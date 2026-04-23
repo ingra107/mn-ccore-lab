@@ -28,8 +28,11 @@ import { test, expect, type Page, type TestInfo } from '@playwright/test'
 import fs from 'node:fs'
 import path from 'node:path'
 import { P } from './helpers/paths'
+import { injectFakeAuth } from './helpers/capture-auth'
 
-const BASE = 'https://mn-ccore-lab.pages.dev'
+// CF Access gates prod `/portal/*` — use CAPTURE_BASE_URL to point at an
+// ungated preview deploy.
+const BASE = process.env.CAPTURE_BASE_URL ?? 'https://mn-ccore-lab.pages.dev'
 
 const TS = new Date()
   .toISOString()
@@ -51,6 +54,10 @@ async function frame(page: Page, id: string, phase: string) {
     fullPage: false,
   })
 }
+
+test.beforeEach(async ({ context }) => {
+  await injectFakeAuth(context, BASE)
+})
 
 /** Copy the Playwright-recorded video next to the keyframes with the
  *  test id as its name, so the whole flow is easy to find. */

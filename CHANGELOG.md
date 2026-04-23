@@ -3,6 +3,207 @@
 
 > Historical phase records moved from CLAUDE.md to keep the operating guide focused on current state. Each section is a complete record of what shipped, decisions made, and scores achieved.
 
+## Whole-hub /simplify sweep (2026-04-23 evening)
+
+Two parallel Claude agents on isolated branches (simplify half =
+clarity + dead-code; perf half = render + query + bundle + deps),
+merged sequentially into main.
+
+**Headline.** `+314 / -5,667` across 93 files; **24 commits** (2 merges
++ 13 simplify + 9 perf). **22 files deleted**, all 0-caller verified
+via grep before removal. Build clean, `tests/inspection.spec.ts`
+149/2/0 (passed/skipped/failed, 10.6 min).
+
+**Deploy:** `18f2aea6.mn-ccore-lab.pages.dev` (HEAD `6e431eaa`).
+
+### Simplify half (13 commits)
+
+- **Files deleted (22):** `Button`, `DecisionCard`, `ExpertSuggestion`,
+  `FilterChip`, `ImpactMetrics`, `MeetingCard`, `SectionHeader`,
+  `Skeleton`, `StageSelector`, `ViewDropdown`, `tasks/{SavedViewsBar,
+  TaskFilters,TaskListView,TaskPeekOverlay}`, `pages/Grants.tsx`
+  (superseded by `portal/Grants`), `pages/portal/Tasks.tsx` (route now
+  redirects to `/portal/my-tasks`), `useLocalData`, `useSavedViews`,
+  `lib/transitions`, `data/affiliates`, `data/index`, `App.css`.
+- **Mutation trim:** 17 unused hooks pruned from `usePBMutations`,
+  `useOtherMutations`, `useDecisionMutations`. Re-export aliases in
+  `mutations/index.ts` narrowed to actual consumers.
+- **`src/lib/api.ts`:** removed 9 unused fetch helpers
+  (`fetchCollaborationGraph`, `fetchExpertSuggestions`,
+  `fetchDeadlineCascade`, etc.) + 9 unused mutation wrappers. Many
+  types demoted to module-private.
+- **`src/hooks/useApiData.ts`:** catch-all re-export block of 30 types
+  narrowed to 6 actually consumed. Dropped 10 unused `lib/api` imports.
+- **Rule 6 compliance:** `pages/Meetings.tsx`'s `formatListDate` and
+  `components/Layout.tsx`'s inline next-meeting formatter both
+  consolidated to `formatShortDate` from `src/lib/dateUtils.ts`.
+- **`components/BrandName.tsx`:** trimmed to `formatBrandName()` only;
+  JSX component version had 0 imports.
+- **Type exports demoted:** ~40 interfaces/types shifted to
+  module-private across `src/hooks/*`, `src/lib/*`,
+  `src/components/*`, `api/types.ts`, `api/routes/*`.
+- **Knip scorecard** (before → after): unused exports 32 → 2, unused
+  exported types 33 → 2, unused files 108 → 87 (remaining are scripts
+  invoked via `tsx` CLI + Cloudflare runtime entrypoints knip can't
+  follow).
+
+### Perf half (9 commits)
+
+- **Context-value memo** — `AuthContext` + `UndoToast` providers
+  wrap portal subtrees. Prior plain `{...}` value objects forced all
+  `useAuth()` / `useUndoToast()` consumers to re-render on every
+  internal state change. Now `useMemo`-wrapped. Est. 60-80% fewer
+  cascaded re-renders during QuickCapture typing / tab switches /
+  status-change bursts.
+- **`env.DB.batch()` for @mention notification inserts** — 4 serial
+  loops in `api/routes/tasks.ts` + `projects.ts` consolidated into
+  one batched call each. Worst case (5-mention comment): ~50ms →
+  ~15ms Worker time.
+- **`/api/digest?with_relevance=true` N+1 fix** — 20 D1 round-trips
+  → 1 full-table scan + in-memory filter. Worker time roughly halves.
+- **`useCallback` on task-page handlers** — `MyTasks.tsx`,
+  `Tasks.tsx`, `Personal.tsx`'s `handleStatusChange` +
+  `handleFieldChange` (Deadlines already had it).
+- **`isProductionVisible` localStorage cache** — called per-row in
+  600+ task filter passes; now cached with event-based invalidation
+  (`storage` + custom `showDebugItems-changed` event from
+  `SettingsPage`).
+- **Dashboard + Sidebar memo** — Dashboard card partitioning (prop
+  thrash into `DashboardGrid`) and Sidebar `allGroups` rebuild
+  inline-per-render both fixed. `nextMeetingLabel` dep added to
+  close stale closure.
+- **Debounced search** — `ExpertSuggestion` 250ms debounce
+  (component was deleted by simplify half shortly after).
+- **Dropped deps:** `tailwindcss-motion` (0 `motion-*` classnames
+  in src/), `@tiptap/extension-mention` (0 imports).
+
+### Conflicts resolved
+
+Two `modify/delete` conflicts where perf edited a file simplify had
+deleted: `src/components/ExpertSuggestion.tsx` and
+`src/pages/portal/Tasks.tsx`. Both verified 0-caller in merged state
+before accepting delete side.
+
+### Artifact
+
+Duplicate commit `5758ddd8 perf: memoize AuthContext + UndoToast
+context values` landed on both branches mid-run (perf agent
+accidentally wrote to simplify worktree early in session before
+catching itself); its content is a no-op duplicate of `d2502098` on
+the perf branch and was absorbed at merge.
+
+### CLAUDE.md edits
+
+- Rule 38 — `FilterChip.tsx` marked deleted (it used to say "delete
+  rather than retrofit if it resurfaces"; file no longer exists).
+- Current-state bullet + Quick Reference row — HEAD + deploy updated.
+- Phase 17 history — `TaskPeekOverlay` entry annotated as removed
+  2026-04-23 during /simplify.
+
+### Flagged but not removed (for human review)
+
+- `HeartbeatDivider` + `EmptyStateArt` — knip reports 0 imports but
+  CLAUDE.md Rule 29 protects brand primitives.
+- `functions/api/[[route]].ts`, `functions/og/[type]/[slug].ts`,
+  `workers/hub-realtime/src/index.ts` — Cloudflare runtime
+  entrypoints (knip false positive).
+- All audit/seed/dogfood scripts in `scripts/` (44 files) — invoked
+  directly via `tsx`, knip can't track.
+- Dashboard eagerly imports 20 card components — converting non-
+  default ones to `React.lazy` would trim ~50-80KB but needs
+  `CARD_REGISTRY` + `<Suspense>` reshape. Separate commit.
+- `TaskGridRow` not wrapped in `React.memo` — big win on keystroke
+  perf in the virtualizer but depends on every parent passing stable
+  callback props. Perf half stabilized MyTasks; other 5 call sites
+  (Deadlines, Personal, Tasks, Grants list, etc.) would need audit.
+- Framer Motion ~120KB `proxy-*.js` chunk used by 79 files — too
+  widespread to swap.
+- No cache headers on read-heavy authenticated endpoints (per-user
+  responses make edge caching tricky; `Cache-Control: private` would
+  help browser caching but invalidation timing needs thought).
+
+### Next
+
+Re-run massive-audit B-visual + mobile smoke + desktop journey after
+CF edge propagation to confirm no runtime regression from the 22 file
+deletions (build + TS compile green is a strong signal, not a
+complete one for runtime).
+
+## Capture infrastructure — Claude Design round 4 (2026-04-23)
+
+Repaired the Claude Design capture pipeline after two post-launch
+environment changes broke it, then broadened coverage. The existing
+three-spec suite had been capturing Google Sign-in pages and
+`RequireAuth` splashes instead of the actual Hub.
+
+**Two blockers fixed:**
+
+1. **CF Access gates prod `/portal/*`.** Captures against
+   `mn-ccore-lab.pages.dev` redirected to
+   `peripheral-brain.cloudflareaccess.com`. Every 17KB "capture" was
+   the same Google Sign-in screenshot.
+   - Fix: `CAPTURE_BASE_URL` env var on all three specs + plumbed
+     through `regen-design-bundle.sh` as `BASE_URL=<preview>`.
+     Preview deploys bypass CF Access while serving the same code.
+2. **`VITE_REQUIRE_AUTH=1` flipped 2026-04-21** (commit `143c1dbd`)
+   shows a branded sign-in splash to unauth'd sessions even on
+   ungated preview hosts.
+   - Fix: `tests/helpers/capture-auth.ts` injects a fake
+     `CF_Authorization` JWT cookie. `useAuth` decodes payload
+     client-side only (no signature verification), so a well-formed
+     unsigned token flips `isAuthenticated` true. Backend writes
+     are still gated by real JWKS verification in `api/jwt-verify.ts`
+     — captures are read-only.
+
+**Round-3 gap fixes (hardcoded paths + missing surfaces):**
+
+- `tests/helpers/paths.ts` — added `nickLab` + `nateLab` +
+  `publicTrajectory` helpers, replacing hardcoded strings in
+  `capture-for-design.spec.ts`.
+- Added 5 hero surfaces: `36-trajectory-portal` (gated chrome vs
+  public at `35`), `37-contact`, `38-meeting-detail`,
+  `39-meeting-prep`, `40-publication-detail`.
+
+**Three new capture specs (wired into `playwright.config.design-capture.ts`):**
+
+- **`capture-scroll-chunks.spec.ts`** — 12 long pages broken into
+  viewport-sized chunks (capped at 8 per page). Output
+  `desktop-<slug>-ch<n>.png`. Designer can review 900px bands
+  instead of one fullPage blob.
+- **`capture-theme-light.spec.ts`** — 8 key pages with
+  `test.use({ colorScheme: 'light' })`. Simpler + more reliable
+  than localStorage injection: `useDarkMode` falls back to
+  `getSystemPreference()` when nothing is stored, so flipping
+  the colorScheme flips the theme.
+- **`capture-rich-states.spec.ts`** — Network WebGL multi-state
+  (default + zoom + mid-drag + post-drag + 3 hovers), 6 modals
+  (Create Task / Command Palette / Shortcut Help / Create Idea /
+  Create Decision / Create Project), Publications carousel at 3
+  scroll positions, Dashboard customize-mode.
+
+**Script + config changes:**
+
+- `regen-design-bundle.sh`: `BASE_URL` plumb-through,
+  `set -e` dropped (single focus-ask flake no longer halts step
+  4/7), 7 steps (hero → mobile → focus → chunks → light → rich →
+  interactions), `ffmpeg` path candidates include work-machine
+  location, video-copy fallback after interactions step
+  (Playwright videos finalize post-`context.close()`, so the
+  `afterEach` hook in `capture-interactions.spec.ts` often sees
+  empty attachments).
+- `playwright.config.design-capture.ts`: `testMatch` extended
+  with the three new specs.
+
+**Bundle produced:** `claude-design-2026-04-22-full-r4`
+(`review/claude-design-2026-04-22-full-r4.zip` — 57MB). 119 PNGs +
+15 MP4s + 15 GIFs + 37 interaction keyframes. `BRIEF.md` +
+`FEEDBACK-FOCUS.md` included (9 ranked asks). Same 2 interaction
+flakes as round 3 (`01-status-change-undo` dropdown race,
+`08-date-picker` cell click) — keyframes still captured,
+non-blocking.
+
+**Commit:** `00aea896`.
+
 ## Audit r7 + GH-issue sweep (2026-04-22 → 2026-04-23)
 
 Massive audit B-visual contrast went **37 → 0 violations** across 204

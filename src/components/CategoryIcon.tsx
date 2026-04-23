@@ -25,14 +25,14 @@ interface CategoryIconProps {
   title?: string
 }
 
-export const CATEGORY_LABEL: Record<string, string> = {
+const CATEGORY_LABEL: Record<string, string> = {
   clif: 'CLIF',
   lab: 'Lab',
   nate: "Nate's",
   mentee: 'Mentee',
 }
 
-export const CATEGORY_COLOR: Record<string, string> = {
+const CATEGORY_COLOR: Record<string, string> = {
   clif: 'var(--maroon)',
   lab: 'var(--teal)',
   nate: 'var(--orange)',

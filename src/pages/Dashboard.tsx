@@ -13,7 +13,6 @@ import { formatMediumDate } from '../lib/dateUtils'
 import { isProductionVisible } from '../lib/isProductionVisible'
 import { getUserRoleFromAuth, ROLE_DEFAULTS } from '../lib/roleDefaults'
 import WelcomeBanner from '../components/WelcomeBanner'
-import PhaseReleaseBanner from '../components/PhaseReleaseBanner'
 import { PATHS } from '../constants/paths'
 import PageTooltip from '../components/PageTooltip'
 import PipelineCard from '../components/dashboard/PipelineCard'
@@ -266,10 +265,32 @@ export default function Dashboard() {
     [activeTab]
   )
 
-  const allVisibleCards = tabFilteredRegistry.filter(c => visibleCards.has(c.id))
-  const pinnedVisibleCards = allVisibleCards.filter(c => pinnedCards.has(c.id))
-  const unpinnedPrimaryCards = sortByUsage(tabFilteredRegistry.filter(c => c.defaultVisible && visibleCards.has(c.id) && !pinnedCards.has(c.id)))
-  const unpinnedSecondaryCards = sortByUsage(tabFilteredRegistry.filter(c => !c.defaultVisible && visibleCards.has(c.id) && !pinnedCards.has(c.id)))
+  // Memoize card partitioning so DashboardGrid's `cards` prop is
+  // referentially stable across renders that didn't actually change
+  // the visible/pinned sets or the active tab. Also pre-compute the
+  // `[{id}]` shape DashboardGrid wants so we don't rebuild those
+  // objects each render (drives RGL layout recompute).
+  const {
+    pinnedVisibleCards,
+    unpinnedPrimaryCards,
+    unpinnedSecondaryCards,
+    pinnedGridCards,
+    primaryGridCards,
+    secondaryGridCards,
+  } = useMemo(() => {
+    const visible = tabFilteredRegistry.filter(c => visibleCards.has(c.id))
+    const pinned = visible.filter(c => pinnedCards.has(c.id))
+    const unpinnedPrimary = sortByUsage(tabFilteredRegistry.filter(c => c.defaultVisible && visibleCards.has(c.id) && !pinnedCards.has(c.id)))
+    const unpinnedSecondary = sortByUsage(tabFilteredRegistry.filter(c => !c.defaultVisible && visibleCards.has(c.id) && !pinnedCards.has(c.id)))
+    return {
+      pinnedVisibleCards: pinned,
+      unpinnedPrimaryCards: unpinnedPrimary,
+      unpinnedSecondaryCards: unpinnedSecondary,
+      pinnedGridCards: pinned.map(c => ({ id: c.id })),
+      primaryGridCards: unpinnedPrimary.map(c => ({ id: c.id })),
+      secondaryGridCards: unpinnedSecondary.map(c => ({ id: c.id })),
+    }
+  }, [tabFilteredRegistry, visibleCards, pinnedCards, sortByUsage])
 
   // Stable slug for layout persistence per user
   const userSlug = emailToSlug(user?.email) || undefined
@@ -377,25 +398,25 @@ export default function Dashboard() {
                   >
                     {greeting}
                   </h1>
-                  <span style={{ color: 'var(--slate)', opacity: 0.75, fontSize: '14px', flexShrink: 0 }}>·</span>
+                  <span style={{ color: 'var(--slate)', opacity: 0.75, fontSize: '14px', flexShrink: 0 }}>{'·'}</span>
                   <span style={{ fontSize: '13px', color: 'var(--slate)', opacity: 0.75, whiteSpace: 'nowrap' }}>
                     {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
                   </span>
                   {todayProgress.completedToday > 0 && (
                     <>
-                      <span style={{ color: 'var(--slate)', opacity: 0.75, fontSize: '14px', flexShrink: 0 }}>·</span>
+                      <span style={{ color: 'var(--slate)', opacity: 0.75, fontSize: '14px', flexShrink: 0 }}>{'·'}</span>
                       <span style={{ fontSize: '12px', color: 'var(--green)', whiteSpace: 'nowrap' }}>{todayProgress.completedToday} done</span>
                     </>
                   )}
                   {todayProgress.dueToday > 0 && (
                     <>
-                      <span style={{ color: 'var(--slate)', opacity: 0.75, fontSize: '14px', flexShrink: 0 }}>·</span>
+                      <span style={{ color: 'var(--slate)', opacity: 0.75, fontSize: '14px', flexShrink: 0 }}>{'·'}</span>
                       <span style={{ fontSize: '12px', color: 'var(--teal)', whiteSpace: 'nowrap' }}>{todayProgress.dueToday} due</span>
                     </>
                   )}
                   {overdue.length > 0 && (
                     <>
-                      <span style={{ color: 'var(--slate)', opacity: 0.75, fontSize: '14px', flexShrink: 0 }}>·</span>
+                      <span style={{ color: 'var(--slate)', opacity: 0.75, fontSize: '14px', flexShrink: 0 }}>{'·'}</span>
                       <a
                         href={PATHS.myTasks}
                         className="portal-footer-link"
@@ -414,7 +435,7 @@ export default function Dashboard() {
                       </a>
                     </>
                   )}
-                  <span style={{ color: 'var(--slate)', opacity: 0.75, fontSize: '14px', flexShrink: 0 }}>·</span>
+                  <span style={{ color: 'var(--slate)', opacity: 0.75, fontSize: '14px', flexShrink: 0 }}>{'·'}</span>
                   <LabHealthScore />
                 </div>
 
@@ -497,59 +518,82 @@ export default function Dashboard() {
         })()}
 
         {/* Welcome banner (first-visit onboarding — conditional, rarely shown) */}
-        <PhaseReleaseBanner />
+        {/* PhaseReleaseBanner moved to PortalLayout top bar as a pill (R4-10). */}
         <WelcomeBanner />
 
-        {/* Customize panel */}
-        {showCustomize && (
-          <div
-            data-testid="customize-panel"
-            className="rounded-xl border p-4 mb-3 customize-panel"
-            style={{ borderColor: 'var(--border-subtle)' }}
-          >
-            <p className="text-xs font-medium mb-3" style={{ color: 'var(--ink)' }}>
-              Toggle cards visible on your dashboard
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {CARD_REGISTRY.map(card => (
-                <div key={card.id} className="flex items-center gap-1">
-                  <button
-                    onClick={() => toggleCard(card.id)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors border"
-                    style={{
-                      color: visibleCards.has(card.id) ? 'var(--teal)' : 'var(--slate)',
-                      backgroundColor: visibleCards.has(card.id) ? 'var(--teal-active)' : 'transparent',
-                      borderColor: visibleCards.has(card.id) ? 'var(--teal)' : 'var(--border-subtle)',
-                      cursor: 'pointer',
-                      opacity: visibleCards.has(card.id) ? 1 : 0.85,
-                    }}
-                  >
-                    {visibleCards.has(card.id) ? '\u2713' : '+'} {card.label}
-                  </button>
-                  {visibleCards.has(card.id) && (
-                    <button
-                      onClick={() => togglePin(card.id)}
-                      aria-label={pinnedCards.has(card.id) ? 'Unpin card' : 'Pin card to top'}
-                      className="flex items-center justify-center"
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        cursor: 'pointer',
-                        minHeight: 44,
-                        minWidth: 44,
-                        color: pinnedCards.has(card.id) ? 'var(--gold)' : 'var(--slate)',
-                        opacity: pinnedCards.has(card.id) ? 1 : 0.85,
-                      }}
-                      title={pinnedCards.has(card.id) ? 'Unpin' : 'Pin to top'}
-                    >
-                      <Pin size={14} />
-                    </button>
-                  )}
-                </div>
-              ))}
+        {/* Customize panel \u2014 R4-P3-01: pills split into Always-on vs
+            Optional so 20 toggles don't present as a flat wall of
+            choices. Claude Design called out that users can't tell
+            what "CLIF Network" vs "Team Pulse" are until they enable
+            them; the split tells them which four are core. */}
+        {showCustomize && (() => {
+          const ALWAYS_ON_IDS = new Set(['action-board', 'upcoming', 'pipeline', 'activity'])
+          const alwaysOn = CARD_REGISTRY.filter(c => ALWAYS_ON_IDS.has(c.id))
+          const optional = CARD_REGISTRY.filter(c => !ALWAYS_ON_IDS.has(c.id))
+          const renderPill = (card: typeof CARD_REGISTRY[number]) => (
+            <div key={card.id} className="flex items-center gap-1">
+              <button
+                onClick={() => toggleCard(card.id)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors border"
+                style={{
+                  color: visibleCards.has(card.id) ? 'var(--teal)' : 'var(--slate)',
+                  backgroundColor: visibleCards.has(card.id) ? 'var(--teal-active)' : 'transparent',
+                  borderColor: visibleCards.has(card.id) ? 'var(--teal)' : 'var(--border-subtle)',
+                  cursor: 'pointer',
+                  opacity: visibleCards.has(card.id) ? 1 : 0.85,
+                }}
+              >
+                {visibleCards.has(card.id) ? '\u2713' : '+'} {card.label}
+              </button>
+              {visibleCards.has(card.id) && (
+                <button
+                  onClick={() => togglePin(card.id)}
+                  aria-label={pinnedCards.has(card.id) ? 'Unpin card' : 'Pin card to top'}
+                  className="flex items-center justify-center"
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    minHeight: 44,
+                    minWidth: 44,
+                    color: pinnedCards.has(card.id) ? 'var(--gold)' : 'var(--slate)',
+                    opacity: pinnedCards.has(card.id) ? 1 : 0.85,
+                  }}
+                  title={pinnedCards.has(card.id) ? 'Unpin' : 'Pin to top'}
+                >
+                  <Pin size={14} />
+                </button>
+              )}
             </div>
-          </div>
-        )}
+          )
+          return (
+            <div
+              data-testid="customize-panel"
+              className="rounded-xl border p-4 mb-3 customize-panel"
+              style={{ borderColor: 'var(--border-subtle)' }}
+            >
+              <p className="text-xs font-medium mb-3" style={{ color: 'var(--ink)' }}>
+                Toggle cards visible on your dashboard
+              </p>
+              <div className="mb-4">
+                <p className="text-[10px] uppercase tracking-wider mb-2" style={{ color: 'var(--slate)', opacity: 0.7, letterSpacing: '0.06em' }}>
+                  Core - recommended
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {alwaysOn.map(renderPill)}
+                </div>
+              </div>
+              <div>
+                <p className="text-[10px] uppercase tracking-wider mb-2" style={{ color: 'var(--slate)', opacity: 0.7, letterSpacing: '0.06em' }}>
+                  Optional - turn on as needed
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {optional.map(renderPill)}
+                </div>
+              </div>
+            </div>
+          )
+        })()}
 
         {/* ── STRATUM 2: QuickCapture + contextual alerts + cards ── */}
         {/* Quick Capture + Actions */}
@@ -671,7 +715,7 @@ export default function Dashboard() {
             <DashboardGrid
               section="pinned"
               userSlug={userSlug}
-              cards={pinnedVisibleCards.map(c => ({ id: c.id }))}
+              cards={pinnedGridCards}
               onCardClick={handleCardInteraction}
               renderCard={renderCard}
               renderOverlay={renderPinOverlay}
@@ -686,7 +730,7 @@ export default function Dashboard() {
             <DashboardGrid
               section="primary"
               userSlug={userSlug}
-              cards={unpinnedPrimaryCards.map(c => ({ id: c.id }))}
+              cards={primaryGridCards}
               onCardClick={handleCardInteraction}
               renderCard={renderCard}
               renderOverlay={renderUnpinOverlay}
@@ -720,7 +764,7 @@ export default function Dashboard() {
                   <DashboardGrid
                     section="secondary"
                     userSlug={userSlug}
-                    cards={unpinnedSecondaryCards.map(c => ({ id: c.id }))}
+                    cards={secondaryGridCards}
                     onCardClick={handleCardInteraction}
                     renderCard={renderCard}
                     renderOverlay={renderUnpinOverlay}

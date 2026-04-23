@@ -1,19 +1,6 @@
 import type { AuthUser, Env } from '../helpers';
 import { json, error, generateId, logActivity, actorSlug } from '../helpers';
 
-// ── Types ──
-
-export interface SubmissionEventRow {
-  id: string;
-  project_id: string;
-  event_type: string;
-  event_date: string;
-  journal: string | null;
-  notes: string | null;
-  deleted_at: string | null;
-  created_at: string;
-}
-
 const VALID_EVENT_TYPES = [
   'submitted',
   'reviews_received',

@@ -1,21 +1,18 @@
 /**
- * PhaseReleaseBanner — branded "what shipped" banner that appears in the
- * portal once per phase. Auto-dismisses after the user clicks read or
- * after first interaction with the page beyond ~3 minutes. Persists the
- * dismissed phase id in localStorage so it never re-appears.
+ * PhaseReleasePill — compact "what shipped" affordance in the portal top
+ * bar. Downgraded from a full Dashboard banner (R4-10) — the banner
+ * served us pre-launch but post-launch it read as noise on every portal
+ * visit. The pill keeps the announcement, kills the vertical real
+ * estate, and still persists dismissal via localStorage.
+ *
+ * Click → opens an inline highlight panel anchored below the pill.
+ * X → dismisses permanently for that release id.
  *
  * Add new phases by appending to RELEASES below + bumping CURRENT_RELEASE.
- *
- * Design notes:
- *  - Sits above the page header on portal routes (caller renders it).
- *  - Heartbeat motif (gold) on the left as the lab's brand thread.
- *  - Single CTA "What's new" → opens the changelog summary inline.
- *  - X to dismiss; Escape to dismiss while focused.
  */
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, ChevronRight } from 'lucide-react'
-import HeartbeatLine from './HeartbeatLine'
 
 interface Release {
   id: string
@@ -64,6 +61,7 @@ export default function PhaseReleaseBanner() {
   const release = RELEASES[CURRENT_RELEASE]
   const [visible, setVisible] = useState(false)
   const [expanded, setExpanded] = useState(false)
+  const panelRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!release) return
@@ -71,7 +69,26 @@ export default function PhaseReleaseBanner() {
     if (!dismissed.has(release.id)) setVisible(true)
   }, [release])
 
-  if (!release) return null
+  // Close popover on outside click or Escape
+  useEffect(() => {
+    if (!expanded) return
+    const onClick = (e: MouseEvent) => {
+      if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
+        setExpanded(false)
+      }
+    }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setExpanded(false)
+    }
+    document.addEventListener('mousedown', onClick)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onClick)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [expanded])
+
+  if (!release || !visible) return null
 
   const dismiss = () => {
     setVisible(false)
@@ -80,116 +97,59 @@ export default function PhaseReleaseBanner() {
     persistDismissed(dismissed)
   }
 
+  const shortLabel = release.title.split('—')[0].trim()
+
   return (
-    <AnimatePresence>
-      {visible && (
-        <motion.div
-          initial={{ opacity: 0, y: -8 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, height: 0, marginBottom: 0 }}
-          transition={{ duration: 0.25, ease: 'easeOut' }}
-          role="region"
-          aria-label={`Release notes: ${release.title}`}
-          className="mb-4 overflow-hidden"
+    <div ref={panelRef} style={{ position: 'relative', display: 'inline-flex' }}>
+      <button
+        onClick={() => setExpanded((v) => !v)}
+        aria-expanded={expanded}
+        aria-label={`Release notes — ${release.title}`}
+        className="phase-pill"
+      >
+        <span className="phase-pill-dot" aria-hidden="true" />
+        <span>{shortLabel} shipped</span>
+        <ChevronRight
+          size={12}
           style={{
-            position: 'relative',
-            background:
-              'linear-gradient(95deg, color-mix(in srgb, var(--gold) 12%, var(--cream)) 0%, var(--cream) 60%)',
-            borderRadius: 'var(--radius-lg)',
-            border: '1px solid color-mix(in srgb, var(--gold) 28%, var(--border-subtle))',
+            transform: expanded ? 'rotate(90deg)' : 'rotate(0deg)',
+            transition: 'transform 150ms ease',
+            opacity: 0.7,
           }}
-          onKeyDown={(e) => { if (e.key === 'Escape') dismiss() }}
-        >
-          {/* Heartbeat brand thread — slow ambient pulse on the left */}
-          <div
-            aria-hidden="true"
+        />
+      </button>
+
+      <AnimatePresence>
+        {expanded && (
+          <motion.div
+            role="dialog"
+            aria-label="Release highlights"
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.15, ease: 'easeOut' }}
             style={{
               position: 'absolute',
-              left: 0,
-              top: 0,
-              bottom: 0,
-              width: 64,
-              opacity: 0.45,
-              pointerEvents: 'none',
-              maskImage: 'linear-gradient(to right, black 30%, transparent)',
+              top: '100%',
+              right: 0,
+              marginTop: 6,
+              width: 340,
+              padding: 'var(--sp-md)',
+              background: 'var(--surface-2, var(--cream))',
+              border: '1px solid var(--border-default)',
+              borderRadius: 'var(--radius-lg)',
+              boxShadow: 'var(--shadow-menu)',
+              zIndex: 'var(--z-dropdown)',
+              color: 'var(--ink)',
             }}
           >
-            <HeartbeatLine variant="slow" bpm={50} strokeWidth={1.25} color="var(--gold)" height="100%" />
-          </div>
-
-          <div style={{ position: 'relative', padding: 'var(--sp-md) var(--sp-lg)' }}>
-            <div className="flex items-start gap-4">
-              <div className="flex-1 min-w-0" style={{ marginLeft: 56 }}>
-                <div className="flex items-baseline gap-2 flex-wrap">
-                  <span style={{ fontSize: 11, color: 'var(--gold)', fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-                    Just shipped
-                  </span>
-                  <span style={{ fontSize: 11, color: 'var(--slate)', opacity: 0.6 }}>
-                    {release.date}
-                  </span>
+            <div className="flex items-start justify-between gap-2" style={{ marginBottom: 6 }}>
+              <div>
+                <div style={{ fontSize: 10, color: 'var(--gold)', fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                  Just shipped · {release.date}
                 </div>
-                <h3 style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink)', margin: '4px 0 0', lineHeight: 1.4 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, marginTop: 2, lineHeight: 1.3 }}>
                   {release.title}
-                </h3>
-                <p style={{ fontSize: 13, color: 'var(--slate)', margin: '4px 0 0', lineHeight: 1.5 }}>
-                  {release.summary}
-                </p>
-                <AnimatePresence initial={false}>
-                  {expanded && (
-                    <motion.ul
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.2 }}
-                      style={{ margin: 'var(--sp-sm) 0 0', paddingLeft: 18, fontSize: 12, lineHeight: 1.55, color: 'var(--slate)', overflow: 'hidden' }}
-                    >
-                      {release.highlights.map((h, i) => (
-                        <li key={i} style={{ marginTop: i === 0 ? 0 : 2 }}>{h}</li>
-                      ))}
-                    </motion.ul>
-                  )}
-                </AnimatePresence>
-                <div className="flex items-center gap-3" style={{ marginTop: 'var(--sp-sm)' }}>
-                  <button
-                    onClick={() => setExpanded((v) => !v)}
-                    aria-expanded={expanded}
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 4,
-                      fontSize: 12,
-                      fontWeight: 500,
-                      color: 'var(--gold)',
-                      background: 'none',
-                      border: 'none',
-                      padding: 0,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    {expanded ? 'Hide details' : "What's new"}
-                    <ChevronRight
-                      size={12}
-                      style={{
-                        transform: expanded ? 'rotate(90deg)' : 'rotate(0deg)',
-                        transition: 'transform 150ms ease',
-                      }}
-                    />
-                  </button>
-                  <button
-                    onClick={dismiss}
-                    style={{
-                      fontSize: 12,
-                      fontWeight: 400,
-                      color: 'var(--slate)',
-                      opacity: 0.65,
-                      background: 'none',
-                      border: 'none',
-                      padding: 0,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    Got it
-                  </button>
                 </div>
               </div>
               <button
@@ -197,14 +157,12 @@ export default function PhaseReleaseBanner() {
                 aria-label="Dismiss release notes"
                 style={{
                   flexShrink: 0,
-                  padding: 4,
                   background: 'none',
                   border: 'none',
                   color: 'var(--slate)',
-                  opacity: 0.55,
+                  opacity: 0.6,
                   cursor: 'pointer',
-                  minWidth: 24,
-                  minHeight: 24,
+                  padding: 2,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -213,9 +171,25 @@ export default function PhaseReleaseBanner() {
                 <X size={14} />
               </button>
             </div>
-          </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+            <p style={{ fontSize: 12, color: 'var(--slate)', lineHeight: 1.5, margin: 0 }}>
+              {release.summary}
+            </p>
+            <ul
+              style={{
+                margin: 'var(--sp-sm) 0 0',
+                paddingLeft: 18,
+                fontSize: 12,
+                lineHeight: 1.55,
+                color: 'var(--slate)',
+              }}
+            >
+              {release.highlights.map((h, i) => (
+                <li key={i} style={{ marginTop: i === 0 ? 0 : 2 }}>{h}</li>
+              ))}
+            </ul>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   )
 }

@@ -42,8 +42,11 @@ export const P = {
   // Public
   home: '/',
   pulse: '/pulse',
+  nickLab: '/nick',
+  nateLab: '/nate',
   publicTeam: '/team',
   publicMember: (slug: string) => `/team/${slug}`,
+  publicTrajectory: (slug: string) => `/team/${slug}/trajectory`,
   publications: '/publications',
   publication: (id: string | number) => `/publications/${id}`,
   network: '/network',

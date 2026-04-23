@@ -1,27 +1,6 @@
 import type { AuthUser, Env } from '../helpers';
 import { json, error, generateId, logActivity, actorSlug, buildUpdate } from '../helpers';
 
-// ── Types ──
-
-export interface ConferenceSubmissionRow {
-  id: string;
-  project_id: string | null;
-  conference: string;
-  conference_date: string | null;
-  submission_type: string;
-  title: string;
-  authors: string | null;
-  abstract_due: string | null;
-  abstract_submitted_at: string | null;
-  accepted_at: string | null;
-  presentation_type: string | null;
-  materials_status: string;
-  travel_booked: number;
-  notes: string | null;
-  status: string;
-  created_at: string;
-}
-
 const VALID_SUBMISSION_TYPES = ['abstract', 'oral', 'poster', 'workshop', 'invited'] as const;
 const VALID_STATUSES = ['planning', 'submitted', 'accepted', 'preparing', 'presented', 'rejected'] as const;
 const VALID_MATERIALS = ['not_started', 'drafting', 'review', 'final'] as const;

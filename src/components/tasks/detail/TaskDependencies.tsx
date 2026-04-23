@@ -8,12 +8,12 @@ import type { TaskRow } from '../../../lib/api'
 
 // ── Helpers ─────────────────────────────────────────────────
 
-export function parseBlockedByIds(blockedBy: string | null): string[] {
+function parseBlockedByIds(blockedBy: string | null): string[] {
   if (!blockedBy) return []
   return blockedBy.split(',').map(s => s.trim()).filter(Boolean)
 }
 
-export function serializeBlockedByIds(ids: string[]): string | null {
+function serializeBlockedByIds(ids: string[]): string | null {
   if (ids.length === 0) return null
   return ids.join(',')
 }
@@ -179,7 +179,7 @@ export function TaskDependenciesSection({ task, onFieldUpdate, onOpenTask }: { t
 
 // ── Blocker Search Dropdown ──────────────────────────────────
 
-export function BlockerSearchDropdown({ currentTaskId, excludeIds, allTasks, onSelect, onClose }: {
+function BlockerSearchDropdown({ currentTaskId, excludeIds, allTasks, onSelect, onClose }: {
   currentTaskId: string
   excludeIds: string[]
   allTasks: TaskRow[]

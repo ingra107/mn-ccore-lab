@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 
-export type Density = 'comfortable' | 'compact'
+type Density = 'comfortable' | 'compact'
 
 const LS_KEY = 'mn-ccore-density'
 

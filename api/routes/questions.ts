@@ -1,5 +1,6 @@
 import type { AuthUser, Env } from '../helpers';
 import { json, error, generateId, logActivity, actorSlug } from '../helpers';
+import { filterFixtures } from '../lib/fixtures';
 
 // ── AI Co-Scientist: detect @hermes/@claude mentions in answers ──
 async function handleClaudeMentionInAnswer(
@@ -66,6 +67,7 @@ interface AnswerRow {
 export async function handleGetQuestions(url: URL, env: Env): Promise<Response> {
   const status = url.searchParams.get('status');
   const projectSlug = url.searchParams.get('project_slug');
+  const includeFixtures = url.searchParams.get('include_fixtures') === '1';
 
   let query = `
     SELECT q.*,
@@ -81,7 +83,8 @@ export async function handleGetQuestions(url: URL, env: Env): Promise<Response> 
   query += ' ORDER BY q.created_at DESC';
 
   const result = await env.DB.prepare(query).bind(...params).all();
-  return json({ data: result.results || [], count: result.results?.length || 0 });
+  const rows = filterFixtures(result.results || [], 'question', includeFixtures);
+  return json({ data: rows, count: rows.length });
 }
 
 // ── GET /api/questions/:id ─────────────────────────────────────

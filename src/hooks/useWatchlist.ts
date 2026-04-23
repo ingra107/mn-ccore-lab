@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react'
 
-export interface WatchItem {
+interface WatchItem {
   id: string
   type: 'project' | 'task' | 'person' | 'meeting'
   label: string

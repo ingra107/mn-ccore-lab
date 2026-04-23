@@ -27,7 +27,7 @@ function daysInStage(p: { stage_updated_at?: string | null; updated_at?: string 
   return Math.floor((Date.now() - then) / 86_400_000)
 }
 
-export interface LabHealthSignals {
+interface LabHealthSignals {
   overdueCount: number
   regulatoryExpiringCount: number
   stalledManuscriptCount: number

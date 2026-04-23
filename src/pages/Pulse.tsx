@@ -110,7 +110,10 @@ export default function Pulse() {
           title="The lab, right now."
           subtitle={`${pendingTasks.length} active tasks, ${activeProjects} active projects, ${team.length || stats?.teamSize || 18} people moving the work.`}
         >
-          <div className="grid grid-cols-3 gap-x-20 gap-y-12">
+          {/* R4-P2-07: on 375px the prior gap-x-20 (80px) collided with
+              the three metrics. Grid now wraps to 2+1 below 420px via
+              the kiosk-metrics-grid class; desktop sizing unchanged. */}
+          <div className="kiosk-metrics-grid grid grid-cols-3 gap-x-20 gap-y-12">
             <PulseMetric value={pendingTasks.length} label="Active tasks" />
             <PulseMetric value={activeProjects} label="Active projects" />
             <PulseMetric

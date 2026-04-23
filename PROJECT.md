@@ -16,8 +16,8 @@ platform for Nick's critical-care research group at UMN.
 
 **Live:** https://mn-ccore-lab.pages.dev  (LIVE for team — CF Access gates `/portal/*` via @umn.edu)
 **Repo:** https://github.com/ingra107/mn-ccore-lab  (720+ commits)
-**Current deploy:** `65b166d7.mn-ccore-lab.pages.dev` (2026-04-21, post-Phase-37 bug-fix sprint — emailToSlug + stage mapper + JWT cookie fallback + visual bug fixes; HEAD `a8537ad` on main)
-**Quality gate:** 🟢 GREEN — inspection 213/213 vs prod, smoke 27/27, deep-audit 14/14 clean, axe WCAG 2.1 AA clean across 29 pages × 2 color schemes, schema-drift CI green.
+**Current deploy:** `18f2aea6.mn-ccore-lab.pages.dev` (2026-04-23 evening, whole-hub /simplify sweep — -5,353 lines net, 22 files deleted, 24 commits; HEAD `6e431eaa` on main)
+**Quality gate:** 🟢 GREEN — build clean, inspection 149/149 post-simplify, smoke 27/27 (pre-simplify baseline), deep-audit 14/14 clean, axe WCAG 2.1 AA clean across 29 pages × 2 color schemes, schema-drift CI green.
 
 ## 🚨 Read these FIRST every session
 

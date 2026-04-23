@@ -116,7 +116,7 @@ export function actorSlug(email: string): string {
  *  unreachable, or migration v44 not yet run). Keep this in sync with the
  *  v44 seed so behavior doesn't silently diverge. Ground truth:
  *  `/c/Users/ingra107/Peripheral-Brain/Context/contacts.md`. */
-export const PI_EMAILS_FALLBACK = new Set<string>([
+const PI_EMAILS_FALLBACK = new Set<string>([
   'ingra107@umn.edu',            // Nick — real UMN address
   'nicholas.ingraham@gmail.com', // Nick — personal
 ])

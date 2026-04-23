@@ -40,7 +40,7 @@ interface DigestData {
 
 // ── Digest generation ─────────────────────────────────────────
 
-export async function generateDigest(memberSlug: string, env: Env): Promise<DigestData> {
+async function generateDigest(memberSlug: string, env: Env): Promise<DigestData> {
   const today = new Date().toISOString().split('T')[0];
   const twoDaysFromNow = new Date(Date.now() + 2 * 86400000).toISOString().split('T')[0];
   const sevenDaysFromNow = new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0];
@@ -147,7 +147,7 @@ function sectionHeader(title: string, count: number, color: string): string {
     </div>`;
 }
 
-export function buildDigestHtml(data: DigestData): string {
+function buildDigestHtml(data: DigestData): string {
   const { memberName, overdue, dueToday, upcoming, meetings, recentActivity, generatedAt } = data;
 
   const greeting = getGreeting();

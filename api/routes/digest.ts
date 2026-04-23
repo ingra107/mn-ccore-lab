@@ -37,33 +37,36 @@ export async function handleDigest(url: URL, env: Env): Promise<Response> {
     return json({ data: papers, count: papers.length });
   }
 
-  // Match paper topics against expertise_tags (cap at 20 for performance)
+  // Match paper topics against expertise_tags (cap at 20 for performance).
+  //
+  // Previous implementation ran 20 separate D1 queries (one per paper)
+  // via Promise.all. D1 serializes per-connection, so even "parallel"
+  // promises paid ~20 round-trips. Fetching the whole expertise_tags
+  // table once (~< a few hundred rows in practice) and filtering in
+  // memory is a single round-trip and still cheap.
   const papersToEnrich = papers.slice(0, 20);
-  const enriched = await Promise.all(
-    papersToEnrich.map(async (paper) => {
-      const topicsRaw = paper.topics as string | null;
-      if (!topicsRaw) return { ...paper, relevant_members: [] };
-
-      try {
-        const topics = JSON.parse(topicsRaw) as string[];
-        if (!topics.length) return { ...paper, relevant_members: [] };
-
-        const likeClauses = topics.map(() => 'LOWER(tag) LIKE ?').join(' OR ');
-        const params = topics.map((t) => `%${t.toLowerCase()}%`);
-
-        const experts = await env.DB.prepare(
-          `SELECT DISTINCT member_slug FROM expertise_tags WHERE ${likeClauses}`
-        ).bind(...params).all();
-
-        return {
-          ...paper,
-          relevant_members: (experts.results || []).map((e: Record<string, unknown>) => e.member_slug as string),
-        };
-      } catch {
-        return { ...paper, relevant_members: [] };
+  const expertiseRowsRes = await env.DB.prepare(
+    'SELECT member_slug, LOWER(tag) AS tag FROM expertise_tags',
+  ).all();
+  const expertiseRows = (expertiseRowsRes.results || []) as Array<{ member_slug: string; tag: string }>;
+  const enriched = papersToEnrich.map((paper) => {
+    const topicsRaw = paper.topics as string | null;
+    if (!topicsRaw) return { ...paper, relevant_members: [] };
+    try {
+      const topics = JSON.parse(topicsRaw) as string[];
+      if (!topics.length) return { ...paper, relevant_members: [] };
+      const needles = topics.map((t) => t.toLowerCase());
+      const members = new Set<string>();
+      for (const row of expertiseRows) {
+        if (needles.some((n) => row.tag.includes(n))) {
+          members.add(row.member_slug);
+        }
       }
-    })
-  );
+      return { ...paper, relevant_members: [...members] };
+    } catch {
+      return { ...paper, relevant_members: [] };
+    }
+  });
 
   // Remaining papers beyond the first 20 get empty relevant_members
   const remaining = papers.slice(20).map((p) => ({ ...p, relevant_members: [] }));

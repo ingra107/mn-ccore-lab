@@ -123,7 +123,7 @@ export default function MyTasks() {
       onSuccess: () => setSelectedIds(new Set()),
     })
   }
-  const handleFieldChange = (id: string, field: string, value: unknown) => {
+  const handleFieldChange = useCallback((id: string, field: string, value: unknown) => {
     // Capture prev so we can undo priority/assignee/due_date/project changes.
     // Skip content fields (title/description) — text-edit undo is noisy.
     const task = allTasks.find((t) => t.id === id)
@@ -135,7 +135,7 @@ export default function MyTasks() {
         updateTask.mutate({ id, fields: { [field]: prev } }),
       )
     }
-  }
+  }, [allTasks, updateTask, showUndo])
 
   const { user } = useAuth()
   const currentUser = emailToSlug(user?.email) || null
@@ -147,13 +147,13 @@ export default function MyTasks() {
     return allTasks.filter((t) => t.assignee === currentUser)
   }, [allTasks, currentUser, showAllTasks])
 
-  const handleStatusChange = (id: string, status: string) => {
+  const handleStatusChange = useCallback((id: string, status: string) => {
     const task = allTasks.find(t => t.id === id)
     const prev = task?.status || 'todo'
     updateStatus.mutate({ id, status })
     const labels: Record<string, string> = { todo: 'To Do', in_progress: 'In Progress', done: 'Done', blocked: 'Blocked', waiting_external: 'Waiting (External)' }
     showUndo(`Status → ${labels[status] || status}`, () => updateStatus.mutate({ id, status: prev }))
-  }
+  }, [allTasks, updateStatus, showUndo])
 
   const handleCreate = (task: {
     title: string
@@ -256,6 +256,18 @@ export default function MyTasks() {
   const assignFocused = useCallback(() => {
     const row = document.querySelector('.task-row-focused .inline-assignee-btn')
     if (row) (row as HTMLButtonElement).click()
+  }, [])
+
+  // Stable handler for task-row bulk-select checkboxes. Previously created
+  // inline per-render in JSX, which broke any future memo wrap on
+  // TaskGridRow.
+  const handleToggleSelectTask = useCallback((id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
   }, [])
 
   // Helper: set focused index by task ID (used by grouped view when user clicks a row)
@@ -638,8 +650,11 @@ export default function MyTasks() {
         </div>
       </div>
 
-      {/* Quick filter pills */}
-      <div className="flex items-center gap-2 mt-2 flex-wrap">
+      {/* Quick filter pills. R4-P2-08 partial — on ≤420px viewports the
+          row scrolls horizontally instead of wrapping to 3 lines that
+          push task rows below the fold. Full bottom-sheet drawer
+          deferred; horizontal scroll is the 80% fix. */}
+      <div className="quick-filter-row flex items-center gap-2 mt-2 flex-wrap sm:flex-wrap max-[420px]:flex-nowrap max-[420px]:overflow-x-auto max-[420px]:-mx-3 max-[420px]:px-3">
         {([
           { key: 'all' as QuickFilter, label: 'All', count: pendingCount },
           { key: 'today' as QuickFilter, label: 'Today', count: filterCounts.today },
@@ -921,9 +936,9 @@ export default function MyTasks() {
             {view === 'timeline' && <Suspense fallback={<TableSkeleton />}><TaskTimelineView tasks={displayTasks} onStatusChange={handleStatusChange} onOpenDetail={setSelectedTask} /></Suspense>}
           </>
         ) : groupBy === 'none' ? (
-          <TaskGridView tasks={sortTasks(displayTasks, sortBy)} onStatusChange={handleStatusChange} onFieldChange={handleFieldChange} onOpenDetail={setSelectedTask} selectedIds={selectedIds} onToggleSelect={(id) => setSelectedIds(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next })} onPinToFocus={pinTask} pinnedIds={focusPinnedSet} focusedIndex={focusedTaskIndex} onFocusIndex={setFocusedTaskIndex} />
+          <TaskGridView tasks={sortTasks(displayTasks, sortBy)} onStatusChange={handleStatusChange} onFieldChange={handleFieldChange} onOpenDetail={setSelectedTask} selectedIds={selectedIds} onToggleSelect={handleToggleSelectTask} onPinToFocus={pinTask} pinnedIds={focusPinnedSet} focusedIndex={focusedTaskIndex} onFocusIndex={setFocusedTaskIndex} />
         ) : (
-          <GroupedTaskList tasks={displayTasks} groupBy={groupBy} sortBy={sortBy} onStatusChange={handleStatusChange} onFieldChange={handleFieldChange} onOpenDetail={setSelectedTask} selectedIds={selectedIds} onToggleSelect={(id) => setSelectedIds(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next })} onPinToFocus={pinTask} pinnedIds={focusPinnedSet} focusedTaskId={focusedTask?.id ?? null} onFocusId={handleFocusById} />
+          <GroupedTaskList tasks={displayTasks} groupBy={groupBy} sortBy={sortBy} onStatusChange={handleStatusChange} onFieldChange={handleFieldChange} onOpenDetail={setSelectedTask} selectedIds={selectedIds} onToggleSelect={handleToggleSelectTask} onPinToFocus={pinTask} pinnedIds={focusPinnedSet} focusedTaskId={focusedTask?.id ?? null} onFocusId={handleFocusById} />
         )}
       </div>
 

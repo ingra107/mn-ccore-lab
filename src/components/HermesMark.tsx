@@ -82,28 +82,31 @@ export default function HermesMark({
 }
 
 function Glyph({ size, color }: { size: number; color: string }) {
-  // Mercury / Hermes alchemical glyph: crescent (winged helm) → circle
-  // (head) → cross (caduceus tail). Drawn as a single 24-unit viewBox
-  // so it composes the same at every scale.
+  // Mercury / Hermes alchemical glyph — now two-tone (R4-09). Gold-only
+  // rendered as another gold badge on gold CTAs. Teal outline + gold
+  // head-circle gives it a distinct silhouette against both gold and
+  // teal surfaces. When `color` prop is explicitly overridden by a
+  // caller, preserve the single-tone render (legacy callers).
+  const isDefault = color === 'var(--gold)'
+  const accent = isDefault ? 'var(--teal)' : color
+  const core = isDefault ? 'var(--gold)' : color
   return (
     <svg
       width={size}
       height={size}
       viewBox="0 0 24 24"
       fill="none"
-      stroke={color}
-      strokeWidth={1.75}
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden="true"
     >
-      {/* Crescent above (winged-helm allusion) */}
-      <path d="M7.5 4 A4.5 4.5 0 0 0 16.5 4" />
-      {/* Head circle */}
-      <circle cx="12" cy="10" r="3.5" />
-      {/* Caduceus shaft + crossbar */}
-      <path d="M12 13.5 L12 21" />
-      <path d="M9 17.5 L15 17.5" />
+      {/* Crescent above (winged-helm allusion) — teal */}
+      <path d="M7.5 4 A4.5 4.5 0 0 0 16.5 4" stroke={accent} strokeWidth={1.75} />
+      {/* Head circle — gold fill for pop against both gold + teal bgs */}
+      <circle cx="12" cy="10" r="3.5" fill={core} stroke={core} strokeWidth={1.25} />
+      {/* Caduceus shaft + crossbar — teal */}
+      <path d="M12 13.5 L12 21" stroke={accent} strokeWidth={1.75} />
+      <path d="M9 17.5 L15 17.5" stroke={accent} strokeWidth={1.75} />
     </svg>
   )
 }

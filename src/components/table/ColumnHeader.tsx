@@ -1,6 +1,6 @@
 import { ChevronUp, ChevronDown } from 'lucide-react'
 
-export interface ColumnHeaderProps {
+interface ColumnHeaderProps {
   label: string
   sortKey: string
   currentSort: string

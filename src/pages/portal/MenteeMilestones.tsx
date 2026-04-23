@@ -165,11 +165,19 @@ export default function MenteeMilestones() {
       <PageHeader
         icon={<GraduationCap size={20} />}
         title="Mentee Milestones"
-        subtitle={
-          overdueTotal > 0
+        subtitle={(() => {
+          // R4-P2-05: reconcile subtitle with the table. When a filter is
+          // active and the table is narrower than the overall upcoming
+          // count, surface `Showing N of M` so the mismatch is explained.
+          const filterActive = Boolean(filterMentee || filterType)
+          const shown = flatList.length
+          if (filterActive && shown !== upcomingTotal) {
+            return `Showing ${shown} of ${upcomingTotal} upcoming`
+          }
+          return overdueTotal > 0
             ? `${overdueTotal} overdue, ${upcomingTotal} upcoming`
             : `${upcomingTotal} upcoming milestones`
-        }
+        })()}
       >
         <div className="flex items-center gap-3 flex-wrap">
           {/* Filter: Mentee */}

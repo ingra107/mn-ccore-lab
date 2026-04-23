@@ -1,11 +1,13 @@
 import type { AuthUser, Env } from '../helpers';
 import { json, error, generateId, logActivity, actorSlug } from '../helpers';
+import { filterFixtures } from '../lib/fixtures';
 
 // GET /api/ideas?status=&submitted_by=&research_area=
 export async function handleIdeas(url: URL, env: Env): Promise<Response> {
   const status = url.searchParams.get('status');
   const submittedBy = url.searchParams.get('submitted_by');
   const researchArea = url.searchParams.get('research_area');
+  const includeFixtures = url.searchParams.get('include_fixtures') === '1';
 
   let query = 'SELECT * FROM ideas WHERE 1=1';
   const params: string[] = [];
@@ -17,7 +19,8 @@ export async function handleIdeas(url: URL, env: Env): Promise<Response> {
   query += ' ORDER BY CASE status WHEN \'new\' THEN 0 WHEN \'under_review\' THEN 1 WHEN \'approved\' THEN 2 WHEN \'parked\' THEN 3 ELSE 4 END, votes DESC, created_at DESC';
 
   const result = await env.DB.prepare(query).bind(...params).all();
-  return json({ data: result.results || [], count: result.results?.length || 0 });
+  const rows = filterFixtures(result.results || [], 'title', includeFixtures);
+  return json({ data: rows, count: rows.length });
 }
 
 // POST /api/ideas — create idea

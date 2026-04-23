@@ -11,7 +11,7 @@ import { formatRelativeTime } from '../../../lib/dateUtils'
 
 // ── Handoff Recipient Select ─────────────────────────────────
 
-export function HandoffRecipientSelect({ value, onChange, members }: { value: string; onChange: (v: string) => void; members: { slug?: string; name: string }[] }) {
+function HandoffRecipientSelect({ value, onChange, members }: { value: string; onChange: (v: string) => void; members: { slug?: string; name: string }[] }) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const person = value ? getPersonInfo(value) : null

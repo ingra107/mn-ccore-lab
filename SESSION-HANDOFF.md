@@ -1,12 +1,37 @@
 # Session Handoff — 2026-04-23
 
-> Last worked: **Audit r7 + GH-issue sweep.** B-visual contrast
-> 37 → 0 violations across 204 page×viewport×theme combos (six
-> iteration rounds). Closed 14 in-app GH bug reports (#8, #10, #14,
-> #15, #16, #17, #18, #19, #20, #21, #22, #23, #24, #25). Bulk-
-> reassigned 602 tasks → `nick-ingraham`. Current HEAD `d7091ec`,
-> deploy `a519de60`. See CHANGELOG.md "Audit r7 + GH-issue sweep" for
-> full record.
+> Last worked: **Whole-hub /simplify sweep.** Two parallel agents on
+> isolated branches (simplify half = clarity/dedup/dead-code; perf
+> half = render/query/bundle/deps) merged into main. **-5,353 lines
+> net, 22 files deleted, 24 commits.** Build + inspection both green
+> (149 passed / 2 skipped / 0 failed, 10.6 min). Deployed
+> `18f2aea6.mn-ccore-lab.pages.dev`. HEAD `6e431eaa` on main.
+>
+> Simplify highlights: 22 dead components/pages/hooks deleted (all
+> 0-caller verified), 17 unused mutation hooks pruned, 18 `lib/api.
+> ts` fetch helpers + 9 mutation wrappers removed, duplicate date
+> formatters consolidated to Rule 6. Perf highlights: AuthContext +
+> UndoToast context-value memo, `env.DB.batch()` for @mention
+> notification inserts, `/api/digest?with_relevance=true` N+1 fix
+> (20 → 1 query), cached `isProductionVisible` localStorage read,
+> dropped unused deps `tailwindcss-motion` + `@tiptap/extension-
+> mention`. One duplicate commit (`5758ddd8` ≈ `d2502098`) landed on
+> both branches mid-run — harmless no-op at merge.
+>
+> **Before (2026-04-23 AM): Capture infrastructure — Claude Design
+> round 4.** CF Access + `VITE_REQUIRE_AUTH=1` broke the screenshot
+> pipeline (all portal captures were Sign-in pages). Added
+> `CAPTURE_BASE_URL` env + fake-JWT cookie helper
+> (`tests/helpers/capture-auth.ts`) + three new specs + 5 new hero
+> surfaces. Bundle shipped: `review/claude-design-2026-04-22-full-r4
+> .zip` (57MB / 119 PNGs + 15 MP4s + 15 GIFs). Round-4 feedback
+> landed; 29 tickets shipped across today, including prod fixture
+> purge (174 rows + ~2,300 child records removed from D1).
+>
+> **Before that (2026-04-22 → 2026-04-23): Audit r7 + GH-issue sweep.**
+> B-visual contrast 37 → 0 across 204 combos. Closed 14 in-app GH
+> bug reports (#8, #10, #14-22, #23, #24, #25). Bulk-reassigned 602
+> tasks → `nick-ingraham`. See CHANGELOG.md.
 
 ## 📖 Session bootstrap — read these in order before writing anything
 
@@ -18,19 +43,20 @@
 6. **`CHANGELOG.md`** top entry — Phase 37 full record.
 7. **`docs/OBSERVABILITY.md`** — `/api/health` + runbook.
 
-## Gate — all green as of commit `d7091ec` (deployed `a519de60`)
+## Gate — all green as of commit `6e431eaa` (deployed `18f2aea6`)
 
 | Check | Result |
 |---|---|
-| `/api/health` (live prod) | 200 ok, 602 tasks / 64 projects / 19 team / ~74ms |
-| Massive audit — B-visual | **204 PASS / 0 BUGS** across 34 pages × 6 viewport+theme combos (r7, 2026-04-23) |
+| `npm run build` (local) | ✓ clean, TypeScript + Vite both pass |
+| Inspection (full suite, post-simplify) | **149 passed / 2 skipped / 0 failed** in 10.6 min |
+| `/api/health` (live prod) | 200 ok, 602 tasks / 64 projects / 19 team / ~74ms (pre-simplify baseline; endpoint untouched) |
+| Massive audit — B-visual | 204 PASS / 0 BUGS across 34 pages × 6 viewport+theme combos (r7, 2026-04-23 — pre-simplify; re-run after prod propagates) |
 | `/og/team/nick-ingraham` | 200 `image/svg+xml`, Cache-Control `max-age=3600` |
 | `/api/version` Cache-Control | `public, max-age=10, s-maxage=10` (edge-cached) |
 | Open GH bug reports | **0** (11 closed in r7 sweep) |
-| Mobile smoke (Pixel 5) | 2/2 ✓ (Phase 37 baseline) |
-| Desktop journey | 1/1 ✓ (Phase 37 baseline) |
-| Inspection (full suite vs prod) | 213/213 (Phase 36b baseline) |
-| Deep-audit (14 suites) | 14/14 clean, 0 bugs (Phase 36 baseline) |
+| Mobile smoke (Pixel 5) | 2/2 ✓ (Phase 37 baseline; re-run optional after deploy) |
+| Desktop journey | 1/1 ✓ (Phase 37 baseline; re-run optional after deploy) |
+| Deep-audit (14 suites) | 14/14 clean, 0 bugs (Phase 36 baseline; re-run optional after deploy) |
 
 Rerun massive audit B-visual: `npx tsx scripts/massive-audit/run.ts --section=B` (~8 min, runs against live prod)
 Rerun gate: `npx tsx scripts/pre-flight/00-orchestrator.ts`
@@ -40,6 +66,33 @@ Rerun mobile smoke: `npx playwright test --config=playwright.config.mobile.ts`
 Rerun journey smoke: `npx playwright test --config=playwright.config.phase36.ts`
 
 ## What's new since the previous handoff
+
+**Capture infrastructure — Claude Design round 4 (2026-04-23, commit
+`00aea896`).** Delivered via `review/claude-design-2026-04-22-full-r4.zip`.
+
+- **Two post-launch blockers fixed.** CF Access now gates prod
+  `/portal/*` — specs hit Google Sign-in instead of the Hub; fixed
+  via `CAPTURE_BASE_URL=<preview>` env plumb-through on all three
+  specs. `VITE_REQUIRE_AUTH=1` (flipped 2026-04-21) shows a branded
+  sign-in splash even on ungated preview hosts; fixed via
+  `tests/helpers/capture-auth.ts` injecting a fake `CF_Authorization`
+  JWT cookie (`useAuth` decodes client-side only, no signature
+  verification).
+- **Three new capture specs** — `capture-scroll-chunks.spec.ts` (12
+  long pages × viewport-sized chunks), `capture-theme-light.spec.ts`
+  (8 pages with `test.use({ colorScheme: 'light' })`),
+  `capture-rich-states.spec.ts` (Network WebGL 6-state + 6 modals +
+  Publications carousel + Dashboard customize).
+- **5 new hero surfaces** — portal-trajectory (gated chrome vs
+  public), contact, meeting-detail, meeting-prep, publication-detail.
+- **`regen-design-bundle.sh` now 7 steps**, `set -e` dropped (single
+  focus-ask flake no longer halts video capture), video-copy fallback
+  after step 7 (Playwright videos finalize post-`context.close()`
+  so the spec's `afterEach` hook often sees empty attachments),
+  work-machine `ffmpeg` path added to candidates.
+- **No app code changed.** Prod still on `a519de60` (r7 deploy).
+
+See `CLAUDE.md` rule 33 for the updated capture workflow.
 
 **Audit r7 + GH-issue sweep (2026-04-22 → 2026-04-23).** Three commits
 across two days:
@@ -466,7 +519,7 @@ Hotfix: `api/index.ts` — `/api/bug-report` gate now piggybacks on `REQUIRE_AUT
 - `src/components/EnhancedCollaborationNetwork.tsx` — DELETED (654 lines).
 - `src/pages/MemberPage.tsx`, `src/pages/TrajectoryPage.tsx` — `useLocation` for portal-vs-public link context.
 - `src/pages/ProjectDetail.tsx` — 100dvh + safe-area-inset-bottom.
-- `src/pages/portal/Tasks.tsx`, `src/pages/portal/MyTasks.tsx` — `lazy()` Board/StandUp/Timeline + Suspense.
+- `src/pages/portal/Tasks.tsx` (*deleted 2026-04-23 /simplify — route now redirects to `/portal/my-tasks`*), `src/pages/portal/MyTasks.tsx` — `lazy()` Board/StandUp/Timeline + Suspense.
 - `src/hooks/useOnboarding.ts` — `dismissed` auto-stales after 7 days.
 - `api/lib/version.ts` — Cache-Control: public, max-age=10.
 - `api/jwt-verify.ts` — importedKeyCache map.
@@ -477,7 +530,7 @@ Hotfix: `api/index.ts` — `/api/bug-report` gate now piggybacks on `REQUIRE_AUT
 
 ## Git state
 
-Hub: `main` at `a8537ad` (pushed to origin; clean).
+Hub: `main` at `6e431eaa` (pushed to origin; clean). Deploy `18f2aea6.mn-ccore-lab.pages.dev`.
 PB: unchanged this session — see PB-side `work_status.md` for PB-specific state.
 
 Re-check before modifying: `git status --short` should be empty in both repos.

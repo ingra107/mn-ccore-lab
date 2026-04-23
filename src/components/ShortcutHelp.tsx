@@ -205,6 +205,19 @@ export default function ShortcutHelp({ open, onClose }: ShortcutHelpProps) {
                 </div>
               ))}
             </div>
+            {/* R4-18: footer hint so users see how to dismiss the modal. */}
+            <div
+              className="px-5 py-2 border-t flex items-center justify-end gap-2"
+              style={{ borderColor: 'var(--border-subtle)', color: 'var(--slate)', fontSize: 11 }}
+            >
+              <kbd
+                className="text-[11px] px-2 py-0.5 rounded border"
+                style={{ fontFamily: 'var(--font-mono)', color: 'var(--slate)', borderColor: 'var(--border-subtle)', backgroundColor: 'var(--cream)' }}
+              >
+                Esc
+              </kbd>
+              <span>Close this panel</span>
+            </div>
           </motion.div>
         </motion.div>
       )}

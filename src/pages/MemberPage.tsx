@@ -270,6 +270,7 @@ export default function MemberPage() {
       bio={member.bio || mentee?.bio}
       links={memberLinks}
       photoUrl={member.photoUrl}
+      portalChrome={location.pathname.startsWith('/portal/')}
       breadcrumb={<Breadcrumb backTo="/team" backLabel="Team" current={formalFullName} />}
       sections={[
         ...(mentee

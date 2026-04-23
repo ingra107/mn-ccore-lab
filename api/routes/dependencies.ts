@@ -3,7 +3,7 @@ import { json, error, generateId, logActivity } from '../helpers';
 
 // ── Types ──────────────────────────────────────────────────
 
-export interface DependencyRow {
+interface DependencyRow {
   id: string;
   from_slug: string;
   to_slug: string;

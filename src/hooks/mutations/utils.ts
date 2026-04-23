@@ -11,7 +11,7 @@ export const TASK_STATUS = {
 // ── Snapshot + optimistic update helper ────────────────────
 // Eliminates ~10 lines of boilerplate per mutation
 
-export type QuerySnapshot<T> = {
+type QuerySnapshot<T> = {
   key: readonly unknown[]
   data: T | undefined
 }

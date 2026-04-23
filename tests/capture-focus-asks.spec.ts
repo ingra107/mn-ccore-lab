@@ -14,8 +14,15 @@ import { test } from '@playwright/test'
 import fs from 'node:fs'
 import path from 'node:path'
 import { P } from './helpers/paths'
+import { injectFakeAuth } from './helpers/capture-auth'
 
-const BASE = 'https://mn-ccore-lab.pages.dev'
+// CF Access gates prod `/portal/*` — use CAPTURE_BASE_URL to point at an
+// ungated preview deploy.
+const BASE = process.env.CAPTURE_BASE_URL ?? 'https://mn-ccore-lab.pages.dev'
+
+test.beforeEach(async ({ context }) => {
+  await injectFakeAuth(context, BASE)
+})
 // Dated bundle dir, same pattern as capture-for-design.spec.ts. Set
 // CAPTURE_BUNDLE=<dirname> to override and write into an existing dir
 // (use this when sharing one dir with the main capture spec run).

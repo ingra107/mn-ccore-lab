@@ -114,18 +114,6 @@ export interface Mentee {
   yearStarted?: number
 }
 
-export interface Affiliate {
-  name: string
-  description: string
-  href: string
-}
-
-export interface ResearchPillar {
-  icon: string
-  title: string
-  description: string
-}
-
 export interface ActionItem {
   id?: string  // D1 action item ID (present when from API)
   description: string

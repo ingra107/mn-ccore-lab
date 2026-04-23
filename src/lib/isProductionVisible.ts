@@ -1,9 +1,13 @@
 // Predicate to filter QA test fixtures from production-facing surfaces.
 // Toggle off via Settings → Show debug/test items (localStorage `showDebugItems=true`).
 
+// Leading underscore is optional: matches both `test_delete_...` AND
+// `_TEST_DELETE_...` (the seed-script variant). Prior regex with no
+// `_?` missed the uppercase-leading-underscore form, which is what
+// Round 4 surfaced on Ask the Lab / Decisions / Meeting Prep.
 const HIDDEN_TITLE_PATTERNS = [
-  /^test_delete_/i,
-  /^deep-audit-sync-/i,
+  /^_?test_delete_/i,
+  /^deep-audit-/i,
   /___cli_edit$/i,
   /^test\s*q\b/i,
   /^test$/i,
@@ -11,13 +15,35 @@ const HIDDEN_TITLE_PATTERNS = [
   /^@claude\s+hi$/i,
 ]
 
-function debugItemsEnabled(): boolean {
+// Cache the localStorage read — this predicate is called per-row across
+// 600+ tasks on hot filter paths (Dashboard, ActivityPage, Personal).
+// localStorage.getItem is ~1µs but the reads add up and also invalidate
+// some browser caches. We refresh on 'storage' events so the Settings
+// toggle still works cross-tab.
+let cachedDebugEnabled: boolean | null = null
+function readDebugFromStorage(): boolean {
   if (typeof window === 'undefined') return false
   try {
     return window.localStorage.getItem('showDebugItems') === 'true'
   } catch {
     return false
   }
+}
+function debugItemsEnabled(): boolean {
+  if (cachedDebugEnabled === null) {
+    cachedDebugEnabled = readDebugFromStorage()
+    if (typeof window !== 'undefined') {
+      // Cross-tab sync: another tab toggles the setting -> invalidate.
+      window.addEventListener('storage', (e) => {
+        if (e.key === 'showDebugItems') cachedDebugEnabled = e.newValue === 'true'
+      })
+      // Same-tab toggle from Settings dispatches a custom event.
+      window.addEventListener('showDebugItems-changed', () => {
+        cachedDebugEnabled = readDebugFromStorage()
+      })
+    }
+  }
+  return cachedDebugEnabled
 }
 
 export function isProductionVisible(title: string | null | undefined): boolean {
@@ -32,7 +58,8 @@ export function isProductionVisible(title: string | null | undefined): boolean {
 // against a short allow-list of known fixture phrases.
 const HIDDEN_ACTIVITY_SUBSTRINGS = [
   'test_delete_',
-  'deep-audit-sync-',
+  '_test_delete_',      // matches `_TEST_DELETE_...` after toLowerCase()
+  'deep-audit-',        // broader than -sync- to cover -probe- too
   '___cli_edit',
   ': test q',
   ': test$',

@@ -345,15 +345,48 @@ export default function CollaborationGraph({
   }, [onNodeClick, onEdgeClick])
 
   // Center graph after initial render
+  // R4-05: on first render, frame on the Ingraham subgraph (2-hop
+  // neighborhood around the highest-connected MNCCORE author) instead
+  // of fitting the whole graph. First-paint without this is a
+  // hairball; framed, the hero connections read immediately.
+  const ingrahamSubgraphIds = useMemo(() => {
+    if (networkNodes.length === 0 || networkEdges.length === 0) return [] as string[]
+    // Hub = most-papered MNCCORE author. Covers Nick without a hardcoded slug.
+    const hub = [...networkNodes]
+      .filter((n) => n.isMnccore)
+      .sort((a, b) => b.papers - a.papers)[0]
+    if (!hub) return []
+    // Adjacency — 1-hop neighbors of any node
+    const adj = new Map<string, Set<string>>()
+    for (const e of networkEdges) {
+      if (!adj.has(e.source)) adj.set(e.source, new Set())
+      if (!adj.has(e.target)) adj.set(e.target, new Set())
+      adj.get(e.source)!.add(e.target)
+      adj.get(e.target)!.add(e.source)
+    }
+    // BFS 2 hops
+    const visited = new Set<string>([hub.id])
+    const firstHop = adj.get(hub.id) ?? new Set<string>()
+    firstHop.forEach((id) => visited.add(id))
+    firstHop.forEach((id) => {
+      (adj.get(id) ?? new Set()).forEach((id2) => visited.add(id2))
+    })
+    return [...visited]
+  }, [networkNodes, networkEdges])
+
   useEffect(() => {
     if (reagraphNodes.length > 0 && !hasRendered) {
       const timer = setTimeout(() => {
-        graphRef.current?.centerGraph()
+        if (ingrahamSubgraphIds.length > 0 && graphRef.current?.fitNodesInView) {
+          graphRef.current.fitNodesInView(ingrahamSubgraphIds)
+        } else {
+          graphRef.current?.centerGraph()
+        }
         setHasRendered(true)
       }, 1500)
       return () => clearTimeout(timer)
     }
-  }, [reagraphNodes.length, hasRendered])
+  }, [reagraphNodes.length, hasRendered, ingrahamSubgraphIds])
 
   // Re-center when node/edge count changes (filter change)
   const prevCountRef = useRef(reagraphNodes.length)

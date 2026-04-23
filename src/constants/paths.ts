@@ -8,7 +8,7 @@
 // Root-level equivalents redirect via <Navigate> in App.tsx for bookmark
 // compatibility — do not add new routes at the root gated path.
 
-export const PORTAL_PREFIX = '/portal'
+const PORTAL_PREFIX = '/portal'
 
 // Gated (behind CF Access + RequireAuth)
 export const PATHS = {
@@ -65,37 +65,7 @@ export const PUBLIC_PATHS = {
   contact: '/contact',
 } as const
 
-// Known legacy root paths that should redirect to portal equivalents.
-// Consumed by App.tsx's redirect shim block. Kept indefinitely; cost is
-// negligible and bookmarks should not silently break.
-export const LEGACY_REDIRECTS: Record<string, string> = {
-  '/dashboard': PATHS.dashboard,
-  '/personal': PATHS.personal,
-  '/my-items': PATHS.myItems,
-  '/my-tasks': PATHS.myTasks,
-  '/tasks': PATHS.myTasks,
-  '/calendar': PATHS.calendar,
-  '/deadlines': PATHS.deadlines,
-  '/deadline-cascade': PATHS.deadlineCascade,
-  '/projects': PATHS.projects,
-  '/manuscripts': PATHS.manuscripts,
-  '/ideas': PATHS.ideas,
-  '/ask': PATHS.ask,
-  '/decisions': PATHS.decisions,
-  '/narratives': PATHS.narratives,
-  '/digest': PATHS.digest,
-  '/research-digest': PATHS.digest,
-  '/search': PATHS.search,
-  '/grants': PATHS.grants,
-  '/meetings': PATHS.meetings,
-  '/meeting-prep': PATHS.meetings,
-  '/meeting-notes': PATHS.meetingNotes,
-  '/activity': PATHS.activity,
-  '/analytics': PATHS.analytics,
-  '/pi/analytics': PATHS.piAnalytics,
-  '/pi-analytics': PATHS.piAnalytics,
-  '/mentee-milestones': PATHS.menteeMilestones,
-  '/pb': PATHS.pb,
-  '/sessions': PATHS.sessions,
-  '/settings': PATHS.settings,
-}
+// Note: legacy root-path redirects are defined inline as <Navigate> elements
+// in App.tsx; this file intentionally no longer exports a LEGACY_REDIRECTS map
+// because nothing consumed it. See docs/superpowers/plans/2026-04-21-portal-url-migration.md
+// for the full list of redirect shims kept for bookmark compatibility.

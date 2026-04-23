@@ -266,7 +266,10 @@ function ProjectVelocity({ projectStages }: { projectStages: TrajectoryData['pro
                         top: 0,
                         bottom: 0,
                         width: `${Math.max(stageWidth, 8)}%`,
-                        backgroundColor: stageColor,
+                        /* R4-P2-02: drop per-stage color on the bar so one
+                           accent holds the view. Stage signal lives on the
+                           pill badge at the row label — no legend needed. */
+                        backgroundColor: 'var(--teal)',
                         borderRadius: '0 var(--radius-sm) var(--radius-sm) 0',
                         opacity: 0.85,
                       }}

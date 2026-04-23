@@ -15,7 +15,7 @@
  * util so Projects.tsx, TrajectoryPage.tsx, and any future stage-rendering
  * surface can use the same mapping.
  */
-export const CANONICAL_STAGES = [
+const CANONICAL_STAGES = [
   'Idea',
   'Data Collection',
   'Analysis',
@@ -25,7 +25,7 @@ export const CANONICAL_STAGES = [
   'Published',
 ] as const
 
-export type CanonicalStage = typeof CANONICAL_STAGES[number]
+type CanonicalStage = typeof CANONICAL_STAGES[number]
 
 const STAGE_ALIASES: Record<string, CanonicalStage> = {
   Submitted: 'Review',
@@ -38,7 +38,7 @@ const STAGE_ALIASES: Record<string, CanonicalStage> = {
   'In Revision': 'Revisions',
 }
 
-export function normalizeStage(stage: string | null | undefined): CanonicalStage | '' {
+function normalizeStage(stage: string | null | undefined): CanonicalStage | '' {
   if (!stage) return ''
   if (STAGE_ALIASES[stage]) return STAGE_ALIASES[stage]
   if ((CANONICAL_STAGES as readonly string[]).includes(stage)) return stage as CanonicalStage
@@ -62,7 +62,7 @@ const UI_TO_API_STAGE: Record<string, string> = {
   Review: 'Submitted',
 }
 
-export type ApiStage = 'Idea' | 'Data Collection' | 'Data Analysis' | 'Writing' | 'Submitted' | 'Revisions' | 'Accepted' | 'Published'
+type ApiStage = 'Idea' | 'Data Collection' | 'Data Analysis' | 'Writing' | 'Submitted' | 'Revisions' | 'Accepted' | 'Published'
 
 export function toApiStage(uiStage: string): ApiStage {
   return (UI_TO_API_STAGE[uiStage] ?? uiStage) as ApiStage

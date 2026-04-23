@@ -5,7 +5,7 @@ import { Link2, Plus, Pencil, Trash2, Check, X, ExternalLink, FolderOpen, Play }
 // and projects. Display mode shows teal underlined links; edit mode swaps in
 // URL + description inputs. Empty state shows a single "+ Add a link" button.
 
-export interface KeyLink {
+interface KeyLink {
   url: string | null | undefined
   desc: string | null | undefined
 }

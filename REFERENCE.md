@@ -184,7 +184,6 @@ server-side via X-API-Key + `REQUIRE_AUTH` + JWT verify.
 | `src/lib/parseQuickAdd.ts` | NLP parser: @person, #project, p1-p3, dates |
 | `src/components/tasks/TaskDetailPanel.tsx` | Slide-over detail panel |
 | `src/components/tasks/TaskBoardView.tsx` | Drag-drop kanban with swimlanes + column collapse |
-| `src/components/tasks/TaskPeekOverlay.tsx` | Space bar peek panel (Linear-style) |
 | `src/components/tasks/TaskGridView.tsx` | Columnar table with inline editing |
 | `src/components/PageHeader.tsx` | Standardized page header |
 | `src/components/EmptyState.tsx` | Consistent empty states |
@@ -193,7 +192,7 @@ server-side via X-API-Key + `REQUIRE_AUTH` + JWT verify.
 | `src/components/InlineDatePicker.tsx` | Date editing with overdue detection |
 | `src/components/CollapsibleSection.tsx` | Progressive disclosure sections |
 | `src/pages/ProjectDetail.tsx` | Project editing, comments, updates |
-| `src/pages/Grants.tsx` | SVG Gantt timeline (2023-2033) |
+| `src/pages/portal/Grants.tsx` | SVG Gantt timeline (2023-2033) |
 | `src/pages/portal/Personal.tsx` | Personal Hub bento grid |
 | `src/pages/portal/AnalyticsPage.tsx` | Lab Analytics |
 | `src/pages/TrajectoryPage.tsx` | Trainee development trajectory |
@@ -255,8 +254,14 @@ server-side via X-API-Key + `REQUIRE_AUTH` + JWT verify.
 | `functions/og/[type]/[slug].ts` | Per-route SVG share-card generator (project/team/meeting/default, edge-cached 1h, Phase 36d) |
 | `public/_headers` | Forces `image/svg+xml` content-type on `/og/*` (Phase 36d) |
 | `scripts/claude-design-brief.txt` | Brand brief for Claude Design — tokens, motif SVG path, ethos (Phase 36d) |
-| `tests/capture-for-design.spec.ts` + `playwright.config.design-capture.ts` | Full-page screenshots with pre-scroll for every hero surface (Phase 36d) |
+| `tests/capture-for-design.spec.ts` + `playwright.config.design-capture.ts` | Full-page screenshots with pre-scroll, 41 hero + 6 mobile surfaces (Phase 36d → round-4) |
+| `tests/capture-focus-asks.spec.ts` | Round-specific spot captures (Quick Add, row focus, ▾ density) |
+| `tests/capture-scroll-chunks.spec.ts` | 12 long pages × viewport chunks (round-4 addition 2026-04-23) |
+| `tests/capture-theme-light.spec.ts` | Light-mode variants via `colorScheme: 'light'` (round-4 addition) |
+| `tests/capture-rich-states.spec.ts` | Network WebGL multi-state + 6 modals + pubs carousel + customize (round-4 addition) |
 | `tests/capture-interactions.spec.ts` + `playwright.config.interactions-capture.ts` | 15 signature interactions as WebM + PNG keyframes (Phase 36d) |
+| `tests/helpers/capture-auth.ts` | Fake `CF_Authorization` JWT cookie injector — bypasses `RequireAuth` splash for captures (round-4) |
+| `scripts/regen-design-bundle.sh` | One-shot 7-step Claude Design bundle. `BASE_URL=<preview>` env required post-launch to bypass CF Access. |
 | `migrations/inbox-table.sql` | inbox table + idx_inbox_synced + idx_inbox_created indices |
 | `scripts/seed-test-data.sql` | 104 rows across 9 tables for DB_TEST seeding |
 | `scripts/cleanup-test-data.sql` | FK-ordered DELETE for test_delete_ prefix |

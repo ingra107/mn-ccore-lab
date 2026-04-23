@@ -1,11 +1,13 @@
 import type { AuthUser, Env } from '../helpers';
 import { json, error, generateId, logActivity, actorSlug, buildUpdate } from '../helpers';
+import { filterFixtures } from '../lib/fixtures';
 
 // GET /api/decisions?project_slug=&status=pending|recorded|revisited&tag=
 export async function handleGetDecisions(url: URL, env: Env): Promise<Response> {
   const projectSlug = url.searchParams.get('project_slug');
   const status = url.searchParams.get('status');
   const tag = url.searchParams.get('tag');
+  const includeFixtures = url.searchParams.get('include_fixtures') === '1';
 
   let query = 'SELECT * FROM decision_log WHERE 1=1';
   const params: string[] = [];
@@ -17,7 +19,8 @@ export async function handleGetDecisions(url: URL, env: Env): Promise<Response> 
   query += ' ORDER BY created_at DESC';
 
   const result = await env.DB.prepare(query).bind(...params).all();
-  return json({ data: result.results || [], count: result.results?.length || 0 });
+  const rows = filterFixtures(result.results || [], 'title', includeFixtures);
+  return json({ data: rows, count: rows.length });
 }
 
 // POST /api/decisions — create decision
@@ -124,7 +127,8 @@ export async function handleGetDecisionsNeedingReview(env: Env): Promise<Respons
   const result = await env.DB.prepare(
     "SELECT * FROM decision_log WHERE outcome_status = 'pending' AND created_at <= datetime('now', '-30 days') ORDER BY created_at ASC"
   ).all();
-  return json({ data: result.results || [], count: result.results?.length || 0 });
+  const rows = filterFixtures(result.results || [], 'title');
+  return json({ data: rows, count: rows.length });
 }
 
 // GET /api/decisions/tags — unique tags across all decisions

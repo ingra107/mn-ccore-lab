@@ -149,41 +149,6 @@ export function TaskComments({ taskId, taskTitle, projectSlug }: { taskId: strin
   )
 }
 
-// ── Task Activity Log ────────────────────────────────────────
-
-export function TaskActivity({ taskId }: { taskId: string }) {
-  const { data: activity = [] } = useQuery({
-    queryKey: ['task-activity', taskId],
-    queryFn: async () => {
-      const res = await fetch(`/api/tasks/${taskId}/activity`)
-      if (!res.ok) return []
-      const data = await res.json()
-      return (data.data || []) as { id: string; description: string; actor: string | null; timestamp: string }[]
-    },
-    staleTime: 30 * 1000,
-    enabled: !!taskId,
-  })
-
-  if (activity.length === 0) return null
-
-  return (
-    <div>
-      <label className="text-[10px] uppercase tracking-wider mb-2 block" style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
-        Activity
-      </label>
-      <div className="flex flex-col gap-1">
-        {activity.slice(0, 8).map((a) => (
-          <div key={a.id} className="flex items-start gap-2 py-0.5">
-            <div className="w-1 h-1 rounded-full mt-1.5 flex-shrink-0" style={{ backgroundColor: 'var(--teal)', opacity: 0.85 }} />
-            <span className="text-[11px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>{a.description}</span>
-            <span className="text-[10px] ml-auto flex-shrink-0" style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>{formatRelativeTime(a.timestamp)}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
 // ── Project Decisions Section ────────────────────────────────
 
 const SENTIMENT_BADGE: Record<string, { color: string; bg: string }> = {

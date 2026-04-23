@@ -1,5 +1,6 @@
 import type { AuthUser, Env } from '../helpers';
 import { json, error, generateId, logActivity, parseMentions, actorSlug } from '../helpers';
+import { filterFixtures } from '../lib/fixtures';
 
 // GET /api/tasks/overdue-count?assignee= — lightweight count for sidebar badge
 export async function handleOverdueCount(url: URL, env: Env): Promise<Response> {
@@ -26,6 +27,9 @@ export async function handleTasks(url: URL, env: Env): Promise<Response> {
   // Sync pipelines need to see soft-deletes to mirror them into brain.db.
   // Default: hide deleted tasks (existing UI contract). Opt-in via flag.
   const includeDeleted = url.searchParams.get('include_deleted') === '1';
+  // Sync pipelines also need to see QA fixtures to detect their status.
+  // UI views never want them (R4-P1-01).
+  const includeFixtures = url.searchParams.get('include_fixtures') === '1' || includeDeleted;
 
   const deletedFilter = includeDeleted ? '1=1' : 't.deleted_at IS NULL';
   let query = `SELECT t.*, m.title as meeting_title, m.date as meeting_date FROM tasks t LEFT JOIN meetings m ON t.meeting_id = m.id WHERE ${deletedFilter}`;
@@ -47,7 +51,8 @@ export async function handleTasks(url: URL, env: Env): Promise<Response> {
   query += ' ORDER BY t.completed ASC, t.due_date ASC, t.created_at DESC';
 
   const result = await env.DB.prepare(query).bind(...params).all();
-  return json({ data: result.results, count: result.results.length });
+  const rows = filterFixtures(result.results, 'title', includeFixtures);
+  return json({ data: rows, count: rows.length });
 }
 
 // POST /api/tasks/:id/status — change task status (todo/in_progress/done/blocked/waiting_external)
@@ -357,17 +362,26 @@ export async function handleAddTaskComment(taskId: string, request: Request, use
 
   await logActivity(env, 'comment', `Commented on task`, authorSlug, taskId, 'task');
 
-  // Create notifications for @mentions
+  // Create notifications for @mentions — batch one round-trip instead of
+  // N serial inserts when a comment @-mentions multiple people.
+  //
+  // source_id references the TASK (what the user cares about), not the
+  // comment row id — clicking the notification takes them to the task
+  // detail panel via ?open=. Found via deep-audit Suite 4.
   try {
-    const mentions = parseMentions(body.content);
-    for (const slug of mentions) {
-      if (slug === authorSlug) continue;
-      // source_id references the TASK (what the user cares about), not the
-      // comment row id — clicking the notification takes them to the task
-      // detail panel via ?open=. Found via deep-audit Suite 4.
-      await env.DB.prepare(
+    const mentions = parseMentions(body.content).filter((slug) => slug !== authorSlug);
+    if (mentions.length > 0) {
+      const title = `${user.name || user.email} mentioned you`;
+      const bodyPreview = body.content.trim().slice(0, 200);
+      const link = `/tasks?open=${taskId}`;
+      const stmt = env.DB.prepare(
         'INSERT INTO notifications (id, recipient_slug, type, source_type, source_id, title, body, link) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
-      ).bind(generateId(), slug, 'mention', 'task_comment', taskId, `${user.name || user.email} mentioned you`, body.content.trim().slice(0, 200), `/tasks?open=${taskId}`).run();
+      );
+      await env.DB.batch(
+        mentions.map((slug) =>
+          stmt.bind(generateId(), slug, 'mention', 'task_comment', taskId, title, bodyPreview, link)
+        )
+      );
     }
   } catch (e) { console.error('Failed to create task comment notifications:', e); }
 
@@ -711,17 +725,23 @@ export async function handlePostTaskUpdate(taskId: string, request: Request, use
   const task = await env.DB.prepare('SELECT title FROM tasks WHERE id = ?').bind(taskId).first<{ title: string }>();
   await logActivity(env, 'task_update', `Posted note on "${task?.title || taskId}": "${body.content.trim().slice(0, 100)}"`, authorSlug, taskId, 'task');
 
-  // Notify @mentions
-  const mentions = parseMentions(body.content);
-  for (const slug of mentions) {
-    if (slug !== authorSlug) {
-      try {
-        await env.DB.prepare(
-          'INSERT INTO notifications (id, recipient_slug, type, source_type, source_id, title, body, link) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
-        ).bind(generateId(), slug, 'mention', 'task', taskId, `${user.name || user.email} mentioned you in a task note`, body.content.trim().slice(0, 200), `/tasks?open=${taskId}`).run();
-      } catch (e) { console.error('Failed to create mention notification:', e); }
+  // Notify @mentions — single batched INSERT instead of N per-row inserts.
+  try {
+    const mentions = parseMentions(body.content).filter((slug) => slug !== authorSlug);
+    if (mentions.length > 0) {
+      const title = `${user.name || user.email} mentioned you in a task note`;
+      const bodyPreview = body.content.trim().slice(0, 200);
+      const link = `/tasks?open=${taskId}`;
+      const stmt = env.DB.prepare(
+        'INSERT INTO notifications (id, recipient_slug, type, source_type, source_id, title, body, link) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+      );
+      await env.DB.batch(
+        mentions.map((slug) =>
+          stmt.bind(generateId(), slug, 'mention', 'task', taskId, title, bodyPreview, link)
+        )
+      );
     }
-  }
+  } catch (e) { console.error('Failed to create mention notification:', e); }
 
   const created = await env.DB.prepare('SELECT * FROM task_updates WHERE id = ?').bind(id).first();
   return json({ data: created }, 201);
