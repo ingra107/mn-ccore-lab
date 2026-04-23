@@ -697,26 +697,22 @@ export async function handleAddComment(
 
       const validSet = new Set((validSlugs.results || []).map((r: any) => r.slug));
       const authorSlug = actorSlug(user.email);
-
-      for (const slug of mentions) {
-        if (!validSet.has(slug)) continue;
-        if (slug === authorSlug) continue; // don't notify yourself
-
-        // source_id references the PROJECT (what the user cares about on click),
-        // not the comment row id. Link resolves to the project's canonical slug
-        // so old id-based URLs keep working.
-        await env.DB.prepare(
+      // source_id references the PROJECT (what the user cares about on click),
+      // not the comment row id. Link resolves to the project's canonical slug
+      // so old id-based URLs keep working.
+      const targets = mentions.filter((slug) => validSet.has(slug) && slug !== authorSlug);
+      if (targets.length > 0) {
+        const title = `${user.name || user.email} mentioned you in a comment`;
+        const bodyPreview = body.content.trim().slice(0, 200);
+        const link = `/projects/${project.slug ?? projectId}`;
+        const stmt = env.DB.prepare(
           'INSERT INTO notifications (id, recipient_slug, type, source_type, source_id, title, body, link) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
-        ).bind(
-          generateId(),
-          slug,
-          'mention',
-          'project_comment',
-          project.id,
-          `${user.name || user.email} mentioned you in a comment`,
-          body.content.trim().slice(0, 200),
-          `/projects/${project.slug ?? projectId}`
-        ).run();
+        );
+        await env.DB.batch(
+          targets.map((slug) =>
+            stmt.bind(generateId(), slug, 'mention', 'project_comment', project.id, title, bodyPreview, link)
+          )
+        );
       }
     }
   } catch (e) {
@@ -756,23 +752,19 @@ export async function handlePostProjectUpdate(slug: string, request: Request, us
 
       const validSet = new Set((validSlugs.results || []).map((r: any) => r.slug));
       const authorSlug = actorSlug(user.email);
-
-      for (const mentionSlug of mentions) {
-        if (!validSet.has(mentionSlug)) continue;
-        if (mentionSlug === authorSlug) continue; // don't notify yourself
-
-        await env.DB.prepare(
+      const targets = mentions.filter((m) => validSet.has(m) && m !== authorSlug);
+      if (targets.length > 0) {
+        const title = `${user.name || user.email} mentioned you in a project update`;
+        const bodyPreview = body.content.slice(0, 200);
+        const link = `/projects/${slug}`;
+        const stmt = env.DB.prepare(
           'INSERT INTO notifications (id, recipient_slug, type, source_type, source_id, title, body, link) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
-        ).bind(
-          generateId(),
-          mentionSlug,
-          'mention',
-          'project_update',
-          id,
-          `${user.name || user.email} mentioned you in a project update`,
-          body.content.slice(0, 200),
-          `/projects/${slug}`
-        ).run();
+        );
+        await env.DB.batch(
+          targets.map((mentionSlug) =>
+            stmt.bind(generateId(), mentionSlug, 'mention', 'project_update', id, title, bodyPreview, link)
+          )
+        );
       }
     }
   } catch (e) {

@@ -136,33 +136,38 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
     return `in ${diffDays}d`
   }, [nextMeeting])
 
-  // Conditionally include PI Tools section
-  const allGroups: NavGroup[] = isPi
-    ? [
-        ...navGroups,
-        {
-          title: 'PI View',
-          items: [
-            { to: PATHS.piAnalytics, label: 'PI Analytics', icon: TrendingUp },
-            { to: PATHS.menteeMilestones, label: 'Mentee Milestones', icon: GraduationCap },
-            { to: PATHS.deadlineCascade, label: 'Deadline Cascade', icon: GitBranch },
-            { to: PATHS.meetings, label: 'Meeting Prep', icon: ClipboardList },
-          ],
-        },
-        {
-          title: 'PI Tools',
-          items: [
-            // PB Sector hidden until Peripheral Brain integration ships (P2-07).
-            // Route /pb still resolves for direct-link access.
-            ...(FEATURE_FLAGS.peripheralBrain ? [{ to: PATHS.pb, label: 'Daily Plan', icon: Terminal }] : []),
-            { to: PATHS.sessions, label: 'Session History', icon: History },
-            { to: PATHS.piAnalytics, label: 'PI Dashboard', icon: Shield },
-          ],
-        },
-      ]
-    : navGroups
+  // Conditionally include PI Tools section. Memoize so `navWithBadges`
+  // below doesn't thrash on every render due to a new array identity.
+  const allGroups = useMemo<NavGroup[]>(() => (
+    isPi
+      ? [
+          ...navGroups,
+          {
+            title: 'PI View',
+            items: [
+              { to: PATHS.piAnalytics, label: 'PI Analytics', icon: TrendingUp },
+              { to: PATHS.menteeMilestones, label: 'Mentee Milestones', icon: GraduationCap },
+              { to: PATHS.deadlineCascade, label: 'Deadline Cascade', icon: GitBranch },
+              { to: PATHS.meetings, label: 'Meeting Prep', icon: ClipboardList },
+            ],
+          },
+          {
+            title: 'PI Tools',
+            items: [
+              // PB Sector hidden until Peripheral Brain integration ships (P2-07).
+              // Route /pb still resolves for direct-link access.
+              ...(FEATURE_FLAGS.peripheralBrain ? [{ to: PATHS.pb, label: 'Daily Plan', icon: Terminal }] : []),
+              { to: PATHS.sessions, label: 'Session History', icon: History },
+              { to: PATHS.piAnalytics, label: 'PI Dashboard', icon: Shield },
+            ],
+          },
+        ]
+      : navGroups
+  ), [isPi])
 
-  // Inject badge counts into nav items
+  // Inject badge counts into nav items. nextMeetingLabel was missing from
+  // the dep array previously — a stale "Today"/"Tomorrow" hint could
+  // persist until another dep changed.
   const navWithBadges = useMemo(() => allGroups.map(group => ({
     ...group,
     items: group.items.map(item => {
@@ -171,7 +176,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
       if (item.to === PATHS.meetings && nextMeetingLabel) return { ...item, hint: nextMeetingLabel }
       return item
     }),
-  })), [allGroups, unreadCount, myOverdue])
+  })), [allGroups, unreadCount, myOverdue, nextMeetingLabel])
 
   const isActive = (path: string) => {
     if (path === PATHS.dashboard) return location.pathname === PATHS.dashboard

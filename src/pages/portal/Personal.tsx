@@ -702,13 +702,13 @@ export default function Personal() {
 
   const showRoleSelector = isAuthenticated || import.meta.env.DEV
 
-  const handleStatusChange = (id: string, status: string) => {
+  const handleStatusChange = useCallback((id: string, status: string) => {
     const task = pendingTasks.find((t) => t.id === id)
     const prev = task?.status || 'todo'
     updateStatus.mutate({ id, status })
     const labels: Record<string, string> = { todo: 'To Do', in_progress: 'In Progress', done: 'Done' }
     showUndo(`Status → ${labels[status] || status}`, () => updateStatus.mutate({ id, status: prev }))
-  }
+  }, [pendingTasks, updateStatus, showUndo])
 
   // ── Keyboard shortcut state (C-02) ────────────────────────────
   const [focusedTaskIndex, setFocusedTaskIndex] = useState(-1)

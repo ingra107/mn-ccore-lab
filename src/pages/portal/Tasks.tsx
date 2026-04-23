@@ -121,15 +121,15 @@ export default function Tasks() {
 
   const activeFilterCount = Object.values(filters).filter(Boolean).length
 
-  const handleStatusChange = (id: string, status: string) => {
+  const handleStatusChange = useCallback((id: string, status: string) => {
     const task = tasks.find(t => t.id === id)
     const prev = task?.status || 'todo'
     updateStatus.mutate({ id, status })
     const labels: Record<string, string> = { todo: 'To Do', in_progress: 'In Progress', done: 'Done', blocked: 'Blocked', waiting_external: 'Waiting (External)' }
     showUndo(`Status → ${labels[status] || status}`, () => updateStatus.mutate({ id, status: prev }))
-  }
+  }, [tasks, updateStatus, showUndo])
 
-  const handleFieldChange = (id: string, field: string, value: unknown) => {
+  const handleFieldChange = useCallback((id: string, field: string, value: unknown) => {
     // Look up the prev value so the undo toast can revert. Skip undo for
     // content fields where a revert is noisy (title/description — users
     // typically don't mean to undo free-text edits).
@@ -142,7 +142,7 @@ export default function Tasks() {
         updateTask.mutate({ id, fields: { [field]: prev } }),
       )
     }
-  }
+  }, [tasks, updateTask, showUndo])
 
   const handleCreate = (task: {
     title: string

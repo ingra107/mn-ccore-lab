@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react'
+import { createContext, useContext, useState, useEffect, useMemo } from 'react'
 import { emailToSlug } from '../lib/emailSlug'
 import { getPersonInfo } from '../data/team'
 
@@ -127,9 +127,16 @@ export function useAuthState(): AuthContextValue {
     })
   }, [])
 
-  return {
-    user,
-    isAuthenticated: user.isAuthenticated,
-    isLoading,
-  }
+  // Memoize so the AuthContext value is referentially stable across renders
+  // that didn't actually change auth state. Without this every re-render
+  // of AuthProvider hands all `useAuth()` consumers a new object and
+  // forces them to re-render too.
+  return useMemo(
+    () => ({
+      user,
+      isAuthenticated: user.isAuthenticated,
+      isLoading,
+    }),
+    [user, isLoading],
+  )
 }
