@@ -46,14 +46,11 @@ import type {
   TeamMemberRow,
   ProjectRow,
   GrantRow,
-  CollaborationGraph,
-  Stats,
   TaskRow,
   IdeaRow,
   CalendarEvent,
   DependencyRow,
   ExpertiseTag,
-  ExpertSuggestion,
   QuestionRow,
   QuestionDetail,
   RevisionRow,
@@ -62,23 +59,16 @@ import type {
   MenteeOverviewRow,
   CascadeGraph,
   ImpactResult,
-  SubmissionEventRow,
-  ActiveSubmissionRow,
-  RegulatoryItemRow,
-  ExpiringRegulatoryRow,
-  GrantMilestoneRow,
-  UpcomingGrantMilestoneRow,
-  ConferenceSubmissionRow,
-  UpcomingConferenceRow,
   PBSessionRow,
-  PBSessionStats,
   DailyPlanRow,
   PomodoroSessionRow,
   DailyReflectionRow,
 } from '../lib/api'
 
-// Re-export row types for components that need them
-export type { PublicationRow, TeamMemberRow, ProjectRow, GrantRow, CollaborationGraph, Stats, TaskRow, IdeaRow, CalendarEvent, DependencyRow, ExpertiseTag, ExpertSuggestion, QuestionRow, QuestionDetail, RevisionRow, ReviewerCommentRow, MenteeMilestoneRow, MenteeOverviewRow, CascadeGraph, ImpactResult, SubmissionEventRow, ActiveSubmissionRow, RegulatoryItemRow, ExpiringRegulatoryRow, GrantMilestoneRow, UpcomingGrantMilestoneRow, ConferenceSubmissionRow, UpcomingConferenceRow, PBSessionRow, PBSessionStats }
+// Re-export lib/api row types that consumers import via this module.
+// Narrow surface: only the types actually consumed by components. Other
+// lib/api types are imported directly from lib/api where needed.
+export type { DependencyRow, ExpertiseTag, MenteeMilestoneRow, PBSessionRow, RevisionRow, ReviewerCommentRow }
 
 import type { Publication, TeamMember, Project, Grant } from '../data/types'
 
