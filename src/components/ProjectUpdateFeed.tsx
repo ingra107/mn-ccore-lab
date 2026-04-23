@@ -50,7 +50,7 @@ export default function ProjectUpdateFeed({ projectSlug }: Props) {
       <div className="flex items-center gap-2 mb-3">
         <MessageCircle size={16} style={{ color: 'var(--teal)' }} />
         <h2 style={{ fontWeight: 'var(--label-weight)', fontSize: '16px', color: 'var(--ink)', margin: 0 }}>
-          Project Updates
+          Notes
         </h2>
         {updates.length > 0 && (
           <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.75 }}>
@@ -93,7 +93,7 @@ export default function ProjectUpdateFeed({ projectSlug }: Props) {
             <MentionInput
               value={text}
               onChange={setText}
-              placeholder={isAuthenticated ? 'Post a project update... (use @mention to tag team)' : 'Sign in to post updates'}
+              placeholder={isAuthenticated ? 'Post a note... (use @mention to tag team)' : 'Sign in to post notes'}
               disabled={!isAuthenticated && import.meta.env.PROD}
               rows={2}
               onKeyDown={(e) => {
@@ -121,7 +121,7 @@ export default function ProjectUpdateFeed({ projectSlug }: Props) {
           </div>
           {!isAuthenticated && import.meta.env.PROD && (
             <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.75, marginTop: '4px', display: 'inline-block' }}>
-              <a href="/api/auth/login" style={{ color: 'var(--teal)', fontWeight: 'var(--weight-ui)' as any, textDecoration: 'underline' }}>Sign in</a> to post updates
+              <a href="/api/auth/login" style={{ color: 'var(--teal)', fontWeight: 'var(--weight-ui)' as any, textDecoration: 'underline' }}>Sign in</a> to post notes
             </span>
           )}
         </form>
@@ -137,7 +137,7 @@ export default function ProjectUpdateFeed({ projectSlug }: Props) {
           </div>
         ) : (
           <p style={{ fontSize: '12px', color: 'var(--slate)', opacity: 'var(--ink-hint)', textAlign: 'center', padding: 'var(--sp-md) 0', margin: 0 }}>
-            No updates yet — post the first one to keep the team informed
+            No notes yet — post the first one to keep the team informed
           </p>
         )}
       </div>
