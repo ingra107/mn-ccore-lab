@@ -603,7 +603,7 @@ function ProjectDetailInner({ project }: InnerProps) {
       {/* ── OVERVIEW TAB ── */}
       {activeTab === 'overview' && (<>
 
-      {/* ── Landing Card: first-glance utility (GH #27, #29, #33) ── */}
+      {/* ── Landing Card: 2-col action panel (GH #27, #29, #33 + 2026-04-23 feedback) ── */}
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
@@ -616,144 +616,177 @@ function ProjectDetailInner({ project }: InnerProps) {
           marginBottom: '1.5rem',
         }}
       >
-        {/* Key Links strip — hoisted from Details (#29) */}
-        <div style={{ marginBottom: '14px' }}>
-          <div className="flex items-center gap-2 mb-2">
-            <Link2 size={13} style={{ color: 'var(--teal)' }} />
-            <span style={{ fontSize: '10px', fontWeight: 500, color: 'var(--slate)', opacity: 'var(--ink-label)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-              Key Links
-            </span>
-          </div>
-          <KeyLinksEditor
-            links={[
-              { url: project.key_link_1, desc: project.key_link_1_desc },
-              { url: project.key_link_2, desc: project.key_link_2_desc },
-              { url: project.key_link_3, desc: project.key_link_3_desc },
-            ]}
-            onSave={(next) => {
-              d1Update.mutate({
-                key_link_1: next[0]?.url || null,
-                key_link_1_desc: next[0]?.desc || null,
-                key_link_2: next[1]?.url || null,
-                key_link_2_desc: next[1]?.desc || null,
-                key_link_3: next[2]?.url || null,
-                key_link_3_desc: next[2]?.desc || null,
-              } as Partial<Project>)
-            }}
-          />
-        </div>
-
-        {/* Recent Activity — last 3 merged notes + comments (#27) */}
-        <div style={{ marginBottom: '14px' }}>
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <Clock size={13} style={{ color: 'var(--gold)' }} />
-              <span style={{ fontSize: '10px', fontWeight: 500, color: 'var(--slate)', opacity: 'var(--ink-label)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                Recent Activity
-              </span>
-            </div>
-            {recentActivity.length > 0 && (
-              <button
-                type="button"
-                onClick={() => setActiveTab('activity')}
-                style={{ fontSize: '11px', color: 'var(--teal)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-              >
-                View all →
-              </button>
-            )}
-          </div>
-          {recentActivity.length === 0 ? (
-            <p style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.7, margin: 0, padding: '8px 0' }}>
-              No activity yet.
-            </p>
-          ) : (
-            <div className="flex flex-col gap-2">
-              {recentActivity.map((item) => {
-                const info = getPersonInfo(item.author)
-                const dt = new Date(item.created_at)
-                const rel = formatShortDate(item.created_at)
-                return (
-                  <div
-                    key={item.id}
-                    onClick={() => setActiveTab(item.kind === 'note' ? 'notes' : 'comments')}
-                    style={{
-                      display: 'flex', alignItems: 'flex-start', gap: '8px',
-                      fontSize: '12px', color: 'var(--ink)', lineHeight: 1.4,
-                      padding: '6px 8px', borderRadius: 'var(--radius-md)',
-                      cursor: 'pointer', transition: 'background 150ms ease',
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.background = 'var(--hover-subtle)'}
-                    onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-                    title={dt.toLocaleString()}
-                  >
-                    <span
-                      style={{
-                        flexShrink: 0, marginTop: 3, width: 6, height: 6,
-                        borderRadius: 'var(--radius-circle)',
-                        background: item.kind === 'note' ? 'var(--teal)' : 'var(--gold)',
-                      }}
-                    />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 'var(--ink-label)', marginBottom: 1 }}>
-                        <span style={{ textTransform: 'capitalize' }}>{item.kind}</span> · {info.name} · {rel}
-                      </div>
-                      <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {item.content}
-                      </div>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          )}
-        </div>
-
-        {/* Top 3 open tasks (#27) */}
-        {pendingTasks.length > 0 && (
-          <div style={{ marginBottom: '14px' }}>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          {/* Left column (2/3): Open Tasks — always visible, + Add task CTA */}
+          <div className="md:col-span-2">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <CheckCircle2 size={13} style={{ color: 'var(--teal)' }} />
                 <span style={{ fontSize: '10px', fontWeight: 500, color: 'var(--slate)', opacity: 'var(--ink-label)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                   Open Tasks
                 </span>
+                {pendingTasks.length > 0 && (
+                  <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75 }}>
+                    {pendingTasks.length}
+                  </span>
+                )}
               </div>
-              <button
-                type="button"
-                onClick={() => setActiveTab('tasks')}
-                style={{ fontSize: '11px', color: 'var(--teal)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-              >
-                View all ({pendingTasks.length}) →
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowCreateTask(true)}
+                  style={{ fontSize: '11px', color: 'var(--teal)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontWeight: 500 }}
+                >
+                  + Add task
+                </button>
+                {pendingTasks.length > 3 && (
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('tasks')}
+                    style={{ fontSize: '11px', color: 'var(--teal)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                  >
+                    View all →
+                  </button>
+                )}
+              </div>
             </div>
-            <div className="flex flex-col gap-1.5">
-              {pendingTasks
-                .slice()
-                .sort((a, b) => {
-                  const ad = a.due_date || '9999-12-31'
-                  const bd = b.due_date || '9999-12-31'
-                  return ad.localeCompare(bd)
-                })
-                .slice(0, 3)
-                .map((task) => (
-                  <div key={task.id} style={{ minWidth: 0 }}>
-                    <TaskCard
-                      task={task}
-                      onStatusChange={(id, status) => {
-                        const prev = task.status
-                        updateTaskStatus.mutate({ id, status })
-                        showUndo(`Status → ${status}`, () => updateTaskStatus.mutate({ id, status: prev }))
-                      }}
-                      onClick={() => setSelectedTask(task)}
-                    />
-                  </div>
-                ))}
+            {pendingTasks.length === 0 ? (
+              <div style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.7, padding: '12px 0' }}>
+                No open tasks.{' '}
+                <button
+                  type="button"
+                  onClick={() => setShowCreateTask(true)}
+                  style={{ color: 'var(--teal)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontSize: '12px', textDecoration: 'underline' }}
+                >
+                  Add one
+                </button>
+                .
+              </div>
+            ) : (
+              <div className="flex flex-col gap-1.5">
+                {pendingTasks
+                  .slice()
+                  .sort((a, b) => {
+                    const ad = a.due_date || '9999-12-31'
+                    const bd = b.due_date || '9999-12-31'
+                    return ad.localeCompare(bd)
+                  })
+                  .slice(0, 5)
+                  .map((task) => (
+                    <div key={task.id} style={{ minWidth: 0 }}>
+                      <TaskCard
+                        task={task}
+                        onStatusChange={(id, status) => {
+                          const prev = task.status
+                          updateTaskStatus.mutate({ id, status })
+                          showUndo(`Status → ${status}`, () => updateTaskStatus.mutate({ id, status: prev }))
+                        }}
+                        onClick={() => setSelectedTask(task)}
+                      />
+                    </div>
+                  ))}
+              </div>
+            )}
+          </div>
+
+          {/* Right column (1/3): Key Links (top) + Recent Activity (bottom) */}
+          <div className="md:col-span-1 flex flex-col gap-4">
+            {/* Key Links strip */}
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <Link2 size={13} style={{ color: 'var(--teal)' }} />
+                <span style={{ fontSize: '10px', fontWeight: 500, color: 'var(--slate)', opacity: 'var(--ink-label)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                  Key Links
+                </span>
+              </div>
+              <KeyLinksEditor
+                links={[
+                  { url: project.key_link_1, desc: project.key_link_1_desc },
+                  { url: project.key_link_2, desc: project.key_link_2_desc },
+                  { url: project.key_link_3, desc: project.key_link_3_desc },
+                ]}
+                onSave={(next) => {
+                  d1Update.mutate({
+                    key_link_1: next[0]?.url || null,
+                    key_link_1_desc: next[0]?.desc || null,
+                    key_link_2: next[1]?.url || null,
+                    key_link_2_desc: next[1]?.desc || null,
+                    key_link_3: next[2]?.url || null,
+                    key_link_3_desc: next[2]?.desc || null,
+                  } as Partial<Project>)
+                }}
+              />
+            </div>
+
+            {/* Recent Activity */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <Clock size={13} style={{ color: 'var(--gold)' }} />
+                  <span style={{ fontSize: '10px', fontWeight: 500, color: 'var(--slate)', opacity: 'var(--ink-label)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                    Recent
+                  </span>
+                </div>
+                {recentActivity.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('activity')}
+                    style={{ fontSize: '11px', color: 'var(--teal)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                  >
+                    All →
+                  </button>
+                )}
+              </div>
+              {recentActivity.length === 0 ? (
+                <p style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.7, margin: 0, padding: '4px 0' }}>
+                  No activity yet.
+                </p>
+              ) : (
+                <div className="flex flex-col gap-1.5">
+                  {recentActivity.map((item) => {
+                    const info = getPersonInfo(item.author)
+                    const dt = new Date(item.created_at)
+                    const rel = formatShortDate(item.created_at)
+                    return (
+                      <div
+                        key={item.id}
+                        onClick={() => setActiveTab(item.kind === 'note' ? 'notes' : 'comments')}
+                        style={{
+                          display: 'flex', alignItems: 'flex-start', gap: '6px',
+                          fontSize: '11px', color: 'var(--ink)', lineHeight: 1.35,
+                          padding: '4px 6px', borderRadius: 'var(--radius-md)',
+                          cursor: 'pointer', transition: 'background 150ms ease',
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.background = 'var(--hover-subtle)'}
+                        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                        title={dt.toLocaleString()}
+                      >
+                        <span
+                          style={{
+                            flexShrink: 0, marginTop: 4, width: 5, height: 5,
+                            borderRadius: 'var(--radius-circle)',
+                            background: item.kind === 'note' ? 'var(--teal)' : 'var(--gold)',
+                          }}
+                        />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 'var(--ink-label)', marginBottom: 1 }}>
+                            {info.name.split(' ')[0]} · {rel}
+                          </div>
+                          <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {item.content}
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
             </div>
           </div>
-        )}
+        </div>
 
-        {/* Quick compose — note or comment inline, no modal (Nick principle 2) */}
-        <div>
+        {/* Full-width Quick compose at bottom */}
+        <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '12px' }}>
           <div className="flex items-center gap-2 mb-2">
             <div style={{ display: 'inline-flex', gap: 4, padding: 2, borderRadius: 'var(--radius-full)', background: 'var(--surface-2)' }}>
               <button
@@ -826,21 +859,9 @@ function ProjectDetailInner({ project }: InnerProps) {
         </div>
       </motion.div>
 
-      {/* Project Timeline */}
-      <div className="mt-6 mb-6" style={{ padding: '0 var(--sp-xs)' }}>
-        <div className="flex items-center gap-2 mb-3">
-          <Clock size={14} style={{ color: 'var(--gold)' }} />
-          <span style={{ fontSize: 'var(--label-size)', fontWeight: 500, color: 'var(--slate)', opacity: 'var(--ink-label)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-            Project Timeline
-          </span>
-        </div>
-        <ProjectTimeline
-          createdAt={project.startDate}
-          stage={project.stage}
-          tasks={projectTasks}
-          updates={projectUpdates}
-        />
-      </div>
+      {/* Project Timeline removed 2026-04-23 — vertical wall of non-interactive
+          visuals took up screen real estate without supporting any "doing"
+          action. Stage indicator below is the canonical interactive stage UI. */}
 
       {/* Strategic Context — Why This Matters Now */}
       {(project.strategic_context || isPi) && (
@@ -1569,163 +1590,6 @@ function ProjectDetailInner({ project }: InnerProps) {
   )
 }
 
-// ── Project Timeline ─────────────────────────────────────
-function ProjectTimeline({ createdAt, stage, tasks, updates }: {
-  createdAt?: string
-  stage?: string
-  tasks: { completed_at: string | null; title: string; status: string }[]
-  updates: { created_at: string; content: string; author?: string }[]
-}) {
-  const events = useMemo(() => {
-    const items: { date: string; label: string; type: 'created' | 'stage' | 'task' | 'update'; color: string }[] = []
-
-    if (createdAt) {
-      items.push({ date: createdAt, label: 'Project created', type: 'created', color: 'var(--gold)' })
-    }
-
-    // Completed tasks as milestones
-    for (const t of tasks) {
-      if (t.completed_at) {
-        items.push({ date: t.completed_at, label: t.title, type: 'task', color: 'var(--green)' })
-      }
-    }
-
-    // Project updates as milestones
-    for (const u of updates) {
-      items.push({
-        date: u.created_at,
-        label: u.content.slice(0, 60) + (u.content.length > 60 ? '...' : ''),
-        type: 'update',
-        color: 'var(--teal)',
-      })
-    }
-
-    // Current stage marker
-    if (stage) {
-      items.push({ date: new Date().toISOString(), label: `Current: ${stage}`, type: 'stage', color: 'var(--gold)' })
-    }
-
-    return items.sort((a, b) => a.date.localeCompare(b.date)).slice(-8) // show last 8 events
-  }, [createdAt, stage, tasks, updates])
-
-  if (events.length === 0) {
-    return (
-      <p style={{ fontSize: '12px', color: 'var(--slate)', opacity: 'var(--ink-label)', textAlign: 'center', padding: 'var(--sp-md) 0' }}>
-        No timeline events yet.
-      </p>
-    )
-  }
-
-  // P3-05: stage progression strip — filled=done, ringed=current, empty=future.
-  // Mirrors the StageSelector visual vocabulary so users carry one mental model.
-  const STAGE_LIST = ['Idea', 'Data Collection', 'Analysis', 'Writing', 'Review', 'Published'] as const
-  const stageIdx = stage ? STAGE_LIST.indexOf(stage as typeof STAGE_LIST[number]) : -1
-
-  return (
-    <div>
-      {stage && stageIdx >= 0 && (
-        <div className="relative mb-4" style={{ paddingLeft: '20px' }}>
-          <div
-            style={{
-              position: 'absolute',
-              left: '7px',
-              top: '8px',
-              bottom: '8px',
-              width: '2px',
-              background: 'var(--border-subtle)',
-              borderRadius: 'var(--radius-sm)',
-            }}
-          />
-          <div className="flex flex-col gap-2">
-            {STAGE_LIST.map((s, i) => {
-              const state = i < stageIdx ? 'done' : i === stageIdx ? 'current' : 'future'
-              const dotBg = state === 'done' ? 'var(--teal-solid)' : state === 'current' ? 'var(--gold)' : 'transparent'
-              const dotBorder = state === 'future' ? '2px solid var(--border-subtle)' : (state === 'current' ? '2px solid var(--gold)' : '2px solid var(--cream)')
-              const dotShadow = state === 'current' ? '0 0 0 3px color-mix(in oklch, var(--gold) 25%, transparent)' : 'none'
-              return (
-                <div key={s} className="flex items-start gap-3 relative" style={{ minHeight: 22 }}>
-                  <div
-                    style={{
-                      position: 'absolute',
-                      left: '-17px',
-                      top: '4px',
-                      width: '12px',
-                      height: '12px',
-                      borderRadius: 'var(--radius-circle)',
-                      background: dotBg,
-                      border: dotBorder,
-                      boxShadow: dotShadow,
-                      zIndex: 'var(--z-base)',
-                    }}
-                  />
-                  <span
-                    style={{
-                      fontSize: '12px',
-                      color: state === 'future' ? 'var(--slate)' : 'var(--ink)',
-                      opacity: state === 'future' ? 0.5 : 1,
-                      fontWeight: state === 'current' ? 'var(--weight-ui, 500)' : 400,
-                    }}
-                  >
-                    {s}
-                    {state === 'current' && (
-                      <span style={{ marginLeft: 6, fontSize: '10px', color: 'var(--gold)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                        Current
-                      </span>
-                    )}
-                  </span>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      )}
-      <div className="relative" style={{ paddingLeft: '20px' }}>
-        {/* Vertical line */}
-        <div
-          style={{
-            position: 'absolute',
-            left: '7px',
-            top: '4px',
-            bottom: '4px',
-            width: '2px',
-            background: 'var(--border-subtle)',
-            borderRadius: 'var(--radius-sm)',
-          }}
-        />
-        <div className="flex flex-col gap-3">
-          {events.map((event, i) => (
-            <div key={i} className="flex items-start gap-3 relative">
-              {/* Dot */}
-              <div
-                style={{
-                  position: 'absolute',
-                  left: '-17px',
-                  top: '5px',
-                  width: '8px',
-                  height: '8px',
-                  borderRadius: 'var(--radius-circle)',
-                  background: event.color,
-                  border: '2px solid var(--cream)',
-                  zIndex: 'var(--z-base)',
-                }}
-              />
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ fontSize: '12px', color: 'var(--ink)', margin: 0, lineHeight: 1.4 }}>
-                  {event.label}
-                </p>
-                <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
-                  {formatShortDate(event.date)}
-                  {event.type === 'task' && <span style={{ color: 'var(--green)', marginLeft: '6px' }}>completed</span>}
-                  {event.type === 'update' && <span style={{ color: 'var(--teal)', marginLeft: '6px' }}>note</span>}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  )
-}
 
 // ProjectKeyLinks (read-only) — superseded by KeyLinksEditor imported from
 // ../components/KeyLinksEditor. The editable editor ships display AND add/edit
