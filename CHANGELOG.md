@@ -3,6 +3,81 @@
 
 > Historical phase records moved from CLAUDE.md to keep the operating guide focused on current state. Each section is a complete record of what shipped, decisions made, and scores achieved.
 
+## Capture infrastructure — Claude Design round 4 (2026-04-23)
+
+Repaired the Claude Design capture pipeline after two post-launch
+environment changes broke it, then broadened coverage. The existing
+three-spec suite had been capturing Google Sign-in pages and
+`RequireAuth` splashes instead of the actual Hub.
+
+**Two blockers fixed:**
+
+1. **CF Access gates prod `/portal/*`.** Captures against
+   `mn-ccore-lab.pages.dev` redirected to
+   `peripheral-brain.cloudflareaccess.com`. Every 17KB "capture" was
+   the same Google Sign-in screenshot.
+   - Fix: `CAPTURE_BASE_URL` env var on all three specs + plumbed
+     through `regen-design-bundle.sh` as `BASE_URL=<preview>`.
+     Preview deploys bypass CF Access while serving the same code.
+2. **`VITE_REQUIRE_AUTH=1` flipped 2026-04-21** (commit `143c1dbd`)
+   shows a branded sign-in splash to unauth'd sessions even on
+   ungated preview hosts.
+   - Fix: `tests/helpers/capture-auth.ts` injects a fake
+     `CF_Authorization` JWT cookie. `useAuth` decodes payload
+     client-side only (no signature verification), so a well-formed
+     unsigned token flips `isAuthenticated` true. Backend writes
+     are still gated by real JWKS verification in `api/jwt-verify.ts`
+     — captures are read-only.
+
+**Round-3 gap fixes (hardcoded paths + missing surfaces):**
+
+- `tests/helpers/paths.ts` — added `nickLab` + `nateLab` +
+  `publicTrajectory` helpers, replacing hardcoded strings in
+  `capture-for-design.spec.ts`.
+- Added 5 hero surfaces: `36-trajectory-portal` (gated chrome vs
+  public at `35`), `37-contact`, `38-meeting-detail`,
+  `39-meeting-prep`, `40-publication-detail`.
+
+**Three new capture specs (wired into `playwright.config.design-capture.ts`):**
+
+- **`capture-scroll-chunks.spec.ts`** — 12 long pages broken into
+  viewport-sized chunks (capped at 8 per page). Output
+  `desktop-<slug>-ch<n>.png`. Designer can review 900px bands
+  instead of one fullPage blob.
+- **`capture-theme-light.spec.ts`** — 8 key pages with
+  `test.use({ colorScheme: 'light' })`. Simpler + more reliable
+  than localStorage injection: `useDarkMode` falls back to
+  `getSystemPreference()` when nothing is stored, so flipping
+  the colorScheme flips the theme.
+- **`capture-rich-states.spec.ts`** — Network WebGL multi-state
+  (default + zoom + mid-drag + post-drag + 3 hovers), 6 modals
+  (Create Task / Command Palette / Shortcut Help / Create Idea /
+  Create Decision / Create Project), Publications carousel at 3
+  scroll positions, Dashboard customize-mode.
+
+**Script + config changes:**
+
+- `regen-design-bundle.sh`: `BASE_URL` plumb-through,
+  `set -e` dropped (single focus-ask flake no longer halts step
+  4/7), 7 steps (hero → mobile → focus → chunks → light → rich →
+  interactions), `ffmpeg` path candidates include work-machine
+  location, video-copy fallback after interactions step
+  (Playwright videos finalize post-`context.close()`, so the
+  `afterEach` hook in `capture-interactions.spec.ts` often sees
+  empty attachments).
+- `playwright.config.design-capture.ts`: `testMatch` extended
+  with the three new specs.
+
+**Bundle produced:** `claude-design-2026-04-22-full-r4`
+(`review/claude-design-2026-04-22-full-r4.zip` — 57MB). 119 PNGs +
+15 MP4s + 15 GIFs + 37 interaction keyframes. `BRIEF.md` +
+`FEEDBACK-FOCUS.md` included (9 ranked asks). Same 2 interaction
+flakes as round 3 (`01-status-change-undo` dropdown race,
+`08-date-picker` cell click) — keyframes still captured,
+non-blocking.
+
+**Commit:** `00aea896`.
+
 ## Audit r7 + GH-issue sweep (2026-04-22 → 2026-04-23)
 
 Massive audit B-visual contrast went **37 → 0 violations** across 204

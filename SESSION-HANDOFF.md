@@ -1,12 +1,21 @@
 # Session Handoff — 2026-04-23
 
-> Last worked: **Audit r7 + GH-issue sweep.** B-visual contrast
-> 37 → 0 violations across 204 page×viewport×theme combos (six
-> iteration rounds). Closed 14 in-app GH bug reports (#8, #10, #14,
-> #15, #16, #17, #18, #19, #20, #21, #22, #23, #24, #25). Bulk-
-> reassigned 602 tasks → `nick-ingraham`. Current HEAD `d7091ec`,
-> deploy `a519de60`. See CHANGELOG.md "Audit r7 + GH-issue sweep" for
-> full record.
+> Last worked: **Capture infrastructure — Claude Design round 4.**
+> Repaired the screenshot/video pipeline after CF Access + flipped
+> `VITE_REQUIRE_AUTH=1` broke it (all portal captures were Sign-in
+> pages). Added `CAPTURE_BASE_URL` env + fake-JWT cookie helper
+> (`tests/helpers/capture-auth.ts`) + three new specs (scroll-chunks,
+> theme-light, rich-states) + 5 new hero surfaces. Bundle shipped:
+> `review/claude-design-2026-04-22-full-r4.zip` (57MB / 119 PNGs +
+> 15 MP4s + 15 GIFs + 37 keyframes + BRIEF + FEEDBACK-FOCUS).
+> Current HEAD `00aea896` (pushed). Prod deploy still `a519de60`
+> from r7 — no app code changed this sprint.
+>
+> **Before (2026-04-22 → 2026-04-23): Audit r7 + GH-issue sweep.**
+> B-visual contrast 37 → 0 across 204 combos. Closed 14 in-app GH
+> bug reports (#8, #10, #14, #15, #16, #17, #18, #19, #20, #21, #22,
+> #23, #24, #25). Bulk-reassigned 602 tasks → `nick-ingraham`.
+> See CHANGELOG.md.
 
 ## 📖 Session bootstrap — read these in order before writing anything
 
@@ -40,6 +49,33 @@ Rerun mobile smoke: `npx playwright test --config=playwright.config.mobile.ts`
 Rerun journey smoke: `npx playwright test --config=playwright.config.phase36.ts`
 
 ## What's new since the previous handoff
+
+**Capture infrastructure — Claude Design round 4 (2026-04-23, commit
+`00aea896`).** Delivered via `review/claude-design-2026-04-22-full-r4.zip`.
+
+- **Two post-launch blockers fixed.** CF Access now gates prod
+  `/portal/*` — specs hit Google Sign-in instead of the Hub; fixed
+  via `CAPTURE_BASE_URL=<preview>` env plumb-through on all three
+  specs. `VITE_REQUIRE_AUTH=1` (flipped 2026-04-21) shows a branded
+  sign-in splash even on ungated preview hosts; fixed via
+  `tests/helpers/capture-auth.ts` injecting a fake `CF_Authorization`
+  JWT cookie (`useAuth` decodes client-side only, no signature
+  verification).
+- **Three new capture specs** — `capture-scroll-chunks.spec.ts` (12
+  long pages × viewport-sized chunks), `capture-theme-light.spec.ts`
+  (8 pages with `test.use({ colorScheme: 'light' })`),
+  `capture-rich-states.spec.ts` (Network WebGL 6-state + 6 modals +
+  Publications carousel + Dashboard customize).
+- **5 new hero surfaces** — portal-trajectory (gated chrome vs
+  public), contact, meeting-detail, meeting-prep, publication-detail.
+- **`regen-design-bundle.sh` now 7 steps**, `set -e` dropped (single
+  focus-ask flake no longer halts video capture), video-copy fallback
+  after step 7 (Playwright videos finalize post-`context.close()`
+  so the spec's `afterEach` hook often sees empty attachments),
+  work-machine `ffmpeg` path added to candidates.
+- **No app code changed.** Prod still on `a519de60` (r7 deploy).
+
+See `CLAUDE.md` rule 33 for the updated capture workflow.
 
 **Audit r7 + GH-issue sweep (2026-04-22 → 2026-04-23).** Three commits
 across two days:
