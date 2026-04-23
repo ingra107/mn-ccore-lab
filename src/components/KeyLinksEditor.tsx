@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Link2, Plus, Pencil, Trash2, Check, X, ExternalLink, FolderOpen, Play } from 'lucide-react'
+import { Link2, Plus, Pencil, Trash2, Check, X } from 'lucide-react'
+import { classifyUrl } from '../lib/urlClassify'
 
 // Shared editor for the 3-slot key_link_1/2/3 + _desc pattern used on tasks
 // and projects. Display mode shows teal underlined links; edit mode swaps in
@@ -21,25 +22,6 @@ interface Props {
   onSave: (next: KeyLink[]) => void
   /** Max slots. Defaults to 3 to match the schema. */
   maxSlots?: number
-}
-
-function classifyUrl(url: string) {
-  const isHttp = url.startsWith('http')
-  const isLocalPath = url.startsWith('file:///') || url.startsWith('C:') || (url.startsWith('/') && !url.startsWith('//'))
-  const isBat = url.endsWith('.bat') || url.endsWith('.cmd') || url.endsWith('.ps1')
-  let Icon = ExternalLink
-  let href = url
-  let typeLabel = 'Link'
-  if (isBat) {
-    Icon = Play
-    href = `mnccore://launch/${url.replace('file:///', '')}`
-    typeLabel = 'Script'
-  } else if (isLocalPath) {
-    Icon = FolderOpen
-    href = `mnccore://open/${url.replace('file:///', '')}`
-    typeLabel = 'Folder'
-  }
-  return { href, Icon, typeLabel, isHttp }
 }
 
 function LinkRow({
