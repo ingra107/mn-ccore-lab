@@ -1,5 +1,7 @@
 import { useState, useMemo, useEffect, useRef, useCallback, useId } from 'react'
 import { createPortal } from 'react-dom'
+import { Link } from 'react-router-dom'
+import { PATHS } from '../../constants/paths'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { useAutoAnimate } from '@formkit/auto-animate/react'
 import { CheckCircle2, ChevronDown, ChevronRight, Circle, Archive, Link2, Plus, MessageSquare, FolderOpen, ExternalLink, Play, Clipboard, Check, GripVertical, Pin, RotateCcw } from 'lucide-react'
@@ -1070,7 +1072,9 @@ function TaskGridRow({
                     )
                   })()}
                   {task.project_id && (
-                    <span
+                    <Link
+                      to={PATHS.project(task.project_id)}
+                      onClick={(e) => e.stopPropagation()}
                       className="hover-badge"
                       style={{
                         fontSize: '10px',
@@ -1085,11 +1089,15 @@ function TaskGridRow({
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap',
+                        textDecoration: 'none',
+                        transition: 'background-color 150ms ease, color 150ms ease',
                       }}
-                      title={task.project_id}
+                      onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--teal-active)'; e.currentTarget.style.color = 'var(--teal)' }}
+                      onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'var(--surface-3)'; e.currentTarget.style.color = 'var(--slate)' }}
+                      title={`Work on ${task.project_id}`}
                     >
-                      {task.project_id.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()).slice(0, 20)}
-                    </span>
+                      {(projectMap.get(task.project_id) ?? task.project_id).slice(0, 20)}
+                    </Link>
                   )}
                   <TaskKeyLinks task={task} />
                 </div>

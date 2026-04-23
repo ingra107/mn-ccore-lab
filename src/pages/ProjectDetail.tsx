@@ -37,6 +37,7 @@ import type { Project } from '../data/types'
 import type { TaskRow } from '../lib/api'
 import RevisionTracker from '../components/RevisionTracker'
 import KeyLinksEditor from '../components/KeyLinksEditor'
+import LinkifiedText from '../components/LinkifiedText'
 import SubmissionTimeline from '../components/SubmissionTimeline'
 import ConferencePrep from '../components/ConferencePrep'
 import InsightPanel from '../components/InsightPanel'
@@ -1260,7 +1261,9 @@ function ProjectDetailInner({ project }: InnerProps) {
                     }
                     title="Click to edit"
                   >
-                    {project.description || 'Click to add a description...'}
+                    {project.description
+                      ? <LinkifiedText text={project.description} />
+                      : 'Click to add a description...'}
                   </p>
                   {project.description && project.description.length > 200 && (
                     <button
