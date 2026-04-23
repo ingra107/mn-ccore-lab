@@ -52,6 +52,17 @@ type MigrationFile = { path: string; file: string; version: number; suffixRank: 
  */
 const FRESH_BOOTSTRAP_SKIP: ReadonlySet<string> = new Set([
   'schema-v22-rename-columns.sql',
+  // schema.sql (base) already declares team_members.email; v43 ALTER
+  // trips "duplicate column name: email" on a fresh bootstrap.  Prod
+  // applied v43 as an ADD COLUMN because its schema predated the email
+  // field — the base schema has since caught up.
+  'schema-v43.sql',
+  // v48 creates indexes on columns that are ADDED by v49 (action_items
+  // .category, .parent_task_id).  Bootstrap order v48→v49 fails because
+  // the columns don't exist yet.  v49 re-creates the same indexes (IF
+  // NOT EXISTS) so skipping v48 for fresh bootstrap is safe.  Prod ran
+  // v48 AFTER the columns were already present via a different path.
+  'schema-v48-index-reconcile.sql',
 ])
 
 function parseMigrationFile(file: string): MigrationFile | null {
