@@ -28,6 +28,7 @@ import type { GrantTimelineItem, GrantMilestone, GrantStatus } from '../../hooks
 import { useSimilarGrants, useUpcomingGrantMilestones } from '../../hooks/useApiData'
 import { useCreateGrantMilestone, useUpdateGrantMilestone, useCompleteGrantMilestone, useUpdateGrant } from '../../hooks/useMutations'
 import { getPersonInfo } from '../../data/team'
+import { displayName } from '../../lib/nameUtils'
 import { formatMediumDate, isOverdue } from '../../lib/dateUtils'
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 
@@ -102,9 +103,7 @@ function yearToX(year: number, chartWidth: number): number {
 }
 
 function piDisplayName(pi: string): string {
-  const info = getPersonInfo(pi)
-  const parts = info.name.split(' ')
-  return parts.length > 1 ? parts[parts.length - 1] : info.name
+  return displayName(pi, 'short')
 }
 
 // ── Gantt tooltip ──────────────────────────────────────────────
@@ -667,7 +666,7 @@ export default function Grants() {
                           <Avatar name={pi.name} initials={pi.initials} photoUrl={pi.photoUrl} size="xs" variant="ice" />
                         </div>
                         <span className="text-xs truncate" style={{ color: 'var(--slate)' }}>
-                          {pi.name.split(' ').slice(-1)[0]}
+                          {grant.pi ? displayName(grant.pi, 'short') : pi.name}
                         </span>
                       </div>
                     </div>

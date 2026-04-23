@@ -14,6 +14,7 @@ import InlineSelect from '../../components/InlineSelect'
 import { useUndoToast } from '../../components/UndoToast'
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 import { getPersonInfo } from '../../data/team'
+import { displayName } from '../../lib/nameUtils'
 import type { Project } from '../../data/types'
 import PageHeader from '../../components/PageHeader'
 import { ActiveRevisionsDashboard } from '../../components/RevisionTracker'
@@ -672,7 +673,7 @@ export default function Manuscripts() {
                                   <Avatar name={pi.name} initials={pi.initials} photoUrl={pi.photoUrl} size="2xs" variant="ice" />
                                 </div>
                                 <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.75 }}>
-                                  {pi.name.split(' ').pop()}
+                                  {p.pi ? displayName(p.pi, 'short') : pi.name}
                                 </span>
                               </div>
                             </motion.div>

@@ -17,6 +17,7 @@ import ProjectDependencyMap from '../components/ProjectDependencyMap'
 import CreateProjectModal from '../components/CreateProjectModal'
 import { ColumnHeader, TableContainer } from '../components/table'
 import { directors } from '../data/team'
+import { displayName } from '../lib/nameUtils'
 import type { Project } from '../data/types'
 import { useProjectKeyboardNav } from '../hooks/useProjectKeyboardNav'
 import type { Stage } from '../components/StageSelector'
@@ -598,7 +599,7 @@ export default function Projects() {
                             <div onClick={(e) => e.preventDefault()}>
                               <InlineSelect
                                 value={project.pi || ''}
-                                options={directors.map(d => ({ value: d.slug, label: d.name.split(' ')[1] || d.name }))}
+                                options={directors.map(d => ({ value: d.slug, label: displayName(d.slug, 'display') }))}
                                 onChange={(val) => inlineUpdate.mutate({ slug: project.slug, fields: { pi: val } })}
                               />
                             </div>
