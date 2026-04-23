@@ -1,11 +1,11 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 
-export interface SortConfig {
+interface SortConfig {
   key: string
   asc: boolean
 }
 
-export interface TableConfig {
+interface TableConfig {
   sortKey: string
   sortAsc: boolean
   /** Multi-column sort: first is primary, second is secondary. Max 2. */

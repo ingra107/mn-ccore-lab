@@ -17,7 +17,6 @@ import {
   fetchTeam,
   fetchProjects,
   fetchGrants,
-  fetchCollaborationGraph,
   fetchStats,
   fetchTasks,
   fetchIdeas,
@@ -25,7 +24,6 @@ import {
   fetchDependencies,
   fetchProjectDependencies,
   fetchExpertise,
-  fetchExpertSuggestions,
   fetchQuestions,
   fetchQuestionDetail,
   fetchRevisions,
@@ -33,14 +31,10 @@ import {
   fetchActiveRevisions,
   fetchMenteeMilestones,
   fetchMenteeOverview,
-  fetchDeadlineCascade,
   fetchDeadlineImpact,
   fetchAllCascades,
   fetchSubmissionEvents,
-  fetchActiveSubmissions,
-  fetchRegulatoryItems,
   fetchExpiringRegulatory,
-  fetchGrantMilestones,
   fetchUpcomingGrantMilestones,
   fetchConferences,
   fetchUpcomingConferences,
@@ -52,14 +46,11 @@ import type {
   TeamMemberRow,
   ProjectRow,
   GrantRow,
-  CollaborationGraph,
-  Stats,
   TaskRow,
   IdeaRow,
   CalendarEvent,
   DependencyRow,
   ExpertiseTag,
-  ExpertSuggestion,
   QuestionRow,
   QuestionDetail,
   RevisionRow,
@@ -68,23 +59,16 @@ import type {
   MenteeOverviewRow,
   CascadeGraph,
   ImpactResult,
-  SubmissionEventRow,
-  ActiveSubmissionRow,
-  RegulatoryItemRow,
-  ExpiringRegulatoryRow,
-  GrantMilestoneRow,
-  UpcomingGrantMilestoneRow,
-  ConferenceSubmissionRow,
-  UpcomingConferenceRow,
   PBSessionRow,
-  PBSessionStats,
   DailyPlanRow,
   PomodoroSessionRow,
   DailyReflectionRow,
 } from '../lib/api'
 
-// Re-export row types for components that need them
-export type { PublicationRow, TeamMemberRow, ProjectRow, GrantRow, CollaborationGraph, Stats, TaskRow, IdeaRow, CalendarEvent, DependencyRow, ExpertiseTag, ExpertSuggestion, QuestionRow, QuestionDetail, RevisionRow, ReviewerCommentRow, MenteeMilestoneRow, MenteeOverviewRow, CascadeGraph, ImpactResult, SubmissionEventRow, ActiveSubmissionRow, RegulatoryItemRow, ExpiringRegulatoryRow, GrantMilestoneRow, UpcomingGrantMilestoneRow, ConferenceSubmissionRow, UpcomingConferenceRow, PBSessionRow, PBSessionStats }
+// Re-export lib/api row types that consumers import via this module.
+// Narrow surface: only the types actually consumed by components. Other
+// lib/api types are imported directly from lib/api where needed.
+export type { DependencyRow, ExpertiseTag, MenteeMilestoneRow, PBSessionRow, RevisionRow, ReviewerCommentRow }
 
 import type { Publication, TeamMember, Project, Grant } from '../data/types'
 
@@ -227,21 +211,6 @@ export function useGrants() {
   })
 }
 
-export function useCollaborationGraph() {
-  return useQuery({
-    queryKey: ['graph', 'collaboration'],
-    queryFn: async () => {
-      try {
-        const res = await fetchCollaborationGraph()
-        return res.data
-      } catch {
-        return null
-      }
-    },
-    staleTime: STALE_TIME,
-  })
-}
-
 export function useStats() {
   return useQuery({
     queryKey: ['stats'],
@@ -287,7 +256,7 @@ export function useComments(projectId: string) {
 
 // ── Activity Feed ───────────────────────────────────────────
 
-export interface ActivityEntry {
+interface ActivityEntry {
   id: string
   type: string
   description: string
@@ -377,7 +346,7 @@ export interface TaskUpdateRow {
   created_at: string
 }
 
-export interface MeetingDetail extends MeetingRow {
+interface MeetingDetail extends MeetingRow {
   action_items: ActionItemRow[]
   agenda_items: AgendaItemRow[]
 }
@@ -435,7 +404,7 @@ export function useNextMeeting() {
 
 // ── Meeting Cadence ──────────────────────────────────────────
 
-export interface CadenceData {
+interface CadenceData {
   nextMeeting?: { id: string; date: string; title: string }
   score: number
   recommendation: string
@@ -688,7 +657,7 @@ export interface ProjectHealth {
   pending_actions: number
 }
 
-export interface HealthSummary {
+interface HealthSummary {
   total: number
   healthy: number
   needs_attention: number
@@ -768,7 +737,7 @@ export function useSubtasks(taskId: string) {
 
 // ── Task Handoffs ──────────────────────────────────────────
 
-export interface HandoffRow {
+interface HandoffRow {
   id: string
   task_id: string
   from_slug: string
@@ -798,7 +767,7 @@ export function useHandoffs(taskId: string) {
 
 // ── Paper-Project Links ────────────────────────────────────
 
-export interface PaperProjectLink {
+interface PaperProjectLink {
   id: string
   paper_id: string
   project_slug: string
@@ -922,7 +891,7 @@ export function useTaskUpdates(taskId: string) {
 
 // ── Team Pulse ──────────────────────────────────────────────
 
-export interface TeamPulseData {
+interface TeamPulseData {
   activity: { slug: string; updates: number; completions: number }[]
   active_this_week: number
   totals: { updates: number; completions: number }
@@ -967,7 +936,7 @@ export interface DecisionRow {
   shared_tags?: string[]
 }
 
-export interface DecisionTagCount {
+interface DecisionTagCount {
   tag: string
   count: number
 }
@@ -1183,7 +1152,7 @@ export function useContributions(slug: string, period: number) {
 
 // ── Contribution Score with Decay ────────────────────────
 
-export interface ContributionScoreData {
+interface ContributionScoreData {
   slug: string
   days: number
   total_score: number
@@ -1210,7 +1179,7 @@ export function useContributionScore(slug: string | undefined, days = 90) {
 
 // ── Grant Intelligence (NIH RePORTER) ──────────────────────
 
-export interface SimilarGrant {
+interface SimilarGrant {
   project_num: string
   title: string
   pi: string
@@ -1255,22 +1224,6 @@ export function useExpertise(slug?: string) {
   })
 }
 
-export function useExpertSuggestions(topic: string) {
-  return useQuery({
-    queryKey: ['expertise', 'suggest', topic],
-    queryFn: async () => {
-      try {
-        const res = await fetchExpertSuggestions(topic)
-        return res.data as ExpertSuggestion[]
-      } catch {
-        return []
-      }
-    },
-    staleTime: 60 * 1000,
-    enabled: !!topic && topic.length >= 2,
-  })
-}
-
 // ── Questions (Ask the Lab) ──────────────────────────────────
 
 export function useQuestions(filters?: { status?: string; project_slug?: string }) {
@@ -1298,7 +1251,7 @@ export function useQuestionDetail(id: string) {
 
 // ── Narratives ──────────────────────────────────────────────
 
-export interface NarrativeArc {
+interface NarrativeArc {
   id: string
   title: string
   category: string
@@ -1325,7 +1278,7 @@ export function useNarratives() {
 
 // ── PB Sector (Command Center) ─────────────────────────────
 
-export interface PBCommandCenterData {
+interface PBCommandCenterData {
   greeting: string
   mode: string
   today: string
@@ -1459,18 +1412,6 @@ export function useMenteeOverview() {
 
 // ── Deadline Cascade ────────────────────────────────────────
 
-export function useDeadlineCascade(projectId: string) {
-  return useQuery({
-    queryKey: ['deadline-cascade', projectId],
-    queryFn: async () => {
-      const res = await fetchDeadlineCascade(projectId)
-      return res.data as CascadeGraph
-    },
-    enabled: !!projectId,
-    staleTime: 60 * 1000,
-  })
-}
-
 export function useDeadlineImpact(id: string | null, type: string | null, newDate: string | null) {
   return useQuery({
     queryKey: ['deadline-impact', id, type, newDate],
@@ -1505,24 +1446,7 @@ export function useSubmissionEvents(projectId: string) {
   })
 }
 
-export function useActiveSubmissions() {
-  return useQuery({
-    queryKey: ['submissions-active'],
-    queryFn: () => fetchActiveSubmissions().then((r) => r.data),
-    staleTime: 60 * 1000,
-  })
-}
-
 // ── Regulatory & Compliance ────────────────────────────────
-
-export function useRegulatoryItems(projectId: string) {
-  return useQuery({
-    queryKey: ['regulatory', projectId],
-    queryFn: () => fetchRegulatoryItems(projectId).then((r) => r.data),
-    enabled: !!projectId,
-    staleTime: 60 * 1000,
-  })
-}
 
 export function useExpiringRegulatory(days: number = 60) {
   return useQuery({
@@ -1533,15 +1457,6 @@ export function useExpiringRegulatory(days: number = 60) {
 }
 
 // ── Grant Post-Award Milestones ───────────────────────────────
-
-export function useGrantMilestones(grantId: string) {
-  return useQuery({
-    queryKey: ['grant-milestones', grantId],
-    queryFn: () => fetchGrantMilestones(grantId).then((r) => r.data),
-    enabled: !!grantId,
-    staleTime: 60 * 1000,
-  })
-}
 
 export function useUpcomingGrantMilestones(days: number = 90) {
   return useQuery({
@@ -1622,7 +1537,7 @@ export function usePBSessionStats() {
 
 // ── Cross-Project Insights ──────────────────────────────────
 
-export interface InsightEdge {
+interface InsightEdge {
   from: string
   to: string
   fromTitle: string
@@ -1644,7 +1559,7 @@ export function useInsightConnections() {
   })
 }
 
-export interface InsightSuggestion {
+interface InsightSuggestion {
   slug: string
   title: string
   reason: string
@@ -1667,7 +1582,7 @@ export function useInsightSuggestions(projectId: string) {
 
 // ── Paper-to-Project linking (enriched) ─────────────────────
 
-export interface LinkedProject {
+interface LinkedProject {
   link_id: string
   link_type: string | null
   note: string | null

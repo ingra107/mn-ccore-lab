@@ -21,7 +21,7 @@ export interface SparkPoint {
   emphasis?: boolean
 }
 
-export interface PulseSparklineProps {
+interface PulseSparklineProps {
   data: SparkPoint[]
   /** Height in px. Width is fluid (100%). */
   height?: number

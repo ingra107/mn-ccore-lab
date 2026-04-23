@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 
-export interface TeamSlug {
+interface TeamSlug {
   slug: string
   name: string
 }

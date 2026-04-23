@@ -15,7 +15,7 @@
 
 // ── Foreground color (CSS var) ──────────────────────────────────────────────
 
-export const STATUS_COLOR: Record<string, string> = {
+const STATUS_COLOR: Record<string, string> = {
   // Core task statuses
   todo: 'var(--slate)',
   in_progress: 'var(--teal)',

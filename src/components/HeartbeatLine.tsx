@@ -23,7 +23,7 @@ import { useId } from 'react'
  * <HeartbeatLine variant="static" color="var(--gold)" strokeWidth={1.25} />
  */
 
-export interface HeartbeatLineProps {
+interface HeartbeatLineProps {
   /** Total stroke width in px. Default 2. */
   strokeWidth?: number
   /** Render width in px (height auto-derives from viewBox if not set). */

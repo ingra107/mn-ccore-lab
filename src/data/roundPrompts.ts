@@ -1,6 +1,6 @@
-export type PromptCategory = 'reflection' | 'wins' | 'challenges' | 'learning' | 'connection'
+type PromptCategory = 'reflection' | 'wins' | 'challenges' | 'learning' | 'connection'
 
-export interface RoundPrompt {
+interface RoundPrompt {
   text: string
   category: PromptCategory
 }

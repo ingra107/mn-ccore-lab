@@ -1,7 +1,7 @@
 import type { AuthUser, Env } from '../helpers';
 import { json, error, generateId, logActivity, actorSlug } from '../helpers';
 
-export type DocType = 'folder' | 'draft' | 'data' | 'protocol' | 'submission' | 'link';
+type DocType = 'folder' | 'draft' | 'data' | 'protocol' | 'submission' | 'link';
 
 // GET /api/projects/:slug/documents — list documents linked to a project
 export async function handleGetProjectDocuments(projectSlug: string, env: Env): Promise<Response> {

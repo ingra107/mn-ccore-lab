@@ -96,11 +96,6 @@ function getDaysUntil(target: Date): number {
   return Math.ceil((t.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
 }
 
-function formatListDate(dateStr: string): string {
-  const d = new Date(dateStr + 'T12:00:00')
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-}
-
 interface ActionItemWithContext extends ActionItem {
   meetingDate: string
   meetingTitle: string
@@ -788,7 +783,7 @@ export default function Meetings() {
                     onClick={() => { setSelectedMeetingId(meeting.id); setFocusedIndex(idx); setMobileShowDetail(true); dismissPageTooltip('meetings-prep-hint') }}>
                     <div className="flex items-center justify-between gap-2">
                       <span style={{ fontSize: '11px', color: isNext ? 'var(--teal)' : 'var(--slate)', opacity: isNext ? 1 : 0.85, flexShrink: 0, fontWeight: isNext ? 600 : 400, minWidth: '46px' }}>
-                        {formatListDate(meeting.date)}
+                        {formatShortDate(meeting.date)}
                       </span>
                       {actionCount > 0 && (
                         <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '10px', background: pendingCount > 0 ? 'rgba(201,168,76,0.15)' : 'rgba(45,138,138,0.12)', color: pendingCount > 0 ? 'var(--gold)' : 'var(--teal)', flexShrink: 0, fontWeight: 500 }}>
@@ -871,7 +866,7 @@ export default function Meetings() {
                                 <div style={{ width: 18, height: 18 }}><Avatar name={info.name} initials={info.initials} photoUrl={info.photoUrl} variant="ice" size="sm-icon" /></div>
                                 <span className="text-xs" style={{ color: 'var(--slate)' }}>{info.name}</span>
                               </div>
-                              {item.dueDate && <span className="text-xs" style={{ color: 'var(--slate)', opacity: 0.75 }}>due {formatListDate(item.dueDate)}</span>}
+                              {item.dueDate && <span className="text-xs" style={{ color: 'var(--slate)', opacity: 0.75 }}>due {formatShortDate(item.dueDate)}</span>}
                               {item.projectSlug && <span className="inline-block px-2 py-0.5 rounded-full text-xs" style={{ background: 'var(--ice)', color: 'var(--slate)', fontSize: '10px' }}>{item.projectSlug}</span>}
                             </div>
                           </div>
@@ -950,7 +945,7 @@ export default function Meetings() {
                                   <div style={{ width: 16, height: 16 }}><Avatar name={info.name} initials={info.initials} photoUrl={info.photoUrl} variant="ice" size="2xs" /></div>
                                   <span className="text-xs" style={{ color: 'var(--slate)', opacity: 0.75 }}>{info.name}</span>
                                 </div>
-                                <span className="text-xs" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>from {formatListDate(item.meetingDate)}</span>
+                                <span className="text-xs" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>from {formatShortDate(item.meetingDate)}</span>
                               </div>
                             </div>
                           </div>

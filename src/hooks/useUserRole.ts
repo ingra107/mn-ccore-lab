@@ -6,7 +6,7 @@ import type { UserRole } from '../lib/roleDefaults'
 const OVERRIDE_KEY = 'hub-role-override'
 const ROLE_INIT_PREFIX = 'dashboard-role-initialized-'
 
-export interface UseUserRoleReturn {
+interface UseUserRoleReturn {
   /** The effective role (override > detected > default) */
   role: UserRole
   /** The role detected from auth, before any override */
@@ -87,4 +87,3 @@ export function useUserRole(): UseUserRoleReturn {
   }
 }
 
-export type { UserRole }

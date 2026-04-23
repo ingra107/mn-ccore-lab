@@ -1,12 +1,12 @@
 // Daily motivational quotes — Stoic philosophy, productivity wisdom, research/science
 // Index by dayOfYear % length for deterministic daily rotation
 
-export interface DailyQuote {
+interface DailyQuote {
   text: string
   author: string
 }
 
-export const dailyQuotes: DailyQuote[] = [
+const dailyQuotes: DailyQuote[] = [
   // Stoic Philosophy
   { text: "The impediment to action advances action. What stands in the way becomes the way.", author: "Marcus Aurelius" },
   { text: "We suffer more often in imagination than in reality.", author: "Seneca" },

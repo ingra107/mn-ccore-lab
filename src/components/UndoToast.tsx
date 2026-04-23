@@ -16,7 +16,7 @@ interface SuccessToast {
 
 type Toast = UndoToast | SuccessToast
 
-export interface ToastContextType {
+interface ToastContextType {
   showUndo: (message: string, onUndo: () => void) => void
   showSuccess: (message: string) => void
 }

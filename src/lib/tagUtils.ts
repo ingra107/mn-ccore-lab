@@ -26,8 +26,3 @@ export function parseTagsString(raw: string | null | undefined): string[] {
     .filter(Boolean)
 }
 
-/** Normalize a tags input value to the canonical CSV form for storage. */
-export function normalizeTagsForStorage(raw: string | null | undefined): string | null {
-  const parsed = parseTagsString(raw)
-  return parsed.length > 0 ? parsed.join(',') : null
-}

@@ -18,7 +18,7 @@
 import { useMemo } from 'react'
 import { useLabHealthSignals } from '../../hooks/useLabHealthSignals'
 
-export type HealthBucket = 'green' | 'amber' | 'orange' | 'red'
+type HealthBucket = 'green' | 'amber' | 'orange' | 'red'
 
 interface HealthResult {
   score: number
@@ -27,7 +27,7 @@ interface HealthResult {
   reasons: string[]
 }
 
-export function computeHealthScore(signals: {
+function computeHealthScore(signals: {
   overdueCount: number
   regulatoryExpiringCount: number
   stalledManuscriptCount: number

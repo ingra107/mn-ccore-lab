@@ -108,7 +108,7 @@ function SortableSubtaskItem({
 
 // ── Subtask Checklist ────────────────────────────────────────
 
-export function SubtaskChecklist({ taskId }: { taskId: string }) {
+function SubtaskChecklist({ taskId }: { taskId: string }) {
   const { data: subtasks = [] } = useSubtasks(taskId)
   const createSubtask = useCreateSubtask(taskId)
   const toggleSubtask = useToggleSubtask(taskId)

@@ -19,13 +19,13 @@ import { ColumnHeader, TableContainer } from '../components/table'
 import { directors } from '../data/team'
 import type { Project } from '../data/types'
 import { useProjectKeyboardNav } from '../hooks/useProjectKeyboardNav'
-import type { Stage } from '../components/StageSelector'
 import { staggerContainer, staggerItem } from '../lib/animations'
 import PageTooltip from '../components/PageTooltip'
 import { stripConsortiumPrefix } from '../lib/textUtils'
 import { PATHS } from '../constants/paths'
 
 const STAGES = ['Idea', 'Data Collection', 'Analysis', 'Writing', 'Review', 'Published'] as const
+type Stage = (typeof STAGES)[number]
 
 const CATEGORY_FILTERS = [
   { key: 'all', label: 'All' },

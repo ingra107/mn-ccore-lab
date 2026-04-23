@@ -28,48 +28,9 @@ export const ROLE_LABELS: Record<UserRole, string> = {
   default: 'Default',
 }
 
-// ── Personal Hub (bento dashboard) card configs per role ──
+// ── Team Dashboard card configs ──
 
-// Card IDs used in Personal.tsx bento grid
-export type PersonalCardId =
-  | 'my-tasks'
-  | 'deadlines'
-  | 'notifications'
-  | 'assigned-by-me'
-  | 'commitments'
-  | 'activity'
-  | 'watching'
-  | 'lab-health'
-  | 'grants'
-  | 'quick-capture'
-
-export interface RoleCardConfig {
-  visible: PersonalCardId[]
-  primary: PersonalCardId[]  // cards that get span-2 treatment
-}
-
-export const ROLE_CARD_CONFIGS: Record<UserRole, RoleCardConfig> = {
-  pi: {
-    visible: ['my-tasks', 'deadlines', 'notifications', 'assigned-by-me', 'commitments', 'activity', 'watching', 'lab-health', 'grants', 'quick-capture'],
-    primary: ['lab-health', 'my-tasks'],
-  },
-  fellow: {
-    visible: ['my-tasks', 'deadlines', 'notifications', 'activity', 'watching', 'quick-capture'],
-    primary: ['my-tasks'],
-  },
-  coordinator: {
-    visible: ['my-tasks', 'deadlines', 'notifications', 'activity', 'assigned-by-me', 'commitments', 'watching', 'quick-capture'],
-    primary: ['my-tasks', 'deadlines'],
-  },
-  default: {
-    visible: ['my-tasks', 'deadlines', 'notifications', 'assigned-by-me', 'commitments', 'activity', 'watching', 'lab-health', 'grants', 'quick-capture'],
-    primary: ['my-tasks'],
-  },
-}
-
-// ── Team Dashboard card configs (backward compat for Dashboard.tsx) ──
-
-export const ROLE_DASHBOARD_DEFAULTS: Record<UserRole, {
+export const ROLE_DEFAULTS: Record<UserRole, {
   dashboardCards: string[]
   taskView: string
   showAnalytics: boolean
@@ -95,6 +56,3 @@ export const ROLE_DASHBOARD_DEFAULTS: Record<UserRole, {
     showAnalytics: false,
   },
 }
-
-// Backward compat alias — old code imports ROLE_DEFAULTS
-export const ROLE_DEFAULTS = ROLE_DASHBOARD_DEFAULTS
