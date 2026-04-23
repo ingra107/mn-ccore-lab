@@ -621,8 +621,11 @@ export default function MyTasks() {
         </div>
       </div>
 
-      {/* Quick filter pills */}
-      <div className="flex items-center gap-2 mt-2 flex-wrap">
+      {/* Quick filter pills. R4-P2-08 partial — on ≤420px viewports the
+          row scrolls horizontally instead of wrapping to 3 lines that
+          push task rows below the fold. Full bottom-sheet drawer
+          deferred; horizontal scroll is the 80% fix. */}
+      <div className="quick-filter-row flex items-center gap-2 mt-2 flex-wrap sm:flex-wrap max-[420px]:flex-nowrap max-[420px]:overflow-x-auto max-[420px]:-mx-3 max-[420px]:px-3">
         {([
           { key: 'all' as QuickFilter, label: 'All', count: pendingCount },
           { key: 'today' as QuickFilter, label: 'Today', count: filterCounts.today },
