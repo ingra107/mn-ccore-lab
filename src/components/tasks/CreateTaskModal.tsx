@@ -2,6 +2,9 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { X, Sparkles, FileText, Shield, DollarSign, BarChart3, ClipboardList } from 'lucide-react'
 import { useTeam, useProjects } from '../../hooks/useApiData'
 import { suggestTaskFields, type AutofillSuggestions, type FieldSuggestion } from '../../lib/taskAutofill'
+import { useAuth } from '../../hooks/useAuth'
+import { emailToSlug } from '../../lib/emailSlug'
+import InlineAssigneePicker from '../InlineAssigneePicker'
 
 interface CreateTaskModalProps {
   open: boolean
@@ -64,13 +67,21 @@ const selectStyle: React.CSSProperties = {
 export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskModalProps) {
   const { data: team = [] } = useTeam()
   const { data: projects = [] } = useProjects()
+  const { user } = useAuth()
+  const defaultAssignee = user?.email ? emailToSlug(user.email) : ''
 
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
-  const [assignee, setAssignee] = useState('')
+  const [assignee, setAssignee] = useState(defaultAssignee)
+  const [assigneeTouched, setAssigneeTouched] = useState(false)
   const [projectId, setProjectId] = useState('')
   const [dueDate, setDueDate] = useState('')
   const [priority, setPriority] = useState('medium')
+
+  // When modal opens, re-derive default assignee if user hasn't touched it
+  useEffect(() => {
+    if (open && !assigneeTouched) setAssignee(defaultAssignee)
+  }, [open, defaultAssignee, assigneeTouched])
 
   // Autofill suggestions
   const [suggestions, setSuggestions] = useState<AutofillSuggestions>({
@@ -144,7 +155,8 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
     // Reset form
     setTitle('')
     setDescription('')
-    setAssignee('')
+    setAssignee(defaultAssignee)
+    setAssigneeTouched(false)
     setProjectId('')
     setDueDate('')
     setPriority('medium')
@@ -373,19 +385,17 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
               >
                 Owner * <span style={{ fontWeight: 400, opacity: 'var(--ink-label)' }}>(responsible)</span>
               </label>
-              <select
+              <div
                 id="task-assignee"
-                value={assignee}
-                onChange={(e) => setAssignee(e.target.value)}
-                className="w-full rounded-md border px-2.5 py-2 text-sm"
-                style={selectStyle}
                 aria-required="true"
+                role="group"
+                aria-labelledby="task-assignee-label"
               >
-                <option value="">Select owner...</option>
-                {memberOptions.map((m) => (
-                  <option key={m.slug} value={m.slug}>{m.name}</option>
-                ))}
-              </select>
+                <InlineAssigneePicker
+                  value={assignee}
+                  onChange={(slug) => { setAssignee(slug); setAssigneeTouched(true) }}
+                />
+              </div>
             </div>
             <div>
               <label
