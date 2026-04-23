@@ -49,8 +49,7 @@
     "react-dom": "^19.2.4",
     "react-grid-layout": "^1.5.3",
     "reagraph": "^4.30.8",
-    "recharts": "^3.8.1",
-    "tailwindcss-motion": "^1.1.1"
+    "recharts": "^3.8.1"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.11.2",

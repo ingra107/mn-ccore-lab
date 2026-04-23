@@ -1,5 +1,6 @@
 @import "tailwindcss";
-@plugin "tailwindcss-motion";
+/* tailwindcss-motion plugin removed: no `motion-*` utilities in any
+   .tsx/.ts/.css file. Framer Motion handles all animations. */
 
 /* ── Design System CSS Variables (OKLCH) ── */
 :root {
