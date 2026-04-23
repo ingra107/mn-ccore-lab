@@ -122,7 +122,7 @@ export default function MyTasks() {
       onSuccess: () => setSelectedIds(new Set()),
     })
   }
-  const handleFieldChange = (id: string, field: string, value: unknown) => {
+  const handleFieldChange = useCallback((id: string, field: string, value: unknown) => {
     // Capture prev so we can undo priority/assignee/due_date/project changes.
     // Skip content fields (title/description) — text-edit undo is noisy.
     const task = allTasks.find((t) => t.id === id)
@@ -134,7 +134,7 @@ export default function MyTasks() {
         updateTask.mutate({ id, fields: { [field]: prev } }),
       )
     }
-  }
+  }, [allTasks, updateTask, showUndo])
 
   const { user } = useAuth()
   const currentUser = emailToSlug(user?.email) || null
@@ -146,13 +146,13 @@ export default function MyTasks() {
     return allTasks.filter((t) => t.assignee === currentUser)
   }, [allTasks, currentUser, showAllTasks])
 
-  const handleStatusChange = (id: string, status: string) => {
+  const handleStatusChange = useCallback((id: string, status: string) => {
     const task = allTasks.find(t => t.id === id)
     const prev = task?.status || 'todo'
     updateStatus.mutate({ id, status })
     const labels: Record<string, string> = { todo: 'To Do', in_progress: 'In Progress', done: 'Done', blocked: 'Blocked', waiting_external: 'Waiting (External)' }
     showUndo(`Status → ${labels[status] || status}`, () => updateStatus.mutate({ id, status: prev }))
-  }
+  }, [allTasks, updateStatus, showUndo])
 
   const handleCreate = (task: {
     title: string
