@@ -48,6 +48,7 @@ review/*.png
 review/audit-newteammate/
 review/a11y-deep/
 review/claude-design-*/
+review/claude-design-*.zip
 review/interactions-*/
 review/audit-detail/
 review/massive-audit/
