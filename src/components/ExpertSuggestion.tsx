@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Sparkles, Search, User } from 'lucide-react'
 import { useExpertSuggestions } from '../hooks/useApiData'
+import { useDebounce } from '../hooks/useDebounce'
 import { getPersonInfo } from '../data/team'
 
 interface ExpertSuggestionProps {
@@ -14,7 +15,10 @@ interface ExpertSuggestionProps {
 
 export default function ExpertSuggestion({ topic: initialTopic = '', compact = false }: ExpertSuggestionProps) {
   const [query, setQuery] = useState(initialTopic)
-  const searchTopic = query.trim()
+  // Debounce 250ms so typing 'ventilator' doesn't fire 10 API calls;
+  // useExpertSuggestions hits D1 LIKE queries.
+  const debouncedQuery = useDebounce(query, 250)
+  const searchTopic = debouncedQuery.trim()
   const { data: suggestions = [], isLoading } = useExpertSuggestions(searchTopic)
 
   return (
