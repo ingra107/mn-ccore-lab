@@ -868,18 +868,39 @@ function TaskGridRow({
       }}
       onContextMenu={(e) => onContextMenu?.(e, task.id)}
     >
-      {/* Checkbox */}
-      <div className="task-row-checkbox" onClick={(e) => { e.stopPropagation(); onToggleSelect?.(task.id) }} style={{ cursor: 'pointer' }}>
-        {onToggleSelect ? (
-          <div style={{
-            width: 16, height: 16, borderRadius: 'var(--radius-sm)',
-            border: selected ? 'none' : '1.5px solid var(--border-subtle)',
-            background: selected ? 'var(--teal-solid)' : 'transparent',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            {selected && <CheckCircle2 size={10} style={{ color: 'var(--ink-bright, #fff)' }} />}
-          </div>
-        ) : <div style={{ width: 16 }} />}
+      {/* Leftmost circle — 1-click complete (with undo). Ctrl/⌘+click toggles
+          row selection for bulk actions. GH #25. r7 2026-04-22. */}
+      <div
+        className="task-row-checkbox"
+        onClick={(e) => {
+          e.stopPropagation()
+          if (e.ctrlKey || e.metaKey) {
+            onToggleSelect?.(task.id)
+          } else if (!isDone) {
+            const prev = task.status
+            onStatusChange(task.id, 'done')
+            showUndo('Completed task', () => onStatusChange(task.id, prev))
+          } else {
+            // Already done — reopen to todo
+            const prev = task.status
+            onStatusChange(task.id, 'todo')
+            showUndo('Reopened task', () => onStatusChange(task.id, prev))
+          }
+        }}
+        title={isDone ? 'Click to reopen · Ctrl-click to select' : 'Click to complete · Ctrl-click to select'}
+        aria-label={isDone ? 'Reopen task' : 'Complete task'}
+        style={{ cursor: 'pointer' }}
+      >
+        <div style={{
+          width: 16, height: 16, borderRadius: 'var(--radius-circle)',
+          border: selected ? '2px solid var(--teal-solid)' : isDone ? 'none' : '1.5px solid var(--border-subtle)',
+          background: isDone ? 'var(--teal-solid)' : selected ? 'var(--teal-emphasis)' : 'transparent',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          transition: 'background var(--transition-fast), border var(--transition-fast)',
+        }}>
+          {isDone && <CheckCircle2 size={10} style={{ color: '#fff' }} />}
+          {!isDone && selected && <CheckCircle2 size={10} style={{ color: 'var(--teal-solid)' }} />}
+        </div>
       </div>
 
       {/* Data cells — rendered in orderedDataCols order */}

@@ -222,20 +222,21 @@ export default function Layout() {
                 />
               </button>
 
-              {/* Dropdown panel */}
+              {/* Dropdown panel — fully opaque bg. Previously 0.98/0.95
+                  transparency + backdrop-blur bled page's dark header band
+                  through the middle of the menu. GH #17. r7 2026-04-22. */}
               <div
                 className="absolute top-full left-0 mt-1 py-2 rounded-lg"
                 style={{
                   minWidth: '180px',
-                  background: isDark ? 'rgba(15, 25, 35, 0.95)' : 'rgba(255, 255, 255, 0.98)',
-                  backdropFilter: 'blur(12px)',
-                  WebkitBackdropFilter: 'blur(12px)',
+                  background: isDark ? '#0f1923' : '#ffffff',
                   border: '1px solid rgba(201, 168, 76, 0.2)',
                   boxShadow: 'var(--shadow-menu)',
                   opacity: researchOpen ? 1 : 0,
                   transform: researchOpen ? 'translateY(0)' : 'translateY(-4px)',
                   pointerEvents: researchOpen ? 'auto' : 'none',
                   transition: 'opacity 250ms ease, transform 250ms ease',
+                  zIndex: 'var(--z-dropdown, 50)',
                 }}
               >
                 {researchDropdownLinks.map((link) => (
