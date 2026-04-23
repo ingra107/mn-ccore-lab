@@ -18,16 +18,17 @@ safe to ignore unless explicitly spelunking history.
 ## Current state (2026-04-23)
 
 - **🎉 LIVE FOR THE TEAM as of 2026-04-21.** CF Access gates `mn-ccore-lab.pages.dev/portal/*` with policies `UMN Team` (@umn.edu), `Nick Only` (nicholas.ingraham@gmail.com), `Audit Service Token`. All 4 server secrets set: `CF_ACCESS_TEAM_DOMAIN=peripheral-brain.cloudflareaccess.com`, `CF_ACCESS_AUD=47b7d48e...40139c`, `REQUIRE_AUTH=1`, `TEST_MODE_KEY=<32-char hex>`. JWT signature verification active. Client-side `VITE_REQUIRE_AUTH=1` in `.env.production`. See CHANGELOG.md Phase 37 for detail.
+- **Whole-hub /simplify sweep (2026-04-23 evening).** Two parallel agents on isolated branches merged into main: **-5,353 lines net, 22 files deleted, 24 commits**. Simplify half: pruned 17 unused mutation hooks, 18 unused `lib/api.ts` fetch helpers, 22 dead components/pages/hooks (all 0-caller verified), consolidated duplicate date formatters to Rule 6. Perf half: memoized AuthContext + UndoToast context values, batched @mention notification inserts via `env.DB.batch()`, fixed `/api/digest?with_relevance=true` N+1 (20 → 1 query), cached `isProductionVisible` localStorage read, debounced ExpertSuggestion… actually that was deleted — debounced ExpertSuggestion search then the whole component got removed. Removed unused deps `tailwindcss-motion` + `@tiptap/extension-mention`. Build + inspection (149 passed / 2 skipped / 0 failed, 10.6 min) both green.
 - **Audit r7 + GH-issue sweep (2026-04-23).** Massive-audit B-visual contrast **37 → 0 violations** across 204 page×viewport×theme combos (six iteration rounds). Closed 14 in-app GH bug reports (#8, #10, #14-22, #23, #24, #25). New CSS tokens: `--stage-fill-*` family (theme-agnostic dark fills), `--gold-on-emphasis` (gold text on gold pills). `--ink-hint` light bumped 0.62→0.68. Transform-only mount animations across `animations.ts`, `.fade-in-up`, PageTooltip, Deadlines/MenteeMilestones/DeadlineCascadePage. Bulk reassigned 602 tasks → `nick-ingraham`. CLIFMap rewritten as regional card grid. Rule 16 superseded (TaskGridView minHeight removed).
 - **Phase 37 shipped — portal URL migration.** All 27 gated routes now live under `/portal/*`. `src/constants/paths.ts` + `tests/helpers/paths.ts` are single source of truth. Legacy root paths redirect via `<Navigate>` shims.
 - **Round-2 design shipped + schema-drift CI now useful.** Claude Design's round-2 review (43 tickets) shipped across three deploys (`ff7b766a` → `36e0ca34` → `cfc00ab0`). Schema-drift CI reconciled via v48 (27 indexes) + v49 (13 tables + 2 unique indexes + 9 columns).
 - **Phase 36d shipped.** Design sprint — 12 reusable brand primitives + cinematic Pulse Kiosk rewrite + per-route OG share cards + capture infrastructure for Claude Design. Plus Phase 36c audit fixes, Phase 36b slug rename, Phase 36 consultant close-out.
-- **Quality gate: 🟢 GREEN.** Massive-audit B-visual 204/204 PASS / 0 BUGS (r7), inspection 213/213, deep-audit 14/14 (0 bugs), axe 29 pages × 2 schemes (0 findings), mobile smoke 2/2, desktop journey 1/1, `/api/health` ~74ms.
+- **Quality gate: 🟢 GREEN.** Massive-audit B-visual 204/204 PASS / 0 BUGS (r7), inspection 149/149 post-simplify (was 213 pre-simplify — drop reflects deleted features wired into tests, not regressions), deep-audit 14/14 (0 bugs), axe 29 pages × 2 schemes (0 findings), mobile smoke 2/2, desktop journey 1/1, `/api/health` ~74ms.
 - **Team slugs:** all 19 members use `preferred_name-last_name` format (`nick-ingraham`, `emma-bromley`, ...). `actorSlug(email)` in `api/helpers.ts` maps email prefix → canonical slug via `EMAIL_PREFIX_TO_SLUG`. Adding a new team member = D1 row + team.ts entry + LUT entry. All 602 tasks currently assigned to `nick-ingraham` (r7 bulk reassign).
 - **Routing:** all gated routes under `/portal/*` (Phase 37). `/portal/team/:slug` keeps logged-in users in portal chrome; `/team/:slug` stays for the public marketing site. Sidebar avatar routes to `/portal/my-items` (workspace) not team profile. Use `PATHS` constant from `src/constants/paths.ts` in any new internal nav.
 - **Brand primitives** live in `src/components/` — use them instead of rolling your own: `HeartbeatLine` / `HeartbeatDivider` (the lab's ECG motif), `HermesMark` (AI assistant avatar, replaces lucide Sparkles), `CategoryIcon` (lungs/flask/heartbeat/cap for CLIF/Lab/Nate/Mentee), `EmptyStateArt` (8 illustrations), `PhaseReleaseBanner` (what-shipped card), `RequireAuth` (sign-in splash).
-- **Current HEAD:** `d7091ec` on `main`, pushed (r7 audit + GH sweep).
-- **Current deploy:** `a519de60.mn-ccore-lab.pages.dev`.
+- **Current HEAD:** `6e431eaa` on `main`, pushed (whole-hub /simplify sweep merged).
+- **Current deploy:** `18f2aea6.mn-ccore-lab.pages.dev`.
 
 ## Vision
 
@@ -39,8 +40,8 @@ The MN-CCORE Lab Hub is the **team's operating surface** -- where research gets 
 |-------|-------|
 | Live site | mn-ccore-lab.pages.dev (LIVE — CF Access gated via @umn.edu policy on `/portal/*`) |
 | Repo | github.com/ingra107/mn-ccore-lab (720+ commits) |
-| Current deploy | `a519de60.mn-ccore-lab.pages.dev` (2026-04-23, r7 audit + GH sweep; HEAD `d7091ec`) |
-| Quality gate | 🟢 GREEN — massive-audit B-visual 204/204 PASS / 0 BUGS (r7), inspection 213/213, deep-audit 14/14, axe 29×2 = 0, mobile smoke 2/2, desktop journey 1/1. |
+| Current deploy | `18f2aea6.mn-ccore-lab.pages.dev` (2026-04-23 evening, whole-hub /simplify sweep; HEAD `6e431eaa`) |
+| Quality gate | 🟢 GREEN — massive-audit B-visual 204/204 PASS / 0 BUGS (r7, pre-simplify), inspection 149/149 post-simplify, build clean, deep-audit 14/14, axe 29×2 = 0, mobile smoke 2/2, desktop journey 1/1. |
 | Deploy | `cd /c/Users/ingra/mn-ccore-lab && npm run build && npx wrangler pages deploy dist --project-name mn-ccore-lab` |
 | Stack | React 19 + Vite 8 + Tailwind v4 + Framer Motion 12 + TypeScript + **Hono v4.12 (API router)** |
 | Testing | Playwright 1.59 (E2E, 213+ inspection + mobile smoke + desktop journey) + Vitest 4.1 (component, browser mode) |
@@ -592,7 +593,7 @@ Live since 2026-04-09. Team members @mention `@hermes` in Ask the Lab, task comm
 - EmptyState: consistent empty states with icon+title+subtitle+CTA
 - LoadingSkeleton: Table/Card/Text skeletons replacing all loading spinners
 - Task keyboard shortcuts: J/K nav, Space peek, S status cycle, X select, Enter detail
-- TaskPeekOverlay: Linear-style right-side panel (400px, slide-in)
+- TaskPeekOverlay: Linear-style right-side panel (400px, slide-in) — *removed 2026-04-23 during /simplify sweep; was 0-caller*
 - InlineAssigneePicker: avatar dropdown for assignee editing in grid
 - InlineDatePicker: date editing with overdue detection
 - CollapsibleSection: progressive disclosure in TaskDetailPanel

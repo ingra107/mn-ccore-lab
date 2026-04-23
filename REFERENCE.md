@@ -184,7 +184,6 @@ server-side via X-API-Key + `REQUIRE_AUTH` + JWT verify.
 | `src/lib/parseQuickAdd.ts` | NLP parser: @person, #project, p1-p3, dates |
 | `src/components/tasks/TaskDetailPanel.tsx` | Slide-over detail panel |
 | `src/components/tasks/TaskBoardView.tsx` | Drag-drop kanban with swimlanes + column collapse |
-| `src/components/tasks/TaskPeekOverlay.tsx` | Space bar peek panel (Linear-style) |
 | `src/components/tasks/TaskGridView.tsx` | Columnar table with inline editing |
 | `src/components/PageHeader.tsx` | Standardized page header |
 | `src/components/EmptyState.tsx` | Consistent empty states |
@@ -193,7 +192,7 @@ server-side via X-API-Key + `REQUIRE_AUTH` + JWT verify.
 | `src/components/InlineDatePicker.tsx` | Date editing with overdue detection |
 | `src/components/CollapsibleSection.tsx` | Progressive disclosure sections |
 | `src/pages/ProjectDetail.tsx` | Project editing, comments, updates |
-| `src/pages/Grants.tsx` | SVG Gantt timeline (2023-2033) |
+| `src/pages/portal/Grants.tsx` | SVG Gantt timeline (2023-2033) |
 | `src/pages/portal/Personal.tsx` | Personal Hub bento grid |
 | `src/pages/portal/AnalyticsPage.tsx` | Lab Analytics |
 | `src/pages/TrajectoryPage.tsx` | Trainee development trajectory |
