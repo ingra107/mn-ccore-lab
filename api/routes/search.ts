@@ -388,8 +388,10 @@ export async function handleSearch(url: URL, env: Env): Promise<Response> {
     return bTime - aTime;
   });
 
-  // Return top 20
-  const top = results.slice(0, 20);
+  // Return top 50 — with 14 entity types searched, 20 was too narrow
+  // (notes/decisions/files got pushed out by tasks/projects hitting the
+  // cap). 50 gives per-type visibility without overwhelming the UI.
+  const top = results.slice(0, 50);
 
   return json({ data: top, count: top.length, query: q });
 }
