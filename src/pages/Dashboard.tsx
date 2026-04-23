@@ -265,10 +265,32 @@ export default function Dashboard() {
     [activeTab]
   )
 
-  const allVisibleCards = tabFilteredRegistry.filter(c => visibleCards.has(c.id))
-  const pinnedVisibleCards = allVisibleCards.filter(c => pinnedCards.has(c.id))
-  const unpinnedPrimaryCards = sortByUsage(tabFilteredRegistry.filter(c => c.defaultVisible && visibleCards.has(c.id) && !pinnedCards.has(c.id)))
-  const unpinnedSecondaryCards = sortByUsage(tabFilteredRegistry.filter(c => !c.defaultVisible && visibleCards.has(c.id) && !pinnedCards.has(c.id)))
+  // Memoize card partitioning so DashboardGrid's `cards` prop is
+  // referentially stable across renders that didn't actually change
+  // the visible/pinned sets or the active tab. Also pre-compute the
+  // `[{id}]` shape DashboardGrid wants so we don't rebuild those
+  // objects each render (drives RGL layout recompute).
+  const {
+    pinnedVisibleCards,
+    unpinnedPrimaryCards,
+    unpinnedSecondaryCards,
+    pinnedGridCards,
+    primaryGridCards,
+    secondaryGridCards,
+  } = useMemo(() => {
+    const visible = tabFilteredRegistry.filter(c => visibleCards.has(c.id))
+    const pinned = visible.filter(c => pinnedCards.has(c.id))
+    const unpinnedPrimary = sortByUsage(tabFilteredRegistry.filter(c => c.defaultVisible && visibleCards.has(c.id) && !pinnedCards.has(c.id)))
+    const unpinnedSecondary = sortByUsage(tabFilteredRegistry.filter(c => !c.defaultVisible && visibleCards.has(c.id) && !pinnedCards.has(c.id)))
+    return {
+      pinnedVisibleCards: pinned,
+      unpinnedPrimaryCards: unpinnedPrimary,
+      unpinnedSecondaryCards: unpinnedSecondary,
+      pinnedGridCards: pinned.map(c => ({ id: c.id })),
+      primaryGridCards: unpinnedPrimary.map(c => ({ id: c.id })),
+      secondaryGridCards: unpinnedSecondary.map(c => ({ id: c.id })),
+    }
+  }, [tabFilteredRegistry, visibleCards, pinnedCards, sortByUsage])
 
   // Stable slug for layout persistence per user
   const userSlug = emailToSlug(user?.email) || undefined
@@ -693,7 +715,7 @@ export default function Dashboard() {
             <DashboardGrid
               section="pinned"
               userSlug={userSlug}
-              cards={pinnedVisibleCards.map(c => ({ id: c.id }))}
+              cards={pinnedGridCards}
               onCardClick={handleCardInteraction}
               renderCard={renderCard}
               renderOverlay={renderPinOverlay}
@@ -708,7 +730,7 @@ export default function Dashboard() {
             <DashboardGrid
               section="primary"
               userSlug={userSlug}
-              cards={unpinnedPrimaryCards.map(c => ({ id: c.id }))}
+              cards={primaryGridCards}
               onCardClick={handleCardInteraction}
               renderCard={renderCard}
               renderOverlay={renderUnpinOverlay}
@@ -742,7 +764,7 @@ export default function Dashboard() {
                   <DashboardGrid
                     section="secondary"
                     userSlug={userSlug}
-                    cards={unpinnedSecondaryCards.map(c => ({ id: c.id }))}
+                    cards={secondaryGridCards}
                     onCardClick={handleCardInteraction}
                     renderCard={renderCard}
                     renderOverlay={renderUnpinOverlay}
