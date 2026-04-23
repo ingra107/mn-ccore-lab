@@ -72,12 +72,3 @@ export function getMenteeBySlug(slug: string): Mentee | undefined {
   return mentees.find((m) => m.slug === slug)
 }
 
-// Helper: get mentees for a specific project
-export function getMenteesForProject(projectSlug: string): Mentee[] {
-  return mentees.filter((m) => m.projectSlugs?.includes(projectSlug))
-}
-
-// Helper: get mentees by mentor
-export function getMenteesByMentor(mentor: 'nick-ingraham' | 'nate-mesfin' | 'shared'): Mentee[] {
-  return mentees.filter((m) => m.mentor === mentor || m.mentor === 'shared')
-}

@@ -29,13 +29,6 @@ export function formatFullDate(dateStr: string): string {
   return safeParse(dateStr).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })
 }
 
-/** "Mar 25, 2025, 3:30 PM" */
-export function formatTimestamp(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString('en-US', {
-    month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit',
-  })
-}
-
 /** "just now", "5m ago", "3h ago", "2d ago", or "Mar 25" */
 export function formatRelativeTime(dateStr: string): string {
   const d = new Date(dateStr)

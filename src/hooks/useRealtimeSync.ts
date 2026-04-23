@@ -84,11 +84,3 @@ export function useRealtimeSync() {
   }, [queryClient])
 }
 
-/** Call after local mutations to notify other tabs instantly */
-export function notifyLocalTabs() {
-  try {
-    const bc = new BroadcastChannel('mnccore-sync')
-    bc.postMessage('changed')
-    bc.close()
-  } catch { /* BroadcastChannel not supported */ }
-}

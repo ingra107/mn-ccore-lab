@@ -15,9 +15,9 @@
 
 import { getPersonInfo, directors, seniorMentors, facultyCollaborators, researchTeam } from '../data/team'
 
-export type NameTier = 'formal' | 'display' | 'short' | 'initials'
+type NameTier = 'formal' | 'display' | 'short' | 'initials'
 
-export interface NameProfile {
+interface NameProfile {
   slug: string
   full_name?: string | null
   preferred_name?: string | null
@@ -47,7 +47,7 @@ function deriveInitials(name: string): string {
  * Render a name profile at the requested tier.
  * Degrades gracefully: if full_name/preferred_name are missing, falls back to `name`.
  */
-export function formatName(profile: NameProfile, tier: NameTier = 'display'): string {
+function formatName(profile: NameProfile, tier: NameTier = 'display'): string {
   const fullName = (profile.full_name || '').trim()
   const preferred = (profile.preferred_name || '').trim()
   const legacy = (profile.name || '').trim()
@@ -84,7 +84,7 @@ export function formatName(profile: NameProfile, tier: NameTier = 'display'): st
  * Falls back to legacy `getPersonInfo(slug).name` when the slug matches a
  * non-team identity (Hermes, bare emails).
  */
-export function profileFromStatic(slug: string): NameProfile {
+function profileFromStatic(slug: string): NameProfile {
   if (!slug) return { slug: '', name: 'Unknown' }
   if (slug === 'claude-ai') return { slug, name: 'Hermes' }
 
@@ -173,11 +173,3 @@ const PREFERRED_NAME_OVERRIDES: Record<string, string> = {
   // need an override.
 }
 
-/** SQL-friendly seed rows for the v41 backfill. Mirrors the overrides above. */
-export function seedRows(): Array<{ slug: string; full_name: string; preferred_name: string }> {
-  return Object.keys(FULL_NAME_OVERRIDES).map((slug) => ({
-    slug,
-    full_name: FULL_NAME_OVERRIDES[slug],
-    preferred_name: PREFERRED_NAME_OVERRIDES[slug] ?? firstToken(FULL_NAME_OVERRIDES[slug]),
-  }))
-}

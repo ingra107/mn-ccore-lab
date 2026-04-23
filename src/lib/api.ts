@@ -352,10 +352,6 @@ export function acknowledgeTask(id: string) {
   })
 }
 
-export function fetchTeamSlugs() {
-  return fetchApi<{ slug: string; name: string }[]>('/api/team/slugs')
-}
-
 // ── Ideas endpoints ──────────────────────────────────────────
 
 export interface IdeaRow {
@@ -1142,5 +1138,3 @@ export function bulkCreatePBSessions(sessions: Array<{
     body: JSON.stringify({ sessions }),
   })
 }
-
-export { ApiError }

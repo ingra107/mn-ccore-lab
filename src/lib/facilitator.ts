@@ -21,12 +21,3 @@ export function getMeetingFacilitator(meetingDate: string): string | null {
   return ROTATION_ROSTER[hash % ROTATION_ROSTER.length]
 }
 
-/**
- * Get next N facilitators for upcoming meetings.
- */
-export function getUpcomingFacilitators(meetingDates: string[]): { date: string; slug: string }[] {
-  return meetingDates.map(date => ({
-    date,
-    slug: getMeetingFacilitator(date) || ROTATION_ROSTER[0],
-  }))
-}
