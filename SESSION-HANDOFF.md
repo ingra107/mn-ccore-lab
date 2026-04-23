@@ -1,536 +1,98 @@
-# Session Handoff — 2026-04-23
+# Session Handoff — 2026-04-23 (late evening)
 
-> Last worked: **Whole-hub /simplify sweep.** Two parallel agents on
-> isolated branches (simplify half = clarity/dedup/dead-code; perf
-> half = render/query/bundle/deps) merged into main. **-5,353 lines
-> net, 22 files deleted, 24 commits.** Build + inspection both green
-> (149 passed / 2 skipped / 0 failed, 10.6 min). Deployed
-> `18f2aea6.mn-ccore-lab.pages.dev`. HEAD `6e431eaa` on main.
+> Last worked: **GH bug sweep + Overview refocus + Slack-parity ship.**
+> 7 bugs closed (#26-#27, #29-#33), 5 deploy rounds. Claude Design
+> round-3 packaged with 174 PNGs + 30 WebM videos at
+> `review/post-track-a-2026-04-23/` and brief at
+> `docs/design-briefs/2026-04-23-first-landing-utility.md`. Nick is
+> relinking the codebase in Claude Design integration; tickets
+> inbound next session.
 >
-> Simplify highlights: 22 dead components/pages/hooks deleted (all
-> 0-caller verified), 17 unused mutation hooks pruned, 18 `lib/api.
-> ts` fetch helpers + 9 mutation wrappers removed, duplicate date
-> formatters consolidated to Rule 6. Perf highlights: AuthContext +
-> UndoToast context-value memo, `env.DB.batch()` for @mention
-> notification inserts, `/api/digest?with_relevance=true` N+1 fix
-> (20 → 1 query), cached `isProductionVisible` localStorage read,
-> dropped unused deps `tailwindcss-motion` + `@tiptap/extension-
-> mention`. One duplicate commit (`5758ddd8` ≈ `d2502098`) landed on
-> both branches mid-run — harmless no-op at merge.
->
-> **Before (2026-04-23 AM): Capture infrastructure — Claude Design
-> round 4.** CF Access + `VITE_REQUIRE_AUTH=1` broke the screenshot
-> pipeline (all portal captures were Sign-in pages). Added
-> `CAPTURE_BASE_URL` env + fake-JWT cookie helper
-> (`tests/helpers/capture-auth.ts`) + three new specs + 5 new hero
-> surfaces. Bundle shipped: `review/claude-design-2026-04-22-full-r4
-> .zip` (57MB / 119 PNGs + 15 MP4s + 15 GIFs). Round-4 feedback
-> landed; 29 tickets shipped across today, including prod fixture
-> purge (174 rows + ~2,300 child records removed from D1).
->
-> **Before that (2026-04-22 → 2026-04-23): Audit r7 + GH-issue sweep.**
-> B-visual contrast 37 → 0 across 204 combos. Closed 14 in-app GH
-> bug reports (#8, #10, #14-22, #23, #24, #25). Bulk-reassigned 602
-> tasks → `nick-ingraham`. See CHANGELOG.md.
+> Deploy: `d76a60a0.mn-ccore-lab.pages.dev`. HEAD `2ef6cc4` on main.
 
-## 📖 Session bootstrap — read these in order before writing anything
+## What shipped today (5 deploy rounds, 30+ commits)
 
-1. **This file** (you're here). Current gate, gotchas, commit, next action.
-2. **`PROJECT.md`** — frontmatter `next_action` is canonical.
-3. **`LAUNCH-CHECKLIST.md`** — launch work complete; only RESEND_API_KEY (optional) remains.
-4. **`CLAUDE.md`** — operating guide. Design system + palette + sync model + rules.
-5. **`REFERENCE.md`** — API endpoints + D1 table list.
-6. **`CHANGELOG.md`** top entry — Phase 37 full record.
-7. **`docs/OBSERVABILITY.md`** — `/api/health` + runbook.
+**Round 1 — Tier-1 bug fixes + Track A first-landing hoists**
+- **#26** `Revisions` project-stage added between Submitted and Accepted. Cross-repo: brain.db `enums.py` canonical 7→8 + aliases; Hub `PROJECT_STAGE_VALUES` + 6 `STAGES` arrays + 2 `stageColors` maps + `ApiStage` union. CSS `--stage-fill-revisions: #5b4fa8`.
+- **#31** PI name consistency via existing `displayName(slug, tier)` from `src/lib/nameUtils.ts` (replaced 4 ad-hoc `.split(' ')` sites in Projects / ProjectCard / Manuscripts / Grants portal). **K23 IHCA data fix:** `pi nick→nate-mesfin`, `category nate→lab`.
+- **#30** Notes/Comments tab restructure (Option B, user-chosen). ProjectDetail: `Overview | Tasks | Notes | Comments | Activity | Revisions | Literature`. `ProjectUpdateFeed` heading + placeholder + empty-state text renamed "Project Updates" → "Notes".
+- **#32** CreateTaskModal default assignee = current user via `useAuth()` + `emailToSlug()`. Plain `<select>` replaced with `InlineAssigneePicker` (typeahead + keyboard nav). `GlobalQuickAdd` + `MeetingDetail` hardcoded `'nick-ingraham'` fallbacks → `emailToSlug(user.email)`.
+- **Track A §A1** New inline `OverviewLandingCard` on ProjectDetail. Description `whiteSpace: pre-wrap`. `KeyLinksEditor` hoisted from Details card (~500px down).
+- **Track A §A2** New `TodayHero` 2-col block (Overdue | Due Today) on MyTasks above Focus Next.
 
-## Gate — all green as of commit `6e431eaa` (deployed `18f2aea6`)
+**Round 2 — Overview refocus (Nick feedback: "timeline is a big waste of space")**
+- Project Timeline deleted (157 lines, dead code).
+- OverviewLandingCard restructured to 2-col grid:
+  - Left 2/3: **Open Tasks** — ALWAYS visible with `+ Add task` CTA. Max 5 rows sorted by due date. Empty state: "No open tasks. Add one."
+  - Right 1/3: Key Links (top) + Recent Activity (bottom, compact row-height).
+  - Bottom full-width: Quick compose (Note/Comment toggle + textarea + Cmd+Enter send).
 
-| Check | Result |
-|---|---|
-| `npm run build` (local) | ✓ clean, TypeScript + Vite both pass |
-| Inspection (full suite, post-simplify) | **149 passed / 2 skipped / 0 failed** in 10.6 min |
-| `/api/health` (live prod) | 200 ok, 602 tasks / 64 projects / 19 team / ~74ms (pre-simplify baseline; endpoint untouched) |
-| Massive audit — B-visual | 204 PASS / 0 BUGS across 34 pages × 6 viewport+theme combos (r7, 2026-04-23 — pre-simplify; re-run after prod propagates) |
-| `/og/team/nick-ingraham` | 200 `image/svg+xml`, Cache-Control `max-age=3600` |
-| `/api/version` Cache-Control | `public, max-age=10, s-maxage=10` (edge-cached) |
-| Open GH bug reports | **0** (11 closed in r7 sweep) |
-| Mobile smoke (Pixel 5) | 2/2 ✓ (Phase 37 baseline; re-run optional after deploy) |
-| Desktop journey | 1/1 ✓ (Phase 37 baseline; re-run optional after deploy) |
-| Deep-audit (14 suites) | 14/14 clean, 0 bugs (Phase 36 baseline; re-run optional after deploy) |
+**Round 3 — #12 + #11 + #10 polish**
+- **#12** Description auto-linkify. New `src/lib/urlClassify.ts` (extracted `classifyUrl` + added `shortLabelForUrl`). New `src/components/LinkifiedText.tsx`. KeyLinksEditor imports from shared lib.
+- **#11** Work-on single-click. Project pill on `TaskGridView` rows is now `<Link>` to `/portal/projects/:slug`, using `projectMap` for actual title (not slug regex). TODAY.md pattern.
+- **#10** Plain `<select>` sweep. CreateProjectModal + CreateDecisionModal → InlineSelect / InlineAssigneePicker. CreateProjectModal STAGES include Revisions; CATEGORIES trimmed to 4 canonical (was 9 with legacy drift).
 
-Rerun massive audit B-visual: `npx tsx scripts/massive-audit/run.ts --section=B` (~8 min, runs against live prod)
-Rerun gate: `npx tsx scripts/pre-flight/00-orchestrator.ts`
-Rerun axe light: `npx tsx scripts/pre-flight/persona-axe.ts --light`
-Rerun deep-audits: `for f in scripts/deep-audit/0*-*.ts scripts/deep-audit/1[0-5]-*.ts; do npx tsx "$f" 2>&1 | tail -2; done`
-Rerun mobile smoke: `npx playwright test --config=playwright.config.mobile.ts`
-Rerun journey smoke: `npx playwright test --config=playwright.config.phase36.ts`
+**Round 4 — Legacy slug root-cause fix (Nick: "is that a bandaid")**
+- **Root cause:** brain.db had 532 tasks with `assignee='nick'` (Nick's CLI shorthand). `hub_payload.py` passed them unchanged to D1, bypassing Hub API `team_members` validation (Rule 20).
+- **PB fix:** added `TEAM_SLUG_ALIASES` + `canonicalize_team_slug()` to `scripts/db/enums.py`. `scripts/db/sync/hub_payload.py` now routes outbound assignees through canonicalizer at both push sites (record-path line 286, item-path line 558).
+- **brain.db migration:** 532 rows `assignee='nick'` → `'nick-ingraham'`. (D1 10 rows fixed earlier.)
+- **Hub revert:** removed read-side `canonicalSlug()` bandaid from `team.ts` + `MyTasks.tsx` + `emailSlug.ts`. If `nick` reappears in D1, UI renders literally — signal, not silent fix.
+- **Folder-link UX:** `mnccore://` protocol has no Windows handler → clicks were silent. Now non-http links copy raw path to clipboard + toast "Path copied — paste in Win+R or Explorer." Protocol nav still fires fire-and-forget. Applies to KeyLinksEditor + LinkifiedText.
 
-## What's new since the previous handoff
+**Round 5 — Slack-parity (#13 + #14 + #15)**
+- **#13 Unified search** extended 6 → 14 entity types. New: notes (project_updates), task notes (task_updates), task comments, decisions, files, action items, publications, grants. Return cap 20→50. Completed action-items scored -2. Projects now searches `description`; meetings searches `notes` body; tasks+projects filter `deleted_at IS NULL`. SearchPage `typeConfig` extended with icons.
+- **#14 Files tab** on ProjectDetail (8 tabs now). `FileUpload` reused at `entity_type='project'`. Drag-drop → R2 presigned upload. Filenames searchable via #13.
+- **#15 Live presence.** New `src/hooks/usePresence.ts` — broadcasts 15s pings on hub-realtime WS `mnccore` room; tracks peers locally with 45s staleness; sends `presence-leave` on unmount. New `src/components/PresenceAvatars.tsx` avatar stack + green dot + "N viewing" count. Wired into ProjectDetail header next to WatchButton.
 
-**Capture infrastructure — Claude Design round 4 (2026-04-23, commit
-`00aea896`).** Delivered via `review/claude-design-2026-04-22-full-r4.zip`.
+## Additional packaging
 
-- **Two post-launch blockers fixed.** CF Access now gates prod
-  `/portal/*` — specs hit Google Sign-in instead of the Hub; fixed
-  via `CAPTURE_BASE_URL=<preview>` env plumb-through on all three
-  specs. `VITE_REQUIRE_AUTH=1` (flipped 2026-04-21) shows a branded
-  sign-in splash even on ungated preview hosts; fixed via
-  `tests/helpers/capture-auth.ts` injecting a fake `CF_Authorization`
-  JWT cookie (`useAuth` decodes client-side only, no signature
-  verification).
-- **Three new capture specs** — `capture-scroll-chunks.spec.ts` (12
-  long pages × viewport-sized chunks), `capture-theme-light.spec.ts`
-  (8 pages with `test.use({ colorScheme: 'light' })`),
-  `capture-rich-states.spec.ts` (Network WebGL 6-state + 6 modals +
-  Publications carousel + Dashboard customize).
-- **5 new hero surfaces** — portal-trajectory (gated chrome vs
-  public), contact, meeting-detail, meeting-prep, publication-detail.
-- **`regen-design-bundle.sh` now 7 steps**, `set -e` dropped (single
-  focus-ask flake no longer halts video capture), video-copy fallback
-  after step 7 (Playwright videos finalize post-`context.close()`
-  so the spec's `afterEach` hook often sees empty attachments),
-  work-machine `ffmpeg` path added to candidates.
-- **No app code changed.** Prod still on `a519de60` (r7 deploy).
+- Brief `docs/design-briefs/2026-04-23-first-landing-utility.md` rewritten post-Round-5 with 3-priority ask (validate shipped, find Airtable+Slack gaps, operational-not-editorial audit) + 9 guardrails + design system constraints.
+- `review/post-track-a-2026-04-23/` captures: 174 PNGs + 30 WebM (47 hero, 79 scroll-chunks, 20 rich-states, 8 focus-asks, 20 light-mode, 30 interaction videos).
+- `tests/capture-for-design.spec.ts` now accepts `CAPTURE_BASE_URL` env — captures bypass CF Access gate via preview-hash URL.
+- `scripts/local-db-bootstrap.ts` now skips `schema-v43.sql` + `schema-v48-index-reconcile.sql` on fresh bootstrap (both incompatible with clean DB) — `npm run test:local` unblocked.
 
-See `CLAUDE.md` rule 33 for the updated capture workflow.
+## Cross-repo changes (PB side)
 
-**Audit r7 + GH-issue sweep (2026-04-22 → 2026-04-23).** Three commits
-across two days:
+All in `/c/Users/ingra107/Peripheral-Brain/`:
+- `scripts/db/enums.py` — `PROJECT_STAGE` canonical 7→8 (+ Revisions aliases), new `TEAM_SLUG_ALIASES` + `canonicalize_team_slug()`.
+- `scripts/db/sync/hub_payload.py` — imports canonicalizer, applies at both outbound assignee sites.
+- `Context/Topics/shared-schema-registry.md` — registered Revisions in projects.stage.
+- `Context/Decisions/2026-04-23-project-stage-revisions-added.md` — decision doc with rationale + color choice + rollback.
+- `data/brain.db` — 532 `tasks.assignee='nick'` → `'nick-ingraham'`.
 
-- **`d366464` — r7 audit + 4 GH issues.** Massive audit B-visual
-  contrast 37 → 0 across 204 combos, six iteration rounds. Closed #18
-  (Ideas row overlap), #20 (avatar → my-items), #22 (hover gap), #24
-  (date picker portal). Plus systemic `--stage-fill-*` token family,
-  `--ink-hint` light bump 0.62→0.68, `--gold-on-emphasis` token,
-  transform-only mount animations across `animations.ts` + `.fade-in-up`
-  + PageTooltip + 3 motion.div variants, compound-opacity removal on
-  MetricCard / Deadlines / Decisions / MyItems cards. Bulk reassigned
-  602 tasks → `nick-ingraham` via batch API.
-- **`394fbd7` — 3 more GH.** #17 Research dropdown opaque bg (killed
-  backdrop-filter bleed-through), #19 CLIFMap rewrite (regional card
-  grid replaces blobby SVG), #25 1-click complete (circle completes
-  on bare click, Ctrl/⌘+click selects for bulk).
-- **`d7091ec` — final 4 GH.** #8 mobile photo attach (removed
-  `capture="environment"` so picker shows library), #10 notes-vs-
-  comments Overview embed + legend, #16 Network `minHeight`→`height`
-  so GraphCanvas sizes right, #23 dropped TaskGridView minHeight
-  reservation.
+## Quality gate
 
-**Superseded:** CLAUDE.md Rule 16 (TaskGridView parentRef minHeight
-must be stable) — r7 #23 removes the reservation entirely. Loading
-skeleton now bounds CLS, so short task lists no longer leave dead
-space below. The Rule should be updated/removed on next CLAUDE.md pass.
+- Build: `tsc -b && vite build` green
+- `npm run test:local` Miniflare 5/5 pass
+- `/api/health` 65-90ms, 606 tasks / 69 projects / 19 team_members
+- Smoke: 15/15 public routes PASS; portal routes CF-gated as expected
 
-**Previously (Post-Phase-37 bug-fix sprint, 2026-04-21).** Four
-follow-up commits after launch closing class bugs surfaced via in-app
-bug reports:
+## Known issues / follow-ups
 
-- **emailToSlug class fix (`8ae27f9`)** — 17 call sites rewired. `email.
-  split('@')[0]` produced the wrong slug (`ingra107` instead of the
-  canonical `nick-ingraham`). New util at `src/lib/emailSlug.ts` with an
-  `EMAIL_PREFIX_TO_SLUG` LUT — client mirror of `api/helpers.ts`. Closed
-  issues #20 (user profile pointed to wrong slug) + #21 (MyTasks filter).
-- **Stage UI↔API mapper (`a8537ad`)** — `toApiStage()` in `src/lib/
-  stageNormalize.ts`. UI strip shows 6 stages but API stores 7 (brain.db
-  canonical: 'Data Analysis'/'Submitted'/'Accepted'). Clicking Analysis
-  or Review → 400 from API → optimistic revert. Mapper invoked on 4
-  submit paths. `Project.stage` type union widened to accept both UI +
-  API values. Bug reported via in-app modal on ADHERE-LPV Trial.
-- **JWT cookie fallback (`b0021c1`)** — `getAuthUser()` in `api/helpers.ts`
-  now reads the `CF_Authorization` cookie as fallback when the
-  `Cf-Access-Jwt-Assertion` header is absent. This matters because
-  CF Access is scoped to `/portal/*` only — all `/api/*` requests bypass
-  the CF Access proxy and never receive the assertion header. Without
-  the cookie path, every authed POST (bug reports, project edits, task
-  mutations) from the browser would 401.
-- **Visual bugs + container width (`b0021c1` + `89c00ad`)** — Ideas row
-  `height: 44px` → `minHeight` (research_area label was bleeding into
-  next row); same fix applied to DecisionsPage. Network page `height:
-  100vh` → `minHeight: 100vh` (allows scroll past canvas). MyTasks CLS
-  reservation tuned `calc(100vh - 320px)` → `420px`. Container width
-  standardized on `.content-container` (1440px) across MyTasks, Tasks,
-  Deadlines, DecisionsPage, Grants, Ideas (Ideas dropped PageLayout).
-  Closed issues #14, #15, #16, #18.
-- **Post-launch polish (`89c00ad`)** — Dashboard greeting "Ingra107" →
-  "Nicholas" (routes through `getPersonInfo(emailToSlug(email)).name`).
-  `useAuth` name fallback uses the same path. `getPersonInfo(slug)`
-  handles `@`-containing slugs via `emailToSlug`. CommandPalette "Show
-  My Tasks Only" keys on the current user's canonical slug. 4 zIndex
-  literals → CSS tokens. Likely closed #19 (Dashboard "horrendous").
+- **4 interaction capture tests failed** (`01-status-change-undo`, `08-date-picker` × desktop + mobile). Selectors drifted. Partial captures still produced; not blocking Claude Design review. Fix selectors next session.
+- **Presence only on ProjectDetail** — extend to TaskDetailPanel + MeetingDetail (hook is entity-agnostic).
+- **No per-type filter chips on SearchPage** — with 14 types, chip row at top would help narrow results.
+- **Typing indicators not yet** — hub-realtime WS could carry keystroke events; Slack-grade presence extension.
 
-Deploy: `65b166d7.mn-ccore-lab.pages.dev` on HEAD `a8537ad`.
+## What-to-do-first next session
 
-**Phase 37 — Portal URL Migration + launch go-live.** All 27 gated Hub
-routes migrated under `/portal/*` prefix so a single Cloudflare Access
-app destination (`mn-ccore-lab.pages.dev/portal/*`) gates the entire
-authenticated surface. Public marketing stays at root. `src/constants/
-paths.ts` is the single source of truth (`PATHS.dashboard`,
-`PATHS.project(slug)`, etc.); mirrored at `tests/helpers/paths.ts`.
-Legacy root paths redirect via `<Navigate>` shims in `src/App.tsx`
-placed outside `RequireAuth` so bookmark bounces happen pre-auth. 14
-tasks, subagent-driven; merged to `main` as `8600c32`. Prod deploy:
-`c5e46630.mn-ccore-lab.pages.dev` (HEAD `143c1db`).
+1. **Claude Design tickets arriving.** Nick relinking codebase post-handoff; triage incoming markdown tickets by severity, ship P1s same-day.
+2. Fix 4 interaction test selectors (low priority).
+3. Extend `usePresence` to TaskDetailPanel + MeetingDetail.
+4. Add per-type filter chips to SearchPage.
+5. Review CHANGELOG for entry I added (2026-04-23 late evening).
 
-**Cloudflare Access configured.** App targets
-`mn-ccore-lab.pages.dev/portal/*`. Policies: `UMN Team` (allow
-@umn.edu), `Nick Only` (allow nicholas.ingraham@gmail.com), `Audit
-Service Token` (service auth for `scripts/hub-audit.ts`). Public
-routes (`/`, `/team`, `/publications*`, etc.) remain open. `/api/*` is
-NOT gated by CF Access — X-API-Key + server-side `REQUIRE_AUTH` + JWT
-verify handle API auth.
+## Memory snapshot (agent-side, persists across sessions)
 
-**Launch secrets set** (Cloudflare Pages):
-`CF_ACCESS_TEAM_DOMAIN=peripheral-brain.cloudflareaccess.com`,
-`CF_ACCESS_AUD=47b7d48e...40139c`, `REQUIRE_AUTH=1`,
-`TEST_MODE_KEY=<32-char hex>`. JWT signature verification is now
-active (no longer decode-only). Client-side `VITE_REQUIRE_AUTH=1` in
-`.env.production` — unauthenticated users see branded RequireAuth
-splash. **GitHub Actions** secrets set for schema-drift CI:
-`CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID`. **Audit Service
-Token** active (`mn-ccore-lab-audit`) — local env vars
-`HUB_TEST_MODE_KEY`, `CF_ACCESS_CLIENT_ID`, `CF_ACCESS_CLIENT_SECRET`
-set on both work + home machines.
+- `feedback_nick-design-philosophy.md` — 9 guardrails
+- `project_hub-vision-airtable-slack-hybrid.md` — product vision verbatim
+- `project_d1-sync-flow.md` — sync architecture
+- `reference_claude-design-link-rescan.md` — CD integration note
 
-**Phase 36e — Claude Design handoff (round 1 + round 2 complete).**
-Nick ran the Hub through Claude Design against HEAD `ef604db`; it
-returned 33 tickets in round 1, then 43 more in round 2. 32/33 round-1
-tickets shipped (P2-14 Post-Award Milestones is a data-entry ask).
-43/43 round-2 tickets shipped across `ff7b766a` → `36e0ca34` →
-`cfc00ab0`. Bundle still at `docs/design-handoff-2026-04-20/`.
+## Session-end state
 
-**Phase 36d — design sprint.** 12 brand-level improvements shipped in
-one session after reviewing Anthropic's new Claude Design product
-(launched 2026-04-17). Added reusable primitives for the Hub's visual
-identity: `HeartbeatLine` (animated ECG trace as the brand signature),
-`HeartbeatDivider`, `HermesMark` (Mercury alchemical glyph for the AI
-assistant), `CategoryIcon` (lungs / flask / heartbeat / cap — one per
-category), `EmptyStateArt` (8 lab-aesthetic line illustrations),
-`PhaseReleaseBanner` (what-shipped card), `RequireAuth` (branded sign-
-in splash, extracted from App.tsx). Rewrote `Pulse.tsx` as a cinematic
-6-scene kiosk with Ken Burns zooms + ambient heartbeat. New
-`functions/og/[type]/[slug].ts` Cloudflare Function generates per-
-route SVG OG share cards for project / team / meeting routes (edge-
-cached 1h via `public/_headers`). Hermes peer-avatar swapped into
-`Avatar` via `slug='claude-ai'`; generated geometric portraits replace
-plain colored initials for members without photos. Mobile top bar
-shows the 28×28 brand mark.
-
-**Plus:** hotfix for `/api/bug-report` so it no longer returns 401
-pre-launch (gate now piggybacks on `REQUIRE_AUTH=1`, auto-engages at
-team launch).
-
-**Capture infrastructure for Claude Design** (all gitignored output):
-- `scripts/claude-design-brief.txt` — brand brief (tokens, motif path,
-  ethos, voice). Paste into Claude Design to set up the design system.
-- `tests/capture-for-design.spec.ts` +
-  `playwright.config.design-capture.ts` — full-page screenshots, pre-
-  scrolls every page to trigger lazy loads. Run:
-  `CAPTURE_DEVICE=desktop npx playwright test --config=playwright.config.design-capture.ts --project=desktop`
-- `tests/capture-interactions.spec.ts` +
-  `playwright.config.interactions-capture.ts` — 15 signature
-  interactions as WebM video + PNG keyframe triplets. Ready for when
-  we want real-time demos for Claude Design. Run:
-  `npx playwright test --config=playwright.config.interactions-capture.ts`
-
-**Phase 36c — 4-auditor deep audit + 11 P0/P1 fixes.** `/portal/team/:slug`
-routing (logged-in users keep portal chrome), mobile tab-bar buffer,
-schema-v46 indexes, `/api/version` edge-cache, JWT `importKey` cache,
-TaskDetailPanel focus trap + opener restore, `.hover-badge` a11y,
-sidebar `aria-current`, PageTooltip overflow, welcome banner auto-
-stale, dead code + lazy bundle, `pi-dashboard` 'Active' bug, slug
-cleanup, test_delete_* residue.
-
-**Phase 36b** — team slug rename. All 19 members → `preferred_name-last_name`.
-2,312 D1 row updates + 239 code replacements + brain.db side updates +
-EMAIL_PREFIX_TO_SLUG LUT in `api/helpers.ts`. Nick's real UMN address
-(`ingra107@umn.edu`) replaced wrong guesses (`ningraha@`, `sandb029@`)
-in PI allowlist.
-
-**Phase 36c** — 4-auditor deep audit (UX / code / a11y / data). 11 P0+P1
-fixes shipped in one sprint:
-
-- Routing: `/portal/team/:slug` keeps logged-in users in portal chrome
-  (clicking a teammate dropped them into public marketing site since
-  2026-03-24).
-- Mobile: tab-bar buffer 1rem→3rem so calendar/project-detail bottom rows
-  clear the bar.
-- Data: 13 leftover Phase 36b old slugs cleaned. ~160 `test_delete_*`
-  rows wiped from 6 tables that lack soft-delete.
-- D1 perf: schema-v46 added 7 missing indexes (50-200ms drop on hot
-  endpoints).
-- Server perf: `/api/version` edge-cached (10s) — drops ~95% polling
-  traffic. JWT `importKey` cached per kid — saves 5-15ms per auth.
-- Code bug: `pi-dashboard.ts` filtered `status='Active'` (caps) —
-  silently empty post-R10. Fixed.
-- A11y: TaskDetailPanel focus trap re-queries focusables per Tab + snaps
-  back when async-mounted regions leak focus + restores opener focus on
-  close. `.hover-badge` now `visibility: hidden` (no phantom SR
-  announcements). Sidebar links get `aria-current="page"`.
-- UX: PageTooltip `nowrap` removed → max-width clamp. WelcomeBanner
-  auto-stales after 7 days.
-- Bundle: dead `EnhancedCollaborationNetwork.tsx` (654 lines) deleted.
-  TaskBoard/StandUp/Timeline views lazy-loaded in Tasks + MyTasks.
-- Render: `CalculationsRow` runs single pass via `useMemo`.
-
-## What to do FIRST in the next session
-
-**The Hub is live. The big open work is done.** Design handoffs
-(round 1 + round 2) are shipped. CF Access is configured. Portal URL
-migration is deployed. All launch secrets are set. The only
-outstanding *blocker* is that Nick still needs to share the URL with
-the team — that's a Nick action, not a code action.
-
-**If Nick wants to actually tell the team:** send an email/slack
-announcing `mn-ccore-lab.pages.dev` + the sign-in flow. First-time
-visitors to `/portal/*` will hit CF Access → @umn.edu login. Public
-marketing pages (`/`, `/team`, `/publications*`) stay open.
-
-**Small optional follow-ups, in roughly decreasing order of value:**
-
-1. **RESEND_API_KEY** (optional, postponable indefinitely). Signing up
-   at [resend.com](https://resend.com) + adding `RESEND_API_KEY` to
-   Cloudflare Pages env vars activates the daily coordinator email
-   digest cron (`api/routes/digest-email.ts`). Without it the preview
-   endpoint `/api/digest-preview?member=nick` still works.
-2. **Post-launch monitoring.** Watch `/api/health` + schema-drift CI.
-   External uptime monitor is wired but optional (see
-   `docs/OBSERVABILITY.md`).
-3. **Round-1 P2-14 — Post-Award Milestones populated state.** Data-
-   entry ask: seed `grant_milestones` rows for Funded grants. Not a
-   code task.
-4. **30-90 days post-launch:** evaluate dropping the legacy root-path
-   redirect shims in `src/App.tsx` once analytics confirm no traffic
-   on legacy paths. Remove `LEGACY_REDIRECTS` from `paths.ts`.
-
-**If Nick reports a bug** → reproduce with a deep-audit suite before
-fixing (`scripts/deep-audit/*.ts`).
-
-**If Nick wants to use Claude Design for more assets** (pitch deck,
-poster, one-pager) — brief at `scripts/claude-design-brief.txt`; 31
-fresh page screenshots at `review/claude-design-20260420/`
-(gitignored, regen via capture config); 15 signature interactions
-ready to capture via `tests/capture-interactions.spec.ts` when
-needed.
-
-## Things that WILL surprise you if you don't know
-
-- **All gated routes now live under `/portal/*`.** `src/constants/
-  paths.ts` (+ `tests/helpers/paths.ts` mirror for tests) is the single
-  source of truth. Internal nav uses `PATHS.dashboard`,
-  `PATHS.project(slug)`, etc. Legacy root paths (`/dashboard`,
-  `/projects/:slug`, ...) redirect via `<Navigate>` shims in
-  `src/App.tsx` placed outside `RequireAuth` so bookmark bounces
-  happen pre-auth. Don't add new gated routes at root — always
-  `/portal/<path>` and extend `paths.ts`.
-- **CF Access gates `/portal/*` only.** Public marketing (`/`,
-  `/team`, `/publications*`, etc.) remains open. `/api/*` is NOT gated
-  by CF Access — auth is enforced server-side via X-API-Key + JWT
-  verify + `REQUIRE_AUTH=1`.
-- **JWT signature verification is ACTIVE.** `CF_ACCESS_TEAM_DOMAIN` +
-  `CF_ACCESS_AUD` are set in prod, so `api/jwt-verify.ts` validates
-  CF Access JWTs against JWKS. No longer decode-only.
-- **`REQUIRE_AUTH=1` and `VITE_REQUIRE_AUTH=1` are BOTH ACTIVE.**
-  Server rejects unauth POST/PUT with 401; client shows branded
-  `RequireAuth` splash for unauthenticated users on `/portal/*`.
-- **Brand primitives live in `src/components/` — use them, don't roll
-  your own.** `HeartbeatLine` / `HeartbeatDivider` for the lab's ECG
-  motif. `HermesMark` for any AI-assistant surface (icon + avatar
-  variants). `CategoryIcon` for any project-category indicator (replaces
-  6px dots). `EmptyStateArt` for lab-aesthetic empty states. Passing
-  a `slug` prop to `Avatar` triggers HermesMark auto-swap when slug
-  === 'claude-ai'.
-- **Per-route OG cards at `/og/<type>/<slug>`.** `functions/og/[type]/
-  [slug].ts` generates SVG cards from D1. Set `ogImage: '/og/project/
-  ...'` when calling `usePageMeta` for any page that wants a branded
-  share preview. `public/_headers` forces `image/svg+xml` content-type.
-- **`getAuthUser()` + `isPiRequest()` are async.** Every caller must
-  `await`. JWT signature verification via JWKS in `api/jwt-verify.ts`
-  with module-level 1h JWKS cache + per-kid CryptoKey cache. Without
-  `CF_ACCESS_TEAM_DOMAIN` env var, falls back to decode-only with one-
-  shot warn — keeps pre-launch PI-only mode working.
-- **PI allowlist lives in `lab_settings.pi_emails`** (JSON array in D1),
-  read via `getPiEmails(env)` with 5-min cache + `PI_EMAILS_FALLBACK`
-  constant in `api/helpers.ts`. To add a PI: SQL UPDATE on
-  `lab_settings.pi_emails` row, no deploy.
-- **`actorSlug(email)` maps via `EMAIL_PREFIX_TO_SLUG` LUT.** Adding a
-  new team member requires THREE updates: D1 `team_members` row,
-  `src/data/team.ts` static fallback, and `EMAIL_PREFIX_TO_SLUG` entry.
-- **Email prefix is NOT a team slug — use `emailToSlug()`.** Client-side
-  mirror of the same LUT lives at `src/lib/emailSlug.ts`. `email.split(
-  '@')[0]` returns `ingra107` but the canonical slug is `nick-ingraham`.
-  Every site that turns an email into a slug (profile links, MyTasks
-  filter, NotificationBell, dashboard cards, CommandPalette "my tasks"
-  toggle, CreateProjectModal default PI, etc.) must route through
-  `emailToSlug`. This is a LUT update on BOTH sides when adding a member.
-- **UI stage labels differ from API values. Route through
-  `toApiStage()` on submit.** UI strip in `src/lib/stageNormalize.ts`
-  shows 6 labels but API stores 7 (brain.db canonical). Submit paths
-  must map `'Analysis' → 'Data Analysis'` and `'Review' → 'Submitted'`
-  via `toApiStage()` before the mutation hits the wire, or the API's
-  `PROJECT_STAGE_VALUES` guard 400s and the optimistic update silently
-  reverts. Display paths use `normalizeStage()` for the reverse fold.
-- **`getAuthUser()` reads JWT from header OR `CF_Authorization` cookie.**
-  `/api/*` is OUTSIDE the CF Access scope (CF Access gates `/portal/*`
-  only), so the `Cf-Access-Jwt-Assertion` header isn't set on API
-  requests. The browser sends the `CF_Authorization` cookie on all
-  same-domain requests regardless of proxy scope — that's the fallback
-  path, and it's required for every authed POST from the browser.
-- **All 19 team slugs are `preferred_name-last_name`** (`nick-ingraham`,
-  `emma-bromley`, etc.). Phase 36b D1 + brain.db migration. Don't
-  reintroduce the old short forms.
-- **`/portal/team/:slug` is the in-portal route**; `/team/:slug` stays
-  for the public marketing site. Sidebar + CommandPalette navigate to
-  the portal one. MemberPage + TrajectoryPage detect context via
-  `useLocation`.
-- **`api/index.ts` is Hono.** Do NOT add routes via `url.pathname === ...`
-  comparisons — use `app.get/post('/api/...', handler)`. Middleware
-  chain: OPTIONS → test-mode swap → API-key → authed-user → PI gate
-  (`/api/pb/*` GET) → REQUIRE_AUTH (POST/PUT) → version-bump-on-success.
-- **`/api/version` is edge-cached for 10s.** Cross-tab realtime
-  invalidation latency is ~25s end-to-end (poll interval 15s + cache
-  TTL 10s) — acceptable, but don't shorten the cache TTL without
-  understanding the Workers-quota tradeoff.
-- **TaskDetailPanel has touch handlers (mobile swipe-to-dismiss) AND a
-  focus trap that snaps focus back into the panel.** Don't add nested
-  touch-gesture elements OR auto-focusing async-mounted children
-  without re-checking these.
-- **`--slate`, `--teal`, `--gold`, `--maroon`, `--orange`, `--green`**
-  are literal sRGB hex (NOT OKLCH) in both modes. Don't restore to
-  OKLCH without reading CLAUDE.md Palette section.
-- **`VITE_REQUIRE_AUTH`** env var gates client sign-in wall.
-  **`REQUIRE_AUTH`** server secret gates writes. Flipping either ON
-  without CF Access configured locks everyone out.
-- **`/api/pb/*` returns 403 to non-PI** — intentional. API keys +
-  `lab_settings.pi_emails` bypass.
-- **`/api/bug-report` is open pre-launch.** Gate piggybacks on
-  `REQUIRE_AUTH=1` — same flag that locks writes. Auto-engages at
-  team launch so strangers can't spam GitHub Issues. Don't add a
-  standalone gate here.
-- **Deploy is manual via wrangler.** No git push → deploy webhook.
-  `npm run build && npx wrangler pages deploy dist --project-name mn-ccore-lab`
-- **brain.db ↔ D1 sync is bidirectional.** `sync_d1_push` translates
-  canonical `task_{ulid}` PKs back to Hub hex IDs via `entity_aliases`.
-
-## Closed: consultant + audit "P0/P1" lists
-
-- All 5 consultant nice-to-haves: Phase 36 (`CHANGELOG.md`).
-- All 11 deep-audit P0/P1: Phase 36c (`CHANGELOG.md`).
-- All Phase 35 launch blockers: Phase 35 (`CHANGELOG.md`).
-- Round-1 design handoff: 32/33 tickets shipped (P2-14 is a data-entry ask).
-- Round-2 design handoff: 43/43 tickets shipped (`CHANGELOG.md` round-2 entry).
-- Phase 37 Portal URL Migration: 14/14 tasks shipped (`CHANGELOG.md` Phase 37).
-- Launch secrets + CF Access config: all set 2026-04-21.
-
-## Scaffolded — not yet live
-
-None. Everything in the codebase is deployed.
-
-## Open audit P2/P3 (not blocking, queued for later)
-
-From the 4-auditor deep audit (full reports were generated under
-`review/audit-newteammate/` + `review/a11y-deep/` — gitignored, regen
-via the audit specs in `tests/`):
-
-- **Server perf:** `tasks.project_id` storage canonicalization (always
-  store slug, drop `slug OR id` join) — saves ~80-150ms on
-  pb-sector.handleCommandCenter. `LIKE '%' || slug || '%'` joins on
-  pi-dashboard need a `publication_authors` join table. SQLite FTS5 on
-  tasks/projects/ideas/comments for /api/search. `RETURNING *` on all
-  single-row writes to drop the post-write SELECT round-trip.
-- **A11y:** dashboard drag-to-reorder is mouse-only (no keyboard
-  alternative for RGL grid). Subtask "checkboxes" are `<div onClick>`
-  (no role=checkbox).
-- **Data integrity:** brain.db `entity_aliases` has zero live `hub_slug`
-  rows (all retired same-day) — `sync_d1_pull_new` is the suspect.
-  brain.db has prefix-mismatch on 33/62 projects (`clif-pf-v-sf-...` vs
-  D1 `pf-v-sf-...`) — sync may dup. brain.db `d1_tasks` mirror is 13
-  days stale; `d1_action_items` 24 days. Airtable push has been
-  returning 422 all day (`INVALID_MULTIPLE_CHOICE_OPTIONS … "Mentees"`
-  / `… "CLIF"`).
-- **UX:** dashboard `<h1>` is "Good evening" (decorative, not
-  informative). 11+ touch targets <44px on mobile (CLAUDE.md says 36px
-  is the floor — already below WCAG 2.5.5 AAA).
-- **Misc:** 22 stale `nick-ingraham` test slug refs in spec files (now
-  CORRECT after rename — but test descriptions reference old context).
-
-## Key files touched Phase 37
-
-New path constants:
-- `src/constants/paths.ts` — single source of truth for every gated URL (`PATHS.dashboard`, `PATHS.project(slug)`, etc.) + `LEGACY_REDIRECTS`.
-- `tests/helpers/paths.ts` — plain-string mirror so tests don't import the prod bundle.
-
-Routing:
-- `src/App.tsx` — 29 new `/portal/*` canonical routes under `RequireAuth + PortalLayout`; `<Navigate>` redirect shims outside `RequireAuth` for legacy root paths; `NavigateWithParams` helper for parametric redirects.
-
-Nav + links migrated through `PATHS`:
-- `src/components/Sidebar.tsx`, `MobileTabBar.tsx`, `CommandPalette.tsx` (22 nav sites).
-- `src/hooks/useKeyboardShortcuts.ts`, `src/hooks/useProjectKeyboardNav.ts`.
-- ~50 `<Link>` + template-literal refs across 30+ components.
-- `src/hooks/useRecentlyViewed.ts` — pathname pattern-matching.
-- `api/routes/search.ts` — backend search link URLs.
-
-Client env:
-- `.env.production` — `VITE_REQUIRE_AUTH=1`.
-
-Tests + audits:
-- 16 test specs + 5 journey specs + 27 audit scripts migrated via `tests/helpers/paths.ts` or hardcoded `/portal/` prefix.
-
-## Key files touched Phase 36d
-
-New reusable primitives:
-- `src/components/HeartbeatLine.tsx` — animated ECG motif (live/slow/static).
-- `src/components/HeartbeatDivider.tsx` — quiet section divider wrapper.
-- `src/components/HermesMark.tsx` — Mercury glyph for AI assistant.
-- `src/components/CategoryIcon.tsx` — lungs/flask/heartbeat/cap glyphs.
-- `src/components/EmptyStateArt.tsx` — 8 line illustrations.
-- `src/components/PhaseReleaseBanner.tsx` — dismissible shipped-list banner.
-- `src/components/RequireAuth.tsx` — branded sign-in splash (extracted from App.tsx).
-- `src/components/pulse/PulseScene.tsx`, `PulseMetric.tsx`, `PulseSparkline.tsx` — kiosk primitives.
-
-Rewrites + wiring:
-- `src/pages/Pulse.tsx` — cinematic 6-scene kiosk with Ken Burns + ambient heartbeat.
-- `src/components/Avatar.tsx` — `slug` prop triggers HermesMark for `claude-ai`; generated portrait for no-photo members.
-- `src/components/ProjectCard.tsx`, `ProjectComments.tsx` — use CategoryIcon + HermesMark.
-- `src/components/PortalLayout.tsx` — 28×28 brand mark in mobile top bar.
-- `src/hooks/useFavicon.ts` — email-prefix → canonical slug LUT so badge fires post-Phase-36b.
-- `src/hooks/usePageMeta.ts` — accepts `ogType` + `ogImage` options.
-- `src/pages/ProjectDetail.tsx`, `MemberPage.tsx`, `MeetingDetail.tsx` — per-page `ogImage` pointing at `/og/...`.
-- `src/pages/Dashboard.tsx` — renders `<PhaseReleaseBanner />` above WelcomeBanner.
-
-New Pages Functions + capture infra:
-- `functions/og/[type]/[slug].ts` — per-route SVG OG cards from D1.
-- `public/_headers` — forces `image/svg+xml` on `/og/*`.
-- `scripts/claude-design-brief.txt` — brand brief for Claude Design.
-- `tests/capture-for-design.spec.ts` + `playwright.config.design-capture.ts`.
-- `tests/capture-interactions.spec.ts` + `playwright.config.interactions-capture.ts`.
-
-Hotfix: `api/index.ts` — `/api/bug-report` gate now piggybacks on `REQUIRE_AUTH=1`.
-
-## Key files touched Phase 36c
-
-- `src/App.tsx` — `/portal/team/:slug` + trajectory routes added.
-- `src/components/Sidebar.tsx` — `aria-current="page"`, `/portal/team/...` link.
-- `src/components/CommandPalette.tsx` — `/portal/team/...` navigate.
-- `src/components/PortalLayout.tsx` — main pad-bottom 1rem → 3rem.
-- `src/components/PageTooltip.tsx` — drop nowrap, max-width, larger X.
-- `src/components/tasks/TaskDetailPanel.tsx` — focus trap fix + opener restore + title region tabIndex=-1.
-- `src/components/tasks/TaskGridView.tsx` — `.hover-badge { visibility: hidden }`, `CalculationsRow` memoized.
-- `src/components/NetworkSidebar.tsx` — type import switched to CollaborationGraph.
-- `src/components/EnhancedCollaborationNetwork.tsx` — DELETED (654 lines).
-- `src/pages/MemberPage.tsx`, `src/pages/TrajectoryPage.tsx` — `useLocation` for portal-vs-public link context.
-- `src/pages/ProjectDetail.tsx` — 100dvh + safe-area-inset-bottom.
-- `src/pages/portal/Tasks.tsx` (*deleted 2026-04-23 /simplify — route now redirects to `/portal/my-tasks`*), `src/pages/portal/MyTasks.tsx` — `lazy()` Board/StandUp/Timeline + Suspense.
-- `src/hooks/useOnboarding.ts` — `dismissed` auto-stales after 7 days.
-- `api/lib/version.ts` — Cache-Control: public, max-age=10.
-- `api/jwt-verify.ts` — importedKeyCache map.
-- `api/routes/pi-dashboard.ts` — `'Active'` → `'active'`.
-- `api/schema-v46.sql` (new) — 7 missing indexes.
-- `scripts/phase36b-slug-cleanup.sql` (new) — 13 slug leftovers + 4 commitments fix.
-- `scripts/test-residue-cleanup.sql` (new) — ~160 test_delete_* rows across 6 tables.
-
-## Git state
-
-Hub: `main` at `6e431eaa` (pushed to origin; clean). Deploy `18f2aea6.mn-ccore-lab.pages.dev`.
-PB: unchanged this session — see PB-side `work_status.md` for PB-specific state.
-
-Re-check before modifying: `git status --short` should be empty in both repos.
+- HEAD `2ef6cc4` pushed to origin/main
+- Deploy `d76a60a0.mn-ccore-lab.pages.dev` (prod alias)
+- PB main has `d4f97dee` (sync canonicalization) + `50cc5997` (Revisions stage)
+- 7 GH issues closed (#26 already closed, #27 #29 #30 #31 #32 #33 closed today with commit SHAs in comments)
+- Claude Design handoff complete — awaiting round-3 tickets from Nick

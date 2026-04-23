@@ -3,6 +3,68 @@
 
 > Historical phase records moved from CLAUDE.md to keep the operating guide focused on current state. Each section is a complete record of what shipped, decisions made, and scores achieved.
 
+## GH bug sweep + Overview refocus + Slack-parity (2026-04-23 late evening)
+
+**Headline.** 7 GH bugs closed (#26-#27, #29-#33), 5 deploy rounds, 30+ commits.
+Deploy `d76a60a0.mn-ccore-lab.pages.dev`; HEAD `2ef6cc4` on main. Claude
+Design round-3 packaged with 174 PNGs + 30 WebM videos.
+
+### Ship rounds
+
+**Round 1 — Tier-1 fixes + Track A first-landing hoists** (commits `f7b1bed` → `0af271f`)
+- **#26** Revisions project-stage between Submitted and Accepted. Cross-repo: brain.db `enums.py` PROJECT_STAGE canonical 7→8 + aliases (R&R / Revise and Resubmit / In Revisions). Hub: `PROJECT_STAGE_VALUES` Set, `ApiStage` union, 6 page `STAGES` arrays, 2 `stageColors` maps, CSS `--stage-fill-revisions: #5b4fa8`.
+- **#31** PI name consistency via existing `displayName(slug, tier)` from `src/lib/nameUtils.ts`. Retrofitted 4 ad-hoc `.split(' ')` sites. **K23 IHCA D1 data fix:** `pi nick→nate-mesfin`, `category nate→lab`.
+- **#30** Notes/Comments tab restructure (Option B, user-chosen). ProjectDetail: `Overview | Tasks | Notes | Comments | Activity | Revisions | Literature`. `ProjectUpdateFeed` heading + placeholder + empty-state renamed "Project Updates" → "Notes." DB tables unchanged.
+- **#32** CreateTaskModal default assignee = current user via `useAuth()` + `emailToSlug()`. Plain `<select>` → `InlineAssigneePicker`. `GlobalQuickAdd` + `MeetingDetail` hardcoded fallbacks → `emailToSlug(user.email)`.
+- **Track A §A1** — new inline OverviewLandingCard on ProjectDetail: Key Links + Recent Activity + Top 3 tasks + Quick compose. Description `whiteSpace: pre-wrap`.
+- **Track A §A2** — new TodayHero 2-col block (Overdue | Due Today) on MyTasks above Focus Next.
+
+**Round 2 — Overview refocus** (PI feedback: "timeline is a big waste of space"; commits `6c609ab` → `fa8de71`)
+- Project Timeline deleted (157 lines).
+- OverviewLandingCard restructured to 2-col grid:
+  - Left 2/3: Open Tasks — ALWAYS visible with `+ Add task` CTA. Max 5 rows sorted by due date. Empty state: "No open tasks. Add one."
+  - Right 1/3: Key Links (top) + Recent Activity (bottom, compact).
+  - Bottom full-width: Quick compose.
+
+**Round 3 — #12 + #11 + #10 polish** (commits `f5fd507` → `8bbb201`)
+- **#12** Description auto-linkify. New `src/lib/urlClassify.ts` (extracted `classifyUrl` + added `shortLabelForUrl`) and `src/components/LinkifiedText.tsx`. Used on ProjectDetail description.
+- **#11** Work-on single-click. Project pill on `TaskGridView` rows is now `<Link>` to `/portal/projects/:slug`. Uses `projectMap` label (not slug regex).
+- **#10 (partial)** Plain `<select>` sweep. CreateProjectModal + CreateDecisionModal migrated to InlineSelect / InlineAssigneePicker. CreateProjectModal STAGES include Revisions; CATEGORIES trimmed to 4 canonical (dropped legacy research/clinical/quality-improvement/education/infrastructure).
+
+**Round 4 — Legacy slug root-cause fix** (PI: "is that a bandaid"; commits `480c2c0` → `deaee4c`)
+- **Root cause:** brain.db had 532 tasks with `assignee='nick'` (CLI shorthand). `hub_payload.py:286` passed them unchanged to D1, bypassing `team_members` validation (Rule 20). D1 rendered two entries for same human.
+- **PB fix (root):** new `TEAM_SLUG_ALIASES` + `canonicalize_team_slug()` in `scripts/db/enums.py`. `scripts/db/sync/hub_payload.py` imports + applies at both outbound assignee sites.
+- **brain.db migration:** 532 `assignee='nick'` → `nick-ingraham`. D1 10 rows fixed earlier.
+- **Hub revert:** removed read-side `canonicalSlug()` bandaid from `team.ts` + `MyTasks.tsx` + `emailSlug.ts`. Root is fixed; if `nick` reappears, UI renders literally as a drift signal.
+- **Folder-link UX:** `mnccore://` protocol has no Windows handler → clicks silent. Now non-http links copy raw path to clipboard + toast. Applies to KeyLinksEditor + LinkifiedText.
+
+**Round 5 — Slack-parity (#13 + #14 + #15)** (commits `cc4b081` → `2ef6cc4`)
+- **#13 Unified search** — `/api/search` extended 6 → 14 entity types. New: notes (project_updates), task notes (task_updates), task comments, decisions, files, action items, publications, grants. Return cap 20→50. Completed action items -2 score. Projects/meetings body-search added. `deleted_at IS NULL` filter. SearchPage `typeConfig` extended with icons.
+- **#14 Files tab** on ProjectDetail (8 tabs now). `FileUpload` reused at `entity_type='project'`. Drag-drop R2 upload. Filenames searchable via #13.
+- **#15 Live presence.** New `src/hooks/usePresence.ts` (15s pings on hub-realtime `mnccore` WS room; 45s staleness; `presence-leave` on unmount). New `src/components/PresenceAvatars.tsx` (avatar stack + green live dot + "N viewing" count). Wired into ProjectDetail header next to WatchButton.
+
+### Additional packaging
+
+- **Design brief rewrite:** `docs/design-briefs/2026-04-23-first-landing-utility.md` rewritten post-Round-5 with 3-priority ask + 9 guardrails + design-system constraints.
+- **Claude Design bundle** `review/post-track-a-2026-04-23/`: 174 PNGs + 30 WebM (47 hero, 79 scroll-chunks, 20 rich-states, 8 focus-asks, 20 light-mode, 30 videos).
+- **`tests/capture-for-design.spec.ts`** accepts `CAPTURE_BASE_URL` env (preview-hash URL bypasses CF Access via injected fake-auth cookie).
+- **`scripts/local-db-bootstrap.ts`** skips `schema-v43.sql` + `schema-v48-index-reconcile.sql` on fresh bootstrap. `npm run test:local` now green.
+- **`.gitignore`** adds `review/post-track-a-*/` + `review/post-*-*/` for future bundles (today's bundle force-added as one-time handoff).
+
+### Known issues
+
+- 4 interaction capture tests failed (stale selectors for `01-status-change-undo`, `08-date-picker`). Partial captures produced; not blocking CD review.
+- Presence only on ProjectDetail (hook is entity-agnostic; extend to TaskDetailPanel / MeetingDetail).
+- SearchPage lacks per-type filter chips for 14-type output.
+
+### Deploy & test state
+
+- HEAD `2ef6cc4` pushed; deploy `d76a60a0.mn-ccore-lab.pages.dev`.
+- Build clean, `npm run test:local` 5/5 pass, `/api/health` 65-90ms, 606 tasks / 69 projects / 19 team_members.
+- 15/15 public smoke routes PASS; portal CF-gated (expected).
+
+---
+
 ## Whole-hub /simplify sweep (2026-04-23 evening)
 
 Two parallel Claude agents on isolated branches (simplify half =
