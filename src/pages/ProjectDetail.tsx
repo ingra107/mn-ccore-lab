@@ -38,6 +38,9 @@ import type { TaskRow } from '../lib/api'
 import RevisionTracker from '../components/RevisionTracker'
 import KeyLinksEditor from '../components/KeyLinksEditor'
 import LinkifiedText from '../components/LinkifiedText'
+import FileUpload from '../components/FileUpload'
+import PresenceAvatars from '../components/PresenceAvatars'
+import { usePresence } from '../hooks/usePresence'
 import SubmissionTimeline from '../components/SubmissionTimeline'
 import ConferencePrep from '../components/ConferencePrep'
 import InsightPanel from '../components/InsightPanel'
@@ -48,7 +51,7 @@ import ProjectComments from '../components/ProjectComments'
 import ProjectDocuments from './project/ProjectDocuments'
 import { PATHS } from '../constants/paths'
 
-type Tab = 'overview' | 'tasks' | 'notes' | 'comments' | 'activity' | 'revisions' | 'literature'
+type Tab = 'overview' | 'tasks' | 'notes' | 'comments' | 'files' | 'activity' | 'revisions' | 'literature'
 
 const STAGES = ['Idea', 'Data Collection', 'Analysis', 'Writing', 'Review', 'Revisions', 'Published'] as const
 type Stage = (typeof STAGES)[number]
@@ -132,7 +135,7 @@ function ProjectDetailInner({ project }: InnerProps) {
   const initialTab = (() => {
     const params = new URLSearchParams(window.location.search)
     const tab = params.get('tab')
-    if (tab && ['overview', 'tasks', 'notes', 'comments', 'activity', 'revisions', 'literature'].includes(tab)) return tab as Tab
+    if (tab && ['overview', 'tasks', 'notes', 'comments', 'files', 'activity', 'revisions', 'literature'].includes(tab)) return tab as Tab
     return 'overview' as Tab
   })()
   const [activeTab, setActiveTab] = useState<Tab>(initialTab)
@@ -216,6 +219,9 @@ function ProjectDetailInner({ project }: InnerProps) {
 
   // Task detail panel
   const [selectedTask, setSelectedTask] = useState<TaskRow | null>(null)
+
+  // Presence: who else is viewing this project right now (Slack-style)
+  const viewerSlugs = usePresence('project', project.slug)
 
   const queryClient = useQueryClient()
 
@@ -391,6 +397,7 @@ function ProjectDetailInner({ project }: InnerProps) {
               {copied ? <Check size={14} /> : <Link2 size={14} />}
             </button>
             <WatchButton id={project.slug} type="project" label={project.title} slug={project.slug} />
+            <PresenceAvatars slugs={viewerSlugs} />
           </div>
         </div>
 
@@ -580,6 +587,7 @@ function ProjectDetailInner({ project }: InnerProps) {
           { id: 'tasks' as Tab, label: `Tasks${pendingTasks.length ? ` (${pendingTasks.length})` : ''}` },
           { id: 'notes' as Tab, label: `Notes${projectUpdates.length ? ` (${projectUpdates.length})` : ''}` },
           { id: 'comments' as Tab, label: 'Comments' },
+          { id: 'files' as Tab, label: 'Files' },
           { id: 'activity' as Tab, label: 'Activity' },
           { id: 'revisions' as Tab, label: `Revisions${revisions.length ? ` (${revisions.length})` : ''}` },
           { id: 'literature' as Tab, label: 'Literature' },
@@ -1425,6 +1433,23 @@ function ProjectDetailInner({ project }: InnerProps) {
       {activeTab === 'comments' && (
         <div id="comments" style={{ scrollMarginTop: '60px' }}>
           <ProjectComments projectSlug={project.slug} />
+        </div>
+      )}
+
+      {/* ── FILES TAB ── */}
+      {activeTab === 'files' && (
+        <div style={{ marginBottom: '2rem' }}>
+          <div className="flex items-center gap-2 mb-3">
+            <span style={{ fontSize: '10px', fontWeight: 500, color: 'var(--slate)', opacity: 'var(--ink-label)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              Project Files
+            </span>
+          </div>
+          <div style={{ background: 'var(--ice)', borderRadius: 'var(--radius-xl)', padding: '16px 20px' }} className="detail-card">
+            <FileUpload entityType="project" entityId={project.slug} />
+          </div>
+          <p style={{ fontSize: '11px', color: 'var(--muted)', marginTop: '8px' }}>
+            Drop a file or click to upload. Attachments are stored on R2 and searchable via the Search page.
+          </p>
         </div>
       )}
 
