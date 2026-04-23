@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import {
   Search, CheckSquare, FolderKanban, Users, Lightbulb,
   MessageSquare, Activity, ArrowRight, X, Clock, Trash2,
+  ScrollText, Scale, Paperclip, ListChecks, BookOpen, Banknote,
 } from 'lucide-react'
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
@@ -27,7 +28,15 @@ const typeConfig: Record<string, { icon: typeof Search; color: string; label: st
   project: { icon: FolderKanban, color: 'var(--gold)', label: 'Project' },
   meeting: { icon: Users, color: 'var(--teal)', label: 'Meeting' },
   idea: { icon: Lightbulb, color: 'var(--gold)', label: 'Idea' },
+  note: { icon: ScrollText, color: 'var(--teal)', label: 'Note' },
+  task_note: { icon: ScrollText, color: 'var(--teal)', label: 'Task note' },
   comment: { icon: MessageSquare, color: 'var(--slate)', label: 'Comment' },
+  task_comment: { icon: MessageSquare, color: 'var(--slate)', label: 'Task comment' },
+  decision: { icon: Scale, color: 'var(--maroon)', label: 'Decision' },
+  action_item: { icon: ListChecks, color: 'var(--teal)', label: 'Action item' },
+  file: { icon: Paperclip, color: 'var(--slate)', label: 'File' },
+  publication: { icon: BookOpen, color: 'var(--gold)', label: 'Publication' },
+  grant: { icon: Banknote, color: 'var(--green)', label: 'Grant' },
   activity: { icon: Activity, color: 'var(--slate)', label: 'Activity' },
 }
 
