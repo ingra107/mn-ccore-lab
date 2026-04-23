@@ -256,10 +256,6 @@ export function fetchGrants() {
   return fetchApi<GrantRow[]>('/api/grants')
 }
 
-export function fetchCollaborationGraph() {
-  return fetchApi<CollaborationGraph>('/api/graph/collaboration')
-}
-
 export function fetchStats() {
   return fetchApi<Stats>('/api/stats')
 }
@@ -486,10 +482,6 @@ export function removeExpertise(id: string) {
   return fetchApi<{ deleted: boolean; id: string }>(`/api/expertise/${id}/delete`, {
     method: 'POST',
   })
-}
-
-export function fetchExpertSuggestions(topic: string) {
-  return fetchApi<ExpertSuggestion[]>(`/api/expertise/suggest?topic=${encodeURIComponent(topic)}`)
 }
 
 // ── Questions (Ask the Lab) ─────────────────────────────────
@@ -757,10 +749,6 @@ export interface ImpactResult {
   shift_days: number
 }
 
-export function fetchDeadlineCascade(projectId: string) {
-  return fetchApi<CascadeGraph>(`/api/deadline-cascade?project_id=${encodeURIComponent(projectId)}`)
-}
-
 export function fetchDeadlineImpact(id: string, type: string, newDate: string) {
   return fetchApi<ImpactResult[]>(`/api/deadline-cascade/impact?id=${encodeURIComponent(id)}&type=${encodeURIComponent(type)}&new_date=${encodeURIComponent(newDate)}`)
 }
@@ -830,10 +818,6 @@ export function fetchSubmissionEvents(projectId: string) {
   return fetchApi<SubmissionEventRow[]>(`/api/submissions?project_id=${encodeURIComponent(projectId)}`)
 }
 
-export function fetchActiveSubmissions() {
-  return fetchApi<ActiveSubmissionRow[]>('/api/submissions/active')
-}
-
 export function createSubmissionEvent(input: {
   project_id: string
   event_type: SubmissionEventType
@@ -885,10 +869,6 @@ export interface ExpiringRegulatoryRow extends RegulatoryItemRow {
   project_title: string | null
   project_slug: string | null
   days_remaining: number
-}
-
-export function fetchRegulatoryItems(projectId: string) {
-  return fetchApi<RegulatoryItemRow[]>(`/api/regulatory?project_id=${encodeURIComponent(projectId)}`)
 }
 
 export function fetchExpiringRegulatory(days: number = 60) {
@@ -957,10 +937,6 @@ export interface GrantMilestoneRow {
 export interface UpcomingGrantMilestoneRow extends GrantMilestoneRow {
   grant_title: string | null
   grant_mechanism: string | null
-}
-
-export function fetchGrantMilestones(grantId: string) {
-  return fetchApi<GrantMilestoneRow[]>(`/api/grant-milestones?grant_id=${encodeURIComponent(grantId)}`)
 }
 
 export function fetchUpcomingGrantMilestones(days: number = 90) {
