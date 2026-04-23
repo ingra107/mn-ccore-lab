@@ -7,7 +7,7 @@
  * count-ups.
  */
 
-export interface PulseMetricProps {
+interface PulseMetricProps {
   value: string | number
   label: string
   /** Optional secondary unit (e.g. "this week", "active"). */

@@ -16,7 +16,7 @@ import '../../styles/dashboard-grid.css'
 
 const ResponsiveGridLayout = WidthProvider(Responsive)
 
-export interface DashboardGridProps {
+interface DashboardGridProps {
   section: string
   userSlug?: string
   cards: GridCard[]

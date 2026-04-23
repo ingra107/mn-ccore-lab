@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect, useMemo } from 'react'
 import { emailToSlug } from '../lib/emailSlug'
 import { getPersonInfo } from '../data/team'
 
-export interface AuthUser {
+interface AuthUser {
   email: string
   name?: string
   isAuthenticated: boolean
@@ -91,7 +91,7 @@ async function fetchAuthStatus(): Promise<AuthUser> {
   return getAuthFromCookie()
 }
 
-export interface AuthContextValue {
+interface AuthContextValue {
   user: AuthUser
   isAuthenticated: boolean
   isLoading: boolean

@@ -13,7 +13,7 @@ import HeartbeatLine from '../HeartbeatLine'
  * climb to 1.06 over the 8s rotation interval.
  */
 
-export interface PulseSceneProps {
+interface PulseSceneProps {
   eyebrow: string
   title: string
   subtitle?: string

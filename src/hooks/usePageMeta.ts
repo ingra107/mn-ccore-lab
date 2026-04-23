@@ -12,7 +12,7 @@ function ensureMeta(attr: string, key: string, content: string) {
   }
 }
 
-export interface PageMetaOptions {
+interface PageMetaOptions {
   /** og:type — e.g. 'article' for project pages, 'profile' for /team/:slug. */
   ogType?: string
   /** Per-route OG share-card URL — point at /og/<type>/<slug> for branded
