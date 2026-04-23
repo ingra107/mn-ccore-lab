@@ -34,6 +34,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useToggleActionItem, useAddAgendaItem, useUpdateMeetingNotes, useCreateDecision, useCreateTask } from '../hooks/useMutations'
 import { parseCarriedForward } from '../lib/textUtils'
 import { parseQuickAddInput } from '../lib/parseQuickAdd'
+import { emailToSlug } from '../lib/emailSlug'
 import { useAuth } from '../hooks/useAuth'
 import { useToast } from '../hooks/useToast'
 import { useUndoToast } from '../components/UndoToast'
@@ -960,6 +961,8 @@ function AddActionItemForm({ meetingId, isAuthenticated, onSuccess }: { meetingI
   const inputRef = useRef<HTMLInputElement>(null)
   const createTask = useCreateTask()
   const queryClient = useQueryClient()
+  const { user } = useAuth()
+  const fallbackAssignee = user?.email ? emailToSlug(user.email) : 'nick-ingraham'
 
   const parsed = text.trim() ? parseQuickAddInput(text) : null
   const hasContent = parsed && parsed.title.trim().length > 0
@@ -971,7 +974,7 @@ function AddActionItemForm({ meetingId, isAuthenticated, onSuccess }: { meetingI
     createTask.mutate({
       title: parsed.title,
       description: parsed.title,
-      assignee: parsed.assigneeSlug ?? 'nick-ingraham',
+      assignee: parsed.assigneeSlug ?? fallbackAssignee,
       meeting_id: meetingId,
       due_date: parsed.dueDate ?? undefined,
       priority: parsed.priority === 1 ? 'urgent' : parsed.priority === 2 ? 'high' : parsed.priority === 3 ? 'medium' : 'medium',

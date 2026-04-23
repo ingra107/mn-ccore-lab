@@ -13,6 +13,8 @@ import QuickAddTaskInput from './QuickAddTaskInput'
 import { parseQuickAddInput } from '../lib/parseQuickAdd'
 import { useCreateTask } from '../hooks/useMutations'
 import { useToast } from '../hooks/useToast'
+import { useAuth } from '../hooks/useAuth'
+import { emailToSlug } from '../lib/emailSlug'
 
 // ── Token hint pill ──────────────────────────────────────────
 
@@ -45,6 +47,8 @@ function GlobalQuickAddModal({ isOpen, onClose }: Props) {
   const [value, setValue] = useState('')
   const createTask = useCreateTask()
   const { showSuccess } = useToast()
+  const { user } = useAuth()
+  const fallbackAssignee = user?.email ? emailToSlug(user.email) : 'nick-ingraham'
 
   useEffect(() => {
     if (!isOpen) setValue('')
@@ -57,7 +61,7 @@ function GlobalQuickAddModal({ isOpen, onClose }: Props) {
     createTask.mutate({
       title: parsed.title,
       description: parsed.title,
-      assignee: parsed.assigneeSlug ?? 'nick-ingraham',
+      assignee: parsed.assigneeSlug ?? fallbackAssignee,
       ...(parsed.dueDate ? { due_date: parsed.dueDate } : {}),
       ...(parsed.projectSlug ? { project_id: parsed.projectSlug } : {}),
       ...(parsed.priority ? { priority: PRIORITY_MAP[parsed.priority] ?? 'medium' } : {}),
@@ -67,7 +71,7 @@ function GlobalQuickAddModal({ isOpen, onClose }: Props) {
 
     setValue('')
     onClose()
-  }, [value, createTask, onClose, showSuccess])
+  }, [value, createTask, onClose, showSuccess, fallbackAssignee])
 
   useEffect(() => {
     if (!isOpen) return
