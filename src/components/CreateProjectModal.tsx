@@ -2,6 +2,8 @@ import { useState, useRef, useEffect } from 'react'
 import { X } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import { emailToSlug } from '../lib/emailSlug'
+import InlineSelect from './InlineSelect'
+import InlineAssigneePicker from './InlineAssigneePicker'
 
 interface CreateProjectModalProps {
   open: boolean
@@ -15,24 +17,24 @@ interface CreateProjectModalProps {
   }) => void
 }
 
+// Hub canonical categories (R10 + Phase 36b). Legacy values like 'research',
+// 'clinical' were pre-R10 drift — removed here so new projects only get
+// canonical values.
 const CATEGORIES = [
-  { value: 'research', label: 'Research' },
-  { value: 'clinical', label: 'Clinical' },
-  { value: 'quality-improvement', label: 'Quality Improvement' },
-  { value: 'education', label: 'Education' },
-  { value: 'infrastructure', label: 'Infrastructure' },
-  { value: 'clif', label: 'CLIF' },
-  { value: 'lab', label: 'Lab' },
-  { value: 'nate-mesfin', label: 'Mesfin Lab' },
-  { value: 'mentee', label: 'Mentee' },
+  { value: 'clif', label: 'CLIF', color: 'var(--maroon)' },
+  { value: 'lab', label: 'Lab', color: 'var(--teal)' },
+  { value: 'nate-mesfin', label: 'Mesfin Lab', color: 'var(--gold)' },
+  { value: 'mentee', label: 'Mentee', color: 'var(--slate)' },
 ]
 
+// 7-stage UI ladder including Revisions (added 2026-04-23, GH #26).
 const STAGES = [
   { value: 'Idea', label: 'Idea' },
   { value: 'Data Collection', label: 'Data Collection' },
   { value: 'Analysis', label: 'Analysis' },
   { value: 'Writing', label: 'Writing' },
   { value: 'Review', label: 'Review' },
+  { value: 'Revisions', label: 'Revisions' },
   { value: 'Published', label: 'Published' },
 ]
 
@@ -179,17 +181,7 @@ export default function CreateProjectModal({ open, onClose, onCreate }: CreatePr
               >
                 Category
               </label>
-              <select
-                id="create-project-category"
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                className="w-full rounded-md border px-2.5 py-2 text-sm"
-                style={selectStyle}
-              >
-                {CATEGORIES.map((c) => (
-                  <option key={c.value} value={c.value}>{c.label}</option>
-                ))}
-              </select>
+              <InlineSelect value={category} options={CATEGORIES} onChange={setCategory} />
             </div>
             <div>
               <label
@@ -199,17 +191,7 @@ export default function CreateProjectModal({ open, onClose, onCreate }: CreatePr
               >
                 Stage
               </label>
-              <select
-                id="create-project-stage"
-                value={stage}
-                onChange={(e) => setStage(e.target.value)}
-                className="w-full rounded-md border px-2.5 py-2 text-sm"
-                style={selectStyle}
-              >
-                {STAGES.map((s) => (
-                  <option key={s.value} value={s.value}>{s.label}</option>
-                ))}
-              </select>
+              <InlineSelect value={stage} options={STAGES} onChange={setStage} />
             </div>
           </div>
 
@@ -219,19 +201,9 @@ export default function CreateProjectModal({ open, onClose, onCreate }: CreatePr
               className="block text-xs font-medium mb-1"
               style={{ color: 'var(--slate)' }}
             >
-              PI <span style={{ fontWeight: 400, opacity: 'var(--ink-label)' }}>(slug, e.g. nick)</span>
+              PI
             </label>
-            <input
-              type="text"
-              value={pi}
-              onChange={(e) => setPi(e.target.value)}
-              placeholder="nick-ingraham"
-              className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-1"
-              style={{
-                ...selectStyle,
-                borderColor: 'var(--border-subtle)',
-              }}
-            />
+            <InlineAssigneePicker value={pi} onChange={setPi} />
           </div>
 
           {/* Description */}

@@ -6,6 +6,7 @@ import { useCreateDecision } from '../hooks/useMutations'
 import { useToast } from '../hooks/useToast'
 import { useDebounce } from '../hooks/useDebounce'
 import SentimentBadge from './SentimentBadge'
+import InlineSelect from './InlineSelect'
 import { parseTagsString } from '../lib/tagUtils'
 
 // ── Tag auto-suggestion ──────────────────────────────────────
@@ -255,18 +256,12 @@ export default function CreateDecisionModal({ projects, onCreate, onClose }: Pro
 
           <div className="flex gap-4">
             <div style={{ flex: 1 }}>
-              <label htmlFor="create-decision-project" style={labelStyle}>Primary Project (optional)</label>
-              <select
-                id="create-decision-project"
+              <label style={labelStyle}>Primary Project (optional)</label>
+              <InlineSelect
                 value={projectSlug}
-                onChange={(e) => setProjectSlug(e.target.value)}
-                style={{ ...inputStyle, padding: '8px 10px' }}
-              >
-                <option value="">No project</option>
-                {projects.map((p) => (
-                  <option key={p.slug} value={p.slug}>{p.title}</option>
-                ))}
-              </select>
+                options={[{ value: '', label: 'No project' }, ...projects.map(p => ({ value: p.slug, label: p.title }))]}
+                onChange={setProjectSlug}
+              />
             </div>
             <div style={{ flex: 1 }}>
               <label style={labelStyle}>Tags (comma-separated)</label>
