@@ -25,7 +25,7 @@ import PageTooltip from '../components/PageTooltip'
 import { stripConsortiumPrefix } from '../lib/textUtils'
 import { PATHS } from '../constants/paths'
 
-const STAGES = ['Idea', 'Data Collection', 'Analysis', 'Writing', 'Review', 'Published'] as const
+const STAGES = ['Idea', 'Data Collection', 'Analysis', 'Writing', 'Review', 'Revisions', 'Published'] as const
 
 const CATEGORY_FILTERS = [
   { key: 'all', label: 'All' },

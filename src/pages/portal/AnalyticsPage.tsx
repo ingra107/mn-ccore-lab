@@ -576,6 +576,7 @@ export default function AnalyticsPage() {
                 'Analysis': 'var(--stage-fill-analysis)',
                 'Writing': 'var(--stage-fill-writing)',
                 'Review': 'var(--stage-fill-review)',
+                'Revisions': 'var(--stage-fill-revisions)',
                 'Published': 'var(--stage-fill-published)',
               }
               return (

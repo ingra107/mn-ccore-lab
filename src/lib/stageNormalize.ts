@@ -1,12 +1,15 @@
 /**
- * Project-stage normalization. The Hub canonical 6-stage ladder is:
- *   Idea → Data Collection → Analysis → Writing → Review → Published
+ * Project-stage normalization. The Hub canonical 7-stage ladder is:
+ *   Idea → Data Collection → Analysis → Writing → Review → Revisions → Published
  *
  * brain.db (and historical Hub data) uses granular sub-stages like
  * "Submitted" / "Under Review" / "Accepted" that don't appear in the
  * canonical strip. Mapping them onto the closest strip stage means every
  * "stage indicator" UI (strip, dot, mini-pipeline) lights up correctly
  * without needing a 9-stage strip.
+ *
+ * Revisions added 2026-04-23 per GH #26 — papers in revise-and-resubmit
+ * are conceptually distinct from first-submission review and from accepted.
  *
  * Originally inlined in ProjectDetail.tsx for P2-R2-14 — lifted to shared
  * util so Projects.tsx, TrajectoryPage.tsx, and any future stage-rendering
@@ -18,6 +21,7 @@ export const CANONICAL_STAGES = [
   'Analysis',
   'Writing',
   'Review',
+  'Revisions',
   'Published',
 ] as const
 
@@ -27,6 +31,11 @@ const STAGE_ALIASES: Record<string, CanonicalStage> = {
   Submitted: 'Review',
   'Under Review': 'Review',
   Accepted: 'Published',
+  'Revise and Resubmit': 'Revisions',
+  'Revise & Resubmit': 'Revisions',
+  'R&R': 'Revisions',
+  'In Revisions': 'Revisions',
+  'In Revision': 'Revisions',
 }
 
 export function normalizeStage(stage: string | null | undefined): CanonicalStage | '' {
@@ -53,7 +62,7 @@ const UI_TO_API_STAGE: Record<string, string> = {
   Review: 'Submitted',
 }
 
-export type ApiStage = 'Idea' | 'Data Collection' | 'Data Analysis' | 'Writing' | 'Submitted' | 'Accepted' | 'Published'
+export type ApiStage = 'Idea' | 'Data Collection' | 'Data Analysis' | 'Writing' | 'Submitted' | 'Revisions' | 'Accepted' | 'Published'
 
 export function toApiStage(uiStage: string): ApiStage {
   return (UI_TO_API_STAGE[uiStage] ?? uiStage) as ApiStage
