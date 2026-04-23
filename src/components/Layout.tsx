@@ -6,6 +6,7 @@ import { AnimatePresence } from 'framer-motion'
 import { useDarkMode } from '../hooks/useDarkMode'
 import { useAuth } from '../hooks/useAuth'
 import { useTasks, useMeetingsApi } from '../hooks/useApiData'
+import { formatShortDate } from '../lib/dateUtils'
 import PageTransition from './PageTransition'
 
 const navLinks: { to: string; label: string }[] = [
@@ -68,8 +69,7 @@ export default function Layout() {
       .filter((m) => m.date >= today)
       .sort((a, b) => a.date.localeCompare(b.date))
     if (upcoming.length === 0) return null
-    const d = new Date(upcoming[0].date + 'T12:00:00')
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    return formatShortDate(upcoming[0].date)
   }, [meetings])
 
   const isResearchActive = researchDropdownLinks.some(
