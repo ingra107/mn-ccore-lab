@@ -19,7 +19,7 @@ const loadTaskDetailPanel = () => import('../../components/tasks/TaskDetailPanel
 const TaskDetailPanel = lazy(loadTaskDetailPanel)
 import CreateTaskModal from '../../components/tasks/CreateTaskModal'
 import { useUndoToast } from '../../components/UndoToast'
-import { useTasks } from '../../hooks/useApiData'
+import { useTasks, useProjects } from '../../hooks/useApiData'
 import { useAuth } from '../../hooks/useAuth'
 import { emailToSlug } from '../../lib/emailSlug'
 import type { TaskRow } from '../../lib/api'
@@ -89,6 +89,7 @@ export default function MyTasks() {
   // For now, show all tasks (no auth = no current user detection)
   // When Cloudflare Access is enabled, this will filter to the authenticated user's slug
   const { data: allTasks = [], isLoading } = useTasks()
+  const { data: projects = [] } = useProjects()
   const createTask = useCreateTask()
   const updateStatus = useUpdateTaskStatus()
   const updateTask = useUpdateTask()
@@ -294,6 +295,22 @@ export default function MyTasks() {
       waiting_on: allTasks.filter(t => !t.completed && t.assignee !== piSlug && (t.status === 'todo' || t.status === 'in_progress' || t.status === 'waiting_external')).length,
     }
   }, [tasks, allTasks, piSlug])
+
+  // Today hero lists — above-the-fold overdue + due today for fast triage (GH #33)
+  const todayHeroLists = useMemo(() => {
+    const active = tasks.filter(t => !t.completed)
+    const now = new Date()
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1)
+    const overdue = active.filter(t => t.due_date && new Date(t.due_date + 'T23:59:59') < now)
+      .sort((a, b) => (a.due_date || '').localeCompare(b.due_date || ''))
+    const dueToday = active.filter(t => t.due_date && new Date(t.due_date + 'T12:00:00') >= today && new Date(t.due_date + 'T12:00:00') < tomorrow)
+      .sort((a, b) => {
+        const pOrder: Record<string, number> = { urgent: 0, high: 1, medium: 2, low: 3 }
+        return (pOrder[a.priority] ?? 9) - (pOrder[b.priority] ?? 9)
+      })
+    return { overdue, dueToday }
+  }, [tasks])
 
   // "Focus Next" — smart scoring: urgency × priority × freshness
   // Returns top 3 auto-suggestions; user can pin up to 5 total
@@ -680,6 +697,124 @@ export default function MyTasks() {
           <span className="text-[10px] flex-shrink-0" style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
             {tasks.filter(t => !t.completed && t.status === 'in_progress').length} active
           </span>
+        </div>
+      )}
+
+      {/* Today Hero — Overdue + Due Today at-a-glance (GH #33, Nick principle 1) */}
+      {quickFilter === 'all' && !showCompleted && !showAllTasks && (todayHeroLists.overdue.length > 0 || todayHeroLists.dueToday.length > 0) && (
+        <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
+          {/* Overdue column */}
+          <div className="rounded-xl border p-3" style={{ borderColor: 'var(--border-subtle)', background: 'var(--surface-1)' }}>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-[10px] px-1.5 py-0.5 rounded font-semibold" style={{ color: '#fff', background: 'var(--maroon-solid)' }}>
+                OVERDUE
+              </span>
+              <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
+                {todayHeroLists.overdue.length}
+              </span>
+            </div>
+            {todayHeroLists.overdue.length === 0 ? (
+              <p className="text-[11px] py-1" style={{ color: 'var(--slate)', opacity: 0.7, margin: 0 }}>
+                No overdue — nice.
+              </p>
+            ) : (
+              <div className="flex flex-col gap-1">
+                {todayHeroLists.overdue.slice(0, 5).map(task => {
+                  const due = new Date(task.due_date! + 'T12:00:00')
+                  const daysOverdue = Math.max(1, Math.floor((Date.now() - due.getTime()) / 86400000))
+                  const proj = task.project_id ? projects.find(p => p.slug === task.project_id) : null
+                  return (
+                    <div
+                      key={task.id}
+                      onClick={() => setSelectedTask(task)}
+                      className="flex items-center gap-2 text-xs rounded px-1.5 py-1 cursor-pointer"
+                      style={{ color: 'var(--ink)', transition: 'background 150ms ease' }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = 'var(--hover-subtle)'}
+                      onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                    >
+                      <span className="text-[10px] flex-shrink-0 font-medium" style={{ color: 'var(--maroon)', minWidth: 40 }}>
+                        {daysOverdue}d
+                      </span>
+                      <span className="truncate flex-1" style={{ minWidth: 0 }}>
+                        <TaskTitle title={task.title} fallback={task.description} showChip={false} />
+                      </span>
+                      {proj && (
+                        <span className="text-[10px] truncate flex-shrink-0" style={{ color: 'var(--slate)', opacity: 0.7, maxWidth: 80 }}>
+                          {proj.title}
+                        </span>
+                      )}
+                    </div>
+                  )
+                })}
+                {todayHeroLists.overdue.length > 5 && (
+                  <button
+                    type="button"
+                    onClick={() => setQuickFilter('overdue')}
+                    className="text-[10px] mt-1 text-left"
+                    style={{ color: 'var(--teal)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                  >
+                    +{todayHeroLists.overdue.length - 5} more →
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Due Today column */}
+          <div className="rounded-xl border p-3" style={{ borderColor: 'var(--border-subtle)', background: 'var(--surface-1)' }}>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-[10px] px-1.5 py-0.5 rounded font-semibold" style={{ color: '#fff', background: 'var(--teal-solid)' }}>
+                DUE TODAY
+              </span>
+              <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
+                {todayHeroLists.dueToday.length}
+              </span>
+            </div>
+            {todayHeroLists.dueToday.length === 0 ? (
+              <p className="text-[11px] py-1" style={{ color: 'var(--slate)', opacity: 0.7, margin: 0 }}>
+                Nothing due today.
+              </p>
+            ) : (
+              <div className="flex flex-col gap-1">
+                {todayHeroLists.dueToday.slice(0, 5).map(task => {
+                  const proj = task.project_id ? projects.find(p => p.slug === task.project_id) : null
+                  const pColor = task.priority === 'urgent' ? 'var(--maroon)' : task.priority === 'high' ? 'var(--orange)' : 'var(--slate)'
+                  return (
+                    <div
+                      key={task.id}
+                      onClick={() => setSelectedTask(task)}
+                      className="flex items-center gap-2 text-xs rounded px-1.5 py-1 cursor-pointer"
+                      style={{ color: 'var(--ink)', transition: 'background 150ms ease' }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = 'var(--hover-subtle)'}
+                      onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                    >
+                      <span className="text-[10px] flex-shrink-0 capitalize font-medium" style={{ color: pColor, minWidth: 40 }}>
+                        {task.priority || 'med'}
+                      </span>
+                      <span className="truncate flex-1" style={{ minWidth: 0 }}>
+                        <TaskTitle title={task.title} fallback={task.description} showChip={false} />
+                      </span>
+                      {proj && (
+                        <span className="text-[10px] truncate flex-shrink-0" style={{ color: 'var(--slate)', opacity: 0.7, maxWidth: 80 }}>
+                          {proj.title}
+                        </span>
+                      )}
+                    </div>
+                  )
+                })}
+                {todayHeroLists.dueToday.length > 5 && (
+                  <button
+                    type="button"
+                    onClick={() => setQuickFilter('today')}
+                    className="text-[10px] mt-1 text-left"
+                    style={{ color: 'var(--teal)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                  >
+                    +{todayHeroLists.dueToday.length - 5} more →
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
