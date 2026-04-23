@@ -256,7 +256,7 @@ export function useComments(projectId: string) {
 
 // ── Activity Feed ───────────────────────────────────────────
 
-export interface ActivityEntry {
+interface ActivityEntry {
   id: string
   type: string
   description: string
@@ -346,7 +346,7 @@ export interface TaskUpdateRow {
   created_at: string
 }
 
-export interface MeetingDetail extends MeetingRow {
+interface MeetingDetail extends MeetingRow {
   action_items: ActionItemRow[]
   agenda_items: AgendaItemRow[]
 }
@@ -404,7 +404,7 @@ export function useNextMeeting() {
 
 // ── Meeting Cadence ──────────────────────────────────────────
 
-export interface CadenceData {
+interface CadenceData {
   nextMeeting?: { id: string; date: string; title: string }
   score: number
   recommendation: string
@@ -657,7 +657,7 @@ export interface ProjectHealth {
   pending_actions: number
 }
 
-export interface HealthSummary {
+interface HealthSummary {
   total: number
   healthy: number
   needs_attention: number
@@ -737,7 +737,7 @@ export function useSubtasks(taskId: string) {
 
 // ── Task Handoffs ──────────────────────────────────────────
 
-export interface HandoffRow {
+interface HandoffRow {
   id: string
   task_id: string
   from_slug: string
@@ -767,7 +767,7 @@ export function useHandoffs(taskId: string) {
 
 // ── Paper-Project Links ────────────────────────────────────
 
-export interface PaperProjectLink {
+interface PaperProjectLink {
   id: string
   paper_id: string
   project_slug: string
@@ -891,7 +891,7 @@ export function useTaskUpdates(taskId: string) {
 
 // ── Team Pulse ──────────────────────────────────────────────
 
-export interface TeamPulseData {
+interface TeamPulseData {
   activity: { slug: string; updates: number; completions: number }[]
   active_this_week: number
   totals: { updates: number; completions: number }
@@ -936,7 +936,7 @@ export interface DecisionRow {
   shared_tags?: string[]
 }
 
-export interface DecisionTagCount {
+interface DecisionTagCount {
   tag: string
   count: number
 }
@@ -1152,7 +1152,7 @@ export function useContributions(slug: string, period: number) {
 
 // ── Contribution Score with Decay ────────────────────────
 
-export interface ContributionScoreData {
+interface ContributionScoreData {
   slug: string
   days: number
   total_score: number
@@ -1179,7 +1179,7 @@ export function useContributionScore(slug: string | undefined, days = 90) {
 
 // ── Grant Intelligence (NIH RePORTER) ──────────────────────
 
-export interface SimilarGrant {
+interface SimilarGrant {
   project_num: string
   title: string
   pi: string
@@ -1251,7 +1251,7 @@ export function useQuestionDetail(id: string) {
 
 // ── Narratives ──────────────────────────────────────────────
 
-export interface NarrativeArc {
+interface NarrativeArc {
   id: string
   title: string
   category: string
@@ -1278,7 +1278,7 @@ export function useNarratives() {
 
 // ── PB Sector (Command Center) ─────────────────────────────
 
-export interface PBCommandCenterData {
+interface PBCommandCenterData {
   greeting: string
   mode: string
   today: string
@@ -1537,7 +1537,7 @@ export function usePBSessionStats() {
 
 // ── Cross-Project Insights ──────────────────────────────────
 
-export interface InsightEdge {
+interface InsightEdge {
   from: string
   to: string
   fromTitle: string
@@ -1559,7 +1559,7 @@ export function useInsightConnections() {
   })
 }
 
-export interface InsightSuggestion {
+interface InsightSuggestion {
   slug: string
   title: string
   reason: string
@@ -1582,7 +1582,7 @@ export function useInsightSuggestions(projectId: string) {
 
 // ── Paper-to-Project linking (enriched) ─────────────────────
 
-export interface LinkedProject {
+interface LinkedProject {
   link_id: string
   link_type: string | null
   note: string | null

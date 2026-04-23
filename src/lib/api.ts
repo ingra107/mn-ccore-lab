@@ -69,26 +69,7 @@ export interface GrantRow {
   created_at: string
 }
 
-export interface GraphNode {
-  id: string
-  name: string
-  slug: string | null
-  publicationCount: number
-}
-
-export interface GraphEdge {
-  source: string
-  target: string
-  weight: number
-  sharedPublications: string[]
-}
-
-export interface CollaborationGraph {
-  nodes: GraphNode[]
-  edges: GraphEdge[]
-}
-
-export interface Stats {
+interface Stats {
   publicationCount: number
   teamSize: number
   grantCount: number
@@ -183,7 +164,7 @@ export interface PBSessionRow {
   created_at: string
 }
 
-export interface PBSessionStats {
+interface PBSessionStats {
   total_sessions: number
   total_hours: number
   avg_minutes: number
@@ -457,12 +438,6 @@ export interface ExpertiseTag {
   created_at: string
 }
 
-export interface ExpertSuggestion {
-  slug: string
-  sources: string[]
-  confidence: number
-}
-
 export function fetchExpertise(params?: { slug?: string; tag?: string }) {
   const qs = new URLSearchParams()
   if (params?.slug) qs.set('slug', params.slug)
@@ -706,12 +681,6 @@ export function updateMenteeMilestone(id: string, fields: Partial<{
   })
 }
 
-export function completeMenteeMilestone(id: string) {
-  return fetchApi<MenteeMilestoneRow>(`/api/mentee-milestones/${id}/complete`, {
-    method: 'POST',
-  })
-}
-
 // ── Deadline cascade ──────────────────────────────────────
 
 export interface DeadlineDepRow {
@@ -757,26 +726,6 @@ export function fetchAllCascades() {
   return fetchApi<CascadeGraph>('/api/deadline-cascade/all')
 }
 
-export function createDeadlineDependency(input: {
-  upstream_id: string
-  upstream_type: string
-  downstream_id: string
-  downstream_type: string
-  lag_days?: number
-  notes?: string
-}) {
-  return fetchApi<DeadlineDepRow>('/api/deadline-dependencies', {
-    method: 'POST',
-    body: JSON.stringify(input),
-  })
-}
-
-export function deleteDeadlineDependency(id: string) {
-  return fetchApi<{ deleted: boolean; id: string }>(`/api/deadline-dependencies/${id}/delete`, {
-    method: 'POST',
-  })
-}
-
 // ── Submission lifecycle ──────────────────────────────────
 
 export type SubmissionEventType =
@@ -799,21 +748,6 @@ export interface SubmissionEventRow {
   created_at: string
 }
 
-export interface ActiveSubmissionRow {
-  id: string
-  project_id: string
-  latest_event_type: SubmissionEventType
-  latest_event_date: string
-  journal: string | null
-  notes: string | null
-  project_title: string | null
-  project_slug: string | null
-  first_submitted_date: string | null
-  days_since_submission: number
-  revision_due_date: string | null
-  days_until_revision_due: number | null
-}
-
 export function fetchSubmissionEvents(projectId: string) {
   return fetchApi<SubmissionEventRow[]>(`/api/submissions?project_id=${encodeURIComponent(projectId)}`)
 }
@@ -831,18 +765,6 @@ export function createSubmissionEvent(input: {
   })
 }
 
-export function updateSubmissionEvent(id: string, fields: Partial<{
-  event_type: SubmissionEventType
-  event_date: string
-  journal: string
-  notes: string
-}>) {
-  return fetchApi<SubmissionEventRow>(`/api/submissions/${id}`, {
-    method: 'POST',
-    body: JSON.stringify(fields),
-  })
-}
-
 export function deleteSubmissionEvent(id: string) {
   return fetchApi<{ id: string; deleted: boolean }>(`/api/submissions/${id}/delete`, {
     method: 'POST',
@@ -851,7 +773,7 @@ export function deleteSubmissionEvent(id: string) {
 
 // ── Regulatory & Compliance ──────────────────────────────────
 
-export interface RegulatoryItemRow {
+interface RegulatoryItemRow {
   id: string
   project_id: string
   item_type: string
@@ -865,7 +787,7 @@ export interface RegulatoryItemRow {
   created_at: string
 }
 
-export interface ExpiringRegulatoryRow extends RegulatoryItemRow {
+interface ExpiringRegulatoryRow extends RegulatoryItemRow {
   project_title: string | null
   project_slug: string | null
   days_remaining: number
@@ -873,51 +795,6 @@ export interface ExpiringRegulatoryRow extends RegulatoryItemRow {
 
 export function fetchExpiringRegulatory(days: number = 60) {
   return fetchApi<ExpiringRegulatoryRow[]>(`/api/regulatory/expiring?days=${days}`)
-}
-
-export function createRegulatoryItem(input: {
-  project_id: string
-  item_type: string
-  title: string
-  protocol_number?: string
-  approved_date?: string
-  expiration_date?: string
-  renewal_due?: string
-  status?: string
-  notes?: string
-}) {
-  return fetchApi<RegulatoryItemRow>('/api/regulatory', {
-    method: 'POST',
-    body: JSON.stringify(input),
-  })
-}
-
-export function updateRegulatoryItem(id: string, fields: Partial<{
-  title: string
-  item_type: string
-  protocol_number: string
-  approved_date: string
-  expiration_date: string
-  renewal_due: string
-  status: string
-  notes: string
-}>) {
-  return fetchApi<RegulatoryItemRow>(`/api/regulatory/${id}`, {
-    method: 'POST',
-    body: JSON.stringify(fields),
-  })
-}
-
-export function renewRegulatoryItem(id: string, input: {
-  approved_date?: string
-  expiration_date?: string
-  renewal_due?: string
-  notes?: string
-}) {
-  return fetchApi<RegulatoryItemRow>(`/api/regulatory/${id}/renew`, {
-    method: 'POST',
-    body: JSON.stringify(input),
-  })
 }
 
 // ── Grant Post-Award Milestones ──────────────────────────────
@@ -934,7 +811,7 @@ export interface GrantMilestoneRow {
   created_at: string
 }
 
-export interface UpcomingGrantMilestoneRow extends GrantMilestoneRow {
+interface UpcomingGrantMilestoneRow extends GrantMilestoneRow {
   grant_title: string | null
   grant_mechanism: string | null
 }
@@ -1003,7 +880,7 @@ export interface ConferenceSubmissionRow {
   created_at: string
 }
 
-export interface UpcomingConferenceRow extends ConferenceSubmissionRow {
+interface UpcomingConferenceRow extends ConferenceSubmissionRow {
   project_title: string | null
   project_slug: string | null
   days_until: number | null
@@ -1081,36 +958,3 @@ export function fetchPBSessionStats() {
   return fetchApi<PBSessionStats>('/api/pb/sessions/stats')
 }
 
-export function createPBSession(input: {
-  id?: string
-  started_at: string
-  ended_at?: string
-  machine?: string
-  project_name?: string
-  summary?: string
-  actions_count?: number
-  commits_count?: number
-  duration_minutes?: number
-}) {
-  return fetchApi<PBSessionRow>('/api/pb/sessions', {
-    method: 'POST',
-    body: JSON.stringify(input),
-  })
-}
-
-export function bulkCreatePBSessions(sessions: Array<{
-  id?: string
-  started_at: string
-  ended_at?: string
-  machine?: string
-  project_name?: string
-  summary?: string
-  actions_count?: number
-  commits_count?: number
-  duration_minutes?: number
-}>) {
-  return fetchApi<{ created: number; updated: number; errors: string[] }>('/api/pb/sessions/bulk', {
-    method: 'POST',
-    body: JSON.stringify({ sessions }),
-  })
-}
