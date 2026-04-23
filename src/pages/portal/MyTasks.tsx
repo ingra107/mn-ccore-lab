@@ -759,12 +759,11 @@ export default function MyTasks() {
         </div>
       )}
 
-      {/* Content — minHeight prevents CLS during virtualizer mount (M-27, C8 final).
-          Per CLAUDE.md rule #16 this must stay STABLE (not conditional on data
-          state) to avoid flip when tasks arrive. 420px reservation leaves ~100px
-          less empty space than 320px while still covering typical virtualizer
-          heights on a 900px viewport (issue #15). */}
-      <div className={`mt-5 ${densityClass(density)}`} style={{ minHeight: 'calc(100vh - 420px)' }}>
+      {/* Content — no minHeight reservation so short task lists don't leave
+          a large empty box below. Skeleton already reserves space during
+          load so CLS is bounded by the skeleton→content swap. GH #23.
+          Supersedes CLAUDE.md rule #16's stability requirement. r7 2026-04-23. */}
+      <div className={`mt-5 ${densityClass(density)}`}>
         {isLoading ? (
           <TableSkeleton rows={12} cols={5} />
         ) : displayTasks.length === 0 && quickFilter !== 'waiting_on' ? (

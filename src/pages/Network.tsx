@@ -96,7 +96,11 @@ export default function Network() {
     <div
       className="flex flex-col"
       style={{
-        minHeight: '100vh',
+        // height (not minHeight) so flex-1 child has a determined parent
+        // height to stretch into. With minHeight alone the GraphCanvas
+        // fell back to its intrinsic 300x150 canvas size. GH #16.
+        // r7 2026-04-23.
+        height: '100vh',
         background: 'linear-gradient(135deg, oklch(0.12 0.005 250) 0%, oklch(0.16 0.005 250) 40%, oklch(0.25 0.01 230) 100%)',
       }}
     >

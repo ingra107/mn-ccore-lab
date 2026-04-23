@@ -41,6 +41,8 @@ import ConferencePrep from '../components/ConferencePrep'
 import InsightPanel from '../components/InsightPanel'
 import ProjectLiterature from './project/ProjectLiterature'
 import ProjectActivity from './project/ProjectActivity'
+import ProjectUpdateFeed from '../components/ProjectUpdateFeed'
+import ProjectComments from '../components/ProjectComments'
 import ProjectDocuments from './project/ProjectDocuments'
 import { PATHS } from '../constants/paths'
 
@@ -1108,6 +1110,33 @@ function ProjectDetailInner({ project }: InnerProps) {
       {/* Conference Prep Tracking */}
       <div style={{ marginTop: '1.5rem' }}>
         <ConferencePrep projectId={project.slug} />
+      </div>
+
+      {/* Quick-access Updates + Comments on Overview (GH #10). Notes = your
+          private progress log (auto-timestamped). Comments = team-visible
+          discussion thread. Full history still lives on the Activity tab. */}
+      <div
+        style={{
+          marginTop: '2rem',
+          padding: '12px 16px',
+          borderRadius: 'var(--radius-lg)',
+          background: 'var(--surface-1)',
+          border: '1px solid var(--border-subtle)',
+          fontSize: '12px',
+          color: 'var(--muted)',
+          lineHeight: 1.5,
+        }}
+      >
+        <strong style={{ color: 'var(--ink)', fontWeight: 600 }}>Notes vs Comments:</strong>{' '}
+        <span><strong>Notes</strong> are your own progress log (private, auto-timestamped — e.g. "Talked with Peter, he'll run the script and get back next week"). <strong>Comments</strong> are team discussion (visible to everyone, @mentions notify).</span>
+      </div>
+
+      <div id="updates" style={{ scrollMarginTop: '60px', marginTop: '1rem' }}>
+        <ProjectUpdateFeed projectSlug={project.slug} />
+      </div>
+
+      <div id="comments" style={{ scrollMarginTop: '60px', marginTop: '1rem' }}>
+        <ProjectComments projectSlug={project.slug} />
       </div>
 
       </>)}

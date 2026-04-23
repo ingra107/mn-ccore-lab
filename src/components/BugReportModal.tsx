@@ -318,11 +318,14 @@ export default function BugReportModal({ open, onClose }: BugReportModalProps) {
                   </span>
                 </div>
               )}
+              {/* No `capture="environment"` — that forces camera-only and
+                  hides the photo library. Without it, mobile gets the
+                  standard picker (Take Photo / Photo Library / Files),
+                  so Nick can pick an existing screenshot. GH #8. r7 2026-04-23. */}
               <input
                 ref={fileInputRef}
                 type="file"
                 accept="image/*"
-                capture="environment"
                 onChange={handleFilePick}
                 style={{ display: 'none' }}
               />
