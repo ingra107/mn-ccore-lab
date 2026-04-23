@@ -499,56 +499,79 @@ export default function Dashboard() {
         {/* PhaseReleaseBanner moved to PortalLayout top bar as a pill (R4-10). */}
         <WelcomeBanner />
 
-        {/* Customize panel */}
-        {showCustomize && (
-          <div
-            data-testid="customize-panel"
-            className="rounded-xl border p-4 mb-3 customize-panel"
-            style={{ borderColor: 'var(--border-subtle)' }}
-          >
-            <p className="text-xs font-medium mb-3" style={{ color: 'var(--ink)' }}>
-              Toggle cards visible on your dashboard
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {CARD_REGISTRY.map(card => (
-                <div key={card.id} className="flex items-center gap-1">
-                  <button
-                    onClick={() => toggleCard(card.id)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors border"
-                    style={{
-                      color: visibleCards.has(card.id) ? 'var(--teal)' : 'var(--slate)',
-                      backgroundColor: visibleCards.has(card.id) ? 'var(--teal-active)' : 'transparent',
-                      borderColor: visibleCards.has(card.id) ? 'var(--teal)' : 'var(--border-subtle)',
-                      cursor: 'pointer',
-                      opacity: visibleCards.has(card.id) ? 1 : 0.85,
-                    }}
-                  >
-                    {visibleCards.has(card.id) ? '\u2713' : '+'} {card.label}
-                  </button>
-                  {visibleCards.has(card.id) && (
-                    <button
-                      onClick={() => togglePin(card.id)}
-                      aria-label={pinnedCards.has(card.id) ? 'Unpin card' : 'Pin card to top'}
-                      className="flex items-center justify-center"
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        cursor: 'pointer',
-                        minHeight: 44,
-                        minWidth: 44,
-                        color: pinnedCards.has(card.id) ? 'var(--gold)' : 'var(--slate)',
-                        opacity: pinnedCards.has(card.id) ? 1 : 0.85,
-                      }}
-                      title={pinnedCards.has(card.id) ? 'Unpin' : 'Pin to top'}
-                    >
-                      <Pin size={14} />
-                    </button>
-                  )}
-                </div>
-              ))}
+        {/* Customize panel \u2014 R4-P3-01: pills split into Always-on vs
+            Optional so 20 toggles don't present as a flat wall of
+            choices. Claude Design called out that users can't tell
+            what "CLIF Network" vs "Team Pulse" are until they enable
+            them; the split tells them which four are core. */}
+        {showCustomize && (() => {
+          const ALWAYS_ON_IDS = new Set(['action-board', 'upcoming', 'pipeline', 'activity'])
+          const alwaysOn = CARD_REGISTRY.filter(c => ALWAYS_ON_IDS.has(c.id))
+          const optional = CARD_REGISTRY.filter(c => !ALWAYS_ON_IDS.has(c.id))
+          const renderPill = (card: typeof CARD_REGISTRY[number]) => (
+            <div key={card.id} className="flex items-center gap-1">
+              <button
+                onClick={() => toggleCard(card.id)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors border"
+                style={{
+                  color: visibleCards.has(card.id) ? 'var(--teal)' : 'var(--slate)',
+                  backgroundColor: visibleCards.has(card.id) ? 'var(--teal-active)' : 'transparent',
+                  borderColor: visibleCards.has(card.id) ? 'var(--teal)' : 'var(--border-subtle)',
+                  cursor: 'pointer',
+                  opacity: visibleCards.has(card.id) ? 1 : 0.85,
+                }}
+              >
+                {visibleCards.has(card.id) ? '\u2713' : '+'} {card.label}
+              </button>
+              {visibleCards.has(card.id) && (
+                <button
+                  onClick={() => togglePin(card.id)}
+                  aria-label={pinnedCards.has(card.id) ? 'Unpin card' : 'Pin card to top'}
+                  className="flex items-center justify-center"
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    minHeight: 44,
+                    minWidth: 44,
+                    color: pinnedCards.has(card.id) ? 'var(--gold)' : 'var(--slate)',
+                    opacity: pinnedCards.has(card.id) ? 1 : 0.85,
+                  }}
+                  title={pinnedCards.has(card.id) ? 'Unpin' : 'Pin to top'}
+                >
+                  <Pin size={14} />
+                </button>
+              )}
             </div>
-          </div>
-        )}
+          )
+          return (
+            <div
+              data-testid="customize-panel"
+              className="rounded-xl border p-4 mb-3 customize-panel"
+              style={{ borderColor: 'var(--border-subtle)' }}
+            >
+              <p className="text-xs font-medium mb-3" style={{ color: 'var(--ink)' }}>
+                Toggle cards visible on your dashboard
+              </p>
+              <div className="mb-4">
+                <p className="text-[10px] uppercase tracking-wider mb-2" style={{ color: 'var(--slate)', opacity: 0.7, letterSpacing: '0.06em' }}>
+                  Core \u00b7 recommended
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {alwaysOn.map(renderPill)}
+                </div>
+              </div>
+              <div>
+                <p className="text-[10px] uppercase tracking-wider mb-2" style={{ color: 'var(--slate)', opacity: 0.7, letterSpacing: '0.06em' }}>
+                  Optional \u00b7 turn on as needed
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {optional.map(renderPill)}
+                </div>
+              </div>
+            </div>
+          )
+        })()}
 
         {/* ── STRATUM 2: QuickCapture + contextual alerts + cards ── */}
         {/* Quick Capture + Actions */}
