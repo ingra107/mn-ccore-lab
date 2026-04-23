@@ -227,21 +227,6 @@ export function useGrants() {
   })
 }
 
-export function useCollaborationGraph() {
-  return useQuery({
-    queryKey: ['graph', 'collaboration'],
-    queryFn: async () => {
-      try {
-        const res = await fetchCollaborationGraph()
-        return res.data
-      } catch {
-        return null
-      }
-    },
-    staleTime: STALE_TIME,
-  })
-}
-
 export function useStats() {
   return useQuery({
     queryKey: ['stats'],
@@ -1255,22 +1240,6 @@ export function useExpertise(slug?: string) {
   })
 }
 
-export function useExpertSuggestions(topic: string) {
-  return useQuery({
-    queryKey: ['expertise', 'suggest', topic],
-    queryFn: async () => {
-      try {
-        const res = await fetchExpertSuggestions(topic)
-        return res.data as ExpertSuggestion[]
-      } catch {
-        return []
-      }
-    },
-    staleTime: 60 * 1000,
-    enabled: !!topic && topic.length >= 2,
-  })
-}
-
 // ── Questions (Ask the Lab) ──────────────────────────────────
 
 export function useQuestions(filters?: { status?: string; project_slug?: string }) {
@@ -1459,18 +1428,6 @@ export function useMenteeOverview() {
 
 // ── Deadline Cascade ────────────────────────────────────────
 
-export function useDeadlineCascade(projectId: string) {
-  return useQuery({
-    queryKey: ['deadline-cascade', projectId],
-    queryFn: async () => {
-      const res = await fetchDeadlineCascade(projectId)
-      return res.data as CascadeGraph
-    },
-    enabled: !!projectId,
-    staleTime: 60 * 1000,
-  })
-}
-
 export function useDeadlineImpact(id: string | null, type: string | null, newDate: string | null) {
   return useQuery({
     queryKey: ['deadline-impact', id, type, newDate],
@@ -1505,24 +1462,7 @@ export function useSubmissionEvents(projectId: string) {
   })
 }
 
-export function useActiveSubmissions() {
-  return useQuery({
-    queryKey: ['submissions-active'],
-    queryFn: () => fetchActiveSubmissions().then((r) => r.data),
-    staleTime: 60 * 1000,
-  })
-}
-
 // ── Regulatory & Compliance ────────────────────────────────
-
-export function useRegulatoryItems(projectId: string) {
-  return useQuery({
-    queryKey: ['regulatory', projectId],
-    queryFn: () => fetchRegulatoryItems(projectId).then((r) => r.data),
-    enabled: !!projectId,
-    staleTime: 60 * 1000,
-  })
-}
 
 export function useExpiringRegulatory(days: number = 60) {
   return useQuery({
@@ -1533,15 +1473,6 @@ export function useExpiringRegulatory(days: number = 60) {
 }
 
 // ── Grant Post-Award Milestones ───────────────────────────────
-
-export function useGrantMilestones(grantId: string) {
-  return useQuery({
-    queryKey: ['grant-milestones', grantId],
-    queryFn: () => fetchGrantMilestones(grantId).then((r) => r.data),
-    enabled: !!grantId,
-    staleTime: 60 * 1000,
-  })
-}
 
 export function useUpcomingGrantMilestones(days: number = 90) {
   return useQuery({
