@@ -1,5 +1,5 @@
 import type { Director, TeamMember } from './types'
-import { emailToSlug, canonicalSlug } from '../lib/emailSlug'
+import { emailToSlug } from '../lib/emailSlug'
 
 export const directors: Director[] = [
   {
@@ -106,12 +106,9 @@ export function getPersonInfo(slug: string): { name: string; initials: string; p
   if (slug === 'claude-ai') {
     return { name: 'Hermes', initials: 'AI', photoUrl: undefined }
   }
-  // Canonicalize legacy short-form slugs (`nick` -> `nick-ingraham`) so the
-  // same human doesn't render as two different people in UI.
-  const canonical = canonicalSlug(slug)
-  const director = directors.find((d) => d.slug === canonical)
+  const director = directors.find((d) => d.slug === slug)
   if (director) return { name: director.name, initials: director.initials, photoUrl: director.photoUrl }
-  const member = getMemberBySlug(canonical)
+  const member = getMemberBySlug(slug)
   if (member) return { name: member.name, initials: member.initials, photoUrl: member.photoUrl }
   // Handle email addresses (from D1 auth) — try LUT-mapped slug first so
   // `ingra107@umn.edu` finds the member row for `nick-ingraham`.
