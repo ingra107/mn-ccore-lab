@@ -14,7 +14,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { P } from './helpers/paths'
 
-const BASE = 'https://mn-ccore-lab.pages.dev'
+const BASE = process.env.BASE_URL ?? 'https://mn-ccore-lab.pages.dev'
 
 const TS = new Date()
   .toISOString()
