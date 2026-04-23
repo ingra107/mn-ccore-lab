@@ -8,7 +8,7 @@
 // Root-level equivalents redirect via <Navigate> in App.tsx for bookmark
 // compatibility — do not add new routes at the root gated path.
 
-export const PORTAL_PREFIX = '/portal'
+const PORTAL_PREFIX = '/portal'
 
 // Gated (behind CF Access + RequireAuth)
 export const PATHS = {

@@ -87,4 +87,3 @@ export function useUserRole(): UseUserRoleReturn {
   }
 }
 
-export type { UserRole }
