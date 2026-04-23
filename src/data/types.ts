@@ -84,7 +84,7 @@ export interface Project {
   // Review) rendered in StageSelector and API canonical stages
   // (Data Analysis, Submitted, Accepted) stored in D1. `normalizeStage`
   // folds API → UI for display; `toApiStage` folds UI → API on submit.
-  stage?: 'Idea' | 'Data Collection' | 'Analysis' | 'Data Analysis' | 'Writing' | 'Review' | 'Submitted' | 'Accepted' | 'Published'
+  stage?: 'Idea' | 'Data Collection' | 'Analysis' | 'Data Analysis' | 'Writing' | 'Review' | 'Submitted' | 'Revisions' | 'Accepted' | 'Published'
   team?: string[]  // slugs of team members working on this
   googleDocUrl?: string
   startDate?: string

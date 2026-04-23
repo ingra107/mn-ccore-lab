@@ -346,6 +346,7 @@ export default function PIAnalytics() {
     'Analysis': 'var(--stage-fill-analysis)',
     'Writing': 'var(--stage-fill-writing)',
     'Review': 'var(--stage-fill-review)',
+    'Revisions': 'var(--stage-fill-revisions)',
     'Published': 'var(--stage-fill-published)',
     'Submitted': 'var(--stage-fill-submitted)',
   }

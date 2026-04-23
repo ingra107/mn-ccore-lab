@@ -379,7 +379,7 @@ const PROJECT_REQUIRED_FIELDS = new Set(['status', 'stage', 'category']);
 // Peripheral-Brain's scripts/db/enums.py (R10 taxonomy). Found during deep
 // audit Suite 2 — "bogus_value" was round-tripping through PUT/POST.
 const PROJECT_STATUS_VALUES = new Set(['active', 'waiting_external', 'blocked', 'done']);
-const PROJECT_STAGE_VALUES = new Set(['Idea', 'Data Collection', 'Data Analysis', 'Writing', 'Submitted', 'Accepted', 'Published']);
+const PROJECT_STAGE_VALUES = new Set(['Idea', 'Data Collection', 'Data Analysis', 'Writing', 'Submitted', 'Revisions', 'Accepted', 'Published']);
 const PROJECT_CATEGORY_VALUES = new Set(['clif', 'lab', 'nate', 'mentee']);
 const PROJECT_ENUM_GUARDS: Record<string, Set<string>> = {
   status: PROJECT_STATUS_VALUES,

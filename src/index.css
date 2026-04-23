@@ -945,6 +945,7 @@ a:hover {
   --stage-fill-writing: #a23d08;        /* orange light-hex: 5.3:1 with #fff */
   --stage-fill-review: #8a1f2e;         /* maroon-solid: 7.3:1 with #fff */
   --stage-fill-submitted: #0d6f68;      /* same as data-collection */
+  --stage-fill-revisions: #5b4fa8;      /* blue-purple: 6.5:1 with #fff — GH #26 (2026-04-23) */
   --stage-fill-published: #066e2f;      /* green light-hex: 5.9:1 with #fff */
 }
 

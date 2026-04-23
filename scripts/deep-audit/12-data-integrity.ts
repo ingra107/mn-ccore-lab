@@ -94,7 +94,7 @@ async function main() {
 
     section(s, '12.G  Projects with invalid stage enum')
     const badProjStage = d1Query<{ stage: string; n: number }>(
-      "SELECT stage, COUNT(*) as n FROM projects WHERE stage IS NOT NULL AND stage NOT IN ('Idea','Data Collection','Data Analysis','Writing','Submitted','Accepted','Published') GROUP BY stage"
+      "SELECT stage, COUNT(*) as n FROM projects WHERE stage IS NOT NULL AND stage NOT IN ('Idea','Data Collection','Data Analysis','Writing','Submitted','Revisions','Accepted','Published') GROUP BY stage"
     )
     if (badProjStage.length === 0) pass(s, '12.G All project stage values canonical')
     else bug(s, 'PROJ-BAD-STAGE', 'P1', '12.G Projects with invalid stage', JSON.stringify(badProjStage).slice(0, 300), 'all in canonical stage enum')

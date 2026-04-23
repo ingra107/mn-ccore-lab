@@ -48,7 +48,7 @@ import { PATHS } from '../constants/paths'
 
 type Tab = 'overview' | 'tasks' | 'revisions' | 'activity' | 'literature'
 
-const STAGES = ['Idea', 'Data Collection', 'Analysis', 'Writing', 'Review', 'Published'] as const
+const STAGES = ['Idea', 'Data Collection', 'Analysis', 'Writing', 'Review', 'Revisions', 'Published'] as const
 type Stage = (typeof STAGES)[number]
 
 const CATEGORY_COLORS: Record<string, { bg: string; text: string; label: string }> = {
