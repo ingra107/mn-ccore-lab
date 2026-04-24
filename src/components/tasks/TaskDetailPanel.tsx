@@ -14,6 +14,8 @@ import { useUpdateTask, useUpdateTaskStatus, useAcknowledgeTask, usePostTaskUpda
 import { useToast } from '../../hooks/useToast'
 import { useUndoToast } from '../UndoToast'
 import { formatRelativeTime } from '../../lib/dateUtils'
+import { appendCharToInput } from '../../lib/textUtils'
+import TypingIndicator from '../TypingIndicator'
 import { getPersonInfo, getAllMembers, directors } from '../../data/team'
 import Avatar from '../Avatar'
 import InlineSelect from '../InlineSelect'
@@ -977,13 +979,7 @@ function OverviewQuickAdd({
   const fileInputRef = useRef<HTMLInputElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const { typingPeers, broadcastTyping } = useTyping('task', taskId)
-  const appendCh = (ch: string) => {
-    setText((t) => (t.endsWith(' ') || t.length === 0 ? t + ch : t + ' ' + ch))
-    requestAnimationFrame(() => {
-      const el = textareaRef.current
-      if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length) }
-    })
-  }
+  const appendCh = (ch: string) => appendCharToInput(textareaRef, ch, setText)
   const postUpdate = usePostTaskUpdate(taskId)
   const { showSuccess } = useToast()
   const queryClient = useQueryClient()
@@ -1244,14 +1240,7 @@ function OverviewQuickAdd({
           )}
         </div>
 
-        {/* T-51 typing indicator — shows when other peers are typing on this task */}
-        {typingPeers.length > 0 && (
-          <p className="text-[10px] self-start" style={{ color: 'var(--teal)', opacity: 0.85, fontStyle: 'italic', margin: 0 }}>
-            {typingPeers.length === 1
-              ? `${getPersonInfo(typingPeers[0]).name.split(' ')[0]} is typing…`
-              : `${typingPeers.length} people are typing…`}
-          </p>
-        )}
+        <TypingIndicator slugs={typingPeers} className="self-start" />
 
         {/* Hermes toggle — only relevant on comments. Shows up after typing. */}
         {mode === 'comment' && text.trim() && (

@@ -29,6 +29,8 @@ import { useUndoToast } from '../components/UndoToast'
 import BulkActionToolbar from '../components/tasks/BulkActionToolbar'
 import { useAuth } from '../hooks/useAuth'
 import { getPersonInfo } from '../data/team'
+import { appendCharToInput } from '../lib/textUtils'
+import TypingIndicator from '../components/TypingIndicator'
 import { formatShortDate, formatMediumDate } from '../lib/dateUtils'
 import Avatar from '../components/Avatar'
 import InlineSelect from '../components/InlineSelect'
@@ -238,17 +240,10 @@ function ProjectDetailInner({ project }: InnerProps) {
   const [quickComposeUploading, setQuickComposeUploading] = useState(false)
   const quickComposeFileInputRef = useRef<HTMLInputElement>(null)
   const quickComposeTextRef = useRef<HTMLTextAreaElement>(null)
-  // T-05 affordance — append @ or : and focus caret end
-  const appendToCompose = useCallback((ch: string) => {
-    setQuickComposeText((t) => (t.endsWith(' ') || t.length === 0 ? t + ch : t + ' ' + ch))
-    requestAnimationFrame(() => {
-      const el = quickComposeTextRef.current
-      if (el) {
-        el.focus()
-        el.setSelectionRange(el.value.length, el.value.length)
-      }
-    })
-  }, [])
+  const appendToCompose = useCallback(
+    (ch: string) => appendCharToInput(quickComposeTextRef, ch, setQuickComposeText),
+    [],
+  )
   // T-04 inline file drop — Slack parity. Upload → append link to compose.
   const uploadToCompose = useCallback(async (file: File) => {
     if (!project) return
@@ -992,13 +987,7 @@ function ProjectDetailInner({ project }: InnerProps) {
           {quickComposeUploading && (
             <p className="mt-1 text-[10px]" style={{ color: 'var(--teal)', opacity: 0.85 }}>Uploading…</p>
           )}
-          {projectTypingPeers.length > 0 && (
-            <p className="mt-1 text-[10px]" style={{ color: 'var(--teal)', opacity: 0.85, fontStyle: 'italic' }}>
-              {projectTypingPeers.length === 1
-                ? `${getPersonInfo(projectTypingPeers[0]).name.split(' ')[0]} is typing…`
-                : `${projectTypingPeers.length} people are typing…`}
-            </p>
-          )}
+          <TypingIndicator slugs={projectTypingPeers} className="mt-1" />
         </div>
       </motion.div>
 

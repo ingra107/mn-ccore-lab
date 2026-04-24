@@ -1,3 +1,27 @@
+import type { RefObject } from 'react'
+
+/**
+ * Append a character to an input/textarea, focus it, and park the caret at
+ * the end. Mobile affordance for compose surfaces where `@`/`:` buttons
+ * insert the character so users don't have to know the shortcut. If the
+ * current content doesn't end in whitespace, inserts a leading space so
+ * `@name` parses cleanly even when the user was mid-sentence.
+ */
+export function appendCharToInput(
+  ref: RefObject<HTMLInputElement | HTMLTextAreaElement | null>,
+  ch: string,
+  setValue: (next: string | ((prev: string) => string)) => void,
+) {
+  setValue((t) => (t.endsWith(' ') || t.length === 0 ? t + ch : t + ' ' + ch))
+  requestAnimationFrame(() => {
+    const el = ref.current
+    if (el) {
+      el.focus()
+      el.setSelectionRange(el.value.length, el.value.length)
+    }
+  })
+}
+
 /**
  * Parse "[Carried forward]" or "[Carried forward Nd]" prefix from action
  * item descriptions or task titles. Returns the clean text + flag + optional

@@ -37,7 +37,8 @@ import type { ActionItemRow as ActionItemRowType, AgendaItemRow } from '../hooks
 import { useQueryClient } from '@tanstack/react-query'
 import { useToggleActionItem, useAddAgendaItem, useUpdateMeetingNotes, useCreateDecision, useCreateTask } from '../hooks/useMutations'
 import FileUpload from '../components/FileUpload'
-import { parseCarriedForward } from '../lib/textUtils'
+import TypingIndicator from '../components/TypingIndicator'
+import { appendCharToInput, parseCarriedForward } from '../lib/textUtils'
 import { parseQuickAddInput } from '../lib/parseQuickAdd'
 import { emailToSlug } from '../lib/emailSlug'
 import { useAuth } from '../hooks/useAuth'
@@ -155,16 +156,23 @@ export default function MeetingDetail() {
     })
   }, [pendingActions, actionOrder])
 
-  // T-20 keyboard nav on action items: n focuses add form, j/k move focus,
-  // x or Enter toggles focused action. Skip when typing in an input.
+  // Keyboard nav on action items: n focuses add form, j/k move focus, x or
+  // Enter toggles focused action. focusedActionIndex + the current actions
+  // list are read from refs so the window listener is not rebuilt on every
+  // focus move (would re-attach ~N times per keystroke).
   const [focusedActionIndex, setFocusedActionIndex] = useState(-1)
+  const focusedActionIndexRef = useRef(focusedActionIndex)
+  const orderedPendingActionsRef = useRef(orderedPendingActions)
+  focusedActionIndexRef.current = focusedActionIndex
+  orderedPendingActionsRef.current = orderedPendingActions
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       const el = document.activeElement as HTMLElement | null
       const isTyping = el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)
       if (isTyping) return
       if (e.metaKey || e.ctrlKey || e.altKey) return
-      const total = orderedPendingActions.length
+      const list = orderedPendingActionsRef.current
+      const total = list.length
       if (e.key === 'n') {
         e.preventDefault()
         const add = document.querySelector<HTMLInputElement>('[data-testid="meeting-action-add"]')
@@ -176,15 +184,16 @@ export default function MeetingDetail() {
         e.preventDefault()
         setFocusedActionIndex((i) => (total === 0 ? -1 : Math.max(0, i - 1)))
       } else if (e.key === 'x' || e.key === 'Enter') {
-        if (focusedActionIndex >= 0 && focusedActionIndex < total) {
+        const idx = focusedActionIndexRef.current
+        if (idx >= 0 && idx < total) {
           e.preventDefault()
-          handleToggleAction(orderedPendingActions[focusedActionIndex].id)
+          handleToggleAction(list[idx].id)
         }
       }
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [orderedPendingActions, focusedActionIndex])
+  }, [])
 
   const handleBatchComplete = () => {
     for (const id of selectedActionIds) {
@@ -1021,13 +1030,7 @@ function AddActionItemForm({ meetingId, isAuthenticated, onSuccess }: { meetingI
   const inputRef = useRef<HTMLInputElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { typingPeers: meetingTypingPeers, broadcastTyping: broadcastMeetingTyping } = useTyping('meeting', meetingId)
-  const appendCh = (ch: string) => {
-    setText((t) => (t.endsWith(' ') || t.length === 0 ? t + ch : t + ' ' + ch))
-    requestAnimationFrame(() => {
-      const el = inputRef.current
-      if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length) }
-    })
-  }
+  const appendCh = (ch: string) => appendCharToInput(inputRef, ch, setText)
   const createTask = useCreateTask()
   const queryClient = useQueryClient()
   const { user } = useAuth()
@@ -1171,14 +1174,7 @@ function AddActionItemForm({ meetingId, isAuthenticated, onSuccess }: { meetingI
         </span>
       )}
 
-      {/* T-51 typing indicator */}
-      {meetingTypingPeers.length > 0 && (
-        <p className="text-[10px] mt-1" style={{ color: 'var(--teal)', opacity: 0.85, fontStyle: 'italic', margin: '4px 0 0 22px' }}>
-          {meetingTypingPeers.length === 1
-            ? `${getPersonInfo(meetingTypingPeers[0]).name.split(' ')[0]} is typing…`
-            : `${meetingTypingPeers.length} people are typing…`}
-        </p>
-      )}
+      <TypingIndicator slugs={meetingTypingPeers} style={{ margin: '4px 0 0 22px' }} />
 
       {/* Token preview chips */}
       {parsed && (parsed.assigneeName || parsed.priority || parsed.dueDate || parsed.projectTitle) && (

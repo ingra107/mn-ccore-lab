@@ -45,7 +45,6 @@ export default function CommandPalette() {
   const { user } = useAuth()
   const currentUserSlug = emailToSlug(user?.email)
 
-  // T-16 recent routes tracked in sessionStorage
   const [recentRoutes, setRecentRoutes] = useState<string[]>(() => {
     try {
       const raw = sessionStorage.getItem(RECENT_KEY)
@@ -56,11 +55,13 @@ export default function CommandPalette() {
     const path = location.pathname
     if (!path.startsWith('/portal/')) return
     setRecentRoutes((prev) => {
-      const next = [path, ...prev.filter((p) => p !== path)].slice(0, RECENT_MAX)
-      try { sessionStorage.setItem(RECENT_KEY, JSON.stringify(next)) } catch {}
-      return next
+      if (prev[0] === path) return prev
+      return [path, ...prev.filter((p) => p !== path)].slice(0, RECENT_MAX)
     })
   }, [location.pathname])
+  useEffect(() => {
+    try { sessionStorage.setItem(RECENT_KEY, JSON.stringify(recentRoutes)) } catch {}
+  }, [recentRoutes])
 
   // Global Cmd+K listener
   useEffect(() => {
