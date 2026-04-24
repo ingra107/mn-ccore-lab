@@ -5,7 +5,7 @@
 ## 🎯 NEXT SESSION — START HERE
 
 **State at handoff:**
-- HEAD `c2ef507a` on main, clean, pushed
+- HEAD `edf6066f` on main, clean, pushed
 - Deploy `538cabcc.mn-ccore-lab.pages.dev` (prod alias)
 - Live for the team since 2026-04-21
 - **Queue fully closed this session** — all 4 remaining items shipped.
@@ -82,6 +82,26 @@ interactivity, friction-free, customizability, agent interaction
 (inline `@hermes` dispatch = `@claude` tag parity), 4-week dogfood.
 v1 is the local half; full parity needs the cross-entity stream +
 comments/interactions inside views + Hermes @-dispatch from a view.
+
+**Don't-forget (carry-over to next session):**
+
+- **Mobile dogfood** for row-swipe + bottom-sheet compose hasn't happened.
+  Right-swipe-complete + left-swipe-menu on iPhone + Android; compose
+  sheet rise-above-keyboard on both. Both shipped behind the `useIsMobile`
+  breakpoint + `useSwipeAction` `enabled=false` gate, so desktop is safe;
+  regression risk is mobile-only and won't surface in desktop Playwright.
+- **`ActiveRevisionsDashboard` is now a 0-caller export** in
+  `src/components/RevisionTracker.tsx:858`. Kept in place for now since
+  the file also hosts the full RevisionTracker UI; next `/simplify` sweep
+  can prune the dead export.
+- **DD-1 mode param `?mode=now|data`** only routes on MyTasks. Other list
+  pages ignore it. If someone deep-links Projects with `?mode=now` it's
+  silently dropped — fine for now (pilot scope), revisit in rollout.
+- **Saved views are localStorage-scoped per browser.** Two clients (home
+  laptop vs work laptop) don't share views. DD-2 v2 is the fix.
+- **Settings → Lab tab** is Nick-only useful at this stage (team members
+  don't run Manuscripts triage). Thresholds are per-user so it's safe to
+  expose; just low-traffic surface.
 
 **Key session decisions (durable, post-compact):**
 - **CD = Claude Design claude.ai project.** Not a human consultant.
