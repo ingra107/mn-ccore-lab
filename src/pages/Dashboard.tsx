@@ -7,7 +7,6 @@ import { useScrollReveal } from '../hooks/useScrollReveal'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useAuth } from '../hooks/useAuth'
 import { emailToSlug } from '../lib/emailSlug'
-import { getPersonInfo } from '../data/team'
 import { useMeetingsApi, useTasks, useExpiringRegulatory } from '../hooks/useApiData'
 import { formatMediumDate } from '../lib/dateUtils'
 import { isProductionVisible } from '../lib/isProductionVisible'
@@ -36,6 +35,7 @@ import ProactiveBriefCard from '../components/dashboard/ProactiveBriefCard'
 import SystemHealthMiniCard from '../components/dashboard/SystemHealthMiniCard'
 import FileActivityCard from '../components/dashboard/FileActivityCard'
 import LabHealthScore from '../components/dashboard/LabHealthScore'
+import StatusLine from '../components/dashboard/StatusLine'
 import QuickCaptureBar from '../components/QuickCaptureBar'
 
 // Context to defer non-critical queries until after first paint
@@ -172,14 +172,6 @@ export default function Dashboard() {
 
   const { data: meetings = [] } = useMeetingsApi({ enabled: mounted })
   const { data: allTasks = [] } = useTasks(undefined, { enabled: mounted })
-
-  // Today's progress summary
-  const todayProgress = useMemo(() => {
-    const todayStr = new Date().toISOString().split('T')[0]
-    const completedToday = allTasks.filter(t => t.completed_at && t.completed_at.startsWith(todayStr)).length
-    const dueToday = allTasks.filter(t => !t.completed && t.due_date === todayStr).length
-    return { completedToday, dueToday }
-  }, [allTasks])
 
   // Find next upcoming meeting (today or tomorrow)
   const upcomingMeeting = useMemo(() => {
@@ -339,26 +331,12 @@ export default function Dashboard() {
     window.location.reload()
   }, [userSlug])
 
-  // Time-of-day greeting — prefer real first name from team data over email prefix
-  // (which for Nick produces "Ingra107", hence 2026-04-21 issue #19).
-  const greeting = useMemo(() => {
-    const hour = new Date().getHours()
-    const person = userSlug ? getPersonInfo(userSlug) : null
-    const personFirstName = person && person.name !== 'Unknown' ? person.name.split(' ')[0] : null
-    const fallback = user?.email?.split('@')[0]?.split('.')[0]
-    const capitalized = fallback ? fallback.charAt(0).toUpperCase() + fallback.slice(1) : null
-    const name = personFirstName || capitalized
-    const timeGreeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
-    return name ? `${timeGreeting}, ${name}` : timeGreeting
-  }, [user, userSlug])
-
   return (
     <DashboardMountedContext.Provider value={mounted}>
     <div style={{ minHeight: '100vh', overflowX: 'hidden' }}>
       <div className="content-container" style={{ paddingBottom: '4rem', maxWidth: '100%', minHeight: 'calc(100vh - 120px)' }}>
-        {/* ── STRATUM 1: Greeting + Tabs + Customize (single row) ── */}
+        {/* DD-#3: operational status chips replace the editorial greeting. */}
         {(() => {
-          const overdue = allTasks.filter(t => !t.completed && t.due_date && new Date(t.due_date + 'T23:59:59') < new Date())
           return (
             <div ref={headerRef} className="fade-in-up" style={{ marginBottom: '0.625rem', paddingTop: '0.25rem' }}>
               {/* Row A: greeting stats + tabs + customize */}
@@ -372,7 +350,7 @@ export default function Dashboard() {
                   flexWrap: 'wrap',
                 }}
               >
-                {/* Left: live dot + greeting + inline stats */}
+                {/* Left: live dot + operational status chips (DD-#3 Option C) */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', flex: 1, minWidth: 0 }}>
                   <div
                     style={{
@@ -384,58 +362,10 @@ export default function Dashboard() {
                       animation: 'status-pulse 2s ease-in-out infinite',
                       flexShrink: 0,
                     }}
+                    aria-label="Live"
                   />
-                  <h1
-                    style={{
-                      fontWeight: 500,
-                      fontSize: '14px',
-                      color: 'var(--ink)',
-                      lineHeight: 1.2,
-                      letterSpacing: 'var(--tracking-display)',
-                      whiteSpace: 'nowrap',
-                      margin: 0,
-                    }}
-                  >
-                    {greeting}
-                  </h1>
-                  <span style={{ color: 'var(--slate)', opacity: 0.75, fontSize: '14px', flexShrink: 0 }}>{'·'}</span>
-                  <span style={{ fontSize: '13px', color: 'var(--slate)', opacity: 0.75, whiteSpace: 'nowrap' }}>
-                    {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
-                  </span>
-                  {todayProgress.completedToday > 0 && (
-                    <>
-                      <span style={{ color: 'var(--slate)', opacity: 0.75, fontSize: '14px', flexShrink: 0 }}>{'·'}</span>
-                      <span style={{ fontSize: '12px', color: 'var(--green)', whiteSpace: 'nowrap' }}>{todayProgress.completedToday} done</span>
-                    </>
-                  )}
-                  {todayProgress.dueToday > 0 && (
-                    <>
-                      <span style={{ color: 'var(--slate)', opacity: 0.75, fontSize: '14px', flexShrink: 0 }}>{'·'}</span>
-                      <span style={{ fontSize: '12px', color: 'var(--teal)', whiteSpace: 'nowrap' }}>{todayProgress.dueToday} due</span>
-                    </>
-                  )}
-                  {overdue.length > 0 && (
-                    <>
-                      <span style={{ color: 'var(--slate)', opacity: 0.75, fontSize: '14px', flexShrink: 0 }}>{'·'}</span>
-                      <a
-                        href={PATHS.myTasks}
-                        className="portal-footer-link"
-                        style={{ display: 'flex', alignItems: 'center', gap: '4px', textDecoration: 'none', whiteSpace: 'nowrap' }}
-                      >
-                        <span
-                          style={{
-                            width: 6,
-                            height: 6,
-                            borderRadius: 'var(--radius-circle)',
-                            background: 'var(--maroon-solid)',
-                            flexShrink: 0,
-                          }}
-                        />
-                        <span style={{ fontSize: '12px', color: 'var(--maroon)' }}>{overdue.length} overdue</span>
-                      </a>
-                    </>
-                  )}
-                  <span style={{ color: 'var(--slate)', opacity: 0.75, fontSize: '14px', flexShrink: 0 }}>{'·'}</span>
+                  <StatusLine tasks={allTasks} loading={!mounted} />
+                  <span style={{ color: 'var(--slate)', opacity: 0.55, fontSize: '12px', flexShrink: 0 }}>{'·'}</span>
                   <LabHealthScore />
                 </div>
 
