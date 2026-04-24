@@ -29,6 +29,7 @@ import {
   fetchRevisions,
   fetchRevisionComments,
   fetchActiveRevisions,
+  fetchManuscriptsAttention,
   fetchMenteeMilestones,
   fetchMenteeOverview,
   fetchDeadlineImpact,
@@ -1382,6 +1383,14 @@ export function useActiveRevisions() {
   return useQuery({
     queryKey: ['revisions-active'],
     queryFn: () => fetchActiveRevisions().then((r) => r.data),
+    staleTime: 60 * 1000,
+  })
+}
+
+export function useManuscriptsAttention(params?: { reviewDays?: number; staleDays?: number }) {
+  return useQuery({
+    queryKey: ['manuscripts-attention', params?.reviewDays ?? 7, params?.staleDays ?? 30],
+    queryFn: () => fetchManuscriptsAttention(params),
     staleTime: 60 * 1000,
   })
 }

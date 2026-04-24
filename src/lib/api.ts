@@ -561,6 +561,45 @@ export function fetchActiveRevisions() {
   return fetchApi<RevisionRow[]>('/api/revisions/active')
 }
 
+export interface ManuscriptsAttentionRow {
+  id: string
+  project_id?: string
+  project_title?: string | null
+  project_slug?: string | null
+  round?: number
+  journal?: string | null
+  submitted_at?: string | null
+  response_due?: string | null
+  revision_id?: string
+  reviewer_number?: number
+  comment_text?: string
+  created_at?: string
+  title?: string
+  status?: string
+  updated_at?: string | null
+  authors?: string
+  comment_count?: number
+  resolved_count?: number
+}
+
+export interface ManuscriptsAttention {
+  data: {
+    revisions_overdue: ManuscriptsAttentionRow[]
+    awaiting_review: ManuscriptsAttentionRow[]
+    stale_drafts: ManuscriptsAttentionRow[]
+  }
+  thresholds: { review_days: number; stale_days: number }
+}
+
+export function fetchManuscriptsAttention(params?: { reviewDays?: number; staleDays?: number }) {
+  const qs = new URLSearchParams()
+  if (params?.reviewDays !== undefined) qs.set('review_days', String(params.reviewDays))
+  if (params?.staleDays !== undefined) qs.set('stale_days', String(params.staleDays))
+  const suffix = qs.toString() ? `?${qs.toString()}` : ''
+  return fetch(`/api/manuscripts/attention${suffix}`, { credentials: 'include' })
+    .then((r) => r.json()) as Promise<ManuscriptsAttention>
+}
+
 export function createRevision(input: {
   project_id: string
   round?: number

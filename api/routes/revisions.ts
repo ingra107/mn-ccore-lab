@@ -252,6 +252,74 @@ export async function handleUpdateRevisionComment(id: string, request: Request, 
   return json({ data: updated });
 }
 
+// ── GET /api/manuscripts/attention ──
+// T-29: three-subgroup triage for the Manuscripts page "Needs your attention"
+// section. Each subgroup computes from existing tables — no schema changes.
+//
+//   1. Revisions overdue — manuscript_revisions.status='in_progress'
+//      AND response_due < NOW().
+//   2. Awaiting your review — reviewer_comments.assigned_to = actor
+//      AND status='pending' AND created_at older than `review_days` (default 7).
+//   3. Stale drafts — publications.status='In Preparation'
+//      AND updated_at older than `stale_days` (default 30).
+//
+// Thresholds are overridable per-request via `?overdue_days=14&review_days=7
+// &stale_days=30` — lets Settings plumb Lab Preferences in a later ticket.
+export async function handleAttentionManuscripts(
+  url: URL,
+  user: AuthUser,
+  env: Env,
+): Promise<Response> {
+  const actor = actorSlug(user.email);
+  const reviewDays = Math.max(0, parseInt(url.searchParams.get('review_days') ?? '7', 10) || 7);
+  const staleDays = Math.max(0, parseInt(url.searchParams.get('stale_days') ?? '30', 10) || 30);
+
+  const [overdue, awaiting, stale] = await Promise.all([
+    env.DB.prepare(`
+      SELECT r.id, r.project_id, r.round, r.journal, r.submitted_at, r.response_due,
+             p.title AS project_title, p.slug AS project_slug,
+             COUNT(c.id) AS comment_count,
+             SUM(CASE WHEN c.status IN ('done', 'wont_fix') THEN 1 ELSE 0 END) AS resolved_count
+      FROM manuscript_revisions r
+      LEFT JOIN projects p ON p.slug = r.project_id OR p.id = r.project_id
+      LEFT JOIN reviewer_comments c ON c.revision_id = r.id
+      WHERE r.status = 'in_progress'
+        AND r.response_due IS NOT NULL
+        AND r.response_due < datetime('now')
+      GROUP BY r.id
+      ORDER BY r.response_due ASC
+    `).all(),
+    env.DB.prepare(`
+      SELECT c.id, c.revision_id, c.reviewer_number, c.comment_text, c.created_at,
+             r.project_id, r.round,
+             p.title AS project_title, p.slug AS project_slug
+      FROM reviewer_comments c
+      JOIN manuscript_revisions r ON r.id = c.revision_id
+      LEFT JOIN projects p ON p.slug = r.project_id OR p.id = r.project_id
+      WHERE c.assigned_to = ?
+        AND c.status = 'pending'
+        AND c.created_at < datetime('now', ?)
+      ORDER BY c.created_at ASC
+    `).bind(actor, `-${reviewDays} days`).all(),
+    env.DB.prepare(`
+      SELECT id, title, status, updated_at, authors, journal
+      FROM publications
+      WHERE status = 'In Preparation'
+        AND (updated_at IS NULL OR updated_at < datetime('now', ?))
+      ORDER BY updated_at ASC
+    `).bind(`-${staleDays} days`).all(),
+  ]);
+
+  return json({
+    data: {
+      revisions_overdue: overdue.results ?? [],
+      awaiting_review: awaiting.results ?? [],
+      stale_drafts: stale.results ?? [],
+    },
+    thresholds: { review_days: reviewDays, stale_days: staleDays },
+  });
+}
+
 // ── GET /api/revisions/active ──
 // All active revisions across projects (for dashboard)
 export async function handleGetActiveRevisions(env: Env): Promise<Response> {

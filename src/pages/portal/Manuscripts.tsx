@@ -6,7 +6,7 @@ import { useDensity, densityClass } from '../../components/DensityToggle'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
 import Avatar from '../../components/Avatar'
 import CreateProjectModal from '../../components/CreateProjectModal'
-import { useProjects, useTasks, useActiveRevisions } from '../../hooks/useApiData'
+import { useProjects, useTasks, useManuscriptsAttention } from '../../hooks/useApiData'
 import { useCreateProject } from '../../hooks/useMutations'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { updateProject } from '../../lib/api'
@@ -17,7 +17,7 @@ import { getPersonInfo } from '../../data/team'
 import { displayName } from '../../lib/nameUtils'
 import type { Project } from '../../data/types'
 import PageHeader from '../../components/PageHeader'
-import { ActiveRevisionsDashboard } from '../../components/RevisionTracker'
+import NeedsAttentionDashboard, { type AttentionFilter } from '../../components/NeedsAttentionDashboard'
 import { ColumnHeader, TableContainer, TableControls } from '../../components/table'
 import EmptyState from '../../components/EmptyState'
 
@@ -81,11 +81,12 @@ export default function Manuscripts() {
   const [sortKey, setSortKey] = useState<'stage' | 'title' | 'status' | 'pi' | 'category' | 'days_in_stage'>('stage')
   const [sortAsc, setSortAsc] = useState(true)
   const [focusedIndex, setFocusedIndex] = useState(-1)
+  const [attentionFilter, setAttentionFilter] = useState<AttentionFilter>(null)
   useScrollReveal<HTMLDivElement>()
 
   const { data: projects = [], isLoading } = useProjects()
   const { data: tasks = [] } = useTasks()
-  const { data: activeRevisions = [] } = useActiveRevisions()
+  const { data: attentionData } = useManuscriptsAttention()
   const createProject = useCreateProject()
   const queryClient = useQueryClient()
   const { showUndo } = useUndoToast()
@@ -119,6 +120,27 @@ export default function Manuscripts() {
     if (filterPI) filtered = filtered.filter((p) => p.pi === filterPI)
     if (filterCategory) filtered = filtered.filter((p) => p.category === filterCategory)
     if (filterStalled) filtered = filtered.filter((p) => p.stage !== 'Published' && daysInStage(p) > STALLED_THRESHOLD_DAYS)
+    if (attentionFilter && attentionData) {
+      const allow = new Set<string>()
+      if (attentionFilter === 'revisions-overdue') {
+        attentionData.data.revisions_overdue.forEach((r) => {
+          const s = r.project_slug || r.project_id
+          if (s) allow.add(s)
+        })
+      } else if (attentionFilter === 'awaiting-review') {
+        attentionData.data.awaiting_review.forEach((r) => {
+          const s = r.project_slug || r.project_id
+          if (s) allow.add(s)
+        })
+      } else if (attentionFilter === 'stale-drafts') {
+        // Stale drafts are publications-scoped, not project-scoped; match by title fallback.
+        attentionData.data.stale_drafts.forEach((r) => { if (r.title) allow.add(r.title) })
+        filtered = filtered.filter((p) => allow.has(p.title))
+      }
+      if (attentionFilter !== 'stale-drafts') {
+        filtered = filtered.filter((p) => allow.has(p.slug))
+      }
+    }
     return [...filtered].sort((a, b) => {
       let cmp = 0
       switch (sortKey) {
@@ -132,7 +154,7 @@ export default function Manuscripts() {
       if (cmp === 0) cmp = a.title.localeCompare(b.title)
       return sortAsc ? cmp : -cmp
     })
-  }, [projects, filterPI, filterCategory, filterStalled, sortKey, sortAsc])
+  }, [projects, filterPI, filterCategory, filterStalled, sortKey, sortAsc, attentionFilter, attentionData])
 
   useListKeyboardNav({
     itemCount: view === 'list' ? manuscripts.length : 0,
@@ -286,9 +308,11 @@ export default function Manuscripts() {
           />
         </PageHeader>
 
-        {/* Active Revisions section */}
-        {!isLoading && activeRevisions.length > 0 && (
-          <ActiveRevisionsDashboard revisions={activeRevisions} />
+        {/* T-29: Needs your attention — three-subgroup triage computed from
+            manuscript_revisions + reviewer_comments + publications. Replaces
+            the earlier ActiveRevisionsDashboard flat list. */}
+        {!isLoading && (
+          <NeedsAttentionDashboard filter={attentionFilter} onFilterChange={setAttentionFilter} />
         )}
 
         {/* Loading skeleton */}

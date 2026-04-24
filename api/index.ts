@@ -48,7 +48,7 @@ import { handlePBSessions, handlePBSessionStats, handleCreatePBSession, handleBu
 import { handleGetTodayMd, handleUpsertTodayMd } from './routes/pb-today';
 import { handlePBHealth } from './routes/pb-health';
 import { handleGetRelay, handleCreateRelay, handleCompleteRelay } from './routes/pb-relay';
-import { handleGetRevisions, handleCreateRevision, handleUpdateRevision, handleGetRevisionComments, handleCreateRevisionComment, handleUpdateRevisionComment, handleGetActiveRevisions } from './routes/revisions';
+import { handleGetRevisions, handleCreateRevision, handleUpdateRevision, handleGetRevisionComments, handleCreateRevisionComment, handleUpdateRevisionComment, handleGetActiveRevisions, handleAttentionManuscripts } from './routes/revisions';
 import { handleMenteeMilestones, handleMenteeMilestoneOverview, handleCreateMenteeMilestone, handleUpdateMenteeMilestone, handleCompleteMenteeMilestone } from './routes/mentee-milestones';
 import { handleGetCascade, handleGetImpact, handleGetAllCascades, handleCreateDeadlineDependency, handleDeleteDeadlineDependency } from './routes/deadline-cascade';
 import { handleGetSubmissions, handleCreateSubmission, handleUpdateSubmission, handleDeleteSubmission, handleGetActiveSubmissions } from './routes/submissions';
@@ -376,6 +376,12 @@ app.get('/api/dependencies', (c) => handleGetDependencies(E(c)));
 app.get('/api/revisions/active', (c) => handleGetActiveRevisions(E(c)));
 app.get('/api/revisions/:id/comments', (c) => handleGetRevisionComments(c.req.param('id'), E(c)));
 app.get('/api/revisions', (c) => handleGetRevisions(U(c), E(c)));
+app.get('/api/manuscripts/attention', async (c) => {
+  const env = E(c);
+  const user = c.get('authedUser') || (await getAuthUser(c.req.raw, env));
+  if (!user) return c.json({ error: 'auth required' }, 401);
+  return handleAttentionManuscripts(U(c), user, env);
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Submissions
