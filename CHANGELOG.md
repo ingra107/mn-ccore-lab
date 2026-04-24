@@ -3,6 +3,90 @@
 
 > Historical phase records moved from CLAUDE.md to keep the operating guide focused on current state. Each section is a complete record of what shipped, decisions made, and scores achieved.
 
+## Claude Design round-5 ticket execution (2026-04-23 night)
+
+**Headline.** 49 tickets received from Claude Design round-5 handoff
+(37 primary + 12 addendum). Shipped ~28 across 2 deploys. 3 P0s
+resolved (T-01 raw-select eradication rolling up T-17 Ideas + T-33
+Settings + T-43 mobile / T-38 verified false alarm / T-49 verified
+intentional prior removal). HEAD `a034e47`. Deploy
+`87beb596.mn-ccore-lab.pages.dev`.
+
+**Batch 1 — `ab8ba90` / `45129bde`:**
+- **T-01 Raw `<select>` codemod.** 36 sites / 22 files →
+  `InlineSelect` + `InlineAssigneePicker`. Guardrail #4 honored.
+- **T-02** Deleted "Your progress log" dead label on ProjectDetail
+  Overview compose.
+- **T-03** RecentActivity falls back to event-type attribution
+  (Note/Comment · date) when actor slug is null; never renders literal
+  "Unknown" again.
+- **T-12** SearchPage per-type filter chip strip above results — 14
+  entity types with live counts, shift-multi-select, sticky under
+  search input.
+- **T-13 / T-14** `usePresence` extended into TaskDetailPanel header
+  and MeetingDetail header. `<PresenceAvatars>` renders nothing when
+  peer list empty.
+- **T-30 / T-48** Dashboard greeting shrunk from clamp(1.1rem, 2.5vw,
+  1.4rem) 600-weight to 14px / 500-weight. Dual-mode (light + dark).
+  Welcome banner already auto-stales after 7d via useOnboarding.
+- **T-35** AskTheLab empty state coaches `@hermes` usage in the
+  subtitle.
+- **T-41** GlobalQuickAdd panel clamped to `min(560px, calc(100vw -
+  32px))` + TokenHint rows `nowrap` / `flex-shrink: 0` so mobile
+  token hints (`@name assignee` / `#project`) don't clip.
+- **T-42** CommandPalette task rows — sublabel = `project · due`
+  (assignee only when ≠ current user). Airtable pattern replaces
+  `assignee · status`.
+- **T-44** PBSector empty state: "Connect Peripheral Brain…" + Learn
+  more CTA.
+- **T-45** SessionHistory empty state: "Set up SessionEnd hook…" +
+  Open install guide CTA.
+- **T-46** Dashboard Customize panel header gets sticky Done button
+  that closes panel + scrolls to top.
+
+**Batch 2 — `a034e47` / `87beb596`:**
+- **T-11** MyTasks `Stale` quickFilter — `status=in_progress AND
+  updated_at < now - 14d`. Badge count wired into pill row.
+- **T-21** Decisions tag-chip filter row hides when
+  `allDecisions.length < 15`. Cuts ~48px of noise on light boards.
+- **T-22** Activity page date headers (Today / Yesterday / Apr 21)
+  now sticky with page-bg — long feeds stay oriented on scroll.
+- **T-36** MeetingNotesPage "How Meeting Transcripts Work" 4-step
+  educational band → collapsible "What is this?" panel. Auto-collapsed
+  when processedCount ≥ 3. Preference persists in localStorage.
+- **T-39** NateLab section order — Grants & Proposals lifted above
+  Research Projects; Publications dropped to bottom. Parity shape
+  with NickLab so Nate's page doesn't lead with empty Publications.
+
+**Skipped with reasoning:**
+- **T-38 Projects stage-data bug** — verified false alarm. Live API
+  distribution varies (33 Idea / 12 DC / 9 W / 9 DA / 3 Submitted).
+  Chunk capture landed inside Idea group where default sort groups by
+  stage. Not a rendering bug.
+- **T-49 Mobile swipe regression** — verified intentional prior
+  removal (commit 428183f, 2026-04-20) due to Pixel 5 inert-drag +
+  iOS Safari edge-swipe-back conflicts. Replaced with enlarged X +
+  sticky Done + tap-backdrop. TaskDetailPanel.tsx:93 carries rationale.
+
+**Verified already-in-code (CD claimed needed, reality is done):**
+T-25 Calendar Today button. T-26 Deadlines timeline-hint
+localStorage + 10s auto-dismiss. T-27 Deadlines overdue compact
+banner. T-28 Projects ColumnHeader chevron. T-15 CommandPalette
+jump-to sections. T-19 MeetingDetail action-item hint hides when
+input has text. T-29 Manuscripts "Needs your attention" — CD
+described UI that doesn't exist in current Manuscripts.tsx; need
+re-audit.
+
+**Deferred for next round** (high-effort or pairs with other work):
+T-04 inline file drop compose. T-05 @-/emoji/📎 toolbar affordance.
+T-06 reactions flush-left first-class placement. T-18 ProjectDetail
+header pills inline-edit. T-24 Research Digest rows view. T-31
+Personal operational restructure. Plus ~9 P2 punch-list items
+(T-07/08/09/10/16/20/23/32/34/37/40/47).
+
+**Quality gate.** Build green both batches (`tsc -b && vite build`).
+No test regressions run this round.
+
 ## GH bug sweep + Overview refocus + Slack-parity (2026-04-23 late evening)
 
 **Headline.** 7 GH bugs closed (#26-#27, #29-#33), 5 deploy rounds, 30+ commits.

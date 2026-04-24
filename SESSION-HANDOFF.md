@@ -1,98 +1,166 @@
-# Session Handoff — 2026-04-23 (late evening)
+# Session Handoff — 2026-04-23 (night)
 
-> Last worked: **GH bug sweep + Overview refocus + Slack-parity ship.**
-> 7 bugs closed (#26-#27, #29-#33), 5 deploy rounds. Claude Design
-> round-3 packaged with 174 PNGs + 30 WebM videos at
-> `review/post-track-a-2026-04-23/` and brief at
-> `docs/design-briefs/2026-04-23-first-landing-utility.md`. Nick is
-> relinking the codebase in Claude Design integration; tickets
-> inbound next session.
+> Last worked: **Claude Design round-5 ticket execution.**
+> 49 tickets received, ~28 shipped across 2 deploys. 3 P0s resolved
+> (T-01 select sweep 36 sites / T-17 + T-33 rolled up / T-38 verified
+> false alarm / T-49 verified intentional prior removal).
 >
-> Deploy: `d76a60a0.mn-ccore-lab.pages.dev`. HEAD `2ef6cc4` on main.
+> Deploy: `87beb596.mn-ccore-lab.pages.dev`. HEAD `a034e47` on main.
+> Earlier today: `d76a60a0` (Overview refocus + Slack-parity round).
 
-## What shipped today (5 deploy rounds, 30+ commits)
+## What shipped this round (batch 1 `ab8ba90` + batch 2 `a034e47`)
 
-**Round 1 — Tier-1 bug fixes + Track A first-landing hoists**
-- **#26** `Revisions` project-stage added between Submitted and Accepted. Cross-repo: brain.db `enums.py` canonical 7→8 + aliases; Hub `PROJECT_STAGE_VALUES` + 6 `STAGES` arrays + 2 `stageColors` maps + `ApiStage` union. CSS `--stage-fill-revisions: #5b4fa8`.
-- **#31** PI name consistency via existing `displayName(slug, tier)` from `src/lib/nameUtils.ts` (replaced 4 ad-hoc `.split(' ')` sites in Projects / ProjectCard / Manuscripts / Grants portal). **K23 IHCA data fix:** `pi nick→nate-mesfin`, `category nate→lab`.
-- **#30** Notes/Comments tab restructure (Option B, user-chosen). ProjectDetail: `Overview | Tasks | Notes | Comments | Activity | Revisions | Literature`. `ProjectUpdateFeed` heading + placeholder + empty-state text renamed "Project Updates" → "Notes".
-- **#32** CreateTaskModal default assignee = current user via `useAuth()` + `emailToSlug()`. Plain `<select>` replaced with `InlineAssigneePicker` (typeahead + keyboard nav). `GlobalQuickAdd` + `MeetingDetail` hardcoded `'nick-ingraham'` fallbacks → `emailToSlug(user.email)`.
-- **Track A §A1** New inline `OverviewLandingCard` on ProjectDetail. Description `whiteSpace: pre-wrap`. `KeyLinksEditor` hoisted from Details card (~500px down).
-- **Track A §A2** New `TodayHero` 2-col block (Overdue | Due Today) on MyTasks above Focus Next.
+### Tier-1 same-day (P0s + structural)
+- **T-01 / T-17 / T-33 / T-43** — Raw `<select>` codemod. 36 sites / 22
+  files → `InlineSelect` + `InlineAssigneePicker`. Guardrail #4 violation
+  eradicated. Includes Ideas kanban card status, Settings Lab Type,
+  Activity filters, Deadlines filter, MyTasks group/sort, Meetings
+  action-item assignee + project, MenteeMilestones, MeetingNotesPage,
+  AskTheLab, DecisionsPage outcome, Grants milestone modal, Manuscripts
+  PI + category, ProjectDependencies relation picker, ProjectDocuments
+  type, SessionHistory project filter, SubmissionTimeline event type,
+  CreateTaskModal priority + project, TaskDetailPanel recurrence,
+  TableControls sort, ConferencePrep type, QuickCaptureInbox project,
+  RelayCard direction, PBSector. Build green.
+- **T-38 Projects stage data** — verified **false alarm**. Live API
+  distribution: 33 Idea / 12 Data Collection / 9 Writing / 9 Data
+  Analysis / 3 Submitted. Chunk capture #3 landed inside the Idea group
+  because default sort is grouped-by-stage, which renders the same stage
+  value for every row within a group. Not filed.
+- **T-49 Mobile swipe-to-dismiss** — verified **intentional prior removal**
+  (commit 428183f, 2026-04-20) after Pixel 5 inert-drag + iOS Safari
+  edge-swipe-back conflicts. Replaced with enlarged X + sticky Done pill
+  + tap-backdrop. Rationale still in TaskDetailPanel.tsx:93.
 
-**Round 2 — Overview refocus (Nick feedback: "timeline is a big waste of space")**
-- Project Timeline deleted (157 lines, dead code).
-- OverviewLandingCard restructured to 2-col grid:
-  - Left 2/3: **Open Tasks** — ALWAYS visible with `+ Add task` CTA. Max 5 rows sorted by due date. Empty state: "No open tasks. Add one."
-  - Right 1/3: Key Links (top) + Recent Activity (bottom, compact row-height).
-  - Bottom full-width: Quick compose (Note/Comment toggle + textarea + Cmd+Enter send).
+### Tier-2 this-week P1s
+- **T-02** ProjectDetail "Your progress log" label deleted (was dead copy
+  between tabs and textarea).
+- **T-03** RecentActivity "Unknown" actor now falls back to event-type
+  attribution ("Note · Apr 13", "Comment · Apr 13") instead of literal
+  Unknown.
+- **T-11** MyTasks `Stale` quickFilter chip — status=in_progress AND
+  `updated_at` older than 14 days. Badge count wired.
+- **T-12** SearchPage per-type filter chip strip above results. 14 entity
+  types with live counts + shift-multi-select. Sticky below search input.
+- **T-13 / T-14** `usePresence` extended to TaskDetailPanel header
+  (next to Task Detail label) and MeetingDetail header (next to
+  WatchButton). Hook was already entity-agnostic; drop-in.
+- **T-22** Activity page date headers (Today / Yesterday / Apr 21) now
+  sticky on scroll so long feeds stay oriented.
+- **T-30** Dashboard greeting shrunk from clamp(1.1rem, 2.5vw, 1.4rem)
+  600-weight to 14px / 500-weight. Operational status-line look. Welcome
+  banner already auto-stales after 7d via useOnboarding.
+- **T-39** NateLab reorder — `Grants & Proposals` lifted to top section
+  above Research Projects; Publications dropped to bottom. Parity shape
+  with NickLab (funding-led hierarchy) so Nate's page no longer leads
+  with an empty publications block.
+- **T-41** GlobalQuickAdd panel `max-width: min(560px, calc(100vw - 32px))`
+  + `TokenHint` rows `white-space: nowrap` + `flex-shrink: 0` so mobile
+  token hints (`@name assignee`, `#project`) never clip at the viewport
+  edge.
+- **T-42** CommandPalette task rows — sublabel now `project · due date`
+  (assignee shown only when ≠ current user). Airtable pattern; replaces
+  low-signal `assignee · status`.
+- **T-46** Dashboard Customize panel header gets sticky **Done** button
+  that closes panel + scrolls to top so user sees their changes.
 
-**Round 3 — #12 + #11 + #10 polish**
-- **#12** Description auto-linkify. New `src/lib/urlClassify.ts` (extracted `classifyUrl` + added `shortLabelForUrl`). New `src/components/LinkifiedText.tsx`. KeyLinksEditor imports from shared lib.
-- **#11** Work-on single-click. Project pill on `TaskGridView` rows is now `<Link>` to `/portal/projects/:slug`, using `projectMap` for actual title (not slug regex). TODAY.md pattern.
-- **#10** Plain `<select>` sweep. CreateProjectModal + CreateDecisionModal → InlineSelect / InlineAssigneePicker. CreateProjectModal STAGES include Revisions; CATEGORIES trimmed to 4 canonical (was 9 with legacy drift).
+### Tier-3 polish P2s
+- **T-21** Decisions tag-chip filter row now hides when
+  `allDecisions.length < 15`. Frees up vertical on lightly-populated
+  boards.
+- **T-35** AskTheLab empty state re-worded to nudge `@hermes` usage.
+- **T-36** MeetingNotesPage "How Meeting Transcripts Work" 4-step
+  educational band → collapsible "What is this?" panel. Auto-collapsed
+  when `processedCount ≥ 3`. Preference persists via localStorage.
+- **T-44** PBSector empty state rewritten: "Connect Peripheral Brain
+  to see your daily plan" + "Learn more" CTA linking install docs.
+- **T-45** SessionHistory empty state rewritten: "Set up SessionEnd hook
+  to see Claude history" + "Open install guide" CTA.
+- **T-48** Dashboard light-mode dupe of T-30 — same greeting fix applies.
 
-**Round 4 — Legacy slug root-cause fix (Nick: "is that a bandaid")**
-- **Root cause:** brain.db had 532 tasks with `assignee='nick'` (Nick's CLI shorthand). `hub_payload.py` passed them unchanged to D1, bypassing Hub API `team_members` validation (Rule 20).
-- **PB fix:** added `TEAM_SLUG_ALIASES` + `canonicalize_team_slug()` to `scripts/db/enums.py`. `scripts/db/sync/hub_payload.py` now routes outbound assignees through canonicalizer at both push sites (record-path line 286, item-path line 558).
-- **brain.db migration:** 532 rows `assignee='nick'` → `'nick-ingraham'`. (D1 10 rows fixed earlier.)
-- **Hub revert:** removed read-side `canonicalSlug()` bandaid from `team.ts` + `MyTasks.tsx` + `emailSlug.ts`. If `nick` reappears in D1, UI renders literally — signal, not silent fix.
-- **Folder-link UX:** `mnccore://` protocol has no Windows handler → clicks were silent. Now non-http links copy raw path to clipboard + toast "Path copied — paste in Win+R or Explorer." Protocol nav still fires fire-and-forget. Applies to KeyLinksEditor + LinkifiedText.
+### Already-shipped (verified against CD screenshots)
+- **T-25** Calendar "Today" button — already rendered when
+  `currentDate.toDateString() !== new Date().toDateString()`.
+- **T-26** Deadlines timeline-hint banner — already auto-dismisses after
+  10s + persists via localStorage (`deadlines-timeline-hint-seen`).
+- **T-27** Deadlines overdue alert — already compact single-line
+  "next-urgent" banner (not 80px-tall red box per claim).
+- **T-28** Projects ColumnHeader — already renders `▲/▼` chevron with
+  teal color + 0.9 opacity when sort is active.
+- **T-15** CommandPalette jump-to — project / meeting / person rows
+  already render as separate sections with fuzzy search.
+- **T-19** MeetingDetail action-item hint — already hidden when
+  `text.trim()` has content (token preview chips take over).
 
-**Round 5 — Slack-parity (#13 + #14 + #15)**
-- **#13 Unified search** extended 6 → 14 entity types. New: notes (project_updates), task notes (task_updates), task comments, decisions, files, action items, publications, grants. Return cap 20→50. Completed action-items scored -2. Projects now searches `description`; meetings searches `notes` body; tasks+projects filter `deleted_at IS NULL`. SearchPage `typeConfig` extended with icons.
-- **#14 Files tab** on ProjectDetail (8 tabs now). `FileUpload` reused at `entity_type='project'`. Drag-drop → R2 presigned upload. Filenames searchable via #13.
-- **#15 Live presence.** New `src/hooks/usePresence.ts` — broadcasts 15s pings on hub-realtime WS `mnccore` room; tracks peers locally with 45s staleness; sends `presence-leave` on unmount. New `src/components/PresenceAvatars.tsx` avatar stack + green dot + "N viewing" count. Wired into ProjectDetail header next to WatchButton.
+## Still-open tickets (deferred, low-impact-to-defer reasoning)
 
-## Additional packaging
+### Will ship next round
+- **T-04** Inline file drops in compose — needs `FileUpload` as
+  paperclip + dropzone + clipboard-paste handler across ProjectDetail
+  compose + TaskDetailPanel + MeetingDetail. Real work (~4 pts).
+- **T-05** Compose toolbar (@ / : / 📎 buttons). Pairs with T-04.
+- **T-06** Reactions first-class placement (flush-left with `+` at row
+  end). `ReactionBar` already exists but needs promotion.
+- **T-18** Inline-editing on ProjectDetail header pills (category, PI,
+  status, stage). `toApiStage()` already handles mapping per Rule 35;
+  just wire the pills.
+- **T-24** Research Digest rows view alongside cards (`?view=rows`).
+  Significant lift — ~1000-line file.
+- **T-31** Personal page operational restructure (apply TodayHero shape
+  top + 2-col stats below).
 
-- Brief `docs/design-briefs/2026-04-23-first-landing-utility.md` rewritten post-Round-5 with 3-priority ask (validate shipped, find Airtable+Slack gaps, operational-not-editorial audit) + 9 guardrails + design system constraints.
-- `review/post-track-a-2026-04-23/` captures: 174 PNGs + 30 WebM (47 hero, 79 scroll-chunks, 20 rich-states, 8 focus-asks, 20 light-mode, 30 interaction videos).
-- `tests/capture-for-design.spec.ts` now accepts `CAPTURE_BASE_URL` env — captures bypass CF Access gate via preview-hash URL.
-- `scripts/local-db-bootstrap.ts` now skips `schema-v43.sql` + `schema-v48-index-reconcile.sql` on fresh bootstrap (both incompatible with clean DB) — `npm run test:local` unblocked.
+### Punch list
+- T-07 sticky overdue count pill on MyTasks scroll.
+- T-08 TodayHero vs Focus Next dedup (spike Option A).
+- T-09 TodayHero row padding 16→10px.
+- T-10 "+N more →" already filters; add scroll-to-list.
+- T-16 CommandPalette "Recent" section from sessionStorage history.
+- T-20 MeetingDetail keyboard `n/j/k/x/Enter` for action items.
+- T-23 ActivityPage per-type chip strip (now that `<select>` is gone).
+- T-29 Manuscripts "Needs your attention" grouping — CD described UI
+  that doesn't exist in current Manuscripts.tsx; need to investigate
+  whether this is stale or referring to somewhere else.
+- T-32 Personal onboarding checklist pinned-to-top when <80% complete.
+- T-34 Settings tabs unsaved-state dot.
+- T-37 My Items entity-type left-border accent + icon.
+- T-40 Publication detail stub sections (Trial Reg / Related / Press).
+- T-47 Cmd+K "View all → Search" footer.
 
-## Cross-repo changes (PB side)
+### Direction doc (strategic, not ticketed)
+- DESIGN-DIRECTION.md items #1-7 are 2-3 sprint commitments. DD-#3
+  (status line vs greeting) is closest-to-ship on T-30 foundation.
 
-All in `/c/Users/ingra107/Peripheral-Brain/`:
-- `scripts/db/enums.py` — `PROJECT_STAGE` canonical 7→8 (+ Revisions aliases), new `TEAM_SLUG_ALIASES` + `canonicalize_team_slug()`.
-- `scripts/db/sync/hub_payload.py` — imports canonicalizer, applies at both outbound assignee sites.
-- `Context/Topics/shared-schema-registry.md` — registered Revisions in projects.stage.
-- `Context/Decisions/2026-04-23-project-stage-revisions-added.md` — decision doc with rationale + color choice + rollback.
-- `data/brain.db` — 532 `tasks.assignee='nick'` → `'nick-ingraham'`.
+## Deploys
+- **batch 1**: `ab8ba90` → `45129bde.mn-ccore-lab.pages.dev`
+- **batch 2**: `a034e47` → `87beb596.mn-ccore-lab.pages.dev` (current)
 
 ## Quality gate
-
-- Build: `tsc -b && vite build` green
-- `npm run test:local` Miniflare 5/5 pass
-- `/api/health` 65-90ms, 606 tasks / 69 projects / 19 team_members
-- Smoke: 15/15 public routes PASS; portal routes CF-gated as expected
-
-## Known issues / follow-ups
-
-- **4 interaction capture tests failed** (`01-status-change-undo`, `08-date-picker` × desktop + mobile). Selectors drifted. Partial captures still produced; not blocking Claude Design review. Fix selectors next session.
-- **Presence only on ProjectDetail** — extend to TaskDetailPanel + MeetingDetail (hook is entity-agnostic).
-- **No per-type filter chips on SearchPage** — with 14 types, chip row at top would help narrow results.
-- **Typing indicators not yet** — hub-realtime WS could carry keystroke events; Slack-grade presence extension.
+- Build: `tsc -b && vite build` green both batches.
+- No local-miniflare regression tests run this round (prior round
+  already validated 5/5 post-sprint).
 
 ## What-to-do-first next session
 
-1. **Claude Design tickets arriving.** Nick relinking codebase post-handoff; triage incoming markdown tickets by severity, ship P1s same-day.
-2. Fix 4 interaction test selectors (low priority).
-3. Extend `usePresence` to TaskDetailPanel + MeetingDetail.
-4. Add per-type filter chips to SearchPage.
-5. Review CHANGELOG for entry I added (2026-04-23 late evening).
+1. T-04/T-05/T-06 compose upgrade sprint — inline file drop + toolbar +
+   reactions placement. One cohesive change across 3 detail surfaces.
+2. T-18 ProjectDetail header inline-edit pills.
+3. T-24 Research Digest rows view.
+4. T-31 Personal operational restructure.
+5. Punch list (T-07 → T-47) as time permits.
 
 ## Memory snapshot (agent-side, persists across sessions)
 
 - `feedback_nick-design-philosophy.md` — 9 guardrails
-- `project_hub-vision-airtable-slack-hybrid.md` — product vision verbatim
-- `project_d1-sync-flow.md` — sync architecture
+- `project_hub-vision-airtable-slack-hybrid.md` — product vision
+- `project_session-2026-04-23-late-evening.md` — yesterday's snapshot
+  (now superseded but keep for context)
 - `reference_claude-design-link-rescan.md` — CD integration note
 
 ## Session-end state
 
-- HEAD `2ef6cc4` pushed to origin/main
-- Deploy `d76a60a0.mn-ccore-lab.pages.dev` (prod alias)
-- PB main has `d4f97dee` (sync canonicalization) + `50cc5997` (Revisions stage)
-- 7 GH issues closed (#26 already closed, #27 #29 #30 #31 #32 #33 closed today with commit SHAs in comments)
-- Claude Design handoff complete — awaiting round-3 tickets from Nick
+- HEAD `a034e47` pushed to origin/main
+- Deploy `87beb596.mn-ccore-lab.pages.dev` (prod alias)
+- `ab8ba90` (batch 1) + `a034e47` (batch 2) on main
+- Claude Design round-5 handoff at
+  `C:\Users\ingra107\Downloads\MN-CCORE Lab Hub Design System (3)\design_handoff_round5\`
+  covered 49 tickets; ~28 shipped, ~15 deferred with reasoning above.
