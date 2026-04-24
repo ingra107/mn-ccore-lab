@@ -10,6 +10,7 @@ import {
 import PageHeader from '../../components/PageHeader'
 import { CardSkeleton } from '../../components/LoadingSkeleton'
 import OnboardingChecklist from '../../components/OnboardingChecklist'
+import { useOnboarding } from '../../hooks/useOnboarding'
 import { useTasks, useActivity, useExpiringRegulatory } from '../../hooks/useApiData'
 import { useProjects } from '../../hooks/useApiData'
 import { useUpdateTaskStatus, useUpdateTask, useCreateIdea } from '../../hooks/useMutations'
@@ -649,6 +650,10 @@ export default function Personal() {
   // Onboarding section collapsed by default — expanded only on explicit user action
   const [onboardingExpanded, setOnboardingExpanded] = useState(false)
 
+  // T-32 onboarding pinned card: show when progress < 80 AND day < 30 AND not dismissed
+  const onboarding = useOnboarding()
+  const shouldPinOnboarding = !onboarding.dismissed && onboarding.progress < 80 && onboarding.currentDay < 30
+
   useEffect(() => {
     // Re-check after mount in case localStorage wasn't ready
     setOnboardingDismissed(isOnboardingDismissed())
@@ -800,6 +805,25 @@ export default function Personal() {
               : 'All caught up'
           }
         />
+        {/* T-32 pinned onboarding progress (first 30d, <80% done) */}
+        {shouldPinOnboarding && (
+          <button
+            type="button"
+            onClick={() => {
+              setOnboardingExpanded(true)
+              document.getElementById('onboarding-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+            }}
+            className="ml-auto flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px]"
+            style={{
+              background: 'var(--teal-hover)', color: 'var(--teal)',
+              border: '1px solid rgba(45,138,138,0.3)', cursor: 'pointer',
+            }}
+            title="Jump to onboarding checklist"
+          >
+            <span style={{ fontWeight: 600 }}>{onboarding.completedCount}/{onboarding.totalSteps}</span>
+            <span style={{ opacity: 0.75 }}>· {onboarding.currentDay}d in</span>
+          </button>
+        )}
         {showRoleSelector && (
           <RoleSelector
             role={role}
@@ -1084,7 +1108,7 @@ export default function Personal() {
 
       {/* Onboarding Checklist — collapsed by default, below the command center */}
       {!onboardingDismissed && (
-        <div className="mt-6">
+        <div id="onboarding-section" className="mt-6" style={{ scrollMarginTop: '16px' }}>
           <button
             onClick={() => setOnboardingExpanded((v) => !v)}
             className="flex items-center gap-2 w-full text-left px-0 py-0 mb-0"

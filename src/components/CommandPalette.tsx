@@ -21,9 +21,13 @@ interface CommandItem {
   sublabel?: string
   icon: typeof Search
   action: () => void
-  category: 'navigation' | 'task' | 'project' | 'person' | 'meeting' | 'action' | 'filter' | 'context'
+  category: 'navigation' | 'task' | 'project' | 'person' | 'meeting' | 'action' | 'filter' | 'context' | 'recent'
   shortcut?: string
 }
+
+// T-16 sessionStorage key for recent palette visits
+const RECENT_KEY = 'mnccore-cmdk-recent'
+const RECENT_MAX = 5
 
 export default function CommandPalette() {
   const [open, setOpen] = useState(false)
@@ -40,6 +44,23 @@ export default function CommandPalette() {
   const { data: meetings = [] } = useMeetingsApi({ enabled: open })
   const { user } = useAuth()
   const currentUserSlug = emailToSlug(user?.email)
+
+  // T-16 recent routes tracked in sessionStorage
+  const [recentRoutes, setRecentRoutes] = useState<string[]>(() => {
+    try {
+      const raw = sessionStorage.getItem(RECENT_KEY)
+      return raw ? (JSON.parse(raw) as string[]) : []
+    } catch { return [] }
+  })
+  useEffect(() => {
+    const path = location.pathname
+    if (!path.startsWith('/portal/')) return
+    setRecentRoutes((prev) => {
+      const next = [path, ...prev.filter((p) => p !== path)].slice(0, RECENT_MAX)
+      try { sessionStorage.setItem(RECENT_KEY, JSON.stringify(next)) } catch {}
+      return next
+    })
+  }, [location.pathname])
 
   // Global Cmd+K listener
   useEffect(() => {
@@ -88,6 +109,19 @@ export default function CommandPalette() {
   // Build command items
   const allItems = useMemo<CommandItem[]>(() => {
     const items: CommandItem[] = []
+
+    // T-16 Recent routes (sessionStorage) — top of palette when empty query
+    for (const path of recentRoutes) {
+      const slug = path.split('/').filter(Boolean).slice(-1)[0] || path
+      items.push({
+        id: `recent:${path}`,
+        label: slug.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
+        sublabel: path,
+        icon: Clock,
+        action: () => { navigate(path); setOpen(false) },
+        category: 'recent',
+      })
+    }
 
     // Navigation commands
     const navItems: { path: string; label: string; icon: typeof Search; shortcut?: string }[] = [
@@ -402,8 +436,8 @@ export default function CommandPalette() {
     }
 
     if (!query.trim()) {
-      // Show context + actions + filters + navigation when no query
-      return allItems.filter((i) => i.category === 'context' || i.category === 'action' || i.category === 'filter' || i.category === 'navigation')
+      // Show recent + context + actions + filters + navigation when no query
+      return allItems.filter((i) => i.category === 'recent' || i.category === 'context' || i.category === 'action' || i.category === 'filter' || i.category === 'navigation')
     }
     const q = query.toLowerCase()
     return allItems
@@ -450,7 +484,7 @@ export default function CommandPalette() {
     }
   }, [filtered, selectedIndex])
 
-  const categoryOrder: Record<string, number> = { context: 0, action: 1, filter: 2, navigation: 3, task: 4, project: 5, person: 6, meeting: 7 }
+  const categoryOrder: Record<string, number> = { recent: 0, context: 1, action: 2, filter: 3, navigation: 4, task: 5, project: 6, person: 7, meeting: 8 }
   const grouped = open ? filtered.reduce((acc, item) => {
     if (!acc[item.category]) acc[item.category] = []
     acc[item.category].push(item)
@@ -458,6 +492,7 @@ export default function CommandPalette() {
   }, {} as Record<string, CommandItem[]>) : {}
 
   const categoryLabels: Record<string, string> = {
+    recent: 'Recent',
     context: 'This Page',
     action: 'Actions',
     filter: 'Quick Filters',
@@ -586,8 +621,19 @@ export default function CommandPalette() {
           <span style={{ opacity: 'var(--ink-label)' }}>esc close</span>
           {!isProjectMode && <span style={{ opacity: 'var(--ink-label)' }}>/ projects</span>}
           <span style={{ opacity: 'var(--ink-hint)' }}>
-            {tasks.filter(t => !t.completed).length} tasks · {projects.length} projects
+            {tasks.filter(t => !t.completed).length} tasks · {projects.length} projects · {team.length} people · {meetings.length} meetings
           </span>
+          {query.length >= 2 && (
+            <button
+              type="button"
+              onClick={() => { navigate(`${PATHS.search}?q=${encodeURIComponent(query)}`); setOpen(false) }}
+              className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px]"
+              style={{ color: 'var(--teal)', background: 'var(--teal-hover)', border: '1px solid rgba(45,138,138,0.3)', cursor: 'pointer' }}
+              title="Open full Search page with this query"
+            >
+              View all <ArrowRight size={9} />
+            </button>
+          )}
           <span className="ml-auto flex items-center gap-1" style={{ opacity: 'var(--ink-label)' }}>
             <Command size={9} />K to toggle
           </span>

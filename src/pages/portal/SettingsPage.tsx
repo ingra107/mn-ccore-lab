@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
@@ -141,6 +141,24 @@ export default function SettingsPage() {
     { key: 'appearance', label: 'Appearance' },
     { key: 'danger', label: 'Danger Zone' },
   ] as const
+
+  // T-34 "changed-this-session" dots. Snapshot settings on first load;
+  // compare current per-tab to detect dirty tabs. Auto-saves clear nothing —
+  // the dot signals "you edited this tab since opening settings."
+  const initialSettingsRef = useRef<any>(null)
+  useEffect(() => {
+    if (settings && !initialSettingsRef.current) initialSettingsRef.current = { ...settings }
+  }, [settings])
+  const dirtyTabs = useMemo(() => {
+    const out = new Set<string>()
+    const initial = initialSettingsRef.current
+    if (!initial || !settings) return out
+    const profileKeys = ['lab_name', 'lab_description', 'lab_icon', 'lab_type']
+    if (profileKeys.some((k) => JSON.stringify(initial[k]) !== JSON.stringify((settings as any)[k]))) out.add('profile')
+    // Other tabs either save outside the settings row (appearance = localStorage,
+    // AI = placeholder inputs, danger = actions) or have no tracked fields yet.
+    return out
+  }, [settings])
   type TabKey = (typeof TABS)[number]['key']
   const [activeTab, setActiveTab] = useState<TabKey>(() => {
     if (typeof window === 'undefined') return 'profile'
@@ -217,6 +235,17 @@ export default function SettingsPage() {
               }}
             >
               {tab.label}
+              {dirtyTabs.has(tab.key) && (
+                <span
+                  aria-label="Edited this session"
+                  style={{
+                    display: 'inline-block',
+                    width: 6, height: 6, borderRadius: '50%',
+                    marginLeft: 6, verticalAlign: 'middle',
+                    background: 'var(--teal)',
+                  }}
+                />
+              )}
             </button>
           )
         })}

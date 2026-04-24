@@ -25,6 +25,7 @@ import {
   Paperclip,
   AtSign,
   Smile,
+  Upload as UploadIcon,
 } from 'lucide-react'
 import { DndContext, closestCenter, PointerSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core'
 import type { DragEndEvent } from '@dnd-kit/core'
@@ -35,6 +36,7 @@ import { useMeetingDetail } from '../hooks/useApiData'
 import type { ActionItemRow as ActionItemRowType, AgendaItemRow } from '../hooks/useApiData'
 import { useQueryClient } from '@tanstack/react-query'
 import { useToggleActionItem, useAddAgendaItem, useUpdateMeetingNotes, useCreateDecision, useCreateTask } from '../hooks/useMutations'
+import FileUpload from '../components/FileUpload'
 import { parseCarriedForward } from '../lib/textUtils'
 import { parseQuickAddInput } from '../lib/parseQuickAdd'
 import { emailToSlug } from '../lib/emailSlug'
@@ -44,7 +46,7 @@ import { useUndoToast } from '../components/UndoToast'
 import Avatar from '../components/Avatar'
 import WatchButton from '../components/WatchButton'
 import PresenceAvatars from '../components/PresenceAvatars'
-import { usePresence } from '../hooks/usePresence'
+import { usePresence, useTyping } from '../hooks/usePresence'
 import HoverCard from '../components/HoverCard'
 import type { HoverCardData } from '../components/HoverCard'
 import { useHoverCard } from '../hooks/useHoverCard'
@@ -708,6 +710,21 @@ export default function MeetingDetail() {
           </div>
         </motion.div>
 
+        {/* T-50 Files section — files attached to this meeting. */}
+        {meeting.id && (
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: 0.22 }} className="mt-8">
+            <div className="flex items-center gap-2 mb-3">
+              <UploadIcon size={16} style={{ color: 'var(--teal)' }} />
+              <h3 style={{ fontWeight: 500, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>
+                Files
+              </h3>
+            </div>
+            <div style={{ background: 'var(--ice)', borderRadius: 'var(--radius-xl)', padding: '20px' }} className="detail-card">
+              <FileUpload entityType="meeting" entityId={meeting.id} />
+            </div>
+          </motion.div>
+        )}
+
         {/* Notes */}
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: 0.25 }} className="mt-8">
           <div className="flex items-center gap-2 mb-3">
@@ -1003,6 +1020,7 @@ function AddActionItemForm({ meetingId, isAuthenticated, onSuccess }: { meetingI
   const [uploading, setUploading] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const { typingPeers: meetingTypingPeers, broadcastTyping: broadcastMeetingTyping } = useTyping('meeting', meetingId)
   const appendCh = (ch: string) => {
     setText((t) => (t.endsWith(' ') || t.length === 0 ? t + ch : t + ' ' + ch))
     requestAnimationFrame(() => {
@@ -1083,7 +1101,7 @@ function AddActionItemForm({ meetingId, isAuthenticated, onSuccess }: { meetingI
           type="text"
           data-testid="meeting-action-add"
           value={text}
-          onChange={(e) => setText(e.target.value)}
+          onChange={(e) => { setText(e.target.value); broadcastMeetingTyping(e.target.value.trim().length > 0) }}
           onPaste={(e) => {
             const fi = Array.from(e.clipboardData?.items || []).find((it) => it.kind === 'file')
             if (fi) { e.preventDefault(); const f = fi.getAsFile(); if (f) uploadToCompose(f) }
@@ -1096,7 +1114,7 @@ function AddActionItemForm({ meetingId, isAuthenticated, onSuccess }: { meetingI
             padding: 'var(--sp-sm) var(--sp-md)', outline: 'none', transition: 'border-color 0.15s',
           }}
           onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--teal)')}
-          onBlur={(e) => (e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--teal) 12%, transparent)')}
+          onBlur={(e) => { e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--teal) 12%, transparent)'; broadcastMeetingTyping(false) }}
           onKeyDown={(e) => { if (e.key === 'Escape') { setText(''); e.currentTarget.blur() } }}
         />
         <button
@@ -1151,6 +1169,15 @@ function AddActionItemForm({ meetingId, isAuthenticated, onSuccess }: { meetingI
         <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.75, marginLeft: '22px', marginTop: '4px', display: 'inline-block' }}>
           <a href="/api/auth/login" style={{ color: 'var(--teal)', fontWeight: 'var(--weight-ui)' as any, textDecoration: 'underline' }}>Sign in</a> to add action items
         </span>
+      )}
+
+      {/* T-51 typing indicator */}
+      {meetingTypingPeers.length > 0 && (
+        <p className="text-[10px] mt-1" style={{ color: 'var(--teal)', opacity: 0.85, fontStyle: 'italic', margin: '4px 0 0 22px' }}>
+          {meetingTypingPeers.length === 1
+            ? `${getPersonInfo(meetingTypingPeers[0]).name.split(' ')[0]} is typing…`
+            : `${meetingTypingPeers.length} people are typing…`}
+        </p>
       )}
 
       {/* Token preview chips */}

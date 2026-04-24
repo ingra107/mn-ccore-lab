@@ -27,7 +27,16 @@ const typeOptions = [
 ]
 
 export default function ActivityPage() {
-  const [filterType, setFilterType] = useState('')
+  // T-23 type filter is now multi-select via chip strip (OR semantics).
+  // Shift-click a chip to add/remove; plain click selects just that one.
+  // Person filter stays as InlineSelect (too many members for chips).
+  const [filterTypes, setFilterTypes] = useState<string[]>([])
+  const toggleType = (t: string, multi: boolean) => {
+    setFilterTypes((prev) => {
+      if (multi) return prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]
+      return prev.length === 1 && prev[0] === t ? [] : [t]
+    })
+  }
   const [filterPerson, setFilterPerson] = useState('')
   const { data: rawActivity = [], isLoading } = useActivity(200)
   const allActivity = useMemo(
@@ -57,10 +66,17 @@ export default function ActivityPage() {
 
   const filtered = useMemo(() => {
     let result = allActivity
-    if (filterType) result = result.filter((a) => a.type === filterType)
+    if (filterTypes.length > 0) result = result.filter((a) => filterTypes.includes(a.type))
     if (filterPerson) result = result.filter((a) => a.actor === filterPerson)
     return result
-  }, [allActivity, filterType, filterPerson])
+  }, [allActivity, filterTypes, filterPerson])
+
+  // Counts per type for chip labels — full pool, not filtered
+  const countByType = useMemo(() => {
+    const m: Record<string, number> = {}
+    for (const a of allActivity) m[a.type] = (m[a.type] || 0) + 1
+    return m
+  }, [allActivity])
 
   // Group by date
   const grouped = useMemo(() => {
@@ -83,14 +99,14 @@ export default function ActivityPage() {
   })
 
   // Reset focus when filter changes
-  useEffect(() => { setFocusedIndex(-1) }, [filterType, filterPerson])
+  useEffect(() => { setFocusedIndex(-1) }, [filterTypes, filterPerson])
 
   return (
     <div>
       <PageHeader
         icon={<ActivityIcon size={20} />}
         title="Activity"
-        subtitle={`${filtered.length}${filterType || filterPerson ? ` of ${allActivity.length}` : ''} recent actions${mostActive ? ` · Most active: ${mostActive}` : ''}`}
+        subtitle={`${filtered.length}${filterTypes.length > 0 || filterPerson ? ` of ${allActivity.length}` : ''} recent actions${mostActive ? ` · Most active: ${mostActive}` : ''}`}
         count={allActivity.length}
         actions={
           <div className="flex items-center gap-2">
@@ -100,15 +116,46 @@ export default function ActivityPage() {
               onChange={setFilterPerson}
               alwaysShowChevron
             />
-            <InlineSelect
-              value={filterType}
-              options={typeOptions}
-              onChange={setFilterType}
-              alwaysShowChevron
-            />
           </div>
         }
       />
+
+      {/* T-23 per-type chip strip. Plain click = single; shift-click = multi. */}
+      <div className="mt-4 flex items-center gap-2 flex-wrap">
+        <button
+          onClick={() => setFilterTypes([])}
+          className="rounded-full px-3 py-1 text-xs border transition-colors"
+          style={{
+            borderColor: filterTypes.length === 0 ? 'var(--teal)' : 'var(--border-subtle)',
+            color: filterTypes.length === 0 ? 'var(--teal)' : 'var(--slate)',
+            background: filterTypes.length === 0 ? 'var(--teal-hover)' : 'transparent',
+            cursor: 'pointer',
+          }}
+        >
+          All ({allActivity.length})
+        </button>
+        {typeOptions.filter(o => o.value !== '').map((o) => {
+          const count = countByType[o.value] || 0
+          if (count === 0) return null
+          const active = filterTypes.includes(o.value)
+          return (
+            <button
+              key={o.value}
+              onClick={(e) => toggleType(o.value, e.shiftKey)}
+              className="rounded-full px-3 py-1 text-xs border transition-colors"
+              style={{
+                borderColor: active ? 'var(--teal)' : 'var(--border-subtle)',
+                color: active ? 'var(--teal)' : 'var(--slate)',
+                background: active ? 'var(--teal-hover)' : 'transparent',
+                cursor: 'pointer',
+              }}
+              title="Shift-click for multi-select"
+            >
+              {o.label} ({count})
+            </button>
+          )
+        })}
+      </div>
 
       {/* H-05: compressed activity feed — single row per entry. CLS fix (C8): reserve viewport height */}
       <div className="mt-5 flex flex-col gap-6" style={{ minHeight: 'calc(100vh - 240px)' }}>
@@ -205,9 +252,9 @@ export default function ActivityPage() {
         {!isLoading && grouped.length === 0 && (
           <EmptyState
             icon={<ActivityIcon size={40} />}
-            title={filterType ? 'No matches for that filter' : 'A quiet day in the lab'}
-            subtitle={filterType
-              ? `Nothing matches the ${typeOptions.find(o => o.value === filterType)?.label.toLowerCase()} filter right now. Try 'All' or pick a different type.`
+            title={filterTypes.length > 0 ? 'No matches for that filter' : 'A quiet day in the lab'}
+            subtitle={filterTypes.length > 0
+              ? `Nothing matches the selected type filter${filterTypes.length > 1 ? 's' : ''}. Try 'All' or pick a different type.`
               : 'Task completions, status changes, comments, and project updates will stream in here as the team works.'}
           />
         )}

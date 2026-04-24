@@ -18,7 +18,7 @@ import { getPersonInfo, getAllMembers, directors } from '../../data/team'
 import Avatar from '../Avatar'
 import InlineSelect from '../InlineSelect'
 import PresenceAvatars from '../PresenceAvatars'
-import { usePresence } from '../../hooks/usePresence'
+import { usePresence, useTyping } from '../../hooks/usePresence'
 import { motion, useMotionValue, useTransform } from 'framer-motion'
 import type { TaskRow } from '../../lib/api'
 import { PATHS } from '../../constants/paths'
@@ -33,13 +33,14 @@ import { TaskUpdateFeed } from './detail/TaskUpdateFeed'
 import { TaskActivityFeed } from './detail/TaskActivityFeed'
 import KeyLinksEditor from '../KeyLinksEditor'
 
-type Tab = 'overview' | 'notes' | 'comments' | 'activity' | 'details'
+type Tab = 'overview' | 'notes' | 'comments' | 'activity' | 'files' | 'details'
 
 const TABS: { key: Tab; label: string; icon: typeof Circle }[] = [
   { key: 'overview', label: 'Overview', icon: Eye },
   { key: 'notes', label: 'Notes', icon: ScrollText },
   { key: 'comments', label: 'Comments', icon: MessageSquare },
   { key: 'activity', label: 'Activity', icon: Clock },
+  { key: 'files', label: 'Files', icon: Upload },
   { key: 'details', label: 'Details', icon: Flag },
 ]
 
@@ -613,6 +614,14 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
             <TaskActivityFeed taskId={task.id} />
           </div>
 
+          {/* T-50 Files tab — dedicated surface mirrors ProjectDetail Files */}
+          <div
+            className={tabAnimating === 'files' ? 'task-detail-tab-content' : ''}
+            style={{ display: activeTab === 'files' ? 'flex' : 'none', flexDirection: 'column', gap: 'var(--sp-md)' }}
+          >
+            <FileUpload entityType="task" entityId={task.id} />
+          </div>
+
         </div>
 
         {/* Mobile-only Done pill — always-visible exit for thumbs that
@@ -967,6 +976,7 @@ function OverviewQuickAdd({
   const [uploading, setUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const { typingPeers, broadcastTyping } = useTyping('task', taskId)
   const appendCh = (ch: string) => {
     setText((t) => (t.endsWith(' ') || t.length === 0 ? t + ch : t + ' ' + ch))
     requestAnimationFrame(() => {
@@ -1190,7 +1200,7 @@ function OverviewQuickAdd({
           <textarea
             ref={textareaRef}
             value={text}
-            onChange={(e) => setText(e.target.value)}
+            onChange={(e) => { setText(e.target.value); broadcastTyping(e.target.value.trim().length > 0) }}
             onPaste={(e) => {
               const fileItem = Array.from(e.clipboardData?.items || []).find((it) => it.kind === 'file')
               if (fileItem) { e.preventDefault(); const f = fileItem.getAsFile(); if (f) uploadToCompose(f) }
@@ -1215,7 +1225,7 @@ function OverviewQuickAdd({
               transition: 'border-color 0.15s',
             }}
             onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--teal)')}
-            onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--border-subtle)')}
+            onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border-subtle)'; broadcastTyping(false) }}
           />
           {text.trim() && (
             <button
@@ -1233,6 +1243,15 @@ function OverviewQuickAdd({
             </button>
           )}
         </div>
+
+        {/* T-51 typing indicator — shows when other peers are typing on this task */}
+        {typingPeers.length > 0 && (
+          <p className="text-[10px] self-start" style={{ color: 'var(--teal)', opacity: 0.85, fontStyle: 'italic', margin: 0 }}>
+            {typingPeers.length === 1
+              ? `${getPersonInfo(typingPeers[0]).name.split(' ')[0]} is typing…`
+              : `${typingPeers.length} people are typing…`}
+          </p>
+        )}
 
         {/* Hermes toggle — only relevant on comments. Shows up after typing. */}
         {mode === 'comment' && text.trim() && (

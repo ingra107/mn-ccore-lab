@@ -44,7 +44,7 @@ import KeyLinksEditor from '../components/KeyLinksEditor'
 import LinkifiedText from '../components/LinkifiedText'
 import FileUpload from '../components/FileUpload'
 import PresenceAvatars from '../components/PresenceAvatars'
-import { usePresence } from '../hooks/usePresence'
+import { usePresence, useTyping } from '../hooks/usePresence'
 import SubmissionTimeline from '../components/SubmissionTimeline'
 import ConferencePrep from '../components/ConferencePrep'
 import InsightPanel from '../components/InsightPanel'
@@ -212,6 +212,7 @@ function ProjectDetailInner({ project }: InnerProps) {
 
   // Presence: who else is viewing this project right now (Slack-style)
   const viewerSlugs = usePresence('project', project.slug)
+  const { typingPeers: projectTypingPeers, broadcastTyping: broadcastProjectTyping } = useTyping('project', project.slug)
 
   const queryClient = useQueryClient()
 
@@ -944,7 +945,7 @@ function ProjectDetailInner({ project }: InnerProps) {
             <textarea
               ref={quickComposeTextRef}
               value={quickComposeText}
-              onChange={(e) => setQuickComposeText(e.target.value)}
+              onChange={(e) => { setQuickComposeText(e.target.value); broadcastProjectTyping(e.target.value.trim().length > 0) }}
               onPaste={(e) => {
                 const items = Array.from(e.clipboardData?.items || [])
                 const fileItem = items.find((it) => it.kind === 'file')
@@ -971,7 +972,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                 transition: 'border-color 0.2s',
               }}
               onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--teal)')}
-              onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--border-subtle)')}
+              onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border-subtle)'; broadcastProjectTyping(false) }}
             />
             {quickComposeText.trim() && (
               <button
@@ -990,6 +991,13 @@ function ProjectDetailInner({ project }: InnerProps) {
           </div>
           {quickComposeUploading && (
             <p className="mt-1 text-[10px]" style={{ color: 'var(--teal)', opacity: 0.85 }}>Uploading…</p>
+          )}
+          {projectTypingPeers.length > 0 && (
+            <p className="mt-1 text-[10px]" style={{ color: 'var(--teal)', opacity: 0.85, fontStyle: 'italic' }}>
+              {projectTypingPeers.length === 1
+                ? `${getPersonInfo(projectTypingPeers[0]).name.split(' ')[0]} is typing…`
+                : `${projectTypingPeers.length} people are typing…`}
+            </p>
           )}
         </div>
       </motion.div>

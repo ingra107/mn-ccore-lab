@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect, useCallback, lazy, Suspense } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Plus, List, LayoutGrid, GanttChartSquare, Users, ChevronDown, CheckCircle2, CheckSquare, Zap, Flame, X, Pin, GripVertical, Hourglass } from 'lucide-react'
+import { Plus, List, LayoutGrid, GanttChartSquare, Users, ChevronDown, CheckCircle2, CheckSquare, Zap, Flame, X, Pin, GripVertical, Hourglass, AlertTriangle } from 'lucide-react'
 import { DndContext, closestCenter, PointerSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core'
 import type { DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
@@ -316,6 +316,20 @@ export default function MyTasks() {
       waiting_on: allTasks.filter(t => !t.completed && t.assignee !== piSlug && (t.status === 'todo' || t.status === 'in_progress' || t.status === 'waiting_external')).length,
     }
   }, [tasks, allTasks, piSlug])
+
+  // T-07 — track TodayHero visibility for sticky overdue pill
+  const todayHeroRef = useRef<HTMLDivElement>(null)
+  const [isHeroVisible, setIsHeroVisible] = useState(true)
+  useEffect(() => {
+    const el = todayHeroRef.current
+    if (!el) return
+    const io = new IntersectionObserver(
+      ([entry]) => setIsHeroVisible(entry.isIntersecting),
+      { threshold: 0.1 }
+    )
+    io.observe(el)
+    return () => io.disconnect()
+  }, [])
 
   // Today hero lists — above-the-fold overdue + due today for fast triage (GH #33)
   const todayHeroLists = useMemo(() => {
@@ -696,9 +710,28 @@ export default function MyTasks() {
         </div>
       )}
 
+      {/* T-07 sticky overdue pill. Appears when TodayHero scrolls out of
+          view; click scrolls back. Only on quickFilter='all' + overdue>0. */}
+      {quickFilter === 'all' && !showCompleted && !showAllTasks && todayHeroLists.overdue.length > 0 && !isHeroVisible && (
+        <button
+          type="button"
+          onClick={() => todayHeroRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+          className="sticky top-0 z-20 mt-3 flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-medium shadow-card"
+          style={{
+            backgroundColor: 'var(--maroon-solid)', color: '#fff', border: 'none',
+            cursor: 'pointer', alignSelf: 'flex-start', width: 'fit-content',
+            scrollMarginTop: '16px',
+          }}
+          title="Jump back to Today Hero"
+        >
+          <AlertTriangle size={12} />
+          {todayHeroLists.overdue.length} overdue
+        </button>
+      )}
+
       {/* Today Hero — Overdue + Due Today at-a-glance (GH #33, Nick principle 1) */}
       {quickFilter === 'all' && !showCompleted && !showAllTasks && (todayHeroLists.overdue.length > 0 || todayHeroLists.dueToday.length > 0) && (
-        <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div ref={todayHeroRef} className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
           {/* Overdue column */}
           <div className="rounded-xl border p-3" style={{ borderColor: 'var(--border-subtle)', background: 'var(--surface-1)' }}>
             <div className="flex items-center gap-2 mb-2">
@@ -929,7 +962,7 @@ export default function MyTasks() {
         ) : groupBy === 'none' ? (
           <TaskGridView tasks={sortTasks(displayTasks, sortBy)} onStatusChange={handleStatusChange} onFieldChange={handleFieldChange} onOpenDetail={setSelectedTask} selectedIds={selectedIds} onToggleSelect={handleToggleSelectTask} onPinToFocus={pinTask} pinnedIds={focusPinnedSet} focusedIndex={focusedTaskIndex} onFocusIndex={setFocusedTaskIndex} />
         ) : (
-          <GroupedTaskList tasks={displayTasks} groupBy={groupBy} sortBy={sortBy} onStatusChange={handleStatusChange} onFieldChange={handleFieldChange} onOpenDetail={setSelectedTask} selectedIds={selectedIds} onToggleSelect={handleToggleSelectTask} onPinToFocus={pinTask} pinnedIds={focusPinnedSet} focusedTaskId={focusedTask?.id ?? null} onFocusId={handleFocusById} />
+          <GroupedTaskList tasks={displayTasks} groupBy={groupBy} sortBy={sortBy} onStatusChange={handleStatusChange} onFieldChange={handleFieldChange} onOpenDetail={setSelectedTask} selectedIds={selectedIds} onToggleSelect={handleToggleSelectTask} onPinToFocus={pinTask} pinnedIds={focusPinnedSet} focusedTaskId={focusedTask?.id ?? null} onFocusId={handleFocusById} hideTodayGroup={quickFilter === 'all' && !showCompleted && !showAllTasks && todayHeroLists.dueToday.length > 0} />
         )}
       </div>
 
@@ -1048,7 +1081,7 @@ function sortTasks(tasks: any[], sortBy: SortBy) {
 }
 
 // ── Grouped Task List ──────────────────────────────────────────
-function GroupedTaskList({ tasks, groupBy, sortBy, onStatusChange, onFieldChange, onOpenDetail, selectedIds, onToggleSelect, onPinToFocus, pinnedIds, focusedTaskId, onFocusId }: {
+function GroupedTaskList({ tasks, groupBy, sortBy, onStatusChange, onFieldChange, onOpenDetail, selectedIds, onToggleSelect, onPinToFocus, pinnedIds, focusedTaskId, onFocusId, hideTodayGroup }: {
   tasks: any[]
   groupBy: GroupBy
   sortBy: SortBy
@@ -1061,6 +1094,7 @@ function GroupedTaskList({ tasks, groupBy, sortBy, onStatusChange, onFieldChange
   pinnedIds?: Set<string>
   focusedTaskId?: string | null
   onFocusId?: (id: string) => void
+  hideTodayGroup?: boolean
 }) {
   const groups = useMemo(() => {
     const map = new Map<string, any[]>()
@@ -1125,8 +1159,10 @@ function GroupedTaskList({ tasks, groupBy, sortBy, onStatusChange, onFieldChange
       entries.sort((a, b) => order.indexOf(a[0]) - order.indexOf(b[0]))
     }
 
-    return entries.map(([label, items]) => ({ label, items: sortTasks(items, sortBy) }))
-  }, [tasks, groupBy, sortBy])
+    return entries
+      .filter(([label]) => !(hideTodayGroup && groupBy === 'due_date' && label === 'Today'))
+      .map(([label, items]) => ({ label, items: sortTasks(items, sortBy) }))
+  }, [tasks, groupBy, sortBy, hideTodayGroup])
 
   const groupColors: Record<string, string> = {
     'Overdue': 'var(--maroon)',

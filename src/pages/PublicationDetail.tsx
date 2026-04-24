@@ -300,8 +300,79 @@ export default function PublicationDetail() {
 
         {/* Linked Projects */}
         <LinkedProjectsSection publicationId={decodedId} />
+
+        {/* T-40 stub sections — Trial Reg / Related Pubs / Press. Each
+            only renders when it has something useful to show. */}
+        <TrialRegSection pub={pub} />
+        <RelatedPublicationsSection pub={pub} allPubs={publications} />
+        <PressMentionsSection pub={pub} />
       </div>
     </div>
+  )
+}
+
+// ── T-40 stub sections ───────────────────────────────────────
+
+function TrialRegSection({ pub }: { pub: any }) {
+  const nct = pub?.nct_id || pub?.trial_registry
+  if (!nct) return null
+  const href = nct.startsWith('http') ? nct : `https://clinicaltrials.gov/study/${nct}`
+  return (
+    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: 0.25 }} style={{ marginTop: '2rem' }}>
+      <div className="flex items-center gap-2 mb-3">
+        <ExternalLink size={16} style={{ color: 'var(--gold)' }} />
+        <h2 style={{ fontWeight: 500, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>Trial Registration</h2>
+      </div>
+      <a href={href} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--teal)', fontSize: 'var(--value-size)', textDecoration: 'underline' }}>
+        {nct}
+      </a>
+    </motion.div>
+  )
+}
+
+function RelatedPublicationsSection({ pub, allPubs }: { pub: any; allPubs: any[] }) {
+  const related = (allPubs || [])
+    .filter((p) => p.id !== pub.id && (p.topics || []).some((t: string) => (pub.topics || []).includes(t)))
+    .slice(0, 3)
+  if (related.length === 0) return null
+  return (
+    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: 0.3 }} style={{ marginTop: '2rem' }}>
+      <div className="flex items-center gap-2 mb-3">
+        <FolderOpen size={16} style={{ color: 'var(--teal)' }} />
+        <h2 style={{ fontWeight: 500, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>Related Publications</h2>
+        <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.75 }}>{related.length}</span>
+      </div>
+      <div className="flex flex-col gap-2" style={{ background: 'var(--ice)', borderRadius: 'var(--radius-xl)', padding: '16px 20px' }}>
+        {related.map((p: any) => (
+          <Link
+            key={p.id}
+            to={`/publications/${encodeURIComponent(p.id)}`}
+            className="flex items-start gap-3 py-1.5"
+            style={{ textDecoration: 'none', color: 'var(--ink)', borderBottom: '1px solid rgba(201,168,76,0.06)' }}
+          >
+            <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75, flexShrink: 0, minWidth: 36 }}>{p.year}</span>
+            <span style={{ fontSize: 'var(--value-size)', flex: 1 }}>{p.title}</span>
+          </Link>
+        ))}
+      </div>
+    </motion.div>
+  )
+}
+
+function PressMentionsSection({ pub }: { pub: any }) {
+  // Only for recent (last 3y) publications — older papers don't need the empty slot.
+  const thisYear = new Date().getFullYear()
+  if (!pub.year || pub.year < thisYear - 3) return null
+  return (
+    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: 0.35 }} style={{ marginTop: '2rem' }}>
+      <div className="flex items-center gap-2 mb-3">
+        <ExternalLink size={16} style={{ color: 'var(--slate)', opacity: 0.85 }} />
+        <h2 style={{ fontWeight: 500, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>Press & Mentions</h2>
+      </div>
+      <p style={{ fontSize: 'var(--value-size)', color: 'var(--slate)', opacity: 0.85, margin: 0, padding: '16px 20px', background: 'var(--ice)', borderRadius: 'var(--radius-xl)' }}>
+        No press mentions yet — share this page with your network to track coverage.
+      </p>
+    </motion.div>
   )
 }
 

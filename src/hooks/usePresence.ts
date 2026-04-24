@@ -36,6 +36,86 @@ interface PresenceMessage {
  * - Small team (~20) — for large rooms a real presence-channel pattern
  *   (track, broadcast-self-only-on-join) would be better.
  */
+/**
+ * T-51 Typing indicator — additive to presence. Broadcasts `typing-start` /
+ * `typing-stop` on the same room. Peers clear after 5s of silence (TTL),
+ * so a dropped `typing-stop` doesn't wedge the indicator. Returns
+ * `{ typingPeers, broadcastTyping }`.
+ */
+const TYPING_TTL_MS = 5_000
+
+interface TypingMessage {
+  type: 'typing-start' | 'typing-stop'
+  slug: string
+  entityType: string
+  entityId: string
+  ts: number
+}
+
+export function useTyping(entityType: string, entityId: string | undefined | null) {
+  const { user } = useAuth()
+  const mySlug = user?.email ? emailToSlug(user.email) : ''
+  const [typingPeers, setTypingPeers] = useState<{ slug: string; lastSeen: number }[]>([])
+  const wsRef = useRef<PartySocket | null>(null)
+  const lastBroadcastRef = useRef<{ typing: boolean; ts: number }>({ typing: false, ts: 0 })
+
+  useEffect(() => {
+    if (!entityId || !mySlug || !WS_HOST) return
+    const ws = new PartySocket({ host: WS_HOST, room: 'mnccore', party: 'notification-hub' })
+    wsRef.current = ws
+
+    const handleMessage = (event: MessageEvent) => {
+      try {
+        const msg = JSON.parse(event.data) as TypingMessage
+        if (msg.type !== 'typing-start' && msg.type !== 'typing-stop') return
+        if (msg.slug === mySlug) return
+        if (msg.entityType !== entityType || msg.entityId !== entityId) return
+        setTypingPeers((prev) => {
+          const filtered = prev.filter((p) => p.slug !== msg.slug)
+          if (msg.type === 'typing-stop') return filtered
+          return [...filtered, { slug: msg.slug, lastSeen: Date.now() }]
+        })
+      } catch { /* not typing traffic */ }
+    }
+    ws.addEventListener('message', handleMessage)
+
+    const ttlCleanup = window.setInterval(() => {
+      setTypingPeers((prev) => prev.filter((p) => Date.now() - p.lastSeen < TYPING_TTL_MS))
+    }, 1_000)
+
+    return () => {
+      try {
+        ws.send(JSON.stringify({
+          type: 'typing-stop', slug: mySlug, entityType, entityId, ts: Date.now(),
+        } satisfies TypingMessage))
+      } catch { /* closed */ }
+      ws.removeEventListener('message', handleMessage)
+      window.clearInterval(ttlCleanup)
+      ws.close()
+      wsRef.current = null
+    }
+  }, [entityType, entityId, mySlug])
+
+  // Debounced broadcast: emit start at most every 3s; stop always emits.
+  const broadcastTyping = (typing: boolean) => {
+    const now = Date.now()
+    const last = lastBroadcastRef.current
+    if (typing && last.typing && now - last.ts < 3_000) return
+    if (!typing && !last.typing) return
+    lastBroadcastRef.current = { typing, ts: now }
+    const ws = wsRef.current
+    if (!ws || !entityId || !mySlug) return
+    try {
+      ws.send(JSON.stringify({
+        type: typing ? 'typing-start' : 'typing-stop',
+        slug: mySlug, entityType, entityId, ts: now,
+      } satisfies TypingMessage))
+    } catch { /* not open */ }
+  }
+
+  return { typingPeers: typingPeers.map((p) => p.slug), broadcastTyping }
+}
+
 export function usePresence(entityType: string, entityId: string | undefined | null): string[] {
   const { user } = useAuth()
   const mySlug = user?.email ? emailToSlug(user.email) : ''
