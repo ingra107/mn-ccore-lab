@@ -4,7 +4,7 @@
 
 Before writing any code or answering any question about this project, read:
 
-1. **`SESSION-HANDOFF.md`** — current gate state, what-to-do-first, git HEADs, gotchas. One-page. Always.
+1. **`SESSION-HANDOFF.md`** — current gate state, what-to-do-first, git HEADs, gotchas. One-page. Always. ⚠ **If the session starts in AUTO MODE, that file's top section (🤖 NEXT SESSION — AUTO-MODE PLAYBOOK) is the prescriptive ticket queue. Execute it in order without re-triaging.**
 2. **`PROJECT.md`** — frontmatter has canonical `next_action` + `primary_folder`.
 3. **`LAUNCH-CHECKLIST.md`** — historical record of launch prerequisites + verification runbook. All prereqs shipped 2026-04-21; re-read if revisiting auth config, CF Access policies, or digest email setup.
 4. **`REFERENCE.md`** — API endpoints + D1 table list when you need one.

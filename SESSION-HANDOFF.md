@@ -5,8 +5,271 @@
 > T-49 mobile swipe-to-dismiss RESTORED after Nick pushback, with
 > framer-motion-backed fix for the original Pixel 5 + iOS conflicts.
 >
-> Deploy: `7077314e.mn-ccore-lab.pages.dev`. HEAD `3c6d20a` on main.
+> Deploy: `7077314e.mn-ccore-lab.pages.dev`. HEAD `e20bf70` on main.
 > Earlier today: `d76a60a0` (Overview refocus + Slack-parity round).
+
+---
+
+# 🤖 NEXT SESSION — AUTO-MODE PLAYBOOK
+
+**Nick's instruction:** go, don't ask. Execute the punch list below in
+priority order. Batch 3-5 tickets per commit + deploy. Stop when the
+list is exhausted OR a ticket turns out to be a false-alarm that needs
+Nick's judgment. If blocked on one, skip + document + continue.
+
+## Environment
+
+- Cwd: `C:\Users\ingra107\mn-ccore-lab`
+- Build: `tsc -b && vite build`. Both should be green before any commit.
+  Runs in <3s. Ship nothing that fails tsc.
+- Deploy: `npx wrangler pages deploy dist --project-name mn-ccore-lab
+  --commit-message "<ASCII-ONLY MESSAGE>" --commit-dirty=true`
+  ⚠ Wrangler rejects commit messages with non-UTF-8 chars (em-dashes,
+  arrows, emoji) with `code: 8000111 Invalid commit message`. Always
+  pass `--commit-message "CD r5 batch N"` explicitly, ASCII only.
+- Git: conventional commits. Long bodies OK, just not in
+  `--commit-message`. Push after each deploy via `git push origin main`.
+- Auth: CF Access gates `/portal/*` in prod. Deploys inherit Nick's
+  wrangler auth — no action needed from agent.
+
+## Ticket queue (in exact ship order)
+
+Use this as a checklist. Mark DONE inline as you go. When all DONE,
+update this file + push + run `/session-close`.
+
+### Batch A — compose + keyboard (pairs well, one deploy)
+
+**T-05 Compose toolbar affordance — visible `@` and `:` buttons**
+- Files:
+  - `src/pages/ProjectDetail.tsx` (Overview quick-compose, near the
+    paperclip button added 2026-04-23)
+  - `src/components/tasks/TaskDetailPanel.tsx` (`OverviewQuickAdd`
+    function, near the paperclip button)
+  - `src/pages/MeetingDetail.tsx` (`AddActionItemForm`, near paperclip)
+- Change: Add two sibling buttons next to the existing paperclip — `@`
+  (AtSign icon, gold) and `:` (Smile icon, slate). On click, append the
+  respective char to the textarea/input value + focus it + move caret
+  to end. Tooltip: "Mention teammate (@name)" / "Add emoji reaction".
+  Group the 3 buttons visually (paperclip + @ + :) as a single toolbar
+  cluster. Match the existing paperclip button styling.
+- Success: mobile users who don't know about `@` suffix see the
+  affordance on the compose bar.
+
+**T-20 MeetingDetail keyboard — n/j/k/x/Enter on action items**
+- File: `src/pages/MeetingDetail.tsx`
+- Change: Add a `useEffect` at the top of `MeetingDetail` that
+  registers keyboard handlers scoped to the page:
+  - `n` → focus `AddActionItemForm` input (store ref in parent or use
+    `document.querySelector('[data-testid="meeting-action-add"]')`)
+  - `j` / `k` → move a `focusedActionIndex` up/down through the
+    rendered action items (skip during text input focus)
+  - `x` → toggle done on the focused action via `toggleAction.mutate`
+  - `Enter` → open the linked task detail panel for focused action
+- Guard: if `document.activeElement` is input/textarea/contenteditable,
+  skip the shortcut (don't intercept typing).
+- Testid on the add-form input: add `data-testid="meeting-action-add"`.
+
+**Commit + deploy:** `CD r5 batch 5`
+
+### Batch B — polish (5 tickets, one deploy)
+
+**T-07 Sticky overdue count pill on MyTasks scroll**
+- File: `src/pages/portal/MyTasks.tsx`
+- Change: In the page header row, wrap the overdue count in a
+  `position: sticky; top: 0` element (or use a secondary sticky row
+  below PageHeader). When user scrolls past the TodayHero band, the
+  `⚠ N overdue` pill stays visible. Click scrolls back to TodayHero
+  (use `scroll-margin-top` so the pill doesn't cover it).
+- Only show when `quickFilter === 'all'` (consistent with TodayHero).
+
+**T-08 TodayHero + main-list Today dedup**
+- File: `src/pages/portal/MyTasks.tsx`
+- Change: In the `GroupedTaskList` render path, when
+  `groupBy === 'due_date'` AND TodayHero is showing (`todayHeroLists.overdue.length > 0 || todayHeroLists.dueToday.length > 0`),
+  collapse or hide the "Today" group in the main list so the
+  same 3 tasks don't render twice. Alternative: start the main list
+  at "This Week" group when TodayHero shows.
+
+**T-09 TodayHero row padding 16→10**
+- File: `src/pages/portal/MyTasks.tsx` (and the mirror in
+  `src/pages/portal/Personal.tsx` added in batch 3)
+- Change: Find the TodayHero row divs (`className="flex items-center
+  gap-2 text-xs rounded px-1.5 py-1 cursor-pointer"`). Reduce
+  `py-1` → no change (already tight). If rows feel loose, drop row
+  `gap-1` to `gap-0.5` in the parent `flex flex-col`. Verify
+  visually — this might already be tight enough.
+
+**T-16 Cmd+K "Recent" section from sessionStorage**
+- File: `src/components/CommandPalette.tsx`
+- Change: Pull last 5 visited `/portal/*` routes from
+  `sessionStorage`. On mount, read `mnccore-cmdk-recent` key (JSON
+  array). Add a `Recent` section at the top of the palette items array
+  (only when query is empty AND array is non-empty). Each item: label
+  = route basename, sublabel = full path, action = `navigate(path)`.
+- Also: register a history listener in a useEffect that pushes current
+  pathname onto the sessionStorage array (dedupe, max 5) on every
+  route change.
+
+**T-47 Cmd+K footer "View all → Search"**
+- File: `src/components/CommandPalette.tsx` (footer region, search for
+  `{tasks.filter(t => !t.completed).length} tasks · {projects.length}
+  projects`)
+- Change: Extend the count string to include total entity types from
+  unified search (tasks + projects + N other). Add a trailing button
+  `View all → Search` that closes the palette and navigates to
+  `/portal/search?q=<current query>`. Only show when query.length >= 2.
+
+**Commit + deploy:** `CD r5 batch 6`
+
+### Batch C — auth/empty/state polish (one deploy)
+
+**T-23 ActivityPage chip strip (replace InlineSelects)**
+- File: `src/pages/portal/ActivityPage.tsx`
+- Change: Replace the two `InlineSelect`s in the PageHeader actions
+  with a chip strip like SearchPage's (see
+  `src/pages/portal/SearchPage.tsx` for the pattern). For type filter:
+  chips = `typeOptions` minus the empty-string entry, shift-click for
+  multi-select. For person filter: keep as InlineSelect (too many
+  members for chips). Multi-selected type filter = OR semantics.
+
+**T-32 Personal onboarding pinned when <80% complete AND <30 days**
+- File: `src/pages/portal/Personal.tsx`
+- Change: Use `useOnboarding()` to read `progress`, `completedCount`,
+  `totalSteps`, and compute `daysSinceJoin` from `startDate`. If
+  `progress < 80` AND `daysSinceJoin < 30` AND not dismissed, render
+  a compact progress card top-right of the header row: `{completedCount}/{totalSteps} items · {daysSinceJoin}d in`.
+  Click scrolls to the existing onboarding section at the bottom.
+
+**T-34 Settings tab unsaved-state dot**
+- File: `src/pages/portal/SettingsPage.tsx`
+- Change: For each of the 5 tabs, compare current settings to defaults
+  (pull defaults from initial load, compare via JSON stringify). If
+  any field in a tab diverges from default, render a 6px dot on that
+  tab's label. Minor: Profile tab is always "customized" if user has
+  filled it, so guard with a shorter comparison (only flag dots when
+  the user has deviated from the template/zero-state).
+
+**T-40 Publication detail stub sections**
+- File: `src/pages/PublicationDetail.tsx` (or wherever
+  `/publications/:slug` renders)
+- Change: Below the existing content, add 3 stub sections that only
+  render when data exists — otherwise omit cleanly:
+  1. `Trial Registration` — if pub has `nct_id` or `trial_registry`
+     field, show link. Else skip.
+  2. `Related Publications` — other pubs from same project. Filter
+     existing publications list by shared `project_slug`.
+  3. `Press & Mentions` — placeholder card "No press mentions yet —
+     share this page" (non-empty content for recent pubs so the page
+     doesn't end on 80% whitespace).
+
+**Commit + deploy:** `CD r5 batch 7`
+
+### Batch D — reactions (if time permits, bigger)
+
+**T-06 Reactions first-class placement**
+- Files: look for `ReactionBar` component + its current usages (grep).
+  Likely surfaces: `ProjectUpdateFeed`, `ProjectComments`,
+  `TaskComments`, `TaskUpdateFeed`.
+- Change: Lift the reaction pills to render flush-left under each
+  note/comment body (not hover-revealed). Always show existing
+  reactions as pills with count. Show a single muted `+` button at
+  the right end of the reaction row that opens an emoji picker
+  (simple: 6 preset reactions — 👍 🎉 ✅ 🔥 👀 ❤️). When a note has zero
+  reactions, `+` still visible at opacity 0.55.
+- Acceptance: screenshots show reactions flush-left, not tucked
+  under/on-hover. Clicking `+` on an empty reaction row adds one
+  without modal friction.
+
+**Commit + deploy:** `CD r5 batch 8`
+
+### Skip reasons (do NOT attempt in auto mode)
+
+- **T-24 Research Digest rows view** — 1000+ line file refactor. Out
+  of scope for auto mode. Leave for Nick-supervised session.
+- **T-29 Manuscripts "Needs attention" grouping** — CD described UI
+  that doesn't exist in current `src/pages/portal/Manuscripts.tsx`.
+  Auto mode should verify once via grep, and if no matching JSX
+  exists, mark T-29 as "re-audit needed" and skip. Don't invent new
+  UI from ambiguous description.
+- **DD-#1 through DD-#7** (DESIGN-DIRECTION.md) — strategic proposals
+  requiring Nick's product call. Never execute without his nod.
+- **Mobile swipe real-device validation** — agent can't test this.
+  Leave a TODO in the session-close handoff for Nick.
+
+## Ship rhythm
+
+1. Read the next batch's ticket(s).
+2. Implement. Build. TS clean? OK.
+3. `git add -A && git commit -m "<body>"` — long bodies OK in commit.
+4. `npm run build`.
+5. `npx wrangler pages deploy dist --project-name mn-ccore-lab
+   --commit-message "CD r5 batch N" --commit-dirty=true`. The
+   `--commit-message` flag MUST be ASCII-only.
+6. `git push origin main`.
+7. Record the new deploy URL + HEAD short-SHA in this handoff + next
+   batch.
+8. Move to next batch.
+
+## When the queue is exhausted
+
+1. Run `/session-close` (this updates CLAUDE.md, CHANGELOG.md,
+   SESSION-HANDOFF.md, MEMORY.md indexes).
+2. If time remains, tackle T-06 (reactions) — the only Batch D item
+   kept as stretch.
+3. Leave a final handoff in SESSION-HANDOFF.md saying "CD round-5
+   fully exhausted. Ready for round-6 tickets or DD-#N pilot." Push.
+
+## When you hit a blocker
+
+- Build fails on an edit: revert the edit, log what broke, skip the
+  ticket, document in handoff, continue.
+- Wrangler 8000111 UTF-8 error: rerun with simpler ASCII
+  `--commit-message`. Never try to parse the error — just retry.
+- Ticket describes code that doesn't exist (T-29 pattern): grep for
+  the described UI. If absent, mark ticket "stale/re-audit", move on.
+- New requirement emerges (Nick mid-run): stop auto, wait for Nick.
+
+## Files you'll touch (quick ref)
+
+Compose surfaces:
+- `src/pages/ProjectDetail.tsx` — Overview quick-compose
+- `src/components/tasks/TaskDetailPanel.tsx` — OverviewQuickAdd fn
+- `src/pages/MeetingDetail.tsx` — AddActionItemForm fn
+
+MyTasks / Personal:
+- `src/pages/portal/MyTasks.tsx`
+- `src/pages/portal/Personal.tsx`
+
+Command palette + search:
+- `src/components/CommandPalette.tsx`
+- `src/pages/portal/SearchPage.tsx` (reference for chip-strip pattern)
+
+Misc:
+- `src/pages/portal/ActivityPage.tsx`
+- `src/pages/portal/SettingsPage.tsx`
+- `src/pages/PublicationDetail.tsx`
+- `src/pages/MyItems.tsx`
+
+Helper components (reuse, don't reimplement):
+- `src/components/InlineSelect.tsx`
+- `src/components/InlineAssigneePicker.tsx`
+- `src/components/FileUpload.tsx` (reference for presigned-R2 flow)
+- `src/hooks/usePresence.ts` (entity-agnostic)
+- `src/components/PresenceAvatars.tsx`
+
+## Starting-state verification (first thing agent should do)
+
+```bash
+cd C:\Users\ingra107\mn-ccore-lab
+git status --short        # expect clean or minor uncommitted
+git log --oneline -3      # expect e20bf70 at top
+npx tsc -b                # expect silent (green)
+```
+
+If HEAD ≠ `e20bf70`, something has moved since this handoff — read
+last 3 commits to understand before continuing.
+
+---
 
 ## What shipped this round (batches `ab8ba90` → `3c6d20a`)
 
