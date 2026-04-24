@@ -19,6 +19,8 @@ import {
   Check,
   Link2,
   Paperclip,
+  AtSign,
+  Smile,
 } from 'lucide-react'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useProjects, useMeetingsApi, useTasks, useProjectUpdates, useRevisions, useComments } from '../hooks/useApiData'
@@ -234,6 +236,18 @@ function ProjectDetailInner({ project }: InnerProps) {
   const [quickComposeDragOver, setQuickComposeDragOver] = useState(false)
   const [quickComposeUploading, setQuickComposeUploading] = useState(false)
   const quickComposeFileInputRef = useRef<HTMLInputElement>(null)
+  const quickComposeTextRef = useRef<HTMLTextAreaElement>(null)
+  // T-05 affordance — append @ or : and focus caret end
+  const appendToCompose = useCallback((ch: string) => {
+    setQuickComposeText((t) => (t.endsWith(' ') || t.length === 0 ? t + ch : t + ' ' + ch))
+    requestAnimationFrame(() => {
+      const el = quickComposeTextRef.current
+      if (el) {
+        el.focus()
+        el.setSelectionRange(el.value.length, el.value.length)
+      }
+    })
+  }, [])
   // T-04 inline file drop — Slack parity. Upload → append link to compose.
   const uploadToCompose = useCallback(async (file: File) => {
     if (!project) return
@@ -892,6 +906,30 @@ function ProjectDetailInner({ project }: InnerProps) {
             >
               <Paperclip size={14} />
             </button>
+            <button
+              type="button"
+              onClick={() => appendToCompose('@')}
+              title="Mention teammate (@name)"
+              style={{
+                flexShrink: 0, padding: '8px', borderRadius: 'var(--radius-md)',
+                background: 'transparent', color: 'var(--gold)', border: '1px solid var(--border-subtle)',
+                cursor: 'pointer', opacity: 0.85,
+              }}
+            >
+              <AtSign size={14} />
+            </button>
+            <button
+              type="button"
+              onClick={() => appendToCompose(':')}
+              title="Add emoji reaction (:emoji:)"
+              style={{
+                flexShrink: 0, padding: '8px', borderRadius: 'var(--radius-md)',
+                background: 'transparent', color: 'var(--slate)', border: '1px solid var(--border-subtle)',
+                cursor: 'pointer', opacity: 0.85,
+              }}
+            >
+              <Smile size={14} />
+            </button>
             <input
               ref={quickComposeFileInputRef}
               type="file"
@@ -904,6 +942,7 @@ function ProjectDetailInner({ project }: InnerProps) {
               style={{ display: 'none' }}
             />
             <textarea
+              ref={quickComposeTextRef}
               value={quickComposeText}
               onChange={(e) => setQuickComposeText(e.target.value)}
               onPaste={(e) => {

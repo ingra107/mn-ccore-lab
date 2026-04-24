@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo } from 'react'
+import { useState, useRef, useMemo, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import Breadcrumb from '../components/Breadcrumb'
 import RoundPrompt from '../components/RoundPrompt'
@@ -23,6 +23,8 @@ import {
   X,
   Sparkles,
   Paperclip,
+  AtSign,
+  Smile,
 } from 'lucide-react'
 import { DndContext, closestCenter, PointerSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core'
 import type { DragEndEvent } from '@dnd-kit/core'
@@ -150,6 +152,37 @@ export default function MeetingDetail() {
       return ai - bi
     })
   }, [pendingActions, actionOrder])
+
+  // T-20 keyboard nav on action items: n focuses add form, j/k move focus,
+  // x or Enter toggles focused action. Skip when typing in an input.
+  const [focusedActionIndex, setFocusedActionIndex] = useState(-1)
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const el = document.activeElement as HTMLElement | null
+      const isTyping = el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)
+      if (isTyping) return
+      if (e.metaKey || e.ctrlKey || e.altKey) return
+      const total = orderedPendingActions.length
+      if (e.key === 'n') {
+        e.preventDefault()
+        const add = document.querySelector<HTMLInputElement>('[data-testid="meeting-action-add"]')
+        add?.focus()
+      } else if (e.key === 'j') {
+        e.preventDefault()
+        setFocusedActionIndex((i) => (total === 0 ? -1 : Math.min(total - 1, i + 1)))
+      } else if (e.key === 'k') {
+        e.preventDefault()
+        setFocusedActionIndex((i) => (total === 0 ? -1 : Math.max(0, i - 1)))
+      } else if (e.key === 'x' || e.key === 'Enter') {
+        if (focusedActionIndex >= 0 && focusedActionIndex < total) {
+          e.preventDefault()
+          handleToggleAction(orderedPendingActions[focusedActionIndex].id)
+        }
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [orderedPendingActions, focusedActionIndex])
 
   const handleBatchComplete = () => {
     for (const id of selectedActionIds) {
@@ -538,8 +571,8 @@ export default function MeetingDetail() {
                 <div className="mb-3">
                   <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleActionDragEnd}>
                     <SortableContext items={orderedPendingActions.map(i => i.id)} strategy={verticalListSortingStrategy}>
-                      {orderedPendingActions.map((item) => (
-                        <SortableActionItem key={item.id} item={item} onToggle={handleToggleAction} selected={selectedActionIds.has(item.id)} onToggleSelect={toggleActionSelect} />
+                      {orderedPendingActions.map((item, idx) => (
+                        <SortableActionItem key={item.id} item={item} onToggle={handleToggleAction} selected={selectedActionIds.has(item.id)} onToggleSelect={toggleActionSelect} isFocused={idx === focusedActionIndex} />
                       ))}
                     </SortableContext>
                   </DndContext>
@@ -804,13 +837,16 @@ function SortableAgendaItem({ item, AGENDA_TYPE_ICONS }: { item: AgendaItemRow; 
   )
 }
 
-function SortableActionItem({ item, onToggle, selected, onToggleSelect }: { item: ActionItemRowType; onToggle: (id: string) => void; selected?: boolean; onToggleSelect?: (id: string) => void }) {
+function SortableActionItem({ item, onToggle, selected, onToggleSelect, isFocused }: { item: ActionItemRowType; onToggle: (id: string) => void; selected?: boolean; onToggleSelect?: (id: string) => void; isFocused?: boolean }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id })
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.85 : 1,
     zIndex: isDragging ? 'var(--z-sticky)' : ('auto' as const),
+    outline: isFocused ? '2px solid var(--teal)' : 'none',
+    outlineOffset: isFocused ? '-2px' : '0',
+    borderRadius: 'var(--radius-md)',
   }
 
   return (
@@ -967,6 +1003,13 @@ function AddActionItemForm({ meetingId, isAuthenticated, onSuccess }: { meetingI
   const [uploading, setUploading] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const appendCh = (ch: string) => {
+    setText((t) => (t.endsWith(' ') || t.length === 0 ? t + ch : t + ' ' + ch))
+    requestAnimationFrame(() => {
+      const el = inputRef.current
+      if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length) }
+    })
+  }
   const createTask = useCreateTask()
   const queryClient = useQueryClient()
   const { user } = useAuth()
@@ -1038,6 +1081,7 @@ function AddActionItemForm({ meetingId, isAuthenticated, onSuccess }: { meetingI
         <input
           ref={inputRef}
           type="text"
+          data-testid="meeting-action-add"
           value={text}
           onChange={(e) => setText(e.target.value)}
           onPaste={(e) => {
@@ -1064,6 +1108,24 @@ function AddActionItemForm({ meetingId, isAuthenticated, onSuccess }: { meetingI
           style={{ border: '1px solid var(--border-subtle)', background: 'transparent', color: 'var(--slate)', cursor: uploading ? 'wait' : 'pointer', opacity: uploading ? 0.55 : 0.85 }}
         >
           <Paperclip size={12} />
+        </button>
+        <button
+          type="button"
+          onClick={() => appendCh('@')}
+          title="Mention teammate (@name)"
+          className="flex-shrink-0 p-2 rounded-lg"
+          style={{ border: '1px solid var(--border-subtle)', background: 'transparent', color: 'var(--gold)', cursor: 'pointer', opacity: 0.85 }}
+        >
+          <AtSign size={12} />
+        </button>
+        <button
+          type="button"
+          onClick={() => appendCh(':')}
+          title="Add emoji reaction (:emoji:)"
+          className="flex-shrink-0 p-2 rounded-lg"
+          style={{ border: '1px solid var(--border-subtle)', background: 'transparent', color: 'var(--slate)', cursor: 'pointer', opacity: 0.85 }}
+        >
+          <Smile size={12} />
         </button>
         <input
           ref={fileInputRef}

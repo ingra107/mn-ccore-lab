@@ -13,7 +13,7 @@ const EMOJI_OPTIONS = [
   { emoji: '\u{1F389}', label: 'Celebrate' },
   { emoji: '\u{1F440}', label: 'Eyes' },
   { emoji: '\u{1F525}', label: 'Fire' },
-  { emoji: '\u{1F4A1}', label: 'Idea' },
+  { emoji: '✅', label: 'Done' },
 ] as const
 
 interface ReactionBarProps {
@@ -111,7 +111,7 @@ export default function ReactionBar({ targetType, targetId, compact }: ReactionB
             border: '1px dashed var(--border-light, var(--hover-medium))',
             cursor: 'pointer',
             color: 'var(--slate)',
-            opacity: showPicker ? 0.8 : 0.85,
+            opacity: showPicker ? 0.85 : 0.55,
             fontSize: '12px',
             lineHeight: 1,
           }}

@@ -4,7 +4,7 @@ import {
   CalendarDays, FolderKanban, ArrowRightLeft,
   FileText, MessageSquare, Upload, Eye, ScrollText,
   Users, Bell, ClipboardList, Link2, Trash2, Plus, ExternalLink, RefreshCw, Copy, Check,
-  ChevronUp, ChevronDown, Send, Paperclip,
+  ChevronUp, ChevronDown, Send, Paperclip, AtSign, Smile,
 } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import CollapsibleSection from '../CollapsibleSection'
@@ -966,6 +966,14 @@ function OverviewQuickAdd({
   const [dragOver, setDragOver] = useState(false)
   const [uploading, setUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const appendCh = (ch: string) => {
+    setText((t) => (t.endsWith(' ') || t.length === 0 ? t + ch : t + ' ' + ch))
+    requestAnimationFrame(() => {
+      const el = textareaRef.current
+      if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length) }
+    })
+  }
   const postUpdate = usePostTaskUpdate(taskId)
   const { showSuccess } = useToast()
   const queryClient = useQueryClient()
@@ -1154,6 +1162,24 @@ function OverviewQuickAdd({
           >
             <Paperclip size={12} />
           </button>
+          <button
+            type="button"
+            onClick={() => appendCh('@')}
+            title="Mention teammate (@name)"
+            className="flex-shrink-0 p-2 rounded-lg"
+            style={{ border: '1px solid var(--border-subtle)', background: 'transparent', color: 'var(--gold)', cursor: 'pointer', opacity: 0.85 }}
+          >
+            <AtSign size={12} />
+          </button>
+          <button
+            type="button"
+            onClick={() => appendCh(':')}
+            title="Add emoji reaction (:emoji:)"
+            className="flex-shrink-0 p-2 rounded-lg"
+            style={{ border: '1px solid var(--border-subtle)', background: 'transparent', color: 'var(--slate)', cursor: 'pointer', opacity: 0.85 }}
+          >
+            <Smile size={12} />
+          </button>
           <input
             ref={fileInputRef}
             type="file"
@@ -1162,6 +1188,7 @@ function OverviewQuickAdd({
             style={{ display: 'none' }}
           />
           <textarea
+            ref={textareaRef}
             value={text}
             onChange={(e) => setText(e.target.value)}
             onPaste={(e) => {
