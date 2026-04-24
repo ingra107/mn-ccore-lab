@@ -5,8 +5,8 @@
 ## 🎯 NEXT SESSION — START HERE
 
 **State at handoff:**
-- HEAD `437fe8cb` on main, clean, pushed
-- Deploy `6db2771f.mn-ccore-lab.pages.dev` (prod alias)
+- HEAD `410582fd` on main, clean, pushed
+- Deploy `8506e159.mn-ccore-lab.pages.dev` (prod alias)
 - Live for the team since 2026-04-21
 
 **Shipped this continuation session (post-compact):**
@@ -23,6 +23,14 @@
   OverviewQuickAdd becomes `position: sticky; bottom: 0` on mobile so
   iOS keyboard doesn't hide it. MeetingDetail deferred — single-line
   input + browser autoscroll handles the keyboard case adequately.
+- **`410582fd` — T-29 full Manuscripts "Needs your attention" UI.**
+  New `/api/manuscripts/attention` endpoint returns three subgroup
+  arrays computed from existing tables (no schema change). New
+  `NeedsAttentionDashboard` replaces `ActiveRevisionsDashboard` on
+  Manuscripts. Three collapsible subgroups + count badges (amber ≥5)
+  + click-to-filter with "Show all" reset + section-level persist in
+  localStorage. Empty-all → 32px muted single-line; single-subgroup →
+  skip empty siblings entirely per spec.
 - **T-29 schema check — NOT BLOCKED.** `manuscript_revisions`
   (v23) has `status`, `submitted_at`, `response_due`.
   `reviewer_comments` has `assigned_to`, `status`, `resolved_at`.
@@ -41,17 +49,12 @@ shipping. The value is moderate (swipe-to-archive/done); cost is
 the regression risk on virtualized scroll perf. Consider whether
 long-press context menu + existing checkbox tap is sufficient.
 
-### 2. T-29 full UI (1 sprint, unblocked)
-CD spec at `docs/specs/t-29-manuscripts-attention.md` — 3 collapsible
-subgroups with count badges + click-to-filter.
-- Files: `src/pages/Manuscripts.tsx` (add "Needs your attention"
-  section above main table), `src/hooks/useApiData.ts` (add
-  `useOverdueRevisions` / `usePendingReviewerComments` / `useStaleDrafts`
-  queries).
-- API: new `/api/manuscripts/attention` endpoint returning the three
-  subgroup arrays. Can compute server-side from existing tables.
-- Threshold defaults `14d / 7d / 30d` exposed in Settings per spec ¶2.
-- Skip-it version (rename + urgency sort) already shipped `ad19cec2`.
+### 2. T-29 Settings threshold plumbing (~1hr)
+`/api/manuscripts/attention` accepts `?review_days=&stale_days=` but
+there's no UI yet. Add to Settings → Lab Preferences per spec ¶2
+("Manuscript attention thresholds"). Defaults `7d / 30d`. Persist
+per-user via existing settings pattern; override the query key in
+`useManuscriptsAttention` to match. Low-risk follow-up.
 
 ### 3. DD-2 saved views (3 sprints, supervised, TODAY.md replacement ambition)
 See `docs/cd-round-trip/2026-04-23-round-6-triage.md` §DD-2. 5 parity
