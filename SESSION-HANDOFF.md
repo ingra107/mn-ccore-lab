@@ -10,32 +10,46 @@
 
 ---
 
-## ⚡ Nick decisions (triaged 2026-04-23 night)
-
-Vision-level items NOT addressed by the tactical auto-mode queue. Triaged.
+## Round 6 triaged 2026-04-23 night
 
 > **Note on "CD":** Claude Design is a separate claude.ai project Nick feeds
 > screenshot bundles to; it returns tickets as markdown. Round-trip artifacts
-> below are prompt-ready content for pasting into that project, NOT emails
-> to a human.
+> at `docs/cd-round-trip/` are prompts for pasting into that project.
 
-- **DD-#3 status-line pilot** → **DRAFT SPEC FIRST.** Spec lives at
-  `docs/specs/dd-3-status-line-pilot.md`. Nick reviews, then next session
-  ships Option C (chip row). Builds on already-shipped T-30 greeting shrink.
-- **DD-#1, #2, #4, #5, #6, #7** → **REQUEST CD DOC.** Prompt-ready at
-  `docs/cd-round-trip/2026-04-23-dd-doc-prompt.md` asks CD project to drop
-  `DESIGN-DIRECTION.md` with one paragraph per DD item. Nick pastes into
-  the claude.ai project; response commits to `docs/design-briefs/`.
-- **Hermes ambient shape** → **SUGGEST SLOT ON LANDING.** Small strip on
-  TaskDetailPanel / ProjectDetail landing surfaces 1 proactive Hermes
-  suggestion ("3 tasks stale >14d — draft nudges?"). Opt-in, most visible.
-  Spec not drafted yet; queue for a later session.
-- **T-24 Digest rows view** → **DROPPED.** Not worth the 1000+ line refactor
-  lift. Current card view stays. Removed from backlog.
-- **T-29 Manuscripts "Needs attention" grouping** → **CD CLARIFICATION
-  REQUESTED.** Prompt-ready at `docs/cd-round-trip/2026-04-23-t-29-prompt.md`
-  asks CD project to verify against live page + specify UI. Nick pastes
-  into the claude.ai project.
+**Full decision doc:** `docs/cd-round-trip/2026-04-23-round-6-triage.md`
+(per-DD rationale + parity gates + adoption order).
+
+**Source docs imported:**
+- `docs/design-briefs/DESIGN-DIRECTION.md` — CD's DD-1..7 one-pager
+- `docs/specs/t-29-manuscripts-attention.md` — CD's T-29 spec (net-new)
+
+**Round 6 auto-mode queue (in ship order):**
+1. **Batch G:** DD-6 display-number StatCard + DD-5 Welcome→release ribbon
+   (2 x 0.5 sprint, one deploy)
+2. **Batch H:** T-29 skip-it (rename + count badge + urgency sort, ~2hr).
+   Blocked on agent schema check for `manuscripts.revision_requested_at`
+   + `manuscripts.reviewer_assigned_slug`.
+3. **Batch I:** DD-4 narrowed (intent dots on PresenceAvatars, drop
+   page-wide typing). 0.5 sprint.
+4. **Batch J:** DD-7 mobile parity infra (bottom-sheet + swipe-hook +
+   long-press). Ship 5 of 6, drop haptics (Web Vibration API unreliable
+   on iOS PWA). Sprint 1 of 2.
+5. **Batch K:** DD-7 rollout to 6 high-traffic mobile surfaces. Sprint 2.
+
+**Supervised (not auto-mode):**
+- **T-29 full** — schema permitting, 3-subgroup UI round 7.
+- **DD-2 saved views** — 3 sprints. **Ambition: replace TODAY.md.**
+  Parity gates (all must hold before CLI retirement): interactivity
+  (inline edit/status/assignee), friction-free keyboard, customizability
+  (user-authored filter recipes pinnable as URLs), agent-interaction
+  (inline `@hermes` comment dispatch = TODAY.md `@claude` tag parity),
+  4-week dogfood. Until all 5 gates pass, TODAY.md keeps generating daily.
+- **DD-1 Now/Data split** — MyTasks-only pilot, 1 sprint. If pilot fails,
+  8-surface rollout saved. Reconcile vs TodayHero before ship (don't
+  double-invest). Post-pilot only.
+
+**Capacity-tight path:** ship DD-3 (done) + DD-6 + DD-5 + T-29 skip-it.
+Four 0.5-sprint wins buy runway for DD-2.
 
 ---
 
