@@ -23,21 +23,44 @@
 - `docs/design-briefs/DESIGN-DIRECTION.md` — CD's DD-1..7 one-pager
 - `docs/specs/t-29-manuscripts-attention.md` — CD's T-29 spec (net-new)
 
-**Round 6 auto-mode queue (in ship order):**
-1. **Batch G:** DD-6 display-number StatCard + DD-5 Welcome→release ribbon
-   (2 x 0.5 sprint, one deploy)
-2. **Batch H:** T-29 skip-it (rename + count badge + urgency sort, ~2hr).
-   Blocked on agent schema check for `manuscripts.revision_requested_at`
-   + `manuscripts.reviewer_assigned_slug`.
-3. **Batch I:** DD-4 narrowed (intent dots on PresenceAvatars, drop
-   page-wide typing). 0.5 sprint.
-4. **Batch J:** DD-7 mobile parity infra (bottom-sheet + swipe-hook +
-   long-press). Ship 5 of 6, drop haptics (Web Vibration API unreliable
-   on iOS PWA). Sprint 1 of 2.
-5. **Batch K:** DD-7 rollout to 6 high-traffic mobile surfaces. Sprint 2.
+**Round 6 shipped 2026-04-24:**
+- ✅ **Batch G** (`5f2c2094`): DD-6 MetricCard display variant (60px
+  Fraunces + gold label) applied to PI Analytics + Analytics overview.
+  DD-5 ReleaseRibbon (version-keyed localStorage).
+- ✅ **Batch H** (`ad19cec2`): T-29 skip-it. Renamed Active Revisions
+  → "Needs your attention" in RevisionTracker. Amber count pill at
+  N≥5. Urgency sort = min(daysOverdue, 30) + unresolved comments.
+- ✅ **Batch I** (`ad19cec2`): DD-4 narrowed. useIntentBroadcast hook
+  + type Intent. PresenceAvatars peerIntents prop colors dot by
+  aggregate state (commenting > editing > viewing). Wired compose
+  content → commenting on Project / Task / Meeting.
+- ✅ **Batch J** (`0b2ce416`): DD-7 infra. useLongPress +
+  useSwipeAction hooks. BottomSheet component. Long-press on task
+  rows → TaskContextMenu (mobile right-click equivalent).
+- ✅ **Audit pass** (`81617c7a`): 1 blocker + 3 majors + 3 minors
+  fixed per reviewer. Rule 44 transform-only animations applied to
+  RevisionTracker + ReleaseRibbon. Rule 43 color-over-opacity on
+  StatusLine muted chips + MetricCard subtitle. PresenceAvatars
+  role='img' for AT. useSwipeAction edge-guard moved to onDragEnd.
+  Long-press context-menu suppression wired.
+
+**Deferred from round 6:**
+- **Batch K** — DD-7 rollout: wire useSwipeAction into task rows
+  (MyTasks + Tasks grids), BottomSheet compose rewrite on 3 mobile
+  surfaces. Infra ready; 1 sprint.
+- **WS socket consolidation** — usePresence + useIntentBroadcast +
+  useTyping each open separate PartySocket per TaskDetailPanel open.
+  19 members × 3 = 57 concurrent connections to same DO. 0.5 sprint
+  refactor to share a single connection via context.
+- **Intent leave message** — useIntentBroadcast unmount sends
+  intent='viewing' instead of dedicated leave; peers see stale dot
+  for up to 5s TTL. Low-impact on 20-person team.
+- **T-29 full** — 3-subgroup UI. Blocked on schema check for
+  `manuscripts.revision_requested_at` + `reviewer_assigned_slug`.
+
+**Strategic (not auto-mode):**
 
 **Supervised (not auto-mode):**
-- **T-29 full** — schema permitting, 3-subgroup UI round 7.
 - **DD-2 saved views** — 3 sprints. **Ambition: replace TODAY.md.**
   Parity gates (all must hold before CLI retirement): interactivity
   (inline edit/status/assignee), friction-free keyboard, customizability
