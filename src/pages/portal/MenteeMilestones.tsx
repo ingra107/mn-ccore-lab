@@ -807,32 +807,12 @@ function FilterSelect({
   options: { value: string; label: string }[]
 }) {
   return (
-    <select
+    <InlineSelect
       value={value}
-      onChange={(e) => onChange(e.target.value)}
-      aria-label={placeholder}
-      className="rounded-full border px-3 py-1.5 text-xs"
-      style={{
-        fontSize: '12px',
-        color: value ? 'var(--teal)' : 'var(--slate)',
-        backgroundColor: value ? 'var(--teal-hover)' : 'transparent',
-        borderColor: value ? 'var(--teal)' : 'var(--border-subtle)',
-        cursor: 'pointer',
-        appearance: 'none' as const,
-        WebkitAppearance: 'none' as const,
-        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
-        backgroundRepeat: 'no-repeat',
-        backgroundPosition: 'right 8px center',
-        paddingRight: '24px',
-      }}
-    >
-      <option value="">{placeholder}</option>
-      {options.map((o) => (
-        <option key={o.value} value={o.value}>
-          {o.label}
-        </option>
-      ))}
-    </select>
+      options={[{ value: '', label: placeholder }, ...options]}
+      onChange={onChange}
+      alwaysShowChevron
+    />
   )
 }
 
@@ -906,26 +886,13 @@ function AddMilestoneModal({ onClose }: { onClose: () => void }) {
             <label htmlFor="mentee-milestone-mentee" style={{ fontSize: 'var(--label-size)', fontWeight: 500, color: 'var(--slate)', marginBottom: '4px', display: 'block' }}>
               Mentee
             </label>
-            <select
-              id="mentee-milestone-mentee"
+            <InlineSelect
               value={menteeSlug}
-              onChange={(e) => setMenteeSlug(e.target.value)}
-              style={{
-                width: '100%',
-                padding: 'var(--sp-sm) var(--sp-md)',
-                borderRadius: 'var(--radius-lg)',
-                border: '1px solid var(--border-subtle)',
-                background: 'var(--cream)',
-                color: 'var(--ink)',
-                fontSize: 'var(--value-size)',
-              }}
-            >
-              {MENTEE_SLUGS.map((s) => (
-                <option key={s} value={s}>
-                  {getPersonInfo(s).name}
-                </option>
-              ))}
-            </select>
+              options={MENTEE_SLUGS.map((s) => ({ value: s, label: getPersonInfo(s).name }))}
+              onChange={setMenteeSlug}
+              size="md"
+              alwaysShowChevron
+            />
           </div>
 
           {/* Type */}
@@ -933,26 +900,13 @@ function AddMilestoneModal({ onClose }: { onClose: () => void }) {
             <label htmlFor="mentee-milestone-type" style={{ fontSize: 'var(--label-size)', fontWeight: 500, color: 'var(--slate)', marginBottom: '4px', display: 'block' }}>
               Milestone Type
             </label>
-            <select
-              id="mentee-milestone-type"
+            <InlineSelect
               value={milestoneType}
-              onChange={(e) => setMilestoneType(e.target.value)}
-              style={{
-                width: '100%',
-                padding: 'var(--sp-sm) var(--sp-md)',
-                borderRadius: 'var(--radius-lg)',
-                border: '1px solid var(--border-subtle)',
-                background: 'var(--cream)',
-                color: 'var(--ink)',
-                fontSize: 'var(--value-size)',
-              }}
-            >
-              {MILESTONE_TYPES.map((t) => (
-                <option key={t.value} value={t.value}>
-                  {t.label}
-                </option>
-              ))}
-            </select>
+              options={MILESTONE_TYPES}
+              onChange={setMilestoneType}
+              size="md"
+              alwaysShowChevron
+            />
           </div>
 
           {/* Title */}

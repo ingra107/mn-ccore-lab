@@ -102,13 +102,35 @@ export default function SearchPage() {
   }, [focusedIndex, results])
   useListKeyboardNav({ itemCount: results.length, focusedIndex, setFocusedIndex, onEnter: handleSearchEnter })
 
-  const grouped = results.reduce((acc, r) => {
+  const typeOrder = [
+    'task', 'project', 'meeting', 'idea',
+    'note', 'task_note', 'comment', 'task_comment',
+    'decision', 'action_item', 'file',
+    'publication', 'grant', 'activity',
+  ]
+
+  // Per-type filter chips (T-12). Empty = all types. Multi-select via shift.
+  const [typeFilter, setTypeFilter] = useState<string[]>([])
+  const toggleType = (t: string, multi: boolean) => {
+    setTypeFilter((prev) => {
+      if (multi) return prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]
+      return prev.length === 1 && prev[0] === t ? [] : [t]
+    })
+  }
+
+  const filteredResults = typeFilter.length === 0 ? results : results.filter((r) => typeFilter.includes(r.type))
+
+  const grouped = filteredResults.reduce((acc, r) => {
     if (!acc[r.type]) acc[r.type] = []
     acc[r.type].push(r)
     return acc
   }, {} as Record<string, SearchResult[]>)
 
-  const typeOrder = ['task', 'project', 'meeting', 'idea', 'comment', 'activity']
+  // Count per type for chip labels — always based on full results, not filtered
+  const countByType = results.reduce((acc, r) => {
+    acc[r.type] = (acc[r.type] || 0) + 1
+    return acc
+  }, {} as Record<string, number>)
 
   return (
     <div>
@@ -224,8 +246,45 @@ export default function SearchPage() {
 
         {!isLoading && results.length > 0 && (
           <div className="flex flex-col gap-6">
+            <div className="flex items-center gap-2 flex-wrap sticky top-0 z-10 py-2" style={{ background: 'var(--page-bg)' }}>
+              <button
+                onClick={() => setTypeFilter([])}
+                className="rounded-full px-3 py-1 text-xs border transition-colors"
+                style={{
+                  borderColor: typeFilter.length === 0 ? 'var(--teal)' : 'var(--border-subtle)',
+                  color: typeFilter.length === 0 ? 'var(--teal)' : 'var(--slate)',
+                  background: typeFilter.length === 0 ? 'var(--teal-hover)' : 'transparent',
+                  cursor: 'pointer',
+                }}
+              >
+                All ({results.length})
+              </button>
+              {typeOrder.map((t) => {
+                const count = countByType[t] || 0
+                if (count === 0) return null
+                const active = typeFilter.includes(t)
+                const cfg = typeConfig[t] || typeConfig.activity
+                return (
+                  <button
+                    key={t}
+                    onClick={(e) => toggleType(t, e.shiftKey)}
+                    className="rounded-full px-3 py-1 text-xs border transition-colors"
+                    style={{
+                      borderColor: active ? cfg.color : 'var(--border-subtle)',
+                      color: active ? cfg.color : 'var(--slate)',
+                      background: active ? `${cfg.color}14` : 'transparent',
+                      cursor: 'pointer',
+                    }}
+                    title="Shift-click for multi-select"
+                  >
+                    {cfg.label}s ({count})
+                  </button>
+                )
+              })}
+            </div>
             <p className="text-xs" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
-              {results.length} result{results.length !== 1 ? 's' : ''} for "{debouncedQuery}"
+              {filteredResults.length} result{filteredResults.length !== 1 ? 's' : ''} for "{debouncedQuery}"
+              {typeFilter.length > 0 && ` (filtered)`}
             </p>
 
             {typeOrder.map((type) => {

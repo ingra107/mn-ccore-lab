@@ -4,6 +4,7 @@ import { Inbox, X, Send } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import { useProjects } from '../hooks/useApiData'
 import { useUndoToast } from './UndoToast'
+import InlineSelect from './InlineSelect'
 
 type InboxTag = 'note' | 'idea' | 'decision' | 'follow-up' | 'meeting-note'
 
@@ -306,30 +307,13 @@ export default function QuickCaptureInbox() {
           >
             Project (optional)
           </label>
-          <select
-            id="qci-project"
+          <InlineSelect
             value={projectId}
-            onChange={(e) => setProjectId(e.target.value)}
-            style={{
-              width: '100%',
-              padding: 'var(--sp-xs) var(--sp-sm)',
-              background: 'var(--surface-1, transparent)',
-              border: '1px solid var(--border-subtle)',
-              borderRadius: 'var(--radius-md)',
-              color: 'var(--ink)',
-              fontSize: 'var(--text-small, 12px)',
-              fontFamily: 'inherit',
-              outline: 'none',
-              cursor: 'pointer',
-            }}
-          >
-            <option value="">No project</option>
-            {(projects || []).map((p) => (
-              <option key={p.slug} value={p.slug}>
-                {p.title}
-              </option>
-            ))}
-          </select>
+            options={[{ value: '', label: 'No project' }, ...((projects || []).map((p) => ({ value: p.slug, label: p.title })))]}
+            onChange={setProjectId}
+            size="md"
+            alwaysShowChevron
+          />
         </div>
 
         {/* Actions */}

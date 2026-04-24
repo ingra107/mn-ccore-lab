@@ -16,6 +16,9 @@ import { useUndoToast } from '../UndoToast'
 import { formatRelativeTime } from '../../lib/dateUtils'
 import { getPersonInfo, getAllMembers, directors } from '../../data/team'
 import Avatar from '../Avatar'
+import InlineSelect from '../InlineSelect'
+import PresenceAvatars from '../PresenceAvatars'
+import { usePresence } from '../../hooks/usePresence'
 import type { TaskRow } from '../../lib/api'
 import { PATHS } from '../../constants/paths'
 
@@ -76,6 +79,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
     return unsub
   }, [qc, taskProp?.id])
   const task = liveTask ?? taskProp
+  const viewerSlugs = usePresence('task', task?.id)
   const ackTask = useAcknowledgeTask()
   const { showUndo } = useUndoToast()
   const [activeTab, setActiveTab] = useState<Tab>('overview')
@@ -225,9 +229,12 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
       >
         {/* Header */}
         <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-3 border-b" style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--border-subtle)' }}>
-          <span className="text-xs uppercase tracking-wider" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
-            Task Detail
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-xs uppercase tracking-wider" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
+              Task Detail
+            </span>
+            {viewerSlugs.length > 0 && <PresenceAvatars slugs={viewerSlugs} />}
+          </div>
           <div className="flex items-center gap-1">
             {/* Prev/Next navigation */}
             {(onPrev || onNext) && (
@@ -472,18 +479,17 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
             {/* Row: Recurrence (single field) */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--sp-md)' }}>
               <FieldBlock label="Recurrence" icon={RefreshCw}>
-                <select
+                <InlineSelect
                   value={task.recurrence || 'none'}
-                  onChange={(e) => handleFieldUpdate('recurrence', e.target.value === 'none' ? null : e.target.value)}
-                  className="w-full bg-transparent outline-none"
-                  style={{ color: 'var(--ink)', fontSize: 'var(--value-size)', cursor: 'pointer', border: 'none' }}
-                >
-                  <option value="none">None</option>
-                  <option value="daily">Daily</option>
-                  <option value="weekly">Weekly</option>
-                  <option value="biweekly">Biweekly</option>
-                  <option value="monthly">Monthly</option>
-                </select>
+                  options={[
+                    { value: 'none', label: 'None' },
+                    { value: 'daily', label: 'Daily' },
+                    { value: 'weekly', label: 'Weekly' },
+                    { value: 'biweekly', label: 'Biweekly' },
+                    { value: 'monthly', label: 'Monthly' },
+                  ]}
+                  onChange={(v) => handleFieldUpdate('recurrence', v === 'none' ? null : v)}
+                />
               </FieldBlock>
               <div>
                 {task.recurrence && task.recurrence !== 'none' && (

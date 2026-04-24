@@ -12,6 +12,7 @@ import { TextSkeleton } from '../../components/LoadingSkeleton'
 import { staggerContainer, staggerItem } from '../../lib/animations'
 import { useTeam } from '../../hooks/useApiData'
 import Avatar from '../../components/Avatar'
+import InlineSelect from '../../components/InlineSelect'
 import { getPersonInfo } from '../../data/team'
 
 interface WorkflowTemplate {
@@ -247,19 +248,19 @@ export default function SettingsPage() {
             />
           </SettingsField>
           <SettingsField label="Lab Type">
-            <select
-              aria-label="Lab Type"
+            <InlineSelect
               value={settings.lab_type || 'clinical_research'}
-              onChange={(e) => updateSettings.mutate({ lab_type: e.target.value })}
-              className="w-full rounded-md border px-3 py-2 text-sm cursor-pointer"
-              style={{ borderColor: 'var(--border-subtle)', color: 'var(--ink)' }}
-            >
-              <option value="clinical_research">Clinical Research</option>
-              <option value="basic_science">Basic Science</option>
-              <option value="translational">Translational</option>
-              <option value="computational">Computational</option>
-              <option value="mixed">Mixed Methods</option>
-            </select>
+              options={[
+                { value: 'clinical_research', label: 'Clinical Research' },
+                { value: 'basic_science', label: 'Basic Science' },
+                { value: 'translational', label: 'Translational' },
+                { value: 'computational', label: 'Computational' },
+                { value: 'mixed', label: 'Mixed Methods' },
+              ]}
+              onChange={(v) => updateSettings.mutate({ lab_type: v })}
+              size="md"
+              alwaysShowChevron
+            />
           </SettingsField>
         </SettingsSection>
         )}

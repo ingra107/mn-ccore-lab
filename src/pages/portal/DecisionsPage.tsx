@@ -357,23 +357,16 @@ function ReviewCard({
           }}
         />
         <div className="flex items-center gap-3">
-          <select
+          <InlineSelect
             value={sentiment}
-            onChange={(e) => setSentiment(e.target.value)}
-            style={{
-              fontSize: 'var(--text-small)',
-              color: 'var(--ink)',
-              background: 'var(--cream)',
-              border: '1px solid var(--border-subtle)',
-              borderRadius: 'var(--radius-md)',
-              padding: '6px 10px',
-              outline: 'none',
-            }}
-          >
-            <option value="positive">Positive outcome</option>
-            <option value="neutral">Neutral outcome</option>
-            <option value="negative">Negative outcome</option>
-          </select>
+            options={[
+              { value: 'positive', label: 'Positive outcome' },
+              { value: 'neutral', label: 'Neutral outcome' },
+              { value: 'negative', label: 'Negative outcome' },
+            ]}
+            onChange={setSentiment}
+            alwaysShowChevron
+          />
           <button
             type="button"
             onClick={handleSave}

@@ -9,6 +9,7 @@ import { TableSkeleton } from '../../components/LoadingSkeleton'
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
 import ToggleButton from '../../components/ToggleButton'
+import InlineSelect from '../../components/InlineSelect'
 import TaskGridView from '../../components/tasks/TaskGridView'
 import TaskTitle from '../../components/tasks/TaskTitle'
 // Alternate views are lazy — most users open MyTasks in 'list' (grid).
@@ -503,51 +504,22 @@ export default function MyTasks() {
 
           <div className="flex items-center gap-1.5">
             <span className="text-[11px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>Group by:</span>
-            <select
-              aria-label="Group tasks by"
+            <InlineSelect
               value={groupBy}
-              onChange={(e) => setGroupBy(e.target.value as GroupBy)}
-              className="rounded-full border px-2.5 py-1 text-xs"
-              style={{
-                fontSize: '12px',
-                color: groupBy !== 'none' ? 'var(--teal)' : 'var(--slate)',
-                backgroundColor: groupBy !== 'none' ? 'var(--teal-hover)' : 'transparent',
-                borderColor: groupBy !== 'none' ? 'var(--teal)' : 'var(--border-subtle)',
-                cursor: 'pointer',
-                appearance: 'none' as const,
-                WebkitAppearance: 'none' as const,
-                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
-                backgroundRepeat: 'no-repeat',
-                backgroundPosition: 'right 6px center',
-                paddingRight: '20px',
-              }}
-            >
-              {groupByOptions.map(o => <option key={o.key} value={o.key}>{o.label}</option>)}
-            </select>
+              options={groupByOptions.map((o) => ({ value: o.key, label: o.label }))}
+              onChange={(v) => setGroupBy(v as GroupBy)}
+              alwaysShowChevron
+            />
           </div>
 
           <div className="flex items-center gap-1.5">
             <span className="text-[11px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>Sort:</span>
-            <select
-              aria-label="Sort tasks by"
+            <InlineSelect
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as SortBy)}
-              className="rounded-full border px-2.5 py-1 text-xs"
-              style={{
-                fontSize: '12px',
-                color: 'var(--slate)',
-                borderColor: 'var(--border-subtle)',
-                cursor: 'pointer',
-                appearance: 'none' as const,
-                WebkitAppearance: 'none' as const,
-                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
-                backgroundRepeat: 'no-repeat',
-                backgroundPosition: 'right 6px center',
-                paddingRight: '20px',
-              }}
-            >
-              {sortByOptions.map(o => <option key={o.key} value={o.key}>{o.label}</option>)}
-            </select>
+              options={sortByOptions.map((o) => ({ value: o.key, label: o.label }))}
+              onChange={(v) => setSortBy(v as SortBy)}
+              alwaysShowChevron
+            />
           </div>
 
           {completedCount > 0 && (

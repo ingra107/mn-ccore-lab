@@ -7,6 +7,7 @@ import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 import { formatMediumDate } from '../../lib/dateUtils'
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
+import InlineSelect from '../../components/InlineSelect'
 import { staggerContainer, staggerItem } from '../../lib/animations'
 
 // ── Helpers ────────────────────────────────────────────────────
@@ -294,26 +295,12 @@ export default function SessionHistory() {
           </div>
 
           {/* Project filter */}
-          <select
+          <InlineSelect
             value={projectFilter}
-            onChange={(e) => setProjectFilter(e.target.value)}
-            aria-label="Filter by project"
-            style={{
-              fontSize: 12,
-              padding: '5px 10px',
-              borderRadius: 'var(--radius-md)',
-              border: '1px solid var(--border-subtle)',
-              backgroundColor: 'var(--surface)',
-              color: 'var(--ink)',
-              cursor: 'pointer',
-              minWidth: 140,
-            }}
-          >
-            <option value="">All projects</option>
-            {projectNames.map(name => (
-              <option key={name} value={name}>{name}</option>
-            ))}
-          </select>
+            options={[{ value: '', label: 'All projects' }, ...projectNames.map((name) => ({ value: name, label: name }))]}
+            onChange={setProjectFilter}
+            alwaysShowChevron
+          />
 
           {/* Date range presets */}
           {['7d', '30d', '90d', 'all'].map(preset => {
@@ -398,8 +385,12 @@ export default function SessionHistory() {
       ) : sessions.length === 0 ? (
         <EmptyState
           icon={<History size={32} />}
-          title="No Claude sessions yet"
-          subtitle="Sessions show up here automatically when you use Claude Code with the MN-CCORE SessionEnd hook installed. Until then this page stays empty."
+          title="Set up SessionEnd hook to see Claude history"
+          subtitle="Sessions populate here automatically once the MN-CCORE SessionEnd hook is installed in your Claude Code setup. Each session becomes a searchable record of what got done, tied to the project folder it ran in."
+          action={{
+            label: 'Open install guide',
+            onClick: () => window.open('https://github.com/ingra107/Peripheral-Brain#sessionend-hook', '_blank', 'noopener,noreferrer'),
+          }}
         />
       ) : (
         <motion.div variants={staggerContainer} initial="hidden" animate="visible">

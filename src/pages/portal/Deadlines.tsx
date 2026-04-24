@@ -266,29 +266,16 @@ export default function Deadlines() {
           <PageTooltip id="deadlines-timeline-hint" text="Switch to Timeline for a visual map" />
           <DensityToggle value={density} onChange={setDensity} />
 
-          <select
-            aria-label="Filter deadlines by type"
+          <InlineSelect
             value={filterType}
-            onChange={(e) => setFilterType(e.target.value)}
-            className="rounded-full border px-3 py-1.5 text-xs"
-            style={{
-              fontSize: '12px',
-              color: filterType ? 'var(--teal)' : 'var(--slate)',
-              backgroundColor: filterType ? 'var(--teal-hover)' : 'transparent',
-              borderColor: filterType ? 'var(--teal)' : 'var(--border-subtle)',
-              cursor: 'pointer',
-              appearance: 'none' as const,
-              WebkitAppearance: 'none' as const,
-              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
-              backgroundRepeat: 'no-repeat',
-              backgroundPosition: 'right 8px center',
-              paddingRight: '24px',
-            }}
-          >
-            <option value="">All Types</option>
-            <option value="task">Tasks</option>
-            <option value="milestone">Grant Milestones</option>
-          </select>
+            options={[
+              { value: '', label: 'All Types' },
+              { value: 'task', label: 'Tasks' },
+              { value: 'milestone', label: 'Grant Milestones' },
+            ]}
+            onChange={setFilterType}
+            alwaysShowChevron
+          />
         </div>
       </PageHeader>
 

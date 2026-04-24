@@ -345,23 +345,12 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
             />
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginBottom: '8px' }}>
-            <select
+            <InlineSelect
               value={form.submission_type}
-              onChange={(e) => setForm({ ...form, submission_type: e.target.value as ConferenceSubmissionType })}
-              style={{
-                fontSize: '12px',
-                padding: '6px 10px',
-                borderRadius: 'var(--radius-md)',
-                border: '1px solid var(--border-subtle)',
-                background: 'var(--cream)',
-                color: 'var(--ink)',
-                cursor: 'pointer',
-              }}
-            >
-              {TYPE_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>{o.label}</option>
-              ))}
-            </select>
+              options={TYPE_OPTIONS}
+              onChange={(v) => setForm({ ...form, submission_type: v as ConferenceSubmissionType })}
+              alwaysShowChevron
+            />
             <input
               type="date"
               placeholder="Abstract due"

@@ -15,6 +15,8 @@ import { projects as projectOptions } from '../data/projects'
 import QuickAddForm from '../components/QuickAddForm'
 import Avatar from '../components/Avatar'
 import PageHeader from '../components/PageHeader'
+import InlineSelect from '../components/InlineSelect'
+import InlineAssigneePicker from '../components/InlineAssigneePicker'
 import { getMeetingFacilitator } from '../lib/facilitator'
 import { parseCarriedForward } from '../lib/textUtils'
 import { formatFullDate, formatShortDate } from '../lib/dateUtils'
@@ -896,10 +898,11 @@ export default function Meetings() {
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label htmlFor="meeting-action-assignee" style={labelStyle}>Assignee</label>
-                        <select id="meeting-action-assignee" value={newActionAssignee} onChange={(e) => setNewActionAssignee(e.target.value)} style={inputStyle}>
-                          {TEAM_OPTIONS.map((m) => <option key={m.slug} value={m.slug}>{m.name}</option>)}
-                        </select>
+                        <label style={labelStyle}>Assignee</label>
+                        <InlineAssigneePicker
+                          value={newActionAssignee}
+                          onChange={setNewActionAssignee}
+                        />
                       </div>
                       <div>
                         <label style={labelStyle}>Due Date (optional)</label>
@@ -907,11 +910,14 @@ export default function Meetings() {
                       </div>
                     </div>
                     <div>
-                      <label htmlFor="meeting-action-project" style={labelStyle}>Project (optional)</label>
-                      <select id="meeting-action-project" value={newActionProject} onChange={(e) => setNewActionProject(e.target.value)} style={inputStyle}>
-                        <option value="">No project link</option>
-                        {projectOptions.map((p) => <option key={p.title} value={p.title}>{p.title}</option>)}
-                      </select>
+                      <label style={labelStyle}>Project (optional)</label>
+                      <InlineSelect
+                        value={newActionProject}
+                        options={[{ value: '', label: 'No project link' }, ...projectOptions.map((p) => ({ value: p.title, label: p.title }))]}
+                        onChange={setNewActionProject}
+                        size="md"
+                        alwaysShowChevron
+                      />
                     </div>
                   </div>
                 </QuickAddForm>

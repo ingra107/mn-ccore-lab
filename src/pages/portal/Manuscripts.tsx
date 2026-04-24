@@ -216,41 +216,25 @@ export default function Manuscripts() {
             onViewChange={(v) => setView(v as 'list' | 'pipeline' | 'trophy')}
             filters={
               <>
-                <select
-                  aria-label="Filter manuscripts by PI"
+                <InlineSelect
                   value={filterPI}
-                  onChange={(e) => setFilterPI(e.target.value)}
-                  className="rounded-md border px-3 py-1.5 text-xs"
-                  style={{
-                    fontSize: '12px',
-                    color: filterPI ? 'var(--teal)' : 'var(--slate)',
-                    backgroundColor: 'transparent',
-                    borderColor: 'var(--border-subtle)',
-                    cursor: 'pointer',
-                  }}
-                >
-                  <option value="">All PIs</option>
-                  <option value="nick-ingraham">Nick Ingraham</option>
-                  <option value="nate-mesfin">Nate Mesfin</option>
-                </select>
-                <select
-                  aria-label="Filter manuscripts by category"
+                  options={[
+                    { value: '', label: 'All PIs' },
+                    { value: 'nick-ingraham', label: 'Nick Ingraham' },
+                    { value: 'nate-mesfin', label: 'Nate Mesfin' },
+                  ]}
+                  onChange={setFilterPI}
+                  alwaysShowChevron
+                />
+                <InlineSelect
                   value={filterCategory}
-                  onChange={(e) => setFilterCategory(e.target.value)}
-                  className="rounded-md border px-3 py-1.5 text-xs"
-                  style={{
-                    fontSize: '12px',
-                    color: filterCategory ? 'var(--gold)' : 'var(--slate)',
-                    backgroundColor: 'transparent',
-                    borderColor: 'var(--border-subtle)',
-                    cursor: 'pointer',
-                  }}
-                >
-                  <option value="">All Groups</option>
-                  {Object.entries(CATEGORY_LABEL).map(([key, label]) => (
-                    <option key={key} value={key}>{label}</option>
-                  ))}
-                </select>
+                  options={[
+                    { value: '', label: 'All Groups' },
+                    ...Object.entries(CATEGORY_LABEL).map(([key, label]) => ({ value: key, label })),
+                  ]}
+                  onChange={setFilterCategory}
+                  alwaysShowChevron
+                />
                 {/* Stalled filter pill */}
                 <button
                   onClick={() => setFilterStalled(!filterStalled)}

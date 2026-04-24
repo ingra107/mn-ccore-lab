@@ -217,34 +217,19 @@ export default function Ideas() {
               })}
             </div>
 
-            <select
-              aria-label="Filter ideas by status"
+            <InlineSelect
               value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="rounded-full border"
-              style={{
-                fontSize: 'var(--text-small)',
-                padding: '6px var(--sp-md)',
-                paddingRight: 'var(--sp-xl)',
-                minHeight: '44px',
-                color: filterStatus ? 'var(--teal)' : 'var(--slate)',
-                backgroundColor: filterStatus ? 'var(--teal-hover)' : 'transparent',
-                borderColor: filterStatus ? 'var(--teal)' : 'var(--border-subtle)',
-                cursor: 'pointer',
-                appearance: 'none' as const,
-                WebkitAppearance: 'none' as const,
-                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
-                backgroundRepeat: 'no-repeat',
-                backgroundPosition: 'right 8px center',
-              }}
-            >
-              <option value="">All Statuses</option>
-              <option value="new">New</option>
-              <option value="under_review">Under Review</option>
-              <option value="approved">Approved</option>
-              <option value="parked">Parked</option>
-              <option value="archived">Archived</option>
-            </select>
+              options={[
+                { value: '', label: 'All Statuses' },
+                { value: 'new', label: 'New' },
+                { value: 'under_review', label: 'Under Review' },
+                { value: 'approved', label: 'Approved' },
+                { value: 'parked', label: 'Parked' },
+                { value: 'archived', label: 'Archived' },
+              ]}
+              onChange={setFilterStatus}
+              alwaysShowChevron
+            />
 
             {/* View toggle (P2-10) */}
             <div className="flex gap-1 rounded-lg p-1" style={{ background: 'var(--surface-2)' }}>
@@ -360,19 +345,17 @@ export default function Ideas() {
                             )}
                           </div>
                           <div className="mt-2" onClick={(e) => e.stopPropagation()}>
-                            <select
+                            <InlineSelect
                               value={idea.status}
-                              onChange={(e) => handleIdeaStatusChange(idea.id, e.target.value, idea.status)}
-                              className="text-[10px] rounded border px-1.5 py-0.5"
-                              style={{ background: 'var(--surface-2)', color: 'var(--slate)', borderColor: 'var(--border-subtle)', cursor: 'pointer' }}
-                              aria-label="Change status"
-                            >
-                              <option value="new">New</option>
-                              <option value="under_review">Under Review</option>
-                              <option value="approved">Approved</option>
-                              <option value="parked">Parked</option>
-                              <option value="archived">Archived</option>
-                            </select>
+                              options={[
+                                { value: 'new', label: 'New' },
+                                { value: 'under_review', label: 'Under Review' },
+                                { value: 'approved', label: 'Approved' },
+                                { value: 'parked', label: 'Parked' },
+                                { value: 'archived', label: 'Archived' },
+                              ]}
+                              onChange={(v) => handleIdeaStatusChange(idea.id, v, idea.status)}
+                            />
                           </div>
                         </div>
                       )
@@ -998,23 +981,13 @@ function CreateIdeaModal({ open, onClose }: { open: boolean; onClose: () => void
             >
               Research Area
             </label>
-            <select
-              id="idea-area"
+            <InlineSelect
               value={researchArea}
-              onChange={(e) => setResearchArea(e.target.value)}
-              className="w-full rounded-md border"
-              style={{
-                borderColor: 'var(--border-subtle)',
-                cursor: 'pointer',
-                padding: 'var(--sp-sm) var(--sp-md)',
-                fontSize: 'var(--text-small)',
-              }}
-            >
-              <option value="">Select area (optional)</option>
-              {researchAreas.map((a) => (
-                <option key={a} value={a}>{a}</option>
-              ))}
-            </select>
+              options={[{ value: '', label: 'Select area (optional)' }, ...researchAreas.map((a) => ({ value: a, label: a }))]}
+              onChange={setResearchArea}
+              size="md"
+              alwaysShowChevron
+            />
           </div>
 
           {!title.trim() && (

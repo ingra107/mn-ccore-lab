@@ -26,6 +26,8 @@ function TokenHint({ prefix, desc, color }: { prefix: string; desc: string; colo
         alignItems: 'center',
         gap: '3px',
         fontSize: '10px',
+        whiteSpace: 'nowrap',
+        flexShrink: 0,
       }}
     >
       <span style={{ color, fontWeight: 700 }}>{prefix}</span>
@@ -118,7 +120,7 @@ function GlobalQuickAddModal({ isOpen, onClose }: Props) {
               transform: 'translateX(-50%)',
               zIndex: 'var(--z-modal)',
               width: '100%',
-              maxWidth: '560px',
+              maxWidth: 'min(560px, calc(100vw - 32px))',
               padding: '0 var(--sp-lg)',
             }}
           >

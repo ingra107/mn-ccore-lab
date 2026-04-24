@@ -9,6 +9,7 @@ import { staggerContainer, staggerItem } from '../../lib/animations'
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
 import MetricCard from '../../components/MetricCard'
+import InlineSelect from '../../components/InlineSelect'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
 import { useMeetingsApi } from '../../hooks/useApiData'
 import { formatMediumDate } from '../../lib/dateUtils'
@@ -273,18 +274,16 @@ function TranscriptModal({ onClose, meetings }: { onClose: () => void; meetings:
             <label htmlFor="meeting-notes-link" className="block text-xs font-medium mb-1" style={{ color: 'var(--slate)' }}>
               Link to Meeting (optional)
             </label>
-            <select
-              id="meeting-notes-link"
+            <InlineSelect
               value={meetingId}
-              onChange={(e) => setMeetingId(e.target.value)}
-              className="w-full rounded-md border px-3 py-2 text-sm"
-              style={{ borderColor: 'var(--border-subtle)', cursor: 'pointer' }}
-            >
-              <option value="">Select meeting...</option>
-              {meetings.map((m) => (
-                <option key={m.id} value={m.id}>{m.title} ({formatMediumDate(m.date)})</option>
-              ))}
-            </select>
+              options={[
+                { value: '', label: 'Select meeting...' },
+                ...meetings.map((m) => ({ value: m.id, label: `${m.title} (${formatMediumDate(m.date)})` })),
+              ]}
+              onChange={setMeetingId}
+              size="md"
+              alwaysShowChevron
+            />
           </div>
 
           {/* Input area */}

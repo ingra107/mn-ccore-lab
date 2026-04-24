@@ -387,8 +387,8 @@ export default function Dashboard() {
                   />
                   <h1
                     style={{
-                      fontWeight: 600,
-                      fontSize: 'clamp(1.1rem, 2.5vw, 1.4rem)',
+                      fontWeight: 500,
+                      fontSize: '14px',
                       color: 'var(--ink)',
                       lineHeight: 1.2,
                       letterSpacing: 'var(--tracking-display)',
@@ -572,9 +572,26 @@ export default function Dashboard() {
               className="rounded-xl border p-4 mb-3 customize-panel"
               style={{ borderColor: 'var(--border-subtle)' }}
             >
-              <p className="text-xs font-medium mb-3" style={{ color: 'var(--ink)' }}>
-                Toggle cards visible on your dashboard
-              </p>
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-xs font-medium" style={{ color: 'var(--ink)' }}>
+                  Toggle cards visible on your dashboard
+                </p>
+                <button
+                  onClick={() => {
+                    setShowCustomize(false)
+                    if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' })
+                  }}
+                  className="inline-flex items-center gap-1 px-3 py-1 rounded-md text-xs font-medium"
+                  style={{
+                    color: 'var(--ink-bright, #fff)',
+                    background: 'var(--teal-solid)',
+                    border: 'none',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Done
+                </button>
+              </div>
               <div className="mb-4">
                 <p className="text-[10px] uppercase tracking-wider mb-2" style={{ color: 'var(--slate)', opacity: 0.7, letterSpacing: '0.06em' }}>
                   Core - recommended

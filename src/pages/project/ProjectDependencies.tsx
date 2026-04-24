@@ -6,6 +6,7 @@ import { useProjects, useProjectDependencies } from '../../hooks/useApiData'
 import { useCreateDependency, useDeleteDependency } from '../../hooks/useMutations'
 import type { Project } from '../../data/types'
 import { PATHS } from '../../constants/paths'
+import InlineSelect from '../../components/InlineSelect'
 
 interface ProjectDependenciesProps {
   project: Project
@@ -143,22 +144,15 @@ export default function ProjectDependencies({ project, isPi }: ProjectDependenci
                   >
                     Direction
                   </label>
-                  <select
+                  <InlineSelect
                     value={newDirection}
-                    onChange={(e) => setNewDirection(e.target.value as 'outgoing' | 'incoming')}
-                    style={{
-                      fontSize: '12px',
-                      color: 'var(--ink)',
-                      background: 'var(--cream)',
-                      border: '1px solid rgba(201, 168, 76, 0.15)',
-                      borderRadius: 'var(--radius-md)',
-                      padding: '6px 8px',
-                      outline: 'none',
-                    }}
-                  >
-                    <option value="outgoing">This project ...</option>
-                    <option value="incoming">... feeds this project</option>
-                  </select>
+                    options={[
+                      { value: 'outgoing', label: 'This project ...' },
+                      { value: 'incoming', label: '... feeds this project' },
+                    ]}
+                    onChange={(v) => setNewDirection(v as 'outgoing' | 'incoming')}
+                    alwaysShowChevron
+                  />
                 </div>
 
                 {/* Relationship type */}
@@ -176,23 +170,12 @@ export default function ProjectDependencies({ project, isPi }: ProjectDependenci
                   >
                     Relationship
                   </label>
-                  <select
+                  <InlineSelect
                     value={newRelType}
-                    onChange={(e) => setNewRelType(e.target.value)}
-                    style={{
-                      fontSize: '12px',
-                      color: 'var(--ink)',
-                      background: 'var(--cream)',
-                      border: '1px solid rgba(201, 168, 76, 0.15)',
-                      borderRadius: 'var(--radius-md)',
-                      padding: '6px 8px',
-                      outline: 'none',
-                    }}
-                  >
-                    {REL_OPTIONS.map((opt) => (
-                      <option key={opt.value} value={opt.value}>{opt.label}</option>
-                    ))}
-                  </select>
+                    options={REL_OPTIONS}
+                    onChange={setNewRelType}
+                    alwaysShowChevron
+                  />
                 </div>
 
                 {/* Target project */}
@@ -210,25 +193,13 @@ export default function ProjectDependencies({ project, isPi }: ProjectDependenci
                   >
                     Project
                   </label>
-                  <select
+                  <InlineSelect
                     value={newTarget}
-                    onChange={(e) => setNewTarget(e.target.value)}
-                    style={{
-                      width: '100%',
-                      fontSize: '12px',
-                      color: 'var(--ink)',
-                      background: 'var(--cream)',
-                      border: '1px solid rgba(201, 168, 76, 0.15)',
-                      borderRadius: 'var(--radius-md)',
-                      padding: '6px 8px',
-                      outline: 'none',
-                    }}
-                  >
-                    <option value="">Select a project...</option>
-                    {availableTargets.map((p) => (
-                      <option key={p.slug} value={p.slug}>{p.title}</option>
-                    ))}
-                  </select>
+                    options={[{ value: '', label: 'Select a project...' }, ...availableTargets.map((p) => ({ value: p.slug, label: p.title }))]}
+                    onChange={setNewTarget}
+                    size="md"
+                    alwaysShowChevron
+                  />
                 </div>
               </div>
 

@@ -5,6 +5,7 @@ import { suggestTaskFields, type AutofillSuggestions, type FieldSuggestion } fro
 import { useAuth } from '../../hooks/useAuth'
 import { emailToSlug } from '../../lib/emailSlug'
 import InlineAssigneePicker from '../InlineAssigneePicker'
+import InlineSelect from '../InlineSelect'
 
 interface CreateTaskModalProps {
   open: boolean
@@ -401,18 +402,18 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
               >
                 Priority
               </label>
-              <select
-                id="task-priority"
+              <InlineSelect
                 value={priority}
-                onChange={(e) => setPriority(e.target.value)}
-                className="w-full rounded-md border px-2.5 py-2 text-sm"
-                style={selectStyle}
-              >
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-                <option value="urgent">Urgent</option>
-              </select>
+                options={[
+                  { value: 'low', label: 'Low' },
+                  { value: 'medium', label: 'Medium' },
+                  { value: 'high', label: 'High' },
+                  { value: 'urgent', label: 'Urgent' },
+                ]}
+                onChange={setPriority}
+                size="md"
+                alwaysShowChevron
+              />
             </div>
           </div>
 
@@ -426,18 +427,13 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
               >
                 Project <span style={{ fontWeight: 400, opacity: 'var(--ink-label)' }}>(optional)</span>
               </label>
-              <select
-                id="task-project"
+              <InlineSelect
                 value={projectId}
-                onChange={(e) => setProjectId(e.target.value)}
-                className="w-full rounded-md border px-2.5 py-2 text-sm"
-                style={selectStyle}
-              >
-                <option value="">No Project</option>
-                {projects.map((p) => (
-                  <option key={p.slug} value={p.slug}>{p.title}</option>
-                ))}
-              </select>
+                options={[{ value: '', label: 'No Project' }, ...projects.map((p) => ({ value: p.slug, label: p.title }))]}
+                onChange={setProjectId}
+                size="md"
+                alwaysShowChevron
+              />
             </div>
             <div>
               <label

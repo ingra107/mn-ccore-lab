@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import DensityToggle from '../DensityToggle'
+import InlineSelect from '../InlineSelect'
 
 type Density = 'compact' | 'default' | 'relaxed'
 
@@ -95,26 +96,12 @@ export default function TableControls({
 
       {/* Sort dropdown */}
       {sortOptions && sortOptions.length > 0 && onSortChange && (
-        <select
+        <InlineSelect
           value={sortKey || ''}
-          onChange={(e) => onSortChange(e.target.value)}
-          className="rounded-md border px-2.5 py-1.5"
-          style={{
-            fontSize: 'var(--text-small, 12px)',
-            fontWeight: 'var(--weight-ui, 500)',
-            color: 'var(--slate)',
-            backgroundColor: 'transparent',
-            borderColor: 'var(--border-subtle)',
-            cursor: 'pointer',
-            flexShrink: 0,
-          }}
-        >
-          {sortOptions.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
+          options={sortOptions}
+          onChange={onSortChange}
+          alwaysShowChevron
+        />
       )}
 
       {/* Filter pills — each page provides its own */}

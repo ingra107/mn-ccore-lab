@@ -753,7 +753,9 @@ function ProjectDetailInner({ project }: InnerProps) {
               ) : (
                 <div className="flex flex-col gap-1.5">
                   {recentActivity.map((item) => {
-                    const info = getPersonInfo(item.author)
+                    const info = item.author ? getPersonInfo(item.author) : null
+                    const isKnown = info && info.name !== 'Unknown'
+                    const attributor = isKnown ? info!.name.split(' ')[0] : (item.kind === 'note' ? 'Note' : 'Comment')
                     const dt = new Date(item.created_at)
                     const rel = formatShortDate(item.created_at)
                     return (
@@ -779,7 +781,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                         />
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 'var(--ink-label)', marginBottom: 1 }}>
-                            {info.name.split(' ')[0]} · {rel}
+                            {attributor} · {rel}
                           </div>
                           <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {item.content}
@@ -823,9 +825,6 @@ function ProjectDetailInner({ project }: InnerProps) {
                 Comment
               </button>
             </div>
-            <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.7 }}>
-              {quickComposeKind === 'note' ? 'Your progress log' : 'Team discussion'}
-            </span>
           </div>
           <div className="flex items-start gap-2">
             <textarea

@@ -7,6 +7,7 @@ import PageHeader from '../../components/PageHeader'
 import EmptyStateComponent from '../../components/EmptyState'
 import ToggleButton from '../../components/ToggleButton'
 import Avatar from '../../components/Avatar'
+import InlineSelect from '../../components/InlineSelect'
 import { useQuestions, useQuestionDetail, useProjects } from '../../hooks/useApiData'
 import { useCreateQuestion, useCreateAnswer, useAcceptAnswer } from '../../hooks/useMutations'
 import { useToast } from '../../hooks/useToast'
@@ -112,8 +113,8 @@ export default function AskTheLab() {
         ) : filteredQuestions.length === 0 ? (
           <EmptyStateComponent
             icon={<HelpCircle size={40} />}
-            title={searchQuery ? 'No matching questions' : 'No questions yet'}
-            subtitle={searchQuery ? 'Try different search terms.' : 'Be the first to ask. No question is too small.'}
+            title={searchQuery ? 'No matching questions' : 'Ask the lab — or @hermes'}
+            subtitle={searchQuery ? 'Try different search terms.' : 'Post a research question for teammates, or tag @hermes in the body to get an AI response. Every question becomes a searchable record.'}
             action={!searchQuery ? { label: 'Ask a question', onClick: () => setShowCreate(true) } : undefined}
           />
         ) : (
@@ -528,18 +529,16 @@ function CreateQuestionModal({ open, onClose }: { open: boolean; onClose: () => 
             <label htmlFor="ask-lab-related-project" className="block text-xs font-medium mb-1" style={{ color: 'var(--slate)' }}>
               Related Project
             </label>
-            <select
-              id="ask-lab-related-project"
+            <InlineSelect
               value={projectSlug}
-              onChange={(e) => setProjectSlug(e.target.value)}
-              className="w-full rounded-md border px-2.5 py-2 text-sm"
-              style={{ borderColor: 'var(--border-subtle)', cursor: 'pointer' }}
-            >
-              <option value="">None (general question)</option>
-              {projects.map((p) => (
-                <option key={p.slug} value={p.slug}>{p.title}</option>
-              ))}
-            </select>
+              options={[
+                { value: '', label: 'None (general question)' },
+                ...projects.map((p) => ({ value: p.slug, label: p.title })),
+              ]}
+              onChange={setProjectSlug}
+              size="md"
+              alwaysShowChevron
+            />
           </div>
 
           {!questionText.trim() && (

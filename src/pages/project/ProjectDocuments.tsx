@@ -3,6 +3,7 @@ import { FolderOpen, FileText, Database, FlaskConical, Upload, Link2, Plus, X, E
 import { useProjectDocuments } from '../../hooks/useApiData'
 import { useAddProjectDocument, useDeleteProjectDocument } from '../../hooks/useMutations'
 import type { ProjectDocumentRow } from '../../hooks/useApiData'
+import InlineSelect from '../../components/InlineSelect'
 
 interface ProjectDocumentsProps {
   projectSlug: string
@@ -269,24 +270,12 @@ export default function ProjectDocuments({ projectSlug }: ProjectDocumentsProps)
               >
                 Add {DOC_TYPE_CONFIG[docType]?.label || 'Link'}
               </span>
-              <select
+              <InlineSelect
                 value={docType}
-                onChange={(e) => setDocType(e.target.value as ProjectDocumentRow['doc_type'])}
-                style={{
-                  fontSize: '10px',
-                  color: 'var(--slate)',
-                  background: 'var(--cream)',
-                  border: '1px solid var(--border-subtle)',
-                  borderRadius: 'var(--radius-sm)',
-                  padding: '2px 6px',
-                  cursor: 'pointer',
-                  outline: 'none',
-                }}
-              >
-                {Object.entries(DOC_TYPE_CONFIG).map(([key, cfg]) => (
-                  <option key={key} value={key}>{cfg.label}</option>
-                ))}
-              </select>
+                options={Object.entries(DOC_TYPE_CONFIG).map(([key, cfg]) => ({ value: key, label: cfg.label }))}
+                onChange={(v) => setDocType(v as ProjectDocumentRow['doc_type'])}
+                alwaysShowChevron
+              />
               <button
                 type="button"
                 onClick={() => { setShowForm(false); setTitle(''); setUrl('') }}

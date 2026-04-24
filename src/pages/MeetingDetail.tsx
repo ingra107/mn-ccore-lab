@@ -40,6 +40,8 @@ import { useToast } from '../hooks/useToast'
 import { useUndoToast } from '../components/UndoToast'
 import Avatar from '../components/Avatar'
 import WatchButton from '../components/WatchButton'
+import PresenceAvatars from '../components/PresenceAvatars'
+import { usePresence } from '../hooks/usePresence'
 import HoverCard from '../components/HoverCard'
 import type { HoverCardData } from '../components/HoverCard'
 import { useHoverCard } from '../hooks/useHoverCard'
@@ -96,6 +98,7 @@ export default function MeetingDetail() {
   }
   const addAgenda = useAddAgendaItem(meeting?.id || '')
   const updateNotes = useUpdateMeetingNotes(meeting?.id || '')
+  const viewerSlugs = usePresence('meeting', meeting?.id)
   const createDecision = useCreateDecision()
   const [editingNotes, setEditingNotes] = useState(false)
   const [notesDraft, setNotesDraft] = useState(meeting?.notes || '')
@@ -278,6 +281,7 @@ export default function MeetingDetail() {
               {meeting.type}
             </span>
             <WatchButton id={meeting.id} type="meeting" label={meeting.title} />
+            {viewerSlugs.length > 0 && <PresenceAvatars slugs={viewerSlugs} />}
             <Link
               to={PATHS.meetingPrep(meeting.id)}
               className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs transition-colors"

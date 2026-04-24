@@ -1192,24 +1192,26 @@ function AddGrantMilestoneModal({
             <label htmlFor="grant-milestone-grant" style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', fontWeight: 500, display: 'block', marginBottom: '4px' }}>
               Grant
             </label>
-            <select id="grant-milestone-grant" value={grantId} onChange={(e) => setGrantId(e.target.value)} style={inputStyle}>
-              {grants.map((g) => (
-                <option key={g.id} value={g.id}>
-                  {g.mechanism} - {g.title}
-                </option>
-              ))}
-            </select>
+            <InlineSelect
+              value={grantId}
+              options={grants.map((g) => ({ value: g.id, label: `${g.mechanism} - ${g.title}` }))}
+              onChange={setGrantId}
+              size="md"
+              alwaysShowChevron
+            />
           </div>
 
           <div>
             <label htmlFor="grant-milestone-type" style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', fontWeight: 500, display: 'block', marginBottom: '4px' }}>
               Milestone Type
             </label>
-            <select id="grant-milestone-type" value={milestoneType} onChange={(e) => setMilestoneType(e.target.value)} style={inputStyle}>
-              {MILESTONE_TYPES.map((t) => (
-                <option key={t.value} value={t.value}>{t.label}</option>
-              ))}
-            </select>
+            <InlineSelect
+              value={milestoneType}
+              options={MILESTONE_TYPES}
+              onChange={setMilestoneType}
+              size="md"
+              alwaysShowChevron
+            />
           </div>
 
           <div>

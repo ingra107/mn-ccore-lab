@@ -20,13 +20,13 @@ import {
   LogOut,
   Plus,
   Trash2,
-  ChevronDown,
 } from 'lucide-react'
 import type { SubmissionEventType, SubmissionEventRow } from '../lib/api'
 import { useSubmissionEvents } from '../hooks/useApiData'
 import { useCreateSubmissionEvent, useDeleteSubmissionEvent } from '../hooks/useMutations'
 import { formatRelativeTime, getDaysUntil } from '../lib/dateUtils'
 import EmptyState from './EmptyState'
+import InlineSelect from './InlineSelect'
 import { getStatusColor, getStatusBg } from '../lib/statusColors'
 
 // ── Event config ──
@@ -149,31 +149,13 @@ function AddEventForm({
           <label style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--slate)', opacity: 0.75, display: 'block', marginBottom: '4px' }}>
             Event Type
           </label>
-          <div style={{ position: 'relative' }}>
-            <select
-              value={eventType}
-              onChange={(e) => setEventType(e.target.value as SubmissionEventType)}
-              style={{
-                width: '100%',
-                padding: '6px 28px 6px 10px',
-                fontSize: 'var(--value-size)',
-                borderRadius: 'var(--radius-md)',
-                border: '1px solid var(--border-subtle)',
-                background: 'transparent',
-                color: 'var(--ink)',
-                cursor: 'pointer',
-                appearance: 'none',
-              }}
-            >
-              {EVENT_TYPES.map((t) => (
-                <option key={t} value={t}>{EVENT_CONFIG[t].label}</option>
-              ))}
-            </select>
-            <ChevronDown
-              size={14}
-              style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--slate)', opacity: 'var(--ink-label)' }}
-            />
-          </div>
+          <InlineSelect
+            value={eventType}
+            options={EVENT_TYPES.map((t) => ({ value: t, label: EVENT_CONFIG[t].label }))}
+            onChange={(v) => setEventType(v as SubmissionEventType)}
+            size="md"
+            alwaysShowChevron
+          />
         </div>
 
         {/* Date */}

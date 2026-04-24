@@ -271,12 +271,24 @@ export default function CommandPalette() {
 
     // Tasks (pending only) — include ALL so fuzzy search can find any;
     // final filtered.slice(0, 12) caps the rendered list after user query.
+    // T-42: sublabel = project · due date. Airtable pattern. Assignee shown
+    // only when ≠ current user.
+    const projectById: Record<string, string> = {}
+    for (const p of projects) projectById[p.slug] = p.title
     for (const task of tasks.filter((t) => !t.completed)) {
-      const person = getPersonInfo(task.assignee)
+      const pid = (task as any).project_id || (task as any).project_slug
+      const projectName = (pid && projectById[pid]) || ''
+      const due = task.due_date ? new Date(task.due_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''
+      const bits = [projectName, due].filter(Boolean)
+      const isMine = task.assignee === currentUserSlug
+      if (!isMine && task.assignee) {
+        const person = getPersonInfo(task.assignee)
+        if (person?.name) bits.push(person.name)
+      }
       items.push({
         id: `task-${task.id}`,
         label: task.title || task.description,
-        sublabel: `${person.name} · ${task.status}`,
+        sublabel: bits.join(' · ') || task.status,
         icon: CheckSquare,
         action: () => { navigate(`${PATHS.myTasks}?open=${task.id}`); setOpen(false) },
         category: 'task',

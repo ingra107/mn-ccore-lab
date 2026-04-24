@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { Radio, Send, Check, ChevronDown, ChevronUp } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useRelayMessages, useCreateRelay, useCompleteRelay } from '../../hooks/usePBRelay'
+import InlineSelect from '../InlineSelect'
 
 export default function RelayCard() {
   const { data: messages = [], isLoading } = useRelayMessages()
@@ -171,32 +172,26 @@ export default function RelayCard() {
                     transition={{ duration: 0.1 }}
                     className="flex flex-col gap-1.5"
                   >
-                    <div className="flex gap-1.5">
-                      <select
+                    <div className="flex gap-1.5 items-center">
+                      <InlineSelect
                         value={from}
-                        onChange={(e) => setFrom(e.target.value)}
-                        style={{
-                          fontSize: '10px', padding: '3px 4px', borderRadius: 'var(--radius-sm)',
-                          border: '1px solid var(--border-subtle)', background: 'var(--cream)',
-                          color: 'var(--ink)', flex: 1,
-                        }}
-                      >
-                        <option value="work">work</option>
-                        <option value="home">home</option>
-                      </select>
+                        options={[
+                          { value: 'work', label: 'work' },
+                          { value: 'home', label: 'home' },
+                        ]}
+                        onChange={setFrom}
+                        alwaysShowChevron
+                      />
                       <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75, alignSelf: 'center' }}>-&gt;</span>
-                      <select
+                      <InlineSelect
                         value={to}
-                        onChange={(e) => setTo(e.target.value)}
-                        style={{
-                          fontSize: '10px', padding: '3px 4px', borderRadius: 'var(--radius-sm)',
-                          border: '1px solid var(--border-subtle)', background: 'var(--cream)',
-                          color: 'var(--ink)', flex: 1,
-                        }}
-                      >
-                        <option value="home">home</option>
-                        <option value="work">work</option>
-                      </select>
+                        options={[
+                          { value: 'home', label: 'home' },
+                          { value: 'work', label: 'work' },
+                        ]}
+                        onChange={setTo}
+                        alwaysShowChevron
+                      />
                     </div>
                     <input
                       type="text"

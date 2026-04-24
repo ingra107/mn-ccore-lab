@@ -329,8 +329,12 @@ export default function PBSector() {
       <div className="flex items-center justify-center min-h-[60vh]">
         <EmptyState
           icon={<LayoutDashboard size={32} />}
-          title="No daily plan loaded"
-          subtitle="PB Sector shows your daily plan when connected to the Peripheral Brain system."
+          title="Connect Peripheral Brain to see your daily plan"
+          subtitle="PB Sector mirrors the TODAY.md plan Nick generates each morning via /generate-today. When connected, you'll see progress bars, timed task bands, and an at-a-glance live view of where the day is."
+          action={{
+            label: 'Learn more',
+            onClick: () => window.open('https://github.com/ingra107/mn-ccore-lab#pb-sector', '_blank', 'noopener,noreferrer'),
+          }}
         />
       </div>
     )

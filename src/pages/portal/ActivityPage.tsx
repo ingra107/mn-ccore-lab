@@ -12,6 +12,7 @@ import { getPersonInfo, getMemberBySlug, directors } from '../../data/team'
 import { formatRelativeTime, formatMediumDate } from '../../lib/dateUtils'
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
+import InlineSelect from '../../components/InlineSelect'
 import { staggerContainer, staggerItem } from '../../lib/animations'
 import { isProductionVisibleActivity } from '../../lib/isProductionVisible'
 
@@ -93,49 +94,18 @@ export default function ActivityPage() {
         count={allActivity.length}
         actions={
           <div className="flex items-center gap-2">
-          <select
-            aria-label="Filter activity by person"
-            value={filterPerson}
-            onChange={(e) => setFilterPerson(e.target.value)}
-            className="rounded-full border px-3 py-1.5 text-xs"
-            style={{
-              fontSize: '12px',
-              color: filterPerson ? 'var(--gold)' : 'var(--slate)',
-              backgroundColor: filterPerson ? 'var(--gold-hover)' : 'transparent',
-              borderColor: filterPerson ? 'var(--gold)' : 'var(--border-subtle)',
-              cursor: 'pointer',
-              appearance: 'none' as const,
-              WebkitAppearance: 'none' as const,
-              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
-              backgroundRepeat: 'no-repeat',
-              backgroundPosition: 'right 8px center',
-              paddingRight: '24px',
-            }}
-          >
-            <option value="">All People</option>
-            {actors.map(a => <option key={a.slug} value={a.slug}>{a.name}</option>)}
-          </select>
-          <select
-            aria-label="Filter activity by type"
-            value={filterType}
-            onChange={(e) => setFilterType(e.target.value)}
-            className="rounded-full border px-3 py-1.5 text-xs"
-            style={{
-              fontSize: '12px',
-              color: filterType ? 'var(--teal)' : 'var(--slate)',
-              backgroundColor: filterType ? 'var(--teal-hover)' : 'transparent',
-              borderColor: filterType ? 'var(--teal)' : 'var(--border-subtle)',
-              cursor: 'pointer',
-              appearance: 'none' as const,
-              WebkitAppearance: 'none' as const,
-              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
-              backgroundRepeat: 'no-repeat',
-              backgroundPosition: 'right 8px center',
-              paddingRight: '24px',
-            }}
-          >
-            {typeOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-          </select>
+            <InlineSelect
+              value={filterPerson}
+              options={[{ value: '', label: 'All People' }, ...actors.map(a => ({ value: a.slug, label: a.name }))]}
+              onChange={setFilterPerson}
+              alwaysShowChevron
+            />
+            <InlineSelect
+              value={filterType}
+              options={typeOptions}
+              onChange={setFilterType}
+              alwaysShowChevron
+            />
           </div>
         }
       />
