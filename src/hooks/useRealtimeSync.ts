@@ -1,9 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import PartySocket from 'partysocket'
-
-// WebSocket host for Durable Object
-const WS_HOST = import.meta.env.VITE_WS_HOST || 'hub-realtime.nicholas-ingraham.workers.dev'
+import { getRealtimeBus } from '../lib/realtimeBus'
 
 export function useRealtimeSync() {
   const queryClient = useQueryClient()
@@ -15,30 +12,23 @@ export function useRealtimeSync() {
     })
   }
 
-  // Phase 2: WebSocket via Durable Object (instant, ~1s)
+  // Phase 2: WebSocket via Durable Object (instant, ~1s). Shares the single
+  // realtimeBus socket with presence/typing/intent hooks.
   useEffect(() => {
-    if (!WS_HOST) return // DO not configured yet — fallback to polling
-
-    const ws = new PartySocket({
-      host: WS_HOST,
-      room: 'mnccore',
-      party: 'notification-hub',
-    })
-
-    ws.addEventListener('message', (event) => {
-      try {
-        const data = JSON.parse(event.data)
-        if (data.type) {
-          queryClient.invalidateQueries({ queryKey: [data.type] })
-        } else {
-          invalidateAll()
-        }
-      } catch {
+    const bus = getRealtimeBus()
+    const stop = bus.subscribe((data) => {
+      const msg = data as { type?: string }
+      if (msg && typeof msg === 'object' && msg.type) {
+        // Ignore presence/typing/intent chatter — those don't invalidate
+        // query cache.
+        const ignore = ['presence-ping', 'presence-leave', 'typing-start', 'typing-stop', 'intent', 'intent-leave']
+        if (ignore.includes(msg.type)) return
+        queryClient.invalidateQueries({ queryKey: [msg.type] })
+      } else {
         invalidateAll()
       }
     })
-
-    return () => ws.close()
+    return stop
   }, [queryClient])
 
   // Phase 1: Polling — /api/version is cheap; 15s gives acceptable cross-tab

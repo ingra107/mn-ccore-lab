@@ -1,9 +1,8 @@
 import { useEffect, useState, useRef } from 'react'
-import PartySocket from 'partysocket'
 import { useAuth } from './useAuth'
 import { emailToSlug } from '../lib/emailSlug'
+import { getRealtimeBus } from '../lib/realtimeBus'
 
-const WS_HOST = import.meta.env.VITE_WS_HOST || 'hub-realtime.nicholas-ingraham.workers.dev'
 const HEARTBEAT_MS = 15_000
 const STALE_MS = 45_000
 
@@ -30,25 +29,17 @@ interface PresenceMessage {
  * than 45s are treated as gone. No server-side state — partyserver just
  * echoes messages to the room.
  *
- * Caveats:
- * - Clock skew is irrelevant (we only use our own `Date.now()` for staleness).
- * - Partyserver broadcasts exclude sender, so we don't see our own presence.
- * - Small team (~20) — for large rooms a real presence-channel pattern
- *   (track, broadcast-self-only-on-join) would be better.
+ * All three presence hooks + useRealtimeSync now share a single underlying
+ * PartySocket via `src/lib/realtimeBus.ts`. Pre-consolidation a single detail
+ * panel open spun up 3 sockets (presence + typing + intent).
  */
-/**
- * DD-4 intent broadcast — additive to presence. Each peer advertises its
- * current activity on the entity: 'viewing' (default) / 'editing' / 'commenting'.
- * Caller passes its current self-intent; hook broadcasts changes on the same
- * WS room. Returns `intentByPeer: Record<slug, intent>`. TTL 30s — a peer
- * that goes silent reverts to `viewing` on the next cleanup tick.
- */
+
 export type Intent = 'viewing' | 'editing' | 'commenting'
 
 const INTENT_TTL_MS = 30_000
 
 interface IntentMessage {
-  type: 'intent'
+  type: 'intent' | 'intent-leave'
   slug: string
   entityType: string
   entityId: string
@@ -64,35 +55,36 @@ export function useIntentBroadcast(
   const { user } = useAuth()
   const mySlug = user?.email ? emailToSlug(user.email) : ''
   const [peerIntents, setPeerIntents] = useState<Record<string, { intent: Intent; lastSeen: number }>>({})
-  const wsRef = useRef<PartySocket | null>(null)
   const lastBroadcastRef = useRef<Intent>('viewing')
 
   useEffect(() => {
-    if (!entityId || !mySlug || !WS_HOST) return
-    const ws = new PartySocket({ host: WS_HOST, room: 'mnccore', party: 'notification-hub' })
-    wsRef.current = ws
+    if (!entityId || !mySlug) return
+    const bus = getRealtimeBus()
 
-    const send = (intent: Intent) => {
-      try {
-        ws.send(JSON.stringify({
-          type: 'intent', slug: mySlug, entityType, entityId, intent, ts: Date.now(),
-        } satisfies IntentMessage))
-      } catch { /* not open yet */ }
+    const send = (intent: Intent, leave = false) => {
+      bus.send({
+        type: leave ? 'intent-leave' : 'intent',
+        slug: mySlug, entityType, entityId, intent, ts: Date.now(),
+      } satisfies IntentMessage)
     }
 
-    const handleOpen = () => send(selfIntent)
-    ws.addEventListener('open', handleOpen)
+    const stopOpen = bus.onOpen(() => send(selfIntent))
 
-    const handleMessage = (event: MessageEvent) => {
-      try {
-        const msg = JSON.parse(event.data) as IntentMessage
-        if (msg.type !== 'intent') return
-        if (msg.slug === mySlug) return
-        if (msg.entityType !== entityType || msg.entityId !== entityId) return
-        setPeerIntents((prev) => ({ ...prev, [msg.slug]: { intent: msg.intent, lastSeen: Date.now() } }))
-      } catch { /* not intent traffic */ }
-    }
-    ws.addEventListener('message', handleMessage)
+    const stopMsg = bus.subscribe((data) => {
+      const msg = data as IntentMessage
+      if (!msg || (msg.type !== 'intent' && msg.type !== 'intent-leave')) return
+      if (msg.slug === mySlug) return
+      if (msg.entityType !== entityType || msg.entityId !== entityId) return
+      if (msg.type === 'intent-leave') {
+        setPeerIntents((prev) => {
+          if (!prev[msg.slug]) return prev
+          const { [msg.slug]: _drop, ...rest } = prev
+          return rest
+        })
+        return
+      }
+      setPeerIntents((prev) => ({ ...prev, [msg.slug]: { intent: msg.intent, lastSeen: Date.now() } }))
+    })
 
     const ttlCleanup = window.setInterval(() => {
       setPeerIntents((prev) => {
@@ -112,29 +104,21 @@ export function useIntentBroadcast(
     }, 5_000)
 
     return () => {
-      try {
-        ws.send(JSON.stringify({
-          type: 'intent', slug: mySlug, entityType, entityId, intent: 'viewing', ts: Date.now(),
-        } satisfies IntentMessage))
-      } catch { /* closed */ }
-      ws.removeEventListener('open', handleOpen)
-      ws.removeEventListener('message', handleMessage)
+      send('viewing', true)
+      stopOpen()
+      stopMsg()
       window.clearInterval(ttlCleanup)
-      ws.close()
-      wsRef.current = null
     }
   }, [entityType, entityId, mySlug])
 
   // Broadcast self intent whenever it changes.
   useEffect(() => {
-    if (!wsRef.current || !entityId || !mySlug) return
+    if (!entityId || !mySlug) return
     if (lastBroadcastRef.current === selfIntent) return
     lastBroadcastRef.current = selfIntent
-    try {
-      wsRef.current.send(JSON.stringify({
-        type: 'intent', slug: mySlug, entityType, entityId, intent: selfIntent, ts: Date.now(),
-      } satisfies IntentMessage))
-    } catch { /* not open */ }
+    getRealtimeBus().send({
+      type: 'intent', slug: mySlug, entityType, entityId, intent: selfIntent, ts: Date.now(),
+    } satisfies IntentMessage)
   }, [selfIntent, entityType, entityId, mySlug])
 
   const out: Record<string, Intent> = {}
@@ -162,61 +146,48 @@ export function useTyping(entityType: string, entityId: string | undefined | nul
   const { user } = useAuth()
   const mySlug = user?.email ? emailToSlug(user.email) : ''
   const [typingPeers, setTypingPeers] = useState<{ slug: string; lastSeen: number }[]>([])
-  const wsRef = useRef<PartySocket | null>(null)
   const lastBroadcastRef = useRef<{ typing: boolean; ts: number }>({ typing: false, ts: 0 })
 
   useEffect(() => {
-    if (!entityId || !mySlug || !WS_HOST) return
-    const ws = new PartySocket({ host: WS_HOST, room: 'mnccore', party: 'notification-hub' })
-    wsRef.current = ws
+    if (!entityId || !mySlug) return
+    const bus = getRealtimeBus()
 
-    const handleMessage = (event: MessageEvent) => {
-      try {
-        const msg = JSON.parse(event.data) as TypingMessage
-        if (msg.type !== 'typing-start' && msg.type !== 'typing-stop') return
-        if (msg.slug === mySlug) return
-        if (msg.entityType !== entityType || msg.entityId !== entityId) return
-        setTypingPeers((prev) => {
-          const filtered = prev.filter((p) => p.slug !== msg.slug)
-          if (msg.type === 'typing-stop') return filtered
-          return [...filtered, { slug: msg.slug, lastSeen: Date.now() }]
-        })
-      } catch { /* not typing traffic */ }
-    }
-    ws.addEventListener('message', handleMessage)
+    const stopMsg = bus.subscribe((data) => {
+      const msg = data as TypingMessage
+      if (!msg || (msg.type !== 'typing-start' && msg.type !== 'typing-stop')) return
+      if (msg.slug === mySlug) return
+      if (msg.entityType !== entityType || msg.entityId !== entityId) return
+      setTypingPeers((prev) => {
+        const filtered = prev.filter((p) => p.slug !== msg.slug)
+        if (msg.type === 'typing-stop') return filtered
+        return [...filtered, { slug: msg.slug, lastSeen: Date.now() }]
+      })
+    })
 
     const ttlCleanup = window.setInterval(() => {
       setTypingPeers((prev) => prev.filter((p) => Date.now() - p.lastSeen < TYPING_TTL_MS))
     }, 1_000)
 
     return () => {
-      try {
-        ws.send(JSON.stringify({
-          type: 'typing-stop', slug: mySlug, entityType, entityId, ts: Date.now(),
-        } satisfies TypingMessage))
-      } catch { /* closed */ }
-      ws.removeEventListener('message', handleMessage)
+      bus.send({
+        type: 'typing-stop', slug: mySlug, entityType, entityId, ts: Date.now(),
+      } satisfies TypingMessage)
+      stopMsg()
       window.clearInterval(ttlCleanup)
-      ws.close()
-      wsRef.current = null
     }
   }, [entityType, entityId, mySlug])
 
-  // Debounced broadcast: emit start at most every 3s; stop always emits.
   const broadcastTyping = (typing: boolean) => {
     const now = Date.now()
     const last = lastBroadcastRef.current
     if (typing && last.typing && now - last.ts < 3_000) return
     if (!typing && !last.typing) return
     lastBroadcastRef.current = { typing, ts: now }
-    const ws = wsRef.current
-    if (!ws || !entityId || !mySlug) return
-    try {
-      ws.send(JSON.stringify({
-        type: typing ? 'typing-start' : 'typing-stop',
-        slug: mySlug, entityType, entityId, ts: now,
-      } satisfies TypingMessage))
-    } catch { /* not open */ }
+    if (!entityId || !mySlug) return
+    getRealtimeBus().send({
+      type: typing ? 'typing-start' : 'typing-stop',
+      slug: mySlug, entityType, entityId, ts: now,
+    } satisfies TypingMessage)
   }
 
   return { typingPeers: typingPeers.map((p) => p.slug), broadcastTyping }
@@ -226,73 +197,51 @@ export function usePresence(entityType: string, entityId: string | undefined | n
   const { user } = useAuth()
   const mySlug = user?.email ? emailToSlug(user.email) : ''
   const [peers, setPeers] = useState<PresenceEntry[]>([])
-  const wsRef = useRef<PartySocket | null>(null)
 
   useEffect(() => {
-    if (!entityId || !mySlug || !WS_HOST) return
-
-    const ws = new PartySocket({
-      host: WS_HOST,
-      room: 'mnccore',
-      party: 'notification-hub',
-    })
-    wsRef.current = ws
+    if (!entityId || !mySlug) return
+    const bus = getRealtimeBus()
 
     const sendPing = () => {
-      try {
-        ws.send(JSON.stringify({
-          type: 'presence-ping',
-          slug: mySlug,
-          entityType,
-          entityId,
-          ts: Date.now(),
-        } satisfies PresenceMessage))
-      } catch { /* socket not open yet */ }
+      bus.send({
+        type: 'presence-ping', slug: mySlug, entityType, entityId, ts: Date.now(),
+      } satisfies PresenceMessage)
     }
 
-    const handleOpen = () => sendPing()
-    ws.addEventListener('open', handleOpen)
+    const stopOpen = bus.onOpen(sendPing)
 
-    const handleMessage = (event: MessageEvent) => {
-      try {
-        const msg = JSON.parse(event.data) as PresenceMessage
-        if (msg.type !== 'presence-ping' && msg.type !== 'presence-leave') return
-        if (msg.slug === mySlug) return
-        if (msg.entityType !== entityType || msg.entityId !== entityId) return
-        setPeers((prev) => {
-          const filtered = prev.filter((p) => p.slug !== msg.slug)
-          if (msg.type === 'presence-leave') return filtered
-          return [
-            ...filtered,
-            { slug: msg.slug, entityType: msg.entityType, entityId: msg.entityId, lastSeen: Date.now() },
-          ]
-        })
-      } catch { /* not presence traffic */ }
-    }
-    ws.addEventListener('message', handleMessage)
+    const stopMsg = bus.subscribe((data) => {
+      const msg = data as PresenceMessage
+      if (!msg || (msg.type !== 'presence-ping' && msg.type !== 'presence-leave')) return
+      if (msg.slug === mySlug) return
+      if (msg.entityType !== entityType || msg.entityId !== entityId) return
+      setPeers((prev) => {
+        const filtered = prev.filter((p) => p.slug !== msg.slug)
+        if (msg.type === 'presence-leave') return filtered
+        return [
+          ...filtered,
+          { slug: msg.slug, entityType: msg.entityType, entityId: msg.entityId, lastSeen: Date.now() },
+        ]
+      })
+    })
+
+    // Kick once immediately in case bus is already open (onOpen above fires
+    // synchronously if so, but defensive: a subscribe-then-send race is fine).
+    if (bus.isOpen()) sendPing()
 
     const heartbeat = window.setInterval(sendPing, HEARTBEAT_MS)
     const staleCleanup = window.setInterval(() => {
       setPeers((prev) => prev.filter((p) => Date.now() - p.lastSeen < STALE_MS))
     }, 10_000)
 
-    // Send one presence-leave on unmount so peers drop us immediately
     return () => {
-      try {
-        ws.send(JSON.stringify({
-          type: 'presence-leave',
-          slug: mySlug,
-          entityType,
-          entityId,
-          ts: Date.now(),
-        } satisfies PresenceMessage))
-      } catch { /* already closed */ }
-      ws.removeEventListener('open', handleOpen)
-      ws.removeEventListener('message', handleMessage)
+      bus.send({
+        type: 'presence-leave', slug: mySlug, entityType, entityId, ts: Date.now(),
+      } satisfies PresenceMessage)
+      stopOpen()
+      stopMsg()
       window.clearInterval(heartbeat)
       window.clearInterval(staleCleanup)
-      ws.close()
-      wsRef.current = null
     }
   }, [entityType, entityId, mySlug])
 
