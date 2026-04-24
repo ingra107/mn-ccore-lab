@@ -1035,7 +1035,7 @@ export default function DecisionsPage() {
             }}
           />
         </div>
-        {tagCounts.length > 0 && (
+        {tagCounts.length > 0 && allDecisions.length >= 15 && (
           <div className="flex items-center gap-2 flex-wrap mt-2">
             <Tag
               size={12}

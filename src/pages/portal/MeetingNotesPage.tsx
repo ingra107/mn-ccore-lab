@@ -16,6 +16,62 @@ import { formatMediumDate } from '../../lib/dateUtils'
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 import { PATHS } from '../../constants/paths'
 
+const HOWTO_STORAGE_KEY = 'mnccore-meeting-transcripts-howto-expanded'
+
+function HowTranscriptsWorkPanel({ collapsedByDefault }: { collapsedByDefault: boolean }) {
+  const [expanded, setExpanded] = useState<boolean>(() => {
+    try {
+      const stored = localStorage.getItem(HOWTO_STORAGE_KEY)
+      if (stored !== null) return stored === '1'
+    } catch { /* noop */ }
+    return !collapsedByDefault
+  })
+  const toggle = () => {
+    const next = !expanded
+    setExpanded(next)
+    try { localStorage.setItem(HOWTO_STORAGE_KEY, next ? '1' : '0') } catch { /* noop */ }
+  }
+  return (
+    <div className="mt-6 rounded-xl border" style={{ borderColor: 'var(--border-subtle)' }}>
+      <button
+        onClick={toggle}
+        className="w-full flex items-center justify-between p-4 text-left"
+        style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+        aria-expanded={expanded}
+      >
+        <h3 className="text-sm font-normal flex items-center gap-2" style={{ color: 'var(--ink)' }}>
+          <Brain size={16} style={{ color: 'var(--teal)' }} />
+          How Meeting Transcripts Work
+        </h3>
+        <span className="text-xs" style={{ color: 'var(--slate)', opacity: 0.75 }}>
+          {expanded ? 'Hide' : 'What is this?'}
+        </span>
+      </button>
+      {expanded && (
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 px-5 pb-5">
+          {[
+            { step: '1', icon: Upload, title: 'Upload or Paste', desc: 'Upload audio (MP3/WAV/M4A) or paste a transcript' },
+            { step: '2', icon: Brain, title: 'AI Processing', desc: 'Claude analyzes your meeting content' },
+            { step: '3', icon: Sparkles, title: 'Extract Insights', desc: 'Get summaries, action items, and decisions' },
+            { step: '4', icon: CheckCircle2, title: 'Track Progress', desc: 'Action items flow to your task board' },
+          ].map((item) => {
+            const Icon = item.icon
+            return (
+              <div key={item.step} className="flex flex-col items-center text-center gap-2 p-3">
+                <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--teal-active)' }}>
+                  <Icon size={18} style={{ color: 'var(--teal)' }} />
+                </div>
+                <h4 className="text-xs font-semibold" style={{ color: 'var(--ink)' }}>{item.title}</h4>
+                <p className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.85 }}>{item.desc}</p>
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function MeetingNotesPage() {
   const [showCreate, setShowCreate] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -67,32 +123,8 @@ export default function MeetingNotesPage() {
         <MetricCard icon={Users} label="Total Meetings" value={totalCount} color="var(--teal)" />
       </div>
 
-      {/* How it works */}
-      <div className="mt-6 rounded-xl border p-5" style={{ borderColor: 'var(--border-subtle)' }}>
-        <h3 className="text-sm font-normal mb-3 flex items-center gap-2" style={{ color: 'var(--ink)' }}>
-          <Brain size={16} style={{ color: 'var(--teal)' }} />
-          How Meeting Transcripts Work
-        </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-          {[
-            { step: '1', icon: Upload, title: 'Upload or Paste', desc: 'Upload audio (MP3/WAV/M4A) or paste a transcript' },
-            { step: '2', icon: Brain, title: 'AI Processing', desc: 'Claude analyzes your meeting content' },
-            { step: '3', icon: Sparkles, title: 'Extract Insights', desc: 'Get summaries, action items, and decisions' },
-            { step: '4', icon: CheckCircle2, title: 'Track Progress', desc: 'Action items flow to your task board' },
-          ].map((item) => {
-            const Icon = item.icon
-            return (
-              <div key={item.step} className="flex flex-col items-center text-center gap-2 p-3">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--teal-active)' }}>
-                  <Icon size={18} style={{ color: 'var(--teal)' }} />
-                </div>
-                <h4 className="text-xs font-semibold" style={{ color: 'var(--ink)' }}>{item.title}</h4>
-                <p className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.85 }}>{item.desc}</p>
-              </div>
-            )
-          })}
-        </div>
-      </div>
+      {/* How it works — auto-collapsed after 3+ transcripts exist */}
+      <HowTranscriptsWorkPanel collapsedByDefault={processedCount >= 3} />
 
       {/* Search + Recent meetings */}
       <div className="mt-6">

@@ -31,7 +31,7 @@ import DensityToggle, { useDensity, densityClass } from '../../components/Densit
 import { useTaskKeyboardShortcuts } from '../../hooks/useTaskKeyboardShortcuts'
 
 type ViewMode = 'list' | 'board' | 'standup' | 'timeline'
-type QuickFilter = 'all' | 'today' | 'this_week' | 'overdue' | 'no_date' | 'waiting_on'
+type QuickFilter = 'all' | 'today' | 'this_week' | 'overdue' | 'no_date' | 'stale' | 'waiting_on'
 
 const alternateViews: { key: ViewMode; label: string; icon: typeof List; description: string }[] = [
   { key: 'board', label: 'Board', icon: LayoutGrid, description: 'Kanban columns by status' },
@@ -199,6 +199,10 @@ export default function MyTasks() {
       case 'this_week': return base.filter(t => t.due_date && new Date(t.due_date + 'T12:00:00') >= today && new Date(t.due_date + 'T12:00:00') < weekEnd)
       case 'overdue': return base.filter(t => !t.completed && t.due_date && new Date(t.due_date + 'T23:59:59') < now)
       case 'no_date': return base.filter(t => !t.due_date)
+      case 'stale': {
+        const stale = new Date(now.getTime() - 14 * 86400000)
+        return base.filter(t => t.status === 'in_progress' && new Date(t.updated_at || t.created_at) < stale)
+      }
       default: return base
     }
   }, [tasks, allTasks, showCompleted, quickFilter, piSlug])
@@ -305,6 +309,10 @@ export default function MyTasks() {
       this_week: active.filter(t => t.due_date && new Date(t.due_date + 'T12:00:00') >= today && new Date(t.due_date + 'T12:00:00') < weekEnd).length,
       overdue: active.filter(t => t.due_date && new Date(t.due_date + 'T23:59:59') < now).length,
       no_date: active.filter(t => !t.due_date).length,
+      stale: (() => {
+        const stale = new Date(now.getTime() - 14 * 86400000)
+        return active.filter(t => t.status === 'in_progress' && new Date(t.updated_at || t.created_at) < stale).length
+      })(),
       waiting_on: allTasks.filter(t => !t.completed && t.assignee !== piSlug && (t.status === 'todo' || t.status === 'in_progress' || t.status === 'waiting_external')).length,
     }
   }, [tasks, allTasks, piSlug])
@@ -633,6 +641,7 @@ export default function MyTasks() {
           { key: 'this_week' as QuickFilter, label: 'This Week', count: filterCounts.this_week },
           { key: 'overdue' as QuickFilter, label: 'Overdue', count: filterCounts.overdue },
           { key: 'no_date' as QuickFilter, label: 'No Date', count: filterCounts.no_date },
+          { key: 'stale' as QuickFilter, label: 'Stale', count: filterCounts.stale },
           { key: 'waiting_on' as QuickFilter, label: 'Waiting On', count: filterCounts.waiting_on },
         ]).map(f => {
           const pillColor = f.key === 'overdue' ? { bg: 'rgba(122,0,25,0.1)', fg: 'var(--maroon)', border: 'rgba(122,0,25,0.3)' }

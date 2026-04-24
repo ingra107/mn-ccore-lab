@@ -70,18 +70,12 @@ export default function NateLab() {
       ]}
       photoUrl="https://med.umn.edu/sites/med.umn.edu/files/styles/bio_photo/public/images/dom-faculty-_0135_layer-164_0.png?itok=YWiCOKFA"
       sections={[
-        { id: 'publications', label: 'Publications' },
         { id: 'grants', label: 'Grants & Proposals' },
         { id: 'research-projects', label: 'Research Projects' },
         { id: 'trainees', label: 'MNCCORE Trainees' },
+        { id: 'publications', label: 'Publications' },
       ]}
     >
-      <PublicationsSection
-        publications={publications.filter((p) => p.authorSlugs?.includes('nate-mesfin'))}
-        id="publications"
-      />
-      <SectionDivider />
-      <div className="py-4" />
       <GrantsSection grants={grants} id="grants" title="Grants & Proposals" />
       <SectionDivider />
       <div className="py-4" />
@@ -89,6 +83,12 @@ export default function NateLab() {
       <SectionDivider />
       <div className="py-4" />
       <MenteesSection mentees={mentees} id="trainees" title="MN-CCORE Trainees" />
+      <SectionDivider />
+      <div className="py-4" />
+      <PublicationsSection
+        publications={publications.filter((p) => p.authorSlugs?.includes('nate-mesfin'))}
+        id="publications"
+      />
     </LabPageLayout>
   )
 }

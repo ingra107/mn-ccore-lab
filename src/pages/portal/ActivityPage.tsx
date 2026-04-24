@@ -158,7 +158,10 @@ export default function ActivityPage() {
             const label = isToday ? 'Today' : isYesterday ? 'Yesterday' : formatMediumDate(date)
             return (
               <div key={date}>
-                <h3 className="text-sm font-normal mb-2" style={{ color: isToday ? 'var(--teal)' : 'var(--ink)' }}>
+                <h3
+                  className="text-sm font-normal mb-2 sticky top-0 z-10 py-1"
+                  style={{ color: isToday ? 'var(--teal)' : 'var(--ink)', background: 'var(--page-bg)' }}
+                >
                   {label}
                 </h3>
                 <motion.div className="flex flex-col border-l-2" style={{ borderColor: isToday ? 'var(--teal)' : 'var(--border-subtle)', paddingLeft: 'var(--sp-md)' }} variants={staggerContainer} initial="hidden" animate="visible">
