@@ -20,7 +20,7 @@ import { getPersonInfo, getAllMembers, directors } from '../../data/team'
 import Avatar from '../Avatar'
 import InlineSelect from '../InlineSelect'
 import PresenceAvatars from '../PresenceAvatars'
-import { usePresence, useTyping } from '../../hooks/usePresence'
+import { usePresence, useTyping, useIntentBroadcast, type Intent } from '../../hooks/usePresence'
 import { motion, useMotionValue, useTransform } from 'framer-motion'
 import type { TaskRow } from '../../lib/api'
 import { PATHS } from '../../constants/paths'
@@ -84,6 +84,9 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
   }, [qc, taskProp?.id])
   const task = liveTask ?? taskProp
   const viewerSlugs = usePresence('task', task?.id)
+  const [quickAddHasContent, setQuickAddHasContent] = useState(false)
+  const taskSelfIntent: Intent = quickAddHasContent ? 'commenting' : 'viewing'
+  const taskPeerIntents = useIntentBroadcast('task', task?.id, taskSelfIntent)
   const ackTask = useAcknowledgeTask()
   const { showUndo } = useUndoToast()
   const [activeTab, setActiveTab] = useState<Tab>('overview')
@@ -266,7 +269,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
             <span className="text-xs uppercase tracking-wider" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
               Task Detail
             </span>
-            {viewerSlugs.length > 0 && <PresenceAvatars slugs={viewerSlugs} />}
+            {viewerSlugs.length > 0 && <PresenceAvatars slugs={viewerSlugs} peerIntents={taskPeerIntents} />}
           </div>
           <div className="flex items-center gap-1">
             {/* Prev/Next navigation */}
@@ -481,6 +484,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
               taskTitle={task.title}
               projectSlug={task.project_id}
               onJumpToTab={(tab) => setActiveTab(tab)}
+              onContentChange={setQuickAddHasContent}
             />
           </div>
 
@@ -965,11 +969,13 @@ function OverviewQuickAdd({
   taskTitle,
   projectSlug,
   onJumpToTab,
+  onContentChange,
 }: {
   taskId: string
   taskTitle?: string | null
   projectSlug?: string | null
   onJumpToTab: (tab: Tab) => void
+  onContentChange?: (hasContent: boolean) => void
 }) {
   const [mode, setMode] = useState<'note' | 'comment'>('comment')
   const [text, setText] = useState('')
@@ -1196,7 +1202,13 @@ function OverviewQuickAdd({
           <textarea
             ref={textareaRef}
             value={text}
-            onChange={(e) => { setText(e.target.value); broadcastTyping(e.target.value.trim().length > 0) }}
+            onChange={(e) => {
+              const v = e.target.value
+              setText(v)
+              const hasContent = v.trim().length > 0
+              broadcastTyping(hasContent)
+              onContentChange?.(hasContent)
+            }}
             onPaste={(e) => {
               const fileItem = Array.from(e.clipboardData?.items || []).find((it) => it.kind === 'file')
               if (fileItem) { e.preventDefault(); const f = fileItem.getAsFile(); if (f) uploadToCompose(f) }
@@ -1221,7 +1233,7 @@ function OverviewQuickAdd({
               transition: 'border-color 0.15s',
             }}
             onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--teal)')}
-            onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border-subtle)'; broadcastTyping(false) }}
+            onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border-subtle)'; broadcastTyping(false); onContentChange?.(false) }}
           />
           {text.trim() && (
             <button

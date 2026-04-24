@@ -37,6 +37,112 @@ interface PresenceMessage {
  *   (track, broadcast-self-only-on-join) would be better.
  */
 /**
+ * DD-4 intent broadcast — additive to presence. Each peer advertises its
+ * current activity on the entity: 'viewing' (default) / 'editing' / 'commenting'.
+ * Caller passes its current self-intent; hook broadcasts changes on the same
+ * WS room. Returns `intentByPeer: Record<slug, intent>`. TTL 30s — a peer
+ * that goes silent reverts to `viewing` on the next cleanup tick.
+ */
+export type Intent = 'viewing' | 'editing' | 'commenting'
+
+const INTENT_TTL_MS = 30_000
+
+interface IntentMessage {
+  type: 'intent'
+  slug: string
+  entityType: string
+  entityId: string
+  intent: Intent
+  ts: number
+}
+
+export function useIntentBroadcast(
+  entityType: string,
+  entityId: string | undefined | null,
+  selfIntent: Intent,
+): Record<string, Intent> {
+  const { user } = useAuth()
+  const mySlug = user?.email ? emailToSlug(user.email) : ''
+  const [peerIntents, setPeerIntents] = useState<Record<string, { intent: Intent; lastSeen: number }>>({})
+  const wsRef = useRef<PartySocket | null>(null)
+  const lastBroadcastRef = useRef<Intent>('viewing')
+
+  useEffect(() => {
+    if (!entityId || !mySlug || !WS_HOST) return
+    const ws = new PartySocket({ host: WS_HOST, room: 'mnccore', party: 'notification-hub' })
+    wsRef.current = ws
+
+    const send = (intent: Intent) => {
+      try {
+        ws.send(JSON.stringify({
+          type: 'intent', slug: mySlug, entityType, entityId, intent, ts: Date.now(),
+        } satisfies IntentMessage))
+      } catch { /* not open yet */ }
+    }
+
+    const handleOpen = () => send(selfIntent)
+    ws.addEventListener('open', handleOpen)
+
+    const handleMessage = (event: MessageEvent) => {
+      try {
+        const msg = JSON.parse(event.data) as IntentMessage
+        if (msg.type !== 'intent') return
+        if (msg.slug === mySlug) return
+        if (msg.entityType !== entityType || msg.entityId !== entityId) return
+        setPeerIntents((prev) => ({ ...prev, [msg.slug]: { intent: msg.intent, lastSeen: Date.now() } }))
+      } catch { /* not intent traffic */ }
+    }
+    ws.addEventListener('message', handleMessage)
+
+    const ttlCleanup = window.setInterval(() => {
+      setPeerIntents((prev) => {
+        const now = Date.now()
+        let changed = false
+        const next = { ...prev }
+        for (const slug of Object.keys(next)) {
+          if (now - next[slug].lastSeen > INTENT_TTL_MS) {
+            if (next[slug].intent !== 'viewing') {
+              next[slug] = { ...next[slug], intent: 'viewing' }
+              changed = true
+            }
+          }
+        }
+        return changed ? next : prev
+      })
+    }, 5_000)
+
+    return () => {
+      try {
+        ws.send(JSON.stringify({
+          type: 'intent', slug: mySlug, entityType, entityId, intent: 'viewing', ts: Date.now(),
+        } satisfies IntentMessage))
+      } catch { /* closed */ }
+      ws.removeEventListener('open', handleOpen)
+      ws.removeEventListener('message', handleMessage)
+      window.clearInterval(ttlCleanup)
+      ws.close()
+      wsRef.current = null
+    }
+  }, [entityType, entityId, mySlug])
+
+  // Broadcast self intent whenever it changes.
+  useEffect(() => {
+    if (!wsRef.current || !entityId || !mySlug) return
+    if (lastBroadcastRef.current === selfIntent) return
+    lastBroadcastRef.current = selfIntent
+    try {
+      wsRef.current.send(JSON.stringify({
+        type: 'intent', slug: mySlug, entityType, entityId, intent: selfIntent, ts: Date.now(),
+      } satisfies IntentMessage))
+    } catch { /* not open */ }
+  }, [selfIntent, entityType, entityId, mySlug])
+
+  const out: Record<string, Intent> = {}
+  for (const [slug, { intent }] of Object.entries(peerIntents)) out[slug] = intent
+  return out
+}
+
+/**
  * T-51 Typing indicator — additive to presence. Broadcasts `typing-start` /
  * `typing-stop` on the same room. Peers clear after 5s of silence (TTL),
  * so a dropped `typing-stop` doesn't wedge the indicator. Returns

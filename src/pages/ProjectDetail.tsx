@@ -46,7 +46,7 @@ import KeyLinksEditor from '../components/KeyLinksEditor'
 import LinkifiedText from '../components/LinkifiedText'
 import FileUpload from '../components/FileUpload'
 import PresenceAvatars from '../components/PresenceAvatars'
-import { usePresence, useTyping } from '../hooks/usePresence'
+import { usePresence, useTyping, useIntentBroadcast, type Intent } from '../hooks/usePresence'
 import SubmissionTimeline from '../components/SubmissionTimeline'
 import ConferencePrep from '../components/ConferencePrep'
 import InsightPanel from '../components/InsightPanel'
@@ -234,6 +234,8 @@ function ProjectDetailInner({ project }: InnerProps) {
 
   // Quick compose state — inline on landing card, defers to ProjectUpdateFeed-style mutation
   const [quickComposeText, setQuickComposeText] = useState('')
+  const projectSelfIntent: Intent = quickComposeText.trim().length > 0 ? 'commenting' : 'viewing'
+  const projectPeerIntents = useIntentBroadcast('project', project.slug, projectSelfIntent)
   const [quickComposeKind, setQuickComposeKind] = useState<'note' | 'comment'>('note')
   const [quickComposeSubmitting, setQuickComposeSubmitting] = useState(false)
   const [quickComposeDragOver, setQuickComposeDragOver] = useState(false)
@@ -441,7 +443,7 @@ function ProjectDetailInner({ project }: InnerProps) {
               {copied ? <Check size={14} /> : <Link2 size={14} />}
             </button>
             <WatchButton id={project.slug} type="project" label={project.title} slug={project.slug} />
-            <PresenceAvatars slugs={viewerSlugs} />
+            <PresenceAvatars slugs={viewerSlugs} peerIntents={projectPeerIntents} />
           </div>
         </div>
 

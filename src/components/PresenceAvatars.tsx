@@ -1,5 +1,6 @@
 import Avatar from './Avatar'
 import { getPersonInfo } from '../data/team'
+import type { Intent } from '../hooks/usePresence'
 
 /**
  * Render a horizontal avatar stack for concurrent viewers of an entity.
@@ -12,17 +13,47 @@ interface Props {
   slugs: string[]
   size?: 'xs' | '2xs' | 'sm-icon'
   limit?: number
+  /** DD-4: optional per-peer intent. Dot color picks the highest-activity
+   *  state across peers (commenting > editing > viewing). Tooltip also
+   *  reports intent when present. Omit for plain green "Live" behavior. */
+  peerIntents?: Record<string, Intent>
 }
 
-export default function PresenceAvatars({ slugs, size = '2xs', limit = 4 }: Props) {
+const INTENT_LABEL: Record<Intent, string> = {
+  viewing: 'viewing',
+  editing: 'editing',
+  commenting: 'commenting',
+}
+
+const INTENT_COLOR: Record<Intent, string> = {
+  viewing: 'var(--green)',
+  editing: 'var(--orange)',
+  commenting: 'var(--teal-solid)',
+}
+
+function aggregateIntent(peerIntents: Record<string, Intent>): Intent {
+  const values = Object.values(peerIntents)
+  if (values.includes('commenting')) return 'commenting'
+  if (values.includes('editing')) return 'editing'
+  return 'viewing'
+}
+
+export default function PresenceAvatars({ slugs, size = '2xs', limit = 4, peerIntents }: Props) {
   if (!slugs.length) return null
   const visible = slugs.slice(0, limit)
   const extra = slugs.length - visible.length
+  const dominant = peerIntents ? aggregateIntent(peerIntents) : 'viewing'
+  const tooltipBase = `${slugs.length} ${INTENT_LABEL[dominant]} now`
+  const tooltipNames = slugs.map((s) => {
+    const intent = peerIntents?.[s]
+    const name = getPersonInfo(s).name
+    return intent && intent !== 'viewing' ? `${name} (${INTENT_LABEL[intent]})` : name
+  }).join(', ')
 
   return (
     <div
       className="flex items-center"
-      title={`${slugs.length} viewing now: ${slugs.map((s) => getPersonInfo(s).name).join(', ')}`}
+      title={`${tooltipBase}: ${tooltipNames}`}
       style={{
         background: 'var(--teal-active)',
         borderRadius: 'var(--radius-full)',
@@ -35,9 +66,10 @@ export default function PresenceAvatars({ slugs, size = '2xs', limit = 4 }: Prop
       <span
         style={{
           width: 6, height: 6, borderRadius: 'var(--radius-circle)',
-          background: 'var(--green)', marginRight: 4, flexShrink: 0,
+          background: INTENT_COLOR[dominant], marginRight: 4, flexShrink: 0,
+          transition: 'background 300ms ease',
         }}
-        aria-label="Live"
+        aria-label={INTENT_LABEL[dominant]}
       />
       <div className="flex items-center" style={{ marginRight: 4 }}>
         {visible.map((slug, i) => {
@@ -61,7 +93,7 @@ export default function PresenceAvatars({ slugs, size = '2xs', limit = 4 }: Prop
         })}
       </div>
       <span>
-        {extra > 0 ? `+${extra}` : slugs.length === 1 ? 'viewing' : `${slugs.length} viewing`}
+        {extra > 0 ? `+${extra}` : slugs.length === 1 ? INTENT_LABEL[dominant] : `${slugs.length} ${INTENT_LABEL[dominant]}`}
       </span>
     </div>
   )

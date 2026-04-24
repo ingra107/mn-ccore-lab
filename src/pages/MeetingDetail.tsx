@@ -47,7 +47,7 @@ import { useUndoToast } from '../components/UndoToast'
 import Avatar from '../components/Avatar'
 import WatchButton from '../components/WatchButton'
 import PresenceAvatars from '../components/PresenceAvatars'
-import { usePresence, useTyping } from '../hooks/usePresence'
+import { usePresence, useTyping, useIntentBroadcast, type Intent } from '../hooks/usePresence'
 import HoverCard from '../components/HoverCard'
 import type { HoverCardData } from '../components/HoverCard'
 import { useHoverCard } from '../hooks/useHoverCard'
@@ -105,6 +105,9 @@ export default function MeetingDetail() {
   const addAgenda = useAddAgendaItem(meeting?.id || '')
   const updateNotes = useUpdateMeetingNotes(meeting?.id || '')
   const viewerSlugs = usePresence('meeting', meeting?.id)
+  const [meetingHasCompose, setMeetingHasCompose] = useState(false)
+  const meetingSelfIntent: Intent = meetingHasCompose ? 'commenting' : 'viewing'
+  const meetingPeerIntents = useIntentBroadcast('meeting', meeting?.id, meetingSelfIntent)
   const createDecision = useCreateDecision()
   const [editingNotes, setEditingNotes] = useState(false)
   const [notesDraft, setNotesDraft] = useState(meeting?.notes || '')
@@ -326,7 +329,7 @@ export default function MeetingDetail() {
               {meeting.type}
             </span>
             <WatchButton id={meeting.id} type="meeting" label={meeting.title} />
-            {viewerSlugs.length > 0 && <PresenceAvatars slugs={viewerSlugs} />}
+            {viewerSlugs.length > 0 && <PresenceAvatars slugs={viewerSlugs} peerIntents={meetingPeerIntents} />}
             <Link
               to={PATHS.meetingPrep(meeting.id)}
               className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs transition-colors"
@@ -533,6 +536,7 @@ export default function MeetingDetail() {
               <AddActionItemForm
                 meetingId={meeting.id}
                 isAuthenticated={isAuthenticated}
+                onContentChange={setMeetingHasCompose}
                 onSuccess={() => showSuccess('Action item added')}
               />
 
@@ -1023,7 +1027,7 @@ function ActionItemRow({ item, onToggle, selected, onToggleSelect }: { item: Act
 const PRIORITY_LABELS: Record<number, string> = { 1: 'Urgent', 2: 'High', 3: 'Medium' }
 const PRIORITY_COLORS: Record<number, string> = { 1: 'var(--maroon)', 2: 'var(--orange)', 3: 'var(--gold)' }
 
-function AddActionItemForm({ meetingId, isAuthenticated, onSuccess }: { meetingId: string; isAuthenticated: boolean; onSuccess: () => void }) {
+function AddActionItemForm({ meetingId, isAuthenticated, onSuccess, onContentChange }: { meetingId: string; isAuthenticated: boolean; onSuccess: () => void; onContentChange?: (hasContent: boolean) => void }) {
   const [text, setText] = useState('')
   const [dragOver, setDragOver] = useState(false)
   const [uploading, setUploading] = useState(false)
@@ -1104,7 +1108,13 @@ function AddActionItemForm({ meetingId, isAuthenticated, onSuccess }: { meetingI
           type="text"
           data-testid="meeting-action-add"
           value={text}
-          onChange={(e) => { setText(e.target.value); broadcastMeetingTyping(e.target.value.trim().length > 0) }}
+          onChange={(e) => {
+            const v = e.target.value
+            setText(v)
+            const hasContent = v.trim().length > 0
+            broadcastMeetingTyping(hasContent)
+            onContentChange?.(hasContent)
+          }}
           onPaste={(e) => {
             const fi = Array.from(e.clipboardData?.items || []).find((it) => it.kind === 'file')
             if (fi) { e.preventDefault(); const f = fi.getAsFile(); if (f) uploadToCompose(f) }
@@ -1117,7 +1127,7 @@ function AddActionItemForm({ meetingId, isAuthenticated, onSuccess }: { meetingI
             padding: 'var(--sp-sm) var(--sp-md)', outline: 'none', transition: 'border-color 0.15s',
           }}
           onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--teal)')}
-          onBlur={(e) => { e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--teal) 12%, transparent)'; broadcastMeetingTyping(false) }}
+          onBlur={(e) => { e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--teal) 12%, transparent)'; broadcastMeetingTyping(false); onContentChange?.(false) }}
           onKeyDown={(e) => { if (e.key === 'Escape') { setText(''); e.currentTarget.blur() } }}
         />
         <button

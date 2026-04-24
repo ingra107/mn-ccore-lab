@@ -844,8 +844,26 @@ function RevisionCommentsList({ revisionId, projectId }: RevisionCommentsListPro
 
 // ── Active Revisions Dashboard Section ──
 
+// T-29 skip-it: urgency = daysOverdue (capped at 30) + unresolved-comments
+// proxy (commentCount - resolvedCount). Schema doesn't track daysAwaiting
+// or daysStale separately yet; when schema-v50 lands (DD-2 / T-29 full)
+// this score expands into the 3-subgroup structure CD specced.
+function urgencyScore(rev: RevisionRow, now: number): number {
+  const due = rev.response_due ? new Date(rev.response_due).getTime() : null
+  const daysOverdue = due && due < now ? Math.floor((now - due) / 86_400_000) : 0
+  const unresolved = (rev.comment_count ?? 0) - (rev.resolved_count ?? 0)
+  return Math.min(daysOverdue, 30) + Math.max(0, unresolved)
+}
+
 export function ActiveRevisionsDashboard({ revisions }: { revisions: RevisionRow[] }) {
   if (!revisions || revisions.length === 0) return null
+
+  // T-29 skip-it: sort by urgency so overdue + unresolved-comment-heavy rows
+  // surface first. Full 3-subgroup UI is round 7 (pending schema check).
+  const now = Date.now()
+  const sorted = [...revisions].sort((a, b) => urgencyScore(b, now) - urgencyScore(a, now))
+  const count = sorted.length
+  const countHigh = count >= 5
 
   return (
     <div style={{ marginBottom: '2rem' }}>
@@ -859,10 +877,20 @@ export function ActiveRevisionsDashboard({ revisions }: { revisions: RevisionRow
             margin: 0,
           }}
         >
-          Active Revisions
+          Needs your attention
         </h2>
-        <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.75 }}>
-          {revisions.length}
+        <span
+          style={{
+            fontSize: '11px',
+            fontWeight: 600,
+            padding: '2px 8px',
+            borderRadius: 'var(--radius-full)',
+            color: countHigh ? 'var(--gold)' : 'var(--slate)',
+            background: countHigh ? 'var(--gold-emphasis)' : 'var(--surface-2)',
+            letterSpacing: '0.02em',
+          }}
+        >
+          {count}
         </span>
       </div>
 
@@ -895,7 +923,7 @@ export function ActiveRevisionsDashboard({ revisions }: { revisions: RevisionRow
 
         {/* Rows */}
         <AnimatePresence mode="popLayout">
-          {revisions.map((rev, idx) => {
+          {sorted.map((rev, idx) => {
             const commentCount = rev.comment_count ?? 0
             const resolvedCount = rev.resolved_count ?? 0
             const progress = commentCount > 0 ? Math.round((resolvedCount / commentCount) * 100) : 0
