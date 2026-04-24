@@ -69,9 +69,9 @@ export default function ReleaseRibbon() {
     <AnimatePresence>
       <motion.div
         data-testid="release-ribbon"
-        initial={{ opacity: 0, y: -6 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, height: 0 }}
+        initial={{ y: -6 }}
+        animate={{ y: 0 }}
+        exit={{ height: 0 }}
         transition={spring.default}
         className="mb-4"
         style={{

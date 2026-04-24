@@ -64,12 +64,13 @@ export default function PresenceAvatars({ slugs, size = '2xs', limit = 4, peerIn
       }}
     >
       <span
+        role="img"
+        aria-label={INTENT_LABEL[dominant]}
         style={{
           width: 6, height: 6, borderRadius: 'var(--radius-circle)',
           background: INTENT_COLOR[dominant], marginRight: 4, flexShrink: 0,
           transition: 'background 300ms ease',
         }}
-        aria-label={INTENT_LABEL[dominant]}
       />
       <div className="flex items-center" style={{ marginRight: 4 }}>
         {visible.map((slug, i) => {

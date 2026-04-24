@@ -48,10 +48,20 @@ export function useSwipeAction({
     }
     setEnabled(true)
     const t = e.touches[0]
+    // Capture edge-touch at the actual touch time. Consumed in onDragEnd
+    // to skip action callbacks (iOS Safari back-gesture coexistence).
     edgeGuardRef.current = t.clientX < 32
   }
 
   const onDragEnd = (_e: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+    // If the gesture started within 32px of the viewport-left, the user
+    // was going for the OS back-swipe — do not fire our row actions. The
+    // drag value still resets so the row returns to rest position.
+    if (edgeGuardRef.current) {
+      edgeGuardRef.current = false
+      x.set(0)
+      return
+    }
     const rowWidth = (typeof window !== 'undefined' ? window.innerWidth : 360) * thresholdPct
     const passesDistance = Math.abs(info.offset.x) > rowWidth
     const passesVelocity = Math.abs(info.velocity.x) > thresholdVelocity
@@ -64,7 +74,11 @@ export function useSwipeAction({
 
   return {
     motionProps: {
-      drag: enabled && !edgeGuardRef.current ? ('x' as const) : false,
+      // Drag is permitted whenever the row is on a mobile viewport. The
+      // iOS back-gesture is handled in onDragEnd (via edgeGuardRef set
+      // in onTouchStart); trying to block at this layer read the ref
+      // at render time, before the touch ever happened (dead check).
+      drag: enabled ? ('x' as const) : false,
       dragConstraints: { left: 0, right: 0 },
       dragElastic: 0.15,
       dragDirectionLock: true,

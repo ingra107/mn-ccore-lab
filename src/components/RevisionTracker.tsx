@@ -148,9 +148,9 @@ export default function RevisionTracker({ projectId }: RevisionTrackerProps) {
       <AnimatePresence>
         {showAddForm && (
           <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
+            initial={{ height: 0 }}
+            animate={{ height: 'auto' }}
+            exit={{ height: 0 }}
             style={{ overflow: 'hidden', marginBottom: '16px' }}
           >
             <div
@@ -412,9 +412,9 @@ function RevisionRound({ revision, projectId, isExpanded, onToggle, onStatusChan
       <AnimatePresence>
         {isExpanded && (
           <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
+            initial={{ height: 0 }}
+            animate={{ height: 'auto' }}
+            exit={{ height: 0 }}
             transition={{ duration: 0.25 }}
             style={{ overflow: 'hidden' }}
           >
@@ -531,9 +531,9 @@ function RevisionCommentsList({ revisionId, projectId }: RevisionCommentsListPro
                       <motion.div
                         key={comment.id}
                         layout
-                        initial={{ opacity: 0, x: -8 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: 8 }}
+                        initial={{ x: -8 }}
+                        animate={{ x: 0 }}
+                        exit={{ x: 8 }}
                         transition={{ duration: 0.15, delay: ci * 0.02 }}
                         className="rounded-lg"
                         style={{

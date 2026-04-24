@@ -47,8 +47,7 @@ function renderDisplayVariant({
           style={{
             marginTop: 'var(--sp-sm)',
             fontSize: '12px',
-            color: 'var(--slate)',
-            opacity: 0.85,
+            color: 'var(--muted)',
           }}
         >
           {subtitle}

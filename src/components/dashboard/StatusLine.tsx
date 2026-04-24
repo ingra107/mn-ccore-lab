@@ -102,12 +102,15 @@ export default function StatusLine({ tasks, loading }: StatusLineProps) {
           fontSize: '11px',
           fontWeight: 500,
           background: muted ? 'var(--surface-2)' : fill,
-          color: muted ? 'var(--slate)' : '#fff',
+          // Zero-count chips use --muted (passes AA at full opacity on both
+          // themes); non-zero chips use white text on the stage fill. Parent
+          // opacity on slate/colored children would compound below AA —
+          // see Rule 43. Keep opacity=1 for both paths.
+          color: muted ? 'var(--muted)' : '#fff',
           border: muted ? '1px solid var(--border-subtle)' : 'none',
           textDecoration: 'none',
           whiteSpace: 'nowrap',
           flexShrink: 0,
-          opacity: muted ? 0.55 : 1,
         }
         if (muted) {
           return (

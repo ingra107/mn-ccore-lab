@@ -882,7 +882,7 @@ function TaskGridRow({
       onKeyDown={(e) => {
         if (e.key === 'Enter') { e.preventDefault(); onOpenDetail?.(task) }
       }}
-      onContextMenu={(e) => onContextMenu?.(e, task.id)}
+      onContextMenu={(e) => { longPress.onContextMenu(e); onContextMenu?.(e, task.id) }}
       onTouchStart={longPress.onTouchStart}
       onTouchMove={longPress.onTouchMove}
       onTouchEnd={longPress.onTouchEnd}
