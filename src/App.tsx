@@ -109,6 +109,7 @@ const Network = lazy(() => import('./pages/Network'))
 
 // Portal pages — lazy-loaded (existing)
 const Dashboard = lazy(() => import('./pages/Dashboard'))
+const TodayPage = lazy(() => import('./pages/portal/TodayPage'))
 const Projects = lazy(() => import('./pages/Projects'))
 const ProjectDetail = lazy(() => import('./pages/ProjectDetail'))
 const Meetings = lazy(() => import('./pages/Meetings'))
@@ -243,12 +244,10 @@ export default function App() {
                     the URL instantly gates portal access (2026-04-18). */}
                 <Route element={<RequireAuth><PortalLayout /></RequireAuth>}>
                   {/* Portal-prefixed canonical routes (2026-04-21 migration). */}
-                  <Route path="/portal/dashboard" element={<ErrorBoundary><PageErrorBoundary pageName="Dashboard"><Dashboard /></PageErrorBoundary></ErrorBoundary>} />
-                  {/* Lab Overview — same component as Dashboard for now. After
-                      Today B2 ships at /portal/dashboard, the component there
-                      will be TodayPage and Lab Overview will keep this route.
-                      Kept as a separate route from day one so deep-links from
-                      Today's PillStrip "Lab Health" pill work pre-cutover. */}
+                  {/* Today B2 — operating-day landing (CLAUDE.md Rule 52).
+                      The old card-grid Dashboard moved to /portal/overview
+                      below, kept indefinitely as Lab Overview. */}
+                  <Route path="/portal/dashboard" element={<ErrorBoundary><PageErrorBoundary pageName="Today"><TodayPage /></PageErrorBoundary></ErrorBoundary>} />
                   <Route path="/portal/overview" element={<ErrorBoundary><PageErrorBoundary pageName="LabOverview"><Dashboard /></PageErrorBoundary></ErrorBoundary>} />
                   <Route path="/portal/personal" element={<ErrorBoundary><Personal /></ErrorBoundary>} />
                   <Route path="/portal/my-items" element={<ErrorBoundary><MyItems /></ErrorBoundary>} />
