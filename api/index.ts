@@ -9,7 +9,7 @@ import { notifyClients } from './lib/notify';
 import { handleUploadUrl, handleUploadDone, handleListFiles, handleGetFile, handleDeleteFile } from './routes/uploads';
 
 // ── Route modules ──────────────────────────────────────────
-import { handleTasks, handleActionItems, handleOverdueCount, handleUpdateTaskStatus, handleToggleTask, handleUpdateTask, handleCreateTask, handleGetTaskComments, handleAddTaskComment, handleGetTaskActivity, handleGetTaskUpdates, handleGetRecentTaskUpdates, handlePostTaskUpdate, handleBatchUpdateTasks, handleSyncBulkTasks, handleAcknowledgeTask, handleDeleteTask, handleMobileTasksToHub } from './routes/tasks';
+import { handleTasks, handleActionItems, handleOverdueCount, handleUpdateTaskStatus, handleToggleTask, handleUpdateTask, handleCreateTask, handleGetTaskComments, handleAddTaskComment, handleGetTaskActivity, handleGetTaskDetail, handleGetTaskUpdates, handleGetRecentTaskUpdates, handlePostTaskUpdate, handleBatchUpdateTasks, handleSyncBulkTasks, handleAcknowledgeTask, handleDeleteTask, handleMobileTasksToHub } from './routes/tasks';
 import { handleProjects, handleCreateProject, handleGetComments, handleGetProjectUpdates, handleProjectHealth, handleRecentUpdates, handleUpdateProject, handleDeleteProject, handleGetDeletedProjectsSince, handleAddComment, handlePostProjectUpdate, handleGetMilestones, handleUpdateMilestoneNote, handleUpdateMilestoneCompletion } from './routes/projects';
 import { handleMeetings, handleNextMeeting, handleGetMeeting, handleGetAgendaItems, handleAddAgendaItem, handleReorderAgenda, handleCreateMeeting, handleUpdateMeetingNotes, handleMeetingPrep, handleGenerateAgenda } from './routes/meetings';
 import { handlePublications, handleGrants, handleCollaborationGraph, handleStats, handleGrantsTimeline, handleUpdateGrant } from './routes/publications';
@@ -564,6 +564,7 @@ app.get('/api/tasks/:id/files', async (c) => {
 });
 app.get('/api/tasks/:id/updates', (c) => handleGetTaskUpdates(c.req.param('id'), E(c)));
 app.get('/api/tasks/:id/activity', (c) => handleGetTaskActivity(c.req.param('id'), E(c)));
+app.get('/api/tasks/:id/detail', (c) => handleGetTaskDetail(c.req.param('id'), E(c)));
 app.get('/api/tasks/:id/subtasks', (c) => handleGetSubtasks(c.req.param('id'), E(c)));
 app.get('/api/tasks/:id/handoffs', (c) => handleGetHandoffs(c.req.param('id'), E(c)));
 
