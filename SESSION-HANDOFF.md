@@ -12,24 +12,30 @@
 
 ## ⚡ Nick decisions (triaged 2026-04-23 night)
 
-These were vision-level items NOT addressed by the tactical auto-mode queue.
-Triage done — outcomes below.
+Vision-level items NOT addressed by the tactical auto-mode queue. Triaged.
+
+> **Note on "CD":** Claude Design is a separate claude.ai project Nick feeds
+> screenshot bundles to; it returns tickets as markdown. Round-trip artifacts
+> below are prompt-ready content for pasting into that project, NOT emails
+> to a human.
 
 - **DD-#3 status-line pilot** → **DRAFT SPEC FIRST.** Spec lives at
   `docs/specs/dd-3-status-line-pilot.md`. Nick reviews, then next session
   ships Option C (chip row). Builds on already-shipped T-30 greeting shrink.
-- **DD-#1, #2, #4, #5, #6, #7** → **REQUEST CD DOC.** Email draft at
-  `docs/cd-round-trip/2026-04-23-dd-doc-request.md` asks CD to drop
-  `DESIGN-DIRECTION.md` with one paragraph per DD item. Nick to send.
+- **DD-#1, #2, #4, #5, #6, #7** → **REQUEST CD DOC.** Prompt-ready at
+  `docs/cd-round-trip/2026-04-23-dd-doc-prompt.md` asks CD project to drop
+  `DESIGN-DIRECTION.md` with one paragraph per DD item. Nick pastes into
+  the claude.ai project; response commits to `docs/design-briefs/`.
 - **Hermes ambient shape** → **SUGGEST SLOT ON LANDING.** Small strip on
   TaskDetailPanel / ProjectDetail landing surfaces 1 proactive Hermes
   suggestion ("3 tasks stale >14d — draft nudges?"). Opt-in, most visible.
   Spec not drafted yet; queue for a later session.
-- **T-24 Digest rows view** → **AWAITING DATE.** Supervised session needed
-  (1000+ line file). Nick to pick a date.
+- **T-24 Digest rows view** → **DROPPED.** Not worth the 1000+ line refactor
+  lift. Current card view stays. Removed from backlog.
 - **T-29 Manuscripts "Needs attention" grouping** → **CD CLARIFICATION
-  REQUESTED.** Email draft at `docs/cd-round-trip/2026-04-23-t-29-clarification.md`
-  asks CD to verify against live page + specify UI. Nick to send.
+  REQUESTED.** Prompt-ready at `docs/cd-round-trip/2026-04-23-t-29-prompt.md`
+  asks CD project to verify against live page + specify UI. Nick pastes
+  into the claude.ai project.
 
 ---
 
@@ -256,12 +262,10 @@ update this file + push + run `/session-close`.
   auto-execute.
 
 **Scheduled (future session, not auto-mode):**
-- **T-24 Research Digest rows view** — Airtable multi-view pillar. 1000+
-  line file refactor. Schedule a Nick-supervised session — date set via
-  the decisions block triage at top of this file.
 - **T-29 Manuscripts "Needs attention" grouping** — CD described UI that
   doesn't exist in current `src/pages/portal/Manuscripts.tsx`. Awaiting
-  CD clarification round-trip before re-ticketing.
+  CD clarification round-trip (prompt at
+  `docs/cd-round-trip/2026-04-23-t-29-prompt.md`) before re-ticketing.
 
 ## Ship rhythm
 
@@ -485,10 +489,10 @@ last 3 commits to understand before continuing.
 - **T-51** Typing indicators on comment threads. **→ See Batch F in
   live queue.**
 
-### Big lift (scheduled supervised session — see decisions block)
-- **T-24** Research Digest rows view (`?view=rows`). Significant lift
-  — ~1000-line file. Airtable multi-view pillar. **→ Date via Nick
-  decisions-block triage.**
+### Dropped
+- **T-24** Research Digest rows view. **→ DROPPED 2026-04-23 night.**
+  Card view stays; multi-view pillar lives elsewhere. 1000+ line
+  refactor not worth the lift given current usage.
 
 ### Direction doc (strategic, not ticketed)
 - DESIGN-DIRECTION.md items #1-7 are 2-3 sprint commitments. DD-#3
