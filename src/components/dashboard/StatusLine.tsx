@@ -38,13 +38,12 @@ export default function StatusLine({ tasks, loading }: StatusLineProps) {
     const irb = regulatory.length
     const doneToday = tasks.filter((t) => t.completed_at && t.completed_at.startsWith(todayStr)).length
 
-    const all: Chip[] = [
+    return [
       { key: 'overdue',  icon: AlertTriangle,  label: 'overdue',    count: overdue,   href: `${PATHS.myTasks}?filter=overdue`,   fill: 'var(--stage-fill-review)' },
       { key: 'week',     icon: CalendarDays,   label: 'this week',  count: thisWeek,  href: `${PATHS.myTasks}?filter=this_week`, fill: 'var(--stage-fill-writing)' },
       { key: 'irb',      icon: ShieldAlert,    label: irb === 1 ? 'IRB renewal' : 'IRB renewals', count: irb, href: PATHS.deadlines, fill: 'var(--stage-fill-analysis)' },
       { key: 'done',     icon: CheckCircle2,   label: 'done today', count: doneToday, href: `${PATHS.myTasks}?filter=today`,     fill: 'var(--stage-fill-published)' },
     ]
-    return all.filter((c) => c.count > 0).slice(0, 4)
   }, [tasks, regulatory])
 
   if (loading) {
@@ -66,9 +65,15 @@ export default function StatusLine({ tasks, loading }: StatusLineProps) {
     )
   }
 
-  if (chips.length === 0) {
-    return (
-      <div data-testid="dashboard-status-line" className="flex items-center gap-2">
+  const allZero = chips.every((c) => c.count === 0)
+
+  return (
+    <div
+      data-testid="dashboard-status-line"
+      className="flex items-center gap-2 flex-wrap max-[640px]:flex-nowrap max-[640px]:overflow-x-auto"
+      style={{ minWidth: 0 }}
+    >
+      {allZero && (
         <span
           className="inline-flex items-center gap-1.5 rounded-full"
           style={{
@@ -83,39 +88,52 @@ export default function StatusLine({ tasks, loading }: StatusLineProps) {
           <CheckCircle2 size={12} />
           All clear
         </span>
-      </div>
-    )
-  }
-
-  return (
-    <div
-      data-testid="dashboard-status-line"
-      className="flex items-center gap-2 flex-wrap max-[640px]:flex-nowrap max-[640px]:overflow-x-auto"
-      style={{ minWidth: 0 }}
-    >
-      {chips.map(({ key, icon: Icon, label, count, href, fill }) => (
-        <Link
-          key={key}
-          to={href}
-          className="inline-flex items-center gap-1.5 rounded-full transition-transform"
-          style={{
-            padding: '3px 10px',
-            fontSize: '11px',
-            fontWeight: 500,
-            background: fill,
-            color: '#fff',
-            border: 'none',
-            textDecoration: 'none',
-            whiteSpace: 'nowrap',
-            flexShrink: 0,
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.transform = 'translateY(-1px)')}
-          onMouseLeave={(e) => (e.currentTarget.style.transform = 'translateY(0)')}
-        >
-          <Icon size={11} />
-          <span>{count} {label}</span>
-        </Link>
-      ))}
+      )}
+      {chips.map(({ key, icon: Icon, label, count, href, fill }) => {
+        const muted = count === 0
+        const inner = (
+          <>
+            <Icon size={11} />
+            <span>{count} {label}</span>
+          </>
+        )
+        const sharedStyle: React.CSSProperties = {
+          padding: '3px 10px',
+          fontSize: '11px',
+          fontWeight: 500,
+          background: muted ? 'var(--surface-2)' : fill,
+          color: muted ? 'var(--slate)' : '#fff',
+          border: muted ? '1px solid var(--border-subtle)' : 'none',
+          textDecoration: 'none',
+          whiteSpace: 'nowrap',
+          flexShrink: 0,
+          opacity: muted ? 0.55 : 1,
+        }
+        if (muted) {
+          return (
+            <span
+              key={key}
+              className="inline-flex items-center gap-1.5 rounded-full"
+              style={sharedStyle}
+              aria-label={`${count} ${label}`}
+            >
+              {inner}
+            </span>
+          )
+        }
+        return (
+          <Link
+            key={key}
+            to={href}
+            className="inline-flex items-center gap-1.5 rounded-full transition-transform"
+            style={sharedStyle}
+            onMouseEnter={(e) => (e.currentTarget.style.transform = 'translateY(-1px)')}
+            onMouseLeave={(e) => (e.currentTarget.style.transform = 'translateY(0)')}
+          >
+            {inner}
+          </Link>
+        )
+      })}
     </div>
   )
 }
