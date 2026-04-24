@@ -736,6 +736,36 @@ export function useSubtasks(taskId: string) {
   })
 }
 
+// ── Task detail (drawer fan-out) ─────────────────────────────
+// Backed by GET /api/tasks/:id/detail. Single round-trip for the
+// TodayPage / UnifiedMyTasks task drawer (why / updates / subtasks /
+// blocks). See api/routes/tasks.ts:handleGetTaskDetail.
+
+export interface TaskDetailUpdate { when: string; who: string; text: string; kind: 'note' | 'event' }
+export interface TaskDetailSubtask { id: string; title: string; completed: number }
+export interface TaskDetailBlock { id: string; title: string }
+export interface TaskDetailPayload {
+  why: string | null
+  updates: TaskDetailUpdate[]
+  subtasks: TaskDetailSubtask[]
+  blocks: TaskDetailBlock[]
+}
+
+export function useTaskDetail(taskId: string | null) {
+  return useQuery({
+    queryKey: ['task-detail', taskId],
+    queryFn: async (): Promise<TaskDetailPayload> => {
+      if (!taskId) return { why: null, updates: [], subtasks: [], blocks: [] }
+      const res = await fetch(`/api/tasks/${taskId}/detail`)
+      if (!res.ok) return { why: null, updates: [], subtasks: [], blocks: [] }
+      const data = await res.json() as { data: TaskDetailPayload }
+      return data.data
+    },
+    staleTime: 30 * 1000,
+    enabled: !!taskId,
+  })
+}
+
 // ── Task Handoffs ──────────────────────────────────────────
 
 interface HandoffRow {
