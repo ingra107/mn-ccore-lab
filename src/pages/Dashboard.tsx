@@ -12,6 +12,7 @@ import { formatMediumDate } from '../lib/dateUtils'
 import { isProductionVisible } from '../lib/isProductionVisible'
 import { getUserRoleFromAuth, ROLE_DEFAULTS } from '../lib/roleDefaults'
 import WelcomeBanner from '../components/WelcomeBanner'
+import ReleaseRibbon from '../components/ReleaseRibbon'
 import { PATHS } from '../constants/paths'
 import PageTooltip from '../components/PageTooltip'
 import PipelineCard from '../components/dashboard/PipelineCard'
@@ -447,8 +448,11 @@ export default function Dashboard() {
           )
         })()}
 
-        {/* Welcome banner (first-visit onboarding — conditional, rarely shown) */}
-        {/* PhaseReleaseBanner moved to PortalLayout top bar as a pill (R4-10). */}
+        {/* DD-5: version-keyed release ribbon for "what shipped this week."
+            Self-dismisses 7 days after first view; bumped CURRENT_RELEASE in
+            ReleaseRibbon.tsx intentionally re-raises it. Sits above the
+            WelcomeBanner (onboarding fallback for day-1 users only). */}
+        <ReleaseRibbon />
         <WelcomeBanner />
 
         {/* Customize panel \u2014 R4-P3-01: pills split into Always-on vs

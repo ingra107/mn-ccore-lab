@@ -396,9 +396,10 @@ export default function PIAnalytics() {
         </div>
       </PageHeader>
 
-      {/* Top-line Metric Cards */}
-      <motion.div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3" variants={staggerContainer} initial="hidden" animate="visible">
+      {/* Top-line hero stats — DD-6 display variant (Fraunces 60px + gold label) */}
+      <motion.div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" variants={staggerContainer} initial="hidden" animate="visible">
         <motion.div variants={staggerItem}><MetricCard
+          variant="display"
           icon={Target}
           label="Commitments Kept"
           value={`${commitRate}%`}
@@ -406,6 +407,7 @@ export default function PIAnalytics() {
           subtitle={`${data?.commitments.completed || 0} of ${data?.commitments.total || 0}`}
         /></motion.div>
         <motion.div variants={staggerItem}><MetricCard
+          variant="display"
           icon={Clock}
           label="Avg Response"
           value={`${data?.responseMetrics.avg_days || 0}d`}
@@ -413,6 +415,7 @@ export default function PIAnalytics() {
           subtitle={data?.responseMetrics.trend === 'improving' ? 'Getting faster' : data?.responseMetrics.trend === 'slowing' ? 'Getting slower' : 'Stable'}
         /></motion.div>
         <motion.div variants={staggerItem}><MetricCard
+          variant="display"
           icon={DollarSign}
           label="Active Funding"
           value={data?.grantPipeline.active_funding ? formatCurrency(data.grantPipeline.active_funding) : '$0'}
@@ -420,6 +423,7 @@ export default function PIAnalytics() {
           subtitle={`${data?.grantPipeline.active || 0} active grants`}
         /></motion.div>
         <motion.div variants={staggerItem}><MetricCard
+          variant="display"
           icon={BookOpen}
           label="Trainee Pubs"
           value={data?.menteeVelocity.reduce((s, m) => s + m.pub_count, 0) || 0}

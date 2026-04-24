@@ -1,5 +1,63 @@
 import type { LucideIcon } from 'lucide-react'
 
+// DD-6: headline stat card — big serif number + small gold label.
+// Pulse Kiosk uses the same Fraunces treatment and it's the product's
+// best visual asset; this shares that DNA. Number stays tabular-nums
+// so decimals line up when multiple display cards sit side-by-side.
+function renderDisplayVariant({
+  Icon, label, value, color, subtitle,
+}: {
+  Icon: LucideIcon; label: string; value: number | string; color: string; subtitle?: string
+}) {
+  return (
+    <div
+      className="rounded-xl border"
+      style={{ borderColor: 'var(--border-subtle)', padding: 'calc(var(--sp-lg) * 1.2)' }}
+    >
+      <div className="flex items-center justify-between mb-3">
+        <span
+          style={{
+            fontSize: '11px',
+            fontWeight: 600,
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            color: 'var(--gold)',
+          }}
+        >
+          {label}
+        </span>
+        <Icon size={16} style={{ color, opacity: 0.85 }} />
+      </div>
+      <div
+        className="tabular-nums"
+        style={{
+          fontFamily: 'var(--font-display)',
+          fontSize: 'clamp(44px, 8vw, 60px)',
+          fontWeight: 500,
+          lineHeight: 1,
+          color: 'var(--ink)',
+          letterSpacing: '-0.01em',
+        }}
+      >
+        {value}
+      </div>
+      {subtitle && (
+        <span
+          className="block"
+          style={{
+            marginTop: 'var(--sp-sm)',
+            fontSize: '12px',
+            color: 'var(--slate)',
+            opacity: 0.85,
+          }}
+        >
+          {subtitle}
+        </span>
+      )}
+    </div>
+  )
+}
+
 interface MetricCardProps {
   icon: LucideIcon
   label: string
@@ -13,9 +71,15 @@ interface MetricCardProps {
    *  "no change" so empty hero cards stop reading as broken. */
   previous?: number
   previousLabel?: string
+  /** DD-6: 'display' renders 60px Fraunces number + 11px all-caps gold
+   *  label, ~20% extra padding. Pulse Kiosk visual DNA. Use for 4-6
+   *  headline hero stats (PI dashboard, Lab Health, Trajectory), never
+   *  in dense rows. Default 'default' stays the 20px DM Sans style. */
+  variant?: 'default' | 'display'
 }
 
-export default function MetricCard({ icon: Icon, label, value, color, subtitle, sparklineData, previous, previousLabel }: MetricCardProps) {
+export default function MetricCard({ icon: Icon, label, value, color, subtitle, sparklineData, previous, previousLabel, variant = 'default' }: MetricCardProps) {
+  if (variant === 'display') return renderDisplayVariant({ Icon, label, value, color, subtitle })
   // Compute delta only when both sides are numeric. We render a chip even
   // when delta === 0 so zero values get explicit context.
   const numericValue = typeof value === 'number' ? value : null

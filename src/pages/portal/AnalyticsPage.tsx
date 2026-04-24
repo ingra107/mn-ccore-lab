@@ -458,12 +458,12 @@ export default function AnalyticsPage() {
         <ActivityHeatmap days={range === '7d' ? 30 : range === '4w' ? 90 : range === '3m' ? 180 : 365} />
       </div>
 
-      {/* Second row: summary stats */}
-      <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <MetricCard icon={FolderKanban} label="Active Projects" value={projects.filter((p) => isProjectActive(p.status)).length} color="var(--teal)" subtitle={`${projects.length} total`} />
-        <MetricCard icon={Lightbulb} label="Research Ideas" value={activeIdeas} color="var(--gold)" subtitle={`${ideas.length} total`} />
-        <MetricCard icon={FileText} label="Pending Tasks" value={pendingTasks} color="var(--ink)" subtitle={`${tasks.length} total`} />
-        <MetricCard icon={Users} label="Project Health" value={health?.healthy || 0} color="var(--green)" subtitle={`${health?.needs_attention || 0} attention · ${(health?.at_risk || 0) + (health?.critical || 0)} at risk`} />
+      {/* Second row: summary hero stats — DD-6 display variant */}
+      <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <MetricCard variant="display" icon={FolderKanban} label="Active Projects" value={projects.filter((p) => isProjectActive(p.status)).length} color="var(--teal)" subtitle={`${projects.length} total`} />
+        <MetricCard variant="display" icon={Lightbulb} label="Research Ideas" value={activeIdeas} color="var(--gold)" subtitle={`${ideas.length} total`} />
+        <MetricCard variant="display" icon={FileText} label="Pending Tasks" value={pendingTasks} color="var(--ink)" subtitle={`${tasks.length} total`} />
+        <MetricCard variant="display" icon={Users} label="Project Health" value={health?.healthy || 0} color="var(--green)" subtitle={`${health?.needs_attention || 0} attention · ${(health?.at_risk || 0) + (health?.critical || 0)} at risk`} />
       </div>
 
       {/* Task Velocity — completions per week, last 8 weeks */}
