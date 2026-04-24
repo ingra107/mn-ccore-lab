@@ -668,6 +668,20 @@ export default function Personal() {
     [pendingTasks]
   )
 
+  // T-31 Today hero — mirrors MyTasks TodayHero pattern so Personal's
+  // first-glance is operational, not editorial.
+  const todayHeroLists = useMemo(() => {
+    const now = new Date()
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1)
+    const overdue = pendingTasks.filter(t => t.due_date && new Date(t.due_date + 'T23:59:59') < now)
+      .sort((a, b) => (a.due_date || '').localeCompare(b.due_date || ''))
+    const dueToday = pendingTasks.filter(t => t.due_date
+      && new Date(t.due_date + 'T12:00:00') >= today
+      && new Date(t.due_date + 'T12:00:00') < tomorrow)
+    return { overdue, dueToday }
+  }, [pendingTasks])
+
   // Upcoming deadlines (next 14 days)
   const upcomingDeadlines = useMemo(() => {
     const now = new Date()
@@ -823,6 +837,83 @@ export default function Personal() {
           >
             Sign in &rarr;
           </a>
+        </div>
+      )}
+
+      {/* T-31 TodayHero — operational first-glance, matches MyTasks pattern */}
+      {currentUser && (todayHeroLists.overdue.length > 0 || todayHeroLists.dueToday.length > 0) && (
+        <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="rounded-xl border p-3" style={{ borderColor: 'var(--border-subtle)', background: 'var(--surface-1)' }}>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-[10px] px-1.5 py-0.5 rounded font-semibold" style={{ color: '#fff', background: 'var(--maroon-solid)' }}>
+                OVERDUE
+              </span>
+              <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
+                {todayHeroLists.overdue.length}
+              </span>
+            </div>
+            {todayHeroLists.overdue.length === 0 ? (
+              <p className="text-[11px] py-1" style={{ color: 'var(--slate)', opacity: 0.7, margin: 0 }}>Nothing overdue — nice.</p>
+            ) : (
+              <div className="flex flex-col gap-1">
+                {todayHeroLists.overdue.slice(0, 5).map(t => {
+                  const proj = t.project_id ? projects.find(p => p.slug === t.project_id) : null
+                  return (
+                    <div
+                      key={t.id}
+                      onClick={() => setSelectedTask(t)}
+                      className="flex items-center gap-2 text-xs rounded px-1.5 py-1 cursor-pointer"
+                      style={{ color: 'var(--ink)' }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = 'var(--hover-subtle)'}
+                      onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                    >
+                      <span className="text-[10px] flex-shrink-0" style={{ color: 'var(--maroon)', fontWeight: 500, minWidth: 40 }}>
+                        {t.due_date ? new Date(t.due_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''}
+                      </span>
+                      <span className="truncate flex-1" style={{ minWidth: 0 }}>{t.title || t.description}</span>
+                      {proj && <span className="text-[10px] truncate flex-shrink-0" style={{ color: 'var(--slate)', opacity: 0.7, maxWidth: 80 }}>{proj.title}</span>}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+          <div className="rounded-xl border p-3" style={{ borderColor: 'var(--border-subtle)', background: 'var(--surface-1)' }}>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-[10px] px-1.5 py-0.5 rounded font-semibold" style={{ color: '#fff', background: 'var(--teal-solid)' }}>
+                DUE TODAY
+              </span>
+              <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
+                {todayHeroLists.dueToday.length}
+              </span>
+            </div>
+            {todayHeroLists.dueToday.length === 0 ? (
+              <p className="text-[11px] py-1" style={{ color: 'var(--slate)', opacity: 0.7, margin: 0 }}>Nothing due today.</p>
+            ) : (
+              <div className="flex flex-col gap-1">
+                {todayHeroLists.dueToday.slice(0, 5).map(t => {
+                  const proj = t.project_id ? projects.find(p => p.slug === t.project_id) : null
+                  const pColor = t.priority === 'urgent' ? 'var(--maroon)' : t.priority === 'high' ? 'var(--orange)' : 'var(--slate)'
+                  return (
+                    <div
+                      key={t.id}
+                      onClick={() => setSelectedTask(t)}
+                      className="flex items-center gap-2 text-xs rounded px-1.5 py-1 cursor-pointer"
+                      style={{ color: 'var(--ink)' }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = 'var(--hover-subtle)'}
+                      onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                    >
+                      <span className="text-[10px] flex-shrink-0 capitalize font-medium" style={{ color: pColor, minWidth: 40 }}>
+                        {t.priority || 'med'}
+                      </span>
+                      <span className="truncate flex-1" style={{ minWidth: 0 }}>{t.title || t.description}</span>
+                      {proj && <span className="text-[10px] truncate flex-shrink-0" style={{ color: 'var(--slate)', opacity: 0.7, maxWidth: 80 }}>{proj.title}</span>}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
         </div>
       )}
 

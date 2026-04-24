@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo } from 'react'
+import { useState, useRef, useMemo, useCallback } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useParams, Link } from 'react-router-dom'
 import Breadcrumb from '../components/Breadcrumb'
@@ -18,6 +18,7 @@ import {
   X,
   Check,
   Link2,
+  Paperclip,
 } from 'lucide-react'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useProjects, useMeetingsApi, useTasks, useProjectUpdates, useRevisions, useComments } from '../hooks/useApiData'
@@ -230,6 +231,52 @@ function ProjectDetailInner({ project }: InnerProps) {
   const [quickComposeText, setQuickComposeText] = useState('')
   const [quickComposeKind, setQuickComposeKind] = useState<'note' | 'comment'>('note')
   const [quickComposeSubmitting, setQuickComposeSubmitting] = useState(false)
+  const [quickComposeDragOver, setQuickComposeDragOver] = useState(false)
+  const [quickComposeUploading, setQuickComposeUploading] = useState(false)
+  const quickComposeFileInputRef = useRef<HTMLInputElement>(null)
+  // T-04 inline file drop — Slack parity. Upload → append link to compose.
+  const uploadToCompose = useCallback(async (file: File) => {
+    if (!project) return
+    setQuickComposeUploading(true)
+    try {
+      const urlRes = await fetch('/api/upload/url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          filename: file.name,
+          contentType: file.type || 'application/octet-stream',
+          context: { type: 'project', id: project.slug },
+        }),
+      })
+      const urlData = await urlRes.json() as { data?: { uploadUrl?: string; key?: string } }
+      if (!urlData.data?.uploadUrl || !urlData.data?.key) throw new Error('presign failed')
+      await fetch(urlData.data.uploadUrl, {
+        method: 'PUT',
+        body: file,
+        headers: { 'Content-Type': file.type || 'application/octet-stream' },
+      })
+      const doneRes = await fetch('/api/upload/done', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          key: urlData.data.key,
+          filename: file.name,
+          contentType: file.type,
+          sizeBytes: file.size,
+          entityType: 'project',
+          entityId: project.slug,
+        }),
+      })
+      const doneData = await doneRes.json() as { data?: { url?: string } }
+      queryClient.invalidateQueries({ queryKey: ['attachments', 'project', project.slug] })
+      const link = doneData.data?.url ?? `/api/files/${urlData.data.key}`
+      setQuickComposeText((prev) => (prev ? `${prev}\n[${file.name}](${link})` : `[${file.name}](${link})`))
+    } catch (err) {
+      console.error('compose upload failed', err)
+    } finally {
+      setQuickComposeUploading(false)
+    }
+  }, [project, queryClient])
   const handleQuickCompose = async () => {
     const text = quickComposeText.trim()
     if (!text || quickComposeSubmitting) return
@@ -815,17 +862,66 @@ function ProjectDetailInner({ project }: InnerProps) {
               </button>
             </div>
           </div>
-          <div className="flex items-start gap-2">
+          <div
+            className="flex items-start gap-2"
+            onDragOver={(e) => { e.preventDefault(); setQuickComposeDragOver(true) }}
+            onDragLeave={() => setQuickComposeDragOver(false)}
+            onDrop={(e) => {
+              e.preventDefault()
+              setQuickComposeDragOver(false)
+              const files = Array.from(e.dataTransfer.files || [])
+              files.forEach(uploadToCompose)
+            }}
+            style={{
+              borderRadius: 'var(--radius-md)',
+              outline: quickComposeDragOver ? '2px dashed var(--teal)' : 'none',
+              outlineOffset: '2px',
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => quickComposeFileInputRef.current?.click()}
+              disabled={quickComposeUploading}
+              title="Attach file (or drag + drop, or paste an image)"
+              style={{
+                flexShrink: 0, padding: '8px', borderRadius: 'var(--radius-md)',
+                background: 'transparent', color: 'var(--slate)', border: '1px solid var(--border-subtle)',
+                cursor: quickComposeUploading ? 'wait' : 'pointer',
+                opacity: quickComposeUploading ? 0.55 : 0.85,
+              }}
+            >
+              <Paperclip size={14} />
+            </button>
+            <input
+              ref={quickComposeFileInputRef}
+              type="file"
+              multiple
+              onChange={(e) => {
+                const files = Array.from(e.target.files || [])
+                files.forEach(uploadToCompose)
+                e.target.value = ''
+              }}
+              style={{ display: 'none' }}
+            />
             <textarea
               value={quickComposeText}
               onChange={(e) => setQuickComposeText(e.target.value)}
+              onPaste={(e) => {
+                const items = Array.from(e.clipboardData?.items || [])
+                const fileItem = items.find((it) => it.kind === 'file')
+                if (fileItem) {
+                  e.preventDefault()
+                  const f = fileItem.getAsFile()
+                  if (f) uploadToCompose(f)
+                }
+              }}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
                   e.preventDefault()
                   handleQuickCompose()
                 }
               }}
-              placeholder={quickComposeKind === 'note' ? 'Post a note... (Cmd+Enter to send)' : 'Comment to team... (Cmd+Enter to send)'}
+              placeholder={quickComposeKind === 'note' ? 'Post a note... (Cmd+Enter to send, paste or drop to attach)' : 'Comment to team... (Cmd+Enter to send)'}
               rows={2}
               style={{
                 flex: 1, minWidth: 0, fontSize: '13px', color: 'var(--ink)',
@@ -853,6 +949,9 @@ function ProjectDetailInner({ project }: InnerProps) {
               </button>
             )}
           </div>
+          {quickComposeUploading && (
+            <p className="mt-1 text-[10px]" style={{ color: 'var(--teal)', opacity: 0.85 }}>Uploading…</p>
+          )}
         </div>
       </motion.div>
 
