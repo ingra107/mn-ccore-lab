@@ -3,6 +3,56 @@
 
 > Historical phase records moved from CLAUDE.md to keep the operating guide focused on current state. Each section is a complete record of what shipped, decisions made, and scores achieved.
 
+## Claude Design round-5 batches 3-4 (2026-04-23 night, later)
+
+Nick pushed back on the T-49 mobile-swipe removal; restored with a
+framer-motion-backed implementation that fixes both original bugs.
+Plus three more P1s shipped: T-18 inline pills on ProjectDetail, T-31
+Personal TodayHero, T-04 extended to all 3 compose surfaces.
+
+**Batch 3 — `674928e` / `abf9bd41`:**
+- **T-31** Personal TodayHero 2-col (Overdue | Due Today) above
+  regulatory strip. Mirrors MyTasks. Hidden when no overdue + no due
+  today.
+- **T-04** ProjectDetail Overview compose: inline file drop +
+  paperclip + clipboard-paste. Uploads through presigned R2 → appends
+  `[filename](url)` into compose.
+
+**Batch 4 — `3c6d20a` / `7077314e` (current):**
+- **T-49 RESTORED.** Swipe-right-to-dismiss on TaskDetailPanel via
+  framer-motion `drag="x"` on `<motion.div>`. `edgeGuardRef` blocks
+  drag activation when initial touch is within 32px of viewport left
+  (iOS Safari edge-swipe-back compat). `touch-action: pan-y` lets
+  vertical content scroll. Dismiss at 30% panel width OR velocity >
+  500px/s. Backdrop opacity fades via `useTransform(dragX, [0, 320],
+  [1, 0])`. Desktop skips drag entirely (conditional on
+  `window.innerWidth < 768`). Prior raw-touch implementation was
+  removed 2026-04-20 due to Pixel 5 inert-drag — framer-motion owns
+  the transform via MotionValue + RAF so there's no React setState
+  race per touchmove frame.
+- **T-18** ProjectDetail header pills inline-editable. Category →
+  InlineSelect (4 canonical values). PI → InlineAssigneePicker. Status
+  + stage already inline. Row now fully Airtable-pattern. Removed
+  dead CATEGORY_COLORS const + cat/pi locals + Avatar/getPersonInfo
+  imports.
+- **T-04 extended.** TaskDetailPanel OverviewQuickAdd
+  (entityType='task') + MeetingDetail AddActionItemForm
+  (entityType='meeting'; attachments bind to meeting, not forthcoming
+  task). Same presigned-R2 flow as ProjectDetail. Slack-parity
+  loop (paste image → attachment → inline link) now works in every
+  compose surface.
+- **T-37** My Items NotificationCard left-border accent is now
+  type-coded: mention=gold (existing), assignment=teal,
+  deadline=maroon, other=slate. Read cards drop to transparent. Card
+  padding 1rem → 0.75rem (~8px row-height reduction).
+- **T-10** MyTasks "+N more →" on TodayHero now sets filter AND
+  smooth-scrolls to main list so the click pays off.
+
+**Updated CLAUDE.md Known Gotchas:** "Mobile swipe on TaskDetailPanel"
+entry rewritten for the framer-motion implementation. Prior `onTouchStart
+/Move/End` guidance is obsolete — that pattern caused the 2026-04-20
+removal.
+
 ## Claude Design round-5 ticket execution (2026-04-23 night)
 
 **Headline.** 49 tickets received from Claude Design round-5 handoff
