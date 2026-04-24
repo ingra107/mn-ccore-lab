@@ -114,13 +114,13 @@ export default function MyTasks() {
   const [selectedTask, setSelectedTask] = useState<TaskRow | null>(null)
   const [showCompleted, setShowCompleted] = useState(false)
   const QF_VALUES: QuickFilter[] = ['all', 'today', 'this_week', 'overdue', 'no_date', 'stale', 'waiting_on']
-  const quickFilterParam = searchParams.get('qf') as QuickFilter | null
+  const quickFilterParam = searchParams.get('filter') as QuickFilter | null
   const quickFilter: QuickFilter = (quickFilterParam && QF_VALUES.includes(quickFilterParam)) ? quickFilterParam : 'all'
   const setQuickFilter = (next: QuickFilter) => {
     setSearchParams((prev) => {
       const s = new URLSearchParams(prev)
-      if (next === 'all') s.delete('qf')
-      else s.set('qf', next)
+      if (next === 'all') s.delete('filter')
+      else s.set('filter', next)
       return s
     }, { replace: false })
   }
