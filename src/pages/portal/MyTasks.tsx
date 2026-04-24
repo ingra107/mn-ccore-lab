@@ -7,6 +7,7 @@ import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-
 import { CSS } from '@dnd-kit/utilities'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
 import PageHeader from '../../components/PageHeader'
+import SavedViewsMenu from '../../components/SavedViewsMenu'
 import EmptyState from '../../components/EmptyState'
 import ToggleButton from '../../components/ToggleButton'
 import InlineSelect from '../../components/InlineSelect'
@@ -66,6 +67,21 @@ export default function MyTasks() {
   const [sortBy, setSortBy] = useState<SortBy>('due_date')
   const [density, setDensity] = useDensity()
 
+  // DD-1 pilot — MyTasks only. Mode toggle between "Now" (hero strip +
+  // Focus Next, no dense table) and "Data" (dense table, no hero).
+  // URL-persisted via ?mode=now|data. If no param set, auto-default is
+  // resolved after fetch: data when >20 active rows, now otherwise.
+  const modeParam = searchParams.get('mode')
+  const explicitMode: 'now' | 'data' | null =
+    modeParam === 'data' ? 'data' : modeParam === 'now' ? 'now' : null
+  const setMode = (next: 'now' | 'data') => {
+    setSearchParams((prev) => {
+      const s = new URLSearchParams(prev)
+      s.set('mode', next)
+      return s
+    }, { replace: false })
+  }
+
   // Open create modal if ?create=true param is present, then clear it
   useEffect(() => {
     if (searchParams.get('create') === 'true') {
@@ -97,7 +113,17 @@ export default function MyTasks() {
   const { showSuccess, showUndo } = useUndoToast()
   const [selectedTask, setSelectedTask] = useState<TaskRow | null>(null)
   const [showCompleted, setShowCompleted] = useState(false)
-  const [quickFilter, setQuickFilter] = useState<QuickFilter>('all')
+  const QF_VALUES: QuickFilter[] = ['all', 'today', 'this_week', 'overdue', 'no_date', 'stale', 'waiting_on']
+  const quickFilterParam = searchParams.get('qf') as QuickFilter | null
+  const quickFilter: QuickFilter = (quickFilterParam && QF_VALUES.includes(quickFilterParam)) ? quickFilterParam : 'all'
+  const setQuickFilter = (next: QuickFilter) => {
+    setSearchParams((prev) => {
+      const s = new URLSearchParams(prev)
+      if (next === 'all') s.delete('qf')
+      else s.set('qf', next)
+      return s
+    }, { replace: false })
+  }
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [showAllTasks, setShowAllTasks] = useState(false)
   const bulkUpdate = useBulkUpdateTasks()
@@ -171,6 +197,7 @@ export default function MyTasks() {
 
   const pendingCount = tasks.filter((t) => !t.completed).length
   const completedCount = tasks.filter((t) => t.completed).length
+  const effectiveMode: 'now' | 'data' = explicitMode ?? (pendingCount > 20 ? 'data' : 'now')
 
   // PI slug for "Waiting On" filter — uses auth if available, else defaults to 'nick-ingraham'
   const piSlug = currentUser || 'nick-ingraham'
@@ -562,6 +589,51 @@ export default function MyTasks() {
           )}
 
           <DensityToggle value={density} onChange={setDensity} />
+
+          {/* DD-2 v1 — Saved views (per-page, localStorage-scoped). Captures
+              the current URL query string on save; applying re-writes search
+              params so every bit of filter + sort + mode state round-trips. */}
+          <SavedViewsMenu
+            page="mytasks"
+            currentQuery={searchParams.toString()}
+            onApply={(q) => setSearchParams(new URLSearchParams(q), { replace: false })}
+          />
+
+          {/* DD-1 mode toggle — Now vs Data. Pill ships MyTasks-only in the
+              pilot; roll to other list surfaces in a follow-up sprint. */}
+          <div
+            role="tablist"
+            aria-label="View mode"
+            className="inline-flex rounded-full"
+            style={{ border: '1px solid var(--border-subtle)', padding: 2, background: 'var(--surface-2)' }}
+          >
+            {(['now', 'data'] as const).map((m) => {
+              const active = effectiveMode === m
+              return (
+                <button
+                  key={m}
+                  role="tab"
+                  aria-selected={active ? 'true' : 'false'}
+                  onClick={() => setMode(m)}
+                  className="inline-flex items-center"
+                  style={{
+                    fontSize: '11px',
+                    fontWeight: active ? 600 : 500,
+                    padding: '3px 10px',
+                    borderRadius: 'var(--radius-full)',
+                    background: active ? 'var(--teal-solid)' : 'transparent',
+                    color: active ? 'var(--ink-bright, #fff)' : 'var(--slate)',
+                    border: 'none',
+                    cursor: 'pointer',
+                    textTransform: 'capitalize',
+                    letterSpacing: '0.02em',
+                  }}
+                >
+                  {m}
+                </button>
+              )
+            })}
+          </div>
         </div>
       </PageHeader>
 
@@ -729,8 +801,10 @@ export default function MyTasks() {
         </button>
       )}
 
-      {/* Today Hero — Overdue + Due Today at-a-glance (GH #33, Nick principle 1) */}
-      {quickFilter === 'all' && !showCompleted && !showAllTasks && (todayHeroLists.overdue.length > 0 || todayHeroLists.dueToday.length > 0) && (
+      {/* Today Hero — Overdue + Due Today at-a-glance (GH #33, Nick principle 1).
+          DD-1: hero only renders in `now` mode; `data` mode hides it so the
+          dense table has full vertical real-estate. */}
+      {effectiveMode === 'now' && quickFilter === 'all' && !showCompleted && !showAllTasks && (todayHeroLists.overdue.length > 0 || todayHeroLists.dueToday.length > 0) && (
         <div ref={todayHeroRef} className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
           {/* Overdue column */}
           <div className="rounded-xl border p-3" style={{ borderColor: 'var(--border-subtle)', background: 'var(--surface-1)' }}>
@@ -857,8 +931,9 @@ export default function MyTasks() {
         </div>
       )}
 
-      {/* Focus Next — auto-suggest top 3, pin up to 5 (Mine view only) */}
-      {focusTasks.length > 0 && quickFilter === 'all' && !showCompleted && !showAllTasks && (
+      {/* Focus Next — auto-suggest top 3, pin up to 5 (Mine view only).
+          DD-1: Now mode only; Data mode keeps the table as the focal surface. */}
+      {effectiveMode === 'now' && focusTasks.length > 0 && quickFilter === 'all' && !showCompleted && !showAllTasks && (
         <div className="mt-3">
           <div className="flex items-center gap-2 mb-2">
             <Zap size={14} style={{ color: 'var(--gold)' }} />
@@ -936,8 +1011,19 @@ export default function MyTasks() {
       {/* Content — no minHeight reservation so short task lists don't leave
           a large empty box below. Skeleton already reserves space during
           load so CLS is bounded by the skeleton→content swap. GH #23.
-          Supersedes CLAUDE.md rule #16's stability requirement. r7 2026-04-23. */}
-      <div className={`mt-5 ${densityClass(density)}`}>
+          Supersedes CLAUDE.md rule #16's stability requirement. r7 2026-04-23.
+          DD-1: in `now` mode the data table hides when hero/focus have
+          content; if both strips are empty the table falls through so the
+          "All caught up!" empty state still renders. */}
+      <div
+        className={`mt-5 ${densityClass(density)}`}
+        style={{
+          display: effectiveMode === 'now'
+            && (todayHeroLists.overdue.length > 0 || todayHeroLists.dueToday.length > 0 || focusTasks.length > 0)
+            ? 'none'
+            : 'block',
+        }}
+      >
         {isLoading ? (
           <TableSkeleton rows={12} cols={5} />
         ) : displayTasks.length === 0 && quickFilter !== 'waiting_on' ? (
