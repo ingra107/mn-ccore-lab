@@ -10,6 +10,30 @@
 
 ---
 
+## ⚡ Nick decisions needed (triage these first, <5 min)
+
+These are CD big-vision items NOT addressed by the auto-mode playbook below.
+Give each a [yes / no / later] so next session knows what to queue.
+
+- **DD-#3 status-line pilot** — replace Dashboard "Good morning, Nick" greeting
+  with an operational status line (e.g. "3 overdue · 2 deadlines this week ·
+  1 IRB renewal"). Closest-to-ship of the 7 DD direction items, builds on the
+  already-shipped T-30 greeting shrink. [yes / no / later]
+- **DD-#1, #2, #4, #5, #6, #7** — other direction items sketched by CD but not
+  yet written up in this repo. Action: ask CD to drop a DESIGN-DIRECTION.md
+  with one paragraph per item so they can be triaged. [request doc / skip]
+- **Hermes ambient shape** — vision says Hermes should be "ambient" but current
+  impl is @mention-only. Candidate shapes when ready: suggest-slot on landing
+  cards / daily briefing email paragraph / inline `@hermes` co-author on
+  compose. [not urgent / draft spec / pick now]
+- **T-24 Digest rows view** — Airtable multi-view pillar, 1000+ line refactor,
+  too big for auto-mode. Pick a supervised session date. [date: __________]
+- **T-29 Manuscripts "Needs attention" grouping** — CD described UI that
+  doesn't match current code. Action: send CD a clarification ask + fresh
+  screenshots of current Manuscripts.tsx. [yes / no]
+
+---
+
 # 🤖 NEXT SESSION — AUTO-MODE PLAYBOOK
 
 **Nick's instruction:** go, don't ask. Execute the punch list below in
@@ -36,6 +60,27 @@ Nick's judgment. If blocked on one, skip + document + continue.
 
 Use this as a checklist. Mark DONE inline as you go. When all DONE,
 update this file + push + run `/session-close`.
+
+### Batch A' — Slack-parity reactions (ship FIRST, promoted from stretch)
+
+**T-06 Reactions first-class placement**
+- Files: look for `ReactionBar` component + its current usages (grep).
+  Likely surfaces: `ProjectUpdateFeed`, `ProjectComments`,
+  `TaskComments`, `TaskUpdateFeed`.
+- Change: Lift the reaction pills to render flush-left under each
+  note/comment body (not hover-revealed). Always show existing
+  reactions as pills with count. Show a single muted `+` button at
+  the right end of the reaction row that opens an emoji picker
+  (simple: 6 preset reactions — 👍 🎉 ✅ 🔥 👀 ❤️). When a note has zero
+  reactions, `+` still visible at opacity 0.55.
+- Rationale for promotion: this is the last Slack-pillar gap. Guardrail
+  #9 (clean but useful) says don't sacrifice utility for aesthetics —
+  hover-hidden reactions are the inverse.
+- Acceptance: screenshots show reactions flush-left, not tucked
+  under/on-hover. Clicking `+` on an empty reaction row adds one
+  without modal friction.
+
+**Commit + deploy:** `CD r5 batch 5a reactions`
 
 ### Batch A — compose + keyboard (pairs well, one deploy)
 
@@ -164,37 +209,60 @@ update this file + push + run `/session-close`.
 
 **Commit + deploy:** `CD r5 batch 7`
 
-### Batch D — reactions (if time permits, bigger)
+### Batch F — Slack-parity Files tab + typing (new tickets)
 
-**T-06 Reactions first-class placement**
-- Files: look for `ReactionBar` component + its current usages (grep).
-  Likely surfaces: `ProjectUpdateFeed`, `ProjectComments`,
-  `TaskComments`, `TaskUpdateFeed`.
-- Change: Lift the reaction pills to render flush-left under each
-  note/comment body (not hover-revealed). Always show existing
-  reactions as pills with count. Show a single muted `+` button at
-  the right end of the reaction row that opens an emoji picker
-  (simple: 6 preset reactions — 👍 🎉 ✅ 🔥 👀 ❤️). When a note has zero
-  reactions, `+` still visible at opacity 0.55.
-- Acceptance: screenshots show reactions flush-left, not tucked
-  under/on-hover. Clicking `+` on an empty reaction row adds one
-  without modal friction.
+**T-50 Files tab on TaskDetailPanel + MeetingDetail**
+- Files:
+  - `src/components/tasks/TaskDetailPanel.tsx` — add Files tab between
+    Activity + Details in the existing tabstrip
+  - `src/pages/MeetingDetail.tsx` — add Files tab in the existing tabstrip
+- Change: Reuse the `FileUpload` component with `entity_type='task'` /
+  `'meeting'`. Render the attached-files list below the uploader (same
+  layout as ProjectDetail Files tab — see `src/pages/ProjectDetail.tsx`
+  Files tab section as the reference implementation).
+- API: `FileUpload` already supports both entity types — no backend change.
+- Rationale: CD Priority 2 explicitly asked "Files tab exists on ProjectDetail
+  but not yet on TaskDetailPanel, MeetingDetail." Inline compose-drop (T-04)
+  is attach-only; a dedicated tab lets you find files later.
+- Success: any task or meeting can have files attached AND browsed in a
+  dedicated tab, not just inline-dropped in compose.
 
-**Commit + deploy:** `CD r5 batch 8`
+**T-51 Typing indicators on comment threads**
+- Files:
+  - `src/hooks/usePresence.ts` — add `broadcastTyping(isTyping: boolean)`
+    returning void; debounce to emit at most every 3s.
+  - `src/components/PresenceAvatars.tsx` — add `typingPeers: string[]` prop;
+    render "{name} is typing…" below avatar stack when non-empty.
+  - Wire into `TaskDetailPanel` + `MeetingDetail` + `ProjectDetail` compose
+    + comment inputs. Call `broadcastTyping(true)` on input focus/change,
+    `broadcastTyping(false)` on blur/submit.
+- Workers: `workers/hub-realtime/` — extend message shape with
+  `{type: 'typing', actor, ttl: 5s}`. Peers clear typing state after 5s
+  of no ping.
+- Rationale: CD Priority 2 explicitly asked "typing indicators on comment
+  threads." `usePresence` already broadcasts 15s pings; this is additive.
+- Success: threads feel live. Typing indicator appears within 1s of a peer
+  typing, clears within 5s of silence.
 
-### Skip reasons (do NOT attempt in auto mode)
+**Commit + deploy:** `CD r5 batch 9 slack-parity`
 
-- **T-24 Research Digest rows view** — 1000+ line file refactor. Out
-  of scope for auto mode. Leave for Nick-supervised session.
-- **T-29 Manuscripts "Needs attention" grouping** — CD described UI
-  that doesn't exist in current `src/pages/portal/Manuscripts.tsx`.
-  Auto mode should verify once via grep, and if no matching JSX
-  exists, mark T-29 as "re-audit needed" and skip. Don't invent new
-  UI from ambiguous description.
-- **DD-#1 through DD-#7** (DESIGN-DIRECTION.md) — strategic proposals
-  requiring Nick's product call. Never execute without his nod.
-- **Mobile swipe real-device validation** — agent can't test this.
-  Leave a TODO in the session-close handoff for Nick.
+### Skip reasons
+
+**Nick-owned (agent cannot do this):**
+- Mobile swipe real-device validation — iPhone + Android dogfood. Regression
+  from batch 3 T-49 framer-motion restore; needs real-device confirmation
+  Pixel 5 inert-drag + iOS Safari edge-swipe-back both behave.
+- **DD-#1 through DD-#7** — strategic direction items requiring Nick's
+  product call. Surface in the decisions block at top of this file, do not
+  auto-execute.
+
+**Scheduled (future session, not auto-mode):**
+- **T-24 Research Digest rows view** — Airtable multi-view pillar. 1000+
+  line file refactor. Schedule a Nick-supervised session — date set via
+  the decisions block triage at top of this file.
+- **T-29 Manuscripts "Needs attention" grouping** — CD described UI that
+  doesn't exist in current `src/pages/portal/Manuscripts.tsx`. Awaiting
+  CD clarification round-trip before re-ticketing.
 
 ## Ship rhythm
 
@@ -383,13 +451,17 @@ last 3 commits to understand before continuing.
 - **T-19** MeetingDetail action-item hint — already hidden when
   `text.trim()` has content (token preview chips take over).
 
-## Still-open tickets (deferred, low-impact-to-defer reasoning)
+## Still-open tickets (historical list as of batch 4 close-out)
+
+> **Note:** the live queue is the "Ticket queue" section above + the
+> "⚡ Nick decisions needed" block at the top. This list is kept for
+> history; where a ticket moved, the inline note says so.
 
 ### Punch list for next round (P2 polish, ~6 hrs if all done)
 - **T-05** Compose toolbar visible buttons — paperclip is now there
   (T-04), but `@` and `:` trigger buttons are still hidden affordances.
-- **T-06** Reactions first-class placement (flush-left with `+` at row
-  end). `ReactionBar` already exists but needs promotion.
+- **T-06** Reactions first-class placement. **→ PROMOTED to Batch A'
+  (ship first) in live queue above.**
 - **T-07** Sticky overdue count pill on MyTasks scroll.
 - **T-08** TodayHero vs main-list Today dedup (spike Option A: collapse
   Today group in main list when TodayHero is showing).
@@ -399,8 +471,8 @@ last 3 commits to understand before continuing.
 - **T-20** MeetingDetail keyboard `n/j/k/x/Enter` for action items.
 - **T-23** ActivityPage per-type chip strip (InlineSelect already fixes
   guardrail #4 but chips allow multi-select).
-- **T-29** Manuscripts "Needs your attention" grouping — CD described
-  UI that doesn't exist in current Manuscripts.tsx; needs re-audit.
+- **T-29** Manuscripts "Needs your attention" grouping. **→ Awaiting CD
+  clarification round-trip (see Scheduled section + decisions block).**
 - **T-32** Personal onboarding checklist pinned-to-top when <80%
   complete.
 - **T-34** Settings tabs unsaved-state dot.
@@ -408,13 +480,23 @@ last 3 commits to understand before continuing.
   / Press).
 - **T-47** Cmd+K "View all → Search" footer.
 
-### Big lift (skip or standalone session)
+### New tickets added this plan update (vision-alignment)
+- **T-50** Files tab on TaskDetailPanel + MeetingDetail. **→ See Batch F
+  in live queue.**
+- **T-51** Typing indicators on comment threads. **→ See Batch F in
+  live queue.**
+
+### Big lift (scheduled supervised session — see decisions block)
 - **T-24** Research Digest rows view (`?view=rows`). Significant lift
-  — ~1000-line file. Lower ROI than the punch list above.
+  — ~1000-line file. Airtable multi-view pillar. **→ Date via Nick
+  decisions-block triage.**
 
 ### Direction doc (strategic, not ticketed)
 - DESIGN-DIRECTION.md items #1-7 are 2-3 sprint commitments. DD-#3
   (status line vs greeting) is closest-to-ship on T-30 foundation.
+  **→ Surfaced in "⚡ Nick decisions needed" block at top of this file.
+  Action on DD-#1/#2/#4-7: ask CD to drop the DESIGN-DIRECTION.md doc
+  so each can be triaged individually.**
 
 ## Deploys
 - **batch 1**: `ab8ba90` → `45129bde.mn-ccore-lab.pages.dev`
@@ -434,11 +516,20 @@ last 3 commits to understand before continuing.
 
 ## What-to-do-first next session
 
-1. Real-device swipe test (iOS + Android) — regression from batch 3.
-2. Punch list (T-05/06/07/08/16/20/23/32/34/40/47) in priority order.
-3. T-24 Research Digest rows view (bigger, standalone).
-4. DD-#3 status-line pilot on Dashboard (replace greeting entirely
-   with operational status). Closest-to-ship of the 7 direction items.
+0. **Triage** the "⚡ Nick decisions needed" block at top of this file
+   (2-5 min). Marks route for DD-#3, Hermes ambient shape, T-24 + T-29.
+1. **Nick-owned:** Real-device swipe test on iPhone + Android (T-49
+   regression from batch 3).
+2. **Auto-mode:** Batch A' reactions first-class (T-06) → then Batch A
+   compose+keyboard (T-05/T-20) → then Batch B polish → Batch C → Batch F
+   Slack-parity Files+typing (T-50/T-51).
+3. **Supervised (scheduled):** T-24 Research Digest rows view — date set
+   via Nick decisions-block triage.
+4. **CD round-trip:** T-29 Manuscripts "Needs attention" — send
+   clarification ask + fresh screenshots to CD.
+5. **DD-#3 status-line pilot on Dashboard** — only if Nick approved in
+   decisions block. Closest-to-ship of the 7 direction items, builds on
+   T-30 greeting shrink.
 
 ## Memory snapshot (agent-side, persists across sessions)
 
