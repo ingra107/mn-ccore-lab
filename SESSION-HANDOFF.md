@@ -1,68 +1,67 @@
-# Session Handoff — 2026-04-24 (pre-compact)
+# Session Handoff — 2026-04-24 (post-compact continuation)
 
 ---
 
-## 🎯 NEXT SESSION — START HERE (post-compact)
+## 🎯 NEXT SESSION — START HERE
 
 **State at handoff:**
-- HEAD `ea6927fc` on main, clean
-- Deploy `a004505f.mn-ccore-lab.pages.dev` (prod alias)
-- Round 5 + Round 6 both shipped + audit-clean
+- HEAD `437fe8cb` on main, clean, pushed
+- Deploy `6db2771f.mn-ccore-lab.pages.dev` (prod alias)
 - Live for the team since 2026-04-21
 
-**Queue, in priority order:**
+**Shipped this continuation session (post-compact):**
 
-### 1. WS socket consolidation (0.5 sprint) — MAJOR from audit
-`usePresence` + `useIntentBroadcast` + `useTyping` each open their own
-`PartySocket` to the same `mnccore` room. Per TaskDetailPanel open
-that's 3 sockets; 19 team members = ~57 concurrent connections to
-the same Durable Object. Refactor to share a single connection.
+- **`baaa41b3` — WS socket consolidation + intent-leave.** One shared
+  `realtimeBus` (`src/lib/realtimeBus.ts`) replaces 4 independent
+  PartySocket instances per detail-panel open. 2s close-grace. Explicit
+  `intent-leave` message type drops peer dot synchronously on unmount
+  instead of waiting 30s TTL.
+- **`437fe8cb` — Batch K part 1 (DD-7 mobile compose).** ProjectDetail
+  inline compose collapses on <768px into a tap trigger; tap raises a
+  fixed-overlay compose with safe-area-inset-bottom + Esc close + body
+  scroll lock (shared `useComposeSheet` hook). TaskDetailPanel
+  OverviewQuickAdd becomes `position: sticky; bottom: 0` on mobile so
+  iOS keyboard doesn't hide it. MeetingDetail deferred — single-line
+  input + browser autoscroll handles the keyboard case adequately.
+- **T-29 schema check — NOT BLOCKED.** `manuscript_revisions`
+  (v23) has `status`, `submitted_at`, `response_due`.
+  `reviewer_comments` has `assigned_to`, `status`, `resolved_at`.
+  `publications` has `status` + `updated_at`. All three T-29 subgroups
+  (Revisions overdue / Awaiting your review / Stale drafts) can be
+  computed from existing data. No schema-v50 prework required.
 
-- Files: `src/hooks/usePresence.ts` (all 3 hooks), callers
-  `src/pages/ProjectDetail.tsx`, `src/components/tasks/TaskDetailPanel.tsx`,
-  `src/pages/MeetingDetail.tsx`.
-- Approach: new `PresenceSocketProvider` via React context, or a
-  module-scope singleton keyed by (entityType, entityId). Hooks
-  subscribe to a shared message dispatcher rather than opening
-  their own sockets.
-- Build check: `npx tsc -b && npm run build`.
-- Pairs well with: intent-leave event (30 min after consolidation).
+**Queue, remaining work:**
 
-### 2. Intent leave event (30 min) — MINOR from audit
-`useIntentBroadcast` unmount sends `intent: 'viewing'` instead of a
-dedicated leave. Peers see a stale dot for up to 5s (TTL). Add new
-message type `intent-leave` that drops the peer from the map
-immediately, matching `usePresence`'s `presence-leave` pattern.
+### 1. Batch K part 2 — DD-7 row-level swipe (careful scope)
+`useSwipeAction` infra shipped already. Wiring onto `TaskGridRow` +
+MyTasks rows is the deferred MAJOR. Virtualizer + framer drag can
+conflict at the row-wrapper layer — wrap INSIDE the virtualized
+colStyle div, not around it. Test on real iPhone + Android before
+shipping. The value is moderate (swipe-to-archive/done); cost is
+the regression risk on virtualized scroll perf. Consider whether
+long-press context menu + existing checkbox tap is sufficient.
 
-### 3. Batch K — DD-7 surface rollout (1 sprint)
-Infra primitives already shipped in `0b2ce416` — `useSwipeAction`,
-`useLongPress`, `BottomSheet`. Wire them up:
-- `useSwipeAction` onto TaskGridRow + MyTasks rows. Virtualizer +
-  framer drag can conflict at the row-wrapper layer — wrap INSIDE
-  the virtualized colStyle div, not around it. Test carefully.
-- `BottomSheet` to rewrite compose on mobile for ProjectDetail /
-  TaskDetailPanel / MeetingDetail (rises above keyboard).
+### 2. T-29 full UI (1 sprint, unblocked)
+CD spec at `docs/specs/t-29-manuscripts-attention.md` — 3 collapsible
+subgroups with count badges + click-to-filter.
+- Files: `src/pages/Manuscripts.tsx` (add "Needs your attention"
+  section above main table), `src/hooks/useApiData.ts` (add
+  `useOverdueRevisions` / `usePendingReviewerComments` / `useStaleDrafts`
+  queries).
+- API: new `/api/manuscripts/attention` endpoint returning the three
+  subgroup arrays. Can compute server-side from existing tables.
+- Threshold defaults `14d / 7d / 30d` exposed in Settings per spec ¶2.
+- Skip-it version (rename + urgency sort) already shipped `ad19cec2`.
 
-### 4. T-29 full (1 sprint, blocked on schema check)
-CD spec at `docs/specs/t-29-manuscripts-attention.md` — 3 subgroups:
-Revisions overdue / Awaiting your review / Stale drafts. Before
-building, grep the `manuscripts` table schema for
-`revision_requested_at` + `reviewer_assigned_slug` equivalents.
-If missing, schema-v50 pre-work comes first. Skip-it version
-already shipped in `ad19cec2` (RevisionTracker rename + urgency sort).
-
-### 5. DD-2 saved views (3 sprints, supervised, TODAY.md replacement ambition)
+### 3. DD-2 saved views (3 sprints, supervised, TODAY.md replacement ambition)
 See `docs/cd-round-trip/2026-04-23-round-6-triage.md` §DD-2. 5 parity
 gates must hold before `scripts/generate-today.py` cron disables:
 interactivity, friction-free, customizability, agent interaction
 (inline `@hermes` dispatch = `@claude` tag parity), 4-week dogfood.
 
-### 6. DD-1 Now/Data pilot (1 sprint, post-Batch-K)
+### 4. DD-1 Now/Data pilot (1 sprint, post-Batch-K)
 MyTasks only. Reconcile vs TodayHero before ship — TodayHero is
 already a "Now" view. Don't double-invest.
-
-**If capacity-tight:** do (1) WS consolidation + (2) intent-leave in
-one batch, deploy, verify no regressions, then Batch K next session.
 
 **Key session decisions (durable, post-compact):**
 - **CD = Claude Design claude.ai project.** Not a human consultant.
