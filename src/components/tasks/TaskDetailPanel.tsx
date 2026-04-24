@@ -19,6 +19,7 @@ import Avatar from '../Avatar'
 import InlineSelect from '../InlineSelect'
 import PresenceAvatars from '../PresenceAvatars'
 import { usePresence } from '../../hooks/usePresence'
+import { motion, useMotionValue, useTransform } from 'framer-motion'
 import type { TaskRow } from '../../lib/api'
 import { PATHS } from '../../constants/paths'
 
@@ -94,12 +95,29 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
     return () => clearTimeout(t)
   }, [activeTab])
 
-  // Swipe-to-dismiss removed 2026-04-20 (P1-R2-07). On Pixel 5 the gesture
-  // fired but the panel never moved (inert), and the iOS Safari edge-swipe-back
-  // conflict was unsolvable in pure web. Replaced by enlarged X (top-right),
-  // sticky "Done" pill at panel bottom on mobile, and tap-outside-backdrop.
   const reduceMotion = typeof window !== 'undefined'
     && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+  // Swipe-right-to-dismiss (restored 2026-04-23 night).
+  // Prior raw-touch implementation was removed 2026-04-20 due to two real
+  // bugs; both are solved here:
+  //  (1) Pixel-5 inert-drag — raw React setState-per-touchmove raced with
+  //      the Android compositor and rendered as no-op. Fix: framer-motion
+  //      owns the transform via MotionValue + RAF; no state round-trip.
+  //  (2) iOS Safari edge-swipe-back — right-swipes starting near the left
+  //      edge conflict with the OS back gesture. Fix: `edgeGuardRef` blocks
+  //      drag activation when initial touch is within 32px of viewport left.
+  // `touch-action: pan-y` lets vertical scrolling through content still work;
+  // framer-motion's own drag handler enforces the horizontal lock.
+  const dragX = useMotionValue(0)
+  const backdropOpacity = useTransform(dragX, [0, 320], [1, 0])
+  const edgeGuardRef = useRef<boolean>(false)
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (typeof window === 'undefined' || window.innerWidth >= 768) { edgeGuardRef.current = true; return }
+    const t = e.touches[0]
+    // Within 32px of the left edge → let iOS Safari own the gesture.
+    edgeGuardRef.current = t.clientX < 32
+  }
 
   // Focus trap + Escape + Alt+Up/Down navigation. Audit caught: prior trap
   // checked only `activeElement === first/last`, which leaks when async-mounted
@@ -198,33 +216,45 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
 
   return (
     <>
-      {/* Backdrop — tap to dismiss (mobile primary) + visual scrim. */}
-      <div
+      {/* Backdrop — tap to dismiss + fades with swipe progress on mobile. */}
+      <motion.div
         data-testid="detail-backdrop"
         className="fixed inset-0 z-40"
         style={{
           backgroundColor: 'rgba(15, 25, 35, 0.3)',
-          transition: 'opacity 200ms ease-out',
+          opacity: backdropOpacity,
         }}
       />
 
       {/* Panel */}
-      <div
+      <motion.div
         ref={panelRef}
         data-testid="task-detail-panel"
         role="dialog"
         aria-modal="true"
         aria-labelledby="task-detail-title"
         className="fixed right-0 top-0 h-full z-50 overflow-y-auto shadow-2xl task-detail-panel card-elevated"
+        onTouchStart={handleTouchStart}
+        drag={typeof window !== 'undefined' && window.innerWidth < 768 ? 'x' : false}
+        dragConstraints={{ left: 0, right: 0 }}
+        dragElastic={{ left: 0, right: 0.6 }}
+        dragMomentum={false}
+        dragListener={!edgeGuardRef.current}
+        onDragStart={() => {
+          if (edgeGuardRef.current) return false
+        }}
+        onDragEnd={(_, info) => {
+          const width = panelRef.current?.offsetWidth ?? 400
+          if (info.offset.x > width * 0.3 || info.velocity.x > 500) onClose()
+        }}
         style={{
-          // Min 420 keeps date/title columns un-truncated on desktop;
-          // 40vw scales gracefully on big monitors; cap 640 prevents
-          // dwarfing the underlying list. P2-R2-02.
+          x: dragX,
           width: 'clamp(420px, 40vw, 640px)',
           maxWidth: '90vw',
           backgroundColor: 'var(--cream)',
           borderLeft: '1px solid var(--border-subtle)',
           animation: reduceMotion ? 'none' : 'slideIn 200ms ease-out',
+          touchAction: 'pan-y',
         }}
       >
         {/* Header */}
@@ -585,8 +615,8 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
 
         </div>
 
-        {/* Mobile-only Done pill — replaces removed swipe-to-dismiss.
-            Hidden on desktop where Esc + click-outside are sufficient. */}
+        {/* Mobile-only Done pill — always-visible exit for thumbs that
+            don't reach top-right X. Swipe-right-to-dismiss also works. */}
         <div className="task-detail-done-bar">
           <button
             type="button"
@@ -645,7 +675,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
             }
           }
         `}</style>
-      </div>
+      </motion.div>
     </>
   )
 }

@@ -29,6 +29,7 @@ import { getPersonInfo } from '../data/team'
 import { formatShortDate, formatMediumDate } from '../lib/dateUtils'
 import Avatar from '../components/Avatar'
 import InlineSelect from '../components/InlineSelect'
+import InlineAssigneePicker from '../components/InlineAssigneePicker'
 import WatchButton from '../components/WatchButton'
 import TaskCard from '../components/tasks/TaskCard'
 import CreateTaskModal from '../components/tasks/CreateTaskModal'
@@ -55,13 +56,6 @@ type Tab = 'overview' | 'tasks' | 'notes' | 'comments' | 'files' | 'activity' | 
 
 const STAGES = ['Idea', 'Data Collection', 'Analysis', 'Writing', 'Review', 'Revisions', 'Published'] as const
 type Stage = (typeof STAGES)[number]
-
-const CATEGORY_COLORS: Record<string, { bg: string; text: string; label: string }> = {
-  clif: { bg: 'var(--maroon)', text: 'var(--ink-bright, #fff)', label: 'CLIF' },
-  lab: { bg: 'var(--teal)', text: 'var(--ink-bright, #fff)', label: 'Lab' },
-  nate: { bg: 'var(--gold)', text: '#0f1923', label: 'Mesfin' },
-}
-
 
 export default function ProjectDetail() {
   const { slug } = useParams<{ slug: string }>()
@@ -194,13 +188,6 @@ function ProjectDetailInner({ project }: InnerProps) {
   const [editingStrategic, setEditingStrategic] = useState(false)
   const [strategicDraft, setStrategicDraft] = useState(project.strategic_context ?? '')
   const { data: apiMeetings = [] } = useMeetingsApi()
-
-  const cat = CATEGORY_COLORS[project.category] ?? {
-    bg: 'var(--slate)',
-    text: 'var(--ink-bright, #fff)',
-    label: project.category,
-  }
-  const pi = getPersonInfo(project.pi)
 
   // Stage changer state
   const [confirmStage, setConfirmStage] = useState<Stage | null>(null)
@@ -401,21 +388,23 @@ function ProjectDetailInner({ project }: InnerProps) {
           </div>
         </div>
 
-        {/* Meta row: category dot, PI, status, stage, agenda button */}
+        {/* Meta row: category, PI, status, stage, agenda button — all inline-editable */}
         <div className="flex flex-wrap items-center gap-3">
-          <span
-            className="inline-block px-2 py-0.5 rounded-full text-[10px] font-medium"
-            style={{ background: cat.bg, color: cat.text, letterSpacing: '0.04em' }}
-          >
-            {cat.label}
-          </span>
+          <InlineSelect
+            value={project.category || 'lab'}
+            options={[
+              { value: 'clif', label: 'CLIF' },
+              { value: 'lab', label: 'Lab' },
+              { value: 'nate', label: 'Mesfin' },
+              { value: 'mentee', label: 'Mentee' },
+            ]}
+            onChange={(val) => d1Update.mutate({ category: val } as Partial<Project>)}
+          />
 
-          <div className="flex items-center gap-1.5">
-            <div style={{ width: 24, height: 24, flexShrink: 0 }}>
-              <Avatar name={pi.name} initials={pi.initials} photoUrl={pi.photoUrl} size="tight" variant="gold" />
-            </div>
-            <span style={{ fontSize: 'var(--value-size)', color: 'var(--slate)' }}>{pi.name}</span>
-          </div>
+          <InlineAssigneePicker
+            value={project.pi || ''}
+            onChange={(slug) => d1Update.mutate({ pi: slug } as Partial<Project>)}
+          />
 
           <div style={{ width: '1px', height: '16px', background: 'var(--border-subtle)' }} />
 
