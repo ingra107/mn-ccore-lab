@@ -14,6 +14,7 @@ import { useTeam } from '../../hooks/useApiData'
 import Avatar from '../../components/Avatar'
 import InlineSelect from '../../components/InlineSelect'
 import { getPersonInfo } from '../../data/team'
+import { useLabPrefs } from '../../hooks/useLabPrefs'
 
 interface WorkflowTemplate {
   id: string
@@ -138,6 +139,7 @@ export default function SettingsPage() {
     { key: 'profile', label: 'Profile' },
     { key: 'templates', label: 'Templates' },
     { key: 'ai', label: 'AI' },
+    { key: 'lab', label: 'Lab' },
     { key: 'appearance', label: 'Appearance' },
     { key: 'danger', label: 'Danger Zone' },
   ] as const
@@ -396,6 +398,13 @@ export default function SettingsPage() {
         </SettingsSection>
         )}
 
+        {/* Lab preferences — T-29 attention thresholds */}
+        {activeTab === 'lab' && (
+        <SettingsSection title="Lab Preferences" subtitle="Per-user thresholds for Manuscripts triage surface" icon={FlaskConical}>
+          <LabPrefsPanel />
+        </SettingsSection>
+        )}
+
         {/* Appearance */}
         {activeTab === 'appearance' && (
         <SettingsSection title="Appearance" subtitle="Theme and layout preferences" icon={Palette}>
@@ -601,6 +610,86 @@ function SettingsSection({ title, subtitle, icon: Icon, children }: { title: str
 }
 
 // ── Settings Field ───────────────────────────────────────────
+
+// ── Lab Preferences Panel — T-29 threshold controls ──
+
+function LabPrefsPanel() {
+  const { prefs, update, reset, defaults } = useLabPrefs()
+  const [review, setReview] = useState<string>(String(prefs.manuscriptsReviewDays))
+  const [stale, setStale] = useState<string>(String(prefs.manuscriptsStaleDays))
+  useEffect(() => { setReview(String(prefs.manuscriptsReviewDays)); setStale(String(prefs.manuscriptsStaleDays)) }, [prefs])
+
+  const commitReview = () => update({ manuscriptsReviewDays: parseInt(review, 10) })
+  const commitStale = () => update({ manuscriptsStaleDays: parseInt(stale, 10) })
+
+  return (
+    <div className="flex flex-col gap-4">
+      <SettingsField
+        label="Awaiting your review — flag after"
+        hint={`Reviewer comments assigned to you that stay pending past this many days surface as "Awaiting your review". Default ${defaults.manuscriptsReviewDays}d.`}
+      >
+        <div className="flex items-center gap-2">
+          <input
+            type="number"
+            min={0}
+            max={365}
+            value={review}
+            onChange={(e) => setReview(e.target.value)}
+            onBlur={commitReview}
+            onKeyDown={(e) => { if (e.key === 'Enter') { (e.target as HTMLInputElement).blur() } }}
+            aria-label="Awaiting review threshold in days"
+            style={{
+              width: 80, padding: '6px 10px', fontSize: '13px',
+              background: 'var(--cream)', border: '1px solid var(--border-subtle)',
+              borderRadius: 'var(--radius-md)', color: 'var(--ink)',
+            }}
+          />
+          <span style={{ fontSize: '12px', color: 'var(--slate)' }}>days</span>
+        </div>
+      </SettingsField>
+
+      <SettingsField
+        label="Stale drafts — flag after"
+        hint={`Publications in "In Preparation" with no activity for this many days surface as "Stale drafts". Default ${defaults.manuscriptsStaleDays}d.`}
+      >
+        <div className="flex items-center gap-2">
+          <input
+            type="number"
+            min={0}
+            max={365}
+            value={stale}
+            onChange={(e) => setStale(e.target.value)}
+            onBlur={commitStale}
+            onKeyDown={(e) => { if (e.key === 'Enter') { (e.target as HTMLInputElement).blur() } }}
+            aria-label="Stale drafts threshold in days"
+            style={{
+              width: 80, padding: '6px 10px', fontSize: '13px',
+              background: 'var(--cream)', border: '1px solid var(--border-subtle)',
+              borderRadius: 'var(--radius-md)', color: 'var(--ink)',
+            }}
+          />
+          <span style={{ fontSize: '12px', color: 'var(--slate)' }}>days</span>
+        </div>
+      </SettingsField>
+
+      <div>
+        <button
+          type="button"
+          onClick={reset}
+          className="inline-flex items-center gap-1.5 rounded"
+          style={{
+            fontSize: '11px', fontWeight: 500, padding: '6px 12px',
+            background: 'transparent', border: '1px solid var(--border-subtle)',
+            color: 'var(--slate)', cursor: 'pointer',
+          }}
+        >
+          <RotateCcw size={11} />
+          Reset to defaults
+        </button>
+      </div>
+    </div>
+  )
+}
 
 function SettingsField({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   return (

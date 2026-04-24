@@ -22,6 +22,8 @@ import { useTableConfig } from '../../hooks/useTableConfig'
 import { ColumnHeader } from '../table'
 import type { TaskRow } from '../../lib/api'
 import { useLongPress } from '../../hooks/useLongPress'
+import { useSwipeAction } from '../../hooks/useSwipeAction'
+import { motion } from 'framer-motion'
 
 // ── Column definitions for resize + tab nav ─────────────────
 // Full column set: checkbox + DATA_COLUMNS + actions
@@ -824,6 +826,33 @@ function TaskGridRow({
     onContextMenu?.(syntheticMouseEvent, task.id)
   })
 
+  // DD-7 row-level swipe (mobile <768px only; noop on desktop via the hook's
+  // internal gating). Right-swipe completes (or reopens if done); left-swipe
+  // opens the same context menu long-press does. Both are recoverable: the
+  // complete fires an undo toast; the context menu is explicit action.
+  const swipe = useSwipeAction({
+    onSwipeRight: () => {
+      if (!isDone) {
+        const prev = task.status
+        onStatusChange(task.id, 'done')
+        showUndo('Completed task', () => onStatusChange(task.id, prev))
+      } else {
+        const prev = task.status
+        onStatusChange(task.id, 'todo')
+        showUndo('Reopened task', () => onStatusChange(task.id, prev))
+      }
+    },
+    onSwipeLeft: () => {
+      const syntheticMouseEvent = {
+        preventDefault: () => {},
+        stopPropagation: () => {},
+        clientX: 0,
+        clientY: 0,
+      } as unknown as React.MouseEvent
+      onContextMenu?.(syntheticMouseEvent, task.id)
+    },
+  })
+
   // Cell focus props for Tab navigation
   const cellProps = useCallback((colIndex: number) => {
     const isCellFocused = focusedCell?.[0] === index && focusedCell?.[1] === colIndex
@@ -850,10 +879,45 @@ function TaskGridRow({
   }, [focusedCell, index])
 
   return (
-    <div
+    <div style={{ position: 'relative', overflow: 'hidden' }}>
+      {/* DD-7 swipe action reveal layers — hidden on desktop (opacity stays 0
+          because useSwipeAction disables drag and x stays pinned). On mobile,
+          fade in as the row translates. */}
+      <motion.div
+        aria-hidden
+        style={{
+          position: 'absolute', inset: 0,
+          background: 'var(--green-hover, rgba(28,115,59,0.12))',
+          color: 'var(--green)',
+          display: 'flex', alignItems: 'center', justifyContent: 'flex-start',
+          padding: '0 var(--sp-lg)',
+          fontSize: '12px', fontWeight: 600,
+          opacity: swipe.leftActionOpacity,
+          pointerEvents: 'none',
+        }}
+      >
+        <Check size={14} />&nbsp;{isDone ? 'Reopen' : 'Complete'}
+      </motion.div>
+      <motion.div
+        aria-hidden
+        style={{
+          position: 'absolute', inset: 0,
+          background: 'var(--gold-hover, rgba(201,168,76,0.15))',
+          color: 'var(--gold)',
+          display: 'flex', alignItems: 'center', justifyContent: 'flex-end',
+          padding: '0 var(--sp-lg)',
+          fontSize: '12px', fontWeight: 600,
+          opacity: swipe.rightActionOpacity,
+          pointerEvents: 'none',
+        }}
+      >
+        Menu
+      </motion.div>
+      <motion.div
       ref={rowRef}
       data-testid={`task-row-${task.id}`}
       data-selected={selected ? 'true' : undefined}
+      {...swipe.motionProps}
       style={{
         ...colStyle,
         padding: '0 var(--sp-lg)',
@@ -870,6 +934,8 @@ function TaskGridRow({
         opacity: isDone ? 0.85 : 1,
         transition: 'background var(--duration-normal) var(--ease-out), opacity var(--duration-normal) var(--ease-out)',
         position: 'relative',
+        background: 'var(--cream)',
+        ...swipe.motionProps.style,
       }}
       className={`task-grid-row hover:bg-black/[0.02] dark:hover:bg-white/[0.02] ${isFocused ? 'task-row-focused' : ''} ${rowFadeAnim ? 'task-row-complete-fade' : ''}`}
       data-focused={isFocused ? 'true' : undefined}
@@ -883,7 +949,7 @@ function TaskGridRow({
         if (e.key === 'Enter') { e.preventDefault(); onOpenDetail?.(task) }
       }}
       onContextMenu={(e) => { longPress.onContextMenu(e); onContextMenu?.(e, task.id) }}
-      onTouchStart={longPress.onTouchStart}
+      onTouchStart={(e) => { longPress.onTouchStart(e); swipe.motionProps.onTouchStart(e) }}
       onTouchMove={longPress.onTouchMove}
       onTouchEnd={longPress.onTouchEnd}
       onTouchCancel={longPress.onTouchCancel}
@@ -1377,6 +1443,7 @@ function TaskGridRow({
           </div>
         </div>
       )}
+      </motion.div>
     </div>
   )
 }

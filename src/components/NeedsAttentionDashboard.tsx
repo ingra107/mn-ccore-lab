@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { AlertTriangle, ChevronDown, ChevronRight, ChevronUp } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useManuscriptsAttention } from '../hooks/useApiData'
+import { useLabPrefs } from '../hooks/useLabPrefs'
 import type { ManuscriptsAttentionRow } from '../lib/api'
 import { PATHS } from '../constants/paths'
 import { formatShortDate } from '../lib/dateUtils'
@@ -37,7 +38,11 @@ const SUBGROUPS: Array<{
  * Section-level collapse persists in localStorage.
  */
 export default function NeedsAttentionDashboard({ filter, onFilterChange }: Props) {
-  const { data, isLoading } = useManuscriptsAttention()
+  const { prefs } = useLabPrefs()
+  const { data, isLoading } = useManuscriptsAttention({
+    reviewDays: prefs.manuscriptsReviewDays,
+    staleDays: prefs.manuscriptsStaleDays,
+  })
   const [sectionCollapsed, setSectionCollapsed] = useState<boolean>(() => {
     try { return localStorage.getItem(LS_COLLAPSED) === 'true' } catch { return false }
   })
