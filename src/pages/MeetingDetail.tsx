@@ -22,6 +22,7 @@ import {
   Check,
   X,
   Sparkles,
+  Paperclip,
 } from 'lucide-react'
 import { DndContext, closestCenter, PointerSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core'
 import type { DragEndEvent } from '@dnd-kit/core'
@@ -962,7 +963,10 @@ const PRIORITY_COLORS: Record<number, string> = { 1: 'var(--maroon)', 2: 'var(--
 
 function AddActionItemForm({ meetingId, isAuthenticated, onSuccess }: { meetingId: string; isAuthenticated: boolean; onSuccess: () => void }) {
   const [text, setText] = useState('')
+  const [dragOver, setDragOver] = useState(false)
+  const [uploading, setUploading] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const createTask = useCreateTask()
   const queryClient = useQueryClient()
   const { user } = useAuth()
@@ -970,6 +974,35 @@ function AddActionItemForm({ meetingId, isAuthenticated, onSuccess }: { meetingI
 
   const parsed = text.trim() ? parseQuickAddInput(text) : null
   const hasContent = parsed && parsed.title.trim().length > 0
+
+  // T-04 inline file drop on meeting action-item compose. Files attach to
+  // the meeting (not the forthcoming task) — R2 flow mirrors FileUpload.
+  const uploadToCompose = async (file: File) => {
+    setUploading(true)
+    try {
+      const urlRes = await fetch('/api/upload/url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filename: file.name, contentType: file.type || 'application/octet-stream', context: { type: 'meeting', id: meetingId } }),
+      })
+      const urlData = await urlRes.json() as { data?: { uploadUrl?: string; key?: string } }
+      if (!urlData.data?.uploadUrl || !urlData.data?.key) throw new Error('presign failed')
+      await fetch(urlData.data.uploadUrl, { method: 'PUT', body: file, headers: { 'Content-Type': file.type || 'application/octet-stream' } })
+      const doneRes = await fetch('/api/upload/done', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: urlData.data.key, filename: file.name, contentType: file.type, sizeBytes: file.size, entityType: 'meeting', entityId: meetingId }),
+      })
+      const doneData = await doneRes.json() as { data?: { url?: string } }
+      queryClient.invalidateQueries({ queryKey: ['attachments', 'meeting', meetingId] })
+      const link = doneData.data?.url ?? `/api/files/${urlData.data.key}`
+      setText((prev) => (prev ? `${prev} [${file.name}](${link})` : `[${file.name}](${link})`))
+    } catch (err) {
+      console.error('meeting compose upload failed', err)
+    } finally {
+      setUploading(false)
+    }
+  }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -994,14 +1027,24 @@ function AddActionItemForm({ meetingId, isAuthenticated, onSuccess }: { meetingI
 
   return (
     <form onSubmit={handleSubmit} style={{ marginBottom: '12px', paddingBottom: '12px', borderBottom: '1px solid rgba(45,138,138,0.08)' }}>
-      <div className="flex items-center gap-2">
+      <div
+        className="flex items-center gap-2"
+        onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
+        onDragLeave={() => setDragOver(false)}
+        onDrop={(e) => { e.preventDefault(); setDragOver(false); Array.from(e.dataTransfer.files || []).forEach(uploadToCompose) }}
+        style={{ outline: dragOver ? '2px dashed var(--teal)' : 'none', outlineOffset: '2px', borderRadius: 'var(--radius-lg)' }}
+      >
         <Plus size={14} style={{ color: 'var(--teal)', opacity: 0.85, flexShrink: 0 }} />
         <input
           ref={inputRef}
           type="text"
           value={text}
           onChange={(e) => setText(e.target.value)}
-          placeholder={isAuthenticated || !import.meta.env.PROD ? '@nick Review draft p2 Friday' : 'Sign in to add items'}
+          onPaste={(e) => {
+            const fi = Array.from(e.clipboardData?.items || []).find((it) => it.kind === 'file')
+            if (fi) { e.preventDefault(); const f = fi.getAsFile(); if (f) uploadToCompose(f) }
+          }}
+          placeholder={isAuthenticated || !import.meta.env.PROD ? '@nick Review draft p2 Friday (drop/paste files to attach)' : 'Sign in to add items'}
           disabled={!isAuthenticated && import.meta.env.PROD}
           style={{
             flex: 1, fontSize: 'var(--value-size)', color: 'var(--ink)',
@@ -1011,6 +1054,23 @@ function AddActionItemForm({ meetingId, isAuthenticated, onSuccess }: { meetingI
           onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--teal)')}
           onBlur={(e) => (e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--teal) 12%, transparent)')}
           onKeyDown={(e) => { if (e.key === 'Escape') { setText(''); e.currentTarget.blur() } }}
+        />
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={uploading}
+          title="Attach file"
+          className="flex-shrink-0 p-2 rounded-lg"
+          style={{ border: '1px solid var(--border-subtle)', background: 'transparent', color: 'var(--slate)', cursor: uploading ? 'wait' : 'pointer', opacity: uploading ? 0.55 : 0.85 }}
+        >
+          <Paperclip size={12} />
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple
+          onChange={(e) => { Array.from(e.target.files || []).forEach(uploadToCompose); e.target.value = '' }}
+          style={{ display: 'none' }}
         />
         {hasContent && (
           <motion.button

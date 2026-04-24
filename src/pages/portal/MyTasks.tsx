@@ -745,7 +745,12 @@ export default function MyTasks() {
                 {todayHeroLists.overdue.length > 5 && (
                   <button
                     type="button"
-                    onClick={() => setQuickFilter('overdue')}
+                    onClick={() => {
+                      setQuickFilter('overdue')
+                      if (typeof window !== 'undefined') {
+                        setTimeout(() => window.scrollTo({ top: 200, behavior: 'smooth' }), 50)
+                      }
+                    }}
                     className="text-[10px] mt-1 text-left"
                     style={{ color: 'var(--teal)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
                   >
@@ -801,7 +806,12 @@ export default function MyTasks() {
                 {todayHeroLists.dueToday.length > 5 && (
                   <button
                     type="button"
-                    onClick={() => setQuickFilter('today')}
+                    onClick={() => {
+                      setQuickFilter('today')
+                      if (typeof window !== 'undefined') {
+                        setTimeout(() => window.scrollTo({ top: 200, behavior: 'smooth' }), 50)
+                      }
+                    }}
                     className="text-[10px] mt-1 text-left"
                     style={{ color: 'var(--teal)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
                   >

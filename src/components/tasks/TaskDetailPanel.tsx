@@ -1,10 +1,10 @@
-import { useState, useEffect, useRef, lazy, Suspense } from 'react'
+import { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react'
 import {
   X, Circle, Clock, User, Flag, Scale,
   CalendarDays, FolderKanban, ArrowRightLeft,
   FileText, MessageSquare, Upload, Eye, ScrollText,
   Users, Bell, ClipboardList, Link2, Trash2, Plus, ExternalLink, RefreshCw, Copy, Check,
-  ChevronUp, ChevronDown, Send,
+  ChevronUp, ChevronDown, Send, Paperclip,
 } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import CollapsibleSection from '../CollapsibleSection'
@@ -963,9 +963,41 @@ function OverviewQuickAdd({
   const [mode, setMode] = useState<'note' | 'comment'>('comment')
   const [text, setText] = useState('')
   const [forHermes, setForHermes] = useState(false)
+  const [dragOver, setDragOver] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const postUpdate = usePostTaskUpdate(taskId)
   const { showSuccess } = useToast()
   const queryClient = useQueryClient()
+
+  // T-04 inline file drop — Slack parity. Same presigned-R2 flow as FileUpload.
+  const uploadToCompose = useCallback(async (file: File) => {
+    setUploading(true)
+    try {
+      const urlRes = await fetch('/api/upload/url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filename: file.name, contentType: file.type || 'application/octet-stream', context: { type: 'task', id: taskId } }),
+      })
+      const urlData = await urlRes.json() as { data?: { uploadUrl?: string; key?: string } }
+      if (!urlData.data?.uploadUrl || !urlData.data?.key) throw new Error('presign failed')
+      await fetch(urlData.data.uploadUrl, { method: 'PUT', body: file, headers: { 'Content-Type': file.type || 'application/octet-stream' } })
+      const doneRes = await fetch('/api/upload/done', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: urlData.data.key, filename: file.name, contentType: file.type, sizeBytes: file.size, entityType: 'task', entityId: taskId }),
+      })
+      const doneData = await doneRes.json() as { data?: { url?: string } }
+      queryClient.invalidateQueries({ queryKey: ['attachments', 'task', taskId] })
+      queryClient.invalidateQueries({ queryKey: ['task-files', taskId] })
+      const link = doneData.data?.url ?? `/api/files/${urlData.data.key}`
+      setText((prev) => (prev ? `${prev}\n[${file.name}](${link})` : `[${file.name}](${link})`))
+    } catch (err) {
+      console.error('compose upload failed', err)
+    } finally {
+      setUploading(false)
+    }
+  }, [taskId, queryClient])
 
   const PLACEHOLDERS = {
     note: 'Pulled cohort, n=412 after exclusions. APACHE>25 worked. Stuck on merge — using ENC_ID not HOSP_ID',
@@ -1101,10 +1133,41 @@ function OverviewQuickAdd({
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-1.5">
-        <div className="flex gap-2 items-end">
+        <div
+          className="flex gap-2 items-end"
+          onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={(e) => {
+            e.preventDefault()
+            setDragOver(false)
+            Array.from(e.dataTransfer.files || []).forEach(uploadToCompose)
+          }}
+          style={{ outline: dragOver ? '2px dashed var(--teal)' : 'none', outlineOffset: '2px', borderRadius: 'var(--radius-lg)' }}
+        >
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+            title="Attach file (drop or paste an image too)"
+            className="flex-shrink-0 p-2 rounded-lg"
+            style={{ border: '1px solid var(--border-subtle)', background: 'transparent', color: 'var(--slate)', cursor: uploading ? 'wait' : 'pointer', opacity: uploading ? 0.55 : 0.85 }}
+          >
+            <Paperclip size={12} />
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            onChange={(e) => { Array.from(e.target.files || []).forEach(uploadToCompose); e.target.value = '' }}
+            style={{ display: 'none' }}
+          />
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
+            onPaste={(e) => {
+              const fileItem = Array.from(e.clipboardData?.items || []).find((it) => it.kind === 'file')
+              if (fileItem) { e.preventDefault(); const f = fileItem.getAsFile(); if (f) uploadToCompose(f) }
+            }}
             placeholder={PLACEHOLDERS[mode]}
             rows={2}
             onKeyDown={(e) => {

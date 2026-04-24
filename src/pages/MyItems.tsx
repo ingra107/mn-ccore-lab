@@ -47,6 +47,16 @@ function notificationIcon(type: string) {
   }
 }
 
+// T-37 type-coded left-border accent on notification cards.
+function notificationAccent(type: string): string {
+  switch (type) {
+    case 'mention':    return 'var(--gold)'
+    case 'assignment': return 'var(--teal)'
+    case 'deadline':   return 'var(--maroon)'
+    default:           return 'var(--slate)'
+  }
+}
+
 // ── Stat Card ───────────────────────────────────────────────
 
 function StatCard({
@@ -310,13 +320,12 @@ function NotificationCard({
         if (isUnread) onMarkRead(notification.id)
       }}
       style={{
-        padding: '1rem 1.25rem',
+        padding: '0.75rem 1.25rem',
         marginBottom: '0.5rem',
         cursor: notification.link ? 'pointer' : 'default',
-        borderLeft: isUnread ? '3px solid var(--gold)' : '3px solid transparent',
-        // Don't dim the whole card for read state — compounds with child
-        // opacity (--ink-hint 0.68 × parent 0.85 = 0.58 → fails AA).
-        // Visual distinction comes from borderLeft transparent. r7 2026-04-22.
+        // T-37 type-coded left border; unread gets full-strength accent, read
+        // drops to 30% of the same hue so entity-type stays legible.
+        borderLeft: `3px solid ${isUnread ? notificationAccent(notification.type) : 'transparent'}`,
       }}
     >
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
