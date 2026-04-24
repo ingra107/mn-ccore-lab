@@ -5,9 +5,10 @@
 ## 🎯 NEXT SESSION — START HERE
 
 **State at handoff:**
-- HEAD `410582fd` on main, clean, pushed
-- Deploy `8506e159.mn-ccore-lab.pages.dev` (prod alias)
+- HEAD `c2ef507a` on main, clean, pushed
+- Deploy `538cabcc.mn-ccore-lab.pages.dev` (prod alias)
 - Live for the team since 2026-04-21
+- **Queue fully closed this session** — all 4 remaining items shipped.
 
 **Shipped this continuation session (post-compact):**
 
@@ -31,6 +32,25 @@
   + click-to-filter with "Show all" reset + section-level persist in
   localStorage. Empty-all → 32px muted single-line; single-subgroup →
   skip empty siblings entirely per spec.
+- **`a9a6f2d2` — T-29 threshold Settings + Batch K part 2 row swipe.**
+  New "Lab" tab in Settings with two clamped number inputs for
+  Awaiting-review (7d) and Stale-drafts (30d) thresholds. Per-user
+  localStorage via `useLabPrefs`. `NeedsAttentionDashboard` reads
+  prefs and passes to the query. `TaskGridRow` gets `useSwipeAction`
+  wired inside the virtualized colStyle div (not around it) —
+  right-swipe completes/reopens with undo; left-swipe opens context
+  menu (long-press parity). Desktop stays fully passthrough via the
+  hook's `enabled=false` gate.
+- **`1efd79b4` + `c2ef507a` — DD-1 pilot + DD-2 v1.** MyTasks gets a
+  Now/Data mode toggle (URL `?mode=now|data`); Now renders TodayHero
+  + Focus Next and hides the dense table; Data is the reverse.
+  Default is resolved from pending count (>20 → data, else now).
+  DD-2: new `useSavedViews` hook + `SavedViewsMenu` component — save
+  current URL query string as a named view, localStorage-scoped per
+  page. Apply rewrites searchParams end-to-end. 25-view cap, rename
+  + delete. quickFilter moved onto URL (`?filter=`) so saved views
+  capture actual filter state, not just mode.
+
 - **T-29 schema check — NOT BLOCKED.** `manuscript_revisions`
   (v23) has `status`, `submitted_at`, `response_due`.
   `reviewer_comments` has `assigned_to`, `status`, `resolved_at`.
@@ -40,31 +60,28 @@
 
 **Queue, remaining work:**
 
-### 1. Batch K part 2 — DD-7 row-level swipe (careful scope)
-`useSwipeAction` infra shipped already. Wiring onto `TaskGridRow` +
-MyTasks rows is the deferred MAJOR. Virtualizer + framer drag can
-conflict at the row-wrapper layer — wrap INSIDE the virtualized
-colStyle div, not around it. Test on real iPhone + Android before
-shipping. The value is moderate (swipe-to-archive/done); cost is
-the regression risk on virtualized scroll perf. Consider whether
-long-press context menu + existing checkbox tap is sufficient.
+### 1. DD-2 v2 — cross-device + cross-surface (1 sprint)
+v1 ships localStorage per-page. v2 needs: D1 `saved_views` table with
+owner slug + JSON blob; `GET/POST/DELETE /api/views`; migrate
+`useSavedViews` to Query/Mutation pair; sidebar-pin UI under the
+RESEARCH/LAB groups; cross-surface merge stream (the real DD-2 spec —
+14-entity graph query, not per-page filters).
 
-### 2. T-29 Settings threshold plumbing (~1hr)
-`/api/manuscripts/attention` accepts `?review_days=&stale_days=` but
-there's no UI yet. Add to Settings → Lab Preferences per spec ¶2
-("Manuscript attention thresholds"). Defaults `7d / 30d`. Persist
-per-user via existing settings pattern; override the query key in
-`useManuscriptsAttention` to match. Low-risk follow-up.
+### 2. DD-1 full rollout (1 sprint)
+Pilot shipped on MyTasks; spec wants Now/Data toggle on Projects,
+Manuscripts, Deadlines, Meetings, Decisions, Ideas, Grants, Activity.
+Before rolling out, audit each page's "Now equivalent" — most have
+none yet (Deadlines/Grants have no hero strip). Scope: add a Now
+definition per page OR gracefully no-op the Now mode on surfaces
+that don't have a natural status-report layout.
 
-### 3. DD-2 saved views (3 sprints, supervised, TODAY.md replacement ambition)
+### 3. DD-2 full parity (3 sprints, supervised, TODAY.md retirement)
 See `docs/cd-round-trip/2026-04-23-round-6-triage.md` §DD-2. 5 parity
 gates must hold before `scripts/generate-today.py` cron disables:
 interactivity, friction-free, customizability, agent interaction
 (inline `@hermes` dispatch = `@claude` tag parity), 4-week dogfood.
-
-### 4. DD-1 Now/Data pilot (1 sprint, post-Batch-K)
-MyTasks only. Reconcile vs TodayHero before ship — TodayHero is
-already a "Now" view. Don't double-invest.
+v1 is the local half; full parity needs the cross-entity stream +
+comments/interactions inside views + Hermes @-dispatch from a view.
 
 **Key session decisions (durable, post-compact):**
 - **CD = Claude Design claude.ai project.** Not a human consultant.
