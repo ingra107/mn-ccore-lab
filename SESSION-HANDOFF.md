@@ -10,27 +10,26 @@
 
 ---
 
-## ⚡ Nick decisions needed (triage these first, <5 min)
+## ⚡ Nick decisions (triaged 2026-04-23 night)
 
-These are CD big-vision items NOT addressed by the auto-mode playbook below.
-Give each a [yes / no / later] so next session knows what to queue.
+These were vision-level items NOT addressed by the tactical auto-mode queue.
+Triage done — outcomes below.
 
-- **DD-#3 status-line pilot** — replace Dashboard "Good morning, Nick" greeting
-  with an operational status line (e.g. "3 overdue · 2 deadlines this week ·
-  1 IRB renewal"). Closest-to-ship of the 7 DD direction items, builds on the
-  already-shipped T-30 greeting shrink. [yes / no / later]
-- **DD-#1, #2, #4, #5, #6, #7** — other direction items sketched by CD but not
-  yet written up in this repo. Action: ask CD to drop a DESIGN-DIRECTION.md
-  with one paragraph per item so they can be triaged. [request doc / skip]
-- **Hermes ambient shape** — vision says Hermes should be "ambient" but current
-  impl is @mention-only. Candidate shapes when ready: suggest-slot on landing
-  cards / daily briefing email paragraph / inline `@hermes` co-author on
-  compose. [not urgent / draft spec / pick now]
-- **T-24 Digest rows view** — Airtable multi-view pillar, 1000+ line refactor,
-  too big for auto-mode. Pick a supervised session date. [date: __________]
-- **T-29 Manuscripts "Needs attention" grouping** — CD described UI that
-  doesn't match current code. Action: send CD a clarification ask + fresh
-  screenshots of current Manuscripts.tsx. [yes / no]
+- **DD-#3 status-line pilot** → **DRAFT SPEC FIRST.** Spec lives at
+  `docs/specs/dd-3-status-line-pilot.md`. Nick reviews, then next session
+  ships Option C (chip row). Builds on already-shipped T-30 greeting shrink.
+- **DD-#1, #2, #4, #5, #6, #7** → **REQUEST CD DOC.** Email draft at
+  `docs/cd-round-trip/2026-04-23-dd-doc-request.md` asks CD to drop
+  `DESIGN-DIRECTION.md` with one paragraph per DD item. Nick to send.
+- **Hermes ambient shape** → **SUGGEST SLOT ON LANDING.** Small strip on
+  TaskDetailPanel / ProjectDetail landing surfaces 1 proactive Hermes
+  suggestion ("3 tasks stale >14d — draft nudges?"). Opt-in, most visible.
+  Spec not drafted yet; queue for a later session.
+- **T-24 Digest rows view** → **AWAITING DATE.** Supervised session needed
+  (1000+ line file). Nick to pick a date.
+- **T-29 Manuscripts "Needs attention" grouping** → **CD CLARIFICATION
+  REQUESTED.** Email draft at `docs/cd-round-trip/2026-04-23-t-29-clarification.md`
+  asks CD to verify against live page + specify UI. Nick to send.
 
 ---
 
