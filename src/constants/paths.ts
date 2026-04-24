@@ -12,11 +12,17 @@ const PORTAL_PREFIX = '/portal'
 
 // Gated (behind CF Access + RequireAuth)
 export const PATHS = {
+  // Today B2 = the operating-day landing (see CLAUDE.md Rule 52).
+  // PATHS.dashboard stays at /portal/dashboard for URL compatibility, but
+  // the component rendered there is TodayPage. The old card-grid Dashboard
+  // moves to /portal/overview as "Lab Overview."
   dashboard: `${PORTAL_PREFIX}/dashboard`,
+  overview: `${PORTAL_PREFIX}/overview`,
   personal: `${PORTAL_PREFIX}/personal`,
   myItems: `${PORTAL_PREFIX}/my-items`,
 
   myTasks: `${PORTAL_PREFIX}/my-tasks`,
+  myTasksLegacy: `${PORTAL_PREFIX}/my-tasks-legacy`,
   tasks: `${PORTAL_PREFIX}/tasks`,
   calendar: `${PORTAL_PREFIX}/calendar`,
   deadlines: `${PORTAL_PREFIX}/deadlines`,

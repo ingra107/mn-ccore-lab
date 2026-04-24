@@ -244,9 +244,19 @@ export default function App() {
                 <Route element={<RequireAuth><PortalLayout /></RequireAuth>}>
                   {/* Portal-prefixed canonical routes (2026-04-21 migration). */}
                   <Route path="/portal/dashboard" element={<ErrorBoundary><PageErrorBoundary pageName="Dashboard"><Dashboard /></PageErrorBoundary></ErrorBoundary>} />
+                  {/* Lab Overview — same component as Dashboard for now. After
+                      Today B2 ships at /portal/dashboard, the component there
+                      will be TodayPage and Lab Overview will keep this route.
+                      Kept as a separate route from day one so deep-links from
+                      Today's PillStrip "Lab Health" pill work pre-cutover. */}
+                  <Route path="/portal/overview" element={<ErrorBoundary><PageErrorBoundary pageName="LabOverview"><Dashboard /></PageErrorBoundary></ErrorBoundary>} />
                   <Route path="/portal/personal" element={<ErrorBoundary><Personal /></ErrorBoundary>} />
                   <Route path="/portal/my-items" element={<ErrorBoundary><MyItems /></ErrorBoundary>} />
                   <Route path="/portal/my-tasks" element={<ErrorBoundary><MyTasks /></ErrorBoundary>} />
+                  {/* Legacy MyTasks — preserved during MyTasks Round 2 cutover.
+                      Same component for now; will route to MyTasksLegacy.tsx
+                      once UnifiedMyTasks ships at /portal/my-tasks. */}
+                  <Route path="/portal/my-tasks-legacy" element={<ErrorBoundary><MyTasks /></ErrorBoundary>} />
                   <Route path="/portal/tasks" element={<Navigate to="/portal/my-tasks" replace />} />
                   <Route path="/portal/calendar" element={<ErrorBoundary><CalendarPage /></ErrorBoundary>} />
                   <Route path="/portal/deadlines" element={<ErrorBoundary><Deadlines /></ErrorBoundary>} />

@@ -28,6 +28,7 @@ import {
   GraduationCap,
   GitBranch,
   ClipboardList,
+  LayoutGrid,
 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../hooks/useAuth'
@@ -68,10 +69,14 @@ const navGroups: NavGroup[] = [
   {
     title: '',
     items: [
-      { to: PATHS.dashboard, label: 'Dashboard', icon: LayoutDashboard },
+      // "Today" replaces "Dashboard" as the primary landing label after the
+      // Today B2 cutover (see CLAUDE.md Rule 52). Route stays /portal/dashboard
+      // for URL compat during the alias window.
+      { to: PATHS.dashboard, label: 'Today', icon: LayoutDashboard },
       { to: PATHS.personal, label: 'My Hub', icon: User },
       { to: PATHS.myTasks, label: 'Tasks', icon: CheckSquare },
       { to: PATHS.calendar, label: 'Calendar', icon: Calendar },
+      { to: PATHS.overview, label: 'Lab Overview', icon: LayoutGrid },
     ],
   },
   {
