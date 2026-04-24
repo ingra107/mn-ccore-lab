@@ -21,6 +21,7 @@ import { STATUS_OPTIONS, STATUS_BG, PRIORITY_OPTIONS, PRIORITY_CONFIG, PRIORITY_
 import { useTableConfig } from '../../hooks/useTableConfig'
 import { ColumnHeader } from '../table'
 import type { TaskRow } from '../../lib/api'
+import { useLongPress } from '../../hooks/useLongPress'
 
 // ── Column definitions for resize + tab nav ─────────────────
 // Full column set: checkbox + DATA_COLUMNS + actions
@@ -810,6 +811,19 @@ function TaskGridRow({
     prevStatusRef.current = task.status
   }, [task.status])
 
+  // DD-7 long-press on mobile opens the same context menu that right-click
+  // opens on desktop. iOS/Android have no right-click; long-press is the
+  // canonical equivalent. Fires at 500ms; cancels on scroll/move.
+  const longPress = useLongPress((e) => {
+    const syntheticMouseEvent = {
+      preventDefault: () => {},
+      stopPropagation: () => {},
+      clientX: 'touches' in e ? e.touches[0]?.clientX ?? 0 : 0,
+      clientY: 'touches' in e ? e.touches[0]?.clientY ?? 0 : 0,
+    } as unknown as React.MouseEvent
+    onContextMenu?.(syntheticMouseEvent, task.id)
+  })
+
   // Cell focus props for Tab navigation
   const cellProps = useCallback((colIndex: number) => {
     const isCellFocused = focusedCell?.[0] === index && focusedCell?.[1] === colIndex
@@ -869,6 +883,10 @@ function TaskGridRow({
         if (e.key === 'Enter') { e.preventDefault(); onOpenDetail?.(task) }
       }}
       onContextMenu={(e) => onContextMenu?.(e, task.id)}
+      onTouchStart={longPress.onTouchStart}
+      onTouchMove={longPress.onTouchMove}
+      onTouchEnd={longPress.onTouchEnd}
+      onTouchCancel={longPress.onTouchCancel}
     >
       {/* Leftmost circle — 1-click complete (with undo). Ctrl/⌘+click toggles
           row selection for bulk actions. GH #25. r7 2026-04-22. */}
