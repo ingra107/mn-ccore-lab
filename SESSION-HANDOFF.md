@@ -1,4 +1,89 @@
-# Session Handoff — 2026-04-23 (night)
+# Session Handoff — 2026-04-24 (pre-compact)
+
+---
+
+## 🎯 NEXT SESSION — START HERE (post-compact)
+
+**State at handoff:**
+- HEAD `ea6927fc` on main, clean
+- Deploy `a004505f.mn-ccore-lab.pages.dev` (prod alias)
+- Round 5 + Round 6 both shipped + audit-clean
+- Live for the team since 2026-04-21
+
+**Queue, in priority order:**
+
+### 1. WS socket consolidation (0.5 sprint) — MAJOR from audit
+`usePresence` + `useIntentBroadcast` + `useTyping` each open their own
+`PartySocket` to the same `mnccore` room. Per TaskDetailPanel open
+that's 3 sockets; 19 team members = ~57 concurrent connections to
+the same Durable Object. Refactor to share a single connection.
+
+- Files: `src/hooks/usePresence.ts` (all 3 hooks), callers
+  `src/pages/ProjectDetail.tsx`, `src/components/tasks/TaskDetailPanel.tsx`,
+  `src/pages/MeetingDetail.tsx`.
+- Approach: new `PresenceSocketProvider` via React context, or a
+  module-scope singleton keyed by (entityType, entityId). Hooks
+  subscribe to a shared message dispatcher rather than opening
+  their own sockets.
+- Build check: `npx tsc -b && npm run build`.
+- Pairs well with: intent-leave event (30 min after consolidation).
+
+### 2. Intent leave event (30 min) — MINOR from audit
+`useIntentBroadcast` unmount sends `intent: 'viewing'` instead of a
+dedicated leave. Peers see a stale dot for up to 5s (TTL). Add new
+message type `intent-leave` that drops the peer from the map
+immediately, matching `usePresence`'s `presence-leave` pattern.
+
+### 3. Batch K — DD-7 surface rollout (1 sprint)
+Infra primitives already shipped in `0b2ce416` — `useSwipeAction`,
+`useLongPress`, `BottomSheet`. Wire them up:
+- `useSwipeAction` onto TaskGridRow + MyTasks rows. Virtualizer +
+  framer drag can conflict at the row-wrapper layer — wrap INSIDE
+  the virtualized colStyle div, not around it. Test carefully.
+- `BottomSheet` to rewrite compose on mobile for ProjectDetail /
+  TaskDetailPanel / MeetingDetail (rises above keyboard).
+
+### 4. T-29 full (1 sprint, blocked on schema check)
+CD spec at `docs/specs/t-29-manuscripts-attention.md` — 3 subgroups:
+Revisions overdue / Awaiting your review / Stale drafts. Before
+building, grep the `manuscripts` table schema for
+`revision_requested_at` + `reviewer_assigned_slug` equivalents.
+If missing, schema-v50 pre-work comes first. Skip-it version
+already shipped in `ad19cec2` (RevisionTracker rename + urgency sort).
+
+### 5. DD-2 saved views (3 sprints, supervised, TODAY.md replacement ambition)
+See `docs/cd-round-trip/2026-04-23-round-6-triage.md` §DD-2. 5 parity
+gates must hold before `scripts/generate-today.py` cron disables:
+interactivity, friction-free, customizability, agent interaction
+(inline `@hermes` dispatch = `@claude` tag parity), 4-week dogfood.
+
+### 6. DD-1 Now/Data pilot (1 sprint, post-Batch-K)
+MyTasks only. Reconcile vs TodayHero before ship — TodayHero is
+already a "Now" view. Don't double-invest.
+
+**If capacity-tight:** do (1) WS consolidation + (2) intent-leave in
+one batch, deploy, verify no regressions, then Batch K next session.
+
+**Key session decisions (durable, post-compact):**
+- **CD = Claude Design claude.ai project.** Not a human consultant.
+  Round-trip artifacts at `docs/cd-round-trip/` are prompts to paste
+  into the claude.ai project, not emails. Latest at
+  `2026-04-23-round-6-triage.md` (Nick-approved triage).
+- **DD-7 haptics DROPPED** per Nick + agent pushback — Web Vibration
+  API unreliable on iOS PWA. 5 of 6 mobile fixes only.
+- **DD-4 page-wide typing broadcast DROPPED.** T-51 inline-by-compose
+  typing indicator suffices. Intent dots only (narrowed).
+- **DD-1 scoped to MyTasks pilot** only, not MyTasks + Projects in
+  sprint 1. Reconcile vs TodayHero.
+- **DD-2 ambition = full TODAY.md replacement**, not parallel-forever.
+  Gate CLI retirement behind 5-gate parity proof.
+- **T-24 Digest rows view DROPPED.** Not worth 1000+ line refactor.
+- **Hermes ambient shape picked: suggest-slot on landing cards.**
+  Not urgent; spec when Nick raises it.
+
+---
+
+## Earlier handoff — 2026-04-23 (night)
 
 > Last worked: **Claude Design round-5 ticket execution — 4 batches.**
 > 49 tickets received, ~32 shipped across 4 deploys. 3 P0s resolved.
