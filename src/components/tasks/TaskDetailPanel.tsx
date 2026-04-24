@@ -21,6 +21,7 @@ import Avatar from '../Avatar'
 import InlineSelect from '../InlineSelect'
 import PresenceAvatars from '../PresenceAvatars'
 import { usePresence, useTyping, useIntentBroadcast, type Intent } from '../../hooks/usePresence'
+import { useIsMobile } from '../../hooks/useIsMobile'
 import { motion, useMotionValue, useTransform } from 'framer-motion'
 import type { TaskRow } from '../../lib/api'
 import { PATHS } from '../../constants/paths'
@@ -984,6 +985,7 @@ function OverviewQuickAdd({
   const [uploading, setUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const isMobile = useIsMobile()
   const { typingPeers, broadcastTyping } = useTyping('task', taskId)
   const appendCh = (ch: string) => appendCharToInput(textareaRef, ch, setText)
   const postUpdate = usePostTaskUpdate(taskId)
@@ -1081,6 +1083,21 @@ function OverviewQuickAdd({
         borderTop: '1px solid var(--border-subtle)',
         paddingTop: 'var(--sp-lg)',
         marginTop: 'var(--sp-sm)',
+        // Mobile: stick the compose form to the bottom of the panel's scroll
+        // container so the iOS keyboard doesn't shove it out of reach.
+        // env(safe-area-inset-bottom) clears the home indicator.
+        ...(isMobile ? {
+          position: 'sticky' as const,
+          bottom: 0,
+          background: 'var(--cream)',
+          paddingBottom: 'calc(var(--sp-md) + env(safe-area-inset-bottom))',
+          paddingLeft: 'var(--sp-lg)',
+          paddingRight: 'var(--sp-lg)',
+          marginLeft: 'calc(-1 * var(--sp-lg))',
+          marginRight: 'calc(-1 * var(--sp-lg))',
+          zIndex: 1,
+          boxShadow: '0 -6px 16px rgba(0,0,0,0.08)',
+        } : null),
       }}
     >
       <label

@@ -47,6 +47,8 @@ import LinkifiedText from '../components/LinkifiedText'
 import FileUpload from '../components/FileUpload'
 import PresenceAvatars from '../components/PresenceAvatars'
 import { usePresence, useTyping, useIntentBroadcast, type Intent } from '../hooks/usePresence'
+import { useIsMobile } from '../hooks/useIsMobile'
+import { useComposeSheet } from '../hooks/useComposeSheet'
 import SubmissionTimeline from '../components/SubmissionTimeline'
 import ConferencePrep from '../components/ConferencePrep'
 import InsightPanel from '../components/InsightPanel'
@@ -240,6 +242,9 @@ function ProjectDetailInner({ project }: InnerProps) {
   const [quickComposeSubmitting, setQuickComposeSubmitting] = useState(false)
   const [quickComposeDragOver, setQuickComposeDragOver] = useState(false)
   const [quickComposeUploading, setQuickComposeUploading] = useState(false)
+  const isMobile = useIsMobile()
+  const [composeSheetOpen, setComposeSheetOpen] = useState(false)
+  useComposeSheet(isMobile && composeSheetOpen, () => setComposeSheetOpen(false))
   const quickComposeFileInputRef = useRef<HTMLInputElement>(null)
   const quickComposeTextRef = useRef<HTMLTextAreaElement>(null)
   const appendToCompose = useCallback(
@@ -307,6 +312,7 @@ function ProjectDetailInner({ project }: InnerProps) {
       })
       if (res.ok) {
         setQuickComposeText('')
+        setComposeSheetOpen(false)
         if (quickComposeKind === 'note') {
           queryClient.invalidateQueries({ queryKey: ['project-updates', project.slug] })
         } else {
@@ -844,8 +850,66 @@ function ProjectDetailInner({ project }: InnerProps) {
           </div>
         </div>
 
-        {/* Full-width Quick compose at bottom */}
-        <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '12px' }}>
+        {/* Full-width Quick compose at bottom. On mobile, the inline compose
+            is replaced by a compact trigger; the actual form mounts in a
+            BottomSheet-style fixed overlay above the keyboard. Same state,
+            same refs — only the positioning/z-index changes when open. */}
+        {isMobile && (
+          <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '12px' }}>
+            <button
+              type="button"
+              onClick={() => setComposeSheetOpen(true)}
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                background: 'var(--surface-2)',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: 'var(--radius-md)',
+                color: 'var(--muted)',
+                fontSize: '13px',
+                textAlign: 'left',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+              }}
+              aria-label="Open compose"
+            >
+              <Send size={14} style={{ flexShrink: 0 }} />
+              <span>{quickComposeText.trim() ? `Draft: ${quickComposeText.slice(0, 40)}…` : 'Add note or comment…'}</span>
+            </button>
+          </div>
+        )}
+        {isMobile && composeSheetOpen && (
+          <div
+            onClick={() => setComposeSheetOpen(false)}
+            style={{
+              position: 'fixed', inset: 0,
+              background: 'rgba(0,0,0,0.45)',
+              zIndex: 'var(--z-modal-backdrop)' as unknown as number,
+            }}
+            aria-hidden
+          />
+        )}
+        <div
+          data-compose-slot
+          style={
+            isMobile
+              ? (composeSheetOpen
+                  ? {
+                      position: 'fixed',
+                      left: 0, right: 0, bottom: 0,
+                      zIndex: 'var(--z-modal)' as unknown as number,
+                      background: 'var(--cream)',
+                      padding: 'var(--sp-md) var(--sp-lg) calc(var(--sp-lg) + env(safe-area-inset-bottom))',
+                      borderTopLeftRadius: 'var(--radius-2xl)',
+                      borderTopRightRadius: 'var(--radius-2xl)',
+                      boxShadow: '0 -10px 40px rgba(0,0,0,0.25)',
+                    }
+                  : { display: 'none' })
+              : { borderTop: '1px solid var(--border-subtle)', paddingTop: '12px' }
+          }
+        >
           <div className="flex items-center gap-2 mb-2">
             <div style={{ display: 'inline-flex', gap: 4, padding: 2, borderRadius: 'var(--radius-full)', background: 'var(--surface-2)' }}>
               <button
