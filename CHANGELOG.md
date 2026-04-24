@@ -3,6 +3,119 @@
 
 > Historical phase records moved from CLAUDE.md to keep the operating guide focused on current state. Each section is a complete record of what shipped, decisions made, and scores achieved.
 
+## Phase 38 — Today B2 + MyTasks Round 2 (2026-04-24)
+
+**Headline.** New CD design pass shipped on `feature/today-b2-mytasks-r2`.
+Two page-level cutovers + new API endpoint + 6 new CLAUDE.md rules.
+
+**Source design (CD memory):** `review/handoff_today_my_tasks_2026.04.24/`
+— full mental model in CLAUDE.md, prototype in `today-explore/option-b2.jsx`
++ `mytasks-explore/unified-mytasks.jsx`, pixel ground-truth in
+`reference/*.png`. Read these before touching either page.
+
+**Plan source:** `~/.claude/plans/a-couple-things-that-curious-popcorn.md`
+— Context, file map, phase boundaries, verification gates, and the
+verdict matrix for unshipped CD round-5 tickets (3 dropped as obviated,
+2 folded into P1, 9 kept as follow-ups).
+
+### Commits (in branch order)
+
+1. **`2e518d2` — Routes + Lab Overview rename.** PATHS gets `overview` +
+   `myTasksLegacy`; new `/portal/overview` + `/portal/my-tasks-legacy`
+   routes. Sidebar primary nav: Dashboard label → "Today" (route still
+   `/portal/dashboard` for URL compat); add "Lab Overview" entry. Mobile
+   tab bar overflow Work section gets Lab Overview. Tests/helpers/paths
+   mirror updated. Both new routes render existing Dashboard / MyTasks
+   for now (single-step cutover comes in subsequent commits).
+2. **`d9f4188` — Today B2 page port.** Single-file translation of
+   `option-b2.jsx` to `src/pages/portal/TodayPage.tsx`. Surfaces:
+   - Pill strip: overdue / stalled / planned / meetings / done-today +
+     Lab Health (formula 100 − 4×overdue − 2×stalled, links to
+     `/portal/overview`)
+   - Right Now: gold-glow promoted slot, swap queue, expand for
+     trail/chat
+   - Timeline: today's meetings + drop zone strip (calendar empty-state
+     links to Settings; OAuth deferred to Phase 3)
+   - 5 task groups (deep / priorities / quick / pb / etl) bucketed via
+     `getGroupForTask()`; sort planned → active → done
+   - Task drawer: Why / Subtasks / Recent Updates / Blocks / inline chat
+   - Right rail: Hermes suggests (cheap algorithmic) / Needs Attention /
+     Projects / Pulse
+   State: `useTodayState` localStorage-backed, keyed by
+   `today_state_${YYYY-MM-DD}`, drops stale entries on each render.
+   Wired `/portal/dashboard` → `TodayPage`; `/portal/overview` keeps the
+   old Dashboard component.
+3. **`da8331d` — UnifiedMyTasks port.** `src/pages/portal/UnifiedMyTasks.tsx`
+   ports `unified-mytasks.jsx` + the three view files. Three views
+   (Columns / Lanes / List) share ONE toolbar (Rule 55). View picker
+   far-left of filter row, persists to `localStorage.mt_view`. Quick-view
+   tabs: All / Today / Overdue / Waiting / Stale. Custom `FilterChip`
+   dropdown so Guardrail #4 (no raw `<select>`) holds. Bulk handlers
+   stubbed for P0 (alert + console.warn — wired in P2). 'Today' quick-view
+   reads planned-set from TodayPage's `today_state_YYYY-MM-DD` key, so
+   promoting from Today flows through here without a separate state
+   store. `/portal/my-tasks` → `UnifiedMyTasks`;
+   `/portal/my-tasks-legacy` → old `MyTasks.tsx`.
+4. **`6ccf1ed` — `/api/tasks/:id/detail` endpoint.** New
+   `handleGetTaskDetail` returns `{why, updates, subtasks, blocks}` in
+   one round-trip. `why` = description first paragraph (no new column).
+   `updates` = task_updates merged with activity_log entries (sorted DESC,
+   capped 30). `subtasks` = task_subtasks with sort_order. `blocks` =
+   tasks whose `blocked_by` mentions this id (LIKE).
+5. **`d920528` — Wire TodayPage drawer to real data.** New
+   `useTaskDetail(taskId)` hook in `useApiData.ts`. Drawer renders
+   real subtasks (with completion checkboxes), real blocks, and merged
+   updates color-coded by author (Hermes=gold, Nick=teal, others=grey
+   per Rule 54). Loading skeleton inline. UnifiedMyTasks drawer stays
+   static for this commit.
+
+### Decisions
+
+- **Single-file ports over component-per-file split.** Faster ship; the
+  HANDOFF §2 file map can be honored by a follow-up refactor commit.
+  Both ports come in at ~1000 lines each — large but manageable.
+- **localStorage state for `rightNow / planned / done`.** Day-keyed,
+  resets daily. v2 will add a `planned_for` D1 column for cross-device
+  sync (deferred to its own /substrate-swap-shaped change).
+- **Lab Health formula = design's spec.** `100 − 4×overdue − 2×stalled`
+  floored at 0. Plan called for fallback to existing `LabHealthScore`
+  hook; the existing hook lives in old Dashboard and is hard to extract
+  without a follow-up. Use design formula for now; refactor later if
+  the numbers diverge in practice.
+- **Hermes-suggests rail card uses cheap algorithm for P0.** "If overdue
+  > 0: work the longest one first; if stalled > 0: pick one and ship a
+  30-min nudge; else: block 90 minutes for deep work." Real LLM call
+  deferred until /api/hermes/today-suggestion endpoint.
+
+### CD round-5 ticket verdicts (post-Phase 38)
+
+3 obviated by Today B2 / MyTasks Round 2: **T-07, T-08, T-09** (TodayHero
+density / scroll / redundancy — replaced by new design).
+2 folded into Phase 38 deferred: **T-05** (compose @-/emoji/📎 toolbar),
+**T-06** (reactions flush-left). Will ship alongside MyTasks drawer
+wiring in a follow-up.
+9 kept for follow-up sessions: T-16, T-20, T-23, T-24, T-29, T-32, T-34,
+T-40, T-47. See plan §6 verdict matrix.
+
+### Out of scope / deferred
+
+- T-05, T-06 polish on the Today drawer + UnifiedMyTasks drawer wiring
+- Component split per HANDOFF §2 (currently single-file ports)
+- Calendar OAuth + personal shortcuts (Phase 3)
+- `planned_for` D1 column for cross-device sync (Phase 3+)
+- Mobile responsive pass (design is desktop-first 1440w per CD memory)
+- A11y pass (focus rings, screen reader labels, tab order)
+- Bulk-action wiring on UnifiedMyTasks (P2)
+- The 7 CD design-direction structural proposals (separate strategic
+  discussion)
+
+### Quality gate (local)
+
+`tsc -b && vite build` green. TodayPage chunk ~36 KB / 9 KB gz;
+UnifiedMyTasks chunk reuses existing MyTasks chunk size class. Branch
+not deployed yet — verify `npm run test:local` and inspection suite
+before merging to main.
+
 ## Claude Design round-5 batches 3-4 (2026-04-23 night, later)
 
 Nick pushed back on the T-49 mobile-swipe removal; restored with a
