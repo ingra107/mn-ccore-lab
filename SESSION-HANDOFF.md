@@ -5,12 +5,16 @@
 ## 🎯 NEXT SESSION — START HERE
 
 **State at handoff:**
-- HEAD `45351c1` on main, pushed
-- Deploy `5a5962c9.mn-ccore-lab.pages.dev` is live as production (closure r2d)
-- Closure deploy chain: r2 `b7fe974e` (8 CD-spec fixes) → r2b `1eab1007` (InlineDetail + bulk picker) → r2c `32ffa0e7` (HermesSuggests 3-bullet) → r2d `5a5962c9` (nextAction + TaskDrawer buttons)
+- HEAD `a955b7a` on main, pushed
+- Deploy `3481f102.mn-ccore-lab.pages.dev` is live as production (closure r2h)
+- Closure deploy chain: r2 `b7fe974e` (8 CD-spec fixes) → r2b `1eab1007` (InlineDetail + bulk picker) → r2c `32ffa0e7` (HermesSuggests 3-bullet) → r2d `5a5962c9` (nextAction + TaskDrawer buttons) → r2e `c454e1c9` (Move button — priority-based, superseded) → r2f `6ec99e0f` (group_override schema v50 — explicit override) → r2g `fb308a88` (Today TaskDetailDrawer Move parity) → r2h `3481f102` (📍 indicator on rows)
 - Live for the team since 2026-04-21; all closure rounds shipped 2026-04-25
-- Phase 38 = Today B2 + MyTasks Round 2 + 12 CD-spec gaps closed (8 from verification + 4 polish swept after)
+- Phase 38 = Today B2 + MyTasks Round 2 + 14 CD-spec gaps closed (8 from verification + 6 polish/cross-repo) + new tasks.group_override end-to-end propagation
+- Cross-repo schema migration v50 / brain.db migration 037 shipped 2026-04-25 (PB-side commit `adf104be` in `~/Peripheral-Brain/`). Hub Move clicks propagate through to TODAY.md generation.
 - One-time agent scheduled for 2026-05-02 14:00 UTC (`trig_01Mobbas7u1o7xGGizxfkmPp`) to retire `/portal/my-tasks-legacy` after the soak window
+- Hub-audit on `3481f102`: 12 PASS / 2 INFO / 0 FAIL on tasks section
+- Component split (HANDOFF §2) DISPATCHED as background agent in isolated worktree (won't touch main); will return branch + diff for Nick review
+- New CLAUDE.md rule 63 captures the group_override end-to-end contract
 
 **Shipped this session (closure r2 — CD verification pass):**
 
