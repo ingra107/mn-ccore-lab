@@ -448,6 +448,17 @@ function writeTodayState(snap: object): void {
   try { window.localStorage.setItem(`today_state_${todayKey()}`, JSON.stringify(snap)) } catch { /* ignore */ }
 }
 
+// Move → popover: maps a target group to the priority change that puts the
+// task there under the current getGroupForTask derivation. PB + ETL are
+// excluded because they're driven by source/project (not safely settable
+// from a quick popover). Schema override path is the proper long-term fix
+// (add tasks.group_override column).
+const MOVE_OPTIONS: Array<{ key: GroupKey; priority: 'medium' | 'high' | 'low'; label: string }> = [
+  { key: 'deep',       priority: 'medium', label: '🎯 Deep work' },
+  { key: 'priorities', priority: 'high',   label: '✅ Priorities' },
+  { key: 'quick',      priority: 'low',    label: '⚡ Quick' },
+]
+
 function InlineDetail({ task, projectName }: { task: TaskRow; projectName?: string | null }) {
   // Real handlers (no longer decorative). Reach for mutations directly so the
   // component is self-contained and the parent doesn't need to drill props.
@@ -456,6 +467,20 @@ function InlineDetail({ task, projectName }: { task: TaskRow; projectName?: stri
   const snap = readTodayState()
   const isPromoted = snap.rightNow === task.id
   const isPlanned = !!snap.planned?.[task.id]
+  const [moveOpen, setMoveOpen] = useState(false)
+  const moveRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!moveOpen) return
+    const close = (e: MouseEvent) => { if (moveRef.current && !moveRef.current.contains(e.target as Node)) setMoveOpen(false) }
+    document.addEventListener('mousedown', close)
+    return () => document.removeEventListener('mousedown', close)
+  }, [moveOpen])
+
+  const moveToGroup = useCallback((opt: typeof MOVE_OPTIONS[number]) => {
+    updateTask.mutate({ id: task.id, fields: { priority: opt.priority } }, {
+      onSuccess: () => { undoToast.showSuccess(`Moved to ${opt.label}`); setMoveOpen(false) },
+    })
+  }, [task.id, updateTask, undoToast])
 
   const promote = useCallback(() => {
     const s = readTodayState()
@@ -497,13 +522,28 @@ function InlineDetail({ task, projectName }: { task: TaskRow; projectName?: stri
           💡 {task.description.split('\n')[0].slice(0, 220)}
         </div>
       )}
-      <div style={{ display: 'flex', gap: 6, marginBottom: 8, flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: 6, marginBottom: 8, flexWrap: 'wrap', position: 'relative' }}>
         {!isPromoted && (
           <button onClick={promote} title="Promote to Right Now on Today" style={{ padding: '4px 10px', fontSize: 10.5, borderRadius: 4, border: `1px solid ${ACCENT_GOLD}`, background: ACCENT_GOLD, color: PAGE_BG, fontWeight: 600, fontFamily: 'inherit', cursor: 'pointer' }}>▶ Work on this</button>
         )}
         {!isPlanned && (
           <button onClick={planToday} title="Add to today's planned strip" style={{ padding: '4px 10px', fontSize: 10.5, borderRadius: 4, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: INK, fontFamily: 'inherit', cursor: 'pointer' }}>📌 Plan today</button>
         )}
+        <div ref={moveRef} style={{ position: 'relative' }}>
+          <button onClick={() => setMoveOpen((o) => !o)} title="Move to a different group (changes priority to match)" style={{ padding: '4px 10px', fontSize: 10.5, borderRadius: 4, border: `1px solid ${moveOpen ? ACCENT_TEAL : 'rgba(255,255,255,0.1)'}`, background: moveOpen ? ACCENT_TEAL + '20' : 'transparent', color: moveOpen ? ACCENT_TEAL : INK, fontFamily: 'inherit', cursor: 'pointer' }}>Move →</button>
+          {moveOpen && (
+            <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: 4, minWidth: 160, background: PANEL_BG, border: '1px solid rgba(255,255,255,0.12)', borderRadius: 4, zIndex: 30, boxShadow: '0 4px 12px rgba(0,0,0,0.4)' }}>
+              {MOVE_OPTIONS.map((opt) => (
+                <button
+                  key={opt.key}
+                  onClick={() => moveToGroup(opt)}
+                  disabled={updateTask.isPending}
+                  style={{ display: 'block', width: '100%', textAlign: 'left', padding: '6px 10px', fontSize: 11, background: 'transparent', border: 'none', color: INK, fontFamily: 'inherit', cursor: updateTask.isPending ? 'wait' : 'pointer' }}
+                >{opt.label}</button>
+              ))}
+            </div>
+          )}
+        </div>
         <button onClick={snooze} title="Push due date +1 day" disabled={updateTask.isPending} style={{ padding: '4px 10px', fontSize: 10.5, borderRadius: 4, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: INK, fontFamily: 'inherit', cursor: updateTask.isPending ? 'wait' : 'pointer', opacity: updateTask.isPending ? 0.5 : 1 }}>Snooze +1d</button>
         <button onClick={archive} title="Soft-delete this task" disabled={updateTask.isPending} style={{ padding: '4px 10px', fontSize: 10.5, borderRadius: 4, border: 'none', background: 'transparent', color: INK_DIM, fontFamily: 'inherit', cursor: updateTask.isPending ? 'wait' : 'pointer' }}>Archive</button>
       </div>
@@ -863,9 +903,24 @@ function TaskDrawer({ task, project, onClose }: { task: TaskRow; project: { name
 
   // Wire ▶ Work / 📌 Plan today to today_state localStorage (TodayPage picks up).
   const undoToast = useUndoToast()
+  const updateTask = useUpdateTask()
   const snap = readTodayState()
   const isPromoted = snap.rightNow === task.id
   const isPlanned = !!snap.planned?.[task.id]
+  const [moveOpen, setMoveOpen] = useState(false)
+  const moveRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!moveOpen) return
+    const close = (e: MouseEvent) => { if (moveRef.current && !moveRef.current.contains(e.target as Node)) setMoveOpen(false) }
+    document.addEventListener('mousedown', close)
+    return () => document.removeEventListener('mousedown', close)
+  }, [moveOpen])
+
+  const moveToGroup = useCallback((opt: typeof MOVE_OPTIONS[number]) => {
+    updateTask.mutate({ id: task.id, fields: { priority: opt.priority } }, {
+      onSuccess: () => { undoToast.showSuccess(`Moved to ${opt.label}`); setMoveOpen(false) },
+    })
+  }, [task.id, updateTask, undoToast])
 
   const promote = useCallback(() => {
     const s = readTodayState()
@@ -898,7 +953,7 @@ function TaskDrawer({ task, project, onClose }: { task: TaskRow; project: { name
           💡 {why}
         </div>
       )}
-      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 14 }}>
+      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 14, position: 'relative' }}>
         {!isPromoted && (
           <button onClick={promote} title="Promote to Right Now on Today" style={{ padding: '5px 12px', fontSize: 11.5, borderRadius: 4, border: `1px solid ${ACCENT_GOLD}`, background: ACCENT_GOLD, color: PAGE_BG, fontWeight: 600, fontFamily: 'inherit', cursor: 'pointer' }}>▶ Work on this</button>
         )}
@@ -908,6 +963,21 @@ function TaskDrawer({ task, project, onClose }: { task: TaskRow; project: { name
         {isPromoted && (
           <span style={{ padding: '5px 12px', fontSize: 11.5, color: ACCENT_GOLD, fontStyle: 'italic' }}>▶ Already in Right Now</span>
         )}
+        <div ref={moveRef} style={{ position: 'relative' }}>
+          <button onClick={() => setMoveOpen((o) => !o)} title="Move to a different group (changes priority to match)" style={{ padding: '5px 12px', fontSize: 11.5, borderRadius: 4, border: `1px solid ${moveOpen ? ACCENT_TEAL : 'rgba(255,255,255,0.15)'}`, background: moveOpen ? ACCENT_TEAL + '20' : 'transparent', color: moveOpen ? ACCENT_TEAL : INK, fontFamily: 'inherit', cursor: 'pointer' }}>Move →</button>
+          {moveOpen && (
+            <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: 4, minWidth: 160, background: PANEL_BG, border: '1px solid rgba(255,255,255,0.12)', borderRadius: 4, zIndex: 30, boxShadow: '0 4px 12px rgba(0,0,0,0.4)' }}>
+              {MOVE_OPTIONS.map((opt) => (
+                <button
+                  key={opt.key}
+                  onClick={() => moveToGroup(opt)}
+                  disabled={updateTask.isPending}
+                  style={{ display: 'block', width: '100%', textAlign: 'left', padding: '6px 10px', fontSize: 11, background: 'transparent', border: 'none', color: INK, fontFamily: 'inherit', cursor: updateTask.isPending ? 'wait' : 'pointer' }}
+                >{opt.label}</button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
       <dl style={{ fontSize: 11, color: INK_MUTED, margin: 0, display: 'grid', gridTemplateColumns: '80px 1fr', rowGap: 8, columnGap: 8 }}>
         <Term>Project</Term><Defn>{project ? <Link to={PATHS.project(project.slug)} style={{ color: ACCENT_TEAL, textDecoration: 'none' }}>{project.name}</Link> : '—'}</Defn>
