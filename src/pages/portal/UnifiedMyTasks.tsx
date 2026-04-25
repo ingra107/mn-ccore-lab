@@ -297,15 +297,24 @@ function TopBar({ view, setView, search, setSearch, filter, setFilter, quickView
 // Bulk bar — actions stub; wired in P2
 // ──────────────────────────────────────────────────────────────────────────
 
-function BulkBar({ count, onClear, onAction }: { count: number; onClear: () => void; onAction: (label: string) => void }) {
+function BulkBar({ count, onClear }: { count: number; onClear: () => void }) {
+  // Bulk handlers are wired in P2. Until then the buttons are disabled
+  // with a tooltip so the bar exists (so the user sees that selection
+  // works) without firing alert("Coming soon") on click.
   const labels = ['📌 Plan today', 'Move to…', 'Snooze +1d', 'Reassign', 'Priority', '✓ Complete', 'Archive']
   return (
     <div style={{ padding: '8px 24px', background: 'rgba(201,168,76,0.08)', borderBottom: '1px solid rgba(201,168,76,0.2)', display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, flexShrink: 0 }}>
       <span style={{ color: ACCENT_GOLD, fontWeight: 600 }}>{count} selected</span>
       <span style={{ color: INK_DIM }}>·</span>
       {labels.map((l) => (
-        <button key={l} onClick={() => onAction(l)} style={{ padding: '3px 9px', fontSize: 11, border: '1px solid rgba(255,255,255,0.12)', borderRadius: 4, background: 'transparent', color: INK, fontFamily: 'inherit', cursor: 'pointer' }}>{l}</button>
+        <button
+          key={l}
+          disabled
+          title="Coming soon"
+          style={{ padding: '3px 9px', fontSize: 11, border: '1px solid rgba(255,255,255,0.08)', borderRadius: 4, background: 'transparent', color: INK_DIM, fontFamily: 'inherit', cursor: 'not-allowed', opacity: 0.55 }}
+        >{l}</button>
       ))}
+      <span style={{ fontSize: 10, color: INK_DIM, marginLeft: 4, fontStyle: 'italic' }}>(actions wire in P2)</span>
       <div style={{ flex: 1 }} />
       <button onClick={onClear} style={{ background: 'none', border: 'none', color: INK_MUTED, fontSize: 11, cursor: 'pointer', fontFamily: 'inherit' }}>Deselect</button>
     </div>
@@ -876,13 +885,6 @@ export default function UnifiedMyTasks() {
   const drawerTask = drawer ? allTasks.find((t) => t.id === drawer) ?? null : null
   const drawerProject = drawerTask?.project_id ? projectsByPid.get(drawerTask.project_id) ?? null : null
 
-  // Bulk action stub — toast.
-  const onBulkAction = useCallback((label: string) => {
-    // P2 wires to real APIs. P0 logs + warns the user.
-    console.warn('[MyTasks Round 2] bulk action stub:', label, [...selected])
-    alert(`"${label}" not yet wired (${selected.size} task${selected.size === 1 ? '' : 's'}). Coming soon.`)
-  }, [selected])
-
   const isLoading = tasksQuery.isLoading || projectsQuery.isLoading
 
   return (
@@ -895,7 +897,7 @@ export default function UnifiedMyTasks() {
         taskCount={filtered.length}
         projectOptions={projectOptions}
       />
-      {selected.size > 0 && <BulkBar count={selected.size} onClear={() => setSelected(new Set())} onAction={onBulkAction} />}
+      {selected.size > 0 && <BulkBar count={selected.size} onClear={() => setSelected(new Set())} />}
       <div style={{ flex: 1, minHeight: 0, display: 'flex', overflow: 'hidden' }}>
         <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           {isLoading ? (

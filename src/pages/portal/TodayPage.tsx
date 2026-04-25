@@ -971,14 +971,26 @@ export default function TodayPage() {
   const [completedOpen, setCompletedOpen] = useState(false)
 
   return (
-    <div style={{ background: PAGE_BG, color: INK, fontFamily: 'var(--font-sans), \'DM Sans\', system-ui, sans-serif', minHeight: '100%', display: 'grid', gridTemplateColumns: '1fr 340px' }}>
+    <div className="b2-grid" style={{ background: PAGE_BG, color: INK, fontFamily: 'var(--font-sans), \'DM Sans\', system-ui, sans-serif', minHeight: '100%' }}>
       <style>{`
         @keyframes b2pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
         .b2-proj:hover { background: rgba(255,255,255,0.04); }
         .b2-proj-link:hover { color: ${ACCENT_TEAL} !important; opacity: 1 !important; text-decoration: underline; }
+        /* Desktop: 1fr main + 340px right rail. Mobile: stack with rail
+           below main (rail collapses to 220px tall horizontal scroll
+           cards). 1024 breakpoint matches the data-page tablet
+           breakpoint per the columnar table density rules. */
+        .b2-grid { display: grid; grid-template-columns: 1fr 340px; }
+        .b2-main { padding: 28px 32px; border-right: 1px solid rgba(255,255,255,0.06); min-width: 0; }
+        .b2-rail { padding: 28px 20px; background: #0a0f15; overflow-y: auto; }
+        @media (max-width: 1024px) {
+          .b2-grid { grid-template-columns: 1fr; }
+          .b2-main { padding: 20px 16px; border-right: none; border-bottom: 1px solid rgba(255,255,255,0.06); }
+          .b2-rail { padding: 16px; }
+        }
       `}</style>
 
-      <main style={{ padding: '28px 32px', borderRight: '1px solid rgba(255,255,255,0.06)' }}>
+      <main className="b2-main">
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, marginBottom: 4 }}>
           <h1 style={{ fontSize: 32, fontWeight: 600, color: '#fff', letterSpacing: '-0.03em', margin: 0 }}>Today</h1>
           <HeartbeatLine width={60} height={14} color={ACCENT_GOLD} variant="static" />
@@ -1114,7 +1126,7 @@ export default function TodayPage() {
         </div>
       </main>
 
-      <aside style={{ padding: '28px 20px', background: '#0a0f15', overflowY: 'auto' }}>
+      <aside className="b2-rail">
         <HermesSuggestsCard stalled={stalledProjects.length} overdue={overdueTasks.length} />
         <NeedsAttentionCard overdueTasks={overdueTasks} stalledProjects={stalledProjects} />
         <ProjectsCard projects={projectsForRail} />
