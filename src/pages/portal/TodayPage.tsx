@@ -24,6 +24,8 @@ import HeartbeatLine from '../../components/HeartbeatLine'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
 import ReactionBar from '../../components/ReactionBar'
 import SmartCompose from '../../components/SmartCompose'
+import { useUpdateTask } from '../../hooks/useMutations'
+import { useUndoToast } from '../../components/UndoToast'
 import { researchTeam } from '../../data/team'
 import type { TaskRow } from '../../lib/api'
 import type { MeetingRow } from '../../hooks/useApiData'
@@ -558,6 +560,17 @@ function PlannedTaskRow({ task, project, state, timeHint, small = false, onExpan
 // Task detail drawer
 // ──────────────────────────────────────────────────────────────────────────
 
+// Move → popover options — same set as UnifiedMyTasks. Writes group_override
+// directly (schema v50). All 5 options actionable because override is
+// independent of priority/source/project derivation.
+const TODAY_MOVE_OPTIONS: Array<{ key: GroupKey; label: string }> = [
+  { key: 'deep',       label: '🎯 Deep work' },
+  { key: 'priorities', label: '✅ Priorities' },
+  { key: 'quick',      label: '⚡ Quick' },
+  { key: 'pb',         label: '🧠 Peripheral Brain' },
+  { key: 'etl',        label: '🔧 CQODE · CLIF ETL' },
+]
+
 function TaskDetailDrawer({ task, project, state }: { task: TaskRow; project: { name: string; slug: string } | null; state: TodayStateApi }) {
   const isPlanned = !!state.planned[task.id]
   const isNow = state.rightNow === task.id
@@ -573,6 +586,28 @@ function TaskDetailDrawer({ task, project, state }: { task: TaskRow; project: { 
   const updates = detail?.updates ?? []
   const blocks = detail?.blocks ?? []
 
+  // Move → popover wiring (parity with UnifiedMyTasks).
+  const updateTask = useUpdateTask()
+  const undoToast = useUndoToast()
+  const [moveOpen, setMoveOpen] = useState(false)
+  const moveRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!moveOpen) return
+    const close = (e: MouseEvent) => { if (moveRef.current && !moveRef.current.contains(e.target as Node)) setMoveOpen(false) }
+    document.addEventListener('mousedown', close)
+    return () => document.removeEventListener('mousedown', close)
+  }, [moveOpen])
+  const moveToGroup = useCallback((opt: typeof TODAY_MOVE_OPTIONS[number]) => {
+    updateTask.mutate({ id: task.id, fields: { group_override: opt.key } }, {
+      onSuccess: () => { undoToast.showSuccess(`Moved to ${opt.label}`); setMoveOpen(false) },
+    })
+  }, [task.id, updateTask, undoToast])
+  const resetGroup = useCallback(() => {
+    updateTask.mutate({ id: task.id, fields: { group_override: null } }, {
+      onSuccess: () => { undoToast.showSuccess('Reset to auto-classify'); setMoveOpen(false) },
+    })
+  }, [task.id, updateTask, undoToast])
+
   return (
     <div onClick={(e) => e.stopPropagation()} style={{ padding: '14px 16px 16px', background: 'rgba(0,0,0,0.20)', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 12, flexWrap: 'wrap' }}>
@@ -585,6 +620,31 @@ function TaskDetailDrawer({ task, project, state }: { task: TaskRow; project: { 
         {isPlanned && !isNow && (
           <button onClick={() => state.unplan(task.id)} style={{ padding: '6px 12px', background: 'transparent', color: INK_MUTED, border: '1px solid rgba(255,255,255,0.14)', borderRadius: 4, fontFamily: 'inherit', fontSize: 12, cursor: 'pointer' }}>Unplan</button>
         )}
+        <div ref={moveRef} style={{ position: 'relative' }}>
+          <button onClick={() => setMoveOpen((o) => !o)} title="Move to a different group (writes group_override)" style={{ padding: '6px 12px', background: moveOpen ? 'rgba(92,188,180,0.20)' : 'transparent', color: moveOpen ? '#5cbcb4' : INK, border: `1px solid ${moveOpen ? '#5cbcb4' : 'rgba(255,255,255,0.14)'}`, borderRadius: 4, fontFamily: 'inherit', fontSize: 12, cursor: 'pointer' }}>Move →</button>
+          {moveOpen && (
+            <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: 4, minWidth: 200, background: PANEL_BG, border: '1px solid rgba(255,255,255,0.12)', borderRadius: 4, zIndex: 30, boxShadow: '0 4px 12px rgba(0,0,0,0.4)' }}>
+              {TODAY_MOVE_OPTIONS.map((opt) => (
+                <button
+                  key={opt.key}
+                  onClick={() => moveToGroup(opt)}
+                  disabled={updateTask.isPending}
+                  style={{ display: 'block', width: '100%', textAlign: 'left', padding: '6px 10px', fontSize: 11, background: task.group_override === opt.key ? 'rgba(92,188,180,0.15)' : 'transparent', border: 'none', color: task.group_override === opt.key ? '#5cbcb4' : INK, fontFamily: 'inherit', cursor: updateTask.isPending ? 'wait' : 'pointer' }}
+                >{opt.label}{task.group_override === opt.key ? ' ✓' : ''}</button>
+              ))}
+              {task.group_override && (
+                <>
+                  <div style={{ height: 1, background: 'rgba(255,255,255,0.08)', margin: '4px 0' }} />
+                  <button
+                    onClick={resetGroup}
+                    disabled={updateTask.isPending}
+                    style={{ display: 'block', width: '100%', textAlign: 'left', padding: '6px 10px', fontSize: 11, background: 'transparent', border: 'none', color: INK_DIM, fontFamily: 'inherit', cursor: updateTask.isPending ? 'wait' : 'pointer', fontStyle: 'italic' }}
+                  >↺ Reset to auto-classify</button>
+                </>
+              )}
+            </div>
+          )}
+        </div>
         <LinkRow links={linkSet} />
         {project && <span style={{ marginLeft: 'auto', fontSize: 11, color: INK_DIM }}>{project.name}</span>}
       </div>
