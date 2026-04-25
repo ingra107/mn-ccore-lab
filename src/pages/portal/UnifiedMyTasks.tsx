@@ -21,6 +21,9 @@ import { PATHS } from '../../constants/paths'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
 import ReactionBar from '../../components/ReactionBar'
 import SavedViewsMenu from '../../components/SavedViewsMenu'
+import SmartCompose from '../../components/SmartCompose'
+import { useBulkUpdateTasks, useUpdateTask } from '../../hooks/useMutations'
+import { useUndoToast } from '../../components/UndoToast'
 import type { TaskRow } from '../../lib/api'
 
 // ──────────────────────────────────────────────────────────────────────────
@@ -301,24 +304,37 @@ function TopBar({ view, setView, search, setSearch, filter, setFilter, quickView
 // Bulk bar — actions stub; wired in P2
 // ──────────────────────────────────────────────────────────────────────────
 
-function BulkBar({ count, onClear }: { count: number; onClear: () => void }) {
-  // Bulk handlers are wired in P2. Until then the buttons are disabled
-  // with a tooltip so the bar exists (so the user sees that selection
-  // works) without firing alert("Coming soon") on click.
-  const labels = ['📌 Plan today', 'Move to…', 'Snooze +1d', 'Reassign', 'Priority', '✓ Complete', 'Archive']
+interface BulkBarProps {
+  count: number
+  onClear: () => void
+  onPlanToday: () => void
+  onSnoozeDay: () => void
+  onComplete: () => void
+  onArchive: () => void
+  onReassign: () => void
+  onPriority: () => void
+  onStatus: () => void
+}
+
+function BulkBar({ count, onClear, onPlanToday, onSnoozeDay, onComplete, onArchive, onReassign, onPriority, onStatus }: BulkBarProps) {
+  const btn = (label: string, onClick: () => void, accent?: string) => (
+    <button
+      key={label}
+      onClick={onClick}
+      style={{ padding: '3px 9px', fontSize: 11, border: `1px solid ${accent ? accent + '40' : 'rgba(255,255,255,0.12)'}`, borderRadius: 4, background: accent ? accent + '15' : 'transparent', color: accent ?? INK, fontFamily: 'inherit', cursor: 'pointer' }}
+    >{label}</button>
+  )
   return (
     <div style={{ padding: '8px 24px', background: 'rgba(201,168,76,0.08)', borderBottom: '1px solid rgba(201,168,76,0.2)', display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, flexShrink: 0 }}>
       <span style={{ color: ACCENT_GOLD, fontWeight: 600 }}>{count} selected</span>
       <span style={{ color: INK_DIM }}>·</span>
-      {labels.map((l) => (
-        <button
-          key={l}
-          disabled
-          title="Coming soon"
-          style={{ padding: '3px 9px', fontSize: 11, border: '1px solid rgba(255,255,255,0.08)', borderRadius: 4, background: 'transparent', color: INK_DIM, fontFamily: 'inherit', cursor: 'not-allowed', opacity: 0.55 }}
-        >{l}</button>
-      ))}
-      <span style={{ fontSize: 10, color: INK_DIM, marginLeft: 4, fontStyle: 'italic' }}>(actions wire in P2)</span>
+      {btn('📌 Plan today', onPlanToday, ACCENT_GOLD)}
+      {btn('Snooze +1d', onSnoozeDay)}
+      {btn('Status →', onStatus)}
+      {btn('Reassign', onReassign)}
+      {btn('Priority', onPriority)}
+      {btn('✓ Complete', onComplete, ACCENT_GREEN)}
+      {btn('Archive', onArchive, ACCENT_CORAL)}
       <div style={{ flex: 1 }} />
       <button onClick={onClear} style={{ background: 'none', border: 'none', color: INK_MUTED, fontSize: 11, cursor: 'pointer', fontFamily: 'inherit' }}>Deselect</button>
     </div>
@@ -363,8 +379,31 @@ function InlineDetail({ task, projectName }: { task: TaskRow; projectName?: stri
 // ──────────────────────────────────────────────────────────────────────────
 
 function ColumnsView({ filtered, byGroup, selected, toggleSelect, expanded, setExpanded, projectsByPid, plannedSet }: { filtered: TaskRow[]; byGroup: Record<GroupKey, TaskRow[]>; selected: Set<string>; toggleSelect: (id: string) => void; expanded: string | null; setExpanded: (id: string | null) => void; projectsByPid: Map<string, { name: string; slug: string }>; plannedSet: Set<string> }) {
+  // Mobile scroll cue — right-edge fade gradient + visible thin scrollbar so
+  // users discover the 5 columns scroll horizontally on small viewports
+  // (eval Issue 5).
   return (
-    <div style={{ flex: 1, overflow: 'auto', padding: '12px 20px 20px' }}>
+    <div className="mt-columns-scroll" style={{ flex: 1, overflow: 'auto', padding: '12px 20px 20px', position: 'relative' }}>
+      <style>{`
+        .mt-columns-scroll { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.18) transparent; }
+        .mt-columns-scroll::-webkit-scrollbar { height: 8px; }
+        .mt-columns-scroll::-webkit-scrollbar-track { background: transparent; }
+        .mt-columns-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.18); border-radius: 4px; }
+        @media (max-width: 1024px) {
+          .mt-columns-scroll::after {
+            content: '';
+            position: sticky;
+            top: 0; right: 0;
+            float: right;
+            width: 32px;
+            height: 100%;
+            margin-left: -32px;
+            pointer-events: none;
+            background: linear-gradient(to right, transparent, ${PAGE_BG} 80%);
+            z-index: 2;
+          }
+        }
+      `}</style>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(260px, 1fr))', gap: 14, minWidth: 1400 }}>
         {GROUP_ORDER.map((gkey) => {
           const meta = GROUP_META[gkey]
@@ -742,65 +781,8 @@ function TaskDrawer({ task, project, onClose }: { task: TaskRow; project: { name
           )
         })}
       </div>
-      <DrawerCompose />
+      <SmartCompose taskId={task.id} placeholder="Jot something or @hermes to delegate…" boxed />
     </aside>
-  )
-}
-
-function DrawerCompose() {
-  const [val, setVal] = useState('')
-  const [focused, setFocused] = useState(false)
-  const ref = useRef<HTMLTextAreaElement>(null)
-  const showToolbar = focused || val.length > 0
-  const insertChar = (ch: string) => {
-    const el = ref.current
-    if (!el) { setVal((v) => v + ch); return }
-    const start = el.selectionStart ?? val.length
-    const end = el.selectionEnd ?? val.length
-    setVal(val.slice(0, start) + ch + val.slice(end))
-    requestAnimationFrame(() => {
-      el.focus()
-      const pos = start + ch.length
-      el.setSelectionRange(pos, pos)
-    })
-  }
-  return (
-    <div style={{ marginTop: 18, padding: '10px 12px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 4 }}>
-      <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: INK_DIM, marginBottom: 6 }}>Add note</div>
-      <textarea
-        ref={ref}
-        value={val}
-        onChange={(e) => setVal(e.target.value)}
-        onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
-        placeholder="Jot something or @hermes to delegate…"
-        style={{ width: '100%', minHeight: 60, background: 'transparent', border: 'none', color: INK, fontSize: 12, fontFamily: 'inherit', outline: 'none', resize: 'vertical' }}
-      />
-      {showToolbar && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 6 }}>
-          <DrawerToolbarBtn label="Mention someone" onClick={() => insertChar('@')}>@</DrawerToolbarBtn>
-          <DrawerToolbarBtn label="Add emoji" onClick={() => insertChar(':')}>:</DrawerToolbarBtn>
-          <DrawerToolbarBtn label="Attach file" onClick={() => insertChar('📎 ')}>📎</DrawerToolbarBtn>
-          <span style={{ flex: 1 }} />
-          <kbd style={{ fontFamily: 'var(--font-mono), JetBrains Mono, monospace', fontSize: 9, padding: '1px 4px', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 2, color: INK_DIM }}>⌘ ⏎</kbd>
-        </div>
-      )}
-    </div>
-  )
-}
-
-function DrawerToolbarBtn({ children, onClick, label }: { children: React.ReactNode; onClick: () => void; label: string }) {
-  return (
-    <button
-      type="button"
-      onMouseDown={(e) => e.preventDefault()}
-      onClick={onClick}
-      title={label}
-      aria-label={label}
-      style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 22, height: 22, borderRadius: 4, background: 'transparent', border: '1px solid rgba(255,255,255,0.06)', color: INK_DIM, fontSize: 11, cursor: 'pointer', fontFamily: 'inherit' }}
-      onMouseEnter={(e) => { e.currentTarget.style.color = ACCENT_TEAL; e.currentTarget.style.borderColor = 'rgba(92,188,180,0.30)' }}
-      onMouseLeave={(e) => { e.currentTarget.style.color = INK_DIM; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)' }}
-    >{children}</button>
   )
 }
 
@@ -939,6 +921,82 @@ export default function UnifiedMyTasks() {
   const drawerTask = drawer ? allTasks.find((t) => t.id === drawer) ?? null : null
   const drawerProject = drawerTask?.project_id ? projectsByPid.get(drawerTask.project_id) ?? null : null
 
+  // ── Bulk actions wired to real API ─────────────────────────
+  const bulkUpdate = useBulkUpdateTasks()
+  const updateTask = useUpdateTask()
+  const undoToast = useUndoToast()
+
+  const clearSelection = useCallback(() => setSelected(new Set()), [])
+
+  const onBulkPlanToday = useCallback(() => {
+    // Writes to today_state localStorage so TodayPage picks them up.
+    const key = `today_state_${todayKey()}`
+    let snap: { rightNow?: string | null; planned?: Record<string, { slot: string }>; done?: Record<string, boolean> } = {}
+    try { snap = JSON.parse(window.localStorage.getItem(key) || '{}') } catch { /* ignore */ }
+    snap.planned = snap.planned ?? {}
+    for (const id of selected) snap.planned[id] = { slot: 'strip' }
+    try { window.localStorage.setItem(key, JSON.stringify(snap)) } catch { /* ignore */ }
+    undoToast.showSuccess(`Planned ${selected.size} task${selected.size === 1 ? '' : 's'} for today`)
+    clearSelection()
+  }, [selected, clearSelection, undoToast])
+
+  const onBulkSnoozeDay = useCallback(() => {
+    // No batch due_date action; loop via single-task updates.
+    const tomorrow = new Date()
+    tomorrow.setDate(tomorrow.getDate() + 1)
+    const due = tomorrow.toISOString().split('T')[0]
+    const ids = [...selected]
+    Promise.all(ids.map((id) => updateTask.mutateAsync({ id, fields: { due_date: due } })))
+      .then(() => { undoToast.showSuccess(`Snoozed ${ids.length} task${ids.length === 1 ? '' : 's'} +1d`); clearSelection() })
+      .catch((err) => { console.error('Snooze failed:', err); alert('Snooze failed') })
+  }, [selected, updateTask, clearSelection, undoToast])
+
+  const onBulkComplete = useCallback(() => {
+    const ids = [...selected]
+    bulkUpdate.mutate({ ids, action: 'complete' }, {
+      onSuccess: () => { undoToast.showSuccess(`Completed ${ids.length} task${ids.length === 1 ? '' : 's'}`); clearSelection() },
+    })
+  }, [selected, bulkUpdate, clearSelection, undoToast])
+
+  const onBulkArchive = useCallback(() => {
+    if (!window.confirm(`Archive ${selected.size} task${selected.size === 1 ? '' : 's'}? They'll be soft-deleted.`)) return
+    const ids = [...selected]
+    bulkUpdate.mutate({ ids, action: 'delete' }, {
+      onSuccess: () => { undoToast.showSuccess(`Archived ${ids.length} task${ids.length === 1 ? '' : 's'}`); clearSelection() },
+    })
+  }, [selected, bulkUpdate, clearSelection, undoToast])
+
+  const onBulkReassign = useCallback(() => {
+    const slug = window.prompt('Reassign to (team-member slug, e.g. nick-ingraham):')
+    if (!slug) return
+    const ids = [...selected]
+    bulkUpdate.mutate({ ids, action: 'assign', value: slug }, {
+      onSuccess: () => { undoToast.showSuccess(`Reassigned ${ids.length} task${ids.length === 1 ? '' : 's'} → ${slug}`); clearSelection() },
+    })
+  }, [selected, bulkUpdate, clearSelection, undoToast])
+
+  const onBulkPriority = useCallback(() => {
+    const p = window.prompt('Priority (urgent / high / medium / low):')
+    if (!p) return
+    const norm = p.toLowerCase().trim()
+    if (!['urgent', 'high', 'medium', 'low'].includes(norm)) { alert(`Invalid priority "${p}". Use urgent/high/medium/low.`); return }
+    const ids = [...selected]
+    bulkUpdate.mutate({ ids, action: 'priority', value: norm }, {
+      onSuccess: () => { undoToast.showSuccess(`Set priority → ${norm} for ${ids.length} task${ids.length === 1 ? '' : 's'}`); clearSelection() },
+    })
+  }, [selected, bulkUpdate, clearSelection, undoToast])
+
+  const onBulkStatus = useCallback(() => {
+    const s = window.prompt('Status (todo / in_progress / blocked / waiting_external / done):')
+    if (!s) return
+    const norm = s.toLowerCase().trim()
+    if (!['todo', 'in_progress', 'blocked', 'waiting_external', 'done'].includes(norm)) { alert(`Invalid status "${s}".`); return }
+    const ids = [...selected]
+    bulkUpdate.mutate({ ids, action: 'status', value: norm }, {
+      onSuccess: () => { undoToast.showSuccess(`Set status → ${norm} for ${ids.length} task${ids.length === 1 ? '' : 's'}`); clearSelection() },
+    })
+  }, [selected, bulkUpdate, clearSelection, undoToast])
+
   const isLoading = tasksQuery.isLoading || projectsQuery.isLoading
 
   return (
@@ -953,7 +1011,19 @@ export default function UnifiedMyTasks() {
         currentQuery={currentQuery}
         onApplyView={applyView}
       />
-      {selected.size > 0 && <BulkBar count={selected.size} onClear={() => setSelected(new Set())} />}
+      {selected.size > 0 && (
+        <BulkBar
+          count={selected.size}
+          onClear={clearSelection}
+          onPlanToday={onBulkPlanToday}
+          onSnoozeDay={onBulkSnoozeDay}
+          onComplete={onBulkComplete}
+          onArchive={onBulkArchive}
+          onReassign={onBulkReassign}
+          onPriority={onBulkPriority}
+          onStatus={onBulkStatus}
+        />
+      )}
       <div style={{ flex: 1, minHeight: 0, display: 'flex', overflow: 'hidden' }}>
         <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           {isLoading ? (

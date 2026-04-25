@@ -23,6 +23,7 @@ import { PATHS } from '../../constants/paths'
 import HeartbeatLine from '../../components/HeartbeatLine'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
 import ReactionBar from '../../components/ReactionBar'
+import SmartCompose from '../../components/SmartCompose'
 import type { TaskRow } from '../../lib/api'
 import type { MeetingRow } from '../../hooks/useApiData'
 
@@ -51,10 +52,15 @@ const GROUP_ORDER: GroupKey[] = ['deep', 'priorities', 'quick', 'pb', 'etl']
 
 // Map a task to one of the 5 groups. Order matters (first match wins).
 function getGroupForTask(t: TaskRow, projectsBySlug: Map<string, { category?: string | null; slug: string }>): GroupKey {
-  if (t.source === 'pb' || /^pb:/i.test(t.title)) return 'pb'
+  // PB bucket — broadened: source flag, title prefix, project slug pattern,
+  // or project category. Catches "Peripheral Brain" variations that the
+  // narrow source='pb' check missed in the eval (review/pre-merge-2026-04-25/EVAL.md Issue 4).
+  if (t.source === 'pb') return 'pb'
+  if (/^(pb|peripheral.?brain)\s*[:\-—]/i.test(t.title)) return 'pb'
   const proj = t.project_id ? projectsBySlug.get(t.project_id) : null
   const projSlug = proj?.slug || ''
   const projCat = proj?.category || ''
+  if (projCat === 'pb' || /(^|\W)(pb|peripheral.?brain)(\W|$)/i.test(projSlug)) return 'pb'
   if (/cqode|clif-etl|etl/i.test(projSlug) || /CQODE|ETL/.test(t.title)) return 'etl'
   if (projCat === 'clif' && /etl|ingest|backbone/i.test(t.title)) return 'etl'
   if (t.priority === 'urgent' || t.priority === 'high') return 'priorities'
@@ -584,78 +590,11 @@ function TaskDetailDrawer({ task, project, state }: { task: TaskRow; project: { 
           })}
         </div>
       </div>
-      <ComposeWithToolbar placeholder="Add a note, or ask Claude about this task…" />
+      <SmartCompose taskId={task.id} placeholder="Add a note, or @hermes for AI…" />
     </div>
   )
 }
 
-// ──────────────────────────────────────────────────────────────────────────
-// Compose surface with @ / : / 📎 affordance toolbar (CD T-05).
-// Toolbar shows on focus or non-empty input. Icons insert their trigger
-// char at the cursor (or end) and refocus the input.
-// ──────────────────────────────────────────────────────────────────────────
-
-function ComposeWithToolbar({ placeholder }: { placeholder: string }) {
-  const [val, setVal] = useState('')
-  const [focused, setFocused] = useState(false)
-  const ref = useRef<HTMLInputElement>(null)
-  const showToolbar = focused || val.length > 0
-
-  const insertChar = (ch: string) => {
-    const el = ref.current
-    if (!el) { setVal((v) => v + ch); return }
-    const start = el.selectionStart ?? val.length
-    const end = el.selectionEnd ?? val.length
-    const next = val.slice(0, start) + ch + val.slice(end)
-    setVal(next)
-    requestAnimationFrame(() => {
-      el.focus()
-      const pos = start + ch.length
-      el.setSelectionRange(pos, pos)
-    })
-  }
-
-  return (
-    <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px dashed rgba(255,255,255,0.08)' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <span style={{ fontSize: 12, color: INK_DIM }}>💬</span>
-        <input
-          ref={ref}
-          value={val}
-          onChange={(e) => setVal(e.target.value)}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
-          placeholder={placeholder}
-          style={{ flex: 1, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 4, padding: '6px 10px', fontSize: 12, color: INK, outline: 'none', fontFamily: 'inherit' }}
-        />
-      </div>
-      {showToolbar && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 6, paddingLeft: 22 }}>
-          <ToolbarBtn label="Mention someone" onClick={() => insertChar('@')}>@</ToolbarBtn>
-          <ToolbarBtn label="Add emoji" onClick={() => insertChar(':')}>:</ToolbarBtn>
-          <ToolbarBtn label="Attach file" onClick={() => insertChar('📎 ')}>📎</ToolbarBtn>
-          <span style={{ flex: 1 }} />
-          <kbd style={{ fontFamily: 'var(--font-mono), JetBrains Mono, monospace', fontSize: 9, padding: '1px 4px', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 2, color: INK_DIM }}>⌘ ⏎</kbd>
-        </div>
-      )}
-    </div>
-  )
-}
-
-function ToolbarBtn({ children, onClick, label }: { children: React.ReactNode; onClick: () => void; label: string }) {
-  return (
-    <button
-      type="button"
-      onMouseDown={(e) => e.preventDefault()}
-      onClick={onClick}
-      title={label}
-      aria-label={label}
-      style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 22, height: 22, borderRadius: 4, background: 'transparent', border: '1px solid rgba(255,255,255,0.06)', color: INK_DIM, fontSize: 11, cursor: 'pointer', fontFamily: 'inherit' }}
-      onMouseEnter={(e) => { e.currentTarget.style.color = ACCENT_TEAL; e.currentTarget.style.borderColor = 'rgba(92,188,180,0.30)' }}
-      onMouseLeave={(e) => { e.currentTarget.style.color = INK_DIM; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)' }}
-    >{children}</button>
-  )
-}
 
 // ──────────────────────────────────────────────────────────────────────────
 // Group + TaskRow
@@ -893,6 +832,29 @@ export default function TodayPage() {
   const state = useTodayState(allTaskIds)
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const onExpand = useCallback((id: string) => { setExpandedId((p) => (p === id ? null : id)) }, [])
+
+  // Auto-promote first relevant task on first load when nothing planned and
+  // nothing in Right Now. Fixes empty-hero discoverability (eval Issue 2).
+  // Picks: longest-overdue → urgent → high → first task. Runs once per
+  // task-list change; user's explicit unplan keeps Right Now empty.
+  const autoPromotedRef = useRef(false)
+  useEffect(() => {
+    if (autoPromotedRef.current) return
+    if (state.rightNow) { autoPromotedRef.current = true; return }
+    if (state.plannedIds().length > 0) { autoPromotedRef.current = true; return }
+    if (tasks.length === 0) return
+    const today = todayKey()
+    const overdue = tasks.filter((t) => t.due_date && t.due_date.slice(0, 10) < today)
+      .sort((a, b) => (a.due_date ?? '').localeCompare(b.due_date ?? ''))
+    const candidate = overdue[0]
+      ?? tasks.find((t) => t.priority === 'urgent')
+      ?? tasks.find((t) => t.priority === 'high')
+      ?? tasks[0]
+    if (candidate) {
+      state.promote(candidate.id)
+      autoPromotedRef.current = true
+    }
+  }, [tasks, state])
 
   // Group bucketing.
   const grouped = useMemo(() => {
