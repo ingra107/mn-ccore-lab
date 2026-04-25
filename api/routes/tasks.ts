@@ -418,7 +418,7 @@ export async function handleGetTaskDetail(taskId: string, env: Env): Promise<Res
       'SELECT id, content, author_slug, update_type, created_at FROM task_updates WHERE task_id = ? ORDER BY created_at DESC LIMIT 20'
     ).bind(taskId).all(),
     env.DB.prepare(
-      "SELECT id, actor, action, summary, timestamp FROM activity_log WHERE related_id = ? AND related_type = 'task' ORDER BY timestamp DESC LIMIT 20"
+      "SELECT id, actor, type, description, timestamp FROM activity_log WHERE related_id = ? AND related_type = 'task' ORDER BY timestamp DESC LIMIT 20"
     ).bind(taskId).all(),
     env.DB.prepare(
       'SELECT id, title, completed FROM task_subtasks WHERE task_id = ? ORDER BY sort_order ASC, created_at ASC'
@@ -432,7 +432,7 @@ export async function handleGetTaskDetail(taskId: string, env: Env): Promise<Res
   ]);
 
   type UpdateRow = { id: string; content: string; author_slug: string | null; update_type: string | null; created_at: string };
-  type ActivityRow = { id: string; actor: string | null; action: string; summary: string | null; timestamp: string };
+  type ActivityRow = { id: string; actor: string | null; type: string; description: string | null; timestamp: string };
 
   const noteUpdates = (updatesRes.results as UpdateRow[]).map((u) => ({
     id: u.id,
@@ -442,12 +442,12 @@ export async function handleGetTaskDetail(taskId: string, env: Env): Promise<Res
     kind: 'note' as const,
   }));
   const eventUpdates = (activityRes.results as ActivityRow[])
-    .filter((a) => a.summary)
+    .filter((a) => a.description)
     .map((a) => ({
       id: a.id,
       when: a.timestamp,
       who: a.actor ?? 'system',
-      text: a.summary || a.action,
+      text: a.description || a.type,
       kind: 'event' as const,
     }));
   // Merge by recency — both ordered DESC already, so a stable sort is fine.
