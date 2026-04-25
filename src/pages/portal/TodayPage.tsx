@@ -538,6 +538,9 @@ function PlannedTaskRow({ task, project, state, timeHint, small = false, onExpan
             {isNow && <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: ACCENT_GOLD, padding: '1px 5px', background: 'rgba(201,168,76,0.14)', borderRadius: 3 }}>Now</span>}
             <span style={{ fontSize: 11, flexShrink: 0 }} aria-hidden="true">{tag}</span>
             <span style={{ fontSize: 13, color: isDone ? INK_DIM : INK, textDecoration: isDone ? 'line-through' : 'none', fontWeight: 500 }}>{task.title}</span>
+            {task.group_override && (
+              <span title={`Moved manually (${task.group_override})`} style={{ fontSize: 9, color: '#5cbcb4', padding: '1px 4px', background: 'rgba(92,188,180,0.10)', borderRadius: 3 }}>📍</span>
+            )}
             <ProjectLink name={project?.name ?? null} slug={project?.slug} />
             <LinkRow links={links} />
             {!isDone && <span style={{ fontSize: 11, color: INK_DIM }}>{expanded ? '▾' : '▸'}</span>}
@@ -738,6 +741,9 @@ function TaskRowDisplay({ task, project, state, expandedId, onExpand, projectsBy
             {isNow && <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: ACCENT_GOLD, padding: '2px 6px', background: 'rgba(201,168,76,0.14)', borderRadius: 3 }}>Right now</span>}
             <span style={{ fontSize: 11, flexShrink: 0 }} aria-hidden="true">{tag}</span>
             <span style={{ fontSize: 13, color: isDone ? INK_DIM : INK, textDecoration: isDone ? 'line-through' : 'none', fontWeight: 500, lineHeight: 1.4 }}>{task.title}</span>
+            {task.group_override && (
+              <span title={`Moved manually (${task.group_override})`} style={{ fontSize: 9, color: '#5cbcb4', padding: '1px 4px', background: 'rgba(92,188,180,0.10)', borderRadius: 3 }}>📍</span>
+            )}
             <ProjectLink name={project?.name ?? null} slug={project?.slug} />
             {planned && !isDone && (
               <span style={{ fontSize: 10, color: ACCENT_GOLD, padding: '1px 6px', background: 'rgba(201,168,76,0.10)', borderRadius: 3, letterSpacing: '0.04em' }}>📌 {planned.slot === 'strip' ? 'planned' : 'scheduled'}</span>

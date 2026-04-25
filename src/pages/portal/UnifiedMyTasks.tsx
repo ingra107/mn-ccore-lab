@@ -675,6 +675,9 @@ function Card({ task, project, selected, onSelect, expanded, onExpand, planned }
         <input type="checkbox" checked={selected} onChange={onSelect} data-stop="1" onClick={(e) => e.stopPropagation()} style={{ marginTop: 2, accentColor: meta.color, cursor: 'pointer' }} />
         <span style={{ fontSize: 12, marginTop: 1, flexShrink: 0 }} aria-hidden="true">{(task as TaskRow & { _tag?: string })._tag ?? '📝'}</span>
         <div style={{ flex: 1, minWidth: 0, fontSize: 12.5, lineHeight: 1.35, color: isCompleted ? INK_DIM : INK, textDecoration: isCompleted ? 'line-through' : 'none', fontWeight: 500, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{task.title}</div>
+        {task.group_override && (
+          <span title={`Moved here manually (override: ${task.group_override})`} style={{ fontSize: 9, color: ACCENT_TEAL, padding: '1px 4px', background: 'rgba(92,188,180,0.10)', borderRadius: 3, letterSpacing: '0.04em', flexShrink: 0 }}>📍</span>
+        )}
         <Chip color={PRIORITY_COLOR[task.priority] ?? INK_DIM}>{PRIORITY_SHORT[task.priority] ?? task.priority}</Chip>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10.5, color: INK_DIM, paddingLeft: 22, flexWrap: 'wrap' }}>
@@ -787,6 +790,9 @@ function LaneRow({ task, project, selected, onSelect, expanded, onExpand, planne
           )}
         </div>
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+          {task.group_override && (
+            <span title={`Moved manually (${task.group_override})`} style={{ fontSize: 9, color: ACCENT_TEAL, padding: '1px 4px', background: 'rgba(92,188,180,0.10)', borderRadius: 3 }}>📍</span>
+          )}
           {planned && <Chip color={ACCENT_GOLD} filled>📌 today</Chip>}
           {task.status === 'waiting_external' && <Chip color={ACCENT_ORANGE} filled>⏳ waiting</Chip>}
           {stale > 0 && <Chip color={ACCENT_ORANGE}>{stale}d stale</Chip>}
@@ -895,6 +901,7 @@ function ListRow({ task, project, isCursor, isSelected, onClick, onDouble, onSel
         <span style={{ width: 6, height: 6, borderRadius: '50%', background: meta.color + '80', flexShrink: 0 }} />
         <span style={{ fontSize: 11, flexShrink: 0 }} aria-hidden="true">{(task as TaskRow & { _tag?: string })._tag ?? '📝'}</span>
         {task.title}
+        {task.group_override && <span title={`Moved manually (${task.group_override})`} style={{ fontSize: 10, color: ACCENT_TEAL, flexShrink: 0 }}>📍</span>}
         {planned && <span style={{ fontSize: 9, color: ACCENT_GOLD, fontWeight: 700, letterSpacing: '0.1em' }}>PLANNED</span>}
         {overdueDays > 0 && <span style={{ fontSize: 9, color: ACCENT_CORAL, fontWeight: 700 }}>{overdueDays}d LATE</span>}
         {stale > 0 && <span style={{ fontSize: 9, color: ACCENT_ORANGE }}>{stale}d stale</span>}
