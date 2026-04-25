@@ -74,6 +74,14 @@ function writeFindings(ctx: Ctx) {
   writeFileSync(file, header + ctx.findings.map((f) => `- ${f}`).join('\n') + '\n')
 }
 
+// Test-mode auth bypass headers (closure r2j, 2026-04-25). When TEST_MODE_KEY
+// is set in env, browser fetches carry the bypass so server-side mutations
+// authenticate as the audit user instead of returning 401 on the JWKS path.
+// Without this, every audit Move/Create/Update would 401 silently because the
+// CF Access service-token JWT lacks an `email` claim.
+const TEST_USER_EMAIL = process.env.TEST_USER_EMAIL || 'audit@mn-ccore.test'
+const TEST_MODE_KEY = process.env.TEST_MODE_KEY
+
 async function newDesktopCtx(browser: any) {
   // Post-launch (2026-04-21) `/portal/*` is gated by CF Access. Forward the
   // service-token headers on every browser request when the env vars are set,
@@ -87,6 +95,13 @@ async function newDesktopCtx(browser: any) {
     extraHTTPHeaders['CF-Access-Client-Secret'] = cfSecret
   } else {
     console.log('    !! CF_ACCESS_CLIENT_ID/SECRET not set — /portal/* will hit Google Sign-In and audit will fail')
+  }
+  if (TEST_MODE_KEY) {
+    extraHTTPHeaders['X-Test-Mode'] = 'true'
+    extraHTTPHeaders['X-Test-Mode-Key'] = TEST_MODE_KEY
+    extraHTTPHeaders['X-Test-User'] = TEST_USER_EMAIL
+  } else {
+    console.log('    !! TEST_MODE_KEY not set — server-side mutations will 401 (audit limited to read-only flows)')
   }
   const ctx = await browser.newContext({
     viewport: { width: 1440, height: 900 },
@@ -104,20 +119,30 @@ async function newDesktopCtx(browser: any) {
 
 // ── API helpers for cleanup + seed validation ────────────────────────────
 
+function authHeaders(extra: Record<string, string> = {}): Record<string, string> {
+  const h: Record<string, string> = { Authorization: `Bearer ${AUTH_TOKEN}`, ...extra }
+  if (TEST_MODE_KEY) {
+    h['X-Test-Mode'] = 'true'
+    h['X-Test-Mode-Key'] = TEST_MODE_KEY
+    h['X-Test-User'] = TEST_USER_EMAIL
+  }
+  return h
+}
+
 async function apiGet(path: string): Promise<any> {
-  const r = await fetch(`${BASE}${path}`, { headers: { Authorization: `Bearer ${AUTH_TOKEN}` } })
+  const r = await fetch(`${BASE}${path}`, { headers: authHeaders() })
   return r.ok ? r.json() : { data: [] }
 }
 
 async function apiDelete(path: string): Promise<number> {
-  const r = await fetch(`${BASE}${path}`, { method: 'DELETE', headers: { Authorization: `Bearer ${AUTH_TOKEN}` } })
+  const r = await fetch(`${BASE}${path}`, { method: 'DELETE', headers: authHeaders() })
   return r.status
 }
 
 async function apiPost(path: string, body: any): Promise<{ status: number; data: any }> {
   const r = await fetch(`${BASE}${path}`, {
     method: 'POST',
-    headers: { Authorization: `Bearer ${AUTH_TOKEN}`, 'Content-Type': 'application/json' },
+    headers: authHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify(body),
   })
   return { status: r.status, data: r.ok ? await r.json() : null }
