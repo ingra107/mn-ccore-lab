@@ -860,6 +860,30 @@ function TaskDrawer({ task, project, onClose }: { task: TaskRow; project: { name
   const subtasks = detail?.subtasks ?? []
   const updates = detail?.updates ?? []
   const blocks = detail?.blocks ?? []
+
+  // Wire ▶ Work / 📌 Plan today to today_state localStorage (TodayPage picks up).
+  const undoToast = useUndoToast()
+  const snap = readTodayState()
+  const isPromoted = snap.rightNow === task.id
+  const isPlanned = !!snap.planned?.[task.id]
+
+  const promote = useCallback(() => {
+    const s = readTodayState()
+    s.rightNow = task.id
+    s.planned = s.planned ?? {}
+    if (!s.planned[task.id]) s.planned[task.id] = { slot: 'strip' }
+    writeTodayState(s)
+    undoToast.showSuccess('Promoted to Right Now on Today')
+  }, [task.id, undoToast])
+
+  const planToday = useCallback(() => {
+    const s = readTodayState()
+    s.planned = s.planned ?? {}
+    s.planned[task.id] = { slot: 'strip' }
+    writeTodayState(s)
+    undoToast.showSuccess('Planned for today')
+  }, [task.id, undoToast])
+
   return (
     <aside style={{ width: 380, flexShrink: 0, borderLeft: '1px solid rgba(255,255,255,0.08)', background: '#0a0f15', overflowY: 'auto', padding: '18px 18px 40px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
@@ -875,8 +899,15 @@ function TaskDrawer({ task, project, onClose }: { task: TaskRow; project: { name
         </div>
       )}
       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 14 }}>
-        <button style={{ padding: '5px 12px', fontSize: 11.5, borderRadius: 4, border: `1px solid ${ACCENT_GOLD}`, background: ACCENT_GOLD, color: PAGE_BG, fontWeight: 600, fontFamily: 'inherit', cursor: 'pointer' }}>▶ Work on this</button>
-        <button style={{ padding: '5px 12px', fontSize: 11.5, borderRadius: 4, border: '1px solid rgba(255,255,255,0.15)', background: 'transparent', color: INK, fontFamily: 'inherit', cursor: 'pointer' }}>📌 Plan today</button>
+        {!isPromoted && (
+          <button onClick={promote} title="Promote to Right Now on Today" style={{ padding: '5px 12px', fontSize: 11.5, borderRadius: 4, border: `1px solid ${ACCENT_GOLD}`, background: ACCENT_GOLD, color: PAGE_BG, fontWeight: 600, fontFamily: 'inherit', cursor: 'pointer' }}>▶ Work on this</button>
+        )}
+        {!isPlanned && (
+          <button onClick={planToday} title="Add to today's planned strip" style={{ padding: '5px 12px', fontSize: 11.5, borderRadius: 4, border: '1px solid rgba(255,255,255,0.15)', background: 'transparent', color: INK, fontFamily: 'inherit', cursor: 'pointer' }}>📌 Plan today</button>
+        )}
+        {isPromoted && (
+          <span style={{ padding: '5px 12px', fontSize: 11.5, color: ACCENT_GOLD, fontStyle: 'italic' }}>▶ Already in Right Now</span>
+        )}
       </div>
       <dl style={{ fontSize: 11, color: INK_MUTED, margin: 0, display: 'grid', gridTemplateColumns: '80px 1fr', rowGap: 8, columnGap: 8 }}>
         <Term>Project</Term><Defn>{project ? <Link to={PATHS.project(project.slug)} style={{ color: ACCENT_TEAL, textDecoration: 'none' }}>{project.name}</Link> : '—'}</Defn>

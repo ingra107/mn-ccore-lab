@@ -989,10 +989,26 @@ export default function TodayPage() {
 
   const projectsForRail = useMemo(() => {
     const all = projectsQuery.data ?? []
+    const allTasks = tasksQuery.data ?? []
+    // Per-project: soonest-due open task assigned to current user, used as
+    // the "next action" cue. No dedicated column on projects, so derive.
+    const nextByProject = new Map<string, { title: string; due: string | null }>()
+    for (const t of allTasks) {
+      if (t.completed === 1 || t.status === 'done') continue
+      if (!t.project_id) continue
+      if (userSlug && t.assignee !== userSlug) continue
+      const existing = nextByProject.get(t.project_id)
+      const aDue = t.due_date ?? '9999-12-31'
+      const eDue = existing?.due ?? '9999-12-31'
+      if (!existing || aDue < eDue) nextByProject.set(t.project_id, { title: t.title, due: t.due_date ?? null })
+    }
     return all
       .filter((p) => p.status === 'Active')
-      .map((p) => ({ slug: p.slug, name: p.title ?? p.slug, nextAction: null as string | null }))
-  }, [projectsQuery.data])
+      .map((p) => {
+        const next = nextByProject.get(p.slug)
+        return { slug: p.slug, name: p.title ?? p.slug, nextAction: next ? next.title.slice(0, 80) : null }
+      })
+  }, [projectsQuery.data, tasksQuery.data, userSlug])
 
   const milestones = useMemo(() => {
     const reg = regulatoryQuery.data ?? []
