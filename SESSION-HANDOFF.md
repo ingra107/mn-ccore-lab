@@ -5,16 +5,17 @@
 ## 🎯 NEXT SESSION — START HERE
 
 **State at handoff:**
-- HEAD `a955b7a` on main, pushed
-- Deploy `3481f102.mn-ccore-lab.pages.dev` is live as production (closure r2h)
-- Closure deploy chain: r2 `b7fe974e` (8 CD-spec fixes) → r2b `1eab1007` (InlineDetail + bulk picker) → r2c `32ffa0e7` (HermesSuggests 3-bullet) → r2d `5a5962c9` (nextAction + TaskDrawer buttons) → r2e `c454e1c9` (Move button — priority-based, superseded) → r2f `6ec99e0f` (group_override schema v50 — explicit override) → r2g `fb308a88` (Today TaskDetailDrawer Move parity) → r2h `3481f102` (📍 indicator on rows)
+- HEAD `ed02570` on main, pushed
+- Deploy `bd0386c0.mn-ccore-lab.pages.dev` is live as production (closure r2k)
+- Closure deploy chain (11 rounds): r2 `b7fe974e` → r2b `1eab1007` → r2c `32ffa0e7` → r2d `5a5962c9` → r2e `c454e1c9` (priority-based Move, superseded) → r2f `6ec99e0f` (group_override schema v50) → r2g `fb308a88` → r2h `3481f102` → r2i `4cc8517d` (component split merge) → r2j `ee39f4ee` → r2k `bd0386c0` (test-mode auth bypass)
 - Live for the team since 2026-04-21; all closure rounds shipped 2026-04-25
-- Phase 38 = Today B2 + MyTasks Round 2 + 14 CD-spec gaps closed (8 from verification + 6 polish/cross-repo) + new tasks.group_override end-to-end propagation
-- Cross-repo schema migration v50 / brain.db migration 037 shipped 2026-04-25 (PB-side commit `adf104be` in `~/Peripheral-Brain/`). Hub Move clicks propagate through to TODAY.md generation.
+- Phase 38 = Today B2 + MyTasks Round 2 + 14 CD-spec gaps closed + tasks.group_override end-to-end + component split + test-mode auth bypass
+- Cross-repo schema migration v50 / brain.db migration 037 shipped 2026-04-25 (PB-side commit `adf104be`). Hub Move clicks propagate through to TODAY.md generation.
 - One-time agent scheduled for 2026-05-02 14:00 UTC (`trig_01Mobbas7u1o7xGGizxfkmPp`) to retire `/portal/my-tasks-legacy` after the soak window
-- Hub-audit on `3481f102`: 12 PASS / 2 INFO / 0 FAIL on tasks section
-- Component split (HANDOFF §2) DISPATCHED as background agent in isolated worktree (won't touch main); will return branch + diff for Nick review
+- **Hub-audit on `bd0386c0`: 14 PASS / 0 INFO / 0 FAIL** on tasks section (closure r2k closed the 3 remaining INFOs by adding test-mode auth bypass)
+- Component split SHIPPED (commit `44fa6a5`): TodayPage 1357 → 300 LOC shell, UnifiedMyTasks 1351 → 8 LOC re-export, 31 new files under `src/components/today/` + `src/pages/MyTasks/`
 - New CLAUDE.md rule 63 captures the group_override end-to-end contract
+- New `src/lib/api.ts` `TaskRow.group_override` field; new `api/routes/tasks.ts` `VALID_GROUP_OVERRIDES` set; new `api/helpers.ts` test-mode bypass in `getAuthUser()`
 
 **Shipped this session (closure r2 — CD verification pass):**
 
@@ -70,25 +71,47 @@
   had no onClick — same gap that InlineDetail had; wired to the same
   `readTodayState`/`writeTodayState` helpers.
 
+**Shipped after r2/r2b (closure r2c through r2k):**
+
+- **`dca0d7e` (audit retarget).** Hub-audit tasks section retargeted
+  for Phase 38 UI + CF Access service-token forwarding. 12 PASS / 2 INFO.
+- **`dc79ed4` (r2c).** HermesSuggests upgraded to focus + 3-bullet
+  algorithmic per CD spec. Real async wiring deferred (separate work).
+- **`45351c1` (r2d).** ProjectsCard.nextAction wired (was hardcoded
+  null). TaskDrawer ▶ Work / 📌 Plan today buttons wired.
+- **`b1f92c1` (r2e).** Move → button (priority-based) — superseded by
+  group_override schema next commit.
+- **`84afe65` + PB `adf104be` (r2f).** `tasks.group_override` schema
+  v50 + brain.db migration 037. Cross-repo: Hub Move click → D1 →
+  brain.db sync → `generate_today_markdown.py` honors override for
+  next-morning TODAY.md bucketing. Decision doc + shared-schema-
+  registry entry. CLAUDE.md rule 63 captures the contract.
+- **`3681018` (r2g).** Today TaskDetailDrawer Move parity (button
+  matches UnifiedMyTasks).
+- **`00d6565` (r2h).** 📍 indicator on rows with group_override set.
+- **`44fa6a5` (component split merge, r2i).** Background agent split
+  `TodayPage.tsx` (1357 → 300 LOC shell) + `UnifiedMyTasks.tsx` (1351
+  → 8 LOC re-export shim) into 31 new files under `src/components/today/`
+  + `src/pages/MyTasks/` per CD HANDOFF §2. Pure refactor, no behavior
+  change. Audit clean post-merge.
+- **`ed25b82` (r2 audit ext).** Audit section 1.13 — Move → group_override
+  flow coverage with snapshot-diff verification.
+- **`fa1c96e` + `ed02570` (r2j + r2k).** Test-mode auth bypass via
+  `X-Test-Mode-Key` + `X-Test-User` headers. Decoupled from DB swap
+  so audit can write to prod. Closes the 3 remaining audit INFOs:
+  GlobalQuickAdd persistence + reload survival + Move group_override
+  write all PASS now (14/0/0 on tasks).
+
 **Open follow-ups (not blockers):**
-- **Move → button on InlineDetail** — DEFERRED. Groups in this codebase
-  are DERIVED from getGroupForTask (priority + project + source), not a
-  stored field. "Move to PB" can't directly set source='pb' (backend
-  signal); "Move to ETL" can't set project_id without choosing a project.
-  Needs CD clarification round-trip before implementation.
-- **Component split per HANDOFF §2** — DEFERRED. TodayPage 1141 lines,
-  UnifiedMyTasks 1067 lines. CD HANDOFF prescribed splitting into ~13
-  files. 2000-line refactor with regression risk; better as separate
-  session with /simplify or focused agent.
-- **HermesSuggests 3-bullet wiring** — currently algorithmic stub at
-  `TodayPage.tsx:HermesSuggestsCard`. CD spec wants real Hermes call
-  with task/project context fanout. P2.
-- **Calendar-dependent Today gaps** — OverlapBand + Join/Brief/Attendees
-  on EventRow are blocked on real meeting time data (Phase 3 calendar
-  OAuth is the prereq).
-- **scripts/hub-audit.ts tasks section** — fails on "New Task button not
-  found" because Phase 38 changed UnifiedMyTasks UI. Selector retarget
-  in progress (background agent).
+- **Real Hermes async wiring** — current algorithmic stub is good
+  enough; real async would need daily ai_request cache pattern
+  (~45-60 min) + variable LLM output quality. Tradeoff worth a
+  design decision, not auto-mode work.
+- **Calendar OAuth (Phase 3)** — unlocks OverlapBand + Join/Brief/
+  Attendees on EventRow. Big infra (Google + Outlook OAuth flows,
+  per-user tokens, sync polling). Strategic, separate-session work.
+- **Audit nightly cron** — could add a routine to run the now-clean
+  audit nightly against prod. Useful regression catcher, not urgent.
 
 **Shipped this session (Phase 38 + closure):**
 

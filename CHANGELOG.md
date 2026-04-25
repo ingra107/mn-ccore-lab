@@ -189,21 +189,105 @@ soak (`trig_01Mobbas7u1o7xGGizxfkmPp`, fires 2026-05-02 14:00 UTC).
   preview-deploy auth path).
 - `/api/health` 626 tasks / 69 projects / 86 ms.
 
-### Out of scope / deferred (closure r2)
+### Out of scope / deferred at r2 close (most superseded same evening — see r2e through r2k below)
 
-- **Move → button** on InlineDetail / TaskDrawer — DEFERRED. Groups
-  in this codebase are DERIVED from `getGroupForTask` (priority +
-  project + source), not a stored field. "Move to PB" can't directly
-  set source='pb' (backend signal); "Move to ETL" can't set project_id
-  without choosing a project. Needs CD clarification round-trip.
-- **Component split per HANDOFF §2** — STILL deferred. TodayPage 1141
-  lines, UnifiedMyTasks 1067 lines. 2000-line refactor with regression
-  risk; better as a separate session.
+- **Move → button** on InlineDetail / TaskDrawer — was DEFERRED at r2
+  close pending CD round-trip. **SHIPPED in r2e (priority-based,
+  superseded) → r2f (group_override schema) → r2g (Today parity).**
+- **Component split per HANDOFF §2** — was deferred at r2 close.
+  **SHIPPED in r2i (`44fa6a5` merge); pure refactor; audit clean.**
+- **GlobalQuickAdd persistence audit path** — was INFO at r2 close.
+  **PASS in r2k via test-mode auth bypass (`X-Test-Mode-Key` +
+  `X-Test-User`); audit now 14/0/0 on tasks.**
+- **OverlapBand + Join/Brief/Attendees on EventRow** — STILL deferred
+  (Phase 3 calendar OAuth prereq).
+- **Real Hermes async wiring** — STILL deferred (algorithmic 3-bullet
+  stub shipped r2c covers most value; real async needs daily
+  `ai_request` cache pattern).
+
+## Phase 38 closure r2c through r2k — same-day continuation (2026-04-25 night)
+
+**Headline.** Continued the r2 close-out across 7 more deploys + 1
+cross-repo schema migration + 1 component split refactor + 1 test-mode
+auth bypass. Final state: hub-audit 14 PASS / 0 INFO / 0 FAIL.
+
+### Deploys
+
+- **r2c `32ffa0e7` (commit `dc79ed4`).** HermesSuggests upgraded from
+  one focus sentence to focus + 3-bullet ul per CD spec. Algorithmic
+  bullets: longest-overdue / most-stalled / mentee-with-overdue.
+- **r2d `5a5962c9` (commit `45351c1`).** ProjectsCard.nextAction was
+  hardcoded `null` — now derives soonest-due open task per project.
+  TaskDrawer ▶ Work / 📌 Plan today buttons wired to today_state
+  localStorage helpers (same gap that InlineDetail had).
+- **r2e `c454e1c9` (commit `b1f92c1`).** Move → button (priority-based
+  mapping). **Superseded by r2f.** Nick caught the semantic gap: a
+  Move click is a preference, not a derivation input.
+- **r2f `6ec99e0f` (commit `84afe65`) + PB `adf104be`.** `tasks.group_override`
+  schema v50 + brain.db migration 037. Cross-repo: Hub Move click writes
+  field; D1 → brain.db sync carries it via `hub_payload.translate_task_*`;
+  `generate_today_markdown.py::_GROUP_OVERRIDE_TO_SECTION` honors it for
+  next-morning TODAY.md bucketing (pb→peripheral_brain, etl→clif_etl,
+  others map directly). Decision doc + shared-schema-registry entry per
+  cross-repo discipline. CLAUDE.md rule 63 captures the contract.
+- **r2g `fb308a88` (commit `3681018`).** Today TaskDetailDrawer Move
+  parity — same MOVE_OPTIONS + popover as UnifiedMyTasks.
+- **r2h `3481f102` (commit `00d6565`).** 📍 indicator on rows with
+  `group_override` set — across 5 surfaces (Card / LaneRow / ListRow /
+  TaskRowDisplay / PlannedTaskRow). Tooltip explains "Moved manually".
+- **r2i `4cc8517d` (merge `44fa6a5`).** Component split via background
+  agent in isolated worktree. TodayPage 1357 → 300 LOC composing parent
+  (16 files under `src/components/today/` + `src/hooks/useTodayState.ts`).
+  UnifiedMyTasks 1351 → 8 LOC re-export shim (15 files under
+  `src/pages/MyTasks/`). Pure refactor, no behavior change. Two extra
+  files vs spec: `today/primitives.tsx` + `MyTasks/primitives.tsx` for
+  shared sub-components used 4+ places. Audit clean post-merge.
+- **r2j `ee39f4ee` + r2k `bd0386c0` (commits `fa1c96e` + `ed02570`).**
+  Test-mode auth bypass via `X-Test-Mode-Key` + `X-Test-User` headers
+  in `getAuthUser()`. Decoupled from DB swap (no `X-Test-Mode: true`
+  required) so audit can write to prod. Closes 3 prior INFOs:
+  GlobalQuickAdd persistence + reload survival + Move group_override
+  write all PASS now (14/0/0 on tasks). Audit also extended with
+  section 1.13 covering the Move → group_override flow end-to-end.
+
+### Schema (cross-repo)
+
+- D1 `api/schema-v50-task-group-override.sql` applied to prod
+  (`changed_db: true`). Adds `tasks.group_override TEXT` (nullable).
+  Values: `'deep' | 'priorities' | 'quick' | 'pb' | 'etl' | NULL`.
+- brain.db `scripts/db/migrations/037_tasks_group_override.sql` applied.
+  Same column. PB-side decision doc:
+  `Context/Decisions/2026-04-25-tasks-group-override.md`. Registry entry:
+  `Context/Topics/shared-schema-registry.md`.
+
+### Auth (security-adjacent)
+
+- `getAuthUser()` in `api/helpers.ts` checks test-mode bypass FIRST when
+  `env.TEST_MODE_KEY` is set. Activates on `X-Test-Mode-Key` (Cloudflare
+  secret match) + `X-Test-User` (email-shaped) header pair. Identity
+  comes from the X-Test-User header. Trust boundary: TEST_MODE_KEY is
+  already a Cloudflare secret + CF Access still gates the request.
+  Knowing the secret already grants test-DB writes — auth bypass
+  doesn't widen blast radius.
+
+### Quality gate
+
+- Build clean across 11 closure-r2 commits (r2 → r2k).
+- Hub-audit on `bd0386c0`: **14 PASS / 0 INFO / 0 FAIL** on tasks
+  section. Every assertion green: toolbar, view shapes, GlobalQuickAdd
+  create + persistence + reload survival, all 4 filter chips
+  (Group/Priority/Project/Mentee), search, List `e` drawer, BulkBar
+  with 7/7 actions, SavedViewsMenu, Move → group_override write.
+- `/api/health` 626 tasks / 69 projects / 19 team / ~70ms.
+
+### Out of scope / still deferred (post-r2k)
+
+- **Real Hermes async wiring** — daily `ai_request` cache pattern;
+  algorithmic 3-bullet stub from r2c is good enough for now.
 - **OverlapBand + Join/Brief/Attendees on EventRow** — Phase 3 calendar
-  OAuth prereq.
-- **Real Hermes async wiring** — needs daily `ai_request` cache pattern.
-- **GlobalQuickAdd persistence audit path** — needs `injectFakeAuth`
-  pattern from `tests/helpers/capture-auth.ts` or preview-deploy.
+  OAuth prereq (Google + Outlook OAuth flows + per-user tokens).
+- **Audit nightly cron** — could schedule a routine to run the now-clean
+  audit nightly; useful regression catcher, not urgent.
 
 ## Claude Design round-5 batches 3-4 (2026-04-23 night, later)
 
