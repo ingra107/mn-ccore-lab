@@ -99,6 +99,9 @@ export default function ReactionBar({ targetType, targetId, compact }: ReactionB
         </button>
       ))}
 
+      {/* Spacer pushes + button to right end of reaction row (T-06 spec) */}
+      <span style={{ flex: 1, minWidth: 4 }} aria-hidden="true" />
+
       {/* Add reaction button + picker */}
       <div className="relative" ref={pickerRef}>
         <button
@@ -122,7 +125,7 @@ export default function ReactionBar({ targetType, targetId, compact }: ReactionB
 
         {showPicker && (
           <div
-            className="absolute bottom-full left-0 mb-1 flex items-center gap-0.5 px-1.5 py-1 rounded-lg shadow-lg z-50"
+            className="absolute bottom-full right-0 mb-1 flex items-center gap-0.5 px-1.5 py-1 rounded-lg shadow-lg z-50"
             style={{
               backgroundColor: 'var(--cream, #fff)',
               border: '1px solid var(--border-light, var(--hover-medium))',

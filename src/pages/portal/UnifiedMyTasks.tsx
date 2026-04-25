@@ -16,6 +16,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { useTasks, useProjects, useTaskDetail } from '../../hooks/useApiData'
 import { useAuth } from '../../hooks/useAuth'
 import { emailToSlug } from '../../lib/emailSlug'
+import { researchTeam } from '../../data/team'
 import { usePageMeta } from '../../hooks/usePageMeta'
 import { PATHS } from '../../constants/paths'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
@@ -72,6 +73,27 @@ function getGroupForTask(t: TaskRow, projectsByPid: Map<string, { category?: str
   if (t.priority === 'urgent' || t.priority === 'high') return 'priorities'
   if (t.priority === 'low') return 'quick'
   return 'deep'
+}
+
+// Mentee slugs derived from researchTeam (CD spec — Mentee filter chip).
+// Trainees/coordinators/students/analysts treated as mentees for the filter.
+const MENTEE_SLUGS = new Set(researchTeam.map((m) => m.slug))
+
+// Tag glyph for a task (CD spec — left-of-title category cue on rows).
+// Picks emoji from project category or task source. Defaults to 📝.
+function tagForTask(t: TaskRow, projectsByPid: Map<string, { category?: string | null; slug: string }>): string {
+  if (t.source === 'pb') return '🧠'
+  const proj = t.project_id ? projectsByPid.get(t.project_id) : null
+  const cat = proj?.category || ''
+  const slug = proj?.slug || ''
+  if (/cqode|clif-etl|etl/i.test(slug) || /CQODE|ETL/.test(t.title)) return '🔧'
+  if (cat === 'clif') return '🔬'
+  if (cat === 'mentee') return '🎓'
+  if (cat === 'nate') return '🫁'
+  if (/grant|R01|R03|K23|aim/i.test(t.title)) return '💰'
+  if (/manuscript|paper|draft|revise/i.test(t.title)) return '📄'
+  if (/meeting|agenda|review/i.test(t.title)) return '📅'
+  return '📝'
 }
 
 function todayKey(): string {
@@ -285,6 +307,16 @@ function TopBar({ view, setView, search, setSearch, filter, setFilter, quickView
           options={[{ v: null, l: 'All' }, ...projectOptions]}
           onChange={(v) => setFilter((f) => ({ ...f, project: v }))}
         />
+        <FilterChip
+          label="Mentee"
+          value={filter.mentee}
+          options={[
+            { v: null, l: 'Any' },
+            { v: '__any_mentee__', l: '🎓 Any mentee' },
+            ...researchTeam.filter((m) => !!m.slug).map((m) => ({ v: m.slug as string, l: m.name })),
+          ]}
+          onChange={(v) => setFilter((f) => ({ ...f, mentee: v }))}
+        />
         <button
           onClick={() => setFilter((f) => ({ ...f, hideCompleted: !f.hideCompleted }))}
           style={{ padding: '4px 10px', fontSize: 11, border: '1px solid rgba(255,255,255,0.12)', borderRadius: 999, background: filter.hideCompleted ? 'rgba(255,255,255,0.02)' : 'rgba(110,232,154,0.1)', color: filter.hideCompleted ? INK_MUTED : ACCENT_GREEN, fontFamily: 'inherit', cursor: 'pointer' }}
@@ -467,6 +499,7 @@ function Card({ task, project, selected, onSelect, expanded, onExpand, planned }
     >
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 4 }}>
         <input type="checkbox" checked={selected} onChange={onSelect} data-stop="1" onClick={(e) => e.stopPropagation()} style={{ marginTop: 2, accentColor: meta.color, cursor: 'pointer' }} />
+        <span style={{ fontSize: 12, marginTop: 1, flexShrink: 0 }} aria-hidden="true">{(task as TaskRow & { _tag?: string })._tag ?? '📝'}</span>
         <div style={{ flex: 1, minWidth: 0, fontSize: 12.5, lineHeight: 1.35, color: isCompleted ? INK_DIM : INK, textDecoration: isCompleted ? 'line-through' : 'none', fontWeight: 500, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{task.title}</div>
         <Chip color={PRIORITY_COLOR[task.priority] ?? INK_DIM}>{PRIORITY_SHORT[task.priority] ?? task.priority}</Chip>
       </div>
@@ -572,6 +605,7 @@ function LaneRow({ task, project, selected, onSelect, expanded, onExpand, planne
         style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 8px', borderRadius: 4, background: selected ? `${meta.color}15` : expanded ? 'rgba(255,255,255,0.03)' : 'transparent', borderLeft: `2px solid ${planned ? ACCENT_GOLD : meta.color + '30'}`, opacity: isCompleted ? 0.5 : 1, cursor: 'pointer', transition: 'background 120ms' }}
       >
         <input type="checkbox" checked={selected} onChange={onSelect} onClick={(e) => e.stopPropagation()} data-stop="1" style={{ accentColor: meta.color, cursor: 'pointer' }} />
+        <span style={{ fontSize: 12, flexShrink: 0 }} aria-hidden="true">{(task as TaskRow & { _tag?: string })._tag ?? '📝'}</span>
         <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
           <span style={{ fontSize: 13, fontWeight: 500, color: isCompleted ? INK_DIM : INK, textDecoration: isCompleted ? 'line-through' : 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 360 }}>{task.title}</span>
           {project && (
@@ -685,6 +719,7 @@ function ListRow({ task, project, isCursor, isSelected, onClick, onDouble, onSel
       <div><input type="checkbox" checked={isSelected} onChange={onSelect} onClick={(e) => e.stopPropagation()} style={{ accentColor: meta.color, cursor: 'pointer' }} /></div>
       <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: isCompleted ? INK_DIM : INK, textDecoration: isCompleted ? 'line-through' : 'none', fontWeight: 500, paddingRight: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
         <span style={{ width: 6, height: 6, borderRadius: '50%', background: meta.color + '80', flexShrink: 0 }} />
+        <span style={{ fontSize: 11, flexShrink: 0 }} aria-hidden="true">{(task as TaskRow & { _tag?: string })._tag ?? '📝'}</span>
         {task.title}
         {planned && <span style={{ fontSize: 9, color: ACCENT_GOLD, fontWeight: 700, letterSpacing: '0.1em' }}>PLANNED</span>}
         {overdueDays > 0 && <span style={{ fontSize: 9, color: ACCENT_CORAL, fontWeight: 700 }}>{overdueDays}d LATE</span>}
@@ -895,28 +930,43 @@ export default function UnifiedMyTasks() {
     if (quickView === 'today') base = base.filter((t) => plannedSet.has(t.id) || t.due_date?.slice(0, 10) === today)
     if (quickView === 'overdue') base = base.filter((t) => t.due_date && t.due_date.slice(0, 10) < today && t.completed === 0)
     if (quickView === 'waiting') base = base.filter((t) => t.status === 'waiting_external' && t.completed === 0)
-    if (quickView === 'stale') base = base.filter((t) => daysSince(t.updated_at) >= 14 && t.status === 'in_progress' && t.completed === 0)
+    if (quickView === 'stale') base = base.filter((t) => daysSince(t.updated_at) >= 10 && t.status === 'in_progress' && t.completed === 0)
     return base.filter((t) => {
       if (filter.hideCompleted && (t.completed === 1 || t.status === 'done')) return false
       if (filter.priority && t.priority !== filter.priority) return false
       if (filter.project && t.project_id !== filter.project) return false
+      if (filter.mentee) {
+        // '__any_mentee__' = any researchTeam slug; specific slug = exact match
+        if (filter.mentee === '__any_mentee__') {
+          if (!t.assignee || !MENTEE_SLUGS.has(t.assignee)) return false
+        } else if (t.assignee !== filter.mentee) return false
+      }
       if (filter.group) {
         if (getGroupForTask(t, projectsByPid) !== filter.group) return false
       }
       if (search && !t.title.toLowerCase().includes(search.toLowerCase())) return false
       return true
-    }).map((t) => ({ ...t, _group: getGroupForTask(t, projectsByPid) }) as TaskRow & { _group: GroupKey })
+    }).map((t) => ({ ...t, _group: getGroupForTask(t, projectsByPid), _tag: tagForTask(t, projectsByPid) }) as TaskRow & { _group: GroupKey; _tag: string })
   }, [allTasks, filter, search, quickView, plannedSet, today, projectsByPid])
 
-  // Bucket by group.
+  // Bucket by group, then sort each bucket: planned → active → done.
+  // CLAUDE.md Rule 62: planned tasks float to top, done sinks to bottom with strikethrough.
   const byGroup = useMemo(() => {
     const g: Record<GroupKey, TaskRow[]> = { deep: [], priorities: [], quick: [], pb: [], etl: [] }
     for (const t of filtered) {
       const k = (t as TaskRow & { _group: GroupKey })._group
       g[k].push(t)
     }
+    const rank = (t: TaskRow): number => {
+      if (t.completed === 1 || t.status === 'done') return 2 // done sinks
+      if (plannedSet.has(t.id)) return 0                     // planned floats
+      return 1                                                 // active middle
+    }
+    for (const k of GROUP_ORDER) {
+      g[k].sort((a, b) => rank(a) - rank(b))
+    }
     return g
-  }, [filtered])
+  }, [filtered, plannedSet])
 
   const drawerTask = drawer ? allTasks.find((t) => t.id === drawer) ?? null : null
   const drawerProject = drawerTask?.project_id ? projectsByPid.get(drawerTask.project_id) ?? null : null
