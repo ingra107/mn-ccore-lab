@@ -343,32 +343,95 @@ interface BulkBarProps {
   onSnoozeDay: () => void
   onComplete: () => void
   onArchive: () => void
-  onReassign: () => void
-  onPriority: () => void
-  onStatus: () => void
+  onReassign: (slug: string) => void
+  onPriority: (priority: string) => void
+  onStatus: (status: string) => void
+  assigneeOptions: Array<{ slug: string; name: string }>
 }
 
-function BulkBar({ count, onClear, onPlanToday, onSnoozeDay, onComplete, onArchive, onReassign, onPriority, onStatus }: BulkBarProps) {
-  const btn = (label: string, onClick: () => void, accent?: string) => (
+type BulkPicker = 'reassign' | 'priority' | 'status' | null
+
+function BulkBar({ count, onClear, onPlanToday, onSnoozeDay, onComplete, onArchive, onReassign, onPriority, onStatus, assigneeOptions }: BulkBarProps) {
+  const [picker, setPicker] = useState<BulkPicker>(null)
+  const pickerRef = useRef<HTMLDivElement>(null)
+  // Close on outside click
+  useEffect(() => {
+    if (!picker) return
+    const close = (e: MouseEvent) => { if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) setPicker(null) }
+    document.addEventListener('mousedown', close)
+    return () => document.removeEventListener('mousedown', close)
+  }, [picker])
+  // Close on Escape
+  useEffect(() => {
+    if (!picker) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setPicker(null) }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [picker])
+
+  const btn = (label: string, onClick: () => void, accent?: string, active?: boolean) => (
     <button
       key={label}
       onClick={onClick}
-      style={{ padding: '3px 9px', fontSize: 11, border: `1px solid ${accent ? accent + '40' : 'rgba(255,255,255,0.12)'}`, borderRadius: 4, background: accent ? accent + '15' : 'transparent', color: accent ?? INK, fontFamily: 'inherit', cursor: 'pointer' }}
+      style={{ padding: '3px 9px', fontSize: 11, border: `1px solid ${active ? ACCENT_TEAL : accent ? accent + '40' : 'rgba(255,255,255,0.12)'}`, borderRadius: 4, background: active ? ACCENT_TEAL + '20' : accent ? accent + '15' : 'transparent', color: active ? ACCENT_TEAL : accent ?? INK, fontFamily: 'inherit', cursor: 'pointer' }}
     >{label}</button>
   )
+
+  const PRIORITY_OPTS = ['urgent', 'high', 'medium', 'low']
+  const STATUS_OPTS = [
+    { v: 'todo', l: 'Todo' },
+    { v: 'in_progress', l: 'In progress' },
+    { v: 'waiting_external', l: 'Waiting' },
+    { v: 'blocked', l: 'Blocked' },
+    { v: 'done', l: 'Done' },
+  ]
+
   return (
-    <div style={{ padding: '8px 24px', background: 'rgba(201,168,76,0.08)', borderBottom: '1px solid rgba(201,168,76,0.2)', display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, flexShrink: 0 }}>
-      <span style={{ color: ACCENT_GOLD, fontWeight: 600 }}>{count} selected</span>
-      <span style={{ color: INK_DIM }}>·</span>
-      {btn('📌 Plan today', onPlanToday, ACCENT_GOLD)}
-      {btn('Snooze +1d', onSnoozeDay)}
-      {btn('Status →', onStatus)}
-      {btn('Reassign', onReassign)}
-      {btn('Priority', onPriority)}
-      {btn('✓ Complete', onComplete, ACCENT_GREEN)}
-      {btn('Archive', onArchive, ACCENT_CORAL)}
-      <div style={{ flex: 1 }} />
-      <button onClick={onClear} style={{ background: 'none', border: 'none', color: INK_MUTED, fontSize: 11, cursor: 'pointer', fontFamily: 'inherit' }}>Deselect</button>
+    <div ref={pickerRef} style={{ position: 'relative', flexShrink: 0 }}>
+      <div style={{ padding: '8px 24px', background: 'rgba(201,168,76,0.08)', borderBottom: '1px solid rgba(201,168,76,0.2)', display: 'flex', alignItems: 'center', gap: 8, fontSize: 12 }}>
+        <span style={{ color: ACCENT_GOLD, fontWeight: 600 }}>{count} selected</span>
+        <span style={{ color: INK_DIM }}>·</span>
+        {btn('📌 Plan today', onPlanToday, ACCENT_GOLD)}
+        {btn('Snooze +1d', onSnoozeDay)}
+        {btn('Status →', () => setPicker(picker === 'status' ? null : 'status'), undefined, picker === 'status')}
+        {btn('Reassign', () => setPicker(picker === 'reassign' ? null : 'reassign'), undefined, picker === 'reassign')}
+        {btn('Priority', () => setPicker(picker === 'priority' ? null : 'priority'), undefined, picker === 'priority')}
+        {btn('✓ Complete', onComplete, ACCENT_GREEN)}
+        {btn('Archive', onArchive, ACCENT_CORAL)}
+        <div style={{ flex: 1 }} />
+        <button onClick={onClear} style={{ background: 'none', border: 'none', color: INK_MUTED, fontSize: 11, cursor: 'pointer', fontFamily: 'inherit' }}>Deselect</button>
+      </div>
+      {/* Picker popover — replaces window.prompt() (CD spec: dark-first picker, not native modal). Esc / outside-click close. */}
+      {picker && (
+        <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, padding: '10px 24px', background: PANEL_BG, borderBottom: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 4px 12px rgba(0,0,0,0.4)', zIndex: 20, display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
+          <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: INK_DIM, marginRight: 6 }}>
+            {picker === 'reassign' ? 'Reassign to' : picker === 'priority' ? 'Set priority' : 'Set status'}
+          </span>
+          {picker === 'priority' && PRIORITY_OPTS.map((p) => (
+            <button
+              key={p}
+              onClick={() => { onPriority(p); setPicker(null) }}
+              style={{ padding: '4px 10px', fontSize: 11, borderRadius: 4, border: `1px solid ${PRIORITY_COLOR[p] ?? INK_DIM}40`, background: `${PRIORITY_COLOR[p] ?? INK_DIM}15`, color: PRIORITY_COLOR[p] ?? INK, fontFamily: 'inherit', cursor: 'pointer' }}
+            >{p}</button>
+          ))}
+          {picker === 'status' && STATUS_OPTS.map((s) => (
+            <button
+              key={s.v}
+              onClick={() => { onStatus(s.v); setPicker(null) }}
+              style={{ padding: '4px 10px', fontSize: 11, borderRadius: 4, border: `1px solid ${STATUS_COLOR[s.v] ?? INK_DIM}40`, background: `${STATUS_COLOR[s.v] ?? INK_DIM}15`, color: STATUS_COLOR[s.v] ?? INK, fontFamily: 'inherit', cursor: 'pointer' }}
+            >{s.l}</button>
+          ))}
+          {picker === 'reassign' && assigneeOptions.map((a) => (
+            <button
+              key={a.slug}
+              onClick={() => { onReassign(a.slug); setPicker(null) }}
+              style={{ padding: '4px 10px', fontSize: 11, borderRadius: 4, border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.02)', color: INK, fontFamily: 'inherit', cursor: 'pointer' }}
+            >{a.name}</button>
+          ))}
+          <span style={{ flex: 1 }} />
+          <button onClick={() => setPicker(null)} style={{ background: 'none', border: 'none', color: INK_DIM, fontSize: 11, cursor: 'pointer', fontFamily: 'inherit' }}>esc</button>
+        </div>
+      )}
     </div>
   )
 }
@@ -377,7 +440,56 @@ function BulkBar({ count, onClear, onPlanToday, onSnoozeDay, onComplete, onArchi
 // Inline detail panel — shared by Columns + Lanes
 // ──────────────────────────────────────────────────────────────────────────
 
+// Helpers for the today_state localStorage shape — shared with TodayPage.
+function readTodayState(): { rightNow?: string | null; planned?: Record<string, { slot: string }>; done?: Record<string, boolean> } {
+  try { return JSON.parse(window.localStorage.getItem(`today_state_${todayKey()}`) || '{}') } catch { return {} }
+}
+function writeTodayState(snap: object): void {
+  try { window.localStorage.setItem(`today_state_${todayKey()}`, JSON.stringify(snap)) } catch { /* ignore */ }
+}
+
 function InlineDetail({ task, projectName }: { task: TaskRow; projectName?: string | null }) {
+  // Real handlers (no longer decorative). Reach for mutations directly so the
+  // component is self-contained and the parent doesn't need to drill props.
+  const updateTask = useUpdateTask()
+  const undoToast = useUndoToast()
+  const snap = readTodayState()
+  const isPromoted = snap.rightNow === task.id
+  const isPlanned = !!snap.planned?.[task.id]
+
+  const promote = useCallback(() => {
+    const s = readTodayState()
+    s.rightNow = task.id
+    s.planned = s.planned ?? {}
+    if (!s.planned[task.id]) s.planned[task.id] = { slot: 'strip' }
+    writeTodayState(s)
+    undoToast.showSuccess('Promoted to Right Now on Today')
+  }, [task.id, undoToast])
+
+  const planToday = useCallback(() => {
+    const s = readTodayState()
+    s.planned = s.planned ?? {}
+    s.planned[task.id] = { slot: 'strip' }
+    writeTodayState(s)
+    undoToast.showSuccess('Planned for today')
+  }, [task.id, undoToast])
+
+  const snooze = useCallback(() => {
+    const tomorrow = new Date()
+    tomorrow.setDate(tomorrow.getDate() + 1)
+    const due = tomorrow.toISOString().split('T')[0]
+    updateTask.mutate({ id: task.id, fields: { due_date: due } }, {
+      onSuccess: () => undoToast.showSuccess('Snoozed +1 day'),
+    })
+  }, [task.id, updateTask, undoToast])
+
+  const archive = useCallback(() => {
+    if (!window.confirm('Archive this task? It will be soft-deleted.')) return
+    updateTask.mutate({ id: task.id, fields: { status: 'done', completed: 1 } }, {
+      onSuccess: () => undoToast.showSuccess('Archived'),
+    })
+  }, [task.id, updateTask, undoToast])
+
   return (
     <div onClick={(e) => e.stopPropagation()} style={{ marginTop: 10, paddingTop: 10, borderTop: '1px dashed rgba(255,255,255,0.08)' }}>
       {task.description && (
@@ -386,21 +498,22 @@ function InlineDetail({ task, projectName }: { task: TaskRow; projectName?: stri
         </div>
       )}
       <div style={{ display: 'flex', gap: 6, marginBottom: 8, flexWrap: 'wrap' }}>
-        <button style={{ padding: '4px 10px', fontSize: 10.5, borderRadius: 4, border: `1px solid ${ACCENT_GOLD}`, background: ACCENT_GOLD, color: PAGE_BG, fontWeight: 600, fontFamily: 'inherit', cursor: 'pointer' }}>▶ Work on this</button>
-        <button style={{ padding: '4px 10px', fontSize: 10.5, borderRadius: 4, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: INK, fontFamily: 'inherit', cursor: 'pointer' }}>📌 Plan today</button>
-        <button style={{ padding: '4px 10px', fontSize: 10.5, borderRadius: 4, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: INK, fontFamily: 'inherit', cursor: 'pointer' }}>Snooze</button>
-        <button style={{ padding: '4px 10px', fontSize: 10.5, borderRadius: 4, border: 'none', background: 'transparent', color: INK_DIM, fontFamily: 'inherit', cursor: 'pointer' }}>Archive</button>
+        {!isPromoted && (
+          <button onClick={promote} title="Promote to Right Now on Today" style={{ padding: '4px 10px', fontSize: 10.5, borderRadius: 4, border: `1px solid ${ACCENT_GOLD}`, background: ACCENT_GOLD, color: PAGE_BG, fontWeight: 600, fontFamily: 'inherit', cursor: 'pointer' }}>▶ Work on this</button>
+        )}
+        {!isPlanned && (
+          <button onClick={planToday} title="Add to today's planned strip" style={{ padding: '4px 10px', fontSize: 10.5, borderRadius: 4, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: INK, fontFamily: 'inherit', cursor: 'pointer' }}>📌 Plan today</button>
+        )}
+        <button onClick={snooze} title="Push due date +1 day" disabled={updateTask.isPending} style={{ padding: '4px 10px', fontSize: 10.5, borderRadius: 4, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: INK, fontFamily: 'inherit', cursor: updateTask.isPending ? 'wait' : 'pointer', opacity: updateTask.isPending ? 0.5 : 1 }}>Snooze +1d</button>
+        <button onClick={archive} title="Soft-delete this task" disabled={updateTask.isPending} style={{ padding: '4px 10px', fontSize: 10.5, borderRadius: 4, border: 'none', background: 'transparent', color: INK_DIM, fontFamily: 'inherit', cursor: updateTask.isPending ? 'wait' : 'pointer' }}>Archive</button>
       </div>
       <div style={{ fontSize: 10.5, color: INK_DIM, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
         <span><span style={{ opacity: 0.6 }}>updated</span> {task.updated_at?.slice(0, 10) ?? '—'}</span>
         <span><span style={{ opacity: 0.6 }}>status</span> <span style={{ color: STATUS_COLOR[task.status] }}>{STATUS_LABEL[task.status] ?? task.status}</span></span>
         {projectName && <span><span style={{ opacity: 0.6 }}>project</span> {projectName}</span>}
       </div>
-      <div style={{ marginTop: 8, padding: '6px 10px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 3 }}>
-        <input
-          placeholder="Add a note or @hermes…"
-          style={{ width: '100%', background: 'transparent', border: 'none', color: INK, fontSize: 11, fontFamily: 'inherit', outline: 'none' }}
-        />
+      <div style={{ marginTop: 8 }}>
+        <SmartCompose taskId={task.id} placeholder="Add a note or @hermes…" />
       </div>
     </div>
   )
@@ -1016,36 +1129,36 @@ export default function UnifiedMyTasks() {
     })
   }, [selected, bulkUpdate, clearSelection, undoToast])
 
-  const onBulkReassign = useCallback(() => {
-    const slug = window.prompt('Reassign to (team-member slug, e.g. nick-ingraham):')
-    if (!slug) return
+  const onBulkReassign = useCallback((slug: string) => {
     const ids = [...selected]
     bulkUpdate.mutate({ ids, action: 'assign', value: slug }, {
       onSuccess: () => { undoToast.showSuccess(`Reassigned ${ids.length} task${ids.length === 1 ? '' : 's'} → ${slug}`); clearSelection() },
     })
   }, [selected, bulkUpdate, clearSelection, undoToast])
 
-  const onBulkPriority = useCallback(() => {
-    const p = window.prompt('Priority (urgent / high / medium / low):')
-    if (!p) return
-    const norm = p.toLowerCase().trim()
-    if (!['urgent', 'high', 'medium', 'low'].includes(norm)) { alert(`Invalid priority "${p}". Use urgent/high/medium/low.`); return }
+  const onBulkPriority = useCallback((priority: string) => {
     const ids = [...selected]
-    bulkUpdate.mutate({ ids, action: 'priority', value: norm }, {
-      onSuccess: () => { undoToast.showSuccess(`Set priority → ${norm} for ${ids.length} task${ids.length === 1 ? '' : 's'}`); clearSelection() },
+    bulkUpdate.mutate({ ids, action: 'priority', value: priority }, {
+      onSuccess: () => { undoToast.showSuccess(`Set priority → ${priority} for ${ids.length} task${ids.length === 1 ? '' : 's'}`); clearSelection() },
     })
   }, [selected, bulkUpdate, clearSelection, undoToast])
 
-  const onBulkStatus = useCallback(() => {
-    const s = window.prompt('Status (todo / in_progress / blocked / waiting_external / done):')
-    if (!s) return
-    const norm = s.toLowerCase().trim()
-    if (!['todo', 'in_progress', 'blocked', 'waiting_external', 'done'].includes(norm)) { alert(`Invalid status "${s}".`); return }
+  const onBulkStatus = useCallback((status: string) => {
     const ids = [...selected]
-    bulkUpdate.mutate({ ids, action: 'status', value: norm }, {
-      onSuccess: () => { undoToast.showSuccess(`Set status → ${norm} for ${ids.length} task${ids.length === 1 ? '' : 's'}`); clearSelection() },
+    bulkUpdate.mutate({ ids, action: 'status', value: status }, {
+      onSuccess: () => { undoToast.showSuccess(`Set status → ${status} for ${ids.length} task${ids.length === 1 ? '' : 's'}`); clearSelection() },
     })
   }, [selected, bulkUpdate, clearSelection, undoToast])
+
+  // Assignee options for bulk Reassign picker — directors + research team + faculty.
+  // Uses the same researchTeam used for the Mentee filter.
+  const assigneeOptions = useMemo(() => {
+    const all: Array<{ slug: string; name: string }> = []
+    all.push({ slug: 'nick-ingraham', name: 'Nick Ingraham' })
+    all.push({ slug: 'nida-mohamud', name: 'Nida Mohamud' })
+    for (const m of researchTeam) if (m.slug) all.push({ slug: m.slug, name: m.name })
+    return all
+  }, [])
 
   const isLoading = tasksQuery.isLoading || projectsQuery.isLoading
 
@@ -1072,6 +1185,7 @@ export default function UnifiedMyTasks() {
           onReassign={onBulkReassign}
           onPriority={onBulkPriority}
           onStatus={onBulkStatus}
+          assigneeOptions={assigneeOptions}
         />
       )}
       <div style={{ flex: 1, minHeight: 0, display: 'flex', overflow: 'hidden' }}>

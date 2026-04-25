@@ -1,14 +1,49 @@
-# Session Handoff — 2026-04-25 (Phase 38 absolute-done)
+# Session Handoff — 2026-04-25 evening (Phase 38 closure r2 — CD verification pass)
 
 ---
 
 ## 🎯 NEXT SESSION — START HERE
 
 **State at handoff:**
-- HEAD `cf285b6` on main + 1 follow-up commit pending push (this handoff + stale-ref sweep)
-- Deploy `f77aded8.mn-ccore-lab.pages.dev` is live as production
-- Live for the team since 2026-04-21; Phase 38 + closure shipped 2026-04-25
-- Phase 38 = Today B2 + MyTasks Round 2 + every loose end closed
+- HEAD `6c6252c` on main + 1 follow-up commit (InlineDetail wiring + bulk picker popover) pending push
+- Deploy `b7fe974e.mn-ccore-lab.pages.dev` is live as production
+- Live for the team since 2026-04-21; Phase 38 + closure r1 + closure r2 shipped 2026-04-25
+- Phase 38 = Today B2 + MyTasks Round 2 + 8 CD-spec gaps closed via parallel-agent verification
+
+**Shipped this session (closure r2 — CD verification pass):**
+
+- **`6c6252c` (this session, pushed).** Two parallel verification agents
+  compared shipped TodayPage.tsx + UnifiedMyTasks.tsx against the CD
+  handoff at `review/handoff_today_my_tasks_2026.04.24/`. Eight real
+  gaps fixed in one commit:
+  - **MyTasks Mentee filter chip** + apply via researchTeam slug match
+    (`__any_mentee__` matches any mentee; specific slug = exact).
+  - **Stale threshold reconciled 14d → 10d** (chips already used 10d;
+    predicate was 14d → Stale row count and Stale quickView disagreed).
+  - **Group sort planned → active → done** within each byGroup bucket
+    (CLAUDE.md Rule 62 was violated; done items had strikethrough but
+    weren't sinking; planned weren't floating).
+  - **Tag glyph on Card / LaneRow / ListRow** (CD spec rendered
+    `{t.tag}` left-of-title; shipped omitted). New `tagForTask()` picks
+    emoji from project category or task source.
+  - **Today: ▶ Work button on Right Now hero** (was: only ✓ Done).
+  - **Today: between-N drop zones in Timeline** (was: "drag into gaps"
+    copy was a lie; only the planned-strip slot worked).
+  - **Today: PulseCard restored to spec** — FOCUS / SYNC tiles + NEXT
+    MILESTONES + MENTEES section. SYNC turns coral if >24h per Rule 59.
+  - **Today: Tag glyph + LinkRow on TaskRow + PlannedTaskRow** (was:
+    drawer-only).
+  - **ReactionBar T-06**: `+` button right-aligned (CD spec parity);
+    picker opens leftward.
+
+- **HEAD+1 (uncommitted as of this writing).** InlineDetail buttons
+  wired to real handlers (▶ Work / 📌 Plan today / Snooze +1d / Archive
+  were pure decoration with no onClick). InlineDetail now uses
+  `useUpdateTask` directly + writes to `today_state_<date>` localStorage
+  for promote/plan-today. SmartCompose replaces the bare input. Bulk
+  Reassign / Priority / Status replaced `window.prompt()` with inline
+  popover (dark-first picker; Esc / outside-click close;
+  `assigneeOptions` derived from researchTeam + directors).
 
 **Shipped this session (Phase 38 + closure):**
 
