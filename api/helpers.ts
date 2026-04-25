@@ -29,25 +29,26 @@ export interface AuthUser {
 }
 
 export async function getAuthUser(request: Request, env: Env): Promise<AuthUser | null> {
-  // Test-mode auth bypass — gated by the SAME TEST_MODE_KEY secret that
-  // gates the DB_TEST swap (api/index.ts middleware step 1). When the
-  // request carries X-Test-Mode: true + matching X-Test-Mode-Key + a
-  // X-Test-User header, identity comes from that header.
+  // Test-mode auth bypass — uses the same TEST_MODE_KEY secret that gates
+  // the DB_TEST swap, but is INDEPENDENT of the swap so the audit can hit
+  // prod DB with a test user identity. Activates when:
+  //   X-Test-Mode-Key: <env.TEST_MODE_KEY>  (Cloudflare secret match)
+  //   X-Test-User:     <email>              (email-shaped only)
+  // Note: deliberately does NOT require `X-Test-Mode: true` — that header
+  // controls the DB_TEST swap (api/index.ts middleware step 1) and the
+  // audit needs to test prod-DB write paths with auth, not test-DB write
+  // paths. Send `X-Test-Mode: true` only when DB isolation is also wanted.
   //
   // Why: CF Access service-token JWTs (used by hub-audit + CI) are valid
   // CF Access tokens but lack an `email` claim, so JWKS-based auth below
   // returns null and every audit mutation 401s. This bypass lets the
   // audit run as an explicit test user without exposing prod auth.
   //
-  // Trust boundary: TEST_MODE_KEY is a Cloudflare secret. The same secret
-  // already grants test-DB swap, so reusing it here doesn't widen blast
-  // radius. CF Access still gates the request reaching the worker.
+  // Trust boundary: TEST_MODE_KEY is a Cloudflare secret. CF Access still
+  // gates the request reaching the worker. Knowing the secret already
+  // grants test-DB writes; auth bypass doesn't widen blast radius.
   const testModeKey = (env as unknown as { TEST_MODE_KEY?: string }).TEST_MODE_KEY;
-  if (
-    testModeKey
-    && request.headers.get('X-Test-Mode') === 'true'
-    && request.headers.get('X-Test-Mode-Key') === testModeKey
-  ) {
+  if (testModeKey && request.headers.get('X-Test-Mode-Key') === testModeKey) {
     const testEmail = request.headers.get('X-Test-User');
     if (testEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(testEmail)) {
       return { email: testEmail, name: testEmail.split('@')[0] };

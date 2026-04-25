@@ -79,8 +79,15 @@ function writeFindings(ctx: Ctx) {
 // authenticate as the audit user instead of returning 401 on the JWKS path.
 // Without this, every audit Move/Create/Update would 401 silently because the
 // CF Access service-token JWT lacks an `email` claim.
-const TEST_USER_EMAIL = process.env.TEST_USER_EMAIL || 'audit@mn-ccore.test'
-const TEST_MODE_KEY = process.env.TEST_MODE_KEY
+// Default to Nick's UMN email — emailToSlug('ingra107@umn.edu') resolves
+// via EMAIL_PREFIX_TO_SLUG to the canonical 'nick-ingraham' slug (which
+// owns 626 tasks). The gmail address slugifies to 'nicholas.ingraham'
+// (no LUT entry) and matches zero tasks. Override via env for other
+// audit identities.
+const TEST_USER_EMAIL = process.env.TEST_USER_EMAIL || 'ingra107@umn.edu'
+// Accept either name — local env uses HUB_TEST_MODE_KEY (HUB_ prefix to
+// disambiguate from other test keys). Worker secret is TEST_MODE_KEY.
+const TEST_MODE_KEY = process.env.HUB_TEST_MODE_KEY || process.env.TEST_MODE_KEY
 
 async function newDesktopCtx(browser: any) {
   // Post-launch (2026-04-21) `/portal/*` is gated by CF Access. Forward the
@@ -97,11 +104,12 @@ async function newDesktopCtx(browser: any) {
     console.log('    !! CF_ACCESS_CLIENT_ID/SECRET not set — /portal/* will hit Google Sign-In and audit will fail')
   }
   if (TEST_MODE_KEY) {
-    extraHTTPHeaders['X-Test-Mode'] = 'true'
+    // Auth bypass only — NOT setting X-Test-Mode: true, so DB stays prod.
+    // Audit needs to exercise prod write paths against real data.
     extraHTTPHeaders['X-Test-Mode-Key'] = TEST_MODE_KEY
     extraHTTPHeaders['X-Test-User'] = TEST_USER_EMAIL
   } else {
-    console.log('    !! TEST_MODE_KEY not set — server-side mutations will 401 (audit limited to read-only flows)')
+    console.log('    !! HUB_TEST_MODE_KEY not set — server-side mutations will 401 (audit limited to read-only flows)')
   }
   const ctx = await browser.newContext({
     viewport: { width: 1440, height: 900 },
@@ -122,7 +130,7 @@ async function newDesktopCtx(browser: any) {
 function authHeaders(extra: Record<string, string> = {}): Record<string, string> {
   const h: Record<string, string> = { Authorization: `Bearer ${AUTH_TOKEN}`, ...extra }
   if (TEST_MODE_KEY) {
-    h['X-Test-Mode'] = 'true'
+    // Auth bypass only — see newDesktopCtx for why DB_TEST is opt-out.
     h['X-Test-Mode-Key'] = TEST_MODE_KEY
     h['X-Test-User'] = TEST_USER_EMAIL
   }
@@ -270,9 +278,10 @@ async function auditTasks(ctx: Ctx) {
     await page.waitForTimeout(2500)
     await snap(ctx, 'quickadd-submitted', 400)
 
-    // Confirm task created via API (the modal closes optimistically; UI may
-    // not show the new row immediately if the user-filter excludes it).
-    const taskList = await apiGet('/api/tasks?limit=5000')
+    // Confirm task created via API. Pass include_fixtures=1 because
+    // filterFixtures() strips `test_delete_*` titles from the default GET
+    // (UI never wants to see audit fixtures, but we need to verify them).
+    const taskList = await apiGet('/api/tasks?limit=5000&include_fixtures=1')
     const created = (taskList.data || []).find((t: any) => t.title === 'test_delete_audit unified task')
     if (created) {
       createdTaskId = created.id
@@ -483,7 +492,7 @@ async function auditTasks(ctx: Ctx) {
     finding(ctx, (await savedViewsBtn.count()) > 0 ? 'PASS' : 'FAIL', '1.11 SavedViewsMenu button renders')
   })
 
-  // 1.12 Persistence — reload, verify created task survives
+  // 1.12 Persistence — reload, verify created task survives, then cleanup
   await safe('1.12 persistence', async () => {
     if (!createdTaskId) {
       finding(ctx, 'INFO', '1.12 Skipping persistence check (no task created in 1.3)')
@@ -492,9 +501,17 @@ async function auditTasks(ctx: Ctx) {
     await page.reload({ waitUntil: 'networkidle' })
     await page.waitForTimeout(1500)
     await snap(ctx, 'reload-persistence', 400)
-    const apiCheck = await apiGet('/api/tasks?limit=5000')
+    // include_fixtures=1 because the task title is `test_delete_*` and
+    // filterFixtures strips it from the default GET.
+    const apiCheck = await apiGet('/api/tasks?limit=5000&include_fixtures=1')
     const stillThere = (apiCheck.data || []).find((t: any) => t.id === createdTaskId && !t.deleted_at)
     finding(ctx, stillThere ? 'PASS' : 'FAIL', '1.12 Task persists in API after reload')
+    // Cleanup: soft-delete the test_delete_* task so it doesn't accumulate.
+    // Hub uses POST /:id with { status:'done', completed:1 } as soft-delete;
+    // archived tasks stay in DB but UI hides them.
+    if (stillThere) {
+      await apiPost(`/api/tasks/${createdTaskId}`, { status: 'done', completed: 1 }).catch(() => {})
+    }
   })
 
   // 1.13 Move → group_override flow (schema v50, closure r2f)
