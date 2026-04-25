@@ -5,9 +5,10 @@
 ## 🎯 NEXT SESSION — START HERE
 
 **State at handoff:**
-- HEAD `6c6252c` on main + 1 follow-up commit (InlineDetail wiring + bulk picker popover) pending push
-- Deploy `b7fe974e.mn-ccore-lab.pages.dev` is live as production
-- Live for the team since 2026-04-21; Phase 38 + closure r1 + closure r2 shipped 2026-04-25
+- HEAD `545954f` on main, pushed
+- Deploy `1eab1007.mn-ccore-lab.pages.dev` is live as production (closure r2b)
+- Earlier r2 deploy `b7fe974e` carried the 8 CD-spec gap fixes; r2b adds InlineDetail wiring + bulk picker popover
+- Live for the team since 2026-04-21; Phase 38 + closure r1 + closure r2 + r2b shipped 2026-04-25
 - Phase 38 = Today B2 + MyTasks Round 2 + 8 CD-spec gaps closed via parallel-agent verification
 
 **Shipped this session (closure r2 — CD verification pass):**
@@ -36,7 +37,7 @@
   - **ReactionBar T-06**: `+` button right-aligned (CD spec parity);
     picker opens leftward.
 
-- **HEAD+1 (uncommitted as of this writing).** InlineDetail buttons
+- **`545954f` (this session, pushed).** InlineDetail buttons
   wired to real handlers (▶ Work / 📌 Plan today / Snooze +1d / Archive
   were pure decoration with no onClick). InlineDetail now uses
   `useUpdateTask` directly + writes to `today_state_<date>` localStorage
@@ -44,6 +45,26 @@
   Reassign / Priority / Status replaced `window.prompt()` with inline
   popover (dark-first picker; Esc / outside-click close;
   `assigneeOptions` derived from researchTeam + directors).
+
+**Open follow-ups (not blockers):**
+- **Move → button on InlineDetail** — DEFERRED. Groups in this codebase
+  are DERIVED from getGroupForTask (priority + project + source), not a
+  stored field. "Move to PB" can't directly set source='pb' (backend
+  signal); "Move to ETL" can't set project_id without choosing a project.
+  Needs CD clarification round-trip before implementation.
+- **Component split per HANDOFF §2** — DEFERRED. TodayPage 1141 lines,
+  UnifiedMyTasks 1067 lines. CD HANDOFF prescribed splitting into ~13
+  files. 2000-line refactor with regression risk; better as separate
+  session with /simplify or focused agent.
+- **HermesSuggests 3-bullet wiring** — currently algorithmic stub at
+  `TodayPage.tsx:HermesSuggestsCard`. CD spec wants real Hermes call
+  with task/project context fanout. P2.
+- **Calendar-dependent Today gaps** — OverlapBand + Join/Brief/Attendees
+  on EventRow are blocked on real meeting time data (Phase 3 calendar
+  OAuth is the prereq).
+- **scripts/hub-audit.ts tasks section** — fails on "New Task button not
+  found" because Phase 38 changed UnifiedMyTasks UI. Selector retarget
+  in progress (background agent).
 
 **Shipped this session (Phase 38 + closure):**
 
