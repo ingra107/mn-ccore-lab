@@ -5,11 +5,12 @@
 ## 🎯 NEXT SESSION — START HERE
 
 **State at handoff:**
-- HEAD `545954f` on main, pushed
-- Deploy `1eab1007.mn-ccore-lab.pages.dev` is live as production (closure r2b)
-- Earlier r2 deploy `b7fe974e` carried the 8 CD-spec gap fixes; r2b adds InlineDetail wiring + bulk picker popover
-- Live for the team since 2026-04-21; Phase 38 + closure r1 + closure r2 + r2b shipped 2026-04-25
-- Phase 38 = Today B2 + MyTasks Round 2 + 8 CD-spec gaps closed via parallel-agent verification
+- HEAD `45351c1` on main, pushed
+- Deploy `5a5962c9.mn-ccore-lab.pages.dev` is live as production (closure r2d)
+- Closure deploy chain: r2 `b7fe974e` (8 CD-spec fixes) → r2b `1eab1007` (InlineDetail + bulk picker) → r2c `32ffa0e7` (HermesSuggests 3-bullet) → r2d `5a5962c9` (nextAction + TaskDrawer buttons)
+- Live for the team since 2026-04-21; all closure rounds shipped 2026-04-25
+- Phase 38 = Today B2 + MyTasks Round 2 + 12 CD-spec gaps closed (8 from verification + 4 polish swept after)
+- One-time agent scheduled for 2026-05-02 14:00 UTC (`trig_01Mobbas7u1o7xGGizxfkmPp`) to retire `/portal/my-tasks-legacy` after the soak window
 
 **Shipped this session (closure r2 — CD verification pass):**
 
@@ -37,7 +38,7 @@
   - **ReactionBar T-06**: `+` button right-aligned (CD spec parity);
     picker opens leftward.
 
-- **`545954f` (this session, pushed).** InlineDetail buttons
+- **`545954f` (closure r2b).** InlineDetail buttons
   wired to real handlers (▶ Work / 📌 Plan today / Snooze +1d / Archive
   were pure decoration with no onClick). InlineDetail now uses
   `useUpdateTask` directly + writes to `today_state_<date>` localStorage
@@ -45,6 +46,25 @@
   Reassign / Priority / Status replaced `window.prompt()` with inline
   popover (dark-first picker; Esc / outside-click close;
   `assigneeOptions` derived from researchTeam + directors).
+- **`dca0d7e` (audit retarget).** Hub-audit tasks section retargeted
+  for Phase 38 UI. 12 PASS / 2 INFO / 0 FAIL on `1eab1007`. Plus CF
+  Access service-token forwarding via `extraHTTPHeaders` (was missing
+  since the 2026-04-21 launch — every audit was hitting Google
+  Sign-In). `CF_ACCESS_CLIENT_ID/SECRET` env vars required for non-
+  interactive `/portal/*` audits.
+- **`dc79ed4` (closure r2c).** HermesSuggests upgraded from one focus
+  sentence to focus + 3-bullet ul per CD spec parity. Algorithmic
+  bullets: longest-overdue task / most-stalled project / mentee with
+  overdue-or-today task. Real Hermes async wiring (60s listener poll
+  pattern) deferred — would need an ai_request once/day per user with
+  cached response. Stub now closer to spec.
+- **`45351c1` (closure r2d).** Two more decoration-to-real gaps
+  swept up: TodayPage ProjectsCard.nextAction was hardcoded `null`
+  (no `next_action` column on projects in D1; now derives soonest-due
+  open task assigned to current user per project). UnifiedMyTasks
+  TaskDrawer (List view side panel) ▶ Work / 📌 Plan today buttons
+  had no onClick — same gap that InlineDetail had; wired to the same
+  `readTodayState`/`writeTodayState` helpers.
 
 **Open follow-ups (not blockers):**
 - **Move → button on InlineDetail** — DEFERRED. Groups in this codebase
