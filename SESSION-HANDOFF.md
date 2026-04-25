@@ -1,8 +1,49 @@
-# Session Handoff — 2026-04-24 (post-compact continuation)
+# Session Handoff — 2026-04-25 (Phase 38 absolute-done)
 
 ---
 
 ## 🎯 NEXT SESSION — START HERE
+
+**State at handoff:**
+- HEAD `cf285b6` on main + 1 follow-up commit pending push (this handoff + stale-ref sweep)
+- Deploy `f77aded8.mn-ccore-lab.pages.dev` is live as production
+- Live for the team since 2026-04-21; Phase 38 + closure shipped 2026-04-25
+- Phase 38 = Today B2 + MyTasks Round 2 + every loose end closed
+
+**Shipped this session (Phase 38 + closure):**
+
+- **`2e518d2` → `cf285b6` (Phase 38 PR #34, squash-merged as `4e6b86b`).** New `/portal/dashboard` = `src/pages/portal/TodayPage.tsx` (Today B2 — pill strip, Right Now hero, timeline, 5 task groups, right rail). Old card-grid Dashboard moved to `/portal/overview` as Lab Overview. New `/portal/my-tasks` = `src/pages/portal/UnifiedMyTasks.tsx` (Columns / Lanes / List, shared toolbar, view picker far-left, `localStorage.mt_view`). Old MyTasks at `/portal/my-tasks-legacy` (one-sprint preserve).
+- **New endpoint** `GET /api/tasks/:id/detail` returns `{why, updates, subtasks, blocks}` for both drawers. New `useTaskDetail` hook in `src/hooks/useApiData.ts`.
+- **Bulk actions wired (no stubs)** — Plan today (writes today_state localStorage so TodayPage picks up) / Snooze +1d (Promise.all useUpdateTask) / Status / Reassign / Priority / ✓ Complete / Archive — all fire real `useBulkUpdateTasks` mutations + UndoToast.
+- **Right Now auto-promotes on first load** when nothing planned. Picks longest-overdue → urgent → high → first task. `autoPromotedRef` guards against re-promotion after explicit unplan.
+- **PB group bucketing broadened** — matches source / title / project category / project slug.
+- **Mobile fixes**: Today B2 collapses 2-col grid to single column at ≤1024w. MyTasks Columns view gets visible scrollbar + right-edge fade gradient at ≤1024w.
+- **`SmartCompose` (new shared component)** replaces decorative compose toolbars. Real `@` mention via MentionInput + autocomplete, real emoji picker (12 quick), real 📎 attach via R2 presigned URL flow → markdown link inserted at cursor, Cmd+Enter posts via `usePostTaskUpdate` → `task_updates` row → drawer "Recent updates" auto-refreshes.
+- **CLAUDE.md rules 57-62** added (renumbered from 52-57 during rebase). 52-56 remain as home-laptop's previous-session work (realtimeBus / DD-1+DD-2 / T-29 / mobile compose / row swipe). Rule 53 amended to note DD-1 Now/Data is superseded by Phase 38 (TodayPage = Now, UnifiedMyTasks = Data).
+- **DD-2 saved views ported into UnifiedMyTasks** post-rebase. `<SavedViewsMenu page="my-tasks" currentQuery={searchParams.toString()} onApply={applyView}>` next to view picker. URL state round-trip via `useSearchParams` so saved views capture search + filter + view + quickView.
+
+**Quality gate (Phase 38 + closure):** 🟢 GREEN.
+- Build clean across 16 commits this session.
+- Smoke 27/27 on preview hash. (Production custom domain shows 12 fails because CF Access redirects to login splash — pre-existing test setup issue, not regression.)
+- Inspection 149 passed / 2 skipped / 0 failed.
+- `/api/health` 624 tasks / 65ms.
+- `/api/tasks/:id/detail` returns proper shape, real activity log entries.
+
+**One-sprint follow-ups (no urgency):**
+- Retire `/portal/my-tasks-legacy` route + delete `src/pages/portal/MyTasks.tsx` after 1-week soak. (Has DD-1 mode toggle for users who want it; UnifiedMyTasks superseded most use cases.)
+- Delete eval artifacts: `tests/pre-merge-eval.spec.ts`, `playwright.config.eval.ts`, `review/pre-merge-2026-04-25/`. Local-only; confirm pre-delete.
+- Smoke spec assumes ungated portal — update to either auth-inject or mark portal-route assertions as preview-only. Pre-existing issue surfaced post-Phase-38 deploy.
+
+**Don't-forget:**
+- Phase 38 introduces `tests/pre-merge-eval.spec.ts` + `playwright.config.eval.ts` + `review/pre-merge-2026-04-25/` — these are local eval artifacts, never tracked. Delete after one-sprint soak.
+- DD-1 mode toggle (`?mode=now|data`) only routes on legacy `/portal/my-tasks-legacy`; UnifiedMyTasks uses 3-view picker instead.
+- Bulk action handlers use existing `useBulkUpdateTasks` + `useUpdateTask`; don't reinvent batch endpoints.
+
+**Stale-ref sweep this session:** 4 places said "Dashboard" but should say "Today" — fixed: `CommandPalette.tsx:129` (also added a Lab Overview entry), `Layout.tsx:20+31+badge-checks`, `ShortcutHelp.tsx:15` (G D shortcut label), `App.tsx:60` (ErrorBoundary fallback button text). Build clean post-fix.
+
+---
+
+## 🗄 PRIOR SESSION (2026-04-24 post-compact continuation) — kept for ramp-up context
 
 **State at handoff:**
 - HEAD `edf6066f` on main, clean, pushed

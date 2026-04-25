@@ -17,7 +17,7 @@ const navLinks: { to: string; label: string }[] = [
 ]
 
 const researchDropdownLinks = [
-  { to: '/dashboard', label: 'Dashboard' },
+  { to: '/dashboard', label: 'Today' },
   { to: '/personal', label: 'My Hub' },
   { to: '/projects', label: 'Projects' },
   { to: '/grants', label: 'Grants' },
@@ -28,7 +28,7 @@ const researchDropdownLinks = [
 
 // Footer link groups
 const footerResearchLinks = [
-  { to: '/dashboard', label: 'Dashboard' },
+  { to: '/dashboard', label: 'Today' },
   { to: '/projects', label: 'Projects' },
   { to: '/grants', label: 'Grants' },
   { to: '/meetings', label: 'Meetings' },
@@ -271,7 +271,7 @@ export default function Layout() {
                     }}
                   >
                     <span>{link.label}</span>
-                    {link.label === 'Dashboard' && pendingCount > 0 && (
+                    {link.label === 'Today' && pendingCount > 0 && (
                       <span
                         style={{
                           background: 'var(--maroon-solid)',
@@ -446,7 +446,7 @@ export default function Layout() {
                   }}
                 >
                   <span>{link.label}</span>
-                  {link.label === 'Dashboard' && pendingCount > 0 && (
+                  {link.label === 'Today' && pendingCount > 0 && (
                     <span
                       style={{
                         background: 'var(--maroon-solid)',

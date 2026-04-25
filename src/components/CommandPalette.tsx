@@ -126,7 +126,8 @@ export default function CommandPalette() {
 
     // Navigation commands
     const navItems: { path: string; label: string; icon: typeof Search; shortcut?: string }[] = [
-      { path: PATHS.dashboard, label: 'Dashboard', icon: LayoutDashboard, shortcut: 'G D' },
+      { path: PATHS.dashboard, label: 'Today', icon: LayoutDashboard, shortcut: 'G D' },
+      { path: PATHS.overview, label: 'Lab Overview', icon: LayoutDashboard },
       { path: PATHS.personal, label: 'My Hub', icon: User, shortcut: 'G H' },
       { path: PATHS.tasks, label: 'All Tasks', icon: ListTodo, shortcut: 'G T' },
       { path: PATHS.myTasks, label: 'My Tasks', icon: CheckSquare, shortcut: 'G Y' },

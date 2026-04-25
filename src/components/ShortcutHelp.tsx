@@ -12,7 +12,7 @@ const shortcuts = [
   {
     category: 'Navigation (press G, then key — 1s window)',
     items: [
-      { keys: 'G D', action: 'Go to Dashboard' },
+      { keys: 'G D', action: 'Go to Today' },
       { keys: 'G T', action: 'Go to My Tasks' },
       { keys: 'G P', action: 'Go to Projects' },
       { keys: 'G M', action: 'Go to Meetings' },
