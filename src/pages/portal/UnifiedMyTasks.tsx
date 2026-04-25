@@ -19,6 +19,7 @@ import { emailToSlug } from '../../lib/emailSlug'
 import { usePageMeta } from '../../hooks/usePageMeta'
 import { PATHS } from '../../constants/paths'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
+import ReactionBar from '../../components/ReactionBar'
 import type { TaskRow } from '../../lib/api'
 
 // ──────────────────────────────────────────────────────────────────────────
@@ -713,24 +714,80 @@ function TaskDrawer({ task, project, onClose }: { task: TaskRow; project: { name
           const isMe = u.who === 'nick-ingraham' || u.who === 'nick'
           const color = isHermes ? ACCENT_GOLD : isMe ? ACCENT_TEAL : INK_MUTED
           return (
-            <div key={i} style={{ padding: '6px 0', borderBottom: i < updates.length - 1 && i < 5 ? '1px dashed rgba(255,255,255,0.06)' : 'none' }}>
+            <div key={u.id ?? i} style={{ padding: '6px 0', borderBottom: i < updates.length - 1 && i < 5 ? '1px dashed rgba(255,255,255,0.06)' : 'none' }}>
               <div style={{ display: 'flex', gap: 8, alignItems: 'baseline', marginBottom: 2 }}>
                 <span style={{ fontSize: 10, fontWeight: 600, color, letterSpacing: '0.04em' }}>{isHermes ? 'Hermes' : u.who}</span>
                 <span style={{ fontSize: 10, color: INK_DIM, fontVariantNumeric: 'tabular-nums' }}>{u.when?.slice(0, 16) ?? ''}</span>
               </div>
               <div style={{ fontSize: 11.5, color: INK, lineHeight: 1.45 }}>{u.text}</div>
+              {u.kind === 'note' && u.id && (
+                <div style={{ marginTop: 4 }}>
+                  <ReactionBar targetType="task_update" targetId={u.id} compact />
+                </div>
+              )}
             </div>
           )
         })}
       </div>
-      <div style={{ marginTop: 18, padding: '10px 12px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 4 }}>
-        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: INK_DIM, marginBottom: 6 }}>Add note</div>
-        <textarea
-          placeholder="Jot something or @hermes to delegate…"
-          style={{ width: '100%', minHeight: 60, background: 'transparent', border: 'none', color: INK, fontSize: 12, fontFamily: 'inherit', outline: 'none', resize: 'vertical' }}
-        />
-      </div>
+      <DrawerCompose />
     </aside>
+  )
+}
+
+function DrawerCompose() {
+  const [val, setVal] = useState('')
+  const [focused, setFocused] = useState(false)
+  const ref = useRef<HTMLTextAreaElement>(null)
+  const showToolbar = focused || val.length > 0
+  const insertChar = (ch: string) => {
+    const el = ref.current
+    if (!el) { setVal((v) => v + ch); return }
+    const start = el.selectionStart ?? val.length
+    const end = el.selectionEnd ?? val.length
+    setVal(val.slice(0, start) + ch + val.slice(end))
+    requestAnimationFrame(() => {
+      el.focus()
+      const pos = start + ch.length
+      el.setSelectionRange(pos, pos)
+    })
+  }
+  return (
+    <div style={{ marginTop: 18, padding: '10px 12px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 4 }}>
+      <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: INK_DIM, marginBottom: 6 }}>Add note</div>
+      <textarea
+        ref={ref}
+        value={val}
+        onChange={(e) => setVal(e.target.value)}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        placeholder="Jot something or @hermes to delegate…"
+        style={{ width: '100%', minHeight: 60, background: 'transparent', border: 'none', color: INK, fontSize: 12, fontFamily: 'inherit', outline: 'none', resize: 'vertical' }}
+      />
+      {showToolbar && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 6 }}>
+          <DrawerToolbarBtn label="Mention someone" onClick={() => insertChar('@')}>@</DrawerToolbarBtn>
+          <DrawerToolbarBtn label="Add emoji" onClick={() => insertChar(':')}>:</DrawerToolbarBtn>
+          <DrawerToolbarBtn label="Attach file" onClick={() => insertChar('📎 ')}>📎</DrawerToolbarBtn>
+          <span style={{ flex: 1 }} />
+          <kbd style={{ fontFamily: 'var(--font-mono), JetBrains Mono, monospace', fontSize: 9, padding: '1px 4px', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 2, color: INK_DIM }}>⌘ ⏎</kbd>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function DrawerToolbarBtn({ children, onClick, label }: { children: React.ReactNode; onClick: () => void; label: string }) {
+  return (
+    <button
+      type="button"
+      onMouseDown={(e) => e.preventDefault()}
+      onClick={onClick}
+      title={label}
+      aria-label={label}
+      style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 22, height: 22, borderRadius: 4, background: 'transparent', border: '1px solid rgba(255,255,255,0.06)', color: INK_DIM, fontSize: 11, cursor: 'pointer', fontFamily: 'inherit' }}
+      onMouseEnter={(e) => { e.currentTarget.style.color = ACCENT_TEAL; e.currentTarget.style.borderColor = 'rgba(92,188,180,0.30)' }}
+      onMouseLeave={(e) => { e.currentTarget.style.color = INK_DIM; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)' }}
+    >{children}</button>
   )
 }
 

@@ -13,7 +13,7 @@
 // P1 will fill in the TaskDetailDrawer's `details` block from
 // /api/tasks/:id/detail. Calendar integration stays empty-state for now.
 
-import { useState, useMemo, useCallback, useEffect } from 'react'
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { useTasks, useProjects, useMeetingsApi, useExpiringRegulatory, useTaskDetail } from '../../hooks/useApiData'
 import { useAuth } from '../../hooks/useAuth'
@@ -22,6 +22,7 @@ import { usePageMeta } from '../../hooks/usePageMeta'
 import { PATHS } from '../../constants/paths'
 import HeartbeatLine from '../../components/HeartbeatLine'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
+import ReactionBar from '../../components/ReactionBar'
 import type { TaskRow } from '../../lib/api'
 import type { MeetingRow } from '../../hooks/useApiData'
 
@@ -567,25 +568,92 @@ function TaskDetailDrawer({ task, project, state }: { task: TaskRow; project: { 
             const isMe = u.who === 'nick-ingraham' || u.who === 'nick'
             const color = isHermes ? ACCENT_GOLD : isMe ? ACCENT_TEAL : INK_MUTED
             return (
-              <div key={i} style={{ padding: '6px 0', borderBottom: i < updates.length - 1 && i < 7 ? '1px dashed rgba(255,255,255,0.06)' : 'none' }}>
+              <div key={u.id ?? i} style={{ padding: '6px 0', borderBottom: i < updates.length - 1 && i < 7 ? '1px dashed rgba(255,255,255,0.06)' : 'none' }}>
                 <div style={{ display: 'flex', gap: 8, alignItems: 'baseline', marginBottom: 2 }}>
                   <span style={{ fontSize: 10, fontWeight: 600, color, letterSpacing: '0.04em' }}>{isHermes ? 'Hermes' : u.who}</span>
                   <span style={{ fontSize: 10, color: INK_DIM, fontVariantNumeric: 'tabular-nums' }}>{u.when?.slice(0, 16) ?? ''}</span>
                 </div>
                 <div style={{ fontSize: 12, color: INK, lineHeight: 1.45 }}>{u.text}</div>
+                {u.kind === 'note' && u.id && (
+                  <div style={{ marginTop: 4 }}>
+                    <ReactionBar targetType="task_update" targetId={u.id} compact />
+                  </div>
+                )}
               </div>
             )
           })}
         </div>
       </div>
-      <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px dashed rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', gap: 8 }}>
+      <ComposeWithToolbar placeholder="Add a note, or ask Claude about this task…" />
+    </div>
+  )
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// Compose surface with @ / : / 📎 affordance toolbar (CD T-05).
+// Toolbar shows on focus or non-empty input. Icons insert their trigger
+// char at the cursor (or end) and refocus the input.
+// ──────────────────────────────────────────────────────────────────────────
+
+function ComposeWithToolbar({ placeholder }: { placeholder: string }) {
+  const [val, setVal] = useState('')
+  const [focused, setFocused] = useState(false)
+  const ref = useRef<HTMLInputElement>(null)
+  const showToolbar = focused || val.length > 0
+
+  const insertChar = (ch: string) => {
+    const el = ref.current
+    if (!el) { setVal((v) => v + ch); return }
+    const start = el.selectionStart ?? val.length
+    const end = el.selectionEnd ?? val.length
+    const next = val.slice(0, start) + ch + val.slice(end)
+    setVal(next)
+    requestAnimationFrame(() => {
+      el.focus()
+      const pos = start + ch.length
+      el.setSelectionRange(pos, pos)
+    })
+  }
+
+  return (
+    <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px dashed rgba(255,255,255,0.08)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <span style={{ fontSize: 12, color: INK_DIM }}>💬</span>
         <input
-          placeholder="Add a note, or ask Claude about this task…"
+          ref={ref}
+          value={val}
+          onChange={(e) => setVal(e.target.value)}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          placeholder={placeholder}
           style={{ flex: 1, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 4, padding: '6px 10px', fontSize: 12, color: INK, outline: 'none', fontFamily: 'inherit' }}
         />
       </div>
+      {showToolbar && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 6, paddingLeft: 22 }}>
+          <ToolbarBtn label="Mention someone" onClick={() => insertChar('@')}>@</ToolbarBtn>
+          <ToolbarBtn label="Add emoji" onClick={() => insertChar(':')}>:</ToolbarBtn>
+          <ToolbarBtn label="Attach file" onClick={() => insertChar('📎 ')}>📎</ToolbarBtn>
+          <span style={{ flex: 1 }} />
+          <kbd style={{ fontFamily: 'var(--font-mono), JetBrains Mono, monospace', fontSize: 9, padding: '1px 4px', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 2, color: INK_DIM }}>⌘ ⏎</kbd>
+        </div>
+      )}
     </div>
+  )
+}
+
+function ToolbarBtn({ children, onClick, label }: { children: React.ReactNode; onClick: () => void; label: string }) {
+  return (
+    <button
+      type="button"
+      onMouseDown={(e) => e.preventDefault()}
+      onClick={onClick}
+      title={label}
+      aria-label={label}
+      style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 22, height: 22, borderRadius: 4, background: 'transparent', border: '1px solid rgba(255,255,255,0.06)', color: INK_DIM, fontSize: 11, cursor: 'pointer', fontFamily: 'inherit' }}
+      onMouseEnter={(e) => { e.currentTarget.style.color = ACCENT_TEAL; e.currentTarget.style.borderColor = 'rgba(92,188,180,0.30)' }}
+      onMouseLeave={(e) => { e.currentTarget.style.color = INK_DIM; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)' }}
+    >{children}</button>
   )
 }
 

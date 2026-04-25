@@ -435,6 +435,7 @@ export async function handleGetTaskDetail(taskId: string, env: Env): Promise<Res
   type ActivityRow = { id: string; actor: string | null; action: string; summary: string | null; timestamp: string };
 
   const noteUpdates = (updatesRes.results as UpdateRow[]).map((u) => ({
+    id: u.id,
     when: u.created_at,
     who: u.author_slug ?? 'system',
     text: u.content,
@@ -443,6 +444,7 @@ export async function handleGetTaskDetail(taskId: string, env: Env): Promise<Res
   const eventUpdates = (activityRes.results as ActivityRow[])
     .filter((a) => a.summary)
     .map((a) => ({
+      id: a.id,
       when: a.timestamp,
       who: a.actor ?? 'system',
       text: a.summary || a.action,

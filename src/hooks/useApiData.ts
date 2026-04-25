@@ -741,7 +741,7 @@ export function useSubtasks(taskId: string) {
 // TodayPage / UnifiedMyTasks task drawer (why / updates / subtasks /
 // blocks). See api/routes/tasks.ts:handleGetTaskDetail.
 
-export interface TaskDetailUpdate { when: string; who: string; text: string; kind: 'note' | 'event' }
+export interface TaskDetailUpdate { id: string; when: string; who: string; text: string; kind: 'note' | 'event' }
 export interface TaskDetailSubtask { id: string; title: string; completed: number }
 export interface TaskDetailBlock { id: string; title: string }
 export interface TaskDetailPayload {
