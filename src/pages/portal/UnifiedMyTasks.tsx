@@ -64,6 +64,12 @@ const PAGE_BG = '#0b1017'
 const PANEL_BG = '#0f1923'
 
 function getGroupForTask(t: TaskRow, projectsByPid: Map<string, { category?: string | null; slug: string }>): GroupKey {
+  // Hub-explicit override wins (schema v50). User clicked Move → on the
+  // /portal/my-tasks page; their choice trumps auto-derivation. Syncs to
+  // brain.db so TODAY.md generation honors it the next morning.
+  if (t.group_override && (['deep', 'priorities', 'quick', 'pb', 'etl'] as const).includes(t.group_override)) {
+    return t.group_override
+  }
   if (t.source === 'pb' || /^pb:/i.test(t.title)) return 'pb'
   const proj = t.project_id ? projectsByPid.get(t.project_id) : null
   const projSlug = proj?.slug || ''
@@ -448,15 +454,15 @@ function writeTodayState(snap: object): void {
   try { window.localStorage.setItem(`today_state_${todayKey()}`, JSON.stringify(snap)) } catch { /* ignore */ }
 }
 
-// Move → popover: maps a target group to the priority change that puts the
-// task there under the current getGroupForTask derivation. PB + ETL are
-// excluded because they're driven by source/project (not safely settable
-// from a quick popover). Schema override path is the proper long-term fix
-// (add tasks.group_override column).
-const MOVE_OPTIONS: Array<{ key: GroupKey; priority: 'medium' | 'high' | 'low'; label: string }> = [
-  { key: 'deep',       priority: 'medium', label: '🎯 Deep work' },
-  { key: 'priorities', priority: 'high',   label: '✅ Priorities' },
-  { key: 'quick',      priority: 'low',    label: '⚡ Quick' },
+// Move → popover: writes tasks.group_override (schema v50). All 5 groups
+// available because the override is independent of priority/source/project.
+// Syncs to brain.db so TODAY.md generation honors it the next morning.
+const MOVE_OPTIONS: Array<{ key: GroupKey; label: string }> = [
+  { key: 'deep',       label: '🎯 Deep work' },
+  { key: 'priorities', label: '✅ Priorities' },
+  { key: 'quick',      label: '⚡ Quick' },
+  { key: 'pb',         label: '🧠 Peripheral Brain' },
+  { key: 'etl',        label: '🔧 CQODE · CLIF ETL' },
 ]
 
 function InlineDetail({ task, projectName }: { task: TaskRow; projectName?: string | null }) {
@@ -477,8 +483,13 @@ function InlineDetail({ task, projectName }: { task: TaskRow; projectName?: stri
   }, [moveOpen])
 
   const moveToGroup = useCallback((opt: typeof MOVE_OPTIONS[number]) => {
-    updateTask.mutate({ id: task.id, fields: { priority: opt.priority } }, {
+    updateTask.mutate({ id: task.id, fields: { group_override: opt.key } }, {
       onSuccess: () => { undoToast.showSuccess(`Moved to ${opt.label}`); setMoveOpen(false) },
+    })
+  }, [task.id, updateTask, undoToast])
+  const resetGroup = useCallback(() => {
+    updateTask.mutate({ id: task.id, fields: { group_override: null } }, {
+      onSuccess: () => { undoToast.showSuccess('Reset to auto-classify'); setMoveOpen(false) },
     })
   }, [task.id, updateTask, undoToast])
 
@@ -532,15 +543,25 @@ function InlineDetail({ task, projectName }: { task: TaskRow; projectName?: stri
         <div ref={moveRef} style={{ position: 'relative' }}>
           <button onClick={() => setMoveOpen((o) => !o)} title="Move to a different group (changes priority to match)" style={{ padding: '4px 10px', fontSize: 10.5, borderRadius: 4, border: `1px solid ${moveOpen ? ACCENT_TEAL : 'rgba(255,255,255,0.1)'}`, background: moveOpen ? ACCENT_TEAL + '20' : 'transparent', color: moveOpen ? ACCENT_TEAL : INK, fontFamily: 'inherit', cursor: 'pointer' }}>Move →</button>
           {moveOpen && (
-            <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: 4, minWidth: 160, background: PANEL_BG, border: '1px solid rgba(255,255,255,0.12)', borderRadius: 4, zIndex: 30, boxShadow: '0 4px 12px rgba(0,0,0,0.4)' }}>
+            <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: 4, minWidth: 200, background: PANEL_BG, border: '1px solid rgba(255,255,255,0.12)', borderRadius: 4, zIndex: 30, boxShadow: '0 4px 12px rgba(0,0,0,0.4)' }}>
               {MOVE_OPTIONS.map((opt) => (
                 <button
                   key={opt.key}
                   onClick={() => moveToGroup(opt)}
                   disabled={updateTask.isPending}
-                  style={{ display: 'block', width: '100%', textAlign: 'left', padding: '6px 10px', fontSize: 11, background: 'transparent', border: 'none', color: INK, fontFamily: 'inherit', cursor: updateTask.isPending ? 'wait' : 'pointer' }}
-                >{opt.label}</button>
+                  style={{ display: 'block', width: '100%', textAlign: 'left', padding: '6px 10px', fontSize: 11, background: task.group_override === opt.key ? 'rgba(92,188,180,0.15)' : 'transparent', border: 'none', color: task.group_override === opt.key ? ACCENT_TEAL : INK, fontFamily: 'inherit', cursor: updateTask.isPending ? 'wait' : 'pointer' }}
+                >{opt.label}{task.group_override === opt.key ? ' ✓' : ''}</button>
               ))}
+              {task.group_override && (
+                <>
+                  <div style={{ height: 1, background: 'rgba(255,255,255,0.08)', margin: '4px 0' }} />
+                  <button
+                    onClick={resetGroup}
+                    disabled={updateTask.isPending}
+                    style={{ display: 'block', width: '100%', textAlign: 'left', padding: '6px 10px', fontSize: 11, background: 'transparent', border: 'none', color: INK_DIM, fontFamily: 'inherit', cursor: updateTask.isPending ? 'wait' : 'pointer', fontStyle: 'italic' }}
+                  >↺ Reset to auto-classify</button>
+                </>
+              )}
             </div>
           )}
         </div>
@@ -917,8 +938,13 @@ function TaskDrawer({ task, project, onClose }: { task: TaskRow; project: { name
   }, [moveOpen])
 
   const moveToGroup = useCallback((opt: typeof MOVE_OPTIONS[number]) => {
-    updateTask.mutate({ id: task.id, fields: { priority: opt.priority } }, {
+    updateTask.mutate({ id: task.id, fields: { group_override: opt.key } }, {
       onSuccess: () => { undoToast.showSuccess(`Moved to ${opt.label}`); setMoveOpen(false) },
+    })
+  }, [task.id, updateTask, undoToast])
+  const resetGroup = useCallback(() => {
+    updateTask.mutate({ id: task.id, fields: { group_override: null } }, {
+      onSuccess: () => { undoToast.showSuccess('Reset to auto-classify'); setMoveOpen(false) },
     })
   }, [task.id, updateTask, undoToast])
 
@@ -966,15 +992,25 @@ function TaskDrawer({ task, project, onClose }: { task: TaskRow; project: { name
         <div ref={moveRef} style={{ position: 'relative' }}>
           <button onClick={() => setMoveOpen((o) => !o)} title="Move to a different group (changes priority to match)" style={{ padding: '5px 12px', fontSize: 11.5, borderRadius: 4, border: `1px solid ${moveOpen ? ACCENT_TEAL : 'rgba(255,255,255,0.15)'}`, background: moveOpen ? ACCENT_TEAL + '20' : 'transparent', color: moveOpen ? ACCENT_TEAL : INK, fontFamily: 'inherit', cursor: 'pointer' }}>Move →</button>
           {moveOpen && (
-            <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: 4, minWidth: 160, background: PANEL_BG, border: '1px solid rgba(255,255,255,0.12)', borderRadius: 4, zIndex: 30, boxShadow: '0 4px 12px rgba(0,0,0,0.4)' }}>
+            <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: 4, minWidth: 200, background: PANEL_BG, border: '1px solid rgba(255,255,255,0.12)', borderRadius: 4, zIndex: 30, boxShadow: '0 4px 12px rgba(0,0,0,0.4)' }}>
               {MOVE_OPTIONS.map((opt) => (
                 <button
                   key={opt.key}
                   onClick={() => moveToGroup(opt)}
                   disabled={updateTask.isPending}
-                  style={{ display: 'block', width: '100%', textAlign: 'left', padding: '6px 10px', fontSize: 11, background: 'transparent', border: 'none', color: INK, fontFamily: 'inherit', cursor: updateTask.isPending ? 'wait' : 'pointer' }}
-                >{opt.label}</button>
+                  style={{ display: 'block', width: '100%', textAlign: 'left', padding: '6px 10px', fontSize: 11, background: task.group_override === opt.key ? 'rgba(92,188,180,0.15)' : 'transparent', border: 'none', color: task.group_override === opt.key ? ACCENT_TEAL : INK, fontFamily: 'inherit', cursor: updateTask.isPending ? 'wait' : 'pointer' }}
+                >{opt.label}{task.group_override === opt.key ? ' ✓' : ''}</button>
               ))}
+              {task.group_override && (
+                <>
+                  <div style={{ height: 1, background: 'rgba(255,255,255,0.08)', margin: '4px 0' }} />
+                  <button
+                    onClick={resetGroup}
+                    disabled={updateTask.isPending}
+                    style={{ display: 'block', width: '100%', textAlign: 'left', padding: '6px 10px', fontSize: 11, background: 'transparent', border: 'none', color: INK_DIM, fontFamily: 'inherit', cursor: updateTask.isPending ? 'wait' : 'pointer', fontStyle: 'italic' }}
+                  >↺ Reset to auto-classify</button>
+                </>
+              )}
             </div>
           )}
         </div>

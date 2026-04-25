@@ -1,0 +1,24 @@
+-- v50 — tasks.group_override (Hub-only field, Phase 38 closure r2f)
+--
+-- Per Nick (2026-04-25): when a user clicks Move → on a task in the
+-- /portal/my-tasks page, that explicit choice should be the new group,
+-- regardless of priority / project / source. Previously the Move button
+-- mapped to a priority change as a side-effect — semantically wrong
+-- (changing a task's priority just to land it in a different group
+-- group is a lossy proxy).
+--
+-- This migration adds tasks.group_override, a nullable text column
+-- holding one of: 'deep', 'priorities', 'quick', 'pb', 'etl', or NULL
+-- (auto-classify via getGroupForTask).
+--
+-- Hub-only field — like subtasks, ideas, decisions — does NOT sync to
+-- brain.db. brain.db still owns the canonical task; group_override is
+-- purely a display/organization preference for the Hub team's MyTasks
+-- view.
+--
+-- Idempotency: SQLite ALTER TABLE ADD COLUMN has no IF NOT EXISTS, so
+-- this will fail with "duplicate column name" on a re-run. That's fine
+-- for prod (run once) but the schema-drift CI bootstrap tolerates the
+-- error — see schema-v49 comments for the same pattern.
+
+ALTER TABLE tasks ADD COLUMN group_override TEXT;

@@ -53,6 +53,10 @@ const GROUP_ORDER: GroupKey[] = ['deep', 'priorities', 'quick', 'pb', 'etl']
 
 // Map a task to one of the 5 groups. Order matters (first match wins).
 function getGroupForTask(t: TaskRow, projectsBySlug: Map<string, { category?: string | null; slug: string }>): GroupKey {
+  // Hub-explicit override wins (schema v50). Same rule as UnifiedMyTasks.
+  if (t.group_override && (['deep', 'priorities', 'quick', 'pb', 'etl'] as const).includes(t.group_override)) {
+    return t.group_override
+  }
   // PB bucket — broadened: source flag, title prefix, project slug pattern,
   // or project category. Catches "Peripheral Brain" variations that the
   // narrow source='pb' check missed in the eval (review/pre-merge-2026-04-25/EVAL.md Issue 4).

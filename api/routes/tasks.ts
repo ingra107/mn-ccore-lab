@@ -174,7 +174,8 @@ export async function handleToggleTask(id: string, user: AuthUser, env: Env): Pr
 // completed so brain.db backfills can carry authentic historical
 // timestamps (prior behavior stamped datetime('now') even when the
 // client passed an explicit value from the local DB).
-const TASK_ALLOWED_FIELDS = new Set(['title', 'description', 'description_json', 'assignee', 'assigned_by', 'due_date', 'priority', 'status', 'project_id', 'meeting_id', 'blocked_by', 'key_link_1', 'key_link_1_desc', 'key_link_2', 'key_link_2_desc', 'key_link_3', 'key_link_3_desc', 'notes', 'effort', 'short_title', 'source_thread_id', 'related_message_ids', 'completed', 'completed_at', 'completed_by']);
+const TASK_ALLOWED_FIELDS = new Set(['title', 'description', 'description_json', 'assignee', 'assigned_by', 'due_date', 'priority', 'status', 'project_id', 'meeting_id', 'blocked_by', 'key_link_1', 'key_link_1_desc', 'key_link_2', 'key_link_2_desc', 'key_link_3', 'key_link_3_desc', 'notes', 'effort', 'short_title', 'source_thread_id', 'related_message_ids', 'completed', 'completed_at', 'completed_by', 'group_override']);
+const VALID_GROUP_OVERRIDES = new Set(['deep', 'priorities', 'quick', 'pb', 'etl']);
 const TASK_REQUIRED_FIELDS = new Set(['status', 'priority', 'assignee']);
 
 export async function handleUpdateTask(id: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
@@ -189,6 +190,15 @@ export async function handleUpdateTask(id: string, request: Request, user: AuthU
   if (typeof body.project_id === 'string' && body.project_id) {
     const proj = await env.DB.prepare('SELECT id, slug FROM projects WHERE id = ? OR slug = ? LIMIT 1').bind(body.project_id, body.project_id).first<{ id: string; slug: string | null }>();
     body.project_id = proj ? (proj.slug || proj.id) : null;
+  }
+  // Validate group_override is one of the canonical group keys (or null/empty
+  // = clear override + return to auto-classification).
+  if ('group_override' in body) {
+    const v = body.group_override;
+    if (v === '' || v === undefined) body.group_override = null;
+    else if (v !== null && (typeof v !== 'string' || !VALID_GROUP_OVERRIDES.has(v))) {
+      return error(`Invalid group_override "${v}". Must be one of deep/priorities/quick/pb/etl or null.`, 400);
+    }
   }
 
   const updates: string[] = [];

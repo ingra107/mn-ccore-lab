@@ -108,6 +108,10 @@ export interface TaskRow {
   key_link_2_desc: string | null
   key_link_3: string | null
   key_link_3_desc: string | null
+  /** User-set group override for /portal/my-tasks bucketing (Hub feature, schema v50).
+   *  Values: 'deep' | 'priorities' | 'quick' | 'pb' | 'etl' | null. NULL = auto-classify
+   *  via getGroupForTask. Syncs to brain.db so TODAY.md generation honors it. */
+  group_override?: 'deep' | 'priorities' | 'quick' | 'pb' | 'etl' | null
   created_at: string
   updated_at?: string
   meeting_title?: string
