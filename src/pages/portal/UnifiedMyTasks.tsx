@@ -13,7 +13,7 @@
 
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
-import { useTasks, useProjects } from '../../hooks/useApiData'
+import { useTasks, useProjects, useTaskDetail } from '../../hooks/useApiData'
 import { useAuth } from '../../hooks/useAuth'
 import { emailToSlug } from '../../lib/emailSlug'
 import { usePageMeta } from '../../hooks/usePageMeta'
@@ -653,6 +653,12 @@ function ListRow({ task, project, isCursor, isSelected, onClick, onDouble, onSel
 
 function TaskDrawer({ task, project, onClose }: { task: TaskRow; project: { name: string; slug: string } | null; onClose: () => void }) {
   const meta = GROUP_META[(task as TaskRow & { _group?: GroupKey })._group ?? 'deep']
+  const detailQuery = useTaskDetail(task.id)
+  const detail = detailQuery.data
+  const why = detail?.why ?? task.description?.split('\n')[0]?.trim() ?? null
+  const subtasks = detail?.subtasks ?? []
+  const updates = detail?.updates ?? []
+  const blocks = detail?.blocks ?? []
   return (
     <aside style={{ width: 380, flexShrink: 0, borderLeft: '1px solid rgba(255,255,255,0.08)', background: '#0a0f15', overflowY: 'auto', padding: '18px 18px 40px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
@@ -662,9 +668,9 @@ function TaskDrawer({ task, project, onClose }: { task: TaskRow; project: { name
         <button onClick={onClose} style={{ background: 'none', border: 'none', color: INK_DIM, cursor: 'pointer', fontSize: 16, padding: '0 4px' }}>×</button>
       </div>
       <h3 style={{ fontSize: 16, fontWeight: 600, color: '#fff', margin: '0 0 12px', lineHeight: 1.35, letterSpacing: '-0.01em' }}>{task.title}</h3>
-      {task.description && (
+      {why && (
         <div style={{ fontSize: 11.5, color: ACCENT_GOLD, marginBottom: 14, fontStyle: 'italic', padding: '9px 12px', background: 'rgba(201,168,76,0.05)', borderLeft: `2px solid ${ACCENT_GOLD}`, borderRadius: 3 }}>
-          💡 {task.description.split('\n')[0].slice(0, 280)}
+          💡 {why}
         </div>
       )}
       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 14 }}>
@@ -679,6 +685,44 @@ function TaskDrawer({ task, project, onClose }: { task: TaskRow; project: { name
         <Term>Owner</Term><Defn>{task.assignee}</Defn>
         <Term>Updated</Term><Defn>{task.updated_at?.slice(0, 10) ?? '—'}</Defn>
       </dl>
+      <div style={{ marginTop: 16 }}>
+        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: INK_DIM, marginBottom: 6 }}>Subtasks</div>
+        {detailQuery.isLoading && <div style={{ fontSize: 11, color: INK_DIM, fontStyle: 'italic' }}>Loading…</div>}
+        {!detailQuery.isLoading && subtasks.length === 0 && <div style={{ fontSize: 11, color: INK_DIM, fontStyle: 'italic' }}>None yet.</div>}
+        {subtasks.map((s) => (
+          <div key={s.id} style={{ display: 'flex', gap: 6, padding: '3px 0', alignItems: 'flex-start' }}>
+            <input type="checkbox" defaultChecked={s.completed === 1} style={{ marginTop: 2, accentColor: ACCENT_GREEN, cursor: 'pointer' }} />
+            <span style={{ fontSize: 12, color: s.completed === 1 ? INK_DIM : INK, textDecoration: s.completed === 1 ? 'line-through' : 'none', lineHeight: 1.4 }}>{s.title}</span>
+          </div>
+        ))}
+        {blocks.length > 0 && (
+          <div style={{ marginTop: 10 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: ACCENT_ORANGE, marginBottom: 4 }}>Blocks</div>
+            {blocks.map((b) => (
+              <div key={b.id} style={{ fontSize: 11, color: INK, padding: '2px 0' }}>↳ {b.title}</div>
+            ))}
+          </div>
+        )}
+      </div>
+      <div style={{ marginTop: 14 }}>
+        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: INK_DIM, marginBottom: 6 }}>Recent updates</div>
+        {detailQuery.isLoading && <div style={{ fontSize: 11, color: INK_DIM, fontStyle: 'italic' }}>Loading…</div>}
+        {!detailQuery.isLoading && updates.length === 0 && <div style={{ fontSize: 11, color: INK_DIM, fontStyle: 'italic' }}>No updates logged.</div>}
+        {updates.slice(0, 6).map((u, i) => {
+          const isHermes = u.who === 'claude-ai' || u.who === 'hermes'
+          const isMe = u.who === 'nick-ingraham' || u.who === 'nick'
+          const color = isHermes ? ACCENT_GOLD : isMe ? ACCENT_TEAL : INK_MUTED
+          return (
+            <div key={i} style={{ padding: '6px 0', borderBottom: i < updates.length - 1 && i < 5 ? '1px dashed rgba(255,255,255,0.06)' : 'none' }}>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'baseline', marginBottom: 2 }}>
+                <span style={{ fontSize: 10, fontWeight: 600, color, letterSpacing: '0.04em' }}>{isHermes ? 'Hermes' : u.who}</span>
+                <span style={{ fontSize: 10, color: INK_DIM, fontVariantNumeric: 'tabular-nums' }}>{u.when?.slice(0, 16) ?? ''}</span>
+              </div>
+              <div style={{ fontSize: 11.5, color: INK, lineHeight: 1.45 }}>{u.text}</div>
+            </div>
+          )
+        })}
+      </div>
       <div style={{ marginTop: 18, padding: '10px 12px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 4 }}>
         <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: INK_DIM, marginBottom: 6 }}>Add note</div>
         <textarea
