@@ -116,6 +116,95 @@ UnifiedMyTasks chunk reuses existing MyTasks chunk size class. Branch
 not deployed yet — verify `npm run test:local` and inspection suite
 before merging to main.
 
+## Phase 38 closure r2 — CD verification pass (2026-04-25 evening)
+
+**Headline.** Two parallel verification agents compared shipped
+TodayPage.tsx + UnifiedMyTasks.tsx against the CD handoff at
+`review/handoff_today_my_tasks_2026.04.24/`. Found 12 spec gaps, all
+shipped across 4 deploys the same evening. Hub-audit retargeted for
+Phase 38 UI (was failing on selectors that no longer exist). One-time
+agent scheduled to retire `/portal/my-tasks-legacy` after one-sprint
+soak (`trig_01Mobbas7u1o7xGGizxfkmPp`, fires 2026-05-02 14:00 UTC).
+
+### Deploys
+
+- **r2 `b7fe974e` (commit `6c6252c`).** 8 verification-flagged gaps:
+  - Mentee filter chip on UnifiedMyTasks (was missing despite
+    `filter.mentee` state field existing) + apply via researchTeam
+    slug match.
+  - Stale threshold reconciled 14d → 10d (chip count and quickView
+    were disagreeing).
+  - Group sort planned → active → done within byGroup buckets
+    (CLAUDE.md Rule 62 was violated).
+  - Tag glyph on Card / LaneRow / ListRow + PlannedTaskRow +
+    TaskRowDisplay (CD spec; `tagForTask()` picks emoji from project
+    category or task source).
+  - ▶ Work button on Today's RightNow hero (was: only ✓ Done).
+  - between-N drop zones in Today timeline + render planned tasks
+    in matching gap (was: "drag into gaps" copy was a lie).
+  - PulseCard restored to spec — FOCUS / SYNC tiles + MENTEES section.
+    SYNC turns coral if >24h (Rule 59).
+  - LinkRow on PlannedTaskRow (was: drawer-only).
+  - ReactionBar T-06 `+` button right-aligned + picker opens leftward.
+
+- **r2b `1eab1007` (commit `545954f`).** InlineDetail wired + bulk
+  picker popover:
+  - InlineDetail's ▶ Work / 📌 Plan today / Snooze +1d / Archive were
+    pure decoration (no onClick). Wired to `useUpdateTask` +
+    `today_state_<date>` localStorage helpers. SmartCompose replaces
+    the bare input.
+  - Bulk Reassign / Priority / Status replaced `window.prompt()` with
+    inline popover (dark-first picker; Esc / outside-click close;
+    `assigneeOptions` from researchTeam + directors).
+
+- **`dca0d7e` (audit retarget, no deploy needed).** `scripts/hub-audit.ts`
+  tasks section retargeted for Phase 38 UI (~280 line rewrite). 12 PASS
+  / 2 INFO / 0 FAIL. Plus CF Access service-token forwarding via
+  `extraHTTPHeaders` (`CF_ACCESS_CLIENT_ID/SECRET` env vars) — was
+  missing since the 2026-04-21 launch; every audit was hitting Google
+  Sign-In.
+
+- **r2c `32ffa0e7` (commit `dc79ed4`).** HermesSuggests upgraded from
+  one focus sentence to focus + 3-bullet ul per CD spec parity.
+  Algorithmic bullets: longest-overdue task / most-stalled project /
+  mentee with overdue-or-today task. Real Hermes async wiring (60s
+  listener poll) deferred — needs daily ai_request cache pattern.
+
+- **r2d `5a5962c9` (commit `45351c1`).** Two more decoration-to-real
+  gaps swept after the verification pass:
+  - TodayPage ProjectsCard.nextAction was hardcoded `null` (no
+    `next_action` column on projects in D1, verified via PRAGMA);
+    now derives soonest-due open task assigned to current user per
+    project.
+  - UnifiedMyTasks TaskDrawer (List view side panel) ▶ Work / 📌
+    Plan today buttons had no onClick; wired to the same
+    `readTodayState`/`writeTodayState` helpers as InlineDetail.
+
+### Quality gate
+
+- Build clean across 5 commits (`6c6252c` → `545954f` → `dca0d7e` →
+  `dc79ed4` → `45351c1`).
+- Hub-audit on `5a5962c9`: 12 PASS / 2 INFO / 0 FAIL. INFO is
+  GlobalQuickAdd persistence check (needs `injectFakeAuth` or
+  preview-deploy auth path).
+- `/api/health` 626 tasks / 69 projects / 86 ms.
+
+### Out of scope / deferred (closure r2)
+
+- **Move → button** on InlineDetail / TaskDrawer — DEFERRED. Groups
+  in this codebase are DERIVED from `getGroupForTask` (priority +
+  project + source), not a stored field. "Move to PB" can't directly
+  set source='pb' (backend signal); "Move to ETL" can't set project_id
+  without choosing a project. Needs CD clarification round-trip.
+- **Component split per HANDOFF §2** — STILL deferred. TodayPage 1141
+  lines, UnifiedMyTasks 1067 lines. 2000-line refactor with regression
+  risk; better as a separate session.
+- **OverlapBand + Join/Brief/Attendees on EventRow** — Phase 3 calendar
+  OAuth prereq.
+- **Real Hermes async wiring** — needs daily `ai_request` cache pattern.
+- **GlobalQuickAdd persistence audit path** — needs `injectFakeAuth`
+  pattern from `tests/helpers/capture-auth.ts` or preview-deploy.
+
 ## Claude Design round-5 batches 3-4 (2026-04-23 night, later)
 
 Nick pushed back on the T-49 mobile-swipe removal; restored with a
