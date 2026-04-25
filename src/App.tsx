@@ -109,6 +109,7 @@ const Network = lazy(() => import('./pages/Network'))
 
 // Portal pages — lazy-loaded (existing)
 const Dashboard = lazy(() => import('./pages/Dashboard'))
+const TodayPage = lazy(() => import('./pages/portal/TodayPage'))
 const Projects = lazy(() => import('./pages/Projects'))
 const ProjectDetail = lazy(() => import('./pages/ProjectDetail'))
 const Meetings = lazy(() => import('./pages/Meetings'))
@@ -121,7 +122,8 @@ const MyItems = lazy(() => import('./pages/MyItems'))
 
 // New portal pages (Phase H1 — placeholders, built out in later phases)
 const Personal = lazy(() => import('./pages/portal/Personal'))
-const MyTasks = lazy(() => import('./pages/portal/MyTasks'))
+const MyTasksLegacy = lazy(() => import('./pages/portal/MyTasks'))
+const UnifiedMyTasks = lazy(() => import('./pages/portal/UnifiedMyTasks'))
 const CalendarPage = lazy(() => import('./pages/portal/CalendarPage'))
 const Deadlines = lazy(() => import('./pages/portal/Deadlines'))
 const Manuscripts = lazy(() => import('./pages/portal/Manuscripts'))
@@ -243,10 +245,19 @@ export default function App() {
                     the URL instantly gates portal access (2026-04-18). */}
                 <Route element={<RequireAuth><PortalLayout /></RequireAuth>}>
                   {/* Portal-prefixed canonical routes (2026-04-21 migration). */}
-                  <Route path="/portal/dashboard" element={<ErrorBoundary><PageErrorBoundary pageName="Dashboard"><Dashboard /></PageErrorBoundary></ErrorBoundary>} />
+                  {/* Today B2 — operating-day landing (CLAUDE.md Rule 52).
+                      The old card-grid Dashboard moved to /portal/overview
+                      below, kept indefinitely as Lab Overview. */}
+                  <Route path="/portal/dashboard" element={<ErrorBoundary><PageErrorBoundary pageName="Today"><TodayPage /></PageErrorBoundary></ErrorBoundary>} />
+                  <Route path="/portal/overview" element={<ErrorBoundary><PageErrorBoundary pageName="LabOverview"><Dashboard /></PageErrorBoundary></ErrorBoundary>} />
                   <Route path="/portal/personal" element={<ErrorBoundary><Personal /></ErrorBoundary>} />
                   <Route path="/portal/my-items" element={<ErrorBoundary><MyItems /></ErrorBoundary>} />
-                  <Route path="/portal/my-tasks" element={<ErrorBoundary><MyTasks /></ErrorBoundary>} />
+                  {/* MyTasks Round 2 — unified 3-view page (Columns / Lanes / List).
+                      View choice persists in localStorage.mt_view (Rule 55). */}
+                  <Route path="/portal/my-tasks" element={<ErrorBoundary><PageErrorBoundary pageName="MyTasks"><UnifiedMyTasks /></PageErrorBoundary></ErrorBoundary>} />
+                  {/* Legacy MyTasks (pre-Round 2). Kept for one sprint as a
+                      safety net; remove once Round 2 has soaked. */}
+                  <Route path="/portal/my-tasks-legacy" element={<ErrorBoundary><MyTasksLegacy /></ErrorBoundary>} />
                   <Route path="/portal/tasks" element={<Navigate to="/portal/my-tasks" replace />} />
                   <Route path="/portal/calendar" element={<ErrorBoundary><CalendarPage /></ErrorBoundary>} />
                   <Route path="/portal/deadlines" element={<ErrorBoundary><Deadlines /></ErrorBoundary>} />

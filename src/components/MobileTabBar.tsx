@@ -22,6 +22,7 @@ import {
   Target,
   Settings,
   Bug,
+  LayoutGrid,
 } from 'lucide-react'
 import { PATHS } from '../constants/paths'
 
@@ -284,6 +285,7 @@ const OVERFLOW_SECTIONS: {
       { to: PATHS.calendar, icon: Calendar, label: 'Calendar' },
       { to: PATHS.deadlines, icon: Clock, label: 'Deadlines' },
       { to: PATHS.myItems, icon: Target, label: 'My Items' },
+      { to: PATHS.overview, icon: LayoutGrid, label: 'Lab Overview' },
     ],
   },
   {

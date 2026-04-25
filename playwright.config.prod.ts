@@ -28,7 +28,9 @@ export default defineConfig({
   timeout: 30_000,
   retries: 0,
   use: {
-    baseURL: 'https://mn-ccore-lab.pages.dev',
+    // Prod baseline; override via PLAYWRIGHT_BASE_URL when running against a
+    // preview-hash deploy before promoting to production.
+    baseURL: process.env.PLAYWRIGHT_BASE_URL || 'https://mn-ccore-lab.pages.dev',
     headless: true,
     screenshot: 'only-on-failure',
     trace: 'retain-on-failure',

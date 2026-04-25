@@ -397,6 +397,74 @@ export async function handleGetTaskActivity(taskId: string, env: Env): Promise<R
   return json({ data: result.results || [] });
 }
 
+// GET /api/tasks/:id/detail — fan-out for TodayPage/UnifiedMyTasks task detail drawer.
+// Returns { why, updates, subtasks, blocks } in a single round-trip so the
+// drawer doesn't have to do four parallel fetches. Read-only.
+export async function handleGetTaskDetail(taskId: string, env: Env): Promise<Response> {
+  // Pull the task itself for the "why" callout. P1: fall back to description's
+  // first paragraph; a future column could replace this with a curated note.
+  const task = await env.DB.prepare(
+    'SELECT id, description FROM tasks WHERE id = ? AND deleted_at IS NULL'
+  ).bind(taskId).first<{ id: string; description: string | null }>();
+  if (!task) return error('Task not found', 404);
+
+  const description = task.description ?? '';
+  const why = description.split(/\n\s*\n/)[0]?.trim().slice(0, 400) || null;
+
+  // Updates merge task_updates (Phase 27 — author-written notes) with
+  // activity_log entries that have meaningful actor + summary.
+  const [updatesRes, activityRes, subtasksRes, blocksRes] = await Promise.all([
+    env.DB.prepare(
+      'SELECT id, content, author_slug, update_type, created_at FROM task_updates WHERE task_id = ? ORDER BY created_at DESC LIMIT 20'
+    ).bind(taskId).all(),
+    env.DB.prepare(
+      "SELECT id, actor, type, description, timestamp FROM activity_log WHERE related_id = ? AND related_type = 'task' ORDER BY timestamp DESC LIMIT 20"
+    ).bind(taskId).all(),
+    env.DB.prepare(
+      'SELECT id, title, completed FROM task_subtasks WHERE task_id = ? ORDER BY sort_order ASC, created_at ASC'
+    ).bind(taskId).all().catch(() => ({ results: [] as Array<Record<string, unknown>> })),
+    // "blocks" = other tasks whose blocked_by mentions this id. blocked_by is
+    // a free-text column (sometimes single id, sometimes comma-list); LIKE
+    // matches both shapes safely.
+    env.DB.prepare(
+      "SELECT id, title FROM tasks WHERE deleted_at IS NULL AND blocked_by LIKE ? AND id != ? LIMIT 10"
+    ).bind(`%${taskId}%`, taskId).all(),
+  ]);
+
+  type UpdateRow = { id: string; content: string; author_slug: string | null; update_type: string | null; created_at: string };
+  type ActivityRow = { id: string; actor: string | null; type: string; description: string | null; timestamp: string };
+
+  const noteUpdates = (updatesRes.results as UpdateRow[]).map((u) => ({
+    id: u.id,
+    when: u.created_at,
+    who: u.author_slug ?? 'system',
+    text: u.content,
+    kind: 'note' as const,
+  }));
+  const eventUpdates = (activityRes.results as ActivityRow[])
+    .filter((a) => a.description)
+    .map((a) => ({
+      id: a.id,
+      when: a.timestamp,
+      who: a.actor ?? 'system',
+      text: a.description || a.type,
+      kind: 'event' as const,
+    }));
+  // Merge by recency — both ordered DESC already, so a stable sort is fine.
+  const updates = [...noteUpdates, ...eventUpdates]
+    .sort((a, b) => (a.when > b.when ? -1 : a.when < b.when ? 1 : 0))
+    .slice(0, 30);
+
+  return json({
+    data: {
+      why,
+      updates,
+      subtasks: subtasksRes.results ?? [],
+      blocks: blocksRes.results ?? [],
+    },
+  });
+}
+
 // POST /api/tasks/batch — batch update tasks
 export async function handleBatchUpdateTasks(request: Request, user: AuthUser, env: Env): Promise<Response> {
   const body = await request.json() as {
