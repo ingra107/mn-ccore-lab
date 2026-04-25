@@ -14,8 +14,9 @@ shims in `src/App.tsx` placed outside `RequireAuth`.
 | Category | Path pattern | Notes |
 |---|---|---|
 | **Gated (portal)** | `/portal/*` | CF Access + `RequireAuth` + `PortalLayout` chrome. 27 canonical routes. |
-| Dashboard | `/portal/dashboard` | — |
-| Tasks | `/portal/tasks`, `/portal/my-tasks`, `/portal/my-items` | `/portal/tasks` redirects → `/portal/my-tasks` |
+| Today (Phase 38) | `/portal/dashboard` | `TodayPage.tsx` — operating-day surface (Right Now / timeline / 5 task groups / right rail) |
+| Lab Overview (Phase 38) | `/portal/overview` | `Dashboard.tsx` (was `/portal/dashboard` pre-Phase-38) — weekly-planning card grid |
+| Tasks | `/portal/tasks`, `/portal/my-tasks`, `/portal/my-items` | `/portal/tasks` redirects → `/portal/my-tasks`. `/portal/my-tasks` = `UnifiedMyTasks.tsx` (Phase 38 — 3 views, shared toolbar). `/portal/my-tasks-legacy` preserved one-sprint, scheduled to retire 2026-05-02. |
 | Projects | `/portal/projects`, `/portal/projects/:slug` | — |
 | Data | `/portal/manuscripts`, `/portal/deadlines`, `/portal/deadline-cascade`, `/portal/ideas`, `/portal/decisions`, `/portal/grants`, `/portal/publications` | — |
 | Meetings | `/portal/meetings`, `/portal/meetings/:id`, `/portal/meeting-prep`, `/portal/meeting-notes` | — |
@@ -281,9 +282,15 @@ server-side via X-API-Key + `REQUIRE_AUTH` + JWT verify.
 
 **Task UX (Phase 17+26b+27):** Space bar peek overlay, inline assignee/date/priority editing (with relative date labels + quick presets), hover row actions, completion animation, status color transitions, loading skeletons, progressive disclosure, board swimlanes + column collapse, snooze (+1d/3d/1w/2w), bulk snooze, 5-tab TaskDetailPanel (Overview/Notes/Comments/Activity/Details), prev/next navigation, copy link, task age badge, task notes/updates feed, Tiptap rich text descriptions.
 
-**MyTasks (Phase 26b):** QuickFilter pills (Today/This Week/Overdue/No Date), Focus Next smart scoring (urgency×priority×freshness), completion streak counter, status distribution bar, StandUp view.
+**MyTasks (Phase 26b → superseded by Phase 38 UnifiedMyTasks at `/portal/my-tasks`).** Phase 26b version preserved one-sprint at `/portal/my-tasks-legacy`, retiring 2026-05-02.
 
-**Dashboard (Phase 26b):** Time-of-day greeting, WeeklyProgressCard (7-day chart), QuickWinsCard (top 4 tasks), overdue alert banner, today's progress summary.
+**UnifiedMyTasks (Phase 38, 2026-04-25):** Three views (Columns / Lanes / List) sharing one toolbar — view picker far-left of filter row, persists to `localStorage.mt_view`. Filters: Group / Priority / Project / **Mentee** (researchTeam slugs). QuickViews: All / Today / Overdue / Waiting on / Stale (10d threshold). Bulk bar (real handlers): Plan today / Snooze +1d / Status → / Reassign / Priority / ✓ Complete / Archive — all with inline popover pickers (no native window.prompt). InlineDetail (Card/Lanes) + TaskDrawer (List) wired to ▶ Work on this / 📌 Plan today / Snooze / Archive / **Move →** (group_override). DD-2 saved views via `<SavedViewsMenu>`. List view `j/k/e/x` keyboard nav. Tag glyph + 📍 group_override indicator on rows. Mobile Columns gets visible scrollbar + right-edge fade gradient.
+
+**TodayPage / Today B2 (Phase 38, 2026-04-25):** `/portal/dashboard`. Pill strip (overdue / stalled / planned / meetings / done + Lab Health). Right Now hero (compact, gold glow, ▶ Work + ✓ Done buttons + LinkRow). Auto-promotes longest-overdue task on first load. Timeline with between-N drop zones (drag tasks into gaps between meetings). Five task groups (Deep work / Priorities / Quick / PB / ETL) with planned→active→done sort. TaskDetailDrawer with ▶ Work on this now / 📌 Plan / Unplan / Move → (group_override) + Why callout + subtasks/blocks/Recent updates from `/api/tasks/:id/detail`. Right rail: HermesSuggests (focus + 3 bullets from real signal) / Needs Attention / Projects (with derived nextAction) / Pulse (FOCUS / SYNC / Mentees). SmartCompose for task notes (real @mention + emoji picker + R2 attach via presigned URL).
+
+**Cross-repo group_override (schema v50 / brain.db migration 037, 2026-04-25):** Move → button on Today TaskDetailDrawer or UnifiedMyTasks InlineDetail/TaskDrawer writes `tasks.group_override` (one of `'deep' | 'priorities' | 'quick' | 'pb' | 'etl' | NULL`). `getGroupForTask()` checks override first. Syncs to brain.db; `generate_today_markdown.py` honors it for next-morning TODAY.md bucketing. 📍 chip indicates the override is set. Decision doc: `Context/Decisions/2026-04-25-tasks-group-override.md` (PB repo).
+
+**Dashboard (Phase 26b → renamed Lab Overview at `/portal/overview` in Phase 38):** Time-of-day greeting, WeeklyProgressCard (7-day chart), QuickWinsCard (top 4 tasks), overdue alert banner, today's progress summary.
 
 **Data (Phase 18):** Blocker flagging (blocked_by + B shortcut), project health (4-factor algorithm + colored bars), dashboard card badges, saved named views.
 
