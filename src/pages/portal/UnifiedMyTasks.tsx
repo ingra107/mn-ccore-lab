@@ -12,7 +12,7 @@
 // Bulk handlers are stubbed for P0 (toast "Coming soon"). Real wiring lands in P2.
 
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useTasks, useProjects, useTaskDetail } from '../../hooks/useApiData'
 import { useAuth } from '../../hooks/useAuth'
 import { emailToSlug } from '../../lib/emailSlug'
@@ -20,6 +20,7 @@ import { usePageMeta } from '../../hooks/usePageMeta'
 import { PATHS } from '../../constants/paths'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
 import ReactionBar from '../../components/ReactionBar'
+import SavedViewsMenu from '../../components/SavedViewsMenu'
 import type { TaskRow } from '../../lib/api'
 
 // ──────────────────────────────────────────────────────────────────────────
@@ -218,11 +219,13 @@ interface TopBarProps {
   quickView: QuickViewKey; setQuickView: (q: QuickViewKey) => void
   taskCount: number
   projectOptions: FilterOption[]
+  currentQuery: string
+  onApplyView: (q: string) => void
 }
 
 interface FilterState { priority: string | null; project: string | null; mentee: string | null; group: GroupKey | null; hideCompleted: boolean }
 
-function TopBar({ view, setView, search, setSearch, filter, setFilter, quickView, setQuickView, taskCount, projectOptions }: TopBarProps) {
+function TopBar({ view, setView, search, setSearch, filter, setFilter, quickView, setQuickView, taskCount, projectOptions, currentQuery, onApplyView }: TopBarProps) {
   const tabs: { k: QuickViewKey; l: string; color?: string }[] = [
     { k: 'all', l: 'All' },
     { k: 'today', l: '📌 Today', color: ACCENT_GOLD },
@@ -259,6 +262,7 @@ function TopBar({ view, setView, search, setSearch, filter, setFilter, quickView
       </div>
       <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
         <ViewPicker view={view} setView={setView} />
+        <SavedViewsMenu page="my-tasks" currentQuery={currentQuery} onApply={onApplyView} />
         <div style={{ width: 1, height: 18, background: 'rgba(255,255,255,0.08)', margin: '0 4px' }} />
         <FilterChip
           label="Group"
@@ -819,17 +823,67 @@ export default function UnifiedMyTasks() {
   const tasksQuery = useTasks(userSlug ? { assignee: userSlug } : undefined)
   const projectsQuery = useProjects()
 
-  const [view, setView] = useState<ViewMode>(() => {
-    try { return (window.localStorage.getItem('mt_view') as ViewMode) || 'columns' } catch { return 'columns' }
-  })
-  useEffect(() => { try { window.localStorage.setItem('mt_view', view) } catch { /* ignore */ } }, [view])
+  // URL-backed state so DD-2 saved views can capture/restore via the
+  // SavedViewsMenu. View persists to localStorage too (per CD memory)
+  // so first-load picks up last shape even if URL is bare.
+  const [searchParams, setSearchParams] = useSearchParams()
 
-  const [search, setSearch] = useState('')
-  const [filter, setFilter] = useState<FilterState>({ priority: null, project: null, mentee: null, group: null, hideCompleted: true })
-  const [quickView, setQuickView] = useState<QuickViewKey>('all')
+  const initialView: ViewMode = (() => {
+    const fromUrl = searchParams.get('view') as ViewMode | null
+    if (fromUrl === 'columns' || fromUrl === 'lanes' || fromUrl === 'list') return fromUrl
+    try { return (window.localStorage.getItem('mt_view') as ViewMode) || 'columns' } catch { return 'columns' }
+  })()
+  const [view, setView] = useState<ViewMode>(initialView)
+  useEffect(() => {
+    try { window.localStorage.setItem('mt_view', view) } catch { /* ignore */ }
+  }, [view])
+
+  const [search, setSearch] = useState(searchParams.get('q') ?? '')
+  const [filter, setFilter] = useState<FilterState>({
+    priority: searchParams.get('priority'),
+    project: searchParams.get('project'),
+    mentee: null,
+    group: (searchParams.get('group') as GroupKey | null) ?? null,
+    hideCompleted: searchParams.get('hideCompleted') !== '0',
+  })
+  const [quickView, setQuickView] = useState<QuickViewKey>(
+    (searchParams.get('filter') as QuickViewKey | null) ?? 'all'
+  )
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [drawer, setDrawer] = useState<string | null>(null)
   const [expanded, setExpanded] = useState<string | null>(null)
+
+  // Round-trip state into the URL so SavedViewsMenu's `currentQuery` capture
+  // and restore round-trip is just URLSearchParams stringification.
+  useEffect(() => {
+    const next = new URLSearchParams()
+    if (search) next.set('q', search)
+    if (quickView !== 'all') next.set('filter', quickView)
+    if (view !== 'columns') next.set('view', view)
+    if (filter.priority) next.set('priority', filter.priority)
+    if (filter.project) next.set('project', filter.project)
+    if (filter.group) next.set('group', filter.group)
+    if (!filter.hideCompleted) next.set('hideCompleted', '0')
+    // Avoid spamming history: replace, not push.
+    setSearchParams(next, { replace: true })
+  }, [search, quickView, view, filter, setSearchParams])
+
+  const currentQuery = searchParams.toString()
+  const applyView = useCallback((q: string) => {
+    const p = new URLSearchParams(q)
+    setSearch(p.get('q') ?? '')
+    setQuickView((p.get('filter') as QuickViewKey | null) ?? 'all')
+    const v = p.get('view') as ViewMode | null
+    if (v === 'columns' || v === 'lanes' || v === 'list') setView(v)
+    else setView('columns')
+    setFilter({
+      priority: p.get('priority'),
+      project: p.get('project'),
+      mentee: null,
+      group: (p.get('group') as GroupKey | null) ?? null,
+      hideCompleted: p.get('hideCompleted') !== '0',
+    })
+  }, [])
 
   const toggleSelect = useCallback((id: string) => {
     setSelected((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n })
@@ -896,6 +950,8 @@ export default function UnifiedMyTasks() {
         quickView={quickView} setQuickView={setQuickView}
         taskCount={filtered.length}
         projectOptions={projectOptions}
+        currentQuery={currentQuery}
+        onApplyView={applyView}
       />
       {selected.size > 0 && <BulkBar count={selected.size} onClear={() => setSelected(new Set())} />}
       <div style={{ flex: 1, minHeight: 0, display: 'flex', overflow: 'hidden' }}>
