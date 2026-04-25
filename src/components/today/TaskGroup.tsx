@@ -1,0 +1,46 @@
+// TaskGroup — header (icon + label + n/total + extending rule) + sorted rows.
+// Group sort: planned → active → done (CLAUDE.md Rule 62).
+//
+// Extracted from src/pages/portal/TodayPage.tsx (B2_Group).
+
+import { useMemo } from 'react'
+import { TaskRow } from './TaskRow'
+import { GROUP_META, INK_DIM, PANEL_BG, type GroupKey } from './constants'
+import type { TodayStateApi } from '../../hooks/useTodayState'
+import type { TaskRow as TaskRowData } from '../../lib/api'
+
+export function TaskGroup({ gkey, tasks, projectsByPid, state, expandedId, onExpand }: { gkey: GroupKey; tasks: TaskRowData[]; projectsByPid: Map<string, { name: string; slug: string; category?: string | null }>; state: TodayStateApi; expandedId: string | null; onExpand: (id: string) => void }) {
+  const meta = GROUP_META[gkey]
+  const doneCount = tasks.filter((t) => state.done[t.id] || t.completed === 1).length
+  const sorted = useMemo(() => {
+    const planned = tasks.filter((t) => state.planned[t.id] && !state.done[t.id])
+    const active = tasks.filter((t) => !state.planned[t.id] && !state.done[t.id])
+    const done = tasks.filter((t) => state.done[t.id])
+    return [...planned, ...active, ...done]
+  }, [tasks, state.planned, state.done])
+
+  if (tasks.length === 0) return null
+  return (
+    <div style={{ marginBottom: 20 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, padding: '0 2px' }}>
+        <span style={{ fontSize: 14 }}>{meta.icon}</span>
+        <h4 style={{ fontSize: 12, fontWeight: 700, color: '#fff', letterSpacing: '0.06em', textTransform: 'uppercase', margin: 0 }}>{meta.label}</h4>
+        <span style={{ fontSize: 11, color: INK_DIM, fontVariantNumeric: 'tabular-nums' }}>{doneCount}/{tasks.length}</span>
+        <div style={{ flex: 1, height: 1, background: `${meta.color}22`, marginLeft: 4 }} />
+      </div>
+      <div style={{ background: PANEL_BG, border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8, overflow: 'hidden' }}>
+        {sorted.map((t) => (
+          <TaskRow
+            key={t.id}
+            task={t}
+            project={t.project_id ? projectsByPid.get(t.project_id) ?? null : null}
+            state={state}
+            expandedId={expandedId}
+            onExpand={onExpand}
+            projectsByPid={projectsByPid}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
