@@ -174,7 +174,7 @@ export async function handleToggleTask(id: string, user: AuthUser, env: Env): Pr
 // completed so brain.db backfills can carry authentic historical
 // timestamps (prior behavior stamped datetime('now') even when the
 // client passed an explicit value from the local DB).
-const TASK_ALLOWED_FIELDS = new Set(['title', 'description', 'description_json', 'assignee', 'assigned_by', 'due_date', 'priority', 'status', 'project_id', 'meeting_id', 'blocked_by', 'key_link_1', 'key_link_1_desc', 'key_link_2', 'key_link_2_desc', 'key_link_3', 'key_link_3_desc', 'notes', 'effort', 'short_title', 'source_thread_id', 'related_message_ids', 'completed', 'completed_at', 'completed_by', 'group_override']);
+const TASK_ALLOWED_FIELDS = new Set(['title', 'description', 'description_json', 'assignee', 'assigned_by', 'due_date', 'deadline', 'priority', 'status', 'project_id', 'meeting_id', 'blocked_by', 'key_link_1', 'key_link_1_desc', 'key_link_2', 'key_link_2_desc', 'key_link_3', 'key_link_3_desc', 'notes', 'effort', 'short_title', 'source_thread_id', 'related_message_ids', 'completed', 'completed_at', 'completed_by', 'group_override']);
 const VALID_GROUP_OVERRIDES = new Set(['deep', 'priorities', 'quick', 'pb', 'etl']);
 const TASK_REQUIRED_FIELDS = new Set(['status', 'priority', 'assignee']);
 
@@ -298,10 +298,11 @@ export async function handleCreateTask(request: Request, user: AuthUser, env: En
     ? body.status : 'todo';
 
   await env.DB.prepare(
-    'INSERT INTO tasks (id, title, description, assignee, assigned_by, meeting_id, project_id, due_date, priority, status, source, key_link_1, key_link_1_desc, key_link_2, key_link_2_desc, key_link_3, key_link_3_desc, notes, effort, short_title, source_thread_id, related_message_ids) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    'INSERT INTO tasks (id, title, description, assignee, assigned_by, meeting_id, project_id, due_date, deadline, priority, status, source, key_link_1, key_link_1_desc, key_link_2, key_link_2_desc, key_link_3, key_link_3_desc, notes, effort, short_title, source_thread_id, related_message_ids) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
   ).bind(
     id, title, body.description, body.assignee, user.email,
     body.meeting_id ?? null, resolvedProjectId, body.due_date ?? null,
+    body.deadline ?? null,  // v51 (2026-04-26): tasks.deadline
     priority, status, source,
     body.key_link_1 ?? null, body.key_link_1_desc ?? null,
     body.key_link_2 ?? null, body.key_link_2_desc ?? null,
@@ -610,8 +611,8 @@ export async function handleSyncBulkTasks(request: Request, user: AuthUser, env:
         // the guard falls through (new row or legacy client) and we write
         // datetime('now') for updated_at. When present, we use it as-is and
         // guard the UPDATE branch with a freshness check.
-        `INSERT INTO tasks (id, meeting_id, project_id, title, description, assignee, assigned_by, due_date, priority, status, source, completed, completed_at, completed_by, created_at, key_link_1, key_link_1_desc, key_link_2, key_link_2_desc, key_link_3, key_link_3_desc, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, COALESCE(?, datetime('now')))
+        `INSERT INTO tasks (id, meeting_id, project_id, title, description, assignee, assigned_by, due_date, deadline, priority, status, source, completed, completed_at, completed_by, created_at, key_link_1, key_link_1_desc, key_link_2, key_link_2_desc, key_link_3, key_link_3_desc, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, COALESCE(?, datetime('now')))
          ON CONFLICT(id) DO UPDATE SET
            meeting_id = excluded.meeting_id,
            project_id = excluded.project_id,
@@ -620,6 +621,7 @@ export async function handleSyncBulkTasks(request: Request, user: AuthUser, env:
            assignee = COALESCE(excluded.assignee, tasks.assignee),
            assigned_by = COALESCE(excluded.assigned_by, tasks.assigned_by),
            due_date = excluded.due_date,
+           deadline = excluded.deadline,
            priority = COALESCE(excluded.priority, tasks.priority),
            status = CASE
              WHEN excluded.status IN ('blocked', 'done') THEN excluded.status
@@ -643,6 +645,7 @@ export async function handleSyncBulkTasks(request: Request, user: AuthUser, env:
         t.id, t.meeting_id ?? null, t.project_id ?? null,
         t.title, t.description ?? null, t.assignee ?? null,
         t.assigned_by ?? null, t.due_date ?? null,
+        t.deadline ?? null,  // v51 (2026-04-26): tasks.deadline
         // Enforce NOT-NULL on required fields — mirrors the single-task API guard (R9-8, DI-8).
         t.priority ?? 'medium', t.status ?? 'todo',
         t.source ?? 'sync', t.completed ?? 0,
@@ -907,10 +910,11 @@ export async function handleMobileTasksToHub(request: Request, user: AuthUser, e
 
     try {
       await env.DB.prepare(
-        'INSERT INTO tasks (id, title, description, assignee, assigned_by, project_id, due_date, priority, status, source, completed, completed_at, notes, effort, short_title, source_thread_id, related_message_ids) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+        'INSERT INTO tasks (id, title, description, assignee, assigned_by, project_id, due_date, deadline, priority, status, source, completed, completed_at, notes, effort, short_title, source_thread_id, related_message_ids) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
       ).bind(
         id, title, description, assignee, user.email,
         resolvedProjectId, pwaTask.due_date ?? null,
+        pwaTask.deadline ?? null,  // v51 (2026-04-26): tasks.deadline
         priority, status, 'mobile',
         completedInt, completedInt ? new Date().toISOString() : null,
         pwaTask.notes ?? null, pwaTask.effort ?? null,
