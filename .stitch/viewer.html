@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Stitch Consultant Batch — 12 mockups</title>
+<style>
+  :root {
+    --bg: #0b1017;
+    --surface: rgba(255,255,255,0.06);
+    --border: rgba(255,255,255,0.10);
+    --ink: #e2e8f0;
+    --muted: rgba(226,232,240,0.7);
+    --teal: #5cbcb4;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 14px/1.5 'DM Sans', system-ui, sans-serif;
+  }
+  header {
+    padding: 24px 32px;
+    border-bottom: 1px solid var(--border);
+  }
+  h1 { margin: 0 0 4px; font-weight: 600; font-size: 20px; }
+  header p { margin: 0; color: var(--muted); font-size: 13px; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+    gap: 24px;
+    padding: 24px 32px;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .card .meta {
+    padding: 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+  }
+  .card .slug { font-weight: 500; }
+  .card .device {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    padding: 2px 8px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+  }
+  .card img {
+    width: 100%;
+    display: block;
+    background: #fff;
+  }
+  .card .links {
+    padding: 12px 16px;
+    display: flex;
+    gap: 12px;
+    font-size: 12px;
+  }
+  .card a { color: var(--teal); text-decoration: none; }
+  .card a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Stitch consultant batch — 12 mockups</h1>
+  <p>Generated 2026-04-26 via @google/stitch-sdk + GEMINI_3_FLASH. Click HTML to inspect markup; click PNG to enlarge.</p>
+</header>
+<div class="grid" id="g"></div>
+<script>
+const items = [
+  {slug:'01-today-page', device:'desktop', label:'Today landing page'},
+  {slug:'02-mytasks-three-views', device:'desktop', label:'MyTasks three-view toggle'},
+  {slug:'03-project-detail-overview', device:'desktop', label:'Project detail overview'},
+  {slug:'04-settings-rethink', device:'desktop', label:'Settings rethink'},
+  {slug:'05-insights-page', device:'desktop', label:'Insights (greenfield)'},
+  {slug:'06-mobile-mytasks', device:'mobile', label:'Mobile MyTasks'},
+  {slug:'07-mobile-project-detail', device:'mobile', label:'Mobile project detail'},
+  {slug:'08-admin-team', device:'desktop', label:'Admin team management'},
+  {slug:'09-calendar-week-view', device:'desktop', label:'Calendar week view'},
+  {slug:'10-manuscripts-needs-attention', device:'desktop', label:'Manuscripts needs-attention'},
+  {slug:'11-public-landing', device:'desktop', label:'Public marketing landing'},
+  {slug:'12-hermes-ask-the-lab', device:'desktop', label:'Hermes / Ask the Lab'},
+];
+const g = document.getElementById('g');
+for (const it of items) {
+  g.insertAdjacentHTML('beforeend', `
+    <div class="card">
+      <div class="meta">
+        <span class="slug">${it.label}</span>
+        <span class="device">${it.device}</span>
+      </div>
+      <a href="designs/${it.slug}.png" target="_blank"><img src="designs/${it.slug}.png" alt="${it.label}"></a>
+      <div class="links">
+        <a href="designs/${it.slug}.html" target="_blank">Open HTML</a>
+        <a href="designs/${it.slug}.png" target="_blank">Open PNG</a>
+        <a href="designs/${it.slug}.json" target="_blank">Metadata</a>
+      </div>
+    </div>
+  `);
+}
+</script>
+</body>
+</html>

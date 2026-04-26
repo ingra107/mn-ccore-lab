@@ -55,3 +55,10 @@ review/massive-audit/
 review/gh-issues/
 review/post-track-a-*/
 review/post-*-*/
+
+# Stitch design sandbox — generated mockups, regenerate via stitch-design skill
+.stitch/designs/
+.stitch/.env
+.stitch/.project-id
+.stitch/node_modules/
+.stitch/package-lock.json
