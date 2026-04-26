@@ -1,8 +1,21 @@
-# Session Handoff — 2026-04-25 evening (Phase 38 closure r2 — CD verification pass)
+# Session Handoff — 2026-04-26 (Stitch consultant + deadline schema)
 
 ---
 
-## 🎯 NEXT SESSION — START HERE
+## 🆕 2026-04-26 update
+
+- **HEAD now `ef2cbb68` on main, pushed.** Two commits since the 2026-04-25 evening handoff below.
+  - `cc52c400` — feat(deadline): D1 schema v51 + tasks.ts allowlist + 3 INSERT paths
+  - `ef2cbb68` — chore(stitch): add Stitch consultant tooling + Insights brief
+- **D1 schema v51 deployed** (tasks.deadline allowlist). CLAUDE.md schema-versions row updated to include v50 + v51.
+- **Stitch design tooling added** under `.stitch/` — uses official `@google/stitch-sdk` (not a community MCP). First batch ran 12 mockups; r1 edit pass on Insights honored exact `--stage-fill-*` tokens + 7 canonical project stages. Memory: `reference_stitch.md`. Setup: `.stitch/SETUP.md`. Findings: `.stitch/findings.md`. Mockups gitignored under `.stitch/designs/`.
+- **5 GH issues filed from Stitch findings** — #35 task intelligence rail, #36 settings sliders, #37 EPIC `/portal/insights` page, #38 hermes citations + findings callout, #39 manuscripts category filter pills.
+- **Plan-ready design brief** at `docs/design-briefs/2026-04-26-insights-page.md` for issue #37 — PI-only `/portal/insights` page, 3-5 day build, no new tables, all SQL on existing `tasks`/`projects`/`project_updates`/`manuscripts`/`nih_grants`.
+- **Don't-forget:** Stitch API key got pasted in chat (`AQ.Ab8R...`). Rotate at https://stitch.withgoogle.com → Settings → API Keys, then update `.stitch/.env`.
+
+---
+
+## 🎯 NEXT SESSION — START HERE (Phase 38 closure context — still valid)
 
 **State at handoff:**
 - HEAD `ed02570` on main, pushed

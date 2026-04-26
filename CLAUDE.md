@@ -61,7 +61,7 @@ The MN-CCORE Lab Hub is the **team's operating surface** -- where research gets 
 | D1 database (prod) | `b8453e9b-7c5f-4029-b07d-dd89c05d00cf` (ENAM), binding: `DB`. 601 tasks, 64 projects, 19 team_members (schema v49). |
 | D1 database (test) | `a30fe84d-0891-4035-9358-f7813b5f5807` (mnccore-lab-test), binding: `DB_TEST` |
 | D1 tables | 60 (live count via `/api/health`; +d1_task_comments in Phase 35) |
-| D1 schema versions applied to prod | v1-v44 + v45 (projects.deleted_at, Phase 36) + v46 (7 missing indexes, Phase 36c) + v47 (5 cols for Airtable funeral, 2026-04-20) + v48 (27-index reconcile, 2026-04-21) + v49 (13 tables + 2 unique indexes reconcile, 2026-04-21) |
+| D1 schema versions applied to prod | v1-v44 + v45 (projects.deleted_at, Phase 36) + v46 (7 missing indexes, Phase 36c) + v47 (5 cols for Airtable funeral, 2026-04-20) + v48 (27-index reconcile, 2026-04-21) + v49 (13 tables + 2 unique indexes reconcile, 2026-04-21) + v50 (tasks.group_override, Phase 38, 2026-04-25) + v51 (tasks.deadline allowlist, 2026-04-26) |
 | Schema drift CI | `.github/workflows/schema-drift.yml` — nightly 03 CT. Dumps prod sqlite_master, diffs against committed bundle. Guardrail against silent prod migrations. Requires `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` secrets. |
 | Deploy mode | Manual via wrangler -- NO auto-deploy |
 | PB project | `Projects/mn-ccore-lab-hub/` -- PROJECT.md, living plan, future ideas |
