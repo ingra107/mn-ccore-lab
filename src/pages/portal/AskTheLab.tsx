@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { HelpCircle, Plus, X, MessageSquare, Check, ChevronDown, ChevronUp, Send, Sparkles, Search } from 'lucide-react'
+import { HelpCircle, Plus, X, MessageSquare, Check, ChevronDown, ChevronUp, Send, Search } from 'lucide-react'
+import HermesMark from '../../components/HermesMark'
+import HermesResponse from '../../components/HermesResponse'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CardSkeleton } from '../../components/LoadingSkeleton'
 import PageHeader from '../../components/PageHeader'
@@ -316,17 +318,15 @@ function QuestionExpanded({ questionId }: { questionId: string }) {
                   }}
                 >
                   <div className="flex items-center gap-1.5 mb-1">
-                    <Sparkles size={12} style={{ color: 'var(--gold)' }} />
-                    <span style={{ fontSize: '10px', color: 'var(--gold)' }}>
+                    <HermesMark size={14} variant="avatar" />
+                    <span style={{ fontSize: '10px', color: 'var(--gold)', fontWeight: 500 }}>
                       Hermes
                     </span>
                     <span className="ml-auto" style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75 }}>
                       {formatRelativeTime(answer.created_at)}
                     </span>
                   </div>
-                  <p className="text-sm leading-relaxed" style={{ color: 'var(--ink)', margin: 0 }}>
-                    {answer.content}
-                  </p>
+                  <HermesResponse content={answer.content} />
                 </div>
               )
             }

@@ -4,6 +4,7 @@ import {
   MessageSquare, Send, Scale,
 } from 'lucide-react'
 import Avatar from '../../Avatar'
+import HermesResponse from '../../HermesResponse'
 import ReactionBar from '../../ReactionBar'
 import { getPersonInfo } from '../../../data/team'
 import { useDecisions } from '../../../hooks/useApiData'
@@ -98,7 +99,11 @@ export function TaskComments({ taskId, taskTitle, projectSlug }: { taskId: strin
                   <span className="text-xs font-medium" style={{ color: 'var(--ink)' }}>{person.name}</span>
                   <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>{formatRelativeTime(c.created_at)}</span>
                 </div>
-                <p className="text-sm mt-0.5" style={{ color: 'var(--ink)', whiteSpace: 'pre-wrap' }}>{c.content}</p>
+                {c.author_slug === 'claude-ai' ? (
+                  <div className="mt-0.5"><HermesResponse content={c.content} /></div>
+                ) : (
+                  <p className="text-sm mt-0.5" style={{ color: 'var(--ink)', whiteSpace: 'pre-wrap' }}>{c.content}</p>
+                )}
                 <ReactionBar targetType="task_comment" targetId={c.id} compact />
               </div>
             </div>
