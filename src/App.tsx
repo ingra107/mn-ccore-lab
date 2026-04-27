@@ -131,6 +131,7 @@ const Ideas = lazy(() => import('./pages/portal/Ideas'))
 const SearchPage = lazy(() => import('./pages/portal/SearchPage'))
 const ActivityPage = lazy(() => import('./pages/portal/ActivityPage'))
 const AnalyticsPage = lazy(() => import('./pages/portal/AnalyticsPage'))
+const InsightsPage = lazy(() => import('./pages/portal/InsightsPage'))
 const SettingsPage = lazy(() => import('./pages/portal/SettingsPage'))
 const MeetingNotesPage = lazy(() => import('./pages/portal/MeetingNotesPage'))
 const DecisionsPage = lazy(() => import('./pages/portal/DecisionsPage'))
@@ -278,6 +279,7 @@ export default function App() {
                   <Route path="/portal/meeting-notes" element={<ErrorBoundary><MeetingNotesPage /></ErrorBoundary>} />
                   <Route path="/portal/activity" element={<ErrorBoundary><ActivityPage /></ErrorBoundary>} />
                   <Route path="/portal/analytics" element={<ErrorBoundary><AnalyticsPage /></ErrorBoundary>} />
+                  <Route path="/portal/insights" element={<ErrorBoundary><InsightsPage /></ErrorBoundary>} />
                   <Route path="/portal/pi/analytics" element={<ErrorBoundary><PageErrorBoundary pageName="PIAnalytics"><PIAnalytics /></PageErrorBoundary></ErrorBoundary>} />
                   <Route path="/portal/mentee-milestones" element={<ErrorBoundary><MenteeMilestones /></ErrorBoundary>} />
                   <Route path="/portal/pb" element={<ErrorBoundary><PBSector /></ErrorBoundary>} />
