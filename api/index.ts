@@ -26,7 +26,7 @@ import { handleActivity, handleActivityHeatmap } from './routes/activity';
 import { handleGetSubtasks, handleCreateSubtask, handleToggleSubtask, handleDeleteSubtask, handleReorderSubtasks } from './routes/subtasks';
 import { handleTeamPulse } from './routes/team-pulse';
 import { handleGetPaperLinks, handleLinkPaper, handleUnlinkPaper, handlePapersByProject, handlePapersByPublication } from './routes/paper-links';
-import { handleInsightConnections, handleInsightSuggestions } from './routes/insights';
+import { handleInsightConnections, handleInsightSuggestions, handleInsightsDashboard } from './routes/insights';
 import { handleGetDependencies, handleGetProjectDependencies, handleCreateDependency, handleDeleteDependency } from './routes/dependencies';
 import { handleTrajectory } from './routes/trajectory';
 import { handleContributions } from './routes/contributions';
@@ -320,6 +320,10 @@ app.get('/api/digest/:id/comments', (c) => handleGetDigestComments(c.req.param('
 // ─────────────────────────────────────────────────────────────────────────────
 app.get('/api/insights/connections', (c) => handleInsightConnections(E(c)));
 app.get('/api/insights/suggestions', (c) => handleInsightSuggestions(U(c), E(c)));
+app.get('/api/insights/dashboard', async (c) => {
+  if (!(await isPiRequest(c.req.raw, E(c)))) return error('Forbidden — PI access only', 403);
+  return handleInsightsDashboard(E(c));
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Papers

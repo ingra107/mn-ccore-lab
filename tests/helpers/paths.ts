@@ -34,6 +34,7 @@ export const P = {
   meetingNotes: '/portal/meeting-notes',
   activity: '/portal/activity',
   analytics: '/portal/analytics',
+  insights: '/portal/insights',
   piAnalytics: '/portal/pi/analytics',
   menteeMilestones: '/portal/mentee-milestones',
   pb: '/portal/pb',

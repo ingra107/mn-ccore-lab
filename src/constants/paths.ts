@@ -46,6 +46,7 @@ export const PATHS = {
 
   activity: `${PORTAL_PREFIX}/activity`,
   analytics: `${PORTAL_PREFIX}/analytics`,
+  insights: `${PORTAL_PREFIX}/insights`,
   piAnalytics: `${PORTAL_PREFIX}/pi/analytics`,
   menteeMilestones: `${PORTAL_PREFIX}/mentee-milestones`,
   pb: `${PORTAL_PREFIX}/pb`,

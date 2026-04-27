@@ -237,3 +237,188 @@ export async function handleInsightSuggestions(url: URL, env: Env): Promise<Resp
     count: related.length,
   })
 }
+
+// ── /api/insights/dashboard — operational insights (PI-only) ──
+// GH #37 EPIC. All queries hit existing tables — no schema change.
+
+interface DashboardMetrics {
+  stalledProjects: { count: number; deltaWoW: number }
+  tasksPerPerson: { avg: number; total: number; distribution: { slug: string; count: number }[] }
+  manuscriptsInRevision: { count: number; awaitingReplyOver7d: number }
+  grantsInPipeline: { count: number; daysToNextDeadline: number | null }
+}
+
+interface DashboardResponse {
+  week: string
+  metrics: DashboardMetrics
+  workloadHeatmap: { slug: string; days: { mon: number; tue: number; wed: number; thu: number; fri: number } }[]
+  pipelineFunnel: { stage: string; count: number }[]
+  velocityScatter: { slug: string; title: string; daysSinceUpdate: number; openTasks: number; isOutlier: boolean }[]
+  stalledRegistry: { slug: string; title: string; daysIdle: number; openTasks: number }[]
+}
+
+function isoWeek(d: Date): string {
+  const date = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()))
+  const dayNum = date.getUTCDay() || 7
+  date.setUTCDate(date.getUTCDate() + 4 - dayNum)
+  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1))
+  const weekNum = Math.ceil((((date.getTime() - yearStart.getTime()) / 86400000) + 1) / 7)
+  return `${date.getUTCFullYear()}-W${String(weekNum).padStart(2, '0')}`
+}
+
+const STALL_THRESHOLD_DAYS = 14
+const SCATTER_OUTLIER_DAYS = 30
+const SCATTER_OUTLIER_TASKS = 10
+
+export async function handleInsightsDashboard(env: Env): Promise<Response> {
+  const week = isoWeek(new Date())
+
+  // 1. Stalled projects (no project_updates in 14d), with WoW delta
+  const stalledNow = await env.DB.prepare(
+    `SELECT COUNT(*) as c FROM projects p
+     WHERE p.deleted_at IS NULL AND p.status = 'active'
+       AND NOT EXISTS (
+         SELECT 1 FROM project_updates pu
+         WHERE pu.project_id = p.id AND pu.created_at > datetime('now', '-${STALL_THRESHOLD_DAYS} days')
+       )`
+  ).first<{ c: number }>()
+
+  const stalledLast = await env.DB.prepare(
+    `SELECT COUNT(*) as c FROM projects p
+     WHERE p.deleted_at IS NULL AND p.status = 'active'
+       AND NOT EXISTS (
+         SELECT 1 FROM project_updates pu
+         WHERE pu.project_id = p.id
+           AND pu.created_at > datetime('now', '-${STALL_THRESHOLD_DAYS + 7} days')
+           AND pu.created_at <= datetime('now', '-7 days')
+       )`
+  ).first<{ c: number }>()
+
+  // 2. Tasks per person (open only)
+  const taskDistRes = await env.DB.prepare(
+    `SELECT assignee, COUNT(*) as c FROM tasks
+     WHERE deleted_at IS NULL AND completed = 0 AND assignee IS NOT NULL
+     GROUP BY assignee ORDER BY c DESC`
+  ).all<{ assignee: string; c: number }>()
+  const distribution = (taskDistRes.results ?? []).map((r) => ({ slug: r.assignee, count: r.c }))
+  const totalOpen = distribution.reduce((s, r) => s + r.count, 0)
+  const memberCountRes = await env.DB.prepare(
+    `SELECT COUNT(*) as c FROM team_members WHERE active = 1`
+  ).first<{ c: number }>()
+  const memberCount = Math.max(1, memberCountRes?.c ?? 1)
+  const avg = Math.round((totalOpen / memberCount) * 10) / 10
+
+  // 3. Manuscripts in revision (projects whose stage = 'Revisions' or has a manuscript_revisions row open)
+  const msRevRes = await env.DB.prepare(
+    `SELECT COUNT(*) as c FROM projects
+     WHERE deleted_at IS NULL AND stage IN ('Revisions', 'Review')`
+  ).first<{ c: number }>()
+  const msAwaitingRes = await env.DB.prepare(
+    `SELECT COUNT(*) as c FROM manuscript_revisions
+     WHERE status = 'awaiting_response'
+       AND received_at < datetime('now', '-7 days')`
+  ).first<{ c: number }>().catch(() => ({ c: 0 } as { c: number }))
+
+  // 4. Grants pipeline + days to next deadline
+  const grantsRes = await env.DB.prepare(
+    `SELECT COUNT(*) as c FROM nih_grants
+     WHERE status NOT IN ('funded', 'withdrawn', 'rejected')`
+  ).first<{ c: number }>().catch(() => ({ c: 0 } as { c: number }))
+  const nextDeadlineRes = await env.DB.prepare(
+    `SELECT julianday(deadline) - julianday('now') as d FROM nih_grants
+     WHERE deadline IS NOT NULL AND deadline > date('now')
+     ORDER BY deadline ASC LIMIT 1`
+  ).first<{ d: number }>().catch(() => null)
+  const daysToNextDeadline = nextDeadlineRes ? Math.max(0, Math.round(nextDeadlineRes.d)) : null
+
+  // 5. Workload heatmap — tasks due this week, grouped by assignee × weekday
+  const heatmapRes = await env.DB.prepare(
+    `SELECT assignee,
+       CAST(strftime('%w', due_date) AS INT) as dow,
+       COUNT(*) as c
+     FROM tasks
+     WHERE deleted_at IS NULL AND completed = 0 AND assignee IS NOT NULL
+       AND due_date IS NOT NULL
+       AND due_date >= date('now', 'weekday 1', '-7 days')
+       AND due_date < date('now', 'weekday 1')
+     GROUP BY assignee, dow`
+  ).all<{ assignee: string; dow: number; c: number }>()
+
+  const heatmapMap = new Map<string, { mon: number; tue: number; wed: number; thu: number; fri: number }>()
+  for (const r of heatmapRes.results ?? []) {
+    const cur = heatmapMap.get(r.assignee) ?? { mon: 0, tue: 0, wed: 0, thu: 0, fri: 0 }
+    if (r.dow === 1) cur.mon = r.c
+    else if (r.dow === 2) cur.tue = r.c
+    else if (r.dow === 3) cur.wed = r.c
+    else if (r.dow === 4) cur.thu = r.c
+    else if (r.dow === 5) cur.fri = r.c
+    heatmapMap.set(r.assignee, cur)
+  }
+  const workloadHeatmap = Array.from(heatmapMap.entries()).map(([slug, days]) => ({ slug, days }))
+
+  // 6. Pipeline funnel
+  const funnelRes = await env.DB.prepare(
+    `SELECT stage, COUNT(*) as c FROM projects
+     WHERE deleted_at IS NULL AND status = 'active' AND stage IS NOT NULL
+     GROUP BY stage`
+  ).all<{ stage: string; c: number }>()
+  const STAGE_ORDER = ['Idea', 'Data Collection', 'Data Analysis', 'Writing', 'Review', 'Submitted', 'Published']
+  const funnelMap = new Map((funnelRes.results ?? []).map((r) => [r.stage, r.c]))
+  const pipelineFunnel = STAGE_ORDER.map((stage) => ({ stage, count: funnelMap.get(stage) ?? 0 }))
+
+  // 7. Velocity scatter + 8. stalled registry (single combined query)
+  const scatterRes = await env.DB.prepare(
+    `SELECT p.slug, p.title,
+       MAX(pu.created_at) as last_update,
+       (SELECT COUNT(*) FROM tasks t
+          WHERE t.project_id = p.id AND t.deleted_at IS NULL AND t.completed = 0) as open_tasks
+     FROM projects p
+     LEFT JOIN project_updates pu ON pu.project_id = p.id
+     WHERE p.deleted_at IS NULL AND p.status = 'active'
+     GROUP BY p.id, p.slug, p.title`
+  ).all<{ slug: string; title: string; last_update: string | null; open_tasks: number }>()
+
+  const now = Date.now()
+  const velocityScatter = (scatterRes.results ?? []).map((r) => {
+    const ms = r.last_update ? new Date(r.last_update).getTime() : 0
+    const daysSinceUpdate = ms === 0 ? 999 : Math.floor((now - ms) / 86400000)
+    const isOutlier = daysSinceUpdate > SCATTER_OUTLIER_DAYS || r.open_tasks > SCATTER_OUTLIER_TASKS
+    return { slug: r.slug, title: r.title, daysSinceUpdate, openTasks: r.open_tasks, isOutlier }
+  })
+
+  const stalledRegistry = velocityScatter
+    .filter((p) => p.daysSinceUpdate >= STALL_THRESHOLD_DAYS)
+    .map((p) => ({ slug: p.slug, title: p.title, daysIdle: p.daysSinceUpdate, openTasks: p.openTasks }))
+    .sort((a, b) => b.daysIdle - a.daysIdle)
+
+  const body: DashboardResponse = {
+    week,
+    metrics: {
+      stalledProjects: {
+        count: stalledNow?.c ?? 0,
+        deltaWoW: (stalledNow?.c ?? 0) - (stalledLast?.c ?? 0),
+      },
+      tasksPerPerson: { avg, total: totalOpen, distribution },
+      manuscriptsInRevision: {
+        count: msRevRes?.c ?? 0,
+        awaitingReplyOver7d: msAwaitingRes?.c ?? 0,
+      },
+      grantsInPipeline: {
+        count: grantsRes?.c ?? 0,
+        daysToNextDeadline,
+      },
+    },
+    workloadHeatmap,
+    pipelineFunnel,
+    velocityScatter,
+    stalledRegistry,
+  }
+
+  return new Response(JSON.stringify({ data: body }), {
+    status: 200,
+    headers: {
+      'Content-Type': 'application/json',
+      'Cache-Control': 'public, max-age=300, s-maxage=300',
+    },
+  })
+}
