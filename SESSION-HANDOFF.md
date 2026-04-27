@@ -1,4 +1,34 @@
-# Session Handoff — 2026-04-26 (Stitch consultant + deadline schema)
+# Session Handoff — 2026-04-27 (Stitch consultant batch shipped)
+
+---
+
+## 🆕 2026-04-27 update — 5 PRs merged from Stitch batch
+
+- **HEAD now `7a79806d` on main, in sync with origin.** Six commits since the 2026-04-26 close (5 squash-merges + 1 PB-side follow-up).
+  - `344cd3d8` — feat(manuscripts): category filter pills above the table (#39 / PR #40)
+  - `40a8e84a` — feat(settings): RangeSlider for Lab thresholds (#36 / PR #41)
+  - `fde6b44c` — feat(hermes): citation pills + Operation Findings callout (#38 / PR #42)
+  - `c45c5013` — feat(tasks): Intelligence tab — relevance + velocity + Hermes draft (#35 / PR #43)
+  - `3605cf4d` — feat(insights): /portal/insights operational dashboard (#37 EPIC / PR #44)
+  - `7a79806d` — feat(api): return ids[] from /tasks/sync-bulk for PB hub_slug capture (PB-side follow-up)
+- **All 5 GH issues auto-closed** (#35-#39). Stitch consultant batch fully discharged.
+- **Build clean on merged main.** No deploy yet — that's the next step. Run: `npm run build && npx wrangler pages deploy dist --project-name mn-ccore-lab` to ship.
+- **New surface — `/portal/insights` (PI-only).** Single endpoint `GET /api/insights/dashboard` (5-min edge cache, gated by `isPiRequest()`). All SQL on existing tables; no schema migration. Sidebar entry under Lab group. PATHS + tests/helpers/paths.ts both updated. Bumped gated-route count: 27 → 28 (CLAUDE.md updated).
+- **New components — none brand-shifting, all reusable:**
+  - `<RangeSlider>` (src/components/) — 0-365 default, 500ms debounce, teal track + cream-bordered thumb. Used in Settings → Lab tab.
+  - `<HermesResponse>` (src/components/) — parses optional trailing fenced ` ```hermes ` JSON for `{citations[], findings[]}`. Wired in 3 surfaces: AskTheLab, ProjectComments, TaskComments. Falls back to plain text. **AskTheLab also swapped lucide `Sparkles` → `HermesMark`** per Rule 29 (last violation closed).
+  - `<TaskIntelligence>` (src/components/tasks/detail/) — new Intelligence tab in TaskDetailPanel with relevance score (client-side compute), 8-week project velocity sparkline, Hermes "Review draft" CTA that posts to `/api/pb/dispatch/add` with `comment_type='pre-draft'`.
+- **Manuscripts category filter UX shift** — replaced category InlineSelect in TableControls with URL-synced pill row (`?category=clif|lab|nate|mentee`) above the views. PI select + Stalled toggle stay in TableControls.
+
+### Cross-repo follow-up that's STILL OPEN
+
+- **`hub_ai_listener.py` prompt change** — backend half of PR #42. Spec written to `~/Peripheral-Brain/scratch/hub_ai_listener_structured_tail.md` for the PB session. Until that lands, Hermes replies render as plain prose (no regression). Once it lands, citations + findings light up automatically.
+
+### Don't-forget
+
+- **Stitch API key still pasted in chat from 2026-04-26.** Rotate at https://stitch.withgoogle.com → Settings → API Keys, then update `.stitch/.env`.
+- **Old stash `stash@{0}`** (April 12 Ideas WIP, verified shipped) still lingering — manual `git stash drop stash@{0}` when convenient.
+- **Deploy pending.** All 5 PRs merged but not deployed. Run wrangler when ready.
 
 ---
 
