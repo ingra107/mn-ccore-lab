@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { FileText, Plus, List, GitBranch, BookOpen, ExternalLink } from 'lucide-react'
 import { useDensity, densityClass } from '../../components/DensityToggle'
@@ -75,7 +75,16 @@ export default function Manuscripts() {
   // P3-03: 'trophy' = cover-style grid for Published manuscripts.
   const [view, setView] = useState<'list' | 'pipeline' | 'trophy'>('list')
   const [filterPI, setFilterPI] = useState<string>('')
-  const [filterCategory, setFilterCategory] = useState<string>('')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const filterCategory = searchParams.get('category') ?? ''
+  const setFilterCategory = (next: string) => {
+    setSearchParams((prev) => {
+      const out = new URLSearchParams(prev)
+      if (next) out.set('category', next)
+      else out.delete('category')
+      return out
+    }, { replace: true })
+  }
   const [filterStalled, setFilterStalled] = useState(false)
   const [showCreate, setShowCreate] = useState(false)
   const [sortKey, setSortKey] = useState<'stage' | 'title' | 'status' | 'pi' | 'category' | 'days_in_stage'>('stage')
@@ -248,15 +257,6 @@ export default function Manuscripts() {
                   onChange={setFilterPI}
                   alwaysShowChevron
                 />
-                <InlineSelect
-                  value={filterCategory}
-                  options={[
-                    { value: '', label: 'All Groups' },
-                    ...Object.entries(CATEGORY_LABEL).map(([key, label]) => ({ value: key, label })),
-                  ]}
-                  onChange={setFilterCategory}
-                  alwaysShowChevron
-                />
                 {/* Stalled filter pill */}
                 <button
                   onClick={() => setFilterStalled(!filterStalled)}
@@ -314,6 +314,57 @@ export default function Manuscripts() {
         {!isLoading && (
           <NeedsAttentionDashboard filter={attentionFilter} onFilterChange={setAttentionFilter} />
         )}
+
+        {/* GH #39: category quick-filter pills. URL-synced so saved views capture state. */}
+        <div
+          role="tablist"
+          aria-label="Filter manuscripts by category"
+          className="flex flex-wrap items-center"
+          style={{ gap: '6px', padding: 'var(--sp-sm) 0 var(--sp-md)' }}
+        >
+          {[
+            { value: '', label: 'All' },
+            ...Object.entries(CATEGORY_LABEL).map(([value, label]) => ({ value, label })),
+          ].map((opt) => {
+            const active = filterCategory === opt.value
+            return (
+              <button
+                key={opt.value || 'all'}
+                role="tab"
+                aria-selected={active}
+                onClick={() => setFilterCategory(opt.value)}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '4px 12px',
+                  borderRadius: 'var(--radius-full)',
+                  border: active ? '1px solid var(--teal)' : '1px solid var(--border-subtle)',
+                  background: active ? 'var(--teal-subtle)' : 'transparent',
+                  color: active ? 'var(--teal)' : 'var(--slate)',
+                  fontSize: '12px',
+                  fontWeight: active ? 600 : 400,
+                  cursor: 'pointer',
+                  transition: 'all 0.12s ease-out',
+                  opacity: active ? 1 : 0.85,
+                }}
+              >
+                {opt.value && (
+                  <span
+                    style={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: 'var(--radius-circle)',
+                      background: CATEGORY_DOT[opt.value] ?? 'var(--slate)',
+                      opacity: 0.85,
+                    }}
+                  />
+                )}
+                {opt.label}
+              </button>
+            )
+          })}
+        </div>
 
         {/* Loading skeleton */}
         {isLoading && <TableSkeleton rows={6} cols={5} />}
