@@ -602,6 +602,14 @@ export async function handleSyncBulkTasks(request: Request, user: AuthUser, env:
   // D1 batch: up to 100 statements per batch
   const BATCH_SIZE = 50;
   let inserted = 0;
+  // 2026-04-26 Bug #1 fix — capture {client_id, hub_id} per row so PB sync_push
+  // can mint a hub_slug alias on 200 instead of waiting for find_name_duplicate
+  // to recover the mapping on the next pull. Hub upserts on the client-supplied
+  // id, so in the steady state hub_id === client_id; when they diverge (Hub-UI
+  // mint or pre-existing Hub row matched on a different id by future logic),
+  // PB-side records the alias to lock identity. Response is additive — old PB
+  // clients that read only `data.inserted` continue to work.
+  const ids: Array<{ client_id: string; hub_id: string }> = [];
 
   for (let i = 0; i < body.tasks.length; i += BATCH_SIZE) {
     const batch = body.tasks.slice(i, i + BATCH_SIZE);
@@ -659,11 +667,31 @@ export async function handleSyncBulkTasks(request: Request, user: AuthUser, env:
     );
     await env.DB.batch(stmts);
     inserted += batch.length;
+
+    // 2026-04-26 Bug #1 fix — read back the stored id for each row in the
+    // batch so PB sync_push can capture {client_id, hub_id} and mint a
+    // hub_slug alias on 200. We look up by the client-supplied id; if the
+    // row is present (insert succeeded OR upsert matched OR stale-guard
+    // skipped the update), we report (client_id, stored_id). If the row is
+    // absent (shouldn't happen post-INSERT/ON CONFLICT, but defensive), we
+    // skip — PB falls back to the current find_name_duplicate path.
+    if (batch.length > 0) {
+      const placeholders = batch.map(() => '?').join(',');
+      const idRows = await env.DB.prepare(
+        `SELECT id FROM tasks WHERE id IN (${placeholders})`
+      ).bind(...batch.map(t => t.id)).all<{ id: string }>();
+      const storedIds = new Set((idRows.results || []).map(r => r.id));
+      for (const t of batch) {
+        if (storedIds.has(t.id)) {
+          ids.push({ client_id: t.id, hub_id: t.id });
+        }
+      }
+    }
   }
 
   await logActivity(env, 'sync', `Bulk sync: ${inserted} tasks loaded from brain.db`, user.email, null, null);
 
-  return json({ data: { ok: true, inserted } });
+  return json({ data: { ok: true, inserted, ids } });
 }
 
 // POST /api/tasks/:id/delete — soft-delete a single task (mirrors handleDeleteProject).
