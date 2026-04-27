@@ -15,6 +15,7 @@ import Avatar from '../../components/Avatar'
 import InlineSelect from '../../components/InlineSelect'
 import { getPersonInfo } from '../../data/team'
 import { useLabPrefs } from '../../hooks/useLabPrefs'
+import RangeSlider from '../../components/RangeSlider'
 
 interface WorkflowTemplate {
   id: string
@@ -615,12 +616,6 @@ function SettingsSection({ title, subtitle, icon: Icon, children }: { title: str
 
 function LabPrefsPanel() {
   const { prefs, update, reset, defaults } = useLabPrefs()
-  const [review, setReview] = useState<string>(String(prefs.manuscriptsReviewDays))
-  const [stale, setStale] = useState<string>(String(prefs.manuscriptsStaleDays))
-  useEffect(() => { setReview(String(prefs.manuscriptsReviewDays)); setStale(String(prefs.manuscriptsStaleDays)) }, [prefs])
-
-  const commitReview = () => update({ manuscriptsReviewDays: parseInt(review, 10) })
-  const commitStale = () => update({ manuscriptsStaleDays: parseInt(stale, 10) })
 
   return (
     <div className="flex flex-col gap-4">
@@ -628,48 +623,28 @@ function LabPrefsPanel() {
         label="Awaiting your review — flag after"
         hint={`Reviewer comments assigned to you that stay pending past this many days surface as "Awaiting your review". Default ${defaults.manuscriptsReviewDays}d.`}
       >
-        <div className="flex items-center gap-2">
-          <input
-            type="number"
-            min={0}
-            max={365}
-            value={review}
-            onChange={(e) => setReview(e.target.value)}
-            onBlur={commitReview}
-            onKeyDown={(e) => { if (e.key === 'Enter') { (e.target as HTMLInputElement).blur() } }}
-            aria-label="Awaiting review threshold in days"
-            style={{
-              width: 80, padding: '6px 10px', fontSize: '13px',
-              background: 'var(--cream)', border: '1px solid var(--border-subtle)',
-              borderRadius: 'var(--radius-md)', color: 'var(--ink)',
-            }}
-          />
-          <span style={{ fontSize: '12px', color: 'var(--slate)' }}>days</span>
-        </div>
+        <RangeSlider
+          value={prefs.manuscriptsReviewDays}
+          onChange={(n) => update({ manuscriptsReviewDays: n })}
+          min={0}
+          max={365}
+          unitLabel="days"
+          ariaLabel="Awaiting review threshold in days"
+        />
       </SettingsField>
 
       <SettingsField
         label="Stale drafts — flag after"
         hint={`Publications in "In Preparation" with no activity for this many days surface as "Stale drafts". Default ${defaults.manuscriptsStaleDays}d.`}
       >
-        <div className="flex items-center gap-2">
-          <input
-            type="number"
-            min={0}
-            max={365}
-            value={stale}
-            onChange={(e) => setStale(e.target.value)}
-            onBlur={commitStale}
-            onKeyDown={(e) => { if (e.key === 'Enter') { (e.target as HTMLInputElement).blur() } }}
-            aria-label="Stale drafts threshold in days"
-            style={{
-              width: 80, padding: '6px 10px', fontSize: '13px',
-              background: 'var(--cream)', border: '1px solid var(--border-subtle)',
-              borderRadius: 'var(--radius-md)', color: 'var(--ink)',
-            }}
-          />
-          <span style={{ fontSize: '12px', color: 'var(--slate)' }}>days</span>
-        </div>
+        <RangeSlider
+          value={prefs.manuscriptsStaleDays}
+          onChange={(n) => update({ manuscriptsStaleDays: n })}
+          min={0}
+          max={365}
+          unitLabel="days"
+          ariaLabel="Stale drafts threshold in days"
+        />
       </SettingsField>
 
       <div>
