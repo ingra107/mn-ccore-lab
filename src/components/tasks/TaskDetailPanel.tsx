@@ -34,12 +34,15 @@ import { HandoffSection } from './detail/HandoffSection'
 import { TaskComments, ProjectDecisionsSection } from './detail/TaskComments'
 import { TaskUpdateFeed } from './detail/TaskUpdateFeed'
 import { TaskActivityFeed } from './detail/TaskActivityFeed'
+import TaskIntelligence from './detail/TaskIntelligence'
 import KeyLinksEditor from '../KeyLinksEditor'
+import { Brain } from 'lucide-react'
 
-type Tab = 'overview' | 'notes' | 'comments' | 'activity' | 'files' | 'details'
+type Tab = 'overview' | 'intelligence' | 'notes' | 'comments' | 'activity' | 'files' | 'details'
 
 const TABS: { key: Tab; label: string; icon: typeof Circle }[] = [
   { key: 'overview', label: 'Overview', icon: Eye },
+  { key: 'intelligence', label: 'Intelligence', icon: Brain },
   { key: 'notes', label: 'Notes', icon: ScrollText },
   { key: 'comments', label: 'Comments', icon: MessageSquare },
   { key: 'activity', label: 'Activity', icon: Clock },
@@ -487,6 +490,14 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
               onJumpToTab={(tab) => setActiveTab(tab)}
               onContentChange={setQuickAddHasContent}
             />
+          </div>
+
+          {/* ── Intelligence Tab — GH #35 ── */}
+          <div
+            className={tabAnimating === 'intelligence' ? 'task-detail-tab-content' : ''}
+            style={{ display: activeTab === 'intelligence' ? 'flex' : 'none', flexDirection: 'column', gap: 'var(--sp-xl)' }}
+          >
+            <TaskIntelligence task={task} />
           </div>
 
           {/* ── Details Tab ── */}
