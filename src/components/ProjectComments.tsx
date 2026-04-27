@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { MessageSquare, Send } from 'lucide-react'
 import HermesMark from './HermesMark'
+import HermesResponse from './HermesResponse'
 import { useComments } from '../hooks/useApiData'
 import { useAddComment } from '../hooks/useMutations'
 import { useAuth } from '../hooks/useAuth'
@@ -200,16 +201,7 @@ export default function ProjectComments({ projectSlug }: Props) {
                               {formatRelativeTime(comment.created_at)}
                             </span>
                           </div>
-                          <p
-                            style={{
-                              fontSize: 'var(--value-size)',
-                              color: 'var(--ink)',
-                              lineHeight: 1.5,
-                              margin: 0,
-                            }}
-                          >
-                            {comment.content}
-                          </p>
+                          <HermesResponse content={comment.content} />
                         </div>
                         <ReactionBar targetType="comment" targetId={comment.id} />
                       </div>
