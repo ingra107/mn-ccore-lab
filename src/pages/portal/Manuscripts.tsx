@@ -2,6 +2,18 @@ import { useState, useMemo, useEffect } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { FileText, Plus, List, GitBranch, BookOpen, ExternalLink } from 'lucide-react'
+import {
+  DndContext,
+  PointerSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+  useDraggable,
+  useDroppable,
+  DragOverlay,
+  type DragEndEvent,
+  type DragStartEvent,
+} from '@dnd-kit/core'
 import { useDensity, densityClass } from '../../components/DensityToggle'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
 import Avatar from '../../components/Avatar'
@@ -724,90 +736,18 @@ export default function Manuscripts() {
           </TableContainer>
         )}
 
-        {/* ─── PIPELINE VIEW ─── */}
+        {/* ─── PIPELINE VIEW ─── M-13: drag-and-drop between stages */}
         {!isLoading && view === 'pipeline' && (
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: `repeat(${STAGES.length}, minmax(180px, 1fr))`,
-              gap: '20px',
-              overflowX: 'auto',
-              paddingBottom: '1rem',
-            }}
-          >
-            {STAGES.map((stage) => {
-              const stageProjects = byStage[stage] || []
-              return (
-                <div
-                  key={stage}
-                  style={{
-                    background: 'var(--ice)',
-                    borderRadius: 'var(--radius-xl)',
-                    borderTop: '2px solid var(--teal)',
-                    padding: 'var(--sp-lg)',
-                    minHeight: '200px',
-                  }}
-                >
-                  <div className="flex items-center justify-between" style={{ marginBottom: '12px' }}>
-                    <h3 style={{ fontWeight: 500, fontSize: '13px', color: 'var(--ink)', margin: 0 }}>
-                      {stage}
-                    </h3>
-                    <span style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.75, fontWeight: 500 }}>
-                      {stageProjects.length}
-                    </span>
-                  </div>
-
-                  <div className="flex flex-col" style={{ gap: '10px' }}>
-                    <AnimatePresence mode="popLayout">
-                      {stageProjects.map((p) => {
-                        const pi = getPersonInfo(p.pi)
-                        return (
-                          <Link key={p.slug} to={PATHS.project(p.slug)} style={{ textDecoration: 'none', display: 'block' }}>
-                            <motion.div
-                              layout
-                              initial={{ opacity: 0, y: 8 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              exit={{ opacity: 0, y: -8 }}
-                              className="project-card"
-                              style={{
-                                background: 'var(--cream)',
-                                borderRadius: 'var(--radius-lg)',
-                                padding: '14px',
-                                boxShadow: 'var(--shadow-card)',
-                                transition: 'box-shadow 0.25s ease',
-                              }}
-                            >
-                              <div className="flex items-start gap-2">
-                                <CategoryIcon category={p.category} size={12} style={{ flexShrink: 0, marginTop: '2px' }} />
-                                <p style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ink)', lineHeight: 1.4, margin: 0 }}>
-                                  {p.title}
-                                </p>
-                              </div>
-                              <div className="flex items-center gap-1.5" style={{ marginTop: '6px', marginLeft: '14px' }}>
-                                <div style={{ width: 16, height: 16, flexShrink: 0 }}>
-                                  <Avatar name={pi.name} initials={pi.initials} photoUrl={pi.photoUrl} size="2xs" variant="ice" />
-                                </div>
-                                <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.75 }}>
-                                  {p.pi ? displayName(p.pi, 'short') : pi.name}
-                                </span>
-                              </div>
-                            </motion.div>
-                          </Link>
-                        )
-                      })}
-                    </AnimatePresence>
-                    {stageProjects.length === 0 && (
-                      <div style={{ padding: 'var(--sp-xl) var(--sp-sm)', textAlign: 'center' }}>
-                        <span style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.75 }}>
-                          No projects
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
+          <PipelineBoard
+            byStage={byStage}
+            onStageChange={(slug, prevStage, nextStage) => {
+              const apiStage = toApiStage(nextStage)
+              inlineUpdate.mutate({ slug, fields: { stage: apiStage } })
+              showUndo(`stage → ${nextStage}`, () =>
+                inlineUpdate.mutate({ slug, fields: { stage: prevStage } })
               )
-            })}
-          </div>
+            }}
+          />
         )}
 
         {/* ─── TROPHY VIEW (P3-03) ─── cover-style cards for Published manuscripts */}
@@ -931,5 +871,194 @@ export default function Manuscripts() {
         }
       `}</style>
     </div>
+  )
+}
+
+// ───────────────────────────────────────────────────────────────────────
+// M-13: Pipeline drag-and-drop. PipelineBoard wraps the kanban in
+// DndContext + per-column droppable + per-card draggable. Drag a card
+// onto a different stage column → fires onStageChange. Optimistic update
+// + 5s undo handled in parent.
+// ───────────────────────────────────────────────────────────────────────
+
+type StageKey = typeof STAGES[number]
+
+function PipelineCard({ project, dragging }: { project: Project; dragging?: boolean }) {
+  const pi = getPersonInfo(project.pi)
+  return (
+    <div
+      className="project-card"
+      style={{
+        background: 'var(--cream)',
+        borderRadius: 'var(--radius-lg)',
+        padding: '14px',
+        boxShadow: dragging ? 'var(--shadow-elevated)' : 'var(--shadow-card)',
+        opacity: dragging ? 0.92 : 1,
+        cursor: dragging ? 'grabbing' : 'grab',
+        transition: 'box-shadow 0.15s ease',
+        userSelect: 'none',
+      }}
+    >
+      <div className="flex items-start gap-2">
+        <CategoryIcon category={project.category} size={12} style={{ flexShrink: 0, marginTop: '2px' }} />
+        <p style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ink)', lineHeight: 1.4, margin: 0 }}>
+          {project.title}
+        </p>
+      </div>
+      <div className="flex items-center gap-1.5" style={{ marginTop: '6px', marginLeft: '14px' }}>
+        <div style={{ width: 16, height: 16, flexShrink: 0 }}>
+          <Avatar name={pi.name} initials={pi.initials} photoUrl={pi.photoUrl} size="2xs" variant="ice" />
+        </div>
+        <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.75 }}>
+          {project.pi ? displayName(project.pi, 'short') : pi.name}
+        </span>
+      </div>
+    </div>
+  )
+}
+
+function DraggableCard({ project, isAnyDragging }: { project: Project; isAnyDragging: boolean }) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: project.slug,
+    data: { stage: project.stage },
+  })
+  return (
+    <div ref={setNodeRef} {...attributes} {...listeners}>
+      {/* Click navigates only when no drag in progress. */}
+      <Link
+        to={PATHS.project(project.slug)}
+        onClick={(e) => { if (isAnyDragging) e.preventDefault() }}
+        style={{ textDecoration: 'none', display: 'block' }}
+        draggable={false}
+      >
+        <motion.div
+          layout
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: isDragging ? 0 : 1, y: 0 }}
+          exit={{ opacity: 0, y: -8 }}
+        >
+          <PipelineCard project={project} />
+        </motion.div>
+      </Link>
+    </div>
+  )
+}
+
+function DroppableColumn({
+  stage,
+  children,
+}: {
+  stage: StageKey
+  children: React.ReactNode
+}) {
+  const { setNodeRef, isOver } = useDroppable({
+    id: `pipeline-col-${stage}`,
+    data: { stage },
+  })
+  return (
+    <div
+      ref={setNodeRef}
+      style={{
+        background: isOver ? 'var(--teal-hover)' : 'var(--ice)',
+        borderRadius: 'var(--radius-xl)',
+        borderTop: isOver ? '2px solid var(--gold)' : '2px solid var(--teal)',
+        padding: 'var(--sp-lg)',
+        minHeight: '200px',
+        transition: 'background 0.12s ease-out, border-color 0.12s ease-out',
+      }}
+    >
+      {children}
+    </div>
+  )
+}
+
+function PipelineBoard({
+  byStage,
+  onStageChange,
+}: {
+  byStage: Record<string, Project[]>
+  onStageChange: (slug: string, prevStage: string, nextStage: StageKey) => void
+}) {
+  const [activeId, setActiveId] = useState<string | null>(null)
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(KeyboardSensor),
+  )
+
+  const allProjects = useMemo(() => {
+    const out: Project[] = []
+    for (const s of STAGES) for (const p of byStage[s] || []) out.push(p)
+    return out
+  }, [byStage])
+
+  const activeProject = activeId ? allProjects.find((p) => p.slug === activeId) ?? null : null
+
+  function handleDragStart(e: DragStartEvent) {
+    setActiveId(String(e.active.id))
+  }
+
+  function handleDragEnd(e: DragEndEvent) {
+    setActiveId(null)
+    const { active, over } = e
+    if (!over) return
+    const draggedSlug = String(active.id)
+    const sourceStage = String((active.data.current as { stage?: string } | undefined)?.stage ?? '')
+    const targetStage = (over.data.current as { stage?: StageKey } | undefined)?.stage
+    if (!targetStage || sourceStage === targetStage) return
+    onStageChange(draggedSlug, sourceStage, targetStage)
+  }
+
+  return (
+    <DndContext
+      sensors={sensors}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      onDragCancel={() => setActiveId(null)}
+    >
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: `repeat(${STAGES.length}, minmax(180px, 1fr))`,
+          gap: '20px',
+          overflowX: 'auto',
+          paddingBottom: '1rem',
+        }}
+      >
+        {STAGES.map((stage) => {
+          const stageProjects = byStage[stage] || []
+          return (
+            <DroppableColumn key={stage} stage={stage}>
+              <div className="flex items-center justify-between" style={{ marginBottom: '12px' }}>
+                <h3 style={{ fontWeight: 500, fontSize: '13px', color: 'var(--ink)', margin: 0 }}>
+                  {stage}
+                </h3>
+                <span style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.75, fontWeight: 500 }}>
+                  {stageProjects.length}
+                </span>
+              </div>
+
+              <div className="flex flex-col" style={{ gap: '10px' }}>
+                <AnimatePresence mode="popLayout">
+                  {stageProjects.map((p) => (
+                    <DraggableCard key={p.slug} project={p} isAnyDragging={activeId !== null} />
+                  ))}
+                </AnimatePresence>
+                {stageProjects.length === 0 && (
+                  <div style={{ padding: 'var(--sp-xl) var(--sp-sm)', textAlign: 'center' }}>
+                    <span style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.75 }}>
+                      Drop here
+                    </span>
+                  </div>
+                )}
+              </div>
+            </DroppableColumn>
+          )
+        })}
+      </div>
+
+      <DragOverlay>
+        {activeProject ? <PipelineCard project={activeProject} dragging /> : null}
+      </DragOverlay>
+    </DndContext>
   )
 }
