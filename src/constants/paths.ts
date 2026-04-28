@@ -52,6 +52,7 @@ export const PATHS = {
   pb: `${PORTAL_PREFIX}/pb`,
   sessions: `${PORTAL_PREFIX}/sessions`,
   settings: `${PORTAL_PREFIX}/settings`,
+  profile: `${PORTAL_PREFIX}/profile`,
 
   teamMember: (slug: string) => `${PORTAL_PREFIX}/team/${slug}`,
   teamTrajectory: (slug: string) => `${PORTAL_PREFIX}/team/${slug}/trajectory`,

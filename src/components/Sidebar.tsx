@@ -99,6 +99,7 @@ const navGroups: NavGroup[] = [
       { to: PATHS.activity, label: 'Activity', icon: Activity },
       { to: PATHS.analytics, label: 'Analytics', icon: BarChart3 },
       { to: PATHS.insights, label: 'Insights', icon: TrendingUp },
+      { to: PATHS.profile, label: 'My Profile', icon: User },
       { to: PATHS.settings, label: 'Settings', icon: Settings },
     ],
   },
