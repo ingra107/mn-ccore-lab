@@ -750,7 +750,7 @@ app.post('/api/expertise/:id/delete', (c) => handleRemoveExpertise(c.req.param('
 // Questions / Answers
 app.post('/api/questions', (c) => handleCreateQuestion(R(c), USER(c), E(c)));
 app.post('/api/questions/:id/answers', (c) => handleCreateAnswer(c.req.param('id'), R(c), USER(c), E(c)));
-app.post('/api/answers/:id/accept', (c) => handleAcceptAnswer(c.req.param('id'), USER(c), E(c)));
+app.post('/api/answers/:id/accept', (c) => handleAcceptAnswer(c.req.param('id'), R(c), USER(c), E(c)));
 
 // AI requests
 app.post('/api/ai-requests', (c) => handleCreateAIRequest(R(c), USER(c), E(c)));
