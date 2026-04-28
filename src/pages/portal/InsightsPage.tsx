@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { TrendingUp, Activity, AlertTriangle, FlaskConical } from 'lucide-react'
@@ -7,6 +7,7 @@ import EmptyState from '../../components/EmptyState'
 import EmptyStateArt from '../../components/EmptyStateArt'
 import { TextSkeleton } from '../../components/LoadingSkeleton'
 import { TableContainer } from '../../components/table'
+import InlineDatePicker from '../../components/InlineDatePicker'
 import { useToast } from '../../hooks/useToast'
 import { useAuth } from '../../hooks/useAuth'
 import { emailToSlug } from '../../lib/emailSlug'
@@ -406,11 +407,17 @@ function StalledRegistry({ rows }: { rows: DashboardData['stalledRegistry'] }) {
   const queryClient = useQueryClient()
   const { showSuccess } = useToast()
   const { user } = useAuth()
+  // INS-02: per-row pending follow-up date. Defaults to +3d when row's Set
+  // follow-up button is first clicked; user can edit via InlineDatePicker
+  // before confirming. Map keyed by project slug.
+  const defaultDueStr = useMemo(() => {
+    const d = new Date()
+    d.setDate(d.getDate() + 3)
+    return d.toISOString().slice(0, 10)
+  }, [])
+  const [pendingDates, setPendingDates] = useState<Record<string, string>>({})
   const followUp = useMutation({
-    mutationFn: async (project: { slug: string; title: string }) => {
-      const due = new Date()
-      due.setDate(due.getDate() + 3)
-      const dueStr = due.toISOString().slice(0, 10)
+    mutationFn: async (project: { slug: string; title: string; dueStr: string }) => {
       const res = await fetch('/api/tasks', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -419,18 +426,29 @@ function StalledRegistry({ rows }: { rows: DashboardData['stalledRegistry'] }) {
           assignee: emailToSlug(user?.email) || 'nick-ingraham',
           project_id: project.slug,
           priority: 'high',
-          due_date: dueStr,
+          due_date: project.dueStr,
           status: 'todo',
         }),
       })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       return res.json()
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] })
       showSuccess('Follow-up task created')
+      // Reset that row's date so re-click starts at default again.
+      setPendingDates((prev) => {
+        const { [variables.slug]: _drop, ...rest } = prev
+        return rest
+      })
     },
   })
+
+  const dueFor = (slug: string) => pendingDates[slug] ?? defaultDueStr
+  const setDueFor = (slug: string, value: string | null) => {
+    if (!value) return
+    setPendingDates((prev) => ({ ...prev, [slug]: value }))
+  }
 
   if (rows.length === 0) {
     return (
@@ -444,8 +462,8 @@ function StalledRegistry({ rows }: { rows: DashboardData['stalledRegistry'] }) {
 
   return (
     <TableContainer>
-      <div className="hidden sm:grid" style={{ gridTemplateColumns: 'minmax(220px, 3fr) 100px 100px 160px', padding: 'var(--sp-sm) var(--sp-xl)', borderBottom: '1px solid var(--border-subtle)' }}>
-        {['Project', 'Days idle', 'Open tasks', 'Action'].map((label) => (
+      <div className="hidden sm:grid" style={{ gridTemplateColumns: 'minmax(220px, 3fr) 90px 90px 140px 130px', padding: 'var(--sp-sm) var(--sp-xl)', borderBottom: '1px solid var(--border-subtle)' }}>
+        {['Project', 'Days idle', 'Open tasks', 'Follow-up date', 'Action'].map((label) => (
           <span key={label} style={{ fontSize: 10, textTransform: 'uppercase', color: 'var(--slate)', opacity: 0.55, letterSpacing: '0.06em', fontWeight: 500 }}>
             {label}
           </span>
@@ -456,7 +474,7 @@ function StalledRegistry({ rows }: { rows: DashboardData['stalledRegistry'] }) {
           key={r.slug}
           className="hidden sm:grid"
           style={{
-            gridTemplateColumns: 'minmax(220px, 3fr) 100px 100px 160px',
+            gridTemplateColumns: 'minmax(220px, 3fr) 90px 90px 140px 130px',
             padding: 'var(--sp-md) var(--sp-xl)',
             borderBottom: '1px solid var(--border-subtle)',
             alignItems: 'center',
@@ -473,9 +491,13 @@ function StalledRegistry({ rows }: { rows: DashboardData['stalledRegistry'] }) {
           <span style={{ color: 'var(--slate)', fontVariantNumeric: 'tabular-nums' }}>
             {r.openTasks}
           </span>
+          <InlineDatePicker
+            value={dueFor(r.slug)}
+            onChange={(d) => setDueFor(r.slug, d)}
+          />
           <button
             type="button"
-            onClick={() => followUp.mutate({ slug: r.slug, title: r.title })}
+            onClick={() => followUp.mutate({ slug: r.slug, title: r.title, dueStr: dueFor(r.slug) })}
             disabled={followUp.isPending}
             style={{
               padding: '4px 10px',
@@ -506,11 +528,18 @@ function StalledRegistry({ rows }: { rows: DashboardData['stalledRegistry'] }) {
           <div className="flex items-center" style={{ gap: 12, marginTop: 4, fontSize: 11 }}>
             <span style={{ color: 'var(--maroon)', fontWeight: 600 }}>{r.daysIdle}d idle</span>
             <span style={{ color: 'var(--slate)' }}>{r.openTasks} tasks</span>
+          </div>
+          <div className="flex items-center" style={{ gap: 8, marginTop: 6 }}>
+            <InlineDatePicker
+              value={dueFor(r.slug)}
+              onChange={(d) => setDueFor(r.slug, d)}
+            />
             <button
-              onClick={() => followUp.mutate({ slug: r.slug, title: r.title })}
-              style={{ marginLeft: 'auto', padding: '4px 10px', fontSize: 11, color: 'var(--teal)', background: 'transparent', border: '1px solid var(--teal)', borderRadius: 'var(--radius-md)' }}
+              onClick={() => followUp.mutate({ slug: r.slug, title: r.title, dueStr: dueFor(r.slug) })}
+              disabled={followUp.isPending}
+              style={{ marginLeft: 'auto', padding: '4px 10px', fontSize: 11, color: 'var(--teal)', background: 'transparent', border: '1px solid var(--teal)', borderRadius: 'var(--radius-md)', cursor: 'pointer' }}
             >
-              + Follow-up
+              + Set follow-up
             </button>
           </div>
         </div>
