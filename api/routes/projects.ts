@@ -173,18 +173,35 @@ export async function handleCreateProject(
   return json({ data: created }, 201);
 }
 
-// GET /api/projects?status=&category=&include_deleted=1
+// GET /api/projects?status=&category=&include_deleted=1[&seq_after=N&limit=N]
 // Sync pipelines can opt into seeing soft-deleted rows via ?include_deleted=1
 // (mirrors the tasks endpoint contract added 2026-04-18 for sync_d1_pull).
 // Default behavior filters deleted_at IS NULL so UI never shows tombstones.
+//
+// 2026-04-28 (schema-v51): when ?seq_after=N is present, switches to
+// sync-cursor mode: filters seq > N, orders by seq ASC, applies limit
+// (default 2000). This is the canonical pull path for brain.db's hub.py
+// driver post-seq-cursor cutover. Wall-clock updated_at remains usable
+// for non-sync clients; seq_after takes precedence when both are sent.
 export async function handleProjects(url: URL, env: Env): Promise<Response> {
   const status = url.searchParams.get('status');
   const category = url.searchParams.get('category');
   const includeDeleted = url.searchParams.get('include_deleted') === '1';
+  const seqAfterRaw = url.searchParams.get('seq_after');
+  const limitRaw = url.searchParams.get('limit');
 
   const deletedFilter = includeDeleted ? '1=1' : 'deleted_at IS NULL';
   let query = `SELECT * FROM projects WHERE ${deletedFilter}`;
-  const params: string[] = [];
+  const params: (string | number)[] = [];
+
+  if (seqAfterRaw !== null) {
+    const seqAfter = Number.parseInt(seqAfterRaw, 10);
+    if (!Number.isFinite(seqAfter) || seqAfter < 0) {
+      return json({ error: 'seq_after must be a non-negative integer' }, 400);
+    }
+    query += ' AND seq > ?';
+    params.push(seqAfter);
+  }
 
   if (status) {
     query += ' AND status = ?';
@@ -196,7 +213,13 @@ export async function handleProjects(url: URL, env: Env): Promise<Response> {
     params.push(category);
   }
 
-  query += ' ORDER BY title ASC';
+  if (seqAfterRaw !== null) {
+    const limit = limitRaw ? Math.min(Math.max(Number.parseInt(limitRaw, 10) || 2000, 1), 5000) : 2000;
+    query += ' ORDER BY seq ASC LIMIT ?';
+    params.push(limit);
+  } else {
+    query += ' ORDER BY title ASC';
+  }
 
   const result = await env.DB.prepare(query).bind(...params).all();
   return json({ data: result.results, count: result.results.length });

@@ -14,6 +14,11 @@ export async function handleOverdueCount(url: URL, env: Env): Promise<Response> 
 }
 
 // GET /api/tasks?assignee=&status=&priority=&project=&meeting=&completed=&source=
+//
+// 2026-04-28 (schema-v51): when ?seq_after=N is present, switches to
+// sync-cursor mode: filters seq > N, orders by seq ASC, applies limit
+// (default 2000). Canonical pull path for brain.db's hub.py post-cutover.
+// updated_since/created_since remain for back-compat. seq_after wins.
 export async function handleTasks(url: URL, env: Env): Promise<Response> {
   const assignee = url.searchParams.get('assignee');
   const status = url.searchParams.get('status');
@@ -24,6 +29,8 @@ export async function handleTasks(url: URL, env: Env): Promise<Response> {
   const source = url.searchParams.get('source');
   const updatedSince = url.searchParams.get('updated_since');
   const createdSince = url.searchParams.get('created_since');
+  const seqAfterRaw = url.searchParams.get('seq_after');
+  const limitRaw = url.searchParams.get('limit');
   // Sync pipelines need to see soft-deletes to mirror them into brain.db.
   // Default: hide deleted tasks (existing UI contract). Opt-in via flag.
   const includeDeleted = url.searchParams.get('include_deleted') === '1';
@@ -34,6 +41,15 @@ export async function handleTasks(url: URL, env: Env): Promise<Response> {
   const deletedFilter = includeDeleted ? '1=1' : 't.deleted_at IS NULL';
   let query = `SELECT t.*, m.title as meeting_title, m.date as meeting_date FROM tasks t LEFT JOIN meetings m ON t.meeting_id = m.id WHERE ${deletedFilter}`;
   const params: (string | number)[] = [];
+
+  if (seqAfterRaw !== null) {
+    const seqAfter = Number.parseInt(seqAfterRaw, 10);
+    if (!Number.isFinite(seqAfter) || seqAfter < 0) {
+      return error('seq_after must be a non-negative integer', 400);
+    }
+    query += ' AND t.seq > ?';
+    params.push(seqAfter);
+  }
 
   if (assignee) { query += ' AND t.assignee = ?'; params.push(assignee); }
   if (status) { query += ' AND t.status = ?'; params.push(status); }
@@ -48,7 +64,13 @@ export async function handleTasks(url: URL, env: Env): Promise<Response> {
   if (updatedSince) { query += ' AND t.updated_at > ?'; params.push(updatedSince); }
   if (createdSince) { query += ' AND t.created_at > ?'; params.push(createdSince); }
 
-  query += ' ORDER BY t.completed ASC, t.due_date ASC, t.created_at DESC';
+  if (seqAfterRaw !== null) {
+    const limit = limitRaw ? Math.min(Math.max(Number.parseInt(limitRaw, 10) || 2000, 1), 5000) : 2000;
+    query += ' ORDER BY t.seq ASC LIMIT ?';
+    params.push(limit);
+  } else {
+    query += ' ORDER BY t.completed ASC, t.due_date ASC, t.created_at DESC';
+  }
 
   const result = await env.DB.prepare(query).bind(...params).all();
   const rows = filterFixtures(result.results, 'title', includeFixtures);
