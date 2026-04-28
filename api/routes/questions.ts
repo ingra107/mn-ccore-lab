@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, actorSlug } from '../helpers';
+import { json, error, generateId, logActivity, actorSlug, isPiRequest } from '../helpers';
 import { filterFixtures } from '../lib/fixtures';
 
 // ── AI Co-Scientist: detect @hermes/@claude mentions in answers ──
@@ -206,12 +206,24 @@ export async function handleCreateAnswer(questionId: string, request: Request, u
 
 // ── POST /api/answers/:id/accept ───────────────────────────────
 
-export async function handleAcceptAnswer(answerId: string, user: AuthUser, env: Env): Promise<Response> {
+export async function handleAcceptAnswer(answerId: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
   // Get the answer and its question
   const answer = await env.DB.prepare(
     'SELECT * FROM lab_answers WHERE id = ?'
   ).bind(answerId).first<AnswerRow>();
   if (!answer) return error('Answer not found', 404);
+
+  // Authorization: PI OR the asker can accept (Stack Overflow model). D1 in DECISIONS-RESOLVED.
+  const question = await env.DB.prepare(
+    'SELECT asked_by FROM lab_questions WHERE id = ?'
+  ).bind(answer.question_id).first<{ asked_by: string }>();
+  if (!question) return error('Question not found', 404);
+
+  const actorSlugValue = actorSlug(user.email);
+  const isPi = await isPiRequest(request, env);
+  if (!isPi && actorSlugValue !== question.asked_by) {
+    return error('Only the PI or the question asker can accept an answer', 403);
+  }
 
   // Mark this answer as accepted
   await env.DB.prepare(
@@ -223,7 +235,6 @@ export async function handleAcceptAnswer(answerId: string, user: AuthUser, env: 
     'UPDATE lab_questions SET status = ? WHERE id = ?'
   ).bind('resolved', answer.question_id).run();
 
-  const actorSlugValue = actorSlug(user.email);
   await logActivity(
     env,
     'answer_accepted',

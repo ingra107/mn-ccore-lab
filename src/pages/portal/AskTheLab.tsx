@@ -362,8 +362,8 @@ function QuestionExpanded({ questionId }: { questionId: string }) {
                     {answer.content}
                   </p>
 
-                  {/* Accept button — only for PI (ningraha) and if not yet accepted */}
-                  {!answer.is_accepted && detail.status === 'open' && userSlug === 'ningraha' && (
+                  {/* Accept button — PI OR the asker can accept (Stack Overflow model). D1 in DECISIONS-RESOLVED. */}
+                  {!answer.is_accepted && detail.status === 'open' && (user?.isPi || userSlug === detail.asked_by) && (
                     <button
                       onClick={() => acceptAnswerMut.mutate(answer.id)}
                       className="mt-2 flex items-center gap-1 px-2 py-1 rounded-md text-xs transition-colors hover:bg-black/5"
