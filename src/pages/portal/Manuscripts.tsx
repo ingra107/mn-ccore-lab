@@ -30,6 +30,19 @@ import { PATHS } from '../../constants/paths'
 const STAGES = ['Idea', 'Data Collection', 'Analysis', 'Writing', 'Review', 'Revisions', 'Published'] as const
 const STAGE_ORDER: Record<string, number> = Object.fromEntries(STAGES.map((s, i) => [s, i]))
 
+// M-06: stage-progress dots use --stage-fill-* tokens (per Rule 41) so the
+// current-stage dot stays AA-stable across both themes. --teal flips to a
+// light dark-mode variant where it would fail contrast against row-hover bg.
+const STAGE_FILL_TOKEN: Record<typeof STAGES[number], string> = {
+  Idea: 'var(--stage-fill-idea)',
+  'Data Collection': 'var(--stage-fill-data-collection)',
+  Analysis: 'var(--stage-fill-analysis)',
+  Writing: 'var(--stage-fill-writing)',
+  Review: 'var(--stage-fill-review)',
+  Revisions: 'var(--stage-fill-revisions)',
+  Published: 'var(--stage-fill-published)',
+}
+
 // PI options for inline editing. Primary investigators on CCORE manuscripts
 // are the two directors (Nick + Nate). More PIs can be added as they start
 // owning manuscript projects.
@@ -464,22 +477,25 @@ export default function Manuscripts() {
                                 {tc}
                               </span>
                             )}
-                            {/* Stage progress dots: completed=gray filled, current=teal, pending=faint outlined */}
+                            {/* Stage progress dots: past=ink-muted, current=stage-fill (M-06),
+                                future=outlined transparent. */}
                             <div className="flex items-center gap-0.5 ml-1 flex-shrink-0">
                               {STAGES.map((s, i) => {
                                 const currentIdx = STAGES.indexOf((project.stage as typeof STAGES[number]) || 'Idea')
+                                const isCurrent = i === currentIdx
+                                const isPast = i < currentIdx
                                 return (
                                   <div
                                     key={s}
                                     style={{
                                       width: 5, height: 5, borderRadius: 'var(--radius-circle)',
-                                      background: i < currentIdx
+                                      background: isPast
                                         ? 'var(--ink-muted)'
-                                        : i === currentIdx
-                                          ? 'var(--teal)'
+                                        : isCurrent
+                                          ? STAGE_FILL_TOKEN[s]
                                           : 'transparent',
-                                      border: i > currentIdx ? '1px solid var(--border-subtle)' : 'none',
-                                      opacity: i > currentIdx ? 0.85 : 1,
+                                      border: !isCurrent && !isPast ? '1px solid var(--border-subtle)' : 'none',
+                                      opacity: !isCurrent && !isPast ? 0.85 : 1,
                                       transition: 'background 200ms',
                                       boxSizing: 'border-box',
                                     }}
