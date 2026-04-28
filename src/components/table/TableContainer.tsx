@@ -7,6 +7,9 @@ interface TableContainerProps {
    * but mixed role="grid" wrappers inside TableContainer caused axe
    * aria-required-children — accepted as a no-op for now (2026-04-18). */
   ariaLabel?: string
+  /** Optional element id. Used by aria-controls handshakes — e.g. the
+   *  Manuscripts category tablist points its tabs at the table id. */
+  id?: string
 }
 
 /**
@@ -20,9 +23,9 @@ interface TableContainerProps {
  * directly on their row wrappers.
  */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export default function TableContainer({ children, className, ariaLabel: _ariaLabel }: TableContainerProps) {
+export default function TableContainer({ children, className, ariaLabel: _ariaLabel, id }: TableContainerProps) {
   return (
-    <div className={`table-container${className ? ` ${className}` : ''}`}>
+    <div id={id} className={`table-container${className ? ` ${className}` : ''}`}>
       {children}
     </div>
   )

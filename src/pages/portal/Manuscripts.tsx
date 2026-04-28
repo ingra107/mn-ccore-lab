@@ -350,6 +350,7 @@ export default function Manuscripts() {
                 key={opt.value || 'all'}
                 role="tab"
                 aria-selected={active}
+                aria-controls="manuscripts-table"
                 onClick={() => setFilterCategory(opt.value)}
                 style={{
                   display: 'inline-flex',
@@ -381,7 +382,7 @@ export default function Manuscripts() {
 
         {/* ─── LIST VIEW ─── */}
         {!isLoading && view === 'list' && (
-          <TableContainer className={densityClass(density)}>
+          <TableContainer id="manuscripts-table" className={densityClass(density)}>
             {/* Table header — sortable */}
             <div
               className="hidden sm:grid manuscripts-grid-row"
