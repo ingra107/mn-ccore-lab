@@ -1,7 +1,8 @@
 import { memo, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { Calendar, AlertCircle, ArrowRight, ListChecks, CalendarOff, UserCheck } from 'lucide-react'
-import { useMeetingsApi, useActionItems, useMeetingCadence } from '../../hooks/useApiData'
+import { useMeetingsApi, useActionItems, useMeetingCadence, useTasks } from '../../hooks/useApiData'
+import { useGrantTimeline } from '../../hooks/useGrantTimeline'
 import { getMeetingFacilitator } from '../../lib/facilitator'
 import { getPersonInfo } from '../../data/team'
 import BentoCard from './BentoCard'
@@ -10,71 +11,91 @@ import { PATHS } from '../../constants/paths'
 interface Deadline {
   date: string
   label: string
-  type: 'grant' | 'milestone' | 'review'
+  type: 'task' | 'grant' | 'milestone'
   daysUntil: number
 }
 
-function generateDeadlines(): Deadline[] {
-  // Generate plausible upcoming deadlines based on real grant/project data
-  const deadlines: Deadline[] = [
-    {
-      date: formatDate(daysFromNow(12)),
-      label: 'R01 ADHERE-LPV LOI due',
-      type: 'grant',
-      daysUntil: 12,
-    },
-    {
-      date: formatDate(daysFromNow(28)),
-      label: 'LPV Variation revision response',
-      type: 'review',
-      daysUntil: 28,
-    },
-    {
-      date: formatDate(daysFromNow(45)),
-      label: 'CLIF annual meeting abstract',
-      type: 'milestone',
-      daysUntil: 45,
-    },
-    {
-      date: formatDate(daysFromNow(67)),
-      label: 'K23 progress report',
-      type: 'grant',
-      daysUntil: 67,
-    },
-    {
-      date: formatDate(daysFromNow(-3)),
-      label: 'CCI-ARDS data freeze',
-      type: 'milestone',
-      daysUntil: -3,
-    },
-  ]
-
-  return deadlines.sort((a, b) => a.daysUntil - b.daysUntil)
-}
-
-function daysFromNow(days: number): Date {
-  const d = new Date()
-  d.setDate(d.getDate() + days)
-  return d
-}
-
-function formatDate(d: Date): string {
+function formatDateShort(d: Date): string {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
 function typeColor(type: Deadline['type']): string {
   switch (type) {
+    case 'task': return 'var(--teal)'
     case 'grant': return 'var(--gold)'
-    case 'review': return 'var(--teal)'
     case 'milestone': return 'var(--slate)'
   }
 }
 
 function UpcomingCard() {
-  const deadlines = generateDeadlines()
   const { data: meetings = [] } = useMeetingsApi()
   const { data: allActionItems = [] } = useActionItems()
   const { data: cadence } = useMeetingCadence()
+  const { data: tasks = [] } = useTasks()
+  const { data: grants = [] } = useGrantTimeline()
+
+  // Aggregate real deadlines from open tasks (with due_date) + grant milestones.
+  // Cap to 5 most-urgent: overdue first (most-overdue first), then ascending by days-until-due.
+  const deadlines = useMemo<Deadline[]>(() => {
+    const now = new Date()
+    const items: Deadline[] = []
+
+    // Open tasks with a due_date (skip completed)
+    for (const t of tasks) {
+      if (!t.due_date || t.completed) continue
+      const due = new Date(t.due_date + 'T23:59:59')
+      const daysUntil = Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+      items.push({
+        date: formatDateShort(due),
+        label: t.title || t.description || 'Untitled task',
+        type: 'task',
+        daysUntil,
+      })
+    }
+
+    // Grant milestones (target_date)
+    for (const g of grants) {
+      for (const m of g.milestones || []) {
+        if (!m.target_date) continue
+        if (m.status === 'completed') continue
+        const due = new Date(m.target_date + 'T23:59:59')
+        const daysUntil = Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+        items.push({
+          date: formatDateShort(due),
+          label: `${g.mechanism}: ${m.title}`,
+          type: 'milestone',
+          daysUntil,
+        })
+      }
+    }
+
+    // Grant submission targets (end_date) for grants in submission lifecycle
+    for (const g of grants) {
+      if (!g.end_date) continue
+      // Only surface grants that haven't yet been funded/closed/declined
+      if (g.status === 'funded' || g.status === 'closed' || g.status === 'declined') continue
+      const due = new Date(g.end_date + 'T23:59:59')
+      const daysUntil = Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+      items.push({
+        date: formatDateShort(due),
+        label: `${g.mechanism} ${g.pi || ''} — ${g.title}`.trim(),
+        type: 'grant',
+        daysUntil,
+      })
+    }
+
+    // Sort: overdue first (negative days, most overdue first), then ascending by days-until-due
+    items.sort((a, b) => {
+      const aOver = a.daysUntil < 0
+      const bOver = b.daysUntil < 0
+      if (aOver && bOver) return a.daysUntil - b.daysUntil  // -10 before -2
+      if (aOver) return -1
+      if (bOver) return 1
+      return a.daysUntil - b.daysUntil  // ascending future
+    })
+
+    return items.slice(0, 5)
+  }, [tasks, grants])
 
   // Find the next upcoming meeting — closest future date wins, regardless of status
   const nextMeeting = useMemo(() => {
@@ -205,6 +226,11 @@ function UpcomingCard() {
       )}
 
       <div className="flex flex-col gap-1">
+        {deadlines.length === 0 && (
+          <div className="py-3 text-center" style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
+            No upcoming deadlines
+          </div>
+        )}
         {deadlines.map((d, i) => {
           const isUrgent = d.daysUntil >= 0 && d.daysUntil <= 30
           const isOverdue = d.daysUntil < 0
