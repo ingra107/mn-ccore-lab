@@ -746,42 +746,37 @@ export default function MeetingDetail() {
           </div>
           <div style={{ background: 'var(--ice)', borderRadius: 'var(--radius-xl)', padding: '20px' }} className="detail-card">
             {editingNotes ? (
-              <div>
-                <textarea
+              <div onKeyDown={(e) => {
+                if (e.key === 'Escape') {
+                  e.preventDefault()
+                  setNotesDraft(meeting?.notes || '')
+                  setEditingNotes(false)
+                }
+              }}>
+                {/* SmartCompose (D14) — replaces bare textarea. @-mention,
+                    emoji, R2 paperclip via uploadContext={type:'meeting'},
+                    Cmd+Enter triggers Save Notes via onSubmit. */}
+                <SmartCompose
+                  theme="light"
+                  bare
                   value={notesDraft}
-                  onChange={(e) => setNotesDraft(e.target.value)}
+                  onChange={setNotesDraft}
+                  onSubmit={async (content) => {
+                    await new Promise<void>((resolve) => {
+                      updateNotes.mutate(content, { onSuccess: () => resolve(), onError: () => resolve() })
+                    })
+                    setEditingNotes(false)
+                  }}
+                  submitting={updateNotes.isPending}
+                  uploadContext={meeting ? { type: 'meeting', id: meeting.id } : undefined}
+                  placeholder="Meeting notes…"
                   rows={12}
-                  style={{
-                    width: '100%',
-                    fontSize: '14px',
-                    lineHeight: 1.7,
-                    color: 'var(--ink)',
-                    background: 'var(--cream)',
-                    border: '1px solid rgba(201,168,76,0.2)',
-                    borderRadius: 'var(--radius-lg)',
-                    padding: 'var(--sp-md) var(--sp-lg)',
-                    resize: 'vertical',
-                    boxSizing: 'border-box',
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-                      updateNotes.mutate(notesDraft)
-                      setEditingNotes(false)
-                    }
-                    if (e.key === 'Escape') {
-                      setNotesDraft(meeting?.notes || '')
-                      setEditingNotes(false)
-                    }
-                  }}
+                  alwaysShowToolbar
                   autoFocus
+                  submitLabel="Save Notes"
+                  submittingLabel="Saving…"
                 />
                 <div className="flex items-center gap-2 mt-2">
-                  <button
-                    onClick={() => { updateNotes.mutate(notesDraft); setEditingNotes(false) }}
-                    style={{ background: '#dcb355', color: '#1a1a1a', border: 'none', borderRadius: 'var(--radius-md)', padding: '6px 16px', fontSize: 'var(--value-size)', fontWeight: 600, cursor: 'pointer' }}
-                  >
-                    Save Notes
-                  </button>
                   <button
                     onClick={() => { setNotesDraft(meeting?.notes || ''); setEditingNotes(false) }}
                     style={{ background: 'none', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)', padding: '6px 16px', fontSize: 'var(--value-size)', cursor: 'pointer', color: 'var(--slate)' }}
