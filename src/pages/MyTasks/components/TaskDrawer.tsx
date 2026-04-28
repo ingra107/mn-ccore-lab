@@ -7,11 +7,12 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Link } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import { PATHS } from '../../../constants/paths'
 import { useTaskDetail } from '../../../hooks/useApiData'
 import ReactionBar from '../../../components/ReactionBar'
 import SmartCompose from '../../../components/SmartCompose'
-import { useUpdateTask } from '../../../hooks/useMutations'
+import { useUpdateTask, useToggleSubtask } from '../../../hooks/useMutations'
 import { useUndoToast } from '../../../components/UndoToast'
 import { Chip } from '../primitives'
 import {
@@ -43,6 +44,12 @@ export function TaskDrawer({ task, project, onClose }: { task: TaskRow; project:
   // Wire ▶ Work / 📌 Plan today to today_state localStorage (TodayPage picks up).
   const undoToast = useUndoToast()
   const updateTask = useUpdateTask()
+
+  // Subtask toggle — MT-03. Drawer's subtasks come from useTaskDetail
+  // (`['task-detail', taskId]`); useToggleSubtask invalidates only
+  // `['subtasks', taskId]`, so add an onSettled to invalidate task-detail.
+  const toggleSubtask = useToggleSubtask(task.id)
+  const queryClient = useQueryClient()
   const snap = readTodayState()
   const isPromoted = snap.rightNow === task.id
   const isPlanned = !!snap.planned?.[task.id]
@@ -147,7 +154,14 @@ export function TaskDrawer({ task, project, onClose }: { task: TaskRow; project:
         {!detailQuery.isLoading && subtasks.length === 0 && <div style={{ fontSize: 11, color: INK_DIM, fontStyle: 'italic' }}>None yet.</div>}
         {subtasks.map((s) => (
           <div key={s.id} style={{ display: 'flex', gap: 6, padding: '3px 0', alignItems: 'flex-start' }}>
-            <input type="checkbox" defaultChecked={s.completed === 1} style={{ marginTop: 2, accentColor: ACCENT_GREEN, cursor: 'pointer' }} />
+            <input
+              type="checkbox"
+              checked={s.completed === 1}
+              onChange={() => toggleSubtask.mutate(s.id, {
+                onSettled: () => queryClient.invalidateQueries({ queryKey: ['task-detail', task.id] }),
+              })}
+              style={{ marginTop: 2, accentColor: ACCENT_GREEN, cursor: 'pointer' }}
+            />
             <span style={{ fontSize: 12, color: s.completed === 1 ? INK_DIM : INK, textDecoration: s.completed === 1 ? 'line-through' : 'none', lineHeight: 1.4 }}>{s.title}</span>
           </div>
         ))}
