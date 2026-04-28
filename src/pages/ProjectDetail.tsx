@@ -279,6 +279,8 @@ function ProjectDetailInner({ project }: InnerProps) {
   const [descDraft, setDescDraft] = useState(project.description ?? '')
   const [editingShortName, setEditingShortName] = useState(false)
   const [shortNameDraft, setShortNameDraft] = useState(project.short_name ?? '')
+  const [editingTitle, setEditingTitle] = useState(false)
+  const [titleDraft, setTitleDraft] = useState(project.title)
   const descRef = useRef<HTMLTextAreaElement>(null)
 
   // Notes/Comments explainer banner dismissibility (PD-4)
@@ -440,6 +442,14 @@ function ProjectDetailInner({ project }: InnerProps) {
     }
   }
 
+  function handleTitleSave() {
+    setEditingTitle(false)
+    const trimmed = titleDraft.trim()
+    if (trimmed && trimmed !== project.title.trim()) {
+      d1Update.mutate({ title: trimmed } as Partial<Project>)
+    }
+  }
+
 
   return (
     <>
@@ -455,17 +465,56 @@ function ProjectDetailInner({ project }: InnerProps) {
         {/* Title row */}
         <div className="flex items-start justify-between gap-4 mb-3">
           <div style={{ flex: 1, minWidth: 0 }}>
-            <h1
-              style={{
-                fontWeight: 700,
-                fontSize: 'clamp(1.25rem, 3vw, 1.75rem)',
-                color: 'var(--ink)',
-                margin: 0,
-                lineHeight: 1.2,
-              }}
-            >
-              {project.title}
-            </h1>
+            {editingTitle ? (
+              <input
+                value={titleDraft}
+                onChange={(e) => setTitleDraft(e.target.value)}
+                onBlur={handleTitleSave}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    handleTitleSave()
+                  }
+                  if (e.key === 'Escape') {
+                    setTitleDraft(project.title)
+                    setEditingTitle(false)
+                  }
+                }}
+                autoFocus
+                aria-label="Edit project title"
+                style={{
+                  fontWeight: 700,
+                  fontSize: 'clamp(1.25rem, 3vw, 1.75rem)',
+                  color: 'var(--ink)',
+                  background: 'none',
+                  border: 'none',
+                  borderBottom: '2px solid var(--teal)',
+                  outline: 'none',
+                  padding: '2px 0',
+                  width: '100%',
+                  fontFamily: 'inherit',
+                  lineHeight: 1.2,
+                }}
+              />
+            ) : (
+              <h1
+                onClick={() => {
+                  setTitleDraft(project.title)
+                  setEditingTitle(true)
+                }}
+                title="Click to edit title"
+                style={{
+                  fontWeight: 700,
+                  fontSize: 'clamp(1.25rem, 3vw, 1.75rem)',
+                  color: 'var(--ink)',
+                  margin: 0,
+                  lineHeight: 1.2,
+                  cursor: 'pointer',
+                }}
+              >
+                {project.title}
+              </h1>
+            )}
             {editingShortName ? (
               <input
                 value={shortNameDraft}
