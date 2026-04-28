@@ -379,14 +379,14 @@ export async function handleProjectHealth(env: Env): Promise<Response> {
   return json({ data: healthData, summary });
 }
 
-// GET /api/updates/recent?limit=20[&since=ISO_TIMESTAMP]
+// GET /api/updates/recent?limit=N[&since=ISO_TIMESTAMP]
 //
 // 2026-04-28 (silent-data-loss class P3): added `since` cursor support.
-// Pre-fix the endpoint was limit-based with no cursor — if volume between
-// pulls exceeded `limit`, oldest project_updates were silently dropped.
-// Volume is currently low (0/24h) so the bug never bit, but structurally
-// same shape as wall-clock-cursor. Brain.db's pull_project_updates now
-// tracks last `since` in sync_cursors and only fetches deltas.
+// Codex review caught a follow-up bug: ORDER BY DESC + advance-to-MAX leaks
+// when volume > limit. Fix: when `since` is present, return ASC so client
+// can paginate forward and never miss the oldest rows; when no `since`
+// (UI-style "give me 20 newest"), keep DESC for back-compat. Brain.db
+// pull_project_updates now paginates until response_count < limit.
 export async function handleRecentUpdates(url: URL, env: Env): Promise<Response> {
   const limit = Math.min(parseInt(url.searchParams.get('limit') || '20', 10), 500);
   const since = url.searchParams.get('since');
@@ -395,8 +395,12 @@ export async function handleRecentUpdates(url: URL, env: Env): Promise<Response>
   if (since) {
     query += ' WHERE created_at > ?';
     binds.push(since);
+    // Sync mode: ASC + tiebreak on id ensures the client can resume
+    // exactly from the last seen (created_at, id) pair without overlap or skip.
+    query += ' ORDER BY created_at ASC, id ASC LIMIT ?';
+  } else {
+    query += ' ORDER BY created_at DESC LIMIT ?';
   }
-  query += ' ORDER BY created_at DESC LIMIT ?';
   binds.push(limit);
   const result = await env.DB.prepare(query).bind(...binds).all();
   return json({ data: result.results, count: result.results.length });

@@ -816,6 +816,10 @@ export async function handleAcknowledgeTask(id: string, request: Request, user: 
 }
 
 // GET /api/task-updates/recent — bulk fetch recent task updates (for sync pull)
+//
+// 2026-04-28 (Codex review fix): when ?since= is present, ORDER BY ASC so
+// brain.db pull_task_updates can paginate forward without losing rows when
+// volume between pulls exceeds limit. DESC kept for UI-style "newest 100".
 export async function handleGetRecentTaskUpdates(url: URL, env: Env): Promise<Response> {
   const limit = parseInt(url.searchParams.get('limit') || '100')
   const since = url.searchParams.get('since') // ISO timestamp for delta sync
@@ -824,8 +828,10 @@ export async function handleGetRecentTaskUpdates(url: URL, env: Env): Promise<Re
   if (since) {
     query += ' WHERE created_at > ?'
     binds.push(since)
+    query += ' ORDER BY created_at ASC, id ASC LIMIT ?'
+  } else {
+    query += ' ORDER BY created_at DESC LIMIT ?'
   }
-  query += ' ORDER BY created_at DESC LIMIT ?'
   binds.push(Math.min(limit, 500))
   const stmt = env.DB.prepare(query)
   const result = await (binds.length === 2 ? stmt.bind(binds[0], binds[1]) : stmt.bind(binds[0])).all()
