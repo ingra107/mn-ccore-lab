@@ -13,6 +13,7 @@ import { LinkRow } from './primitives'
 import { ACCENT_GOLD, INK, INK_MUTED, INK_DIM, PAGE_BG, type LinkKind } from './constants'
 import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow } from '../../lib/api'
+import SmartCompose from '../SmartCompose'
 
 export function RightNow({ task, project, queueTasks, state }: { task: TaskRow | null; project: { name: string; slug: string } | null; queueTasks: Array<{ id: string; title: string }>; state: TodayStateApi }) {
   const [expanded, setExpanded] = useState(false)
@@ -63,12 +64,18 @@ export function RightNow({ task, project, queueTasks, state }: { task: TaskRow |
           {task.description && (
             <div style={{ fontSize: 12, color: INK_MUTED, marginBottom: 8, fontStyle: 'italic' }}>{task.description.split('\n')[0].slice(0, 280)}</div>
           )}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ fontSize: 12, color: ACCENT_GOLD }}>💬</span>
-            <input
-              placeholder="Chat with Claude about this task…"
-              style={{ flex: 1, background: 'rgba(0,0,0,0.20)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 4, padding: '5px 10px', fontSize: 12, color: INK, outline: 'none', fontFamily: 'inherit' }}
-            />
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>
+            <span style={{ fontSize: 12, color: ACCENT_GOLD, marginTop: 4 }}>💬</span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <SmartCompose
+                taskId={task.id}
+                placeholder="Chat with Claude about this task… (@hermes for AI)"
+                theme="dark"
+                bare
+                rows={1}
+                autoFocus
+              />
+            </div>
           </div>
         </div>
       )}
