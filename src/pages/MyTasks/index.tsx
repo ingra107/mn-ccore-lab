@@ -246,7 +246,7 @@ export default function UnifiedMyTasks() {
           ) : view === 'lanes' ? (
             <LanesView byGroup={byGroup} selected={selected} toggleSelect={toggleSelect} expanded={expanded} setExpanded={setExpanded} projectsByPid={projectsByPid} plannedSet={plannedSet} />
           ) : (
-            <ListView filtered={filtered} selected={selected} toggleSelect={toggleSelect} setSelected={setSelected} setDrawer={setDrawer} projectsByPid={projectsByPid} plannedSet={plannedSet} />
+            <ListView filtered={filtered} selected={selected} toggleSelect={toggleSelect} setSelected={setSelected} setDrawer={setDrawer} projectsByPid={projectsByPid} projectOptions={projectOptions} plannedSet={plannedSet} />
           )}
         </div>
       </div>
