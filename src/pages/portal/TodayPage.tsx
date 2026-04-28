@@ -11,7 +11,7 @@
 // explicit ▶ button = promote (Rule 58).
 
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
-import { useTasks, useProjects, useMeetingsApi, useExpiringRegulatory, useUserCalendarEvents } from '../../hooks/useApiData'
+import { useTasks, useProjects, useMeetingsApi, useExpiringRegulatory, useUserCalendarEvents, usePBSessionStats } from '../../hooks/useApiData'
 import { useAuth } from '../../hooks/useAuth'
 import { emailToSlug } from '../../lib/emailSlug'
 import { usePageMeta } from '../../hooks/usePageMeta'
@@ -49,6 +49,9 @@ export default function TodayPage() {
   const meetingsQuery = useMeetingsApi()
   const regulatoryQuery = useExpiringRegulatory(60)
   const calendarEventsQuery = useUserCalendarEvents()
+  // TP-16 (D19): focusMin reads from real PB pomodoro sessions instead of
+  // the prior fake `plannedIds × 30` math. Returns 0 if no sessions today.
+  const sessionStatsQuery = usePBSessionStats()
 
   const tasks: TaskRow[] = useMemo(() => (tasksQuery.data ?? []).filter((t) => t.completed === 0 && t.status !== 'done'), [tasksQuery.data])
 
@@ -142,10 +145,16 @@ export default function TodayPage() {
     return reg.map((r: any) => ({ title: r.name ?? r.title ?? 'Regulatory item', days: r.days_until_expiry ?? 0 })).filter((m: { days: number }) => m.days > 0).sort((a: { days: number }, b: { days: number }) => a.days - b.days).slice(0, 5)
   }, [regulatoryQuery.data])
 
-  // Pulse: focus minutes proxy (planned tasks × 30min average), sync staleness, mentees.
-  // Mentees = researchTeam slugs (Coordinators / Fellows / Students / Analysts).
-  // Each mentee's "next" is the soonest due_date among their assigned tasks; — if none.
-  const focusMin = useMemo(() => state.plannedIds().length * 30, [state])
+  // Pulse: real focus minutes from PB pomodoro sessions today (D19),
+  // sync staleness, mentees. Mentees = researchTeam slugs (Coordinators /
+  // Fellows / Students / Analysts). Each mentee's "next" is the soonest
+  // due_date among their assigned tasks; — if none.
+  const focusMin = useMemo(() => {
+    const today = todayKey()
+    const perDay = sessionStatsQuery.data?.per_day ?? []
+    const todayRow = perDay.find((d) => d.day === today)
+    return todayRow?.total_minutes ?? 0
+  }, [sessionStatsQuery.data])
   const syncHours = useMemo(() => hoursSinceLastSync(), [])
   const mentees = useMemo(() => {
     const allTasks = tasksQuery.data ?? []
