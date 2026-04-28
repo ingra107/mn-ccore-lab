@@ -25,6 +25,7 @@ import EmptyState from '../../components/EmptyState'
 import { usePageMeta } from '../../hooks/usePageMeta'
 import { useScrollReveal } from '../../hooks/useScrollReveal'
 import { useLabPrefs } from '../../hooks/useLabPrefs'
+import { toApiStage } from '../../lib/stageNormalize'
 import { PATHS } from '../../constants/paths'
 
 const STAGES = ['Idea', 'Data Collection', 'Analysis', 'Writing', 'Review', 'Revisions', 'Published'] as const
@@ -478,29 +479,61 @@ export default function Manuscripts() {
                               </span>
                             )}
                             {/* Stage progress dots: past=ink-muted, current=stage-fill (M-06),
-                                future=outlined transparent. */}
-                            <div className="flex items-center gap-0.5 ml-1 flex-shrink-0">
+                                future=outlined transparent. M-07: each dot is a button
+                                that advances the stage to that target with optimistic
+                                update + 5s undo. */}
+                            <div className="flex items-center gap-0.5 ml-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
                               {STAGES.map((s, i) => {
                                 const currentIdx = STAGES.indexOf((project.stage as typeof STAGES[number]) || 'Idea')
                                 const isCurrent = i === currentIdx
                                 const isPast = i < currentIdx
                                 return (
-                                  <div
+                                  <button
                                     key={s}
-                                    style={{
-                                      width: 5, height: 5, borderRadius: 'var(--radius-circle)',
-                                      background: isPast
-                                        ? 'var(--ink-muted)'
-                                        : isCurrent
-                                          ? STAGE_FILL_TOKEN[s]
-                                          : 'transparent',
-                                      border: !isCurrent && !isPast ? '1px solid var(--border-subtle)' : 'none',
-                                      opacity: !isCurrent && !isPast ? 0.85 : 1,
-                                      transition: 'background 200ms',
-                                      boxSizing: 'border-box',
+                                    type="button"
+                                    aria-label={`Advance ${project.title} to ${s}`}
+                                    aria-current={isCurrent ? 'step' : undefined}
+                                    onClick={(e) => {
+                                      e.preventDefault()
+                                      e.stopPropagation()
+                                      if (isCurrent) return
+                                      const prevStage = project.stage
+                                      const next = toApiStage(s)
+                                      inlineUpdate.mutate({ slug: project.slug, fields: { stage: next } })
+                                      showUndo(`stage → ${s}`, () =>
+                                        inlineUpdate.mutate({ slug: project.slug, fields: { stage: prevStage } })
+                                      )
                                     }}
-                                    title={s}
-                                  />
+                                    style={{
+                                      width: 11, height: 11,
+                                      padding: 3,
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      borderRadius: 'var(--radius-circle)',
+                                      background: 'transparent',
+                                      border: 'none',
+                                      cursor: isCurrent ? 'default' : 'pointer',
+                                    }}
+                                    title={isCurrent ? `${s} (current stage)` : `Advance to ${s}`}
+                                  >
+                                    <span
+                                      aria-hidden="true"
+                                      style={{
+                                        width: 5, height: 5, borderRadius: 'var(--radius-circle)',
+                                        background: isPast
+                                          ? 'var(--ink-muted)'
+                                          : isCurrent
+                                            ? STAGE_FILL_TOKEN[s]
+                                            : 'transparent',
+                                        border: !isCurrent && !isPast ? '1px solid var(--border-subtle)' : 'none',
+                                        opacity: !isCurrent && !isPast ? 0.85 : 1,
+                                        transition: 'background 200ms',
+                                        boxSizing: 'border-box',
+                                        display: 'block',
+                                      }}
+                                    />
+                                  </button>
                                 )
                               })}
                             </div>
