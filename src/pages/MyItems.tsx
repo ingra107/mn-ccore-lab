@@ -90,7 +90,7 @@ function StatCard({
           width: 40,
           height: 40,
           borderRadius: 'var(--radius-xl)',
-          background: `${accentColor}18`,
+          background: `color-mix(in srgb, ${accentColor} 9%, transparent)`,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -769,19 +769,19 @@ export default function MyItems() {
             count={pending.length}
             label="Pending Action Items"
             icon={<Circle size={20} />}
-            accentColor="#c9a84c"
+            accentColor="var(--gold)"
           />
           <StatCard
             count={unreadCount}
             label="Unread Notifications"
             icon={<BellDot size={20} />}
-            accentColor="#2d8a8a"
+            accentColor="var(--teal)"
           />
           <StatCard
             count={openCommitments.length}
             label="Open Commitments"
             icon={<Handshake size={20} />}
-            accentColor="#c9a84c"
+            accentColor="var(--maroon)"
           />
         </div>
 
