@@ -124,48 +124,78 @@ export default function NeedsAttentionDashboard({ filter, onFilterChange }: Prop
           {SUBGROUPS.filter((g) => counts[g.key] > 0).map((g, idx) => {
             const active = filter === g.key
             const openForReal = isExpanded(g.key)
+            const panelId = `ms-subgroup-${g.key}-rows`
+            // M-09: split chevron-toggles-expand from row-toggles-filter so a
+            // user can read the expanded subgroup AND keep the full table
+            // below the dashboard. Previously one button conflated both.
+            const handleFilterToggle = () => {
+              if (onlyOne) return
+              onFilterChange(active ? null : g.key)
+            }
             return (
               <div key={g.key} style={{ borderBottom: idx < nonEmpty.length - 1 ? '1px solid var(--border-subtle)' : 'none' }}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (onlyOne) return
-                    toggleSubgroup(g.key)
-                    onFilterChange(active ? null : g.key)
-                  }}
-                  aria-expanded={openForReal ? "true" : "false"}
-                  className="w-full flex items-center gap-2 text-left"
+                <div
+                  className="w-full flex items-center gap-2"
                   style={{
                     padding: '10px 16px',
-                    border: 'none',
                     background: active ? 'var(--surface-2)' : 'transparent',
-                    cursor: onlyOne ? 'default' : 'pointer',
                     color: 'var(--ink)',
                     fontSize: '13px',
                     fontWeight: 500,
                   }}
                 >
-                  {!onlyOne && (openForReal
-                    ? <ChevronDown size={12} style={{ color: 'var(--slate)', flexShrink: 0 }} />
-                    : <ChevronRight size={12} style={{ color: 'var(--slate)', flexShrink: 0 }} />
+                  {/* Chevron — expand/collapse only. M-17: aria-controls links button to panel. */}
+                  {!onlyOne && (
+                    <button
+                      type="button"
+                      onClick={() => toggleSubgroup(g.key)}
+                      aria-expanded={openForReal ? 'true' : 'false'}
+                      aria-controls={panelId}
+                      aria-label={openForReal ? `Collapse ${g.label}` : `Expand ${g.label}`}
+                      style={{
+                        border: 'none', background: 'transparent', cursor: 'pointer',
+                        padding: '2px', display: 'inline-flex', alignItems: 'center',
+                        flexShrink: 0,
+                      }}
+                    >
+                      {openForReal
+                        ? <ChevronDown size={12} style={{ color: 'var(--slate)' }} />
+                        : <ChevronRight size={12} style={{ color: 'var(--slate)' }} />
+                      }
+                    </button>
                   )}
-                  <span style={{ width: 6, height: 6, borderRadius: 'var(--radius-full)', background: g.dot, flexShrink: 0 }} />
-                  <span>{g.label}</span>
-                  <CountBadge n={counts[g.key]} />
-                  {active && (
-                    <span style={{
-                      marginLeft: 'auto', fontSize: '10px', fontWeight: 500,
-                      color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.04em',
-                    }}>
-                      Filtering
-                    </span>
-                  )}
-                </button>
+                  {/* Row body — filter toggle only. M-09. */}
+                  <button
+                    type="button"
+                    onClick={handleFilterToggle}
+                    aria-pressed={active}
+                    className="flex items-center gap-2 text-left flex-1"
+                    style={{
+                      border: 'none', background: 'transparent',
+                      cursor: onlyOne ? 'default' : 'pointer',
+                      color: 'inherit', fontSize: 'inherit', fontWeight: 'inherit',
+                      padding: 0,
+                    }}
+                  >
+                    <span style={{ width: 6, height: 6, borderRadius: 'var(--radius-full)', background: g.dot, flexShrink: 0 }} />
+                    <span>{g.label}</span>
+                    <CountBadge n={counts[g.key]} />
+                    {active && (
+                      <span style={{
+                        marginLeft: 'auto', fontSize: '10px', fontWeight: 500,
+                        color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.04em',
+                      }}>
+                        Filtering
+                      </span>
+                    )}
+                  </button>
+                </div>
 
                 <AnimatePresence initial={false}>
                   {openForReal && (
                     <motion.div
                       key={`${g.key}-rows`}
+                      id={panelId}
                       initial={{ height: 0 }}
                       animate={{ height: 'auto' }}
                       exit={{ height: 0 }}
