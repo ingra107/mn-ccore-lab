@@ -80,49 +80,82 @@ export async function getAuthUser(request: Request, env: Env): Promise<AuthUser 
 }
 
 /**
- * Auto-provision a team_members row on first login.
+ * Auto-provision OR claim a team_members row on first login.
  *
  * The CF Access JWT carries an authoritative email (verified by Google +
- * gated by the @umn.edu Access policy). If we've never seen this email,
- * INSERT a row with name + picture from Google and flag it auto_created.
- * The Team page surfaces a "Pending review" badge so Nick can assign
- * role / member_type / expertise tags whenever; editing role clears the flag.
+ * gated by the @umn.edu Access policy). On first sight of an email,
+ * three branches:
  *
- * Idempotent + safe under concurrency:
- *   - INSERT ... WHERE NOT EXISTS race: rare and harmless (UNIQUE on slug
- *     would surface as a duplicate-id error; we swallow it)
- *   - Excludes the legacy `claude-ai` agent and any test-mode users
+ *   1. Direct email match — row already linked. No-op.
  *
- * Slug strategy: email-prefix (e.g. `jsmith@umn.edu` → `jsmith`). For
- * the existing 19 members, the EMAIL_PREFIX_TO_SLUG LUT in this file
- * maps to canonical `preferred-last` slugs — so they were provisioned
- * with the canonical slug and won't trigger this path. New auto-created
- * members get the email-prefix as their slug; if that needs to change
- * later (preferred-name format), do it via a manual UPDATE.
+ *   2. Slug match via EMAIL_PREFIX_TO_SLUG LUT — Nick had pre-provisioned
+ *      this member (e.g. `nate-mesfin` exists, JWT email `mesfin@umn.edu`,
+ *      LUT maps `mesfin → nate-mesfin`). This is a CLAIM. Backfill the
+ *      real email + photo (only if not already set) so future lookups
+ *      hit branch 1. Don't overwrite name (Nick's preferred name beats
+ *      Google's display name).
+ *
+ *   3. Email-prefix slug match — direct lookup against `slug = email-prefix`.
+ *      Same claim logic as branch 2. Catches members provisioned without
+ *      a LUT entry.
+ *
+ *   4. No match — INSERT a new row with auto_created=1. Surfaces in the
+ *      Team UI with a PENDING REVIEW badge until Nick assigns a role.
+ *
+ * Idempotent + safe under concurrency. Excludes the synthetic Hermes
+ * agent and test-mode users.
  */
 export async function ensureTeamMember(env: Env, user: AuthUser): Promise<void> {
-  // Skip the synthetic agent identity used by Hermes and the test bypass.
   if (user.email === 'anonymous' || user.email.endsWith('@test.local')) return
   if (user.email === 'claude-ai@umn.edu') return
 
-  // Check existence. Cheap query — covered by team_members(email) row scan
-  // (~20 rows) + idx_team_members_slug.
-  const existing = await env.DB.prepare(
-    'SELECT id FROM team_members WHERE email = ? OR slug = ?'
-  ).bind(user.email, user.email.split('@')[0]).first<{ id: string }>()
-  if (existing) return
+  // Branch 1: direct email match — already linked, nothing to do.
+  const byEmail = await env.DB.prepare(
+    'SELECT id FROM team_members WHERE email = ?'
+  ).bind(user.email).first<{ id: string }>()
+  if (byEmail) return
 
+  // Branch 2/3: try to claim a pre-provisioned row. Two candidate slugs:
+  //   - canonical slug from the LUT (e.g. mesfin → nate-mesfin)
+  //   - raw email-prefix (covers members not in the LUT)
+  const emailPrefix = user.email.split('@')[0].toLowerCase()
+  const canonicalSlug = actorSlug(user.email)  // returns LUT-mapped slug or email-prefix
+  const candidateSlugs = [...new Set([canonicalSlug, emailPrefix])]
+
+  const existingBySlug = await env.DB.prepare(
+    `SELECT id, photo_url FROM team_members
+     WHERE slug IN (${candidateSlugs.map(() => '?').join(',')})
+     LIMIT 1`
+  ).bind(...candidateSlugs).first<{ id: string; photo_url: string | null }>()
+
+  if (existingBySlug) {
+    // CLAIM: backfill email so future logins hit branch 1. Backfill
+    // photo_url only if the row doesn't already have one (Nick's curated
+    // photo wins). Never overwrite name — preferred name is intentional.
+    const setPhoto = !existingBySlug.photo_url && user.picture
+    if (setPhoto) {
+      await env.DB.prepare(
+        'UPDATE team_members SET email = ?, photo_url = ? WHERE id = ?'
+      ).bind(user.email, user.picture ?? null, existingBySlug.id).run()
+    } else {
+      await env.DB.prepare(
+        'UPDATE team_members SET email = ? WHERE id = ?'
+      ).bind(user.email, existingBySlug.id).run()
+    }
+    return
+  }
+
+  // Branch 4: no pre-provisioned row → create one.
   const id = generateId()
-  const slug = user.email.split('@')[0].toLowerCase()
-  const name = user.name?.trim() || slug
+  const name = user.name?.trim() || emailPrefix
   try {
     await env.DB.prepare(
       `INSERT INTO team_members (id, name, slug, email, photo_url, auto_created)
        VALUES (?, ?, ?, ?, ?, 1)`
-    ).bind(id, name, slug, user.email, user.picture ?? null).run()
+    ).bind(id, name, emailPrefix, user.email, user.picture ?? null).run()
   } catch (e) {
-    // Most likely a UNIQUE constraint race (two concurrent first requests).
-    // Either way, the row exists now; safe to ignore.
+    // UNIQUE constraint race (two concurrent first requests). Safe to ignore —
+    // row exists now; the next call will land on branch 1 or 2.
     const msg = (e as Error).message
     if (!msg.includes('UNIQUE')) throw e
   }
