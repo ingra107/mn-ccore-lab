@@ -1,8 +1,7 @@
 -- v53 — fix v52 seq trigger: include self in MAX(seq) computation
--- anti-pattern-allowed-file: this file's body comment quotes the v52 buggy
---   line `MAX(seq) WHERE id != NEW.id` to document what's being fixed.
---   The actual trigger DDL below uses `MAX(seq)` with no `WHERE id != NEW.id`.
---   File is the FIX.
+-- anti-pattern-allowed-file: docstring quotes the v52 buggy SQL it replaces
+--   (`MAX(seq) WHERE id != NEW.id`). The actual triggers below DO include
+--   self in MAX — file IS the fix. R3 hits on the comment text only.
 --
 -- v52 fixed the column-coverage gap by removing UPDATE OF (so triggers
 -- fire on every column change). But the trigger body still excludes the
