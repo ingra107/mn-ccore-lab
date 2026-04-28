@@ -495,7 +495,7 @@ function ProjectDetailInner({ project }: InnerProps) {
               className="inline-flex items-center gap-1 px-2 py-1 rounded text-[11px]"
               style={{
                 background: showAgendaForm ? 'var(--gold)' : 'var(--gold-active)',
-                color: showAgendaForm ? '#0f1923' : 'var(--gold)',
+                color: showAgendaForm ? '#0f1923' : 'var(--gold-on-emphasis)',
                 border: '1px solid rgba(201,168,76,0.2)',
                 fontWeight: 500,
                 cursor: 'pointer',
