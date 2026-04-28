@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import { TrendingUp, Activity, AlertTriangle, FlaskConical } from 'lucide-react'
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
+import EmptyStateArt from '../../components/EmptyStateArt'
 import { TextSkeleton } from '../../components/LoadingSkeleton'
 import { TableContainer } from '../../components/table'
 import { useToast } from '../../hooks/useToast'
@@ -434,7 +435,7 @@ function StalledRegistry({ rows }: { rows: DashboardData['stalledRegistry'] }) {
   if (rows.length === 0) {
     return (
       <EmptyState
-        icon={<TrendingUp size={32} />}
+        icon={<EmptyStateArt variant="tasks" title="All caught up" />}
         title="No stalled projects"
         subtitle="Every active project has had a project_update within the last 14 days."
       />
