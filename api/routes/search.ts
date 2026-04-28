@@ -59,6 +59,49 @@ interface ScoredResult {
   url?: string;
   score: number;
   timestamp?: string;
+  /** Snippet (~120 chars) centered on the matched token in the matched
+   * field. Frontend renders below title with <mark> highlights. */
+  snippet?: string | null;
+  /** Human label of the field that produced the match ("description",
+   * "abstract", etc.) so the frontend can show "matched in description". */
+  matchedField?: string | null;
+  /** Per-type metadata for type-specific row rendering (S-12). */
+  details?: Record<string, any> | null;
+}
+
+/** Build a ~120-char snippet centered on the first occurrence of `q`
+ * inside `text`. Returns null when text doesn't contain q. */
+function buildSnippet(text: string | null | undefined, q: string, maxLen = 160): string | null {
+  if (!text) return null;
+  const lower = text.toLowerCase();
+  const idx = lower.indexOf(q.toLowerCase());
+  if (idx < 0) return null;
+  const ctx = Math.max(0, Math.floor((maxLen - q.length) / 2));
+  let start = Math.max(0, idx - ctx);
+  let end = Math.min(text.length, idx + q.length + ctx);
+  // Snap to word boundaries when possible.
+  if (start > 0) {
+    const ws = text.lastIndexOf(' ', start);
+    if (ws > start - 12 && ws >= 0) start = ws + 1;
+  }
+  if (end < text.length) {
+    const ws = text.indexOf(' ', end);
+    if (ws !== -1 && ws < end + 12) end = ws;
+  }
+  let out = text.slice(start, end).trim();
+  if (start > 0) out = '… ' + out;
+  if (end < text.length) out = out + ' …';
+  return out;
+}
+
+/** Pick the matched field across N candidates and emit the snippet +
+ * field name. Returns the first field that contains the query. */
+function pickMatch(q: string, fields: Array<{ name: string; value: string | null | undefined }>): { snippet: string | null; matchedField: string | null } {
+  for (const f of fields) {
+    const snip = buildSnippet(f.value, q);
+    if (snip) return { snippet: snip, matchedField: f.name };
+  }
+  return { snippet: null, matchedField: null };
 }
 
 // --- Handler ---
@@ -81,10 +124,10 @@ export async function handleSearch(url: URL, env: Env): Promise<Response> {
     publications, grants,
   ] = await Promise.all([
     env.DB.prepare(
-      'SELECT id, title, description, assignee, status, priority, due_date, created_at FROM tasks WHERE (title LIKE ? OR description LIKE ?) AND deleted_at IS NULL LIMIT ?'
+      'SELECT id, title, description, assignee, status, priority, due_date, project_id, created_at FROM tasks WHERE (title LIKE ? OR description LIKE ?) AND deleted_at IS NULL LIMIT ?'
     ).bind(like, like, limit).all(),
     env.DB.prepare(
-      'SELECT slug, title, category, stage, pi, updated_at FROM projects WHERE (title LIKE ? OR category LIKE ? OR description LIKE ?) AND deleted_at IS NULL LIMIT ?'
+      'SELECT slug, title, category, stage, pi, description, updated_at FROM projects WHERE (title LIKE ? OR category LIKE ? OR description LIKE ?) AND deleted_at IS NULL LIMIT ?'
     ).bind(like, like, like, limit).all(),
     env.DB.prepare(
       'SELECT id, title, date, type, notes FROM meetings WHERE (title LIKE ? OR notes LIKE ?) LIMIT ?'
@@ -137,18 +180,35 @@ export async function handleSearch(url: URL, env: Env): Promise<Response> {
   // Tasks
   for (const t of (tasks.results || []) as any[]) {
     const timestamp = t.created_at || t.due_date;
-    let score = TYPE_PRIORITY.task
+    const score = TYPE_PRIORITY.task
       + recencyBoost(timestamp)
       + titleMatchBonus(t.title, q)
       + (TASK_STATUS_BOOST[t.status] ?? 0);
+    const match = pickMatch(q, [
+      { name: 'title', value: t.title },
+      { name: 'description', value: t.description },
+    ]);
+    // S-07: deeplink into project context when task has a project_id.
+    const url = t.project_id
+      ? `/portal/projects/${t.project_id}?openTask=${t.id}`
+      : `/portal/my-tasks?open=${t.id}`;
     results.push({
       id: t.id,
       type: 'task',
       title: t.title || t.description,
       subtitle: `${t.assignee} · ${t.status} · ${t.priority}`,
-      url: `/portal/my-tasks?open=${t.id}`,
+      url,
       score,
       timestamp,
+      snippet: match.snippet,
+      matchedField: match.matchedField,
+      details: {
+        assignee: t.assignee,
+        status: t.status,
+        priority: t.priority,
+        due_date: t.due_date,
+        project_id: t.project_id,
+      },
     });
   }
 
@@ -158,6 +218,11 @@ export async function handleSearch(url: URL, env: Env): Promise<Response> {
     const score = TYPE_PRIORITY.project
       + recencyBoost(timestamp)
       + titleMatchBonus(p.title, q);
+    const match = pickMatch(q, [
+      { name: 'title', value: p.title },
+      { name: 'description', value: p.description },
+      { name: 'category', value: p.category },
+    ]);
     results.push({
       id: p.slug,
       type: 'project',
@@ -166,6 +231,13 @@ export async function handleSearch(url: URL, env: Env): Promise<Response> {
       url: `/portal/projects/${p.slug}`,
       score,
       timestamp,
+      snippet: match.snippet,
+      matchedField: match.matchedField,
+      details: {
+        category: p.category,
+        stage: p.stage,
+        pi: p.pi,
+      },
     });
   }
 
@@ -175,6 +247,10 @@ export async function handleSearch(url: URL, env: Env): Promise<Response> {
     const score = TYPE_PRIORITY.meeting
       + recencyBoost(timestamp)
       + titleMatchBonus(m.title, q);
+    const match = pickMatch(q, [
+      { name: 'title', value: m.title },
+      { name: 'notes', value: m.notes },
+    ]);
     results.push({
       id: m.id,
       type: 'meeting',
@@ -183,6 +259,12 @@ export async function handleSearch(url: URL, env: Env): Promise<Response> {
       url: `/portal/meetings/${m.id}`,
       score,
       timestamp,
+      snippet: match.snippet,
+      matchedField: match.matchedField,
+      details: {
+        date: m.date,
+        type: m.type,
+      },
     });
   }
 
@@ -192,6 +274,10 @@ export async function handleSearch(url: URL, env: Env): Promise<Response> {
     const score = TYPE_PRIORITY.idea
       + recencyBoost(timestamp)
       + titleMatchBonus(i.title, q);
+    const match = pickMatch(q, [
+      { name: 'title', value: i.title },
+      { name: 'description', value: i.description },
+    ]);
     results.push({
       id: i.id,
       type: 'idea',
@@ -200,6 +286,8 @@ export async function handleSearch(url: URL, env: Env): Promise<Response> {
       url: '/portal/ideas',
       score,
       timestamp,
+      snippet: match.snippet,
+      matchedField: match.matchedField,
     });
   }
 
@@ -209,6 +297,7 @@ export async function handleSearch(url: URL, env: Env): Promise<Response> {
     const score = TYPE_PRIORITY.comment
       + recencyBoost(timestamp)
       + titleMatchBonus(c.content, q);
+    const match = pickMatch(q, [{ name: 'content', value: c.content }]);
     results.push({
       id: c.id,
       type: 'comment',
@@ -217,6 +306,8 @@ export async function handleSearch(url: URL, env: Env): Promise<Response> {
       url: `/portal/projects/${c.project_slug}`,
       score,
       timestamp,
+      snippet: match.snippet,
+      matchedField: match.matchedField,
     });
   }
 
@@ -226,6 +317,7 @@ export async function handleSearch(url: URL, env: Env): Promise<Response> {
     const score = TYPE_PRIORITY.activity
       + recencyBoost(timestamp)
       + titleMatchBonus(a.description, q);
+    const match = pickMatch(q, [{ name: 'description', value: a.description }]);
     results.push({
       id: a.id,
       type: 'activity',
@@ -234,6 +326,8 @@ export async function handleSearch(url: URL, env: Env): Promise<Response> {
       url: '/portal/activity',
       score,
       timestamp,
+      snippet: match.snippet,
+      matchedField: match.matchedField,
     });
   }
 
@@ -243,6 +337,7 @@ export async function handleSearch(url: URL, env: Env): Promise<Response> {
     const score = TYPE_PRIORITY.note
       + recencyBoost(timestamp)
       + titleMatchBonus(n.content, q);
+    const match = pickMatch(q, [{ name: 'content', value: n.content }]);
     results.push({
       id: n.id,
       type: 'note',
@@ -251,6 +346,8 @@ export async function handleSearch(url: URL, env: Env): Promise<Response> {
       url: `/portal/projects/${n.project_slug}?tab=notes`,
       score,
       timestamp,
+      snippet: match.snippet,
+      matchedField: match.matchedField,
     });
   }
 
@@ -260,6 +357,7 @@ export async function handleSearch(url: URL, env: Env): Promise<Response> {
     const score = TYPE_PRIORITY.task_note
       + recencyBoost(timestamp)
       + titleMatchBonus(n.content, q);
+    const match = pickMatch(q, [{ name: 'content', value: n.content }]);
     results.push({
       id: n.id,
       type: 'task_note',
@@ -268,6 +366,8 @@ export async function handleSearch(url: URL, env: Env): Promise<Response> {
       url: `/portal/my-tasks?open=${n.task_id}`,
       score,
       timestamp,
+      snippet: match.snippet,
+      matchedField: match.matchedField,
     });
   }
 
@@ -277,6 +377,7 @@ export async function handleSearch(url: URL, env: Env): Promise<Response> {
     const score = TYPE_PRIORITY.task_comment
       + recencyBoost(timestamp)
       + titleMatchBonus(c.content, q);
+    const match = pickMatch(q, [{ name: 'content', value: c.content }]);
     results.push({
       id: c.id,
       type: 'task_comment',
@@ -285,6 +386,8 @@ export async function handleSearch(url: URL, env: Env): Promise<Response> {
       url: `/portal/my-tasks?open=${c.task_id}`,
       score,
       timestamp,
+      snippet: match.snippet,
+      matchedField: match.matchedField,
     });
   }
 
@@ -295,6 +398,12 @@ export async function handleSearch(url: URL, env: Env): Promise<Response> {
       + recencyBoost(timestamp)
       + titleMatchBonus(d.title, q);
     const parts = [d.decided_by, d.outcome].filter(Boolean);
+    const match = pickMatch(q, [
+      { name: 'title', value: d.title },
+      { name: 'rationale', value: d.rationale },
+      { name: 'context', value: d.context },
+      { name: 'outcome', value: d.outcome },
+    ]);
     results.push({
       id: d.id,
       type: 'decision',
@@ -303,6 +412,12 @@ export async function handleSearch(url: URL, env: Env): Promise<Response> {
       url: `/portal/decisions?open=${d.id}`,
       score,
       timestamp,
+      snippet: match.snippet,
+      matchedField: match.matchedField,
+      details: {
+        outcome: d.outcome,
+        decided_by: d.decided_by,
+      },
     });
   }
 
@@ -312,11 +427,16 @@ export async function handleSearch(url: URL, env: Env): Promise<Response> {
     const score = TYPE_PRIORITY.file
       + recencyBoost(timestamp)
       + titleMatchBonus(f.filename, q);
+    // S-08: route file → meeting when entity_type=meeting (was self-loop
+    // to /portal/search). Also keep project/task branches.
     const entityUrl = f.entity_type === 'project'
       ? `/portal/projects/${f.entity_id}`
       : f.entity_type === 'task'
         ? `/portal/my-tasks?open=${f.entity_id}`
-        : '/portal/search';
+        : f.entity_type === 'meeting'
+          ? `/portal/meetings/${f.entity_id}`
+          : '/portal/search';
+    const match = pickMatch(q, [{ name: 'filename', value: f.filename }]);
     results.push({
       id: f.id,
       type: 'file',
@@ -325,6 +445,8 @@ export async function handleSearch(url: URL, env: Env): Promise<Response> {
       url: entityUrl,
       score,
       timestamp,
+      snippet: match.snippet,
+      matchedField: match.matchedField,
     });
   }
 
@@ -335,6 +457,7 @@ export async function handleSearch(url: URL, env: Env): Promise<Response> {
       + recencyBoost(timestamp)
       + titleMatchBonus(a.description, q)
       + (a.completed ? -2 : 1);
+    const match = pickMatch(q, [{ name: 'description', value: a.description }]);
     results.push({
       id: a.id,
       type: 'action_item',
@@ -343,6 +466,8 @@ export async function handleSearch(url: URL, env: Env): Promise<Response> {
       url: a.meeting_id ? `/portal/meetings/${a.meeting_id}` : '/portal/meetings',
       score,
       timestamp,
+      snippet: match.snippet,
+      matchedField: match.matchedField,
     });
   }
 
@@ -352,6 +477,11 @@ export async function handleSearch(url: URL, env: Env): Promise<Response> {
     const score = TYPE_PRIORITY.publication
       + recencyBoost(timestamp)
       + titleMatchBonus(p.title, q);
+    const match = pickMatch(q, [
+      { name: 'title', value: p.title },
+      { name: 'journal', value: p.journal },
+      { name: 'authors', value: p.authors },
+    ]);
     results.push({
       id: p.id,
       type: 'publication',
@@ -360,6 +490,13 @@ export async function handleSearch(url: URL, env: Env): Promise<Response> {
       url: `/publications/${p.id}`,
       score,
       timestamp,
+      snippet: match.snippet,
+      matchedField: match.matchedField,
+      details: {
+        journal: p.journal,
+        year: p.year,
+        status: p.status,
+      },
     });
   }
 
@@ -369,6 +506,10 @@ export async function handleSearch(url: URL, env: Env): Promise<Response> {
     const score = TYPE_PRIORITY.grant
       + recencyBoost(timestamp)
       + titleMatchBonus(g.title, q);
+    const match = pickMatch(q, [
+      { name: 'title', value: g.title },
+      { name: 'pi_name', value: g.pi_name },
+    ]);
     results.push({
       id: g.project_number,
       type: 'grant',
@@ -377,6 +518,13 @@ export async function handleSearch(url: URL, env: Env): Promise<Response> {
       url: '/portal/grants',
       score,
       timestamp,
+      snippet: match.snippet,
+      matchedField: match.matchedField,
+      details: {
+        pi_name: g.pi_name,
+        fiscal_year: g.fiscal_year,
+        total_cost: g.total_cost,
+      },
     });
   }
 
