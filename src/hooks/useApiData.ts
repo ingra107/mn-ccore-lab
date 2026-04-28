@@ -18,6 +18,7 @@ import {
   fetchProjects,
   fetchGrants,
   fetchStats,
+  fetchCitations,
   fetchTasks,
   fetchIdeas,
   fetchCalendarEvents,
@@ -225,6 +226,32 @@ export function useStats() {
       }
     },
     staleTime: STALE_TIME,
+  })
+}
+
+// Lab-wide Google Scholar citations aggregate.
+// Wired by Lab Overview StatsCard (LO-1). Backed by the per-author cache on
+// team_members (citation_count + h_index + last_scholar_refresh) which a
+// PB-side weekly cron refreshes via PUT /api/team/:slug. See
+// scripts/citations-scholar-stub.md for the cron design.
+//
+// staleTime is 1h to match the server-side Cache-Control: max-age=3600 on
+// /api/citations. refetchOnWindowFocus stays default (true) so users who
+// idle on the page still get a fresh number when they come back.
+export function useCitations(options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: ['citations'],
+    queryFn: async () => {
+      try {
+        const res = await fetchCitations()
+        return res.data
+      } catch {
+        return null
+      }
+    },
+    staleTime: 60 * 60 * 1000, // 1 hour — matches server edge-cache TTL.
+    retry: false,
+    enabled: options?.enabled ?? true,
   })
 }
 
