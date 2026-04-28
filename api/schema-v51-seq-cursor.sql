@@ -1,16 +1,11 @@
 -- v51 — server-assigned monotonic seq cursor for projects + tasks
--- anti-pattern-allowed-file: historical migration. The UPDATE OF column-list
---   pattern (R4) and MAX(seq) WHERE id != NEW.id (R3) are documented bugs
---   superseded by v52 (drops UPDATE OF) and v53 (drops self-exclusion).
---   File is already applied to prod D1 and immutable.
---
--- anti-pattern-allowed-file: this file documents the FIRST iteration of
--- the seq-cursor work and contains the v51 anti-patterns (AFTER UPDATE OF
--- column lists; MAX(seq) WHERE id != NEW.id) that were SUPERSEDED by
--- v52 + v53 (DROP TRIGGER + CREATE TRIGGER without OF and including
--- self in MAX). Production state is v53. v51 file kept as historical
--- record. Codex Mechanism #2 anti-pattern checker would correctly
--- flag this file's contents as bugs — they were the bugs we fixed.
+-- anti-pattern-allowed-file: this file documents the FIRST iteration of the
+--   seq-cursor work and contains the v51 anti-patterns (AFTER UPDATE OF
+--   column lists; MAX(seq) WHERE id != NEW.id) that were SUPERSEDED by
+--   v52 + v53 (DROP TRIGGER + CREATE TRIGGER without OF and including self
+--   in MAX). Production state is v53. v51 file kept as historical record;
+--   Codex Mechanism #2 anti-pattern checker would correctly flag this
+--   file's contents as bugs — they were the bugs we fixed.
 --
 -- Per Context/Topics/research-bidirectional-sync-2026-04-28.md (Peripheral
 -- Brain repo) and the 2026-04-28 home<->work brainstorm, replace wall-clock

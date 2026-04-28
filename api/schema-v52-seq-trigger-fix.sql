@@ -1,11 +1,8 @@
--- anti-pattern-allowed-file: v52 fixed v51 column-coverage gap but
--- introduced the WHERE id != NEW.id self-exclusion bug, which v53
--- subsequently fixed. Production state is v53. v52 file kept as
--- historical record of the iteration.
 -- v52 — fix v51 trigger UPDATE OF column gap
--- anti-pattern-allowed-file: historical migration. The MAX(seq) WHERE id != NEW.id
---   (R3) pattern is the v52 self-exclusion bug, fixed in v53. Already applied
---   to prod D1 and immutable.
+-- anti-pattern-allowed-file: v52 fixed v51's column-coverage gap but introduced
+--   the WHERE id != NEW.id self-exclusion bug (R3), which v53 subsequently
+--   fixed. Production state is v53. v52 file kept as historical record of
+--   the iteration; already applied to prod D1 and immutable.
 --
 -- v51 listed specific columns in UPDATE OF for the seq-bump triggers.
 -- That list was incomplete:
