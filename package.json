@@ -14,6 +14,7 @@
     "db:schema:remote": "wrangler d1 execute mnccore-lab --file=api/schema.sql --remote",
     "db:seed:remote": "wrangler d1 execute mnccore-lab --file=scripts/seed.sql --remote",
     "test": "npm run test:local",
+    "test:api": "vitest run --config vitest.config.api.ts",
     "test:local": "concurrently -k -s first \"wrangler dev api/index.ts --local --config=wrangler.local.toml --port 8787\" \"wait-on http-get://localhost:8787/api/projects && playwright test --config=playwright.config.local.ts\"",
     "test:journeys": "concurrently -k -s first \"wrangler dev api/index.ts --local --config=wrangler.local.toml --port 8787\" \"vite --port 5173\" \"wait-on http-get://localhost:5173 && playwright test --config=playwright.config.journeys.ts\"",
     "test:local:setup": "tsx scripts/local-db-bootstrap.ts && tsx scripts/local-db-seed.ts",

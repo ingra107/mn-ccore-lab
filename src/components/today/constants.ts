@@ -156,3 +156,23 @@ export function isToday(isoDate: string | null | undefined): boolean {
   const today = todayKey()
   return isoDate.slice(0, 10) === today
 }
+
+// Personal calendar feed events (issue #45). Same TodayEvent shape so the
+// timeline renders them indistinguishably from team meetings — but we
+// prefix the title with a 📅 so users can spot which came from their feed.
+export function calendarEventToTodayEvent(e: { id: string; title: string; location: string | null; startAt: string; endAt: string | null; isAllDay: boolean }): TodayEvent {
+  const start = new Date(e.startAt)
+  const time = e.isAllDay
+    ? 'all day'
+    : start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+  const end = e.endAt && !e.isAllDay
+    ? new Date(e.endAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+    : undefined
+  return {
+    id: `cal-${e.id}`,
+    time,
+    end,
+    title: e.title,
+    loc: e.location ?? undefined,
+  }
+}

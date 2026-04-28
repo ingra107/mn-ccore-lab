@@ -22,6 +22,7 @@ import { handleSearch } from './routes/search';
 import { handleGetSettings, handleUpdateSettings, handleGetWorkflowTemplates, handleCreateWorkflowTemplate } from './routes/settings';
 import { handleGetReactions, handleToggleReaction } from './routes/reactions';
 import { handleCalendarEvents } from './routes/calendar';
+import { handleListFeeds, handleAddFeed, handleDeleteFeed, handleListEvents } from './routes/calendar-feeds';
 import { handleActivity, handleActivityHeatmap } from './routes/activity';
 import { handleGetSubtasks, handleCreateSubtask, handleToggleSubtask, handleDeleteSubtask, handleReorderSubtasks } from './routes/subtasks';
 import { handleTeamPulse } from './routes/team-pulse';
@@ -476,6 +477,14 @@ app.get('/api/search', (c) => handleSearch(U(c), E(c)));
 app.get('/api/settings', (c) => handleGetSettings(E(c)));
 app.get('/api/workflow-templates', (c) => handleGetWorkflowTemplates(E(c)));
 app.get('/api/calendar/events', (c) => handleCalendarEvents(U(c), E(c)));
+
+// Personal iCal calendar feeds (issue #45). Per-user, secret URL stays in D1.
+// These use `authedUser` (real JWT identity) not `user` (anonymous fallback)
+// because the feed_url is a secret — no anonymous access path.
+app.get('/api/integrations/calendar/feeds', (c) => handleListFeeds(E(c), c.get('authedUser')));
+app.post('/api/integrations/calendar/feeds', (c) => handleAddFeed(R(c), E(c), c.get('authedUser')));
+app.delete('/api/integrations/calendar/feeds/:id', (c) => handleDeleteFeed(E(c), c.get('authedUser'), c.req.param('id')));
+app.get('/api/integrations/calendar/events', (c) => handleListEvents(U(c), E(c), c.get('authedUser')));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Files (presigned URLs etc.)
