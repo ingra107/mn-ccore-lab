@@ -826,6 +826,28 @@ export function deleteSubmissionEvent(id: string) {
   })
 }
 
+// Active submissions across all projects — backs the Manuscripts page
+// "Active submissions" widget (M-12). Server returns one row per project
+// whose latest submission event is not accepted/rejected/withdrawn.
+export interface ActiveSubmissionRow {
+  id: string
+  project_id: string
+  latest_event_type: SubmissionEventType
+  latest_event_date: string
+  journal: string | null
+  notes: string | null
+  project_title: string | null
+  project_slug: string | null
+  first_submitted_date: string | null
+  days_since_submission: number | null
+  revision_due_date: string | null
+  days_until_revision_due: number | null
+}
+
+export function fetchActiveSubmissions() {
+  return fetchApi<ActiveSubmissionRow[]>('/api/submissions/active')
+}
+
 // ── Regulatory & Compliance ──────────────────────────────────
 
 interface RegulatoryItemRow {
