@@ -18,10 +18,13 @@ import { usePageMeta } from '../../hooks/usePageMeta'
 interface DashboardData {
   week: string
   metrics: {
-    stalledProjects: { count: number; deltaWoW: number }
-    tasksPerPerson: { avg: number; total: number; distribution: { slug: string; count: number }[] }
-    manuscriptsInRevision: { count: number; awaitingReplyOver7d: number }
-    grantsInPipeline: { count: number; daysToNextDeadline: number | null }
+    // INS-05: each metric carries an 8-week trailing sparkline (oldest first).
+    // Empty/flat arrays for snapshot-only metrics where historical reconstruction
+    // isn't feasible.
+    stalledProjects: { count: number; deltaWoW: number; sparkline?: number[] }
+    tasksPerPerson: { avg: number; total: number; distribution: { slug: string; count: number }[]; sparkline?: number[] }
+    manuscriptsInRevision: { count: number; awaitingReplyOver7d: number; sparkline?: number[] }
+    grantsInPipeline: { count: number; daysToNextDeadline: number | null; sparkline?: number[] }
   }
   workloadHeatmap: { slug: string; days: { mon: number; tue: number; wed: number; thu: number; fri: number } }[]
   pipelineFunnel: { stage: string; count: number }[]

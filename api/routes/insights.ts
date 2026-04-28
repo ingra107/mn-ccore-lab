@@ -242,10 +242,12 @@ export async function handleInsightSuggestions(url: URL, env: Env): Promise<Resp
 // GH #37 EPIC. All queries hit existing tables — no schema change.
 
 interface DashboardMetrics {
-  stalledProjects: { count: number; deltaWoW: number }
-  tasksPerPerson: { avg: number; total: number; distribution: { slug: string; count: number }[] }
-  manuscriptsInRevision: { count: number; awaitingReplyOver7d: number }
-  grantsInPipeline: { count: number; daysToNextDeadline: number | null }
+  // sparkline arrays are 8-week trailing series, oldest first.
+  // Empty array when historical reconstruction isn't feasible (snapshot-only metrics).
+  stalledProjects: { count: number; deltaWoW: number; sparkline: number[] }
+  tasksPerPerson: { avg: number; total: number; distribution: { slug: string; count: number }[]; sparkline: number[] }
+  manuscriptsInRevision: { count: number; awaitingReplyOver7d: number; sparkline: number[] }
+  grantsInPipeline: { count: number; daysToNextDeadline: number | null; sparkline: number[] }
 }
 
 interface DashboardResponse {
@@ -266,12 +268,41 @@ function isoWeek(d: Date): string {
   return `${date.getUTCFullYear()}-W${String(weekNum).padStart(2, '0')}`
 }
 
+// INS-04: parse a `YYYY-Www` ISO-week string into the Monday at 00:00 UTC of
+// that week. Returns null on bad input. Used for archive UI navigation.
+function isoWeekToMonday(weekStr: string): Date | null {
+  const m = /^(\d{4})-W(\d{2})$/.exec(weekStr)
+  if (!m) return null
+  const year = parseInt(m[1], 10)
+  const week = parseInt(m[2], 10)
+  if (week < 1 || week > 53) return null
+  // ISO-week 1 contains Jan 4 — find that week's Monday and offset.
+  const jan4 = new Date(Date.UTC(year, 0, 4))
+  const jan4Day = jan4.getUTCDay() || 7 // 1 (Mon) .. 7 (Sun)
+  const week1Mon = new Date(Date.UTC(year, 0, 4 - (jan4Day - 1)))
+  return new Date(week1Mon.getTime() + (week - 1) * 7 * 86400000)
+}
+
 const STALL_THRESHOLD_DAYS = 14
 const SCATTER_OUTLIER_DAYS = 30
 const SCATTER_OUTLIER_TASKS = 10
 
-export async function handleInsightsDashboard(env: Env): Promise<Response> {
-  const week = isoWeek(new Date())
+export async function handleInsightsDashboard(env: Env, weekArg?: string): Promise<Response> {
+  // INS-04: optional `?week=YYYY-Www`. Defaults to current ISO week.
+  // For non-current weeks we anchor the heatmap window to that week's Mon-Sun,
+  // and the stalled / stalled-last counters to "as of end of that week."
+  // Snapshot metrics (open tasks, manuscripts in revision, grants in pipeline)
+  // remain current — no historical snapshot table exists yet.
+  const today = new Date()
+  const requestedMonday = weekArg ? isoWeekToMonday(weekArg) : null
+  const isHistorical = requestedMonday !== null
+  const week = isHistorical ? weekArg! : isoWeek(today)
+  // Anchor for date math is "end of the requested week" (Sunday at end of day)
+  // when historical, otherwise "now".
+  const weekEndDate = isHistorical ? new Date(requestedMonday!.getTime() + 7 * 86400000) : null
+  const weekEndIso = weekEndDate ? weekEndDate.toISOString().slice(0, 10) : null
+  // SQLite date anchor: 'now' or a literal date string.
+  const anchor = weekEndIso ? `'${weekEndIso}'` : `'now'`
 
   // 1. Stalled projects (no project_updates in 14d), with WoW delta
   const stalledNow = await env.DB.prepare(
@@ -279,7 +310,7 @@ export async function handleInsightsDashboard(env: Env): Promise<Response> {
      WHERE p.deleted_at IS NULL AND p.status = 'active'
        AND NOT EXISTS (
          SELECT 1 FROM project_updates pu
-         WHERE pu.project_id = p.id AND pu.created_at > datetime('now', '-${STALL_THRESHOLD_DAYS} days')
+         WHERE pu.project_id = p.id AND pu.created_at > datetime(${anchor}, '-${STALL_THRESHOLD_DAYS} days')
        )`
   ).first<{ c: number }>()
 
@@ -289,8 +320,8 @@ export async function handleInsightsDashboard(env: Env): Promise<Response> {
        AND NOT EXISTS (
          SELECT 1 FROM project_updates pu
          WHERE pu.project_id = p.id
-           AND pu.created_at > datetime('now', '-${STALL_THRESHOLD_DAYS + 7} days')
-           AND pu.created_at <= datetime('now', '-7 days')
+           AND pu.created_at > datetime(${anchor}, '-${STALL_THRESHOLD_DAYS + 7} days')
+           AND pu.created_at <= datetime(${anchor}, '-7 days')
        )`
   ).first<{ c: number }>()
 
@@ -342,17 +373,32 @@ export async function handleInsightsDashboard(env: Env): Promise<Response> {
   // implementation used `weekday 1, -7 days .. weekday 1` (always last week's
   // Mon-Sun), the corrected current-week range is `weekday 0, -6 days .. weekday 0, +1 day`
   // (Sun start through next-Sun-exclusive == Sat end inclusive).
-  const heatmapRes = await env.DB.prepare(
-    `SELECT assignee,
-       CAST(strftime('%w', due_date) AS INT) as dow,
-       COUNT(*) as c
-     FROM tasks
-     WHERE deleted_at IS NULL AND completed = 0 AND assignee IS NOT NULL
-       AND due_date IS NOT NULL
-       AND due_date >= date('now', 'weekday 0', '-6 days')
-       AND due_date < date('now', 'weekday 0', '+1 day')
-     GROUP BY assignee, dow`
-  ).all<{ assignee: string; dow: number; c: number }>()
+  // For historical weeks, the heatmap window is the requested Mon-Sun. For
+  // current week we anchor on `weekday 0` (next Sunday) per INS-01 fix.
+  const heatmapRes = isHistorical
+    ? await env.DB.prepare(
+        `SELECT assignee,
+           CAST(strftime('%w', due_date) AS INT) as dow,
+           COUNT(*) as c
+         FROM tasks
+         WHERE deleted_at IS NULL AND completed = 0 AND assignee IS NOT NULL
+           AND due_date IS NOT NULL
+           AND due_date >= ?
+           AND due_date < date(?, '+7 days')
+         GROUP BY assignee, dow`
+      ).bind(requestedMonday!.toISOString().slice(0, 10), requestedMonday!.toISOString().slice(0, 10))
+        .all<{ assignee: string; dow: number; c: number }>()
+    : await env.DB.prepare(
+        `SELECT assignee,
+           CAST(strftime('%w', due_date) AS INT) as dow,
+           COUNT(*) as c
+         FROM tasks
+         WHERE deleted_at IS NULL AND completed = 0 AND assignee IS NOT NULL
+           AND due_date IS NOT NULL
+           AND due_date >= date('now', 'weekday 0', '-6 days')
+           AND due_date < date('now', 'weekday 0', '+1 day')
+         GROUP BY assignee, dow`
+      ).all<{ assignee: string; dow: number; c: number }>()
 
   const heatmapMap = new Map<string, { mon: number; tue: number; wed: number; thu: number; fri: number }>()
   for (const r of heatmapRes.results ?? []) {
@@ -388,10 +434,10 @@ export async function handleInsightsDashboard(env: Env): Promise<Response> {
      GROUP BY p.id, p.slug, p.title`
   ).all<{ slug: string; title: string; last_update: string | null; open_tasks: number }>()
 
-  const now = Date.now()
+  const anchorMs = isHistorical ? weekEndDate!.getTime() : Date.now()
   const velocityScatter = (scatterRes.results ?? []).map((r) => {
     const ms = r.last_update ? new Date(r.last_update).getTime() : 0
-    const daysSinceUpdate = ms === 0 ? 999 : Math.floor((now - ms) / 86400000)
+    const daysSinceUpdate = ms === 0 ? 999 : Math.max(0, Math.floor((anchorMs - ms) / 86400000))
     const isOutlier = daysSinceUpdate > SCATTER_OUTLIER_DAYS || r.open_tasks > SCATTER_OUTLIER_TASKS
     return { slug: r.slug, title: r.title, daysSinceUpdate, openTasks: r.open_tasks, isOutlier }
   })
@@ -401,21 +447,83 @@ export async function handleInsightsDashboard(env: Env): Promise<Response> {
     .map((p) => ({ slug: p.slug, title: p.title, daysIdle: p.daysSinceUpdate, openTasks: p.openTasks }))
     .sort((a, b) => b.daysIdle - a.daysIdle)
 
+  // 9. INS-05: 8-week trailing sparklines.
+  // Anchor = end of requested week (or today). Compute one offset per week:
+  // week N = "as of (anchor - N*7 days)" snapshot.
+  // - stalledProjects: count of active projects with no project_update in the
+  //   14d preceding that snapshot date.
+  // - tasksPerPerson: tasks COMPLETED in the 7-day window preceding that
+  //   snapshot date (proxy for velocity — open-snapshots aren't reconstructable).
+  // - manuscriptsInRevision: same query each week (no historical reconstruction
+  //   without a snapshot table). We emit a flat series with the current count
+  //   so the sparkline renders as a steady line rather than zeros.
+  // - grantsInPipeline: same as manuscripts.
+  const sparklineWindowEnds: string[] = []
+  for (let i = 7; i >= 0; i--) {
+    if (isHistorical) {
+      const d = new Date(weekEndDate!.getTime() - i * 7 * 86400000)
+      sparklineWindowEnds.push(d.toISOString().slice(0, 10))
+    } else {
+      // For "now"-anchored, use SQLite expression literal for the END of each
+      // historical week. We compute via JS for consistency.
+      const d = new Date(today.getTime() - i * 7 * 86400000)
+      sparklineWindowEnds.push(d.toISOString().slice(0, 10))
+    }
+  }
+
+  // Run the 8 stalled-snapshot queries in parallel.
+  const stalledSparklinePromises = sparklineWindowEnds.map((endIso) =>
+    env.DB.prepare(
+      `SELECT COUNT(*) as c FROM projects p
+       WHERE p.deleted_at IS NULL AND p.status = 'active'
+         AND NOT EXISTS (
+           SELECT 1 FROM project_updates pu
+           WHERE pu.project_id = p.id
+             AND pu.created_at > datetime(?, '-${STALL_THRESHOLD_DAYS} days')
+             AND pu.created_at <= datetime(?, '+1 day')
+         )`
+    ).bind(endIso, endIso).first<{ c: number }>()
+  )
+  const stalledSparkRows = await Promise.all(stalledSparklinePromises).catch(() => [] as ({ c: number } | null)[])
+  const stalledSparkline = stalledSparkRows.map((r) => r?.c ?? 0)
+
+  // Tasks-completed velocity sparkline — 7d window ending each weekend.
+  const tasksSparklinePromises = sparklineWindowEnds.map((endIso) =>
+    env.DB.prepare(
+      `SELECT COUNT(*) as c FROM tasks
+       WHERE deleted_at IS NULL AND completed = 1
+         AND updated_at > datetime(?, '-7 days')
+         AND updated_at <= datetime(?, '+1 day')`
+    ).bind(endIso, endIso).first<{ c: number }>().catch(() => ({ c: 0 } as { c: number }))
+  )
+  const tasksSparkRows = await Promise.all(tasksSparklinePromises)
+  const tasksSparkline = tasksSparkRows.map((r) => r?.c ?? 0)
+
+  // Manuscripts/grants sparklines: snapshot-only metrics. Emit a flat 8-point
+  // series at the current count so the SVG renders a steady horizontal stroke
+  // (better signal than empty / zeros and explicit about no historical signal).
+  // When a snapshot table arrives later, fill these in.
+  const msFlat = Array(8).fill(msRevRes?.c ?? 0)
+  const grantsFlat = Array(8).fill(grantsRes?.c ?? 0)
+
   const body: DashboardResponse = {
     week,
     metrics: {
       stalledProjects: {
         count: stalledNow?.c ?? 0,
         deltaWoW: (stalledNow?.c ?? 0) - (stalledLast?.c ?? 0),
+        sparkline: stalledSparkline,
       },
-      tasksPerPerson: { avg, total: totalOpen, distribution },
+      tasksPerPerson: { avg, total: totalOpen, distribution, sparkline: tasksSparkline },
       manuscriptsInRevision: {
         count: msRevRes?.c ?? 0,
         awaitingReplyOver7d: msAwaitingRes?.c ?? 0,
+        sparkline: msFlat,
       },
       grantsInPipeline: {
         count: grantsRes?.c ?? 0,
         daysToNextDeadline,
+        sparkline: grantsFlat,
       },
     },
     workloadHeatmap,
