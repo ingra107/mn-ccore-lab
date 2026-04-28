@@ -64,6 +64,31 @@ After Nick answers the decision queue:
 
 <!-- Future entries below this line. Latest on top. -->
 
+## 2026-04-28 — DEPLOYED 🚀
+
+**Phase**: Deploy. Schema v54 migrated, Pages deploy shipped, post-deploy verification green.
+
+### Deploy URL
+`https://86c3445e.mn-ccore-lab.pages.dev`
+
+### Steps run
+1. ✅ Schema v54 migration (`api/schema-v54-team-citations.sql`) applied to prod D1 — 3 columns added to `team_members` (`citation_count`, `h_index`, `last_scholar_refresh`)
+2. ✅ `npm run build` clean (TypeScript + Vite)
+3. ✅ `npx wrangler pages deploy dist --project-name mn-ccore-lab` — 100 new files uploaded, 79 already cached
+
+### Post-deploy verification ✅
+- `GET /api/health` → 200, 652 tasks / 71 projects / 19 team_members, 42ms duration
+- `GET /api/citations` → 200, zero-state correct (schema v54 active; awaits PB scholarly cron)
+- `GET /api/insights/dashboard` → 403 PI-only (gate enforced)
+- `GET /api/submissions/active` → empty data shape correct (Bundle N M-12 endpoint live)
+- `GET /api/search?q=test` → first hit ships new `?openTask=` URL (Bundle O S-07 project-context deeplink working)
+- `npm run test:smoke` → 15/27 pass (12 portal `/portal/*` fails are CF Access auth gating; identical to pre-deploy baseline; **no regression**)
+
+### Pending manual step (Nick)
+- PB scholarly weekly cron — implement per `scripts/citations-scholar-stub.md` on home laptop. Until then, StatsCard.totalCitations renders `—`.
+
+---
+
 ## 2026-04-28 — WAVE 4 SHIPPED ✅
 
 **Phase**: Fix (complete). 4 audit PRs merged to main. Build green, TypeScript clean, API tests 24/24.
