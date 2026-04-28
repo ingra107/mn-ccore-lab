@@ -32,6 +32,7 @@ import { PillStrip } from '../../components/today/PillStrip'
 import { RightNow } from '../../components/today/RightNowCard'
 import { Timeline } from '../../components/today/Timeline'
 import { TaskGroup } from '../../components/today/TaskGroup'
+import { MorningThoughtCompose } from '../../components/today/MorningThoughtCompose'
 import { HermesSuggestsCard } from '../../components/today/rail/HermesSuggestsCard'
 import { NeedsAttentionCard } from '../../components/today/rail/NeedsAttentionCard'
 import { ProjectsCard } from '../../components/today/rail/ProjectsCard'
@@ -234,13 +235,11 @@ export default function TodayPage() {
 
         <PillStrip counts={counts} />
 
-        <div style={{ display: 'flex', gap: 8, padding: '10px 14px', background: PANEL_BG, border: '1px solid rgba(255,255,255,0.08)', borderRadius: 6, marginBottom: 20 }}>
-          <span style={{ fontSize: 14 }}>🧠</span>
-          <input
-            placeholder="Morning thought, quick capture, or @hermes to delegate…"
-            style={{ flex: 1, background: 'transparent', border: 'none', fontSize: 13, color: INK, outline: 'none', fontFamily: 'inherit' }}
-          />
-          <kbd style={{ fontFamily: 'var(--font-mono), JetBrains Mono, monospace', fontSize: 10, padding: '2px 6px', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 3, color: INK_DIM }}>⌘ ⏎</kbd>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '10px 14px', background: PANEL_BG, border: '1px solid rgba(255,255,255,0.08)', borderRadius: 6, marginBottom: 20 }}>
+          <span style={{ fontSize: 14, marginTop: 2 }}>🧠</span>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <MorningThoughtCompose />
+          </div>
         </div>
 
         <RightNow task={rightNowTask} project={rightNowProject ? { name: rightNowProject.name, slug: rightNowProject.slug } : null} queueTasks={queueTasks} state={state} />
