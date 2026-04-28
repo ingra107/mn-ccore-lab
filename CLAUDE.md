@@ -4,16 +4,42 @@
 
 Before writing any code or answering any question about this project, read:
 
-1. **`SESSION-HANDOFF.md`** — current gate state, what-to-do-first, git HEADs, gotchas. One-page. Always. ⚠ **If the session starts in AUTO MODE, that file's top section (🤖 NEXT SESSION — AUTO-MODE PLAYBOOK) is the prescriptive ticket queue. Execute it in order without re-triaging.**
-2. **`PROJECT.md`** — frontmatter has canonical `next_action` + `primary_folder`.
-3. **`LAUNCH-CHECKLIST.md`** — historical record of launch prerequisites + verification runbook. All prereqs shipped 2026-04-21; re-read if revisiting auth config, CF Access policies, or digest email setup.
-4. **`REFERENCE.md`** — API endpoints + D1 table list when you need one.
-5. **`CHANGELOG.md`** — top entry = most recent phase; jump here when asked "what changed."
-6. **`docs/OBSERVABILITY.md`** — `/api/health` runbook.
+1. **`SESSION-HANDOFF.md`** — current gate state, what-to-do-first, git HEADs, gotchas. One-page. Always. ⚠ **If the session starts in AUTO MODE or AUDIT MODE, that file's top section is the prescriptive ticket queue. Execute it in order without re-triaging.**
+2. **`audit/2026-04-28/README.md`** — IF working on the multi-agent audit (default for sessions without a specific focus). 12 page audits + synthesized plan + ~364 findings. ⚠ **MANDATORY: read `audit/2026-04-28/VERIFICATION-PROTOCOL.md` before fixing any finding.**
+3. **`PROJECT.md`** — frontmatter has canonical `next_action` + `primary_folder`.
+4. **`LAUNCH-CHECKLIST.md`** — historical record of launch prerequisites + verification runbook. All prereqs shipped 2026-04-21; re-read if revisiting auth config, CF Access policies, or digest email setup.
+5. **`REFERENCE.md`** — API endpoints + D1 table list when you need one.
+6. **`CHANGELOG.md`** — top entry = most recent phase; jump here when asked "what changed."
+7. **`docs/OBSERVABILITY.md`** — `/api/health` runbook.
 
-These six plus this file are authoritative. Historical material lives
+These plus this file are authoritative. Historical material lives
 in `docs/archived/` (and PB-side `Projects/mn-ccore-lab-hub/_archived/`) —
 safe to ignore unless explicitly spelunking history.
+
+## 🔬 Audit-mode protocol (active 2026-04-28 onward)
+
+A multi-agent audit covering 12 portal pages landed 2026-04-28. ~364 findings (22 P0, 109 P1). The audit is the default workplan for sessions without a specific focus.
+
+**Audit directory** (`audit/2026-04-28/`, git-tracked):
+- `README.md` — entry point + workflow
+- `VERIFICATION-PROTOCOL.md` — **mandatory before any fix** (6-step verification protocol)
+- `synthesis-plan.md` — prioritized phase plan (P0 batch → A → B → C, ~10-12 weeks)
+- `progress-log.md` — append-only session log
+- `findings-index.md` — quick lookup of all 364 findings by ID + severity + theme
+- `reports/01-12.md` — raw agent output for each page (≥1500 words each)
+
+**The cardinal rule**: VERIFY a finding still exists before fixing it. The audit is dated; the codebase changes daily. Some findings are already fixed; some have moved; some agents may have looked at the wrong file. Verify first, fix second.
+
+**Ask Nick (do not guess) when**:
+- File:line citation no longer matches and content search returns nothing
+- Schema change or feature deletion required
+- Auth / billing / data-write changes
+- Open question from `synthesis-plan.md` § "Top Open Questions for Nick" applies
+- Phase A cross-cutting sweep (12+ sites at once — bundle vs split is Nick's call)
+
+**Update protocol**: every fixed (or verified-already-fixed) finding requires an entry in `audit/2026-04-28/progress-log.md` with verification evidence. Commits should reference the finding ID (e.g., `fix(today): wire SmartCompose on morning thought (TP-01)`).
+
+**Resumable agents**: each report has an `agentId`. Use `SendMessage(to: '<id>', prompt: '...')` to drill deeper without re-spawning a full audit.
 
 ## Current state (2026-04-28 late evening)
 

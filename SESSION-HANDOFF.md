@@ -2,6 +2,48 @@
 
 ---
 
+## 🤖 NEXT SESSION — AUDIT MODE PLAYBOOK
+
+**A 12-page multi-agent audit landed 2026-04-28.** ~364 findings, 22 P0, 109 P1. Persistent workplan lives at `audit/2026-04-28/`.
+
+**If Nick has not redirected you to a different priority, your job is to work the audit.**
+
+### Strict workflow (do this in order, every session)
+
+1. Read `audit/2026-04-28/README.md` — explains directory + workflow
+2. Read `audit/2026-04-28/VERIFICATION-PROTOCOL.md` — **MANDATORY** before any fix
+3. Read `audit/2026-04-28/progress-log.md` — see what previous sessions did
+4. Open `audit/2026-04-28/synthesis-plan.md` — find next unchecked P0/P1 item
+5. Open the matching `audit/2026-04-28/reports/NN-pagename.md` — get raw context
+6. **VERIFY the finding still exists** (file:line + git log + reproduce in browser)
+   - If already fixed → mark in progress-log, move to next finding
+   - If still broken → fix it, then progress-log + commit referencing finding ID
+   - If unclear → **ASK NICK** in chat. Do not guess.
+7. Append entry to `audit/2026-04-28/progress-log.md` with verification evidence
+
+### Priority order (work top-down)
+
+1. **P0 batch** (22 items, ~1.5wk): auth bugs, hardcoded fake data, decorative compose, broken endpoints. Start with `findings-index.md` § "P0 / High severity" table.
+2. **Phase A — Foundations** (2wk): cross-cutting sweeps (SmartCompose universal, Hermes maturity, brand primitives, token discipline, cache-subscribe, activity_log emit, page-identity decision).
+3. **Phase B — Tier 1** (3-4wk): page-specific high-leverage moves on Today / UnifiedMyTasks / ProjectDetail / Hermes pages / Lab Overview / Calendar.
+4. **Phase C — Tier 2** (3-4wk): polish on Manuscripts / Profile / Inbox / Meetings / Search / Insights.
+
+### When to ASK NICK (do not guess)
+
+See `VERIFICATION-PROTOCOL.md` § "When to ASK NICK". Top triggers:
+- File:line citation no longer matches and content search returns nothing
+- Schema change required
+- Feature deletion / page retirement (e.g., `/portal/personal`)
+- Auth, billing, retention, data-write changes
+- Open question from `synthesis-plan.md` § "Top Open Questions for Nick" applies
+- Phase A foundation sweep (12+ sites at once — bundle vs split is Nick's call)
+
+### Trust-but-verify mindset
+
+The audit is dated 2026-04-28. The codebase changes daily. **Some findings will already be fixed by a different commit.** Some will be partially fixed. Some agents will have looked at the wrong file. **Your job is to verify before fixing — not to mechanically fix everything in the table.**
+
+---
+
 ## What shipped this session — 4 PRs, 2 schema migrations, 1 IdP swap
 
 - **HEAD `f44605ee` on main, in sync with origin.** Four squash-merges since 2026-04-27 close.
