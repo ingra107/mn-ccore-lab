@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, logActivity } from '../helpers';
+import { json, error, logActivity, actorSlug, getPiEmails } from '../helpers';
 
 // GET /api/team
 export async function handleTeam(env: Env): Promise<Response> {
@@ -37,39 +37,67 @@ export async function handleCVData(slug: string, env: Env): Promise<Response> {
   });
 }
 
-// PUT /api/team/:slug — team member updates own profile
+// Self-edit fields — anyone can update on their own profile.
+const SELF_EDIT_FIELDS = ['bio', 'photo_url', 'scholar_id', 'title', 'department', 'full_name', 'preferred_name', 'credentials'] as const
+
+// Admin-only fields — only PI emails (lab_settings.pi_emails) can set.
+// role/member_type assignment is admin-only because it determines team
+// directory grouping + sets the gold-pill role label visible to the
+// whole lab.
+const ADMIN_ONLY_FIELDS = ['role', 'member_type'] as const
+
+const ALL_ALLOWED_FIELDS: readonly string[] = [...SELF_EDIT_FIELDS, ...ADMIN_ONLY_FIELDS]
+
+// PUT /api/team/:slug — update a team member's profile.
+// Authorization:
+//   - User editing their OWN row (slug derived from JWT email == path slug):
+//     can update SELF_EDIT_FIELDS only
+//   - User in lab_settings.pi_emails:
+//     can update any row, including ADMIN_ONLY_FIELDS
+//   - Anyone else: 403
 export async function handleUpdateTeamMember(
   slug: string,
   request: Request,
   user: AuthUser,
   env: Env,
 ): Promise<Response> {
+  // Auth boundary. Anonymous fallback identity has email='anonymous';
+  // reject before any DB write. (REQUIRE_AUTH=1 in prod also blocks at
+  // middleware level, but this is defense-in-depth.)
+  if (!user.email || user.email === 'anonymous') {
+    return error('Authentication required', 401);
+  }
+
+  const callerSlug = actorSlug(user.email);
+  const piEmails = await getPiEmails(env);
+  const isPi = piEmails.has(user.email.toLowerCase());
+  const isOwner = callerSlug === slug;
+
+  if (!isOwner && !isPi) {
+    return error('Forbidden — can only edit your own profile', 403);
+  }
+
   const body = await request.json() as Record<string, unknown>;
 
-  // Allowlisted fields. Self-edit fields + admin fields share the
-  // allowlist; per-field auth (e.g. only PI can set member_type) can be
-  // layered on top later if it matters.
-  // v41: full_name, preferred_name added so the profile form can edit them.
-  // v53: role + member_type added so an admin UI can assign a role to
-  //      auto_created members and clear the flag.
-  const allowed = ['bio', 'photo_url', 'scholar_id', 'title', 'department', 'full_name', 'preferred_name', 'credentials', 'role', 'member_type'];
   const updates: string[] = [];
   const values: (string | null)[] = [];
 
   for (const [key, val] of Object.entries(body)) {
-    if (allowed.includes(key)) {
-      updates.push(`${key} = ?`);
-      values.push(val as string | null);
+    if (!ALL_ALLOWED_FIELDS.includes(key)) continue
+    // Admin-only field guard.
+    if (ADMIN_ONLY_FIELDS.includes(key as typeof ADMIN_ONLY_FIELDS[number]) && !isPi) {
+      return error(`Field "${key}" can only be set by a PI`, 403);
     }
+    updates.push(`${key} = ?`);
+    values.push(val as string | null);
   }
 
   if (updates.length === 0) {
     return error('No valid fields to update', 400);
   }
 
-  // Clear the auto_created flag whenever a role is assigned. Once Nick
-  // (or whoever) sets the role, the row has been "reviewed" and the
-  // PENDING badge should drop. Idempotent — re-clearing is harmless.
+  // Clear the auto_created flag whenever a role is assigned (admin-only
+  // path; only PI reaches here). Idempotent — re-clearing is harmless.
   const setsRole = typeof body.role === 'string' && body.role.trim() !== '';
   if (setsRole) updates.push('auto_created = 0');
 

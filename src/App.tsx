@@ -133,6 +133,7 @@ const ActivityPage = lazy(() => import('./pages/portal/ActivityPage'))
 const AnalyticsPage = lazy(() => import('./pages/portal/AnalyticsPage'))
 const InsightsPage = lazy(() => import('./pages/portal/InsightsPage'))
 const SettingsPage = lazy(() => import('./pages/portal/SettingsPage'))
+const ProfilePage = lazy(() => import('./pages/portal/ProfilePage'))
 const MeetingNotesPage = lazy(() => import('./pages/portal/MeetingNotesPage'))
 const DecisionsPage = lazy(() => import('./pages/portal/DecisionsPage'))
 const NarrativesPage = lazy(() => import('./pages/portal/NarrativesPage'))
@@ -285,6 +286,7 @@ export default function App() {
                   <Route path="/portal/pb" element={<ErrorBoundary><PBSector /></ErrorBoundary>} />
                   <Route path="/portal/sessions" element={<ErrorBoundary><SessionHistory /></ErrorBoundary>} />
                   <Route path="/portal/settings" element={<ErrorBoundary><SettingsPage /></ErrorBoundary>} />
+                  <Route path="/portal/profile" element={<ErrorBoundary><ProfilePage /></ErrorBoundary>} />
 
                   {/* Team member pages — under portal layout when navigating
                       from inside the portal. Audit caught: clicking a teammate
