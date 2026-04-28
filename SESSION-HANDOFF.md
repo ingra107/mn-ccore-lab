@@ -1,145 +1,123 @@
-# Session Handoff — 2026-04-28 (Phase 39 — bug sweep + iCal feeds + auto-create + profile page)
+# Session Handoff — 2026-04-28 (audit waves 1-4 shipped + deployed)
 
 ---
 
-## 🤖 NEXT SESSION — AUDIT MODE PLAYBOOK
+## 🚀 LATEST DEPLOY
 
-**A 12-page multi-agent audit landed 2026-04-28.** ~364 findings, 22 P0, 109 P1. Persistent workplan lives at `audit/2026-04-28/`.
+**HEAD `46e820b3` on main**, in sync with origin. Pages deploy live at:
+
+> https://86c3445e.mn-ccore-lab.pages.dev
+
+Schema v54 applied to prod D1 (`team_members.citation_count` + `h_index` + `last_scholar_refresh`).
+
+---
+
+## 🤖 NEXT SESSION — AUDIT MODE PLAYBOOK (still active)
+
+**100 of 161 P0/P1 audit findings closed (~62%) via 11 PRs (#55-#65) on 2026-04-28.** ~60 findings remain. Persistent workplan still lives at `audit/2026-04-28/`.
 
 **If Nick has not redirected you to a different priority, your job is to work the audit.**
 
-### Strict workflow (do this in order, every session)
+### Strict workflow (every session)
 
 1. Read `audit/2026-04-28/README.md` — explains directory + workflow
 2. Read `audit/2026-04-28/VERIFICATION-PROTOCOL.md` — **MANDATORY** before any fix
-3. Read `audit/2026-04-28/progress-log.md` — see what previous sessions did
-4. Open `audit/2026-04-28/synthesis-plan.md` — find next unchecked P0/P1 item
+3. Read `audit/2026-04-28/progress-log.md` — see what previous sessions did (entries are append-only, latest at top)
+4. Open `audit/2026-04-28/synthesis-plan.md` — find next unchecked P1 item
 5. Open the matching `audit/2026-04-28/reports/NN-pagename.md` — get raw context
-6. **VERIFY the finding still exists** (file:line + git log + reproduce in browser)
-   - If already fixed → mark in progress-log, move to next finding
-   - If still broken → fix it, then progress-log + commit referencing finding ID
-   - If unclear → **ASK NICK** in chat. Do not guess.
-7. Append entry to `audit/2026-04-28/progress-log.md` with verification evidence
+6. **VERIFY the finding still exists** (file:line + git log + reproduce in browser) — many findings are already closed by waves 1-4
+7. Fix or escalate per the protocol
+8. Append entry to `audit/2026-04-28/progress-log.md`
 
-### Priority order (work top-down)
+### Trust-but-verify
 
-1. **P0 batch** (22 items, ~1.5wk): auth bugs, hardcoded fake data, decorative compose, broken endpoints. Start with `findings-index.md` § "P0 / High severity" table.
-2. **Phase A — Foundations** (2wk): cross-cutting sweeps (SmartCompose universal, Hermes maturity, brand primitives, token discipline, cache-subscribe, activity_log emit, page-identity decision).
-3. **Phase B — Tier 1** (3-4wk): page-specific high-leverage moves on Today / UnifiedMyTasks / ProjectDetail / Hermes pages / Lab Overview / Calendar.
-4. **Phase C — Tier 2** (3-4wk): polish on Manuscripts / Profile / Inbox / Meetings / Search / Insights.
+The audit is dated 2026-04-28; the codebase has shifted significantly. Many "still broken" findings from the verification sweep are NOW fixed. **Run the protocol** before assuming anything.
 
-### When to ASK NICK (do not guess)
+### Wave 5 candidate bundles (ready to dispatch on Nick's go)
 
-See `VERIFICATION-PROTOCOL.md` § "When to ASK NICK". Top triggers:
-- File:line citation no longer matches and content search returns nothing
-- Schema change required
-- Feature deletion / page retirement (e.g., `/portal/personal`)
-- Auth, billing, retention, data-write changes
-- Open question from `synthesis-plan.md` § "Top Open Questions for Nick" applies
-- Phase A foundation sweep (12+ sites at once — bundle vs split is Nick's call)
+- **Bundle Q** AskTheLab Hermes pending state + realtimeBus + tier-1 polish (~10 findings — ATL-03, ATL-04, ATL-08, ATL-10, ATL-13, ATL-14, ATL-21-23, ATL-25-27)
+- **Bundle T** ProfilePage tier-1 (~8 findings — P-02 affordance, P-03 photo upload, P-05 optimistic + undo, P-08 calendar feed delete confirm, P-11 scholar_id format, P-12 slug visible, P-13 lock tooltip)
+- **Bundle U** Personal 3-tab merge per D4+D5 — biggest single bundle remaining. Personal becomes Workspace | Inbox | Cards. MyItems retired. 6 personal cards move from Lab Overview. Substrate-swap protocol applies.
+- **Bundle V** Calendar tier-1 (~4 findings — C-01 iCal merge, C-02 clickable tasks/milestones, C-04 +N more interactive, C-05 view persist)
+- **Bundle K** TodayPage Tier-2 (TP-04 + TP-06 state.done arch, TP-05 meeting-notes piggyback per D13, TP-13 token migration per D16, TP-15 CategoryIcon vocabulary per D18)
+- **Bundle S** Lab Overview tier-2 (LO-5 ActionBoard scope filter, LO-7 ROLE_DEFAULTS reconcile, LO-9 TeamPulse + Insights default-on, LO-10 dashboard-role-key)
 
-### Trust-but-verify mindset
+### Cross-repo schema queue (NOT auto-dispatched — needs Nick + lockstep deploy with brain.db)
 
-The audit is dated 2026-04-28. The codebase changes daily. **Some findings will already be fixed by a different commit.** Some will be partially fixed. Some agents will have looked at the wrong file. **Your job is to verify before fixing — not to mechanically fix everything in the table.**
+Per Rule R10 — each needs decision doc in `~/Peripheral-Brain/Context/Decisions/` + `enums.py` update + `shared-schema-registry.md` + lockstep deploy:
+
+- **D7** `projects.stage_entered_at` (unblocks M-03)
+- **D8** `lab_questions.tags` (unblocks ATL-06)
+- **D9** `commitments.to_slug` (unblocks MI-07)
+- **D22** `activity_log` emit on stage / PI / status / assignee / project rename / meeting cancel transitions (unblocks PD-3 Activity audit log + partial M-03)
+- **D28** `meetings.start_time` + `meetings.end_time` (unblocks Calendar time-aware C-03/C-06)
 
 ---
 
-## What shipped this session — 4 PRs, 2 schema migrations, 1 IdP swap
+## What shipped this session — 17 PRs in one day
 
-- **HEAD `f44605ee` on main, in sync with origin.** Four squash-merges since 2026-04-27 close.
-  - `c7bd33f0` — fix(today,settings): close 3 GH bugs (#49) — closed #46 + #47, plus Settings Integrations placeholder
-  - `9c6fab10` — feat(calendar): personal iCal feeds for Today timeline (#50) — closed #45
-  - `9931421c` — feat(team): auto-provision team_members on first CF Access login (#51)
-  - `f44605ee` — feat(profile): /portal/profile page + lock down team update auth (#52)
-- **GH issues closed:** #45, #46, #47, #48 (#48 closed without code via CF dashboard config)
-- **Deployed:** `722efd9e.mn-ccore-lab.pages.dev`
-- **Schemas applied to prod D1:**
-  - v52: `user_calendar_feeds` + `user_calendar_events` (Phase 39, 2026-04-27)
-  - v53: `team_members.auto_created` (Phase 39, 2026-04-28)
-- **CF Access IdP swap (2026-04-28):** preset Google → Generic OIDC `Google UMN` with `Auth URL = https://accounts.google.com/o/oauth2/auth?prompt=select_account&hd=umn.edu`. New Web OAuth client created in Google Cloud Console (Peripheral Brain - UMN project) — separate from the existing Desktop client used by Peripheral Brain CLI.
-- **Quality gate green.** `npm run build` + `npx tsc --noEmit` + `npm run test:api` (24/24 parser tests) all clean post-deploy.
+### Phase 39 morning (#49-#52, pre-audit)
+- PR #49 closed GH #46 / #47 — Today plan persistence + Today→/tasks completion sync
+- PR #50 iCal calendar feeds (RFC 5545 parser, RRULE, IANA TZID, 24 vitest tests)
+- PR #51 auto-create + claim of team_members on first CF Access login (schema v53)
+- PR #52 `/portal/profile` page + lock down `PUT /api/team/:slug` auth
+
+### Audit waves 1-4 (#55-#65)
+- **Wave 1** PR #55 Bundle A (P0 quick wins — auth + subtask + slug + stopProp), PR #56 Bundle D (brand sweep — gold-on-emphasis, CategoryIcon, EmptyStateArt)
+- **Wave 2** PR #57 Bundle B (Lab Overview wires — kill fake R01 deadlines / fake citations / fake grant timeline / "CLIF expanding" copy), PR #58 Bundle G (citations infra — schema v54 + `/api/citations` + `useCitations()` + StatsCard wire + PB scholarly cron stub doc)
+- **Wave 3** PR #59 Bundle H (UnifiedMyTasks rebuild — TaskDrawer.tsx DELETED, TaskDetailPanel composition, inline editing on List, virtualization, FilterChip typeahead), PR #60 Bundle F (ProjectDetail polish — title inline-edit, archive menu, tab URL state, file uploader name+timestamp, Hermes ReactionBar fix), PR #61 Bundle C (SmartCompose universal sweep — 9 sites including TodayPage MorningThoughtCompose with prefix routing + time-aware after 5pm CT)
+- **Wave 4** PR #62 Bundle O (SearchPage UX foundations — match highlighting, snippets, sticky bar, view picker, type-specific badges, "Did you mean" token retry), PR #63 Bundle M (InsightsPage feature pass — sigmoid Lab Health, ?week= param, sparklines, MetricCard adoption, Connections panel between funnel + scatter), PR #64 Bundle R (TodayPage Tier-1 — 1px now-line, OverlapBand, due/priority cells, sigmoid Lab Health, focusMin from PB sessions, NeedsAttention overflow link, ProjectsCard "relevant today"), PR #65 Bundle N (Manuscripts polish — Active Submissions widget, Pipeline DnD, click-to-advance stage dots, derived PI filter, useLabPrefs threshold)
+
+---
 
 ## State changes a fresh session needs to know
 
-### iCal feeds (Phase 39 / Rule 64)
-- `api/lib/ics-parser.ts` — pure-JS RFC 5545 parser (Workers-compatible). Capabilities: RRULE expansion (DAILY/WEEKLY/MONTHLY/YEARLY with INTERVAL/BYDAY/BYMONTHDAY/COUNT/UNTIL), TZID resolution via `Intl.DateTimeFormat`, STATUS=CANCELLED filtering, PARTSTAT=DECLINED filtering (per ownerEmail), meeting URL extraction from DESCRIPTION (Zoom/Teams/Meet) with Google `&sa=D` tracking strip, dedup by (summary, startAt). 24 vitest unit tests at `api/lib/ics-parser.test.ts`. Run via `npm run test:api` (uses node mode `vitest.config.api.ts` — separate from browser-mode component tests).
-- `api/routes/calendar-feeds.ts` — 4 endpoints under `/api/integrations/calendar/*`:
-  - `GET /feeds` — list user's feeds (returns obfuscated host preview, never raw URL)
-  - `POST /feeds` — add feed (eager polls + parses on add)
-  - `DELETE /feeds/:id` — remove feed (FK cascade clears events)
-  - `GET /events?start=&end=` — list user's events; lazy-refreshes any feed with `last_polled_at` >15min stale before returning
-- `src/components/CalendarFeedsPanel.tsx` — shared component used by both `/portal/profile` and `/portal/settings#integrations`. Single TanStack cache key `calendar-feeds`.
-- `useUserCalendarEvents()` in `useApiData.ts` — TodayPage merges these events with team meetings (timed events sorted, untimed/all-day at top).
+### Major component lifecycle
+- **`src/pages/MyTasks/components/TaskDrawer.tsx` DELETED.** Bundle H replaced with `<TaskDetailPanel taskId={drawerId}>` composition. List view drawer now uses canonical TaskDetailPanel pattern (cache-subscribed per Rule 18, focus trap, prev/next, 5 tabs).
+- **`src/pages/MyTasks/views/ListView.tsx` rebuilt.** Now uses `useVirtualizer`, inline editing on Status / Priority / Due / Owner / Project via InlineSelect/InlineDatePicker/InlineAssigneePicker.
+- **`src/components/SmartCompose.tsx` extended** with backward-compatible custom-mode props (`onSubmit`, `value`/`onChange`, `submitting`, `uploadContext`, `theme='dark'|'light'`, `bare`, `autoFocus`, `alwaysShowToolbar`, `submitLabel`, `hideKbdHint`, `hideSubmitButton`, `rows`). 9 surfaces now adopt it: TodayPage morning thought + Right Now chat, ProjectDetail Overview compose, ProjectUpdateFeed, ProjectComments, MeetingDetail action items + notes, AskTheLab modal + answer.
+- **`src/components/today/MorningThoughtCompose.tsx` NEW.** Bundle C / TP-01 / D11 — prefix-routed (`@hermes` / `note:` / default `task:`) + time-aware (after 5pm CT, prompt swaps to "Plan tomorrow" + tasks default `due_date=tomorrow`).
+- **`src/components/today/OverlapBand.tsx` IMPLEMENTED** (was stub returning null). Clusters overlapping events; renders dashed coral band w/ side-by-side grid.
+- **`src/components/ActiveSubmissionsWidget.tsx` NEW.** Bundle N M-12 — top of Manuscripts List view. Reuses existing `/api/submissions/active` endpoint.
+- **`api/routes/citations.ts` NEW.** `GET /api/citations` returns `{ total, last_refresh, members_with_data, members_total }` w/ 1h edge cache.
+- **`api/schema-v54-team-citations.sql` NEW + APPLIED to prod.**
+- **`scripts/citations-scholar-stub.md` NEW** — PB scholarly weekly cron spec for Nick to implement on home laptop.
+- **`scripts/deploy-audit-wave.sh` NEW** — idempotent deploy script (schema migration + build + Pages deploy).
 
-### Auto-create + claim (Phase 39 / Rule 24 updated, Rule 66)
-- `ensureTeamMember()` in `api/helpers.ts` runs on every authed request. Four-branch: (1) email match no-op; (2) LUT slug match → CLAIM existing row (backfills email + photo_url); (3) email-prefix slug match → same claim path; (4) no match → INSERT auto_created=1 row.
-- For new lab members: NO manual provisioning needed. Sign-in creates the row.
-- For existing 19 members: first CF Access sign-in via `mesfin@umn.edu` claims the pre-provisioned `nate-mesfin` row, backfills email column from placeholder `nate-mesfin@umn.edu` to real `mesfin@umn.edu`, and adds Google profile photo if not already set. Name is NEVER overwritten — Nick's curated preferred name beats Google's display name.
-- Yellow PENDING REVIEW badge on Team page for `auto_created=1` rows. Clears when role is assigned (admin-only update).
+### Endpoint extensions
+- **`PUT /api/team/:slug` extended** with `CITATION_FIELDS` bucket + API-key auth path. PB cron uses Bearer PB_API_KEY to write `citation_count` / `h_index` / `last_scholar_refresh`. Browser users (even PI) get 403 on these fields. Activity log skipped on the cron path.
+- **`/api/insights/dashboard` extended** with `?week=YYYY-WW` param. Default = current ISO week. Frontend wires week-prev/next chevrons in PageHeader.
+- **`/api/search` extended** with snippets (~160-char excerpt centered on match) + matchedField + per-type details (project_id on tasks for project-context routing).
 
-### Auth fix on `PUT /api/team/:slug` (Rule 66 footnote)
-- Was: any authed user could edit ANY team_members row including role.
-- Now: owner (slug derived from JWT email matches path slug) OR PI (lab_settings.pi_emails). 403 otherwise.
-- Field tiers: `SELF_EDIT_FIELDS` (bio, photo_url, scholar_id, title, department, full_name, preferred_name, credentials) editable by owner; `ADMIN_ONLY_FIELDS` (role, member_type) PI-only.
+### Brand primitives now adopted
+- `EmptyStateArt` first consumers: InsightsPage (Bundle D INS-07), MyItems (Bundle D MI-08 indirectly via accentColor refactor)
+- `CategoryIcon` now on: ProjectDetail header (Bundle D PD-8), Manuscripts (4 sites — Bundle D M-15)
+- `HermesMark` and `HeartbeatLine` still under-utilized — candidates for future bundles
 
-### `/portal/profile` page (Rule 67)
-- New route. Sidebar nav entry "My Profile" (lucide `User` icon — same as 'My Hub' link, not a conflict).
-- `PATHS.profile = /portal/profile` added to `src/constants/paths.ts`.
-- Inline-on-blur edit pattern. Saves invalidate `['team']` + `['team-raw']` cache keys.
-- Embedded `<CalendarFeedsPanel />` so calendar config is on the same page as profile editing.
-- Read-only role + member_type pills (admin-assigned).
+### Token discipline
+- `--gold-on-emphasis` swapped where needed (AskTheLab project pill / Hermes pill / ProjectDetail agenda pill — Bundle D)
+- Manuscripts stage progress dots use `--stage-fill-*` tokens (Bundle N M-06)
 
-### CF Access OIDC swap (Rule 65)
-- Preset Google IdP DEPRECATED but still attached to the Access app as fallback. Remove after a few days of `Google UMN` working.
-- Web OAuth client in Google Cloud Console: `MN-CCORE Lab Hub - CF Access` in `Peripheral Brain - UMN` project. Authorized redirect URI: `https://<TEAM>.cloudflareaccess.com/cdn-cgi/access/callback`.
-- OIDC Claims: `name` + `picture` listed. Claims arrive at TOP LEVEL of the Access JWT (not in `oidc_fields`); the Test UI's empty `oidc_fields: {}` is a UI quirk, NOT a problem.
-- `api/jwt-verify.ts` extracts `picture` claim. `AuthUser.picture` now exists.
+---
 
 ## Next steps
 
-### Verification (Nick or fresh session)
-1. **Verify profile page** — sign in, open `/portal/profile`, edit a field, refresh, confirm persistence
-2. **Verify claim flow** — have Nate Mesfin or another existing member sign in, then check:
-   ```bash
-   npx wrangler d1 execute mnccore-lab --remote --command="SELECT slug, email, photo_url FROM team_members WHERE slug IN ('nate-mesfin', 'casey-eddington', 'emma-bromley')"
-   ```
-   Their email column should flip from `slug@umn.edu` placeholder to real `mesfin@umn.edu` etc.
-3. **Verify auto-create** — when a brand-new lab member (not in EMAIL_PREFIX_TO_SLUG) signs in for the first time, check `/portal/team` for their auto-row with PENDING REVIEW badge.
-4. **Add real iCal feed** — paste your Google Calendar secret iCal URL into `/portal/profile` → confirm events appear on `/portal/dashboard`.
+### Manual (Nick)
+1. **PB scholarly weekly cron** — implement per `scripts/citations-scholar-stub.md` on home laptop (PB infra). Until it runs, `/api/citations` returns zero-state and StatsCard.totalCitations renders `—`.
+2. **Wave 5 dispatch** — say go and I'll fire Bundle Q + T + U + V (+ K + S) in parallel. Sequencing same as wave 4: agents write to worktrees, I rebase + push + merge as they complete.
+3. **CF Access cleanup** (still pending from Phase 39) — remove preset Google IdP from CF Access app. Generic OIDC `Google UMN` is the canonical IdP now.
 
-### Cleanup (when comfortable)
-- Edit Access app in CF dashboard → uncheck old preset Google → keep only `Google UMN`
-- Delete the preset Google IdP entry (Settings → Authentication → Login methods)
+### Verification (next session)
+- `bash scripts/deploy-audit-wave.sh` is idempotent; safe to re-run if a prod issue surfaces.
+- `npm run test:smoke` shows 15/27 green; the 12 portal failures are CF Access auth gating (pre-existing, expected — needs `tests/helpers/capture-auth.ts` fake-auth wiring per Rule 33). Not a regression.
+- `npm run test:api` 24/24 green.
 
-### Known follow-ups (NOT blocking)
-- Adding `.github/workflows/schema-drift.yml` will regenerate the schema bundle next nightly run; v52 + v53 lands in the bundle automatically.
-- The `_OldImpl_unused` placeholder in SettingsPage was eliminated during the extraction — clean.
+---
 
 ## Don't-forget
 
-- **CF dashboard cleanup** (above) — only thing that needs you, not code.
-- **Settings → Integrations tab still shows** as a placeholder of sorts. The real UI lives in `CalendarFeedsPanel`. If you want to redirect that tab somewhere, edit `src/pages/portal/SettingsPage.tsx` line ~680 (`function IntegrationsPanel() { return <CalendarFeedsPanel /> }`).
-- **Test database migrated** — `npm run test:local` should still work; if not, the tests/local-db-bootstrap.ts skip list might need v52/v53 added (mirror the skip pattern from v43/v48).
-
----
-
-## Prior session summary (2026-04-27 Stitch batch) — kept for context
-
-(Full prior handoff archived below the cut.)
-
----
-
-# Earlier — Session Handoff — 2026-04-27 (Stitch consultant batch shipped)
-
-## 🆕 2026-04-27 update — 5 PRs merged from Stitch batch
-
-- **HEAD `7a79806d` on main, in sync with origin.** Six commits since the 2026-04-26 close (5 squash-merges + 1 PB-side follow-up).
-  - `344cd3d8` — feat(manuscripts): category filter pills above the table (#39 / PR #40)
-  - `40a8e84a` — feat(settings): RangeSlider for Lab thresholds (#36 / PR #41)
-  - `fde6b44c` — feat(hermes): citation pills + Operation Findings callout (#38 / PR #42)
-  - `c45c5013` — feat(tasks): Intelligence tab — relevance + velocity + Hermes draft (#35 / PR #43)
-  - `3605cf4d` — feat(insights): /portal/insights operational dashboard (#37 EPIC / PR #44)
-  - `7a79806d` — feat(api): return ids[] from /tasks/sync-bulk for PB hub_slug capture (PB-side follow-up)
-- **All 5 GH issues auto-closed** (#35-#39). Stitch consultant batch fully discharged.
-
-(Earlier content preserved in CHANGELOG.md and prior commits.)
+- **Wave 5 is BIG** — Bundle U (Personal 3-tab merge) is substrate-swap territory. Run the substrate-swap skill checklist before retiring `/portal/personal`. 24h dogfood window. Decision doc.
+- **Schema v54 is Hub-only** — `team_members.citation_count` etc. don't mirror to brain.db. The cron WRITES to Hub from PB but PB doesn't keep a mirror.
+- **Worktree dirs from waves 1-4 still locked** at `.claude/worktrees/agent-*`. Branches deleted on remote post-merge. Local cleanup if disk space matters: `git worktree remove --force .claude/worktrees/agent-{ID}`.
+- **Spec mismatch incident on D2-followup** — DECISIONS-RESOLVED.md was inadvertently reverted to Semantic Scholar mid-day; restored to per-author Google Scholar via `scholarly` weekly cron per Nick's intent. Bundle G's deliverable matches the GS-scholarly path. Schema v54 columns (`citation_count`, `h_index`, `last_scholar_refresh`) live on `team_members`, not `publications`.
+- **CHANGELOG.md still references TaskDrawer** at lines 179, 194, 221 — left intact intentionally as historical record (Phase 38 era). Per session-close anti-pattern: don't rewrite history.
