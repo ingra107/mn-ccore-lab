@@ -46,24 +46,74 @@ const SELF_EDIT_FIELDS = ['bio', 'photo_url', 'scholar_id', 'title', 'department
 // whole lab.
 const ADMIN_ONLY_FIELDS = ['role', 'member_type'] as const
 
-const ALL_ALLOWED_FIELDS: readonly string[] = [...SELF_EDIT_FIELDS, ...ADMIN_ONLY_FIELDS]
+// Citation cache fields — written ONLY by the PB-side scholarly cron via
+// X-API-Key (Bearer PB_API_KEY) auth, never by browser users. See
+// scripts/citations-scholar-stub.md. Schema: api/schema-v54-team-citations.sql.
+const CITATION_FIELDS = ['citation_count', 'h_index', 'last_scholar_refresh'] as const
+
+const ALL_ALLOWED_FIELDS: readonly string[] = [
+  ...SELF_EDIT_FIELDS,
+  ...ADMIN_ONLY_FIELDS,
+  ...CITATION_FIELDS,
+]
 
 // PUT /api/team/:slug — update a team member's profile.
 // Authorization:
+//   - Caller authenticated via PB_API_KEY (X-API-Key / Bearer header):
+//     can update CITATION_FIELDS only (used by the weekly scholarly cron).
+//     Owner / PI gates do NOT apply — the cron has no JWT identity.
 //   - User editing their OWN row (slug derived from JWT email == path slug):
 //     can update SELF_EDIT_FIELDS only
 //   - User in lab_settings.pi_emails:
-//     can update any row, including ADMIN_ONLY_FIELDS
+//     can update any row, including ADMIN_ONLY_FIELDS (NOT citation fields —
+//     those flow only from the cron, never hand-edited).
 //   - Anyone else: 403
 export async function handleUpdateTeamMember(
   slug: string,
   request: Request,
   user: AuthUser,
   env: Env,
+  apiKeyAuth: boolean = false,
 ): Promise<Response> {
-  // Auth boundary. Anonymous fallback identity has email='anonymous';
-  // reject before any DB write. (REQUIRE_AUTH=1 in prod also blocks at
-  // middleware level, but this is defense-in-depth.)
+  // API-key auth path (PB scholarly cron). No JWT identity — cron writes
+  // CITATION_FIELDS only.
+  if (apiKeyAuth) {
+    const body = await request.json() as Record<string, unknown>;
+    const updates: string[] = [];
+    const values: (string | number | null)[] = [];
+
+    for (const [key, val] of Object.entries(body)) {
+      if (!CITATION_FIELDS.includes(key as typeof CITATION_FIELDS[number])) {
+        return error(`Field "${key}" is not writable via API key`, 403);
+      }
+      updates.push(`${key} = ?`);
+      values.push(val as string | number | null);
+    }
+
+    if (updates.length === 0) {
+      return error('No valid fields to update', 400);
+    }
+
+    values.push(slug);
+    const result = await env.DB.prepare(
+      `UPDATE team_members SET ${updates.join(', ')} WHERE slug = ?`
+    ).bind(...values).run();
+
+    if (result.meta.changes === 0) {
+      return error('Team member not found', 404);
+    }
+
+    // Citation cron writes are mechanical; skip activity_log spam. (Cron
+    // runs weekly across ~20 members → would generate 20 activity rows
+    // every Monday morning for no operational signal.)
+    const updated = await env.DB.prepare('SELECT * FROM team_members WHERE slug = ?').bind(slug).first();
+    return json({ data: updated });
+  }
+
+  // Browser/JWT auth path — original owner-or-PI flow.
+  // Anonymous fallback identity has email='anonymous'; reject before any
+  // DB write. (REQUIRE_AUTH=1 in prod also blocks at middleware level,
+  // but this is defense-in-depth.)
   if (!user.email || user.email === 'anonymous') {
     return error('Authentication required', 401);
   }
@@ -84,6 +134,10 @@ export async function handleUpdateTeamMember(
 
   for (const [key, val] of Object.entries(body)) {
     if (!ALL_ALLOWED_FIELDS.includes(key)) continue
+    // Citation fields can only be written by the PB cron (API key).
+    if (CITATION_FIELDS.includes(key as typeof CITATION_FIELDS[number])) {
+      return error(`Field "${key}" is only writable by the citations cron`, 403);
+    }
     // Admin-only field guard.
     if (ADMIN_ONLY_FIELDS.includes(key as typeof ADMIN_ONLY_FIELDS[number]) && !isPi) {
       return error(`Field "${key}" can only be set by a PI`, 403);

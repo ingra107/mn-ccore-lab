@@ -611,7 +611,7 @@ app.post('/api/projects/:slug/documents/:docId/delete', (c) => handleDeleteProje
 app.post('/api/projects/:slug', (c) => handleUpdateProject(c.req.param('slug'), R(c), USER(c), E(c)));
 
 // Team
-app.put('/api/team/:slug', (c) => handleUpdateTeamMember(c.req.param('slug'), R(c), USER(c), E(c)));
+app.put('/api/team/:slug', (c) => handleUpdateTeamMember(c.req.param('slug'), R(c), USER(c), E(c), c.get('apiKeyValid') === true));
 
 // Tasks — specific-before-generic
 app.post('/api/tasks/sync-bulk', (c) => handleSyncBulkTasks(R(c), USER(c), E(c)));
