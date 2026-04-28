@@ -26,6 +26,7 @@ export function error(message: string, status = 500): Response {
 export interface AuthUser {
   email: string
   name?: string
+  picture?: string
 }
 
 export async function getAuthUser(request: Request, env: Env): Promise<AuthUser | null> {
@@ -74,7 +75,57 @@ export async function getAuthUser(request: Request, env: Env): Promise<AuthUser 
   return {
     email: payload.email,
     name: payload.name || payload.email.split('@')[0],
+    picture: payload.picture,
   };
+}
+
+/**
+ * Auto-provision a team_members row on first login.
+ *
+ * The CF Access JWT carries an authoritative email (verified by Google +
+ * gated by the @umn.edu Access policy). If we've never seen this email,
+ * INSERT a row with name + picture from Google and flag it auto_created.
+ * The Team page surfaces a "Pending review" badge so Nick can assign
+ * role / member_type / expertise tags whenever; editing role clears the flag.
+ *
+ * Idempotent + safe under concurrency:
+ *   - INSERT ... WHERE NOT EXISTS race: rare and harmless (UNIQUE on slug
+ *     would surface as a duplicate-id error; we swallow it)
+ *   - Excludes the legacy `claude-ai` agent and any test-mode users
+ *
+ * Slug strategy: email-prefix (e.g. `jsmith@umn.edu` → `jsmith`). For
+ * the existing 19 members, the EMAIL_PREFIX_TO_SLUG LUT in this file
+ * maps to canonical `preferred-last` slugs — so they were provisioned
+ * with the canonical slug and won't trigger this path. New auto-created
+ * members get the email-prefix as their slug; if that needs to change
+ * later (preferred-name format), do it via a manual UPDATE.
+ */
+export async function ensureTeamMember(env: Env, user: AuthUser): Promise<void> {
+  // Skip the synthetic agent identity used by Hermes and the test bypass.
+  if (user.email === 'anonymous' || user.email.endsWith('@test.local')) return
+  if (user.email === 'claude-ai@umn.edu') return
+
+  // Check existence. Cheap query — covered by team_members(email) row scan
+  // (~20 rows) + idx_team_members_slug.
+  const existing = await env.DB.prepare(
+    'SELECT id FROM team_members WHERE email = ? OR slug = ?'
+  ).bind(user.email, user.email.split('@')[0]).first<{ id: string }>()
+  if (existing) return
+
+  const id = generateId()
+  const slug = user.email.split('@')[0].toLowerCase()
+  const name = user.name?.trim() || slug
+  try {
+    await env.DB.prepare(
+      `INSERT INTO team_members (id, name, slug, email, photo_url, auto_created)
+       VALUES (?, ?, ?, ?, ?, 1)`
+    ).bind(id, name, slug, user.email, user.picture ?? null).run()
+  } catch (e) {
+    // Most likely a UNIQUE constraint race (two concurrent first requests).
+    // Either way, the row exists now; safe to ignore.
+    const msg = (e as Error).message
+    if (!msg.includes('UNIQUE')) throw e
+  }
 }
 
 export function generateId(): string {

@@ -37,6 +37,7 @@ export interface TeamMemberRow {
   title: string | null
   department: string | null
   member_type: string | null
+  auto_created?: number
   created_at: string
 }
 

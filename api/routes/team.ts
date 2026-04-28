@@ -46,9 +46,13 @@ export async function handleUpdateTeamMember(
 ): Promise<Response> {
   const body = await request.json() as Record<string, unknown>;
 
-  // Allowlisted fields that team members can update about themselves.
+  // Allowlisted fields. Self-edit fields + admin fields share the
+  // allowlist; per-field auth (e.g. only PI can set member_type) can be
+  // layered on top later if it matters.
   // v41: full_name, preferred_name added so the profile form can edit them.
-  const allowed = ['bio', 'photo_url', 'scholar_id', 'title', 'department', 'full_name', 'preferred_name', 'credentials'];
+  // v53: role + member_type added so an admin UI can assign a role to
+  //      auto_created members and clear the flag.
+  const allowed = ['bio', 'photo_url', 'scholar_id', 'title', 'department', 'full_name', 'preferred_name', 'credentials', 'role', 'member_type'];
   const updates: string[] = [];
   const values: (string | null)[] = [];
 
@@ -62,6 +66,12 @@ export async function handleUpdateTeamMember(
   if (updates.length === 0) {
     return error('No valid fields to update', 400);
   }
+
+  // Clear the auto_created flag whenever a role is assigned. Once Nick
+  // (or whoever) sets the role, the row has been "reviewed" and the
+  // PENDING badge should drop. Idempotent — re-clearing is harmless.
+  const setsRole = typeof body.role === 'string' && body.role.trim() !== '';
+  if (setsRole) updates.push('auto_created = 0');
 
   values.push(slug);
 

@@ -22,6 +22,9 @@ export interface TeamMember {
   bio?: string
   links?: { label: string; href: string }[]
   scholarId?: string // Google Scholar user ID (the ?user= parameter)
+  /** True if this row was provisioned automatically on first login.
+   *  Surfaces a "Pending review" badge in the Team UI until role is set. */
+  autoCreated?: boolean
 }
 
 export interface Publication {

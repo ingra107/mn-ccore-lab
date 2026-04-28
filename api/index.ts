@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import type { Context, Next } from 'hono';
 import type { Env } from './types';
-import { corsHeaders, json, error, getAuthUser, isPiRequest, getPiEmails } from './helpers';
+import { corsHeaders, json, error, getAuthUser, isPiRequest, getPiEmails, ensureTeamMember } from './helpers';
 import type { AuthUser } from './helpers';
 import { validateApiKey } from './middleware/api-key-auth';
 import { handleVersion, bumpVersion } from './lib/version';
@@ -152,6 +152,13 @@ app.use('*', async (c, next) => {
   const authed = await getAuthUser(c.req.raw, env);
   c.set('authedUser', authed);
   c.set('user', authed || { email: 'anonymous', name: 'Team Member' });
+  // Auto-provision a team_members row on first sight. Cheap (1 indexed
+  // SELECT for known users; INSERT only for new). Failure is non-fatal —
+  // we don't want auth to break because the directory write hiccupped.
+  if (authed) {
+    try { await ensureTeamMember(env, authed) }
+    catch (e) { console.warn('[ensureTeamMember]', (e as Error).message) }
+  }
   await next();
 });
 
