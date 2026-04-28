@@ -341,7 +341,7 @@ function QuestionExpanded({ questionId }: { questionId: string }) {
                 }}
               >
                 <div style={{ width: 24, height: 24, flexShrink: 0, paddingTop: 2 }}>
-                  <Avatar name={answerPerson.name} initials={answerPerson.initials} photoUrl={answerPerson.photoUrl} size="tight" variant="gold" />
+                  <Avatar name={answerPerson.name} initials={answerPerson.initials} photoUrl={answerPerson.photoUrl} size="tight" variant="ice" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
