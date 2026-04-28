@@ -13,6 +13,7 @@ import { handleTasks, handleActionItems, handleOverdueCount, handleUpdateTaskSta
 import { handleProjects, handleCreateProject, handleGetComments, handleGetProjectUpdates, handleProjectHealth, handleRecentUpdates, handleUpdateProject, handleDeleteProject, handleGetDeletedProjectsSince, handleAddComment, handlePostProjectUpdate, handleGetMilestones, handleUpdateMilestoneNote, handleUpdateMilestoneCompletion } from './routes/projects';
 import { handleMeetings, handleNextMeeting, handleGetMeeting, handleGetAgendaItems, handleAddAgendaItem, handleReorderAgenda, handleCreateMeeting, handleUpdateMeetingNotes, handleMeetingPrep, handleGenerateAgenda } from './routes/meetings';
 import { handlePublications, handleGrants, handleCollaborationGraph, handleStats, handleGrantsTimeline, handleUpdateGrant } from './routes/publications';
+import { handleCitations } from './routes/citations';
 import { handleTeam, handleTeamSlugs, handleCVData, handleUpdateTeamMember } from './routes/team';
 import { handleDigest, handleDigestDates, handleUpdateDigestStatus, handleCreateDigestPaper, handleGetDigestComments, handleCreateDigestComment, handleDigestCommentCounts } from './routes/digest';
 import { handleIdeas, handleCreateIdea, handleUpdateIdea, handleVoteIdea } from './routes/ideas';
@@ -455,6 +456,7 @@ app.get('/api/team/slugs', (c) => handleTeamSlugs(E(c)));
 app.get('/api/team/pulse', (c) => handleTeamPulse(U(c), E(c)));
 app.get('/api/graph/collaboration', (c) => handleCollaborationGraph(E(c)));
 app.get('/api/stats', (c) => handleStats(E(c)));
+app.get('/api/citations', (c) => handleCitations(E(c)));
 app.get('/api/activity', (c) => handleActivity(U(c), E(c)));
 app.get('/api/activity/heatmap', (c) => handleActivityHeatmap(U(c), E(c)));
 app.get('/api/tasks/overdue-count', (c) => handleOverdueCount(U(c), E(c)));
