@@ -64,6 +64,59 @@ After Nick answers the decision queue:
 
 <!-- Future entries below this line. Latest on top. -->
 
+## 2026-04-28 (later 2) — Bundle A P0/P1 quick wins
+
+**Phase**: Fix. Worktree branch `worktree-agent-a1bbaa8b2e645dd2d`. 5 findings shipped per Bundle A in `DECISIONS-RESOLVED.md`. `npm run build` clean after each commit.
+
+### ATL-01 + ATL-02 — AskTheLab accept-answer auth (P0)
+- **File:line confirmed**: yes (UI `src/pages/portal/AskTheLab.tsx:366`, server `api/routes/questions.ts:209`, route `api/index.ts:753`)
+- **git log since audit**: none
+- **Reproduction**: UI gate hardcoded `userSlug === 'ningraha'` (no isPi check, also wrong slug). Server `handleAcceptAnswer` did NO authorization at all — any authed user could accept any answer.
+- **Status**: STILL BROKEN → FIXED
+- **Action**: UI gate now `(user?.isPi || userSlug === detail.asked_by)`. Server fetches `lab_questions.asked_by`, computes `actorSlug(user.email)`, calls async `isPiRequest(request, env)` and 403s when neither match. Route registration passes `R(c)` so the request is forwarded.
+- **Decision**: D1 (Stack Overflow asker-can-accept-too).
+- **Commit**: pending (worktree, see hash list below)
+
+### TP-03 — Today TaskDetailDrawer subtask checkbox decorative (P0)
+- **File:line confirmed**: yes (`src/components/today/TaskDetailDrawer.tsx:114`)
+- **git log since audit**: none
+- **Reproduction**: `<input type="checkbox" defaultChecked={s.completed === 1} ... />` — no `onChange`. Click does nothing.
+- **Status**: STILL BROKEN → FIXED
+- **Action**: Wired `useToggleSubtask(task.id)` mutation. `onChange` calls `.mutate(s.id)`. Also invalidates `['task-detail', taskId]` cache so the drawer re-renders with updated subtask state (the useTaskDetail query feeds the drawer, not the `['subtasks', taskId]` cache that the hook already invalidates).
+- **Commit**: pending (worktree, see hash list below)
+
+### MT-03 — UnifiedMyTasks TaskDrawer subtask checkbox decorative (P0)
+- **File:line confirmed**: yes (`src/pages/MyTasks/components/TaskDrawer.tsx:150`)
+- **git log since audit**: none
+- **Reproduction**: Same as TP-03 — `defaultChecked` no `onChange`.
+- **Status**: STILL BROKEN → FIXED
+- **Action**: Same — wired `useToggleSubtask(task.id)` + invalidate `['task-detail', taskId]`.
+- **Commit**: pending (worktree, see hash list below)
+
+### MTG-05 — MeetingPrep email-prefix-as-slug violates Rule 34 (P1)
+- **File:line confirmed**: yes (`src/pages/MeetingPrep.tsx:281`)
+- **git log since audit**: none
+- **Reproduction**: `getPersonInfo(act.actor?.split('@')[0] || '')` — Rule 34 explicitly bans email-prefix slugging.
+- **Status**: STILL BROKEN → FIXED
+- **Action**: Replaced with `emailToSlug(act.actor || '')`. Imported `emailToSlug` from `../lib/emailSlug`.
+- **Commit**: pending (worktree, see hash list below)
+
+### M-01 — Manuscripts Status + Stage InlineSelect cells lack stopPropagation (P1)
+- **File:line confirmed**: yes (`src/pages/portal/Manuscripts.tsx:501-509` desktop status, `:512-516` desktop stage, `:587-595` mobile status, `:596-600` mobile stage)
+- **git log since audit**: none
+- **Reproduction**: Inner card is wrapped in a `<Link>`. Clicking Status / Stage InlineSelect can navigate parent instead of opening the dropdown. PI cell at `:520` and Category cells at `:533` and `:602` already wrap with `stopPropagation`.
+- **Status**: STILL BROKEN → FIXED
+- **Action**: Wrapped each of the 4 InlineSelect sites in `<div onClick={(e) => e.stopPropagation()}>`, matching the existing PI/Category pattern.
+- **Commit**: pending (worktree, see hash list below)
+
+### Bundle A commit hashes (worktree branch `worktree-agent-a1bbaa8b2e645dd2d`)
+- `b34823e3` — fix(askthelab): asker-can-accept-too auth (ATL-01, ATL-02)
+- `f9ac4850` — fix(today): wire subtask checkbox onChange (TP-03)
+- `aab65e64` — fix(my-tasks): wire subtask checkbox onChange (MT-03)
+- `a5868d7c` — fix(meeting-prep): emailToSlug instead of split('@')[0] (MTG-05)
+- `2fe26a4c` — fix(manuscripts): stopPropagation on Status + Stage cells (M-01)
+
+
 ## 2026-04-28 (later) — Decision queue walked, all 31 decisions resolved
 
 **Phase**: Decision (no code changed). Walked the full decision queue with Nick via AskUserQuestion in 7 batches.
