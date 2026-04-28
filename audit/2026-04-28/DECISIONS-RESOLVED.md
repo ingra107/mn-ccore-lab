@@ -23,10 +23,15 @@
 **Unblocks**: LO-1, LO-2, LO-3, LO-4
 
 ### D2-followup — Citations source
-**Answer**: Aggregate from `publications.citation_count` column.
-- One-time backfill: scrape Semantic Scholar API per pub.id, populate `publications.citation_count`
-- API endpoint: `GET /api/citations` returns `SUM(citation_count)` from publications
-- Recurring: nightly cron refreshes citation counts (or per-pub on edit)
+**Answer**: Per-author Google Scholar via `scholarly` Python library, weekly cron.
+- Cron: weekly job on home laptop (PB infra) iterates `team_members WHERE scholar_id IS NOT NULL`
+- For each author: `scholarly.search_author(scholar_id)` → fetch profile → write `team_members.citation_count` + `team_members.h_index` + `team_members.last_scholar_refresh`
+- Lab total = `SUM(team_members.citation_count)` across team
+- Schema (v54): `team_members.citation_count INTEGER`, `team_members.h_index INTEGER`, `team_members.last_scholar_refresh TIMESTAMP`
+- API endpoint: `GET /api/citations` returns `{ total: SUM(citation_count), last_refresh: MAX(last_scholar_refresh), members_with_data, members_total }`
+- Frontend: StatsCard.totalCitations swaps `2626` literal for `useCitations()`
+- Cron writes via existing `PUT /api/team/:slug` (extended w/ `CITATION_FIELDS` bucket, API-key auth path — Bundle G)
+- Fallback: if scholarly is blocked, log error, keep last-known value, surface stale-warning chip if `last_refresh > 14d`
 
 ### D3 — `/api/meetings/process-transcript`
 **Answer**: Hermes-async via ai_requests queue.
