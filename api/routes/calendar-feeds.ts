@@ -17,6 +17,27 @@ import { parseIcs, type IcsEvent, type ParseOptions } from '../lib/ics-parser'
 const STALE_MINUTES = 15
 const FETCH_TIMEOUT_MS = 8000
 
+// D1 batches with thousands of statements hit the storage timeout
+// ("D1_ERROR: D1 DB storage operation exceeded timeout which caused
+// object to be reset"). Calendar feeds with daily-recurring events
+// expand to 1000+ instances over 90 days; chunk inserts so each batch
+// stays well under D1's per-batch ceiling.
+const INSERT_CHUNK_SIZE = 100
+
+// Hard cap to prevent a malformed RRULE from running away. With
+// FREQ=DAILY and no UNTIL/COUNT, a year window expands to 365 events;
+// with sub-hour FREQ=MINUTELY (rare but possible), exponential growth.
+// 5000 is plenty for any sane personal calendar.
+const MAX_EVENTS_PER_FEED = 5000
+
+// Polling window. Read-side query is bounded by the caller (Today =
+// today + 7 days), but the cache here is sized to support that lookup
+// without missing recent edits. 30 days forward is enough for the
+// "Today timeline + next-week glance" use case; expanding to 90 days
+// 3x'd the row count and pushed past the D1 batch timeout.
+const WINDOW_BACK_DAYS = 1
+const WINDOW_FWD_DAYS = 30
+
 interface FeedRow {
   id: string
   user_slug: string
@@ -76,7 +97,18 @@ export async function handleListFeeds(env: Env, user: AuthUser | null): Promise<
 }
 
 // POST /api/integrations/calendar/feeds — body: { url, label? }
-export async function handleAddFeed(request: Request, env: Env, user: AuthUser | null): Promise<Response> {
+//
+// `waitUntil` is the Workers ExecutionContext callback. Used to run the
+// initial poll AFTER the response is returned, so the user gets immediate
+// 201 instead of waiting 5-10s for a multi-thousand-event calendar to
+// fetch + parse + chunk-insert. If the poll fails, last_error surfaces
+// in the Settings UI on the next GET.
+export async function handleAddFeed(
+  request: Request,
+  env: Env,
+  user: AuthUser | null,
+  waitUntil?: (promise: Promise<unknown>) => void,
+): Promise<Response> {
   if (!user) return error('Unauthorized', 401)
   const slug = actorSlug(user.email)
   const body = await request.json().catch(() => null) as { url?: string; label?: string } | null
@@ -96,13 +128,19 @@ export async function handleAddFeed(request: Request, env: Env, user: AuthUser |
     throw e
   }
 
-  // Eager poll on add so the user sees events immediately. Best-effort —
-  // failures land in last_error and surface in the Settings UI.
-  await pollFeed(
+  // Initial poll runs in the background. User gets immediate success;
+  // events appear on Today after the poll completes (~5-15 seconds for
+  // a typical Google Calendar with weekly recurring meetings).
+  const pollPromise = pollFeed(
     env,
     { id, user_slug: slug, feed_url: url, feed_label: label, last_polled_at: null, last_error: null, created_at: new Date().toISOString() },
     user.email,
-  )
+  ).catch((e) => {
+    // Swallow background errors so they don't terminate the worker;
+    // last_error in D1 is the durable record.
+    console.error('[pollFeed background]', (e as Error).message)
+  })
+  if (waitUntil) waitUntil(pollPromise)
 
   return json({ id, label, urlPreview: obfuscateUrl(url) }, 201)
 }
@@ -191,8 +229,8 @@ async function pollFeed(env: Env, feed: FeedRow, ownerEmail: string): Promise<vo
   // Bound the parser's RRULE expansion to the polling window. Without a
   // bound, an event with FREQ=DAILY and no UNTIL would expand for years.
   const parseOpts: ParseOptions = {
-    windowStart: new Date(Date.now() - 7 * 86400000).toISOString(),
-    windowEnd: new Date(Date.now() + 90 * 86400000).toISOString(),
+    windowStart: new Date(Date.now() - WINDOW_BACK_DAYS * 86400000).toISOString(),
+    windowEnd: new Date(Date.now() + WINDOW_FWD_DAYS * 86400000).toISOString(),
     ownerEmail,
   }
   let parsed: IcsEvent[]
@@ -204,22 +242,54 @@ async function pollFeed(env: Env, feed: FeedRow, ownerEmail: string): Promise<vo
     ).bind(new Date().toISOString(), `parse: ${(e as Error).message.slice(0, 180)}`, feed.id).run()
     return
   }
-  const inWindow = parsed
 
-  // Replace strategy: clear events for this feed, re-insert. Simpler than
-  // diffing UIDs, and per-feed event counts are <500 typical so the write
-  // cost is fine.
-  const stmts: D1PreparedStatement[] = []
-  stmts.push(env.DB.prepare('DELETE FROM user_calendar_events WHERE feed_id = ?').bind(feed.id))
-  for (const ev of inWindow) {
-    stmts.push(env.DB.prepare(
-      `INSERT INTO user_calendar_events (id, feed_id, user_slug, uid, summary, description, location, start_at, end_at, is_all_day, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`
-    ).bind(newId(), feed.id, feed.user_slug, ev.uid, ev.summary, ev.description, ev.location, ev.startAt, ev.endAt, ev.isAllDay ? 1 : 0))
+  // Hard cap on instances per feed. Past this, drop the tail and surface
+  // a non-fatal error message so the user knows their feed is unusually
+  // large (probably a runaway RRULE in a third-party calendar).
+  let inWindow = parsed
+  let truncated = false
+  if (inWindow.length > MAX_EVENTS_PER_FEED) {
+    inWindow = inWindow.slice(0, MAX_EVENTS_PER_FEED)
+    truncated = true
   }
-  stmts.push(env.DB.prepare(
-    'UPDATE user_calendar_feeds SET last_polled_at = ?, last_error = NULL WHERE id = ?'
-  ).bind(new Date().toISOString(), feed.id))
 
-  await env.DB.batch(stmts)
+  // Replace strategy: clear events for this feed, re-insert. Chunked into
+  // batches of INSERT_CHUNK_SIZE so each batch stays under D1's per-batch
+  // timeout. The DELETE runs in its own batch first; if a later chunk
+  // fails the feed will end up partial — last_error captures it so the
+  // next poll retries the full set.
+  try {
+    await env.DB.prepare('DELETE FROM user_calendar_events WHERE feed_id = ?').bind(feed.id).run()
+  } catch (e) {
+    await env.DB.prepare(
+      'UPDATE user_calendar_feeds SET last_polled_at = ?, last_error = ? WHERE id = ?'
+    ).bind(new Date().toISOString(), `delete: ${(e as Error).message.slice(0, 180)}`, feed.id).run()
+    return
+  }
+
+  const insertStmt = env.DB.prepare(
+    `INSERT INTO user_calendar_events (id, feed_id, user_slug, uid, summary, description, location, start_at, end_at, is_all_day, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`
+  )
+
+  for (let i = 0; i < inWindow.length; i += INSERT_CHUNK_SIZE) {
+    const chunk = inWindow.slice(i, i + INSERT_CHUNK_SIZE)
+    const stmts = chunk.map((ev) => insertStmt.bind(
+      newId(), feed.id, feed.user_slug, ev.uid, ev.summary, ev.description, ev.location, ev.startAt, ev.endAt, ev.isAllDay ? 1 : 0,
+    ))
+    try {
+      await env.DB.batch(stmts)
+    } catch (e) {
+      const msg = `insert chunk ${i}: ${(e as Error).message.slice(0, 160)}`
+      await env.DB.prepare(
+        'UPDATE user_calendar_feeds SET last_polled_at = ?, last_error = ? WHERE id = ?'
+      ).bind(new Date().toISOString(), msg, feed.id).run()
+      return
+    }
+  }
+
+  const finalErr = truncated ? `Truncated to ${MAX_EVENTS_PER_FEED} events (feed had more — likely runaway RRULE)` : null
+  await env.DB.prepare(
+    'UPDATE user_calendar_feeds SET last_polled_at = ?, last_error = ? WHERE id = ?'
+  ).bind(new Date().toISOString(), finalErr, feed.id).run()
 }
