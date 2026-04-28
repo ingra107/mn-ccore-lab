@@ -44,14 +44,6 @@ const STAGE_FILL_TOKEN: Record<typeof STAGES[number], string> = {
   Published: 'var(--stage-fill-published)',
 }
 
-// PI options for inline editing. Primary investigators on CCORE manuscripts
-// are the two directors (Nick + Nate). More PIs can be added as they start
-// owning manuscript projects.
-const PI_OPTIONS = [
-  { value: 'nick-ingraham', label: 'Nick Ingraham' },
-  { value: 'nate-mesfin', label: 'Nate Mesfin' },
-] as const
-
 function daysInStage(project: Project): number {
   const dateStr = project.updated_at || project.lastActivity
   if (!dateStr) return 0
@@ -217,6 +209,16 @@ export default function Manuscripts() {
     projects.filter(p => p.stage !== 'Published' && daysInStage(p) > stalledThresholdDays).length
   , [projects, stalledThresholdDays])
 
+  // M-14: derive PI options from data instead of hardcoding nick + nate.
+  // New PIs (mentees taking over a manuscript, visiting faculty) auto-appear.
+  // Names render via getPersonInfo for slug -> display-name resolution.
+  const piOptions = useMemo(() => {
+    const slugs = [...new Set(projects.map((p) => p.pi).filter(Boolean) as string[])]
+    return slugs
+      .map((slug) => ({ value: slug, label: getPersonInfo(slug).name }))
+      .sort((a, b) => a.label.localeCompare(b.label))
+  }, [projects])
+
   // M-05: dynamic title flows through usePageMeta so the OG tags + meta
   // description stay in sync. Previously a competing useEffect overwrote
   // document.title, racing usePageMeta and making it dead code.
@@ -268,8 +270,7 @@ export default function Manuscripts() {
                   value={filterPI}
                   options={[
                     { value: '', label: 'All PIs' },
-                    { value: 'nick-ingraham', label: 'Nick Ingraham' },
-                    { value: 'nate-mesfin', label: 'Nate Mesfin' },
+                    ...piOptions,
                   ]}
                   onChange={setFilterPI}
                   alwaysShowChevron
@@ -570,7 +571,7 @@ export default function Manuscripts() {
                             </div>
                             <InlineSelect
                               value={project.pi || 'nick-ingraham'}
-                              options={PI_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
+                              options={piOptions}
                               onChange={(val) => handleFieldChange(project.slug, 'pi', val, project.pi)}
                               size="sm"
                             />
