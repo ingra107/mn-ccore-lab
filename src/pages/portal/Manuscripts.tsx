@@ -24,6 +24,7 @@ import EmptyState from '../../components/EmptyState'
 
 import { usePageMeta } from '../../hooks/usePageMeta'
 import { useScrollReveal } from '../../hooks/useScrollReveal'
+import { useLabPrefs } from '../../hooks/useLabPrefs'
 import { PATHS } from '../../constants/paths'
 
 const STAGES = ['Idea', 'Data Collection', 'Analysis', 'Writing', 'Review', 'Revisions', 'Published'] as const
@@ -36,8 +37,6 @@ const PI_OPTIONS = [
   { value: 'nick-ingraham', label: 'Nick Ingraham' },
   { value: 'nate-mesfin', label: 'Nate Mesfin' },
 ] as const
-
-const STALLED_THRESHOLD_DAYS = 30
 
 function daysInStage(project: Project): number {
   const dateStr = project.updated_at || project.lastActivity
@@ -97,6 +96,11 @@ export default function Manuscripts() {
   const { data: projects = [], isLoading } = useProjects()
   const { data: tasks = [] } = useTasks()
   const { data: attentionData } = useManuscriptsAttention()
+  // M-04: stalled threshold now flows from useLabPrefs (same source as
+  // NeedsAttentionDashboard). Previously a hardcoded 30 in this file
+  // produced two parallel staleness models the user couldn't reconcile.
+  const { prefs: labPrefs } = useLabPrefs()
+  const stalledThresholdDays = labPrefs.manuscriptsStaleDays
   const createProject = useCreateProject()
   const queryClient = useQueryClient()
   const { showUndo } = useUndoToast()
@@ -129,7 +133,7 @@ export default function Manuscripts() {
     let filtered = projects.filter((p) => p.status !== 'Published' || p.stage === 'Published')
     if (filterPI) filtered = filtered.filter((p) => p.pi === filterPI)
     if (filterCategory) filtered = filtered.filter((p) => p.category === filterCategory)
-    if (filterStalled) filtered = filtered.filter((p) => p.stage !== 'Published' && daysInStage(p) > STALLED_THRESHOLD_DAYS)
+    if (filterStalled) filtered = filtered.filter((p) => p.stage !== 'Published' && daysInStage(p) > stalledThresholdDays)
     if (attentionFilter && attentionData) {
       const allow = new Set<string>()
       if (attentionFilter === 'revisions-overdue') {
@@ -164,7 +168,7 @@ export default function Manuscripts() {
       if (cmp === 0) cmp = a.title.localeCompare(b.title)
       return sortAsc ? cmp : -cmp
     })
-  }, [projects, filterPI, filterCategory, filterStalled, sortKey, sortAsc, attentionFilter, attentionData])
+  }, [projects, filterPI, filterCategory, filterStalled, sortKey, sortAsc, attentionFilter, attentionData, stalledThresholdDays])
 
   useListKeyboardNav({
     itemCount: view === 'list' ? manuscripts.length : 0,
@@ -201,8 +205,8 @@ export default function Manuscripts() {
   const writingCount = manuscripts.filter((p) => p.stage === 'Writing').length
 
   const stalledCount = useMemo(() =>
-    projects.filter(p => p.stage !== 'Published' && daysInStage(p) > STALLED_THRESHOLD_DAYS).length
-  , [projects])
+    projects.filter(p => p.stage !== 'Published' && daysInStage(p) > stalledThresholdDays).length
+  , [projects, stalledThresholdDays])
 
   // Dynamic page title
   useEffect(() => {
@@ -276,7 +280,7 @@ export default function Manuscripts() {
                     transition: 'all 0.12s ease-out',
                     opacity: filterStalled ? 1 : 0.85,
                   }}
-                  title={`Manuscripts stalled in stage for more than ${STALLED_THRESHOLD_DAYS} days`}
+                  title={`Manuscripts stalled in stage for more than ${stalledThresholdDays} days`}
                 >
                   Stalled
                   {stalledCount > 0 && (
@@ -409,7 +413,7 @@ export default function Manuscripts() {
                   const isFocused = focusedIndex === flatIndex
                   flatIndex++
                   const days = daysInStage(project)
-                  const isStalled = project.stage !== 'Published' && days > STALLED_THRESHOLD_DAYS
+                  const isStalled = project.stage !== 'Published' && days > stalledThresholdDays
 
                   return (
                     <div key={project.slug}>
