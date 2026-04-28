@@ -10,6 +10,7 @@ import { TableSkeleton } from '../components/LoadingSkeleton'
 import Breadcrumb from '../components/Breadcrumb'
 import Avatar from '../components/Avatar'
 import { getPersonInfo } from '../data/team'
+import { emailToSlug } from '../lib/emailSlug'
 import { formatLongDate, formatShortDate } from '../lib/dateUtils'
 import { PRIORITY_COLORS } from '../lib/taskConstants'
 import { getMeetingFacilitator } from '../lib/facilitator'
@@ -278,7 +279,8 @@ export default function MeetingPrep() {
             <div className="detail-card" style={{ background: 'var(--ice)', borderRadius: 'var(--radius-xl)', padding: 'var(--sp-md) var(--sp-lg)' }}>
               {recentActivity.length > 0 ? (
                 recentActivity.slice(0, 10).map((act, i) => {
-                  const person = getPersonInfo(act.actor?.split('@')[0] || '')
+                  // Rule 34: never split('@')[0] — route through emailToSlug LUT.
+                  const person = getPersonInfo(emailToSlug(act.actor || ''))
                   return (
                     <div key={i} className="flex items-start gap-2 py-1.5" style={{ borderBottom: i < Math.min(recentActivity.length, 10) - 1 ? '1px solid rgba(201,168,76,0.04)' : 'none' }}>
                       <div style={{ width: 16, height: 16, flexShrink: 0, marginTop: 1 }}>
