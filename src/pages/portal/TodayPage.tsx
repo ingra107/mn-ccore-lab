@@ -11,7 +11,7 @@
 // explicit ▶ button = promote (Rule 58).
 
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
-import { useTasks, useProjects, useMeetingsApi, useExpiringRegulatory } from '../../hooks/useApiData'
+import { useTasks, useProjects, useMeetingsApi, useExpiringRegulatory, useUserCalendarEvents } from '../../hooks/useApiData'
 import { useAuth } from '../../hooks/useAuth'
 import { emailToSlug } from '../../lib/emailSlug'
 import { usePageMeta } from '../../hooks/usePageMeta'
@@ -24,7 +24,7 @@ import {
   ACCENT_GOLD, ACCENT_GREEN,
   INK, INK_MUTED, INK_DIM, PAGE_BG, PANEL_BG,
   todayKey, daysSince, formatTodayDate,
-  meetingToEvent, isToday, hoursSinceLastSync,
+  meetingToEvent, calendarEventToTodayEvent, isToday, hoursSinceLastSync,
   getGroupForTask,
   type GroupKey, type TodayEvent, type DailyCounts,
 } from '../../components/today/constants'
@@ -47,6 +47,7 @@ export default function TodayPage() {
   const projectsQuery = useProjects()
   const meetingsQuery = useMeetingsApi()
   const regulatoryQuery = useExpiringRegulatory(60)
+  const calendarEventsQuery = useUserCalendarEvents()
 
   const tasks: TaskRow[] = useMemo(() => (tasksQuery.data ?? []).filter((t) => t.completed === 0 && t.status !== 'done'), [tasksQuery.data])
 
@@ -159,11 +160,22 @@ export default function TodayPage() {
     })
   }, [tasksQuery.data])
 
-  // Today events.
+  // Today events. Merge team meetings (D1 `meetings` table — date-only, no
+  // time) with the user's personal iCal feed events (timed). Sort so timed
+  // events appear in chronological order and untimed meetings sink to the
+  // top as the "all day" band.
   const todaysMeetings: TodayEvent[] = useMemo(() => {
-    const all = meetingsQuery.data ?? []
-    return all.filter((m) => isToday(m.date)).map(meetingToEvent)
-  }, [meetingsQuery.data])
+    const meetings = (meetingsQuery.data ?? []).filter((m) => isToday(m.date)).map(meetingToEvent)
+    const personal = (calendarEventsQuery.data ?? [])
+      .filter((e) => isToday(e.startAt))
+      .map(calendarEventToTodayEvent)
+    // Personal events with a real time go after untimed meetings, sorted
+    // by start. Untimed events keep insertion order (D1 returns by date).
+    const timed = personal.filter((e) => e.time !== '—' && e.time !== 'all day')
+    const untimed = personal.filter((e) => e.time === '—' || e.time === 'all day')
+    timed.sort((a, b) => a.time.localeCompare(b.time))
+    return [...untimed, ...meetings, ...timed]
+  }, [meetingsQuery.data, calendarEventsQuery.data])
 
   // Right Now lookup.
   const rightNowTask = state.rightNow ? tasks.find((t) => t.id === state.rightNow) ?? null : null

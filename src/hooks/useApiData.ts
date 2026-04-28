@@ -1505,6 +1505,34 @@ export function useUpcomingGrantMilestones(days: number = 90) {
   })
 }
 
+// ── Personal calendar feed (issue #45) ────────────────────────────────
+// Reads the current user's iCal feed events (today + next 7 days). Hub
+// poller refreshes feeds lazily on the same endpoint when last_polled_at
+// is >15min stale; first-load latency on cold cache is ~500ms-1s.
+
+export interface UserCalendarEvent {
+  id: string
+  title: string
+  location: string | null
+  startAt: string
+  endAt: string | null
+  isAllDay: boolean
+}
+
+export function useUserCalendarEvents() {
+  return useQuery({
+    queryKey: ['user-calendar-events'],
+    queryFn: async (): Promise<UserCalendarEvent[]> => {
+      const res = await fetch('/api/integrations/calendar/events')
+      if (!res.ok) return []
+      const j = await res.json() as { events: UserCalendarEvent[] }
+      return j.events
+    },
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  })
+}
+
 // ── Conference submissions ────────────────────────────────
 
 export function useConferences(projectId: string) {
