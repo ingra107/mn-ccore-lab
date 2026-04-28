@@ -18,9 +18,6 @@ import {
   X,
   Check,
   Link2,
-  Paperclip,
-  AtSign,
-  Smile,
   MoreVertical,
   Archive,
   Trash2,
@@ -33,7 +30,6 @@ import { useUndoToast } from '../components/UndoToast'
 import BulkActionToolbar from '../components/tasks/BulkActionToolbar'
 import { useAuth } from '../hooks/useAuth'
 import { getPersonInfo } from '../data/team'
-import { appendCharToInput } from '../lib/textUtils'
 import TypingIndicator from '../components/TypingIndicator'
 import { formatShortDate, formatMediumDate } from '../lib/dateUtils'
 import Avatar from '../components/Avatar'
@@ -62,6 +58,7 @@ import ProjectLiterature from './project/ProjectLiterature'
 import ProjectActivity from './project/ProjectActivity'
 import ProjectUpdateFeed from '../components/ProjectUpdateFeed'
 import ProjectComments from '../components/ProjectComments'
+import SmartCompose from '../components/SmartCompose'
 import ProjectDocuments from './project/ProjectDocuments'
 import { PATHS } from '../constants/paths'
 
@@ -354,13 +351,9 @@ function ProjectDetailInner({ project }: InnerProps) {
   const isMobile = useIsMobile()
   const [composeSheetOpen, setComposeSheetOpen] = useState(false)
   useComposeSheet(isMobile && composeSheetOpen, () => setComposeSheetOpen(false))
-  const quickComposeFileInputRef = useRef<HTMLInputElement>(null)
-  const quickComposeTextRef = useRef<HTMLTextAreaElement>(null)
-  const appendToCompose = useCallback(
-    (ch: string) => appendCharToInput(quickComposeTextRef, ch, setQuickComposeText),
-    [],
-  )
   // T-04 inline file drop — Slack parity. Upload → append link to compose.
+  // The drag-drop wrapper still calls uploadToCompose; SmartCompose's own
+  // paperclip + paste path uses uploadContext directly.
   const uploadToCompose = useCallback(async (file: File) => {
     if (!project) return
     setQuickComposeUploading(true)
@@ -1221,7 +1214,6 @@ function ProjectDetailInner({ project }: InnerProps) {
             </div>
           </div>
           <div
-            className="flex items-start gap-2"
             onDragOver={(e) => { e.preventDefault(); setQuickComposeDragOver(true) }}
             onDragLeave={() => setQuickComposeDragOver(false)}
             onDrop={(e) => {
@@ -1236,101 +1228,24 @@ function ProjectDetailInner({ project }: InnerProps) {
               outlineOffset: '2px',
             }}
           >
-            <button
-              type="button"
-              onClick={() => quickComposeFileInputRef.current?.click()}
-              disabled={quickComposeUploading}
-              title="Attach file (or drag + drop, or paste an image)"
-              style={{
-                flexShrink: 0, padding: '8px', borderRadius: 'var(--radius-md)',
-                background: 'transparent', color: 'var(--slate)', border: '1px solid var(--border-subtle)',
-                cursor: quickComposeUploading ? 'wait' : 'pointer',
-                opacity: quickComposeUploading ? 0.55 : 0.85,
-              }}
-            >
-              <Paperclip size={14} />
-            </button>
-            <button
-              type="button"
-              onClick={() => appendToCompose('@')}
-              title="Mention teammate (@name)"
-              style={{
-                flexShrink: 0, padding: '8px', borderRadius: 'var(--radius-md)',
-                background: 'transparent', color: 'var(--gold)', border: '1px solid var(--border-subtle)',
-                cursor: 'pointer', opacity: 0.85,
-              }}
-            >
-              <AtSign size={14} />
-            </button>
-            <button
-              type="button"
-              onClick={() => appendToCompose(':')}
-              title="Add emoji reaction (:emoji:)"
-              style={{
-                flexShrink: 0, padding: '8px', borderRadius: 'var(--radius-md)',
-                background: 'transparent', color: 'var(--slate)', border: '1px solid var(--border-subtle)',
-                cursor: 'pointer', opacity: 0.85,
-              }}
-            >
-              <Smile size={14} />
-            </button>
-            <input
-              ref={quickComposeFileInputRef}
-              type="file"
-              multiple
-              onChange={(e) => {
-                const files = Array.from(e.target.files || [])
-                files.forEach(uploadToCompose)
-                e.target.value = ''
-              }}
-              style={{ display: 'none' }}
-            />
-            <textarea
-              ref={quickComposeTextRef}
+            {/* SmartCompose (D14) — replaces the prior decorative @/:/📎
+                button row. @ → MentionInput dropdown, : → emoji palette,
+                paperclip → real R2 upload via uploadContext. State is
+                shared via value/onChange so the BottomSheet trigger label
+                ("Draft: …") still updates and broadcastProjectTyping fires. */}
+            <SmartCompose
+              theme="light"
+              bare
               value={quickComposeText}
-              onChange={(e) => { setQuickComposeText(e.target.value); broadcastProjectTyping(e.target.value.trim().length > 0) }}
-              onPaste={(e) => {
-                const items = Array.from(e.clipboardData?.items || [])
-                const fileItem = items.find((it) => it.kind === 'file')
-                if (fileItem) {
-                  e.preventDefault()
-                  const f = fileItem.getAsFile()
-                  if (f) uploadToCompose(f)
-                }
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-                  e.preventDefault()
-                  handleQuickCompose()
-                }
-              }}
+              onChange={(next) => { setQuickComposeText(next); broadcastProjectTyping(next.trim().length > 0) }}
+              onSubmit={async () => { await handleQuickCompose() }}
+              submitting={quickComposeSubmitting}
+              uploadContext={{ type: 'project', id: project.slug }}
               placeholder={quickComposeKind === 'note' ? 'Post a note... (Cmd+Enter to send, paste or drop to attach)' : 'Comment to team... (Cmd+Enter to send)'}
               rows={2}
-              style={{
-                flex: 1, minWidth: 0, fontSize: '13px', color: 'var(--ink)',
-                background: 'var(--cream)',
-                border: '1px solid var(--border-subtle)',
-                borderRadius: 'var(--radius-md)', padding: '8px 10px',
-                resize: 'none', outline: 'none', lineHeight: 1.4,
-                transition: 'border-color 0.2s',
-              }}
-              onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--teal)')}
-              onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border-subtle)'; broadcastProjectTyping(false) }}
+              alwaysShowToolbar
+              submitLabel={quickComposeKind === 'note' ? 'Post note' : 'Comment'}
             />
-            {quickComposeText.trim() && (
-              <button
-                type="button"
-                onClick={handleQuickCompose}
-                disabled={quickComposeSubmitting}
-                style={{
-                  flexShrink: 0, padding: '8px 10px', borderRadius: 'var(--radius-md)',
-                  background: 'var(--teal-solid)', color: 'var(--ink-bright, #fff)',
-                  border: 'none', cursor: 'pointer', opacity: quickComposeSubmitting ? 0.6 : 1,
-                }}
-              >
-                <Send size={14} />
-              </button>
-            )}
           </div>
           {quickComposeUploading && (
             <p className="mt-1 text-[10px]" style={{ color: 'var(--teal)', opacity: 0.85 }}>Uploading…</p>
