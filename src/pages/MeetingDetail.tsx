@@ -22,9 +22,6 @@ import {
   Check,
   X,
   Sparkles,
-  Paperclip,
-  AtSign,
-  Smile,
   Upload as UploadIcon,
 } from 'lucide-react'
 import { DndContext, closestCenter, PointerSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core'
@@ -38,7 +35,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useToggleActionItem, useAddAgendaItem, useUpdateMeetingNotes, useCreateDecision, useCreateTask } from '../hooks/useMutations'
 import FileUpload from '../components/FileUpload'
 import TypingIndicator from '../components/TypingIndicator'
-import { appendCharToInput, parseCarriedForward } from '../lib/textUtils'
+import { parseCarriedForward } from '../lib/textUtils'
 import { parseQuickAddInput } from '../lib/parseQuickAdd'
 import { emailToSlug } from '../lib/emailSlug'
 import { useAuth } from '../hooks/useAuth'
@@ -55,6 +52,7 @@ import { getPersonInfo, getMemberBySlug, directors, getAllMembers } from '../dat
 import { formatLongDate, formatShortDate } from '../lib/dateUtils'
 import { getMeetingFacilitator } from '../lib/facilitator'
 import { PATHS } from '../constants/paths'
+import SmartCompose from '../components/SmartCompose'
 
 function buildMemberHoverData(slug: string): HoverCardData {
   const p = getPersonInfo(slug)
@@ -1029,12 +1027,7 @@ const PRIORITY_COLORS: Record<number, string> = { 1: 'var(--maroon)', 2: 'var(--
 
 function AddActionItemForm({ meetingId, isAuthenticated, onSuccess, onContentChange }: { meetingId: string; isAuthenticated: boolean; onSuccess: () => void; onContentChange?: (hasContent: boolean) => void }) {
   const [text, setText] = useState('')
-  const [dragOver, setDragOver] = useState(false)
-  const [uploading, setUploading] = useState(false)
-  const inputRef = useRef<HTMLInputElement>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
   const { typingPeers: meetingTypingPeers, broadcastTyping: broadcastMeetingTyping } = useTyping('meeting', meetingId)
-  const appendCh = (ch: string) => appendCharToInput(inputRef, ch, setText)
   const createTask = useCreateTask()
   const queryClient = useQueryClient()
   const { user } = useAuth()
@@ -1043,146 +1036,69 @@ function AddActionItemForm({ meetingId, isAuthenticated, onSuccess, onContentCha
   const parsed = text.trim() ? parseQuickAddInput(text) : null
   const hasContent = parsed && parsed.title.trim().length > 0
 
-  // T-04 inline file drop on meeting action-item compose. Files attach to
-  // the meeting (not the forthcoming task) — R2 flow mirrors FileUpload.
-  const uploadToCompose = async (file: File) => {
-    setUploading(true)
-    try {
-      const urlRes = await fetch('/api/upload/url', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ filename: file.name, contentType: file.type || 'application/octet-stream', context: { type: 'meeting', id: meetingId } }),
-      })
-      const urlData = await urlRes.json() as { data?: { uploadUrl?: string; key?: string } }
-      if (!urlData.data?.uploadUrl || !urlData.data?.key) throw new Error('presign failed')
-      await fetch(urlData.data.uploadUrl, { method: 'PUT', body: file, headers: { 'Content-Type': file.type || 'application/octet-stream' } })
-      const doneRes = await fetch('/api/upload/done', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key: urlData.data.key, filename: file.name, contentType: file.type, sizeBytes: file.size, entityType: 'meeting', entityId: meetingId }),
-      })
-      const doneData = await doneRes.json() as { data?: { url?: string } }
-      queryClient.invalidateQueries({ queryKey: ['attachments', 'meeting', meetingId] })
-      const link = doneData.data?.url ?? `/api/files/${urlData.data.key}`
-      setText((prev) => (prev ? `${prev} [${file.name}](${link})` : `[${file.name}](${link})`))
-    } catch (err) {
-      console.error('meeting compose upload failed', err)
-    } finally {
-      setUploading(false)
-    }
-  }
+  // SmartCompose now owns the textarea, paperclip (R2 → meeting context),
+  // @-mention dropdown, emoji palette, paste-image, Cmd+Enter.
+  // We retain `text` state at this level so:
+  //   1) parseQuickAddInput runs on every keystroke for live token preview
+  //   2) presence broadcast fires from onChange
+  //   3) submission still goes through createTask + onSuccess
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    if (!parsed || !hasContent) return
-
-    createTask.mutate({
-      title: parsed.title,
-      description: parsed.title,
-      assignee: parsed.assigneeSlug ?? fallbackAssignee,
-      meeting_id: meetingId,
-      due_date: parsed.dueDate ?? undefined,
-      priority: parsed.priority === 1 ? 'urgent' : parsed.priority === 2 ? 'high' : parsed.priority === 3 ? 'medium' : 'medium',
-    }, {
-      onSuccess: () => {
-        setText('')
-        queryClient.invalidateQueries({ queryKey: ['meeting', meetingId] })
-        onSuccess()
-        inputRef.current?.focus()
-      },
+  const handleSubmit = async (raw: string) => {
+    const p = parseQuickAddInput(raw)
+    if (!p?.title.trim()) return
+    return new Promise<void>((resolve) => {
+      createTask.mutate({
+        title: p.title,
+        description: p.title,
+        assignee: p.assigneeSlug ?? fallbackAssignee,
+        meeting_id: meetingId,
+        due_date: p.dueDate ?? undefined,
+        priority: p.priority === 1 ? 'urgent' : p.priority === 2 ? 'high' : p.priority === 3 ? 'medium' : 'medium',
+      }, {
+        onSuccess: () => {
+          setText('')
+          broadcastMeetingTyping(false)
+          onContentChange?.(false)
+          queryClient.invalidateQueries({ queryKey: ['meeting', meetingId] })
+          onSuccess()
+          resolve()
+        },
+        onError: () => resolve(),
+      })
     })
   }
 
   return (
-    <form onSubmit={handleSubmit} style={{ marginBottom: '12px', paddingBottom: '12px', borderBottom: '1px solid rgba(45,138,138,0.08)' }}>
-      <div
-        className="flex items-center gap-2"
-        onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
-        onDragLeave={() => setDragOver(false)}
-        onDrop={(e) => { e.preventDefault(); setDragOver(false); Array.from(e.dataTransfer.files || []).forEach(uploadToCompose) }}
-        style={{ outline: dragOver ? '2px dashed var(--teal)' : 'none', outlineOffset: '2px', borderRadius: 'var(--radius-lg)' }}
-      >
-        <Plus size={14} style={{ color: 'var(--teal)', opacity: 0.85, flexShrink: 0 }} />
-        <input
-          ref={inputRef}
-          type="text"
-          data-testid="meeting-action-add"
-          value={text}
-          onChange={(e) => {
-            const v = e.target.value
-            setText(v)
-            const hasContent = v.trim().length > 0
-            broadcastMeetingTyping(hasContent)
-            onContentChange?.(hasContent)
-          }}
-          onPaste={(e) => {
-            const fi = Array.from(e.clipboardData?.items || []).find((it) => it.kind === 'file')
-            if (fi) { e.preventDefault(); const f = fi.getAsFile(); if (f) uploadToCompose(f) }
-          }}
-          placeholder={isAuthenticated || !import.meta.env.PROD ? '@nick Review draft p2 Friday (drop/paste files to attach)' : 'Sign in to add items'}
-          disabled={!isAuthenticated && import.meta.env.PROD}
-          style={{
-            flex: 1, fontSize: 'var(--value-size)', color: 'var(--ink)',
-            background: 'var(--cream)', border: '1px solid color-mix(in srgb, var(--teal) 12%, transparent)', borderRadius: 'var(--radius-lg)',
-            padding: 'var(--sp-sm) var(--sp-md)', outline: 'none', transition: 'border-color 0.15s',
-          }}
-          onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--teal)')}
-          onBlur={(e) => { e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--teal) 12%, transparent)'; broadcastMeetingTyping(false); onContentChange?.(false) }}
-          onKeyDown={(e) => { if (e.key === 'Escape') { setText(''); e.currentTarget.blur() } }}
-        />
-        <button
-          type="button"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={uploading}
-          title="Attach file"
-          className="flex-shrink-0 p-2 rounded-lg"
-          style={{ border: '1px solid var(--border-subtle)', background: 'transparent', color: 'var(--slate)', cursor: uploading ? 'wait' : 'pointer', opacity: uploading ? 0.55 : 0.85 }}
-        >
-          <Paperclip size={12} />
-        </button>
-        <button
-          type="button"
-          onClick={() => appendCh('@')}
-          title="Mention teammate (@name)"
-          className="flex-shrink-0 p-2 rounded-lg"
-          style={{ border: '1px solid var(--border-subtle)', background: 'transparent', color: 'var(--gold)', cursor: 'pointer', opacity: 0.85 }}
-        >
-          <AtSign size={12} />
-        </button>
-        <button
-          type="button"
-          onClick={() => appendCh(':')}
-          title="Add emoji reaction (:emoji:)"
-          className="flex-shrink-0 p-2 rounded-lg"
-          style={{ border: '1px solid var(--border-subtle)', background: 'transparent', color: 'var(--slate)', cursor: 'pointer', opacity: 0.85 }}
-        >
-          <Smile size={12} />
-        </button>
-        <input
-          ref={fileInputRef}
-          type="file"
-          multiple
-          onChange={(e) => { Array.from(e.target.files || []).forEach(uploadToCompose); e.target.value = '' }}
-          style={{ display: 'none' }}
-        />
-        {hasContent && (
-          <motion.button
-            type="submit"
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="flex-shrink-0 p-2 rounded-lg cursor-pointer"
-            style={{ background: 'var(--teal-solid)', color: 'white', border: 'none' }}
-          >
-            <Plus size={14} />
-          </motion.button>
-        )}
+    <div style={{ marginBottom: '12px', paddingBottom: '12px', borderBottom: '1px solid rgba(45,138,138,0.08)' }}>
+      <div className="flex items-start gap-2">
+        <Plus size={14} style={{ color: 'var(--teal)', opacity: 0.85, flexShrink: 0, marginTop: 10 }} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {!isAuthenticated && import.meta.env.PROD ? (
+            <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.75, display: 'inline-block', padding: '8px 0' }}>
+              <a href="/api/auth/login" style={{ color: 'var(--teal)', fontWeight: 'var(--weight-ui)' as any, textDecoration: 'underline' }}>Sign in</a> to add action items
+            </span>
+          ) : (
+            <SmartCompose
+              theme="light"
+              bare
+              value={text}
+              onChange={(next) => {
+                setText(next)
+                const has = next.trim().length > 0
+                broadcastMeetingTyping(has)
+                onContentChange?.(has)
+              }}
+              onSubmit={handleSubmit}
+              submitting={createTask.isPending}
+              uploadContext={{ type: 'meeting', id: meetingId }}
+              placeholder="@nick Review draft p2 Friday (drop/paste files to attach)"
+              rows={1}
+              alwaysShowToolbar={hasContent ?? false}
+              submitLabel="Add"
+            />
+          )}
+        </div>
       </div>
-
-      {!isAuthenticated && import.meta.env.PROD && (
-        <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.75, marginLeft: '22px', marginTop: '4px', display: 'inline-block' }}>
-          <a href="/api/auth/login" style={{ color: 'var(--teal)', fontWeight: 'var(--weight-ui)' as any, textDecoration: 'underline' }}>Sign in</a> to add action items
-        </span>
-      )}
 
       <TypingIndicator slugs={meetingTypingPeers} style={{ margin: '4px 0 0 22px' }} />
 
@@ -1225,7 +1141,7 @@ function AddActionItemForm({ meetingId, isAuthenticated, onSuccess, onContentCha
           <span>Apr 15</span>
         </div>
       )}
-    </form>
+    </div>
   )
 }
 
