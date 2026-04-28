@@ -19,6 +19,7 @@ import { displayName } from '../../lib/nameUtils'
 import type { Project } from '../../data/types'
 import PageHeader from '../../components/PageHeader'
 import NeedsAttentionDashboard, { type AttentionFilter } from '../../components/NeedsAttentionDashboard'
+import ActiveSubmissionsWidget from '../../components/ActiveSubmissionsWidget'
 import { ColumnHeader, TableContainer, TableControls } from '../../components/table'
 import EmptyState from '../../components/EmptyState'
 
@@ -332,6 +333,10 @@ export default function Manuscripts() {
         {!isLoading && (
           <NeedsAttentionDashboard filter={attentionFilter} onFilterChange={setAttentionFilter} />
         )}
+
+        {/* M-12 (D25): Active submissions horizontal scroll — papers currently
+            in flight. List view only; pipeline + trophy have their own shape. */}
+        {!isLoading && view === 'list' && <ActiveSubmissionsWidget />}
 
         {/* GH #39: category quick-filter pills. URL-synced so saved views capture state. */}
         <div

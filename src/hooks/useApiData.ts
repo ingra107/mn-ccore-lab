@@ -36,6 +36,7 @@ import {
   fetchDeadlineImpact,
   fetchAllCascades,
   fetchSubmissionEvents,
+  fetchActiveSubmissions,
   fetchExpiringRegulatory,
   fetchUpcomingGrantMilestones,
   fetchConferences,
@@ -1509,6 +1510,17 @@ export function useSubmissionEvents(projectId: string) {
     queryKey: ['submission-events', projectId],
     queryFn: () => fetchSubmissionEvents(projectId).then((r) => r.data),
     enabled: !!projectId,
+    staleTime: 60 * 1000,
+  })
+}
+
+// M-12: lab-wide active submissions list. Drives the Manuscripts page
+// "Active submissions" widget — one row per project whose latest event
+// is not accepted/rejected/withdrawn.
+export function useActiveSubmissions() {
+  return useQuery({
+    queryKey: ['submissions-active'],
+    queryFn: () => fetchActiveSubmissions().then((r) => r.data),
     staleTime: 60 * 1000,
   })
 }
