@@ -10,6 +10,7 @@ import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { PATHS } from '../../constants/paths'
 import { EventRow } from './MeetingRow'
+import { OverlapBand } from './OverlapBand'
 import { PlannedTaskRow } from './PlannedTaskRow'
 import {
   ACCENT_GOLD, ACCENT_TEAL, ACCENT_CORAL, INK_MUTED, INK_DIM,
@@ -111,6 +112,35 @@ export function Timeline({ events, tasks, state, projectsByPid, expandedId, onEx
   // Suppress unused-var warning for derived window; kept in scope for future work.
   void dayStart; void dayEnd
 
+  // TP-11: cluster overlapping events. Walk events sorted by startMin and
+  // merge any whose startMin < cluster.maxEnd into the running cluster.
+  // Untimed events (no startMin) never overlap — each forms a singleton.
+  const clusters = useMemo(() => {
+    const result: TodayEvent[][] = []
+    const timed = visibleMeetings.filter((e) => typeof e.startMin === 'number')
+    const untimed = visibleMeetings.filter((e) => typeof e.startMin !== 'number')
+    // Untimed events keep insertion order, each as a 1-event cluster.
+    for (const e of untimed) result.push([e])
+    // Timed events: sort by start, then cluster by overlap.
+    const sorted = [...timed].sort((a, b) => (a.startMin ?? 0) - (b.startMin ?? 0))
+    let current: TodayEvent[] = []
+    let currentEnd = -1
+    for (const e of sorted) {
+      const s = e.startMin as number
+      const en = typeof e.endMin === 'number' ? e.endMin : s + 30
+      if (current.length === 0 || s < currentEnd) {
+        current.push(e)
+        currentEnd = Math.max(currentEnd, en)
+      } else {
+        result.push(current)
+        current = [e]
+        currentEnd = en
+      }
+    }
+    if (current.length > 0) result.push(current)
+    return result
+  }, [visibleMeetings])
+
   const plannedStripIds = state.plannedIds().filter((id) => state.planned[id]?.slot === 'strip' && id !== state.rightNow)
   const plannedStripTasks = plannedStripIds.map((id) => tasks.find((t) => t.id === id)).filter((t): t is TaskRow => !!t)
 
@@ -177,16 +207,19 @@ export function Timeline({ events, tasks, state, projectsByPid, expandedId, onEx
             </span>
           </div>
         )}
-        {visibleMeetings.map((e, idx) => {
-          // Gather planned tasks dropped into the gap BEFORE this meeting.
+        {clusters.map((cluster, idx) => {
+          // Gather planned tasks dropped into the gap BEFORE this cluster.
           const slotKey = `between-${idx}` as PlannedSlot
           const tasksInGap = state.plannedIds()
             .filter((id) => state.planned[id]?.slot === slotKey)
             .map((id) => tasks.find((t) => t.id === id))
             .filter((t): t is TaskRow => !!t)
+          const head = cluster[0]
+          const beforeLabel = `drop a task here · before ${head.title}${cluster.length > 1 ? ` (+${cluster.length - 1} overlap)` : ''}`
+          const clusterKey = cluster.map((e) => e.id).join('|')
           return (
-            <div key={e.id}>
-              <DropZone slot={slotKey} label={`drop a task here · before ${e.title}`} onDropTask={onDropTask} />
+            <div key={clusterKey}>
+              <DropZone slot={slotKey} label={beforeLabel} onDropTask={onDropTask} />
               {tasksInGap.map((t) => (
                 <PlannedTaskRow
                   key={t.id}
@@ -199,17 +232,26 @@ export function Timeline({ events, tasks, state, projectsByPid, expandedId, onEx
                   projectsByPid={projectsByPid}
                 />
               ))}
-              <EventRow
-                e={e}
-                onDismiss={(id) => setDismissedMeetings((s) => ({ ...s, [id]: true }))}
-                note={meetingNotes[e.id]}
-                onNote={(id, v) => setMeetingNotes((s) => ({ ...s, [id]: v }))}
-              />
+              {cluster.length === 1 ? (
+                <EventRow
+                  e={head}
+                  onDismiss={(id) => setDismissedMeetings((s) => ({ ...s, [id]: true }))}
+                  note={meetingNotes[head.id]}
+                  onNote={(id, v) => setMeetingNotes((s) => ({ ...s, [id]: v }))}
+                />
+              ) : (
+                <OverlapBand
+                  events={cluster}
+                  onDismiss={(id) => setDismissedMeetings((s) => ({ ...s, [id]: true }))}
+                  notes={meetingNotes}
+                  onNote={(id, v) => setMeetingNotes((s) => ({ ...s, [id]: v }))}
+                />
+              )}
             </div>
           )
         })}
-        {visibleMeetings.length > 0 && (() => {
-          const slotKey = `between-${visibleMeetings.length}` as PlannedSlot
+        {clusters.length > 0 && (() => {
+          const slotKey = `between-${clusters.length}` as PlannedSlot
           const tasksInGap = state.plannedIds()
             .filter((id) => state.planned[id]?.slot === slotKey)
             .map((id) => tasks.find((t) => t.id === id))
