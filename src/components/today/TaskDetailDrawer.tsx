@@ -7,10 +7,11 @@
 // popover wiring as UnifiedMyTasks InlineDetail (writes group_override on tasks).
 
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { useTaskDetail } from '../../hooks/useApiData'
 import ReactionBar from '../ReactionBar'
 import SmartCompose from '../SmartCompose'
-import { useUpdateTask } from '../../hooks/useMutations'
+import { useUpdateTask, useToggleSubtask } from '../../hooks/useMutations'
 import { useUndoToast } from '../UndoToast'
 import { LinkRow } from './primitives'
 import {
@@ -39,6 +40,12 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
   // Move → popover wiring (parity with UnifiedMyTasks).
   const updateTask = useUpdateTask()
   const undoToast = useUndoToast()
+
+  // Subtask toggle — TP-03. The drawer's subtasks come from useTaskDetail
+  // (`['task-detail', taskId]`), not the `['subtasks', taskId]` cache that
+  // useToggleSubtask invalidates. Invalidate task-detail too so the UI flips.
+  const toggleSubtask = useToggleSubtask(task.id)
+  const queryClient = useQueryClient()
   const [moveOpen, setMoveOpen] = useState(false)
   const moveRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
@@ -111,7 +118,14 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
           {!detailQuery.isLoading && subtasks.length === 0 && <div style={{ fontSize: 11, color: INK_DIM, fontStyle: 'italic' }}>None yet.</div>}
           {subtasks.map((s) => (
             <div key={s.id} style={{ display: 'flex', gap: 6, padding: '3px 0', alignItems: 'flex-start' }}>
-              <input type="checkbox" defaultChecked={s.completed === 1} style={{ marginTop: 2, accentColor: ACCENT_GREEN, cursor: 'pointer' }} />
+              <input
+                type="checkbox"
+                checked={s.completed === 1}
+                onChange={() => toggleSubtask.mutate(s.id, {
+                  onSettled: () => queryClient.invalidateQueries({ queryKey: ['task-detail', task.id] }),
+                })}
+                style={{ marginTop: 2, accentColor: ACCENT_GREEN, cursor: 'pointer' }}
+              />
               <span style={{ fontSize: 12, color: s.completed === 1 ? INK_DIM : INK, textDecoration: s.completed === 1 ? 'line-through' : 'none', lineHeight: 1.4 }}>{s.title}</span>
             </div>
           ))}
