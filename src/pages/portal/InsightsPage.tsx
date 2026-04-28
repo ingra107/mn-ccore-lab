@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link, useSearchParams, useNavigate } from 'react-router-dom'
-import { TrendingUp, Activity, AlertTriangle, FlaskConical, AlertCircle, Users, BookOpen, Award, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react'
+import { TrendingUp, Activity, AlertTriangle, FlaskConical, AlertCircle, Users, BookOpen, Award, RefreshCw, ChevronLeft, ChevronRight, Link2, CalendarPlus } from 'lucide-react'
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
 import EmptyStateArt from '../../components/EmptyStateArt'
@@ -9,6 +9,7 @@ import { TextSkeleton } from '../../components/LoadingSkeleton'
 import { TableContainer } from '../../components/table'
 import InlineDatePicker from '../../components/InlineDatePicker'
 import MetricCard from '../../components/MetricCard'
+import { useInsightConnections } from '../../hooks/useApiData'
 import { useToast } from '../../hooks/useToast'
 import { useAuth } from '../../hooks/useAuth'
 import { emailToSlug } from '../../lib/emailSlug'
@@ -320,6 +321,12 @@ export default function InsightsPage() {
           <TasksPerPersonBars distribution={data.metrics.tasksPerPerson.distribution} />
         </div>
 
+        {/* Cross-Project Connections — INS-10: promote /api/insights/connections
+            from Lab Overview's InsightsCard onto the page named "Insights" */}
+        <div style={{ marginBottom: 'var(--sp-2xl)' }}>
+          <ConnectionsPanel />
+        </div>
+
         {/* Velocity scatter */}
         <VelocityScatter rows={data.velocityScatter} />
 
@@ -485,6 +492,110 @@ function TasksPerPersonBars({ distribution }: { distribution: { slug: string; co
           )
         })}
       </div>
+    </div>
+  )
+}
+
+// INS-10: Cross-Project Connections panel. Top-5 highest-strength edges
+// from /api/insights/connections (4 inference modes: PI overlap, category +
+// stage, topic keywords, shared papers). Each row exposes a "Schedule sync"
+// CTA that deeplinks /portal/meetings?compose=1&projects=<slugA>,<slugB> —
+// surfacing Meetings list with both projects pre-selected when that page
+// opts into the URL contract. For now the URL state is set up; Meetings
+// page enhancement to consume it is a separate finding.
+function ConnectionsPanel() {
+  const { data: connections = [], isLoading } = useInsightConnections()
+  const top5 = connections.slice(0, 5)
+
+  function reasonChip(reason: string): string {
+    // The API joins reasons with ' | '. Use the strongest signal as the chip
+    // label and surface the full string via title attribute.
+    const first = reason.split(' | ')[0] ?? reason
+    if (first.startsWith('Shared team')) return 'PI overlap'
+    if (first.startsWith('Same category')) return 'category match'
+    if (first.startsWith('Shared topics')) return 'topic'
+    if (first.startsWith('Shared literature')) return 'shared paper'
+    return first
+  }
+
+  return (
+    <div style={{ padding: 'var(--sp-lg)', borderRadius: 'var(--radius-xl)', background: 'var(--surface-1)', border: '1px solid var(--border-subtle)' }}>
+      <SectionHeader icon={<Link2 size={14} />} label="Cross-project connections" count={connections.length} />
+      {isLoading ? (
+        <p style={{ fontSize: 12, color: 'var(--slate)', opacity: 0.85, margin: 0 }}>Analyzing connections…</p>
+      ) : top5.length === 0 ? (
+        <p style={{ fontSize: 12, color: 'var(--slate)', opacity: 0.85, margin: 0 }}>
+          No cross-project connections detected yet.
+        </p>
+      ) : (
+        <div className="flex flex-col" style={{ gap: 6, marginTop: 4 }}>
+          {top5.map((edge, i) => {
+            const chip = reasonChip(edge.reason)
+            const strengthPct = Math.round(edge.strength * 100)
+            const syncHref = `${PATHS.meetings}?compose=1&projects=${encodeURIComponent(edge.from)},${encodeURIComponent(edge.to)}`
+            return (
+              <div
+                key={`${edge.from}-${edge.to}-${i}`}
+                className="flex items-center"
+                style={{
+                  gap: 8,
+                  padding: '6px 8px',
+                  borderBottom: i < top5.length - 1 ? '1px solid var(--border-subtle)' : 'none',
+                }}
+              >
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div className="flex items-center" style={{ gap: 6, flexWrap: 'wrap' }}>
+                    <Link to={PATHS.project(edge.from)} title={edge.fromTitle} style={{ fontSize: 12, fontWeight: 500, color: 'var(--ink)', textDecoration: 'none', maxWidth: '40%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {edge.fromTitle}
+                    </Link>
+                    <span style={{ fontSize: 10, color: 'var(--teal)', opacity: 0.85 }}>↔</span>
+                    <Link to={PATHS.project(edge.to)} title={edge.toTitle} style={{ fontSize: 12, fontWeight: 500, color: 'var(--ink)', textDecoration: 'none', maxWidth: '40%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {edge.toTitle}
+                    </Link>
+                  </div>
+                  <div className="flex items-center" style={{ gap: 6, marginTop: 4 }}>
+                    <span
+                      title={edge.reason}
+                      style={{
+                        fontSize: 10,
+                        padding: '1px 6px',
+                        background: 'var(--teal-active)',
+                        color: 'var(--teal)',
+                        borderRadius: 'var(--radius-sm)',
+                      }}
+                    >
+                      {chip}
+                    </span>
+                    <span style={{ fontSize: 10, color: 'var(--slate)', opacity: 0.85, fontVariantNumeric: 'tabular-nums' }}>
+                      {strengthPct}%
+                    </span>
+                  </div>
+                </div>
+                <Link
+                  to={syncHref}
+                  className="inline-flex items-center"
+                  style={{
+                    gap: 4,
+                    padding: '4px 10px',
+                    fontSize: 11,
+                    fontWeight: 500,
+                    color: 'var(--teal)',
+                    background: 'transparent',
+                    border: '1px solid var(--teal)',
+                    borderRadius: 'var(--radius-md)',
+                    textDecoration: 'none',
+                    flexShrink: 0,
+                  }}
+                  title={`Open Meetings to schedule a sync between ${edge.fromTitle} and ${edge.toTitle}`}
+                >
+                  <CalendarPlus size={11} />
+                  Schedule sync
+                </Link>
+              </div>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
