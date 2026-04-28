@@ -383,7 +383,7 @@ export default function Manuscripts() {
           <TableContainer className={densityClass(density)}>
             {/* Table header — sortable */}
             <div
-              className="hidden sm:grid"
+              className="hidden sm:grid manuscripts-grid-row"
               style={{
                 gridTemplateColumns: 'minmax(200px, 3fr) 90px 100px 140px 80px 68px',
                 padding: 'var(--sp-sm) var(--sp-xl)',
@@ -391,24 +391,25 @@ export default function Manuscripts() {
               }}
             >
               {([
-                { label: 'Title', key: 'title' as const },
-                { label: 'Status', key: 'status' as const },
-                { label: 'Stage', key: 'stage' as const },
-                { label: 'PI', key: 'pi' as const },
-                { label: 'Group', key: 'category' as const },
-                { label: 'Days', key: 'days_in_stage' as const },
+                { label: 'Title', key: 'title' as const, cls: '' },
+                { label: 'Status', key: 'status' as const, cls: '' },
+                { label: 'Stage', key: 'stage' as const, cls: '' },
+                { label: 'PI', key: 'pi' as const, cls: '' },
+                { label: 'Group', key: 'category' as const, cls: 'manuscripts-header-group' },
+                { label: 'Days', key: 'days_in_stage' as const, cls: 'manuscripts-header-days' },
               ]).map((col) => (
-                <ColumnHeader
-                  key={col.key}
-                  label={col.label}
-                  sortKey={col.key}
-                  currentSort={sortKey}
-                  sortAsc={sortAsc}
-                  onSort={(k) => {
-                    if (sortKey === k) setSortAsc(!sortAsc)
-                    else { setSortKey(k as typeof sortKey); setSortAsc(true) }
-                  }}
-                />
+                <div key={col.key} className={col.cls}>
+                  <ColumnHeader
+                    label={col.label}
+                    sortKey={col.key}
+                    currentSort={sortKey}
+                    sortAsc={sortAsc}
+                    onSort={(k) => {
+                      if (sortKey === k) setSortAsc(!sortAsc)
+                      else { setSortKey(k as typeof sortKey); setSortAsc(true) }
+                    }}
+                  />
+                </div>
               ))}
             </div>
 
@@ -452,9 +453,9 @@ export default function Manuscripts() {
                       )}
 
                       <Link to={PATHS.project(project.slug)} className={isFocused ? 'task-row-focused' : ''} style={{ textDecoration: 'none', display: 'block' }}>
-                        {/* Desktop: 6-column grid */}
+                        {/* Desktop: 6-column grid (collapses to 4 cols at 1024-1279px via M-08 CSS) */}
                         <div
-                          className="manuscript-list-row hidden sm:grid"
+                          className="manuscript-list-row manuscripts-grid-row hidden sm:grid"
                           style={{
                             gridTemplateColumns: 'minmax(200px, 3fr) 90px 100px 140px 80px 68px',
                             padding: `var(--row-padding-y, 14px) 24px`,
@@ -576,7 +577,7 @@ export default function Manuscripts() {
                           </div>
 
                           {/* Category — inline editable */}
-                          <div onClick={(e) => e.stopPropagation()}>
+                          <div className="manuscripts-cell-group" onClick={(e) => e.stopPropagation()}>
                             <InlineSelect
                               value={project.category || 'lab'}
                               options={CATEGORY_OPTIONS}
@@ -587,6 +588,7 @@ export default function Manuscripts() {
 
                           {/* Days in stage */}
                           <span
+                            className="manuscripts-cell-days"
                             style={{
                               fontSize: 'var(--text-label)',
                               fontWeight: isStalled ? 600 : 400,
@@ -903,6 +905,21 @@ export default function Manuscripts() {
         }
         .dark .manuscript-list-row:hover {
           background: var(--gold-active) !important;
+        }
+        /* M-08: at 1024-1279px (laptop with sidebar) the 6-col grid squeezes
+           the title. Collapse the Days + Group columns at this range; they
+           re-appear at >=1280px. Below 768px the mobile stacked layout
+           takes over (sm:hidden / sm:grid). */
+        @media (min-width: 768px) and (max-width: 1279px) {
+          .manuscripts-grid-row {
+            grid-template-columns: minmax(200px, 3fr) 90px 100px 140px !important;
+          }
+          .manuscripts-cell-group,
+          .manuscripts-cell-days,
+          .manuscripts-header-group,
+          .manuscripts-header-days {
+            display: none !important;
+          }
         }
       `}</style>
     </div>
