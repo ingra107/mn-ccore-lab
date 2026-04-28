@@ -123,6 +123,11 @@ export default function TodayPage() {
     // Per-project: soonest-due open task assigned to current user, used as
     // the "next action" cue. No dedicated column on projects, so derive.
     const nextByProject = new Map<string, { title: string; due: string | null }>()
+    // TP-19 (D21): "relevant today" = project has tasks due today/overdue
+    // OR a planned-today task OR last activity within 7 days.
+    const today = todayKey()
+    const sevenDaysAgoMs = Date.now() - 7 * 86400000
+    const relevantSlugs = new Set<string>()
     for (const t of allTasks) {
       if (t.completed === 1 || t.status === 'done') continue
       if (!t.project_id) continue
@@ -131,14 +136,28 @@ export default function TodayPage() {
       const aDue = t.due_date ?? '9999-12-31'
       const eDue = existing?.due ?? '9999-12-31'
       if (!existing || aDue < eDue) nextByProject.set(t.project_id, { title: t.title, due: t.due_date ?? null })
+      // Relevance signal A: due today OR overdue.
+      if (t.due_date && t.due_date.slice(0, 10) <= today) relevantSlugs.add(t.project_id)
+      // Relevance signal B: planned-today (covers strip and between-N slots).
+      if (state.planned[t.id]) relevantSlugs.add(t.project_id)
     }
     return all
       .filter((p) => p.status === 'Active')
       .map((p) => {
         const next = nextByProject.get(p.slug)
-        return { slug: p.slug, name: p.title ?? p.slug, nextAction: next ? next.title.slice(0, 80) : null }
+        // Relevance signal C: lastActivity within 7d.
+        if (p.lastActivity) {
+          const t = new Date(p.lastActivity).getTime()
+          if (!isNaN(t) && t >= sevenDaysAgoMs) relevantSlugs.add(p.slug)
+        }
+        return {
+          slug: p.slug,
+          name: p.title ?? p.slug,
+          nextAction: next ? next.title.slice(0, 80) : null,
+          relevantToday: relevantSlugs.has(p.slug),
+        }
       })
-  }, [projectsQuery.data, tasksQuery.data, userSlug])
+  }, [projectsQuery.data, tasksQuery.data, userSlug, state])
 
   const milestones = useMemo(() => {
     const reg = regulatoryQuery.data ?? []
