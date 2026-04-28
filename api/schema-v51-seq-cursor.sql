@@ -18,7 +18,16 @@
 -- param via PB_USE_SEQ_CURSOR=1 env gate (see Peripheral-Brain
 -- scripts/db/sync/drivers/hub.py — home is shipping that side).
 --
--- Backfill: existing rows get seq = rowid (D1 ROWID is insert-order).
+-- Backfill: existing rows get seq = rowid as a one-time ordering seed.
+-- D1 / SQLite ROWID is insert-order at backfill time, so the seeded seq
+-- values reflect the order rows were inserted historically. Note that
+-- ROWID itself is NOT durable — `VACUUM` (and certain pragmas) can
+-- renumber rowids on tables without an INTEGER PRIMARY KEY alias.
+-- These tables use `id TEXT PRIMARY KEY`, not INTEGER PK, so rowid is
+-- a non-aliased system rowid that could shift. AFTER the one-time
+-- backfill writes a persisted `seq INTEGER` value into the row, that
+-- value is durable. Triggers maintain seq strictly via MAX(seq)+1, so
+-- post-backfill seq is independent of ROWID changes.
 -- New rows get seq = MAX(seq) + 1 from the trigger on first write.
 -- Both paths produce strictly-increasing seq globally per table.
 --
