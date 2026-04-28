@@ -497,23 +497,27 @@ export default function Manuscripts() {
                             </div>
                           </div>
 
-                          {/* Status (inline editable) */}
-                          <InlineSelect
-                            value={project.status || 'Active'}
-                            options={[
-                              { value: 'Active', label: 'Active', color: 'var(--green)' },
-                              { value: 'Pending', label: 'Pending', color: 'var(--gold)' },
-                              { value: 'Completed', label: 'Done', color: 'var(--slate)' },
-                            ]}
-                            onChange={(val) => handleFieldChange(project.slug, 'status', val, project.status)}
-                          />
+                          {/* Status (inline editable) — wrapped to stop click bubbling to parent <Link>. M-01. */}
+                          <div onClick={(e) => e.stopPropagation()}>
+                            <InlineSelect
+                              value={project.status || 'Active'}
+                              options={[
+                                { value: 'Active', label: 'Active', color: 'var(--green)' },
+                                { value: 'Pending', label: 'Pending', color: 'var(--gold)' },
+                                { value: 'Completed', label: 'Done', color: 'var(--slate)' },
+                              ]}
+                              onChange={(val) => handleFieldChange(project.slug, 'status', val, project.status)}
+                            />
+                          </div>
 
-                          {/* Stage (inline editable) */}
-                          <InlineSelect
-                            value={project.stage || 'Idea'}
-                            options={STAGES.map((s) => ({ value: s, label: s }))}
-                            onChange={(val) => handleFieldChange(project.slug, 'stage', val, project.stage)}
-                          />
+                          {/* Stage (inline editable) — wrapped to stop click bubbling. M-01. */}
+                          <div onClick={(e) => e.stopPropagation()}>
+                            <InlineSelect
+                              value={project.stage || 'Idea'}
+                              options={STAGES.map((s) => ({ value: s, label: s }))}
+                              onChange={(val) => handleFieldChange(project.slug, 'stage', val, project.stage)}
+                            />
+                          </div>
 
                           {/* PI — inline editable. Avatar stays visible as a sibling so the
                               visual "who owns this?" signal isn't lost when we switch to a select. */}
@@ -584,20 +588,24 @@ export default function Manuscripts() {
                           </div>
                           {/* Metadata row: status + stage + category label right-aligned */}
                           <div className="flex items-center gap-3" style={{ paddingLeft: '14px' }}>
-                            <InlineSelect
-                              value={project.status || 'Active'}
-                              options={[
-                                { value: 'Active', label: 'Active', color: 'var(--green)' },
-                                { value: 'Pending', label: 'Pending', color: 'var(--gold)' },
-                                { value: 'Completed', label: 'Done', color: 'var(--slate)' },
-                              ]}
-                              onChange={(val) => handleFieldChange(project.slug, 'status', val, project.status)}
-                            />
-                            <InlineSelect
-                              value={project.stage || 'Idea'}
-                              options={STAGES.map((s) => ({ value: s, label: s }))}
-                              onChange={(val) => handleFieldChange(project.slug, 'stage', val, project.stage)}
-                            />
+                            <div onClick={(e) => e.stopPropagation()}>
+                              <InlineSelect
+                                value={project.status || 'Active'}
+                                options={[
+                                  { value: 'Active', label: 'Active', color: 'var(--green)' },
+                                  { value: 'Pending', label: 'Pending', color: 'var(--gold)' },
+                                  { value: 'Completed', label: 'Done', color: 'var(--slate)' },
+                                ]}
+                                onChange={(val) => handleFieldChange(project.slug, 'status', val, project.status)}
+                              />
+                            </div>
+                            <div onClick={(e) => e.stopPropagation()}>
+                              <InlineSelect
+                                value={project.stage || 'Idea'}
+                                options={STAGES.map((s) => ({ value: s, label: s }))}
+                                onChange={(val) => handleFieldChange(project.slug, 'stage', val, project.stage)}
+                              />
+                            </div>
                             {/* Category — inline editable on mobile too */}
                             <div style={{ marginLeft: 'auto' }} onClick={(e) => e.stopPropagation()}>
                               <InlineSelect
