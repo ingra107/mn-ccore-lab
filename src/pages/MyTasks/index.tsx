@@ -59,7 +59,9 @@ export default function UnifiedMyTasks() {
   const [filter, setFilter] = useState<FilterState>({
     priority: searchParams.get('priority'),
     project: searchParams.get('project'),
-    mentee: null,
+    // MT-15 — restore mentee from URL like every other filter so saved
+    // views with a mentee param survive a reload. Was hardcoded to null.
+    mentee: searchParams.get('mentee'),
     group: (searchParams.get('group') as GroupKey | null) ?? null,
     hideCompleted: searchParams.get('hideCompleted') !== '0',
   })
@@ -79,6 +81,7 @@ export default function UnifiedMyTasks() {
     if (view !== 'columns') next.set('view', view)
     if (filter.priority) next.set('priority', filter.priority)
     if (filter.project) next.set('project', filter.project)
+    if (filter.mentee) next.set('mentee', filter.mentee)
     if (filter.group) next.set('group', filter.group)
     if (!filter.hideCompleted) next.set('hideCompleted', '0')
     // Avoid spamming history: replace, not push.
@@ -96,7 +99,7 @@ export default function UnifiedMyTasks() {
     setFilter({
       priority: p.get('priority'),
       project: p.get('project'),
-      mentee: null,
+      mentee: p.get('mentee'),
       group: (p.get('group') as GroupKey | null) ?? null,
       hideCompleted: p.get('hideCompleted') !== '0',
     })
@@ -242,9 +245,9 @@ export default function UnifiedMyTasks() {
           {isLoading ? (
             <div style={{ padding: 24 }}><TableSkeleton /></div>
           ) : view === 'columns' ? (
-            <ColumnsView filtered={filtered} byGroup={byGroup} selected={selected} toggleSelect={toggleSelect} expanded={expanded} setExpanded={setExpanded} projectsByPid={projectsByPid} plannedSet={plannedSet} />
+            <ColumnsView filtered={filtered} byGroup={byGroup} selected={selected} toggleSelect={toggleSelect} expanded={expanded} setExpanded={setExpanded} projectsByPid={projectsByPid} plannedSet={plannedSet} filterGroup={filter.group} />
           ) : view === 'lanes' ? (
-            <LanesView byGroup={byGroup} selected={selected} toggleSelect={toggleSelect} expanded={expanded} setExpanded={setExpanded} projectsByPid={projectsByPid} plannedSet={plannedSet} />
+            <LanesView byGroup={byGroup} selected={selected} toggleSelect={toggleSelect} expanded={expanded} setExpanded={setExpanded} projectsByPid={projectsByPid} plannedSet={plannedSet} filterGroup={filter.group} />
           ) : (
             <ListView filtered={filtered} selected={selected} toggleSelect={toggleSelect} setSelected={setSelected} setDrawer={setDrawer} projectsByPid={projectsByPid} projectOptions={projectOptions} plannedSet={plannedSet} />
           )}
