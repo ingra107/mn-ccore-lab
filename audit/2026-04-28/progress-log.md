@@ -116,6 +116,61 @@ After Nick answers the decision queue:
 - `a5868d7c` — fix(meeting-prep): emailToSlug instead of split('@')[0] (MTG-05)
 - `2fe26a4c` — fix(manuscripts): stopPropagation on Status + Stage cells (M-01)
 
+## 2026-04-28 (Bundle B) — Lab Overview lies wired to real APIs (3 of 4)
+
+**Phase**: Fix. Bundle B = Lab Overview cards LO-2 / LO-3 / LO-4. LO-1
+(citations) explicitly blocked on Bundle G — not touched here.
+
+**Branch**: `worktree-agent-a45ff95d207b05eb0` (worktree, not pushed —
+Nick to merge manually).
+
+### LO-2 — UpcomingCard deadlines hardcoded (P0)
+
+- **File:line confirmed**: yes — `src/components/dashboard/UpcomingCard.tsx:17-53` matched `generateDeadlines()` with the cited 5 fake R01/K23/CCI items.
+- **git log since audit**: none touching the file since 2026-04-28 verification sweep.
+- **Reproduction**: read source — literal hardcoded array still rendering.
+- **Status**: STILL BROKEN → FIXED.
+- **Action**: Replaced `generateDeadlines()` with `useTasks()` (open tasks with `due_date`) + `useGrantTimeline()` (milestones via `target_date` + grant submission targets via `end_date`). Cap to 5 most-urgent: overdue first (most-overdue first), then ascending by days-until-due. Added empty state.
+- **Hook discovery**: `useDeadlines()` does NOT exist as a standalone hook. The Deadlines page derives its DeadlineItem list from `useTasks()` + `useGrantTimeline()` directly. Used the same pattern.
+- **Commit**: `ee5c6b37`.
+
+### LO-3 — GrantTimelineCard discards real data (P0)
+
+- **File:line confirmed**: yes — `src/components/dashboard/GrantTimelineCard.tsx:7-13` had hardcoded `grantTimelines` array; line 30 fetched `useGrants()` only for subtitle counts; line 39 iterated the hardcoded array.
+- **git log since audit**: none.
+- **Reproduction**: read source — hardcoded array still rendered.
+- **Status**: STILL BROKEN → FIXED.
+- **Action**: Switched from `useGrants()` to `useGrantTimeline()` because the former's `rowToGrant()` mapper discards `start_date`/`end_date` (the very fields needed). Bars now derive from real start_date/end_date (year extracted via regex). Filtered to `startYear <= CURRENT_YEAR + 5` (no speculation past 5 years per spec). Sorted by start year ASC. min/max year computed dynamically. Funded → solid; in_preparation/submitted/planning OR proposed=1 → dashed. Empty state added.
+- **Data shape surprise**: `useGrants()` returns a `Grant` type with NO date fields — `rowToGrant()` strips `start_date`/`end_date` from the API row. `useGrantTimeline()` (separate `/api/grants/timeline` endpoint) returns the full row including dates and milestones. Used the timeline hook so dates are preserved.
+- **Hook discovery**: `useGrantTimeline()` already existed in `src/hooks/useGrantTimeline.ts` — no new hook needed.
+- **Commit**: `d5ab1f25`.
+
+### LO-4 — ActivityFeedCard hardcoded marketing copy (P0)
+
+- **File:line confirmed**: yes — `src/components/dashboard/ActivityFeedCard.tsx:80-87` had the literal `'CLIF Consortium expanding to 13+ sites nationwide'` push.
+- **git log since audit**: none.
+- **Reproduction**: read source — hardcoded marketing block still pushed onto every render.
+- **Status**: STILL BROKEN → FIXED.
+- **Action**: Replaced the entire body (hardcoded marketing + synthetic publications/projects/in-review summary) with `useActivity(20)`, filtered via `isProductionVisibleActivity` to skip `_TEST_DELETE_*` + `test_delete_*` fixtures, sliced to 5. Each row: type-coded dot, actor name (resolved via `getPersonInfo(activity.actor)`), description text, relative timestamp via `formatRelativeTime`. Empty state added. "View all" footer link routed to `PATHS.activity` (was hardcoded `/publications`).
+- **Hook discovery**: `useActivity()` already existed in `src/hooks/useApiData.ts:271` — no new hook needed.
+- **Commit**: `7119d183`.
+
+### Build status
+
+`npm run build` clean after each commit. TypeScript clean (`tsc --noEmit -p tsconfig.app.json`).
+
+### Skipped findings
+
+- **LO-1 (StatsCard.totalCitations = 2626)**: explicitly NOT TOUCHED. Blocked on Bundle G (`/api/citations` endpoint per D2-followup → per-author Google Scholar via `scholarly` Python library). Will ship with Bundle G.
+
+### Notes
+
+- All 3 cards now consume real data; no fixtures/marketing copy reach the team-facing Lab Overview surface (modulo LO-1 which is correctly deferred).
+- No new hooks were created — every needed hook already existed in `src/hooks/useApiData.ts` or `src/hooks/useGrantTimeline.ts`. The brief's "if `useActivityLog` doesn't exist, create it" path was unnecessary; the existing `useActivity()` is the canonical hook.
+- LO-2 spec mentioned filtering past-date items, but the verbatim instruction also said "overdue first (negative days), then ascending by days-until-due" — kept overdue items in the list per the explicit sort spec, since "what's overdue" is exactly what the user needs to see on Lab Overview.
+- Branch merged via PR #57. Per CLAUDE.md Rule 9 "NEVER deploy from a worktree" — the worktree branch was rebased onto main + pushed, then merged via gh pr merge.
+
+---
 
 ## 2026-04-28 (later) — Decision queue walked, all 31 decisions resolved
 
