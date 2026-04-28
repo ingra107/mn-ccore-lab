@@ -1,13 +1,14 @@
 import { useMemo, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
-import { TrendingUp, Activity, AlertTriangle, FlaskConical } from 'lucide-react'
+import { Link, useSearchParams } from 'react-router-dom'
+import { TrendingUp, Activity, AlertTriangle, FlaskConical, AlertCircle, Users, BookOpen, Award, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react'
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
 import EmptyStateArt from '../../components/EmptyStateArt'
 import { TextSkeleton } from '../../components/LoadingSkeleton'
 import { TableContainer } from '../../components/table'
 import InlineDatePicker from '../../components/InlineDatePicker'
+import MetricCard from '../../components/MetricCard'
 import { useToast } from '../../hooks/useToast'
 import { useAuth } from '../../hooks/useAuth'
 import { emailToSlug } from '../../lib/emailSlug'
@@ -42,13 +43,49 @@ const STAGE_FILL: Record<string, string> = {
   'Published': 'var(--stage-fill-published)',
 }
 
+// INS-04: bump / shift an ISO-week string by N weeks. Returns the new YYYY-Www.
+function shiftIsoWeek(weekStr: string, deltaWeeks: number): string {
+  const m = /^(\d{4})-W(\d{2})$/.exec(weekStr)
+  if (!m) return weekStr
+  const year = parseInt(m[1], 10)
+  const week = parseInt(m[2], 10)
+  const jan4 = new Date(Date.UTC(year, 0, 4))
+  const jan4Day = jan4.getUTCDay() || 7
+  const week1Mon = new Date(Date.UTC(year, 0, 4 - (jan4Day - 1)))
+  const monOfRequested = new Date(week1Mon.getTime() + (week - 1) * 7 * 86400000)
+  const shifted = new Date(monOfRequested.getTime() + deltaWeeks * 7 * 86400000)
+  // Re-derive ISO week from shifted Monday.
+  const date = new Date(Date.UTC(shifted.getUTCFullYear(), shifted.getUTCMonth(), shifted.getUTCDate()))
+  const dayNum = date.getUTCDay() || 7
+  date.setUTCDate(date.getUTCDate() + 4 - dayNum)
+  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1))
+  const weekNum = Math.ceil((((date.getTime() - yearStart.getTime()) / 86400000) + 1) / 7)
+  return `${date.getUTCFullYear()}-W${String(weekNum).padStart(2, '0')}`
+}
+
+function currentIsoWeek(): string {
+  const d = new Date()
+  const date = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()))
+  const dayNum = date.getUTCDay() || 7
+  date.setUTCDate(date.getUTCDate() + 4 - dayNum)
+  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1))
+  const weekNum = Math.ceil((((date.getTime() - yearStart.getTime()) / 86400000) + 1) / 7)
+  return `${date.getUTCFullYear()}-W${String(weekNum).padStart(2, '0')}`
+}
+
 export default function InsightsPage() {
   usePageMeta('Operational Insights | MN-CCORE', 'Where attention should go this week.')
 
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ['insights-dashboard'],
+  // INS-04: ?week=YYYY-Www in URL → historical view; absent → current.
+  const [searchParams, setSearchParams] = useSearchParams()
+  const weekParam = searchParams.get('week') || undefined
+  const queryClient = useQueryClient()
+
+  const { data, isLoading, isError, isFetching, refetch } = useQuery({
+    queryKey: ['insights', 'operational', weekParam ?? 'current'],
     queryFn: async () => {
-      const res = await fetch('/api/insights/dashboard')
+      const url = weekParam ? `/api/insights/dashboard?week=${encodeURIComponent(weekParam)}` : '/api/insights/dashboard'
+      const res = await fetch(url)
       if (res.status === 403) {
         throw new Error('PI-only')
       }
@@ -58,6 +95,30 @@ export default function InsightsPage() {
     },
     staleTime: 5 * 60 * 1000,
   })
+
+  // INS-04: prev/next chevrons. "next" disabled when already on current week.
+  const onPrev = () => {
+    const base = data?.week ?? weekParam ?? currentIsoWeek()
+    const target = shiftIsoWeek(base, -1)
+    setSearchParams({ week: target })
+  }
+  const onNext = () => {
+    const base = data?.week ?? weekParam ?? currentIsoWeek()
+    const target = shiftIsoWeek(base, +1)
+    if (target > currentIsoWeek()) {
+      // Don't go beyond current — clear the param to land on default.
+      setSearchParams({})
+      return
+    }
+    setSearchParams({ week: target })
+  }
+  const onResetCurrent = () => setSearchParams({})
+  // INS-03: refresh button — invalidate the cache for whatever week we're on.
+  const onRefresh = () => {
+    queryClient.invalidateQueries({ queryKey: ['insights', 'operational', weekParam ?? 'current'] })
+    refetch()
+  }
+  const isCurrent = !weekParam || (data && data.week === currentIsoWeek())
 
   if (isLoading) return <div className="content-container"><TextSkeleton lines={12} /></div>
 
@@ -76,16 +137,113 @@ export default function InsightsPage() {
 
   if (!data) return null
 
+  const headerActions = (
+    <div className="flex items-center" style={{ gap: 6 }}>
+      <button
+        type="button"
+        onClick={onPrev}
+        title="Previous week"
+        aria-label="Previous week"
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: 32,
+          height: 32,
+          borderRadius: 'var(--radius-md)',
+          background: 'transparent',
+          border: '1px solid var(--border-subtle)',
+          color: 'var(--slate)',
+          cursor: 'pointer',
+        }}
+      >
+        <ChevronLeft size={14} />
+      </button>
+      <button
+        type="button"
+        onClick={onNext}
+        disabled={!!isCurrent}
+        title={isCurrent ? 'Already on current week' : 'Next week'}
+        aria-label="Next week"
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: 32,
+          height: 32,
+          borderRadius: 'var(--radius-md)',
+          background: 'transparent',
+          border: '1px solid var(--border-subtle)',
+          color: 'var(--slate)',
+          cursor: isCurrent ? 'default' : 'pointer',
+          opacity: isCurrent ? 0.4 : 1,
+        }}
+      >
+        <ChevronRight size={14} />
+      </button>
+      {!isCurrent && (
+        <button
+          type="button"
+          onClick={onResetCurrent}
+          title="Jump to current week"
+          style={{
+            padding: '6px 10px',
+            fontSize: 11,
+            fontWeight: 500,
+            color: 'var(--teal)',
+            background: 'transparent',
+            border: '1px solid var(--teal)',
+            borderRadius: 'var(--radius-md)',
+            cursor: 'pointer',
+          }}
+        >
+          Today
+        </button>
+      )}
+      <button
+        type="button"
+        onClick={onRefresh}
+        disabled={isFetching}
+        title="Refresh"
+        aria-label="Refresh insights"
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 4,
+          padding: '6px 10px',
+          fontSize: 11,
+          fontWeight: 500,
+          color: 'var(--teal)',
+          background: 'transparent',
+          border: '1px solid var(--teal)',
+          borderRadius: 'var(--radius-md)',
+          cursor: isFetching ? 'default' : 'pointer',
+          opacity: isFetching ? 0.7 : 1,
+        }}
+      >
+        <RefreshCw
+          size={12}
+          style={{
+            transition: 'transform 0.6s ease',
+            transform: isFetching ? 'rotate(360deg)' : 'none',
+          }}
+        />
+        {isFetching ? 'Refreshing…' : 'Refresh'}
+      </button>
+    </div>
+  )
+
   return (
     <div style={{ minHeight: '100vh' }}>
       <div className="content-container" style={{ paddingBottom: '6rem' }}>
         <PageHeader
           icon={<TrendingUp size={20} />}
           title="Operational Insights"
-          subtitle={`Hub aggregation · ${data.week}`}
+          subtitle={`Hub aggregation · ${data.week}${isCurrent ? '' : ' (historical)'}`}
+          actions={headerActions}
         />
 
-        {/* Metric hero row */}
+        {/* Metric hero row — INS-06: shared MetricCard primitive. */}
         <div
           style={{
             display: 'grid',
@@ -94,43 +252,53 @@ export default function InsightsPage() {
             marginBottom: 'var(--sp-2xl)',
           }}
         >
-          <MetricHero
+          <MetricCard
+            icon={AlertCircle}
             label="Stalled projects (14d+)"
             value={data.metrics.stalledProjects.count}
-            delta={data.metrics.stalledProjects.deltaWoW}
-            accent={data.metrics.stalledProjects.count > 0 ? 'var(--maroon)' : 'var(--teal)'}
+            color={data.metrics.stalledProjects.count > 0 ? 'var(--maroon)' : 'var(--teal)'}
+            // INS-18: was using gold (Rule 59 = AI). Stalled is severity, not AI.
+            previous={data.metrics.stalledProjects.count - data.metrics.stalledProjects.deltaWoW}
+            previousLabel="vs last week"
+            sparklineData={data.metrics.stalledProjects.sparkline}
           />
-          <MetricHero
+          <MetricCard
+            icon={Users}
             label="Open tasks per person"
             value={data.metrics.tasksPerPerson.avg}
-            sublabel={`${data.metrics.tasksPerPerson.total} total`}
-            accent="var(--teal)"
+            color="var(--teal)"
+            subtitle={`${data.metrics.tasksPerPerson.total} total`}
+            sparklineData={data.metrics.tasksPerPerson.sparkline}
           />
-          <MetricHero
+          <MetricCard
+            icon={BookOpen}
             label="Manuscripts in revision"
             value={data.metrics.manuscriptsInRevision.count}
-            sublabel={
+            // INS-18: dropped gold accent. Use neutral slate; reserve gold for AI.
+            color="var(--slate)"
+            subtitle={
               data.metrics.manuscriptsInRevision.awaitingReplyOver7d > 0
                 ? `${data.metrics.manuscriptsInRevision.awaitingReplyOver7d} awaiting reply >7d`
                 : undefined
             }
-            sublabelColor={data.metrics.manuscriptsInRevision.awaitingReplyOver7d > 0 ? 'var(--maroon)' : undefined}
-            accent="var(--gold)"
+            sparklineData={data.metrics.manuscriptsInRevision.sparkline}
           />
-          <MetricHero
+          <MetricCard
+            icon={Award}
             label="Grants in pipeline"
             value={data.metrics.grantsInPipeline.count}
-            sublabel={
+            // INS-18: dropped gold accent. Maroon when deadline tight, slate otherwise.
+            color={
+              data.metrics.grantsInPipeline.daysToNextDeadline !== null && data.metrics.grantsInPipeline.daysToNextDeadline < 14
+                ? 'var(--maroon)'
+                : 'var(--slate)'
+            }
+            subtitle={
               data.metrics.grantsInPipeline.daysToNextDeadline !== null
                 ? `Next deadline in ${data.metrics.grantsInPipeline.daysToNextDeadline}d`
                 : undefined
             }
-            sublabelColor={
-              data.metrics.grantsInPipeline.daysToNextDeadline !== null && data.metrics.grantsInPipeline.daysToNextDeadline < 14
-                ? 'var(--gold)'
-                : undefined
-            }
-            accent="var(--gold)"
+            sparklineData={data.metrics.grantsInPipeline.sparkline}
           />
         </div>
 
@@ -168,45 +336,6 @@ function SectionHeader({ icon, label, count }: { icon: React.ReactNode; label: s
       {count !== undefined && count > 0 && (
         <span style={{ fontSize: 11, color: 'var(--slate)', opacity: 0.85, fontWeight: 500, fontVariantNumeric: 'tabular-nums' }}>
           {count}
-        </span>
-      )}
-    </div>
-  )
-}
-
-function MetricHero({
-  label, value, delta, sublabel, sublabelColor, accent,
-}: {
-  label: string; value: number; delta?: number; sublabel?: string; sublabelColor?: string; accent: string
-}) {
-  return (
-    <div
-      style={{
-        padding: 'var(--sp-lg)',
-        borderRadius: 'var(--radius-xl)',
-        background: 'var(--surface-1)',
-        border: '1px solid var(--border-subtle)',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 6,
-      }}
-    >
-      <span style={{ fontSize: 11, fontWeight: 500, letterSpacing: '0.04em', color: 'var(--slate)', opacity: 0.85, textTransform: 'uppercase' }}>
-        {label}
-      </span>
-      <div className="flex items-baseline" style={{ gap: 8 }}>
-        <span style={{ fontSize: 32, fontWeight: 700, color: accent, fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>
-          {value}
-        </span>
-        {delta !== undefined && delta !== 0 && (
-          <span style={{ fontSize: 12, color: delta < 0 ? 'var(--green)' : 'var(--maroon)', fontWeight: 500 }}>
-            {delta > 0 ? '▲' : '▼'} {Math.abs(delta)} wk
-          </span>
-        )}
-      </div>
-      {sublabel && (
-        <span style={{ fontSize: 11, color: sublabelColor ?? 'var(--slate)', opacity: sublabelColor ? 1 : 0.85 }}>
-          {sublabel}
         </span>
       )}
     </div>
