@@ -1,92 +1,59 @@
 import { memo, useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { Activity, BookOpen, FlaskConical, Users, ArrowRight } from 'lucide-react'
+import { Activity, ArrowRight } from 'lucide-react'
 import BentoCard from './BentoCard'
-import { usePublications, useProjects } from '../../hooks/useApiData'
+import { useActivity } from '../../hooks/useApiData'
 import { useDashboardMounted } from '../../pages/Dashboard'
-import { isProjectActive } from '../../lib/taskConstants'
-import type { LucideIcon } from 'lucide-react'
+import { isProductionVisibleActivity } from '../../lib/isProductionVisible'
+import { getPersonInfo } from '../../data/team'
+import { formatRelativeTime } from '../../lib/dateUtils'
+import { PATHS } from '../../constants/paths'
 
 interface FeedItem {
-  icon: LucideIcon
+  id: string
   dotColor: string
-  text: string
-  detail: string
+  actorName: string | null
+  description: string
   time: string
   link?: string
 }
 
-function relativeTime(monthsAgo: number): string {
-  if (monthsAgo <= 0) return 'This month'
-  if (monthsAgo === 1) return '1 month ago'
-  if (monthsAgo < 12) return `${monthsAgo} months ago`
-  const years = Math.floor(monthsAgo / 12)
-  return years === 1 ? '1 year ago' : `${years} years ago`
+/**
+ * Pick a small accent dot color based on the activity entry's `type`.
+ * Keeps the feed visually scannable without inventing a per-row icon.
+ */
+function dotColorForType(type: string): string {
+  if (type.startsWith('task')) return '#c9a84c'   // gold — user-driven action
+  if (type.startsWith('project')) return '#2d8a8a' // teal — system / project work
+  if (type.startsWith('comment')) return '#5cbcb4'
+  if (type.startsWith('meeting')) return '#5cbcb4'
+  if (type.startsWith('idea')) return '#c9a84c'
+  if (type.startsWith('decision')) return '#7a0019' // maroon — decision
+  return 'var(--slate)'
 }
 
 function ActivityFeedCard() {
   const mounted = useDashboardMounted()
-  const { data: publications = [] } = usePublications(undefined, { enabled: mounted })
-  const { data: projects = [] } = useProjects(undefined, { enabled: mounted })
+  // Over-fetch a bit so the post-filter feed still has 5 items.
+  const { data: rawActivity = [] } = useActivity(20)
 
   const items = useMemo<FeedItem[]>(() => {
-    const now = new Date()
-    const currentYear = now.getFullYear()
-    const currentMonth = now.getMonth()
-    const feed: FeedItem[] = []
-
-    // Recent publications (by year — treat as mid-year)
-    const recentPubs = publications
-      .filter((p) => p.status === 'Published')
-      .sort((a, b) => b.year - a.year)
-      .slice(0, 4)
-
-    recentPubs.forEach((pub) => {
-      const monthsAgo = (currentYear - pub.year) * 12 + currentMonth - 6
-      feed.push({
-        icon: BookOpen,
-        dotColor: '#c9a84c',
-        text: pub.title.length > 70 ? pub.title.slice(0, 67) + '...' : pub.title,
-        detail: pub.journal,
-        time: relativeTime(Math.max(0, monthsAgo)),
-        link: '/publications',
+    if (!mounted) return []
+    return rawActivity
+      .filter((a) => isProductionVisibleActivity({ description: a.description }))
+      .slice(0, 5)
+      .map((a) => {
+        const person = a.actor ? getPersonInfo(a.actor) : null
+        return {
+          id: a.id,
+          dotColor: dotColorForType(a.type || ''),
+          actorName: person?.name ?? null,
+          description: a.description || '',
+          time: formatRelativeTime(a.timestamp),
+          link: PATHS.activity,
+        }
       })
-    })
-
-    // Papers in review
-    const inReview = publications.filter((p) => p.status === 'In Review')
-    if (inReview.length > 0) {
-      feed.push({
-        icon: FlaskConical,
-        dotColor: '#2d8a8a',
-        text: `${inReview.length} manuscript${inReview.length > 1 ? 's' : ''} under review`,
-        detail: inReview.map((p) => p.journal).join(', '),
-        time: 'Active',
-        link: '/publications',
-      })
-    }
-
-    // Active projects count
-    const activeProjects = projects.filter((p) => isProjectActive(p.status))
-    feed.push({
-      icon: FlaskConical,
-      dotColor: '#2d8a8a',
-      text: `${activeProjects.length} research projects actively underway`,
-      detail: 'CLIF consortium and MN-CCORE lab',
-      time: 'Ongoing',
-    })
-
-    // Team growth
-    feed.push({
-      icon: Users,
-      dotColor: '#ffffff',
-      text: 'CLIF Consortium expanding to 13+ sites nationwide',
-      detail: 'Multi-center ICU data infrastructure',
-      time: '2025',
-    })
-
-    return feed.slice(0, 8)
-  }, [publications, projects])
+  }, [rawActivity, mounted])
 
   return (
     <BentoCard title="Recent Activity" subtitle="Lab updates" size="span-1x2" icon={Activity} drillDown>
@@ -116,10 +83,15 @@ function ActivityFeedCard() {
               }}
             />
 
+            {items.length === 0 && (
+              <div className="py-4 text-center" style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
+                No recent activity yet.
+              </div>
+            )}
             {items.map((item, i) => {
               return (
                 <div
-                  key={i}
+                  key={item.id}
                   className="flex items-start gap-3 py-2.5 relative group"
                   style={{
                     borderBottom: i < items.length - 1
@@ -135,9 +107,7 @@ function ActivityFeedCard() {
                       height: '15px',
                       borderRadius: 'var(--radius-circle)',
                       background: item.dotColor,
-                      border: item.dotColor === '#ffffff'
-                        ? '1.5px solid rgba(201, 168, 76, 0.3)'
-                        : '2px solid var(--cream)',
+                      border: '2px solid var(--cream)',
                       marginTop: '2px',
                       transition: 'transform 0.2s ease',
                     }}
@@ -153,18 +123,11 @@ function ActivityFeedCard() {
                         margin: 0,
                       }}
                     >
-                      {item.text}
-                    </p>
-                    <p
-                      style={{
-                        fontSize: 'var(--label-size)',
-                        color: 'var(--slate)',
-                        fontStyle: 'italic',
-                        margin: '2px 0 0 0',
-                        opacity: 0.85,
-                      }}
-                    >
-                      {item.detail}
+                      {item.actorName ? (
+                        <span style={{ fontWeight: 500 }}>{item.actorName}</span>
+                      ) : null}
+                      {item.actorName ? ' ' : ''}
+                      {item.description}
                     </p>
                   </div>
 
@@ -189,7 +152,7 @@ function ActivityFeedCard() {
 
         {/* View all link */}
         <Link
-          to="/publications"
+          to={PATHS.activity}
           className="flex items-center gap-1 mt-3 pt-2 portal-footer-link"
           style={{
             fontSize: 'var(--label-size)',
