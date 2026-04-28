@@ -64,6 +64,83 @@ After Nick answers the decision queue:
 
 <!-- Future entries below this line. Latest on top. -->
 
+## 2026-04-28 — WAVE 1 + 2 + 3 SHIPPED ✅
+
+**Phase**: Fix (complete). 7 audit PRs merged to main. Build green, TypeScript clean, API tests 24/24.
+
+### PR roll-up
+
+| PR | Bundle | Findings closed | Lines net |
+|----|--------|----------------|-----------|
+| #55 | A — P0 quick wins | ATL-01, ATL-02, TP-03, MT-03, MTG-05, M-01 (6) | small |
+| #56 | D — Brand + token sweep | ATL-07, ATL-09, ATL-11, PD-8, PD-9, M-15, INS-07, MI-08 (8) | small |
+| #57 | B — Lab Overview wires | LO-2, LO-3, LO-4 (3) | +329 / -266 |
+| #58 | G — Citations infrastructure | LO-1 + schema v54 + endpoint + PB cron stub (1) | +new files |
+| #59 | H — UnifiedMyTasks rebuild | MT-01, MT-02, MT-04, MT-05, MT-06, MT-07, MT-10, MT-11, MT-12, MT-15, MT-16, MT-17, MT-19, MT-26, MT-29, MT-33 (16) | +338 / -276 |
+| #60 | F — ProjectDetail polish | PD-1, PD-2, PD-4, PD-5, PD-7, PD-10, PD-11, PD-12, PD-13, PD-14, PD-15, PD-16, PD-17, PD-18 (14) | +588 / -240 |
+| #61 | C — SmartCompose universal | PD-6, MTG-02, MTG-03, ATL-05, TP-01, TP-02 + ProjectUpdateFeed + ProjectComments + RightNowCard (~6 finding-equiv) | +651 / -510 |
+
+**Total findings closed**: ~54 P0+P1 (out of 161 verified — 33% closed in one day).
+
+### Quality gate ✅
+
+- `npm run build`: clean
+- `npx tsc --noEmit`: 0 errors
+- `npm run test:api`: 24/24 passing
+- 7 sequential merges, all rebased to clean linear history
+
+### Schema migration pending (Nick deploys)
+
+Bundle G shipped `api/schema-v54-team-citations.sql`:
+```
+ALTER TABLE team_members ADD COLUMN citation_count INTEGER DEFAULT NULL;
+ALTER TABLE team_members ADD COLUMN h_index INTEGER DEFAULT NULL;
+ALTER TABLE team_members ADD COLUMN last_scholar_refresh TIMESTAMP DEFAULT NULL;
+```
+Deploy: `npx wrangler d1 execute mnccore-lab --remote --file=api/schema-v54-team-citations.sql`
+
+Until applied, `/api/citations` returns zeros and StatsCard shows `—`.
+
+### PB scholarly cron pending (Nick implements)
+
+Spec at `scripts/citations-scholar-stub.md`. Weekly cron on home laptop iterates `team_members WHERE scholar_id IS NOT NULL`, scrapes scholar.google.com via `scholarly` library, writes back via `PUT /api/team/:slug` with X-API-Key (handler now accepts `CITATION_FIELDS` via API-key auth path).
+
+### Findings remaining (~107 P0+P1 in audit, mostly P1/P2)
+
+- TodayPage Tier-2 (TP-04 through TP-19, mostly P1) — state.done architecture, virtualization, now-line, token sweep, etc.
+- UnifiedMyTasks deferred (MT-08 drag, MT-09 swipe, MT-18 grid resize, MT-13/MT-14 saved views)
+- ProjectDetail PD-3 (Activity audit log) — blocked on D22 schema work
+- Manuscripts (M-02 through M-18 except M-15)
+- Meetings (MTG-01 transcript pipeline build, MTG-04+)
+- AskTheLab (ATL-03 Hermes pending state, ATL-04 realtimeBus, ATL-06 tags, ATL-08+)
+- CalendarPage (C-01 iCal merge, C-02 clickable, C-03 time-aware, C-07 + New)
+- InsightsPage (INS-01 SQL fix, INS-02 InlineDatePicker, INS-03+)
+- MyItems/Personal (MI-02 mark-all-read undo, MI-03 per-row actions, MI-04 filter chips, MI-05 retire Personal)
+- Lab Overview LO-5 through LO-10 (action filter, role defaults, header chrome)
+- ProfilePage (P-01 query fix, P-02 affordance, P-03 photo upload, etc.)
+- SearchPage (S-01 highlighting, S-02 mixed list, S-03 snippets, etc.)
+
+### Schema migrations queued (cross-repo coordination per Rule R10)
+
+1. `projects.stage_entered_at` (D7 — for M-03)
+2. `lab_questions.tags` (D8 — for ATL-06)
+3. `commitments.to_slug` (D9 — for MI-07)
+4. `meetings.start_time` + `meetings.end_time` (D28 — for C-03 Calendar time-aware)
+5. (Possibly) `regulatory_items.responsible_slug` (D10 — pending audit)
+6. activity_log emit on 6 transitions (D22 — for PD-3)
+
+These need decision docs in `~/Peripheral-Brain/Context/Decisions/` + `enums.py` + `shared-schema-registry.md` + lockstep deploy.
+
+### Worktree cleanup
+
+Wave 1+2+3 worktree dirs (Bundle A/B/D/G/H/F/C agents) still exist at `.claude/worktrees/agent-*`. Branches deleted on remote post-merge. Local cleanup recommended:
+```bash
+git worktree list  # see all
+git worktree remove --force .claude/worktrees/agent-{ID}  # per worktree
+```
+
+---
+
 ## 2026-04-28 (later 2) — Bundle A P0/P1 quick wins
 
 **Phase**: Fix. Worktree branch `worktree-agent-a1bbaa8b2e645dd2d`. 5 findings shipped per Bundle A in `DECISIONS-RESOLVED.md`. `npm run build` clean after each commit.
