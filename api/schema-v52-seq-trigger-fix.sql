@@ -1,3 +1,7 @@
+-- anti-pattern-allowed-file: v52 fixed v51 column-coverage gap but
+-- introduced the WHERE id != NEW.id self-exclusion bug, which v53
+-- subsequently fixed. Production state is v53. v52 file kept as
+-- historical record of the iteration.
 -- v52 — fix v51 trigger UPDATE OF column gap
 --
 -- v51 listed specific columns in UPDATE OF for the seq-bump triggers.

@@ -1,3 +1,5 @@
+-- anti-pattern-allowed-file: docstring quotes the v52 buggy SQL it
+-- replaces. The actual triggers below DO include self in MAX (correct).
 -- v53 — fix v52 seq trigger: include self in MAX(seq) computation
 --
 -- v52 fixed the column-coverage gap by removing UPDATE OF (so triggers
