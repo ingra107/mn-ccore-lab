@@ -18,9 +18,9 @@ import { usePageMeta } from '../../hooks/usePageMeta'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
 import { useBulkUpdateTasks, useUpdateTask } from '../../hooks/useMutations'
 import { useUndoToast } from '../../components/UndoToast'
+import TaskDetailPanel from '../../components/tasks/TaskDetailPanel'
 import { TopBar } from './components/TopBar'
 import { BulkBar } from './components/BulkBar'
-import { TaskDrawer } from './components/TaskDrawer'
 import { ColumnsView } from './views/ColumnsView'
 import { LanesView } from './views/LanesView'
 import { ListView } from './views/ListView'
@@ -124,7 +124,16 @@ export default function UnifiedMyTasks() {
   })
 
   const drawerTask = drawer ? allTasks.find((t) => t.id === drawer) ?? null : null
-  const drawerProject = drawerTask?.project_id ? projectsByPid.get(drawerTask.project_id) ?? null : null
+
+  // Prev/next navigation across the filtered list (Alt+Up/Down inside the
+  // panel). Closes MT-26.
+  const drawerIndex = drawer ? filtered.findIndex((t) => t.id === drawer) : -1
+  const onPrevTask = drawerIndex > 0
+    ? () => setDrawer(filtered[drawerIndex - 1].id)
+    : undefined
+  const onNextTask = drawerIndex >= 0 && drawerIndex < filtered.length - 1
+    ? () => setDrawer(filtered[drawerIndex + 1].id)
+    : undefined
 
   // ── Bulk actions wired to real API ─────────────────────────
   const bulkUpdate = useBulkUpdateTasks()
@@ -240,8 +249,15 @@ export default function UnifiedMyTasks() {
             <ListView filtered={filtered} selected={selected} toggleSelect={toggleSelect} setSelected={setSelected} setDrawer={setDrawer} projectsByPid={projectsByPid} plannedSet={plannedSet} />
           )}
         </div>
-        {drawerTask && <TaskDrawer task={drawerTask} project={drawerProject} onClose={() => setDrawer(null)} />}
       </div>
+      {drawerTask && (
+        <TaskDetailPanel
+          task={drawerTask}
+          onClose={() => setDrawer(null)}
+          onPrev={onPrevTask}
+          onNext={onNextTask}
+        />
+      )}
     </div>
   )
 }

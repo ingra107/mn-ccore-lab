@@ -8,10 +8,10 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import SmartCompose from '../../../components/SmartCompose'
-import { useUpdateTask } from '../../../hooks/useMutations'
+import { useUpdateTask, useBulkUpdateTasks } from '../../../hooks/useMutations'
 import { useUndoToast } from '../../../components/UndoToast'
 import {
-  ACCENT_GOLD, ACCENT_TEAL,
+  ACCENT_GOLD, ACCENT_TEAL, ACCENT_GREEN,
   INK, INK_DIM, PAGE_BG, PANEL_BG,
   STATUS_LABEL, STATUS_COLOR,
   MOVE_OPTIONS,
@@ -23,6 +23,7 @@ export function InlineDetail({ task, projectName }: { task: TaskRow; projectName
   // Real handlers (no longer decorative). Reach for mutations directly so the
   // component is self-contained and the parent doesn't need to drill props.
   const updateTask = useUpdateTask()
+  const bulkUpdate = useBulkUpdateTasks()
   const undoToast = useUndoToast()
   const snap = readTodayState()
   const isPromoted = snap.rightNow === task.id
@@ -73,12 +74,27 @@ export function InlineDetail({ task, projectName }: { task: TaskRow; projectName
     })
   }, [task.id, updateTask, undoToast])
 
+  // MT-02 — Archive must SOFT-DELETE (set deleted_at), not flip to done.
+  // The bulk-archive path on this page already does the right thing via
+  // bulkUpdate({ action: 'delete' }); the single-row path used to write
+  // status:'done', completed:1 — same word, different state transition.
+  // Match the bulk path so confirm copy ("they'll be soft-deleted") matches.
   const archive = useCallback(() => {
     if (!window.confirm('Archive this task? It will be soft-deleted.')) return
-    updateTask.mutate({ id: task.id, fields: { status: 'done', completed: 1 } }, {
+    bulkUpdate.mutate({ ids: [task.id], action: 'delete' }, {
       onSuccess: () => undoToast.showSuccess('Archived'),
     })
-  }, [task.id, updateTask, undoToast])
+  }, [task.id, bulkUpdate, undoToast])
+
+  // MT-10 — single-row Complete button. Without it the only completion path
+  // was select-then-bulk (3 clicks for what should be 1).
+  const complete = useCallback(() => {
+    if (task.completed === 1 || task.status === 'done') return
+    bulkUpdate.mutate({ ids: [task.id], action: 'complete' }, {
+      onSuccess: () => undoToast.showSuccess('Completed'),
+    })
+  }, [task.id, task.completed, task.status, bulkUpdate, undoToast])
+  const isCompleted = task.completed === 1 || task.status === 'done'
 
   return (
     <div onClick={(e) => e.stopPropagation()} style={{ marginTop: 10, paddingTop: 10, borderTop: '1px dashed rgba(255,255,255,0.08)' }}>
@@ -120,7 +136,10 @@ export function InlineDetail({ task, projectName }: { task: TaskRow; projectName
           )}
         </div>
         <button onClick={snooze} title="Push due date +1 day" disabled={updateTask.isPending} style={{ padding: '4px 10px', fontSize: 10.5, borderRadius: 4, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: INK, fontFamily: 'inherit', cursor: updateTask.isPending ? 'wait' : 'pointer', opacity: updateTask.isPending ? 0.5 : 1 }}>Snooze +1d</button>
-        <button onClick={archive} title="Soft-delete this task" disabled={updateTask.isPending} style={{ padding: '4px 10px', fontSize: 10.5, borderRadius: 4, border: 'none', background: 'transparent', color: INK_DIM, fontFamily: 'inherit', cursor: updateTask.isPending ? 'wait' : 'pointer' }}>Archive</button>
+        {!isCompleted && (
+          <button onClick={complete} title="Mark complete" disabled={bulkUpdate.isPending} style={{ padding: '4px 10px', fontSize: 10.5, borderRadius: 4, border: `1px solid ${ACCENT_GREEN}55`, background: 'transparent', color: ACCENT_GREEN, fontFamily: 'inherit', cursor: bulkUpdate.isPending ? 'wait' : 'pointer', opacity: bulkUpdate.isPending ? 0.5 : 1 }}>✓ Complete</button>
+        )}
+        <button onClick={archive} title="Soft-delete this task" disabled={bulkUpdate.isPending} style={{ padding: '4px 10px', fontSize: 10.5, borderRadius: 4, border: 'none', background: 'transparent', color: INK_DIM, fontFamily: 'inherit', cursor: bulkUpdate.isPending ? 'wait' : 'pointer' }}>Archive</button>
       </div>
       <div style={{ fontSize: 10.5, color: INK_DIM, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
         <span><span style={{ opacity: 0.6 }}>updated</span> {task.updated_at?.slice(0, 10) ?? '—'}</span>
