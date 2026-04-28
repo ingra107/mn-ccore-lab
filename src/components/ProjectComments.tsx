@@ -8,6 +8,7 @@ import { useAddComment } from '../hooks/useMutations'
 import { useAuth } from '../hooks/useAuth'
 import { emailToSlug } from '../lib/emailSlug'
 import { formatRelativeTime } from '../lib/dateUtils'
+import { getPersonInfo } from '../data/team'
 import Avatar from './Avatar'
 import MentionInput from './MentionInput'
 import ReactionBar from './ReactionBar'
@@ -202,55 +203,67 @@ export default function ProjectComments({ projectSlug }: Props) {
                             </span>
                           </div>
                           <HermesResponse content={comment.content} />
+                          {/* PD-18: ReactionBar inside the gold card to match human comment placement */}
+                          <ReactionBar targetType="comment" targetId={comment.id} />
                         </div>
-                        <ReactionBar targetType="comment" targetId={comment.id} />
                       </div>
                     ) : (
                       /* Regular human comment */
-                      <>
-                        <div className="flex-shrink-0 mt-0.5" style={{ width: 28, height: 28 }}>
-                          <Avatar
-                            name={comment.author_name || 'User'}
-                            initials={(comment.author_name || 'U').split(' ').map(n => n[0]).join('').toUpperCase()}
-                            variant="ice"
-                            size="base-sm"
-                          />
-                        </div>
-                        <div style={{ flex: 1 }}>
-                          <div className="flex items-baseline gap-2">
-                            <span
-                              style={{
-                                fontSize: 'var(--value-size)',
-                                fontWeight: 600,
-                                color: 'var(--ink)',
-                              }}
-                            >
-                              {comment.author_name || 'Team Member'}
-                            </span>
-                            <span
-                              style={{
-                                fontSize: '10px',
-                                color: 'var(--slate)',
-                                opacity: 'var(--ink-label)',
-                              }}
-                            >
-                              {formatRelativeTime(comment.created_at)}
-                            </span>
-                          </div>
-                          <p
-                            style={{
-                              fontSize: 'var(--value-size)',
-                              color: 'var(--ink)',
-                              lineHeight: 1.5,
-                              margin: '2px 0 0',
-                              whiteSpace: 'pre-wrap',
-                            }}
-                          >
-                            {comment.content}
-                          </p>
-                          <ReactionBar targetType="comment" targetId={comment.id} />
-                        </div>
-                      </>
+                      (() => {
+                        // PD-17: prefer getPersonInfo(author_slug) over raw author_name; reuse initials from team data
+                        const info = comment.author_slug ? getPersonInfo(comment.author_slug) : null
+                        const isKnown = info && info.name !== 'Unknown'
+                        const displayName = isKnown ? info!.name : (comment.author_name || 'Team Member')
+                        const initials = isKnown
+                          ? info!.initials
+                          : (comment.author_name || 'U').split(' ').map(n => n[0]).join('').toUpperCase()
+                        return (
+                          <>
+                            <div className="flex-shrink-0 mt-0.5" style={{ width: 28, height: 28 }}>
+                              <Avatar
+                                name={displayName}
+                                initials={initials}
+                                variant="ice"
+                                size="base-sm"
+                              />
+                            </div>
+                            <div style={{ flex: 1 }}>
+                              <div className="flex items-baseline gap-2">
+                                <span
+                                  style={{
+                                    fontSize: 'var(--value-size)',
+                                    fontWeight: 600,
+                                    color: 'var(--ink)',
+                                  }}
+                                >
+                                  {displayName}
+                                </span>
+                                <span
+                                  style={{
+                                    fontSize: '10px',
+                                    color: 'var(--slate)',
+                                    opacity: 'var(--ink-label)',
+                                  }}
+                                >
+                                  {formatRelativeTime(comment.created_at)}
+                                </span>
+                              </div>
+                              <p
+                                style={{
+                                  fontSize: 'var(--value-size)',
+                                  color: 'var(--ink)',
+                                  lineHeight: 1.5,
+                                  margin: '2px 0 0',
+                                  whiteSpace: 'pre-wrap',
+                                }}
+                              >
+                                {comment.content}
+                              </p>
+                              <ReactionBar targetType="comment" targetId={comment.id} />
+                            </div>
+                          </>
+                        )
+                      })()
                     )}
                   </motion.div>
                 )
