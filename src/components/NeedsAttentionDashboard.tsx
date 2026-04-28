@@ -47,10 +47,29 @@ export default function NeedsAttentionDashboard({ filter, onFilterChange }: Prop
     try { return localStorage.getItem(LS_COLLAPSED) === 'true' } catch { return false }
   })
   const [expanded, setExpanded] = useState<Set<SubgroupKey>>(() => new Set<SubgroupKey>())
+  // M-10: track whether we've applied the default-expanded urgency rule yet.
+  // First render sets this once data arrives, so users don't have to click
+  // to triage the highest-urgency non-empty subgroup.
+  const [didAutoExpand, setDidAutoExpand] = useState(false)
 
   useEffect(() => {
     try { localStorage.setItem(LS_COLLAPSED, String(sectionCollapsed)) } catch { /* unavailable */ }
   }, [sectionCollapsed])
+
+  // M-10: auto-expand the highest-urgency non-empty subgroup on first load.
+  // Order: revisions-overdue > awaiting-review > stale-drafts.
+  useEffect(() => {
+    if (didAutoExpand || !data) return
+    const { revisions_overdue: ro, awaiting_review: ar, stale_drafts: sd } = data.data
+    let urgent: SubgroupKey | null = null
+    if (ro.length > 0) urgent = 'revisions-overdue'
+    else if (ar.length > 0) urgent = 'awaiting-review'
+    else if (sd.length > 0) urgent = 'stale-drafts'
+    if (urgent) {
+      setExpanded((prev) => new Set<SubgroupKey>([...prev, urgent as SubgroupKey]))
+    }
+    setDidAutoExpand(true)
+  }, [data, didAutoExpand])
 
   if (isLoading || !data) return null
   const { revisions_overdue, awaiting_review, stale_drafts } = data.data
