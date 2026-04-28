@@ -35,6 +35,7 @@ import { formatShortDate, formatMediumDate } from '../lib/dateUtils'
 import Avatar from '../components/Avatar'
 import InlineSelect from '../components/InlineSelect'
 import InlineAssigneePicker from '../components/InlineAssigneePicker'
+import CategoryIcon from '../components/CategoryIcon'
 import WatchButton from '../components/WatchButton'
 import TaskCard from '../components/tasks/TaskCard'
 import CreateTaskModal from '../components/tasks/CreateTaskModal'
@@ -455,16 +456,19 @@ function ProjectDetailInner({ project }: InnerProps) {
 
         {/* Meta row: category, PI, status, stage, agenda button — all inline-editable */}
         <div className="flex flex-wrap items-center gap-3">
-          <InlineSelect
-            value={project.category || 'lab'}
-            options={[
-              { value: 'clif', label: 'CLIF' },
-              { value: 'lab', label: 'Lab' },
-              { value: 'nate', label: 'Mesfin' },
-              { value: 'mentee', label: 'Mentee' },
-            ]}
-            onChange={(val) => d1Update.mutate({ category: val } as Partial<Project>)}
-          />
+          <div className="flex items-center gap-1.5">
+            <CategoryIcon category={project.category || 'lab'} size={14} />
+            <InlineSelect
+              value={project.category || 'lab'}
+              options={[
+                { value: 'clif', label: 'CLIF' },
+                { value: 'lab', label: 'Lab' },
+                { value: 'nate', label: 'Mesfin' },
+                { value: 'mentee', label: 'Mentee' },
+              ]}
+              onChange={(val) => d1Update.mutate({ category: val } as Partial<Project>)}
+            />
+          </div>
 
           <InlineAssigneePicker
             value={project.pi || ''}
