@@ -11,6 +11,7 @@ import { useCreateProject } from '../../hooks/useMutations'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { updateProject } from '../../lib/api'
 import InlineSelect from '../../components/InlineSelect'
+import CategoryIcon from '../../components/CategoryIcon'
 import { useUndoToast } from '../../components/UndoToast'
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 import { getPersonInfo } from '../../data/team'
@@ -350,15 +351,7 @@ export default function Manuscripts() {
                 }}
               >
                 {opt.value && (
-                  <span
-                    style={{
-                      width: 6,
-                      height: 6,
-                      borderRadius: 'var(--radius-circle)',
-                      background: CATEGORY_DOT[opt.value] ?? 'var(--slate)',
-                      opacity: 0.85,
-                    }}
-                  />
+                  <CategoryIcon category={opt.value} size={12} />
                 )}
                 {opt.label}
               </button>
@@ -456,12 +449,10 @@ export default function Manuscripts() {
                           }}
                         >
                           <div className="flex items-center gap-2.5" style={{ paddingRight: '16px' }}>
-                            <span
-                              style={{
-                                width: 6, height: 6, borderRadius: 'var(--radius-circle)',
-                                background: CATEGORY_DOT[project.category] ?? 'var(--slate)',
-                                flexShrink: 0, opacity: 0.85, marginTop: '-1px',
-                              }}
+                            <CategoryIcon
+                              category={project.category}
+                              size={14}
+                              style={{ flexShrink: 0 }}
                             />
                             <span style={{ fontSize: '14px', fontWeight: 500, color: 'var(--ink)', lineHeight: 1.35 }}>
                               {project.title}
@@ -568,14 +559,12 @@ export default function Manuscripts() {
                             transition: 'background 0.12s ease-out',
                           }}
                         >
-                          {/* Title row: category dot + title + task count */}
+                          {/* Title row: category icon + title + task count */}
                           <div className="flex items-start gap-2" style={{ marginBottom: '8px' }}>
-                            <span
-                              style={{
-                                width: 6, height: 6, borderRadius: 'var(--radius-circle)',
-                                background: CATEGORY_DOT[project.category] ?? 'var(--slate)',
-                                flexShrink: 0, opacity: 0.85, marginTop: '6px',
-                              }}
+                            <CategoryIcon
+                              category={project.category}
+                              size={14}
+                              style={{ flexShrink: 0, marginTop: '2px' }}
                             />
                             <span style={{ fontSize: '14px', fontWeight: 500, color: 'var(--ink)', lineHeight: 1.35, flex: 1 }}>
                               {project.title}
@@ -712,7 +701,6 @@ export default function Manuscripts() {
                     <AnimatePresence mode="popLayout">
                       {stageProjects.map((p) => {
                         const pi = getPersonInfo(p.pi)
-                        const dotColor = CATEGORY_DOT[p.category] ?? 'var(--slate)'
                         return (
                           <Link key={p.slug} to={PATHS.project(p.slug)} style={{ textDecoration: 'none', display: 'block' }}>
                             <motion.div
@@ -730,7 +718,7 @@ export default function Manuscripts() {
                               }}
                             >
                               <div className="flex items-start gap-2">
-                                <span style={{ width: 6, height: 6, borderRadius: 'var(--radius-circle)', background: dotColor, flexShrink: 0, opacity: 0.85, marginTop: '5px' }} />
+                                <CategoryIcon category={p.category} size={12} style={{ flexShrink: 0, marginTop: '2px' }} />
                                 <p style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ink)', lineHeight: 1.4, margin: 0 }}>
                                   {p.title}
                                 </p>
