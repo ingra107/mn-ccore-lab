@@ -221,6 +221,11 @@ function ProjectDetailInner({ project }: InnerProps) {
   const [shortNameDraft, setShortNameDraft] = useState(project.short_name ?? '')
   const descRef = useRef<HTMLTextAreaElement>(null)
 
+  // Notes/Comments explainer banner dismissibility (PD-4)
+  const [notesCommentsBannerDismissed, setNotesCommentsBannerDismissed] = useState(() => {
+    try { return localStorage.getItem('mnccore.banner.notes-comments.dismissed') === '1' } catch { return false }
+  })
+
 
   // Task detail panel
   const [selectedTask, setSelectedTask] = useState<TaskRow | null>(null)
@@ -1613,22 +1618,48 @@ function ProjectDetailInner({ project }: InnerProps) {
       {/* ── NOTES TAB ── */}
       {activeTab === 'notes' && (
         <>
-          {/* Notes vs Comments explainer — dismissible one-time banner */}
-          <div
-            style={{
-              marginBottom: '1rem',
-              padding: '12px 16px',
-              borderRadius: 'var(--radius-lg)',
-              background: 'var(--surface-1)',
-              border: '1px solid var(--border-subtle)',
-              fontSize: '12px',
-              color: 'var(--muted)',
-              lineHeight: 1.5,
-            }}
-          >
-            <strong style={{ color: 'var(--ink)', fontWeight: 600 }}>Notes vs Comments:</strong>{' '}
-            <span><strong>Notes</strong> are your own progress log (private, auto-timestamped — e.g. "Talked with Peter, he'll run the script and get back next week"). <strong>Comments</strong> are team discussion (visible to everyone, @mentions notify).</span>
-          </div>
+          {/* Notes vs Comments explainer — dismissible one-time banner (PD-4) */}
+          {!notesCommentsBannerDismissed && (
+            <div
+              style={{
+                marginBottom: '1rem',
+                padding: '12px 16px',
+                borderRadius: 'var(--radius-lg)',
+                background: 'var(--surface-1)',
+                border: '1px solid var(--border-subtle)',
+                fontSize: '12px',
+                color: 'var(--muted)',
+                lineHeight: 1.5,
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '8px',
+              }}
+            >
+              <div style={{ flex: 1 }}>
+                <strong style={{ color: 'var(--ink)', fontWeight: 600 }}>Notes vs Comments:</strong>{' '}
+                <span><strong>Notes</strong> are your own progress log (private, auto-timestamped — e.g. "Talked with Peter, he'll run the script and get back next week"). <strong>Comments</strong> are team discussion (visible to everyone, @mentions notify).</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  try { localStorage.setItem('mnccore.banner.notes-comments.dismissed', '1') } catch {}
+                  setNotesCommentsBannerDismissed(true)
+                }}
+                aria-label="Dismiss explainer"
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--muted)',
+                  cursor: 'pointer',
+                  padding: '2px',
+                  lineHeight: 0,
+                  flexShrink: 0,
+                }}
+              >
+                <X size={14} />
+              </button>
+            </div>
+          )}
           <div id="updates" style={{ scrollMarginTop: '60px' }}>
             <ProjectUpdateFeed projectSlug={project.slug} />
           </div>
