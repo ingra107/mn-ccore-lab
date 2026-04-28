@@ -66,11 +66,6 @@ const CATEGORY_OPTIONS = Object.entries(CATEGORY_LABEL).map(([value, label]) => 
 }))
 
 export default function Manuscripts() {
-  usePageMeta(
-    'Manuscript Pipeline | MN-CCORE',
-    'Track MN-CCORE manuscripts from idea to publication.'
-  )
-
   const [density, setDensity] = useDensity()
   // P3-03: 'trophy' = cover-style grid for Published manuscripts.
   const [view, setView] = useState<'list' | 'pipeline' | 'trophy'>('list')
@@ -208,13 +203,16 @@ export default function Manuscripts() {
     projects.filter(p => p.stage !== 'Published' && daysInStage(p) > stalledThresholdDays).length
   , [projects, stalledThresholdDays])
 
-  // Dynamic page title
-  useEffect(() => {
-    document.title = writingCount > 0
-      ? `Manuscripts (${writingCount} writing) | MN-CCORE`
-      : `Manuscripts (${activeCount}) | MN-CCORE`
-    return () => { document.title = 'MN-CCORE Lab Hub' }
-  }, [writingCount, activeCount])
+  // M-05: dynamic title flows through usePageMeta so the OG tags + meta
+  // description stay in sync. Previously a competing useEffect overwrote
+  // document.title, racing usePageMeta and making it dead code.
+  const pageTitle = writingCount > 0
+    ? `Manuscripts (${writingCount} writing) | MN-CCORE`
+    : `Manuscripts (${activeCount}) | MN-CCORE`
+  usePageMeta(
+    pageTitle,
+    'Track MN-CCORE manuscripts from idea to publication.'
+  )
 
   return (
     <div style={{ minHeight: '100vh' }}>
