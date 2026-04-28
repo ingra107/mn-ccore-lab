@@ -64,6 +64,45 @@ After Nick answers the decision queue:
 
 <!-- Future entries below this line. Latest on top. -->
 
+## 2026-04-28 — WAVE 4 SHIPPED ✅
+
+**Phase**: Fix (complete). 4 audit PRs merged to main. Build green, TypeScript clean, API tests 24/24.
+
+### PR roll-up
+
+| PR | Bundle | Findings closed |
+|----|--------|----------------|
+| #62 | O — SearchPage UX foundations | S-01 through S-16 (16) |
+| #63 | M — InsightsPage feature pass | INS-01, INS-02, INS-03, INS-04, INS-05, INS-06, INS-08, INS-09, INS-10 (9) + INS-12, INS-18 incidental |
+| #64 | R — TodayPage Tier-1 | TP-09, TP-10, TP-11, TP-12, TP-14, TP-16, TP-17, TP-18, TP-19 (9) |
+| #65 | N — Manuscripts polish | M-04, M-05, M-06, M-07, M-08, M-09, M-10, M-11, M-12, M-13, M-14, M-17, M-18 (12) |
+
+**Wave 4 total**: 46 findings closed.
+
+**Cumulative (waves 1-4)**: ~100 P0+P1 findings closed of 161 verified (~62%) across 11 PRs.
+
+### Quality gate ✅
+- `npm run build`: clean
+- `npx tsc --noEmit`: 0 errors
+- `npm run test:api`: 24/24 passing
+
+### Remaining backlog (~60 findings)
+- TodayPage Tier-2 (TP-04 + TP-06 state.done arch, TP-05 meeting-notes piggyback, TP-13 token sweep, TP-15 CategoryIcon vocabulary)
+- ProfilePage tier-1 (P-02, P-03, P-05, P-08, P-11, P-12, P-13)
+- AskTheLab Tier-1 (ATL-03 Hermes pending, ATL-04 realtimeBus, plus ~8 small)
+- MyItems / Personal D4+D5 merge (the Personal 3-tab rebuild)
+- Lab Overview tier-2 (LO-5, LO-7, LO-9, LO-10)
+- CalendarPage tier-1 (C-01 iCal merge, C-02 clickable, C-04 +N more, C-05 view persist)
+- Schema-blocked: M-02 (backend), M-03 (D7 cross-repo), MTG-01 (Hermes endpoint), PD-3 (D22 activity_log emit)
+- Cross-repo schema migrations queued: D7, D8, D9, D28 (need decision docs + brain.db lockstep)
+
+### Deploy readiness
+- Schema v54 SQL ready at `api/schema-v54-team-citations.sql` (Bundle G — needs `wrangler d1 execute`)
+- Pages deploy ready (no auto-deploy per Rule 9)
+- Single-command flow at `scripts/deploy-audit-wave.sh`
+
+---
+
 ## 2026-04-28 — WAVE 1 + 2 + 3 SHIPPED ✅
 
 **Phase**: Fix (complete). 7 audit PRs merged to main. Build green, TypeScript clean, API tests 24/24.
