@@ -331,7 +331,17 @@ export async function handleInsightsDashboard(env: Env): Promise<Response> {
   ).first<{ d: number }>().catch(() => null)
   const daysToNextDeadline = nextDeadlineRes ? Math.max(0, Math.round(nextDeadlineRes.d)) : null
 
-  // 5. Workload heatmap — tasks due this week, grouped by assignee × weekday
+  // 5. Workload heatmap — tasks due this week (Sun-Sat), grouped by assignee × weekday.
+  // Note: SQLite's `date('now','weekday N')` returns the next occurrence of that
+  // weekday (or today if today matches). For a Sun-Sat current-week window we
+  // anchor on `weekday 0` (next Sunday) and back up 6 days — so:
+  //   start = next Sunday minus 6 days = previous Monday  ❌
+  // Wait — `weekday 0` returns *next* Sunday (or today if Sun). To get the
+  // start of the current week we want `weekday 0, -6 days` (Mon-of-this-week)
+  // and end inclusive at `weekday 0` (Sat-of-this-week). Since the prior
+  // implementation used `weekday 1, -7 days .. weekday 1` (always last week's
+  // Mon-Sun), the corrected current-week range is `weekday 0, -6 days .. weekday 0, +1 day`
+  // (Sun start through next-Sun-exclusive == Sat end inclusive).
   const heatmapRes = await env.DB.prepare(
     `SELECT assignee,
        CAST(strftime('%w', due_date) AS INT) as dow,
@@ -339,8 +349,8 @@ export async function handleInsightsDashboard(env: Env): Promise<Response> {
      FROM tasks
      WHERE deleted_at IS NULL AND completed = 0 AND assignee IS NOT NULL
        AND due_date IS NOT NULL
-       AND due_date >= date('now', 'weekday 1', '-7 days')
-       AND due_date < date('now', 'weekday 1')
+       AND due_date >= date('now', 'weekday 0', '-6 days')
+       AND due_date < date('now', 'weekday 0', '+1 day')
      GROUP BY assignee, dow`
   ).all<{ assignee: string; dow: number; c: number }>()
 
