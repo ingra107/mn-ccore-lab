@@ -315,6 +315,11 @@ export default function InsightsPage() {
           <PipelineFunnel rows={data.pipelineFunnel} />
         </div>
 
+        {/* Tasks per person bar — INS-09: surface tasksPerPerson.distribution */}
+        <div style={{ marginBottom: 'var(--sp-2xl)' }}>
+          <TasksPerPersonBars distribution={data.metrics.tasksPerPerson.distribution} />
+        </div>
+
         {/* Velocity scatter */}
         <VelocityScatter rows={data.velocityScatter} />
 
@@ -428,6 +433,58 @@ function WorkloadHeatmap({ rows }: { rows: DashboardData['workloadHeatmap'] }) {
           </div>
         </>
       )}
+    </div>
+  )
+}
+
+// INS-09: per-person open-task bar chart sourced from
+// data.metrics.tasksPerPerson.distribution. Already returned by the API,
+// previously unused. Sorted DESC by count, named via getPersonInfo().
+function TasksPerPersonBars({ distribution }: { distribution: { slug: string; count: number }[] }) {
+  const sorted = useMemo(
+    () => [...distribution].sort((a, b) => b.count - a.count),
+    [distribution]
+  )
+  if (sorted.length === 0) {
+    return null
+  }
+  const max = Math.max(1, ...sorted.map((r) => r.count))
+  return (
+    <div style={{ padding: 'var(--sp-lg)', borderRadius: 'var(--radius-xl)', background: 'var(--surface-1)', border: '1px solid var(--border-subtle)' }}>
+      <SectionHeader icon={<Users size={14} />} label="Open tasks per person" count={sorted.length} />
+      <div className="flex flex-col" style={{ gap: 4, marginTop: 6 }}>
+        {sorted.map((r) => {
+          const person = getPersonInfo(r.slug)
+          const pct = (r.count / max) * 100
+          return (
+            <Link
+              key={r.slug}
+              to={`${PATHS.tasks}?assignee=${encodeURIComponent(r.slug)}`}
+              className="flex items-center"
+              style={{ gap: 8, color: 'inherit', textDecoration: 'none' }}
+              title={`${person.name}: ${r.count} open tasks · open Tasks filtered to assignee`}
+              aria-label={`${person.name}: ${r.count} open tasks`}
+            >
+              <span style={{ flex: '0 0 130px', fontSize: 12, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {person.name}
+              </span>
+              <div style={{ flex: 1, height: 18, background: 'rgba(255,255,255,0.03)', borderRadius: 'var(--radius-sm)', position: 'relative' }}>
+                <div
+                  style={{
+                    width: `${pct}%`,
+                    height: '100%',
+                    background: 'var(--stage-fill-data-collection)',
+                    borderRadius: 'var(--radius-sm)',
+                  }}
+                />
+              </div>
+              <span style={{ flex: '0 0 36px', textAlign: 'right', fontSize: 11, color: 'var(--slate)', fontVariantNumeric: 'tabular-nums', fontWeight: 500 }}>
+                {r.count}
+              </span>
+            </Link>
+          )
+        })}
+      </div>
     </div>
   )
 }
