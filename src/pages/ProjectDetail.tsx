@@ -1553,6 +1553,8 @@ function ProjectDetailInner({ project }: InnerProps) {
                   title={`Move to ${stage}`}
                 />
                 <span
+                  className="project-stage-label"
+                  title={stage}
                   style={{
                     fontSize: '10px',
                     color: isCurrent ? 'var(--gold)' : isFuture ? 'var(--slate)' : 'var(--ink)',
@@ -2111,6 +2113,14 @@ function ProjectDetailInner({ project }: InnerProps) {
         }
         .dark .project-tab-strip-fade {
           background: linear-gradient(to right, transparent, var(--ink));
+        }
+        /* PD-15: stage strip mobile — truncate labels at narrow widths to prevent horizontal-scroll */
+        @media (max-width: 480px) {
+          .project-stage-label {
+            max-width: 44px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          }
         }
       `}</style>
     </>
