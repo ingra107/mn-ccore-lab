@@ -79,6 +79,13 @@ interface Stats {
   featuredPublicationCount: number
 }
 
+export interface Citations {
+  total: number
+  last_refresh: string | null
+  members_with_data: number
+  members_total: number
+}
+
 export interface TaskRow {
   id: string
   meeting_id: string | null
@@ -244,6 +251,10 @@ export function fetchGrants() {
 
 export function fetchStats() {
   return fetchApi<Stats>('/api/stats')
+}
+
+export function fetchCitations() {
+  return fetchApi<Citations>('/api/citations')
 }
 
 // ── Write endpoints (require auth) ──────────────────────────
