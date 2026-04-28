@@ -331,7 +331,8 @@ app.get('/api/insights/connections', (c) => handleInsightConnections(E(c)));
 app.get('/api/insights/suggestions', (c) => handleInsightSuggestions(U(c), E(c)));
 app.get('/api/insights/dashboard', async (c) => {
   if (!(await isPiRequest(c.req.raw, E(c)))) return error('Forbidden — PI access only', 403);
-  return handleInsightsDashboard(E(c));
+  const week = c.req.query('week') || undefined;
+  return handleInsightsDashboard(E(c), week);
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
