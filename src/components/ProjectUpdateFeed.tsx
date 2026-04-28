@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { MessageCircle, AlertTriangle, CheckCircle, HelpCircle, TrendingUp, Send } from 'lucide-react'
+import { MessageCircle, AlertTriangle, CheckCircle, HelpCircle, TrendingUp } from 'lucide-react'
 import { useProjectUpdates } from '../hooks/useApiData'
 import type { ProjectUpdateRow } from '../hooks/useApiData'
 import { usePostProjectUpdate } from '../hooks/useMutations'
@@ -8,7 +8,7 @@ import { useAuth } from '../hooks/useAuth'
 import { getPersonInfo } from '../data/team'
 import { formatRelativeTime } from '../lib/dateUtils'
 import Avatar from './Avatar'
-import MentionInput from './MentionInput'
+import SmartCompose from './SmartCompose'
 import ReactionBar from './ReactionBar'
 import { useToast } from '../hooks/useToast'
 
@@ -28,17 +28,15 @@ export default function ProjectUpdateFeed({ projectSlug }: Props) {
   const postUpdate = usePostProjectUpdate(projectSlug)
   const { isAuthenticated } = useAuth()
   const { showSuccess } = useToast()
-  const [text, setText] = useState('')
   const [updateType, setUpdateType] = useState<string>('progress')
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    if (!text.trim()) return
-    postUpdate.mutate({ content: text.trim(), update_type: updateType }, {
-      onSuccess: () => showSuccess('Update posted'),
+  const handleSubmit = (content: string) =>
+    new Promise<void>((resolve) => {
+      postUpdate.mutate({ content, update_type: updateType }, {
+        onSuccess: () => { showSuccess('Update posted'); resolve() },
+        onError: () => resolve(),
+      })
     })
-    setText('')
-  }
 
   return (
     <motion.div
@@ -60,8 +58,8 @@ export default function ProjectUpdateFeed({ projectSlug }: Props) {
       </div>
 
       <div style={{ background: 'var(--ice)', borderRadius: 'var(--radius-xl)', padding: '16px 20px' }} className="detail-card">
-        {/* Post update form */}
-        <form onSubmit={handleSubmit} style={{ marginBottom: updates.length > 0 ? '16px' : 0 }}>
+        {/* Post update form — type pills row + SmartCompose (D14). */}
+        <div style={{ marginBottom: updates.length > 0 ? '16px' : 0 }}>
           {/* Type selector */}
           <div className="flex gap-1.5 mb-2">
             {Object.entries(TYPE_CONFIG).map(([key, config]) => {
@@ -89,42 +87,24 @@ export default function ProjectUpdateFeed({ projectSlug }: Props) {
             })}
           </div>
 
-          <div className="flex gap-2 items-end">
-            <MentionInput
-              value={text}
-              onChange={setText}
-              placeholder={isAuthenticated ? 'Post a note... (use @mention to tag team)' : 'Sign in to post notes'}
-              disabled={!isAuthenticated && import.meta.env.PROD}
-              rows={2}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-                  e.preventDefault()
-                  handleSubmit(e)
-                }
-              }}
-              style={{
-                fontSize: 'var(--value-size)', color: 'var(--ink)',
-                background: 'var(--cream)', border: '1px solid rgba(201, 168, 76, 0.15)',
-                borderRadius: 'var(--radius-lg)', padding: '10px 12px', resize: 'none', outline: 'none',
-                lineHeight: 1.5, transition: 'border-color 0.2s', width: '100%',
-              }}
-              onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--gold)')}
-              onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--gold-emphasis)')}
-            />
-            {text.trim() && (
-              <motion.button type="submit" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}
-                className="cursor-pointer flex-shrink-0 p-2.5 rounded-lg"
-                style={{ background: 'var(--gold)', color: '#0f1923', border: 'none' }}>
-                <Send size={16} />
-              </motion.button>
-            )}
-          </div>
-          {!isAuthenticated && import.meta.env.PROD && (
+          {!isAuthenticated && import.meta.env.PROD ? (
             <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.75, marginTop: '4px', display: 'inline-block' }}>
               <a href="/api/auth/login" style={{ color: 'var(--teal)', fontWeight: 'var(--weight-ui)' as any, textDecoration: 'underline' }}>Sign in</a> to post notes
             </span>
+          ) : (
+            <SmartCompose
+              theme="light"
+              bare
+              onSubmit={handleSubmit}
+              submitting={postUpdate.isPending}
+              uploadContext={{ type: 'project', id: projectSlug }}
+              placeholder="Post a note... (use @mention to tag team)"
+              rows={2}
+              alwaysShowToolbar
+              submitLabel="Post note"
+            />
           )}
-        </form>
+        </div>
 
         {/* Updates list */}
         {updates.length > 0 ? (
