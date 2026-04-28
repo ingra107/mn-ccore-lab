@@ -12,7 +12,7 @@
 import type { Env, AuthUser } from '../helpers'
 import { json, error } from '../helpers'
 import { actorSlug } from '../helpers'
-import { parseIcs, type IcsEvent } from '../lib/ics-parser'
+import { parseIcs, type IcsEvent, type ParseOptions } from '../lib/ics-parser'
 
 const STALE_MINUTES = 15
 const FETCH_TIMEOUT_MS = 8000
@@ -98,7 +98,11 @@ export async function handleAddFeed(request: Request, env: Env, user: AuthUser |
 
   // Eager poll on add so the user sees events immediately. Best-effort —
   // failures land in last_error and surface in the Settings UI.
-  await pollFeed(env, { id, user_slug: slug, feed_url: url, feed_label: label, last_polled_at: null, last_error: null, created_at: new Date().toISOString() })
+  await pollFeed(
+    env,
+    { id, user_slug: slug, feed_url: url, feed_label: label, last_polled_at: null, last_error: null, created_at: new Date().toISOString() },
+    user.email,
+  )
 
   return json({ id, label, urlPreview: obfuscateUrl(url) }, 201)
 }
@@ -134,7 +138,7 @@ export async function handleListEvents(url: URL, env: Env, user: AuthUser | null
   const stalenessCutoff = new Date(Date.now() - STALE_MINUTES * 60_000).toISOString()
   const stale = (feeds.results ?? []).filter((f) => !f.last_polled_at || f.last_polled_at < stalenessCutoff)
   if (stale.length > 0) {
-    await Promise.allSettled(stale.map((f) => pollFeed(env, f)))
+    await Promise.allSettled(stale.map((f) => pollFeed(env, f, user.email)))
   }
 
   // Range query is inclusive on both ends. start_at is ISO with 'Z' suffix
@@ -160,7 +164,9 @@ export async function handleListEvents(url: URL, env: Env, user: AuthUser | null
 }
 
 // Internal: poll a single feed, parse, upsert events, update last_polled_at.
-async function pollFeed(env: Env, feed: FeedRow): Promise<void> {
+// ownerEmail is passed through to the parser so it can drop events the
+// user has declined (PARTSTAT=DECLINED).
+async function pollFeed(env: Env, feed: FeedRow, ownerEmail: string): Promise<void> {
   let body = ''
   try {
     const ctrl = new AbortController()
@@ -182,21 +188,23 @@ async function pollFeed(env: Env, feed: FeedRow): Promise<void> {
     return
   }
 
+  // Bound the parser's RRULE expansion to the polling window. Without a
+  // bound, an event with FREQ=DAILY and no UNTIL would expand for years.
+  const parseOpts: ParseOptions = {
+    windowStart: new Date(Date.now() - 7 * 86400000).toISOString(),
+    windowEnd: new Date(Date.now() + 90 * 86400000).toISOString(),
+    ownerEmail,
+  }
   let parsed: IcsEvent[]
   try {
-    parsed = parseIcs(body)
+    parsed = parseIcs(body, parseOpts)
   } catch (e) {
     await env.DB.prepare(
       'UPDATE user_calendar_feeds SET last_polled_at = ?, last_error = ? WHERE id = ?'
     ).bind(new Date().toISOString(), `parse: ${(e as Error).message.slice(0, 180)}`, feed.id).run()
     return
   }
-
-  // Only retain events whose start falls within today-7 .. today+90. Calendar
-  // feeds often carry years of history that we don't need on a Today timeline.
-  const minDate = new Date(Date.now() - 7 * 86400000).toISOString()
-  const maxDate = new Date(Date.now() + 90 * 86400000).toISOString()
-  const inWindow = parsed.filter((e) => e.startAt >= minDate && e.startAt <= maxDate)
+  const inWindow = parsed
 
   // Replace strategy: clear events for this feed, re-insert. Simpler than
   // diffing UIDs, and per-feed event counts are <500 typical so the write
