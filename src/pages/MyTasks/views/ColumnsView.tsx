@@ -18,7 +18,13 @@ import {
 } from '../constants'
 import type { TaskRow } from '../../../lib/api'
 
-export function ColumnsView({ filtered, byGroup, selected, toggleSelect, expanded, setExpanded, projectsByPid, plannedSet }: { filtered: TaskRow[]; byGroup: Record<GroupKey, TaskRow[]>; selected: Set<string>; toggleSelect: (id: string) => void; expanded: string | null; setExpanded: (id: string | null) => void; projectsByPid: Map<string, { name: string; slug: string }>; plannedSet: Set<string> }) {
+export function ColumnsView({ filtered, byGroup, selected, toggleSelect, expanded, setExpanded, projectsByPid, plannedSet, filterGroup }: { filtered: TaskRow[]; byGroup: Record<GroupKey, TaskRow[]>; selected: Set<string>; toggleSelect: (id: string) => void; expanded: string | null; setExpanded: (id: string | null) => void; projectsByPid: Map<string, { name: string; slug: string }>; plannedSet: Set<string>; filterGroup?: GroupKey | null }) {
+  // MT-16 — when a Group filter is active, only render the matching column
+  // (others would just be "nothing here" empty lanes that eat horizontal
+  // space and obscure the filter result).
+  const visibleGroups = filterGroup ? GROUP_ORDER.filter(g => g === filterGroup) : GROUP_ORDER
+  const colCount = visibleGroups.length
+  const minWidth = colCount * 280
   // Mobile scroll cue — right-edge fade gradient + visible thin scrollbar so
   // users discover the 5 columns scroll horizontally on small viewports
   // (eval Issue 5).
@@ -44,8 +50,8 @@ export function ColumnsView({ filtered, byGroup, selected, toggleSelect, expande
           }
         }
       `}</style>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(260px, 1fr))', gap: 14, minWidth: 1400 }}>
-        {GROUP_ORDER.map((gkey) => {
+      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${colCount}, minmax(260px, 1fr))`, gap: 14, minWidth }}>
+        {visibleGroups.map((gkey) => {
           const meta = GROUP_META[gkey]
           const tasks = byGroup[gkey]
           const incomplete = tasks.filter((t) => t.completed === 0 && t.status !== 'done').length

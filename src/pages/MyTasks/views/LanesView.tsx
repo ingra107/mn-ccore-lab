@@ -4,7 +4,7 @@
 //
 // Extracted from src/pages/portal/UnifiedMyTasks.tsx (LanesView + LaneRow).
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { PATHS } from '../../../constants/paths'
 import { Chip } from '../primitives'
@@ -19,15 +19,35 @@ import {
 } from '../constants'
 import type { TaskRow } from '../../../lib/api'
 
-export function LanesView({ byGroup, selected, toggleSelect, expanded, setExpanded, projectsByPid, plannedSet }: { byGroup: Record<GroupKey, TaskRow[]>; selected: Set<string>; toggleSelect: (id: string) => void; expanded: string | null; setExpanded: (id: string | null) => void; projectsByPid: Map<string, { name: string; slug: string }>; plannedSet: Set<string> }) {
-  const [collapsed, setCollapsed] = useState<Set<GroupKey>>(new Set())
-  const [peek, setPeek] = useState<Set<GroupKey>>(new Set())
+// MT-17 — persist lane collapsed/peek state to localStorage so reload
+// remembers what was open. Stored as two arrays keyed by GroupKey.
+const LS_COLLAPSED = 'mt_lane_collapsed'
+const LS_PEEK = 'mt_lane_peek'
+function readSet(key: string): Set<GroupKey> {
+  try {
+    const raw = window.localStorage.getItem(key)
+    if (!raw) return new Set()
+    const arr = JSON.parse(raw) as GroupKey[]
+    return new Set(Array.isArray(arr) ? arr : [])
+  } catch { return new Set() }
+}
+function writeSet(key: string, s: Set<GroupKey>) {
+  try { window.localStorage.setItem(key, JSON.stringify([...s])) } catch { /* ignore */ }
+}
+
+export function LanesView({ byGroup, selected, toggleSelect, expanded, setExpanded, projectsByPid, plannedSet, filterGroup }: { byGroup: Record<GroupKey, TaskRow[]>; selected: Set<string>; toggleSelect: (id: string) => void; expanded: string | null; setExpanded: (id: string | null) => void; projectsByPid: Map<string, { name: string; slug: string }>; plannedSet: Set<string>; filterGroup?: GroupKey | null }) {
+  // MT-16 — when a Group filter is active, only render the matching lane.
+  const visibleGroups = filterGroup ? GROUP_ORDER.filter(g => g === filterGroup) : GROUP_ORDER
+  const [collapsed, setCollapsed] = useState<Set<GroupKey>>(() => readSet(LS_COLLAPSED))
+  const [peek, setPeek] = useState<Set<GroupKey>>(() => readSet(LS_PEEK))
+  useEffect(() => { writeSet(LS_COLLAPSED, collapsed) }, [collapsed])
+  useEffect(() => { writeSet(LS_PEEK, peek) }, [peek])
   const toggleC = (k: GroupKey) => setCollapsed((s) => { const n = new Set(s); n.has(k) ? n.delete(k) : n.add(k); return n })
   const toggleP = (k: GroupKey) => setPeek((s) => { const n = new Set(s); n.has(k) ? n.delete(k) : n.add(k); return n })
 
   return (
     <div style={{ flex: 1, overflow: 'auto', padding: '12px 28px 40px', maxWidth: 1100, margin: '0 auto', width: '100%' }}>
-      {GROUP_ORDER.map((gkey) => {
+      {visibleGroups.map((gkey) => {
         const meta = GROUP_META[gkey]
         const tasks = byGroup[gkey]
         const isCollapsed = collapsed.has(gkey)

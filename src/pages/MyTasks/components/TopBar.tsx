@@ -39,7 +39,7 @@ export function TopBar({ view, setView, search, setSearch, filter, setFilter, qu
     <div style={{ padding: '14px 24px 12px', borderBottom: '1px solid rgba(255,255,255,0.06)', flexShrink: 0 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 10 }}>
         <h1 style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-0.02em', margin: 0, color: '#fff' }}>My Tasks</h1>
-        <span style={{ fontSize: 11, color: INK_DIM, fontVariantNumeric: 'tabular-nums' }}>{taskCount} visible</span>
+        <span aria-live="polite" aria-atomic="true" style={{ fontSize: 11, color: INK_DIM, fontVariantNumeric: 'tabular-nums' }}>{taskCount} visible</span>
         <div style={{ flex: 1 }} />
         <input
           value={search}
