@@ -29,6 +29,16 @@ export interface TodayEvent {
   title: string
   loc?: string
   href?: string
+  // Phase 39 audit (TP-10): meeting URL extracted by ics-parser. Surfaces
+  // as the "🔗 Join" chip on the EventRow when present. Sourced from the
+  // event's location field via classifyMeetingUrl().
+  meetingUrl?: string
+  // Phase 39 audit (TP-09 + TP-11): wall-clock minutes since midnight
+  // (local). Used for now-line rendering + overlap detection. Populated
+  // from the iCal startAt/endAt; legacy team meetings (date-only) leave
+  // these undefined and render as untimed.
+  startMin?: number
+  endMin?: number
 }
 
 export interface DailyCounts {
@@ -151,6 +161,30 @@ export function meetingToEvent(m: MeetingRow): TodayEvent {
   return { id: m.id, time: '—', title: m.title }
 }
 
+// TP-10: detect a meeting URL in the location field. ics-parser already
+// runs enrichLocation() which folds Zoom/Teams/Meet URLs from DESCRIPTION
+// into LOCATION. We just need to recognise an http(s) URL here.
+const MEETING_URL_RE = /^https?:\/\/\S+/i
+
+export function extractMeetingUrl(location: string | null | undefined): string | undefined {
+  if (!location) return undefined
+  const trimmed = location.trim()
+  if (MEETING_URL_RE.test(trimmed)) return trimmed
+  // Also handle "<text> <url>" — pick first URL substring.
+  const m = trimmed.match(/https?:\/\/\S+/)
+  return m ? m[0] : undefined
+}
+
+// TP-09 + TP-11: minutes-since-midnight from an ISO timestamp, in the
+// browser's local TZ. Returns undefined for all-day events (no clock
+// position to report).
+export function localMinutesFromIso(iso: string | null | undefined): number | undefined {
+  if (!iso) return undefined
+  const d = new Date(iso)
+  if (isNaN(d.getTime())) return undefined
+  return d.getHours() * 60 + d.getMinutes()
+}
+
 export function isToday(isoDate: string | null | undefined): boolean {
   if (!isoDate) return false
   const today = todayKey()
@@ -168,11 +202,18 @@ export function calendarEventToTodayEvent(e: { id: string; title: string; locati
   const end = e.endAt && !e.isAllDay
     ? new Date(e.endAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
     : undefined
+  const meetingUrl = extractMeetingUrl(e.location)
+  // If location holds a meeting URL, hide the URL string from the loc
+  // chip (it'll render via the dedicated 🔗 Join button instead).
+  const loc = meetingUrl ? undefined : (e.location ?? undefined)
   return {
     id: `cal-${e.id}`,
     time,
     end,
     title: e.title,
-    loc: e.location ?? undefined,
+    loc,
+    meetingUrl,
+    startMin: e.isAllDay ? undefined : localMinutesFromIso(e.startAt),
+    endMin: e.isAllDay ? undefined : localMinutesFromIso(e.endAt),
   }
 }
