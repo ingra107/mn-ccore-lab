@@ -1,5 +1,5 @@
-import { useState, useRef, useMemo, useCallback } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
+import { useState, useRef, useMemo, useCallback, useEffect } from 'react'
+import { useQueryClient, useQuery } from '@tanstack/react-query'
 import { useParams, Link, useSearchParams, useNavigate } from 'react-router-dom'
 import Breadcrumb from '../components/Breadcrumb'
 import { stageIndex, toApiStage } from '../lib/stageNormalize'
@@ -27,7 +27,7 @@ import {
   Copy as CopyIcon,
 } from 'lucide-react'
 import { usePageMeta } from '../hooks/usePageMeta'
-import { useProjects, useMeetingsApi, useTasks, useProjectUpdates, useRevisions, useComments } from '../hooks/useApiData'
+import { useProjects, useMeetingsApi, useTasks, useProjectUpdates, useRevisions, useComments, useProjectPapers } from '../hooks/useApiData'
 import { useUpdateProject, useAddAgendaItem, useUpdateTaskStatus, useUpdateTask, useBulkUpdateTasks, useCreateTask } from '../hooks/useMutations'
 import { useUndoToast } from '../components/UndoToast'
 import BulkActionToolbar from '../components/tasks/BulkActionToolbar'
@@ -163,6 +163,17 @@ function ProjectDetailInner({ project }: InnerProps) {
   // Revisions for this project
   const { data: revisions = [] } = useRevisions(project.slug)
 
+  // Tab counts (PD-12)
+  const { data: papers = [] } = useProjectPapers(project.slug)
+  const { data: filesData = [] } = useQuery<Array<unknown>>({
+    queryKey: ['attachments', 'project', project.slug],
+    queryFn: async () => {
+      const res = await fetch(`/api/files?entity_type=project&entity_id=${project.slug}`)
+      const json = await res.json() as { data: Array<unknown> }
+      return json.data || []
+    },
+  })
+
   // Tasks for this project
   const { data: projectTasks = [] } = useTasks({ project: project.slug })
   const updateTaskStatus = useUpdateTaskStatus()
@@ -287,6 +298,26 @@ function ProjectDetailInner({ project }: InnerProps) {
   const [notesCommentsBannerDismissed, setNotesCommentsBannerDismissed] = useState(() => {
     try { return localStorage.getItem('mnccore.banner.notes-comments.dismissed') === '1' } catch { return false }
   })
+
+  // Tab strip overflow affordance (PD-16) — show right-edge fade when content scrolls
+  const tabStripRef = useRef<HTMLDivElement>(null)
+  const [tabStripHasOverflow, setTabStripHasOverflow] = useState(false)
+  useEffect(() => {
+    const el = tabStripRef.current
+    if (!el) return
+    const checkOverflow = () => {
+      const hasMore = el.scrollWidth > el.clientWidth + 2
+      const atEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 2
+      setTabStripHasOverflow(hasMore && !atEnd)
+    }
+    checkOverflow()
+    el.addEventListener('scroll', checkOverflow, { passive: true })
+    window.addEventListener('resize', checkOverflow)
+    return () => {
+      el.removeEventListener('scroll', checkOverflow)
+      window.removeEventListener('resize', checkOverflow)
+    }
+  }, [])
 
 
   // Task detail panel
@@ -849,40 +880,73 @@ function ProjectDetailInner({ project }: InnerProps) {
           )}
         </AnimatePresence>
 
-      {/* Tab navigation — M-31: flex-nowrap + overflow-x-auto ensures tabs scroll on mobile instead of clipping */}
+      {/* Tab navigation — M-31 + PD-11 (role/keyboard) + PD-12 (counts) + PD-16 (overflow fade) */}
+      <div style={{ position: 'relative', marginBottom: '24px' }} className="project-tab-strip-wrap">
+      {tabStripHasOverflow && <div aria-hidden="true" className="project-tab-strip-fade" />}
       <div
-        className="flex flex-nowrap items-center gap-1 mb-6 pb-2 overflow-x-auto project-tab-strip"
-        style={{ borderBottom: '1px solid var(--border-subtle)' }}
+        ref={tabStripRef}
+        className="flex flex-nowrap items-center gap-1 pb-2 overflow-x-auto project-tab-strip"
+        style={{
+          borderBottom: '1px solid var(--border-subtle)',
+        }}
+        role="tablist"
+        aria-label="Project sections"
       >
-        {([
-          { id: 'overview' as Tab, label: 'Overview' },
-          { id: 'tasks' as Tab, label: `Tasks${pendingTasks.length ? ` (${pendingTasks.length})` : ''}` },
-          { id: 'notes' as Tab, label: `Notes${projectUpdates.length ? ` (${projectUpdates.length})` : ''}` },
-          { id: 'comments' as Tab, label: 'Comments' },
-          { id: 'files' as Tab, label: 'Files' },
-          { id: 'activity' as Tab, label: 'Activity' },
-          { id: 'revisions' as Tab, label: `Revisions${revisions.length ? ` (${revisions.length})` : ''}` },
-          { id: 'literature' as Tab, label: 'Literature' },
-        ]).map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className="px-3 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap"
-            style={{
-              color: activeTab === tab.id ? 'var(--teal)' : 'var(--slate)',
-              backgroundColor: activeTab === tab.id ? 'var(--teal-active)' : 'transparent',
-              border: 'none',
-              cursor: 'pointer',
-              opacity: activeTab === tab.id ? 1 : 0.85,
-            }}
-          >
-            {tab.label}
-          </button>
-        ))}
+        {(() => {
+          const tabs: Array<{ id: Tab; label: string }> = [
+            { id: 'overview', label: 'Overview' },
+            { id: 'tasks', label: `Tasks${pendingTasks.length ? ` (${pendingTasks.length})` : ''}` },
+            { id: 'notes', label: `Notes${projectUpdates.length ? ` (${projectUpdates.length})` : ''}` },
+            { id: 'comments', label: `Comments${projectComments.length ? ` (${projectComments.length})` : ''}` },
+            { id: 'files', label: `Files${filesData.length ? ` (${filesData.length})` : ''}` },
+            { id: 'activity', label: 'Activity' },
+            { id: 'revisions', label: `Revisions${revisions.length ? ` (${revisions.length})` : ''}` },
+            { id: 'literature', label: `Literature${papers.length ? ` (${papers.length})` : ''}` },
+          ]
+          return tabs.map((tab, i) => (
+            <button
+              key={tab.id}
+              role="tab"
+              id={`projectdetail-tab-${tab.id}`}
+              aria-selected={activeTab === tab.id}
+              aria-controls={`projectdetail-tabpanel-${tab.id}`}
+              tabIndex={activeTab === tab.id ? 0 : -1}
+              onClick={() => setActiveTab(tab.id)}
+              onKeyDown={(e) => {
+                if (e.key === 'ArrowRight' || e.key === 'ArrowLeft' || e.key === 'Home' || e.key === 'End') {
+                  e.preventDefault()
+                  let nextIdx = i
+                  if (e.key === 'ArrowRight') nextIdx = (i + 1) % tabs.length
+                  else if (e.key === 'ArrowLeft') nextIdx = (i - 1 + tabs.length) % tabs.length
+                  else if (e.key === 'Home') nextIdx = 0
+                  else if (e.key === 'End') nextIdx = tabs.length - 1
+                  const nextTab = tabs[nextIdx]
+                  setActiveTab(nextTab.id)
+                  // Focus the new tab button
+                  setTimeout(() => {
+                    const btn = document.getElementById(`projectdetail-tab-${nextTab.id}`)
+                    btn?.focus()
+                  }, 0)
+                }
+              }}
+              className="px-3 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap"
+              style={{
+                color: activeTab === tab.id ? 'var(--teal)' : 'var(--slate)',
+                backgroundColor: activeTab === tab.id ? 'var(--teal-active)' : 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                opacity: activeTab === tab.id ? 1 : 0.85,
+              }}
+            >
+              {tab.label}
+            </button>
+          ))
+        })()}
+      </div>
       </div>
 
       {/* ── OVERVIEW TAB ── */}
-      {activeTab === 'overview' && (<>
+      {activeTab === 'overview' && (<div role="tabpanel" id="projectdetail-tabpanel-overview" aria-labelledby="projectdetail-tab-overview">
 
       {/* ── Landing Card: 2-col action panel (GH #27, #29, #33 + 2026-04-23 feedback) ── */}
       <motion.div
@@ -1809,11 +1873,11 @@ function ProjectDetailInner({ project }: InnerProps) {
         <ConferencePrep projectId={project.slug} />
       </div>
 
-      </>)}
+      </div>)}
 
       {/* ── NOTES TAB ── */}
       {activeTab === 'notes' && (
-        <>
+        <div role="tabpanel" id="projectdetail-tabpanel-notes" aria-labelledby="projectdetail-tab-notes">
           {/* Notes vs Comments explainer — dismissible one-time banner (PD-4) */}
           {!notesCommentsBannerDismissed && (
             <div
@@ -1859,19 +1923,19 @@ function ProjectDetailInner({ project }: InnerProps) {
           <div id="updates" style={{ scrollMarginTop: '60px' }}>
             <ProjectUpdateFeed projectSlug={project.slug} />
           </div>
-        </>
+        </div>
       )}
 
       {/* ── COMMENTS TAB ── */}
       {activeTab === 'comments' && (
-        <div id="comments" style={{ scrollMarginTop: '60px' }}>
+        <div role="tabpanel" id="projectdetail-tabpanel-comments" aria-labelledby="projectdetail-tab-comments" style={{ scrollMarginTop: '60px' }}>
           <ProjectComments projectSlug={project.slug} />
         </div>
       )}
 
       {/* ── FILES TAB ── */}
       {activeTab === 'files' && (
-        <div style={{ marginBottom: '2rem' }}>
+        <div role="tabpanel" id="projectdetail-tabpanel-files" aria-labelledby="projectdetail-tab-files" style={{ marginBottom: '2rem' }}>
           <div className="flex items-center gap-2 mb-3">
             <span style={{ fontSize: '10px', fontWeight: 500, color: 'var(--slate)', opacity: 'var(--ink-label)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
               Project Files
@@ -1890,7 +1954,7 @@ function ProjectDetailInner({ project }: InnerProps) {
       {activeTab === 'tasks' && (() => {
         const filtered = taskFilter === 'all' ? projectTasks : taskFilter === 'active' ? pendingTasks : taskFilter === 'done' ? completedTasks : projectTasks.filter(t => t.status === 'blocked')
         return (
-          <div style={{ marginBottom: '2rem' }}>
+          <div role="tabpanel" id="projectdetail-tabpanel-tasks" aria-labelledby="projectdetail-tab-tasks" style={{ marginBottom: '2rem' }}>
             <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
               <div className="flex items-center gap-2">
                 {(['all', 'active', 'done', 'blocked'] as const).map(f => {
@@ -1974,7 +2038,7 @@ function ProjectDetailInner({ project }: InnerProps) {
 
       {/* ── REVISIONS TAB ── */}
       {activeTab === 'revisions' && (
-        <>
+        <div role="tabpanel" id="projectdetail-tabpanel-revisions" aria-labelledby="projectdetail-tab-revisions">
           {/* Submission lifecycle timeline */}
           <div className="table-container" style={{ padding: '16px 20px', marginBottom: '1rem' }}>
             <SubmissionTimeline projectId={project.slug} />
@@ -1984,17 +2048,21 @@ function ProjectDetailInner({ project }: InnerProps) {
           <div className="table-container" style={{ padding: '16px 20px', marginBottom: '2rem' }}>
             <RevisionTracker projectId={project.slug} />
           </div>
-        </>
+        </div>
       )}
 
       {/* ── ACTIVITY TAB ── */}
       {activeTab === 'activity' && (
-        <ProjectActivity project={project} isPi={isPi} />
+        <div role="tabpanel" id="projectdetail-tabpanel-activity" aria-labelledby="projectdetail-tab-activity">
+          <ProjectActivity project={project} isPi={isPi} />
+        </div>
       )}
 
       {/* ── LITERATURE TAB ── */}
       {activeTab === 'literature' && (
-        <ProjectLiterature projectSlug={project.slug} isPi={isPi} />
+        <div role="tabpanel" id="projectdetail-tabpanel-literature" aria-labelledby="projectdetail-tab-literature">
+          <ProjectLiterature projectSlug={project.slug} isPi={isPi} />
+        </div>
       )}
 
       {/* Task Detail Panel */}
@@ -2029,6 +2097,20 @@ function ProjectDetailInner({ project }: InnerProps) {
         }
         .project-tab-strip::-webkit-scrollbar {
           display: none;
+        }
+        /* PD-16: right-edge fade gradient when tab strip overflows */
+        .project-tab-strip-fade {
+          position: absolute;
+          top: 0;
+          right: 0;
+          bottom: 8px;
+          width: 32px;
+          pointer-events: none;
+          background: linear-gradient(to right, transparent, var(--cream));
+          z-index: 1;
+        }
+        .dark .project-tab-strip-fade {
+          background: linear-gradient(to right, transparent, var(--ink));
         }
       `}</style>
     </>
