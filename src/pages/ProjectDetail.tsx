@@ -500,7 +500,10 @@ function ProjectDetailInner({ project }: InnerProps) {
           <InlineSelect
             value={project.stage || 'Idea'}
             options={STAGES.map((s) => ({ value: s, label: s }))}
-            onChange={(val) => d1Update.mutate({ stage: toApiStage(val) } as Partial<Project>)}
+            onChange={(val) => {
+              if (val === project.stage) return
+              setConfirmStage(val as Stage)
+            }}
           />
 
           {isAuthenticated && nextUpcomingMeeting && (
