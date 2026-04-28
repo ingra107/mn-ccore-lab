@@ -103,6 +103,14 @@ export interface Project {
   key_link_2_desc?: string | null
   key_link_3?: string | null
   key_link_3_desc?: string | null
+  // Trophy / publication metadata (M-11). Populated for stage='Published'
+  // projects via the linked publications row. NULL until the project is
+  // shipped + linked. journal_name is the canonical field name; older
+  // payloads may use `journal` or `target_journal` — those are aliases.
+  journal_name?: string | null
+  published_year?: number | null
+  doi?: string | null
+  created_at?: string
 }
 
 export interface Mentee {

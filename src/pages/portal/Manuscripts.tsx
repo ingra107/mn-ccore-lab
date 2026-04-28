@@ -819,10 +819,11 @@ export default function Manuscripts() {
           return (
             <div className="grid gap-5" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))' }}>
               {published.map((p) => {
-                const journal = (p as any).journal_name || (p as any).target_journal || (p as any).journal || ''
-                const created = (p as any).created_at as string | undefined
-                const year = (p as any).published_year || (p as any).year || (created ? new Date(created).getFullYear() : '')
-                const doi = (p as any).doi
+                // M-11: canonical names live on the Project type. created_at
+                // backfills the year if published_year is missing.
+                const journal = p.journal_name || ''
+                const year = p.published_year || (p.created_at ? new Date(p.created_at).getFullYear() : '')
+                const doi = p.doi
                 return (
                   <div
                     key={p.slug}
