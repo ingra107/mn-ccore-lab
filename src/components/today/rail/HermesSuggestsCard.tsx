@@ -1,7 +1,14 @@
-// HermesSuggestsCard — algorithmic 3-bullet focus suggestion (CD spec).
+// HermesSuggestsCard ("Today's Focus") — algorithmic 3-bullet suggestion.
 // First bullet biased to longest-overdue task, second to most-stalled
 // project, third to mentee with soonest due. Real Hermes (async ai_request)
-// is a follow-up — see HANDOFF Phase 2.
+// is a follow-up — D17 stage 2.
+//
+// TP-14 (D17 stage 1, Phase 39 audit): renamed from "Hermes Suggests" to
+// "Today's Focus" because the heuristic is JS, not an LLM call. The ✨
+// glyph and gold-AI framing implied AI authorship that wasn't there. We
+// keep the heuristic as-is; stage 2 will swap to a 1×/day cached
+// ai_request. The component name + filename keep "HermesSuggests" to
+// minimise churn on imports — only the visible label changes.
 //
 // Extracted from src/pages/portal/TodayPage.tsx (B2_Rail_Alert).
 
@@ -54,8 +61,8 @@ export function HermesSuggestsCard({ overdueTasks, stalledProjects, menteesWithD
   return (
     <div style={{ padding: 14, background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.20)', borderRadius: 6, marginBottom: 14 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
-        <span>✨</span>
-        <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: ACCENT_GOLD }}>Hermes suggests</span>
+        <span style={{ width: 6, height: 6, borderRadius: '50%', background: ACCENT_GOLD }} />
+        <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: ACCENT_GOLD }}>Today's focus</span>
       </div>
       <div style={{ fontSize: 12, color: INK, lineHeight: 1.5, marginBottom: 8 }}>{focus}</div>
       <ul style={{ margin: 0, paddingLeft: 14, fontSize: 11, color: INK_MUTED, lineHeight: 1.7 }}>
