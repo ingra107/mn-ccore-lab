@@ -204,7 +204,7 @@ function QuestionCard({
             {question.project_slug && (
               <span
                 className="text-[10px] px-1.5 py-0.5 rounded-full"
-                style={{ color: 'var(--gold)', backgroundColor: 'var(--gold-hover)' }}
+                style={{ color: 'var(--gold-on-emphasis)', backgroundColor: 'var(--gold-emphasis)' }}
               >
                 {question.project_slug}
               </span>
@@ -319,7 +319,7 @@ function QuestionExpanded({ questionId }: { questionId: string }) {
                 >
                   <div className="flex items-center gap-1.5 mb-1">
                     <HermesMark size={14} variant="avatar" />
-                    <span style={{ fontSize: '10px', color: 'var(--gold)', fontWeight: 500 }}>
+                    <span style={{ fontSize: '10px', color: 'var(--gold-on-emphasis)', fontWeight: 500 }}>
                       Hermes
                     </span>
                     <span className="ml-auto" style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75 }}>
