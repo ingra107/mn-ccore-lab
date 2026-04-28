@@ -4,10 +4,17 @@
 //
 // Extracted from src/pages/portal/TodayPage.tsx (B2_Rail_Attention).
 
+import { Link } from 'react-router-dom'
 import { ACCENT_CORAL, ACCENT_ORANGE, INK, INK_DIM, daysSince } from '../constants'
+import { PATHS } from '../../../constants/paths'
 import type { TaskRow } from '../../../lib/api'
 
 export function NeedsAttentionCard({ overdueTasks, stalledProjects }: { overdueTasks: TaskRow[]; stalledProjects: Array<{ name: string; days: number }> }) {
+  // TP-18: when more than 5 in either bucket, append a "+N more →" link
+  // that filters MyTasks (overdue) / Projects (stalled) to the matching
+  // subset. Keeps top-5 readable without burying the long-tail count.
+  const overdueExtra = Math.max(0, overdueTasks.length - 5)
+  const stalledExtra = Math.max(0, stalledProjects.length - 5)
   return (
     <div data-b2-attention style={{ marginBottom: 14 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
@@ -28,6 +35,16 @@ export function NeedsAttentionCard({ overdueTasks, stalledProjects }: { overdueT
             </div>
           )
         })}
+        {overdueExtra > 0 && (
+          <Link
+            to={`${PATHS.myTasks}?filter=overdue`}
+            style={{ display: 'inline-block', marginTop: 6, fontSize: 11, color: ACCENT_CORAL, textDecoration: 'none', fontWeight: 500 }}
+            onMouseEnter={(e) => { e.currentTarget.style.textDecoration = 'underline' }}
+            onMouseLeave={(e) => { e.currentTarget.style.textDecoration = 'none' }}
+          >
+            +{overdueExtra} more →
+          </Link>
+        )}
       </div>
       <div style={{ padding: 12, background: 'rgba(240,138,91,0.04)', border: '1px solid rgba(240,138,91,0.15)', borderRadius: 6 }}>
         <div style={{ fontSize: 10, color: ACCENT_ORANGE, marginBottom: 4, fontWeight: 600, letterSpacing: '0.04em' }}>STALLED</div>
@@ -40,6 +57,16 @@ export function NeedsAttentionCard({ overdueTasks, stalledProjects }: { overdueT
             <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
           </div>
         ))}
+        {stalledExtra > 0 && (
+          <Link
+            to={`${PATHS.projects}?filter=stalled`}
+            style={{ display: 'inline-block', marginTop: 6, fontSize: 11, color: ACCENT_ORANGE, textDecoration: 'none', fontWeight: 500 }}
+            onMouseEnter={(e) => { e.currentTarget.style.textDecoration = 'underline' }}
+            onMouseLeave={(e) => { e.currentTarget.style.textDecoration = 'none' }}
+          >
+            +{stalledExtra} more →
+          </Link>
+        )}
       </div>
     </div>
   )
