@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import {
   Settings, Type, Layers, Plus, X, GripVertical, Check, Bot, Info, Palette, RotateCcw, Sun, Moon, Users, ArrowRight,
-  FlaskConical, Microscope, Brain, Heart, Activity, Stethoscope, Dna, Atom, BookOpen, Beaker,
+  FlaskConical, Microscope, Brain, Heart, Activity, Stethoscope, Dna, Atom, BookOpen, Beaker, Calendar as CalendarIcon, Link2,
 } from 'lucide-react'
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
@@ -141,6 +141,7 @@ export default function SettingsPage() {
     { key: 'templates', label: 'Templates' },
     { key: 'ai', label: 'AI' },
     { key: 'lab', label: 'Lab' },
+    { key: 'integrations', label: 'Integrations' },
     { key: 'appearance', label: 'Appearance' },
     { key: 'danger', label: 'Danger Zone' },
   ] as const
@@ -406,6 +407,13 @@ export default function SettingsPage() {
         </SettingsSection>
         )}
 
+        {/* Integrations — issue #45 */}
+        {activeTab === 'integrations' && (
+        <SettingsSection title="Integrations" subtitle="Connect external services to surface their data inside the Hub" icon={Link2}>
+          <IntegrationsPanel />
+        </SettingsSection>
+        )}
+
         {/* Appearance */}
         {activeTab === 'appearance' && (
         <SettingsSection title="Appearance" subtitle="Theme and layout preferences" icon={Palette}>
@@ -662,6 +670,89 @@ function LabPrefsPanel() {
           Reset to defaults
         </button>
       </div>
+    </div>
+  )
+}
+
+function IntegrationsPanel() {
+  // Calendar OAuth flow not wired yet; surface the feature gap honestly so
+  // /portal/settings#integrations stops being a dead-end. Issue #45.
+  // Hub already reads team meetings from D1; this section is for personal
+  // calendar feeds (UMN Google + visiting-scientist iCloud, etc.).
+  return (
+    <div className="flex flex-col gap-3">
+      <IntegrationCard
+        icon={CalendarIcon}
+        name="Google Calendar"
+        status="not_connected"
+        description="Pull your @umn.edu calendar onto the Today timeline. Read-only — Hub never writes back to Google."
+        ctaLabel="Connect"
+        onConnect={() => alert('Google Calendar OAuth flow not yet implemented. Tracking issue #45.')}
+      />
+      <IntegrationCard
+        icon={CalendarIcon}
+        name="iCal / .ics feed"
+        status="not_connected"
+        description="Paste a calendar URL (e.g., visiting-scientist iCloud share). Polled every 15 min."
+        ctaLabel="Add feed"
+        onConnect={() => alert('iCal feed import not yet implemented. Tracking issue #45.')}
+      />
+      <div className="flex items-start gap-2 mt-1 px-1">
+        <Info size={12} style={{ color: 'var(--teal)', marginTop: 2, flexShrink: 0 }} />
+        <p className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.75, lineHeight: 1.5 }}>
+          Calendar connection is on the roadmap. The buttons above currently surface a placeholder — track progress on{' '}
+          <a href="https://github.com/ingra107/mn-ccore-lab/issues/45" target="_blank" rel="noopener" style={{ color: 'var(--teal)', textDecoration: 'underline' }}>
+            issue #45
+          </a>.
+        </p>
+      </div>
+    </div>
+  )
+}
+
+function IntegrationCard({ icon: Icon, name, status, description, ctaLabel, onConnect }: {
+  icon: typeof Settings; name: string; status: 'connected' | 'not_connected'; description: string; ctaLabel: string; onConnect: () => void
+}) {
+  const isConnected = status === 'connected'
+  return (
+    <div
+      className="flex items-start gap-3 p-3 rounded-lg border"
+      style={{ borderColor: 'var(--border-subtle)', background: 'var(--surface-1)' }}
+    >
+      <div
+        className="flex items-center justify-center w-9 h-9 rounded-md flex-shrink-0"
+        style={{ background: 'var(--teal-active)' }}
+      >
+        <Icon size={16} style={{ color: 'var(--teal)' }} />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-0.5">
+          <span className="text-sm font-medium" style={{ color: 'var(--ink)' }}>{name}</span>
+          <span
+            className="text-[10px] px-1.5 py-0.5 rounded"
+            style={{
+              background: isConnected ? 'var(--green-emphasis, rgba(110,232,154,0.12))' : 'rgba(255,255,255,0.06)',
+              color: isConnected ? 'var(--green)' : 'var(--slate)',
+              opacity: 0.85,
+            }}
+          >
+            {isConnected ? 'Connected' : 'Not connected'}
+          </span>
+        </div>
+        <p className="text-[11px]" style={{ color: 'var(--slate)', opacity: 0.75, lineHeight: 1.5 }}>{description}</p>
+      </div>
+      <button
+        type="button"
+        onClick={onConnect}
+        className="inline-flex items-center gap-1.5 rounded flex-shrink-0"
+        style={{
+          fontSize: 11, fontWeight: 500, padding: '6px 12px',
+          background: 'transparent', border: '1px solid var(--border-subtle)',
+          color: 'var(--slate)', cursor: 'pointer',
+        }}
+      >
+        {ctaLabel}
+      </button>
     </div>
   )
 }

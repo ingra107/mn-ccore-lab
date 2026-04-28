@@ -7,6 +7,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { todayKey, type PlannedSlot } from '../components/today/constants'
+import { useUpdateTaskStatus } from './mutations/useTaskMutations'
 
 export interface TodayStateShape {
   rightNow: string | null
@@ -25,6 +26,7 @@ export interface TodayStateApi extends TodayStateShape {
 
 export function useTodayState(allTaskIds: string[]): TodayStateApi {
   const storageKey = `today_state_${todayKey()}`
+  const updateStatus = useUpdateTaskStatus()
   const [state, setState] = useState<TodayStateShape>(() => {
     if (typeof window === 'undefined') return { rightNow: null, planned: {}, done: {} }
     try {
@@ -39,14 +41,21 @@ export function useTodayState(allTaskIds: string[]): TodayStateApi {
     try { window.localStorage.setItem(storageKey, JSON.stringify(state)) } catch { /* ignore */ }
   }, [state, storageKey])
 
-  // Trim entries pointing at tasks no longer in the data set.
+  // Trim planned entries pointing at tasks no longer in the data set.
+  // Skip when allTaskIds is empty — that's the loading state (tasks query
+  // hasn't resolved yet) and trimming would wipe restored localStorage
+  // before the user's planned snapshot can render. Issue #47.
+  // Done entries are NOT trimmed — `state.done` survives the API
+  // completion that removes the task from the open list, so the
+  // "Completed today" group keeps it. The storage key is per-day so done
+  // entries roll over naturally at midnight. Issue #46.
   useEffect(() => {
+    if (allTaskIds.length === 0) return
     const ids = new Set(allTaskIds)
     setState((prev) => {
       let changed = false
-      const next: TodayStateShape = { ...prev, planned: { ...prev.planned }, done: { ...prev.done } }
+      const next: TodayStateShape = { ...prev, planned: { ...prev.planned } }
       for (const id of Object.keys(next.planned)) if (!ids.has(id)) { delete next.planned[id]; changed = true }
-      for (const id of Object.keys(next.done)) if (!ids.has(id)) { delete next.done[id]; changed = true }
       if (next.rightNow && !ids.has(next.rightNow)) { next.rightNow = null; changed = true }
       return changed ? next : prev
     })
@@ -74,7 +83,9 @@ export function useTodayState(allTaskIds: string[]): TodayStateApi {
       }
       return { rightNow: nextRight, planned: nextPlanned, done: nextDone }
     })
-  }, [])
+    // Persist to D1 so /tasks reflects the change. Issue #46.
+    updateStatus.mutate({ id, status: 'done' })
+  }, [updateStatus])
 
   const uncheck = useCallback((id: string) => {
     setState((p) => {
@@ -82,7 +93,8 @@ export function useTodayState(allTaskIds: string[]): TodayStateApi {
       delete nextDone[id]
       return { ...p, done: nextDone }
     })
-  }, [])
+    updateStatus.mutate({ id, status: 'todo' })
+  }, [updateStatus])
 
   const planAt = useCallback((id: string, slot: PlannedSlot) => {
     setState((p) => ({ ...p, planned: { ...p.planned, [id]: { slot } } }))
