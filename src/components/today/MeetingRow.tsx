@@ -20,6 +20,21 @@ export function EventRow({ e, onDismiss, overlap = false, note, onNote }: { e: T
         </span>
         <span style={{ width: 6, height: 6, borderRadius: '50%', background: ACCENT_TEAL, flexShrink: 0 }} />
         <span style={{ flex: 1, fontSize: 13, color: INK, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.title}</span>
+        {e.meetingUrl && (
+          <a
+            href={e.meetingUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(ev) => ev.stopPropagation()}
+            title="Open meeting link in a new tab"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 8px', fontSize: 11, fontWeight: 600, color: ACCENT_GOLD, background: 'rgba(201,168,76,0.10)', border: '1px solid rgba(201,168,76,0.30)', borderRadius: 999, textDecoration: 'none', transition: 'all 120ms' }}
+            onMouseEnter={(ev) => { ev.currentTarget.style.background = 'rgba(201,168,76,0.20)' }}
+            onMouseLeave={(ev) => { ev.currentTarget.style.background = 'rgba(201,168,76,0.10)' }}
+          >
+            <span aria-hidden="true">🔗</span>
+            <span>Join</span>
+          </a>
+        )}
         {e.loc && <span style={{ fontSize: 11, color: ACCENT_TEAL }}>📍 {e.loc}</span>}
         {note && note.length > 0 && <span title="Has notes" style={{ fontSize: 11, color: ACCENT_GOLD }}>📝</span>}
         <span style={{ fontSize: 11, color: INK_DIM }}>{expanded ? '▾' : '▸'}</span>
