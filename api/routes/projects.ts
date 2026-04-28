@@ -379,12 +379,26 @@ export async function handleProjectHealth(env: Env): Promise<Response> {
   return json({ data: healthData, summary });
 }
 
-// GET /api/updates/recent?limit=20
+// GET /api/updates/recent?limit=20[&since=ISO_TIMESTAMP]
+//
+// 2026-04-28 (silent-data-loss class P3): added `since` cursor support.
+// Pre-fix the endpoint was limit-based with no cursor — if volume between
+// pulls exceeded `limit`, oldest project_updates were silently dropped.
+// Volume is currently low (0/24h) so the bug never bit, but structurally
+// same shape as wall-clock-cursor. Brain.db's pull_project_updates now
+// tracks last `since` in sync_cursors and only fetches deltas.
 export async function handleRecentUpdates(url: URL, env: Env): Promise<Response> {
-  const limit = Math.min(parseInt(url.searchParams.get('limit') || '20', 10), 100);
-  const result = await env.DB.prepare(
-    'SELECT * FROM project_updates ORDER BY created_at DESC LIMIT ?'
-  ).bind(limit).all();
+  const limit = Math.min(parseInt(url.searchParams.get('limit') || '20', 10), 500);
+  const since = url.searchParams.get('since');
+  let query = 'SELECT * FROM project_updates';
+  const binds: unknown[] = [];
+  if (since) {
+    query += ' WHERE created_at > ?';
+    binds.push(since);
+  }
+  query += ' ORDER BY created_at DESC LIMIT ?';
+  binds.push(limit);
+  const result = await env.DB.prepare(query).bind(...binds).all();
   return json({ data: result.results, count: result.results.length });
 }
 
@@ -659,16 +673,29 @@ export async function handleGetDeletedProjectsSince(
   env: Env,
 ): Promise<Response> {
   const since = url.searchParams.get('since');
+  const seqAfterRaw = url.searchParams.get('seq_after');
   const limit = Math.min(parseInt(url.searchParams.get('limit') || '1000', 10), 5000);
 
+  // 2026-04-28 (silent-data-loss class P3): added seq_after support so brain.db
+  // pulls can advance with monotonic guarantees instead of re-fetching all
+  // tombstones every poll. seq_after takes precedence over since when both sent;
+  // since remains for back-compat.
   let rows: D1Result<Record<string, unknown>>;
-  if (since) {
+  if (seqAfterRaw !== null) {
+    const seqAfter = Number.parseInt(seqAfterRaw, 10);
+    if (!Number.isFinite(seqAfter) || seqAfter < 0) {
+      return error('seq_after must be a non-negative integer', 400);
+    }
     rows = await env.DB.prepare(
-      'SELECT id, title, slug, category, stage, status, deleted_at, updated_at FROM projects WHERE deleted_at IS NOT NULL AND deleted_at > ? ORDER BY deleted_at DESC LIMIT ?'
+      'SELECT id, title, slug, category, stage, status, deleted_at, updated_at, seq FROM projects WHERE deleted_at IS NOT NULL AND seq > ? ORDER BY seq ASC LIMIT ?'
+    ).bind(seqAfter, limit).all();
+  } else if (since) {
+    rows = await env.DB.prepare(
+      'SELECT id, title, slug, category, stage, status, deleted_at, updated_at, seq FROM projects WHERE deleted_at IS NOT NULL AND deleted_at > ? ORDER BY deleted_at DESC LIMIT ?'
     ).bind(since, limit).all();
   } else {
     rows = await env.DB.prepare(
-      'SELECT id, title, slug, category, stage, status, deleted_at, updated_at FROM projects WHERE deleted_at IS NOT NULL ORDER BY deleted_at DESC LIMIT ?'
+      'SELECT id, title, slug, category, stage, status, deleted_at, updated_at, seq FROM projects WHERE deleted_at IS NOT NULL ORDER BY deleted_at DESC LIMIT ?'
     ).bind(limit).all();
   }
 
