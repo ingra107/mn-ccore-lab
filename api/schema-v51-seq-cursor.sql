@@ -1,4 +1,8 @@
 -- v51 — server-assigned monotonic seq cursor for projects + tasks
+-- anti-pattern-allowed-file: historical migration. The UPDATE OF column-list
+--   pattern (R4) and MAX(seq) WHERE id != NEW.id (R3) are documented bugs
+--   superseded by v52 (drops UPDATE OF) and v53 (drops self-exclusion).
+--   File is already applied to prod D1 and immutable.
 --
 -- Per Context/Topics/research-bidirectional-sync-2026-04-28.md (Peripheral
 -- Brain repo) and the 2026-04-28 home<->work brainstorm, replace wall-clock
