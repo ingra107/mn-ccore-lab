@@ -1,8 +1,9 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { HelpCircle, Plus, X, MessageSquare, Check, ChevronDown, ChevronUp, Send, Search } from 'lucide-react'
+import { HelpCircle, Plus, X, MessageSquare, Check, ChevronDown, ChevronUp, Search } from 'lucide-react'
 import HermesMark from '../../components/HermesMark'
 import HermesResponse from '../../components/HermesResponse'
+import SmartCompose from '../../components/SmartCompose'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CardSkeleton } from '../../components/LoadingSkeleton'
 import PageHeader from '../../components/PageHeader'
@@ -263,14 +264,14 @@ function QuestionExpanded({ questionId }: { questionId: string }) {
   const createAnswerMut = useCreateAnswer(questionId)
   const acceptAnswerMut = useAcceptAnswer(questionId)
 
-  const handleSubmitAnswer = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!answerText.trim()) return
-    createAnswerMut.mutate(answerText.trim(), {
-      onSuccess: () => showSuccess('Answer posted'),
+  const handleSubmitAnswer = (content: string) =>
+    new Promise<void>((resolve) => {
+      createAnswerMut.mutate(content, {
+        onSuccess: () => { showSuccess('Answer posted'); resolve() },
+        onError: () => resolve(),
+      })
+      setAnswerText('')
     })
-    setAnswerText('')
-  }
 
   if (isLoading || !detail) {
     return (
@@ -386,32 +387,23 @@ function QuestionExpanded({ questionId }: { questionId: string }) {
         </p>
       )}
 
-      {/* Answer form */}
+      {/* Answer form — SmartCompose (D14). */}
       {detail.status === 'open' && (
-        <form onSubmit={handleSubmitAnswer} className="mt-4 flex gap-2">
-          <textarea
+        <div className="mt-4">
+          <SmartCompose
+            theme="light"
+            bare
             value={answerText}
-            onChange={(e) => setAnswerText(e.target.value)}
-            placeholder="Write your answer..."
+            onChange={setAnswerText}
+            onSubmit={handleSubmitAnswer}
+            submitting={createAnswerMut.isPending}
+            uploadContext={{ type: 'answer', id: questionId, entityType: 'question' }}
+            placeholder="Write your answer… (use @hermes for AI)"
             rows={2}
-            className="flex-1 rounded-lg border px-3 py-2 text-sm outline-none resize-none"
-            style={{ borderColor: 'var(--border-subtle)', backgroundColor: 'var(--cream)' }}
+            alwaysShowToolbar
+            submitLabel="Reply"
           />
-          <button
-            type="submit"
-            disabled={!answerText.trim() || createAnswerMut.isPending}
-            className="self-end flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
-            style={{
-              backgroundColor: !answerText.trim() ? 'var(--border-subtle)' : 'var(--teal)',
-              color: !answerText.trim() ? 'var(--slate)' : 'var(--ink-bright, #fff)',
-              cursor: !answerText.trim() ? 'not-allowed' : 'pointer',
-              border: 'none',
-            }}
-          >
-            <Send size={14} />
-            Reply
-          </button>
-        </form>
+        </div>
       )}
     </div>
   )
@@ -451,8 +443,7 @@ function CreateQuestionModal({ open, onClose }: { open: boolean; onClose: () => 
     return () => document.removeEventListener('keydown', handler)
   }, [open, onClose])
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+  const submitQuestion = () => {
     if (!questionText.trim()) return
     createQuestion.mutate({
       question: questionText.trim(),
@@ -465,6 +456,11 @@ function CreateQuestionModal({ open, onClose }: { open: boolean; onClose: () => 
     setContext('')
     setProjectSlug('')
     onClose()
+  }
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    submitQuestion()
   }
 
   if (!open) return null
@@ -498,15 +494,25 @@ function CreateQuestionModal({ open, onClose }: { open: boolean; onClose: () => 
             <label htmlFor="question-text" className="block text-xs font-medium mb-1" style={{ color: 'var(--slate)' }}>
               Question *
             </label>
-            <textarea
-              id="question-text"
+            {/* SmartCompose (D14) — @-mention dropdown surfaces @hermes
+                in the team list so a user typing the prefix gets a real
+                hint that AI assist is wired. Modal's own submit button
+                ("Ask the Lab") drives the form, so SmartCompose's button
+                is hidden via hideSubmitButton. Cmd+Enter still triggers
+                the modal's form-level handler via the keydown listener
+                in the focus-trap effect. */}
+            <SmartCompose
+              theme="light"
+              bare
               value={questionText}
-              onChange={(e) => setQuestionText(e.target.value)}
-              placeholder="What do you want to know?"
+              onChange={setQuestionText}
+              onSubmit={async () => submitQuestion()}
+              uploadContext={{ type: 'question', id: 'new', entityType: 'question' }}
+              placeholder="What do you want to know? (use @hermes for AI)"
               rows={3}
-              className="w-full rounded-md border px-3 py-2 text-sm outline-none resize-none"
-              style={{ borderColor: 'var(--border-subtle)' }}
-              aria-required="true"
+              alwaysShowToolbar
+              hideSubmitButton
+              hideKbdHint
               autoFocus
             />
           </div>
