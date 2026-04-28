@@ -3,6 +3,9 @@
 -- subsequently fixed. Production state is v53. v52 file kept as
 -- historical record of the iteration.
 -- v52 — fix v51 trigger UPDATE OF column gap
+-- anti-pattern-allowed-file: historical migration. The MAX(seq) WHERE id != NEW.id
+--   (R3) pattern is the v52 self-exclusion bug, fixed in v53. Already applied
+--   to prod D1 and immutable.
 --
 -- v51 listed specific columns in UPDATE OF for the seq-bump triggers.
 -- That list was incomplete:

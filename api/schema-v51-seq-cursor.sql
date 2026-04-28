@@ -1,4 +1,8 @@
 -- v51 — server-assigned monotonic seq cursor for projects + tasks
+-- anti-pattern-allowed-file: historical migration. The UPDATE OF column-list
+--   pattern (R4) and MAX(seq) WHERE id != NEW.id (R3) are documented bugs
+--   superseded by v52 (drops UPDATE OF) and v53 (drops self-exclusion).
+--   File is already applied to prod D1 and immutable.
 --
 -- anti-pattern-allowed-file: this file documents the FIRST iteration of
 -- the seq-cursor work and contains the v51 anti-patterns (AFTER UPDATE OF
