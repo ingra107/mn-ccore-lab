@@ -1,6 +1,5 @@
-import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { MessageSquare, Send } from 'lucide-react'
+import { MessageSquare } from 'lucide-react'
 import HermesMark from './HermesMark'
 import HermesResponse from './HermesResponse'
 import { useComments } from '../hooks/useApiData'
@@ -10,7 +9,7 @@ import { emailToSlug } from '../lib/emailSlug'
 import { formatRelativeTime } from '../lib/dateUtils'
 import { getPersonInfo } from '../data/team'
 import Avatar from './Avatar'
-import MentionInput from './MentionInput'
+import SmartCompose from './SmartCompose'
 import ReactionBar from './ReactionBar'
 import { useToast } from '../hooks/useToast'
 
@@ -23,21 +22,17 @@ export default function ProjectComments({ projectSlug }: Props) {
   const addComment = useAddComment(projectSlug)
   const { user, isAuthenticated } = useAuth()
   const { showSuccess } = useToast()
-  const [text, setText] = useState('')
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    const content = text.trim()
-    if (!content) return
-
-    addComment.mutate({
-      content,
-      author: emailToSlug(user?.email) || 'anonymous',
-    }, {
-      onSuccess: () => showSuccess('Comment posted'),
+  const handleSubmit = (content: string) =>
+    new Promise<void>((resolve) => {
+      addComment.mutate({
+        content,
+        author: emailToSlug(user?.email) || 'anonymous',
+      }, {
+        onSuccess: () => { showSuccess('Comment posted'); resolve() },
+        onError: () => resolve(),
+      })
     })
-    setText('')
-  }
 
   return (
     <motion.div
@@ -79,71 +74,26 @@ export default function ProjectComments({ projectSlug }: Props) {
         }}
         className="detail-card"
       >
-        {/* Comment input */}
-        <form onSubmit={handleSubmit} style={{ marginBottom: comments.length > 0 ? '16px' : 0 }}>
-          <div className="flex gap-2 items-end">
-            <MentionInput
-              value={text}
-              onChange={setText}
-              placeholder={isAuthenticated ? 'Add a comment... (use @mention to tag team)' : 'Sign in to comment'}
-              disabled={!isAuthenticated && import.meta.env.PROD}
+        {/* Comment input — SmartCompose (D14). */}
+        <div style={{ marginBottom: comments.length > 0 ? '16px' : 0 }}>
+          {!isAuthenticated && import.meta.env.PROD ? (
+            <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.75 }}>
+              <a href="/api/auth/login" style={{ color: 'var(--teal)', fontWeight: 'var(--weight-ui)' as any, textDecoration: 'underline' }}>Sign in</a> to comment
+            </span>
+          ) : (
+            <SmartCompose
+              theme="light"
+              bare
+              onSubmit={handleSubmit}
+              submitting={addComment.isPending}
+              uploadContext={{ type: 'project', id: projectSlug }}
+              placeholder="Add a comment... (use @mention to tag team)"
               rows={2}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-                  e.preventDefault()
-                  handleSubmit(e)
-                }
-              }}
-              style={{
-                width: '100%',
-                fontSize: 'var(--value-size)',
-                color: 'var(--ink)',
-                background: 'var(--cream)',
-                border: '1px solid rgba(201, 168, 76, 0.15)',
-                borderRadius: 'var(--radius-lg)',
-                padding: '10px 12px',
-                resize: 'none',
-                outline: 'none',
-                lineHeight: 1.5,
-                transition: 'border-color 0.2s',
-              }}
-              onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--gold)')}
-              onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--gold-emphasis)')}
+              alwaysShowToolbar
+              submitLabel="Comment"
             />
-            {!isAuthenticated && import.meta.env.PROD && (
-              <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.75 }}>
-                <a href="/api/auth/login" style={{ color: 'var(--teal)', fontWeight: 'var(--weight-ui)' as any, textDecoration: 'underline' }}>Sign in</a> to comment
-              </span>
-            )}
-            {text.trim() && (
-              <motion.button
-                type="submit"
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="cursor-pointer flex-shrink-0 p-2.5 rounded-lg"
-                style={{
-                  background: 'var(--gold)',
-                  color: '#0f1923',
-                  border: 'none',
-                }}
-                whileTap={{ scale: 0.9 }}
-                disabled={addComment.isPending}
-              >
-                <Send size={16} />
-              </motion.button>
-            )}
-          </div>
-          <p
-            style={{
-              fontSize: '10px',
-              color: 'var(--slate)',
-              opacity: 'var(--ink-hint)',
-              marginTop: '4px',
-            }}
-          >
-            Ctrl+Enter to send
-          </p>
-        </form>
+          )}
+        </div>
 
         {/* Comments list */}
         {isLoading ? (
