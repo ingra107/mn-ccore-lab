@@ -287,8 +287,8 @@ function QuestionExpanded({ questionId }: { questionId: string }) {
     <div className="px-5 pb-5 border-t" style={{ borderColor: 'var(--border-subtle)' }}>
       {/* Full context */}
       {detail.context && (
-        <div className="mt-4 px-3 py-2.5 rounded-lg" style={{ backgroundColor: 'var(--gold-hover)', border: '1px solid rgba(201,168,76,0.1)' }}>
-          <p className="text-[11px] mb-1" style={{ color: 'var(--gold)', fontWeight: 500 }}>
+        <div className="mt-4 px-3 py-2.5 rounded-lg" style={{ backgroundColor: 'var(--surface-1)', border: '1px solid var(--border-subtle)' }}>
+          <p className="text-[11px] mb-1" style={{ color: 'var(--muted)', fontWeight: 500 }}>
             Context
           </p>
           <p className="text-sm leading-relaxed" style={{ color: 'var(--ink)', fontStyle: 'italic' }}>
