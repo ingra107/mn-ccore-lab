@@ -38,6 +38,7 @@ import InlineAssigneePicker from '../components/InlineAssigneePicker'
 import CategoryIcon from '../components/CategoryIcon'
 import WatchButton from '../components/WatchButton'
 import TaskCard from '../components/tasks/TaskCard'
+import TaskGridView from '../components/tasks/TaskGridView'
 import CreateTaskModal from '../components/tasks/CreateTaskModal'
 import TaskDetailPanel from '../components/tasks/TaskDetailPanel'
 import type { Project } from '../data/types'
@@ -1690,107 +1691,91 @@ function ProjectDetailInner({ project }: InnerProps) {
         </div>
       )}
 
-      {/* ── TASKS TAB ── */}
-      {activeTab === 'tasks' && (
-        <div className="table-container" style={{ padding: '16px 20px', marginBottom: '2rem' }}>
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              {(['all', 'active', 'done', 'blocked'] as const).map(f => {
-                const count = f === 'all' ? projectTasks.length : f === 'active' ? pendingTasks.length : f === 'done' ? completedTasks.length : projectTasks.filter(t => t.status === 'blocked').length
-                if (f !== 'all' && count === 0) return null
-                return (
-                  <button
-                    key={f}
-                    onClick={() => setTaskFilter(f)}
-                    className="text-[10px] px-2.5 py-1 rounded-full font-medium transition-colors"
-                    style={{
-                      background: taskFilter === f ? 'var(--teal-active)' : 'none',
-                      color: taskFilter === f ? 'var(--teal)' : 'var(--slate)',
-                      border: `1px solid ${taskFilter === f ? 'var(--teal)' : 'var(--border-subtle)'}`,
-                      cursor: 'pointer',
-                      opacity: taskFilter === f ? 1 : 0.85,
-                    }}
-                  >
-                    {f.charAt(0).toUpperCase() + f.slice(1)} {count > 0 ? `(${count})` : ''}
-                  </button>
-                )
-              })}
+      {/* ── TASKS TAB ── (PD-5: TaskGridView per Rule 17 / Decision D23) */}
+      {activeTab === 'tasks' && (() => {
+        const filtered = taskFilter === 'all' ? projectTasks : taskFilter === 'active' ? pendingTasks : taskFilter === 'done' ? completedTasks : projectTasks.filter(t => t.status === 'blocked')
+        return (
+          <div style={{ marginBottom: '2rem' }}>
+            <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+              <div className="flex items-center gap-2">
+                {(['all', 'active', 'done', 'blocked'] as const).map(f => {
+                  const count = f === 'all' ? projectTasks.length : f === 'active' ? pendingTasks.length : f === 'done' ? completedTasks.length : projectTasks.filter(t => t.status === 'blocked').length
+                  if (f !== 'all' && count === 0) return null
+                  return (
+                    <button
+                      key={f}
+                      onClick={() => setTaskFilter(f)}
+                      className="text-[10px] px-2.5 py-1 rounded-full font-medium transition-colors"
+                      style={{
+                        background: taskFilter === f ? 'var(--teal-active)' : 'none',
+                        color: taskFilter === f ? 'var(--teal)' : 'var(--slate)',
+                        border: `1px solid ${taskFilter === f ? 'var(--teal)' : 'var(--border-subtle)'}`,
+                        cursor: 'pointer',
+                        opacity: taskFilter === f ? 1 : 0.85,
+                      }}
+                    >
+                      {f.charAt(0).toUpperCase() + f.slice(1)} {count > 0 ? `(${count})` : ''}
+                    </button>
+                  )
+                })}
+              </div>
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => {
+                    const lines = pendingTasks.map(t => `- [ ] ${t.title || t.description}${t.due_date ? ` (due ${t.due_date})` : ''}`)
+                    navigator.clipboard.writeText(lines.join('\n'))
+                  }}
+                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-colors border"
+                  style={{ color: 'var(--slate)', borderColor: 'var(--border-subtle)', background: 'none', cursor: 'pointer', opacity: 0.85 }}
+                  title="Copy task list to clipboard"
+                >
+                  <FileText size={11} />
+                  Copy
+                </button>
+                <button
+                  onClick={() => setShowCreateTask(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-colors"
+                  style={{ backgroundColor: 'var(--teal-solid)', color: 'var(--ink-bright, #fff)', border: 'none', cursor: 'pointer' }}
+                >
+                  <Plus size={13} />
+                  New Task
+                </button>
+              </div>
             </div>
-            <div className="flex items-center gap-1.5">
-              <button
-                onClick={() => {
-                  const lines = pendingTasks.map(t => `- [ ] ${t.title || t.description}${t.due_date ? ` (due ${t.due_date})` : ''}`)
-                  navigator.clipboard.writeText(lines.join('\n'))
-                }}
-                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-colors border"
-                style={{ color: 'var(--slate)', borderColor: 'var(--border-subtle)', background: 'none', cursor: 'pointer', opacity: 0.85 }}
-                title="Copy task list to clipboard"
-              >
-                <FileText size={11} />
-                Copy
-              </button>
-              <button
-                onClick={() => setShowCreateTask(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-colors"
-                style={{ backgroundColor: 'var(--teal-solid)', color: 'var(--ink-bright, #fff)', border: 'none', cursor: 'pointer' }}
-              >
-                <Plus size={13} />
-                New Task
-              </button>
-            </div>
-          </div>
-          {(() => {
-            const filtered = taskFilter === 'all' ? projectTasks : taskFilter === 'active' ? pendingTasks : taskFilter === 'done' ? completedTasks : projectTasks.filter(t => t.status === 'blocked')
-            return filtered.length === 0 ? (
+            {filtered.length === 0 ? (
               <div className="text-center py-12">
                 <CheckCircle2 size={32} style={{ color: 'var(--teal)', opacity: 0.85, margin: '0 auto var(--sp-md)' }} />
                 <p style={{ fontSize: '14px', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
-                  {taskFilter === 'active' ? 'No active tasks.' : taskFilter === 'done' ? 'No completed tasks.' : 'No tasks for this project.'}
+                  {taskFilter === 'active' ? 'No active tasks.' : taskFilter === 'done' ? 'No completed tasks.' : taskFilter === 'blocked' ? 'No blocked tasks.' : 'No tasks for this project.'}
                 </p>
               </div>
             ) : (
-              <div className="flex flex-col gap-2">
-                {filtered.map((task) => (
-                  <div key={task.id} className="flex items-start gap-2">
-                    <button
-                      onClick={(e) => { e.stopPropagation(); toggleSelect(task.id) }}
-                      style={{
-                        width: 18, height: 18, borderRadius: 'var(--radius-sm)',
-                        border: `1.5px solid ${selectedIds.has(task.id) ? 'var(--teal)' : 'var(--border-default)'}`,
-                        background: selectedIds.has(task.id) ? 'var(--teal-solid)' : 'transparent',
-                        cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        padding: 0, transition: 'all 150ms ease', flexShrink: 0, marginTop: 10,
-                      }}
-                      aria-label={selectedIds.has(task.id) ? 'Deselect task' : 'Select task'}
-                    >
-                      {selectedIds.has(task.id) && <Check size={12} style={{ color: 'var(--ink-bright, #fff)' }} />}
-                    </button>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <TaskCard
-                        task={task}
-                        onStatusChange={(id, status) => {
-                          const prev = task.status
-                          updateTaskStatus.mutate({ id, status })
-                          showUndo(`Status → ${status}`, () => updateTaskStatus.mutate({ id, status: prev }))
-                        }}
-                        onClick={() => setSelectedTask(task)}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )
-          })()}
+              <TaskGridView
+                tasks={filtered}
+                allTasks={projectTasks}
+                onStatusChange={(id, status) => {
+                  const task = projectTasks.find(t => t.id === id)
+                  const prev = task?.status
+                  updateTaskStatus.mutate({ id, status })
+                  if (prev) showUndo(`Status → ${status}`, () => updateTaskStatus.mutate({ id, status: prev }))
+                }}
+                onFieldChange={handleFieldChange}
+                onOpenDetail={setSelectedTask}
+                selectedIds={selectedIds}
+                onToggleSelect={toggleSelect}
+              />
+            )}
 
-          <BulkActionToolbar
-            selectedIds={selectedIds}
-            selectedTasks={projectTasks.filter(t => selectedIds.has(t.id))}
-            onClear={() => setSelectedIds(new Set())}
-            onBulkAction={handleBulkAction}
-            isUpdating={bulkUpdate.isPending}
-          />
-        </div>
-      )}
+            <BulkActionToolbar
+              selectedIds={selectedIds}
+              selectedTasks={projectTasks.filter(t => selectedIds.has(t.id))}
+              onClear={() => setSelectedIds(new Set())}
+              onBulkAction={handleBulkAction}
+              isUpdating={bulkUpdate.isPending}
+            />
+          </div>
+        )
+      })()}
 
       {/* ── REVISIONS TAB ── */}
       {activeTab === 'revisions' && (
