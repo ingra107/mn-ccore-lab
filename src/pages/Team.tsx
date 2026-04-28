@@ -332,8 +332,17 @@ export default function Team() {
                     >
                       {member.slug ? displayName(member.slug, 'formal') : `${member.name}${member.credentials ? ', ' + member.credentials : ''}`}
                     </h3>
-                    <p className="text-sm" style={{ color: 'var(--gold)', fontSize: '12px' }}>
-                      {member.role}
+                    <p className="text-sm flex items-center gap-2" style={{ color: 'var(--gold)', fontSize: '12px' }}>
+                      <span>{member.role || (member.autoCreated ? 'Role not set' : '')}</span>
+                      {member.autoCreated && (
+                        <span
+                          className="text-[10px] px-1.5 py-0.5 rounded"
+                          style={{ background: 'rgba(220,179,85,0.18)', color: 'var(--gold)', letterSpacing: '0.04em' }}
+                          title="Auto-provisioned on first login. Edit member to assign role / member type / expertise tags."
+                        >
+                          PENDING REVIEW
+                        </span>
+                      )}
                     </p>
                     {tags.length > 0 && (
                       <div className="flex flex-wrap gap-1 mt-1.5">
@@ -413,8 +422,17 @@ export default function Team() {
                 >
                   {member.slug ? displayName(member.slug, 'formal') : `${member.name}${member.credentials ? ', ' + member.credentials : ''}`}
                 </h3>
-                <p className="text-xs" style={{ color: 'var(--slate)' }}>
-                  {member.role}
+                <p className="text-xs flex items-center justify-center gap-1.5" style={{ color: 'var(--slate)' }}>
+                  <span>{member.role || (member.autoCreated ? 'Role not set' : '')}</span>
+                  {member.autoCreated && (
+                    <span
+                      className="text-[9px] px-1 py-0.5 rounded"
+                      style={{ background: 'rgba(220,179,85,0.18)', color: 'var(--gold)', letterSpacing: '0.04em' }}
+                      title="Auto-provisioned on first login. Edit to assign role."
+                    >
+                      PENDING
+                    </span>
+                  )}
                 </p>
                 {tags.length > 0 && (
                   <div className="flex flex-wrap justify-center gap-1 mt-1.5">
@@ -491,8 +509,17 @@ export default function Team() {
                 >
                   {member.slug ? displayName(member.slug, 'formal') : `${member.name}${member.credentials ? ', ' + member.credentials : ''}`}
                 </h3>
-                <p className="text-xs" style={{ color: 'var(--slate)' }}>
-                  {member.role}
+                <p className="text-xs flex items-center justify-center gap-1.5" style={{ color: 'var(--slate)' }}>
+                  <span>{member.role || (member.autoCreated ? 'Role not set' : '')}</span>
+                  {member.autoCreated && (
+                    <span
+                      className="text-[9px] px-1 py-0.5 rounded"
+                      style={{ background: 'rgba(220,179,85,0.18)', color: 'var(--gold)', letterSpacing: '0.04em' }}
+                      title="Auto-provisioned on first login. Edit to assign role."
+                    >
+                      PENDING
+                    </span>
+                  )}
                 </p>
                 {tags.length > 0 && (
                   <div className="flex flex-wrap justify-center gap-1 mt-1.5">

@@ -116,6 +116,7 @@ function rowToTeamMember(row: TeamMemberRow): TeamMember {
     bio: row.bio || undefined,
     scholarId: row.scholar_id || undefined,
     authorName: row.author_name || undefined,
+    autoCreated: row.auto_created === 1,
   }
 }
 

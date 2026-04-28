@@ -52,6 +52,8 @@ export interface TeamMemberRow {
   department: string | null;
   member_type: string | null;
   email: string | null;
+  /** v53: 1 if provisioned via first-login auto-create; 0 otherwise. */
+  auto_created: number;
   created_at: string;
 }
 

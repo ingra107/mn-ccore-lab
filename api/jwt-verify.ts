@@ -30,6 +30,7 @@ interface JwksResponse {
 interface VerifiedClaims {
   email?: string
   name?: string
+  picture?: string
   aud?: string | string[]
   iss?: string
   exp?: number
