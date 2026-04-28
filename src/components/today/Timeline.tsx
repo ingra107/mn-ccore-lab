@@ -6,17 +6,35 @@
 //
 // Extracted from src/pages/portal/TodayPage.tsx (B2_Timeline + DropZone).
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { PATHS } from '../../constants/paths'
 import { EventRow } from './MeetingRow'
 import { PlannedTaskRow } from './PlannedTaskRow'
 import {
-  ACCENT_GOLD, ACCENT_TEAL, INK_MUTED, INK_DIM,
+  ACCENT_GOLD, ACCENT_TEAL, ACCENT_CORAL, INK_MUTED, INK_DIM,
   type PlannedSlot, type TodayEvent,
 } from './constants'
 import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow } from '../../lib/api'
+
+// TP-09: 1px now-line. Updates every 60s via setInterval. Static — no
+// animation — so prefers-reduced-motion is a no-op.
+function useNowMinutes(): number {
+  const [now, setNow] = useState(() => {
+    const d = new Date()
+    return d.getHours() * 60 + d.getMinutes()
+  })
+  useEffect(() => {
+    const tick = () => {
+      const d = new Date()
+      setNow(d.getHours() * 60 + d.getMinutes())
+    }
+    const id = setInterval(tick, 60_000)
+    return () => clearInterval(id)
+  }, [])
+  return now
+}
 
 function DropZone({ slot, label, onDropTask }: { slot: PlannedSlot; label: string; onDropTask: (id: string, slot: PlannedSlot) => void }) {
   return (
@@ -52,6 +70,47 @@ export function Timeline({ events, tasks, state, projectsByPid, expandedId, onEx
   const visibleMeetings = events.filter((e) => !dismissedMeetings[e.id])
   const onDropTask = useCallback((id: string, slot: PlannedSlot) => state.planAt(id, slot), [state])
 
+  // TP-09: now-line. Window = min(startMin) of timed events to max(endMin),
+  // clamped + padded to a sensible 7am-8pm default if no timed events.
+  // Line color = coral if user is currently inside a meeting, gold otherwise
+  // (Rule 59 — coral = warnings/overlap, gold = user-driven action).
+  const now = useNowMinutes()
+  const meetingsListRef = useRef<HTMLDivElement | null>(null)
+  const [listHeight, setListHeight] = useState(0)
+  useEffect(() => {
+    const el = meetingsListRef.current
+    if (!el) return
+    const update = () => setListHeight(el.offsetHeight)
+    update()
+    const obs = new ResizeObserver(update)
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [visibleMeetings.length])
+  const { dayStart, dayEnd, inMeeting, lineTop } = useMemo(() => {
+    const timed = visibleMeetings
+      .map((e) => ({ start: e.startMin, end: e.endMin }))
+      .filter((t): t is { start: number; end: number | undefined } => typeof t.start === 'number')
+    let ds = 7 * 60   // 7:00 default
+    let de = 20 * 60  // 20:00 default
+    if (timed.length > 0) {
+      const minStart = Math.min(...timed.map((t) => t.start))
+      const maxEnd = Math.max(...timed.map((t) => (typeof t.end === 'number' ? t.end : t.start + 30)))
+      ds = Math.min(ds, minStart - 30)
+      de = Math.max(de, maxEnd + 30)
+    }
+    const inMtg = visibleMeetings.some((e) => typeof e.startMin === 'number' && typeof e.endMin === 'number' && e.startMin <= now && now < e.endMin)
+    const fraction = listHeight > 0 && de > ds && now >= ds && now <= de
+      ? (now - ds) / (de - ds)
+      : -1
+    const top = fraction >= 0 ? Math.round(fraction * listHeight) : -1
+    return { dayStart: ds, dayEnd: de, inMeeting: inMtg, lineTop: top }
+  }, [visibleMeetings, now, listHeight])
+  const showLine = lineTop >= 0
+  const nowColor = inMeeting ? ACCENT_CORAL : ACCENT_GOLD
+  const nowLabel = `${String(Math.floor(now / 60)).padStart(2, '0')}:${String(now % 60).padStart(2, '0')}`
+  // Suppress unused-var warning for derived window; kept in scope for future work.
+  void dayStart; void dayEnd
+
   const plannedStripIds = state.plannedIds().filter((id) => state.planned[id]?.slot === 'strip' && id !== state.rightNow)
   const plannedStripTasks = plannedStripIds.map((id) => tasks.find((t) => t.id === id)).filter((t): t is TaskRow => !!t)
 
@@ -71,7 +130,53 @@ export function Timeline({ events, tasks, state, projectsByPid, expandedId, onEx
           <Link to={PATHS.settings} style={{ fontSize: 11, color: ACCENT_TEAL, textDecoration: 'underline' }}>Connect a calendar in Settings</Link>
         </div>
       )}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+      <div ref={meetingsListRef} style={{ display: 'flex', flexDirection: 'column', gap: 4, position: 'relative' }}>
+        {showLine && (
+          <div
+            aria-hidden="true"
+            style={{
+              position: 'absolute',
+              left: 0,
+              right: 0,
+              top: lineTop,
+              height: 1,
+              background: nowColor,
+              pointerEvents: 'none',
+              zIndex: 2,
+              boxShadow: `0 0 4px ${nowColor}80`,
+            }}
+          >
+            <span
+              style={{
+                position: 'absolute',
+                left: -4,
+                top: -3,
+                width: 7,
+                height: 7,
+                borderRadius: '50%',
+                background: nowColor,
+              }}
+            />
+            <span
+              title={inMeeting ? 'Currently in a meeting' : 'Now'}
+              style={{
+                position: 'absolute',
+                right: 0,
+                top: -7,
+                padding: '1px 5px',
+                fontSize: 9,
+                fontWeight: 700,
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                color: nowColor,
+                background: 'rgba(11,16,23,0.90)',
+                borderRadius: 3,
+              }}
+            >
+              {nowLabel} now
+            </span>
+          </div>
+        )}
         {visibleMeetings.map((e, idx) => {
           // Gather planned tasks dropped into the gap BEFORE this meeting.
           const slotKey = `between-${idx}` as PlannedSlot
