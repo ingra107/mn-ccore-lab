@@ -68,6 +68,8 @@ interface BaseProps {
   submittingLabel?: string
   /** Hide the ⌘⏎ kbd hint. */
   hideKbdHint?: boolean
+  /** Hide the inline Post button (e.g., when the surrounding form supplies its own submit). */
+  hideSubmitButton?: boolean
 }
 
 interface TaskModeProps extends BaseProps {
@@ -106,6 +108,7 @@ export default function SmartCompose(props: SmartComposeProps) {
     submitLabel = 'Post',
     submittingLabel = 'Posting…',
     hideKbdHint = false,
+    hideSubmitButton = false,
   } = props
 
   const isCustomMode = 'onSubmit' in props && typeof props.onSubmit === 'function'
@@ -345,7 +348,7 @@ export default function SmartCompose(props: SmartComposeProps) {
             </div>
           )}
           <span style={{ flex: 1 }} />
-          {val.trim().length > 0 && (
+          {!hideSubmitButton && val.trim().length > 0 && (
             <button
               type="button"
               onClick={submit}
