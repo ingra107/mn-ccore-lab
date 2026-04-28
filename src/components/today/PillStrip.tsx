@@ -13,8 +13,18 @@ import {
 } from './constants'
 
 export function PillStrip({ counts }: { counts: DailyCounts }) {
-  const labHealth = Math.max(0, 100 - counts.overdue * 4 - counts.stalled * 2)
-  const healthColor = labHealth >= 85 ? ACCENT_GREEN : labHealth >= 70 ? ACCENT_GOLD : ACCENT_CORAL
+  // TP-17 (D20): sigmoid scaling — score = 100 / (1 + e^(0.05 * overdue + 0.02 * stalled)).
+  // Smooth degradation; never reaches 0. With 0/0 → 50, but the tooltip
+  // explains the formula so the number is legible. Old linear formula
+  // hit 0 at 25 overdue and stayed; sigmoid lets a 50-overdue lab still
+  // distinguish from a 5-overdue one.
+  const labHealth = Math.round(100 / (1 + Math.exp(0.05 * counts.overdue + 0.02 * counts.stalled)))
+  const healthColor = labHealth >= 35 ? ACCENT_GREEN : labHealth >= 25 ? ACCENT_GOLD : ACCENT_CORAL
+  const tooltipReasons: string[] = []
+  if (counts.overdue > 0) tooltipReasons.push(`${counts.overdue} overdue task${counts.overdue === 1 ? '' : 's'}`)
+  if (counts.stalled > 0) tooltipReasons.push(`${counts.stalled} stalled project${counts.stalled === 1 ? '' : 's'}`)
+  const tooltipReasonText = tooltipReasons.length > 0 ? tooltipReasons.join(' · ') : 'No active drag'
+  const tooltipText = `Lab Health: ${labHealth}/100\nFormula: 100 / (1 + e^(0.05·overdue + 0.02·stalled))\n${tooltipReasonText}\nClick for Lab Overview →`
   const scrollTo = (sel: string) => document.querySelector(sel)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 
   return (
@@ -27,7 +37,7 @@ export function PillStrip({ counts }: { counts: DailyCounts }) {
       <div style={{ flex: 1 }} />
       <Link
         to={PATHS.overview}
-        title="Lab Overview"
+        title={tooltipText}
         style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '7px 14px', background: `${healthColor}10`, border: `1px solid ${healthColor}50`, borderRadius: 999, textDecoration: 'none', transition: 'all 150ms' }}
         onMouseEnter={(e) => { e.currentTarget.style.background = `${healthColor}20` }}
         onMouseLeave={(e) => { e.currentTarget.style.background = `${healthColor}10` }}
