@@ -1,6 +1,8 @@
 import { useState, useCallback } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Upload, File, Trash2, Download, Loader2 } from 'lucide-react'
+import { getPersonInfo } from '../data/team'
+import { formatRelativeTime } from '../lib/dateUtils'
 
 interface FileAttachment {
   id: string
@@ -169,35 +171,52 @@ export default function FileUpload({ entityType, entityId }: FileUploadProps) {
       {/* File list */}
       {files.length > 0 && (
         <div style={{ marginTop: '8px' }}>
-          {files.map((f) => (
-            <div
-              key={f.id}
-              className="flex items-center gap-2 py-1.5 px-2 rounded-md"
-              style={{ fontSize: '12px' }}
-            >
-              <File size={14} style={{ color: 'var(--slate)', opacity: 0.85, flexShrink: 0 }} />
-              <span className="truncate flex-1" style={{ color: 'var(--ink)' }}>{f.filename}</span>
-              {f.size_bytes && (
-                <span style={{ color: 'var(--muted)', fontSize: '10px', flexShrink: 0 }}>
-                  {formatBytes(f.size_bytes)}
-                </span>
-              )}
-              <button
-                onClick={() => handleDownload(f.r2_key, f.filename)}
-                title="Download"
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--teal)', padding: '2px' }}
+          {files.map((f) => {
+            const uploaderInfo = f.uploaded_by ? getPersonInfo(f.uploaded_by) : null
+            const uploaderName = uploaderInfo && uploaderInfo.name !== 'Unknown' ? uploaderInfo.name : null
+            return (
+              <div
+                key={f.id}
+                className="flex items-center gap-2 py-1.5 px-2 rounded-md"
+                style={{ fontSize: '12px' }}
               >
-                <Download size={13} />
-              </button>
-              <button
-                onClick={() => deleteMutation.mutate(f.id)}
-                title="Delete"
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--maroon)', padding: '2px', opacity: 0.85 }}
-              >
-                <Trash2 size={13} />
-              </button>
-            </div>
-          ))}
+                <File size={14} style={{ color: 'var(--slate)', opacity: 0.85, flexShrink: 0 }} />
+                <div className="flex-1 min-w-0">
+                  <div className="truncate" style={{ color: 'var(--ink)' }}>{f.filename}</div>
+                  {(uploaderName || f.created_at) && (
+                    <div style={{ color: 'var(--muted)', fontSize: '10px', marginTop: 1 }}>
+                      {uploaderName && <span>{uploaderName}</span>}
+                      {uploaderName && f.created_at && <span> · </span>}
+                      {f.created_at && <span>{formatRelativeTime(f.created_at)}</span>}
+                    </div>
+                  )}
+                </div>
+                {f.size_bytes && (
+                  <span style={{ color: 'var(--muted)', fontSize: '10px', flexShrink: 0 }}>
+                    {formatBytes(f.size_bytes)}
+                  </span>
+                )}
+                <button
+                  onClick={() => handleDownload(f.r2_key, f.filename)}
+                  title="Download"
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--teal)', padding: '2px' }}
+                >
+                  <Download size={13} />
+                </button>
+                <button
+                  onClick={() => {
+                    if (window.confirm(`Delete "${f.filename}"? This cannot be undone.`)) {
+                      deleteMutation.mutate(f.id)
+                    }
+                  }}
+                  title="Delete"
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--maroon)', padding: '2px', opacity: 0.85 }}
+                >
+                  <Trash2 size={13} />
+                </button>
+              </div>
+            )
+          })}
         </div>
       )}
     </div>
