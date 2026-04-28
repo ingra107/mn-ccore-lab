@@ -1,6 +1,6 @@
 import { useState, useRef, useMemo, useCallback } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useSearchParams } from 'react-router-dom'
 import Breadcrumb from '../components/Breadcrumb'
 import { stageIndex, toApiStage } from '../lib/stageNormalize'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -133,14 +133,24 @@ function ProjectDetailInner({ project }: InnerProps) {
   const { isAuthenticated, user } = useAuth()
   const isPi = user?.isPi ?? false
 
-  // Tabs — support ?tab= query param for deep linking
+  // Tabs — support ?tab= query param for deep linking + write-back on switch (PD-2)
+  const [searchParams, setSearchParams] = useSearchParams()
   const initialTab = (() => {
-    const params = new URLSearchParams(window.location.search)
-    const tab = params.get('tab')
+    const tab = searchParams.get('tab')
     if (tab && ['overview', 'tasks', 'notes', 'comments', 'files', 'activity', 'revisions', 'literature'].includes(tab)) return tab as Tab
     return 'overview' as Tab
   })()
-  const [activeTab, setActiveTab] = useState<Tab>(initialTab)
+  const [activeTab, setActiveTabState] = useState<Tab>(initialTab)
+  const setActiveTab = useCallback((tab: Tab) => {
+    setActiveTabState(tab)
+    const next = new URLSearchParams(searchParams)
+    if (tab === 'overview') {
+      next.delete('tab')
+    } else {
+      next.set('tab', tab)
+    }
+    setSearchParams(next, { replace: true })
+  }, [searchParams, setSearchParams])
   const [showCreateTask, setShowCreateTask] = useState(false)
   const [taskFilter, setTaskFilter] = useState<'all' | 'active' | 'done' | 'blocked'>('active')
   const createTask = useCreateTask()
