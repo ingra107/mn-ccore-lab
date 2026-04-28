@@ -1,6 +1,6 @@
 import { useState, useRef, useMemo, useCallback } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { useParams, Link, useSearchParams } from 'react-router-dom'
+import { useParams, Link, useSearchParams, useNavigate } from 'react-router-dom'
 import Breadcrumb from '../components/Breadcrumb'
 import { stageIndex, toApiStage } from '../lib/stageNormalize'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -21,6 +21,10 @@ import {
   Paperclip,
   AtSign,
   Smile,
+  MoreVertical,
+  Archive,
+  Trash2,
+  Copy as CopyIcon,
 } from 'lucide-react'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useProjects, useMeetingsApi, useTasks, useProjectUpdates, useRevisions, useComments } from '../hooks/useApiData'
@@ -201,6 +205,61 @@ function ProjectDetailInner({ project }: InnerProps) {
     navigator.clipboard.writeText(window.location.href)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
+  }
+
+  // Action menu (archive / delete / duplicate) — PD-7
+  const navigate = useNavigate()
+  const [actionMenuOpen, setActionMenuOpen] = useState(false)
+  const isArchived = (project.status as string) === 'Completed'
+  const handleArchiveProject = () => {
+    if (isArchived) return
+    const prevStatus = project.status
+    d1Update.mutate({ status: 'Completed' as any } as Partial<Project>)
+    showUndo('Project archived', () => d1Update.mutate({ status: prevStatus } as Partial<Project>))
+    setActionMenuOpen(false)
+  }
+  const handleDeleteProject = async () => {
+    if (!window.confirm(`Delete project "${project.title}"? Tasks will be unlinked; comments and notes will be cascade-removed.`)) return
+    setActionMenuOpen(false)
+    try {
+      const res = await fetch(`/api/projects/${project.slug}/delete`, { method: 'POST' })
+      if (res.ok) {
+        queryClient.invalidateQueries({ queryKey: ['projects'] })
+        navigate(PATHS.projects)
+      } else {
+        window.alert('Delete failed. Please try again or contact Nick.')
+      }
+    } catch (err) {
+      console.error('Delete project failed', err)
+      window.alert('Delete failed. Please try again.')
+    }
+  }
+  const handleDuplicateProject = async () => {
+    setActionMenuOpen(false)
+    try {
+      const newTitle = `${project.title} (copy)`
+      const res = await fetch('/api/projects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: newTitle,
+          stage: project.stage,
+          category: project.category,
+          pi: project.pi,
+          status: 'Active',
+        }),
+      })
+      const json = await res.json() as { data?: { slug?: string } }
+      if (res.ok && json.data?.slug) {
+        queryClient.invalidateQueries({ queryKey: ['projects'] })
+        navigate(`${PATHS.projects}/${json.data.slug}`)
+      } else {
+        window.alert('Duplicate failed.')
+      }
+    } catch (err) {
+      console.error('Duplicate project failed', err)
+      window.alert('Duplicate failed.')
+    }
   }
 
   // Strategic Context ("Why This Matters Now") editing
@@ -466,6 +525,93 @@ function ProjectDetailInner({ project }: InnerProps) {
               {copied ? <Check size={14} /> : <Link2 size={14} />}
             </button>
             <WatchButton id={project.slug} type="project" label={project.title} slug={project.slug} />
+            {/* Action menu (archive / delete / duplicate) — PD-7 */}
+            <div style={{ position: 'relative' }}>
+              <button
+                onClick={() => setActionMenuOpen((v) => !v)}
+                onBlur={(e) => {
+                  // close when focus leaves the wrapper
+                  if (!e.currentTarget.parentElement?.contains(e.relatedTarget as Node)) {
+                    setTimeout(() => setActionMenuOpen(false), 150)
+                  }
+                }}
+                className="p-1.5 rounded-md transition-colors hover:bg-black/5"
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', opacity: 0.85 }}
+                title="More actions"
+                aria-haspopup="menu"
+                aria-expanded={actionMenuOpen}
+              >
+                <MoreVertical size={14} />
+              </button>
+              {actionMenuOpen && (
+                <div
+                  role="menu"
+                  style={{
+                    position: 'absolute',
+                    top: '100%',
+                    right: 0,
+                    marginTop: '4px',
+                    minWidth: '180px',
+                    background: 'var(--surface-2)',
+                    border: '1px solid var(--border-default)',
+                    borderRadius: 'var(--radius-lg)',
+                    boxShadow: 'var(--shadow-menu)',
+                    zIndex: 'var(--z-dropdown)' as any,
+                    padding: '4px',
+                  }}
+                >
+                  <button
+                    role="menuitem"
+                    onClick={handleArchiveProject}
+                    disabled={isArchived}
+                    style={{
+                      width: '100%', display: 'flex', alignItems: 'center', gap: '8px',
+                      padding: '8px 10px', fontSize: '12px', color: 'var(--ink)',
+                      background: 'none', border: 'none', borderRadius: 'var(--radius-md)',
+                      cursor: isArchived ? 'not-allowed' : 'pointer',
+                      opacity: isArchived ? 0.5 : 1,
+                      textAlign: 'left',
+                    }}
+                    onMouseEnter={(e) => { if (!isArchived) e.currentTarget.style.background = 'var(--hover-subtle)' }}
+                    onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                  >
+                    <Archive size={13} />
+                    {isArchived ? 'Already archived' : 'Archive project'}
+                  </button>
+                  <button
+                    role="menuitem"
+                    onClick={handleDuplicateProject}
+                    style={{
+                      width: '100%', display: 'flex', alignItems: 'center', gap: '8px',
+                      padding: '8px 10px', fontSize: '12px', color: 'var(--ink)',
+                      background: 'none', border: 'none', borderRadius: 'var(--radius-md)',
+                      cursor: 'pointer', textAlign: 'left',
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = 'var(--hover-subtle)'}
+                    onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                  >
+                    <CopyIcon size={13} />
+                    Duplicate
+                  </button>
+                  <div style={{ height: '1px', background: 'var(--border-subtle)', margin: '4px 2px' }} />
+                  <button
+                    role="menuitem"
+                    onClick={handleDeleteProject}
+                    style={{
+                      width: '100%', display: 'flex', alignItems: 'center', gap: '8px',
+                      padding: '8px 10px', fontSize: '12px', color: 'var(--maroon)',
+                      background: 'none', border: 'none', borderRadius: 'var(--radius-md)',
+                      cursor: 'pointer', textAlign: 'left',
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = 'var(--hover-subtle)'}
+                    onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                  >
+                    <Trash2 size={13} />
+                    Delete project…
+                  </button>
+                </div>
+              )}
+            </div>
             <PresenceAvatars slugs={viewerSlugs} peerIntents={projectPeerIntents} />
           </div>
         </div>
