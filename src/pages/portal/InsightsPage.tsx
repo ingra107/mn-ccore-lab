@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams, useNavigate } from 'react-router-dom'
 import { TrendingUp, Activity, AlertTriangle, FlaskConical, AlertCircle, Users, BookOpen, Award, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react'
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
@@ -378,9 +378,16 @@ function WorkloadHeatmap({ rows }: { rows: DashboardData['workloadHeatmap'] }) {
               const person = getPersonInfo(row.slug)
               return (
                 <>
-                  <span key={`${row.slug}-name`} role="rowheader" style={{ fontSize: 12, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', paddingRight: 8 }}>
+                  {/* INS-08: rowname links to /portal/team/:slug */}
+                  <Link
+                    key={`${row.slug}-name`}
+                    to={PATHS.teamMember(row.slug)}
+                    role="rowheader"
+                    style={{ fontSize: 12, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', paddingRight: 8, textDecoration: 'none' }}
+                    title={`Open ${person.name}'s profile`}
+                  >
                     {person.name}
-                  </span>
+                  </Link>
                   {days.map((d) => (
                     <div
                       key={`${row.slug}-${d}`}
@@ -433,13 +440,17 @@ function PipelineFunnel({ rows }: { rows: DashboardData['pipelineFunnel'] }) {
       <div className="flex flex-col" style={{ gap: 6 }}>
         {rows.map((r) => {
           const pct = (r.count / max) * 100
+          // INS-08: bars deeplink to /portal/projects?stage=:stage
+          const href = `${PATHS.projects}?stage=${encodeURIComponent(r.stage)}`
           return (
-            <div
+            <Link
               key={r.stage}
+              to={href}
               role="img"
-              aria-label={`${r.stage}: ${r.count} projects`}
+              aria-label={`${r.stage}: ${r.count} projects — open Projects filtered to this stage`}
               className="flex items-center"
-              style={{ gap: 8 }}
+              style={{ gap: 8, color: 'inherit', textDecoration: 'none' }}
+              title={`Open Projects · stage: ${r.stage}`}
             >
               <span style={{ flex: '0 0 110px', fontSize: 11, color: 'var(--slate)', textAlign: 'right', whiteSpace: 'nowrap' }}>
                 {r.stage}
@@ -464,7 +475,7 @@ function PipelineFunnel({ rows }: { rows: DashboardData['pipelineFunnel'] }) {
                   {r.count > 0 ? r.count : ''}
                 </div>
               </div>
-            </div>
+            </Link>
           )
         })}
       </div>
@@ -473,6 +484,7 @@ function PipelineFunnel({ rows }: { rows: DashboardData['pipelineFunnel'] }) {
 }
 
 function VelocityScatter({ rows }: { rows: DashboardData['velocityScatter'] }) {
+  const navigate = useNavigate()
   const maxX = Math.max(60, ...rows.map((r) => r.daysSinceUpdate))
   const maxY = Math.max(10, ...rows.map((r) => r.openTasks))
   const w = 700
@@ -491,7 +503,7 @@ function VelocityScatter({ rows }: { rows: DashboardData['velocityScatter'] }) {
           {/* axes */}
           <line x1={padL} y1={h - padB} x2={w - 8} y2={h - padB} stroke="var(--border-subtle)" />
           <line x1={padL} y1={8} x2={padL} y2={h - padB} stroke="var(--border-subtle)" />
-          {/* points */}
+          {/* points — INS-08: clickable circles deeplink to project detail */}
           {rows.map((r) => {
             const cx = padL + (r.daysSinceUpdate / maxX) * (w - padL - 16)
             const cy = (h - padB) - (r.openTasks / maxY) * (h - padB - 16)
@@ -503,6 +515,12 @@ function VelocityScatter({ rows }: { rows: DashboardData['velocityScatter'] }) {
                 r={r.isOutlier ? 5 : 3}
                 fill={r.isOutlier ? 'var(--maroon)' : 'var(--teal)'}
                 opacity={r.isOutlier ? 0.9 : 0.7}
+                onClick={() => navigate(PATHS.project(r.slug))}
+                style={{ cursor: 'pointer' }}
+                role="link"
+                aria-label={`${r.title} — ${r.daysSinceUpdate}d idle, ${r.openTasks} open. Open project.`}
+                tabIndex={0}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate(PATHS.project(r.slug)) } }}
               >
                 <title>{`${r.title} — ${r.daysSinceUpdate}d, ${r.openTasks} open`}</title>
               </circle>
@@ -523,7 +541,11 @@ function VelocityScatter({ rows }: { rows: DashboardData['velocityScatter'] }) {
           <tbody>
             {rows.map((r) => (
               <tr key={r.slug} style={{ color: r.isOutlier ? 'var(--maroon)' : 'var(--ink)' }}>
-                <td style={{ padding: '4px 8px' }}>{r.title}</td>
+                <td style={{ padding: '4px 8px' }}>
+                  <Link to={PATHS.project(r.slug)} style={{ color: 'inherit', textDecoration: 'none' }}>
+                    {r.title}
+                  </Link>
+                </td>
                 <td style={{ padding: '4px 8px', fontVariantNumeric: 'tabular-nums' }}>{r.daysSinceUpdate}</td>
                 <td style={{ padding: '4px 8px', fontVariantNumeric: 'tabular-nums' }}>{r.openTasks}</td>
               </tr>
