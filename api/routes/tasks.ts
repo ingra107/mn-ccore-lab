@@ -623,18 +623,46 @@ export async function handleSyncBulkTasks(request: Request, user: AuthUser, env:
 
   // D1 batch: up to 100 statements per batch
   const BATCH_SIZE = 50;
-  let inserted = 0;
+  let inserted = 0;            // legacy field — total rows whose write was authoritative
+  let rejectedStale = 0;       // CX-A2: rows the freshness guard no-op'd
   // 2026-04-26 Bug #1 fix — capture {client_id, hub_id} per row so PB sync_push
   // can mint a hub_slug alias on 200 instead of waiting for find_name_duplicate
   // to recover the mapping on the next pull. Hub upserts on the client-supplied
   // id, so in the steady state hub_id === client_id; when they diverge (Hub-UI
   // mint or pre-existing Hub row matched on a different id by future logic),
-  // PB-side records the alias to lock identity. Response is additive — old PB
-  // clients that read only `data.inserted` continue to work.
+  // PB-side records the alias to lock identity.
   const ids: Array<{ client_id: string; hub_id: string }> = [];
+  // CX-A2 (2026-04-28, Codex holistic-review): per-row status. Pre-fix the
+  // route returned `inserted = batch.length` for every batch even when the
+  // freshness guard (WHERE excluded.updated_at >= tasks.updated_at) caused
+  // individual UPDATE branches to no-op. PB then marked all rows synced,
+  // including the stale ones — silent data loss class identical to the
+  // ones M5 closed elsewhere. This `results` array surfaces per-row outcome
+  // so PB's IdentityBoundary.mark_synced_upsert refuses to mark the
+  // rejected-stale rows synced (they replay on next push).
+  //
+  // Status semantics (matches PB scripts/db/sync/records.py::UpsertResult):
+  //   - 'inserted'        — new row created
+  //   - 'updated'         — existing row updated (freshness guard passed)
+  //   - 'rejected_stale'  — freshness guard rejected (Hub row newer than
+  //                         client_updated_at OR same-ts no-op)
+  //   - 'error'           — write returned 0 changes for unknown reason
+  //
+  // Old PB clients read only `data.inserted` — additive, no break.
+  const results: Array<{ client_id: string; status: string; reason?: string }> = [];
 
   for (let i = 0; i < body.tasks.length; i += BATCH_SIZE) {
     const batch = body.tasks.slice(i, i + BATCH_SIZE);
+    // Capture per-row pre-state so the post-batch readback can disambiguate
+    // INSERT vs UPDATE-applied vs UPDATE-rejected-stale.
+    const placeholders = batch.map(() => '?').join(',');
+    const preRows = await env.DB.prepare(
+      `SELECT id, updated_at FROM tasks WHERE id IN (${placeholders})`
+    ).bind(...batch.map(t => t.id)).all<{ id: string; updated_at: string | null }>();
+    const preState = new Map<string, string | null>(
+      (preRows.results || []).map(r => [r.id, r.updated_at])
+    );
+
     const stmts = batch.map(t =>
       env.DB.prepare(
         // Bind client_updated_at as the last positional parameter. When NULL,
@@ -688,32 +716,72 @@ export async function handleSyncBulkTasks(request: Request, user: AuthUser, env:
       )
     );
     await env.DB.batch(stmts);
-    inserted += batch.length;
 
-    // 2026-04-26 Bug #1 fix — read back the stored id for each row in the
-    // batch so PB sync_push can capture {client_id, hub_id} and mint a
-    // hub_slug alias on 200. We look up by the client-supplied id; if the
-    // row is present (insert succeeded OR upsert matched OR stale-guard
-    // skipped the update), we report (client_id, stored_id). If the row is
-    // absent (shouldn't happen post-INSERT/ON CONFLICT, but defensive), we
-    // skip — PB falls back to the current find_name_duplicate path.
-    if (batch.length > 0) {
-      const placeholders = batch.map(() => '?').join(',');
-      const idRows = await env.DB.prepare(
-        `SELECT id FROM tasks WHERE id IN (${placeholders})`
-      ).bind(...batch.map(t => t.id)).all<{ id: string }>();
-      const storedIds = new Set((idRows.results || []).map(r => r.id));
-      for (const t of batch) {
-        if (storedIds.has(t.id)) {
-          ids.push({ client_id: t.id, hub_id: t.id });
-        }
+    // CX-A2 readback: post-state has updated_at = excluded.updated_at iff
+    // the freshness guard passed. Compare to (a) presence in preState and
+    // (b) whether updated_at advanced.
+    const postRows = await env.DB.prepare(
+      `SELECT id, updated_at FROM tasks WHERE id IN (${placeholders})`
+    ).bind(...batch.map(t => t.id)).all<{ id: string; updated_at: string | null }>();
+    const postState = new Map<string, string | null>(
+      (postRows.results || []).map(r => [r.id, r.updated_at])
+    );
+
+    for (const t of batch) {
+      const post = postState.get(t.id);
+      if (post === undefined) {
+        // Row absent post-write — should not happen given INSERT ON CONFLICT,
+        // but defensive (rolled-back by D1 internally for some reason).
+        results.push({ client_id: t.id, status: 'error', reason: 'row_absent_post_write' });
+        continue;
+      }
+      ids.push({ client_id: t.id, hub_id: t.id });
+      const pre = preState.get(t.id);
+      if (pre === undefined) {
+        // Was absent before, present after → INSERT branch fired.
+        inserted += 1;
+        results.push({ client_id: t.id, status: 'inserted' });
+        continue;
+      }
+      // Row existed before. Check whether updated_at advanced — if so, the
+      // freshness-guard-passed UPDATE branch ran. If not, the WHERE clause
+      // rejected the update (excluded.updated_at < tasks.updated_at) and
+      // the row is unchanged.
+      const sentTs = t.client_updated_at ?? null;
+      if (post === pre) {
+        // Updated_at didn't advance. Two interpretations:
+        //   - Stale: client sent older client_updated_at, guard rejected.
+        //   - Same-ts: client sent the exact same timestamp, no-op.
+        // Both are 'rejected_stale' from the sync layer's perspective — PB
+        // shouldn't mark these synced because Hub still holds whatever
+        // state was there.
+        rejectedStale += 1;
+        results.push({
+          client_id: t.id,
+          status: 'rejected_stale',
+          reason: sentTs && pre ? `client=${sentTs} hub=${pre}` : 'no_update_applied',
+        });
+      } else {
+        inserted += 1;
+        results.push({ client_id: t.id, status: 'updated' });
       }
     }
   }
 
-  await logActivity(env, 'sync', `Bulk sync: ${inserted} tasks loaded from brain.db`, user.email, null, null);
+  await logActivity(
+    env,
+    'sync',
+    `Bulk sync: ${inserted}/${body.tasks.length} tasks applied (${rejectedStale} rejected stale)`,
+    user.email, null, null,
+  );
 
-  return json({ data: { ok: true, inserted, ids } });
+  // Response shape (additive, backwards-compat):
+  //   data.inserted          — count of rows whose write was authoritative
+  //                            (created or updated). Pre-CX-A2 clients read this.
+  //   data.rejected_stale    — count rejected by freshness guard (CX-A2)
+  //   data.ids               — per-row {client_id, hub_id} mapping (Bug #1 era)
+  //   data.results           — per-row {client_id, status, reason?} (CX-A2)
+  return json({ data: { ok: true, inserted, rejected_stale: rejectedStale, ids, results } });
 }
 
 // POST /api/tasks/:id/delete — soft-delete a single task (mirrors handleDeleteProject).
