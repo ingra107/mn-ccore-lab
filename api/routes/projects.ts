@@ -519,66 +519,21 @@ export async function handleUpdateProject(
   return json({ data: updated });
 }
 
-// ── Airtable cascade (2026-04-19) ────────────────────────────────────────────
+// POST /api/projects/:id/delete — soft-delete a project, mirror to brain.db
 //
-// Hub -> Airtable project DELETE. Best-effort. Env vars optional; when unset,
-// the cascade no-ops and brain.db cleanup still fires via sync_d1_pull calling
-// /api/projects/deleted-since (Airtable cleanup flows in from brain.db via
-// push_deletes_to_airtable.py as belt-and-suspenders).
-//
-// Env setup (set once via `wrangler pages secret put <NAME> --project-name mn-ccore-lab`):
-//   AIRTABLE_TOKEN               — PAT with data.records:write scope on the PB base
-//   AIRTABLE_BASE_ID             — e.g. appq2PfOW0Lu4V0yR
-//   AIRTABLE_PROJECTS_TABLE      — e.g. tblPY256RukHRBrbR
-//
-// Never hardcode the token. Never log it. Return 204 on "already gone" (404).
-async function cascadeAirtableProjectDelete(
-  airtableRecId: string,
-  env: Env,
-): Promise<{ ok: boolean; message: string }> {
-  if (!env.AIRTABLE_TOKEN || !env.AIRTABLE_BASE_ID || !env.AIRTABLE_PROJECTS_TABLE) {
-    return { ok: false, message: 'airtable_secrets_not_configured' };
-  }
-  const url = `https://api.airtable.com/v0/${env.AIRTABLE_BASE_ID}/${env.AIRTABLE_PROJECTS_TABLE}/${airtableRecId}`;
-  try {
-    const resp = await fetch(url, {
-      method: 'DELETE',
-      headers: { Authorization: `Bearer ${env.AIRTABLE_TOKEN}` },
-    });
-    if (resp.status === 200 || resp.status === 204) {
-      return { ok: true, message: `airtable_deleted_${resp.status}` };
-    }
-    if (resp.status === 404) {
-      return { ok: true, message: 'airtable_already_gone_404' };
-    }
-    const body = await resp.text();
-    return { ok: false, message: `airtable_http_${resp.status}: ${body.slice(0, 200)}` };
-  } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : String(e);
-    return { ok: false, message: `airtable_fetch_error: ${msg.slice(0, 200)}` };
-  }
-}
-
-// Heuristic: Airtable rec_IDs are always "rec" + 14 alphanumeric characters.
-// Hub-generated ids are 32-char hex. brain.db proj_{ulid} are 31 chars.
-function looksLikeAirtableRecId(id: string): boolean {
-  return /^rec[A-Za-z0-9]{14}$/.test(id);
-}
-
-// POST /api/projects/:id/delete — soft-delete a project, cascade to Airtable + brain.db
-//
-// Cascade chain (all best-effort, order: D1 first, then Airtable):
+// Cascade chain (D1-only, post-2026-04-21 Airtable retirement):
 //   1. D1: set projects.deleted_at = now (soft-delete, keeps row for
 //      /api/projects/deleted-since consumers until a 30-day sweep reclaims).
 //   2. D1: cascade-clean comments/project_updates (hard DELETE), NULL out
 //      tasks.project_id (keep the task, clear the dangling ref).
-//   3. Airtable: DELETE the matching rec_ID if the project.id is a rec_ID
-//      OR if the caller supplies ?airtable_rec_id=recXXX in the URL.
-//      This prevents the 2026-04-19 "Airtable zombie" class where Hub delete
-//      stuck in D1 but Airtable retained the row, resurrecting on next
-//      sync_d1_push.
-//   4. brain.db consumer: sync_d1_pull.pull_hub_projects polls
-//      /api/projects/deleted-since and mirrors status='done' + retires slug.
+//   3. brain.db consumer: scripts/db/sync/ pulls /api/projects/deleted-since
+//      and mirrors status='done' + retires slug via boundary.retire_alias.
+//
+// Airtable DELETE cascade removed in CX-S2 (2026-04-28): Airtable was retired
+// 2026-04-21 and there's no live write path on PB side. Pre-removal this
+// function shipped 65 LOC of cascadeAirtableProjectDelete + looksLikeAirtableRecId
+// + secret config that all no-op'd today (AIRTABLE_TOKEN unset on Hub since
+// retirement). Codex 2026-04-28 holistic-review SIMPLIFY finding.
 export async function handleDeleteProject(
   id: string,
   user: AuthUser,
@@ -621,34 +576,10 @@ export async function handleDeleteProject(
     return json({ data: { deleted: existing.id, slug: existing.slug, title: existing.title, idempotent: true } });
   }
 
-  // Airtable cascade — only when we can identify the rec_ID. Two sources:
-  //   (a) project.id IS the rec_ID (happens when sync_d1_push pushed from
-  //       brain.db where project PKs are still legacy rec_ format).
-  //   (b) caller supplies ?airtable_rec_id=recXXX (brain.db push_deletes
-  //       script passes this when it knows the rec from its alias table).
-  let airtableRecId: string | null = null;
-  if (looksLikeAirtableRecId(existing.id)) {
-    airtableRecId = existing.id;
-  } else if (url) {
-    const qRec = url.searchParams.get('airtable_rec_id');
-    if (qRec && looksLikeAirtableRecId(qRec)) airtableRecId = qRec;
-  }
-
-  let airtableResult: { ok: boolean; message: string } = { ok: false, message: 'no_airtable_rec_id_found' };
-  if (airtableRecId) {
-    airtableResult = await cascadeAirtableProjectDelete(airtableRecId, env);
-    // Log cascade outcome but never block the user's delete on Airtable failure.
-    // push_deletes_to_airtable.py (brain.db side) is the belt-and-suspenders
-    // recovery path for failed Airtable cascades here.
-    if (!airtableResult.ok) {
-      console.warn(`[project-delete-cascade] ${existing.slug}: Airtable cascade failed: ${airtableResult.message}`);
-    }
-  }
-
   await logActivity(
     env,
     'project_delete',
-    `Deleted project: ${existing.title} [airtable: ${airtableResult.message}]`,
+    `Deleted project: ${existing.title}`,
     user.email,
     existing.id,
     'project',
@@ -659,7 +590,6 @@ export async function handleDeleteProject(
       deleted: existing.id,
       slug: existing.slug,
       title: existing.title,
-      airtable: airtableResult,
     },
   });
 }
