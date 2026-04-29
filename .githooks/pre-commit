@@ -1,43 +1,60 @@
 #!/usr/bin/env bash
 # Git pre-commit hook for mn-ccore-lab.
 #
-# Enforces that handleDeleteProject in api/routes/projects.ts cascades to
-# Airtable (or at least references the cascade), per the 2026-04-19 sync
-# propagation cure. Without this, a well-intentioned refactor could remove
-# the cascade and reintroduce Gap 2 from the sync audit.
-#
-# Activate this hook with:
+# Activate with:
 #   git config core.hooksPath .githooks
+#
+# What this hook does:
+#
+# 1. (CX-E2, 2026-04-28 Codex holistic review): invoke PB's
+#    `check_sync_antipatterns.py` if PB checkout is adjacent. Catches the
+#    same SQL anti-pattern shapes (R1-R5) + identity-write rules (R6-R9)
+#    on Hub commits that would otherwise only be enforced on PB pre-commit.
+#    Bypasses cleanly if PB isn't checked out (e.g., Hub-only contributor).
+#
+# Removed (CX-S2, 2026-04-28): the original Airtable cascade enforcement
+# that required handleDeleteProject to call cascadeAirtableProjectDelete.
+# Airtable was retired 2026-04-21 and CX-S2 deleted the cascade entirely
+# (commit e6fc63e5). Re-introducing the check would block every future
+# commit to projects.ts.
 
-# If api/routes/projects.ts is in the commit, check the handleDeleteProject body
-if git diff --cached --name-only --diff-filter=AM | grep -q "api/routes/projects.ts"; then
-    # Extract the staged content and check for cascade evidence in the
-    # handleDeleteProject function. We look for any of:
-    #   cascadeAirtableProjectDelete, AIRTABLE_TOKEN, api.airtable.com
-    # If NONE appear in a 120-line window after the function declaration,
-    # the cascade was removed — block the commit.
-    staged=$(git show ":api/routes/projects.ts" 2>/dev/null)
+set -e
 
-    # Find the handleDeleteProject function line number
-    fn_line=$(echo "$staged" | grep -n "export async function handleDeleteProject" | head -1 | cut -d: -f1)
-    if [ -n "$fn_line" ]; then
-        # Grab a 150-line window starting at the function declaration
-        window=$(echo "$staged" | tail -n +"$fn_line" | head -n 150)
+# Resolve PB checkout path (sibling to mn-ccore-lab on Nick's two laptops).
+PB_ROOT=""
+for cand in "$(cd "$(dirname "$0")/.." && pwd)/../Peripheral-Brain" \
+            "$HOME/Peripheral-Brain" \
+            "/c/Users/ingra/Peripheral-Brain" \
+            "/c/Users/ingra107/Peripheral-Brain"; do
+    if [ -f "$cand/scripts/db/check_sync_antipatterns.py" ]; then
+        PB_ROOT="$cand"
+        break
+    fi
+done
 
-        if ! echo "$window" | grep -qE "(cascadeAirtableProjectDelete|AIRTABLE_TOKEN|api\.airtable\.com|Airtable cascade|airtable cascade)"; then
+# Only run the lint when api/ TS or schema-v*.sql files are staged. Cheap
+# check — the lint itself is fast (<1s on full Hub checkout) but the staged-
+# file guard saves a fork+exec on doc-only commits.
+if git diff --cached --name-only --diff-filter=AM \
+        | grep -qE "^api/(routes|middleware|lib)/.*\.(ts|tsx)$|^api/schema-v.*\.sql$"; then
+    if [ -z "$PB_ROOT" ]; then
+        echo "[hub-precommit] WARN: PB checkout not adjacent; skipping sync-antipattern lint."
+        echo "[hub-precommit] To enforce: clone Peripheral-Brain at \$HOME/Peripheral-Brain or sibling to mn-ccore-lab."
+    else
+        # Run from PB root so the checker's relative paths + sibling-mn-ccore-lab
+        # detection work as designed (the checker walks ../mn-ccore-lab when
+        # invoked from PB root). This catches Hub-side R1-R9 violations even
+        # when the commit is purely in the Hub repo.
+        if ! ( cd "$PB_ROOT" && python scripts/db/check_sync_antipatterns.py ); then
             echo ""
-            echo "BLOCKED: handleDeleteProject has no Airtable cascade reference."
+            echo "BLOCKED: Hub commit triggered sync-antipattern lint failure."
             echo ""
-            echo "The Hub's project delete MUST cascade to Airtable. Without the"
-            echo "cascade, Hub deletes don't stick — next sync_d1_push cycle"
-            echo "resurrects the project (Gap 2 from 2026-04-19 sync audit)."
+            echo "The checker enforces R1-R9 — see"
+            echo "  $PB_ROOT/scripts/db/check_sync_antipatterns.py"
+            echo "  $PB_ROOT/Context/Topics/codex-failure-rate-mechanisms-2026-04-28.md"
             echo ""
-            echo "If you are intentionally removing the cascade, add a comment"
-            echo "line containing 'Airtable cascade' explaining why."
-            echo ""
-            echo "Refs:"
-            echo "  Context/Decisions/2026-04-19-sync-propagation-cure.md"
-            echo "  Context/Decisions/2026-04-19-end-to-end-sync-audit.md"
+            echo "Either fix the pattern, or add an allowlist marker"
+            echo "(\`// anti-pattern-allowed: <reason>\`) within 10 lines above the hit."
             exit 1
         fi
     fi
