@@ -722,8 +722,11 @@ app.post('/api/bug-report', async (c) => {
   const requireAuth = (env as unknown as { REQUIRE_AUTH?: string }).REQUIRE_AUTH === '1';
   if (requireAuth) {
     const authed = c.get('authedUser');
-    const hasApiKey = Boolean(c.req.header('X-API-Key'));
-    if (!authed && !hasApiKey) return error('Authentication required to file a bug', 401);
+    // CX-A3 fix (2026-04-28): use validated apiKeyValid flag from
+    // middleware (line 148), not raw header presence. Pre-fix accepted
+    // X-API-Key: junk as authentication.
+    const apiKeyValid = c.var.apiKeyValid === true;
+    if (!authed && !apiKeyValid) return error('Authentication required to file a bug', 401);
   }
   return handleBugReport(c.req.raw, env);
 });

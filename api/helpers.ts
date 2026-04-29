@@ -1,5 +1,6 @@
 import type { Env } from './types';
 import { verifyCfAccessJwt } from './jwt-verify';
+import { validateApiKey } from './middleware/api-key-auth';
 
 export type { Env };
 
@@ -261,10 +262,20 @@ export async function getPiEmails(env: Env): Promise<Set<string>> {
 
 /** True iff the request is from a PI — either an authenticated CF Access
  *  JWT matching a known PI email, OR a valid API-key request (server-side
- *  automation / Hermes). Returns false for unauthenticated + non-PI users. */
+ *  automation / Hermes). Returns false for unauthenticated + non-PI users.
+ *
+ *  CX-A3 fix (2026-04-28, Codex holistic-review finding): pre-fix, ANY
+ *  X-API-Key header value was accepted as PI authority — `request.headers
+ *  .get('X-API-Key')` returns truthy for `X-API-Key: junk`. The validateApiKey
+ *  middleware at api/middleware/api-key-auth.ts only checks Bearer in the
+ *  Authorization header, so an attacker sending `X-API-Key: anything` could
+ *  hit PI-only routes (`/api/pb/*`, insights dashboard, etc.) without ever
+ *  being validated. Now: validate the Bearer key explicitly. */
 export async function isPiRequest(request: Request, env: Env): Promise<boolean> {
-  // API key callers are trusted (already validated by validateApiKey middleware).
-  if (request.headers.get('X-API-Key')) return true
+  // API key callers are trusted ONLY when validateApiKey returns true
+  // (Bearer scheme + key matches env.PB_API_KEY). Header-presence is not
+  // sufficient — same pattern M5 closed for sync-layer identity writes.
+  if (validateApiKey(request, env) === true) return true
   const user = await getAuthUser(request, env)
   if (!user?.email) return false
   const piEmails = await getPiEmails(env)
