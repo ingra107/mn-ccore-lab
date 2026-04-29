@@ -255,9 +255,10 @@ Post-launch follow-ups (not blocking):
    sRGB hex (axe-core 4.11 mis-parses OKLCH); opacity codemod (640+
    sites) bumped 0.30-0.55 → 0.85; 29 pages × 2 color schemes clean.
 2. **Hub ↔ brain.db sync parity** — `task_comments` mirror (read-only
-   `d1_task_comments`) + Hub-originated projects now flow back via
-   `sync_d1_pull --task-comments` + `--hub-projects`. Suite 15 asserts
-   both hard-pass.
+   `d1_task_comments`) + Hub-originated projects now flow back via PB's
+   `scripts/db/sync/` module's task-comments + hub-projects pulls
+   (legacy `sync_d1_pull --task-comments` / `--hub-projects` extracted
+   2026-04-21). Suite 15 asserts both hard-pass.
 3. **Consultant-review launch blockers closed** — `/api/pb/*` PI-gated
    (403 to non-PI), `/api/bug-report` requires auth (401), `X-Test-Mode`
    requires `TEST_MODE_KEY` secret, `REQUIRE_AUTH` + `VITE_REQUIRE_AUTH`

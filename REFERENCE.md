@@ -398,7 +398,7 @@ Suites:
 - `03-content-entities.ts` — meetings, grants, questions, revisions, digest
 - `04-mentions-notifications.ts` — @mention fan-out, deep-links, notification source_id
 - `05-subtasks-handoffs.ts` — subtask CRUD + order, SBAR handoff, acknowledge
-- `06-sync-pipeline.ts` — Hub ↔ brain.db round-trip via sync_d1_pull/push
+- `06-sync-pipeline.ts` — Hub ↔ brain.db round-trip via PB's `scripts/db/sync/` module (`python scripts/db/sync.py pull/push` — replaced legacy `sync_d1_pull/push` 2026-04-21)
 - `07-realtime-multitab.ts` — WebSocket broadcast + 15s polling cross-tab verification
 - `08-overlap-traps.ts` — duplicate slugs, dangling refs, orphan cleanup, enum validation
 - `10-misc-surfaces.ts` — reactions, search, ideas vote, activity, stats, key_links

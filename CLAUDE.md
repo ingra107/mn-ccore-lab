@@ -283,44 +283,43 @@ Competitive reference: LabSync (JC Rojas) — friend, learn from, never compete.
 ## Architecture
 
 ```
-Airtable ←CRDT→ brain.db ←LWW→ D1 (mnccore-lab) ←API→ React + TanStack Query
-                   ↑                    ↑
-            Nick's CLI              Team's Hub
-          (single user)          (20+ team members)
+brain.db ←LWW→ D1 (mnccore-lab) ←API→ React + TanStack Query
+   ↑                    ↑
+Nick's CLI         Team's Hub
+(single user)   (20+ team members)
 ```
+
+(Airtable retired 2026-04-21 — read-only historical mirror only. `entity_aliases.alias_kind='airtable_legacy'` rows resolve forever for historical lookups.)
 
 - **Data:** TanStack Query v5 → D1 API (prod), static TS fallback (dev)
 - **API:** Cloudflare Worker, 225+ route registrations via Hono v4.12 (`api/index.ts`). Middleware chain: OPTIONS preflight → test-mode DB swap → API-key auth → authed-user resolve → PI gate for `/api/pb/*` GETs → REQUIRE_AUTH gate for POST/PUT → version-bump-on-success (post-handler). Test isolation: `X-Test-Mode: true` header + `DB_TEST` binding + matching `TEST_MODE_KEY` secret swaps `env.DB` to `env.DB_TEST` so tests never touch production. **Pre-Hono contributors:** the old flat if/else router was replaced 2026-04-19. Do not add routes with raw `url.pathname === ...` comparisons — use `app.get/post('/api/...', handler)`.
 - **Auth:** LIVE 2026-04-21. Cloudflare Access gates `mn-ccore-lab.pages.dev/portal/*` (single destination). JWT signature verification via JWKS lives in `api/jwt-verify.ts` — `CF_ACCESS_TEAM_DOMAIN` + `CF_ACCESS_AUD` are set in prod so verification is active (no longer decode-only). `REQUIRE_AUTH=1` + `VITE_REQUIRE_AUTH=1` both active. `/api/*` is NOT gated by CF Access (auth via X-API-Key + `REQUIRE_AUTH` + JWT server-side). `getAuthUser()` and `isPiRequest()` are `async` — any new caller must `await` them.
 - **Email:** Resend (`api/lib/email.ts`) + daily digest (`api/routes/digest-email.ts`). Needs `RESEND_API_KEY` Cloudflare secret. Preview: `/api/digest-preview?member=nick`
-- **Sync:** `sync_d1_push.py` / `sync_d1_pull.py` in PB, scheduled + /process-triggered
+- **Sync:** `scripts/db/sync/` module in PB, invoked via `python scripts/db/sync.py {pull|push|sync|status}`. Scheduled + /process-triggered. (Replaced legacy `sync_d1_push.py` / `sync_d1_pull.py` in the 2026-04-21 sync extraction — see PB `Context/Decisions/2026-04-21-sync-extraction-COMPLETE.md`.)
 
-### Sync Architecture (Decision: 2026-04-06)
+### Sync Architecture (Decision: 2026-04-06; sync layer extracted 2026-04-21)
 
-brain.db is the **sync hub**. Airtable and D1 never talk directly — changes propagate through brain.db.
+brain.db is the **primary store**. D1 (Hub) is the primary UI + write target. Sync runs through PB's `scripts/db/sync/` module — no direct D1↔Airtable path (Airtable retired).
 
 **Sync model:** Field-level last-write-wins (LWW) with timestamps. Both D1 and brain.db are authoritative — whoever changed a field last wins. Conflicts logged to `sync_log`.
 
-**Sync triggers:**
+**Sync triggers (PB-side):**
 - /process: push to D1 (step 4b) + pull from D1 (step 0c)
-- Scheduled: 2:35 AM push, 2:40 AM pull, 12:05 PM push+pull
-- Machine swap: Airtable only (not D1)
+- Scheduled PowerShell tasks: `sync-pull.ps1` (02:00) / `midday-sync.ps1` (12:00) / `eod-sync.ps1` (17:00) / `sync-push.ps1` (22:00)
 
 **Key rules:**
 - Brain.db tasks use canonical `task_{ulid}` (post-migration 030, 2026-04-15). Hub-created tasks have 32-char hex IDs. Both are reachable via `entity_aliases` — brain.db keeps the ulid PK, stores the hex id as a `hub_slug` alias.
 - On push, brain.db ↔ D1 id translation goes through `hub_slug` alias so upserts land on the same D1 row (fix 2026-04-18 — was creating duplicates).
-- Hub-created tasks pull to brain.db but do NOT push to Airtable (Airtable is Nick-only).
 - `notes` (brain.db) is private. `description` (D1) is team-visible. They do NOT sync bidirectionally.
-- Task deletion uses soft-delete (`deleted_at` column). `GET /api/tasks?include_deleted=1` surfaces them for sync_d1_pull to mirror into brain.db.
+- Task deletion uses soft-delete (`deleted_at` column). `GET /api/tasks?include_deleted=1` surfaces them for the sync module to mirror into brain.db.
 - `completed` field is bidirectional — Hub can reopen tasks, brain.db accepts it.
 - `task_key_link_{1,2,3}(_desc)` fields: accepted on `POST /api/tasks` create + bi-directionally synced (2026-04-18).
 
 **Phase 35 sync-parity additions (2026-04-18):**
-- Hub `task_comments` mirror into brain.db's **`d1_task_comments`** table (read-only). Pull via `sync_d1_pull --task-comments`. Hub stays authoritative for composition; brain.db uses the mirror for search + /process context.
-- Hub-originated **projects** now flow into brain.db. Pull via `sync_d1_pull --hub-projects`. Hub `category` (clif/nate/mentee/lab) maps onto brain.db `domain` (CLIF/Mentees/Research).
+- Hub `task_comments` mirror into brain.db's **`d1_task_comments`** table (read-only). Pulled via the sync module's task-comments path. Hub stays authoritative for composition; brain.db uses the mirror for search + /process context.
+- Hub-originated **projects** flow into brain.db via the sync module's hub-projects path. Hub `category` (clif/nate/mentee/lab) maps onto brain.db `domain` (CLIF/Mentees/Research).
 
-**Implementation:** See plan at `~/.claude/plans/graceful-meandering-thimble.md`
-**Peripheral Brain sync scripts:** `scripts/db/sync_d1_push.py`, `sync_d1_pull.py`
+**Implementation:** PB module `scripts/db/sync/` (drivers/hub.py + boundary + payload). CLI: `python scripts/db/sync.py {pull|push|sync|status}`. Decision: `Context/Decisions/2026-04-21-sync-extraction-COMPLETE.md` in PB.
 
 **Test coverage:** `scripts/deep-audit/15-pb-sync-deep.ts` round-trips the
 full payload across both directions every run.
@@ -329,7 +328,7 @@ full payload across both directions every run.
 
 Hub and brain.db **share vocabulary** for status/stage/type/etc. Any change to a shared field in the Hub repo (schema.sql DEFAULTs, migration SQL against prod D1, taxonomy reshuffles like R10) must be **coordinated with Peripheral Brain** before deploying.
 
-**The R10 incident:** On 2026-04-13 a migration in this repo (`scripts/round9/r10-projects-status-migration.sql`, commit `145ed8e`) lowercased all project statuses in D1. The Peripheral Brain side was never updated. `sync_d1_push.py`'s pull-back path silently wrote the new lowercase values into brain.db, corrupting 38 projects on Nick's home machine. TODAY.md filter stopped showing R01s. Airtable push failed with 422s. 4-hour debug session the next morning. Full postmortem: `/c/Users/ingra107/Peripheral-Brain/Context/Decisions/2026-04-14-r10-taxonomy-cross-repo-cascade.md`
+**The R10 incident:** On 2026-04-13 a migration in this repo (`scripts/round9/r10-projects-status-migration.sql`, commit `145ed8e`) lowercased all project statuses in D1. The Peripheral Brain side was never updated. The legacy `sync_d1_push.py` pull-back path (since deleted in the 2026-04-21 sync extraction; replaced by `scripts/db/sync/` module) silently wrote the new lowercase values into brain.db, corrupting 38 projects on Nick's home machine. TODAY.md filter stopped showing R01s. Airtable push failed with 422s. 4-hour debug session the next morning. Full postmortem: `/c/Users/ingra107/Peripheral-Brain/Context/Decisions/2026-04-14-r10-taxonomy-cross-repo-cascade.md`
 
 **Process for any shared-field change:**
 1. Write a decision doc in `/c/Users/ingra107/Peripheral-Brain/Context/Decisions/`
@@ -755,7 +754,7 @@ Currently good: aria-hidden on icons, aria-label on interactive elements, aria-p
 - **Research:** `Projects/mn-ccore-lab-hub/competitive-landscape-lab-management-2026.md` + `task-management-ux-patterns-research.md`
 - **Design decision:** `Context/Decisions/2026-04-01_hub-design-ethos-pivot.md`
 - **Memory:** `memory/project_mnccore-website-redesign.md`
-- **Sync scripts:** `scripts/db/sync_d1_push.py` / `sync_d1_pull.py` -- push/pull brain.db ↔ D1
+- **Sync scripts:** PB `scripts/db/sync/` module -- `python scripts/db/sync.py {pull|push|sync|status}` (replaced legacy `sync_d1_push.py` / `sync_d1_pull.py` 2026-04-21)
 - **Sync plan:** `~/.claude/plans/graceful-meandering-thimble.md` -- full database alignment (Phase 24)
 - **CRDT engine:** `scripts/db/crdt.py` -- field-level LWW for Airtable sync (extend to D1)
 - **Meeting automation:** `scripts/scheduled/meeting_automation.py`
