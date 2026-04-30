@@ -11,6 +11,7 @@ import { handleUploadUrl, handleUploadDone, handleListFiles, handleGetFile, hand
 // ── Route modules ──────────────────────────────────────────
 import { handleTasks, handleActionItems, handleOverdueCount, handleUpdateTaskStatus, handleToggleTask, handleUpdateTask, handleCreateTask, handleGetTaskComments, handleAddTaskComment, handleGetTaskActivity, handleGetTaskDetail, handleGetTaskUpdates, handleGetRecentTaskUpdates, handlePostTaskUpdate, handleBatchUpdateTasks, handleSyncBulkTasks, handleAcknowledgeTask, handleDeleteTask, handleMobileTasksToHub } from './routes/tasks';
 import { handleInboxEvents, handleSyncBulkInboxEvents, handleDeleteInboxEvent } from './routes/inbox-events';
+import { handleMutations } from './routes/mutations';
 import { handleProjects, handleCreateProject, handleGetComments, handleGetProjectUpdates, handleProjectHealth, handleRecentUpdates, handleUpdateProject, handleDeleteProject, handleGetDeletedProjectsSince, handleAddComment, handlePostProjectUpdate, handleGetMilestones, handleUpdateMilestoneNote, handleUpdateMilestoneCompletion } from './routes/projects';
 import { handleMeetings, handleNextMeeting, handleGetMeeting, handleGetAgendaItems, handleAddAgendaItem, handleReorderAgenda, handleCreateMeeting, handleUpdateMeetingNotes, handleMeetingPrep, handleGenerateAgenda } from './routes/meetings';
 import { handlePublications, handleGrants, handleCollaborationGraph, handleStats, handleGrantsTimeline, handleUpdateGrant } from './routes/publications';
@@ -619,6 +620,12 @@ app.put('/api/team/:slug', (c) => handleUpdateTeamMember(c.req.param('slug'), R(
 app.post('/api/inbox-events/sync-bulk', (c) => handleSyncBulkInboxEvents(R(c), USER(c), E(c)));
 app.post('/api/inbox-events/:id/delete', (c) => handleDeleteInboxEvent(c.req.param('id'), USER(c), E(c)));
 app.get('/api/inbox-events', (c) => handleInboxEvents(U(c), E(c)));
+
+// Mutations (A3) — single endpoint for every brain.db -> Hub write.
+// Ships AFTER pre-A3 snapshot manifest verifier exits 0 on both PB
+// machines + schema-v58 (processed_mutations) + v59 (last_mutation_id)
+// applied to D1 prod.
+app.post('/api/mutations', (c) => handleMutations(R(c), USER(c), E(c)));
 
 // Tasks — specific-before-generic
 app.post('/api/tasks/sync-bulk', (c) => handleSyncBulkTasks(R(c), USER(c), E(c)));
