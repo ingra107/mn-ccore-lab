@@ -70,7 +70,7 @@ const TABLE_FIELDS: Record<string, Set<string>> = {
   ]),
 };
 
-interface Mutation {
+export interface Mutation {
   mutation_id: string;
   origin_machine: string;
   table: string;
@@ -231,7 +231,13 @@ async function applyInsert(env: Env, mut: Mutation, user: AuthUser): Promise<Mut
   });
 }
 
-async function applyUpdate(env: Env, mut: Mutation, user: AuthUser): Promise<MutationResult> {
+// Exported so Hub-side internal callers (e.g., handoffs.ts task reassignment)
+// can route domain-table writes through the mutation protocol instead of
+// raw UPDATE. Routes through here pick up: last_mutation_id stamping,
+// updated_at refresh, canonical_payload return shape, and seq advancement.
+// Codex item HUB-R1 (2026-04-30): handoffs.ts:65 was a direct UPDATE
+// outside mutations.ts; now uses this export.
+export async function applyUpdate(env: Env, mut: Mutation, user: AuthUser): Promise<MutationResult> {
   if (!mut.patch) return mutErr(mut.mutation_id, 'update requires patch');
 
   const current = await readCanonical(env, mut.table, mut.record_id);

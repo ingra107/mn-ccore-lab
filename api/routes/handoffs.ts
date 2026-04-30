@@ -1,5 +1,6 @@
 import type { AuthUser, Env } from '../helpers';
 import { json, error, generateId, logActivity, actorSlug } from '../helpers';
+import { applyUpdate, type Mutation } from './mutations';
 
 interface HandoffRow {
   id: string
@@ -60,10 +61,24 @@ export async function handleCreateHandoff(taskId: string, request: Request, user
     body.recommendation?.trim() || null,
   ).run();
 
-  // Reassign the task to the new owner
-  await env.DB.prepare(
-    "UPDATE tasks SET assignee = ?, updated_at = datetime('now') WHERE id = ?"
-  ).bind(toSlug, taskId).run();
+  // Reassign the task to the new owner via the A3 mutation protocol so the
+  // change picks up last_mutation_id stamping, seq advancement, and the
+  // canonical-payload pipeline that brain.db pulls reconcile against.
+  // Codex HUB-R1 fix (2026-04-30): was raw "UPDATE tasks SET assignee=...".
+  const reassignMutId = `mut_${generateId()}`;
+  const reassignMut: Mutation = {
+    mutation_id: reassignMutId,
+    origin_machine: 'hub',
+    table: 'tasks',
+    op: 'update',
+    record_id: taskId,
+    base_seq: null,
+    base_row_hash: null,
+    patch: { assignee: toSlug },
+    client_ts: new Date().toISOString(),
+    issued_at: new Date().toISOString(),
+  };
+  await applyUpdate(env, reassignMut, user);
 
   // Create notification for recipient
   const task = await env.DB.prepare('SELECT title, description FROM tasks WHERE id = ?').bind(taskId).first<{ title: string; description: string }>();
