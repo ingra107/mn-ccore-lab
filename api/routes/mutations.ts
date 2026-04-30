@@ -324,7 +324,11 @@ async function readCanonical(
   return row;
 }
 
-async function hashTouched(
+// Exported for tests/mutations.hash.test.ts. Internal call sites use it
+// without import (same module). The cross-language hash contract test
+// (Peripheral-Brain tests/db/test_a3_hash_contract.py + this Hub test)
+// verifies byte-for-byte alignment with Python compute_base_hash.
+export async function hashTouched(
   row: Record<string, unknown>, fields: string[],
 ): Promise<string> {
   // Match Python scripts/db/outbox.py::canonical_json_hash byte-for-byte:
