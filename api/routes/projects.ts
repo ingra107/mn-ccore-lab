@@ -152,7 +152,7 @@ export async function handleCreateProject(
     attempt += 1;
     if (attempt > 100) return error(`Cannot generate unique slug after 100 attempts from "${baseSlug}"`, 500);
   }
-  const id = generateId();
+  const id = generateId('project');  // A1.2: typed ULID
 
   await env.DB.prepare(
     `INSERT INTO projects (id, title, slug, category, stage, description, pi, status, created_at, updated_at)

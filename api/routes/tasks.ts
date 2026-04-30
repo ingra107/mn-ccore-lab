@@ -313,7 +313,7 @@ export async function handleCreateTask(request: Request, user: AuthUser, env: En
     }
   }
 
-  const id = generateId();
+  const id = generateId('task');  // A1.2: typed ULID
   const title = body.title || body.description;
   const source = body.source || (body.meeting_id ? 'meeting' : 'manual');
   const priority = body.priority || 'medium';
@@ -1030,7 +1030,7 @@ export async function handleMobileTasksToHub(request: Request, user: AuthUser, e
       resolvedProjectId = proj ? (proj.slug || proj.id) : null;
     }
 
-    const id = generateId();
+    const id = generateId('task');  // A1.2: typed ULID
     const completedInt = pwaTask.completed === true || pwaTask.completed === 1 ? 1 : 0;
     const status = completedInt ? 'done' : 'todo';
     const priority = pwaTask.priority || 'medium';

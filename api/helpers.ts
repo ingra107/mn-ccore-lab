@@ -162,7 +162,50 @@ export async function ensureTeamMember(env: Env, user: AuthUser): Promise<void> 
   }
 }
 
-export function generateId(): string {
+// A1.2 (2026-04-29 plan rev 4 §A1): when `kind` is 'task' or 'project',
+// emit a typed ULID (`task_<26-char-Crockford>` / `proj_<26-char-Crockford>`)
+// matching brain.db's `mint_task_id` / `mint_project_id` shape. PB's
+// IdentityBoundary fast-path adopts these directly with no alias indirection.
+//
+// Other kinds (activity, plan, comment, etc.) keep the legacy 32-char hex
+// for backward compat — they're not in CORE_TABLES sync and don't benefit
+// from the typed format yet.
+//
+// PB acceptance shipped first (Peripheral-Brain commit 7894ed5d) so this
+// flip is safe per codex r9 ordering: pre-deploy Hub-minted typed ULIDs
+// would have confused old PB code that classifies them as legacy hex.
+const ULID_ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+
+function ulid(): string {
+  // 10 chars of millisecond timestamp (48 bits in base32)
+  let ts = Date.now();
+  let timePart = '';
+  for (let i = 0; i < 10; i++) {
+    timePart = ULID_ALPHABET[ts & 0x1f] + timePart;
+    ts = Math.floor(ts / 32);
+  }
+  // 16 chars of randomness (80 bits in base32). Read 10 random bytes as a
+  // bigint, then base32-encode 5 bits at a time. Matches Python's
+  // scripts/db/ids.py::_ulid output format byte-for-byte.
+  const bytes = new Uint8Array(10);
+  crypto.getRandomValues(bytes);
+  let n = 0n;
+  for (let i = 0; i < 10; i++) {
+    n = (n << 8n) | BigInt(bytes[i]);
+  }
+  let randPart = '';
+  for (let i = 0; i < 16; i++) {
+    randPart = ULID_ALPHABET[Number(n & 0x1fn)] + randPart;
+    n >>= 5n;
+  }
+  return timePart + randPart;
+}
+
+export function generateId(kind?: 'task' | 'project' | 'inbox_event'): string {
+  if (kind === 'task') return `task_${ulid()}`;
+  if (kind === 'project') return `proj_${ulid()}`;
+  if (kind === 'inbox_event') return `evt_${ulid()}`;
+  // Default: legacy 32-char hex for activities/notifications/comments/etc.
   const bytes = new Uint8Array(16);
   crypto.getRandomValues(bytes);
   return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');

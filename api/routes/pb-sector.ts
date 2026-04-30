@@ -184,8 +184,10 @@ export async function handlePBCapture(request: Request, user: AuthUser, env: Env
   const body = await request.json() as { text: string; type?: 'task' | 'idea' | 'note'; priority?: string; project?: string }
   if (!body.text?.trim()) return error('text required', 400)
 
-  const id = generateId()
   const type = body.type || 'task'
+  // A1.2: type-conditional ID format. tasks get typed ULID; ideas stay hex
+  // (ideas table not yet in CORE_TABLES sync).
+  const id = type === 'task' ? generateId('task') : generateId()
 
   if (type === 'task') {
     await env.DB.prepare(
