@@ -28,7 +28,9 @@
     "preflight:trainee": "tsx scripts/pre-flight/persona-trainee.ts",
     "preflight:mobile": "tsx scripts/pre-flight/persona-mobile.ts",
     "preflight:a11y": "tsx scripts/pre-flight/persona-accessibility.ts",
-    "preflight:breaker": "tsx scripts/pre-flight/persona-breaker.ts"
+    "preflight:breaker": "tsx scripts/pre-flight/persona-breaker.ts",
+    "deploy:gated": "bash scripts/verify-pre-a3-gate.sh && wrangler deploy",
+    "deploy:pages:gated": "bash scripts/verify-pre-a3-gate.sh && npm run build && wrangler pages deploy dist --project-name mn-ccore-lab --branch main"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
