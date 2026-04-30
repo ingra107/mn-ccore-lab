@@ -195,6 +195,7 @@ export function parseMentions(text: string): string[] {
 const EMAIL_PREFIX_TO_SLUG: Record<string, string> = {
   nick: 'nick-ingraham',       // old slug, kept so legacy records resolve
   ingra107: 'nick-ingraham',   // real UMN NetID
+  ningraha: 'nick-ingraham',   // legacy email alias (W1 2026-04-29)
   nate: 'nate-mesfin',
   dudley: 'adams-dudley',
   chipman: 'jeff-chipman',

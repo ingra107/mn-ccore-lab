@@ -413,6 +413,8 @@ const PROJECT_ALLOWED_FIELDS = new Set([
   'pi_context', 'strategic_context', 'short_name',
   // key_link_* added in schema-v42
   'key_link_1', 'key_link_1_desc', 'key_link_2', 'key_link_2_desc', 'key_link_3', 'key_link_3_desc',
+  // W1 (schema-v55) operational state + pipeline metadata
+  'state', 'next_artifact', 'last_meaningful_movement', 'stale_active_since',
 ]);
 const PROJECT_REQUIRED_FIELDS = new Set(['status', 'stage', 'category']);
 
@@ -422,10 +424,13 @@ const PROJECT_REQUIRED_FIELDS = new Set(['status', 'stage', 'category']);
 const PROJECT_STATUS_VALUES = new Set(['active', 'waiting_external', 'blocked', 'done']);
 const PROJECT_STAGE_VALUES = new Set(['Idea', 'Data Collection', 'Data Analysis', 'Writing', 'Submitted', 'Revisions', 'Accepted', 'Published']);
 const PROJECT_CATEGORY_VALUES = new Set(['clif', 'lab', 'nate', 'mentee']);
+// W1 (schema-v55) operational state — distinct from .status (lifecycle).
+const PROJECT_STATE_VALUES = new Set(['Active', 'Waiting', 'Delegated', 'Incubating', 'Parked', 'Closing', 'Dead']);
 const PROJECT_ENUM_GUARDS: Record<string, Set<string>> = {
   status: PROJECT_STATUS_VALUES,
   stage: PROJECT_STAGE_VALUES,
   category: PROJECT_CATEGORY_VALUES,
+  state: PROJECT_STATE_VALUES,
 };
 
 export async function handleUpdateProject(

@@ -190,11 +190,11 @@ export async function handlePBCapture(request: Request, user: AuthUser, env: Env
   if (type === 'task') {
     await env.DB.prepare(
       'INSERT INTO tasks (id, title, description, assignee, priority, source, status, project_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
-    ).bind(id, body.text.trim(), body.text.trim(), 'ningraha', body.priority || 'medium', 'pb-sector', 'todo', body.project || null).run()
+    ).bind(id, body.text.trim(), body.text.trim(), 'nick-ingraham', body.priority || 'medium', 'pb-sector', 'todo', body.project || null).run()
   } else if (type === 'idea') {
     await env.DB.prepare(
       'INSERT INTO ideas (id, title, submitted_by, status) VALUES (?, ?, ?, ?)'
-    ).bind(id, body.text.trim(), 'ningraha', 'new').run()
+    ).bind(id, body.text.trim(), 'nick-ingraham', 'new').run()
   }
 
   await logActivity(env, type, `PB capture: ${body.text.trim().slice(0, 100)}`, user.email, id, type)

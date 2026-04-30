@@ -196,7 +196,10 @@ export async function handleToggleTask(id: string, user: AuthUser, env: Env): Pr
 // completed so brain.db backfills can carry authentic historical
 // timestamps (prior behavior stamped datetime('now') even when the
 // client passed an explicit value from the local DB).
-const TASK_ALLOWED_FIELDS = new Set(['title', 'description', 'description_json', 'assignee', 'assigned_by', 'due_date', 'deadline', 'priority', 'status', 'project_id', 'meeting_id', 'blocked_by', 'key_link_1', 'key_link_1_desc', 'key_link_2', 'key_link_2_desc', 'key_link_3', 'key_link_3_desc', 'notes', 'effort', 'short_title', 'source_thread_id', 'related_message_ids', 'completed', 'completed_at', 'completed_by', 'group_override']);
+const TASK_ALLOWED_FIELDS = new Set(['title', 'description', 'description_json', 'assignee', 'assigned_by', 'due_date', 'deadline', 'priority', 'status', 'project_id', 'meeting_id', 'blocked_by', 'key_link_1', 'key_link_1_desc', 'key_link_2', 'key_link_2_desc', 'key_link_3', 'key_link_3_desc', 'notes', 'effort', 'short_title', 'source_thread_id', 'related_message_ids', 'completed', 'completed_at', 'completed_by', 'group_override',
+  // W1 (schema-v55) operational metadata
+  'waiting_on', 'promised_to', 'promise_date', 'next_checkin_date', 'nick_followup_date',
+  'requires_nick_brain', 'estimated_minutes', 'deadline_type', 'next_artifact', 'inbox_event_id']);
 const VALID_GROUP_OVERRIDES = new Set(['deep', 'priorities', 'quick', 'pb', 'etl']);
 const TASK_REQUIRED_FIELDS = new Set(['status', 'priority', 'assignee']);
 
@@ -1000,7 +1003,7 @@ export async function handleMobileTasksToHub(request: Request, user: AuthUser, e
     }
     const title = pwaTask.title || pwaTask.name || '';
     const description = pwaTask.description || pwaTask.notes || title;
-    const assignee = pwaTask.assignee || 'ningraha';
+    const assignee = pwaTask.assignee || 'nick-ingraham';
 
     if (!title.trim()) {
       errors.push(`skip empty-title: ${pwaTask.id}`);
