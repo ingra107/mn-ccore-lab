@@ -327,11 +327,16 @@ async function readCanonical(
 async function hashTouched(
   row: Record<string, unknown>, fields: string[],
 ): Promise<string> {
-  // Match Python scripts/db/outbox.py::_canonical_json_hash:
-  // sort_keys + tight separators, sha256.
+  // Match Python scripts/db/outbox.py::canonical_json_hash byte-for-byte:
+  // sort_keys + tight separators, NULLs preserved (a row with field=null
+  // must hash differently than a row missing the field). compute_base_hash
+  // and this function MUST stay aligned -- mismatch = false conflict
+  // rejection on every UPDATE that touches a NULL column.
   const subset: Record<string, unknown> = {};
   for (const f of fields) {
-    if (row[f] !== undefined) subset[f] = row[f];
+    // Coerce undefined -> null so hash includes NULLs (matches Python's
+    // dict.get() returning None for missing keys after dict() materialization).
+    subset[f] = row[f] === undefined ? null : row[f];
   }
   const sorted = Object.keys(subset).sort().reduce((acc, k) => {
     acc[k] = subset[k];
