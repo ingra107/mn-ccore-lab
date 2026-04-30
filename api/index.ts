@@ -10,6 +10,7 @@ import { handleUploadUrl, handleUploadDone, handleListFiles, handleGetFile, hand
 
 // ── Route modules ──────────────────────────────────────────
 import { handleTasks, handleActionItems, handleOverdueCount, handleUpdateTaskStatus, handleToggleTask, handleUpdateTask, handleCreateTask, handleGetTaskComments, handleAddTaskComment, handleGetTaskActivity, handleGetTaskDetail, handleGetTaskUpdates, handleGetRecentTaskUpdates, handlePostTaskUpdate, handleBatchUpdateTasks, handleSyncBulkTasks, handleAcknowledgeTask, handleDeleteTask, handleMobileTasksToHub } from './routes/tasks';
+import { handleInboxEvents, handleSyncBulkInboxEvents, handleDeleteInboxEvent } from './routes/inbox-events';
 import { handleProjects, handleCreateProject, handleGetComments, handleGetProjectUpdates, handleProjectHealth, handleRecentUpdates, handleUpdateProject, handleDeleteProject, handleGetDeletedProjectsSince, handleAddComment, handlePostProjectUpdate, handleGetMilestones, handleUpdateMilestoneNote, handleUpdateMilestoneCompletion } from './routes/projects';
 import { handleMeetings, handleNextMeeting, handleGetMeeting, handleGetAgendaItems, handleAddAgendaItem, handleReorderAgenda, handleCreateMeeting, handleUpdateMeetingNotes, handleMeetingPrep, handleGenerateAgenda } from './routes/meetings';
 import { handlePublications, handleGrants, handleCollaborationGraph, handleStats, handleGrantsTimeline, handleUpdateGrant } from './routes/publications';
@@ -613,6 +614,11 @@ app.post('/api/projects/:slug', (c) => handleUpdateProject(c.req.param('slug'), 
 
 // Team
 app.put('/api/team/:slug', (c) => handleUpdateTeamMember(c.req.param('slug'), R(c), USER(c), E(c), c.get('apiKeyValid') === true));
+
+// Inbox events (W2a) — specific-before-generic
+app.post('/api/inbox-events/sync-bulk', (c) => handleSyncBulkInboxEvents(R(c), USER(c), E(c)));
+app.post('/api/inbox-events/:id/delete', (c) => handleDeleteInboxEvent(c.req.param('id'), USER(c), E(c)));
+app.get('/api/inbox-events', (c) => handleInboxEvents(U(c), E(c)));
 
 // Tasks — specific-before-generic
 app.post('/api/tasks/sync-bulk', (c) => handleSyncBulkTasks(R(c), USER(c), E(c)));
