@@ -209,8 +209,15 @@ async function processOne(
     result = mutErr(mut.mutation_id, `apply error: ${(e as Error).message}`);
   }
 
-  await recordProcessed(env, mut, result);
-  return result;
+  // Bug Y fix (2026-04-30 stress test): atomic write of processed_mutations
+  // via ON CONFLICT DO NOTHING. If a concurrent request raced past the SELECT
+  // idempotency gate at the top of this function and beat us to the INSERT,
+  // we silently no-op AND return THEIR canonical response (read back from
+  // processed_mutations). The two requests carry identical mutation_id, so
+  // applyInsert's ON CONFLICT(id) above already produced the same final row
+  // state; we just need to make the response shape consistent.
+  const idempotent = await recordProcessedAtomic(env, mut, result);
+  return idempotent ?? result;
 }
 
 // ── Apply functions (per-op; per-table column dispatch inside) ──────────────
@@ -221,7 +228,15 @@ async function applyInsert(env: Env, mut: Mutation, user: AuthUser): Promise<Mut
   const cols = ['id', ...Object.keys(mut.payload), 'last_mutation_id'];
   const vals = [mut.record_id, ...Object.values(mut.payload), mut.mutation_id];
   const placeholders = cols.map(() => '?').join(', ');
-  const sql = `INSERT INTO ${mut.table} (${cols.join(', ')}) VALUES (${placeholders})`;
+  // Bug Y fix (2026-04-30 stress test): ON CONFLICT DO NOTHING. If two
+  // concurrent requests race past the processed_mutations SELECT-gate,
+  // both call applyInsert with the same mutation_id + record_id. The
+  // first INSERT wins; the second would D1_ERROR UNIQUE on tasks.id.
+  // With DO NOTHING, the second silently no-ops and we read back the
+  // same canonical state. End-to-end idempotent.
+  // day_capacity uses `date` as PK; all other tables use `id`.
+  const idCol = mut.table === 'day_capacity' ? 'date' : 'id';
+  const sql = `INSERT INTO ${mut.table} (${cols.join(', ')}) VALUES (${placeholders}) ON CONFLICT(${idCol}) DO NOTHING`;
 
   await env.DB.prepare(sql).bind(...vals).run();
   const canonical = await readCanonical(env, mut.table, mut.record_id);
@@ -377,10 +392,61 @@ function mutErr(mutation_id: string, reason: string): MutationResult {
 async function recordProcessed(
   env: Env, mut: Mutation, result: MutationResult,
 ): Promise<void> {
+  // Legacy non-atomic helper. Used by branches that don't race
+  // (depends_on / unknown-fields / non-applyOne paths). The applyOne
+  // happy path uses recordProcessedAtomic instead.
   await env.DB.prepare(
-    `INSERT INTO processed_mutations (mutation_id, origin_machine, processed_at, outcome, original_response_json, table_name, record_id) VALUES (?, ?, datetime('now'), ?, ?, ?, ?)`
+    `INSERT INTO processed_mutations (mutation_id, origin_machine, processed_at, outcome, original_response_json, table_name, record_id) VALUES (?, ?, datetime('now'), ?, ?, ?, ?) ON CONFLICT(mutation_id) DO NOTHING`
   ).bind(
     mut.mutation_id, mut.origin_machine, result.status,
     JSON.stringify(result), mut.table, mut.record_id,
   ).run();
+}
+
+async function recordProcessedAtomic(
+  env: Env, mut: Mutation, result: MutationResult,
+): Promise<MutationResult | null> {
+  // Bug Y fix (2026-04-30 stress test): atomic claim of mutation_id row.
+  // Returns:
+  //   null  -- our INSERT won; caller's `result` is canonical
+  //   Stored result -- a concurrent request beat us; return THEIR result
+  //
+  // Without this, two concurrent requests with the same mutation_id (which
+  // PB-side flush_async daemon races CAN produce -- Bug X) would both pass
+  // the SELECT-then-INSERT idempotency gate, both INSERT processed_mutations,
+  // and the second would D1_ERROR UNIQUE constraint -> Worker returns 500
+  // -> PB outbox records error -> dead-letters after 3 retries on rows
+  // that were ACTUALLY accepted on Hub. Caught by 40-task /process stress
+  // test 2026-04-30 (159 phantom dead-letters).
+  const ins = await env.DB.prepare(
+    `INSERT INTO processed_mutations (mutation_id, origin_machine, processed_at, outcome, original_response_json, table_name, record_id) VALUES (?, ?, datetime('now'), ?, ?, ?, ?) ON CONFLICT(mutation_id) DO NOTHING`
+  ).bind(
+    mut.mutation_id, mut.origin_machine, result.status,
+    JSON.stringify(result), mut.table, mut.record_id,
+  ).run();
+
+  // D1's RunResult exposes meta.changes -- non-zero means our row was inserted.
+  const changes = (ins.meta?.changes as number | undefined) ?? 0;
+  if (changes > 0) {
+    return null; // we won; caller returns its own result
+  }
+
+  // Race lost: another request wrote the canonical processed_mutations row.
+  // Fetch + return their stored result so both Worker invocations return
+  // the same shape to the client.
+  const prior = await env.DB.prepare(
+    'SELECT original_response_json FROM processed_mutations WHERE mutation_id = ?'
+  ).bind(mut.mutation_id).first<{ original_response_json: string }>();
+  if (prior) {
+    try {
+      return JSON.parse(prior.original_response_json) as MutationResult;
+    } catch {
+      // Stored row is corrupt -- fall back to our own freshly-computed result
+      // (which is functionally identical since the mutation is deterministic).
+      return result;
+    }
+  }
+  // Defensive: unreachable in practice (we just lost a race so the row
+  // MUST exist), but never throw from this helper.
+  return result;
 }
