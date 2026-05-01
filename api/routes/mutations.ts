@@ -163,8 +163,8 @@ async function processOne(
       if (inBatch.status !== 'accepted' && inBatch.status !== 'merged_clean') {
         const r = mkResult(mut.mutation_id, 'dependency_failed',
           { reason: `depends_on ${mut.depends_on} ${inBatch.status}` });
-        await recordProcessed(env, mut, r);
-        return r;
+        const idem = await recordProcessedAtomic(env, mut, r);
+        return idem ?? r;
       }
     } else {
       const depRow = await env.DB.prepare(
@@ -173,8 +173,8 @@ async function processOne(
       if (!depRow || (depRow.outcome !== 'accepted' && depRow.outcome !== 'merged_clean')) {
         const r = mkResult(mut.mutation_id, 'dependency_failed',
           { reason: `depends_on ${mut.depends_on} ${depRow?.outcome ?? 'missing'}` });
-        await recordProcessed(env, mut, r);
-        return r;
+        const idem = await recordProcessedAtomic(env, mut, r);
+        return idem ?? r;
       }
     }
   }
@@ -187,8 +187,8 @@ async function processOne(
       const unknown = Object.keys(fields).filter(k => !allowed.has(k));
       if (unknown.length > 0) {
         const r = mutErr(mut.mutation_id, `unknown fields for ${mut.table}: ${unknown.join(',')}`);
-        await recordProcessed(env, mut, r);
-        return r;
+        const idem = await recordProcessedAtomic(env, mut, r);
+        return idem ?? r;
       }
     }
   }
@@ -387,20 +387,6 @@ function mkResult(
 
 function mutErr(mutation_id: string, reason: string): MutationResult {
   return { mutation_id, status: 'error', reason };
-}
-
-async function recordProcessed(
-  env: Env, mut: Mutation, result: MutationResult,
-): Promise<void> {
-  // Legacy non-atomic helper. Used by branches that don't race
-  // (depends_on / unknown-fields / non-applyOne paths). The applyOne
-  // happy path uses recordProcessedAtomic instead.
-  await env.DB.prepare(
-    `INSERT INTO processed_mutations (mutation_id, origin_machine, processed_at, outcome, original_response_json, table_name, record_id) VALUES (?, ?, datetime('now'), ?, ?, ?, ?) ON CONFLICT(mutation_id) DO NOTHING`
-  ).bind(
-    mut.mutation_id, mut.origin_machine, result.status,
-    JSON.stringify(result), mut.table, mut.record_id,
-  ).run();
 }
 
 async function recordProcessedAtomic(
