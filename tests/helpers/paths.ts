@@ -13,7 +13,6 @@ export const P = {
   personal: '/portal/personal',
   myItems: '/portal/my-items',
   myTasks: '/portal/my-tasks',
-  myTasksLegacy: '/portal/my-tasks-legacy',
   tasks: '/portal/tasks',
   calendar: '/portal/calendar',
   deadlines: '/portal/deadlines',

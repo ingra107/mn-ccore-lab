@@ -122,7 +122,6 @@ const MyItems = lazy(() => import('./pages/MyItems'))
 
 // New portal pages (Phase H1 — placeholders, built out in later phases)
 const Personal = lazy(() => import('./pages/portal/Personal'))
-const MyTasksLegacy = lazy(() => import('./pages/portal/MyTasks'))
 const UnifiedMyTasks = lazy(() => import('./pages/portal/UnifiedMyTasks'))
 const CalendarPage = lazy(() => import('./pages/portal/CalendarPage'))
 const Deadlines = lazy(() => import('./pages/portal/Deadlines'))
@@ -257,9 +256,6 @@ export default function App() {
                   {/* MyTasks Round 2 — unified 3-view page (Columns / Lanes / List).
                       View choice persists in localStorage.mt_view (Rule 55). */}
                   <Route path="/portal/my-tasks" element={<ErrorBoundary><PageErrorBoundary pageName="MyTasks"><UnifiedMyTasks /></PageErrorBoundary></ErrorBoundary>} />
-                  {/* Legacy MyTasks (pre-Round 2). Kept for one sprint as a
-                      safety net; remove once Round 2 has soaked. */}
-                  <Route path="/portal/my-tasks-legacy" element={<ErrorBoundary><MyTasksLegacy /></ErrorBoundary>} />
                   <Route path="/portal/tasks" element={<Navigate to="/portal/my-tasks" replace />} />
                   <Route path="/portal/calendar" element={<ErrorBoundary><CalendarPage /></ErrorBoundary>} />
                   <Route path="/portal/deadlines" element={<ErrorBoundary><Deadlines /></ErrorBoundary>} />
