@@ -1,10 +1,10 @@
 {
   "config": {
-    "configFile": "C:\\Users\\ingra107\\mn-ccore-lab\\playwright.config.prod.ts",
-    "rootDir": "C:/Users/ingra107/mn-ccore-lab/tests",
+    "configFile": "C:\\Users\\ingra\\mn-ccore-lab\\playwright.config.prod.ts",
+    "rootDir": "C:/Users/ingra/mn-ccore-lab/tests",
     "forbidOnly": false,
     "fullyParallel": false,
-    "globalSetup": "C:\\Users\\ingra107\\mn-ccore-lab\\tests\\test-seed.ts",
+    "globalSetup": "C:\\Users\\ingra\\mn-ccore-lab\\tests\\test-seed.ts",
     "globalTeardown": null,
     "globalTimeout": 0,
     "grep": {},
@@ -16,7 +16,7 @@
     "preserveOutput": "always",
     "projects": [
       {
-        "outputDir": "C:/Users/ingra107/mn-ccore-lab/test-results",
+        "outputDir": "C:/Users/ingra/mn-ccore-lab/test-results",
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
@@ -24,7 +24,7 @@
         },
         "id": "chromium",
         "name": "chromium",
-        "testDir": "C:/Users/ingra107/mn-ccore-lab/tests",
+        "testDir": "C:/Users/ingra/mn-ccore-lab/tests",
         "testIgnore": [],
         "testMatch": [
           "**/tests/smoke.spec.ts",
@@ -55,7 +55,7 @@
     "updateSnapshots": "missing",
     "updateSourceMethod": "patch",
     "version": "1.59.1",
-    "workers": 10,
+    "workers": 4,
     "webServer": null
   },
   "suites": [
@@ -88,12 +88,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 3527,
+                      "duration": 3447,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-04-23T19:31:25.057Z",
+                      "startTime": "2026-04-28T14:23:34.511Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -122,12 +122,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 11248,
+                      "duration": 2933,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-04-23T19:31:28.708Z",
+                      "startTime": "2026-04-28T14:23:38.205Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -156,12 +156,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2478,
+                      "duration": 2555,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-04-23T19:31:39.966Z",
+                      "startTime": "2026-04-28T14:23:41.159Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -190,12 +190,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 6039,
+                      "duration": 6661,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-04-23T19:31:42.456Z",
+                      "startTime": "2026-04-28T14:23:43.729Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -224,12 +224,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 3458,
+                      "duration": 4479,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-04-23T19:31:48.514Z",
+                      "startTime": "2026-04-28T14:23:50.406Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -258,12 +258,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "failed",
-                      "duration": 1675,
+                      "duration": 1737,
                       "error": {
                         "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"mn-ccore\"\u001b[39m\nReceived string:    \u001b[31m\"sign in - google accounts\"\u001b[39m",
-                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"mn-ccore\"\u001b[39m\nReceived string:    \u001b[31m\"sign in - google accounts\"\u001b[39m\n    at C:\\Users\\ingra107\\mn-ccore-lab\\tests\\smoke.spec.ts:48:35",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"mn-ccore\"\u001b[39m\nReceived string:    \u001b[31m\"sign in - google accounts\"\u001b[39m\n    at C:\\Users\\ingra\\mn-ccore-lab\\tests\\smoke.spec.ts:48:35",
                         "location": {
-                          "file": "C:\\Users\\ingra107\\mn-ccore-lab\\tests\\smoke.spec.ts",
+                          "file": "C:\\Users\\ingra\\mn-ccore-lab\\tests\\smoke.spec.ts",
                           "column": 35,
                           "line": 48
                         },
@@ -272,37 +272,37 @@
                       "errors": [
                         {
                           "location": {
-                            "file": "C:\\Users\\ingra107\\mn-ccore-lab\\tests\\smoke.spec.ts",
+                            "file": "C:\\Users\\ingra\\mn-ccore-lab\\tests\\smoke.spec.ts",
                             "column": 35,
                             "line": 48
                           },
-                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"mn-ccore\"\u001b[39m\nReceived string:    \u001b[31m\"sign in - google accounts\"\u001b[39m\n\n  46 |       // Title should contain expected text (case-insensitive)\n  47 |       const title = await page.title()\n> 48 |       expect(title.toLowerCase()).toContain('mn-ccore')\n     |                                   ^\n  49 |\n  50 |       // No uncaught JS errors\n  51 |       const errors: string[] = []\n    at C:\\Users\\ingra107\\mn-ccore-lab\\tests\\smoke.spec.ts:48:35"
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"mn-ccore\"\u001b[39m\nReceived string:    \u001b[31m\"sign in - google accounts\"\u001b[39m\n\n  46 |       // Title should contain expected text (case-insensitive)\n  47 |       const title = await page.title()\n> 48 |       expect(title.toLowerCase()).toContain('mn-ccore')\n     |                                   ^\n  49 |\n  50 |       // No uncaught JS errors\n  51 |       const errors: string[] = []\n    at C:\\Users\\ingra\\mn-ccore-lab\\tests\\smoke.spec.ts:48:35"
                         }
                       ],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-04-23T19:31:51.983Z",
+                      "startTime": "2026-04-28T14:23:54.919Z",
                       "annotations": [],
                       "attachments": [
                         {
                           "name": "screenshot",
                           "contentType": "image/png",
-                          "path": "C:\\Users\\ingra107\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-f8b19-shboard-loads-without-error-chromium\\test-failed-1.png"
+                          "path": "C:\\Users\\ingra\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-f8b19-shboard-loads-without-error-chromium\\test-failed-1.png"
                         },
                         {
                           "name": "error-context",
                           "contentType": "text/markdown",
-                          "path": "C:\\Users\\ingra107\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-f8b19-shboard-loads-without-error-chromium\\error-context.md"
+                          "path": "C:\\Users\\ingra\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-f8b19-shboard-loads-without-error-chromium\\error-context.md"
                         },
                         {
                           "name": "trace",
                           "contentType": "application/zip",
-                          "path": "C:\\Users\\ingra107\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-f8b19-shboard-loads-without-error-chromium\\trace.zip"
+                          "path": "C:\\Users\\ingra\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-f8b19-shboard-loads-without-error-chromium\\trace.zip"
                         }
                       ],
                       "errorLocation": {
-                        "file": "C:\\Users\\ingra107\\mn-ccore-lab\\tests\\smoke.spec.ts",
+                        "file": "C:\\Users\\ingra\\mn-ccore-lab\\tests\\smoke.spec.ts",
                         "column": 35,
                         "line": 48
                       }
@@ -332,12 +332,12 @@
                       "workerIndex": 1,
                       "parallelIndex": 0,
                       "status": "failed",
-                      "duration": 1276,
+                      "duration": 1676,
                       "error": {
                         "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"mn-ccore\"\u001b[39m\nReceived string:    \u001b[31m\"sign in - google accounts\"\u001b[39m",
-                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"mn-ccore\"\u001b[39m\nReceived string:    \u001b[31m\"sign in - google accounts\"\u001b[39m\n    at C:\\Users\\ingra107\\mn-ccore-lab\\tests\\smoke.spec.ts:48:35",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"mn-ccore\"\u001b[39m\nReceived string:    \u001b[31m\"sign in - google accounts\"\u001b[39m\n    at C:\\Users\\ingra\\mn-ccore-lab\\tests\\smoke.spec.ts:48:35",
                         "location": {
-                          "file": "C:\\Users\\ingra107\\mn-ccore-lab\\tests\\smoke.spec.ts",
+                          "file": "C:\\Users\\ingra\\mn-ccore-lab\\tests\\smoke.spec.ts",
                           "column": 35,
                           "line": 48
                         },
@@ -346,37 +346,37 @@
                       "errors": [
                         {
                           "location": {
-                            "file": "C:\\Users\\ingra107\\mn-ccore-lab\\tests\\smoke.spec.ts",
+                            "file": "C:\\Users\\ingra\\mn-ccore-lab\\tests\\smoke.spec.ts",
                             "column": 35,
                             "line": 48
                           },
-                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"mn-ccore\"\u001b[39m\nReceived string:    \u001b[31m\"sign in - google accounts\"\u001b[39m\n\n  46 |       // Title should contain expected text (case-insensitive)\n  47 |       const title = await page.title()\n> 48 |       expect(title.toLowerCase()).toContain('mn-ccore')\n     |                                   ^\n  49 |\n  50 |       // No uncaught JS errors\n  51 |       const errors: string[] = []\n    at C:\\Users\\ingra107\\mn-ccore-lab\\tests\\smoke.spec.ts:48:35"
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"mn-ccore\"\u001b[39m\nReceived string:    \u001b[31m\"sign in - google accounts\"\u001b[39m\n\n  46 |       // Title should contain expected text (case-insensitive)\n  47 |       const title = await page.title()\n> 48 |       expect(title.toLowerCase()).toContain('mn-ccore')\n     |                                   ^\n  49 |\n  50 |       // No uncaught JS errors\n  51 |       const errors: string[] = []\n    at C:\\Users\\ingra\\mn-ccore-lab\\tests\\smoke.spec.ts:48:35"
                         }
                       ],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-04-23T19:31:54.649Z",
+                      "startTime": "2026-04-28T14:23:57.664Z",
                       "annotations": [],
                       "attachments": [
                         {
                           "name": "screenshot",
                           "contentType": "image/png",
-                          "path": "C:\\Users\\ingra107\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-f9b3c-ersonal-loads-without-error-chromium\\test-failed-1.png"
+                          "path": "C:\\Users\\ingra\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-f9b3c-ersonal-loads-without-error-chromium\\test-failed-1.png"
                         },
                         {
                           "name": "error-context",
                           "contentType": "text/markdown",
-                          "path": "C:\\Users\\ingra107\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-f9b3c-ersonal-loads-without-error-chromium\\error-context.md"
+                          "path": "C:\\Users\\ingra\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-f9b3c-ersonal-loads-without-error-chromium\\error-context.md"
                         },
                         {
                           "name": "trace",
                           "contentType": "application/zip",
-                          "path": "C:\\Users\\ingra107\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-f9b3c-ersonal-loads-without-error-chromium\\trace.zip"
+                          "path": "C:\\Users\\ingra\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-f9b3c-ersonal-loads-without-error-chromium\\trace.zip"
                         }
                       ],
                       "errorLocation": {
-                        "file": "C:\\Users\\ingra107\\mn-ccore-lab\\tests\\smoke.spec.ts",
+                        "file": "C:\\Users\\ingra\\mn-ccore-lab\\tests\\smoke.spec.ts",
                         "column": 35,
                         "line": 48
                       }
@@ -406,12 +406,12 @@
                       "workerIndex": 2,
                       "parallelIndex": 0,
                       "status": "failed",
-                      "duration": 1318,
+                      "duration": 1800,
                       "error": {
                         "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"mn-ccore\"\u001b[39m\nReceived string:    \u001b[31m\"sign in - google accounts\"\u001b[39m",
-                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"mn-ccore\"\u001b[39m\nReceived string:    \u001b[31m\"sign in - google accounts\"\u001b[39m\n    at C:\\Users\\ingra107\\mn-ccore-lab\\tests\\smoke.spec.ts:48:35",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"mn-ccore\"\u001b[39m\nReceived string:    \u001b[31m\"sign in - google accounts\"\u001b[39m\n    at C:\\Users\\ingra\\mn-ccore-lab\\tests\\smoke.spec.ts:48:35",
                         "location": {
-                          "file": "C:\\Users\\ingra107\\mn-ccore-lab\\tests\\smoke.spec.ts",
+                          "file": "C:\\Users\\ingra\\mn-ccore-lab\\tests\\smoke.spec.ts",
                           "column": 35,
                           "line": 48
                         },
@@ -420,37 +420,37 @@
                       "errors": [
                         {
                           "location": {
-                            "file": "C:\\Users\\ingra107\\mn-ccore-lab\\tests\\smoke.spec.ts",
+                            "file": "C:\\Users\\ingra\\mn-ccore-lab\\tests\\smoke.spec.ts",
                             "column": 35,
                             "line": 48
                           },
-                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"mn-ccore\"\u001b[39m\nReceived string:    \u001b[31m\"sign in - google accounts\"\u001b[39m\n\n  46 |       // Title should contain expected text (case-insensitive)\n  47 |       const title = await page.title()\n> 48 |       expect(title.toLowerCase()).toContain('mn-ccore')\n     |                                   ^\n  49 |\n  50 |       // No uncaught JS errors\n  51 |       const errors: string[] = []\n    at C:\\Users\\ingra107\\mn-ccore-lab\\tests\\smoke.spec.ts:48:35"
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"mn-ccore\"\u001b[39m\nReceived string:    \u001b[31m\"sign in - google accounts\"\u001b[39m\n\n  46 |       // Title should contain expected text (case-insensitive)\n  47 |       const title = await page.title()\n> 48 |       expect(title.toLowerCase()).toContain('mn-ccore')\n     |                                   ^\n  49 |\n  50 |       // No uncaught JS errors\n  51 |       const errors: string[] = []\n    at C:\\Users\\ingra\\mn-ccore-lab\\tests\\smoke.spec.ts:48:35"
                         }
                       ],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-04-23T19:31:57.095Z",
+                      "startTime": "2026-04-28T14:24:01.350Z",
                       "annotations": [],
                       "attachments": [
                         {
                           "name": "screenshot",
                           "contentType": "image/png",
-                          "path": "C:\\Users\\ingra107\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-5d8f5-y-items-loads-without-error-chromium\\test-failed-1.png"
+                          "path": "C:\\Users\\ingra\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-5d8f5-y-items-loads-without-error-chromium\\test-failed-1.png"
                         },
                         {
                           "name": "error-context",
                           "contentType": "text/markdown",
-                          "path": "C:\\Users\\ingra107\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-5d8f5-y-items-loads-without-error-chromium\\error-context.md"
+                          "path": "C:\\Users\\ingra\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-5d8f5-y-items-loads-without-error-chromium\\error-context.md"
                         },
                         {
                           "name": "trace",
                           "contentType": "application/zip",
-                          "path": "C:\\Users\\ingra107\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-5d8f5-y-items-loads-without-error-chromium\\trace.zip"
+                          "path": "C:\\Users\\ingra\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-5d8f5-y-items-loads-without-error-chromium\\trace.zip"
                         }
                       ],
                       "errorLocation": {
-                        "file": "C:\\Users\\ingra107\\mn-ccore-lab\\tests\\smoke.spec.ts",
+                        "file": "C:\\Users\\ingra\\mn-ccore-lab\\tests\\smoke.spec.ts",
                         "column": 35,
                         "line": 48
                       }
@@ -480,12 +480,12 @@
                       "workerIndex": 3,
                       "parallelIndex": 0,
                       "status": "failed",
-                      "duration": 1237,
+                      "duration": 1502,
                       "error": {
                         "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"mn-ccore\"\u001b[39m\nReceived string:    \u001b[31m\"sign in - google accounts\"\u001b[39m",
-                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"mn-ccore\"\u001b[39m\nReceived string:    \u001b[31m\"sign in - google accounts\"\u001b[39m\n    at C:\\Users\\ingra107\\mn-ccore-lab\\tests\\smoke.spec.ts:48:35",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"mn-ccore\"\u001b[39m\nReceived string:    \u001b[31m\"sign in - google accounts\"\u001b[39m\n    at C:\\Users\\ingra\\mn-ccore-lab\\tests\\smoke.spec.ts:48:35",
                         "location": {
-                          "file": "C:\\Users\\ingra107\\mn-ccore-lab\\tests\\smoke.spec.ts",
+                          "file": "C:\\Users\\ingra\\mn-ccore-lab\\tests\\smoke.spec.ts",
                           "column": 35,
                           "line": 48
                         },
@@ -494,37 +494,37 @@
                       "errors": [
                         {
                           "location": {
-                            "file": "C:\\Users\\ingra107\\mn-ccore-lab\\tests\\smoke.spec.ts",
+                            "file": "C:\\Users\\ingra\\mn-ccore-lab\\tests\\smoke.spec.ts",
                             "column": 35,
                             "line": 48
                           },
-                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"mn-ccore\"\u001b[39m\nReceived string:    \u001b[31m\"sign in - google accounts\"\u001b[39m\n\n  46 |       // Title should contain expected text (case-insensitive)\n  47 |       const title = await page.title()\n> 48 |       expect(title.toLowerCase()).toContain('mn-ccore')\n     |                                   ^\n  49 |\n  50 |       // No uncaught JS errors\n  51 |       const errors: string[] = []\n    at C:\\Users\\ingra107\\mn-ccore-lab\\tests\\smoke.spec.ts:48:35"
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"mn-ccore\"\u001b[39m\nReceived string:    \u001b[31m\"sign in - google accounts\"\u001b[39m\n\n  46 |       // Title should contain expected text (case-insensitive)\n  47 |       const title = await page.title()\n> 48 |       expect(title.toLowerCase()).toContain('mn-ccore')\n     |                                   ^\n  49 |\n  50 |       // No uncaught JS errors\n  51 |       const errors: string[] = []\n    at C:\\Users\\ingra\\mn-ccore-lab\\tests\\smoke.spec.ts:48:35"
                         }
                       ],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-04-23T19:31:59.821Z",
+                      "startTime": "2026-04-28T14:24:04.815Z",
                       "annotations": [],
                       "attachments": [
                         {
                           "name": "screenshot",
                           "contentType": "image/png",
-                          "path": "C:\\Users\\ingra107\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-c12c1-y-tasks-loads-without-error-chromium\\test-failed-1.png"
+                          "path": "C:\\Users\\ingra\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-c12c1-y-tasks-loads-without-error-chromium\\test-failed-1.png"
                         },
                         {
                           "name": "error-context",
                           "contentType": "text/markdown",
-                          "path": "C:\\Users\\ingra107\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-c12c1-y-tasks-loads-without-error-chromium\\error-context.md"
+                          "path": "C:\\Users\\ingra\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-c12c1-y-tasks-loads-without-error-chromium\\error-context.md"
                         },
                         {
                           "name": "trace",
                           "contentType": "application/zip",
-                          "path": "C:\\Users\\ingra107\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-c12c1-y-tasks-loads-without-error-chromium\\trace.zip"
+                          "path": "C:\\Users\\ingra\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-c12c1-y-tasks-loads-without-error-chromium\\trace.zip"
                         }
                       ],
                       "errorLocation": {
-                        "file": "C:\\Users\\ingra107\\mn-ccore-lab\\tests\\smoke.spec.ts",
+                        "file": "C:\\Users\\ingra\\mn-ccore-lab\\tests\\smoke.spec.ts",
                         "column": 35,
                         "line": 48
                       }
@@ -554,12 +554,12 @@
                       "workerIndex": 4,
                       "parallelIndex": 0,
                       "status": "failed",
-                      "duration": 1303,
+                      "duration": 9307,
                       "error": {
                         "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"mn-ccore\"\u001b[39m\nReceived string:    \u001b[31m\"sign in - google accounts\"\u001b[39m",
-                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"mn-ccore\"\u001b[39m\nReceived string:    \u001b[31m\"sign in - google accounts\"\u001b[39m\n    at C:\\Users\\ingra107\\mn-ccore-lab\\tests\\smoke.spec.ts:48:35",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"mn-ccore\"\u001b[39m\nReceived string:    \u001b[31m\"sign in - google accounts\"\u001b[39m\n    at C:\\Users\\ingra\\mn-ccore-lab\\tests\\smoke.spec.ts:48:35",
                         "location": {
-                          "file": "C:\\Users\\ingra107\\mn-ccore-lab\\tests\\smoke.spec.ts",
+                          "file": "C:\\Users\\ingra\\mn-ccore-lab\\tests\\smoke.spec.ts",
                           "column": 35,
                           "line": 48
                         },
@@ -568,37 +568,37 @@
                       "errors": [
                         {
                           "location": {
-                            "file": "C:\\Users\\ingra107\\mn-ccore-lab\\tests\\smoke.spec.ts",
+                            "file": "C:\\Users\\ingra\\mn-ccore-lab\\tests\\smoke.spec.ts",
                             "column": 35,
                             "line": 48
                           },
-                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"mn-ccore\"\u001b[39m\nReceived string:    \u001b[31m\"sign in - google accounts\"\u001b[39m\n\n  46 |       // Title should contain expected text (case-insensitive)\n  47 |       const title = await page.title()\n> 48 |       expect(title.toLowerCase()).toContain('mn-ccore')\n     |                                   ^\n  49 |\n  50 |       // No uncaught JS errors\n  51 |       const errors: string[] = []\n    at C:\\Users\\ingra107\\mn-ccore-lab\\tests\\smoke.spec.ts:48:35"
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"mn-ccore\"\u001b[39m\nReceived string:    \u001b[31m\"sign in - google accounts\"\u001b[39m\n\n  46 |       // Title should contain expected text (case-insensitive)\n  47 |       const title = await page.title()\n> 48 |       expect(title.toLowerCase()).toContain('mn-ccore')\n     |                                   ^\n  49 |\n  50 |       // No uncaught JS errors\n  51 |       const errors: string[] = []\n    at C:\\Users\\ingra\\mn-ccore-lab\\tests\\smoke.spec.ts:48:35"
                         }
                       ],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-04-23T19:32:02.474Z",
+                      "startTime": "2026-04-28T14:24:07.509Z",
                       "annotations": [],
                       "attachments": [
                         {
                           "name": "screenshot",
                           "contentType": "image/png",
-                          "path": "C:\\Users\\ingra107\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-85b75-alendar-loads-without-error-chromium\\test-failed-1.png"
+                          "path": "C:\\Users\\ingra\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-85b75-alendar-loads-without-error-chromium\\test-failed-1.png"
                         },
                         {
                           "name": "error-context",
                           "contentType": "text/markdown",
-                          "path": "C:\\Users\\ingra107\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-85b75-alendar-loads-without-error-chromium\\error-context.md"
+                          "path": "C:\\Users\\ingra\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-85b75-alendar-loads-without-error-chromium\\error-context.md"
                         },
                         {
                           "name": "trace",
                           "contentType": "application/zip",
-                          "path": "C:\\Users\\ingra107\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-85b75-alendar-loads-without-error-chromium\\trace.zip"
+                          "path": "C:\\Users\\ingra\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-85b75-alendar-loads-without-error-chromium\\trace.zip"
                         }
                       ],
                       "errorLocation": {
-                        "file": "C:\\Users\\ingra107\\mn-ccore-lab\\tests\\smoke.spec.ts",
+                        "file": "C:\\Users\\ingra\\mn-ccore-lab\\tests\\smoke.spec.ts",
                         "column": 35,
                         "line": 48
                       }
@@ -628,12 +628,12 @@
                       "workerIndex": 5,
                       "parallelIndex": 0,
                       "status": "failed",
-                      "duration": 1288,
+                      "duration": 1494,
                       "error": {
                         "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"mn-ccore\"\u001b[39m\nReceived string:    \u001b[31m\"sign in - google accounts\"\u001b[39m",
-                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"mn-ccore\"\u001b[39m\nReceived string:    \u001b[31m\"sign in - google accounts\"\u001b[39m\n    at C:\\Users\\ingra107\\mn-ccore-lab\\tests\\smoke.spec.ts:48:35",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"mn-ccore\"\u001b[39m\nReceived string:    \u001b[31m\"sign in - google accounts\"\u001b[39m\n    at C:\\Users\\ingra\\mn-ccore-lab\\tests\\smoke.spec.ts:48:35",
                         "location": {
-                          "file": "C:\\Users\\ingra107\\mn-ccore-lab\\tests\\smoke.spec.ts",
+                          "file": "C:\\Users\\ingra\\mn-ccore-lab\\tests\\smoke.spec.ts",
                           "column": 35,
                           "line": 48
                         },
@@ -642,37 +642,37 @@
                       "errors": [
                         {
                           "location": {
-                            "file": "C:\\Users\\ingra107\\mn-ccore-lab\\tests\\smoke.spec.ts",
+                            "file": "C:\\Users\\ingra\\mn-ccore-lab\\tests\\smoke.spec.ts",
                             "column": 35,
                             "line": 48
                           },
-                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"mn-ccore\"\u001b[39m\nReceived string:    \u001b[31m\"sign in - google accounts\"\u001b[39m\n\n  46 |       // Title should contain expected text (case-insensitive)\n  47 |       const title = await page.title()\n> 48 |       expect(title.toLowerCase()).toContain('mn-ccore')\n     |                                   ^\n  49 |\n  50 |       // No uncaught JS errors\n  51 |       const errors: string[] = []\n    at C:\\Users\\ingra107\\mn-ccore-lab\\tests\\smoke.spec.ts:48:35"
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"mn-ccore\"\u001b[39m\nReceived string:    \u001b[31m\"sign in - google accounts\"\u001b[39m\n\n  46 |       // Title should contain expected text (case-insensitive)\n  47 |       const title = await page.title()\n> 48 |       expect(title.toLowerCase()).toContain('mn-ccore')\n     |                                   ^\n  49 |\n  50 |       // No uncaught JS errors\n  51 |       const errors: string[] = []\n    at C:\\Users\\ingra\\mn-ccore-lab\\tests\\smoke.spec.ts:48:35"
                         }
                       ],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-04-23T19:32:05.182Z",
+                      "startTime": "2026-04-28T14:24:17.946Z",
                       "annotations": [],
                       "attachments": [
                         {
                           "name": "screenshot",
                           "contentType": "image/png",
-                          "path": "C:\\Users\\ingra107\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-5a39c-adlines-loads-without-error-chromium\\test-failed-1.png"
+                          "path": "C:\\Users\\ingra\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-5a39c-adlines-loads-without-error-chromium\\test-failed-1.png"
                         },
                         {
                           "name": "error-context",
                           "contentType": "text/markdown",
-                          "path": "C:\\Users\\ingra107\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-5a39c-adlines-loads-without-error-chromium\\error-context.md"
+                          "path": "C:\\Users\\ingra\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-5a39c-adlines-loads-without-error-chromium\\error-context.md"
                         },
                         {
                           "name": "trace",
                           "contentType": "application/zip",
-                          "path": "C:\\Users\\ingra107\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-5a39c-adlines-loads-without-error-chromium\\trace.zip"
+                          "path": "C:\\Users\\ingra\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-5a39c-adlines-loads-without-error-chromium\\trace.zip"
                         }
                       ],
                       "errorLocation": {
-                        "file": "C:\\Users\\ingra107\\mn-ccore-lab\\tests\\smoke.spec.ts",
+                        "file": "C:\\Users\\ingra\\mn-ccore-lab\\tests\\smoke.spec.ts",
                         "column": 35,
                         "line": 48
                       }
@@ -702,12 +702,12 @@
                       "workerIndex": 6,
                       "parallelIndex": 0,
                       "status": "failed",
-                      "duration": 2616,
+                      "duration": 1500,
                       "error": {
                         "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"mn-ccore\"\u001b[39m\nReceived string:    \u001b[31m\"sign in - google accounts\"\u001b[39m",
-                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"mn-ccore\"\u001b[39m\nReceived string:    \u001b[31m\"sign in - google accounts\"\u001b[39m\n    at C:\\Users\\ingra107\\mn-ccore-lab\\tests\\smoke.spec.ts:48:35",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"mn-ccore\"\u001b[39m\nReceived string:    \u001b[31m\"sign in - google accounts\"\u001b[39m\n    at C:\\Users\\ingra\\mn-ccore-lab\\tests\\smoke.spec.ts:48:35",
                         "location": {
-                          "file": "C:\\Users\\ingra107\\mn-ccore-lab\\tests\\smoke.spec.ts",
+                          "file": "C:\\Users\\ingra\\mn-ccore-lab\\tests\\smoke.spec.ts",
                           "column": 35,
                           "line": 48
                         },
@@ -716,37 +716,37 @@
                       "errors": [
                         {
                           "location": {
-                            "file": "C:\\Users\\ingra107\\mn-ccore-lab\\tests\\smoke.spec.ts",
+                            "file": "C:\\Users\\ingra\\mn-ccore-lab\\tests\\smoke.spec.ts",
                             "column": 35,
                             "line": 48
                           },
-                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"mn-ccore\"\u001b[39m\nReceived string:    \u001b[31m\"sign in - google accounts\"\u001b[39m\n\n  46 |       // Title should contain expected text (case-insensitive)\n  47 |       const title = await page.title()\n> 48 |       expect(title.toLowerCase()).toContain('mn-ccore')\n     |                                   ^\n  49 |\n  50 |       // No uncaught JS errors\n  51 |       const errors: string[] = []\n    at C:\\Users\\ingra107\\mn-ccore-lab\\tests\\smoke.spec.ts:48:35"
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"mn-ccore\"\u001b[39m\nReceived string:    \u001b[31m\"sign in - google accounts\"\u001b[39m\n\n  46 |       // Title should contain expected text (case-insensitive)\n  47 |       const title = await page.title()\n> 48 |       expect(title.toLowerCase()).toContain('mn-ccore')\n     |                                   ^\n  49 |\n  50 |       // No uncaught JS errors\n  51 |       const errors: string[] = []\n    at C:\\Users\\ingra\\mn-ccore-lab\\tests\\smoke.spec.ts:48:35"
                         }
                       ],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-04-23T19:32:07.665Z",
+                      "startTime": "2026-04-28T14:24:20.737Z",
                       "annotations": [],
                       "attachments": [
                         {
                           "name": "screenshot",
                           "contentType": "image/png",
-                          "path": "C:\\Users\\ingra107\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-eac8f-rojects-loads-without-error-chromium\\test-failed-1.png"
+                          "path": "C:\\Users\\ingra\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-eac8f-rojects-loads-without-error-chromium\\test-failed-1.png"
                         },
                         {
                           "name": "error-context",
                           "contentType": "text/markdown",
-                          "path": "C:\\Users\\ingra107\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-eac8f-rojects-loads-without-error-chromium\\error-context.md"
+                          "path": "C:\\Users\\ingra\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-eac8f-rojects-loads-without-error-chromium\\error-context.md"
                         },
                         {
                           "name": "trace",
                           "contentType": "application/zip",
-                          "path": "C:\\Users\\ingra107\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-eac8f-rojects-loads-without-error-chromium\\trace.zip"
+                          "path": "C:\\Users\\ingra\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-eac8f-rojects-loads-without-error-chromium\\trace.zip"
                         }
                       ],
                       "errorLocation": {
-                        "file": "C:\\Users\\ingra107\\mn-ccore-lab\\tests\\smoke.spec.ts",
+                        "file": "C:\\Users\\ingra\\mn-ccore-lab\\tests\\smoke.spec.ts",
                         "column": 35,
                         "line": 48
                       }
@@ -776,12 +776,12 @@
                       "workerIndex": 7,
                       "parallelIndex": 0,
                       "status": "failed",
-                      "duration": 1355,
+                      "duration": 5201,
                       "error": {
                         "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"mn-ccore\"\u001b[39m\nReceived string:    \u001b[31m\"sign in - google accounts\"\u001b[39m",
-                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"mn-ccore\"\u001b[39m\nReceived string:    \u001b[31m\"sign in - google accounts\"\u001b[39m\n    at C:\\Users\\ingra107\\mn-ccore-lab\\tests\\smoke.spec.ts:48:35",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"mn-ccore\"\u001b[39m\nReceived string:    \u001b[31m\"sign in - google accounts\"\u001b[39m\n    at C:\\Users\\ingra\\mn-ccore-lab\\tests\\smoke.spec.ts:48:35",
                         "location": {
-                          "file": "C:\\Users\\ingra107\\mn-ccore-lab\\tests\\smoke.spec.ts",
+                          "file": "C:\\Users\\ingra\\mn-ccore-lab\\tests\\smoke.spec.ts",
                           "column": 35,
                           "line": 48
                         },
@@ -790,37 +790,37 @@
                       "errors": [
                         {
                           "location": {
-                            "file": "C:\\Users\\ingra107\\mn-ccore-lab\\tests\\smoke.spec.ts",
+                            "file": "C:\\Users\\ingra\\mn-ccore-lab\\tests\\smoke.spec.ts",
                             "column": 35,
                             "line": 48
                           },
-                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"mn-ccore\"\u001b[39m\nReceived string:    \u001b[31m\"sign in - google accounts\"\u001b[39m\n\n  46 |       // Title should contain expected text (case-insensitive)\n  47 |       const title = await page.title()\n> 48 |       expect(title.toLowerCase()).toContain('mn-ccore')\n     |                                   ^\n  49 |\n  50 |       // No uncaught JS errors\n  51 |       const errors: string[] = []\n    at C:\\Users\\ingra107\\mn-ccore-lab\\tests\\smoke.spec.ts:48:35"
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"mn-ccore\"\u001b[39m\nReceived string:    \u001b[31m\"sign in - google accounts\"\u001b[39m\n\n  46 |       // Title should contain expected text (case-insensitive)\n  47 |       const title = await page.title()\n> 48 |       expect(title.toLowerCase()).toContain('mn-ccore')\n     |                                   ^\n  49 |\n  50 |       // No uncaught JS errors\n  51 |       const errors: string[] = []\n    at C:\\Users\\ingra\\mn-ccore-lab\\tests\\smoke.spec.ts:48:35"
                         }
                       ],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-04-23T19:32:11.810Z",
+                      "startTime": "2026-04-28T14:24:23.394Z",
                       "annotations": [],
                       "attachments": [
                         {
                           "name": "screenshot",
                           "contentType": "image/png",
-                          "path": "C:\\Users\\ingra107\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-75a76-scripts-loads-without-error-chromium\\test-failed-1.png"
+                          "path": "C:\\Users\\ingra\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-75a76-scripts-loads-without-error-chromium\\test-failed-1.png"
                         },
                         {
                           "name": "error-context",
                           "contentType": "text/markdown",
-                          "path": "C:\\Users\\ingra107\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-75a76-scripts-loads-without-error-chromium\\error-context.md"
+                          "path": "C:\\Users\\ingra\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-75a76-scripts-loads-without-error-chromium\\error-context.md"
                         },
                         {
                           "name": "trace",
                           "contentType": "application/zip",
-                          "path": "C:\\Users\\ingra107\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-75a76-scripts-loads-without-error-chromium\\trace.zip"
+                          "path": "C:\\Users\\ingra\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-75a76-scripts-loads-without-error-chromium\\trace.zip"
                         }
                       ],
                       "errorLocation": {
-                        "file": "C:\\Users\\ingra107\\mn-ccore-lab\\tests\\smoke.spec.ts",
+                        "file": "C:\\Users\\ingra\\mn-ccore-lab\\tests\\smoke.spec.ts",
                         "column": 35,
                         "line": 48
                       }
@@ -850,12 +850,12 @@
                       "workerIndex": 8,
                       "parallelIndex": 0,
                       "status": "failed",
-                      "duration": 1364,
+                      "duration": 1423,
                       "error": {
                         "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"mn-ccore\"\u001b[39m\nReceived string:    \u001b[31m\"sign in - google accounts\"\u001b[39m",
-                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"mn-ccore\"\u001b[39m\nReceived string:    \u001b[31m\"sign in - google accounts\"\u001b[39m\n    at C:\\Users\\ingra107\\mn-ccore-lab\\tests\\smoke.spec.ts:48:35",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"mn-ccore\"\u001b[39m\nReceived string:    \u001b[31m\"sign in - google accounts\"\u001b[39m\n    at C:\\Users\\ingra\\mn-ccore-lab\\tests\\smoke.spec.ts:48:35",
                         "location": {
-                          "file": "C:\\Users\\ingra107\\mn-ccore-lab\\tests\\smoke.spec.ts",
+                          "file": "C:\\Users\\ingra\\mn-ccore-lab\\tests\\smoke.spec.ts",
                           "column": 35,
                           "line": 48
                         },
@@ -864,37 +864,37 @@
                       "errors": [
                         {
                           "location": {
-                            "file": "C:\\Users\\ingra107\\mn-ccore-lab\\tests\\smoke.spec.ts",
+                            "file": "C:\\Users\\ingra\\mn-ccore-lab\\tests\\smoke.spec.ts",
                             "column": 35,
                             "line": 48
                           },
-                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"mn-ccore\"\u001b[39m\nReceived string:    \u001b[31m\"sign in - google accounts\"\u001b[39m\n\n  46 |       // Title should contain expected text (case-insensitive)\n  47 |       const title = await page.title()\n> 48 |       expect(title.toLowerCase()).toContain('mn-ccore')\n     |                                   ^\n  49 |\n  50 |       // No uncaught JS errors\n  51 |       const errors: string[] = []\n    at C:\\Users\\ingra107\\mn-ccore-lab\\tests\\smoke.spec.ts:48:35"
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"mn-ccore\"\u001b[39m\nReceived string:    \u001b[31m\"sign in - google accounts\"\u001b[39m\n\n  46 |       // Title should contain expected text (case-insensitive)\n  47 |       const title = await page.title()\n> 48 |       expect(title.toLowerCase()).toContain('mn-ccore')\n     |                                   ^\n  49 |\n  50 |       // No uncaught JS errors\n  51 |       const errors: string[] = []\n    at C:\\Users\\ingra\\mn-ccore-lab\\tests\\smoke.spec.ts:48:35"
                         }
                       ],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-04-23T19:32:14.569Z",
+                      "startTime": "2026-04-28T14:24:29.734Z",
                       "annotations": [],
                       "attachments": [
                         {
                           "name": "screenshot",
                           "contentType": "image/png",
-                          "path": "C:\\Users\\ingra107\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-d8bbd-l-ideas-loads-without-error-chromium\\test-failed-1.png"
+                          "path": "C:\\Users\\ingra\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-d8bbd-l-ideas-loads-without-error-chromium\\test-failed-1.png"
                         },
                         {
                           "name": "error-context",
                           "contentType": "text/markdown",
-                          "path": "C:\\Users\\ingra107\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-d8bbd-l-ideas-loads-without-error-chromium\\error-context.md"
+                          "path": "C:\\Users\\ingra\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-d8bbd-l-ideas-loads-without-error-chromium\\error-context.md"
                         },
                         {
                           "name": "trace",
                           "contentType": "application/zip",
-                          "path": "C:\\Users\\ingra107\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-d8bbd-l-ideas-loads-without-error-chromium\\trace.zip"
+                          "path": "C:\\Users\\ingra\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-d8bbd-l-ideas-loads-without-error-chromium\\trace.zip"
                         }
                       ],
                       "errorLocation": {
-                        "file": "C:\\Users\\ingra107\\mn-ccore-lab\\tests\\smoke.spec.ts",
+                        "file": "C:\\Users\\ingra\\mn-ccore-lab\\tests\\smoke.spec.ts",
                         "column": 35,
                         "line": 48
                       }
@@ -924,12 +924,12 @@
                       "workerIndex": 9,
                       "parallelIndex": 0,
                       "status": "failed",
-                      "duration": 1293,
+                      "duration": 1529,
                       "error": {
                         "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"mn-ccore\"\u001b[39m\nReceived string:    \u001b[31m\"sign in - google accounts\"\u001b[39m",
-                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"mn-ccore\"\u001b[39m\nReceived string:    \u001b[31m\"sign in - google accounts\"\u001b[39m\n    at C:\\Users\\ingra107\\mn-ccore-lab\\tests\\smoke.spec.ts:48:35",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"mn-ccore\"\u001b[39m\nReceived string:    \u001b[31m\"sign in - google accounts\"\u001b[39m\n    at C:\\Users\\ingra\\mn-ccore-lab\\tests\\smoke.spec.ts:48:35",
                         "location": {
-                          "file": "C:\\Users\\ingra107\\mn-ccore-lab\\tests\\smoke.spec.ts",
+                          "file": "C:\\Users\\ingra\\mn-ccore-lab\\tests\\smoke.spec.ts",
                           "column": 35,
                           "line": 48
                         },
@@ -938,37 +938,37 @@
                       "errors": [
                         {
                           "location": {
-                            "file": "C:\\Users\\ingra107\\mn-ccore-lab\\tests\\smoke.spec.ts",
+                            "file": "C:\\Users\\ingra\\mn-ccore-lab\\tests\\smoke.spec.ts",
                             "column": 35,
                             "line": 48
                           },
-                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"mn-ccore\"\u001b[39m\nReceived string:    \u001b[31m\"sign in - google accounts\"\u001b[39m\n\n  46 |       // Title should contain expected text (case-insensitive)\n  47 |       const title = await page.title()\n> 48 |       expect(title.toLowerCase()).toContain('mn-ccore')\n     |                                   ^\n  49 |\n  50 |       // No uncaught JS errors\n  51 |       const errors: string[] = []\n    at C:\\Users\\ingra107\\mn-ccore-lab\\tests\\smoke.spec.ts:48:35"
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"mn-ccore\"\u001b[39m\nReceived string:    \u001b[31m\"sign in - google accounts\"\u001b[39m\n\n  46 |       // Title should contain expected text (case-insensitive)\n  47 |       const title = await page.title()\n> 48 |       expect(title.toLowerCase()).toContain('mn-ccore')\n     |                                   ^\n  49 |\n  50 |       // No uncaught JS errors\n  51 |       const errors: string[] = []\n    at C:\\Users\\ingra\\mn-ccore-lab\\tests\\smoke.spec.ts:48:35"
                         }
                       ],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-04-23T19:32:17.509Z",
+                      "startTime": "2026-04-28T14:24:32.303Z",
                       "annotations": [],
                       "attachments": [
                         {
                           "name": "screenshot",
                           "contentType": "image/png",
-                          "path": "C:\\Users\\ingra107\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-356c1--digest-loads-without-error-chromium\\test-failed-1.png"
+                          "path": "C:\\Users\\ingra\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-356c1--digest-loads-without-error-chromium\\test-failed-1.png"
                         },
                         {
                           "name": "error-context",
                           "contentType": "text/markdown",
-                          "path": "C:\\Users\\ingra107\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-356c1--digest-loads-without-error-chromium\\error-context.md"
+                          "path": "C:\\Users\\ingra\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-356c1--digest-loads-without-error-chromium\\error-context.md"
                         },
                         {
                           "name": "trace",
                           "contentType": "application/zip",
-                          "path": "C:\\Users\\ingra107\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-356c1--digest-loads-without-error-chromium\\trace.zip"
+                          "path": "C:\\Users\\ingra\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-356c1--digest-loads-without-error-chromium\\trace.zip"
                         }
                       ],
                       "errorLocation": {
-                        "file": "C:\\Users\\ingra107\\mn-ccore-lab\\tests\\smoke.spec.ts",
+                        "file": "C:\\Users\\ingra\\mn-ccore-lab\\tests\\smoke.spec.ts",
                         "column": 35,
                         "line": 48
                       }
@@ -998,12 +998,12 @@
                       "workerIndex": 10,
                       "parallelIndex": 0,
                       "status": "failed",
-                      "duration": 1311,
+                      "duration": 1564,
                       "error": {
                         "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"mn-ccore\"\u001b[39m\nReceived string:    \u001b[31m\"sign in - google accounts\"\u001b[39m",
-                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"mn-ccore\"\u001b[39m\nReceived string:    \u001b[31m\"sign in - google accounts\"\u001b[39m\n    at C:\\Users\\ingra107\\mn-ccore-lab\\tests\\smoke.spec.ts:48:35",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"mn-ccore\"\u001b[39m\nReceived string:    \u001b[31m\"sign in - google accounts\"\u001b[39m\n    at C:\\Users\\ingra\\mn-ccore-lab\\tests\\smoke.spec.ts:48:35",
                         "location": {
-                          "file": "C:\\Users\\ingra107\\mn-ccore-lab\\tests\\smoke.spec.ts",
+                          "file": "C:\\Users\\ingra\\mn-ccore-lab\\tests\\smoke.spec.ts",
                           "column": 35,
                           "line": 48
                         },
@@ -1012,37 +1012,37 @@
                       "errors": [
                         {
                           "location": {
-                            "file": "C:\\Users\\ingra107\\mn-ccore-lab\\tests\\smoke.spec.ts",
+                            "file": "C:\\Users\\ingra\\mn-ccore-lab\\tests\\smoke.spec.ts",
                             "column": 35,
                             "line": 48
                           },
-                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"mn-ccore\"\u001b[39m\nReceived string:    \u001b[31m\"sign in - google accounts\"\u001b[39m\n\n  46 |       // Title should contain expected text (case-insensitive)\n  47 |       const title = await page.title()\n> 48 |       expect(title.toLowerCase()).toContain('mn-ccore')\n     |                                   ^\n  49 |\n  50 |       // No uncaught JS errors\n  51 |       const errors: string[] = []\n    at C:\\Users\\ingra107\\mn-ccore-lab\\tests\\smoke.spec.ts:48:35"
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"mn-ccore\"\u001b[39m\nReceived string:    \u001b[31m\"sign in - google accounts\"\u001b[39m\n\n  46 |       // Title should contain expected text (case-insensitive)\n  47 |       const title = await page.title()\n> 48 |       expect(title.toLowerCase()).toContain('mn-ccore')\n     |                                   ^\n  49 |\n  50 |       // No uncaught JS errors\n  51 |       const errors: string[] = []\n    at C:\\Users\\ingra\\mn-ccore-lab\\tests\\smoke.spec.ts:48:35"
                         }
                       ],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-04-23T19:32:19.698Z",
+                      "startTime": "2026-04-28T14:24:35.357Z",
                       "annotations": [],
                       "attachments": [
                         {
                           "name": "screenshot",
                           "contentType": "image/png",
-                          "path": "C:\\Users\\ingra107\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-602ac--search-loads-without-error-chromium\\test-failed-1.png"
+                          "path": "C:\\Users\\ingra\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-602ac--search-loads-without-error-chromium\\test-failed-1.png"
                         },
                         {
                           "name": "error-context",
                           "contentType": "text/markdown",
-                          "path": "C:\\Users\\ingra107\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-602ac--search-loads-without-error-chromium\\error-context.md"
+                          "path": "C:\\Users\\ingra\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-602ac--search-loads-without-error-chromium\\error-context.md"
                         },
                         {
                           "name": "trace",
                           "contentType": "application/zip",
-                          "path": "C:\\Users\\ingra107\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-602ac--search-loads-without-error-chromium\\trace.zip"
+                          "path": "C:\\Users\\ingra\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-602ac--search-loads-without-error-chromium\\trace.zip"
                         }
                       ],
                       "errorLocation": {
-                        "file": "C:\\Users\\ingra107\\mn-ccore-lab\\tests\\smoke.spec.ts",
+                        "file": "C:\\Users\\ingra\\mn-ccore-lab\\tests\\smoke.spec.ts",
                         "column": 35,
                         "line": 48
                       }
@@ -1072,12 +1072,12 @@
                       "workerIndex": 11,
                       "parallelIndex": 0,
                       "status": "failed",
-                      "duration": 1322,
+                      "duration": 1739,
                       "error": {
                         "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"mn-ccore\"\u001b[39m\nReceived string:    \u001b[31m\"sign in - google accounts\"\u001b[39m",
-                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"mn-ccore\"\u001b[39m\nReceived string:    \u001b[31m\"sign in - google accounts\"\u001b[39m\n    at C:\\Users\\ingra107\\mn-ccore-lab\\tests\\smoke.spec.ts:48:35",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"mn-ccore\"\u001b[39m\nReceived string:    \u001b[31m\"sign in - google accounts\"\u001b[39m\n    at C:\\Users\\ingra\\mn-ccore-lab\\tests\\smoke.spec.ts:48:35",
                         "location": {
-                          "file": "C:\\Users\\ingra107\\mn-ccore-lab\\tests\\smoke.spec.ts",
+                          "file": "C:\\Users\\ingra\\mn-ccore-lab\\tests\\smoke.spec.ts",
                           "column": 35,
                           "line": 48
                         },
@@ -1086,37 +1086,37 @@
                       "errors": [
                         {
                           "location": {
-                            "file": "C:\\Users\\ingra107\\mn-ccore-lab\\tests\\smoke.spec.ts",
+                            "file": "C:\\Users\\ingra\\mn-ccore-lab\\tests\\smoke.spec.ts",
                             "column": 35,
                             "line": 48
                           },
-                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"mn-ccore\"\u001b[39m\nReceived string:    \u001b[31m\"sign in - google accounts\"\u001b[39m\n\n  46 |       // Title should contain expected text (case-insensitive)\n  47 |       const title = await page.title()\n> 48 |       expect(title.toLowerCase()).toContain('mn-ccore')\n     |                                   ^\n  49 |\n  50 |       // No uncaught JS errors\n  51 |       const errors: string[] = []\n    at C:\\Users\\ingra107\\mn-ccore-lab\\tests\\smoke.spec.ts:48:35"
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"mn-ccore\"\u001b[39m\nReceived string:    \u001b[31m\"sign in - google accounts\"\u001b[39m\n\n  46 |       // Title should contain expected text (case-insensitive)\n  47 |       const title = await page.title()\n> 48 |       expect(title.toLowerCase()).toContain('mn-ccore')\n     |                                   ^\n  49 |\n  50 |       // No uncaught JS errors\n  51 |       const errors: string[] = []\n    at C:\\Users\\ingra\\mn-ccore-lab\\tests\\smoke.spec.ts:48:35"
                         }
                       ],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-04-23T19:32:22.447Z",
+                      "startTime": "2026-04-28T14:24:38.102Z",
                       "annotations": [],
                       "attachments": [
                         {
                           "name": "screenshot",
                           "contentType": "image/png",
-                          "path": "C:\\Users\\ingra107\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-d812c-eetings-loads-without-error-chromium\\test-failed-1.png"
+                          "path": "C:\\Users\\ingra\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-d812c-eetings-loads-without-error-chromium\\test-failed-1.png"
                         },
                         {
                           "name": "error-context",
                           "contentType": "text/markdown",
-                          "path": "C:\\Users\\ingra107\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-d812c-eetings-loads-without-error-chromium\\error-context.md"
+                          "path": "C:\\Users\\ingra\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-d812c-eetings-loads-without-error-chromium\\error-context.md"
                         },
                         {
                           "name": "trace",
                           "contentType": "application/zip",
-                          "path": "C:\\Users\\ingra107\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-d812c-eetings-loads-without-error-chromium\\trace.zip"
+                          "path": "C:\\Users\\ingra\\mn-ccore-lab\\test-results\\smoke-Smoke-tests-—-all-ro-d812c-eetings-loads-without-error-chromium\\trace.zip"
                         }
                       ],
                       "errorLocation": {
-                        "file": "C:\\Users\\ingra107\\mn-ccore-lab\\tests\\smoke.spec.ts",
+                        "file": "C:\\Users\\ingra\\mn-ccore-lab\\tests\\smoke.spec.ts",
                         "column": 35,
                         "line": 48
                       }
@@ -1146,12 +1146,12 @@
                       "workerIndex": 12,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 3481,
+                      "duration": 2761,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-04-23T19:32:25.165Z",
+                      "startTime": "2026-04-28T14:24:40.938Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -1188,12 +1188,12 @@
                       "workerIndex": 12,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 108,
+                      "duration": 168,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-04-23T19:32:28.768Z",
+                      "startTime": "2026-04-28T14:24:43.933Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -1222,12 +1222,12 @@
                       "workerIndex": 12,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 56,
+                      "duration": 69,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-04-23T19:32:28.886Z",
+                      "startTime": "2026-04-28T14:24:44.118Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -1256,12 +1256,12 @@
                       "workerIndex": 12,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 138,
+                      "duration": 62,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-04-23T19:32:28.947Z",
+                      "startTime": "2026-04-28T14:24:44.197Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -1290,12 +1290,12 @@
                       "workerIndex": 12,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 52,
+                      "duration": 58,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-04-23T19:32:29.094Z",
+                      "startTime": "2026-04-28T14:24:44.268Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -1324,12 +1324,12 @@
                       "workerIndex": 12,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 110,
+                      "duration": 122,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-04-23T19:32:29.154Z",
+                      "startTime": "2026-04-28T14:24:44.336Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -1358,12 +1358,12 @@
                       "workerIndex": 12,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 45,
+                      "duration": 47,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-04-23T19:32:29.269Z",
+                      "startTime": "2026-04-28T14:24:44.468Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -1392,12 +1392,12 @@
                       "workerIndex": 12,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 45,
+                      "duration": 52,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-04-23T19:32:29.319Z",
+                      "startTime": "2026-04-28T14:24:44.525Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -1426,12 +1426,12 @@
                       "workerIndex": 12,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 82,
+                      "duration": 60,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-04-23T19:32:29.371Z",
+                      "startTime": "2026-04-28T14:24:44.586Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -1460,12 +1460,12 @@
                       "workerIndex": 12,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 98,
+                      "duration": 105,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-04-23T19:32:29.461Z",
+                      "startTime": "2026-04-28T14:24:44.655Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -1485,8 +1485,8 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-04-23T19:31:23.266Z",
-    "duration": 66353.607,
+    "startTime": "2026-04-28T14:23:32.815Z",
+    "duration": 72079.81,
     "expected": 15,
     "skipped": 0,
     "unexpected": 12,

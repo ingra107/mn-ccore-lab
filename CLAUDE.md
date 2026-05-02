@@ -958,6 +958,22 @@ Update handlers protect required fields from null:
 ### Removed Features
 - **CV Page** (`/team/:slug/cv`): Cut 2026-04-09. PB cv-export skill handles Nick's CV.
 
+## Hub Specialist Agents (added 2026-05-02)
+
+User-level agents at `~/.claude/agents/` (sync via Syncthing). Each holds focused context, persistent memory in `agent_knowledge.category='<name>'` (table lives in `C:/Users/ingra107/Peripheral-Brain/data/brain.db`).
+
+| Nick says / situation | Specialist |
+|----------------------|------------|
+| Hub frontend bug / React component / Tailwind / accessibility / Playwright UI test | **hub-frontend** (Sonnet) |
+| Worker deploy / D1 query / mutations.ts / KV / R2 / hub_ai_listener / wrangler | **hub-backend** (Sonnet) |
+| Schema drift between brain.db ↔ D1 / pending change-spec from Builder / type generation | **hub-schema-sync** (Sonnet) |
+
+**Cross-system handoff:** when brain.db schema changes (Builder, in PB session), Builder writes a change-spec to `C:/Users/ingra107/Peripheral-Brain/data/shared/hub-schema-changes.jsonl`. On next Hub session, dispatch `hub-schema-sync` to apply pending specs (D1 migration + frontend types). Resolution writes back to spec file.
+
+**Depth-2 limit:** Hub specialists cannot dispatch other agents directly. They return "next: dispatch X" → COO does the next dispatch.
+
+Full architecture: `C:/Users/ingra107/Peripheral-Brain/Context/Decisions/2026-05-02-context-diet-and-managers.md`.
+
 ## Session Notes
 <!-- COO writes session updates here. Synced by SessionEnd hook or Start Day backup. -->
 
