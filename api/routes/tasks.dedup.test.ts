@@ -452,3 +452,286 @@ describe('handleSyncBulkTasks — I18 (title, project_id) dedup', () => {
     expect(db._store.has('task_proj_d_new')).toBe(true)
   })
 })
+
+// ── Concurrent-race tests (partial index backstop) ──────────────────────────
+//
+// The serial dedup path (SELECT finds existing → return deduped) was tested
+// above. These tests cover the race window:
+//
+//   T=0  machine-home  SELECT → no row found (winner not yet inserted)
+//   T=0  machine-work  SELECT → no row found (same empty state)
+//   T=1  machine-home  INSERT → succeeds (first writer wins)
+//   T=1  machine-work  INSERT → partial index fires (UNIQUE violation)
+//
+// In production D1/SQLite the partial index
+//   CREATE UNIQUE INDEX idx_tasks_title_project_active
+//     ON tasks(title, project_id) WHERE deleted_at IS NULL AND status != 'done'
+// makes this structural: the race-loser INSERT throws a constraint error.
+//
+// The catch(e) in processOne wraps it as:
+//   { status: 'error', reason: 'apply error: UNIQUE constraint failed: ...' }
+//
+// CLIENT-SIDE GAP (documented 2026-05-03, flagged to builder):
+//   The outbox ack handler receives HTTP 200 with status='error'. The serial
+//   dedup path returns status='accepted' with reason containing 'deduped' and
+//   the canonical winner id — the client can adopt the alias. The race-loser
+//   path currently returns status='error' with a raw constraint message, which
+//   the outbox may dead-letter rather than alias-adopt. Builder should add a
+//   catch in applyInsert for the UNIQUE constraint on (title, project_id) that
+//   performs the same dup-lookup-and-return-deduped logic as the serial path.
+//   See data/shared/hub-schema-changes.jsonl for the builder handoff entry.
+
+// Stub DB that simulates the race: SELECT returns null for both concurrent
+// calls (empty store at check time), but the second INSERT throws a UNIQUE
+// constraint error matching the partial index firing.
+function makeRaceStubDB() {
+  const store: Map<string, Record<string, unknown>> = new Map()
+  let insertCount = 0
+
+  function makeStmt(sql: string, boundVals: unknown[]): any {
+    return {
+      bind: (...more: unknown[]) => makeStmt(sql, [...boundVals, ...more]),
+
+      first: async <T>() => {
+        const upper = sql.trim().toUpperCase()
+        // Dedup SELECT: always returns null — simulating the race window where
+        // the winner hasn't committed yet when both machines check.
+        if (upper.includes('TITLE =') && upper.includes('PROJECT_ID IS')) {
+          return null as T | null
+        }
+        // processed_mutations idempotency check
+        if (upper.includes('PROCESSED_MUTATIONS')) {
+          return null as T | null
+        }
+        // readCanonical (SELECT * FROM tasks WHERE id = ?)
+        const id = boundVals[0] as string
+        return (store.get(id) ?? null) as T | null
+      },
+
+      all: async <T>() => {
+        return { results: [] as T[], success: true, meta: {} }
+      },
+
+      run: async () => {
+        const upper = sql.trim().toUpperCase()
+        if (upper.startsWith('INSERT INTO PROCESSED_MUTATIONS')) {
+          return { meta: { changes: 1 } }
+        }
+        if (upper.startsWith('INSERT INTO TASKS')) {
+          insertCount++
+          const id = boundVals[0] as string
+          if (insertCount === 1) {
+            // First INSERT (home-machine winner): succeeds
+            store.set(id, {
+              id,
+              title: boundVals[3],
+              project_id: boundVals[2] ?? null,
+              status: boundVals[10] ?? 'todo',
+              deleted_at: null,
+              seq: 1,
+              last_mutation_id: boundVals[boundVals.length - 1],
+              updated_at: new Date().toISOString(),
+            })
+            return { meta: { changes: 1 } }
+          } else {
+            // Second INSERT (work-machine loser): partial index fires.
+            // D1 throws an error matching SQLite UNIQUE constraint violation.
+            throw new Error(
+              'D1_ERROR: UNIQUE constraint failed: tasks.title, tasks.project_id'
+            )
+          }
+        }
+        return { meta: { changes: 0 } }
+      },
+    }
+  }
+
+  return {
+    _store: store,
+    _insertCount: () => insertCount,
+    prepare: (sql: string) => makeStmt(sql, []),
+    batch: async (stmts: any[]) => {
+      for (const s of stmts) await s.run()
+      return []
+    },
+  }
+}
+
+describe('partial index race backstop — concurrent dup INSERT (18:00:27 shape)', () => {
+  // Regression test for the 2026-05-03 18:00:27 incident:
+  // Both home + work machines pushed "Approve: MECHANIC: I18 — 0p+19t" near-
+  // simultaneously. Phase 2 serial dedup didn't catch it because both machines
+  // passed the SELECT check before either INSERT landed.
+  //
+  // With the partial index in place (2be4a01b):
+  //   - The winner INSERT succeeds → row in store
+  //   - The loser INSERT hits the UNIQUE constraint → throws
+  //   - processOne catch(e) wraps it as status='error'
+  //
+  // This test DOCUMENTS the current behavior (error response to loser) and
+  // asserts the partial index fires (regression would be: both succeed).
+  // The client-side gap (status='error' vs 'accepted+deduped') is flagged to
+  // builder via data/shared/hub-schema-changes.jsonl.
+  it('test_partial_index_catches_concurrent_dup_insert_race: loser gets error, winner succeeds', async () => {
+    const db = makeRaceStubDB()
+    const { handleMutations } = await import('./mutations')
+
+    const title = 'Approve: MECHANIC: I18 — 0p+19t'
+    const fakeEnv = { DB: db } as unknown as Env
+
+    // Machine-home (winner) mutation — arrives first
+    const mutHome: Mutation = {
+      mutation_id: 'mut_race_home_0001',
+      origin_machine: 'home',
+      table: 'tasks',
+      op: 'insert',
+      record_id: 'task_01KQQ1SRTWBWREJY0SHPTE5RPJ',  // actual winner PK from incident
+      base_seq: null,
+      base_row_hash: null,
+      payload: {
+        title,
+        project_id: null,
+        status: 'todo',
+        priority: 'medium',
+        assignee: 'nick-ingraham',
+        created_at: '2026-05-03T18:00:27.000Z',
+      },
+      client_ts: '2026-05-03T18:00:27.000Z',
+      issued_at: '2026-05-03T18:00:27.000Z',
+    }
+
+    // Machine-work (loser) mutation — same title, different record_id
+    const mutWork: Mutation = {
+      mutation_id: 'mut_race_work_0001',
+      origin_machine: 'work',
+      table: 'tasks',
+      op: 'insert',
+      record_id: 'task_01KQQ1SRTWBWREJY0SHPTE5RXX',  // loser PK (alias candidate)
+      base_seq: null,
+      base_row_hash: null,
+      payload: {
+        title,
+        project_id: null,
+        status: 'todo',
+        priority: 'medium',
+        assignee: 'nick-ingraham',
+        created_at: '2026-05-03T18:00:27.100Z',
+      },
+      client_ts: '2026-05-03T18:00:27.100Z',
+      issued_at: '2026-05-03T18:00:27.100Z',
+    }
+
+    // Winner request
+    const reqHome = new Request('https://example.com/api/mutations', {
+      method: 'POST',
+      body: JSON.stringify({ mutations: [mutHome] }),
+      headers: { 'Content-Type': 'application/json' },
+    })
+    const respHome = await handleMutations(reqHome, fakeUser, fakeEnv)
+    const bodyHome = await respHome.json() as { results: Array<{ status: string; reason?: string }> }
+
+    // Winner: succeeds
+    expect(bodyHome.results[0].status).toBe('accepted')
+    expect(bodyHome.results[0].reason ?? '').not.toContain('error')
+    expect(db._store.has('task_01KQQ1SRTWBWREJY0SHPTE5RPJ')).toBe(true)
+
+    // Loser request — partial index fires on INSERT
+    const reqWork = new Request('https://example.com/api/mutations', {
+      method: 'POST',
+      body: JSON.stringify({ mutations: [mutWork] }),
+      headers: { 'Content-Type': 'application/json' },
+    })
+    const respWork = await handleMutations(reqWork, fakeUser, fakeEnv)
+    const bodyWork = await respWork.json() as { results: Array<{ status: string; reason?: string }> }
+
+    // Partial index fired: loser gets status='error' (current behavior — see gap note)
+    // If this assert fails, it means the index was dropped and BOTH inserts succeeded
+    // (regression: back to the 18:00:27 dup state).
+    expect(bodyWork.results[0].status).toBe('error')
+    expect(bodyWork.results[0].reason).toContain('UNIQUE constraint failed')
+
+    // The duplicate was NOT inserted — only the winner row exists
+    expect(db._store.has('task_01KQQ1SRTWBWREJY0SHPTE5RXX')).toBe(false)
+
+    // Verify index count: both SELECTs saw empty state (race window), both
+    // attempted INSERT — proves the serial dedup didn't help here.
+    expect(db._insertCount()).toBe(2)
+
+    // CLIENT-SIDE GAP: the loser gets status='error' not status='accepted' with
+    // reason='deduped'. Builder needs to catch the UNIQUE constraint in applyInsert
+    // and return the deduped response. See data/shared/hub-schema-changes.jsonl.
+  })
+
+  it('regression proof: without the index both concurrent inserts would succeed', async () => {
+    // A stub DB where the second INSERT does NOT throw (index absent).
+    // Both inserts succeed → store has two rows with same (title, project_id).
+    // This demonstrates what happened at 18:00:27 before 2be4a01b.
+    const store: Map<string, Record<string, unknown>> = new Map()
+    const noIndexDB = {
+      _store: store,
+      prepare: (sql: string) => {
+        const makeNoIndexStmt = (s: string, vals: unknown[]): any => ({
+          bind: (...more: unknown[]) => makeNoIndexStmt(s, [...vals, ...more]),
+          first: async <T>() => {
+            const upper = s.trim().toUpperCase()
+            if (upper.includes('TITLE =') && upper.includes('PROJECT_ID IS')) {
+              return null as T | null  // race: both see empty
+            }
+            if (upper.includes('PROCESSED_MUTATIONS')) return null as T | null
+            return (store.get(vals[0] as string) ?? null) as T | null
+          },
+          all: async <T>() => ({ results: [] as T[], success: true, meta: {} }),
+          run: async () => {
+            const upper = s.trim().toUpperCase()
+            if (upper.startsWith('INSERT INTO PROCESSED_MUTATIONS')) return { meta: { changes: 1 } }
+            if (upper.startsWith('INSERT INTO TASKS')) {
+              const id = vals[0] as string
+              // No index: silently accept both inserts
+              store.set(id, {
+                id, title: vals[3], project_id: vals[2] ?? null,
+                status: vals[10] ?? 'todo', deleted_at: null, seq: 1,
+              })
+              return { meta: { changes: 1 } }
+            }
+            return { meta: { changes: 0 } }
+          },
+        })
+        return makeNoIndexStmt(sql, [])
+      },
+      batch: async (stmts: any[]) => { for (const s of stmts) await s.run(); return [] },
+    }
+
+    const { handleMutations } = await import('./mutations')
+    const title = 'Approve: MECHANIC: I18 — 0p+19t'
+    const fakeEnvNoIndex = { DB: noIndexDB } as unknown as Env
+
+    for (const [origin, id] of [['home', 'task_winner_noindex'], ['work', 'task_loser_noindex']] as const) {
+      const mut: Mutation = {
+        mutation_id: `mut_race_noidx_${origin}`,
+        origin_machine: origin,
+        table: 'tasks',
+        op: 'insert',
+        record_id: id,
+        base_seq: null,
+        base_row_hash: null,
+        payload: { title, project_id: null, status: 'todo', priority: 'medium', assignee: 'nick-ingraham', created_at: new Date().toISOString() },
+        client_ts: new Date().toISOString(),
+        issued_at: new Date().toISOString(),
+      }
+      const req = new Request('https://example.com/api/mutations', {
+        method: 'POST',
+        body: JSON.stringify({ mutations: [mut] }),
+        headers: { 'Content-Type': 'application/json' },
+      })
+      await handleMutations(req, fakeUser, fakeEnvNoIndex)
+    }
+
+    // Without the index: both rows land → this is the pre-2be4a01b dup state
+    expect(noIndexDB._store.has('task_winner_noindex')).toBe(true)
+    expect(noIndexDB._store.has('task_loser_noindex')).toBe(true)
+
+    // With the index (first test above), only winner lands.
+    // This test exists to make the regression explicit:
+    // drop 2be4a01b's index → this test passes, the race test above fails.
+  })
+})
