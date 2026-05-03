@@ -656,17 +656,58 @@ export async function handleSyncBulkTasks(request: Request, user: AuthUser, env:
 
   for (let i = 0; i < body.tasks.length; i += BATCH_SIZE) {
     const batch = body.tasks.slice(i, i + BATCH_SIZE);
+
+    // I18 dedup (2026-05-03): before the batch INSERT, check each task whose
+    // id does NOT already exist in Hub (new rows only) for a same-(title,
+    // project_id) active duplicate. If found, record it as 'deduped' and
+    // exclude it from the batch. This closes the RC2 leak where two machines
+    // push the same mechanic-triage Approve task with different PKs.
+    //
+    // Only checks tasks whose id isn't already in Hub (no point deduping an
+    // UPDATE; the freshness guard handles that). We do one SELECT per novel
+    // task title — acceptable since batch sizes are ≤50 and these are rare.
+    //
+    // Edge cases:
+    //   - NULL project_id: two tasks with same title and null project_id ARE
+    //     duplicates (the IS ? bind handles SQL NULL equality correctly).
+    //   - deleted rows: excluded (deleted_at IS NOT NULL).
+    //   - status='done': excluded — a completed task should not block a new
+    //     open task of the same name.
+    const placeholdersAll = batch.map(() => '?').join(',');
+    const existingIds = await env.DB.prepare(
+      `SELECT id FROM tasks WHERE id IN (${placeholdersAll})`
+    ).bind(...batch.map(t => t.id)).all<{ id: string }>();
+    const knownIds = new Set((existingIds.results || []).map(r => r.id));
+
+    // deduped_ids: tasks excluded from the INSERT batch due to active dup found
+    const dedupedInBatch = new Set<string>();
+    for (const t of batch) {
+      if (knownIds.has(t.id)) continue; // existing row — handled as UPDATE below
+      if (!t.title) continue;
+      const dup = await env.DB.prepare(
+        `SELECT id FROM tasks WHERE title = ? AND project_id IS ? AND deleted_at IS NULL AND status != 'done' LIMIT 1`
+      ).bind(t.title, t.project_id ?? null).first<{ id: string }>();
+      if (dup && dup.id !== t.id) {
+        dedupedInBatch.add(t.id);
+        results.push({ client_id: t.id, status: 'deduped', reason: `active task with same (title, project_id) exists as ${dup.id}` });
+        ids.push({ client_id: t.id, hub_id: dup.id });
+      }
+    }
+    // Exclude deduped tasks from the INSERT/UPSERT batch
+    const activeBatch = batch.filter(t => !dedupedInBatch.has(t.id));
+    if (activeBatch.length === 0) continue;
+
     // Capture per-row pre-state so the post-batch readback can disambiguate
     // INSERT vs UPDATE-applied vs UPDATE-rejected-stale.
-    const placeholders = batch.map(() => '?').join(',');
+    const placeholders = activeBatch.map(() => '?').join(',');
     const preRows = await env.DB.prepare(
       `SELECT id, updated_at FROM tasks WHERE id IN (${placeholders})`
-    ).bind(...batch.map(t => t.id)).all<{ id: string; updated_at: string | null }>();
+    ).bind(...activeBatch.map(t => t.id)).all<{ id: string; updated_at: string | null }>();
     const preState = new Map<string, string | null>(
       (preRows.results || []).map(r => [r.id, r.updated_at])
     );
 
-    const stmts = batch.map(t =>
+    const stmts = activeBatch.map(t =>
       env.DB.prepare(
         // Bind client_updated_at as the last positional parameter. When NULL,
         // the guard falls through (new row or legacy client) and we write
@@ -725,12 +766,12 @@ export async function handleSyncBulkTasks(request: Request, user: AuthUser, env:
     // (b) whether updated_at advanced.
     const postRows = await env.DB.prepare(
       `SELECT id, updated_at FROM tasks WHERE id IN (${placeholders})`
-    ).bind(...batch.map(t => t.id)).all<{ id: string; updated_at: string | null }>();
+    ).bind(...activeBatch.map(t => t.id)).all<{ id: string; updated_at: string | null }>();
     const postState = new Map<string, string | null>(
       (postRows.results || []).map(r => [r.id, r.updated_at])
     );
 
-    for (const t of batch) {
+    for (const t of activeBatch) {
       const post = postState.get(t.id);
       if (post === undefined) {
         // Row absent post-write — should not happen given INSERT ON CONFLICT,

@@ -225,6 +225,45 @@ async function processOne(
 async function applyInsert(env: Env, mut: Mutation, user: AuthUser): Promise<MutationResult> {
   if (!mut.payload) return mutErr(mut.mutation_id, 'insert requires payload');
 
+  // I18 dedup (2026-05-03): for tasks inserts, reject duplicate (title, project_id)
+  // pairs when an active (non-deleted, non-done) row already exists. This closes
+  // the RC2 leak where two machines running mechanic_triage both push an
+  // "Approve: MECHANIC: I3" task and Hub stores both as separate rows.
+  //
+  // Edge cases:
+  //   - project_id IS NULL: two tasks with same title but both null project_id
+  //     ARE duplicates of each other (SQL IS NULL match).
+  //   - deleted rows: excluded (deleted_at IS NOT NULL). A soft-deleted row
+  //     with the same title is fine to re-create.
+  //   - status='done': excluded. A completed task with same title should not
+  //     block a new open task of the same name (recurring tasks, re-opens).
+  //   - Race condition: the INSERT below uses ON CONFLICT(id) DO NOTHING, so
+  //     two concurrent inserts with the same record_id are already covered by
+  //     Bug Y idempotency. The dedup check here covers the separate-PK case
+  //     (two DIFFERENT record_ids for the same conceptual task).
+  if (mut.table === 'tasks') {
+    const title = (mut.payload as Record<string, unknown>).title as string | undefined;
+    const projectId = (mut.payload as Record<string, unknown>).project_id as string | null | undefined;
+    if (title) {
+      // Use IS ? instead of = ? so NULL project_id matches NULL (SQL equality
+      // NULL = NULL is false; IS NULL = IS NULL is true).
+      const dup = await env.DB.prepare(
+        `SELECT id FROM tasks WHERE title = ? AND project_id IS ? AND deleted_at IS NULL AND status != 'done' LIMIT 1`
+      ).bind(title, projectId ?? null).first<{ id: string }>();
+      if (dup) {
+        // Return the existing row as the canonical result. Outbox treats
+        // this as accepted-idempotent: the conceptual task exists on Hub,
+        // the PB-side can adopt the existing Hub id via alias.
+        const canonical = await readCanonical(env, 'tasks', dup.id);
+        return mkResult(mut.mutation_id, 'accepted', {
+          result_seq: canonical?.seq as number | undefined,
+          canonical_payload: canonical || undefined,
+          reason: `deduped: active task with same (title, project_id) exists as ${dup.id}`,
+        });
+      }
+    }
+  }
+
   const cols = ['id', ...Object.keys(mut.payload), 'last_mutation_id'];
   const vals = [mut.record_id, ...Object.values(mut.payload), mut.mutation_id];
   const placeholders = cols.map(() => '?').join(', ');
