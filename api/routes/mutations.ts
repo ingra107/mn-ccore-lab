@@ -326,6 +326,26 @@ async function applyPatch(
   const patchKeys = Object.keys(mut.patch || {});
   const setClauses = [...patchKeys.map(k => `${k} = ?`), 'updated_at = datetime(\'now\')', 'last_mutation_id = ?'];
   const vals = [...patchKeys.map(k => (mut.patch as Record<string, unknown>)[k]), mut.mutation_id, mut.record_id];
+
+  // I7 fix (2026-05-03): brain.db uses tasks.status='deleted' as its soft-delete
+  // signal, but the outbox emits op='update' + patch={status:'deleted'} rather
+  // than op='delete'. Hub D1's invariant checker (I7) fires when deleted_at IS
+  // NULL despite status='deleted'. Bridge the gap: whenever an update mutation
+  // for the tasks table carries status='deleted' AND the row doesn't already have
+  // deleted_at set, co-apply deleted_at=NOW(). Idempotent: already-deleted rows
+  // are untouched (current.deleted_at check). Does NOT replicate the
+  // POST /tasks/:id/delete cascade (task_comments / task_updates / notifications)
+  // because those tables are Hub-UI artefacts with no brain.db equivalent — the
+  // cascade is cosmetic, not part of the sync contract.
+  const isTaskDeleteByStatus =
+    mut.table === 'tasks' &&
+    (mut.patch as Record<string, unknown>)?.status === 'deleted' &&
+    !current.deleted_at;
+
+  if (isTaskDeleteByStatus) {
+    setClauses.push("deleted_at = datetime('now')");
+  }
+
   const idCol = mut.table === 'day_capacity' ? 'date' : 'id';
   await env.DB.prepare(
     `UPDATE ${mut.table} SET ${setClauses.join(', ')} WHERE ${idCol} = ?`
