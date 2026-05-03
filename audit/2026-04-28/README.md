@@ -4,6 +4,8 @@
 >
 > This directory holds 12 deep page audits + a synthesized plan. Every Hub session should pick up work HERE, in priority order, until the audit is closed.
 
+> **🪙 TOKEN HYGIENE (2026-05-03):** Use `findings-index.md` as the entrypoint for finding ID + file:line. Each raw report under `reports/` is 30-44 KB. **Do not Read all 12 reports.** Only open a raw report when prose context (decision rationale, screenshots, multi-finding clusters) is needed. The findings-index already lists every finding with file:line citations.
+
 ---
 
 ## 🛑 STOP. Before you do ANYTHING in this audit, read in this order:
@@ -12,7 +14,8 @@
 2. `VERIFICATION-PROTOCOL.md` — **MANDATORY** before fixing any finding
 3. `synthesis-plan.md` — the prioritized plan (P0 batch → Phase A → B → C)
 4. `progress-log.md` — what previous sessions did (append-only)
-5. The raw report under `reports/` for the page you're about to touch
+5. `findings-index.md` — quick lookup of every finding by ID + file:line
+6. The raw report under `reports/NN-page.md` **ONLY** if findings-index doesn't give you enough context (rare)
 
 **If you skip step 2, you will fix things that are already fixed, or fix the wrong thing because the source has shifted. Do not skip step 2.**
 
@@ -28,7 +31,8 @@
 │ 2. Read this README                                                   │
 │ 3. Read progress-log.md to see what's been touched                   │
 │ 4. Open synthesis-plan.md, find next unchecked item by priority      │
-│ 5. Open the matching reports/NN-pagename.md to get raw context        │
+│ 5. Look up the finding ID in findings-index.md (file:line is there)   │
+│    Only open reports/NN-pagename.md if prose context is needed        │
 │ 6. RUN VERIFICATION PROTOCOL (from VERIFICATION-PROTOCOL.md)          │
 │    ├─ If verified-still-broken → fix it (carefully)                   │
 │    ├─ If verified-already-fixed → mark it in progress-log + plan     │
