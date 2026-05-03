@@ -39,6 +39,9 @@ function makeStubDB() {
                 const [col, placeholder] = pair.split('=').map(s => s.trim())
                 if (placeholder.includes('datetime')) {
                   row[col] = new Date().toISOString().replace('T', ' ').slice(0, 19)
+                } else if (placeholder.toUpperCase() === 'NULL') {
+                  // Literal NULL — no bound param consumed, set to null directly
+                  row[col] = null
                 } else {
                   row[col] = boundVals[paramIdx++]
                 }
@@ -169,5 +172,80 @@ describe('I7 fix — op=update with status=deleted sets deleted_at', () => {
     expect(result.status).toMatch(/^(accepted|merged_clean)$/)
     const row = db._store.get(taskId)!
     expect(row.deleted_at).toBeNull()
+  })
+
+  // I7-INVERSE tests (2026-05-03): symmetric recovery path
+  it('clears deleted_at when status transitions from deleted to a live status', async () => {
+    const db = makeStubDB()
+    db._store.set(taskId, {
+      id: taskId,
+      title: 'Restored task',
+      status: 'deleted',
+      deleted_at: '2026-05-03 14:24:33',
+      seq: 10,
+      last_mutation_id: 'mut_prev',
+    })
+
+    const mut: Mutation = {
+      mutation_id: 'mut_01hwtest000000000000000004',
+      origin_machine: 'home',
+      table: 'tasks',
+      op: 'update',
+      record_id: taskId,
+      base_seq: 10,
+      base_row_hash: null,
+      patch: { status: 'todo' },
+      client_ts: new Date().toISOString(),
+      issued_at: new Date().toISOString(),
+    }
+
+    const fakeEnv = { DB: db } as unknown as import('../helpers').Env
+    const fakeUser = { email: 'test@example.com', role: 'admin' } as import('../helpers').AuthUser
+
+    const result = await applyUpdate(fakeEnv, mut, fakeUser)
+
+    expect(result.status).toMatch(/^(accepted|merged_clean)$/)
+    const row = db._store.get(taskId)!
+    expect(row.status).toBe('todo')
+    expect(row.deleted_at).toBeNull()
+  })
+
+  it('explicit deleted_at in patch wins over implicit co-flip (precedence rule)', async () => {
+    const db = makeStubDB()
+    const explicitTs = '2026-01-01 00:00:00'
+    db._store.set(taskId, {
+      id: taskId,
+      title: 'Task with explicit deleted_at',
+      status: 'deleted',
+      deleted_at: '2026-05-03 14:24:33',
+      seq: 15,
+      last_mutation_id: 'mut_prev2',
+    })
+
+    // Patch sets status='todo' AND deleted_at explicitly — explicit wins, no co-flip
+    const mut: Mutation = {
+      mutation_id: 'mut_01hwtest000000000000000005',
+      origin_machine: 'home',
+      table: 'tasks',
+      op: 'update',
+      record_id: taskId,
+      base_seq: 15,
+      base_row_hash: null,
+      patch: { status: 'todo', deleted_at: explicitTs } as Record<string, unknown>,
+      client_ts: new Date().toISOString(),
+      issued_at: new Date().toISOString(),
+    }
+
+    // deleted_at is not in TABLE_FIELDS whitelist, so we bypass the whitelist
+    // check by testing applyUpdate directly (not through processOne).
+    const fakeEnv = { DB: db } as unknown as import('../helpers').Env
+    const fakeUser = { email: 'test@example.com', role: 'admin' } as import('../helpers').AuthUser
+
+    const result = await applyUpdate(fakeEnv, mut, fakeUser)
+
+    expect(result.status).toMatch(/^(accepted|merged_clean)$/)
+    const row = db._store.get(taskId)!
+    // The explicit deleted_at from the patch must be applied as-is
+    expect(row.deleted_at).toBe(explicitTs)
   })
 })

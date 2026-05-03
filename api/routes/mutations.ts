@@ -376,13 +376,40 @@ async function applyPatch(
   // POST /tasks/:id/delete cascade (task_comments / task_updates / notifications)
   // because those tables are Hub-UI artefacts with no brain.db equivalent — the
   // cascade is cosmetic, not part of the sync contract.
+  //
+  // I7-INVERSE fix (2026-05-03): symmetric recovery path. When status transitions
+  // FROM 'deleted' to any live status (todo/in_progress/done/blocked/etc.) AND the
+  // row has a stale deleted_at, clear it. Without this, a corrective mutation that
+  // sets status='todo' on a previously-deleted row leaves deleted_at non-null —
+  // the pull-side tombstone branch fires on deleted_at IS NOT NULL and re-deletes
+  // the row on the receiving machine.
+  //
+  // Precedence rule: if the patch EXPLICITLY sets deleted_at, that value wins and
+  // neither co-flip fires (explicit always beats implicit). This preserves the
+  // semantic where a caller intentionally sets deleted_at to a specific timestamp
+  // or NULL directly via the patch payload.
+  const patchedStatus = (mut.patch as Record<string, unknown>)?.status as string | undefined;
+  const explicitDeletedAt = Object.prototype.hasOwnProperty.call(mut.patch ?? {}, 'deleted_at');
+
   const isTaskDeleteByStatus =
     mut.table === 'tasks' &&
-    (mut.patch as Record<string, unknown>)?.status === 'deleted' &&
-    !current.deleted_at;
+    patchedStatus === 'deleted' &&
+    !current.deleted_at &&
+    !explicitDeletedAt;
+
+  const isTaskUndeleteByStatus =
+    mut.table === 'tasks' &&
+    patchedStatus !== undefined &&
+    patchedStatus !== 'deleted' &&
+    !!current.deleted_at &&
+    !explicitDeletedAt;
 
   if (isTaskDeleteByStatus) {
     setClauses.push("deleted_at = datetime('now')");
+  } else if (isTaskUndeleteByStatus) {
+    // Use literal NULL (not a ? placeholder) so the parameter binding index
+    // for subsequent params (last_mutation_id, id) stays correct.
+    setClauses.push("deleted_at = NULL");
   }
 
   const idCol = mut.table === 'day_capacity' ? 'date' : 'id';
