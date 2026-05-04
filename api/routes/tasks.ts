@@ -1005,9 +1005,12 @@ export async function handlePostTaskUpdate(taskId: string, request: Request, use
 // Schema v47 fields (notes, effort, short_title, source_thread_id,
 // related_message_ids) accepted + stored structured. No lossy concat.
 //
-// Dedup rule: if a task with the same (title, project_id, assignee) is
-// already in Hub D1 (completed=0), skip creation and return its existing ID
+// Dedup rule: if a task with the same (title, assignee) is already in Hub D1
+// (completed=0, deleted_at IS NULL), skip creation and return its existing ID
 // in the map. Prevents the same PWA batch re-creating duplicates on retry.
+// NOTE: project_id is NOT part of the dedup key (see SQL at L1054-1057).
+// A task with the same title+assignee but different project_id is treated as
+// a duplicate. Confirmed against codex audit 2026-05-04.
 export async function handleMobileTasksToHub(request: Request, user: AuthUser, env: Env): Promise<Response> {
   const body = await request.json() as {
     tasks: Array<{
