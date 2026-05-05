@@ -1,3 +1,7 @@
+// Canonical contribution-score-with-decay handler. Served at /api/analytics/contributions
+// (not /api/contributions-decay). See api/routes/contributions.ts for the raw
+// per-member contribution list at /api/team/:slug/contributions — those are distinct.
+// 5.3c audit 2026-05-05: dual-path concern verified resolved — one canonical endpoint.
 import type { Env } from '../helpers';
 import { json } from '../helpers';
 
