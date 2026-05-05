@@ -1,14 +1,28 @@
-# Session Handoff — 2026-04-28 (audit waves 1-4 shipped + deployed)
+# Session Handoff — 2026-05-05 (calendar TZ fixes)
 
 ---
 
-## 🚀 LATEST DEPLOY
+## LATEST DEPLOY
 
-**HEAD `46e820b3` on main**, in sync with origin. Pages deploy live at:
+**HEAD `ab14850c` on main**, in sync with origin. Pages deploy live at:
 
-> https://86c3445e.mn-ccore-lab.pages.dev
+> https://d4fe4812.mn-ccore-lab.pages.dev (production alias: mn-ccore-lab.pages.dev)
 
-Schema v54 applied to prod D1 (`team_members.citation_count` + `h_index` + `last_scholar_refresh`).
+Worker version `33d504ff`. Calendar cron re-polled `2026-05-05T14:16:12.266Z`, no errors.
+
+### Calendar timezone fix (commit ab14850c)
+
+Three bugs fixed in `fix(calendar): two-pass tzOffsetMinutes + isToday local date + sort by startMin`:
+
+1. **`api/lib/ics-parser.ts`** — `tzOffsetMinutes()` two-pass probe: single-pass Intl probe gave wrong DST state near transitions in Workers runtime (CDT = UTC-5 computed as CST = UTC-6, +1hr drift for TZID-format events). Fix: pass1=naive approx, pass2=re-query at candidateUtc. Regression tests added (79 total, was 77).
+
+2. **`src/components/today/constants.ts`** — `isToday()` now compares local date components (getFullYear/getMonth/getDate) not UTC ISO slice. Prevents post-7pm CDT events (midnight+ UTC) appearing on wrong day.
+
+3. **`src/pages/portal/TodayPage.tsx`** — `timed.sort()` now sorts by `startMin` (numeric) not `a.time.localeCompare()`. Lexicographic sort put "9:30 AM" after "12:00 PM" (because "9" > "1").
+
+D1 verify after re-poll: CQODE `T14:30:00.000Z` (9:30am CDT correct), MNCCORE `T21:00:00.000Z` (4pm CDT — matches ICS feed). If Nick's actual meeting times differ from what Hub shows, the Google Calendar entries themselves need correction.
+
+Schema v54 still in prod D1 (`team_members.citation_count` + `h_index` + `last_scholar_refresh`).
 
 ---
 
