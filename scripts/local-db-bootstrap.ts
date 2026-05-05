@@ -1,6 +1,6 @@
 #!/usr/bin/env tsx
 /**
- * Local D1 bootstrap — applies api/schema.sql + every api/schema-v*.sql
+ * Local D1 bootstrap — applies api/bootstrap-schema.sql + every api/schema-v*.sql
  * migration, in numeric version order, to the local Miniflare D1 instance.
  *
  * Usage:
@@ -12,7 +12,7 @@
  * d1:write scope on machines where CLOUDFLARE_API_TOKEN is pinned to Pages.
  *
  * Ordering rules:
- *   1. api/schema.sql runs first (base table definitions, IF NOT EXISTS).
+ *   1. api/bootstrap-schema.sql runs first (base table definitions, IF NOT EXISTS).
  *   2. Migration files run in ascending numeric version order.
  *   3. When two migration files share the same version (e.g. schema-v22.sql
  *      and schema-v22-rename-columns.sql), the plain "schema-vN.sql" file
@@ -52,7 +52,7 @@ type MigrationFile = { path: string; file: string; version: number; suffixRank: 
  */
 const FRESH_BOOTSTRAP_SKIP: ReadonlySet<string> = new Set([
   'schema-v22-rename-columns.sql',
-  // schema.sql (base) already declares team_members.email; v43 ALTER
+  // bootstrap-schema.sql (base) already declares team_members.email; v43 ALTER
   // trips "duplicate column name: email" on a fresh bootstrap.  Prod
   // applied v43 as an ADD COLUMN because its schema predated the email
   // field — the base schema has since caught up.
@@ -130,8 +130,8 @@ function run() {
     rmSync(LOCAL_D1_STATE, { recursive: true, force: true })
   }
 
-  // 1. Base schema.sql
-  applySqlFile(join(SCHEMA_DIR, 'schema.sql'), 'schema.sql (base)')
+  // 1. Base bootstrap-schema.sql
+  applySqlFile(join(SCHEMA_DIR, 'bootstrap-schema.sql'), 'bootstrap-schema.sql (base)')
 
   // 2. Migration files in version order
   const migrations = listMigrations()

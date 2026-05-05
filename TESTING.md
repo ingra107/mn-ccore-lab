@@ -93,7 +93,7 @@ Playwright tests run against a **separate D1 database** (`mnccore-lab-test`), no
 
 - **Playwright config (prod smoke)**: `playwright.config.prod.ts` (Chromium, 30s, narrow `tests/smoke.spec.ts` match, NO `X-Test-Mode` header — that pattern was deprecated in the 2026-04-15 Miniflare rework)
 - **Playwright config (local, default)**: `playwright.config.local.ts` (Chromium, 30s, `testMatch: tests/local/**`, baseURL `http://localhost:5173`, no extra headers)
-- **Test database (local)**: Miniflare-hosted D1 in `.wrangler/state/v3/d1/` (binding: `DB`), bootstrapped from `api/schema.sql` + every `api/schema-v*.sql`
+- **Test database (local)**: Miniflare-hosted D1 in `.wrangler/state/v3/d1/` (binding: `DB`), bootstrapped from `api/bootstrap-schema.sql` + every `api/schema-v*.sql`
 - **Test database (legacy prod)**: `mnccore-lab-test` D1 instance (binding: `DB_TEST`) — still exists but no longer the primary path
 - **Test cleanup**: `tests/test-cleanup.ts` (prefix: `_TEST_DELETE_`)
 - **Test results**: `review/audit-results.json` + `review/test-summary.txt`
@@ -118,7 +118,7 @@ npm run test:local:setup        # apply schema + seed the local D1
 
 `test:local:setup` runs two scripts back-to-back:
 
-1. **`tsx scripts/local-db-bootstrap.ts`** — applies `api/schema.sql` to the
+1. **`tsx scripts/local-db-bootstrap.ts`** — applies `api/bootstrap-schema.sql` to the
    local D1 (`.wrangler/state/v3/d1`), then every `api/schema-v*.sql`
    migration in numeric version order.  Files sharing a version number
    (e.g. `schema-v22.sql` and `schema-v22-rename-columns.sql`) run
@@ -211,7 +211,7 @@ it's not `mn-ccore-lab`.  This means:
 `.github/workflows/schema-drift.yml` runs nightly (09:00 UTC / ~3am CT)
 and on manual `workflow_dispatch`.  It dumps the live prod D1 schema via
 `wrangler d1 execute mnccore-lab --remote --command ".schema"`, builds a
-concatenated committed-schema reference from `api/schema.sql` +
+concatenated committed-schema reference from `api/bootstrap-schema.sql` +
 `api/schema-v*.sql` in version order, and `diff`s them.  Drift fails the
 job and uploads a `schema-drift-diff` artifact for inspection.
 
