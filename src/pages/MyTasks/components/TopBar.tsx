@@ -4,6 +4,7 @@
 //
 // Extracted from src/pages/portal/UnifiedMyTasks.tsx.
 
+import { Plus } from 'lucide-react'
 import { researchTeam } from '../../../data/team'
 import SavedViewsMenu from '../../../components/SavedViewsMenu'
 import { ViewPicker } from './ViewPicker'
@@ -24,9 +25,10 @@ interface TopBarProps {
   projectOptions: FilterOption[]
   currentQuery: string
   onApplyView: (q: string) => void
+  onCreateTask: () => void
 }
 
-export function TopBar({ view, setView, search, setSearch, filter, setFilter, quickView, setQuickView, taskCount, projectOptions, currentQuery, onApplyView }: TopBarProps) {
+export function TopBar({ view, setView, search, setSearch, filter, setFilter, quickView, setQuickView, taskCount, projectOptions, currentQuery, onApplyView, onCreateTask }: TopBarProps) {
   const tabs: { k: QuickViewKey; l: string; color?: string }[] = [
     { k: 'all', l: 'All' },
     { k: 'today', l: '📌 Today', color: ACCENT_GOLD },
@@ -41,6 +43,18 @@ export function TopBar({ view, setView, search, setSearch, filter, setFilter, qu
         <h1 style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-0.02em', margin: 0, color: '#fff' }}>My Tasks</h1>
         <span aria-live="polite" aria-atomic="true" style={{ fontSize: 11, color: INK_DIM, fontVariantNumeric: 'tabular-nums' }}>{taskCount} visible</span>
         <div style={{ flex: 1 }} />
+        <button
+          onClick={onCreateTask}
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: 6,
+            padding: '6px 14px', borderRadius: 6, fontSize: 13, fontWeight: 500,
+            fontFamily: 'inherit', cursor: 'pointer', border: 'none',
+            backgroundColor: ACCENT_TEAL, color: 'var(--ink-bright, #fff)',
+          }}
+        >
+          <Plus size={15} />
+          Create Task
+        </button>
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}

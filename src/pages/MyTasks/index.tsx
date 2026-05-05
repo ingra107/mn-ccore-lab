@@ -16,9 +16,10 @@ import { emailToSlug } from '../../lib/emailSlug'
 import { researchTeam } from '../../data/team'
 import { usePageMeta } from '../../hooks/usePageMeta'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
-import { useBulkUpdateTasks, useUpdateTask } from '../../hooks/useMutations'
+import { useBulkUpdateTasks, useUpdateTask, useCreateTask } from '../../hooks/useMutations'
 import { useUndoToast } from '../../components/UndoToast'
 import TaskDetailPanel from '../../components/tasks/TaskDetailPanel'
+import CreateTaskModal from '../../components/tasks/CreateTaskModal'
 import { TopBar } from './components/TopBar'
 import { BulkBar } from './components/BulkBar'
 import { ColumnsView } from './views/ColumnsView'
@@ -143,6 +144,23 @@ export default function UnifiedMyTasks() {
   const updateTask = useUpdateTask()
   const undoToast = useUndoToast()
 
+  // ── Create task ─────────────────────────────────────────────
+  const [showCreate, setShowCreate] = useState(false)
+  const createTask = useCreateTask()
+  const handleCreate = useCallback((task: {
+    title: string
+    description: string
+    assignee: string
+    project_id?: string
+    due_date?: string
+    priority?: string
+  }) => {
+    createTask.mutate(task, {
+      onSuccess: () => undoToast.showSuccess('Task created'),
+    })
+    setShowCreate(false)
+  }, [createTask, undoToast])
+
   const onBulkPlanToday = useCallback(() => {
     // Writes to today_state localStorage so TodayPage picks them up.
     const key = `today_state_${todayKey()}`
@@ -225,6 +243,7 @@ export default function UnifiedMyTasks() {
         projectOptions={projectOptions}
         currentQuery={currentQuery}
         onApplyView={applyView}
+        onCreateTask={() => setShowCreate(true)}
       />
       {selected.size > 0 && (
         <BulkBar
@@ -253,6 +272,11 @@ export default function UnifiedMyTasks() {
           )}
         </div>
       </div>
+      <CreateTaskModal
+        open={showCreate}
+        onClose={() => setShowCreate(false)}
+        onCreate={handleCreate}
+      />
       {drawerTask && (
         <TaskDetailPanel
           task={drawerTask}
