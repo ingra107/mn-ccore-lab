@@ -108,7 +108,13 @@ export function Timeline({ events, tasks, state, projectsByPid, expandedId, onEx
   }, [visibleMeetings, now, listHeight])
   const showLine = lineTop >= 0
   const nowColor = inMeeting ? ACCENT_CORAL : ACCENT_GOLD
-  const nowLabel = `${String(Math.floor(now / 60)).padStart(2, '0')}:${String(now % 60).padStart(2, '0')}`
+  // Derive nowLabel from live wall-clock time at render, NOT from the 60s-tick
+  // `now` hook. The hook drives position smoothness (updates every 60s); the
+  // label should always reflect actual current time so it never shows a stale
+  // minute (e.g. "11:00" when it's 11:29). Both read from system clock so
+  // label and position remain consistent to within a few seconds.
+  const nowLabelDate = new Date()
+  const nowLabel = `${String(nowLabelDate.getHours()).padStart(2, '0')}:${String(nowLabelDate.getMinutes()).padStart(2, '0')}`
   // Suppress unused-var warning for derived window; kept in scope for future work.
   void dayStart; void dayEnd
 
