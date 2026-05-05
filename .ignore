@@ -1,0 +1,25 @@
+# Codex / ripgrep ignore — keep audit-relevant code in scope only
+# Exists so `rg --files .` returns ~700 files instead of ~4876.
+# Re-evaluate when adding new directories at root.
+
+# Design captures + screenshots (3779 + 152 + 33 + 98 = 4062 files, none architectural)
+review/
+qa-screenshots/
+eval-screenshots/
+.playwright-mcp/
+.superpowers/
+.stitch/
+.vitest-attachments/
+
+# Build artifacts
+node_modules/
+dist/
+test-results/
+.wrangler/
+
+# Prior audit (2026-04-28) — codex should not redo this; mentioned in prompt
+audit/2026-04-28/reports/
+
+# Archived / historical
+Archive/
+docs/archived/

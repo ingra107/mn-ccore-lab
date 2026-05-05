@@ -1,13 +1,11 @@
--- MN-CCORE Lab Hub — D1 Schema
--- Run with: wrangler d1 execute mnccore-lab --file=api/schema.sql
+-- MN-CCORE Lab Hub — D1 BOOTSTRAP Schema
 --
--- ⚠️ SEED-ONLY (post-A3, 2026-04-30; comment added 2026-05-04 codex review).
--- This file is bootstrap only and is missing fields added by post-seed migrations.
--- Current synced field contracts live in api/routes/mutations.ts:TABLE_FIELDS for
--- tasks, projects, inbox_events, day_capacity, project_state_log.
--- Post-seed schema migrations: api/schema-v*.sql (~62 files; v55 + v58 + v59 add
--- last_mutation_id + processed_mutations + workflow metadata).
--- See: Context/Decisions/2026-04-30-a3-cutover-codex-validated.md (lines 86-88).
+-- THIS FILE IS NOT THE CURRENT PRODUCTION SCHEMA.
+-- It is the seed schema applied once when D1 was bootstrapped.
+-- Current production state = this file + 60 migrations (api/schema-v*.sql).
+-- For current schema, run: wrangler d1 export mnccore-lab --remote
+--
+-- Run with: wrangler d1 execute mnccore-lab --file=api/bootstrap-schema.sql
 
 -- Publications
 CREATE TABLE IF NOT EXISTS publications (
