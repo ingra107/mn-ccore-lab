@@ -197,6 +197,8 @@ export async function handlePBCapture(request: Request, user: AuthUser, env: Env
     await env.DB.prepare(
       'INSERT INTO ideas (id, title, submitted_by, status) VALUES (?, ?, ?, ?)'
     ).bind(id, body.text.trim(), 'nick-ingraham', 'new').run()
+  } else {
+    return error(`unsupported capture type: ${type}. Allowed: task, idea`, 400)
   }
 
   await logActivity(env, type, `PB capture: ${body.text.trim().slice(0, 100)}`, user.email, id, type)
