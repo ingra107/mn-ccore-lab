@@ -1,5 +1,6 @@
 import type { AuthUser, Env } from '../helpers';
 import { json, error, generateId, logActivity } from '../helpers';
+import { applyMutation } from './mutations';
 
 // GET /api/pb/command-center?date=YYYY-MM-DD
 export async function handleCommandCenter(env: Env, planDate?: string): Promise<Response> {
@@ -190,9 +191,25 @@ export async function handlePBCapture(request: Request, user: AuthUser, env: Env
   const id = type === 'task' ? generateId('task') : generateId()
 
   if (type === 'task') {
-    await env.DB.prepare(
-      'INSERT INTO tasks (id, title, description, assignee, priority, source, status, project_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
-    ).bind(id, body.text.trim(), body.text.trim(), 'nick-ingraham', body.priority || 'medium', 'pb-sector', 'todo', body.project || null).run()
+    const captureMut = await applyMutation(env, {
+      table: 'tasks',
+      record_id: id,
+      op: 'insert',
+      payload: {
+        title: body.text.trim(),
+        description: body.text.trim(),
+        assignee: 'nick-ingraham',
+        priority: body.priority || 'medium',
+        source: 'pb-sector',
+        status: 'todo',
+        project_id: body.project || null,
+      },
+      route: 'handlePBCapture',
+      user,
+    });
+    if (captureMut.status !== 'accepted') {
+      return error(`mutation rejected: ${captureMut.status} — ${captureMut.reason ?? ''}`, 409);
+    }
   } else if (type === 'idea') {
     await env.DB.prepare(
       'INSERT INTO ideas (id, title, submitted_by, status) VALUES (?, ?, ?, ?)'
@@ -206,18 +223,26 @@ export async function handlePBCapture(request: Request, user: AuthUser, env: Env
 }
 
 // POST /api/pb/defer — defer a task to tomorrow/next week
-export async function handlePBDefer(request: Request, env: Env): Promise<Response> {
+export async function handlePBDefer(request: Request, user: AuthUser, env: Env): Promise<Response> {
   const body = await request.json() as { id: string; to: 'tomorrow' | 'next_week' | 'someday' }
   const dueDate = body.to === 'tomorrow' ? new Date(Date.now() + 86400000).toISOString().split('T')[0]
     : body.to === 'next_week' ? new Date(Date.now() + 7*86400000).toISOString().split('T')[0]
     : null
 
-  if (body.to === 'someday') {
-    await env.DB.prepare('UPDATE tasks SET due_date = ?, priority = ? WHERE id = ?')
-      .bind(null, 'low', body.id).run()
-  } else {
-    await env.DB.prepare('UPDATE tasks SET due_date = ? WHERE id = ?')
-      .bind(dueDate, body.id).run()
+  const deferPatch: Record<string, unknown> = body.to === 'someday'
+    ? { due_date: null, priority: 'low' }
+    : { due_date: dueDate };
+
+  const deferMut = await applyMutation(env, {
+    table: 'tasks',
+    record_id: body.id,
+    op: 'update',
+    patch: deferPatch,
+    route: 'handlePBDefer',
+    user,
+  });
+  if (deferMut.status !== 'accepted' && deferMut.status !== 'merged_clean') {
+    return error(`mutation rejected: ${deferMut.status} — ${deferMut.reason ?? ''}`, 409);
   }
 
   return json({ data: { ok: true } })

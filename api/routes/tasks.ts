@@ -1,6 +1,7 @@
 import type { AuthUser, Env } from '../helpers';
 import { json, error, generateId, logActivity, parseMentions, actorSlug } from '../helpers';
 import { filterFixtures } from '../lib/fixtures';
+import { applyMutation } from './mutations';
 
 // GET /api/tasks/overdue-count?assignee= — lightweight count for sidebar badge
 export async function handleOverdueCount(url: URL, env: Env): Promise<Response> {
@@ -91,9 +92,22 @@ export async function handleUpdateTaskStatus(id: string, request: Request, user:
   const completedAt = completed ? new Date().toISOString() : null;
   const completedBy = completed ? user.email : null;
 
-  await env.DB.prepare(
-    "UPDATE tasks SET status = ?, completed = ?, completed_at = ?, completed_by = ?, updated_at = datetime('now') WHERE id = ?"
-  ).bind(body.status, completed, completedAt, completedBy, id).run();
+  const mutResult = await applyMutation(env, {
+    table: 'tasks',
+    record_id: id,
+    op: 'update',
+    patch: {
+      status: body.status,
+      completed,
+      completed_at: completedAt,
+      completed_by: completedBy,
+    },
+    route: 'handleUpdateTaskStatus',
+    user,
+  });
+  if (mutResult.status !== 'accepted' && mutResult.status !== 'merged_clean') {
+    return error(`mutation rejected: ${mutResult.status} — ${mutResult.reason ?? ''}`, 409);
+  }
 
   await logActivity(env, 'task', `${body.status === 'done' ? 'Completed' : `Status → ${body.status}`}: "${item.title || item.description}"`, user.email, id, 'task');
 
@@ -125,13 +139,27 @@ export async function handleUpdateTaskStatus(id: string, request: Request, user:
           }
           nextDue = d.toISOString().split('T')[0];
         }
-        const nextId = generateId();
+        const nextId = generateId('task');
         // Note: recurrence + recurrence_parent_id columns not yet in D1 schema (pending schema v35).
         // Insert without those columns until migration is applied.
-        await env.DB.prepare(
-          `INSERT INTO tasks (id, title, description, assignee, project_id, due_date, priority, status, source, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, 'todo', 'recurrence', datetime('now'), datetime('now'))`
-        ).bind(nextId, fullTask?.title, fullTask?.description || '', fullTask?.assignee || '', fullTask?.project_id || null, nextDue, fullTask?.priority || 'medium').run();
+        // Route through applyMutation so last_mutation_id is stamped (Phase 3.1).
+        await applyMutation(env, {
+          table: 'tasks',
+          record_id: nextId,
+          op: 'insert',
+          payload: {
+            title: fullTask?.title as string | undefined,
+            description: (fullTask?.description as string) || '',
+            assignee: (fullTask?.assignee as string) || '',
+            project_id: (fullTask?.project_id as string) || null,
+            due_date: nextDue,
+            priority: (fullTask?.priority as string) || 'medium',
+            status: 'todo',
+            source: 'recurrence',
+          },
+          route: 'handleUpdateTaskStatus:recurrence',
+          user,
+        });
       }
     } catch (e) { console.error('Failed to create recurring task:', e); }
   }
@@ -176,9 +204,23 @@ export async function handleToggleTask(id: string, user: AuthUser, env: Env): Pr
       "UPDATE action_items SET completed = ?, completed_at = ?, completed_by = ? WHERE id = ?"
     ).bind(newCompleted, newCompleted ? new Date().toISOString() : null, newCompleted ? user.email : null, id).run();
   } else {
-    await env.DB.prepare(
-      "UPDATE tasks SET status = ?, completed = ?, completed_at = ?, completed_by = ?, updated_at = datetime('now') WHERE id = ?"
-    ).bind(newStatus, newCompleted, newCompleted ? new Date().toISOString() : null, newCompleted ? user.email : null, id).run();
+    // Route through applyMutation so last_mutation_id is stamped (Phase 3.1).
+    const toggleMutResult = await applyMutation(env, {
+      table: 'tasks',
+      record_id: id,
+      op: 'update',
+      patch: {
+        status: newStatus,
+        completed: newCompleted,
+        completed_at: newCompleted ? new Date().toISOString() : null,
+        completed_by: newCompleted ? user.email : null,
+      },
+      route: 'handleToggleTask',
+      user,
+    });
+    if (toggleMutResult.status !== 'accepted' && toggleMutResult.status !== 'merged_clean') {
+      return error(`mutation rejected: ${toggleMutResult.status} — ${toggleMutResult.reason ?? ''}`, 409);
+    }
   }
 
   await logActivity(env, 'task', `${newCompleted ? 'Completed' : 'Reopened'}: "${item.description}"`, user.email, id, table === 'action_items' ? 'action_item' : 'task');
@@ -261,9 +303,27 @@ export async function handleUpdateTask(id: string, request: Request, user: AuthU
 
   if (updates.length === 0) return error('No valid fields to update', 400);
 
-  updates.push("updated_at = datetime('now')");
-  params.push(id);
-  await env.DB.prepare(`UPDATE tasks SET ${updates.join(', ')} WHERE id = ?`).bind(...params).run();
+  // Build patch from the collected updates/params (fields already validated against TASK_ALLOWED_FIELDS,
+  // including auto-derived completed/completed_at/completed_by from the status sync block above).
+  // Re-key from the updates[] + params[] parallel arrays back to a patch object.
+  const patchRecord: Record<string, unknown> = {};
+  let paramIdx = 0;
+  for (const setClause of updates) {
+    const col = setClause.split(' = ')[0].trim();
+    patchRecord[col] = params[paramIdx++];
+  }
+
+  const updateMutResult = await applyMutation(env, {
+    table: 'tasks',
+    record_id: id,
+    op: 'update',
+    patch: patchRecord,
+    route: 'handleUpdateTask',
+    user,
+  });
+  if (updateMutResult.status !== 'accepted' && updateMutResult.status !== 'merged_clean') {
+    return error(`mutation rejected: ${updateMutResult.status} — ${updateMutResult.reason ?? ''}`, 409);
+  }
 
   const updated = await env.DB.prepare('SELECT * FROM tasks WHERE id = ?').bind(id).first();
   if (!updated) return error('Task not found', 404);
@@ -322,20 +382,40 @@ export async function handleCreateTask(request: Request, user: AuthUser, env: En
   const status = body.status && ['todo', 'in_progress', 'done', 'blocked', 'waiting_external'].includes(body.status)
     ? body.status : 'todo';
 
-  await env.DB.prepare(
-    'INSERT INTO tasks (id, title, description, assignee, assigned_by, meeting_id, project_id, due_date, deadline, priority, status, source, key_link_1, key_link_1_desc, key_link_2, key_link_2_desc, key_link_3, key_link_3_desc, notes, effort, short_title, source_thread_id, related_message_ids) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
-  ).bind(
-    id, title, body.description, body.assignee, user.email,
-    body.meeting_id ?? null, resolvedProjectId, body.due_date ?? null,
-    body.deadline ?? null,  // v51 (2026-04-26): tasks.deadline
-    priority, status, source,
-    body.key_link_1 ?? null, body.key_link_1_desc ?? null,
-    body.key_link_2 ?? null, body.key_link_2_desc ?? null,
-    body.key_link_3 ?? null, body.key_link_3_desc ?? null,
-    // v47 fields (Airtable Funeral Phase 1)
-    body.notes ?? null, body.effort ?? null, body.short_title ?? null,
-    body.source_thread_id ?? null, body.related_message_ids ?? null,
-  ).run();
+  const createMutResult = await applyMutation(env, {
+    table: 'tasks',
+    record_id: id,
+    op: 'insert',
+    payload: {
+      title,
+      description: body.description,
+      assignee: body.assignee,
+      assigned_by: user.email,
+      meeting_id: body.meeting_id ?? null,
+      project_id: resolvedProjectId,
+      due_date: body.due_date ?? null,
+      deadline: body.deadline ?? null,
+      priority,
+      status,
+      source,
+      key_link_1: body.key_link_1 ?? null,
+      key_link_1_desc: body.key_link_1_desc ?? null,
+      key_link_2: body.key_link_2 ?? null,
+      key_link_2_desc: body.key_link_2_desc ?? null,
+      key_link_3: body.key_link_3 ?? null,
+      key_link_3_desc: body.key_link_3_desc ?? null,
+      notes: body.notes ?? null,
+      effort: body.effort ?? null,
+      short_title: body.short_title ?? null,
+      source_thread_id: body.source_thread_id ?? null,
+      related_message_ids: body.related_message_ids ?? null,
+    },
+    route: 'handleCreateTask',
+    user,
+  });
+  if (createMutResult.status !== 'accepted') {
+    return error(`mutation rejected: ${createMutResult.status} — ${createMutResult.reason ?? ''}`, 409);
+  }
 
   await logActivity(env, 'task', `Created task: "${title}" → ${body.assignee}`, user.email, id, 'task');
 
@@ -592,7 +672,28 @@ export async function handleBatchUpdateTasks(request: Request, user: AuthUser, e
 // behavior was last-writer-wins (line updated_at = datetime('now')) which
 // let a stale machine clobber the peer's authoritative state (see I18
 // drift investigation 2026-04-21).
+/**
+ * /api/sync/bulk-tasks — one-shot migration / mobile catch-up only.
+ * Gated behind HUB_BULK_MIGRATION_MODE=1 env var as of 2026-05-04
+ * (Phase 3.1 Step 7). Normal Hub UI / PB writes go through applyMutation.
+ *
+ * Use cases that legitimately need this path:
+ * - mobile catch-up after offline period (PWA bulk import)
+ * - one-shot migrations (e.g., backfill from external source)
+ * - explicit `clear_existing` wipe-and-reload during recovery
+ *
+ * NOT a normal-operation path. If you find yourself reaching for this,
+ * use applyMutation per-row instead.
+ */
 export async function handleSyncBulkTasks(request: Request, user: AuthUser, env: Env): Promise<Response> {
+  if ((env as unknown as Record<string, string>).HUB_BULK_MIGRATION_MODE !== '1') {
+    return error(
+      'sync-bulk requires HUB_BULK_MIGRATION_MODE=1 (one-shot migrations only). ' +
+      'Normal writes go through /api/mutations.',
+      403,
+    );
+  }
+
   const body = await request.json() as {
     tasks: Array<{
       id: string; title: string; description?: string | null;
@@ -870,15 +971,22 @@ export async function handleDeleteTask(id: string, user: AuthUser, env: Env): Pr
     console.error('task cascade-clean failed:', e);
   }
 
-  // Soft-delete. Only flip deleted_at if it's NULL so we can detect idempotent
-  // re-deletes via meta.changes.
-  const result = await env.DB.prepare(
-    "UPDATE tasks SET deleted_at = datetime('now'), updated_at = datetime('now') WHERE id = ? AND deleted_at IS NULL"
-  ).bind(id).run();
-
-  if (result.meta.changes === 0) {
+  // Idempotent: already-deleted returns accepted.
+  if (existing.deleted_at) {
     await logActivity(env, 'task_delete', `Deleted task (idempotent): ${label}`, user.email, id, 'task');
     return json({ data: { deleted: id, title: label, idempotent: true } });
+  }
+
+  // Soft-delete via applyMutation — stamps last_mutation_id + records in processed_mutations.
+  const deleteMutResult = await applyMutation(env, {
+    table: 'tasks',
+    record_id: id,
+    op: 'delete',
+    route: 'handleDeleteTask',
+    user,
+  });
+  if (deleteMutResult.status !== 'accepted' && deleteMutResult.status !== 'merged_clean') {
+    return error(`mutation rejected: ${deleteMutResult.status} — ${deleteMutResult.reason ?? ''}`, 409);
   }
 
   await logActivity(env, 'task_delete', `Deleted task: ${label}`, user.email, id, 'task');
@@ -1082,19 +1190,36 @@ export async function handleMobileTasksToHub(request: Request, user: AuthUser, e
     const priority = pwaTask.priority || 'medium';
 
     try {
-      await env.DB.prepare(
-        'INSERT INTO tasks (id, title, description, assignee, assigned_by, project_id, due_date, deadline, priority, status, source, completed, completed_at, notes, effort, short_title, source_thread_id, related_message_ids) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
-      ).bind(
-        id, title, description, assignee, user.email,
-        resolvedProjectId, pwaTask.due_date ?? null,
-        pwaTask.deadline ?? null,  // v51 (2026-04-26): tasks.deadline
-        priority, status, 'mobile',
-        completedInt, completedInt ? new Date().toISOString() : null,
-        pwaTask.notes ?? null, pwaTask.effort ?? null,
-        pwaTask.short_title ?? null,
-        pwaTask.source_thread_id ?? null,
-        pwaTask.related_message_ids ?? null,
-      ).run();
+      const mobileMutResult = await applyMutation(env, {
+        table: 'tasks',
+        record_id: id,
+        op: 'insert',
+        payload: {
+          title,
+          description,
+          assignee,
+          assigned_by: user.email,
+          project_id: resolvedProjectId,
+          due_date: pwaTask.due_date ?? null,
+          deadline: (pwaTask as Record<string, unknown>).deadline ?? null,
+          priority,
+          status,
+          source: 'mobile',
+          completed: completedInt,
+          completed_at: completedInt ? new Date().toISOString() : null,
+          notes: pwaTask.notes ?? null,
+          effort: pwaTask.effort ?? null,
+          short_title: pwaTask.short_title ?? null,
+          source_thread_id: pwaTask.source_thread_id ?? null,
+          related_message_ids: pwaTask.related_message_ids ?? null,
+        },
+        route: 'handleMobileTasksToHub',
+        user,
+      });
+      if (mobileMutResult.status !== 'accepted') {
+        errors.push(`${pwaTask.id}: mutation ${mobileMutResult.status} — ${mobileMutResult.reason ?? ''}`);
+        continue;
+      }
       id_map[pwaTask.id] = id;
       created++;
 

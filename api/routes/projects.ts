@@ -1,5 +1,6 @@
 import type { AuthUser, Env } from '../helpers';
 import { json, error, generateId, logActivity, parseMentions, actorSlug } from '../helpers';
+import { applyMutation } from './mutations';
 
 // ── AI Co-Scientist: detect @hermes/@claude mentions and create pending request ──
 async function handleClaudeMention(
@@ -154,18 +155,26 @@ export async function handleCreateProject(
   }
   const id = generateId('project');  // A1.2: typed ULID
 
-  await env.DB.prepare(
-    `INSERT INTO projects (id, title, slug, category, stage, description, pi, status, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, 'active', datetime('now'), datetime('now'))`
-  ).bind(
-    id,
-    body.title.trim(),
-    slug,
-    body.category || 'lab',
-    body.stage || 'Idea',
-    body.description || '',
-    body.pi || user.email.split('@')[0],
-  ).run();
+  const createProjMut = await applyMutation(env, {
+    table: 'projects',
+    record_id: id,
+    op: 'insert',
+    payload: {
+      title: body.title.trim(),
+      slug,
+      category: body.category || 'lab',
+      stage: body.stage || 'Idea',
+      description: body.description || '',
+      pi: body.pi || user.email.split('@')[0],
+      status: 'active',
+      created_at: new Date().toISOString(),
+    },
+    route: 'handleCreateProject',
+    user,
+  });
+  if (createProjMut.status !== 'accepted') {
+    return error(`mutation rejected: ${createProjMut.status} — ${createProjMut.reason ?? ''}`, 409);
+  }
 
   await logActivity(env, 'project', `Created project: ${body.title.trim()}`, user.email, id, null);
 
@@ -441,12 +450,10 @@ export async function handleUpdateProject(
 ): Promise<Response> {
   const body = await request.json() as Record<string, unknown>;
 
-  // 2026-04-21 stale-overwrite guard (mirrors handleSyncBulkTasks tasks.ts:521-549).
-  // When the client passes `client_updated_at`, use it as the new row's updated_at
-  // AND guard the UPDATE with `client_updated_at >= projects.updated_at`. Prevents
-  // a stale machine from clobbering a peer's authoritative edit. Backwards-compat:
-  // callers that don't send client_updated_at get the legacy unconditional update.
-  const clientUpdatedAt = (body.client_updated_at as string | undefined) ?? null;
+  // client_updated_at was a LWW guard for the legacy direct-SQL path.
+  // Post-Phase-3.1, Hub UI writes go through applyMutation (base_seq=null =>
+  // always authoritative from Hub). Strip it from the patch so it doesn't
+  // end up in the field-whitelist check.
   delete body.client_updated_at;
 
   const updates: string[] = [];
@@ -471,51 +478,57 @@ export async function handleUpdateProject(
     return error('No valid fields to update', 400);
   }
 
-  // Updated_at column: use client value if present, else server now().
-  updates.push("updated_at = COALESCE(?, datetime('now'))");
-  values.push(clientUpdatedAt);
-
-  // Check row existence BEFORE the update so we can distinguish "row not found"
-  // (fall through to INSERT) from "row found but guard rejected" (return 200 with
-  // current state + rejected flag).
+  // Check row existence to distinguish "row not found" (fallback INSERT)
+  // from "row found" (UPDATE).
   const existingCheck = await env.DB.prepare(
-    'SELECT updated_at FROM projects WHERE id = ? OR slug = ? LIMIT 1'
-  ).bind(id, id).first<{ updated_at: string | null }>();
+    'SELECT id FROM projects WHERE id = ? OR slug = ? LIMIT 1'
+  ).bind(id, id).first<{ id: string }>();
 
-  // Freshness guard — mirrors tasks.ts:546-549. Allows the write if the client
-  // is fresher than current, OR if either timestamp is missing (backwards-compat).
-  const result = await env.DB.prepare(
-    `UPDATE projects SET ${updates.join(', ')}
-     WHERE (id = ? OR slug = ?)
-       AND (projects.updated_at IS NULL
-            OR ? IS NULL
-            OR ? >= projects.updated_at)`
-  ).bind(...values, id, id, clientUpdatedAt, clientUpdatedAt).run();
-
-  if (result.meta.changes === 0) {
-    if (existingCheck) {
-      // Row exists but the freshness guard rejected the write. Return current
-      // server state so the caller can reconcile. 200 (not 409) matches the
-      // task-side pattern where sync-bulk returns inserted=0 silently.
-      const current = await env.DB.prepare('SELECT * FROM projects WHERE id = ? OR slug = ?').bind(id, id).first();
-      return json({ data: current, rejected: 'stale_overwrite_guard',
-                    message: 'client_updated_at older than server; write rejected' });
-    }
+  if (!existingCheck) {
     // Project doesn't exist — create it (upsert; preserves legacy behavior).
-    const slug = (body.slug as string) || id;
-    const newId = id.length === 32 ? id : generateId();
-    await env.DB.prepare(
-      `INSERT INTO projects (id, title, status, description, category, stage, pi, slug) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
-    ).bind(
-      newId,
-      (body.title as string) || 'Untitled',
-      (body.status as string) || 'active',
-      (body.description as string) || '',
-      (body.category as string) || 'lab',
-      (body.stage as string) || 'Idea',
-      (body.pi as string) || 'nick',
-      slug,
-    ).run();
+    const upsertSlug = (body.slug as string) || id;
+    const newId = id.length === 32 ? id : generateId('project');
+    const upsertMut = await applyMutation(env, {
+      table: 'projects',
+      record_id: newId,
+      op: 'insert',
+      payload: {
+        title: (body.title as string) || 'Untitled',
+        status: (body.status as string) || 'active',
+        description: (body.description as string) || '',
+        category: (body.category as string) || 'lab',
+        stage: (body.stage as string) || 'Idea',
+        pi: (body.pi as string) || 'nick',
+        slug: upsertSlug,
+      },
+      route: 'handleUpdateProject',
+      user,
+    });
+    if (upsertMut.status !== 'accepted') {
+      return error(`mutation rejected: ${upsertMut.status} — ${upsertMut.reason ?? ''}`, 409);
+    }
+  } else {
+    // Build patch from validated fields
+    const patchFields: Record<string, unknown> = {};
+    for (let i = 0; i < updates.length; i++) {
+      const col = updates[i].split(' = ')[0].trim();
+      patchFields[col] = values[i];
+    }
+
+    const updateProjMut = await applyMutation(env, {
+      table: 'projects',
+      record_id: existingCheck.id,
+      op: 'update',
+      patch: patchFields,
+      route: 'handleUpdateProject',
+      user,
+    });
+    if (updateProjMut.status !== 'accepted' && updateProjMut.status !== 'merged_clean') {
+      // Return current server state so the caller can reconcile (mirrors old LWW guard behavior).
+      const current = await env.DB.prepare('SELECT * FROM projects WHERE id = ?').bind(existingCheck.id).first();
+      return json({ data: current, rejected: updateProjMut.status,
+                    message: `mutation ${updateProjMut.status}: ${updateProjMut.reason ?? ''}` });
+    }
   }
 
   await logActivity(env, 'project_update', `Updated project fields: ${Object.keys(body).join(', ')}`, user.email, id, 'project');
@@ -566,19 +579,25 @@ export async function handleDeleteProject(
     console.error('project cascade-clean failed:', e);
   }
 
-  // Soft-delete via projects.deleted_at (schema v45, 2026-04-19). Keeps the
-  // row queryable by /api/projects/deleted-since so brain.db mirrors the delete.
-  // GET /api/projects filters deleted_at IS NULL so the UI hides it immediately.
-  const result = await env.DB.prepare(
-    "UPDATE projects SET deleted_at = datetime('now'), updated_at = datetime('now') WHERE (id = ? OR slug = ?) AND deleted_at IS NULL"
-  ).bind(id, id).run();
-
-  if (result.meta.changes === 0) {
-    // Either the project is already deleted (idempotent — return 200) or it's
-    // not in D1 at all. The earlier SELECT proved it exists, so re-deletion
-    // is the case. Treat as success.
+  // Check idempotency: already soft-deleted?
+  const projectRow = await env.DB.prepare(
+    'SELECT deleted_at FROM projects WHERE id = ?'
+  ).bind(existing.id).first<{ deleted_at: string | null }>();
+  if (projectRow?.deleted_at) {
     await logActivity(env, 'project_delete', `Deleted project (idempotent): ${existing.title}`, user.email, existing.id, 'project');
     return json({ data: { deleted: existing.id, slug: existing.slug, title: existing.title, idempotent: true } });
+  }
+
+  // Soft-delete via applyMutation — stamps last_mutation_id + records in processed_mutations.
+  const deleteProjMut = await applyMutation(env, {
+    table: 'projects',
+    record_id: existing.id,
+    op: 'delete',
+    route: 'handleDeleteProject',
+    user,
+  });
+  if (deleteProjMut.status !== 'accepted' && deleteProjMut.status !== 'merged_clean') {
+    return error(`mutation rejected: ${deleteProjMut.status} — ${deleteProjMut.reason ?? ''}`, 409);
   }
 
   await logActivity(

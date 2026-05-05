@@ -374,7 +374,8 @@ describe('handleSyncBulkTasks — I18 (title, project_id) dedup', () => {
     })
 
     const { handleSyncBulkTasks } = await import('./tasks')
-    const fakeEnv = { DB: db } as unknown as Env
+    // Phase 3.1: bulk path requires HUB_BULK_MIGRATION_MODE=1 gate
+    const fakeEnv = { DB: db, HUB_BULK_MIGRATION_MODE: '1' } as unknown as Env
     const req = new Request('https://example.com/api/tasks/sync-bulk', {
       method: 'POST',
       body: JSON.stringify({
@@ -427,7 +428,8 @@ describe('handleSyncBulkTasks — I18 (title, project_id) dedup', () => {
     })
 
     const { handleSyncBulkTasks } = await import('./tasks')
-    const fakeEnv = { DB: db } as unknown as Env
+    // Phase 3.1: bulk path requires HUB_BULK_MIGRATION_MODE=1 gate
+    const fakeEnv = { DB: db, HUB_BULK_MIGRATION_MODE: '1' } as unknown as Env
     const req = new Request('https://example.com/api/tasks/sync-bulk', {
       method: 'POST',
       body: JSON.stringify({

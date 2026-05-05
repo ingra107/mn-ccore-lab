@@ -22,7 +22,7 @@
 // write path through this endpoint as part of A3 ship.
 
 import type { AuthUser, Env } from '../helpers';
-import { json, error } from '../helpers';
+import { json, error, generateId } from '../helpers';
 
 const ALLOWED_TABLES = new Set([
   'tasks', 'projects', 'inbox_events', 'day_capacity', 'project_state_log',
@@ -222,7 +222,7 @@ async function processOne(
 
 // ── Apply functions (per-op; per-table column dispatch inside) ──────────────
 
-async function applyInsert(env: Env, mut: Mutation, user: AuthUser): Promise<MutationResult> {
+export async function applyInsert(env: Env, mut: Mutation, user: AuthUser): Promise<MutationResult> {
   if (!mut.payload) return mutErr(mut.mutation_id, 'insert requires payload');
 
   // I18 dedup (2026-05-03): for tasks inserts, reject duplicate (title, project_id)
@@ -332,7 +332,7 @@ export async function applyUpdate(env: Env, mut: Mutation, user: AuthUser): Prom
   });
 }
 
-async function applyDelete(env: Env, mut: Mutation, user: AuthUser): Promise<MutationResult> {
+export async function applyDelete(env: Env, mut: Mutation, user: AuthUser): Promise<MutationResult> {
   // Soft delete via deleted_at (the 5 domain tables all support it post-W2a).
   // Idempotent: already-deleted returns accepted.
   const current = await readCanonical(env, mut.table, mut.record_id);
@@ -357,6 +357,50 @@ async function applyDelete(env: Env, mut: Mutation, user: AuthUser): Promise<Mut
     result_seq: r?.seq as number | undefined,
     canonical_payload: r || undefined,
   });
+}
+
+/**
+ * Server-side mutation envelope factory.
+ *
+ * Used by Hub UI routes that originate writes inside the Worker
+ * (handleCreateTask, handleUpdateProject, etc.) — NOT for PB-origin
+ * writes which go through processOne with PB-supplied envelopes.
+ *
+ * Mints mutation_id, sets origin_machine='hub_ui:<route>', records the
+ * mutation in processed_mutations, and stamps last_mutation_id on the row.
+ *
+ * Codex 2026-05-04 Phase 3.1. The one mutation ledger.
+ */
+export async function applyMutation(
+  env: Env,
+  args: {
+    table: 'tasks' | 'projects';
+    record_id: string;
+    op: 'insert' | 'update' | 'delete';
+    patch?: Record<string, unknown>;
+    payload?: Record<string, unknown>;
+    route: string;
+    user: AuthUser;
+  },
+): Promise<MutationResult> {
+  const mutation_id = generateId('mut');
+  const origin_machine = `hub_ui:${args.route}`;
+  const mut: Mutation = {
+    mutation_id,
+    origin_machine,
+    table: args.table,
+    record_id: args.record_id,
+    op: args.op,
+    base_seq: null,  // Hub-origin: no PB local seq
+    base_row_hash: null,
+    patch: args.patch,
+    payload: args.payload,
+    depends_on: null,
+    client_ts: new Date().toISOString(),
+    issued_at: new Date().toISOString(),
+  };
+  // Route through processOne so idempotency + processed_mutations recording fires.
+  return await processOne(env, mut, new Map(), args.user);
 }
 
 async function applyPatch(

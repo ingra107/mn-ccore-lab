@@ -777,7 +777,7 @@ app.post('/api/ai-requests/:id/response', (c) => handleUpdateAIResponse(c.req.pa
 
 // PB sector writes
 app.post('/api/pb/capture', (c) => handlePBCapture(R(c), USER(c), E(c)));
-app.post('/api/pb/defer', (c) => handlePBDefer(R(c), E(c)));
+app.post('/api/pb/defer', (c) => handlePBDefer(R(c), USER(c), E(c)));
 app.post('/api/pb/plan', (c) => handleCreateOrUpdatePlan(R(c), USER(c), E(c)));
 app.post('/api/pb/plan/reorder', (c) => handleReorderPlan(R(c), E(c)));
 app.post('/api/pb/plan/promote', (c) => handlePromoteTask(R(c), E(c)));
