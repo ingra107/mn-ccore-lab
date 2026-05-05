@@ -327,13 +327,26 @@ async function pollFeed(env: Env, feed: FeedRow, ownerEmail: string, timeoutMs =
     return
   }
 
+  // Dedupe by UID (D1 batch within-chunk UNIQUE conflicts even with OR REPLACE).
+  // iCal RRULE expansions can produce multiple events with the same UID; last-wins
+  // matches REPLACE semantics. Phase: 2026-05-05 calendar fix follow-up.
+  const seenUids = new Map<string, typeof inWindow[number]>()
+  for (const ev of inWindow) {
+    seenUids.set(ev.uid, ev)
+  }
+  const dedupedEvents = Array.from(seenUids.values())
+  const droppedDups = inWindow.length - dedupedEvents.length
+  if (droppedDups > 0) {
+    console.log(`pollFeed ${feed.id}: deduped ${droppedDups} recurring UID instances (kept ${dedupedEvents.length} of ${inWindow.length})`)
+  }
+
   const insertStmt = env.DB.prepare(
     `INSERT OR REPLACE INTO user_calendar_events (id, feed_id, user_slug, uid, summary, description, location, start_at, end_at, is_all_day, updated_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`
   )
 
-  for (let i = 0; i < inWindow.length; i += INSERT_CHUNK_SIZE) {
-    const chunk = inWindow.slice(i, i + INSERT_CHUNK_SIZE)
+  for (let i = 0; i < dedupedEvents.length; i += INSERT_CHUNK_SIZE) {
+    const chunk = dedupedEvents.slice(i, i + INSERT_CHUNK_SIZE)
     const stmts = chunk.map((ev) => insertStmt.bind(
       newId(), feed.id, feed.user_slug, ev.uid, ev.summary, ev.description, ev.location, ev.startAt, ev.endAt, ev.isAllDay ? 1 : 0,
     ))
