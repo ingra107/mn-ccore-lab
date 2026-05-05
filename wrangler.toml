@@ -18,9 +18,9 @@ database_id = "a30fe84d-0891-4035-9358-f7813b5f5807"
 # To activate: wrangler secret put SENDGRID_API_KEY
 # Daily coordinator digest: every day at 6 AM CT (11:00 UTC during DST)
 # To activate: wrangler secret put RESEND_API_KEY
-# iCal feed poller: every 15 minutes (cron has 15min wall-clock budget —
-# safe for slow Google Calendar exports that exceed the 30s on-demand limit)
-crons = ["0 13 * * 1-5", "0 11 * * *", "*/15 * * * *"]
+# iCal feed poller: hourly (96/day → 24/day). ETag/If-Modified-Since
+# makes most polls cheap (~200 bytes 304 vs ~500KB full fetch).
+crons = ["0 13 * * 1-5", "0 11 * * *", "0 * * * *"]
 
 [[r2_buckets]]
 binding = "FILES"

@@ -2,8 +2,13 @@
 //
 // Each user can paste a private iCal URL (Google "Secret address in iCal
 // format", Outlook publish, iCloud share). Hub stores the URL, polls it
-// lazily on Today page load (when last_polled_at >15min stale), parses
-// VEVENTs, and serves them back per-user / per-date.
+// via a cron trigger (hourly, 24×/day), parses VEVENTs, and serves them
+// back per-user / per-date.
+//
+// HTTP conditional GET (ETag/If-Modified-Since) is used on every poll so
+// unchanged calendars return 304 (~200 bytes) instead of a full iCal export
+// (~500KB). After the first successful poll, ~95% of subsequent cron firings
+// should hit the 304 cheap path.
 //
 // The feed URL itself is the secret. We never return it through GET —
 // only an obfuscated host preview ("calendar.google.com/...") so users
@@ -14,11 +19,14 @@ import { json, error } from '../helpers'
 import { actorSlug } from '../helpers'
 import { parseIcs, type IcsEvent, type ParseOptions } from '../lib/ics-parser'
 
-const STALE_MINUTES = 15
+// Staleness threshold: feeds older than this are eligible for a cron re-poll.
+// Set to 50 min so the hourly cron (fires at :00) always picks up feeds last
+// polled at :00 of the prior hour (50 min < 60 min gap).
+const STALE_MINUTES = 50
 // On-demand path (GET /events): 25s keeps us inside the 30s subrequest hard
 // cap. Only used for ?force=1 explicit refresh; normal GETs are cache-only.
 const FETCH_TIMEOUT_ONDEMAND_MS = 25000
-// Cron path: 15-minute wall-clock budget means 60s per feed is safe even
+// Cron path: hourly wall-clock budget means 60s per feed is safe even
 // for slow Google Calendar iCal exports (the actual bottleneck for Nick's
 // busy academic calendar).
 const FETCH_TIMEOUT_CRON_MS = 60000
@@ -52,6 +60,8 @@ interface FeedRow {
   last_polled_at: string | null
   last_error: string | null
   created_at: string
+  etag: string | null
+  last_modified: string | null
 }
 
 function newId(): string {
@@ -89,7 +99,7 @@ export async function handleListFeeds(env: Env, user: AuthUser | null): Promise<
   if (!user) return error('Unauthorized', 401)
   const slug = actorSlug(user.email)
   const r = await env.DB.prepare(
-    'SELECT id, user_slug, feed_url, feed_label, last_polled_at, last_error, created_at FROM user_calendar_feeds WHERE user_slug = ? ORDER BY created_at'
+    'SELECT id, user_slug, feed_url, feed_label, last_polled_at, last_error, created_at, etag, last_modified FROM user_calendar_feeds WHERE user_slug = ? ORDER BY created_at'
   ).bind(slug).all<FeedRow>()
   const feeds = (r.results ?? []).map((row) => ({
     id: row.id,
@@ -139,7 +149,7 @@ export async function handleAddFeed(
   // a typical Google Calendar with weekly recurring meetings).
   const pollPromise = pollFeed(
     env,
-    { id, user_slug: slug, feed_url: url, feed_label: label, last_polled_at: null, last_error: null, created_at: new Date().toISOString() },
+    { id, user_slug: slug, feed_url: url, feed_label: label, last_polled_at: null, last_error: null, created_at: new Date().toISOString(), etag: null, last_modified: null },
     user.email,
     FETCH_TIMEOUT_ONDEMAND_MS,
   ).catch((e) => {
@@ -167,9 +177,9 @@ export async function handleDeleteFeed(env: Env, user: AuthUser | null, id: stri
 // GET /api/integrations/calendar/events?start=YYYY-MM-DD&end=YYYY-MM-DD[&force=1]
 //
 // Normal requests return cached events ONLY — no blocking fetch to upstream
-// iCal. Cache is populated by the Cron Trigger (every 15 min) which has a
-// 15-minute wall-clock budget — plenty for slow iCal exports that exceed the
-// 30s on-demand subrequest hard limit.
+// iCal. Cache is populated by the hourly Cron Trigger, which uses HTTP
+// conditional GET (ETag/If-Modified-Since) so unchanged calendars cost ~200
+// bytes (304) instead of the full ~500KB iCal export.
 //
 // ?force=1  — explicit manual refresh: fires stale polls in the background
 // via waitUntil (on-demand timeout 25s). Use sparingly; prefer cron cache.
@@ -191,7 +201,7 @@ export async function handleListEvents(
   // returns immediately (cached data). Poll runs after response via waitUntil.
   if (forceRefresh) {
     const feeds = await env.DB.prepare(
-      'SELECT id, user_slug, feed_url, feed_label, last_polled_at, last_error, created_at FROM user_calendar_feeds WHERE user_slug = ?'
+      'SELECT id, user_slug, feed_url, feed_label, last_polled_at, last_error, created_at, etag, last_modified FROM user_calendar_feeds WHERE user_slug = ?'
     ).bind(slug).all<FeedRow>()
     const stalenessCutoff = new Date(Date.now() - STALE_MINUTES * 60_000).toISOString()
     const stale = (feeds.results ?? []).filter((f) => !f.last_polled_at || f.last_polled_at < stalenessCutoff)
@@ -232,12 +242,13 @@ export async function handleListEvents(
 }
 
 // Exported for Cron Trigger: poll all feeds whose last_polled_at is stale
-// (>15 min old or never polled). Called from the scheduled() handler with
-// FETCH_TIMEOUT_CRON_MS (60s) — safe because cron has a 15min wall budget.
+// (>50 min old or never polled, so hourly cron always catches the prior cycle).
+// Called from the scheduled() handler with FETCH_TIMEOUT_CRON_MS (60s).
+// Uses HTTP conditional GET — most polls will hit 304 once feeds stabilize.
 export async function pollAllStaleFeeds(env: Env): Promise<void> {
   const stalenessCutoff = new Date(Date.now() - STALE_MINUTES * 60_000).toISOString()
   const r = await env.DB.prepare(
-    `SELECT id, user_slug, feed_url, feed_label, last_polled_at, last_error, created_at
+    `SELECT id, user_slug, feed_url, feed_label, last_polled_at, last_error, created_at, etag, last_modified
      FROM user_calendar_feeds
      WHERE last_polled_at IS NULL OR last_polled_at < ?`
   ).bind(stalenessCutoff).all<FeedRow>()
@@ -264,18 +275,47 @@ export async function pollAllStaleFeeds(env: Env): Promise<void> {
 // ownerEmail is passed through to the parser so it can drop events the
 // user has declined (PARTSTAT=DECLINED). timeoutMs defaults to the
 // on-demand limit; cron callers pass FETCH_TIMEOUT_CRON_MS (60s).
+//
+// HTTP conditional GET: if the feed row has a stored ETag or Last-Modified
+// header from a prior poll, we send If-None-Match / If-Modified-Since on the
+// request. A 304 Not Modified response means the calendar hasn't changed —
+// we update last_polled_at and return early without touching the events table.
+// This makes the typical cron firing ~200 bytes instead of ~500KB.
 async function pollFeed(env: Env, feed: FeedRow, ownerEmail: string, timeoutMs = FETCH_TIMEOUT_ONDEMAND_MS): Promise<void> {
   let body = ''
+  let newEtag: string | null = null
+  let newLastModified: string | null = null
   try {
     const ctrl = new AbortController()
     const timer = setTimeout(() => ctrl.abort(), timeoutMs)
+    const reqHeaders: Record<string, string> = {
+      'User-Agent': 'mn-ccore-lab-hub/1.0 (calendar-feed-poller)',
+      'Accept': 'text/calendar',
+    }
+    if (feed.etag) reqHeaders['If-None-Match'] = feed.etag
+    if (feed.last_modified) reqHeaders['If-Modified-Since'] = feed.last_modified
     const res = await fetch(feed.feed_url, {
-      headers: { 'User-Agent': 'mn-ccore-lab-hub/1.0 (calendar-feed-poller)' },
+      headers: reqHeaders,
       signal: ctrl.signal,
       cf: { cacheTtl: 0, cacheEverything: false },
     } as RequestInit)
     clearTimeout(timer)
+
+    // 304 Not Modified: calendar unchanged since last poll. Cheap path.
+    if (res.status === 304) {
+      console.log(`pollFeed ${feed.id}: 304 Not Modified (cheap path)`)
+      await env.DB.prepare(
+        'UPDATE user_calendar_feeds SET last_polled_at = ? WHERE id = ?'
+      ).bind(new Date().toISOString(), feed.id).run()
+      return
+    }
+
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
+
+    // Capture conditional GET headers for next poll.
+    newEtag = res.headers.get('ETag')
+    newLastModified = res.headers.get('Last-Modified')
+
     body = await res.text()
     if (!body.includes('BEGIN:VCALENDAR')) throw new Error('Response not iCalendar')
   } catch (e) {
@@ -297,8 +337,11 @@ async function pollFeed(env: Env, feed: FeedRow, ownerEmail: string, timeoutMs =
   try {
     parsed = parseIcs(body, parseOpts)
   } catch (e) {
+    // Parse failure: don't persist new conditional headers — the body may
+    // be corrupt. Clear any stored etag/last_modified so next poll re-fetches
+    // the full response rather than risking another 304 against a bad body.
     await env.DB.prepare(
-      'UPDATE user_calendar_feeds SET last_polled_at = ?, last_error = ? WHERE id = ?'
+      'UPDATE user_calendar_feeds SET last_polled_at = ?, last_error = ?, etag = NULL, last_modified = NULL WHERE id = ?'
     ).bind(new Date().toISOString(), `parse: ${(e as Error).message.slice(0, 180)}`, feed.id).run()
     return
   }
@@ -322,7 +365,7 @@ async function pollFeed(env: Env, feed: FeedRow, ownerEmail: string, timeoutMs =
     await env.DB.prepare('DELETE FROM user_calendar_events WHERE feed_id = ?').bind(feed.id).run()
   } catch (e) {
     await env.DB.prepare(
-      'UPDATE user_calendar_feeds SET last_polled_at = ?, last_error = ? WHERE id = ?'
+      'UPDATE user_calendar_feeds SET last_polled_at = ?, last_error = ?, etag = NULL, last_modified = NULL WHERE id = ?'
     ).bind(new Date().toISOString(), `delete: ${(e as Error).message.slice(0, 180)}`, feed.id).run()
     return
   }
@@ -348,17 +391,21 @@ async function pollFeed(env: Env, feed: FeedRow, ownerEmail: string, timeoutMs =
       await env.DB.batch(stmts)
     } catch (e) {
       const msg = `insert chunk ${i}: ${(e as Error).message.slice(0, 160)}`
+      // Don't persist conditional headers on partial failure — force a full
+      // re-fetch next poll so the events table is rebuilt cleanly.
       await env.DB.prepare(
-        'UPDATE user_calendar_feeds SET last_polled_at = ?, last_error = ? WHERE id = ?'
+        'UPDATE user_calendar_feeds SET last_polled_at = ?, last_error = ?, etag = NULL, last_modified = NULL WHERE id = ?'
       ).bind(new Date().toISOString(), msg, feed.id).run()
       return
     }
   }
 
-  console.log(`pollFeed ${feed.id}: upserted ${inWindow.length} events (${Math.ceil(inWindow.length / INSERT_CHUNK_SIZE)} chunk(s))`)
+  console.log(`pollFeed ${feed.id}: 200 OK, parsed ${inWindow.length} events, inserted ${inWindow.length} (${Math.ceil(inWindow.length / INSERT_CHUNK_SIZE)} chunk(s))`)
 
   const finalErr = truncated ? `Truncated to ${MAX_EVENTS_PER_FEED} events (feed had more — likely runaway RRULE)` : null
+  // Persist ETag + Last-Modified so next poll can send If-None-Match /
+  // If-Modified-Since for a cheap 304 response if the calendar hasn't changed.
   await env.DB.prepare(
-    'UPDATE user_calendar_feeds SET last_polled_at = ?, last_error = ? WHERE id = ?'
-  ).bind(new Date().toISOString(), finalErr, feed.id).run()
+    'UPDATE user_calendar_feeds SET last_polled_at = ?, last_error = ?, etag = ?, last_modified = ? WHERE id = ?'
+  ).bind(new Date().toISOString(), finalErr, newEtag, newLastModified, feed.id).run()
 }
