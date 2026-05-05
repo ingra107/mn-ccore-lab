@@ -386,4 +386,64 @@ describe('parseIcs — window bounds', () => {
     expect(out.length).toBeLessThanOrEqual(91)
     expect(out.length).toBeGreaterThan(80)
   })
+
+  it('DST-safe RRULE expansion: biweekly-Tuesday series starting in winter (CST) produces correct UTC in summer (CDT)', () => {
+    // Regression for MNCCORE-class bug: a recurring series with
+    // DTSTART;TZID=America/Chicago:20260127T150000 (Jan 27 = CST, UTC-6)
+    // has master.startAt = 2026-01-27T21:00:00Z.
+    // Pure UTC arithmetic advances by 14*86400000ms, so May 5 = 2026-05-05T21:00:00Z.
+    // But 3pm CDT (UTC-5) = 2026-05-05T20:00:00Z — wrong by 1hr.
+    // The DST-safe fix re-applies tzOffsetMinutes for each expanded date.
+    const win = { windowStart: '2026-05-01T00:00:00.000Z', windowEnd: '2026-06-30T23:59:59.000Z' }
+    const ics = ical(vevent({
+      UID: 'dst-rrule-1',
+      SUMMARY: 'MNCCORE',
+      'DTSTART;TZID=America/Chicago': '20260127T150000',
+      'DTEND;TZID=America/Chicago': '20260127T160000',
+      RRULE: 'FREQ=WEEKLY;WKST=SU;UNTIL=20260701T045959Z;INTERVAL=2;BYDAY=TU',
+    }))
+    const out = parseIcs(ics, win)
+    // Should have instances in May + June. May 5 should be 20:00Z (3pm CDT), not 21:00Z (4pm CDT).
+    const may5 = out.find((e) => e.startAt.startsWith('2026-05-05'))
+    expect(may5).toBeDefined()
+    expect(may5!.startAt).toBe('2026-05-05T20:00:00.000Z')  // 3pm CDT = 20:00 UTC
+    // May 19 should also be CDT (20:00Z), not CST (21:00Z)
+    const may19 = out.find((e) => e.startAt.startsWith('2026-05-19'))
+    expect(may19).toBeDefined()
+    expect(may19!.startAt).toBe('2026-05-19T20:00:00.000Z')
+  })
+
+  it('DST-safe RRULE expansion: RECURRENCE-ID override matches corrected UTC, not stale CST UTC', () => {
+    // The fix to DST-safe expansion is only complete if RECURRENCE-ID overrides
+    // still match. When the master starts in CST and an override for a CDT date
+    // is sent with DTSTART;TZID=America/Chicago:20260505T150000, the override's
+    // recurrenceId is 2026-05-05T20:00:00Z (CDT). Without the DST fix, the
+    // expanded instance would have startAt=21:00Z, missing the override lookup
+    // at key uid|20:00Z — and the override's changed summary/location would be
+    // silently dropped, showing the master's stale data instead.
+    const win = { windowStart: '2026-05-01T00:00:00.000Z', windowEnd: '2026-06-30T23:59:59.000Z' }
+    const ics = ical(
+      vevent({
+        UID: 'dst-rrule-override',
+        SUMMARY: 'MNCCORE',
+        'DTSTART;TZID=America/Chicago': '20260127T150000',
+        'DTEND;TZID=America/Chicago': '20260127T160000',
+        RRULE: 'FREQ=WEEKLY;WKST=SU;UNTIL=20260701T045959Z;INTERVAL=2;BYDAY=TU',
+      }),
+      vevent({
+        UID: 'dst-rrule-override',
+        SUMMARY: 'MNCCORE (room change)',
+        'DTSTART;TZID=America/Chicago': '20260505T150000',
+        'DTEND;TZID=America/Chicago': '20260505T160000',
+        'RECURRENCE-ID;TZID=America/Chicago': '20260505T150000',
+      }),
+    )
+    const out = parseIcs(ics, win)
+    const may5 = out.find((e) => e.startAt.startsWith('2026-05-05'))
+    expect(may5).toBeDefined()
+    // The override must be applied: summary should be the overridden one.
+    expect(may5!.summary).toBe('MNCCORE (room change)')
+    // And the time must still be correct CDT.
+    expect(may5!.startAt).toBe('2026-05-05T20:00:00.000Z')
+  })
 })

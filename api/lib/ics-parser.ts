@@ -123,6 +123,7 @@ export function parseIcs(raw: string, opts: ParseOptions = {}): IcsEvent[] {
         current.startAt = parsed.iso
         current.isAllDay = parsed.isAllDay
         current.startTzid = parsed.tzid
+        current.startWallHms = parsed.wallHms
         break
       }
       case 'DTEND': {
@@ -198,7 +199,8 @@ interface ParsedVEvent {
   startAt: string
   endAt?: string | null
   isAllDay: boolean
-  startTzid?: string  // for duration math when expanding RRULE
+  startTzid?: string   // IANA tz from DTSTART;TZID= — used by RRULE expander for DST-safe expansion
+  startWallHms?: string  // wall-clock HHMMSS from DTSTART (without TZ conversion) — used to re-anchor each RRULE instance at the correct local time-of-day across DST transitions
   rrule?: RRule | null
   exdates?: string[]
   recurrenceId?: string
@@ -290,7 +292,7 @@ function cleanMeetingUrl(url: string): string {
 
 // ─── Date parsing ───────────────────────────────────────────────────────
 
-interface ParsedDate { iso: string; isAllDay: boolean; tzid?: string }
+interface ParsedDate { iso: string; isAllDay: boolean; tzid?: string; wallHms?: string }
 
 function parseIcsDate(value: string, params: string): ParsedDate {
   const v = value.trim()
@@ -316,7 +318,11 @@ function parseIcsDate(value: string, params: string): ParsedDate {
     const tzid = tzidMatch ? tzidMatch[1] : undefined
     if (tzid) {
       const offsetMin = tzOffsetMinutes(tzid, ymd, hms)
-      return { iso: composeIso(ymd, hms, offsetMin), isAllDay: false, tzid }
+      // wallHms is the raw HHMMSS from the iCal value — stored so RRULE
+      // expansion can re-anchor each instance at this wall-clock time using
+      // the correct DST offset for each expanded date, rather than inheriting
+      // the master's UTC offset (which bakes in the master's DST state).
+      return { iso: composeIso(ymd, hms, offsetMin), isAllDay: false, tzid, wallHms: hms }
     }
     // True floating (no TZID) — treat as UTC, RFC 5545 leaves this to the
     // calendar consumer's local time. We can't know the user's tz on the
@@ -514,12 +520,44 @@ function expandRrule(master: ParsedVEvent, windowStart: string, windowEnd: strin
         if (r.count !== undefined && ++count >= r.count) return out
         continue
       }
-      const startIso = new Date(candMs).toISOString()
+
+      // DST-safe reanchoring: when the master carries a TZID, pure UTC
+      // arithmetic (cursor.getTime() + N*86400000) inherits the master's
+      // UTC time-of-day, which bakes in the DST offset at the MASTER's date.
+      // After a DST transition the wall-clock time is still the same (e.g.
+      // "3 PM Tuesday") but the UTC offset changes by 1h — so the expanded
+      // UTC is off by 1h and RECURRENCE-ID overrides (which are parsed with
+      // the correct per-date offset) fail to match.
+      //
+      // Fix: take the candidate date (YYYYMMDD) in the TZID's local time,
+      // combine it with the master's original wall-clock HHMMSS, and
+      // re-apply tzOffsetMinutes for that specific date. This yields the
+      // correct UTC regardless of which side of a DST boundary the instance
+      // falls on.
+      let canonMs = candMs
+      if (master.startTzid && master.startWallHms) {
+        const candDate = new Date(candMs)
+        // Extract the calendar date in the master's timezone by querying Intl.
+        const fmt = new Intl.DateTimeFormat('en-US', {
+          timeZone: master.startTzid,
+          year: 'numeric', month: '2-digit', day: '2-digit',
+        })
+        const parts = fmt.formatToParts(candDate)
+        const get = (t: string) => parts.find((p) => p.type === t)?.value ?? '0'
+        const ymd = `${get('year')}${get('month')}${get('day')}`
+        const offsetMin = tzOffsetMinutes(master.startTzid, ymd, master.startWallHms)
+        const hms = master.startWallHms
+        const y = +ymd.slice(0, 4), mo = +ymd.slice(4, 6), d = +ymd.slice(6, 8)
+        const h = +hms.slice(0, 2), mi = +hms.slice(2, 4), s = +hms.slice(4, 6)
+        canonMs = Date.UTC(y, mo - 1, d, h, mi, s) - offsetMin * 60_000
+      }
+
+      const startIso = new Date(canonMs).toISOString()
       if (exdates.has(startIso)) {
         if (r.count !== undefined && ++count >= r.count) return out
         continue
       }
-      const endIso = durationMs !== null ? new Date(candMs + durationMs).toISOString() : null
+      const endIso = durationMs !== null ? new Date(canonMs + durationMs).toISOString() : null
       out.push({
         uid: master.uid,
         summary: master.summary,
