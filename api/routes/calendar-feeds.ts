@@ -340,26 +340,40 @@ async function pollFeed(env: Env, feed: FeedRow, ownerEmail: string, timeoutMs =
     console.log(`pollFeed ${feed.id}: deduped ${droppedDups} recurring UID instances (kept ${dedupedEvents.length} of ${inWindow.length})`)
   }
 
-  const insertStmt = env.DB.prepare(
-    `INSERT OR REPLACE INTO user_calendar_events (id, feed_id, user_slug, uid, summary, description, location, start_at, end_at, is_all_day, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`
-  )
-
-  for (let i = 0; i < dedupedEvents.length; i += INSERT_CHUNK_SIZE) {
-    const chunk = dedupedEvents.slice(i, i + INSERT_CHUNK_SIZE)
-    const stmts = chunk.map((ev) => insertStmt.bind(
-      newId(), feed.id, feed.user_slug, ev.uid, ev.summary, ev.description, ev.location, ev.startAt, ev.endAt, ev.isAllDay ? 1 : 0,
-    ))
+  // Per-row INSERT OR IGNORE to bypass D1 batch's deferred-constraint behavior
+  // AND any race with concurrent polls. JS dedupe should already prevent dupes,
+  // but if any sneak through (e.g., parser weirdness, unicode normalization,
+  // concurrent poll), IGNORE keeps the ingest going. Log the count of ignored
+  // rows so we can diagnose.
+  let inserted = 0
+  let ignored = 0
+  const conflictingUids: string[] = []
+  for (const ev of dedupedEvents) {
     try {
-      await env.DB.batch(stmts)
+      const result = await env.DB.prepare(
+        `INSERT OR IGNORE INTO user_calendar_events
+         (id, feed_id, user_slug, uid, summary, description, location, start_at, end_at, is_all_day, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`
+      ).bind(
+        newId(), feed.id, feed.user_slug, ev.uid, ev.summary, ev.description, ev.location,
+        ev.startAt, ev.endAt, ev.isAllDay ? 1 : 0,
+      ).run()
+      if (result.meta.changes > 0) {
+        inserted++
+      } else {
+        ignored++
+        if (conflictingUids.length < 5) conflictingUids.push(String(ev.uid).slice(0, 80))
+      }
     } catch (e) {
-      const msg = `insert chunk ${i}: ${(e as Error).message.slice(0, 160)}`
+      // Catastrophic — write last_error and bail
       await env.DB.prepare(
         'UPDATE user_calendar_feeds SET last_polled_at = ?, last_error = ? WHERE id = ?'
-      ).bind(new Date().toISOString(), msg, feed.id).run()
+      ).bind(new Date().toISOString(), `insert: ${(e as Error).message.slice(0, 160)}`, feed.id).run()
       return
     }
   }
+
+  console.log(`pollFeed ${feed.id}: inserted ${inserted}, ignored ${ignored} (deduped from ${inWindow.length} parsed). First conflicting UIDs: ${conflictingUids.join(', ')}`)
 
   const finalErr = truncated ? `Truncated to ${MAX_EVENTS_PER_FEED} events (feed had more — likely runaway RRULE)` : null
   await env.DB.prepare(
