@@ -346,6 +346,20 @@ function composeIso(ymd: string, hms: string, offsetMin: number): string {
 // Cached because parsing one calendar usually involves hundreds of
 // lookups against the same TZID + nearby dates, and Intl construction is
 // the slow step.
+//
+// TWO-PASS PROBE — eliminates the 1-hour DST drift seen in production
+// (Cloudflare Workers runtime, May 2026 CDT window):
+//
+// Pass 1: probe the wall-clock treated as UTC to get an approximate offset.
+//   This naive probe can be off by 1h near DST transitions because Intl
+//   evaluates DST state at the PROBE instant (wall-as-UTC), not at the
+//   actual UTC instant corresponding to the wall-clock time.
+// Pass 2: apply the approximate offset to get the candidate UTC instant,
+//   then re-query Intl at THAT instant. The DST flag is now evaluated at
+//   the correct UTC moment, resolving any transition ambiguity.
+//
+// This two-iteration approach matches the strategy used by date-fns-tz and
+// Temporal polyfills; it converges in 2 passes for all real-world IANA zones.
 const tzOffsetCache = new Map<string, number>()
 
 function tzOffsetMinutes(tzid: string, ymd: string, hms: string): number {
@@ -356,25 +370,37 @@ function tzOffsetMinutes(tzid: string, ymd: string, hms: string): number {
   try {
     const y = +ymd.slice(0, 4), mo = +ymd.slice(4, 6), d = +ymd.slice(6, 8)
     const h = +hms.slice(0, 2), mi = +hms.slice(2, 4)
-    // Probe instant: treat the wall-clock as UTC, then ask Intl what the
-    // target tz says it is. The difference is the offset.
-    const probeUtc = Date.UTC(y, mo - 1, d, h, mi, 0)
+
     const fmt = new Intl.DateTimeFormat('en-US', {
       timeZone: tzid,
       year: 'numeric', month: '2-digit', day: '2-digit',
       hour: '2-digit', minute: '2-digit', second: '2-digit',
       hour12: false,
     })
-    const parts = fmt.formatToParts(new Date(probeUtc))
-    const get = (t: string) => parts.find((p) => p.type === t)?.value ?? '0'
-    const py = +get('year'), pmo = +get('month'), pd = +get('day')
-    const ph = +get('hour') === 24 ? 0 : +get('hour')  // some locales return 24
-    const pmi = +get('minute'), ps = +get('second')
-    const tzWall = Date.UTC(py, pmo - 1, pd, ph, pmi, ps)
-    // tzWall - probeUtc = how much the target tz is ahead of UTC.
-    const offsetMin = Math.round((tzWall - probeUtc) / 60_000)
-    tzOffsetCache.set(cacheKey, offsetMin)
-    return offsetMin
+
+    // Helper: given a UTC millisecond timestamp, return what the target tz
+    // wall-clock says it is (as UTC ms), then compute offset = tzWall - utcMs.
+    const queryOffsetAt = (utcMs: number): number => {
+      const parts = fmt.formatToParts(new Date(utcMs))
+      const get = (t: string) => parts.find((p) => p.type === t)?.value ?? '0'
+      const py = +get('year'), pmo = +get('month'), pd = +get('day')
+      const ph = +get('hour') === 24 ? 0 : +get('hour')  // some locales return 24
+      const pmi = +get('minute'), ps = +get('second')
+      const tzWall = Date.UTC(py, pmo - 1, pd, ph, pmi, ps)
+      return Math.round((tzWall - utcMs) / 60_000)
+    }
+
+    // Pass 1: naive probe — treat wall-clock as UTC. May be 1h off near DST.
+    const wallAsUtc = Date.UTC(y, mo - 1, d, h, mi, 0)
+    const approxOffset = queryOffsetAt(wallAsUtc)
+
+    // Pass 2: estimate the real UTC instant using the pass-1 offset, then
+    // re-query. DST flag is now evaluated at the correct UTC moment.
+    const candidateUtc = wallAsUtc - approxOffset * 60_000
+    const refinedOffset = queryOffsetAt(candidateUtc)
+
+    tzOffsetCache.set(cacheKey, refinedOffset)
+    return refinedOffset
   } catch {
     // Unknown TZID (e.g. Outlook's "Eastern Standard Time" rather than
     // IANA "America/New_York"). Fall back to UTC — better than throwing.

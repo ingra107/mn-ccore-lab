@@ -154,6 +154,42 @@ describe('parseIcs — TZID resolution', () => {
     const out = parseIcs(ics, WIN)
     expect(out[0].startAt).toBe('2026-04-15T14:00:00.000Z')
   })
+
+  it('correctly converts May CDT times (regression: single-pass probe gave CST offset in Workers)', () => {
+    // May 5 2026 is in CDT (UTC-5), not CST (UTC-6). The single-pass probe
+    // treated wall-clock as UTC and could ask Intl for DST state at the wrong
+    // instant — producing -360 (CST) instead of -300 (CDT), storing times 1hr late.
+    // Two-pass fix: candidate UTC = wallAsUtc - approxOffset, then re-query.
+    // 3:00 PM CDT = 20:00 UTC; 4:00 PM CDT = 21:00 UTC (NOT what should be stored).
+    const ics = ical(vevent({
+      UID: 'cdt-may-1',
+      SUMMARY: 'MNCCORE',
+      'DTSTART;TZID=America/Chicago': '20260505T150000',
+      'DTEND;TZID=America/Chicago': '20260505T160000',
+    }))
+    const out = parseIcs(ics, { windowStart: '2026-05-01T00:00:00.000Z', windowEnd: '2026-05-31T23:59:59.000Z' })
+    expect(out[0].startAt).toBe('2026-05-05T20:00:00.000Z')  // 3pm CDT = 20:00 UTC
+    expect(out[0].endAt).toBe('2026-05-05T21:00:00.000Z')    // 4pm CDT = 21:00 UTC
+  })
+
+  it('correctly converts May CDT times across common meeting hours', () => {
+    // Spot-check 9:30 AM, 11:00 AM, 4:00 PM CDT in May (all should be UTC-5).
+    const win = { windowStart: '2026-05-01T00:00:00.000Z', windowEnd: '2026-05-31T23:59:59.000Z' }
+    const cases: Array<[string, string, string]> = [
+      ['20260505T093000', '2026-05-05T14:30:00.000Z', 'CQODE 9:30am CDT'],
+      ['20260505T110000', '2026-05-05T16:00:00.000Z', 'CLIF 11am CDT'],
+      ['20260505T160000', '2026-05-05T21:00:00.000Z', 'TIGNANELLI 4pm CDT'],
+    ]
+    for (const [dtstart, expectedUtc, label] of cases) {
+      const ics = ical(vevent({
+        UID: `cdt-${dtstart}`,
+        SUMMARY: label,
+        [`DTSTART;TZID=America/Chicago`]: dtstart,
+      }))
+      const out = parseIcs(ics, win)
+      expect(out[0].startAt).toBe(expectedUtc)
+    }
+  })
 })
 
 describe('parseIcs — RRULE expansion', () => {

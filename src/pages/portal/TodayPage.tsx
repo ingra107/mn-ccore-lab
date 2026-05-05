@@ -200,9 +200,12 @@ export default function TodayPage() {
       .map(calendarEventToTodayEvent)
     // Personal events with a real time go after untimed meetings, sorted
     // by start. Untimed events keep insertion order (D1 returns by date).
+    // Sort by startMin (wall-clock minutes, numeric) — NOT a.time.localeCompare
+    // which gives wrong order for AM/PM strings ("9:30 AM" > "12:00 PM"
+    // lexicographically because "9" > "1").
     const timed = personal.filter((e) => e.time !== '—' && e.time !== 'all day')
     const untimed = personal.filter((e) => e.time === '—' || e.time === 'all day')
-    timed.sort((a, b) => a.time.localeCompare(b.time))
+    timed.sort((a, b) => (a.startMin ?? 0) - (b.startMin ?? 0))
     return [...untimed, ...meetings, ...timed]
   }, [meetingsQuery.data, calendarEventsQuery.data])
 

@@ -188,7 +188,14 @@ export function localMinutesFromIso(iso: string | null | undefined): number | un
 export function isToday(isoDate: string | null | undefined): boolean {
   if (!isoDate) return false
   const today = todayKey()
-  return isoDate.slice(0, 10) === today
+  // Use the local date of the parsed timestamp, not the UTC date slice.
+  // isoDate may be a UTC Z-suffix string (e.g. "2026-05-05T21:00:00.000Z");
+  // slicing to 10 gives the UTC date which can differ from local date by up to
+  // 24h in western timezones — causing evening events to appear on the wrong day.
+  const d = new Date(isoDate)
+  if (isNaN(d.getTime())) return isoDate.slice(0, 10) === today  // fallback for date-only strings
+  const local = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  return local === today
 }
 
 // Personal calendar feed events (issue #45). Same TodayEvent shape so the
