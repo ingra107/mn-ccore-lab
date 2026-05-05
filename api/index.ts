@@ -496,7 +496,7 @@ app.get('/api/calendar/events', (c) => handleCalendarEvents(U(c), E(c)));
 app.get('/api/integrations/calendar/feeds', (c) => handleListFeeds(E(c), c.get('authedUser')));
 app.post('/api/integrations/calendar/feeds', (c) => handleAddFeed(R(c), E(c), c.get('authedUser'), (p) => c.executionCtx.waitUntil(p)));
 app.delete('/api/integrations/calendar/feeds/:id', (c) => handleDeleteFeed(E(c), c.get('authedUser'), c.req.param('id')));
-app.get('/api/integrations/calendar/events', (c) => handleListEvents(U(c), E(c), c.get('authedUser')));
+app.get('/api/integrations/calendar/events', (c) => handleListEvents(U(c), E(c), c.get('authedUser'), (p) => c.executionCtx.waitUntil(p)));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Files (presigned URLs etc.)

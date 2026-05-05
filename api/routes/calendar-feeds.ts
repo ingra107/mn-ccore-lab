@@ -15,7 +15,11 @@ import { actorSlug } from '../helpers'
 import { parseIcs, type IcsEvent, type ParseOptions } from '../lib/ics-parser'
 
 const STALE_MINUTES = 15
-const FETCH_TIMEOUT_MS = 8000
+// Google Calendar's "Secret address in iCal format" can take 10-20s to respond
+// from Cloudflare's edge (large calendars with many recurring events). The
+// previous 8s limit caused persistent "The operation was aborted" errors.
+// Cloudflare Workers allow up to 30s per subrequest; 25s leaves buffer.
+const FETCH_TIMEOUT_MS = 25000
 
 // D1 batches with thousands of statements hit the storage timeout
 // ("D1_ERROR: D1 DB storage operation exceeded timeout which caused
@@ -159,7 +163,17 @@ export async function handleDeleteFeed(env: Env, user: AuthUser | null, id: stri
 
 // GET /api/integrations/calendar/events?start=YYYY-MM-DD&end=YYYY-MM-DD
 // Refreshes any stale feeds (>15min) before returning.
-export async function handleListEvents(url: URL, env: Env, user: AuthUser | null): Promise<Response> {
+//
+// waitUntil fires stale-feed polls in the background (same pattern as
+// handleAddFeed) so the response is not blocked by a slow iCal fetch.
+// Without waitUntil, a 20s Google Calendar fetch would cause the entire
+// /api/integrations/calendar/events request to hang or timeout.
+export async function handleListEvents(
+  url: URL,
+  env: Env,
+  user: AuthUser | null,
+  waitUntil?: (promise: Promise<unknown>) => void,
+): Promise<Response> {
   if (!user) return error('Unauthorized', 401)
   const slug = actorSlug(user.email)
   const start = url.searchParams.get('start') || new Date().toISOString().slice(0, 10)
@@ -171,12 +185,22 @@ export async function handleListEvents(url: URL, env: Env, user: AuthUser | null
     'SELECT id, user_slug, feed_url, feed_label, last_polled_at, last_error, created_at FROM user_calendar_feeds WHERE user_slug = ?'
   ).bind(slug).all<FeedRow>()
 
-  // Refresh stale feeds in parallel. Don't block on errors — stale data
-  // beats no data, last_error surfaces in Settings.
+  // Fire stale-feed polls in the background via waitUntil so the response
+  // is returned immediately with cached data. Stale data beats a hung
+  // request — last_error in the feeds list surfaces poll failures.
   const stalenessCutoff = new Date(Date.now() - STALE_MINUTES * 60_000).toISOString()
   const stale = (feeds.results ?? []).filter((f) => !f.last_polled_at || f.last_polled_at < stalenessCutoff)
   if (stale.length > 0) {
-    await Promise.allSettled(stale.map((f) => pollFeed(env, f, user.email)))
+    const pollAll = Promise.allSettled(stale.map((f) => pollFeed(env, f, user.email).catch((e) => {
+      console.error('[handleListEvents pollFeed]', (e as Error).message)
+    })))
+    if (waitUntil) {
+      // Non-blocking: return cached events immediately; poll runs after response.
+      waitUntil(pollAll)
+    } else {
+      // Fallback (no ExecutionContext): poll synchronously so events appear.
+      await pollAll
+    }
   }
 
   // Range query is inclusive on both ends. start_at is ISO with 'Z' suffix
