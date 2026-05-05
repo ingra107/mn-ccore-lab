@@ -327,53 +327,35 @@ async function pollFeed(env: Env, feed: FeedRow, ownerEmail: string, timeoutMs =
     return
   }
 
-  // Dedupe by UID (D1 batch within-chunk UNIQUE conflicts even with OR REPLACE).
-  // iCal RRULE expansions can produce multiple events with the same UID; last-wins
-  // matches REPLACE semantics. Phase: 2026-05-05 calendar fix follow-up.
-  const seenUids = new Map<string, typeof inWindow[number]>()
-  for (const ev of inWindow) {
-    seenUids.set(ev.uid, ev)
-  }
-  const dedupedEvents = Array.from(seenUids.values())
-  const droppedDups = inWindow.length - dedupedEvents.length
-  if (droppedDups > 0) {
-    console.log(`pollFeed ${feed.id}: deduped ${droppedDups} recurring UID instances (kept ${dedupedEvents.length} of ${inWindow.length})`)
-  }
+  // Batched INSERT OR REPLACE. Schema v61 unique key is (feed_id, uid, start_at),
+  // so each recurring instance (same UID, different start_at) lands in its own
+  // row. Same UID + same start_at = REPLACE (handles updates from re-poll).
+  // The JS Map dedupe block was removed — it was collapsing legitimate recurring
+  // instances by keeping only last-seen UID, exactly the bug this fix addresses.
+  const insertStmt = env.DB.prepare(
+    `INSERT OR REPLACE INTO user_calendar_events
+     (id, feed_id, user_slug, uid, summary, description, location, start_at, end_at, is_all_day, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`
+  )
 
-  // Per-row INSERT OR IGNORE to bypass D1 batch's deferred-constraint behavior
-  // AND any race with concurrent polls. JS dedupe should already prevent dupes,
-  // but if any sneak through (e.g., parser weirdness, unicode normalization,
-  // concurrent poll), IGNORE keeps the ingest going. Log the count of ignored
-  // rows so we can diagnose.
-  let inserted = 0
-  let ignored = 0
-  const conflictingUids: string[] = []
-  for (const ev of dedupedEvents) {
+  for (let i = 0; i < inWindow.length; i += INSERT_CHUNK_SIZE) {
+    const chunk = inWindow.slice(i, i + INSERT_CHUNK_SIZE)
+    const stmts = chunk.map((ev) => insertStmt.bind(
+      newId(), feed.id, feed.user_slug, ev.uid, ev.summary, ev.description, ev.location,
+      ev.startAt, ev.endAt, ev.isAllDay ? 1 : 0,
+    ))
     try {
-      const result = await env.DB.prepare(
-        `INSERT OR IGNORE INTO user_calendar_events
-         (id, feed_id, user_slug, uid, summary, description, location, start_at, end_at, is_all_day, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`
-      ).bind(
-        newId(), feed.id, feed.user_slug, ev.uid, ev.summary, ev.description, ev.location,
-        ev.startAt, ev.endAt, ev.isAllDay ? 1 : 0,
-      ).run()
-      if (result.meta.changes > 0) {
-        inserted++
-      } else {
-        ignored++
-        if (conflictingUids.length < 5) conflictingUids.push(String(ev.uid).slice(0, 80))
-      }
+      await env.DB.batch(stmts)
     } catch (e) {
-      // Catastrophic — write last_error and bail
+      const msg = `insert chunk ${i}: ${(e as Error).message.slice(0, 160)}`
       await env.DB.prepare(
         'UPDATE user_calendar_feeds SET last_polled_at = ?, last_error = ? WHERE id = ?'
-      ).bind(new Date().toISOString(), `insert: ${(e as Error).message.slice(0, 160)}`, feed.id).run()
+      ).bind(new Date().toISOString(), msg, feed.id).run()
       return
     }
   }
 
-  console.log(`pollFeed ${feed.id}: inserted ${inserted}, ignored ${ignored} (deduped from ${inWindow.length} parsed). First conflicting UIDs: ${conflictingUids.join(', ')}`)
+  console.log(`pollFeed ${feed.id}: upserted ${inWindow.length} events (${Math.ceil(inWindow.length / INSERT_CHUNK_SIZE)} chunk(s))`)
 
   const finalErr = truncated ? `Truncated to ${MAX_EVENTS_PER_FEED} events (feed had more — likely runaway RRULE)` : null
   await env.DB.prepare(
