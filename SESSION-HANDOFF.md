@@ -4,13 +4,29 @@
 
 ## LATEST DEPLOY
 
-**HEAD `ab14850c` on main**, in sync with origin. Pages deploy live at:
+**HEAD `1a6b9986` on main**, in sync with origin. Pages deploy live at:
 
-> https://d4fe4812.mn-ccore-lab.pages.dev (production alias: mn-ccore-lab.pages.dev)
+> https://mn-ccore-lab.pages.dev
 
-Worker version `33d504ff`. Calendar cron re-polled `2026-05-05T14:16:12.266Z`, no errors.
+Worker version `64992fc8`. Calendar cron last_polled_at set to NULL; next cron tick (~:45 CDT) will re-poll with the new parser.
 
-### Calendar timezone fix (commit ab14850c)
+### Calendar timezone fix wave 2 (commit 1a6b9986)
+
+**Root cause of persisting MNCCORE/TIGNANELLI/CLIF drift after ab14850c:**
+
+The `ab14850c` two-pass fix correctly handles direct `DTSTART;TZID=...` parsing. But `expandRrule()` used pure UTC arithmetic: advancing a CST-origin master (MNCCORE: `20260127T150000` = 21:00Z) by 2-week UTC increments gave CDT instances as 21:00Z instead of the correct 20:00Z. RECURRENCE-ID overrides (which parsed correctly to 20:00Z) failed to match the expansion (which looked up `uid|21:00Z`), so overrides were silently dropped and the wrong stale time persisted.
+
+**Fix (api/lib/ics-parser.ts):** DST-safe RRULE reanchoring. Each expanded candidate UTC is now recomputed by extracting the candidate date in the master's IANA timezone via Intl, combining with the master's original wall-clock HHMMSS, and re-applying the two-pass `tzOffsetMinutes()` probe for that specific date. New fields: `ParsedVEvent.startWallHms`, `ParsedDate.wallHms`.
+
+**Regression tests:** +2 (81 total, was 79). Biweekly-Tuesday CST-origin series: May 5 = 20:00Z (was 21:00Z). RECURRENCE-ID override matching after DST reanchoring.
+
+**Affected events (after next cron poll, expect D1 to update):**
+- MNCCORE: `2026-05-05T21:00:00Z` → `2026-05-05T20:00:00Z` (3pm CDT)
+- TIGNANELLI OFFICE HOURS: same correction
+- CLIF Grant Writing: `2026-05-05T17:00:00Z` → `2026-05-05T16:00:00Z` (11am CDT)
+- CQODE Leadership: already correct at `14:30:00Z` (9:30am CDT) — not affected
+
+### Calendar timezone fix wave 1 (commit ab14850c)
 
 Three bugs fixed in `fix(calendar): two-pass tzOffsetMinutes + isToday local date + sort by startMin`:
 
@@ -19,8 +35,6 @@ Three bugs fixed in `fix(calendar): two-pass tzOffsetMinutes + isToday local dat
 2. **`src/components/today/constants.ts`** — `isToday()` now compares local date components (getFullYear/getMonth/getDate) not UTC ISO slice. Prevents post-7pm CDT events (midnight+ UTC) appearing on wrong day.
 
 3. **`src/pages/portal/TodayPage.tsx`** — `timed.sort()` now sorts by `startMin` (numeric) not `a.time.localeCompare()`. Lexicographic sort put "9:30 AM" after "12:00 PM" (because "9" > "1").
-
-D1 verify after re-poll: CQODE `T14:30:00.000Z` (9:30am CDT correct), MNCCORE `T21:00:00.000Z` (4pm CDT — matches ICS feed). If Nick's actual meeting times differ from what Hub shows, the Google Calendar entries themselves need correction.
 
 Schema v54 still in prod D1 (`team_members.citation_count` + `h_index` + `last_scholar_refresh`).
 
