@@ -328,7 +328,7 @@ async function pollFeed(env: Env, feed: FeedRow, ownerEmail: string, timeoutMs =
   }
 
   const insertStmt = env.DB.prepare(
-    `INSERT INTO user_calendar_events (id, feed_id, user_slug, uid, summary, description, location, start_at, end_at, is_all_day, updated_at)
+    `INSERT OR REPLACE INTO user_calendar_events (id, feed_id, user_slug, uid, summary, description, location, start_at, end_at, is_all_day, updated_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`
   )
 
