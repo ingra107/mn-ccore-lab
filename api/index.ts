@@ -43,13 +43,13 @@ import { handleGetExpertise, handleAddExpertise, handleRemoveExpertise, handleSu
 import { handleGetQuestions, handleGetQuestionDetail, handleCreateQuestion, handleCreateAnswer, handleAcceptAnswer } from './routes/questions';
 import { handleGetHandoffs, handleCreateHandoff, handleAcknowledgeHandoff } from './routes/handoffs';
 import { handleCheckImpact } from './routes/impact-trace';
-import { handlePIAnalytics } from './routes/pi-analytics';
+// pi-analytics.ts retired 2026-05-05 (5.9) — 0 frontend callers; /api/analytics/pi-dashboard is canonical
 import { handlePIDashboard, handleMenteeVelocity, handleResponseTime, handleTeamEngagement, handleTeamByExpertise } from './routes/pi-dashboard';
 import { handleCadenceCheck } from './routes/meeting-cadence';
 import { handleGetAIRequests, handleCreateAIRequest, handleUpdateAIResponse } from './routes/ai-requests';
 import { handleCommandCenter, handlePBCapture, handlePBDefer, handleCreateOrUpdatePlan, handleReorderPlan, handlePromoteTask, handleStartPomodoro, handleCompletePomodoro, handleSaveReflection, handlePlanHistory, handleAddToDispatch, handleGetPendingDispatch, handleSendDispatch, handleCompleteDispatchItem } from './routes/pb-sector';
 import { handlePBSessions, handlePBSessionStats, handleCreatePBSession, handleBulkCreatePBSessions } from './routes/pb-sessions';
-import { handleGetTodayMd, handleUpsertTodayMd } from './routes/pb-today';
+import { handleGetTodayMd } from './routes/pb-today'; // POST /api/pb/today retired 2026-05-05 (5.9)
 import { handlePBHealth } from './routes/pb-health';
 import { handleGetRelay, handleCreateRelay, handleCompleteRelay } from './routes/pb-relay';
 import { handleGetRevisions, handleCreateRevision, handleUpdateRevision, handleGetRevisionComments, handleCreateRevisionComment, handleUpdateRevisionComment, handleGetActiveRevisions, handleAttentionManuscripts } from './routes/revisions';
@@ -310,7 +310,7 @@ app.get('/api/pb/relay', (c) => handleGetRelay(E(c)));
 // ─────────────────────────────────────────────────────────────────────────────
 // PI Analytics
 // ─────────────────────────────────────────────────────────────────────────────
-app.get('/api/pi/analytics', (c) => handlePIAnalytics(E(c)));
+// /api/pi/analytics retired 2026-05-05 (5.9): 0 callers, overlapped /api/analytics/pi-dashboard
 app.get('/api/analytics/pi-dashboard', (c) => handlePIDashboard(E(c)));
 app.get('/api/analytics/mentee-velocity', (c) => handleMenteeVelocity(E(c)));
 app.get('/api/analytics/response-time', (c) => handleResponseTime(E(c)));
@@ -787,7 +787,7 @@ app.post('/api/pb/dispatch/send', (c) => handleSendDispatch(R(c), USER(c), E(c))
 app.post('/api/pb/dispatch/complete', (c) => handleCompleteDispatchItem(R(c), E(c)));
 app.post('/api/pb/sessions', (c) => handleCreatePBSession(R(c), USER(c), E(c)));
 app.post('/api/pb/sessions/bulk', (c) => handleBulkCreatePBSessions(R(c), USER(c), E(c)));
-app.post('/api/pb/today', (c) => handleUpsertTodayMd(R(c), E(c)));
+// POST /api/pb/today retired 2026-05-05 (5.9): 0 callers; GET preserved for frontend use
 app.post('/api/pb/relay', (c) => handleCreateRelay(R(c), USER(c), E(c)));
 // Relay completion uses a numeric index in the path — Hono matches :index
 // against one URL segment. Original regex was /^\/api\/pb\/relay\/\d+\/complete$/;
