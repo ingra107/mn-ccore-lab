@@ -110,15 +110,23 @@ export default function QuickCaptureInbox() {
     if (!trimmed || submitting) return
     setSubmitting(true)
     try {
-      const res = await fetch('/api/inbox', {
+      const now = new Date().toISOString()
+      const eventId = crypto.randomUUID()
+      const res = await fetch('/api/inbox-events/sync-bulk', {
         method: 'POST',
         credentials: 'same-origin',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          text: trimmed,
-          tag,
-          project_id: projectId || null,
-          author: user?.email || undefined,
+          events: [{
+            id: eventId,
+            source: 'hub_ui',
+            raw_text: trimmed,
+            notes: [tag, projectId || null].filter(Boolean).join(':') || null,
+            suggested_project_id: projectId || null,
+            captured_at: now,
+            created_at: now,
+            client_updated_at: now,
+          }],
         }),
       })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)

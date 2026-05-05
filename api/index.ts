@@ -64,7 +64,7 @@ import { handleGetProjectDocuments, handleCreateProjectDocument, handleDeletePro
 import { handleProactiveBrief } from './routes/proactive-brief';
 import { handleGetFileActivity, handleSyncFileActivity } from './routes/file-activity';
 import { handleGenerateDigestEmail, handleDigestPreview, handleSendDigestEmail, handleSendDailyDigests } from './routes/digest-email';
-import { handlePostInbox, handleGetInbox, handleMarkSynced } from './routes/inbox';
+// inbox.ts retired 2026-05-05 (5.3a) — migrated to /api/inbox-events/sync-bulk
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Hono app with typed bindings + per-request variables
@@ -484,7 +484,7 @@ app.get('/api/notifications', (c) => handleNotifications(U(c), R(c), E(c)));
 app.get('/api/notifications/count', (c) => handleNotificationCount(U(c), R(c), E(c)));
 app.get('/api/commitments', (c) => handleCommitments(U(c), E(c)));
 app.get('/api/ideas', (c) => handleIdeas(U(c), E(c)));
-app.get('/api/inbox', (c) => handleGetInbox(U(c), E(c)));
+// GET /api/inbox retired 2026-05-05 (5.3a) — use /api/inbox-events
 app.get('/api/search', (c) => handleSearch(U(c), E(c)));
 app.get('/api/settings', (c) => handleGetSettings(E(c)));
 app.get('/api/workflow-templates', (c) => handleGetWorkflowTemplates(E(c)));
@@ -720,9 +720,7 @@ app.post('/api/ideas', (c) => handleCreateIdea(R(c), USER(c), E(c)));
 app.post('/api/ideas/:id/vote', (c) => handleVoteIdea(c.req.param('id'), E(c)));
 app.post('/api/ideas/:id', (c) => handleUpdateIdea(c.req.param('id'), R(c), USER(c), E(c)));
 
-// Inbox
-app.post('/api/inbox', (c) => handlePostInbox(R(c), USER(c), E(c)));
-app.post('/api/inbox/sync', (c) => handleMarkSynced(R(c), E(c)));
+// Inbox — POST /api/inbox + /api/inbox/sync retired 2026-05-05 (5.3a); use /api/inbox-events/sync-bulk
 
 // Bug report. Once REQUIRE_AUTH is flipped on (team launch), require an
 // authed user OR API key — bug reports create real GitHub Issues and a

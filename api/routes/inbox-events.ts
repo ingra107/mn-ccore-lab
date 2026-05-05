@@ -145,7 +145,7 @@ export async function handleSyncBulkInboxEvents(
            suggested_project_id, suggested_action, confidence,
            captured_at, triaged_at, triage_outcome, resulting_task_id, triaged_by,
            notes, created_at, updated_at
-         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, COALESCE(?, datetime('now')))
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, COALESCE(?, datetime('now')), COALESCE(?, datetime('now')))
          ON CONFLICT(id) DO UPDATE SET
            source = excluded.source,
            source_external_id = excluded.source_external_id,
