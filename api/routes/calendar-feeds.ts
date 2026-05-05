@@ -15,11 +15,13 @@ import { actorSlug } from '../helpers'
 import { parseIcs, type IcsEvent, type ParseOptions } from '../lib/ics-parser'
 
 const STALE_MINUTES = 15
-// Google Calendar's "Secret address in iCal format" can take 10-20s to respond
-// from Cloudflare's edge (large calendars with many recurring events). The
-// previous 8s limit caused persistent "The operation was aborted" errors.
-// Cloudflare Workers allow up to 30s per subrequest; 25s leaves buffer.
-const FETCH_TIMEOUT_MS = 25000
+// On-demand path (GET /events): 25s keeps us inside the 30s subrequest hard
+// cap. Only used for ?force=1 explicit refresh; normal GETs are cache-only.
+const FETCH_TIMEOUT_ONDEMAND_MS = 25000
+// Cron path: 15-minute wall-clock budget means 60s per feed is safe even
+// for slow Google Calendar iCal exports (the actual bottleneck for Nick's
+// busy academic calendar).
+const FETCH_TIMEOUT_CRON_MS = 60000
 
 // D1 batches with thousands of statements hit the storage timeout
 // ("D1_ERROR: D1 DB storage operation exceeded timeout which caused
@@ -139,6 +141,7 @@ export async function handleAddFeed(
     env,
     { id, user_slug: slug, feed_url: url, feed_label: label, last_polled_at: null, last_error: null, created_at: new Date().toISOString() },
     user.email,
+    FETCH_TIMEOUT_ONDEMAND_MS,
   ).catch((e) => {
     // Swallow background errors so they don't terminate the worker;
     // last_error in D1 is the durable record.
@@ -161,13 +164,15 @@ export async function handleDeleteFeed(env: Env, user: AuthUser | null, id: stri
   return json({ ok: true })
 }
 
-// GET /api/integrations/calendar/events?start=YYYY-MM-DD&end=YYYY-MM-DD
-// Refreshes any stale feeds (>15min) before returning.
+// GET /api/integrations/calendar/events?start=YYYY-MM-DD&end=YYYY-MM-DD[&force=1]
 //
-// waitUntil fires stale-feed polls in the background (same pattern as
-// handleAddFeed) so the response is not blocked by a slow iCal fetch.
-// Without waitUntil, a 20s Google Calendar fetch would cause the entire
-// /api/integrations/calendar/events request to hang or timeout.
+// Normal requests return cached events ONLY — no blocking fetch to upstream
+// iCal. Cache is populated by the Cron Trigger (every 15 min) which has a
+// 15-minute wall-clock budget — plenty for slow iCal exports that exceed the
+// 30s on-demand subrequest hard limit.
+//
+// ?force=1  — explicit manual refresh: fires stale polls in the background
+// via waitUntil (on-demand timeout 25s). Use sparingly; prefer cron cache.
 export async function handleListEvents(
   url: URL,
   env: Env,
@@ -180,26 +185,27 @@ export async function handleListEvents(
   // Default range: today + next 7 days.
   const endDefault = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10)
   const end = url.searchParams.get('end') || endDefault
+  const forceRefresh = url.searchParams.get('force') === '1'
 
-  const feeds = await env.DB.prepare(
-    'SELECT id, user_slug, feed_url, feed_label, last_polled_at, last_error, created_at FROM user_calendar_feeds WHERE user_slug = ?'
-  ).bind(slug).all<FeedRow>()
-
-  // Fire stale-feed polls in the background via waitUntil so the response
-  // is returned immediately with cached data. Stale data beats a hung
-  // request — last_error in the feeds list surfaces poll failures.
-  const stalenessCutoff = new Date(Date.now() - STALE_MINUTES * 60_000).toISOString()
-  const stale = (feeds.results ?? []).filter((f) => !f.last_polled_at || f.last_polled_at < stalenessCutoff)
-  if (stale.length > 0) {
-    const pollAll = Promise.allSettled(stale.map((f) => pollFeed(env, f, user.email).catch((e) => {
-      console.error('[handleListEvents pollFeed]', (e as Error).message)
-    })))
-    if (waitUntil) {
-      // Non-blocking: return cached events immediately; poll runs after response.
-      waitUntil(pollAll)
-    } else {
-      // Fallback (no ExecutionContext): poll synchronously so events appear.
-      await pollAll
+  // ?force=1: fire stale-feed polls in the background so the response still
+  // returns immediately (cached data). Poll runs after response via waitUntil.
+  if (forceRefresh) {
+    const feeds = await env.DB.prepare(
+      'SELECT id, user_slug, feed_url, feed_label, last_polled_at, last_error, created_at FROM user_calendar_feeds WHERE user_slug = ?'
+    ).bind(slug).all<FeedRow>()
+    const stalenessCutoff = new Date(Date.now() - STALE_MINUTES * 60_000).toISOString()
+    const stale = (feeds.results ?? []).filter((f) => !f.last_polled_at || f.last_polled_at < stalenessCutoff)
+    if (stale.length > 0) {
+      const pollAll = Promise.allSettled(stale.map((f) =>
+        pollFeed(env, f, user.email, FETCH_TIMEOUT_ONDEMAND_MS).catch((e) => {
+          console.error('[handleListEvents force pollFeed]', (e as Error).message)
+        })
+      ))
+      if (waitUntil) {
+        waitUntil(pollAll)
+      } else {
+        await pollAll
+      }
     }
   }
 
@@ -222,17 +228,47 @@ export async function handleListEvents(
     endAt: r.end_at,
     isAllDay: r.is_all_day === 1,
   }))
-  return json({ events, refreshedFeeds: stale.length })
+  return json({ events })
+}
+
+// Exported for Cron Trigger: poll all feeds whose last_polled_at is stale
+// (>15 min old or never polled). Called from the scheduled() handler with
+// FETCH_TIMEOUT_CRON_MS (60s) — safe because cron has a 15min wall budget.
+export async function pollAllStaleFeeds(env: Env): Promise<void> {
+  const stalenessCutoff = new Date(Date.now() - STALE_MINUTES * 60_000).toISOString()
+  const r = await env.DB.prepare(
+    `SELECT id, user_slug, feed_url, feed_label, last_polled_at, last_error, created_at
+     FROM user_calendar_feeds
+     WHERE last_polled_at IS NULL OR last_polled_at < ?`
+  ).bind(stalenessCutoff).all<FeedRow>()
+  const stale = r.results ?? []
+  if (stale.length === 0) {
+    console.log('[CalendarCron] No stale feeds — skipping')
+    return
+  }
+  console.log(`[CalendarCron] Polling ${stale.length} stale feed(s)`)
+  // Sequential: avoids overwhelming D1 with parallel batch writes. Each
+  // pollFeed does a DELETE + N batched INSERTs; running in parallel risks
+  // hitting D1's concurrent statement ceiling on large calendars.
+  for (const feed of stale) {
+    try {
+      await pollFeed(env, feed, feed.user_slug, FETCH_TIMEOUT_CRON_MS)
+      console.log(`[CalendarCron] Polled feed ${feed.id} (${feed.user_slug})`)
+    } catch (e) {
+      console.error(`[CalendarCron] Feed ${feed.id} threw:`, (e as Error).message)
+    }
+  }
 }
 
 // Internal: poll a single feed, parse, upsert events, update last_polled_at.
 // ownerEmail is passed through to the parser so it can drop events the
-// user has declined (PARTSTAT=DECLINED).
-async function pollFeed(env: Env, feed: FeedRow, ownerEmail: string): Promise<void> {
+// user has declined (PARTSTAT=DECLINED). timeoutMs defaults to the
+// on-demand limit; cron callers pass FETCH_TIMEOUT_CRON_MS (60s).
+async function pollFeed(env: Env, feed: FeedRow, ownerEmail: string, timeoutMs = FETCH_TIMEOUT_ONDEMAND_MS): Promise<void> {
   let body = ''
   try {
     const ctrl = new AbortController()
-    const timer = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS)
+    const timer = setTimeout(() => ctrl.abort(), timeoutMs)
     const res = await fetch(feed.feed_url, {
       headers: { 'User-Agent': 'mn-ccore-lab-hub/1.0 (calendar-feed-poller)' },
       signal: ctrl.signal,

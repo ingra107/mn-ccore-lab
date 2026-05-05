@@ -25,7 +25,7 @@ import { handleSearch } from './routes/search';
 import { handleGetSettings, handleUpdateSettings, handleGetWorkflowTemplates, handleCreateWorkflowTemplate } from './routes/settings';
 import { handleGetReactions, handleToggleReaction } from './routes/reactions';
 import { handleCalendarEvents } from './routes/calendar';
-import { handleListFeeds, handleAddFeed, handleDeleteFeed, handleListEvents } from './routes/calendar-feeds';
+import { handleListFeeds, handleAddFeed, handleDeleteFeed, handleListEvents, pollAllStaleFeeds } from './routes/calendar-feeds';
 import { handleActivity, handleActivityHeatmap } from './routes/activity';
 import { handleGetSubtasks, handleCreateSubtask, handleToggleSubtask, handleDeleteSubtask, handleReorderSubtasks } from './routes/subtasks';
 import { handleTeamPulse } from './routes/team-pulse';
@@ -1245,15 +1245,29 @@ app.notFound(() => error('Not found', 404));
 // ─────────────────────────────────────────────────────────────────────────────
 // Default export: { fetch, scheduled } — matches Cloudflare Worker module shape.
 // - fetch: Hono app, invoked by functions/api/[[route]].ts for all /api/* requests.
-// - scheduled: verbatim copy of the original cron handler. Do NOT refactor —
-//   it sends morning pulse emails via SendGrid + triggers the coordinator
-//   daily digest. Breaking it breaks production email.
+// - scheduled: dispatches by event.cron:
+//     "*/15 * * * *"   → calendar feed poller (iCal background refresh)
+//     "0 13 * * 1-5"   → morning pulse email (weekday 7 AM CT)
+//     "0 11 * * *"     → coordinator daily digest (6 AM CT)
+//   Dispatching by cron expression prevents the pulse email firing 96×/day
+//   after adding the 15-minute calendar cron.
 // ─────────────────────────────────────────────────────────────────────────────
 export default {
   fetch: app.fetch.bind(app),
 
-  // ── Scheduled: Morning Pulse Email ─────────────────────────
-  async scheduled(_event: ScheduledEvent, env: Env, _ctx: ExecutionContext): Promise<void> {
+  async scheduled(event: ScheduledEvent, env: Env, _ctx: ExecutionContext): Promise<void> {
+    // ── iCal feed poller (every 15 min) ────────────────────────
+    if (event.cron === '*/15 * * * *') {
+      console.log('[CalendarCron] Starting iCal feed poll...')
+      try {
+        await pollAllStaleFeeds(env)
+      } catch (e) {
+        console.error('[CalendarCron] Unhandled error:', (e as Error).message)
+      }
+      return
+    }
+
+    // ── Morning Pulse Email + Daily Digest (existing crons) ────
     if (!env.SENDGRID_API_KEY) {
       console.log('[Pulse] No SENDGRID_API_KEY configured — skipping email send');
       return;
