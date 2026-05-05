@@ -799,8 +799,7 @@ app.post('/api/pb/relay/:index/complete', (c) => {
   return handleCompleteRelay(R(c), E(c), index);
 });
 
-// Impact check
-app.post('/api/impact/check', (c) => handleCheckImpact(E(c)));
+// Impact check — route removed 2026-05-05 (5.3b); handleCheckImpact used internally by cron at line 1269
 
 // Revisions (specific /:id/comments BEFORE /:id)
 app.post('/api/revisions', (c) => handleCreateRevision(R(c), USER(c), E(c)));
