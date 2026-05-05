@@ -1005,12 +1005,12 @@ export async function handlePostTaskUpdate(taskId: string, request: Request, use
 // Schema v47 fields (notes, effort, short_title, source_thread_id,
 // related_message_ids) accepted + stored structured. No lossy concat.
 //
-// Dedup rule: if a task with the same (title, assignee) is already in Hub D1
-// (completed=0, deleted_at IS NULL), skip creation and return its existing ID
-// in the map. Prevents the same PWA batch re-creating duplicates on retry.
-// NOTE: project_id is NOT part of the dedup key (see SQL at L1054-1057).
-// A task with the same title+assignee but different project_id is treated as
-// a duplicate. Confirmed against codex audit 2026-05-04.
+// Dedup rule: if a task with the same (title, project_id, assignee) is
+// already in Hub D1 (completed=0, deleted_at IS NULL), skip creation
+// and return its existing ID in the map. Prevents the same PWA batch
+// re-creating duplicates on retry. project_id-aware as of 2026-05-04
+// (Phase 1.4): different project + same title+assignee = NOT a duplicate.
+// NULL project_id matches NULL project_id (use IS operator).
 export async function handleMobileTasksToHub(request: Request, user: AuthUser, env: Env): Promise<Response> {
   const body = await request.json() as {
     tasks: Array<{
@@ -1054,24 +1054,26 @@ export async function handleMobileTasksToHub(request: Request, user: AuthUser, e
       continue;
     }
 
-    // Dedup: same (title, assignee) already open in Hub?
-    const existing = await env.DB.prepare(
-      'SELECT id FROM tasks WHERE lower(trim(title)) = lower(trim(?)) AND assignee = ? AND completed = 0 AND deleted_at IS NULL LIMIT 1'
-    ).bind(title, assignee).first<{ id: string }>();
-
-    if (existing) {
-      id_map[pwaTask.id] = existing.id;
-      deduped++;
-      continue;
-    }
-
-    // Resolve project_id (PWA may send brain.db slug or id)
+    // Resolve project_id first (PWA may send brain.db slug or id).
+    // Must be above the dedup query since project_id is now part of the dedup key.
     let resolvedProjectId: string | null = pwaTask.project_id ?? null;
     if (resolvedProjectId) {
       const proj = await env.DB.prepare(
         'SELECT id, slug FROM projects WHERE id = ? OR slug = ? LIMIT 1'
       ).bind(resolvedProjectId, resolvedProjectId).first<{ id: string; slug: string | null }>();
       resolvedProjectId = proj ? (proj.slug || proj.id) : null;
+    }
+
+    // Dedup: same (title, assignee, project_id) already open in Hub?
+    // NULL project_id matches NULL project_id via IS operator.
+    const existing = await env.DB.prepare(
+      'SELECT id FROM tasks WHERE lower(trim(title)) = lower(trim(?)) AND assignee = ? AND ((project_id IS NULL AND ? IS NULL) OR project_id = ?) AND completed = 0 AND deleted_at IS NULL LIMIT 1'
+    ).bind(title, assignee, resolvedProjectId, resolvedProjectId).first<{ id: string }>();
+
+    if (existing) {
+      id_map[pwaTask.id] = existing.id;
+      deduped++;
+      continue;
     }
 
     const id = generateId('task');  // A1.2: typed ULID

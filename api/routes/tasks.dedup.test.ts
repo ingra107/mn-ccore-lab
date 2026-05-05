@@ -735,3 +735,187 @@ describe('partial index race backstop — concurrent dup INSERT (18:00:27 shape)
     // drop 2be4a01b's index → this test passes, the race test above fails.
   })
 })
+
+// ── Phase 1.4 — mobile dedup includes project_id ────────────────────────────
+//
+// handleMobileTasksToHub dedup key was (title, assignee) only.
+// Nick decision 2026-05-04: same title+assignee but DIFFERENT project = NOT a
+// duplicate. This block verifies the fix: project_id added to the dedup query.
+
+function makeMobileEnv() {
+  // Minimal in-memory store for handleMobileTasksToHub tests.
+  // Tracks tasks by id; supports INSERT (pre-seed + creation) and SELECT dedup.
+  const store: Map<string, Record<string, unknown>> = new Map()
+  let lastInsertedId: string | null = null
+
+  function makeStmt(sql: string, boundVals: unknown[]): any {
+    return {
+      bind: (...more: unknown[]) => makeStmt(sql, [...boundVals, ...more]),
+
+      first: async <T>() => {
+        const upper = sql.trim().toUpperCase()
+
+        // Dedup SELECT for handleMobileTasksToHub (pre-fix and post-fix shapes)
+        // Pre-fix:  WHERE lower(trim(title)) = lower(trim(?)) AND assignee = ? AND completed = 0 AND deleted_at IS NULL
+        // Post-fix: + AND ((project_id IS NULL AND ? IS NULL) OR project_id = ?)
+        if (upper.includes('LOWER(TRIM(TITLE))') && upper.includes('ASSIGNEE =')) {
+          const title = (boundVals[0] as string).toLowerCase().trim()
+          const assignee = boundVals[1] as string
+          // Post-fix: project_id is boundVals[2] and boundVals[3]
+          const projectId = boundVals.length >= 4 ? (boundVals[2] as string | null) : undefined
+
+          for (const row of store.values()) {
+            const rowTitle = ((row.title as string) ?? '').toLowerCase().trim()
+            const rowAssignee = row.assignee as string
+            const rowCompleted = row.completed as number
+            const rowDeletedAt = row.deleted_at
+
+            if (rowTitle !== title) continue
+            if (rowAssignee !== assignee) continue
+            if (rowCompleted !== 0) continue
+            if (rowDeletedAt) continue
+
+            // If project_id is present in the query (post-fix), check it
+            if (projectId !== undefined) {
+              const rowProjectId = (row.project_id ?? null) as string | null
+              const queryProjectId = projectId === undefined ? null : (projectId ?? null)
+              if (rowProjectId !== queryProjectId) continue
+            }
+
+            return { id: row.id } as T
+          }
+          return null as T | null
+        }
+
+        // Project resolution query: SELECT id, slug FROM projects WHERE id = ? OR slug = ?
+        if (upper.includes('FROM PROJECTS') && upper.includes('SLUG')) {
+          const ref = boundVals[0] as string
+          // Return the ref as-is (treat project_id as already resolved)
+          return { id: ref, slug: ref } as T
+        }
+
+        return null as T | null
+      },
+
+      run: async () => {
+        const upper = sql.trim().toUpperCase()
+        if (upper.startsWith('INSERT INTO TASKS')) {
+          // handleMobileTasksToHub INSERT column order:
+          // id, title, description, assignee, assigned_by, project_id, due_date,
+          // deadline, priority, status, source, completed, completed_at,
+          // notes, effort, short_title, source_thread_id, related_message_ids
+          const id = boundVals[0] as string
+          store.set(id, {
+            id,
+            title: boundVals[1],
+            assignee: boundVals[3],
+            project_id: boundVals[5] ?? null,
+            status: boundVals[9],
+            completed: boundVals[11],
+            deleted_at: null,
+          })
+          lastInsertedId = id
+          return { meta: { changes: 1 } }
+        }
+        // activity_log INSERT — silently accept
+        if (upper.startsWith('INSERT INTO ACTIVITY_LOG')) {
+          return { meta: { changes: 1 } }
+        }
+        return { meta: { changes: 0 } }
+      },
+
+      all: async <T>() => ({ results: [] as T[], success: true, meta: {} }),
+    }
+  }
+
+  const db = {
+    _store: store,
+    _lastInsertedId: () => lastInsertedId,
+    prepare: (sql: string) => makeStmt(sql, []),
+    batch: async (stmts: any[]) => { for (const s of stmts) await s.run(); return [] },
+  }
+
+  // Env stub — also provides a no-op ACTIVITY_LOG path
+  const env = {
+    DB: db,
+  }
+
+  // Helper: pre-seed a task directly into the store
+  function seedTask(row: Record<string, unknown>) {
+    store.set(row.id as string, { deleted_at: null, completed: 0, ...row })
+  }
+
+  return { env, seedTask, store }
+}
+
+const mobileUser = { id: 'u_test', email: 'test@example.com', role: 'admin', name: 'Test' } as unknown as import('../helpers').AuthUser
+
+describe('Phase 1.4 — mobile dedup includes project_id', () => {
+  it('different project_id with same title+assignee creates two rows', async () => {
+    const { env, seedTask, store } = makeMobileEnv()
+
+    // Pre-seed: task in project A
+    seedTask({
+      id: 'task_existing',
+      title: 'shared title',
+      assignee: 'nick-ingraham',
+      project_id: 'proj_A',
+      status: 'todo',
+      completed: 0,
+    })
+
+    const { handleMobileTasksToHub } = await import('./tasks')
+
+    const req = new Request('https://example.com/api/sync/mobile-tasks-to-hub', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        tasks: [{
+          id: 'mobile_xyz',
+          title: 'shared title',
+          assignee: 'nick-ingraham',
+          project_id: 'proj_B',  // DIFFERENT project
+        }],
+      }),
+    })
+
+    const response = await handleMobileTasksToHub(req, mobileUser, env as any)
+    const body = await response.json() as { data: { deduped: number; created: number; id_map: Record<string, string> } }
+
+    // Should NOT dedup; should create new task
+    expect(body.data.deduped).toBe(0)
+    expect(body.data.created).toBe(1)
+    expect(body.data.id_map['mobile_xyz']).not.toBe('task_existing')
+    // New task should exist in store
+    expect(store.has(body.data.id_map['mobile_xyz'])).toBe(true)
+  })
+
+  it('same title+assignee+project_id deduplicates', async () => {
+    const { env, seedTask } = makeMobileEnv()
+
+    seedTask({
+      id: 'task_existing2',
+      title: 'dup title',
+      assignee: 'nick-ingraham',
+      project_id: 'proj_C',
+      status: 'todo',
+      completed: 0,
+    })
+
+    const { handleMobileTasksToHub } = await import('./tasks')
+
+    const req = new Request('https://example.com/api/sync/mobile-tasks-to-hub', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        tasks: [{ id: 'mobile_dup', title: 'dup title', assignee: 'nick-ingraham', project_id: 'proj_C' }],
+      }),
+    })
+
+    const response = await handleMobileTasksToHub(req, mobileUser, env as any)
+    const body = await response.json() as { data: { deduped: number; created: number; id_map: Record<string, string> } }
+
+    expect(body.data.deduped).toBe(1)
+    expect(body.data.id_map['mobile_dup']).toBe('task_existing2')
+  })
+})
