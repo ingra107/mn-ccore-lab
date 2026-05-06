@@ -77,7 +77,7 @@ export async function handleCommandCenter(env: Env, planDate?: string): Promise<
     env.DB.prepare('SELECT * FROM daily_plans WHERE plan_date = ?').bind(targetDate),
 
     // Target date's pomodoro sessions
-    env.DB.prepare('SELECT * FROM pomodoro_sessions WHERE plan_date = ?').bind(targetDate),
+    env.DB.prepare('SELECT * FROM hub_pomodoro_slots WHERE plan_date = ?').bind(targetDate),
 
     // Target date's reflection
     env.DB.prepare('SELECT * FROM daily_reflections WHERE plan_date = ?').bind(targetDate),
@@ -403,12 +403,12 @@ export async function handleStartPomodoro(request: Request, user: AuthUser, env:
   const duration = body.duration_minutes || 25
 
   await env.DB.prepare(
-    'INSERT INTO pomodoro_sessions (id, task_id, plan_date, slot_type, duration_minutes, started_at) VALUES (?, ?, ?, ?, ?, datetime(\'now\'))'
+    'INSERT INTO hub_pomodoro_slots (id, task_id, plan_date, slot_type, duration_minutes, started_at) VALUES (?, ?, ?, ?, ?, datetime(\'now\'))'
   ).bind(id, body.task_id, body.plan_date, body.slot_type, duration).run()
 
   await logActivity(env, 'pomodoro', `Pomodoro started for task ${body.task_id} (${duration}min)`, user.email, body.task_id, 'task')
 
-  const created = await env.DB.prepare('SELECT * FROM pomodoro_sessions WHERE id = ?').bind(id).first()
+  const created = await env.DB.prepare('SELECT * FROM hub_pomodoro_slots WHERE id = ?').bind(id).first()
   return json({ data: created }, 201)
 }
 
@@ -417,16 +417,16 @@ export async function handleCompletePomodoro(request: Request, user: AuthUser, e
   const body = await request.json() as { id: string }
   if (!body.id) return error('id required', 400)
 
-  const existing = await env.DB.prepare('SELECT * FROM pomodoro_sessions WHERE id = ?').bind(body.id).first()
+  const existing = await env.DB.prepare('SELECT * FROM hub_pomodoro_slots WHERE id = ?').bind(body.id).first()
   if (!existing) return error('Pomodoro session not found', 404)
 
   await env.DB.prepare(
-    'UPDATE pomodoro_sessions SET completed_at = datetime(\'now\'), completed = 1 WHERE id = ?'
+    'UPDATE hub_pomodoro_slots SET completed_at = datetime(\'now\'), completed = 1 WHERE id = ?'
   ).bind(body.id).run()
 
   await logActivity(env, 'pomodoro', `Pomodoro completed`, user.email, body.id, 'pomodoro')
 
-  const updated = await env.DB.prepare('SELECT * FROM pomodoro_sessions WHERE id = ?').bind(body.id).first()
+  const updated = await env.DB.prepare('SELECT * FROM hub_pomodoro_slots WHERE id = ?').bind(body.id).first()
   return json({ data: updated })
 }
 
