@@ -26,6 +26,9 @@ import { json, error, generateId } from '../helpers';
 
 const ALLOWED_TABLES = new Set([
   'tasks', 'projects', 'inbox_events', 'day_capacity', 'project_state_log',
+  // Stage 3 Phase 1 — 9 semantic tables
+  'sessions', 'agent_knowledge', 'memory_facts', 'pomodoro_sessions', 'decisions',
+  'kg_entities', 'kg_relations', 'kg_relation_type_registry', 'trajectories',
 ]);
 
 const ALLOWED_OPS = new Set(['insert', 'update', 'delete', 'append']);
@@ -67,6 +70,57 @@ const TABLE_FIELDS: Record<string, Set<string>> = {
   ]),
   project_state_log: new Set([
     'project_id', 'old_state', 'new_state', 'reason', 'actor', 'created_at',
+  ]),
+  sessions: new Set([
+    'session_id', 'started_at', 'ended_at', 'summary', 'context',
+    'projects_touched', 'skills_used', 'token_estimate', 'machine_id',
+    'created_at',
+  ]),
+  agent_knowledge: new Set([
+    'category', 'topic', 'knowledge', 'source',
+    'learned_at', 'updated_at', 'confidence', 'tags',
+    'valid_from', 'valid_to', 'superseded_by', 'machine_id',
+    'created_at',
+  ]),
+  memory_facts: new Set([
+    'id', 'text', 'category', 'confidence', 'status',
+    'confusion_risk', 'is_negative_constraint',
+    'superseded_by', 'superseded_at', 'supersession_reason',
+    'source_type', 'source_session_id',
+    'access_count', 'days_active', 'last_relevance_score',
+    'created_at', 'updated_at', 'promoted_at', 'last_accessed',
+    'source_machine_id',
+  ]),
+  pomodoro_sessions: new Set([
+    'task_id', 'project_id', 'start_time', 'end_time',
+    'duration_min', 'completed', 'notes', 'created_at',
+    'source', 'confidence_score', 'phase', 'machine_id',
+  ]),
+  decisions: new Set([
+    'context_id', 'date', 'title', 'topic', 'tags', 'content',
+    'file_path', 'indexed_at', 'outcome', 'outcome_date',
+    'machine_id', 'created_at',
+  ]),
+  kg_entities: new Set([
+    'id', 'entity_type', 'name', 'canonical_name', 'attributes',
+    'description', 'importance_score', 'access_count', 'last_accessed',
+    'source_type', 'source_id', 'created_at', 'updated_at',
+    'valid_from', 'valid_until',
+  ]),
+  kg_relations: new Set([
+    'source_id', 'target_id', 'relation_type', 'attributes',
+    'confidence', 'weight', 'valid_from', 'valid_until',
+    'superseded_by', 'extraction_source', 'extraction_ref',
+    'extracted_from', 'created_at', 'last_validated',
+  ]),
+  kg_relation_type_registry: new Set([
+    'relation_type', 'inverse_name', 'is_transitive', 'is_temporal',
+    'default_weight', 'category', 'description', 'staleness_days',
+    'created_at', 'updated_at',
+  ]),
+  trajectories: new Set([
+    'task', 'steps', 'outcome', 'insight', 'project_id',
+    'created_at', 'access_count', 'last_accessed', 'machine_id',
   ]),
 };
 
