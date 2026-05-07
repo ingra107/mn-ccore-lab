@@ -270,3 +270,71 @@ describe('_HUB_ONLY_FIELDS schema drift gate (Task C)', () => {
     })
   }
 })
+
+// ── PK_COLUMN map coverage (Stage 3 Phase 2) ────────────────────────────────
+//
+// Motivation: mutations.ts previously hardcoded idCol = mut.table === 'day_capacity' ? 'date' : 'id'
+// at applyInsert, applyPatch, applyDelete, and readCanonical — all 9 Stage 3 Phase 1 tables
+// with natural keys (sessions, decisions, kg_relation_type_registry, etc.) would resolve
+// to PK='id', causing D1 row writes at the wrong column. This test pins the PK_COLUMN
+// constant so adding a new Stage 3 table forces an explicit PK declaration.
+//
+// Approach: text-scan the PK_COLUMN const block; assert all Stage 2 required entries
+// are present. Also verify pkColumn() is used at every idCol assignment site.
+
+describe('PK_COLUMN map — Stage 3 Phase 2 natural key coverage', () => {
+  // Required entries for Stage 2 (sessions canary + decisions + kg_relation_type_registry)
+  const REQUIRED_ENTRIES: Record<string, string> = {
+    day_capacity: 'date',
+    sessions: 'session_id',
+    decisions: 'context_id',
+    kg_relation_type_registry: 'relation_type',
+  }
+
+  it('PK_COLUMN constant contains all Stage 2 required entries', () => {
+    // Parse the PK_COLUMN block from source
+    const pkBlockMatch = mutationsSrc.match(/const PK_COLUMN[^=]*=\s*\{([\s\S]*?)\};/)
+    expect(pkBlockMatch, 'PK_COLUMN const not found in mutations.ts').toBeTruthy()
+    const pkBlock = pkBlockMatch![1]
+
+    for (const [table, col] of Object.entries(REQUIRED_ENTRIES)) {
+      expect(
+        pkBlock,
+        `PK_COLUMN missing entry for table '${table}' (expected PK='${col}'). ` +
+        `All Stage 3 tables with non-'id' PKs must be registered here.`
+      ).toContain(table)
+      expect(
+        pkBlock,
+        `PK_COLUMN entry for '${table}' should map to '${col}'`
+      ).toContain(col)
+    }
+  })
+
+  it('no raw idCol ternary remains in mutations.ts (all sites use pkColumn())', () => {
+    // Regression guard: the old ternary pattern must not be re-introduced.
+    const oldPattern = /idCol\s*=\s*\w+\.table\s*===\s*['"]day_capacity['"]\s*\?/
+    expect(
+      oldPattern.test(mutationsSrc),
+      'Found old hardcoded ternary for day_capacity PK. Use pkColumn() instead.'
+    ).toBe(false)
+  })
+
+  it('pkColumn() is called at every idCol assignment site', () => {
+    // Every `const idCol` or `let idCol` assignment must use pkColumn()
+    const idColAssignments = [...mutationsSrc.matchAll(/(?:const|let)\s+idCol\s*=/g)]
+    expect(idColAssignments.length).toBeGreaterThan(0)
+
+    const idColPkColumn = [...mutationsSrc.matchAll(/(?:const|let)\s+idCol\s*=\s*pkColumn\(/g)]
+    // Also allow inline pkColumn() calls (without idCol variable)
+    const inlinePkColumn = [...mutationsSrc.matchAll(/pkColumn\(/g)]
+
+    expect(
+      idColPkColumn.length,
+      `Expected all idCol assignments to use pkColumn(). ` +
+      `Found ${idColAssignments.length} idCol assignments, ${idColPkColumn.length} use pkColumn().`
+    ).toBe(idColAssignments.length)
+
+    // At least 3 call sites (applyInsert, applyPatch/UPDATE, readCanonical)
+    expect(inlinePkColumn.length).toBeGreaterThanOrEqual(3)
+  })
+})

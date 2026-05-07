@@ -33,6 +33,24 @@ const ALLOWED_TABLES = new Set([
 
 const ALLOWED_OPS = new Set(['insert', 'update', 'delete', 'append']);
 
+// Per-table primary key column lookup.
+// Tables with PK = 'id' (tasks, projects, inbox_events, project_state_log,
+// kg_entities, memory_facts) are omitted — they fall through to the default.
+// Composite PKs (agent_knowledge, pomodoro_sessions, kg_relations, trajectories)
+// are not yet in this map because PB outbox uses `id` as their record_id
+// (deferred to Phase 3); they also fall through to the default.
+// Mirrors PB scripts/db/outbox.py:_TABLE_PK_COLUMN_MAP for consistency.
+const PK_COLUMN: Record<string, string> = {
+  day_capacity: 'date',
+  sessions: 'session_id',
+  decisions: 'context_id',
+  kg_relation_type_registry: 'relation_type',
+};
+
+function pkColumn(table: string): string {
+  return PK_COLUMN[table] ?? 'id';
+}
+
 // Per-table column whitelists. Mutations carrying fields not in the
 // whitelist are rejected with status='error' (rather than silently dropped).
 // Keeps schema drift visible.
@@ -318,7 +336,8 @@ export async function applyInsert(env: Env, mut: Mutation, user: AuthUser): Prom
     }
   }
 
-  const cols = ['id', ...Object.keys(mut.payload), 'last_mutation_id'];
+  const idCol = pkColumn(mut.table);
+  const cols = [idCol, ...Object.keys(mut.payload), 'last_mutation_id'];
   const vals = [mut.record_id, ...Object.values(mut.payload), mut.mutation_id];
   const placeholders = cols.map(() => '?').join(', ');
   // Bug Y fix (2026-04-30 stress test): ON CONFLICT DO NOTHING. If two
@@ -327,8 +346,6 @@ export async function applyInsert(env: Env, mut: Mutation, user: AuthUser): Prom
   // first INSERT wins; the second would D1_ERROR UNIQUE on tasks.id.
   // With DO NOTHING, the second silently no-ops and we read back the
   // same canonical state. End-to-end idempotent.
-  // day_capacity uses `date` as PK; all other tables use `id`.
-  const idCol = mut.table === 'day_capacity' ? 'date' : 'id';
   const sql = `INSERT INTO ${mut.table} (${cols.join(', ')}) VALUES (${placeholders}) ON CONFLICT(${idCol}) DO NOTHING`;
 
   await env.DB.prepare(sql).bind(...vals).run();
@@ -403,7 +420,7 @@ export async function applyDelete(env: Env, mut: Mutation, user: AuthUser): Prom
   }
 
   await env.DB.prepare(
-    `UPDATE ${mut.table} SET deleted_at = datetime('now'), updated_at = datetime('now'), last_mutation_id = ? WHERE id = ?`
+    `UPDATE ${mut.table} SET deleted_at = datetime('now'), updated_at = datetime('now'), last_mutation_id = ? WHERE ${pkColumn(mut.table)} = ?`
   ).bind(mut.mutation_id, mut.record_id).run();
 
   const r = await readCanonical(env, mut.table, mut.record_id);
@@ -510,7 +527,7 @@ async function applyPatch(
     setClauses.push("deleted_at = NULL");
   }
 
-  const idCol = mut.table === 'day_capacity' ? 'date' : 'id';
+  const idCol = pkColumn(mut.table);
   await env.DB.prepare(
     `UPDATE ${mut.table} SET ${setClauses.join(', ')} WHERE ${idCol} = ?`
   ).bind(...vals).run();
@@ -522,7 +539,7 @@ async function applyPatch(
 async function readCanonical(
   env: Env, table: string, recordId: string,
 ): Promise<Record<string, unknown> | null> {
-  const idCol = table === 'day_capacity' ? 'date' : 'id';
+  const idCol = pkColumn(table);
   const row = await env.DB.prepare(
     `SELECT * FROM ${table} WHERE ${idCol} = ?`
   ).bind(recordId).first<Record<string, unknown>>();
