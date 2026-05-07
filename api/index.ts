@@ -49,6 +49,7 @@ import { handleCadenceCheck } from './routes/meeting-cadence';
 import { handleGetAIRequests, handleCreateAIRequest, handleUpdateAIResponse } from './routes/ai-requests';
 import { handleCommandCenter, handlePBCapture, handlePBDefer, handleCreateOrUpdatePlan, handleReorderPlan, handlePromoteTask, handleStartPomodoro, handleCompletePomodoro, handleSaveReflection, handlePlanHistory, handleAddToDispatch, handleGetPendingDispatch, handleSendDispatch, handleCompleteDispatchItem } from './routes/pb-sector';
 import { handlePBSessions, handlePBSessionStats, handleCreatePBSession, handleBulkCreatePBSessions } from './routes/pb-sessions';
+import { handleSessions } from './routes/sessions';
 import { handleGetTodayMd } from './routes/pb-today'; // POST /api/pb/today retired 2026-05-05 (5.9)
 import { handlePBHealth } from './routes/pb-health';
 import { handleGetRelay, handleCreateRelay, handleCompleteRelay } from './routes/pb-relay';
@@ -302,6 +303,7 @@ app.get('/api/pb/command-center', (c) => handleCommandCenter(E(c), U(c).searchPa
 app.get('/api/pb/plan/history', (c) => handlePlanHistory(R(c), E(c)));
 app.get('/api/pb/dispatch/pending', (c) => handleGetPendingDispatch(E(c)));
 app.get('/api/pb/today', (c) => handleGetTodayMd(E(c)));
+app.get('/api/sessions', (c) => handleSessions(U(c), E(c)));
 app.get('/api/pb/sessions', (c) => handlePBSessions(R(c), E(c)));
 app.get('/api/pb/sessions/stats', (c) => handlePBSessionStats(E(c)));
 app.get('/api/pb/health', (c) => handlePBHealth(E(c)));
