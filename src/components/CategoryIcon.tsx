@@ -6,15 +6,20 @@
  * status pill (default 14px). Stays compatible: pages can fall back
  * to the existing CATEGORY_DOT color via the `color` prop.
  *
- * Categories (per CLAUDE.md cross-repo schema registry):
- *   clif    → lungs (CLIF Consortium = pulmonary critical care)
- *   lab     → flask (general lab work)
+ * Canonical 3-bucket categories (Stage 4 #12-followup, 2026-05-08):
+ *   MNCCORE          → flask (general MN-CCORE lab work)
+ *   CLIF             → lungs (CLIF Consortium = pulmonary critical care)
+ *   Peripheral Brain → brain outline (Nick's personal PB projects)
+ *
+ * Legacy arms (kept for soft-deleted rows tagged with pre-migration values):
+ *   clif    → lungs  (maps same icon as canonical CLIF)
+ *   lab     → flask  (maps same icon as canonical MNCCORE)
  *   nate    → heartbeat (Nate's cardiac arrest research)
  *   mentee  → grad cap (trainee development)
  */
 import type { CSSProperties } from 'react'
 
-type Category = 'clif' | 'lab' | 'nate' | 'mentee' | string | null | undefined
+type Category = 'MNCCORE' | 'CLIF' | 'Peripheral Brain' | 'clif' | 'lab' | 'nate' | 'mentee' | string | null | undefined
 
 interface CategoryIconProps {
   category: Category
@@ -26,14 +31,22 @@ interface CategoryIconProps {
 }
 
 const CATEGORY_LABEL: Record<string, string> = {
+  // Canonical 3-bucket (Stage 4 #12-followup)
+  mnccore: 'MN-CCORE',
   clif: 'CLIF',
+  'peripheral brain': 'Peripheral Brain',
+  // Legacy fallbacks (pre-migration soft-deleted rows)
   lab: 'Lab',
   nate: "Nate's",
   mentee: 'Mentee',
 }
 
 const CATEGORY_COLOR: Record<string, string> = {
+  // Canonical 3-bucket
+  mnccore: 'var(--teal)',
   clif: 'var(--maroon)',
+  'peripheral brain': 'var(--slate)',
+  // Legacy fallbacks
   lab: 'var(--teal)',
   nate: 'var(--orange)',
   mentee: 'var(--gold)',
@@ -66,18 +79,10 @@ export default function CategoryIcon({
   }
 
   switch (slug) {
-    case 'clif':
-      // Lungs: trachea + two opposing curves
-      return (
-        <svg {...common}>
-          <title>{label}</title>
-          <path d="M12 4 L12 11" />
-          <path d="M12 11 C12 9 9 9 7 11 C5 13 4 17 5.5 19.5 C6.5 21 9 21 9.5 19 L11 13" />
-          <path d="M12 11 C12 9 15 9 17 11 C19 13 20 17 18.5 19.5 C17.5 21 15 21 14.5 19 L13 13" />
-        </svg>
-      )
-    case 'lab':
-      // Flask: triangular bottom + neck stopper
+    // ── Canonical 3-bucket (Stage 4 #12-followup, 2026-05-08) ────────────────
+    case 'mnccore':
+    case 'lab': // legacy alias — same icon
+      // Flask: triangular body + neck stopper (general lab / MN-CCORE work)
       return (
         <svg {...common}>
           <title>{label}</title>
@@ -86,6 +91,27 @@ export default function CategoryIcon({
           <path d="M7.5 15 L16.5 15" />
         </svg>
       )
+    case 'clif':
+      // Lungs: trachea + two opposing curves (CLIF Consortium = pulmonary critical care)
+      return (
+        <svg {...common}>
+          <title>{label}</title>
+          <path d="M12 4 L12 11" />
+          <path d="M12 11 C12 9 9 9 7 11 C5 13 4 17 5.5 19.5 C6.5 21 9 21 9.5 19 L11 13" />
+          <path d="M12 11 C12 9 15 9 17 11 C19 13 20 17 18.5 19.5 C17.5 21 15 21 14.5 19 L13 13" />
+        </svg>
+      )
+    case 'peripheral brain':
+      // Brain outline: two hemispheres — Nick's personal PB projects
+      return (
+        <svg {...common}>
+          <title>{label}</title>
+          <path d="M12 5 C12 5 10 3 7.5 4 C5 5 4 7 4 9 C4 11 5 12.5 6 13 C5 13.5 4 15 4 17 C4 19 5.5 21 8 21 C9.5 21 11 20 12 19" />
+          <path d="M12 5 C12 5 14 3 16.5 4 C19 5 20 7 20 9 C20 11 19 12.5 18 13 C19 13.5 20 15 20 17 C20 19 18.5 21 16 21 C14.5 21 13 20 12 19" />
+          <path d="M12 5 L12 19" />
+        </svg>
+      )
+    // ── Legacy fallbacks (pre-migration soft-deleted rows only) ──────────────
     case 'nate':
       // Heartbeat / ECG line — Nate's cardiac arrest survivability work
       return (

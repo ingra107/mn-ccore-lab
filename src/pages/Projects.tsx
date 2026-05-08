@@ -28,20 +28,26 @@ import { PATHS } from '../constants/paths'
 const STAGES = ['Idea', 'Data Collection', 'Analysis', 'Writing', 'Review', 'Revisions', 'Published'] as const
 type Stage = (typeof STAGES)[number]
 
+// Stage 4 #12-followup (2026-05-08): 3-bucket canonical categories.
+// 'stale' is a pseudo-filter (health score < 50) not a real category value.
 const CATEGORY_FILTERS = [
   { key: 'all', label: 'All' },
-  { key: 'clif', label: 'CLIF' },
-  { key: 'lab', label: 'Lab' },
-  { key: 'nate-mesfin', label: 'Mesfin Lab' },
-  { key: 'mentee', label: 'Mentees' },
+  { key: 'MNCCORE', label: 'MN-CCORE' },
+  { key: 'CLIF', label: 'CLIF' },
+  { key: 'Peripheral Brain', label: 'Peripheral Brain' },
   { key: 'stale', label: 'Needs Attention' },
 ] as const
 
 const CATEGORY_DOT: Record<string, string> = {
+  // Canonical 3-bucket
+  MNCCORE: 'var(--teal)',
+  CLIF: 'var(--maroon)',
+  'Peripheral Brain': 'var(--slate)',
+  // Legacy fallbacks for soft-deleted rows
   clif: 'var(--maroon)',
   lab: 'var(--teal)',
-  nate: 'var(--gold)',
-  mentee: 'var(--slate)',
+  nate: 'var(--orange)',
+  mentee: 'var(--gold)',
 }
 
 const STAGE_ORDER: Record<string, number> = Object.fromEntries(STAGES.map((s, i) => [s, i]))
@@ -60,7 +66,7 @@ function getStageProjects(stage: Stage, filtered: Project[]): Project[] {
 export default function Projects() {
   usePageMeta(
     'Research Pipeline | MN-CCORE',
-    'Track MN-CCORE research projects from idea to publication across CLIF, Lab, and Mesfin research groups.'
+    'Track MN-CCORE research projects from idea to publication across MN-CCORE, CLIF, and Peripheral Brain buckets.'
   )
 
   const { data: projects = [] } = useProjects()
@@ -202,12 +208,11 @@ export default function Projects() {
     }
   }, [focusedIndex])
 
-  // Summary stats
+  // Summary stats — 3-bucket canonical (Stage 4 #12-followup, 2026-05-08)
   const totalCount = projects.length
-  const clifCount = projects.filter((p) => p.category === 'clif').length
-  const labCount = projects.filter((p) => p.category === 'lab').length
-  const nateCount = projects.filter((p) => p.category === 'nate-mesfin').length
-  const menteeCount = projects.filter((p) => p.category === 'mentee').length
+  const mncoreCount = projects.filter((p) => p.category === 'MNCCORE').length
+  const clifCount = projects.filter((p) => p.category === 'CLIF').length
+  const pbCount = projects.filter((p) => p.category === 'Peripheral Brain').length
 
 
   return (
@@ -324,7 +329,7 @@ export default function Projects() {
                 whiteSpace: 'nowrap',
               }}
             >
-              {totalCount} projects &middot; {clifCount} CLIF &middot; {labCount} Lab &middot; {nateCount} Mesfin{menteeCount > 0 ? ` \u00b7 ${menteeCount} Mentees` : ''}
+              {totalCount} projects &middot; {mncoreCount} MN-CCORE &middot; {clifCount} CLIF{pbCount > 0 ? ` \u00b7 ${pbCount} PB` : ''}
             </span>
             {viewMode === 'pipeline' && (
               <button
@@ -604,15 +609,14 @@ export default function Projects() {
                               />
                             </div>
 
-                            {/* Category (inline editable) */}
+                            {/* Category (inline editable) — 3-bucket canonical */}
                             <div onClick={(e) => e.preventDefault()}>
                               <InlineSelect
                                 value={project.category || ''}
                                 options={[
-                                  { value: 'clif', label: 'CLIF', color: 'var(--maroon)' },
-                                  { value: 'lab', label: 'Lab', color: 'var(--teal)' },
-                                  { value: 'nate-mesfin', label: 'Mesfin', color: 'var(--gold)' },
-                                  { value: 'mentee', label: 'Mentee', color: 'var(--slate)' },
+                                  { value: 'MNCCORE', label: 'MN-CCORE', color: 'var(--teal)' },
+                                  { value: 'CLIF', label: 'CLIF', color: 'var(--maroon)' },
+                                  { value: 'Peripheral Brain', label: 'Peripheral Brain', color: 'var(--slate)' },
                                 ]}
                                 onChange={(val) => inlineUpdate.mutate({ slug: project.slug, fields: { category: val } })}
                               />
@@ -693,10 +697,9 @@ export default function Projects() {
                                 <InlineSelect
                                   value={project.category || ''}
                                   options={[
-                                    { value: 'clif', label: 'CLIF', color: 'var(--maroon)' },
-                                    { value: 'lab', label: 'Lab', color: 'var(--teal)' },
-                                    { value: 'nate-mesfin', label: 'Mesfin', color: 'var(--gold)' },
-                                    { value: 'mentee', label: 'Mentee', color: 'var(--slate)' },
+                                    { value: 'MNCCORE', label: 'MN-CCORE', color: 'var(--teal)' },
+                                    { value: 'CLIF', label: 'CLIF', color: 'var(--maroon)' },
+                                    { value: 'Peripheral Brain', label: 'Peripheral Brain', color: 'var(--slate)' },
                                   ]}
                                   onChange={(val) => inlineUpdate.mutate({ slug: project.slug, fields: { category: val } })}
                                 />

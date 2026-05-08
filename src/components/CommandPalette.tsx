@@ -271,6 +271,14 @@ export default function CommandPalette() {
       })
     }
     if (currentPath === PATHS.projects) {
+      // Stage 4 #12-followup (2026-05-08): 3-bucket canonical categories.
+      items.push({
+        id: 'ctx-projects-mnccore',
+        label: 'Filter MN-CCORE Projects',
+        icon: FolderKanban,
+        action: () => { navigate(`${PATHS.projects}?category=MNCCORE`); setOpen(false) },
+        category: 'context',
+      })
       items.push({
         id: 'ctx-projects-clif',
         label: 'Filter CLIF Projects',
@@ -279,10 +287,10 @@ export default function CommandPalette() {
         category: 'context',
       })
       items.push({
-        id: 'ctx-projects-lab',
-        label: 'Filter Lab Projects',
+        id: 'ctx-projects-pb',
+        label: 'Filter Peripheral Brain Projects',
         icon: FolderKanban,
-        action: () => { navigate(`${PATHS.projects}?category=Lab`); setOpen(false) },
+        action: () => { navigate(`${PATHS.projects}?category=Peripheral%20Brain`); setOpen(false) },
         category: 'context',
       })
     }

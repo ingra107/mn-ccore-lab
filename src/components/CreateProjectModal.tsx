@@ -17,15 +17,20 @@ interface CreateProjectModalProps {
   }) => void
 }
 
-// Hub canonical categories (R10 + Phase 36b). Legacy values like 'research',
-// 'clinical' were pre-R10 drift — removed here so new projects only get
-// canonical values.
-const CATEGORIES = [
-  { value: 'clif', label: 'CLIF', color: 'var(--maroon)' },
-  { value: 'lab', label: 'Lab', color: 'var(--teal)' },
-  { value: 'nate-mesfin', label: 'Mesfin Lab', color: 'var(--gold)' },
-  { value: 'mentee', label: 'Mentee', color: 'var(--slate)' },
+// Hub canonical 3-bucket categories (Stage 4 #12-followup, 2026-05-08).
+// 'Peripheral Brain' option is gated to Nick only — checked at render time.
+// Legacy 4-bucket values (clif/lab/nate-mesfin/mentee) may still exist on
+// soft-deleted rows; CategoryIcon keeps fallback arms for those.
+const CATEGORIES_BASE = [
+  { value: 'MNCCORE', label: 'MN-CCORE', color: 'var(--teal)' },
+  { value: 'CLIF', label: 'CLIF', color: 'var(--maroon)' },
 ]
+const CATEGORY_PERIPHERAL_BRAIN = { value: 'Peripheral Brain', label: 'Peripheral Brain', color: 'var(--slate)' }
+
+// Email-based Nick check — mirrors isNick() in api/routes/projects.ts.
+function checkIsNick(email: string): boolean {
+  return email === 'ingra107@umn.edu' || email === 'nicholas.ingraham@gmail.com'
+}
 
 // 7-stage UI ladder including Revisions (added 2026-04-23, GH #26).
 const STAGES = [
@@ -48,8 +53,11 @@ const selectStyle: React.CSSProperties = {
 export default function CreateProjectModal({ open, onClose, onCreate }: CreateProjectModalProps) {
   const { user } = useAuth()
 
+  const isNick = checkIsNick(user.email)
+  const categories = isNick ? [...CATEGORIES_BASE, CATEGORY_PERIPHERAL_BRAIN] : CATEGORIES_BASE
+
   const [title, setTitle] = useState('')
-  const [category, setCategory] = useState('research')
+  const [category, setCategory] = useState('MNCCORE')
   const [stage, setStage] = useState('Idea')
   const [pi, setPi] = useState(emailToSlug(user.email))
   const [description, setDescription] = useState('')
@@ -100,7 +108,7 @@ export default function CreateProjectModal({ open, onClose, onCreate }: CreatePr
 
     // Reset form
     setTitle('')
-    setCategory('research')
+    setCategory('MNCCORE')
     setStage('Idea')
     setPi(emailToSlug(user.email))
     setDescription('')
@@ -181,7 +189,7 @@ export default function CreateProjectModal({ open, onClose, onCreate }: CreatePr
               >
                 Category
               </label>
-              <InlineSelect value={category} options={CATEGORIES} onChange={setCategory} />
+              <InlineSelect value={category} options={categories} onChange={setCategory} />
             </div>
             <div>
               <label
