@@ -8,6 +8,7 @@
 //   4. Missing seq_after returns 400
 //   5. Invalid seq_after (non-numeric) returns 400
 //   6. Empty result returns cursor=seqAfter and has_more=false
+//   7. Tombstoned rows (deleted_at IS NOT NULL) are excluded from pull results
 
 import { describe, it, expect } from 'vitest';
 import { handleSessions } from './sessions';
@@ -32,19 +33,21 @@ function makeSessionDb(rows: Partial<Session>[]) {
     created_at: r.created_at ?? '2026-05-01T00:00:00Z',
     updated_at: r.updated_at ?? '2026-05-01T00:00:00Z',
     last_mutation_id: r.last_mutation_id ?? null,
+    deleted_at: r.deleted_at ?? null,
   }));
 
   function makeStmt(sql: string, boundVals: unknown[]): any {
     return {
       bind: (...more: unknown[]) => makeStmt(sql, [...boundVals, ...more]),
       all: async <T>() => {
-        // Parse: SELECT * FROM sessions WHERE seq > ? ORDER BY seq ASC LIMIT ?
+        // Parse: SELECT * FROM sessions WHERE seq > ? AND deleted_at IS NULL ORDER BY seq ASC LIMIT ?
         const upper = sql.trim().toUpperCase();
         if (upper.includes('FROM SESSIONS') && upper.includes('SEQ >')) {
           const seqAfter = Number(boundVals[0]);
           const limit = Number(boundVals[1]);
+          const filterDeleted = upper.includes('DELETED_AT IS NULL');
           const filtered = store
-            .filter((r) => r.seq > seqAfter)
+            .filter((r) => r.seq > seqAfter && (!filterDeleted || r.deleted_at === null))
             .sort((a, b) => a.seq - b.seq)
             .slice(0, limit);
           return { results: filtered as unknown as T[], success: true, meta: {} };
@@ -164,5 +167,31 @@ describe('handleSessions', () => {
     const body = await res.json() as { rows: Session[] };
     const seqs = body.rows.map((r) => r.seq);
     expect(seqs).toEqual([...seqs].sort((a, b) => a - b));
+  });
+
+  it('tombstoned sessions (deleted_at IS NOT NULL) are excluded from pull results', async () => {
+    // Mix of live and tombstoned rows (schema-v65 — 36 tombstones from Phase 3 Task 9 cleanup)
+    const rows: Partial<Session>[] = [
+      { session_id: 'sess_live_1', seq: 1, deleted_at: null },
+      { session_id: 'session_2026-05-07T10-14-31-299429', seq: 2, deleted_at: '2026-05-07T10:14:31Z' },
+      { session_id: 'sess_live_2', seq: 3, deleted_at: null },
+      { session_id: 'sess_tombstone_2', seq: 4, deleted_at: '2026-05-08T00:00:00Z' },
+    ];
+    const env = makeEnv(rows);
+    const url = makeUrl({ seq_after: '0' });
+    const res = await handleSessions(url, env);
+    expect(res.status).toBe(200);
+    const body = await res.json() as { rows: Session[]; cursor: number; has_more: boolean };
+    // Only 2 live rows should appear
+    expect(body.rows).toHaveLength(2);
+    const ids = body.rows.map((r) => r.session_id);
+    expect(ids).toContain('sess_live_1');
+    expect(ids).toContain('sess_live_2');
+    // Known tombstone from Phase 3 Task 9 must NOT appear
+    expect(ids).not.toContain('session_2026-05-07T10-14-31-299429');
+    expect(ids).not.toContain('sess_tombstone_2');
+    // Cursor should reflect max seq of returned rows (seq=3)
+    expect(body.cursor).toBe(3);
+    expect(body.has_more).toBe(false);
   });
 });

@@ -16,6 +16,7 @@ export interface Session {
   created_at: string;
   updated_at: string;
   last_mutation_id: string | null;
+  deleted_at: string | null;
 }
 
 // GET /api/sessions?seq_after=N&limit=L
@@ -25,7 +26,7 @@ export interface Session {
 // applies limit (default 2000, max 5000). Returns the max seq in the
 // result set as the next cursor for incremental pull.
 //
-// No soft-delete support: sessions table has no deleted_at column.
+// Tombstone filtering: rows with deleted_at IS NOT NULL are excluded (schema-v65+).
 // No fixture filtering: sessions are not QA fixtures.
 export async function handleSessions(url: URL, env: Env): Promise<Response> {
   const seqAfterRaw = url.searchParams.get('seq_after');
@@ -44,7 +45,7 @@ export async function handleSessions(url: URL, env: Env): Promise<Response> {
     ? Math.min(Math.max(Number.parseInt(limitRaw, 10) || 2000, 1), 5000)
     : 2000;
 
-  const query = 'SELECT * FROM sessions WHERE seq > ? ORDER BY seq ASC LIMIT ?';
+  const query = 'SELECT * FROM sessions WHERE seq > ? AND deleted_at IS NULL ORDER BY seq ASC LIMIT ?';
   const result = await env.DB.prepare(query).bind(seqAfter, limit).all<Session>();
   const rows = result.results ?? [];
 
