@@ -2,6 +2,14 @@ import type { AuthUser, Env } from '../helpers';
 import { json, error, generateId, logActivity, parseMentions, actorSlug } from '../helpers';
 import { applyMutation } from './mutations';
 
+// Stage 4 #12-followup (2026-05-09): Nick-only visibility gate for
+// 'Peripheral Brain' category. Email-based; if team auth model tightens,
+// replace with role-based check (user.role === 'owner' or similar).
+// Decision doc: ~/Peripheral-Brain/Context/Decisions/2026-05-08-hub-category-three-bucket-design.md
+function isNick(user: AuthUser): boolean {
+  return user.email === 'ingra107@umn.edu' || user.email === 'nicholas.ingraham@gmail.com';
+}
+
 // ── AI Co-Scientist: detect @hermes/@claude mentions and create pending request ──
 async function handleClaudeMention(
   content: string,
@@ -162,7 +170,7 @@ export async function handleCreateProject(
     payload: {
       title: body.title.trim(),
       slug,
-      category: body.category || 'lab',
+      category: body.category || 'MNCCORE',
       stage: body.stage || 'Idea',
       description: body.description || '',
       pi: body.pi || user.email.split('@')[0],
@@ -192,7 +200,12 @@ export async function handleCreateProject(
 // (default 2000). This is the canonical pull path for brain.db's hub.py
 // driver post-seq-cursor cutover. Wall-clock updated_at remains usable
 // for non-sync clients; seq_after takes precedence when both are sent.
-export async function handleProjects(url: URL, env: Env): Promise<Response> {
+//
+// 2026-05-09 (Stage 4 #12-followup): user is now required so the
+// 'Peripheral Brain' visibility gate can be applied. Nick (ingra107@umn.edu
+// or nicholas.ingraham@gmail.com) sees all categories; all other callers
+// have 'Peripheral Brain' rows excluded from every read path.
+export async function handleProjects(url: URL, env: Env, user: AuthUser): Promise<Response> {
   const status = url.searchParams.get('status');
   const category = url.searchParams.get('category');
   const includeDeleted = url.searchParams.get('include_deleted') === '1';
@@ -220,6 +233,15 @@ export async function handleProjects(url: URL, env: Env): Promise<Response> {
   if (category) {
     query += ' AND category = ?';
     params.push(category);
+  }
+
+  // Stage 4 #12-followup (2026-05-09): Nick-only visibility gate.
+  // Non-Nick callers never see 'Peripheral Brain' rows (Admin/Personal/
+  // uncategorized projects that exist in PB but shouldn't appear in team view).
+  // Applied at every read path (main, cursor mode, deleted-include mode) so
+  // the gate cannot be bypassed by query-param combination.
+  if (!isNick(user)) {
+    query += " AND (category != 'Peripheral Brain' OR category IS NULL)";
   }
 
   if (seqAfterRaw !== null) {
@@ -432,7 +454,12 @@ const PROJECT_REQUIRED_FIELDS = new Set(['status', 'stage', 'category']);
 // audit Suite 2 — "bogus_value" was round-tripping through PUT/POST.
 const PROJECT_STATUS_VALUES = new Set(['active', 'waiting_external', 'blocked', 'done']);
 const PROJECT_STAGE_VALUES = new Set(['Idea', 'Data Collection', 'Data Analysis', 'Writing', 'Submitted', 'Revisions', 'Accepted', 'Published']);
-const PROJECT_CATEGORY_VALUES = new Set(['clif', 'lab', 'nate', 'mentee']);
+// Stage 4 #12-followup (2026-05-09): three-bucket two-views model.
+// MNCCORE = team-visible lab work (Ingraham/Mesfin/Grant/Friends/Mentees)
+// CLIF = consortium, team-visible
+// Peripheral Brain = Nick-only forensic (Admin/Personal/uncategorized)
+// Decision doc: ~/Peripheral-Brain/Context/Decisions/2026-05-08-hub-category-three-bucket-design.md
+const PROJECT_CATEGORY_VALUES = new Set(['MNCCORE', 'CLIF', 'Peripheral Brain']);
 // W1 (schema-v55) operational state — distinct from .status (lifecycle).
 const PROJECT_STATE_VALUES = new Set(['Active', 'Waiting', 'Delegated', 'Incubating', 'Parked', 'Closing', 'Dead']);
 const PROJECT_ENUM_GUARDS: Record<string, Set<string>> = {
@@ -496,7 +523,7 @@ export async function handleUpdateProject(
         title: (body.title as string) || 'Untitled',
         status: (body.status as string) || 'active',
         description: (body.description as string) || '',
-        category: (body.category as string) || 'lab',
+        category: (body.category as string) || 'MNCCORE',
         stage: (body.stage as string) || 'Idea',
         pi: (body.pi as string) || 'nick',
         slug: upsertSlug,

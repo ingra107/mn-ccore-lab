@@ -370,7 +370,7 @@ app.get('/api/projects/:slug/revisions', async (c) => {
   rewrittenUrl.searchParams.set('project_id', projectId);
   return handleGetRevisions(rewrittenUrl, env);
 });
-app.get('/api/projects', (c) => handleProjects(U(c), E(c)));
+app.get('/api/projects', (c) => handleProjects(U(c), E(c), c.get('user')));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Meetings (specific first, parameterized last)
