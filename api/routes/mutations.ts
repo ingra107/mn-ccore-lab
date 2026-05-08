@@ -37,18 +37,64 @@ const ALLOWED_OPS = new Set(['insert', 'update', 'delete', 'append']);
 // Tables with PK = 'id' (tasks, projects, inbox_events, project_state_log,
 // kg_entities, memory_facts) are omitted — they fall through to the default.
 // Composite PKs (agent_knowledge, pomodoro_sessions, kg_relations, trajectories)
-// are not yet in this map because PB outbox uses `id` as their record_id
-// (deferred to Phase 3); they also fall through to the default.
+// use string[] — Stage 3 Phase 3 v3 (codex pass-2 N3 + M5 fix, 2026-05-07).
 // Mirrors PB scripts/db/outbox.py:_TABLE_PK_COLUMN_MAP for consistency.
-const PK_COLUMN: Record<string, string> = {
+const PK_COLUMN: Record<string, string | string[]> = {
   day_capacity: 'date',
   sessions: 'session_id',
   decisions: 'context_id',
   kg_relation_type_registry: 'relation_type',
+  // Composite PKs — Stage 3 Phase 3 v3
+  agent_knowledge: ['category', 'topic', 'valid_from'],
+  pomodoro_sessions: ['start_time', 'source'],
+  kg_relations: ['source_id', 'target_id', 'relation_type'],
+  trajectories: ['task', 'created_at'],
 };
 
-function pkColumn(table: string): string {
+function pkColumn(table: string): string | string[] {
   return PK_COLUMN[table] ?? 'id';
+}
+
+function isCompositePk(pk: string | string[]): pk is string[] {
+  return Array.isArray(pk);
+}
+
+// Mirror of Python scripts/db/query.py::_composite_record_id.
+// PB encodes natural-key parts as base64url(JSON.stringify([part1, part2, ...]))
+// because PK fields like agent_knowledge.topic and trajectories.task are
+// unconstrained TEXT and can contain delimiter characters (codex pass-2 N3).
+//
+// Usage: Hub receives record_id, calls this to get ordered PK values back.
+function decodeCompositeRecordId(recordId: string): unknown[] {
+  let json: string;
+  try {
+    // Buffer.from(s, 'base64url') handles URL-safe base64 (- and _ substitution).
+    json = Buffer.from(recordId, 'base64url').toString('utf-8');
+  } catch (e) {
+    throw new Error(`composite recordId base64url decode failed: ${(e as Error).message}`);
+  }
+  let parts: unknown;
+  try {
+    parts = JSON.parse(json);
+  } catch (e) {
+    throw new Error(`composite recordId JSON parse failed: ${(e as Error).message}`);
+  }
+  if (!Array.isArray(parts)) {
+    throw new Error(`composite recordId must decode to JSON array, got ${typeof parts}`);
+  }
+  return parts;
+}
+
+// Build a composite WHERE clause: "col1 = ? AND col2 = ? AND col3 = ?"
+// Returns { clause: string, vals: unknown[] }.
+function compositeWhere(cols: string[], parts: unknown[]): { clause: string; vals: unknown[] } {
+  if (cols.length !== parts.length) {
+    throw new Error(
+      `composite PK column count ${cols.length} != recordId parts count ${parts.length}`
+    );
+  }
+  const clause = cols.map(c => `${c} = ?`).join(' AND ');
+  return { clause, vals: parts };
 }
 
 // Per-table column whitelists. Mutations carrying fields not in the
@@ -337,16 +383,35 @@ export async function applyInsert(env: Env, mut: Mutation, user: AuthUser): Prom
   }
 
   const idCol = pkColumn(mut.table);
-  const cols = [idCol, ...Object.keys(mut.payload), 'last_mutation_id'];
-  const vals = [mut.record_id, ...Object.values(mut.payload), mut.mutation_id];
+  let pkCols: string[];
+  let pkVals: unknown[];
+  let conflictTarget: string;
+
+  if (isCompositePk(idCol)) {
+    const parts = decodeCompositeRecordId(mut.record_id);
+    const { vals: cv } = compositeWhere(idCol, parts);
+    pkCols = idCol;
+    pkVals = cv;
+    conflictTarget = `(${idCol.join(', ')})`;
+  } else {
+    pkCols = [idCol];
+    pkVals = [mut.record_id];
+    conflictTarget = `(${idCol})`;
+  }
+
+  const payloadCols = Object.keys(mut.payload);
+  const payloadVals = Object.values(mut.payload);
+  const cols = [...pkCols, ...payloadCols, 'last_mutation_id'];
+  const vals = [...pkVals, ...payloadVals, mut.mutation_id];
   const placeholders = cols.map(() => '?').join(', ');
+
   // Bug Y fix (2026-04-30 stress test): ON CONFLICT DO NOTHING. If two
   // concurrent requests race past the processed_mutations SELECT-gate,
   // both call applyInsert with the same mutation_id + record_id. The
   // first INSERT wins; the second would D1_ERROR UNIQUE on tasks.id.
   // With DO NOTHING, the second silently no-ops and we read back the
   // same canonical state. End-to-end idempotent.
-  const sql = `INSERT INTO ${mut.table} (${cols.join(', ')}) VALUES (${placeholders}) ON CONFLICT(${idCol}) DO NOTHING`;
+  const sql = `INSERT INTO ${mut.table} (${cols.join(', ')}) VALUES (${placeholders}) ON CONFLICT${conflictTarget} DO NOTHING`;
 
   await env.DB.prepare(sql).bind(...vals).run();
   const canonical = await readCanonical(env, mut.table, mut.record_id);
@@ -419,9 +484,23 @@ export async function applyDelete(env: Env, mut: Mutation, user: AuthUser): Prom
     });
   }
 
+  const idCol = pkColumn(mut.table);
+  let deleteWhere: string;
+  let deleteVals: unknown[];
+
+  if (isCompositePk(idCol)) {
+    const parts = decodeCompositeRecordId(mut.record_id);
+    const { clause, vals: wv } = compositeWhere(idCol, parts);
+    deleteWhere = clause;
+    deleteVals = [mut.mutation_id, ...wv];
+  } else {
+    deleteWhere = `${idCol} = ?`;
+    deleteVals = [mut.mutation_id, mut.record_id];
+  }
+
   await env.DB.prepare(
-    `UPDATE ${mut.table} SET deleted_at = datetime('now'), updated_at = datetime('now'), last_mutation_id = ? WHERE ${pkColumn(mut.table)} = ?`
-  ).bind(mut.mutation_id, mut.record_id).run();
+    `UPDATE ${mut.table} SET deleted_at = datetime('now'), updated_at = datetime('now'), last_mutation_id = ? WHERE ${deleteWhere}`
+  ).bind(...deleteVals).run();
 
   const r = await readCanonical(env, mut.table, mut.record_id);
   return mkResult(mut.mutation_id, 'accepted', {
@@ -479,7 +558,9 @@ async function applyPatch(
 ): Promise<Record<string, unknown>> {
   const patchKeys = Object.keys(mut.patch || {});
   const setClauses = [...patchKeys.map(k => `${k} = ?`), 'updated_at = datetime(\'now\')', 'last_mutation_id = ?'];
-  const vals = [...patchKeys.map(k => (mut.patch as Record<string, unknown>)[k]), mut.mutation_id, mut.record_id];
+  // vals only covers SET clause bindings; WHERE clause bindings appended separately below
+  // (composite PKs need multiple WHERE values; scalar PKs need one).
+  const vals = [...patchKeys.map(k => (mut.patch as Record<string, unknown>)[k]), mut.mutation_id];
 
   // I7 fix (2026-05-03): brain.db uses tasks.status='deleted' as its soft-delete
   // signal, but the outbox emits op='update' + patch={status:'deleted'} rather
@@ -528,9 +609,22 @@ async function applyPatch(
   }
 
   const idCol = pkColumn(mut.table);
+  let patchWhere: string;
+  let patchWhereVals: unknown[];
+
+  if (isCompositePk(idCol)) {
+    const parts = decodeCompositeRecordId(mut.record_id);
+    const { clause, vals: wv } = compositeWhere(idCol, parts);
+    patchWhere = clause;
+    patchWhereVals = wv;
+  } else {
+    patchWhere = `${idCol} = ?`;
+    patchWhereVals = [mut.record_id];
+  }
+
   await env.DB.prepare(
-    `UPDATE ${mut.table} SET ${setClauses.join(', ')} WHERE ${idCol} = ?`
-  ).bind(...vals).run();
+    `UPDATE ${mut.table} SET ${setClauses.join(', ')} WHERE ${patchWhere}`
+  ).bind(...vals, ...patchWhereVals).run();
 
   const r = await readCanonical(env, mut.table, mut.record_id);
   return r || current;
@@ -539,9 +633,17 @@ async function applyPatch(
 async function readCanonical(
   env: Env, table: string, recordId: string,
 ): Promise<Record<string, unknown> | null> {
-  const idCol = pkColumn(table);
+  const pk = pkColumn(table);
+  if (isCompositePk(pk)) {
+    const parts = decodeCompositeRecordId(recordId);
+    const { clause, vals } = compositeWhere(pk, parts);
+    const row = await env.DB.prepare(
+      `SELECT * FROM ${table} WHERE ${clause}`
+    ).bind(...vals).first<Record<string, unknown>>();
+    return row;
+  }
   const row = await env.DB.prepare(
-    `SELECT * FROM ${table} WHERE ${idCol} = ?`
+    `SELECT * FROM ${table} WHERE ${pk} = ?`
   ).bind(recordId).first<Record<string, unknown>>();
   return row;
 }
