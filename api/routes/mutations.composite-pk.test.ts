@@ -10,15 +10,37 @@
 //   5. Delete via composite recordId; row reads back with deleted_at IS NOT NULL
 //   6. Sessions applyDelete sets deleted_at (schema-v65 M5 fix)
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
 import { applyInsert, applyUpdate, applyDelete } from './mutations';
 import type { Mutation } from './mutations';
 
-// ── base64url(JSON array) encoder (mirrors Python _composite_record_id) ──────
+// ── Workers-runtime gap guard ─────────────────────────────────────────────────
+//
+// vitest runs in Node, which has Buffer. Cloudflare Pages Functions do NOT
+// have Buffer (Pages and Workers are separate runtimes; nodejs_compat in
+// wrangler.toml only covers the Worker deploy). This beforeAll undefines
+// Buffer so that any use of Buffer inside mutations.ts functions called by
+// these tests will throw synchronously — the same error production returns.
+//
+// Regression class: 4790715d shipped Buffer.from in decodeCompositeRecordId;
+// vitest passed (Node env had Buffer) but Pages smoke failed with
+// "Buffer is not defined". This guard prevents recurrence.
+beforeAll(() => {
+  // @ts-expect-error intentionally poison Buffer to catch Workers-runtime gap
+  globalThis.Buffer = undefined;
+});
 
+// ── base64url(JSON array) encoder (mirrors Python _composite_record_id) ──────
+// Uses Web APIs (btoa + TextEncoder) — no Buffer dependency — so this encoder
+// stays valid even with the Buffer guard above.
 function compositeRecordId(...parts: string[]): string {
   const json = JSON.stringify(parts);
-  return Buffer.from(json, 'utf-8').toString('base64url');
+  const bytes = new TextEncoder().encode(json);
+  // Convert bytes to binary string for btoa
+  let binStr = '';
+  bytes.forEach(b => { binStr += String.fromCharCode(b); });
+  // base64 → base64url
+  return btoa(binStr).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
 }
 
 // ── In-memory D1 stub ────────────────────────────────────────────────────────

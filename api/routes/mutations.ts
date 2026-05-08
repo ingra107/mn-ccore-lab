@@ -65,11 +65,23 @@ function isCompositePk(pk: string | string[]): pk is string[] {
 // unconstrained TEXT and can contain delimiter characters (codex pass-2 N3).
 //
 // Usage: Hub receives record_id, calls this to get ordered PK values back.
+//
+// IMPORTANT: Uses Web-standard APIs (atob + TextDecoder) instead of Node's
+// Buffer. Cloudflare Pages Functions do NOT have Buffer even when
+// wrangler.toml sets compatibility_flags = ["nodejs_compat"] for the Worker
+// deploy — Pages and Workers are separate runtimes. atob+TextDecoder are
+// available in both without any compat flags. (Regression: 4790715d shipped
+// Buffer.from which vitest passed in Node env but Pages smoke failed with
+// "Buffer is not defined"; fixed in this commit.)
 function decodeCompositeRecordId(recordId: string): unknown[] {
   let json: string;
   try {
-    // Buffer.from(s, 'base64url') handles URL-safe base64 (- and _ substitution).
-    json = Buffer.from(recordId, 'base64url').toString('utf-8');
+    // base64url → standard base64: replace URL-safe chars, restore padding.
+    const b64 = recordId.replace(/-/g, '+').replace(/_/g, '/');
+    const padded = b64 + '='.repeat((4 - (b64.length % 4)) % 4);
+    const binStr = atob(padded);
+    const bytes = Uint8Array.from(binStr, c => c.charCodeAt(0));
+    json = new TextDecoder('utf-8').decode(bytes);
   } catch (e) {
     throw new Error(`composite recordId base64url decode failed: ${(e as Error).message}`);
   }
