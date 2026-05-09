@@ -593,62 +593,124 @@ export async function handleBatchUpdateTasks(request: Request, user: AuthUser, e
     return error('ids and action required', 400)
   }
 
-  const placeholders = body.ids.map(() => '?').join(',')
-
   switch (body.action) {
-    case 'complete':
-      await env.DB.prepare(
-        `UPDATE tasks SET status = 'done', completed = 1, completed_at = datetime('now'), completed_by = ?, updated_at = datetime('now') WHERE id IN (${placeholders})`
-      ).bind(user.email, ...body.ids).run()
+    case 'complete': {
+      const completedAt = new Date().toISOString()
+      for (const id of body.ids) {
+        const mutResult = await applyMutation(env, {
+          table: 'tasks',
+          record_id: id,
+          op: 'update',
+          patch: { status: 'done', completed: 1, completed_at: completedAt, completed_by: user.email },
+          route: 'handleBatchUpdateTasks/complete',
+          user,
+        })
+        if (mutResult.status !== 'accepted' && mutResult.status !== 'merged_clean') {
+          console.error(`bulkAction complete failed for ${id}: ${mutResult.status} — ${mutResult.reason ?? ''}`)
+        }
+      }
       break
+    }
 
-    case 'uncomplete':
-      await env.DB.prepare(
-        `UPDATE tasks SET status = 'todo', completed = 0, completed_at = NULL, completed_by = NULL, updated_at = datetime('now') WHERE id IN (${placeholders})`
-      ).bind(...body.ids).run()
+    case 'uncomplete': {
+      for (const id of body.ids) {
+        const mutResult = await applyMutation(env, {
+          table: 'tasks',
+          record_id: id,
+          op: 'update',
+          patch: { status: 'todo', completed: 0, completed_at: null, completed_by: null },
+          route: 'handleBatchUpdateTasks/uncomplete',
+          user,
+        })
+        if (mutResult.status !== 'accepted' && mutResult.status !== 'merged_clean') {
+          console.error(`bulkAction uncomplete failed for ${id}: ${mutResult.status} — ${mutResult.reason ?? ''}`)
+        }
+      }
       break
+    }
 
-    case 'status':
+    case 'status': {
       if (!body.value || !['todo', 'in_progress', 'done', 'blocked', 'waiting_external'].includes(body.value)) {
         return error('value must be one of: todo, in_progress, done, blocked, waiting_external', 400)
       }
-      if (body.value === 'done') {
-        await env.DB.prepare(
-          `UPDATE tasks SET status = 'done', completed = 1, completed_at = datetime('now'), completed_by = ?, updated_at = datetime('now') WHERE id IN (${placeholders})`
-        ).bind(user.email, ...body.ids).run()
-      } else {
-        await env.DB.prepare(
-          `UPDATE tasks SET status = ?, completed = 0, completed_at = NULL, completed_by = NULL, updated_at = datetime('now') WHERE id IN (${placeholders})`
-        ).bind(body.value, ...body.ids).run()
+      const statusPatch: Record<string, unknown> = body.value === 'done'
+        ? { status: 'done', completed: 1, completed_at: new Date().toISOString(), completed_by: user.email }
+        : { status: body.value, completed: 0, completed_at: null, completed_by: null }
+      for (const id of body.ids) {
+        const mutResult = await applyMutation(env, {
+          table: 'tasks',
+          record_id: id,
+          op: 'update',
+          patch: statusPatch,
+          route: 'handleBatchUpdateTasks/status',
+          user,
+        })
+        if (mutResult.status !== 'accepted' && mutResult.status !== 'merged_clean') {
+          console.error(`bulkAction status failed for ${id}: ${mutResult.status} — ${mutResult.reason ?? ''}`)
+        }
       }
       break
+    }
 
-    case 'assign':
+    case 'assign': {
       if (!body.value) return error('value (assignee) required for assign action', 400)
       if (body.value !== 'claude-ai') {
         const member = await env.DB.prepare('SELECT 1 FROM team_members WHERE slug = ? LIMIT 1').bind(body.value).first()
         if (!member) return error(`Unknown assignee "${body.value}". Must match team_members.slug.`, 400)
       }
-      await env.DB.prepare(
-        `UPDATE tasks SET assignee = ?, updated_at = datetime('now') WHERE id IN (${placeholders})`
-      ).bind(body.value, ...body.ids).run()
+      for (const id of body.ids) {
+        const mutResult = await applyMutation(env, {
+          table: 'tasks',
+          record_id: id,
+          op: 'update',
+          patch: { assignee: body.value },
+          route: 'handleBatchUpdateTasks/assign',
+          user,
+        })
+        if (mutResult.status !== 'accepted' && mutResult.status !== 'merged_clean') {
+          console.error(`bulkAction assign failed for ${id}: ${mutResult.status} — ${mutResult.reason ?? ''}`)
+        }
+      }
       break
+    }
 
-    case 'priority':
+    case 'priority': {
       if (!body.value || !['low', 'medium', 'high', 'urgent'].includes(body.value)) {
         return error('value must be one of: low, medium, high, urgent', 400)
       }
-      await env.DB.prepare(
-        `UPDATE tasks SET priority = ?, updated_at = datetime('now') WHERE id IN (${placeholders})`
-      ).bind(body.value, ...body.ids).run()
+      for (const id of body.ids) {
+        const mutResult = await applyMutation(env, {
+          table: 'tasks',
+          record_id: id,
+          op: 'update',
+          patch: { priority: body.value },
+          route: 'handleBatchUpdateTasks/priority',
+          user,
+        })
+        if (mutResult.status !== 'accepted' && mutResult.status !== 'merged_clean') {
+          console.error(`bulkAction priority failed for ${id}: ${mutResult.status} — ${mutResult.reason ?? ''}`)
+        }
+      }
       break
+    }
 
-    case 'delete':
-      await env.DB.prepare(
-        `UPDATE tasks SET deleted_at = datetime('now'), updated_at = datetime('now') WHERE id IN (${placeholders})`
-      ).bind(...body.ids).run()
+    case 'delete': {
+      for (const id of body.ids) {
+        const mutResult = await applyMutation(env, {
+          table: 'tasks',
+          record_id: id,
+          op: 'delete',
+          route: 'handleBatchUpdateTasks/delete',
+          user,
+        })
+        if (mutResult.status !== 'accepted' && mutResult.status !== 'merged_clean') {
+          console.error(`bulkAction delete failed for ${id}: ${mutResult.status} — ${mutResult.reason ?? ''}`)
+        }
+      }
       // Cascade-clean notifications pointing at deleted tasks so orphans
       // don't accumulate (deep-audit 12.L found 151 stale notifs).
+      // Note: done after mutations so IDs are valid at cascade time.
+      const placeholders = body.ids.map(() => '?').join(',')
       try {
         await env.DB.prepare(
           `DELETE FROM notifications WHERE source_type IN ('task','task_comment') AND source_id IN (${placeholders})`
@@ -657,6 +719,7 @@ export async function handleBatchUpdateTasks(request: Request, user: AuthUser, e
         console.error('cascade-clean notifications failed:', e)
       }
       break
+    }
   }
 
   await logActivity(env, 'task', `Bulk ${body.action}: ${body.ids.length} tasks`, user.email, null, null)
