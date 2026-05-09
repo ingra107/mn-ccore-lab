@@ -605,10 +605,17 @@ export async function handleDeleteProject(
   // enforced FK), but leaving them behind means stale joins forever.
   // `tasks.project_id` is soft-orphaned to NULL (keep the task, clear the ref)
   // so users don't lose work — dangling refs found by deep-audit Suite 8.
+  // B-CRIT-05 fix (2026-05-09): wrap in env.DB.batch() so all 3 cascade
+  // statements execute in a single implicit D1 transaction. Pre-fix, 3 separate
+  // prepare().run() calls meant a failure mid-cascade (e.g. D1 timeout on the
+  // UPDATE) left orphaned rows in comments/project_updates pointing at the now-
+  // deleted project. With batch() D1 rolls back all 3 on any error.
   try {
-    await env.DB.prepare('DELETE FROM comments WHERE project_id = ? OR project_id = ?').bind(existing.id, existing.slug).run();
-    await env.DB.prepare('DELETE FROM project_updates WHERE project_id = ? OR project_id = ?').bind(existing.id, existing.slug).run();
-    await env.DB.prepare('UPDATE tasks SET project_id = NULL, updated_at = datetime(\'now\') WHERE (project_id = ? OR project_id = ?) AND deleted_at IS NULL').bind(existing.id, existing.slug).run();
+    await env.DB.batch([
+      env.DB.prepare('DELETE FROM comments WHERE project_id = ? OR project_id = ?').bind(existing.id, existing.slug),
+      env.DB.prepare('DELETE FROM project_updates WHERE project_id = ? OR project_id = ?').bind(existing.id, existing.slug),
+      env.DB.prepare('UPDATE tasks SET project_id = NULL, updated_at = datetime(\'now\') WHERE (project_id = ? OR project_id = ?) AND deleted_at IS NULL').bind(existing.id, existing.slug),
+    ]);
   } catch (e) {
     console.error('project cascade-clean failed:', e);
   }
