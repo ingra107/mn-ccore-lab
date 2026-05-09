@@ -3,10 +3,17 @@ import { json, error, generateId, logActivity, parseMentions, actorSlug } from '
 import { applyMutation } from './mutations';
 
 // Stage 4 #12-followup (2026-05-09): Nick-only visibility gate for
-// 'Peripheral Brain' category. Email-based; if team auth model tightens,
-// replace with role-based check (user.role === 'owner' or similar).
+// 'Peripheral Brain' category. Two ways to be "Nick" for this gate:
+//   (a) JWT-authed as Nick (browser via CF Access).
+//   (b) Valid PB_API_KEY (cross-machine PB sync — runs on Nick's two
+//       laptops only; key is in secrets.ps1, not shared with team).
+// Without (b) the v1 ship blocked PB-to-PB sync from pulling Nick's own
+// 'Peripheral Brain' projects on the second machine. Caught by home
+// 2026-05-09T01:40Z when project never propagated. If team auth model
+// tightens, replace this with a role-based check.
 // Decision doc: ~/Peripheral-Brain/Context/Decisions/2026-05-08-hub-category-three-bucket-design.md
-function isNick(user: AuthUser): boolean {
+function isNick(user: AuthUser, apiKeyValid?: boolean): boolean {
+  if (apiKeyValid === true) return true;
   return user.email === 'ingra107@umn.edu' || user.email === 'nicholas.ingraham@gmail.com';
 }
 
@@ -205,7 +212,7 @@ export async function handleCreateProject(
 // 'Peripheral Brain' visibility gate can be applied. Nick (ingra107@umn.edu
 // or nicholas.ingraham@gmail.com) sees all categories; all other callers
 // have 'Peripheral Brain' rows excluded from every read path.
-export async function handleProjects(url: URL, env: Env, user: AuthUser): Promise<Response> {
+export async function handleProjects(url: URL, env: Env, user: AuthUser, apiKeyValid?: boolean): Promise<Response> {
   const status = url.searchParams.get('status');
   const category = url.searchParams.get('category');
   const includeDeleted = url.searchParams.get('include_deleted') === '1';
@@ -240,7 +247,7 @@ export async function handleProjects(url: URL, env: Env, user: AuthUser): Promis
   // uncategorized projects that exist in PB but shouldn't appear in team view).
   // Applied at every read path (main, cursor mode, deleted-include mode) so
   // the gate cannot be bypassed by query-param combination.
-  if (!isNick(user)) {
+  if (!isNick(user, apiKeyValid)) {
     query += " AND (category != 'Peripheral Brain' OR category IS NULL)";
   }
 

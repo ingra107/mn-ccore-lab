@@ -233,6 +233,35 @@ describe('handleProjects — Nick-only Peripheral Brain gate', () => {
     const categories = body.data.map((r) => r.category);
     expect(categories).not.toContain('Peripheral Brain');
   });
+
+  // 2026-05-09 v2 fix: PB cross-machine sync uses PB_API_KEY (apiKeyValid=true)
+  // and is anonymous from JWT perspective. Without this bypass, home's PB sync
+  // can never pull Nick's 'Peripheral Brain' projects -> silent data loss class.
+  // Caught by home 2026-05-09T01:40Z when proj_01KR561PW3G2P2TKDG6H66X73K never
+  // propagated cross-machine.
+  it('apiKeyValid=true bypasses gate (anon user can see Peripheral Brain via PB_API_KEY)', async () => {
+    const env = makeEnv(SAMPLE_ROWS);
+    const res = await handleProjects(makeUrl({ seq_after: '0', limit: '100' }), env, ANON_USER, true);
+    const body = await res.json() as { data: ProjectRow[]; count: number };
+    const categories = body.data.map((r) => r.category);
+    expect(categories).toContain('Peripheral Brain');
+  });
+
+  it('apiKeyValid=undefined preserves anon-blocked behavior (gate still fires)', async () => {
+    const env = makeEnv(SAMPLE_ROWS);
+    const res = await handleProjects(makeUrl({ seq_after: '0', limit: '100' }), env, ANON_USER);
+    const body = await res.json() as { data: ProjectRow[]; count: number };
+    const categories = body.data.map((r) => r.category);
+    expect(categories).not.toContain('Peripheral Brain');
+  });
+
+  it('apiKeyValid=false (invalid Bearer) preserves gate', async () => {
+    const env = makeEnv(SAMPLE_ROWS);
+    const res = await handleProjects(makeUrl({ seq_after: '0', limit: '100' }), env, ANON_USER, false);
+    const body = await res.json() as { data: ProjectRow[]; count: number };
+    const categories = body.data.map((r) => r.category);
+    expect(categories).not.toContain('Peripheral Brain');
+  });
 });
 
 // ── Tests: PROJECT_CATEGORY_VALUES enum guard ────────────────────────────────
