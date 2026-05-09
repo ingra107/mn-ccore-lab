@@ -1247,137 +1247,140 @@ app.notFound(() => error('Not found', 404));
 // ─────────────────────────────────────────────────────────────────────────────
 // Default export: { fetch, scheduled } — matches Cloudflare Worker module shape.
 // - fetch: Hono app, invoked by functions/api/[[route]].ts for all /api/* requests.
-// - scheduled: dispatches by event.cron:
-//     "*/15 * * * *"   → calendar feed poller (iCal background refresh)
+// - scheduled: dispatches by event.cron (explicit switch — each cron fires exactly
+//   one handler):
+//     "0 * * * *"      → calendar feed poller (iCal hourly refresh, 24/day)
 //     "0 13 * * 1-5"   → morning pulse email (weekday 7 AM CT)
-//     "0 11 * * *"     → coordinator daily digest (6 AM CT)
-//   Dispatching by cron expression prevents the pulse email firing 96×/day
-//   after adding the 15-minute calendar cron.
+//     "0 11 * * *"     → coordinator daily digest (6 AM CT every day)
+//   NOTE: cron "*/15 * * * *" was removed in commit 441ec212 (2026-05-05);
+//   the guard here was not updated at the time — fixed in this commit.
 // ─────────────────────────────────────────────────────────────────────────────
 export default {
   fetch: app.fetch.bind(app),
 
   async scheduled(event: ScheduledEvent, env: Env, _ctx: ExecutionContext): Promise<void> {
-    // ── iCal feed poller (every 15 min) ────────────────────────
-    if (event.cron === '*/15 * * * *') {
-      console.log('[CalendarCron] Starting iCal feed poll...')
-      try {
-        await pollAllStaleFeeds(env)
-      } catch (e) {
-        console.error('[CalendarCron] Unhandled error:', (e as Error).message)
-      }
-      return
-    }
-
-    // ── Morning Pulse Email + Daily Digest (existing crons) ────
-    if (!env.SENDGRID_API_KEY) {
-      console.log('[Pulse] No SENDGRID_API_KEY configured — skipping email send');
-      return;
-    }
-
-    console.log('[Pulse] Starting morning pulse email...');
-
-    // Check for impact events first — creates notifications before we count unread
-    try {
-      const impactResult = await handleCheckImpact(env);
-      const impactData = await impactResult.json() as { data: { notifications_created: number } };
-      if (impactData.data.notifications_created > 0) {
-        console.log(`[Pulse] Impact check created ${impactData.data.notifications_created} notifications`);
-      }
-    } catch (e) {
-      console.log(`[Pulse] Impact check failed (non-fatal): ${e}`);
-    }
-
-    const members = await env.DB.prepare(
-      'SELECT slug, name, email FROM team_members WHERE slug IS NOT NULL'
-    ).all<{ slug: string; name: string; email: string | null }>();
-
-    if (!members.results?.length) {
-      console.log('[Pulse] No team members found');
-      return;
-    }
-
-    let sent = 0;
-    for (const member of members.results) {
-      const email = member.email || `${member.slug}@umn.edu`;
-      const firstName = member.name.split(' ')[0];
-
-      // Get their pending action items
-      const actions = await env.DB.prepare(
-        'SELECT title, description, due_date, priority, status FROM tasks WHERE assignee = ? AND completed = 0 ORDER BY due_date ASC'
-      ).bind(member.slug).all<{ description: string; due_date: string | null }>();
-
-      // Get unread notifications
-      const notifCount = await env.DB.prepare(
-        'SELECT COUNT(*) as c FROM notifications WHERE recipient_slug = ? AND read = 0'
-      ).bind(member.slug).first<{ c: number }>();
-
-      // Get recent team activity (last 24 hours)
-      const recentUpdates = await env.DB.prepare(
-        "SELECT author, content, project_id FROM project_updates WHERE created_at > datetime('now', '-1 day') AND author != ? ORDER BY created_at DESC LIMIT 5"
-      ).bind(member.slug).all<{ author: string; content: string; project_id: string }>();
-
-      // Get milestones with Future Me notes due within 3 days
-      const futureNotes = await env.DB.prepare(
-        `SELECT m.title, m.target_date, m.future_note, m.future_note_author, g.mechanism
-         FROM milestones m
-         LEFT JOIN grants g ON m.grant_id = g.id
-         WHERE m.future_note IS NOT NULL
-           AND m.status != 'completed'
-           AND m.target_date BETWEEN date('now') AND date('now', '+3 days')
-         ORDER BY m.target_date ASC`
-      ).all<{ title: string; target_date: string; future_note: string; future_note_author: string; mechanism: string | null }>();
-      const futureNoteItems = futureNotes.results || [];
-
-      // Only send if there's something to report
-      const pendingItems = actions.results || [];
-      const unread = notifCount?.c ?? 0;
-      const updates = recentUpdates.results || [];
-
-      if (pendingItems.length === 0 && unread === 0 && updates.length === 0 && futureNoteItems.length === 0) {
-        continue; // Nothing to report for this person
-      }
-
-      // Build email body
-      const today = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
-      let itemsHtml = '';
-
-      if (pendingItems.length > 0) {
-        itemsHtml += '<h3 style="color:#c9a84c;font-family:monospace;font-size:12px;text-transform:uppercase;letter-spacing:1px;margin-top:20px;">Your Action Items</h3><ul style="padding-left:20px;">';
-        for (const item of pendingItems) {
-          const overdue = item.due_date && item.due_date < new Date().toISOString().slice(0, 10);
-          const dueLabel = item.due_date
-            ? `<span style="color:${overdue ? '#7a0019' : '#64748b'};font-size:12px;"> — ${overdue ? 'overdue' : 'due'} ${item.due_date}</span>`
-            : '';
-          itemsHtml += `<li style="margin-bottom:8px;font-size:14px;color:#0f1923;">${item.description.replace(/^\[Carried forward\]\s*/i, '')}${dueLabel}</li>`;
+    switch (event.cron) {
+      // ── iCal feed poller (hourly, 24/day) ────────────────────────────────
+      case '0 * * * *': {
+        console.log('[CalendarCron] Starting iCal feed poll...')
+        try {
+          await pollAllStaleFeeds(env)
+        } catch (e) {
+          console.error('[CalendarCron] Unhandled error:', (e as Error).message)
         }
-        itemsHtml += '</ul>';
+        return
       }
 
-      if (futureNoteItems.length > 0) {
-        itemsHtml += '<h3 style="color:#c9a84c;font-family:monospace;font-size:12px;text-transform:uppercase;letter-spacing:1px;margin-top:20px;border-left:3px solid #c9a84c;padding-left:8px;">Notes From Past You</h3>';
-        for (const fn of futureNoteItems) {
-          const label = fn.mechanism ? `${fn.mechanism}: ${fn.title}` : fn.title;
-          itemsHtml += `<div style="margin:12px 0;padding:12px 14px;background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.15);border-left:3px solid #c9a84c;border-radius:8px;">`;
-          itemsHtml += `<p style="margin:0 0 4px;font-size:13px;font-weight:600;color:#0f1923;">${label} <span style="font-size:11px;font-weight:400;color:#64748b;">— due ${fn.target_date}</span></p>`;
-          itemsHtml += `<p style="margin:0;font-size:13px;color:#0f1923;font-style:italic;line-height:1.5;">${fn.future_note}</p>`;
-          itemsHtml += `</div>`;
+      // ── Morning Pulse Email (weekdays 7 AM CT = 13:00 UTC) ───────────────
+      case '0 13 * * 1-5': {
+        if (!env.SENDGRID_API_KEY) {
+          console.log('[Pulse] No SENDGRID_API_KEY configured — skipping email send');
+          return;
         }
-      }
 
-      if (unread > 0) {
-        itemsHtml += `<p style="font-size:14px;color:#0f1923;margin-top:16px;">You have <strong style="color:#c9a84c;">${unread}</strong> unread notification${unread > 1 ? 's' : ''} on the Hub.</p>`;
-      }
+        console.log('[Pulse] Starting morning pulse email...');
 
-      if (updates.length > 0) {
-        itemsHtml += '<h3 style="color:#c9a84c;font-family:monospace;font-size:12px;text-transform:uppercase;letter-spacing:1px;margin-top:20px;">Team Activity</h3><ul style="padding-left:20px;">';
-        for (const u of updates) {
-          itemsHtml += `<li style="margin-bottom:6px;font-size:13px;color:#2c3e50;">${u.author}: ${u.content.slice(0, 100)}${u.content.length > 100 ? '...' : ''}</li>`;
+        // Check for impact events first — creates notifications before we count unread
+        try {
+          const impactResult = await handleCheckImpact(env);
+          const impactData = await impactResult.json() as { data: { notifications_created: number } };
+          if (impactData.data.notifications_created > 0) {
+            console.log(`[Pulse] Impact check created ${impactData.data.notifications_created} notifications`);
+          }
+        } catch (e) {
+          console.log(`[Pulse] Impact check failed (non-fatal): ${e}`);
         }
-        itemsHtml += '</ul>';
-      }
 
-      const html = `
+        const members = await env.DB.prepare(
+          'SELECT slug, name, email FROM team_members WHERE slug IS NOT NULL'
+        ).all<{ slug: string; name: string; email: string | null }>();
+
+        if (!members.results?.length) {
+          console.log('[Pulse] No team members found');
+          return;
+        }
+
+        let sent = 0;
+        for (const member of members.results) {
+          const email = member.email || `${member.slug}@umn.edu`;
+          const firstName = member.name.split(' ')[0];
+
+          // Get their pending action items
+          const actions = await env.DB.prepare(
+            'SELECT title, description, due_date, priority, status FROM tasks WHERE assignee = ? AND completed = 0 ORDER BY due_date ASC'
+          ).bind(member.slug).all<{ description: string; due_date: string | null }>();
+
+          // Get unread notifications
+          const notifCount = await env.DB.prepare(
+            'SELECT COUNT(*) as c FROM notifications WHERE recipient_slug = ? AND read = 0'
+          ).bind(member.slug).first<{ c: number }>();
+
+          // Get recent team activity (last 24 hours)
+          const recentUpdates = await env.DB.prepare(
+            "SELECT author, content, project_id FROM project_updates WHERE created_at > datetime('now', '-1 day') AND author != ? ORDER BY created_at DESC LIMIT 5"
+          ).bind(member.slug).all<{ author: string; content: string; project_id: string }>();
+
+          // Get milestones with Future Me notes due within 3 days
+          const futureNotes = await env.DB.prepare(
+            `SELECT m.title, m.target_date, m.future_note, m.future_note_author, g.mechanism
+             FROM milestones m
+             LEFT JOIN grants g ON m.grant_id = g.id
+             WHERE m.future_note IS NOT NULL
+               AND m.status != 'completed'
+               AND m.target_date BETWEEN date('now') AND date('now', '+3 days')
+             ORDER BY m.target_date ASC`
+          ).all<{ title: string; target_date: string; future_note: string; future_note_author: string; mechanism: string | null }>();
+          const futureNoteItems = futureNotes.results || [];
+
+          // Only send if there's something to report
+          const pendingItems = actions.results || [];
+          const unread = notifCount?.c ?? 0;
+          const updates = recentUpdates.results || [];
+
+          if (pendingItems.length === 0 && unread === 0 && updates.length === 0 && futureNoteItems.length === 0) {
+            continue; // Nothing to report for this person
+          }
+
+          // Build email body
+          const today = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+          let itemsHtml = '';
+
+          if (pendingItems.length > 0) {
+            itemsHtml += '<h3 style="color:#c9a84c;font-family:monospace;font-size:12px;text-transform:uppercase;letter-spacing:1px;margin-top:20px;">Your Action Items</h3><ul style="padding-left:20px;">';
+            for (const item of pendingItems) {
+              const overdue = item.due_date && item.due_date < new Date().toISOString().slice(0, 10);
+              const dueLabel = item.due_date
+                ? `<span style="color:${overdue ? '#7a0019' : '#64748b'};font-size:12px;"> — ${overdue ? 'overdue' : 'due'} ${item.due_date}</span>`
+                : '';
+              itemsHtml += `<li style="margin-bottom:8px;font-size:14px;color:#0f1923;">${item.description.replace(/^\[Carried forward\]\s*/i, '')}${dueLabel}</li>`;
+            }
+            itemsHtml += '</ul>';
+          }
+
+          if (futureNoteItems.length > 0) {
+            itemsHtml += '<h3 style="color:#c9a84c;font-family:monospace;font-size:12px;text-transform:uppercase;letter-spacing:1px;margin-top:20px;border-left:3px solid #c9a84c;padding-left:8px;">Notes From Past You</h3>';
+            for (const fn of futureNoteItems) {
+              const label = fn.mechanism ? `${fn.mechanism}: ${fn.title}` : fn.title;
+              itemsHtml += `<div style="margin:12px 0;padding:12px 14px;background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.15);border-left:3px solid #c9a84c;border-radius:8px;">`;
+              itemsHtml += `<p style="margin:0 0 4px;font-size:13px;font-weight:600;color:#0f1923;">${label} <span style="font-size:11px;font-weight:400;color:#64748b;">— due ${fn.target_date}</span></p>`;
+              itemsHtml += `<p style="margin:0;font-size:13px;color:#0f1923;font-style:italic;line-height:1.5;">${fn.future_note}</p>`;
+              itemsHtml += `</div>`;
+            }
+          }
+
+          if (unread > 0) {
+            itemsHtml += `<p style="font-size:14px;color:#0f1923;margin-top:16px;">You have <strong style="color:#c9a84c;">${unread}</strong> unread notification${unread > 1 ? 's' : ''} on the Hub.</p>`;
+          }
+
+          if (updates.length > 0) {
+            itemsHtml += '<h3 style="color:#c9a84c;font-family:monospace;font-size:12px;text-transform:uppercase;letter-spacing:1px;margin-top:20px;">Team Activity</h3><ul style="padding-left:20px;">';
+            for (const u of updates) {
+              itemsHtml += `<li style="margin-bottom:6px;font-size:13px;color:#2c3e50;">${u.author}: ${u.content.slice(0, 100)}${u.content.length > 100 ? '...' : ''}</li>`;
+            }
+            itemsHtml += '</ul>';
+          }
+
+          const html = `
 <!DOCTYPE html>
 <html>
 <body style="font-family:'DM Sans',Helvetica,Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;background:#faf8f3;">
@@ -1393,40 +1396,50 @@ export default {
 </body>
 </html>`;
 
-      // Send via SendGrid
-      try {
-        const sgResp = await fetch('https://api.sendgrid.com/v3/mail/send', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${env.SENDGRID_API_KEY}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            personalizations: [{ to: [{ email, name: member.name }] }],
-            from: { email: 'hub@mnccore.org', name: 'MN-CCORE Lab Hub' },
-            subject: `${firstName}, you have ${pendingItems.length} item${pendingItems.length !== 1 ? 's' : ''} today`,
-            content: [{ type: 'text/html', value: html }],
-          }),
-        });
-        if (sgResp.ok || sgResp.status === 202) {
-          sent++;
-          console.log(`[Pulse] Sent to ${email}`);
-        } else {
-          console.log(`[Pulse] Failed for ${email}: ${sgResp.status}`);
+          // Send via SendGrid
+          try {
+            const sgResp = await fetch('https://api.sendgrid.com/v3/mail/send', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${env.SENDGRID_API_KEY}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                personalizations: [{ to: [{ email, name: member.name }] }],
+                from: { email: 'hub@mnccore.org', name: 'MN-CCORE Lab Hub' },
+                subject: `${firstName}, you have ${pendingItems.length} item${pendingItems.length !== 1 ? 's' : ''} today`,
+                content: [{ type: 'text/html', value: html }],
+              }),
+            });
+            if (sgResp.ok || sgResp.status === 202) {
+              sent++;
+              console.log(`[Pulse] Sent to ${email}`);
+            } else {
+              console.log(`[Pulse] Failed for ${email}: ${sgResp.status}`);
+            }
+          } catch (e) {
+            console.log(`[Pulse] Error sending to ${email}: ${e}`);
+          }
         }
-      } catch (e) {
-        console.log(`[Pulse] Error sending to ${email}: ${e}`);
+
+        console.log(`[Pulse] Done — sent ${sent} emails`);
+        return;
       }
-    }
 
-    console.log(`[Pulse] Done — sent ${sent} emails`);
+      // ── Daily Coordinator Digest (every day 6 AM CT = 11:00 UTC) ─────────
+      case '0 11 * * *': {
+        console.log('[DailyDigest] Triggering coordinator daily brief...');
+        try {
+          await handleSendDailyDigests(env);
+        } catch (e) {
+          console.log(`[DailyDigest] Failed (non-fatal): ${e}`);
+        }
+        return;
+      }
 
-    // ── Daily Coordinator Digest (6 AM CT = 11:00 UTC during DST) ──
-    console.log('[DailyDigest] Triggering coordinator daily brief...');
-    try {
-      await handleSendDailyDigests(env);
-    } catch (e) {
-      console.log(`[DailyDigest] Failed (non-fatal): ${e}`);
+      default:
+        console.warn(`[scheduled] Unknown cron expression: ${event.cron} — no handler registered`);
+        return;
     }
   },
 };
