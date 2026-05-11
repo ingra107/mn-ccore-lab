@@ -60,6 +60,11 @@ function makeStubDB() {
   return {
     _store: store,
     prepare: (sql: string) => makeStmt(sql, []),
+    // batch: execute each statement sequentially (sufficient for unit tests;
+    // mirrors the D1 batch contract without needing a real binding).
+    batch: async (stmts: Array<{ run: () => Promise<unknown> }>) => {
+      return Promise.all(stmts.map(s => s.run()))
+    },
   }
 }
 

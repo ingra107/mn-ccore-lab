@@ -9,7 +9,7 @@ import { notifyClients } from './lib/notify';
 import { handleUploadUrl, handleUploadDone, handleListFiles, handleGetFile, handleDeleteFile } from './routes/uploads';
 
 // ── Route modules ──────────────────────────────────────────
-import { handleTasks, handleActionItems, handleOverdueCount, handleUpdateTaskStatus, handleToggleTask, handleUpdateTask, handleCreateTask, handleGetTaskComments, handleAddTaskComment, handleGetTaskActivity, handleGetTaskDetail, handleGetTaskUpdates, handleGetRecentTaskUpdates, handlePostTaskUpdate, handleBatchUpdateTasks, handleSyncBulkTasks, handleAcknowledgeTask, handleDeleteTask, handleMobileTasksToHub } from './routes/tasks';
+import { handleTasks, handleGetTask, handleActionItems, handleOverdueCount, handleUpdateTaskStatus, handleToggleTask, handleUpdateTask, handleCreateTask, handleGetTaskComments, handleAddTaskComment, handleGetTaskActivity, handleGetTaskDetail, handleGetTaskUpdates, handleGetRecentTaskUpdates, handlePostTaskUpdate, handleBatchUpdateTasks, handleSyncBulkTasks, handleAcknowledgeTask, handleDeleteTask, handleMobileTasksToHub } from './routes/tasks';
 import { handleInboxEvents, handleSyncBulkInboxEvents, handleDeleteInboxEvent } from './routes/inbox-events';
 import { handleMutations } from './routes/mutations';
 import { handleProjects, handleCreateProject, handleGetComments, handleGetProjectUpdates, handleProjectHealth, handleRecentUpdates, handleUpdateProject, handleDeleteProject, handleGetDeletedProjectsSince, handleAddComment, handlePostProjectUpdate, handleGetMilestones, handleUpdateMilestoneNote, handleUpdateMilestoneCompletion } from './routes/projects';
@@ -594,6 +594,9 @@ app.get('/api/tasks/:id/activity', (c) => handleGetTaskActivity(c.req.param('id'
 app.get('/api/tasks/:id/detail', (c) => handleGetTaskDetail(c.req.param('id'), E(c)));
 app.get('/api/tasks/:id/subtasks', (c) => handleGetSubtasks(c.req.param('id'), E(c)));
 app.get('/api/tasks/:id/handoffs', (c) => handleGetHandoffs(c.req.param('id'), E(c)));
+// GET /api/tasks/:id — fetch single task by PK (mechanic I5: was missing, always 404)
+// Must come AFTER all /api/tasks/:id/<sub-path> routes so hono routes specifics first.
+app.get('/api/tasks/:id', (c) => handleGetTask(c.req.param('id'), E(c)));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ── Writes (POST / PUT / PATCH) ──────────────────────────────────────────────

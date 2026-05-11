@@ -168,6 +168,19 @@ export async function handleUpdateTaskStatus(id: string, request: Request, user:
   return json({ data: updated });
 }
 
+// GET /api/tasks/:id — fetch a single task by primary key.
+// Applies the same deleted_at IS NULL filter as the list endpoint so
+// a task visible in GET /api/tasks?limit=500 is always reachable here.
+// mechanic I5: previously no GET-by-PK route existed — direct lookups
+// returned 404 for every task regardless of status.
+export async function handleGetTask(id: string, env: Env): Promise<Response> {
+  const task = await env.DB.prepare(
+    'SELECT t.*, m.title as meeting_title, m.date as meeting_date FROM tasks t LEFT JOIN meetings m ON t.meeting_id = m.id WHERE t.id = ? AND t.deleted_at IS NULL'
+  ).bind(id).first();
+  if (!task) return error('Task not found', 404);
+  return json({ data: task });
+}
+
 // GET /api/action-items — query the action_items table (meeting action items, NOT tasks)
 export async function handleActionItems(url: URL, env: Env): Promise<Response> {
   const assignee = url.searchParams.get('assignee');
