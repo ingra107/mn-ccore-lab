@@ -439,11 +439,43 @@ export async function applyInsert(env: Env, mut: Mutation, user: AuthUser): Prom
 // updated_at refresh, canonical_payload return shape, and seq advancement.
 // Codex item HUB-R1 (2026-04-30): handoffs.ts:65 was a direct UPDATE
 // outside mutations.ts; now uses this export.
+// Tables where an update mutation arriving before the corresponding insert
+// (insert-update race window) should be accepted via upsert rather than
+// dead-lettered. Sessions is the canonical case: PB writes the insert when
+// the session opens, then writes an update (ended_at, summary, etc.) when
+// it closes. Because Hub sync is async, the update can arrive while the
+// insert is still in the outbox queue. Rather than dead-lettering ~260
+// mutations per canary window, we upsert: INSERT the row with the patch
+// fields if absent, UPDATE if present. Stage 3 Phase 3.6 fix 2026-05-11.
+const UPSERT_ON_MISS_TABLES = new Set(['sessions']);
+
 export async function applyUpdate(env: Env, mut: Mutation, user: AuthUser): Promise<MutationResult> {
   if (!mut.patch) return mutErr(mut.mutation_id, 'update requires patch');
 
   const current = await readCanonical(env, mut.table, mut.record_id);
   if (!current) {
+    // For tables that support upsert-on-miss (insert-update race window),
+    // synthesize an INSERT ... ON CONFLICT DO UPDATE instead of dead-lettering.
+    if (UPSERT_ON_MISS_TABLES.has(mut.table)) {
+      const idCol = pkColumn(mut.table) as string; // scalar PK only in this set
+      const patchKeys = Object.keys(mut.patch);
+      const patchVals = Object.values(mut.patch);
+      const allCols = [idCol, ...patchKeys, 'last_mutation_id'];
+      const allVals = [mut.record_id, ...patchVals, mut.mutation_id];
+      const placeholders = allCols.map(() => '?').join(', ');
+      // ON CONFLICT DO UPDATE: apply patch fields so a later real-insert
+      // doesn't overwrite the already-applied ended_at/summary data.
+      const updateSet = [...patchKeys.map(k => `${k} = excluded.${k}`), `last_mutation_id = excluded.last_mutation_id`, `updated_at = datetime('now')`].join(', ');
+      await env.DB.prepare(
+        `INSERT INTO ${mut.table} (${allCols.join(', ')}) VALUES (${placeholders}) ON CONFLICT(${idCol}) DO UPDATE SET ${updateSet}`
+      ).bind(...allVals).run();
+      const canonical = await readCanonical(env, mut.table, mut.record_id);
+      return mkResult(mut.mutation_id, 'accepted', {
+        result_seq: canonical?.seq as number | undefined,
+        canonical_payload: canonical || undefined,
+        reason: 'upserted: row absent at update time (insert-update race)',
+      });
+    }
     return mutErr(mut.mutation_id, `${mut.table} record ${mut.record_id} not found`);
   }
   const currentSeq = (current.seq as number) ?? 0;

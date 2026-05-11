@@ -4,7 +4,7 @@
 //   - handleSyncBulkTasks: gated behind HUB_BULK_MIGRATION_MODE=1 env var.
 
 import { describe, it, expect } from 'vitest'
-import { applyMutation, applyInsert } from './mutations'
+import { applyMutation, applyInsert, applyUpdate } from './mutations'
 
 // ── Stub DB ──────────────────────────────────────────────────────────────────
 // Handles: SELECT * FROM tasks/projects WHERE id = ?,
@@ -375,5 +375,147 @@ describe('Stage 3 Phase 2: sessions table uses session_id as PK', () => {
       s.sql.includes('FROM sessions') && s.sql.includes('WHERE id =')
     )
     expect(idWhereClause).toHaveLength(0)
+  })
+})
+
+// ── Stage 3 Phase 3.6: sessions upsert-on-miss (insert-update race window) ───
+//
+// PB writes insert when session opens, update (ended_at, summary, ...) when
+// it closes. Hub sync is async so the update can arrive while the insert is
+// still queued. Before this fix, applyUpdate returned mutErr → 260 DLs.
+// After: INSERT ... ON CONFLICT DO UPDATE (upsert) instead.
+
+describe('Stage 3 Phase 3.6: sessions upsert-on-miss', () => {
+  function makeUpsertDB() {
+    // Like makeCapturingDB but also supports UPDATE path
+    const store: Map<string, Record<string, unknown>> = new Map()
+    const capturedSqls: Array<{ sql: string; vals: unknown[] }> = []
+
+    function makeStmt(sql: string, boundVals: unknown[]): ReturnType<typeof makeStmt> {
+      const self = {
+        bind: (...more: unknown[]) => makeStmt(sql, [...boundVals, ...more]),
+        first: async <T>() => {
+          const upper = sql.trim().toUpperCase()
+          if (upper.includes('PROCESSED_MUTATIONS')) return null as T | null
+          const key = boundVals[0] as string
+          return (store.get(key) ?? null) as T | null
+        },
+        all: async <T>() => ({ results: [] as T[], success: true, meta: {} }),
+        run: async () => {
+          capturedSqls.push({ sql, vals: [...boundVals] })
+          const upper = sql.trim().toUpperCase()
+          if (upper.startsWith('INSERT INTO PROCESSED_MUTATIONS')) {
+            return { meta: { changes: 1 } }
+          }
+          if (upper.startsWith('INSERT INTO')) {
+            const key = boundVals[0] as string
+            const colsMatch = sql.match(/INSERT INTO \w+ \(([^)]+)\)/)
+            if (colsMatch) {
+              const cols = colsMatch[1].split(',').map((c: string) => c.trim())
+              const existing = store.get(key)
+              if (!existing || sql.toUpperCase().includes('DO UPDATE')) {
+                // Upsert: create or merge
+                const row: Record<string, unknown> = existing ? { ...existing } : {}
+                cols.forEach((col: string, i: number) => {
+                  if (boundVals[i] !== undefined) row[col] = boundVals[i]
+                })
+                row['seq'] = (row['seq'] as number ?? 0) + 1
+                store.set(key, row)
+              }
+            }
+          }
+          if (upper.startsWith('UPDATE')) {
+            const idKey = boundVals[boundVals.length - 1] as string
+            const row = store.get(idKey)
+            if (row) store.set(idKey, { ...row, updated: true })
+          }
+          return { meta: { changes: 1 } }
+        },
+      }
+      return self
+    }
+
+    return {
+      _store: store,
+      _capturedSqls: capturedSqls,
+      prepare: (sql: string) => makeStmt(sql, []),
+      batch: async () => [],
+    }
+  }
+
+  it('update on absent sessions row upserts (accepted) instead of erroring', async () => {
+    const db = makeUpsertDB()
+    const env = { DB: db } as unknown as import('../helpers').Env
+    const user = { email: 'test@example.com' } as import('../helpers').AuthUser
+
+    const sessionId = 'sess_upsert_race_test_001'
+    // No prior INSERT — row is absent on Hub (race window)
+    const mut = {
+      mutation_id: 'mut_sess_upsert_001',
+      origin_machine: 'work',
+      table: 'sessions',
+      op: 'update' as const,
+      record_id: sessionId,
+      base_seq: null,
+      base_row_hash: null,
+      client_ts: '2026-05-11T18:00:00Z',
+      issued_at: '2026-05-11T18:00:00Z',
+      patch: {
+        ended_at: '2026-05-11T19:00:00Z',
+        summary: 'Closed session',
+        token_estimate: 1200,
+      },
+    }
+
+    const result = await applyUpdate(env, mut, user)
+
+    // Must not dead-letter
+    expect(result.status).toBe('accepted')
+    expect(result.reason).toContain('upserted')
+
+    // The upsert SQL must target session_id conflict, not id
+    const upsertSql = db._capturedSqls.find(s =>
+      s.sql.includes('INSERT INTO sessions') && s.sql.toUpperCase().includes('ON CONFLICT')
+    )
+    expect(upsertSql, 'No upsert INSERT INTO sessions captured').toBeTruthy()
+    expect(upsertSql!.sql).toContain('ON CONFLICT(session_id)')
+    expect(upsertSql!.sql).not.toContain('ON CONFLICT(id)')
+  })
+
+  it('update on present sessions row applies patch normally (no upsert path)', async () => {
+    const db = makeUpsertDB()
+    const sessionId = 'sess_update_present_002'
+    // Row already exists on Hub
+    db._store.set(sessionId, {
+      session_id: sessionId,
+      started_at: '2026-05-11T17:00:00Z',
+      ended_at: null,
+      seq: 2,
+      last_mutation_id: 'mut_prior',
+    })
+
+    const env = { DB: db } as unknown as import('../helpers').Env
+    const user = { email: 'test@example.com' } as import('../helpers').AuthUser
+
+    const mut = {
+      mutation_id: 'mut_sess_update_002',
+      origin_machine: 'work',
+      table: 'sessions',
+      op: 'update' as const,
+      record_id: sessionId,
+      base_seq: 2,
+      base_row_hash: null,
+      client_ts: '2026-05-11T18:30:00Z',
+      issued_at: '2026-05-11T18:30:00Z',
+      patch: { ended_at: '2026-05-11T18:30:00Z', summary: 'Done' },
+    }
+
+    const result = await applyUpdate(env, mut, user)
+    expect(result.status).toMatch(/^(accepted|merged_clean)$/)
+    // Should NOT have gone through upsert path
+    const upsertSql = db._capturedSqls.find(s =>
+      s.sql.includes('INSERT INTO sessions') && s.sql.toUpperCase().includes('DO UPDATE SET')
+    )
+    expect(upsertSql).toBeUndefined()
   })
 })
