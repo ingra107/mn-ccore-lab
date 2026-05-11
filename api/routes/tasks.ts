@@ -760,6 +760,15 @@ export async function handleBatchUpdateTasks(request: Request, user: AuthUser, e
  *
  * NOT a normal-operation path. If you find yourself reaching for this,
  * use applyMutation per-row instead.
+ *
+ * Mutation ledger gap (codex Fix 5, 2026-05-11):
+ * Rows written here do NOT get processed_mutations entries. This is intentional:
+ * bulk migration upserts are out-of-band bootstraps, not PB-origin mutations.
+ * PB's cursor pull uses last_mutation_id — rows inserted here have
+ * last_mutation_id=NULL and are excluded from pull diffs until a subsequent
+ * /api/mutations write stamps them. Accepted trade-off for the migration escape
+ * hatch. Decision: fix is moot while the gate remains on; document rather than
+ * refactor.
  */
 export async function handleSyncBulkTasks(request: Request, user: AuthUser, env: Env): Promise<Response> {
   if ((env as unknown as Record<string, string>).HUB_BULK_MIGRATION_MODE !== '1') {
@@ -1071,6 +1080,15 @@ export async function handleDeleteTask(id: string, user: AuthUser, env: Env): Pr
 }
 
 // POST /api/tasks/:id/acknowledge — closed-loop task acknowledgment (aviation CRM pattern)
+//
+// Hub-only side-channel (codex Fix 4, 2026-05-11):
+// acknowledged_at and acknowledged_by are intentionally NOT in TABLE_FIELDS['tasks']
+// in mutations.ts and are NOT in the PB sync contract. These are Hub-UI-only fields
+// used for local CRM workflow (assignee receipts, notifications); PB brain.db has no
+// acknowledged_at column and the PB outbox never emits them.
+// Decision: keep the direct UPDATE here; routing through applyMutation would require
+// adding these fields to TABLE_FIELDS which would pollute the PB wire contract.
+// The route_no_raw_writes.test.ts explicitly exempts this function.
 export async function handleAcknowledgeTask(id: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
   const task = await env.DB.prepare('SELECT * FROM tasks WHERE id = ?').bind(id).first<{ title: string; description: string; assignee: string; assigned_by: string | null; acknowledged_at: string | null }>();
   if (!task) return error('Task not found', 404);

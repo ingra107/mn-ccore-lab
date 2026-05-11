@@ -478,6 +478,39 @@ export async function applyUpdate(env: Env, mut: Mutation, user: AuthUser): Prom
     }
     return mutErr(mut.mutation_id, `${mut.table} record ${mut.record_id} not found`);
   }
+
+  // Tombstone resurrection guard (codex Fix 1, 2026-05-11):
+  // Reject updates to soft-deleted rows unless the patch intends to undelete.
+  // Three allowed paths that indicate intent to undelete:
+  //   1. Patch contains deleted_at = null (explicit undelete, e.g. hub-ui send).
+  //   2. Patch contains status = <live value> (not 'deleted') — the I7-INVERSE
+  //      bridge in applyPatch co-clears deleted_at for PB outbox patterns where
+  //      PB sends status='todo' without touching deleted_at.
+  //   3. Patch contains both status = <live> AND explicit deleted_at value (test
+  //      suite explicit-deleted_at precedence case).
+  //
+  // Rejected: patches that don't address the deletion (e.g. due_date change on
+  // a tombstoned row, or a plain status='deleted' re-stamp). These would apply
+  // silently and leave the row in an inconsistent state.
+  if (current.deleted_at) {
+    const patchRecord = (mut.patch ?? {}) as Record<string, unknown>;
+    const hasExplicitDeletedAt = Object.prototype.hasOwnProperty.call(patchRecord, 'deleted_at');
+    const hasLiveStatus =
+      Object.prototype.hasOwnProperty.call(patchRecord, 'status') &&
+      patchRecord.status !== 'deleted' &&
+      patchRecord.status !== null &&
+      patchRecord.status !== undefined;
+    // Also allow idempotent re-stamp of status='deleted' on already-deleted rows
+    // (e.g. PB re-sends the outbox mutation, applyPatch co-flip is a no-op).
+    const isIdempotentDelete =
+      Object.prototype.hasOwnProperty.call(patchRecord, 'status') &&
+      patchRecord.status === 'deleted';
+    const isUndeletePatch = hasExplicitDeletedAt || hasLiveStatus || isIdempotentDelete;
+    if (!isUndeletePatch) {
+      return mutErr(mut.mutation_id, `${mut.table} record ${mut.record_id} is deleted — cannot update; send deleted_at=null to undelete`);
+    }
+  }
+
   const currentSeq = (current.seq as number) ?? 0;
 
   // Conflict check (only for update with base_seq)
@@ -540,6 +573,37 @@ export async function applyDelete(env: Env, mut: Mutation, user: AuthUser): Prom
   } else {
     deleteWhere = `${idCol} = ?`;
     deleteVals = [mut.mutation_id, mut.record_id];
+  }
+
+  // Cascade cleanup for tasks and projects (codex Fixes 2+3, 2026-05-11).
+  // PB-origin deletes route through applyDelete, bypassing the route-level
+  // cascade in handleDeleteTask / handleDeleteProject. Move the cascade here
+  // so both callers (Hub-UI route + /api/mutations PB path) clean up dependents.
+  // Wrapped in try/catch so a missing child table doesn't abort the soft-delete.
+  if (mut.table === 'tasks') {
+    try {
+      await env.DB.batch([
+        env.DB.prepare('DELETE FROM task_comments WHERE task_id = ?').bind(mut.record_id),
+        env.DB.prepare('DELETE FROM task_updates WHERE task_id = ?').bind(mut.record_id),
+        env.DB.prepare("DELETE FROM notifications WHERE source_type IN ('task','task_comment') AND source_id = ?").bind(mut.record_id),
+      ]);
+    } catch (e) {
+      console.error('applyDelete task cascade failed:', e);
+    }
+    // task_subtasks is conditional (may not exist in all envs)
+    try {
+      await env.DB.prepare('DELETE FROM task_subtasks WHERE task_id = ?').bind(mut.record_id).run();
+    } catch { /* table may not exist */ }
+  } else if (mut.table === 'projects') {
+    try {
+      await env.DB.batch([
+        env.DB.prepare('DELETE FROM comments WHERE project_id = ?').bind(mut.record_id),
+        env.DB.prepare('DELETE FROM project_updates WHERE project_id = ?').bind(mut.record_id),
+        env.DB.prepare("UPDATE tasks SET project_id = NULL, updated_at = datetime('now') WHERE project_id = ? AND deleted_at IS NULL").bind(mut.record_id),
+      ]);
+    } catch (e) {
+      console.error('applyDelete project cascade failed:', e);
+    }
   }
 
   await env.DB.prepare(
