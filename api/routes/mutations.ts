@@ -259,7 +259,16 @@ async function processOne(
   inBatchResults: Map<string, MutationResult>,
   user: AuthUser,
 ): Promise<MutationResult> {
-  // Validate envelope
+  // Validate envelope — ALL required fields checked BEFORE any DB access.
+  // Fail-fast here prevents partial-batch commits: if a later mutation in the
+  // batch has a malformed envelope (missing origin_machine / client_ts /
+  // issued_at), it returns mutErr before any D1 write occurs. Without this,
+  // earlier mutations in the batch commit successfully and the missing field
+  // only surfaces as D1_TYPE_ERROR inside recordProcessedAtomic (after the
+  // apply has already run), producing an inconsistent partial state.
+  // (Incident: 2026-05-11 mechanic cleanup; escalation in
+  // Peripheral-Brain/Context/Mechanic/escalations/
+  //   2026-05-11_tests-sync-flush-async-prod-hub-leak.md secondary finding.)
   if (!mut.mutation_id || !mut.mutation_id.startsWith('mut_')) {
     return mutErr(mut.mutation_id || '<missing>', 'invalid mutation_id (must be mut_<ULID>)');
   }
@@ -271,6 +280,17 @@ async function processOne(
   }
   if (!mut.record_id) {
     return mutErr(mut.mutation_id, 'record_id required');
+  }
+  // Required envelope fields that feed into processed_mutations INSERT.
+  // Undefined values would produce D1_TYPE_ERROR after the apply already ran.
+  if (!mut.origin_machine) {
+    return mutErr(mut.mutation_id, 'origin_machine required');
+  }
+  if (!mut.client_ts) {
+    return mutErr(mut.mutation_id, 'client_ts required');
+  }
+  if (!mut.issued_at) {
+    return mutErr(mut.mutation_id, 'issued_at required');
   }
 
   // Idempotency: previously processed?
