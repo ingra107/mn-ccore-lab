@@ -460,9 +460,16 @@ export async function applyUpdate(env: Env, mut: Mutation, user: AuthUser): Prom
       const idCol = pkColumn(mut.table) as string; // scalar PK only in this set
       const patchKeys = Object.keys(mut.patch);
       const patchVals = Object.values(mut.patch);
-      const allCols = [idCol, ...patchKeys, 'last_mutation_id'];
+      // sessions.started_at: if the patch doesn't carry started_at (typical
+      // session-close update: ended_at + summary only), default to datetime('now')
+      // so the upsert-on-miss row is never left with started_at=NULL in production.
+      // The real insert will later arrive and set the authoritative started_at via
+      // ON CONFLICT DO UPDATE (which does NOT touch started_at on conflict, preserving
+      // whatever the close-update set here or the insert provides).
+      const needsStartedAt = mut.table === 'sessions' && !patchKeys.includes('started_at');
+      const allCols = [idCol, ...patchKeys, ...(needsStartedAt ? ['started_at'] : []), 'last_mutation_id'];
       const allVals = [mut.record_id, ...patchVals, mut.mutation_id];
-      const placeholders = allCols.map(() => '?').join(', ');
+      const placeholders = allCols.map((c) => (c === 'started_at' && needsStartedAt) ? "datetime('now')" : '?').join(', ');
       // ON CONFLICT DO UPDATE: apply patch fields so a later real-insert
       // doesn't overwrite the already-applied ended_at/summary data.
       const updateSet = [...patchKeys.map(k => `${k} = excluded.${k}`), `last_mutation_id = excluded.last_mutation_id`, `updated_at = datetime('now')`].join(', ');

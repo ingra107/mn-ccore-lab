@@ -480,6 +480,10 @@ describe('Stage 3 Phase 3.6: sessions upsert-on-miss', () => {
     expect(upsertSql, 'No upsert INSERT INTO sessions captured').toBeTruthy()
     expect(upsertSql!.sql).toContain('ON CONFLICT(session_id)')
     expect(upsertSql!.sql).not.toContain('ON CONFLICT(id)')
+    // started_at must be defaulted via SQL literal so the row is never NULL —
+    // this was the smoke-test-upsert-on-miss-20260511 production class (mig-082 fix).
+    expect(upsertSql!.sql).toContain("started_at")
+    expect(upsertSql!.sql).toContain("datetime('now')")
   })
 
   it('update on present sessions row applies patch normally (no upsert path)', async () => {
