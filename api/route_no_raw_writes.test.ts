@@ -9,11 +9,12 @@
 // Exemptions built in:
 //  - Lines starting with // or * (comments)
 //  - Strings containing 'applyMutation' (the approved path)
-//  - handleSyncBulkTasks body (gated behind HUB_BULK_MIGRATION_MODE=1 —
-//    kept as explicit migration escape hatch; the gate enforces the invariant)
+//  - handleBatchUpdateTasks / handleAcknowledgeTask bodies (hub-internal
+//    multi-row paths; not routable through single-row applyMutation)
 //
 // Maintenance: if you add a new route file that writes tasks/projects, add it
 // to routeFiles below AND route through applyMutation().
+// Note: handleSyncBulkTasks deleted 2026-05-12 (codex audit #8); exemption removed.
 
 import { readFileSync } from 'node:fs'
 import { describe, it, expect } from 'vitest'
@@ -25,7 +26,6 @@ const routeFiles = [
 ]
 
 // Raw write patterns that are BANNED outside mutations.ts.
-// Allow them inside handleSyncBulkTasks body (guarded by HUB_BULK_MIGRATION_MODE=1).
 const BANNED_PATTERNS = [
   /INSERT\s+INTO\s+tasks\b/i,
   /INSERT\s+INTO\s+projects\b/i,
@@ -43,11 +43,11 @@ describe('Phase 3.1 invariant: no raw writes outside mutations.ts', () => {
 
       // Track whether we're inside a batch/bulk function body that is
       // explicitly exempted from the invariant:
-      //   - handleSyncBulkTasks: gated behind HUB_BULK_MIGRATION_MODE=1
       //   - handleBatchUpdateTasks: multi-row IN-clause batch path; per-row
       //     applyMutation conversion deferred (post-Phase-3.1 task).
       //   - handleAcknowledgeTask: writes acknowledged_at/acknowledged_by which
       //     are not in TABLE_FIELDS (hub-internal fields, not synced to PB).
+      // (handleSyncBulkTasks deleted 2026-05-12; exemption removed.)
       let insideBulkHandler = false
       let braceDepth = 0
 
@@ -57,7 +57,6 @@ describe('Phase 3.1 invariant: no raw writes outside mutations.ts', () => {
 
         // Detect entry into exempted bulk/batch handlers
         if (
-          trimmed.includes('async function handleSyncBulkTasks') ||
           trimmed.includes('async function handleBatchUpdateTasks') ||
           trimmed.includes('async function handleAcknowledgeTask')
         ) {

@@ -1,7 +1,7 @@
 // Phase 3.1 tests (2026-05-04):
 //   - applyMutation() envelope factory: mints mut_ id, sets origin_machine,
 //     records in processed_mutations, stamps last_mutation_id on the row.
-//   - handleSyncBulkTasks: gated behind HUB_BULK_MIGRATION_MODE=1 env var.
+// (handleSyncBulkTasks deleted 2026-05-12; HUB_BULK_MIGRATION_MODE gate removed.)
 
 import { describe, it, expect } from 'vitest'
 import { applyMutation, applyInsert, applyUpdate } from './mutations'
@@ -226,10 +226,10 @@ describe('applyMutation envelope factory', () => {
   })
 })
 
-describe('handleSyncBulkTasks env-flag gate', () => {
-  // We test the gate indirectly by importing the handler and checking the 403.
-  // The handler itself is in tasks.ts, but we verify the flag contract here.
-  it('applyMutation does NOT require HUB_BULK_MIGRATION_MODE (unrelated)', async () => {
+describe('applyMutation flag-independence sanity check', () => {
+  // applyMutation does not require HUB_BULK_MIGRATION_MODE or any env gate.
+  // (handleSyncBulkTasks and its env-flag gate deleted 2026-05-12, codex audit #8.)
+  it('applyMutation does NOT require HUB_BULK_MIGRATION_MODE', async () => {
     // Just a sanity guard — applyMutation should work without any env flag
     const db = makeStubDB()
     const tid = 'task_01hwtest_bulk_flag_test001'
