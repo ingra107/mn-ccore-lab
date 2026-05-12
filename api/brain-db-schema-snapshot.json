@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-03T18:39:34.727003+00:00",
+  "generated_at": "2026-05-12T00:00:00.000000+00:00",
   "note": "Checked-in schema snapshot for Hub CI test (mutations.schema-drift.test.ts). Update when brain.db schema changes. hub-schema-sync specialist owns updates. Regenerate: python scripts/db/generate_hub_schema_snapshot.py --out <mn-ccore-lab>/api/brain-db-schema-snapshot.json",
   "hub_to_local": {
     "tasks": {
@@ -149,7 +149,9 @@
     ],
     "projects": [
       "pi",
-      "stage_notes"
+      "pi_context",
+      "stage_notes",
+      "strategic_context"
     ],
     "inbox_events": [],
     "day_capacity": [

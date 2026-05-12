@@ -128,7 +128,7 @@ const TABLE_FIELDS: Record<string, Set<string>> = {
     'created_at',
   ]),
   projects: new Set([
-    'title', 'short_name', 'status', 'stage', 'category', 'pi',
+    'title', 'short_name', 'status', 'stage', 'category', 'pi', 'pi_context', 'strategic_context',
     'slug', 'description', 'stage_notes',
     'key_link_1', 'key_link_1_desc', 'key_link_2', 'key_link_2_desc',
     'key_link_3', 'key_link_3_desc',
