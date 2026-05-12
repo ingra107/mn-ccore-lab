@@ -121,49 +121,6 @@ export async function handleUpdateTaskStatus(id: string, request: Request, user:
     } catch (e) { console.error('Failed to create completion notification:', e); }
   }
 
-  // Auto-create next instance for recurring tasks
-  if (completed) {
-    try {
-      const fullTask = await env.DB.prepare('SELECT * FROM tasks WHERE id = ?').bind(id).first<Record<string, unknown>>();
-      const recurrence = fullTask?.recurrence as string | null;
-      if (recurrence && recurrence !== 'none') {
-        const currentDue = fullTask?.due_date as string | null;
-        let nextDue: string | null = null;
-        if (currentDue) {
-          const d = new Date(currentDue + 'T12:00:00');
-          switch (recurrence) {
-            case 'daily': d.setDate(d.getDate() + 1); break;
-            case 'weekly': d.setDate(d.getDate() + 7); break;
-            case 'biweekly': d.setDate(d.getDate() + 14); break;
-            case 'monthly': d.setMonth(d.getMonth() + 1); break;
-          }
-          nextDue = d.toISOString().split('T')[0];
-        }
-        const nextId = generateId('task');
-        // Note: recurrence + recurrence_parent_id columns not yet in D1 schema (pending schema v35).
-        // Insert without those columns until migration is applied.
-        // Route through applyMutation so last_mutation_id is stamped (Phase 3.1).
-        await applyMutation(env, {
-          table: 'tasks',
-          record_id: nextId,
-          op: 'insert',
-          payload: {
-            title: fullTask?.title as string | undefined,
-            description: (fullTask?.description as string) || '',
-            assignee: (fullTask?.assignee as string) || '',
-            project_id: (fullTask?.project_id as string) || null,
-            due_date: nextDue,
-            priority: (fullTask?.priority as string) || 'medium',
-            status: 'todo',
-            source: 'recurrence',
-          },
-          route: 'handleUpdateTaskStatus:recurrence',
-          user,
-        });
-      }
-    } catch (e) { console.error('Failed to create recurring task:', e); }
-  }
-
   const updated = await env.DB.prepare('SELECT * FROM tasks WHERE id = ?').bind(id).first();
   return json({ data: updated });
 }
