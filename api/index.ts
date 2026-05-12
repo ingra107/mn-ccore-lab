@@ -12,7 +12,7 @@ import { handleUploadUrl, handleUploadDone, handleListFiles, handleGetFile, hand
 import { handleTasks, handleGetTask, handleActionItems, handleOverdueCount, handleUpdateTaskStatus, handleToggleTask, handleUpdateTask, handleCreateTask, handleGetTaskComments, handleAddTaskComment, handleGetTaskActivity, handleGetTaskDetail, handleGetTaskUpdates, handleGetRecentTaskUpdates, handlePostTaskUpdate, handleBatchUpdateTasks, handleAcknowledgeTask, handleDeleteTask, handleMobileTasksToHub } from './routes/tasks';
 import { handleInboxEvents, handleSyncBulkInboxEvents, handleDeleteInboxEvent } from './routes/inbox-events';
 import { handleMutations } from './routes/mutations';
-import { handleProjects, handleCreateProject, handleGetComments, handleGetProjectUpdates, handleProjectHealth, handleRecentUpdates, handleUpdateProject, handleDeleteProject, handleGetDeletedProjectsSince, handleAddComment, handlePostProjectUpdate, handleGetMilestones, handleUpdateMilestoneNote, handleUpdateMilestoneCompletion } from './routes/projects';
+import { handleProjects, handleGetProject, handleCreateProject, handleGetComments, handleGetProjectUpdates, handleProjectHealth, handleRecentUpdates, handleUpdateProject, handleDeleteProject, handleGetDeletedProjectsSince, handleAddComment, handlePostProjectUpdate, handleGetMilestones, handleUpdateMilestoneNote, handleUpdateMilestoneCompletion } from './routes/projects';
 import { handleMeetings, handleNextMeeting, handleGetMeeting, handleGetAgendaItems, handleAddAgendaItem, handleReorderAgenda, handleCreateMeeting, handleUpdateMeetingNotes, handleMeetingPrep, handleGenerateAgenda } from './routes/meetings';
 import { handlePublications, handleGrants, handleCollaborationGraph, handleStats, handleGrantsTimeline, handleUpdateGrant } from './routes/publications';
 import { handleCitations } from './routes/citations';
@@ -371,6 +371,10 @@ app.get('/api/projects/:slug/revisions', async (c) => {
   return handleGetRevisions(rewrittenUrl, env);
 });
 app.get('/api/projects', (c) => handleProjects(U(c), E(c), c.get('user'), c.get('apiKeyValid') === true));
+// GET /api/projects/:id — single-record fetch by id or slug (codex Q4 2026-05-12).
+// Must be registered AFTER static paths (/health, /deleted-since) and before POST routes
+// so Hono resolves statics first. Mirrors handleGetTask pattern (tasks.ts:133).
+app.get('/api/projects/:id', (c) => handleGetProject(c.req.param('id'), E(c), c.get('user'), c.get('apiKeyValid') === true));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Meetings (specific first, parameterized last)

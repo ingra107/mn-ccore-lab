@@ -12,7 +12,7 @@
 // Design doc: ~/Peripheral-Brain/Context/Decisions/2026-05-08-hub-category-three-bucket-design.md
 
 import { describe, it, expect } from 'vitest';
-import { handleProjects, handleCreateProject, handleUpdateProject } from './projects';
+import { handleProjects, handleGetProject, handleCreateProject, handleUpdateProject } from './projects';
 import type { AuthUser } from '../helpers';
 
 // ── D1 stub ──────────────────────────────────────────────────────────────────
@@ -373,5 +373,124 @@ describe('PROJECT_CATEGORY_VALUES — three-bucket allowlist enforcement', () =>
     expect(res.status).toBe(400);
     const body = await res.json() as { error: string };
     expect(body.error).toMatch(/Invalid category/);
+  });
+});
+
+// ── Tests: handleGetProject — GET /api/projects/:id ──────────────────────────
+// codex Q4 (2026-05-12): single-record fetch added to unblock 9 stuck PB
+// recovery-pull entries that needed a deterministic project probe path.
+
+// Extend the D1 stub to support the single-record lookup in handleGetProject.
+// makeProjectDb.first() already handles id and slug lookups; we need a stub
+// that also matches the two-param bind used in handleGetProject.
+function makeGetProjectDb(rows: Partial<ProjectRow>[]) {
+  const store: ProjectRow[] = rows.map((r, i) => ({
+    id: r.id ?? `proj_${i + 1}`,
+    title: r.title ?? `Project ${i + 1}`,
+    slug: r.slug ?? `project-${i + 1}`,
+    category: r.category ?? 'MNCCORE',
+    status: r.status ?? 'active',
+    stage: r.stage ?? 'Idea',
+    deleted_at: r.deleted_at ?? null,
+    seq: r.seq ?? i + 1,
+    updated_at: r.updated_at ?? '2026-05-01T00:00:00Z',
+    description: r.description ?? '',
+    pi: r.pi ?? 'nick-ingraham',
+  }));
+
+  function makeStmt(sql: string, boundVals: unknown[]): any {
+    return {
+      bind: (...more: unknown[]) => makeStmt(sql, [...boundVals, ...more]),
+      first: async <T>() => {
+        const upper = sql.trim().toUpperCase();
+        // handleGetProject: SELECT * FROM projects WHERE (id = ? OR slug = ?) AND deleted_at IS NULL
+        if (upper.includes('FROM PROJECTS') && upper.includes('DELETED_AT IS NULL')) {
+          const val = String(boundVals[0]); // id and slug are bound the same value
+          const found = store.find(
+            (r) => (r.id === val || r.slug === val) && r.deleted_at === null
+          );
+          return (found as unknown as T) ?? null;
+        }
+        // Fallback for other first() queries (e.g. existence checks in update path)
+        if (upper.includes('FROM PROJECTS')) {
+          const val = String(boundVals[0]);
+          const found = store.find((r) => r.id === val || r.slug === val);
+          return (found as unknown as T) ?? null;
+        }
+        return null;
+      },
+      all: async <T>() => ({ results: [] as T[], success: true, meta: {} }),
+      run: async () => ({ success: true, meta: {}, results: [] }),
+    };
+  }
+
+  return {
+    prepare: (sql: string) => makeStmt(sql, []),
+    batch: (_stmts: unknown[]) => Promise.resolve([]),
+  };
+}
+
+function makeGetProjectEnv(rows: Partial<ProjectRow>[] = []) {
+  return { DB: makeGetProjectDb(rows) } as any;
+}
+
+describe('handleGetProject — GET /api/projects/:id', () => {
+  it('returns 200 with the project row for an existing non-deleted project (by id)', async () => {
+    const rows = [{ id: 'proj_001', slug: 'my-project', title: 'My Project', category: 'MNCCORE', status: 'active', stage: 'Idea' }];
+    const env = makeGetProjectEnv(rows);
+    const res = await handleGetProject('proj_001', env, NICK_USER);
+    expect(res.status).toBe(200);
+    const body = await res.json() as { data: ProjectRow };
+    expect(body.data.id).toBe('proj_001');
+    expect(body.data.title).toBe('My Project');
+  });
+
+  it('returns 200 with the project row when fetched by slug', async () => {
+    const rows = [{ id: 'proj_002', slug: 'slug-lookup', title: 'Slug Project', category: 'CLIF', status: 'active', stage: 'Writing' }];
+    const env = makeGetProjectEnv(rows);
+    const res = await handleGetProject('slug-lookup', env, NICK_USER);
+    expect(res.status).toBe(200);
+    const body = await res.json() as { data: ProjectRow };
+    expect(body.data.slug).toBe('slug-lookup');
+  });
+
+  it('returns 404 when the project does not exist', async () => {
+    const env = makeGetProjectEnv([]);
+    const res = await handleGetProject('proj_nonexistent', env, NICK_USER);
+    expect(res.status).toBe(404);
+    const body = await res.json() as { error: string };
+    expect(body.error).toBe('Project not found');
+  });
+
+  it('returns 404 for a soft-deleted project (deleted_at IS NOT NULL)', async () => {
+    const rows = [{ id: 'proj_003', slug: 'deleted-proj', title: 'Deleted Project', deleted_at: '2026-05-01T00:00:00Z' }];
+    const env = makeGetProjectEnv(rows);
+    const res = await handleGetProject('proj_003', env, NICK_USER);
+    expect(res.status).toBe(404);
+    const body = await res.json() as { error: string };
+    expect(body.error).toBe('Project not found');
+  });
+
+  it('non-Nick user receives 404 for a Peripheral Brain project', async () => {
+    const rows = [{ id: 'proj_004', slug: 'pb-proj', title: 'PB Admin', category: 'Peripheral Brain', status: 'active', stage: 'Idea' }];
+    const env = makeGetProjectEnv(rows);
+    const res = await handleGetProject('proj_004', env, NON_NICK_USER);
+    expect(res.status).toBe(404);
+  });
+
+  it('Nick user can fetch a Peripheral Brain project', async () => {
+    const rows = [{ id: 'proj_005', slug: 'pb-proj-nick', title: 'Nick PB', category: 'Peripheral Brain', status: 'active', stage: 'Idea' }];
+    const env = makeGetProjectEnv(rows);
+    const res = await handleGetProject('proj_005', env, NICK_USER);
+    expect(res.status).toBe(200);
+    const body = await res.json() as { data: ProjectRow };
+    expect(body.data.category).toBe('Peripheral Brain');
+  });
+
+  it('apiKeyValid=true bypasses Nick gate for Peripheral Brain projects', async () => {
+    const rows = [{ id: 'proj_006', slug: 'pb-api-key', title: 'PB via API Key', category: 'Peripheral Brain', status: 'active', stage: 'Idea' }];
+    const env = makeGetProjectEnv(rows);
+    const res = await handleGetProject('proj_006', env, ANON_USER, true);
+    expect(res.status).toBe(200);
   });
 });

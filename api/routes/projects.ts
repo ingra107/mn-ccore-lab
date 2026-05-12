@@ -701,6 +701,26 @@ export async function handleGetDeletedProjectsSince(
   return json({ data: rows.results, count: rows.results.length });
 }
 
+// GET /api/projects/:id — fetch a single project by primary key or slug.
+// Applies the same deleted_at IS NULL filter as the list endpoint so a
+// project visible in GET /api/projects is always reachable here.
+// Nick-scoped: apiKeyValid bypasses JWT gate (PB cross-machine sync path).
+// codex Q4 (2026-05-12): added to unblock 9 stuck PB recovery-pull entries
+// that needed a deterministic single-record probe path for projects.
+export async function handleGetProject(id: string, env: Env, user: AuthUser, apiKeyValid?: boolean): Promise<Response> {
+  const project = await env.DB.prepare(
+    'SELECT * FROM projects WHERE (id = ? OR slug = ?) AND deleted_at IS NULL'
+  ).bind(id, id).first();
+  if (!project) return error('Project not found', 404);
+  // Nick-only visibility gate (mirrors handleProjects gate: Stage 4 #12-followup).
+  // Non-Nick callers cannot probe 'Peripheral Brain' projects by ID/slug.
+  const row = project as Record<string, unknown>;
+  if (!isNick(user, apiKeyValid) && row['category'] === 'Peripheral Brain') {
+    return error('Project not found', 404);
+  }
+  return json({ data: project });
+}
+
 // POST /api/projects/:id/comments — add comment
 export async function handleAddComment(
   projectId: string,
