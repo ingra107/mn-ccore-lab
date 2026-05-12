@@ -813,15 +813,6 @@
       "covered": true
     },
     {
-      "id": "api-post-tasks-sync-bulk",
-      "component": "api/routes/tasks.ts",
-      "type": "api",
-      "description": "POST /api/tasks/sync-bulk — bulk upsert from brain.db",
-      "test_file": "tests/sync-pipeline.test.py",
-      "test_name": "test_01_create_task_in_brain_push_to_d1",
-      "covered": true
-    },
-    {
       "id": "page-render-dashboard",
       "component": "src/pages/Dashboard.tsx",
       "type": "render",
