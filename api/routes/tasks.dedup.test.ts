@@ -1,8 +1,8 @@
 // I18 dedup regression tests (2026-05-03)
 //
-// Covers server-side (title, project_id) dedup in two paths:
+// Covers server-side (title, project_id) dedup via:
 //   1. mutations.ts applyInsert — via the exported handleMutations path
-//   2. tasks.ts handleSyncBulkTasks — via the sync-bulk path
+// (sync-bulk path deleted 2026-05-12; codex audit #8)
 //
 // Uses the same in-memory D1 stub pattern as mutations.deleted-status.test.ts.
 // Covers the four edge cases from the incident spec:
@@ -101,7 +101,7 @@ function makeStubDB(seedRows: Record<string, Record<string, unknown>> = {}) {
           const id = boundVals[0] as string
           if (id && !store.has(id)) {
             // Build a minimal row from bound values
-            // Column order matches the INSERT in handleSyncBulkTasks:
+            // Column order matches the INSERT in applyInsert (mutations.ts):
             // id, meeting_id, project_id, title, description, assignee, assigned_by,
             // due_date, deadline, priority, status, source, completed, completed_at,
             // completed_by, created_at, key_link_1..6, updated_at
@@ -352,106 +352,6 @@ describe('mutations.ts applyInsert — I18 (title, project_id) dedup', () => {
     expect(body.results[0].status).toBe('accepted')
     expect(body.results[0].reason ?? '').not.toContain('deduped')
     expect(db._store.has('task_new_weekly')).toBe(true)
-  })
-})
-
-// ── tasks.ts handleSyncBulkTasks dedup tests ────────────────────────────────
-
-describe('handleSyncBulkTasks — I18 (title, project_id) dedup', () => {
-  it('deduped task appears in results with status=deduped and hub_id=existing id', async () => {
-    const existingId = 'task_existing_bulk_001'
-    const db = makeStubDB({
-      [existingId]: {
-        id: existingId,
-        title: 'Approve: MECHANIC: I25',
-        project_id: null,
-        deleted_at: null,
-        status: 'todo',
-        seq: 2,
-        last_mutation_id: null,
-        updated_at: '2026-05-03 08:00:00',
-      }
-    })
-
-    const { handleSyncBulkTasks } = await import('./tasks')
-    // Phase 3.1: bulk path requires HUB_BULK_MIGRATION_MODE=1 gate
-    const fakeEnv = { DB: db, HUB_BULK_MIGRATION_MODE: '1' } as unknown as Env
-    const req = new Request('https://example.com/api/tasks/sync-bulk', {
-      method: 'POST',
-      body: JSON.stringify({
-        tasks: [{
-          id: 'task_work_dup_bulk',
-          title: 'Approve: MECHANIC: I25',
-          project_id: null,
-          assignee: 'nick-ingraham',
-          status: 'todo',
-          priority: 'medium',
-          client_updated_at: '2026-05-03 08:00:03',
-        }]
-      }),
-      headers: { 'Content-Type': 'application/json' },
-    })
-
-    const resp = await handleSyncBulkTasks(req, fakeUser, fakeEnv)
-    const body = await resp.json() as {
-      data: {
-        results: Array<{ client_id: string; status: string; reason?: string }>;
-        ids: Array<{ client_id: string; hub_id: string }>;
-      }
-    }
-
-    const taskResult = body.data.results.find(r => r.client_id === 'task_work_dup_bulk')
-    expect(taskResult).toBeDefined()
-    expect(taskResult!.status).toBe('deduped')
-    expect(taskResult!.reason).toContain(existingId)
-
-    const idEntry = body.data.ids.find(e => e.client_id === 'task_work_dup_bulk')
-    expect(idEntry).toBeDefined()
-    expect(idEntry!.hub_id).toBe(existingId)
-
-    // Duplicate should NOT have been inserted
-    expect(db._store.has('task_work_dup_bulk')).toBe(false)
-  })
-
-  it('no-dedup: different project_id — both tasks inserted', async () => {
-    const existingId = 'task_proj_c_existing'
-    const db = makeStubDB({
-      [existingId]: {
-        id: existingId,
-        title: 'Fix bug',
-        project_id: 'proj-c',
-        deleted_at: null,
-        status: 'todo',
-        seq: 1,
-        updated_at: '2026-05-01 10:00:00',
-      }
-    })
-
-    const { handleSyncBulkTasks } = await import('./tasks')
-    // Phase 3.1: bulk path requires HUB_BULK_MIGRATION_MODE=1 gate
-    const fakeEnv = { DB: db, HUB_BULK_MIGRATION_MODE: '1' } as unknown as Env
-    const req = new Request('https://example.com/api/tasks/sync-bulk', {
-      method: 'POST',
-      body: JSON.stringify({
-        tasks: [{
-          id: 'task_proj_d_new',
-          title: 'Fix bug',
-          project_id: 'proj-d',  // different project
-          assignee: 'nick-ingraham',
-          status: 'todo',
-          priority: 'medium',
-        }]
-      }),
-      headers: { 'Content-Type': 'application/json' },
-    })
-
-    const resp = await handleSyncBulkTasks(req, fakeUser, fakeEnv)
-    const body = await resp.json() as { data: { results: Array<{ client_id: string; status: string }> } }
-
-    const taskResult = body.data.results.find(r => r.client_id === 'task_proj_d_new')
-    expect(taskResult).toBeDefined()
-    expect(taskResult!.status).not.toBe('deduped')
-    expect(db._store.has('task_proj_d_new')).toBe(true)
   })
 })
 
