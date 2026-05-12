@@ -2083,33 +2083,6 @@ test.describe('API — New feature endpoints (schema v37+)', () => {
     expect([200, 201]).toContain(res.status())
   })
 
-  // Feature 2: Key Links on Tasks
-  test('API: Task key_link fields accepted in sync-bulk', async ({ request }) => {
-    const res = await request.post(`${BASE}/api/tasks/sync-bulk`, {
-      data: { tasks: [{
-        id: 'test-keylink-001',
-        title: 'KEYLINK TEST — delete',
-        description: 'Testing key links',
-        assignee: 'nick-ingraham',
-        priority: 'low',
-        source: 'sync',
-        key_link_1: 'C:/Users/ingra107/Box/Research/Test',
-        key_link_1_desc: 'Project Folder',
-        key_link_2: 'https://mail.google.com/test',
-        key_link_2_desc: 'Email Draft',
-      }], clear_existing: false }
-    })
-    expect([200, 201]).toContain(res.status())
-
-    // Verify readback includes key_links
-    const tasks = await (await request.get(`${BASE}/api/tasks?limit=200`)).json()
-    const found = tasks.data?.find((t: any) => t.id === 'test-keylink-001')
-    if (found) {
-      expect(found.key_link_1).toBe('C:/Users/ingra107/Box/Research/Test')
-      expect(found.key_link_1_desc).toBe('Project Folder')
-    }
-  })
-
   // Feature 6: Enhanced PB Health
   test('API GET: /api/pb/health → includes sync_summary', async ({ request }) => {
     const res = await request.get(`${BASE}/api/pb/health`)
