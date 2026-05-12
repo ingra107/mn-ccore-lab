@@ -193,3 +193,13 @@ jobs:
             prod-schema.sql
             schema-drift.diff
           retention-days: 30
+
+      - name: Install npm dependencies (for contract lint)
+        run: npm ci
+
+      - name: Schema contract lint (codex Q6+Q9)
+        # Compares TABLE_FIELDS, route ALLOWED_FIELDS, and SQL column refs
+        # against the committed D1 schema files. Catches phantom column bugs
+        # like the deleted tasks.recurrence branch (Task 1.6, PB SHA b06ce2b3).
+        # Exit 1 if any gap found; gaps listed in job log.
+        run: npm run audit:schema-contract
