@@ -1,0 +1,81 @@
+// GET /api/lane3/:table?seq_after=N&limit=L
+//
+// Generic seq-cursor list endpoint for Lane 3 semantic tables. Single
+// metadata-driven route that the PB pull layer hits for every table
+// in PB scripts/db/lane3_registry.py classified as `pull_supported`.
+//
+// Returns {rows, cursor, has_more} matching the /api/sessions envelope.
+//
+// `sessions` keeps its own /api/sessions handler because it has tombstone
+// filtering (deleted_at IS NULL); the other 8 Lane 3 tables don't have
+// deleted_at columns — supersession is the deletion model for them.
+//
+// Companion to:
+//   - PB scripts/db/lane3_registry.py LANE3_TABLES
+//   - PB scripts/db/sync/__init__.py PULL_ONLY_TABLES
+//   - PB scripts/db/sync/drivers/hub.py _apply_pull_semantic_table
+//
+// Drift detected by PB tests/integration/test_lane3_contract.py.
+
+import type { Env } from '../helpers';
+import { json, error } from '../helpers';
+
+
+// Mirrors PB scripts/db/lane3_registry.py LANE3_TABLES minus 'sessions'.
+// Update both files together when promoting a table from
+// hub_only_no_local_cache to pull_supported.
+export const LANE3_PULL_TABLES = new Set([
+  'agent_knowledge',
+  'memory_facts',
+  'pomodoro_sessions',
+  'decisions',
+  'kg_entities',
+  'kg_relations',
+  'kg_relation_type_registry',
+  'trajectories',
+]);
+
+
+export async function handleLane3List(
+  table: string,
+  url: URL,
+  env: Env,
+): Promise<Response> {
+  if (!LANE3_PULL_TABLES.has(table)) {
+    return error(
+      `Lane 3 table '${table}' not eligible for generic pull. ` +
+      `Eligible: ${Array.from(LANE3_PULL_TABLES).sort().join(', ')}.`,
+      400,
+    );
+  }
+
+  const seqAfterRaw = url.searchParams.get('seq_after');
+  const limitRaw = url.searchParams.get('limit');
+
+  if (seqAfterRaw === null) {
+    return error('seq_after is required', 400);
+  }
+  const seqAfter = Number.parseInt(seqAfterRaw, 10);
+  if (!Number.isFinite(seqAfter) || seqAfter < 0) {
+    return error('seq_after must be a non-negative integer', 400);
+  }
+
+  const limit = limitRaw
+    ? Math.min(Math.max(Number.parseInt(limitRaw, 10) || 2000, 1), 5000)
+    : 2000;
+
+  // SQL injection guard: `table` is validated against the hardcoded
+  // LANE3_PULL_TABLES set above. Never derived from unvalidated input.
+  const query = `SELECT * FROM ${table} WHERE seq > ? ORDER BY seq ASC LIMIT ?`;
+  const result = await env.DB
+    .prepare(query)
+    .bind(seqAfter, limit)
+    .all<Record<string, unknown>>();
+  const rows = result.results ?? [];
+
+  const cursor =
+    rows.length > 0 ? (rows[rows.length - 1].seq as number) : seqAfter;
+  const has_more = rows.length === limit;
+
+  return json({ rows, cursor, has_more });
+}
