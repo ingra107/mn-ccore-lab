@@ -1,8 +1,11 @@
 // GET /api/lane3/:table?seq_after=N&limit=L
 //
-// Generic seq-cursor list endpoint for Lane 3 semantic tables. Single
-// metadata-driven route that the PB pull layer hits for every table
-// in PB scripts/db/lane3_registry.py classified as `pull_supported`.
+// Generic seq-cursor list endpoint for non-session Lane 3 semantic tables.
+// PB only schedules tables listed in PULL_ONLY_TABLES; this route is broader
+// because hub_only_no_local_cache tables are endpoint-capable but not pulled
+// into brain.db until promoted. Drift between this allow-list and PB
+// classification fails tests/integration/test_lane3_contract.py
+// (test_hub_lane3_generic_endpoint_allowlist_matches_non_session_registry).
 //
 // Returns {rows, cursor, has_more} matching the /api/sessions envelope.
 //
