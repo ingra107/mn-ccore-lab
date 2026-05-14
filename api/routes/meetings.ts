@@ -182,7 +182,7 @@ export async function handleGenerateAgenda(meetingId: string, env: Env): Promise
   const stalledProjects = await env.DB.prepare(
     `SELECT id, title, stage, category, updated_at
      FROM projects
-     WHERE status IN ('Active','In Review','In Preparation')
+     WHERE status IN ('active','In Review','In Preparation')
        AND julianday('now') - julianday(updated_at) > 30
      ORDER BY updated_at ASC
      LIMIT 8`
