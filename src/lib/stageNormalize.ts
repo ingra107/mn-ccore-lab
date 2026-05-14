@@ -36,6 +36,15 @@ const STAGE_ALIASES: Record<string, CanonicalStage> = {
   'R&R': 'Revisions',
   'In Revisions': 'Revisions',
   'In Revision': 'Revisions',
+  // Lowercase canonical (brain.db + D1 normalized 2026-05-14)
+  idea: 'Idea',
+  data_collection: 'Data Collection',
+  data_analysis: 'Analysis',
+  writing: 'Writing',
+  submitted: 'Review',
+  revisions: 'Revisions',
+  accepted: 'Published',
+  published: 'Published',
 }
 
 function normalizeStage(stage: string | null | undefined): CanonicalStage | '' {
@@ -58,11 +67,17 @@ export function stageIndex(stage: string | null | undefined): number {
 // in any stage picker sends an invalid value, the API returns 400, and the
 // optimistic update reverts silently (issue #19 reported 2026-04-21).
 const UI_TO_API_STAGE: Record<string, string> = {
-  Analysis: 'Data Analysis',
-  Review: 'Submitted',
+  Analysis: 'data_analysis',
+  Review: 'submitted',
+  Idea: 'idea',
+  'Data Collection': 'data_collection',
+  Writing: 'writing',
+  Revisions: 'revisions',
+  Published: 'published',
+  Accepted: 'accepted',
 }
 
-type ApiStage = 'Idea' | 'Data Collection' | 'Data Analysis' | 'Writing' | 'Submitted' | 'Revisions' | 'Accepted' | 'Published'
+type ApiStage = 'idea' | 'data_collection' | 'data_analysis' | 'writing' | 'submitted' | 'revisions' | 'accepted' | 'published'
 
 export function toApiStage(uiStage: string): ApiStage {
   return (UI_TO_API_STAGE[uiStage] ?? uiStage) as ApiStage
