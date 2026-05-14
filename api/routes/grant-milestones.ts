@@ -8,7 +8,7 @@ const VALID_TYPES = ['progress_report', 'continuing_review', 'nce_deadline', 'bu
 const VALID_STATUSES = ['upcoming', 'in_progress', 'completed', 'overdue'];
 
 // GET /api/grant-milestones?grant_id=
-export async function handleGrantMilestones(url: URL, env: Env): Promise<Response> {
+export async function handleGetGrantMilestones(url: URL, env: Env): Promise<Response> {
   const grantId = url.searchParams.get('grant_id');
 
   let query = 'SELECT * FROM grant_milestones WHERE 1=1';

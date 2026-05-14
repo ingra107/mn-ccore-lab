@@ -107,7 +107,7 @@ function pickMatch(q: string, fields: Array<{ name: string; value: string | null
 // --- Handler ---
 
 // GET /api/search?q=
-export async function handleSearch(url: URL, env: Env): Promise<Response> {
+export async function handleGetSearch(url: URL, env: Env): Promise<Response> {
   const q = url.searchParams.get('q')?.trim();
   if (!q || q.length < 2) return json({ data: [], count: 0 });
   // Upper bound: 200-char search strings are already absurdly long; cap to

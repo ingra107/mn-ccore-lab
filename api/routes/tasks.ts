@@ -20,7 +20,7 @@ export async function handleOverdueCount(url: URL, env: Env): Promise<Response> 
 // sync-cursor mode: filters seq > N, orders by seq ASC, applies limit
 // (default 2000). Canonical pull path for brain.db's hub.py post-cutover.
 // updated_since/created_since remain for back-compat. seq_after wins.
-export async function handleTasks(url: URL, env: Env): Promise<Response> {
+export async function handleGetTasks(url: URL, env: Env): Promise<Response> {
   const assignee = url.searchParams.get('assignee');
   const status = url.searchParams.get('status');
   const priority = url.searchParams.get('priority');

@@ -2,7 +2,7 @@ import type { AuthUser, Env } from '../helpers';
 import { json, error, logActivity, actorSlug, getPiEmails } from '../helpers';
 
 // GET /api/team
-export async function handleTeam(env: Env): Promise<Response> {
+export async function handleGetTeam(env: Env): Promise<Response> {
   const result = await env.DB.prepare(
     'SELECT * FROM team_members ORDER BY member_type, name'
   ).all();

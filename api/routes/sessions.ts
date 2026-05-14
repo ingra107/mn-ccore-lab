@@ -28,7 +28,7 @@ export interface Session {
 //
 // Tombstone filtering: rows with deleted_at IS NOT NULL are excluded (schema-v65+).
 // No fixture filtering: sessions are not QA fixtures.
-export async function handleSessions(url: URL, env: Env): Promise<Response> {
+export async function handleGetSessions(url: URL, env: Env): Promise<Response> {
   const seqAfterRaw = url.searchParams.get('seq_after');
   const limitRaw = url.searchParams.get('limit');
 

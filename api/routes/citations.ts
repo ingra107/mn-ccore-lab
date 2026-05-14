@@ -31,7 +31,7 @@ interface CitationsAggregateRow {
 }
 
 // GET /api/citations
-export async function handleCitations(env: Env): Promise<Response> {
+export async function handleGetCitations(env: Env): Promise<Response> {
   // Single round-trip — sqlite computes SUM/MAX/COUNT in one pass. We
   // return total=0 + members_with_data=0 if the schema migration hasn't
   // run yet (CASE-guarded for forward-compat), but with v54 applied the

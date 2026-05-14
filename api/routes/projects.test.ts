@@ -3,7 +3,7 @@
 // Stage 4 #12-followup (2026-05-09): validates:
 //   1. PROJECT_CATEGORY_VALUES allowlist rejects old values ('lab', 'clif', etc.)
 //      and accepts new three-bucket values ('MNCCORE', 'CLIF', 'Peripheral Brain').
-//   2. handleProjects Nick-only visibility gate: Nick sees 'Peripheral Brain'
+//   2. handleGetProjects Nick-only visibility gate: Nick sees 'Peripheral Brain'
 //      rows; non-Nick callers have them filtered out.
 //   3. Default category in handleCreateProject is 'MNCCORE' (not 'lab').
 //
@@ -12,7 +12,7 @@
 // Design doc: ~/Peripheral-Brain/Context/Decisions/2026-05-08-hub-category-three-bucket-design.md
 
 import { describe, it, expect } from 'vitest';
-import { handleProjects, handleGetProject, handleCreateProject, handleUpdateProject } from './projects';
+import { handleGetProjects, handleGetProject, handleCreateProject, handleUpdateProject } from './projects';
 import type { AuthUser } from '../helpers';
 
 // ── D1 stub ──────────────────────────────────────────────────────────────────
@@ -169,12 +169,12 @@ const SAMPLE_ROWS: Partial<ProjectRow>[] = [
   { id: 'proj_4', title: 'Nick Admin Tasks', category: 'Peripheral Brain', seq: 4 },
 ];
 
-// ── Tests: handleProjects visibility gate ────────────────────────────────────
+// ── Tests: handleGetProjects visibility gate ────────────────────────────────────
 
-describe('handleProjects — Nick-only Peripheral Brain gate', () => {
+describe('handleGetProjects — Nick-only Peripheral Brain gate', () => {
   it('Nick (UMN email) sees all categories including Peripheral Brain', async () => {
     const env = makeEnv(SAMPLE_ROWS);
-    const res = await handleProjects(makeUrl(), env, NICK_USER);
+    const res = await handleGetProjects(makeUrl(), env, NICK_USER);
     const body = await res.json() as { data: ProjectRow[]; count: number };
     const categories = body.data.map((r) => r.category);
     expect(categories).toContain('Peripheral Brain');
@@ -183,7 +183,7 @@ describe('handleProjects — Nick-only Peripheral Brain gate', () => {
 
   it('Nick (personal gmail) also sees Peripheral Brain rows', async () => {
     const env = makeEnv(SAMPLE_ROWS);
-    const res = await handleProjects(makeUrl(), env, PERSONAL_EMAIL_NICK);
+    const res = await handleGetProjects(makeUrl(), env, PERSONAL_EMAIL_NICK);
     const body = await res.json() as { data: ProjectRow[]; count: number };
     const categories = body.data.map((r) => r.category);
     expect(categories).toContain('Peripheral Brain');
@@ -191,7 +191,7 @@ describe('handleProjects — Nick-only Peripheral Brain gate', () => {
 
   it('non-Nick user does NOT see Peripheral Brain rows', async () => {
     const env = makeEnv(SAMPLE_ROWS);
-    const res = await handleProjects(makeUrl(), env, NON_NICK_USER);
+    const res = await handleGetProjects(makeUrl(), env, NON_NICK_USER);
     const body = await res.json() as { data: ProjectRow[]; count: number };
     const categories = body.data.map((r) => r.category);
     expect(categories).not.toContain('Peripheral Brain');
@@ -200,7 +200,7 @@ describe('handleProjects — Nick-only Peripheral Brain gate', () => {
 
   it('anonymous user (no auth) does NOT see Peripheral Brain rows', async () => {
     const env = makeEnv(SAMPLE_ROWS);
-    const res = await handleProjects(makeUrl(), env, ANON_USER);
+    const res = await handleGetProjects(makeUrl(), env, ANON_USER);
     const body = await res.json() as { data: ProjectRow[]; count: number };
     const categories = body.data.map((r) => r.category);
     expect(categories).not.toContain('Peripheral Brain');
@@ -208,7 +208,7 @@ describe('handleProjects — Nick-only Peripheral Brain gate', () => {
 
   it('gate applies in cursor mode (seq_after) — non-Nick cannot page past Peripheral Brain', async () => {
     const env = makeEnv(SAMPLE_ROWS);
-    const res = await handleProjects(makeUrl({ seq_after: '0', limit: '100' }), env, NON_NICK_USER);
+    const res = await handleGetProjects(makeUrl({ seq_after: '0', limit: '100' }), env, NON_NICK_USER);
     const body = await res.json() as { data: ProjectRow[]; count: number };
     const categories = body.data.map((r) => r.category);
     expect(categories).not.toContain('Peripheral Brain');
@@ -216,7 +216,7 @@ describe('handleProjects — Nick-only Peripheral Brain gate', () => {
 
   it('gate applies in cursor mode — Nick CAN page and see Peripheral Brain', async () => {
     const env = makeEnv(SAMPLE_ROWS);
-    const res = await handleProjects(makeUrl({ seq_after: '0', limit: '100' }), env, NICK_USER);
+    const res = await handleGetProjects(makeUrl({ seq_after: '0', limit: '100' }), env, NICK_USER);
     const body = await res.json() as { data: ProjectRow[]; count: number };
     const categories = body.data.map((r) => r.category);
     expect(categories).toContain('Peripheral Brain');
@@ -228,7 +228,7 @@ describe('handleProjects — Nick-only Peripheral Brain gate', () => {
       { id: 'proj_5', title: 'Deleted PB project', category: 'Peripheral Brain', deleted_at: '2026-05-01T00:00:00Z', seq: 5 },
     ];
     const env = makeEnv(rows);
-    const res = await handleProjects(makeUrl({ include_deleted: '1' }), env, NON_NICK_USER);
+    const res = await handleGetProjects(makeUrl({ include_deleted: '1' }), env, NON_NICK_USER);
     const body = await res.json() as { data: ProjectRow[]; count: number };
     const categories = body.data.map((r) => r.category);
     expect(categories).not.toContain('Peripheral Brain');
@@ -241,7 +241,7 @@ describe('handleProjects — Nick-only Peripheral Brain gate', () => {
   // propagated cross-machine.
   it('apiKeyValid=true bypasses gate (anon user can see Peripheral Brain via PB_API_KEY)', async () => {
     const env = makeEnv(SAMPLE_ROWS);
-    const res = await handleProjects(makeUrl({ seq_after: '0', limit: '100' }), env, ANON_USER, true);
+    const res = await handleGetProjects(makeUrl({ seq_after: '0', limit: '100' }), env, ANON_USER, true);
     const body = await res.json() as { data: ProjectRow[]; count: number };
     const categories = body.data.map((r) => r.category);
     expect(categories).toContain('Peripheral Brain');
@@ -249,7 +249,7 @@ describe('handleProjects — Nick-only Peripheral Brain gate', () => {
 
   it('apiKeyValid=undefined preserves anon-blocked behavior (gate still fires)', async () => {
     const env = makeEnv(SAMPLE_ROWS);
-    const res = await handleProjects(makeUrl({ seq_after: '0', limit: '100' }), env, ANON_USER);
+    const res = await handleGetProjects(makeUrl({ seq_after: '0', limit: '100' }), env, ANON_USER);
     const body = await res.json() as { data: ProjectRow[]; count: number };
     const categories = body.data.map((r) => r.category);
     expect(categories).not.toContain('Peripheral Brain');
@@ -257,7 +257,7 @@ describe('handleProjects — Nick-only Peripheral Brain gate', () => {
 
   it('apiKeyValid=false (invalid Bearer) preserves gate', async () => {
     const env = makeEnv(SAMPLE_ROWS);
-    const res = await handleProjects(makeUrl({ seq_after: '0', limit: '100' }), env, ANON_USER, false);
+    const res = await handleGetProjects(makeUrl({ seq_after: '0', limit: '100' }), env, ANON_USER, false);
     const body = await res.json() as { data: ProjectRow[]; count: number };
     const categories = body.data.map((r) => r.category);
     expect(categories).not.toContain('Peripheral Brain');

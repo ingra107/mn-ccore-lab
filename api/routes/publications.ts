@@ -3,7 +3,7 @@ import { json } from '../helpers';
 import type { PublicationRow, TeamMemberRow, CollaborationGraph, GraphNode, GraphEdge, Stats } from '../types';
 
 // GET /api/publications?year=&status=&topic=
-export async function handlePublications(url: URL, env: Env): Promise<Response> {
+export async function handleGetPublications(url: URL, env: Env): Promise<Response> {
   const year = url.searchParams.get('year');
   const status = url.searchParams.get('status');
   const topic = url.searchParams.get('topic');
@@ -34,7 +34,7 @@ export async function handlePublications(url: URL, env: Env): Promise<Response> 
 }
 
 // GET /api/grants
-export async function handleGrants(env: Env): Promise<Response> {
+export async function handleGetGrants(env: Env): Promise<Response> {
   const result = await env.DB.prepare(
     'SELECT * FROM grants ORDER BY mechanism, title'
   ).all();
@@ -117,7 +117,7 @@ export async function handleCollaborationGraph(env: Env): Promise<Response> {
 }
 
 // GET /api/stats
-export async function handleStats(env: Env): Promise<Response> {
+export async function handleGetStats(env: Env): Promise<Response> {
   const [pubCount, teamCount, grantCount, projectCount, activeCount, featuredCount] =
     await Promise.all([
       env.DB.prepare('SELECT COUNT(*) as c FROM publications').first<{ c: number }>(),

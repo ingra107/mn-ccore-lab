@@ -9,36 +9,36 @@ import { notifyClients } from './lib/notify';
 import { handleUploadUrl, handleUploadDone, handleListFiles, handleGetFile, handleDeleteFile } from './routes/uploads';
 
 // ── Route modules ──────────────────────────────────────────
-import { handleTasks, handleGetTask, handleActionItems, handleOverdueCount, handleUpdateTaskStatus, handleToggleTask, handleUpdateTask, handleCreateTask, handleGetTaskComments, handleAddTaskComment, handleGetTaskActivity, handleGetTaskDetail, handleGetTaskUpdates, handleGetRecentTaskUpdates, handlePostTaskUpdate, handleBatchUpdateTasks, handleAcknowledgeTask, handleDeleteTask, handleMobileTasksToHub } from './routes/tasks';
+import { handleGetTasks, handleGetTask, handleActionItems, handleOverdueCount, handleUpdateTaskStatus, handleToggleTask, handleUpdateTask, handleCreateTask, handleGetTaskComments, handleAddTaskComment, handleGetTaskActivity, handleGetTaskDetail, handleGetTaskUpdates, handleGetRecentTaskUpdates, handlePostTaskUpdate, handleBatchUpdateTasks, handleAcknowledgeTask, handleDeleteTask, handleMobileTasksToHub } from './routes/tasks';
 import { handleInboxEvents, handleSyncBulkInboxEvents, handleDeleteInboxEvent } from './routes/inbox-events';
 import { handleMutations } from './routes/mutations';
-import { handleProjects, handleGetProject, handleCreateProject, handleGetComments, handleGetProjectUpdates, handleProjectHealth, handleRecentUpdates, handleUpdateProject, handleDeleteProject, handleGetDeletedProjectsSince, handleAddComment, handlePostProjectUpdate, handleGetMilestones, handleUpdateMilestoneNote, handleUpdateMilestoneCompletion } from './routes/projects';
-import { handleMeetings, handleNextMeeting, handleGetMeeting, handleGetAgendaItems, handleAddAgendaItem, handleReorderAgenda, handleCreateMeeting, handleUpdateMeetingNotes, handleMeetingPrep, handleGenerateAgenda } from './routes/meetings';
-import { handlePublications, handleGrants, handleCollaborationGraph, handleStats, handleGrantsTimeline, handleUpdateGrant } from './routes/publications';
-import { handleCitations } from './routes/citations';
-import { handleTeam, handleTeamSlugs, handleCVData, handleUpdateTeamMember } from './routes/team';
-import { handleDigest, handleDigestDates, handleUpdateDigestStatus, handleCreateDigestPaper, handleGetDigestComments, handleCreateDigestComment, handleDigestCommentCounts } from './routes/digest';
-import { handleIdeas, handleCreateIdea, handleUpdateIdea, handleVoteIdea } from './routes/ideas';
+import { handleGetProjects, handleGetProject, handleCreateProject, handleGetComments, handleGetProjectUpdates, handleProjectHealth, handleRecentUpdates, handleUpdateProject, handleDeleteProject, handleGetDeletedProjectsSince, handleAddComment, handlePostProjectUpdate, handleGetMilestones, handleUpdateMilestoneNote, handleUpdateMilestoneCompletion } from './routes/projects';
+import { handleGetMeetings, handleNextMeeting, handleGetMeeting, handleGetAgendaItems, handleAddAgendaItem, handleReorderAgenda, handleCreateMeeting, handleUpdateMeetingNotes, handleMeetingPrep, handleGenerateAgenda } from './routes/meetings';
+import { handleGetPublications, handleGetGrants, handleCollaborationGraph, handleGetStats, handleGrantsTimeline, handleUpdateGrant } from './routes/publications';
+import { handleGetCitations } from './routes/citations';
+import { handleGetTeam, handleTeamSlugs, handleCVData, handleUpdateTeamMember } from './routes/team';
+import { handleGetDigest, handleDigestDates, handleUpdateDigestStatus, handleCreateDigestPaper, handleGetDigestComments, handleCreateDigestComment, handleDigestCommentCounts } from './routes/digest';
+import { handleGetIdeas, handleCreateIdea, handleUpdateIdea, handleVoteIdea } from './routes/ideas';
 import { handleBugReport } from './routes/bug-report';
 import { handleNotifications, handleNotificationCount, handleMarkNotificationRead, handleMarkAllNotificationsRead, handleCommitments, handleCreateCommitment } from './routes/notifications';
-import { handleSearch } from './routes/search';
+import { handleGetSearch } from './routes/search';
 import { handleGetSettings, handleUpdateSettings, handleGetWorkflowTemplates, handleCreateWorkflowTemplate } from './routes/settings';
 import { handleGetReactions, handleToggleReaction } from './routes/reactions';
 import { handleCalendarEvents } from './routes/calendar';
 import { handleListFeeds, handleAddFeed, handleDeleteFeed, handleListEvents, pollAllStaleFeeds } from './routes/calendar-feeds';
-import { handleActivity, handleActivityHeatmap } from './routes/activity';
+import { handleGetActivity, handleActivityHeatmap } from './routes/activity';
 import { handleGetSubtasks, handleCreateSubtask, handleToggleSubtask, handleDeleteSubtask, handleReorderSubtasks } from './routes/subtasks';
 import { handleTeamPulse } from './routes/team-pulse';
 import { handleGetPaperLinks, handleLinkPaper, handleUnlinkPaper, handlePapersByProject, handlePapersByPublication } from './routes/paper-links';
 import { handleInsightConnections, handleInsightSuggestions, handleInsightsDashboard } from './routes/insights';
 import { handleGetDependencies, handleGetProjectDependencies, handleCreateDependency, handleDeleteDependency } from './routes/dependencies';
 import { handleTrajectory } from './routes/trajectory';
-import { handleContributions } from './routes/contributions';
+import { handleGetContributions } from './routes/contributions';
 import { handleContributionsDecay } from './routes/contributions-decay';
 import { handleSimilarGrants } from './routes/grant-intelligence';
 import { handleGetDecisions, handleCreateDecision, handleUpdateDecisionOutcome, handleUpdateDecision, handleGetDecisionsNeedingReview, handleGetDecisionTags } from './routes/decisions';
 import { handleSimilarDecisions, handleSimilarDecisionsById } from './routes/decision-replay';
-import { handleNarratives } from './routes/narratives';
+import { handleGetNarratives } from './routes/narratives';
 import { handleGetExpertise, handleAddExpertise, handleRemoveExpertise, handleSuggestExperts } from './routes/expertise';
 import { handleGetQuestions, handleGetQuestionDetail, handleCreateQuestion, handleCreateAnswer, handleAcceptAnswer } from './routes/questions';
 import { handleGetHandoffs, handleCreateHandoff, handleAcknowledgeHandoff } from './routes/handoffs';
@@ -49,17 +49,17 @@ import { handleCadenceCheck } from './routes/meeting-cadence';
 import { handleGetAIRequests, handleCreateAIRequest, handleUpdateAIResponse } from './routes/ai-requests';
 import { handleCommandCenter, handlePBCapture, handlePBDefer, handleCreateOrUpdatePlan, handleReorderPlan, handlePromoteTask, handleStartPomodoro, handleCompletePomodoro, handleSaveReflection, handlePlanHistory, handleAddToDispatch, handleGetPendingDispatch, handleSendDispatch, handleCompleteDispatchItem } from './routes/pb-sector';
 import { handlePBSessions, handlePBSessionStats, handleCreatePBSession, handleBulkCreatePBSessions } from './routes/pb-sessions';
-import { handleSessions } from './routes/sessions';
+import { handleGetSessions } from './routes/sessions';
 import { handleLane3List } from './routes/lane3';
 import { handleGetTodayMd } from './routes/pb-today'; // POST /api/pb/today retired 2026-05-05 (5.9)
 import { handlePBHealth } from './routes/pb-health';
 import { handleGetRelay, handleCreateRelay, handleCompleteRelay } from './routes/pb-relay';
 import { handleGetRevisions, handleCreateRevision, handleUpdateRevision, handleGetRevisionComments, handleCreateRevisionComment, handleUpdateRevisionComment, handleGetActiveRevisions, handleAttentionManuscripts } from './routes/revisions';
-import { handleMenteeMilestones, handleMenteeMilestoneOverview, handleCreateMenteeMilestone, handleUpdateMenteeMilestone, handleCompleteMenteeMilestone } from './routes/mentee-milestones';
+import { handleGetMenteeMilestones, handleMenteeMilestoneOverview, handleCreateMenteeMilestone, handleUpdateMenteeMilestone, handleCompleteMenteeMilestone } from './routes/mentee-milestones';
 import { handleGetCascade, handleGetImpact, handleGetAllCascades, handleCreateDeadlineDependency, handleDeleteDeadlineDependency } from './routes/deadline-cascade';
 import { handleGetSubmissions, handleCreateSubmission, handleUpdateSubmission, handleDeleteSubmission, handleGetActiveSubmissions } from './routes/submissions';
 import { handleGetRegulatoryItems, handleGetExpiringItems, handleCreateRegulatoryItem, handleUpdateRegulatoryItem, handleRenewRegulatoryItem, handleRegulatoryIcs } from './routes/regulatory';
-import { handleGrantMilestones, handleUpcomingGrantMilestones, handleCreateGrantMilestone, handleUpdateGrantMilestone, handleCompleteGrantMilestone } from './routes/grant-milestones';
+import { handleGetGrantMilestones, handleUpcomingGrantMilestones, handleCreateGrantMilestone, handleUpdateGrantMilestone, handleCompleteGrantMilestone } from './routes/grant-milestones';
 import { handleGetConferences, handleGetUpcomingConferences, handleCreateConference, handleUpdateConference, handleDeleteConference } from './routes/conferences';
 import { handleGetEmailDrafts, handleGetPendingDrafts, handleSyncEmailDrafts } from './routes/email-drafts';
 import { handleGetProjectDocuments, handleCreateProjectDocument, handleDeleteProjectDocument } from './routes/project-documents';
@@ -304,7 +304,7 @@ app.get('/api/pb/command-center', (c) => handleCommandCenter(E(c), U(c).searchPa
 app.get('/api/pb/plan/history', (c) => handlePlanHistory(R(c), E(c)));
 app.get('/api/pb/dispatch/pending', (c) => handleGetPendingDispatch(E(c)));
 app.get('/api/pb/today', (c) => handleGetTodayMd(E(c)));
-app.get('/api/sessions', (c) => handleSessions(U(c), E(c)));
+app.get('/api/sessions', (c) => handleGetSessions(U(c), E(c)));
 app.get('/api/lane3/:table', (c) => handleLane3List(c.req.param('table'), U(c), E(c)));
 app.get('/api/pb/sessions', (c) => handlePBSessions(R(c), E(c)));
 app.get('/api/pb/sessions/stats', (c) => handlePBSessionStats(E(c)));
@@ -327,7 +327,7 @@ app.get('/api/team/by-expertise', (c) => handleTeamByExpertise(U(c), E(c)));
 // ─────────────────────────────────────────────────────────────────────────────
 app.get('/api/digest/dates', (c) => handleDigestDates(E(c)));
 app.get('/api/digest/comment-counts', (c) => handleDigestCommentCounts(U(c), E(c)));
-app.get('/api/digest', (c) => handleDigest(U(c), E(c)));
+app.get('/api/digest', (c) => handleGetDigest(U(c), E(c)));
 app.get('/api/digest/:id/comments', (c) => handleGetDigestComments(c.req.param('id'), E(c)));
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -372,7 +372,7 @@ app.get('/api/projects/:slug/revisions', async (c) => {
   rewrittenUrl.searchParams.set('project_id', projectId);
   return handleGetRevisions(rewrittenUrl, env);
 });
-app.get('/api/projects', (c) => handleProjects(U(c), E(c), c.get('user'), c.get('apiKeyValid') === true));
+app.get('/api/projects', (c) => handleGetProjects(U(c), E(c), c.get('user'), c.get('apiKeyValid') === true));
 // GET /api/projects/:id — single-record fetch by id or slug (codex Q4 2026-05-12).
 // Must be registered AFTER static paths (/health, /deleted-since) and before POST routes
 // so Hono resolves statics first. Mirrors handleGetTask pattern (tasks.ts:133).
@@ -387,7 +387,7 @@ app.get('/api/meetings/:id/agenda', (c) => handleGetAgendaItems(c.req.param('id'
 app.get('/api/meetings/:id/generate-agenda', (c) => handleGenerateAgenda(c.req.param('id'), E(c)));
 app.get('/api/meetings/:id/prep', (c) => handleMeetingPrep(c.req.param('id'), E(c)));
 app.get('/api/meetings/:id', (c) => handleGetMeeting(c.req.param('id'), E(c)));
-app.get('/api/meetings', (c) => handleMeetings(E(c)));
+app.get('/api/meetings', (c) => handleGetMeetings(E(c)));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Dependencies
@@ -418,12 +418,12 @@ app.get('/api/submissions', (c) => handleGetSubmissions(U(c), E(c)));
 // ─────────────────────────────────────────────────────────────────────────────
 app.get('/api/grants/similar', (c) => handleSimilarGrants(U(c), E(c)));
 app.get('/api/grants/timeline', (c) => handleGrantsTimeline(E(c)));
-app.get('/api/grants', (c) => handleGrants(E(c)));
+app.get('/api/grants', (c) => handleGetGrants(E(c)));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Narratives
 // ─────────────────────────────────────────────────────────────────────────────
-app.get('/api/narratives', (c) => handleNarratives(E(c)));
+app.get('/api/narratives', (c) => handleGetNarratives(E(c)));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Decisions
@@ -461,17 +461,17 @@ app.get('/api/questions/:id', (c) => handleGetQuestionDetail(c.req.param('id'), 
 // ─────────────────────────────────────────────────────────────────────────────
 // Simple exact-match GETs
 // ─────────────────────────────────────────────────────────────────────────────
-app.get('/api/publications', (c) => handlePublications(U(c), E(c)));
-app.get('/api/team', (c) => handleTeam(E(c)));
+app.get('/api/publications', (c) => handleGetPublications(U(c), E(c)));
+app.get('/api/team', (c) => handleGetTeam(E(c)));
 app.get('/api/team/slugs', (c) => handleTeamSlugs(E(c)));
 app.get('/api/team/pulse', (c) => handleTeamPulse(U(c), E(c)));
 app.get('/api/graph/collaboration', (c) => handleCollaborationGraph(E(c)));
-app.get('/api/stats', (c) => handleStats(E(c)));
-app.get('/api/citations', (c) => handleCitations(E(c)));
-app.get('/api/activity', (c) => handleActivity(U(c), E(c)));
+app.get('/api/stats', (c) => handleGetStats(E(c)));
+app.get('/api/citations', (c) => handleGetCitations(E(c)));
+app.get('/api/activity', (c) => handleGetActivity(U(c), E(c)));
 app.get('/api/activity/heatmap', (c) => handleActivityHeatmap(U(c), E(c)));
 app.get('/api/tasks/overdue-count', (c) => handleOverdueCount(U(c), E(c)));
-app.get('/api/tasks', (c) => handleTasks(U(c), E(c)));
+app.get('/api/tasks', (c) => handleGetTasks(U(c), E(c)));
 app.get('/api/action-items', (c) => handleActionItems(U(c), E(c)));
 app.get('/api/updates/recent', (c) => handleRecentUpdates(U(c), E(c)));
 app.get('/api/task-updates/recent', (c) => handleGetRecentTaskUpdates(U(c), E(c)));
@@ -491,9 +491,9 @@ app.get('/api/task-comments/recent', async (c) => {
 app.get('/api/notifications', (c) => handleNotifications(U(c), R(c), E(c)));
 app.get('/api/notifications/count', (c) => handleNotificationCount(U(c), R(c), E(c)));
 app.get('/api/commitments', (c) => handleCommitments(U(c), E(c)));
-app.get('/api/ideas', (c) => handleIdeas(U(c), E(c)));
+app.get('/api/ideas', (c) => handleGetIdeas(U(c), E(c)));
 // GET /api/inbox retired 2026-05-05 (5.3a) — use /api/inbox-events
-app.get('/api/search', (c) => handleSearch(U(c), E(c)));
+app.get('/api/search', (c) => handleGetSearch(U(c), E(c)));
 app.get('/api/settings', (c) => handleGetSettings(E(c)));
 app.get('/api/workflow-templates', (c) => handleGetWorkflowTemplates(E(c)));
 app.get('/api/calendar/events', (c) => handleCalendarEvents(U(c), E(c)));
@@ -523,7 +523,7 @@ app.get('/api/files/:rest{.+}', (c) => {
 // ─────────────────────────────────────────────────────────────────────────────
 app.get('/api/team/:slug/cv-data', (c) => handleCVData(c.req.param('slug'), E(c)));
 app.get('/api/team/:slug/trajectory', (c) => handleTrajectory(c.req.param('slug'), E(c)));
-app.get('/api/team/:slug/contributions', (c) => handleContributions(c.req.param('slug'), U(c), E(c)));
+app.get('/api/team/:slug/contributions', (c) => handleGetContributions(c.req.param('slug'), U(c), E(c)));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Deadline cascade
@@ -536,7 +536,7 @@ app.get('/api/deadline-cascade', (c) => handleGetCascade(U(c), E(c)));
 // Mentee milestones
 // ─────────────────────────────────────────────────────────────────────────────
 app.get('/api/mentee-milestones/overview', (c) => handleMenteeMilestoneOverview(E(c)));
-app.get('/api/mentee-milestones', (c) => handleMenteeMilestones(U(c), E(c)));
+app.get('/api/mentee-milestones', (c) => handleGetMenteeMilestones(U(c), E(c)));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Milestones (project + grant share a handler for listing)
@@ -547,7 +547,7 @@ app.get('/api/milestones', (c) => handleGetMilestones(U(c), E(c)));
 // Grant post-award milestones
 // ─────────────────────────────────────────────────────────────────────────────
 app.get('/api/grant-milestones/upcoming', (c) => handleUpcomingGrantMilestones(U(c), E(c)));
-app.get('/api/grant-milestones', (c) => handleGrantMilestones(U(c), E(c)));
+app.get('/api/grant-milestones', (c) => handleGetGrantMilestones(U(c), E(c)));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Regulatory

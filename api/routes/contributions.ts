@@ -2,7 +2,7 @@ import type { Env } from '../helpers';
 import { json } from '../helpers';
 
 // GET /api/team/:slug/contributions?period=90
-export async function handleContributions(slug: string, url: URL, env: Env): Promise<Response> {
+export async function handleGetContributions(slug: string, url: URL, env: Env): Promise<Response> {
   const days = parseInt(url.searchParams.get('period') || '90', 10);
   const cutoff = new Date(Date.now() - days * 86400000).toISOString();
 

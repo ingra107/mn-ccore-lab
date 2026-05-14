@@ -11,7 +11,7 @@ const CATEGORY_LABELS: Record<string, string> = {
 };
 
 // GET /api/narratives — auto-detected research arcs
-export async function handleNarratives(env: Env): Promise<Response> {
+export async function handleGetNarratives(env: Env): Promise<Response> {
   const [projects, deps, pubs] = await Promise.all([
     env.DB.prepare(
       "SELECT id, title, slug, category, stage, status, description, pi FROM projects WHERE status = 'active' ORDER BY category, title"
@@ -26,7 +26,7 @@ export async function handleNarratives(env: Env): Promise<Response> {
   const depList = (deps.results || []) as any[];
   const pubList = (pubs.results || []) as any[];
 
-  const stageOrder = ['Idea', 'Data Collection', 'Analysis', 'Writing', 'Review', 'Published'];
+  const stageOrder = ['idea', 'data_collection', 'data_analysis', 'writing', 'submitted', 'revisions', 'published'];
 
   // Group by category
   const byCategory = new Map<string, any[]>();

@@ -2,7 +2,7 @@ import type { AuthUser, Env } from '../helpers';
 import { json, error, logActivity } from '../helpers';
 
 // GET /api/digest?date=&status=&topic=&limit=&with_relevance=true
-export async function handleDigest(url: URL, env: Env): Promise<Response> {
+export async function handleGetDigest(url: URL, env: Env): Promise<Response> {
   const date = url.searchParams.get('date');
   const status = url.searchParams.get('status');
   const topic = url.searchParams.get('topic');

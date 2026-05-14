@@ -3,7 +3,7 @@ import { json } from '../helpers';
 import { isTestFixture } from '../lib/fixtures';
 
 // GET /api/activity?limit=20&actor=slug
-export async function handleActivity(url: URL, env: Env): Promise<Response> {
+export async function handleGetActivity(url: URL, env: Env): Promise<Response> {
   const limit = Math.min(parseInt(url.searchParams.get('limit') || '20', 10), 500);
   const actor = url.searchParams.get('actor');
   const includeFixtures = url.searchParams.get('include_fixtures') === '1';

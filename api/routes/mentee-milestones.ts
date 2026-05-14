@@ -3,7 +3,7 @@ import { json, error, generateId, logActivity, actorSlug, buildUpdate } from '..
 import { filterFixtures } from '../lib/fixtures';
 
 // GET /api/mentee-milestones?mentee=&status=&type=
-export async function handleMenteeMilestones(url: URL, env: Env): Promise<Response> {
+export async function handleGetMenteeMilestones(url: URL, env: Env): Promise<Response> {
   const mentee = url.searchParams.get('mentee');
   const status = url.searchParams.get('status');
   const type = url.searchParams.get('type');

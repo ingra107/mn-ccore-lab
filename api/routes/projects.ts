@@ -178,7 +178,7 @@ export async function handleCreateProject(
       title: body.title.trim(),
       slug,
       category: body.category || 'MNCCORE',
-      stage: body.stage || 'Idea',
+      stage: body.stage || 'idea',
       description: body.description || '',
       pi: body.pi || user.email.split('@')[0],
       status: 'active',
@@ -212,7 +212,7 @@ export async function handleCreateProject(
 // 'Peripheral Brain' visibility gate can be applied. Nick (ingra107@umn.edu
 // or nicholas.ingraham@gmail.com) sees all categories; all other callers
 // have 'Peripheral Brain' rows excluded from every read path.
-export async function handleProjects(url: URL, env: Env, user: AuthUser, apiKeyValid?: boolean): Promise<Response> {
+export async function handleGetProjects(url: URL, env: Env, user: AuthUser, apiKeyValid?: boolean): Promise<Response> {
   const status = url.searchParams.get('status');
   const category = url.searchParams.get('category');
   const includeDeleted = url.searchParams.get('include_deleted') === '1';
@@ -460,7 +460,7 @@ const PROJECT_REQUIRED_FIELDS = new Set(['status', 'stage', 'category']);
 // Peripheral-Brain's scripts/db/enums.py (R10 taxonomy). Found during deep
 // audit Suite 2 — "bogus_value" was round-tripping through PUT/POST.
 const PROJECT_STATUS_VALUES = new Set(['active', 'waiting_external', 'blocked', 'done']);
-const PROJECT_STAGE_VALUES = new Set(['Idea', 'Data Collection', 'Data Analysis', 'Writing', 'Submitted', 'Revisions', 'Accepted', 'Published']);
+const PROJECT_STAGE_VALUES = new Set(['idea', 'data_collection', 'data_analysis', 'writing', 'submitted', 'revisions', 'accepted', 'published']);
 // Stage 4 #12-followup (2026-05-09): three-bucket two-views model.
 // MNCCORE = team-visible lab work (Ingraham/Mesfin/Grant/Friends/Mentees)
 // CLIF = consortium, team-visible
@@ -468,7 +468,7 @@ const PROJECT_STAGE_VALUES = new Set(['Idea', 'Data Collection', 'Data Analysis'
 // Decision doc: ~/Peripheral-Brain/Context/Decisions/2026-05-08-hub-category-three-bucket-design.md
 const PROJECT_CATEGORY_VALUES = new Set(['MNCCORE', 'CLIF', 'Peripheral Brain']);
 // W1 (schema-v55) operational state — distinct from .status (lifecycle).
-const PROJECT_STATE_VALUES = new Set(['Active', 'Waiting', 'Delegated', 'Incubating', 'Parked', 'Closing', 'Dead']);
+const PROJECT_STATE_VALUES = new Set(['active', 'waiting', 'delegated', 'incubating', 'parked', 'closing', 'dead']);
 const PROJECT_ENUM_GUARDS: Record<string, Set<string>> = {
   status: PROJECT_STATUS_VALUES,
   stage: PROJECT_STAGE_VALUES,
@@ -531,7 +531,7 @@ export async function handleUpdateProject(
         status: (body.status as string) || 'active',
         description: (body.description as string) || '',
         category: (body.category as string) || 'MNCCORE',
-        stage: (body.stage as string) || 'Idea',
+        stage: (body.stage as string) || 'idea',
         pi: (body.pi as string) || 'nick',
         slug: upsertSlug,
       },

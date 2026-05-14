@@ -3,7 +3,7 @@ import { json, error, generateId, logActivity, actorSlug } from '../helpers';
 import { filterFixtures } from '../lib/fixtures';
 
 // GET /api/ideas?status=&submitted_by=&research_area=
-export async function handleIdeas(url: URL, env: Env): Promise<Response> {
+export async function handleGetIdeas(url: URL, env: Env): Promise<Response> {
   const status = url.searchParams.get('status');
   const submittedBy = url.searchParams.get('submitted_by');
   const researchArea = url.searchParams.get('research_area');

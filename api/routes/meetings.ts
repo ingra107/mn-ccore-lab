@@ -11,7 +11,7 @@ export async function handleNextMeeting(env: Env): Promise<Response> {
 }
 
 // GET /api/meetings — list all meetings
-export async function handleMeetings(env: Env): Promise<Response> {
+export async function handleGetMeetings(env: Env): Promise<Response> {
   const result = await env.DB.prepare(
     'SELECT * FROM meetings ORDER BY date DESC'
   ).all();
