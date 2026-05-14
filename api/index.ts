@@ -565,8 +565,8 @@ app.get('/api/conferences', (c) => handleGetConferences(U(c), E(c)));
 // ─────────────────────────────────────────────────────────────────────────────
 // Email drafts (reads)
 // ─────────────────────────────────────────────────────────────────────────────
-app.get('/api/email-drafts', (c) => handleGetEmailDrafts(R(c), E(c), U(c)));
-app.get('/api/email-drafts/pending', (c) => handleGetPendingDrafts(R(c), E(c), U(c)));
+app.get('/api/email-drafts', (c) => handleGetEmailDrafts(U(c), E(c)));
+app.get('/api/email-drafts/pending', (c) => handleGetPendingDrafts(E(c)));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Proactive brief / digest preview / file activity
@@ -577,7 +577,7 @@ app.get('/api/digest-preview', (c) => handleDigestPreview(U(c), E(c)));
 // used pathname.match(/^\/api\/file-activity\/heatmap/), so we preserve the
 // prefix behavior with an explicit route on the exact path. No other
 // subpaths existed, so a wildcard match isn't necessary.
-app.get('/api/file-activity/heatmap', (c) => handleGetFileActivity(R(c), E(c), U(c)));
+app.get('/api/file-activity/heatmap', (c) => handleGetFileActivity(U(c), E(c)));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Reactions (read)

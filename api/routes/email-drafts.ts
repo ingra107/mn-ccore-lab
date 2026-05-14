@@ -2,7 +2,7 @@ import type { Env } from '../helpers';
 import { json, error, generateId } from '../helpers';
 
 // GET /api/email-drafts — list all drafts, with optional ?status=draft filter
-export async function handleGetEmailDrafts(request: Request, env: Env, url: URL): Promise<Response> {
+export async function handleGetEmailDrafts(url: URL, env: Env): Promise<Response> {
   const status = url.searchParams.get('status');
   let query = 'SELECT * FROM email_drafts';
   const params: string[] = [];
@@ -21,7 +21,7 @@ export async function handleGetEmailDrafts(request: Request, env: Env, url: URL)
 }
 
 // GET /api/email-drafts/pending — count and list pending drafts
-export async function handleGetPendingDrafts(request: Request, env: Env, url: URL): Promise<Response> {
+export async function handleGetPendingDrafts(env: Env): Promise<Response> {
   const result = await env.DB.prepare(
     "SELECT * FROM email_drafts WHERE status = 'draft' ORDER BY created_at DESC"
   ).all();

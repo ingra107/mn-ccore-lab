@@ -2,7 +2,7 @@ import type { Env } from '../helpers';
 import { json, error, generateId } from '../helpers';
 
 // GET /api/file-activity/heatmap?days=90 — daily aggregates from file_activity_daily
-export async function handleGetFileActivity(request: Request, env: Env, url: URL): Promise<Response> {
+export async function handleGetFileActivity(url: URL, env: Env): Promise<Response> {
   const days = parseInt(url.searchParams.get('days') || '90', 10);
   const since = new Date(Date.now() - days * 86400000).toISOString().split('T')[0];
 
