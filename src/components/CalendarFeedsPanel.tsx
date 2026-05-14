@@ -57,7 +57,7 @@ export default function CalendarFeedsPanel() {
 
   const removeFeed = useMutation({
     mutationFn: async (id: string) => {
-      const res = await fetch(`/api/integrations/calendar/feeds/${id}`, { method: 'DELETE' })
+      const res = await fetch(`/api/integrations/calendar/feeds/${id}/delete`, { method: 'POST' })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       return res.json()
     },

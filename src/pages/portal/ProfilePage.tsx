@@ -91,7 +91,7 @@ export default function ProfilePage() {
   const save = useMutation({
     mutationFn: async (patch: Partial<ProfileForm>) => {
       const res = await fetch(`/api/team/${slug}`, {
-        method: 'PUT',
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(patch),
       })

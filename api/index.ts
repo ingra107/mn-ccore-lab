@@ -503,7 +503,7 @@ app.get('/api/calendar/events', (c) => handleCalendarEvents(U(c), E(c)));
 // because the feed_url is a secret — no anonymous access path.
 app.get('/api/integrations/calendar/feeds', (c) => handleListFeeds(E(c), c.get('authedUser')));
 app.post('/api/integrations/calendar/feeds', (c) => handleAddFeed(R(c), E(c), c.get('authedUser'), (p) => c.executionCtx.waitUntil(p)));
-app.delete('/api/integrations/calendar/feeds/:id', (c) => handleDeleteFeed(E(c), c.get('authedUser'), c.req.param('id')));
+app.post('/api/integrations/calendar/feeds/:id/delete', (c) => handleDeleteFeed(E(c), c.get('authedUser'), c.req.param('id')));
 app.get('/api/integrations/calendar/events', (c) => handleListEvents(U(c), E(c), c.get('authedUser'), (p) => c.executionCtx.waitUntil(p)));
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -625,7 +625,7 @@ app.post('/api/projects/:slug/documents/:docId/delete', (c) => handleDeleteProje
 app.post('/api/projects/:slug', (c) => handleUpdateProject(c.req.param('slug'), R(c), USER(c), E(c)));
 
 // Team
-app.put('/api/team/:slug', (c) => handleUpdateTeamMember(c.req.param('slug'), R(c), USER(c), E(c), c.get('apiKeyValid') === true));
+app.post('/api/team/:slug', (c) => handleUpdateTeamMember(c.req.param('slug'), R(c), USER(c), E(c), c.get('apiKeyValid') === true));
 
 // Inbox events (W2a) — specific-before-generic
 app.post('/api/inbox-events/sync-bulk', (c) => handleSyncBulkInboxEvents(R(c), USER(c), E(c)));
@@ -833,7 +833,7 @@ app.post('/api/grant-milestones/:id/complete', (c) => handleCompleteGrantMilesto
 app.post('/api/grant-milestones/:id', (c) => handleUpdateGrantMilestone(c.req.param('id'), R(c), USER(c), E(c)));
 
 // Grants (PATCH only — R10 inline editing)
-app.patch('/api/grants/:id', (c) => handleUpdateGrant(c.req.param('id'), R(c), E(c)));
+app.post('/api/grants/:id', (c) => handleUpdateGrant(c.req.param('id'), R(c), E(c)));
 
 // Regulatory
 app.post('/api/regulatory', (c) => handleCreateRegulatoryItem(R(c), USER(c), E(c)));

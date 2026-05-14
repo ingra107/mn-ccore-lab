@@ -532,7 +532,7 @@ export function useUpdateGrant() {
   return useMutation({
     mutationFn: async ({ id, fields }: { id: string; fields: Record<string, unknown> }) => {
       const res = await fetch(`/api/grants/${id}`, {
-        method: 'PATCH',
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(fields),
       })
