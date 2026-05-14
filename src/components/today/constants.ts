@@ -4,14 +4,25 @@
 //
 // Anything imported by 2+ files in src/components/today/ lives here.
 
-import type { TaskRow } from '../../lib/api'
 import type { MeetingRow } from '../../hooks/useApiData'
+
+// Shared primitives re-exported from taskGrouping (also used by MyTasks page).
+// Import directly from there if you only need these.
+export {
+  type GroupKey,
+  GROUP_ORDER,
+  ACCENT_GOLD, ACCENT_TEAL, ACCENT_CORAL, ACCENT_ORANGE, ACCENT_GREEN,
+  INK, INK_MUTED, INK_DIM, PAGE_BG, PANEL_BG,
+  todayKey, daysSince, tagForTask,
+} from '../../lib/taskGrouping'
+
+import type { GroupKey } from '../../lib/taskGrouping'
+import type { TaskRow } from '../../lib/api'
 
 // ──────────────────────────────────────────────────────────────────────────
 // Types
 // ──────────────────────────────────────────────────────────────────────────
 
-export type GroupKey = 'deep' | 'priorities' | 'quick' | 'pb' | 'etl'
 export type PlannedSlot = 'strip' | `between-${number}`
 
 export interface GroupMeta {
@@ -61,8 +72,6 @@ export const GROUP_META: Record<GroupKey, GroupMeta> = {
   etl:        { label: 'CQODE · CLIF ETL', icon: '🔧', color: '#5cbcb4' },
 }
 
-export const GROUP_ORDER: GroupKey[] = ['deep', 'priorities', 'quick', 'pb', 'etl']
-
 // Move → popover options — same set as UnifiedMyTasks. Writes group_override
 // directly (schema v50). All 5 options actionable because override is
 // independent of priority/source/project derivation.
@@ -74,22 +83,13 @@ export const TODAY_MOVE_OPTIONS: Array<{ key: GroupKey; label: string }> = [
   { key: 'etl',        label: '🔧 CQODE · CLIF ETL' },
 ]
 
-export const ACCENT_GOLD = '#c9a84c'
-export const ACCENT_TEAL = '#5cbcb4'
-export const ACCENT_CORAL = '#f0737e'
-export const ACCENT_ORANGE = '#f08a5b'
-export const ACCENT_GREEN = '#6ee89a'
-export const INK = '#e2e8f0'
-export const INK_MUTED = '#b0b5b9'
-export const INK_DIM = '#7a828c'
-export const PAGE_BG = '#0b1017'
-export const PANEL_BG = '#0f1923'
-
 // ──────────────────────────────────────────────────────────────────────────
 // Helpers
 // ──────────────────────────────────────────────────────────────────────────
 
 // Map a task to one of the 5 groups. Order matters (first match wins).
+// Today landing uses broader pb detection (project slug / category) than
+// MyTasks page — do NOT consolidate without reviewing both rule sets.
 export function getGroupForTask(t: TaskRow, projectsBySlug: Map<string, { category?: string | null; slug: string }>): GroupKey {
   // Hub-explicit override wins (schema v50). Same rule as UnifiedMyTasks.
   if (t.group_override && (['deep', 'priorities', 'quick', 'pb', 'etl'] as const).includes(t.group_override)) {
@@ -111,28 +111,6 @@ export function getGroupForTask(t: TaskRow, projectsBySlug: Map<string, { catego
   return 'deep'
 }
 
-export function todayKey(): string {
-  const d = new Date()
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-}
-
-// Tag glyph for a task — left-of-title category cue per CD spec.
-// Mirrors UnifiedMyTasks tagForTask; consider extracting if a third surface needs it.
-export function tagForTask(t: TaskRow, projectsByPid: Map<string, { category?: string | null; slug: string }>): string {
-  if (t.source === 'pb') return '🧠'
-  const proj = t.project_id ? projectsByPid.get(t.project_id) : null
-  const cat = proj?.category || ''
-  const slug = proj?.slug || ''
-  if (/cqode|clif-etl|etl/i.test(slug) || /CQODE|ETL/.test(t.title)) return '🔧'
-  if (cat === 'clif') return '🔬'
-  if (cat === 'mentee') return '🎓'
-  if (cat === 'nate') return '🫁'
-  if (/grant|R01|R03|K23|aim/i.test(t.title)) return '💰'
-  if (/manuscript|paper|draft|revise/i.test(t.title)) return '📄'
-  if (/meeting|agenda|review/i.test(t.title)) return '📅'
-  return '📝'
-}
-
 // Sync staleness lookup — last successful sync timestamp from localStorage.
 // Coral if >24h per Rule 59. Returns hours-since-sync or Infinity if never synced.
 export function hoursSinceLastSync(): number {
@@ -143,13 +121,6 @@ export function hoursSinceLastSync(): number {
     if (isNaN(t)) return Infinity
     return Math.floor((Date.now() - t) / 3600000)
   } catch { return Infinity }
-}
-
-export function daysSince(iso: string | null | undefined): number {
-  if (!iso) return Infinity
-  const d = new Date(iso)
-  if (isNaN(d.getTime())) return Infinity
-  return Math.floor((Date.now() - d.getTime()) / 86400000)
 }
 
 export function formatTodayDate(): string {

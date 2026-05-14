@@ -5,12 +5,24 @@
 import type { TaskRow } from '../../lib/api'
 import { researchTeam } from '../../data/team'
 
+// Shared primitives re-exported from taskGrouping (also used by Today landing).
+// Import directly from there if you only need these.
+export {
+  type GroupKey,
+  GROUP_ORDER,
+  ACCENT_GOLD, ACCENT_TEAL, ACCENT_CORAL, ACCENT_ORANGE, ACCENT_GREEN,
+  INK, INK_MUTED, INK_DIM, PAGE_BG, PANEL_BG,
+  todayKey, daysSince, tagForTask,
+} from '../../lib/taskGrouping'
+
+import type { GroupKey } from '../../lib/taskGrouping'
+import { ACCENT_CORAL, ACCENT_GOLD, INK_MUTED, todayKey } from '../../lib/taskGrouping'
+
 // ──────────────────────────────────────────────────────────────────────────
 // Types
 // ──────────────────────────────────────────────────────────────────────────
 
 export type ViewMode = 'columns' | 'lanes' | 'list'
-export type GroupKey = 'deep' | 'priorities' | 'quick' | 'pb' | 'etl'
 export type QuickViewKey = 'all' | 'today' | 'overdue' | 'waiting' | 'stale'
 
 export interface GroupMeta { icon: string; label: string; color: string; desc: string }
@@ -31,23 +43,10 @@ export const GROUP_META: Record<GroupKey, GroupMeta> = {
   etl:        { icon: '🔧', label: 'CQODE · CLIF ETL', color: '#5cbcb4', desc: 'Data pipeline ops' },
 }
 
-export const GROUP_ORDER: GroupKey[] = ['deep', 'priorities', 'quick', 'pb', 'etl']
-
 export const STATUS_LABEL: Record<string, string> = { todo: 'Todo', in_progress: 'Active', waiting_external: 'Waiting', blocked: 'Blocked', done: 'Done' }
 export const STATUS_COLOR: Record<string, string> = { todo: '#9aa0a6', in_progress: '#5cbcb4', waiting_external: '#f08a5b', blocked: '#f0737e', done: '#6ee89a' }
 export const PRIORITY_COLOR: Record<string, string> = { urgent: '#f0737e', high: '#f0737e', medium: '#c9a84c', low: '#9aa0a6' }
 export const PRIORITY_SHORT: Record<string, string> = { urgent: 'P1', high: 'P1', medium: 'P2', low: 'P3' }
-
-export const ACCENT_GOLD = '#c9a84c'
-export const ACCENT_TEAL = '#5cbcb4'
-export const ACCENT_CORAL = '#f0737e'
-export const ACCENT_ORANGE = '#f08a5b'
-export const ACCENT_GREEN = '#6ee89a'
-export const INK = '#e2e8f0'
-export const INK_MUTED = '#b0b5b9'
-export const INK_DIM = '#7a828c'
-export const PAGE_BG = '#0b1017'
-export const PANEL_BG = '#0f1923'
 
 // Mentee slugs derived from researchTeam (CD spec — Mentee filter chip).
 // Trainees/coordinators/students/analysts treated as mentees for the filter.
@@ -84,35 +83,6 @@ export function getGroupForTask(t: TaskRow, projectsByPid: Map<string, { categor
   if (t.priority === 'urgent' || t.priority === 'high') return 'priorities'
   if (t.priority === 'low') return 'quick'
   return 'deep'
-}
-
-// Tag glyph for a task (CD spec — left-of-title category cue on rows).
-// Picks emoji from project category or task source. Defaults to 📝.
-export function tagForTask(t: TaskRow, projectsByPid: Map<string, { category?: string | null; slug: string }>): string {
-  if (t.source === 'pb') return '🧠'
-  const proj = t.project_id ? projectsByPid.get(t.project_id) : null
-  const cat = proj?.category || ''
-  const slug = proj?.slug || ''
-  if (/cqode|clif-etl|etl/i.test(slug) || /CQODE|ETL/.test(t.title)) return '🔧'
-  if (cat === 'clif') return '🔬'
-  if (cat === 'mentee') return '🎓'
-  if (cat === 'nate') return '🫁'
-  if (/grant|R01|R03|K23|aim/i.test(t.title)) return '💰'
-  if (/manuscript|paper|draft|revise/i.test(t.title)) return '📄'
-  if (/meeting|agenda|review/i.test(t.title)) return '📅'
-  return '📝'
-}
-
-export function todayKey(): string {
-  const d = new Date()
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-}
-
-export function daysSince(iso: string | null | undefined): number {
-  if (!iso) return Infinity
-  const d = new Date(iso)
-  if (isNaN(d.getTime())) return Infinity
-  return Math.floor((Date.now() - d.getTime()) / 86400000)
 }
 
 export function dueLabel(due: string | null): string {
