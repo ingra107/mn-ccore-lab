@@ -2,13 +2,13 @@
 -- a deleted_at soft-delete column. Without this, /ideas + /decisions are
 -- wallpapered with test rows for any new team member opening the link.
 --
--- Tables: ideas, decision_log, meetings, digest_comments, lab_questions,
+-- Tables: ideas, hub_decisions, meetings, digest_comments, lab_questions,
 -- publications. ~160 rows total.
 -- Tasks already use deleted_at (not affected).
 
 DELETE FROM ideas WHERE LOWER(title) LIKE 'test_delete_%' OR LOWER(description) LIKE 'test_delete_%';
 
-DELETE FROM decision_log WHERE LOWER(title) LIKE 'test_delete_%';
+DELETE FROM hub_decisions WHERE LOWER(title) LIKE 'test_delete_%';
 
 -- agenda_items + action_items + tasks reference meeting_id. Clean cascading.
 DELETE FROM agenda_items WHERE meeting_id IN (SELECT id FROM meetings WHERE LOWER(title) LIKE 'test_delete_%');

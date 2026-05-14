@@ -68,7 +68,7 @@ export async function handleCommandCenter(env: Env, planDate?: string): Promise<
 
     // Recent decisions needing outcomes
     env.DB.prepare(`
-      SELECT id, title, rationale, outcome_status, created_at FROM decision_log
+      SELECT id, title, rationale, outcome_status, created_at FROM hub_decisions
       WHERE outcome_status = 'pending' AND created_at < datetime('now', '-60 days')
       ORDER BY created_at ASC LIMIT 5
     `),

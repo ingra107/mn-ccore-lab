@@ -19,7 +19,7 @@ DELETE FROM idea_votes WHERE idea_id IN (SELECT id FROM ideas WHERE id LIKE 'tes
 DELETE FROM ideas WHERE id LIKE 'test_delete_%' OR title LIKE 'test_delete_%';
 
 -- Decisions
-DELETE FROM decision_log WHERE id LIKE 'test_delete_%' OR title LIKE 'test_delete_%';
+DELETE FROM hub_decisions WHERE id LIKE 'test_delete_%' OR title LIKE 'test_delete_%';
 
 -- Meetings + agenda + action items
 DELETE FROM action_items WHERE meeting_id IN (SELECT id FROM meetings WHERE id LIKE 'test_delete_%' OR title LIKE 'test_delete_%');

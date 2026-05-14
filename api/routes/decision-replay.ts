@@ -17,7 +17,7 @@ export async function handleSimilarDecisions(url: URL, env: Env): Promise<Respon
         WHEN LOWER(context) LIKE LOWER(?) THEN 1
         ELSE 0
       END as relevance
-    FROM decision_log
+    FROM hub_decisions
     WHERE LOWER(title) LIKE LOWER(?) OR LOWER(rationale) LIKE LOWER(?) OR LOWER(context) LIKE LOWER(?) OR LOWER(tags) LIKE LOWER(?)
     ORDER BY relevance DESC, created_at DESC
     LIMIT 5
@@ -33,7 +33,7 @@ export async function handleSimilarDecisionsById(url: URL, env: Env): Promise<Re
 
   // Fetch the source decision
   const source = await env.DB.prepare(
-    'SELECT id, title, rationale, context, tags FROM decision_log WHERE id = ?'
+    'SELECT id, title, rationale, context, tags FROM hub_decisions WHERE id = ?'
   ).bind(id).first() as { id: string; title: string; rationale: string | null; context: string | null; tags: string | null } | null
 
   if (!source) return json({ data: [] })
@@ -50,7 +50,7 @@ export async function handleSimilarDecisionsById(url: URL, env: Env): Promise<Re
 
   // Fetch all other decisions
   const allDecisions = await env.DB.prepare(
-    'SELECT * FROM decision_log WHERE id != ? ORDER BY created_at DESC'
+    'SELECT * FROM hub_decisions WHERE id != ? ORDER BY created_at DESC'
   ).bind(id).all()
 
   const scored = ((allDecisions.results || []) as Array<{

@@ -9,7 +9,7 @@ export async function handleGetDecisions(url: URL, env: Env): Promise<Response> 
   const tag = url.searchParams.get('tag');
   const includeFixtures = url.searchParams.get('include_fixtures') === '1';
 
-  let query = 'SELECT * FROM decision_log WHERE 1=1';
+  let query = 'SELECT * FROM hub_decisions WHERE 1=1';
   const params: string[] = [];
 
   if (projectSlug) { query += ' AND (project_slug = ? OR linked_projects LIKE ?)'; params.push(projectSlug, `%${projectSlug}%`); }
@@ -43,7 +43,7 @@ export async function handleCreateDecision(request: Request, user: AuthUser, env
   const normalizedTags = parseTagsField(body.tags).join(',') || null;
 
   await env.DB.prepare(
-    'INSERT INTO decision_log (id, title, rationale, context, project_slug, meeting_id, decided_by, tags, linked_projects) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    'INSERT INTO hub_decisions (id, title, rationale, context, project_slug, meeting_id, decided_by, tags, linked_projects) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
   ).bind(
     id,
     body.title,
@@ -58,7 +58,7 @@ export async function handleCreateDecision(request: Request, user: AuthUser, env
 
   await logActivity(env, 'decision', `Decision logged: "${body.title}"`, decidedBy, id, 'decision');
 
-  const created = await env.DB.prepare('SELECT * FROM decision_log WHERE id = ?').bind(id).first();
+  const created = await env.DB.prepare('SELECT * FROM hub_decisions WHERE id = ?').bind(id).first();
   return json({ data: created }, 201);
 }
 
@@ -85,13 +85,13 @@ export async function handleUpdateDecisionOutcome(id: string, request: Request, 
     : 'neutral';
 
   await env.DB.prepare(
-    "UPDATE decision_log SET outcome = ?, outcome_status = ?, outcome_sentiment = ?, outcome_date = datetime('now') WHERE id = ?"
+    "UPDATE hub_decisions SET outcome = ?, outcome_status = ?, outcome_sentiment = ?, outcome_date = datetime('now') WHERE id = ?"
   ).bind(body.outcome, body.outcome_status, sentiment, id).run();
 
   const actor = actorSlug(user.email);
   await logActivity(env, 'decision_outcome', `Outcome recorded for decision`, actor, id, 'decision');
 
-  const updated = await env.DB.prepare('SELECT * FROM decision_log WHERE id = ?').bind(id).first();
+  const updated = await env.DB.prepare('SELECT * FROM hub_decisions WHERE id = ?').bind(id).first();
   if (!updated) return error('Decision not found', 404);
   return json({ data: updated });
 }
@@ -111,13 +111,13 @@ export async function handleUpdateDecision(id: string, request: Request, user: A
   if (!hasUpdates) return error('No valid fields to update', 400);
 
   await env.DB.prepare(
-    `UPDATE decision_log SET ${sql} WHERE id = ?`
+    `UPDATE hub_decisions SET ${sql} WHERE id = ?`
   ).bind(...values, id).run();
 
   const actor = actorSlug(user.email);
   await logActivity(env, 'decision_update', `Decision updated`, actor, id, 'decision');
 
-  const updated = await env.DB.prepare('SELECT * FROM decision_log WHERE id = ?').bind(id).first();
+  const updated = await env.DB.prepare('SELECT * FROM hub_decisions WHERE id = ?').bind(id).first();
   if (!updated) return error('Decision not found', 404);
   return json({ data: updated });
 }
@@ -125,7 +125,7 @@ export async function handleUpdateDecision(id: string, request: Request, user: A
 // GET /api/decisions/review — decisions older than 30 days with outcome_status='pending'
 export async function handleGetDecisionsNeedingReview(env: Env): Promise<Response> {
   const result = await env.DB.prepare(
-    "SELECT * FROM decision_log WHERE outcome_status = 'pending' AND created_at <= datetime('now', '-30 days') ORDER BY created_at ASC"
+    "SELECT * FROM hub_decisions WHERE outcome_status = 'pending' AND created_at <= datetime('now', '-30 days') ORDER BY created_at ASC"
   ).all();
   const rows = filterFixtures(result.results || [], 'title');
   return json({ data: rows, count: rows.length });
@@ -147,7 +147,7 @@ function parseTagsField(raw: string | null | undefined): string[] {
 
 export async function handleGetDecisionTags(env: Env): Promise<Response> {
   const result = await env.DB.prepare(
-    "SELECT tags FROM decision_log WHERE tags IS NOT NULL AND tags != ''"
+    "SELECT tags FROM hub_decisions WHERE tags IS NOT NULL AND tags != ''"
   ).all();
 
   const tagCounts = new Map<string, number>();

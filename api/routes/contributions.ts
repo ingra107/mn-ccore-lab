@@ -24,7 +24,7 @@ export async function handleGetContributions(slug: string, url: URL, env: Env): 
 
     // Decisions involved in
     env.DB.prepare(
-      "SELECT id, title, rationale, outcome_status, created_at FROM decision_log WHERE decided_by LIKE ? AND created_at > ? ORDER BY created_at DESC"
+      "SELECT id, title, rationale, outcome_status, created_at FROM hub_decisions WHERE decided_by LIKE ? AND created_at > ? ORDER BY created_at DESC"
     ).bind(`%${slug}%`, cutoff).all(),
 
     // Meetings attended (via agenda items added)

@@ -1183,7 +1183,7 @@ test residue (`mesfin`, `ningraha`) and 4 `commitments.to_whom`
 storing display names. SQL: `scripts/phase36b-slug-cleanup.sql`.
 
 **4. ~160 `test_delete_*` rows across 6 tables.**
-Tables that lack `deleted_at` (ideas, decision_log, meetings,
+Tables that lack `deleted_at` (ideas, hub_decisions, meetings,
 digest_comments, lab_questions, publications) had hundreds of test rows
 visible to any new team member opening /ideas or /decisions. Cleanup
 SQL with cascading FK handling for meeting_id and question_id:

@@ -558,7 +558,7 @@ conn.close()
 info "Note: Hub test data (task, idea, decision, action item) left in D1."
 info "Clean manually: DELETE FROM tasks WHERE title LIKE 'WORKFLOW-TEST%'"
 info "              DELETE FROM ideas WHERE title LIKE 'WORKFLOW-TEST%'"
-info "              DELETE FROM decision_log WHERE title LIKE 'WORKFLOW-TEST%'"
+info "              DELETE FROM hub_decisions WHERE title LIKE 'WORKFLOW-TEST%'"
 
 echo ""
 

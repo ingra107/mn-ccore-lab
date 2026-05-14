@@ -163,10 +163,10 @@ async function main() {
 
     section(s, '12.P  Decision outcome_status values')
     const badDecOutcome = d1Query<{ outcome_status: string; n: number }>(
-      "SELECT outcome_status, COUNT(*) as n FROM decision_log WHERE outcome_status IS NOT NULL AND outcome_status NOT IN ('pending','recorded','revisited') GROUP BY outcome_status"
+      "SELECT outcome_status, COUNT(*) as n FROM hub_decisions WHERE outcome_status IS NOT NULL AND outcome_status NOT IN ('pending','recorded','revisited') GROUP BY outcome_status"
     )
     if (badDecOutcome.length === 0) pass(s, '12.P All decision outcome_status values canonical')
-    else bug(s, 'DEC-BAD-OUTCOME', 'P2', '12.P decision_log invalid outcome_status', JSON.stringify(badDecOutcome).slice(0, 200), 'pending/recorded/revisited')
+    else bug(s, 'DEC-BAD-OUTCOME', 'P2', '12.P hub_decisions invalid outcome_status', JSON.stringify(badDecOutcome).slice(0, 200), 'pending/recorded/revisited')
 
     section(s, '12.Q  Team members with no name (display broken)')
     const noNameMembers = d1Query<{ count: number }>(

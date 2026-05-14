@@ -166,7 +166,7 @@ parallel; all 11 P0 + P1 findings fixed in one sprint.
 - **Data:** 13 leftover Phase 36b old slugs cleaned (7 nick in
   tasks.assignee, 6 in projects.pi, 2 nathan-mesfin in ideas, +
   variants). ~160 `test_delete_*` rows wiped from 6 tables that lack
-  soft-delete (ideas, decision_log, meetings, digest_comments,
+  soft-delete (ideas, hub_decisions, meetings, digest_comments,
   lab_questions, publications).
 - **D1 perf:** schema-v46 — 7 missing indexes (activity_log, comments,
   milestones, task_updates, projects.title, notifications composite,

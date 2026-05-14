@@ -52,8 +52,8 @@ DELETE FROM grants WHERE title LIKE 'test_delete_%';
 -- Meetings (action items referencing meetings already cleaned via tasks delete below)
 DELETE FROM meetings WHERE title LIKE 'test_delete_%';
 
--- Decisions (decision_log table — not 'decisions')
-DELETE FROM decision_log WHERE title LIKE 'test_delete_%';
+-- Decisions (hub_decisions table — not 'decisions')
+DELETE FROM hub_decisions WHERE title LIKE 'test_delete_%';
 
 -- Ideas
 DELETE FROM ideas WHERE title LIKE 'test_delete_%';

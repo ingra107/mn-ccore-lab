@@ -26,7 +26,7 @@ All created 2026-04-16. `submitted_by` reflects who would plausibly suggest it.
 
 ---
 
-## Decisions (8 rows — table: `decision_log`)
+## Decisions (8 rows — table: `hub_decisions`)
 
 All created 2026-04-16. Content sourced from real PB Context/Decisions/ docs.
 
@@ -41,7 +41,7 @@ All created 2026-04-16. Content sourced from real PB Context/Decisions/ docs.
 | 7 | Hermes AI response latency acceptable at 60s | mn-ccore-lab-hub | infrastructure, performance |
 | 8 | Miniflare replaces X-Test-Mode for local testing | mn-ccore-lab-hub | testing, infrastructure |
 
-**Cleanup:** `DELETE FROM decision_log WHERE created_at >= '2026-04-16' AND created_at < '2026-04-17';`
+**Cleanup:** `DELETE FROM hub_decisions WHERE created_at >= '2026-04-16' AND created_at < '2026-04-17';`
 
 ---
 

@@ -1227,7 +1227,7 @@ app.post('/api/test-cleanup', async (c) => {
     { name: 'project_updates', col: 'content', clause: likeClause },
     { name: 'ideas', col: 'title', clause: titleLikeClause },
     { name: 'lab_questions', col: 'question', clause: questionLikeClause },
-    { name: 'decision_log', col: 'title', clause: titleLikeClause },
+    { name: 'hub_decisions', col: 'title', clause: titleLikeClause },
     { name: 'notifications', col: 'body', clause: bodyLikeClause },
     { name: 'expertise_tags', col: 'topic', clause: topicLikeClause },
   ];

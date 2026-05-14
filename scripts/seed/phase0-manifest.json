@@ -257,27 +257,27 @@
       "label": "test_delete_Open office hours with PI"
     },
     {
-      "table": "decision_log",
+      "table": "hub_decisions",
       "id": "549c21bc67f447fc001443a4f8ea4622",
       "label": "test_delete_Adopt R10 grant status taxonomy"
     },
     {
-      "table": "decision_log",
+      "table": "hub_decisions",
       "id": "bd2a26df0edd9545d71efcbabee21d81",
       "label": "test_delete_Deprecate X-Test-Mode header"
     },
     {
-      "table": "decision_log",
+      "table": "hub_decisions",
       "id": "4108497c14e28c0f3707c9acec164575",
       "label": "test_delete_Ship dashboard resizable cards"
     },
     {
-      "table": "decision_log",
+      "table": "hub_decisions",
       "id": "1b1243023ac9f00ba736142a8db3af7e",
       "label": "test_delete_Stub WebSocket in local tests"
     },
     {
-      "table": "decision_log",
+      "table": "hub_decisions",
       "id": "351eb4f4e87949f00095f497c75d93b5",
       "label": "test_delete_Defer R13 Digest Model B"
     },

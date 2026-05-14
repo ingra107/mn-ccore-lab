@@ -60,7 +60,7 @@ export async function handleContributionsDecay(url: URL, env: Env): Promise<Resp
     ).bind(`%${slug}%`, cutoff).all(),
 
     env.DB.prepare(
-      "SELECT created_at FROM decision_log WHERE decided_by LIKE ? AND created_at > ?"
+      "SELECT created_at FROM hub_decisions WHERE decided_by LIKE ? AND created_at > ?"
     ).bind(`%${slug}%`, cutoff).all(),
 
     env.DB.prepare(

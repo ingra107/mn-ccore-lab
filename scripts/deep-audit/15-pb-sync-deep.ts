@@ -240,7 +240,7 @@ async function main() {
       try {
         const tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all() as Array<{ name: string }>
         const tableNames = new Set(tables.map((t) => t.name))
-        for (const t of ['ideas', 'decisions', 'decision_log', 'grants', 'lab_questions']) {
+        for (const t of ['ideas', 'decisions', 'hub_decisions', 'grants', 'lab_questions']) {
           if (tableNames.has(t)) log(s, `  15.G brain.db has table '${t}'`)
           else log(s, `  15.G brain.db missing table '${t}' (Hub-only feature)`)
         }

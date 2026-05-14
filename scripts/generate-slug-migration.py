@@ -48,7 +48,7 @@ SLUG_COLUMNS = [
     ("ai_requests", "requested_by"),
     ("commitments", "to_whom"),
     ("contributions", "member_slug"),
-    ("decision_log", "decided_by"),
+    ("hub_decisions", "decided_by"),
     ("digest_comments", "author_slug"),
     ("expertise_tags", "member_slug"),
     ("file_attachments", "uploaded_by"),
@@ -96,7 +96,7 @@ NON_TEAM_SLUG = {
     ("narrative_projects", "project_slug"),
     ("dispatch_queue", "project_slug"),
     ("ai_requests", "project_slug"),
-    ("decision_log", "project_slug"),
+    ("hub_decisions", "project_slug"),
     ("paper_project_links", "project_slug"),
     ("lab_questions", "project_slug"),
 }

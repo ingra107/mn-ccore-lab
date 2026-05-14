@@ -155,7 +155,7 @@ export async function handleGetSearch(url: URL, env: Env): Promise<Response> {
     ).bind(like, limit).all(),
     // Decisions
     env.DB.prepare(
-      'SELECT id, title, rationale, context, outcome, project_slug, decided_by, created_at FROM decision_log WHERE (title LIKE ? OR rationale LIKE ? OR context LIKE ? OR outcome LIKE ?) LIMIT ?'
+      'SELECT id, title, rationale, context, outcome, project_slug, decided_by, created_at FROM hub_decisions WHERE (title LIKE ? OR rationale LIKE ? OR context LIKE ? OR outcome LIKE ?) LIMIT ?'
     ).bind(like, like, like, like, limit).all(),
     // File attachments
     env.DB.prepare(

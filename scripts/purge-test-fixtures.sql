@@ -122,7 +122,7 @@ DELETE FROM lab_questions WHERE
   LOWER(question) LIKE 'test question%' OR
   LOWER(question) = '@claude hi';
 
-DELETE FROM decision_log WHERE
+DELETE FROM hub_decisions WHERE
   LOWER(title) LIKE '\_test\_delete\_%' ESCAPE '\' OR
   LOWER(title) LIKE 'test\_delete\_%' ESCAPE '\' OR
   LOWER(title) LIKE 'deep-audit-%' OR

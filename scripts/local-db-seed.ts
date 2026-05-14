@@ -15,7 +15,7 @@
  *
  * Tables mirrored (same set as scripts/seed/phase0-direct-sql.ts + the API
  * path from scripts/seed/phase0-seed.ts):
- *   projects, tasks, ideas, decision_log, meetings, publications,
+ *   projects, tasks, ideas, hub_decisions, meetings, publications,
  *   task_comments, reactions, grants, milestones, manuscript_revisions,
  *   research_digest
  *
@@ -140,13 +140,13 @@ function run() {
   }
   d1Flush('ideas')
 
-  // ---- decision_log ----
+  // ---- hub_decisions ----
   for (const d of plan.decisions) {
     const id = mintId('dec')
     const tagsStr = Array.isArray(d.tags) ? d.tags.join(',') : (d.tags ?? null)
     const projectSlug = stripPrefix(d.project_slug)
     d1Execute(
-      `INSERT INTO decision_log (id, title, rationale, project_slug, tags) VALUES (` +
+      `INSERT INTO hub_decisions (id, title, rationale, project_slug, tags) VALUES (` +
       `${sqlEscape(id)}, ${sqlEscape(stripPrefix(d.title))}, ${sqlEscape(stripPrefix(d.rationale))}, ` +
       `${sqlEscape(projectSlug)}, ${sqlEscape(tagsStr)})`
     )

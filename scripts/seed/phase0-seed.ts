@@ -157,18 +157,18 @@ async function run() {
     console.log(`  ideas +${i.title}`)
   }
 
-  // ---- decisions (decision_log) ----
+  // ---- decisions (hub_decisions) ----
   for (const d of plan.decisions) {
     assertPrefix('decision.title', d.title)
-    if (wasSeeded('decision_log', d.title)) continue
-    // tags stored as comma-separated string in decision_log.tags (handler splits on ',')
+    if (wasSeeded('hub_decisions', d.title)) continue
+    // tags stored as comma-separated string in hub_decisions.tags (handler splits on ',')
     const tagsStr = Array.isArray(d.tags) ? d.tags.join(',') : (d.tags ?? null)
     const resp = await post('/api/decisions', {
       title: d.title, rationale: d.rationale, project_slug: d.project_slug ?? undefined, tags: tagsStr,
     })
     const id = idFrom(resp)
-    manifest.rows.push({ table: 'decision_log', id, label: d.title })
-    seededLabels.add(`decision_log:${d.title}`)
+    manifest.rows.push({ table: 'hub_decisions', id, label: d.title })
+    seededLabels.add(`hub_decisions:${d.title}`)
     saveManifest(manifest)
     console.log(`  decisions +${d.title}`)
   }
