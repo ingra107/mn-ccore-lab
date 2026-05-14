@@ -342,7 +342,7 @@ export async function handleInsightsDashboard(env: Env, weekArg?: string): Promi
   // 3. Manuscripts in revision (projects whose stage = 'Revisions' or has a manuscript_revisions row open)
   const msRevRes = await env.DB.prepare(
     `SELECT COUNT(*) as c FROM projects
-     WHERE deleted_at IS NULL AND stage IN ('Revisions', 'Review')`
+     WHERE deleted_at IS NULL AND stage IN ('revisions', 'review')`
   ).first<{ c: number }>()
   const msAwaitingRes = await env.DB.prepare(
     `SELECT COUNT(*) as c FROM manuscript_revisions
@@ -418,7 +418,7 @@ export async function handleInsightsDashboard(env: Env, weekArg?: string): Promi
      WHERE deleted_at IS NULL AND status = 'active' AND stage IS NOT NULL
      GROUP BY stage`
   ).all<{ stage: string; c: number }>()
-  const STAGE_ORDER = ['Idea', 'Data Collection', 'Data Analysis', 'Writing', 'Review', 'Submitted', 'Published']
+  const STAGE_ORDER = ['idea', 'data_collection', 'data_analysis', 'writing', 'review', 'submitted', 'published']
   const funnelMap = new Map((funnelRes.results ?? []).map((r) => [r.stage, r.c]))
   const pipelineFunnel = STAGE_ORDER.map((stage) => ({ stage, count: funnelMap.get(stage) ?? 0 }))
 

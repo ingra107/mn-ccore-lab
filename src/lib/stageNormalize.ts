@@ -1,9 +1,9 @@
 /**
  * Project-stage normalization. The Hub canonical 7-stage ladder is:
- *   Idea → Data Collection → Analysis → Writing → Review → Revisions → Published
+ *   idea → data_collection → analysis → writing → review → revisions → published
  *
  * brain.db (and historical Hub data) uses granular sub-stages like
- * "Submitted" / "Under Review" / "Accepted" that don't appear in the
+ * "submitted" / "under_review" / "accepted" that don't appear in the
  * canonical strip. Mapping them onto the closest strip stage means every
  * "stage indicator" UI (strip, dot, mini-pipeline) lights up correctly
  * without needing a 9-stage strip.
@@ -14,37 +14,45 @@
  * Originally inlined in ProjectDetail.tsx for P2-R2-14 — lifted to shared
  * util so Projects.tsx, TrajectoryPage.tsx, and any future stage-rendering
  * surface can use the same mapping.
+ *
+ * CANONICAL_STAGES normalized to lowercase 2026-05-14 for D1 parity.
+ * STAGE_ALIASES maps old Title Case values (and historical strings) to the
+ * new lowercase canonical values.
  */
 const CANONICAL_STAGES = [
-  'Idea',
-  'Data Collection',
-  'Analysis',
-  'Writing',
-  'Review',
-  'Revisions',
-  'Published',
+  'idea',
+  'data_collection',
+  'analysis',
+  'writing',
+  'review',
+  'revisions',
+  'published',
 ] as const
 
 type CanonicalStage = typeof CANONICAL_STAGES[number]
 
 const STAGE_ALIASES: Record<string, CanonicalStage> = {
-  Submitted: 'Review',
-  'Under Review': 'Review',
-  Accepted: 'Published',
-  'Revise and Resubmit': 'Revisions',
-  'Revise & Resubmit': 'Revisions',
-  'R&R': 'Revisions',
-  'In Revisions': 'Revisions',
-  'In Revision': 'Revisions',
-  // Lowercase canonical (brain.db + D1 normalized 2026-05-14)
-  idea: 'Idea',
-  data_collection: 'Data Collection',
-  data_analysis: 'Analysis',
-  writing: 'Writing',
-  submitted: 'Review',
-  revisions: 'Revisions',
-  accepted: 'Published',
-  published: 'Published',
+  // Old Title Case values (pre 2026-05-14) → new lowercase canonical
+  Idea: 'idea',
+  'Data Collection': 'data_collection',
+  'Data Analysis': 'analysis',
+  Analysis: 'analysis',
+  Writing: 'writing',
+  Review: 'review',
+  Submitted: 'review',
+  'Under Review': 'review',
+  Revisions: 'revisions',
+  'Revise and Resubmit': 'revisions',
+  'Revise & Resubmit': 'revisions',
+  'R&R': 'revisions',
+  'In Revisions': 'revisions',
+  'In Revision': 'revisions',
+  Accepted: 'published',
+  Published: 'published',
+  // Lowercase API aliases
+  data_analysis: 'analysis',
+  submitted: 'review',
+  accepted: 'published',
 }
 
 function normalizeStage(stage: string | null | undefined): CanonicalStage | '' {

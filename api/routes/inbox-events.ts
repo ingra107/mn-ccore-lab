@@ -1,6 +1,6 @@
 // W2a — inbox_events sync routes.
 //
-// Three endpoints mirror the tasks.ts pattern (handleTasks +
+// Three endpoints mirror the tasks.ts pattern (handleGetTasks +
 // handleSyncBulkTasks + handleDeleteTask) but for the inbox_events table.
 // Schema v57 (2026-04-29) created the table; this route ships the API
 // surface so brain.db sync can round-trip a captured event end-to-end.
