@@ -64,8 +64,18 @@ import { PATHS } from '../constants/paths'
 
 type Tab = 'overview' | 'tasks' | 'notes' | 'comments' | 'files' | 'activity' | 'revisions' | 'literature'
 
-const STAGES = ['Idea', 'Data Collection', 'Analysis', 'Writing', 'Review', 'Revisions', 'Published'] as const
+// Values are D1 lowercase canonical; labels are Title Case for display.
+const STAGES = ['idea', 'data_collection', 'analysis', 'writing', 'review', 'revisions', 'published'] as const
 type Stage = (typeof STAGES)[number]
+const STAGE_LABELS: Record<Stage, string> = {
+  idea: 'Idea',
+  data_collection: 'Data Collection',
+  analysis: 'Analysis',
+  writing: 'Writing',
+  review: 'Review',
+  revisions: 'Revisions',
+  published: 'Published',
+}
 
 export default function ProjectDetail() {
   const { slug } = useParams<{ slug: string }>()
@@ -254,7 +264,7 @@ function ProjectDetailInner({ project }: InnerProps) {
           stage: project.stage,
           category: project.category,
           pi: project.pi,
-          status: 'Active',
+          status: 'active',
         }),
       })
       const json = await res.json() as { data?: { slug?: string } }
@@ -713,18 +723,19 @@ function ProjectDetailInner({ project }: InnerProps) {
           <div style={{ width: '1px', height: '16px', background: 'var(--border-subtle)' }} />
 
           <InlineSelect
-            value={project.status || 'Active'}
+            value={project.status || 'active'}
             options={[
-              { value: 'Active', label: 'Active', color: 'var(--green)' },
-              { value: 'Pending', label: 'Pending', color: 'var(--gold)' },
-              { value: 'Completed', label: 'Done', color: 'var(--slate)' },
+              { value: 'active', label: 'Active', color: 'var(--green)' },
+              { value: 'waiting_external', label: 'Waiting', color: 'var(--gold)' },
+              { value: 'blocked', label: 'Blocked', color: 'var(--maroon)' },
+              { value: 'done', label: 'Done', color: 'var(--slate)' },
             ]}
             onChange={(val) => d1Update.mutate({ status: val } as Partial<Project>)}
           />
 
           <InlineSelect
-            value={project.stage || 'Idea'}
-            options={STAGES.map((s) => ({ value: s, label: s }))}
+            value={project.stage || 'idea'}
+            options={STAGES.map((s) => ({ value: s, label: STAGE_LABELS[s] }))}
             onChange={(val) => {
               if (val === project.stage) return
               setConfirmStage(val as Stage)
@@ -1427,7 +1438,7 @@ function ProjectDetailInner({ project }: InnerProps) {
             />
           )}
           {STAGES.map((stage, i) => {
-            const isCurrent = stage === project.stage
+            const isCurrent = i === currentStageIndex
             const isPast = i < currentStageIndex
             const isFuture = i > currentStageIndex
             return (
@@ -1465,11 +1476,11 @@ function ProjectDetailInner({ project }: InnerProps) {
                   }}
                   whileHover={{ scale: 1.3 }}
                   whileTap={{ scale: 0.9 }}
-                  title={`Move to ${stage}`}
+                  title={`Move to ${STAGE_LABELS[stage]}`}
                 />
                 <span
                   className="project-stage-label"
-                  title={stage}
+                  title={STAGE_LABELS[stage]}
                   style={{
                     fontSize: '10px',
                     color: isCurrent ? 'var(--gold)' : isFuture ? 'var(--slate)' : 'var(--ink)',
@@ -1481,7 +1492,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                     whiteSpace: 'nowrap',
                   }}
                 >
-                  {stage}
+                  {STAGE_LABELS[stage]}
                 </span>
               </div>
             )
@@ -1515,7 +1526,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                   flex: 1,
                 }}
               >
-                Move to <strong>{confirmStage}</strong>?
+                Move to <strong>{confirmStage ? STAGE_LABELS[confirmStage] : ''}</strong>?
               </span>
               <div className="flex items-center gap-2">
                 <motion.button

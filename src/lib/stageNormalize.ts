@@ -75,6 +75,7 @@ export function stageIndex(stage: string | null | undefined): number {
 // in any stage picker sends an invalid value, the API returns 400, and the
 // optimistic update reverts silently (issue #19 reported 2026-04-21).
 const UI_TO_API_STAGE: Record<string, string> = {
+  // Title Case UI values (legacy, pre 2026-05-14)
   Analysis: 'data_analysis',
   Review: 'submitted',
   Idea: 'idea',
@@ -83,6 +84,9 @@ const UI_TO_API_STAGE: Record<string, string> = {
   Revisions: 'revisions',
   Published: 'published',
   Accepted: 'accepted',
+  // Lowercase canonical UI values (post 2026-05-14, D1 parity)
+  analysis: 'data_analysis',
+  review: 'submitted',
 }
 
 type ApiStage = 'idea' | 'data_collection' | 'data_analysis' | 'writing' | 'submitted' | 'revisions' | 'accepted' | 'published'

@@ -58,9 +58,9 @@ export function useLabHealthSignals(options?: { enabled?: boolean }): LabHealthS
     }).length
 
     const stalledManuscriptCount = (projects ?? []).filter((p: any) => {
-      if (!p.stage || p.stage === 'Published') return false
+      if (!p.stage || p.stage === 'published') return false
       // Only count research-output stages, not all projects
-      const manuscriptStages = ['Idea', 'Data Collection', 'Analysis', 'Writing', 'Submitted', 'Under Review']
+      const manuscriptStages = ['idea', 'data_collection', 'analysis', 'data_analysis', 'writing', 'submitted', 'review']
       if (!manuscriptStages.includes(p.stage)) return false
       return daysInStage(p) > STALLED_THRESHOLD_DAYS
     }).length

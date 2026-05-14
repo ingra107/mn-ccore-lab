@@ -41,20 +41,30 @@ import { useLabPrefs } from '../../hooks/useLabPrefs'
 import { toApiStage } from '../../lib/stageNormalize'
 import { PATHS } from '../../constants/paths'
 
-const STAGES = ['Idea', 'Data Collection', 'Analysis', 'Writing', 'Review', 'Revisions', 'Published'] as const
+// Values are D1 lowercase canonical; labels are Title Case for display.
+const STAGES = ['idea', 'data_collection', 'analysis', 'writing', 'review', 'revisions', 'published'] as const
+const STAGE_LABELS: Record<typeof STAGES[number], string> = {
+  idea: 'Idea',
+  data_collection: 'Data Collection',
+  analysis: 'Analysis',
+  writing: 'Writing',
+  review: 'Review',
+  revisions: 'Revisions',
+  published: 'Published',
+}
 const STAGE_ORDER: Record<string, number> = Object.fromEntries(STAGES.map((s, i) => [s, i]))
 
 // M-06: stage-progress dots use --stage-fill-* tokens (per Rule 41) so the
 // current-stage dot stays AA-stable across both themes. --teal flips to a
 // light dark-mode variant where it would fail contrast against row-hover bg.
 const STAGE_FILL_TOKEN: Record<typeof STAGES[number], string> = {
-  Idea: 'var(--stage-fill-idea)',
-  'Data Collection': 'var(--stage-fill-data-collection)',
-  Analysis: 'var(--stage-fill-analysis)',
-  Writing: 'var(--stage-fill-writing)',
-  Review: 'var(--stage-fill-review)',
-  Revisions: 'var(--stage-fill-revisions)',
-  Published: 'var(--stage-fill-published)',
+  idea: 'var(--stage-fill-idea)',
+  data_collection: 'var(--stage-fill-data-collection)',
+  analysis: 'var(--stage-fill-analysis)',
+  writing: 'var(--stage-fill-writing)',
+  review: 'var(--stage-fill-review)',
+  revisions: 'var(--stage-fill-revisions)',
+  published: 'var(--stage-fill-published)',
 }
 
 function daysInStage(project: Project): number {
@@ -144,10 +154,10 @@ export default function ManuscriptsPage() {
   }
 
   const manuscripts = useMemo(() => {
-    let filtered = projects.filter((p) => p.status !== 'Published' || p.stage === 'Published')
+    let filtered = projects.filter((p) => p.status !== 'published' || p.stage === 'published')
     if (filterPI) filtered = filtered.filter((p) => p.pi === filterPI)
     if (filterCategory) filtered = filtered.filter((p) => p.category === filterCategory)
-    if (filterStalled) filtered = filtered.filter((p) => p.stage !== 'Published' && daysInStage(p) > stalledThresholdDays)
+    if (filterStalled) filtered = filtered.filter((p) => p.stage !== 'published' && daysInStage(p) > stalledThresholdDays)
     if (attentionFilter && attentionData) {
       const allow = new Set<string>()
       if (attentionFilter === 'revisions-overdue') {
@@ -208,18 +218,18 @@ export default function ManuscriptsPage() {
     const map: Record<string, Project[]> = {}
     for (const s of STAGES) map[s] = []
     for (const p of manuscripts) {
-      const stage = p.stage || 'Idea'
+      const stage = p.stage || 'idea'
       if (map[stage]) map[stage].push(p)
-      else map['Idea'].push(p)
+      else map['idea'].push(p)
     }
     return map
   }, [manuscripts])
 
-  const activeCount = manuscripts.filter((p) => p.stage !== 'Published').length
-  const writingCount = manuscripts.filter((p) => p.stage === 'Writing').length
+  const activeCount = manuscripts.filter((p) => p.stage !== 'published').length
+  const writingCount = manuscripts.filter((p) => p.stage === 'writing').length
 
   const stalledCount = useMemo(() =>
-    projects.filter(p => p.stage !== 'Published' && daysInStage(p) > stalledThresholdDays).length
+    projects.filter(p => p.stage !== 'published' && daysInStage(p) > stalledThresholdDays).length
   , [projects, stalledThresholdDays])
 
   // M-14: derive PI options from data instead of hardcoding nick + nate.
@@ -445,7 +455,7 @@ export default function ManuscriptsPage() {
                   const isFocused = focusedIndex === flatIndex
                   flatIndex++
                   const days = daysInStage(project)
-                  const isStalled = project.stage !== 'Published' && days > stalledThresholdDays
+                  const isStalled = project.stage !== 'published' && days > stalledThresholdDays
 
                   return (
                     <div key={project.slug}>
@@ -462,7 +472,7 @@ export default function ManuscriptsPage() {
                               flexShrink: 0,
                             }}
                           >
-                            {project.stage}
+                            {STAGE_LABELS[project.stage as typeof STAGES[number]] ?? project.stage}
                           </span>
                           <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.75, flexShrink: 0 }}>
                             {manuscripts.filter((p) => p.stage === project.stage).length}
@@ -504,14 +514,14 @@ export default function ManuscriptsPage() {
                                 update + 5s undo. */}
                             <div className="flex items-center gap-0.5 ml-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
                               {STAGES.map((s, i) => {
-                                const currentIdx = STAGES.indexOf((project.stage as typeof STAGES[number]) || 'Idea')
+                                const currentIdx = STAGES.indexOf((project.stage as typeof STAGES[number]) || 'idea')
                                 const isCurrent = i === currentIdx
                                 const isPast = i < currentIdx
                                 return (
                                   <button
                                     key={s}
                                     type="button"
-                                    aria-label={`Advance ${project.title} to ${s}`}
+                                    aria-label={`Advance ${project.title} to ${STAGE_LABELS[s]}`}
                                     aria-current={isCurrent ? 'step' : undefined}
                                     onClick={(e) => {
                                       e.preventDefault()
@@ -520,7 +530,7 @@ export default function ManuscriptsPage() {
                                       const prevStage = project.stage
                                       const next = toApiStage(s)
                                       inlineUpdate.mutate({ slug: project.slug, fields: { stage: next } })
-                                      showUndo(`stage → ${s}`, () =>
+                                      showUndo(`stage → ${STAGE_LABELS[s]}`, () =>
                                         inlineUpdate.mutate({ slug: project.slug, fields: { stage: prevStage } })
                                       )
                                     }}
@@ -535,7 +545,7 @@ export default function ManuscriptsPage() {
                                       border: 'none',
                                       cursor: isCurrent ? 'default' : 'pointer',
                                     }}
-                                    title={isCurrent ? `${s} (current stage)` : `Advance to ${s}`}
+                                    title={isCurrent ? `${STAGE_LABELS[s]} (current stage)` : `Advance to ${STAGE_LABELS[s]}`}
                                   >
                                     <span
                                       aria-hidden="true"
@@ -562,11 +572,11 @@ export default function ManuscriptsPage() {
                           {/* Status (inline editable) — wrapped to stop click bubbling to parent <Link>. M-01. */}
                           <div onClick={(e) => e.stopPropagation()}>
                             <InlineSelect
-                              value={project.status || 'Active'}
+                              value={project.status || 'active'}
                               options={[
-                                { value: 'Active', label: 'Active', color: 'var(--green)' },
-                                { value: 'Pending', label: 'Pending', color: 'var(--gold)' },
-                                { value: 'Completed', label: 'Done', color: 'var(--slate)' },
+                                { value: 'active', label: 'Active', color: 'var(--green)' },
+                                { value: 'pending', label: 'Pending', color: 'var(--gold)' },
+                                { value: 'completed', label: 'Done', color: 'var(--slate)' },
                               ]}
                               onChange={(val) => handleFieldChange(project.slug, 'status', val, project.status)}
                             />
@@ -575,8 +585,8 @@ export default function ManuscriptsPage() {
                           {/* Stage (inline editable) — wrapped to stop click bubbling. M-01. */}
                           <div onClick={(e) => e.stopPropagation()}>
                             <InlineSelect
-                              value={project.stage || 'Idea'}
-                              options={STAGES.map((s) => ({ value: s, label: s }))}
+                              value={project.stage || 'idea'}
+                              options={STAGES.map((s) => ({ value: s, label: STAGE_LABELS[s] }))}
                               onChange={(val) => handleFieldChange(project.slug, 'stage', val, project.stage)}
                             />
                           </div>
@@ -651,19 +661,19 @@ export default function ManuscriptsPage() {
                           <div className="flex items-center gap-3" style={{ paddingLeft: '14px' }}>
                             <div onClick={(e) => e.stopPropagation()}>
                               <InlineSelect
-                                value={project.status || 'Active'}
+                                value={project.status || 'active'}
                                 options={[
-                                  { value: 'Active', label: 'Active', color: 'var(--green)' },
-                                  { value: 'Pending', label: 'Pending', color: 'var(--gold)' },
-                                  { value: 'Completed', label: 'Done', color: 'var(--slate)' },
+                                  { value: 'active', label: 'Active', color: 'var(--green)' },
+                                  { value: 'pending', label: 'Pending', color: 'var(--gold)' },
+                                  { value: 'completed', label: 'Done', color: 'var(--slate)' },
                                 ]}
                                 onChange={(val) => handleFieldChange(project.slug, 'status', val, project.status)}
                               />
                             </div>
                             <div onClick={(e) => e.stopPropagation()}>
                               <InlineSelect
-                                value={project.stage || 'Idea'}
-                                options={STAGES.map((s) => ({ value: s, label: s }))}
+                                value={project.stage || 'idea'}
+                                options={STAGES.map((s) => ({ value: s, label: STAGE_LABELS[s] }))}
                                 onChange={(val) => handleFieldChange(project.slug, 'stage', val, project.stage)}
                               />
                             </div>
@@ -694,15 +704,15 @@ export default function ManuscriptsPage() {
             {/* Calculations row */}
             {manuscripts.length > 0 && (() => {
               const stageCounts = manuscripts.reduce<Record<string, number>>((acc, p) => {
-                const stage = p.stage || 'Idea'
+                const stage = p.stage || 'idea'
                 acc[stage] = (acc[stage] || 0) + 1
                 return acc
               }, {})
-              const publishedCount = stageCounts['Published'] || 0
+              const publishedCount = stageCounts['published'] || 0
               const stats = [
                 { label: 'Total', value: manuscripts.length },
-                ...STAGES.filter(s => s !== 'Published' && stageCounts[s]).map(s => ({
-                  label: s,
+                ...STAGES.filter(s => s !== 'published' && stageCounts[s]).map(s => ({
+                  label: STAGE_LABELS[s],
                   value: stageCounts[s],
                 })),
                 ...(publishedCount > 0 ? [{ label: 'Published', value: publishedCount }] : []),
@@ -752,7 +762,7 @@ export default function ManuscriptsPage() {
 
         {/* ─── TROPHY VIEW (P3-03) ─── cover-style cards for Published manuscripts */}
         {!isLoading && view === 'trophy' && (() => {
-          const published = manuscripts.filter((p) => p.stage === 'Published')
+          const published = manuscripts.filter((p) => p.stage === 'published')
           if (published.length === 0) {
             return (
               <div className="text-center py-12" style={{ color: 'var(--slate)' }}>
@@ -1030,7 +1040,7 @@ function PipelineBoard({
             <DroppableColumn key={stage} stage={stage}>
               <div className="flex items-center justify-between" style={{ marginBottom: '12px' }}>
                 <h3 style={{ fontWeight: 500, fontSize: '13px', color: 'var(--ink)', margin: 0 }}>
-                  {stage}
+                  {STAGE_LABELS[stage]}
                 </h3>
                 <span style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.75, fontWeight: 500 }}>
                   {stageProjects.length}

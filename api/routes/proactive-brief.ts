@@ -28,7 +28,7 @@ export async function handleProactiveBrief(request: Request, env: Env): Promise<
         `SELECT p.id, p.title, p.status, MAX(t.updated_at) as last_activity
          FROM projects p
          LEFT JOIN tasks t ON t.project_id = p.id AND t.deleted_at IS NULL
-         WHERE p.status IN ('active', 'Active')
+         WHERE p.status IN ('active')
          GROUP BY p.id
          HAVING last_activity IS NULL OR last_activity < ?
          ORDER BY last_activity ASC`

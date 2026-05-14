@@ -33,14 +33,15 @@ function checkIsNick(email: string): boolean {
 }
 
 // 7-stage UI ladder including Revisions (added 2026-04-23, GH #26).
+// Values are D1 lowercase canonical; labels are Title Case for display.
 const STAGES = [
-  { value: 'Idea', label: 'Idea' },
-  { value: 'Data Collection', label: 'Data Collection' },
-  { value: 'Analysis', label: 'Analysis' },
-  { value: 'Writing', label: 'Writing' },
-  { value: 'Review', label: 'Review' },
-  { value: 'Revisions', label: 'Revisions' },
-  { value: 'Published', label: 'Published' },
+  { value: 'idea', label: 'Idea' },
+  { value: 'data_collection', label: 'Data Collection' },
+  { value: 'analysis', label: 'Analysis' },
+  { value: 'writing', label: 'Writing' },
+  { value: 'review', label: 'Review' },
+  { value: 'revisions', label: 'Revisions' },
+  { value: 'published', label: 'Published' },
 ]
 
 const selectStyle: React.CSSProperties = {
@@ -58,7 +59,7 @@ export default function CreateProjectModal({ open, onClose, onCreate }: CreatePr
 
   const [title, setTitle] = useState('')
   const [category, setCategory] = useState('MNCCORE')
-  const [stage, setStage] = useState('Idea')
+  const [stage, setStage] = useState('idea')
   const [pi, setPi] = useState(emailToSlug(user.email))
   const [description, setDescription] = useState('')
 
@@ -109,7 +110,7 @@ export default function CreateProjectModal({ open, onClose, onCreate }: CreatePr
     // Reset form
     setTitle('')
     setCategory('MNCCORE')
-    setStage('Idea')
+    setStage('idea')
     setPi(emailToSlug(user.email))
     setDescription('')
     onClose()

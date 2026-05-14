@@ -76,18 +76,17 @@ export interface ProjectNote {
 
 export interface Project {
   title: string
-  status: 'Active' | 'In Review' | 'Published' | 'In Preparation'
+  status: 'active' | 'waiting_external' | 'blocked' | 'done' | string
   description?: string
   category: string
   pi: string
   slug: string
   short_name?: string
   visibility?: 'public' | 'internal'
-  // Pipeline board fields. Includes both UI canonical stages (Analysis,
-  // Review) rendered in StageSelector and API canonical stages
-  // (Data Analysis, Submitted, Accepted) stored in D1. `normalizeStage`
-  // folds API → UI for display; `toApiStage` folds UI → API on submit.
-  stage?: 'Idea' | 'Data Collection' | 'Analysis' | 'Data Analysis' | 'Writing' | 'Review' | 'Submitted' | 'Revisions' | 'Accepted' | 'Published'
+  // Pipeline board fields. D1 stores lowercase canonical values.
+  // `normalizeStage` maps to 7-step UI ladder; `toApiStage` handles
+  // analysis→data_analysis and review→submitted translation on write.
+  stage?: 'idea' | 'data_collection' | 'analysis' | 'data_analysis' | 'writing' | 'review' | 'submitted' | 'revisions' | 'accepted' | 'published' | string
   team?: string[]  // slugs of team members working on this
   googleDocUrl?: string
   startDate?: string

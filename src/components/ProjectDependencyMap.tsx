@@ -13,12 +13,16 @@ import type { DependencyRow } from '../hooks/useApiData'
 // ── Stage colors ───────────────────────────────────────────
 
 const STAGE_COLORS: Record<string, string> = {
-  Idea: '#64748b',
-  'Data Collection': '#5b8abf',
-  Analysis: '#2d8a8a',
-  Writing: '#c9a84c',
-  Review: '#7a0019',
-  Published: 'var(--green-light)',
+  idea: '#64748b',
+  data_collection: '#5b8abf',
+  data_analysis: '#2d8a8a',
+  analysis: '#2d8a8a',
+  writing: '#c9a84c',
+  review: '#7a0019',
+  submitted: '#7a0019',
+  revisions: '#c9a84c',
+  accepted: 'var(--green-light)',
+  published: 'var(--green-light)',
 }
 
 // ── Relationship arrow colors ──────────────────────────────
@@ -71,7 +75,7 @@ function layoutNodes(projects: Project[], width: number, height: number): NodeLa
     x: cx + r * Math.cos((2 * Math.PI * i) / n - Math.PI / 2),
     y: cy + r * Math.sin((2 * Math.PI * i) / n - Math.PI / 2),
     title: p.title,
-    stage: p.stage || 'Idea',
+    stage: p.stage || 'idea',
     abbrev: getAbbrev(p.title),
   }))
 }

@@ -30,7 +30,7 @@ export async function handleCommandCenter(env: Env, planDate?: string): Promise<
         (SELECT COUNT(*) FROM tasks t WHERE (t.project_id = p.slug OR t.project_id = p.id) AND t.completed = 1) as done_tasks,
         (SELECT MAX(pu.created_at) FROM project_updates pu WHERE pu.project_id = p.slug) as last_update,
         (SELECT COUNT(*) FROM tasks t WHERE (t.project_id = p.slug OR t.project_id = p.id) AND t.status = 'blocked') as blocked_count
-      FROM projects p WHERE p.status IN ('active', 'Active') ORDER BY p.category, p.title
+      FROM projects p WHERE p.status IN ('active') ORDER BY p.category, p.title
     `),
 
     // Milestones in next 30 days

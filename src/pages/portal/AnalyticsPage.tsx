@@ -15,6 +15,20 @@ import { getPersonInfo } from '../../data/team'
 import Avatar from '../../components/Avatar'
 import { PRIORITY_COLORS, isProjectActive } from '../../lib/taskConstants'
 
+// D1 lowercase stage value → display label.
+const STAGE_DISPLAY: Record<string, string> = {
+  idea: 'Idea',
+  data_collection: 'Data Collection',
+  data_analysis: 'Analysis',
+  analysis: 'Analysis',
+  writing: 'Writing',
+  review: 'Review',
+  submitted: 'Review',
+  revisions: 'Revisions',
+  accepted: 'Published',
+  published: 'Published',
+}
+
 // Get Monday of the week containing the given date
 function getWeekStart(d: Date): Date {
   const date = new Date(d)
@@ -114,7 +128,7 @@ export default function AnalyticsPage() {
   const projectsByStage = useMemo(() => {
     const map = new Map<string, number>()
     for (const p of projects) {
-      const stage = p.stage || 'Idea'
+      const stage = p.stage || 'idea'
       map.set(stage, (map.get(stage) || 0) + 1)
     }
     return [...map.entries()].sort((a, b) => b[1] - a[1])
@@ -571,17 +585,20 @@ export default function AnalyticsPage() {
               // --slate/--teal/--gold flip to LIGHT dark-mode variants (e.g.
               // --teal dark = #5cbcb4), where white text fails 2:1. r7 2026-04-22.
               const stageColors: Record<string, string> = {
-                'Idea': 'var(--stage-fill-idea)',
-                'Data Collection': 'var(--stage-fill-data-collection)',
-                'Analysis': 'var(--stage-fill-analysis)',
-                'Writing': 'var(--stage-fill-writing)',
-                'Review': 'var(--stage-fill-review)',
-                'Revisions': 'var(--stage-fill-revisions)',
-                'Published': 'var(--stage-fill-published)',
+                'idea': 'var(--stage-fill-idea)',
+                'data_collection': 'var(--stage-fill-data-collection)',
+                'analysis': 'var(--stage-fill-analysis)',
+                'data_analysis': 'var(--stage-fill-analysis)',
+                'writing': 'var(--stage-fill-writing)',
+                'review': 'var(--stage-fill-review)',
+                'submitted': 'var(--stage-fill-review)',
+                'revisions': 'var(--stage-fill-revisions)',
+                'accepted': 'var(--stage-fill-published)',
+                'published': 'var(--stage-fill-published)',
               }
               return (
                 <div key={stage} className="flex items-center gap-3">
-                  <span className="text-xs w-28" style={{ color: 'var(--ink)' }}>{stage}</span>
+                  <span className="text-xs w-28" style={{ color: 'var(--ink)' }}>{STAGE_DISPLAY[stage] ?? stage}</span>
                   <div className="flex-1 h-5 rounded overflow-hidden" style={{ backgroundColor: 'var(--border-subtle)' }}>
                     <div className="h-full rounded transition-all flex items-center px-2" style={{ width: `${width}%`, backgroundColor: stageColors[stage] || 'var(--teal)', minWidth: 24 }}>
                       {/* Stage bar fills are dark-saturated (teal/maroon/slate); white

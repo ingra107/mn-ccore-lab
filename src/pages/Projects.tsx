@@ -25,8 +25,18 @@ import PageTooltip from '../components/PageTooltip'
 import { stripConsortiumPrefix } from '../lib/textUtils'
 import { PATHS } from '../constants/paths'
 
-const STAGES = ['Idea', 'Data Collection', 'Analysis', 'Writing', 'Review', 'Revisions', 'Published'] as const
+// Values are D1 lowercase canonical; labels are Title Case for display.
+const STAGES = ['idea', 'data_collection', 'analysis', 'writing', 'review', 'revisions', 'published'] as const
 type Stage = (typeof STAGES)[number]
+const STAGE_LABELS: Record<Stage, string> = {
+  idea: 'Idea',
+  data_collection: 'Data Collection',
+  analysis: 'Analysis',
+  writing: 'Writing',
+  review: 'Review',
+  revisions: 'Revisions',
+  published: 'Published',
+}
 
 // Stage 4 #12-followup (2026-05-08): 3-bucket canonical categories.
 // 'stale' is a pseudo-filter (health score < 50) not a real category value.
@@ -551,7 +561,7 @@ export default function Projects() {
                                 </span>
                               )}
                               {/* Stage progress dots */}
-                              <span className="inline-flex items-center gap-0.5 ml-1" title={`Stage: ${project.stage || 'Idea'}`}>
+                              <span className="inline-flex items-center gap-0.5 ml-1" title={`Stage: ${project.stage || 'idea'}`}>
                                 {STAGES.map((s, si) => {
                                   // Brain.db granular stages → 6-stage canonical (P2-R2-14)
                                   const currentIdx = stageIndex(project.stage)
@@ -595,8 +605,8 @@ export default function Projects() {
 
                             {/* Stage (inline editable) */}
                             <InlineSelect
-                              value={project.stage || 'Idea'}
-                              options={STAGES.map((s) => ({ value: s, label: s }))}
+                              value={project.stage || 'idea'}
+                              options={STAGES.map((s) => ({ value: s, label: STAGE_LABELS[s] }))}
                               onChange={(val) => inlineUpdate.mutate({ slug: project.slug, fields: { stage: toApiStage(val) } })}
                             />
 
@@ -689,8 +699,8 @@ export default function Projects() {
                                 onChange={(val) => inlineUpdate.mutate({ slug: project.slug, fields: { status: val } })}
                               />
                               <InlineSelect
-                                value={project.stage || 'Idea'}
-                                options={STAGES.map((s) => ({ value: s, label: s }))}
+                                value={project.stage || 'idea'}
+                                options={STAGES.map((s) => ({ value: s, label: STAGE_LABELS[s] }))}
                                 onChange={(val) => inlineUpdate.mutate({ slug: project.slug, fields: { stage: toApiStage(val) } })}
                               />
                               <div onClick={(e) => e.preventDefault()} style={{ marginLeft: 'auto' }}>

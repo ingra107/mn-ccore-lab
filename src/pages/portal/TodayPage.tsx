@@ -111,7 +111,7 @@ export default function TodayPage() {
   const stalledProjects = useMemo(() => {
     const all = projectsQuery.data ?? []
     return all
-      .filter((p) => p.status === 'Active')
+      .filter((p) => p.status === 'active')
       .map((p) => ({ name: p.title ?? p.slug, days: daysSince(p.lastActivity) }))
       .filter((p) => p.days >= 10 && p.days < Infinity)
       .sort((a, b) => b.days - a.days)
@@ -142,7 +142,7 @@ export default function TodayPage() {
       if (state.planned[t.id]) relevantSlugs.add(t.project_id)
     }
     return all
-      .filter((p) => p.status === 'Active')
+      .filter((p) => p.status === 'active')
       .map((p) => {
         const next = nextByProject.get(p.slug)
         // Relevance signal C: lastActivity within 7d.

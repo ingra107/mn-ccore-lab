@@ -344,7 +344,7 @@ export default function CommandPalette() {
       items.push({
         id: `project-${project.slug}`,
         label: project.title,
-        sublabel: `${project.stage || 'Active'} · ${project.category}`,
+        sublabel: `${project.stage || 'idea'} · ${project.category}`,
         icon: FolderKanban,
         action: () => { navigate(PATHS.project(project.slug)); setOpen(false) },
         category: 'project',
