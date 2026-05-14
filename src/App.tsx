@@ -121,13 +121,13 @@ const TrajectoryPage = lazy(() => import('./pages/TrajectoryPage'))
 const MyItems = lazy(() => import('./pages/MyItems'))
 
 // New portal pages (Phase H1 — placeholders, built out in later phases)
-const Personal = lazy(() => import('./pages/portal/Personal'))
+const PersonalPage = lazy(() => import('./pages/portal/PersonalPage'))
 const MyTasksLegacy = lazy(() => import('./pages/portal/MyTasks'))
 const UnifiedMyTasks = lazy(() => import('./pages/portal/UnifiedMyTasks'))
 const CalendarPage = lazy(() => import('./pages/portal/CalendarPage'))
-const Deadlines = lazy(() => import('./pages/portal/Deadlines'))
-const Manuscripts = lazy(() => import('./pages/portal/Manuscripts'))
-const Ideas = lazy(() => import('./pages/portal/Ideas'))
+const DeadlinesPage = lazy(() => import('./pages/portal/DeadlinesPage'))
+const ManuscriptsPage = lazy(() => import('./pages/portal/ManuscriptsPage'))
+const IdeasPage = lazy(() => import('./pages/portal/IdeasPage'))
 const SearchPage = lazy(() => import('./pages/portal/SearchPage'))
 const ActivityPage = lazy(() => import('./pages/portal/ActivityPage'))
 const AnalyticsPage = lazy(() => import('./pages/portal/AnalyticsPage'))
@@ -141,10 +141,10 @@ const AskTheLab = lazy(() => import('./pages/portal/AskTheLab'))
 const PIAnalytics = lazy(() => import('./pages/portal/PIAnalytics'))
 const PBSector = lazy(() => import('./pages/portal/PBSector'))
 const SessionHistory = lazy(() => import('./pages/portal/SessionHistory'))
-const MenteeMilestones = lazy(() => import('./pages/portal/MenteeMilestones'))
+const MenteeMilestonesPage = lazy(() => import('./pages/portal/MenteeMilestonesPage'))
 const DeadlineCascadePage = lazy(() => import('./pages/portal/DeadlineCascadePage'))
 const Pulse = lazy(() => import('./pages/Pulse'))
-const GrantsPortal = lazy(() => import('./pages/portal/Grants'))
+const GrantsPage = lazy(() => import('./pages/portal/GrantsPage'))
 
 function PageLoader() {
   return (
@@ -252,7 +252,7 @@ export default function App() {
                       below, kept indefinitely as Lab Overview. */}
                   <Route path="/portal/dashboard" element={<ErrorBoundary><PageErrorBoundary pageName="Today"><TodayPage /></PageErrorBoundary></ErrorBoundary>} />
                   <Route path="/portal/overview" element={<ErrorBoundary><PageErrorBoundary pageName="LabOverview"><Dashboard /></PageErrorBoundary></ErrorBoundary>} />
-                  <Route path="/portal/personal" element={<ErrorBoundary><Personal /></ErrorBoundary>} />
+                  <Route path="/portal/personal" element={<ErrorBoundary><PersonalPage /></ErrorBoundary>} />
                   <Route path="/portal/my-items" element={<ErrorBoundary><MyItems /></ErrorBoundary>} />
                   {/* MyTasks Round 2 — unified 3-view page (Columns / Lanes / List).
                       View choice persists in localStorage.mt_view (Rule 55). */}
@@ -262,18 +262,18 @@ export default function App() {
                   <Route path="/portal/my-tasks-legacy" element={<ErrorBoundary><MyTasksLegacy /></ErrorBoundary>} />
                   <Route path="/portal/tasks" element={<Navigate to="/portal/my-tasks" replace />} />
                   <Route path="/portal/calendar" element={<ErrorBoundary><CalendarPage /></ErrorBoundary>} />
-                  <Route path="/portal/deadlines" element={<ErrorBoundary><Deadlines /></ErrorBoundary>} />
+                  <Route path="/portal/deadlines" element={<ErrorBoundary><DeadlinesPage /></ErrorBoundary>} />
                   <Route path="/portal/deadline-cascade" element={<ErrorBoundary><DeadlineCascadePage /></ErrorBoundary>} />
                   <Route path="/portal/projects" element={<ErrorBoundary><Projects /></ErrorBoundary>} />
                   <Route path="/portal/projects/:slug" element={<ErrorBoundary><PageErrorBoundary pageName="ProjectDetail"><ProjectDetail /></PageErrorBoundary></ErrorBoundary>} />
-                  <Route path="/portal/manuscripts" element={<ErrorBoundary><Manuscripts /></ErrorBoundary>} />
-                  <Route path="/portal/ideas" element={<ErrorBoundary><Ideas /></ErrorBoundary>} />
+                  <Route path="/portal/manuscripts" element={<ErrorBoundary><ManuscriptsPage /></ErrorBoundary>} />
+                  <Route path="/portal/ideas" element={<ErrorBoundary><IdeasPage /></ErrorBoundary>} />
                   <Route path="/portal/ask" element={<ErrorBoundary><AskTheLab /></ErrorBoundary>} />
                   <Route path="/portal/decisions" element={<ErrorBoundary><PageErrorBoundary pageName="DecisionsPage"><DecisionsPage /></PageErrorBoundary></ErrorBoundary>} />
                   <Route path="/portal/narratives" element={<ErrorBoundary><NarrativesPage /></ErrorBoundary>} />
                   <Route path="/portal/digest" element={<ErrorBoundary><Digest /></ErrorBoundary>} />
                   <Route path="/portal/search" element={<ErrorBoundary><SearchPage /></ErrorBoundary>} />
-                  <Route path="/portal/grants" element={<ErrorBoundary><PageErrorBoundary pageName="Grants"><GrantsPortal /></PageErrorBoundary></ErrorBoundary>} />
+                  <Route path="/portal/grants" element={<ErrorBoundary><PageErrorBoundary pageName="Grants"><GrantsPage /></PageErrorBoundary></ErrorBoundary>} />
                   <Route path="/portal/meetings" element={<ErrorBoundary><Meetings /></ErrorBoundary>} />
                   <Route path="/portal/meetings/:id" element={<ErrorBoundary><MeetingDetail /></ErrorBoundary>} />
                   <Route path="/portal/meetings/:id/prep" element={<ErrorBoundary><MeetingPrep /></ErrorBoundary>} />
@@ -282,7 +282,7 @@ export default function App() {
                   <Route path="/portal/analytics" element={<ErrorBoundary><AnalyticsPage /></ErrorBoundary>} />
                   <Route path="/portal/insights" element={<ErrorBoundary><InsightsPage /></ErrorBoundary>} />
                   <Route path="/portal/pi/analytics" element={<ErrorBoundary><PageErrorBoundary pageName="PIAnalytics"><PIAnalytics /></PageErrorBoundary></ErrorBoundary>} />
-                  <Route path="/portal/mentee-milestones" element={<ErrorBoundary><MenteeMilestones /></ErrorBoundary>} />
+                  <Route path="/portal/mentee-milestones" element={<ErrorBoundary><MenteeMilestonesPage /></ErrorBoundary>} />
                   <Route path="/portal/pb" element={<ErrorBoundary><PBSector /></ErrorBoundary>} />
                   <Route path="/portal/sessions" element={<ErrorBoundary><SessionHistory /></ErrorBoundary>} />
                   <Route path="/portal/settings" element={<ErrorBoundary><SettingsPage /></ErrorBoundary>} />
