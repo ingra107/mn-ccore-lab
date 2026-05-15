@@ -1058,7 +1058,7 @@ export default {
             for (const item of pendingItems) {
               const overdue = item.due_date && item.due_date < new Date().toISOString().slice(0, 10);
               const dueLabel = item.due_date
-                ? `<span style="color:${overdue ? '#7a0019' : '#64748b'};font-size:12px;"> — ${overdue ? 'overdue' : 'due'} ${item.due_date}</span>`
+                ? `<span style="color:${overdue ? '#7a0019' : '#64748b'};font-size:12px;"> — ${overdue ? 'overdue' : 'due'} ${escapeHtml(item.due_date)}</span>`
                 : '';
               itemsHtml += `<li style="margin-bottom:8px;font-size:14px;color:#0f1923;">${escapeHtml(item.description.replace(/^\[Carried forward\]\s*/i, ''))}${dueLabel}</li>`;
             }
