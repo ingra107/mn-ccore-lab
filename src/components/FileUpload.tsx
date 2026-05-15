@@ -75,14 +75,15 @@ export default function FileUpload({ entityType, entityId }: FileUploadProps) {
 
       // 2. Upload directly to R2
       setUploadProgress(`Uploading ${file.name}... (${formatBytes(file.size)})`)
-      await fetch(urlData.data.uploadUrl, {
+      const res = await fetch(urlData.data.uploadUrl, {
         method: 'PUT',
         body: file,
         headers: { 'Content-Type': file.type || 'application/octet-stream' },
       })
+      if (!res.ok) throw new Error('Upload failed')
 
       // 3. Record in D1
-      await fetch('/api/upload/done', {
+      const doneRes = await fetch('/api/upload/done', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -94,17 +95,17 @@ export default function FileUpload({ entityType, entityId }: FileUploadProps) {
           entityId,
         }),
       })
+      if (!doneRes.ok) throw new Error('Failed to register upload')
 
       queryClient.invalidateQueries({ queryKey: ['attachments', entityType, entityId] })
+      setUploadProgress('')
     } catch (err) {
       console.error('Upload failed:', err)
       setUploadProgress(`Upload failed: ${err instanceof Error ? err.message : 'unknown error'}`)
       setTimeout(() => setUploadProgress(''), 3000)
-      return
+    } finally {
+      setUploading(false)
     }
-
-    setUploading(false)
-    setUploadProgress('')
   }, [entityType, entityId, queryClient])
 
   const handleDrop = useCallback((e: React.DragEvent) => {

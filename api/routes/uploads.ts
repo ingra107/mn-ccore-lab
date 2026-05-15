@@ -74,6 +74,17 @@ export async function handleUploadDone(request: Request, user: AuthUser, env: En
     return error('key, entityType, entityId required');
   }
 
+  // Verify file actually landed in R2 before writing the DB record.
+  // Without this check a client could register arbitrary keys that were
+  // never uploaded (e.g. failed PUT, wrong presigned URL) and the
+  // file_attachments row would point at a missing object.
+  if (env.FILES) {
+    const head = await env.FILES.head(body.key);
+    if (!head) {
+      return error('File not found in storage', 400);
+    }
+  }
+
   const id = crypto.randomUUID().slice(0, 16);
   await env.DB.prepare(
     `INSERT INTO file_attachments (id, entity_type, entity_id, filename, content_type, size_bytes, r2_key, uploaded_by)
