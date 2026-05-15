@@ -2,11 +2,13 @@
 
 ## Current State
 
-**HEAD:** `548f1a39` on main (in sync with origin)
-**Deploy:** Last known deploy is Phase 38/39 era — naming refactor commits (30 since May 10) have NOT been deployed yet.
-**Build:** GREEN (3814 modules, 0 errors). Two build breaks from naming refactor fixed this session (`548f1a39`).
+**HEAD:** `4d4f53b8` on main
+**Deploy:** `7f355d9f.mn-ccore-lab.pages.dev` (2026-05-15). All naming refactor + security fixes deployed.
+**Build:** GREEN (3814 modules, 0 errors).
 **API tests:** 171/171 passing (vitest).
-**Schema:** v54 on prod D1 (v66 `decision_log -> hub_decisions` rename exists on disk but NOT applied to prod).
+**Schema:** v66 on prod D1 (`hub_decisions` rename applied 2026-05-15). 
+**API auth:** GET endpoints locked down via allowlist — ~20 public routes, rest requires JWT/API key.
+**Protocol:** `mnccore://` registered on work machine (ingra107).
 **Team adoption:** CF Access gated but team not yet broadly directed to use it.
 
 ## What happened since last handoff (May 5 -> May 15)
