@@ -1,5 +1,6 @@
 import type { Env } from '../helpers';
 import { json, error, corsHeaders } from '../helpers';
+import { escapeHtml } from '../lib/escapeHtml';
 
 const HUB_URL = 'https://mn-ccore-lab.pages.dev';
 
@@ -120,7 +121,7 @@ function priorityColor(priority: string | null): string {
 
 function priorityLabel(priority: string | null): string {
   if (!priority) return '';
-  return `<span style="display:inline-block;padding:1px 6px;border-radius:3px;font-size:10px;font-weight:500;color:white;background:${priorityColor(priority)};margin-left:6px;">${priority.toUpperCase()}</span>`;
+  return `<span style="display:inline-block;padding:1px 6px;border-radius:3px;font-size:10px;font-weight:500;color:white;background:${priorityColor(priority)};margin-left:6px;">${escapeHtml(priority.toUpperCase())}</span>`;
 }
 
 function formatDueDate(due: string | null): string {
@@ -133,7 +134,7 @@ function taskRow(task: DigestTask): string {
   const due = task.due_date ? `<span style="color:#94a3b8;font-size:12px;margin-left:8px;">${formatDueDate(task.due_date)}</span>` : '';
   return `<tr>
     <td style="padding:6px 0;border-bottom:1px solid #f0f0f0;font-size:13px;color:#0f1923;">
-      ${task.title}${priorityLabel(task.priority)}${due}
+      ${escapeHtml(task.title)}${priorityLabel(task.priority)}${due}
     </td>
   </tr>`;
 }
@@ -196,7 +197,7 @@ function buildDigestHtml(data: DigestData): string {
         mtgDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
       sectionsHtml += `<tr>
         <td style="padding:6px 0;border-bottom:1px solid #f0f0f0;font-size:13px;color:#0f1923;">
-          ${mtg.title}
+          ${escapeHtml(mtg.title)}
           <span style="color:#94a3b8;font-size:12px;margin-left:8px;">${dayLabel}</span>
         </td>
       </tr>`;
@@ -213,7 +214,7 @@ function buildDigestHtml(data: DigestData): string {
       const ago = timeAgo(act.created_at);
       sectionsHtml += `<tr>
         <td style="padding:4px 0;border-bottom:1px solid #f0f0f0;font-size:12px;color:#64748b;">
-          ${act.description}
+          ${escapeHtml(act.description)}
           <span style="color:#94a3b8;margin-left:6px;">${ago}</span>
         </td>
       </tr>`;
@@ -260,7 +261,7 @@ function buildDigestHtml(data: DigestData): string {
 
     <!-- Body -->
     <div style="background:#ffffff;padding:24px;border:1px solid #e2e8f0;border-top:none;border-radius:0 0 8px 8px;">
-      <p style="margin:0 0 4px;font-size:15px;color:#0f1923;">${greeting}, ${memberName.split(' ')[0]}.</p>
+      <p style="margin:0 0 4px;font-size:15px;color:#0f1923;">${greeting}, ${escapeHtml(memberName.split(' ')[0])}.</p>
       <p style="margin:0 0 16px;font-size:13px;color:#64748b;">Here's your daily digest from the Lab Hub.</p>
 
       ${sectionsHtml}
@@ -481,13 +482,12 @@ async function composeDailyDigest(env: Env, member: CoordinatorMember): Promise<
        LIMIT 10`
     ).bind(in14Days).all<RegulatoryItem>(),
 
-    // Stalled manuscripts (projects in manuscript category with stage unchanged > 30 days)
+    // Stalled projects (any category, stage unchanged > 30 days, not done)
     env.DB.prepare(
       `SELECT COUNT(*) as n FROM projects
-       WHERE category = 'manuscript'
-         AND stage_changed_at IS NOT NULL
-         AND julianday(date('now')) - julianday(stage_changed_at) > 30
-         AND status != 'completed' AND status != 'cancelled'`
+       WHERE updated_at IS NOT NULL
+         AND julianday(date('now')) - julianday(updated_at) > 30
+         AND status != 'done'`
     ).first<{ n: number }>(),
 
     // Today's meetings
@@ -516,12 +516,12 @@ async function composeDailyDigest(env: Env, member: CoordinatorMember): Promise<
     regulatoryHtml = '<ul style="padding-left:20px;margin:6px 0;">';
     for (const item of regulatoryItems) {
       const expLabel = item.expiration_date
-        ? `<span style="color:#c2410c;font-size:11px;margin-left:6px;">exp. ${item.expiration_date}</span>`
+        ? `<span style="color:#c2410c;font-size:11px;margin-left:6px;">exp. ${escapeHtml(item.expiration_date)}</span>`
         : '';
       const typeLabel = item.item_type
-        ? `<span style="color:#94a3b8;font-size:11px;"> (${item.item_type})</span>`
+        ? `<span style="color:#94a3b8;font-size:11px;"> (${escapeHtml(item.item_type)})</span>`
         : '';
-      regulatoryHtml += `<li style="font-size:13px;color:#0f1923;margin-bottom:6px;">${item.title}${typeLabel}${expLabel}</li>`;
+      regulatoryHtml += `<li style="font-size:13px;color:#0f1923;margin-bottom:6px;">${escapeHtml(item.title)}${typeLabel}${expLabel}</li>`;
     }
     regulatoryHtml += '</ul>';
   }
@@ -531,7 +531,7 @@ async function composeDailyDigest(env: Env, member: CoordinatorMember): Promise<
   if (todayMeetings.length > 0) {
     meetingsHtml = '<ul style="padding-left:20px;margin:6px 0;">';
     for (const mtg of todayMeetings) {
-      meetingsHtml += `<li style="font-size:13px;color:#0f1923;margin-bottom:4px;">${mtg.title}</li>`;
+      meetingsHtml += `<li style="font-size:13px;color:#0f1923;margin-bottom:4px;">${escapeHtml(mtg.title)}</li>`;
     }
     meetingsHtml += '</ul>';
   }
@@ -564,7 +564,7 @@ async function composeDailyDigest(env: Env, member: CoordinatorMember): Promise<
     </div>
     <!-- Body -->
     <div style="background:#ffffff;padding:24px;border:1px solid #e2e8f0;border-top:none;border-radius:0 0 8px 8px;">
-      <p style="margin:0 0 4px;font-size:15px;color:#0f1923;">Good morning, ${firstName}.</p>
+      <p style="margin:0 0 4px;font-size:15px;color:#0f1923;">Good morning, ${escapeHtml(firstName)}.</p>
       <p style="margin:0 0 20px;font-size:13px;color:#64748b;">Daily Lab Brief — coordinator summary.</p>
       ${allClear ? `
       <div style="text-align:center;padding:32px 0;">

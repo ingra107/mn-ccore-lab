@@ -47,6 +47,7 @@ import { handleCheckImpact } from './routes/impact-trace';
 import { handlePIDashboard, handleMenteeVelocity, handleResponseTime, handleTeamEngagement, handleTeamByExpertise } from './routes/pi-dashboard';
 import { handleCadenceCheck } from './routes/meeting-cadence';
 import { handleGetAIRequests, handleCreateAIRequest, handleUpdateAIResponse } from './routes/ai-requests';
+import { escapeHtml } from './lib/escapeHtml';
 import { handleCommandCenter, handlePBCapture, handlePBDefer, handleCreateOrUpdatePlan, handleReorderPlan, handlePromoteTask, handleStartPomodoro, handleCompletePomodoro, handleSaveReflection, handlePlanHistory, handleAddToDispatch, handleGetPendingDispatch, handleSendDispatch, handleCompleteDispatchItem } from './routes/pb-sector';
 import { handlePBSessions, handlePBSessionStats, handleCreatePBSession, handleBulkCreatePBSessions } from './routes/pb-sessions';
 import { handleGetSessions } from './routes/sessions';
@@ -97,6 +98,55 @@ type AppEnv = {
 };
 
 const app = new Hono<AppEnv>();
+
+// ─────────────────────────────────────────────────────────────────────────────
+// isPublicGet — allowlist of GET paths that don't require authentication even
+// when REQUIRE_AUTH=1. Everything else (GET /api/*) requires a valid CF Access
+// JWT or API key. This mirrors the approach used for POST/PUT but applies to
+// reads so that team portals behind CF Access don't need additional per-route
+// auth checks for sensitive data endpoints.
+//
+// Parameterized rules use prefix-match because Hono exposes the resolved
+// pathname string, not a parsed params object, at middleware level.
+// ─────────────────────────────────────────────────────────────────────────────
+function isPublicGet(path: string): boolean {
+  // Exact-match public routes
+  const exactPublic = new Set([
+    '/api/health',
+    '/api/version',
+    '/api/auth/me',
+    '/api/team',
+    '/api/team/slugs',
+    '/api/team/pulse',
+    '/api/publications',
+    '/api/grants',
+    '/api/grants/timeline',
+    '/api/stats',
+    '/api/citations',
+    '/api/graph/collaboration',
+    '/api/projects',
+    '/api/projects/health',
+    '/api/activity',
+    '/api/expertise',
+    '/api/meetings',
+    '/api/meetings/next',
+    '/api/digest',
+    '/api/digest/dates',
+  ]);
+  if (exactPublic.has(path)) return true;
+
+  // /api/team/:slug — single-segment profile (exclude analytics sub-routes)
+  // Matches /api/team/nick-ingraham but NOT /api/team/by-expertise
+  if (/^\/api\/team\/[^/]+$/.test(path) && path !== '/api/team/by-expertise') return true;
+
+  // /api/projects/:slug — single project view (NOT sub-resources like /api/projects/:slug/comments)
+  if (/^\/api\/projects\/[^/]+$/.test(path)) return true;
+
+  // /api/digest/* — digest comments and other digest sub-resources
+  if (path.startsWith('/api/digest/')) return true;
+
+  return false;
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Global error handler — matches old top-level try/catch behavior.
@@ -168,21 +218,45 @@ app.use('*', async (c, next) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 3. PI gate for /api/pb/* GETs.
-// Private brain.db data (pomodoro, TODAY.md, relay, plan history) — PI only.
-// Writes to /api/pb/* flow through the auth gate below; this middleware
-// scopes the hard 403 to reads (matches original behavior at line 188).
+// 3. PI gate for ALL /api/pb/* methods (GET + POST + PUT).
+// Private brain.db data (pomodoro, TODAY.md, relay, plan history, sessions) —
+// PI-only for ALL verbs. isPiRequest returns true for: (a) valid Bearer API key
+// (server-side automation / PB sync), or (b) CF Access JWT matching a PI email.
+// Any other caller (team member browser session) gets 403 on any /api/pb/* path.
 // ─────────────────────────────────────────────────────────────────────────────
 app.use('/api/pb/*', async (c, next) => {
   const env = c.get('env');
-  if (c.req.method === 'GET' && !(await isPiRequest(c.req.raw, env))) {
+  if (!(await isPiRequest(c.req.raw, env))) {
     return error('Forbidden — PI access only', 403);
   }
   await next();
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 4. POST/PUT auth gate + user resolution.
+// 4. GET auth lockdown — require auth for non-public GET endpoints.
+// When REQUIRE_AUTH=1, any GET that isn't in isPublicGet() needs a CF Access
+// JWT or a valid API key. This closes the read-path hole where team members
+// could fetch /api/tasks, /api/pb/*, /api/analytics/*, etc. without signing in.
+// Public routes (marketing pages, /api/health, /api/version, team profiles, etc.)
+// pass through unchanged. The PI-gate middleware above already handles /api/pb/*
+// before this runs, so /api/pb/* GETs from non-PI callers are 403'd first.
+// ─────────────────────────────────────────────────────────────────────────────
+app.use('/api/*', async (c, next) => {
+  if (c.req.method !== 'GET') { await next(); return; }
+  const env = c.get('env') as unknown as { REQUIRE_AUTH?: string };
+  if (env.REQUIRE_AUTH !== '1') { await next(); return; }
+  const path = new URL(c.req.url).pathname;
+  if (isPublicGet(path)) { await next(); return; }
+  const authedUser = c.get('authedUser');
+  const hasApiKey = c.get('apiKeyValid') === true;
+  if (!authedUser && !hasApiKey) {
+    return c.json({ error: 'Authentication required' }, 401, corsHeaders);
+  }
+  await next();
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 5. POST/PUT auth gate + user resolution.
 // If REQUIRE_AUTH=1 and neither a CF Access JWT nor a valid API key is
 // present, return 401. Otherwise fall back to the anonymous "Team Member"
 // identity (preserves pre-launch PI-only behavior).
@@ -861,386 +935,12 @@ app.post('/api/email-drafts/sync-bulk', (c) => handleSyncEmailDrafts(R(c), E(c))
 app.post('/api/file-activity/sync', (c) => handleSyncFileActivity(R(c), E(c)));
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Admin / test-cleanup — verbatim port of the original inline handlers.
-// Kept inline because each version branch issues specific ALTER / CREATE
-// statements — extracting into a route module would mean duplicating the
-// giant body with no readability win.
+// /api/admin/migrate and /api/test-cleanup removed 2026-05-15.
+// Security: any authenticated user could run DB migrations or delete data.
+// Schema changes go through wrangler d1 execute + migration files in migrations/.
+// Test cleanup uses /api/tasks/batch (action='delete').
 // ─────────────────────────────────────────────────────────────────────────────
-app.post('/api/admin/migrate', async (c) => {
-  const env = E(c);
-  const body = await c.req.json() as { version: number };
-  if (body.version === 22) {
-    const results: string[] = [];
-    try { await env.DB.prepare('ALTER TABLE tasks ADD COLUMN updated_at TEXT').run(); results.push('added updated_at'); } catch { results.push('updated_at already exists'); }
-    try { await env.DB.prepare('ALTER TABLE tasks ADD COLUMN deleted_at TEXT').run(); results.push('added deleted_at'); } catch { results.push('deleted_at already exists'); }
-    try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_tasks_updated_at ON tasks(updated_at)').run(); results.push('created index'); } catch (e) { results.push(`index error: ${e}`); }
-    await env.DB.prepare("UPDATE tasks SET updated_at = datetime('now') WHERE updated_at IS NULL").run();
-    results.push('backfilled updated_at');
-    return json({ data: { version: 22, results } });
-  }
-  if (body.version === 23) {
-    const results: string[] = [];
-    try {
-      await env.DB.prepare(`
-        CREATE TABLE IF NOT EXISTS manuscript_revisions (
-          id TEXT PRIMARY KEY,
-          project_id TEXT NOT NULL,
-          round INTEGER NOT NULL DEFAULT 1,
-          submitted_at TEXT,
-          response_due TEXT,
-          status TEXT DEFAULT 'in_progress',
-          journal TEXT,
-          notes TEXT,
-          created_at TEXT DEFAULT (datetime('now'))
-        )
-      `).run();
-      results.push('created manuscript_revisions');
-    } catch (e) { results.push(`manuscript_revisions: ${e}`); }
-    try {
-      await env.DB.prepare(`
-        CREATE TABLE IF NOT EXISTS reviewer_comments (
-          id TEXT PRIMARY KEY,
-          revision_id TEXT NOT NULL,
-          reviewer_number INTEGER DEFAULT 1,
-          comment_text TEXT NOT NULL,
-          assigned_to TEXT DEFAULT 'nick-ingraham',
-          status TEXT DEFAULT 'pending',
-          response_text TEXT,
-          resolved_at TEXT,
-          created_at TEXT DEFAULT (datetime('now')),
-          FOREIGN KEY (revision_id) REFERENCES manuscript_revisions(id) ON DELETE CASCADE
-        )
-      `).run();
-      results.push('created reviewer_comments');
-    } catch (e) { results.push(`reviewer_comments: ${e}`); }
-    try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_revisions_project ON manuscript_revisions(project_id)').run(); results.push('created idx_revisions_project'); } catch (e) { results.push(`index error: ${e}`); }
-    try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_comments_revision ON reviewer_comments(revision_id)').run(); results.push('created idx_comments_revision'); } catch (e) { results.push(`index error: ${e}`); }
-    return json({ data: { version: 23, results } });
-  }
-  if (body.version === 24) {
-    const results: string[] = [];
-    try {
-      await env.DB.prepare(`
-        CREATE TABLE IF NOT EXISTS mentee_milestones (
-          id TEXT PRIMARY KEY,
-          mentee_slug TEXT NOT NULL,
-          milestone_type TEXT NOT NULL,
-          title TEXT NOT NULL,
-          description TEXT,
-          due_date TEXT,
-          completed_at TEXT,
-          status TEXT DEFAULT 'upcoming',
-          notes TEXT,
-          created_at TEXT DEFAULT (datetime('now'))
-        )
-      `).run();
-      results.push('created mentee_milestones');
-    } catch (e) { results.push(`mentee_milestones: ${e}`); }
-    try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_mentee_milestones_mentee ON mentee_milestones(mentee_slug)').run(); results.push('created idx_mentee_milestones_mentee'); } catch (e) { results.push(`index error: ${e}`); }
-    try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_mentee_milestones_due ON mentee_milestones(due_date)').run(); results.push('created idx_mentee_milestones_due'); } catch (e) { results.push(`index error: ${e}`); }
-    try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_mentee_milestones_status ON mentee_milestones(status)').run(); results.push('created idx_mentee_milestones_status'); } catch (e) { results.push(`index error: ${e}`); }
-    return json({ data: { version: 24, results } });
-  }
-  if (body.version === 25) {
-    const results: string[] = [];
-    try {
-      await env.DB.prepare(`
-        CREATE TABLE IF NOT EXISTS deadline_dependencies (
-          id TEXT PRIMARY KEY,
-          upstream_id TEXT NOT NULL,
-          upstream_type TEXT NOT NULL,
-          downstream_id TEXT NOT NULL,
-          downstream_type TEXT NOT NULL,
-          lag_days INTEGER DEFAULT 0,
-          notes TEXT,
-          created_at TEXT DEFAULT (datetime('now'))
-        )
-      `).run();
-      results.push('created deadline_dependencies');
-    } catch (e) { results.push(`deadline_dependencies: ${e}`); }
-    try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_deadline_deps_upstream ON deadline_dependencies(upstream_id)').run(); results.push('created idx_deadline_deps_upstream'); } catch (e) { results.push(`index error: ${e}`); }
-    try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_deadline_deps_downstream ON deadline_dependencies(downstream_id)').run(); results.push('created idx_deadline_deps_downstream'); } catch (e) { results.push(`index error: ${e}`); }
-    return json({ data: { version: 25, results } });
-  }
-  if (body.version === 26) {
-    const results: string[] = [];
-    try {
-      await env.DB.prepare(`
-        CREATE TABLE IF NOT EXISTS submission_events (
-          id TEXT PRIMARY KEY,
-          project_id TEXT NOT NULL,
-          event_type TEXT NOT NULL,
-          event_date TEXT NOT NULL,
-          journal TEXT,
-          notes TEXT,
-          deleted_at TEXT,
-          created_at TEXT DEFAULT (datetime('now'))
-        )
-      `).run();
-      results.push('created submission_events');
-    } catch (e) { results.push(`submission_events: ${e}`); }
-    try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_submission_events_project ON submission_events(project_id)').run(); results.push('created idx_submission_events_project'); } catch (e) { results.push(`index error: ${e}`); }
-    try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_submission_events_date ON submission_events(event_date)').run(); results.push('created idx_submission_events_date'); } catch (e) { results.push(`index error: ${e}`); }
-    try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_submission_events_type ON submission_events(event_type)').run(); results.push('created idx_submission_events_type'); } catch (e) { results.push(`index error: ${e}`); }
-    return json({ data: { version: 26, results } });
-  }
-  if (body.version === 27) {
-    const results: string[] = [];
-    try {
-      await env.DB.prepare(`
-        CREATE TABLE IF NOT EXISTS regulatory_items (
-          id TEXT PRIMARY KEY,
-          project_id TEXT NOT NULL,
-          item_type TEXT NOT NULL,
-          title TEXT NOT NULL,
-          protocol_number TEXT,
-          approved_date TEXT,
-          expiration_date TEXT,
-          renewal_due TEXT,
-          status TEXT DEFAULT 'active',
-          notes TEXT,
-          created_at TEXT DEFAULT (datetime('now'))
-        )
-      `).run();
-      results.push('created regulatory_items');
-    } catch (e) { results.push(`regulatory_items: ${e}`); }
-    try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_regulatory_project ON regulatory_items(project_id)').run(); results.push('created idx_regulatory_project'); } catch (e) { results.push(`index error: ${e}`); }
-    try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_regulatory_expiration ON regulatory_items(expiration_date)').run(); results.push('created idx_regulatory_expiration'); } catch (e) { results.push(`index error: ${e}`); }
-    try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_regulatory_status ON regulatory_items(status)').run(); results.push('created idx_regulatory_status'); } catch (e) { results.push(`index error: ${e}`); }
-    return json({ data: { version: 27, results } });
-  }
-  if (body.version === 28) {
-    const results: string[] = [];
-    try {
-      await env.DB.prepare(`
-        CREATE TABLE IF NOT EXISTS conference_submissions (
-          id TEXT PRIMARY KEY,
-          project_id TEXT,
-          conference TEXT NOT NULL,
-          conference_date TEXT,
-          submission_type TEXT NOT NULL,
-          title TEXT NOT NULL,
-          authors TEXT,
-          abstract_due TEXT,
-          abstract_submitted_at TEXT,
-          accepted_at TEXT,
-          presentation_type TEXT,
-          materials_status TEXT DEFAULT 'not_started',
-          travel_booked INTEGER DEFAULT 0,
-          notes TEXT,
-          status TEXT DEFAULT 'planning',
-          created_at TEXT DEFAULT (datetime('now'))
-        )
-      `).run();
-      results.push('created conference_submissions');
-    } catch (e) { results.push(`conference_submissions: ${e}`); }
-    try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_conf_sub_project ON conference_submissions(project_id)').run(); results.push('created idx_conf_sub_project'); } catch (e) { results.push(`index error: ${e}`); }
-    try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_conf_sub_conference ON conference_submissions(conference)').run(); results.push('created idx_conf_sub_conference'); } catch (e) { results.push(`index error: ${e}`); }
-    try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_conf_sub_status ON conference_submissions(status)').run(); results.push('created idx_conf_sub_status'); } catch (e) { results.push(`index error: ${e}`); }
-    return json({ data: { version: 28, results } });
-  }
-  if (body.version === 29) {
-    const results: string[] = [];
-    try {
-      await env.DB.prepare(`
-        CREATE TABLE IF NOT EXISTS grant_milestones (
-          id TEXT PRIMARY KEY,
-          grant_id TEXT NOT NULL,
-          milestone_type TEXT NOT NULL,
-          title TEXT NOT NULL,
-          due_date TEXT,
-          completed_at TEXT,
-          status TEXT DEFAULT 'upcoming',
-          notes TEXT,
-          created_at TEXT DEFAULT (datetime('now'))
-        )
-      `).run();
-      results.push('created grant_milestones');
-    } catch (e) { results.push(`grant_milestones: ${e}`); }
-    try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_grant_milestones_grant ON grant_milestones(grant_id)').run(); results.push('created idx_grant_milestones_grant'); } catch (e) { results.push(`index error: ${e}`); }
-    try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_grant_milestones_due ON grant_milestones(due_date)').run(); results.push('created idx_grant_milestones_due'); } catch (e) { results.push(`index error: ${e}`); }
-    try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_grant_milestones_status ON grant_milestones(status)').run(); results.push('created idx_grant_milestones_status'); } catch (e) { results.push(`index error: ${e}`); }
-    return json({ data: { version: 29, results } });
-  }
-  if (body.version === 30) {
-    const results: string[] = [];
-    try {
-      await env.DB.prepare(`
-        CREATE TABLE IF NOT EXISTS pb_sessions (
-          id TEXT PRIMARY KEY,
-          started_at TEXT NOT NULL,
-          ended_at TEXT,
-          machine TEXT,
-          project_name TEXT,
-          summary TEXT,
-          actions_count INTEGER DEFAULT 0,
-          commits_count INTEGER DEFAULT 0,
-          duration_minutes INTEGER,
-          created_at TEXT DEFAULT (datetime('now'))
-        )
-      `).run();
-      results.push('created pb_sessions');
-    } catch (e) { results.push(`pb_sessions: ${e}`); }
-    try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_pb_sessions_started ON pb_sessions(started_at)').run(); results.push('created idx_pb_sessions_started'); } catch (e) { results.push(`index error: ${e}`); }
-    try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_pb_sessions_project ON pb_sessions(project_name)').run(); results.push('created idx_pb_sessions_project'); } catch (e) { results.push(`index error: ${e}`); }
-    return json({ data: { version: 30, results } });
-  }
-  if (body.version === 31) {
-    const results: string[] = [];
-    try { await env.DB.prepare("ALTER TABLE daily_plans ADD COLUMN evening_task_ids TEXT").run(); results.push('added evening_task_ids'); } catch { results.push('evening_task_ids already exists'); }
-    return json({ data: { version: 31, results } });
-  }
-  if (body.version === 32) {
-    const results: string[] = [];
-    try { await env.DB.prepare("ALTER TABLE paper_project_links ADD COLUMN link_type TEXT DEFAULT 'output'").run(); results.push('added link_type'); } catch { results.push('link_type already exists'); }
-    return json({ data: { version: 32, results } });
-  }
-  if (body.version === 33) {
-    const results: string[] = [];
-    try { await env.DB.prepare('ALTER TABLE tasks ADD COLUMN acknowledged_at TEXT').run(); results.push('added acknowledged_at'); } catch { results.push('acknowledged_at already exists'); }
-    try { await env.DB.prepare('ALTER TABLE tasks ADD COLUMN acknowledged_by TEXT').run(); results.push('added acknowledged_by'); } catch { results.push('acknowledged_by already exists'); }
-    return json({ data: { version: 33, results } });
-  }
-  if (body.version === 34) {
-    const results: string[] = [];
-    try { await env.DB.prepare('ALTER TABLE tasks ADD COLUMN watchers TEXT').run(); results.push('added watchers'); } catch { results.push('watchers already exists'); }
-    try { await env.DB.prepare('ALTER TABLE tasks ADD COLUMN reminder_days INTEGER').run(); results.push('added reminder_days'); } catch { results.push('reminder_days already exists'); }
-    try { await env.DB.prepare('ALTER TABLE tasks ADD COLUMN instructions TEXT').run(); results.push('added instructions'); } catch { results.push('instructions already exists'); }
-    try {
-      await env.DB.prepare(`
-        CREATE TABLE IF NOT EXISTS task_files (
-          id TEXT PRIMARY KEY,
-          task_id TEXT NOT NULL,
-          filename TEXT NOT NULL,
-          url TEXT NOT NULL,
-          file_type TEXT DEFAULT 'link',
-          uploaded_by TEXT,
-          created_at TEXT DEFAULT (datetime('now')),
-          FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE
-        )
-      `).run();
-      results.push('created task_files');
-    } catch (e) { results.push(`task_files: ${e}`); }
-    try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_task_files_task ON task_files(task_id)').run(); results.push('created index'); } catch (e) { results.push(`index: ${e}`); }
-    return json({ data: { version: 34, results } });
-  }
-  if (body.version === 35) {
-    const results: string[] = [];
-    try { await env.DB.prepare('ALTER TABLE tasks ADD COLUMN recurrence TEXT').run(); results.push('added recurrence'); } catch { results.push('recurrence already exists'); }
-    try { await env.DB.prepare('ALTER TABLE tasks ADD COLUMN recurrence_parent_id TEXT').run(); results.push('added recurrence_parent_id'); } catch { results.push('recurrence_parent_id already exists'); }
-    return json({ data: { version: 35, results } });
-  }
-  if (body.version === 36) {
-    const results: string[] = [];
-    try {
-      await env.DB.prepare(`
-        CREATE TABLE IF NOT EXISTS task_updates (
-          id TEXT PRIMARY KEY,
-          task_id TEXT NOT NULL,
-          author_slug TEXT NOT NULL,
-          content TEXT NOT NULL,
-          update_type TEXT DEFAULT 'progress',
-          created_at TEXT DEFAULT (datetime('now')),
-          FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE
-        )
-      `).run();
-      results.push('created task_updates');
-    } catch (e) { results.push(`task_updates: ${e}`); }
-    try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_task_updates_task ON task_updates(task_id)').run(); results.push('created task index'); } catch (e) { results.push(`task index: ${e}`); }
-    try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_task_updates_created ON task_updates(created_at)').run(); results.push('created created_at index'); } catch (e) { results.push(`created_at index: ${e}`); }
-    return json({ data: { version: 36, results } });
-  }
-  if (body.version === 38) {
-    const results: string[] = [];
-    try {
-      await env.DB.prepare(`
-        CREATE TABLE IF NOT EXISTS project_documents (
-          id TEXT PRIMARY KEY,
-          project_id TEXT NOT NULL,
-          title TEXT NOT NULL,
-          url TEXT NOT NULL,
-          doc_type TEXT DEFAULT 'link',
-          created_at TEXT DEFAULT (datetime('now')),
-          created_by TEXT,
-          FOREIGN KEY (project_id) REFERENCES projects(id)
-        )
-      `).run();
-      results.push('created project_documents');
-    } catch (e) { results.push(`project_documents: ${e}`); }
-    try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_project_documents_project ON project_documents(project_id)').run(); results.push('created project index'); } catch (e) { results.push(`project index: ${e}`); }
-    return json({ data: { version: 38, results } });
-  }
-  if (body.version === 41) {
-    const results: string[] = [];
-    try { await env.DB.prepare('ALTER TABLE team_members ADD COLUMN full_name TEXT').run(); results.push('added full_name'); } catch { results.push('full_name already exists'); }
-    try { await env.DB.prepare('ALTER TABLE team_members ADD COLUMN preferred_name TEXT').run(); results.push('added preferred_name'); } catch { results.push('preferred_name already exists'); }
-    return json({ data: { version: 41, results } });
-  }
-  if (body.version === 42) {
-    const results: string[] = [];
-    for (const col of ['key_link_1', 'key_link_1_desc', 'key_link_2', 'key_link_2_desc', 'key_link_3', 'key_link_3_desc']) {
-      try { await env.DB.prepare(`ALTER TABLE projects ADD COLUMN ${col} TEXT`).run(); results.push(`added ${col}`); } catch { results.push(`${col} already exists`); }
-    }
-    return json({ data: { version: 42, results } });
-  }
-  if (body.version === 43) {
-    const results: string[] = [];
-    try { await env.DB.prepare('ALTER TABLE team_members ADD COLUMN email TEXT').run(); results.push('added email'); } catch { results.push('email already exists'); }
-    try {
-      const r = await env.DB.prepare("UPDATE team_members SET email = slug || '@umn.edu' WHERE email IS NULL AND slug IS NOT NULL").run();
-      results.push(`backfilled ${r.meta?.changes ?? 0} rows`);
-    } catch (e) { results.push(`backfill: ${e}`); }
-    return json({ data: { version: 43, results } });
-  }
-  if (body.version === 44) {
-    const results: string[] = [];
-    try {
-      const r = await env.DB.prepare(
-        "INSERT OR IGNORE INTO lab_settings (key, value, updated_at) VALUES ('pi_emails', ?, datetime('now'))"
-      ).bind('["ningraha@umn.edu","sandb029@umn.edu","nicholas.ingraham@gmail.com"]').run();
-      results.push(`pi_emails seeded (changes=${r.meta?.changes ?? 0})`);
-    } catch (e) { results.push(`pi_emails: ${e}`); }
-    return json({ data: { version: 44, results } });
-  }
-  if (body.version === 45) {
-    // v45 (2026-04-19): projects.deleted_at for soft-delete parity with tasks.
-    // Enables Hub project delete -> brain.db mirror via /api/projects/deleted-since.
-    const results: string[] = [];
-    try { await env.DB.prepare('ALTER TABLE projects ADD COLUMN deleted_at TEXT').run(); results.push('added projects.deleted_at'); } catch { results.push('projects.deleted_at already exists'); }
-    try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_projects_deleted_at ON projects(deleted_at) WHERE deleted_at IS NOT NULL').run(); results.push('created idx_projects_deleted_at'); } catch (e) { results.push(`idx_projects_deleted_at: ${e}`); }
-    return json({ data: { version: 45, results } });
-  }
-  return error(`Unknown migration version: ${body.version}`, 400);
-});
 
-app.post('/api/test-cleanup', async (c) => {
-  const env = E(c);
-  const prefixes = ['INSPECTION', 'DAILYTEST', 'EDGE', 'SYNC-', 'SYNCTEST', 'JOURNEY', 'KEYLINK TEST', 'AUDIT TEST', 'AUDIT-TEST', 'TIMEZONE-PROBE', 'DUE-DATE-PROBE', 'WORKFLOW-TEST', 'QA ', 'TEST-'];
-  const likeClause = prefixes.map(() => 'content LIKE ?').join(' OR ');
-  const titleLikeClause = prefixes.map(() => 'title LIKE ?').join(' OR ');
-  const questionLikeClause = prefixes.map(() => 'question LIKE ?').join(' OR ');
-  const bodyLikeClause = prefixes.map(() => 'body LIKE ?').join(' OR ');
-  const topicLikeClause = prefixes.map(() => 'topic LIKE ?').join(' OR ');
-  const wildcardPrefixes = prefixes.map(p => `${p}%`);
-  const results: Record<string, number> = {};
-  const tables = [
-    { name: 'project_updates', col: 'content', clause: likeClause },
-    { name: 'ideas', col: 'title', clause: titleLikeClause },
-    { name: 'lab_questions', col: 'question', clause: questionLikeClause },
-    { name: 'hub_decisions', col: 'title', clause: titleLikeClause },
-    { name: 'notifications', col: 'body', clause: bodyLikeClause },
-    { name: 'expertise_tags', col: 'topic', clause: topicLikeClause },
-  ];
-  for (const { name, clause } of tables) {
-    try {
-      const r = await env.DB.prepare(`DELETE FROM ${name} WHERE ${clause}`).bind(...wildcardPrefixes).run();
-      results[name] = r.meta.changes ?? 0;
-    } catch { results[name] = -1; }
-  }
-  return json({ data: results });
-});
-
-// ─────────────────────────────────────────────────────────────────────────────
 // 404 fallback.
 // Hono's default 404 returns a text "404 Not Found" response — override so
 // clients get the same { error: "Not found" } JSON shape they got before.
@@ -1360,7 +1060,7 @@ export default {
               const dueLabel = item.due_date
                 ? `<span style="color:${overdue ? '#7a0019' : '#64748b'};font-size:12px;"> — ${overdue ? 'overdue' : 'due'} ${item.due_date}</span>`
                 : '';
-              itemsHtml += `<li style="margin-bottom:8px;font-size:14px;color:#0f1923;">${item.description.replace(/^\[Carried forward\]\s*/i, '')}${dueLabel}</li>`;
+              itemsHtml += `<li style="margin-bottom:8px;font-size:14px;color:#0f1923;">${escapeHtml(item.description.replace(/^\[Carried forward\]\s*/i, ''))}${dueLabel}</li>`;
             }
             itemsHtml += '</ul>';
           }
@@ -1368,10 +1068,10 @@ export default {
           if (futureNoteItems.length > 0) {
             itemsHtml += '<h3 style="color:#c9a84c;font-family:monospace;font-size:12px;text-transform:uppercase;letter-spacing:1px;margin-top:20px;border-left:3px solid #c9a84c;padding-left:8px;">Notes From Past You</h3>';
             for (const fn of futureNoteItems) {
-              const label = fn.mechanism ? `${fn.mechanism}: ${fn.title}` : fn.title;
+              const label = fn.mechanism ? `${escapeHtml(fn.mechanism)}: ${escapeHtml(fn.title)}` : escapeHtml(fn.title);
               itemsHtml += `<div style="margin:12px 0;padding:12px 14px;background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.15);border-left:3px solid #c9a84c;border-radius:8px;">`;
-              itemsHtml += `<p style="margin:0 0 4px;font-size:13px;font-weight:600;color:#0f1923;">${label} <span style="font-size:11px;font-weight:400;color:#64748b;">— due ${fn.target_date}</span></p>`;
-              itemsHtml += `<p style="margin:0;font-size:13px;color:#0f1923;font-style:italic;line-height:1.5;">${fn.future_note}</p>`;
+              itemsHtml += `<p style="margin:0 0 4px;font-size:13px;font-weight:600;color:#0f1923;">${label} <span style="font-size:11px;font-weight:400;color:#64748b;">— due ${escapeHtml(fn.target_date)}</span></p>`;
+              itemsHtml += `<p style="margin:0;font-size:13px;color:#0f1923;font-style:italic;line-height:1.5;">${escapeHtml(fn.future_note)}</p>`;
               itemsHtml += `</div>`;
             }
           }
@@ -1383,7 +1083,7 @@ export default {
           if (updates.length > 0) {
             itemsHtml += '<h3 style="color:#c9a84c;font-family:monospace;font-size:12px;text-transform:uppercase;letter-spacing:1px;margin-top:20px;">Team Activity</h3><ul style="padding-left:20px;">';
             for (const u of updates) {
-              itemsHtml += `<li style="margin-bottom:6px;font-size:13px;color:#2c3e50;">${u.author}: ${u.content.slice(0, 100)}${u.content.length > 100 ? '...' : ''}</li>`;
+              itemsHtml += `<li style="margin-bottom:6px;font-size:13px;color:#2c3e50;">${escapeHtml(u.author)}: ${escapeHtml(u.content.slice(0, 100))}${u.content.length > 100 ? '...' : ''}</li>`;
             }
             itemsHtml += '</ul>';
           }
@@ -1393,7 +1093,7 @@ export default {
 <html>
 <body style="font-family:'DM Sans',Helvetica,Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;background:#faf8f3;">
   <div style="border-bottom:2px solid #c9a84c;padding-bottom:12px;margin-bottom:20px;">
-    <h1 style="font-family:Georgia,serif;font-size:22px;color:#0f1923;margin:0;">Good morning, ${firstName}</h1>
+    <h1 style="font-family:Georgia,serif;font-size:22px;color:#0f1923;margin:0;">Good morning, ${escapeHtml(firstName)}</h1>
     <p style="font-size:13px;color:#64748b;margin:4px 0 0;">${today}</p>
   </div>
   ${itemsHtml}
