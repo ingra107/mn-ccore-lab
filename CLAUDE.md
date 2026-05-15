@@ -1,74 +1,20 @@
 # MN-CCORE Lab Hub -- Claude Operating Guide
 
-## 🚨 First read on every session — in this order
+## First read on every session — in this order
 
 Before writing any code or answering any question about this project, read:
 
-1. **`SESSION-HANDOFF.md`** — current gate state, what-to-do-first, git HEADs, gotchas. One-page. Always. ⚠ **If the session starts in AUTO MODE or AUDIT MODE, that file's top section is the prescriptive ticket queue. Execute it in order without re-triaging.**
-2. **`audit/2026-04-28/README.md`** — IF working on the multi-agent audit (default for sessions without a specific focus). 12 page audits + synthesized plan + ~364 findings. ⚠ **MANDATORY: read `audit/2026-04-28/VERIFICATION-PROTOCOL.md` before fixing any finding.**
-3. **`PROJECT.md`** — frontmatter has canonical `next_action` + `primary_folder`.
-4. **`LAUNCH-CHECKLIST.md`** — historical record of launch prerequisites + verification runbook. All prereqs shipped 2026-04-21; re-read if revisiting auth config, CF Access policies, or digest email setup.
-5. **`REFERENCE.md`** — API endpoints + D1 table list when you need one.
-6. **`CHANGELOG.md`** — top entry = most recent phase; jump here when asked "what changed."
-7. **`docs/OBSERVABILITY.md`** — `/api/health` runbook.
+1. **`SESSION-HANDOFF.md`** — current gate state, what-to-do-first, git HEADs, gotchas. One-page. Always. If the session starts in AUTO MODE or AUDIT MODE, that file's top section is the prescriptive ticket queue. Execute it in order without re-triaging.
+2. **`PROJECT.md`** — frontmatter has canonical `next_action` + `primary_folder`.
+3. **`REFERENCE.md`** — API endpoints + D1 table list when you need one.
+4. **`CHANGELOG.md`** — top entry = most recent phase; jump here when asked "what changed."
+5. **`docs/OBSERVABILITY.md`** — `/api/health` runbook.
 
-These plus this file are authoritative. Historical material lives
-in `docs/archived/` (and PB-side `Projects/mn-ccore-lab-hub/_archived/`) —
-safe to ignore unless explicitly spelunking history.
-
-## 🔬 Audit-mode protocol (active 2026-04-28 onward)
-
-A multi-agent audit covering 12 portal pages landed 2026-04-28. ~364 findings (22 P0, 109 P1). The audit is the default workplan for sessions without a specific focus.
-
-**Audit directory** (`audit/2026-04-28/`, git-tracked):
-- `README.md` — entry point + workflow
-- `VERIFICATION-PROTOCOL.md` — **mandatory before any fix** (6-step verification protocol)
-- `synthesis-plan.md` — prioritized phase plan (P0 batch → A → B → C, ~10-12 weeks)
-- `progress-log.md` — append-only session log
-- `findings-index.md` — quick lookup of all 364 findings by ID + severity + theme
-- `reports/01-12.md` — raw agent output for each page (≥1500 words each)
-
-**The cardinal rule**: VERIFY a finding still exists before fixing it. The audit is dated; the codebase changes daily. Some findings are already fixed; some have moved; some agents may have looked at the wrong file. Verify first, fix second.
-
-**Ask Nick (do not guess) when**:
-- File:line citation no longer matches and content search returns nothing
-- Schema change or feature deletion required
-- Auth / billing / data-write changes
-- Open question from `synthesis-plan.md` § "Top Open Questions for Nick" applies
-- Phase A cross-cutting sweep (12+ sites at once — bundle vs split is Nick's call)
-
-**Update protocol**: every fixed (or verified-already-fixed) finding requires an entry in `audit/2026-04-28/progress-log.md` with verification evidence. Commits should reference the finding ID (e.g., `fix(today): wire SmartCompose on morning thought (TP-01)`).
-
-**Resumable agents**: each report has an `agentId`. Use `SendMessage(to: '<id>', prompt: '...')` to drill deeper without re-spawning a full audit.
-
-## Current state (2026-04-28 late, post-audit)
-
-- **AUDIT WAVE 1-4 SHIPPED + DEPLOYED (2026-04-28).** 11 PRs merged (#55-#65), schema v54 applied to prod, Pages deploy live at `86c3445e.mn-ccore-lab.pages.dev`. **Current HEAD: `46e820b3` on main.** ~100 P0+P1 audit findings closed (~62% of 161 verified). Bundle roll-up: A (P0 quick wins), D (brand sweep), B (Lab Overview wires), G (citations infra + schema v54), H (UnifiedMyTasks rebuild — TaskDrawer.tsx DELETED, replaced with TaskDetailPanel composition), F (ProjectDetail polish), C (SmartCompose universal — 9 sites), O (SearchPage UX foundations), M (InsightsPage feature pass), R (TodayPage Tier-1), N (Manuscripts polish). See `audit/2026-04-28/progress-log.md` for per-finding evidence and `audit/2026-04-28/synthesis-plan.md` for remaining backlog (~60 P1/P2 across TodayPage Tier-2, ProfilePage, AskTheLab, Personal merge, Calendar tier-1, Lab Overview tier-2, plus 6 cross-repo schema migrations queued).
-- **Phase 39 shipped (2026-04-28 morning).** 4 PRs merged + deployed. (1) PR #49 closed GH #46 / #47 — Today plan persistence on refresh + Today-completion-syncs-to-/tasks; (2) PR #50 shipped iCal calendar feeds (closed GH #45) with full RFC 5545 parser at `api/lib/ics-parser.ts` (RRULE expansion, IANA TZID via Intl.DateTimeFormat, STATUS=CANCELLED + PARTSTAT=DECLINED filters, meeting URL extraction, 24 vitest tests at `npm run test:api`); (3) PR #51 shipped auto-create + claim of team_members on first CF Access login (schema v53 `auto_created` flag, yellow PENDING REVIEW badge, claim flow via `EMAIL_PREFIX_TO_SLUG` LUT — `mesfin` claims `nate-mesfin` row); (4) PR #52 shipped `/portal/profile` page with inline-on-blur self-edit + embedded calendar feeds, plus auth lockdown on `PUT /api/team/:slug` (owner-or-PI; role/member_type PI-only), plus `CalendarFeedsPanel` extracted to shared component. Closed GH #48 (CF Access account picker) via swap from preset Google IdP to Generic OIDC `Google UMN` with `prompt=select_account&hd=umn.edu`. Schemas v52 + v53 applied to prod. **Open follow-up**: existing Google IdP preset in CF still attached to Access app as fallback — remove after confirming `Google UMN` works for a few days.
-- **🎉 LIVE FOR THE TEAM as of 2026-04-21.** CF Access gates `mn-ccore-lab.pages.dev/portal/*` with policies `UMN Team` (@umn.edu), `Nick Only` (nicholas.ingraham@gmail.com), `Audit Service Token`. As of Phase 39 (2026-04-28), the Google IdP is now Generic OIDC `Google UMN` (not the preset Google) — see Rule 65. All 4 server secrets set. JWT signature verification active. Client-side `VITE_REQUIRE_AUTH=1` in `.env.production`. See CHANGELOG.md Phase 37.
-- **GH bug sweep + Overview refocus + Slack-parity (2026-04-23 late evening).** 7 bugs closed (#26-#27, #29-#33), 5 deploy rounds, 30+ commits. Highlights: (1) **Revisions** project-stage (cross-repo w/ brain.db, 8 canonical values, blue-purple `#5b4fa8`); (2) **ProjectDetail Overview refocus** — killed Project Timeline, new 2-col landing card (Open Tasks left always visible + `+ Add task`, Key Links + Recent Activity right, Quick compose bottom); (3) **Notes/Comments restructure** — Overview | Tasks | Notes | Comments | Files | Activity | Revisions | Literature (8 tabs, matches TaskDetailPanel shape); (4) **MyTasks TodayHero** — 2-col Overdue | Due Today above Focus Next; (5) **CreateTaskModal + GlobalQuickAdd** default assignee via `emailToSlug(user.email)`, plain `<select>` → `InlineAssigneePicker`; (6) **Legacy-slug root-cause fix** — `hub_payload.py` canonicalizes assignee on outbound sync (brain.db 532 `nick` → `nick-ingraham`), Hub read-side bandaid reverted; (7) **Unified search 14 entity types** (was 6) — notes / task-notes / task-comments / decisions / files / action-items / publications / grants added; (8) **Files tab** on ProjectDetail (`FileUpload` reused at `entity_type='project'`); (9) **Live presence** — `usePresence()` hook broadcasts 15s pings on hub-realtime `mnccore` WS room, `<PresenceAvatars>` avatar stack + green live dot wired into ProjectDetail header.
-- **Whole-hub /simplify sweep (2026-04-23 evening).** Two parallel agents merged into main: **-5,353 lines net, 22 files deleted, 24 commits**. Pruned 17 unused mutation hooks + 18 `lib/api.ts` fetch helpers + 22 dead components (all 0-caller verified). Perf: AuthContext + UndoToast context memo, `env.DB.batch()` @mention inserts, `/api/digest?with_relevance=true` N+1 fix (20→1), cached `isProductionVisible` localStorage read. Dropped `tailwindcss-motion` + `@tiptap/extension-mention`. Build + inspection 149/2/0 green.
-- **Audit r7 + GH-issue sweep (2026-04-23).** Massive-audit B-visual contrast **37 → 0 violations** across 204 page×viewport×theme combos (six iteration rounds). Closed 14 in-app GH bug reports (#8, #10, #14-22, #23, #24, #25). New CSS tokens: `--stage-fill-*` family (theme-agnostic dark fills), `--gold-on-emphasis` (gold text on gold pills). `--ink-hint` light bumped 0.62→0.68. Transform-only mount animations across `animations.ts`, `.fade-in-up`, PageTooltip, Deadlines/MenteeMilestones/DeadlineCascadePage. Bulk reassigned 602 tasks → `nick-ingraham`. CLIFMap rewritten as regional card grid. Rule 16 superseded (TaskGridView minHeight removed).
-- **Phase 37 shipped — portal URL migration.** All gated routes (28 as of 2026-04-27 with `/portal/insights` added) now live under `/portal/*`. `src/constants/paths.ts` + `tests/helpers/paths.ts` are single source of truth. Legacy root paths redirect via `<Navigate>` shims.
-- **Round-2 design shipped + schema-drift CI now useful.** Claude Design's round-2 review (43 tickets) shipped across three deploys (`ff7b766a` → `36e0ca34` → `cfc00ab0`). Schema-drift CI reconciled via v48 (27 indexes) + v49 (13 tables + 2 unique indexes + 9 columns).
-- **Phase 36d shipped.** Design sprint — 12 reusable brand primitives + cinematic Pulse Kiosk rewrite + per-route OG share cards + capture infrastructure for Claude Design. Plus Phase 36c audit fixes, Phase 36b slug rename, Phase 36 consultant close-out.
-- **Quality gate: 🟢 GREEN.** Massive-audit B-visual 204/204 PASS / 0 BUGS (r7), inspection 149/149 post-simplify (was 213 pre-simplify — drop reflects deleted features wired into tests, not regressions), deep-audit 14/14 (0 bugs), axe 29 pages × 2 schemes (0 findings), mobile smoke 2/2, desktop journey 1/1, `/api/health` ~74ms.
-- **Team slugs:** all 19 members use `preferred_name-last_name` format (`nick-ingraham`, `emma-bromley`, ...). `actorSlug(email)` in `api/helpers.ts` maps email prefix → canonical slug via `EMAIL_PREFIX_TO_SLUG`. Adding a new team member = D1 row + team.ts entry + LUT entry. All 602 tasks currently assigned to `nick-ingraham` (r7 bulk reassign).
-- **Routing:** all gated routes under `/portal/*` (Phase 37). `/portal/team/:slug` keeps logged-in users in portal chrome; `/team/:slug` stays for the public marketing site. Sidebar avatar routes to `/portal/my-items` (workspace) not team profile. Use `PATHS` constant from `src/constants/paths.ts` in any new internal nav.
-- **Brand primitives** live in `src/components/` — use them instead of rolling your own: `HeartbeatLine` / `HeartbeatDivider` (the lab's ECG motif), `HermesMark` (AI assistant avatar, replaces lucide Sparkles), `CategoryIcon` (lungs/flask/heartbeat/cap for CLIF/Lab/Nate/Mentee), `EmptyStateArt` (8 illustrations), `PhaseReleaseBanner` (what-shipped card), `RequireAuth` (sign-in splash).
-- **Claude Design round-5 execution (2026-04-23 night).** 49 tickets from CD round-5 handoff; shipped ~28 across 2 deploys. Batch 1 `ab8ba90`: raw `<select>` codemod (36 sites / 22 files → InlineSelect/InlineAssigneePicker) + T-02/T-03/T-12 search chips/T-13+T-14 presence extend (TaskDetailPanel + MeetingDetail)/T-30 greeting shrink/T-35 AskHermes coach/T-41 QuickAdd viewport clamp/T-42 Cmd+K metadata/T-44+T-45 empty states actionable/T-46 Customize Done. Batch 2 `a034e47`: T-11 MyTasks Stale filter/T-21 Decisions chip hide <15/T-22 Activity sticky day headers/T-36 Transcripts collapsible how-it-works/T-39 NateLab reorder. T-38 verified false alarm (grouped-sort artifact). T-49 verified intentional prior removal (Pixel 5 + iOS Safari conflict).
-- **CD round-5 batches 3-4 (2026-04-23 night, later).** Restored mobile swipe-to-dismiss on TaskDetailPanel via framer-motion drag (fixes Pixel 5 inert-drag + iOS Safari edge-guard). T-18 ProjectDetail header pills inline-editable (category InlineSelect + PI InlineAssigneePicker). T-31 Personal TodayHero band (Overdue | Due Today). T-04 extended: inline file drop (paperclip + drag-drop + paste-image) now on all 3 compose surfaces (Project / Task / Meeting) via presigned-R2 flow. T-37 My Items NotificationCard type-coded left-border accent (mention=gold / assignment=teal / deadline=maroon). T-10 "+N more" on MyTasks TodayHero scrolls to main list after applying filter.
-- **Phase 38 — Today B2 + MyTasks Round 2 (2026-04-24/25, SHIPPED + DEPLOYED).** New CD design pass ported and closure-shipped. `/portal/dashboard` now renders `TodayPage.tsx` (operating-day surface — pill strip / Right Now hero / timeline / 5 task groups / right rail). Old card-grid Dashboard moved to `/portal/overview` as Lab Overview. `/portal/my-tasks` replaced by `UnifiedMyTasks.tsx` (3-view: Columns / Lanes / List, shared toolbar, `localStorage.mt_view` persistence); legacy MyTasks preserved at `/portal/my-tasks-legacy` for one-sprint safety net. New `GET /api/tasks/:id/detail` endpoint fans out `{why, updates, subtasks, blocks}` for the drawer; `useTaskDetail` hook wires both drawers to real activity log + task_updates + task_subtasks. New rules 57-62 capture the TODAY.md mental model.
-- **Phase 38 closure (`cf285b6`, 2026-04-25).** Bulk actions wired (no stubs) — Plan today / Snooze +1d / Status / Reassign / Priority / ✓ Complete / Archive — real `useBulkUpdateTasks` mutations + UndoToast. Right Now auto-promotes on first load. PB group bucketing broadened (source / title / project category / project slug). Mobile: Today B2 collapses 2-col → single column at ≤1024w; MyTasks Columns gets visible scrollbar + right-edge fade gradient. **`SmartCompose` (new shared component)** replaces decorative compose toolbars — real `@` mention via MentionInput, real emoji picker (12 quick), real 📎 attach via R2 presigned URL flow → markdown link inserted at cursor, Cmd+Enter posts via `usePostTaskUpdate`. **DD-2 saved views** ported into UnifiedMyTasks via `<SavedViewsMenu page="my-tasks">` next to view picker; URL state round-trips through `useSearchParams`.
-- **Phase 38 verification + T-06 fix (`HEAD+1`, 2026-04-25 evening).** Round-5 deferred follow-ups verified — T-05 SmartCompose shipped (real handlers, not decorative). T-06 ReactionBar already flush-left under each note/comment with always-visible pills + always-visible muted `+` button (opacity 0.55 when no reactions); fix moves `+` to right end of row + opens picker leftward (`right-0` instead of `left-0`). UnifiedMyTasks drawer wiring confirmed: List view uses right-side drawer (CD spec), Columns + Lanes use inline expand (CD spec) — three views, three shapes intentionally.
-- **Current HEAD:** `10bcaef` on `main`. Phase 38 squash-merged as `4e6b86b` (PR #34) → closure `cf285b6` → session-close `10bcaef`.
-- **Current deploy:** `f77aded8.mn-ccore-lab.pages.dev` (Phase 38 era).
-- **Claude Design round-3 handoff packaged (2026-04-23 late evening).** Brief at `docs/design-briefs/2026-04-23-first-landing-utility.md`. Captures at `review/post-track-a-2026-04-23/` (174 PNGs + 30 WebM = 204 artifacts).
-- **CD design memory (Phase 38 source):** `review/handoff_today_my_tasks_2026.04.24/CLAUDE.md` carries the full Today B2 + MyTasks Round 2 mental model. Read it before touching either page.
+Historical material in `docs/archived/` — safe to ignore unless explicitly spelunking history. Detailed design reference in `docs/design-system.md`.
 
 ## Vision
 
-The MN-CCORE Lab Hub is the **team's operating surface** -- where research gets managed, meetings get run, and information flows between Nick's CLI system and every team member's browser.
+The MN-CCORE Lab Hub is the **team's operating surface** — where research gets managed, meetings get run, and information flows between Nick's CLI system and every team member's browser.
 
 ## Quick Reference
 
@@ -76,55 +22,44 @@ The MN-CCORE Lab Hub is the **team's operating surface** -- where research gets 
 |-------|-------|
 | Live site | mn-ccore-lab.pages.dev (LIVE — CF Access gated via @umn.edu policy on `/portal/*`) |
 | Repo | github.com/ingra107/mn-ccore-lab (720+ commits) |
-| Today landing | `/portal/dashboard` → `src/pages/portal/TodayPage.tsx` (Phase 38 — operating-day surface) |
-| Lab Overview | `/portal/overview` → `src/pages/Dashboard.tsx` (Phase 38 — was `/portal/dashboard`; weekly-planning card grid) |
-| MyTasks | `/portal/my-tasks` → `src/pages/portal/UnifiedMyTasks.tsx` (Phase 38 — 3 views, shared toolbar) |
-| MyTasks legacy | `/portal/my-tasks-legacy` → old `src/pages/portal/MyTasks.tsx` (one-sprint preserve) |
-| Current deploy | `7077314e.mn-ccore-lab.pages.dev` (Phase 37 era; Phase 38 on `feature/today-b2-mytasks-r2`, pending deploy) |
-| Quality gate | 🟢 GREEN — massive-audit B-visual 204/204 PASS / 0 BUGS (r7, pre-simplify), inspection 149/149 post-simplify, build clean, deep-audit 14/14, axe 29×2 = 0, mobile smoke 2/2, desktop journey 1/1. |
+| Today landing | `/portal/dashboard` → `src/pages/portal/TodayPage.tsx` |
+| Lab Overview | `/portal/overview` → `src/pages/Dashboard.tsx` |
+| MyTasks | `/portal/my-tasks` → `src/pages/portal/UnifiedMyTasks.tsx` (3 views, shared toolbar) |
 | Deploy | `cd /c/Users/ingra/mn-ccore-lab && npm run build && npx wrangler pages deploy dist --project-name mn-ccore-lab` |
-| Stack | React 19 + Vite 8 + Tailwind v4 + Framer Motion 12 + TypeScript + **Hono v4.12 (API router)** |
-| Testing | Playwright 1.59 (E2E, 213+ inspection + mobile smoke + desktop journey) + Vitest 4.1 (component, browser mode) |
-| Data | TanStack Query v5 + Cloudflare D1 (63 tables, ~229 endpoints via Hono) + Recharts -- ALL LIVE |
-| D1 database (prod) | `b8453e9b-7c5f-4029-b07d-dd89c05d00cf` (ENAM), binding: `DB`. 652 tasks, 71 projects, 19 team_members (schema v54). |
+| Stack | React 19 + Vite 8 + Tailwind v4 + Framer Motion 12 + TypeScript + Hono v4.12 |
+| Testing | Playwright 1.59 (568+ tests, 4 suites) + Vitest 4.1 (component, browser mode) |
+| Data | TanStack Query v5 + Cloudflare D1 (63 tables, ~229 endpoints via Hono) + Recharts |
+| D1 database (prod) | `b8453e9b-7c5f-4029-b07d-dd89c05d00cf` (ENAM), binding: `DB`. Schema v54. |
 | D1 database (test) | `a30fe84d-0891-4035-9358-f7813b5f5807` (mnccore-lab-test), binding: `DB_TEST` |
-| D1 tables | 63 (live count via `/api/health`; +user_calendar_feeds + user_calendar_events from Phase 39 v52) |
-| D1 schema versions applied to prod | v1-v44 + v45 (projects.deleted_at, Phase 36) + v46 (7 missing indexes, Phase 36c) + v47 (5 cols for Airtable funeral, 2026-04-20) + v48 (27-index reconcile, 2026-04-21) + v49 (13 tables + 2 unique indexes reconcile, 2026-04-21) + v50 (tasks.group_override, Phase 38, 2026-04-25) + **v51** (tasks.deadline allowlist, 2026-04-26) + **v52** (user_calendar_feeds + user_calendar_events, Phase 39, 2026-04-27) + **v53** (team_members.auto_created, Phase 39, 2026-04-28) + v54 (team_members.citation_count + h_index + last_scholar_refresh, Bundle G audit-wave, 2026-04-28). **PARALLEL FILENAME COLLISION (CX-N2 doc, 2026-04-28):** schema files `v51-seq-cursor.sql`, `v52-seq-trigger-fix.sql`, `v53-seq-trigger-include-self.sql` ALSO exist on disk under the same version numbers — they install/maintain the seq-cursor triggers PB sync depends on (Context/Decisions/2026-04-28-seq-cursor-on-d1.md in PB). Both tracks landed simultaneously. When reviewing v51/v52/v53 migration history, check BOTH filenames before assuming the listed feature is the only thing at that version. |
-| Schema drift CI | `.github/workflows/schema-drift.yml` — nightly 03 CT. Dumps prod sqlite_master, diffs against committed bundle. Guardrail against silent prod migrations. Requires `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` secrets. |
+| Schema drift CI | `.github/workflows/schema-drift.yml` — nightly 03 CT. Guardrail against silent prod migrations. |
 | Deploy mode | Manual via wrangler -- NO auto-deploy |
 | PB project | `Projects/mn-ccore-lab-hub/` -- PROJECT.md, living plan, future ideas |
-| Reference | `REFERENCE.md` in this repo -- D1 tables, API endpoints, key files, feature list |
 
 ## Design System
 
 ### Design Ethos: Operational, Not Editorial (Decision: 2026-04-01)
 
-The Hub is a **research operations center**, not a magazine. Every design choice prioritizes usability and data clarity over decoration. Read `Context/Decisions/2026-04-01_hub-design-ethos-pivot.md` (PB repo) for full rationale.
+The Hub is a **research operations center**, not a magazine. Full rationale: `Context/Decisions/2026-04-01_hub-design-ethos-pivot.md` (PB repo). Detailed design reference in `docs/design-system.md`.
 
 **Core principles (NEVER violate):**
-1. **Dark-first design.** Dark bg is deep neutral (#0b1017), NOT blue-tinted. Text is #e2e8f0 (not pure white — less glare). Light mode secondary.
-2. **Columnar tables, not card stacks.** Data pages use fixed-column tables with headers (Title|Assignee|Due|Status|Priority). Cards are for dashboards only. Fixed row height for vertical scanning.
-3. **Inline editability with visible affordance.** Every editable field shows "▾" dropdown indicator. Click cell → dropdown/picker by type. Auto-save on blur. No explicit save button. Dropdowns with 5+ options show typeahead filter input + arrow key navigation (Airtable pattern). (Research: Pattern 4)
-4. **Typography: 3-tier weight, 5-tier opacity.** Weights: `--weight-body` (400, reading), `--weight-ui` (500, interactive/nav/badges), `--weight-heading` (600, titles/emphasis), `--weight-metric` (700, dashboard numbers only). Opacity: `--ink-primary` (1.0), `--ink-muted` (0.7), `--ink-label` (0.55), `--ink-hint` (0.4), `--ink-disabled` (0.3). NEVER opacity below 0.3 on readable dark-mode text.
-5. **One accent color per view.** Teal for interactive. Everything else neutral. Max 2 non-neutral colors per view.
-6. **More info, more readable.** Density ≠ clutter. LabSync puts 20 sidebar items that are MORE readable than our 17. The secret: font-weight 400, grouped sections with rhythm, consistent icon opacity.
+1. **Dark-first design.** Dark bg is deep neutral (#0b1017), NOT blue-tinted. Text is #e2e8f0. Light mode secondary.
+2. **Columnar tables, not card stacks.** Data pages use fixed-column tables (Title|Assignee|Due|Status|Priority). Cards are for dashboards only. Fixed row height for vertical scanning.
+3. **Inline editability with visible affordance.** Every editable field shows "▾" indicator. Click cell → dropdown/picker by type. Auto-save on blur. No explicit save button.
+4. **Typography: 3-tier weight, 5-tier opacity.** Weights: `--weight-body` (400), `--weight-ui` (500), `--weight-heading` (600), `--weight-metric` (700). Opacity: `--ink-primary` (1.0), `--ink-muted` (0.7), `--ink-label` (0.55), `--ink-hint` (0.4), `--ink-disabled` (0.3). NEVER opacity below 0.3 on readable dark-mode text.
+5. **One accent color per view.** Teal for interactive. Max 2 non-neutral colors per view.
+6. **More info, more readable.** Density is not clutter. The secret: font-weight 400, grouped sections with rhythm, consistent icon opacity.
 7. **Zero monospace in content.** JetBrains Mono for `<kbd>` only. ALL other text is DM Sans.
-8. **Optimistic UI + undo.** State changes are instant. Undo toast for 5 seconds. Never show spinners for actions. (Research: Pattern 9)
-9. **Click targets must be precise.** Clicking a task row opens detail panel. ONLY clicking the status circle changes status. Hover actions hidden until hover (pointer-events:none at opacity:0).
+8. **Optimistic UI + undo.** State changes are instant. Undo toast for 5 seconds. Never show spinners for actions.
+9. **Click targets must be precise.** Clicking a task row opens detail panel. ONLY clicking the status circle changes status. Hover actions hidden until hover.
 
 ### Fonts
-- **Portal titles:** DM Sans (clean, operational)
-- **Public website titles:** Fraunces (editorial, brand voice)
-- **Body text:** DM Sans everywhere
-- **Code only:** JetBrains Mono
-- **CSS:** `--font-sans` and `--font-body` both resolve to DM Sans. `--font-display` = Fraunces (public pages only).
+- **Portal/body:** DM Sans everywhere. `--font-sans` and `--font-body` both resolve to DM Sans.
+- **Public website titles:** Fraunces. `--font-display` = Fraunces (public pages only).
+- **Code only:** JetBrains Mono.
 
 ### Palette (Phase 35 hex-pinned, 2026-04-18 axe AA)
 
-All text-carrying color tokens are **literal sRGB hex**, not OKLCH.
-axe-core 4.11's OKLCH parser resolves to darker sRGB than Chromium renders,
-which failed contrast even when the visual rendering was fine. Hex stays.
-OKLCH remains only on pure-bg tokens (`--cream`, `--ice`, `--gold-light`).
+All text-carrying color tokens are **literal sRGB hex**, not OKLCH. (axe-core 4.11's OKLCH parser resolves to darker sRGB than Chromium renders.) OKLCH remains only on pure-bg tokens (`--cream`, `--ice`, `--gold-light`).
 
 | Token | Light | Dark |
 |-------|-------|------|
@@ -146,139 +81,46 @@ OKLCH remains only on pure-bg tokens (`--cream`, `--ice`, `--gold-light`).
 | `--stage-fill-published` | `#066e2f` (both) | — |
 | `--gold-on-emphasis` | `#5a4518` | `#dcb355` |
 
-- `--teal-solid` + `--maroon-solid` are for solid button/badge bg where
-  white text sits on top (6-7:1 with #fff). Separate token from `--teal`
-  because a button bg has opposite contrast needs than same-color text.
-- `--stage-fill-*` tokens are for ANY bar/pill/button fill where white
-  text sits on top and the color should not flip between themes.
-  `--slate`/`--teal`/`--gold` flip to LIGHT dark-mode variants where
-  `#fff` text fails ~2:1. r7 2026-04-22.
-- `--gold-on-emphasis` — gold text on `--gold-emphasis` pill. `--gold`
-  light (`#6b5420`) on `#efebdf` = 4.25:1 fail; pinned to darker `#5a4518`
-  (5.8:1). Used on streak badges etc. r7 2026-04-22.
-- Sidebar-bg: `color-mix(in oklch, var(--cream), black 12%)` — pulse bg:
-  `var(--ink)` (inverts between modes).
-- Category dots: 6px, 0.7 opacity — maroon=CLIF, teal=Lab, gold=Mesfin
+- `--teal-solid` + `--maroon-solid`: solid button/badge bg where white text sits on top (6-7:1 with #fff). Separate token from `--teal` because button bg has opposite contrast needs from same-color text.
+- `--stage-fill-*`: for ANY bar/pill/button fill where white text sits on top — these never flip between themes. `--slate`/`--teal`/`--gold` flip to light dark-mode variants where `#fff` text fails ~2:1.
+- `--gold-on-emphasis`: gold text on `--gold-emphasis` pill. `--gold` light on `#efebdf` = 4.25:1 fail; pinned to `#5a4518` (5.8:1).
+- Sidebar-bg: `color-mix(in oklch, var(--cream), black 12%)`. Category dots: 6px, 0.7 opacity — maroon=CLIF, teal=Lab, gold=Mesfin.
 
-### Opacity policy (dark mode AA on near-black bg)
+### Opacity policy (dark mode AA)
 
-Inline `opacity: 0.30-0.55` on slate/teal/maroon/gold text fails AA with
-our hex-pinned colors. Codemod run 2026-04-18 bumped 640+ sites to 0.85.
-Use 0.85 as the floor for secondary text; reserve 0.55-0.70 for decorative
-(borders, inactive dots). Never go below 0.30 on readable text.
+`opacity: 0.30-0.55` on slate/teal/maroon/gold text fails AA. Codemod 2026-04-18 bumped 640+ sites to 0.85. Use **0.85 as the floor** for secondary text; reserve 0.55-0.70 for decorative (borders, inactive dots). Never go below 0.30 on readable text.
 
-### Opacity policy (light mode AA on white card bg)
+### Opacity policy (light mode AA)
 
-`--ink-label` light = 0.70, `--ink-hint` light = 0.68 (bumped from 0.62
-2026-04-23 after r7 audit — 0.62 × slate on white = 4.35:1 fail).
-`--muted` light = `#5a6370` (bumped from `#6b7280` 2026-04-22 — 4.2:1 on
-grey panels was edge failure). Avoid `opacity <= 0.70` on slate text
-when the bg is white or near-white; prefer `color: var(--muted)` which
-passes AA without opacity math.
+`--ink-label` light = 0.70, `--ink-hint` light = 0.68 (bumped from 0.62, r7 audit). `--muted` light = `#5a6370` (bumped from `#6b7280` 2026-04-22). Avoid `opacity <= 0.70` on slate text on white/near-white bg; prefer `color: var(--muted)`.
 
 ### Compound-opacity is forbidden
 
-Parent `opacity` multiplies with children. A card with `opacity: 0.85`
-(for "read" or "done" visual state) + a child green/maroon span with
-`--ink-label` (0.70) compounds to effective alpha 0.595, dropping
-contrast below AA. Never dim a whole card for state — use
-`borderLeft: transparent`, strikethrough, or `color: var(--muted)` on
-the title. See CLAUDE.md Rule 43.
+Parent `opacity` multiplies with children. A card with `opacity: 0.85` + a child green/maroon span with `--ink-label` (0.70) compounds to effective alpha 0.595, failing AA. Never dim a whole card for state — use `borderLeft: transparent`, strikethrough, or `color: var(--muted)` on the title.
 
-### On gold buttons (both themes)
+### Gold buttons (both themes)
 
-Gold bg is identical across themes. `color: var(--ink)` flips bright/dark
-with theme, so use a fixed literal dark color like `#1a1a1a` for text on
-gold backgrounds.
+Gold bg is identical across themes. Use a fixed literal dark color like `#1a1a1a` for text on gold backgrounds (not `color: var(--ink)` which flips with theme).
 
 ### Table Pattern (apply to ALL data pages)
-- Shared `ColumnHeader` + `TableContainer` components (`src/components/table/`)
-- Column headers: uppercase, 11px, 0.55 opacity, 0.06em letter-spacing — shared across Tasks, Projects, Manuscripts, Deadlines
-- Column resize: drag handles on right edge, min widths, persisted via `useTableConfig`
-- Column reorder: drag headers horizontally, persisted to localStorage
-- Cell focus: 2px teal outline, Tab/Shift+Tab between editable cells
-- Multi-sort: Shift+Click for secondary sort, ①② rank indicators
-- Frozen columns: checkbox + title sticky at ≤1024px viewport
-- Table config persistence: `useTableConfig(id)` hook saves sort/widths/order to localStorage, Reset View button
-- Stage group headers: quiet uppercase labels with extending rule line
-- Row hover: neutral `rgba(255,255,255,0.02)` (dark), barely-there luminance shift
-- Row separators: use `var(--row-separator)` token (dark: `rgba(255,255,255,0.03)`, light: `rgba(0,0,0,0.04)`) — structure felt not seen
-- Inline controls: status/priority dropdowns editable in-row
-- Hover-only badges: age/project badges hidden until row hover (`.hover-badge` CSS class)
-- Ghost-style action buttons (outline, not filled) + Pin-to-Focus button on MyTasks
+
+- Shared `ColumnHeader` + `TableContainer` (`src/components/table/`). Full spec in `docs/design-system.md`.
+- Hover-only badges: use `visibility: hidden`, not `opacity: 0` (keeps element out of AT tree).
 
 ### Data-Pages vs Dashboard-Pages Taxonomy (GC-6)
 
-**Data pages — columnar table rules apply (ColumnHeader + TableContainer, inline editing, density toggle, row separators):**
+**Data pages** — columnar table rules apply (ColumnHeader + TableContainer, inline editing, density toggle, row separators):
 - Tasks, MyTasks, Projects, Manuscripts, Deadlines, Grants, Ideas, Decisions, Settings team directory
 
-**Dashboard pages — exempt from columnar table rules (charts + metric cards + panels, no forced table layout):**
+**Dashboard pages** — exempt from columnar table rules (charts + metric cards + panels):
 - Dashboard, Analytics, PI Analytics, Personal, Meetings (split-panel), Calendar, Home (public)
 
-This taxonomy closes ambiguity: a page is a "data page" if its primary content is a scrollable record list. Dashboard pages may contain embedded tables but are not required to follow the full table pattern.
-
-### Animation Timing (5 durations + 2 easings)
-- `--duration-instant: 0ms` — state toggles, checkbox
-- `--duration-fast: 100ms` — tooltips, button press
-- `--duration-normal: 150ms` — hover, row highlight (alias: `--transition-fast`)
-- `--duration-moderate: 200ms` — dropdowns, panels (alias: `--transition-panel`)
-- `--duration-slow: 300ms` — sidebar, modals, page transitions
-- `--ease-out: cubic-bezier(0.16, 1, 0.3, 1)` — entering elements
-- `--ease-in-out: cubic-bezier(0.4, 0, 0.2, 1)` — moving elements
-- Card hover: -1px lift. Respects `prefers-reduced-motion` (all durations → 0ms).
-
-### Sidebar
-- **3-plane depth**: sidebar DARKER than content via `--sidebar-bg: color-mix(in oklch, var(--cream), black 12%)` in both light and dark mode. The sidebar must always recede behind content, matching Linear. Phase 31.5 briefly tried an elevated (lighter) sidebar (`#ebebeb` light / `white 10%` dark); reverted 2026-04-12 — darker-than-content is the canonical pattern.
-- Font-weight 400 for nav items, 500 for active only
-- Active: `--teal-subtle` bg fill (desaturated), full teal on text/icon. No left border.
-- Inactive: --slate color, icon opacity 0.7.
-- Borders: `--border-subtle` (neutral), NOT `--border-light` (gold)
-- Section labels: 10px uppercase, opacity 0.5. Divider lines between groups.
-- Row height: py-2 (compact). Font: 12px. Group gap: 4px. Section divider margin: 6px/8px.
-- Logo: mark uses CSS filter for dark mode (`invert(1) brightness(1.5)`), text logo swaps to dark variant.
-
-### Borders & Spacing
-- `--border-light` (gold tint) = ONLY for filter toggle inactive states and intentional brand accents. `--border-subtle/default/strong` (neutral, 3 tiers) = ALL structural borders. 222 structural borders migrated in Phase 30.
-- Spacing: `--sp-xs` (4) / `--sp-sm` (8) / `--sp-md` (12) / `--sp-lg` (16) / `--sp-xl` (24) / `--sp-2xl` (32). Strict 8px grid.
-- Radius: `--radius-sm` (4) / `--radius-md` (6) / `--radius-lg` (8) / `--radius-xl` (12) / `--radius-2xl` (16) / `--radius-full` (9999) / `--radius-circle` (50%). All borderRadius MUST use tokens.
-- Typography scale: `--text-micro` (10, was 9 — eliminated all 9px text) / `--text-caption` (10) / `--text-label` (11) / `--text-small` (12) / `--text-body` (13) / `--text-base` (14) / `--text-md` (16) / `--text-lg` (18) / `--text-xl` (24) / `--text-2xl` (32).
-
-### Z-Index Hierarchy (Phase 31)
-- `--z-base` (1) / `--z-sticky` (10) / `--z-dropdown` (50) / `--z-sidebar` (100) / `--z-modal-backdrop` (400) / `--z-modal` (500) / `--z-toast` (9999). All zIndex MUST use tokens.
-
-### Semantic Hover/Overlay Tokens (Phase 31)
-- Accent hovers: `--gold-hover/active/emphasis`, `--teal-hover/active/emphasis`, `--maroon-hover/emphasis`, `--orange-hover`, `--green-hover`
-- Neutral overlays: `--hover-subtle/light/medium`, `--overlay-light/medium/heavy` (with dark mode overrides — light uses black-based, dark uses white-based for hovers)
-- Standardized opacity tiers: 0.03 / 0.06 / 0.10 / 0.15 / 0.40 / 0.70. Snap to nearest tier.
-
-### Surface Elevation (Linear pattern)
-- `--surface-0` (page bg) / `--surface-1` 3% (panels) / `--surface-2` 6% (cards, sidebar, dropdowns) / `--surface-3` 10% (hover, active)
-- Dark mode: luminance stepping via `rgba(255,255,255, 0.03→0.10)` — 10% total range (Linear-equivalent)
-- Light mode: `--page-bg: #f5f5f5` (off-white), cards `#ffffff` with 3-layer box-shadow (Vercel pattern)
-- Card borders: `box-shadow: 0 0 0 1px var(--border-subtle)` technique (not CSS border)
-- Dark cards: `inset 0 1px 0 rgba(255,255,255,0.03)` top-edge highlight
-- Shadows: `--shadow-flat/card/card-hover/elevated/menu`. All boxShadow MUST use tokens.
-- `--muted`: derived from `--ink` via `color-mix(in oklch, var(--ink) 70%, transparent)` in dark mode
-
-### Table Density (user-controlled)
-- 3 modes via `DensityToggle` component: Compact (36px) / Default (44px) / Relaxed (52px)
-- CSS vars: `--row-height`, `--row-padding-y`, `--cell-font-size`. Applied to all 7 data table pages.
-- Persisted per-user in localStorage. Numeric columns right-aligned, `tabular-nums` on dates.
-
-### UX Research Patterns (from task-management-ux-patterns-research.md)
-
-Must-reference before building ANY new feature. Key implementable patterns:
-- **Pattern 4 (Inline Editing):** Click any field → edit mode by type (dropdown/picker/text). Auto-save on blur.
-- **Pattern 7 (List View):** Fixed row height. Column headers. Grouping with collapsible headers. Density toggle.
-- **Pattern 9 (Optimistic UI):** Instant state changes. Undo toast for 5 seconds. Never show spinners.
-- **Pattern 10 (Micro-interactions):** Completion animation. Status color transitions. Progressive disclosure.
-- **Pattern 3 (Three depth levels):** Peek (Space) → Side Panel (click) → Full Page (Enter). Decision tree in research doc.
-
-Reference: `Projects/mn-ccore-lab-hub/task-management-ux-patterns-research.md` (PB repo)
-Competitive reference: LabSync (JC Rojas) — friend, learn from, never compete.
+A page is a "data page" if its primary content is a scrollable record list. Never mix.
 
 ### Shared Utilities
-- `src/lib/dateUtils.ts` (formatters), `src/data/team.ts:getPersonInfo()`, `formatBrandName()` from BrandName.tsx
+- `src/lib/dateUtils.ts` — all date formatting
+- `src/data/team.ts:getPersonInfo()` — team member lookup
+- `formatBrandName()` from `BrandName.tsx` — any text that might contain "MNCCORE"
 
 ## Architecture
 
@@ -289,63 +131,46 @@ Nick's CLI         Team's Hub
 (single user)   (20+ team members)
 ```
 
-(Airtable retired 2026-04-21 — read-only historical mirror only. `entity_aliases.alias_kind='airtable_legacy'` rows resolve forever for historical lookups.)
+(Airtable retired 2026-04-21. `entity_aliases.alias_kind='airtable_legacy'` rows resolve forever for historical lookups.)
 
-- **Data:** TanStack Query v5 → D1 API (prod), static TS fallback (dev)
-- **API:** Cloudflare Worker, 225+ route registrations via Hono v4.12 (`api/index.ts`). Middleware chain: OPTIONS preflight → test-mode DB swap → API-key auth → authed-user resolve → PI gate for `/api/pb/*` GETs → REQUIRE_AUTH gate for POST/PUT → version-bump-on-success (post-handler). Test isolation: `X-Test-Mode: true` header + `DB_TEST` binding + matching `TEST_MODE_KEY` secret swaps `env.DB` to `env.DB_TEST` so tests never touch production. **Pre-Hono contributors:** the old flat if/else router was replaced 2026-04-19. Do not add routes with raw `url.pathname === ...` comparisons — use `app.get/post('/api/...', handler)`.
-- **Auth:** LIVE 2026-04-21. Cloudflare Access gates `mn-ccore-lab.pages.dev/portal/*` (single destination). JWT signature verification via JWKS lives in `api/jwt-verify.ts` — `CF_ACCESS_TEAM_DOMAIN` + `CF_ACCESS_AUD` are set in prod so verification is active (no longer decode-only). `REQUIRE_AUTH=1` + `VITE_REQUIRE_AUTH=1` both active. `/api/*` is NOT gated by CF Access (auth via X-API-Key + `REQUIRE_AUTH` + JWT server-side). `getAuthUser()` and `isPiRequest()` are `async` — any new caller must `await` them.
-- **Email:** Resend (`api/lib/email.ts`) + daily digest (`api/routes/digest-email.ts`). Needs `RESEND_API_KEY` Cloudflare secret. Preview: `/api/digest-preview?member=nick`
-- **Sync:** `scripts/db/sync/` module in PB, invoked via `python scripts/db/sync.py {pull|push|sync|status}`. Scheduled + /process-triggered. (Replaced legacy `sync_d1_push.py` / `sync_d1_pull.py` in the 2026-04-21 sync extraction — see PB `Context/Decisions/2026-04-21-sync-extraction-COMPLETE.md`.)
+- **API:** Cloudflare Worker, 225+ route registrations via Hono v4.12 (`api/index.ts`). Middleware chain: OPTIONS preflight → test-mode DB swap → API-key auth → authed-user resolve → PI gate for `/api/pb/*` GETs → REQUIRE_AUTH gate for POST/PUT → version-bump-on-success. Do NOT add routes with raw `url.pathname === ...` comparisons — use `app.get/post('/api/...', handler)`.
+- **Auth:** CF Access gates `mn-ccore-lab.pages.dev/portal/*` (single destination). JWT via JWKS in `api/jwt-verify.ts`. `REQUIRE_AUTH=1` + `VITE_REQUIRE_AUTH=1` both active. `/api/*` is NOT gated by CF Access (auth via X-API-Key + `REQUIRE_AUTH` + JWT server-side). `getAuthUser()` and `isPiRequest()` are `async` — callers must `await`.
+- **Email:** Resend (`api/lib/email.ts`) + daily digest (`api/routes/digest-email.ts`). Preview: `/api/digest-preview?member=nick`
+- **Sync:** `scripts/db/sync/` module in PB, invoked via `python scripts/db/sync.py {pull|push|sync|status}`. Scheduled + /process-triggered.
 
-### Sync Architecture (Decision: 2026-04-06; sync layer extracted 2026-04-21)
+### Sync Architecture
 
-brain.db is the **primary store**. D1 (Hub) is the primary UI + write target. Sync runs through PB's `scripts/db/sync/` module — no direct D1↔Airtable path (Airtable retired).
-
-**Sync model:** Field-level last-write-wins (LWW) with timestamps. Both D1 and brain.db are authoritative — whoever changed a field last wins. Conflicts logged to `sync_log`.
-
-**Sync triggers (PB-side):**
-- /process: push to D1 (step 4b) + pull from D1 (step 0c)
-- Scheduled PowerShell tasks: `sync-pull.ps1` (02:00) / `midday-sync.ps1` (12:00) / `eod-sync.ps1` (17:00) / `sync-push.ps1` (22:00)
+brain.db is the **primary store**. D1 (Hub) is the primary UI + write target. Sync model: field-level last-write-wins (LWW) with timestamps. Conflicts logged to `sync_log`.
 
 **Key rules:**
-- Brain.db tasks use canonical `task_{ulid}` (post-migration 030, 2026-04-15). Hub-created tasks have 32-char hex IDs. Both are reachable via `entity_aliases` — brain.db keeps the ulid PK, stores the hex id as a `hub_slug` alias.
-- On push, brain.db ↔ D1 id translation goes through `hub_slug` alias so upserts land on the same D1 row (fix 2026-04-18 — was creating duplicates).
+- Brain.db tasks use canonical `task_{ulid}` IDs. Hub-created tasks have 32-char hex IDs. Both reachable via `entity_aliases` (hub_slug alias).
 - `notes` (brain.db) is private. `description` (D1) is team-visible. They do NOT sync bidirectionally.
-- Task deletion uses soft-delete (`deleted_at` column). `GET /api/tasks?include_deleted=1` surfaces them for the sync module to mirror into brain.db.
-- `completed` field is bidirectional — Hub can reopen tasks, brain.db accepts it.
-- `task_key_link_{1,2,3}(_desc)` fields: accepted on `POST /api/tasks` create + bi-directionally synced (2026-04-18).
+- Task deletion uses soft-delete (`deleted_at` column). `GET /api/tasks?include_deleted=1` surfaces them for the sync module.
+- `completed` field is bidirectional — Hub can reopen tasks.
+- Hub `task_comments` mirror into brain.db `d1_task_comments` (read-only).
+- Hub-originated projects flow into brain.db — `category` (clif/nate/mentee/lab) maps onto brain.db `domain`.
 
-**Phase 35 sync-parity additions (2026-04-18):**
-- Hub `task_comments` mirror into brain.db's **`d1_task_comments`** table (read-only). Pulled via the sync module's task-comments path. Hub stays authoritative for composition; brain.db uses the mirror for search + /process context.
-- Hub-originated **projects** flow into brain.db via the sync module's hub-projects path. Hub `category` (clif/nate/mentee/lab) maps onto brain.db `domain` (CLIF/Mentees/Research).
+**Implementation:** `scripts/db/sync/` (drivers/hub.py + boundary + payload). Decision: `Context/Decisions/2026-04-21-sync-extraction-COMPLETE.md` in PB.
 
-**Implementation:** PB module `scripts/db/sync/` (drivers/hub.py + boundary + payload). CLI: `python scripts/db/sync.py {pull|push|sync|status}`. Decision: `Context/Decisions/2026-04-21-sync-extraction-COMPLETE.md` in PB.
+### Cross-repo Schema Coordination (rule from R10 incident)
 
-**Test coverage:** `scripts/deep-audit/15-pb-sync-deep.ts` round-trips the
-full payload across both directions every run.
-
-### ⚠️ Cross-repo schema coordination (after R10 incident 2026-04-14)
-
-Hub and brain.db **share vocabulary** for status/stage/type/etc. Any change to a shared field in the Hub repo (schema.sql DEFAULTs, migration SQL against prod D1, taxonomy reshuffles like R10) must be **coordinated with Peripheral Brain** before deploying.
-
-**The R10 incident:** On 2026-04-13 a migration in this repo (`scripts/round9/r10-projects-status-migration.sql`, commit `145ed8e`) lowercased all project statuses in D1. The Peripheral Brain side was never updated. The legacy `sync_d1_push.py` pull-back path (since deleted in the 2026-04-21 sync extraction; replaced by `scripts/db/sync/` module) silently wrote the new lowercase values into brain.db, corrupting 38 projects on Nick's home machine. TODAY.md filter stopped showing R01s. Airtable push failed with 422s. 4-hour debug session the next morning. Full postmortem: `/c/Users/ingra107/Peripheral-Brain/Context/Decisions/2026-04-14-r10-taxonomy-cross-repo-cascade.md`
+Any change to a shared field (schema.sql DEFAULTs, D1 migration SQL, taxonomy reshuffles) must be **coordinated with Peripheral Brain** before deploying.
 
 **Process for any shared-field change:**
-1. Write a decision doc in `/c/Users/ingra107/Peripheral-Brain/Context/Decisions/`
-2. Update `/c/Users/ingra107/Peripheral-Brain/scripts/db/enums.py` with the new canonical + legacy alias FIRST
-3. Update `/c/Users/ingra107/Peripheral-Brain/Context/Topics/shared-schema-registry.md` with the new field info
-4. Ship the code changes to BOTH repos in lockstep — never deploy data migration ahead of dependent code
-5. Run `python /c/Users/ingra107/Peripheral-Brain/scripts/db/health.py --check` to verify no drift
+1. Write a decision doc in `C:/Users/ingra107/Peripheral-Brain/Context/Decisions/`
+2. Update `C:/Users/ingra107/Peripheral-Brain/scripts/db/enums.py` with canonical + legacy alias FIRST
+3. Update `C:/Users/ingra107/Peripheral-Brain/Context/Topics/shared-schema-registry.md`
+4. Ship changes to BOTH repos in lockstep — never deploy data migration ahead of dependent code
+5. Run `python C:/Users/ingra107/Peripheral-Brain/scripts/db/health.py --check` to verify no drift
 
-**Registered shared fields** (see `shared-schema-registry.md` for full list):
+**Registered shared fields:**
 - `projects.status`: `active / waiting_external / blocked / done`
 - `tasks.status`: `todo / in_progress / done / blocked / waiting_external`
-- `projects.stage`: `Idea / Data Collection / Data Analysis / Writing / Submitted / Accepted / Published` (brain.db granular, Hub R10 used `Analysis`/`Review` — map via `enums.canonicalize_project_stage()`)
+- `projects.stage`: `Idea / Data Collection / Data Analysis / Writing / Submitted / Accepted / Published` (map via `enums.canonicalize_project_stage()`)
 - `projects.category`: `clif / lab / nate / mentee` (Hub-authoritative)
-- `projects.type`: `R01 / R03 / K / CLIF / Nick_Lab / Friends / Mentees / Admin / Personal` (brain.db-only)
 - `tasks.priority`: `low / medium / high / urgent`
 
-**Anti-pattern to avoid:** "we can deploy the frontend next week when Workers cap resets" while the data migration is already live. Data-on-new-schema with code-on-old-schema is how things corrupt.
+Anti-pattern: deploying a data migration while the frontend still expects the old schema. Data-on-new-schema + code-on-old-schema corrupts.
 
 ## Hermes (AI Research Assistant)
 
@@ -353,7 +178,7 @@ Live since 2026-04-09. Team members @mention `@hermes` in Ask the Lab, task comm
 
 - **Detection:** `/@(hermes|claude)\b/i` regex in `api/routes/questions.ts` and `api/routes/projects.ts`
 - **Author slug:** `claude-ai` (display name "Hermes" via `src/data/team.ts`)
-- **Backend:** `hub_ai_listener.py` on home laptop polls `GET /api/ai-requests?status=pending` every 10s
+- **Backend:** `hub_ai_listener.py` on home laptop polls `GET /api/ai-requests?status=pending` every 60s
 - **Auth:** Bearer token via `PB_API_KEY` (Cloudflare Pages secret)
 - **Docs:** `docs/hermes.md`
 
@@ -363,287 +188,126 @@ Live since 2026-04-09. Team members @mention `@hermes` in Ask the Lab, task comm
 2. **Hero cards use `<a>` tags**, not React Router `<Link>`. AnimatePresence + useCountUp conflict.
 3. **initialData as factory functions.** `initialData: () => data`, never `initialData: data`.
 4. **Avatar:** Container `overflow-hidden`, img `w-full h-full`.
-5. **`getPersonInfo()` from `src/data/team.ts`** -- never create local copies.
-6. **Date formatting from `src/lib/dateUtils.ts`** -- never create local formatters.
-7. **@mentions use `MentionInput`** -- not raw `<textarea>`.
-8. **Dedup action items** -- normalize "[Carried forward]" prefix.
+5. **`getPersonInfo()` from `src/data/team.ts`** — never create local copies.
+6. **Date formatting from `src/lib/dateUtils.ts`** — never create local formatters.
+7. **@mentions use `MentionInput`** — not raw `<textarea>`.
+8. **Dedup action items** — normalize "[Carried forward]" prefix.
 9. **NEVER deploy from a worktree.** Commit to branch + PR only.
-10. **Batch deploys where practical.** Workers Paid plan ($5/mo, 10M req/day) as of 2026-04-17 removes the hard free-tier deploy ceiling — multi-deploy sessions are fine when each one fixes something verifiable (post-Phase-37 bug-fix sprint ran 5 deploys in one day). Still: prefer batching unrelated edits into one deploy to reduce KV write churn + cache-miss cost on edge.
+10. **Batch deploys where practical.** Workers Paid plan (10M req/day) — prefer batching unrelated edits to reduce KV write churn.
 11. **`formatBrandName()`** for any text that might contain "MNCCORE".
-12. **Tailwind v4:** `@import` syntax, not `@tailwind`. No `group-hover:` with arbitrary values -- use CSS rules.
-13. **Build verification after batch edits.** After editing 3+ files or any shared module/type, run `npm run build` and fix all TypeScript errors before continuing. After fixing test failures, re-run the full affected test suite (`npx playwright test tests/<suite>`) to confirm zero regressions. Do not commit code that doesn't build.
-14. **`--ink-bright` is WHITE in BOTH modes.** It is a white-fill-on-dark token, NOT a "stronger than ink" token. Setting it to black in light mode breaks 84 call sites. It exists for white text/icons on dark accent surfaces (teal buttons, maroon pills) regardless of page theme.
+12. **Tailwind v4:** `@import` syntax, not `@tailwind`. No `group-hover:` with arbitrary values — use CSS rules.
+13. **Build verification after batch edits.** After editing 3+ files or any shared module/type, run `npm run build` and fix all TypeScript errors before continuing. Do not commit code that doesn't build.
+14. **`--ink-bright` is WHITE in BOTH modes.** It is a white-fill-on-dark token. Setting it to black in light mode breaks 84 call sites. It exists for white text/icons on dark accent surfaces regardless of page theme.
 15. **Row height CSS must be `@media (min-width: 768px)` scoped.** Mobile uses `height: auto; min-height`. Unscoped fixed heights break stacked card layout on mobile.
-16. **TaskGridView wrapper has NO minHeight reservation.** Short task lists no longer leave 100+ px of dead space — container sizes to content. CLS is bounded by the loading skeleton's placeholder height (skeleton → content swap is atomic). Prior rule required a stable `calc(100vh - Npx)` to avoid flip; removed 2026-04-23 (GH #23). If re-introducing a minHeight, make sure it's either larger than typical content OR only applied during loading.
-17. **Data pages vs dashboard pages taxonomy.** Data pages (Tasks, MyTasks, Deadlines, Projects, Manuscripts, Ideas, Decisions, Grants, Meetings, Publications) use columnar `TableContainer` + `ColumnHeader`. Dashboard pages (Dashboard, Personal, PIAnalytics, Analytics) use card layouts. Never mix.
-18. **Detail panels must subscribe to cache, not parent state.** TaskDetailPanel and any future detail panel that receives a row object as prop MUST look up fresh data from the React Query cache using `queryClient.getQueryCache().subscribe(...)`. Parent pages hold `selectedTask` as `useState<TaskRow | null>` — that snapshot goes stale after any mutation updates the `['tasks']` cache, and the panel shows old assignee/priority/status. **Reference implementation:** `src/components/tasks/TaskDetailPanel.tsx` post-GH#7 fix (commit `087ba42`). Apply the same pattern to any ProjectDetailPanel, IdeaDetailPanel, DecisionDetailPanel that takes a full row as prop.
-19. **`refetchIntervalInBackground: true` on `/api/version` polling.** `useRealtimeSync` polls /api/version every 15s for cross-user realtime. React Query's default pauses polling when the tab isn't focused — which is constant for real users who park the Hub in background tabs. Without this flag, team member A edits a task and team member B doesn't see it until they refocus the tab. Deep-audit Suite 7 uncovered this. Ref: `src/hooks/useRealtimeSync.ts`.
-20. **Task mutation endpoints validate assignee + project_id.** `POST /api/tasks`, `POST /api/tasks/:id`, and `POST /api/tasks/batch` action='assign' all reject unknown assignee slugs (except `claude-ai`). `project_id` on create/update is resolved (accepting id OR slug); unknown → NULL. Keeps dangling refs out of the DB. Ref: `api/routes/tasks.ts`. Pattern found via deep-audit Suite 8 + propagated to every write path.
-21. **Project slug collision auto-resolves.** `handleCreateProject` loops appending `-2/-3/...` if the desired slug already exists. Two projects with the same title get distinct slugs; no silent overwrite. Ref: `api/routes/projects.ts`. Found via Suite 8.
-22. **Project delete cascades.** `handleDeleteProject` clears `comments`, `project_updates`, and sets active tasks' `project_id = NULL` before removing the project row. Tasks are never orphaned with dangling refs. Ref: `api/routes/projects.ts`.
-23. **All gated routes live under `/portal/*`. Public routes stay at root.** Migration 2026-04-21 (Phase 37) — single Cloudflare Access application destination (`mn-ccore-lab.pages.dev/portal/*`) gates the authenticated surface. Legacy root paths (`/dashboard`, `/projects/:slug`, etc.) redirect to their `/portal/*` equivalents via `<Navigate>` shims in `src/App.tsx` (kept indefinitely for bookmark compatibility). ALL internal navigation goes through `src/constants/paths.ts` — import `PATHS` and use `PATHS.dashboard`, `PATHS.project(slug)`, etc. Tests use `tests/helpers/paths.ts` (the `P` object with plain strings). Adding a new gated route: add under `/portal/*` in `App.tsx` + export from `paths.ts` + add to `tests/helpers/paths.ts`. Never add a new route at root unless it's a public marketing page. Public `/team/:slug` still exists for the marketing site; portal users get `/portal/team/:slug` via `useLocation`-aware navigation in MemberPage + TrajectoryPage.
-24. **`actorSlug(email)` is a LUT, not a derive.** `EMAIL_PREFIX_TO_SLUG` in `api/helpers.ts` maps email-prefix → canonical team slug (post-Phase-36b rename). The 19 pre-Phase-36b members rely on this for their `preferred-last` slugs (`mesfin → nate-mesfin`). For BRAND-NEW members joining post-Phase-39, `ensureTeamMember()` auto-provisions a row with slug = email-prefix on first login + claims pre-existing rows via the same LUT — see Rule 50. The three-step manual provisioning (D1 row + team.ts entry + LUT entry) is now ONLY needed when:
-   (a) you want a custom non-email-prefix slug for a new member, OR
-   (b) you're adding a member without `@umn.edu` (collaborator who'll never sign in via CF Access)
-   Otherwise the auto-create + claim flow handles it. The LUT remains the canonical mapping for legacy pre-provisioned members and for any email-prefix that doesn't match the desired slug format.
-25. **`/api/version` is edge-cached for 10s.** `Cache-Control: public, max-age=10, s-maxage=10` in `api/lib/version.ts`. Drops ~95% of polling traffic without breaking cross-tab realtime invalidation (effective latency ~25s end-to-end with 15s poll interval). Don't shorten the TTL without understanding the Workers-quota tradeoff. Don't add `Set-Cookie` to this response (would defeat the cache).
-26. **JWT `importKey` is cached per `kid` at module scope.** `importedKeyCache: Map<string, CryptoKey>` in `api/jwt-verify.ts`. Don't replace with a per-request import unless you've measured the cold-start trade.
-27. **Hover-only badges must be `visibility: hidden`, not just `opacity: 0`.** Phase 36c a11y fix in `TaskGridView.tsx` `.hover-badge` CSS. `opacity: 0` keeps the element in the AT tree, so screen readers announce ~120 phantom badges per /tasks visit. Apply same pattern to any future hover-revealed content.
-28. **Sidebar nav links carry `aria-current="page"` on the active route.** `Sidebar.tsx` follows the same pattern `MobileTabBar.tsx:91` already uses. New navigation surfaces must set `aria-current` for screen reader navigation.
-29. **Brand primitives live in `src/components/` — use them, don't reinvent.** `HeartbeatLine` + `HeartbeatDivider` for the ECG motif (the lab's visual signature). `HermesMark` for ANY AI-assistant surface — icon variant for badges, avatar variant for peer avatars. `CategoryIcon` for project-category indicators (lungs / flask / heartbeat / cap). `EmptyStateArt` for empty-state slots. `PhaseReleaseBanner` for shipped-announcement moments. Passing `slug='claude-ai'` to `Avatar` auto-swaps to HermesMark. Never use a generic lucide `<Sparkles />` for Hermes or a 6px colored dot for categories — the primitives carry the brand.
-30. **`/api/bug-report` gates on `REQUIRE_AUTH=1`, not a standalone check.** Before Phase 36d the endpoint always required auth, which locked Nick out pre-launch because CF Access wasn't configured. Fix: bug-report now piggybacks on the same `REQUIRE_AUTH` flag that gates writes. Don't add a separate auth check here.
-31. **Per-route OG share cards at `/og/<type>/<slug>`.** `functions/og/[type]/[slug].ts` generates SVG cards from D1 for project / team / meeting / default. `public/_headers` forces `image/svg+xml` (Pages was auto-coercing to `text/html` pre-fix). Set `ogImage: '/og/project/<slug>'` when calling `usePageMeta()` on any page that should have a branded share preview. Cached 1h at the edge.
-32. **Pulse Kiosk (`src/pages/Pulse.tsx`) hex-pins its colors deliberately.** Kiosk renders without the `.dark` class so `var(--ink)` would resolve to the blue-tinted light value. Hex-pinned (`#0b1017`, `#f5efe2`, `#dcb355`, `#5cbcb4`, `#f0737e`) matches the design-ethos deep-neutral and stays axe-stable. Don't "fix" these to CSS vars.
-33. **Capture specs for Claude Design — run on demand via `scripts/regen-design-bundle.sh`.** Six specs now, seven pipeline steps, ~25 min end-to-end. Output to `review/claude-design-*` / `review/interactions-*` (gitignored). Don't add to default test run — only useful when building design assets.
+16. **TaskGridView wrapper has NO minHeight reservation.** Container sizes to content. CLS is bounded by loading skeleton. If re-introducing a minHeight, apply it only during loading.
+17. **Data pages vs dashboard pages taxonomy.** See taxonomy section above. Never mix.
+18. **Detail panels must subscribe to cache, not parent state.** TaskDetailPanel and any future detail panel MUST look up fresh data from the React Query cache (`queryClient.getQueryCache().subscribe(...)`). Parent `useState<TaskRow | null>` snapshot goes stale after mutations. Reference: `src/components/tasks/TaskDetailPanel.tsx` post-GH#7 fix (commit `087ba42`).
+19. **`refetchIntervalInBackground: true` on `/api/version` polling.** `useRealtimeSync` polls /api/version every 15s. Without this flag, polling pauses on background tabs and team members miss each other's edits. Ref: `src/hooks/useRealtimeSync.ts`.
+20. **Task mutation endpoints validate assignee + project_id.** `POST /api/tasks`, `POST /api/tasks/:id`, and `POST /api/tasks/batch` action='assign' all reject unknown assignee slugs (except `claude-ai`). `project_id` resolved (id OR slug); unknown → NULL. Ref: `api/routes/tasks.ts`.
+21. **Project slug collision auto-resolves.** `handleCreateProject` loops appending `-2/-3/...` if the desired slug exists. Ref: `api/routes/projects.ts`.
+22. **Project delete cascades.** `handleDeleteProject` clears `comments`, `project_updates`, and sets active tasks' `project_id = NULL` before removing the project row. Ref: `api/routes/projects.ts`.
+23. **All gated routes live under `/portal/*`. Public routes stay at root.** ALL internal navigation goes through `src/constants/paths.ts` — import `PATHS`. Tests use `tests/helpers/paths.ts`. Adding a new gated route: add under `/portal/*` in `App.tsx` + export from `paths.ts` + add to `tests/helpers/paths.ts`. Public `/team/:slug` stays for the marketing site.
+24. **`actorSlug(email)` is a LUT, not a derive.** `EMAIL_PREFIX_TO_SLUG` in `api/helpers.ts` maps email-prefix → canonical team slug. New members post-Phase-39 are auto-provisioned via `ensureTeamMember()` on first login — manual 3-step provisioning only needed for custom slug or non-@umn.edu members.
+25. **`/api/version` is edge-cached for 10s.** Don't shorten the TTL. Don't add `Set-Cookie` (defeats cache).
+26. **JWT `importKey` is cached per `kid` at module scope.** `importedKeyCache: Map<string, CryptoKey>` in `api/jwt-verify.ts`. Don't replace with per-request import.
+27. **Hover-only badges must be `visibility: hidden`, not `opacity: 0`.** `opacity: 0` keeps the element in the AT tree — screen readers announce phantom badges. Apply to any future hover-revealed content.
+28. **Sidebar nav links carry `aria-current="page"` on the active route.** New navigation surfaces must set `aria-current` for screen reader navigation.
+29. **Brand primitives live in `src/components/` — use them, don't reinvent.** `HeartbeatLine` / `HeartbeatDivider` (ECG motif), `HermesMark` (AI assistant), `CategoryIcon` (lungs/flask/heartbeat/cap), `EmptyStateArt` (8 illustrations), `PhaseReleaseBanner`, `RequireAuth`. Never use lucide `<Sparkles />` for Hermes or a 6px dot for categories.
+30. **`/api/bug-report` gates on `REQUIRE_AUTH=1`, not a standalone check.** Bug-report piggybacks on the same `REQUIRE_AUTH` flag that gates writes. Don't add a separate auth check.
+31. **Per-route OG share cards at `/og/<type>/<slug>`.** `functions/og/[type]/[slug].ts` generates SVG cards. `public/_headers` forces `image/svg+xml`. Use `usePageMeta()` with `ogImage`. Cached 1h at edge.
+32. **Pulse Kiosk (`src/pages/Pulse.tsx`) hex-pins its colors deliberately.** Renders without `.dark` class so CSS vars would resolve wrong. Hex-pinned (`#0b1017`, `#f5efe2`, `#dcb355`, `#5cbcb4`, `#f0737e`). Don't "fix" to CSS vars.
+33. **Capture specs for Claude Design — run on demand via `scripts/regen-design-bundle.sh`.** Six specs, ~25 min end-to-end. Output gitignored. Don't add to default test run. Full spec detail in `docs/design-system.md` and `docs/archived/CLAUDE.md-history-2026-05-15.md`.
+34. **Email prefix → slug via `emailToSlug`, never raw `split('@')[0]`.** `src/lib/emailSlug.ts` exports `emailToSlug(email)` backed by the `EMAIL_PREFIX_TO_SLUG` LUT. Adding a new team member requires updating the LUT on BOTH sides (frontend + backend) in lockstep.
+35. **UI stage labels are 6; API canonical is 7. Map on submit via `toApiStage()`.** `src/lib/stageNormalize.ts` owns both directions. `normalizeStage()` for display, `toApiStage()` for submit. The API rejects non-canonical values with 400; in optimistic-update flows this manifests as a silent revert.
+36. **`getAuthUser()` reads JWT from either the header OR the `CF_Authorization` cookie.** Header = CF Access proxied requests (portal only). Cookie = sent by browser on all same-domain requests. Without the cookie fallback every authed POST from `/api/*` would 401. Keep BOTH paths working.
+37. **Google Fonts `<link>` tags need `crossorigin="anonymous"`.** Without it, axe-core's contrast checker trips CORS preflight — 3 console errors per page in audit runs. Same for any new cross-origin stylesheet.
+38. **Every `<select>` must have `aria-label` or a matching `<label htmlFor>`/`<select id>` pair.** Bare `<select>` trips axe `select-name` critical.
+39. **`role="switch"` with `aria-checked` must use string `"true"`/`"false"`, not boolean.** `aria-checked={myBool ? "true" : "false"}`. Only `aria-checked` on role=switch/checkbox/radio is strict; `aria-expanded`/`aria-pressed` boolean bindings are fine.
+40. **Overlap detector (`scripts/massive-audit/lib/overlap-detector.ts`) skips semantic landmarks.** `<nav>`/`<header>`/`<aside>` + `role="navigation|banner|complementary"` are treated as chrome. Don't remove the tag-based filter.
+41. **Stage-bar fills use `--stage-fill-*` tokens, not `--slate/--teal/--gold`.** The accent tokens flip to light dark-mode variants where `#fff` text fails ~2:1. Use `--stage-fill-{idea,data-collection,analysis,writing,review,submitted,published}` — dark hex values stable across themes.
+42. **Gold pill bg + gold text uses `--gold-on-emphasis`, not `--gold`.** `--gold` light on `--gold-emphasis` bg = 4.25:1 fail. `--gold-on-emphasis` pins to `#5a4518` light / `#dcb355` dark for AA on both.
+43. **Parent `opacity` on a card multiplies with child colored spans.** See compound-opacity section above. Never dim whole cards for state.
+44. **Mount animations must use transform-only, not opacity: 0 → 1.** Axe-core's contrast checker catches elements mid-transition. Animate via `y` / `scale` only.
+45. **Dropdowns use fully-opaque bg, not semi-transparent + backdrop-filter.** Band bleed-through on pages with dark headers. Use `#ffffff` / `#0f1923` (full opaque) with `box-shadow` for depth.
+46. **Flex-col pages with canvas children need `height: 100vh`, not `minHeight: 100vh`.** `minHeight` doesn't give `flex-1` children a determined size. Canvas elements fall back to intrinsic 300×150. Use `height: 100vh` when intent is "fill the viewport".
+47. **URL classification + linkification go through shared util.** `src/lib/urlClassify.ts` exports `classifyUrl(url)` + `shortLabelForUrl(url)`. Don't duplicate the classification regex. Non-http links: `mnccore://open/<path>` + clipboard copy + toast as fallback.
+48. **Legacy slug canonicalization belongs at the write path, not the read path.** `hub_payload.py` applies `canonicalize_team_slug()` at every outbound assignee write. Hub's `src/lib/emailSlug.ts` does NOT re-canonicalize on reads — visible drift signal if `nick` appears in D1 again.
+49. **Presence is entity-scoped but WS-room-global.** `src/hooks/usePresence(entityType, entityId)` subscribes to the single shared `mnccore` WS room, filters client-side. 15s heartbeat + 45s staleness. Don't shard rooms per entity. Extend by adding `<PresenceAvatars slugs={usePresence(type, id)} />` — hook is entity-agnostic. Unmount sends `presence-leave`; intent unmount sends `intent-leave`.
+50. **Landing cards use 2-col grid for action density.** ProjectDetail Overview: `grid-cols-1 md:grid-cols-3` — left `md:col-span-2` = primary action, right `md:col-span-1` = reference, bottom full-width = compose. Replicate for any new "detail page Overview."
+51. **Search covers 14 entity types — extend on future entity adds.** `api/routes/search.ts` queries 14 tables in parallel. When adding a new entity: add SELECT, push block, `TYPE_PRIORITY` entry, and `typeConfig` in `src/pages/portal/SearchPage.tsx`.
+52. **One shared PartySocket per (room, party) — use `realtimeBus`.** `src/lib/realtimeBus.ts` module-singleton. `useRealtimeSync`, `usePresence`, `useTyping`, `useIntentBroadcast` all subscribe through the bus. Don't `new PartySocket(...)` directly — use `getRealtimeBus().subscribe(listener)` + `.send(payload)`.
+53. **DD-1 mode toggle + DD-2 saved views.** Saved views (`useSavedViews(page)`, LS key `mnccore.savedViews.v1.<page>`, 25-view cap) wired into `UnifiedMyTasks` via `<SavedViewsMenu>`. URL state round-trips through `?filter=<quickFilter>&view=<columns|lanes|list>`.
+54. **T-29 Manuscripts "Needs your attention".** `GET /api/manuscripts/attention?review_days=&stale_days=`. Thresholds from `useLabPrefs()` (LS key `mnccore.labprefs.v1`). `NeedsAttentionDashboard` = 3 collapsible subgroups + amber count pill. Thresholds surfaced in Settings → Lab tab.
+55. **Mobile compose pattern.** ProjectDetail `<768px`: tap trigger → `position: fixed` bottom overlay via `useComposeSheet(open, onClose)`. TaskDetailPanel: `position: sticky; bottom: 0` + `env(safe-area-inset-bottom)`. `useIsMobile()` is the canonical breakpoint check.
+56. **Row-level swipe on TaskGridRow — inside the virtualizer.** `useSwipeAction({onSwipeLeft, onSwipeRight})`. Wire the `motion.div` INSIDE the virtualizer's translateY outer wrapper. The hook disables drag on desktop (`window.innerWidth >= 768`). Right-swipe = complete (with undo); left-swipe = long-press context menu.
+57. **Today landing model.** `/portal/dashboard` = TodayPage (operating-day surface). `/portal/overview` = Dashboard.tsx (Lab Overview, weekly-planning card grid). Don't reintroduce a card-grid Dashboard at `/portal/dashboard`. Sidebar label: "Today" / "Lab Overview". URL alias `/dashboard` redirects to `/portal/dashboard`.
+58. **Three click semantics on Today/MyTasks rows: NEVER conflate.** (a) Clicking the body = expands TaskDetailDrawer inline; does NOT promote. (b) Dragging `⋮⋮` handle = plans the task. (c) Explicit `▶ Work on this now` = promotes to Right Now. Three independent affordances.
+59. **Three accent colors with assigned meaning on Today/MyTasks surfaces.** `#c9a84c` gold = user-driven action / planned / Hermes / Right Now glow. `#5cbcb4` teal = meetings / mentees / system / navigation. `#f0737e` coral = overdue / stalled / warnings. `#6ee89a` green = done / healthy sync. Don't repurpose.
+60. **MyTasks view picker far-left of filter row, persisted in `localStorage.mt_view`.** Three views share ONE toolbar. List view uses right-side drawer (cursor-stable j/k nav); Columns and Lanes use inline expand. Source: `src/pages/portal/UnifiedMyTasks.tsx`.
+61. **Right Now is a promoted slot, not a fixed task.** Subtle gold glow only here (`box-shadow: 0 0 24px rgba(201,168,76,0.06)`); nothing else gets a glow. Mark-done unplans, sinks to bottom with strikethrough, auto-promotes next planned task. Source: `useTodayState` in `src/pages/portal/TodayPage.tsx`.
+62. **Group sort within a TaskGroup: planned → active → done.** Don't re-sort by priority/due_date within a group — that fights the operating-day mental model. Source: `TaskGroup` in `TodayPage.tsx` (also applies to UnifiedMyTasks Lanes view).
+63. **`tasks.group_override` is the explicit Hub-authored bucket choice; `getGroupForTask()` checks it FIRST.** Schema v50. Groups: `'deep' | 'priorities' | 'quick' | 'pb' | 'etl' | NULL`. Syncs to brain.db via LWW. `generate_today_markdown.py::_GROUP_OVERRIDE_TO_SECTION` honors it. API guard: `VALID_GROUP_OVERRIDES` rejects non-canonical values with 400. Decision: `Context/Decisions/2026-04-25-tasks-group-override.md`.
+64. **Personal calendar feeds are iCal pull, not OAuth.** Schema v52. Users paste private iCal URLs into `/portal/profile` or `/portal/settings#integrations`. Hub polls lazily, parses via `api/lib/ics-parser.ts`, upserts to `user_calendar_events`. UI: `src/components/CalendarFeedsPanel.tsx` (shared TanStack cache key `calendar-feeds`). Tests: 24 vitest unit tests at `api/lib/ics-parser.test.ts`; run via `npm run test:api`.
+65. **CF Access auth uses Generic OIDC `Google UMN`, not the preset Google IdP.** `Auth URL = https://accounts.google.com/o/oauth2/auth?prompt=select_account&hd=umn.edu`. Don't revert to the preset Google IdP — it loses the account chooser.
+66. **`ensureTeamMember()` runs on every authed request — auto-create + claim.** Schema v53. Four-branch logic: (1) direct email match → no-op; (2) slug match via LUT → CLAIM existing row, backfill email+photo; (3) slug match via raw email-prefix → same; (4) no match → INSERT auto_created=1 row (PENDING REVIEW badge). `PUT /api/team/:slug` is owner-or-PI gated; role + member_type are PI-only.
+67. **`/portal/profile` is the self-service profile + integrations entry.** Inline-on-blur edit for self-edit fields. Embeds `<CalendarFeedsPanel />`. Any save invalidates both `['team']` and `['team-raw']`.
 
-    **Specs (all wired into `playwright.config.design-capture.ts`):**
-    - `capture-for-design.spec.ts` — 41 hero surfaces desktop + 6 mobile, full-page + scroll-through for lazy-load.
-    - `capture-focus-asks.spec.ts` — round-specific spot captures (Quick Add, task-row focus outline, inline ▾ density).
-    - `capture-scroll-chunks.spec.ts` — 12 long pages broken into viewport-sized chunks so designer can review 900px bands instead of one fullPage blob.
-    - `capture-theme-light.spec.ts` — 8 key pages via `test.use({ colorScheme: 'light' })`; dark/light side-by-side review.
-    - `capture-rich-states.spec.ts` — Network WebGL multi-state, 6 modals, Publications carousel, Dashboard customize.
-    - `capture-interactions.spec.ts` — 15 signature interactions as WebM (converted to MP4 + GIF via ffmpeg) + PNG keyframes.
-
-    **Post-launch auth workarounds (required after 2026-04-21 launch):**
-    - **CF Access gates prod `/portal/*`.** Pass an ungated preview deploy via `BASE_URL=https://<hash>.mn-ccore-lab.pages.dev bash scripts/regen-design-bundle.sh <name>`. The script plumbs this through as `CAPTURE_BASE_URL` on all specs.
-    - **`VITE_REQUIRE_AUTH=1` shows a branded sign-in splash.** Every spec calls `injectFakeAuth(context, BASE)` (from `tests/helpers/capture-auth.ts`) in a `test.beforeEach` to set a fake `CF_Authorization` JWT cookie. `useAuth` decodes client-side only (no signature verify), so this flips `isAuthenticated` → true. Backend writes stay gated by real JWKS verify in `api/jwt-verify.ts`; captures are read-only so that's fine.
-    - Without both, every `/portal/*` capture is either a Google Sign-in page (CF Access) or a `RequireAuth` splash (app).
-
-    **Known flakes (non-blocking — keyframes still capture):** `01-status-change-undo` (dropdown option-click race), `08-date-picker` (cell click doesn't always open picker). Leave for now; the interactions themselves work in the product.
-
-    **Video copy is a fallback block in `regen-design-bundle.sh`, NOT the spec's `afterEach`.** Playwright videos finalize after `context.close()`, so `testInfo.attachments` is often empty when `afterEach` runs. Script reads `test-results/capture-interactions-*/video.webm` by numeric prefix post-run.
-34. **Email prefix → slug via `emailToSlug`, never raw `split('@')[0]`.** `src/lib/emailSlug.ts` exports `emailToSlug(email)` backed by the `EMAIL_PREFIX_TO_SLUG` LUT — the client-side mirror of the same-named map in `api/helpers.ts`. Deriving a team slug by slicing the email prefix is a class bug: `ingra107@umn.edu → ingra107`, but the canonical slug is `nick-ingraham`. Every site that turns an email into a slug (profile links, MyTasks filter, dashboard card filters, notification routing, CommandPalette "my tasks" toggle) must route through `emailToSlug`. Adding a new team member requires updating the LUT on BOTH sides in lockstep.
-35. **UI stage labels are 6; API canonical is 7. Map on submit via `toApiStage()`.** `src/lib/stageNormalize.ts` owns both directions. Display paths call `normalizeStage()` to fold API values back to UI labels; submit paths call `toApiStage()` to map `'Analysis' → 'Data Analysis'` and `'Review' → 'Submitted'` before hitting the API. The API's `PROJECT_STAGE_VALUES` guard rejects non-canonical values with 400, which in an optimistic-update flow manifests as a silent revert (state flips then snaps back onError). Four call sites are wired: ProjectDetail stage strip click+confirm, ProjectDetail inline stage select, Projects list inline selects (2x). Don't bypass the mapper on any new stage mutation path.
-36. **`getAuthUser()` reads JWT from either the header OR the `CF_Authorization` cookie.** `api/helpers.ts` tries `Cf-Access-Jwt-Assertion` header first, then falls back to the `CF_Authorization` cookie. The header is only set by CF Access on proxied requests — and CF Access is scoped to `/portal/*` only, so `/api/*` requests bypass the proxy and never get the header. The cookie is sent by the browser on all same-domain requests regardless of proxy scope. Without the cookie fallback every authed POST from the browser (bug-report, project edits, task mutations) would 401. Keep BOTH paths working when modifying auth flow.
-37. **Google Fonts `<link>` tags need `crossorigin="anonymous"`.** `index.html` preconnect + preload + stylesheet refs to `fonts.googleapis.com` all carry `crossorigin="anonymous"`. Without it, axe-core's contrast checker fetch()es the cross-origin stylesheet and trips CORS preflight — 3 console errors per page in every audit run. Real users never see it (browsers load stylesheets in no-cors mode), but audit signal-to-noise tanks. Same rule applies to any new cross-origin stylesheet.
-38. **Every `<select>` must have `aria-label` or a matching `<label htmlFor>`/`<select id>` pair.** Bare `<select>` adjacent to a bare `<label>` trips axe `select-name` critical. Class sweep 2026-04-22 found 13 unlabeled selects across MenteeMilestones, SessionHistory, Meetings, CreateProjectModal, CreateDecisionModal, AskTheLab, MeetingNotesPage, Grants — all fixed with `id`/`htmlFor` pairing. Same applies to new form selects going forward. (FilterChip.tsx was deleted 2026-04-23.)
-39. **`role="switch"` with `aria-checked` must use string `"true"`/`"false"`, not boolean.** React normally coerces booleans to the right attribute value, but axe-core `aria-valid-attr-value` flags `aria-checked={showDebugItems}` where `showDebugItems` is a JS boolean. Fix: `aria-checked={showDebugItems ? "true" : "false"}`. `aria-expanded`/`aria-pressed` boolean bindings are fine — only `aria-checked` (on role=switch/checkbox/radio) is strict about string form.
-40. **Overlap detector (`scripts/massive-audit/lib/overlap-detector.ts`) skips semantic landmarks.** `<nav>`/`<header>`/`<aside>` tags + `role="navigation|banner|complementary"` are treated as chrome — they legitimately overlay content, so intersection with page content never counts as a bug. Don't remove the tag-based filter; without it MobileTabBar spams a fake overlap hit on every mobile page.
-41. **Stage-bar fills use `--stage-fill-*` tokens, not `--slate/--teal/--gold`.** The accent tokens flip to LIGHT dark-mode variants (`--teal` dark = `#5cbcb4`, `--gold` dark = `#dcb355`, `--slate` dark = `#b0b5b9`), so `#fff` text on those fails ~2:1 in dark mode. Use `--stage-fill-{idea,data-collection,analysis,writing,review,submitted,published}` — dark hex values stable across themes, 5.4-7.5:1 with white. Applies to AnalyticsPage + PIAnalytics stage bars, member workload bars, Dashboard active tab, Meetings save/filter/view buttons. r7 2026-04-22.
-42. **Gold pill bg + gold text uses `--gold-on-emphasis`, not `--gold`.** `--gold-emphasis` (rgba 201,168,76,0.15) resolves to `#efebdf` in light, `#2a2618` in dark. `--gold` light (`#6b5420`) on `#efebdf` = 4.25:1 fail. `--gold-on-emphasis` pins to `#5a4518` light / `#dcb355` dark for AA on both. Used on MyTasks streak badge + any future gold-on-gold pill.
-43. **Parent `opacity` on a card multiplies with child colored spans.** A card wrapper with `opacity: 0.85` (e.g. "read" or "done" visual) + a green/maroon/gold child span with its own opacity compounds to fail AA (0.85 × 0.70 = 0.595 effective alpha → ratio ~3.3:1). Don't dim whole cards for state. Use `borderLeft: transparent` / strikethrough / `color: var(--muted)` on the title instead. Fixed across `MetricCard`, `Deadlines` stat row, `DecisionsPage` stat row, `MyItems` NotificationCard + CommitmentCard (r7 2026-04-22).
-44. **Mount animations must use transform-only, not opacity: 0 → 1.** Axe-core's contrast checker catches elements mid-transition and reports false-positive contrast fails. `staggerItem.hidden` (`animations.ts`), `.fade-in-up.will-animate` CSS, PageTooltip AnimatePresence, and several Deadlines / MenteeMilestones / DeadlineCascadePage motion.div variants all animate via `y` / `scale` only now. CLAUDE.md Rule 1 ("content visible by default") applies to animation entry states too.
-45. **Dropdowns use fully-opaque bg, not semi-transparent + backdrop-filter.** 98%/95% opacity + `backdrop-filter: blur(Npx)` looks clean against uniform bg, but when a page has a dark header band behind the dropdown, the band bleeds through as a horizontal shadow. Use `#ffffff` / `#0f1923` (full opaque) with `box-shadow` for depth. Ref: Research dropdown fix (Layout.tsx, GH #17).
-46. **Flex-col pages with canvas children need `height: 100vh`, not `minHeight: 100vh`.** `minHeight` lets the container match content height, which doesn't give `flex-1` children a determined size to stretch into. Canvas elements (reagraph GraphCanvas, three.js, etc.) fall back to their intrinsic 300×150. Use `height: 100vh` when the intent is "fill the viewport". Ref: Network.tsx fix (GH #16).
-47. **URL classification + linkification go through shared util.** `src/lib/urlClassify.ts` exports `classifyUrl(url)` + `shortLabelForUrl(url)`. `src/components/LinkifiedText.tsx` consumes them for auto-linkify in description/note content; `src/components/KeyLinksEditor.tsx` consumes for the project Key Links editor. Don't duplicate the classification regex — one truth. For non-http links (folder / `.bat` script), the rewritten `href` is `mnccore://open/<path>` which no Windows handler resolves by default; the click handler also copies the raw path to clipboard + shows toast as the reliable fallback.
-48. **Legacy slug canonicalization belongs at the write path, not the read path.** brain.db's `scripts/db/sync/hub_payload.py` imports `canonicalize_team_slug()` from `scripts/db/enums.py` (PB-side) and applies at every outbound assignee write. The Hub's `src/lib/emailSlug.ts` does NOT re-canonicalize on reads. Rationale (PI 2026-04-23): "read-side bandaid masks write-side leaks and hides future drift." If `nick` ever appears in D1 again, `getPersonInfo('nick')` returns `{name: 'nick'}` literally — visible signal that sync broke. Keep the asymmetry.
-49. **Presence is entity-scoped but WS-room-global.** `src/hooks/usePresence(entityType, entityId)` subscribes to the single shared `mnccore` WS room (hub-realtime Durable Object) and filters incoming messages by `{entityType, entityId}` client-side. 15s heartbeat ping + 45s staleness. Don't shard rooms per entity — keeps DO cost flat and cross-entity broadcast (Nick's global notifications) still works. Small team (~20) makes the broadcast-to-all overhead trivial. `<PresenceAvatars>` renders nothing when peer list empty, so there's no "0 viewing" noise. Extend to new entities by dropping `<PresenceAvatars slugs={usePresence(type, id)} />` next to the header — hook is entity-agnostic.
-
-    Presence unmount sends `presence-leave`; intent unmount sends explicit
-    `intent-leave` (r7 2026-04-24) — peers drop state synchronously instead
-    of waiting for TTL sweep. Add matching leave events on any new message
-    type (typing-stop already covers this for `useTyping`).
-50. **Landing cards use 2-col grid for action density.** ProjectDetail Overview's inline landing card (`src/pages/ProjectDetail.tsx`) is a `grid grid-cols-1 md:grid-cols-3`: left `md:col-span-2` = primary action (Open Tasks ALWAYS visible with `+ Add task` CTA), right `md:col-span-1` = Key Links + Recent Activity stacked, bottom full-width = Quick compose with top border. Pattern exists because PI 2026-04-23 called the previous single-column layout a "waste of space given its vertical." Replicate this shape for any new "detail page Overview" — actions left-primary, reference right-secondary, compose bottom.
-51. **Search covers 14 entity types — extend on future entity adds.** `api/routes/search.ts` queries 14 tables in parallel: tasks, projects, meetings, ideas, project_updates (notes), task_updates (task notes), comments, task_comments, decisions (hub_decisions), files (file_attachments), action_items, publications, nih_grants, activity_log. Return cap 50. Each type has a `TYPE_PRIORITY` score + `recencyBoost` + `titleMatchBonus`. When adding a new entity table, (a) add a parallel SELECT with LIKE on the narrative fields, (b) add a push block with a scored result, (c) add a type entry to `TYPE_PRIORITY`, (d) extend `typeConfig` in `src/pages/portal/SearchPage.tsx` with an icon + label. Otherwise search silently misses the new surface.
-52. **One shared PartySocket per (room, party) — use `realtimeBus`.** `src/lib/realtimeBus.ts` module-singleton owns the single socket to `mnccore/notification-hub`. `useRealtimeSync`, `usePresence`, `useTyping`, `useIntentBroadcast` all subscribe through the bus. 2s close-grace after last unsubscribe avoids cycling the socket on rapid React remounts. Don't `new PartySocket(...)` directly in new hooks — use `getRealtimeBus().subscribe(listener)` + `.send(payload)`. Pre-consolidation each detail-panel open spun up 3 separate sockets per user; a 19-member dogfood hit the DO with ~57 concurrent connections. Reference: commit `baaa41b3`.
-53. **DD-1 mode toggle + DD-2 saved views.** Saved views (`useSavedViews(page)`, LS key `mnccore.savedViews.v1.<page>`, 25-view cap) are wired into `UnifiedMyTasks` toolbar via `<SavedViewsMenu>` next to the view picker. State round-trips through `?filter=<quickFilter>&view=<columns|lanes|list>` so views capture both the quickView pill AND the shape (Columns/Lanes/List). DD-1 Now/Data mode toggle on the OLD MyTasks is superseded by Phase 38: TodayPage = Now (`/portal/dashboard`); UnifiedMyTasks = Data (`/portal/my-tasks`). v2 roadmap: D1-backed saved views table + cross-surface 14-entity merge stream + sidebar pins (DD-2 full parity).
-54. **T-29 Manuscripts "Needs your attention".** `GET /api/manuscripts/attention?review_days=&stale_days=` returns three subgroup arrays computed from `manuscript_revisions` + `reviewer_comments` + `publications`. Thresholds come from per-user `useLabPrefs()` (LS key `mnccore.labprefs.v1`, defaults 7d / 30d, clamped 0-365). `NeedsAttentionDashboard` replaces the old flat `ActiveRevisionsDashboard` — three collapsible subgroups + amber count pill at N≥5 + click-to-filter main table + section collapse persisted via `manuscripts.attention.collapsed` localStorage. Empty-all collapses to a single 32px muted line; single-subgroup renders without zero-state siblings per spec. Thresholds are surfaced in Settings → Lab tab.
-55. **Mobile compose pattern — BottomSheet-style trigger on small surfaces, sticky-bottom on big ones.** ProjectDetail: on `<768px` the inline compose collapses to a tap trigger; tap raises a `position: fixed` bottom overlay via `useComposeSheet(open, onClose)` (Esc + body-scroll-lock). TaskDetailPanel `OverviewQuickAdd`: the panel already slides over the page on mobile, so the compose just gets `position: sticky; bottom: 0` + `env(safe-area-inset-bottom)` to keep it above the iOS keyboard. MeetingDetail stays inline (single-line input + browser autoscroll handles the keyboard case adequately). `useIsMobile()` is the canonical breakpoint check — matchMedia-backed, reactive on rotation.
-56. **Row-level swipe on TaskGridRow — inside the virtualizer.** `useSwipeAction({onSwipeLeft, onSwipeRight})` returns motion.div props + action-opacity `MotionValues`. Wire the `motion.div` INSIDE the virtualizer's translateY outer wrapper (same colStyle div as before, just swap the root `<div>` for a `<motion.div>`); wrap it with a `position: relative; overflow: hidden` div that holds absolute-positioned action-reveal layers. The hook's internal `window.innerWidth >= 768` check sets `drag: false` on desktop so translateX never fires. Right-swipe maps to complete (with undo); left-swipe mirrors the long-press context menu. Combined `onTouchStart` calls both `longPress.onTouchStart` AND `swipe.motionProps.onTouchStart` — framer drag takes over on move, long-press on hold-still.
-57. **Today landing model: `/portal/dashboard` renders Today B2 (operating-day surface), `/portal/overview` renders the old card-grid Lab Overview.** The component at `/portal/dashboard` is `src/pages/portal/TodayPage.tsx` (Phase 38). The legacy `Dashboard.tsx` lives at `/portal/overview`. If you're adding a "what's happening across the lab" widget (status snapshot, weekly planning), it goes on Lab Overview. If you're adding a "what should I work on right now" widget (today's queue, pill counts, planned tasks), it goes on Today. Don't reintroduce a card-grid Dashboard at `/portal/dashboard`. Sidebar label is "Today"; "Lab Overview" sits next to it. URL alias `/dashboard` (root) still redirects to `/portal/dashboard`.
-58. **Three click semantics on Today/MyTasks rows: NEVER conflate.** (a) Clicking the **body** of an unplanned task = expands `TaskDetailDrawer` inline; does NOT promote. (b) Dragging the `⋮⋮` handle = plans the task (drop zone determines slot). (c) Explicit `▶ Work on this now` button inside the drawer = promotes to Right Now. Same rule applies to MyTasks Columns/Lanes views (inline expand) and List view (drawer expand). Drag/click/promote stay three independent affordances. Source: CD design memory 2026-04-24 — Nick called this out explicitly ("the click in the middle of the task should not make it planned it should expand more info").
-59. **Three accent colors with assigned meaning on Today/MyTasks surfaces.** `#c9a84c` gold = user-driven action / planned tasks / Hermes / Right Now glow. `#5cbcb4` teal = meetings / mentees / system / navigation. `#f0737e` coral = overdue / stalled / warnings / overlapping meetings. `#6ee89a` green = done / healthy sync. Don't repurpose a color when adding a new component to TodayPage / UnifiedMyTasks — pick the meaning that matches. These are hex-pinned (not CSS vars) because Today/MyTasks render inside the portal chrome with their own dark-first palette.
-60. **MyTasks view picker far-left of filter row, persisted in `localStorage.mt_view`.** Three views (Columns / Lanes / List) share ONE toolbar. If a filter only makes sense in one view, the toolbar contract is wrong, not the filter. List view uses a right-side drawer specifically because dense table requires cursor-stable nav (j/k); Columns and Lanes use inline expand. View picker reads as "shape of this page" — not a sidebar, not a tab, not a top-right toggle (CD tried those and rejected). Source: `src/pages/portal/UnifiedMyTasks.tsx`.
-61. **Right Now is a promoted slot, not a fixed task.** Compact horizontal hero with `▾` to expand trail/chat. Subtle gold glow only here (`box-shadow: 0 0 24px rgba(201,168,76,0.06)`); nothing else gets a glow. Mark-done unplans, sinks the task to the bottom of its home group with strikethrough, and auto-promotes the next planned task. Empty queue state = "No planned tasks. Drag ⋮⋮ up or click a task to promote." Source: `useTodayState` in `src/pages/portal/TodayPage.tsx`.
-62. **Group sort within a TaskGroup: planned → active → done.** Done sinks to bottom with strikethrough at reduced opacity. Planned floats to top. Don't re-sort by priority/due_date within a group — that fights the operating-day mental model. Source: `TaskGroup` component in `TodayPage.tsx` (also applies to UnifiedMyTasks Lanes view).
-63. **`tasks.group_override` is the explicit Hub-authored bucket choice; `getGroupForTask()` checks it FIRST.** Schema v50 + brain.db migration 037 (2026-04-25). When a user clicks Move → on `/portal/my-tasks` (or Today's TaskDetailDrawer), the chosen group is written to `tasks.group_override` (one of `'deep' | 'priorities' | 'quick' | 'pb' | 'etl' | NULL`). Both `getGroupForTask()` implementations (UnifiedMyTasks + TodayPage) check the override first and only fall back to derivation when it's NULL. The field syncs to brain.db via `hub_payload.translate_task_from_hub` (pull) + `translate_task_to_hub` (push, LWW), and `generate_today_markdown.py::_GROUP_OVERRIDE_TO_SECTION` honors it for next-morning TODAY.md bucketing (pb → peripheral_brain, etl → clif_etl, others map directly). 📍 chip on rows indicates the override is set. **API guard**: `VALID_GROUP_OVERRIDES` set in `api/routes/tasks.ts` rejects non-canonical values with 400. **Cross-repo coordination**: registered in `Context/Topics/shared-schema-registry.md`; decision doc at `Context/Decisions/2026-04-25-tasks-group-override.md`. Never add a Hub-side classification field without the same end-to-end propagation — Nick's mental model is "Hub action = system commitment", a Hub-only state field is a smell.
-
-64. **Personal calendar feeds are iCal pull, not OAuth.** Schema v52 (2026-04-27). Each user pastes their private iCal URL (Google "Secret address in iCal format", Outlook publish, iCloud public-cal share) into `/portal/profile` or `/portal/settings#integrations`. Hub stores it in `user_calendar_feeds`, polls lazily on Today page load when `last_polled_at` is >15 min stale, parses VEVENTs via `api/lib/ics-parser.ts`, upserts to `user_calendar_events`. Today timeline merges these with team meetings. **Why iCal over OAuth**: works for any provider (visiting scientists with iCloud, collaborators with Outlook), no GCP project per user, no token refresh, no Workspace verification. **Parser capabilities**: full RFC 5545 RRULE expansion (DAILY/WEEKLY/MONTHLY/YEARLY with INTERVAL/BYDAY/BYMONTHDAY/COUNT/UNTIL), TZID resolution via `Intl.DateTimeFormat` (Workers ship IANA tz data), STATUS=CANCELLED filtering, PARTSTAT=DECLINED filtering (per ownerEmail), meeting URL extraction from DESCRIPTION (Zoom/Teams/Meet) with Google redirect-tracking strip. **Tests**: 24 vitest unit tests at `api/lib/ics-parser.test.ts`; run via `npm run test:api` (node mode, no Playwright). **Extracted UI**: `src/components/CalendarFeedsPanel.tsx` renders in both Settings and Profile (shared TanStack cache key `calendar-feeds`).
-
-65. **CF Access auth uses Generic OIDC pointing at Google, not the preset Google IdP.** Phase 39 (2026-04-28). The preset Google integration doesn't expose `prompt=select_account`, which silently rejected users whose default Chrome Google account isn't @umn.edu. Fix: `Google UMN` Generic OIDC entry in CF Zero Trust → Authentication → Identity providers, with `Auth URL = https://accounts.google.com/o/oauth2/auth?prompt=select_account&hd=umn.edu`, custom Web OAuth client in Google Cloud Console (project: Peripheral Brain - UMN, separate from the Desktop client used by Peripheral Brain CLI). **Standard OIDC claims** (`name`, `picture`) listed in OIDC Claims field flow into the Access JWT at top level — Test UI shows them in `oidc_fields: {}` only for non-standard claims, but they ARE in the JWT (verify by decoding `CF_Authorization` cookie at jwt.io). Don't revert to the preset Google IdP — it loses the account chooser. Closed GH #48.
-
-66. **`ensureTeamMember()` runs on every authed request — auto-create + claim.** Schema v53 (2026-04-28). After `getAuthUser()` resolves a JWT, the middleware calls `ensureTeamMember()` (defined in `api/helpers.ts`). Four-branch logic: (1) direct email match → no-op; (2) slug match via `EMAIL_PREFIX_TO_SLUG` LUT → CLAIM existing row (e.g. `mesfin@umn.edu` claims `nate-mesfin`), backfill email + photo_url (don't overwrite name); (3) slug match via raw email-prefix → same claim path; (4) no match → INSERT auto_created=1 row, surfaces with yellow PENDING REVIEW badge on Team page. The badge clears when role is assigned. **Authorization**: `PUT /api/team/:slug` is now owner-or-PI gated (was previously any-authed-user); role + member_type are PI-only.
-
-67. **`/portal/profile` is the self-service profile + integrations entry.** Phase 39 (2026-04-28). Inline-on-blur edit for self-edit fields (preferred_name, full_name, credentials, title, department, bio, photo_url, scholar_id). Embeds `<CalendarFeedsPanel />`. Read-only role + member_type pills (admin-assigned). Shared cache invalidation: any save invalidates both `['team']` and `['team-raw']` so other surfaces refresh. The Settings → Integrations tab now wraps the same `CalendarFeedsPanel` — both surfaces share TanStack cache key `calendar-feeds` so changes flow instantly.
-
-## Roadmap
-
-**Phase 37: COMPLETE** (2026-04-21). Portal URL migration — all 27 gated routes moved under `/portal/*` prefix so a single Cloudflare Access destination gates the authenticated surface. `src/constants/paths.ts` + `tests/helpers/paths.ts` single source of truth. Legacy root paths redirect via `<Navigate>` shims. Merged as `8600c32`; deployed `c5e46630`. Launch secrets set same day. See CHANGELOG.md.
-
-**Phases 1-13: COMPLETE** (360+ commits). See `REFERENCE.md` for details.
-
-**Phase 14: COMPLETE** (7 commits). Design ethos pivot — palette, containers, inline editing, fonts, monospace, colors.
-
-**Phases 14-36: COMPLETE** (~210 lines of detail, archived 2026-05-03 to `docs/archived/CLAUDE.md-history-2026-05-03.md`). See CHANGELOG.md or git log for full history.
-
-## Meeting Cadence
-
-Biweekly Tuesdays 3pm CT. Anchor: Apr 21, May 5. Automation runs Monday mornings.
-
-## Component Coverage (verified 2026-04-15 Everything Sprint v2)
-
-> Archived 2026-05-03 to `docs/archived/CLAUDE.md-history-2026-05-03.md`. Token-diet cut.
-
-## Accessibility Requirements
-
-Currently good: aria-hidden on icons, aria-label on interactive elements, aria-pressed on toggles, skip-to-content link, focus-visible styling, prefers-reduced-motion in 5 locations, all modals have focus trapping + Escape key + aria-modal.
-
-**All major gaps closed as of Phase 23:**
-- ~~UndoToast needs `role="alert"` and `aria-live="polite"`~~ DONE (be80679)
-- ~~CommandPalette needs focus trapping~~ DONE (81da23b)
-- ~~CreateTaskModal needs focus trapping~~ DONE (be80679)
-- ~~CreateProjectModal needs focus trapping~~ DONE
-- ~~CreateIdeaModal, CreateQuestionModal, CreateDecisionModal, TranscriptModal need focus trapping~~ DONE (Phase 23)
-- ~~No `aria-live` regions for dynamic content updates~~ DONE — PageHeader count/subtitle have aria-live
-- ~~Toast notifications not announced to screen readers~~ DONE — UndoToast container has role="status" + aria-live, success toasts share same container
-
-## Known Gotchas
+## Known Gotchas (active traps only)
 
 | Problem | Fix |
 |---------|-----|
 | Hero cards render loop | Use `<a>` tags, not Router Link |
 | initialData flash | Use factory functions: `() => data` |
-| Meeting ID collision | IDs include random suffix. R10-5 `normalizeMeetingTitle()` lowercases+trims+collapses whitespace before dedup compare. UNIQUE index enforced. |
+| Meeting ID collision | IDs include random suffix. `normalizeMeetingTitle()` lowercases+trims. UNIQUE index enforced. |
 | Tailwind v4 group-hover | Use CSS rule in index.css, not arbitrary value |
-| --border-light vs --border-subtle | Gold=semantic, Neutral=structural. Don't mix. |
+| `--border-light` vs `--border-subtle` | Gold=semantic, Neutral=structural. Don't mix. |
 | TaskCard status cycling | todo→in_progress→done (skips blocked) |
 | Network chunk 1.3MB | Expected (three.js). Code-split via React.lazy |
 | CF Access blocks all | Restrict to portal paths only |
 | Duplicate action items | Dedup by normalizing "[Carried forward]" |
-| Duplicate project slugs in D1 | Fixed 2026-04-19: D1 is clean (0 paren slugs in prod). `POST /api/projects` now sanitizes `body.slug` server-side via `[^a-z0-9]+ → -`, so a client passing `(mceachron)-...` can't reintroduce the class. |
-| MeetingDetail Rules of Hooks | useState/useMemo must come BEFORE early returns on loading/not-found branches. Phase 31.5 perf pass introduced a variant of this bug; R6 hotfixed. |
-| `team_members.email` column | Added 2026-04-19 (schema-v43). Backfilled to `slug || '@umn.edu'` for existing rows. Read `email` column; fall back to the slug derivation only if NULL. Non-UMN collaborators get a real address. |
-| Mobile swipe on TaskDetailPanel | Implemented via framer-motion `drag="x"` on the `<motion.div>` panel (not raw touch handlers — those caused Pixel 5 inert-drag, see commit cd1b96d). `touch-action: pan-y` lets vertical content scroll through. `edgeGuardRef` blocks drag activation when initial touch is within 32px of the viewport left so iOS Safari edge-swipe-back keeps working. Dismiss threshold: offset > 30% of panel width OR velocity > 500px/s. Only active below 768px (drag prop conditionally false on desktop). Backdrop opacity fades with drag via `useTransform(dragX, [0, 320], [1, 0])`. Respects `prefers-reduced-motion`. Don't revert to raw touch handlers — they don't move the element on some Androids. |
-| Virtualizer skeleton rows must match actual layout | TableSkeleton component was generic; pages with virtualizers need inline skeletons that match TableContainer + header + rows at `var(--row-height)` pixel-for-pixel to avoid CLS. |
-| Cloudflare Workers request cap | **On Workers Paid plan** (10M/day) as of 2026-04-17 — the old 100K/day free-tier cliff no longer applies. Hermes polling at 60s + normal team use well under cap. Parallel Playwright audits against prod are acceptable; Miniflare local (`npm run test:local`) still preferred for dev iteration. |
-| FAB positioning | Use `--fab-stack-{1,2,3}` CSS vars in `:root` (R9-1). NEVER `max(24px, 72px)` — that always returns 72. Mobile override is a `<768px` media query in index.css. |
-| react-grid-layout v2.x is a breaking rewrite | Stay on `1.5.3`. DashboardGrid.tsx depends on the `WidthProvider(Responsive)` HOC pattern. RGL measures container width, not window — `DASHBOARD_GRID_BREAKPOINTS` must account for the sidebar. |
+| `team_members.email` column | Read `email` column; fall back to slug derivation only if NULL. Non-UMN collaborators get a real address. |
+| Mobile swipe on TaskDetailPanel | Implemented via framer-motion `drag="x"`. `touch-action: pan-y` lets vertical scroll through. `edgeGuardRef` blocks drag within 32px of viewport left (iOS Safari edge-swipe-back). Dismiss: offset > 30% OR velocity > 500px/s. Don't revert to raw touch handlers. |
+| Virtualizer skeleton rows | Must match TableContainer + header + rows at `var(--row-height)` pixel-for-pixel to avoid CLS. |
+| FAB positioning | Use `--fab-stack-{1,2,3}` CSS vars. NEVER `max(24px, 72px)`. Mobile override via `<768px` media query in index.css. |
+| react-grid-layout v2.x is a breaking rewrite | Stay on `1.5.3`. `DashboardGrid.tsx` depends on `WidthProvider(Responsive)` HOC pattern. |
 | Dark mode localStorage key | `mn-ccore-theme`, NOT `theme`. Playwright tests must set the right key. |
-| Playwright X-Test-Mode header | DEPRECATED — Miniflare local test harness replaces this. `X-Test-Mode: true` routes API calls to `mnccore-lab-test` (empty DB). Prior inspection passes on data-rich pages may be inflated. Phase 3 Miniflare rework removes the header from prod config. |
-| `@formkit/auto-animate` import drift | Imported in `TaskGridView.tsx` but was missing from `package.json` — blocked the first build 2026-04-13. If you see `Cannot find module 'X'`, grep the imports. |
-| Project status legacy values | `src/data/projects.ts` static fallbacks still use `'Active'`. `normalizeProjectStatus()` in `lib/taskConstants.ts` folds them. Don't delete the helper. |
-| Grant status taxonomy | R10: 7 values in `useGrantTimeline.ts:GRANT_STATUS_OPTIONS`. Only K23 provider practice variation in mechvent is `funded`. Anything else marked `Active` is legacy — see migration SQL in `scripts/round9/r10-grants-status-migration.sql`. |
-| hub-realtime WebSocket namespace | FIXED (commit `46f53c4`). Was HTTP 400 for 7 days — `routePartykitRequest` maps binding `NOTIFICATION_HUB` → namespace `notification-hub`, but PartySocket client defaulted to `main`. Fix: added `party: 'notification-hub'` to `useRealtimeSync.ts`. Source now at `workers/hub-realtime/` in this repo. WebSocket stub kept in `tests/setup/websocket-stub.ts` for local tests (Miniflare can't run the DO). |
-| `npm run test:local` fails on fresh bootstrap | FIXED 2026-04-23 late evening. `schema-v43.sql` ALTER TABLE conflicts with base `schema.sql` which already declares `team_members.email`. `schema-v48-index-reconcile.sql` creates indexes on `action_items.category` / `.parent_task_id` that v49 hadn't yet added. Both are now in `FRESH_BOOTSTRAP_SKIP` in `scripts/local-db-bootstrap.ts`. Local test harness unblocked (5/5 data-validation pass). |
-| Folder links silent on Windows | `mnccore://open/<path>` custom protocol has no registered Windows handler so clicks do nothing. KeyLinksEditor + LinkifiedText both copy raw path to clipboard on click + show toast "Path copied — paste in Win+R or Explorer." Protocol nav still fires fire-and-forget. Don't revert to direct `mnccore://` href — users without the handler see silent failure. |
-| Legacy team slugs in brain.db | FIXED 2026-04-23 late evening. 532 `tasks.assignee='nick'` canonicalized to `nick-ingraham`. `scripts/db/sync/hub_payload.py` imports `canonicalize_team_slug()` from `scripts/db/enums.py` (PB-side) and applies at both outbound assignee sites so brain.db shorthand never leaks to D1 again. Hub read-side `canonicalSlug()` was reverted — root fix means UI renders `nick` literally if it reappears (visible drift signal, not silent fix). |
-| PresenceAvatars visible when alone | By design. Peer list excludes self (partyserver broadcasts skip sender). If you want local verification, open the same ProjectDetail in two browsers as two different auth identities — each should see the other's avatar within ~15s. |
+| `@formkit/auto-animate` import drift | If you see `Cannot find module 'X'`, grep the imports vs package.json before assuming it's installed. |
+| Project status legacy values | `src/data/projects.ts` static fallbacks use `'Active'`. `normalizeProjectStatus()` in `lib/taskConstants.ts` folds them. Don't delete the helper. |
+| Grant status taxonomy | 7 values in `useGrantTimeline.ts:GRANT_STATUS_OPTIONS`. `Active` is legacy. |
+| WebSocket stub | `tests/setup/websocket-stub.ts` kept for local tests (Miniflare can't run the DO). |
+| Folder links silent on Windows | `mnccore://open/<path>` has no Windows handler. `KeyLinksEditor` + `LinkifiedText` copy raw path to clipboard + show toast. Don't revert to direct href. |
+| PresenceAvatars visible when alone | By design. Peer list excludes self. Verify: open same ProjectDetail in two browsers as two auth identities. |
 
-## Peripheral Brain Connection
-
-- **Project folder:** `Projects/mn-ccore-lab-hub/` -- PROJECT.md + hub-future-ideas.md (88 features tracked)
-- **Research:** `Projects/mn-ccore-lab-hub/competitive-landscape-lab-management-2026.md` + `task-management-ux-patterns-research.md`
-- **Design decision:** `Context/Decisions/2026-04-01_hub-design-ethos-pivot.md`
-- **Memory:** `memory/project_mnccore-website-redesign.md`
-- **Sync scripts:** PB `scripts/db/sync/` module -- `python scripts/db/sync.py {pull|push|sync|status}` (replaced legacy `sync_d1_push.py` / `sync_d1_pull.py` 2026-04-21)
-- **Sync plan:** `~/.claude/plans/graceful-meandering-thimble.md` -- full database alignment (Phase 24)
-- **CRDT engine:** `scripts/db/crdt.py` -- field-level LWW for Airtable sync (extend to D1)
-- **Meeting automation:** `scripts/scheduled/meeting_automation.py`
-- **Archived plans:** `Projects/mn-ccore-lab-hub/_archived/` + `Archive/Scratch/hub-plans-consolidated/`
-
-## Office of Inspection (Testing Infrastructure)
-
-**568+ tests** across 4 suites. Self-updating via feature registry + scanner.
-
-| Suite | Tests | File |
-|-------|-------|------|
-| Inspection | 214 | `tests/inspection.spec.ts` |
-| Workflows | 167 | `tests/inspection-workflows.spec.ts` |
-| Daily Super-User | 131 | `tests/daily-superuser.spec.ts` |
-| Sync Pipeline | 58 | `tests/sync-pipeline.test.py` |
+## Testing
 
 **Run:** `bash scripts/run-tests.sh all` (quick/ui/sync/all modes)
 
-### Test Database Isolation
+**Config variants:**
 
-Tests run against a **separate D1 database** (`mnccore-lab-test`), not production. The production DB is never touched by Playwright tests.
+| Config | Target | Use case |
+|--------|--------|----------|
+| `playwright.config.prod.ts` | live prod | Inspection + post-deploy regression |
+| `playwright.config.dogfood.ts` | prod + thorough | Visual audit default |
+| `playwright.config.local.ts` | Miniflare local | Unshipped changes |
 
-**How it works:**
-1. `playwright.config.ts` sends `X-Test-Mode: true` header on all requests
-2. Middleware in `api/index.ts` detects the header and swaps `env.DB` to `env.DB_TEST`
-3. `DB_TEST` binding configured in both `wrangler.toml` and Cloudflare Dashboard
-4. `api/types.ts` and `functions/api/[[route]].ts` include `DB_TEST` in the `Env` interface
+**Test DB isolation:** Tests run against `mnccore-lab-test` (separate D1). Canonical test prefix: `_TEST_DELETE_`. See `TESTING.md`.
 
-**Canonical test prefix:** `_TEST_DELETE_` -- used in `tests/test-cleanup.ts` for test data identification and cleanup.
+**Playwright MCP vs CLI:** CLI default (fast, cheap). MCP only for debugging a specific failing test after CLI doesn't give enough context — each `browser_snapshot` costs ~2K tokens.
 
-**Cleanup:** Test data lives in the isolated test DB and does not pollute production. The `tests/test-cleanup.ts` handles cleanup of `_TEST_DELETE_`-prefixed records. The manual cleanup commands below are for **legacy test data** that was created in production before isolation was implemented, and for sync pipeline tests that operate on brain.db directly:
-```bash
-# Legacy production cleanup (only needed for pre-isolation test data)
-# Tasks (soft delete)
-npx wrangler d1 execute mnccore-lab --remote --command="UPDATE tasks SET deleted_at=datetime('now') WHERE title LIKE 'SYNCTEST%'"
-npx wrangler d1 execute mnccore-lab --remote --command="UPDATE tasks SET deleted_at=datetime('now') WHERE title LIKE 'INSPECTION%' OR title LIKE 'EDGE%' OR title LIKE 'JOURNEY%' OR title LIKE 'DAILYTEST%'"
-npx wrangler d1 execute mnccore-lab --remote --command="UPDATE tasks SET deleted_at=datetime('now') WHERE title LIKE 'SYNC-%'"
-# Non-task tables (hard delete — no deleted_at column)
-npx wrangler d1 execute mnccore-lab --remote --command="DELETE FROM ideas WHERE title LIKE 'INSPECTION%' OR title LIKE 'EDGE%'"
-npx wrangler d1 execute mnccore-lab --remote --command="DELETE FROM lab_questions WHERE question LIKE 'INSPECTION%' OR question LIKE 'EDGE%'"
-npx wrangler d1 execute mnccore-lab --remote --command="DELETE FROM hub_decisions WHERE title LIKE 'INSPECTION%' OR title LIKE 'EDGE%'"
-npx wrangler d1 execute mnccore-lab --remote --command="DELETE FROM notifications WHERE body LIKE 'SYNCTEST%'"
-# brain.db (sync pipeline tests still touch brain.db directly)
-python -c "import sqlite3; conn=sqlite3.connect('C:/Users/ingra107/Peripheral-Brain/data/brain.db'); conn.execute(\"UPDATE tasks SET status='deleted', completed=1, sync_status='synced' WHERE name LIKE 'SYNCTEST%' OR name LIKE 'INSPECTION%' OR name LIKE 'EDGE%' OR name LIKE 'DAILYTEST%' OR name LIKE 'JOURNEY%' OR name LIKE 'SYNC-%' OR name LIKE 'AAAA%' OR name LIKE 'TEST-%'\"); conn.commit(); print(f'Cleaned {conn.total_changes} test tasks from brain.db'); conn.close()"
-```
-**Scan for gaps:** `python scripts/inspection-scanner.py --commits 5`
-**Registry:** `tests/feature-registry.json` (369 features, 318 covered = 86.2%)
-**Guide:** `TESTING.md`
-**Skill:** `/test-hub` (scan, run, generate, update, report)
-
-## Phase History (29-37 + R8/R9/R10) → see CHANGELOG.md
-
-> **Phase-by-phase build history in `CHANGELOG.md`** to keep this file operational. Latest: **Phase 37** (2026-04-21) — Portal URL migration. All 27 gated routes under `/portal/*`. Single CF Access destination. Launch secrets set same day. **Phase 36e** — Claude Design round-1 handoff imported; 32/33 shipped. **Phase 36d** — design sprint (12 brand primitives + cinematic Pulse Kiosk + per-route OG share cards + capture infrastructure). **Phase 36c** — 4-auditor deep audit + 11 P0/P1 fixes. **Phase 36b** — slug rename. **Phase 36** — consultant close-out + mobile swipe. Earlier: 29 features, 30 visual QA, 31 token compliance, 31.5 expert polish, 32 final launch polish (10 consultant rounds), Nick-Review R8/R9/R10, 34 audit framework, 35 a11y + sync parity.
->
-> **Key decisions in that history:** sidebar darker-than-content is NEVER-violate (GC-1). Framer Motion scoped to page transitions only (GC-2). Ideas + Decisions are columnar tables not cards (GC-3). Data-pages vs dashboard-pages taxonomy (GC-6). Grant + project status taxonomies locked (R10). Research Digest = Model B. Dashboard cards resizable via RGL (R9-9). Hono router declarative — no raw `url.pathname` routing (Phase 36).
-
-**Still open:**
-- ~~DI-4 duplicate projects~~ DONE Phase 36 (2026-04-19). 1 duplicate merged (`clif-pf-sf` → `pf-v-sf-oxygenation-severity`). SQL at `scripts/merge-pf-sf-duplicate.sql`.
-- ~~DI-6 dangling task project_id~~ RESOLVED 2026-04-19: live D1 verified at 0 dangling rows (ran `SELECT COUNT(*) FROM tasks t WHERE t.project_id IS NOT NULL AND t.project_id NOT IN ...`).
-- ~~Hermes polling 10→60s~~ DONE (2026-04-16). POLL_INTERVAL 20→60s in hub_ai_listener.py.
-
-## Everything Sprint v2 (2026-04-15) — R11/R12 + Miniflare
-
-> Archived 2026-05-03 to `docs/archived/CLAUDE.md-history-2026-05-03.md`. Token-diet cut.
-
-## Pending Sync
-<!-- When this session ends, the SessionEnd hook syncs this to Peripheral Brain. -->
-
-
-## Next Session Playbook — April 21 Launch Readiness
-
-> Archived 2026-05-03 to `docs/archived/CLAUDE.md-history-2026-05-03.md`. Token-diet cut.
-
-## Audit Infrastructure (2026-04-17)
-
-> Archived 2026-05-03 to `docs/archived/CLAUDE.md-history-2026-05-03.md`. Token-diet cut.
-
-## Test Results (2026-04-15, post-Everything Sprint v2)
-
-> Archived 2026-05-03 to `docs/archived/CLAUDE.md-history-2026-05-03.md`. Token-diet cut.
-
-## Architecture Notes
-
-### Mutations (src/hooks/mutations/)
-71 mutations split into 9 domain files. `useMutations.ts` re-exports everything — no import changes needed.
-- `useTaskMutations.ts` (5), `useSubtaskMutations.ts` (3), `useProjectMutations.ts` (6), `useMeetingMutations.ts` (4), `useDecisionMutations.ts` (3), `useIdeaMutations.ts` (3), `usePBMutations.ts` (13), `useOtherMutations.ts` (34)
-
-### Testing
-- **Playwright** (E2E): 546 tests, 4 suites. `reducedMotion: 'reduce'` in config.
-- **Vitest** (component): Browser mode with Playwright provider. `vitest.config.ts`.
-- **data-testid**: 28 attributes on key interactive elements. Use in tests over CSS selectors.
-
-### When to Use Playwright MCP vs CLI (token budget)
-
-**Use Playwright CLI** (default — cheap, fast):
-- Running test suites: `npx playwright test tests/...`
-- Batch test runs: `bash scripts/run-tests.sh all`
-- Any run where you just need pass/fail counts
-
-**Use Playwright MCP** (expensive — real browser control, burns tokens on snapshots):
-- Debugging a SPECIFIC failing test that you can't figure out from the error message
-- Investigating what the page actually looks like (DOM structure, visibility)
-- Testing a fix interactively before committing
-- When you need to inspect the accessibility tree or console errors live
-
-**Rule of thumb:** Run tests via CLI first. If a test fails and the error context isn't enough, THEN use the MCP to navigate to that page and inspect. Never use the MCP for batch test runs — a single `browser_snapshot` call returns the full accessibility tree which costs ~2K tokens.
-
-### API Field Protection
-Update handlers protect required fields from null:
+**API field protection:**
 - Tasks: `status`, `priority`, `assignee` — can never be null
 - Projects: `status`, `stage`, `category` — can never be null
 
-### Removed Features
-- **CV Page** (`/team/:slug/cv`): Cut 2026-04-09. PB cv-export skill handles Nick's CV.
+## Peripheral Brain Connection
+
+- **Project folder:** `Projects/mn-ccore-lab-hub/` — PROJECT.md + hub-future-ideas.md
+- **Sync scripts:** PB `scripts/db/sync/` module — `python scripts/db/sync.py {pull|push|sync|status}`
+- **Decision:** `Context/Decisions/2026-04-21-sync-extraction-COMPLETE.md`
+- **Accessibility:** WCAG 2.1 AA clean (axe 29 pages × 2 schemes = 0 findings, r7 2026-04-23).
 
 ## Hub Specialist Agents (added 2026-05-02)
 
-User-level agents at `~/.claude/agents/` (sync via Syncthing). Each holds focused context, persistent memory in `agent_knowledge.category='<name>'` (table lives in `C:/Users/ingra107/Peripheral-Brain/data/brain.db`).
+User-level agents at `~/.claude/agents/`. Persistent memory in `agent_knowledge.category='<name>'` (brain.db).
 
 | Nick says / situation | Specialist |
 |----------------------|------------|
@@ -651,12 +315,14 @@ User-level agents at `~/.claude/agents/` (sync via Syncthing). Each holds focuse
 | Worker deploy / D1 query / mutations.ts / KV / R2 / hub_ai_listener / wrangler | **hub-backend** (Sonnet) |
 | Schema drift between brain.db ↔ D1 / pending change-spec from Builder / type generation | **hub-schema-sync** (Sonnet) |
 
-**Cross-system handoff:** when brain.db schema changes (Builder, in PB session), Builder writes a change-spec to `C:/Users/ingra107/Peripheral-Brain/data/shared/hub-schema-changes.jsonl`. On next Hub session, dispatch `hub-schema-sync` to apply pending specs (D1 migration + frontend types). Resolution writes back to spec file.
+**Cross-system handoff:** Builder writes change-specs to `C:/Users/ingra107/Peripheral-Brain/data/shared/hub-schema-changes.jsonl`. On next Hub session, dispatch `hub-schema-sync` to apply pending specs.
 
-**Depth-2 limit:** Hub specialists cannot dispatch other agents directly. They return "next: dispatch X" → COO does the next dispatch.
+**Depth-2 limit:** Hub specialists cannot dispatch other agents directly — return "next: dispatch X" to COO.
 
 Full architecture: `C:/Users/ingra107/Peripheral-Brain/Context/Decisions/2026-05-02-context-diet-and-managers.md`.
 
 ## Session Notes
 <!-- COO writes session updates here. Synced by SessionEnd hook or Start Day backup. -->
 
+## Pending Sync
+<!-- When this session ends, the SessionEnd hook syncs this to Peripheral Brain. -->

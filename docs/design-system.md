@@ -1,0 +1,119 @@
+# MN-CCORE Lab Hub — Design System Reference
+
+Extracted from `CLAUDE.md` 2026-05-15 to keep the operating guide lean.
+This file is reference-only — load it when doing design system work.
+
+---
+
+## Animation Timing (5 durations + 2 easings)
+
+- `--duration-instant: 0ms` — state toggles, checkbox
+- `--duration-fast: 100ms` — tooltips, button press
+- `--duration-normal: 150ms` — hover, row highlight (alias: `--transition-fast`)
+- `--duration-moderate: 200ms` — dropdowns, panels (alias: `--transition-panel`)
+- `--duration-slow: 300ms` — sidebar, modals, page transitions
+- `--ease-out: cubic-bezier(0.16, 1, 0.3, 1)` — entering elements
+- `--ease-in-out: cubic-bezier(0.4, 0, 0.2, 1)` — moving elements
+- Card hover: -1px lift. Respects `prefers-reduced-motion` (all durations → 0ms).
+
+---
+
+## Sidebar Specs
+
+- **3-plane depth**: sidebar DARKER than content via `--sidebar-bg: color-mix(in oklch, var(--cream), black 12%)` in both light and dark mode. The sidebar must always recede behind content (matching Linear). Darker-than-content is NEVER-violate. Phase 31.5 briefly tried lighter sidebar; reverted 2026-04-12.
+- Font-weight 400 for nav items, 500 for active only.
+- Active: `--teal-subtle` bg fill (desaturated), full teal on text/icon. No left border.
+- Inactive: `--slate` color, icon opacity 0.7.
+- Borders: `--border-subtle` (neutral), NOT `--border-light` (gold).
+- Section labels: 10px uppercase, opacity 0.5. Divider lines between groups.
+- Row height: py-2 (compact). Font: 12px. Group gap: 4px. Section divider margin: 6px/8px.
+- Logo: mark uses CSS filter for dark mode (`invert(1) brightness(1.5)`), text logo swaps to dark variant.
+
+---
+
+## Borders & Spacing
+
+- `--border-light` (gold tint) = ONLY for filter toggle inactive states and intentional brand accents.
+- `--border-subtle/default/strong` (neutral, 3 tiers) = ALL structural borders. 222 structural borders migrated in Phase 30.
+- Spacing: `--sp-xs` (4) / `--sp-sm` (8) / `--sp-md` (12) / `--sp-lg` (16) / `--sp-xl` (24) / `--sp-2xl` (32). Strict 8px grid.
+- Radius: `--radius-sm` (4) / `--radius-md` (6) / `--radius-lg` (8) / `--radius-xl` (12) / `--radius-2xl` (16) / `--radius-full` (9999) / `--radius-circle` (50%). All `borderRadius` MUST use tokens.
+- Typography scale: `--text-micro` (10) / `--text-caption` (10) / `--text-label` (11) / `--text-small` (12) / `--text-body` (13) / `--text-base` (14) / `--text-md` (16) / `--text-lg` (18) / `--text-xl` (24) / `--text-2xl` (32).
+
+---
+
+## Z-Index Hierarchy
+
+- `--z-base` (1) / `--z-sticky` (10) / `--z-dropdown` (50) / `--z-sidebar` (100) / `--z-modal-backdrop` (400) / `--z-modal` (500) / `--z-toast` (9999).
+- All `zIndex` MUST use tokens.
+
+---
+
+## Semantic Hover/Overlay Tokens
+
+- Accent hovers: `--gold-hover/active/emphasis`, `--teal-hover/active/emphasis`, `--maroon-hover/emphasis`, `--orange-hover`, `--green-hover`
+- Neutral overlays: `--hover-subtle/light/medium`, `--overlay-light/medium/heavy` (dark mode overrides: light uses black-based, dark uses white-based)
+- Standardized opacity tiers: 0.03 / 0.06 / 0.10 / 0.15 / 0.40 / 0.70. Snap to nearest tier.
+
+---
+
+## Surface Elevation (Linear pattern)
+
+- `--surface-0` (page bg) / `--surface-1` 3% (panels) / `--surface-2` 6% (cards, sidebar, dropdowns) / `--surface-3` 10% (hover, active)
+- Dark mode: luminance stepping via `rgba(255,255,255, 0.03→0.10)` — 10% total range (Linear-equivalent)
+- Light mode: `--page-bg: #f5f5f5` (off-white), cards `#ffffff` with 3-layer box-shadow (Vercel pattern)
+- Card borders: `box-shadow: 0 0 0 1px var(--border-subtle)` technique (not CSS border)
+- Dark cards: `inset 0 1px 0 rgba(255,255,255,0.03)` top-edge highlight
+- Shadows: `--shadow-flat/card/card-hover/elevated/menu`. All `boxShadow` MUST use tokens.
+- `--muted`: derived from `--ink` via `color-mix(in oklch, var(--ink) 70%, transparent)` in dark mode
+
+---
+
+## Table Density (user-controlled)
+
+- 3 modes via `DensityToggle` component: Compact (36px) / Default (44px) / Relaxed (52px)
+- CSS vars: `--row-height`, `--row-padding-y`, `--cell-font-size`. Applied to all 7 data table pages.
+- Persisted per-user in localStorage. Numeric columns right-aligned, `tabular-nums` on dates.
+
+---
+
+## UX Research Patterns
+
+Reference: `Projects/mn-ccore-lab-hub/task-management-ux-patterns-research.md` (PB repo).
+Must-reference before building ANY new feature.
+
+- **Pattern 3 (Three depth levels):** Peek (Space) → Side Panel (click) → Full Page (Enter).
+- **Pattern 4 (Inline Editing):** Click any field → edit mode by type (dropdown/picker/text). Auto-save on blur.
+- **Pattern 7 (List View):** Fixed row height. Column headers. Grouping with collapsible headers. Density toggle.
+- **Pattern 9 (Optimistic UI):** Instant state changes. Undo toast for 5 seconds. Never show spinners.
+- **Pattern 10 (Micro-interactions):** Completion animation. Status color transitions. Progressive disclosure.
+
+Competitive reference: LabSync (JC Rojas) — friend, learn from, never compete.
+
+---
+
+## Capture Specs for Claude Design
+
+Run on demand via `scripts/regen-design-bundle.sh`. Six specs wired into `playwright.config.design-capture.ts`. Output to `review/claude-design-*` / `review/interactions-*` (gitignored). Do NOT add to default test run.
+
+Full spec details archived in `docs/archived/CLAUDE.md-history-2026-05-15.md`.
+
+**Auth workarounds (required post-2026-04-21 launch):**
+- CF Access gates prod `/portal/*`. Use ungated preview deploy: `BASE_URL=https://<hash>.mn-ccore-lab.pages.dev bash scripts/regen-design-bundle.sh <name>`.
+- Every spec calls `injectFakeAuth(context, BASE)` from `tests/helpers/capture-auth.ts` to bypass the `RequireAuth` splash.
+
+---
+
+## Table Pattern Reference
+
+- Shared `ColumnHeader` + `TableContainer` in `src/components/table/`
+- Column headers: uppercase, 11px, 0.55 opacity, 0.06em letter-spacing
+- Column resize: drag handles on right edge, min widths, persisted via `useTableConfig`
+- Column reorder: drag headers horizontally, persisted to localStorage
+- Cell focus: 2px teal outline, Tab/Shift+Tab between editable cells
+- Multi-sort: Shift+Click for secondary sort, ①② rank indicators
+- Frozen columns: checkbox + title sticky at ≤1024px viewport
+- Stage group headers: quiet uppercase labels with extending rule line
+- Row hover: `rgba(255,255,255,0.02)` (dark), barely-there luminance shift
+- Row separators: `var(--row-separator)` token (dark: `rgba(255,255,255,0.03)`, light: `rgba(0,0,0,0.04)`)
+- Hover-only badges: `.hover-badge` CSS class — use `visibility: hidden`, not `opacity: 0`
+- Ghost-style action buttons (outline, not filled) + Pin-to-Focus button on MyTasks
