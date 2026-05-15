@@ -9,9 +9,9 @@
 
 ## Tier 0: Critical / Security (fix before any team adoption push)
 
-- [ ] **SEC-1** — Digest email XSS: task/meeting titles interpolated raw into HTML email. Add `escapeHtml()` wrapper at every `${}` site in `api/routes/digest-email.ts`. (source: codex T3, effort: S)
-- [ ] **SEC-2** — Delete `/api/admin/migrate` + `/api/test-cleanup` endpoints: still live at `api/index.ts:869,1216`. Zero production callers; migration SQL lives in versioned files. (source: codex T5, effort: S)
-- [ ] **SEC-3** — Upload integrity: `api/routes/uploads.ts` trusts client "done" without R2 HEAD check. Frontend ignores PUT failure. Add R2 existence check + frontend error handling. (source: codex T4, effort: M)
+- [x] ~~**SEC-1** — Digest email XSS: 16 interpolation sites wrapped with escapeHtml(). Fixed 2026-05-15 (commits `67315db8`, `5e1676ed`).~~
+- [x] ~~**SEC-2** — Delete admin/test endpoints: removed 2026-05-15 (Agent 1 api/index.ts overhaul).~~
+- [x] ~~**SEC-3** — Upload integrity: R2 HEAD check + frontend error handling added. Fixed 2026-05-15 (commit `64d4b971`).~~
 - [ ] **SEC-4** — Timezone hardcoded offsets: `pb-sector.ts:9` (`getUTCHours()-6`) and `digest-email.ts:290` (`getUTCHours()-5`) break during DST transitions. Replace with `Intl.DateTimeFormat('America/Chicago')`. (source: codex T13, effort: S)
 - [ ] **SEC-5** — QuickCaptureInbox dedup: mints random UUID per submit, no idempotency key. Double-click/retry creates duplicates. Add deterministic `source_external_id` + `raw_hash`. (source: codex pass-4 #4, effort: M)
 - [ ] **SEC-6** — PB capture writes raw `project` string as `tasks.project_id` in `pb-sector.ts:205`. No resolver. Can write garbage FKs. Add project ID resolution before insert. (source: codex pass-4 #3, effort: S)
@@ -26,14 +26,14 @@
 - [ ] **DAT-4** — Realtime broadcasts `'all'` instead of `'data'`: realtimeBus channel mismatch means some mutations don't trigger UI refresh. (source: codex T12, effort: S)
 - [ ] **DAT-5** — `revisions.ts` writes activity_log without checking `result.changes > 0`. Phantom activity entries on no-op updates. (source: codex T20, effort: S)
 - [ ] **DAT-6** — `meetings.ts` notes endpoint returns 200 on missing meeting instead of 404. (source: codex T21, effort: S)
-- [ ] **DAT-7** — DecisionsPage tag filter is decorative: `filterTag` state exists but never applies to `filteredDecisions` memo. (source: codex T19, effort: S)
+- [x] ~~**DAT-7** — DecisionsPage tag filter: confirmed FIXED by recent commits (Codex cross-ref).~~
 - [ ] **DAT-8** — `regulatory.ts` renew not atomic: multi-statement renewal should use `env.DB.batch()`. Status enum not centralized. (source: codex T18, effort: S)
 
 ### Fake / broken data on team-facing surfaces
 
 - [ ] **FAKE-1** — Lab Overview `StatsCard.totalCitations = 2626` hardcoded. PB scholarly cron not yet implemented. Wire real `/api/citations` data or show `—` until cron ships. (source: audit T4/LO-1, effort: S for `—` fallback, L for cron)
 - [ ] **FAKE-2** — Hermes "Thinking about this..." literal string: no animation, no timeout, no failure state. Replace with `<HermesPending>` component. (source: audit T3/ATL-03, effort: M)
-- [ ] **FAKE-3** — `/api/meetings/process-transcript` doesn't exist. MeetingNotesPage:227 silently 404s. Either build endpoint or remove the button. (source: audit P0-3/MTG-01, effort: M to build, S to hide)
+- [x] ~~**FAKE-3** — Transcript button: fake insights removed, button shows "coming soon" toast, audio zone muted. Fixed 2026-05-15 (commit `625ad4c5`). Backend endpoint deferred to Tier 4.~~
 - [x] ~~**FAKE-4** — InsightsPage SQL date bug: fixed in `64352724` (Bundle M, INS-01).~~
 - [ ] **FAKE-5** — Manuscripts `daysInStage()` uses `updated_at`, not `last_meaningful_movement`. Any field edit resets the counter. (source: audit T19/codex T9, effort: S)
 
@@ -76,7 +76,7 @@
 - [ ] **INFRA-1** — `activity_log` emit on shared-field changes: stage, PI, assignee, project rename, meeting cancel, role assignment. Unblocks real Activity tab on ProjectDetail. (source: audit A7/T20/D22, effort: L)
 - [ ] **INFRA-2** — Deep health endpoint (`/api/health/deep`): mutation stats, calendar feed errors, R2 orphans, open bug reports, cron status. (source: codex T8, effort: M)
 - [ ] **INFRA-3** — realtimeBus wiring sweep: AskTheLab questions (60s poll, no WS), MyItems notifications (30s poll), InsightsPage (5min cache), CalendarPage (15min stale). (source: audit A3/T15, effort: M)
-- [ ] **INFRA-4** — Project status normalization: `ProjectDetail.tsx` still writes `'Active'`/`'Completed'`. Meetings.ts filters legacy statuses. Single sweep with `normalizeProjectStatus()`. (source: codex T9 — partially addressed by commits `c4702d59`..`548f1a39` naming sweep; **verify completeness**, effort: S)
+- [x] ~~**INFRA-4** — Project status normalization: `ProjectDetail.tsx` archive fixed `Completed`→`done`. ManuscriptsPage categories fixed to 3-bucket. Digest stale enums fixed. Fixed 2026-05-15.~~
 - [ ] **INFRA-5** — Schema drift CI hardening: assert exact ordered version list, detect unexpected duplicate prefixes, snapshot hash. (source: codex T11, effort: S)
 - [ ] **INFRA-6** — Personal 3-tab merge (Bundle U): merge MyItems INTO Personal as Workspace | Inbox | Cards per D4+D5 decision. Substrate-swap protocol required. (source: audit A8, effort: XL)
 - [ ] **INFRA-7** — Surface v55 task workflow fields: `waiting_on`, `promised_to`, `promise_date`, `next_checkin_date`, etc. exist in schema + A3 whitelist but not in `TaskRow` type or UI. (source: codex T14, effort: M)
@@ -114,6 +114,29 @@ Each needs: decision doc in `~/Peripheral-Brain/Context/Decisions/`, `enums.py` 
 4. **Citations cron:** implement PB scholarly weekly cron per `scripts/citations-scholar-stub.md`, or show `—` indefinitely? (blocks FAKE-1)
 5. **AskHermes coach:** ship (M effort) or formally cancel + remove from CLAUDE.md? (parking lot)
 6. **iCal events privacy:** personal calendar events visible to team on CalendarPage, or user-only? (blocks PAGE-4)
+
+## Fixed This Session (2026-05-15)
+
+Items fixed by 5 parallel agents + main-thread doc updates:
+- [x] SEC-1: escapeHtml on 16 digest/pulse email interpolation sites
+- [x] SEC-2: admin/migrate + test-cleanup endpoints deleted
+- [x] SEC-3: upload R2 HEAD check + frontend error handling
+- [x] NEW: GET API auth lockdown (allowlist ~20 public routes, rest requires JWT/API key)
+- [x] NEW: PB POST routes PI-gated (was GET-only)
+- [x] NEW: ProjectDetail archive fixed (Completed → done)
+- [x] NEW: ManuscriptsPage category taxonomy (clif/lab/nate/mentee → MNCCORE/CLIF/PB)
+- [x] NEW: Search comment join fixed (slug → id OR slug)
+- [x] NEW: MeetingNotesPage fake insights removed, "coming soon" toast
+- [x] NEW: Folder link drive letter fix + TaskGridView KeyLinkIcon consolidated
+- [x] NEW: mnccore-handler.bat .ps1 support + debug logging
+- [x] INFRA-4: Status normalization complete (archive + categories + digest enums)
+- [x] DAT-7: DecisionsPage tag filter (confirmed already fixed)
+- [x] FAKE-3: Transcript button honest (coming soon, not fake AI)
+- [x] FAKE-4: InsightsPage SQL (confirmed already fixed)
+- [x] CLAUDE.md: 5 doc-code contradictions fixed (stages, categories, task IDs, Hermes timing)
+- [x] WORKPLAN.md + SESSION-HANDOFF.md: consolidated and current
+
+**NOT fixed (intentional):** Project delete cascade — existing swallow-and-continue behavior is a documented design decision (test: `projects.cascade.test.ts` B-CRIT-05).
 
 ## Effort Summary
 

@@ -143,12 +143,12 @@ Nick's CLI         Team's Hub
 brain.db is the **primary store**. D1 (Hub) is the primary UI + write target. Sync model: field-level last-write-wins (LWW) with timestamps. Conflicts logged to `sync_log`.
 
 **Key rules:**
-- Brain.db tasks use canonical `task_{ulid}` IDs. Hub-created tasks have 32-char hex IDs. Both reachable via `entity_aliases` (hub_slug alias).
+- Brain.db tasks use canonical `task_{ulid}` IDs. Hub-created tasks use typed ULIDs (e.g., `task_01KP...`). Both reachable via `entity_aliases` (hub_slug alias).
 - `notes` (brain.db) is private. `description` (D1) is team-visible. They do NOT sync bidirectionally.
 - Task deletion uses soft-delete (`deleted_at` column). `GET /api/tasks?include_deleted=1` surfaces them for the sync module.
 - `completed` field is bidirectional — Hub can reopen tasks.
 - Hub `task_comments` mirror into brain.db `d1_task_comments` (read-only).
-- Hub-originated projects flow into brain.db — `category` (clif/nate/mentee/lab) maps onto brain.db `domain`.
+- Hub-originated projects flow into brain.db — `category` (MNCCORE/CLIF/Peripheral Brain) maps onto brain.db `domain`.
 
 **Implementation:** `scripts/db/sync/` (drivers/hub.py + boundary + payload). Decision: `Context/Decisions/2026-04-21-sync-extraction-COMPLETE.md` in PB.
 
@@ -166,15 +166,15 @@ Any change to a shared field (schema.sql DEFAULTs, D1 migration SQL, taxonomy re
 **Registered shared fields:**
 - `projects.status`: `active / waiting_external / blocked / done`
 - `tasks.status`: `todo / in_progress / done / blocked / waiting_external`
-- `projects.stage`: `Idea / Data Collection / Data Analysis / Writing / Submitted / Accepted / Published` (map via `enums.canonicalize_project_stage()`)
-- `projects.category`: `clif / lab / nate / mentee` (Hub-authoritative)
+- `projects.stage`: `idea / data_collection / data_analysis / writing / submitted / revisions / accepted / published` (lowercase canonical; map via `enums.canonicalize_project_stage()`)
+- `projects.category`: `MNCCORE / CLIF / Peripheral Brain` (Hub-authoritative; 3-bucket design per 2026-05-08 decision)
 - `tasks.priority`: `low / medium / high / urgent`
 
 Anti-pattern: deploying a data migration while the frontend still expects the old schema. Data-on-new-schema + code-on-old-schema corrupts.
 
 ## Hermes (AI Research Assistant)
 
-Live since 2026-04-09. Team members @mention `@hermes` in Ask the Lab, task comments, or project comments. Responses appear with gold sparkle badge in 20-40 seconds.
+Live since 2026-04-09. Team members @mention `@hermes` in Ask the Lab, task comments, or project comments. Responses appear with gold sparkle badge (timing depends on ai-request queue; placeholder "Thinking about this..." shown immediately, real response via polling).
 
 - **Detection:** `/@(hermes|claude)\b/i` regex in `api/routes/questions.ts` and `api/routes/projects.ts`
 - **Author slug:** `claude-ai` (display name "Hermes" via `src/data/team.ts`)
