@@ -16,6 +16,7 @@ export {
   todayKey, daysSince, tagForTask,
 } from '../../lib/taskGrouping'
 
+import { todayKey } from '../../lib/taskGrouping'
 import type { GroupKey } from '../../lib/taskGrouping'
 import type { TaskRow } from '../../lib/api'
 
