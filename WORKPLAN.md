@@ -106,14 +106,14 @@ Each needs: decision doc in `~/Peripheral-Brain/Context/Decisions/`, `enums.py` 
 | D22 | `activity_log` emit on 6 transitions | INFRA-1, ProjectDetail Activity tab | Not started |
 | D28 | `meetings.start_time` + `meetings.end_time` | Calendar time-aware week view | Not started |
 
-## Decisions Needed (Nick must choose)
+## Decisions Resolved (2026-05-15)
 
-1. **Hermes pending-state shape:** stub card with pulse + elapsed time, banner above question, or nothing until response? (blocks FAKE-2)
-2. **Transcript pipeline:** build Hermes-via-ai-requests async, or formally kill the button? Audio support too? (blocks FAKE-3)
-3. **Lab Overview audience:** PI-only after Rule 57 enforcement, or everyone with lab-wide cards? (blocks PAGE-5)
-4. **Citations cron:** implement PB scholarly weekly cron per `scripts/citations-scholar-stub.md`, or show `—` indefinitely? (blocks FAKE-1)
-5. **AskHermes coach:** ship (M effort) or formally cancel + remove from CLAUDE.md? (parking lot)
-6. **iCal events privacy:** personal calendar events visible to team on CalendarPage, or user-only? (blocks PAGE-4)
+1. **Hermes pending-state:** Pulse card with HermesMark icon + elapsed timer. Disappears on real response via realtimeBus. → unblocks FAKE-2
+2. **Transcript pipeline:** Build Hermes-via-ai-requests backend next session. Button says "coming soon" until then. → unblocks FAKE-3
+3. **Lab Overview audience:** Role-based defaults. PI sees everything, team sees lab-wide + own cards. Use existing DashboardGrid customize. → unblocks PAGE-5
+4. **Citations cron:** Build it. PB scholarly weekly cron on home laptop. Real h-index + citation data per team member. → unblocks FAKE-1
+5. **AskHermes coach:** KILLED. Remove from CLAUDE.md. Placeholder text in compose box is enough ("Try: @hermes what papers should I read about X?"). → no work needed
+6. **iCal events privacy:** User-only (private). Each person sees only their own calendar events on CalendarPage. Team sees only shared team meetings. → unblocks PAGE-4
 
 ## Fixed This Session (2026-05-15)
 
