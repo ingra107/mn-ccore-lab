@@ -228,11 +228,11 @@ function ProjectDetailInner({ project }: InnerProps) {
   // Action menu (archive / delete / duplicate) — PD-7
   const navigate = useNavigate()
   const [actionMenuOpen, setActionMenuOpen] = useState(false)
-  const isArchived = (project.status as string) === 'Completed'
+  const isArchived = project.status === 'done'
   const handleArchiveProject = () => {
     if (isArchived) return
     const prevStatus = project.status
-    d1Update.mutate({ status: 'Completed' as any } as Partial<Project>)
+    d1Update.mutate({ status: 'done' } as Partial<Project>)
     showUndo('Project archived', () => d1Update.mutate({ status: prevStatus } as Partial<Project>))
     setActionMenuOpen(false)
   }

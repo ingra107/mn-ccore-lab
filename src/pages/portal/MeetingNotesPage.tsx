@@ -11,6 +11,7 @@ import EmptyState from '../../components/EmptyState'
 import MetricCard from '../../components/MetricCard'
 import InlineSelect from '../../components/InlineSelect'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
+import { useUndoToast } from '../../components/UndoToast'
 import { useMeetingsApi } from '../../hooks/useApiData'
 import { formatMediumDate } from '../../lib/dateUtils'
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
@@ -198,8 +199,7 @@ function TranscriptModal({ onClose, meetings }: { onClose: () => void; meetings:
   const [mode, setMode] = useState<'audio' | 'transcript'>('transcript')
   const [transcript, setTranscript] = useState('')
   const [meetingId, setMeetingId] = useState('')
-  const [processing, setProcessing] = useState(false)
-  const [result, setResult] = useState<{ summary: string; actions: string[]; decisions: string[] } | null>(null)
+  const { showUndo } = useUndoToast()
   const modalRef = useRef<HTMLDivElement>(null)
 
   // Focus trap + Escape
@@ -218,43 +218,10 @@ function TranscriptModal({ onClose, meetings }: { onClose: () => void; meetings:
     return () => document.removeEventListener('keydown', handler)
   }, [onClose])
 
-  const handleProcess = async () => {
+  const handleProcess = () => {
     if (!transcript.trim()) return
-    setProcessing(true)
-
-    try {
-      // Send transcript to API for processing
-      const res = await fetch('/api/meetings/process-transcript', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          transcript: transcript.trim(),
-          meeting_id: meetingId || undefined,
-        }),
-      })
-
-      if (res.ok) {
-        const data = await res.json()
-        setResult(data.data)
-      } else {
-        // Fallback: extract basic structure from transcript
-        const lines = transcript.trim().split('\n').filter((l) => l.trim())
-        setResult({
-          summary: lines.slice(0, 3).join(' ').slice(0, 300),
-          actions: lines.filter((l) => l.toLowerCase().includes('action') || l.toLowerCase().includes('todo') || l.toLowerCase().includes('follow up')),
-          decisions: lines.filter((l) => l.toLowerCase().includes('decided') || l.toLowerCase().includes('agreed') || l.toLowerCase().includes('decision')),
-        })
-      }
-    } catch {
-      // Basic extraction fallback
-      setResult({
-        summary: 'Transcript uploaded. AI processing requires API key configuration.',
-        actions: [],
-        decisions: [],
-      })
-    }
-
-    setProcessing(false)
+    // Transcript AI processing is not yet available. Show informational toast.
+    showUndo('Transcript processing coming soon — AI analysis not yet wired up', () => {})
   }
 
   return (
@@ -334,59 +301,19 @@ function TranscriptModal({ onClose, meetings }: { onClose: () => void; meetings:
               />
             </div>
           ) : (
+            /* Audio upload is not yet implemented — muted drop zone with clear label */
             <div
-              className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors hover:bg-black/[0.02] dark:hover:bg-white/[0.02]"
-              style={{ borderColor: 'var(--border-subtle)' }}
+              aria-disabled="true"
+              className="border-2 border-dashed rounded-lg p-8 text-center"
+              style={{ borderColor: 'var(--border-subtle)', opacity: 0.6, cursor: 'not-allowed' }}
             >
               <Upload size={32} style={{ color: 'var(--slate)', opacity: 0.75, margin: '0 auto var(--sp-sm)' }} />
-              <p className="text-sm" style={{ color: 'var(--slate)' }}>
-                Click to upload audio file
+              <p className="text-sm font-medium" style={{ color: 'var(--slate)' }}>
+                Audio upload coming soon
               </p>
               <p className="text-[10px] mt-1" style={{ color: 'var(--slate)', opacity: 0.75 }}>
-                MP3, M4A, WAV, or MP4 (max 25MB)
+                Use "Paste Transcript" above for now
               </p>
-              <p className="text-[10px] mt-2 px-4 py-1.5 rounded-full inline-block" style={{ color: 'var(--gold)', backgroundColor: 'var(--gold-active)' }}>
-                Audio upload requires AI API key — use "Paste Transcript" for now
-              </p>
-            </div>
-          )}
-
-          {/* Results */}
-          {result && (
-            <div className="rounded-lg border p-4" style={{ borderColor: 'var(--teal)', backgroundColor: 'var(--teal-hover)' }}>
-              <h4 className="text-sm font-semibold mb-2 flex items-center gap-1.5" style={{ color: 'var(--teal)' }}>
-                <Sparkles size={14} />
-                AI Insights
-              </h4>
-              {result.summary && (
-                <div className="mb-3">
-                  <span style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>Summary</span>
-                  <p className="text-sm mt-1" style={{ color: 'var(--ink)' }}>{result.summary}</p>
-                </div>
-              )}
-              {result.actions.length > 0 && (
-                <div className="mb-3">
-                  <span style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>Action Items ({result.actions.length})</span>
-                  <ul className="mt-1 flex flex-col gap-1">
-                    {result.actions.map((a, i) => (
-                      <li key={i} className="flex items-start gap-2 text-sm" style={{ color: 'var(--ink)' }}>
-                        <CheckCircle2 size={12} style={{ color: 'var(--teal)', marginTop: 3, flexShrink: 0 }} />
-                        {a}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              {result.decisions.length > 0 && (
-                <div>
-                  <span style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>Decisions ({result.decisions.length})</span>
-                  <ul className="mt-1 flex flex-col gap-1">
-                    {result.decisions.map((d, i) => (
-                      <li key={i} className="text-sm" style={{ color: 'var(--ink)' }}>• {d}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
             </div>
           )}
 
@@ -397,12 +324,12 @@ function TranscriptModal({ onClose, meetings }: { onClose: () => void; meetings:
             </button>
             <button
               onClick={handleProcess}
-              disabled={!transcript.trim() || processing}
+              disabled={!transcript.trim()}
               className="px-4 py-2 rounded-md text-sm font-medium flex items-center gap-2"
-              style={{ backgroundColor: 'var(--teal-solid)', color: 'var(--ink-bright, #fff)', cursor: 'pointer', border: 'none', opacity: (!transcript.trim() || processing) ? 0.85 : 1 }}
+              style={{ backgroundColor: 'var(--teal-solid)', color: 'var(--ink-bright, #fff)', cursor: 'pointer', border: 'none', opacity: !transcript.trim() ? 0.85 : 1 }}
             >
-              {processing ? <Clock size={14} className="animate-spin" /> : <Brain size={14} />}
-              {processing ? 'Processing...' : 'Process with AI'}
+              <Brain size={14} />
+              Process with AI
             </button>
           </div>
         </div>

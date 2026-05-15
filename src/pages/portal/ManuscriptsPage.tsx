@@ -75,6 +75,11 @@ function daysInStage(project: Project): number {
 }
 
 const CATEGORY_DOT: Record<string, string> = {
+  // Canonical 3-bucket (Stage 4 #12-followup, 2026-05-08)
+  'MNCCORE': 'var(--teal)',
+  'CLIF': 'var(--maroon)',
+  'Peripheral Brain': 'var(--gold)',
+  // Legacy fallbacks for soft-deleted rows with pre-migration values
   clif: 'var(--maroon)',
   lab: 'var(--teal)',
   nate: 'var(--gold)',
@@ -82,15 +87,24 @@ const CATEGORY_DOT: Record<string, string> = {
 }
 
 const CATEGORY_LABEL: Record<string, string> = {
+  // Canonical 3-bucket (Stage 4 #12-followup, 2026-05-08)
+  'MNCCORE': 'MNCCORE',
+  'CLIF': 'CLIF',
+  'Peripheral Brain': 'PB',
+  // Legacy fallbacks for soft-deleted rows with pre-migration values
   clif: 'CLIF',
   lab: 'Lab',
   nate: 'Mesfin',
   mentee: 'Mentee',
 }
 
-const CATEGORY_OPTIONS = Object.entries(CATEGORY_LABEL).map(([value, label]) => ({
+// Canonical options only — drives category filter pills and InlineSelect
+// inline editor. Users cannot re-assign projects to legacy values.
+const CANONICAL_CATEGORY_KEYS = ['MNCCORE', 'CLIF', 'Peripheral Brain'] as const
+
+const CATEGORY_OPTIONS = CANONICAL_CATEGORY_KEYS.map((value) => ({
   value,
-  label,
+  label: CATEGORY_LABEL[value],
   color: CATEGORY_DOT[value],
 }))
 
@@ -369,7 +383,7 @@ export default function ManuscriptsPage() {
         >
           {[
             { value: '', label: 'All' },
-            ...Object.entries(CATEGORY_LABEL).map(([value, label]) => ({ value, label })),
+            ...CATEGORY_OPTIONS.map(({ value, label }) => ({ value, label })),
           ].map((opt) => {
             const active = filterCategory === opt.value
             return (
@@ -608,7 +622,7 @@ export default function ManuscriptsPage() {
                           {/* Category — inline editable */}
                           <div className="manuscripts-cell-group" onClick={(e) => e.stopPropagation()}>
                             <InlineSelect
-                              value={project.category || 'lab'}
+                              value={project.category || 'MNCCORE'}
                               options={CATEGORY_OPTIONS}
                               onChange={(val) => handleFieldChange(project.slug, 'category', val, project.category)}
                               size="sm"
@@ -680,7 +694,7 @@ export default function ManuscriptsPage() {
                             {/* Category — inline editable on mobile too */}
                             <div style={{ marginLeft: 'auto' }} onClick={(e) => e.stopPropagation()}>
                               <InlineSelect
-                                value={project.category || 'lab'}
+                                value={project.category || 'MNCCORE'}
                                 options={CATEGORY_OPTIONS}
                                 onChange={(val) => handleFieldChange(project.slug, 'category', val, project.category)}
                                 size="sm"
