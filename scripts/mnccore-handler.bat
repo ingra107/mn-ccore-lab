@@ -1,5 +1,6 @@
 @echo off
 setlocal enabledelayedexpansion
+echo %date% %time% ARGS: %* >> "%TEMP%\mnccore-handler.log"
 
 :: Parse the URL: mnccore://open/C:/path/to/folder or mnccore://launch/C:/path/to/script.bat
 set "url=%~1"
@@ -26,8 +27,14 @@ if "!url:~0,5!"=="open/" (
     set "script=!url:~7!"
     set "script=!script:/=\!"
     set "script=!script:%%20= !"
+    :: Determine extension for dispatch
+    for %%F in ("!script!") do set "ext=%%~xF"
     if exist "!script!" (
-        start "" "!script!"
+        if /I "!ext!"==".ps1" (
+            powershell -ExecutionPolicy Bypass -File "!script!"
+        ) else (
+            start "" "!script!"
+        )
     ) else (
         echo Script not found: !script!
     )

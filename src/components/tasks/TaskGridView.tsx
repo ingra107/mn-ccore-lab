@@ -12,6 +12,8 @@ import { CSS } from '@dnd-kit/utilities'
 import InlineAssigneePicker from '../InlineAssigneePicker'
 import InlineDatePicker from '../InlineDatePicker'
 import { useUndoToast } from '../UndoToast'
+import { useToast } from '../../hooks/useToast'
+import { classifyUrl } from '../../lib/urlClassify'
 import TaskTitle from './TaskTitle'
 import TaskContextMenu from './TaskContextMenu'
 import { useContextMenu } from '../../hooks/useContextMenu'
@@ -1452,40 +1454,39 @@ function TaskGridRow({
 
 function KeyLinkIcon({ url, label }: { url: string; label?: string | null }) {
   const [copied, setCopied] = useState(false)
+  const { showSuccess } = useToast()
 
-  const isLocalPath = url.startsWith('file:///') || url.startsWith('C:') || url.startsWith('/') && !url.startsWith('//')
-  const isBat = url.endsWith('.bat') || url.endsWith('.cmd') || url.endsWith('.ps1')
-  const isHttp = url.startsWith('http')
+  const { href, Icon, typeLabel, isHttp } = classifyUrl(url)
 
-  let Icon = ExternalLink
-  let href = url
-  if (isBat) {
-    Icon = Play
-    const cleanPath = url.replace('file:///', '')
-    href = `mnccore://launch/${cleanPath}`
-  } else if (isLocalPath) {
-    Icon = FolderOpen
-    const cleanPath = url.replace('file:///', '')
-    href = `mnccore://open/${cleanPath}`
-  }
-
-  const handleCopy = (e: React.MouseEvent) => {
-    e.stopPropagation()
+  // Local paths + .bat/.ps1 scripts use the `mnccore://` custom protocol.
+  // Copy path to clipboard first (reliable fallback), then fire the protocol
+  // link (works if the handler is registered). Matches KeyLinksEditor pattern.
+  const handleNonHttpClick = async (e: React.MouseEvent) => {
     e.preventDefault()
-    navigator.clipboard.writeText(url).then(() => {
+    e.stopPropagation()
+    try {
+      await navigator.clipboard.writeText(url)
+      showSuccess(`${typeLabel} path copied — paste in Win+R or Explorer`)
       setCopied(true)
       setTimeout(() => setCopied(false), 1500)
-    })
+    } catch {
+      window.prompt('Copy path:', url)
+    }
+    try {
+      window.location.href = href
+    } catch {
+      // ignore — custom protocol without handler is a no-op on most systems
+    }
   }
 
   return (
     <span className="inline-flex items-center gap-0.5" style={{ flexShrink: 0 }}>
       <a
-        href={href}
+        href={isHttp ? href : url}
         target={isHttp ? '_blank' : undefined}
         rel={isHttp ? 'noopener noreferrer' : undefined}
-        onClick={(e) => e.stopPropagation()}
-        title={label || url}
+        onClick={isHttp ? (e) => e.stopPropagation() : handleNonHttpClick}
+        title={label || (isHttp ? url : `Click to copy path: ${url}`)}
         style={{
           color: 'var(--teal)',
           opacity: 0.85,
@@ -1500,7 +1501,7 @@ function KeyLinkIcon({ url, label }: { url: string; label?: string | null }) {
         <Icon size={14} />
       </a>
       <button
-        onClick={handleCopy}
+        onClick={handleNonHttpClick}
         title="Copy link"
         style={{
           background: 'none',

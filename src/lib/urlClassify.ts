@@ -18,7 +18,9 @@ export interface ClassifiedUrl {
 
 export function classifyUrl(url: string): ClassifiedUrl {
   const isHttp = url.startsWith('http')
-  const isLocalPath = url.startsWith('file:///') || url.startsWith('C:') || (url.startsWith('/') && !url.startsWith('//'))
+  const isDrivePath = /^[A-Za-z]:/.test(url)
+  const isUncPath = url.startsWith('\\\\')
+  const isLocalPath = url.startsWith('file:///') || isDrivePath || isUncPath || (url.startsWith('/') && !url.startsWith('//'))
   const isBat = url.endsWith('.bat') || url.endsWith('.cmd') || url.endsWith('.ps1')
   if (isBat) {
     return {
@@ -51,7 +53,7 @@ export function shortLabelForUrl(url: string): string {
     if (url.startsWith('http')) {
       return new URL(url).hostname.replace(/^www\./, '')
     }
-    if (url.startsWith('file:///') || url.startsWith('C:')) {
+    if (url.startsWith('file:///') || /^[A-Za-z]:/.test(url) || url.startsWith('\\\\')) {
       const clean = url.replace(/^file:\/\/\//, '').replace(/\\/g, '/')
       const parts = clean.split('/').filter(Boolean)
       return parts.slice(-3).join(' / ')
