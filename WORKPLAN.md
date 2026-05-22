@@ -4,12 +4,21 @@
 > bottom — do not re-expand them. Supersedes the Apr-28 synthesis, May-5 codex plan,
 > design-handoff TICKETS, and hub-future-ideas (all historical now).
 
-## ▶ NEXT SESSION (Nick's directive, 2026-05-22): fresh eyes + new Codex audit
+## ▶ NEXT SESSION (Nick's directive, 2026-05-22): fixes first, then a fresh Codex audit
 
-Start a **new** session, take a fresh look, and run **another Codex audit** (`/codex-cli`). Prior
-audit synthesis: `Scratch/codex-state-audit-2026-05-22/synthesis.md`. Codex's standing call:
-**fix the T1 correctness leaks below before any UX polish.** The daily surfaces shouldn't lie
-about stale work, completed work, or saved profiles.
+Order (Nick 2026-05-22):
+1. **Fresh look** — read this file + SESSION-HANDOFF.md to orient. (cheap; not the audit)
+2. **Do the T1 correctness batch below.** These are already audit-derived (from the
+   2026-05-22 Codex pass), so they don't need re-auditing to start. For the two
+   judgment-heavy ones — the **CT date helper sweep** (~30 sites) and **STATE-1** —
+   grep-validate the approach BEFORE executing (`pre-review-grep-validate` skill), so a
+   wrong mental model doesn't ship 30 bad edits. The cheap ones (enum drift, STATE-2) just get done.
+3. **THEN run a fresh Codex audit** (`/codex-cli`) as the verification gate on the
+   just-shipped batch + to surface the next priorities. This is Codex's highest-value use —
+   the 2026-05-22 audit ran after a batch and caught 4 real flaws in just-shipped code.
+
+Prior audit synthesis: `Scratch/codex-state-audit-2026-05-22/synthesis.md`. The daily surfaces
+shouldn't lie about stale work, completed work, or saved profiles — that's why correctness leads.
 
 ---
 

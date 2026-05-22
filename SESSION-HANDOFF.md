@@ -49,7 +49,7 @@ Security (digest XSS/escapeHtml, GET API auth lockdown, admin endpoints deleted,
 
 ## Next Session Playbook
 
-**▶ Nick's directive (2026-05-22): start a fresh session, take a fresh look, run another Codex audit (`/codex-cli`), then work the T1 correctness batch.** All open work + priorities now live in `WORKPLAN.md` — see its "▶ NEXT SESSION" section at the top. Prior audit synthesis: `Scratch/codex-state-audit-2026-05-22/synthesis.md`. Top of the queue: CT date helper sweep, entity status-enum drift audit, STATE-1/STATE-2, DAT-4 (verify first), test-D1 repair.
+**▶ Nick's directive (2026-05-22): fresh look → do the T1 correctness fixes → THEN a fresh Codex audit (as the verification gate).** NOT audit-first — the T1 batch is already audit-derived, and Codex's highest-value use is gating just-shipped work (the 2026-05-22 audit ran after a batch and caught 4 real flaws). For the judgment-heavy items (CT date sweep ~30 sites, STATE-1), grep-validate the approach before executing. Full ordering + rationale in `WORKPLAN.md` "▶ NEXT SESSION". Prior synthesis: `Scratch/codex-state-audit-2026-05-22/synthesis.md`. Queue: CT date helper sweep, entity status-enum drift audit, STATE-1/STATE-2, DAT-4 (verify first), test-D1 repair.
 
 ### Schema Queue
 
