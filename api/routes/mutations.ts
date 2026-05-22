@@ -557,6 +557,13 @@ export async function applyUpdate(env: Env, mut: Mutation, user: AuthUser): Prom
       }
       // Hash matches OR no base_row_hash -> merged_clean
       const r = await applyPatch(env, mut, current);
+      // Advance parent project staleness fields on task completion.
+      // Symmetric Hub-side counterpart to brain.db::_advance_project_movement
+      // (commit 83946bc2). Uses MAX semantics so forward-only regardless of
+      // which machine's completion lands first. Fires for both PB-push and
+      // Hub-UI completion mutations (no feedback loop: the project UPDATE is a
+      // direct D1 write, not routed through the mutation protocol).
+      await advanceProjectMovement(env, mut, current);
       return mkResult(mut.mutation_id, 'merged_clean', {
         result_seq: r.seq as number | undefined,
         canonical_payload: r,
@@ -566,6 +573,9 @@ export async function applyUpdate(env: Env, mut: Mutation, user: AuthUser): Prom
 
   // Clean apply (current_seq == base_seq, or no base_seq for append)
   const r = await applyPatch(env, mut, current);
+  // Advance parent project staleness fields on task completion.
+  // See comment on the merged_clean path above — same semantics.
+  await advanceProjectMovement(env, mut, current);
   return mkResult(mut.mutation_id, 'accepted', {
     result_seq: r.seq as number | undefined,
     canonical_payload: r,
@@ -688,6 +698,86 @@ export async function applyMutation(
   return await processOne(env, mut, new Map(), args.user);
 }
 
+/**
+ * Advance the parent project's last_meaningful_movement and clear
+ * stale_active_since when a task transitions to done/completed.
+ *
+ * Symmetric Hub-side counterpart to brain.db::_advance_project_movement
+ * (PB commit 83946bc2). Requirement coverage:
+ *
+ *   1. Transition guard: only fires when status transitions TO 'done' / completed
+ *      flips 0→1. Does NOT re-fire on idempotent re-sends of already-done rows
+ *      (current.status === 'done' already → skip). No feedback loop: this is a
+ *      direct D1 UPDATE, not routed through the mutations protocol, so no
+ *      processed_mutations row is created and PB's outbox echo-suppression is
+ *      irrelevant here.
+ *
+ *   2. MAX semantics (forward-only): CASE WHEN clause ensures we never move
+ *      last_meaningful_movement backward. If the project already has a later
+ *      movement timestamp (e.g. from an even more recent completion), the CASE
+ *      preserves the existing value.
+ *
+ *   3. Pull-back correctness: brain.db's hub.py pull-back (~line 1817) gates on
+ *      `if d1_v and d1_v != existing` for last_meaningful_movement. After this
+ *      write, D1 will carry a truthy value → pull correctly propagates to
+ *      brain.db. NOTE: stale_active_since clearing (NULL) does NOT propagate via
+ *      the current pull-back (truthy gate skips NULL). A companion fix to
+ *      hub.py::_w1col loop is REQUIRED for full symmetry — see STATUS:
+ *      scope-question note in the session response.
+ */
+async function advanceProjectMovement(
+  env: Env,
+  mut: Mutation,
+  current: Record<string, unknown>,
+): Promise<void> {
+  // Only applies to task mutations.
+  if (mut.table !== 'tasks') return;
+
+  // Determine whether this patch is transitioning a task TO done/completed.
+  // Guard 1: patch must assert done. Accept either signal (status or completed
+  // flag) since callers vary — Hub-UI sends both; PB outbox may send status only.
+  const patch = (mut.patch ?? {}) as Record<string, unknown>;
+  const patchingDone =
+    patch.status === 'done' || patch.completed === 1 || patch.completed === true;
+  if (!patchingDone) return;
+
+  // Guard 2: must be a genuine transition, not an idempotent re-stamp of an
+  // already-done task. This prevents double-advancing timestamps on outbox
+  // re-delivers and Hub UI re-clicks on a completed checkbox.
+  const alreadyDone = current.status === 'done' || current.completed === 1;
+  if (alreadyDone) return;
+
+  // Resolve parent project id. Tasks store project_id as the project's PK or slug.
+  const projectId = current.project_id as string | null | undefined;
+  if (!projectId) return;
+
+  // Use client_ts as the movement timestamp so both brain.db-originated and
+  // Hub-UI-originated completions use the actual completion time rather than
+  // Hub server processing time. This makes convergence deterministic when both
+  // machines complete the same task nearly simultaneously.
+  const ts = mut.client_ts || new Date().toISOString();
+
+  // MAX-safe update: CASE WHEN preserves existing if it is already later.
+  // Clears stale_active_since unconditionally (task movement = project unstale).
+  // Uses projects.id = ? (primary key) — project_id on tasks is always the PK.
+  // Non-fatal wrapper: a missing projects row (orphaned task) or transient D1
+  // error must not abort the task mutation that already succeeded. Log clearly
+  // so operational issues surface in wrangler tail without aborting the caller.
+  await env.DB.prepare(`
+    UPDATE projects
+    SET last_meaningful_movement = CASE
+        WHEN last_meaningful_movement IS NULL OR last_meaningful_movement < ?
+        THEN ?
+        ELSE last_meaningful_movement
+      END,
+      stale_active_since = NULL,
+      updated_at = datetime('now')
+    WHERE id = ?
+  `).bind(ts, ts, projectId).run().catch((e: Error) => {
+    console.error('advanceProjectMovement: project update failed:', e.message);
+  });
+}
+
 async function applyPatch(
   env: Env, mut: Mutation, current: Record<string, unknown>,
 ): Promise<Record<string, unknown>> {
@@ -741,6 +831,21 @@ async function applyPatch(
     // Use literal NULL (not a ? placeholder) so the parameter binding index
     // for subsequent params (last_mutation_id, id) stays correct.
     setClauses.push("deleted_at = NULL");
+  }
+
+  // D7 (2026-05-22): stamp stage_entered_at whenever a project's stage genuinely
+  // changes, regardless of write path (Hub UI, PB sync push, batch — all route
+  // through applyPatch). Literal SET clause keeps the ? binding indices intact,
+  // same approach as the deleted_at co-flips above. Only fires on a real
+  // transition (patch.stage differs from current.stage), so editing other fields
+  // never resets the counter — this is the fix for the Manuscripts daysInStage bug.
+  const patchedStage = (mut.patch as Record<string, unknown>)?.stage;
+  const isProjectStageChange =
+    mut.table === 'projects' &&
+    typeof patchedStage === 'string' &&
+    patchedStage !== current.stage;
+  if (isProjectStageChange) {
+    setClauses.push("stage_entered_at = datetime('now')");
   }
 
   const idCol = pkColumn(mut.table);
