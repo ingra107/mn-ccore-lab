@@ -133,6 +133,7 @@ function rowToProject(row: ProjectRow): Project {
     stage: row.stage as Project['stage'],
     strategic_context: row.strategic_context || undefined,
     updated_at: row.updated_at || undefined,
+    stage_entered_at: row.stage_entered_at || undefined,
   }
 }
 

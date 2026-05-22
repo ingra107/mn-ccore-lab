@@ -19,8 +19,8 @@ import {
 
 const STALLED_THRESHOLD_DAYS = 30
 
-function daysInStage(p: { stage_updated_at?: string | null; updated_at?: string | null; created_at?: string | null }): number {
-  const ref = p.stage_updated_at || p.updated_at || p.created_at
+function daysInStage(p: { stage_entered_at?: string | null; stage_updated_at?: string | null; updated_at?: string | null; created_at?: string | null }): number {
+  const ref = p.stage_entered_at ?? p.stage_updated_at ?? p.updated_at ?? p.created_at
   if (!ref) return 0
   const then = new Date(ref).getTime()
   if (isNaN(then)) return 0

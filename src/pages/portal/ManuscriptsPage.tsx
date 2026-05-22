@@ -68,7 +68,7 @@ const STAGE_FILL_TOKEN: Record<typeof STAGES[number], string> = {
 }
 
 function daysInStage(project: Project): number {
-  const dateStr = project.updated_at || project.lastActivity
+  const dateStr = project.stage_entered_at || project.updated_at || project.lastActivity
   if (!dateStr) return 0
   const ms = Date.now() - new Date(dateStr).getTime()
   return Math.floor(ms / (1000 * 60 * 60 * 24))

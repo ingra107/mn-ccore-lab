@@ -55,6 +55,7 @@ export interface ProjectRow {
   short_name: string | null
   created_at: string
   updated_at: string
+  stage_entered_at: string | null
 }
 
 export interface GrantRow {

@@ -92,6 +92,7 @@ export interface Project {
   startDate?: string
   lastActivity?: string
   updated_at?: string
+  stage_entered_at?: string
   notes?: ProjectNote[]
   pi_context?: string
   strategic_context?: string
