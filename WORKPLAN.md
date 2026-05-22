@@ -15,6 +15,43 @@ returned Block→2 critical+5 minor, all verified + fixed. Detail in SESSION-HAN
 
 ---
 
+## ▶ CODEX 5-pass "simplify + improve" review (2026-05-22) — graduated items
+
+Full tagged synthesis: `docs/reviews/2026-05-22-codex-simplify/SYNTHESIS.md` (+ 5 per-pass syntheses
+alongside it). 5 passes, WORKPLAN-blind, ~8 findings spot-checked accurate. High-leverage NET-NEW items
+below; OVERLAP items are noted against existing T2/T4 entries (codex added concrete file:line sites).
+
+**T0 — SECURITY / pre-adoption (NET-NEW; gate before broad team access; adoption not yet started so not active):**
+- **SEC-T0-1** Over-exposed public GETs: `isPublicGet` allows `/api/activity`, `/api/projects/health` (leaks PB project titles, no category filter), `/api/team` (`SELECT *` → email/auto_created). Redact/gate. *(M)*
+- **SEC-T0-2** Search bypasses PB-category visibility — any authed member can search Nick-only PB projects/notes (`search.ts:127-155`). Add shared visibleProjects filter. *(M)*
+- **SEC-T0-3** Digest gen/send has no owner-or-PI authz (`digest-email.ts:319-416`) — anyone can send another's digest anywhere. *(S)*
+- **SEC-T0-4** `tasks.notes` private boundary breached by `SELECT t.*` (`tasks.ts:44`); "notes" UI label is team-visible. Redact or reconcile. *(M)*
+- **SEC-T0-5** Protected-field NULLs via `/api/mutations` — allowlist gates keys not values; status/priority/assignee/stage/category can be nulled (`mutations.ts:116-137,332,785`). Reject null for protected fields. *(S — highest risk per pass 5)*
+- **SEC-T0-6** Identity-canonicalization bypass — 9 raw actor writes (handoffs `to_slug`→assignee worst; questions/ideas/project-documents/dependencies/tasks-note author; projects.ts:181 + uploads.ts:88 `email.split`). Canonicalize via `actorSlug`. *(M)*
+- **SEC-T0-7** Delete/cascade gaps — PB-origin mutation delete clears only record_id (dangling slug-linked tasks); project delete misses newer child tables (docs/deps/submissions/conferences). *(M)*
+- **SEC-T0-8** JWT fail-open hardening *(LOW — verified CF_ACCESS vars ARE set in prod, so not active)* — make `verifyCfAccessJwt` fail CLOSED when REQUIRE_AUTH=1. *(S)*
+- **SEC-T0-9** X-API-Key contract mismatch (middleware Bearer-only vs documented X-API-Key). *(S)*
+
+**T1' — Correctness NET-NEW (the CT sweep was NOT exhaustive):**
+- **CT-2** ~12 more UTC "today" sites: server `projects.ts:308`, `index.ts:1032/1053`, `pb-sector.ts:40/493`, `regulatory.ts:35`, `submissions.ts:142`, `conferences.ts:35` → `ctToday()`; frontend `CalendarPage`/`PBSector`/`TodayView`/`ConferencePrep`/`SubmissionTimeline`/`useApiData` → a `localDateKey()` helper. *(M)*
+- **CON-2** Contract drift: frontend/backend slug LUT (3 vs full → wrong identity); `key_link_*` dropped in `ProjectRow`/`rowToProject`; task op-fields absent from `TaskRow`; `fetchManuscriptsAttention` skips res.ok. *(M)*
+
+**T2' — SIMPLIFY (NET-NEW deletes/consolidations; verified):**
+- **DEL** `handleUpsertTodayMd` (dead) + tracked `.pyc` (delete now); legacy MyTasks + UnifiedMyTasks/AuthContext shims; stale seed path (seed-d1.ts/seed.sql/npm seed*); dead tables decision_log/`*_new`/watchlist + `narrative_projects`/`research_narratives` (row-count check; KEEP publication/citation tables per Nick). *(S each)*
+- **CONS** consolidate ~36 raw-fetch → typed api/hooks; attachment-upload ×3 → `useAttachmentUpload`; task-grouping fork → `taskGrouping`; stage taxonomy ×5 → one module; people pickers → `useTeam()`. (inline-date consolidation folds into CT-2.) *(M)*
+
+**T3' — UX NET-NEW (rest OVERLAP T2/PAGE-* — see synthesis):**
+- Today/ProjectDetail no query-error state (collapse to empty/not-found); Today meeting notes not persisted; Today planning drag-only (add Plan button); MeetingDetail attendance silent save-fail; MyTasks ListView div-grid → TableContainer; CreateTaskModal dangling `aria-labelledby`. *(S-M each)*
+- **IMPROVE:** wire real `/api/proactive-brief` into Today (adjacent FAKE-2); MyTasks `?open=` deep links; ProfilePage → `/api/team/me`; export `normalizeStage`; Personal root paths → `PATHS`.
+
+**CONTRADICTS — RESOLVED by Nick 2026-05-22:**
+- PI-analytics subendpoints (`/api/analytics/{mentee-velocity,response-time,team-engagement}`): **KEEP** until PAGE-5 (PI Analytics) is designed — do NOT fold into pi-dashboard yet.
+- Narrative/citation tables: **drop `narrative_projects` + `research_narratives` only** (computed, not read — added to T2' DEL above); **KEEP `project_publications` / `open_science_resources` / `pubmed_sync_log`** as FAKE-1 citation substrate.
+
+**OVERLAP-WP (codex refined existing entries):** create-flow-keep-open=UX-6 · focus-traps=UX-7/8 · mobile-split-brain=UX-9 · token/compound-opacity=UX-2 · brand-primitives(CategoryIcon/EmptyStateArt)=UX-1 · Ideas kanban/opacity=PAGE-6 · Projects/Manuscripts board=T4 DnD · search try/catch (UX-5) is DIFFERENT from SEC-T0-2 (visibility).
+
+---
+
 ## T1 — Correctness — ✅ ALL DONE 2026-05-22 PM (kept below for the record; see done ledger)
 
 - **CT date helper sweep** *(S/M)* — ~30 `new Date().toISOString().split('T')[0]` "today/now"
