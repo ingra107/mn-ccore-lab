@@ -1,19 +1,40 @@
-# Session Handoff — 2026-05-15
+# Session Handoff — 2026-05-22
 
 ## Current State
 
 | Item | Value |
 |------|-------|
-| HEAD | `9782e46a` on main, pushed to origin |
-| Deploy | `7f355d9f.mn-ccore-lab.pages.dev` (2026-05-15) |
-| Build | GREEN (3814 modules, 0 errors) |
-| API tests | 171/171 passing |
-| Schema | v66 on prod D1 (`hub_decisions` rename applied this session) |
-| API auth | GET endpoints locked down — ~20 public routes (allowlist), rest requires JWT/API key |
-| Protocol | `mnccore://` registered on work machine via `scripts/setup-mnccore-protocol.reg` |
-| Team adoption | Not yet broadly directed. Security fixes deployed — ready when Nick says go. |
+| HEAD | `5483d30b` on main, pushed to origin |
+| Deploy | `2c217abf.mn-ccore-lab.pages.dev` (2026-05-22) — LIVE, `/api/health` ok, `/api/version` env=production |
+| Build | GREEN (0 TS errors) |
+| API tests | 178/178 passing |
+| Schema | **v68** on prod D1 (`projects.stage_entered_at` added + backfilled 92/92 rows). Also applied to test D1. |
+| API auth | GET endpoints locked down (unchanged from 2026-05-15) |
+| Team adoption | Not yet broadly directed. |
 
-## What shipped this session (13 commits)
+## What shipped this session (2026-05-22) — verify-first batch
+
+Nick: "do Batch 1 + Batch 2 + schema migrations, but verify each is still needed first." Verification killed 4 of 9 backend items as already-fixed and deferred 3 of 5 schema items as dead columns. Net 8 real changes shipped + deployed.
+
+**`3bd5d419` — 5 backend correctness fixes (Batch 1+2):**
+- SEC-4 timezone DST (`pb-sector.ts` + `digest-email.ts` → `Intl.DateTimeFormat('America/Chicago', h23')`)
+- SEC-6 project FK resolver on pb-sector capture
+- DAT-3 `/api/tasks/batch` returns `{ok,count,applied,failed}` (additive)
+- DAT-6 meeting-notes 404 on missing meeting
+- DAT-8 regulatory renew wrapped in `env.DB.batch()`
+
+**`9eb9b192` + `5483d30b` — D7 (`projects.stage_entered_at`, fixes FAKE-5):** schema-v68 (Hub-only) + frontend surface + `daysInStage` fix. The write engine (co-flip in `applyPatch`, fires on any stage transition) lives in `8990acb7` — see heads-up below.
+
+**`1c40fa2a` — D22 (typed activity_log events):** stage_change, pi_change, project_rename, assignee_change, role_assignment. No schema needed (table existed).
+
+**Verified ALREADY-FIXED / deferred (no work):** SEC-5 (ON CONFLICT dedup), DAT-1 (PK_COLUMN map), DAT-2 (ALLOWED_TABLES), DAT-5 (404/400 guards). D8/D9/D28 deferred — dead columns until their features are built. `meeting_cancel` N/A — no cancel handler.
+
+## ⚠️ Heads-up for next session
+
+1. **A background `builder` agent committed AND pushed to this repo concurrently** (`8990acb7` advanceProjectMovement, 09:49). Its commit wasn't path-explicit, so it **swept this session's D7 `applyPatch` co-flip into it** — that's why the stage_entered_at write engine is in a commit labeled "advance project movement." Code is correct, `ingra107`-authored, no Claude attribution. But: if a builder agent is running, coordinate / expect concurrent commits. `8990acb7` also flagged a follow-up: `stale_active_since` NULL doesn't pull back to brain.db (hub.py `_w1col` truthy gate skips NULL) — companion fix needed for full symmetry.
+2. **Test D1 (`mnccore-lab-test`) is drifted** — missing schema-v55 columns (`last_meaningful_movement` et al.). Surfaced when v68's original backfill referenced one. Pre-existing; worth a janitor/schema-sync pass to bring test D1 current with prod.
+
+## Prior session — 2026-05-15 (13 commits)
 
 ### Security (5 fixes — all deployed)
 - **GET API auth lockdown** — `isPublicGet()` allowlist in `api/index.ts`. ~20 public routes (team, stats, publications, health), everything else requires JWT or API key. Smoke tested: `/api/tasks` → 401, `/api/team` → 200.
@@ -49,26 +70,9 @@
 
 **Read `WORKPLAN.md` — it's the single source of truth.** Everything below is a prioritized queue extracted from it.
 
-### Batch 1: Remaining T0 Security (3 items, ~1 hour)
+### Batch 1 (T0 Security) + Batch 2 (T1 Data Integrity) — ✅ DONE 2026-05-22
 
-All small, all independent. Can dispatch in parallel.
-
-| Task | File(s) | What to do | Effort |
-|------|---------|-----------|--------|
-| **SEC-4** | `api/routes/pb-sector.ts:9`, `api/routes/digest-email.ts:290` | Replace `getUTCHours()-6` and `getUTCHours()-5` with `new Intl.DateTimeFormat('en-US', {timeZone:'America/Chicago', hour:'numeric', hour12:false}).format(new Date())`. | S |
-| **SEC-5** | `src/components/QuickCaptureInbox.tsx:113-129`, `api/routes/inbox-events.ts:143-167` | Add deterministic `source_external_id` (hash of content+timestamp) to prevent double-submit duplicates. | M |
-| **SEC-6** | `api/routes/pb-sector.ts:205` | Add project ID resolution before inserting — same pattern as `api/routes/tasks.ts:331-344`. | S |
-
-### Batch 2: T1 Data Integrity (6 items, ~2 hours)
-
-| Task | What | Effort |
-|------|------|--------|
-| **DAT-1** | `day_capacity` mutations: add `idCol='date'` branch in `applyInsert`/`applyDelete` | S |
-| **DAT-2** | Expand `applyMutation` to handle `inbox_events`, `day_capacity`, `project_state_log` | M |
-| **DAT-3** | `/api/tasks/batch` should return `{applied:[], failed:[]}` on partial failure, not bare 200 | M |
-| **DAT-5** | `revisions.ts`: check `result.changes > 0` before writing activity_log | S |
-| **DAT-6** | `meetings.ts` notes: return 404 on missing meeting, not 200 | S |
-| **DAT-8** | `regulatory.ts` renew: wrap in `env.DB.batch()` | S |
+Resolved this session. SEC-4/SEC-6/DAT-3/DAT-6/DAT-8 fixed (`3bd5d419`); SEC-5/DAT-1/DAT-2/DAT-5 verified already-fixed (no work). See WORKPLAN.md for per-item evidence. Only **DAT-4** (realtimeBus `'all'` vs `'data'` channel mismatch) remains in this cluster — NOT yet verified or touched.
 
 ### Batch 3: T1 Fake/Broken Data (4 items, ~2 hours)
 
@@ -76,7 +80,7 @@ All small, all independent. Can dispatch in parallel.
 |------|------|----------|--------|
 | **FAKE-1** | Wire real `/api/citations` fallback to "—" | Build PB scholarly cron (home laptop) | S (fallback) / L (cron) |
 | **FAKE-2** | Build `<HermesPending>` pulse card with timer | Decision: pulse card + elapsed timer | M |
-| **FAKE-5** | Fix `daysInStage()` to not reset on any field edit | Needs D7 schema (`stage_entered_at`) or client-side workaround | S |
+| ~~**FAKE-5**~~ | ✅ DONE 2026-05-22 via D7 (`stage_entered_at`) | — | — |
 | **STATE-1** | TodayPage done-state: derive from cache, not localStorage | — | M |
 | **STATE-2** | ProfilePage rawRow: add real queryFn | — | S |
 
@@ -90,15 +94,15 @@ All small, all independent. Can dispatch in parallel.
 
 See WORKPLAN.md for full details. These are "during adoption" items, not blockers.
 
-### Schema Queue (5 cross-repo migrations, none started)
+### Schema Queue
 
-| ID | What | Unblocks |
-|----|------|----------|
-| D7 | `projects.stage_entered_at` | FAKE-5 |
-| D8 | `lab_questions.tags` | AskTheLab filters |
-| D9 | `commitments.to_slug` | MyItems commitments |
-| D22 | `activity_log` emit | INFRA-1, Activity tab |
-| D28 | `meetings.start_time/end_time` | Calendar time-aware |
+| ID | What | Status |
+|----|------|--------|
+| D7 | `projects.stage_entered_at` | ✅ DONE 2026-05-22 (schema-v68, Hub-only) |
+| D22 | `activity_log` typed emits | ✅ DONE 2026-05-22 (no schema; 5 typed events) |
+| D8 | `lab_questions.tags` | DEFERRED — build with AskTheLab tag-filter feature |
+| D9 | `commitments.to_slug` | DEFERRED — build with MyItems commitment tracker |
+| D28 | `meetings.start_time/end_time` | DEFERRED — build with time-aware Calendar |
 
 ### Manual Items (Nick-owned)
 

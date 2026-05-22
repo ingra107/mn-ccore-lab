@@ -12,22 +12,22 @@
 - [x] ~~**SEC-1** — Digest email XSS: 16 interpolation sites wrapped with escapeHtml(). Fixed 2026-05-15 (commits `67315db8`, `5e1676ed`).~~
 - [x] ~~**SEC-2** — Delete admin/test endpoints: removed 2026-05-15 (Agent 1 api/index.ts overhaul).~~
 - [x] ~~**SEC-3** — Upload integrity: R2 HEAD check + frontend error handling added. Fixed 2026-05-15 (commit `64d4b971`).~~
-- [ ] **SEC-4** — Timezone hardcoded offsets: `pb-sector.ts:9` (`getUTCHours()-6`) and `digest-email.ts:290` (`getUTCHours()-5`) break during DST transitions. Replace with `Intl.DateTimeFormat('America/Chicago')`. (source: codex T13, effort: S)
-- [ ] **SEC-5** — QuickCaptureInbox dedup: mints random UUID per submit, no idempotency key. Double-click/retry creates duplicates. Add deterministic `source_external_id` + `raw_hash`. (source: codex pass-4 #4, effort: M)
-- [ ] **SEC-6** — PB capture writes raw `project` string as `tasks.project_id` in `pb-sector.ts:205`. No resolver. Can write garbage FKs. Add project ID resolution before insert. (source: codex pass-4 #3, effort: S)
+- [x] ~~**SEC-4** — Timezone hardcoded offsets in `pb-sector.ts` + `digest-email.ts`. Replaced with `Intl.DateTimeFormat('America/Chicago', hourCycle:'h23')`. Fixed 2026-05-22 (commit `3bd5d419`).~~
+- [x] ~~**SEC-5** — QuickCaptureInbox dedup: VERIFIED ALREADY FIXED 2026-05-22. `inbox-events.ts` sync-bulk insert uses `ON CONFLICT(id) DO UPDATE` LWW upsert; client mints a per-submit UUID. Server-side dedup-on-id already idempotent. No work needed.~~
+- [x] ~~**SEC-6** — PB capture wrote raw `project` string as `tasks.project_id` with no resolver. Added id-OR-slug resolver before insert (mirrors `tasks.ts`). Fixed 2026-05-22 (commit `3bd5d419`).~~
 
 ## Tier 1: Trust & Correctness (fix before broad team use)
 
 ### Data integrity
 
-- [ ] **DAT-1** — `day_capacity` mutations use `date` PK: `applyInsert`/`applyDelete` hardcoded to `id` column. Needs `idCol = 'date'` branch. (source: codex T1, effort: S)
-- [ ] **DAT-2** — A3 helper covers all ALLOWED_TABLES: `applyMutation` only accepts tasks/projects. `inbox_events`, `day_capacity`, `project_state_log` need handler coverage. (source: codex T6, effort: M)
-- [ ] **DAT-3** — `/api/tasks/batch` atomicity: bulk endpoint returns 200 even on partial failure. Should return `{applied:[], failed:[]}`. Extract `deleteTaskById` for cascade consistency. (source: codex T7, effort: M)
-- [ ] **DAT-4** — Realtime broadcasts `'all'` instead of `'data'`: realtimeBus channel mismatch means some mutations don't trigger UI refresh. (source: codex T12, effort: S)
-- [ ] **DAT-5** — `revisions.ts` writes activity_log without checking `result.changes > 0`. Phantom activity entries on no-op updates. (source: codex T20, effort: S)
-- [ ] **DAT-6** — `meetings.ts` notes endpoint returns 200 on missing meeting instead of 404. (source: codex T21, effort: S)
+- [x] ~~**DAT-1** — `day_capacity` PK: VERIFIED ALREADY FIXED 2026-05-22. `mutations.ts` `PK_COLUMN` map already has `day_capacity:'date'`; `applyInsert`/`applyDelete` call `pkColumn()`. No work needed.~~
+- [x] ~~**DAT-2** — ALLOWED_TABLES coverage: VERIFIED ALREADY FIXED 2026-05-22. `ALLOWED_TABLES` already includes `inbox_events`, `day_capacity`, `project_state_log` (+ 9 Stage-3 tables). No work needed.~~
+- [x] ~~**DAT-3** — `/api/tasks/batch` atomicity: now wraps each per-item mutation in try/catch and returns `{ok, count, applied, failed}` (additive — `ok`/`count` preserved). Fixed 2026-05-22 (commit `3bd5d419`).~~
+- [ ] **DAT-4** — Realtime broadcasts `'all'` instead of `'data'`: realtimeBus channel mismatch means some mutations don't trigger UI refresh. (source: codex T12, effort: S) — NOT yet verified/touched.
+- [x] ~~**DAT-5** — `revisions.ts` activity_log: VERIFIED EFFECTIVELY FIXED 2026-05-22. The described phantom-on-missing-id bug can't occur — handler returns 400 on empty patch and 404 on missing row before/around the log. Only same-value no-op logging remains (cosmetic). No work needed.~~
+- [x] ~~**DAT-6** — `meetings.ts` notes returned 200 on a missing meeting. Now captures `result.meta.changes===0` → 404 before logActivity. Fixed 2026-05-22 (commit `3bd5d419`).~~
 - [x] ~~**DAT-7** — DecisionsPage tag filter: confirmed FIXED by recent commits (Codex cross-ref).~~
-- [ ] **DAT-8** — `regulatory.ts` renew not atomic: multi-statement renewal should use `env.DB.batch()`. Status enum not centralized. (source: codex T18, effort: S)
+- [x] ~~**DAT-8** — `regulatory.ts` renew now wraps expire-old + insert-new in `env.DB.batch()` (atomic). Fixed 2026-05-22 (commit `3bd5d419`). NOTE: status-enum centralization (second half of original item) NOT done — minor, deferred.~~
 
 ### Fake / broken data on team-facing surfaces
 
@@ -35,7 +35,7 @@
 - [ ] **FAKE-2** — Hermes "Thinking about this..." literal string: no animation, no timeout, no failure state. Replace with `<HermesPending>` component. (source: audit T3/ATL-03, effort: M)
 - [x] ~~**FAKE-3** — Transcript button: fake insights removed, button shows "coming soon" toast, audio zone muted. Fixed 2026-05-15 (commit `625ad4c5`). Backend endpoint deferred to Tier 4.~~
 - [x] ~~**FAKE-4** — InsightsPage SQL date bug: fixed in `64352724` (Bundle M, INS-01).~~
-- [ ] **FAKE-5** — Manuscripts `daysInStage()` uses `updated_at`, not `last_meaningful_movement`. Any field edit resets the counter. (source: audit T19/codex T9, effort: S)
+- [x] ~~**FAKE-5** — Manuscripts `daysInStage()` reset on any field edit. Fixed via D7: new `projects.stage_entered_at` column (bumped only on a genuine stage transition in the `applyPatch` chokepoint); `daysInStage` now reads it. Fixed 2026-05-22 (commits `8990acb7` co-flip + `9eb9b192`).~~
 
 ### Cache / state bugs
 
@@ -100,11 +100,11 @@ Each needs: decision doc in `~/Peripheral-Brain/Context/Decisions/`, `enums.py` 
 
 | ID | Migration | Unblocks | Status |
 |----|-----------|----------|--------|
-| D7 | `projects.stage_entered_at` | FAKE-5 (Manuscripts stale math) | Not started |
-| D8 | `lab_questions.tags` | AskTheLab tag filters | Not started |
-| D9 | `commitments.to_slug` | MyItems commitment tracker | Not started |
-| D22 | `activity_log` emit on 6 transitions | INFRA-1, ProjectDetail Activity tab | Not started |
-| D28 | `meetings.start_time` + `meetings.end_time` | Calendar time-aware week view | Not started |
+| D7 | `projects.stage_entered_at` | FAKE-5 (Manuscripts stale math) | ✅ DONE 2026-05-22. schema-v68 live on prod+test D1. **Hub-only** (no brain.db/sync changes): the `applyPatch` chokepoint bumps it on any stage transition incl. PB-sync-pushed ones, and brain.db has no consumer. |
+| D8 | `lab_questions.tags` | AskTheLab tag filters | DEFERRED — dead column until the AskTheLab tag-filter feature is built. Add WITH the feature. |
+| D9 | `commitments.to_slug` | MyItems commitment tracker | DEFERRED — dead column until MyItems commitment tracker is built. Add WITH the feature. |
+| D22 | `activity_log` typed emits | INFRA-1, ProjectDetail Activity tab | ✅ DONE 2026-05-22 (commit `1c40fa2a`). **No schema needed** — table existed; added 5 typed emits (stage_change, pi_change, project_rename, assignee_change, role_assignment). `meeting_cancel` N/A (no cancel handler). Hub-UI-origin only; sync-origin changes not logged. |
+| D28 | `meetings.start_time` + `meetings.end_time` | Calendar time-aware week view | DEFERRED — dead columns until time-aware Calendar (T4 parking lot) is built. Add WITH the feature. |
 
 ## Decisions Resolved (2026-05-15)
 
