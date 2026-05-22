@@ -3,6 +3,19 @@
 
 > Historical phase records moved from CLAUDE.md to keep the operating guide focused on current state. Each section is a complete record of what shipped, decisions made, and scores achieved.
 
+## 2026-05-22 (PM) — T1 correctness batch + deploy + 5-pass Codex simplify review
+
+**Shipped** (`5f5f597d`, `909c6e8b`; deploy `af3189f0` live on `909c6e8`):
+- **CT date helper** (`api/lib/ct-date.ts` `ctToday(offsetDays)`) replacing 10 UTC "today" anchors + paired window-bounds across tasks/meetings/pb-sector/proactive-brief/projects/digest-email (rolled to tomorrow after ~6pm CT). DST-safe via formatToParts.
+- **STATE-1** (TodayPage done-from-cache: reconciliation prunes optimistic flag on cache-confirm + markDone onError rollback + `isToday()` not UTC slice + `localDoneIds` dedup).
+- **STATE-2** (ProfilePage `['team-raw']` → real `useQuery`; auth-gated).
+- Enum-drift audit + DAT-4 realtimeBus: verified clean, no change.
+- **Codex verification gate** fixed 2 critical (pb-sector meetings `date('now')` UTC vs CT `today`; digest date labels missing timeZone) + 5 minor.
+- **test D1 reconciled to prod** (hub-schema-sync): was missing 27 tables + columns (v54/v55/v57/v58); now 76 tables exact match.
+- Deploy-mechanism docs corrected (manual-only via `npm run deploy:pages:gated`; `CLOUDFLARE_API_TOKEN` not OAuth); librarian fixed 3 stale brain.db agent_knowledge entries.
+
+**5-pass Codex "simplify + improve" review** (`8cb953df`/`8ebb490e`; `docs/reviews/2026-05-22-codex-simplify/`): WORKPLAN-blind, exclusion-chained. Surfaced a pre-adoption SECURITY tier (over-exposed public GETs, search PB-visibility, `/api/mutations` protected-field nulls, 9 identity bypasses, cascade gaps), ~12 more CT/UTC sites, simplify deletes/consolidations, UX gaps. Graduated into WORKPLAN. Clean negatives: no new optimistic-staleness/enum/PK/Buffer/cron-guard bugs.
+
 ## Phase 38 — Today B2 + MyTasks Round 2 (2026-04-24)
 
 **Headline.** New CD design pass shipped on `feature/today-b2-mytasks-r2`.

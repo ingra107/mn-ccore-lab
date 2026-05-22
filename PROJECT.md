@@ -5,7 +5,7 @@ created: 2026-03-25
 status: active
 domain: Research
 tier: 2-Biweekly
-next_action: Fresh session + new Codex audit (Nick directive 2026-05-22), then work the T1 correctness batch in WORKPLAN.md — CT date helper sweep, entity status-enum drift audit, STATE-1/2, DAT-4 (verify first), test-D1 repair. HEAD ef714950, deploy 4681a29c (schema v68). See SESSION-HANDOFF.md.
+next_action: T1 correctness batch + 5-pass Codex simplify review DONE 2026-05-22 PM (deployed af3189f0 on 909c6e8). Next = the pre-adoption SECURITY tier (WORKPLAN "Codex 5-pass review" SEC-T0-1..9) before broad team adoption, or CT-2 (~12 more UTC date sites). HEAD 8ebb490e (docs ahead of deploy), schema v68. See SESSION-HANDOFF.md.
 primary_folder: C:/Users/ingra107/mn-ccore-lab
 ---
 

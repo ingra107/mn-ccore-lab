@@ -16,7 +16,7 @@ shims in `src/App.tsx` placed outside `RequireAuth`.
 | **Gated (portal)** | `/portal/*` | CF Access + `RequireAuth` + `PortalLayout` chrome. 27 canonical routes. |
 | Today (Phase 38) | `/portal/dashboard` | `TodayPage.tsx` — operating-day surface (Right Now / timeline / 5 task groups / right rail) |
 | Lab Overview (Phase 38) | `/portal/overview` | `Dashboard.tsx` (was `/portal/dashboard` pre-Phase-38) — weekly-planning card grid |
-| Tasks | `/portal/tasks`, `/portal/my-tasks`, `/portal/my-items` | `/portal/tasks` redirects → `/portal/my-tasks`. `/portal/my-tasks` = `UnifiedMyTasks.tsx` (Phase 38 — 3 views, shared toolbar). `/portal/my-tasks-legacy` preserved one-sprint, scheduled to retire 2026-05-02. |
+| Tasks | `/portal/tasks`, `/portal/my-tasks`, `/portal/my-items` | `/portal/tasks` redirects → `/portal/my-tasks`. `/portal/my-tasks` = `UnifiedMyTasks.tsx` (Phase 38 — 3 views, shared toolbar). `/portal/my-tasks-legacy` still mounted (retire overdue since 2026-05-02 — removal tracked in WORKPLAN "Codex 5-pass review" T2' DEL). |
 | Projects | `/portal/projects`, `/portal/projects/:slug` | — |
 | Data | `/portal/manuscripts`, `/portal/deadlines`, `/portal/deadline-cascade`, `/portal/ideas`, `/portal/decisions`, `/portal/grants`, `/portal/publications` | — |
 | Meetings | `/portal/meetings`, `/portal/meetings/:id`, `/portal/meeting-prep`, `/portal/meeting-notes` | — |

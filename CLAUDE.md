@@ -24,7 +24,7 @@ The MN-CCORE Lab Hub is the **team's operating surface** — where research gets
 | Repo | github.com/ingra107/mn-ccore-lab (720+ commits) |
 | Today landing | `/portal/dashboard` → `src/pages/portal/TodayPage.tsx` |
 | Lab Overview | `/portal/overview` → `src/pages/Dashboard.tsx` |
-| MyTasks | `/portal/my-tasks` → `src/pages/portal/UnifiedMyTasks.tsx` (3 views, shared toolbar) |
+| MyTasks | `/portal/my-tasks` → `src/pages/MyTasks/` (via `portal/UnifiedMyTasks.tsx` 8-line re-export shim; 3 views, shared toolbar) |
 | Deploy | **Manual only** (pushing to `origin/main` does NOT deploy). From repo root: `npm run deploy:pages:gated` (= `npm run build` + `wrangler pages deploy dist --project-name mn-ccore-lab --branch main`). Auth: load `CLOUDFLARE_API_TOKEN` from PB `scripts/scheduled/secrets.ps1` — do NOT `wrangler login`. |
 | Stack | React 19 + Vite 8 + Tailwind v4 + Framer Motion 12 + TypeScript + Hono v4.12 |
 | Testing | Playwright 1.59 (568+ tests, 4 suites) + Vitest 4.1 (component, browser mode) |

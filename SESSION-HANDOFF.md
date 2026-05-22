@@ -4,7 +4,7 @@
 
 | Item | Value |
 |------|-------|
-| HEAD | `cf85cfa0` on main, pushed to origin |
+| HEAD | `8ebb490e` on main, pushed to origin (commits after `909c6e8` are DOCS-only — handoff/WORKPLAN/CLAUDE.md/codex-review; prod app code = `909c6e8`, no redeploy needed) |
 | Deploy | `af3189f0.mn-ccore-lab.pages.dev` (2026-05-22 PM) — LIVE on commit `909c6e8`, `/api/health` ok, `/api/version` env=production |
 | Build | GREEN (0 TS errors) |
 | API tests | 178/178 passing |
@@ -22,7 +22,9 @@ Executed the full "▶ NEXT SESSION" directive (fixes first → fresh Codex audi
 
 **`cf85cfa0` — docs:** corrected CLAUDE.md deploy rows (manual-only; token from secrets.ps1; push≠deploy; pages.dev=prod vs unused workers.dev).
 
-**Also:** deployed `af3189f0` (verified live on 909c6e8); test D1 reconciled to prod (hub-schema-sync); librarian corrected 3 stale brain.db agent_knowledge entries that falsely claimed "Pages auto-deploys on push via GitHub Actions."
+**Also:** deployed `af3189f0` (verified live on 909c6e8); test D1 reconciled to prod (hub-schema-sync — was missing 27 tables + cols, now 76 exact match); librarian corrected 3 stale brain.db agent_knowledge entries that falsely claimed "Pages auto-deploys on push via GitHub Actions."
+
+**`8cb953df` + `8ebb490e` — 5-pass Codex "simplify + improve" review** (WORKPLAN-blind, exclusion-chained, ~8 findings spot-checked accurate): graduated into `WORKPLAN.md` "Codex 5-pass review" section + `docs/reviews/2026-05-22-codex-simplify/`. **Top output = a pre-adoption SECURITY tier (T0)** — all NET-NEW, none active yet (team adoption not started): over-exposed public GETs (PB titles + emails), search ignoring PB-category visibility, `/api/mutations` nulling protected fields, 9 identity-canonicalization bypasses, cascade gaps. The "fail-open JWT" was verified a NON-issue (CF_ACCESS_TEAM_DOMAIN/AUD set in prod). Also: ~12 more CT/UTC sites the api-only sweep missed (PB Sector/regulatory/submissions/conferences/frontend Calendar).
 
 ### ⚠️ Deploy + auth — learned this session (see CLAUDE.md Quick Reference)
 Deploy is **MANUAL ONLY** — `npm run deploy:pages:gated`; pushing to origin/main does NOT deploy. Auth via **`CLOUDFLARE_API_TOKEN`** (PB `scripts/scheduled/secrets.ps1`), NOT interactive `wrangler login`. Verify live commit: `wrangler pages deployment list --project-name mn-ccore-lab`.
@@ -64,9 +66,10 @@ Security (digest XSS/escapeHtml, GET API auth lockdown, admin endpoints deleted,
 
 ## Next Session Playbook
 
-**▶ The 2026-05-22 T1 directive is DONE** (fixes-first + Codex gate executed; CT sweep, STATE-1/2, enum-drift, DAT-4, test-D1 all closed — see "Latest — 2026-05-22 PM" above). Pick the next tier from `WORKPLAN.md`:
+**▶ The 2026-05-22 T1 directive is DONE** (fixes-first + Codex gate executed; CT sweep, STATE-1/2, enum-drift, DAT-4, test-D1 all closed — see "Latest — 2026-05-22 PM" above). The natural next session is the **TIER-0 SECURITY batch** from the new Codex review (`WORKPLAN.md` "Codex 5-pass review" → SEC-T0-1..9): it's the pre-adoption gate before the Hub opens to ~20 people, and it's all NET-NEW. Highest-leverage / lowest-risk first: SEC-T0-5 (mutations null-guard), SEC-T0-1 (public-endpoint gating), SEC-T0-6 (identity canonicalization). Otherwise pick a tier from `WORKPLAN.md`:
 
 - **T1 leftovers:** FAKE-1 (Lab Overview `totalCitations` hardcoded — show `—` until PB scholarly cron), FAKE-2 (Hermes "Thinking…" → `<HermesPending>`), DH-1 (grant_milestones seed data), DH-2 (verify/drop Pulse PWA manifest).
+- **CT-2 (from Codex review):** ~12 more UTC "today" sites the api-only sweep missed (server: projects/index/pb-sector/regulatory/submissions/conferences; frontend Calendar/PBSector → a `localDateKey()` helper).
 - **Open follow-up from the morning batch:** `stale_active_since` NULL doesn't pull back to brain.db (`hub.py` `_w1col` truthy gate skips NULL) — companion fix for full symmetry.
 - **T2 polish** (during adoption): see WORKPLAN T2 (brand primitives, token discipline, keyboard nav, search source isolation, mobile breakpoint split-brain).
 
