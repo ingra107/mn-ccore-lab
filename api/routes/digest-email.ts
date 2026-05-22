@@ -154,6 +154,7 @@ function buildDigestHtml(data: DigestData): string {
 
   const greeting = getGreeting();
   const dateStr = new Date(generatedAt).toLocaleDateString('en-US', {
+    timeZone: 'America/Chicago',
     weekday: 'long',
     month: 'long',
     day: 'numeric',
@@ -464,7 +465,7 @@ async function composeDailyDigest(env: Env, member: CoordinatorMember): Promise<
   const today = ctToday();
   const in14Days = ctToday(14);
   const dateStr = new Date().toLocaleDateString('en-US', {
-    weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
+    timeZone: 'America/Chicago', weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
   });
   const firstName = member.name.split(' ')[0];
 
@@ -674,7 +675,7 @@ export async function handleSendDailyDigests(env: Env): Promise<Response> {
   }
 
   const { sendEmail } = await import('../lib/email');
-  const dateStr = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+  const dateStr = new Date().toLocaleDateString('en-US', { timeZone: 'America/Chicago', weekday: 'long', month: 'long', day: 'numeric' });
 
   let sent = 0;
   let skipped = 0;

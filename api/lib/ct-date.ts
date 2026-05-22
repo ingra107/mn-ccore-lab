@@ -12,13 +12,21 @@
 // (e.g. "activity in the last 90 days") — a one-day boundary there is immaterial
 // and UTC is fine.
 
-// en-CA formats as YYYY-MM-DD, matching the ISO date strings stored in D1.
-const CT_DATE_FMT = new Intl.DateTimeFormat('en-CA', {
+// Resolve a Date to its America/Chicago calendar parts. We assemble YYYY-MM-DD
+// from formatToParts rather than relying on a locale's string format (e.g.
+// en-CA happening to emit "2026-05-22") — the part values are locale-neutral.
+const CT_DATE_FMT = new Intl.DateTimeFormat('en-US', {
   timeZone: 'America/Chicago',
   year: 'numeric',
   month: '2-digit',
   day: '2-digit',
 });
+
+function ctDateString(d: Date): string {
+  const parts = CT_DATE_FMT.formatToParts(d);
+  const get = (type: string) => parts.find((p) => p.type === type)?.value ?? '';
+  return `${get('year')}-${get('month')}-${get('day')}`;
+}
 
 /**
  * Today's calendar date in America/Chicago as `YYYY-MM-DD`.
@@ -30,7 +38,7 @@ const CT_DATE_FMT = new Intl.DateTimeFormat('en-CA', {
  *                    `ctToday(-14)` = fourteen days ago (CT).
  */
 export function ctToday(offsetDays = 0): string {
-  const todayStr = CT_DATE_FMT.format(new Date());
+  const todayStr = ctDateString(new Date());
   if (offsetDays === 0) return todayStr;
   // Anchor at UTC midnight of the CT calendar date, then add whole days. This
   // is timezone-neutral integer date math — no DST hour ever enters into it.

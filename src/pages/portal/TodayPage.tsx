@@ -76,6 +76,17 @@ export default function TodayPage() {
 
   const allTaskIds = useMemo(() => tasks.map((t) => t.id), [tasks])
   const state = useTodayState(allTaskIds, completedTodayIds)
+
+  // Local done flags that are genuine completions for the "Completed today"
+  // surface: NOT already counted by the cache (doneTodayDetail) and whose task
+  // has left the open list. Excluding still-open tasks drops a stale flag from a
+  // cross-surface reopen and the one-render optimistic flash, so neither is
+  // double-counted nor shown twice. Source of truth stays the cache.
+  const localDoneIds = useMemo(() => {
+    const confirmed = new Set(completedTodayIds)
+    const open = new Set(allTaskIds)
+    return Object.keys(state.done).filter((id) => state.done[id] && !confirmed.has(id) && !open.has(id))
+  }, [state.done, completedTodayIds, allTaskIds])
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const onExpand = useCallback((id: string) => { setExpandedId((p) => (p === id ? null : id)) }, [])
 
@@ -228,11 +239,8 @@ export default function TodayPage() {
     .filter((t): t is TaskRow => !!t)
     .map((t) => ({ id: t.id, title: t.title }))
 
-  // Pill counts.
-  // Open tasks still flagged done locally = unconfirmed-optimistic completions
-  // (the reconciliation effect prunes the flag once the cache confirms them, so
-  // these are disjoint from doneTodayDetail — no double count).
-  const doneTodayCount = tasks.filter((t) => state.done[t.id]).length + doneTodayDetail.length
+  // Pill counts. Cache-confirmed completions + deduped local-only completions.
+  const doneTodayCount = doneTodayDetail.length + localDoneIds.length
   const counts: DailyCounts = {
     overdue: overdueTasks.length,
     stalled: stalledProjects.length,
@@ -320,7 +328,7 @@ export default function TodayPage() {
           <div onClick={() => setCompletedOpen(!completedOpen)} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', padding: '4px 0' }}>
             <span style={{ fontSize: 12, color: ACCENT_GREEN }}>✓</span>
             <span style={{ fontSize: 11, color: INK_MUTED, letterSpacing: '0.06em', textTransform: 'uppercase', fontWeight: 500 }}>
-              Completed today ({doneTodayDetail.length + Object.values(state.done).filter(Boolean).length})
+              Completed today ({doneTodayDetail.length + localDoneIds.length})
             </span>
             <span style={{ color: INK_DIM }}>{completedOpen ? '▾' : '▸'}</span>
           </div>
@@ -329,8 +337,8 @@ export default function TodayPage() {
               {doneTodayDetail.map((t) => (
                 <div key={t.id} style={{ fontSize: 12, color: INK_MUTED, padding: '2px 0', paddingLeft: 12, textDecoration: 'line-through' }}>{t.title}</div>
               ))}
-              {Object.keys(state.done).filter((id) => state.done[id]).map((id) => {
-                const t = tasks.find((x) => x.id === id) ?? (tasksQuery.data ?? []).find((x) => x.id === id)
+              {localDoneIds.map((id) => {
+                const t = (tasksQuery.data ?? []).find((x) => x.id === id)
                 if (!t) return null
                 return (
                   <div key={id} style={{ fontSize: 12, color: INK_MUTED, padding: '2px 0', paddingLeft: 12, textDecoration: 'line-through' }}>{t.title}</div>

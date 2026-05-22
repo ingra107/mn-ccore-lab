@@ -67,6 +67,7 @@ export default function ProfilePage() {
       if (!r.ok) throw new Error(`HTTP ${r.status}`)
       return r.json()
     },
+    enabled: !!slug && isAuthenticated,
   })
   const rawRow = (rawQuery.data?.data ?? []).find((r) => r.slug === slug)
 

@@ -53,9 +53,9 @@ export async function handleCommandCenter(env: Env, planDate?: string): Promise<
       SELECT m.id, m.date, m.title, m.type,
         (SELECT COUNT(*) FROM agenda_items ai WHERE ai.meeting_id = m.id) as agenda_count,
         (SELECT COUNT(*) FROM tasks t WHERE t.meeting_id = m.id AND t.completed = 0) as pending_actions
-      FROM meetings m WHERE m.date >= date('now') AND m.date <= date('now', '+7 days')
+      FROM meetings m WHERE m.date >= ? AND m.date <= ?
       ORDER BY m.date ASC
-    `),
+    `).bind(today, ctToday(7)),
 
     // Recent activity (last 24h)
     env.DB.prepare(`
