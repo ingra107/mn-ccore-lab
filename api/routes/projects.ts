@@ -179,6 +179,7 @@ export async function handleCreateProject(
       slug,
       category: body.category || 'MNCCORE',
       stage: body.stage || 'idea',
+      stage_entered_at: new Date().toISOString(),
       description: body.description || '',
       pi: body.pi || user.email.split('@')[0],
       status: 'active',

@@ -33,6 +33,7 @@ export default function QuickCaptureInbox() {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const dialogRef = useRef<HTMLDivElement>(null)
   const previousFocusRef = useRef<HTMLElement | null>(null)
+  const eventIdRef = useRef<string | null>(null)
   const { user } = useAuth()
   const { data: projects } = useProjects(undefined, { enabled: open })
   const { showSuccess } = useUndoToast()
@@ -111,7 +112,8 @@ export default function QuickCaptureInbox() {
     setSubmitting(true)
     try {
       const now = new Date().toISOString()
-      const eventId = crypto.randomUUID()
+      if (!eventIdRef.current) eventIdRef.current = crypto.randomUUID()
+      const eventId = eventIdRef.current
       const res = await fetch('/api/inbox-events/sync-bulk', {
         method: 'POST',
         credentials: 'same-origin',
@@ -132,6 +134,7 @@ export default function QuickCaptureInbox() {
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       setText('')
       setProjectId('')
+      eventIdRef.current = null
       showSuccess('Captured → Inbox')
       setTimeout(() => {
         setSubmitting(false)

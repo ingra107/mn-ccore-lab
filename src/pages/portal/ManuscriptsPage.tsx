@@ -589,8 +589,9 @@ export default function ManuscriptsPage() {
                               value={project.status || 'active'}
                               options={[
                                 { value: 'active', label: 'Active', color: 'var(--green)' },
-                                { value: 'pending', label: 'Pending', color: 'var(--gold)' },
-                                { value: 'completed', label: 'Done', color: 'var(--slate)' },
+                                { value: 'waiting_external', label: 'Waiting', color: 'var(--gold)' },
+                                { value: 'blocked', label: 'Blocked', color: 'var(--maroon)' },
+                                { value: 'done', label: 'Done', color: 'var(--slate)' },
                               ]}
                               onChange={(val) => handleFieldChange(project.slug, 'status', val, project.status)}
                             />
@@ -678,8 +679,9 @@ export default function ManuscriptsPage() {
                                 value={project.status || 'active'}
                                 options={[
                                   { value: 'active', label: 'Active', color: 'var(--green)' },
-                                  { value: 'pending', label: 'Pending', color: 'var(--gold)' },
-                                  { value: 'completed', label: 'Done', color: 'var(--slate)' },
+                                  { value: 'waiting_external', label: 'Waiting', color: 'var(--gold)' },
+                                  { value: 'blocked', label: 'Blocked', color: 'var(--maroon)' },
+                                  { value: 'done', label: 'Done', color: 'var(--slate)' },
                                 ]}
                                 onChange={(val) => handleFieldChange(project.slug, 'status', val, project.status)}
                               />

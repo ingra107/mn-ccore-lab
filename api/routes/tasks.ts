@@ -673,6 +673,15 @@ export async function handleBatchUpdateTasks(request: Request, user: AuthUser, e
         const member = await env.DB.prepare('SELECT 1 FROM team_members WHERE slug = ? LIMIT 1').bind(body.value).first()
         if (!member) return error(`Unknown assignee "${body.value}". Must match team_members.slug.`, 400)
       }
+      // Bulk-fetch prior assignees in one query to avoid N+1 and enable typed
+      // assignee_change activity events (parity with the single-task update path
+      // at ~line 277). Map is keyed by task id.
+      const assignPrev = new Map<string, string | null>()
+      {
+        const ph = body.ids.map(() => '?').join(',')
+        const rows = await env.DB.prepare(`SELECT id, assignee FROM tasks WHERE id IN (${ph})`).bind(...body.ids).all<{ id: string; assignee: string | null }>()
+        for (const r of (rows.results || [])) assignPrev.set(r.id, r.assignee)
+      }
       for (const id of body.ids) {
         try {
           const mutResult = await applyMutation(env, {
@@ -685,6 +694,10 @@ export async function handleBatchUpdateTasks(request: Request, user: AuthUser, e
           })
           if (mutResult.status === 'accepted' || mutResult.status === 'merged_clean') {
             applied.push(id)
+            // Emit typed assignee_change only when the value actually changed.
+            if (body.value !== assignPrev.get(id)) {
+              await logActivity(env, 'assignee_change', `Assignee: ${assignPrev.get(id) ?? '—'} → ${body.value}`, user.email, id, 'task')
+            }
           } else {
             const reason = `${mutResult.status} — ${mutResult.reason ?? ''}`
             console.error(`bulkAction assign failed for ${id}: ${reason}`)

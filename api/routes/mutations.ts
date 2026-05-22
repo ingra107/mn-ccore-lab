@@ -759,7 +759,11 @@ async function advanceProjectMovement(
 
   // MAX-safe update: CASE WHEN preserves existing if it is already later.
   // Clears stale_active_since unconditionally (task movement = project unstale).
-  // Uses projects.id = ? (primary key) — project_id on tasks is always the PK.
+  // Uses id = ? OR slug = ? because tasks.project_id may store the project's
+  // slug (assigned via the Hub UI resolve path in tasks.ts resolvedProjectId =
+  // proj.slug || proj.id) rather than the PK. Matching only id = ? silently
+  // misses slug-backed tasks, leaving last_meaningful_movement un-advanced.
+  // Both bindings carry the same projectId value; D1 will match at most one row.
   // Non-fatal wrapper: a missing projects row (orphaned task) or transient D1
   // error must not abort the task mutation that already succeeded. Log clearly
   // so operational issues surface in wrangler tail without aborting the caller.
@@ -772,8 +776,8 @@ async function advanceProjectMovement(
       END,
       stale_active_since = NULL,
       updated_at = datetime('now')
-    WHERE id = ?
-  `).bind(ts, ts, projectId).run().catch((e: Error) => {
+    WHERE id = ? OR slug = ?
+  `).bind(ts, ts, projectId, projectId).run().catch((e: Error) => {
     console.error('advanceProjectMovement: project update failed:', e.message);
   });
 }
