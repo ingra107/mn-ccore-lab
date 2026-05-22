@@ -24,7 +24,7 @@ import {
 import type { SubmissionEventType, SubmissionEventRow } from '../lib/api'
 import { useSubmissionEvents } from '../hooks/useApiData'
 import { useCreateSubmissionEvent, useDeleteSubmissionEvent } from '../hooks/useMutations'
-import { formatRelativeTime, getDaysUntil } from '../lib/dateUtils'
+import { formatRelativeTime, getDaysUntil, localDateKey } from '../lib/dateUtils'
 import EmptyState from './EmptyState'
 import InlineSelect from './InlineSelect'
 import { getStatusColor, getStatusBg } from '../lib/statusColors'
@@ -109,7 +109,7 @@ function AddEventForm({
   onClose: () => void
 }) {
   const [eventType, setEventType] = useState<SubmissionEventType>('submitted')
-  const [eventDate, setEventDate] = useState(new Date().toISOString().slice(0, 10))
+  const [eventDate, setEventDate] = useState(localDateKey())
   const [journal, setJournal] = useState('')
   const [notes, setNotes] = useState('')
   const createEvent = useCreateSubmissionEvent(projectId)

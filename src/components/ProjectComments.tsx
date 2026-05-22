@@ -2,6 +2,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { MessageSquare } from 'lucide-react'
 import HermesMark from './HermesMark'
 import HermesResponse from './HermesResponse'
+import HermesPending, { isHermesPending } from './HermesPending'
 import { useComments } from '../hooks/useApiData'
 import { useAddComment } from '../hooks/useMutations'
 import { useAuth } from '../hooks/useAuth'
@@ -152,7 +153,11 @@ export default function ProjectComments({ projectSlug }: Props) {
                               {formatRelativeTime(comment.created_at)}
                             </span>
                           </div>
-                          <HermesResponse content={comment.content} />
+                          {isHermesPending(comment.content) ? (
+                            <HermesPending askedAt={comment.created_at} />
+                          ) : (
+                            <HermesResponse content={comment.content} />
+                          )}
                           {/* PD-18: ReactionBar inside the gold card to match human comment placement */}
                           <ReactionBar targetType="comment" targetId={comment.id} />
                         </div>

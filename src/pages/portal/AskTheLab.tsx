@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { HelpCircle, Plus, X, MessageSquare, Check, ChevronDown, ChevronUp, Search } from 'lucide-react'
 import HermesMark from '../../components/HermesMark'
 import HermesResponse from '../../components/HermesResponse'
+import HermesPending, { isHermesPending } from '../../components/HermesPending'
 import SmartCompose from '../../components/SmartCompose'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CardSkeleton } from '../../components/LoadingSkeleton'
@@ -327,7 +328,11 @@ function QuestionExpanded({ questionId }: { questionId: string }) {
                       {formatRelativeTime(answer.created_at)}
                     </span>
                   </div>
-                  <HermesResponse content={answer.content} />
+                  {isHermesPending(answer.content) ? (
+                    <HermesPending askedAt={answer.created_at} />
+                  ) : (
+                    <HermesResponse content={answer.content} />
+                  )}
                 </div>
               )
             }

@@ -59,3 +59,20 @@ export function getDaysAgo(dateStr: string): number {
   const target = new Date(dateStr + 'T00:00:00')
   return Math.floor((new Date().getTime() - target.getTime()) / (1000 * 60 * 60 * 24))
 }
+
+/**
+ * Date as `YYYY-MM-DD` in the browser's LOCAL timezone.
+ *
+ * Use this for any "today"/calendar-day anchor instead of
+ * `date.toISOString().split('T')[0]`, which formats in UTC. For users west of
+ * UTC an evening timestamp rolls forward to tomorrow's UTC date, so a 9pm CT
+ * "today" anchor would point at the next calendar day. Building the string from
+ * the local getters avoids that.
+ *
+ * (Mirrors the local-date logic in `taskGrouping.ts:todayKey()`, but accepts an
+ * arbitrary `Date` so callers can key any constructed date — week cells, day
+ * views, etc. — not just `new Date()`.)
+ */
+export function localDateKey(d: Date = new Date()): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}

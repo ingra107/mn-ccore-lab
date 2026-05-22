@@ -67,6 +67,7 @@ import type {
   PomodoroSessionRow,
   DailyReflectionRow,
 } from '../lib/api'
+import { localDateKey } from '../lib/dateUtils'
 
 // Re-export lib/api row types that consumers import via this module.
 // Narrow surface: only the types actually consumed by components. Other
@@ -395,7 +396,7 @@ function staticToMeetingRows(): MeetingRow[] {
     agenda: JSON.stringify(m.agenda || []),
     notes: m.notes || null,
     decisions: JSON.stringify(m.decisions || []),
-    status: m.date >= new Date().toISOString().split('T')[0] ? 'upcoming' : 'completed',
+    status: m.date >= localDateKey() ? 'upcoming' : 'completed',
     created_at: m.date,
     updated_at: m.date,
   }))

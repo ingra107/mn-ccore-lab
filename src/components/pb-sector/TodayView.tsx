@@ -4,6 +4,7 @@ import { ChevronDown, ChevronRight, FileText } from 'lucide-react'
 import { useTodayMd } from '../../hooks/useApiData'
 import { CardSkeleton } from '../LoadingSkeleton'
 import EmptyState from '../EmptyState'
+import { localDateKey } from '../../lib/dateUtils'
 
 // ── Markdown line types ──────────────────────────────────────
 
@@ -158,7 +159,7 @@ function parseMarkdown(content: string): Section[] {
 // ── Due date coloring ────────────────────────────────────────
 
 function getDueDateStyle(dateStr: string): { color: string; label: string } {
-  const today = new Date().toISOString().split('T')[0]
+  const today = localDateKey()
   if (dateStr < today) return { color: 'var(--maroon)', label: 'overdue' }
   if (dateStr === today) return { color: 'var(--gold)', label: 'today' }
   return { color: 'var(--slate)', label: dateStr }

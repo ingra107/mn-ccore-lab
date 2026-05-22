@@ -9,7 +9,7 @@ import { formatBrandName } from '../../components/BrandName'
 import { useCalendarEvents } from '../../hooks/useApiData'
 import { isProductionVisible } from '../../lib/isProductionVisible'
 import { getPersonInfo } from '../../data/team'
-import { formatLongDate, formatShortDate } from '../../lib/dateUtils'
+import { formatLongDate, formatShortDate, localDateKey } from '../../lib/dateUtils'
 import type { CalendarEvent } from '../../lib/api'
 import { staggerContainer, staggerItem } from '../../lib/animations'
 import { PATHS } from '../../constants/paths'
@@ -49,8 +49,8 @@ export default function CalendarPage() {
     const first = new Date(y, m - 1, 1)
     const last = new Date(y, m + 2, 0)
     return {
-      start: first.toISOString().split('T')[0],
-      end: last.toISOString().split('T')[0],
+      start: localDateKey(first),
+      end: localDateKey(last),
     }
   }, [currentDate])
 
@@ -71,10 +71,10 @@ export default function CalendarPage() {
   }, [currentDate])
   const weekEnd = new Date(weekStart)
   weekEnd.setDate(weekEnd.getDate() + 6)
-  const weekLabel = `${formatShortDate(weekStart.toISOString().split('T')[0])} — ${formatShortDate(weekEnd.toISOString().split('T')[0])}, ${weekEnd.getFullYear()}`
+  const weekLabel = `${formatShortDate(localDateKey(weekStart))} — ${formatShortDate(localDateKey(weekEnd))}, ${weekEnd.getFullYear()}`
 
   // Day label
-  const dayLabel = formatLongDate(currentDate.toISOString().split('T')[0])
+  const dayLabel = formatLongDate(localDateKey(currentDate))
 
   const goToPrev = () => {
     const d = new Date(currentDate)
@@ -130,7 +130,7 @@ export default function CalendarPage() {
         icon={<Calendar size={20} />}
         title="Lab Calendar"
         subtitle={(() => {
-          const todayStr = new Date().toISOString().split('T')[0]
+          const todayStr = localDateKey()
           const todayCount = events.filter(e => e.date === todayStr).length
           return todayCount > 0
             ? `${events.length} events · ${todayCount} today`
@@ -255,7 +255,7 @@ export default function CalendarPage() {
 // ── Month View ───────────────────────────────────────────────
 
 function MonthView({ currentDate, events, denseWeek = false }: { currentDate: Date; events: CalendarEvent[]; denseWeek?: boolean }) {
-  const today = new Date().toISOString().split('T')[0]
+  const today = localDateKey()
   const year = currentDate.getFullYear()
   const month = currentDate.getMonth()
 
@@ -374,14 +374,14 @@ function DayCellRender({ dateStr, today, dayEvents }: { dateStr: string; today: 
 // ── Week View ────────────────────────────────────────────────
 
 function WeekView({ weekStart, events }: { weekStart: Date; events: CalendarEvent[] }) {
-  const today = new Date().toISOString().split('T')[0]
+  const today = localDateKey()
 
   const days = useMemo(() => {
     const result: string[] = []
     for (let i = 0; i < 7; i++) {
       const d = new Date(weekStart)
       d.setDate(d.getDate() + i)
-      result.push(d.toISOString().split('T')[0])
+      result.push(localDateKey(d))
     }
     return result
   }, [weekStart])
@@ -443,9 +443,9 @@ function WeekView({ weekStart, events }: { weekStart: Date; events: CalendarEven
 // ── Day View ─────────────────────────────────────────────────
 
 function DayView({ date, events }: { date: Date; events: CalendarEvent[] }) {
-  const dateStr = date.toISOString().split('T')[0]
+  const dateStr = localDateKey(date)
   const dayEvents = events.filter((e) => e.date === dateStr)
-  const isToday = dateStr === new Date().toISOString().split('T')[0]
+  const isToday = dateStr === localDateKey()
 
   return (
     <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'var(--border-subtle)' }}>
@@ -503,7 +503,7 @@ function DayView({ date, events }: { date: Date; events: CalendarEvent[] }) {
 // ── Agenda View ──────────────────────────────────────────────
 
 function AgendaView({ events }: { events: CalendarEvent[] }) {
-  const today = new Date().toISOString().split('T')[0]
+  const today = localDateKey()
 
   const grouped = useMemo(() => {
     const map = new Map<string, CalendarEvent[]>()

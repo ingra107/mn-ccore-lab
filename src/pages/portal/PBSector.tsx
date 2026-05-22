@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import type { TaskRow } from '../../lib/api'
+import { localDateKey } from '../../lib/dateUtils'
 import {
   DndContext,
   DragOverlay,
@@ -50,7 +51,7 @@ function parseJsonArray(val: string | null): string[] {
 // ── Main Component ────────────────────────────────────────
 
 export default function PBSector() {
-  const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0])
+  const [selectedDate, setSelectedDate] = useState(() => localDateKey())
   const { data, isLoading } = usePBCommandCenter(selectedDate)
   const capture = usePBCapture()
   const completeTask = useUpdateTaskStatus()
@@ -176,7 +177,7 @@ export default function PBSector() {
 
   // ── Handlers ────────────────────────────────────────────
 
-  const today = data?.today || new Date().toISOString().split('T')[0]
+  const today = data?.today || localDateKey()
 
   const handleSavePlan = useCallback((updates: Record<string, any>) => {
     savePlan.mutate({ plan_date: selectedDate, ...updates })

@@ -6,7 +6,7 @@ import InlineSelect from './InlineSelect'
 import { useUndoToast } from './UndoToast'
 import { useConferences } from '../hooks/useApiData'
 import { useCreateConference, useUpdateConference, useDeleteConference } from '../hooks/useMutations'
-import { formatShortDate } from '../lib/dateUtils'
+import { formatShortDate, localDateKey } from '../lib/dateUtils'
 import type { ConferenceSubmissionRow, ConferenceSubmissionType, ConferenceStatus, MaterialsStatus } from '../lib/api'
 
 const STATUS_OPTIONS: { value: ConferenceStatus; label: string; color: string }[] = [
@@ -61,10 +61,10 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
     const prev = conf.status
     const updates: Record<string, unknown> = { status: newStatus }
     if (newStatus === 'submitted' && !conf.abstract_submitted_at) {
-      updates.abstract_submitted_at = new Date().toISOString().split('T')[0]
+      updates.abstract_submitted_at = localDateKey()
     }
     if (newStatus === 'accepted' && !conf.accepted_at) {
-      updates.accepted_at = new Date().toISOString().split('T')[0]
+      updates.accepted_at = localDateKey()
     }
     updateMutation.mutate({ id: conf.id, fields: updates as any })
     showUndo(`Status -> ${newStatus}`, () => updateMutation.mutate({ id: conf.id, fields: { status: prev as ConferenceStatus } }))

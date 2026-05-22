@@ -121,6 +121,13 @@ export interface TaskRow {
    *  Values: 'deep' | 'priorities' | 'quick' | 'pb' | 'etl' | null. NULL = auto-classify
    *  via getGroupForTask. Syncs to brain.db so TODAY.md generation honors it. */
   group_override?: 'deep' | 'priorities' | 'quick' | 'pb' | 'etl' | null
+  /** Operational follow-up fields (schema v55). Returned by the task GET
+   *  endpoints and accepted by the mutation allowlist; typed here so callers
+   *  can read them without `as any`. No UI surfacing yet (INFRA-7). */
+  waiting_on?: string | null
+  promised_to?: string | null
+  promise_date?: string | null
+  next_checkin_date?: string | null
   created_at: string
   updated_at?: string
   meeting_title?: string
@@ -608,13 +615,20 @@ export interface ManuscriptsAttention {
   thresholds: { review_days: number; stale_days: number }
 }
 
-export function fetchManuscriptsAttention(params?: { reviewDays?: number; staleDays?: number }) {
+export async function fetchManuscriptsAttention(params?: { reviewDays?: number; staleDays?: number }): Promise<ManuscriptsAttention> {
   const qs = new URLSearchParams()
   if (params?.reviewDays !== undefined) qs.set('review_days', String(params.reviewDays))
   if (params?.staleDays !== undefined) qs.set('stale_days', String(params.staleDays))
   const suffix = qs.toString() ? `?${qs.toString()}` : ''
-  return fetch(`/api/manuscripts/attention${suffix}`, { credentials: 'include' })
-    .then((r) => r.json()) as Promise<ManuscriptsAttention>
+  const res = await fetch(`/api/manuscripts/attention${suffix}`, { credentials: 'include' })
+  // Guard res.ok before parsing — an error response (e.g. 401/500) returns
+  // non-JSON or an error envelope; parsing it as the success shape silently
+  // corrupts the UI. Match the fetchApi() error pattern.
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ error: res.statusText }))
+    throw new ApiError(res.status, body.error || res.statusText)
+  }
+  return res.json() as Promise<ManuscriptsAttention>
 }
 
 export function createRevision(input: {
