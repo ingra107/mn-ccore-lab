@@ -28,8 +28,8 @@ The MN-CCORE Lab Hub is the **team's operating surface** — where research gets
 | Deploy | `cd /c/Users/ingra/mn-ccore-lab && npm run build && npx wrangler pages deploy dist --project-name mn-ccore-lab` |
 | Stack | React 19 + Vite 8 + Tailwind v4 + Framer Motion 12 + TypeScript + Hono v4.12 |
 | Testing | Playwright 1.59 (568+ tests, 4 suites) + Vitest 4.1 (component, browser mode) |
-| Data | TanStack Query v5 + Cloudflare D1 (63 tables, ~229 endpoints via Hono) + Recharts |
-| D1 database (prod) | `b8453e9b-7c5f-4029-b07d-dd89c05d00cf` (ENAM), binding: `DB`. Schema v54. |
+| Data | TanStack Query v5 + Cloudflare D1 (75 tables, sqlite_master excl. internal; ~225 endpoints via Hono) + Recharts |
+| D1 database (prod) | `b8453e9b-7c5f-4029-b07d-dd89c05d00cf` (ENAM), binding: `DB`. Schema v68. |
 | D1 database (test) | `a30fe84d-0891-4035-9358-f7813b5f5807` (mnccore-lab-test), binding: `DB_TEST` |
 | Schema drift CI | `.github/workflows/schema-drift.yml` — nightly 03 CT. Guardrail against silent prod migrations. |
 | Deploy mode | Manual via wrangler -- NO auto-deploy |
