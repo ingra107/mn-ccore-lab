@@ -4,25 +4,18 @@
 > bottom — do not re-expand them. Supersedes the Apr-28 synthesis, May-5 codex plan,
 > design-handoff TICKETS, and hub-future-ideas (all historical now).
 
-## ▶ NEXT SESSION (Nick's directive, 2026-05-22): fixes first, then a fresh Codex audit
+## ▶ DONE 2026-05-22 PM — the T1 correctness directive + Codex gate executed
 
-Order (Nick 2026-05-22):
-1. **Fresh look** — read this file + SESSION-HANDOFF.md to orient. (cheap; not the audit)
-2. **Do the T1 correctness batch below.** These are already audit-derived (from the
-   2026-05-22 Codex pass), so they don't need re-auditing to start. For the two
-   judgment-heavy ones — the **CT date helper sweep** (~30 sites) and **STATE-1** —
-   grep-validate the approach BEFORE executing (`pre-review-grep-validate` skill), so a
-   wrong mental model doesn't ship 30 bad edits. The cheap ones (enum drift, STATE-2) just get done.
-3. **THEN run a fresh Codex audit** (`/codex-cli`) as the verification gate on the
-   just-shipped batch + to surface the next priorities. This is Codex's highest-value use —
-   the 2026-05-22 audit ran after a batch and caught 4 real flaws in just-shipped code.
+Shipped `5f5f597d` (T1 batch) + `909c6e8b` (Codex-gate fixes) + `cf85cfa0` (deploy docs), deployed
+`af3189f0` (live on `909c6e8`). CT date sweep, STATE-1, STATE-2 done; enum-drift + DAT-4 verified
+clean (no change); test-D1 fully reconciled to prod via hub-schema-sync. Codex audit (`Scratch/codex-t1-verify-2026-05-22/`)
+returned Block→2 critical+5 minor, all verified + fixed. Detail in SESSION-HANDOFF.md "Latest — 2026-05-22 PM".
 
-Prior audit synthesis: `Scratch/codex-state-audit-2026-05-22/synthesis.md`. The daily surfaces
-shouldn't lie about stale work, completed work, or saved profiles — that's why correctness leads.
+**Next:** T1 leftovers (FAKE-1/2, DH-1/2) below + the `stale_active_since` brain.db pull-back follow-up + T2 polish.
 
 ---
 
-## T1 — Correctness (highest leverage — do next)
+## T1 — Correctness — ✅ ALL DONE 2026-05-22 PM (kept below for the record; see done ledger)
 
 - **CT date helper sweep** *(S/M)* — ~30 `new Date().toISOString().split('T')[0]` "today/now"
   derivations in `api/` are UTC → wrong in CT evening (shows tomorrow after ~6pm). Build a shared
@@ -110,6 +103,7 @@ shouldn't lie about stale work, completed work, or saved profiles — that's why
 
 ## Done ledger (do not re-expand)
 
+- **2026-05-22 PM — T1 correctness batch + Codex gate + ship** (`5f5f597d`/`909c6e8b`/`cf85cfa0`, deploy `af3189f0` live on `909c6e8`): CT date helper sweep (`api/lib/ct-date.ts`, 10 anchors + paired bounds across 6 routes) · STATE-1 TodayPage done-from-cache (reconciliation + onError rollback + isToday) · STATE-2 ProfilePage useQuery refetch · enum-drift + DAT-4 verified clean (no change) · Codex gate fixed pb-sector meeting-TZ + digest date labels + helper hardening + localDoneIds dedup + ProfilePage auth-gate · test-D1 reconciled to prod (hub-schema-sync, 27 tables + cols, now 76 exact match) · librarian fixed 3 stale "Pages auto-deploys on push" agent_knowledge entries · CLAUDE.md deploy docs corrected (manual-only + token).
 - **2026-05-22 — audit-fix batch** (`6a69cfb2`, deploy `4681a29c`): advanceProjectMovement id-OR-slug match (was silently missing slug-backed tasks) · `stage_entered_at` on project insert (new-project hole in D7) · batch-assign `assignee_change` event · Manuscripts status enum aligned to server (both dropdowns) · QuickCapture stable event id (SEC-5 double-submit).
 - **2026-05-22 — verify-first batch** (`3bd5d419`/`8990acb7`/`9eb9b192`/`1c40fa2a`, deploy `2c217abf`): SEC-4 timezone DST · SEC-6 project resolver · DAT-3 batch response · DAT-6 meeting 404 · DAT-8 regulatory batch · D7 `stage_entered_at` · D22 typed events · advanceProjectMovement (builder). Verified ALREADY-FIXED (no work): SEC-5(initial call, later corrected)/DAT-1/DAT-2/DAT-5/DAT-7.
 - **2026-05-15** (`3bd5d419`..): SEC-1/2/3 (digest XSS, admin endpoints, upload integrity) · GET API auth lockdown · PB POST PI-gating · ProjectDetail archive · Manuscripts categories (3-bucket) · search comment join · transcript honesty (FAKE-3) · folder-link drive letters · INFRA-4 status normalization · FAKE-4.

@@ -4,15 +4,30 @@
 
 | Item | Value |
 |------|-------|
-| HEAD | `6a69cfb2` on main, pushed to origin |
-| Deploy | `4681a29c.mn-ccore-lab.pages.dev` (2026-05-22) — LIVE, `/api/health` ok, `/api/version` env=production |
+| HEAD | `cf85cfa0` on main, pushed to origin |
+| Deploy | `af3189f0.mn-ccore-lab.pages.dev` (2026-05-22 PM) — LIVE on commit `909c6e8`, `/api/health` ok, `/api/version` env=production |
 | Build | GREEN (0 TS errors) |
 | API tests | 178/178 passing |
-| Schema | **v68** on prod D1 (`projects.stage_entered_at` added + backfilled 92/92 rows). Also applied to test D1. |
+| Schema | **v68** on prod D1. Test D1 (`mnccore-lab-test`) **fully reconciled to prod 2026-05-22 PM** via hub-schema-sync (was missing 27 tables + dozens of columns incl. all of v54/v55/v57/v58; now 76 tables, exact column match, 178/178 tests). |
 | API auth | GET endpoints locked down (unchanged from 2026-05-15) |
 | Team adoption | Not yet broadly directed. |
 
-## What shipped this session (2026-05-22) — verify-first batch
+## Latest — 2026-05-22 PM: T1 correctness batch (the WORKPLAN directive, DONE)
+
+Executed the full "▶ NEXT SESSION" directive (fixes first → fresh Codex audit as the gate).
+
+**`5f5f597d` — T1 batch:** CT date helper (`api/lib/ct-date.ts` `ctToday(offsetDays)`) replacing 10 UTC "today" anchors + paired window-bounds across tasks/meetings/pb-sector/proactive-brief/projects/digest-email (rolled to tomorrow after ~6pm CT). STATE-2 (ProfilePage `['team-raw']` → real useQuery so save-invalidate refetches). STATE-1 (TodayPage done-from-cache: reconciliation effect prunes optimistic flag on cache-confirm + markDone onError rollback + isToday() instead of UTC slice). Enum-drift audit + DAT-4 realtimeBus: verified clean, no change.
+
+**`909c6e8b` — Codex-gate fixes:** `/codex-cli` audit (synthesis `Scratch/codex-t1-verify-2026-05-22/`) returned Block with 2 critical + 5 minor, all verified + fixed: pb-sector meetings query used SQLite `date('now')` UTC vs CT `today` (dropped today's meeting after 6pm CT); digest date LABELS used `toLocaleDateString` w/o timeZone; reverted over-migrated `fourteenDaysAgo` to UTC; `ctToday` hardened with formatToParts; TodayPage `localDoneIds` dedup; ProfilePage query auth-gated.
+
+**`cf85cfa0` — docs:** corrected CLAUDE.md deploy rows (manual-only; token from secrets.ps1; push≠deploy; pages.dev=prod vs unused workers.dev).
+
+**Also:** deployed `af3189f0` (verified live on 909c6e8); test D1 reconciled to prod (hub-schema-sync); librarian corrected 3 stale brain.db agent_knowledge entries that falsely claimed "Pages auto-deploys on push via GitHub Actions."
+
+### ⚠️ Deploy + auth — learned this session (see CLAUDE.md Quick Reference)
+Deploy is **MANUAL ONLY** — `npm run deploy:pages:gated`; pushing to origin/main does NOT deploy. Auth via **`CLOUDFLARE_API_TOKEN`** (PB `scripts/scheduled/secrets.ps1`), NOT interactive `wrangler login`. Verify live commit: `wrangler pages deployment list --project-name mn-ccore-lab`.
+
+## What shipped earlier 2026-05-22 (AM) — verify-first batch
 
 Nick: "do Batch 1 + Batch 2 + schema migrations, but verify each is still needed first." Verification killed 4 of 9 backend items as already-fixed and deferred 3 of 5 schema items as dead columns. Net 8 real changes shipped + deployed.
 
@@ -49,7 +64,11 @@ Security (digest XSS/escapeHtml, GET API auth lockdown, admin endpoints deleted,
 
 ## Next Session Playbook
 
-**▶ Nick's directive (2026-05-22): fresh look → do the T1 correctness fixes → THEN a fresh Codex audit (as the verification gate).** NOT audit-first — the T1 batch is already audit-derived, and Codex's highest-value use is gating just-shipped work (the 2026-05-22 audit ran after a batch and caught 4 real flaws). For the judgment-heavy items (CT date sweep ~30 sites, STATE-1), grep-validate the approach before executing. Full ordering + rationale in `WORKPLAN.md` "▶ NEXT SESSION". Prior synthesis: `Scratch/codex-state-audit-2026-05-22/synthesis.md`. Queue: CT date helper sweep, entity status-enum drift audit, STATE-1/STATE-2, DAT-4 (verify first), test-D1 repair.
+**▶ The 2026-05-22 T1 directive is DONE** (fixes-first + Codex gate executed; CT sweep, STATE-1/2, enum-drift, DAT-4, test-D1 all closed — see "Latest — 2026-05-22 PM" above). Pick the next tier from `WORKPLAN.md`:
+
+- **T1 leftovers:** FAKE-1 (Lab Overview `totalCitations` hardcoded — show `—` until PB scholarly cron), FAKE-2 (Hermes "Thinking…" → `<HermesPending>`), DH-1 (grant_milestones seed data), DH-2 (verify/drop Pulse PWA manifest).
+- **Open follow-up from the morning batch:** `stale_active_since` NULL doesn't pull back to brain.db (`hub.py` `_w1col` truthy gate skips NULL) — companion fix for full symmetry.
+- **T2 polish** (during adoption): see WORKPLAN T2 (brand primitives, token discipline, keyboard nav, search source isolation, mobile breakpoint split-brain).
 
 ### Schema Queue
 
