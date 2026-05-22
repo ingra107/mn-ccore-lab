@@ -196,27 +196,28 @@ export async function handleRenewRegulatoryItem(id: string, request: Request, us
   const existing = await env.DB.prepare('SELECT * FROM regulatory_items WHERE id = ?').bind(id).first() as Record<string, any> | null;
   if (!existing) return error('Regulatory item not found', 404);
 
-  // Archive the old item
-  await env.DB.prepare(
-    "UPDATE regulatory_items SET status = 'expired', notes = COALESCE(notes || ' | ', '') || 'Renewed on ' || datetime('now') WHERE id = ?"
-  ).bind(id).run();
-
-  // Create a new item with updated dates
+  // Archive the old item and create the new item atomically so a failed
+  // INSERT never leaves the old item orphaned in 'expired' state.
   const newId = generateId();
-  await env.DB.prepare(
-    'INSERT INTO regulatory_items (id, project_id, item_type, title, protocol_number, approved_date, expiration_date, renewal_due, status, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
-  ).bind(
-    newId,
-    existing.project_id,
-    existing.item_type,
-    existing.title,
-    existing.protocol_number,
-    body.approved_date || null,
-    body.expiration_date || null,
-    body.renewal_due || null,
-    'active',
-    body.notes || null,
-  ).run();
+  await env.DB.batch([
+    env.DB.prepare(
+      "UPDATE regulatory_items SET status = 'expired', notes = COALESCE(notes || ' | ', '') || 'Renewed on ' || datetime('now') WHERE id = ?"
+    ).bind(id),
+    env.DB.prepare(
+      'INSERT INTO regulatory_items (id, project_id, item_type, title, protocol_number, approved_date, expiration_date, renewal_due, status, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    ).bind(
+      newId,
+      existing.project_id,
+      existing.item_type,
+      existing.title,
+      existing.protocol_number,
+      body.approved_date || null,
+      body.expiration_date || null,
+      body.renewal_due || null,
+      'active',
+      body.notes || null,
+    ),
+  ]);
 
   const actor = actorSlug(user.email);
   await logActivity(env, 'regulatory', `Renewed regulatory item: "${existing.title}"`, actor, newId, 'regulatory');

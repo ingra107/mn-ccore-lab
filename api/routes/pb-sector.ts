@@ -6,7 +6,10 @@ import { applyMutation } from './mutations';
 export async function handleCommandCenter(env: Env, planDate?: string): Promise<Response> {
   const today = new Date().toISOString().split('T')[0]
   const targetDate = planDate || today
-  const hour = new Date().getUTCHours() - 6 // CT approximation
+  const hour = parseInt(
+    new Intl.DateTimeFormat('en-US', { timeZone: 'America/Chicago', hour: '2-digit', hourCycle: 'h23' }).format(new Date()),
+    10
+  )
 
   // D1 batch() sends all 11 reads in a single RPC round trip instead of 11
   // separate connections (consultant review: "N+1 on handleCommandCenter").
@@ -191,6 +194,12 @@ export async function handlePBCapture(request: Request, user: AuthUser, env: Env
   const id = type === 'task' ? generateId('task') : generateId()
 
   if (type === 'task') {
+    let resolvedProjectId: string | null = null;
+    if (body.project) {
+      const p = await env.DB.prepare('SELECT id, slug FROM projects WHERE id = ? OR slug = ? LIMIT 1')
+        .bind(body.project, body.project).first<{ id: string }>();
+      resolvedProjectId = p ? p.id : null;
+    }
     const captureMut = await applyMutation(env, {
       table: 'tasks',
       record_id: id,
@@ -202,7 +211,7 @@ export async function handlePBCapture(request: Request, user: AuthUser, env: Env
         priority: body.priority || 'medium',
         source: 'pb-sector',
         status: 'todo',
-        project_id: body.project || null,
+        project_id: resolvedProjectId,
       },
       route: 'handlePBCapture',
       user,

@@ -79,9 +79,10 @@ export async function handleReorderAgenda(meetingId: string, request: Request, e
 // POST /api/meetings/:id/notes — update meeting notes
 export async function handleUpdateMeetingNotes(meetingId: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
   const body = await request.json() as { notes: string };
-  await env.DB.prepare(
+  const result = await env.DB.prepare(
     'UPDATE meetings SET notes = ?, updated_at = datetime(\'now\') WHERE id = ?'
   ).bind(body.notes, meetingId).run();
+  if (!result.meta || result.meta.changes === 0) return error('Meeting not found', 404);
 
   await logActivity(env, 'meeting', `Updated notes for meeting`, user.email, meetingId, 'meeting');
 

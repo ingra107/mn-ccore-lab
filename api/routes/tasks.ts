@@ -563,20 +563,33 @@ export async function handleBatchUpdateTasks(request: Request, user: AuthUser, e
     return error('ids and action required', 400)
   }
 
+  const applied: string[] = []
+  const failed: { id: string; reason: string }[] = []
+
   switch (body.action) {
     case 'complete': {
       const completedAt = new Date().toISOString()
       for (const id of body.ids) {
-        const mutResult = await applyMutation(env, {
-          table: 'tasks',
-          record_id: id,
-          op: 'update',
-          patch: { status: 'done', completed: 1, completed_at: completedAt, completed_by: user.email },
-          route: 'handleBatchUpdateTasks/complete',
-          user,
-        })
-        if (mutResult.status !== 'accepted' && mutResult.status !== 'merged_clean') {
-          console.error(`bulkAction complete failed for ${id}: ${mutResult.status} — ${mutResult.reason ?? ''}`)
+        try {
+          const mutResult = await applyMutation(env, {
+            table: 'tasks',
+            record_id: id,
+            op: 'update',
+            patch: { status: 'done', completed: 1, completed_at: completedAt, completed_by: user.email },
+            route: 'handleBatchUpdateTasks/complete',
+            user,
+          })
+          if (mutResult.status === 'accepted' || mutResult.status === 'merged_clean') {
+            applied.push(id)
+          } else {
+            const reason = `${mutResult.status} — ${mutResult.reason ?? ''}`
+            console.error(`bulkAction complete failed for ${id}: ${reason}`)
+            failed.push({ id, reason })
+          }
+        } catch (e) {
+          const reason = e instanceof Error ? e.message : String(e)
+          console.error(`bulkAction complete threw for ${id}: ${reason}`)
+          failed.push({ id, reason })
         }
       }
       break
@@ -584,16 +597,26 @@ export async function handleBatchUpdateTasks(request: Request, user: AuthUser, e
 
     case 'uncomplete': {
       for (const id of body.ids) {
-        const mutResult = await applyMutation(env, {
-          table: 'tasks',
-          record_id: id,
-          op: 'update',
-          patch: { status: 'todo', completed: 0, completed_at: null, completed_by: null },
-          route: 'handleBatchUpdateTasks/uncomplete',
-          user,
-        })
-        if (mutResult.status !== 'accepted' && mutResult.status !== 'merged_clean') {
-          console.error(`bulkAction uncomplete failed for ${id}: ${mutResult.status} — ${mutResult.reason ?? ''}`)
+        try {
+          const mutResult = await applyMutation(env, {
+            table: 'tasks',
+            record_id: id,
+            op: 'update',
+            patch: { status: 'todo', completed: 0, completed_at: null, completed_by: null },
+            route: 'handleBatchUpdateTasks/uncomplete',
+            user,
+          })
+          if (mutResult.status === 'accepted' || mutResult.status === 'merged_clean') {
+            applied.push(id)
+          } else {
+            const reason = `${mutResult.status} — ${mutResult.reason ?? ''}`
+            console.error(`bulkAction uncomplete failed for ${id}: ${reason}`)
+            failed.push({ id, reason })
+          }
+        } catch (e) {
+          const reason = e instanceof Error ? e.message : String(e)
+          console.error(`bulkAction uncomplete threw for ${id}: ${reason}`)
+          failed.push({ id, reason })
         }
       }
       break
@@ -607,16 +630,26 @@ export async function handleBatchUpdateTasks(request: Request, user: AuthUser, e
         ? { status: 'done', completed: 1, completed_at: new Date().toISOString(), completed_by: user.email }
         : { status: body.value, completed: 0, completed_at: null, completed_by: null }
       for (const id of body.ids) {
-        const mutResult = await applyMutation(env, {
-          table: 'tasks',
-          record_id: id,
-          op: 'update',
-          patch: statusPatch,
-          route: 'handleBatchUpdateTasks/status',
-          user,
-        })
-        if (mutResult.status !== 'accepted' && mutResult.status !== 'merged_clean') {
-          console.error(`bulkAction status failed for ${id}: ${mutResult.status} — ${mutResult.reason ?? ''}`)
+        try {
+          const mutResult = await applyMutation(env, {
+            table: 'tasks',
+            record_id: id,
+            op: 'update',
+            patch: statusPatch,
+            route: 'handleBatchUpdateTasks/status',
+            user,
+          })
+          if (mutResult.status === 'accepted' || mutResult.status === 'merged_clean') {
+            applied.push(id)
+          } else {
+            const reason = `${mutResult.status} — ${mutResult.reason ?? ''}`
+            console.error(`bulkAction status failed for ${id}: ${reason}`)
+            failed.push({ id, reason })
+          }
+        } catch (e) {
+          const reason = e instanceof Error ? e.message : String(e)
+          console.error(`bulkAction status threw for ${id}: ${reason}`)
+          failed.push({ id, reason })
         }
       }
       break
@@ -629,16 +662,26 @@ export async function handleBatchUpdateTasks(request: Request, user: AuthUser, e
         if (!member) return error(`Unknown assignee "${body.value}". Must match team_members.slug.`, 400)
       }
       for (const id of body.ids) {
-        const mutResult = await applyMutation(env, {
-          table: 'tasks',
-          record_id: id,
-          op: 'update',
-          patch: { assignee: body.value },
-          route: 'handleBatchUpdateTasks/assign',
-          user,
-        })
-        if (mutResult.status !== 'accepted' && mutResult.status !== 'merged_clean') {
-          console.error(`bulkAction assign failed for ${id}: ${mutResult.status} — ${mutResult.reason ?? ''}`)
+        try {
+          const mutResult = await applyMutation(env, {
+            table: 'tasks',
+            record_id: id,
+            op: 'update',
+            patch: { assignee: body.value },
+            route: 'handleBatchUpdateTasks/assign',
+            user,
+          })
+          if (mutResult.status === 'accepted' || mutResult.status === 'merged_clean') {
+            applied.push(id)
+          } else {
+            const reason = `${mutResult.status} — ${mutResult.reason ?? ''}`
+            console.error(`bulkAction assign failed for ${id}: ${reason}`)
+            failed.push({ id, reason })
+          }
+        } catch (e) {
+          const reason = e instanceof Error ? e.message : String(e)
+          console.error(`bulkAction assign threw for ${id}: ${reason}`)
+          failed.push({ id, reason })
         }
       }
       break
@@ -649,16 +692,26 @@ export async function handleBatchUpdateTasks(request: Request, user: AuthUser, e
         return error('value must be one of: low, medium, high, urgent', 400)
       }
       for (const id of body.ids) {
-        const mutResult = await applyMutation(env, {
-          table: 'tasks',
-          record_id: id,
-          op: 'update',
-          patch: { priority: body.value },
-          route: 'handleBatchUpdateTasks/priority',
-          user,
-        })
-        if (mutResult.status !== 'accepted' && mutResult.status !== 'merged_clean') {
-          console.error(`bulkAction priority failed for ${id}: ${mutResult.status} — ${mutResult.reason ?? ''}`)
+        try {
+          const mutResult = await applyMutation(env, {
+            table: 'tasks',
+            record_id: id,
+            op: 'update',
+            patch: { priority: body.value },
+            route: 'handleBatchUpdateTasks/priority',
+            user,
+          })
+          if (mutResult.status === 'accepted' || mutResult.status === 'merged_clean') {
+            applied.push(id)
+          } else {
+            const reason = `${mutResult.status} — ${mutResult.reason ?? ''}`
+            console.error(`bulkAction priority failed for ${id}: ${reason}`)
+            failed.push({ id, reason })
+          }
+        } catch (e) {
+          const reason = e instanceof Error ? e.message : String(e)
+          console.error(`bulkAction priority threw for ${id}: ${reason}`)
+          failed.push({ id, reason })
         }
       }
       break
@@ -666,15 +719,25 @@ export async function handleBatchUpdateTasks(request: Request, user: AuthUser, e
 
     case 'delete': {
       for (const id of body.ids) {
-        const mutResult = await applyMutation(env, {
-          table: 'tasks',
-          record_id: id,
-          op: 'delete',
-          route: 'handleBatchUpdateTasks/delete',
-          user,
-        })
-        if (mutResult.status !== 'accepted' && mutResult.status !== 'merged_clean') {
-          console.error(`bulkAction delete failed for ${id}: ${mutResult.status} — ${mutResult.reason ?? ''}`)
+        try {
+          const mutResult = await applyMutation(env, {
+            table: 'tasks',
+            record_id: id,
+            op: 'delete',
+            route: 'handleBatchUpdateTasks/delete',
+            user,
+          })
+          if (mutResult.status === 'accepted' || mutResult.status === 'merged_clean') {
+            applied.push(id)
+          } else {
+            const reason = `${mutResult.status} — ${mutResult.reason ?? ''}`
+            console.error(`bulkAction delete failed for ${id}: ${reason}`)
+            failed.push({ id, reason })
+          }
+        } catch (e) {
+          const reason = e instanceof Error ? e.message : String(e)
+          console.error(`bulkAction delete threw for ${id}: ${reason}`)
+          failed.push({ id, reason })
         }
       }
       // Cascade-clean notifications pointing at deleted tasks so orphans
@@ -694,7 +757,7 @@ export async function handleBatchUpdateTasks(request: Request, user: AuthUser, e
 
   await logActivity(env, 'task', `Bulk ${body.action}: ${body.ids.length} tasks`, user.email, null, null)
 
-  return json({ data: { ok: true, count: body.ids.length } })
+  return json({ data: { ok: failed.length === 0, count: applied.length, applied, failed } })
 }
 
 // /api/tasks/sync-bulk: deleted 2026-05-12 — all task writes through /api/mutations. Codex system audit #8.

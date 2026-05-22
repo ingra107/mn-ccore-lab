@@ -288,7 +288,10 @@ function buildDigestHtml(data: DigestData): string {
 // ── Helpers ───────────────────────────────────────────────────
 
 function getGreeting(): string {
-  const hour = new Date().getUTCHours() - 5; // rough CT offset
+  const hour = parseInt(
+    new Intl.DateTimeFormat('en-US', { timeZone: 'America/Chicago', hour: '2-digit', hourCycle: 'h23' }).format(new Date()),
+    10
+  );
   if (hour < 12) return 'Good morning';
   if (hour < 17) return 'Good afternoon';
   return 'Good evening';
