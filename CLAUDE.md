@@ -25,14 +25,14 @@ The MN-CCORE Lab Hub is the **team's operating surface** — where research gets
 | Today landing | `/portal/dashboard` → `src/pages/portal/TodayPage.tsx` |
 | Lab Overview | `/portal/overview` → `src/pages/Dashboard.tsx` |
 | MyTasks | `/portal/my-tasks` → `src/pages/portal/UnifiedMyTasks.tsx` (3 views, shared toolbar) |
-| Deploy | `cd /c/Users/ingra/mn-ccore-lab && npm run build && npx wrangler pages deploy dist --project-name mn-ccore-lab` |
+| Deploy | **Manual only** (pushing to `origin/main` does NOT deploy). From repo root: `npm run deploy:pages:gated` (= `npm run build` + `wrangler pages deploy dist --project-name mn-ccore-lab --branch main`). Auth: load `CLOUDFLARE_API_TOKEN` from PB `scripts/scheduled/secrets.ps1` — do NOT `wrangler login`. |
 | Stack | React 19 + Vite 8 + Tailwind v4 + Framer Motion 12 + TypeScript + Hono v4.12 |
 | Testing | Playwright 1.59 (568+ tests, 4 suites) + Vitest 4.1 (component, browser mode) |
 | Data | TanStack Query v5 + Cloudflare D1 (75 tables, sqlite_master excl. internal; ~225 endpoints via Hono) + Recharts |
 | D1 database (prod) | `b8453e9b-7c5f-4029-b07d-dd89c05d00cf` (ENAM), binding: `DB`. Schema v68. |
 | D1 database (test) | `a30fe84d-0891-4035-9358-f7813b5f5807` (mnccore-lab-test), binding: `DB_TEST` |
 | Schema drift CI | `.github/workflows/schema-drift.yml` — nightly 03 CT. Guardrail against silent prod migrations. |
-| Deploy mode | Manual via wrangler -- NO auto-deploy |
+| Deploy mode | **Manual via `wrangler pages deploy` ONLY — no auto-deploy** (no Pages CI workflow exists; verified 2026-05-22 — pushed commits did NOT trigger a deployment). `pages.dev` = production (serves frontend + `/api/*`); `wrangler deploy` → a SEPARATE, unused `workers.dev`. Verify the live commit: `wrangler pages deployment list --project-name mn-ccore-lab` (Source col). |
 | PB project | `Projects/mn-ccore-lab-hub/` -- PROJECT.md, living plan, future ideas |
 
 ## Design System
