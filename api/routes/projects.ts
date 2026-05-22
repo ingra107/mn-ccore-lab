@@ -513,10 +513,10 @@ export async function handleUpdateProject(
   }
 
   // Check row existence to distinguish "row not found" (fallback INSERT)
-  // from "row found" (UPDATE).
+  // from "row found" (UPDATE). Fetch stage/pi/title for typed activity events (D22).
   const existingCheck = await env.DB.prepare(
-    'SELECT id FROM projects WHERE id = ? OR slug = ? LIMIT 1'
-  ).bind(id, id).first<{ id: string }>();
+    'SELECT id, stage, pi, title FROM projects WHERE id = ? OR slug = ? LIMIT 1'
+  ).bind(id, id).first<{ id: string; stage: string | null; pi: string | null; title: string | null }>();
 
   if (!existingCheck) {
     // Project doesn't exist — create it (upsert; preserves legacy behavior).
@@ -562,6 +562,20 @@ export async function handleUpdateProject(
       const current = await env.DB.prepare('SELECT * FROM projects WHERE id = ?').bind(existingCheck.id).first();
       return json({ data: current, rejected: updateProjMut.status,
                     message: `mutation ${updateProjMut.status}: ${updateProjMut.reason ?? ''}` });
+    }
+
+    // D22 (2026-05-22): typed activity events for meaningful field transitions.
+    // Only emit when the field is present in the request body AND the new value
+    // differs from the pre-mutation snapshot. Never emitted on the upsert-insert
+    // (row-absent) branch above.
+    if (typeof body.stage === 'string' && body.stage !== existingCheck.stage) {
+      await logActivity(env, 'stage_change', `Stage: ${existingCheck.stage ?? '—'} → ${body.stage}`, user.email, id, 'project');
+    }
+    if (typeof body.pi === 'string' && body.pi !== existingCheck.pi) {
+      await logActivity(env, 'pi_change', `PI: ${existingCheck.pi ?? '—'} → ${body.pi}`, user.email, id, 'project');
+    }
+    if (typeof body.title === 'string' && body.title !== existingCheck.title) {
+      await logActivity(env, 'project_rename', `Renamed: ${existingCheck.title ?? '—'} → ${body.title}`, user.email, id, 'project');
     }
   }
 

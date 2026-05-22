@@ -155,6 +155,13 @@ export async function handleUpdateTeamMember(
   const setsRole = typeof body.role === 'string' && body.role.trim() !== '';
   if (setsRole) updates.push('auto_created = 0');
 
+  // D22 (2026-05-22): snapshot old role before UPDATE so we can emit a typed
+  // 'role_assignment' event when it genuinely changes. Fetch only when setsRole
+  // is true — avoids an extra query on profile-only edits.
+  const oldRoleRow = setsRole
+    ? await env.DB.prepare('SELECT role FROM team_members WHERE slug = ?').bind(slug).first<{ role: string | null }>()
+    : null;
+
   values.push(slug);
 
   const result = await env.DB.prepare(
@@ -166,6 +173,11 @@ export async function handleUpdateTeamMember(
   }
 
   await logActivity(env, 'team_update', `Updated profile for ${slug}`, user.email, slug, 'team_member');
+
+  // D22: typed role transition event — only when role genuinely changed.
+  if (setsRole && oldRoleRow !== null && body.role !== oldRoleRow.role) {
+    await logActivity(env, 'role_assignment', `Role: ${oldRoleRow.role ?? '—'} → ${body.role as string}`, user.email, slug, 'team_member');
+  }
 
   const updated = await env.DB.prepare('SELECT * FROM team_members WHERE slug = ?').bind(slug).first();
   return json({ data: updated });

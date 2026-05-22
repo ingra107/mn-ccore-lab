@@ -273,6 +273,13 @@ export async function handleUpdateTask(id: string, request: Request, user: AuthU
 
   if (updates.length === 0) return error('No valid fields to update', 400);
 
+  // D22 (2026-05-22): snapshot the current assignee before mutation so we can
+  // emit a typed 'assignee_change' event when it genuinely changes. Fetch only
+  // when body.assignee is present — avoids an extra query on unrelated updates.
+  const prevAssignee = typeof body.assignee === 'string'
+    ? await env.DB.prepare('SELECT assignee FROM tasks WHERE id = ?').bind(id).first<{ assignee: string | null }>()
+    : null;
+
   // Build patch from the collected updates/params (fields already validated against TASK_ALLOWED_FIELDS,
   // including auto-derived completed/completed_at/completed_by from the status sync block above).
   // Re-key from the updates[] + params[] parallel arrays back to a patch object.
@@ -293,6 +300,11 @@ export async function handleUpdateTask(id: string, request: Request, user: AuthU
   });
   if (updateMutResult.status !== 'accepted' && updateMutResult.status !== 'merged_clean') {
     return error(`mutation rejected: ${updateMutResult.status} — ${updateMutResult.reason ?? ''}`, 409);
+  }
+
+  // D22: emit typed event only when assignee genuinely changed.
+  if (prevAssignee !== null && body.assignee !== prevAssignee.assignee) {
+    await logActivity(env, 'assignee_change', `Assignee: ${prevAssignee.assignee ?? '—'} → ${body.assignee as string}`, user.email, id, 'task');
   }
 
   const updated = await env.DB.prepare('SELECT * FROM tasks WHERE id = ?').bind(id).first();
