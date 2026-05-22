@@ -4,8 +4,8 @@
 
 | Item | Value |
 |------|-------|
-| HEAD | `5483d30b` on main, pushed to origin |
-| Deploy | `2c217abf.mn-ccore-lab.pages.dev` (2026-05-22) — LIVE, `/api/health` ok, `/api/version` env=production |
+| HEAD | `6a69cfb2` on main, pushed to origin |
+| Deploy | `4681a29c.mn-ccore-lab.pages.dev` (2026-05-22) — LIVE, `/api/health` ok, `/api/version` env=production |
 | Build | GREEN (0 TS errors) |
 | API tests | 178/178 passing |
 | Schema | **v68** on prod D1 (`projects.stage_entered_at` added + backfilled 92/92 rows). Also applied to test D1. |
@@ -27,72 +27,29 @@ Nick: "do Batch 1 + Batch 2 + schema migrations, but verify each is still needed
 
 **`1c40fa2a` — D22 (typed activity_log events):** stage_change, pi_change, project_rename, assignee_change, role_assignment. No schema needed (table existed).
 
-**Verified ALREADY-FIXED / deferred (no work):** SEC-5 (ON CONFLICT dedup), DAT-1 (PK_COLUMN map), DAT-2 (ALLOWED_TABLES), DAT-5 (404/400 guards). D8/D9/D28 deferred — dead columns until their features are built. `meeting_cancel` N/A — no cancel handler.
+**Verified ALREADY-FIXED / deferred (no work):** DAT-1 (PK_COLUMN map), DAT-2 (ALLOWED_TABLES), DAT-5 (404/400 guards). D8/D9/D28 deferred — dead columns until their features are built. `meeting_cancel` N/A — no cancel handler.
+
+**Then: Codex audit + audit-fix batch.** Ran a `/codex-cli` state audit (synthesis: `Scratch/codex-state-audit-2026-05-22/synthesis.md`). It caught real misses, all verified + fixed in **`6a69cfb2`** (deploy `4681a29c`):
+- **advanceProjectMovement** matched `WHERE id=?` only, but tasks store project *slug* → silently never advanced `last_meaningful_movement` (regression in `8990acb7`). Now `id=? OR slug=?`.
+- **D7 new-project hole** — `handleCreateProject` didn't set `stage_entered_at` → new projects NULL → bug recurred. Now set on insert.
+- **SEC-5 was wrongly dismissed** — random UUID per submit meant double-click made duplicate inbox rows. Now a stable per-draft id reused across retries (server `ON CONFLICT(id)` dedups).
+- **Manuscripts status enum** — UI sent `pending`/`completed` the server rejects → silent revert. Aligned to `active/waiting_external/blocked/done` (both dropdowns).
+- **D22 batch-assign** now emits `assignee_change` (was single-task only).
 
 ## ⚠️ Heads-up for next session
 
-1. **A background `builder` agent committed AND pushed to this repo concurrently** (`8990acb7` advanceProjectMovement, 09:49). Its commit wasn't path-explicit, so it **swept this session's D7 `applyPatch` co-flip into it** — that's why the stage_entered_at write engine is in a commit labeled "advance project movement." Code is correct, `ingra107`-authored, no Claude attribution. But: if a builder agent is running, coordinate / expect concurrent commits. `8990acb7` also flagged a follow-up: `stale_active_since` NULL doesn't pull back to brain.db (hub.py `_w1col` truthy gate skips NULL) — companion fix needed for full symmetry.
+1. **A background `builder` agent committed AND pushed to this repo concurrently** (`8990acb7` advanceProjectMovement, 09:49). Its commit wasn't path-explicit, so it **swept this session's D7 `applyPatch` co-flip into it** — that's why the stage_entered_at write engine is in a commit labeled "advance project movement." Code is correct, `ingra107`-authored, no Claude attribution. But: if a builder agent is running, coordinate / expect concurrent commits. (The slug/id bug `8990acb7` introduced in advanceProjectMovement was caught by the Codex audit + fixed in `6a69cfb2`.) Still-open follow-up from that commit: `stale_active_since` NULL doesn't pull back to brain.db (hub.py `_w1col` truthy gate skips NULL) — companion fix needed for full symmetry.
 2. **Test D1 (`mnccore-lab-test`) is drifted** — missing schema-v55 columns (`last_meaningful_movement` et al.). Surfaced when v68's original backfill referenced one. Pre-existing; worth a janitor/schema-sync pass to bring test D1 current with prod.
 
 ## Prior session — 2026-05-15 (13 commits)
 
-### Security (5 fixes — all deployed)
-- **GET API auth lockdown** — `isPublicGet()` allowlist in `api/index.ts`. ~20 public routes (team, stats, publications, health), everything else requires JWT or API key. Smoke tested: `/api/tasks` → 401, `/api/team` → 200.
-- **Admin/test endpoints deleted** — `/api/admin/migrate` and `/api/test-cleanup` removed from `api/index.ts`.
-- **escapeHtml on 16 email sites** — `api/lib/escapeHtml.ts` created. Wrapped all DB interpolations in `digest-email.ts` (10 sites) and `api/index.ts` pulse email (6 sites).
-- **PB POST routes PI-gated** — middleware changed from GET-only to all methods. PB sync (Bearer token) still works.
-- **Upload R2 integrity** — `handleUploadDone` now HEAD-checks R2 before DB insert. Frontend checks PUT/done responses, `finally` clears upload state.
-
-### Data/Naming Fixes (5 fixes — all deployed)
-- **Project archive** — `'Completed'` → `'done'` in `ProjectDetail.tsx`. Archive button now works.
-- **Manuscripts categories** — `clif/lab/nate/mentee` → `MNCCORE/CLIF/Peripheral Brain` in `ManuscriptsPage.tsx`.
-- **Digest stale enums** — removed `category='manuscript'` filter (doesn't exist), fixed `status!='completed'` → `status!='done'`, replaced `stage_changed_at` → `updated_at`.
-- **Search comment join** — `c.project_id = p.slug` → `c.project_id = p.id OR c.project_id = p.slug`.
-- **v66 migration applied** — `decision_log` renamed to `hub_decisions` on prod D1.
-
-### UX Fixes (3 fixes — all deployed)
-- **Folder links** — `urlClassify.ts` handles all drive letters (regex). `TaskGridView.tsx` `KeyLinkIcon` consolidated to use `classifyUrl()` + protocol fire.
-- **mnccore-handler.bat** — `.ps1` support + debug logging to `%TEMP%\mnccore-handler.log`.
-- **Fake transcript insights removed** — MeetingNotesPage button shows "coming soon" toast. Audio drop zone muted with "coming soon" label.
-
-### Documentation (4 commits)
-- **CLAUDE.md diet** — 25K → ~8K tokens (70% reduction). Design system extracted to `docs/design-system.md`. History archived to `docs/archived/CLAUDE.md-history-2026-05-15.md`.
-- **WORKPLAN.md created** — single source of truth, 45 items across 4 tiers (17 now done). Supersedes 4 prior planning artifacts.
-- **5 doc-code contradictions fixed** — stages (lowercase), categories (3-bucket), task IDs (ULID not hex), Hermes timing, category mapping.
-- **6 decisions resolved** — Hermes pulse card, transcripts next session, role-based Lab Overview, build citations cron, kill AskHermes coach, iCal user-only.
-
-### NOT fixed (intentional)
-- **Project delete cascade** — existing swallow-and-continue behavior is a documented design decision (`projects.cascade.test.ts` B-CRIT-05).
+Security (digest XSS/escapeHtml, GET API auth lockdown, admin endpoints deleted, PB POST PI-gating, upload R2 integrity), data/naming fixes (ProjectDetail archive, Manuscripts categories → 3-bucket, digest enums, search comment join, v66 `hub_decisions` rename), UX (folder-link drive letters, mnccore-handler, transcript honesty), and the CLAUDE.md diet + WORKPLAN creation. Full detail in `CHANGELOG.md` + git history. **NOT fixed (intentional):** project delete cascade swallow-and-continue (documented design decision, `projects.cascade.test.ts` B-CRIT-05).
 
 ---
 
 ## Next Session Playbook
 
-**Read `WORKPLAN.md` — it's the single source of truth.** Everything below is a prioritized queue extracted from it.
-
-### Batch 1 (T0 Security) + Batch 2 (T1 Data Integrity) — ✅ DONE 2026-05-22
-
-Resolved this session. SEC-4/SEC-6/DAT-3/DAT-6/DAT-8 fixed (`3bd5d419`); SEC-5/DAT-1/DAT-2/DAT-5 verified already-fixed (no work). See WORKPLAN.md for per-item evidence. Only **DAT-4** (realtimeBus `'all'` vs `'data'` channel mismatch) remains in this cluster — NOT yet verified or touched.
-
-### Batch 3: T1 Fake/Broken Data (4 items, ~2 hours)
-
-| Task | What | Decision | Effort |
-|------|------|----------|--------|
-| **FAKE-1** | Wire real `/api/citations` fallback to "—" | Build PB scholarly cron (home laptop) | S (fallback) / L (cron) |
-| **FAKE-2** | Build `<HermesPending>` pulse card with timer | Decision: pulse card + elapsed timer | M |
-| ~~**FAKE-5**~~ | ✅ DONE 2026-05-22 via D7 (`stage_entered_at`) | — | — |
-| **STATE-1** | TodayPage done-state: derive from cache, not localStorage | — | M |
-| **STATE-2** | ProfilePage rawRow: add real queryFn | — | S |
-
-### Batch 4: T1 Transcript Backend (1 item, ~1 hour)
-
-| Task | What | Decision |
-|------|------|----------|
-| **FAKE-3 backend** | Build `/api/meetings/process-transcript` via ai-requests (same pattern as Hermes @mention in `questions.ts`) | Decision: build it |
-
-### Batch 5+: T2 UX Polish (16 items), T3 Infra (6 items)
-
-See WORKPLAN.md for full details. These are "during adoption" items, not blockers.
+**▶ Nick's directive (2026-05-22): start a fresh session, take a fresh look, run another Codex audit (`/codex-cli`), then work the T1 correctness batch.** All open work + priorities now live in `WORKPLAN.md` — see its "▶ NEXT SESSION" section at the top. Prior audit synthesis: `Scratch/codex-state-audit-2026-05-22/synthesis.md`. Top of the queue: CT date helper sweep, entity status-enum drift audit, STATE-1/STATE-2, DAT-4 (verify first), test-D1 repair.
 
 ### Schema Queue
 
@@ -117,9 +74,8 @@ See WORKPLAN.md for full details. These are "during adoption" items, not blocker
 
 | File | Purpose |
 |------|---------|
-| `WORKPLAN.md` | Single source of truth for all remaining work (28 open items + 17 done) |
-| `CLAUDE.md` | Operational guide (~8K tokens, dieted this session) |
-| `docs/design-system.md` | Extracted design reference (palette, spacing, animations, etc.) |
+| `WORKPLAN.md` | Single source of truth for remaining work (open items first; done in a compact ledger) |
+| `Scratch/codex-state-audit-2026-05-22/synthesis.md` | Latest Codex audit (2026-05-22; all findings verified) |
+| `CLAUDE.md` | Operational guide (~8K tokens) |
+| `docs/design-system.md` | Extracted design reference (palette, spacing, animations) |
 | `docs/archived/CLAUDE.md-history-2026-05-15.md` | Archived CLAUDE.md content |
-| `Scratch/codex-hub-audit-2026-05-15/synthesis.md` | Codex GPT-5.5 audit results (all findings verified) |
-| `audit/2026-04-28/` | Historical audit artifacts (superseded by WORKPLAN.md) |
