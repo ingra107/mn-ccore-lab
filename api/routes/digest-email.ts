@@ -1,7 +1,25 @@
 import type { Env } from '../helpers';
-import { json, error, corsHeaders } from '../helpers';
+import { json, error, corsHeaders, getAuthUser, isPiRequest, actorSlug } from '../helpers';
 import { escapeHtml } from '../lib/escapeHtml';
 import { ctToday } from '../lib/ct-date';
+
+/**
+ * B6 (SEC-T0-3): owner-or-PI authorization for digest generate/send.
+ * A member may generate/send only their OWN digest; a PI (or the API-key
+ * service path) may act for anyone. Returns an error message string when the
+ * caller is not authorized for `memberSlug`, or null when allowed.
+ */
+async function authorizeDigestFor(
+  request: Request,
+  env: Env,
+  memberSlug: string,
+): Promise<string | null> {
+  if (await isPiRequest(request, env)) return null; // PI / service key
+  const user = await getAuthUser(request, env);
+  if (!user?.email || user.email === 'anonymous') return 'Authentication required';
+  if (actorSlug(user.email) === memberSlug) return null; // own digest
+  return 'Forbidden — you can only generate/send your own digest';
+}
 
 const HUB_URL = 'https://mn-ccore-lab.pages.dev';
 
@@ -326,6 +344,10 @@ export async function handleGenerateDigestEmail(
       return error('memberSlug is required', 400);
     }
 
+    // B6: owner-or-PI authorization.
+    const authzErr = await authorizeDigestFor(request, env, body.memberSlug);
+    if (authzErr) return error(authzErr, authzErr === 'Authentication required' ? 401 : 403);
+
     const digest = await generateDigest(body.memberSlug, env);
     const html = buildDigestHtml(digest);
 
@@ -389,6 +411,10 @@ export async function handleSendDigestEmail(
     if (!body.memberSlug || !body.to) {
       return error('memberSlug and to (email address) are required', 400);
     }
+
+    // B6: owner-or-PI authorization — a member can only send their own digest.
+    const authzErr = await authorizeDigestFor(request, env, body.memberSlug);
+    if (authzErr) return error(authzErr, authzErr === 'Authentication required' ? 401 : 403);
 
     // Restrict outbound destinations to allowlisted domains. Without this,
     // an authenticated user could trigger Resend sends to arbitrary addresses
@@ -659,7 +685,13 @@ async function composeDailyDigest(env: Env, member: CoordinatorMember): Promise<
  * Can be triggered by cron (via scheduled handler) or manually via POST.
  * Requires RESEND_API_KEY.
  */
-export async function handleSendDailyDigests(env: Env): Promise<Response> {
+export async function handleSendDailyDigests(env: Env, request?: Request): Promise<Response> {
+  // B6: the daily fan-out is PI/service-only. When invoked over HTTP (request
+  // present) require PI/API-key; when invoked by the scheduled cron (no
+  // request) it's the trusted service path and runs unguarded.
+  if (request && !(await isPiRequest(request, env))) {
+    return error('Forbidden — daily digest fan-out is PI/service-only', 403);
+  }
   if (!env.RESEND_API_KEY) {
     return error('Daily digest not configured (RESEND_API_KEY missing). Add via Cloudflare Pages secrets.', 503);
   }

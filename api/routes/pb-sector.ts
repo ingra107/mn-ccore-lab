@@ -38,12 +38,14 @@ export async function handleCommandCenter(env: Env, planDate?: string): Promise<
     `),
 
     // Milestones in next 30 days
+    // AM-7: bind CT-anchored bounds instead of SQLite date('now') (UTC), which
+    // after ~6pm CT shifts the window a day. target_date is a CT calendar date.
     env.DB.prepare(`
       SELECT m.*, p.title as project_title, p.slug as project_slug, m.future_note
       FROM milestones m LEFT JOIN projects p ON m.project_id = p.slug OR m.project_id = p.id
-      WHERE m.target_date >= date('now', '-7 days') AND m.target_date <= date('now', '+30 days')
+      WHERE m.target_date >= ? AND m.target_date <= ?
       ORDER BY m.target_date ASC
-    `),
+    `).bind(ctToday(-7), ctToday(30)),
 
     // Open commitments
     env.DB.prepare("SELECT * FROM commitments WHERE status != 'done' ORDER BY due_date ASC NULLS LAST"),
@@ -496,14 +498,18 @@ export async function handlePlanHistory(request: Request, env: Env): Promise<Res
   const days = parseInt(url.searchParams.get('days') || '7', 10)
   const clampedDays = Math.min(Math.max(days, 1), 90)
 
+  // AM-7: bind a CT-anchored lower bound (ctToday(-clampedDays)) instead of
+  // SQLite date('now', ...) (UTC). plan_date is a CT calendar date, so the
+  // UTC anchor pulled in/dropped a day after ~6pm CT.
+  const sinceDate = ctToday(-clampedDays)
   const [plans, reflections] = await Promise.all([
     env.DB.prepare(
-      'SELECT * FROM daily_plans WHERE plan_date >= date(\'now\', ? || \' days\') ORDER BY plan_date DESC'
-    ).bind(`-${clampedDays}`).all(),
+      'SELECT * FROM daily_plans WHERE plan_date >= ? ORDER BY plan_date DESC'
+    ).bind(sinceDate).all(),
 
     env.DB.prepare(
-      'SELECT * FROM daily_reflections WHERE plan_date >= date(\'now\', ? || \' days\') ORDER BY plan_date DESC'
-    ).bind(`-${clampedDays}`).all(),
+      'SELECT * FROM daily_reflections WHERE plan_date >= ? ORDER BY plan_date DESC'
+    ).bind(sinceDate).all(),
   ])
 
   // Merge plans and reflections by date

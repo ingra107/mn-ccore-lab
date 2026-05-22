@@ -1,5 +1,6 @@
 import type { AuthUser, Env } from '../helpers';
 import { json, error, generateId, logActivity, actorSlug } from '../helpers';
+import { ctToday } from '../lib/ct-date';
 
 const VALID_EVENT_TYPES = [
   'submitted',
@@ -125,6 +126,7 @@ export async function handleDeleteSubmission(id: string, user: AuthUser, env: En
 // All projects with active submissions (most recent event is not accepted/rejected/withdrawn)
 // Includes days-since-submission and days-until-revision-due
 export async function handleGetActiveSubmissions(env: Env): Promise<Response> {
+  const today = ctToday(); // AM-7: CT calendar date for the bound anchors below
   // Get the most recent non-deleted event per project
   const activeProjects = await env.DB.prepare(`
     WITH latest_events AS (
@@ -144,7 +146,7 @@ export async function handleGetActiveSubmissions(env: Env): Promise<Response> {
       FROM submission_events rd
       WHERE rd.event_type = 'revision_due'
         AND rd.deleted_at IS NULL
-        AND rd.event_date >= date('now')
+        AND rd.event_date >= ?
       GROUP BY rd.project_id
       HAVING rd.event_date = MAX(rd.event_date)
     )
@@ -158,10 +160,10 @@ export async function handleGetActiveSubmissions(env: Env): Promise<Response> {
       p.title as project_title,
       p.slug as project_slug,
       fs.first_submitted_date,
-      CAST(julianday('now') - julianday(COALESCE(fs.first_submitted_date, le.event_date)) AS INTEGER) as days_since_submission,
+      CAST(julianday(?) - julianday(COALESCE(fs.first_submitted_date, le.event_date)) AS INTEGER) as days_since_submission,
       rd.revision_due_date,
       CASE WHEN rd.revision_due_date IS NOT NULL
-        THEN CAST(julianday(rd.revision_due_date) - julianday('now') AS INTEGER)
+        THEN CAST(julianday(rd.revision_due_date) - julianday(?) AS INTEGER)
         ELSE NULL
       END as days_until_revision_due
     FROM latest_events le
@@ -174,7 +176,13 @@ export async function handleGetActiveSubmissions(env: Env): Promise<Response> {
       CASE WHEN rd.revision_due_date IS NOT NULL THEN 0 ELSE 1 END,
       rd.revision_due_date ASC,
       le.event_date DESC
-  `).all();
+  `).bind(today, today, today).all();
+  // AM-7: three CT-anchored params replace date('now')/julianday('now') (UTC):
+  //   1) revision_due CTE  event_date >= ?      (today filter)
+  //   2) days_since_submission  julianday(?)    (day count)
+  //   3) days_until_revision_due julianday(?)   (day count)
+  // event_date / revision_due_date are CT calendar dates; UTC anchors flipped
+  // the day-counts and the >= boundary after ~6pm CT.
 
   return json({ data: activeProjects.results || [], count: activeProjects.results?.length || 0 });
 }

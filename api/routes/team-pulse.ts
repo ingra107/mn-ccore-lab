@@ -2,7 +2,13 @@ import type { Env } from '../helpers';
 import { json, actorSlug } from '../helpers';
 
 // GET /api/team/pulse?hours=48
-export async function handleTeamPulse(url: URL, env: Env): Promise<Response> {
+// AM-3 (SEC-T0-1): the per-member activity breakdown (who did what) is
+// team-internal. `isAuthed` true for JWT/API-key callers (resolved by the
+// index.ts router) — they get the full per-member `activity` array. Unauth
+// callers get only non-sensitive aggregate counts (totals + active_this_week)
+// with an empty `activity` array, so the public surface can't enumerate who's
+// active. The TeamPulseCard consumer already tolerates `activity ?? []`.
+export async function handleTeamPulse(url: URL, env: Env, isAuthed = false): Promise<Response> {
   const hours = parseInt(url.searchParams.get('hours') || '48', 10);
   const cutoff = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
 
@@ -54,7 +60,8 @@ export async function handleTeamPulse(url: URL, env: Env): Promise<Response> {
 
   return json({
     data: {
-      activity,
+      // Unauth callers get aggregate counts only — no per-member breakdown.
+      activity: isAuthed ? activity : [],
       active_this_week: personActivity.size,
       totals: { updates: totalUpdates, completions: totalCompletions },
     },

@@ -44,6 +44,14 @@ export async function handleCreateHandoff(taskId: string, request: Request, user
 
   const fromSlug = actorSlug(user.email);
   const toSlug = body.to_slug.trim();
+  // AM-2: to_slug is a destination team slug (not an actor identity). Validate
+  // it against team_members so a handoff can't be created to a bogus slug
+  // (which would silently lose the reassignment + notification). claude-ai is
+  // a valid handoff target (Hermes), so it's exempt from the directory check.
+  if (toSlug !== 'claude-ai') {
+    const member = await env.DB.prepare('SELECT 1 FROM team_members WHERE slug = ? LIMIT 1').bind(toSlug).first();
+    if (!member) return error(`Unknown to_slug "${toSlug}". Must match team_members.slug.`, 400);
+  }
   const id = generateId();
 
   // Insert handoff record

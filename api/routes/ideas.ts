@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, actorSlug } from '../helpers';
+import { json, error, generateId, logActivity, isPiRequest, resolveActor } from '../helpers';
 import { filterFixtures } from '../lib/fixtures';
 
 // GET /api/ideas?status=&submitted_by=&research_area=
@@ -29,7 +29,10 @@ export async function handleCreateIdea(request: Request, user: AuthUser, env: En
   if (!body.title) return error('title required', 400);
 
   const id = generateId();
-  const submittedBy = body.submitted_by?.trim() || actorSlug(user.email);
+  // AM-2: validate/canonicalize submitted_by; impersonation requires PI/service.
+  const actor = await resolveActor(env, user, body.submitted_by, { allowImpersonation: await isPiRequest(request, env) });
+  if ('error' in actor) return error(actor.error, 400);
+  const submittedBy = actor.slug;
 
   await env.DB.prepare(
     'INSERT INTO ideas (id, title, description, submitted_by, research_area) VALUES (?, ?, ?, ?, ?)'

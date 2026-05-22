@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, actorSlug } from '../helpers';
+import { json, error, generateId, logActivity, isPiRequest, resolveActor } from '../helpers';
 
 type DocType = 'folder' | 'draft' | 'data' | 'protocol' | 'submission' | 'link';
 
@@ -36,7 +36,10 @@ export async function handleCreateProjectDocument(
 
   const id = generateId();
   const docType = body.doc_type || 'link';
-  const createdBy = body.created_by?.trim() || actorSlug(user.email);
+  // AM-2: validate/canonicalize created_by; impersonation requires PI/service.
+  const actor = await resolveActor(env, user, body.created_by, { allowImpersonation: await isPiRequest(request, env) });
+  if ('error' in actor) return error(actor.error, 400);
+  const createdBy = actor.slug;
 
   await env.DB.prepare(
     `INSERT INTO project_documents (id, project_id, title, url, doc_type, created_by)

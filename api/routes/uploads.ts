@@ -1,5 +1,6 @@
 import { AwsClient } from 'aws4fetch';
 import type { Env } from '../types';
+import { actorSlug } from '../helpers';
 
 interface AuthUser {
   email: string;
@@ -18,6 +19,33 @@ function error(msg: string, status = 400) {
     status,
     headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
   });
+}
+
+/**
+ * AM-6 / B11 (SEC-T0): can the caller see attachments on this entity?
+ *
+ * The only entity-class with restricted visibility today is a
+ * 'Peripheral Brain'-category PROJECT — its files must not be enumerable /
+ * downloadable / deletable by non-PI callers. `canSeePb` (PI/Nick/service) is
+ * resolved by the route via isPiRequest. Tasks/meetings and non-PB projects
+ * are visible to any authed caller. Returns true=allowed, false=blocked.
+ *
+ * entityType/entityId can be a project id OR slug (file_attachments stores
+ * whatever the uploader passed); we match both.
+ */
+async function canAccessEntity(
+  env: Env,
+  entityType: string,
+  entityId: string,
+  canSeePb: boolean,
+): Promise<boolean> {
+  if (canSeePb) return true;
+  if (entityType !== 'project') return true; // only PB-projects are gated
+  const proj = await env.DB.prepare(
+    'SELECT category FROM projects WHERE id = ? OR slug = ? LIMIT 1'
+  ).bind(entityId, entityId).first<{ category: string | null }>();
+  if (!proj) return true; // unknown/orphaned entity — not a PB leak
+  return proj.category !== 'Peripheral Brain';
 }
 
 /** POST /api/upload/url — generate presigned PUT URL for direct browser→R2 upload */
@@ -85,6 +113,11 @@ export async function handleUploadDone(request: Request, user: AuthUser, env: En
     }
   }
 
+  // AM-2: uploaded_by is an actor identity. Pre-fix it stored a raw
+  // email-prefix (user.email.split('@')[0]) that bypassed actorSlug. Resolve
+  // to a canonical team slug (no caller override on this path).
+  const uploadedBy = actorSlug(user.email);
+
   const id = crypto.randomUUID().slice(0, 16);
   await env.DB.prepare(
     `INSERT INTO file_attachments (id, entity_type, entity_id, filename, content_type, size_bytes, r2_key, uploaded_by)
@@ -93,19 +126,24 @@ export async function handleUploadDone(request: Request, user: AuthUser, env: En
     id, body.entityType, body.entityId,
     body.filename, body.contentType || null,
     body.sizeBytes || null, body.key,
-    user.email.split('@')[0]
+    uploadedBy
   ).run();
 
   return json({ id, key: body.key, filename: body.filename });
 }
 
 /** GET /api/files?entity_type=X&entity_id=Y — list attachments */
-export async function handleListFiles(url: URL, env: Env): Promise<Response> {
+export async function handleListFiles(url: URL, env: Env, canSeePb = false): Promise<Response> {
   const entityType = url.searchParams.get('entity_type');
   const entityId = url.searchParams.get('entity_id');
 
   if (!entityType || !entityId) {
     return error('entity_type and entity_id required');
+  }
+
+  // B11: block listing files on a PB-category project for non-PI callers.
+  if (!(await canAccessEntity(env, entityType, entityId, canSeePb))) {
+    return error('Forbidden', 403);
   }
 
   const rows = await env.DB.prepare(
@@ -116,9 +154,22 @@ export async function handleListFiles(url: URL, env: Env): Promise<Response> {
 }
 
 /** GET /api/files/:key+ — generate presigned GET URL for downloading */
-export async function handleGetFile(key: string, env: Env): Promise<Response> {
+export async function handleGetFile(key: string, env: Env, canSeePb = false): Promise<Response> {
   if (!env.R2_ACCESS_KEY_ID || !env.R2_SECRET_ACCESS_KEY || !env.CF_ACCOUNT_ID) {
     return error('R2 not configured', 503);
+  }
+
+  // B11: resolve the attachment row (authoritative entity_type/entity_id —
+  // the key prefix alone is client-supplied) and block signing a download URL
+  // for files on a PB-category project for non-PI callers. If no row matches
+  // the key we fall back to the key prefix so legacy keys still gate.
+  const row = await env.DB.prepare(
+    'SELECT entity_type, entity_id FROM file_attachments WHERE r2_key = ? LIMIT 1'
+  ).bind(key).first<{ entity_type: string; entity_id: string }>();
+  const entityType = row?.entity_type ?? key.split('/')[0] ?? '';
+  const entityId = row?.entity_id ?? key.split('/')[1] ?? '';
+  if (entityType && !(await canAccessEntity(env, entityType, entityId, canSeePb))) {
+    return error('Forbidden', 403);
   }
 
   const r2 = new AwsClient({
@@ -137,10 +188,15 @@ export async function handleGetFile(key: string, env: Env): Promise<Response> {
 }
 
 /** POST /api/files/:id/delete — delete file attachment */
-export async function handleDeleteFile(id: string, env: Env): Promise<Response> {
-  // Get the R2 key before deleting the record
-  const row = await env.DB.prepare('SELECT r2_key FROM file_attachments WHERE id = ?').bind(id).first<{ r2_key: string }>();
+export async function handleDeleteFile(id: string, env: Env, canSeePb = false): Promise<Response> {
+  // Get the R2 key + parent entity before deleting the record.
+  const row = await env.DB.prepare('SELECT r2_key, entity_type, entity_id FROM file_attachments WHERE id = ?').bind(id).first<{ r2_key: string; entity_type: string; entity_id: string }>();
   if (!row) return error('File not found', 404);
+
+  // B11: block deleting a file on a PB-category project for non-PI callers.
+  if (!(await canAccessEntity(env, row.entity_type, row.entity_id, canSeePb))) {
+    return error('Forbidden', 403);
+  }
 
   // Delete from R2 if bucket is bound
   if (env.FILES) {

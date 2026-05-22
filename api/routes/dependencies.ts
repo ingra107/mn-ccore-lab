@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity } from '../helpers';
+import { json, error, generateId, logActivity, isPiRequest, resolveActor } from '../helpers';
 
 // ── Types ──────────────────────────────────────────────────
 
@@ -62,10 +62,17 @@ export async function handleCreateDependency(
 
   const id = generateId();
 
+  // AM-2: created_by is an actor identity. Pre-fix it stored a raw email
+  // (user.email) or an unvalidated body.created_by. Resolve to a canonical
+  // team slug; impersonation requires PI/service.
+  const actor = await resolveActor(env, user, body.created_by, { allowImpersonation: await isPiRequest(request, env) });
+  if ('error' in actor) return error(actor.error, 400);
+  const createdBy = actor.slug;
+
   try {
     await env.DB.prepare(
       'INSERT INTO project_dependencies (id, from_slug, to_slug, relationship_type, note, created_by) VALUES (?, ?, ?, ?, ?, ?)'
-    ).bind(id, body.from_slug, body.to_slug, relType, body.note || null, body.created_by?.trim() || user.email).run();
+    ).bind(id, body.from_slug, body.to_slug, relType, body.note || null, createdBy).run();
   } catch (e: unknown) {
     if (e instanceof Error && e.message.includes('UNIQUE')) {
       return error('This dependency already exists', 409);
@@ -73,7 +80,7 @@ export async function handleCreateDependency(
     throw e;
   }
 
-  await logActivity(env, 'dependency_created', `Created dependency: ${body.from_slug} → ${body.to_slug} (${relType})`, user.email, body.from_slug, 'project');
+  await logActivity(env, 'dependency_created', `Created dependency: ${body.from_slug} → ${body.to_slug} (${relType})`, createdBy, body.from_slug, 'project');
 
   const created = await env.DB.prepare('SELECT * FROM project_dependencies WHERE id = ?').bind(id).first();
   return json({ data: created }, 201);

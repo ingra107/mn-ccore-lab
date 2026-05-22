@@ -1,5 +1,6 @@
 import type { AuthUser, Env } from '../helpers';
 import { json, error, generateId, logActivity, actorSlug, buildUpdate } from '../helpers';
+import { ctToday } from '../lib/ct-date';
 
 // ── .ics helpers ─────────────────────────────────────────────────────────────
 
@@ -36,9 +37,11 @@ export async function handleGetRegulatoryItems(url: URL, env: Env): Promise<Resp
 export async function handleGetExpiringItems(url: URL, env: Env): Promise<Response> {
   const days = parseInt(url.searchParams.get('days') || '30', 10);
   const now = new Date();
-  const cutoff = new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
-  const nowIso = now.toISOString().split('T')[0];
-  const cutoffIso = cutoff.toISOString().split('T')[0];
+  // AM-7: CT-anchored cutoff (was UTC `cutoff.toISOString()`, which after ~6pm
+  // CT advanced the expiration window a day). `now` (Date) is still used for
+  // the days_remaining ms-diff math below, which is timezone-agnostic.
+  // (`nowIso` was dead — never referenced in the query — so it's removed.)
+  const cutoffIso = ctToday(days);
 
   // Get items expiring within N days (including already expired), joined with project title
   const result = await env.DB.prepare(`

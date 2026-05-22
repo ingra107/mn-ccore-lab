@@ -1,10 +1,27 @@
 import type { AuthUser, Env } from '../helpers';
 import { json, error, logActivity, actorSlug, getPiEmails } from '../helpers';
 
+// AM-3 (SEC-T0-1): public-safe team_members projection. Excludes `email`
+// (PII) and `auto_created` (the internal PENDING-REVIEW flag). Keeps every
+// display field the marketing site + portal UI render (name, photo, role,
+// bio, credentials, scholar/citation stats). Authed callers get the full row
+// (incl. email + auto_created) so the directory / settings UI keeps working.
+const TEAM_PUBLIC_COLS = [
+  'id', 'name', 'slug', 'preferred_name', 'full_name', 'role', 'credentials',
+  'photo_url', 'bio', 'scholar_id', 'author_name', 'title', 'department',
+  'member_type', 'expertise_tags', 'citation_count', 'h_index',
+  'last_scholar_refresh', 'created_at',
+  // NOTE: `email` + `auto_created` deliberately omitted from the public path.
+].join(', ');
+
 // GET /api/team
-export async function handleGetTeam(env: Env): Promise<Response> {
+// `isAuthed` true when the caller has a valid JWT or API key (resolved by the
+// index.ts router). Unauth callers (public marketing site) get the redacted
+// projection; authed callers get SELECT * (email/auto_created included).
+export async function handleGetTeam(env: Env, isAuthed = false): Promise<Response> {
+  const cols = isAuthed ? '*' : TEAM_PUBLIC_COLS;
   const result = await env.DB.prepare(
-    'SELECT * FROM team_members ORDER BY member_type, name'
+    `SELECT ${cols} FROM team_members ORDER BY member_type, name`
   ).all();
   return json({ data: result.results, count: result.results.length });
 }

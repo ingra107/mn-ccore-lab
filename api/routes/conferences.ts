@@ -1,5 +1,6 @@
 import type { AuthUser, Env } from '../helpers';
 import { json, error, generateId, logActivity, actorSlug, buildUpdate } from '../helpers';
+import { ctToday } from '../lib/ct-date';
 
 const VALID_SUBMISSION_TYPES = ['abstract', 'oral', 'poster', 'workshop', 'invited'] as const;
 const VALID_STATUSES = ['planning', 'submitted', 'accepted', 'preparing', 'presented', 'rejected'] as const;
@@ -32,23 +33,29 @@ export async function handleGetConferences(url: URL, env: Env): Promise<Response
 // ── GET /api/conferences/upcoming ──
 // Conferences with deadlines in the next 90 days
 export async function handleGetUpcomingConferences(env: Env): Promise<Response> {
+  // AM-7: bind CT-anchored today / today+90 instead of SQLite date('now')
+  // (UTC), which after ~6pm CT shifted the 90-day window a day. abstract_due
+  // and conference_date are CT calendar dates. Bind order matches the textual
+  // ? order: today, +90, today, +90, today (WHERE), then today (ORDER BY).
+  const today = ctToday();
+  const in90 = ctToday(90);
   const result = await env.DB.prepare(`
     SELECT cs.*, p.title as project_title, p.slug as project_slug
     FROM conference_submissions cs
     LEFT JOIN projects p ON cs.project_id = p.slug OR cs.project_id = p.id
     WHERE cs.status NOT IN ('presented', 'rejected')
       AND (
-        (cs.abstract_due IS NOT NULL AND cs.abstract_due >= date('now') AND cs.abstract_due <= date('now', '+90 days'))
-        OR (cs.conference_date IS NOT NULL AND cs.conference_date >= date('now') AND cs.conference_date <= date('now', '+90 days'))
-        OR (cs.status IN ('accepted', 'preparing') AND cs.conference_date >= date('now'))
+        (cs.abstract_due IS NOT NULL AND cs.abstract_due >= ? AND cs.abstract_due <= ?)
+        OR (cs.conference_date IS NOT NULL AND cs.conference_date >= ? AND cs.conference_date <= ?)
+        OR (cs.status IN ('accepted', 'preparing') AND cs.conference_date >= ?)
       )
     ORDER BY
       CASE
-        WHEN cs.abstract_due IS NOT NULL AND cs.abstract_due >= date('now') AND cs.status = 'planning' THEN cs.abstract_due
+        WHEN cs.abstract_due IS NOT NULL AND cs.abstract_due >= ? AND cs.status = 'planning' THEN cs.abstract_due
         WHEN cs.conference_date IS NOT NULL THEN cs.conference_date
         ELSE '9999-12-31'
       END ASC
-  `).all();
+  `).bind(today, in90, today, in90, today, today).all();
 
   // Annotate with days_until for the most relevant deadline
   const now = new Date();

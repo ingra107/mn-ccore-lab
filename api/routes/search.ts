@@ -107,7 +107,14 @@ function pickMatch(q: string, fields: Array<{ name: string; value: string | null
 // --- Handler ---
 
 // GET /api/search?q=
-export async function handleGetSearch(url: URL, env: Env): Promise<Response> {
+// AM-4 (SEC-T0-2): `canSeePb` true for PI/Nick/service (resolved by the
+// index.ts router). Non-PI/unauth callers must never see content derived from
+// a 'Peripheral Brain'-category project — applied via a single shared SQL
+// predicate to EVERY project-derived query: projects, project comments,
+// project notes (project_updates), tasks (by parent project), and files (by
+// parent project). Non-project entities (ideas, meetings, publications,
+// grants, decisions, activity) are unaffected here.
+export async function handleGetSearch(url: URL, env: Env, canSeePb = false): Promise<Response> {
   const q = url.searchParams.get('q')?.trim();
   if (!q || q.length < 2) return json({ data: [], count: 0 });
   // Upper bound: 200-char search strings are already absurdly long; cap to
@@ -117,6 +124,18 @@ export async function handleGetSearch(url: URL, env: Env): Promise<Response> {
   const like = `%${q}%`;
   const limit = 15;
 
+  // visibleProjectPredicate — shared PB-category exclusion. Empty for PI;
+  // for everyone else, excludes any project (or project-derived row) whose
+  // category is 'Peripheral Brain'. `pAlias` is the projects table alias in
+  // the query (''=bare projects, 'p'=joined). The subquery form covers tasks
+  // and files where the project isn't directly joined.
+  const projPred = canSeePb ? '' : "category != 'Peripheral Brain' OR category IS NULL";
+  const joinedProjPred = canSeePb ? '' : "p.category != 'Peripheral Brain' OR p.category IS NULL";
+  // For tasks/files: exclude rows whose project_id/entity_id points at a PB
+  // project (matched by id OR slug). Non-project rows pass through.
+  const pbProjectIdSet = `SELECT id FROM projects WHERE category = 'Peripheral Brain'
+      UNION SELECT slug FROM projects WHERE category = 'Peripheral Brain'`;
+
   // Search across 14 tables in parallel — Slack-parity unified search.
   const [
     tasks, projects, meetings, ideas, comments, activity,
@@ -124,10 +143,14 @@ export async function handleGetSearch(url: URL, env: Env): Promise<Response> {
     publications, grants,
   ] = await Promise.all([
     env.DB.prepare(
-      'SELECT id, title, description, assignee, status, priority, due_date, project_id, created_at FROM tasks WHERE (title LIKE ? OR description LIKE ?) AND deleted_at IS NULL LIMIT ?'
+      `SELECT id, title, description, assignee, status, priority, due_date, project_id, created_at FROM tasks WHERE (title LIKE ? OR description LIKE ?) AND deleted_at IS NULL${
+        canSeePb ? '' : ` AND (project_id IS NULL OR project_id NOT IN (${pbProjectIdSet}))`
+      } LIMIT ?`
     ).bind(like, like, limit).all(),
     env.DB.prepare(
-      'SELECT slug, title, category, stage, pi, description, updated_at FROM projects WHERE (title LIKE ? OR category LIKE ? OR description LIKE ?) AND deleted_at IS NULL LIMIT ?'
+      `SELECT slug, title, category, stage, pi, description, updated_at FROM projects WHERE (title LIKE ? OR category LIKE ? OR description LIKE ?) AND deleted_at IS NULL${
+        projPred ? ` AND (${projPred})` : ''
+      } LIMIT ?`
     ).bind(like, like, like, limit).all(),
     env.DB.prepare(
       'SELECT id, title, date, type, notes FROM meetings WHERE (title LIKE ? OR notes LIKE ?) LIMIT ?'
@@ -136,14 +159,18 @@ export async function handleGetSearch(url: URL, env: Env): Promise<Response> {
       'SELECT id, title, description, submitted_by, status, created_at FROM ideas WHERE (title LIKE ? OR description LIKE ?) LIMIT ?'
     ).bind(like, like, limit).all(),
     env.DB.prepare(
-      'SELECT c.id, c.content, c.author_id, c.created_at, p.title as project_title, p.slug as project_slug FROM comments c JOIN projects p ON c.project_id = p.id OR c.project_id = p.slug WHERE c.content LIKE ? LIMIT ?'
+      `SELECT c.id, c.content, c.author_id, c.created_at, p.title as project_title, p.slug as project_slug FROM comments c JOIN projects p ON c.project_id = p.id OR c.project_id = p.slug WHERE c.content LIKE ?${
+        joinedProjPred ? ` AND (${joinedProjPred})` : ''
+      } LIMIT ?`
     ).bind(like, limit).all(),
     env.DB.prepare(
       'SELECT id, type, description, actor, timestamp FROM activity_log WHERE description LIKE ? ORDER BY timestamp DESC LIMIT ?'
     ).bind(like, limit).all(),
     // Project notes (project_updates)
     env.DB.prepare(
-      'SELECT u.id, u.content, u.author, u.update_type, u.created_at, p.title as project_title, p.slug as project_slug FROM project_updates u JOIN projects p ON u.project_id = p.slug OR u.project_id = p.id WHERE u.content LIKE ? LIMIT ?'
+      `SELECT u.id, u.content, u.author, u.update_type, u.created_at, p.title as project_title, p.slug as project_slug FROM project_updates u JOIN projects p ON u.project_id = p.slug OR u.project_id = p.id WHERE u.content LIKE ?${
+        joinedProjPred ? ` AND (${joinedProjPred})` : ''
+      } LIMIT ?`
     ).bind(like, limit).all(),
     // Task notes (task_updates)
     env.DB.prepare(
@@ -157,9 +184,11 @@ export async function handleGetSearch(url: URL, env: Env): Promise<Response> {
     env.DB.prepare(
       'SELECT id, title, rationale, context, outcome, project_slug, decided_by, created_at FROM hub_decisions WHERE (title LIKE ? OR rationale LIKE ? OR context LIKE ? OR outcome LIKE ?) LIMIT ?'
     ).bind(like, like, like, like, limit).all(),
-    // File attachments
+    // File attachments — exclude files attached to a PB-category project.
     env.DB.prepare(
-      'SELECT id, filename, entity_type, entity_id, content_type, uploaded_by, created_at FROM file_attachments WHERE filename LIKE ? LIMIT ?'
+      `SELECT id, filename, entity_type, entity_id, content_type, uploaded_by, created_at FROM file_attachments WHERE filename LIKE ?${
+        canSeePb ? '' : ` AND NOT (entity_type = 'project' AND entity_id IN (${pbProjectIdSet}))`
+      } LIMIT ?`
     ).bind(like, limit).all(),
     // Action items
     env.DB.prepare(

@@ -11,10 +11,19 @@ export async function handleNextMeeting(env: Env): Promise<Response> {
   return json({ data: result || null })
 }
 
+// AM-3 (SEC-T0-1): public-safe meeting columns. Excludes internal meeting
+// content — `agenda`, `notes`, `decisions`, `attendees` — which the public
+// `SELECT *` previously leaked. Authed callers (the gated /portal/meetings
+// list page) get the full row so the existing UI keeps rendering those fields.
+const MEETING_PUBLIC_COLS = 'id, date, title, type, status, facilitator, created_at, updated_at';
+
 // GET /api/meetings — list all meetings
-export async function handleGetMeetings(env: Env): Promise<Response> {
+// `isAuthed` true when the caller has a valid JWT or API key (resolved by the
+// index.ts router). Unauth callers get the redacted projection.
+export async function handleGetMeetings(env: Env, isAuthed = false): Promise<Response> {
+  const cols = isAuthed ? '*' : MEETING_PUBLIC_COLS;
   const result = await env.DB.prepare(
-    'SELECT * FROM meetings ORDER BY date DESC'
+    `SELECT ${cols} FROM meetings ORDER BY date DESC`
   ).all();
   return json({ data: result.results, count: result.results.length });
 }

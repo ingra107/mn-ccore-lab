@@ -5,6 +5,7 @@ import { corsHeaders, json, error, getAuthUser, isPiRequest, getPiEmails, ensure
 import type { AuthUser } from './helpers';
 import { validateApiKey } from './middleware/api-key-auth';
 import { handleVersion, bumpVersion } from './lib/version';
+import { ctToday } from './lib/ct-date';
 import { notifyClients } from './lib/notify';
 import { handleUploadUrl, handleUploadDone, handleListFiles, handleGetFile, handleDeleteFile } from './routes/uploads';
 
@@ -424,7 +425,7 @@ app.get('/api/papers/by-publication', (c) => handlePapersByPublication(U(c), E(c
 // ─────────────────────────────────────────────────────────────────────────────
 // Projects (ordering matters: revisions > papers > dependencies > :slug etc.)
 // ─────────────────────────────────────────────────────────────────────────────
-app.get('/api/projects/health', (c) => handleProjectHealth(E(c)));
+app.get('/api/projects/health', async (c) => handleProjectHealth(E(c), await isPiRequest(R(c), E(c))));
 // Tombstone endpoint — consumed by sync_d1_pull.pull_hub_projects to mirror
 // Hub project deletes into brain.db. Airtable cascade comment: handleDeleteProject
 // writes deleted_at and (when secrets present) DELETEs the matching Airtable rec.
@@ -461,7 +462,7 @@ app.get('/api/meetings/:id/agenda', (c) => handleGetAgendaItems(c.req.param('id'
 app.get('/api/meetings/:id/generate-agenda', (c) => handleGenerateAgenda(c.req.param('id'), E(c)));
 app.get('/api/meetings/:id/prep', (c) => handleMeetingPrep(c.req.param('id'), E(c)));
 app.get('/api/meetings/:id', (c) => handleGetMeeting(c.req.param('id'), E(c)));
-app.get('/api/meetings', (c) => handleGetMeetings(E(c)));
+app.get('/api/meetings', (c) => handleGetMeetings(E(c), c.get('authedUser') !== null || c.get('apiKeyValid') === true));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Dependencies
@@ -536,13 +537,13 @@ app.get('/api/questions/:id', (c) => handleGetQuestionDetail(c.req.param('id'), 
 // Simple exact-match GETs
 // ─────────────────────────────────────────────────────────────────────────────
 app.get('/api/publications', (c) => handleGetPublications(U(c), E(c)));
-app.get('/api/team', (c) => handleGetTeam(E(c)));
+app.get('/api/team', (c) => handleGetTeam(E(c), c.get('authedUser') !== null || c.get('apiKeyValid') === true));
 app.get('/api/team/slugs', (c) => handleTeamSlugs(E(c)));
-app.get('/api/team/pulse', (c) => handleTeamPulse(U(c), E(c)));
+app.get('/api/team/pulse', (c) => handleTeamPulse(U(c), E(c), c.get('authedUser') !== null || c.get('apiKeyValid') === true));
 app.get('/api/graph/collaboration', (c) => handleCollaborationGraph(E(c)));
 app.get('/api/stats', (c) => handleGetStats(E(c)));
 app.get('/api/citations', (c) => handleGetCitations(E(c)));
-app.get('/api/activity', (c) => handleGetActivity(U(c), E(c)));
+app.get('/api/activity', async (c) => handleGetActivity(U(c), E(c), await isPiRequest(R(c), E(c))));
 app.get('/api/activity/heatmap', (c) => handleActivityHeatmap(U(c), E(c)));
 app.get('/api/tasks/overdue-count', (c) => handleOverdueCount(U(c), E(c)));
 app.get('/api/tasks', (c) => handleGetTasks(U(c), E(c)));
@@ -567,7 +568,7 @@ app.get('/api/notifications/count', (c) => handleNotificationCount(U(c), R(c), E
 app.get('/api/commitments', (c) => handleCommitments(U(c), E(c)));
 app.get('/api/ideas', (c) => handleGetIdeas(U(c), E(c)));
 // GET /api/inbox retired 2026-05-05 (5.3a) — use /api/inbox-events
-app.get('/api/search', (c) => handleGetSearch(U(c), E(c)));
+app.get('/api/search', async (c) => handleGetSearch(U(c), E(c), await isPiRequest(R(c), E(c))));
 app.get('/api/settings', (c) => handleGetSettings(E(c)));
 app.get('/api/workflow-templates', (c) => handleGetWorkflowTemplates(E(c)));
 app.get('/api/calendar/events', (c) => handleCalendarEvents(U(c), E(c)));
@@ -583,13 +584,13 @@ app.get('/api/integrations/calendar/events', (c) => handleListEvents(U(c), E(c),
 // ─────────────────────────────────────────────────────────────────────────────
 // Files (presigned URLs etc.)
 // ─────────────────────────────────────────────────────────────────────────────
-app.get('/api/files', (c) => handleListFiles(U(c), E(c)));
+app.get('/api/files', async (c) => handleListFiles(U(c), E(c), await isPiRequest(R(c), E(c))));
 // GET /api/files/:key+ — presigned download URL. Key can contain slashes
 // (R2 key paths). Hono's wildcard match in the URL `:*` isn't used because
 // we need the full rest-of-path as a single string — match regex-style.
-app.get('/api/files/:rest{.+}', (c) => {
+app.get('/api/files/:rest{.+}', async (c) => {
   const key = c.req.param('rest');
-  return handleGetFile(key, E(c));
+  return handleGetFile(key, E(c), await isPiRequest(R(c), E(c)));
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -687,7 +688,7 @@ app.get('/api/tasks/:id', (c) => handleGetTask(c.req.param('id'), E(c)));
 // Uploads
 app.post('/api/upload/url', (c) => handleUploadUrl(R(c), USER(c), E(c)));
 app.post('/api/upload/done', (c) => handleUploadDone(R(c), USER(c), E(c)));
-app.post('/api/files/:id/delete', (c) => handleDeleteFile(c.req.param('id'), E(c)));
+app.post('/api/files/:id/delete', async (c) => handleDeleteFile(c.req.param('id'), E(c), await isPiRequest(R(c), E(c))));
 
 // Projects (specific first)
 app.post('/api/projects', (c) => handleCreateProject(R(c), USER(c), E(c)));
@@ -926,7 +927,7 @@ app.post('/api/deadline-dependencies/:id/delete', (c) => handleDeleteDeadlineDep
 // Digest email
 app.post('/api/digest-email', (c) => handleGenerateDigestEmail(R(c), E(c)));
 app.post('/api/digest-email/send', (c) => handleSendDigestEmail(R(c), E(c)));
-app.post('/api/digest-email/daily', (c) => handleSendDailyDigests(E(c)));
+app.post('/api/digest-email/daily', (c) => handleSendDailyDigests(E(c), R(c)));
 
 // Email drafts sync
 app.post('/api/email-drafts/sync-bulk', (c) => handleSyncEmailDrafts(R(c), E(c)));
@@ -1056,7 +1057,7 @@ export default {
           if (pendingItems.length > 0) {
             itemsHtml += '<h3 style="color:#c9a84c;font-family:monospace;font-size:12px;text-transform:uppercase;letter-spacing:1px;margin-top:20px;">Your Action Items</h3><ul style="padding-left:20px;">';
             for (const item of pendingItems) {
-              const overdue = item.due_date && item.due_date < new Date().toISOString().slice(0, 10);
+              const overdue = item.due_date && item.due_date < ctToday();
               const dueLabel = item.due_date
                 ? `<span style="color:${overdue ? '#7a0019' : '#64748b'};font-size:12px;"> — ${overdue ? 'overdue' : 'due'} ${escapeHtml(item.due_date)}</span>`
                 : '';

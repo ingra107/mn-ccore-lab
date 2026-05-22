@@ -1,15 +1,22 @@
 /**
- * projects.cascade.test.ts — B-CRIT-05 regression guard
+ * projects.cascade.test.ts — B-CRIT-05 + B7 (SEC-T0-7) regression guard
  *
  * Verifies that handleDeleteProject's cascade-clean block calls env.DB.batch()
- * with all 3 statements as a single atomic unit, not 3 separate run() calls.
+ * with ALL child-table statements as a single atomic unit, not separate run()
+ * calls.
  *
  * Pre-fix (projects.ts:609-611): 3 separate prepare().run() calls — a failure
  * on statement 2 or 3 left orphaned rows in comments/project_updates pointing
  * at a deleted project.
  *
- * Post-fix: env.DB.batch([stmt1, stmt2, stmt3]) — D1 executes all 3 in a
- * single implicit transaction; any error rolls back all 3.
+ * Post-fix: env.DB.batch([...]) — D1 executes all statements in a single
+ * implicit transaction; any error rolls back the whole batch.
+ *
+ * B7 (SEC-T0-7, 2026-05-22) expanded the cascade from 3 child statements to 9:
+ *   comments, project_updates, project_documents, milestones,
+ *   conference_submissions, submission_events, regulatory_items,
+ *   project_dependencies, and the tasks.project_id NULL-out. The structural
+ *   guard below now asserts 9.
  *
  * ── Atomicity test limitation ────────────────────────────────────────────────
  * True rollback semantics (all 3 statements undo on mid-batch failure) are a
@@ -119,7 +126,7 @@ beforeEach(() => {
 })
 
 describe('handleDeleteProject — cascade-clean uses DB.batch() (B-CRIT-05)', () => {
-  it('calls DB.batch() exactly once with 3 statements (structural guard)', async () => {
+  it('calls DB.batch() exactly once with 9 statements (structural guard)', async () => {
     const capturedStmts: unknown[] = []
     const env = makeEnv({
       onBatch: (stmts) => capturedStmts.push(...stmts),
@@ -131,9 +138,9 @@ describe('handleDeleteProject — cascade-clean uses DB.batch() (B-CRIT-05)', ()
     // batch() called exactly once
     expect((env.DB.batch as ReturnType<typeof vi.fn>).mock.calls).toHaveLength(1)
 
-    // batch() received exactly 3 statements
+    // batch() received exactly 9 statements (B7 expanded cascade)
     const [batchArg] = (env.DB.batch as ReturnType<typeof vi.fn>).mock.calls[0] as [unknown[]]
-    expect(batchArg).toHaveLength(3)
+    expect(batchArg).toHaveLength(9)
 
     // Deleted successfully
     expect(response.status).toBe(200)

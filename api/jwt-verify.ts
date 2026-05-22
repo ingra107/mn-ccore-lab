@@ -91,6 +91,20 @@ export async function verifyCfAccessJwt(token: string, env: Env): Promise<Verifi
 
   const teamDomain = env.CF_ACCESS_TEAM_DOMAIN?.trim();
   if (!teamDomain) {
+    // B8a (SEC-T0-8): fail CLOSED when REQUIRE_AUTH=1 but verification can't
+    // complete (team domain unconfigured). Returning decoded-but-unverified
+    // claims in a REQUIRE_AUTH'd deployment would let a forged
+    // Cf-Access-Jwt-Assertion header impersonate any email. Prod sets BOTH
+    // REQUIRE_AUTH=1 and CF_ACCESS_TEAM_DOMAIN, so this only bites a
+    // misconfigured/partial deploy — never the dev path (REQUIRE_AUTH unset),
+    // which keeps the decode-only fallback for local/PI-only mode.
+    if (env.REQUIRE_AUTH === '1') {
+      if (!fallbackWarningLogged) {
+        console.error('[auth] REQUIRE_AUTH=1 but CF_ACCESS_TEAM_DOMAIN not set — failing CLOSED (rejecting all JWTs). Configure CF_ACCESS_TEAM_DOMAIN.');
+        fallbackWarningLogged = true;
+      }
+      return null;
+    }
     if (!fallbackWarningLogged) {
       console.warn('[auth] CF_ACCESS_TEAM_DOMAIN not set — JWT signatures NOT verified. Configure before team launch.');
       fallbackWarningLogged = true;

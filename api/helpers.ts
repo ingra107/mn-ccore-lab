@@ -268,6 +268,59 @@ export function actorSlug(email: string): string {
   return EMAIL_PREFIX_TO_SLUG[prefix] ?? prefix
 }
 
+/**
+ * AM-2 (SEC-T0-6): unified actor-identity resolution.
+ *
+ * One policy for every "who did this" write site (asked_by, submitted_by,
+ * created_by, author_slug, author, to_slug, pi, uploaded_by):
+ *
+ *   1. Default identity = actorSlug(user.email) — the authenticated caller.
+ *   2. A caller-supplied `override` is accepted ONLY if it resolves to a real
+ *      team_members.slug. Email-looking overrides are canonicalized through
+ *      actorSlug first (so "mesfin@umn.edu" → "nate-mesfin" before the slug
+ *      check). An unknown slug returns an error (caller 400s).
+ *   3. Cross-identity impersonation (override ≠ caller's own slug) is allowed
+ *      ONLY when `allowImpersonation` is true — i.e. the request is a PI or the
+ *      API-key/service path. EXCEPTION: `claude-ai` (Hermes) is always allowed,
+ *      because the AI listener posts answers/comments as claude-ai via the
+ *      service key and that identity has no team_members row.
+ *
+ * Returns { slug } on success or { error } on a rejected override. Async
+ * because it validates the override against team_members.
+ */
+export async function resolveActor(
+  env: Env,
+  user: AuthUser,
+  override: string | null | undefined,
+  opts: { allowImpersonation: boolean },
+): Promise<{ slug: string } | { error: string }> {
+  const callerSlug = actorSlug(user.email);
+  const raw = typeof override === 'string' ? override.trim() : '';
+  if (!raw) return { slug: callerSlug };
+
+  // claude-ai (Hermes) is always allowed and bypasses the team_members check —
+  // it's a synthetic agent identity, not a directory row.
+  if (raw === 'claude-ai') return { slug: 'claude-ai' };
+
+  // Canonicalize email-looking overrides to a slug before validating.
+  const candidate = raw.includes('@') ? actorSlug(raw) : raw;
+
+  // The override must be a real team member slug.
+  const member = await env.DB.prepare(
+    'SELECT 1 FROM team_members WHERE slug = ? LIMIT 1'
+  ).bind(candidate).first();
+  if (!member) {
+    return { error: `Unknown actor "${override}". Must match team_members.slug.` };
+  }
+
+  // Impersonating someone else requires PI / service authority.
+  if (candidate !== callerSlug && !opts.allowImpersonation) {
+    return { error: `Not authorized to act as "${candidate}".` };
+  }
+
+  return { slug: candidate };
+}
+
 /** Fallback PI emails used when lab_settings query fails (cold start, DB
  *  unreachable, or migration v44 not yet run). Keep this in sync with the
  *  v44 seed so behavior doesn't silently diverge. Ground truth:
@@ -325,6 +378,48 @@ export async function isPiRequest(request: Request, env: Env): Promise<boolean> 
   if (!user?.email) return false
   const piEmails = await getPiEmails(env)
   return piEmails.has(user.email.toLowerCase())
+}
+
+/**
+ * AM-1 (SEC-T0-5): protected fields that must never be set to null/empty.
+ *
+ * These columns carry the API field-protection contract documented in
+ * CLAUDE.md ("Tasks: status/priority/assignee — can never be null;
+ * Projects: status/stage/category — can never be null"). Pre-fix, three
+ * write paths silently SKIPPED a null/empty protected value
+ * (`continue`/no guard), which on the client manifested as an optimistic
+ * update that silently reverted. We now hard-reject so the caller sees a
+ * 400 instead of a silent no-op.
+ */
+const PROTECTED_NON_NULL: Record<string, readonly string[]> = {
+  tasks: ['status', 'priority', 'assignee'],
+  projects: ['status', 'stage', 'category'],
+};
+
+/**
+ * Returns an error message string if `obj` sets any protected field of
+ * `table` to null / undefined / '' (present-and-empty). Returns null when
+ * the object is clean. Non-throwing so each caller controls its own
+ * response shape (route handlers return `error(...)`, mutations returns a
+ * MutationResult error). A field that is simply ABSENT from `obj` is fine —
+ * only a present-but-empty value is rejected.
+ */
+export function assertProtectedNotNull(
+  table: string,
+  obj: Record<string, unknown> | null | undefined,
+): string | null {
+  if (!obj) return null;
+  const protectedFields = PROTECTED_NON_NULL[table];
+  if (!protectedFields) return null;
+  for (const f of protectedFields) {
+    if (f in obj) {
+      const v = obj[f];
+      if (v === null || v === undefined || v === '') {
+        return `Protected field "${f}" on ${table} cannot be null or empty`;
+      }
+    }
+  }
+  return null;
 }
 
 /** Build a dynamic UPDATE clause from allowed fields */

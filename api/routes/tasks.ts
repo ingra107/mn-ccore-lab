@@ -1,8 +1,32 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, parseMentions, actorSlug } from '../helpers';
+import { json, error, generateId, logActivity, parseMentions, actorSlug, isPiRequest, resolveActor } from '../helpers';
 import { filterFixtures } from '../lib/fixtures';
 import { ctToday } from '../lib/ct-date';
 import { applyMutation } from './mutations';
+
+// AM-5 (SEC-T0-4): explicit task column list that EXCLUDES the private
+// `notes` column. `notes` is the brain.db private field (team-visible content
+// lives in `description`); `SELECT t.*` leaked it on both the list and the
+// single-task endpoints. This list keeps every column the frontend uses
+// (description, group_override, the v55 op-fields waiting_on/promised_to/
+// promise_date/next_checkin_date, etc.) and stays in sync with the schema
+// (base tasks table + all ALTER ADD COLUMN through schema-v68, minus `notes`).
+// If a column is added to the tasks table, add it here too (or the API stops
+// returning it). Prefixed `t.` so it composes with the meetings LEFT JOIN.
+const TASK_SELECT_COLS = [
+  'id', 'meeting_id', 'project_id', 'title', 'description', 'assignee',
+  'assigned_by', 'due_date', 'priority', 'status', 'source', 'completed',
+  'completed_at', 'completed_by', 'created_at', 'updated_at', 'deleted_at',
+  'acknowledged_at', 'acknowledged_by', 'watchers', 'reminder_days',
+  'instructions', 'key_link_1', 'key_link_1_desc', 'key_link_2',
+  'key_link_2_desc', 'key_link_3', 'key_link_3_desc', 'effort', 'short_title',
+  'source_thread_id', 'related_message_ids', 'blocked_by', 'description_json',
+  'group_override', 'seq', 'deadline', 'waiting_on', 'promised_to',
+  'promise_date', 'next_checkin_date', 'nick_followup_date',
+  'requires_nick_brain', 'estimated_minutes', 'deadline_type', 'next_artifact',
+  'inbox_event_id', 'last_mutation_id',
+  // NOTE: `notes` is deliberately omitted — private brain.db field.
+].map((c) => `t.${c}`).join(', ');
 
 // GET /api/tasks/overdue-count?assignee= — lightweight count for sidebar badge
 export async function handleOverdueCount(url: URL, env: Env): Promise<Response> {
@@ -41,7 +65,7 @@ export async function handleGetTasks(url: URL, env: Env): Promise<Response> {
   const includeFixtures = url.searchParams.get('include_fixtures') === '1' || includeDeleted;
 
   const deletedFilter = includeDeleted ? '1=1' : 't.deleted_at IS NULL';
-  let query = `SELECT t.*, m.title as meeting_title, m.date as meeting_date FROM tasks t LEFT JOIN meetings m ON t.meeting_id = m.id WHERE ${deletedFilter}`;
+  let query = `SELECT ${TASK_SELECT_COLS}, m.title as meeting_title, m.date as meeting_date FROM tasks t LEFT JOIN meetings m ON t.meeting_id = m.id WHERE ${deletedFilter}`;
   const params: (string | number)[] = [];
 
   if (seqAfterRaw !== null) {
@@ -133,7 +157,7 @@ export async function handleUpdateTaskStatus(id: string, request: Request, user:
 // returned 404 for every task regardless of status.
 export async function handleGetTask(id: string, env: Env): Promise<Response> {
   const task = await env.DB.prepare(
-    'SELECT t.*, m.title as meeting_title, m.date as meeting_date FROM tasks t LEFT JOIN meetings m ON t.meeting_id = m.id WHERE t.id = ? AND t.deleted_at IS NULL'
+    `SELECT ${TASK_SELECT_COLS}, m.title as meeting_title, m.date as meeting_date FROM tasks t LEFT JOIN meetings m ON t.meeting_id = m.id WHERE t.id = ? AND t.deleted_at IS NULL`
   ).bind(id).first();
   if (!task) return error('Task not found', 404);
   return json({ data: task });
@@ -244,8 +268,12 @@ export async function handleUpdateTask(id: string, request: Request, user: AuthU
 
   for (const field of TASK_ALLOWED_FIELDS) {
     if (field in body) {
+      // AM-1 (SEC-T0-5): protected field present-but-null/empty is a hard 400,
+      // not a silent skip. The old `continue` dropped the bad value but applied
+      // the rest of the patch, so the client's optimistic status/priority/
+      // assignee edit silently reverted with no error surfaced.
       if (TASK_REQUIRED_FIELDS.has(field) && (body[field] === null || body[field] === undefined || body[field] === '')) {
-        continue;
+        return error(`Protected field "${field}" on tasks cannot be null or empty`, 400);
       }
       updates.push(`${field} = ?`);
       params.push(body[field]);
@@ -453,7 +481,11 @@ export async function handleAddTaskComment(taskId: string, request: Request, use
   if (!body.content?.trim()) return error('content required', 400);
 
   const id = generateId();
-  const authorSlug = body.author_slug?.trim() || actorSlug(user.email);
+  // AM-2: validate/canonicalize author_slug; impersonation requires PI/service.
+  // claude-ai (Hermes) is always allowed by resolveActor.
+  const actor = await resolveActor(env, user, body.author_slug, { allowImpersonation: await isPiRequest(request, env) });
+  if ('error' in actor) return error(actor.error, 400);
+  const authorSlug = actor.slug;
 
   await env.DB.prepare(
     'INSERT INTO task_comments (id, task_id, author_slug, content) VALUES (?, ?, ?, ?)'
@@ -940,7 +972,10 @@ export async function handlePostTaskUpdate(taskId: string, request: Request, use
   if (!body.content?.trim()) return error('content required', 400);
 
   const id = generateId();
-  const authorSlug = body.author_slug?.trim() || actorSlug(user.email);
+  // AM-2: validate/canonicalize author_slug; impersonation requires PI/service.
+  const actor = await resolveActor(env, user, body.author_slug, { allowImpersonation: await isPiRequest(request, env) });
+  if ('error' in actor) return error(actor.error, 400);
+  const authorSlug = actor.slug;
 
   await env.DB.prepare(
     'INSERT INTO task_updates (id, task_id, author_slug, content, update_type) VALUES (?, ?, ?, ?, ?)'

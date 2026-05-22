@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, logActivity } from '../helpers';
+import { json, error, logActivity, isPiRequest, resolveActor } from '../helpers';
 
 // GET /api/digest?date=&status=&topic=&limit=&with_relevance=true
 export async function handleGetDigest(url: URL, env: Env): Promise<Response> {
@@ -139,7 +139,12 @@ export async function handleCreateDigestComment(
   }
 
   const id = crypto.randomUUID();
-  const authorSlug = body.author_slug?.trim() || user.email?.split('@')[0]?.replace(/\./g, '-') || 'unknown';
+  // AM-2: validate/canonicalize author_slug. Pre-fix used a raw
+  // email.split('@')[0].replace(/\./g,'-') derivation that bypassed actorSlug
+  // (so it never canonicalized aliases like ningraha → nick-ingraham).
+  const actor = await resolveActor(env, user, body.author_slug, { allowImpersonation: await isPiRequest(request, env) });
+  if ('error' in actor) return error(actor.error, 400);
+  const authorSlug = actor.slug;
 
   await env.DB.prepare(
     'INSERT INTO digest_comments (id, paper_id, author_slug, content) VALUES (?, ?, ?, ?)'

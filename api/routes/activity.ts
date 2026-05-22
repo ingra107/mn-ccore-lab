@@ -3,15 +3,33 @@ import { json } from '../helpers';
 import { isTestFixture } from '../lib/fixtures';
 
 // GET /api/activity?limit=20&actor=slug
-export async function handleGetActivity(url: URL, env: Env): Promise<Response> {
+// AM-3 (SEC-T0-1): `canSeePb` true for PI/Nick/service. This endpoint stays
+// public (the /pulse kiosk consumes it unauthenticated), but for non-PI
+// callers we exclude activity_log rows tied to a 'Peripheral Brain'-category
+// project so PB project titles/state don't leak via free-text descriptions.
+// Rows that aren't project-related (related_type != 'project') are unaffected.
+export async function handleGetActivity(url: URL, env: Env, canSeePb = false): Promise<Response> {
   const limit = Math.min(parseInt(url.searchParams.get('limit') || '20', 10), 500);
   const actor = url.searchParams.get('actor');
   const includeFixtures = url.searchParams.get('include_fixtures') === '1';
   let query = 'SELECT * FROM activity_log';
   const params: (string | number)[] = [];
+  const where: string[] = [];
   if (actor) {
-    query += ' WHERE actor = ?';
+    where.push('actor = ?');
     params.push(actor);
+  }
+  if (!canSeePb) {
+    // Exclude rows whose related project is PB-category. related_id stores the
+    // project id OR slug, so match on either. Non-project rows (related_type
+    // != 'project') and rows with no matching PB project pass through.
+    where.push(`NOT (related_type = 'project' AND related_id IN (
+      SELECT id FROM projects WHERE category = 'Peripheral Brain'
+      UNION SELECT slug FROM projects WHERE category = 'Peripheral Brain'
+    ))`);
+  }
+  if (where.length > 0) {
+    query += ' WHERE ' + where.join(' AND ');
   }
   // Over-fetch when filtering so the final count still honours the caller's limit.
   const fetchLimit = includeFixtures ? limit : Math.min(limit * 3, 500);

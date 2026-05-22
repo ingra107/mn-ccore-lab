@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, actorSlug, isPiRequest } from '../helpers';
+import { json, error, generateId, logActivity, actorSlug, isPiRequest, resolveActor } from '../helpers';
 import { filterFixtures } from '../lib/fixtures';
 
 // ── AI Co-Scientist: detect @hermes/@claude mentions in answers ──
@@ -126,7 +126,10 @@ export async function handleCreateQuestion(request: Request, user: AuthUser, env
   if (!questionText?.trim()) return error('question is required', 400);
 
   const id = generateId();
-  const askedBy = body.asked_by?.trim() || actorSlug(user.email);
+  // AM-2: validate/canonicalize asked_by; impersonation requires PI/service.
+  const actor = await resolveActor(env, user, body.asked_by, { allowImpersonation: await isPiRequest(request, env) });
+  if ('error' in actor) return error(actor.error, 400);
+  const askedBy = actor.slug;
 
   await env.DB.prepare(
     'INSERT INTO lab_questions (id, question, context, asked_by, project_slug) VALUES (?, ?, ?, ?, ?)'
@@ -178,7 +181,11 @@ export async function handleCreateAnswer(questionId: string, request: Request, u
   if (!question) return error('Question not found', 404);
 
   const id = generateId();
-  const authorSlug = body.author_slug?.trim() || actorSlug(user.email);
+  // AM-2: validate/canonicalize author_slug; impersonation requires PI/service.
+  // claude-ai (Hermes) is always allowed by resolveActor.
+  const actor = await resolveActor(env, user, body.author_slug, { allowImpersonation: await isPiRequest(request, env) });
+  if ('error' in actor) return error(actor.error, 400);
+  const authorSlug = actor.slug;
 
   await env.DB.prepare(
     'INSERT INTO lab_answers (id, question_id, content, author_slug) VALUES (?, ?, ?, ?)'

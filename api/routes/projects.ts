@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, parseMentions, actorSlug } from '../helpers';
+import { json, error, generateId, logActivity, parseMentions, actorSlug, isPiRequest, resolveActor } from '../helpers';
 import { ctToday } from '../lib/ct-date';
 import { applyMutation } from './mutations';
 
@@ -171,6 +171,15 @@ export async function handleCreateProject(
   }
   const id = generateId('project');  // A1.2: typed ULID
 
+  // AM-2: projects.pi names the project's PI. Pre-fix the fallback stored a
+  // raw email-prefix (user.email.split('@')[0]) that bypassed actorSlug, so
+  // aliases like ningraha never canonicalized. Resolve to a canonical slug.
+  // allowImpersonation:true — naming any team member as a project's PI is a
+  // legitimate assignment (not actor spoofing); resolveActor still validates
+  // an explicit body.pi against team_members.
+  const piActor = await resolveActor(env, user, body.pi, { allowImpersonation: true });
+  if ('error' in piActor) return error(piActor.error, 400);
+
   const createProjMut = await applyMutation(env, {
     table: 'projects',
     record_id: id,
@@ -182,7 +191,7 @@ export async function handleCreateProject(
       stage: body.stage || 'idea',
       stage_entered_at: new Date().toISOString(),
       description: body.description || '',
-      pi: body.pi || user.email.split('@')[0],
+      pi: piActor.slug,
       status: 'active',
       created_at: new Date().toISOString(),
     },
@@ -293,7 +302,9 @@ export async function handleGetProjectUpdates(slug: string, env: Env): Promise<R
 }
 
 // GET /api/projects/health — project health metrics (scored 0-100)
-export async function handleProjectHealth(env: Env): Promise<Response> {
+// AM-3 (SEC-T0-1): `canSeePb` true for PI/Nick/service. Non-PI/unauth callers
+// never see 'Peripheral Brain' project titles in the health list.
+export async function handleProjectHealth(env: Env, canSeePb = false): Promise<Response> {
   // Batched implementation — prior version ran 7 queries per active project
   // (N+1 anti-pattern). With 68 projects this was ~476 sequential queries
   // and 8.8s p95. Found via deep-audit Suite 14.
@@ -301,12 +312,17 @@ export async function handleProjectHealth(env: Env): Promise<Response> {
   // New approach: one aggregation query per data source, keyed by project_id,
   // merged in memory. Total query count is now constant (6 regardless of
   // project count). Benchmarked ~80ms for 68 projects.
+  const pbFilter = canSeePb ? '' : " AND (category != 'Peripheral Brain' OR category IS NULL)";
   const projects = await env.DB.prepare(
-    "SELECT id, slug, title, stage, status, updated_at FROM projects WHERE status = 'active'"
+    `SELECT id, slug, title, stage, status, updated_at FROM projects WHERE status = 'active'${pbFilter}`
   ).all<{ id: string; slug: string; title: string; stage: string; status: string; updated_at: string }>();
 
   const now = new Date();
-  const nowIso = now.toISOString().split('T')[0];
+  // AM-7: CT calendar "today" for the overdue comparison below (was UTC, which
+  // after ~6pm CT counted tomorrow's date — flipping the overdue boundary a
+  // day early). `now` (a Date) is still used for ms-diff math (daysSinceUpdate,
+  // milestone day counts) which is timezone-agnostic.
+  const nowIso = ctToday();
 
   // Six aggregation queries — whole-table scans but one-shot.
   const [updatesAgg, tasksCompAgg, activityAgg, commentsAgg, tasksVelocityAgg, milestonesAgg] = await Promise.all([
@@ -497,8 +513,13 @@ export async function handleUpdateProject(
 
   for (const [key, val] of Object.entries(body)) {
     if (PROJECT_ALLOWED_FIELDS.has(key)) {
+      // AM-1 (SEC-T0-5): a protected field present-but-null/empty is now a
+      // hard 400, not a silent skip. Pre-fix the `continue` swallowed the
+      // bad value and the rest of the patch applied, so the client's
+      // optimistic update silently reverted (status/stage/category vanished
+      // from the request but the row kept its old value with no error).
       if (PROJECT_REQUIRED_FIELDS.has(key) && (val === null || val === undefined || val === '')) {
-        continue;
+        return error(`Protected field "${key}" on projects cannot be null or empty`, 400);
       }
       // Enum validation — reject unknown values instead of silently storing them.
       const guard = PROJECT_ENUM_GUARDS[key];
@@ -626,10 +647,25 @@ export async function handleDeleteProject(
   // prepare().run() calls meant a failure mid-cascade (e.g. D1 timeout on the
   // UPDATE) left orphaned rows in comments/project_updates pointing at the now-
   // deleted project. With batch() D1 rolls back all 3 on any error.
+  // B7 (SEC-T0-7): cascade-clean ALL child tables that carry a project FK.
+  // Verified against schema: project_documents (project_id), milestones
+  // (project_id), conference_submissions (project_id), submission_events
+  // (project_id), regulatory_items (project_id), project_dependencies
+  // (from_slug/to_slug — slug-based, no project_id column). Pre-fix only
+  // comments/project_updates/tasks were handled, leaving the rest orphaned.
+  // All wrapped in one batch() so D1 rolls back the whole cascade on any error
+  // (B-CRIT-05 atomicity). project_id columns store either the canonical id OR
+  // the slug, so every match is `= id OR = slug`.
   try {
     await env.DB.batch([
       env.DB.prepare('DELETE FROM comments WHERE project_id = ? OR project_id = ?').bind(existing.id, existing.slug),
       env.DB.prepare('DELETE FROM project_updates WHERE project_id = ? OR project_id = ?').bind(existing.id, existing.slug),
+      env.DB.prepare('DELETE FROM project_documents WHERE project_id = ? OR project_id = ?').bind(existing.id, existing.slug),
+      env.DB.prepare('DELETE FROM milestones WHERE project_id = ? OR project_id = ?').bind(existing.id, existing.slug),
+      env.DB.prepare('DELETE FROM conference_submissions WHERE project_id = ? OR project_id = ?').bind(existing.id, existing.slug),
+      env.DB.prepare('DELETE FROM submission_events WHERE project_id = ? OR project_id = ?').bind(existing.id, existing.slug),
+      env.DB.prepare('DELETE FROM regulatory_items WHERE project_id = ? OR project_id = ?').bind(existing.id, existing.slug),
+      env.DB.prepare('DELETE FROM project_dependencies WHERE from_slug = ? OR to_slug = ? OR from_slug = ? OR to_slug = ?').bind(existing.slug, existing.slug, existing.id, existing.id),
       env.DB.prepare('UPDATE tasks SET project_id = NULL, updated_at = datetime(\'now\') WHERE (project_id = ? OR project_id = ?) AND deleted_at IS NULL').bind(existing.id, existing.slug),
     ]);
   } catch (e) {
@@ -758,7 +794,10 @@ export async function handleAddComment(
 
   // Look up author — body.author_slug takes precedence so API-driven seeding
   // attributes correctly. Falls back to the signed-in user's slug.
-  const authorSlugResolved = body.author_slug?.trim() || actorSlug(user.email);
+  // AM-2: validate/canonicalize author_slug; impersonation requires PI/service.
+  const actor = await resolveActor(env, user, body.author_slug, { allowImpersonation: await isPiRequest(request, env) });
+  if ('error' in actor) return error(actor.error, 400);
+  const authorSlugResolved = actor.slug;
   const member = await env.DB.prepare('SELECT id FROM team_members WHERE slug = ?')
     .bind(authorSlugResolved)
     .first<{ id: string }>();
@@ -821,9 +860,14 @@ export async function handlePostProjectUpdate(slug: string, request: Request, us
   if (!body.content) return error('content required', 400);
 
   const id = generateId();
+  // AM-2: project_updates.author is an actor identity. Pre-fix it stored a raw
+  // email (user.email) or an unvalidated body.author. Resolve to a canonical
+  // team slug; impersonation requires PI/service.
+  const actor = await resolveActor(env, user, body.author, { allowImpersonation: await isPiRequest(request, env) });
+  if ('error' in actor) return error(actor.error, 400);
   await env.DB.prepare(
     'INSERT INTO project_updates (id, project_id, author, content, update_type) VALUES (?, ?, ?, ?, ?)'
-  ).bind(id, slug, body.author?.trim() || user.email, body.content, body.update_type ?? 'progress').run();
+  ).bind(id, slug, actor.slug, body.content, body.update_type ?? 'progress').run();
 
   await logActivity(env, 'project_update', `Posted update on ${slug}: "${body.content.slice(0, 100)}"`, user.email, slug, 'project');
 

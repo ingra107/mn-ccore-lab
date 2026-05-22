@@ -22,7 +22,7 @@
 // write path through this endpoint as part of A3 ship.
 
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId } from '../helpers';
+import { json, error, generateId, assertProtectedNotNull } from '../helpers';
 
 const ALLOWED_TABLES = new Set([
   'tasks', 'projects', 'inbox_events', 'day_capacity', 'project_state_log',
@@ -341,6 +341,18 @@ async function processOne(
         return idem ?? r;
       }
     }
+    // AM-1 (SEC-T0-5): reject NULL/empty on protected fields. Covers BOTH
+    // insert payloads and update patches (fields is payload|patch above).
+    // applyInsert (:434) and applyPatch (:785) both spread values with no
+    // guard, so this is the single gate that prevents a protected column
+    // (tasks.status/priority/assignee, projects.status/stage/category) from
+    // being silently nulled via the A3 write path.
+    const protectedErr = assertProtectedNotNull(mut.table, fields);
+    if (protectedErr) {
+      const r = mutErr(mut.mutation_id, protectedErr);
+      const idem = await recordProcessedAtomic(env, mut, r);
+      return idem ?? r;
+    }
   }
 
   // Dispatch by op
@@ -632,11 +644,25 @@ export async function applyDelete(env: Env, mut: Mutation, user: AuthUser): Prom
       await env.DB.prepare('DELETE FROM task_subtasks WHERE task_id = ?').bind(mut.record_id).run();
     } catch { /* table may not exist */ }
   } else if (mut.table === 'projects') {
+    // B7 (SEC-T0-7): mirror the full child-table cascade from handleDeleteProject
+    // so PB-origin project deletes (this path) clean up the same dependents the
+    // Hub-UI route does. `mut.record_id` is the project's canonical id; child
+    // rows may key by id OR slug, so resolve the slug and match both.
+    // (entity_aliases is a PB-side brain.db table, not present in Hub D1, so
+    // there's no Hub alias row to clear here.)
     try {
+      const proj = await env.DB.prepare('SELECT slug FROM projects WHERE id = ?').bind(mut.record_id).first<{ slug: string | null }>();
+      const slug = proj?.slug ?? mut.record_id;
       await env.DB.batch([
-        env.DB.prepare('DELETE FROM comments WHERE project_id = ?').bind(mut.record_id),
-        env.DB.prepare('DELETE FROM project_updates WHERE project_id = ?').bind(mut.record_id),
-        env.DB.prepare("UPDATE tasks SET project_id = NULL, updated_at = datetime('now') WHERE project_id = ? AND deleted_at IS NULL").bind(mut.record_id),
+        env.DB.prepare('DELETE FROM comments WHERE project_id = ? OR project_id = ?').bind(mut.record_id, slug),
+        env.DB.prepare('DELETE FROM project_updates WHERE project_id = ? OR project_id = ?').bind(mut.record_id, slug),
+        env.DB.prepare('DELETE FROM project_documents WHERE project_id = ? OR project_id = ?').bind(mut.record_id, slug),
+        env.DB.prepare('DELETE FROM milestones WHERE project_id = ? OR project_id = ?').bind(mut.record_id, slug),
+        env.DB.prepare('DELETE FROM conference_submissions WHERE project_id = ? OR project_id = ?').bind(mut.record_id, slug),
+        env.DB.prepare('DELETE FROM submission_events WHERE project_id = ? OR project_id = ?').bind(mut.record_id, slug),
+        env.DB.prepare('DELETE FROM regulatory_items WHERE project_id = ? OR project_id = ?').bind(mut.record_id, slug),
+        env.DB.prepare('DELETE FROM project_dependencies WHERE from_slug = ? OR to_slug = ? OR from_slug = ? OR to_slug = ?').bind(slug, slug, mut.record_id, mut.record_id),
+        env.DB.prepare("UPDATE tasks SET project_id = NULL, updated_at = datetime('now') WHERE (project_id = ? OR project_id = ?) AND deleted_at IS NULL").bind(mut.record_id, slug),
       ]);
     } catch (e) {
       console.error('applyDelete project cascade failed:', e);

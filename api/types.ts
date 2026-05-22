@@ -11,6 +11,10 @@ export interface Env {
   PB_API_KEY?: string;
   CF_ACCESS_TEAM_DOMAIN?: string;
   CF_ACCESS_AUD?: string;
+  /** "1" in prod — gates write/non-public-GET auth. Read elsewhere via an
+   *  `as unknown` cast historically; typed here so jwt-verify can fail-closed
+   *  when set without verification configured (B8a). */
+  REQUIRE_AUTH?: string;
   // Airtable secrets removed in CX-S2 (2026-04-28). Pre-removal these
   // configured an Airtable DELETE cascade in handleDeleteProject; Airtable
   // was retired 2026-04-21 and the cascade no longer ran. Variables are
