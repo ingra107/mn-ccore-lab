@@ -55,6 +55,16 @@ export default function TodayPage() {
 
   const tasks: TaskRow[] = useMemo(() => (tasksQuery.data ?? []).filter((t) => t.completed === 0 && t.status !== 'done'), [tasksQuery.data])
 
+  // Tasks completed *today* per the cache — the source of truth across every
+  // surface (and this page's own optimistic completion). isToday() resolves the
+  // (UTC) completed_at to the local calendar date; a bare .slice(0,10) compares
+  // the UTC date and drops evening completions in Central time.
+  const doneTodayDetail = useMemo(
+    () => (tasksQuery.data ?? []).filter((t) => t.completed === 1 && isToday(t.completed_at)),
+    [tasksQuery.data],
+  )
+  const completedTodayIds = useMemo(() => doneTodayDetail.map((t) => t.id), [doneTodayDetail])
+
   const projectsByPid = useMemo(() => {
     const m = new Map<string, { name: string; slug: string; category?: string | null; lastActivity?: string | null }>()
     for (const p of projectsQuery.data ?? []) {
@@ -65,7 +75,7 @@ export default function TodayPage() {
   }, [projectsQuery.data])
 
   const allTaskIds = useMemo(() => tasks.map((t) => t.id), [tasks])
-  const state = useTodayState(allTaskIds)
+  const state = useTodayState(allTaskIds, completedTodayIds)
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const onExpand = useCallback((id: string) => { setExpandedId((p) => (p === id ? null : id)) }, [])
 
@@ -219,9 +229,10 @@ export default function TodayPage() {
     .map((t) => ({ id: t.id, title: t.title }))
 
   // Pill counts.
-  const today = todayKey()
-  const doneTodayCount = tasks.filter((t) => state.done[t.id]).length
-    + (tasksQuery.data ?? []).filter((t) => t.completed === 1 && t.completed_at?.slice(0, 10) === today).length
+  // Open tasks still flagged done locally = unconfirmed-optimistic completions
+  // (the reconciliation effect prunes the flag once the cache confirms them, so
+  // these are disjoint from doneTodayDetail — no double count).
+  const doneTodayCount = tasks.filter((t) => state.done[t.id]).length + doneTodayDetail.length
   const counts: DailyCounts = {
     overdue: overdueTasks.length,
     stalled: stalledProjects.length,
@@ -231,7 +242,6 @@ export default function TodayPage() {
   }
 
   const isLoading = tasksQuery.isLoading || projectsQuery.isLoading
-  const doneTodayDetail = (tasksQuery.data ?? []).filter((t) => t.completed === 1 && t.completed_at?.slice(0, 10) === today)
   const [completedOpen, setCompletedOpen] = useState(false)
 
   return (

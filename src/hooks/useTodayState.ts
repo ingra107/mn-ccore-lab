@@ -24,7 +24,7 @@ export interface TodayStateApi extends TodayStateShape {
   unplan: (id: string) => void
 }
 
-export function useTodayState(allTaskIds: string[]): TodayStateApi {
+export function useTodayState(allTaskIds: string[], completedTodayIds: string[] = []): TodayStateApi {
   const storageKey = `today_state_${todayKey()}`
   const updateStatus = useUpdateTaskStatus()
   const [state, setState] = useState<TodayStateShape>(() => {
@@ -61,6 +61,24 @@ export function useTodayState(allTaskIds: string[]): TodayStateApi {
     })
   }, [allTaskIds])
 
+  // Reconcile optimistic done-flags against the cache (the source of truth).
+  // markDone sets done[id] for instant feedback; once the cache CONFIRMS the
+  // task is completed today, the "Completed today" surface renders it straight
+  // from the cache, so we prune the optimistic flag. This prevents (a) double
+  // count / double-display (cache + localStorage both listing the same task)
+  // and (b) a stale "done" after a cross-surface reopen — the flag is already
+  // gone by then, so the reopened (completed=0) task correctly shows open again.
+  useEffect(() => {
+    if (completedTodayIds.length === 0) return
+    const confirmed = new Set(completedTodayIds)
+    setState((prev) => {
+      let changed = false
+      const nextDone = { ...prev.done }
+      for (const id of Object.keys(nextDone)) if (confirmed.has(id)) { delete nextDone[id]; changed = true }
+      return changed ? { ...prev, done: nextDone } : prev
+    })
+  }, [completedTodayIds])
+
   const plannedIds = useCallback(() => Object.keys(state.planned).filter((id) => !state.done[id]), [state])
 
   const promote = useCallback((id: string) => {
@@ -83,8 +101,17 @@ export function useTodayState(allTaskIds: string[]): TodayStateApi {
       }
       return { rightNow: nextRight, planned: nextPlanned, done: nextDone }
     })
-    // Persist to D1 so /tasks reflects the change. Issue #46.
-    updateStatus.mutate({ id, status: 'done' })
+    // Persist to D1 so /tasks reflects the change. Issue #46. On write failure,
+    // roll back the optimistic done flag — otherwise the task shows "done" until
+    // midnight despite never having completed server-side (the cache rollback in
+    // useUpdateTaskStatus.onError reverts completed=0, but can't see this flag).
+    updateStatus.mutate({ id, status: 'done' }, {
+      onError: () => setState((p) => {
+        const nextDone = { ...p.done }
+        delete nextDone[id]
+        return { ...p, done: nextDone }
+      }),
+    })
   }, [updateStatus])
 
   const uncheck = useCallback((id: string) => {

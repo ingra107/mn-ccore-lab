@@ -1,12 +1,13 @@
 import type { Env } from '../helpers';
 import { json, error } from '../helpers';
+import { ctToday } from '../lib/ct-date';
 
 // GET /api/proactive-brief — morning brief with overdue, due-today, stale, milestones
 export async function handleProactiveBrief(request: Request, env: Env): Promise<Response> {
   try {
-    const today = new Date().toISOString().split('T')[0];
-    const fourteenDaysAgo = new Date(Date.now() - 14 * 86400000).toISOString().split('T')[0];
-    const sevenDaysFromNow = new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0];
+    const today = ctToday();
+    const fourteenDaysAgo = ctToday(-14);
+    const sevenDaysFromNow = ctToday(7);
 
     const [overdueResult, dueTodayResult, staleResult, milestonesResult] = await Promise.all([
       // Overdue tasks: due_date < today AND not done

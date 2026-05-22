@@ -1,10 +1,11 @@
 import type { AuthUser, Env } from '../helpers';
 import { json, error, generateId, logActivity } from '../helpers';
+import { ctToday } from '../lib/ct-date';
 import { applyMutation } from './mutations';
 
 // GET /api/pb/command-center?date=YYYY-MM-DD
 export async function handleCommandCenter(env: Env, planDate?: string): Promise<Response> {
-  const today = new Date().toISOString().split('T')[0]
+  const today = ctToday()
   const targetDate = planDate || today
   const hour = parseInt(
     new Intl.DateTimeFormat('en-US', { timeZone: 'America/Chicago', hour: '2-digit', hourCycle: 'h23' }).format(new Date()),
@@ -107,7 +108,7 @@ export async function handleCommandCenter(env: Env, planDate?: string): Promise<
   // "Today" = high priority + due today
   // "This Week" = medium priority + due this week
   // "Backlog" = everything else
-  const weekEnd = new Date(); weekEnd.setDate(weekEnd.getDate() + (7 - weekEnd.getDay())); const weekEndStr = weekEnd.toISOString().split('T')[0]
+  const weekEndStr = ctToday(7 - new Date(today + 'T00:00:00Z').getUTCDay())
 
   const focusNow = openTasks.filter((t: any) => t.priority === 'urgent' || (t.due_date && t.due_date < today) || t.status === 'blocked')
   const todayTasks = openTasks.filter((t: any) => !focusNow.includes(t) && (t.priority === 'high' || t.due_date === today))
@@ -234,8 +235,8 @@ export async function handlePBCapture(request: Request, user: AuthUser, env: Env
 // POST /api/pb/defer — defer a task to tomorrow/next week
 export async function handlePBDefer(request: Request, user: AuthUser, env: Env): Promise<Response> {
   const body = await request.json() as { id: string; to: 'tomorrow' | 'next_week' | 'someday' }
-  const dueDate = body.to === 'tomorrow' ? new Date(Date.now() + 86400000).toISOString().split('T')[0]
-    : body.to === 'next_week' ? new Date(Date.now() + 7*86400000).toISOString().split('T')[0]
+  const dueDate = body.to === 'tomorrow' ? ctToday(1)
+    : body.to === 'next_week' ? ctToday(7)
     : null
 
   const deferPatch: Record<string, unknown> = body.to === 'someday'

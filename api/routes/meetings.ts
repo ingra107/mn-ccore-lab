@@ -1,9 +1,10 @@
 import type { AuthUser, Env } from '../helpers';
 import { json, error, generateId, logActivity } from '../helpers';
+import { ctToday } from '../lib/ct-date';
 
 // GET /api/meetings/next — next upcoming meeting (lightweight, for sidebar badge)
 export async function handleNextMeeting(env: Env): Promise<Response> {
-  const today = new Date().toISOString().split('T')[0]
+  const today = ctToday()
   const result = await env.DB.prepare(
     'SELECT id, title, date FROM meetings WHERE date >= ? ORDER BY date ASC LIMIT 1'
   ).bind(today).first()
@@ -114,8 +115,8 @@ export async function handleMeetingPrep(meetingId: string, env: Env): Promise<Re
   ).bind(twoWeeksAgo).all()).results;
 
   // Upcoming deadlines (next 14 days)
-  const twoWeeksOut = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-  const today = new Date().toISOString().split('T')[0];
+  const twoWeeksOut = ctToday(14);
+  const today = ctToday();
   const upcomingDeadlines = (await env.DB.prepare(
     'SELECT id, title, description, assignee, due_date, priority, status FROM tasks WHERE due_date BETWEEN ? AND ? AND completed = 0 ORDER BY due_date'
   ).bind(today, twoWeeksOut).all()).results;
@@ -166,8 +167,8 @@ export async function handleGenerateAgenda(meetingId: string, env: Env): Promise
   ).bind(meeting.date).all<{ id: string; title: string; description: string; assignee: string; due_date: string; status: string }>();
 
   // 2. Urgent / high-priority open tasks due this week
-  const today = new Date().toISOString().split('T')[0];
-  const weekOut = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+  const today = ctToday();
+  const weekOut = ctToday(7);
   const urgentTasks = await env.DB.prepare(
     `SELECT id, title, assignee, due_date, priority, status
      FROM tasks

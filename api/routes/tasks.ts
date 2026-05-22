@@ -1,12 +1,13 @@
 import type { AuthUser, Env } from '../helpers';
 import { json, error, generateId, logActivity, parseMentions, actorSlug } from '../helpers';
 import { filterFixtures } from '../lib/fixtures';
+import { ctToday } from '../lib/ct-date';
 import { applyMutation } from './mutations';
 
 // GET /api/tasks/overdue-count?assignee= — lightweight count for sidebar badge
 export async function handleOverdueCount(url: URL, env: Env): Promise<Response> {
   const assignee = url.searchParams.get('assignee')
-  const today = new Date().toISOString().split('T')[0]
+  const today = ctToday()
   let query = 'SELECT COUNT(*) as count FROM tasks WHERE completed = 0 AND due_date < ?'
   const params: string[] = [today]
   if (assignee) { query += ' AND assignee = ?'; params.push(assignee) }

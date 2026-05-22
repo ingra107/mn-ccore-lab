@@ -5,7 +5,7 @@
 
 import { useState, useEffect } from 'react'
 import { Navigate, Link } from 'react-router-dom'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { User, Save, Calendar as CalendarIcon, Settings as SettingsIcon, ExternalLink } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { emailToSlug } from '../../lib/emailSlug'
@@ -51,21 +51,24 @@ export default function ProfilePage() {
   const member = (teamQuery.data ?? []).find((m) => m.slug === slug)
 
   // Server-side fetch to get the full row including full_name/preferred_name
-  // which the public TeamMember shape doesn't carry. This piggybacks on
-  // the same /api/team response — we just dig into it post-fetch.
-  const rawRow = (queryClient.getQueryData<{ data: Array<Record<string, unknown>> } | undefined>(['team-raw'])?.data ?? [])
-    .find((r) => r.slug === slug)
-
-  // Pull the full row directly via fetch to get preferred_name + full_name.
-  // Stored on a separate cache key so it doesn't compete with the public
+  // which the public TeamMember shape doesn't carry. This piggybacks on the
+  // same /api/team response — we just dig into it post-fetch.
+  //
+  // MUST be a real useQuery (not a manual setQueryData on the cache): the save's
+  // onSuccess calls invalidateQueries(['team-raw']), and invalidate only refetches
+  // queries that have an observer with a queryFn. A hand-set cache entry gets
+  // marked stale but never re-fetched, so the form re-hydrates from stale data
+  // after a save (the STATE-2 bug). Sharing the cache key keeps it off the public
   // useTeam mapping.
-  useEffect(() => {
-    if (!slug) return
-    if (rawRow) return
-    fetch('/api/team').then((r) => r.ok ? r.json() : null).then((j) => {
-      if (j) queryClient.setQueryData(['team-raw'], j)
-    }).catch(() => { /* ignore */ })
-  }, [slug, rawRow, queryClient])
+  const rawQuery = useQuery({
+    queryKey: ['team-raw'],
+    queryFn: async (): Promise<{ data: Array<Record<string, unknown>> }> => {
+      const r = await fetch('/api/team')
+      if (!r.ok) throw new Error(`HTTP ${r.status}`)
+      return r.json()
+    },
+  })
+  const rawRow = (rawQuery.data?.data ?? []).find((r) => r.slug === slug)
 
   const [form, setForm] = useState<ProfileForm>({
     preferred_name: '', full_name: '', credentials: '', title: '',

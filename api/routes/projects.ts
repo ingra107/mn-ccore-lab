@@ -1,5 +1,6 @@
 import type { AuthUser, Env } from '../helpers';
 import { json, error, generateId, logActivity, parseMentions, actorSlug } from '../helpers';
+import { ctToday } from '../lib/ct-date';
 import { applyMutation } from './mutations';
 
 // Stage 4 #12-followup (2026-05-09): Nick-only visibility gate for
@@ -84,7 +85,7 @@ export async function handleUpdateMilestoneCompletion(
     return error('completed field (boolean) is required', 400);
   }
 
-  const completedDate = body.completed ? new Date().toISOString().split('T')[0] : null;
+  const completedDate = body.completed ? ctToday() : null;
   const status = body.completed ? 'completed' : 'pending';
 
   await env.DB.prepare(

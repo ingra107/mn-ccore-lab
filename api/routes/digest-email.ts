@@ -1,6 +1,7 @@
 import type { Env } from '../helpers';
 import { json, error, corsHeaders } from '../helpers';
 import { escapeHtml } from '../lib/escapeHtml';
+import { ctToday } from '../lib/ct-date';
 
 const HUB_URL = 'https://mn-ccore-lab.pages.dev';
 
@@ -42,9 +43,9 @@ interface DigestData {
 // ── Digest generation ─────────────────────────────────────────
 
 async function generateDigest(memberSlug: string, env: Env): Promise<DigestData> {
-  const today = new Date().toISOString().split('T')[0];
-  const twoDaysFromNow = new Date(Date.now() + 2 * 86400000).toISOString().split('T')[0];
-  const sevenDaysFromNow = new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0];
+  const today = ctToday();
+  const twoDaysFromNow = ctToday(2);
+  const sevenDaysFromNow = ctToday(7);
   const threeDaysAgo = new Date(Date.now() - 3 * 86400000).toISOString();
 
   // Look up the member name from team_members table
@@ -192,8 +193,8 @@ function buildDigestHtml(data: DigestData): string {
     sectionsHtml += `<table style="width:100%;border-collapse:collapse;">`;
     for (const mtg of meetings) {
       const mtgDate = new Date(mtg.date + 'T00:00:00');
-      const dayLabel = mtg.date === new Date().toISOString().split('T')[0] ? 'Today' :
-        mtg.date === new Date(Date.now() + 86400000).toISOString().split('T')[0] ? 'Tomorrow' :
+      const dayLabel = mtg.date === ctToday() ? 'Today' :
+        mtg.date === ctToday(1) ? 'Tomorrow' :
         mtgDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
       sectionsHtml += `<tr>
         <td style="padding:6px 0;border-bottom:1px solid #f0f0f0;font-size:13px;color:#0f1923;">
@@ -460,8 +461,8 @@ interface TodayMeeting {
 }
 
 async function composeDailyDigest(env: Env, member: CoordinatorMember): Promise<string> {
-  const today = new Date().toISOString().split('T')[0];
-  const in14Days = new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0];
+  const today = ctToday();
+  const in14Days = ctToday(14);
   const dateStr = new Date().toLocaleDateString('en-US', {
     weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
   });
