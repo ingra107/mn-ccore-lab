@@ -1218,22 +1218,28 @@ function AddAgendaForm({ isAuthenticated, onAdd }: { isAuthenticated: boolean; o
 function AttendanceSection({ meetingId, attendees }: { meetingId: string; attendees: string[] }) {
   const [expanded, setExpanded] = useState(false)
   const [localAttendees, setLocalAttendees] = useState<string[]>(attendees)
+  const { showUndo } = useUndoToast()
 
   const allPeople = [...directors, ...getAllMembers()].filter(p => p.slug)
   const uniquePeople = allPeople.filter((p, i) => allPeople.findIndex(x => x.slug === p.slug) === i)
 
   const toggleAttendee = async (slug: string) => {
+    const prevList = localAttendees
     const newList = localAttendees.includes(slug)
       ? localAttendees.filter(s => s !== slug)
       : [...localAttendees, slug]
     setLocalAttendees(newList)
     try {
-      await fetch(`/api/meetings/${meetingId}`, {
+      const res = await fetch(`/api/meetings/${meetingId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ attendees: JSON.stringify(newList) }),
       })
-    } catch { /* silent */ }
+      if (!res.ok) throw new Error('Save failed')
+    } catch {
+      setLocalAttendees(prevList)
+      showUndo('Attendance save failed — undone', () => {})
+    }
   }
 
   return (

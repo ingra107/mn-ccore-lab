@@ -376,6 +376,7 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label
+                id="task-assignee-label"
                 htmlFor="task-assignee"
                 className="block text-xs font-medium mb-1"
                 style={{ color: 'var(--slate)' }}

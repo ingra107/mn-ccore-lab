@@ -250,7 +250,28 @@ export default function TodayPage() {
   }
 
   const isLoading = tasksQuery.isLoading || projectsQuery.isLoading
+  const isError = tasksQuery.isError || projectsQuery.isError
   const [completedOpen, setCompletedOpen] = useState(false)
+
+  if (isError) {
+    return (
+      <div style={{ background: PAGE_BG, color: INK, fontFamily: 'var(--font-sans), \'DM Sans\', system-ui, sans-serif', minHeight: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
+        <div style={{ textAlign: 'center', maxWidth: 340 }}>
+          <div style={{ fontSize: 32, marginBottom: 12 }}>⚠️</div>
+          <h2 style={{ fontSize: 18, fontWeight: 600, color: '#fff', marginBottom: 8 }}>Could not load Today</h2>
+          <p style={{ fontSize: 13, color: INK_MUTED, marginBottom: 20 }}>
+            There was a problem fetching your tasks or projects. Check your connection and try again.
+          </p>
+          <button
+            onClick={() => { tasksQuery.refetch(); projectsQuery.refetch() }}
+            style={{ padding: '8px 20px', borderRadius: 'var(--radius-lg)', background: '#0d6f68', color: '#fff', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 500 }}
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="b2-grid" style={{ background: PAGE_BG, color: INK, fontFamily: 'var(--font-sans), \'DM Sans\', system-ui, sans-serif', minHeight: '100%' }}>

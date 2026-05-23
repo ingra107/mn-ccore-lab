@@ -61,6 +61,7 @@ import ProjectComments from '../components/ProjectComments'
 import SmartCompose from '../components/SmartCompose'
 import ProjectDocuments from './project/ProjectDocuments'
 import { PATHS } from '../constants/paths'
+import EmptyStateArt from '../components/EmptyStateArt'
 
 type Tab = 'overview' | 'tasks' | 'notes' | 'comments' | 'files' | 'activity' | 'revisions' | 'literature'
 
@@ -79,7 +80,7 @@ const STAGE_LABELS: Record<Stage, string> = {
 
 export default function ProjectDetail() {
   const { slug } = useParams<{ slug: string }>()
-  const { data: projects = [] } = useProjects()
+  const { data: projects = [], isLoading, isError } = useProjects()
 
   const project = projects.find((p) => p.slug === slug)
 
@@ -91,6 +92,54 @@ export default function ProjectDetail() {
       ogImage: slug ? `https://mn-ccore-lab.pages.dev/og/project/${slug}` : undefined,
     },
   )
+
+  // Still fetching — don't render "not found" prematurely
+  if (isLoading) {
+    return (
+      <div className="content-container" style={{ paddingTop: '2rem', paddingBottom: '4rem' }}>
+        <div style={{ height: '2rem', width: '12rem', borderRadius: 'var(--radius-lg)', background: 'var(--border-subtle)', marginBottom: '1.5rem' }} />
+        <div style={{ height: '2rem', width: '60%', borderRadius: 'var(--radius-lg)', background: 'var(--border-subtle)', marginBottom: '0.75rem' }} />
+        <div style={{ height: '1rem', width: '40%', borderRadius: 'var(--radius-lg)', background: 'var(--border-subtle)' }} />
+      </div>
+    )
+  }
+
+  if (isError) {
+    return (
+      <div className="content-container" style={{ paddingTop: '2rem', paddingBottom: '4rem' }}>
+        <Link
+          to={PATHS.projects}
+          className="inline-flex items-center gap-2 mb-6"
+          style={{ fontSize: '14px', color: 'var(--slate)', textDecoration: 'none' }}
+        >
+          <ArrowLeft size={16} />
+          Back to Pipeline
+        </Link>
+        <EmptyStateArt variant="generic" style={{ marginBottom: '1.5rem', opacity: 0.5 }} />
+        <h1 style={{ fontWeight: 600, fontSize: '1.5rem', color: 'var(--ink)', marginBottom: '0.5rem' }}>
+          Could not load project
+        </h1>
+        <p style={{ color: 'var(--slate)', marginBottom: '1.25rem' }}>
+          There was a problem fetching the project data. Check your connection and try again.
+        </p>
+        <button
+          onClick={() => window.location.reload()}
+          style={{
+            padding: '6px 16px',
+            borderRadius: 'var(--radius-lg)',
+            background: 'var(--teal-solid)',
+            color: '#fff',
+            border: 'none',
+            cursor: 'pointer',
+            fontSize: '13px',
+            fontWeight: 500,
+          }}
+        >
+          Retry
+        </button>
+      </div>
+    )
+  }
 
   if (!project) {
     return (
