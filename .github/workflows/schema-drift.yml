@@ -219,3 +219,15 @@ jobs:
         # like the deleted tasks.recurrence branch (Task 1.6, PB SHA b06ce2b3).
         # Exit 1 if any gap found; gaps listed in job log.
         run: npm run audit:schema-contract
+
+      - name: Time-discipline lint (Increment 1A R20/R21, WARN during migration)
+        # Hub-local stdlib mirror — does NOT depend on a PB checkout. WARN mode
+        # (exit 0) until the 1B display-site migration clears the backlog, then
+        # set TIME_LINT_MODE=enforce here to hard-fail.
+        #
+        # No `|| true`: the script self-gates on TIME_LINT_MODE and exits 0 in
+        # WARN mode by design, so a real hit is VISIBLE in the log (not
+        # swallowed) while never red-failing the build during 1A.
+        env:
+          TIME_LINT_MODE: warn
+        run: node scripts/check-time-discipline.mjs
