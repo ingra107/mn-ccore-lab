@@ -4,6 +4,33 @@
 > bottom — do not re-expand them. Supersedes the Apr-28 synthesis, May-5 codex plan,
 > design-handoff TICKETS, and hub-future-ideas (all historical now).
 
+---
+
+## ★ MISSION-ALIGNED PRIORITIES — north star (2026-05-22, from Nick's priorities interview)
+
+**Posture:** build it solid FIRST, no rush to invite the team. Hub is for **all audiences equally** (PI / team / mentees). The two surfaces that matter: **Today/MyTasks** (daily driver) + **Projects/Manuscripts/Grants** (system-of-record). Weighting: balanced (polish + capability + reliability + lower-maintenance). Execute roughly in this order. **Design-touching items are STEER-FIRST** — confirm direction with Nick before building.
+
+**P1 — Sync fidelity & maintenance reduction (TOP — serves daily-driver TRUST *and* cuts Nick's #1 manual pain).**
+The brain.db ↔ Hub ↔ TODAY.md "data-sync dance" is the thing most likely to silently drift and the heaviest upkeep. Goal: bulletproof, zero-drift, fewer manual steps.
+- **Sync-drift AUDIT first** — map every drift source across brain.db ↔ D1 ↔ TODAY.md (investigate-skill / builder), then close them.
+- Carry-overs: `next_artifact` symmetry (S1 done; `last_meaningful_movement` MAX-wins intentional); task done-state reconciliation (Hub side done — verify TODAY.md side); v55 fields both ways; `group_override`; legacy-slug canonicalization drift signal.
+- Automate the manual sync steps (shrink the dance).
+
+**P2 — Today/MyTasks completeness (daily driver — Nick picked ALL sub-aspects).**
+- Task capability in UI: surface v55 workflow fields (INFRA-7: `waiting_on`/`promised_to`/`promise_date`/`next_checkin`) + commitments tracker (D9 `commitments.to_slug`).
+- Planning UX (T3' remaining): Plan button, Today meeting-notes persistence, drag-planning polish.
+- Then polish: PAGE-1 (TodayPage T2), keyboard nav (UX-3), tokens (UX-2).
+
+**P3 — Research SoR trustworthiness (Projects/Manuscripts/Grants — data + history + pipeline; NOT analytics).**
+- Data completeness/accuracy audit (are all projects/manuscripts in + correct? — the real trust blocker).
+- History + movement: INFRA-1 (ProjectDetail Activity tab read+UI; D22 emits exist) + INFRA-8 (surface state/next_artifact/last_movement/stale_active_since).
+- Pipeline workflows: manuscript/grant stage tracking + deadlines + DH-1 (real grant milestones).
+
+**P4 — Smarter Hermes / Co-Scientist (strategic capability bet — longer-horizon, BRAINSTORM-FIRST).**
+- Deeper AI assistance on research tasks (lit synthesis, analysis help, drafting) beyond Q&A. T4 #41 Co-Scientist. Architecture + design effort; steer-first.
+
+**Deprioritized (still tracked below, just not now):** deeper analytics / PI-velocity dashboards; Meetings, AskTheLab, Calendar polish; external-facing OG/marketing; non-priority PAGE-* design; dead-table simplify (do opportunistically via justify-it). The tier list (T2/T3/T4) below is the MENU; THIS section is the ORDER.
+
 ## ▶ DONE 2026-05-22 PM — the T1 correctness directive + Codex gate executed
 
 Shipped `5f5f597d` (T1 batch) + `909c6e8b` (Codex-gate fixes) + `cf85cfa0` (deploy docs), deployed
