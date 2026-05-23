@@ -184,3 +184,89 @@ describe('handleListFiles — B11 PB-category attachment gate', () => {
     expect(res.status).toBe(200)
   })
 })
+
+// ── Search source isolation (UX-5) ───────────────────────────────────────────
+// When one source query rejects, Promise.allSettled keeps the rest. Verify:
+//  - response is still 200
+//  - successful sources' results are present
+//  - failed source is absent from data
+//  - `partial: true` and `failedSources` are present in the body
+describe('handleGetSearch — UX-5 source isolation on partial failure', () => {
+  // Stub: projects query throws; every other query returns one matching row.
+  function partialEnv(): Env {
+    return {
+      DB: {
+        prepare: (sql: string) => ({
+          bind: (..._args: unknown[]) => ({
+            all: async () => {
+              // The projects query is the one that carries "FROM projects WHERE
+              // (title LIKE" — make it throw to simulate a D1 timeout on that
+              // table while every other source succeeds.
+              if (/FROM projects/i.test(sql) && /WHERE \(title LIKE/i.test(sql)) {
+                throw new Error('simulated D1 timeout on projects')
+              }
+              // tasks query — return one hit so we can verify it comes through
+              if (/FROM tasks/i.test(sql)) {
+                return {
+                  results: [{
+                    id: 'task-1', title: 'isolated task', description: null,
+                    assignee: 'nick', status: 'todo', priority: 'medium',
+                    due_date: null, project_id: null, created_at: '2026-05-22',
+                  }],
+                }
+              }
+              return { results: [] }
+            },
+          }),
+        }),
+      },
+    } as unknown as Env
+  }
+
+  it('returns 200 when one source throws', async () => {
+    const url = new URL('https://x/api/search?q=isolated')
+    const res = await handleGetSearch(url, partialEnv(), true)
+    expect(res.status).toBe(200)
+  })
+
+  it('includes results from successful sources', async () => {
+    const url = new URL('https://x/api/search?q=isolated')
+    const res = await handleGetSearch(url, partialEnv(), true)
+    const body = await res.json() as { data: { type: string }[]; count: number; partial?: boolean; failedSources?: string[] }
+    const taskHits = body.data.filter((r) => r.type === 'task')
+    expect(taskHits).toHaveLength(1)
+  })
+
+  it('excludes results from the failed source', async () => {
+    const url = new URL('https://x/api/search?q=isolated')
+    const res = await handleGetSearch(url, partialEnv(), true)
+    const body = await res.json() as { data: { type: string }[] }
+    expect(body.data.filter((r) => r.type === 'project')).toHaveLength(0)
+  })
+
+  it('sets partial:true and names the failed source', async () => {
+    const url = new URL('https://x/api/search?q=isolated')
+    const res = await handleGetSearch(url, partialEnv(), true)
+    const body = await res.json() as { partial?: boolean; failedSources?: string[] }
+    expect(body.partial).toBe(true)
+    expect(body.failedSources).toContain('projects')
+  })
+
+  it('omits partial/failedSources when all sources succeed', async () => {
+    // Use the existing searchEnv() shape (all tables respond, no throws).
+    const allOkEnv: Env = {
+      DB: {
+        prepare: (_sql: string) => ({
+          bind: (..._args: unknown[]) => ({
+            all: async () => ({ results: [] }),
+          }),
+        }),
+      },
+    } as unknown as Env
+    const url = new URL('https://x/api/search?q=anything')
+    const res = await handleGetSearch(url, allOkEnv, true)
+    const body = await res.json() as { partial?: boolean; failedSources?: string[] }
+    expect(body.partial).toBeUndefined()
+    expect(body.failedSources).toBeUndefined()
+  })
+})

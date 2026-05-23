@@ -137,11 +137,15 @@ export async function handleGetSearch(url: URL, env: Env, canSeePb = false): Pro
       UNION SELECT slug FROM projects WHERE category = 'Peripheral Brain'`;
 
   // Search across 14 tables in parallel — Slack-parity unified search.
-  const [
-    tasks, projects, meetings, ideas, comments, activity,
-    notes, taskNotes, taskComments, decisions, files, actionItems,
-    publications, grants,
-  ] = await Promise.all([
+  // Promise.allSettled isolates each source: one D1 timeout or transient
+  // error returns partial results rather than a total search failure.
+  const SOURCE_NAMES = [
+    'tasks', 'projects', 'meetings', 'ideas', 'comments', 'activity',
+    'notes', 'taskNotes', 'taskComments', 'decisions', 'files', 'actionItems',
+    'publications', 'grants',
+  ] as const;
+
+  const settled = await Promise.allSettled([
     env.DB.prepare(
       `SELECT id, title, description, assignee, status, priority, due_date, project_id, created_at FROM tasks WHERE (title LIKE ? OR description LIKE ?) AND deleted_at IS NULL${
         canSeePb ? '' : ` AND (project_id IS NULL OR project_id NOT IN (${pbProjectIdSet}))`
@@ -203,6 +207,19 @@ export async function handleGetSearch(url: URL, env: Env, canSeePb = false): Pro
       'SELECT project_number, title, pi_name, fiscal_year, total_cost, last_synced FROM nih_grants WHERE (title LIKE ? OR pi_name LIKE ? OR abstract LIKE ?) LIMIT ?'
     ).bind(like, like, like, limit).all(),
   ]);
+
+  // Unpack settled results — failed sources yield empty rows and are logged.
+  const failedSources: string[] = [];
+  const [
+    tasks, projects, meetings, ideas, comments, activity,
+    notes, taskNotes, taskComments, decisions, files, actionItems,
+    publications, grants,
+  ] = settled.map((outcome, i) => {
+    if (outcome.status === 'fulfilled') return outcome.value;
+    failedSources.push(SOURCE_NAMES[i]);
+    console.error(`[search] source "${SOURCE_NAMES[i]}" failed:`, outcome.reason);
+    return { results: [] };
+  });
 
   const results: ScoredResult[] = [];
 
@@ -570,5 +587,9 @@ export async function handleGetSearch(url: URL, env: Env, canSeePb = false): Pro
   // cap). 50 gives per-type visibility without overwhelming the UI.
   const top = results.slice(0, 50);
 
-  return json({ data: top, count: top.length, query: q });
+  // `failedSources` is additive — the frontend's typed shape only reads
+  // `data` and `count`, so this field is safely ignored by existing consumers.
+  // It lets API callers and future monitoring detect partial degradation.
+  const extra = failedSources.length > 0 ? { partial: true, failedSources } : {};
+  return json({ data: top, count: top.length, query: q, ...extra });
 }
