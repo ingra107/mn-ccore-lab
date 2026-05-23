@@ -13,7 +13,9 @@ import { applyMutation } from './mutations';
 // (base tasks table + all ALTER ADD COLUMN through schema-v68, minus `notes`).
 // If a column is added to the tasks table, add it here too (or the API stops
 // returning it). Prefixed `t.` so it composes with the meetings LEFT JOIN.
-const TASK_SELECT_COLS = [
+// Exported so other route modules (proactive-brief, etc.) can reuse without
+// duplicating the column list.
+export const TASK_SELECT_COLS = [
   'id', 'meeting_id', 'project_id', 'title', 'description', 'assignee',
   'assigned_by', 'due_date', 'priority', 'status', 'source', 'completed',
   'completed_at', 'completed_by', 'created_at', 'updated_at', 'deleted_at',
@@ -146,7 +148,7 @@ export async function handleUpdateTaskStatus(id: string, request: Request, user:
     } catch (e) { console.error('Failed to create completion notification:', e); }
   }
 
-  const updated = await env.DB.prepare('SELECT * FROM tasks WHERE id = ?').bind(id).first();
+  const updated = await env.DB.prepare(`SELECT ${TASK_SELECT_COLS} FROM tasks t WHERE t.id = ?`).bind(id).first();
   return json({ data: updated });
 }
 
@@ -336,7 +338,7 @@ export async function handleUpdateTask(id: string, request: Request, user: AuthU
     await logActivity(env, 'assignee_change', `Assignee: ${prevAssignee.assignee ?? '—'} → ${body.assignee as string}`, user.email, id, 'task');
   }
 
-  const updated = await env.DB.prepare('SELECT * FROM tasks WHERE id = ?').bind(id).first();
+  const updated = await env.DB.prepare(`SELECT ${TASK_SELECT_COLS} FROM tasks t WHERE t.id = ?`).bind(id).first();
   if (!updated) return error('Task not found', 404);
   return json({ data: updated });
 }
@@ -463,7 +465,7 @@ export async function handleCreateTask(request: Request, user: AuthUser, env: En
     console.error('Failed to create assignment notification:', e);
   }
 
-  const created = await env.DB.prepare('SELECT * FROM tasks WHERE id = ?').bind(id).first();
+  const created = await env.DB.prepare(`SELECT ${TASK_SELECT_COLS} FROM tasks t WHERE t.id = ?`).bind(id).first();
   return json({ data: created }, 201);
 }
 
@@ -931,7 +933,7 @@ export async function handleAcknowledgeTask(id: string, request: Request, user: 
     } catch (e) { console.error('Failed to create acknowledge notification:', e); }
   }
 
-  const updated = await env.DB.prepare('SELECT * FROM tasks WHERE id = ?').bind(id).first();
+  const updated = await env.DB.prepare(`SELECT ${TASK_SELECT_COLS} FROM tasks t WHERE t.id = ?`).bind(id).first();
   return json({ data: updated });
 }
 

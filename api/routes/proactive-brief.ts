@@ -1,6 +1,7 @@
 import type { Env } from '../helpers';
 import { json, error } from '../helpers';
 import { ctToday } from '../lib/ct-date';
+import { TASK_SELECT_COLS } from './tasks';
 
 // GET /api/proactive-brief — morning brief with overdue, due-today, stale, milestones
 export async function handleProactiveBrief(request: Request, env: Env): Promise<Response> {
@@ -15,16 +16,16 @@ export async function handleProactiveBrief(request: Request, env: Env): Promise<
     const [overdueResult, dueTodayResult, staleResult, milestonesResult] = await Promise.all([
       // Overdue tasks: due_date < today AND not done
       env.DB.prepare(
-        `SELECT * FROM tasks
-         WHERE due_date < ? AND status != 'done' AND completed = 0 AND deleted_at IS NULL
-         ORDER BY priority DESC, due_date ASC`
+        `SELECT ${TASK_SELECT_COLS} FROM tasks t
+         WHERE t.due_date < ? AND t.status != 'done' AND t.completed = 0 AND t.deleted_at IS NULL
+         ORDER BY t.priority DESC, t.due_date ASC`
       ).bind(today).all(),
 
       // Due today
       env.DB.prepare(
-        `SELECT * FROM tasks
-         WHERE due_date = ? AND status != 'done' AND completed = 0 AND deleted_at IS NULL
-         ORDER BY priority DESC`
+        `SELECT ${TASK_SELECT_COLS} FROM tasks t
+         WHERE t.due_date = ? AND t.status != 'done' AND t.completed = 0 AND t.deleted_at IS NULL
+         ORDER BY t.priority DESC`
       ).bind(today).all(),
 
       // Stale projects: projects with no task activity in 14 days
