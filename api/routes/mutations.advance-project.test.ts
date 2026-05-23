@@ -188,9 +188,11 @@ describe('advanceProjectMovement — via applyUpdate', () => {
     expect(projCalls[0].sql).toMatch(/last_meaningful_movement/i)
     expect(projCalls[0].sql).toMatch(/stale_active_since\s*=\s*NULL/i)
 
-    // Project row in store should reflect the advancement
+    // Project row in store should reflect the advancement.
+    // After Task-4 UTC normalization, the stored value is canonical UTC space-sep
+    // (not the raw Z-format client_ts). '2026-05-22T14:00:00.000Z' → '2026-05-22 14:00:00'.
     const proj = db._projects.get('r01-provider-variation')
-    expect(proj?.last_meaningful_movement).toBe('2026-05-22T14:00:00.000Z')
+    expect(proj?.last_meaningful_movement).toBe('2026-05-22 14:00:00')
     expect(proj?.stale_active_since).toBeNull()
   })
 
@@ -248,10 +250,11 @@ describe('advanceProjectMovement — via applyUpdate', () => {
     }), user)
     expect(result.status).toMatch(/^(accepted|merged_clean)$/)
 
-    // Project must be advanced regardless of origin
+    // Project must be advanced regardless of origin.
+    // UTC space-sep form after Task-4 normalization.
     expect(projectUpdateCalls(db).length).toBe(1)
     const proj = db._projects.get('r01-provider-variation')
-    expect(proj?.last_meaningful_movement).toBe('2026-05-22T14:00:00.000Z')
+    expect(proj?.last_meaningful_movement).toBe('2026-05-22 14:00:00')
   })
 
   it('R4: no project_id → no project UPDATE (orphaned task is safe)', async () => {
@@ -298,6 +301,203 @@ describe('advanceProjectMovement — via applyUpdate', () => {
 
     expect(projectUpdateCalls(db).length).toBe(1)
     const proj = db._projects.get('r01-provider-variation')
-    expect(proj?.last_meaningful_movement).toBe('2026-05-22T14:00:00.000Z')
+    // UTC space-sep form after Task-4 normalization.
+    expect(proj?.last_meaningful_movement).toBe('2026-05-22 14:00:00')
+  })
+})
+
+// ── Task-4 UTC normalization tests ───────────────────────────────────────────
+// Verifies advanceProjectMovement correctly normalizes naive-CT client_ts to
+// UTC before the MAX compare so lexical `<` on two UTC space-sep values gives
+// the right winner. (Increment 1A Task 4 — kills the live LMM churn bug.)
+//
+// These tests exercise the normalizeToUtcSpaceSep path via applyUpdate, using
+// the same makeStubDB harness. Each test uses a distinct project + task id to
+// avoid cross-test state aliasing.
+
+describe('advanceProjectMovement — Task-4 UTC normalization', () => {
+  // Shared UTC offset for test: 2026-05-22 is CDT (-05:00 / -300 min).
+  // 16:30 CT = 21:30 UTC; 15:00 CT = 20:00 UTC.
+
+  it('naive-CT client_ts that is the LATER real instant beats an earlier stored UTC LMM', async () => {
+    // Stored LMM (UTC space-sep): 2026-05-22 21:00:00 == 16:00 CT.
+    // Incoming naive-CT client_ts: 2026-05-22T16:30:00 == 21:30 UTC (LATER).
+    // Pre-fix raw lexical compare: '2026-05-22 21:00:00' < '2026-05-22T16:30:00'
+    //   is FALSE ('2' < 'T' at separator pos) → the genuinely-later CT instant
+    //   WRONGLY loses. After Task-4 fix, tsUtc = '2026-05-22 21:30:00' > stored
+    //   '2026-05-22 21:00:00' → LMM correctly advances to '2026-05-22 21:30:00'.
+    const taskId = 'task_01utcnorm0000000000000001'
+    const projId = 'proj_utc_norm_x'
+    const db = makeStubDB({
+      task: {
+        id: taskId,
+        title: 'UTC norm task',
+        status: 'todo',
+        completed: 0,
+        project_id: projId,
+        deleted_at: null,
+        seq: 1,
+        last_mutation_id: null,
+      },
+      project: {
+        id: projId,
+        title: 'UTC norm project X',
+        status: 'active',
+        last_meaningful_movement: '2026-05-22 21:00:00',
+        stale_active_since: null,
+      },
+    })
+    const env = { DB: db } as unknown as import('../helpers').Env
+    const user = { email: 'test@example.com' } as import('../helpers').AuthUser
+
+    await applyUpdate(env, makeMut({
+      mutation_id: 'mut_01utcnorm0000000000000001',
+      record_id: taskId,
+      // Naive CT: 16:30 on 2026-05-22. CDT = UTC-5, so 16:30 CT = 21:30 UTC.
+      client_ts: '2026-05-22T16:30:00',
+    }), user)
+
+    const proj = db._projects.get(projId)
+    // The later real instant (21:30 UTC) must win, stored as UTC space-sep.
+    expect(proj?.last_meaningful_movement).toBe('2026-05-22 21:30:00')
+  })
+
+  it('explicit-UTC (Z) client_ts is honored verbatim as UTC', async () => {
+    // An explicit Z-suffix client_ts should be parsed as UTC and stored correctly.
+    const taskId = 'task_01utcnorm0000000000000002'
+    const projId = 'proj_utc_norm_y'
+    const db = makeStubDB({
+      task: {
+        id: taskId,
+        title: 'UTC norm task Y',
+        status: 'todo',
+        completed: 0,
+        project_id: projId,
+        deleted_at: null,
+        seq: 1,
+        last_mutation_id: null,
+      },
+      project: {
+        id: projId,
+        title: 'UTC norm project Y',
+        status: 'active',
+        last_meaningful_movement: '2026-05-22 21:00:00',
+        stale_active_since: null,
+      },
+    })
+    const env = { DB: db } as unknown as import('../helpers').Env
+    const user = { email: 'test@example.com' } as import('../helpers').AuthUser
+
+    await applyUpdate(env, makeMut({
+      mutation_id: 'mut_01utcnorm0000000000000002',
+      record_id: taskId,
+      client_ts: '2026-05-22T21:30:00Z',
+    }), user)
+
+    const proj = db._projects.get(projId)
+    // Z-suffix is UTC; 21:30:00Z → stored as '2026-05-22 21:30:00'.
+    expect(proj?.last_meaningful_movement).toBe('2026-05-22 21:30:00')
+  })
+
+  it('an earlier incoming instant does NOT overwrite a later stored LMM', async () => {
+    // Stored LMM: 2026-05-22 22:00:00 UTC (later).
+    // Incoming naive-CT: 2026-05-22T16:30:00 == 21:30 UTC (earlier).
+    // After normalization both are UTC; '21:30' < '22:00' → stored LMM unchanged.
+    const taskId = 'task_01utcnorm0000000000000003'
+    const projId = 'proj_utc_norm_z'
+    const db = makeStubDB({
+      task: {
+        id: taskId,
+        title: 'UTC norm task Z',
+        status: 'todo',
+        completed: 0,
+        project_id: projId,
+        deleted_at: null,
+        seq: 1,
+        last_mutation_id: null,
+      },
+      project: {
+        id: projId,
+        title: 'UTC norm project Z',
+        status: 'active',
+        last_meaningful_movement: '2026-05-22 22:00:00',
+        stale_active_since: null,
+      },
+    })
+    const env = { DB: db } as unknown as import('../helpers').Env
+    const user = { email: 'test@example.com' } as import('../helpers').AuthUser
+
+    await applyUpdate(env, makeMut({
+      mutation_id: 'mut_01utcnorm0000000000000003',
+      record_id: taskId,
+      client_ts: '2026-05-22T16:30:00', // 21:30 UTC — earlier than 22:00
+    }), user)
+
+    const proj = db._projects.get(projId)
+    // LMM must remain unchanged.
+    expect(proj?.last_meaningful_movement).toBe('2026-05-22 22:00:00')
+  })
+
+  it('concurrent completions never move LMM backward — atomic single-UPDATE CASE guard (Codex finding 2)', async () => {
+    // Two completions race: an EARLIER instant (CT 15:00 = 20:00 UTC) and a
+    // LATER instant (CT 16:30 = 21:30 UTC), fired concurrently from Promise.all.
+    // The atomic single-UPDATE CASE compare ensures the LATER value wins regardless
+    // of arrival order. A SELECT-then-write read-modify-write would let the earlier
+    // write land after the later one and move LMM backward — this test guards that
+    // regression (Codex finding 2, confirmed against mutations.ts:796-806 HEAD).
+    // Miniflare/Node D1 stub serializes per connection; the test documents the
+    // invariant and catches any future refactor that introduces a read-modify-write.
+    const taskEarlier = 'task_01utcnorm0000000000000004'
+    const taskLater   = 'task_01utcnorm0000000000000005'
+    const projId = 'proj_utc_norm_cas'
+    const db = makeStubDB({
+      task: {
+        id: taskEarlier,
+        title: 'CAS task earlier',
+        status: 'todo',
+        completed: 0,
+        project_id: projId,
+        deleted_at: null,
+        seq: 1,
+        last_mutation_id: null,
+      },
+      project: {
+        id: projId,
+        title: 'CAS project',
+        status: 'active',
+        last_meaningful_movement: '2026-05-22 20:00:00',
+        stale_active_since: null,
+      },
+    })
+    // Add the second task to the store manually (makeStubDB only takes one task)
+    db._tasks.set(taskLater, {
+      id: taskLater,
+      title: 'CAS task later',
+      status: 'todo',
+      completed: 0,
+      project_id: projId,
+      deleted_at: null,
+      seq: 2,
+      last_mutation_id: null,
+    })
+    const env = { DB: db } as unknown as import('../helpers').Env
+    const user = { email: 'test@example.com' } as import('../helpers').AuthUser
+
+    await Promise.all([
+      applyUpdate(env, makeMut({
+        mutation_id: 'mut_01utcnorm0000000000000004',
+        record_id: taskEarlier,
+        client_ts: '2026-05-22T15:00:00', // 20:00 UTC — EARLIER
+      }), user),
+      applyUpdate(env, makeMut({
+        mutation_id: 'mut_01utcnorm0000000000000005',
+        record_id: taskLater,
+        client_ts: '2026-05-22T16:30:00', // 21:30 UTC — LATER
+      }), user),
+    ])
+
+    const proj = db._projects.get(projId)
+    // The LATER instant (21:30 UTC) must have won; LMM must never be moved backward.
+    expect(proj?.last_meaningful_movement).toBe('2026-05-22 21:30:00')
   })
 })

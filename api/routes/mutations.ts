@@ -97,6 +97,79 @@ function decodeCompositeRecordId(recordId: string): unknown[] {
   return parts;
 }
 
+// ── UTC timestamp normalization (Increment 1A Task 4) ──────────────────────
+// Kills the live LMM churn bug: client_ts from brain.db pre-1A is naive
+// America/Chicago, while stored last_meaningful_movement is UTC. A raw lexical
+// MAX on mixed-zone strings picks the wrong winner (CT '16:30' < UTC '21:00'
+// lexically even though 16:30 CT == 21:30 UTC, which is later). Fix: normalize
+// BOTH operands to canonical UTC space-sep BEFORE the DB-side CASE compare,
+// keeping the single-UPDATE atomicity (no SELECT-then-write lost-update window).
+
+/**
+ * Returns the America/Chicago UTC offset in minutes for the wall-clock instant
+ * described by `ts` (YYYY-MM-DDTHH:MM:SS or YYYY-MM-DD HH:MM:SS, no offset).
+ * Returns -300 during CDT (UTC-5) and -360 during CST (UTC-6). Cloudflare
+ * Workers ship full ICU so DST resolution via Intl is correct.
+ */
+function ctOffsetMinutesAt(ts: string): -300 | -360 {
+  // Parse the naive wall-clock into a Date by pretending it is UTC (the only
+  // parse path that is zone-neutral). We just need the calendar date to look up
+  // DST, so the resulting Date is a proxy for the CT civil date — close enough.
+  const normalized = ts.replace(' ', 'T');
+  const proxy = new Date(normalized + 'Z'); // treat as UTC to get a Date object
+  if (isNaN(proxy.getTime())) return -360; // safe fallback: CST
+
+  // Use Intl to resolve the CT offset at this proxy instant. The CT wall-clock
+  // is within ±1h of the true instant, which is always sufficient to determine
+  // which DST side we're on (DST transitions happen at 2am CT, far from noon).
+  const fmt = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Chicago',
+    timeZoneName: 'shortOffset',
+  });
+  const parts = fmt.formatToParts(proxy);
+  const tzPart = parts.find(p => p.type === 'timeZoneName')?.value ?? 'GMT-6';
+  // shortOffset format: "GMT-5" (CDT) or "GMT-6" (CST)
+  const match = tzPart.match(/GMT([+-])(\d+)/);
+  if (!match) return -360;
+  const sign = match[1] === '-' ? -1 : 1;
+  return (sign * parseInt(match[2], 10) * 60) as -300 | -360;
+}
+
+/**
+ * Normalize a timestamp to canonical UTC 'YYYY-MM-DD HH:MM:SS' (space-sep,
+ * no trailing Z, no fractional seconds). Honors an explicit UTC offset or Z
+ * suffix; treats a naive value (no offset) as legacy America/Chicago (the
+ * brain.db pre-Increment-1A emit zone). Returns null on unparseable input.
+ *
+ * The on-disk LMM format in D1 is 'YYYY-MM-DD HH:MM:SS' (SQLite datetime()).
+ * Storing in this canonical form lets SQLite's lexical `<` on two UTC values
+ * act as a correct temporal compare.
+ */
+function normalizeToUtcSpaceSep(ts: string | null | undefined): string | null {
+  if (!ts) return null;
+  const trimmed = ts.trim();
+  // Detect an explicit offset: Z suffix OR +HH:MM / -HH:MM after the time part.
+  const hasOffset = /[zZ]$/.test(trimmed) || /[+-]\d{2}:?\d{2}$/.test(trimmed.slice(10));
+  let d: Date;
+  if (hasOffset) {
+    d = new Date(trimmed);
+  } else {
+    // Naive wall-clock → treat as America/Chicago. Append the CT offset so the
+    // Date constructor gets an unambiguous absolute instant.
+    const ctOffsetMin = ctOffsetMinutesAt(trimmed); // -300 (CDT) or -360 (CST)
+    const sign = ctOffsetMin <= 0 ? '-' : '+';
+    const abs = Math.abs(ctOffsetMin);
+    const hh = String(Math.floor(abs / 60)).padStart(2, '0');
+    const mm = String(abs % 60).padStart(2, '0');
+    const withOffset = trimmed.replace(' ', 'T') + `${sign}${hh}:${mm}`;
+    d = new Date(withOffset);
+  }
+  if (isNaN(d.getTime())) return null;
+  // toISOString() → 'YYYY-MM-DDTHH:MM:SS.mmmZ'; convert to space-sep, no frac, no Z.
+  return d.toISOString().replace('T', ' ').replace(/\.\d+Z$/, '');
+}
+// ── end UTC timestamp normalization ─────────────────────────────────────────
+
 // Build a composite WHERE clause: "col1 = ? AND col2 = ? AND col3 = ?"
 // Returns { clause: string, vals: unknown[] }.
 function compositeWhere(cols: string[], parts: unknown[]): { clause: string; vals: unknown[] } {
@@ -781,10 +854,26 @@ async function advanceProjectMovement(
   // Hub-UI-originated completions use the actual completion time rather than
   // Hub server processing time. This makes convergence deterministic when both
   // machines complete the same task nearly simultaneously.
-  const ts = mut.client_ts || new Date().toISOString();
+  //
+  // UTC-normalize the incoming timestamp (Increment 1A Task 4): client_ts from
+  // brain.db pre-1A is naive America/Chicago (e.g. '2026-05-22T16:11:46');
+  // last_meaningful_movement on disk is UTC space-sep (SQLite datetime('now')).
+  // A raw lexical compare on mixed-zone strings picks the wrong winner — a CT
+  // '16:30' string sorts before a UTC '21:00' string even though the CT instant
+  // IS later (16:30 CT == 21:30 UTC). Normalizing to UTC space-sep makes the
+  // DB-side lexical `<` a correct temporal compare. Fallback to server-now
+  // (already UTC) if client_ts is missing or unparseable.
+  const tsUtc =
+    normalizeToUtcSpaceSep(mut.client_ts) ??
+    new Date().toISOString().replace('T', ' ').replace(/\.\d+Z$/, '');
 
-  // MAX-safe update: CASE WHEN preserves existing if it is already later.
-  // Clears stale_active_since unconditionally (task movement = project unstale).
+  // ATOMIC MAX in UTC space — single UPDATE, DB-side CASE compare. Because both
+  // sides are now canonical UTC space-sep, the lexical `<` IS a correct temporal
+  // compare. This preserves the live code's lost-update safety (the compare and
+  // write are one statement; concurrent completions can never move LMM backward)
+  // while killing the mixed-zone wrong-winner bug. stale_active_since + updated_at
+  // unconditional (movement = project unstale), matching prior behavior.
+  //
   // Uses id = ? OR slug = ? because tasks.project_id may store the project's
   // slug (assigned via the Hub UI resolve path in tasks.ts resolvedProjectId =
   // proj.slug || proj.id) rather than the PK. Matching only id = ? silently
@@ -803,7 +892,7 @@ async function advanceProjectMovement(
       stale_active_since = NULL,
       updated_at = datetime('now')
     WHERE id = ? OR slug = ?
-  `).bind(ts, ts, projectId, projectId).run().catch((e: Error) => {
+  `).bind(tsUtc, tsUtc, projectId, projectId).run().catch((e: Error) => {
     console.error('advanceProjectMovement: project update failed:', e.message);
   });
 }
