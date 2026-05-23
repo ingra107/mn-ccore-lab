@@ -26,6 +26,7 @@ import type { TaskRow } from '../../lib/api'
 import { useLongPress } from '../../hooks/useLongPress'
 import { useSwipeAction } from '../../hooks/useSwipeAction'
 import { motion } from 'framer-motion'
+import { localDateKey } from '../../lib/dateUtils'
 
 // ── Column definitions for resize + tab nav ─────────────────
 // Full column set: checkbox + DATA_COLUMNS + actions
@@ -1882,7 +1883,7 @@ function CalculationsRow({ tasks }: { tasks: TaskRow[] }) {
   // 600+ tasks rerendering on every keystroke (search input, filter
   // toggle), the prior version recomputed everything ~5×/keystroke.
   const stats = useMemo(() => {
-    const today = new Date().toISOString().split('T')[0]
+    const today = localDateKey()
     let overdue = 0, todo = 0, inProgress = 0, done = 0
     for (const t of tasks) {
       if (t.completed) done++

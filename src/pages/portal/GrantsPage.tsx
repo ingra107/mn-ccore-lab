@@ -29,7 +29,7 @@ import { useSimilarGrants, useUpcomingGrantMilestones } from '../../hooks/useApi
 import { useCreateGrantMilestone, useUpdateGrantMilestone, useCompleteGrantMilestone, useUpdateGrant } from '../../hooks/useMutations'
 import { getPersonInfo } from '../../data/team'
 import { displayName } from '../../lib/nameUtils'
-import { formatMediumDate, isOverdue } from '../../lib/dateUtils'
+import { formatMediumDate, isOverdue, localDateKey } from '../../lib/dateUtils'
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 
 // ── Gantt chart constants ──────────────────────────────────────
@@ -441,7 +441,7 @@ export default function GrantsPage() {
   )
 
   const upcomingMilestones = useMemo(() => {
-    const now = new Date().toISOString().slice(0, 10)
+    const now = localDateKey()
     return grants
       .flatMap((g) =>
         (g.milestones || [])

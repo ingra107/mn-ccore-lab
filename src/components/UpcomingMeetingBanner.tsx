@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { Calendar, ArrowRight, CheckCircle2, UserCheck } from 'lucide-react'
 import { useMeetingsApi, useActionItems } from '../hooks/useApiData'
 import { getMeetingFacilitator } from '../lib/facilitator'
+import { localDateKey } from '../lib/dateUtils'
 import { getPersonInfo } from '../data/team'
 import { PATHS } from '../constants/paths'
 
@@ -12,7 +13,7 @@ export default function UpcomingMeetingBanner() {
 
   // Find the next upcoming meeting: status='upcoming' or nearest future date
   const nextMeeting = useMemo(() => {
-    const today = new Date().toISOString().slice(0, 10)
+    const today = localDateKey()
 
     // First try status='upcoming'
     const upcoming = meetings.find((m) => m.status === 'upcoming')

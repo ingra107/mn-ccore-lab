@@ -9,7 +9,7 @@ import type { HoverCardData } from '../../components/HoverCard'
 import { useHoverCard } from '../../hooks/useHoverCard'
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 import { getPersonInfo, getMemberBySlug, directors } from '../../data/team'
-import { formatRelativeTime, formatMediumDate } from '../../lib/dateUtils'
+import { formatRelativeTime, formatMediumDate, localDateKey } from '../../lib/dateUtils'
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
 import InlineSelect from '../../components/InlineSelect'
@@ -198,8 +198,8 @@ export default function ActivityPage() {
         {!isLoading && (() => {
           let flatIndex = 0
           return grouped.map(([date, items]) => {
-            const today = new Date().toISOString().split('T')[0]
-            const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0]
+            const today = localDateKey()
+            const yesterday = localDateKey(new Date(Date.now() - 86400000))
             const isToday = date === today
             const isYesterday = date === yesterday
             const label = isToday ? 'Today' : isYesterday ? 'Yesterday' : formatMediumDate(date)

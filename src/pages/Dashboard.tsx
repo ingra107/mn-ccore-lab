@@ -8,7 +8,7 @@ import { usePageMeta } from '../hooks/usePageMeta'
 import { useAuth } from '../hooks/useAuth'
 import { emailToSlug } from '../lib/emailSlug'
 import { useMeetingsApi, useTasks, useExpiringRegulatory } from '../hooks/useApiData'
-import { formatMediumDate } from '../lib/dateUtils'
+import { formatMediumDate, localDateKey } from '../lib/dateUtils'
 import { isProductionVisible } from '../lib/isProductionVisible'
 import { getUserRoleFromAuth, ROLE_DEFAULTS } from '../lib/roleDefaults'
 import WelcomeBanner from '../components/WelcomeBanner'
@@ -176,9 +176,8 @@ export default function Dashboard() {
 
   // Find next upcoming meeting (today or tomorrow)
   const upcomingMeeting = useMemo(() => {
-    const now = new Date()
-    const today = now.toISOString().split('T')[0]
-    const tomorrow = new Date(now.getTime() + 86400000).toISOString().split('T')[0]
+    const today = localDateKey()
+    const tomorrow = localDateKey(new Date(Date.now() + 86400000))
     return meetings.find(m => m.date === today || m.date === tomorrow)
   }, [meetings])
 
@@ -598,7 +597,7 @@ export default function Dashboard() {
             <Clock size={18} style={{ color: 'var(--gold)', flexShrink: 0 }} />
             <div className="flex-1">
               <div style={{ fontSize: '13px', fontWeight: 500 }}>
-                {upcomingMeeting.date === new Date().toISOString().split('T')[0] ? 'Meeting today' : 'Meeting tomorrow'}: {upcomingMeeting.title}
+                {upcomingMeeting.date === localDateKey() ? 'Meeting today' : 'Meeting tomorrow'}: {upcomingMeeting.title}
               </div>
               <div style={{ fontSize: '11px', color: 'var(--muted)' }}>
                 {formatMediumDate(upcomingMeeting.date)}

@@ -9,6 +9,7 @@ import {
   Activity, BarChart3, Settings,
 } from 'lucide-react'
 import { spring } from '../lib/animations'
+import { localDateKey } from '../lib/dateUtils'
 import { useTasks, useProjects, useTeam, useMeetingsApi } from '../hooks/useApiData'
 import { useAuth } from '../hooks/useAuth'
 import { getPersonInfo } from '../data/team'
@@ -236,7 +237,7 @@ export default function CommandPalette() {
     items.push({
       id: 'filter-due-today',
       label: 'Due Today',
-      sublabel: `${tasks.filter(t => !t.completed && t.due_date === new Date().toISOString().split('T')[0]).length} tasks due today`,
+      sublabel: `${tasks.filter(t => !t.completed && t.due_date === localDateKey()).length} tasks due today`,
       icon: Clock,
       action: () => { navigate(PATHS.myTasks); setOpen(false) },
       category: 'filter',

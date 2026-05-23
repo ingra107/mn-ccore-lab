@@ -6,7 +6,7 @@ import { AnimatePresence } from 'framer-motion'
 import { useDarkMode } from '../hooks/useDarkMode'
 import { useAuth } from '../hooks/useAuth'
 import { useTasks, useMeetingsApi } from '../hooks/useApiData'
-import { formatShortDate } from '../lib/dateUtils'
+import { formatShortDate, localDateKey } from '../lib/dateUtils'
 import PageTransition from './PageTransition'
 
 const navLinks: { to: string; label: string }[] = [
@@ -64,7 +64,7 @@ export default function Layout() {
   // Next upcoming meeting
   const { data: meetings = [] } = useMeetingsApi({ enabled: isAuthenticated })
   const nextMeetingLabel = useMemo(() => {
-    const today = new Date().toISOString().slice(0, 10)
+    const today = localDateKey()
     const upcoming = meetings
       .filter((m) => m.date >= today)
       .sort((a, b) => a.date.localeCompare(b.date))

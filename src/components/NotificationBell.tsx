@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../hooks/useAuth'
 import { emailToSlug } from '../lib/emailSlug'
 import { useNotifications, useUnreadCount, useMarkRead, useMarkAllRead } from '../hooks/useNotifications'
-import { formatRelativeTime, formatMediumDate } from '../lib/dateUtils'
+import { formatRelativeTime, formatMediumDate, localDateKey } from '../lib/dateUtils'
 import { PATHS } from '../constants/paths'
 
 const TYPE_ICONS: Record<string, typeof Bell> = {
@@ -54,8 +54,8 @@ export default function NotificationBell() {
   const displayNotifications = isAuthenticated ? notifications.slice(0, 20) : []
 
   const groupedByDay = useMemo(() => {
-    const today = new Date().toISOString().split('T')[0]
-    const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0]
+    const today = localDateKey()
+    const yesterday = localDateKey(new Date(Date.now() - 86400000))
     const groups: { label: string; items: typeof displayNotifications }[] = []
     const map = new Map<string, typeof displayNotifications>()
 

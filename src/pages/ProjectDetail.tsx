@@ -31,7 +31,7 @@ import BulkActionToolbar from '../components/tasks/BulkActionToolbar'
 import { useAuth } from '../hooks/useAuth'
 import { getPersonInfo } from '../data/team'
 import TypingIndicator from '../components/TypingIndicator'
-import { formatShortDate, formatMediumDate } from '../lib/dateUtils'
+import { formatShortDate, formatMediumDate, localDateKey } from '../lib/dateUtils'
 import Avatar from '../components/Avatar'
 import InlineSelect from '../components/InlineSelect'
 import InlineAssigneePicker from '../components/InlineAssigneePicker'
@@ -440,7 +440,7 @@ function ProjectDetailInner({ project }: InnerProps) {
   const [showAgendaForm, setShowAgendaForm] = useState(false)
   const [agendaNote, setAgendaNote] = useState('')
   const nextUpcomingMeeting = useMemo(() => {
-    const today = new Date().toISOString().split('T')[0]
+    const today = localDateKey()
     const upcoming = apiMeetings.find((m) => m.status === 'upcoming')
     if (upcoming) return upcoming
     const future = [...apiMeetings]
@@ -770,7 +770,7 @@ function ProjectDetailInner({ project }: InnerProps) {
             </span>
           )}
           {(() => {
-            const overdue = pendingTasks.filter(t => t.due_date && t.due_date < new Date().toISOString().split('T')[0])
+            const overdue = pendingTasks.filter(t => t.due_date && t.due_date < localDateKey())
             return overdue.length > 0 ? (
               <span className="inline-flex items-center gap-1 text-[10px]" style={{ color: 'var(--maroon)', fontWeight: 500 }}>
                 <span style={{ width: 5, height: 5, borderRadius: 'var(--radius-circle)', background: 'var(--maroon-solid)' }} />

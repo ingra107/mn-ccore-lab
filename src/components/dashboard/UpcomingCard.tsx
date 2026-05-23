@@ -4,6 +4,7 @@ import { Calendar, AlertCircle, ArrowRight, ListChecks, CalendarOff, UserCheck }
 import { useMeetingsApi, useActionItems, useMeetingCadence, useTasks } from '../../hooks/useApiData'
 import { useGrantTimeline } from '../../hooks/useGrantTimeline'
 import { getMeetingFacilitator } from '../../lib/facilitator'
+import { localDateKey } from '../../lib/dateUtils'
 import { getPersonInfo } from '../../data/team'
 import BentoCard from './BentoCard'
 import { PATHS } from '../../constants/paths'
@@ -99,7 +100,7 @@ function UpcomingCard() {
 
   // Find the next upcoming meeting — closest future date wins, regardless of status
   const nextMeeting = useMemo(() => {
-    const today = new Date().toISOString().split('T')[0]
+    const today = localDateKey()
     const future = [...meetings]
       .filter((m) => m.date >= today && m.status !== 'cancelled')
       .sort((a, b) => a.date.localeCompare(b.date))

@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo } from 'react'
 import { ONBOARDING_STEPS } from '../data/onboarding'
+import { localDateKey } from '../lib/dateUtils'
 
 const STORAGE_KEY = 'mnccore-onboarding-v1'
 
@@ -24,7 +25,7 @@ function loadState(): OnboardingState {
   }
   // Auto-start: set startDate to today for new users
   const fresh: OnboardingState = {
-    startDate: new Date().toISOString().split('T')[0],
+    startDate: localDateKey(),
     completedSteps: [],
     dismissed: false,
   }
@@ -69,7 +70,7 @@ export function useOnboarding() {
 
   const reset = useCallback(() => {
     const fresh: OnboardingState = {
-      startDate: new Date().toISOString().split('T')[0],
+      startDate: localDateKey(),
       completedSteps: [],
       dismissed: false,
     }

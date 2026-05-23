@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState, useCallback } from 'react'
 import { getPersonInfo } from '../../data/team'
-import { formatShortDate } from '../../lib/dateUtils'
+import { formatShortDate, localDateKey } from '../../lib/dateUtils'
 import { useProjects } from '../../hooks/useApiData'
 import type { TaskRow } from '../../lib/api'
 
@@ -87,7 +87,7 @@ export default function TaskTimelineView({ tasks, onStatusChange, onOpenDetail }
     [startDate, totalDays]
   )
 
-  const todayX = dateToX(new Date().toISOString().split('T')[0])
+  const todayX = dateToX(localDateKey())
 
   // Generate week markers
   const weekMarkers = useMemo(() => {
