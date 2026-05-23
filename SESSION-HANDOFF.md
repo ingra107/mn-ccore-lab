@@ -1,22 +1,22 @@
-# Session Handoff — 2026-05-22 (→ 2026-05-23)
+# Session Handoff — 2026-05-23
 
-## ▶▶ AUDIT MODE — NEXT SESSION, DO THIS FIRST (in order, no re-triage)
+## ▶▶ NEXT SESSION — Phase β of Increment 1A (COORDINATED, both machines)
 
-**Reviews-before-code. Nick's explicit instruction (2026-05-23): get the focused plans reviewed by Opus agents + Codex BEFORE consolidating them into the final WORKPLAN and BEFORE writing any code.** The three plans below are INTERRELATED (they all touch time/sync/migration) — review each, then reconcile into ONE coherent sequence.
+**The full reviews-before-code → brainstorm → writing-plans → executing-plans pipeline RAN this session. Increment 1A Phase α is SHIPPED + DEPLOYED + LIVE. Phase β (the live-data cross-machine migration) was DEFERRED by Nick to a dedicated coordinated session — that is your next action. Do NOT re-run the review/design/plan work; it's done + committed.**
 
-**STEP 1 — Dispatch the review wave (parallel). For EACH plan, get BOTH (a) an Opus specialist-agent review AND (b) a `/codex-cli` review. Each reviewer must output EXPLICIT step-by-step: (1) how they'd ALTER the plan, and (2) where relevant, step-by-step MIGRATION instructions.**
-   1. **Activity-timeline / notes / comments** — `docs/superpowers/specs/2026-05-23-activity-timeline-comments-design.md` (Model A: Description + unified Activity timeline + one-line MentionInput composer + @→NotificationBell; notes→brain.db-local; core fix = description is wrongly an append-target). *(Nick specifically asked for the Codex review of this one.)*
-   2. **LWW timezone v2** — `~/Peripheral-Brain/Context/Decisions/2026-05-22-sync-lww-timezone-unification-v2.md`. Include: (a) review the **48h shadow log** `~/Peripheral-Brain/data/logs/lww_zone_shadow.jsonl` (≥48h after ~2026-05-23 03:00 UTC; if 0 wrong-decision rows → safe), and (b) evaluate Nick's **"flip-with-snapshot + live log watch"** alternative to the pure 48h shadow (snapshot affected columns first so a wrong overwrite is recoverable; gate fails toward "skip" on ambiguous rows — builder to confirm a wrong overwrite is genuinely unrecoverable today).
-   3. **Canonical time discipline (FOUNDATIONAL)** — `~/Peripheral-Brain/Context/Decisions/2026-05-23-canonical-time-discipline.md` (STUB → needs full design). Single read/write/display chokepoint + lint. **This SIMPLIFIES #2** (disciplined UTC writes remove the LWW read-side zone-guessing) → design it first/with #2, not after.
+**DONE this session (2026-05-23):**
+- **6-review wave** (3 Opus specialist + 2 Codex plan-audits) on the 3 interrelated plans → reconciled into ONE Nick-approved design: `docs/superpowers/specs/2026-05-23-time-sync-timeline-reconciliation-design.md`. Reviews persisted in `Scratch/reviews-2026-05-23/`. Key verified finding: wrong LWW overwrites are **UNRECOVERABLE in place** (`audit_log`=hash only `query.py:314`; CRDT=hash+latest-only `crdt.py:247-255`) → a snapshot is mandatory for β. `completed_at` resolved to UTC-store/display-local (not a CT exception); server-side display = rendering-machine OS zone.
+- **Increment 1A plan** (`docs/superpowers/plans/2026-05-23-increment-1A-time-sync-foundation.md`, `d2de8ee2` → Codex-blocked → amended `217989c3` → spot-checked). Split into Phase α (done) + Phase β (next). **Plan 1B** (the ~91-site Hub display-migration to viewer-local) is still UNWRITTEN — write it after β, since it consumes `time.ts`.
+- **Phase α SHIPPED + LIVE** (deploy `17d7cdd1`, `/api/health` ok, smoke-clean): Task 1 PB `timez.py`+`now_instant` (`569a604a`); Task 2 Hub `time.ts` (`be2eb1d4`); Task 3 lint R20-R23 WARN both repos (`43b9eb68`+`40058df6`); **Task 4 — KILLED the live LMM churn bug** via UTC-normalized atomic compare in `advanceProjectMovement` (`d9398a83`+`68b8d861`); Task 10 hazards — `operations.py:920` Bug-2 fix + backfill `--allow-post-utc-cutover` quarantine + zone-contract registry (`c00db519`). Deploy also batched the **`tasks.notes` redaction** (`66e5c9d0`) → LIVE.
 
-**STEP 2 — `superpowers:brainstorming` for the OPEN design.** The time-discipline stub NEEDS full design, and the three plans must be reconciled into ONE coherent target (time-discipline underpins LWW; timeline is the P2 build). Brainstorm that WITH Nick, folding in STEP 1's review recommendations — and honor the skill's HARD GATE: present a design + get Nick's approval before ANY implementation. *Appropriately scoped:* brainstorm only the open/reconciliation pieces; do NOT re-brainstorm the already-settled parts (the timeline spec + LWW v2 are designed — they get refined by the reviews, not re-explored). Apply the 30k-ft principle (global CLAUDE.md Core Principles): is there a simplifying/systemic move that collapses all three?
+**▶ NEXT: Phase β = Increment 1A Tasks 5-9 — DEDICATED COORDINATED SESSION.** snapshot both repos → fail-closed LWW enforce flip (3 pull-gates `hub.py:1278/1861/2002`) → `client_ts` cutover (cross-repo lockstep, Hub handoff spec first) → ONE stopped-world legacy UTC migration (`088_normalize_timestamps_utc.py`, frozen-CT converter) → delete `to_utc_dt` zone-guessing scaffold + lint WARN→ERROR. **HARD PRECONDITIONS — do NOT start β without ALL:**
+   1. **Home laptop quiescent** (or Syncthing paused) the whole β window — β rewrites the Syncthing-synced `brain.db` AND changes how BOTH machines arbitrate vs the shared Hub D1. Running it while home is live → divergent `brain.db` + Syncthing conflict = the exact silent corruption β prevents.
+   2. **Triage the 16 pre-existing `tests/sync/` failures FIRST** (`test_state`, `test_pull_symmetry_check`, `test_hub_payload_w1` — present at HEAD, unrelated to timezones per builder, but don't run a lossy sync migration on a red sync suite blind).
+   3. **Snapshot FIRST** (rollback artifact; overwrites are unrecoverable). Plan Task 5 has the exact commands. Valid ~hours → snapshot→flip→watch→restore-or-discard.
+   4. Run **fail-closed** + the plan's 2-hour watch window (exact diff queries, count=0, restore trigger). `_ISO_T_SHIFT_ELIGIBLE_IDS` (Task 8) ships EMPTY (fail-closed) → hand-audit + populate from real naive-ISO-T candidates, rehearse on a copied brain.db, before applying.
 
-**STEP 3 — `superpowers:writing-plans` for the consolidated implementation plan.** Once the design is approved, write the detailed plan(s) — MANDATORY `pre-review-grep-validate` first (every file:line verified against current code), and for this multi-subsystem scope dispatch domain specialists (builder / hub-backend / hub-frontend) to draft per the skill. This sets/updates the final `WORKPLAN.md` sequencing.
-
-**STEP 4 — `superpowers:executing-plans` (or `subagent-driven-development`) to BUILD.** Task-by-task with review checkpoints. Reviews-before-code is already satisfied by STEP 1, design-approval by STEP 2, grounding by STEP 3. ONLY here does code get written.
-
-> **Skill ownership:** these skills are invoked by the SESSION ORCHESTRATOR (next-session Claude / COO), NOT by dispatched sub-agents — specialist agents (builder, hub-*) don't have the Skill tool. The Opus auditors operate INSIDE the flow: reviewers in STEP 1, plan-drafters within writing-plans (STEP 3), per-task builders within executing-plans (STEP 4). The orchestrator drives brainstorm → writing-plans → executing-plans in order; agents do the work each stage dispatches.
-> **Going-forward rule** (now in global CLAUDE.md Core Principles): any architectural/substrate change gets the same reviews-before-code → brainstorm → writing-plans → executing-plans treatment. The three above are the current review wave; no other WORKPLAN item is review-gated right now (the rest are smaller/non-architectural).
+> **Increment 2** (Activity-timeline/comments, P2) stays specced + amended (`docs/superpowers/specs/2026-05-23-activity-timeline-comments-design.md` + the opus/codex timeline reviews) but UNPLANNED-for-build. It MUST follow β's `client_ts` cutover (shared files). Extend `activity_log` (visibility-gate the public endpoints); remove ALL notes→description paths incl. the create-path leaks (`query.py:736/900`); add a Hub Activity write transport.
+> **Going-forward rule** (global CLAUDE.md): any architectural/substrate change gets reviews-before-code → brainstorm → writing-plans → executing-plans. Phase β execution is already grounded by all four — it just needs the coordinated window.
 
 ---
 
@@ -24,11 +24,11 @@
 
 | Item | Value |
 |------|-------|
-| HEAD | `2e3ca57c` on main, pushed (INFRA-5 CI hardening `2e3ca57c`; Increment B `bb2db3c3`/`7a4599a0`; CT-3 `a8bd7a9e`; deploy-docs `e3adaf36`; security batch `0a612459`/`45911e6d`/`7c222e65`). Deployed app code = `7a4599a0` (`8c8188ac`); INFRA-5 is CI-only, no redeploy. PB repo: sync fix `148138e3` (Syncthing). |
-| Deploy | `8c8188ac.mn-ccore-lab.pages.dev` (2026-05-22 evening, Increment B) — LIVE on `7a4599a0`. api 204/204; security batch smoke-verified earlier; `run-tests.sh quick` 113/0/4 after each deploy. |
+| HEAD | Hub `68b8d861` on main, pushed (Increment 1A Phase α — Hub: `be2eb1d4`/`40058df6`/`d9398a83`/`68b8d861`; spec `5715e6eb`/`799ee275`; plan `d2de8ee2`/`217989c3`; redaction `66e5c9d0`). PB α commits local + Syncthing-propagating: `569a604a`/`43b9eb68`/`c00db519` (PB HEAD `c00db519`). |
+| Deploy | `17d7cdd1.mn-ccore-lab.pages.dev` (2026-05-23, Increment 1A Phase α) — LIVE on `68b8d861`. `/api/health` ok (tasks 759/projects 93/team 19, 0 failures). Shipped: Task 4 LMM churn-fix + `tasks.notes` redaction (`66e5c9d0`) + `time.ts` + lint CI. |
 | Build | GREEN (0 TS errors) |
-| API tests | 178/178 passing |
-| Schema | **v68** on prod D1. Test D1 (`mnccore-lab-test`) **fully reconciled to prod 2026-05-22 PM** via hub-schema-sync (was missing 27 tables + dozens of columns incl. all of v54/v55/v57/v58; now 76 tables, exact column match, 178/178 tests). |
+| API tests | **208/208** passing (Hub). ⚠️ PB `tests/sync/`: 324 pass / 3 skip / **16 PRE-EXISTING failures** (`test_state`, `test_pull_symmetry_check`, `test_hub_payload_w1` — at HEAD, unrelated to 1A; **triage before Phase β**). |
+| Schema | **v68** prod D1. PB migration high-water `087_stage3_deleted_at`; Phase β adds `088_normalize_timestamps_utc.py` (stopped-world). |
 | API auth | GET endpoints locked down (unchanged from 2026-05-15) |
 | Team adoption | Not yet broadly directed. |
 
