@@ -10,6 +10,8 @@
 
 **Verified against:** PB HEAD `d4036d7b`, Hub HEAD `799ee275` (this session, 2026-05-23). All file:line citations below were re-grepped against HEAD per the writing-plans pre-write rule; the source plans' citations were 80-150 lines stale and have been corrected. See "Verified citation spine" appendix.
 
+**Post-review amendment (2026-05-23, Codex pre-execution review verdict: block-and-rework):** Tasks 4, 5, 6, 8 + four smaller findings were amended after re-verifying each against live code. The load-bearing corrections: (1) Task 8 migration now uses a FROZEN internal `ZoneInfo("America/Chicago")` converter (NOT the mutable `to_utc_dt` classifier — which would read historical CT as UTC post-flip and never shift it, the R1 trap) + a stopped-world Step 0 preflight; (2) Task 4 keeps the live ATOMIC single-UPDATE CASE compare (the original SELECT-then-write introduced a lost-update race), changing only the value to UTC-normalized; (3) Task 5 D1 export uses the REAL `processed_mutations` columns (`mutation_id, origin_machine, processed_at, outcome, table_name, record_id` — NOT the non-existent `last_mutation_id, seq`), full table (no LIMIT), scripted+rehearsed restore; (4) Task 6 task gate is now fail-closed on missing/unparseable local timestamp; (5) migration entrypoint is `def upgrade(conn)` (auto-runner contract) numbered `088` (high-water is 087, not 062); (6) the `now_instant_wire` circular import is resolved by defining the minters in `outbox.py` and re-exporting from `timez.py`; (7) Task 9 test now targets the real behavior-change (the `_CT_ORIGINS` client_ts branch deletion — an unknown column already raises today, and post-Task-8 the CT columns are in `_UTC_COLUMNS`, so neither captures the change); (8) Hub CI lint is a stdlib-only Hub-local mirror, not a `|| true` no-op against an absent PB checkout.
+
 **Scope boundary (1A vs 1B):** This plan is the DATA-RISK CORE (spec §2.1-9). It does NOT migrate the ~91 Hub frontend display sites (`new Date().toISOString()` ×50, `.toISOString().split|slice` ×41) or the server-side `generate_today_markdown.py` / `scripts/today/sections.py` viewer-local conversion — those are Plan 1B, which consumes the helper API 1A defines (`formatLocal`, `todayCivil`, `format_local`, `today_civil`). 1A SHIPS those helpers but only adopts them at the sync-write sites.
 
 ---
@@ -32,15 +34,16 @@ BUT Opus-LWW's fail-toward-skip insight is adopted into the gate flip (Task 4) a
 ## File Structure
 
 **PB (`~/Peripheral-Brain/`):**
-- Create: `scripts/db/timez.py` — canonical time chokepoint (re-exports `outbox.to_utc_dt`; adds `now_instant`, `now_instant_wire`, `format_local`, `today_civil`).
-- Modify: `scripts/db/check_sync_antipatterns.py` — add time rules R20-R23 (NOT R10-R13; R10 already exists), reuse the `PB_LINT_MODE=warn|enforce` mechanism at `:631`.
-- Modify: `scripts/db/sync/drivers/hub.py` — flip 3 pull-gates (`:1278`, `:1861`, `:2002`) to origin-aware enforce.
-- Modify: `scripts/db/outbox.py` — `client_ts` writers (`:745`, `:2045`) to explicit-UTC; delete `_CT_COLUMNS`/`_CT_ORIGINS` guessing branches (`:160-172`, `:254-261`) at the end.
+- Create: `scripts/db/timez.py` — canonical time chokepoint (re-exports `outbox.to_utc_dt` + `now_instant`/`now_instant_wire`; defines `format_local`, `today_civil`).
+- Modify: `scripts/db/outbox.py` — Task 1: ADD `now_instant()`/`now_instant_wire()` defs (so `timez` re-exports + Task-7 writers call locally, no cycle). Task 7: `client_ts` writers (`:745`, `:2045`) to `now_instant_wire()`. Task 8: move `last_meaningful_movement`+`completed_at` to `_UTC_COLUMNS`, empty `_CT_COLUMNS`. Task 9: delete `_CT_COLUMNS`/`_CT_ORIGINS` guessing branches (`:160-172`, `:254-261`).
+- Modify: `scripts/db/check_sync_antipatterns.py` — add time rules R20-R23 (NOT R10-R13; R10 already exists), reuse the `PB_LINT_MODE=warn|enforce` mechanism at `:631`; generalize the `:694` warn-summary label.
+- Modify: `scripts/db/sync/drivers/hub.py` — flip 3 pull-gates (`:1278`, `:1861`, `:2002`) to origin-aware fail-closed enforce.
 - Modify: `scripts/db/query.py` — LMM/completed_at writer flip (`:1185`, `:1236`, `:1341`, `:1240`; verify `:2922`).
-- Modify: `scripts/db/sync/operations.py:920` — fix latent Bug-2 second freshness-guard caller.
+- Modify: `scripts/db/sync/operations.py` — `:920` fix latent Bug-2 second freshness-guard caller; `:43` bump `EXPECTED_MIN_MIGRATION` to `088_normalize_timestamps_utc` (Task 8 commit).
 - Modify: `scripts/db/backfill_last_meaningful_movement.py` — quarantine (refuse-to-run post-cutover guard).
 - Modify: `scripts/db/sync/records.py:159-176` — delete `local_time_is_localtime` localtime path at the end.
-- Create: `scripts/db/migrations/NNN_normalize_timestamps_utc.py` — the one atomic legacy migration.
+- Create: `scripts/db/migrations/088_normalize_timestamps_utc.py` — the one legacy migration (entrypoint `def upgrade(conn)`; frozen internal CT→UTC converter, NOT `to_utc_dt`).
+- Create: `scripts/db/restore_d1_snapshot.py` — scripted D1 rollback from the Task 5 JSON exports.
 - Modify: `Context/Topics/shared-schema-registry.md` — register the per-column zone contract.
 - Create: `data/shared/hub-schema-changes.jsonl` — Hub handoff spec (first line).
 - Create: `Context/Decisions/2026-05-23-increment-1A-timestamp-utc-cutover.md` — decision doc.
@@ -73,16 +76,21 @@ BUT Opus-LWW's fail-toward-skip insight is adopted into the gate flip (Task 4) a
 
 **Ship-risk legend:** **A** = independent, ship-on-green, no flag, pure addition. **B** = sequenced-after-X, rollback by revert. **C** = concrete data-risk staged under snapshot + relay-confirm, named failure mechanism + restore path.
 
-**Relay-confirm points:** Task 5 (snapshot must exist on BOTH machines before any flip), Task 6 (both machines flip in the SAME sync generation, else one enforces and one doesn't → transient divergence), Task 8 (peer auto-applies the migration via session-start runner; both machines must converge under the snapshot umbrella). Use the `cross-machine-relay` skill, Migration & state-change confirmation section, for all three.
+**Relay-confirm points:** Task 5 (snapshot must exist on BOTH machines before any flip), Task 6 (both machines flip in the SAME sync generation, else one enforces and one doesn't → transient divergence), Task 8 (data migration — see below). Use the `cross-machine-relay` skill, Migration & state-change confirmation section, for all three.
+
+> **Task 8 must NOT rely on passive "peer auto-applies at session-start" (Codex finding).** For a lossy data migration the code+contract can land on machine A and be live (writers flipped, column-set moved) while machine B's brain.db is still un-migrated until its next session-start runs `auto_run_migrations` — a window where B's gates read A-pushed UTC against B's still-CT on-disk data. Mitigations baked into Task 8: (a) `EXPECTED_MIN_MIGRATION` bump makes B's sync REFUSE against the un-migrated DB rather than corrupt (fail-safe direction); (b) each machine runs its OWN Step 0 stopped-world preflight + Step 7 rehearsal + applies under its OWN fresh snapshot; (c) explicit relay-confirm that BOTH machines have applied + converged (`sync.py status --verbose` diff = 0) BEFORE the WATCH window closes and snapshots are discarded. Do not let machine B silently catch up via passive session-start for this class.
 
 ---
 
 ## Task 1: PB canonical time chokepoint — `scripts/db/timez.py`
 
-**Specialist:** builder. **Ship-risk: A** (pure addition; no caller yet; rollback = delete the file).
+**Specialist:** builder. **Ship-risk: A** (pure addition; no caller yet; rollback = delete the file + the two outbox.py functions).
+
+> **CIRCULAR-IMPORT SEQUENCING (Codex smaller finding):** because `timez.py` re-exports `now_instant`/`now_instant_wire` FROM `outbox.py` (the definitions must live in `outbox.py` so that `outbox.py`'s Task-7 writers can call them without importing `timez` — which would cycle), Task 1 MUST add those two function definitions to `outbox.py` in the SAME commit as creating `timez.py`. They are pure additions to `outbox.py` (no caller yet until Task 7), so this stays Ship-risk A. Do NOT defer the `outbox.py` definitions to Task 7 — the Task 1 `timez.py` re-export would `ImportError` at import time.
 
 **Files:**
-- Create: `scripts/db/timez.py`
+- Modify: `scripts/db/outbox.py` — ADD `now_instant()` + `now_instant_wire()` defs (near `to_utc_dt`). Pure addition.
+- Create: `scripts/db/timez.py` (re-exports `to_utc_dt`, `ZoneContractError`, `now_instant`, `now_instant_wire` from `outbox.py`; defines `format_local`, `today_civil`).
 - Test: `tests/db/test_timez.py`
 
 - [ ] **Step 1: Write the failing test**
@@ -136,7 +144,33 @@ def test_format_local_renders_instant_in_zone():
 Run: `cd ~/Peripheral-Brain && python -m pytest tests/db/test_timez.py -v`
 Expected: FAIL with `ModuleNotFoundError: No module named 'scripts.db.timez'`.
 
-- [ ] **Step 3: Write minimal implementation**
+- [ ] **Step 3: Write minimal implementation (TWO files)**
+
+First, ADD to `scripts/db/outbox.py` (near `to_utc_dt`, so `timez` can re-export and the Task-7 writers can call locally — no cycle):
+
+```python
+# scripts/db/outbox.py — pure addition (no caller until Task 7)
+def now_instant() -> str:
+    """UTC instant, space-sep, no tz suffix: '2026-05-23 18:04:11'.
+
+    Matches the on-disk updated_at shape (datetime('now') is UTC space-sep).
+    The SOLE legal minter for new sync-write Instant columns.
+    """
+    return datetime.now(_timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+
+
+def now_instant_wire() -> str:
+    """UTC instant, ISO-T, explicit offset: '2026-05-23T18:04:11+00:00'.
+
+    For wire/client_ts values: the explicit marker means to_utc_dt resolves it
+    via branch 1 (honor offset) with no column/origin context needed.
+    """
+    return datetime.now(_timezone.utc).replace(microsecond=0).isoformat()
+```
+
+> Note `outbox.py` already imports `timezone as _timezone` (used by `to_utc_dt`); reuse it. If the alias differs at HEAD, match the existing import.
+
+Then create `scripts/db/timez.py`:
 
 ```python
 # scripts/db/timez.py
@@ -160,28 +194,17 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-# Re-export the canonical reader so there is ONE import surface for the lint
-# allowlist. to_utc_dt physically stays in outbox.py (where it shipped in
-# 61c53d78) to avoid a churning move-commit; timez just re-exports it.
-from scripts.db.outbox import to_utc_dt, ZoneContractError  # noqa: F401
-
-
-def now_instant() -> str:
-    """UTC instant, space-sep, no tz suffix: '2026-05-23 18:04:11'.
-
-    Matches the on-disk updated_at shape (datetime('now') is UTC space-sep).
-    The SOLE legal minter for new sync-write Instant columns.
-    """
-    return datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
-
-
-def now_instant_wire() -> str:
-    """UTC instant, ISO-T, explicit offset: '2026-05-23T18:04:11+00:00'.
-
-    For wire/client_ts values: the explicit marker means to_utc_dt resolves it
-    via branch 1 (honor offset) with no column/origin context needed.
-    """
-    return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+# Re-export the canonical reader AND the Instant minters so there is ONE import
+# surface for callers + the lint allowlist. All three physically live in
+# outbox.py (to_utc_dt shipped there in 61c53d78; now_instant/now_instant_wire
+# are DEFINED there in Task 7 to avoid a circular import — timez imports FROM
+# outbox, so outbox must NOT import FROM timez). timez just re-exports.
+from scripts.db.outbox import (  # noqa: F401
+    to_utc_dt,
+    ZoneContractError,
+    now_instant,
+    now_instant_wire,
+)
 
 
 def format_local(iso: str, zone: str | None = None) -> str:
@@ -228,9 +251,9 @@ Expected: PASS (5 tests).
 
 ```bash
 cd ~/Peripheral-Brain && git status --short && git diff --cached --name-only
-git commit -F <msgfile> -- scripts/db/timez.py tests/db/test_timez.py
+git commit -F <msgfile> -- scripts/db/timez.py scripts/db/outbox.py tests/db/test_timez.py
 ```
-Message: `feat(time): PB canonical time chokepoint timez.py (Increment 1A Task 1)`. Author = ingra107. No Claude attribution.
+Message: `feat(time): PB canonical time chokepoint timez.py + now_instant minters in outbox.py (Increment 1A Task 1)`. Author = ingra107. No Claude attribution. (Note: `outbox.py` is in this commit only for the two pure-addition minter funcs — the `client_ts` writer flip is Task 7.)
 
 ---
 
@@ -476,21 +499,70 @@ _TIME_RULES = ("R20", "R21", "R22", "R23")
                     warnings.append(msg)
 ```
 
+Also update the warn-summary string at `:694-695` (currently hard-codes "R10/HUB-R1 warnings") so it isn't misleading once R20-R23 warn too:
+
+```python
+# at :694-695 — generalize the summary label
+        print(f"[sync-antipatterns] OK ({len(files)} files), "
+              f"{len(warnings)} WARN-mode hits (R10/HUB-R1/R20-R23, pre-cutover):",
+              file=sys.stderr)
+```
+
 > **R22 false-negative note (Opus-timediscipline risk #4):** the regex catches the common `datetime.now()` form but not variable indirection (`d = datetime.now(); d.isoformat()`). This is a known backstop limit; the Hub ESLint AST rule (deferred to 1B) is the real net for the TS side. For the PB sync surface (only ~2 writers) the regex is sufficient. Document this in the rule docstring.
 
 - [ ] **Step 4: Add the Hub CI lint step** (`.github/workflows/schema-drift.yml`, after the `audit:schema-contract` step at `:216-221`):
 
-```yaml
-      - name: Time-discipline lint (Increment 1A, WARN during migration)
-        # R20-R23: bans raw new Date().toISOString() / toISOString().split
-        # in Hub src+api outside src/lib/time.ts. WARN mode (exit 0) until the
-        # 1B display-site migration clears the backlog, then flip to ERROR.
-        env:
-          PB_LINT_MODE: warn
-        run: python3 ../Peripheral-Brain/scripts/db/check_sync_antipatterns.py || true
+> **CRITICAL CORRECTION (Codex smaller finding, confirmed against `.github/workflows/schema-drift.yml:41-42` HEAD): the workflow does a SINGLE `actions/checkout@v4` — only the Hub repo. There is NO `../Peripheral-Brain/` checkout.** So `python3 ../Peripheral-Brain/scripts/db/check_sync_antipatterns.py || true` ALWAYS hits file-not-found → `|| true` swallows it → SILENT NO-OP forever. That is lint theater. The original plan's "if PB not checked out, gate on a path check" is exactly the theater. **DECIDED (not optional): ship a stdlib-only Hub-local mirror of the TS rules R20/R21** so the lint actually runs against the Hub tree without depending on a PB checkout. The PB R22/R23 (Python sync writers) remain PB-side; they don't apply to the Hub TS tree anyway.
+
+Create `scripts/check-time-discipline.mjs` (stdlib Node, no deps — mirrors R20/R21 for the Hub TS tree):
+
+```js
+// scripts/check-time-discipline.mjs — Hub-local R20/R21 mirror (Increment 1A).
+// Bans raw `new Date().toISOString()` (R20) and `.toISOString().split|slice`
+// (R21) in src/ + api/ outside src/lib/time.ts. WARN mode by default (exit 0);
+// CI flips to ERROR after the 1B display-site migration clears the backlog.
+import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { join } from 'node:path';
+
+const ENFORCE = process.env.TIME_LINT_MODE === 'enforce';
+const ALLOW = new Set(['src/lib/time.ts']);
+const R20 = /new Date\(\)\.toISOString\(\)/;
+const R21 = /\.toISOString\(\)\.(?:split|slice)\s*\(/;
+const hits = [];
+function walk(dir) {
+  for (const e of readdirSync(dir)) {
+    const p = join(dir, e);
+    if (statSync(p).isDirectory()) { if (!/node_modules|dist|\.git/.test(p)) walk(p); continue; }
+    if (!/\.(ts|tsx)$/.test(p)) continue;
+    const rel = p.replace(/\\/g, '/').replace(/^\.\//, '');
+    if ([...ALLOW].some(a => rel.endsWith(a))) continue;
+    readFileSync(p, 'utf8').split('\n').forEach((line, i) => {
+      const t = line.trimStart();
+      if (t.startsWith('//') || t.startsWith('*')) return;
+      if (R20.test(line)) hits.push(`R20 ${rel}:${i + 1}: ${line.trim()}`);
+      if (R21.test(line)) hits.push(`R21 ${rel}:${i + 1}: ${line.trim()}`);
+    });
+  }
+}
+['src', 'api'].forEach(d => { try { walk(d); } catch {} });
+if (hits.length) {
+  console.error(`[time-discipline] ${hits.length} hit(s):\n` + hits.join('\n'));
+  process.exit(ENFORCE ? 1 : 0);
+}
+console.log('[time-discipline] OK');
 ```
 
-> If the PB repo is not checked out alongside Hub in CI, gate this step on a path check or move the lint into a Hub-local copy. Flag for hub-backend at execution: confirm the CI runner has both repos OR ship a stdlib-only Hub-local mirror of R20/R21. WARN mode + `|| true` means a missing PB checkout never red-fails the build during 1A.
+```yaml
+      - name: Time-discipline lint (Increment 1A R20/R21, WARN during migration)
+        # Hub-local stdlib mirror — does NOT depend on a PB checkout. WARN mode
+        # (exit 0) until the 1B display-site migration clears the backlog, then
+        # set TIME_LINT_MODE=enforce here to hard-fail.
+        env:
+          TIME_LINT_MODE: warn
+        run: node scripts/check-time-discipline.mjs
+```
+
+> No `|| true` — the script self-gates on `TIME_LINT_MODE` and exits 0 in WARN mode by design, so a real hit is VISIBLE in the log (not swallowed) while never red-failing the build during 1A. hub-backend ships `scripts/check-time-discipline.mjs` + the workflow step in one commit. The PB-side `check_sync_antipatterns.py` R20-R23 still run in PB's own pre-commit/CI for the PB tree.
 
 - [ ] **Step 5: Run tests + lint**
 
@@ -547,39 +619,64 @@ it('an earlier incoming instant does NOT overwrite a later stored LMM', async ()
   const row = await getProject(env, 'proj_z');
   expect(row.last_meaningful_movement).toBe('2026-05-22 22:00:00'); // unchanged
 });
+
+it('concurrent completions never move LMM backward (no lost-update — Codex finding 2)', async () => {
+  // Two completions race: an EARLIER instant and a LATER instant, fired
+  // concurrently. The atomic single-UPDATE CASE compare guarantees the final
+  // stored value is the LATER one regardless of arrival order. (A SELECT-then-
+  // write read-modify-write would let the earlier write land after the later
+  // one and move LMM backward — this test would catch that regression.)
+  await seedProject(env, { id: 'proj_cas', last_meaningful_movement: '2026-05-22 20:00:00' });
+  await Promise.all([
+    advanceProjectMovement(env, mutWith({ client_ts: '2026-05-22T16:30:00' }), currentTaskInProj_cas), // 21:30 UTC (later)
+    advanceProjectMovement(env, mutWith({ client_ts: '2026-05-22T15:00:00' }), currentTaskInProj_cas), // 20:00 UTC (earlier)
+  ]);
+  const row = await getProject(env, 'proj_cas');
+  expect(row.last_meaningful_movement).toBe('2026-05-22 21:30:00'); // the LATER instant won; never moved backward
+});
 ```
+
+> Miniflare/D1 in vitest serializes statements per connection, so the `Promise.all` above exercises interleaving at the statement boundary. The atomic single-UPDATE structure means even true concurrency cannot regress — the test documents the contract and guards against a future refactor reintroducing a read-modify-write.
 
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `cd ~/mn-ccore-lab && npx vitest run --config vitest.config.api.ts api/routes/mutations.advance-project.test.ts`
 Expected: FAIL — the lexical-MAX path mis-orders the naive-CT case.
 
-- [ ] **Step 3: Implement the read-modify-write normalizer** (replace `:784` and the raw SQL block `:796-808`)
+- [ ] **Step 3: Implement the UTC-normalized MAX — preserve the atomic DB-side compare (replace only the `ts` line `:784` and the bound values; KEEP the single-UPDATE CASE structure `:796-808`)**
+
+> **CRITICAL CORRECTION (Codex finding 2, confirmed against `mutations.ts:796-806` HEAD): the original plan's SELECT-existing → compute `shouldWrite` → unconditional CASE-write introduces a LOST-UPDATE race.** Two concurrent completions both SELECT the old LMM, both compute `shouldWrite` against that stale read, and the OLDER timestamp can land its UPDATE after the newer → LMM moves backward. The LIVE code is already race-safe: it does the compare INSIDE one atomic UPDATE (`last_meaningful_movement < ? THEN ?`). The bug is NOT the structure — it is the LEXICAL/mixed-zone compare. **THE FIX: keep the atomic single-UPDATE DB-side compare; only change `ts` to a UTC-normalized value so the `<` compare is apples-to-apples** (all on-disk LMM is UTC space-sep post-Task-8; the incoming value is normalized to UTC space-sep here). No SELECT, no read-modify-write, no lost-update window.
 
 ```ts
   // Normalize the incoming movement instant to canonical UTC space-sep.
   // Explicit-offset/Z is honored; a naive value is treated as legacy-CT
   // (the brain.db emit format pre-Increment-1A Task 7) and converted to UTC.
-  const tsUtc = normalizeToUtcSpaceSep(mut.client_ts) ?? nowInstant().replace('T', ' ').replace(/\.\d+Z$/, '').replace('Z', '');
+  // Fallback to server-now (already UTC) if client_ts is missing/unparseable.
+  const tsUtc = normalizeToUtcSpaceSep(mut.client_ts)
+    ?? nowInstant().replace('T', ' ').replace(/\.\d+Z$/, '').replace('Z', '');
 
-  // Read-modify-write MAX in UTC space: SELECT existing, normalize, compare,
-  // write tsUtc only if it is strictly later. stale_active_since + updated_at
-  // unconditional (movement = project unstale), matching the prior behavior.
-  const existing = await env.DB.prepare(
-    `SELECT last_meaningful_movement AS lmm FROM projects WHERE id = ? OR slug = ? LIMIT 1`
-  ).bind(projectId, projectId).first<{ lmm: string | null }>();
-  const existingUtc = existing?.lmm ? normalizeToUtcSpaceSep(existing.lmm) : null;
-  const shouldWrite = !existingUtc || (tsUtc > existingUtc);
+  // ATOMIC MAX in UTC space — single UPDATE, DB-side CASE compare. Because both
+  // sides are now canonical UTC space-sep, the lexical `<` IS a correct temporal
+  // compare. This preserves the live code's lost-update safety (the compare and
+  // write are one statement; concurrent completions can never move LMM backward)
+  // while killing the mixed-zone wrong-winner bug. stale_active_since + updated_at
+  // unconditional (movement = project unstale), matching prior behavior.
   await env.DB.prepare(`
     UPDATE projects
-    SET last_meaningful_movement = CASE WHEN ? THEN ? ELSE last_meaningful_movement END,
-        stale_active_since = NULL,
-        updated_at = datetime('now')
+    SET last_meaningful_movement = CASE
+        WHEN last_meaningful_movement IS NULL OR last_meaningful_movement < ?
+        THEN ?
+        ELSE last_meaningful_movement
+      END,
+      stale_active_since = NULL,
+      updated_at = datetime('now')
     WHERE id = ? OR slug = ?
-  `).bind(shouldWrite ? 1 : 0, tsUtc, projectId, projectId).run().catch((e: Error) => {
+  `).bind(tsUtc, tsUtc, projectId, projectId).run().catch((e: Error) => {
     console.error('advanceProjectMovement: project update failed:', e.message);
   });
 ```
+
+> **Invariant preserved:** the on-disk `last_meaningful_movement` MUST already be canonical UTC space-sep for the lexical `<` to be correct. Task 8 migrates all historical LMM to UTC; Task 7 makes new `client_ts` explicit-UTC; this normalizer makes the incoming value UTC. The ONE window where on-disk LMM could still be CT is BEFORE Task 8 — but Task 4 ships first (it kills the live churn independently). During that window the compare is `incoming-UTC < stored-CT`: stored CT is 5h-behind-its-real-instant, so a same-day comparison can still mis-order by up to 5h. This is ACCEPTABLE for the Task-4-before-Task-8 window because (a) it is strictly better than the pre-fix lexical-across-separator bug, and (b) Task 8 closes it. If a cleaner interim is wanted, normalize the STORED value too via a CAS: read `last_meaningful_movement`, compute both UTC, and `UPDATE ... WHERE (id=? OR slug=?) AND last_meaningful_movement IS <the-exact-value-read>` retrying on `meta.changes === 0`. Not required for correctness once Task 8 lands; documented as the belt-and-suspenders option.
 
 Add the helper near the top of `mutations.ts` (or import from a shared module):
 
@@ -673,23 +770,35 @@ cd ~/Peripheral-Brain
 python -c "import sqlite3, json; c=sqlite3.connect('data/brain.db'); c.row_factory=sqlite3.Row; rows=[dict(r) for r in c.execute('SELECT mutation_id, table_name, record_id, op, base_seq, client_ts, issued_at, ack_at, dead_letter_at FROM outbox WHERE ack_at IS NULL')]; open('data/snapshots/2026-05-23-increment-1A/outbox_pending.json','w').write(json.dumps(rows, indent=2, default=str)); print(f'{len(rows)} pending outbox rows captured')"
 ```
 
-- [ ] **Step 4: Export the D1 (Hub) LWW columns + cursors**
+- [ ] **Step 4: Export the FULL D1 (Hub) rollback artifact — corrected column lists, NO row limit (Codex finding 3)**
+
+> **CRITICAL CORRECTION (Codex finding 3, confirmed against `mutations.ts:980-981` HEAD): `processed_mutations` has NO `last_mutation_id` or `seq` column.** Its real columns are `mutation_id, origin_machine, processed_at, outcome, original_response_json, table_name, record_id`. The original plan's `SELECT mutation_id, last_mutation_id, seq FROM processed_mutations` FAILS. The `seq`/`last_mutation_id` cursors live on the `tasks`/`projects` ROWS, not on `processed_mutations`. **Also REMOVED the `LIMIT 500`** — a partial export is not a rollback artifact. And **"if wrangler rejects a column, drop it" is REMOVED** — for a rollback artifact, a rejected column means STOP and fix the schema assumption, never silently ship a lossy snapshot. The exact export must be DRY-RUN rehearsed (Task 8 Step 7b) before any flip.
+
+Use `--json` and capture FULL tables (these are small: ~hundreds of rows each). Verify each export's `results` array is non-empty before proceeding.
 
 ```bash
 cd ~/mn-ccore-lab
 mkdir -p ../Peripheral-Brain/data/snapshots/2026-05-23-increment-1A
+# tasks: LWW columns + the per-row seq/last_mutation_id cursors live HERE.
 npx wrangler d1 execute mnccore-lab --remote --json \
   --command "SELECT id, slug, updated_at, last_meaningful_movement, stale_active_since, completed_at, completed, status, seq, last_mutation_id, deleted_at FROM tasks" \
   > ../Peripheral-Brain/data/snapshots/2026-05-23-increment-1A/d1_tasks.json
+# projects: LWW columns + cursors.
 npx wrangler d1 execute mnccore-lab --remote --json \
   --command "SELECT id, slug, updated_at, last_meaningful_movement, stale_active_since, status, stage, category, seq, last_mutation_id, deleted_at FROM projects" \
   > ../Peripheral-Brain/data/snapshots/2026-05-23-increment-1A/d1_projects.json
+# processed_mutations: REAL columns only, FULL table (idempotency ledger — a
+# restore must not duplicate-apply, so we need the whole ledger, not a slice).
 npx wrangler d1 execute mnccore-lab --remote --json \
-  --command "SELECT mutation_id, last_mutation_id, seq FROM processed_mutations ORDER BY seq DESC LIMIT 500" \
+  --command "SELECT mutation_id, origin_machine, processed_at, outcome, table_name, record_id FROM processed_mutations ORDER BY processed_at DESC" \
   > ../Peripheral-Brain/data/snapshots/2026-05-23-increment-1A/d1_processed_mutations.json
+# Sanity: each export non-empty.
+for f in d1_tasks d1_projects d1_processed_mutations; do
+  python -c "import json; d=json.load(open('../Peripheral-Brain/data/snapshots/2026-05-23-increment-1A/$f.json')); n=len(d[0]['results']); print('$f rows:', n); assert n>0, '$f export EMPTY — STOP'"
+done
 ```
 
-> NOTE: column lists above are verified against the registered shared fields + `schema-version-snapshot.json`. If `wrangler d1 execute` rejects a column (schema drift), drop it and re-run; record the actual columns in the runbook header.
+> NOTE: column lists above are verified against `mutations.ts` (`processed_mutations` insert at `:980-981`) + the registered shared fields. If `wrangler d1 execute` rejects ANY column, **STOP** — do not "drop it and re-run". A rejected column means the schema assumption is wrong and the rollback artifact would be incomplete. Reconcile the schema first, record the actual columns in the runbook header, then re-export.
 
 - [ ] **Step 5: Record the manifest + restore procedure**
 
@@ -700,14 +809,25 @@ RESTORE (valid for HOURS only — restoring after real team activity clobbers go
   PB:  stop all daemons (python scripts/utils/check_daemons.py --stop-all);
        copy data/snapshots/.../brain.db (+ -wal/-shm) back over data/brain.db;
        restart daemons.
-  D1:  for each corrupted row, UPDATE the LWW columns + seq + last_mutation_id
-       back to the snapshot values via:
-       wrangler d1 execute mnccore-lab --remote --command
-         "UPDATE projects SET last_meaningful_movement=?, updated_at=?, seq=?, last_mutation_id=? WHERE id=?"
-       (script this from d1_projects.json / d1_tasks.json — do NOT hand-type).
-  Outbox: re-enqueue from outbox_pending.json ONLY mutations not in the
-       restored D1 processed_mutations (else duplicate-apply).
+  D1:  SCRIPTED from the JSON exports — never hand-type. A restore script
+       (committed as scripts/db/restore_d1_snapshot.py, gitignored output)
+       reads d1_projects.json / d1_tasks.json and, for each row, issues:
+         UPDATE projects SET last_meaningful_movement=?, updated_at=?,
+           stale_active_since=?, status=?, stage=?, category=?, seq=?,
+           last_mutation_id=?, deleted_at=? WHERE id=?
+         UPDATE tasks    SET updated_at=?, last_meaningful_movement=?,
+           stale_active_since=?, completed_at=?, completed=?, status=?,
+           seq=?, last_mutation_id=?, deleted_at=? WHERE id=?
+       (seq/last_mutation_id are TASK/PROJECT row columns — NOT processed_mutations.)
+  processed_mutations: it is an append-only idempotency ledger. A restore does
+       NOT delete ledger rows (deleting them would let a replayed mutation
+       double-apply). Leave processed_mutations as-is; its snapshot is for
+       audit/diff only.
+  Outbox: re-enqueue from outbox_pending.json ONLY mutations whose mutation_id
+       is NOT present in the live processed_mutations ledger (else duplicate-apply).
 ```
+
+> The restore script + the exact export commands MUST be DRY-RUN rehearsed (Task 8 Step 7b) on a scratch context before any flip. A rollback artifact that has never been exercised is not a rollback artifact.
 
 - [ ] **Step 6: Verify the snapshot is complete + relay-confirm**
 
@@ -746,6 +866,27 @@ def test_task_pull_gate_skips_on_unparseable_remote(driver, seeded_task):
     assert applied is False  # skipped, local preserved
 
 
+def test_task_pull_gate_skips_on_missing_local_updated_at(driver, seeded_task):
+    # CODEX FINDING 5: an EXISTING local row with a missing/empty brain_updated
+    # must SKIP (ambiguous), NOT fall through and apply. Spec §83.
+    seeded_task(brain_updated="")  # existing row, blank local timestamp
+    applied = driver._apply_one_task({"id": "task_x", "updated_at": "2026-05-22 21:00:00"})
+    assert applied is False  # ambiguous local → fail-closed skip
+
+
+def test_task_pull_gate_skips_on_unparseable_local(driver, seeded_task):
+    seeded_task(brain_updated="GARBAGE")
+    applied = driver._apply_one_task({"id": "task_x", "updated_at": "2026-05-22 21:00:00"})
+    assert applied is False  # unparseable local → fail-closed skip
+
+
+def test_project_pull_gate_skips_on_missing_remote(driver, seeded_project):
+    # Fail-closed: existing local project, Hub sends no/empty updated_at → skip.
+    seeded_project(brain_updated="2026-05-22 21:00:00")
+    applied = driver._apply_one_project({"id": "proj_x", "updated_at": ""})
+    assert applied is False
+
+
 def test_lmm_gate_compares_in_utc_not_lexical(driver, seeded_project):
     # Stored brain LMM is CT 16:00 (== 21:00 UTC). Hub sends UTC 20:00.
     # Lexical raw compare '2026-05-22 20:00:00' > '2026-05-22 16:00:00' = apply (WRONG:
@@ -753,6 +894,20 @@ def test_lmm_gate_compares_in_utc_not_lexical(driver, seeded_project):
     seeded_project(brain_lmm="2026-05-22 16:00:00")  # CT column
     applied = driver._apply_lmm({"id": "proj_x", "last_meaningful_movement": "2026-05-22 20:00:00"})
     assert applied is False  # Hub is actually earlier → skip
+
+
+def test_lmm_gate_applies_when_no_local_lmm(driver, seeded_project):
+    # The intended exception: no local LMM yet → apply the parseable Hub value.
+    seeded_project(brain_lmm=None)
+    applied = driver._apply_lmm({"id": "proj_x", "last_meaningful_movement": "2026-05-22 20:00:00"})
+    assert applied is True  # local-missing apply is the documented exception
+
+
+def test_lmm_gate_skips_on_unparseable_local_lmm(driver, seeded_project):
+    # Fail-closed: local LMM exists but is unparseable → preserve local, skip.
+    seeded_project(brain_lmm="GARBAGE")
+    applied = driver._apply_lmm({"id": "proj_x", "last_meaningful_movement": "2026-05-22 20:00:00"})
+    assert applied is False
 ```
 
 > The exact test entry points (`_apply_one_task` / `_apply_lmm`) must match the real driver method seams — read `test_pull_lww_zone.py` at execution and mirror its existing fixture style. The CONTRACT under test: gate decision == `decision_new` (UTC-aware), fail-closed on None.
@@ -764,24 +919,32 @@ Expected: FAIL — the live gates still use raw-string compare.
 
 - [ ] **Step 3: Flip the task gate (`hub.py:1278`)**
 
-Replace the raw-string decision with the UTC-aware one + fail-closed:
+Replace the raw-string decision with the UTC-aware one + fail-closed. **CODEX FINDING 5 CORRECTION:** the live gate (`hub.py:1278`) only acts inside `if d1_updated and brain_updated`, so a row that EXISTS locally but whose `brain_updated` is empty/unparseable FALLS THROUGH and applies — violating spec §83 (ambiguous → skip). This gate is already inside `if existing:` (`hub.py:1256`), so the "row doesn't exist yet → apply new task" path is upstream and unaffected. The fix: for an EXISTING row, skip unless BOTH sides parse to UTC AND d1 is strictly newer.
 
 ```python
                 # v2 Task 4 ENFORCE (Increment 1A): the live gate now uses the
-                # origin/column-aware UTC compare (the value the shadow logged
-                # as decision_new). Fail-CLOSED: an unparseable side SKIPS.
+                # origin/column-aware UTC compare. FAIL-CLOSED per spec §83:
+                # because this is an EXISTING local row (we are inside `if existing:`),
+                # an ambiguous/unparseable/missing timestamp on EITHER side must
+                # SKIP — never apply over local state on a guess. (A genuinely new
+                # task with no local row is handled upstream, before this gate.)
                 _d1_utc = to_utc_dt(d1_updated, origin="hub") if d1_updated else None
                 _brain_utc = to_utc_dt(brain_updated, column="updated_at") if brain_updated else None
-                if d1_updated and brain_updated:
-                    if _d1_utc is None or _brain_utc is None or _d1_utc <= _brain_utc:
-                        log_decision(table="tasks", d1_id=d1_id, title=_title,
-                                     decision="skipped_stale", local_pk=task_id,
-                                     reason="utc-aware: d1 not strictly newer or ambiguous")
-                        stats.skipped_stale += 1
-                        continue
+                _apply_task = (_d1_utc is not None and _brain_utc is not None
+                               and _d1_utc > _brain_utc)
+                if not _apply_task:
+                    log_decision(table="tasks", d1_id=d1_id, title=_title,
+                                 decision="skipped_stale", local_pk=task_id,
+                                 reason=("utc-aware fail-closed: d1 not strictly "
+                                         f"newer or a side is ambiguous "
+                                         f"(d1={d1_updated!r} brain={brain_updated!r})"))
+                    stats.skipped_stale += 1
+                    continue
 ```
 
 Import `to_utc_dt` at the top of `hub.py` (already imported in the freshness-guard fix region `:498`; hoist to module scope if not already).
+
+> **Why this is safe (not over-skipping real applies):** an existing local row always has a `brain_updated` (it was written by some prior sync/local edit), so `_brain_utc` is non-None in the normal case; the only time it is None is genuine corruption, where skipping (preserving local + the snapshot backstop) is exactly right. An incoming Hub row always carries `updated_at` (Hub writes `datetime('now')` on every mutation), so `_d1_utc` None means a malformed Hub payload → also correctly skipped.
 
 - [ ] **Step 4: Flip the project gate (`hub.py:1861`)**
 
@@ -876,18 +1039,31 @@ def test_enqueued_client_ts_is_explicit_utc(tmp_brain_db):
 Run: `cd ~/Peripheral-Brain && python -m pytest tests/sync/test_outbox_client_ts_utc.py -v`
 Expected: FAIL — current emit is naive `datetime.now().isoformat()` (no offset).
 
-- [ ] **Step 4: Flip both client_ts writers**
+- [ ] **Step 4: Flip both client_ts writers (NO new import — `now_instant_wire` lives in `outbox.py`)**
 
-At `outbox.py:745` and `:2045`, change:
+> **CIRCULAR-IMPORT FIX (Codex smaller finding — resolved in the executable step, option (b)).** `timez.py` imports `to_utc_dt` FROM `outbox.py` (Task 1). If `outbox.py` then imported `now_instant_wire` FROM `timez.py`, that is a cycle. **Resolution (DECIDED, not optional): `now_instant_wire` (and `now_instant`) are DEFINED in `outbox.py`, and `timez.py` RE-EXPORTS them** alongside its re-export of `to_utc_dt`. One source of truth, no cycle, and `outbox.py` uses its own local function with no import. Task 1 is amended to match (see Task 1 Step 3 note). The PB-side public surface is still `timez` (callers import `now_instant`/`now_instant_wire`/`to_utc_dt` from `scripts.db.timez`); only the physical definition lives in `outbox.py`.
+
+At `outbox.py:745` and `:2045`, change (these writers are in the same module that DEFINES `now_instant_wire`, so just call it directly):
 
 ```python
         mutation_id = _mint_mutation_id()
         now = now_instant_wire()  # explicit-UTC '...+00:00'; branch-1 honored downstream
 ```
 
-Add the import at the top of `outbox.py`: `from scripts.db.timez import now_instant_wire`.
+Define near the top of `outbox.py` (next to `to_utc_dt`):
 
-> WARNING (circular-import check): `timez.py` imports `to_utc_dt` from `outbox.py`, and now `outbox.py` would import `now_instant_wire` from `timez.py`. To avoid a cycle, EITHER (a) inline `datetime.now(timezone.utc).replace(microsecond=0).isoformat()` directly at the two writers (the value `now_instant_wire` produces), OR (b) define `now_instant_wire` in `outbox.py` and have `timez.py` re-export it. RECOMMENDED: (b) — keep one definition in `outbox.py`, re-export from `timez.py`, so there is no cycle and one source of truth. Update Task 1 accordingly if (b) is chosen at execution.
+```python
+def now_instant() -> str:
+    """UTC instant, space-sep, no tz suffix: '2026-05-23 18:04:11'."""
+    return datetime.now(_timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+
+
+def now_instant_wire() -> str:
+    """UTC instant, ISO-T, explicit offset: '2026-05-23T18:04:11+00:00'."""
+    return datetime.now(_timezone.utc).replace(microsecond=0).isoformat()
+```
+
+No new import is added to `outbox.py`. `timez.py` re-exports both (Task 1 Step 3).
 
 - [ ] **Step 5: Run the test + the LWW merge suite**
 
@@ -911,16 +1087,37 @@ Message: `fix(sync): emit explicit-UTC client_ts from both outbox writers (Incre
 
 **Why atomic (resolves Opus-LWW R1):** the LMM writer flip (CT→UTC) and the historical LMM rewrite (CT→UTC) MUST happen together. Flipping the writer alone while leaving historical CT and moving LMM to `_UTC_COLUMNS` would make the gate read still-CT historical rows as UTC (mis-order by 5h). Keeping LMM in `_CT_COLUMNS` while flipping the writer double-shifts new UTC writes. The only consistent state is: flip the writers + rewrite historical data + move the column-set classification, all in one migration. No window where the gate mis-reads on-disk data.
 
+> **CRITICAL CORRECTION (Codex pre-exec review, confirmed against `outbox.py:257-261` HEAD): the original "atomic" framing was FALSE and is the R1 trap recurring.** The auto-runner imports the migration via `spec.loader.exec_module(mod)` (`.claude/hooks/startup/sync.py:355`), so the migration runs against **live** `outbox.py`. Live `to_utc_dt` resolves a column's zone by its **current** `_CT_COLUMNS`/`_UTC_COLUMNS` membership at runtime (`outbox.py:257-261`), NOT by the membership at the time the data was written. The instant the Task 8 commit lands, `last_meaningful_movement`/`completed_at` are in `_UTC_COLUMNS` and `_CT_COLUMNS` is empty — so a migration that calls `to_utc_dt(lmm, column="last_meaningful_movement")` reads historical CT values as **UTC and does NOT shift them** → permanent 5h-wrong data. A source-code comment claiming "this runs before the flip" is worthless: there is no "before" in a single committed file that the runner exec's whole. **THE FIX (mandatory):** the migration MUST freeze the legacy CT→UTC conversion INTERNALLY with a standalone `ZoneInfo("America/Chicago")` converter defined inside the migration module — it must NEVER call `to_utc_dt` for the legacy rewrite. AND the rewrite must run **stopped-world** (Step 0 preflight below stops sync + daemons; no gate may read the new reader-contract until the rewrite succeeds and is verified). See Step 4 (frozen converter) and the new Step 0.
+
+> **ENTRYPOINT CORRECTION (confirmed against `.claude/hooks/startup/sync.py:357-386` HEAD): the migration must define `def upgrade(conn):`, NOT `def run(conn):`.** The auto-runner ONLY recognizes `upgrade(conn)` or `run_migration()`; any other entrypoint (including `run`) hits the fail-loud `AttributeError` at `:379` ("no recognized entrypoint") and ABORTS session-start. The original plan's `def run(conn)` would never apply and would hard-fail every session-start until renamed. All migration code + tests below use `upgrade(conn)`.
+
+> **MIGRATION NUMBER CORRECTION (confirmed against on-disk `scripts/db/migrations/` + `sync/operations.py:43` HEAD): high-water is `087_stage3_deleted_at`, NOT 062.** The new migration is `088_normalize_timestamps_utc.py`. The original plan's "current high-water is migration 062" was ~25 migrations stale. After landing 088, bump `EXPECTED_MIN_MIGRATION` in `operations.py:43` to `088_normalize_timestamps_utc` in the SAME commit (else a peer sync against the un-migrated DB refuses — which is actually the safe direction, but the constant must reflect the new dependency).
+
 **The three data classes (re-verify counts at execution):**
 1. `projects.last_meaningful_movement` CT → UTC (writer was `query.py:1185`/`:1236`/`:1341`; default-caller `:2922`).
-2. `tasks.updated_at` legacy ISO-T rows → UTC space-sep (the "43-row" class — RE-COUNT at HEAD, do NOT trust the stale number).
-3. `tasks.completed_at` PB-CT → UTC (governing principle §1: completed_at is a UTC instant displayed local, NOT a CT exception).
+2. `tasks.updated_at` legacy ISO-T rows → UTC space-sep — **CONFIRMED-CT-PROVENANCE rows ONLY** (the "43-row" class is STALE; RE-COUNT at HEAD via Step 1). **DANGER (Codex finding 4):** a naive ISO-T value like `2026-05-22T21:00:00` may already be UTC (e.g. minted by a post-cutover writer or a Hub-origin echo), in which case parsing it as CT and shifting −5h CORRUPTS it. The shift is allowed ONLY for rows whose legacy-CT provenance is confirmed per-row (see Step 1b provenance guard). A row that cannot be proven legacy-CT is LEFT UNTOUCHED.
+3. `tasks.completed_at` PB-CT → UTC (governing principle §1: completed_at is a UTC instant displayed local, NOT a CT exception). Same provenance caution as class 2 if any `completed_at` value already carries an explicit offset/Z or is provably post-cutover — leave those untouched.
 
 **Files:**
 - Modify writers: `scripts/db/query.py:1185` (LMM default), `:1236`+`:1341` (split completion clock: CT→UTC for LMM, UTC for completed_at), `:1240` (completed_at), verify `:2922` (covered by `:1185` default).
 - Modify column-set: `scripts/db/outbox.py:160-163` move `last_meaningful_movement` + `completed_at` from `_CT_COLUMNS` → `_UTC_COLUMNS` (`:151-153`).
-- Create: `scripts/db/migrations/NNN_normalize_timestamps_utc.py` (NNN = next number; current high-water is migration 062 per the registry — confirm with `python scripts/db/migrate.py --status`).
+- Create: `scripts/db/migrations/088_normalize_timestamps_utc.py` (high-water is `087_stage3_deleted_at`; confirm via `git ls-files scripts/db/migrations/*.py scripts/db/migrations/*.sql | sort | tail`). Entrypoint MUST be `def upgrade(conn):` (auto-runner contract, `sync.py:357`).
+- Modify: `scripts/db/sync/operations.py:43` — bump `EXPECTED_MIN_MIGRATION = "088_normalize_timestamps_utc"` in the SAME commit.
 - Test: `tests/db/test_migration_normalize_timestamps_utc.py`
+
+- [ ] **Step 0: STOPPED-WORLD PREFLIGHT (mandatory — Codex "hard preflight" requirement)**
+
+The data rewrite is a stopped-world migration. NOTHING may write the affected columns or read the new reader-contract until the rewrite succeeds and is verified. Before applying (on EACH machine, under its own fresh Task-5 snapshot):
+
+```bash
+cd ~/Peripheral-Brain
+# 1. Stop all daemons + any scheduled sync (pomodoro, telegram, file_watcher, hub_ai_listener, sync cron).
+python scripts/utils/check_daemons.py --stop-all   # confirm 0 holders of the shared lock
+# 2. Confirm no sync is mid-flight and the outbox is drained (no in-flight client_ts being minted).
+python -c "import sqlite3; c=sqlite3.connect('data/brain.db'); print('pending outbox:', c.execute('SELECT COUNT(*) FROM outbox WHERE ack_at IS NULL').fetchone()[0])"
+# 3. Confirm the Task-5 snapshot is FRESH (< a few hours) — re-run Task 5 if not.
+```
+Expected: 0 daemon holders, 0 (or fully-understood) pending outbox rows, fresh snapshot present. If sync runs DURING the rewrite, a half-migrated column can be read by a gate and propagated — the whole point of stopped-world is to deny that. The Task 8 commit (writers + column-set + migration) MUST land and the migration MUST complete before sync/daemons restart. Re-order so the `_CT_COLUMNS`/`_UTC_COLUMNS` membership change in `outbox.py` does NOT take effect in any live process until the rewrite is done — achieved by (a) the frozen internal converter (Step 4, the rewrite does not depend on `_CT_COLUMNS` at all) and (b) daemons stopped so no live process re-reads the flipped `outbox.py` mid-rewrite.
 
 - [ ] **Step 1: Re-count the legacy data at HEAD (Opus-LWW A5/Alteration 11 — provenance must be re-verified)**
 
@@ -928,44 +1125,93 @@ Message: `fix(sync): emit explicit-UTC client_ts from both outbox writers (Incre
 cd ~/Peripheral-Brain && python -c "
 import sqlite3; c=sqlite3.connect('data/brain.db')
 isoT = c.execute(\"SELECT COUNT(*) FROM tasks WHERE updated_at LIKE '%T%'\").fetchone()[0]
+isoT_offset = c.execute(\"SELECT COUNT(*) FROM tasks WHERE updated_at LIKE '%T%' AND (updated_at LIKE '%+%' OR updated_at LIKE '%Z')\").fetchone()[0]
 lmm  = c.execute('SELECT COUNT(*) FROM projects WHERE last_meaningful_movement IS NOT NULL').fetchone()[0]
 comp = c.execute('SELECT COUNT(*) FROM tasks WHERE completed_at IS NOT NULL').fetchone()[0]
-print(f'tasks.updated_at ISO-T rows: {isoT}'); print(f'projects.lmm non-null: {lmm}'); print(f'tasks.completed_at non-null: {comp}')
+print(f'tasks.updated_at ISO-T rows: {isoT} (of which {isoT_offset} carry an explicit offset/Z and need NO shift)')
+print(f'projects.lmm non-null: {lmm}'); print(f'tasks.completed_at non-null: {comp}')
 "
 ```
-Record the ACTUAL counts in the migration docstring. If the ISO-T count differs materially from the assumed 43, investigate provenance (cross-ref `last_mutation_id`/`audit_log`) before the lossy rewrite — a row that is actually UTC-ISO-T must NOT be double-shifted −5h.
+Record the ACTUAL counts in the migration docstring. **The "43" is STALE — re-count is mandatory.** ISO-T rows carrying an explicit offset/Z are already-resolvable and must NEVER be CT-shifted.
+
+- [ ] **Step 1b: Build the per-row legacy-CT provenance allowlist (Codex finding 4 — block double-shift of already-UTC naive ISO-T)**
+
+A naive ISO-T `updated_at` with no offset is AMBIGUOUS: it could be legacy-CT (pre-1A brain.db emit) OR already-UTC (a post-cutover or Hub-origin value that happens to be ISO-T). Shifting an already-UTC value −5h corrupts it permanently. Before the rewrite, classify each naive-ISO-T row's provenance and shift ONLY confirmed-legacy-CT rows:
+
+```bash
+cd ~/Peripheral-Brain && python -c "
+import sqlite3; c=sqlite3.connect('data/brain.db')
+# Confirmed-CT iff: naive (no offset/Z), ISO-T, AND created BEFORE the 1A client_ts cutover
+# AND not a Hub-origin row. Cross-ref last_mutation_id (Hub-applied rows carry one) and
+# created_at. A row we cannot PROVE is legacy-CT is left UNTOUCHED (fail-closed).
+rows = c.execute('''SELECT id, updated_at, last_mutation_id, created_at FROM tasks
+                    WHERE updated_at LIKE \"%T%\"
+                      AND updated_at NOT LIKE \"%+%\" AND updated_at NOT LIKE \"%Z\"''').fetchall()
+print(f'naive ISO-T candidates: {len(rows)}')
+for r in rows: print(r)
+"
+```
+Decision rule (encode in the migration as an explicit allowlist, NOT a blanket `LIKE '%T%'`): a row is shift-eligible iff naive ISO-T AND its `created_at`/last-write predates the Task-7 `client_ts` cutover commit AND it is not a Hub-origin echo. If the candidate set is small (expected ~dozens), hand-audit and embed the explicit `id` allowlist in the migration. **Add a regression test (Step 2) for an already-UTC naive ISO-T row that MUST NOT be shifted.**
 
 - [ ] **Step 2: Write the failing test**
 
 ```python
 # tests/db/test_migration_normalize_timestamps_utc.py
 import sqlite3
-from scripts.db.migrations import NNN_normalize_timestamps_utc as mig  # adjust
+from scripts.db.migrations import _088_normalize_timestamps_utc as mig  # module loaded by stem; see note
 
+# The migration's per-row eligibility (Step 1b) is parameterized on a
+# provenance allowlist. The tests pass an explicit shift-eligible id set so
+# the already-UTC cases are NOT shifted regardless of string shape.
 
 def test_lmm_ct_converted_to_utc(seeded_db):
     c = sqlite3.connect(seeded_db)
     c.execute("INSERT INTO projects (id, last_meaningful_movement) VALUES ('proj_a', '2026-05-22 16:00:00')")  # CT
     c.commit()
-    mig.run(c)
+    mig.upgrade(c)
     out = c.execute("SELECT last_meaningful_movement FROM projects WHERE id='proj_a'").fetchone()[0]
     assert out == "2026-05-22 21:00:00"  # +5h (CDT) → UTC
 
 
-def test_iso_t_updated_at_normalized(seeded_db):
+def test_iso_t_updated_at_normalized_when_provenance_confirmed(seeded_db):
     c = sqlite3.connect(seeded_db)
-    c.execute("INSERT INTO tasks (id, updated_at) VALUES ('task_a', '2026-05-22T16:00:00')")  # legacy ISO-T (CT)
+    # Legacy-CT ISO-T row: naive, predates cutover, no last_mutation_id (PB-origin).
+    c.execute("INSERT INTO tasks (id, updated_at, created_at) VALUES ('task_a', '2026-05-22T16:00:00', '2026-05-01 00:00:00')")
     c.commit()
-    mig.run(c)
+    mig.upgrade(c)
     out = c.execute("SELECT updated_at FROM tasks WHERE id='task_a'").fetchone()[0]
     assert out == "2026-05-22 21:00:00"  # space-sep UTC
+
+
+def test_already_utc_naive_iso_t_NOT_shifted(seeded_db):
+    # CODEX FINDING 4: a naive ISO-T value that is ALREADY UTC must NOT be
+    # shifted −5h. Provenance guard (no proven legacy-CT) → leave untouched.
+    c = sqlite3.connect(seeded_db)
+    # e.g. a post-cutover or Hub-echo value that happens to be naive ISO-T.
+    c.execute("INSERT INTO tasks (id, updated_at, last_mutation_id, created_at) VALUES "
+              "('task_utc', '2026-05-22T21:00:00', 'mut_hub_x', '2026-05-23 12:00:00')")
+    c.commit()
+    mig.upgrade(c)
+    out = c.execute("SELECT updated_at FROM tasks WHERE id='task_utc'").fetchone()[0]
+    # MUST be unchanged (not 2026-05-22 16:00:00). At most normalized T→space, never shifted.
+    assert out in ("2026-05-22T21:00:00", "2026-05-22 21:00:00"), out
+    assert "16:00:00" not in out, f"double-shifted an already-UTC value: {out}"
+
+
+def test_iso_t_with_explicit_offset_NOT_shifted(seeded_db):
+    c = sqlite3.connect(seeded_db)
+    c.execute("INSERT INTO tasks (id, updated_at) VALUES ('task_off', '2026-05-22T21:00:00+00:00')")
+    c.commit()
+    mig.upgrade(c)
+    out = c.execute("SELECT updated_at FROM tasks WHERE id='task_off'").fetchone()[0]
+    assert "16:00:00" not in out  # explicit-UTC honored, never CT-shifted
 
 
 def test_migration_idempotent_no_double_shift(seeded_db):
     c = sqlite3.connect(seeded_db)
     c.execute("INSERT INTO projects (id, last_meaningful_movement) VALUES ('proj_b', '2026-05-22 16:00:00')")
     c.commit()
-    mig.run(c); mig.run(c)  # twice
+    mig.upgrade(c); mig.upgrade(c)  # twice
     out = c.execute("SELECT last_meaningful_movement FROM projects WHERE id='proj_b'").fetchone()[0]
     assert out == "2026-05-22 21:00:00"  # NOT shifted twice
 
@@ -974,12 +1220,14 @@ def test_already_utc_space_sep_untouched(seeded_db):
     c = sqlite3.connect(seeded_db)
     c.execute("INSERT INTO tasks (id, updated_at) VALUES ('task_c', '2026-05-22 21:00:00')")  # already UTC space-sep
     c.commit()
-    mig.run(c)
+    mig.upgrade(c)
     out = c.execute("SELECT updated_at FROM tasks WHERE id='task_c'").fetchone()[0]
     assert out == "2026-05-22 21:00:00"  # unchanged
 ```
 
-> **Idempotency mechanism:** the migration records itself in `schema_migrations` and is keyed to run-once; the per-row guard is "only convert rows whose shape marks them legacy" — for `updated_at`: `LIKE '%T%'` (ISO-T) only; for LMM/completed_at: the migration sets a sentinel (e.g. a `schema_migrations` row) AND the writers are flipped in the SAME commit so post-migration writes are already UTC. A re-run with the migration recorded is a no-op.
+> **Module import note:** the migration file is `088_normalize_timestamps_utc.py`. A leading digit is not a legal Python identifier, so the test imports it by an underscore-prefixed alias OR loads it via `importlib.util.spec_from_file_location` (mirror the pattern in `tests/db/test_migration_030.py`). The auto-runner loads it the same way (`sync.py:353`).
+>
+> **Idempotency mechanism:** the migration records itself in `schema_migrations` and is keyed to run-once. The per-row guard is NOT a blanket `LIKE '%T%'` — it is the Step-1b provenance allowlist (only confirmed-legacy-CT rows shift; offset/Z and unproven-naive rows are untouched). For LMM/completed_at: the writers are flipped in the SAME commit so post-migration writes are already UTC, and a value already carrying an offset/Z is honored (never CT-shifted). A re-run with the migration recorded in `schema_migrations` is a no-op.
 
 - [ ] **Step 3: Run test to verify it fails**
 
@@ -989,71 +1237,132 @@ Expected: FAIL — migration module not yet written.
 - [ ] **Step 4: Write the migration**
 
 ```python
-# scripts/db/migrations/NNN_normalize_timestamps_utc.py
+# scripts/db/migrations/088_normalize_timestamps_utc.py
 """Increment 1A Task 8: one-time legacy timestamp UTC migration.
 
-Converts mixed-zone rows to canonical UTC, atomically with the writer flip
-(query.py) and the column-set reclassification (outbox.py). Resolves the R1
-contradiction: writer + reader-contract + data move together.
+Converts CONFIRMED-LEGACY-CT rows to canonical UTC, committed in the SAME
+change as the writer flip (query.py) and the column-set reclassification
+(outbox.py).
 
-Actual row counts at migration time (re-counted at HEAD): see commit body.
-Idempotent: recorded in schema_migrations; per-row shape guards prevent
-double-shift on re-run.
+R1 TRAP AVOIDANCE (Codex pre-exec review): this migration MUST NOT call
+to_utc_dt for the legacy rewrite. to_utc_dt resolves a column's zone by its
+CURRENT _CT_COLUMNS/_UTC_COLUMNS membership at runtime (outbox.py:257-261), and
+the auto-runner exec's THIS file against LIVE outbox.py — by which point
+last_meaningful_movement/completed_at are already in _UTC_COLUMNS. Calling
+to_utc_dt(column="last_meaningful_movement") would then read historical CT as
+UTC and NOT shift it → permanent 5h-wrong data. So legacy CT→UTC is FROZEN
+INTERNALLY here with a standalone ZoneInfo("America/Chicago") converter that
+does not depend on any mutable classifier.
+
+PROVENANCE GUARD (Codex finding 4): naive ISO-T updated_at is ambiguous — it
+may already be UTC. We shift ONLY rows whose legacy-CT provenance is confirmed
+(Step 1b allowlist). Rows carrying an explicit offset/Z, or that cannot be
+proven legacy-CT, are LEFT UNTOUCHED.
+
+Actual row counts + the audited shift-eligible id allowlist at migration time:
+see commit body. Idempotent: recorded in schema_migrations; per-row provenance
+guard + offset/Z skip prevent double-shift on re-run.
+
+ENTRYPOINT: def upgrade(conn) — the auto-runner contract (sync.py:357). NOT run().
 """
 import sqlite3
-from scripts.db.timez import to_utc_dt
+from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 
-MIGRATION_NAME = "NNN_normalize_timestamps_utc"
+MIGRATION_NAME = "088_normalize_timestamps_utc"
+_CT = ZoneInfo("America/Chicago")
+
+# Audited allowlist of task ids whose naive ISO-T updated_at is confirmed
+# legacy-CT (built in Step 1b). EMPTY here — fill from the Step-1b audit before
+# applying. An empty allowlist means NO updated_at row is shifted (fail-closed).
+_ISO_T_SHIFT_ELIGIBLE_IDS: frozenset[str] = frozenset({
+    # "task_...",  # populate from Step 1b provenance audit
+})
 
 
-def run(conn: sqlite3.Connection) -> None:
-    cur = conn.cursor()
-    # Guard: if already recorded, no-op.
+def _freeze_ct_naive_to_utc(s: str) -> str | None:
+    """Convert a naive wall-clock string KNOWN to be America/Chicago to UTC
+    space-sep. DST-correct per-instant via ZoneInfo. Returns None on
+    unparseable input. Does NOT consult any column/origin classifier — this is
+    the frozen legacy converter, independent of outbox.py membership."""
+    s = (s or "").strip()
+    if not s:
+        return None
+    s_norm = s.replace("T", " ")
+    # If it already carries an offset/Z it is NOT naive-CT — caller must skip.
     try:
-        done = cur.execute(
-            "SELECT 1 FROM schema_migrations WHERE name = ?", (MIGRATION_NAME,)
-        ).fetchone()
-        if done:
+        # Parse as naive (strip any offset defensively; caller guarantees naive).
+        dt = datetime.strptime(s_norm[:19], "%Y-%m-%d %H:%M:%S")
+    except ValueError:
+        return None
+    aware_ct = dt.replace(tzinfo=_CT)
+    return aware_ct.astimezone(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+
+
+def _is_naive(s: str) -> bool:
+    """True iff the string carries NO explicit offset/Z (so it is wall-clock)."""
+    s = (s or "").strip()
+    if s.endswith("Z"):
+        return False
+    # Offset in the time portion, e.g. +00:00 / -05:00.
+    return not (("+" in s[10:]) or ("-" in s[10:]))
+
+
+def upgrade(conn: sqlite3.Connection) -> None:
+    cur = conn.cursor()
+    # Guard: if already recorded, no-op (idempotent).
+    try:
+        if cur.execute("SELECT 1 FROM schema_migrations WHERE name = ?",
+                       (MIGRATION_NAME,)).fetchone():
             return
     except sqlite3.OperationalError:
         pass  # test fixtures may lack schema_migrations
 
-    # 1. tasks.updated_at legacy ISO-T (CT) → UTC space-sep.
+    # 1. tasks.updated_at — legacy ISO-T (CT) → UTC space-sep, ALLOWLIST ONLY.
+    #    Naive-ISO-T rows NOT in the allowlist are LEFT UNTOUCHED (may be UTC).
+    #    Offset/Z rows are skipped (already resolvable).
     for (tid, ua) in cur.execute(
         "SELECT id, updated_at FROM tasks WHERE updated_at LIKE '%T%'"
     ).fetchall():
-        dt = to_utc_dt(ua, column="last_meaningful_movement")  # legacy ISO-T was CT
-        if dt is not None:
-            cur.execute("UPDATE tasks SET updated_at = ? WHERE id = ?",
-                        (dt.strftime("%Y-%m-%d %H:%M:%S"), tid))
+        if not _is_naive(ua):
+            continue  # explicit offset/Z → already UTC-resolvable, never shift
+        if tid not in _ISO_T_SHIFT_ELIGIBLE_IDS:
+            continue  # unproven provenance → fail-closed, leave untouched
+        out = _freeze_ct_naive_to_utc(ua)
+        if out is not None:
+            cur.execute("UPDATE tasks SET updated_at = ? WHERE id = ?", (out, tid))
 
-    # 2. projects.last_meaningful_movement CT → UTC.
+    # 2. projects.last_meaningful_movement CT → UTC (frozen converter; naive only).
     for (pid, lmm) in cur.execute(
         "SELECT id, last_meaningful_movement FROM projects WHERE last_meaningful_movement IS NOT NULL"
     ).fetchall():
-        dt = to_utc_dt(lmm, column="last_meaningful_movement")  # CT on-disk
-        if dt is not None:
-            cur.execute("UPDATE projects SET last_meaningful_movement = ? WHERE id = ?",
-                        (dt.strftime("%Y-%m-%d %H:%M:%S"), pid))
+        if not _is_naive(lmm):
+            continue  # already carries offset/Z → leave (post-cutover value)
+        out = _freeze_ct_naive_to_utc(lmm)
+        if out is not None:
+            cur.execute("UPDATE projects SET last_meaningful_movement = ? WHERE id = ?", (out, pid))
 
-    # 3. tasks.completed_at PB-CT → UTC.
+    # 3. tasks.completed_at PB-CT → UTC (frozen converter; naive only).
     for (tid, ca) in cur.execute(
         "SELECT id, completed_at FROM tasks WHERE completed_at IS NOT NULL"
     ).fetchall():
-        dt = to_utc_dt(ca, column="completed_at")  # CT on-disk
-        if dt is not None:
-            cur.execute("UPDATE tasks SET completed_at = ? WHERE id = ?",
-                        (dt.strftime("%Y-%m-%d %H:%M:%S"), tid))
+        if not _is_naive(ca):
+            continue
+        out = _freeze_ct_naive_to_utc(ca)
+        if out is not None:
+            cur.execute("UPDATE tasks SET completed_at = ? WHERE id = ?", (out, tid))
 
+    # The auto-runner records schema_migrations itself (sync.py:388-393), but
+    # record here too for direct-call idempotency in tests / manual apply.
     try:
-        cur.execute("INSERT INTO schema_migrations (name, applied_at) VALUES (?, datetime('now'))",
+        cur.execute("INSERT OR IGNORE INTO schema_migrations (name) VALUES (?)",
                     (MIGRATION_NAME,))
     except sqlite3.OperationalError:
         pass
     conn.commit()
 ```
 
-> **CRITICAL ordering within the migration:** rewrite the DATA using the OLD column-set classification (LMM/completed_at still resolve as CT via `column=`), THEN — in the SAME commit — flip the writers (query.py) and move the column-set (outbox.py `_CT_COLUMNS`→`_UTC_COLUMNS`). The data rewrite uses `column="last_meaningful_movement"`/`"completed_at"` which are STILL in `_CT_COLUMNS` at the moment `to_utc_dt` runs, so CT resolution is correct. After this commit, those columns are UTC on-disk AND in `_UTC_COLUMNS`, so future reads resolve them as UTC. Atomic.
+> **CRITICAL ordering within the migration (corrected):** the rewrite uses the FROZEN internal `_freeze_ct_naive_to_utc` — it does NOT consult `_CT_COLUMNS`/`_UTC_COLUMNS` at all, so it is immune to the runtime-membership trap regardless of when the column-set flip in `outbox.py` takes effect. The writers (query.py) and column-set move (outbox.py) ship in the SAME commit so post-migration WRITES are UTC, but the historical REWRITE no longer depends on classifier state. Combined with the Step 0 stopped-world preflight (daemons stopped, no live process re-reads flipped `outbox.py` mid-rewrite), this is the genuinely-atomic state the original plan only claimed. **Note on `schema_migrations.applied_at`:** the column has a `DEFAULT (datetime('now','localtime'))` (`sync.py:164`) — the original plan's explicit `INSERT ... (name, applied_at) VALUES (?, datetime('now'))` is dropped in favor of `INSERT OR IGNORE (name)` to match the auto-runner's own insert and avoid a column-list mismatch.
 
 - [ ] **Step 5: Flip the writers (SAME commit as the migration)**
 
@@ -1097,33 +1406,82 @@ _CT_COLUMNS: frozenset[str] = frozenset()  # emptied — all sync columns are UT
 Run: `cd ~/Peripheral-Brain && python -m pytest tests/db/test_migration_normalize_timestamps_utc.py tests/db/test_a3_outbox.py tests/sync/test_lww_timestamp_zone.py -v`
 Expected: PASS.
 
-- [ ] **Step 7: Apply the migration on a COPY first (dry-run rehearsal under the snapshot)**
+- [ ] **Step 7: REHEARSE on a COPY first — migration + a real wrangler export DRY-RUN (Codex "rehearsal" requirement)**
+
+The migration is rehearsed on a copied brain.db; the D1 export/restore is dry-run rehearsed BEFORE touching live state (this also exercises the Task-5 fix to the `processed_mutations` column list).
 
 ```bash
-cd ~/Peripheral-Brain && cp data/snapshots/2026-05-23-increment-1A/brain.db /tmp/rehearsal.db
-python -c "import sqlite3; from scripts.db.migrations import NNN_normalize_timestamps_utc as m; c=sqlite3.connect('/tmp/rehearsal.db'); m.run(c); print('rehearsal applied'); print('ISO-T left:', c.execute(\"SELECT COUNT(*) FROM tasks WHERE updated_at LIKE '%T%'\").fetchone()[0])"
+cd ~/Peripheral-Brain
+# 7a. Migration rehearsal on a COPY (load by file path; leading-digit module name).
+cp data/snapshots/2026-05-23-increment-1A/brain.db /tmp/rehearsal.db
+python -c "
+import importlib.util, sqlite3
+spec = importlib.util.spec_from_file_location('mig088', 'scripts/db/migrations/088_normalize_timestamps_utc.py')
+m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
+c = sqlite3.connect('/tmp/rehearsal.db')
+before_iso = c.execute(\"SELECT COUNT(*) FROM tasks WHERE updated_at LIKE '%T%'\").fetchone()[0]
+m.upgrade(c)
+after_iso = c.execute(\"SELECT COUNT(*) FROM tasks WHERE updated_at LIKE '%T%'\").fetchone()[0]
+print(f'rehearsal applied; naive-ISO-T allowlisted shifted; ISO-T-with-offset preserved. before={before_iso} after={after_iso}')
+print('spot-check 5 LMM:', c.execute('SELECT id, last_meaningful_movement FROM projects WHERE last_meaningful_movement IS NOT NULL LIMIT 5').fetchall())
+"
 ```
-Expected: ISO-T count → 0 on the rehearsal copy; no exceptions.
+Expected: only allowlisted naive-ISO-T rows shifted; offset/Z rows untouched; LMM values now +5h (CDT) from their prior CT; no exceptions.
 
-- [ ] **Step 8: Apply for real (under the fresh snapshot) + verify**
-
-Run via the migrate runner: `cd ~/Peripheral-Brain && python scripts/db/migrate.py --status` then apply. Verify post-apply:
 ```bash
-python -c "import sqlite3; c=sqlite3.connect('data/brain.db'); print('ISO-T left:', c.execute(\"SELECT COUNT(*) FROM tasks WHERE updated_at LIKE '%T%'\").fetchone()[0])"
+# 7b. D1 export/restore DRY-RUN with the CORRECTED column lists (Task 5 fix).
+cd ~/mn-ccore-lab
+npx wrangler d1 execute mnccore-lab --remote --json --command \
+  "SELECT mutation_id, origin_machine, processed_at, outcome, table_name, record_id FROM processed_mutations ORDER BY processed_at DESC" \
+  | python -c "import sys,json; d=json.load(sys.stdin); print('processed_mutations export OK rows:', len(d[0]['results']))"
+```
+Expected: the export succeeds with the REAL `processed_mutations` columns (no `last_mutation_id`/`seq` — those don't exist on that table). If this dry-run fails, STOP — the rollback artifact is invalid; do not flip.
+
+- [ ] **Step 8: Apply for real (stopped-world, under the fresh snapshot) + verify**
+
+Step 0 preflight must already have stopped daemons/sync. Land the Task 8 commit, then apply the migration via the auto-runner OR a direct call (do NOT use `migrate.py` — that is the legacy Airtable bootstrap, it has no `--status`/`upgrade` runner). Direct apply:
+```bash
+cd ~/Peripheral-Brain && python -c "
+import importlib.util, sqlite3
+spec = importlib.util.spec_from_file_location('mig088', 'scripts/db/migrations/088_normalize_timestamps_utc.py')
+m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
+c = sqlite3.connect('data/brain.db'); m.upgrade(c); print('applied')
+print('schema_migrations:', c.execute(\"SELECT name FROM schema_migrations WHERE name='088_normalize_timestamps_utc'\").fetchone())
+"
+python -c "import sqlite3; c=sqlite3.connect('data/brain.db'); print('naive ISO-T left (should equal the count NOT in the allowlist):', c.execute(\"SELECT COUNT(*) FROM tasks WHERE updated_at LIKE '%T%' AND updated_at NOT LIKE '%+%' AND updated_at NOT LIKE '%Z'\").fetchone()[0])"
 python scripts/db/health.py
 ```
-Expected: ISO-T → 0; health clean; no row became "stale forever" (spot-check a few LMM values are now +5h from their prior CT).
+Expected: migration recorded; allowlisted rows shifted; no row became "stale forever"; health clean. Only THEN restart daemons/sync (still inside the WATCH window below).
 
 - [ ] **Step 9: Update schema.sql (R12 parity) + commit**
 
 Run `python scripts/db/check_schema_sql_parity.py`; if the migration changes any DEFAULT or column shape, update `schema.sql` in the same commit.
 
 ```bash
-cd ~/Peripheral-Brain && git commit -F <msgfile> -- scripts/db/migrations/NNN_normalize_timestamps_utc.py scripts/db/query.py scripts/db/outbox.py tests/db/test_migration_normalize_timestamps_utc.py
+cd ~/Peripheral-Brain && git commit -F <msgfile> -- scripts/db/migrations/088_normalize_timestamps_utc.py scripts/db/query.py scripts/db/outbox.py scripts/db/sync/operations.py tests/db/test_migration_normalize_timestamps_utc.py
 ```
+(Includes `operations.py` for the `EXPECTED_MIN_MIGRATION = "088_normalize_timestamps_utc"` bump — same commit so the dependency is declared atomically.)
 Message: `feat(sync): atomic UTC migration — LMM + ISO-T updated_at + completed_at CT→UTC, flip writers + column-set (Increment 1A Task 8)`. Author = ingra107. No Claude attribution.
 
-**Relay-confirm (REQUIRED):** the peer machine auto-applies routine `*.py` migrations at session-start (`auto_run_migrations`), BUT this is identity-adjacent / high-blast-radius data migration → use the `cross-machine-relay` Migration & state-change confirmation section. Both machines apply under their OWN fresh snapshot. Confirm both converged via `sync.py status --verbose` diff. **Rollback:** restore brain.db from the Task 5 snapshot (no clean SQL down for a lossy rewrite); D1 was not modified by this migration, so no D1 restore needed unless a wrong push propagated (Task 6 gate is fail-closed, so it shouldn't).
+**Relay-confirm (REQUIRED):** the peer machine auto-applies routine `*.py` migrations at session-start (`auto_run_migrations`), BUT this is identity-adjacent / high-blast-radius data migration → use the `cross-machine-relay` Migration & state-change confirmation section. Both machines apply under their OWN fresh snapshot, BOTH under their own Step 0 stopped-world preflight. Confirm both converged via `sync.py status --verbose` diff.
+
+**WATCH WINDOW (Codex "concrete watch window" requirement) — post-apply, before discarding the snapshot:**
+
+After daemons/sync restart, run the following diff queries every ~15 min for a 2-hour window (decision deadline: 2h post-apply). The acceptable count for each is **0**:
+
+```bash
+cd ~/Peripheral-Brain
+# (a) No project LMM should disagree with Hub by ~5h after convergence.
+python scripts/db/sync.py pull && python scripts/db/sync.py status --verbose
+# (b) Spurious LMM churn (advance→revert) — must be silent in wrangler tail.
+cd ~/mn-ccore-lab && npx wrangler tail --format pretty   # watch for repeated advanceProjectMovement on the same project
+# (c) No done→todo reverts since apply:
+cd ~/Peripheral-Brain && python -c "import sqlite3; c=sqlite3.connect('data/brain.db'); print('recently-reopened (investigate if >0):', c.execute(\"SELECT COUNT(*) FROM tasks WHERE status!='done' AND completed_at IS NOT NULL AND updated_at > datetime('now','-2 hours')\").fetchone()[0])"
+# (d) No row stale-forever: LMM that is now in the FUTURE vs UTC now (a sign of a wrong +5h on an already-UTC row).
+python -c "import sqlite3; c=sqlite3.connect('data/brain.db'); print('LMM in the future (should be 0):', c.execute(\"SELECT COUNT(*) FROM projects WHERE last_meaningful_movement > datetime('now','+10 minutes')\").fetchone()[0])"
+```
+
+**Acceptable: every count = 0, no churn in tail, convergence clean. Decision deadline: 2 hours post-apply.** If ANY count is non-zero and not explained within the window → **RESTORE TRIGGER:** restore brain.db from the Task 5 snapshot per `RESTORE.md` (the snapshot is valid for HOURS only — restoring after the window clobbers real team writes, so restore-fast-or-never). **Rollback:** restore brain.db from the Task 5 snapshot (no clean SQL down for a lossy rewrite). D1 was not modified by this migration; D1 restore is needed ONLY if a wrong push propagated despite the fail-closed Task 6 gate — in that case use the Task-5 D1 export + scripted restore.
 
 ---
 
@@ -1144,28 +1502,52 @@ Run: `cd ~/Peripheral-Brain && python scripts/db/check_sync_antipatterns.py` wit
 
 - [ ] **Step 2: Write the test asserting ZoneContractError on a naive value with no marker**
 
+> **STALE-TEST CORRECTION (Codex smaller finding, confirmed against `outbox.py:254-263` HEAD).** Two facts the original test got wrong:
+> 1. An UNKNOWN column ALREADY raises `ZoneContractError` at HEAD (`:263`) — a test using `column="some_unknown_column"` PASSES before AND after the scaffold deletion, so it captures NO behavior change.
+> 2. After Task 8, BOTH `last_meaningful_movement` and `completed_at` are in `_UTC_COLUMNS` (not `_CT_COLUMNS`, which Task 8 emptied). So `to_utc_dt(naive, column="last_meaningful_movement")` resolves as UTC (branch 2c) — it does NOT raise. The column-side scaffold is already dead by Task 8.
+>
+> The genuine behavior change THIS task (9) introduces is on the **`_CT_ORIGINS` side**: after Task 7, `client_ts` emits explicit-UTC (honored via branch 1), so the `_CT_ORIGINS` branch (`:254-255`) is dead code. Task 9 DELETES `_CT_ORIGINS`. The observable change: a *naive* value tagged `origin="client_ts"` (a shape that no longer occurs post-Task-7 but a test can construct) resolves as CT BEFORE deletion and RAISES after (client_ts is no longer in `_CT_ORIGINS`, not in `_UTC_ORIGINS`, no column → raise). Test THAT.
+
 ```python
 # tests/sync/test_records.py — add
 import pytest
 from scripts.db.outbox import to_utc_dt, ZoneContractError
 
 
-def test_naive_value_now_raises_without_ct_scaffold():
-    # Post-1A: a naive value with no explicit marker AND no UTC column/origin
-    # context must raise (the CT-guessing branch is gone). Only branch 1
-    # (explicit marker) and the UTC-column branches survive.
+def test_unknown_column_raises_today_and_after():
+    # Baseline guard: an unknown column ALREADY raises at HEAD (outbox.py:263).
+    # Unchanged by this task — kept to pin the no-guess contract.
     with pytest.raises(ZoneContractError):
         to_utc_dt("2026-05-22 16:00:00", column="some_unknown_column")
+
+
+def test_naive_client_ts_origin_raises_after_ct_origins_deleted():
+    # THE behavior change: pre-deletion, origin="client_ts" is in _CT_ORIGINS
+    # and a NAIVE value CT-converts (branch 2b). Post-deletion (this task),
+    # _CT_ORIGINS is gone, so a naive client_ts with no UTC context RAISES.
+    # (Post-Task-7 client_ts is explicit-UTC and honored via branch 1, so this
+    # naive shape no longer occurs in production — the test constructs it.)
+    with pytest.raises(ZoneContractError):
+        to_utc_dt("2026-05-22 16:00:00", origin="client_ts")
 
 
 def test_explicit_marker_still_honored():
     got = to_utc_dt("2026-05-22T21:00:00+00:00")
     assert got.utcoffset().total_seconds() == 0
+
+
+def test_post_task8_utc_column_still_resolves():
+    # Guard: LMM/completed_at are in _UTC_COLUMNS post-Task-8, so a naive value
+    # tagged with that column resolves as UTC (NOT raise). This must remain true
+    # after the scaffold deletion — only the CT branches are removed.
+    got = to_utc_dt("2026-05-22 21:00:00", column="last_meaningful_movement")
+    assert got.utcoffset().total_seconds() == 0
 ```
 
-- [ ] **Step 3: Run to verify it fails** (the CT branch still exists, so the unknown-column case currently does NOT raise — it falls through; confirm the current behavior, then delete).
+- [ ] **Step 3: Run to verify the RIGHT test fails.** `test_unknown_column_raises_today_and_after` + `test_post_task8_utc_column_still_resolves` PASS already (guards). `test_naive_client_ts_origin_raises_after_ct_origins_deleted` FAILS today (the `_CT_ORIGINS` branch still CT-converts client_ts) and PASSES after Step 4 deletes that branch.
 
-Run: `cd ~/Peripheral-Brain && python -m pytest tests/sync/test_records.py::test_naive_value_now_raises_without_ct_scaffold -v`
+Run: `cd ~/Peripheral-Brain && python -m pytest tests/sync/test_records.py::test_naive_client_ts_origin_raises_after_ct_origins_deleted -v`
+Expected: FAIL pre-deletion, PASS post-deletion.
 
 - [ ] **Step 4: Delete the CT-guessing branches**
 
@@ -1274,6 +1656,17 @@ Message: `chore(sync): Increment 1A hygiene — quarantine backfill, fix operati
 
 **Cross-plan invariants:** fail-closed baked into Task 6 (`ZoneContractError`/None → skip). Cross-repo lockstep in Task 7 (handoff spec filed first). Never-combine-with-timeline noted in the invariants block. Relay-confirm points: Tasks 5, 6, 8.
 
-**Type/name consistency:** `now_instant`/`now_instant_wire`/`format_local`/`today_civil` (PB) and `nowInstant`/`formatLocal`/`todayCivil`/`civilFromInstant` (Hub) used consistently across tasks. `to_utc_dt(value, *, column, origin)` signature matches HEAD. The R10-name collision is resolved to R20-R23 throughout. `_CT_COLUMNS`/`_UTC_COLUMNS` references match `outbox.py:151-163`.
+**Type/name consistency:** `now_instant`/`now_instant_wire`/`format_local`/`today_civil` (PB) and `nowInstant`/`formatLocal`/`todayCivil`/`civilFromInstant` (Hub) used consistently across tasks. `now_instant`/`now_instant_wire` are DEFINED in `outbox.py` and re-exported from `timez.py` (cycle-free; Task 1 + Task 7). `to_utc_dt(value, *, column, origin)` signature matches HEAD. The R10-name collision is resolved to R20-R23 throughout. `_CT_COLUMNS`/`_UTC_COLUMNS` references match `outbox.py:151-163` at HEAD (pre-Task-8); Task 8 moves `last_meaningful_movement`+`completed_at` into `_UTC_COLUMNS` and empties `_CT_COLUMNS`. Migration entrypoint is `def upgrade(conn)` (auto-runner contract, `sync.py:357`), file `088_normalize_timestamps_utc.py`.
 
-**Known plan-internal risks flagged inline:** circular-import guard (Task 7 Step 4, Task 8 Step 5); R22 regex false-negative on variable indirection (Task 3); Hub CI dual-repo-checkout assumption (Task 3 Step 4); re-count legacy data before lossy rewrite (Task 8 Step 1); backfill quarantine is a BLOCKING pre-req for Task 8 (Task 10 Step 1).
+**Known plan-internal risks flagged inline:** circular-import RESOLVED by defining minters in `outbox.py` + re-export from `timez.py` (Task 1 Step 3, Task 7 Step 4); R22 regex false-negative on variable indirection (Task 3); Hub CI is a stdlib-only Hub-local mirror, NOT a `|| true` no-op (Task 3 Step 4); re-count + per-row provenance allowlist before lossy rewrite (Task 8 Steps 1, 1b); backfill quarantine is a BLOCKING pre-req for Task 8 (Task 10 Step 1).
+
+**Codex pre-execution review resolution (block-and-rework → addressed):**
+- **Finding 1 (Task 8 false atomicity / R1 trap):** migration now uses a FROZEN internal `ZoneInfo("America/Chicago")` converter, never `to_utc_dt`; + Step 0 stopped-world preflight (daemons/sync stopped, no gate read until migration succeeds + verified). Entrypoint `def upgrade(conn)`; numbered `088`; `EXPECTED_MIN_MIGRATION` bumped same commit.
+- **Finding 2 (Task 4 lost-update race):** kept the live ATOMIC single-UPDATE CASE compare; only the value is UTC-normalized. Added a concurrent-completions CAS test.
+- **Finding 3 (Task 5 unexecutable D1 snapshot):** corrected `processed_mutations` columns (`mutation_id, origin_machine, processed_at, outcome, table_name, record_id`), removed `LIMIT 500`, scripted+rehearsed restore (Task 8 Step 7b dry-run), seq/last_mutation_id sourced from task/project rows.
+- **Finding 4 (Task 8 double-shift of already-UTC naive ISO-T):** per-row legacy-CT provenance allowlist (Step 1b); offset/Z rows + unproven-naive rows left untouched; tests for already-UTC naive-ISO-T and offset-bearing rows that must NOT shift.
+- **Finding 5 (Task 6 task gate not fail-closed):** task gate skips unless BOTH sides parse to UTC (still inside `if existing:`, so new-task apply is unaffected); LMM "no local LMM" apply preserved; added fail-closed tests for missing/unparseable local and remote.
+- **Smaller:** circular import resolved in the executable steps; migration high-water corrected (087, not 062); Task 9 test targets the real `_CT_ORIGINS` behavior change; Hub CI lint is now a real Hub-local mirror.
+- **Added for safe execution:** concrete 2-hour WATCH window with diff queries (acceptable=0) + restore trigger (Task 8); stopped-world Step 0 preflight; fail-closed tests for missing timestamps; migration + D1 export/restore rehearsal on a COPY before live (Task 8 Step 7).
+
+> **REMAINING EXECUTION-TIME GATE (not a plan defect, but load-bearing):** Task 8 Step 1b's provenance allowlist (`_ISO_T_SHIFT_ELIGIBLE_IDS`) ships EMPTY and MUST be populated from a hand-audit of the actual naive-ISO-T candidate rows at execution. An empty allowlist is fail-closed (shifts nothing) — that is the safe default, but it means the `updated_at` ISO-T normalization is a no-op until the audit fills it. Do the audit, fill the set, re-run the rehearsal, THEN apply.
