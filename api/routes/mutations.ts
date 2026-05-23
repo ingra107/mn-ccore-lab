@@ -99,11 +99,20 @@ function decodeCompositeRecordId(recordId: string): unknown[] {
 
 // ── UTC timestamp normalization (Increment 1A Task 4) ──────────────────────
 // Kills the live LMM churn bug: client_ts from brain.db pre-1A is naive
-// America/Chicago, while stored last_meaningful_movement is UTC. A raw lexical
-// MAX on mixed-zone strings picks the wrong winner (CT '16:30' < UTC '21:00'
-// lexically even though 16:30 CT == 21:30 UTC, which is later). Fix: normalize
-// BOTH operands to canonical UTC space-sep BEFORE the DB-side CASE compare,
-// keeping the single-UPDATE atomicity (no SELECT-then-write lost-update window).
+// America/Chicago, while stored last_meaningful_movement is mixed-zone/mixed-
+// format (ISO-T-Z UTC from old Hub-UI completions, space-sep CT from old PB
+// pushes, space-sep UTC from datetime('now')). A raw lexical MAX picks the
+// wrong winner (CT '16:30' < UTC '21:00' lexically even though 16:30 CT ==
+// 21:30 UTC, which is later). Fix: normalize the INCOMING operand to canonical
+// UTC space-sep, so all NEW writes are canonical; the lexical `<` is then a
+// correct temporal compare against any already-canonical stored value, and the
+// single-UPDATE atomicity is preserved (no SELECT-then-write lost-update window).
+// LEGACY stored values are not normalized in SQL here — they are migrated to
+// canonical UTC space-sep by Increment 1A Task 8. Until that migration runs, a
+// legacy non-canonical stored LMM may mis-order against a new UTC value (e.g. an
+// ISO-T-Z stored value's 'T' sorts after a space-sep incoming value); the effect
+// is bounded to LMM staleness DISPLAY (a project may show a stale "last moved"
+// time), never task data loss, and self-resolves once Task 8 migrates it.
 
 /**
  * Returns the America/Chicago UTC offset in minutes for the wall-clock instant
@@ -856,21 +865,23 @@ async function advanceProjectMovement(
   // machines complete the same task nearly simultaneously.
   //
   // UTC-normalize the incoming timestamp (Increment 1A Task 4): client_ts from
-  // brain.db pre-1A is naive America/Chicago (e.g. '2026-05-22T16:11:46');
-  // last_meaningful_movement on disk is UTC space-sep (SQLite datetime('now')).
-  // A raw lexical compare on mixed-zone strings picks the wrong winner — a CT
-  // '16:30' string sorts before a UTC '21:00' string even though the CT instant
-  // IS later (16:30 CT == 21:30 UTC). Normalizing to UTC space-sep makes the
-  // DB-side lexical `<` a correct temporal compare. Fallback to server-now
-  // (already UTC) if client_ts is missing or unparseable.
+  // brain.db pre-1A is naive America/Chicago (e.g. '2026-05-22T16:11:46'). A raw
+  // lexical compare on mixed-zone strings picks the wrong winner — a CT '16:30'
+  // string sorts before a UTC '21:00' string even though the CT instant IS later
+  // (16:30 CT == 21:30 UTC). Normalizing the incoming value to UTC space-sep
+  // makes new writes canonical and the DB-side lexical `<` a correct temporal
+  // compare against any already-canonical stored value. (Legacy non-canonical
+  // stored values are migrated by Task 8 — see the helper-block note above.)
+  // Fallback to server-now (already UTC) if client_ts is missing or unparseable.
   const tsUtc =
     normalizeToUtcSpaceSep(mut.client_ts) ??
     new Date().toISOString().replace('T', ' ').replace(/\.\d+Z$/, '');
 
-  // ATOMIC MAX in UTC space — single UPDATE, DB-side CASE compare. Because both
-  // sides are now canonical UTC space-sep, the lexical `<` IS a correct temporal
-  // compare. This preserves the live code's lost-update safety (the compare and
-  // write are one statement; concurrent completions can never move LMM backward)
+  // ATOMIC MAX in UTC space — single UPDATE, DB-side CASE compare. The incoming
+  // value is canonical UTC space-sep, so the lexical `<` is a correct temporal
+  // compare against canonical stored values (and against legacy values once Task
+  // 8 migrates them). This preserves the live code's lost-update safety (compare
+  // and write are one statement; concurrent completions never move LMM backward)
   // while killing the mixed-zone wrong-winner bug. stale_active_since + updated_at
   // unconditional (movement = project unstale), matching prior behavior.
   //
