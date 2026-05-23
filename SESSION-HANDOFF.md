@@ -4,8 +4,8 @@
 
 | Item | Value |
 |------|-------|
-| HEAD | `7c222e65` on main (security `0a612459` + frontend `45911e6d` + data `7c222e65`; docs commit follows). PB repo: sync fix `148138e3` (local, Syncthing-propagated). |
-| Deploy | `b9e31ca8.mn-ccore-lab.pages.dev` (2026-05-22 evening) — LIVE on `7c222e65`. Smoke verified: `/api/health` ok, `/api/version` env=production, unauth `/api/team` no email, unauth `/api/meetings` no notes, `/api/team/pulse` aggregate-only, search auth-gated. |
+| HEAD | `a8bd7a9e` on main, pushed (CT-3 `a8bd7a9e` + deploy-docs `e3adaf36` + docs `4b6c08ba` + security batch `0a612459`/`45911e6d`/`7c222e65`). PB repo: sync fix `148138e3` (Syncthing-propagated). |
+| Deploy | `cd30f61e.mn-ccore-lab.pages.dev` (2026-05-22 evening, CT-3) — LIVE on `a8bd7a9e`. Security batch deploy `b9e31ca8` smoke-verified (unauth /api/team no email, /api/meetings no notes, /api/team/pulse aggregate-only, search auth-gated); `run-tests.sh quick` 113/0/4. |
 | Build | GREEN (0 TS errors) |
 | API tests | 178/178 passing |
 | Schema | **v68** on prod D1. Test D1 (`mnccore-lab-test`) **fully reconciled to prod 2026-05-22 PM** via hub-schema-sync (was missing 27 tables + dozens of columns incl. all of v54/v55/v57/v58; now 76 tables, exact column match, 178/178 tests). |
@@ -78,8 +78,8 @@ Security (digest XSS/escapeHtml, GET API auth lockdown, admin endpoints deleted,
 
 **▶ The TIER-0 SECURITY batch is DONE + DEPLOYED** (2026-05-22 evening, `b9e31ca8`) — SEC-T0-1..9 + attachment visibility + CT-2 + FAKE-2 + CON-2 + PB sync symmetry all shipped & smoke-verified (see "Latest — 2026-05-22 evening" above). The pre-adoption security gate is closed; **team adoption is now unblocked** (Manual Item #3). Remaining work, pick a tier from `WORKPLAN.md`:
 
-- **CT-3 (new follow-up):** ~13 more frontend UTC-"today" sites outside AM-7 scope (CalendarPage extras, CommandPalette, Dashboard, Layout, useOnboarding, UpcomingCard, NotificationBell, ProjectDetail, GrantsPage, ActivityPage, UpcomingMeetingBanner, TaskTimelineView, TaskGridView) → route through `localDateKey()`. Date-display, low-risk.
-- **Cleanup:** remove the dead `isPublicGet` regex branch (index.ts:139-141) for the non-existent `GET /api/team/:slug`.
+- **CT-3** ✅ DONE 2026-05-22 evening (`a8bd7a9e`, deploy `cd30f61e`) — 12 frontend UTC-today sites → `localDateKey()` (CommandPalette, Dashboard, Layout, useOnboarding, UpcomingCard, NotificationBell, ProjectDetail, GrantsPage, ActivityPage, UpcomingMeetingBanner, TaskTimelineView, TaskGridView). The timezone-correctness sweep (CT-2 + CT-3) is now complete.
+- **`isPublicGet` regex for `GET /api/team/:slug`:** assessed — LEFT IN PLACE (no GET handler exists, but the branch likely forward-provisions a public marketing profile endpoint; per justify-it, not removed as "dead").
 - **DH-1:** apply `scripts/seed-grant-milestones.sql` once real grant IDs/dates are supplied.
 - Otherwise pick a tier from `WORKPLAN.md`:
 

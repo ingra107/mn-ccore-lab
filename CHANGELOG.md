@@ -23,7 +23,9 @@ Plan → codex plan-audit (gpt-5.5, BLOCK→ship-after-amend, 217K tokens) → 3
 - **DH-1** grant_milestones seed TEMPLATE (real data TBD). **DH-2/FAKE-1 dropped** — already satisfied.
 - **PB sync symmetry** — key-presence gates so a Hub NULL clears `stale_active_since`/`next_artifact` in brain.db; `last_meaningful_movement` MAX-wins preserved.
 
-Build GREEN, **api tests 199/199** (+21 guard tests). Deploy verified live on `b9e31ca8`. **Follow-ups** (not blockers): ~13 more frontend UTC-today sites outside AM-7 scope (date display); dead `isPublicGet` regex for non-existent `GET /api/team/:slug`; `/api/team/:slug` single-profile leak was a false positive (no handler exists).
+Build GREEN, **api tests 199/199** (+21 guard tests). Deploy verified live on `b9e31ca8`; `run-tests.sh quick` 113/0/4 post-deploy.
+
+**Then CT-3 + docs** (`a8bd7a9e`, deploy `cd30f61e`): the 12 remaining frontend UTC-today sites (CommandPalette/Dashboard/Layout/useOnboarding/UpcomingCard/NotificationBell/ProjectDetail/GrantsPage/ActivityPage/UpcomingMeetingBanner/TaskTimeline/TaskGrid) → `localDateKey()` — **timezone-correctness sweep (CT-2+CT-3) now complete**. CLAUDE.md deploy guidance fixed (`e3adaf36`): Claude runs `npm run deploy:pages:gated` directly (wrangler already authed); powershell.exe + reading secrets.ps1 are classifier-denied dead ends — don't punt the deploy. The `isPublicGet` regex for `GET /api/team/:slug` was assessed and LEFT (no handler exists, but likely forward-provisions a public profile endpoint — not "dead"); the "single-profile email leak" the agent flagged was a false positive.
 
 ## 2026-05-22 (PM) — T1 correctness batch + deploy + 5-pass Codex simplify review
 
