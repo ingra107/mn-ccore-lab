@@ -1,4 +1,21 @@
-# Session Handoff — 2026-05-22
+# Session Handoff — 2026-05-22 (→ 2026-05-23)
+
+## ▶▶ AUDIT MODE — NEXT SESSION, DO THIS FIRST (in order, no re-triage)
+
+**Reviews-before-code. Nick's explicit instruction (2026-05-23): get the focused plans reviewed by Opus agents + Codex BEFORE consolidating them into the final WORKPLAN and BEFORE writing any code.** The three plans below are INTERRELATED (they all touch time/sync/migration) — review each, then reconcile into ONE coherent sequence.
+
+**STEP 1 — Dispatch the review wave (parallel). For EACH plan, get BOTH (a) an Opus specialist-agent review AND (b) a `/codex-cli` review. Each reviewer must output EXPLICIT step-by-step: (1) how they'd ALTER the plan, and (2) where relevant, step-by-step MIGRATION instructions.**
+   1. **Activity-timeline / notes / comments** — `docs/superpowers/specs/2026-05-23-activity-timeline-comments-design.md` (Model A: Description + unified Activity timeline + one-line MentionInput composer + @→NotificationBell; notes→brain.db-local; core fix = description is wrongly an append-target). *(Nick specifically asked for the Codex review of this one.)*
+   2. **LWW timezone v2** — `~/Peripheral-Brain/Context/Decisions/2026-05-22-sync-lww-timezone-unification-v2.md`. Include: (a) review the **48h shadow log** `~/Peripheral-Brain/data/logs/lww_zone_shadow.jsonl` (≥48h after ~2026-05-23 03:00 UTC; if 0 wrong-decision rows → safe), and (b) evaluate Nick's **"flip-with-snapshot + live log watch"** alternative to the pure 48h shadow (snapshot affected columns first so a wrong overwrite is recoverable; gate fails toward "skip" on ambiguous rows — builder to confirm a wrong overwrite is genuinely unrecoverable today).
+   3. **Canonical time discipline (FOUNDATIONAL)** — `~/Peripheral-Brain/Context/Decisions/2026-05-23-canonical-time-discipline.md` (STUB → needs full design). Single read/write/display chokepoint + lint. **This SIMPLIFIES #2** (disciplined UTC writes remove the LWW read-side zone-guessing) → design it first/with #2, not after.
+
+**STEP 2 — Consolidate** all review outputs into the final `WORKPLAN.md`: reconcile sequencing across the three (time-discipline underpins LWW; timeline is the P2 build; they share the migration/time concerns) into ONE ordered plan. Apply the 30k-ft principle (global CLAUDE.md Core Principles, added 2026-05-23): is there a simplifying/systemic move that collapses these?
+
+**STEP 3 — ONLY THEN write code.** No implementation before the reviews land and the consolidated plan is set.
+
+> Going-forward rule (now in global CLAUDE.md Core Principles): any architectural/substrate change gets the same reviews-before-code treatment. The three above are the current review wave; no other WORKPLAN item is review-gated right now (the rest are smaller/non-architectural).
+
+---
 
 ## Current State
 

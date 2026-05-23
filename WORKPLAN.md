@@ -29,6 +29,8 @@ The brain.db ↔ Hub ↔ TODAY.md "data-sync dance" is the thing most likely to 
 **P4 — Smarter Hermes / Co-Scientist (strategic capability bet — longer-horizon, BRAINSTORM-FIRST).**
 - Deeper AI assistance on research tasks (lit synthesis, analysis help, drafting) beyond Q&A. T4 #41 Co-Scientist. Architecture + design effort; steer-first.
 
+**P0′ — Canonical time discipline (FOUNDATIONAL — design before/with the P1 LWW flip).** Single read/write/display chokepoint for ALL dates/times: two types (`Instant`=UTC / `CivilDate`=date-only+zone), ONE `nowUtc()` writer, ONE display fn (browser-local on Hub = **traveler-aware**; configurable server "my timezone" for TODAY.md/cron), + a **pre-commit/CI lint banning raw `new Date().toISOString()`/`datetime.now()`/`datetime('now')`** outside the helpers (executable contract — same pattern as this session's schema-version + sync-antipattern hooks). **Why it's P0′:** disciplined writes make the LWW read-side zone-guessing (the fragile part codex flagged) UNNECESSARY going forward → it SIMPLIFIES P1. Stub: `~/Peripheral-Brain/Context/Decisions/2026-05-23-canonical-time-discipline.md`. Needs full design next session.
+
 **Deprioritized (still tracked below, just not now):** deeper analytics / PI-velocity dashboards; Meetings, AskTheLab, Calendar polish; external-facing OG/marketing; non-priority PAGE-* design; dead-table simplify (do opportunistically via justify-it). The tier list (T2/T3/T4) below is the MENU; THIS section is the ORDER.
 
 ## ▶ DONE 2026-05-22 PM — the T1 correctness directive + Codex gate executed
