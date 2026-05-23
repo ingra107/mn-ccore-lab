@@ -41,7 +41,8 @@ below; OVERLAP items are noted against existing T2/T4 entries (codex added concr
 - **CONS** consolidate ~36 raw-fetch → typed api/hooks; attachment-upload ×3 → `useAttachmentUpload`; task-grouping fork → `taskGrouping`; stage taxonomy ×5 → one module; people pickers → `useTeam()`. (inline-date consolidation folds into CT-2.) *(M)*
 
 **T3' — UX NET-NEW (rest OVERLAP T2/PAGE-* — see synthesis):**
-- Today/ProjectDetail no query-error state (collapse to empty/not-found); Today meeting notes not persisted; Today planning drag-only (add Plan button); MeetingDetail attendance silent save-fail; MyTasks ListView div-grid → TableContainer; CreateTaskModal dangling `aria-labelledby`. *(S-M each)*
+- ✅ DONE 2026-05-22 evening (`7a4599a0`, deploy `8c8188ac`): Today/ProjectDetail query-error states (EmptyStateArt + retry; ProjectDetail distinguishes loading vs missing-slug); MeetingDetail attendance save-fail (rollback + toast); CreateTaskModal dangling `aria-labelledby` (added matching label id).
+- REMAINING: Today meeting notes not persisted; Today planning drag-only (add Plan button); MyTasks ListView div-grid → TableContainer (design-restructuring — defer to a design pass). *(S-M each)*
 - **IMPROVE:** wire real `/api/proactive-brief` into Today (adjacent FAKE-2); MyTasks `?open=` deep links; ProfilePage → `/api/team/me`; export `normalizeStage`; Personal root paths → `PATHS`.
 
 **CONTRADICTS — RESOLVED by Nick 2026-05-22:**
@@ -98,7 +99,7 @@ below; OVERLAP items are noted against existing T2/T4 entries (codex added concr
 - **UX-2** Token discipline (`#fff`→`--ink-bright`; `--gold-on-emphasis` gaps; inline `<style>` on TodayPage). *(M)*
 - **UX-3** Keyboard nav (TodayPage J/K/D/Space/F; AskTheLab J/K; SearchPage `/` focus). *(M)*
 - **UX-4** Standard API error envelope `{error:{code,message}}` (uploads/pi-dashboard ad-hoc). *(L)*
-- **UX-5** Search source isolation — try/catch per table so one D1 timeout doesn't break all 14. *(M)*
+- **UX-5** ✅ DONE 2026-05-22 evening (`bb2db3c3`, deploy `8c8188ac`) — `handleGetSearch` uses `Promise.allSettled`; a failed source returns `[]` + additive `{partial, failedSources}`. Auth/PB-visibility unchanged. +5 tests (api 204).
 - **UX-6** Create flows keep form open + inline error on failure (CreateDecisionModal, Ideas, AskTheLab, RelayCard). *(M)*
 - **UX-7** BottomSheet focus trap + larger close target. *(S)*
 - **UX-8** Mobile sidebar overlay = real dialog (focus trap, `aria-modal`). *(M)*

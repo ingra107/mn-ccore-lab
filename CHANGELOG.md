@@ -27,6 +27,8 @@ Build GREEN, **api tests 199/199** (+21 guard tests). Deploy verified live on `b
 
 **Then CT-3 + docs** (`a8bd7a9e`, deploy `cd30f61e`): the 12 remaining frontend UTC-today sites (CommandPalette/Dashboard/Layout/useOnboarding/UpcomingCard/NotificationBell/ProjectDetail/GrantsPage/ActivityPage/UpcomingMeetingBanner/TaskTimeline/TaskGrid) → `localDateKey()` — **timezone-correctness sweep (CT-2+CT-3) now complete**. CLAUDE.md deploy guidance fixed (`e3adaf36`): Claude runs `npm run deploy:pages:gated` directly (wrangler already authed); powershell.exe + reading secrets.ps1 are classifier-denied dead ends — don't punt the deploy. The `isPublicGet` regex for `GET /api/team/:slug` was assessed and LEFT (no handler exists, but likely forward-provisions a public profile endpoint — not "dead"); the "single-profile email leak" the agent flagged was a false positive.
 
+**Then Increment B — resilience + correctness/a11y** (`bb2db3c3` search · `7a4599a0` frontend; deploy `8c8188ac`; api 204/204; `run-tests.sh quick` re-verified): **UX-5** search source isolation (`Promise.allSettled` — one slow/failing table returns `[]` + additive `{partial, failedSources}` instead of sinking all 14 sources; auth/PB-visibility unchanged). **T3' safe correctness/a11y:** ProjectDetail + TodayPage real query-error states (EmptyStateArt + retry; loading vs missing-slug distinguished); MeetingDetail attendance toggle rolls back + toasts on save-fail (was silently swallowed); CreateTaskModal dangling `aria-labelledby` fixed. No design restructuring (MyTasks ListView→TableContainer deferred to a design pass).
+
 ## 2026-05-22 (PM) — T1 correctness batch + deploy + 5-pass Codex simplify review
 
 **Shipped** (`5f5f597d`, `909c6e8b`; deploy `af3189f0` live on `909c6e8`):

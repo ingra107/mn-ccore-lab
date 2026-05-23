@@ -4,8 +4,8 @@
 
 | Item | Value |
 |------|-------|
-| HEAD | `a8bd7a9e` on main, pushed (CT-3 `a8bd7a9e` + deploy-docs `e3adaf36` + docs `4b6c08ba` + security batch `0a612459`/`45911e6d`/`7c222e65`). PB repo: sync fix `148138e3` (Syncthing-propagated). |
-| Deploy | `cd30f61e.mn-ccore-lab.pages.dev` (2026-05-22 evening, CT-3) — LIVE on `a8bd7a9e`. Security batch deploy `b9e31ca8` smoke-verified (unauth /api/team no email, /api/meetings no notes, /api/team/pulse aggregate-only, search auth-gated); `run-tests.sh quick` 113/0/4. |
+| HEAD | `7a4599a0` on main, pushed (Increment B: search `bb2db3c3` + correctness/a11y `7a4599a0`; CT-3 `a8bd7a9e`; deploy-docs `e3adaf36`; security batch `0a612459`/`45911e6d`/`7c222e65`). PB repo: sync fix `148138e3` (Syncthing-propagated). |
+| Deploy | `8c8188ac.mn-ccore-lab.pages.dev` (2026-05-22 evening, Increment B) — LIVE on `7a4599a0`. api 204/204; security batch smoke-verified earlier; `run-tests.sh quick` 113/0/4 after each deploy. |
 | Build | GREEN (0 TS errors) |
 | API tests | 178/178 passing |
 | Schema | **v68** on prod D1. Test D1 (`mnccore-lab-test`) **fully reconciled to prod 2026-05-22 PM** via hub-schema-sync (was missing 27 tables + dozens of columns incl. all of v54/v55/v57/v58; now 76 tables, exact column match, 178/178 tests). |
