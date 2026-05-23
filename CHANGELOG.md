@@ -3,6 +3,28 @@
 
 > Historical phase records moved from CLAUDE.md to keep the operating guide focused on current state. Each section is a complete record of what shipped, decisions made, and scores achieved.
 
+## 2026-05-22 (evening) — Pre-adoption SECURITY tier (T0) + correctness, orchestrated 3-agent batch
+
+Plan → codex plan-audit (gpt-5.5, BLOCK→ship-after-amend, 217K tokens) → 3 parallel Opus agents (BACKEND `api/` · FRONTEND `src/` · SYNC PB) → integrate/build/test/commit/deploy. Plan + amendments: `docs/superpowers/plans/2026-05-22-hub-pre-adoption-batch.md`.
+
+**Shipped** (`0a612459` api · `45911e6d` frontend · `7c222e65` data; deploy `b9e31ca8`; PB sync `148138e3`):
+- **SEC-T0-1/+** auth-aware public-GET projections — `/api/team` & `/api/meetings` redact email/notes/agenda for unauth (verified live); `/api/team/pulse` aggregate-only; `/api/projects/health` + `/api/activity` filter PB-category for non-PI. Full `isPublicGet` allowlist audited.
+- **SEC-T0-2** search now requires auth + a shared visible-project predicate across projects/comments/notes/tasks/files (PI sees all; others exclude PB).
+- **SEC-T0-3** owner-or-PI authz on digest generate/send.
+- **SEC-T0-4** `tasks.notes` redacted from BOTH list and single-task endpoints (explicit column list).
+- **SEC-T0-5** shared `assertProtectedNotNull` rejects NULL on protected fields across all 3 write paths (mutations insert+patch, project update, task update — codex caught the task + insert gaps the original plan missed).
+- **SEC-T0-6** unified actor-identity policy (`resolveActor`) at ~11 sites — default own slug, overrides must be known team slugs, impersonation gated to PI/API-key (claude-ai exempt).
+- **SEC-T0-7** project delete cascades the newer child tables; PB-origin delete mirrors it.
+- **NEW (codex-found) attachment visibility** — `/api/files` list/download/delete enforce parent-entity visibility; non-PI blocked from PB-category project files.
+- **SEC-T0-8/9** JWT fails closed when `REQUIRE_AUTH=1`; api-key middleware also accepts `X-API-Key`.
+- **CT-2** remaining UTC "today" anchors → CT helper (server: projects/index/pb-sector/regulatory/submissions/conferences) + `localDateKey()` (frontend: Calendar/PBSector/TodayView/ConferencePrep/SubmissionTimeline/meeting classifier). `pb-sector.ts:142` correctly LEFT (prev-date arithmetic, not a today anchor).
+- **FAKE-2** `<HermesPending>` (pulse card + elapsed timer, clears via realtimeBus) replaces literal "Thinking…" in Ask the Lab + project comments.
+- **CON-2** emailSlug LUT mirrored 3→21 to match backend; `fetchManuscriptsAttention` res.ok guard; TaskRow v55 op-field types.
+- **DH-1** grant_milestones seed TEMPLATE (real data TBD). **DH-2/FAKE-1 dropped** — already satisfied.
+- **PB sync symmetry** — key-presence gates so a Hub NULL clears `stale_active_since`/`next_artifact` in brain.db; `last_meaningful_movement` MAX-wins preserved.
+
+Build GREEN, **api tests 199/199** (+21 guard tests). Deploy verified live on `b9e31ca8`. **Follow-ups** (not blockers): ~13 more frontend UTC-today sites outside AM-7 scope (date display); dead `isPublicGet` regex for non-existent `GET /api/team/:slug`; `/api/team/:slug` single-profile leak was a false positive (no handler exists).
+
 ## 2026-05-22 (PM) — T1 correctness batch + deploy + 5-pass Codex simplify review
 
 **Shipped** (`5f5f597d`, `909c6e8b`; deploy `af3189f0` live on `909c6e8`):

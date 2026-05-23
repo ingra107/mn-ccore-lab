@@ -4,13 +4,23 @@
 
 | Item | Value |
 |------|-------|
-| HEAD | `8ebb490e` on main, pushed to origin (commits after `909c6e8` are DOCS-only — handoff/WORKPLAN/CLAUDE.md/codex-review; prod app code = `909c6e8`, no redeploy needed) |
-| Deploy | `af3189f0.mn-ccore-lab.pages.dev` (2026-05-22 PM) — LIVE on commit `909c6e8`, `/api/health` ok, `/api/version` env=production |
+| HEAD | `7c222e65` on main (security `0a612459` + frontend `45911e6d` + data `7c222e65`; docs commit follows). PB repo: sync fix `148138e3` (local, Syncthing-propagated). |
+| Deploy | `b9e31ca8.mn-ccore-lab.pages.dev` (2026-05-22 evening) — LIVE on `7c222e65`. Smoke verified: `/api/health` ok, `/api/version` env=production, unauth `/api/team` no email, unauth `/api/meetings` no notes, `/api/team/pulse` aggregate-only, search auth-gated. |
 | Build | GREEN (0 TS errors) |
 | API tests | 178/178 passing |
 | Schema | **v68** on prod D1. Test D1 (`mnccore-lab-test`) **fully reconciled to prod 2026-05-22 PM** via hub-schema-sync (was missing 27 tables + dozens of columns incl. all of v54/v55/v57/v58; now 76 tables, exact column match, 178/178 tests). |
 | API auth | GET endpoints locked down (unchanged from 2026-05-15) |
 | Team adoption | Not yet broadly directed. |
+
+## Latest — 2026-05-22 evening: Pre-adoption SECURITY tier (T0) shipped — orchestrated 3-agent batch
+
+Full pipeline executed: plan (`docs/superpowers/plans/2026-05-22-hub-pre-adoption-batch.md`) → codex plan-audit (gpt-5.5, **BLOCK→ship-after-amend**, 217K tokens, every finding verified) → amendments folded in → **3 parallel Opus agents** (BACKEND `api/`, FRONTEND `src/`, SYNC PB — disjoint file domains, edits-only, orchestrator committed) → build/test/commit/deploy/smoke.
+
+**Shipped (`0a612459`/`45911e6d`/`7c222e65`; deploy `b9e31ca8`; PB `148138e3`):** SEC-T0-1..9 (auth-aware public-GET projections incl. NEW `/api/meetings` + `/api/team/pulse`; search PB-visibility; digest authz; tasks.notes redaction on BOTH endpoints; shared protected-field null-reject across 3 write paths; ~11-site actor-identity policy; cascade gaps; **NEW codex-found attachment visibility gate**; JWT fail-closed + X-API-Key) · CT-2 server+frontend (`ctToday`/`localDateKey`) · FAKE-2 `<HermesPending>` · CON-2 (emailSlug LUT 3→21, res.ok guard, TaskRow types) · DH-1 seed template · PB sync NULL-clear symmetry. **api tests 199/199**, build GREEN.
+
+**Codex caught (all fixed before dispatch):** B1 missed `/api/tasks/:id` + mutation inserts; B3/B4 needed handler signature changes (no auth param) + `photo_url` not `photo`; B5 missed the single-task `SELECT t.*`; the SECURITY-vs-CORRECTNESS commit split was fiction (collide in projects.ts/index.ts → one BACKEND commit); `pb-sector.ts:142` is NOT a today anchor (don't touch); 6 NEW holes (meetings, team/pulse, 4 actor sites, attachment visibility).
+
+**Follow-ups (not blockers):** ~13 more frontend UTC-today sites outside AM-7 (CalendarPage extras, CommandPalette, Dashboard, ProjectDetail, etc. — date *display*); dead `isPublicGet` regex for non-existent `GET /api/team/:slug`; the "/api/team/:slug leak" the backend agent flagged was a **false positive** (no GET handler exists — only POST update). DH-1 needs real grant data to apply the seed.
 
 ## Latest — 2026-05-22 PM: T1 correctness batch (the WORKPLAN directive, DONE)
 
@@ -66,7 +76,12 @@ Security (digest XSS/escapeHtml, GET API auth lockdown, admin endpoints deleted,
 
 ## Next Session Playbook
 
-**▶ The 2026-05-22 T1 directive is DONE** (fixes-first + Codex gate executed; CT sweep, STATE-1/2, enum-drift, DAT-4, test-D1 all closed — see "Latest — 2026-05-22 PM" above). The natural next session is the **TIER-0 SECURITY batch** from the new Codex review (`WORKPLAN.md` "Codex 5-pass review" → SEC-T0-1..9): it's the pre-adoption gate before the Hub opens to ~20 people, and it's all NET-NEW. Highest-leverage / lowest-risk first: SEC-T0-5 (mutations null-guard), SEC-T0-1 (public-endpoint gating), SEC-T0-6 (identity canonicalization). Otherwise pick a tier from `WORKPLAN.md`:
+**▶ The TIER-0 SECURITY batch is DONE + DEPLOYED** (2026-05-22 evening, `b9e31ca8`) — SEC-T0-1..9 + attachment visibility + CT-2 + FAKE-2 + CON-2 + PB sync symmetry all shipped & smoke-verified (see "Latest — 2026-05-22 evening" above). The pre-adoption security gate is closed; **team adoption is now unblocked** (Manual Item #3). Remaining work, pick a tier from `WORKPLAN.md`:
+
+- **CT-3 (new follow-up):** ~13 more frontend UTC-"today" sites outside AM-7 scope (CalendarPage extras, CommandPalette, Dashboard, Layout, useOnboarding, UpcomingCard, NotificationBell, ProjectDetail, GrantsPage, ActivityPage, UpcomingMeetingBanner, TaskTimelineView, TaskGridView) → route through `localDateKey()`. Date-display, low-risk.
+- **Cleanup:** remove the dead `isPublicGet` regex branch (index.ts:139-141) for the non-existent `GET /api/team/:slug`.
+- **DH-1:** apply `scripts/seed-grant-milestones.sql` once real grant IDs/dates are supplied.
+- Otherwise pick a tier from `WORKPLAN.md`:
 
 - **T1 leftovers:** FAKE-1 (Lab Overview `totalCitations` hardcoded — show `—` until PB scholarly cron), FAKE-2 (Hermes "Thinking…" → `<HermesPending>`), DH-1 (grant_milestones seed data), DH-2 (verify/drop Pulse PWA manifest).
 - **CT-2 (from Codex review):** ~12 more UTC "today" sites the api-only sweep missed (server: projects/index/pb-sector/regulatory/submissions/conferences; frontend Calendar/PBSector → a `localDateKey()` helper).

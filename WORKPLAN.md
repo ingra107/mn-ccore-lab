@@ -21,7 +21,7 @@ Full tagged synthesis: `docs/reviews/2026-05-22-codex-simplify/SYNTHESIS.md` (+ 
 alongside it). 5 passes, WORKPLAN-blind, ~8 findings spot-checked accurate. High-leverage NET-NEW items
 below; OVERLAP items are noted against existing T2/T4 entries (codex added concrete file:line sites).
 
-**T0 — SECURITY / pre-adoption (NET-NEW; gate before broad team access; adoption not yet started so not active):**
+**T0 — SECURITY / pre-adoption — ✅ ALL DONE + DEPLOYED 2026-05-22 evening** (`0a612459`, deploy `b9e31ca8`; smoke-verified live). Plan + amendments: `docs/superpowers/plans/2026-05-22-hub-pre-adoption-batch.md`. Codex plan-audit expanded the original 9 → +attachment-visibility gate +`/api/meetings` +`/api/team/pulse` +4 actor sites, and corrected B1 (3 write paths) / B3-B4 (signature changes) / B5 (both task endpoints). Kept below for the record:
 - **SEC-T0-1** Over-exposed public GETs: `isPublicGet` allows `/api/activity`, `/api/projects/health` (leaks PB project titles, no category filter), `/api/team` (`SELECT *` → email/auto_created). Redact/gate. *(M)*
 - **SEC-T0-2** Search bypasses PB-category visibility — any authed member can search Nick-only PB projects/notes (`search.ts:127-155`). Add shared visibleProjects filter. *(M)*
 - **SEC-T0-3** Digest gen/send has no owner-or-PI authz (`digest-email.ts:319-416`) — anyone can send another's digest anywhere. *(S)*
@@ -32,9 +32,9 @@ below; OVERLAP items are noted against existing T2/T4 entries (codex added concr
 - **SEC-T0-8** JWT fail-open hardening *(LOW — verified CF_ACCESS vars ARE set in prod, so not active)* — make `verifyCfAccessJwt` fail CLOSED when REQUIRE_AUTH=1. *(S)*
 - **SEC-T0-9** X-API-Key contract mismatch (middleware Bearer-only vs documented X-API-Key). *(S)*
 
-**T1' — Correctness NET-NEW (the CT sweep was NOT exhaustive):**
-- **CT-2** ~12 more UTC "today" sites: server `projects.ts:308`, `index.ts:1032/1053`, `pb-sector.ts:40/493`, `regulatory.ts:35`, `submissions.ts:142`, `conferences.ts:35` → `ctToday()`; frontend `CalendarPage`/`PBSector`/`TodayView`/`ConferencePrep`/`SubmissionTimeline`/`useApiData` → a `localDateKey()` helper. *(M)*
-- **CON-2** Contract drift: frontend/backend slug LUT (3 vs full → wrong identity); `key_link_*` dropped in `ProjectRow`/`rowToProject`; task op-fields absent from `TaskRow`; `fetchManuscriptsAttention` skips res.ok. *(M)*
+**T1' — Correctness NET-NEW — ✅ CT-2 + CON-2 DONE 2026-05-22 evening** (`0a612459`/`45911e6d`):
+- **CT-2** ✅ DONE — server (projects/index/pb-sector/regulatory/submissions/conferences → `ctToday()`) + frontend (`localDateKey()` helper; Calendar/PBSector/TodayView/ConferencePrep/SubmissionTimeline/meeting-classifier). NOTE corrected sites: `pb-sector.ts:142` LEFT (prev-date arithmetic, not a today anchor). **CT-3 follow-up:** ~13 more frontend UTC-today sites outside this scope (CommandPalette/Dashboard/Layout/useOnboarding/UpcomingCard/NotificationBell/ProjectDetail/GrantsPage/ActivityPage/UpcomingMeetingBanner/TaskTimelineView/TaskGridView) — date display, low-risk.
+- **CON-2** ✅ DONE (valid parts) — emailSlug LUT 3→21 lockstep; `fetchManuscriptsAttention` res.ok guard; TaskRow v55 op-field types. `key_link_*`/`rowToProject` claim was INVALID (no rowToProject; SELECT * retains them).
 
 **T2' — SIMPLIFY (NET-NEW deletes/consolidations; verified):**
 - **DEL** `handleUpsertTodayMd` (dead) + tracked `.pyc` (delete now); legacy MyTasks + UnifiedMyTasks/AuthContext shims; stale seed path (seed-d1.ts/seed.sql/npm seed*); dead tables decision_log/`*_new`/watchlist + `narrative_projects`/`research_narratives` (row-count check; KEEP publication/citation tables per Nick). *(S each)*
@@ -79,18 +79,18 @@ below; OVERLAP items are noted against existing T2/T4 entries (codex added concr
 
 ## T1 — Fake / broken data
 
-- **FAKE-1** *(S fallback / L cron)* — Lab Overview `totalCitations` hardcoded; `useCitations()`
-  hook already exists. Show `—` until the PB scholarly weekly cron (home laptop) populates
-  per-member h-index/citation data, then wire it. (decision: build the cron)
-- **FAKE-2** *(M)* — Hermes "Thinking about this..." literal → `<HermesPending>` component (pulse
-  card + elapsed timer, clears via realtimeBus). `questions.ts:40`. (decision: pulse card + timer)
+- **FAKE-1** ✅ fallback DONE (was already correct — `StatsCard.tsx:118-119` renders `—` when no
+  citation data; NOT hardcoded). Remaining: PB scholarly weekly cron (home laptop) to populate
+  per-member h-index/citation data — then it displays live automatically. (decision: build the cron)
+- **FAKE-2** ✅ DONE 2026-05-22 evening (`45911e6d`) — `<HermesPending>` (pulse card + elapsed timer,
+  clears via realtimeBus) in Ask the Lab + project comments.
 
 ## T1 — Design-handoff leftovers
 
-- **DH-1** *(S once data)* — Post-Award Milestones populated state; needs `grant_milestones` seed
-  rows (data task, not engineering). `Grants.tsx:898`.
-- **DH-2** *(S — verify/drop)* — PWA manifest for Pulse kiosk; may already be shipped (Phase 32) —
-  verify, likely drop.
+- **DH-1** ⏳ seed TEMPLATE shipped (`scripts/seed-grant-milestones.sql`, `7c222e65`); table + UI
+  already exist. Remaining: Nick supplies real grant IDs/dates, then apply the SQL to prod D1.
+- **DH-2** ✅ DROPPED 2026-05-22 — verified generic `public/manifest.webmanifest` exists; no Pulse-
+  specific kiosk manifest needed.
 
 ## T2 — UX & polish (during adoption; not blockers)
 
@@ -140,6 +140,7 @@ below; OVERLAP items are noted against existing T2/T4 entries (codex added concr
 
 ## Done ledger (do not re-expand)
 
+- **2026-05-22 evening — Pre-adoption SECURITY tier (T0) + correctness, 3-agent orchestrated batch** (`0a612459` api / `45911e6d` frontend / `7c222e65` data; deploy `b9e31ca8`; PB sync `148138e3`): plan→codex-audit(BLOCK→amend)→3 parallel Opus agents→integrate. SEC-T0-1..9 + NEW attachment-visibility gate + `/api/meetings`/`/api/team/pulse` redaction (codex-found) · CT-2 server+frontend · FAKE-2 `<HermesPending>` · CON-2 (LUT 3→21, res.ok, TaskRow types) · DH-1 seed template · PB sync NULL-clear symmetry (key-presence gates; MAX-wins preserved). api 199/199, smoke-verified live. FAKE-1 + DH-2 dropped (already satisfied). Plan: `docs/superpowers/plans/2026-05-22-hub-pre-adoption-batch.md`.
 - **2026-05-22 PM — T1 correctness batch + Codex gate + ship** (`5f5f597d`/`909c6e8b`/`cf85cfa0`, deploy `af3189f0` live on `909c6e8`): CT date helper sweep (`api/lib/ct-date.ts`, 10 anchors + paired bounds across 6 routes) · STATE-1 TodayPage done-from-cache (reconciliation + onError rollback + isToday) · STATE-2 ProfilePage useQuery refetch · enum-drift + DAT-4 verified clean (no change) · Codex gate fixed pb-sector meeting-TZ + digest date labels + helper hardening + localDoneIds dedup + ProfilePage auth-gate · test-D1 reconciled to prod (hub-schema-sync, 27 tables + cols, now 76 exact match) · librarian fixed 3 stale "Pages auto-deploys on push" agent_knowledge entries · CLAUDE.md deploy docs corrected (manual-only + token).
 - **2026-05-22 — audit-fix batch** (`6a69cfb2`, deploy `4681a29c`): advanceProjectMovement id-OR-slug match (was silently missing slug-backed tasks) · `stage_entered_at` on project insert (new-project hole in D7) · batch-assign `assignee_change` event · Manuscripts status enum aligned to server (both dropdowns) · QuickCapture stable event id (SEC-5 double-submit).
 - **2026-05-22 — verify-first batch** (`3bd5d419`/`8990acb7`/`9eb9b192`/`1c40fa2a`, deploy `2c217abf`): SEC-4 timezone DST · SEC-6 project resolver · DAT-3 batch response · DAT-6 meeting 404 · DAT-8 regulatory batch · D7 `stage_entered_at` · D22 typed events · advanceProjectMovement (builder). Verified ALREADY-FIXED (no work): SEC-5(initial call, later corrected)/DAT-1/DAT-2/DAT-5/DAT-7.
