@@ -4,7 +4,7 @@
 
 | Item | Value |
 |------|-------|
-| HEAD | `7a4599a0` on main, pushed (Increment B: search `bb2db3c3` + correctness/a11y `7a4599a0`; CT-3 `a8bd7a9e`; deploy-docs `e3adaf36`; security batch `0a612459`/`45911e6d`/`7c222e65`). PB repo: sync fix `148138e3` (Syncthing-propagated). |
+| HEAD | `2e3ca57c` on main, pushed (INFRA-5 CI hardening `2e3ca57c`; Increment B `bb2db3c3`/`7a4599a0`; CT-3 `a8bd7a9e`; deploy-docs `e3adaf36`; security batch `0a612459`/`45911e6d`/`7c222e65`). Deployed app code = `7a4599a0` (`8c8188ac`); INFRA-5 is CI-only, no redeploy. PB repo: sync fix `148138e3` (Syncthing). |
 | Deploy | `8c8188ac.mn-ccore-lab.pages.dev` (2026-05-22 evening, Increment B) — LIVE on `7a4599a0`. api 204/204; security batch smoke-verified earlier; `run-tests.sh quick` 113/0/4 after each deploy. |
 | Build | GREEN (0 TS errors) |
 | API tests | 178/178 passing |

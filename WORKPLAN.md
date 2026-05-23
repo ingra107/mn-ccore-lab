@@ -117,7 +117,7 @@ below; OVERLAP items are noted against existing T2/T4 entries (codex added concr
 - **INFRA-1** *(L)* ProjectDetail Activity tab — typed `activity_log` emits now exist (D22); wire the read + UI.
 - **INFRA-2** *(M)* `/api/health/deep` (mutation stats, calendar-feed errors, R2 orphans, open bug reports, cron status).
 - **INFRA-3** *(M)* realtimeBus wiring sweep (AskTheLab 60s poll, MyItems 30s, Insights 5min, Calendar 15min → WS).
-- **INFRA-5** *(S — codex: pull up)* Schema-drift CI hardening (assert ordered version list, detect dup prefixes, snapshot hash).
+- **INFRA-5** ✅ DONE 2026-05-22 evening (`2e3ca57c`) — `scripts/check-schema-versions.py` + `schema-version-snapshot.json` in the nightly drift workflow: asserts ordered version list (new-gap detection vs snapshot), no new duplicate vNN prefixes, SHA-256 snapshot hash. Tested pass + synthetic-fail. CI-only.
 - **INFRA-6** *(XL)* Personal 3-tab merge (MyItems INTO Personal: Workspace|Inbox|Cards). Substrate-swap protocol required.
 - **INFRA-7** *(M)* Surface v55 task workflow fields (`waiting_on`, `promised_to`, `promise_date`, `next_checkin_date`) in `TaskRow` + UI.
 - **INFRA-8** *(M — codex: pull up)* Project staleness adapter — `state`/`next_artifact`/`last_meaningful_movement`/`stale_active_since` dropped in `rowToProject`.
