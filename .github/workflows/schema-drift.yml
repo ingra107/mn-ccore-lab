@@ -41,6 +41,22 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Schema version integrity (INFRA-5)
+        # Fast pre-flight using stdlib Python — no Node/wrangler required.
+        # Checks three structural properties of the api/schema-v*.sql file set:
+        #   1. Ordered-version list: any NEW gap vs the committed snapshot fails.
+        #   2. Duplicate-prefix detection: any NEW file sharing an existing vNN fails.
+        #   3. Snapshot hash: SHA-256 of sorted filenames must match
+        #      scripts/schema-version-snapshot.json.
+        #
+        # The snapshot is the authoritative baseline.  When a schema file is
+        # intentionally added or removed the developer must run:
+        #   python scripts/check-schema-versions.py --update
+        # and commit the updated snapshot alongside the schema file change.
+        #
+        # Runs on Python 3.x (stdlib only).  Ubuntu default Python 3 is used.
+        run: python3 scripts/check-schema-versions.py
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:

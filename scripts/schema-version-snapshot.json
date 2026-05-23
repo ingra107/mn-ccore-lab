@@ -1,0 +1,116 @@
+{
+  "description": "Canonical set of api/schema-v*.sql migration files. Regenerate with: python scripts/check-schema-versions.py --update",
+  "hash": "49417b06bfb0674bf425372ddb65ae3858b9fc44ec05629e371e2174958f070b",
+  "file_count": 72,
+  "files": [
+    "schema-v2.sql",
+    "schema-v3.sql",
+    "schema-v4.sql",
+    "schema-v5.sql",
+    "schema-v6.sql",
+    "schema-v7.sql",
+    "schema-v8.sql",
+    "schema-v9.sql",
+    "schema-v10.sql",
+    "schema-v11.sql",
+    "schema-v12.sql",
+    "schema-v13.sql",
+    "schema-v14.sql",
+    "schema-v15.sql",
+    "schema-v16.sql",
+    "schema-v17.sql",
+    "schema-v18.sql",
+    "schema-v19.sql",
+    "schema-v20.sql",
+    "schema-v21.sql",
+    "schema-v22.sql",
+    "schema-v22-rename-columns.sql",
+    "schema-v23.sql",
+    "schema-v24.sql",
+    "schema-v25.sql",
+    "schema-v26.sql",
+    "schema-v27.sql",
+    "schema-v28.sql",
+    "schema-v29.sql",
+    "schema-v30.sql",
+    "schema-v31.sql",
+    "schema-v32.sql",
+    "schema-v33.sql",
+    "schema-v34.sql",
+    "schema-v36.sql",
+    "schema-v37.sql",
+    "schema-v38.sql",
+    "schema-v39.sql",
+    "schema-v40.sql",
+    "schema-v41.sql",
+    "schema-v42.sql",
+    "schema-v43.sql",
+    "schema-v44.sql",
+    "schema-v45.sql",
+    "schema-v46.sql",
+    "schema-v47.sql",
+    "schema-v48.sql",
+    "schema-v48-index-reconcile.sql",
+    "schema-v48-stage3-8tables.sql",
+    "schema-v49-missing-columns.sql",
+    "schema-v49-missing-tables.sql",
+    "schema-v49-pomodoro-rename.sql",
+    "schema-v50-task-group-override.sql",
+    "schema-v51-seq-cursor.sql",
+    "schema-v51-tasks-deadline.sql",
+    "schema-v52-calendar-feeds.sql",
+    "schema-v52-seq-trigger-fix.sql",
+    "schema-v53-seq-trigger-include-self.sql",
+    "schema-v53-team-auto-create.sql",
+    "schema-v54-team-citations.sql",
+    "schema-v55-workflow-metadata.sql",
+    "schema-v57-inbox-events.sql",
+    "schema-v58-processed-mutations.sql",
+    "schema-v59-last-mutation-tracking.sql",
+    "schema-v60-tasks-dedup-index.sql",
+    "schema-v61-calendar-events-unique-fix.sql",
+    "schema-v62-calendar-feeds-conditional-get.sql",
+    "schema-v63-stage3-last-mutation-id.sql",
+    "schema-v65-sessions-deleted-at.sql",
+    "schema-v66-rename-decision-log.sql",
+    "schema-v67-stage3-deleted-at.sql",
+    "schema-v68-stage-entered-at.sql"
+  ],
+  "version_range": [
+    2,
+    68
+  ],
+  "gaps": [
+    35,
+    56,
+    64
+  ],
+  "duplicate_version_groups": {
+    "22": [
+      "schema-v22.sql",
+      "schema-v22-rename-columns.sql"
+    ],
+    "48": [
+      "schema-v48.sql",
+      "schema-v48-index-reconcile.sql",
+      "schema-v48-stage3-8tables.sql"
+    ],
+    "49": [
+      "schema-v49-missing-columns.sql",
+      "schema-v49-missing-tables.sql",
+      "schema-v49-pomodoro-rename.sql"
+    ],
+    "51": [
+      "schema-v51-seq-cursor.sql",
+      "schema-v51-tasks-deadline.sql"
+    ],
+    "52": [
+      "schema-v52-calendar-feeds.sql",
+      "schema-v52-seq-trigger-fix.sql"
+    ],
+    "53": [
+      "schema-v53-seq-trigger-include-self.sql",
+      "schema-v53-team-auto-create.sql"
+    ]
+  }
+}
