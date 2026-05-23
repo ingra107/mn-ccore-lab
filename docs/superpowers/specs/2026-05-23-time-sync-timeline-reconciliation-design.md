@@ -16,8 +16,8 @@ Per Nick's reviews-before-code instruction (2026-05-23), each plan got an Opus s
 - `Scratch/reviews-2026-05-23/opus-timeline.md` — Opus, activity-timeline.
 - `Scratch/reviews-2026-05-23/opus-lww.md` — Opus, LWW v2.
 - `Scratch/reviews-2026-05-23/opus-timediscipline.md` — Opus, time-discipline design.
-- `Scratch/codex-plan-audit-2026-05-23/passA/` + `$TEMP/codex-passA-20260523-last.md` — Codex, timeline.
-- `Scratch/codex-plan-audit-2026-05-23/passB/` + `$TEMP/codex-passB-20260523-last.md` — Codex, LWW + time-discipline.
+- `Scratch/codex-plan-audit-2026-05-23/passA/` (inventory + prompt persisted) — Codex, timeline. Synthesis folded into this doc (§0 findings + §2 sequence); the raw `-o` output was ephemeral ($TEMP, not recoverable).
+- `Scratch/codex-plan-audit-2026-05-23/passB/` (inventory + prompt persisted) — Codex, LWW + time-discipline. Synthesis folded into this doc; raw `-o` output ephemeral.
 - Quick-win shipped: `66e5c9d0` (redact residual `tasks.notes` `SELECT *` leaks; 204 api tests; NOT yet deployed).
 
 **Convergent verified findings** (drive everything below):
@@ -102,7 +102,7 @@ A task-by-task plan with, per task: file:line, change, test, A/B/C ship-risk cla
 ## 6. References
 
 - Source plans: timeline spec (Hub `docs/superpowers/specs/2026-05-23-activity-timeline-comments-design.md`); LWW v2 + time-discipline stub (PB `Context/Decisions/`).
-- Review wave: `Scratch/reviews-2026-05-23/` (3 Opus) + `Scratch/codex-plan-audit-2026-05-23/` + `$TEMP/codex-pass{A,B}-20260523-last.md` (2 Codex).
+- Review wave: `Scratch/reviews-2026-05-23/` (3 Opus, full text persisted) + `Scratch/codex-plan-audit-2026-05-23/` (2 Codex bundles; syntheses folded into §0/§2, raw outputs ephemeral).
 - Verified-recoverability evidence: `query.py:314` (audit_log hash), `crdt.py:247-255` (CRDT hash + latest-only), `events` inserts (`query.py:1092/1285/1423`).
 </content>
 </invoke>
