@@ -144,10 +144,10 @@ brain.db is the **primary store**. D1 (Hub) is the primary UI + write target. Sy
 
 **Key rules:**
 - Brain.db tasks use canonical `task_{ulid}` IDs. Hub-created tasks use typed ULIDs (e.g., `task_01KP...`). Both reachable via `entity_aliases` (hub_slug alias).
-- `notes` (brain.db) is private. `description` (D1) is team-visible. They do NOT sync bidirectionally.
+- `notes` (brain.db) vs `description` (D1, team-visible). ⚠️ **UNDER REVIEW (2026-05-22):** the code currently DOES sync these bidirectionally (push brain.db `notes`→Hub `description`; pull Hub `description`→brain.db `notes`, the latter since 2026-05-12 "Task 1.2") — this CONTRADICTS the original "notes is private, do-NOT-sync" privacy boundary. Pending Nick's call: intended, or a privacy regression to revert (private notes leaking to the team-visible field)?
 - Task deletion uses soft-delete (`deleted_at` column). `GET /api/tasks?include_deleted=1` surfaces them for the sync module.
 - `completed` field is bidirectional — Hub can reopen tasks.
-- Hub `task_comments` mirror into brain.db `d1_task_comments` (read-only).
+- Hub task/project **updates** mirror into brain.db `d1_task_updates` / `d1_project_updates` (append-only, read-only). (`d1_task_comments` exists in schema but is inert/0-rows; task *comments* are not mirrored. Side-note: both update-mirrors have had no new rows in ~1mo for a 20-person team — hub-backend should confirm team updates are being written.)
 - Hub-originated projects flow into brain.db — `category` (MNCCORE/CLIF/Peripheral Brain) maps onto brain.db `domain`.
 
 **Implementation:** `scripts/db/sync/` (drivers/hub.py + boundary + payload). Decision: `Context/Decisions/2026-04-21-sync-extraction-COMPLETE.md` in PB.
