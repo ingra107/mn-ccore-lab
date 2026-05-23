@@ -76,7 +76,11 @@ Security (digest XSS/escapeHtml, GET API auth lockdown, admin endpoints deleted,
 
 ## Next Session Playbook
 
-**▶ The TIER-0 SECURITY batch is DONE + DEPLOYED** (2026-05-22 evening, `b9e31ca8`) — SEC-T0-1..9 + attachment visibility + CT-2 + FAKE-2 + CON-2 + PB sync symmetry all shipped & smoke-verified (see "Latest — 2026-05-22 evening" above). The pre-adoption security gate is closed; **team adoption is now unblocked** (Manual Item #3). Remaining work, pick a tier from `WORKPLAN.md`:
+**▶ P1 SYNC-FIDELITY is the active priority (mission north-star #1).** State: Track A safe wins SHIPPED (frozen-row trust-tax gone), P0/P1 root-cause front-end SHIPPED (PB `61c53d78`, 51 tests) with a **provenance shadow-log running on the 3 pull-gates — 48h window started ~2026-05-23 03:00 UTC**. **⏰ NEXT ACTION (~2026-05-25, after the window): review `~/Peripheral-Brain/data/logs/lww_zone_shadow.jsonl`** — if 0 "new-decision-wrong" rows, proceed with the gated tasks (flip pull-gates to origin-aware; Task 5 LMM writer→UTC; Task 6 `client_ts` explicit-Z + Hub `advanceProjectMovement` cutover, CROSS-REPO with hub-backend; Task 7 43-row migration). Plan: `~/Peripheral-Brain/Context/Decisions/2026-05-22-sync-lww-timezone-unification-v2.md`. **Also pending Nick's call:** is `notes`↔`description` sync (since 2026-05-12) intended or a privacy regression? (flagged in CLAUDE.md sync section). Then P2 (Today/MyTasks completeness) → P3 (research SoR) → P4 (Co-Scientist) per WORKPLAN north-star.
+
+---
+
+**The TIER-0 SECURITY batch is DONE + DEPLOYED** (2026-05-22 evening, `b9e31ca8`) — SEC-T0-1..9 + attachment visibility + CT-2 + FAKE-2 + CON-2 + PB sync symmetry all shipped & smoke-verified (see "Latest — 2026-05-22 evening" above). The pre-adoption security gate is closed; **team adoption is now unblocked** (Manual Item #3). Remaining work, pick a tier from `WORKPLAN.md`:
 
 - **CT-3** ✅ DONE 2026-05-22 evening (`a8bd7a9e`, deploy `cd30f61e`) — 12 frontend UTC-today sites → `localDateKey()` (CommandPalette, Dashboard, Layout, useOnboarding, UpcomingCard, NotificationBell, ProjectDetail, GrantsPage, ActivityPage, UpcomingMeetingBanner, TaskTimelineView, TaskGridView). The timezone-correctness sweep (CT-2 + CT-3) is now complete.
 - **`isPublicGet` regex for `GET /api/team/:slug`:** assessed — LEFT IN PLACE (no GET handler exists, but the branch likely forward-provisions a public marketing profile endpoint; per justify-it, not removed as "dead").
