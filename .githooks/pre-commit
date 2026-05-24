@@ -21,6 +21,24 @@
 set -e
 
 # ---------------------------------------------------------------------------
+# WORKPLAN.html regeneration (2026-05-24). Option B: WORKPLAN.md is the
+# editable source of truth; WORKPLAN.html is GENERATED, never hand-edited.
+# When WORKPLAN.md is staged, regenerate the HTML and re-stage it so the two
+# can never drift. Cheap: only fires when WORKPLAN.md is in the staged set.
+if git diff --cached --name-only --diff-filter=AM | grep -qx "WORKPLAN.md"; then
+    if command -v python >/dev/null 2>&1; then
+        if python "$(dirname "$0")/../scripts/gen_workplan_html.py" >/dev/null 2>&1; then
+            git add -- WORKPLAN.html
+            echo "[hub-precommit] Regenerated + staged WORKPLAN.html from WORKPLAN.md."
+        else
+            echo "[hub-precommit] WARN: gen_workplan_html.py failed; committing WORKPLAN.md without HTML regen."
+        fi
+    else
+        echo "[hub-precommit] WARN: python not found; skipping WORKPLAN.html regen."
+    fi
+fi
+
+# ---------------------------------------------------------------------------
 # Wrangler-D1 entry-point lint (2026-05-24). Flags RAW `wrangler d1` /
 # `npx wrangler d1 execute` in staged files (wrangler-d1-allowed: rule doc).
 # ALL programmatic D1 calls must go

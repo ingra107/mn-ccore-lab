@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hub Workplan — updated 2026-05-22</title>
+<style>
+  :root{
+    --bg:#0e1014; --panel:#171a21; --panel2:#1c212b; --ink:#e8ebf1; --muted:#94a0b0;
+    --line:#272d39; --now:#6ea8fe; --next:#f5b14c; --done:#5bbf8a; --block:#ef6a6a; --p:#a78bfa;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:16px/1.62 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-text-size-adjust:100%;}
+  .wrap{max-width:860px;margin:0 auto;padding:22px 16px 90px;}
+  h1{font-size:20px;margin:0 0 3px;}
+  .sub{color:var(--muted);font-size:13px;}
+  .updated{color:var(--muted);font-size:12px;margin-top:6px;}
+  .genwarn{color:var(--next);font-size:11px;margin-top:4px;border:1px dashed #5c4019;
+    background:#241a0c;border-radius:7px;padding:7px 10px;}
+
+  /* NOW banner */
+  .now{background:linear-gradient(180deg,#13233a,#161b24);border:1px solid #2c456e;
+    border-radius:12px;padding:14px 16px;margin:18px 0 8px;}
+  .now .lbl{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--now);font-weight:700;}
+  .now .line{margin-top:6px;font-size:15px;}
+  .now .nextup{margin-top:10px;padding-top:10px;border-top:1px dashed #2c456e;color:var(--next);font-size:14px;}
+  .now .nextup b{color:#ffd591;}
+
+  h2{font-size:12px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);
+    margin:30px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line);}
+  h3{font-size:14px;margin:18px 0 6px;color:#cdd6e4;}
+  h4{font-size:13px;margin:14px 0 5px;color:var(--muted);}
+
+  .row{display:flex;gap:11px;align-items:flex-start;padding:10px 12px;margin:7px 0;
+    background:var(--panel);border:1px solid var(--line);border-radius:9px;}
+  .row .ic{flex:0 0 auto;width:20px;text-align:center;font-size:14px;margin-top:1px;}
+  .row .c{flex:1 1 auto;min-width:0;}
+  .row .ttl{font-weight:600;font-size:15px;}
+  .row .d{color:#bcc6d4;font-size:13.5px;}
+  .tag{flex:0 0 auto;font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;
+    padding:3px 8px;border-radius:20px;align-self:flex-start;white-space:nowrap;}
+  .ptag{font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;
+    padding:2px 7px;border-radius:20px;margin-right:7px;white-space:nowrap;}
+  .t-now{background:#15263d;color:var(--now);border:1px solid #2c456e;}
+  .t-next{background:#3a2a12;color:var(--next);border:1px solid #5c4019;}
+  .t-block{background:#3a1818;color:var(--block);border:1px solid #5c2424;}
+  .t-prog{background:#1f2a3a;color:#8fb8ff;border:1px solid #2c456e;}
+  .t-p{background:#241d3a;color:var(--p);border:1px solid #3c2f63;}
+
+  p.para{margin:9px 0;font-size:14px;color:#cdd6e4;}
+  p.para.done{opacity:.6;}
+  p.para.done b, p.para.done{text-decoration:line-through;text-decoration-color:#3c6b50;}
+  blockquote.note{margin:10px 0;padding:9px 13px;border-left:3px solid var(--line);
+    background:var(--panel2);border-radius:0 8px 8px 0;color:var(--muted);font-size:13px;}
+  hr.rule{border:0;border-top:1px solid var(--line);margin:22px 0;}
+
+  /* done = struck + dim + collapsible */
+  .done .ttl{text-decoration:line-through;color:var(--muted);text-decoration-color:#3c6b50;}
+  .done .d{text-decoration:line-through;text-decoration-color:#3c6b50;}
+  .row.done{opacity:.62;border-left:3px solid var(--done);}
+  .row.done .ic{color:var(--done);}
+  details{margin:8px 0;border:1px solid var(--line);border-radius:9px;background:var(--panel2);overflow:hidden;}
+  summary{cursor:pointer;padding:11px 14px;font-weight:600;font-size:13px;list-style:none;
+    display:flex;justify-content:space-between;align-items:center;gap:10px;color:#cdd6e4;
+    text-transform:uppercase;letter-spacing:.8px;}
+  summary::-webkit-details-marker{display:none}
+  summary .cnt{color:var(--muted);font-size:11px;font-weight:500;text-transform:none;letter-spacing:0;flex:0 0 auto;}
+  details[open] summary{border-bottom:1px solid var(--line);}
+  .det-body{padding:8px 12px 12px;}
+  code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;background:#11141a;
+    border:1px solid var(--line);border-radius:4px;padding:1px 5px;color:#cdd6e4;}
+  a{color:var(--now);text-decoration:none;border-bottom:1px solid #2c456e;}
+  .foot{margin-top:36px;border-top:1px solid var(--line);padding-top:14px;color:var(--muted);font-size:12px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>Hub Workplan — updated 2026-05-22</h1>
+  <div class="sub">Single source of truth for <b>remaining</b> work. Completed items are a compact ledger at the
+bottom — do not re-expand them. Supersedes the Apr-28 synthesis, May-5 codex plan,
+design-handoff TICKETS, and hub-future-ideas (all historical now).</div>
+  <div class="genwarn">Generated from <code>WORKPLAN.md</code> &mdash; do not hand-edit; run <code>python scripts/gen_workplan_html.py</code></div>
+  <div class="updated">Generated 2026-05-24 12:36 Central Daylight Time</div>
+
+  <div class="now">
+  <div class="lbl">▶ Where we are now</div>
+  <div class="line">▶ INCREMENT 1A — Time/Sync/Timeline reconciliation (P0′+P1, leads to P2) — Phase α DONE 2026-05-23, Phase β NEXT</div>
+  <div class="nextup">⏭ <b>Next:</b> <b>Phase β — NEXT (Tasks 5-9, DEDICATED COORDINATED SESSION).</b> snapshot both repos → fail-closed LWW enforce flip (<code>hub.py:1278/1861/2002</code>) → <code>client_ts</code> cutover (cross-repo lockstep, Hub handoff spec first) → ONE stopped-world legacy UTC migration (<code>088_normalize_timestamps_utc.py</code>, frozen-CT converter) → delete <code>to_utc_dt</code> zone-guessing scaffold + lint WARN→ERROR. **Preconditions (see SESSION-HA</div>
+</div>
+
+  <hr class="rule">
+
+<h2>★ MISSION-ALIGNED PRIORITIES — north star (2026-05-22, from Nick's priorities interview)</h2>
+<p class="para"><b>Posture:</b> build it solid FIRST, no rush to invite the team. Hub is for <b>all audiences equally</b> (PI / team / mentees). The two surfaces that matter: <b>Today/MyTasks</b> (daily driver) + <b>Projects/Manuscripts/Grants</b> (system-of-record). Weighting: balanced (polish + capability + reliability + lower-maintenance). Execute roughly in this order. <b>Design-touching items are STEER-FIRST</b> — confirm direction with Nick before building.</p>
+<div class="row"><div class="ic">◆</div><div class="c"><div class="d"><b>P1 — Sync fidelity &amp; maintenance reduction (TOP — serves daily-driver TRUST <em>and</em> cuts Nick's #1 manual pain).</b> The brain.db ↔ Hub ↔ TODAY.md "data-sync dance" is the thing most likely to silently drift and the heaviest upkeep. Goal: bulletproof, zero-drift, fewer manual steps.</div></div><div class="tag t-p">priority</div></div>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d"><b>Sync-drift AUDIT first</b> — map every drift source across brain.db ↔ D1 ↔ TODAY.md (investigate-skill / builder), then close them.</div></div></div>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d">Carry-overs: <code>next_artifact</code> symmetry (S1 done; <code>last_meaningful_movement</code> MAX-wins intentional); task done-state reconciliation (Hub side done — verify TODAY.md side); v55 fields both ways; <code>group_override</code>; legacy-slug canonicalization drift signal.</div></div></div>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d">Automate the manual sync steps (shrink the dance).</div></div></div>
+<div class="row"><div class="ic">◆</div><div class="c"><div class="d"><b>P2 — Today/MyTasks completeness (daily driver — Nick picked ALL sub-aspects).</b></div></div><div class="tag t-p">priority</div></div>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d">Task capability in UI: surface v55 workflow fields (INFRA-7: <code>waiting_on</code>/<code>promised_to</code>/<code>promise_date</code>/<code>next_checkin</code>) + commitments tracker (D9 <code>commitments.to_slug</code>).</div></div></div>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d">Planning UX (T3' remaining): Plan button, Today meeting-notes persistence, drag-planning polish.</div></div></div>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d">Then polish: PAGE-1 (TodayPage T2), keyboard nav (UX-3), tokens (UX-2).</div></div></div>
+<div class="row"><div class="ic">◆</div><div class="c"><div class="d"><b>P3 — Research SoR trustworthiness (Projects/Manuscripts/Grants — data + history + pipeline; NOT analytics).</b></div></div><div class="tag t-p">priority</div></div>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d">Data completeness/accuracy audit (are all projects/manuscripts in + correct? — the real trust blocker).</div></div></div>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d">History + movement: INFRA-1 (ProjectDetail Activity tab read+UI; D22 emits exist) + INFRA-8 (surface state/next_artifact/last_movement/stale_active_since).</div></div></div>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d">Pipeline workflows: manuscript/grant stage tracking + deadlines + DH-1 (real grant milestones).</div></div></div>
+<div class="row"><div class="ic">◆</div><div class="c"><div class="d"><b>P4 — Smarter Hermes / Co-Scientist (strategic capability bet — longer-horizon, BRAINSTORM-FIRST).</b></div></div><div class="tag t-p">priority</div></div>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d">Deeper AI assistance on research tasks (lit synthesis, analysis help, drafting) beyond Q&amp;A. T4 #41 Co-Scientist. Architecture + design effort; steer-first.</div></div></div>
+<div class="row"><div class="ic">◆</div><div class="c"><div class="d"><b>P0′ — Canonical time discipline (FOUNDATIONAL — design before/with the P1 LWW flip).</b> Single read/write/display chokepoint for ALL dates/times: two types (<code>Instant</code>=UTC / <code>CivilDate</code>=date-only+zone), ONE <code>nowUtc()</code> writer, ONE display fn (browser-local on Hub = <b>traveler-aware</b>; configurable server "my timezone" for TODAY.md/cron), + a <b>pre-commit/CI lint banning raw <code>new Date().toISOString()</code>/<code>datetime.now()</code>/<code>datetime('now')</code></b> outside the helpers (executable contract — same pattern as this session's schema-version + sync-antipattern hooks). <b>Why it's P0′:</b> disciplined writes make the LWW read-side zone-guessing (the fragile part codex flagged) UNNECESSARY going forward → it SIMPLIFIES P1. <b>NOW DESIGNED + Phase α SHIPPED</b> (2026-05-23) — reconciled with P1 (LWW) + P2 (timeline) into <b>Increment 1A</b> (below); the lint + <code>timez.py</code>/<code>time.ts</code> chokepoints + the Hub LMM churn-fix landed live this session. Phase β (the LWW flip + UTC migration) is next.</div></div><div class="tag t-p">priority</div></div>
+<p class="para"><b>Deprioritized (still tracked below, just not now):</b> deeper analytics / PI-velocity dashboards; Meetings, AskTheLab, Calendar polish; external-facing OG/marketing; non-priority PAGE-* design; dead-table simplify (do opportunistically via justify-it). The tier list (T2/T3/T4) below is the MENU; THIS section is the ORDER.</p>
+
+<h2>▶ INCREMENT 1A — Time/Sync/Timeline reconciliation (P0′+P1, leads to P2) — Phase α DONE 2026-05-23, Phase β NEXT</h2>
+<p class="para"><span class="ptag t-block">blocks</span>P0′ (time-discipline) + P1 (LWW sync-fidelity) + P2 (timeline) were reconciled into ONE plan after a 6-review wave (3 Opus + 2 Codex plan-audits + 1 Codex pre-execution review that BLOCKED→amended the plan). Design: <code>docs/superpowers/specs/2026-05-23-time-sync-timeline-reconciliation-design.md</code>. Plan: <code>docs/superpowers/plans/2026-05-23-increment-1A-time-sync-foundation.md</code>. Principle: store every instant UTC, display viewer-local (browser zone on Hub = traveler-aware; rendering-machine OS zone server-side; <code>completed_at</code> is UTC-store/display-local, not a CT exception).</p>
+<p class="para"><span class="ptag t-prog">done</span><b>Phase α — SHIPPED + LIVE</b> (deploy <code>17d7cdd1</code> on <code>68b8d861</code>, <code>/api/health</code> clean):</p>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d"><b>Task 4 — killed the live LMM churn bug</b> (<code>advanceProjectMovement</code> UTC-normalized atomic CASE compare); the deploy batched the <code>tasks.notes</code> redaction (<code>66e5c9d0</code>) → live.</div></div></div>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d">Tasks 1/2 — canonical time chokepoints: PB <code>timez.py</code> + <code>now_instant</code>/<code>now_instant_wire</code> (<code>569a604a</code>); Hub <code>src/lib/time.ts</code> (<code>be2eb1d4</code>).</div></div></div>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d">Task 3 — time-discipline lint R20-R23, WARN mode, both repos (<code>43b9eb68</code> PB + <code>40058df6</code> Hub); ERROR-flip wired for Task 9.</div></div></div>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d">Task 10 — hazards: <code>operations.py:920</code> Bug-2 fix + backfill <code>--allow-post-utc-cutover</code> quarantine + zone contract in <code>shared-schema-registry.md</code> (<code>c00db519</code>).</div></div></div>
+<p class="para done"><span class="ptag t-prog">done</span><b>Phase β — NEXT (Tasks 5-9, DEDICATED COORDINATED SESSION).</b> snapshot both repos → fail-closed LWW enforce flip (<code>hub.py:1278/1861/2002</code>) → <code>client_ts</code> cutover (cross-repo lockstep, Hub handoff spec first) → ONE stopped-world legacy UTC migration (<code>088_normalize_timestamps_utc.py</code>, frozen-CT converter) → delete <code>to_utc_dt</code> zone-guessing scaffold + lint WARN→ERROR. <b>Preconditions (see SESSION-HANDOFF):</b> home laptop quiescent / Syncthing paused; ✅ <code>tests/sync</code> triaged + cleaned (commit <code>4427a808</code>, suite green — see Standing-item resolution below); snapshot-first (wrong overwrites are unrecoverable in place); fail-closed + 2h watch window <b>incl. MANUAL symmetric-pull-gate verification</b> (auto-guard deleted <code>9528f79c</code>); <code>_ISO_T_SHIFT_ELIGIBLE_IDS</code> hand-audited + rehearsed.</p>
+<p class="para"><b>Follow-ons:</b> <b>Plan 1B</b> = the ~91-site Hub frontend display-migration to viewer-local (UNWRITTEN; write after β — consumes <code>time.ts</code>; lint flips to ERROR once it clears the raw-date sites). <b>Increment 2</b> = Activity-timeline/comments (P2; specced + amended: <code>docs/superpowers/specs/2026-05-23-activity-timeline-comments-design.md</code>; MUST follow β's <code>client_ts</code> cutover — shared files; extend <code>activity_log</code> visibility-gated, remove ALL <code>notes</code>→<code>description</code> paths incl. create-path leaks <code>query.py:736/900</code>, add a Hub Activity write transport).</p>
+<p class="para done"><span class="ptag t-prog">done</span><b>✅ RESOLVED 2026-05-24 — was: "16 pre-existing <code>tests/sync/</code> failures, triage before Phase β".</b> Triaged (actually <b>18 deterministic + 1 flaky</b>, all <b>STALE-TEST debt</b> asserting deliberately-deleted behavior — JSON cursor dual-write <code>e29c30fd</code>, pull-symmetry checker <code>9528f79c</code>, pre-mig-073 <code>key_link</code> schema, pre-<code>abeebc51</code> enum casing; <b>zero real regressions</b>, none in timezone/LWW logic — the β-path runtime is exercised by the passing siblings; Fix-Gate evidence in <code>agent_knowledge</code> <code>builder/preexisting-state-test-failures*</code>) + <b>cleaned</b> (PB commit <code>4427a808</code>: suite now <b>328 passed / 0 failures</b>; coverage-worth-keeping tests updated to current SQL/enum/schema, dead JSON-dual-write + orphan symmetry meta-tests retired). <b>β-GO from the test precondition.</b> ⚠️ <b>β watch-window caveat:</b> the pull-symmetry auto-guard (<code>.githooks/check_pull_symmetry.py</code>) was deleted <code>9528f79c</code> and β edits exactly the 3 pull-gates it used to check (<code>hub.py:1278/1861/2002</code>) — so <b>add MANUAL symmetric-gate verification to β's watch window</b> (no automation catches an asymmetric gate change now).</p>
+
+<details>
+<summary>▶ DONE 2026-05-22 PM — the T1 correctness directive + Codex gate executed <span class="cnt">0/2 done</span></summary>
+<div class="det-body">
+<p class="para">Shipped <code>5f5f597d</code> (T1 batch) + <code>909c6e8b</code> (Codex-gate fixes) + <code>cf85cfa0</code> (deploy docs), deployed <code>af3189f0</code> (live on <code>909c6e8</code>). CT date sweep, STATE-1, STATE-2 done; enum-drift + DAT-4 verified clean (no change); test-D1 fully reconciled to prod via hub-schema-sync. Codex audit (<code>Scratch/codex-t1-verify-2026-05-22/</code>) returned Block→2 critical+5 minor, all verified + fixed. Detail in SESSION-HANDOFF.md "Latest — 2026-05-22 PM".</p>
+<p class="para"><b>Next:</b> T1 leftovers (FAKE-1/2, DH-1/2) below + the <code>stale_active_since</code> brain.db pull-back follow-up + T2 polish.</p>
+<hr class="rule">
+</div>
+</details>
+
+<details>
+<summary>▶ CODEX 5-pass "simplify + improve" review (2026-05-22) — graduated items <span class="cnt">5/25 done</span></summary>
+<div class="det-body">
+<p class="para">Full tagged synthesis: <code>docs/reviews/2026-05-22-codex-simplify/SYNTHESIS.md</code> (+ 5 per-pass syntheses alongside it). 5 passes, WORKPLAN-blind, ~8 findings spot-checked accurate. High-leverage NET-NEW items below; OVERLAP items are noted against existing T2/T4 entries (codex added concrete file:line sites).</p>
+<p class="para done"><span class="ptag t-prog">done</span><b>T0 — SECURITY / pre-adoption — ✅ ALL DONE + DEPLOYED 2026-05-22 evening</b> (<code>0a612459</code>, deploy <code>b9e31ca8</code>; smoke-verified live). Plan + amendments: <code>docs/superpowers/plans/2026-05-22-hub-pre-adoption-batch.md</code>. Codex plan-audit expanded the original 9 → +attachment-visibility gate +<code>/api/meetings</code> +<code>/api/team/pulse</code> +4 actor sites, and corrected B1 (3 write paths) / B3-B4 (signature changes) / B5 (both task endpoints). Kept below for the record:</p>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d"><b>SEC-T0-1</b> Over-exposed public GETs: <code>isPublicGet</code> allows <code>/api/activity</code>, <code>/api/projects/health</code> (leaks PB project titles, no category filter), <code>/api/team</code> (<code>SELECT *</code> → email/auto_created). Redact/gate. <em>(M)</em></div></div></div>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d"><b>SEC-T0-2</b> Search bypasses PB-category visibility — any authed member can search Nick-only PB projects/notes (<code>search.ts:127-155</code>). Add shared visibleProjects filter. <em>(M)</em></div></div></div>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d"><b>SEC-T0-3</b> Digest gen/send has no owner-or-PI authz (<code>digest-email.ts:319-416</code>) — anyone can send another's digest anywhere. <em>(S)</em></div></div></div>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d"><b>SEC-T0-4</b> <code>tasks.notes</code> private boundary breached by <code>SELECT t.*</code> (<code>tasks.ts:44</code>); "notes" UI label is team-visible. Redact or reconcile. <em>(M)</em></div></div></div>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d"><b>SEC-T0-5</b> Protected-field NULLs via <code>/api/mutations</code> — allowlist gates keys not values; status/priority/assignee/stage/category can be nulled (<code>mutations.ts:116-137,332,785</code>). Reject null for protected fields. <em>(S — highest risk per pass 5)</em></div></div></div>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d"><b>SEC-T0-6</b> Identity-canonicalization bypass — 9 raw actor writes (handoffs <code>to_slug</code>→assignee worst; questions/ideas/project-documents/dependencies/tasks-note author; projects.ts:181 + uploads.ts:88 <code>email.split</code>). Canonicalize via <code>actorSlug</code>. <em>(M)</em></div></div></div>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d"><b>SEC-T0-7</b> Delete/cascade gaps — PB-origin mutation delete clears only record_id (dangling slug-linked tasks); project delete misses newer child tables (docs/deps/submissions/conferences). <em>(M)</em></div></div></div>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d"><b>SEC-T0-8</b> JWT fail-open hardening <em>(LOW — verified CF_ACCESS vars ARE set in prod, so not active)</em> — make <code>verifyCfAccessJwt</code> fail CLOSED when REQUIRE_AUTH=1. <em>(S)</em></div></div></div>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d"><b>SEC-T0-9</b> X-API-Key contract mismatch (middleware Bearer-only vs documented X-API-Key). <em>(S)</em></div></div></div>
+<p class="para done"><span class="ptag t-prog">done</span><b>T1' — Correctness NET-NEW — ✅ CT-2 + CON-2 DONE 2026-05-22 evening</b> (<code>0a612459</code>/<code>45911e6d</code>):</p>
+<div class="row done" style="margin-left:6px"><div class="ic">✓</div><div class="c"><div class="d"><b>CT-2</b> ✅ DONE — server (projects/index/pb-sector/regulatory/submissions/conferences → <code>ctToday()</code>) + frontend (<code>localDateKey()</code> helper; Calendar/PBSector/TodayView/ConferencePrep/SubmissionTimeline/meeting-classifier). NOTE corrected sites: <code>pb-sector.ts:142</code> LEFT (prev-date arithmetic, not a today anchor). <b>CT-3</b> ✅ DONE 2026-05-22 evening (<code>a8bd7a9e</code>, deploy <code>cd30f61e</code>) — the 12 remaining frontend UTC-today sites (CommandPalette/Dashboard/Layout/useOnboarding/UpcomingCard/NotificationBell/ProjectDetail/GrantsPage/ActivityPage/UpcomingMeetingBanner/TaskTimelineView/TaskGridView) routed through <code>localDateKey()</code>. Timezone-correctness sweep (CT-2+CT-3) COMPLETE.</div></div><div class="tag t-prog">done</div></div>
+<div class="row done" style="margin-left:6px"><div class="ic">✓</div><div class="c"><div class="d"><b>CON-2</b> ✅ DONE (valid parts) — emailSlug LUT 3→21 lockstep; <code>fetchManuscriptsAttention</code> res.ok guard; TaskRow v55 op-field types. <code>key_link_*</code>/<code>rowToProject</code> claim was INVALID (no rowToProject; SELECT * retains them).</div></div><div class="tag t-prog">done</div></div>
+<p class="para"><b>T2' — SIMPLIFY (NET-NEW deletes/consolidations; verified):</b></p>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d"><b>DEL</b> <code>handleUpsertTodayMd</code> (dead) + tracked <code>.pyc</code> (delete now); legacy MyTasks + UnifiedMyTasks/AuthContext shims; stale seed path (seed-d1.ts/seed.sql/npm seed*); dead tables decision_log/<code>*_new</code>/watchlist + <code>narrative_projects</code>/<code>research_narratives</code> (row-count check; KEEP publication/citation tables per Nick). <em>(S each)</em></div></div></div>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d"><b>CONS</b> consolidate ~36 raw-fetch → typed api/hooks; attachment-upload ×3 → <code>useAttachmentUpload</code>; task-grouping fork → <code>taskGrouping</code>; stage taxonomy ×5 → one module; people pickers → <code>useTeam()</code>. (inline-date consolidation folds into CT-2.) <em>(M)</em></div></div></div>
+<p class="para"><b>T3' — UX NET-NEW (rest OVERLAP T2/PAGE-* — see synthesis):</b></p>
+<div class="row done" style="margin-left:6px"><div class="ic">✓</div><div class="c"><div class="d">✅ DONE 2026-05-22 evening (<code>7a4599a0</code>, deploy <code>8c8188ac</code>): Today/ProjectDetail query-error states (EmptyStateArt + retry; ProjectDetail distinguishes loading vs missing-slug); MeetingDetail attendance save-fail (rollback + toast); CreateTaskModal dangling <code>aria-labelledby</code> (added matching label id).</div></div><div class="tag t-prog">done</div></div>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d">REMAINING: Today meeting notes not persisted; Today planning drag-only (add Plan button); MyTasks ListView div-grid → TableContainer (design-restructuring — defer to a design pass). <em>(S-M each)</em></div></div></div>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d"><b>IMPROVE:</b> wire real <code>/api/proactive-brief</code> into Today (adjacent FAKE-2); MyTasks <code>?open=</code> deep links; ProfilePage → <code>/api/team/me</code>; export <code>normalizeStage</code>; Personal root paths → <code>PATHS</code>.</div></div></div>
+<p class="para"><span class="ptag t-prog">done</span><b>CONTRADICTS — RESOLVED by Nick 2026-05-22:</b></p>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d">PI-analytics subendpoints (<code>/api/analytics/{mentee-velocity,response-time,team-engagement}</code>): <b>KEEP</b> until PAGE-5 (PI Analytics) is designed — do NOT fold into pi-dashboard yet.</div></div></div>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d">Narrative/citation tables: <b>drop <code>narrative_projects</code> + <code>research_narratives</code> only</b> (computed, not read — added to T2' DEL above); <b>KEEP <code>project_publications</code> / <code>open_science_resources</code> / <code>pubmed_sync_log</code></b> as FAKE-1 citation substrate.</div></div></div>
+<p class="para"><b>OVERLAP-WP (codex refined existing entries):</b> create-flow-keep-open=UX-6 · focus-traps=UX-7/8 · mobile-split-brain=UX-9 · token/compound-opacity=UX-2 · brand-primitives(CategoryIcon/EmptyStateArt)=UX-1 · Ideas kanban/opacity=PAGE-6 · Projects/Manuscripts board=T4 DnD · search try/catch (UX-5) is DIFFERENT from SEC-T0-2 (visibility).</p>
+<hr class="rule">
+</div>
+</details>
+
+<details>
+<summary>T1 — Correctness — ✅ ALL DONE 2026-05-22 PM (kept below for the record; see done ledger) <span class="cnt">0/7 done</span></summary>
+<div class="det-body">
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d"><b>CT date helper sweep</b> <em>(S/M)</em> — ~30 <code>new Date().toISOString().split('T')[0]</code> "today/now" derivations in <code>api/</code> are UTC → wrong in CT evening (shows tomorrow after ~6pm). Build a shared <code>America/Chicago</code> date helper in <code>api/lib/</code> and replace the <b>"today/now"</b> sites — PER-SITE JUDGMENT, leave legit UTC range-bounds alone. Key sites: <code>pb-sector.ts:7</code>, <code>digest-email.ts:45/195/463</code>, <code>meetings.ts:6/118/169</code>, <code>tasks.ts:9</code>, <code>proactive-brief.ts:7</code>, <code>projects.ts:87/307</code>, <code>activity.ts:33</code>. (codex 2026-05-22)</div></div></div>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d"><b>Entity status-enum drift audit</b> <em>(S)</em> — Manuscripts shipped UI status options the server rejected → silent optimistic revert (fixed 2026-05-22, both dropdowns). Same risk elsewhere: verify UI options vs the server enum in <code>RevisionTracker.tsx:50</code>, <code>DecisionsPage.tsx:46</code>, <code>GrantsPage.tsx:60</code>, <code>MenteeMilestonesPage.tsx:35</code>. These are <b>different</b> enums — fix only genuine mismatches. (codex 2026-05-22)</div></div></div>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d"><b>STATE-1</b> <em>(M)</em> — TodayPage <code>state.done</code> (localStorage) ignores cross-surface status changes; derive from the cache. <code>TodayPage.tsx:223</code>.</div></div></div>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d"><b>STATE-2</b> <em>(S)</em> — ProfilePage <code>team-raw</code>/<code>rawRow</code> query has no <code>queryFn</code> → <code>invalidateQueries</code> is a no-op, profile saves don't refetch. <code>ProfilePage.tsx:56/65/107</code>.</div></div></div>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d"><b>DAT-4</b> <em>(S — VERIFY FIRST)</em> — realtimeBus <code>'all'</code> vs <code>'data'</code> channel mismatch may break some UI refresh. Trace subscriber filters before patching; <code>realtimeBus.ts</code> shows no channel concept beyond room/party, so this may be stale. (codex T12)</div></div></div>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d"><b>test-D1 repair</b> <em>(S)</em> — <code>mnccore-lab-test</code> is missing schema-v55 columns; bring it current with prod (janitor / hub-schema-sync). Surfaced when a v68 backfill referenced a v55 column.</div></div></div>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d"><b>SEC-5 server defense</b> <em>(optional, low)</em> — client double-submit now dedups via a stable per-draft id + <code>ON CONFLICT(id)</code> (fixed 2026-05-22). Optional defense-in-depth: server dedup on <code>(source, raw_hash)</code>. Not required for the stated bug.</div></div></div>
+</div>
+</details>
+
+<h2>T1 — Fake / broken data</h2>
+<div class="row done" style="margin-left:6px"><div class="ic">✓</div><div class="c"><div class="d"><b>FAKE-1</b> ✅ fallback DONE (was already correct — <code>StatsCard.tsx:118-119</code> renders <code>—</code> when no citation data; NOT hardcoded). Remaining: PB scholarly weekly cron (home laptop) to populate per-member h-index/citation data — then it displays live automatically. (decision: build the cron)</div></div><div class="tag t-prog">done</div></div>
+<div class="row done" style="margin-left:6px"><div class="ic">✓</div><div class="c"><div class="d"><b>FAKE-2</b> ✅ DONE 2026-05-22 evening (<code>45911e6d</code>) — <code>&lt;HermesPending&gt;</code> (pulse card + elapsed timer, clears via realtimeBus) in Ask the Lab + project comments.</div></div><div class="tag t-prog">done</div></div>
+
+<h2>T1 — Design-handoff leftovers</h2>
+<div class="row" style="margin-left:6px"><div class="ic">◐</div><div class="c"><div class="d"><b>DH-1</b> ⏳ seed TEMPLATE shipped (<code>scripts/seed-grant-milestones.sql</code>, <code>7c222e65</code>); table + UI already exist. Remaining: Nick supplies real grant IDs/dates, then apply the SQL to prod D1.</div></div><div class="tag t-prog">in progress</div></div>
+<div class="row done" style="margin-left:6px"><div class="ic">✓</div><div class="c"><div class="d"><b>DH-2</b> ✅ DROPPED 2026-05-22 — verified generic <code>public/manifest.webmanifest</code> exists; no Pulse- specific kiosk manifest needed.</div></div><div class="tag t-prog">done</div></div>
+
+<h2>T2 — UX &amp; polish (during adoption; not blockers)</h2>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d"><b>UX-1</b> Brand primitives adoption (HermesMark on AskTheLab/MeetingDetail/notifications; HeartbeatDivider; EmptyStateArt). <em>(M)</em></div></div></div>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d"><b>UX-2</b> Token discipline (<code>#fff</code>→<code>--ink-bright</code>; <code>--gold-on-emphasis</code> gaps; inline <code>&lt;style&gt;</code> on TodayPage). <em>(M)</em></div></div></div>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d"><b>UX-3</b> Keyboard nav (TodayPage J/K/D/Space/F; AskTheLab J/K; SearchPage <code>/</code> focus). <em>(M)</em></div></div></div>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d"><b>UX-4</b> Standard API error envelope <code>{error:{code,message}}</code> (uploads/pi-dashboard ad-hoc). <em>(L)</em></div></div></div>
+<div class="row done" style="margin-left:6px"><div class="ic">✓</div><div class="c"><div class="d"><b>UX-5</b> ✅ DONE 2026-05-22 evening (<code>bb2db3c3</code>, deploy <code>8c8188ac</code>) — <code>handleGetSearch</code> uses <code>Promise.allSettled</code>; a failed source returns <code>[]</code> + additive <code>{partial, failedSources}</code>. Auth/PB-visibility unchanged. +5 tests (api 204).</div></div><div class="tag t-prog">done</div></div>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d"><b>UX-6</b> Create flows keep form open + inline error on failure (CreateDecisionModal, Ideas, AskTheLab, RelayCard). <em>(M)</em></div></div></div>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d"><b>UX-7</b> BottomSheet focus trap + larger close target. <em>(S)</em></div></div></div>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d"><b>UX-8</b> Mobile sidebar overlay = real dialog (focus trap, <code>aria-modal</code>). <em>(M)</em></div></div></div>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d"><b>UX-9</b> Mobile breakpoint split-brain (<code>useIsMobile</code> 768 vs MobileTabBar 1024 → tablet nav breaks). <em>(S)</em></div></div></div>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d"><b>PAGE-1</b> TodayPage T2 (meeting-notes piggyback data loss, CategoryIcon on task tags, tokens). <em>(M)</em></div></div></div>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d"><b>PAGE-2</b> ProfilePage T1 (▾ affordance, R2 photo upload, optimistic+undo, feed-delete confirm). <em>(M)</em></div></div></div>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d"><b>PAGE-3</b> AskTheLab (Hermes pending + realtimeBus subscription + polish). <em>(M)</em></div></div></div>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d"><b>PAGE-4</b> Calendar T1 (iCal events on CalendarPage [user-only/private], clickable tasks/milestones, view persistence). <em>(M)</em></div></div></div>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d"><b>PAGE-5</b> Lab Overview T2 (ActionBoard scope filter; role-based defaults — PI sees all, team sees lab-wide + own; TeamPulse+Insights). <em>(M)</em></div></div></div>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d"><b>PAGE-6</b> Ideas page (Edit button has no handler; archive hover-only; no mobile controls). <em>(S)</em></div></div></div>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d"><b>PAGE-7</b> MenteeMilestones — mobile can't change milestone status (no InlineSelect on mobile rows). <em>(S)</em></div></div></div>
+
+<h2>T3 — Infrastructure</h2>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d"><b>INFRA-1</b> <em>(L)</em> ProjectDetail Activity tab — typed <code>activity_log</code> emits now exist (D22); wire the read + UI.</div></div></div>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d"><b>INFRA-2</b> <em>(M)</em> <code>/api/health/deep</code> (mutation stats, calendar-feed errors, R2 orphans, open bug reports, cron status).</div></div></div>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d"><b>INFRA-3</b> <em>(M)</em> realtimeBus wiring sweep (AskTheLab 60s poll, MyItems 30s, Insights 5min, Calendar 15min → WS).</div></div></div>
+<div class="row done" style="margin-left:6px"><div class="ic">✓</div><div class="c"><div class="d"><b>INFRA-5</b> ✅ DONE 2026-05-22 evening (<code>2e3ca57c</code>) — <code>scripts/check-schema-versions.py</code> + <code>schema-version-snapshot.json</code> in the nightly drift workflow: asserts ordered version list (new-gap detection vs snapshot), no new duplicate vNN prefixes, SHA-256 snapshot hash. Tested pass + synthetic-fail. CI-only.</div></div><div class="tag t-prog">done</div></div>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d"><b>INFRA-6</b> <em>(XL)</em> Personal 3-tab merge (MyItems INTO Personal: Workspace|Inbox|Cards). Substrate-swap protocol required.</div></div></div>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d"><b>INFRA-7</b> <em>(M)</em> Surface v55 task workflow fields (<code>waiting_on</code>, <code>promised_to</code>, <code>promise_date</code>, <code>next_checkin_date</code>) in <code>TaskRow</code> + UI.</div></div></div>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d"><b>INFRA-8</b> <em>(M — codex: pull up)</em> Project staleness adapter — <code>state</code>/<code>next_artifact</code>/<code>last_meaningful_movement</code>/<code>stale_active_since</code> dropped in <code>rowToProject</code>.</div></div></div>
+
+<h2>T4 — Parking lot</h2>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d"><b>AI:</b> Co-Scientist (#41), PubMed/academic search (#46), RePORTER grant intel (#42), multi-tenant (#60).</div></div></div>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d"><b>Comms:</b> Weekly digest email (#31), pre/post-meeting email (#86/#87).</div></div></div>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d"><b>UX depth:</b> SmartCompose remaining surfaces, Saved views v2 (D1-backed), FTS5 search, drag-to-reclassify, Manuscripts pipeline DnD, Calendar time-aware week view (needs D28), inline edit on Columns/Lanes, PersonSearch as 15th entity, Hermes-augmented search.</div></div></div>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d"><b>FAKE-3 transcript backend:</b> Hermes-via-ai-requests <code>/api/meetings/process-transcript</code> (button is honest now; not a blocker).</div></div></div>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d"><b>PB Sector:</b> TODAY.md web rendering depth; nav visibility (hidden per design).</div></div></div>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d"><b>Kiosk:</b> Lab-TV data slides; Apple Watch complication (native).</div></div></div>
+
+<h2>Schema queue</h2>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d"><b>DONE:</b> D7 <code>projects.stage_entered_at</code> (schema-v68, Hub-only, 2026-05-22) · D22 <code>activity_log</code> typed emits (no schema, 2026-05-22).</div></div><div class="tag t-prog">done</div></div>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d"><b>DEFERRED — build WITH the feature, not before (dead columns otherwise):</b> D8 <code>lab_questions.tags</code> (AskTheLab filters) · D9 <code>commitments.to_slug</code> (MyItems commitments) · D28 <code>meetings.start_time/end_time</code> (time-aware Calendar).</div></div></div>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d"><b>Process for any schema change:</b> decision doc in PB <code>Context/Decisions/</code> + <code>enums.py</code> + <code>shared-schema-registry.md</code> + lockstep brain.db/D1. (D7 needed none of this — Hub-only.)</div></div></div>
+<hr class="rule">
+
+<details>
+<summary>Done ledger (do not re-expand) <span class="cnt">0/7 done</span></summary>
+<div class="det-body">
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d"><b>2026-05-22 night — P1 sync-fidelity: audit + safe wins + root-cause front-end shipped, shadow running.</b> Builder read-only audit mapped brain.db↔Hub↔TODAY.md drift (<code>Scratch/sync-fidelity-audit-2026-05-22/findings.md</code> + agent_knowledge). <b>Track A safe wins SHIPPED</b> (PB <code>86d12331</code>): P2 reconciled all 405 frozen <code>local_modified</code> rows (pending readout 342/63→0/0, trust-tax gone) + fixed the source (<code>health.py --fix</code> raw-SQL freeze) + recurrence guard; P3 resurrected the dead TODAY.md freshness guard; P5 truthy-gate sweep (class fully closed). P4 doc-drift fixed in Hub CLAUDE.md (<code>f9b9684a</code>) — d1 mirror correction + <b><code>notes</code>↔<code>description</code> sync flagged UNDER REVIEW (possible privacy regression — Nick's call pending)</b>. <b>P0/P1 root-cause</b> (CT↔UTC LWW split): v1 doc (<code>843cab8d</code>) <b>codex-BLOCKED</b> (its space-sep⇒UTC heuristic is wrong — <code>updated_at</code>=UTC but <code>last_meaningful_movement</code>=CT, same format); <b>v2 column-aware-contract doc authored</b> (<code>fdcf31bb</code>, LMM→UTC sync-state). <b>Safe front-end EXECUTED</b> (<code>61c53d78</code>, 51 tests green): <code>to_utc_dt</code> origin/column-aware helper + push-side freshness-guard + <code>_lww_merge</code> zone fixes + <b>provenance shadow-log live on the 3 pull-gates (48h window started ~2026-05-23 03:00 UTC)</b> — NO writer/gate-winner changed. <b>PENDING the shadow review (~2026-05-25):</b> if <code>data/logs/lww_zone_shadow.jsonl</code> shows 0 "new-decision-wrong" rows → flip pull-gates to origin-aware (Task 4 enforce) + Task 5 (LMM writer→UTC) + Task 6 (<code>client_ts</code> explicit-Z + Hub <code>advanceProjectMovement</code> cutover — cross-repo w/ hub-backend) + Task 7 (43-row migration). See <code>Context/Decisions/2026-05-22-sync-lww-timezone-unification-v2.md</code>.</div></div><div class="tag t-prog">done</div></div>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d"><b>2026-05-22 evening — Pre-adoption SECURITY tier (T0) + correctness, 3-agent orchestrated batch</b> (<code>0a612459</code> api / <code>45911e6d</code> frontend / <code>7c222e65</code> data; deploy <code>b9e31ca8</code>; PB sync <code>148138e3</code>): plan→codex-audit(BLOCK→amend)→3 parallel Opus agents→integrate. SEC-T0-1..9 + NEW attachment-visibility gate + <code>/api/meetings</code>/<code>/api/team/pulse</code> redaction (codex-found) · CT-2 server+frontend · FAKE-2 <code>&lt;HermesPending&gt;</code> · CON-2 (LUT 3→21, res.ok, TaskRow types) · DH-1 seed template · PB sync NULL-clear symmetry (key-presence gates; MAX-wins preserved). api 199/199, smoke-verified live. FAKE-1 + DH-2 dropped (already satisfied). Plan: <code>docs/superpowers/plans/2026-05-22-hub-pre-adoption-batch.md</code>.</div></div><div class="tag t-block">blocks</div></div>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d"><b>2026-05-22 PM — T1 correctness batch + Codex gate + ship</b> (<code>5f5f597d</code>/<code>909c6e8b</code>/<code>cf85cfa0</code>, deploy <code>af3189f0</code> live on <code>909c6e8</code>): CT date helper sweep (<code>api/lib/ct-date.ts</code>, 10 anchors + paired bounds across 6 routes) · STATE-1 TodayPage done-from-cache (reconciliation + onError rollback + isToday) · STATE-2 ProfilePage useQuery refetch · enum-drift + DAT-4 verified clean (no change) · Codex gate fixed pb-sector meeting-TZ + digest date labels + helper hardening + localDoneIds dedup + ProfilePage auth-gate · test-D1 reconciled to prod (hub-schema-sync, 27 tables + cols, now 76 exact match) · librarian fixed 3 stale "Pages auto-deploys on push" agent_knowledge entries · CLAUDE.md deploy docs corrected (manual-only + token).</div></div></div>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d"><b>2026-05-22 — audit-fix batch</b> (<code>6a69cfb2</code>, deploy <code>4681a29c</code>): advanceProjectMovement id-OR-slug match (was silently missing slug-backed tasks) · <code>stage_entered_at</code> on project insert (new-project hole in D7) · batch-assign <code>assignee_change</code> event · Manuscripts status enum aligned to server (both dropdowns) · QuickCapture stable event id (SEC-5 double-submit).</div></div></div>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d"><b>2026-05-22 — verify-first batch</b> (<code>3bd5d419</code>/<code>8990acb7</code>/<code>9eb9b192</code>/<code>1c40fa2a</code>, deploy <code>2c217abf</code>): SEC-4 timezone DST · SEC-6 project resolver · DAT-3 batch response · DAT-6 meeting 404 · DAT-8 regulatory batch · D7 <code>stage_entered_at</code> · D22 typed events · advanceProjectMovement (builder). Verified ALREADY-FIXED (no work): SEC-5(initial call, later corrected)/DAT-1/DAT-2/DAT-5/DAT-7.</div></div></div>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d"><b>2026-05-15</b> (<code>3bd5d419</code>..): SEC-1/2/3 (digest XSS, admin endpoints, upload integrity) · GET API auth lockdown · PB POST PI-gating · ProjectDetail archive · Manuscripts categories (3-bucket) · search comment join · transcript honesty (FAKE-3) · folder-link drive letters · INFRA-4 status normalization · FAKE-4.</div></div></div>
+<div class="row" style="margin-left:6px"><div class="ic">○</div><div class="c"><div class="d"><b>Earlier (Phases 35–39):</b> see <code>CHANGELOG.md</code> + git history.</div></div></div>
+</div>
+</details>
+
+  <div class="foot">
+    Generated view of <code>WORKPLAN.md</code>. The markdown is the editable source of truth;
+    this HTML is regenerated by <code>python scripts/gen_workplan_html.py</code> and is committed
+    automatically when <code>WORKPLAN.md</code> is staged (pre-commit hook). Read on phone; edit the markdown.
+  </div>
+
+</div>
+</body>
+</html>
