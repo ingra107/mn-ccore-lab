@@ -10,22 +10,22 @@ You are an independent reviewer doing the FINAL gate before an IRREVERSIBLE data
 5. One pass: read, synthesize, stop.
 
 ## Scope
-PB at ~/Peripheral-Brain. Hub at ~/mn-ccore-lab. Read via absolute path; reads need no --add-dir. (Your cwd is whichever repo you launched from — resolve the other by absolute path.)
+RUN codex from the Peripheral-Brain repo root (your cwd). Read PB files cwd-relative (`scripts/...`); read Hub files via the sibling path `../mn-ccore-lab/...`. This resolves identically on work (ingra107) and home (ingra) — do NOT use machine-absolute paths.
 
 ## Orientation files
 PLAN (read first, fully — INCLUDING the `## CODEX AMENDMENTS` section at the end):
-- ~/mn-ccore-lab/docs/superpowers/plans/2026-05-23-increment-1A-time-sync-foundation.md
+- ../mn-ccore-lab/docs/superpowers/plans/2026-05-23-increment-1A-time-sync-foundation.md
 PB code:
-- ~/Peripheral-Brain/scripts/db/sync/drivers/hub.py    (Task 6 gates :1278/:1861/:2002 + shadow blocks)
-- ~/Peripheral-Brain/scripts/db/outbox.py              (to_utc_dt, now_instant/now_instant_wire, _UTC_COLUMNS/_CT_COLUMNS/_CT_ORIGINS, client_ts writers ~:767/:2067)
-- ~/Peripheral-Brain/scripts/db/query.py               (Task 8 LMM/completed_at writers :1185/:1236/:1341)
-- ~/Peripheral-Brain/scripts/db/sync/operations.py     (EXPECTED_MIN_MIGRATION :43; schema gate :492-532; Bug-2 :920)
-- ~/Peripheral-Brain/scripts/db/timez.py
-- ~/Peripheral-Brain/scripts/db/backfill_last_meaningful_movement.py
-- ~/Peripheral-Brain/scripts/db/sync/records.py
+- scripts/db/sync/drivers/hub.py    (Task 6 gates :1278/:1861/:2002 + shadow blocks)
+- scripts/db/outbox.py              (to_utc_dt, now_instant/now_instant_wire, _UTC_COLUMNS/_CT_COLUMNS/_CT_ORIGINS, client_ts writers ~:767/:2067)
+- scripts/db/query.py               (Task 8 LMM/completed_at writers :1185/:1236/:1341)
+- scripts/db/sync/operations.py     (EXPECTED_MIN_MIGRATION :43; schema gate :492-532; Bug-2 :920)
+- scripts/db/timez.py
+- scripts/db/backfill_last_meaningful_movement.py
+- scripts/db/sync/records.py
 Hub code:
-- ~/mn-ccore-lab/api/routes/mutations.ts   (Task 4 normalizer + advanceProjectMovement :100-180/:777-909; TABLE_FIELDS :197-219; processed insert :1081-1085)
-- ~/mn-ccore-lab/src/lib/time.ts
+- ../mn-ccore-lab/api/routes/mutations.ts   (Task 4 normalizer + advanceProjectMovement :100-180/:777-909; TABLE_FIELDS :197-219; processed insert :1081-1085)
+- ../mn-ccore-lab/src/lib/time.ts
 
 ## Facts established by the COO (verify, do not just trust)
 - Task 4 LIVE since 2026-05-23 19:22 UTC (commit d9398a83). It writes projects.last_meaningful_movement as NAIVE space-sep UTC (mutations.ts:178 -> "YYYY-MM-DD HH:MM:SS", no Z).
