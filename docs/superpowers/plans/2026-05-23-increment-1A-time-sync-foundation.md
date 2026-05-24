@@ -1688,6 +1688,10 @@ Message: `chore(sync): Increment 1A hygiene — quarantine backfill, fix operati
 
 ### Amendment B — Task 8 LMM step needs the SAME provenance guard as `updated_at` (Codex finding 2; CONFIRMED — silent +5h corruption)
 
+> **🛑 SUPERSEDED 2026-05-24 by "Task 8 v2" (below). The value-cutoff (`_LMM_CT_CUTOFF_UTC`) in this amendment is UNSAFE in BOTH directions and was BLOCKED by a second dual-codex audit (`data/shared/codex-beta-amend-audit-{work,home}.md`). Do NOT implement the `_LMM_CT_CUTOFF_UTC` cutoff. The diagnosis of the corruption *direction* below is retained for context; the *fix* is replaced by the audited allowlist in Task 8 v2.**
+>
+> Why the cutoff fails both ways (verified against live code): (1) **Corruption** — Task 4 stamps D1 LMM from `mut.client_ts` (`mutations.ts:862-878`), NOT deploy time, so a *delayed* pre-deploy mutation processed after Task 4 can write a true-UTC LMM whose value is **< the cutoff** → the cutoff shifts it +5h. (2) **Incompleteness** — PB `query.py:1185/1236/1341` still writes naive **local CT** until Task 8 ships, so any PB-local completion after `2026-05-23 14:22 CT` produces a legacy-CT LMM that converts-as-CT to **> the cutoff** → the cutoff SKIPS it, leaving mixed-format data. Provenance is not encoded in the value; it must be encoded per-row.
+
 Task 4 is LIVE (deployed `2026-05-23 19:22 UTC`, commit `d9398a83`) and writes `projects.last_meaningful_movement` as **naive space-sep UTC** (`mutations.ts:178` `toISOString().replace('T',' ').replace(/\.\d+Z$/,'')` → `"2026-05-23 20:00:00"`, no Z; written at `:898-906`). The Task 8 LMM step (plan:1335-1343) shifts EVERY naive LMM CT→UTC with **no allowlist** (unlike the `updated_at` step at plan:1321-1333, which is allowlist-guarded). So any Task-4-written UTC LMM gets double-shifted **+5h**, silently (the watch query only catches future rows). Blast radius (work, now): 64/64 LMM naive, all pre-T4 → 0 at-risk *today on work* — but Hub D1 / home / any completion since 05-23 19:22 can hold post-T4 UTC LMM. The migration must be safe by construction.
 
 **Fix — cutoff guard (self-contained, mirrors the `updated_at` fail-closed intent):** add to migration 088:
@@ -1733,4 +1737,192 @@ No Syncthing pause needed (brain.db not file-synced); the stop-the-world is on t
 
 ### Unchanged-but-confirmed
 - Citation drift (builder reads live code, edits by content not line#): `outbox.py` client_ts writers now `:767`/`:2067` (bound `:783`/`:2083`); `mutations.ts` Task-4 region `:777-909`, processed-insert `:1081-1085`; `backfill ...:226-229`. All hub.py gate/shadow + query.py citations still valid. `operations.py:920` Bug-2 already fixed (`e2553799`).
-- Order unchanged: 5 → 6 → 7 → 8 → 9. Task 8 starts only after both machines stopped + snapshotted + Tasks 6/7 live on both + LMM cutoff + `_ISO_T_SHIFT_ELIGIBLE_IDS` populated.
+- Order unchanged: 5 → 6 → 7 → 8 → 9. Task 8 starts only after both machines stopped + snapshotted + Tasks 6/7 live on both + ~~LMM cutoff~~ **(replaced by Task 8 v2 dual-allowlist)** + `_ISO_T_SHIFT_ELIGIBLE_IDS` populated.
+
+---
+
+## Task 8 v2 (2026-05-24) — provenance-by-row, not provenance-by-value (REPLACES Amendment B; SOURCE OF TRUTH for Task 8 dispatch)
+
+> **Verdict that triggered this:** a second dual-codex audit (`data/shared/codex-beta-amend-audit-work.md` + `-home.md`, both read in full) returned **still-block**. Amendment B's `_LMM_CT_CUTOFF_UTC` value-cutoff is unsafe both directions (banner above), and a LARGER miss was found: Hub D1 is the synced-state arbiter (plan:24) and still holds legacy LMM that Hub code itself says Task 8 normalizes (`mutations.ts:110-115`), but the planned Task 8 only touches brain.db (plan:1484). This section replaces Amendment B's LMM fix, adds the missing D1 normalization decision, and resolves the Task 6 + DST findings.
+>
+> **Builder live re-verification 2026-05-24 (HEAD: PB `4dc1484f`, Hub current). Do not trust, the numbers were re-measured:**
+> - **work brain.db:** `projects.last_meaningful_movement` non-null = **64**, all 64 naive (no offset/Z), MAX value = `2026-05-22T15:53:50.793979` → **all pre-T4, 0 convert-as-CT past the 19:22 UTC mark → 0 ambiguous today.** `tasks.updated_at` ISO-T naive = **44** (the plan's "43" is stale; Step 1 re-count is mandatory anyway).
+> - **Hub D1 `projects`:** LMM non-null = **3** → 2 legacy-CT naive ISO-T (`2026-05-22T15:53:50.793979`, `2026-05-22T15:53:48.535287` — old `_dt.now().isoformat()` shape, microseconds, no Z) + 1 already-canonical `…Z` (`2026-05-22T14:48:10.648260Z`). **0 ambiguous.**
+> - **home brain.db: count pending** (relay-confirm at execution; the allowlist is built per-machine under Step 0).
+> - **Net:** the real ambiguous set is ~empty on both stores today → a deterministic, enumerated, hand-audited allowlist is correct and complete. The allowlist is not a fallback; it is the right primitive (provenance lives in the row's history, never in the value).
+
+### v2-1 — Replace the LMM value-cutoff with an audited `_LMM_SHIFT_ELIGIBLE_IDS` allowlist (mirrors `_ISO_T_SHIFT_ELIGIBLE_IDS`)
+
+Delete `_LMM_CT_CUTOFF_UTC` and the `out > cutoff` branch entirely. Add a second allowlist beside `_ISO_T_SHIFT_ELIGIBLE_IDS` (plan:1278), built by an execution-time **Step 1b-LMM provenance audit** that classifies every naive LMM row: **pre-T4-naive = eligible (legacy CT); post-T4-naive = classify-or-skip (could be a delayed Task-4 UTC value or a PB-local CT value — leave UNTOUCHED unless proven legacy-CT).**
+
+```python
+# scripts/db/migrations/088_normalize_timestamps_utc.py — replaces _LMM_CT_CUTOFF_UTC
+
+# Audited allowlist of PROJECT ids whose naive last_meaningful_movement is
+# confirmed legacy-CT (built in Step 1b-LMM). EMPTY here — fill from the
+# Step-1b-LMM provenance audit before applying. Empty == NO LMM row is shifted
+# (fail-closed). Provenance is per-ROW, never inferred from the value: Task 4
+# stamps D1 LMM from mut.client_ts (mutations.ts:862-878), not deploy time, and
+# PB still writes naive local CT until this very commit — so no value cutoff can
+# distinguish a true-UTC LMM from a legacy-CT LMM. Only the row's history can.
+_LMM_SHIFT_ELIGIBLE_IDS: frozenset[str] = frozenset({
+    # "proj_...",  # populate from Step 1b-LMM provenance audit (pre-T4-naive only)
+})
+```
+
+LMM loop (replaces plan:1335-1343 AND Amendment B's plan:1705-1717 cutoff loop):
+
+```python
+    # 2. projects.last_meaningful_movement CT → UTC, ALLOWLIST ONLY (frozen
+    #    converter; naive only). Mirrors the updated_at step's fail-closed shape:
+    #    offset/Z rows skipped (already resolvable); unproven-naive rows left
+    #    untouched (a post-T4 value may be true-UTC OR PB-local-CT — both are
+    #    indistinguishable by value, so we require explicit per-row provenance).
+    for (pid, lmm) in cur.execute(
+        "SELECT id, last_meaningful_movement FROM projects WHERE last_meaningful_movement IS NOT NULL"
+    ).fetchall():
+        if not _is_naive(lmm):
+            continue  # explicit offset/Z → already UTC-resolvable, never shift
+        if pid not in _LMM_SHIFT_ELIGIBLE_IDS:
+            continue  # unproven provenance → fail-closed, leave untouched
+        out = _freeze_ct_naive_to_utc(lmm)
+        if out is not None:
+            cur.execute("UPDATE projects SET last_meaningful_movement = ? WHERE id = ?", (out, pid))
+```
+
+**Step 1b-LMM provenance audit (execution-time, mirrors plan:1137-1154 for `updated_at`):**
+
+```bash
+cd ~/Peripheral-Brain && PYTHONPATH=. python -c "
+import sqlite3; c=sqlite3.connect('data/brain.db')
+# Naive LMM candidates (no offset/Z). Classify each by provenance:
+#   pre-T4-naive  → ELIGIBLE (legacy CT minted by query.py:1185 _dt.now()).
+#   post-T4-naive → CLASSIFY-OR-SKIP. A naive LMM written after the 2026-05-23
+#                   19:22 UTC Task-4 deploy could be (a) a delayed Task-4 UTC
+#                   value pulled from Hub, or (b) a PB-local-CT value from
+#                   query.py:1185 (still CT until THIS commit). Neither is
+#                   distinguishable by value → default SKIP; include ONLY if a
+#                   per-row audit (audit_log.captured_at / outbox.client_ts /
+#                   d1_project_updates / sync provenance) proves legacy-CT.
+rows = c.execute('''SELECT id, last_meaningful_movement FROM projects
+                    WHERE last_meaningful_movement IS NOT NULL
+                      AND last_meaningful_movement NOT LIKE \"%+%\"
+                      AND last_meaningful_movement NOT LIKE \"%Z\"''').fetchall()
+print(f'naive LMM candidates: {len(rows)}')
+for r in rows: print(r)
+"
+```
+Decision rule: a project is shift-eligible iff naive LMM **AND** its LMM instant (converted-as-CT) is provably pre-Task-4-deploy **AND** no post-T4 PB-local or Hub-echo write touched LMM since. With today's data (MAX LMM `2026-05-22`, all 64 pre-T4), every naive LMM is eligible → the allowlist is the full 64 PKs. If at execution any row's LMM converts to ≥ `2026-05-23 19:22:00 UTC`, that row needs hand-classification (or skip) before its PK enters the set. Embed the explicit PK allowlist in the migration. Build the SAME audit on home under its own Step 0.
+
+> **Why an allowlist, not a cutoff (class-level):** the cutoff encodes provenance in the *value*; provenance actually lives in the row's *write history*. Task 4 uses `client_ts` (not deploy time) and PB writes CT until this commit — two independent reasons the value cannot carry provenance. The `updated_at` step already solved this exact class with `_ISO_T_SHIFT_ELIGIBLE_IDS`; LMM gets the symmetric treatment. This is the same primitive applied twice, not two mechanisms.
+
+### v2-2 — Preflight ASSERT for BOTH allowlists ("populated OR candidate-count==0", hard-fail)
+
+Both `_ISO_T_SHIFT_ELIGIBLE_IDS` and `_LMM_SHIFT_ELIGIBLE_IDS` shipping empty is fail-closed (shifts nothing) — but executing empty *knowingly leaves a non-empty candidate class unmigrated*, which is silent incompleteness. Make it a **hard pre-apply gate**: the migration refuses to proceed if there is a non-empty candidate set with an empty allowlist. Add to `upgrade(conn)` BEFORE any UPDATE (after the idempotency guard at plan:1314-1319):
+
+```python
+    # PREFLIGHT ASSERT (Codex finding 4 + finding from 2026-05-24 audit): each
+    # allowlist must be POPULATED, OR its candidate count must be 0. An empty
+    # allowlist against a non-empty candidate set is silent incompleteness —
+    # hard-fail so the operator runs Step 1b/1b-LMM and fills the set. This is a
+    # tested durability gate, not a comment (ethos #2/#7).
+    iso_candidates = [r[0] for r in cur.execute(
+        "SELECT id FROM tasks WHERE updated_at LIKE '%T%' "
+        "AND updated_at NOT LIKE '%+%' AND updated_at NOT LIKE '%Z'"
+    ).fetchall()]
+    lmm_candidates = [r[0] for r in cur.execute(
+        "SELECT id FROM projects WHERE last_meaningful_movement IS NOT NULL "
+        "AND last_meaningful_movement NOT LIKE '%+%' "
+        "AND last_meaningful_movement NOT LIKE '%Z'"
+    ).fetchall()]
+    if iso_candidates and not _ISO_T_SHIFT_ELIGIBLE_IDS:
+        raise RuntimeError(
+            f"088 preflight: {len(iso_candidates)} naive ISO-T updated_at candidates "
+            f"but _ISO_T_SHIFT_ELIGIBLE_IDS is EMPTY. Run Step 1b, classify, fill the "
+            f"allowlist, re-rehearse. Refusing to apply (fail-closed-but-incomplete)."
+        )
+    if lmm_candidates and not _LMM_SHIFT_ELIGIBLE_IDS:
+        raise RuntimeError(
+            f"088 preflight: {len(lmm_candidates)} naive LMM candidates but "
+            f"_LMM_SHIFT_ELIGIBLE_IDS is EMPTY. Run Step 1b-LMM, classify, fill the "
+            f"allowlist, re-rehearse. Refusing to apply (fail-closed-but-incomplete)."
+        )
+```
+
+> This converts the "REMAINING EXECUTION-TIME GATE" warning (plan:1672) from prose into an executable contract. The rehearsal on the COPY (Step 7) will trip this assert first if the allowlists weren't filled — surfacing the gate loudly before the live apply, exactly when it's cheap to fix. Add a regression test: empty allowlist + ≥1 candidate → `RuntimeError`; populated allowlist OR 0 candidates → proceeds.
+
+### v2-3 — Hub D1 legacy LMM normalization (the biggest miss; Hub is the arbiter)
+
+**Contradiction to resolve:** `mutations.ts:110-115` (the helper-block note) and `mutations.ts:896-906` (the inline `advanceProjectMovement` note) both assert that legacy non-canonical stored D1 LMM "self-resolves once Task 8 migrates it." But Task 8 (plan:1484) explicitly says "D1 was not modified by this migration." Since Hub D1 is the synced-state arbiter (plan:24), leaving 2 mixed-format legacy rows there means the canonical store stays mixed while brain.db is clean — an asymmetric-path bug (ethos #6) and a doc-contradicts-code bug (ethos #10).
+
+The MAX gate at `mutations.ts:898-906` is:
+```sql
+UPDATE projects SET last_meaningful_movement = CASE
+    WHEN last_meaningful_movement IS NULL OR last_meaningful_movement < ?   -- raw lexical compare vs STORED legacy
+    THEN ? ELSE last_meaningful_movement END, ...
+```
+The **incoming** operand is already normalized (`normalizeToUtcSpaceSep(mut.client_ts)`, `:877`); the **stored** operand is compared raw. With the 2 D1 rows being ISO-T (`2026-05-22T…`), a future space-sep UTC value on the SAME date would lexically mis-order (`T` (0x54) sorts after space (0x20)) → wrong-winner / stuck-stale LMM display.
+
+**Two options — RECOMMENDATION: Option B (normalize the stored operand), flagged `next: hub-backend`.**
+
+- **Option A — stopped-world D1 normalization step (wrangler, under the snapshot, hub-backend executes).** Add a Task 8 sub-step that, inside Amendment C's stop-the-world window, runs `UPDATE projects SET last_meaningful_movement = <normalized> WHERE id IN (<2 audited PKs>)` against D1 via `wrangler d1 execute --remote`, after the same per-row provenance audit (the 2 naive ISO-T rows are confirmed pre-T4 legacy-CT → shift to `…Z`-equivalent UTC space-sep). Mirrors the brain.db rehearsal/rollback discipline (Task 5 D1 export is the rollback artifact). **Cost:** a second hand-audited allowlist + a live D1 write inside the window; correct but adds a stopped-world mutation to a 2-row problem.
+- **Option B (RECOMMENDED) — normalize the stored operand in `advanceProjectMovement` before the MAX compare.** Hub **already ships** `normalizeToUtcSpaceSep` (`mutations.ts:157`) + `ctOffsetMinutesAt` (`:123`, Intl/ICU DST-correct). The fix is to make the CASE compare against the **normalized** stored value, so legacy mixed-format rows are temporally compared correctly AND lazily rewritten to canonical on the next movement — no stopped-world D1 write, no second allowlist, and it permanently kills the *class* (any future legacy/mixed value self-heals on next write). Sketch (hub-backend owns the exact SQL/JS — D1 has no SQL function for this, so normalize in JS by reading-then-writing OR push the canonical value unconditionally when the incoming instant is newer):
+
+  ```ts
+  // advanceProjectMovement (mutations.ts ~896-906) — normalize the STORED operand.
+  // Read current LMM, normalize BOTH sides in JS (normalizeToUtcSpaceSep already
+  // exists), compare as canonical UTC, write canonical. Keeps lost-update safety
+  // by scoping to a single project row; if true atomicity vs concurrent
+  // completions is required, keep the single-UPDATE but compare against a
+  // normalized expression. NOTE: D1/SQLite has no UDF, so the JS read-modify-write
+  // is the straightforward path; hub-backend decides read-modify-write vs a
+  // CASE that tolerates the 2 known legacy shapes. Either way the STORED side is
+  // no longer compared raw-lexically against a normalized incoming value.
+  ```
+
+  **This is a `mutations.ts` edit → out of Builder's Tier-1 scope. Flag: `next: hub-backend`.** Builder owns the brain.db edge of the contract; the Hub-side MAX-gate normalization is a Hub-backend specialist change requiring the cross-language-hash-contract lens and Codex review. Pair it with deleting/correcting the false `mutations.ts:110-115` + `:896-906` "self-resolves once Task 8 migrates it" comments (they describe a brain.db-only migration that never touches D1).
+
+**Resolution of the plan:1484 ↔ mutations.ts:110-115 contradiction:** adopt Option B → update plan:1484 to state "D1 legacy LMM is normalized lazily by the Task-4 writer's stored-operand normalization (hub-backend follow-up), NOT by 088; 088 is brain.db-only by design," and update the `mutations.ts` comments to match (remove "migrated by Task 8"). If Nick/hub-backend prefer Option A, plan:1484 instead documents the in-window D1 `UPDATE` step + its 2-PK allowlist + the Task-5 D1 export as rollback. Either way the contradiction is closed; the doc and code agree.
+
+### v2-4 — Task 6 uses the DIRECT fail-closed snippets, NOT `_shadow_pull_gate` reuse
+
+Both audits flagged: do NOT "promote the shadow decision." `_shadow_pull_gate` (`hub.py:82-152`) is SHADOW-only and, on an unparseable side, **mirrors `decision_old`** (`hub.py:120-123`) — that is NOT fail-closed (it inherits the live raw-string gate's decision, which is exactly the ambiguous-apply bug Task 6 fixes). Task 6's direct snippets (plan:924-942 task gate, plan:952-961 project gate, plan:967-972 LMM gate) ARE fail-closed (skip unless BOTH sides parse to UTC AND Hub strictly newer; LMM preserves the "no local LMM → apply" exception). **Task 6 is already written correctly in the plan** — this note pins it: implement Steps 3/4/5 of Task 6 as the direct `to_utc_dt(...) is not None and _d1_utc > _brain_utc` snippets; the shadow helper stays SHADOW until Task 9 retires it. Do not refactor Task 6 to call `_shadow_pull_gate`.
+
+### v2-5 — Harden the DST gap in `_freeze_ct_naive_to_utc` (converter, plan:1283-1299)
+
+The frozen converter does `aware_ct = dt.replace(tzinfo=_CT)` (plan:1298). `ZoneInfo` makes the *offset* DST-correct, but `replace(tzinfo=...)` does **not** reject a nonexistent spring-forward wall time (02:00–02:59 CST→CDT) nor disambiguate a fall-back fold (01:00–01:59 occurs twice). For the affected columns, the only realistic boundary is the 2026 spring-forward (Mar 8 02:00) / fall-back (Nov 1 02:00) — none of today's 64+44+2 rows land there (all `2026-05-22`), so the LIVE risk is zero. But the converter is a frozen primitive that future migrations may reuse, so harden OR document explicitly:
+
+```python
+def _freeze_ct_naive_to_utc(s: str) -> str | None:
+    s = (s or "").strip()
+    if not s:
+        return None
+    s_norm = s.replace("T", " ")
+    try:
+        dt = datetime.strptime(s_norm[:19], "%Y-%m-%d %H:%M:%S")
+    except ValueError:
+        return None
+    # DST hardening: fold=0 picks the FIRST (DST/earlier-offset) occurrence on a
+    # fall-back ambiguous hour; nonexistent spring-forward times resolve forward
+    # via ZoneInfo's documented behavior. For a one-time legacy rewrite this is
+    # a deterministic, documented choice. The affected rows (all 2026-05-22) are
+    # nowhere near a DST boundary, so this is belt-and-suspenders. If a future
+    # reuse must handle a boundary row exactly, classify it by hand.
+    aware_ct = dt.replace(tzinfo=_CT, fold=0)
+    return aware_ct.astimezone(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+```
+Add a regression test asserting the converter is deterministic on a fall-back ambiguous time (`2026-11-01 01:30:00` → fixed UTC via fold=0) and does not raise on a spring-forward nonexistent time (`2026-03-08 02:30:00`). Document the ±1h boundary semantics in the migration docstring.
+
+### v2 — wiring into the existing Task 8 steps (no step renumbering)
+
+- **Step 1b** (plan:1137) — keep for `updated_at`; ADD **Step 1b-LMM** (the LMM provenance audit above) to build `_LMM_SHIFT_ELIGIBLE_IDS`.
+- **Step 4 / the migration body** (plan:1237-1363) — apply edits v2-1 (allowlist + loop), v2-2 (preflight assert), v2-5 (converter hardening). Delete `_LMM_CT_CUTOFF_UTC`.
+- **Step 2 tests** (plan:1156-1226) — keep all; ADD: (a) empty-allowlist + ≥1-candidate → `RuntimeError` (×2, ISO-T and LMM); (b) LMM allowlisted CT row shifts +5h, LMM non-allowlisted naive row UNTOUCHED, LMM offset/Z row untouched; (c) converter determinism on the two DST-boundary inputs.
+- **Step 7 rehearsal** (plan:1409) — the rehearsal now trips the preflight assert FIRST if allowlists are empty; fill from Step 1b/1b-LMM, then re-rehearse. Eyeball: count shifted vs left for BOTH allowlists.
+- **Step 8 live apply** (plan:1440) — unchanged shape; the preflight assert is the new hard gate.
+- **Step 9 commit** (plan:1461) — unchanged pathspec for the brain.db side. The `mutations.ts` Option-B edit is a SEPARATE hub-backend commit (`next: hub-backend`), NOT in Builder's 088 commit.
+- **Amendment C stop-the-world** (plan:1722) — still required; if Option A is chosen, the D1 `UPDATE` step lands inside that window. If Option B, no D1 write in the window (the lazy normalization is a code deploy, sequenced like Tasks 6/7).
+
+### v2 — ready for re-audit (do NOT execute)
+
+This is **DESIGN + DRAFT only.** Nothing was executed: migration 088 not run, `EXPECTED_MIN_MIGRATION` not bumped live, no D1 write, no daemons touched, no allowlist populated (both ship EMPTY by design — the preflight assert is the gate). Open decision for the re-audit / Nick / hub-backend: **Option A vs Option B for the D1 legacy LMM** (Builder recommends B — it kills the class, reuses an existing primitive, and needs no stopped-world D1 write; it costs one `mutations.ts` hub-backend edit + Codex review). After the re-audit signs off and Option A/B is chosen, populate both allowlists from the live Step 1b/1b-LMM audits on EACH machine, re-rehearse on a copy (the preflight assert will catch an unfilled allowlist), then apply under Amendment C's stop-the-world protocol.
