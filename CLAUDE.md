@@ -119,6 +119,7 @@ A page is a "data page" if its primary content is a scrollable record list. Neve
 
 ### Shared Utilities
 - `src/lib/dateUtils.ts` — all date formatting
+- `src/lib/time.ts` — canonical time chokepoint (Increment 1A): `Instant`/`CivilDate` types, `nowInstant()` (UTC), `formatLocal()` (viewer-local display), `todayCivil()`. Discipline: store instants UTC, display viewer-local (browser zone = traveler-aware). Lint R20-R23 (`scripts/check-time-discipline.mjs`, WARN) flags raw `new Date().toISOString()` / `.toISOString().split|slice`. Full ~91-site adoption is Plan 1B; dateUtils.ts is still in use until then.
 - `src/data/team.ts:getPersonInfo()` — team member lookup
 - `formatBrandName()` from `BrandName.tsx` — any text that might contain "MNCCORE"
 

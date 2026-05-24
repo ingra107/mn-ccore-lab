@@ -5,7 +5,7 @@ created: 2026-03-25
 status: active
 domain: Research
 tier: 2-Biweekly
-next_action: T1 correctness batch + 5-pass Codex simplify review DONE 2026-05-22 PM (deployed af3189f0 on 909c6e8). Next = the pre-adoption SECURITY tier (WORKPLAN "Codex 5-pass review" SEC-T0-1..9) before broad team adoption, or CT-2 (~12 more UTC date sites). HEAD 8ebb490e (docs ahead of deploy), schema v68. See SESSION-HANDOFF.md.
+next_action: Increment 1A Phase α SHIPPED + LIVE 2026-05-23 (deploy 17d7cdd1 on 68b8d861) — time-discipline chokepoints + R20-R23 lint (warn) + Hub LMM churn-fix + tasks.notes redaction. NEXT = Increment 1A Phase β (Tasks 5-9: LWW enforce flip + UTC migration) in a DEDICATED COORDINATED session — preconditions: home laptop quiescent, triage 16 pre-existing tests/sync failures, snapshot-first, fail-closed. Plan: docs/superpowers/plans/2026-05-23-increment-1A-time-sync-foundation.md. See SESSION-HANDOFF.md.
 primary_folder: C:/Users/ingra107/mn-ccore-lab
 ---
 
@@ -16,7 +16,7 @@ platform for Nick's critical-care research group at UMN.
 
 **Live:** https://mn-ccore-lab.pages.dev  (LIVE for team — CF Access gates `/portal/*` via @umn.edu)
 **Repo:** https://github.com/ingra107/mn-ccore-lab  (720+ commits)
-**Current deploy:** `4681a29c.mn-ccore-lab.pages.dev` (2026-05-22, audit-fix batch; HEAD `ef714950` on main, schema v68). See SESSION-HANDOFF.md + WORKPLAN.md for current state.
+**Current deploy:** `17d7cdd1.mn-ccore-lab.pages.dev` (2026-05-23, Increment 1A Phase α; HEAD `376e95e9` on main, schema v68). See SESSION-HANDOFF.md + WORKPLAN.md for current state.
 **Quality gate:** 🟢 GREEN — build clean, inspection 149/149 post-simplify, smoke 27/27 (pre-simplify baseline), deep-audit 14/14 clean, axe WCAG 2.1 AA clean across 29 pages × 2 color schemes, schema-drift CI green.
 
 ## 🚨 Read these FIRST every session

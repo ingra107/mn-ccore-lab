@@ -3,6 +3,20 @@
 
 > Historical phase records moved from CLAUDE.md to keep the operating guide focused on current state. Each section is a complete record of what shipped, decisions made, and scores achieved.
 
+## 2026-05-23 — Increment 1A Phase α: time-discipline foundation + LWW churn-fix (deploy `17d7cdd1`)
+
+Full reviews-before-code pipeline: **6-review wave** (3 Opus specialist reviews + 2 Codex plan-audits) on three interrelated plans (activity-timeline/comments, LWW timezone v2, canonical time-discipline) → reconciled into ONE Nick-approved design (`docs/superpowers/specs/2026-05-23-time-sync-timeline-reconciliation-design.md`) → `writing-plans` (builder draft → **Codex BLOCK-and-rework** → amended `217989c3` → spot-checked) → `subagent-driven-development` execution of Phase α. A reviewer contradiction (snapshot needed?) was resolved against ground-truth code: wrong LWW overwrites are **unrecoverable in place** (`audit_log`=hash only `query.py:314`; CRDT=hash+latest-only `crdt.py:247-255`) → snapshot is mandatory for Phase β.
+
+**Shipped + LIVE** (deploy `17d7cdd1` on `68b8d861`, `/api/health` ok, Hub api 208/208):
+- **Task 4 — killed the live LMM churn bug** (`api/routes/mutations.ts` `advanceProjectMovement`): UTC-normalize `client_ts` + the stored operand before the atomic single-UPDATE `CASE` MAX, so a naive-CT `client_ts` no longer lexically mis-orders against a UTC `last_meaningful_movement` (`d9398a83` + comment-accuracy fix `68b8d861`). Atomicity preserved (no SELECT-then-write race). The deploy also batched the **`tasks.notes` privacy redaction** (`66e5c9d0` — 4 post-write re-fetches + proactive-brief now use `TASK_SELECT_COLS`) → live.
+- **Tasks 1/2 — canonical time chokepoints:** PB `scripts/db/timez.py` + `now_instant()`/`now_instant_wire()` in `outbox.py` (`569a604a`); Hub `src/lib/time.ts` (`Instant`/`CivilDate` branded types, `nowInstant`, `formatLocal`, `todayCivil`) (`be2eb1d4`). No callers yet — pure additions.
+- **Task 3 — time-discipline lint R20-R23, WARN mode** (executable contract): PB `check_sync_antipatterns.py` (reuses `PB_LINT_MODE`; R10 was taken) (`43b9eb68`) + Hub stdlib `scripts/check-time-discipline.mjs` in `schema-drift.yml` (no `|| true`) (`40058df6`). 114 PB + 138 Hub raw-date sites flagged (warn, exit 0); ERROR-flip wired for Phase β Task 9.
+- **Task 10 — hazards:** `sync/operations.py:920` second freshness-guard caller `local_time_is_localtime` `True`→`False` (latent Bug-2); `backfill_last_meaningful_movement.py` quarantined behind `--allow-post-utc-cutover` (would re-poison LMM with CT post-flip); per-column timestamp zone contract registered in PB `shared-schema-registry.md` (`c00db519`).
+
+**Principle established:** store every instant UTC, display in the viewer's local zone — browser zone on the Hub (traveler-aware), rendering-machine OS zone server-side (TODAY.md/CLI); `completed_at` is UTC-store/display-local, not a CT exception.
+
+**Deferred to a coordinated session — Phase β (Tasks 5-9):** snapshot both repos → fail-closed LWW enforce flip → `client_ts` cutover → stopped-world legacy UTC migration (`088_normalize_timestamps_utc.py`) → delete the `to_utc_dt` scaffold. Preconditions in SESSION-HANDOFF (home laptop quiescent, triage 16 pre-existing `tests/sync/` failures, snapshot-first, watch window). **⚠️ Standing:** 16 pre-existing `tests/sync/` failures at HEAD (unrelated to 1A).
+
 ## 2026-05-22 (evening) — Pre-adoption SECURITY tier (T0) + correctness, orchestrated 3-agent batch
 
 Plan → codex plan-audit (gpt-5.5, BLOCK→ship-after-amend, 217K tokens) → 3 parallel Opus agents (BACKEND `api/` · FRONTEND `src/` · SYNC PB) → integrate/build/test/commit/deploy. Plan + amendments: `docs/superpowers/plans/2026-05-22-hub-pre-adoption-batch.md`.

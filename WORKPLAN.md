@@ -29,9 +29,25 @@ The brain.db ↔ Hub ↔ TODAY.md "data-sync dance" is the thing most likely to 
 **P4 — Smarter Hermes / Co-Scientist (strategic capability bet — longer-horizon, BRAINSTORM-FIRST).**
 - Deeper AI assistance on research tasks (lit synthesis, analysis help, drafting) beyond Q&A. T4 #41 Co-Scientist. Architecture + design effort; steer-first.
 
-**P0′ — Canonical time discipline (FOUNDATIONAL — design before/with the P1 LWW flip).** Single read/write/display chokepoint for ALL dates/times: two types (`Instant`=UTC / `CivilDate`=date-only+zone), ONE `nowUtc()` writer, ONE display fn (browser-local on Hub = **traveler-aware**; configurable server "my timezone" for TODAY.md/cron), + a **pre-commit/CI lint banning raw `new Date().toISOString()`/`datetime.now()`/`datetime('now')`** outside the helpers (executable contract — same pattern as this session's schema-version + sync-antipattern hooks). **Why it's P0′:** disciplined writes make the LWW read-side zone-guessing (the fragile part codex flagged) UNNECESSARY going forward → it SIMPLIFIES P1. Stub: `~/Peripheral-Brain/Context/Decisions/2026-05-23-canonical-time-discipline.md`. Needs full design next session.
+**P0′ — Canonical time discipline (FOUNDATIONAL — design before/with the P1 LWW flip).** Single read/write/display chokepoint for ALL dates/times: two types (`Instant`=UTC / `CivilDate`=date-only+zone), ONE `nowUtc()` writer, ONE display fn (browser-local on Hub = **traveler-aware**; configurable server "my timezone" for TODAY.md/cron), + a **pre-commit/CI lint banning raw `new Date().toISOString()`/`datetime.now()`/`datetime('now')`** outside the helpers (executable contract — same pattern as this session's schema-version + sync-antipattern hooks). **Why it's P0′:** disciplined writes make the LWW read-side zone-guessing (the fragile part codex flagged) UNNECESSARY going forward → it SIMPLIFIES P1. **NOW DESIGNED + Phase α SHIPPED** (2026-05-23) — reconciled with P1 (LWW) + P2 (timeline) into **Increment 1A** (below); the lint + `timez.py`/`time.ts` chokepoints + the Hub LMM churn-fix landed live this session. Phase β (the LWW flip + UTC migration) is next.
 
 **Deprioritized (still tracked below, just not now):** deeper analytics / PI-velocity dashboards; Meetings, AskTheLab, Calendar polish; external-facing OG/marketing; non-priority PAGE-* design; dead-table simplify (do opportunistically via justify-it). The tier list (T2/T3/T4) below is the MENU; THIS section is the ORDER.
+
+## ▶ INCREMENT 1A — Time/Sync/Timeline reconciliation (P0′+P1, leads to P2) — Phase α DONE 2026-05-23, Phase β NEXT
+
+P0′ (time-discipline) + P1 (LWW sync-fidelity) + P2 (timeline) were reconciled into ONE plan after a 6-review wave (3 Opus + 2 Codex plan-audits + 1 Codex pre-execution review that BLOCKED→amended the plan). Design: `docs/superpowers/specs/2026-05-23-time-sync-timeline-reconciliation-design.md`. Plan: `docs/superpowers/plans/2026-05-23-increment-1A-time-sync-foundation.md`. Principle: store every instant UTC, display viewer-local (browser zone on Hub = traveler-aware; rendering-machine OS zone server-side; `completed_at` is UTC-store/display-local, not a CT exception).
+
+**Phase α — SHIPPED + LIVE** (deploy `17d7cdd1` on `68b8d861`, `/api/health` clean):
+- **Task 4 — killed the live LMM churn bug** (`advanceProjectMovement` UTC-normalized atomic CASE compare); the deploy batched the `tasks.notes` redaction (`66e5c9d0`) → live.
+- Tasks 1/2 — canonical time chokepoints: PB `timez.py` + `now_instant`/`now_instant_wire` (`569a604a`); Hub `src/lib/time.ts` (`be2eb1d4`).
+- Task 3 — time-discipline lint R20-R23, WARN mode, both repos (`43b9eb68` PB + `40058df6` Hub); ERROR-flip wired for Task 9.
+- Task 10 — hazards: `operations.py:920` Bug-2 fix + backfill `--allow-post-utc-cutover` quarantine + zone contract in `shared-schema-registry.md` (`c00db519`).
+
+**Phase β — NEXT (Tasks 5-9, DEDICATED COORDINATED SESSION).** snapshot both repos → fail-closed LWW enforce flip (`hub.py:1278/1861/2002`) → `client_ts` cutover (cross-repo lockstep, Hub handoff spec first) → ONE stopped-world legacy UTC migration (`088_normalize_timestamps_utc.py`, frozen-CT converter) → delete `to_utc_dt` zone-guessing scaffold + lint WARN→ERROR. **Preconditions (see SESSION-HANDOFF):** home laptop quiescent / Syncthing paused; triage the 16 pre-existing `tests/sync/` failures; snapshot-first (wrong overwrites are unrecoverable in place); fail-closed + 2h watch window; `_ISO_T_SHIFT_ELIGIBLE_IDS` hand-audited + rehearsed.
+
+**Follow-ons:** **Plan 1B** = the ~91-site Hub frontend display-migration to viewer-local (UNWRITTEN; write after β — consumes `time.ts`; lint flips to ERROR once it clears the raw-date sites). **Increment 2** = Activity-timeline/comments (P2; specced + amended: `docs/superpowers/specs/2026-05-23-activity-timeline-comments-design.md`; MUST follow β's `client_ts` cutover — shared files; extend `activity_log` visibility-gated, remove ALL `notes`→`description` paths incl. create-path leaks `query.py:736/900`, add a Hub Activity write transport).
+
+**⚠️ Standing item:** 16 pre-existing `tests/sync/` failures (`test_state`, `test_pull_symmetry_check`, `test_hub_payload_w1` — present at HEAD, unrelated to 1A timezones) — triage before Phase β.
 
 ## ▶ DONE 2026-05-22 PM — the T1 correctness directive + Codex gate executed
 
