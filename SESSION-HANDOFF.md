@@ -11,7 +11,7 @@
 
 **▶ NEXT: Phase β = Increment 1A Tasks 5-9 — DEDICATED COORDINATED SESSION.** snapshot both repos → fail-closed LWW enforce flip (3 pull-gates `hub.py:1278/1861/2002`) → `client_ts` cutover (cross-repo lockstep, Hub handoff spec first) → ONE stopped-world legacy UTC migration (`088_normalize_timestamps_utc.py`, frozen-CT converter) → delete `to_utc_dt` zone-guessing scaffold + lint WARN→ERROR. **HARD PRECONDITIONS — do NOT start β without ALL:**
    1. **Home laptop quiescent** (or Syncthing paused) the whole β window — β rewrites the Syncthing-synced `brain.db` AND changes how BOTH machines arbitrate vs the shared Hub D1. Running it while home is live → divergent `brain.db` + Syncthing conflict = the exact silent corruption β prevents.
-   2. **Triage the 16 pre-existing `tests/sync/` failures FIRST** (`test_state`, `test_pull_symmetry_check`, `test_hub_payload_w1` — present at HEAD, unrelated to timezones per builder, but don't run a lossy sync migration on a red sync suite blind).
+   2. ✅ **DONE 2026-05-24 — `tests/sync` triaged + cleaned.** Were 18 deterministic failures (+1 flaky), ALL stale-test debt asserting deliberately-deleted behavior (JSON dual-write `e29c30fd`, symmetry checker `9528f79c`, pre-mig-073 key_link, pre-`abeebc51` enum casing) — **zero real regressions**, none timezone/LWW. Retired/updated in PB commit `4427a808`; suite now **328 passed / 0 failures**. ⚠️ **Carry into the watch window (#4):** the pull-symmetry auto-guard (`.githooks/check_pull_symmetry.py`) was deleted `9528f79c` and β edits exactly those 3 gates (`hub.py:1278/1861/2002`) → do MANUAL symmetric-gate verification; no automation catches an asymmetric change now.
    3. **Snapshot FIRST** (rollback artifact; overwrites are unrecoverable). Plan Task 5 has the exact commands. Valid ~hours → snapshot→flip→watch→restore-or-discard.
    4. Run **fail-closed** + the plan's 2-hour watch window (exact diff queries, count=0, restore trigger). `_ISO_T_SHIFT_ELIGIBLE_IDS` (Task 8) ships EMPTY (fail-closed) → hand-audit + populate from real naive-ISO-T candidates, rehearse on a copied brain.db, before applying.
 
@@ -27,7 +27,7 @@
 | HEAD | Hub `68b8d861` on main, pushed (Increment 1A Phase α — Hub: `be2eb1d4`/`40058df6`/`d9398a83`/`68b8d861`; spec `5715e6eb`/`799ee275`; plan `d2de8ee2`/`217989c3`; redaction `66e5c9d0`). PB α commits local + Syncthing-propagating: `569a604a`/`43b9eb68`/`c00db519` (PB HEAD `c00db519`). |
 | Deploy | `17d7cdd1.mn-ccore-lab.pages.dev` (2026-05-23, Increment 1A Phase α) — LIVE on `68b8d861`. `/api/health` ok (tasks 759/projects 93/team 19, 0 failures). Shipped: Task 4 LMM churn-fix + `tasks.notes` redaction (`66e5c9d0`) + `time.ts` + lint CI. |
 | Build | GREEN (0 TS errors) |
-| API tests | **208/208** passing (Hub). ⚠️ PB `tests/sync/`: 324 pass / 3 skip / **16 PRE-EXISTING failures** (`test_state`, `test_pull_symmetry_check`, `test_hub_payload_w1` — at HEAD, unrelated to 1A; **triage before Phase β**). |
+| API tests | **208/208** passing (Hub). PB `tests/sync/`: ✅ **328 passed / 2 skip / 0 failures** (was 18 stale-test failures — triaged + retired as test debt, PB commit `4427a808`, 2026-05-24). |
 | Schema | **v68** prod D1. PB migration high-water `087_stage3_deleted_at`; Phase β adds `088_normalize_timestamps_utc.py` (stopped-world). |
 | API auth | GET endpoints locked down (unchanged from 2026-05-15) |
 | Team adoption | Not yet broadly directed. |
