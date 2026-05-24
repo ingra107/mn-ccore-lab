@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+# scripts/wrangler-d1 — THE sanctioned wrangler entry point for this repo.
+#
+# WHY THIS EXISTS
+# ---------------
+# `secrets.ps1` exports CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID into the
+# shell. That token is scoped for Pages deploys and LACKS D1 write/read scope.
+# When both env vars are set, wrangler PREFERS them over the OAuth credentials
+# at ~/.wrangler/config/default.toml (which DO have `d1 (write)` scope). The
+# result is a 401 / 403 / 7403 / "Authentication error code 10000" on any
+# `wrangler d1` call — repeatedly misdiagnosed as "home/work can't reach D1"
+# four times across sessions despite a standing memory rule.
+#
+# This wrapper makes the fix structural instead of remembered: it ALWAYS strips
+# the two env vars before invoking wrangler, so the OAuth path is always used.
+#
+# USAGE
+#   scripts/wrangler-d1 d1 execute mnccore-lab --remote --command "SELECT 1"
+#   scripts/wrangler-d1 d1 execute mnccore-lab --remote --json --command "..."
+#   scripts/wrangler-d1 whoami
+#
+# Any wrangler subcommand works; this is a thin pass-through with the env strip.
+# Run from the repo root (npx resolves the repo-local wrangler@^4 devDependency).
+#
+# Memory rule cross-reference:
+#   ~/.claude/.../memory/feedback_wrangler-home-auth-works.md
+# Team-guide cross-reference: CLAUDE.md "Wrangler / D1 auth" section.
+#
+# DO NOT call `npx wrangler d1 ...` raw anywhere in this repo. The pre-commit
+# lint (.githooks/pre-commit) flags raw `wrangler d1` calls outside this
+# wrapper and .github/workflows/ (CI uses a proper D1-scoped secret).
+
+set -euo pipefail
+
+# Resolve to the repo root regardless of cwd, so npx finds the repo-local
+# wrangler and a caller from any directory behaves identically.
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$REPO_ROOT"
+
+# THE STRIP. Unconditional — env may or may not be set; either way, after this
+# wrangler uses OAuth. `unset` is a no-op when the var is absent.
+unset CLOUDFLARE_API_TOKEN
+unset CLOUDFLARE_ACCOUNT_ID
+
+exec npx wrangler "$@"

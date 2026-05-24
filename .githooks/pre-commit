@@ -20,6 +20,51 @@
 
 set -e
 
+# ---------------------------------------------------------------------------
+# Wrangler-D1 entry-point lint (2026-05-24). Flags RAW `wrangler d1` /
+# `npx wrangler d1 execute` in staged files (wrangler-d1-allowed: rule doc).
+# ALL programmatic D1 calls must go
+# through the sanctioned env-stripping entry point (scripts/wrangler-d1 shell
+# shim or scripts/wrangler_d1.py), which unsets CLOUDFLARE_API_TOKEN /
+# CLOUDFLARE_ACCOUNT_ID before invoking wrangler — the fix for the recurring
+# OAuth-shadow auth failure (feedback_wrangler-home-auth-works.md).
+#
+# Exemptions (legitimate raw callers):
+#   - .github/workflows/   CI uses a proper D1-scoped secret, not OAuth.
+#   - scripts/wrangler-d1, scripts/wrangler_d1.py  the wrapper itself.
+#   - *.md doc/comment usage may carry an allow marker `wrangler-d1-allowed`.
+# A line carrying `wrangler-d1-allowed` anywhere on it is allowed (escape hatch
+# for docs/comments that must show the raw form).
+raw_d1_hits=""
+for f in $(git diff --cached --name-only --diff-filter=AM); do
+    case "$f" in
+        .github/workflows/*) continue ;;
+        scripts/wrangler-d1|scripts/wrangler_d1.py) continue ;;
+    esac
+    # Only inspect text files that still exist in the working tree.
+    [ -f "$f" ] || continue
+    # Match `wrangler d1` or `npx wrangler d1` not preceded by the wrapper name.
+    # Skip lines carrying the allow marker.
+    while IFS= read -r line; do
+        case "$line" in *wrangler-d1-allowed*) continue ;; esac
+        raw_d1_hits="${raw_d1_hits}${f}: ${line}
+"
+    done < <(grep -nE '(npx )?wrangler d1 (execute|export)' "$f" 2>/dev/null | grep -vE 'wrangler-d1|wrangler_d1' || true)
+done
+if [ -n "$raw_d1_hits" ]; then
+    echo ""
+    echo "BLOCKED: raw 'wrangler d1' call(s) found — route through the sanctioned"
+    echo "entry point (scripts/wrangler-d1 shell shim OR scripts/wrangler_d1.py)."
+    echo "These strip CLOUDFLARE_API_TOKEN/ACCOUNT_ID so OAuth (which has D1 scope)"
+    echo "is used. See CLAUDE.md 'Wrangler / D1 auth' + feedback_wrangler-home-auth-works.md."
+    echo ""
+    printf '%s' "$raw_d1_hits"
+    echo ""
+    echo "If a raw form is genuinely required (CI, docs), add 'wrangler-d1-allowed'"
+    echo "on the line, or place it under .github/workflows/."
+    exit 1
+fi
+
 # Resolve PB checkout path (sibling to mn-ccore-lab on Nick's two laptops).
 PB_ROOT=""
 for cand in "$(cd "$(dirname "$0")/.." && pwd)/../Peripheral-Brain" \

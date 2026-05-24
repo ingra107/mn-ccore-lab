@@ -153,6 +153,31 @@ brain.db is the **primary store**. D1 (Hub) is the primary UI + write target. Sy
 
 **Implementation:** `scripts/db/sync/` (drivers/hub.py + boundary + payload). Decision: `Context/Decisions/2026-04-21-sync-extraction-COMPLETE.md` in PB.
 
+### Wrangler / D1 auth — ALWAYS go through the sanctioned entry point (2026-05-24)
+
+`secrets.ps1` exports `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID`. Those are
+Pages-deploy-scoped and **lack D1 scope**; when present they SHADOW the OAuth
+creds at `~/.wrangler/config/default.toml` (which DO have `d1 (write)`). Result:
+401 / 403 / 7403 / "Authentication error code 10000" on any `wrangler d1` call —
+misdiagnosed as "blocked" **four times** across sessions despite a standing
+memory rule. The fix is now a primitive, not a note (codex ethos #4).
+
+**ALL wrangler D1 calls go through the sanctioned entry point. Never raw
+`npx wrangler d1`.** Both forms unconditionally `unset CLOUDFLARE_API_TOKEN
+CLOUDFLARE_ACCOUNT_ID` and run wrangler from the repo root:
+
+- **Shell / command line:** `scripts/wrangler-d1 d1 execute mnccore-lab --remote --command "SELECT 1"`
+- **Python (incl. PB's `sync.py`):** `from wrangler_d1 import run_d1; run_d1(command="SELECT 1", json=True)`
+
+The DB is `mnccore-lab` (no dash). Enforced by `.githooks/pre-commit`: any staged
+raw d1 execute/export call outside `.github/workflows/` (CI uses a proper
+D1-scoped secret) or the wrapper files is blocked. Escape hatch for docs:
+put `wrangler-d1-allowed` on the line.
+
+Memory rule cross-reference: `~/.claude/.../memory/feedback_wrangler-home-auth-works.md`
+("ANY wrangler D1 auth failure = strip env first"). This wrapper makes that rule
+structural so it can't be forgotten a fifth time.
+
 ### Cross-repo Schema Coordination (rule from R10 incident)
 
 Any change to a shared field (schema.sql DEFAULTs, D1 migration SQL, taxonomy reshuffles) must be **coordinated with Peripheral Brain** before deploying.
