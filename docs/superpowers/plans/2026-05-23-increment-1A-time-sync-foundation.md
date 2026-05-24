@@ -1670,3 +1670,67 @@ Message: `chore(sync): Increment 1A hygiene — quarantine backfill, fix operati
 - **Added for safe execution:** concrete 2-hour WATCH window with diff queries (acceptable=0) + restore trigger (Task 8); stopped-world Step 0 preflight; fail-closed tests for missing timestamps; migration + D1 export/restore rehearsal on a COPY before live (Task 8 Step 7).
 
 > **REMAINING EXECUTION-TIME GATE (not a plan defect, but load-bearing):** Task 8 Step 1b's provenance allowlist (`_ISO_T_SHIFT_ELIGIBLE_IDS`) ships EMPTY and MUST be populated from a hand-audit of the actual naive-ISO-T candidate rows at execution. An empty allowlist is fail-closed (shifts nothing) — that is the safe default, but it means the `updated_at` ISO-T normalization is a no-op until the audit fills it. Do the audit, fill the set, re-run the rehearsal, THEN apply.
+
+---
+
+## CODEX AMENDMENTS (2026-05-24, pre-execution re-audit against HEAD 4dc1484f / Hub current) — SOURCE OF TRUTH for dispatch
+
+> The 2026-05-23 review verified against PB `d4036d7b`/Hub `799ee275`. Both repos advanced (Tasks 1-4 shipped + LIVE; PB at `4dc1484f`). A second codex pass (verified by COO against live code) found two CONFIRMED data-corruption bugs that the original plan would hit AS WRITTEN. These amendments supersede the cited steps. Verdict was **block-and-fix**; these are the fixes.
+
+### Amendment A — Task 5 D1 `tasks` export/restore drops project-only columns (Codex finding 1; CONFIRMED)
+
+`last_meaningful_movement` and `stale_active_since` are **`projects` columns, NOT `tasks`** — verified: brain.db `PRAGMA table_info(tasks)` lacks both; `mutations.ts:217` `TABLE_FIELDS` lists them under projects. The Task 5 `tasks` export (plan:783-785) and restore (plan:818-820) would error (`wrangler d1 execute ... SELECT last_meaningful_movement ... FROM tasks` → no such column) → **no rollback artifact**.
+
+- **Export (plan:784):** change to
+  `SELECT id, slug, updated_at, completed_at, completed, status, seq, last_mutation_id, deleted_at FROM tasks`
+  (drop `last_meaningful_movement, stale_active_since`). The `projects` export (plan:788) keeps them — correct, they live there.
+- **Restore (`restore_d1_snapshot.py` + plan:818-820):** the `tasks` UPDATE drops `last_meaningful_movement=?, stale_active_since=?`. The `projects` UPDATE keeps them.
+
+### Amendment B — Task 8 LMM step needs the SAME provenance guard as `updated_at` (Codex finding 2; CONFIRMED — silent +5h corruption)
+
+Task 4 is LIVE (deployed `2026-05-23 19:22 UTC`, commit `d9398a83`) and writes `projects.last_meaningful_movement` as **naive space-sep UTC** (`mutations.ts:178` `toISOString().replace('T',' ').replace(/\.\d+Z$/,'')` → `"2026-05-23 20:00:00"`, no Z; written at `:898-906`). The Task 8 LMM step (plan:1335-1343) shifts EVERY naive LMM CT→UTC with **no allowlist** (unlike the `updated_at` step at plan:1321-1333, which is allowlist-guarded). So any Task-4-written UTC LMM gets double-shifted **+5h**, silently (the watch query only catches future rows). Blast radius (work, now): 64/64 LMM naive, all pre-T4 → 0 at-risk *today on work* — but Hub D1 / home / any completion since 05-23 19:22 can hold post-T4 UTC LMM. The migration must be safe by construction.
+
+**Fix — cutoff guard (self-contained, mirrors the `updated_at` fail-closed intent):** add to migration 088:
+```python
+# LMM provenance cutoff: Task 4 (advanceProjectMovement UTC writer) went LIVE
+# 2026-05-23 19:22 UTC. EVERY legacy-CT LMM was written before that; EVERY
+# Task-4 UTC LMM is an instant >= 19:22 UTC. So shift a naive LMM ONLY if
+# converting-it-as-CT yields an instant <= the cutoff (provably legacy). A
+# Task-4 UTC value (>= 19:22 UTC) converted-as-CT lands >= next-day 00:22 UTC
+# (> cutoff) -> never shifted. Fail-toward-NOT-shifting (leaving a CT value is a
+# comparison nuisance; shifting a UTC value is corruption).
+_LMM_CT_CUTOFF_UTC = "2026-05-23 19:22:00"
+```
+LMM loop (replaces plan:1335-1343):
+```python
+    for (pid, lmm) in cur.execute(
+        "SELECT id, last_meaningful_movement FROM projects WHERE last_meaningful_movement IS NOT NULL"
+    ).fetchall():
+        if not _is_naive(lmm):
+            continue  # offset/Z -> already resolvable, never shift
+        out = _freeze_ct_naive_to_utc(lmm)
+        if out is None:
+            continue  # unparseable -> fail-closed leave
+        if out > _LMM_CT_CUTOFF_UTC:
+            continue  # converts-as-CT to AFTER Task-4 deploy -> it is a Task-4 UTC
+                      # value, NOT legacy CT. Leave untouched (corruption guard).
+        cur.execute("UPDATE projects SET last_meaningful_movement = ? WHERE id = ?", (out, pid))
+```
+> **Why `completed_at` (plan:1345-1353) does NOT need this guard:** its UTC writer is Task 7 (`query.py:1236`), which ships INSIDE the stopped-world window with this migration. At migration time there are zero post-Task-7 (UTC) `completed_at` values — they only get written after the window reopens. So every `completed_at` at migration time is legacy CT; blanket-shift is correct there. The asymmetry is real: Task 4 (LMM) has been live ~28h; Task 7 (completed_at) has not shipped.
+> **Step 7b rehearsal MUST now also dry-run the LMM cutoff** on a copied brain.db (count shifted vs left, eyeball 5 of each) before the live apply.
+
+### Amendment C — global stop-the-world both machines before any 088 apply (Codex finding 5; sound)
+
+The plan's relay-confirm is "confirm both converged AFTER apply" (plan:1466). Gap: the window where machine A applied 088 + resumed sync while machine B is still on pre-088 code (its `EXPECTED_MIN_MIGRATION` not yet bumped) — B happily syncs stale CT against the shared Hub D1. `brain.db` is per-machine (`.stglobalignore`'d), so the race is on Hub D1, not Syncthing. Strengthen the Task 8 relay protocol to:
+1. **BOTH** machines stop sync daemons (`python scripts/utils/check_daemons.py --stop-all`) BEFORE either applies 088. Relay-confirm both stopped.
+2. Both pull the Task 6/7/8 code commits (so `EXPECTED_MIN_MIGRATION`=088 + writers + gates are present on both).
+3. Both take a FRESH snapshot (re-verify < hours old).
+4. Both run Step 0 preflight + apply 088 + Step 7 verify.
+5. Relay-confirm BOTH report 088 applied + `sync.py status --verbose` diff=0.
+6. ONLY THEN both resume daemons. Neither resumes sync until both are at 088.
+
+No Syncthing pause needed (brain.db not file-synced); the stop-the-world is on the sync daemons + Hub D1 push/pull, coordinated via this chat/relay.
+
+### Unchanged-but-confirmed
+- Citation drift (builder reads live code, edits by content not line#): `outbox.py` client_ts writers now `:767`/`:2067` (bound `:783`/`:2083`); `mutations.ts` Task-4 region `:777-909`, processed-insert `:1081-1085`; `backfill ...:226-229`. All hub.py gate/shadow + query.py citations still valid. `operations.py:920` Bug-2 already fixed (`e2553799`).
+- Order unchanged: 5 → 6 → 7 → 8 → 9. Task 8 starts only after both machines stopped + snapshotted + Tasks 6/7 live on both + LMM cutoff + `_ISO_T_SHIFT_ELIGIBLE_IDS` populated.
