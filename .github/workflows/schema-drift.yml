@@ -220,14 +220,14 @@ jobs:
         # Exit 1 if any gap found; gaps listed in job log.
         run: npm run audit:schema-contract
 
-      - name: Time-discipline lint (Increment 1A R20/R21, WARN during migration)
-        # Hub-local stdlib mirror — does NOT depend on a PB checkout. WARN mode
-        # (exit 0) until the 1B display-site migration clears the backlog, then
-        # set TIME_LINT_MODE=enforce here to hard-fail.
+      - name: Time-discipline lint (Increment 1A R20/R21, ENFORCE)
+        # Hub-local stdlib mirror — does NOT depend on a PB checkout. ENFORCE
+        # mode (hard-fail) since the Plan 1B display-site migration cleared the
+        # backlog to zero (2026-05-25): all date sites use canonical helpers
+        # (src/lib/time.ts, src/lib/dateUtils.ts, api/lib/time.ts, ct-date.ts).
         #
-        # No `|| true`: the script self-gates on TIME_LINT_MODE and exits 0 in
-        # WARN mode by design, so a real hit is VISIBLE in the log (not
-        # swallowed) while never red-failing the build during 1A.
+        # No `|| true`: in ENFORCE mode the script exits 1 on any R20/R21 hit,
+        # red-failing the build so a regression is caught at PR time.
         env:
-          TIME_LINT_MODE: warn
+          TIME_LINT_MODE: enforce
         run: node scripts/check-time-discipline.mjs

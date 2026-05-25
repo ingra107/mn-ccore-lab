@@ -1,7 +1,8 @@
 // scripts/check-time-discipline.mjs — Hub-local R20/R21 mirror (Increment 1A).
 // Bans raw `new Date().toISOString()` (R20) and `.toISOString().split|slice`
-// (R21) in src/ + api/ outside src/lib/time.ts. WARN mode by default (exit 0);
-// CI flips to ERROR after the 1B display-site migration clears the backlog.
+// (R21) in src/ + api/ outside the allowlist. WARN mode by default (exit 0);
+// CI runs in ERROR mode — Plan 1B migration complete (2026-05-25), all sites
+// use canonical helpers; any new R20/R21 hit hard-fails the build.
 //
 // This is a Hub-LOCAL stdlib mirror so the CI lint actually runs against the
 // Hub tree without depending on a Peripheral-Brain checkout (the schema-drift
