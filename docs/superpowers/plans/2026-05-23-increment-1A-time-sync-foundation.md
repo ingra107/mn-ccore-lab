@@ -2331,3 +2331,25 @@ This also makes the Task-5 D1 export the genuine rollback for the §v4-4.1 D1 LM
 ### Task 8 v4 — ready for re-audit (do NOT execute)
 
 **DESIGN + DRAFT only.** Nothing executed: migration 088 not run, no D1 write, no CAS UPDATE, `EXPECTED_MIN_MIGRATION` not bumped, no daemons touched, no flag flipped, no wrangler run. All SIX frozensets (eligible + ineligible × updated_at/LMM/completed_at) ship EMPTY by design — the §v4-4.2 coverage asserts + §v4-4.4 converter preflight are the hard gates that refuse to apply until every candidate is classified AND every eligible row proven convertible on EACH machine under its own Step 0. The D1 LMM canonicality invariant is now LITERALLY enforced (§v4-4.1 post-update assert = 0 non-canonical rows). v4 goes to a v4 re-audit (`docs/superpowers/specs/2026-05-24-beta-v4-reaudit-prompt.md`) before any execution window. After v4 sign-off: populate all six sets from the live Step 1b/1b-LMM/1b-completed_at + D1 provenance audits, re-rehearse on a copy (the partition + converter asserts trip first if anything is unclassified/unconvertible), run Step 8-D1's CAS writes + invariant assert, then apply brain.db 088 under Amendment C's stop-the-world protocol.
+
+---
+
+## Task 8 v5 DIRECTION — DECISION 2026-05-25 (Nick): SIMPLIFY; do NOT build automated provenance
+
+> **This block supersedes "run a v4 re-audit" as the next action.** It is the next-session entry point for Task 8. Execution still DEFERRED — nothing executed this session. Both v3 (`0394a6b7`) + v4 (`602eb72d`) commits are pushed; design is settled.
+
+**5th audit pass (work codex; home was offline → single verdict, not dual): design VALIDATED, still-block ONLY on provenance rigor.** 5 of 9 v4 punch-list items CLOSED (CAS #2, converter preflight #4, partition contract #5, DB name #7, lowercase-z #9). Disposition Nick chose for the rest:
+
+**DO next session (cheap + correct — keep):**
+1. **Exact-shape invariant assert** (finding 2): replace the marker-based post-update D1 check (plan:2136-2143) with `re.fullmatch(r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}")` + parse over EVERY non-null D1 LMM. The marker list misses malformed space-sep ("2026-05-22 15:53", trailing junk).
+2. **Real Python offset converter** (finding 3 / the 8c seam): add `_offset_to_utc_space_sep()` with tests (Z, z, +00:00, -05:00, fractional, no-seconds). Do NOT reuse the CT-only `_freeze_ct_naive_to_utc` on offset values (it double-shifts). JS `normalizeToUtcSpaceSep` (mutations.ts:157) is the reference behavior.
+3. **Forward guard** (finding 4 — the one genuinely new architectural catch): `projects.last_meaningful_movement` is a generic `applyPatch` field (mutations.ts:212-218) written verbatim, so future patches can REINTRODUCE non-canonical values after Option A normalizes today's rows. Fix: normalize-or-reject LMM inside applyPatch, OR remove it from generic patch input (only advanceProjectMovement should write it). hub-backend owns this.
+
+**DROP / SIMPLIFY (findings 1 + 5 — automated provenance for a 2-3 row dataset is over-engineering):**
+- Finding 1 (D1 LMM provenance via processed_mutations) is unachievable anyway: advanceProjectMovement does a DIRECT D1 write, creates no ledger row (mutations.ts:819-820), does not stamp last_mutation_id. Stop claiming ledger attribution.
+- Finding 5 (completed_at field-level provenance) has the same row-level-vs-field-level problem (last_mutation_id changes on any patch).
+- **REPLACEMENT:** blast radius = 2-3 D1 rows (today: 2 legacy-CT naive ISO-T + 1 Z). Classify each BY HAND at execution (Nick eyeballs value + the project's known activity era), record the PK -> old -> new -> class table in the runbook artifact, and rely on the exact-shape invariant assert (#1) + CAS (#2) as the machine-checked safety net. No automated population-scale provenance engine for D1. The partition/coverage asserts STILL gate the brain.db columns (which can have larger candidate sets) — simplification applies to the D1 side only.
+
+**Rationale:** Design (Option A + partition + preflight + CAS + unchanged atomic Hub compare) validated since round 3. Rounds 4-5 each closed real bugs, but the 5th's residual block is automated-provenance rigor that manual per-row inspection trivially provides at this row count. The forward guard (finding 4) is the one item worth real engineering. Stop the audit treadmill; ship the 3 DO items + manual classification next session, then ONE confirmation audit, then execute under Amendment C's stop-the-world window.
+
+**Next-session entry:** dispatch builder for the 3 DO items + the manual-classification runbook step; hub-backend for the applyPatch forward guard + the mutations.ts:110-115 comment. Then a single re-audit (home back for the dual, or single given convergence), then the execution window.
