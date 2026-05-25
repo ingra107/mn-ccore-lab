@@ -2057,3 +2057,277 @@ v2's preflight built candidate sets with SQL `... NOT LIKE '%+%' AND NOT LIKE '%
 ### Task 8 v3 — ready for re-audit (do NOT execute)
 
 **DESIGN + DRAFT only.** Nothing executed: migration 088 not run, no D1 write, `EXPECTED_MIN_MIGRATION` not bumped, no daemons touched, no flag flipped, no wrangler run. Both allowlists AND both ineligible sets ship EMPTY by design — the §v3-3.2 partition assert is the hard gate that refuses to apply until every candidate is classified on EACH machine under its own Step 0. The CONVERGED decision (Option A + partition assert + Python `_is_naive()` candidate collection) goes to a v3 re-audit (`docs/superpowers/specs/2026-05-24-beta-v3-reaudit-prompt.md`) before any execution window. After v3 sign-off: populate all four sets from the live Step 1b/1b-LMM + D1 provenance audits, re-rehearse on a copy (the partition assert trips first if any candidate is unclassified), then apply under Amendment C's stop-the-world protocol with the Step 8-D1 wrangler step in-window.
+
+---
+
+## Task 8 v4 (2026-05-24) — §v4-4 SOURCE OF TRUTH for Task 8 dispatch
+
+> **Verdict that triggered v4:** the FOURTH dual-codex re-audit (`data/shared/codex-beta-v3-audit-work.md` + `-home.md`, both read in full) returned **design VALIDATED** — Option A + the partition assert + Python `_is_naive()` is the right shape; round-3's double-shift, lost-update race, and negative-offset bugs are CLOSED. But it is **NOT ship-as-written**: an 8-item punch-list (one BLOCK + a broken rollback snippet + a wrong DB name + an under-partitioned `completed_at` + converter/assert/`_is_naive` gaps) must be resolved first. v4 supersedes the specific v3 sub-sections named below; everything else in v3 (and v2's primitives it kept) stands. This is **DESIGN + DRAFT only — execute nothing.**
+>
+> **v4 supersedes (do NOT execute the superseded text):**
+> - §v3-3.1's "NEVER touch offset/Z" D1 rule + the `pb-db` DB name + the `id=?`-only D1 UPDATE → REPLACED by §v4-4.1.
+> - §v3-3.2's partition assert that checks only overlap + (candidates − classified) → AMENDED by §v4-4.2 (coverage-only semantics made explicit + true per-machine equality made an opt-in hard-fail, prose↔code reconciled).
+> - The migration body's blanket `completed_at` shift (plan:1345-1353) → REPLACED by §v4-4.3 (a `completed_at` partition identical to the LMM/ISO-T one).
+> - `_freeze_ct_naive_to_utc` silent-None skip behavior in the loops (plan:1331-1333, :1341-1343, :1351-1353) → REPLACED by §v4-4.4 (converter-success preflight, hard-fail on None, update-count == eligible-count assert).
+> - `_is_naive()` (plan:1302-1308) lowercase-`z` + no-seconds gap → AMENDED by §v4-4.9.
+> - Task 5 export/restore snippet (plan:783-785, :815-821) listing `tasks.last_meaningful_movement`/`stale_active_since` → REPLACED by §v4-4.8.
+>
+> **Audit verdict, both machines (risk-ordered):** (1) [BLOCK-work / BLOCK-home] D1 canonicality invariant is FALSE as written — a Z-shaped D1 LMM left un-normalized mis-sorts against space-sep under the unchanged raw lexical `<` (`mutations.ts:896-906`). (2) D1 UPDATE lacks CAS. (3) `completed_at` blanket shift can corrupt a naive Hub-origin UTC value. (4) converter silent-None silently skips an eligible row. (5) partition assert ≠ stated equality. (6) D1 provenance audit under-specified. (7) wrangler DB-name mismatch (`pb-db` vs `mnccore-lab`). (8) Task 5 rollback snippet selects projects columns from `tasks`. (9 nit) `_is_naive()` misses lowercase `z` + no-seconds.
+
+### Task 8 v4 §v4-4 — the 8-item punch-list resolution (SOURCE OF TRUTH; every v4 banner forward-refs HERE)
+
+> **Resolved facts pinned at draft time (re-verify at execution):**
+> - **D1 database name = `mnccore-lab`** (binding `DB`, id `b8453e9b-7c5f-4029-b07d-dd89c05d00cf`), READ from `../mn-ccore-lab/wrangler.toml:6-9` HEAD. `pb-db` was never a real binding. Task 5 already uses `mnccore-lab` (`plan:783`,`:787`,`:792`) — §v3-3.1's `pb-db` was the lone wrong instance.
+> - Hub accepts `completed_at` as a task patch field (`../mn-ccore-lab/api/routes/mutations.ts:201`), `applyPatch` writes patch values verbatim (`:914-918`), and the PB pull copies D1 `completed_at` into brain.db on a completed-flag change (`scripts/db/sync/drivers/hub.py:1349-1352`). So a naive Hub-origin UTC `completed_at` is a real, reachable shape — finding 3 is valid.
+> - `tasks` LWW/cursor columns per `mutations.ts:198-211`: `completed_at`, `completed`, `status`, `seq`, `last_mutation_id`, `deleted_at`, `created_at`, etc. — **NO `last_meaningful_movement`, NO `stale_active_since`** (those are `projects`-only, `:212-218`). Finding 8 is valid.
+
+#### §v4-4.1 — Make the D1 canonicality invariant LITERALLY TRUE (resolves BLOCK item 1, CAS item 2, DB-name item 7, provenance item 6)
+
+The v3 §v3-3.1 invariant ("post-Option-A every D1 LMM is canonical UTC space-sep") was FALSE because v3 also said "explicit offset/Z → NEVER touch" while a Z-shaped D1 LMM row exists today (`plan:1981-1982`). Under the UNCHANGED raw lexical `<` compare (`../mn-ccore-lab/api/routes/mutations.ts:896-906`), a `2026-05-22T...Z` value sorts AFTER a `2026-05-22 ...` space-sep value on the same instant (`T`=0x54 > space=0x20; `Z` adds a trailing byte). So the mixed-arbiter wrong-winner class the whole Option A exists to kill is NOT closed for that Z row. The invariant must be made real, not asserted.
+
+**Step 8-D1 (v4) normalizes EVERY non-canonical D1 `projects.last_meaningful_movement` to UTC space-sep `%Y-%m-%d %H:%M:%S` (no `T`, no `Z`, no offset, no fractional).** Three provenance classes, all RESOLVED (none left noncanonical):
+
+| D1 LMM shape | Classification | Action |
+|---|---|---|
+| Already canonical UTC space-sep (`YYYY-MM-DD HH:MM:SS`, no T/Z/offset/frac) | canonical | identity / no-op (do NOT re-write) |
+| Explicit offset or `Z`/`z` (e.g. `...T15:53:50.793979Z`, `...+00:00`, `...-05:00`) | offset-resolvable | RE-RENDER the same instant to canonical UTC space-sep (honor the offset, convert to UTC, drop T/Z/frac). NOT skip. |
+| Naive (no offset/Z) AND provably pre-Task-4-deploy (2026-05-23 19:22 UTC) legacy-CT | legacy-CT-naive | CT→UTC via the frozen converter (`_freeze_ct_naive_to_utc`), → canonical space-sep |
+| Naive AND post-T4 / unprovable provenance | UNPROVABLE | **HARD-FAIL the runbook step — do NOT ineligible-skip.** Leaving an unprovable naive row in D1 breaks the unchanged lexical compare. Stop, resolve provenance manually (or restore + re-plan), do not proceed. |
+
+The point of finding 1 (both machines): there is no "ineligible-skip" escape for D1 LMM the way there is for brain.db columns. brain.db can leave an unclassified-but-naive row untouched because the brain.db rewrite is allowlist-gated and the lexical compare that matters lives on the Hub side. D1 IS the arbiter operand — every D1 LMM row MUST end canonical or the runbook fails closed. (Today's measured D1 has 3 non-null LMM: 2 legacy-CT naive ISO-T + 1 `Z`. Under v4 all 3 are normalized: 2 CT→UTC, 1 Z→UTC space-sep. RE-MEASURE at execution.)
+
+**Provenance audit (item 6 — fetch enough to PROVE CT-vs-UTC, persist the classified table as a runbook artifact):** the v3 audit query selected only `id, last_meaningful_movement` — insufficient to distinguish legacy CT from canonical UTC. v4 fetches the provenance fields and writes the classified PK/value table to a gitignored runbook artifact (`data/snapshots/2026-05-23-increment-1A/d1_lmm_provenance.json`) so the exact PK → old-value → new-value → class table is auditable, not operator-memory:
+
+```bash
+# Step 8-D1 v4 — AUDIT FIRST (read-only). Enumerate every non-null D1 LMM WITH provenance fields.
+cd ~/mn-ccore-lab && npx wrangler d1 execute mnccore-lab --remote --json \
+  --command "SELECT id, slug, last_meaningful_movement, updated_at, last_mutation_id, stale_active_since FROM projects WHERE last_meaningful_movement IS NOT NULL" \
+  > ../Peripheral-Brain/data/snapshots/2026-05-23-increment-1A/d1_lmm_audit.json
+# Cross-ref processed_mutations (from the Task-5 d1_processed_mutations.json export) to attribute
+# each project's last LMM-moving mutation to an origin_machine + processed_at, proving CT-vs-UTC era.
+# Classify EACH row in PYTHON (NOT a D1 SQL LIKE) via the migration's _is_naive() + the offset detector:
+#   - _is_naive(lmm) == False (carries offset/Z/z)         -> offset-resolvable  -> re-render to UTC space-sep
+#   - _is_naive(lmm) == True  AND canonical space-sep form -> canonical          -> no-op
+#   - _is_naive(lmm) == True  AND provably pre-T4 legacy-CT -> legacy-CT-naive    -> CT->UTC via frozen converter
+#   - _is_naive(lmm) == True  AND post-T4 / unprovable      -> UNPROVABLE         -> HARD-FAIL, stop the runbook
+# Persist the classified PK -> {old, new, class, evidence} table:
+#   data/snapshots/2026-05-23-increment-1A/d1_lmm_provenance.json   (gitignored runbook artifact)
+```
+
+**D1 UPDATE with CAS (item 2):** the v3 `WHERE id = '<PK>'`-only UPDATE can clobber a newer LMM if a Hub UI/API mutation touched the project in the audit→write gap (stopping PB daemons blocks PB races but NOT a Hub-side mutation). v4 makes every D1 UPDATE compare-and-swap on the audited old value and verifies exactly one row changed; on 0 changed, the audit raced — re-run the audit, do not retry blind:
+
+```bash
+# For EACH classified row (offset-resolvable OR legacy-CT-naive — canonical rows are skipped),
+# CAS on the exact audited old value. Wrangler returns meta.changes; assert it equals 1.
+cd ~/mn-ccore-lab && npx wrangler d1 execute mnccore-lab --remote --json --command \
+  "UPDATE projects SET last_meaningful_movement = '<NEW_UTC_SPACE_SEP>'
+   WHERE id = '<AUDITED_PK>' AND last_meaningful_movement = '<AUDITED_OLD_VALUE>'" \
+  > /tmp/d1_lmm_update_<PK>.json
+# Assert exactly 1 row changed; 0 => a Hub mutation raced the audit->write gap. Re-run the audit; do NOT retry blind.
+python -c "import json,sys; m=json.load(open('/tmp/d1_lmm_update_<PK>.json'))[0]['meta']; c=m.get('changes',m.get('rows_written',0)); assert c==1, f'CAS changed {c} rows for <PK> (expected 1) — audit raced a Hub mutation; STOP and re-audit'; print('CAS ok: 1 row')"
+# (NEW/OLD values + PKs are read from d1_lmm_provenance.json — never hand-typed from memory.)
+```
+
+**Post-update invariant assert (items 1 + 7):** after all CAS updates, prove the invariant is now literally true AND that the write hit the right DB:
+
+```bash
+# Prove ZERO non-canonical D1 LMM rows remain (the invariant the unchanged lexical compare depends on).
+cd ~/mn-ccore-lab && npx wrangler d1 execute mnccore-lab --remote --json --command \
+  "SELECT COUNT(*) AS noncanonical FROM projects
+   WHERE last_meaningful_movement IS NOT NULL
+     AND (last_meaningful_movement LIKE '%T%'
+          OR last_meaningful_movement LIKE '%Z%'
+          OR last_meaningful_movement LIKE '%z%'
+          OR last_meaningful_movement LIKE '%+%'
+          OR last_meaningful_movement LIKE '%.%'
+          OR (last_meaningful_movement LIKE '%-%-% %:%:%-%'))" \
+  > /tmp/d1_lmm_invariant.json
+python -c "import json; n=json.load(open('/tmp/d1_lmm_invariant.json'))[0]['results'][0]['noncanonical']; assert n==0, f'{n} non-canonical D1 LMM rows REMAIN — invariant FALSE, lexical compare unsafe; STOP'; print('D1 LMM canonicality invariant: TRUE (0 non-canonical rows)')"
+```
+
+> NOTE: the SQL `LIKE` guards above are a *post-hoc invariant check on the result*, not the *candidate classifier* — classification is still done in Python via `_is_naive()` (§v3-3.3 / §v4-4.9). The `LIKE '%-%-% %:%:%-%'` clause catches a stray negative offset on an otherwise space-sep value; offset/Z/`z`/`+`/fractional are caught by the earlier clauses. A negative offset on the calendar-date hyphens is excluded by requiring the ` %:%:%` time portion before the trailing `-`.
+
+**`mutations.ts:110-115` comment edit (`next: hub-backend`) — now literally accurate:** under v4 the comment becomes "Legacy non-canonical stored LMM (naive-CT, offset, OR Z) is normalized ONCE, in-window, to canonical UTC space-sep by the Task-8 D1 runbook step (Option A); after that step ZERO non-canonical D1 LMM rows remain, so `advanceProjectMovement`'s atomic raw-lexical MAX-compare is a correct AND race-safe temporal compare. No logic change." The v3 phrasing was false while a Z row survived; v4's hard-fail-on-unprovable + offset/Z re-render makes the claim true before the comment ships.
+
+#### §v4-4.2 — Partition assert: reconcile prose ↔ code (resolves item 5)
+
+v3's snippet checked overlap + `candidates − classified` (coverage) but the prose claimed `candidates == eligible ∪ ineligible` (equality), which also requires `classified − candidates == ∅`. The two disagree. v4 makes the code match a clearly-stated contract. **Decision: coverage-only is the contract, because the sets are populated from each machine's OWN live audit and the union of cross-machine PKs may legitimately contain IDs absent on this machine** (a project that exists on home but not work, etc.). The `classified − candidates` set is therefore allowed to be non-empty (those are this-machine-irrelevant PKs from the other machine's audit), and forcing equality would false-fail a correct cross-machine union.
+
+v4 ships BOTH the coverage hard-fail (kept) AND a logged-but-non-fatal `extra_classified` diagnostic, so the operator SEES extra IDs (catches a typo'd PK) without false-failing the legitimate cross-machine case:
+
+```python
+    # v4 §v4-4.2 — COVERAGE contract (NOT equality): every candidate ON THIS MACHINE
+    # must be classified; extra classified IDs (from the other machine's audit, via the
+    # cross-machine union) are LOGGED but allowed. Overlap still hard-fails.
+    iso_classified = _ISO_T_SHIFT_ELIGIBLE_IDS | _ISO_T_SHIFT_INELIGIBLE_IDS
+    iso_overlap = _ISO_T_SHIFT_ELIGIBLE_IDS & _ISO_T_SHIFT_INELIGIBLE_IDS
+    if iso_overlap:
+        raise RuntimeError(
+            f"088 preflight: {len(iso_overlap)} ids in BOTH ISO-T eligible AND "
+            f"ineligible sets: {sorted(iso_overlap)[:10]}. Partition must be disjoint."
+        )
+    iso_unclassified = iso_candidates - iso_classified
+    if iso_unclassified:
+        raise RuntimeError(
+            f"088 preflight: {len(iso_unclassified)} naive ISO-T updated_at candidates "
+            f"are UNCLASSIFIED (not in eligible OR ineligible): {sorted(iso_unclassified)[:10]}. "
+            f"Run Step 1b, classify EVERY candidate, fill both sets, re-rehearse. "
+            f"Refusing to apply (incomplete partition)."
+        )
+    iso_extra = iso_classified - iso_candidates
+    if iso_extra:
+        # Cross-machine union artifact (other machine's PKs) OR an operator typo.
+        # Non-fatal: log loudly so a typo is visible, but a legitimate cross-machine
+        # PK absent on THIS machine must not false-fail a correct migration.
+        print(f"088 preflight NOTE: {len(iso_extra)} classified ISO-T ids are not "
+              f"candidates on THIS machine (cross-machine union OR typo): {sorted(iso_extra)[:10]}")
+    # ... identical block for LMM and (NEW in v4) completed_at — see §v4-4.3.
+```
+
+**Alternative documented for the operator:** if a future run wants STRICT per-machine equality (no cross-machine union; each machine ships only its own PKs), set `iso_extra` to a `raise` instead of a `print`. The contract choice is now explicit in code + comment, not ambiguous. Regression tests (Step 2): add (e) an `extra_classified` id present → does NOT raise, emits the NOTE (assert on captured stdout); the four v3 tests (a-d) keep their meaning under coverage semantics.
+
+#### §v4-4.3 — `completed_at` partition gate (resolves item 3)
+
+The v3 migration body shifted EVERY naive `completed_at` (plan:1345-1353) with no allowlist. PB completion writes CT (`scripts/db/query.py:1236-1240`, `:1268-1273`), but Hub accepts `completed_at` verbatim (`../mn-ccore-lab/api/routes/mutations.ts:201`,`:914-918`) and PB pulls it back (`scripts/db/sync/drivers/hub.py:1349-1352`). A naive Hub-origin UTC `completed_at` shifted −5h by a blanket CT conversion is silently corrupted. v4 adds `_COMPLETED_AT_SHIFT_ELIGIBLE_IDS` + `_COMPLETED_AT_SHIFT_INELIGIBLE_IDS` frozensets and the SAME partition assert + eligible-only loop the LMM/ISO-T columns use:
+
+```python
+    # v4 §v4-4.3 — completed_at gets the SAME partition treatment as updated_at + LMM.
+    # candidate population computed in Python via _is_naive() (§v3-3.3 / §v4-4.9):
+    comp_candidates = {
+        tid for (tid, ca) in cur.execute(
+            "SELECT id, completed_at FROM tasks WHERE completed_at IS NOT NULL"
+        ).fetchall() if _is_naive(ca)
+    }
+    comp_classified = _COMPLETED_AT_SHIFT_ELIGIBLE_IDS | _COMPLETED_AT_SHIFT_INELIGIBLE_IDS
+    comp_overlap = _COMPLETED_AT_SHIFT_ELIGIBLE_IDS & _COMPLETED_AT_SHIFT_INELIGIBLE_IDS
+    if comp_overlap:
+        raise RuntimeError(f"088 preflight: {len(comp_overlap)} ids in BOTH completed_at "
+                           f"eligible AND ineligible: {sorted(comp_overlap)[:10]}. Must be disjoint.")
+    comp_unclassified = comp_candidates - comp_classified
+    if comp_unclassified:
+        raise RuntimeError(
+            f"088 preflight: {len(comp_unclassified)} naive completed_at candidates UNCLASSIFIED "
+            f"(a naive Hub-origin UTC completed_at shifted -5h is silent corruption — prove "
+            f"each is legacy PB-CT before shifting): {sorted(comp_unclassified)[:10]}. Refusing to apply.")
+    comp_extra = comp_classified - comp_candidates
+    if comp_extra:
+        print(f"088 preflight NOTE: {len(comp_extra)} classified completed_at ids not candidates "
+              f"on THIS machine (cross-machine union OR typo): {sorted(comp_extra)[:10]}")
+```
+
+The `completed_at` UPDATE loop (plan:1345-1353) becomes eligible-only, mirroring §v3-3.1's LMM loop:
+
+```python
+    for (tid, ca) in cur.execute(
+        "SELECT id, completed_at FROM tasks WHERE completed_at IS NOT NULL"
+    ).fetchall():
+        if not _is_naive(ca):
+            continue  # explicit offset/Z → already UTC-resolvable, never shift
+        if tid not in _COMPLETED_AT_SHIFT_ELIGIBLE_IDS:
+            continue  # unproven provenance (may be naive Hub-origin UTC) → fail-closed
+        out = _freeze_ct_naive_to_utc(ca)
+        # (preflight in §v4-4.4 has already proven out is not None for every eligible tid)
+        cur.execute("UPDATE tasks SET completed_at = ? WHERE id = ?", (out, tid))
+```
+
+Step 1b extends to a Step 1b-completed_at producing both completed_at sets via the SAME per-row provenance method (cross-ref `last_mutation_id` + `created_at`; Hub-applied rows carry a `last_mutation_id`). Amendment B's "blanket shift is safe because Task 7 hasn't shipped" claim (plan:1723) is RETIRED for `completed_at` — Task 7 is irrelevant to the Hub-pull path that already populates naive `completed_at` today (hub.py:1352).
+
+#### §v4-4.4 — Converter-success preflight: hard-fail on None, assert update-count == eligible-count (resolves item 4)
+
+`_freeze_ct_naive_to_utc()` returns `None` on parse failure (plan:1293-1297), and the v3 loops only write when `out is not None` (plan:1331-1333,:1341-1343,:1351-1353) — so an eligible row that fails to parse is SILENTLY skipped, left unmigrated, permanently 5h-wrong with no signal (ethos #3: fail loud). v4 adds a converter-success preflight that runs EVERY eligible candidate (all three columns) through `_freeze_ct_naive_to_utc` BEFORE any UPDATE, hard-fails on any `None`, and after the loops asserts the rows-updated count equals the eligible-candidate count per column:
+
+```python
+    # v4 §v4-4.4 — converter-success preflight (per column). Runs BEFORE any UPDATE.
+    # An eligible row that the frozen converter cannot parse must HARD-FAIL, never be
+    # silently skipped into permanent 5h-wrong state (ethos #3).
+    def _assert_all_convertible(rows, eligible_ids, col):
+        unconvertible = []
+        for (rid, val) in rows:
+            if rid in eligible_ids and _is_naive(val) and _freeze_ct_naive_to_utc(val) is None:
+                unconvertible.append((rid, val))
+        if unconvertible:
+            raise RuntimeError(
+                f"088 preflight: {len(unconvertible)} ELIGIBLE {col} rows are unconvertible "
+                f"(_freeze_ct_naive_to_utc returned None): {unconvertible[:5]}. An eligible row "
+                f"that cannot convert would be silently left 5h-wrong. Fix the value or reclassify "
+                f"as ineligible WITH a recorded reason. Refusing to apply.")
+    # call for each: (tasks.updated_at, _ISO_T_SHIFT_ELIGIBLE_IDS, 'updated_at'),
+    #                (projects.last_meaningful_movement, _LMM_SHIFT_ELIGIBLE_IDS, 'lmm'),
+    #                (tasks.completed_at, _COMPLETED_AT_SHIFT_ELIGIBLE_IDS, 'completed_at')
+
+    # ... after the three UPDATE loops, assert each wrote exactly len(eligible ∩ candidates):
+    #   expected = len(_ISO_T_SHIFT_ELIGIBLE_IDS & iso_candidates)
+    #   if iso_rows_updated != expected: raise RuntimeError(... "update-count != eligible-count" ...)
+    # (track rows_updated by incrementing a counter inside each loop; the loop is now
+    #  unconditional-write because the preflight proved every eligible row converts.)
+```
+
+Because the preflight proves convertibility, the loop body drops the `if out is not None` guard for eligible rows — `out` is guaranteed non-None, so the write is unconditional and the row-count assert is meaningful. The count is intersected with `candidates` (not raw `len(eligible)`) so cross-machine extra eligible IDs (§v4-4.2) don't inflate the expected count.
+
+#### §v4-4.9 — `_is_naive()` lowercase-`z` + no-seconds (resolves nit item 9)
+
+`_is_naive()` (plan:1302-1308) rejects uppercase `Z` (`s.endswith("Z")`) but NOT lowercase `z`, so a `...z`-suffixed value is wrongly treated as naive. Separately, a no-seconds naive value (`2026-05-22T15:53`) passes `_is_naive()` candidacy but `_freeze_ct_naive_to_utc` needs `%H:%M:%S` (`strptime(s_norm[:19], "%Y-%m-%d %H:%M:%S")`, plan:1295) and returns None on it → under v3 it was a silent skip; under §v4-4.4 it now hard-fails as unconvertible (correct, loud) — but cleaner to handle it in the converter. v4:
+
+```python
+def _is_naive(s: str) -> bool:
+    """True iff the string carries NO explicit offset/Z (so it is wall-clock)."""
+    s = (s or "").strip()
+    if s[-1:].upper() == "Z":          # reject BOTH 'Z' and 'z'
+        return False
+    return not (("+" in s[10:]) or ("-" in s[10:]))
+
+
+def _freeze_ct_naive_to_utc(s: str) -> str | None:
+    s = (s or "").strip()
+    if not s:
+        return None
+    s_norm = s.replace("T", " ")
+    # Accept no-seconds (HH:MM) by padding to HH:MM:00 before the %H:%M:%S parse.
+    head = s_norm[:19]
+    try:
+        try:
+            dt = datetime.strptime(head, "%Y-%m-%d %H:%M:%S")
+        except ValueError:
+            dt = datetime.strptime(head[:16], "%Y-%m-%d %H:%M")   # no-seconds → :00
+    except ValueError:
+        return None
+    aware_ct = dt.replace(tzinfo=_CT)
+    return aware_ct.astimezone(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+```
+
+Step 2 tests add: a `...z` lowercase value → `_is_naive() == False` (NOT a candidate); a no-seconds naive value (`2026-05-22T15:53`) → `_is_naive() == True` AND `_freeze_ct_naive_to_utc` returns `2026-05-22 20:53:00` (not None).
+
+### Task 8 v4 §v4-4.8 — fix the BROKEN Task 5 rollback snippet (resolves item 8)
+
+Task 5's executable export (plan:783-785) and RESTORE.md (plan:815-821) SELECT/UPDATE `tasks.last_meaningful_movement` + `tasks.stale_active_since` — but those are `projects`-only columns (`mutations.ts:212-218`); `tasks` has neither (`:198-211`). The export command FAILS (wrangler rejects the unknown column) → the rollback artifact never produces, which Task-5's own "if wrangler rejects a column, STOP" rule (plan:801) would correctly halt on, but the snippet is still broken-as-written. v4 corrects the executable snippet so the rollback artifact actually runs:
+
+- **Export (plan:784):** `tasks` SELECT drops `last_meaningful_movement, stale_active_since`. Correct list: `SELECT id, slug, updated_at, completed_at, completed, status, seq, last_mutation_id, deleted_at FROM tasks`.
+- **RESTORE.md (plan:818-820):** the `tasks` UPDATE drops `last_meaningful_movement=?, stale_active_since=?`. Correct: `UPDATE tasks SET updated_at=?, completed_at=?, completed=?, status=?, seq=?, last_mutation_id=?, deleted_at=? WHERE id=?`.
+- The `projects` SELECT/UPDATE (plan:787-788, :815-817) KEEP `last_meaningful_movement, stale_active_since` — those are correct for `projects`.
+
+The exact corrected snippet (replaces plan:783-785 `tasks` export line):
+
+```bash
+# tasks: LWW + cursor columns that ACTUALLY exist on tasks (no LMM/stale_active_since — those are projects-only).
+npx wrangler d1 execute mnccore-lab --remote --json \
+  --command "SELECT id, slug, updated_at, completed_at, completed, status, seq, last_mutation_id, deleted_at FROM tasks" \
+  > ../Peripheral-Brain/data/snapshots/2026-05-23-increment-1A/d1_tasks.json
+```
+
+This also makes the Task-5 D1 export the genuine rollback for the §v4-4.1 D1 LMM write: the `projects` export (plan:787) already captures `last_meaningful_movement` + `seq` + `last_mutation_id`, so the scripted restore can put every CAS'd LMM back to its audited old value.
+
+### Task 8 v4 — wiring into the existing steps (no renumbering)
+
+- **Task 5 export (plan:783-785) + RESTORE.md (plan:815-821)** — apply §v4-4.8: drop `last_meaningful_movement`/`stale_active_since` from the `tasks` SELECT + UPDATE; `projects` unchanged. DB name already `mnccore-lab` (correct).
+- **Step 1b / Step 1b-LMM (plan:1137, :1793) + NEW Step 1b-completed_at** — produce BOTH sets per column for ALL THREE columns (updated_at, LMM, completed_at), eligible + ineligible, union = full naive-candidate population via `_is_naive()`.
+- **Migration body (plan:1237-1363)** — add `_ISO_T_SHIFT_INELIGIBLE_IDS`, `_LMM_SHIFT_INELIGIBLE_IDS`, `_COMPLETED_AT_SHIFT_ELIGIBLE_IDS`, `_COMPLETED_AT_SHIFT_INELIGIBLE_IDS`; §v4-4.2 coverage-asserts for all three columns; §v4-4.4 converter-success preflight + update-count asserts; §v4-4.3 eligible-only `completed_at` loop; §v4-4.9 `_is_naive`/converter edits. UPDATE loops drop the `if out is not None` guard for eligible rows (preflight guarantees non-None). Keep v2-5 DST hardening.
+- **Step 2 tests** — keep v3's; ADD: §v4-4.2 test (e) extra-classified non-fatal NOTE; §v4-4.3 completed_at partition (the four a-d shapes); §v4-4.4 unconvertible-eligible hard-fail + update-count mismatch hard-fail; §v4-4.9 lowercase-`z` + no-seconds.
+- **Step 8 / Step 8-D1 (plan:2052)** — REPLACE §v3-3.1's runbook with §v4-4.1: normalize EVERY non-canonical D1 LMM (offset/Z re-render + legacy-CT shift; hard-fail unprovable naive), CAS UPDATE with changed-row==1 assert, post-update canonicality invariant assert (0 non-canonical rows), DB name `mnccore-lab`, persist `d1_lmm_provenance.json`.
+- **`mutations.ts:110-115`** — COMMENT-ONLY edit per §v4-4.1 (`next: hub-backend`), now literally accurate (offset/Z + naive all normalized → 0 non-canonical D1 LMM). `advanceProjectMovement` (`:896-906`) UNCHANGED. NOT in Builder's 088 commit.
+- **plan:1484** — already updated by §v3-3.1; v4 amends it: "D1's audited legacy-CT AND offset/Z LMM rows are ALL normalized to canonical UTC space-sep in-window (Step 8-D1 v4, CAS-guarded, post-update invariant-asserted); D1 restore via the Task-5 `projects` export if a CAS write needs reverting."
+- **Amendment B (plan:1723)** — RETIRE the "completed_at blanket shift is safe" claim per §v4-4.3.
+- **Amendment C (plan:1726-1736)** — unchanged; the §v4-4.1 D1 CAS writes land inside this stop-the-world window.
+
+### Task 8 v4 — ready for re-audit (do NOT execute)
+
+**DESIGN + DRAFT only.** Nothing executed: migration 088 not run, no D1 write, no CAS UPDATE, `EXPECTED_MIN_MIGRATION` not bumped, no daemons touched, no flag flipped, no wrangler run. All SIX frozensets (eligible + ineligible × updated_at/LMM/completed_at) ship EMPTY by design — the §v4-4.2 coverage asserts + §v4-4.4 converter preflight are the hard gates that refuse to apply until every candidate is classified AND every eligible row proven convertible on EACH machine under its own Step 0. The D1 LMM canonicality invariant is now LITERALLY enforced (§v4-4.1 post-update assert = 0 non-canonical rows). v4 goes to a v4 re-audit (`docs/superpowers/specs/2026-05-24-beta-v4-reaudit-prompt.md`) before any execution window. After v4 sign-off: populate all six sets from the live Step 1b/1b-LMM/1b-completed_at + D1 provenance audits, re-rehearse on a copy (the partition + converter asserts trip first if anything is unclassified/unconvertible), run Step 8-D1's CAS writes + invariant assert, then apply brain.db 088 under Amendment C's stop-the-world protocol.
