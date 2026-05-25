@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { createProject, updateProject, addProjectComment, fetchApi } from '../../lib/api'
 import type { Project } from '../../data/types'
 import type { Comment, ProjectDocumentRow } from '../useApiData'
+import { nowInstant } from '../../lib/time'
 
 // ── Project mutations ───────────────────────────────────────
 
@@ -86,7 +87,7 @@ export function useAddComment(projectId: string) {
         content: input.content,
         author_name: input.author,
         author_slug: null,
-        created_at: new Date().toISOString(),
+        created_at: nowInstant(),
       }
 
       queryClient.setQueryData<Comment[]>(
@@ -151,7 +152,7 @@ export function useAddProjectDocument(projectSlug: string) {
         title: input.title,
         url: input.url,
         doc_type: (input.doc_type as ProjectDocumentRow['doc_type']) || 'link',
-        created_at: new Date().toISOString(),
+        created_at: nowInstant(),
         created_by: null,
       }
 

@@ -5,6 +5,7 @@ import { useAuth } from '../hooks/useAuth'
 import { useProjects } from '../hooks/useApiData'
 import { useUndoToast } from './UndoToast'
 import InlineSelect from './InlineSelect'
+import { nowInstant } from '../lib/time'
 
 type InboxTag = 'note' | 'idea' | 'decision' | 'follow-up' | 'meeting-note'
 
@@ -111,7 +112,7 @@ export default function QuickCaptureInbox() {
     if (!trimmed || submitting) return
     setSubmitting(true)
     try {
-      const now = new Date().toISOString()
+      const now = nowInstant()
       if (!eventIdRef.current) eventIdRef.current = crypto.randomUUID()
       const eventId = eventIdRef.current
       const res = await fetch('/api/inbox-events/sync-bulk', {

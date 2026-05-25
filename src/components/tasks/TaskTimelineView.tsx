@@ -96,7 +96,7 @@ export default function TaskTimelineView({ tasks, onStatusChange, onOpenDetail }
     // Align to Monday
     d.setDate(d.getDate() + ((1 - d.getDay() + 7) % 7))
     while (d <= endDate) {
-      const iso = d.toISOString().split('T')[0]
+      const iso = localDateKey(d)
       markers.push({ x: dateToX(iso), label: formatShortDate(iso) })
       d.setDate(d.getDate() + 7)
     }

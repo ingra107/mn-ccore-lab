@@ -1,5 +1,6 @@
 import { useState, useRef, useMemo } from 'react'
 import { Star, Clock, CheckCircle2, Sun, ChevronLeft, ChevronRight } from 'lucide-react'
+import { localDateKey } from '../../lib/dateUtils'
 
 interface PlannerHeaderProps {
   greeting: string
@@ -89,24 +90,24 @@ export default function PlannerHeader({ greeting, mode, today, stats, intention,
   const isTomorrow = useMemo(() => {
     const t = new Date(today + 'T12:00:00')
     t.setDate(t.getDate() + 1)
-    return selectedDate === t.toISOString().split('T')[0]
+    return selectedDate === localDateKey(t)
   }, [selectedDate, today])
 
   const handlePrevDay = () => {
     const d = new Date(selectedDate + 'T12:00:00')
     d.setDate(d.getDate() - 1)
-    onDateChange(d.toISOString().split('T')[0])
+    onDateChange(localDateKey(d))
   }
   const handleNextDay = () => {
     const d = new Date(selectedDate + 'T12:00:00')
     d.setDate(d.getDate() + 1)
-    onDateChange(d.toISOString().split('T')[0])
+    onDateChange(localDateKey(d))
   }
   const handleToday = () => onDateChange(today)
   const handleTomorrow = () => {
     const t = new Date(today + 'T12:00:00')
     t.setDate(t.getDate() + 1)
-    onDateChange(t.toISOString().split('T')[0])
+    onDateChange(localDateKey(t))
   }
 
   return (

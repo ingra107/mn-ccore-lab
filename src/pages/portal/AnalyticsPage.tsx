@@ -9,7 +9,7 @@ import { CardSkeleton } from '../../components/LoadingSkeleton'
 import ActivityHeatmap from '../../components/ActivityHeatmap'
 import { staggerContainer, staggerItem } from '../../lib/animations'
 import { useTasks, useProjects, useIdeas, useActivity, useProjectHealth } from '../../hooks/useApiData'
-import { formatShortDate } from '../../lib/dateUtils'
+import { formatShortDate, localDateKey } from '../../lib/dateUtils'
 import { useAuth } from '../../hooks/useAuth'
 import { getPersonInfo } from '../../data/team'
 import Avatar from '../../components/Avatar'
@@ -307,7 +307,7 @@ export default function AnalyticsPage() {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `mnccore-tasks-${new Date().toISOString().split('T')[0]}.csv`
+    a.download = `mnccore-tasks-${localDateKey()}.csv`
     a.click()
     URL.revokeObjectURL(url)
   }

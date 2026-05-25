@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { createTask, updateTaskStatus, updateTask, acknowledgeTask, fetchApi } from '../../lib/api'
 import type { TaskRow } from '../../lib/api'
 import { TASK_STATUS, optimisticListUpdate, rollbackSnapshots } from './utils'
+import { nowInstant } from '../../lib/time'
 
 // ── Task mutations ──────────────────────────────────────────
 
@@ -39,7 +40,7 @@ export function useUpdateTaskStatus() {
       const { snapshots } = optimisticListUpdate<TaskRow>(
         queryClient, ['tasks'],
         (tasks) => tasks.map((t) => t.id === id
-          ? { ...t, status, completed: status === TASK_STATUS.DONE ? 1 : 0, completed_at: status === TASK_STATUS.DONE ? new Date().toISOString() : null }
+          ? { ...t, status, completed: status === TASK_STATUS.DONE ? 1 : 0, completed_at: status === TASK_STATUS.DONE ? nowInstant() : null }
           : t
         ),
       )
@@ -105,10 +106,10 @@ export function useBulkUpdateTasks() {
           if (!ids.includes(t.id)) return t
           if (action === 'complete') return { ...t, completed: 1, status: TASK_STATUS.DONE }
           if (action === 'uncomplete') return { ...t, completed: 0, status: TASK_STATUS.TODO }
-          if (action === 'status' && value) return { ...t, status: value, completed: value === TASK_STATUS.DONE ? 1 : 0, completed_at: value === TASK_STATUS.DONE ? new Date().toISOString() : null }
+          if (action === 'status' && value) return { ...t, status: value, completed: value === TASK_STATUS.DONE ? 1 : 0, completed_at: value === TASK_STATUS.DONE ? nowInstant() : null }
           if (action === 'priority' && value) return { ...t, priority: value }
           if (action === 'assign' && value) return { ...t, assignee: value }
-          if (action === 'delete') return { ...t, deleted_at: new Date().toISOString() }
+          if (action === 'delete') return { ...t, deleted_at: nowInstant() }
           return t
         }),
       )
@@ -138,7 +139,7 @@ export function useAcknowledgeTask() {
       const { snapshots } = optimisticListUpdate<TaskRow>(
         queryClient, ['tasks'],
         (tasks) => tasks.map((t) => t.id === id
-          ? { ...t, acknowledged_at: new Date().toISOString(), acknowledged_by: 'nick-ingraham' }
+          ? { ...t, acknowledged_at: nowInstant(), acknowledged_by: 'nick-ingraham' }
           : t
         ),
       )

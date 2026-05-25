@@ -22,13 +22,15 @@ import { emailToSlug } from '../../lib/emailSlug'
 import { useCreateTask } from '../../hooks/useMutations'
 import { useUndoToast } from '../UndoToast'
 import { todayKey } from './constants'
+import { nowInstant } from '../../lib/time'
+import { localDateKey } from '../../lib/dateUtils'
 
 const DEFAULT_GROUP_OVERRIDE = 'priorities'
 
 function tomorrowISO(): string {
   const d = new Date()
   d.setDate(d.getDate() + 1)
-  return d.toISOString().slice(0, 10)
+  return localDateKey(d)
 }
 
 function appendDailyThought(content: string, kind: 'note' | 'hermes' | 'task') {
@@ -38,7 +40,7 @@ function appendDailyThought(content: string, kind: 'note' | 'hermes' | 'task') {
     const raw = window.localStorage.getItem(key)
     const state = raw ? JSON.parse(raw) : {}
     const thoughts = Array.isArray(state.thoughts) ? state.thoughts : []
-    thoughts.push({ at: new Date().toISOString(), kind, content })
+    thoughts.push({ at: nowInstant(), kind, content })
     state.thoughts = thoughts
     window.localStorage.setItem(key, JSON.stringify(state))
   } catch { /* ignore */ }

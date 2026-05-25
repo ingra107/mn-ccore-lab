@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { fetchApi, createDependency, deleteDependency, addExpertise, removeExpertise, createQuestion, createAnswer, acceptAnswer, createRevision, updateRevision, createRevisionComment, updateRevisionComment, createMenteeMilestone, updateMenteeMilestone, createSubmissionEvent, deleteSubmissionEvent, createGrantMilestone, updateGrantMilestone, completeGrantMilestone, createConference, updateConference, deleteConference } from '../../lib/api'
+import { nowInstant } from '../../lib/time'
 import type { DependencyRow, ExpertiseTag, RevisionRow, ReviewerCommentRow, MenteeMilestoneRow, SubmissionEventRow, SubmissionEventType, GrantMilestoneRow, ConferenceSubmissionRow, ConferenceSubmissionType, ConferenceStatus, MaterialsStatus, PresentationType } from '../../lib/api'
 
 // ── Digest Status mutation ───────────────────────────────────
@@ -123,7 +124,7 @@ export function useAcknowledgeHandoff(taskId: string) {
       const prev = queryClient.getQueryData<{ id: string; acknowledged: number }[]>(['handoffs', taskId])
       if (prev) {
         queryClient.setQueryData(['handoffs', taskId], prev.map((h) =>
-          h.id === handoffId ? { ...h, acknowledged: 1, acknowledged_at: new Date().toISOString() } : h
+          h.id === handoffId ? { ...h, acknowledged: 1, acknowledged_at: nowInstant() } : h
         ))
       }
       return { prev }
@@ -158,7 +159,7 @@ export function useCreateDependency() {
           relationship_type: input.relationship_type || 'feeds_into',
           note: input.note || null,
           created_by: null,
-          created_at: new Date().toISOString(),
+          created_at: nowInstant(),
         }
         queryClient.setQueryData(['dependencies'], [optimistic, ...prev])
       }

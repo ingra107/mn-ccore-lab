@@ -10,6 +10,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import SmartCompose from '../../../components/SmartCompose'
 import { useUpdateTask, useBulkUpdateTasks } from '../../../hooks/useMutations'
 import { useUndoToast } from '../../../components/UndoToast'
+import { localDateKey } from '../../../lib/dateUtils'
 import {
   ACCENT_GOLD, ACCENT_TEAL, ACCENT_GREEN,
   INK, INK_DIM, PAGE_BG, PANEL_BG,
@@ -68,7 +69,7 @@ export function InlineDetail({ task, projectName }: { task: TaskRow; projectName
   const snooze = useCallback(() => {
     const tomorrow = new Date()
     tomorrow.setDate(tomorrow.getDate() + 1)
-    const due = tomorrow.toISOString().split('T')[0]
+    const due = localDateKey(tomorrow)
     updateTask.mutate({ id: task.id, fields: { due_date: due } }, {
       onSuccess: () => undoToast.showSuccess('Snoozed +1 day'),
     })

@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { fetchApi } from '../../lib/api'
 import type { SubtaskRow } from '../useApiData'
+import { nowInstant } from '../../lib/time'
 
 // ── Subtask mutations ──────────────────────────────────────
 
@@ -29,7 +30,7 @@ export function useToggleSubtask(taskId: string) {
       const prev = queryClient.getQueryData<SubtaskRow[]>(['subtasks', taskId])
       if (prev) {
         queryClient.setQueryData(['subtasks', taskId], prev.map((s) =>
-          s.id === subtaskId ? { ...s, completed: s.completed ? 0 : 1, completed_at: s.completed ? null : new Date().toISOString() } : s
+          s.id === subtaskId ? { ...s, completed: s.completed ? 0 : 1, completed_at: s.completed ? null : nowInstant() } : s
         ))
       }
       return { prev }

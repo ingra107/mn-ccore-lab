@@ -4,7 +4,7 @@ import { History, Clock, GitCommit, Zap, Monitor, Filter, Search } from 'lucide-
 import { usePBSessions, usePBSessionStats } from '../../hooks/useApiData'
 import type { PBSessionRow } from '../../hooks/useApiData'
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
-import { formatMediumDate } from '../../lib/dateUtils'
+import { formatMediumDate, localDateKey } from '../../lib/dateUtils'
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
 import InlineSelect from '../../components/InlineSelect'
@@ -51,7 +51,7 @@ function ActivityChart({ data }: { data: { day: string; count: number; total_min
   for (let i = 29; i >= 0; i--) {
     const d = new Date(now)
     d.setDate(d.getDate() - i)
-    const key = d.toISOString().split('T')[0]
+    const key = localDateKey(d)
     days.push(dataMap.get(key) || { day: key, count: 0, total_minutes: 0 })
   }
 
@@ -257,7 +257,7 @@ export default function SessionHistory() {
         setSinceFilter('')
         return
     }
-    setSinceFilter(now.toISOString().split('T')[0])
+    setSinceFilter(localDateKey(now))
   }, [])
 
   const isLoading = sessionsLoading || statsLoading

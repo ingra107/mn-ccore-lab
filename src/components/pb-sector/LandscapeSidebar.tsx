@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { Flag, AlertTriangle, Clock, CheckCircle2, Users, TrendingDown } from 'lucide-react'
 import CalendarTimeline from './CalendarTimeline'
 import { PATHS } from '../../constants/paths'
+import { localDateKey } from '../../lib/dateUtils'
 
 interface CalendarEvent {
   id: string
@@ -97,7 +98,7 @@ export default function LandscapeSidebar({ mode, events, milestones, commitments
   const weekMilestones = useMemo(() => {
     const cutoff = new Date()
     cutoff.setDate(cutoff.getDate() + 7)
-    const cutoffStr = cutoff.toISOString().split('T')[0]
+    const cutoffStr = localDateKey(cutoff)
     return milestones.filter((m: any) => m.target_date && m.target_date <= cutoffStr).slice(0, 5)
   }, [milestones])
 
@@ -110,7 +111,7 @@ export default function LandscapeSidebar({ mode, events, milestones, commitments
   const staleProjects = useMemo(() => {
     const cutoff = new Date()
     cutoff.setDate(cutoff.getDate() - 14)
-    const cutoffStr = cutoff.toISOString().split('T')[0]
+    const cutoffStr = localDateKey(cutoff)
     return projects.filter((p: any) => {
       const lastUpdate = p.last_update
       return !lastUpdate || lastUpdate < cutoffStr

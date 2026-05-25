@@ -12,6 +12,7 @@
 
 import { directors, getAllMembers } from '../data/team'
 import { projects } from '../data/projects'
+import { localDateKey } from './dateUtils'
 
 // ── Types ────────────────────────────────────────────────────
 
@@ -103,12 +104,12 @@ function parseDate(text: string): string | null {
   const today = new Date()
   today.setHours(12, 0, 0, 0)
 
-  if (lower === 'today') return today.toISOString().slice(0, 10)
+  if (lower === 'today') return localDateKey(today)
 
   if (lower === 'tomorrow') {
     const d = new Date(today)
     d.setDate(d.getDate() + 1)
-    return d.toISOString().slice(0, 10)
+    return localDateKey(d)
   }
 
   const nextDay = lower.match(/^next\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday)$/)
@@ -118,14 +119,14 @@ function parseDate(text: string): string | null {
     const diff = ((target - today.getDay() + 7) % 7) || 7
     const d = new Date(today)
     d.setDate(d.getDate() + diff)
-    return d.toISOString().slice(0, 10)
+    return localDateKey(d)
   }
 
   const inN = lower.match(/^in\s+(\d+)\s+days?$/)
   if (inN) {
     const d = new Date(today)
     d.setDate(d.getDate() + parseInt(inN[1]))
-    return d.toISOString().slice(0, 10)
+    return localDateKey(d)
   }
 
   const MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
@@ -139,7 +140,7 @@ function parseDate(text: string): string | null {
       const year = mm[3] ? parseInt(mm[3]) : today.getFullYear()
       const d = new Date(year, monthIdx, day, 12, 0, 0)
       if (!mm[3] && d < today) d.setFullYear(year + 1)
-      return d.toISOString().slice(0, 10)
+      return localDateKey(d)
     }
   }
 

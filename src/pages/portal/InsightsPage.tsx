@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link, useSearchParams, useNavigate } from 'react-router-dom'
+import { localDateKey } from '../../lib/dateUtils'
 import { TrendingUp, Activity, AlertTriangle, FlaskConical, AlertCircle, Users, BookOpen, Award, RefreshCw, ChevronLeft, ChevronRight, Link2, CalendarPlus } from 'lucide-react'
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
@@ -735,7 +736,7 @@ function StalledRegistry({ rows }: { rows: DashboardData['stalledRegistry'] }) {
   const defaultDueStr = useMemo(() => {
     const d = new Date()
     d.setDate(d.getDate() + 3)
-    return d.toISOString().slice(0, 10)
+    return localDateKey(d)
   }, [])
   const [pendingDates, setPendingDates] = useState<Record<string, string>>({})
   const followUp = useMutation({

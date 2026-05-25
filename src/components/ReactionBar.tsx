@@ -6,6 +6,7 @@ import { useToggleReaction } from '../hooks/useMutations'
 import { useAuth } from '../hooks/useAuth'
 import { emailToSlug } from '../lib/emailSlug'
 import { getPersonInfo } from '../data/team'
+import { nowInstant } from '../lib/time'
 
 const EMOJI_OPTIONS = [
   { emoji: '\u{1F44D}', label: 'Thumbs up' },
@@ -51,7 +52,7 @@ export default function ReactionBar({ targetType, targetId, compact }: ReactionB
     const existing = prev.find((r) => r.user_slug === currentSlug && r.emoji === emoji)
     const next = existing
       ? prev.filter((r) => r.id !== existing.id)
-      : [...prev, { id: `optimistic-${Date.now()}`, target_type: targetType, target_id: targetId, user_slug: currentSlug, emoji, created_at: new Date().toISOString() }]
+      : [...prev, { id: `optimistic-${Date.now()}`, target_type: targetType, target_id: targetId, user_slug: currentSlug, emoji, created_at: nowInstant() }]
     queryClient.setQueryData(['reactions', targetType, targetId], next)
 
     toggle.mutate({ target_type: targetType, target_id: targetId, emoji })

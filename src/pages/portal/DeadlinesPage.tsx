@@ -17,7 +17,7 @@ import { useTasks, useUpcomingConferences, useProjects } from '../../hooks/useAp
 import { useUpdateTaskStatus, useUpdateTask, useBulkUpdateTasks } from '../../hooks/useMutations'
 import { useGrantTimeline } from '../../hooks/useGrantTimeline'
 import { getPersonInfo } from '../../data/team'
-import { formatShortDate } from '../../lib/dateUtils'
+import { formatShortDate, localDateKey } from '../../lib/dateUtils'
 import { PATHS } from '../../constants/paths'
 import { useQueryClient } from '@tanstack/react-query'
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
@@ -1180,7 +1180,7 @@ function DeadlineTimeline({ items }: { items: DeadlineItem[] }) {
       const diff = d.getDate() - day + (day === 0 ? -6 : 1)
       const monday = new Date(d)
       monday.setDate(diff)
-      const key = monday.toISOString().split('T')[0]
+      const key = localDateKey(monday)
       if (!groups.has(key)) groups.set(key, [])
       groups.get(key)!.push(item)
     }
@@ -1211,7 +1211,7 @@ function DeadlineTimeline({ items }: { items: DeadlineItem[] }) {
             {/* Week label */}
             <div className="mb-2">
               <span className="text-xs font-semibold" style={{ color: 'var(--ink)' }}>
-                {formatShortDate(weekStart)} — {formatShortDate(weekEnd.toISOString().split('T')[0])}
+                {formatShortDate(weekStart)} — {formatShortDate(localDateKey(weekEnd))}
               </span>
             </div>
 

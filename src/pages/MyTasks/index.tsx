@@ -32,6 +32,7 @@ import {
   todayKey, readPlannedToday,
   type ViewMode, type GroupKey, type QuickViewKey, type FilterState, type FilterOption,
 } from './constants'
+import { localDateKey } from '../../lib/dateUtils'
 
 export default function UnifiedMyTasks() {
   usePageMeta('My Tasks · MN-CCORE', 'Library / workbench for triage, filtering, and bulk actions across all your tasks.')
@@ -177,7 +178,7 @@ export default function UnifiedMyTasks() {
     // No batch due_date action; loop via single-task updates.
     const tomorrow = new Date()
     tomorrow.setDate(tomorrow.getDate() + 1)
-    const due = tomorrow.toISOString().split('T')[0]
+    const due = localDateKey(tomorrow)
     const ids = [...selected]
     Promise.all(ids.map((id) => updateTask.mutateAsync({ id, fields: { due_date: due } })))
       .then(() => { undoToast.showSuccess(`Snoozed ${ids.length} task${ids.length === 1 ? '' : 's'} +1d`); clearSelection() })

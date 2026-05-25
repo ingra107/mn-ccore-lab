@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { fetchApi } from '../../lib/api'
 import type { ActionItemRow } from '../useApiData'
+import { nowInstant } from '../../lib/time'
 
 // ── Agenda Item mutations ───────────────────────────────────
 
@@ -79,7 +80,7 @@ export function useToggleActionItem() {
             key,
             data.map((item) =>
               item.id === itemId
-                ? { ...item, completed: item.completed ? 0 : 1, completed_at: item.completed ? null : new Date().toISOString() }
+                ? { ...item, completed: item.completed ? 0 : 1, completed_at: item.completed ? null : nowInstant() }
                 : item
             )
           )

@@ -19,7 +19,7 @@ import InlineSelect from '../components/InlineSelect'
 import InlineAssigneePicker from '../components/InlineAssigneePicker'
 import { getMeetingFacilitator } from '../lib/facilitator'
 import { parseCarriedForward } from '../lib/textUtils'
-import { formatFullDate, formatShortDate } from '../lib/dateUtils'
+import { formatFullDate, formatShortDate, localDateKey } from '../lib/dateUtils'
 import PageTooltip, { dismissPageTooltip } from '../components/PageTooltip'
 import type { Meeting, ActionItem } from '../data/types'
 import { PATHS } from '../constants/paths'
@@ -440,7 +440,7 @@ export default function Meetings() {
 
   const nextMeeting = useMemo(() => getNextMeetingDate(meetings), [meetings])
   const daysUntil = getDaysUntil(nextMeeting)
-  const nextMeetingDateStr = nextMeeting.toISOString().slice(0, 10)
+  const nextMeetingDateStr = localDateKey(nextMeeting)
 
   const allActionItems = useMemo(() => {
     const items: ActionItemWithContext[] = []

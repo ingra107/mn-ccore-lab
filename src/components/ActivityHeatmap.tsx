@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { localDateKey } from '../lib/dateUtils'
 
 interface ActivityHeatmapProps {
   slug?: string
@@ -39,7 +40,7 @@ export default function ActivityHeatmap({ slug, days = 90 }: ActivityHeatmapProp
 
     let weekIdx = 0
     while (d <= end) {
-      const iso = d.toISOString().split('T')[0]
+      const iso = localDateKey(d)
       const count = heatmapData[iso] || 0
       if (count > maxC) maxC = count
       total += count

@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react'
+import { nowInstant } from '../lib/time'
 
 interface WatchItem {
   id: string
@@ -24,7 +25,7 @@ export function useWatchlist() {
   const watch = useCallback((item: Omit<WatchItem, 'addedAt'>) => {
     setItems(prev => {
       if (prev.some(i => i.id === item.id && i.type === item.type)) return prev
-      return [...prev, { ...item, addedAt: new Date().toISOString() }]
+      return [...prev, { ...item, addedAt: nowInstant() }]
     })
   }, [])
 

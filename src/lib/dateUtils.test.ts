@@ -17,7 +17,9 @@ describe('localDateKey', () => {
     // runtime's offset is negative (Americas). Where that's true, the UTC slice
     // differs from the local key; localDateKey must follow LOCAL.
     const evening = new Date(2026, 4, 22, 23, 30, 0)
-    const utcKey = evening.toISOString().split('T')[0]
+    // time-discipline: intentional utc-wrong contrast — proves toISOString().split rolls to UTC date
+    const utcIso = evening.toISOString()
+    const utcKey = utcIso.split('T')[0]
     const localKey = localDateKey(evening)
     if (evening.getTimezoneOffset() > 0) {
       // Behind UTC (e.g. US Central) — UTC slice has already rolled to the 23rd.
