@@ -107,12 +107,12 @@ function decodeCompositeRecordId(recordId: string): unknown[] {
 // UTC space-sep, so all NEW writes are canonical; the lexical `<` is then a
 // correct temporal compare against any already-canonical stored value, and the
 // single-UPDATE atomicity is preserved (no SELECT-then-write lost-update window).
-// LEGACY stored values are not normalized in SQL here — they are migrated to
-// canonical UTC space-sep by Increment 1A Task 8. Until that migration runs, a
-// legacy non-canonical stored LMM may mis-order against a new UTC value (e.g. an
-// ISO-T-Z stored value's 'T' sorts after a space-sep incoming value); the effect
-// is bounded to LMM staleness DISPLAY (a project may show a stale "last moved"
-// time), never task data loss, and self-resolves once Task 8 migrates it.
+// LEGACY stored values were normalized to canonical UTC space-sep by Increment
+// 1A Task 8-D1 (CAS UPDATE; post-update invariant asserts 0 non-canonical rows).
+// All D1 LMM is therefore canonical space-sep after that migration. The
+// applyPatch forward guard (applyPatch LMM normalization, same file) ensures
+// future writes via the generic patch path also land in canonical form, so the
+// invariant is maintained by both the migration and all subsequent writes.
 
 /**
  * Returns the America/Chicago UTC offset in minutes for the wall-clock instant
@@ -911,11 +911,54 @@ async function advanceProjectMovement(
 async function applyPatch(
   env: Env, mut: Mutation, current: Record<string, unknown>,
 ): Promise<Record<string, unknown>> {
-  const patchKeys = Object.keys(mut.patch || {});
+  // LMM forward guard (Increment 1A Task 8 v5, finding 4): normalize
+  // last_meaningful_movement to canonical UTC space-sep before writing it
+  // verbatim to D1. Without this guard, any future projects patch (Hub UI,
+  // PB push) can REINTRODUCE a non-canonical value after Task 8-D1 normalizes
+  // the existing rows — undoing Option A's invariant.
+  //
+  // Strategy: normalize, not remove. The Hub UI project editor legitimately
+  // writes LMM via a projects patch (manual state update), and PB sync push
+  // carries it on every projects row. Silently removing it from the generic
+  // patch path would drop user-set values. Normalizing is lossless — valid
+  // timestamps stay valid; only the format changes. The reference behavior is
+  // normalizeToUtcSpaceSep (mutations.ts:157), which already governs
+  // advanceProjectMovement's writes.
+  //
+  // Rejection condition: a non-null/non-empty string that does not parse.
+  // This surfaces caller bugs (malformed timestamps) rather than silently
+  // writing NULL into a previously-valid LMM column (which would be data loss).
+  let effectivePatch = mut.patch as Record<string, unknown>;
+  if (
+    mut.table === 'projects' &&
+    effectivePatch &&
+    Object.prototype.hasOwnProperty.call(effectivePatch, 'last_meaningful_movement')
+  ) {
+    const rawLmm = effectivePatch['last_meaningful_movement'];
+    if (rawLmm !== null && rawLmm !== undefined && rawLmm !== '') {
+      const raw = String(rawLmm);
+      // Fast-path: already canonical 'YYYY-MM-DD HH:MM:SS' (space-sep, no
+      // offset, no fractional seconds). Skips unnecessary re-normalization
+      // which would treat it as naive CT and shift it by the CT offset.
+      const isAlreadyCanonical = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(raw);
+      if (!isAlreadyCanonical) {
+        const normalized = normalizeToUtcSpaceSep(raw);
+        if (normalized === null) {
+          throw new Error(
+            `lmm_invalid: last_meaningful_movement '${raw}' is not a parseable timestamp`
+          );
+        }
+        // Shallow-copy to avoid mutating the caller's patch object.
+        effectivePatch = { ...effectivePatch, last_meaningful_movement: normalized };
+      }
+    }
+  }
+
+  const patchKeys = Object.keys(effectivePatch || {});
   const setClauses = [...patchKeys.map(k => `${k} = ?`), 'updated_at = datetime(\'now\')', 'last_mutation_id = ?'];
   // vals only covers SET clause bindings; WHERE clause bindings appended separately below
   // (composite PKs need multiple WHERE values; scalar PKs need one).
-  const vals = [...patchKeys.map(k => (mut.patch as Record<string, unknown>)[k]), mut.mutation_id];
+  const vals = [...patchKeys.map(k => effectivePatch[k]), mut.mutation_id];
 
   // I7 fix (2026-05-03): brain.db uses tasks.status='deleted' as its soft-delete
   // signal, but the outbox emits op='update' + patch={status:'deleted'} rather
@@ -939,8 +982,8 @@ async function applyPatch(
   // neither co-flip fires (explicit always beats implicit). This preserves the
   // semantic where a caller intentionally sets deleted_at to a specific timestamp
   // or NULL directly via the patch payload.
-  const patchedStatus = (mut.patch as Record<string, unknown>)?.status as string | undefined;
-  const explicitDeletedAt = Object.prototype.hasOwnProperty.call(mut.patch ?? {}, 'deleted_at');
+  const patchedStatus = effectivePatch?.status as string | undefined;
+  const explicitDeletedAt = Object.prototype.hasOwnProperty.call(effectivePatch ?? {}, 'deleted_at');
 
   const isTaskDeleteByStatus =
     mut.table === 'tasks' &&
@@ -969,7 +1012,7 @@ async function applyPatch(
   // same approach as the deleted_at co-flips above. Only fires on a real
   // transition (patch.stage differs from current.stage), so editing other fields
   // never resets the counter — this is the fix for the Manuscripts daysInStage bug.
-  const patchedStage = (mut.patch as Record<string, unknown>)?.stage;
+  const patchedStage = effectivePatch?.stage;
   const isProjectStageChange =
     mut.table === 'projects' &&
     typeof patchedStage === 'string' &&
