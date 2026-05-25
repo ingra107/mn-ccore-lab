@@ -1,5 +1,7 @@
 # Increment 1A — Time/Sync Foundation (DATA-RISK CORE) Implementation Plan
 
+> **🛑 PARTIALLY SUPERSEDED 2026-05-25 — Tasks 8 + 9 DESCOPED.** Step-0 + a strategic eval (work codex + home dual + COO, all converged) found the historical-rewrite half over-engineered: brain.db has ~900 naive candidates/machine (not 2-3), `lmm` is a phantom on work (64 local-backfill rows marked `synced` vs Hub canonical's 3), and `completed_at` (~800) isn't LWW-arbitrated. **Tasks 1-7 + 10 stand (the forward primitive — ship them); Tasks 8 (900-row migration) + 9 (scaffold delete) are dropped.** Go-forward plan: `2026-05-25-increment-1A-descope-forward-primitive.md`. Read that FIRST.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking. Dispatch domain specialists per task: **builder** (PB `scripts/db/*`, migrations, lint) and **hub-backend** (`api/routes/mutations.ts`, deploy). Builder cannot edit `mutations.ts` directly — those steps return "next: dispatch hub-backend" to the COO.
 
 **Goal:** Store every synced timestamp instant in UTC and enforce it with origin-aware LWW gates + a CI lint, so the live Hub LMM-churn bug dies, mixed-zone columns are migrated to UTC under one snapshot, and the `to_utc_dt` zone-guessing scaffold can be deleted.
