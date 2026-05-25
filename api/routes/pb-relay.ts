@@ -1,5 +1,6 @@
 import type { AuthUser, Env } from '../helpers';
 import { json, error, logActivity } from '../helpers';
+import { nowInstant } from '../lib/time';
 
 interface RelayMessage {
   from: string
@@ -44,7 +45,7 @@ export async function handleCreateRelay(request: Request, user: AuthUser, env: E
     topic: body.topic.trim(),
     prompt: body.prompt.trim(),
     status: 'pending',
-    created_at: new Date().toISOString(),
+    created_at: nowInstant(),
   }
   messages.push(newMessage)
 
@@ -68,7 +69,7 @@ export async function handleCompleteRelay(request: Request, env: Env, index: num
   }
 
   messages[index].status = 'completed'
-  messages[index].completed_at = new Date().toISOString()
+  messages[index].completed_at = nowInstant()
 
   await env.DB.prepare(
     "INSERT OR REPLACE INTO lab_settings (key, value, updated_at) VALUES ('relay_messages', ?, datetime('now'))"

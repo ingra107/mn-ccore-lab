@@ -1,6 +1,7 @@
 import type { AuthUser, Env } from '../helpers';
 import { json, error, generateId, logActivity } from '../helpers';
 import { ctToday } from '../lib/ct-date';
+import { nowInstant } from '../lib/time';
 import { applyMutation } from './mutations';
 
 // GET /api/pb/command-center?date=YYYY-MM-DD
@@ -141,7 +142,10 @@ export async function handleCommandCenter(env: Env, planDate?: string): Promise<
     // Find yesterday's plan (relative to targetDate)
     const prevDate = new Date(targetDate + 'T12:00:00')
     prevDate.setDate(prevDate.getDate() - 1)
-    const prevDateStr = prevDate.toISOString().split('T')[0]
+    const y = prevDate.getUTCFullYear();
+    const mo = String(prevDate.getUTCMonth() + 1).padStart(2, '0');
+    const dy = String(prevDate.getUTCDate()).padStart(2, '0');
+    const prevDateStr = `${y}-${mo}-${dy}`
     const prevPlan = await env.DB.prepare('SELECT * FROM daily_plans WHERE plan_date = ?').bind(prevDateStr).first() as any
 
     if (prevPlan) {
@@ -571,7 +575,7 @@ export async function handleGetPendingDispatch(env: Env): Promise<Response> {
 
 // POST /api/pb/dispatch/send — mark all pending as dispatched
 export async function handleSendDispatch(request: Request, user: AuthUser, env: Env): Promise<Response> {
-  const now = new Date().toISOString()
+  const now = nowInstant()
   const pending = await env.DB.prepare(
     "SELECT * FROM dispatch_queue WHERE status = 'pending' ORDER BY created_at ASC"
   ).all()
@@ -593,7 +597,7 @@ export async function handleCompleteDispatchItem(request: Request, env: Env): Pr
   const body = await request.json() as { id: string; response?: string }
   if (!body.id) return error('id required', 400)
 
-  const now = new Date().toISOString()
+  const now = nowInstant()
   await env.DB.prepare(
     "UPDATE dispatch_queue SET status = 'completed', completed_at = ?, response = ? WHERE id = ?"
   ).bind(now, body.response || null, body.id).run()

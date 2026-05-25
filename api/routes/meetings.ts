@@ -1,6 +1,7 @@
 import type { AuthUser, Env } from '../helpers';
 import { json, error, generateId, logActivity } from '../helpers';
 import { ctToday } from '../lib/ct-date';
+import { nowInstant } from '../lib/time';
 
 // GET /api/meetings/next — next upcoming meeting (lightweight, for sidebar badge)
 export async function handleNextMeeting(env: Env): Promise<Response> {
@@ -222,7 +223,7 @@ export async function handleGenerateAgenda(meetingId: string, env: Env): Promise
   return json({
     meeting_id: meetingId,
     title: `Agenda: ${meeting.title}`,
-    generated_at: new Date().toISOString(),
+    generated_at: nowInstant(),
     sections: [
       {
         title: 'Carried-forward action items',

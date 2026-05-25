@@ -23,6 +23,7 @@
 
 import type { AuthUser, Env } from '../helpers';
 import { json, error, generateId, assertProtectedNotNull } from '../helpers';
+import { nowInstant } from '../lib/time';
 
 const ALLOWED_TABLES = new Set([
   'tasks', 'projects', 'inbox_events', 'day_capacity', 'project_state_log',
@@ -799,8 +800,8 @@ export async function applyMutation(
     patch: args.patch,
     payload: args.payload,
     depends_on: null,
-    client_ts: new Date().toISOString(),
-    issued_at: new Date().toISOString(),
+    client_ts: nowInstant(),
+    issued_at: nowInstant(),
   };
   // Route through processOne so idempotency + processed_mutations recording fires.
   return await processOne(env, mut, new Map(), args.user);
@@ -875,7 +876,8 @@ async function advanceProjectMovement(
   // Fallback to server-now (already UTC) if client_ts is missing or unparseable.
   const tsUtc =
     normalizeToUtcSpaceSep(mut.client_ts) ??
-    new Date().toISOString().replace('T', ' ').replace(/\.\d+Z$/, '');
+    // SQLite-native format for LMM normalization temp; nowInstant() base ensures UTC Z
+    nowInstant().replace('T', ' ').replace(/\.\d+Z$/, '');
 
   // ATOMIC MAX in UTC space — single UPDATE, DB-side CASE compare. The incoming
   // value is canonical UTC space-sep, so the lexical `<` is a correct temporal

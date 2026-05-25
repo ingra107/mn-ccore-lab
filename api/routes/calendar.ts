@@ -1,10 +1,11 @@
 import type { Env } from '../helpers';
 import { json } from '../helpers';
+import { ctToday } from '../lib/ct-date';
 
 // GET /api/calendar/events?start=&end=
 export async function handleCalendarEvents(url: URL, env: Env): Promise<Response> {
-  const startDate = url.searchParams.get('start') || new Date(Date.now() - 30 * 86400000).toISOString().split('T')[0];
-  const endDate = url.searchParams.get('end') || new Date(Date.now() + 90 * 86400000).toISOString().split('T')[0];
+  const startDate = url.searchParams.get('start') || ctToday(-30);
+  const endDate = url.searchParams.get('end') || ctToday(90);
 
   // Aggregate from multiple sources
   const [meetings, tasks, milestones] = await Promise.all([

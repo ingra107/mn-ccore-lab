@@ -6,6 +6,7 @@ import type { AuthUser } from './helpers';
 import { validateApiKey } from './middleware/api-key-auth';
 import { handleVersion, bumpVersion } from './lib/version';
 import { ctToday } from './lib/ct-date';
+import { nowInstant } from './lib/time';
 import { notifyClients } from './lib/notify';
 import { handleUploadUrl, handleUploadDone, handleListFiles, handleGetFile, handleDeleteFile } from './routes/uploads';
 
@@ -366,7 +367,7 @@ app.get('/api/health', async (c) => {
 
   checks.duration_ms = Date.now() - t0;
   const ok = failures.length === 0;
-  return new Response(JSON.stringify({ ok, checks, failures, timestamp: new Date().toISOString() }, null, 2), {
+  return new Response(JSON.stringify({ ok, checks, failures, timestamp: nowInstant() }, null, 2), {
     status: ok ? 200 : 503,
     headers: { 'Content-Type': 'application/json', ...corsHeaders },
   });

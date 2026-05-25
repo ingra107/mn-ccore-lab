@@ -1,5 +1,6 @@
 import type { Env } from '../helpers'
 import { json, error } from '../helpers'
+import { nowInstant } from '../lib/time'
 
 const REPO = 'ingra107/mn-ccore-lab'
 
@@ -43,7 +44,7 @@ export async function handleBugReport(
   if (body.pageUrl) lines.push(`- **Page:** ${body.pageUrl}`)
   if (body.viewport) lines.push(`- **Viewport:** ${body.viewport}`)
   if (body.theme) lines.push(`- **Theme:** ${body.theme}`)
-  lines.push(`- **Reported:** ${new Date().toISOString()}`)
+  lines.push(`- **Reported:** ${nowInstant()}`)
 
   // Screenshot: client compresses to JPEG ~30-80KB, embed as base64 markdown image
   if (body.screenshot && body.screenshot.startsWith('data:image/')) {

@@ -2,6 +2,7 @@ import type { Env } from '../helpers';
 import { json, error, corsHeaders, getAuthUser, isPiRequest, actorSlug } from '../helpers';
 import { escapeHtml } from '../lib/escapeHtml';
 import { ctToday } from '../lib/ct-date';
+import { nowInstant } from '../lib/time';
 
 /**
  * B6 (SEC-T0-3): owner-or-PI authorization for digest generate/send.
@@ -122,7 +123,7 @@ async function generateDigest(memberSlug: string, env: Env): Promise<DigestData>
     upcoming: (upcomingResult.results || []) as unknown as DigestTask[],
     meetings: (meetingsResult.results || []) as unknown as DigestMeeting[],
     recentActivity: (activityResult.results || []) as unknown as DigestActivity[],
-    generatedAt: new Date().toISOString(),
+    generatedAt: nowInstant(),
   };
 }
 

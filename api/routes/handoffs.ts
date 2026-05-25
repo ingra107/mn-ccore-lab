@@ -1,6 +1,7 @@
 import type { AuthUser, Env } from '../helpers';
 import { json, error, generateId, logActivity, actorSlug } from '../helpers';
 import { applyUpdate, type Mutation } from './mutations';
+import { nowInstant } from '../lib/time';
 
 interface HandoffRow {
   id: string
@@ -83,8 +84,8 @@ export async function handleCreateHandoff(taskId: string, request: Request, user
     base_seq: null,
     base_row_hash: null,
     patch: { assignee: toSlug },
-    client_ts: new Date().toISOString(),
-    issued_at: new Date().toISOString(),
+    client_ts: nowInstant(),
+    issued_at: nowInstant(),
   };
   await applyUpdate(env, reassignMut, user);
 

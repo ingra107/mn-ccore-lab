@@ -1,5 +1,6 @@
 import type { AuthUser, Env } from '../helpers';
 import { json, error, generateId, logActivity, actorSlug } from '../helpers';
+import { nowInstant } from '../lib/time';
 
 interface SubtaskRow {
   id: string
@@ -61,7 +62,7 @@ export async function handleToggleSubtask(subtaskId: string, user: AuthUser, env
 
   const actor = actorSlug(user.email);
   const nowCompleted = existing.completed ? 0 : 1;
-  const completedAt = nowCompleted ? new Date().toISOString() : null;
+  const completedAt = nowCompleted ? nowInstant() : null;
   const completedBy = nowCompleted ? actor : null;
 
   await env.DB.prepare(

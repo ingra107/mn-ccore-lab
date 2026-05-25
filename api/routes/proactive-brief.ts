@@ -10,7 +10,7 @@ export async function handleProactiveBrief(request: Request, env: Env): Promise<
     // Staleness lookback compares against MAX(updated_at) timestamps, not a
     // user-facing date — it's a range-bound where a one-day CT/UTC boundary is
     // immaterial, so it stays UTC (see api/lib/ct-date.ts guidance).
-    const fourteenDaysAgo = new Date(Date.now() - 14 * 86400000).toISOString().split('T')[0];
+    const fourteenDaysAgo = ctToday(-14);
     const sevenDaysFromNow = ctToday(7);
 
     const [overdueResult, dueTodayResult, staleResult, milestonesResult] = await Promise.all([

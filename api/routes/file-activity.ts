@@ -1,10 +1,11 @@
 import type { Env } from '../helpers';
 import { json, error, generateId } from '../helpers';
+import { ctToday } from '../lib/ct-date';
 
 // GET /api/file-activity/heatmap?days=90 — daily aggregates from file_activity_daily
 export async function handleGetFileActivity(url: URL, env: Env): Promise<Response> {
   const days = parseInt(url.searchParams.get('days') || '90', 10);
-  const since = new Date(Date.now() - days * 86400000).toISOString().split('T')[0];
+  const since = ctToday(-days);
 
   const result = await env.DB.prepare(
     `SELECT date, SUM(file_count) as file_count, SUM(total_events) as total_events

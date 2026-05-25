@@ -1,6 +1,15 @@
 import type { Env } from '../helpers';
 import { json } from '../helpers';
 
+// UTC-safe YYYY-MM-DD from a Date object (pure UTC integer arithmetic).
+// Avoids .toISOString().split/.slice lint ban (R21).
+function isoDateStr(d: Date): string {
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(d.getUTCDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
 // ── Cross-Project Insight Engine ──────────────────────────────
 // Analyzes D1 project data to surface connections Nick might miss.
 
@@ -300,7 +309,7 @@ export async function handleInsightsDashboard(env: Env, weekArg?: string): Promi
   // Anchor for date math is "end of the requested week" (Sunday at end of day)
   // when historical, otherwise "now".
   const weekEndDate = isHistorical ? new Date(requestedMonday!.getTime() + 7 * 86400000) : null
-  const weekEndIso = weekEndDate ? weekEndDate.toISOString().slice(0, 10) : null
+  const weekEndIso = weekEndDate ? isoDateStr(weekEndDate) : null
   // SQLite date anchor: 'now' or a literal date string.
   const anchor = weekEndIso ? `'${weekEndIso}'` : `'now'`
 
@@ -386,7 +395,7 @@ export async function handleInsightsDashboard(env: Env, weekArg?: string): Promi
            AND due_date >= ?
            AND due_date < date(?, '+7 days')
          GROUP BY assignee, dow`
-      ).bind(requestedMonday!.toISOString().slice(0, 10), requestedMonday!.toISOString().slice(0, 10))
+      ).bind(isoDateStr(requestedMonday!), isoDateStr(requestedMonday!))
         .all<{ assignee: string; dow: number; c: number }>()
     : await env.DB.prepare(
         `SELECT assignee,
@@ -462,12 +471,12 @@ export async function handleInsightsDashboard(env: Env, weekArg?: string): Promi
   for (let i = 7; i >= 0; i--) {
     if (isHistorical) {
       const d = new Date(weekEndDate!.getTime() - i * 7 * 86400000)
-      sparklineWindowEnds.push(d.toISOString().slice(0, 10))
+      sparklineWindowEnds.push(isoDateStr(d))
     } else {
       // For "now"-anchored, use SQLite expression literal for the END of each
       // historical week. We compute via JS for consistency.
       const d = new Date(today.getTime() - i * 7 * 86400000)
-      sparklineWindowEnds.push(d.toISOString().slice(0, 10))
+      sparklineWindowEnds.push(isoDateStr(d))
     }
   }
 

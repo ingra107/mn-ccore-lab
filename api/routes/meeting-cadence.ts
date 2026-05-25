@@ -1,5 +1,6 @@
 import type { Env } from '../helpers';
 import { json } from '../helpers';
+import { ctToday } from '../lib/ct-date';
 
 // GET /api/meetings/cadence-check — analyze if next meeting is needed
 export async function handleCadenceCheck(env: Env): Promise<Response> {
@@ -17,7 +18,7 @@ export async function handleCadenceCheck(env: Env): Promise<Response> {
     "SELECT id, date FROM meetings WHERE date < ? ORDER BY date DESC LIMIT 1"
   ).bind(nextMeeting.date).first<{ id: string; date: string }>();
 
-  const sinceDate = prevMeeting?.date || new Date(Date.now() - 14 * 86400000).toISOString().split('T')[0];
+  const sinceDate = prevMeeting?.date || ctToday(-14);
 
   // Analyze activity since last meeting
   const [activityCount, pendingActions, newUpdates, agendaItems, blockedTasks] = await Promise.all([

@@ -1,6 +1,7 @@
 import type { AuthUser, Env } from '../helpers';
 import { json, error, generateId, logActivity, parseMentions, actorSlug, isPiRequest, resolveActor } from '../helpers';
 import { ctToday } from '../lib/ct-date';
+import { nowInstant } from '../lib/time';
 import { applyMutation } from './mutations';
 
 // Stage 4 #12-followup (2026-05-09): Nick-only visibility gate for
@@ -189,11 +190,11 @@ export async function handleCreateProject(
       slug,
       category: body.category || 'MNCCORE',
       stage: body.stage || 'idea',
-      stage_entered_at: new Date().toISOString(),
+      stage_entered_at: nowInstant(),
       description: body.description || '',
       pi: piActor.slug,
       status: 'active',
-      created_at: new Date().toISOString(),
+      created_at: nowInstant(),
     },
     route: 'handleCreateProject',
     user,

@@ -1,6 +1,7 @@
 import type { Env } from '../helpers';
 import { json } from '../helpers';
 import { isTestFixture } from '../lib/fixtures';
+import { ctToday } from '../lib/ct-date';
 
 // GET /api/activity?limit=20&actor=slug
 // AM-3 (SEC-T0-1): `canSeePb` true for PI/Nick/service. This endpoint stays
@@ -48,7 +49,7 @@ export async function handleGetActivity(url: URL, env: Env, canSeePb = false): P
 export async function handleActivityHeatmap(url: URL, env: Env): Promise<Response> {
   const slug = url.searchParams.get('slug');
   const days = parseInt(url.searchParams.get('days') || '90');
-  const since = new Date(Date.now() - days * 86400000).toISOString().split('T')[0];
+  const since = ctToday(-days);
 
   let query = "SELECT DATE(timestamp) as date, COUNT(*) as count FROM activity_log WHERE timestamp >= ? ";
   const params: string[] = [since];

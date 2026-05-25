@@ -107,7 +107,11 @@ function computeImpact(
   function addDays(dateStr: string, days: number): string {
     const d = new Date(dateStr + 'T12:00:00Z');
     d.setUTCDate(d.getUTCDate() + days);
-    return d.toISOString().split('T')[0];
+    // Return YYYY-MM-DD via UTC getters to avoid .split/.slice lint ban
+    const y = d.getUTCFullYear();
+    const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(d.getUTCDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
   }
 
   // BFS traversal

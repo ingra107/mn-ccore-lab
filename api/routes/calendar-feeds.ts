@@ -18,6 +18,8 @@ import type { Env, AuthUser } from '../helpers'
 import { json, error } from '../helpers'
 import { actorSlug } from '../helpers'
 import { parseIcs, type IcsEvent, type ParseOptions } from '../lib/ics-parser'
+import { nowInstant } from '../lib/time'
+import { ctToday } from '../lib/ct-date'
 
 // Staleness threshold: feeds older than this are eligible for a cron re-poll.
 // Set to 50 min so the hourly cron (fires at :00) always picks up feeds last
@@ -149,7 +151,7 @@ export async function handleAddFeed(
   // a typical Google Calendar with weekly recurring meetings).
   const pollPromise = pollFeed(
     env,
-    { id, user_slug: slug, feed_url: url, feed_label: label, last_polled_at: null, last_error: null, created_at: new Date().toISOString(), etag: null, last_modified: null },
+    { id, user_slug: slug, feed_url: url, feed_label: label, last_polled_at: null, last_error: null, created_at: nowInstant(), etag: null, last_modified: null },
     user.email,
     FETCH_TIMEOUT_ONDEMAND_MS,
   ).catch((e) => {
@@ -191,9 +193,9 @@ export async function handleListEvents(
 ): Promise<Response> {
   if (!user) return error('Unauthorized', 401)
   const slug = actorSlug(user.email)
-  const start = url.searchParams.get('start') || new Date().toISOString().slice(0, 10)
+  const start = url.searchParams.get('start') || ctToday()
   // Default range: today + next 7 days.
-  const endDefault = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10)
+  const endDefault = ctToday(7)
   const end = url.searchParams.get('end') || endDefault
   const forceRefresh = url.searchParams.get('force') === '1'
 
@@ -306,7 +308,7 @@ async function pollFeed(env: Env, feed: FeedRow, ownerEmail: string, timeoutMs =
       console.log(`pollFeed ${feed.id}: 304 Not Modified (cheap path)`)
       await env.DB.prepare(
         'UPDATE user_calendar_feeds SET last_polled_at = ? WHERE id = ?'
-      ).bind(new Date().toISOString(), feed.id).run()
+      ).bind(nowInstant(), feed.id).run()
       return
     }
 
@@ -322,7 +324,7 @@ async function pollFeed(env: Env, feed: FeedRow, ownerEmail: string, timeoutMs =
     const msg = (e as Error).message.slice(0, 200)
     await env.DB.prepare(
       'UPDATE user_calendar_feeds SET last_polled_at = ?, last_error = ? WHERE id = ?'
-    ).bind(new Date().toISOString(), msg, feed.id).run()
+    ).bind(nowInstant(), msg, feed.id).run()
     return
   }
 
@@ -342,7 +344,7 @@ async function pollFeed(env: Env, feed: FeedRow, ownerEmail: string, timeoutMs =
     // the full response rather than risking another 304 against a bad body.
     await env.DB.prepare(
       'UPDATE user_calendar_feeds SET last_polled_at = ?, last_error = ?, etag = NULL, last_modified = NULL WHERE id = ?'
-    ).bind(new Date().toISOString(), `parse: ${(e as Error).message.slice(0, 180)}`, feed.id).run()
+    ).bind(nowInstant(), `parse: ${(e as Error).message.slice(0, 180)}`, feed.id).run()
     return
   }
 
@@ -366,7 +368,7 @@ async function pollFeed(env: Env, feed: FeedRow, ownerEmail: string, timeoutMs =
   } catch (e) {
     await env.DB.prepare(
       'UPDATE user_calendar_feeds SET last_polled_at = ?, last_error = ?, etag = NULL, last_modified = NULL WHERE id = ?'
-    ).bind(new Date().toISOString(), `delete: ${(e as Error).message.slice(0, 180)}`, feed.id).run()
+    ).bind(nowInstant(), `delete: ${(e as Error).message.slice(0, 180)}`, feed.id).run()
     return
   }
 
@@ -395,7 +397,7 @@ async function pollFeed(env: Env, feed: FeedRow, ownerEmail: string, timeoutMs =
       // re-fetch next poll so the events table is rebuilt cleanly.
       await env.DB.prepare(
         'UPDATE user_calendar_feeds SET last_polled_at = ?, last_error = ?, etag = NULL, last_modified = NULL WHERE id = ?'
-      ).bind(new Date().toISOString(), msg, feed.id).run()
+      ).bind(nowInstant(), msg, feed.id).run()
       return
     }
   }
@@ -407,5 +409,5 @@ async function pollFeed(env: Env, feed: FeedRow, ownerEmail: string, timeoutMs =
   // If-Modified-Since for a cheap 304 response if the calendar hasn't changed.
   await env.DB.prepare(
     'UPDATE user_calendar_feeds SET last_polled_at = ?, last_error = ?, etag = ?, last_modified = ? WHERE id = ?'
-  ).bind(new Date().toISOString(), finalErr, newEtag, newLastModified, feed.id).run()
+  ).bind(nowInstant(), finalErr, newEtag, newLastModified, feed.id).run()
 }

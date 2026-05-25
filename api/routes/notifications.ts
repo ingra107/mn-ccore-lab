@@ -1,5 +1,6 @@
 import type { Env } from '../helpers';
 import { json, error, generateId } from '../helpers';
+import { nowInstant } from '../lib/time';
 
 // GET /api/notifications?recipient=&unread=
 export async function handleNotifications(url: URL, request: Request, env: Env): Promise<Response> {
@@ -103,7 +104,7 @@ export async function handleCreateCommitment(request: Request, env: Env): Promis
     (body.source as string) ?? null,
     (body.project as string) ?? null,
     (body.task_id as string) ?? null,
-    (body.created_at as string) ?? new Date().toISOString(),
+    (body.created_at as string) ?? nowInstant(),
     (body.completed_at as string) ?? null,
   ).run();
 

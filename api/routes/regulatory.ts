@@ -1,6 +1,7 @@
 import type { AuthUser, Env } from '../helpers';
 import { json, error, generateId, logActivity, actorSlug, buildUpdate } from '../helpers';
 import { ctToday } from '../lib/ct-date';
+import { nowInstant } from '../lib/time';
 
 // ── .ics helpers ─────────────────────────────────────────────────────────────
 
@@ -150,7 +151,7 @@ export async function handleRegulatoryIcs(id: string, env: Env): Promise<Respons
 
   const uid = `regulatory-${id}@mn-ccore-lab.pages.dev`;
   const dtstart = formatIcsDate(renewalDate);
-  const now = new Date().toISOString().replace(/[^0-9]/g, '').slice(0, 15) + 'Z';
+  const now = nowInstant().replace(/[^0-9]/g, '').slice(0, 15) + 'Z';
   const summary = `Renew: ${item.title}`;
   const description = `${item.item_type} renewal for ${item.title}. Protocol: ${item.protocol_number || 'N/A'}. Notes: ${item.notes || 'N/A'}.`;
 

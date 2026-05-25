@@ -2,6 +2,7 @@ import type { AuthUser, Env } from '../helpers';
 import { json, error, generateId, logActivity, parseMentions, actorSlug, isPiRequest, resolveActor } from '../helpers';
 import { filterFixtures } from '../lib/fixtures';
 import { ctToday } from '../lib/ct-date';
+import { nowInstant } from '../lib/time';
 import { applyMutation } from './mutations';
 
 // AM-5 (SEC-T0-4): explicit task column list that EXCLUDES the private
@@ -116,7 +117,7 @@ export async function handleUpdateTaskStatus(id: string, request: Request, user:
   if (!item) return error('Task not found', 404);
 
   const completed = body.status === 'done' ? 1 : 0;
-  const completedAt = completed ? new Date().toISOString() : null;
+  const completedAt = completed ? nowInstant() : null;
   const completedBy = completed ? user.email : null;
 
   const mutResult = await applyMutation(env, {
@@ -199,7 +200,7 @@ export async function handleToggleTask(id: string, user: AuthUser, env: Env): Pr
   if (table === 'action_items') {
     await env.DB.prepare(
       "UPDATE action_items SET completed = ?, completed_at = ?, completed_by = ? WHERE id = ?"
-    ).bind(newCompleted, newCompleted ? new Date().toISOString() : null, newCompleted ? user.email : null, id).run();
+    ).bind(newCompleted, newCompleted ? nowInstant() : null, newCompleted ? user.email : null, id).run();
   } else {
     // Route through applyMutation so last_mutation_id is stamped (Phase 3.1).
     const toggleMutResult = await applyMutation(env, {
@@ -209,7 +210,7 @@ export async function handleToggleTask(id: string, user: AuthUser, env: Env): Pr
       patch: {
         status: newStatus,
         completed: newCompleted,
-        completed_at: newCompleted ? new Date().toISOString() : null,
+        completed_at: newCompleted ? nowInstant() : null,
         completed_by: newCompleted ? user.email : null,
       },
       route: 'handleToggleTask',
@@ -294,7 +295,7 @@ export async function handleUpdateTask(id: string, request: Request, user: AuthU
     }
     if (isDone && !('completed_at' in body)) {
       updates.push('completed_at = ?');
-      params.push(new Date().toISOString());
+      params.push(nowInstant());
     }
     if (isDone && !('completed_by' in body)) {
       updates.push('completed_by = ?');
@@ -615,7 +616,7 @@ export async function handleBatchUpdateTasks(request: Request, user: AuthUser, e
 
   switch (body.action) {
     case 'complete': {
-      const completedAt = new Date().toISOString()
+      const completedAt = nowInstant()
       for (const id of body.ids) {
         try {
           const mutResult = await applyMutation(env, {
@@ -674,7 +675,7 @@ export async function handleBatchUpdateTasks(request: Request, user: AuthUser, e
         return error('value must be one of: todo, in_progress, done, blocked, waiting_external', 400)
       }
       const statusPatch: Record<string, unknown> = body.value === 'done'
-        ? { status: 'done', completed: 1, completed_at: new Date().toISOString(), completed_by: user.email }
+        ? { status: 'done', completed: 1, completed_at: nowInstant(), completed_by: user.email }
         : { status: body.value, completed: 0, completed_at: null, completed_by: null }
       for (const id of body.ids) {
         try {
@@ -914,7 +915,7 @@ export async function handleAcknowledgeTask(id: string, request: Request, user: 
     if (body?.slug && typeof body.slug === 'string') overrideSlug = body.slug.trim() || null;
   } catch { /* no body or non-JSON — fine */ }
 
-  const now = new Date().toISOString();
+  const now = nowInstant();
   const acknowledgedBy = overrideSlug ?? actorSlug(user.email);
 
   await env.DB.prepare(
@@ -1111,7 +1112,7 @@ export async function handleMobileTasksToHub(request: Request, user: AuthUser, e
           status,
           source: 'mobile',
           completed: completedInt,
-          completed_at: completedInt ? new Date().toISOString() : null,
+          completed_at: completedInt ? nowInstant() : null,
           notes: pwaTask.notes ?? null,
           effort: pwaTask.effort ?? null,
           short_title: pwaTask.short_title ?? null,
