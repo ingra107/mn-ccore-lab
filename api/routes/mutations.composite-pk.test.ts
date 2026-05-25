@@ -11,6 +11,7 @@
 //   6. Sessions applyDelete sets deleted_at (schema-v65 M5 fix)
 
 import { describe, it, expect, beforeAll } from 'vitest';
+import { nowInstant } from '../lib/time';
 import { applyInsert, applyUpdate, applyDelete } from './mutations';
 import type { Mutation } from './mutations';
 
@@ -168,7 +169,7 @@ function makeCompositeDb() {
             if (lit.toUpperCase() === 'NULL') {
               row[item.col] = null;
             } else if (lit.match(/^datetime\(/i)) {
-              row[item.col] = new Date().toISOString().replace('T', ' ').substring(0, 19);
+              row[item.col] = nowInstant().replace('T', ' ').substring(0, 19);
             }
           }
         }
@@ -237,8 +238,8 @@ function mut(overrides: Partial<Mutation>): Mutation {
     patch: undefined,
     payload: undefined,
     depends_on: null,
-    client_ts: new Date().toISOString(),
-    issued_at: new Date().toISOString(),
+    client_ts: nowInstant(),
+    issued_at: nowInstant(),
     ...overrides,
   };
 }

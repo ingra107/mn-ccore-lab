@@ -4,6 +4,7 @@
 // (handleSyncBulkTasks deleted 2026-05-12; HUB_BULK_MIGRATION_MODE gate removed.)
 
 import { describe, it, expect } from 'vitest'
+import { nowInstant } from '../lib/time'
 import { applyMutation, applyInsert, applyUpdate } from './mutations'
 
 // ── Stub DB ──────────────────────────────────────────────────────────────────
@@ -46,7 +47,7 @@ function makeStubDB() {
               for (const pair of pairs) {
                 const [col, placeholder] = pair.split('=').map((s: string) => s.trim())
                 if (placeholder && placeholder.includes('datetime')) {
-                  row[col] = new Date().toISOString().replace('T', ' ').slice(0, 19)
+                  row[col] = nowInstant().replace('T', ' ').slice(0, 19)
                 } else if (placeholder && placeholder.toUpperCase() === 'NULL') {
                   row[col] = null
                 } else {

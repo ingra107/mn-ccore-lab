@@ -13,6 +13,7 @@
 //   R5 — non-done status transitions are left alone
 
 import { describe, it, expect } from 'vitest'
+import { nowInstant } from '../lib/time'
 import { applyUpdate } from './mutations'
 import type { Mutation } from './mutations'
 
@@ -89,7 +90,7 @@ function makeStubDB(opts: {
               for (const pair of pairs) {
                 const [col, placeholder] = pair.split('=').map((s: string) => s.trim())
                 if (placeholder && placeholder.includes('datetime')) {
-                  row[col] = new Date().toISOString().replace('T', ' ').slice(0, 19)
+                  row[col] = nowInstant().replace('T', ' ').slice(0, 19)
                 } else if (placeholder && placeholder.toUpperCase() === 'NULL') {
                   row[col] = null
                 } else if (placeholder && placeholder.includes('CASE')) {

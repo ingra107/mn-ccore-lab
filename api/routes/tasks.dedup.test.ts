@@ -12,6 +12,7 @@
 //   - No dedup against done rows
 
 import { describe, it, expect } from 'vitest'
+import { nowInstant } from '../lib/time'
 import { applyUpdate } from './mutations'
 import type { Mutation } from './mutations'
 import type { Env, AuthUser } from '../helpers'
@@ -83,7 +84,7 @@ function makeStubDB(seedRows: Record<string, Record<string, unknown>> = {}) {
               for (const pair of pairs) {
                 const [col, placeholder] = pair.split('=').map((s: string) => s.trim())
                 if (placeholder && placeholder.includes('datetime')) {
-                  row[col] = new Date().toISOString().replace('T', ' ').slice(0, 19)
+                  row[col] = nowInstant().replace('T', ' ').slice(0, 19)
                 } else {
                   row[col] = boundVals[paramIdx++]
                 }
@@ -114,7 +115,7 @@ function makeStubDB(seedRows: Record<string, Record<string, unknown>> = {}) {
               source: boundVals[11], completed: boundVals[12],
               completed_at: boundVals[13], completed_by: boundVals[14],
               created_at: boundVals[15],
-              deleted_at: null, seq: 1, updated_at: boundVals[22] ?? new Date().toISOString(),
+              deleted_at: null, seq: 1, updated_at: boundVals[22] ?? nowInstant(),
               last_mutation_id: null,
             })
           }
@@ -182,10 +183,10 @@ describe('mutations.ts applyInsert — I18 (title, project_id) dedup', () => {
         status: 'todo',
         priority: 'medium',
         assignee: 'nick-ingraham',
-        created_at: new Date().toISOString(),
+        created_at: nowInstant(),
       },
-      client_ts: new Date().toISOString(),
-      issued_at: new Date().toISOString(),
+      client_ts: nowInstant(),
+      issued_at: nowInstant(),
     }
 
     const fakeEnv = { DB: db } as unknown as Env
@@ -233,10 +234,10 @@ describe('mutations.ts applyInsert — I18 (title, project_id) dedup', () => {
         status: 'todo',
         priority: 'medium',
         assignee: 'nick-ingraham',
-        created_at: new Date().toISOString(),
+        created_at: nowInstant(),
       },
-      client_ts: new Date().toISOString(),
-      issued_at: new Date().toISOString(),
+      client_ts: nowInstant(),
+      issued_at: nowInstant(),
     }
 
     const fakeEnv = { DB: db } as unknown as Env
@@ -284,10 +285,10 @@ describe('mutations.ts applyInsert — I18 (title, project_id) dedup', () => {
         status: 'todo',
         priority: 'medium',
         assignee: 'nick-ingraham',
-        created_at: new Date().toISOString(),
+        created_at: nowInstant(),
       },
-      client_ts: new Date().toISOString(),
-      issued_at: new Date().toISOString(),
+      client_ts: nowInstant(),
+      issued_at: nowInstant(),
     }
 
     const fakeEnv = { DB: db } as unknown as Env
@@ -333,10 +334,10 @@ describe('mutations.ts applyInsert — I18 (title, project_id) dedup', () => {
         status: 'todo',
         priority: 'medium',
         assignee: 'nick-ingraham',
-        created_at: new Date().toISOString(),
+        created_at: nowInstant(),
       },
-      client_ts: new Date().toISOString(),
-      issued_at: new Date().toISOString(),
+      client_ts: nowInstant(),
+      issued_at: nowInstant(),
     }
 
     const fakeEnv = { DB: db } as unknown as Env
@@ -432,7 +433,7 @@ function makeRaceStubDB() {
               deleted_at: null,
               seq: 1,
               last_mutation_id: boundVals[boundVals.length - 1],
-              updated_at: new Date().toISOString(),
+              updated_at: nowInstant(),
             })
             return { meta: { changes: 1 } }
           } else {
@@ -616,9 +617,9 @@ describe('partial index race backstop — concurrent dup INSERT (18:00:27 shape)
         record_id: id,
         base_seq: null,
         base_row_hash: null,
-        payload: { title, project_id: null, status: 'todo', priority: 'medium', assignee: 'nick-ingraham', created_at: new Date().toISOString() },
-        client_ts: new Date().toISOString(),
-        issued_at: new Date().toISOString(),
+        payload: { title, project_id: null, status: 'todo', priority: 'medium', assignee: 'nick-ingraham', created_at: nowInstant() },
+        client_ts: nowInstant(),
+        issued_at: nowInstant(),
       }
       const req = new Request('https://example.com/api/mutations', {
         method: 'POST',

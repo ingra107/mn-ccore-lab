@@ -8,6 +8,7 @@
 // vitest pool.
 
 import { describe, it, expect, beforeAll } from 'vitest'
+import { nowInstant } from '../lib/time'
 import { applyUpdate } from './mutations'
 import type { Mutation } from './mutations'
 
@@ -38,7 +39,7 @@ function makeStubDB() {
               for (const pair of pairs) {
                 const [col, placeholder] = pair.split('=').map(s => s.trim())
                 if (placeholder.includes('datetime')) {
-                  row[col] = new Date().toISOString().replace('T', ' ').slice(0, 19)
+                  row[col] = nowInstant().replace('T', ' ').slice(0, 19)
                 } else if (placeholder.toUpperCase() === 'NULL') {
                   // Literal NULL — no bound param consumed, set to null directly
                   row[col] = null
@@ -92,8 +93,8 @@ describe('I7 fix — op=update with status=deleted sets deleted_at', () => {
       base_seq: 1,
       base_row_hash: null,
       patch: { status: 'deleted' },
-      client_ts: new Date().toISOString(),
-      issued_at: new Date().toISOString(),
+      client_ts: nowInstant(),
+      issued_at: nowInstant(),
     }
 
     const fakeEnv = { DB: db } as unknown as import('../helpers').Env
@@ -130,8 +131,8 @@ describe('I7 fix — op=update with status=deleted sets deleted_at', () => {
       base_seq: 5,
       base_row_hash: null,
       patch: { status: 'deleted' },
-      client_ts: new Date().toISOString(),
-      issued_at: new Date().toISOString(),
+      client_ts: nowInstant(),
+      issued_at: nowInstant(),
     }
 
     const fakeEnv = { DB: db } as unknown as import('../helpers').Env
@@ -165,8 +166,8 @@ describe('I7 fix — op=update with status=deleted sets deleted_at', () => {
       base_seq: 2,
       base_row_hash: null,
       patch: { status: 'done' },
-      client_ts: new Date().toISOString(),
-      issued_at: new Date().toISOString(),
+      client_ts: nowInstant(),
+      issued_at: nowInstant(),
     }
 
     const fakeEnv = { DB: db } as unknown as import('../helpers').Env
@@ -200,8 +201,8 @@ describe('I7 fix — op=update with status=deleted sets deleted_at', () => {
       base_seq: 10,
       base_row_hash: null,
       patch: { status: 'todo' },
-      client_ts: new Date().toISOString(),
-      issued_at: new Date().toISOString(),
+      client_ts: nowInstant(),
+      issued_at: nowInstant(),
     }
 
     const fakeEnv = { DB: db } as unknown as import('../helpers').Env
@@ -237,8 +238,8 @@ describe('I7 fix — op=update with status=deleted sets deleted_at', () => {
       base_seq: 15,
       base_row_hash: null,
       patch: { status: 'todo', deleted_at: explicitTs } as Record<string, unknown>,
-      client_ts: new Date().toISOString(),
-      issued_at: new Date().toISOString(),
+      client_ts: nowInstant(),
+      issued_at: nowInstant(),
     }
 
     // deleted_at is not in TABLE_FIELDS whitelist, so we bypass the whitelist

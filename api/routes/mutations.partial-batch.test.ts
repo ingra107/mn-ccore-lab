@@ -31,6 +31,7 @@
 // envelope check returns.
 
 import { describe, it, expect, vi } from 'vitest'
+import { nowInstant } from '../lib/time'
 import type { Mutation } from './mutations'
 
 // Minimal mock D1 DB. We track whether prepare() was called with DML (INSERT/UPDATE/DELETE).
@@ -81,8 +82,8 @@ function baseMut(overrides: Partial<Mutation> = {}): Mutation {
     base_row_hash: null,
     payload: { title: 'Test task', status: 'todo' },
     depends_on: null,
-    client_ts: new Date().toISOString(),
-    issued_at: new Date().toISOString(),
+    client_ts: nowInstant(),
+    issued_at: nowInstant(),
     ...overrides,
   }
 }

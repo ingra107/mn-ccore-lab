@@ -7,6 +7,7 @@
 //           cleaned and tasks.project_id NULLed via env.DB.batch().
 
 import { describe, it, expect } from 'vitest'
+import { nowInstant } from '../lib/time'
 import { applyUpdate, applyDelete } from './mutations'
 
 // ── Stub DB ──────────────────────────────────────────────────────────────────
@@ -42,7 +43,7 @@ function makeStubDB() {
               for (const pair of pairs) {
                 const [col, placeholder] = pair.split('=').map((s: string) => s.trim())
                 if (placeholder && placeholder.includes('datetime')) {
-                  row[col] = new Date().toISOString().replace('T', ' ').slice(0, 19)
+                  row[col] = nowInstant().replace('T', ' ').slice(0, 19)
                 } else if (placeholder && placeholder.toUpperCase() === 'NULL') {
                   row[col] = null
                 } else {
@@ -140,8 +141,8 @@ describe('Fix 1: applyUpdate rejects updates to deleted rows', () => {
       depends_on: null,
       payload: null,
       origin_machine: 'pb:home',
-      client_ts: new Date().toISOString(),
-      issued_at: new Date().toISOString(),
+      client_ts: nowInstant(),
+      issued_at: nowInstant(),
     }, user)
 
     expect(result.status).toBe('error')
@@ -180,8 +181,8 @@ describe('Fix 1: applyUpdate rejects updates to deleted rows', () => {
       depends_on: null,
       payload: null,
       origin_machine: 'pb:home',
-      client_ts: new Date().toISOString(),
-      issued_at: new Date().toISOString(),
+      client_ts: nowInstant(),
+      issued_at: nowInstant(),
     }, user)
 
     expect(result.status).toMatch(/^(accepted|merged_clean)$/)
@@ -212,8 +213,8 @@ describe('Fix 1: applyUpdate rejects updates to deleted rows', () => {
       depends_on: null,
       payload: null,
       origin_machine: 'pb:home',
-      client_ts: new Date().toISOString(),
-      issued_at: new Date().toISOString(),
+      client_ts: nowInstant(),
+      issued_at: nowInstant(),
     }, user)
 
     // applyPatch will apply the patch — status transitions allowed with explicit deleted_at=null
@@ -251,8 +252,8 @@ describe('Fix 2: applyDelete cascades for tasks table', () => {
       base_row_hash: null,
       depends_on: null,
       origin_machine: 'pb:home',
-      client_ts: new Date().toISOString(),
-      issued_at: new Date().toISOString(),
+      client_ts: nowInstant(),
+      issued_at: nowInstant(),
     }, user)
 
     expect(result.status).toBe('accepted')
@@ -289,8 +290,8 @@ describe('Fix 2: applyDelete cascades for tasks table', () => {
       base_row_hash: null,
       depends_on: null,
       origin_machine: 'pb:home',
-      client_ts: new Date().toISOString(),
-      issued_at: new Date().toISOString(),
+      client_ts: nowInstant(),
+      issued_at: nowInstant(),
     }, user)
 
     // Already deleted — early-return path, no cascade
@@ -331,8 +332,8 @@ describe('Fix 3: applyDelete cascades for projects table', () => {
       base_row_hash: null,
       depends_on: null,
       origin_machine: 'pb:home',
-      client_ts: new Date().toISOString(),
-      issued_at: new Date().toISOString(),
+      client_ts: nowInstant(),
+      issued_at: nowInstant(),
     }, user)
 
     expect(result.status).toBe('accepted')

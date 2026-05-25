@@ -15,6 +15,7 @@
 //   G7 — LMM in a tasks patch is NOT normalized (guard is projects-table only)
 
 import { describe, it, expect } from 'vitest'
+import { nowInstant } from '../lib/time'
 import { applyUpdate } from './mutations'
 import type { Mutation } from './mutations'
 
@@ -70,7 +71,7 @@ function makeProjectStubDB(project: Record<string, unknown>) {
                 const col = pair.slice(0, eqIdx).trim()
                 const placeholder = pair.slice(eqIdx + 1).trim()
                 if (placeholder.includes('datetime')) {
-                  row[col] = new Date().toISOString().replace('T', ' ').slice(0, 19)
+                  row[col] = nowInstant().replace('T', ' ').slice(0, 19)
                 } else if (placeholder.toUpperCase() === 'NULL') {
                   row[col] = null
                 } else {
