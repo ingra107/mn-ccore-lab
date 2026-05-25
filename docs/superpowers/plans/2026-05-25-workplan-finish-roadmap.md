@@ -7,6 +7,7 @@
 ---
 
 **1. DONE Ledger**
+- **M2 Plan 1B time-display contract is shipped (2026-05-25):** all 139 R20/R21 date-discipline hits cleared to zero across `src/` + `api/`; new Worker helper `api/lib/time.ts`; lint allowlist extended; CI flipped `TIME_LINT_MODE: warn`→`enforce` and validated green (`workflow_dispatch` run 26423213524). Commits `cce10949`→`9ffa48a4`. Lint now hard-fails on any new raw `new Date().toISOString()` / `.toISOString().split|slice`. `docs/superpowers/plans/2026-05-25-plan-1b-time-display-migration.md`
 - Increment 1A forward primitive is shipped: Phase alpha delivered time chokepoints, WARN-mode lint, LMM churn fix, and Task 10 hazards; Phase beta kept Task 6 fail-closed gates, Task 7 UTC `client_ts`, pull-apply `now_instant`, PB writer guard, and Hub `applyPatch` guard. `WORKPLAN.md:40-49`, `SESSION-HANDOFF.md:19-23`
 - Do not re-plan the historical timestamp migration: Task 8 900-row migration and Task 9 scaffold deletion / `_CT` to `_UTC` move were intentionally dropped; `last_meaningful_movement` and `completed_at` stay in `_CT_COLUMNS`. `WORKPLAN.md:46-49`, `SESSION-HANDOFF.md:15-17`
 - T1 correctness batch is closed: CT date sweep, STATE-1, STATE-2, enum drift, DAT-4 verification, and test-D1 repair shipped. `WORKPLAN.md:60-65`, `WORKPLAN.md:109-132`, `WORKPLAN.md:199`

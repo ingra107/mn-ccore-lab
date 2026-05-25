@@ -1,5 +1,7 @@
 # Plan 1B — Time Display Contract Migration
 
+> ✅ **COMPLETE — 2026-05-25.** All 139 R20/R21 hits cleared to zero (`[time-discipline] OK`); CI flipped WARN→ENFORCE and validated green via `workflow_dispatch` (run 26423213524, Time-discipline lint step = success). Commits: Chunk 1 `cce10949`, Chunk 2 `9ae879dd`, Chunk 3 `df4fc8a4`, Chunk 4 `13b458e9`, Chunk 5 flip `9ffa48a4` (all on `main`). Real hit count was 50 test-file hits (not the §1 estimate of 35); production cleared in full. M2 closed.
+
 > **Purpose:** Migrate every Hub raw-date display site to `time.ts`/`dateUtils.ts` canonical helpers, then flip the time-discipline lint from WARN to ERROR. This is not a cosmetic date cleanup — it is the lint-enforcement blocker across the codebase. No lint flip until zero lint hits remain.
 >
 > **Framing note (Trap #3):** The roadmap flags this explicitly. The "~91" estimate in the spec (`docs/superpowers/specs/2026-05-23-time-sync-timeline-reconciliation-design.md:62`) is wrong. The real lint hit count is **139** across R20 + R21, across both `src/` (40 hits) and `api/` (99 hits), covering production code AND test fixtures. The spec's "×50 toISOString, ×41 split|slice" characterization does broadly match — but the total was under-counted because `api/` test files were not included in the estimate. The lint counts them. Every one must be zero before the ERROR flip.
