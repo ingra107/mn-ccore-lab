@@ -12,7 +12,7 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
 const ENFORCE = process.env.TIME_LINT_MODE === 'enforce';
-const ALLOW = new Set(['src/lib/time.ts']);
+const ALLOW = new Set(['src/lib/time.ts', 'api/lib/time.ts', 'api/lib/ct-date.ts']);
 const R20 = /new Date\(\)\.toISOString\(\)/;
 const R21 = /\.toISOString\(\)\.(?:split|slice)\s*\(/;
 const hits = [];
