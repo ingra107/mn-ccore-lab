@@ -4,6 +4,8 @@ export interface CommitmentRow {
   id: string
   commitment: string
   to_whom: string
+  /** Resolved team-member slug for to_whom. Null until backend ships WS2.3. */
+  to_slug: string | null
   status: string
   due_date: string | null
   source: string | null

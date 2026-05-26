@@ -122,6 +122,35 @@ export function TaskRow({ task, project, state, expandedId, onExpand, projectsBy
               <span style={{ marginLeft: due ? 0 : 'auto', fontSize: 11, color: INK_DIM, flexShrink: 0 }}>{expanded ? '▾' : '▸'}</span>
             )}
           </div>
+          {/* v55 workflow badges — compact, second line, only when fields are set */}
+          {!isDone && (task.waiting_on || task.promised_to || task.next_checkin_date) && (
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 4 }}>
+              {task.waiting_on && (
+                <span
+                  title={`Waiting on: ${task.waiting_on}`}
+                  style={{ fontSize: 10, color: ACCENT_GOLD, padding: '1px 5px', background: 'rgba(201,168,76,0.10)', borderRadius: 3, maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                >
+                  ⏳ {task.waiting_on}
+                </span>
+              )}
+              {task.promised_to && (
+                <span
+                  title={`Promised to: ${task.promised_to}${task.promise_date ? ` by ${task.promise_date}` : ''}`}
+                  style={{ fontSize: 10, color: ACCENT_CORAL, padding: '1px 5px', background: 'rgba(231,111,82,0.10)', borderRadius: 3, maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                >
+                  🤝 {task.promised_to}{task.promise_date ? ` · ${formatShortDate(task.promise_date)}` : ''}
+                </span>
+              )}
+              {task.next_checkin_date && !task.waiting_on && (
+                <span
+                  title={`Check in: ${task.next_checkin_date}`}
+                  style={{ fontSize: 10, color: INK_MUTED, padding: '1px 5px', background: 'rgba(176,181,185,0.10)', borderRadius: 3 }}
+                >
+                  ↻ {formatShortDate(task.next_checkin_date)}
+                </span>
+              )}
+            </div>
+          )}
         </div>
       </div>
       {expanded && !isDone && <TaskDetailDrawer task={task} project={project} state={state} />}

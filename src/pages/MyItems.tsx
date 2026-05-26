@@ -414,8 +414,9 @@ function NotificationCard({
 function CommitmentCard({ item }: { item: CommitmentRow }) {
   const isDone = item.status === 'done'
   const overdue = !isDone && isOverdue(item.due_date)
+  // to_slug is authoritative when present (WS2.4); fall back to heuristic last-word lookup
   const person = getPersonInfo(
-    item.to_whom.split(' ').pop()?.toLowerCase() ?? ''
+    item.to_slug ?? item.to_whom.split(' ').pop()?.toLowerCase() ?? ''
   )
 
   const borderColor = isDone ? 'var(--teal)' : overdue ? 'var(--maroon)' : 'var(--gold)'

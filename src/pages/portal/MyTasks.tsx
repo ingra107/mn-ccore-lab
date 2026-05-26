@@ -204,10 +204,17 @@ export default function MyTasks() {
 
   // Quick date filter
   const quickFiltered = useMemo(() => {
-    // "Waiting On" uses allTasks — shows tasks delegated to others, regardless of Mine/All toggle
+    // "Waiting On" uses allTasks — shows tasks with the real waiting_on field set,
+    // OR (fallback heuristic) tasks delegated to others. Preserves existing behavior.
     if (quickFilter === 'waiting_on') {
       return allTasks
-        .filter(t => !t.completed && t.assignee !== piSlug && (t.status === 'todo' || t.status === 'in_progress' || t.status === 'waiting_external'))
+        .filter(t => {
+          if (t.completed) return false
+          // Prefer the real v55 field when set
+          if (t.waiting_on) return true
+          // Fallback heuristic: assignee≠Nick + active status
+          return t.assignee !== piSlug && (t.status === 'todo' || t.status === 'in_progress' || t.status === 'waiting_external')
+        })
         .sort((a, b) => {
           // Sort by staleness: tasks with oldest updated_at first (most stale at top)
           const aDate = a.updated_at || a.created_at
@@ -340,7 +347,7 @@ export default function MyTasks() {
         const stale = new Date(now.getTime() - 14 * 86400000)
         return active.filter(t => t.status === 'in_progress' && new Date(t.updated_at || t.created_at) < stale).length
       })(),
-      waiting_on: allTasks.filter(t => !t.completed && t.assignee !== piSlug && (t.status === 'todo' || t.status === 'in_progress' || t.status === 'waiting_external')).length,
+      waiting_on: allTasks.filter(t => !t.completed && (t.waiting_on || (t.assignee !== piSlug && (t.status === 'todo' || t.status === 'in_progress' || t.status === 'waiting_external')))).length,
     }
   }, [tasks, allTasks, piSlug])
 

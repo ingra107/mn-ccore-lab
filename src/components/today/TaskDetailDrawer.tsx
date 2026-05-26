@@ -14,6 +14,8 @@ import SmartCompose from '../SmartCompose'
 import { useUpdateTask, useToggleSubtask } from '../../hooks/useMutations'
 import { useUndoToast } from '../UndoToast'
 import { LinkRow } from './primitives'
+import { WorkflowSection } from '../tasks/detail/FieldControls'
+import type { WorkflowFields } from '../tasks/detail/FieldControls'
 import {
   ACCENT_GOLD, ACCENT_TEAL, ACCENT_ORANGE, ACCENT_GREEN,
   INK, INK_MUTED, INK_DIM, PAGE_BG, PANEL_BG,
@@ -64,6 +66,18 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
       onSuccess: () => { undoToast.showSuccess('Reset to auto-classify'); setMoveOpen(false) },
     })
   }, [task.id, updateTask, undoToast])
+
+  // Workflow fields — v55 (waiting_on, next_checkin_date, promised_to, promise_date).
+  // Distinct from HandoffSection (to_slug + ack). Each field saves individually on blur.
+  const workflowFields: WorkflowFields = {
+    waiting_on: task.waiting_on ?? null,
+    next_checkin_date: task.next_checkin_date ?? null,
+    promised_to: task.promised_to ?? null,
+    promise_date: task.promise_date ?? null,
+  }
+  const saveWorkflowField = useCallback((patch: Partial<WorkflowFields>) => {
+    updateTask.mutate({ id: task.id, fields: patch as Record<string, unknown> })
+  }, [task.id, updateTask])
 
   return (
     <div onClick={(e) => e.stopPropagation()} style={{ padding: '14px 16px 16px', background: 'rgba(0,0,0,0.20)', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
@@ -162,6 +176,11 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
             )
           })}
         </div>
+      </div>
+      {/* Workflow fields — v55 (waiting_on / next_checkin_date / promised_to / promise_date) */}
+      <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: INK_DIM, marginBottom: 8 }}>Workflow</div>
+        <WorkflowSection fields={workflowFields} onChange={saveWorkflowField} />
       </div>
       <SmartCompose taskId={task.id} placeholder="Add a note, or @hermes for AI…" />
     </div>

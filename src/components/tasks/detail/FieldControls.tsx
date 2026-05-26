@@ -2,14 +2,14 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { useQuery } from '@tanstack/react-query'
 import {
-  Circle, Flag, Check, FolderKanban,
+  Circle, Flag, Check, FolderKanban, Clock, Handshake,
 } from 'lucide-react'
 import Avatar from '../../Avatar'
 import HoverCard from '../../HoverCard'
 import type { HoverCardData } from '../../HoverCard'
 import { useHoverCard } from '../../../hooks/useHoverCard'
 import { getPersonInfo } from '../../../data/team'
-import { formatMediumDate } from '../../../lib/dateUtils'
+import { formatMediumDate, formatShortDate } from '../../../lib/dateUtils'
 import { useTeam } from '../../../hooks/useApiData'
 import { STATUS_OPTIONS, PRIORITY_OPTIONS } from '../../../lib/taskConstants'
 
@@ -338,6 +338,104 @@ export function DateInput({ value, onChange }: { value: string; onChange: (v: st
           &times;
         </button>
       )}
+    </div>
+  )
+}
+
+// ── Workflow Section ─────────────────────────────────────────
+// Renders the v55 follow-up fields: waiting_on, next_checkin_date,
+// promised_to, promise_date. Distinct from HandoffSection (to_slug + ack).
+
+export interface WorkflowFields {
+  waiting_on?: string | null
+  next_checkin_date?: string | null
+  promised_to?: string | null
+  promise_date?: string | null
+}
+
+function WorkflowTextInput({ value, placeholder, onSave }: { value: string; placeholder: string; onSave: (v: string | null) => void }) {
+  const [draft, setDraft] = useState(value)
+  useEffect(() => { setDraft(value) }, [value])
+  const commit = () => { onSave(draft.trim() || null) }
+  return (
+    <input
+      type="text"
+      value={draft}
+      placeholder={placeholder}
+      onChange={(e) => setDraft(e.target.value)}
+      onBlur={commit}
+      onKeyDown={(e) => { if (e.key === 'Enter') { e.currentTarget.blur() } }}
+      className="w-full text-sm outline-none rounded-md px-3 py-1.5"
+      style={{ color: 'var(--ink)', background: 'var(--field-bg, rgba(0,0,0,0.04))', border: '1px solid var(--border-subtle)' }}
+    />
+  )
+}
+
+function WorkflowDateInput({ value, onSave }: { value: string; onSave: (v: string | null) => void }) {
+  const inputRef = useRef<HTMLInputElement>(null)
+  const formatted = value ? formatShortDate(value) : null
+  return (
+    <div className="flex items-center gap-2">
+      <button
+        onClick={() => inputRef.current?.showPicker()}
+        className="text-sm rounded-md px-2.5 py-1.5 transition-colors hover:bg-black/[0.03] dark:hover:bg-white/[0.05]"
+        style={{ color: formatted ? 'var(--ink)' : 'var(--slate)', opacity: formatted ? 1 : 0.7, cursor: 'pointer', background: 'none', border: '1px solid var(--border-subtle)' }}
+      >
+        {formatted || 'Set date…'}
+      </button>
+      <input ref={inputRef} type="date" value={value} onChange={(e) => onSave(e.target.value || null)} className="sr-only" tabIndex={-1} />
+      {value && (
+        <button onClick={() => onSave(null)} className="text-xs px-1 rounded" style={{ color: 'var(--slate)', cursor: 'pointer', background: 'none', border: 'none', opacity: 0.6 }}>&times;</button>
+      )}
+    </div>
+  )
+}
+
+export function WorkflowSection({ fields, onChange }: { fields: WorkflowFields; onChange: (patch: Partial<WorkflowFields>) => void }) {
+  return (
+    <div className="flex flex-col" style={{ gap: 'var(--sp-sm, 10px)' }}>
+      <div className="grid grid-cols-2" style={{ gap: 'var(--sp-sm, 10px)' }}>
+        {/* Waiting on */}
+        <div className="flex flex-col" style={{ gap: 'var(--sp-xs, 6px)' }}>
+          <label className="flex items-center" style={{ gap: 'var(--sp-xs, 6px)', fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', fontWeight: 'var(--label-weight)' }}>
+            <Clock size={11} style={{ opacity: 0.85 }} />
+            Waiting on
+          </label>
+          <WorkflowTextInput
+            value={fields.waiting_on ?? ''}
+            placeholder="Who or what am I waiting on…"
+            onSave={(v) => onChange({ waiting_on: v })}
+          />
+        </div>
+        {/* Next check-in */}
+        <div className="flex flex-col" style={{ gap: 'var(--sp-xs, 6px)' }}>
+          <label className="flex items-center" style={{ gap: 'var(--sp-xs, 6px)', fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', fontWeight: 'var(--label-weight)' }}>
+            <Clock size={11} style={{ opacity: 0.85 }} />
+            Next check-in
+          </label>
+          <WorkflowDateInput value={fields.next_checkin_date ?? ''} onSave={(v) => onChange({ next_checkin_date: v })} />
+        </div>
+        {/* Promised to */}
+        <div className="flex flex-col" style={{ gap: 'var(--sp-xs, 6px)' }}>
+          <label className="flex items-center" style={{ gap: 'var(--sp-xs, 6px)', fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', fontWeight: 'var(--label-weight)' }}>
+            <Handshake size={11} style={{ opacity: 0.85 }} />
+            Promised to
+          </label>
+          <WorkflowTextInput
+            value={fields.promised_to ?? ''}
+            placeholder="Who did I commit this to…"
+            onSave={(v) => onChange({ promised_to: v })}
+          />
+        </div>
+        {/* Promise date */}
+        <div className="flex flex-col" style={{ gap: 'var(--sp-xs, 6px)' }}>
+          <label className="flex items-center" style={{ gap: 'var(--sp-xs, 6px)', fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', fontWeight: 'var(--label-weight)' }}>
+            <Handshake size={11} style={{ opacity: 0.85 }} />
+            By when
+          </label>
+          <WorkflowDateInput value={fields.promise_date ?? ''} onSave={(v) => onChange({ promise_date: v })} />
+        </div>
+      </div>
     </div>
   )
 }

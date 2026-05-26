@@ -14,7 +14,7 @@ import { useCommitments } from '../hooks/useCommitments'
 import { useAddExpertise, useRemoveExpertise } from '../hooks/useMutations'
 import { useAuth } from '../hooks/useAuth'
 import type { CommitmentRow } from '../hooks/useCommitments'
-import { getMemberBySlug } from '../data/team'
+import { getMemberBySlug, getPersonInfo } from '../data/team'
 import { getMenteeBySlug } from '../data/mentees'
 import { projects } from '../data/projects'
 import { formatShortDate, isOverdue } from '../lib/dateUtils'
@@ -49,6 +49,8 @@ function MemberCommitmentCard({ item }: { item: CommitmentRow }) {
   const isDone = item.status === 'done'
   const overdue = !isDone && isOverdue(item.due_date)
   const borderColor = isDone ? 'var(--teal)' : overdue ? 'var(--maroon)' : 'var(--gold)'
+  // to_slug is authoritative when present (WS2.4); falls back to to_whom text
+  const toPersonInfo = item.to_slug ? getPersonInfo(item.to_slug) : null
 
   return (
     <motion.div
@@ -111,6 +113,21 @@ function MemberCommitmentCard({ item }: { item: CommitmentRow }) {
               >
                 {overdue ? 'overdue' : 'due'} {formatShortDate(item.due_date)}
               </span>
+            )}
+
+            {/* to whom — avatar chip when to_slug present, else text fallback */}
+            {(item.to_slug || item.to_whom) && (
+              <>
+                {(item.due_date || item.source) && <span style={{ color: 'var(--slate)', opacity: 0.75 }}>&middot;</span>}
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: '11px', color: 'var(--slate)', opacity: 0.85 }}>
+                  {toPersonInfo?.photoUrl ? (
+                    <img src={toPersonInfo.photoUrl} alt={toPersonInfo.name} style={{ width: 14, height: 14, borderRadius: '50%', objectFit: 'cover' }} />
+                  ) : toPersonInfo ? (
+                    <span style={{ width: 14, height: 14, borderRadius: '50%', background: 'var(--gold-light)', border: '1px solid var(--gold)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 8, fontWeight: 700, color: 'var(--gold)', flexShrink: 0 }}>{toPersonInfo.initials}</span>
+                  ) : null}
+                  {toPersonInfo ? toPersonInfo.name : item.to_whom}
+                </span>
+              </>
             )}
 
             {/* Source */}
