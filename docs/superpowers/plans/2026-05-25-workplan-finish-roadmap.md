@@ -92,7 +92,8 @@ M4 — P2 Task Workflow Surface ✅ DONE 2026-05-26 (see DONE ledger)
 - Size: **M/L**. Steer-first: yes for commitments semantics. `WORKPLAN.md:19-22`, `WORKPLAN.md:175`, `WORKPLAN.md:187-191`
 - Shipped: steer = Full M4 · distinct/freeform fields (Handoff separate) · jsonl-canonical commitments · badge+detail-edit. Commits Hub `8d9a72c7`+`a3ff9004`, PB `77d74578`. Live on prod (Worker `75809e4f`, Pages `06af842e`).
 
-M5 — Increment 2 Activity Timeline + Comments
+M5 — Increment 2 Activity Timeline + Comments  📋 PLAN READY 2026-05-26 (build gated on Nick review)
+- Codex-audited (build-with-amendments) + task-by-task plan: `docs/superpowers/plans/2026-05-26-m5-timeline-build-plan.md` (5 phases, 18 tasks); audit `docs/superpowers/plans/2026-05-26-m5-codex-audit.md`. Body model LOCKED = plain `description` canonical (description_json = generated cache). NOT started.
 - Closes: notes→description privacy/correctness model, unified Activity timeline, comment composer, mentions/NotificationBell, Activity write transport, ProjectDetail Activity tab if scoped in.
 - Prereqs: client_ts cutover met; Plan 1B and sync drift milestones should be done to avoid shared-file collision and rollback confusion.
 - Size: **XL**. Steer-first: yes for migration decisions, despite approved concept. `WORKPLAN.md:56`, `docs/superpowers/specs/2026-05-23-activity-timeline-comments-design.md:106-115`
