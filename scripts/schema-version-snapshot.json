@@ -1,7 +1,7 @@
 {
   "description": "Canonical set of api/schema-v*.sql migration files. Regenerate with: python scripts/check-schema-versions.py --update",
-  "hash": "49417b06bfb0674bf425372ddb65ae3858b9fc44ec05629e371e2174958f070b",
-  "file_count": 72,
+  "hash": "37f30613e1d244f51f90cbc04590cfdc21fb7401d141ff894873285161125074",
+  "file_count": 73,
   "files": [
     "schema-v2.sql",
     "schema-v3.sql",
@@ -74,11 +74,12 @@
     "schema-v65-sessions-deleted-at.sql",
     "schema-v66-rename-decision-log.sql",
     "schema-v67-stage3-deleted-at.sql",
-    "schema-v68-stage-entered-at.sql"
+    "schema-v68-stage-entered-at.sql",
+    "schema-v69-commitments-to-slug.sql"
   ],
   "version_range": [
     2,
-    68
+    69
   ],
   "gaps": [
     35,

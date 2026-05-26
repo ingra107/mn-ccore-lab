@@ -69,10 +69,10 @@ export async function handleCommitments(url: URL, env: Env): Promise<Response> {
     params.push(`%${toWhom.toLowerCase()}%`, `%${toWhom.toLowerCase()}%`);
   }
   if (slug) {
-    // Match by team member slug — look in to_whom for the name
-    // Also try matching the slug directly against known team patterns
-    query += ' AND (LOWER(to_whom) LIKE ? OR LOWER(to_whom) LIKE ?)';
-    params.push(`%${slug.toLowerCase()}%`, `%${slug.toLowerCase()}%`);
+    // Prefer exact to_slug match (populated since schema-v69); also keep
+    // fuzzy to_whom fallback for rows written before the column existed.
+    query += ' AND (LOWER(to_slug) = ? OR LOWER(to_whom) LIKE ?)';
+    params.push(slug.toLowerCase(), `%${slug.toLowerCase()}%`);
   }
   if (status) {
     query += ' AND status = ?';
@@ -93,12 +93,13 @@ export async function handleCreateCommitment(request: Request, env: Env): Promis
   }
 
   await env.DB.prepare(
-    `INSERT OR REPLACE INTO commitments (id, commitment, to_whom, status, due_date, source, project, task_id, created_at, completed_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    `INSERT OR REPLACE INTO commitments (id, commitment, to_whom, to_slug, status, due_date, source, project, task_id, created_at, completed_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ).bind(
     body.id as string,
     body.commitment as string,
     body.to_whom as string,
+    (body.to_slug as string) ?? null,
     (body.status as string) ?? 'open',
     (body.due_date as string) ?? null,
     (body.source as string) ?? null,
