@@ -422,6 +422,85 @@ export function assertProtectedNotNull(
   return null;
 }
 
+/**
+ * Phase A1 — per-item validation flags for the /api/mutations write path.
+ *
+ * Each validator (enum / conflict_hash / completion_tombstone / dedup) is gated
+ * by its own lab_settings row so a false-fire in one can be reverted without
+ * disabling the others (Q4 tiebreak: per-item flags; enum is highest false-fire
+ * risk). Mirrors getPiEmails: lab_settings lookup, 5-min in-module cache, and
+ * fallback OFF on any DB-read failure — a config hiccup must NOT lock out writes
+ * (Q3 tiebreak + risk register #6). Keys (lab_settings.key, value '1'|'0'):
+ *   hub_validate_enums
+ *   hub_validate_conflict_hash
+ *   hub_validate_completion_tombstone
+ *   hub_dedup_adoptable
+ *
+ * DEPLOY POSTURE: seeded OFF in prod. Validators are dormant (zero behavior
+ * change) until each flag is flipped ON via a single UPDATE lab_settings, after
+ * the read-only Step-0 prod-D1 audit confirms zero un-aliasable values.
+ */
+export interface ValidationFlags {
+  enums: boolean;
+  conflict_hash: boolean;
+  completion_tombstone: boolean;
+  dedup: boolean;
+}
+
+const VALIDATION_FLAGS_DEFAULT: ValidationFlags = {
+  enums: false,
+  conflict_hash: false,
+  completion_tombstone: false,
+  dedup: false,
+};
+
+const VALIDATION_FLAG_KEYS: Record<keyof ValidationFlags, string> = {
+  enums: 'hub_validate_enums',
+  conflict_hash: 'hub_validate_conflict_hash',
+  completion_tombstone: 'hub_validate_completion_tombstone',
+  dedup: 'hub_dedup_adoptable',
+};
+
+let validationFlagsCache: { flags: ValidationFlags; fetchedAt: number } | null = null;
+const VALIDATION_FLAGS_TTL_MS = 5 * 60 * 1000;
+
+/** Read the per-item validation flags from lab_settings. Cached 5 minutes.
+ *  Falls back to ALL-OFF if any row is missing or the query throws — a config
+ *  hiccup must never lock out writes (validators dormant on error). A row value
+ *  of '1' (string) is ON; anything else (including a missing row) is OFF. */
+export async function getValidationFlags(env: Env): Promise<ValidationFlags> {
+  const now = Date.now();
+  if (validationFlagsCache && now - validationFlagsCache.fetchedAt < VALIDATION_FLAGS_TTL_MS) {
+    return validationFlagsCache.flags;
+  }
+  try {
+    const keys = Object.values(VALIDATION_FLAG_KEYS);
+    const placeholders = keys.map(() => '?').join(', ');
+    const { results } = await env.DB.prepare(
+      `SELECT key, value FROM lab_settings WHERE key IN (${placeholders})`,
+    ).bind(...keys).all<{ key: string; value: string }>();
+    const byKey = new Map<string, string>(
+      (results ?? []).map((r: { key: string; value: string }) => [r.key, r.value] as [string, string]),
+    );
+    const flags: ValidationFlags = { ...VALIDATION_FLAGS_DEFAULT };
+    (Object.keys(VALIDATION_FLAG_KEYS) as Array<keyof ValidationFlags>).forEach(item => {
+      flags[item] = byKey.get(VALIDATION_FLAG_KEYS[item]) === '1';
+    });
+    validationFlagsCache = { flags, fetchedAt: now };
+    return flags;
+  } catch {
+    // Fall through to ALL-OFF — never lock out writes on a config-read failure.
+    validationFlagsCache = { flags: VALIDATION_FLAGS_DEFAULT, fetchedAt: now };
+    return VALIDATION_FLAGS_DEFAULT;
+  }
+}
+
+/** Test-only: clear the validation-flags cache so a test that seeds new
+ *  lab_settings rows isn't served a stale TTL window. */
+export function _resetValidationFlagsCache(): void {
+  validationFlagsCache = null;
+}
+
 /** Build a dynamic UPDATE clause from allowed fields */
 export function buildUpdate(body: Record<string, unknown>, allowedFields: string[]) {
   const updates: string[] = []

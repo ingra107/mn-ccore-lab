@@ -1,0 +1,189 @@
+{
+  "_generated_by": "python -m scripts.db.schema_contract_codegen --emit-hub-enum-domains (Phase A1; SSOT = scripts/db/enums.py + outbox.PROJECT_TYPE_TO_HUB_CATEGORY). DO NOT EDIT BY HAND.",
+  "tables": {
+    "projects": {
+      "category": {
+        "canonical": [
+          "CLIF",
+          "MNCCORE",
+          "Peripheral Brain"
+        ],
+        "legacy_aliases": {},
+        "nullable": true
+      },
+      "stage": {
+        "canonical": [
+          "idea",
+          "data_collection",
+          "data_analysis",
+          "writing",
+          "submitted",
+          "revisions",
+          "accepted",
+          "published"
+        ],
+        "legacy_aliases": {
+          "Accepted": "accepted",
+          "Analysis": "data_analysis",
+          "Analyzing": "data_analysis",
+          "Collection": "data_collection",
+          "Data Analysis": "data_analysis",
+          "Data Collecting": "data_collection",
+          "Data Collection": "data_collection",
+          "Drafting": "writing",
+          "Idea": "idea",
+          "In Revision": "revisions",
+          "In Revisions": "revisions",
+          "Published": "published",
+          "R&R": "revisions",
+          "Review": "submitted",
+          "Revise & Resubmit": "revisions",
+          "Revise and Resubmit": "revisions",
+          "Revisions": "revisions",
+          "Submitted": "submitted",
+          "Writing": "writing"
+        },
+        "nullable": true
+      },
+      "state": {
+        "canonical": [
+          "active",
+          "waiting",
+          "delegated",
+          "incubating",
+          "parked",
+          "closing",
+          "dead"
+        ],
+        "legacy_aliases": {
+          "Active": "active",
+          "Closing": "closing",
+          "Dead": "dead",
+          "Delegated": "delegated",
+          "Incubating": "incubating",
+          "Parked": "parked",
+          "Waiting": "waiting"
+        },
+        "nullable": true
+      },
+      "status": {
+        "canonical": [
+          "active",
+          "waiting_external",
+          "blocked",
+          "done"
+        ],
+        "legacy_aliases": {
+          "Active": "active",
+          "Blocked": "blocked",
+          "COMPLETED": "done",
+          "Complete": "done",
+          "Completed": "done",
+          "Done": "done",
+          "In Preparation": "active",
+          "In Review": "active",
+          "Not started": "active",
+          "Pending": "waiting_external",
+          "Waiting": "waiting_external"
+        },
+        "nullable": false
+      }
+    },
+    "tasks": {
+      "deadline_type": {
+        "canonical": [
+          "hard",
+          "soft",
+          "self_imposed",
+          "opportunistic"
+        ],
+        "legacy_aliases": {
+          "Hard": "hard",
+          "Opportunistic": "opportunistic",
+          "Self-Imposed": "self_imposed",
+          "Soft": "soft",
+          "self-imposed": "self_imposed"
+        },
+        "nullable": true
+      },
+      "effort": {
+        "canonical": [
+          "quick",
+          "deep",
+          "multi"
+        ],
+        "legacy_aliases": {
+          "Deep": "deep",
+          "Multi": "multi",
+          "Quick": "quick"
+        },
+        "nullable": true
+      },
+      "next_artifact": {
+        "canonical": [
+          "email",
+          "draft",
+          "figure",
+          "decision",
+          "meeting",
+          "analysis",
+          "response_letter",
+          "biosketch",
+          "other"
+        ],
+        "legacy_aliases": {
+          "Analysis": "analysis",
+          "Biosketch": "biosketch",
+          "Decision": "decision",
+          "Draft": "draft",
+          "Email": "email",
+          "Figure": "figure",
+          "Meeting": "meeting",
+          "Other": "other",
+          "Response Letter": "response_letter",
+          "response letter": "response_letter"
+        },
+        "nullable": true
+      },
+      "priority": {
+        "canonical": [
+          "low",
+          "medium",
+          "high",
+          "urgent"
+        ],
+        "legacy_aliases": {
+          "High": "high",
+          "Low": "low",
+          "Medium": "medium",
+          "Normal": "medium",
+          "Urgent": "urgent",
+          "normal": "medium",
+          "p0": "urgent",
+          "p1": "high",
+          "p2": "medium",
+          "p3": "low"
+        },
+        "nullable": true
+      },
+      "status": {
+        "canonical": [
+          "todo",
+          "in_progress",
+          "done",
+          "blocked",
+          "waiting_external",
+          "deleted"
+        ],
+        "legacy_aliases": {
+          "Active": "todo",
+          "Blocked": "blocked",
+          "Completed": "done",
+          "Done": "done",
+          "Waiting": "waiting_external"
+        },
+        "nullable": false
+      }
+    }
+  }
+}

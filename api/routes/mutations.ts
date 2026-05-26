@@ -21,9 +21,10 @@
 // domain tables outside this route is a hard fail. Migrate every existing
 // write path through this endpoint as part of A3 ship.
 
-import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, assertProtectedNotNull } from '../helpers';
+import type { AuthUser, Env, ValidationFlags } from '../helpers';
+import { json, error, generateId, assertProtectedNotNull, getValidationFlags } from '../helpers';
 import { nowInstant } from '../lib/time';
+import { assertEnumDomain, assertCompletionTriad } from '../lib/enum-domains';
 
 const ALLOWED_TABLES = new Set([
   'tasks', 'projects', 'inbox_events', 'day_capacity', 'project_state_log',
@@ -305,6 +306,11 @@ interface MutationResult {
   canonical_payload?: Record<string, unknown>;
   current_payload?: Record<string, unknown>;
   reason?: string;
+  // Phase A1 (V3 dedup): when an insert is deduped onto an existing canonical
+  // row (serial path OR race-loser path), Hub returns the WINNER's PK here so
+  // the PB outbox ack handler can adopt it via a hub_slug alias instead of
+  // dead-lettering or keeping a zombie row. Present only on adoptable acks.
+  canonical_id?: string;
 }
 
 export async function handleMutations(
@@ -327,8 +333,13 @@ export async function handleMutations(
   // depends_on chain tracking within this batch
   const inBatchResults = new Map<string, MutationResult>();
 
+  // Phase A1: read the per-item validation flags ONCE per batch (5-min cached,
+  // fallback ALL-OFF on read failure). Seeded OFF in prod -> validators dormant
+  // -> zero behavior change until each flag is flipped on.
+  const flags = await getValidationFlags(env);
+
   for (const mut of body.mutations) {
-    const result = await processOne(env, mut, inBatchResults, user);
+    const result = await processOne(env, mut, inBatchResults, user, flags);
     results.push(result);
     inBatchResults.set(mut.mutation_id, result);
   }
@@ -341,6 +352,7 @@ async function processOne(
   mut: Mutation,
   inBatchResults: Map<string, MutationResult>,
   user: AuthUser,
+  flags: ValidationFlags,
 ): Promise<MutationResult> {
   // Validate envelope — ALL required fields checked BEFORE any DB access.
   // Fail-fast here prevents partial-batch commits: if a later mutation in the
@@ -436,15 +448,43 @@ async function processOne(
       const idem = await recordProcessedAtomic(env, mut, r);
       return idem ?? r;
     }
+
+    // V1 enum (hub_validate_enums) — canonicalize-forward every enum field in
+    // `fields` (MUTATES it to canonical: status 'Active'->'todo' is ACCEPTED,
+    // not rejected — risk-#1 dead-letter-wave guard). Rejects ONLY unmappable
+    // junk as status='error'. Keyed on the Hub WIRE field name (category, not
+    // type). Dormant unless the flag is ON.
+    if (flags.enums) {
+      const enumErr = assertEnumDomain(mut.table, fields);
+      if (enumErr) {
+        const r = mutErr(mut.mutation_id, enumErr);
+        const idem = await recordProcessedAtomic(env, mut, r);
+        return idem ?? r;
+      }
+    }
+
+    // V4 completion-triad (hub_validate_completion_tombstone) — for tasks
+    // inserts, assert status='done' <=> completed=1 <=> completed_at present
+    // against the resulting state (no current row on insert). Update-path triad
+    // is checked inside applyUpdate where `current` is available. Isolated flag
+    // (most likely to false-fire on Hub-UI partial writes). Dormant unless ON.
+    if (flags.completion_tombstone && mut.op === 'insert') {
+      const triadErr = assertCompletionTriad(mut.table, null, fields);
+      if (triadErr) {
+        const r = mutErr(mut.mutation_id, triadErr);
+        const idem = await recordProcessedAtomic(env, mut, r);
+        return idem ?? r;
+      }
+    }
   }
 
   // Dispatch by op
   let result: MutationResult;
   try {
     if (mut.op === 'insert') {
-      result = await applyInsert(env, mut, user);
+      result = await applyInsert(env, mut, user, flags);
     } else if (mut.op === 'update' || mut.op === 'append') {
-      result = await applyUpdate(env, mut, user);
+      result = await applyUpdate(env, mut, user, flags);
     } else if (mut.op === 'delete') {
       result = await applyDelete(env, mut, user);
     } else {
@@ -467,7 +507,7 @@ async function processOne(
 
 // ── Apply functions (per-op; per-table column dispatch inside) ──────────────
 
-export async function applyInsert(env: Env, mut: Mutation, user: AuthUser): Promise<MutationResult> {
+export async function applyInsert(env: Env, mut: Mutation, user: AuthUser, flags?: ValidationFlags): Promise<MutationResult> {
   if (!mut.payload) return mutErr(mut.mutation_id, 'insert requires payload');
 
   // I18 dedup (2026-05-03): for tasks inserts, reject duplicate (title, project_id)
@@ -499,10 +539,18 @@ export async function applyInsert(env: Env, mut: Mutation, user: AuthUser): Prom
         // Return the existing row as the canonical result. Outbox treats
         // this as accepted-idempotent: the conceptual task exists on Hub,
         // the PB-side can adopt the existing Hub id via alias.
+        //
+        // V3 dedup (hub_dedup_adoptable): when the flag is ON, surface the
+        // WINNER's PK as canonical_id so the PB outbox ack handler can adopt it
+        // via a hub_slug alias (closing the zombie-row class). The
+        // canonical_payload is also returned so the cache converges. The flag
+        // gates only the canonical_id surfacing — the dedup itself (returning
+        // accepted, not a second row) is pre-existing I18 behavior.
         const canonical = await readCanonical(env, 'tasks', dup.id);
         return mkResult(mut.mutation_id, 'accepted', {
           result_seq: canonical?.seq as number | undefined,
           canonical_payload: canonical || undefined,
+          canonical_id: flags?.dedup ? dup.id : undefined,
           reason: `deduped: active task with same (title, project_id) exists as ${dup.id}`,
         });
       }
@@ -540,7 +588,43 @@ export async function applyInsert(env: Env, mut: Mutation, user: AuthUser): Prom
   // same canonical state. End-to-end idempotent.
   const sql = `INSERT INTO ${mut.table} (${cols.join(', ')}) VALUES (${placeholders}) ON CONFLICT${conflictTarget} DO NOTHING`;
 
-  await env.DB.prepare(sql).bind(...vals).run();
+  try {
+    await env.DB.prepare(sql).bind(...vals).run();
+  } catch (e) {
+    // V3 dedup race-loser path (tasks.dedup.test.ts:382 TODO):
+    // The serial dedup SELECT above runs BEFORE the winner's INSERT commits in a
+    // true race, so it finds no row. The INSERT then fires the partial unique
+    // index `idx_tasks_title_project_active` ON (title, project_id) WHERE
+    // deleted_at IS NULL AND status != 'done' -> a UNIQUE constraint error that
+    // ON CONFLICT(id) does NOT absorb (different conflict target). Pre-fix this
+    // dead-lettered an actually-accepted conceptual task. Fix: re-run the
+    // dup-lookup and return the SAME adoptable `accepted` + canonical_id the
+    // serial path returns, so the race-loser adopts the winner's PK via alias.
+    const msg = (e as Error).message ?? '';
+    const isUniqueRace =
+      mut.table === 'tasks' && /UNIQUE constraint failed/i.test(msg);
+    if (isUniqueRace) {
+      const title = (mut.payload as Record<string, unknown>).title as string | undefined;
+      const projectId = (mut.payload as Record<string, unknown>).project_id as string | null | undefined;
+      if (title) {
+        const dup = await env.DB.prepare(
+          `SELECT id FROM tasks WHERE title = ? AND project_id IS ? AND deleted_at IS NULL AND status != 'done' LIMIT 1`,
+        ).bind(title, projectId ?? null).first<{ id: string }>();
+        if (dup) {
+          const canonical = await readCanonical(env, 'tasks', dup.id);
+          return mkResult(mut.mutation_id, 'accepted', {
+            result_seq: canonical?.seq as number | undefined,
+            canonical_payload: canonical || undefined,
+            canonical_id: flags?.dedup ? dup.id : undefined,
+            reason: `deduped (race-loser): active task with same (title, project_id) exists as ${dup.id}`,
+          });
+        }
+      }
+    }
+    // Not the dedup race (or no winner found) — re-throw so processOne's catch
+    // records the original error (preserves the existing failure shape).
+    throw e;
+  }
   const canonical = await readCanonical(env, mut.table, mut.record_id);
   return mkResult(mut.mutation_id, 'accepted', {
     result_seq: canonical?.seq as number | undefined,
@@ -564,7 +648,7 @@ export async function applyInsert(env: Env, mut: Mutation, user: AuthUser): Prom
 // fields if absent, UPDATE if present. Stage 3 Phase 3.6 fix 2026-05-11.
 const UPSERT_ON_MISS_TABLES = new Set(['sessions']);
 
-export async function applyUpdate(env: Env, mut: Mutation, user: AuthUser): Promise<MutationResult> {
+export async function applyUpdate(env: Env, mut: Mutation, user: AuthUser, flags?: ValidationFlags): Promise<MutationResult> {
   if (!mut.patch) return mutErr(mut.mutation_id, 'update requires patch');
 
   const current = await readCanonical(env, mut.table, mut.record_id);
@@ -634,6 +718,53 @@ export async function applyUpdate(env: Env, mut: Mutation, user: AuthUser): Prom
   }
 
   const currentSeq = (current.seq as number) ?? 0;
+
+  // V4 completion-triad on the update path (hub_validate_completion_tombstone):
+  // assert the RESULTING state (current row + patch) satisfies the triad. Skips
+  // when resulting status='deleted' and when the patch touches no completion
+  // signal (avoids false-firing on unrelated edits to a row whose stored triad
+  // is legacy-inconsistent). Dormant unless the flag is ON.
+  if (flags?.completion_tombstone) {
+    const triadErr = assertCompletionTriad(mut.table, current, mut.patch as Record<string, unknown>);
+    if (triadErr) {
+      return mutErr(mut.mutation_id, triadErr);
+    }
+  }
+
+  // V2 conflict-hash closure (hub_validate_conflict_hash) — BROAD (Q2 tiebreak):
+  // close the two fail-open lanes that let a blind overwrite of an existing row
+  // through, returning `conflict` (NOT error) so PB's self-heal resolver
+  // (outbox.py:924) runs LWW merge instead of dead-lettering.
+  //
+  //   (i)  stale-seq (currentSeq > base_seq) + MISSING base_row_hash: the live
+  //        code treats this as merged_clean and applies blindly. Reject as
+  //        conflict — we cannot prove the touched fields are unchanged.
+  //   (ii) op=update with base_seq=null against an EXISTING row: a PB-origin
+  //        blind overwrite. Reject as conflict.
+  //
+  // EXEMPTION: origin_machine starting 'hub_ui:' — applyMutation deliberately
+  // constructs Hub-UI writes with base_seq=null + base_row_hash=null (:790-806).
+  // Those are the canonical writer and must apply. Do NOT sweep sessions
+  // upsert-on-miss (handled above; row was absent, not existing) or append ops.
+  const isHubUiOrigin = (mut.origin_machine ?? '').startsWith('hub_ui:');
+  if (flags?.conflict_hash && mut.op === 'update' && !isHubUiOrigin) {
+    // (ii) base_seq=null against an existing row -> blind overwrite -> conflict.
+    if (mut.base_seq === null || mut.base_seq === undefined) {
+      return mkResult(mut.mutation_id, 'conflict', {
+        result_seq: currentSeq,
+        current_payload: current,
+        reason: `base_seq=null on update against existing ${mut.table} ${mut.record_id} (blind overwrite refused)`,
+      });
+    }
+    // (i) stale-seq + missing base_row_hash -> cannot verify -> conflict.
+    if (currentSeq > mut.base_seq && !mut.base_row_hash) {
+      return mkResult(mut.mutation_id, 'conflict', {
+        result_seq: currentSeq,
+        current_payload: current,
+        reason: `current_seq=${currentSeq} > base_seq=${mut.base_seq} with no base_row_hash (cannot verify; refused)`,
+      });
+    }
+  }
 
   // Conflict check (only for update with base_seq)
   if (mut.op === 'update' && mut.base_seq !== null && mut.base_seq !== undefined) {
@@ -804,7 +935,10 @@ export async function applyMutation(
     issued_at: nowInstant(),
   };
   // Route through processOne so idempotency + processed_mutations recording fires.
-  return await processOne(env, mut, new Map(), args.user);
+  // Hub-UI internal writes read the same validation flags; the V2 conflict
+  // closure exempts 'hub_ui:' origins (base_seq=null is deliberate here).
+  const flags = await getValidationFlags(env);
+  return await processOne(env, mut, new Map(), args.user, flags);
 }
 
 /**
