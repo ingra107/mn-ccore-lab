@@ -5,7 +5,7 @@ created: 2026-03-25
 status: active
 domain: Research
 tier: 2-Biweekly
-next_action: Increment 1A Phase α SHIPPED + LIVE 2026-05-23 (deploy 17d7cdd1 on 68b8d861) — time-discipline chokepoints + R20-R23 lint (warn) + Hub LMM churn-fix + tasks.notes redaction. NEXT = Increment 1A Phase β (Tasks 5-9: LWW enforce flip + UTC migration) in a DEDICATED COORDINATED session — preconditions: home laptop quiescent, triage 16 pre-existing tests/sync failures, snapshot-first, fail-closed. Plan: docs/superpowers/plans/2026-05-23-increment-1A-time-sync-foundation.md. See SESSION-HANDOFF.md.
+next_action: Full-system audit + brainstorm IN PROGRESS (2026-05-27) — every endpoint/read/write/hook/page/button verified vs the new Hub-first model + Playwright visual verification + simplification/UX-clarity → collate → Codex audit → plan. GROUND TRUTH (post PB Phase D/E/F): tasks/projects are Hub-first (D1 canonical, brain.db = pull-cache; outbox deleted for tasks/projects edits ONLY, still live for PB-local tables); schema v69; Plan 1B DONE (time lint ENFORCE); M2/M3/M4 done; M5 activity-timeline+comments plan READY (gated on Nick review). See SESSION-HANDOFF.md + WORKPLAN.md + Scratch/audit-2026-05-27/GROUND-TRUTH.md.
 primary_folder: C:/Users/ingra107/mn-ccore-lab
 ---
 
@@ -16,7 +16,7 @@ platform for Nick's critical-care research group at UMN.
 
 **Live:** https://mn-ccore-lab.pages.dev  (LIVE for team — CF Access gates `/portal/*` via @umn.edu)
 **Repo:** https://github.com/ingra107/mn-ccore-lab  (720+ commits)
-**Current deploy:** `17d7cdd1.mn-ccore-lab.pages.dev` (2026-05-23, Increment 1A Phase α; HEAD `376e95e9` on main, schema v68). See SESSION-HANDOFF.md + WORKPLAN.md for current state.
+**Current HEAD:** `fc7c08f9` on main (2026-05-26, Phase A1 `/api/mutations` validators landed flags-OFF), schema v69. Verify the live deploy with `wrangler pages deployment list --project-name mn-ccore-lab`. See SESSION-HANDOFF.md + WORKPLAN.md for current state.
 **Quality gate:** 🟢 GREEN — build clean, inspection 149/149 post-simplify, smoke 27/27 (pre-simplify baseline), deep-audit 14/14 clean, axe WCAG 2.1 AA clean across 29 pages × 2 color schemes, schema-drift CI green.
 
 ## 🚨 Read these FIRST every session

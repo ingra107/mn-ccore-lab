@@ -11,8 +11,8 @@ in comments).
 
 - **Frontend:** React 19 + Vite 8 + TypeScript + Tailwind v4 + Framer Motion 12
 - **API:** Hono v4.12 router on Cloudflare Workers (Phase 36)
-- **Data:** TanStack Query v5 → Cloudflare D1 (60 tables, ~225 endpoints)
-- **Testing:** Playwright (213+ inspection + mobile smoke + desktop journey) + Vitest (component)
+- **Data:** TanStack Query v5 → Cloudflare D1 (75 tables, 236 route registrations)
+- **Testing:** Playwright (568+ tests, 4 suites) + Vitest (component, browser mode)
 - **Realtime:** Cloudflare Durable Objects + PartySocket (`hub-realtime` worker)
 - **AI assistant:** Hermes via `hub_ai_listener.py` (Peripheral Brain)
 

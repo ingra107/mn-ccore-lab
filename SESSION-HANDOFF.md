@@ -1,6 +1,12 @@
-# Session Handoff — 2026-05-23
+# Session Handoff — 2026-05-27
 
-## ▶▶ NEXT SESSION — Phase β of Increment 1A (COORDINATED, both machines)
+## ▶▶ CURRENT — Full-system audit + brainstorm IN PROGRESS
+
+**Read `Scratch/audit-2026-05-27/GROUND-TRUTH.md` first** — it is the verified current state after the PB Phase D/E/F simplification. Headlines: tasks/projects are now **Hub-first** (D1 canonical, brain.db = pull-cache; the outbox edit lane was deleted **for tasks/projects only** — outbox still serves PB-local semantic tables + `inbox_events`); schema **v69**; **Plan 1B DONE** (time-discipline lint = ENFORCE); M2/M3/M4 done; **M5** (activity-timeline + comments) plan READY, gated on Nick's review. A full-system audit — every endpoint/read/write/hook/page/button + Playwright visual verification + simplification/UX-clarity — is IN PROGRESS → collate → Codex audit → plan.
+
+> ⚠️ **SUPERSEDED — do NOT action.** Everything below referencing "Phase β", the `lww_zone_shadow.jsonl` review gate, "P1 SYNC-FIDELITY", and the "DEDICATED COORDINATED SESSION" is done or moot. Phase β shipped as a forward primitive 2026-05-25 (Tasks 8/9 descoped); the shadow-log window is moot post-enforce (zero divergences by construction → no file is ever written). Kept below as history only.
+
+## ▶▶ (HISTORY) NEXT SESSION — Phase β of Increment 1A (COORDINATED, both machines)
 
 **The full reviews-before-code → brainstorm → writing-plans → executing-plans pipeline RAN this session. Increment 1A Phase α is SHIPPED + DEPLOYED + LIVE. Phase β (the live-data cross-machine migration) was DEFERRED by Nick to a dedicated coordinated session — that is your next action. Do NOT re-run the review/design/plan work; it's done + committed.**
 
@@ -28,7 +34,7 @@
 | Deploy | `17d7cdd1.mn-ccore-lab.pages.dev` (2026-05-23, Increment 1A Phase α) — LIVE on `68b8d861`. `/api/health` ok (tasks 759/projects 93/team 19, 0 failures). Shipped: Task 4 LMM churn-fix + `tasks.notes` redaction (`66e5c9d0`) + `time.ts` + lint CI. |
 | Build | GREEN (0 TS errors) |
 | API tests | **208/208** passing (Hub). PB `tests/sync/`: ✅ **328 passed / 2 skip / 0 failures** (was 18 stale-test failures — triaged + retired as test debt, PB commit `4427a808`, 2026-05-24). |
-| Schema | **v68** prod D1. PB migration high-water `087_stage3_deleted_at`; Phase β adds `088_normalize_timestamps_utc.py` (stopped-world). |
+| Schema | **v69** prod D1 (commitments.to_slug). brain.db migration high-water **093** (sync_status neutralized/inert; mig-088 = `blocked_by` legacy-ID backfill, NOT timestamp-normalize — that migration was descoped). |
 | API auth | GET endpoints locked down (unchanged from 2026-05-15) |
 | Team adoption | Not yet broadly directed. |
 
@@ -95,6 +101,8 @@ Security (digest XSS/escapeHtml, GET API auth lockdown, admin endpoints deleted,
 ---
 
 ## Next Session Playbook
+
+> ⚠️ **SUPERSEDED 2026-05-27.** The P1 SYNC-FIDELITY / shadow-log / notes↔description-protocol items below are DONE or superseded by the Hub-first simplification + the M5 plan. See the CURRENT banner at the top + `Scratch/audit-2026-05-27/GROUND-TRUTH.md`. Kept as history.
 
 **▶ P1 SYNC-FIDELITY is the active priority (mission north-star #1).** State: Track A safe wins SHIPPED (frozen-row trust-tax gone), P0/P1 root-cause front-end SHIPPED (PB `61c53d78`, 51 tests) with a **provenance shadow-log running on the 3 pull-gates — 48h window started ~2026-05-23 03:00 UTC**. **⏰ NEXT ACTION (~2026-05-25, after the window): review `~/Peripheral-Brain/data/logs/lww_zone_shadow.jsonl`** — if 0 "new-decision-wrong" rows, proceed with the gated tasks (flip pull-gates to origin-aware; Task 5 LMM writer→UTC; Task 6 `client_ts` explicit-Z + Hub `advanceProjectMovement` cutover, CROSS-REPO with hub-backend; Task 7 43-row migration). Plan: `~/Peripheral-Brain/Context/Decisions/2026-05-22-sync-lww-timezone-unification-v2.md`. **▶ NEW DESIGN DECIDED (P2) — Activity Timeline + Comments.** The `notes`↔`description` question is RESOLVED → **Model A** (consolidate the 4 overlapping text fields → clean **Description** + unified **Activity timeline** with a one-line `MentionInput` comment composer + `@`→`NotificationBell`; **`notes` becomes brain.db-local-only**). Spec (detailed, with exhaustive read/write map + migration questions): **`docs/superpowers/specs/2026-05-23-activity-timeline-comments-design.md`**. Core problem it fixes: Hub `description` is wrongly an *append-target* for brain.db notes. **Next-session protocol (Nick's explicit instruction):** (1) review whole WORKPLAN + this spec; (2) `/codex-cli` review of JUST this part; (3) Codex must output explicit step-by-step instructions to **(a) alter the plan** and **(b) carry out the notes+comments migration**; (4) then implement under P2. Out-of-scope per Nick: comment auto-changing a structured field. Independent quick win: redact the residual `SELECT *` `tasks.notes` leak (`tasks.ts:149/339/466/934` + `proactive-brief.ts:18/25`). Then P2 (Today/MyTasks completeness) → P3 (research SoR) → P4 (Co-Scientist) per WORKPLAN north-star.
 

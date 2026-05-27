@@ -29,7 +29,7 @@ The MN-CCORE Lab Hub is the **team's operating surface** — where research gets
 | Stack | React 19 + Vite 8 + Tailwind v4 + Framer Motion 12 + TypeScript + Hono v4.12 |
 | Testing | Playwright 1.59 (568+ tests, 4 suites) + Vitest 4.1 (component, browser mode) |
 | Data | TanStack Query v5 + Cloudflare D1 (75 tables, sqlite_master excl. internal; ~225 endpoints via Hono) + Recharts |
-| D1 database (prod) | `b8453e9b-7c5f-4029-b07d-dd89c05d00cf` (ENAM), binding: `DB`. Schema v68. |
+| D1 database (prod) | `b8453e9b-7c5f-4029-b07d-dd89c05d00cf` (ENAM), binding: `DB`. Schema v69. |
 | D1 database (test) | `a30fe84d-0891-4035-9358-f7813b5f5807` (mnccore-lab-test), binding: `DB_TEST` |
 | Schema drift CI | `.github/workflows/schema-drift.yml` — nightly 03 CT. Guardrail against silent prod migrations. |
 | Deploy mode | **Manual via `wrangler pages deploy` ONLY — no auto-deploy** (no Pages CI workflow exists; verified 2026-05-22 — pushed commits did NOT trigger a deployment). `pages.dev` = production (serves frontend + `/api/*`); `wrangler deploy` → a SEPARATE, unused `workers.dev`. Verify the live commit: `wrangler pages deployment list --project-name mn-ccore-lab` (Source col). |
@@ -119,14 +119,14 @@ A page is a "data page" if its primary content is a scrollable record list. Neve
 
 ### Shared Utilities
 - `src/lib/dateUtils.ts` — all date formatting
-- `src/lib/time.ts` — canonical time chokepoint (Increment 1A): `Instant`/`CivilDate` types, `nowInstant()` (UTC), `formatLocal()` (viewer-local display), `todayCivil()`. Discipline: store instants UTC, display viewer-local (browser zone = traveler-aware). Lint R20-R23 (`scripts/check-time-discipline.mjs`, WARN) flags raw `new Date().toISOString()` / `.toISOString().split|slice`. Full ~91-site adoption is Plan 1B; dateUtils.ts is still in use until then.
+- `src/lib/time.ts` — canonical time chokepoint (Increment 1A): `Instant`/`CivilDate` types, `nowInstant()` (UTC), `formatLocal()` (viewer-local display), `todayCivil()`. Discipline: store instants UTC, display viewer-local (browser zone = traveler-aware). Lint R20-R23 (`scripts/check-time-discipline.mjs`, **ENFORCE** — CI hard-fails on any new raw-date site) flags raw `new Date().toISOString()` / `.toISOString().split|slice`. Plan 1B (the ~139-site display migration to viewer-local) is **COMPLETE** (2026-05-25): all hits cleared, lint flipped WARN→ENFORCE. `dateUtils.ts` remains in use alongside `time.ts`.
 - `src/data/team.ts:getPersonInfo()` — team member lookup
 - `formatBrandName()` from `BrandName.tsx` — any text that might contain "MNCCORE"
 
 ## Architecture
 
 ```
-brain.db ←LWW→ D1 (mnccore-lab) ←API→ React + TanStack Query
+brain.db ⇄ D1 (mnccore-lab) ←API→ React + TanStack Query
    ↑                    ↑
 Nick's CLI         Team's Hub
 (single user)   (20+ team members)
@@ -141,14 +141,14 @@ Nick's CLI         Team's Hub
 
 ### Sync Architecture
 
-brain.db is the **primary store**. D1 (Hub) is the primary UI + write target. Sync model: field-level last-write-wins (LWW) with timestamps. Conflicts logged to `sync_log`.
+**Tasks & projects: D1 (Hub) is canonical; brain.db is a disposable pull-cache** (PB Phase D/E/F simplification, 2026-05-27). Every hub-synced tasks/projects write — status, assignee, key-links, slug rename, create, delete — routes through BrainDB **Hub-first** writers: POST `/api/mutations` first, then mirror the accepted canonical row into brain.db at `sync_status='synced'`. **No outbox lane, no `local_modified`, no dirty-push** for tasks/projects edits; the local row can be discarded + rebuilt from Hub (`rebuild_brain_db.py --import-pb-only`). The **pull** direction is still LWW-gated (3 origin-aware UTC pull-gates in `hub.py`; Hub wins when strictly newer). ⚠️ The outbox machinery is **still load-bearing** for PB-local semantic tables (sessions, agent_knowledge, memory_facts, decisions, kg_*, pomodoro_sessions, trajectories) + `inbox_events` — "no outbox" applies ONLY to the tasks/projects edit lane. `sync_status` on tasks/projects is **inert** (always `'synced'`, mig-093; `v_pending_sync` + sync indexes dropped); physical `DROP COLUMN` is gated on a zero-reader check (`.githooks/check_no_sync_status_readers.py`).
 
 **Key rules:**
 - Brain.db tasks use canonical `task_{ulid}` IDs. Hub-created tasks use typed ULIDs (e.g., `task_01KP...`). Both reachable via `entity_aliases` (hub_slug alias).
-- `notes` (brain.db) vs `description` (D1, team-visible). ⚠️ **UNDER REVIEW (2026-05-22):** the code currently DOES sync these bidirectionally (push brain.db `notes`→Hub `description`; pull Hub `description`→brain.db `notes`, the latter since 2026-05-12 "Task 1.2") — this CONTRADICTS the original "notes is private, do-NOT-sync" privacy boundary. Pending Nick's call: intended, or a privacy regression to revert (private notes leaking to the team-visible field)?
+- `notes` (brain.db) vs `description` (D1, team-visible). **DECISION MADE — Model A:** `notes` becomes **brain.db-local-only**; the bidirectional `notes`↔`description` sync is a privacy regression to be **removed in M5** (activity-timeline + comments build). The old bidirectional path is STILL in code (outbox `_LOCAL_TO_HUB_FIELD_MAP`, pull-back in `hub.py`, create-leaks in `query.py`/`hub_payload.py`) until M5 executes — do NOT treat current bidirectional behavior as intended. Plan: `docs/superpowers/plans/2026-05-26-m5-timeline-build-plan.md`.
 - Task deletion uses soft-delete (`deleted_at` column). `GET /api/tasks?include_deleted=1` surfaces them for the sync module.
 - `completed` field is bidirectional — Hub can reopen tasks.
-- Hub task/project **updates** mirror into brain.db `d1_task_updates` / `d1_project_updates` (append-only, read-only). (`d1_task_comments` exists in schema but is inert/0-rows; task *comments* are not mirrored. Side-note: both update-mirrors have had no new rows in ~1mo for a 20-person team — hub-backend should confirm team updates are being written.)
+- Hub task/project **updates** mirror into brain.db `d1_task_updates` / `d1_project_updates` (append-only, read-only). (`d1_task_comments` exists in schema but is inert/0-rows; task *comments* are not mirrored.) M5 (activity-timeline + comments) reconciles the update-mirror vs unified-Activity-timeline overlap.
 - Hub-originated projects flow into brain.db — `category` (MNCCORE/CLIF/Peripheral Brain) maps onto brain.db `domain`.
 
 **Implementation:** `scripts/db/sync/` (drivers/hub.py + boundary + payload). Decision: `Context/Decisions/2026-04-21-sync-extraction-COMPLETE.md` in PB.
@@ -272,7 +272,7 @@ Live since 2026-04-09. Team members @mention `@hermes` in Ask the Lab, task comm
 60. **MyTasks view picker far-left of filter row, persisted in `localStorage.mt_view`.** Three views share ONE toolbar. List view uses right-side drawer (cursor-stable j/k nav); Columns and Lanes use inline expand. Source: `src/pages/portal/UnifiedMyTasks.tsx`.
 61. **Right Now is a promoted slot, not a fixed task.** Subtle gold glow only here (`box-shadow: 0 0 24px rgba(201,168,76,0.06)`); nothing else gets a glow. Mark-done unplans, sinks to bottom with strikethrough, auto-promotes next planned task. Source: `useTodayState` in `src/pages/portal/TodayPage.tsx`.
 62. **Group sort within a TaskGroup: planned → active → done.** Don't re-sort by priority/due_date within a group — that fights the operating-day mental model. Source: `TaskGroup` in `TodayPage.tsx` (also applies to UnifiedMyTasks Lanes view).
-63. **`tasks.group_override` is the explicit Hub-authored bucket choice; `getGroupForTask()` checks it FIRST.** Schema v50. Groups: `'deep' | 'priorities' | 'quick' | 'pb' | 'etl' | NULL`. Syncs to brain.db via LWW. `generate_today_markdown.py::_GROUP_OVERRIDE_TO_SECTION` honors it. API guard: `VALID_GROUP_OVERRIDES` rejects non-canonical values with 400. Decision: `Context/Decisions/2026-04-25-tasks-group-override.md`.
+63. **`tasks.group_override` is the explicit Hub-authored bucket choice; `getGroupForTask()` checks it FIRST.** Schema v50. Groups: `'deep' | 'priorities' | 'quick' | 'pb' | 'etl' | NULL`. Pulls to brain.db (tasks are Hub-first written; D1 canonical). `generate_today_markdown.py::_GROUP_OVERRIDE_TO_SECTION` honors it. API guard: `VALID_GROUP_OVERRIDES` rejects non-canonical values with 400. Decision: `Context/Decisions/2026-04-25-tasks-group-override.md`.
 64. **Personal calendar feeds are iCal pull, not OAuth.** Schema v52. Users paste private iCal URLs into `/portal/profile` or `/portal/settings#integrations`. Hub polls lazily, parses via `api/lib/ics-parser.ts`, upserts to `user_calendar_events`. UI: `src/components/CalendarFeedsPanel.tsx` (shared TanStack cache key `calendar-feeds`). Tests: 24 vitest unit tests at `api/lib/ics-parser.test.ts`; run via `npm run test:api`.
 65. **CF Access auth uses Generic OIDC `Google UMN`, not the preset Google IdP.** `Auth URL = https://accounts.google.com/o/oauth2/auth?prompt=select_account&hd=umn.edu`. Don't revert to the preset Google IdP — it loses the account chooser.
 66. **`ensureTeamMember()` runs on every authed request — auto-create + claim.** Schema v53. Four-branch logic: (1) direct email match → no-op; (2) slug match via LUT → CLAIM existing row, backfill email+photo; (3) slug match via raw email-prefix → same; (4) no match → INSERT auto_created=1 row (PENDING REVIEW badge). `PUT /api/team/:slug` is owner-or-PI gated; role + member_type are PI-only.

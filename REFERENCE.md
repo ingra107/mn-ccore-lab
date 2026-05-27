@@ -30,7 +30,7 @@ shims in `src/App.tsx` placed outside `RequireAuth`.
 **API routes** (`/api/*`) are NOT gated by CF Access. Auth enforced
 server-side via X-API-Key + `REQUIRE_AUTH` + JWT verify.
 
-## D1 Tables (75 — sqlite_master, excl. sqlite_/internal; schema v68)
+## D1 Tables (75 — sqlite_master, excl. sqlite_/internal; schema v69)
 
 | Table | Rows | Purpose |
 |-------|------|---------|
