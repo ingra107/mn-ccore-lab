@@ -63,12 +63,13 @@ describe('route contract — generated from ROUTE_REGISTRY', () => {
     }
   })
 
-  it('registry meets the migration-floor count (>= 230)', () => {
-    // Floor: post-Z1.3 the hardening branch had 236 route registrations.
-    // Migration should not shrink the surface — tightening to 230 prevents a
-    // sneaky route DELETION while leaving room for one or two intentional
-    // retirements without bumping this number.
-    expect(ROUTE_REGISTRY.length).toBeGreaterThanOrEqual(230)
+  it('registry has exactly the expected route count', () => {
+    // Snapshot: 236 routes as of hub-hardening-2026-05-27 merge (commit 0b5e0b86).
+    // Adding a route → increment this number. Removing a route → decrement it.
+    // This makes route deletion require explicit acknowledgment, preventing
+    // silent surface regression (codex final-audit finding #9, 2026-05-28).
+    // If you are intentionally adding or removing routes, update this count.
+    expect(ROUTE_REGISTRY).toHaveLength(236)
   })
 
   it('every non-public route has either entity or visibility metadata', () => {
