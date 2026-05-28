@@ -74,3 +74,19 @@ export function safeRow(table: string, row: Record<string, unknown>): Record<str
   }
   return result;
 }
+
+/**
+ * T2.6 (2026-05-28) · `FK_SLUG_FIELDS` — per-table registry of FK columns whose
+ * value is a project id-or-slug that must be canonicalized to the stored form
+ * (`slug || id`) before write. Generalizes the tasks-only project_id
+ * canonicalization in applyInsert: any new table with a projects-FK column
+ * registers here and gets resolved automatically.
+ *
+ * Semantics: each column listed for a given table will be looked up via
+ * projectRefToCanonical at write time; unresolvable refs become NULL (no
+ * reject, mirroring the existing /api/tasks behavior — PB may push before
+ * the project row arrives on Hub, then a later sync resolves it).
+ */
+export const FK_SLUG_FIELDS: Record<string, string[]> = {
+  tasks: ['project_id'],
+};

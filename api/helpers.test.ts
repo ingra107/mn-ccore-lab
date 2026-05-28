@@ -432,3 +432,18 @@ describe('safeRow + TABLE_PRIVATE_COLS — T2.5', () => {
     expect(safeTaskRow(row)).toEqual(safeRow('tasks', row))
   })
 })
+
+// ── T2.6: FK_SLUG_FIELDS registry ────────────────────────────────────────────
+
+describe('FK_SLUG_FIELDS — T2.6', () => {
+  it('registers tasks → [project_id]', async () => {
+    const { FK_SLUG_FIELDS } = await import('./lib/task-cols')
+    expect(FK_SLUG_FIELDS.tasks).toBeDefined()
+    expect(FK_SLUG_FIELDS.tasks).toContain('project_id')
+  })
+
+  it('returns empty for unknown table (??[] guards the iteration in applyInsert)', async () => {
+    const { FK_SLUG_FIELDS } = await import('./lib/task-cols')
+    expect(FK_SLUG_FIELDS.notatable).toBeUndefined()
+  })
+})

@@ -23,6 +23,7 @@
 
 import type { AuthUser, Env, ValidationFlags } from '../helpers';
 import { json, error, generateId, assertProtectedNotNull, getValidationFlags, safeTaskRow, safeRow, projectRefToCanonical } from '../helpers';
+import { FK_SLUG_FIELDS } from '../lib/task-cols';
 import { nowInstant } from '../lib/time';
 import { assertEnumDomain, assertCompletionTriad } from '../lib/enum-domains';
 
@@ -557,16 +558,24 @@ export async function applyInsert(env: Env, mut: Mutation, user: AuthUser, flags
     }
   }
 
-  // Fix 7: resolve project_id for tasks inserts so raw slugs are never stored.
-  // The direct /api/tasks route already calls projectRefToCanonical; the
-  // /api/mutations path accepted payload.project_id raw, leaving orphaned refs
-  // when PB pushed a slug-form project_id. Matches tasks-route behavior: unresolvable
-  // → NULL (no reject — PB may push before the project row arrives on Hub).
-  if (mut.table === 'tasks' && mut.payload && 'project_id' in (mut.payload as Record<string, unknown>)) {
-    const rawPid = (mut.payload as Record<string, unknown>).project_id as string | null | undefined;
-    if (rawPid) {
-      const canonical = await projectRefToCanonical(env, rawPid);
-      (mut.payload as Record<string, unknown>).project_id = canonical ?? null;
+  // T2.6 (2026-05-28): FK_SLUG_FIELDS registry replaces the tasks-only
+  // project_id branch. Each column listed for this table is canonicalized
+  // via projectRefToCanonical; unresolvable refs become NULL (no reject —
+  // PB may push before the project row arrives on Hub, then a later sync
+  // resolves it). Matches the /api/tasks direct-route behavior. Originally
+  // Fix 7 (2026-04-xx) — was hardcoded to ('tasks', 'project_id'); now
+  // any new table with a projects FK can register here.
+  const fkFields = FK_SLUG_FIELDS[mut.table] ?? [];
+  if (mut.payload && fkFields.length > 0) {
+    const payloadRec = mut.payload as Record<string, unknown>;
+    for (const field of fkFields) {
+      if (field in payloadRec) {
+        const rawRef = payloadRec[field] as string | null | undefined;
+        if (rawRef) {
+          const canonical = await projectRefToCanonical(env, rawRef);
+          payloadRec[field] = canonical ?? null;
+        }
+      }
     }
   }
 
