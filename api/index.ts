@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import type { Context, Next } from 'hono';
 import type { Env } from './types';
-import { corsHeaders, json, error, getAuthUser, isPiRequest, getPiEmails, ensureTeamMember, actorSlugFromRequest, logActivity } from './helpers';
+import { corsHeaders, json, error, getAuthUser, isPiRequest, getPiEmails, ensureTeamMember, actorSlugFromRequest, logActivity, assertProjectVisible } from './helpers';
 import type { AuthUser } from './helpers';
 import { validateApiKey } from './middleware/api-key-auth';
 import { handleVersion, bumpVersion } from './lib/version';
@@ -490,7 +490,7 @@ app.get('/api/projects/:slug/revisions', async (c) => {
   const projectId = proj.slug || proj.id;
   const rewrittenUrl = new URL(c.req.url);
   rewrittenUrl.searchParams.set('project_id', projectId);
-  return handleGetRevisions(rewrittenUrl, env);
+  return handleGetRevisions(rewrittenUrl, R(c), env);
 });
 app.get('/api/projects', (c) => handleGetProjects(U(c), E(c), c.get('user'), c.get('apiKeyValid') === true));
 // GET /api/projects/:id — single-record fetch by id or slug (codex Q4 2026-05-12).
@@ -506,8 +506,8 @@ app.get('/api/meetings/next', (c) => handleNextMeeting(E(c)));
 // Agenda/prep/generate-agenda are auth-gated (isAuthed flag mirrors handleGetMeeting pattern).
 // Unauth callers get 401; authed team members get the full internal content.
 app.get('/api/meetings/:id/agenda', (c) => handleGetAgendaItems(c.req.param('id'), E(c), c.get('authedUser') !== null || c.get('apiKeyValid') === true));
-app.get('/api/meetings/:id/generate-agenda', (c) => handleGenerateAgenda(c.req.param('id'), E(c), c.get('authedUser') !== null || c.get('apiKeyValid') === true));
-app.get('/api/meetings/:id/prep', (c) => handleMeetingPrep(c.req.param('id'), E(c), c.get('authedUser') !== null || c.get('apiKeyValid') === true));
+app.get('/api/meetings/:id/generate-agenda', async (c) => handleGenerateAgenda(c.req.param('id'), E(c), c.get('authedUser') !== null || c.get('apiKeyValid') === true, await isPiRequest(R(c), E(c))));
+app.get('/api/meetings/:id/prep', async (c) => handleMeetingPrep(c.req.param('id'), E(c), c.get('authedUser') !== null || c.get('apiKeyValid') === true, await isPiRequest(R(c), E(c))));
 // Meeting detail — authed callers get full row; unauth get public-safe cols only.
 app.get('/api/meetings/:id', (c) => handleGetMeeting(c.req.param('id'), E(c), c.get('authedUser') !== null || c.get('apiKeyValid') === true));
 app.get('/api/meetings', (c) => handleGetMeetings(E(c), c.get('authedUser') !== null || c.get('apiKeyValid') === true));
@@ -521,8 +521,8 @@ app.get('/api/dependencies', (c) => handleGetDependencies(E(c)));
 // Revisions
 // ─────────────────────────────────────────────────────────────────────────────
 app.get('/api/revisions/active', async (c) => handleGetActiveRevisions(E(c), await isPiRequest(R(c), E(c))));
-app.get('/api/revisions/:id/comments', (c) => handleGetRevisionComments(c.req.param('id'), E(c)));
-app.get('/api/revisions', (c) => handleGetRevisions(U(c), E(c)));
+app.get('/api/revisions/:id/comments', (c) => handleGetRevisionComments(c.req.param('id'), R(c), E(c)));
+app.get('/api/revisions', (c) => handleGetRevisions(U(c), R(c), E(c)));
 app.get('/api/manuscripts/attention', async (c) => {
   const env = E(c);
   const user = c.get('authedUser') || (await getAuthUser(c.req.raw, env));
@@ -603,9 +603,25 @@ app.get('/api/task-comments/recent', async (c) => {
   const env = E(c);
   const limit = Math.min(parseInt(url.searchParams.get('limit') || '200', 10), 500);
   const since = url.searchParams.get('since');
+  // Phase 1b-extended: filter PB-category comments out for non-PI callers.
+  // Join task_comments → tasks → projects so we can check category. The filter
+  // also tolerates orphan task_comments (LEFT JOIN) by surfacing them
+  // regardless of category (no PB risk if there's no project link).
+  const canSeePb = await isPiRequest(R(c), env);
+  const pbFilter = canSeePb
+    ? ''
+    : " AND (p.category IS NULL OR p.category != 'Peripheral Brain')";
   const q = since
-    ? 'SELECT * FROM task_comments WHERE created_at > ? ORDER BY created_at DESC LIMIT ?'
-    : 'SELECT * FROM task_comments ORDER BY created_at DESC LIMIT ?';
+    ? `SELECT tc.* FROM task_comments tc
+       LEFT JOIN tasks t ON tc.task_id = t.id
+       LEFT JOIN projects p ON p.id = t.project_id OR p.slug = t.project_id
+       WHERE tc.created_at > ?${pbFilter}
+       ORDER BY tc.created_at DESC LIMIT ?`
+    : `SELECT tc.* FROM task_comments tc
+       LEFT JOIN tasks t ON tc.task_id = t.id
+       LEFT JOIN projects p ON p.id = t.project_id OR p.slug = t.project_id
+       WHERE 1=1${pbFilter}
+       ORDER BY tc.created_at DESC LIMIT ?`;
   const result = since
     ? await env.DB.prepare(q).bind(since, limit).all()
     : await env.DB.prepare(q).bind(limit).all();
@@ -652,8 +668,8 @@ app.get('/api/team/:slug/contributions', (c) => handleGetContributions(c.req.par
 // ─────────────────────────────────────────────────────────────────────────────
 // Deadline cascade
 // ─────────────────────────────────────────────────────────────────────────────
-app.get('/api/deadline-cascade/all', (c) => handleGetAllCascades(E(c)));
-app.get('/api/deadline-cascade/impact', (c) => handleGetImpact(U(c), E(c)));
+app.get('/api/deadline-cascade/all', async (c) => handleGetAllCascades(E(c), await isPiRequest(R(c), E(c))));
+app.get('/api/deadline-cascade/impact', (c) => handleGetImpact(U(c), R(c), E(c)));
 app.get('/api/deadline-cascade', (c) => handleGetCascade(U(c), R(c), E(c)));
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -676,16 +692,16 @@ app.get('/api/grant-milestones', (c) => handleGetGrantMilestones(U(c), E(c)));
 // ─────────────────────────────────────────────────────────────────────────────
 // Regulatory
 // ─────────────────────────────────────────────────────────────────────────────
-app.get('/api/regulatory/expiring', (c) => handleGetExpiringItems(U(c), E(c)));
+app.get('/api/regulatory/expiring', async (c) => handleGetExpiringItems(U(c), E(c), await isPiRequest(R(c), E(c))));
 // Auth-only (not PI) — team members need iCal access to renewal reminders.
 app.get('/api/regulatory/:id/ics', (c) => handleRegulatoryIcs(c.req.param('id'), E(c), R(c)));
-app.get('/api/regulatory', (c) => handleGetRegulatoryItems(U(c), R(c), E(c)));
+app.get('/api/regulatory', async (c) => handleGetRegulatoryItems(U(c), R(c), E(c), await isPiRequest(R(c), E(c))));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Conferences
 // ─────────────────────────────────────────────────────────────────────────────
-app.get('/api/conferences/upcoming', (c) => handleGetUpcomingConferences(E(c)));
-app.get('/api/conferences', (c) => handleGetConferences(U(c), R(c), E(c)));
+app.get('/api/conferences/upcoming', async (c) => handleGetUpcomingConferences(E(c), await isPiRequest(R(c), E(c))));
+app.get('/api/conferences', async (c) => handleGetConferences(U(c), R(c), E(c), await isPiRequest(R(c), E(c))));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Email drafts (reads)
@@ -718,9 +734,20 @@ app.get('/api/tasks/:id/files', async (c) => {
   // Auth required — task files are team-internal content.
   const authedUser = c.get('authedUser');
   if (!authedUser && c.get('apiKeyValid') !== true) return error('Authentication required', 401);
+  // Phase 1b-extended: if the task belongs to a PB-category project, block non-PI
+  // callers from listing the file metadata. Mirrors the read-side gates on
+  // task comments/updates/activity (api/routes/tasks.ts).
+  const taskId = c.req.param('id');
+  const taskRowForGate = await env.DB.prepare(
+    'SELECT project_id FROM tasks WHERE id = ? AND deleted_at IS NULL'
+  ).bind(taskId).first<{ project_id: string | null }>();
+  if (taskRowForGate?.project_id) {
+    const block = await assertProjectVisible(R(c), env, taskRowForGate.project_id);
+    if (block) return block;
+  }
   const { results } = await env.DB.prepare(
     'SELECT id, task_id, filename, url, file_type, uploaded_by, created_at FROM task_files WHERE task_id = ? ORDER BY created_at DESC'
-  ).bind(c.req.param('id')).all();
+  ).bind(taskId).all();
   return json({ data: results });
 });
 app.get('/api/tasks/:id/updates', (c) => handleGetTaskUpdates(c.req.param('id'), R(c), E(c)));
@@ -749,7 +776,7 @@ app.post('/api/projects/:slug/delete', (c) => handleDeleteProject(c.req.param('s
 app.post('/api/projects/:slug/comments', (c) => handleAddComment(c.req.param('slug'), R(c), USER(c), E(c)));
 app.post('/api/projects/:slug/updates', (c) => handlePostProjectUpdate(c.req.param('slug'), R(c), USER(c), E(c)));
 app.post('/api/projects/:slug/documents', (c) => handleCreateProjectDocument(c.req.param('slug'), R(c), USER(c), E(c)));
-app.post('/api/projects/:slug/documents/:docId/delete', (c) => handleDeleteProjectDocument(c.req.param('docId'), E(c)));
+app.post('/api/projects/:slug/documents/:docId/delete', (c) => handleDeleteProjectDocument(c.req.param('docId'), R(c), E(c)));
 app.post('/api/projects/:slug', (c) => handleUpdateProject(c.req.param('slug'), R(c), USER(c), E(c)));
 
 // Team
@@ -783,10 +810,16 @@ app.post('/api/tasks/:id/files', async (c) => {
   // Owner-or-PI gate: only the task owner/assignee or a PI may attach files.
   const callerSlug = await actorSlugFromRequest(R(c), env);
   if (!callerSlug) return error('Authentication required', 401);
+  // Phase 1b-extended: also gate on PB-project visibility. Pull project_id in
+  // the same row read so we don't pay a second round-trip.
   const task = await env.DB.prepare(
-    'SELECT assignee FROM tasks WHERE id = ? LIMIT 1'
-  ).bind(id).first<{ assignee: string | null }>();
+    'SELECT assignee, project_id FROM tasks WHERE id = ? LIMIT 1'
+  ).bind(id).first<{ assignee: string | null; project_id: string | null }>();
   if (!task) return error('Task not found', 404);
+  if (task.project_id) {
+    const block = await assertProjectVisible(R(c), env, task.project_id);
+    if (block) return block;
+  }
   // Null-assignee guard: unassigned tasks are NOT locked to any owner.
   // Only block when assignee is non-null AND differs AND caller is not PI.
   if (task.assignee != null && task.assignee !== callerSlug && !(await isPiRequest(R(c), env))) {
@@ -813,11 +846,21 @@ app.post('/api/task-files/:id/delete', async (c) => {
   const fileId = c.req.param('id');
   const callerSlug = await actorSlugFromRequest(R(c), env);
   if (!callerSlug) return error('Authentication required', 401);
-  // Look up the file to get the parent task and its assignee.
+  // Look up the file to get the parent task, its assignee, and project_id.
   const fileRow = await env.DB.prepare(
-    'SELECT tf.id, tf.task_id, tf.filename, t.assignee FROM task_files tf LEFT JOIN tasks t ON tf.task_id = t.id WHERE tf.id = ? LIMIT 1'
-  ).bind(fileId).first<{ id: string; task_id: string; filename: string; assignee: string | null }>();
-  if (!fileRow) return error('File not found', 404);
+    'SELECT tf.id, tf.task_id, tf.filename, t.assignee, t.project_id FROM task_files tf LEFT JOIN tasks t ON tf.task_id = t.id WHERE tf.id = ? LIMIT 1'
+  ).bind(fileId).first<{ id: string; task_id: string; filename: string; assignee: string | null; project_id: string | null }>();
+  // SEC-10.3 + Phase 1b-extended: idempotent — repeat delete (row already gone)
+  // returns 200 with idempotent:true. Codex flagged that the prior 404 leaked
+  // existence of file IDs to non-owners.
+  if (!fileRow) return json({ data: { deleted: fileId, idempotent: true } });
+  // Phase 1b-extended: gate on PB-project visibility before the assignee check.
+  // A non-PI knowing a PB task-file id must not be able to delete (or learn
+  // about its existence via a different error code).
+  if (fileRow.project_id) {
+    const block = await assertProjectVisible(R(c), env, fileRow.project_id);
+    if (block) return block;
+  }
   // Null-assignee guard: unassigned tasks are NOT locked to any owner.
   // Only block when assignee is non-null AND differs AND caller is not PI.
   if (fileRow.assignee != null && fileRow.assignee !== callerSlug && !(await isPiRequest(R(c), env))) {
@@ -825,7 +868,7 @@ app.post('/api/task-files/:id/delete', async (c) => {
   }
   await env.DB.prepare('DELETE FROM task_files WHERE id = ?').bind(fileId).run();
   await logActivity(env, 'task_file_delete', `Deleted file "${fileRow.filename}" from task ${fileRow.task_id}`, callerSlug, fileRow.task_id, 'task');
-  return json({ data: { deleted: fileId } });
+  return json({ data: { deleted: fileId, idempotent: false } });
 });
 
 // Subtasks
@@ -974,7 +1017,7 @@ app.post('/api/revisions/:id', (c) => handleUpdateRevision(c.req.param('id'), R(
 
 // Submissions
 app.post('/api/submissions', (c) => handleCreateSubmission(R(c), USER(c), E(c)));
-app.post('/api/submissions/:id/delete', (c) => handleDeleteSubmission(c.req.param('id'), USER(c), E(c)));
+app.post('/api/submissions/:id/delete', (c) => handleDeleteSubmission(c.req.param('id'), R(c), USER(c), E(c)));
 app.post('/api/submissions/:id', (c) => handleUpdateSubmission(c.req.param('id'), R(c), USER(c), E(c)));
 
 // Mentee milestones
@@ -997,12 +1040,12 @@ app.post('/api/regulatory/:id', (c) => handleUpdateRegulatoryItem(c.req.param('i
 
 // Conferences
 app.post('/api/conferences', (c) => handleCreateConference(R(c), USER(c), E(c)));
-app.post('/api/conferences/:id/delete', (c) => handleDeleteConference(c.req.param('id'), USER(c), E(c)));
+app.post('/api/conferences/:id/delete', (c) => handleDeleteConference(c.req.param('id'), R(c), USER(c), E(c)));
 app.post('/api/conferences/:id', (c) => handleUpdateConference(c.req.param('id'), R(c), USER(c), E(c)));
 
 // Deadline dependencies
 app.post('/api/deadline-dependencies', (c) => handleCreateDeadlineDependency(R(c), USER(c), E(c)));
-app.post('/api/deadline-dependencies/:id/delete', (c) => handleDeleteDeadlineDependency(c.req.param('id'), E(c)));
+app.post('/api/deadline-dependencies/:id/delete', (c) => handleDeleteDeadlineDependency(c.req.param('id'), R(c), E(c)));
 
 // Digest email
 app.post('/api/digest-email', (c) => handleGenerateDigestEmail(R(c), E(c)));
