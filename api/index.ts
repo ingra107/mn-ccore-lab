@@ -96,6 +96,10 @@ type AppEnv = {
     /** Effective user for handler calls. On writes this falls back to the
      *  anonymous shim unless REQUIRE_AUTH is set + auth is missing. */
     user: AuthUser;
+    /** T2.7: precomputed PB visibility flag (set by the /api/* middleware).
+     *  True iff the caller can see Peripheral Brain content (PI email or
+     *  valid API key). Read via the CSP helper at handler registrations. */
+    canSeePb: boolean;
   };
 };
 
@@ -306,6 +310,24 @@ app.use('*', async (c, next) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// 5b. T2.7 (2026-05-28): canSeePb middleware — resolve PB visibility ONCE.
+// 12+ list-route registrations were doing `await isPiRequest(R(c), E(c))`
+// inline at the handler invocation site. Each call re-parses the JWT or
+// re-validates the API key. Compute once per request, stash on context,
+// and let handlers read it via c.get('canSeePb').
+//
+// Polarity: canSeePb = true when the caller is permitted to see PB content
+// (PI email OR valid API key). Matches the handler signature shape
+// (handler(url, env, canSeePb = false)). The 'false' default in handlers
+// means "fail-closed" (no PB) on any path that forgets to forward the flag.
+// ─────────────────────────────────────────────────────────────────────────────
+app.use('/api/*', async (c, next) => {
+  const env = c.get('env');
+  c.set('canSeePb', await isPiRequest(c.req.raw, env));
+  await next();
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // SEC-10.4: Rate limiting — ABSENT from this middleware stack (2026-05-27).
 // Investigation: no rate-limit layer exists anywhere in api/index.ts or
 // api/middleware/. The full middleware chain is:
@@ -349,6 +371,11 @@ const E = (c: Context<AppEnv>) => c.get('env');
 const U = (c: Context<AppEnv>) => new URL(c.req.url);
 const R = (c: Context<AppEnv>) => c.req.raw;
 const USER = (c: Context<AppEnv>) => c.get('user');
+// T2.7: precomputed canSeePb (set by the /api/* middleware above). True iff
+// the caller can see Peripheral Brain content (PI email or valid API key).
+// Replaces `await isPiRequest(R(c), E(c))` at handler-invocation sites that
+// were re-doing JWT parsing / API-key validation on every route call.
+const CSP = (c: Context<AppEnv>) => c.get('canSeePb') === true;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Meta + auth endpoints
@@ -470,7 +497,7 @@ app.get('/api/papers/by-publication', (c) => handlePapersByPublication(U(c), E(c
 // ─────────────────────────────────────────────────────────────────────────────
 // Projects (ordering matters: revisions > papers > dependencies > :slug etc.)
 // ─────────────────────────────────────────────────────────────────────────────
-app.get('/api/projects/health', async (c) => handleProjectHealth(E(c), await isPiRequest(R(c), E(c))));
+app.get('/api/projects/health', (c) => handleProjectHealth(E(c), CSP(c)));
 // Tombstone endpoint — consumed by sync_d1_pull.pull_hub_projects to mirror
 // Hub project deletes into brain.db. Airtable cascade comment: handleDeleteProject
 // writes deleted_at and (when secrets present) DELETEs the matching Airtable rec.
@@ -506,8 +533,8 @@ app.get('/api/meetings/next', (c) => handleNextMeeting(E(c)));
 // Agenda/prep/generate-agenda are auth-gated (isAuthed flag mirrors handleGetMeeting pattern).
 // Unauth callers get 401; authed team members get the full internal content.
 app.get('/api/meetings/:id/agenda', (c) => handleGetAgendaItems(c.req.param('id'), E(c), c.get('authedUser') !== null || c.get('apiKeyValid') === true));
-app.get('/api/meetings/:id/generate-agenda', async (c) => handleGenerateAgenda(c.req.param('id'), E(c), c.get('authedUser') !== null || c.get('apiKeyValid') === true, await isPiRequest(R(c), E(c))));
-app.get('/api/meetings/:id/prep', async (c) => handleMeetingPrep(c.req.param('id'), E(c), c.get('authedUser') !== null || c.get('apiKeyValid') === true, await isPiRequest(R(c), E(c))));
+app.get('/api/meetings/:id/generate-agenda', (c) => handleGenerateAgenda(c.req.param('id'), E(c), c.get('authedUser') !== null || c.get('apiKeyValid') === true, CSP(c)));
+app.get('/api/meetings/:id/prep', (c) => handleMeetingPrep(c.req.param('id'), E(c), c.get('authedUser') !== null || c.get('apiKeyValid') === true, CSP(c)));
 // Meeting detail — authed callers get full row; unauth get public-safe cols only.
 app.get('/api/meetings/:id', (c) => handleGetMeeting(c.req.param('id'), E(c), c.get('authedUser') !== null || c.get('apiKeyValid') === true));
 app.get('/api/meetings', (c) => handleGetMeetings(E(c), c.get('authedUser') !== null || c.get('apiKeyValid') === true));
@@ -520,7 +547,7 @@ app.get('/api/dependencies', (c) => handleGetDependencies(E(c)));
 // ─────────────────────────────────────────────────────────────────────────────
 // Revisions
 // ─────────────────────────────────────────────────────────────────────────────
-app.get('/api/revisions/active', async (c) => handleGetActiveRevisions(E(c), await isPiRequest(R(c), E(c))));
+app.get('/api/revisions/active', (c) => handleGetActiveRevisions(E(c), CSP(c)));
 app.get('/api/revisions/:id/comments', (c) => handleGetRevisionComments(c.req.param('id'), R(c), E(c)));
 app.get('/api/revisions', (c) => handleGetRevisions(U(c), R(c), E(c)));
 app.get('/api/manuscripts/attention', async (c) => {
@@ -591,13 +618,13 @@ app.get('/api/team/pulse', (c) => handleTeamPulse(U(c), E(c), c.get('authedUser'
 app.get('/api/graph/collaboration', (c) => handleCollaborationGraph(E(c)));
 app.get('/api/stats', (c) => handleGetStats(E(c)));
 app.get('/api/citations', (c) => handleGetCitations(E(c)));
-app.get('/api/activity', async (c) => handleGetActivity(U(c), E(c), await isPiRequest(R(c), E(c))));
+app.get('/api/activity', (c) => handleGetActivity(U(c), E(c), CSP(c)));
 app.get('/api/activity/heatmap', (c) => handleActivityHeatmap(U(c), E(c)));
 app.get('/api/tasks/overdue-count', (c) => handleOverdueCount(U(c), E(c)));
-app.get('/api/tasks', async (c) => handleGetTasks(U(c), E(c), await isPiRequest(R(c), E(c))));
+app.get('/api/tasks', (c) => handleGetTasks(U(c), E(c), CSP(c)));
 app.get('/api/action-items', (c) => handleActionItems(U(c), E(c)));
-app.get('/api/updates/recent', async (c) => handleRecentUpdates(U(c), E(c), await isPiRequest(R(c), E(c))));
-app.get('/api/task-updates/recent', async (c) => handleGetRecentTaskUpdates(U(c), E(c), await isPiRequest(R(c), E(c))));
+app.get('/api/updates/recent', (c) => handleRecentUpdates(U(c), E(c), CSP(c)));
+app.get('/api/task-updates/recent', (c) => handleGetRecentTaskUpdates(U(c), E(c), CSP(c)));
 app.get('/api/task-comments/recent', async (c) => {
   const url = U(c);
   const env = E(c);
@@ -607,7 +634,8 @@ app.get('/api/task-comments/recent', async (c) => {
   // Join task_comments → tasks → projects so we can check category. The filter
   // also tolerates orphan task_comments (LEFT JOIN) by surfacing them
   // regardless of category (no PB risk if there's no project link).
-  const canSeePb = await isPiRequest(R(c), env);
+  // T2.7: read from precomputed canSeePb context var, not a fresh isPiRequest call.
+  const canSeePb = CSP(c);
   const pbFilter = canSeePb
     ? ''
     : " AND (p.category IS NULL OR p.category != 'Peripheral Brain')";
@@ -633,7 +661,7 @@ app.get('/api/notifications/count', (c) => handleNotificationCount(U(c), R(c), E
 app.get('/api/commitments', (c) => handleCommitments(U(c), E(c)));
 app.get('/api/ideas', (c) => handleGetIdeas(U(c), E(c)));
 // GET /api/inbox retired 2026-05-05 (5.3a) — use /api/inbox-events
-app.get('/api/search', async (c) => handleGetSearch(U(c), E(c), await isPiRequest(R(c), E(c))));
+app.get('/api/search', (c) => handleGetSearch(U(c), E(c), CSP(c)));
 app.get('/api/settings', (c) => handleGetSettings(E(c)));
 app.get('/api/workflow-templates', (c) => handleGetWorkflowTemplates(E(c)));
 app.get('/api/calendar/events', (c) => handleCalendarEvents(U(c), E(c)));
@@ -649,13 +677,13 @@ app.get('/api/integrations/calendar/events', (c) => handleListEvents(U(c), E(c),
 // ─────────────────────────────────────────────────────────────────────────────
 // Files (presigned URLs etc.)
 // ─────────────────────────────────────────────────────────────────────────────
-app.get('/api/files', async (c) => handleListFiles(U(c), E(c), await isPiRequest(R(c), E(c))));
+app.get('/api/files', (c) => handleListFiles(U(c), E(c), CSP(c)));
 // GET /api/files/:key+ — presigned download URL. Key can contain slashes
 // (R2 key paths). Hono's wildcard match in the URL `:*` isn't used because
 // we need the full rest-of-path as a single string — match regex-style.
-app.get('/api/files/:rest{.+}', async (c) => {
+app.get('/api/files/:rest{.+}', (c) => {
   const key = c.req.param('rest');
-  return handleGetFile(key, E(c), await isPiRequest(R(c), E(c)));
+  return handleGetFile(key, E(c), CSP(c));
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -668,7 +696,7 @@ app.get('/api/team/:slug/contributions', (c) => handleGetContributions(c.req.par
 // ─────────────────────────────────────────────────────────────────────────────
 // Deadline cascade
 // ─────────────────────────────────────────────────────────────────────────────
-app.get('/api/deadline-cascade/all', async (c) => handleGetAllCascades(E(c), await isPiRequest(R(c), E(c))));
+app.get('/api/deadline-cascade/all', (c) => handleGetAllCascades(E(c), CSP(c)));
 app.get('/api/deadline-cascade/impact', (c) => handleGetImpact(U(c), R(c), E(c)));
 app.get('/api/deadline-cascade', (c) => handleGetCascade(U(c), R(c), E(c)));
 
@@ -692,16 +720,16 @@ app.get('/api/grant-milestones', (c) => handleGetGrantMilestones(U(c), E(c)));
 // ─────────────────────────────────────────────────────────────────────────────
 // Regulatory
 // ─────────────────────────────────────────────────────────────────────────────
-app.get('/api/regulatory/expiring', async (c) => handleGetExpiringItems(U(c), E(c), await isPiRequest(R(c), E(c))));
+app.get('/api/regulatory/expiring', (c) => handleGetExpiringItems(U(c), E(c), CSP(c)));
 // Auth-only (not PI) — team members need iCal access to renewal reminders.
 app.get('/api/regulatory/:id/ics', (c) => handleRegulatoryIcs(c.req.param('id'), E(c), R(c)));
-app.get('/api/regulatory', async (c) => handleGetRegulatoryItems(U(c), R(c), E(c), await isPiRequest(R(c), E(c))));
+app.get('/api/regulatory', (c) => handleGetRegulatoryItems(U(c), R(c), E(c), CSP(c)));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Conferences
 // ─────────────────────────────────────────────────────────────────────────────
-app.get('/api/conferences/upcoming', async (c) => handleGetUpcomingConferences(E(c), await isPiRequest(R(c), E(c))));
-app.get('/api/conferences', async (c) => handleGetConferences(U(c), R(c), E(c), await isPiRequest(R(c), E(c))));
+app.get('/api/conferences/upcoming', (c) => handleGetUpcomingConferences(E(c), CSP(c)));
+app.get('/api/conferences', (c) => handleGetConferences(U(c), R(c), E(c), CSP(c)));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Email drafts (reads)
@@ -768,7 +796,7 @@ app.get('/api/tasks/:id', (c) => handleGetTask(c.req.param('id'), E(c), R(c)));
 // Uploads
 app.post('/api/upload/url', (c) => handleUploadUrl(R(c), USER(c), E(c)));
 app.post('/api/upload/done', (c) => handleUploadDone(R(c), USER(c), E(c)));
-app.post('/api/files/:id/delete', async (c) => handleDeleteFile(c.req.param('id'), E(c), await isPiRequest(R(c), E(c))));
+app.post('/api/files/:id/delete', (c) => handleDeleteFile(c.req.param('id'), E(c), CSP(c)));
 
 // Projects (specific first)
 app.post('/api/projects', (c) => handleCreateProject(R(c), USER(c), E(c)));
