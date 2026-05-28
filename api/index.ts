@@ -1251,7 +1251,7 @@ defineRoute({
   auth: 'authed',
   entity: 'calendar-feeds',
   visibility: 'na',
-  handler: (c) => handleDeleteFeed(E(c), c.get('authedUser'), c.req.param('id')),
+  handler: (c) => handleDeleteFeed(R(c), E(c), c.get('authedUser'), c.req.param('id')),
 });
 defineRoute({
   method: 'GET',
@@ -1714,7 +1714,7 @@ defineRoute({
   auth: 'authed',
   entity: 'inbox-events',
   visibility: 'na',
-  handler: (c) => handleDeleteInboxEvent(c.req.param('id'), USER(c), E(c)),
+  handler: (c) => handleDeleteInboxEvent(c.req.param('id'), R(c), USER(c), E(c)),
 });
 // PI-or-API-key gate: raw_payload_json/notes are private to Nick's capture pipeline.
 defineRoute({
@@ -1929,7 +1929,7 @@ defineRoute({
   auth: 'authed',
   entity: 'subtasks',
   visibility: 'na',
-  handler: (c) => handleDeleteSubtask(c.req.param('id'), E(c)),
+  handler: (c) => handleDeleteSubtask(c.req.param('id'), R(c), E(c)),
 });
 
 // Action items (backward compat)
@@ -2188,7 +2188,7 @@ defineRoute({
   auth: 'authed',
   entity: 'paper-links',
   visibility: 'na',
-  handler: (c) => handleUnlinkPaper(c.req.param('id'), E(c)),
+  handler: (c) => handleUnlinkPaper(c.req.param('id'), R(c), E(c)),
 });
 
 // Dependencies
@@ -2206,7 +2206,7 @@ defineRoute({
   auth: 'authed',
   entity: 'dependencies',
   visibility: 'na',
-  handler: (c) => handleDeleteDependency(c.req.param('id'), E(c)),
+  handler: (c) => handleDeleteDependency(c.req.param('id'), R(c), E(c)),
 });
 
 // Decisions
@@ -2250,7 +2250,7 @@ defineRoute({
   auth: 'authed',
   entity: 'expertise',
   visibility: 'na',
-  handler: (c) => handleRemoveExpertise(c.req.param('id'), E(c)),
+  handler: (c) => handleRemoveExpertise(c.req.param('id'), R(c), E(c)),
 });
 
 // Questions / Answers

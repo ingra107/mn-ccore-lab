@@ -17,6 +17,7 @@
 import type { Env, AuthUser } from '../helpers'
 import { json, error } from '../helpers'
 import { actorSlug } from '../helpers'
+import { idempotentDelete } from '../lib/idempotent-delete'
 import { parseIcs, type IcsEvent, type ParseOptions } from '../lib/ics-parser'
 import { nowInstant } from '../lib/time'
 import { ctToday } from '../lib/ct-date'
@@ -165,15 +166,16 @@ export async function handleAddFeed(
 }
 
 // DELETE /api/integrations/calendar/feeds/:id
-export async function handleDeleteFeed(env: Env, user: AuthUser | null, id: string): Promise<Response> {
+export async function handleDeleteFeed(request: Request, env: Env, user: AuthUser | null, id: string): Promise<Response> {
   if (!user) return error('Unauthorized', 401)
   const slug = actorSlug(user.email)
   // Confirm ownership before delete (FK cascade clears events automatically).
+  // Ownership gate runs before idempotentDelete so a foreign-user id doesn't
+  // get the idempotent 200 "already gone" response (it should be 403).
   const row = await env.DB.prepare('SELECT user_slug FROM user_calendar_feeds WHERE id = ?').bind(id).first<{ user_slug: string }>()
   if (!row) return error('Feed not found', 404)
   if (row.user_slug !== slug) return error('Forbidden', 403)
-  await env.DB.prepare('DELETE FROM user_calendar_feeds WHERE id = ?').bind(id).run()
-  return json({ ok: true })
+  return idempotentDelete({ table: 'user_calendar_feeds', id, mode: 'hard', request, env })
 }
 
 // GET /api/integrations/calendar/events?start=YYYY-MM-DD&end=YYYY-MM-DD[&force=1]

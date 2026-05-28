@@ -16,6 +16,7 @@
 
 import type { AuthUser, Env } from '../helpers';
 import { json, error, logActivity, isPiRequest } from '../helpers';
+import { idempotentDelete } from '../lib/idempotent-delete';
 
 const INBOX_EVENT_ALLOWED_SOURCES = new Set([
   'telegram', 'gmail', 'hub_pwa', 'file_watcher', 'pomodoro',
@@ -246,24 +247,24 @@ export async function handleSyncBulkInboxEvents(
 }
 
 // POST /api/inbox-events/:id/delete — soft-delete tombstone.
+// Note: idempotentDelete soft mode sets deleted_at only (not updated_at).
+// The sync layer detects deletions via deleted_at IS NOT NULL in the seq-cursor
+// pull (handleInboxEvents ?include_deleted=1), so the updated_at omission is
+// intentional — the seq column advances on write via the outbox lane, not here.
 export async function handleDeleteInboxEvent(
   id: string,
+  request: Request,
   user: AuthUser,
   env: Env,
 ): Promise<Response> {
-  const existing = await env.DB.prepare(
-    'SELECT id, deleted_at FROM inbox_events WHERE id = ?'
-  ).bind(id).first<{ id: string; deleted_at: string | null }>();
-
-  if (!existing) return error('inbox_event not found', 404);
-  if (existing.deleted_at) {
-    return json({ data: { ok: true, idempotent: true, id } });
-  }
-
-  await env.DB.prepare(
-    "UPDATE inbox_events SET deleted_at = datetime('now'), updated_at = datetime('now') WHERE id = ?"
-  ).bind(id).run();
-
-  await logActivity(env, 'inbox_event', `Deleted inbox_event`, user.email, id, 'inbox_event');
-  return json({ data: { ok: true, id } });
+  return idempotentDelete({
+    table: 'inbox_events',
+    id,
+    mode: 'soft',
+    request,
+    env,
+    actorSlug: user.email,
+    activityCategory: 'inbox_event',
+    activityEntityType: 'inbox_event',
+  });
 }
