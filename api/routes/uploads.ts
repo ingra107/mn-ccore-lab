@@ -1,6 +1,6 @@
 import { AwsClient } from 'aws4fetch';
 import type { Env } from '../types';
-import { actorSlug } from '../helpers';
+import { actorSlug, isPiRequest } from '../helpers';
 
 interface AuthUser {
   email: string;
@@ -64,6 +64,13 @@ export async function handleUploadUrl(request: Request, user: AuthUser, env: Env
     return error('filename and context required');
   }
 
+  // B11: block uploading a file on a PB-category project for non-PI callers.
+  // Mirror the same canAccessEntity gate used by list/download/delete.
+  const canSeePb = await isPiRequest(request, env);
+  if (!(await canAccessEntity(env, body.context.type, body.context.id, canSeePb))) {
+    return error('Forbidden', 403);
+  }
+
   // Sanitize filename
   const safe = body.filename.replace(/[^a-zA-Z0-9._-]/g, '_');
   const key = `${body.context.type}/${body.context.id}/${Date.now()}-${safe}`;
@@ -100,6 +107,14 @@ export async function handleUploadDone(request: Request, user: AuthUser, env: En
 
   if (!body.key || !body.entityType || !body.entityId) {
     return error('key, entityType, entityId required');
+  }
+
+  // B11: block recording an attachment on a PB-category project for non-PI callers.
+  // The presigned-URL step already gates this, but upload/done is a separate
+  // POST that could be called independently with an already-known key.
+  const canSeePb = await isPiRequest(request, env);
+  if (!(await canAccessEntity(env, body.entityType, body.entityId, canSeePb))) {
+    return error('Forbidden', 403);
   }
 
   // Verify file actually landed in R2 before writing the DB record.

@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, actorSlug, buildUpdate } from '../helpers';
+import { json, error, generateId, logActivity, actorSlug, buildUpdate, getAuthUser } from '../helpers';
 import { ctToday } from '../lib/ct-date';
 import { nowInstant } from '../lib/time';
 
@@ -141,8 +141,14 @@ export async function handleUpdateRegulatoryItem(id: string, request: Request, u
   return json({ data: updated });
 }
 
-// GET /api/regulatory/:id/ics — generate .ics calendar invite for renewal
-export async function handleRegulatoryIcs(id: string, env: Env): Promise<Response> {
+// GET /api/regulatory/:id/ics — generate .ics calendar invite for renewal.
+// Auth-only (not PI-only): the whole team legitimately needs iCal access to
+// regulatory deadlines to add renewal reminders to their calendars.
+export async function handleRegulatoryIcs(id: string, env: Env, request?: Request): Promise<Response> {
+  if (request) {
+    const user = await getAuthUser(request, env);
+    if (!user) return error('Authentication required', 401);
+  }
   const item = await env.DB.prepare('SELECT * FROM regulatory_items WHERE id = ?').bind(id).first() as Record<string, any> | null;
   if (!item) return error('Regulatory item not found', 404);
 
