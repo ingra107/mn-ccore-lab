@@ -746,6 +746,13 @@ describe('PB-visibility contract — Pattern B (cross-project feed filters; body
 // If a developer adds a new gated route, they must add a row here. This guard
 // fails fast when the registry shrinks (someone deleted coverage) — it does
 // not fail-fast on growth (adding new coverage is the encouraged path).
+//
+// Z1.4 (2026-05-28): the per-route four-caller matrix above is PARTIALLY
+// auto-covered by route-contract.generated.test.ts (handler-shape + entity
+// presence + auth-level validity, generated from ROUTE_REGISTRY). This file
+// still owns the BEHAVIOR matrix (non-PI on PB, etc.) because each case
+// needs a hand-built stub env. The size-guard below still catches "someone
+// deleted coverage" for the manually-enumerated cases.
 
 describe('PB-visibility contract — registry drift guard', () => {
   it('Pattern A registry has at least the expected number of cases', () => {
