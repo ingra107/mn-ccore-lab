@@ -11,6 +11,7 @@ import {
   ACCENT_GOLD, ACCENT_TEAL, ACCENT_CORAL, ACCENT_ORANGE, ACCENT_GREEN,
   INK_MUTED, type DailyCounts,
 } from './constants'
+import { withAlpha } from '../../lib/taskGrouping'
 
 export function PillStrip({ counts }: { counts: DailyCounts }) {
   // P6-B9: renamed from "Lab Health" to "Day Score" to avoid confusion with
@@ -37,9 +38,9 @@ export function PillStrip({ counts }: { counts: DailyCounts }) {
       <Link
         to={PATHS.overview}
         title={tooltipText}
-        style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '7px 14px', background: `${healthColor}10`, border: `1px solid ${healthColor}50`, borderRadius: 999, textDecoration: 'none', transition: 'all 150ms' }}
-        onMouseEnter={(e) => { e.currentTarget.style.background = `${healthColor}20` }}
-        onMouseLeave={(e) => { e.currentTarget.style.background = `${healthColor}10` }}
+        style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '7px 14px', background: withAlpha(healthColor, 6), border: `1px solid ${withAlpha(healthColor, 31)}`, borderRadius: 999, textDecoration: 'none', transition: 'all 150ms' }}
+        onMouseEnter={(e) => { e.currentTarget.style.background = withAlpha(healthColor, 13) }}
+        onMouseLeave={(e) => { e.currentTarget.style.background = withAlpha(healthColor, 6) }}
       >
         <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: healthColor }}>Day score</span>
         <span style={{ fontSize: 18, fontWeight: 700, color: healthColor, fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>{dayScore}</span>
