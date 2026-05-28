@@ -46,7 +46,14 @@ export async function handleInboxEvents(url: URL, env: Env, request: Request): P
   const limitRaw = url.searchParams.get('limit');
 
   const deletedFilter = includeDeleted ? '1=1' : 'deleted_at IS NULL';
-  let query = `SELECT * FROM inbox_events WHERE ${deletedFilter}`;
+  // Explicit column list (not SELECT *) — Z3.3 lint compliance. This route is
+  // PI-only gated and legitimately returns raw_payload_json + notes to Nick.
+  // safeRow would strip them, so we use an explicit projection instead.
+  let query = `SELECT id, source, source_external_id, raw_text, raw_payload_json,
+    raw_hash, suggested_project_id, suggested_action, confidence,
+    captured_at, triaged_at, triage_outcome, resulting_task_id, triaged_by,
+    notes, last_mutation_id, seq, deleted_at, updated_at, created_at
+    FROM inbox_events WHERE ${deletedFilter}`;
   const params: (string | number)[] = [];
 
   if (seqAfterRaw !== null) {

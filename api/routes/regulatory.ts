@@ -3,6 +3,7 @@ import { json, error, generateId, logActivity, actorSlug, buildUpdate, getAuthUs
 import { withProjectWrite } from '../lib/route-guards';
 import { ctToday } from '../lib/ct-date';
 import { nowInstant } from '../lib/time';
+import { safeRow } from '../lib/task-cols';
 
 // ── .ics helpers ─────────────────────────────────────────────────────────────
 
@@ -142,8 +143,8 @@ export async function handleCreateRegulatoryItem(request: Request, user: AuthUse
     const actor = actorSlug(user.email);
     await logActivity(e, 'regulatory', `New regulatory item for ${b.project_id}: "${b.title}"`, actor, id, 'regulatory');
 
-    const created = await e.DB.prepare('SELECT * FROM regulatory_items WHERE id = ?').bind(id).first();
-    return json({ data: created }, 201);
+    const created = await e.DB.prepare('SELECT * FROM regulatory_items WHERE id = ?').bind(id).first<Record<string, unknown>>();
+    return json({ data: created ? safeRow('regulatory_items', created) : null }, 201);
   })(request, env, body);
 }
 
@@ -177,9 +178,9 @@ export async function handleUpdateRegulatoryItem(id: string, request: Request, u
 
   await env.DB.prepare(`UPDATE regulatory_items SET ${sql} WHERE id = ?`).bind(...params, id).run();
 
-  const updated = await env.DB.prepare('SELECT * FROM regulatory_items WHERE id = ?').bind(id).first();
+  const updated = await env.DB.prepare('SELECT * FROM regulatory_items WHERE id = ?').bind(id).first<Record<string, unknown>>();
   if (!updated) return error('Regulatory item not found', 404);
-  return json({ data: updated });
+  return json({ data: safeRow('regulatory_items', updated) });
 }
 
 // GET /api/regulatory/:id/ics — generate .ics calendar invite for renewal.
@@ -191,7 +192,11 @@ export async function handleRegulatoryIcs(id: string, env: Env, request: Request
   // branch collapses to the standard auth gate.
   const user = await getAuthUser(request, env);
   if (!user) return error('Authentication required', 401);
-  const item = await env.DB.prepare('SELECT * FROM regulatory_items WHERE id = ?').bind(id).first() as Record<string, any> | null;
+  // Explicit projection (not SELECT *) — Z3.3 lint compliance. `notes` is
+  // legitimately needed here for the ICS DESCRIPTION field; safeRow would strip it.
+  const item = await env.DB.prepare(
+    'SELECT id, project_id, item_type, title, protocol_number, approved_date, expiration_date, renewal_due, status, notes, created_at FROM regulatory_items WHERE id = ?'
+  ).bind(id).first() as Record<string, any> | null;
   if (!item) return error('Regulatory item not found', 404);
 
   // Phase 1b-extended: block non-PI callers from generating an ICS for a
@@ -251,8 +256,12 @@ export async function handleRenewRegulatoryItem(id: string, request: Request, us
     notes?: string;
   };
 
-  // Get the existing item
-  const existing = await env.DB.prepare('SELECT * FROM regulatory_items WHERE id = ?').bind(id).first() as Record<string, any> | null;
+  // Explicit projection (not SELECT *) — Z3.3 lint compliance. This read is
+  // internal (not returned as JSON). Fields used: project_id (visibility gate +
+  // copy to new row), item_type, title, protocol_number (copied to new row).
+  const existing = await env.DB.prepare(
+    'SELECT id, project_id, item_type, title, protocol_number, approved_date, expiration_date, renewal_due, status, notes, created_at FROM regulatory_items WHERE id = ?'
+  ).bind(id).first() as Record<string, any> | null;
   if (!existing) return error('Regulatory item not found', 404);
 
   // Phase 1b-extended: gate on the existing row's project. The renew creates a
@@ -288,6 +297,6 @@ export async function handleRenewRegulatoryItem(id: string, request: Request, us
   const actor = actorSlug(user.email);
   await logActivity(env, 'regulatory', `Renewed regulatory item: "${existing.title}"`, actor, newId, 'regulatory');
 
-  const created = await env.DB.prepare('SELECT * FROM regulatory_items WHERE id = ?').bind(newId).first();
-  return json({ data: created }, 201);
+  const created = await env.DB.prepare('SELECT * FROM regulatory_items WHERE id = ?').bind(newId).first<Record<string, unknown>>();
+  return json({ data: created ? safeRow('regulatory_items', created) : null }, 201);
 }
