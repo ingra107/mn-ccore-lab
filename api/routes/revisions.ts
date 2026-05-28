@@ -1,5 +1,6 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, actorSlug, projectRefToCanonical, assertProjectVisible, resolveAndGuardProject } from '../helpers';
+import { json, error, generateId, logActivity, actorSlug, assertProjectVisible } from '../helpers';
+import { withProjectWrite } from '../lib/route-guards';
 
 // ── Types ──
 
@@ -56,8 +57,12 @@ export async function handleGetRevisions(url: URL, request: Request, env: Env): 
 
 // ── POST /api/revisions ──
 // Create a new revision round
+// Z2.3 (2026-05-28): withProjectWrite wraps the resolve+visibility-gate so
+// bypass is impossible. Accepts project_id OR project_slug (convenience alias)
+// by normalizing into project_id before the wrapper call. Outer signature
+// (request, user, env) unchanged for api/index.ts compatibility.
 export async function handleCreateRevision(request: Request, user: AuthUser, env: Env): Promise<Response> {
-  const body = await request.json() as {
+  type CreateBody = {
     project_id?: string;
     project_slug?: string;
     round?: number;
@@ -69,50 +74,56 @@ export async function handleCreateRevision(request: Request, user: AuthUser, env
     reviewer_comments?: string;
   };
 
-  // Accept project_id OR project_slug. T2.4: resolveAndGuardProject combines
-  // canonicalize + visibility gate into one round-trip (was projectRefToCanonical
-  // SELECT + assertProjectVisible SELECT).
-  const ref = body.project_id || body.project_slug;
+  const rawBody = await request.json() as CreateBody;
+
+  // Normalize: accept project_id OR project_slug. Feed the canonical project_id
+  // slot so withProjectWrite can find it. Preserve the original project_slug for
+  // the activity-log message below.
+  const ref = rawBody.project_id || rawBody.project_slug;
   if (!ref) return error('project_id or project_slug required', 400);
-  const { block, projectId } = await resolveAndGuardProject(request, env, ref);
-  if (block) return block;
+  const normalizedBody: CreateBody = { ...rawBody, project_id: ref };
 
-  // Auto-detect round number if not provided
-  let round = body.round;
-  if (!round) {
-    const latest = await env.DB.prepare(
-      'SELECT MAX(round) as max_round FROM manuscript_revisions WHERE project_id = ?'
-    ).bind(projectId).first<{ max_round: number | null }>();
-    round = (latest?.max_round || 0) + 1;
-  }
+  // withProjectWrite checks project_id presence (→ 400 if absent, handled above)
+  // + runs resolveAndGuardProject (→ 403/400 if hidden/unknown). Inner only runs
+  // when the project is confirmed visible; receives the canonical projectId.
+  return withProjectWrite<CreateBody>(async (_req, e, projectId, b) => {
+    // Auto-detect round number if not provided
+    let round = b.round;
+    if (!round) {
+      const latest = await e.DB.prepare(
+        'SELECT MAX(round) as max_round FROM manuscript_revisions WHERE project_id = ?'
+      ).bind(projectId).first<{ max_round: number | null }>();
+      round = (latest?.max_round || 0) + 1;
+    }
 
-  const status = body.status && VALID_REVISION_STATUSES.includes(body.status)
-    ? body.status : 'in_progress';
+    const status = b.status && VALID_REVISION_STATUSES.includes(b.status)
+      ? b.status : 'in_progress';
 
-  // reviewer_comments is a convenience alias for notes (the deep-audit test
-  // + UI create form both send this name).
-  const notes = body.notes ?? body.reviewer_comments ?? null;
+    // reviewer_comments is a convenience alias for notes (the deep-audit test
+    // + UI create form both send this name).
+    const notes = b.notes ?? b.reviewer_comments ?? null;
 
-  const id = generateId();
-  await env.DB.prepare(`
-    INSERT INTO manuscript_revisions (id, project_id, round, submitted_at, response_due, status, journal, notes)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-  `).bind(
-    id,
-    projectId,
-    round,
-    body.submitted_at || null,
-    body.response_due || null,
-    status,
-    body.journal || null,
-    notes,
-  ).run();
+    const id = generateId();
+    await e.DB.prepare(`
+      INSERT INTO manuscript_revisions (id, project_id, round, submitted_at, response_due, status, journal, notes)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `).bind(
+      id,
+      projectId,
+      round,
+      b.submitted_at || null,
+      b.response_due || null,
+      status,
+      b.journal || null,
+      notes,
+    ).run();
 
-  const actor = actorSlug(user.email);
-  await logActivity(env, 'revision', `Revision R${round} created for project ${body.project_id}`, actor, id, 'revision');
+    const actor = actorSlug(user.email);
+    await logActivity(e, 'revision', `Revision R${round} created for project ${ref}`, actor, id, 'revision');
 
-  const created = await env.DB.prepare('SELECT * FROM manuscript_revisions WHERE id = ?').bind(id).first();
-  return json({ data: created }, 201);
+    const created = await e.DB.prepare('SELECT * FROM manuscript_revisions WHERE id = ?').bind(id).first();
+    return json({ data: created }, 201);
+  })(request, env, normalizedBody);
 }
 
 // ── POST /api/revisions/:id ──

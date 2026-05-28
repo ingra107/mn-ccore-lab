@@ -1,5 +1,6 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, actorSlug, buildUpdate, getAuthUser, assertProjectVisible, projectRefToCanonical, resolveAndGuardProject } from '../helpers';
+import { json, error, generateId, logActivity, actorSlug, buildUpdate, getAuthUser, assertProjectVisible } from '../helpers';
+import { withProjectWrite } from '../lib/route-guards';
 import { ctToday } from '../lib/ct-date';
 import { nowInstant } from '../lib/time';
 
@@ -86,11 +87,15 @@ export async function handleGetExpiringItems(url: URL, env: Env, canSeePb = fals
 }
 
 // POST /api/regulatory — create item
+// Z2.3 (2026-05-28): withProjectWrite wraps the resolve+visibility-gate so
+// bypass is impossible. The outer signature (request, user, env) is
+// unchanged for api/index.ts compatibility. The inner handler receives the
+// canonical projectId already resolved and PB-gated.
 export async function handleCreateRegulatoryItem(request: Request, user: AuthUser, env: Env): Promise<Response> {
-  const body = await request.json() as {
-    project_id: string;
-    item_type: string;
-    title: string;
+  type CreateBody = {
+    project_id?: string;
+    item_type?: string;
+    title?: string;
     protocol_number?: string;
     approved_date?: string;
     expiration_date?: string;
@@ -99,7 +104,8 @@ export async function handleCreateRegulatoryItem(request: Request, user: AuthUse
     notes?: string;
   };
 
-  if (!body.project_id) return error('project_id required', 400);
+  const body = await request.json() as CreateBody;
+
   if (!body.item_type) return error('item_type required', 400);
   if (!body.title) return error('title required', 400);
 
@@ -111,34 +117,34 @@ export async function handleCreateRegulatoryItem(request: Request, user: AuthUse
     return error(`Invalid status. Must be one of: ${VALID_STATUSES.join(', ')}`, 400);
   }
 
-  // T2.4 (2026-05-28): resolveAndGuardProject combines projectRefToCanonical
-  // + assertProjectVisible into one DB round-trip (was two SELECTs).
-  const { block, projectId: resolvedProjectId } = await resolveAndGuardProject(request, env, body.project_id);
-  if (block) return block;
+  // withProjectWrite checks project_id presence (→ 400 if absent) + runs
+  // resolveAndGuardProject (→ 403/400 if hidden/unknown). Inner handler only
+  // runs when project is confirmed visible; receives the canonical projectId.
+  return withProjectWrite<CreateBody>(async (_req, e, resolvedProjectId, b) => {
+    const id = generateId();
+    const status = b.status || 'active';
 
-  const id = generateId();
-  const status = body.status || 'active';
+    await e.DB.prepare(
+      'INSERT INTO regulatory_items (id, project_id, item_type, title, protocol_number, approved_date, expiration_date, renewal_due, status, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    ).bind(
+      id,
+      resolvedProjectId,
+      b.item_type!,
+      b.title!,
+      b.protocol_number || null,
+      b.approved_date || null,
+      b.expiration_date || null,
+      b.renewal_due || null,
+      status,
+      b.notes || null,
+    ).run();
 
-  await env.DB.prepare(
-    'INSERT INTO regulatory_items (id, project_id, item_type, title, protocol_number, approved_date, expiration_date, renewal_due, status, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
-  ).bind(
-    id,
-    resolvedProjectId,
-    body.item_type,
-    body.title,
-    body.protocol_number || null,
-    body.approved_date || null,
-    body.expiration_date || null,
-    body.renewal_due || null,
-    status,
-    body.notes || null,
-  ).run();
+    const actor = actorSlug(user.email);
+    await logActivity(e, 'regulatory', `New regulatory item for ${b.project_id}: "${b.title}"`, actor, id, 'regulatory');
 
-  const actor = actorSlug(user.email);
-  await logActivity(env, 'regulatory', `New regulatory item for ${body.project_id}: "${body.title}"`, actor, id, 'regulatory');
-
-  const created = await env.DB.prepare('SELECT * FROM regulatory_items WHERE id = ?').bind(id).first();
-  return json({ data: created }, 201);
+    const created = await e.DB.prepare('SELECT * FROM regulatory_items WHERE id = ?').bind(id).first();
+    return json({ data: created }, 201);
+  })(request, env, body);
 }
 
 // POST /api/regulatory/:id — update item
