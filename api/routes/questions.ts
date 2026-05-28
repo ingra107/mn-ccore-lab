@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, actorSlug, isPiRequest, resolveActor } from '../helpers';
+import { json, error, generateId, logActivity, actorSlug, isPiRequest, resolveActor, projectRefToCanonical } from '../helpers';
 import { filterFixtures } from '../lib/fixtures';
 
 // ── AI Co-Scientist: detect @hermes/@claude mentions in answers ──
@@ -131,6 +131,12 @@ export async function handleCreateQuestion(request: Request, user: AuthUser, env
   if ('error' in actor) return error(actor.error, 400);
   const askedBy = actor.slug;
 
+  // Z3.2: canonicalize project_slug before insert so lab_questions stores a
+  // stable canonical slug (not a raw id or stale alias).
+  const canonicalProjectSlug = body.project_slug
+    ? await projectRefToCanonical(env, body.project_slug)
+    : null;
+
   await env.DB.prepare(
     'INSERT INTO lab_questions (id, question, context, asked_by, project_slug) VALUES (?, ?, ?, ?, ?)'
   ).bind(
@@ -138,7 +144,7 @@ export async function handleCreateQuestion(request: Request, user: AuthUser, env
     questionText.trim(),
     body.body || body.context?.trim() || null,
     askedBy,
-    body.project_slug || null,
+    canonicalProjectSlug,
   ).run();
 
   await logActivity(env, 'question', `New question: "${questionText.trim().slice(0, 80)}"`, askedBy, id, 'question');
@@ -151,7 +157,7 @@ export async function handleCreateQuestion(request: Request, user: AuthUser, env
         const aiId = generateId();
         await env.DB.prepare(
           'INSERT INTO ai_requests (id, source_type, source_id, project_slug, prompt, context, requested_by) VALUES (?, ?, ?, ?, ?, ?, ?)'
-        ).bind(aiId, 'lab_question', id, body.project_slug || null, aiPrompt, null, user.email).run();
+        ).bind(aiId, 'lab_question', id, canonicalProjectSlug, aiPrompt, null, user.email).run();
 
         const responseId = generateId();
         await env.DB.prepare(

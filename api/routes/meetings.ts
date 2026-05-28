@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, safeTaskRow } from '../helpers';
+import { json, error, generateId, logActivity, safeTaskRow, projectRefToCanonical } from '../helpers';
 import { TASK_SELECT_COLS } from '../lib/task-cols';
 import { ctToday } from '../lib/ct-date';
 import { nowInstant } from '../lib/time';
@@ -77,12 +77,18 @@ export async function handleAddAgendaItem(meetingId: string, request: Request, u
   const body = await request.json() as { content: string; project_id?: string; type?: string; document_url?: string };
   if (!body.content) return error('content required', 400);
 
+  // Z3.2: canonicalize project_id before insert so agenda_items stores a
+  // stable canonical slug (not a raw id or stale alias).
+  const canonicalProjectId = body.project_id
+    ? await projectRefToCanonical(env, body.project_id)
+    : null;
+
   const id = generateId();
   const maxOrder = await env.DB.prepare('SELECT MAX(sort_order) as m FROM agenda_items WHERE meeting_id = ?').bind(meetingId).first<{ m: number | null }>();
 
   await env.DB.prepare(
     'INSERT INTO agenda_items (id, meeting_id, content, added_by, project_id, type, document_url, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
-  ).bind(id, meetingId, body.content, user.email, body.project_id ?? null, body.type ?? 'discussion', body.document_url ?? null, (maxOrder?.m ?? 0) + 1).run();
+  ).bind(id, meetingId, body.content, user.email, canonicalProjectId, body.type ?? 'discussion', body.document_url ?? null, (maxOrder?.m ?? 0) + 1).run();
 
   await logActivity(env, 'agenda', `Added agenda item: "${body.content}"`, user.email, meetingId, 'meeting');
 
