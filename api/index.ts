@@ -153,10 +153,36 @@ function isPublicGet(path: string): boolean {
 // ─────────────────────────────────────────────────────────────────────────────
 // Global error handler — matches old top-level try/catch behavior.
 // Any thrown error from a handler becomes a 500 JSON response with corsHeaders.
+//
+// SEC-10.1: In production, suppress raw error messages (SQL/D1/stack details
+// that could leak internal schema). Return a sanitized envelope with a
+// correlation request_id so support can cross-reference console.error logs.
+// In dev / test (TEST_MODE_KEY present or ENVIRONMENT=development) the full
+// message is included for debuggability.
 // ─────────────────────────────────────────────────────────────────────────────
-app.onError((err, _c) => {
+app.onError((err, c) => {
   const message = err instanceof Error ? err.message : 'Internal server error';
-  return error(message, 500);
+  // Generate a short correlation ID (first 12 chars of a random hex string).
+  const requestId = Array.from(crypto.getRandomValues(new Uint8Array(8)))
+    .map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 12);
+
+  // Determine if we're in a dev/test context where detailed errors are safe.
+  const env = c.get('env') as unknown as { ENVIRONMENT?: string; TEST_MODE_KEY?: string } | undefined;
+  const isDev = env?.ENVIRONMENT === 'development' || Boolean(env?.TEST_MODE_KEY);
+
+  // Always log full details server-side for correlation.
+  const url = new URL(c.req.url);
+  console.error(`[error] request_id=${requestId} method=${c.req.method} path=${url.pathname} message=${message}`, err instanceof Error ? err.stack : err);
+
+  if (isDev) {
+    // Dev/test: include message for debuggability.
+    return error(message, 500);
+  }
+  // Prod: sanitized envelope only — never expose raw error messages to clients.
+  return new Response(JSON.stringify({ error: 'Internal error', request_id: requestId }), {
+    status: 500,
+    headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+  });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -278,6 +304,22 @@ app.use('*', async (c, next) => {
   c.set('user', authedUser || { email: 'anonymous', name: 'Team Member' });
   await next();
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SEC-10.4: Rate limiting — ABSENT from this middleware stack (2026-05-27).
+// Investigation: no rate-limit layer exists anywhere in api/index.ts or
+// api/middleware/. The full middleware chain is:
+//   (1) test-mode DB swap, (2) API-key auth, (3) PI gate /api/pb/*,
+//   (4) GET auth lockdown, (5) POST/PUT auth gate, (6) version bump.
+// The app is gated behind Cloudflare Access (JWT) on /portal/* so raw
+// unauthenticated abuse is already blocked at the edge for the portal paths.
+// API endpoints at /api/* rely on the X-API-Key / JWT auth gate as the
+// primary protection; a KV-backed per-IP token bucket would be the right
+// next step for further hardening but is deferred — the risk profile is
+// acceptable given CF Access + auth gates on all write paths.
+// Follow-up: add RATE_LIMIT_ENABLED flag + KV token bucket when a Durable
+// Object or KV namespace is provisioned for this purpose.
+// ─────────────────────────────────────────────────────────────────────────────
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 5. Version bump + realtime notify (runs AFTER handler).
