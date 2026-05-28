@@ -1081,6 +1081,36 @@ export async function handleGetRecentTaskUpdates(url: URL, env: Env, canSeePb = 
   return json({ data: result.results || [], count: result.results?.length || 0 })
 }
 
+// GET /api/task-comments/recent — cross-task feed for activity drawers / digest.
+//
+// T2.8 (2026-05-28): extracted from an inline handler in api/index.ts so the
+// /api/task-comments/recent registration is a one-liner alongside
+// /api/task-updates/recent. PB filter mirrors handleGetRecentTaskUpdates'
+// non-PI exclusion (join task_comments → tasks → projects), with LEFT JOINs
+// so orphan task_comments still surface (no project link → no PB risk).
+export async function handleGetRecentTaskComments(url: URL, env: Env, canSeePb = false): Promise<Response> {
+  const limit = Math.min(parseInt(url.searchParams.get('limit') || '200', 10), 500);
+  const since = url.searchParams.get('since');
+  const pbFilter = canSeePb
+    ? ''
+    : " AND (p.category IS NULL OR p.category != 'Peripheral Brain')";
+  const q = since
+    ? `SELECT tc.* FROM task_comments tc
+       LEFT JOIN tasks t ON tc.task_id = t.id
+       LEFT JOIN projects p ON p.id = t.project_id OR p.slug = t.project_id
+       WHERE tc.created_at > ?${pbFilter}
+       ORDER BY tc.created_at DESC LIMIT ?`
+    : `SELECT tc.* FROM task_comments tc
+       LEFT JOIN tasks t ON tc.task_id = t.id
+       LEFT JOIN projects p ON p.id = t.project_id OR p.slug = t.project_id
+       WHERE 1=1${pbFilter}
+       ORDER BY tc.created_at DESC LIMIT ?`;
+  const result = since
+    ? await env.DB.prepare(q).bind(since, limit).all()
+    : await env.DB.prepare(q).bind(limit).all();
+  return json({ data: result.results || [] });
+}
+
 // GET /api/tasks/:id/updates — get task notes/updates
 export async function handleGetTaskUpdates(taskId: string, request: Request, env: Env): Promise<Response> {
   // Fix 3: guardTaskProject consolidates the repeated SELECT+assertProjectVisible pattern.

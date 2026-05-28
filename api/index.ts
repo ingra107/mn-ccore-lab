@@ -11,7 +11,7 @@ import { notifyClients } from './lib/notify';
 import { handleUploadUrl, handleUploadDone, handleListFiles, handleGetFile, handleDeleteFile } from './routes/uploads';
 
 // ── Route modules ──────────────────────────────────────────
-import { handleGetTasks, handleGetTask, handleActionItems, handleOverdueCount, handleUpdateTaskStatus, handleToggleTask, handleUpdateTask, handleCreateTask, handleGetTaskComments, handleAddTaskComment, handleGetTaskActivity, handleGetTaskDetail, handleGetTaskUpdates, handleGetRecentTaskUpdates, handlePostTaskUpdate, handleBatchUpdateTasks, handleAcknowledgeTask, handleDeleteTask, handleMobileTasksToHub } from './routes/tasks';
+import { handleGetTasks, handleGetTask, handleActionItems, handleOverdueCount, handleUpdateTaskStatus, handleToggleTask, handleUpdateTask, handleCreateTask, handleGetTaskComments, handleAddTaskComment, handleGetTaskActivity, handleGetTaskDetail, handleGetTaskUpdates, handleGetRecentTaskUpdates, handleGetRecentTaskComments, handlePostTaskUpdate, handleBatchUpdateTasks, handleAcknowledgeTask, handleDeleteTask, handleMobileTasksToHub } from './routes/tasks';
 import { handleInboxEvents, handleSyncBulkInboxEvents, handleDeleteInboxEvent } from './routes/inbox-events';
 import { handleMutations } from './routes/mutations';
 import { handleGetProjects, handleGetProject, handleCreateProject, handleGetComments, handleGetProjectUpdates, handleProjectHealth, handleRecentUpdates, handleUpdateProject, handleDeleteProject, handleGetDeletedProjectsSince, handleAddComment, handlePostProjectUpdate, handleGetMilestones, handleUpdateMilestoneNote, handleUpdateMilestoneCompletion } from './routes/projects';
@@ -625,36 +625,9 @@ app.get('/api/tasks', (c) => handleGetTasks(U(c), E(c), CSP(c)));
 app.get('/api/action-items', (c) => handleActionItems(U(c), E(c)));
 app.get('/api/updates/recent', (c) => handleRecentUpdates(U(c), E(c), CSP(c)));
 app.get('/api/task-updates/recent', (c) => handleGetRecentTaskUpdates(U(c), E(c), CSP(c)));
-app.get('/api/task-comments/recent', async (c) => {
-  const url = U(c);
-  const env = E(c);
-  const limit = Math.min(parseInt(url.searchParams.get('limit') || '200', 10), 500);
-  const since = url.searchParams.get('since');
-  // Phase 1b-extended: filter PB-category comments out for non-PI callers.
-  // Join task_comments → tasks → projects so we can check category. The filter
-  // also tolerates orphan task_comments (LEFT JOIN) by surfacing them
-  // regardless of category (no PB risk if there's no project link).
-  // T2.7: read from precomputed canSeePb context var, not a fresh isPiRequest call.
-  const canSeePb = CSP(c);
-  const pbFilter = canSeePb
-    ? ''
-    : " AND (p.category IS NULL OR p.category != 'Peripheral Brain')";
-  const q = since
-    ? `SELECT tc.* FROM task_comments tc
-       LEFT JOIN tasks t ON tc.task_id = t.id
-       LEFT JOIN projects p ON p.id = t.project_id OR p.slug = t.project_id
-       WHERE tc.created_at > ?${pbFilter}
-       ORDER BY tc.created_at DESC LIMIT ?`
-    : `SELECT tc.* FROM task_comments tc
-       LEFT JOIN tasks t ON tc.task_id = t.id
-       LEFT JOIN projects p ON p.id = t.project_id OR p.slug = t.project_id
-       WHERE 1=1${pbFilter}
-       ORDER BY tc.created_at DESC LIMIT ?`;
-  const result = since
-    ? await env.DB.prepare(q).bind(since, limit).all()
-    : await env.DB.prepare(q).bind(limit).all();
-  return json({ data: result.results || [] });
-});
+// T2.8 (2026-05-28): extracted to api/routes/tasks.ts::handleGetRecentTaskComments
+// — one-liner alongside /api/task-updates/recent. Single place to maintain.
+app.get('/api/task-comments/recent', (c) => handleGetRecentTaskComments(U(c), E(c), CSP(c)));
 // Notifications: recipient derived from auth (R(c) carries the JWT/test headers)
 app.get('/api/notifications', (c) => handleNotifications(U(c), R(c), E(c)));
 app.get('/api/notifications/count', (c) => handleNotificationCount(U(c), R(c), E(c)));
