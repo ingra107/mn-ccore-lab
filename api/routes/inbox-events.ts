@@ -32,7 +32,8 @@ const INBOX_EVENT_ALLOWED_SOURCES = new Set([
 //   ?triaged=0|1        — UI filter (triaged_at IS NULL when 0)
 //   ?limit=N            — default 2000 in seq mode, no cap otherwise
 export async function handleInboxEvents(url: URL, env: Env, request?: Request): Promise<Response> {
-  if (request && !(await isPiRequest(request, env))) {
+  // Fail-closed: missing request (absent caller) is treated as denied, not open.
+  if (!request || !(await isPiRequest(request, env))) {
     return error('Forbidden — PI access only', 403);
   }
   const seqAfterRaw = url.searchParams.get('seq_after');
@@ -86,11 +87,19 @@ export async function handleInboxEvents(url: URL, env: Env, request?: Request): 
 // stale client (older client_updated_at than the row's existing updated_at)
 // is rejected via the WHERE clause; the response status flips to
 // 'rejected_stale' so brain.db's IdentityBoundary doesn't mark it synced.
+//
+// PI-or-API-key gate (M-2): mirrors the PI gate on the GET sibling.
+// raw_payload_json/notes fields are private to Nick's capture pipeline;
+// team JWT callers must NOT write to them.  API-key (PB sync) path is
+// granted access via isPiRequest's Bearer check.
 export async function handleSyncBulkInboxEvents(
   request: Request,
   user: AuthUser,
   env: Env,
 ): Promise<Response> {
+  if (!(await isPiRequest(request, env))) {
+    return error('Forbidden — PI access only', 403);
+  }
   const body = await request.json() as {
     events: Array<{
       id: string;

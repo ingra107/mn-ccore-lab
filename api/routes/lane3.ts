@@ -48,7 +48,8 @@ export async function handleLane3List(
   env: Env,
   request?: Request,
 ): Promise<Response> {
-  if (request && !(await isPiRequest(request, env))) {
+  // Fail-closed: missing request (absent caller) is treated as denied, not open.
+  if (!request || !(await isPiRequest(request, env))) {
     return error('Forbidden — PI access only', 403);
   }
 

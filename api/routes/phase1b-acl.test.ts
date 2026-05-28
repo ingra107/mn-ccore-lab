@@ -13,19 +13,25 @@
 //  10. File-activity sync — PI-or-API-key gate
 //  11. Meeting detail — full row for authed, public cols for unauth
 //
+// Security-review follow-up (hub-hardening-2026-05-27 findings):
+//  I-1: Fail-closed — absent request → denied on sessions/lane3/inbox-events GET/regulatory ICS
+//  I-3: Meeting sub-routes (agenda/prep/generate-agenda) — unauth → 401
+//  I-4: Null-assignee guard — unassigned-task file attach by non-owner non-PI ALLOWED
+//  M-2: Inbox sync-bulk write — non-PI JWT → 403, API-key → allowed
+//
 // Uses the same lightweight SQL-shape stub pattern as security-gates.test.ts.
 
 import { describe, it, expect } from 'vitest'
 import { handleNotifications, handleNotificationCount, handleMarkNotificationRead } from './notifications'
 import { handleGetSessions } from './sessions'
 import { handleLane3List } from './lane3'
-import { handleInboxEvents } from './inbox-events'
+import { handleInboxEvents, handleSyncBulkInboxEvents } from './inbox-events'
 import { handleRegulatoryIcs } from './regulatory'
 import { handleUploadUrl, handleUploadDone } from './uploads'
 import { handleCreateDecision } from './decisions'
 import { handleSyncEmailDrafts } from './email-drafts'
 import { handleSyncFileActivity } from './file-activity'
-import { handleGetMeeting } from './meetings'
+import { handleGetMeeting, handleGetAgendaItems, handleMeetingPrep, handleGenerateAgenda } from './meetings'
 import type { Env } from '../helpers'
 
 // ── Shared test primitives ────────────────────────────────────────────────────
@@ -305,8 +311,8 @@ describe('handleGetSessions — PI-or-API-key gate', () => {
     expect(res.status).toBe(200)
   })
 
-  it('still returns 400 when seq_after is missing (gate fires first)', async () => {
-    // Without request, gate is skipped (legacy path) and 400 fires on missing param
+  it('still returns 400 when seq_after is missing (PI passes gate, hits param validation)', async () => {
+    // PI caller passes the gate; 400 fires because seq_after param is absent
     const urlNoParam = new URL('https://x/api/sessions')
     const res = await handleGetSessions(urlNoParam, sessionsEnv(), piRequest())
     expect(res.status).toBe(400)
@@ -837,5 +843,217 @@ describe('handleGetMeeting — auth projection', () => {
     const env = makeEnv()
     const res = await handleGetMeeting('ghost-mtg', env, true)
     expect(res.status).toBe(404)
+  })
+})
+
+// ── I-1: Fail-closed — absent request → denied on all PI-gated handlers ───────
+
+describe('I-1 fail-closed: absent request → denied (no open-gate legacy path)', () => {
+  it('handleGetSessions: absent request → 403', async () => {
+    const env = piEnv()
+    const url = new URL('https://x/api/sessions?seq_after=0')
+    // No request arg — must fail closed, not skip the gate
+    const res = await handleGetSessions(url, env, undefined)
+    expect(res.status).toBe(403)
+  })
+
+  it('handleLane3List: absent request → 403', async () => {
+    const env = piEnv()
+    const url = new URL('https://x/api/lane3/agent_knowledge?seq_after=0')
+    const res = await handleLane3List('agent_knowledge', url, env, undefined)
+    expect(res.status).toBe(403)
+  })
+
+  it('handleInboxEvents: absent request → 403', async () => {
+    const env = piEnv()
+    const url = new URL('https://x/api/inbox-events')
+    const res = await handleInboxEvents(url, env, undefined)
+    expect(res.status).toBe(403)
+  })
+
+  it('handleRegulatoryIcs: absent request → 401', async () => {
+    const env = piEnv()
+    // Auth-only (not PI-only) — absent request → 401, not bypass
+    const res = await handleRegulatoryIcs('reg1', env, undefined)
+    expect(res.status).toBe(401)
+  })
+})
+
+// ── I-3: Meeting sub-routes — unauth → 401 ───────────────────────────────────
+
+describe('I-3: meeting sub-routes agenda/prep/generate-agenda — unauth → 401', () => {
+  function subRouteMeetingEnv() {
+    return makeEnv({
+      DB: {
+        prepare: (sql: string) => ({
+          bind: (..._args: unknown[]) => ({
+            first: async () => {
+              if (/FROM meetings WHERE id/.test(sql)) {
+                return { id: 'mtg1', date: '2026-05-28', title: 'Team standup', type: 'biweekly', status: 'upcoming', facilitator: 'nick-ingraham' }
+              }
+              if (/FROM meetings WHERE date/.test(sql)) return null
+              return null
+            },
+            all: async () => ({ results: [] }),
+            run: async () => ({ success: true }),
+          }),
+          first: async () => null,
+          all: async () => ({ results: [] }),
+          run: async () => ({ success: true }),
+        }),
+        batch: async () => [],
+      } as unknown as Env['DB'],
+    })
+  }
+
+  it('handleGetAgendaItems: unauth (isAuthed=false) → 401', async () => {
+    const env = subRouteMeetingEnv()
+    const res = await handleGetAgendaItems('mtg1', env, false)
+    expect(res.status).toBe(401)
+  })
+
+  it('handleGetAgendaItems: authed (isAuthed=true) → 200', async () => {
+    const env = subRouteMeetingEnv()
+    const res = await handleGetAgendaItems('mtg1', env, true)
+    expect(res.status).toBe(200)
+    const body = await res.json() as { data: unknown[] }
+    expect(Array.isArray(body.data)).toBe(true)
+  })
+
+  it('handleMeetingPrep: unauth (isAuthed=false) → 401', async () => {
+    const env = subRouteMeetingEnv()
+    const res = await handleMeetingPrep('mtg1', env, false)
+    expect(res.status).toBe(401)
+  })
+
+  it('handleMeetingPrep: authed (isAuthed=true) → 200', async () => {
+    const env = subRouteMeetingEnv()
+    const res = await handleMeetingPrep('mtg1', env, true)
+    expect(res.status).toBe(200)
+    const body = await res.json() as { data: { meeting: unknown } }
+    expect(body.data).toHaveProperty('meeting')
+  })
+
+  it('handleGenerateAgenda: unauth (isAuthed=false) → 401', async () => {
+    const env = subRouteMeetingEnv()
+    const res = await handleGenerateAgenda('mtg1', env, false)
+    expect(res.status).toBe(401)
+  })
+
+  it('handleGenerateAgenda: authed (isAuthed=true) → 200', async () => {
+    const env = subRouteMeetingEnv()
+    const res = await handleGenerateAgenda('mtg1', env, true)
+    expect(res.status).toBe(200)
+    const body = await res.json() as { meeting_id: string }
+    expect(body.meeting_id).toBe('mtg1')
+  })
+})
+
+// ── I-4: Null-assignee guard — unassigned task NOT a lockout ─────────────────
+//
+// The task-file attach/delete gates live inline in index.ts, so the guard
+// logic cannot be directly imported. Instead we verify the boolean invariant
+// that drives the decision: only block when assignee is non-null AND differs
+// AND caller is not PI. This is the exact condition the handler evaluates.
+
+describe('I-4: null-assignee guard boolean invariant', () => {
+  // Mirror of the guard in index.ts:
+  //   task.assignee != null && task.assignee !== callerSlug && !isPI
+  function gateBlocks(assignee: string | null, callerSlug: string, isPI: boolean): boolean {
+    return assignee != null && assignee !== callerSlug && !isPI
+  }
+
+  it('null assignee — non-owner non-PI: ALLOWED (no lockout)', () => {
+    expect(gateBlocks(null, NON_PI_SLUG, false)).toBe(false)
+  })
+
+  it('null assignee — any caller: ALLOWED', () => {
+    expect(gateBlocks(null, 'any-slug', false)).toBe(false)
+    expect(gateBlocks(null, 'any-slug', true)).toBe(false)
+  })
+
+  it('assigned to caller — non-PI: ALLOWED (owner)', () => {
+    expect(gateBlocks(NON_PI_SLUG, NON_PI_SLUG, false)).toBe(false)
+  })
+
+  it('assigned to a different user — non-PI: BLOCKED (foreign owner)', () => {
+    expect(gateBlocks(PI_SLUG, NON_PI_SLUG, false)).toBe(true)
+  })
+
+  it('assigned to a different user — PI caller: ALLOWED (PI bypasses)', () => {
+    expect(gateBlocks(NON_PI_SLUG, PI_SLUG, true)).toBe(false)
+  })
+})
+
+// ── M-2: Inbox sync-bulk write — non-PI JWT → 403, API-key → allowed ─────────
+
+describe('M-2: handleSyncBulkInboxEvents — PI-or-API-key gate on write path', () => {
+  const sampleEvent = {
+    id: 'ev_test_01',
+    source: 'hub_ui',
+    captured_at: '2026-05-27T10:00:00Z',
+  }
+
+  function syncBulkEnv() {
+    return piEnv()
+  }
+
+  it('returns 403 for unauthenticated callers', async () => {
+    const env = syncBulkEnv()
+    const user = { email: NON_PI_EMAIL, name: 'Anon' }
+    const req = new Request('https://x/api/inbox-events/sync-bulk', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ events: [sampleEvent] }),
+    })
+    const res = await handleSyncBulkInboxEvents(req, user, env)
+    expect(res.status).toBe(403)
+  })
+
+  it('returns 403 for non-PI JWT callers', async () => {
+    const env = syncBulkEnv()
+    const user = { email: NON_PI_EMAIL, name: 'Nate' }
+    const req = new Request('https://x/api/inbox-events/sync-bulk', {
+      method: 'POST',
+      headers: {
+        'X-Test-Mode-Key': 'local-test-key-do-not-use-in-prod',
+        'X-Test-User': NON_PI_EMAIL,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ events: [sampleEvent] }),
+    })
+    const res = await handleSyncBulkInboxEvents(req, user, env)
+    expect(res.status).toBe(403)
+  })
+
+  it('returns 200 for PI JWT callers', async () => {
+    const env = syncBulkEnv()
+    const user = { email: PI_EMAIL, name: 'Nick' }
+    const req = new Request('https://x/api/inbox-events/sync-bulk', {
+      method: 'POST',
+      headers: {
+        'X-Test-Mode-Key': 'local-test-key-do-not-use-in-prod',
+        'X-Test-User': PI_EMAIL,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ events: [sampleEvent] }),
+    })
+    const res = await handleSyncBulkInboxEvents(req, user, env)
+    expect(res.status).toBe(200)
+  })
+
+  it('returns 200 for API-key callers (PB sync service)', async () => {
+    const env = makeEnv({ PB_API_KEY: 'valid-test-api-key' } as unknown as Env)
+    const user = { email: 'system@pb', name: 'PB Sync' }
+    const req = new Request('https://x/api/inbox-events/sync-bulk', {
+      method: 'POST',
+      headers: {
+        Authorization: VALID_API_KEY,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ events: [sampleEvent] }),
+    })
+    const res = await handleSyncBulkInboxEvents(req, user, env)
+    expect(res.status).toBe(200)
   })
 })

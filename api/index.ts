@@ -461,9 +461,11 @@ app.get('/api/projects/:id', (c) => handleGetProject(c.req.param('id'), E(c), c.
 // ─────────────────────────────────────────────────────────────────────────────
 app.get('/api/meetings/cadence-check', (c) => handleCadenceCheck(E(c)));
 app.get('/api/meetings/next', (c) => handleNextMeeting(E(c)));
-app.get('/api/meetings/:id/agenda', (c) => handleGetAgendaItems(c.req.param('id'), E(c)));
-app.get('/api/meetings/:id/generate-agenda', (c) => handleGenerateAgenda(c.req.param('id'), E(c)));
-app.get('/api/meetings/:id/prep', (c) => handleMeetingPrep(c.req.param('id'), E(c)));
+// Agenda/prep/generate-agenda are auth-gated (isAuthed flag mirrors handleGetMeeting pattern).
+// Unauth callers get 401; authed team members get the full internal content.
+app.get('/api/meetings/:id/agenda', (c) => handleGetAgendaItems(c.req.param('id'), E(c), c.get('authedUser') !== null || c.get('apiKeyValid') === true));
+app.get('/api/meetings/:id/generate-agenda', (c) => handleGenerateAgenda(c.req.param('id'), E(c), c.get('authedUser') !== null || c.get('apiKeyValid') === true));
+app.get('/api/meetings/:id/prep', (c) => handleMeetingPrep(c.req.param('id'), E(c), c.get('authedUser') !== null || c.get('apiKeyValid') === true));
 // Meeting detail — authed callers get full row; unauth get public-safe cols only.
 app.get('/api/meetings/:id', (c) => handleGetMeeting(c.req.param('id'), E(c), c.get('authedUser') !== null || c.get('apiKeyValid') === true));
 app.get('/api/meetings', (c) => handleGetMeetings(E(c), c.get('authedUser') !== null || c.get('apiKeyValid') === true));
@@ -743,7 +745,9 @@ app.post('/api/tasks/:id/files', async (c) => {
     'SELECT assignee FROM tasks WHERE id = ? LIMIT 1'
   ).bind(id).first<{ assignee: string | null }>();
   if (!task) return error('Task not found', 404);
-  if (task.assignee !== callerSlug && !(await isPiRequest(R(c), env))) {
+  // Null-assignee guard: unassigned tasks are NOT locked to any owner.
+  // Only block when assignee is non-null AND differs AND caller is not PI.
+  if (task.assignee != null && task.assignee !== callerSlug && !(await isPiRequest(R(c), env))) {
     return error('Forbidden', 403);
   }
   const body = await c.req.json() as { filename: string; url: string; file_type?: string };
@@ -772,7 +776,9 @@ app.post('/api/task-files/:id/delete', async (c) => {
     'SELECT tf.id, tf.task_id, tf.filename, t.assignee FROM task_files tf LEFT JOIN tasks t ON tf.task_id = t.id WHERE tf.id = ? LIMIT 1'
   ).bind(fileId).first<{ id: string; task_id: string; filename: string; assignee: string | null }>();
   if (!fileRow) return error('File not found', 404);
-  if (fileRow.assignee !== callerSlug && !(await isPiRequest(R(c), env))) {
+  // Null-assignee guard: unassigned tasks are NOT locked to any owner.
+  // Only block when assignee is non-null AND differs AND caller is not PI.
+  if (fileRow.assignee != null && fileRow.assignee !== callerSlug && !(await isPiRequest(R(c), env))) {
     return error('Forbidden', 403);
   }
   await env.DB.prepare('DELETE FROM task_files WHERE id = ?').bind(fileId).run();

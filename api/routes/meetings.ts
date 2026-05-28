@@ -61,8 +61,11 @@ export async function handleGetMeeting(id: string, env: Env, isAuthed = false): 
   });
 }
 
-// GET /api/meetings/:id/agenda — agenda items for a meeting
-export async function handleGetAgendaItems(meetingId: string, env: Env): Promise<Response> {
+// GET /api/meetings/:id/agenda — agenda items for a meeting.
+// Auth-gated: agenda content is team-internal (mirrors the handleGetMeeting pattern).
+// Unauth callers get 401 rather than internal meeting content.
+export async function handleGetAgendaItems(meetingId: string, env: Env, isAuthed = false): Promise<Response> {
+  if (!isAuthed) return error('Authentication required', 401);
   const result = await env.DB.prepare(
     'SELECT * FROM agenda_items WHERE meeting_id = ? ORDER BY sort_order, created_at'
   ).bind(meetingId).all();
@@ -114,8 +117,11 @@ export async function handleUpdateMeetingNotes(meetingId: string, request: Reque
   return json({ data: updated });
 }
 
-// GET /api/meetings/:id/prep — facilitator prep view data
-export async function handleMeetingPrep(meetingId: string, env: Env): Promise<Response> {
+// GET /api/meetings/:id/prep — facilitator prep view data.
+// Auth-gated: prep data contains task details, prior action items, activity log.
+// Unauth callers get 401 (mirrors the handleGetMeeting pattern).
+export async function handleMeetingPrep(meetingId: string, env: Env, isAuthed = false): Promise<Response> {
+  if (!isAuthed) return error('Authentication required', 401);
   const meeting = await env.DB.prepare('SELECT * FROM meetings WHERE id = ?').bind(meetingId).first();
   if (!meeting) return error('Meeting not found', 404);
 
@@ -167,8 +173,11 @@ export async function handleMeetingPrep(meetingId: string, env: Env): Promise<Re
   });
 }
 
-// GET /api/meetings/:id/generate-agenda — autogenerate agenda from carried-forward + open items
-export async function handleGenerateAgenda(meetingId: string, env: Env): Promise<Response> {
+// GET /api/meetings/:id/generate-agenda — autogenerate agenda from carried-forward + open items.
+// Auth-gated: generated agenda surfaces task titles, assignees, regulatory items (internal).
+// Unauth callers get 401 (mirrors the handleGetMeeting pattern).
+export async function handleGenerateAgenda(meetingId: string, env: Env, isAuthed = false): Promise<Response> {
+  if (!isAuthed) return error('Authentication required', 401);
   const meeting = await env.DB.prepare('SELECT * FROM meetings WHERE id = ?').bind(meetingId).first<{ id: string; title: string; date: string }>();
   if (!meeting) return error('Meeting not found', 404);
 

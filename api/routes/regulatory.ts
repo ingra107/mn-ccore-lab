@@ -145,10 +145,10 @@ export async function handleUpdateRegulatoryItem(id: string, request: Request, u
 // Auth-only (not PI-only): the whole team legitimately needs iCal access to
 // regulatory deadlines to add renewal reminders to their calendars.
 export async function handleRegulatoryIcs(id: string, env: Env, request?: Request): Promise<Response> {
-  if (request) {
-    const user = await getAuthUser(request, env);
-    if (!user) return error('Authentication required', 401);
-  }
+  // Fail-closed: missing request (absent caller) is treated as unauthenticated.
+  if (!request) return error('Authentication required', 401);
+  const user = await getAuthUser(request, env);
+  if (!user) return error('Authentication required', 401);
   const item = await env.DB.prepare('SELECT * FROM regulatory_items WHERE id = ?').bind(id).first() as Record<string, any> | null;
   if (!item) return error('Regulatory item not found', 404);
 

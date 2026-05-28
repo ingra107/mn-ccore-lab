@@ -33,7 +33,8 @@ export interface Session {
 // Tombstone filtering: rows with deleted_at IS NOT NULL are excluded (schema-v65+).
 // No fixture filtering: sessions are not QA fixtures.
 export async function handleGetSessions(url: URL, env: Env, request?: Request): Promise<Response> {
-  if (request && !(await isPiRequest(request, env))) {
+  // Fail-closed: missing request (absent caller) is treated as denied, not open.
+  if (!request || !(await isPiRequest(request, env))) {
     return error('Forbidden — PI access only', 403);
   }
   const seqAfterRaw = url.searchParams.get('seq_after');
