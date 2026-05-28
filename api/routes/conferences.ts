@@ -1,7 +1,7 @@
 import type { AuthUser, Env } from '../helpers';
 import { json, error, generateId, logActivity, actorSlug, buildUpdate, assertProjectVisible, resolveAndGuardProject } from '../helpers';
 import { ctToday } from '../lib/ct-date';
-import { withOptionalProjectWrite } from '../lib/route-guards';
+import { withOptionalProjectWrite, withExistingRowProject } from '../lib/route-guards';
 import { idempotentDelete } from '../lib/idempotent-delete';
 
 const VALID_SUBMISSION_TYPES = ['abstract', 'oral', 'poster', 'workshop', 'invited'] as const;
@@ -169,52 +169,57 @@ export async function handleCreateConference(request: Request, user: AuthUser, e
 }
 
 // ── POST /api/conferences/:id ──
+// P4 (2026-05-28): migrated to withExistingRowProject so the existing-row
+// existence check + PB visibility gate cannot be bypassed. The reparent gate
+// (new project_id in body) is a secondary check that must remain inside the
+// inner handler where the body is available — it gates the NEW project the row
+// is moving to, beyond the existing-row gate that withExistingRowProject provides.
+// Outer signature (id, request, user, env) unchanged for api/index.ts compatibility.
 export async function handleUpdateConference(id: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
-  // Phase 1b-B: resolve the conference submission's project and gate on PB visibility.
-  const existing_conf = await env.DB.prepare('SELECT project_id FROM conference_submissions WHERE id = ?').bind(id).first<{ project_id: string | null }>();
-  if (existing_conf?.project_id) {
-    const block = await assertProjectVisible(request, env, existing_conf.project_id);
-    if (block) return block;
-  }
-  const body = await request.json() as Record<string, unknown>;
-  const allowedFields = [
-    'project_id', 'conference', 'conference_date', 'submission_type', 'title',
-    'authors', 'abstract_due', 'abstract_submitted_at', 'accepted_at',
-    'presentation_type', 'materials_status', 'travel_booked', 'notes', 'status',
-  ];
-  const { sql, params, hasUpdates } = buildUpdate(body, allowedFields);
+  return withExistingRowProject('conference_submissions', async (req, e, rowId, _projectId) => {
+    const body = await req.json() as Record<string, unknown>;
+    const allowedFields = [
+      'project_id', 'conference', 'conference_date', 'submission_type', 'title',
+      'authors', 'abstract_due', 'abstract_submitted_at', 'accepted_at',
+      'presentation_type', 'materials_status', 'travel_booked', 'notes', 'status',
+    ];
+    const { sql, params, hasUpdates } = buildUpdate(body, allowedFields);
 
-  if (!hasUpdates) return error('No valid fields to update', 400);
+    if (!hasUpdates) return error('No valid fields to update', 400);
 
-  // Validate enums if provided
-  if (body.submission_type && !VALID_SUBMISSION_TYPES.includes(body.submission_type as typeof VALID_SUBMISSION_TYPES[number])) {
-    return error(`submission_type must be one of: ${VALID_SUBMISSION_TYPES.join(', ')}`, 400);
-  }
-  if (body.status && !VALID_STATUSES.includes(body.status as typeof VALID_STATUSES[number])) {
-    return error(`status must be one of: ${VALID_STATUSES.join(', ')}`, 400);
-  }
-  if (body.materials_status && !VALID_MATERIALS.includes(body.materials_status as typeof VALID_MATERIALS[number])) {
-    return error(`materials_status must be one of: ${VALID_MATERIALS.join(', ')}`, 400);
-  }
-  if (body.presentation_type && !VALID_PRESENTATION_TYPES.includes(body.presentation_type as typeof VALID_PRESENTATION_TYPES[number])) {
-    return error(`presentation_type must be one of: ${VALID_PRESENTATION_TYPES.join(', ')}`, 400);
-  }
+    // Validate enums if provided
+    if (body.submission_type && !VALID_SUBMISSION_TYPES.includes(body.submission_type as typeof VALID_SUBMISSION_TYPES[number])) {
+      return error(`submission_type must be one of: ${VALID_SUBMISSION_TYPES.join(', ')}`, 400);
+    }
+    if (body.status && !VALID_STATUSES.includes(body.status as typeof VALID_STATUSES[number])) {
+      return error(`status must be one of: ${VALID_STATUSES.join(', ')}`, 400);
+    }
+    if (body.materials_status && !VALID_MATERIALS.includes(body.materials_status as typeof VALID_MATERIALS[number])) {
+      return error(`materials_status must be one of: ${VALID_MATERIALS.join(', ')}`, 400);
+    }
+    if (body.presentation_type && !VALID_PRESENTATION_TYPES.includes(body.presentation_type as typeof VALID_PRESENTATION_TYPES[number])) {
+      return error(`presentation_type must be one of: ${VALID_PRESENTATION_TYPES.join(', ')}`, 400);
+    }
 
-  // Phase 1b-extended: if the update reparents the conference submission to a
-  // NEW project_id, gate that target too. T2.4: combined helper.
-  if (typeof body.project_id === 'string' && body.project_id) {
-    const { block } = await resolveAndGuardProject(request, env, body.project_id);
-    if (block) return block;
-  }
+    // P4 reparent gate (2026-05-28): if the update reparents the conference
+    // submission to a NEW project_id, gate the target project too. This is a
+    // second check BEYOND the existing-row gate provided by withExistingRowProject
+    // above — the wrapper gates the CURRENT row's project; this gates the NEW
+    // project the row is being moved to. Both gates must pass for a reparent.
+    if (typeof body.project_id === 'string' && body.project_id) {
+      const { block } = await resolveAndGuardProject(req, e, body.project_id);
+      if (block) return block;
+    }
 
-  await env.DB.prepare(`UPDATE conference_submissions SET ${sql} WHERE id = ?`).bind(...params, id).run();
+    await e.DB.prepare(`UPDATE conference_submissions SET ${sql} WHERE id = ?`).bind(...params, rowId).run();
 
-  const actor = actorSlug(user.email);
-  await logActivity(env, 'conference', `Conference submission ${id} updated`, actor, id, 'conference_submission');
+    const actor = actorSlug(user.email);
+    await logActivity(e, 'conference', `Conference submission ${rowId} updated`, actor, rowId, 'conference_submission');
 
-  const updated = await env.DB.prepare('SELECT * FROM conference_submissions WHERE id = ?').bind(id).first();
-  if (!updated) return error('Conference submission not found', 404);
-  return json({ data: updated });
+    const updated = await e.DB.prepare('SELECT * FROM conference_submissions WHERE id = ?').bind(rowId).first();
+    if (!updated) return error('Conference submission not found', 404);
+    return json({ data: updated });
+  })(request, env, id);
 }
 
 // ── POST /api/conferences/:id/delete ──

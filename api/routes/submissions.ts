@@ -1,7 +1,7 @@
 import type { AuthUser, Env } from '../helpers';
 import { json, error, generateId, logActivity, actorSlug, assertProjectVisible } from '../helpers';
 import { ctToday } from '../lib/ct-date';
-import { withProjectWrite } from '../lib/route-guards';
+import { withProjectWrite, withExistingRowProject } from '../lib/route-guards';
 import { idempotentDelete } from '../lib/idempotent-delete';
 
 const VALID_EVENT_TYPES = [
@@ -77,52 +77,49 @@ export async function handleCreateSubmission(request: Request, user: AuthUser, e
 
 // ── POST /api/submissions/:id ──
 // Update a submission event
+// P4 (2026-05-28): migrated to withExistingRowProject so the existing-row
+// existence check + PB visibility gate cannot be bypassed by forgetting to
+// call them. submission_events has no project_id change path (allowedFields
+// does not list project_id), so only the existing row's project is gated; if
+// a future spec adds project_id reparent, also gate the new target as
+// conferences.ts does. Outer signature (id, request, user, env) unchanged.
 export async function handleUpdateSubmission(id: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
-  // Phase 1b-extended: gate on the existing row's project (the row being edited)
-  // BEFORE applying any update. submission_events has no `project_id` change path
-  // (allowedFields here does not list project_id), so we only check the existing
-  // row's project. If a future spec adds project_id mutation to the allowed list,
-  // also gate the NEW target project as the conferences/regulatory paths do.
-  const existing = await env.DB.prepare('SELECT project_id FROM submission_events WHERE id = ?').bind(id).first<{ project_id: string | null }>();
-  if (existing?.project_id) {
-    const block = await assertProjectVisible(request, env, existing.project_id);
-    if (block) return block;
-  }
+  return withExistingRowProject('submission_events', async (req, e, rowId, _projectId) => {
+    const body = await req.json() as {
+      event_type?: string;
+      event_date?: string;
+      journal?: string;
+      notes?: string;
+    };
 
-  const body = await request.json() as {
-    event_type?: string;
-    event_date?: string;
-    journal?: string;
-    notes?: string;
-  };
+    const sets: string[] = [];
+    const params: (string | null)[] = [];
 
-  const sets: string[] = [];
-  const params: (string | null)[] = [];
-
-  if (body.event_type !== undefined) {
-    if (!VALID_EVENT_TYPES.includes(body.event_type as typeof VALID_EVENT_TYPES[number])) {
-      return error(`event_type must be one of: ${VALID_EVENT_TYPES.join(', ')}`, 400);
+    if (body.event_type !== undefined) {
+      if (!VALID_EVENT_TYPES.includes(body.event_type as typeof VALID_EVENT_TYPES[number])) {
+        return error(`event_type must be one of: ${VALID_EVENT_TYPES.join(', ')}`, 400);
+      }
+      sets.push('event_type = ?');
+      params.push(body.event_type);
     }
-    sets.push('event_type = ?');
-    params.push(body.event_type);
-  }
-  if (body.event_date !== undefined) { sets.push('event_date = ?'); params.push(body.event_date); }
-  if (body.journal !== undefined) { sets.push('journal = ?'); params.push(body.journal || null); }
-  if (body.notes !== undefined) { sets.push('notes = ?'); params.push(body.notes || null); }
+    if (body.event_date !== undefined) { sets.push('event_date = ?'); params.push(body.event_date); }
+    if (body.journal !== undefined) { sets.push('journal = ?'); params.push(body.journal || null); }
+    if (body.notes !== undefined) { sets.push('notes = ?'); params.push(body.notes || null); }
 
-  if (sets.length === 0) return error('No fields to update', 400);
+    if (sets.length === 0) return error('No fields to update', 400);
 
-  params.push(id);
-  await env.DB.prepare(
-    `UPDATE submission_events SET ${sets.join(', ')} WHERE id = ? AND deleted_at IS NULL`
-  ).bind(...params).run();
+    params.push(rowId);
+    await e.DB.prepare(
+      `UPDATE submission_events SET ${sets.join(', ')} WHERE id = ? AND deleted_at IS NULL`
+    ).bind(...params).run();
 
-  const actor = actorSlug(user.email);
-  await logActivity(env, 'submission', `Submission event ${id} updated`, actor, id, 'submission_event');
+    const actor = actorSlug(user.email);
+    await logActivity(e, 'submission', `Submission event ${rowId} updated`, actor, rowId, 'submission_event');
 
-  const updated = await env.DB.prepare('SELECT * FROM submission_events WHERE id = ?').bind(id).first();
-  if (!updated) return error('Submission event not found', 404);
-  return json({ data: updated });
+    const updated = await e.DB.prepare('SELECT * FROM submission_events WHERE id = ?').bind(rowId).first();
+    if (!updated) return error('Submission event not found', 404);
+    return json({ data: updated });
+  })(request, env, id);
 }
 
 // ── POST /api/submissions/:id/delete ──

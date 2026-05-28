@@ -1,6 +1,7 @@
 import type { AuthUser, Env } from '../helpers';
 import { json, error, generateId, logActivity, actorSlug, assertProjectVisible } from '../helpers';
-import { withProjectWrite } from '../lib/route-guards';
+import { withProjectWrite, withExistingRowProject } from '../lib/route-guards';
+import { hiddenResource } from '../lib/hidden-resource';
 
 // ── Types ──
 
@@ -128,50 +129,49 @@ export async function handleCreateRevision(request: Request, user: AuthUser, env
 
 // ── POST /api/revisions/:id ──
 // Update revision fields (status, dates, journal, notes)
-// Phase 1b-extended: gate on the existing row's parent project.
+// P4 (2026-05-28): migrated to withExistingRowProject so the row-existence
+// check + PB visibility gate cannot be bypassed by forgetting to call them.
+// Inner receives the canonical projectId; outer signature (id, request, user, env)
+// is unchanged for api/index.ts compatibility.
 export async function handleUpdateRevision(id: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
-  const existing = await env.DB.prepare('SELECT project_id FROM manuscript_revisions WHERE id = ?').bind(id).first<{ project_id: string | null }>();
-  if (existing?.project_id) {
-    const block = await assertProjectVisible(request, env, existing.project_id);
-    if (block) return block;
-  }
+  return withExistingRowProject('manuscript_revisions', async (req, e, rowId, _projectId) => {
+    const body = await req.json() as {
+      submitted_at?: string;
+      response_due?: string;
+      status?: string;
+      journal?: string;
+      notes?: string;
+    };
 
-  const body = await request.json() as {
-    submitted_at?: string;
-    response_due?: string;
-    status?: string;
-    journal?: string;
-    notes?: string;
-  };
+    const sets: string[] = [];
+    const params: (string | null)[] = [];
 
-  const sets: string[] = [];
-  const params: (string | null)[] = [];
-
-  if (body.submitted_at !== undefined) { sets.push('submitted_at = ?'); params.push(body.submitted_at || null); }
-  if (body.response_due !== undefined) { sets.push('response_due = ?'); params.push(body.response_due || null); }
-  if (body.journal !== undefined) { sets.push('journal = ?'); params.push(body.journal || null); }
-  if (body.notes !== undefined) { sets.push('notes = ?'); params.push(body.notes || null); }
-  if (body.status !== undefined) {
-    if (!VALID_REVISION_STATUSES.includes(body.status)) {
-      return error(`status must be one of: ${VALID_REVISION_STATUSES.join(', ')}`, 400);
+    if (body.submitted_at !== undefined) { sets.push('submitted_at = ?'); params.push(body.submitted_at || null); }
+    if (body.response_due !== undefined) { sets.push('response_due = ?'); params.push(body.response_due || null); }
+    if (body.journal !== undefined) { sets.push('journal = ?'); params.push(body.journal || null); }
+    if (body.notes !== undefined) { sets.push('notes = ?'); params.push(body.notes || null); }
+    if (body.status !== undefined) {
+      if (!VALID_REVISION_STATUSES.includes(body.status)) {
+        return error(`status must be one of: ${VALID_REVISION_STATUSES.join(', ')}`, 400);
+      }
+      sets.push('status = ?');
+      params.push(body.status);
     }
-    sets.push('status = ?');
-    params.push(body.status);
-  }
 
-  if (sets.length === 0) return error('No fields to update', 400);
+    if (sets.length === 0) return error('No fields to update', 400);
 
-  params.push(id);
-  await env.DB.prepare(
-    `UPDATE manuscript_revisions SET ${sets.join(', ')} WHERE id = ?`
-  ).bind(...params).run();
+    params.push(rowId);
+    await e.DB.prepare(
+      `UPDATE manuscript_revisions SET ${sets.join(', ')} WHERE id = ?`
+    ).bind(...params).run();
 
-  const actor = actorSlug(user.email);
-  await logActivity(env, 'revision', `Revision ${id} updated`, actor, id, 'revision');
+    const actor = actorSlug(user.email);
+    await logActivity(e, 'revision', `Revision ${rowId} updated`, actor, rowId, 'revision');
 
-  const updated = await env.DB.prepare('SELECT * FROM manuscript_revisions WHERE id = ?').bind(id).first();
-  if (!updated) return error('Revision not found', 404);
-  return json({ data: updated });
+    const updated = await e.DB.prepare('SELECT * FROM manuscript_revisions WHERE id = ?').bind(rowId).first();
+    if (!updated) return error('Revision not found', 404);
+    return json({ data: updated });
+  })(request, env, id);
 }
 
 // ── GET /api/revisions/:id/comments ──
@@ -184,12 +184,20 @@ export async function handleUpdateRevision(id: string, request: Request, user: A
 // blocked response. Now: 404 when the revision doesn't exist, regardless of
 // PB status; 403 only when the revision exists AND the caller can't see its
 // parent project. Both PI and non-PI get 404 for unknown ids.
+//
+// P8 (2026-05-28): further closes the 404/403 differential. T1.2 fixed the
+// null-revision path (now 404) but the hidden-project path still returned 403
+// via assertProjectVisible — an attacker could still distinguish "no such
+// revision" (404) from "revision exists but you can't see it" (403). Both
+// paths now return hiddenResource() (404, uniform envelope) so the oracle is
+// fully closed. The T1.2 tests at pb-visibility-contract.test.ts:811-824
+// assert 404 for all callers on unknown ids — they continue to pass.
 export async function handleGetRevisionComments(revisionId: string, request: Request, env: Env): Promise<Response> {
   const revision = await env.DB.prepare('SELECT project_id FROM manuscript_revisions WHERE id = ?').bind(revisionId).first<{ project_id: string | null }>();
-  if (!revision) return error('Revision not found', 404);
+  if (!revision) return hiddenResource();
   if (revision.project_id) {
     const block = await assertProjectVisible(request, env, revision.project_id);
-    if (block) return block;
+    if (block) return hiddenResource();
   }
 
   const comments = await env.DB.prepare(

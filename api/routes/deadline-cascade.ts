@@ -162,6 +162,15 @@ export async function handleGetCascade(url: URL, request: Request, env: Env): Pr
 
   // T2.4 (2026-05-28): resolveAndGuardProject combines canonicalize + visibility
   // gate into one DB round-trip (was two SELECTs).
+  //
+  // P4-exemption (2026-05-28): withExistingRowProject is NOT used here because
+  // this is a GET read path that takes project_id from the URL (not an UPDATE
+  // on an existing row by row-id). resolveAndGuardProject is the correct primitive
+  // for this pattern — it canonicalizes the project_id slug and gates visibility
+  // in a single SELECT, which is exactly what withExistingRowProject does internally
+  // for its table lookup. The P4 codex flag referred to Update handlers that
+  // hand-roll SELECT + assertProjectVisible; this GET handler was already
+  // correctly structured and needs no further migration.
   const { block, projectId } = await resolveAndGuardProject(request, env, rawProjectId);
   if (block) return block;
 

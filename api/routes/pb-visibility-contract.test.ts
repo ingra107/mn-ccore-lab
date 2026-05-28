@@ -347,13 +347,12 @@ const patternACases: PatternACase[] = [
     callPiOnPb:       () => handleGetRevisions(new URL('https://x/?project_id=pb-proj'), piRequest(), pbEnv()),
     callApiKeyOnPb:   () => handleGetRevisions(new URL('https://x/?project_id=pb-proj'), apiKeyRequest(), pbEnv()),
   },
-  {
-    label: 'GET /api/revisions/:id/comments (handleGetRevisionComments)',
-    callNonPiOnPb:    () => handleGetRevisionComments('rev1', nonPiRequest(), pbEnv({ revProjectId: 'pb-proj' })),
-    callNonPiOnNonPb: () => handleGetRevisionComments('rev1', nonPiRequest(), nonPbEnv({ revProjectId: 'mnccore-proj' })),
-    callPiOnPb:       () => handleGetRevisionComments('rev1', piRequest(), pbEnv({ revProjectId: 'pb-proj' })),
-    callApiKeyOnPb:   () => handleGetRevisionComments('rev1', apiKeyRequest(), pbEnv({ revProjectId: 'pb-proj' })),
-  },
+  // NOTE: handleGetRevisionComments was removed from patternACases (P8 2026-05-28).
+  // It previously returned 403 for non-PI on PB-category revision; after the P8
+  // oracle fix it returns 404 (via hiddenResource()) for both "no such revision"
+  // and "revision exists but caller can't see it" — the uniform envelope that
+  // closes the 404/403 status-code oracle. It is now tested in the P8 section
+  // below (describe 'P8 — handleGetRevisionComments oracle-closed').
   {
     label: 'GET /api/deadline-cascade/impact (handleGetImpact)',
     callNonPiOnPb:    () => handleGetImpact(new URL('https://x/?id=task1&type=task&new_date=2026-06-01'), nonPiRequest(), pbEnv({ taskProjectId: 'pb-proj' })),
@@ -757,7 +756,9 @@ describe('PB-visibility contract — Pattern B (cross-project feed filters; body
 describe('PB-visibility contract — registry drift guard', () => {
   it('Pattern A registry has at least the expected number of cases', () => {
     // 12 originals + 3 Phase 1b-extended + 1 Fix 2b (handleGetTask) = 16
-    expect(patternACases.length).toBeGreaterThanOrEqual(16)
+    // -1: handleGetRevisionComments moved to P8 oracle section (P8 2026-05-28;
+    //     now returns 404 not 403, so it can't use the shared 403-asserting loop)
+    expect(patternACases.length).toBeGreaterThanOrEqual(15)
   })
 
   it('Pattern W (writes) registry has at least the expected number of cases', () => {
@@ -821,6 +822,42 @@ describe('T1.2 — handleGetRevisionComments existence oracle (unknown revision 
   it('API-key caller on unknown revisionId → 404', async () => {
     const res = await handleGetRevisionComments('unknown-rev', apiKeyRequest(), nullRevEnv())
     expect(res.status).toBe(404)
+  })
+})
+
+// ── P8: handleGetRevisionComments oracle-closed ──────────────────────────────
+//
+// P8 (2026-05-28): the 404/403 differential in handleGetRevisionComments was
+// the second half of the existence oracle. T1.2 (above) closed the
+// "unknown revision → 200" half. P8 closes the "known revision, PB-hidden →
+// 403" half by routing both cases through hiddenResource() (status 404).
+//
+// Both the "no such revision" case (T1.2, tested above) and the "revision
+// exists but caller can't see its project" case (P8, tested here) must return
+// 404 with an identical body so no oracle discrimination is possible.
+//
+// PI callers and API-key callers on PB-category revisions must still get 200.
+// Non-PI callers on non-PB projects must still get 200.
+
+describe('P8 — handleGetRevisionComments oracle-closed (hidden revision → 404 not 403)', () => {
+  it('non-PI caller on PB-category revision → 404 (not 403)', async () => {
+    const res = await handleGetRevisionComments('rev1', nonPiRequest(), pbEnv({ revProjectId: 'pb-proj' }))
+    expect(res.status).toBe(404)
+  })
+
+  it('non-PI caller on non-PB revision → 200', async () => {
+    const res = await handleGetRevisionComments('rev1', nonPiRequest(), nonPbEnv({ revProjectId: 'mnccore-proj' }))
+    expect(res.status).toBe(200)
+  })
+
+  it('PI caller on PB-category revision → 200 (PI can still read)', async () => {
+    const res = await handleGetRevisionComments('rev1', piRequest(), pbEnv({ revProjectId: 'pb-proj' }))
+    expect(res.status).toBe(200)
+  })
+
+  it('API-key caller on PB-category revision → 200 (API-key can still read)', async () => {
+    const res = await handleGetRevisionComments('rev1', apiKeyRequest(), pbEnv({ revProjectId: 'pb-proj' }))
+    expect(res.status).toBe(200)
   })
 })
 

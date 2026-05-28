@@ -1,6 +1,6 @@
 import type { AuthUser, Env } from '../helpers';
 import { json, error, generateId, logActivity, actorSlug, buildUpdate, getAuthUser, assertProjectVisible } from '../helpers';
-import { withProjectWrite } from '../lib/route-guards';
+import { withProjectWrite, withExistingRowProject } from '../lib/route-guards';
 import { ctToday } from '../lib/ct-date';
 import { nowInstant } from '../lib/time';
 import { safeRow } from '../lib/task-cols';
@@ -149,38 +149,35 @@ export async function handleCreateRegulatoryItem(request: Request, user: AuthUse
 }
 
 // POST /api/regulatory/:id — update item
+// P4 (2026-05-28): migrated to withExistingRowProject so the existing-row
+// existence check + PB visibility gate cannot be bypassed. allowedFields does
+// NOT include project_id, so no reparent gate is needed; if a future spec adds
+// project_id reparent, also gate the new target as conferences.ts does.
+// Outer signature (id, request, user, env) unchanged for api/index.ts.
 export async function handleUpdateRegulatoryItem(id: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
-  // Phase 1b-extended: gate on the existing row's project before mutation.
-  // allowedFields below does NOT include project_id, so we don't need a target
-  // gate here — the item can't be re-parented through this endpoint. If a
-  // future spec adds project_id to allowedFields, also gate the new target.
-  const existing = await env.DB.prepare('SELECT project_id FROM regulatory_items WHERE id = ?').bind(id).first<{ project_id: string | null }>();
-  if (existing?.project_id) {
-    const block = await assertProjectVisible(request, env, existing.project_id);
-    if (block) return block;
-  }
+  return withExistingRowProject('regulatory_items', async (req, e, rowId, _projectId) => {
+    const body = await req.json() as Record<string, unknown>;
+    const allowedFields = ['title', 'item_type', 'protocol_number', 'approved_date', 'expiration_date', 'renewal_due', 'status', 'notes'];
+    const { sql, params, hasUpdates } = buildUpdate(body, allowedFields);
 
-  const body = await request.json() as Record<string, unknown>;
-  const allowedFields = ['title', 'item_type', 'protocol_number', 'approved_date', 'expiration_date', 'renewal_due', 'status', 'notes'];
-  const { sql, params, hasUpdates } = buildUpdate(body, allowedFields);
+    if (!hasUpdates) return error('No valid fields to update', 400);
 
-  if (!hasUpdates) return error('No valid fields to update', 400);
+    // Validate status if provided
+    if (body.status && !VALID_STATUSES.includes(body.status as typeof VALID_STATUSES[number])) {
+      return error(`Invalid status. Must be one of: ${VALID_STATUSES.join(', ')}`, 400);
+    }
 
-  // Validate status if provided
-  if (body.status && !VALID_STATUSES.includes(body.status as typeof VALID_STATUSES[number])) {
-    return error(`Invalid status. Must be one of: ${VALID_STATUSES.join(', ')}`, 400);
-  }
+    // Validate item_type if provided
+    if (body.item_type && !VALID_TYPES.includes(body.item_type as typeof VALID_TYPES[number])) {
+      return error(`Invalid item_type. Must be one of: ${VALID_TYPES.join(', ')}`, 400);
+    }
 
-  // Validate item_type if provided
-  if (body.item_type && !VALID_TYPES.includes(body.item_type as typeof VALID_TYPES[number])) {
-    return error(`Invalid item_type. Must be one of: ${VALID_TYPES.join(', ')}`, 400);
-  }
+    await e.DB.prepare(`UPDATE regulatory_items SET ${sql} WHERE id = ?`).bind(...params, rowId).run();
 
-  await env.DB.prepare(`UPDATE regulatory_items SET ${sql} WHERE id = ?`).bind(...params, id).run();
-
-  const updated = await env.DB.prepare('SELECT * FROM regulatory_items WHERE id = ?').bind(id).first<Record<string, unknown>>();
-  if (!updated) return error('Regulatory item not found', 404);
-  return json({ data: safeRow('regulatory_items', updated) });
+    const updated = await e.DB.prepare('SELECT * FROM regulatory_items WHERE id = ?').bind(rowId).first<Record<string, unknown>>();
+    if (!updated) return error('Regulatory item not found', 404);
+    return json({ data: safeRow('regulatory_items', updated) });
+  })(request, env, id);
 }
 
 // GET /api/regulatory/:id/ics — generate .ics calendar invite for renewal.
