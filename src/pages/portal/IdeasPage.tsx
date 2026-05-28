@@ -74,6 +74,7 @@ export default function IdeasPage() {
   const updateIdea = useUpdateIdea()
   const { showUndo } = useUndoToast()
   const [focusedIndex, setFocusedIndex] = useState(-1)
+  const [editingId, setEditingId] = useState<string | null>(null)
 
   const handleSort = (key: string) => {
     if (sortKey === key) {
@@ -152,6 +153,18 @@ export default function IdeasPage() {
     const btn = e.currentTarget
     btn.style.transform = 'scale(1.3)'
     window.setTimeout(() => { btn.style.transform = 'scale(1)' }, 150)
+  }
+
+  const handleEditSave = (id: string, fields: { title: string; description: string; research_area: string }) => {
+    updateIdea.mutate({
+      id,
+      fields: {
+        title: fields.title,
+        description: fields.description || null,
+        research_area: fields.research_area || null,
+      },
+    })
+    setEditingId(null)
   }
 
   const activeCount = ideas.filter((i) => i.status !== 'archived' && i.status !== 'parked').length
@@ -410,10 +423,23 @@ export default function IdeasPage() {
                   key={idea.id}
                   idea={idea}
                   isFocused={focusedIndex === idx}
-                  isExpanded={expandedId === idea.id}
-                  onToggleExpand={() => setExpandedId(expandedId === idea.id ? null : idea.id)}
+                  isExpanded={expandedId === idea.id || editingId === idea.id}
+                  isEditing={editingId === idea.id}
+                  onToggleExpand={() => {
+                    setEditingId(null)
+                    setExpandedId(expandedId === idea.id ? null : idea.id)
+                  }}
                   onVote={(e) => handleVote(e, idea.id)}
                   onStatusChange={(status) => handleIdeaStatusChange(idea.id, status, idea.status)}
+                  onEdit={() => {
+                    setExpandedId(idea.id)
+                    setEditingId(idea.id)
+                  }}
+                  onEditSave={(fields) => handleEditSave(idea.id, fields)}
+                  onEditCancel={() => {
+                    setEditingId(null)
+                    setExpandedId(null)
+                  }}
                 />
               ))}
             </div>
@@ -479,18 +505,38 @@ function IdeaRowView({
   idea,
   isFocused,
   isExpanded,
+  isEditing,
   onToggleExpand,
   onVote,
   onStatusChange,
+  onEdit,
+  onEditSave,
+  onEditCancel,
 }: {
   idea: IdeaRow
   isFocused: boolean
   isExpanded: boolean
+  isEditing: boolean
   onToggleExpand: () => void
   onVote: (e: React.MouseEvent<HTMLButtonElement>) => void
   onStatusChange: (status: string) => void
+  onEdit: () => void
+  onEditSave: (fields: { title: string; description: string; research_area: string }) => void
+  onEditCancel: () => void
 }) {
   const person = getPersonInfo(idea.submitted_by)
+  const [editTitle, setEditTitle] = useState(idea.title)
+  const [editDescription, setEditDescription] = useState(idea.description ?? '')
+  const [editArea, setEditArea] = useState(idea.research_area ?? '')
+
+  // Reset edit fields when editing opens
+  useEffect(() => {
+    if (isEditing) {
+      setEditTitle(idea.title)
+      setEditDescription(idea.description ?? '')
+      setEditArea(idea.research_area ?? '')
+    }
+  }, [isEditing, idea.title, idea.description, idea.research_area])
 
   return (
     <div
@@ -645,6 +691,10 @@ function IdeaRowView({
         >
           <button
             className="rounded-md"
+            onClick={(e) => {
+              e.stopPropagation()
+              onEdit()
+            }}
             style={{
               background: 'none',
               border: '1px solid var(--border-subtle)',
@@ -768,7 +818,7 @@ function IdeaRowView({
         }
       `}</style>
 
-      {/* Inline detail panel (shown when title is clicked) */}
+      {/* Inline detail panel (shown when title is clicked or Edit pressed) */}
       {isExpanded && (
         <div
           style={{
@@ -779,6 +829,66 @@ function IdeaRowView({
             color: 'var(--ink)',
           }}
         >
+          {isEditing ? (
+            /* ── Inline edit form ── */
+            <form
+              onSubmit={(e) => {
+                e.preventDefault()
+                onEditSave({ title: editTitle.trim(), description: editDescription.trim(), research_area: editArea })
+              }}
+              style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-md)' }}
+            >
+              <div>
+                <label style={{ display: 'block', fontSize: '10px', color: 'var(--slate)', opacity: 0.75, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Title</label>
+                <input
+                  type="text"
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  required
+                  autoFocus
+                  style={{ width: '100%', padding: '6px 8px', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-sm)', background: 'var(--cream)', color: 'var(--ink)', fontSize: 'var(--text-base)', boxSizing: 'border-box' }}
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '10px', color: 'var(--slate)', opacity: 0.75, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Description</label>
+                <textarea
+                  value={editDescription}
+                  onChange={(e) => setEditDescription(e.target.value)}
+                  rows={3}
+                  style={{ width: '100%', padding: '6px 8px', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-sm)', background: 'var(--cream)', color: 'var(--ink)', fontSize: 'var(--text-small)', resize: 'vertical', boxSizing: 'border-box' }}
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '10px', color: 'var(--slate)', opacity: 0.75, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Research Area</label>
+                <select
+                  value={editArea}
+                  onChange={(e) => setEditArea(e.target.value)}
+                  aria-label="Research area"
+                  style={{ padding: '6px 8px', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-sm)', background: 'var(--cream)', color: 'var(--ink)', fontSize: 'var(--text-small)' }}
+                >
+                  <option value="">— none —</option>
+                  {researchAreas.map((a) => <option key={a} value={a}>{a}</option>)}
+                </select>
+              </div>
+              <div style={{ display: 'flex', gap: 'var(--sp-sm)' }}>
+                <button
+                  type="submit"
+                  disabled={!editTitle.trim()}
+                  style={{ padding: '6px 14px', background: 'var(--teal-solid)', color: 'var(--ink-bright)', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontSize: 'var(--text-small)', fontWeight: 500 }}
+                >
+                  Save
+                </button>
+                <button
+                  type="button"
+                  onClick={onEditCancel}
+                  style={{ padding: '6px 14px', background: 'none', color: 'var(--slate)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontSize: 'var(--text-small)' }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          ) : (
+          /* ── Read-only detail ── */
           <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
             <div>
               <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Title</div>
@@ -809,6 +919,7 @@ function IdeaRowView({
               <div style={{ color: idea.votes > 0 ? 'var(--teal)' : 'var(--slate)' }}>{idea.votes}</div>
             </div>
           </div>
+          )}
         </div>
       )}
     </div>

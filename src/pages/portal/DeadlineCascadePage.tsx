@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo } from 'react'
 import { motion } from 'framer-motion'
-import { GitBranch, Filter } from 'lucide-react'
+import { GitBranch, Filter, RotateCcw } from 'lucide-react'
 import PageHeader from '../../components/PageHeader'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
 import DeadlineCascade from '../../components/DeadlineCascade'
@@ -91,6 +91,23 @@ export default function DeadlineCascadePage() {
             <Filter size={14} />
             At Risk Only
           </ToggleButton>
+          {(impactId !== null) && (
+            <button
+              onClick={() => { setImpactId(null); setImpactType(null); setImpactDate(null) }}
+              className="inline-flex items-center gap-1.5 rounded-md border text-sm transition-colors px-3 py-1.5"
+              style={{
+                borderColor: 'var(--border-subtle)',
+                color: 'var(--slate)',
+                background: 'none',
+                cursor: 'pointer',
+              }}
+              title="Clear impact simulation"
+              aria-label="Reset impact simulation"
+            >
+              <RotateCcw size={13} />
+              Reset
+            </button>
+          )}
         </div>
       </PageHeader>
 

@@ -620,9 +620,13 @@ export default function GrantsPage() {
                     // aria-expanded must live on an interactive role; removed
                     // together to stay axe-clean. Keyboard users tab to the
                     // inner row-title link or expand chevron.
+                    // P6-A3: old guard `e.target === e.currentTarget` was
+                    // unreachable when child columns fill the row. Now exclude
+                    // explicit interactive elements (button, a, select, input).
                     onClick={(e) => {
-                      // Only expand on background click, not on inner buttons/links.
-                      if (e.target === e.currentTarget) setExpandedId(isExpanded ? null : grant.id)
+                      const t = e.target as HTMLElement
+                      if (t.closest('button, a, select, input, [role="option"]')) return
+                      setExpandedId(isExpanded ? null : grant.id)
                     }}
                   >
                     {/* Title */}

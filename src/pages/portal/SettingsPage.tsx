@@ -10,10 +10,7 @@ import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
 import { TextSkeleton } from '../../components/LoadingSkeleton'
 import { staggerContainer, staggerItem } from '../../lib/animations'
-import { useTeam } from '../../hooks/useApiData'
-import Avatar from '../../components/Avatar'
 import InlineSelect from '../../components/InlineSelect'
-import { getPersonInfo } from '../../data/team'
 import { useLabPrefs } from '../../hooks/useLabPrefs'
 import RangeSlider from '../../components/RangeSlider'
 import CalendarFeedsPanel from '../../components/CalendarFeedsPanel'
@@ -77,7 +74,6 @@ function LabIconPicker({ value, onChange }: { value: string; onChange: (next: st
 
 export default function SettingsPage() {
   const queryClient = useQueryClient()
-  const { data: team = [] } = useTeam()
 
   // Load settings
   const { data: settings = {}, isLoading: settingsLoading } = useQuery({
@@ -135,6 +131,20 @@ export default function SettingsPage() {
     if (typeof window === 'undefined') return false
     return window.localStorage.getItem('showDebugItems') === 'true'
   })
+
+  // P6-A6: drive theme selection from React state, not DOM attribute reads.
+  // DOM reads at render time produce stale values; React state stays in sync.
+  const [currentTheme, setCurrentTheme] = useState<'light' | 'dark'>(() => {
+    if (typeof window === 'undefined') return 'dark'
+    return (document.documentElement.getAttribute('data-theme') as 'light' | 'dark') ?? 'dark'
+  })
+
+  const applyTheme = (theme: 'light' | 'dark') => {
+    document.documentElement.setAttribute('data-theme', theme)
+    // Per CLAUDE.md rule 14: theme localStorage key is 'mn-ccore-theme', NOT 'theme'
+    localStorage.setItem('mn-ccore-theme', theme)
+    setCurrentTheme(theme)
+  }
 
   // P2-05: tabbed layout. Hash-route deep-linkable (/settings#ai).
   const TABS = [
@@ -368,36 +378,32 @@ export default function SettingsPage() {
 
         {/* AI Meeting Context */}
         {activeTab === 'ai' && (
-        <SettingsSection title="AI Meeting Context" subtitle="Help AI recognize speakers and assign tasks accurately during meeting note analysis" icon={Bot}>
-          <div className="flex flex-col gap-3">
-            {team.filter(m => m.slug).slice(0, 20).map((member) => {
-              const person = getPersonInfo(member.slug!)
-              return (
-                <div key={member.slug} className="flex items-center gap-3 py-2 border-b last:border-b-0" style={{ borderColor: 'var(--border-subtle)' }}>
-                  <div style={{ width: 32, height: 32, flexShrink: 0 }}>
-                    <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="base" variant="ice" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium" style={{ color: 'var(--ink)' }}>{person.name}</div>
-                    <div className="text-[10px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>{member.role}</div>
-                  </div>
-                  <input
-                    type="text"
-                    placeholder="e.g., stats expert, IRB contact, data lead"
-                    className="w-48 rounded-md border px-2 py-1 text-xs outline-none"
-                    style={{ fontSize: 'var(--label-size)', borderColor: 'var(--border-subtle)', color: 'var(--ink)' }}
-                    defaultValue=""
-                  />
-                </div>
-              )
-            })}
-          </div>
-          <div className="flex items-start gap-2 mt-3 px-1">
+        <SettingsSection title="AI Meeting Context" subtitle="AI uses each member's role to recognize speakers and assign tasks in meeting notes" icon={Bot}>
+          <div className="flex items-start gap-2 mb-4 px-1">
             <Info size={12} style={{ color: 'var(--teal)', marginTop: 2, flexShrink: 0 }} />
-            <p className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.75, lineHeight: 1.5 }}>
-              Expertise notes help AI meeting notes recognize who should be assigned which tasks. These are used when AI processes meeting transcripts.
+            <p className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.85, lineHeight: 1.5 }}>
+              Speaker recognition and task attribution use each team member's <strong>Role</strong> field. Edit roles in the Team Directory to update what the AI knows about each person.
             </p>
           </div>
+          <Link
+            to="/team"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border transition-colors hover:bg-black/5 dark:hover:bg-white/5"
+            style={{
+              borderColor: 'var(--border-subtle)',
+              textDecoration: 'none',
+              color: 'var(--ink)',
+              backgroundColor: 'var(--surface-1)',
+            }}
+          >
+            <div className="flex items-center justify-center w-7 h-7 rounded-md flex-shrink-0" style={{ backgroundColor: 'var(--teal-active)' }}>
+              <Users size={14} style={{ color: 'var(--teal)' }} />
+            </div>
+            <div style={{ flex: 1 }}>
+              <span className="text-sm font-medium" style={{ color: 'var(--ink)' }}>Team Directory</span>
+              <span className="ml-2 text-[11px]" style={{ color: 'var(--slate)', opacity: 0.75 }}>Edit member roles and expertise tags</span>
+            </div>
+            <ArrowRight size={14} style={{ color: 'var(--slate)', opacity: 0.75 }} />
+          </Link>
         </SettingsSection>
         )}
 
@@ -421,13 +427,11 @@ export default function SettingsPage() {
           <div className="flex gap-4">
             {/* Light theme preview — hardcoded hex intentional (showing what themes look like) */}
             <button
-              onClick={() => {
-                document.documentElement.setAttribute('data-theme', 'light')
-                localStorage.setItem('theme', 'light')
-              }}
+              onClick={() => applyTheme('light')}
               className="flex-1 rounded-lg border-2 p-3 transition-all cursor-pointer"
+              aria-pressed={currentTheme === 'light' ? "true" : "false"}
               style={{
-                borderColor: document.documentElement.getAttribute('data-theme') !== 'dark' ? 'var(--teal)' : 'var(--border-subtle)',
+                borderColor: currentTheme !== 'dark' ? 'var(--teal)' : 'var(--border-subtle)',
                 background: '#ffffff',
               }}
             >
@@ -443,13 +447,11 @@ export default function SettingsPage() {
             </button>
             {/* Dark theme preview — hardcoded hex intentional (showing what themes look like) */}
             <button
-              onClick={() => {
-                document.documentElement.setAttribute('data-theme', 'dark')
-                localStorage.setItem('theme', 'dark')
-              }}
+              onClick={() => applyTheme('dark')}
               className="flex-1 rounded-lg border-2 p-3 transition-all cursor-pointer"
+              aria-pressed={currentTheme === 'dark' ? "true" : "false"}
               style={{
-                borderColor: document.documentElement.getAttribute('data-theme') === 'dark' ? 'var(--teal)' : 'var(--border-subtle)',
+                borderColor: currentTheme === 'dark' ? 'var(--teal)' : 'var(--border-subtle)',
                 background: '#0b1017',
               }}
             >
