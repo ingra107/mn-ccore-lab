@@ -23,7 +23,14 @@ export function useRealtimeSync() {
         // query cache.
         const ignore = ['presence-ping', 'presence-leave', 'typing-start', 'typing-stop', 'intent', 'intent-leave']
         if (ignore.includes(msg.type)) return
-        queryClient.invalidateQueries({ queryKey: [msg.type] })
+        // 'data' is the all-invalidate sentinel broadcast by notifyClients().
+        // invalidateQueries({queryKey:['data']}) matched no real query key;
+        // call with no filter instead so every cache entry is refreshed.
+        if (msg.type === 'data') {
+          invalidateAll()
+        } else {
+          queryClient.invalidateQueries({ queryKey: [msg.type] })
+        }
       } else {
         invalidateAll()
       }
@@ -32,10 +39,8 @@ export function useRealtimeSync() {
   }, [queryClient])
 
   // Phase 1: Polling — /api/version is cheap; 15s gives acceptable cross-tab
-  // latency without thrashing. Deep-audit Suite 7 confirmed tab-to-tab edits
-  // weren't propagating through the WS path in <20s: the DO service binding
-  // (NOTIFICATION_HUB) isn't wired in wrangler.toml, so api/lib/notify.ts
-  // early-returns. Until that binding ships, polling is the real sync path.
+  // latency without thrashing. NOTIFICATION_HUB is wired in wrangler.toml
+  // (binding present since Phase 2); both WS push and polling are active.
   //
   // refetchIntervalInBackground: true is required — React Query's default
   // pauses the polling interval when the tab isn't focused. Real users
