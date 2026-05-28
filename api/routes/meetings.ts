@@ -129,65 +129,77 @@ export async function handleMeetingPrep(meetingId: string, env: Env, isAuthed = 
 
   const pbFilter = canSeePb ? '' : " AND (p.category IS NULL OR p.category != 'Peripheral Brain')";
 
-  // Find the previous meeting (for carry-forward context)
+  // Find the previous meeting (for carry-forward context). MUST resolve
+  // before the parallel fan-out below — prevActionItems depends on it.
   const prevMeeting = await env.DB.prepare(
     'SELECT id, date, title FROM meetings WHERE date < ? ORDER BY date DESC LIMIT 1'
   ).bind(meeting.date as string).first();
 
-  // Action items from previous meeting (if any).
-  // Join to projects so PB-category tasks are filtered for non-PI callers.
-  const prevActionItems = prevMeeting
-    ? (await env.DB.prepare(
-        `SELECT t.id, t.description, t.assignee, t.completed, t.due_date
-         FROM tasks t
-         LEFT JOIN projects p ON p.id = t.project_id OR p.slug = t.project_id
-         WHERE t.meeting_id = ?${pbFilter}
-         ORDER BY t.completed ASC, t.assignee`
-      ).bind(prevMeeting.id).all()).results
-    : [];
-
-  // Recent project activity (last 14 days) — stage changes, completed tasks, comments.
-  // Filter by related_type='project' joining to projects, plus pass through
-  // non-project activities (which can't be PB-leaking) unchanged.
+  // T2.3 (2026-05-28): parallelize the 5 independent reads. recentActivity,
+  // upcomingDeadlines, agendaItems, overdueTasks read disjoint tables on
+  // disjoint params (today / twoWeeksAgo / twoWeeksOut / meetingId). prevActionItems
+  // depends only on prevMeeting.id (already resolved). Sequential await on each
+  // accumulated ~5x round-trip latency.
   const twoWeeksAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
-  const recentActivity = (await env.DB.prepare(
-    canSeePb
-      ? `SELECT a.type, a.description, a.actor, a.related_id as entity_id, a.related_type as entity_type, a.timestamp as created_at
-         FROM activity_log a
-         WHERE a.timestamp > ?
-         ORDER BY a.timestamp DESC LIMIT 30`
-      : `SELECT a.type, a.description, a.actor, a.related_id as entity_id, a.related_type as entity_type, a.timestamp as created_at
-         FROM activity_log a
-         LEFT JOIN projects p ON a.related_type = 'project' AND (p.id = a.related_id OR p.slug = a.related_id)
-         WHERE a.timestamp > ?
-           AND (a.related_type != 'project' OR p.category IS NULL OR p.category != 'Peripheral Brain')
-         ORDER BY a.timestamp DESC LIMIT 30`
-  ).bind(twoWeeksAgo).all()).results;
-
-  // Upcoming deadlines (next 14 days)
   const twoWeeksOut = ctToday(14);
   const today = ctToday();
-  const upcomingDeadlines = (await env.DB.prepare(
-    `SELECT t.id, t.title, t.description, t.assignee, t.due_date, t.priority, t.status
-     FROM tasks t
-     LEFT JOIN projects p ON p.id = t.project_id OR p.slug = t.project_id
-     WHERE t.due_date BETWEEN ? AND ? AND t.completed = 0${pbFilter}
-     ORDER BY t.due_date`
-  ).bind(today, twoWeeksOut).all()).results;
-
-  // Current meeting's agenda items
-  const agendaItems = (await env.DB.prepare(
-    'SELECT * FROM agenda_items WHERE meeting_id = ? ORDER BY sort_order, created_at'
-  ).bind(meetingId).all()).results;
-
-  // Overdue tasks
-  const overdueTasks = (await env.DB.prepare(
-    `SELECT t.id, t.title, t.description, t.assignee, t.due_date, t.priority
-     FROM tasks t
-     LEFT JOIN projects p ON p.id = t.project_id OR p.slug = t.project_id
-     WHERE t.due_date < ? AND t.completed = 0${pbFilter}
-     ORDER BY t.due_date`
-  ).bind(today).all()).results;
+  const [
+    prevActionItemsRes,
+    recentActivityRes,
+    upcomingDeadlinesRes,
+    agendaItemsRes,
+    overdueTasksRes,
+  ] = await Promise.all([
+    // Action items from previous meeting (if any). PB-filtered via the join.
+    prevMeeting
+      ? env.DB.prepare(
+          `SELECT t.id, t.description, t.assignee, t.completed, t.due_date
+           FROM tasks t
+           LEFT JOIN projects p ON p.id = t.project_id OR p.slug = t.project_id
+           WHERE t.meeting_id = ?${pbFilter}
+           ORDER BY t.completed ASC, t.assignee`
+        ).bind(prevMeeting.id).all()
+      : Promise.resolve({ results: [] as Record<string, unknown>[] }),
+    // Recent project activity (last 14 days) — stage changes, completed tasks, comments.
+    env.DB.prepare(
+      canSeePb
+        ? `SELECT a.type, a.description, a.actor, a.related_id as entity_id, a.related_type as entity_type, a.timestamp as created_at
+           FROM activity_log a
+           WHERE a.timestamp > ?
+           ORDER BY a.timestamp DESC LIMIT 30`
+        : `SELECT a.type, a.description, a.actor, a.related_id as entity_id, a.related_type as entity_type, a.timestamp as created_at
+           FROM activity_log a
+           LEFT JOIN projects p ON a.related_type = 'project' AND (p.id = a.related_id OR p.slug = a.related_id)
+           WHERE a.timestamp > ?
+             AND (a.related_type != 'project' OR p.category IS NULL OR p.category != 'Peripheral Brain')
+           ORDER BY a.timestamp DESC LIMIT 30`
+    ).bind(twoWeeksAgo).all(),
+    // Upcoming deadlines (next 14 days)
+    env.DB.prepare(
+      `SELECT t.id, t.title, t.description, t.assignee, t.due_date, t.priority, t.status
+       FROM tasks t
+       LEFT JOIN projects p ON p.id = t.project_id OR p.slug = t.project_id
+       WHERE t.due_date BETWEEN ? AND ? AND t.completed = 0${pbFilter}
+       ORDER BY t.due_date`
+    ).bind(today, twoWeeksOut).all(),
+    // Current meeting's agenda items
+    env.DB.prepare(
+      'SELECT * FROM agenda_items WHERE meeting_id = ? ORDER BY sort_order, created_at'
+    ).bind(meetingId).all(),
+    // Overdue tasks
+    env.DB.prepare(
+      `SELECT t.id, t.title, t.description, t.assignee, t.due_date, t.priority
+       FROM tasks t
+       LEFT JOIN projects p ON p.id = t.project_id OR p.slug = t.project_id
+       WHERE t.due_date < ? AND t.completed = 0${pbFilter}
+       ORDER BY t.due_date`
+    ).bind(today).all(),
+  ]);
+  const prevActionItems = prevActionItemsRes.results;
+  const recentActivity = recentActivityRes.results;
+  const upcomingDeadlines = upcomingDeadlinesRes.results;
+  const agendaItems = agendaItemsRes.results;
+  const overdueTasks = overdueTasksRes.results;
 
   return json({
     data: {
@@ -219,64 +231,67 @@ export async function handleGenerateAgenda(meetingId: string, env: Env, isAuthed
   const prevDate = prevMeeting?.date ?? '1970-01-01';
 
   const pbFilterP = canSeePb ? '' : " AND (p.category IS NULL OR p.category != 'Peripheral Brain')";
-
-  // 1. Carried-forward and open action items from previous meetings
-  const carriedForward = await env.DB.prepare(
-    `SELECT t.id, t.title, t.description, t.assignee, t.due_date, t.status
-     FROM tasks t
-     JOIN meetings m ON t.meeting_id = m.id
-     LEFT JOIN projects p ON p.id = t.project_id OR p.slug = t.project_id
-     WHERE m.date < ? AND (t.completed = 0 OR t.status NOT IN ('done','completed'))${pbFilterP}
-     ORDER BY m.date DESC, t.created_at
-     LIMIT 20`
-  ).bind(meeting.date).all<{ id: string; title: string; description: string; assignee: string; due_date: string; status: string }>();
-
-  // 2. Urgent / high-priority open tasks due this week
+  const pbFilterDirect = canSeePb ? '' : " AND (category IS NULL OR category != 'Peripheral Brain')";
   const today = ctToday();
   const weekOut = ctToday(7);
-  const urgentTasks = await env.DB.prepare(
-    `SELECT t.id, t.title, t.assignee, t.due_date, t.priority, t.status
-     FROM tasks t
-     LEFT JOIN projects p ON p.id = t.project_id OR p.slug = t.project_id
-     WHERE t.status IN ('todo','in_progress','waiting_external')
-       AND t.priority IN ('high','urgent')
-       AND t.due_date BETWEEN ? AND ?
-       AND (t.deleted_at IS NULL OR t.deleted_at = '')${pbFilterP}
-     ORDER BY t.due_date
-     LIMIT 15`
-  ).bind(today, weekOut).all<{ id: string; title: string; assignee: string; due_date: string; priority: string; status: string }>();
 
-  // 3. Stalled manuscripts / projects (in active status but not updated in 30+ days)
-  const pbFilterDirect = canSeePb ? '' : " AND (category IS NULL OR category != 'Peripheral Brain')";
-  const stalledProjects = await env.DB.prepare(
-    `SELECT id, title, stage, category, updated_at
-     FROM projects
-     WHERE status IN ('active','In Review','In Preparation')
-       AND julianday('now') - julianday(updated_at) > 30${pbFilterDirect}
-     ORDER BY updated_at ASC
-     LIMIT 8`
-  ).all<{ id: string; title: string; stage: string; category: string; updated_at: string }>();
-
-  // 4. Regulatory items expiring within 60 days
-  const regulatory = await env.DB.prepare(
-    `SELECT r.id, r.title, r.item_type, r.expiration_date, r.status
-     FROM regulatory_items r
-     LEFT JOIN projects p ON p.id = r.project_id OR p.slug = r.project_id
-     WHERE r.status IN ('active','action_needed','expiring_soon')
-       AND r.expiration_date < date('now', '+60 days')${pbFilterP}
-     ORDER BY r.expiration_date ASC
-     LIMIT 10`
-  ).all<{ id: string; title: string; item_type: string; expiration_date: string; status: string }>();
-
-  // 5. Recent project updates since previous meeting
-  const recentUpdates = await env.DB.prepare(
-    `SELECT pu.id, pu.content, pu.update_type, pu.author, pu.created_at, p.title as project_title
-     FROM project_updates pu
-     LEFT JOIN projects p ON pu.project_id = p.id OR pu.project_id = p.slug
-     WHERE pu.created_at > ?${pbFilterP}
-     ORDER BY pu.created_at DESC
-     LIMIT 15`
-  ).bind(prevDate).all<{ id: string; content: string; update_type: string; author: string; created_at: string; project_title: string }>();
+  // T2.3 (2026-05-28): parallelize the 5 disjoint queries below. Each reads
+  // a different table (tasks JOIN meetings / tasks / projects / regulatory_items /
+  // project_updates) on disjoint params (all derived from prevDate / meeting.date /
+  // today / weekOut, all available at fan-out time). Sequential await accumulated
+  // ~5x round-trip latency on a frequent-ish endpoint (agenda generation).
+  const [carriedForward, urgentTasks, stalledProjects, regulatory, recentUpdates] = await Promise.all([
+    // 1. Carried-forward and open action items from previous meetings
+    env.DB.prepare(
+      `SELECT t.id, t.title, t.description, t.assignee, t.due_date, t.status
+       FROM tasks t
+       JOIN meetings m ON t.meeting_id = m.id
+       LEFT JOIN projects p ON p.id = t.project_id OR p.slug = t.project_id
+       WHERE m.date < ? AND (t.completed = 0 OR t.status NOT IN ('done','completed'))${pbFilterP}
+       ORDER BY m.date DESC, t.created_at
+       LIMIT 20`
+    ).bind(meeting.date).all<{ id: string; title: string; description: string; assignee: string; due_date: string; status: string }>(),
+    // 2. Urgent / high-priority open tasks due this week
+    env.DB.prepare(
+      `SELECT t.id, t.title, t.assignee, t.due_date, t.priority, t.status
+       FROM tasks t
+       LEFT JOIN projects p ON p.id = t.project_id OR p.slug = t.project_id
+       WHERE t.status IN ('todo','in_progress','waiting_external')
+         AND t.priority IN ('high','urgent')
+         AND t.due_date BETWEEN ? AND ?
+         AND (t.deleted_at IS NULL OR t.deleted_at = '')${pbFilterP}
+       ORDER BY t.due_date
+       LIMIT 15`
+    ).bind(today, weekOut).all<{ id: string; title: string; assignee: string; due_date: string; priority: string; status: string }>(),
+    // 3. Stalled manuscripts / projects (in active status but not updated in 30+ days)
+    env.DB.prepare(
+      `SELECT id, title, stage, category, updated_at
+       FROM projects
+       WHERE status IN ('active','In Review','In Preparation')
+         AND julianday('now') - julianday(updated_at) > 30${pbFilterDirect}
+       ORDER BY updated_at ASC
+       LIMIT 8`
+    ).all<{ id: string; title: string; stage: string; category: string; updated_at: string }>(),
+    // 4. Regulatory items expiring within 60 days
+    env.DB.prepare(
+      `SELECT r.id, r.title, r.item_type, r.expiration_date, r.status
+       FROM regulatory_items r
+       LEFT JOIN projects p ON p.id = r.project_id OR p.slug = r.project_id
+       WHERE r.status IN ('active','action_needed','expiring_soon')
+         AND r.expiration_date < date('now', '+60 days')${pbFilterP}
+       ORDER BY r.expiration_date ASC
+       LIMIT 10`
+    ).all<{ id: string; title: string; item_type: string; expiration_date: string; status: string }>(),
+    // 5. Recent project updates since previous meeting
+    env.DB.prepare(
+      `SELECT pu.id, pu.content, pu.update_type, pu.author, pu.created_at, p.title as project_title
+       FROM project_updates pu
+       LEFT JOIN projects p ON pu.project_id = p.id OR pu.project_id = p.slug
+       WHERE pu.created_at > ?${pbFilterP}
+       ORDER BY pu.created_at DESC
+       LIMIT 15`
+    ).bind(prevDate).all<{ id: string; content: string; update_type: string; author: string; created_at: string; project_title: string }>(),
+  ]);
 
   return json({
     meeting_id: meetingId,
