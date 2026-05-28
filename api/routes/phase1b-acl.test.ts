@@ -1,0 +1,841 @@
+// phase1b-acl.test.ts — Phase 1b-A caller-identity + ownership + gating ACL
+//
+// Covers the 9 endpoint groups hardened in hub-hardening-2026-05-27:
+//   1. Notifications — GET list/count (auth required; recipient from JWT not param)
+//   2. Notifications — POST /:id/read (owner-or-PI gate)
+//   3. Sessions — PI-or-API-key gate
+//   4. Lane3 — PI-or-API-key gate
+//   5. Inbox-events GET — PI-or-API-key gate
+//   6. Regulatory ICS — auth-only gate (not PI-only)
+//   7. Uploads create (url + done) — canAccessEntity on context/entityId
+//   8. Decisions create — resolveActor rejects foreign decided_by for non-PI
+//   9. Email-drafts sync-bulk — PI-or-API-key gate
+//  10. File-activity sync — PI-or-API-key gate
+//  11. Meeting detail — full row for authed, public cols for unauth
+//
+// Uses the same lightweight SQL-shape stub pattern as security-gates.test.ts.
+
+import { describe, it, expect } from 'vitest'
+import { handleNotifications, handleNotificationCount, handleMarkNotificationRead } from './notifications'
+import { handleGetSessions } from './sessions'
+import { handleLane3List } from './lane3'
+import { handleInboxEvents } from './inbox-events'
+import { handleRegulatoryIcs } from './regulatory'
+import { handleUploadUrl, handleUploadDone } from './uploads'
+import { handleCreateDecision } from './decisions'
+import { handleSyncEmailDrafts } from './email-drafts'
+import { handleSyncFileActivity } from './file-activity'
+import { handleGetMeeting } from './meetings'
+import type { Env } from '../helpers'
+
+// ── Shared test primitives ────────────────────────────────────────────────────
+
+const PI_EMAIL = 'ingra107@umn.edu'
+// nate@umn.edu → LUT maps 'nate' → 'nate-mesfin'
+const NON_PI_EMAIL = 'nate@umn.edu'
+const PI_SLUG = 'nick-ingraham'
+const NON_PI_SLUG = 'nate-mesfin'
+const VALID_API_KEY = 'Bearer valid-test-api-key'
+
+/** Request that looks like a PI JWT (test-mode bypass). */
+function piRequest(extra: RequestInit = {}): Request {
+  return new Request('https://x/api/test', {
+    method: 'GET',
+    headers: {
+      'X-Test-Mode-Key': 'local-test-key-do-not-use-in-prod',
+      'X-Test-User': PI_EMAIL,
+    },
+    ...extra,
+  })
+}
+
+/** Request that looks like a non-PI JWT. */
+function nonPiRequest(extra: RequestInit = {}): Request {
+  return new Request('https://x/api/test', {
+    method: 'GET',
+    headers: {
+      'X-Test-Mode-Key': 'local-test-key-do-not-use-in-prod',
+      'X-Test-User': NON_PI_EMAIL,
+    },
+    ...extra,
+  })
+}
+
+/** Unauthenticated request (no headers). */
+function unauthRequest(extra: RequestInit = {}): Request {
+  return new Request('https://x/api/test', { method: 'GET', ...extra })
+}
+
+/** Request carrying a valid API key in Authorization: Bearer. */
+function apiKeyRequest(extra: RequestInit = {}): Request {
+  return new Request('https://x/api/test', {
+    method: 'POST',
+    headers: { Authorization: VALID_API_KEY },
+    ...extra,
+  })
+}
+
+/** Minimal Env that satisfies helpers.ts test-mode auth + PI-email lookup. */
+function makeEnv(overrides: Partial<Env> = {}): Env {
+  const base = {
+    TEST_MODE_KEY: 'local-test-key-do-not-use-in-prod',
+    PB_API_KEY: 'valid-test-api-key',
+    DB: {
+      prepare: (_sql: string) => ({
+        bind: (..._args: unknown[]) => ({
+          first: async () => null,
+          all: async () => ({ results: [] }),
+          run: async () => ({ success: true }),
+        }),
+        first: async () => null,
+        all: async () => ({ results: [] }),
+        run: async () => ({ success: true }),
+      }),
+      batch: async () => [],
+    },
+  }
+  return { ...base, ...overrides } as unknown as Env
+}
+
+/** Env with a lab_settings row giving PI email = PI_EMAIL. */
+function piEnv(overrides: Partial<Env> = {}): Env {
+  return makeEnv({
+    DB: {
+      prepare: (sql: string) => ({
+        bind: (..._args: unknown[]) => ({
+          first: async () => {
+            if (/lab_settings.*pi_emails/.test(sql) || /pi_emails/.test(sql)) {
+              return { value: JSON.stringify([PI_EMAIL]) }
+            }
+            return null
+          },
+          all: async () => ({ results: [] }),
+          run: async () => ({ success: true }),
+        }),
+        first: async () => {
+          if (/lab_settings.*pi_emails/.test(sql) || /pi_emails/.test(sql)) {
+            return { value: JSON.stringify([PI_EMAIL]) }
+          }
+          return null
+        },
+        all: async () => ({ results: [] }),
+        run: async () => ({ success: true }),
+      }),
+      batch: async () => [],
+    },
+    ...overrides,
+  } as unknown as Env)
+}
+
+// ── 1. Notifications — auth required, recipient from JWT ──────────────────────
+
+describe('handleNotifications — auth gate + recipient from JWT', () => {
+  it('returns 401 for unauthenticated callers (list)', async () => {
+    const env = makeEnv()
+    const url = new URL('https://x/api/notifications')
+    const res = await handleNotifications(url, unauthRequest(), env)
+    expect(res.status).toBe(401)
+  })
+
+  it('returns 401 for unauthenticated callers (count)', async () => {
+    const env = makeEnv()
+    const url = new URL('https://x/api/notifications/count')
+    const res = await handleNotificationCount(url, unauthRequest(), env)
+    expect(res.status).toBe(401)
+  })
+
+  it('returns 200 for an authenticated caller (list)', async () => {
+    const env = piEnv({
+      DB: {
+        prepare: (_sql: string) => ({
+          bind: (..._args: unknown[]) => ({
+            all: async () => ({ results: [{ id: 'n1', recipient_slug: PI_SLUG }] }),
+            first: async () => ({ value: JSON.stringify([PI_EMAIL]) }),
+          }),
+          all: async () => ({ results: [] }),
+          first: async () => ({ value: JSON.stringify([PI_EMAIL]) }),
+        }),
+        batch: async () => [],
+      } as unknown as Env['DB'],
+    })
+    const url = new URL('https://x/api/notifications')
+    const res = await handleNotifications(url, piRequest(), env)
+    expect(res.status).toBe(200)
+  })
+
+  it('ignores ?recipient= param — query uses JWT-derived slug', async () => {
+    // The DB receives a slug derived from the JWT, not from ?recipient=
+    let capturedSlug: unknown = null
+    const env = makeEnv({
+      DB: {
+        prepare: (_sql: string) => ({
+          bind: (...args: unknown[]) => {
+            // First bind arg after "WHERE recipient_slug = ?" is the slug
+            capturedSlug = args[0]
+            return {
+              all: async () => ({ results: [] }),
+              first: async () => ({ value: JSON.stringify([PI_EMAIL]) }),
+              run: async () => ({ success: true }),
+            }
+          },
+          first: async () => ({ value: JSON.stringify([PI_EMAIL]) }),
+          all: async () => ({ results: [] }),
+        }),
+        batch: async () => [],
+      } as unknown as Env['DB'],
+    })
+    const url = new URL('https://x/api/notifications?recipient=SPOOFED_SLUG')
+    await handleNotifications(url, piRequest(), env)
+    // Must be the PI's canonical slug (nick-ingraham), not the spoofed value
+    expect(capturedSlug).toBe(PI_SLUG)
+    expect(capturedSlug).not.toBe('SPOOFED_SLUG')
+  })
+})
+
+// ── 2. Notifications — POST /:id/read owner-or-PI gate ───────────────────────
+
+describe('handleMarkNotificationRead — owner-or-PI gate', () => {
+  function notifEnv(recipientSlug: string) {
+    return makeEnv({
+      DB: {
+        prepare: (sql: string) => ({
+          bind: (..._args: unknown[]) => ({
+            first: async () => {
+              if (/FROM notifications WHERE id/.test(sql)) {
+                return { recipient_slug: recipientSlug }
+              }
+              if (/pi_emails/.test(sql)) {
+                return { value: JSON.stringify([PI_EMAIL]) }
+              }
+              return null
+            },
+            all: async () => ({ results: [] }),
+            run: async () => ({ success: true }),
+          }),
+          first: async () => {
+            if (/pi_emails/.test(sql)) return { value: JSON.stringify([PI_EMAIL]) }
+            return null
+          },
+          all: async () => ({ results: [] }),
+          run: async () => ({ success: true }),
+        }),
+        batch: async () => [],
+      } as unknown as Env['DB'],
+    })
+  }
+
+  it('returns 401 when unauthenticated', async () => {
+    const env = notifEnv(NON_PI_SLUG)
+    const res = await handleMarkNotificationRead('n1', unauthRequest({ method: 'POST' }), env)
+    expect(res.status).toBe(401)
+  })
+
+  it('allows the recipient (owner) to mark their own notification read', async () => {
+    const env = notifEnv(NON_PI_SLUG)
+    const res = await handleMarkNotificationRead('n1', nonPiRequest({ method: 'POST' }), env)
+    expect(res.status).toBe(200)
+  })
+
+  it('returns 403 when a non-PI tries to mark another user\'s notification read', async () => {
+    // Non-PI caller (nate-mesfin) tries to mark nick-ingraham's notification
+    const env = notifEnv(PI_SLUG) // notification belongs to PI
+    const res = await handleMarkNotificationRead('n1', nonPiRequest({ method: 'POST' }), env)
+    expect(res.status).toBe(403)
+  })
+
+  it('allows PI to mark any notification read', async () => {
+    // PI caller (nick-ingraham) marks nate-mesfin's notification
+    const env = notifEnv(NON_PI_SLUG)
+    const res = await handleMarkNotificationRead('n1', piRequest({ method: 'POST' }), env)
+    expect(res.status).toBe(200)
+  })
+
+  it('returns 404 when notification does not exist', async () => {
+    const env = makeEnv({
+      DB: {
+        prepare: (sql: string) => ({
+          bind: (..._args: unknown[]) => ({
+            first: async () => {
+              if (/FROM notifications WHERE id/.test(sql)) return null // not found
+              if (/pi_emails/.test(sql)) return { value: JSON.stringify([PI_EMAIL]) }
+              return null
+            },
+            all: async () => ({ results: [] }),
+            run: async () => ({ success: true }),
+          }),
+          first: async () => null,
+          all: async () => ({ results: [] }),
+          run: async () => ({ success: true }),
+        }),
+        batch: async () => [],
+      } as unknown as Env['DB'],
+    })
+    const res = await handleMarkNotificationRead('missing-id', piRequest({ method: 'POST' }), env)
+    expect(res.status).toBe(404)
+  })
+})
+
+// ── 3. Sessions — PI-or-API-key gate ────────────────────────────────────────
+
+describe('handleGetSessions — PI-or-API-key gate', () => {
+  function sessionsEnv() {
+    return piEnv()
+  }
+
+  const baseUrl = new URL('https://x/api/sessions?seq_after=0')
+
+  it('returns 403 for unauthenticated callers', async () => {
+    const res = await handleGetSessions(baseUrl, sessionsEnv(), unauthRequest())
+    expect(res.status).toBe(403)
+  })
+
+  it('returns 403 for non-PI authenticated team members', async () => {
+    const res = await handleGetSessions(baseUrl, sessionsEnv(), nonPiRequest())
+    expect(res.status).toBe(403)
+  })
+
+  it('returns 200 for PI callers', async () => {
+    const res = await handleGetSessions(baseUrl, sessionsEnv(), piRequest())
+    expect(res.status).toBe(200)
+  })
+
+  it('returns 200 for API-key callers (PB sync service)', async () => {
+    const env = makeEnv({ PB_API_KEY: 'valid-test-api-key' } as unknown as Env)
+    const res = await handleGetSessions(baseUrl, env, apiKeyRequest())
+    expect(res.status).toBe(200)
+  })
+
+  it('still returns 400 when seq_after is missing (gate fires first)', async () => {
+    // Without request, gate is skipped (legacy path) and 400 fires on missing param
+    const urlNoParam = new URL('https://x/api/sessions')
+    const res = await handleGetSessions(urlNoParam, sessionsEnv(), piRequest())
+    expect(res.status).toBe(400)
+  })
+})
+
+// ── 4. Lane3 — PI-or-API-key gate ────────────────────────────────────────────
+
+describe('handleLane3List — PI-or-API-key gate', () => {
+  function lane3Env() {
+    return piEnv()
+  }
+
+  const baseUrl = new URL('https://x/api/lane3/agent_knowledge?seq_after=0')
+
+  it('returns 403 for unauthenticated callers', async () => {
+    const res = await handleLane3List('agent_knowledge', baseUrl, lane3Env(), unauthRequest())
+    expect(res.status).toBe(403)
+  })
+
+  it('returns 403 for non-PI team members', async () => {
+    const res = await handleLane3List('agent_knowledge', baseUrl, lane3Env(), nonPiRequest())
+    expect(res.status).toBe(403)
+  })
+
+  it('returns 200 for PI callers', async () => {
+    const res = await handleLane3List('agent_knowledge', baseUrl, lane3Env(), piRequest())
+    expect(res.status).toBe(200)
+  })
+
+  it('returns 200 for API-key callers (PB sync service)', async () => {
+    const env = makeEnv({ PB_API_KEY: 'valid-test-api-key' } as unknown as Env)
+    const res = await handleLane3List('agent_knowledge', baseUrl, env, apiKeyRequest())
+    expect(res.status).toBe(200)
+  })
+
+  it('returns 400 for unknown table names (gate fires before table validation)', async () => {
+    // PI caller but invalid table → 400 from table validation after gate
+    const url = new URL('https://x/api/lane3/unknown_table?seq_after=0')
+    const res = await handleLane3List('unknown_table', url, lane3Env(), piRequest())
+    expect(res.status).toBe(400)
+  })
+})
+
+// ── 5. Inbox-events GET — PI-or-API-key gate ─────────────────────────────────
+
+describe('handleInboxEvents — PI-or-API-key gate', () => {
+  function inboxEnv() {
+    return piEnv()
+  }
+
+  const baseUrl = new URL('https://x/api/inbox-events')
+
+  it('returns 403 for unauthenticated callers', async () => {
+    const res = await handleInboxEvents(baseUrl, inboxEnv(), unauthRequest())
+    expect(res.status).toBe(403)
+  })
+
+  it('returns 403 for non-PI team members', async () => {
+    const res = await handleInboxEvents(baseUrl, inboxEnv(), nonPiRequest())
+    expect(res.status).toBe(403)
+  })
+
+  it('returns 200 for PI callers', async () => {
+    const res = await handleInboxEvents(baseUrl, inboxEnv(), piRequest())
+    expect(res.status).toBe(200)
+  })
+
+  it('returns 200 for API-key callers (PB sync service)', async () => {
+    const env = makeEnv({ PB_API_KEY: 'valid-test-api-key' } as unknown as Env)
+    const res = await handleInboxEvents(baseUrl, env, apiKeyRequest())
+    expect(res.status).toBe(200)
+  })
+})
+
+// ── 6. Regulatory ICS — auth-only (not PI) ──────────────────────────────────
+
+describe('handleRegulatoryIcs — auth-only gate (not PI-only)', () => {
+  function icsEnv() {
+    return makeEnv({
+      DB: {
+        prepare: (sql: string) => ({
+          bind: (..._args: unknown[]) => ({
+            first: async () => {
+              if (/FROM regulatory_items/.test(sql)) {
+                return {
+                  id: 'reg1', title: 'IRB Protocol', item_type: 'irb',
+                  renewal_due: '2026-12-31', expiration_date: '2026-12-31',
+                  protocol_number: 'IRB-001', notes: 'test',
+                }
+              }
+              return null
+            },
+            all: async () => ({ results: [] }),
+            run: async () => ({ success: true }),
+          }),
+          first: async () => null,
+          all: async () => ({ results: [] }),
+          run: async () => ({ success: true }),
+        }),
+        batch: async () => [],
+      } as unknown as Env['DB'],
+    })
+  }
+
+  it('returns 401 for unauthenticated callers', async () => {
+    const env = icsEnv()
+    const res = await handleRegulatoryIcs('reg1', env, unauthRequest())
+    expect(res.status).toBe(401)
+  })
+
+  it('returns 200 for a non-PI authenticated team member (team CAN access iCal)', async () => {
+    const env = icsEnv()
+    const res = await handleRegulatoryIcs('reg1', env, nonPiRequest())
+    expect(res.status).toBe(200)
+    const text = await res.text()
+    expect(text).toContain('BEGIN:VCALENDAR')
+  })
+
+  it('returns 200 for PI callers', async () => {
+    const env = icsEnv()
+    const res = await handleRegulatoryIcs('reg1', env, piRequest())
+    expect(res.status).toBe(200)
+  })
+})
+
+// ── 7. Uploads create — canAccessEntity on context ───────────────────────────
+
+describe('handleUploadUrl / handleUploadDone — canAccessEntity on context', () => {
+  function uploadsEnv(isPbProject: boolean) {
+    return makeEnv({
+      R2_ACCESS_KEY_ID: 'test-key',
+      R2_SECRET_ACCESS_KEY: 'test-secret',
+      CF_ACCOUNT_ID: 'test-account',
+      DB: {
+        prepare: (sql: string) => ({
+          bind: (..._args: unknown[]) => ({
+            first: async () => {
+              if (/FROM projects/.test(sql)) {
+                return { category: isPbProject ? 'Peripheral Brain' : 'MNCCORE' }
+              }
+              if (/pi_emails/.test(sql)) {
+                return { value: JSON.stringify([PI_EMAIL]) }
+              }
+              return null
+            },
+            all: async () => ({ results: [] }),
+            run: async () => ({ success: true }),
+          }),
+          first: async () => null,
+          all: async () => ({ results: [] }),
+          run: async () => ({ success: true }),
+        }),
+        batch: async () => [],
+      } as unknown as Env['DB'],
+    } as unknown as Env)
+  }
+
+  it('handleUploadUrl: blocks non-PI uploading to a PB-category project', async () => {
+    const env = uploadsEnv(true)
+    const req = new Request('https://x/api/upload/url', {
+      method: 'POST',
+      headers: {
+        'X-Test-Mode-Key': 'local-test-key-do-not-use-in-prod',
+        'X-Test-User': NON_PI_EMAIL,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        filename: 'secret.pdf',
+        contentType: 'application/pdf',
+        context: { type: 'project', id: 'pb-secret' },
+      }),
+    })
+    const user = { email: NON_PI_EMAIL, name: 'Nate' }
+    const res = await handleUploadUrl(req, user, env)
+    expect(res.status).toBe(403)
+  })
+
+  it('handleUploadUrl: allows non-PI uploading to a non-PB project', async () => {
+    const env = uploadsEnv(false)
+    const req = new Request('https://x/api/upload/url', {
+      method: 'POST',
+      headers: {
+        'X-Test-Mode-Key': 'local-test-key-do-not-use-in-prod',
+        'X-Test-User': NON_PI_EMAIL,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        filename: 'report.pdf',
+        contentType: 'application/pdf',
+        context: { type: 'project', id: 'mnccore-project' },
+      }),
+    })
+    const user = { email: NON_PI_EMAIL, name: 'Nate' }
+    const res = await handleUploadUrl(req, user, env)
+    // Should get past the entity gate — may fail on actual R2 signing in test (503 ok)
+    expect([200, 503]).toContain(res.status)
+    expect(res.status).not.toBe(403)
+  })
+
+  it('handleUploadDone: blocks non-PI committing a file record on a PB project', async () => {
+    const env = uploadsEnv(true)
+    const req = new Request('https://x/api/upload/done', {
+      method: 'POST',
+      headers: {
+        'X-Test-Mode-Key': 'local-test-key-do-not-use-in-prod',
+        'X-Test-User': NON_PI_EMAIL,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        key: 'project/pb-secret/file.pdf',
+        filename: 'file.pdf',
+        contentType: 'application/pdf',
+        sizeBytes: 1024,
+        entityType: 'project',
+        entityId: 'pb-secret',
+      }),
+    })
+    const user = { email: NON_PI_EMAIL, name: 'Nate' }
+    const res = await handleUploadDone(req, user, env)
+    expect(res.status).toBe(403)
+  })
+
+  it('handleUploadDone: allows PI to commit a file record on a PB project', async () => {
+    const env = uploadsEnv(true)
+    const req = new Request('https://x/api/upload/done', {
+      method: 'POST',
+      headers: {
+        'X-Test-Mode-Key': 'local-test-key-do-not-use-in-prod',
+        'X-Test-User': PI_EMAIL,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        key: 'project/pb-secret/file.pdf',
+        filename: 'file.pdf',
+        contentType: 'application/pdf',
+        sizeBytes: 1024,
+        entityType: 'project',
+        entityId: 'pb-secret',
+      }),
+    })
+    const user = { email: PI_EMAIL, name: 'Nick' }
+    const res = await handleUploadDone(req, user, env)
+    // File not in R2 (FILES not bound) → 400 from R2 head check, but NOT 403
+    expect(res.status).not.toBe(403)
+  })
+})
+
+// ── 8. Decisions create — resolveActor rejects foreign decided_by ─────────────
+
+describe('handleCreateDecision — resolveActor for decided_by', () => {
+  function decisionsEnv(memberExists: boolean) {
+    return piEnv({
+      DB: {
+        prepare: (sql: string) => ({
+          bind: (..._args: unknown[]) => ({
+            first: async () => {
+              if (/pi_emails/.test(sql)) return { value: JSON.stringify([PI_EMAIL]) }
+              if (/FROM team_members WHERE slug/.test(sql)) {
+                return memberExists ? { id: 'tm1' } : null
+              }
+              if (/FROM hub_decisions WHERE id/.test(sql)) {
+                return { id: 'dec1', title: 'Test decision', decided_by: NON_PI_SLUG }
+              }
+              return null
+            },
+            all: async () => ({ results: [] }),
+            run: async () => ({ success: true }),
+          }),
+          first: async () => null,
+          all: async () => ({ results: [] }),
+          run: async () => ({ success: true }),
+        }),
+        batch: async () => [],
+      } as unknown as Env['DB'],
+    })
+  }
+
+  it('non-PI caller cannot spoof a foreign decided_by', async () => {
+    const env = decisionsEnv(true) // member exists but caller is not PI
+    const user = { email: NON_PI_EMAIL, name: 'Nate' }
+    const req = new Request('https://x/api/decisions', {
+      method: 'POST',
+      headers: {
+        'X-Test-Mode-Key': 'local-test-key-do-not-use-in-prod',
+        'X-Test-User': NON_PI_EMAIL,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ title: 'Test', decided_by: PI_SLUG }),
+    })
+    const res = await handleCreateDecision(req, user, env)
+    expect(res.status).toBe(400)
+    const body = await res.json() as { error: string }
+    expect(body.error).toMatch(/not authorized/i)
+  })
+
+  it('non-PI caller with no decided_by override uses their own slug (OK)', async () => {
+    const env = decisionsEnv(true)
+    const user = { email: NON_PI_EMAIL, name: 'Nate' }
+    const req = new Request('https://x/api/decisions', {
+      method: 'POST',
+      headers: {
+        'X-Test-Mode-Key': 'local-test-key-do-not-use-in-prod',
+        'X-Test-User': NON_PI_EMAIL,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ title: 'Test decision' }),
+    })
+    const res = await handleCreateDecision(req, user, env)
+    expect(res.status).toBe(201)
+  })
+
+  it('PI caller may delegate decided_by to another team member', async () => {
+    const env = decisionsEnv(true)
+    const user = { email: PI_EMAIL, name: 'Nick' }
+    const req = new Request('https://x/api/decisions', {
+      method: 'POST',
+      headers: {
+        'X-Test-Mode-Key': 'local-test-key-do-not-use-in-prod',
+        'X-Test-User': PI_EMAIL,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ title: 'Test', decided_by: NON_PI_SLUG }),
+    })
+    const res = await handleCreateDecision(req, user, env)
+    expect(res.status).toBe(201)
+  })
+
+  it('unknown decided_by slug returns 400 even for PI', async () => {
+    const env = decisionsEnv(false) // member does NOT exist
+    const user = { email: PI_EMAIL, name: 'Nick' }
+    const req = new Request('https://x/api/decisions', {
+      method: 'POST',
+      headers: {
+        'X-Test-Mode-Key': 'local-test-key-do-not-use-in-prod',
+        'X-Test-User': PI_EMAIL,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ title: 'Test', decided_by: 'ghost-user' }),
+    })
+    const res = await handleCreateDecision(req, user, env)
+    expect(res.status).toBe(400)
+    const body = await res.json() as { error: string }
+    expect(body.error).toMatch(/unknown actor/i)
+  })
+})
+
+// ── 9. Email-drafts sync-bulk — PI-or-API-key gate ──────────────────────────
+
+describe('handleSyncEmailDrafts — PI-or-API-key gate', () => {
+  function draftEnv() {
+    return piEnv()
+  }
+
+  it('returns 403 for unauthenticated callers', async () => {
+    const req = new Request('https://x/api/email-drafts/sync-bulk', {
+      method: 'POST',
+      body: JSON.stringify({ drafts: [{ id: 'd1', status: 'draft' }] }),
+      headers: { 'Content-Type': 'application/json' },
+    })
+    const res = await handleSyncEmailDrafts(req, draftEnv())
+    expect(res.status).toBe(403)
+  })
+
+  it('returns 403 for non-PI team members', async () => {
+    const req = new Request('https://x/api/email-drafts/sync-bulk', {
+      method: 'POST',
+      body: JSON.stringify({ drafts: [{ id: 'd1', status: 'draft' }] }),
+      headers: {
+        'X-Test-Mode-Key': 'local-test-key-do-not-use-in-prod',
+        'X-Test-User': NON_PI_EMAIL,
+        'Content-Type': 'application/json',
+      },
+    })
+    const res = await handleSyncEmailDrafts(req, draftEnv())
+    expect(res.status).toBe(403)
+  })
+
+  it('returns 200 for PI callers', async () => {
+    const req = new Request('https://x/api/email-drafts/sync-bulk', {
+      method: 'POST',
+      body: JSON.stringify({ drafts: [{ id: 'd1', status: 'draft' }] }),
+      headers: {
+        'X-Test-Mode-Key': 'local-test-key-do-not-use-in-prod',
+        'X-Test-User': PI_EMAIL,
+        'Content-Type': 'application/json',
+      },
+    })
+    const res = await handleSyncEmailDrafts(req, draftEnv())
+    expect(res.status).toBe(200)
+  })
+
+  it('returns 200 for API-key callers (PB sync service)', async () => {
+    const env = makeEnv({ PB_API_KEY: 'valid-test-api-key' } as unknown as Env)
+    const req = new Request('https://x/api/email-drafts/sync-bulk', {
+      method: 'POST',
+      body: JSON.stringify({ drafts: [{ id: 'd1', status: 'draft' }] }),
+      headers: {
+        Authorization: VALID_API_KEY,
+        'Content-Type': 'application/json',
+      },
+    })
+    const res = await handleSyncEmailDrafts(req, env)
+    expect(res.status).toBe(200)
+  })
+})
+
+// ── 10. File-activity sync — PI-or-API-key gate ──────────────────────────────
+
+describe('handleSyncFileActivity — PI-or-API-key gate', () => {
+  function faEnv() {
+    return piEnv()
+  }
+
+  it('returns 403 for unauthenticated callers', async () => {
+    const req = new Request('https://x/api/file-activity/sync', {
+      method: 'POST',
+      body: JSON.stringify({ entries: [{ date: '2026-05-27', file_count: 1, total_events: 1 }] }),
+      headers: { 'Content-Type': 'application/json' },
+    })
+    const res = await handleSyncFileActivity(req, faEnv())
+    expect(res.status).toBe(403)
+  })
+
+  it('returns 403 for non-PI team members', async () => {
+    const req = new Request('https://x/api/file-activity/sync', {
+      method: 'POST',
+      body: JSON.stringify({ entries: [{ date: '2026-05-27', file_count: 1, total_events: 1 }] }),
+      headers: {
+        'X-Test-Mode-Key': 'local-test-key-do-not-use-in-prod',
+        'X-Test-User': NON_PI_EMAIL,
+        'Content-Type': 'application/json',
+      },
+    })
+    const res = await handleSyncFileActivity(req, faEnv())
+    expect(res.status).toBe(403)
+  })
+
+  it('returns 200 for PI callers', async () => {
+    const req = new Request('https://x/api/file-activity/sync', {
+      method: 'POST',
+      body: JSON.stringify({ entries: [{ date: '2026-05-27', file_count: 1, total_events: 1 }] }),
+      headers: {
+        'X-Test-Mode-Key': 'local-test-key-do-not-use-in-prod',
+        'X-Test-User': PI_EMAIL,
+        'Content-Type': 'application/json',
+      },
+    })
+    const res = await handleSyncFileActivity(req, faEnv())
+    expect(res.status).toBe(200)
+  })
+
+  it('returns 200 for API-key callers (PB sync service)', async () => {
+    const env = makeEnv({ PB_API_KEY: 'valid-test-api-key' } as unknown as Env)
+    const req = new Request('https://x/api/file-activity/sync', {
+      method: 'POST',
+      body: JSON.stringify({ entries: [{ date: '2026-05-27', file_count: 1, total_events: 1 }] }),
+      headers: {
+        Authorization: VALID_API_KEY,
+        'Content-Type': 'application/json',
+      },
+    })
+    const res = await handleSyncFileActivity(req, env)
+    expect(res.status).toBe(200)
+  })
+})
+
+// ── 11. Meeting detail — full row for authed, public cols for unauth ──────────
+
+describe('handleGetMeeting — auth projection', () => {
+  const FULL_ROW = {
+    id: 'mtg1', date: '2026-05-28', title: 'Team standup',
+    type: 'biweekly', status: 'upcoming', facilitator: PI_SLUG,
+    agenda: 'PRIVATE AGENDA', notes: 'INTERNAL NOTES',
+    decisions: 'TEAM DECISIONS', attendees: 'everyone',
+    created_at: '2026-05-28', updated_at: '2026-05-28',
+  }
+
+  function meetingEnv() {
+    return makeEnv({
+      DB: {
+        prepare: (sql: string) => ({
+          bind: (..._args: unknown[]) => ({
+            first: async () => {
+              if (/FROM meetings WHERE id/.test(sql)) {
+                // Return only the columns the handler selected
+                const isStar = /SELECT \*/.test(sql)
+                if (isStar) return { ...FULL_ROW }
+                // Public col projection: id, date, title, type, status, facilitator, created_at, updated_at
+                const { agenda: _a, notes: _n, decisions: _d, attendees: _at, ...pub } = FULL_ROW
+                return pub
+              }
+              return null
+            },
+            all: async () => ({ results: [] }),
+            run: async () => ({ success: true }),
+          }),
+          first: async () => null,
+          all: async () => ({ results: [] }),
+          run: async () => ({ success: true }),
+        }),
+        batch: async () => [],
+      } as unknown as Env['DB'],
+    })
+  }
+
+  it('unauthenticated callers get public-safe columns only (no agenda/notes/decisions)', async () => {
+    const res = await handleGetMeeting('mtg1', meetingEnv(), false)
+    expect(res.status).toBe(200)
+    const body = await res.json() as { data: Record<string, unknown> }
+    expect(body.data.title).toBe('Team standup') // public field preserved
+    expect(body.data).not.toHaveProperty('agenda')
+    expect(body.data).not.toHaveProperty('notes')
+    expect(body.data).not.toHaveProperty('decisions')
+    expect(body.data).not.toHaveProperty('attendees')
+  })
+
+  it('authenticated callers get the full row (including agenda/notes/decisions)', async () => {
+    const res = await handleGetMeeting('mtg1', meetingEnv(), true)
+    expect(res.status).toBe(200)
+    const body = await res.json() as { data: Record<string, unknown> }
+    expect(body.data).toHaveProperty('agenda', 'PRIVATE AGENDA')
+    expect(body.data).toHaveProperty('notes', 'INTERNAL NOTES')
+    expect(body.data).toHaveProperty('decisions', 'TEAM DECISIONS')
+  })
+
+  it('returns 404 when meeting does not exist', async () => {
+    const env = makeEnv()
+    const res = await handleGetMeeting('ghost-mtg', env, true)
+    expect(res.status).toBe(404)
+  })
+})
