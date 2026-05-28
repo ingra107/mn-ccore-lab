@@ -40,10 +40,22 @@ const mockApplyMutation = vi.mocked(applyMutation);
 
 const NICK: AuthUser = { email: 'ingra107@umn.edu', name: 'Nick' };
 
+// Phase 1b-extended: write-path handlers now run assertProjectVisible / isPiRequest,
+// both of which need a real auth signal on the Request. Use the same TEST_MODE_KEY
+// pattern as pb-visibility-contract.test.ts — caller must be PI by default so
+// these correctness tests aren't blocked by the new ACL gates. Override to
+// nonPi only when explicitly testing a non-PI path.
+const TEST_MODE_KEY = 'local-test-key-do-not-use-in-prod';
+
 function makeRequest(body: unknown, headers: Record<string, string> = {}): Request {
   return new Request('https://example.com/test', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...headers },
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Test-Mode-Key': TEST_MODE_KEY,
+      'X-Test-User': NICK.email,
+      ...headers,
+    },
     body: JSON.stringify(body),
   });
 }
@@ -118,7 +130,7 @@ describe('Fix 1 — handleAddComment: @hermes uses project.id (UUID), not URL sl
           },
           first: async () => {
             // Route by SQL content — more robust than call count ordering
-            if (sql.includes('FROM projects WHERE id = ? OR slug = ?')) {
+            if (/FROM projects WHERE/.test(sql) && /id\s*=\s*\?\s*OR\s+slug\s*=\s*\?/.test(sql)) {
               return { id: 'proj-uuid-001', title: 'My Project', slug: 'my-project' };
             }
             if (sql.includes('FROM team_members WHERE slug = ?')) return { id: 'member_001' };
@@ -133,7 +145,7 @@ describe('Fix 1 — handleAddComment: @hermes uses project.id (UUID), not URL sl
       batch: async (stmts: unknown[]) => stmts.map(() => ({ success: true, meta: {}, results: [] })),
     };
 
-    const env = { DB: db } as unknown as Env;
+    const env = { DB: db, TEST_MODE_KEY, PB_API_KEY: 'valid-test-api-key' } as unknown as Env;
     const req = makeRequest({ content: '@hermes what is the status of this project?' });
 
     // Pass URL slug (not UUID) as projectId — the fix should resolve to project.id
@@ -173,7 +185,7 @@ describe('Fix 1 — handleAddComment: @hermes uses project.id (UUID), not URL sl
           bind: (...args: unknown[]) => { boundVals = [...boundVals, ...args]; return stmt; },
           run: async () => { inserts.push({ sql }); return { success: true, meta: {}, results: [] }; },
           first: async () => {
-            if (sql.includes('FROM projects WHERE id = ? OR slug = ?')) {
+            if (/FROM projects WHERE/.test(sql) && /id\s*=\s*\?\s*OR\s+slug\s*=\s*\?/.test(sql)) {
               return { id: 'proj-uuid-001', title: 'My Project', slug: 'my-project' };
             }
             if (sql.includes('FROM team_members WHERE slug = ?')) return { id: 'member_001' };
@@ -188,7 +200,7 @@ describe('Fix 1 — handleAddComment: @hermes uses project.id (UUID), not URL sl
       batch: async (stmts: unknown[]) => stmts.map(() => ({ success: true, meta: {}, results: [] })),
     };
 
-    const env = { DB: db } as unknown as Env;
+    const env = { DB: db, TEST_MODE_KEY, PB_API_KEY: 'valid-test-api-key' } as unknown as Env;
     const req = makeRequest({ content: 'Great work everyone!' });
 
     await handleAddComment('my-project', req, NICK, env);
@@ -221,6 +233,9 @@ describe('Fix 1b — handleAddTaskComment: @hermes creates ai_request + placehol
             if (sql.includes('FROM team_members WHERE slug =')) return { id: 'member_001', slug: 'nick-ingraham' };
             if (sql.includes('FROM team_members WHERE email =')) return { id: 'member_001', slug: 'nick-ingraham' };
             if (sql.includes('FROM tasks WHERE id = ? AND deleted_at IS NULL')) return { project_id: 'proj-slug-001' };
+            // Phase 1b-extended ACL gate visits the projects table to read
+            // category. Non-PB row keeps the test on the happy path.
+            if (/FROM projects WHERE/.test(sql)) return { id: 'proj-uuid-001', slug: 'proj-slug-001', category: null };
             return null;
           },
           all: async () => {
@@ -234,7 +249,7 @@ describe('Fix 1b — handleAddTaskComment: @hermes creates ai_request + placehol
       batch: async (stmts: unknown[]) => stmts.map(() => ({ success: true, meta: {}, results: [] })),
     };
 
-    const env = { DB: db } as unknown as Env;
+    const env = { DB: db, TEST_MODE_KEY, PB_API_KEY: 'valid-test-api-key' } as unknown as Env;
     const req = makeRequest(
       { content: '@hermes can you summarize the task context?' },
       { 'X-Auth-Email': 'ingra107@umn.edu' },
@@ -284,7 +299,7 @@ describe('Fix 1b — handleAddTaskComment: @hermes creates ai_request + placehol
       batch: async (stmts: unknown[]) => stmts.map(() => ({ success: true, meta: {}, results: [] })),
     };
 
-    const env = { DB: db } as unknown as Env;
+    const env = { DB: db, TEST_MODE_KEY, PB_API_KEY: 'valid-test-api-key' } as unknown as Env;
     const req = makeRequest({ content: 'Just a regular comment, no AI mention.' });
 
     await handleAddTaskComment('task-001', req, NICK, env);
@@ -421,7 +436,7 @@ describe('Fix 3 — handleDeleteProject: idempotency check runs BEFORE cascade',
       },
     };
 
-    const env = { DB: db } as unknown as Env;
+    const env = { DB: db, TEST_MODE_KEY, PB_API_KEY: 'valid-test-api-key' } as unknown as Env;
     const res = await handleDeleteProject('proj_X', NICK, env);
 
     const body = await res.json() as Record<string, unknown>;
@@ -473,7 +488,7 @@ describe('Fix 3b — handleDeleteTask: idempotency check runs BEFORE cascade', (
       batch: async (stmts: unknown[]) => stmts.map(() => ({ success: true, meta: {}, results: [] })),
     };
 
-    const env = { DB: db } as unknown as Env;
+    const env = { DB: db, TEST_MODE_KEY, PB_API_KEY: 'valid-test-api-key' } as unknown as Env;
     const res = await handleDeleteTask('task_Z', NICK, env);
 
     const body = await res.json() as Record<string, unknown>;
@@ -519,7 +534,7 @@ describe('Fix 4 — handleUpdateProject: conflict → HTTP 409', () => {
       batch: async () => [],
     };
 
-    const env = { DB: db } as unknown as Env;
+    const env = { DB: db, TEST_MODE_KEY, PB_API_KEY: 'valid-test-api-key' } as unknown as Env;
     const req = makeRequest({ title: 'Updated Title', status: 'active', stage: 'idea', category: 'MNCCORE' });
 
     const res = await handleUpdateProject('proj_A', req, NICK, env);
@@ -557,7 +572,7 @@ describe('Fix 4 — handleUpdateProject: conflict → HTTP 409', () => {
       batch: async () => [],
     };
 
-    const env = { DB: db } as unknown as Env;
+    const env = { DB: db, TEST_MODE_KEY, PB_API_KEY: 'valid-test-api-key' } as unknown as Env;
     const req = makeRequest({ title: 'Updated Title', status: 'active', stage: 'idea', category: 'MNCCORE' });
 
     const res = await handleUpdateProject('proj_B', req, NICK, env);
@@ -583,7 +598,7 @@ describe('Fix 5 — regulatory: action_needed and expiring_soon accepted as vali
             return { success: true, meta: {}, results: [] };
           },
           first: async () => {
-            if (sql.includes('FROM projects WHERE id = ? OR slug = ?')) {
+            if (/FROM projects WHERE/.test(sql) && /id\s*=\s*\?\s*OR\s+slug\s*=\s*\?/.test(sql)) {
               return projectExists ? { id: 'proj-uuid-r', slug: 'irb-project' } : null;
             }
             if (sql.includes('FROM regulatory_items WHERE id = ?')) {
@@ -603,7 +618,7 @@ describe('Fix 5 — regulatory: action_needed and expiring_soon accepted as vali
 
   it('accepts action_needed as a valid status on create', async () => {
     const db = makeRegDb(true);
-    const env = { DB: db } as unknown as Env;
+    const env = { DB: db, TEST_MODE_KEY, PB_API_KEY: 'valid-test-api-key' } as unknown as Env;
     const req = makeRequest({
       project_id: 'irb-project',
       item_type: 'irb',
@@ -617,7 +632,7 @@ describe('Fix 5 — regulatory: action_needed and expiring_soon accepted as vali
 
   it('accepts expiring_soon as a valid status on create', async () => {
     const db = makeRegDb(true);
-    const env = { DB: db } as unknown as Env;
+    const env = { DB: db, TEST_MODE_KEY, PB_API_KEY: 'valid-test-api-key' } as unknown as Env;
     const req = makeRequest({
       project_id: 'irb-project',
       item_type: 'dua',
@@ -631,7 +646,7 @@ describe('Fix 5 — regulatory: action_needed and expiring_soon accepted as vali
 
   it('still rejects truly invalid status', async () => {
     const db = makeRegDb(true);
-    const env = { DB: db } as unknown as Env;
+    const env = { DB: db, TEST_MODE_KEY, PB_API_KEY: 'valid-test-api-key' } as unknown as Env;
     const req = makeRequest({
       project_id: 'irb-project',
       item_type: 'irb',
@@ -645,7 +660,7 @@ describe('Fix 5 — regulatory: action_needed and expiring_soon accepted as vali
 
   it('accepts action_needed on update', async () => {
     const db = makeRegDb(true);
-    const env = { DB: db } as unknown as Env;
+    const env = { DB: db, TEST_MODE_KEY, PB_API_KEY: 'valid-test-api-key' } as unknown as Env;
     const req = makeRequest({ status: 'action_needed' });
 
     const res = await handleUpdateRegulatoryItem('reg_1', req, NICK, env);
@@ -660,7 +675,7 @@ describe('Fix 6 — project-ref resolver: slug resolves to canonical before INSE
 
   function makeProjectDb(projectRow: { id: string; slug: string } | null) {
     return (sql: string, _binds: unknown[]) => {
-      if (sql.includes('FROM projects WHERE id = ? OR slug = ?')) return projectRow;
+      if (/FROM projects WHERE/.test(sql) && /id\s*=\s*\?\s*OR\s+slug\s*=\s*\?/.test(sql)) return projectRow;
       return null;
     };
   }
@@ -675,7 +690,7 @@ describe('Fix 6 — project-ref resolver: slug resolves to canonical before INSE
           bind: (...args: unknown[]) => { boundVals = [...boundVals, ...args]; return stmt; },
           run: async () => { inserts.push({ sql, binds: [...boundVals] }); return { success: true, meta: {}, results: [] }; },
           first: async () => {
-            if (sql.includes('FROM projects WHERE id = ? OR slug = ?')) return { id: 'proj-uuid-s', slug: 'some-project' };
+            if (/FROM projects WHERE/.test(sql) && /id\s*=\s*\?\s*OR\s+slug\s*=\s*\?/.test(sql)) return { id: 'proj-uuid-s', slug: 'some-project' };
             if (sql.includes('FROM submission_events WHERE id = ?')) return { id: 'ev_1' };
             return null;
           },
@@ -686,7 +701,7 @@ describe('Fix 6 — project-ref resolver: slug resolves to canonical before INSE
       },
       batch: async () => [],
     };
-    const env = { DB: db } as unknown as Env;
+    const env = { DB: db, TEST_MODE_KEY, PB_API_KEY: 'valid-test-api-key' } as unknown as Env;
     const req = makeRequest({ project_id: 'some-project', event_type: 'submitted', event_date: '2026-06-01' });
 
     const res = await handleCreateSubmission(req, NICK, env);
@@ -713,7 +728,7 @@ describe('Fix 6 — project-ref resolver: slug resolves to canonical before INSE
       },
       batch: async () => [],
     };
-    const env = { DB: db } as unknown as Env;
+    const env = { DB: db, TEST_MODE_KEY, PB_API_KEY: 'valid-test-api-key' } as unknown as Env;
     const req = makeRequest({ project_id: 'nonexistent-project', event_type: 'submitted', event_date: '2026-06-01' });
 
     const res = await handleCreateSubmission(req, NICK, env);
@@ -730,7 +745,7 @@ describe('Fix 6 — project-ref resolver: slug resolves to canonical before INSE
           bind: (...args: unknown[]) => { boundVals = [...boundVals, ...args]; return stmt; },
           run: async () => { inserts.push({ sql, binds: [...boundVals] }); return { success: true, meta: {}, results: [] }; },
           first: async () => {
-            if (sql.includes('FROM projects WHERE id = ? OR slug = ?')) return { id: 'proj-uuid-c', slug: 'clif-study' };
+            if (/FROM projects WHERE/.test(sql) && /id\s*=\s*\?\s*OR\s+slug\s*=\s*\?/.test(sql)) return { id: 'proj-uuid-c', slug: 'clif-study' };
             if (sql.includes('FROM conference_submissions WHERE id = ?')) return { id: 'conf_1' };
             return null;
           },
@@ -741,7 +756,7 @@ describe('Fix 6 — project-ref resolver: slug resolves to canonical before INSE
       },
       batch: async () => [],
     };
-    const env = { DB: db } as unknown as Env;
+    const env = { DB: db, TEST_MODE_KEY, PB_API_KEY: 'valid-test-api-key' } as unknown as Env;
     const req = makeRequest({
       project_id: 'clif-study',
       conference: 'CHEST 2026',
@@ -772,7 +787,7 @@ describe('Fix 6 — project-ref resolver: slug resolves to canonical before INSE
       },
       batch: async () => [],
     };
-    const env = { DB: db } as unknown as Env;
+    const env = { DB: db, TEST_MODE_KEY, PB_API_KEY: 'valid-test-api-key' } as unknown as Env;
     const req = makeRequest({ project_id: 'ghost-project', item_type: 'irb', title: 'IRB' });
 
     const res = await handleCreateRegulatoryItem(req, NICK, env);
@@ -797,7 +812,7 @@ describe('Fix 6 — project-ref resolver: slug resolves to canonical before INSE
       },
       batch: async () => [],
     };
-    const env = { DB: db } as unknown as Env;
+    const env = { DB: db, TEST_MODE_KEY, PB_API_KEY: 'valid-test-api-key' } as unknown as Env;
     const req = makeRequest({ project_id: 'missing-project' });
 
     const res = await handleCreateRevision(req, NICK, env);
@@ -822,7 +837,7 @@ describe('Fix 6 — project-ref resolver: slug resolves to canonical before INSE
       },
       batch: async () => [],
     };
-    const env = { DB: db } as unknown as Env;
+    const env = { DB: db, TEST_MODE_KEY, PB_API_KEY: 'valid-test-api-key' } as unknown as Env;
     const url = makeUrl({ project_id: 'ghost-project' });
     const req = makeRequest({});
 
@@ -868,7 +883,7 @@ describe('Fix 7 — applyInsert: tasks.project_id slug resolved to canonical', (
       },
     };
 
-    const env = { DB: db } as unknown as Env;
+    const env = { DB: db, TEST_MODE_KEY, PB_API_KEY: 'valid-test-api-key' } as unknown as Env;
 
     // With slug as input → should return slug (since slug || id = slug)
     const result = await projectRefToCanonical(env, 'my-slug');
