@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, actorSlug, projectRefToCanonical, assertProjectVisible } from '../helpers';
+import { json, error, generateId, logActivity, actorSlug, projectRefToCanonical, assertProjectVisible, resolveAndGuardProject } from '../helpers';
 
 // ── Types ──
 
@@ -69,15 +69,12 @@ export async function handleCreateRevision(request: Request, user: AuthUser, env
     reviewer_comments?: string;
   };
 
-  // Accept project_id OR project_slug; resolve to the canonical stored form via
-  // projectRefToCanonical (single source of truth, same as /api/tasks create).
+  // Accept project_id OR project_slug. T2.4: resolveAndGuardProject combines
+  // canonicalize + visibility gate into one round-trip (was projectRefToCanonical
+  // SELECT + assertProjectVisible SELECT).
   const ref = body.project_id || body.project_slug;
   if (!ref) return error('project_id or project_slug required', 400);
-  const projectId = await projectRefToCanonical(env, ref);
-  if (!projectId) return error(`Unknown project "${ref}"`, 400);
-
-  // Phase 1b-extended: gate on parent-project visibility before the insert.
-  const block = await assertProjectVisible(request, env, projectId);
+  const { block, projectId } = await resolveAndGuardProject(request, env, ref);
   if (block) return block;
 
   // Auto-detect round number if not provided

@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, actorSlug, buildUpdate, getAuthUser, assertProjectVisible, projectRefToCanonical } from '../helpers';
+import { json, error, generateId, logActivity, actorSlug, buildUpdate, getAuthUser, assertProjectVisible, projectRefToCanonical, resolveAndGuardProject } from '../helpers';
 import { ctToday } from '../lib/ct-date';
 import { nowInstant } from '../lib/time';
 
@@ -111,13 +111,9 @@ export async function handleCreateRegulatoryItem(request: Request, user: AuthUse
     return error(`Invalid status. Must be one of: ${VALID_STATUSES.join(', ')}`, 400);
   }
 
-  // Resolve project_id-or-slug to canonical form so FK is consistent.
-  const resolvedProjectId = await projectRefToCanonical(env, body.project_id);
-  if (!resolvedProjectId) return error(`Unknown project "${body.project_id}"`, 400);
-
-  // Phase 1b-extended: block non-PI callers from creating regulatory items on
-  // a PB-category project. Mirror the read-side gate (handleGetRegulatoryItems).
-  const block = await assertProjectVisible(request, env, resolvedProjectId);
+  // T2.4 (2026-05-28): resolveAndGuardProject combines projectRefToCanonical
+  // + assertProjectVisible into one DB round-trip (was two SELECTs).
+  const { block, projectId: resolvedProjectId } = await resolveAndGuardProject(request, env, body.project_id);
   if (block) return block;
 
   const id = generateId();

@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, actorSlug, assertProjectVisible, projectRefToCanonical } from '../helpers';
+import { json, error, generateId, logActivity, actorSlug, assertProjectVisible, projectRefToCanonical, resolveAndGuardProject } from '../helpers';
 import { ctToday } from '../lib/ct-date';
 
 const VALID_EVENT_TYPES = [
@@ -49,13 +49,9 @@ export async function handleCreateSubmission(request: Request, user: AuthUser, e
     return error(`event_type must be one of: ${VALID_EVENT_TYPES.join(', ')}`, 400);
   }
 
-  // Resolve project_id-or-slug to canonical form (slug || id) so FK is consistent.
-  const resolvedProjectId = await projectRefToCanonical(env, body.project_id);
-  if (!resolvedProjectId) return error(`Unknown project "${body.project_id}"`, 400);
-
-  // Phase 1b-extended: block non-PI callers from creating submission events on
-  // a PB-category project. Mirror the read-side gate (handleGetSubmissions).
-  const block = await assertProjectVisible(request, env, resolvedProjectId);
+  // T2.4 (2026-05-28): resolveAndGuardProject combines projectRefToCanonical
+  // + assertProjectVisible into one DB round-trip (was two SELECTs).
+  const { block, projectId: resolvedProjectId } = await resolveAndGuardProject(request, env, body.project_id);
   if (block) return block;
 
   const id = generateId();

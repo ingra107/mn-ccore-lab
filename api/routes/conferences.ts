@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, actorSlug, buildUpdate, assertProjectVisible, projectRefToCanonical } from '../helpers';
+import { json, error, generateId, logActivity, actorSlug, buildUpdate, assertProjectVisible, projectRefToCanonical, resolveAndGuardProject } from '../helpers';
 import { ctToday } from '../lib/ct-date';
 
 const VALID_SUBMISSION_TYPES = ['abstract', 'oral', 'poster', 'workshop', 'invited'] as const;
@@ -131,18 +131,15 @@ export async function handleCreateConference(request: Request, user: AuthUser, e
     return error(`presentation_type must be one of: ${VALID_PRESENTATION_TYPES.join(', ')}`, 400);
   }
 
-  // Resolve project_id-or-slug to canonical form; NULL if omitted or unresolvable.
-  const resolvedProjectId = body.project_id
-    ? (await projectRefToCanonical(env, body.project_id))
-    : null;
-
-  // Phase 1b-extended: block non-PI callers from creating conference submissions
-  // tied to a PB-category project. Mirror the read-side gate (handleGetConferences).
+  // T2.4 (2026-05-28): resolveAndGuardProject combines projectRefToCanonical
+  // + assertProjectVisible into one DB round-trip when a project is supplied.
   // Project-less conference rows are allowed (lab-wide conferences with no
-  // manuscript link) — only gate when a project is supplied.
-  if (resolvedProjectId) {
-    const block = await assertProjectVisible(request, env, resolvedProjectId);
+  // manuscript link) — keep the optional shape.
+  let resolvedProjectId: string | null = null;
+  if (body.project_id) {
+    const { block, projectId } = await resolveAndGuardProject(request, env, body.project_id);
     if (block) return block;
+    resolvedProjectId = projectId;
   }
 
   const id = generateId();
@@ -207,13 +204,9 @@ export async function handleUpdateConference(id: string, request: Request, user:
   }
 
   // Phase 1b-extended: if the update reparents the conference submission to a
-  // NEW project_id, gate that target too. Pre-fix, a non-PI could reparent a
-  // non-PB conference onto a PB project (since the only gate above is on the
-  // existing row's project). Resolve id-or-slug first.
+  // NEW project_id, gate that target too. T2.4: combined helper.
   if (typeof body.project_id === 'string' && body.project_id) {
-    const targetProjectId = await projectRefToCanonical(env, body.project_id);
-    if (!targetProjectId) return error(`Unknown project "${body.project_id}"`, 400);
-    const block = await assertProjectVisible(request, env, targetProjectId);
+    const { block } = await resolveAndGuardProject(request, env, body.project_id);
     if (block) return block;
   }
 

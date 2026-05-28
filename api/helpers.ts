@@ -599,6 +599,83 @@ export async function assertProjectVisible(request: Request, env: Env, projectRe
 }
 
 /**
+ * T2.4 (2026-05-28) · `canSeePbProjectRow` — overload for callers that already
+ * have a pre-fetched {id, category} row in hand. Skips the DB lookup that
+ * `canSeePbProject` would otherwise issue.
+ *
+ * Used together with `resolveAndGuardProject` to eliminate the double-
+ * lookup that 6 ACL-gated write handlers had: previously they called
+ * `projectRefToCanonical` (1 SELECT) followed by `assertProjectVisible`
+ * (a 2nd SELECT in canSeePbProject). Now: one combined SELECT returns
+ * id+slug+category, this function applies the gate, and we save a query
+ * per gated write.
+ *
+ * Semantics match canSeePbProject exactly: PB-category → PI-or-API-key only;
+ * other categories → everyone.
+ */
+export async function canSeePbProjectRow(
+  request: Request,
+  env: Env,
+  row: { id: string; category: string | null },
+): Promise<boolean> {
+  if (row.category !== 'Peripheral Brain') return true;
+  return isPiRequest(request, env);
+}
+
+/**
+ * T2.4 (2026-05-28) · `resolveAndGuardProject` — combined resolver + visibility
+ * gate. Single SELECT for id/slug/category; returns either a 403 block plus a
+ * null projectId (caller `return block;`s) or null block + the canonical
+ * projectId (`slug || id`) for downstream use.
+ *
+ * Replaces the 2-statement pattern at 6 write-side call sites:
+ *
+ *   const projectId = await projectRefToCanonical(env, ref);   // SELECT #1
+ *   if (!projectId) return error('Project not found', 404);
+ *   const block = await assertProjectVisible(request, env, projectId);  // SELECT #2
+ *   if (block) return block;
+ *
+ *   → const { block, projectId } = await resolveAndGuardProject(request, env, ref);
+ *     if (block) return block;
+ *     // projectId is the canonical slug-or-id for downstream INSERT/UPDATE.
+ *
+ * Unknown refs (proj=null) fail-closed for non-PI (consistent with
+ * canSeePbProject) and return a 404 (not 403) so callers don't need a
+ * separate existence check.
+ */
+export async function resolveAndGuardProject(
+  request: Request,
+  env: Env,
+  ref: string,
+): Promise<{ block: Response; projectId: null } | { block: null; projectId: string }> {
+  if (!ref) {
+    return { block: error('project_id required', 400), projectId: null };
+  }
+  // Note: deleted_at filter intentionally omitted — same rationale as
+  // canSeePbProject (Fix 1, 2026-04-23): category doesn't change on soft-delete,
+  // and we want PI/API-key callers to reach the gate's PB check rather than
+  // a spurious 403 on a soft-deleted row.
+  const proj = await env.DB.prepare(
+    'SELECT id, slug, category FROM projects WHERE (id = ? OR slug = ?) LIMIT 1'
+  ).bind(ref, ref).first<{ id: string; slug: string | null; category: string | null }>();
+
+  if (!proj) {
+    // Unknown ref — preserve the pre-existing error shape from the 6 call
+    // sites this helper is replacing (400 + "Unknown project \"<ref>\"").
+    // Non-PI callers DON'T get the 403 fail-closed here because the bare
+    // "ref doesn't resolve" signal is already public (write was attempted)
+    // and a 400 keeps the API surface stable. PB visibility is enforced
+    // when the project EXISTS via canSeePbProjectRow below.
+    return { block: error(`Unknown project "${ref}"`, 400), projectId: null };
+  }
+
+  const canonical = proj.slug || proj.id;
+  const visible = await canSeePbProjectRow(request, env, proj);
+  if (!visible) return { block: error('Project not found', 403), projectId: null };
+  return { block: null, projectId: canonical };
+}
+
+/**
  * A4 · `safeTaskRow` — strip private columns from a full task row.
  *
  * `/api/mutations` reads tasks via `SELECT *` to check current state before
