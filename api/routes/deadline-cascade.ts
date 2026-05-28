@@ -376,11 +376,11 @@ export async function handleCreateDeadlineDependency(request: Request, user: Aut
 }
 
 // ── POST /api/deadline-dependencies/:id/delete ─────────────
-
+// Hard-delete (deadline_dependencies has no deleted_at column).
+// SEC-10.3: Idempotent — check meta.changes; repeat calls return 200 with
+// idempotent:true instead of 404.
 export async function handleDeleteDeadlineDependency(id: string, env: Env): Promise<Response> {
-  const existing = await env.DB.prepare('SELECT id FROM deadline_dependencies WHERE id = ?').bind(id).first();
-  if (!existing) return error('Dependency not found', 404);
-
-  await env.DB.prepare('DELETE FROM deadline_dependencies WHERE id = ?').bind(id).run();
-  return json({ data: { deleted: true, id } });
+  const result = await env.DB.prepare('DELETE FROM deadline_dependencies WHERE id = ?').bind(id).run();
+  const changed = (result.meta?.changes ?? 0) > 0;
+  return json({ data: { deleted: true, id, idempotent: !changed } });
 }

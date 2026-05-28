@@ -63,6 +63,9 @@ export async function handleCreateProjectDocument(
 }
 
 // DELETE /api/projects/:slug/documents/:docId — remove a document link
+// Hard-delete (project_documents has no deleted_at column).
+// SEC-10.3: Idempotent — check meta.changes; repeat calls return 200 with
+// idempotent:true instead of 404.
 export async function handleDeleteProjectDocument(
   docId: string,
   env: Env,
@@ -71,9 +74,6 @@ export async function handleDeleteProjectDocument(
     'DELETE FROM project_documents WHERE id = ?'
   ).bind(docId).run();
 
-  if (result.meta.changes === 0) {
-    return error('Document link not found', 404);
-  }
-
-  return json({ data: { deleted: docId } });
+  const changed = (result.meta?.changes ?? 0) > 0;
+  return json({ data: { deleted: docId, idempotent: !changed } });
 }

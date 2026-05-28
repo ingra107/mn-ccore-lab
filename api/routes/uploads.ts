@@ -203,10 +203,19 @@ export async function handleGetFile(key: string, env: Env, canSeePb = false): Pr
 }
 
 /** POST /api/files/:id/delete — delete file attachment */
+// SEC-10.3: Idempotent — if the D1 record is already gone (row not found)
+// we still attempt the R2 delete (best-effort) and return 200 with
+// idempotent:true. The ownership gate (canAccessEntity) only fires when the
+// record exists; for already-deleted files we can't re-check the project,
+// so we return idempotent 200 directly.
 export async function handleDeleteFile(id: string, env: Env, canSeePb = false): Promise<Response> {
   // Get the R2 key + parent entity before deleting the record.
   const row = await env.DB.prepare('SELECT r2_key, entity_type, entity_id FROM file_attachments WHERE id = ?').bind(id).first<{ r2_key: string; entity_type: string; entity_id: string }>();
-  if (!row) return error('File not found', 404);
+
+  if (!row) {
+    // Already deleted — idempotent 200.
+    return json({ deleted: id, idempotent: true });
+  }
 
   // B11: block deleting a file on a PB-category project for non-PI callers.
   if (!(await canAccessEntity(env, row.entity_type, row.entity_id, canSeePb))) {
@@ -220,5 +229,5 @@ export async function handleDeleteFile(id: string, env: Env, canSeePb = false): 
 
   // Delete from D1
   await env.DB.prepare('DELETE FROM file_attachments WHERE id = ?').bind(id).run();
-  return json({ deleted: id });
+  return json({ deleted: id, idempotent: false });
 }

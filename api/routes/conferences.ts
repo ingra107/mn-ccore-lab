@@ -196,14 +196,17 @@ export async function handleUpdateConference(id: string, request: Request, user:
 }
 
 // ── POST /api/conferences/:id/delete ──
+// Hard-delete (conference_submissions has no deleted_at column).
+// SEC-10.3: Idempotent — attempt the DELETE and check changes.meta.changes.
+// A repeat call (row already gone) returns 200 with idempotent:true instead of 404.
 export async function handleDeleteConference(id: string, user: AuthUser, env: Env): Promise<Response> {
-  const existing = await env.DB.prepare('SELECT id FROM conference_submissions WHERE id = ?').bind(id).first();
-  if (!existing) return error('Conference submission not found', 404);
+  const result = await env.DB.prepare('DELETE FROM conference_submissions WHERE id = ?').bind(id).run();
+  const changed = (result.meta?.changes ?? 0) > 0;
 
-  await env.DB.prepare('DELETE FROM conference_submissions WHERE id = ?').bind(id).run();
+  if (changed) {
+    const actor = actorSlug(user.email);
+    await logActivity(env, 'conference', `Conference submission ${id} deleted`, actor, id, 'conference_submission');
+  }
 
-  const actor = actorSlug(user.email);
-  await logActivity(env, 'conference', `Conference submission ${id} deleted`, actor, id, 'conference_submission');
-
-  return json({ data: { id, deleted: true } });
+  return json({ data: { id, deleted: true, idempotent: !changed } });
 }

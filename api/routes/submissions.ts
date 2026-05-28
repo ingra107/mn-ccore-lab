@@ -113,12 +113,20 @@ export async function handleUpdateSubmission(id: string, request: Request, user:
 }
 
 // ── POST /api/submissions/:id/delete ──
-// Soft delete a submission event
+// Soft delete a submission event.
+// SEC-10.3: Idempotent — check existence WITHOUT filtering deleted_at first,
+// then only apply the soft-delete when not already deleted. Repeat calls
+// return 200 with idempotent:true instead of 404.
 export async function handleDeleteSubmission(id: string, user: AuthUser, env: Env): Promise<Response> {
   const existing = await env.DB.prepare(
-    'SELECT id FROM submission_events WHERE id = ? AND deleted_at IS NULL'
-  ).bind(id).first();
+    'SELECT id, deleted_at FROM submission_events WHERE id = ?'
+  ).bind(id).first<{ id: string; deleted_at: string | null }>();
   if (!existing) return error('Submission event not found', 404);
+
+  if (existing.deleted_at !== null) {
+    // Already soft-deleted — return idempotent 200 without re-logging.
+    return json({ data: { id, deleted: true, idempotent: true } });
+  }
 
   await env.DB.prepare(
     "UPDATE submission_events SET deleted_at = datetime('now') WHERE id = ?"
@@ -127,7 +135,7 @@ export async function handleDeleteSubmission(id: string, user: AuthUser, env: En
   const actor = actorSlug(user.email);
   await logActivity(env, 'submission', `Submission event ${id} soft-deleted`, actor, id, 'submission_event');
 
-  return json({ data: { id, deleted: true } });
+  return json({ data: { id, deleted: true, idempotent: false } });
 }
 
 // ── GET /api/submissions/active ──
