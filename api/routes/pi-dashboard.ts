@@ -47,13 +47,16 @@ export async function handlePIDashboard(env: Env): Promise<Response> {
       FROM tasks
     `).first(),
 
-    // Mentee publication velocity — papers with yearly rate
+    // Mentee publication velocity — papers with yearly rate.
+    // P6-B7: LIKE '%slug%' causes false positives (e.g. "lee"⊂"mcleery").
+    // Use quoted-value pattern '%"slug"%' which matches JSON array elements exactly.
+    // author_slugs is stored as a JSON array string: ["slug1","slug2",...].
     env.DB.prepare(`
       SELECT tm.slug, tm.name, COUNT(p.id) as pub_count,
         MIN(p.year) as first_year,
         MAX(p.year) as latest_year
       FROM team_members tm
-      LEFT JOIN publications p ON p.author_slugs LIKE '%' || tm.slug || '%'
+      LEFT JOIN publications p ON p.author_slugs LIKE '%"' || tm.slug || '"%'
       WHERE tm.member_type IN ('trainee', 'fellow', 'resident') OR tm.role LIKE '%Fellow%' OR tm.role LIKE '%Resident%' OR tm.role LIKE '%Student%'
       GROUP BY tm.slug
     `).all(),
@@ -99,11 +102,13 @@ export async function handlePIDashboard(env: Env): Promise<Response> {
       ORDER BY year
     `).all(),
 
-    // Grants: submitted vs funded
+    // P6-B8: proposed=0 means "currently active/awarded", NOT "funded".
+    // There is no funded flag in the grants schema. Relabel to true meaning.
+    // submitted = proposed=1 (pending), active = proposed=0 (awarded/running).
     env.DB.prepare(`
       SELECT
         SUM(CASE WHEN proposed = 1 THEN 1 ELSE 0 END) as submitted,
-        SUM(CASE WHEN proposed = 0 THEN 1 ELSE 0 END) as funded
+        SUM(CASE WHEN proposed = 0 THEN 1 ELSE 0 END) as active
       FROM grants
     `).first(),
 
@@ -186,7 +191,7 @@ export async function handlePIDashboard(env: Env): Promise<Response> {
       grantPipeline: grantPipeline || { total: 0, pending: 0, active: 0, active_funding: 0 },
       teamEngagement: engagementScores,
       pubsByQuarter: (pubsByQuarter.results || []) as Array<{ year: number; quarter: string; count: number }>,
-      grantsFunnel: grantsFunnel || { submitted: 0, funded: 0 },
+      grantsFunnel: grantsFunnel || { submitted: 0, active: 0 },
       projectsByStage: (projectsByStage.results || []) as Array<{ stage: string; count: number }>,
     },
   });
@@ -195,10 +200,11 @@ export async function handlePIDashboard(env: Env): Promise<Response> {
 // ── GET /api/analytics/mentee-velocity ─────────────────────
 // Per-mentee publication rates with monthly breakdown
 export async function handleMenteeVelocity(env: Env): Promise<Response> {
+  // P6-B7: use quoted-value LIKE pattern to avoid slug substring false positives.
   const mentees = await env.DB.prepare(`
     SELECT tm.slug, tm.name, p.year, COUNT(p.id) as count
     FROM team_members tm
-    LEFT JOIN publications p ON p.author_slugs LIKE '%' || tm.slug || '%'
+    LEFT JOIN publications p ON p.author_slugs LIKE '%"' || tm.slug || '"%'
     WHERE (tm.member_type IN ('trainee', 'fellow', 'resident')
       OR tm.role LIKE '%Fellow%' OR tm.role LIKE '%Resident%' OR tm.role LIKE '%Student%')
     GROUP BY tm.slug, p.year

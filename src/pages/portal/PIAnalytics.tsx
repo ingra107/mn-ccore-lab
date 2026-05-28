@@ -82,7 +82,8 @@ interface PIDashboardData {
   }>
   grantsFunnel: {
     submitted: number
-    funded: number
+    // P6-B8: 'active' replaces 'funded'. proposed=0 means awarded/active, not funded.
+    active: number
   }
   projectsByStage: Array<{
     stage: string
@@ -97,11 +98,16 @@ function usePIDashboard() {
     queryKey: ['pi-dashboard'],
     queryFn: async () => {
       const res = await fetch('/api/analytics/pi-dashboard')
-      if (!res.ok) throw new Error('Failed to fetch PI dashboard')
+      if (!res.ok) {
+        const err = new Error(`HTTP ${res.status}`) as Error & { status: number }
+        err.status = res.status
+        throw err
+      }
       const json = await res.json() as { data: PIDashboardData }
       return json.data
     },
     staleTime: 5 * 60 * 1000,
+    retry: false,
   })
 }
 
@@ -256,8 +262,9 @@ export function TrendArrow({ trend }: { trend: 'up' | 'down' | 'flat' | string }
 // Widgets: commitment scorecard, response time, team engagement, mentee pub velocity, grant pipeline.
 
 export default function PIAnalytics() {
-  const { data, isLoading } = usePIDashboard()
+  const { data, isLoading, isError, error } = usePIDashboard()
   const [copied, setCopied] = useState(false)
+  const errorStatus = (error as (Error & { status?: number }) | null)?.status
 
   // Compute insights
   const insights = useMemo(() => {
@@ -313,6 +320,23 @@ export default function PIAnalytics() {
   }, [data])
 
   if (isLoading) return <CardSkeleton count={6} />
+
+  // P6-C10: distinguish auth error from empty/network error.
+  if (isError) {
+    const isAuth = errorStatus === 401 || errorStatus === 403
+    return (
+      <div>
+        <PageHeader icon={<Shield size={20} />} title="PI Dashboard" subtitle="Evidence-based leadership metrics" />
+        <EmptyState
+          icon={<LineChart size={40} />}
+          title={isAuth ? 'Sign in to view PI Analytics' : 'Could not load PI Analytics'}
+          subtitle={isAuth
+            ? 'Your session may have expired. Refresh and sign in with your UMN account.'
+            : 'Refresh the page or contact support if this persists.'}
+        />
+      </div>
+    )
+  }
 
   if (!data) {
     return (
@@ -805,35 +829,15 @@ export default function PIAnalytics() {
             </h3>
           </div>
           <div className="rounded-xl border p-5" style={{ borderColor: 'var(--border-subtle)' }}>
-            {/* Grants: submitted vs funded */}
+            {/* Grants: pending (proposed) vs active (awarded) — P6-B8 */}
             <div className="mb-5">
               <h4 className="text-[10px] uppercase tracking-wider mb-2" style={{ color: 'var(--slate)' }}>
-                Grants: Submitted vs Funded
+                Grants: Pending vs Active
               </h4>
               <div className="grid grid-cols-2 gap-3">
-                <MetricCard icon={Target} label="Submitted" value={data?.grantsFunnel.submitted || 0} color="var(--gold)" />
-                <MetricCard icon={CheckCircle2} label="Funded" value={data?.grantsFunnel.funded || 0} color="var(--green)" />
+                <MetricCard icon={Target} label="Pending" value={data?.grantsFunnel.submitted || 0} color="var(--gold)" />
+                <MetricCard icon={CheckCircle2} label="Active" value={data?.grantsFunnel.active || 0} color="var(--green)" />
               </div>
-              {data && data.grantsFunnel.submitted > 0 && (
-                <div className="mt-2">
-                  <div
-                    className="h-2.5 rounded-full overflow-hidden"
-                    style={{ backgroundColor: 'var(--border-subtle)' }}
-                  >
-                    <div
-                      className="h-full rounded-full"
-                      style={{
-                        width: `${Math.round((data.grantsFunnel.funded / data.grantsFunnel.submitted) * 100)}%`,
-                        backgroundColor: 'var(--green)',
-                        transition: 'width 0.6s ease',
-                      }}
-                    />
-                  </div>
-                  <span className="text-[10px] mt-1" style={{ color: 'var(--slate)', opacity: 0.75 }}>
-                    {Math.round((data.grantsFunnel.funded / data.grantsFunnel.submitted) * 100)}% success rate
-                  </span>
-                </div>
-              )}
             </div>
 
             {/* Projects by stage */}
