@@ -1,32 +1,63 @@
 {
   "generated_at": "2026-05-28T14:45:00Z",
+  "updated_at": "2026-05-28T14:55:00Z",
   "generated_by": "hub-backend specialist (codex final-audit fix #6)",
   "d1_database": "mnccore-lab",
   "purpose": "Pre-deploy completion-triad drift check. assertCompletionTriad in api/lib/enum-domains.ts:141-185 rejects mutations where status/completed/completed_at disagree. This audit verifies existing D1 state before activating validators.",
 
-  "total_triad_violations": 62,
+  "status": "CLOSED",
+  "deploy_recommendation": "SAFE_TO_DEPLOY",
 
-  "by_type": {
-    "done_no_completed": {
-      "count": 1,
-      "query": "SELECT COUNT(*) FROM tasks WHERE status='done' AND completed != 1",
-      "sample": [
-        { "id": "task_01KQGKXAWAPCQET3MCXFYAKMA9", "status": "done", "completed": 0, "completed_at": null }
-      ]
-    },
-    "done_no_completed_at": {
-      "count": 1,
-      "note": "Overlaps with done_no_completed (same 1 row: task_01KQGKXAWAPCQET3MCXFYAKMA9)"
-    },
-    "completed_not_done": {
-      "count": 61,
-      "query": "SELECT COUNT(*) FROM tasks WHERE completed = 1 AND status != 'done'",
-      "breakdown_by_status": { "deleted": 61 }
-    },
-    "completed_at_not_done": {
-      "count": 57,
-      "note": "Subset of completed_not_done (57 of 61 deleted rows also have completed_at set)"
+  "pre_cleanup": {
+    "total_triad_violations": 62,
+    "by_type": {
+      "done_no_completed": {
+        "count": 1,
+        "query": "SELECT COUNT(*) FROM tasks WHERE status='done' AND completed != 1",
+        "sample": [
+          { "id": "task_01KQGKXAWAPCQET3MCXFYAKMA9", "status": "done", "completed": 0, "completed_at": null, "updated_at": "2026-05-01 01:56:00", "deleted_at": "2026-05-01 01:56:00" }
+        ]
+      },
+      "done_no_completed_at": {
+        "count": 1,
+        "note": "Same row as done_no_completed"
+      },
+      "completed_not_done": {
+        "count": 61,
+        "breakdown_by_status": { "deleted": 61 }
+      },
+      "completed_at_not_done": {
+        "count": 57,
+        "note": "Subset of completed_not_done (57 of 61 deleted rows also have completed_at set)"
+      }
     }
+  },
+
+  "cleanup_executed": {
+    "authorized_by": "Nick (2026-05-28 orchestrator reply, option a)",
+    "target_row": "task_01KQGKXAWAPCQET3MCXFYAKMA9",
+    "sql_executed": "UPDATE tasks SET completed=1, completed_at='2026-05-01 01:56:00' WHERE id='task_01KQGKXAWAPCQET3MCXFYAKMA9' AND status='done' AND completed=0",
+    "completed_at_value": "2026-05-01 01:56:00",
+    "completed_at_choice": "used existing updated_at (non-NULL: '2026-05-01 01:56:00') — preserves implied completion time",
+    "safety_belt": "WHERE status='done' AND completed=0 — UPDATE no-ops if row state changed since audit",
+    "d1_meta": { "changes": 2, "changed_db": true },
+    "note": "Row also has deleted_at set (soft-deleted 2026-05-01). The update resolves the triad inconsistency. The validator skips status='deleted' tombstones; this row has status='done' (not 'deleted'), so the triad fix is the correct resolution."
+  },
+
+  "post_cleanup": {
+    "verified_row": {
+      "id": "task_01KQGKXAWAPCQET3MCXFYAKMA9",
+      "status": "done",
+      "completed": 1,
+      "completed_at": "2026-05-01 01:56:00",
+      "updated_at": "2026-05-01 01:56:00",
+      "deleted_at": "2026-05-01 01:56:00"
+    },
+    "total_triad_violations": 61,
+    "all_exempt": true,
+    "breakdown": { "status='deleted' AND completed=1": 61 },
+    "real_violations": 0,
+    "query_used": "SELECT status, completed, COUNT(*) FROM tasks WHERE (status='done' AND (completed != 1 OR completed_at IS NULL)) OR (completed = 1 AND status != 'done') OR (completed_at IS NOT NULL AND completed_at != '' AND status != 'done') GROUP BY status, completed"
   },
 
   "validator_risk_analysis": {
@@ -35,14 +66,8 @@
       "risk": "NONE",
       "reason": "assertCompletionTriad explicitly skips when resulting status='deleted' (api/lib/enum-domains.ts:155: 'Tombstones are not completions'). These rows will never trip the validator regardless of future mutations."
     },
-    "done_no_completed": {
-      "count": 1,
-      "task_id": "task_01KQGKXAWAPCQET3MCXFYAKMA9",
-      "risk": "LOW",
-      "reason": "The validator only fires when an incoming mutation TOUCHES a completion field (status, completed, or completed_at). A mutation that updates an unrelated field (e.g. due_date) on this row is NOT blocked. Only a mutation that also touches one of the three completion fields triggers the check — and such a mutation would need to resolve the triad anyway."
-    }
+    "real_violations_remaining": 0
   },
 
-  "deploy_recommendation": "SAFE_TO_DEPLOY",
-  "rationale": "61 of 62 violations are status='deleted' rows that the validator explicitly exempts. The 1 genuine violation (task_01KQGKXAWAPCQET3MCXFYAKMA9: done but completed=0) will only block a future mutation that specifically touches a completion field on that row. No existing automation touches that row's completion fields — it is a legacy inconsistency from pre-A3. If Nick wants to clean it up proactively, the fix is: update tasks SET completed=1, completed_at='<timestamp>' WHERE id='task_01KQGKXAWAPCQET3MCXFYAKMA9'."
+  "rationale": "Zero real triad violations remain. 61 deleted-row entries are permanently exempt from the validator. Deploy activates assertCompletionTriad with no rows in D1 that would cause false-fire rejections on legitimate future mutations."
 }
