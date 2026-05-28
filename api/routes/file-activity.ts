@@ -1,5 +1,5 @@
 import type { Env } from '../helpers';
-import { json, error, generateId } from '../helpers';
+import { json, error, generateId, isPiRequest } from '../helpers';
 import { ctToday } from '../lib/ct-date';
 
 // GET /api/file-activity/heatmap?days=90 — daily aggregates from file_activity_daily
@@ -33,8 +33,14 @@ export async function handleGetFileActivity(url: URL, env: Env): Promise<Respons
   });
 }
 
-// POST /api/file-activity/sync — bulk upsert file activity entries
+// POST /api/file-activity/sync — bulk upsert file activity entries.
+// PI-or-API-key: this IS the PB sync ingestion path; ordinary team JWT
+// callers must not be able to write file activity data.
+// API-key callers (PB sync service) are granted access via isPiRequest Bearer check.
 export async function handleSyncFileActivity(request: Request, env: Env): Promise<Response> {
+  if (!(await isPiRequest(request, env))) {
+    return error('Forbidden — PI access only', 403);
+  }
   const body = await request.json() as {
     entries: Array<{
       date: string;

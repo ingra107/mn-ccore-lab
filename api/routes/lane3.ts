@@ -21,7 +21,7 @@
 // Drift detected by PB tests/integration/test_lane3_contract.py.
 
 import type { Env } from '../helpers';
-import { json, error } from '../helpers';
+import { json, error, isPiRequest } from '../helpers';
 
 
 // Mirrors PB scripts/db/lane3_registry.py LANE3_TABLES minus 'sessions'.
@@ -39,11 +39,19 @@ export const LANE3_PULL_TABLES = new Set([
 ]);
 
 
+// PI-only: Lane 3 tables contain private brain.db semantic data (agent
+// knowledge, memory facts, pomodoro, KG, decisions). API-key callers (PB
+// sync service) are granted PI-level access via isPiRequest's Bearer check.
 export async function handleLane3List(
   table: string,
   url: URL,
   env: Env,
+  request?: Request,
 ): Promise<Response> {
+  if (request && !(await isPiRequest(request, env))) {
+    return error('Forbidden — PI access only', 403);
+  }
+
   if (!LANE3_PULL_TABLES.has(table)) {
     return error(
       `Lane 3 table '${table}' not eligible for generic pull. ` +

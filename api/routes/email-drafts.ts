@@ -1,5 +1,5 @@
 import type { Env } from '../helpers';
-import { json, error, generateId } from '../helpers';
+import { json, error, generateId, isPiRequest } from '../helpers';
 
 // GET /api/email-drafts — list all drafts, with optional ?status=draft filter
 export async function handleGetEmailDrafts(url: URL, env: Env): Promise<Response> {
@@ -28,8 +28,15 @@ export async function handleGetPendingDrafts(env: Env): Promise<Response> {
   return json({ count: result.results.length, drafts: result.results });
 }
 
-// POST /api/email-drafts/sync-bulk — bulk upsert drafts
+// POST /api/email-drafts/sync-bulk — bulk upsert drafts.
+// PI-or-API-key: this IS the PB sync ingestion path; ordinary team JWT
+// callers must not be able to write email drafts on Nick's behalf.
+// API-key callers (hub_ai_listener / PB sync) are granted access via
+// isPiRequest's Bearer check (validateApiKey).
 export async function handleSyncEmailDrafts(request: Request, env: Env): Promise<Response> {
+  if (!(await isPiRequest(request, env))) {
+    return error('Forbidden — PI access only', 403);
+  }
   const body = await request.json() as {
     drafts: Array<{
       id: string;

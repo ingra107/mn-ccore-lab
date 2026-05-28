@@ -15,7 +15,7 @@
 // rejected-stale rows synced.
 
 import type { AuthUser, Env } from '../helpers';
-import { json, error, logActivity } from '../helpers';
+import { json, error, logActivity, isPiRequest } from '../helpers';
 
 const INBOX_EVENT_ALLOWED_SOURCES = new Set([
   'telegram', 'gmail', 'hub_pwa', 'file_watcher', 'pomodoro',
@@ -23,12 +23,18 @@ const INBOX_EVENT_ALLOWED_SOURCES = new Set([
 ]);
 
 // GET /api/inbox-events
+//   PI-or-API-key gate: inbox_events contain raw_payload_json and notes
+//   fields that are private to Nick's capture pipeline. Team JWT callers → 403.
+//   API-key callers (PB sync) are granted access via isPiRequest Bearer check.
 //   ?seq_after=N        — switches to seq-cursor mode (ORDER BY seq ASC, LIMIT)
 //   ?include_deleted=1  — include soft-deletes (sync mirrors tombstones)
 //   ?source=...         — UI filter
 //   ?triaged=0|1        — UI filter (triaged_at IS NULL when 0)
 //   ?limit=N            — default 2000 in seq mode, no cap otherwise
-export async function handleInboxEvents(url: URL, env: Env): Promise<Response> {
+export async function handleInboxEvents(url: URL, env: Env, request?: Request): Promise<Response> {
+  if (request && !(await isPiRequest(request, env))) {
+    return error('Forbidden — PI access only', 403);
+  }
   const seqAfterRaw = url.searchParams.get('seq_after');
   const includeDeleted = url.searchParams.get('include_deleted') === '1';
   const source = url.searchParams.get('source');
