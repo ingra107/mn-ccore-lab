@@ -1,0 +1,48 @@
+{
+  "generated_at": "2026-05-28T14:45:00Z",
+  "generated_by": "hub-backend specialist (codex final-audit fix #6)",
+  "d1_database": "mnccore-lab",
+  "purpose": "Pre-deploy completion-triad drift check. assertCompletionTriad in api/lib/enum-domains.ts:141-185 rejects mutations where status/completed/completed_at disagree. This audit verifies existing D1 state before activating validators.",
+
+  "total_triad_violations": 62,
+
+  "by_type": {
+    "done_no_completed": {
+      "count": 1,
+      "query": "SELECT COUNT(*) FROM tasks WHERE status='done' AND completed != 1",
+      "sample": [
+        { "id": "task_01KQGKXAWAPCQET3MCXFYAKMA9", "status": "done", "completed": 0, "completed_at": null }
+      ]
+    },
+    "done_no_completed_at": {
+      "count": 1,
+      "note": "Overlaps with done_no_completed (same 1 row: task_01KQGKXAWAPCQET3MCXFYAKMA9)"
+    },
+    "completed_not_done": {
+      "count": 61,
+      "query": "SELECT COUNT(*) FROM tasks WHERE completed = 1 AND status != 'done'",
+      "breakdown_by_status": { "deleted": 61 }
+    },
+    "completed_at_not_done": {
+      "count": 57,
+      "note": "Subset of completed_not_done (57 of 61 deleted rows also have completed_at set)"
+    }
+  },
+
+  "validator_risk_analysis": {
+    "deleted_rows": {
+      "count": 61,
+      "risk": "NONE",
+      "reason": "assertCompletionTriad explicitly skips when resulting status='deleted' (api/lib/enum-domains.ts:155: 'Tombstones are not completions'). These rows will never trip the validator regardless of future mutations."
+    },
+    "done_no_completed": {
+      "count": 1,
+      "task_id": "task_01KQGKXAWAPCQET3MCXFYAKMA9",
+      "risk": "LOW",
+      "reason": "The validator only fires when an incoming mutation TOUCHES a completion field (status, completed, or completed_at). A mutation that updates an unrelated field (e.g. due_date) on this row is NOT blocked. Only a mutation that also touches one of the three completion fields triggers the check — and such a mutation would need to resolve the triad anyway."
+    }
+  },
+
+  "deploy_recommendation": "SAFE_TO_DEPLOY",
+  "rationale": "61 of 62 violations are status='deleted' rows that the validator explicitly exempts. The 1 genuine violation (task_01KQGKXAWAPCQET3MCXFYAKMA9: done but completed=0) will only block a future mutation that specifically touches a completion field on that row. No existing automation touches that row's completion fields — it is a legacy inconsistency from pre-A3. If Nick wants to clean it up proactively, the fix is: update tasks SET completed=1, completed_at='<timestamp>' WHERE id='task_01KQGKXAWAPCQET3MCXFYAKMA9'."
+}
