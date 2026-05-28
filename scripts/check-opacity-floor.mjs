@@ -10,6 +10,23 @@
 // (borders, inactive dots, divider lines, watermark glyphs). See
 // docs/design-system.md "Opacity policy" + CLAUDE.md rules section.
 //
+// T2.9 STATUS (2026-05-28): the lint surfaces 331 text-bearing sub-0.85
+// sites across ~80 files. Flipping the default to ENFORCE today would block
+// every npm run lint:opacity invocation immediately. Cleanup of 331 sites
+// is a multi-session backlog (each site needs visual verification — some
+// are decorative-on-text borderlines the heuristic can't resolve). DEFERRED
+// the ENFORCE-default flip until the backlog is migrated below ~10. Until
+// then: ENFORCE remains opt-in via `OPACITY_LINT_MODE=enforce npm run
+// lint:opacity` so reviewers can spot-check their own diffs.
+//
+// Migration plan: chunk the 331 hits by file (top offenders:
+// pages/TrajectoryPage.tsx=14, pages/portal/PersonalPage.tsx=12,
+// components/RevisionTracker.tsx=9, pages/MemberPage.tsx=9,
+// pages/MyItems.tsx=8, pages/portal/IdeasPage.tsx=8), then sweep file-by-
+// file in a future commit. Each fix: bump to 0.85 OR rewrite as color (e.g.
+// `color: var(--muted)`). Once the backlog drops below ~10, flip the
+// default and clean up the rest in the same commit.
+//
 // Heuristic — text-bearing if any of:
 //   - inline style block on the SAME element also sets `color:` (the
 //     opacity dims the text)
