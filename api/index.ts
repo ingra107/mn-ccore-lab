@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import type { Context, Next } from 'hono';
 import type { Env } from './types';
-import { corsHeaders, json, error, getAuthUser, isPiRequest, getPiEmails, ensureTeamMember } from './helpers';
+import { corsHeaders, json, error, getAuthUser, isPiRequest, getPiEmails, ensureTeamMember, actorSlugFromRequest, logActivity } from './helpers';
 import type { AuthUser } from './helpers';
 import { validateApiKey } from './middleware/api-key-auth';
 import { handleVersion, bumpVersion } from './lib/version';
@@ -380,8 +380,10 @@ app.get('/api/pb/command-center', (c) => handleCommandCenter(E(c), U(c).searchPa
 app.get('/api/pb/plan/history', (c) => handlePlanHistory(R(c), E(c)));
 app.get('/api/pb/dispatch/pending', (c) => handleGetPendingDispatch(E(c)));
 app.get('/api/pb/today', (c) => handleGetTodayMd(E(c)));
-app.get('/api/sessions', (c) => handleGetSessions(U(c), E(c)));
-app.get('/api/lane3/:table', (c) => handleLane3List(c.req.param('table'), U(c), E(c)));
+// PI-gated: sessions + lane3 contain private brain.db data. R(c) carries JWT/API-key
+// so isPiRequest inside the handler can distinguish PI/service from team callers.
+app.get('/api/sessions', (c) => handleGetSessions(U(c), E(c), R(c)));
+app.get('/api/lane3/:table', (c) => handleLane3List(c.req.param('table'), U(c), E(c), R(c)));
 app.get('/api/pb/sessions', (c) => handlePBSessions(R(c), E(c)));
 app.get('/api/pb/sessions/stats', (c) => handlePBSessionStats(E(c)));
 app.get('/api/pb/health', (c) => handlePBHealth(E(c)));
@@ -462,7 +464,8 @@ app.get('/api/meetings/next', (c) => handleNextMeeting(E(c)));
 app.get('/api/meetings/:id/agenda', (c) => handleGetAgendaItems(c.req.param('id'), E(c)));
 app.get('/api/meetings/:id/generate-agenda', (c) => handleGenerateAgenda(c.req.param('id'), E(c)));
 app.get('/api/meetings/:id/prep', (c) => handleMeetingPrep(c.req.param('id'), E(c)));
-app.get('/api/meetings/:id', (c) => handleGetMeeting(c.req.param('id'), E(c)));
+// Meeting detail — authed callers get full row; unauth get public-safe cols only.
+app.get('/api/meetings/:id', (c) => handleGetMeeting(c.req.param('id'), E(c), c.get('authedUser') !== null || c.get('apiKeyValid') === true));
 app.get('/api/meetings', (c) => handleGetMeetings(E(c), c.get('authedUser') !== null || c.get('apiKeyValid') === true));
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -564,6 +567,7 @@ app.get('/api/task-comments/recent', async (c) => {
     : await env.DB.prepare(q).bind(limit).all();
   return json({ data: result.results || [] });
 });
+// Notifications: recipient derived from auth (R(c) carries the JWT/test headers)
 app.get('/api/notifications', (c) => handleNotifications(U(c), R(c), E(c)));
 app.get('/api/notifications/count', (c) => handleNotificationCount(U(c), R(c), E(c)));
 app.get('/api/commitments', (c) => handleCommitments(U(c), E(c)));
@@ -629,7 +633,8 @@ app.get('/api/grant-milestones', (c) => handleGetGrantMilestones(U(c), E(c)));
 // Regulatory
 // ─────────────────────────────────────────────────────────────────────────────
 app.get('/api/regulatory/expiring', (c) => handleGetExpiringItems(U(c), E(c)));
-app.get('/api/regulatory/:id/ics', (c) => handleRegulatoryIcs(c.req.param('id'), E(c)));
+// Auth-only (not PI) — team members need iCal access to renewal reminders.
+app.get('/api/regulatory/:id/ics', (c) => handleRegulatoryIcs(c.req.param('id'), E(c), R(c)));
 app.get('/api/regulatory', (c) => handleGetRegulatoryItems(U(c), E(c)));
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -666,8 +671,11 @@ app.get('/api/reactions', (c) => handleGetReactions(U(c), E(c)));
 app.get('/api/tasks/:id/comments', (c) => handleGetTaskComments(c.req.param('id'), E(c)));
 app.get('/api/tasks/:id/files', async (c) => {
   const env = E(c);
+  // Auth required — task files are team-internal content.
+  const authedUser = c.get('authedUser');
+  if (!authedUser && c.get('apiKeyValid') !== true) return error('Authentication required', 401);
   const { results } = await env.DB.prepare(
-    'SELECT * FROM task_files WHERE task_id = ? ORDER BY created_at DESC'
+    'SELECT id, task_id, filename, url, file_type, uploaded_by, created_at FROM task_files WHERE task_id = ? ORDER BY created_at DESC'
   ).bind(c.req.param('id')).all();
   return json({ data: results });
 });
@@ -706,7 +714,8 @@ app.post('/api/team/:slug', (c) => handleUpdateTeamMember(c.req.param('slug'), R
 // Inbox events (W2a) — specific-before-generic
 app.post('/api/inbox-events/sync-bulk', (c) => handleSyncBulkInboxEvents(R(c), USER(c), E(c)));
 app.post('/api/inbox-events/:id/delete', (c) => handleDeleteInboxEvent(c.req.param('id'), USER(c), E(c)));
-app.get('/api/inbox-events', (c) => handleInboxEvents(U(c), E(c)));
+// PI-or-API-key gate: raw_payload_json/notes are private to Nick's capture pipeline.
+app.get('/api/inbox-events', (c) => handleInboxEvents(U(c), E(c), R(c)));
 
 // Mutations (A3) — single endpoint for every brain.db -> Hub write.
 // Ships AFTER pre-A3 snapshot manifest verifier exits 0 on both PB
@@ -726,24 +735,49 @@ app.post('/api/tasks/:id/subtasks', (c) => handleCreateSubtask(c.req.param('id')
 app.post('/api/tasks/:id/handoffs', (c) => handleCreateHandoff(c.req.param('id'), R(c), USER(c), E(c)));
 app.post('/api/tasks/:id/files', async (c) => {
   const env = E(c);
-  const user = USER(c);
   const id = c.req.param('id');
+  // Owner-or-PI gate: only the task owner/assignee or a PI may attach files.
+  const callerSlug = await actorSlugFromRequest(R(c), env);
+  if (!callerSlug) return error('Authentication required', 401);
+  const task = await env.DB.prepare(
+    'SELECT assignee FROM tasks WHERE id = ? LIMIT 1'
+  ).bind(id).first<{ assignee: string | null }>();
+  if (!task) return error('Task not found', 404);
+  if (task.assignee !== callerSlug && !(await isPiRequest(R(c), env))) {
+    return error('Forbidden', 403);
+  }
   const body = await c.req.json() as { filename: string; url: string; file_type?: string };
   const newId = crypto.randomUUID().slice(0, 8);
   await env.DB.prepare(
     'INSERT INTO task_files (id, task_id, filename, url, file_type, uploaded_by) VALUES (?, ?, ?, ?, ?, ?)'
-  ).bind(newId, id, body.filename, body.url, body.file_type || 'link', user.email).run();
+  ).bind(newId, id, body.filename, body.url, body.file_type || 'link', callerSlug).run();
+  await logActivity(env, 'task_file_attach', `Attached file "${body.filename}" to task ${id}`, callerSlug, id, 'task');
   return json({ data: { id: newId, task_id: id, filename: body.filename, url: body.url } });
 });
 app.post('/api/tasks/:id', (c) => handleUpdateTask(c.req.param('id'), R(c), USER(c), E(c)));
 app.post('/api/tasks', (c) => handleCreateTask(R(c), USER(c), E(c)));
 app.post('/api/sync/mobile-tasks-to-hub', (c) => handleMobileTasksToHub(R(c), USER(c), E(c)));
 
-// Task-files (deletion uses the legacy /api/task-files/:id/delete path)
+// Task-files (deletion uses the legacy /api/task-files/:id/delete path).
+// Owner-or-PI gate: look up the file's task assignee; only they or a PI may delete.
+// Hard-delete is intentional (task_files has no deleted_at column — schema-v34).
+// logActivity provides the audit trail in lieu of a soft-delete tombstone.
 app.post('/api/task-files/:id/delete', async (c) => {
   const env = E(c);
-  await env.DB.prepare('DELETE FROM task_files WHERE id = ?').bind(c.req.param('id')).run();
-  return json({ data: { deleted: c.req.param('id') } });
+  const fileId = c.req.param('id');
+  const callerSlug = await actorSlugFromRequest(R(c), env);
+  if (!callerSlug) return error('Authentication required', 401);
+  // Look up the file to get the parent task and its assignee.
+  const fileRow = await env.DB.prepare(
+    'SELECT tf.id, tf.task_id, tf.filename, t.assignee FROM task_files tf LEFT JOIN tasks t ON tf.task_id = t.id WHERE tf.id = ? LIMIT 1'
+  ).bind(fileId).first<{ id: string; task_id: string; filename: string; assignee: string | null }>();
+  if (!fileRow) return error('File not found', 404);
+  if (fileRow.assignee !== callerSlug && !(await isPiRequest(R(c), env))) {
+    return error('Forbidden', 403);
+  }
+  await env.DB.prepare('DELETE FROM task_files WHERE id = ?').bind(fileId).run();
+  await logActivity(env, 'task_file_delete', `Deleted file "${fileRow.filename}" from task ${fileRow.task_id}`, callerSlug, fileRow.task_id, 'task');
+  return json({ data: { deleted: fileId } });
 });
 
 // Subtasks
@@ -767,18 +801,15 @@ app.post('/api/milestones/:id/complete', (c) => handleUpdateMilestoneCompletion(
 // Commitments
 app.post('/api/commitments', (c) => handleCreateCommitment(R(c), E(c)));
 
-// Notifications
+// Notifications — read-all derives recipient from the authenticated caller slug,
+// not from a user-supplied ?recipient= or body field (prevents cross-user spoofing).
 app.post('/api/notifications/read-all', async (c) => {
   const env = E(c);
-  const user = USER(c);
-  let recipient = user.email.split('@')[0];
-  try {
-    const body = await c.req.json() as Record<string, string>;
-    if (body.recipient) recipient = body.recipient;
-  } catch {}
-  return handleMarkAllNotificationsRead(recipient, env);
+  const callerSlug = await actorSlugFromRequest(R(c), env);
+  if (!callerSlug) return error('Authentication required', 401);
+  return handleMarkAllNotificationsRead(callerSlug, env);
 });
-app.post('/api/notifications/:id/read', (c) => handleMarkNotificationRead(c.req.param('id'), E(c)));
+app.post('/api/notifications/:id/read', (c) => handleMarkNotificationRead(c.req.param('id'), R(c), E(c)));
 
 // Reactions
 app.post('/api/reactions', (c) => handleToggleReaction(R(c), USER(c), E(c)));

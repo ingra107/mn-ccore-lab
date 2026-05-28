@@ -30,9 +30,13 @@ export async function handleGetMeetings(env: Env, isAuthed = false): Promise<Res
   return json({ data: result.results, count: result.results.length });
 }
 
-// GET /api/meetings/:id — single meeting with action items + agenda items
-export async function handleGetMeeting(id: string, env: Env): Promise<Response> {
-  const meeting = await env.DB.prepare('SELECT * FROM meetings WHERE id = ?').bind(id).first();
+// GET /api/meetings/:id — single meeting with action items + agenda items.
+// `isAuthed` true when the caller has a valid JWT or API key (resolved by
+// index.ts, mirroring the handleGetMeetings pattern). Unauth callers get the
+// public-safe column projection; authed callers get the full row.
+export async function handleGetMeeting(id: string, env: Env, isAuthed = false): Promise<Response> {
+  const cols = isAuthed ? '*' : MEETING_PUBLIC_COLS;
+  const meeting = await env.DB.prepare(`SELECT ${cols} FROM meetings WHERE id = ?`).bind(id).first();
   if (!meeting) return error('Meeting not found', 404);
 
   // SEC-P2-02: exclude the private `notes` column from task rows returned in
