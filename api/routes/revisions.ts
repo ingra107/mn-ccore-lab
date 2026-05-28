@@ -322,7 +322,10 @@ export async function handleAttentionManuscripts(
 
 // ── GET /api/revisions/active ──
 // All active revisions across projects (for dashboard)
-export async function handleGetActiveRevisions(env: Env): Promise<Response> {
+// Phase 1b-B: canSeePb=false for non-PI callers — filter out PB-category project revisions.
+export async function handleGetActiveRevisions(env: Env, canSeePb = false): Promise<Response> {
+  // Mirror the category filter from search/activity for non-PI callers.
+  const pbFilter = canSeePb ? '' : " AND (p.category != 'Peripheral Brain' OR p.category IS NULL)";
   const revisions = await env.DB.prepare(`
     SELECT r.*,
       p.title as project_title,
@@ -332,7 +335,7 @@ export async function handleGetActiveRevisions(env: Env): Promise<Response> {
     FROM manuscript_revisions r
     LEFT JOIN projects p ON p.slug = r.project_id OR p.id = r.project_id
     LEFT JOIN reviewer_comments c ON c.revision_id = r.id
-    WHERE r.status = 'in_progress'
+    WHERE r.status = 'in_progress'${pbFilter}
     GROUP BY r.id
     ORDER BY r.response_due ASC NULLS LAST, r.created_at DESC
   `).all();
