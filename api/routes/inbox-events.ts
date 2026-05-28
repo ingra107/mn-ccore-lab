@@ -31,9 +31,12 @@ const INBOX_EVENT_ALLOWED_SOURCES = new Set([
 //   ?source=...         — UI filter
 //   ?triaged=0|1        — UI filter (triaged_at IS NULL when 0)
 //   ?limit=N            — default 2000 in seq mode, no cap otherwise
-export async function handleInboxEvents(url: URL, env: Env, request?: Request): Promise<Response> {
-  // Fail-closed: missing request (absent caller) is treated as denied, not open.
-  if (!request || !(await isPiRequest(request, env))) {
+export async function handleInboxEvents(url: URL, env: Env, request: Request): Promise<Response> {
+  // Z1.6 (2026-05-28): request is now required (was optional). The fail-closed
+  // path collapses to the standard PI gate — callers MUST forward the raw
+  // request. defineRoute() registration in api/index.ts already does this
+  // unconditionally via R(c).
+  if (!(await isPiRequest(request, env))) {
     return error('Forbidden — PI access only', 403);
   }
   const seqAfterRaw = url.searchParams.get('seq_after');

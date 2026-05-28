@@ -864,19 +864,14 @@ describe('I-1 fail-closed: absent request → denied (no open-gate legacy path)'
     expect(res.status).toBe(403)
   })
 
-  it('handleInboxEvents: absent request → 403', async () => {
-    const env = piEnv()
-    const url = new URL('https://x/api/inbox-events')
-    const res = await handleInboxEvents(url, env, undefined)
-    expect(res.status).toBe(403)
-  })
-
-  it('handleRegulatoryIcs: absent request → 401', async () => {
-    const env = piEnv()
-    // Auth-only (not PI-only) — absent request → 401, not bypass
-    const res = await handleRegulatoryIcs('reg1', env, undefined)
-    expect(res.status).toBe(401)
-  })
+  // Z1.6 (2026-05-28): handleInboxEvents / handleRegulatoryIcs signatures
+  // now require `request: Request` (was `request?: Request`). The fail-closed
+  // path for "absent request" is replaced by a compile-time guarantee — the
+  // type checker refuses to call the handler without a Request. The Z5.2 lint
+  // bans new `request?: Request` signatures in api/routes/*.ts so this gap
+  // can't re-open. The two runtime tests below would not compile against the
+  // new signatures and are removed; the regression is now structurally
+  // impossible rather than runtime-checked.
 })
 
 // ── I-3: Meeting sub-routes — unauth → 401 ───────────────────────────────────

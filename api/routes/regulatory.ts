@@ -179,9 +179,10 @@ export async function handleUpdateRegulatoryItem(id: string, request: Request, u
 // GET /api/regulatory/:id/ics — generate .ics calendar invite for renewal.
 // Auth-only (not PI-only): the whole team legitimately needs iCal access to
 // regulatory deadlines to add renewal reminders to their calendars.
-export async function handleRegulatoryIcs(id: string, env: Env, request?: Request): Promise<Response> {
-  // Fail-closed: missing request (absent caller) is treated as unauthenticated.
-  if (!request) return error('Authentication required', 401);
+export async function handleRegulatoryIcs(id: string, env: Env, request: Request): Promise<Response> {
+  // Z1.6 (2026-05-28): request is now required (was optional). Callers in
+  // api/index.ts forward c.req.raw unconditionally via R(c). The fail-closed
+  // branch collapses to the standard auth gate.
   const user = await getAuthUser(request, env);
   if (!user) return error('Authentication required', 401);
   const item = await env.DB.prepare('SELECT * FROM regulatory_items WHERE id = ?').bind(id).first() as Record<string, any> | null;
