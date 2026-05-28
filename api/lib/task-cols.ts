@@ -46,12 +46,16 @@ export const TASK_PRIVATE_COLS = new Set<string>(['notes']);
  * private fields can register them once and have every SELECT * return path
  * pick them up via `safeRow(table, row)`.
  *
+ * Z3.1 (2026-05-28): expanded to cover the 3 non-tasks tables codex flagged.
  * Adding a private column to a new table: add the table key here with a Set
  * of column names. safeRow strips them automatically; the old per-table
  * helpers (safeTaskRow) stay as backward-compat re-exports.
  */
 export const TABLE_PRIVATE_COLS: Record<string, Set<string>> = {
   tasks: TASK_PRIVATE_COLS,
+  email_drafts: new Set<string>(['body_text', 'body_html', 'thread_id']),
+  inbox_events: new Set<string>(['raw_payload_json', 'notes']),
+  regulatory_items: new Set<string>(['notes']),
 };
 
 /**
@@ -86,7 +90,17 @@ export function safeRow(table: string, row: Record<string, unknown>): Record<str
  * projectRefToCanonical at write time; unresolvable refs become NULL (no
  * reject, mirroring the existing /api/tasks behavior — PB may push before
  * the project row arrives on Hub, then a later sync resolves it).
+ *
+ * Z3.2 (2026-05-28): expanded from tasks-only to every project-linked Hub
+ * table. /api/mutations applyInsert consults this registry — unregistered
+ * tables silently store the raw ref (sync drift class).
  */
 export const FK_SLUG_FIELDS: Record<string, string[]> = {
   tasks: ['project_id'],
+  submission_events: ['project_id'],
+  conference_submissions: ['project_id'],
+  regulatory_items: ['project_id'],
+  manuscript_revisions: ['project_id'],
+  project_documents: ['project_id'],
+  deadline_dependencies: ['project_id'],  // covers the deadline_cascade graph
 };
