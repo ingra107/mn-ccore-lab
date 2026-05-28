@@ -101,6 +101,11 @@ export default function InlineSelect({ value, options, onChange, size = 'sm', al
           alignItems: 'center',
           gap: '4px',
           padding: `${py} 8px`,
+          // Phase 7 (2026-05-27): WCAG 2.5.8 minimum tap target 24x24 CSS px.
+          // sm tile was 11px font + 2px py = ~16px tall on touch — bumped
+          // to a 24px floor while leaving visual padding alone so layouts
+          // don't reflow noticeably.
+          minHeight: '24px',
           borderRadius: 'var(--radius-md)',
           border: '1px solid transparent',
           background: 'none',

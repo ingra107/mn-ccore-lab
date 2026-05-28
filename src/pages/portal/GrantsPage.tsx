@@ -158,7 +158,7 @@ function GanttTooltip({ data, chartWidth }: { data: TooltipData; chartWidth: num
           {info.name}
         </p>
         {(grant.start_date || grant.end_date) && (
-          <p style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.75, margin: '2px 0 0' }}>
+          <p style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.85, margin: '2px 0 0' }}>
             {grant.start_date ? formatMediumDate(grant.start_date) : '?'}
             {' – '}
             {grant.end_date ? formatMediumDate(grant.end_date) : '?'}
@@ -725,11 +725,11 @@ export default function GrantsPage() {
                     >
                       <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
                         <div>
-                          <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Full title</div>
+                          <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.85, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Full title</div>
                           <div>{grant.title}</div>
                         </div>
                         <div>
-                          <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>PI</div>
+                          <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.85, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>PI</div>
                           <div className="flex items-center gap-2">
                             <div style={{ width: 22, height: 22, flexShrink: 0 }}>
                               <Avatar name={pi.name} initials={pi.initials} photoUrl={pi.photoUrl} size="sm-plus" variant="ice" />
@@ -738,15 +738,15 @@ export default function GrantsPage() {
                           </div>
                         </div>
                         <div>
-                          <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Mechanism</div>
+                          <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.85, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Mechanism</div>
                           <div>{grant.mechanism || '—'}</div>
                         </div>
                         <div>
-                          <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Agency</div>
+                          <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.85, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Agency</div>
                           <div>{grant.agency || '—'}</div>
                         </div>
                         <div>
-                          <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Period</div>
+                          <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.85, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Period</div>
                           <div>
                             {grant.start_date ? formatMediumDate(grant.start_date) : '?'}
                             {' – '}
@@ -754,7 +754,7 @@ export default function GrantsPage() {
                           </div>
                         </div>
                         <div>
-                          <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Status</div>
+                          <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.85, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Status</div>
                           <div>{isProposed ? 'Proposed' : 'Active'}{!isProposed && progress > 0 ? ` · ${Math.round(progress)}% through period` : ''}</div>
                         </div>
                       </div>
@@ -770,7 +770,7 @@ export default function GrantsPage() {
           {filteredGrants.length > 0 && (
             <div
               className="mt-2 px-4 py-2 rounded-lg text-xs flex items-center gap-1.5 flex-wrap"
-              style={{ color: 'var(--slate)', opacity: 0.75, fontSize: '12px' }}
+              style={{ color: 'var(--slate)', opacity: 0.85, fontSize: '12px' }}
             >
               <span>{grants.length} grants</span>
               <span style={{ opacity: 0.85 }}>·</span>
@@ -835,7 +835,7 @@ export default function GrantsPage() {
                     <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ color: 'var(--teal)', backgroundColor: 'var(--teal-active)' }}>
                       {m.grantMechanism}
                     </span>
-                    <span className="text-[11px] flex-shrink-0 w-20 text-right" style={{ color: 'var(--slate)', opacity: 0.75 }}>
+                    <span className="text-[11px] flex-shrink-0 w-20 text-right" style={{ color: 'var(--slate)', opacity: 0.85 }}>
                       {formatMediumDate(m.target_date)}
                     </span>
                   </div>
@@ -908,7 +908,7 @@ export default function GrantsPage() {
           <TableSkeleton rows={3} cols={5} />
         ) : enrichedPostAward.length === 0 ? (
           <div className="text-center py-4">
-            <p style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.75 }}>
+            <p style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.85 }}>
               No upcoming post-award milestones. Add progress reports, continuing reviews, NCE deadlines, and budget periods.
             </p>
           </div>
@@ -1054,7 +1054,7 @@ export default function GrantsPage() {
 
         {similarGrants.isLoading && (
           <div className="text-center py-6">
-            <p style={{ fontSize: 'var(--value-size)', color: 'var(--slate)', opacity: 0.75 }}>
+            <p style={{ fontSize: 'var(--value-size)', color: 'var(--slate)', opacity: 0.85 }}>
               Searching NIH RePORTER...
             </p>
           </div>
@@ -1096,7 +1096,7 @@ export default function GrantsPage() {
         )}
 
         {activeSearch && similarGrants.data?.data?.length === 0 && !similarGrants.isLoading && (
-          <p style={{ fontSize: 'var(--value-size)', color: 'var(--slate)', opacity: 0.75, textAlign: 'center', padding: 'var(--sp-lg) 0' }}>
+          <p style={{ fontSize: 'var(--value-size)', color: 'var(--slate)', opacity: 0.85, textAlign: 'center', padding: 'var(--sp-lg) 0' }}>
             No funded grants found for "{activeSearch}"
           </p>
         )}

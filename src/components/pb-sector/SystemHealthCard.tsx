@@ -91,10 +91,9 @@ export default function SystemHealthCard({ data, isLoading }: Props) {
           <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.85 }}>
             Task sync
           </span>
-          <span style={{
+          <span className="tabular-nums" style={{
             fontSize: '10px',
             color: 'var(--ink)',
-            fontFamily: 'JetBrains Mono, monospace',
             marginLeft: 'auto',
           }}>
             {formatTimestamp(data.lastTaskSync)}
@@ -105,10 +104,9 @@ export default function SystemHealthCard({ data, isLoading }: Props) {
           <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.85 }}>
             D1 activity
           </span>
-          <span style={{
+          <span className="tabular-nums" style={{
             fontSize: '10px',
             color: 'var(--ink)',
-            fontFamily: 'JetBrains Mono, monospace',
             marginLeft: 'auto',
           }}>
             {formatTimestamp(data.lastActivityTimestamp)}
@@ -122,23 +120,23 @@ export default function SystemHealthCard({ data, isLoading }: Props) {
         <div className="flex items-center gap-3" style={{ fontSize: '10px' }}>
           <span style={{ color: 'var(--slate)', opacity: 0.85 }}>
             Tasks{' '}
-            <span style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--ink)' }}>
+            <span className="tabular-nums" style={{ color: 'var(--ink)' }}>
               {data.tasks.active}
             </span>
             <span style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>/</span>
-            <span style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--slate)' }}>
+            <span className="tabular-nums" style={{ color: 'var(--slate)' }}>
               {data.tasks.total}
             </span>
           </span>
           <span style={{ color: 'var(--slate)', opacity: 0.85 }}>
             Projects{' '}
-            <span style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--ink)' }}>
+            <span className="tabular-nums" style={{ color: 'var(--ink)' }}>
               {data.projects.active}
             </span>
           </span>
           <span style={{ color: 'var(--slate)', opacity: 0.85 }}>
             Tables{' '}
-            <span style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--ink)' }}>
+            <span className="tabular-nums" style={{ color: 'var(--ink)' }}>
               {data.d1TableCount}
             </span>
           </span>
@@ -147,7 +145,7 @@ export default function SystemHealthCard({ data, isLoading }: Props) {
         {/* Recent activity */}
         {data.recentActivityCount > 0 && (
           <div style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75 }}>
-            <span style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--teal)' }}>
+            <span className="tabular-nums" style={{ color: 'var(--teal)' }}>
               {data.recentActivityCount}
             </span>{' '}
             actions in last 24h

@@ -549,8 +549,8 @@ export default function ManuscriptsPage() {
                                       )
                                     }}
                                     style={{
-                                      width: 11, height: 11,
-                                      padding: 3,
+                                      width: 24, height: 24,
+                                      padding: 0,
                                       display: 'inline-flex',
                                       alignItems: 'center',
                                       justifyContent: 'center',

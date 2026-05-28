@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Brain, Sparkles, TrendingUp } from 'lucide-react'
+import { Brain, TrendingUp } from 'lucide-react'
 import { useProjectUpdates } from '../../../hooks/useApiData'
 import { useToast } from '../../../hooks/useToast'
 import HermesMark from '../../HermesMark'
@@ -221,7 +221,12 @@ export default function TaskIntelligence({ task }: TaskIntelligenceProps) {
         </p>
       )}
 
-      <SectionHeader icon={Sparkles} label="Hermes draft" />
+      {/* Hermes-adjacent label uses HermesMark (Mercury glyph, gold) per
+          CLAUDE.md Rule 29 — never lucide <Sparkles /> for Hermes. */}
+      <label className="flex items-center gap-1.5" style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
+        <HermesMark size={10} />
+        Hermes draft
+      </label>
       <div
         style={{
           padding: 'var(--sp-md)',

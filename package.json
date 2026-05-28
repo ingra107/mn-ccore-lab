@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
+    "lint:opacity": "node scripts/check-opacity-floor.mjs",
     "preview": "vite preview",
     "seed": "tsx scripts/seed-d1.ts",
     "db:schema": "wrangler d1 execute mnccore-lab --file=api/bootstrap-schema.sql",
