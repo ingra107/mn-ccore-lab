@@ -15,6 +15,7 @@
 
 import { EventRow } from './MeetingRow'
 import { ACCENT_CORAL, INK_DIM } from './constants'
+import { withAlpha } from '../../lib/taskGrouping'
 import type { TodayEvent } from './constants'
 
 // 2px per minute: 30 min stagger → 60px, 1 hour → 120px.
@@ -47,7 +48,7 @@ export function OverlapBand({ events, onDismiss, notes, onNote }: OverlapBandPro
         position: 'relative',
         padding: '8px 8px 6px',
         margin: '4px 0',
-        border: `1px dashed ${ACCENT_CORAL}66`,
+        border: `1px dashed ${withAlpha(ACCENT_CORAL, 40)}`,
         borderRadius: 8,
         background: 'rgba(240,115,126,0.04)',
       }}

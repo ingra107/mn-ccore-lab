@@ -18,6 +18,7 @@ import {
   MOVE_OPTIONS,
   readTodayState, writeTodayState,
 } from '../constants'
+import { withAlpha } from '../../../lib/taskGrouping'
 import type { TaskRow } from '../../../lib/api'
 
 export function InlineDetail({ task, projectName }: { task: TaskRow; projectName?: string | null }) {
@@ -112,7 +113,7 @@ export function InlineDetail({ task, projectName }: { task: TaskRow; projectName
           <button onClick={planToday} title="Add to today's planned strip" style={{ padding: '4px 10px', fontSize: 10.5, borderRadius: 4, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: INK, fontFamily: 'inherit', cursor: 'pointer' }}>📌 Plan today</button>
         )}
         <div ref={moveRef} style={{ position: 'relative' }}>
-          <button onClick={() => setMoveOpen((o) => !o)} title="Move to a different group (changes priority to match)" style={{ padding: '4px 10px', fontSize: 10.5, borderRadius: 4, border: `1px solid ${moveOpen ? ACCENT_TEAL : 'rgba(255,255,255,0.1)'}`, background: moveOpen ? ACCENT_TEAL + '20' : 'transparent', color: moveOpen ? ACCENT_TEAL : INK, fontFamily: 'inherit', cursor: 'pointer' }}>Move →</button>
+          <button onClick={() => setMoveOpen((o) => !o)} title="Move to a different group (changes priority to match)" style={{ padding: '4px 10px', fontSize: 10.5, borderRadius: 4, border: `1px solid ${moveOpen ? ACCENT_TEAL : 'rgba(255,255,255,0.1)'}`, background: moveOpen ? withAlpha(ACCENT_TEAL, 13) : 'transparent', color: moveOpen ? ACCENT_TEAL : INK, fontFamily: 'inherit', cursor: 'pointer' }}>Move →</button>
           {moveOpen && (
             <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: 4, minWidth: 200, background: PANEL_BG, border: '1px solid rgba(255,255,255,0.12)', borderRadius: 4, zIndex: 30, boxShadow: '0 4px 12px rgba(0,0,0,0.4)' }}>
               {MOVE_OPTIONS.map((opt) => (
@@ -138,7 +139,7 @@ export function InlineDetail({ task, projectName }: { task: TaskRow; projectName
         </div>
         <button onClick={snooze} title="Push due date +1 day" disabled={updateTask.isPending} style={{ padding: '4px 10px', fontSize: 10.5, borderRadius: 4, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: INK, fontFamily: 'inherit', cursor: updateTask.isPending ? 'wait' : 'pointer', opacity: updateTask.isPending ? 0.5 : 1 }}>Snooze +1d</button>
         {!isCompleted && (
-          <button onClick={complete} title="Mark complete" disabled={bulkUpdate.isPending} style={{ padding: '4px 10px', fontSize: 10.5, borderRadius: 4, border: `1px solid ${ACCENT_GREEN}55`, background: 'transparent', color: ACCENT_GREEN, fontFamily: 'inherit', cursor: bulkUpdate.isPending ? 'wait' : 'pointer', opacity: bulkUpdate.isPending ? 0.5 : 1 }}>✓ Complete</button>
+          <button onClick={complete} title="Mark complete" disabled={bulkUpdate.isPending} style={{ padding: '4px 10px', fontSize: 10.5, borderRadius: 4, border: `1px solid ${withAlpha(ACCENT_GREEN, 33)}`, background: 'transparent', color: ACCENT_GREEN, fontFamily: 'inherit', cursor: bulkUpdate.isPending ? 'wait' : 'pointer', opacity: bulkUpdate.isPending ? 0.5 : 1 }}>✓ Complete</button>
         )}
         <button onClick={archive} title="Soft-delete this task" disabled={bulkUpdate.isPending} style={{ padding: '4px 10px', fontSize: 10.5, borderRadius: 4, border: 'none', background: 'transparent', color: INK_DIM, fontFamily: 'inherit', cursor: bulkUpdate.isPending ? 'wait' : 'pointer' }}>Archive</button>
       </div>

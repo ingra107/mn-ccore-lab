@@ -400,7 +400,7 @@ export default function SettingsPage() {
             </div>
             <div style={{ flex: 1 }}>
               <span className="text-sm font-medium" style={{ color: 'var(--ink)' }}>Team Directory</span>
-              <span className="ml-2 text-[11px]" style={{ color: 'var(--slate)', opacity: 0.75 }}>Edit member roles and expertise tags</span>
+              <span className="ml-2 text-[11px]" style={{ color: 'var(--slate)', opacity: 0.85 }}>Edit member roles and expertise tags</span>
             </div>
             <ArrowRight size={14} style={{ color: 'var(--slate)', opacity: 0.75 }} />
           </Link>

@@ -839,7 +839,7 @@ function IdeaRowView({
               style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-md)' }}
             >
               <div>
-                <label style={{ display: 'block', fontSize: '10px', color: 'var(--slate)', opacity: 0.75, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Title</label>
+                <label style={{ display: 'block', fontSize: '10px', color: 'var(--slate)', opacity: 0.85, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Title</label>
                 <input
                   type="text"
                   value={editTitle}
@@ -850,7 +850,7 @@ function IdeaRowView({
                 />
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: '10px', color: 'var(--slate)', opacity: 0.75, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Description</label>
+                <label style={{ display: 'block', fontSize: '10px', color: 'var(--slate)', opacity: 0.85, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Description</label>
                 <textarea
                   value={editDescription}
                   onChange={(e) => setEditDescription(e.target.value)}
@@ -859,7 +859,7 @@ function IdeaRowView({
                 />
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: '10px', color: 'var(--slate)', opacity: 0.75, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Research Area</label>
+                <label style={{ display: 'block', fontSize: '10px', color: 'var(--slate)', opacity: 0.85, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Research Area</label>
                 <select
                   value={editArea}
                   onChange={(e) => setEditArea(e.target.value)}
