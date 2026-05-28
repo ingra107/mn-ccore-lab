@@ -7,7 +7,6 @@ import {
   Diamond,
   List,
   GanttChartSquare,
-  Clock,
   Telescope,
   Plus,
   ClipboardList,
@@ -29,7 +28,7 @@ import { useSimilarGrants, useUpcomingGrantMilestones } from '../../hooks/useApi
 import { useCreateGrantMilestone, useUpdateGrantMilestone, useCompleteGrantMilestone, useUpdateGrant } from '../../hooks/useMutations'
 import { getPersonInfo } from '../../data/team'
 import { displayName } from '../../lib/nameUtils'
-import { formatMediumDate, isOverdue, localDateKey } from '../../lib/dateUtils'
+import { formatMediumDate, isOverdue } from '../../lib/dateUtils'
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 
 // ── Gantt chart constants ──────────────────────────────────────
@@ -440,18 +439,6 @@ export default function GrantsPage() {
     [grants]
   )
 
-  const upcomingMilestones = useMemo(() => {
-    const now = localDateKey()
-    return grants
-      .flatMap((g) =>
-        (g.milestones || [])
-          .filter((m) => m.target_date >= now && m.status !== 'completed')
-          .map((m) => ({ ...m, grantMechanism: g.mechanism, grantTitle: g.title }))
-      )
-      .sort((a, b) => a.target_date.localeCompare(b.target_date))
-      .slice(0, 5)
-  }, [grants])
-
   // Filtered + sorted list
   const filteredGrants = useMemo(() => {
     let list = grants
@@ -815,51 +802,19 @@ export default function GrantsPage() {
       {/* Loading state */}
       {isLoading && <TableSkeleton rows={4} cols={6} />}
 
-      {/* Upcoming grant milestones */}
-      {upcomingMilestones.length > 0 && (
-        <div className="mt-5 rounded-xl border p-4" style={{ borderColor: 'var(--border-subtle)' }}>
-          <h3 className="text-sm font-normal mb-3" style={{ color: 'var(--ink)' }}>
-            Upcoming Milestones
-          </h3>
-          <div className="flex flex-col gap-1.5">
-            {upcomingMilestones.map((m) => {
-              const daysUntil = Math.ceil((new Date(m.target_date + 'T23:59:59').getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
-              const isDueSoon = daysUntil >= 0 && daysUntil <= 7
-              return (
-                <div key={m.id}>
-                  <div className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors">
-                    <Diamond size={12} style={{ color: 'var(--gold)', flexShrink: 0 }} />
-                    <span className="flex-1 text-sm truncate" style={{ color: 'var(--ink)' }}>
-                      {m.title}
-                    </span>
-                    <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ color: 'var(--teal)', backgroundColor: 'var(--teal-active)' }}>
-                      {m.grantMechanism}
-                    </span>
-                    <span className="text-[11px] flex-shrink-0 w-20 text-right" style={{ color: 'var(--slate)', opacity: 0.85 }}>
-                      {formatMediumDate(m.target_date)}
-                    </span>
-                  </div>
-                  {m.future_note && isDueSoon && (
-                    <div className="ml-8 mr-3 mt-1 mb-1 p-3 rounded-lg" style={{
-                      background: 'var(--gold-hover)',
-                      border: '1px solid rgba(201,168,76,0.15)',
-                      borderLeft: '3px solid var(--gold)',
-                    }}>
-                      <div className="flex items-center gap-1.5 mb-1">
-                        <Clock size={10} style={{ color: 'var(--gold)' }} />
-                        <span style={{ fontSize: 'var(--label-size)', fontWeight: 500, color: 'var(--gold)' }}>
-                          Note from past you
-                        </span>
-                      </div>
-                      <p style={{ fontSize: '12px', color: 'var(--ink)', lineHeight: 1.5, fontStyle: 'italic', margin: 0 }}>
-                        {m.future_note}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              )
-            })}
-          </div>
+      {/* Milestone tracking consolidated in Post-Award tab */}
+      {!isLoading && enrichedPostAward.length > 0 && (
+        <div className="mt-5 flex items-center gap-2 text-xs" style={{ color: 'var(--slate)', opacity: 0.85 }}>
+          <Diamond size={12} style={{ color: 'var(--gold)', flexShrink: 0 }} />
+          <span>
+            {enrichedPostAward.length} upcoming milestone{enrichedPostAward.length !== 1 ? 's' : ''} —{' '}
+            <button
+              onClick={() => setActiveTab('post-award')}
+              style={{ background: 'none', border: 'none', padding: 0, color: 'var(--teal)', cursor: 'pointer', fontWeight: 500, fontSize: 'inherit' }}
+            >
+              view in Post-Award
+            </button>
+          </span>
         </div>
       )}
 
