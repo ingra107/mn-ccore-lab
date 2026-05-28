@@ -264,11 +264,11 @@ describe('mutations canonical_payload — SEC-P2-03 notes not in response', () =
 
     expect(body.results[0].status).toBe('accepted')
     const payload = body.results[0].canonical_payload
-    // canonical_payload may be undefined if the row wasn't readable yet — that's OK.
-    // The critical case: if it IS present, notes must be absent.
-    if (payload) {
-      expect(payload).not.toHaveProperty('notes')
-    }
+    // Strict: an accepted insert MUST return a canonical_payload, and it must
+    // never carry notes. (No conditional guard — that would let the leak
+    // assertion pass vacuously if the payload were ever absent.)
+    expect(payload).toBeDefined()
+    expect(payload).not.toHaveProperty('notes')
   })
 
   it('non-task table mutations are unaffected by task-specific stripping', async () => {
