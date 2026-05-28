@@ -4,32 +4,9 @@ import { filterFixtures } from '../lib/fixtures';
 import { ctToday } from '../lib/ct-date';
 import { nowInstant } from '../lib/time';
 import { applyMutation } from './mutations';
-
-// AM-5 (SEC-T0-4): explicit task column list that EXCLUDES the private
-// `notes` column. `notes` is the brain.db private field (team-visible content
-// lives in `description`); `SELECT t.*` leaked it on both the list and the
-// single-task endpoints. This list keeps every column the frontend uses
-// (description, group_override, the v55 op-fields waiting_on/promised_to/
-// promise_date/next_checkin_date, etc.) and stays in sync with the schema
-// (base tasks table + all ALTER ADD COLUMN through schema-v68, minus `notes`).
-// If a column is added to the tasks table, add it here too (or the API stops
-// returning it). Prefixed `t.` so it composes with the meetings LEFT JOIN.
-// Exported so other route modules (proactive-brief, etc.) can reuse without
-// duplicating the column list.
-export const TASK_SELECT_COLS = [
-  'id', 'meeting_id', 'project_id', 'title', 'description', 'assignee',
-  'assigned_by', 'due_date', 'priority', 'status', 'source', 'completed',
-  'completed_at', 'completed_by', 'created_at', 'updated_at', 'deleted_at',
-  'acknowledged_at', 'acknowledged_by', 'watchers', 'reminder_days',
-  'instructions', 'key_link_1', 'key_link_1_desc', 'key_link_2',
-  'key_link_2_desc', 'key_link_3', 'key_link_3_desc', 'effort', 'short_title',
-  'source_thread_id', 'related_message_ids', 'blocked_by', 'description_json',
-  'group_override', 'seq', 'deadline', 'waiting_on', 'promised_to',
-  'promise_date', 'next_checkin_date', 'nick_followup_date',
-  'requires_nick_brain', 'estimated_minutes', 'deadline_type', 'next_artifact',
-  'inbox_event_id', 'last_mutation_id',
-  // NOTE: `notes` is deliberately omitted — private brain.db field.
-].map((c) => `t.${c}`).join(', ');
+// TASK_SELECT_COLS moved to api/lib/task-cols.ts so helpers.ts (safeTaskRow)
+// can import it without creating a circular dependency.
+export { TASK_SELECT_COLS } from '../lib/task-cols';
 
 // GET /api/tasks/overdue-count?assignee= — lightweight count for sidebar badge
 export async function handleOverdueCount(url: URL, env: Env): Promise<Response> {

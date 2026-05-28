@@ -1,6 +1,10 @@
 import type { Env } from './types';
 import { verifyCfAccessJwt } from './jwt-verify';
 import { validateApiKey } from './middleware/api-key-auth';
+import { TASK_PRIVATE_COLS } from './lib/task-cols';
+// Re-export so Phase 1b callers can import TASK_SELECT_COLS from the same
+// shared root without touching the internal lib path.
+export { TASK_SELECT_COLS } from './lib/task-cols';
 
 export type { Env };
 
@@ -499,6 +503,118 @@ export async function getValidationFlags(env: Env): Promise<ValidationFlags> {
  *  lab_settings rows isn't served a stale TTL window. */
 export function _resetValidationFlagsCache(): void {
   validationFlagsCache = null;
+}
+
+// ── Phase 1a: shared ACL / visibility primitives ──────────────────────────────
+//
+// These four helpers are the consolidation layer for the hub-hardening sweep.
+// Callers (Phase 1b) replace duplicated in-route logic with one-liners.
+// Do NOT yet apply in routes — that is Phase 1b.
+
+/**
+ * A1 · `actorSlugFromRequest` — resolve the canonical team slug for the
+ * authenticated caller, or null when the request is unauthenticated.
+ *
+ * Replaces the buggy `?.slug` pattern: `AuthUser` has no `.slug` field.
+ * Correct form: `getAuthUser` → `actorSlug(user.email)`.
+ */
+export async function actorSlugFromRequest(request: Request, env: Env): Promise<string | null> {
+  const user = await getAuthUser(request, env);
+  return user ? actorSlug(user.email) : null;
+}
+
+/**
+ * A3 · `projectRefToCanonical` — resolve a project id-or-slug to the
+ * canonical stored form (`slug || id`), or null when the ref is unresolvable.
+ *
+ * Extracts the repeated resolver from api/routes/tasks.ts so there is ONE
+ * implementation. Three callsites in tasks.ts (handleUpdateTask,
+ * handleCreateTask, PWA batch) each duplicated:
+ *   SELECT id, slug FROM projects WHERE id = ? OR slug = ?
+ *   result = proj.slug || proj.id
+ * This function is the single source of truth for that logic.
+ *
+ * Returns null (not an error) on unknown refs — callers decide whether to
+ * store NULL or reject (task create tolerates NULL; ACL gate rejects).
+ */
+export async function projectRefToCanonical(env: Env, ref: string): Promise<string | null> {
+  if (!ref) return null;
+  const proj = await env.DB.prepare(
+    'SELECT id, slug FROM projects WHERE id = ? OR slug = ? LIMIT 1'
+  ).bind(ref, ref).first<{ id: string; slug: string | null }>();
+  if (!proj) return null;
+  return proj.slug || proj.id;
+}
+
+/**
+ * A2a · `canSeePbProject` — boolean visibility check for a project ref.
+ *
+ * 'Peripheral Brain' category projects are Nick-only. Non-PI callers get
+ * `false` for any PB project. Unknown project refs are treated as not-visible
+ * (fail-closed) — the unknown ref could be a PB project and we can't prove
+ * otherwise without reading the DB. API key callers go through `isPiRequest`
+ * which grants them PI-level access (same as the existing projects.ts gate).
+ *
+ * @param request  The incoming request (used to determine caller identity).
+ * @param env      Worker env (DB + secrets).
+ * @param projectRef  Project id or slug.
+ * @returns true if the caller is allowed to see this project.
+ */
+export async function canSeePbProject(request: Request, env: Env, projectRef: string): Promise<boolean> {
+  // Resolve the project row to read its category.
+  const proj = await env.DB.prepare(
+    'SELECT id, slug, category FROM projects WHERE (id = ? OR slug = ?) AND deleted_at IS NULL LIMIT 1'
+  ).bind(projectRef, projectRef).first<{ id: string; slug: string | null; category: string | null }>();
+
+  // Unknown ref → fail-closed (treat as not-visible).
+  if (!proj) return false;
+
+  // Non-PB categories are visible to everyone.
+  if (proj.category !== 'Peripheral Brain') return true;
+
+  // PB projects require PI access.
+  return isPiRequest(request, env);
+}
+
+/**
+ * A2b · `assertProjectVisible` — guard that returns a 403 Response when the
+ * caller may not see the project, or null when access is allowed.
+ *
+ * Usage pattern in a route handler:
+ *   const block = await assertProjectVisible(request, env, projectId);
+ *   if (block) return block;
+ *
+ * @returns A 403 Response when visibility is denied, null when permitted.
+ */
+export async function assertProjectVisible(request: Request, env: Env, projectRef: string): Promise<Response | null> {
+  const visible = await canSeePbProject(request, env, projectRef);
+  if (!visible) return error('Project not found', 403);
+  return null;
+}
+
+/**
+ * A4 · `safeTaskRow` — strip private columns from a full task row.
+ *
+ * `/api/mutations` reads tasks via `SELECT *` to check current state before
+ * applying patches. The resulting row contains `notes` (private brain.db
+ * field). Before returning any such row to callers, pass it through this
+ * function to omit all TASK_PRIVATE_COLS.
+ *
+ * The strip-list is driven by `TASK_PRIVATE_COLS` from `api/lib/task-cols.ts`,
+ * which must stay in sync with the `notes` omission in `TASK_SELECT_COLS`.
+ * Adding a new private column: add it to TASK_PRIVATE_COLS only — safeTaskRow
+ * picks it up automatically.
+ *
+ * Returns a shallow copy — does not mutate the input.
+ */
+export function safeTaskRow(row: Record<string, unknown>): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(row)) {
+    if (!TASK_PRIVATE_COLS.has(key)) {
+      result[key] = value;
+    }
+  }
+  return result;
 }
 
 /** Build a dynamic UPDATE clause from allowed fields */
