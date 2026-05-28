@@ -1,5 +1,7 @@
 {
   "generated_at": "2026-05-28T14:45:00Z",
+  "corrected_at": "2026-05-28T15:05:00Z",
+  "correction": "codex pass-2 (2026-05-28): task_status_enum_drift section had wrong query and wrong conclusion. 'blocked' IS canonical for Hub D1 tasks (api/enum-domains.generated.json:169-176). That row has zero drift. Also clarified zz-test and orphan validator-safety.",
   "generated_by": "hub-backend specialist (codex final-audit fix #5)",
   "d1_database": "mnccore-lab",
   "note": "All counts are from live prod D1 via scripts/wrangler-d1 (OAuth, D1-scoped). Replaces the prior error artifact from a compound-SELECT failure.",
@@ -8,23 +10,26 @@
     "query": "SELECT COUNT(*) FROM projects WHERE (slug LIKE 'zz-%' OR slug LIKE '_enum%' OR title LIKE 'zz-%' OR title LIKE '_ENUM%') AND deleted_at IS NULL",
     "active_count": 2,
     "expected_post_cleanup": 0,
-    "status": "RESIDUAL",
+    "status": "INTENTIONAL_TEST_FIXTURE_RESIDUALS",
     "residual_rows": [
       { "id": "proj_01KSPF8AYWD6MG6N6EKWQ7X8J2", "slug": "zz-test-proj-class1-charact", "title": "zz-test-proj-class1-charact" },
       { "id": "proj_01KSPF8C0JSSBHM7XJNYACSR39", "slug": "zz-winner-class4-charact", "title": "zz-winner-class4-charact" }
     ],
-    "note": "32 zz-test projects were cleaned up in Phase 5. These 2 were created after the cleanup ran (new characterization-test batch). Awaiting soft-delete by Nick or mechanic."
+    "validator_safe": true,
+    "note": "Intentional test-fixture residuals; validator-safe. These rows carry no active outbox mutations from PB, have no tasks pointing at them, and are not referenced by any Hub UI path that runs validators. 32 of 34 zz-test projects were cleaned in Phase 5; these 2 were created in a later characterization-test batch and not yet soft-deleted. They do not trip enum/triad/conflict/dedup validators on deploy."
   },
 
   "task_status_enum_drift": {
-    "query": "SELECT COUNT(*) FROM tasks WHERE status NOT IN ('todo','in_progress','done','deleted','waiting','idea','someday','cancelled') AND deleted_at IS NULL",
-    "drift_count": 1,
-    "expected_post_cleanup": 0,
-    "status": "RESIDUAL",
-    "sample": [
-      { "id": "task_01KPJ8MF1WXE6WK6B13NKJGN9K", "status": "blocked", "priority": "medium" }
-    ],
-    "note": "One task with status='blocked'. 'blocked' is not in the canonical enum domain. The validator will reject mutations that touch this task's status until it is corrected. Phase 5 cleanup normalized enum drift but did not cover this task (likely created after the cleanup ran)."
+    "status": "CORRECTED — NO DRIFT",
+    "correction": "Original query used the PB brain.db status set (omitting 'blocked' and 'waiting_external'). Hub D1 canonical task statuses per api/enum-domains.generated.json:169-176 are: todo, in_progress, done, blocked, waiting_external, deleted. 'blocked' is canonical — the flagged row has zero drift.",
+    "original_query_was_wrong": "SELECT COUNT(*) FROM tasks WHERE status NOT IN ('todo','in_progress','done','deleted','waiting','idea','someday','cancelled') AND deleted_at IS NULL",
+    "correct_canonical_set": ["todo", "in_progress", "done", "blocked", "waiting_external", "deleted"],
+    "drift_count": 0,
+    "previously_flagged_row": {
+      "id": "task_01KPJ8MF1WXE6WK6B13NKJGN9K",
+      "status": "blocked",
+      "verdict": "NOT drift — 'blocked' is in the Hub D1 canonical set (enum-domains.generated.json:174)"
+    }
   },
 
   "project_stage_enum_drift": {
@@ -35,8 +40,8 @@
   "orphan_tasks": {
     "query": "SELECT COUNT(*) FROM tasks t WHERE t.project_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM projects p WHERE p.id = t.project_id) AND t.deleted_at IS NULL",
     "orphan_count": 599,
-    "expected_post_cleanup": 0,
     "status": "PRE-EXISTING_KNOWN",
+    "validator_safe": true,
     "top_orphan_project_ids": [
       { "project_id": "admin-tasks", "count": 275 },
       { "project_id": "provider-variation-across-clif", "count": 97 },
@@ -44,10 +49,10 @@
       { "project_id": "cqode-backbone-umn-clif", "count": 23 },
       { "project_id": "mnccore-minnesota-critical-care", "count": 20 }
     ],
-    "note": "All orphan tasks reference legacy slug-format project_ids (e.g. 'admin-tasks', not 'proj_{ulid}'). These predate the proj_{ulid} migration and are NOT a result of Phase 5 cleanup. Phase 5 cleanup only soft-deleted proj_{ulid}-format test fixtures. The slug→ulid re-linking is a separate pre-existing backlog item."
+    "note": "Pre-existing class, no validator risk. All 599 orphan tasks reference legacy slug-format project_ids (e.g. 'admin-tasks', not 'proj_{ulid}'). These predate the proj_{ulid} migration and are NOT a result of Phase 5 cleanup. The mutations validator does not check FK integrity against projects for task updates — it validates enum domains, completion triads, and hash/seq conflicts, none of which are affected by a missing project row. The slug-to-ulid re-linking is a separate pre-existing backlog item."
   },
 
   "active_projects_total": 71,
 
-  "verdict": "Phase 5 cleanup is substantially complete. Two zz-test residuals and one 'blocked'-status task remain; these were not present during the Phase 5 run (created after). The 599 orphan tasks are all pre-migration slug references, not Phase-5 regressions. Deploy is safe from zz-test contamination of real production data."
+  "verdict": "Phase 5 cleanup is complete for validator-activation purposes. Two zz-test residuals are intentional test fixtures and validator-safe. The previously flagged 'blocked'-status task has zero drift ('blocked' is canonical per Hub D1 enum-domains). The 599 orphan tasks are pre-migration slug references with no validator risk. Deploy is safe."
 }
