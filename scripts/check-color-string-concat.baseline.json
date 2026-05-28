@@ -1,0 +1,2036 @@
+[
+  {
+    "file": "src/components/Avatar.tsx",
+    "line": 134,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.2)"
+  },
+  {
+    "file": "src/components/CalendarFeedsPanel.tsx",
+    "line": 158,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(240,115,126,0.12)"
+  },
+  {
+    "file": "src/components/CLIFMap.tsx",
+    "line": 103,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.15)"
+  },
+  {
+    "file": "src/components/CLIFMap.tsx",
+    "line": 123,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.9)"
+  },
+  {
+    "file": "src/components/CLIFMap.tsx",
+    "line": 139,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.12)"
+  },
+  {
+    "file": "src/components/CLIFMap.tsx",
+    "line": 140,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.35)"
+  },
+  {
+    "file": "src/components/CollaborationGraph.tsx",
+    "line": 88,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.25)"
+  },
+  {
+    "file": "src/components/CollaborationGraph.tsx",
+    "line": 104,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.1)"
+  },
+  {
+    "file": "src/components/CollaborationGraph.tsx",
+    "line": 105,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.5)"
+  },
+  {
+    "file": "src/components/CollaborationNetwork.tsx",
+    "line": 166,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.6)"
+  },
+  {
+    "file": "src/components/CollaborationNetwork.tsx",
+    "line": 167,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.12)"
+  },
+  {
+    "file": "src/components/CollaborationNetwork.tsx",
+    "line": 199,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.8)"
+  },
+  {
+    "file": "src/components/CreateDecisionModal.tsx",
+    "line": 146,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.15)"
+  },
+  {
+    "file": "src/components/CreateDecisionModal.tsx",
+    "line": 170,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.15)"
+  },
+  {
+    "file": "src/components/CreateDecisionModal.tsx",
+    "line": 204,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.2)"
+  },
+  {
+    "file": "src/components/CreateDecisionModal.tsx",
+    "line": 212,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.06)"
+  },
+  {
+    "file": "src/components/dashboard/ActionBoardCard.tsx",
+    "line": 63,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.04)"
+  },
+  {
+    "file": "src/components/dashboard/ActionBoardCard.tsx",
+    "line": 123,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.1)"
+  },
+  {
+    "file": "src/components/dashboard/ActivityFeedCard.tsx",
+    "line": 161,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.1)"
+  },
+  {
+    "file": "src/components/dashboard/PipelineCard.tsx",
+    "line": 105,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.2)"
+  },
+  {
+    "file": "src/components/dashboard/ProjectHealthCard.tsx",
+    "line": 120,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.08)"
+  },
+  {
+    "file": "src/components/dashboard/ProjectHealthCard.tsx",
+    "line": 272,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.1)"
+  },
+  {
+    "file": "src/components/dashboard/ProjectHealthCard.tsx",
+    "line": 303,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.04)"
+  },
+  {
+    "file": "src/components/dashboard/TeamPulseCard.tsx",
+    "line": 74,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.08)"
+  },
+  {
+    "file": "src/components/dashboard/UpcomingCard.tsx",
+    "line": 127,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.08)"
+  },
+  {
+    "file": "src/components/dashboard/UpcomingCard.tsx",
+    "line": 128,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.15)"
+  },
+  {
+    "file": "src/components/DeadlineCascade.tsx",
+    "line": 354,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.2)"
+  },
+  {
+    "file": "src/components/DeadlineCascade.tsx",
+    "line": 393,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.3)"
+  },
+  {
+    "file": "src/components/DeadlineCascade.tsx",
+    "line": 407,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.3)"
+  },
+  {
+    "file": "src/components/GlobalQuickAddModal.tsx",
+    "line": 130,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.28)"
+  },
+  {
+    "file": "src/components/GlobalQuickAddModal.tsx",
+    "line": 143,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.1)"
+  },
+  {
+    "file": "src/components/GlobalQuickAddModal.tsx",
+    "line": 168,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.15)"
+  },
+  {
+    "file": "src/components/GlobalQuickAddModal.tsx",
+    "line": 220,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.3)"
+  },
+  {
+    "file": "src/components/HoverCard.tsx",
+    "line": 82,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.2)"
+  },
+  {
+    "file": "src/components/HoverCard.tsx",
+    "line": 229,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.25)"
+  },
+  {
+    "file": "src/components/LabPageLayout.tsx",
+    "line": 549,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.12)"
+  },
+  {
+    "file": "src/components/LabPageLayout.tsx",
+    "line": 562,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.1)"
+  },
+  {
+    "file": "src/components/LatestDigest.tsx",
+    "line": 29,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.12)"
+  },
+  {
+    "file": "src/components/Layout.tsx",
+    "line": 143,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(15, 25, 35, 0.85)"
+  },
+  {
+    "file": "src/components/Layout.tsx",
+    "line": 150,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.2)"
+  },
+  {
+    "file": "src/components/Layout.tsx",
+    "line": 233,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.2)"
+  },
+  {
+    "file": "src/components/Layout.tsx",
+    "line": 263,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.4)"
+  },
+  {
+    "file": "src/components/Layout.tsx",
+    "line": 371,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(15, 25, 35, 0.95)"
+  },
+  {
+    "file": "src/components/Layout.tsx",
+    "line": 445,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.2)"
+  },
+  {
+    "file": "src/components/Layout.tsx",
+    "line": 722,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.2)"
+  },
+  {
+    "file": "src/components/MentionInput.tsx",
+    "line": 263,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.2)"
+  },
+  {
+    "file": "src/components/NetworkFilters.tsx",
+    "line": 49,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.9)"
+  },
+  {
+    "file": "src/components/NetworkFilters.tsx",
+    "line": 52,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.6)"
+  },
+  {
+    "file": "src/components/NetworkFilters.tsx",
+    "line": 113,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(15, 25, 35, 0.6)"
+  },
+  {
+    "file": "src/components/NetworkFilters.tsx",
+    "line": 116,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.12)"
+  },
+  {
+    "file": "src/components/NetworkFilters.tsx",
+    "line": 122,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.5)"
+  },
+  {
+    "file": "src/components/NetworkFilters.tsx",
+    "line": 227,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.9)"
+  },
+  {
+    "file": "src/components/NetworkFilters.tsx",
+    "line": 231,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.6)"
+  },
+  {
+    "file": "src/components/NetworkFilters.tsx",
+    "line": 258,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.15)"
+  },
+  {
+    "file": "src/components/NetworkSidebar.tsx",
+    "line": 118,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(15, 25, 35, 0.85)"
+  },
+  {
+    "file": "src/components/NetworkSidebar.tsx",
+    "line": 121,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.2)"
+  },
+  {
+    "file": "src/components/NetworkSidebar.tsx",
+    "line": 131,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.15)"
+  },
+  {
+    "file": "src/components/NetworkSidebar.tsx",
+    "line": 136,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.4)"
+  },
+  {
+    "file": "src/components/NetworkSidebar.tsx",
+    "line": 270,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.1)"
+  },
+  {
+    "file": "src/components/NetworkSidebar.tsx",
+    "line": 316,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.2)"
+  },
+  {
+    "file": "src/components/NetworkSidebar.tsx",
+    "line": 324,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.4)"
+  },
+  {
+    "file": "src/components/NetworkSidebar.tsx",
+    "line": 328,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.2)"
+  },
+  {
+    "file": "src/components/NetworkSidebar.tsx",
+    "line": 364,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.06)"
+  },
+  {
+    "file": "src/components/NetworkSidebar.tsx",
+    "line": 382,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.6)"
+  },
+  {
+    "file": "src/components/NetworkSidebar.tsx",
+    "line": 431,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.4)"
+  },
+  {
+    "file": "src/components/NetworkSidebar.tsx",
+    "line": 436,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.6)"
+  },
+  {
+    "file": "src/components/NetworkSidebar.tsx",
+    "line": 489,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.06)"
+  },
+  {
+    "file": "src/components/NetworkSidebar.tsx",
+    "line": 501,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.5)"
+  },
+  {
+    "file": "src/components/NotificationBell.tsx",
+    "line": 127,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.2)"
+  },
+  {
+    "file": "src/components/NotificationBell.tsx",
+    "line": 140,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.12)"
+  },
+  {
+    "file": "src/components/NotificationBell.tsx",
+    "line": 260,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.2)"
+  },
+  {
+    "file": "src/components/NotificationBell.tsx",
+    "line": 353,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.15)"
+  },
+  {
+    "file": "src/components/OnboardingChecklist.tsx",
+    "line": 54,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.06)"
+  },
+  {
+    "file": "src/components/OnboardingChecklist.tsx",
+    "line": 112,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.12)"
+  },
+  {
+    "file": "src/components/OnboardingChecklist.tsx",
+    "line": 189,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.12)"
+  },
+  {
+    "file": "src/components/OnboardingChecklist.tsx",
+    "line": 420,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.1)"
+  },
+  {
+    "file": "src/components/pb-sector/CalendarTimeline.tsx",
+    "line": 64,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.1)"
+  },
+  {
+    "file": "src/components/pb-sector/DispatchBadge.tsx",
+    "line": 35,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.2)"
+  },
+  {
+    "file": "src/components/pb-sector/DispatchBadge.tsx",
+    "line": 55,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.2)"
+  },
+  {
+    "file": "src/components/pb-sector/DispatchBadge.tsx",
+    "line": 58,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.1)"
+  },
+  {
+    "file": "src/components/pb-sector/DispatchBadge.tsx",
+    "line": 73,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.04)"
+  },
+  {
+    "file": "src/components/pb-sector/DispatchBadge.tsx",
+    "line": 99,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.1)"
+  },
+  {
+    "file": "src/components/pb-sector/EveningTaskSlot.tsx",
+    "line": 44,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.04)"
+  },
+  {
+    "file": "src/components/pb-sector/EveningTaskSlot.tsx",
+    "line": 118,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.1)"
+  },
+  {
+    "file": "src/components/pb-sector/EveningTaskSlot.tsx",
+    "line": 143,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.04)"
+  },
+  {
+    "file": "src/components/pb-sector/FocusTaskSlot.tsx",
+    "line": 53,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.06)"
+  },
+  {
+    "file": "src/components/pb-sector/FocusTaskSlot.tsx",
+    "line": 169,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.04)"
+  },
+  {
+    "file": "src/components/pb-sector/FocusTaskSlot.tsx",
+    "line": 192,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.04)"
+  },
+  {
+    "file": "src/components/pb-sector/LandscapeSidebar.tsx",
+    "line": 40,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.1)"
+  },
+  {
+    "file": "src/components/pb-sector/LandscapeSidebar.tsx",
+    "line": 40,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.02)"
+  },
+  {
+    "file": "src/components/pb-sector/LandscapeSidebar.tsx",
+    "line": 199,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.06)"
+  },
+  {
+    "file": "src/components/pb-sector/QuickWinsList.tsx",
+    "line": 42,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.04)"
+  },
+  {
+    "file": "src/components/pb-sector/QuickWinsList.tsx",
+    "line": 130,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.04)"
+  },
+  {
+    "file": "src/components/pb-sector/ReflectionPanel.tsx",
+    "line": 75,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.1)"
+  },
+  {
+    "file": "src/components/pb-sector/ReflectionPanel.tsx",
+    "line": 117,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.15)"
+  },
+  {
+    "file": "src/components/pb-sector/ReflectionPanel.tsx",
+    "line": 136,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.15)"
+  },
+  {
+    "file": "src/components/pb-sector/RelayCard.tsx",
+    "line": 34,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.1)"
+  },
+  {
+    "file": "src/components/pb-sector/RelayCard.tsx",
+    "line": 46,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.1)"
+  },
+  {
+    "file": "src/components/pb-sector/RelayCard.tsx",
+    "line": 160,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.08)"
+  },
+  {
+    "file": "src/components/pb-sector/StarTaskSlot.tsx",
+    "line": 37,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.25)"
+  },
+  {
+    "file": "src/components/pb-sector/SystemHealthCard.tsx",
+    "line": 54,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.1)"
+  },
+  {
+    "file": "src/components/pb-sector/SystemHealthCard.tsx",
+    "line": 68,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.1)"
+  },
+  {
+    "file": "src/components/pb-sector/SystemHealthCard.tsx",
+    "line": 117,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.08)"
+  },
+  {
+    "file": "src/components/pb-sector/TaskSearchDropdown.tsx",
+    "line": 44,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(15,25,35,0.2)"
+  },
+  {
+    "file": "src/components/pb-sector/TaskSearchDropdown.tsx",
+    "line": 53,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.1)"
+  },
+  {
+    "file": "src/components/pb-sector/TaskSearchDropdown.tsx",
+    "line": 90,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.04)"
+  },
+  {
+    "file": "src/components/ProjectComments.tsx",
+    "line": 129,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.15)"
+  },
+  {
+    "file": "src/components/ProjectUpdateFeed.tsx",
+    "line": 19,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.25)"
+  },
+  {
+    "file": "src/components/PublicationCard.tsx",
+    "line": 267,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.3)"
+  },
+  {
+    "file": "src/components/PublicationCard.tsx",
+    "line": 312,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.2)"
+  },
+  {
+    "file": "src/components/PublicationCard.tsx",
+    "line": 329,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.15)"
+  },
+  {
+    "file": "src/components/PublicationCard.tsx",
+    "line": 344,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.15)"
+  },
+  {
+    "file": "src/components/PublicationFilters.tsx",
+    "line": 91,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.12)"
+  },
+  {
+    "file": "src/components/PublicationFilters.tsx",
+    "line": 130,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.25)"
+  },
+  {
+    "file": "src/components/PublicationFilters.tsx",
+    "line": 154,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.2)"
+  },
+  {
+    "file": "src/components/PublicationLibrary.tsx",
+    "line": 58,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.2)"
+  },
+  {
+    "file": "src/components/PublicationSearch.tsx",
+    "line": 56,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.2)"
+  },
+  {
+    "file": "src/components/PublicationSearch.tsx",
+    "line": 66,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.2)"
+  },
+  {
+    "file": "src/components/QuickAddForm.tsx",
+    "line": 43,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.3)"
+  },
+  {
+    "file": "src/components/QuickAddForm.tsx",
+    "line": 51,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.3)"
+  },
+  {
+    "file": "src/components/QuickAddForm.tsx",
+    "line": 75,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.2)"
+  },
+  {
+    "file": "src/components/QuickAddForm.tsx",
+    "line": 82,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.1)"
+  },
+  {
+    "file": "src/components/QuickAddForm.tsx",
+    "line": 90,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.15)"
+  },
+  {
+    "file": "src/components/QuickAddTaskInput.tsx",
+    "line": 49,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.18)"
+  },
+  {
+    "file": "src/components/QuickAddTaskInput.tsx",
+    "line": 76,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.12)"
+  },
+  {
+    "file": "src/components/QuickAddTaskInput.tsx",
+    "line": 159,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.2)"
+  },
+  {
+    "file": "src/components/QuickAddTaskInput.tsx",
+    "line": 224,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.5)"
+  },
+  {
+    "file": "src/components/QuickAddTaskInput.tsx",
+    "line": 230,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.2)"
+  },
+  {
+    "file": "src/components/RequireAuth.tsx",
+    "line": 75,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.08)"
+  },
+  {
+    "file": "src/components/RequireAuth.tsx",
+    "line": 158,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.6)"
+  },
+  {
+    "file": "src/components/RequireAuth.tsx",
+    "line": 159,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.18)"
+  },
+  {
+    "file": "src/components/RequireAuth.tsx",
+    "line": 165,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.28)"
+  },
+  {
+    "file": "src/components/RequireAuth.tsx",
+    "line": 170,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.18)"
+  },
+  {
+    "file": "src/components/RoundPrompt.tsx",
+    "line": 110,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.25)"
+  },
+  {
+    "file": "src/components/RoundPrompt.tsx",
+    "line": 133,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.2)"
+  },
+  {
+    "file": "src/components/RoundPrompt.tsx",
+    "line": 171,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.2)"
+  },
+  {
+    "file": "src/components/RoundPrompt.tsx",
+    "line": 184,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.2)"
+  },
+  {
+    "file": "src/components/SimilarDecisionsPanel.tsx",
+    "line": 15,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.15)"
+  },
+  {
+    "file": "src/components/SimilarDecisionsPanel.tsx",
+    "line": 25,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.15)"
+  },
+  {
+    "file": "src/components/SimilarDecisionsPanel.tsx",
+    "line": 34,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.15)"
+  },
+  {
+    "file": "src/components/SimilarDecisionsPanel.tsx",
+    "line": 48,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.12)"
+  },
+  {
+    "file": "src/components/SmartCompose.tsx",
+    "line": 420,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(92,188,180,0.30)"
+  },
+  {
+    "file": "src/components/SmartCompose.tsx",
+    "line": 421,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(92,188,180,0.15)"
+  },
+  {
+    "file": "src/components/SmartCompose.tsx",
+    "line": 441,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(92,188,180,0.30)"
+  },
+  {
+    "file": "src/components/tasks/detail/HandoffSection.tsx",
+    "line": 294,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.2)"
+  },
+  {
+    "file": "src/components/tasks/detail/TaskActivityFeed.tsx",
+    "line": 139,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.4)"
+  },
+  {
+    "file": "src/components/tasks/detail/TaskComments.tsx",
+    "line": 140,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.3)"
+  },
+  {
+    "file": "src/components/tasks/detail/TaskComments.tsx",
+    "line": 188,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.1)"
+  },
+  {
+    "file": "src/components/tasks/detail/TaskIntelligence.tsx",
+    "line": 235,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.2)"
+  },
+  {
+    "file": "src/components/tasks/detail/TaskUpdateFeed.tsx",
+    "line": 17,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.4)"
+  },
+  {
+    "file": "src/components/tasks/TaskCard.tsx",
+    "line": 212,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(15,25,35,0.10)"
+  },
+  {
+    "file": "src/components/tasks/TaskCard.tsx",
+    "line": 233,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(15,25,35,0.10)"
+  },
+  {
+    "file": "src/components/tasks/TaskCard.tsx",
+    "line": 254,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(15,25,35,0.10)"
+  },
+  {
+    "file": "src/components/tasks/TaskDetailPanel.tsx",
+    "line": 234,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(15, 25, 35, 0.3)"
+  },
+  {
+    "file": "src/components/tasks/TaskDetailPanel.tsx",
+    "line": 411,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.2)"
+  },
+  {
+    "file": "src/components/tasks/TaskDetailPanel.tsx",
+    "line": 1296,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.3)"
+  },
+  {
+    "file": "src/components/tasks/TaskGridView.tsx",
+    "line": 908,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.15)"
+  },
+  {
+    "file": "src/components/tasks/TaskStandUpView.tsx",
+    "line": 80,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.08)"
+  },
+  {
+    "file": "src/components/today/MeetingRow.tsx",
+    "line": 15,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(92,188,180,0.06)"
+  },
+  {
+    "file": "src/components/today/MeetingRow.tsx",
+    "line": 30,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.10)"
+  },
+  {
+    "file": "src/components/today/MeetingRow.tsx",
+    "line": 30,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.30)"
+  },
+  {
+    "file": "src/components/today/MeetingRow.tsx",
+    "line": 31,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.20)"
+  },
+  {
+    "file": "src/components/today/MeetingRow.tsx",
+    "line": 32,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.10)"
+  },
+  {
+    "file": "src/components/today/MeetingRow.tsx",
+    "line": 50,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(92,188,180,0.18)"
+  },
+  {
+    "file": "src/components/today/MeetingRow.tsx",
+    "line": 50,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(92,188,180,0.02)"
+  },
+  {
+    "file": "src/components/today/OverlapBand.tsx",
+    "line": 53,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(240,115,126,0.04)"
+  },
+  {
+    "file": "src/components/today/OverlapBand.tsx",
+    "line": 67,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(11,16,23,0.95)"
+  },
+  {
+    "file": "src/components/today/PlannedTaskRow.tsx",
+    "line": 25,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.10)"
+  },
+  {
+    "file": "src/components/today/PlannedTaskRow.tsx",
+    "line": 25,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.03)"
+  },
+  {
+    "file": "src/components/today/PlannedTaskRow.tsx",
+    "line": 39,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.14)"
+  },
+  {
+    "file": "src/components/today/primitives.tsx",
+    "line": 45,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.30)"
+  },
+  {
+    "file": "src/components/today/rail/HermesSuggestsCard.tsx",
+    "line": 62,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.06)"
+  },
+  {
+    "file": "src/components/today/rail/HermesSuggestsCard.tsx",
+    "line": 62,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.20)"
+  },
+  {
+    "file": "src/components/today/rail/NeedsAttentionCard.tsx",
+    "line": 24,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(240,115,126,0.04)"
+  },
+  {
+    "file": "src/components/today/rail/NeedsAttentionCard.tsx",
+    "line": 24,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(240,115,126,0.15)"
+  },
+  {
+    "file": "src/components/today/RightNowCard.tsx",
+    "line": 35,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.12)"
+  },
+  {
+    "file": "src/components/today/RightNowCard.tsx",
+    "line": 35,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.02)"
+  },
+  {
+    "file": "src/components/today/RightNowCard.tsx",
+    "line": 35,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.28)"
+  },
+  {
+    "file": "src/components/today/RightNowCard.tsx",
+    "line": 35,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.06)"
+  },
+  {
+    "file": "src/components/today/RightNowCard.tsx",
+    "line": 55,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.06)"
+  },
+  {
+    "file": "src/components/today/RightNowCard.tsx",
+    "line": 55,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.22)"
+  },
+  {
+    "file": "src/components/today/RightNowCard.tsx",
+    "line": 63,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.18)"
+  },
+  {
+    "file": "src/components/today/TaskDetailDrawer.tsx",
+    "line": 89,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.08)"
+  },
+  {
+    "file": "src/components/today/TaskDetailDrawer.tsx",
+    "line": 89,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.30)"
+  },
+  {
+    "file": "src/components/today/TaskDetailDrawer.tsx",
+    "line": 123,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.04)"
+  },
+  {
+    "file": "src/components/today/TaskDetailDrawer.tsx",
+    "line": 123,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.30)"
+  },
+  {
+    "file": "src/components/today/TaskRow.tsx",
+    "line": 60,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.05)"
+  },
+  {
+    "file": "src/components/today/TaskRow.tsx",
+    "line": 94,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.14)"
+  },
+  {
+    "file": "src/components/today/TaskRow.tsx",
+    "line": 98,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(92,188,180,0.10)"
+  },
+  {
+    "file": "src/components/today/TaskRow.tsx",
+    "line": 102,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.10)"
+  },
+  {
+    "file": "src/components/today/TaskRow.tsx",
+    "line": 131,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.10)"
+  },
+  {
+    "file": "src/components/today/Timeline.tsx",
+    "line": 43,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.08)"
+  },
+  {
+    "file": "src/components/today/Timeline.tsx",
+    "line": 44,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.15)"
+  },
+  {
+    "file": "src/components/today/Timeline.tsx",
+    "line": 47,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.15)"
+  },
+  {
+    "file": "src/components/today/Timeline.tsx",
+    "line": 52,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.15)"
+  },
+  {
+    "file": "src/components/today/Timeline.tsx",
+    "line": 208,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(11,16,23,0.90)"
+  },
+  {
+    "file": "src/components/today/Timeline.tsx",
+    "line": 286,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.40)"
+  },
+  {
+    "file": "src/components/UpcomingMeetingBanner.tsx",
+    "line": 57,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.06)"
+  },
+  {
+    "file": "src/components/UpcomingMeetingBanner.tsx",
+    "line": 58,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.15)"
+  },
+  {
+    "file": "src/components/UpcomingMeetingBanner.tsx",
+    "line": 61,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.3)"
+  },
+  {
+    "file": "src/index.css",
+    "line": 44,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.12)"
+  },
+  {
+    "file": "src/index.css",
+    "line": 49,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(15, 25, 35, 0.08)"
+  },
+  {
+    "file": "src/index.css",
+    "line": 50,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(15, 25, 35, 0.14)"
+  },
+  {
+    "file": "src/index.css",
+    "line": 51,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(15, 25, 35, 0.24)"
+  },
+  {
+    "file": "src/index.css",
+    "line": 70,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(15, 25, 35, 0.18)"
+  },
+  {
+    "file": "src/index.css",
+    "line": 145,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.12)"
+  },
+  {
+    "file": "src/index.css",
+    "line": 189,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.06)"
+  },
+  {
+    "file": "src/index.css",
+    "line": 190,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.10)"
+  },
+  {
+    "file": "src/index.css",
+    "line": 191,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.15)"
+  },
+  {
+    "file": "src/index.css",
+    "line": 465,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.12)"
+  },
+  {
+    "file": "src/index.css",
+    "line": 662,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(92, 188, 180, 0.08)"
+  },
+  {
+    "file": "src/index.css",
+    "line": 819,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(15, 25, 35, 0.08)"
+  },
+  {
+    "file": "src/index.css",
+    "line": 893,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.15)"
+  },
+  {
+    "file": "src/index.css",
+    "line": 991,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.15)"
+  },
+  {
+    "file": "src/index.css",
+    "line": 1095,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.06)"
+  },
+  {
+    "file": "src/index.css",
+    "line": 1098,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.06)"
+  },
+  {
+    "file": "src/index.css",
+    "line": 1191,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.06)"
+  },
+  {
+    "file": "src/index.css",
+    "line": 1694,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(15, 25, 35, 0.20)"
+  },
+  {
+    "file": "src/index.css",
+    "line": 1695,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(15, 25, 35, 0.35)"
+  },
+  {
+    "file": "src/index.css",
+    "line": 1719,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(15, 25, 35, 0.12)"
+  },
+  {
+    "file": "src/index.css",
+    "line": 1720,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(15, 25, 35, 0.20)"
+  },
+  {
+    "file": "src/lib/statusColors.ts",
+    "line": 75,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.15)"
+  },
+  {
+    "file": "src/lib/statusColors.ts",
+    "line": 76,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.15)"
+  },
+  {
+    "file": "src/lib/statusColors.ts",
+    "line": 83,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.15)"
+  },
+  {
+    "file": "src/lib/statusColors.ts",
+    "line": 88,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.15)"
+  },
+  {
+    "file": "src/lib/statusColors.ts",
+    "line": 92,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.15)"
+  },
+  {
+    "file": "src/lib/taskConstants.ts",
+    "line": 33,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.14)"
+  },
+  {
+    "file": "src/lib/taskGrouping.ts",
+    "line": 54,
+    "kind": "css-var-alpha",
+    "sample": "var(--task-accent-gold)22"
+  },
+  {
+    "file": "src/pages/Contact.tsx",
+    "line": 129,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.15)"
+  },
+  {
+    "file": "src/pages/Contact.tsx",
+    "line": 200,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.08)"
+  },
+  {
+    "file": "src/pages/Contact.tsx",
+    "line": 201,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.15)"
+  },
+  {
+    "file": "src/pages/Contact.tsx",
+    "line": 255,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.12)"
+  },
+  {
+    "file": "src/pages/Dashboard.tsx",
+    "line": 591,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.08)"
+  },
+  {
+    "file": "src/pages/Dashboard.tsx",
+    "line": 592,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.2)"
+  },
+  {
+    "file": "src/pages/Dashboard.tsx",
+    "line": 794,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(15, 25, 35, 0.05)"
+  },
+  {
+    "file": "src/pages/Digest.tsx",
+    "line": 66,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.2)"
+  },
+  {
+    "file": "src/pages/Digest.tsx",
+    "line": 246,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.2)"
+  },
+  {
+    "file": "src/pages/Digest.tsx",
+    "line": 322,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.3)"
+  },
+  {
+    "file": "src/pages/Digest.tsx",
+    "line": 438,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.2)"
+  },
+  {
+    "file": "src/pages/Digest.tsx",
+    "line": 475,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.06)"
+  },
+  {
+    "file": "src/pages/Digest.tsx",
+    "line": 777,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.2)"
+  },
+  {
+    "file": "src/pages/Digest.tsx",
+    "line": 796,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.2)"
+  },
+  {
+    "file": "src/pages/Home.tsx",
+    "line": 170,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.12)"
+  },
+  {
+    "file": "src/pages/Home.tsx",
+    "line": 304,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.25)"
+  },
+  {
+    "file": "src/pages/MeetingDetail.tsx",
+    "line": 392,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.25)"
+  },
+  {
+    "file": "src/pages/MeetingDetail.tsx",
+    "line": 663,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.1)"
+  },
+  {
+    "file": "src/pages/MeetingDetail.tsx",
+    "line": 673,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.15)"
+  },
+  {
+    "file": "src/pages/MeetingDetail.tsx",
+    "line": 686,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.1)"
+  },
+  {
+    "file": "src/pages/MeetingDetail.tsx",
+    "line": 710,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.06)"
+  },
+  {
+    "file": "src/pages/MeetingDetail.tsx",
+    "line": 934,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.06)"
+  },
+  {
+    "file": "src/pages/MeetingDetail.tsx",
+    "line": 1169,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.15)"
+  },
+  {
+    "file": "src/pages/MeetingDetail.tsx",
+    "line": 1186,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.2)"
+  },
+  {
+    "file": "src/pages/MeetingDetail.tsx",
+    "line": 1206,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.15)"
+  },
+  {
+    "file": "src/pages/MeetingPrep.tsx",
+    "line": 197,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.04)"
+  },
+  {
+    "file": "src/pages/MeetingPrep.tsx",
+    "line": 216,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.04)"
+  },
+  {
+    "file": "src/pages/MeetingPrep.tsx",
+    "line": 261,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.04)"
+  },
+  {
+    "file": "src/pages/MeetingPrep.tsx",
+    "line": 285,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.04)"
+  },
+  {
+    "file": "src/pages/MeetingPrep.tsx",
+    "line": 362,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.04)"
+  },
+  {
+    "file": "src/pages/Meetings.tsx",
+    "line": 161,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.3)"
+  },
+  {
+    "file": "src/pages/Meetings.tsx",
+    "line": 252,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.2)"
+  },
+  {
+    "file": "src/pages/Meetings.tsx",
+    "line": 351,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.15)"
+  },
+  {
+    "file": "src/pages/Meetings.tsx",
+    "line": 355,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.15)"
+  },
+  {
+    "file": "src/pages/Meetings.tsx",
+    "line": 364,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.1)"
+  },
+  {
+    "file": "src/pages/Meetings.tsx",
+    "line": 561,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.15)"
+  },
+  {
+    "file": "src/pages/Meetings.tsx",
+    "line": 599,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.25)"
+  },
+  {
+    "file": "src/pages/Meetings.tsx",
+    "line": 652,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.2)"
+  },
+  {
+    "file": "src/pages/Meetings.tsx",
+    "line": 652,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.1)"
+  },
+  {
+    "file": "src/pages/Meetings.tsx",
+    "line": 695,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.12)"
+  },
+  {
+    "file": "src/pages/Meetings.tsx",
+    "line": 747,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.15)"
+  },
+  {
+    "file": "src/pages/Meetings.tsx",
+    "line": 749,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.15)"
+  },
+  {
+    "file": "src/pages/Meetings.tsx",
+    "line": 783,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.04)"
+  },
+  {
+    "file": "src/pages/Meetings.tsx",
+    "line": 791,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.15)"
+  },
+  {
+    "file": "src/pages/Meetings.tsx",
+    "line": 849,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.15)"
+  },
+  {
+    "file": "src/pages/Meetings.tsx",
+    "line": 999,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.15)"
+  },
+  {
+    "file": "src/pages/MemberPage.tsx",
+    "line": 371,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.2)"
+  },
+  {
+    "file": "src/pages/MemberPage.tsx",
+    "line": 383,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.1)"
+  },
+  {
+    "file": "src/pages/MemberPage.tsx",
+    "line": 585,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.2)"
+  },
+  {
+    "file": "src/pages/MyTasks/components/BulkBar.tsx",
+    "line": 67,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.08)"
+  },
+  {
+    "file": "src/pages/MyTasks/components/BulkBar.tsx",
+    "line": 67,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.2)"
+  },
+  {
+    "file": "src/pages/MyTasks/components/FilterChip.tsx",
+    "line": 90,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(92,188,180,0.20)"
+  },
+  {
+    "file": "src/pages/MyTasks/components/FilterChip.tsx",
+    "line": 90,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(92,188,180,0.15)"
+  },
+  {
+    "file": "src/pages/MyTasks/components/InlineDetail.tsx",
+    "line": 104,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.05)"
+  },
+  {
+    "file": "src/pages/MyTasks/components/InlineDetail.tsx",
+    "line": 124,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(92,188,180,0.15)"
+  },
+  {
+    "file": "src/pages/MyTasks/components/TopBar.tsx",
+    "line": 73,
+    "kind": "concat-hex-alpha",
+    "sample": "+ '70'"
+  },
+  {
+    "file": "src/pages/MyTasks/components/TopBar.tsx",
+    "line": 73,
+    "kind": "concat-hex-alpha",
+    "sample": "+ '15'"
+  },
+  {
+    "file": "src/pages/MyTasks/components/ViewPicker.tsx",
+    "line": 24,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(92,188,180,0.15)"
+  },
+  {
+    "file": "src/pages/MyTasks/views/ColumnsView.tsx",
+    "line": 119,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(92,188,180,0.10)"
+  },
+  {
+    "file": "src/pages/MyTasks/views/LanesView.tsx",
+    "line": 132,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(92,188,180,0.10)"
+  },
+  {
+    "file": "src/pages/MyTasks/views/ListView.tsx",
+    "line": 199,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.06)"
+  },
+  {
+    "file": "src/pages/MyTasks/views/ListView.tsx",
+    "line": 204,
+    "kind": "concat-hex-alpha",
+    "sample": "+ '80'"
+  },
+  {
+    "file": "src/pages/Network.tsx",
+    "line": 125,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.2)"
+  },
+  {
+    "file": "src/pages/Network.tsx",
+    "line": 142,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.8)"
+  },
+  {
+    "file": "src/pages/Network.tsx",
+    "line": 198,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(15, 25, 35, 0.6)"
+  },
+  {
+    "file": "src/pages/portal/AnalyticsPage.tsx",
+    "line": 569,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.15)"
+  },
+  {
+    "file": "src/pages/portal/AnalyticsPage.tsx",
+    "line": 735,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.25)"
+  },
+  {
+    "file": "src/pages/portal/AnalyticsPage.tsx",
+    "line": 763,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.15)"
+  },
+  {
+    "file": "src/pages/portal/AnalyticsPage.tsx",
+    "line": 769,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.25)"
+  },
+  {
+    "file": "src/pages/portal/AskTheLab.tsx",
+    "line": 319,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.15)"
+  },
+  {
+    "file": "src/pages/portal/AskTheLab.tsx",
+    "line": 476,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(15,25,35,0.5)"
+  },
+  {
+    "file": "src/pages/portal/DeadlinesPage.tsx",
+    "line": 894,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.15)"
+  },
+  {
+    "file": "src/pages/portal/DeadlinesPage.tsx",
+    "line": 940,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.2)"
+  },
+  {
+    "file": "src/pages/portal/DeadlinesPage.tsx",
+    "line": 959,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.15)"
+  },
+  {
+    "file": "src/pages/portal/DeadlinesPage.tsx",
+    "line": 983,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.2)"
+  },
+  {
+    "file": "src/pages/portal/GrantsPage.tsx",
+    "line": 135,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.3)"
+  },
+  {
+    "file": "src/pages/portal/GrantsPage.tsx",
+    "line": 308,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.08)"
+  },
+  {
+    "file": "src/pages/portal/GrantsPage.tsx",
+    "line": 1022,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.08)"
+  },
+  {
+    "file": "src/pages/portal/IdeasPage.tsx",
+    "line": 299,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.15)"
+  },
+  {
+    "file": "src/pages/portal/MeetingNotesPage.tsx",
+    "line": 228,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(15,25,35,0.5)"
+  },
+  {
+    "file": "src/pages/portal/MyTasks.tsx",
+    "line": 741,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.4)"
+  },
+  {
+    "file": "src/pages/portal/MyTasks.tsx",
+    "line": 976,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.3)"
+  },
+  {
+    "file": "src/pages/portal/MyTasks.tsx",
+    "line": 1114,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.06)"
+  },
+  {
+    "file": "src/pages/portal/MyTasks.tsx",
+    "line": 1115,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.02)"
+  },
+  {
+    "file": "src/pages/portal/NarrativesPage.tsx",
+    "line": 161,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.15)"
+  },
+  {
+    "file": "src/pages/portal/PBSector.tsx",
+    "line": 384,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.2)"
+  },
+  {
+    "file": "src/pages/portal/ProfilePage.tsx",
+    "line": 161,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.14)"
+  },
+  {
+    "file": "src/pages/portal/SearchPage.tsx",
+    "line": 824,
+    "kind": "concat-hex-alpha",
+    "sample": "+ '14'"
+  },
+  {
+    "file": "src/pages/portal/SettingsPage.tsx",
+    "line": 342,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.3)"
+  },
+  {
+    "file": "src/pages/project/ProjectActivity.tsx",
+    "line": 103,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.08)"
+  },
+  {
+    "file": "src/pages/project/ProjectDecisions.tsx",
+    "line": 64,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.08)"
+  },
+  {
+    "file": "src/pages/project/ProjectDependencies.tsx",
+    "line": 217,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.15)"
+  },
+  {
+    "file": "src/pages/project/ProjectDependencies.tsx",
+    "line": 291,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.08)"
+  },
+  {
+    "file": "src/pages/project/ProjectDependencies.tsx",
+    "line": 361,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.08)"
+  },
+  {
+    "file": "src/pages/project/ProjectLiterature.tsx",
+    "line": 72,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.06)"
+  },
+  {
+    "file": "src/pages/project/ProjectLiterature.tsx",
+    "line": 257,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(15, 25, 35, 0.4)"
+  },
+  {
+    "file": "src/pages/ProjectDetail.tsx",
+    "line": 801,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.2)"
+  },
+  {
+    "file": "src/pages/ProjectDetail.tsx",
+    "line": 859,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.15)"
+  },
+  {
+    "file": "src/pages/ProjectDetail.tsx",
+    "line": 909,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.15)"
+  },
+  {
+    "file": "src/pages/ProjectDetail.tsx",
+    "line": 1327,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.15)"
+  },
+  {
+    "file": "src/pages/ProjectDetail.tsx",
+    "line": 1564,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.3)"
+  },
+  {
+    "file": "src/pages/ProjectDetail.tsx",
+    "line": 1713,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.4)"
+  },
+  {
+    "file": "src/pages/Projects.tsx",
+    "line": 965,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(15, 25, 35, 0.04)"
+  },
+  {
+    "file": "src/pages/PublicationDetail.tsx",
+    "line": 272,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.2)"
+  },
+  {
+    "file": "src/pages/PublicationDetail.tsx",
+    "line": 351,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.06)"
+  },
+  {
+    "file": "src/pages/PublicationDetail.tsx",
+    "line": 442,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.06)"
+  },
+  {
+    "file": "src/pages/Publications.tsx",
+    "line": 216,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201,168,76,0.3)"
+  },
+  {
+    "file": "src/pages/Team.tsx",
+    "line": 403,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.08)"
+  },
+  {
+    "file": "src/pages/Team.tsx",
+    "line": 490,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(201, 168, 76, 0.08)"
+  },
+  {
+    "file": "src/styles/dashboard-grid.css",
+    "line": 84,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(15, 25, 35, 0.05)"
+  },
+  {
+    "file": "src/styles/dashboard-grid.css",
+    "line": 100,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(15, 25, 35, 0.1)"
+  }
+]
