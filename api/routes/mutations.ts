@@ -22,7 +22,7 @@
 // write path through this endpoint as part of A3 ship.
 
 import type { AuthUser, Env, ValidationFlags } from '../helpers';
-import { json, error, generateId, assertProtectedNotNull, getValidationFlags } from '../helpers';
+import { json, error, generateId, assertProtectedNotNull, getValidationFlags, safeTaskRow } from '../helpers';
 import { nowInstant } from '../lib/time';
 import { assertEnumDomain, assertCompletionTriad } from '../lib/enum-domains';
 
@@ -1189,12 +1189,15 @@ async function readCanonical(
     const row = await env.DB.prepare(
       `SELECT * FROM ${table} WHERE ${clause}`
     ).bind(...vals).first<Record<string, unknown>>();
-    return row;
+    // SEC-P2-03: strip private task columns (notes) before returning.
+    // readCanonical is used for canonical_payload in every mutation result.
+    return (row && table === 'tasks') ? safeTaskRow(row) : row;
   }
   const row = await env.DB.prepare(
     `SELECT * FROM ${table} WHERE ${pk} = ?`
   ).bind(recordId).first<Record<string, unknown>>();
-  return row;
+  // SEC-P2-03: strip private task columns (notes) before returning.
+  return (row && table === 'tasks') ? safeTaskRow(row) : row;
 }
 
 // Exported for tests/mutations.hash.test.ts. Internal call sites use it

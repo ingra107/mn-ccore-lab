@@ -1,11 +1,12 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, parseMentions, actorSlug, isPiRequest, resolveActor } from '../helpers';
+import { json, error, generateId, logActivity, parseMentions, actorSlug, isPiRequest, resolveActor, safeTaskRow } from '../helpers';
 import { filterFixtures } from '../lib/fixtures';
 import { ctToday } from '../lib/ct-date';
 import { nowInstant } from '../lib/time';
 import { applyMutation } from './mutations';
 // TASK_SELECT_COLS moved to api/lib/task-cols.ts so helpers.ts (safeTaskRow)
 // can import it without creating a circular dependency.
+import { TASK_SELECT_COLS } from '../lib/task-cols';
 export { TASK_SELECT_COLS } from '../lib/task-cols';
 
 // GET /api/tasks/overdue-count?assignee= — lightweight count for sidebar badge
@@ -200,7 +201,13 @@ export async function handleToggleTask(id: string, user: AuthUser, env: Env): Pr
 
   await logActivity(env, 'task', `${newCompleted ? 'Completed' : 'Reopened'}: "${item.description}"`, user.email, id, table === 'action_items' ? 'action_item' : 'task');
 
-  const updated = await env.DB.prepare(`SELECT * FROM ${table} WHERE id = ?`).bind(id).first();
+  // SEC-P2-01: use TASK_SELECT_COLS for tasks to exclude the private `notes`
+  // column. safeTaskRow strips any remnant (defense-in-depth for test stubs
+  // and any future SELECT * that slips in). action_items has no notes column.
+  const raw = table === 'tasks'
+    ? await env.DB.prepare(`SELECT ${TASK_SELECT_COLS} FROM tasks t WHERE t.id = ?`).bind(id).first<Record<string, unknown>>()
+    : await env.DB.prepare(`SELECT * FROM action_items WHERE id = ?`).bind(id).first<Record<string, unknown>>();
+  const updated = (raw && table === 'tasks') ? safeTaskRow(raw) : raw;
   return json({ data: updated });
 }
 

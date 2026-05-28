@@ -1,5 +1,6 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity } from '../helpers';
+import { json, error, generateId, logActivity, safeTaskRow } from '../helpers';
+import { TASK_SELECT_COLS } from '../lib/task-cols';
 import { ctToday } from '../lib/ct-date';
 import { nowInstant } from '../lib/time';
 
@@ -34,10 +35,18 @@ export async function handleGetMeeting(id: string, env: Env): Promise<Response> 
   const meeting = await env.DB.prepare('SELECT * FROM meetings WHERE id = ?').bind(id).first();
   if (!meeting) return error('Meeting not found', 404);
 
-  const [actionItems, agendaItems] = await Promise.all([
-    env.DB.prepare('SELECT * FROM tasks WHERE meeting_id = ? ORDER BY created_at').bind(id).all(),
+  // SEC-P2-02: exclude the private `notes` column from task rows returned in
+  // the meeting detail. TASK_SELECT_COLS prefixes cols with `t.` for JOIN
+  // queries; strip the prefix for a plain FROM tasks query. safeTaskRow
+  // provides defense-in-depth (strips any remnant notes).
+  // Meeting agenda/notes (the meeting row itself) are team-internal-visible
+  // by design — only the task rows in action_items are the leak risk.
+  const taskCols = TASK_SELECT_COLS.replace(/\bt\./g, '');
+  const [actionItemsRaw, agendaItems] = await Promise.all([
+    env.DB.prepare(`SELECT ${taskCols} FROM tasks WHERE meeting_id = ? ORDER BY created_at`).bind(id).all<Record<string, unknown>>(),
     env.DB.prepare('SELECT * FROM agenda_items WHERE meeting_id = ? ORDER BY sort_order, created_at').bind(id).all(),
   ]);
+  const actionItems = { ...actionItemsRaw, results: (actionItemsRaw.results ?? []).map(safeTaskRow) };
 
   return json({
     data: {
