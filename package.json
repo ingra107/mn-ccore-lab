@@ -6,8 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "lint": "eslint .",
+    "lint": "eslint . && npm run lint:select-star",
     "lint:opacity": "node scripts/check-opacity-floor.mjs",
+    "lint:select-star": "node scripts/check-select-star.mjs",
     "lint:no-optional-request": "node scripts/check-no-optional-request.mjs",
     "preview": "vite preview",
     "seed": "tsx scripts/seed-d1.ts",
