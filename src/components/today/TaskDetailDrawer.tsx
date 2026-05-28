@@ -19,7 +19,7 @@ import type { WorkflowFields } from '../tasks/detail/FieldControls'
 import {
   ACCENT_GOLD, ACCENT_TEAL, ACCENT_ORANGE, ACCENT_GREEN,
   INK, INK_MUTED, INK_DIM, PAGE_BG, PANEL_BG,
-  TODAY_MOVE_OPTIONS, type LinkKind,
+  TODAY_MOVE_OPTIONS, withAlpha, type LinkKind,
 } from './constants'
 import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow } from '../../lib/api'
@@ -92,7 +92,7 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
           <button onClick={() => state.unplan(task.id)} style={{ padding: '6px 12px', background: 'transparent', color: INK_MUTED, border: '1px solid rgba(255,255,255,0.14)', borderRadius: 4, fontFamily: 'inherit', fontSize: 12, cursor: 'pointer' }}>Unplan</button>
         )}
         <div ref={moveRef} style={{ position: 'relative' }}>
-          <button onClick={() => setMoveOpen((o) => !o)} title="Move to a different group (writes group_override)" style={{ padding: '6px 12px', background: moveOpen ? 'rgba(92,188,180,0.20)' : 'transparent', color: moveOpen ? '#5cbcb4' : INK, border: `1px solid ${moveOpen ? '#5cbcb4' : 'rgba(255,255,255,0.14)'}`, borderRadius: 4, fontFamily: 'inherit', fontSize: 12, cursor: 'pointer' }}>Move →</button>
+          <button onClick={() => setMoveOpen((o) => !o)} title="Move to a different group (writes group_override)" style={{ padding: '6px 12px', background: moveOpen ? withAlpha(ACCENT_TEAL, 20) : 'transparent', color: moveOpen ? ACCENT_TEAL : INK, border: `1px solid ${moveOpen ? ACCENT_TEAL : 'rgba(255,255,255,0.14)'}`, borderRadius: 4, fontFamily: 'inherit', fontSize: 12, cursor: 'pointer' }}>Move →</button>
           {moveOpen && (
             <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: 4, minWidth: 200, background: PANEL_BG, border: '1px solid rgba(255,255,255,0.12)', borderRadius: 4, zIndex: 30, boxShadow: '0 4px 12px rgba(0,0,0,0.4)' }}>
               {TODAY_MOVE_OPTIONS.map((opt) => (
@@ -100,7 +100,7 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
                   key={opt.key}
                   onClick={() => moveToGroup(opt)}
                   disabled={updateTask.isPending}
-                  style={{ display: 'block', width: '100%', textAlign: 'left', padding: '6px 10px', fontSize: 11, background: task.group_override === opt.key ? 'rgba(92,188,180,0.15)' : 'transparent', border: 'none', color: task.group_override === opt.key ? '#5cbcb4' : INK, fontFamily: 'inherit', cursor: updateTask.isPending ? 'wait' : 'pointer' }}
+                  style={{ display: 'block', width: '100%', textAlign: 'left', padding: '6px 10px', fontSize: 11, background: task.group_override === opt.key ? withAlpha(ACCENT_TEAL, 15) : 'transparent', border: 'none', color: task.group_override === opt.key ? ACCENT_TEAL : INK, fontFamily: 'inherit', cursor: updateTask.isPending ? 'wait' : 'pointer' }}
                 >{opt.label}{task.group_override === opt.key ? ' ✓' : ''}</button>
               ))}
               {task.group_override && (

@@ -108,18 +108,16 @@ export default function RelayCard() {
                     className="flex items-center gap-2"
                     style={{ fontSize: '10px' }}
                   >
-                    <span style={{
+                    <span className="tabular-nums" style={{
                       color: 'var(--teal)',
-                      fontFamily: 'JetBrains Mono, monospace',
                       fontWeight: 600,
                       flexShrink: 0,
                     }}>
                       {msg.from}
                     </span>
                     <span style={{ color: 'var(--slate)', opacity: 0.75 }}>-&gt;</span>
-                    <span style={{
+                    <span className="tabular-nums" style={{
                       color: 'var(--teal)',
-                      fontFamily: 'JetBrains Mono, monospace',
                       fontWeight: 600,
                       flexShrink: 0,
                     }}>
@@ -148,7 +146,7 @@ export default function RelayCard() {
                   style={{ fontSize: '10px', opacity: 0.85 }}
                 >
                   <Check size={10} style={{ color: 'var(--green-light)', flexShrink: 0 }} />
-                  <span style={{ color: 'var(--slate)', fontFamily: 'JetBrains Mono, monospace' }}>
+                  <span className="tabular-nums" style={{ color: 'var(--slate)' }}>
                     {msg.from}-&gt;{msg.to}
                   </span>
                   <span className="truncate" style={{ color: 'var(--slate)' }}>

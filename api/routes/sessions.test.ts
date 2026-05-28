@@ -14,6 +14,18 @@ import { describe, it, expect } from 'vitest';
 import { handleGetSessions } from './sessions';
 import type { Session } from './sessions';
 
+// The handler is PI-or-API-key gated (fail-closed after I-1 fix).
+// All functional tests need a caller that passes the gate.
+// Use a Bearer API-key request — simpler than a JWT stub since it only
+// requires PB_API_KEY in env, not TEST_MODE_KEY + pi_emails lookup.
+const TEST_API_KEY = 'sessions-test-api-key';
+
+function apiKeyRequest(): Request {
+  return new Request('https://example.com/api/sessions', {
+    headers: { Authorization: `Bearer ${TEST_API_KEY}` },
+  });
+}
+
 // ── Shared D1 stub ──────────────────────────────────────────────────────────
 
 // Store of sessions rows indexed by session_id, with seq values.
@@ -66,7 +78,7 @@ function makeSessionDb(rows: Partial<Session>[]) {
 }
 
 function makeEnv(rows: Partial<Session>[]) {
-  return { DB: makeSessionDb(rows) } as any;
+  return { DB: makeSessionDb(rows), PB_API_KEY: TEST_API_KEY } as any;
 }
 
 function makeUrl(params: Record<string, string>) {
@@ -90,7 +102,7 @@ describe('handleGetSessions', () => {
   it('returns 400 when seq_after is missing', async () => {
     const env = makeEnv(SAMPLE_ROWS);
     const url = new URL('https://example.com/api/sessions');
-    const res = await handleGetSessions(url, env);
+    const res = await handleGetSessions(url, env, apiKeyRequest());
     expect(res.status).toBe(400);
     const body = await res.json() as { error: string };
     expect(body.error).toMatch(/seq_after/i);
@@ -99,7 +111,7 @@ describe('handleGetSessions', () => {
   it('returns 400 when seq_after is non-numeric', async () => {
     const env = makeEnv(SAMPLE_ROWS);
     const url = makeUrl({ seq_after: 'abc' });
-    const res = await handleGetSessions(url, env);
+    const res = await handleGetSessions(url, env, apiKeyRequest());
     expect(res.status).toBe(400);
     const body = await res.json() as { error: string };
     expect(body.error).toMatch(/non-negative integer/i);
@@ -108,14 +120,14 @@ describe('handleGetSessions', () => {
   it('returns 400 when seq_after is negative', async () => {
     const env = makeEnv(SAMPLE_ROWS);
     const url = makeUrl({ seq_after: '-1' });
-    const res = await handleGetSessions(url, env);
+    const res = await handleGetSessions(url, env, apiKeyRequest());
     expect(res.status).toBe(400);
   });
 
   it('seq_after=0 returns all rows, cursor=max_seq, has_more=false', async () => {
     const env = makeEnv(SAMPLE_ROWS);
     const url = makeUrl({ seq_after: '0' });
-    const res = await handleGetSessions(url, env);
+    const res = await handleGetSessions(url, env, apiKeyRequest());
     expect(res.status).toBe(200);
     const body = await res.json() as { rows: Session[]; cursor: number; has_more: boolean };
     expect(body.rows).toHaveLength(4);
@@ -128,7 +140,7 @@ describe('handleGetSessions', () => {
   it('cursor advances: seq_after=2 returns only rows with seq > 2', async () => {
     const env = makeEnv(SAMPLE_ROWS);
     const url = makeUrl({ seq_after: '2' });
-    const res = await handleGetSessions(url, env);
+    const res = await handleGetSessions(url, env, apiKeyRequest());
     expect(res.status).toBe(200);
     const body = await res.json() as { rows: Session[]; cursor: number; has_more: boolean };
     expect(body.rows).toHaveLength(2);
@@ -141,7 +153,7 @@ describe('handleGetSessions', () => {
   it('limit is enforced and has_more=true when result fills the limit', async () => {
     const env = makeEnv(SAMPLE_ROWS);
     const url = makeUrl({ seq_after: '0', limit: '2' });
-    const res = await handleGetSessions(url, env);
+    const res = await handleGetSessions(url, env, apiKeyRequest());
     expect(res.status).toBe(200);
     const body = await res.json() as { rows: Session[]; cursor: number; has_more: boolean };
     expect(body.rows).toHaveLength(2);
@@ -152,7 +164,7 @@ describe('handleGetSessions', () => {
   it('empty result returns cursor=seqAfter and has_more=false', async () => {
     const env = makeEnv(SAMPLE_ROWS);
     const url = makeUrl({ seq_after: '9999' });
-    const res = await handleGetSessions(url, env);
+    const res = await handleGetSessions(url, env, apiKeyRequest());
     expect(res.status).toBe(200);
     const body = await res.json() as { rows: Session[]; cursor: number; has_more: boolean };
     expect(body.rows).toHaveLength(0);
@@ -163,7 +175,7 @@ describe('handleGetSessions', () => {
   it('rows are ordered by seq ASC', async () => {
     const env = makeEnv(SAMPLE_ROWS);
     const url = makeUrl({ seq_after: '0' });
-    const res = await handleGetSessions(url, env);
+    const res = await handleGetSessions(url, env, apiKeyRequest());
     const body = await res.json() as { rows: Session[] };
     const seqs = body.rows.map((r) => r.seq);
     expect(seqs).toEqual([...seqs].sort((a, b) => a - b));
@@ -179,7 +191,7 @@ describe('handleGetSessions', () => {
     ];
     const env = makeEnv(rows);
     const url = makeUrl({ seq_after: '0' });
-    const res = await handleGetSessions(url, env);
+    const res = await handleGetSessions(url, env, apiKeyRequest());
     expect(res.status).toBe(200);
     const body = await res.json() as { rows: Session[]; cursor: number; has_more: boolean };
     // Only 2 live rows should appear

@@ -13,7 +13,7 @@ export {
   GROUP_ORDER,
   ACCENT_GOLD, ACCENT_TEAL, ACCENT_CORAL, ACCENT_ORANGE, ACCENT_GREEN,
   INK, INK_MUTED, INK_DIM, PAGE_BG, PANEL_BG,
-  todayKey, daysSince, tagForTask,
+  todayKey, daysSince, tagForTask, withAlpha,
 } from '../../lib/taskGrouping'
 
 import { todayKey } from '../../lib/taskGrouping'
@@ -65,12 +65,16 @@ export interface DailyCounts {
 // Constants
 // ──────────────────────────────────────────────────────────────────────────
 
+// GROUP_META colors reference CSS-var tokens so the lane / chip / dot
+// accents flip with theme (Phase 7, 2026-05-27). The pb-bucket grey uses
+// --task-ink-muted (the same token used for secondary text on the
+// surface) — gives 4.6:1+ on both light and dark task-page-bg.
 export const GROUP_META: Record<GroupKey, GroupMeta> = {
-  deep:       { label: 'Deep work',        icon: '🎯', color: '#c9a84c' },
-  priorities: { label: 'Priorities',       icon: '✅', color: '#5cbcb4' },
-  quick:      { label: 'Quick',            icon: '⚡', color: '#f08a5b' },
-  pb:         { label: 'Peripheral Brain', icon: '🧠', color: '#b0b5b9' },
-  etl:        { label: 'CQODE · CLIF ETL', icon: '🔧', color: '#5cbcb4' },
+  deep:       { label: 'Deep work',        icon: '🎯', color: 'var(--task-accent-gold)' },
+  priorities: { label: 'Priorities',       icon: '✅', color: 'var(--task-accent-teal)' },
+  quick:      { label: 'Quick',            icon: '⚡', color: 'var(--task-accent-orange)' },
+  pb:         { label: 'Peripheral Brain', icon: '🧠', color: 'var(--task-ink-muted)' },
+  etl:        { label: 'CQODE · CLIF ETL', icon: '🔧', color: 'var(--task-accent-teal)' },
 }
 
 // Move → popover options — same set as UnifiedMyTasks. Writes group_override

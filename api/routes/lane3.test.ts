@@ -15,6 +15,16 @@
 import { describe, it, expect } from 'vitest';
 import { handleLane3List, LANE3_PULL_TABLES } from './lane3';
 
+// The handler is PI-or-API-key gated (fail-closed after I-1 fix).
+// All functional tests need a caller that passes the gate.
+const TEST_API_KEY = 'lane3-test-api-key';
+
+function apiKeyRequest(): Request {
+  return new Request('https://example.com/api/lane3/test', {
+    headers: { Authorization: `Bearer ${TEST_API_KEY}` },
+  });
+}
+
 // In-memory D1 stub: keyed by table name, returns rows by seq filter.
 type Row = Record<string, unknown> & { seq: number };
 
@@ -53,7 +63,7 @@ function makeDb(byTable: Record<string, Partial<Row>[]>) {
 }
 
 function makeEnv(byTable: Record<string, Partial<Row>[]>) {
-  return { DB: makeDb(byTable) } as any;
+  return { DB: makeDb(byTable), PB_API_KEY: TEST_API_KEY } as any;
 }
 
 function makeUrl(table: string, params: Record<string, string>) {
@@ -73,7 +83,7 @@ describe('handleLane3List', () => {
   it('returns 400 for unknown table', async () => {
     const env = makeEnv({});
     const url = makeUrl('bogus_table', { seq_after: '0' });
-    const res = await handleLane3List('bogus_table', url, env);
+    const res = await handleLane3List('bogus_table', url, env, apiKeyRequest());
     expect(res.status).toBe(400);
     const body = (await res.json()) as { error: string };
     expect(body.error).toMatch(/not eligible/i);
@@ -83,7 +93,7 @@ describe('handleLane3List', () => {
   it("returns 400 for 'sessions' (use /api/sessions instead)", async () => {
     const env = makeEnv({});
     const url = makeUrl('sessions', { seq_after: '0' });
-    const res = await handleLane3List('sessions', url, env);
+    const res = await handleLane3List('sessions', url, env, apiKeyRequest());
     expect(res.status).toBe(400);
   });
 
@@ -91,7 +101,7 @@ describe('handleLane3List', () => {
     const env = makeEnv({});
     for (const t of ['tasks', 'projects', 'inbox_events']) {
       const url = makeUrl(t, { seq_after: '0' });
-      const res = await handleLane3List(t, url, env);
+      const res = await handleLane3List(t, url, env, apiKeyRequest());
       expect(res.status).toBe(400);
     }
   });
@@ -99,7 +109,7 @@ describe('handleLane3List', () => {
   it('returns 400 when seq_after is missing', async () => {
     const env = makeEnv({ agent_knowledge: SAMPLE_KNOWLEDGE });
     const url = new URL('https://example.com/api/lane3/agent_knowledge');
-    const res = await handleLane3List('agent_knowledge', url, env);
+    const res = await handleLane3List('agent_knowledge', url, env, apiKeyRequest());
     expect(res.status).toBe(400);
     const body = (await res.json()) as { error: string };
     expect(body.error).toMatch(/seq_after/i);
@@ -108,21 +118,21 @@ describe('handleLane3List', () => {
   it('returns 400 when seq_after is non-numeric', async () => {
     const env = makeEnv({ agent_knowledge: SAMPLE_KNOWLEDGE });
     const url = makeUrl('agent_knowledge', { seq_after: 'abc' });
-    const res = await handleLane3List('agent_knowledge', url, env);
+    const res = await handleLane3List('agent_knowledge', url, env, apiKeyRequest());
     expect(res.status).toBe(400);
   });
 
   it('returns 400 when seq_after is negative', async () => {
     const env = makeEnv({ agent_knowledge: SAMPLE_KNOWLEDGE });
     const url = makeUrl('agent_knowledge', { seq_after: '-1' });
-    const res = await handleLane3List('agent_knowledge', url, env);
+    const res = await handleLane3List('agent_knowledge', url, env, apiKeyRequest());
     expect(res.status).toBe(400);
   });
 
   it('seq_after=0 returns all agent_knowledge rows, cursor=max_seq, has_more=false', async () => {
     const env = makeEnv({ agent_knowledge: SAMPLE_KNOWLEDGE });
     const url = makeUrl('agent_knowledge', { seq_after: '0' });
-    const res = await handleLane3List('agent_knowledge', url, env);
+    const res = await handleLane3List('agent_knowledge', url, env, apiKeyRequest());
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
       rows: Row[];
@@ -139,7 +149,7 @@ describe('handleLane3List', () => {
   it('cursor advances: seq_after=1 returns rows with seq > 1 only', async () => {
     const env = makeEnv({ agent_knowledge: SAMPLE_KNOWLEDGE });
     const url = makeUrl('agent_knowledge', { seq_after: '1' });
-    const res = await handleLane3List('agent_knowledge', url, env);
+    const res = await handleLane3List('agent_knowledge', url, env, apiKeyRequest());
     const body = (await res.json()) as { rows: Row[]; cursor: number; has_more: boolean };
     expect(body.rows).toHaveLength(2);
     expect(body.rows.map((r) => r.topic)).toEqual(['topic2', 'topic3']);
@@ -150,7 +160,7 @@ describe('handleLane3List', () => {
   it('limit is enforced and has_more=true when result fills the limit', async () => {
     const env = makeEnv({ agent_knowledge: SAMPLE_KNOWLEDGE });
     const url = makeUrl('agent_knowledge', { seq_after: '0', limit: '2' });
-    const res = await handleLane3List('agent_knowledge', url, env);
+    const res = await handleLane3List('agent_knowledge', url, env, apiKeyRequest());
     const body = (await res.json()) as { rows: Row[]; cursor: number; has_more: boolean };
     expect(body.rows).toHaveLength(2);
     expect(body.cursor).toBe(2);
@@ -160,7 +170,7 @@ describe('handleLane3List', () => {
   it('empty result returns cursor=seqAfter and has_more=false', async () => {
     const env = makeEnv({ agent_knowledge: SAMPLE_KNOWLEDGE });
     const url = makeUrl('agent_knowledge', { seq_after: '9999' });
-    const res = await handleLane3List('agent_knowledge', url, env);
+    const res = await handleLane3List('agent_knowledge', url, env, apiKeyRequest());
     const body = (await res.json()) as { rows: Row[]; cursor: number; has_more: boolean };
     expect(body.rows).toHaveLength(0);
     expect(body.cursor).toBe(9999);
@@ -178,6 +188,7 @@ describe('handleLane3List', () => {
       'agent_knowledge',
       makeUrl('agent_knowledge', { seq_after: '0' }),
       env,
+      apiKeyRequest(),
     );
     const akBody = (await ak.json()) as { rows: Row[] };
     expect(akBody.rows).toHaveLength(1);
@@ -187,6 +198,7 @@ describe('handleLane3List', () => {
       'memory_facts',
       makeUrl('memory_facts', { seq_after: '0' }),
       env,
+      apiKeyRequest(),
     );
     const mfBody = (await mf.json()) as { rows: Row[] };
     expect(mfBody.rows).toHaveLength(2);

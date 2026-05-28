@@ -6,6 +6,7 @@ import { Clock, List, GanttChartSquare, AlertTriangle, FolderKanban, Pencil, X, 
 import DensityToggle, { useDensity, densityClass } from '../../components/DensityToggle'
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
+import QueryState from '../../components/QueryState'
 import ToggleButton from '../../components/ToggleButton'
 import Avatar from '../../components/Avatar'
 import InlineSelect from '../../components/InlineSelect'
@@ -55,7 +56,7 @@ export default function DeadlinesPage() {
     else { setSortKey(key as DeadlineSortKey); setSortAsc(true) }
   }
 
-  const { data: tasks = [], isLoading: tasksLoading } = useTasks()
+  const { data: tasks = [], isLoading: tasksLoading, isError: tasksError, error: tasksErr } = useTasks()
   const { data: grants = [], isLoading: grantsLoading } = useGrantTimeline()
   const { data: projectsList = [] } = useProjects()
   const projectMap = useMemo(() => {
@@ -194,6 +195,22 @@ export default function DeadlinesPage() {
       : 'Deadlines | MN-CCORE'
     return () => { document.title = 'MN-CCORE Lab Hub' }
   }, [overdue.length])
+
+  // T2.1 (2026-05-28): adopt QueryState for auth-error consistency.
+  // Mirrors AnalyticsPage / PIAnalytics post-/simplify so the auth-vs-generic
+  // error message is identical across pages. errorStatus drives the 401/403
+  // "Sign in" copy; otherwise the generic "Something went wrong" message.
+  if (tasksError) {
+    const status = (tasksErr as (Error & { status?: number }) | null)?.status
+    return (
+      <div className="content-container">
+        <PageHeader icon={<Clock size={20} />} title="Deadlines & Milestones" subtitle="" />
+        <QueryState isLoading={false} isError={true} errorStatus={status}>
+          {null}
+        </QueryState>
+      </div>
+    )
+  }
 
   return (
     <div className="content-container">

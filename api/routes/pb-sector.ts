@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity } from '../helpers';
+import { json, error, generateId, logActivity, projectRefToCanonical } from '../helpers';
 import { ctToday } from '../lib/ct-date';
 import { nowInstant } from '../lib/time';
 import { applyMutation } from './mutations';
@@ -549,6 +549,12 @@ export async function handleAddToDispatch(request: Request, user: AuthUser, env:
   }
   if (!body.comment?.trim()) return error('comment required', 400)
 
+  // Z3.2: canonicalize project_slug before insert so dispatch_queue stores a
+  // stable canonical slug (not a raw id or stale alias).
+  const canonicalProjectSlug = body.project_slug
+    ? await projectRefToCanonical(env, body.project_slug)
+    : null;
+
   const id = generateId()
   await env.DB.prepare(
     'INSERT INTO dispatch_queue (id, task_id, task_title, project_slug, comment, comment_type) VALUES (?, ?, ?, ?, ?, ?)'
@@ -556,7 +562,7 @@ export async function handleAddToDispatch(request: Request, user: AuthUser, env:
     id,
     body.task_id || null,
     body.task_title || null,
-    body.project_slug || null,
+    canonicalProjectSlug,
     body.comment.trim(),
     body.comment_type || 'action'
   ).run()

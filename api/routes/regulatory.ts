@@ -1,7 +1,9 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, actorSlug, buildUpdate } from '../helpers';
+import { json, error, generateId, logActivity, actorSlug, buildUpdate, getAuthUser, assertProjectVisible } from '../helpers';
+import { withProjectWrite, withExistingRowProject } from '../lib/route-guards';
 import { ctToday } from '../lib/ct-date';
 import { nowInstant } from '../lib/time';
+import { safeRow } from '../lib/task-cols';
 
 // ── .ics helpers ─────────────────────────────────────────────────────────────
 
@@ -14,28 +16,47 @@ function escapeIcs(s: string): string {
 }
 
 const VALID_TYPES = ['irb', 'irb_amendment', 'dua', 'dta', 'coi', 'training', 'other'] as const;
-const VALID_STATUSES = ['active', 'expired', 'pending', 'exempt'] as const;
+// 'action_needed' and 'expiring_soon' are produced by the read query at line 59
+// (handleGetExpiringItems WHERE clause). Omitting them from VALID_STATUSES caused
+// validation to reject values the system itself writes.
+const VALID_STATUSES = ['active', 'expired', 'pending', 'exempt', 'action_needed', 'expiring_soon'] as const;
 
 // GET /api/regulatory?project_id=
-export async function handleGetRegulatoryItems(url: URL, env: Env): Promise<Response> {
+// Phase 1b-extended: cross-project feed when project_id is absent — filter PB
+// rows for non-PI callers.
+export async function handleGetRegulatoryItems(url: URL, request: Request, env: Env, canSeePb = false): Promise<Response> {
   const projectId = url.searchParams.get('project_id');
 
-  let query = 'SELECT * FROM regulatory_items WHERE 1=1';
+  // Phase 1b-B: when scoped to a specific project, block non-PI callers from
+  // reading regulatory items of a PB-category project.
+  if (projectId) {
+    const block = await assertProjectVisible(request, env, projectId);
+    if (block) return block;
+  }
+
+  const pbFilter = (!projectId && !canSeePb)
+    ? " AND (p.category IS NULL OR p.category != 'Peripheral Brain')"
+    : '';
+
+  let query = `SELECT r.* FROM regulatory_items r
+               LEFT JOIN projects p ON p.id = r.project_id OR p.slug = r.project_id
+               WHERE 1=1${pbFilter}`;
   const params: string[] = [];
 
   if (projectId) {
-    query += ' AND project_id = ?';
+    query += ' AND r.project_id = ?';
     params.push(projectId);
   }
 
-  query += ' ORDER BY CASE status WHEN \'expired\' THEN 0 WHEN \'active\' THEN 1 WHEN \'pending\' THEN 2 WHEN \'exempt\' THEN 3 END, expiration_date ASC, created_at DESC';
+  query += ' ORDER BY CASE r.status WHEN \'expired\' THEN 0 WHEN \'active\' THEN 1 WHEN \'pending\' THEN 2 WHEN \'exempt\' THEN 3 END, r.expiration_date ASC, r.created_at DESC';
 
   const result = await env.DB.prepare(query).bind(...params).all();
   return json({ data: result.results || [], count: result.results?.length || 0 });
 }
 
 // GET /api/regulatory/expiring?days=30
-export async function handleGetExpiringItems(url: URL, env: Env): Promise<Response> {
+// Phase 1b-extended: cross-project feed; filter PB rows for non-PI callers.
+export async function handleGetExpiringItems(url: URL, env: Env, canSeePb = false): Promise<Response> {
   const days = parseInt(url.searchParams.get('days') || '30', 10);
   const now = new Date();
   // AM-7: CT-anchored cutoff (was UTC `cutoff.toISOString()`, which after ~6pm
@@ -44,6 +65,7 @@ export async function handleGetExpiringItems(url: URL, env: Env): Promise<Respon
   // (`nowIso` was dead — never referenced in the query — so it's removed.)
   const cutoffIso = ctToday(days);
 
+  const pbFilter = canSeePb ? '' : " AND (p.category IS NULL OR p.category != 'Peripheral Brain')";
   // Get items expiring within N days (including already expired), joined with project title
   const result = await env.DB.prepare(`
     SELECT r.*, p.title as project_title, p.slug as project_slug
@@ -51,7 +73,7 @@ export async function handleGetExpiringItems(url: URL, env: Env): Promise<Respon
     LEFT JOIN projects p ON r.project_id = p.slug OR r.project_id = p.id
     WHERE r.status IN ('active','action_needed','expiring_soon','pending')
       AND r.expiration_date IS NOT NULL
-      AND r.expiration_date <= ?
+      AND r.expiration_date <= ?${pbFilter}
     ORDER BY r.expiration_date ASC
   `).bind(cutoffIso).all();
 
@@ -66,11 +88,15 @@ export async function handleGetExpiringItems(url: URL, env: Env): Promise<Respon
 }
 
 // POST /api/regulatory — create item
+// Z2.3 (2026-05-28): withProjectWrite wraps the resolve+visibility-gate so
+// bypass is impossible. The outer signature (request, user, env) is
+// unchanged for api/index.ts compatibility. The inner handler receives the
+// canonical projectId already resolved and PB-gated.
 export async function handleCreateRegulatoryItem(request: Request, user: AuthUser, env: Env): Promise<Response> {
-  const body = await request.json() as {
-    project_id: string;
-    item_type: string;
-    title: string;
+  type CreateBody = {
+    project_id?: string;
+    item_type?: string;
+    title?: string;
     protocol_number?: string;
     approved_date?: string;
     expiration_date?: string;
@@ -79,7 +105,8 @@ export async function handleCreateRegulatoryItem(request: Request, user: AuthUse
     notes?: string;
   };
 
-  if (!body.project_id) return error('project_id required', 400);
+  const body = await request.json() as CreateBody;
+
   if (!body.item_type) return error('item_type required', 400);
   if (!body.title) return error('title required', 400);
 
@@ -91,60 +118,90 @@ export async function handleCreateRegulatoryItem(request: Request, user: AuthUse
     return error(`Invalid status. Must be one of: ${VALID_STATUSES.join(', ')}`, 400);
   }
 
-  const id = generateId();
-  const status = body.status || 'active';
+  // withProjectWrite checks project_id presence (→ 400 if absent) + runs
+  // resolveAndGuardProject (→ 403/400 if hidden/unknown). Inner handler only
+  // runs when project is confirmed visible; receives the canonical projectId.
+  return withProjectWrite<CreateBody>(async (_req, e, resolvedProjectId, b) => {
+    const id = generateId();
+    const status = b.status || 'active';
 
-  await env.DB.prepare(
-    'INSERT INTO regulatory_items (id, project_id, item_type, title, protocol_number, approved_date, expiration_date, renewal_due, status, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
-  ).bind(
-    id,
-    body.project_id,
-    body.item_type,
-    body.title,
-    body.protocol_number || null,
-    body.approved_date || null,
-    body.expiration_date || null,
-    body.renewal_due || null,
-    status,
-    body.notes || null,
-  ).run();
+    await e.DB.prepare(
+      'INSERT INTO regulatory_items (id, project_id, item_type, title, protocol_number, approved_date, expiration_date, renewal_due, status, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    ).bind(
+      id,
+      resolvedProjectId,
+      b.item_type!,
+      b.title!,
+      b.protocol_number || null,
+      b.approved_date || null,
+      b.expiration_date || null,
+      b.renewal_due || null,
+      status,
+      b.notes || null,
+    ).run();
 
-  const actor = actorSlug(user.email);
-  await logActivity(env, 'regulatory', `New regulatory item for ${body.project_id}: "${body.title}"`, actor, id, 'regulatory');
+    const actor = actorSlug(user.email);
+    await logActivity(e, 'regulatory', `New regulatory item for ${b.project_id}: "${b.title}"`, actor, id, 'regulatory');
 
-  const created = await env.DB.prepare('SELECT * FROM regulatory_items WHERE id = ?').bind(id).first();
-  return json({ data: created }, 201);
+    const created = await e.DB.prepare('SELECT * FROM regulatory_items WHERE id = ?').bind(id).first<Record<string, unknown>>();
+    return json({ data: created ? safeRow('regulatory_items', created) : null }, 201);
+  })(request, env, body);
 }
 
 // POST /api/regulatory/:id — update item
+// P4 (2026-05-28): migrated to withExistingRowProject so the existing-row
+// existence check + PB visibility gate cannot be bypassed. allowedFields does
+// NOT include project_id, so no reparent gate is needed; if a future spec adds
+// project_id reparent, also gate the new target as conferences.ts does.
+// Outer signature (id, request, user, env) unchanged for api/index.ts.
 export async function handleUpdateRegulatoryItem(id: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
-  const body = await request.json() as Record<string, unknown>;
-  const allowedFields = ['title', 'item_type', 'protocol_number', 'approved_date', 'expiration_date', 'renewal_due', 'status', 'notes'];
-  const { sql, params, hasUpdates } = buildUpdate(body, allowedFields);
+  return withExistingRowProject('regulatory_items', async (req, e, rowId, _projectId) => {
+    const body = await req.json() as Record<string, unknown>;
+    const allowedFields = ['title', 'item_type', 'protocol_number', 'approved_date', 'expiration_date', 'renewal_due', 'status', 'notes'];
+    const { sql, params, hasUpdates } = buildUpdate(body, allowedFields);
 
-  if (!hasUpdates) return error('No valid fields to update', 400);
+    if (!hasUpdates) return error('No valid fields to update', 400);
 
-  // Validate status if provided
-  if (body.status && !VALID_STATUSES.includes(body.status as typeof VALID_STATUSES[number])) {
-    return error(`Invalid status. Must be one of: ${VALID_STATUSES.join(', ')}`, 400);
-  }
+    // Validate status if provided
+    if (body.status && !VALID_STATUSES.includes(body.status as typeof VALID_STATUSES[number])) {
+      return error(`Invalid status. Must be one of: ${VALID_STATUSES.join(', ')}`, 400);
+    }
 
-  // Validate item_type if provided
-  if (body.item_type && !VALID_TYPES.includes(body.item_type as typeof VALID_TYPES[number])) {
-    return error(`Invalid item_type. Must be one of: ${VALID_TYPES.join(', ')}`, 400);
-  }
+    // Validate item_type if provided
+    if (body.item_type && !VALID_TYPES.includes(body.item_type as typeof VALID_TYPES[number])) {
+      return error(`Invalid item_type. Must be one of: ${VALID_TYPES.join(', ')}`, 400);
+    }
 
-  await env.DB.prepare(`UPDATE regulatory_items SET ${sql} WHERE id = ?`).bind(...params, id).run();
+    await e.DB.prepare(`UPDATE regulatory_items SET ${sql} WHERE id = ?`).bind(...params, rowId).run();
 
-  const updated = await env.DB.prepare('SELECT * FROM regulatory_items WHERE id = ?').bind(id).first();
-  if (!updated) return error('Regulatory item not found', 404);
-  return json({ data: updated });
+    const updated = await e.DB.prepare('SELECT * FROM regulatory_items WHERE id = ?').bind(rowId).first<Record<string, unknown>>();
+    if (!updated) return error('Regulatory item not found', 404);
+    return json({ data: safeRow('regulatory_items', updated) });
+  })(request, env, id);
 }
 
-// GET /api/regulatory/:id/ics — generate .ics calendar invite for renewal
-export async function handleRegulatoryIcs(id: string, env: Env): Promise<Response> {
-  const item = await env.DB.prepare('SELECT * FROM regulatory_items WHERE id = ?').bind(id).first() as Record<string, any> | null;
+// GET /api/regulatory/:id/ics — generate .ics calendar invite for renewal.
+// Auth-only (not PI-only): the whole team legitimately needs iCal access to
+// regulatory deadlines to add renewal reminders to their calendars.
+export async function handleRegulatoryIcs(id: string, env: Env, request: Request): Promise<Response> {
+  // Z1.6 (2026-05-28): request is now required (was optional). Callers in
+  // api/index.ts forward c.req.raw unconditionally via R(c). The fail-closed
+  // branch collapses to the standard auth gate.
+  const user = await getAuthUser(request, env);
+  if (!user) return error('Authentication required', 401);
+  // Explicit projection (not SELECT *) — Z3.3 lint compliance. `notes` is
+  // legitimately needed here for the ICS DESCRIPTION field; safeRow would strip it.
+  const item = await env.DB.prepare(
+    'SELECT id, project_id, item_type, title, protocol_number, approved_date, expiration_date, renewal_due, status, notes, created_at FROM regulatory_items WHERE id = ?'
+  ).bind(id).first() as Record<string, any> | null;
   if (!item) return error('Regulatory item not found', 404);
+
+  // Phase 1b-extended: block non-PI callers from generating an ICS for a
+  // regulatory item attached to a PB-category project.
+  if (item.project_id) {
+    const block = await assertProjectVisible(request, env, item.project_id as string);
+    if (block) return block;
+  }
 
   const renewalDate = (item.renewal_due || item.expiration_date) as string | null;
   if (!renewalDate) return error('No renewal date on this item', 400);
@@ -196,9 +253,20 @@ export async function handleRenewRegulatoryItem(id: string, request: Request, us
     notes?: string;
   };
 
-  // Get the existing item
-  const existing = await env.DB.prepare('SELECT * FROM regulatory_items WHERE id = ?').bind(id).first() as Record<string, any> | null;
+  // Explicit projection (not SELECT *) — Z3.3 lint compliance. This read is
+  // internal (not returned as JSON). Fields used: project_id (visibility gate +
+  // copy to new row), item_type, title, protocol_number (copied to new row).
+  const existing = await env.DB.prepare(
+    'SELECT id, project_id, item_type, title, protocol_number, approved_date, expiration_date, renewal_due, status, notes, created_at FROM regulatory_items WHERE id = ?'
+  ).bind(id).first() as Record<string, any> | null;
   if (!existing) return error('Regulatory item not found', 404);
+
+  // Phase 1b-extended: gate on the existing row's project. The renew creates a
+  // new row that inherits existing.project_id, so the same gate covers both.
+  if (existing.project_id) {
+    const block = await assertProjectVisible(request, env, existing.project_id as string);
+    if (block) return block;
+  }
 
   // Archive the old item and create the new item atomically so a failed
   // INSERT never leaves the old item orphaned in 'expired' state.
@@ -226,6 +294,6 @@ export async function handleRenewRegulatoryItem(id: string, request: Request, us
   const actor = actorSlug(user.email);
   await logActivity(env, 'regulatory', `Renewed regulatory item: "${existing.title}"`, actor, newId, 'regulatory');
 
-  const created = await env.DB.prepare('SELECT * FROM regulatory_items WHERE id = ?').bind(newId).first();
-  return json({ data: created }, 201);
+  const created = await env.DB.prepare('SELECT * FROM regulatory_items WHERE id = ?').bind(newId).first<Record<string, unknown>>();
+  return json({ data: created ? safeRow('regulatory_items', created) : null }, 201);
 }

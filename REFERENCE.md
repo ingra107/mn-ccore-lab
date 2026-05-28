@@ -23,14 +23,14 @@ shims in `src/App.tsx` placed outside `RequireAuth`.
 | Calendar | `/portal/calendar` | — |
 | Analytics | `/portal/analytics`, `/portal/pi-analytics`, `/portal/personal` | — |
 | Team (portal) | `/portal/team/:slug`, `/portal/team/:slug/trajectory` | Phase 36c — keeps chrome for logged-in users |
-| Other | `/portal/settings`, `/portal/search`, `/portal/activity`, `/portal/narratives`, `/portal/session-history`, `/portal/ask`, `/portal/digest`, `/portal/network`, `/portal/pb-sector`, `/portal/mentee-milestones` | — |
+| Other | `/portal/settings`, `/portal/search`, `/portal/activity`, `/portal/narratives`, `/portal/sessions`, `/portal/ask`, `/portal/digest`, `/portal/pb`, `/portal/mentee-milestones` | — |
 | **Public (marketing)** | `/`, `/team`, `/team/:slug`, `/team/:slug/trajectory`, `/nick`, `/nate`, `/publications`, `/publications/:id`, `/network`, `/contact`, `/pulse` | Layout chrome — no auth |
 | **Redirects** | `/dashboard`, `/projects/:slug`, ... → `/portal/...` | `<Navigate>` shims; outside `RequireAuth` so bookmarks bounce pre-auth |
 
 **API routes** (`/api/*`) are NOT gated by CF Access. Auth enforced
 server-side via X-API-Key + `REQUIRE_AUTH` + JWT verify.
 
-## D1 Tables (75 — sqlite_master, excl. sqlite_/internal; schema v69)
+## D1 Tables (75 — sqlite_master, excl. sqlite_/internal; schema v70)
 
 | Table | Rows | Purpose |
 |-------|------|---------|

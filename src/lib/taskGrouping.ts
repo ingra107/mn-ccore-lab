@@ -22,23 +22,47 @@ export type GroupKey = 'deep' | 'priorities' | 'quick' | 'pb' | 'etl'
 export const GROUP_ORDER: GroupKey[] = ['deep', 'priorities', 'quick', 'pb', 'etl']
 
 // ──────────────────────────────────────────────────────────────────────────
-// Constants — theme palette (dark surface)
+// Constants — theme palette (CSS-var SSOT, Phase 7 2026-05-27)
 // ──────────────────────────────────────────────────────────────────────────
+//
+// These are STRING references to CSS custom properties defined in
+// src/index.css (the --task-* tokens). Used as CSS values (style={{
+// color: ACCENT_GOLD }}) they resolve to the theme-aware token, so the
+// task surfaces (Today + MyTasks) now adapt to both light + dark mode
+// instead of being dark-locked. The previous hardcoded hex palette
+// (#c9a84c / #0b1017 / etc.) lives only in :root/.dark in index.css.
 
-export const ACCENT_GOLD   = '#c9a84c'
-export const ACCENT_TEAL   = '#5cbcb4'
-export const ACCENT_CORAL  = '#f0737e'
-export const ACCENT_ORANGE = '#f08a5b'
-export const ACCENT_GREEN  = '#6ee89a'
-export const INK           = '#e2e8f0'
-export const INK_MUTED     = '#b0b5b9'
-export const INK_DIM       = '#7a828c'
-export const PAGE_BG       = '#0b1017'
-export const PANEL_BG      = '#0f1923'
+export const ACCENT_GOLD   = 'var(--task-accent-gold)'
+export const ACCENT_TEAL   = 'var(--task-accent-teal)'
+export const ACCENT_CORAL  = 'var(--task-accent-coral)'
+export const ACCENT_ORANGE = 'var(--task-accent-orange)'
+export const ACCENT_GREEN  = 'var(--task-accent-green)'
+export const INK           = 'var(--task-ink)'
+export const INK_MUTED     = 'var(--task-ink-muted)'
+export const INK_DIM       = 'var(--task-ink-dim)'
+export const PAGE_BG       = 'var(--task-page-bg)'
+export const PANEL_BG      = 'var(--task-panel-bg)'
 
 // ──────────────────────────────────────────────────────────────────────────
 // Helpers
 // ──────────────────────────────────────────────────────────────────────────
+
+/**
+ * Alpha-blend a task-surface accent color over the page background.
+ * Replaces the legacy `${color}NN` hex+alpha-suffix pattern which only
+ * worked when `color` was a literal 6-digit hex; the Phase 7 CSS-var
+ * migration broke that pattern (var(--task-accent-gold)22 is not valid
+ * CSS). Returns a CSS `color-mix()` expression supported in Chrome
+ * 111+ / Safari 16.4+ / Firefox 113+.
+ *
+ *   withAlpha(ACCENT_GOLD, 13)  →  'color-mix(in srgb, var(--task-accent-gold) 13%, transparent)'
+ *
+ * Common hex-alpha → percent lookups (rounded):
+ *   12=7%, 14=8%, 15=8%, 22=13%, 25=15%, 30=19%, 40=25%, 55=33%, 70=44%
+ */
+export function withAlpha(color: string, pct: number): string {
+  return `color-mix(in srgb, ${color} ${pct}%, transparent)`
+}
 
 /** Today's date as YYYY-MM-DD string in browser local time. */
 export function todayKey(): string {

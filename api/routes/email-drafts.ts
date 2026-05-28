@@ -1,5 +1,6 @@
 import type { Env } from '../helpers';
-import { json, error, generateId } from '../helpers';
+import { json, error, generateId, isPiRequest } from '../helpers';
+import { safeRow } from '../lib/task-cols';
 
 // GET /api/email-drafts — list all drafts, with optional ?status=draft filter
 export async function handleGetEmailDrafts(url: URL, env: Env): Promise<Response> {
@@ -17,7 +18,8 @@ export async function handleGetEmailDrafts(url: URL, env: Env): Promise<Response
   const result = params.length
     ? await env.DB.prepare(query).bind(...params).all()
     : await env.DB.prepare(query).all();
-  return json({ data: result.results, count: result.results.length });
+  const rows = result.results.map(r => safeRow('email_drafts', r as Record<string, unknown>));
+  return json({ data: rows, count: rows.length });
 }
 
 // GET /api/email-drafts/pending — count and list pending drafts
@@ -25,11 +27,19 @@ export async function handleGetPendingDrafts(env: Env): Promise<Response> {
   const result = await env.DB.prepare(
     "SELECT * FROM email_drafts WHERE status = 'draft' ORDER BY created_at DESC"
   ).all();
-  return json({ count: result.results.length, drafts: result.results });
+  const drafts = result.results.map(r => safeRow('email_drafts', r as Record<string, unknown>));
+  return json({ count: drafts.length, drafts });
 }
 
-// POST /api/email-drafts/sync-bulk — bulk upsert drafts
+// POST /api/email-drafts/sync-bulk — bulk upsert drafts.
+// PI-or-API-key: this IS the PB sync ingestion path; ordinary team JWT
+// callers must not be able to write email drafts on Nick's behalf.
+// API-key callers (hub_ai_listener / PB sync) are granted access via
+// isPiRequest's Bearer check (validateApiKey).
 export async function handleSyncEmailDrafts(request: Request, env: Env): Promise<Response> {
+  if (!(await isPiRequest(request, env))) {
+    return error('Forbidden — PI access only', 403);
+  }
   const body = await request.json() as {
     drafts: Array<{
       id: string;

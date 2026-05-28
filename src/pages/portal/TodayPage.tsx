@@ -274,28 +274,32 @@ export default function TodayPage() {
   }
 
   return (
-    <div className="b2-grid" style={{ background: PAGE_BG, color: INK, fontFamily: 'var(--font-sans), \'DM Sans\', system-ui, sans-serif', minHeight: '100%' }}>
+    <div className="b2-grid" style={{ background: 'var(--task-page-bg)', color: 'var(--task-ink)', fontFamily: 'var(--font-sans), \'DM Sans\', system-ui, sans-serif', minHeight: '100%' }}>
       <style>{`
         @keyframes b2pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
-        .b2-proj:hover { background: rgba(255,255,255,0.04); }
-        .b2-proj-link:hover { color: #5cbcb4 !important; opacity: 1 !important; text-decoration: underline; }
+        /* Hover tints: rgba lifts in dark mode, darken in light mode.
+           Both schemes get a 4% overlay against their respective bg. */
+        .b2-proj:hover { background: rgba(127,127,127,0.06); }
+        .b2-proj-link:hover { color: var(--task-accent-teal) !important; opacity: 1 !important; text-decoration: underline; }
         /* Desktop: 1fr main + 340px right rail. Mobile: stack with rail
            below main (rail collapses to 220px tall horizontal scroll
            cards). 1024 breakpoint matches the data-page tablet
            breakpoint per the columnar table density rules. */
         .b2-grid { display: grid; grid-template-columns: 1fr 340px; }
-        .b2-main { padding: 28px 32px; border-right: 1px solid rgba(255,255,255,0.06); min-width: 0; }
-        .b2-rail { padding: 28px 20px; background: #0a0f15; overflow-y: auto; }
+        .b2-main { padding: 28px 32px; border-right: 1px solid var(--border-subtle); min-width: 0; }
+        /* Rail uses the page bg directly (not panel) — sits as a darker
+           recess in dark mode and a slightly off-white panel in light. */
+        .b2-rail { padding: 28px 20px; background: var(--task-page-bg); overflow-y: auto; border-left: 1px solid var(--border-subtle); }
         @media (max-width: 1024px) {
           .b2-grid { grid-template-columns: 1fr; }
-          .b2-main { padding: 20px 16px; border-right: none; border-bottom: 1px solid rgba(255,255,255,0.06); }
-          .b2-rail { padding: 16px; }
+          .b2-main { padding: 20px 16px; border-right: none; border-bottom: 1px solid var(--border-subtle); }
+          .b2-rail { padding: 16px; border-left: none; }
         }
       `}</style>
 
       <main className="b2-main">
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, marginBottom: 4 }}>
-          <h1 style={{ fontSize: 32, fontWeight: 600, color: '#fff', letterSpacing: '-0.03em', margin: 0 }}>Today</h1>
+          <h1 style={{ fontSize: 32, fontWeight: 600, color: 'var(--task-ink)', letterSpacing: '-0.03em', margin: 0 }}>Today</h1>
           <HeartbeatLine width={60} height={14} color={ACCENT_GOLD} variant="static" />
           <span style={{ fontSize: 13, color: INK_MUTED }}>{formatTodayDate()}</span>
         </div>

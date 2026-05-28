@@ -1,10 +1,14 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, isPiRequest, resolveActor } from '../helpers';
+import { json, error, generateId, logActivity, isPiRequest, resolveActor, assertProjectVisible } from '../helpers';
+import { idempotentDelete } from '../lib/idempotent-delete';
 
 type DocType = 'folder' | 'draft' | 'data' | 'protocol' | 'submission' | 'link';
 
 // GET /api/projects/:slug/documents — list documents linked to a project
-export async function handleGetProjectDocuments(projectSlug: string, env: Env): Promise<Response> {
+export async function handleGetProjectDocuments(projectSlug: string, request: Request, env: Env): Promise<Response> {
+  // Phase 1b-B: block non-PI callers from listing documents of a PB-category project.
+  const block = await assertProjectVisible(request, env, projectSlug);
+  if (block) return block;
   const result = await env.DB.prepare(
     `SELECT * FROM project_documents
      WHERE project_id = ?
@@ -34,6 +38,10 @@ export async function handleCreateProjectDocument(
     return error('url is required', 400);
   }
 
+  // Phase 1b-extended: block non-PI callers from attaching documents to a PB-category project.
+  const block = await assertProjectVisible(request, env, projectSlug);
+  if (block) return block;
+
   const id = generateId();
   const docType = body.doc_type || 'link';
   // AM-2: validate/canonicalize created_by; impersonation requires PI/service.
@@ -60,17 +68,26 @@ export async function handleCreateProjectDocument(
 }
 
 // DELETE /api/projects/:slug/documents/:docId — remove a document link
+// Hard-delete (project_documents has no deleted_at column; Z4.3 migration).
+// SEC-10.3: Idempotent — idempotentDelete() handles the meta.changes check;
+// repeat calls return 200 with idempotent:true instead of 404.
+//
+// Phase 1b-extended: idempotentDelete() gates on project_id via
+// assertProjectVisible before mutating — PB-category projects are protected.
+// If the document row is already gone the pre-flight SELECT returns null and
+// we return idempotent 200 (no project to gate on).
 export async function handleDeleteProjectDocument(
   docId: string,
+  request: Request,
   env: Env,
 ): Promise<Response> {
-  const result = await env.DB.prepare(
-    'DELETE FROM project_documents WHERE id = ?'
-  ).bind(docId).run();
-
-  if (result.meta.changes === 0) {
-    return error('Document link not found', 404);
-  }
-
-  return json({ data: { deleted: docId } });
+  // Z4.3: collapsed from hand-rolled SELECT→gate→DELETE to idempotentDelete().
+  // mode:'hard' because project_documents has no deleted_at column.
+  return idempotentDelete({
+    table: 'project_documents',
+    id: docId,
+    mode: 'hard',
+    request,
+    env,
+  });
 }

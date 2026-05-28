@@ -1,5 +1,6 @@
 import type { AuthUser, Env } from '../helpers';
 import { json, error, generateId, logActivity, isPiRequest, resolveActor } from '../helpers';
+import { idempotentDelete } from '../lib/idempotent-delete';
 
 // ── Types ──────────────────────────────────────────────────
 
@@ -88,12 +89,6 @@ export async function handleCreateDependency(
 
 // ── POST /api/dependencies/:id/delete — delete dependency ──
 
-export async function handleDeleteDependency(id: string, env: Env): Promise<Response> {
-  const existing = await env.DB.prepare('SELECT * FROM project_dependencies WHERE id = ?').bind(id).first<DependencyRow>();
-  if (!existing) {
-    return error('Dependency not found', 404);
-  }
-
-  await env.DB.prepare('DELETE FROM project_dependencies WHERE id = ?').bind(id).run();
-  return json({ data: { deleted: true, id } });
+export async function handleDeleteDependency(id: string, request: Request, env: Env): Promise<Response> {
+  return idempotentDelete({ table: 'project_dependencies', id, mode: 'hard', request, env });
 }

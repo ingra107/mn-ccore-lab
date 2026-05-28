@@ -5,7 +5,7 @@ created: 2026-03-25
 status: active
 domain: Research
 tier: 2-Biweekly
-next_action: Full-system audit + brainstorm IN PROGRESS (2026-05-27) — every endpoint/read/write/hook/page/button verified vs the new Hub-first model + Playwright visual verification + simplification/UX-clarity → collate → Codex audit → plan. GROUND TRUTH (post PB Phase D/E/F): tasks/projects are Hub-first (D1 canonical, brain.db = pull-cache; outbox deleted for tasks/projects edits ONLY, still live for PB-local tables); schema v69; Plan 1B DONE (time lint ENFORCE); M2/M3/M4 done; M5 activity-timeline+comments plan READY (gated on Nick review). See SESSION-HANDOFF.md + WORKPLAN.md + Scratch/audit-2026-05-27/GROUND-TRUTH.md.
+next_action: Hub hardening + primitive-enforcement branch `hub-hardening-2026-05-27` MERGED to main (2026-05-28). **68 commits** = 34 hardening + 21 primitive sweep + 6 codex-pass-5 BLOCK fixes + 7 misc. **691/691 API tests, build green.** Codex pass-4 (meta-review) recommended 11 class-of-bug eliminator primitives → all shipped. Codex pass-5 caught 2 FAIL (FK_SLUG_FIELDS dead via ALLOWED_TABLES rejection + revisions oracle still leaking 404/403) + 5 AMEND → fixed in Wave 4 + re-verified. Deploy ACTIVATES the 4 Phase-A1 validators (flag-on, code-gated on deploy of `fc7c08f9`+). PB branch `primitive-write-result-2026-05-28` merged: WriteResult typed return replaces bool at 11 query.py writers; `__bool__` raises TypeError on truthiness bypass. Schema v70 (`idx_projects_slug_active` UNIQUE partial). See SESSION-HANDOFF.md + CHANGELOG.md + docs/superpowers/plans/2026-05-28-primitive-enforcement-plan.md + Scratch/audit-2026-05-27/codex/pass4-primitives/synthesis.md + Scratch/audit-2026-05-27/codex/pass5-final/.
 primary_folder: C:/Users/ingra107/mn-ccore-lab
 ---
 
@@ -16,7 +16,7 @@ platform for Nick's critical-care research group at UMN.
 
 **Live:** https://mn-ccore-lab.pages.dev  (LIVE for team — CF Access gates `/portal/*` via @umn.edu)
 **Repo:** https://github.com/ingra107/mn-ccore-lab  (720+ commits)
-**Current HEAD:** `fc7c08f9` on main (2026-05-26, Phase A1 `/api/mutations` validators landed flags-OFF), schema v69. Verify the live deploy with `wrangler pages deployment list --project-name mn-ccore-lab`. See SESSION-HANDOFF.md + WORKPLAN.md for current state.
+**Current HEAD:** `fc7c08f9` on main (2026-05-26, Phase A1 `/api/mutations` validators landed flags-OFF), schema v70 (Phase 5 added `idx_projects_slug_active` partial UNIQUE index). Verify the live deploy with `wrangler pages deployment list --project-name mn-ccore-lab`. See SESSION-HANDOFF.md + WORKPLAN.md for current state.
 **Quality gate:** 🟢 GREEN — build clean, inspection 149/149 post-simplify, smoke 27/27 (pre-simplify baseline), deep-audit 14/14 clean, axe WCAG 2.1 AA clean across 29 pages × 2 color schemes, schema-drift CI green.
 
 ## 🚨 Read these FIRST every session

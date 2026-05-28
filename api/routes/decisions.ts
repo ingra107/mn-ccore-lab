@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, actorSlug, buildUpdate } from '../helpers';
+import { json, error, generateId, logActivity, actorSlug, buildUpdate, resolveActor, isPiRequest, projectRefToCanonical } from '../helpers';
 import { filterFixtures } from '../lib/fixtures';
 
 // GET /api/decisions?project_slug=&status=pending|recorded|revisited&tag=
@@ -37,10 +37,22 @@ export async function handleCreateDecision(request: Request, user: AuthUser, env
   };
   if (!body.title) return error('title required', 400);
 
+  // AM-2: use resolveActor so a non-PI caller cannot spoof a foreign decided_by.
+  // PI callers (allowImpersonation=true) may delegate to anyone on the team.
+  const isPi = await isPiRequest(request, env);
+  const actorResult = await resolveActor(env, user, body.decided_by ?? null, { allowImpersonation: isPi });
+  if ('error' in actorResult) return error(actorResult.error, 400);
+
   const id = generateId();
-  const decidedBy = body.decided_by?.trim() || actorSlug(user.email);
+  const decidedBy = actorResult.slug;
   // Normalize tags to CSV on write (historical data was JSON-stringified arrays).
   const normalizedTags = parseTagsField(body.tags).join(',') || null;
+
+  // Z3.2: canonicalize project_slug before insert. hub_decisions.project_slug
+  // stores a canonical slug; unresolvable refs store NULL.
+  const canonicalProjectSlug = body.project_slug
+    ? await projectRefToCanonical(env, body.project_slug)
+    : null;
 
   await env.DB.prepare(
     'INSERT INTO hub_decisions (id, title, rationale, context, project_slug, meeting_id, decided_by, tags, linked_projects) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
@@ -49,7 +61,7 @@ export async function handleCreateDecision(request: Request, user: AuthUser, env
     body.title,
     body.rationale || null,
     body.context || null,
-    body.project_slug || null,
+    canonicalProjectSlug,
     body.meeting_id || null,
     decidedBy,
     normalizedTags,

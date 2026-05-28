@@ -168,7 +168,7 @@ function ProjectContent({ data }: { data: ProjectCardData }) {
       <div className="flex items-center gap-2 flex-wrap">
         {data.stage && <StageBadge stage={data.stage} />}
         {data.category && (
-          <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.75 }}>
+          <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.85 }}>
             {data.category}
           </span>
         )}
@@ -190,7 +190,7 @@ function ProjectContent({ data }: { data: ProjectCardData }) {
           {piInfo && (
             <div className="flex items-center gap-1.5">
               <MiniAvatar slug={data.pi!} />
-              <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.75 }}>
+              <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.85 }}>
                 {piInfo.name.split(' ')[0]}
               </span>
             </div>
@@ -209,7 +209,7 @@ function ProjectContent({ data }: { data: ProjectCardData }) {
           )}
         </div>
         {data.updated_at && (
-          <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.75 }}>
+          <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.85 }}>
             {formatRelativeTime(data.updated_at)}
           </span>
         )}
@@ -249,7 +249,7 @@ function MemberContent({ data }: { data: MemberCardData }) {
             {data.name}
           </div>
           {data.role && (
-            <div className="text-[11px]" style={{ color: 'var(--slate)', opacity: 0.75 }}>
+            <div className="text-[11px]" style={{ color: 'var(--slate)', opacity: 0.85 }}>
               {data.role}
             </div>
           )}
@@ -310,7 +310,7 @@ function TaskContent({ data }: { data: TaskCardData }) {
         {assigneeInfo && (
           <div className="flex items-center gap-1.5">
             <MiniAvatar slug={data.assignee!} />
-            <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.75 }}>
+            <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.85 }}>
               {assigneeInfo.name.split(' ')[0]}
             </span>
           </div>

@@ -6,12 +6,12 @@
 // have no dedicated file — they sit alongside the rest of MyTasks/ because
 // Card / LaneRow / ListRow / InlineDetail / TaskDrawer all import them.
 
-import { INK_DIM } from './constants'
+import { INK_DIM, INK_MUTED, withAlpha } from './constants'
 import type { TaskRow } from '../../lib/api'
 
-export function Chip({ children, color = '#9aa0a6', filled = false, title }: { children: React.ReactNode; color?: string; filled?: boolean; title?: string }) {
+export function Chip({ children, color = INK_MUTED, filled = false, title }: { children: React.ReactNode; color?: string; filled?: boolean; title?: string }) {
   return (
-    <span title={title} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 7px', borderRadius: 4, fontSize: 10, fontWeight: 500, letterSpacing: '0.02em', background: filled ? `${color}22` : 'transparent', border: `1px solid ${color}40`, color, whiteSpace: 'nowrap' }}>{children}</span>
+    <span title={title} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 7px', borderRadius: 4, fontSize: 10, fontWeight: 500, letterSpacing: '0.02em', background: filled ? withAlpha(color, 13) : 'transparent', border: `1px solid ${withAlpha(color, 25)}`, color, whiteSpace: 'nowrap' }}>{children}</span>
   )
 }
 

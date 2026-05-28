@@ -33,8 +33,8 @@ import {
 } from 'lucide-react'
 import PageHeader from '../../components/PageHeader'
 import MetricCard from '../../components/MetricCard'
-import EmptyState from '../../components/EmptyState'
 import { CardSkeleton } from '../../components/LoadingSkeleton'
+import QueryState from '../../components/QueryState'
 import { staggerContainer, staggerItem } from '../../lib/animations'
 import { getPersonInfo } from '../../data/team'
 import Avatar from '../../components/Avatar'
@@ -82,7 +82,8 @@ interface PIDashboardData {
   }>
   grantsFunnel: {
     submitted: number
-    funded: number
+    // P6-B8: 'active' replaces 'funded'. proposed=0 means awarded/active, not funded.
+    active: number
   }
   projectsByStage: Array<{
     stage: string
@@ -97,11 +98,16 @@ function usePIDashboard() {
     queryKey: ['pi-dashboard'],
     queryFn: async () => {
       const res = await fetch('/api/analytics/pi-dashboard')
-      if (!res.ok) throw new Error('Failed to fetch PI dashboard')
+      if (!res.ok) {
+        const err = new Error(`HTTP ${res.status}`) as Error & { status: number }
+        err.status = res.status
+        throw err
+      }
       const json = await res.json() as { data: PIDashboardData }
       return json.data
     },
     staleTime: 5 * 60 * 1000,
+    retry: false,
   })
 }
 
@@ -256,8 +262,9 @@ export function TrendArrow({ trend }: { trend: 'up' | 'down' | 'flat' | string }
 // Widgets: commitment scorecard, response time, team engagement, mentee pub velocity, grant pipeline.
 
 export default function PIAnalytics() {
-  const { data, isLoading } = usePIDashboard()
+  const { data, isLoading, isError, error } = usePIDashboard()
   const [copied, setCopied] = useState(false)
+  const errorStatus = (error as (Error & { status?: number }) | null)?.status
 
   // Compute insights
   const insights = useMemo(() => {
@@ -314,23 +321,8 @@ export default function PIAnalytics() {
 
   if (isLoading) return <CardSkeleton count={6} />
 
-  if (!data) {
-    return (
-      <div>
-        <PageHeader
-          icon={<Shield size={20} />}
-          title="PI Dashboard"
-          subtitle="Evidence-based leadership metrics"
-        />
-        <EmptyState
-          icon={<LineChart size={40} />}
-          title="No PI analytics available"
-          subtitle="Metrics appear as your team logs activity, tasks, and publications."
-        />
-      </div>
-    )
-  }
-
+  // P6-C10 / Fix 4: QueryState consolidates the auth-vs-generic-error block and
+  // the empty-state block that were previously duplicated across early returns.
   const commitRate = data && data.commitments.total > 0
     ? Math.round((data.commitments.completed / data.commitments.total) * 100)
     : 0
@@ -395,6 +387,16 @@ export default function PIAnalytics() {
           </button>
         </div>
       </PageHeader>
+
+      <QueryState
+        isLoading={false}
+        isError={isError}
+        isEmpty={!data}
+        errorStatus={errorStatus}
+        emptyIcon={<LineChart size={40} />}
+        emptyTitle="No PI analytics available"
+        emptySubtitle="Metrics appear as your team logs activity, tasks, and publications."
+      >
 
       {/* Top-line hero stats — DD-6 display variant (Fraunces 60px + gold label) */}
       <motion.div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" variants={staggerContainer} initial="hidden" animate="visible">
@@ -805,35 +807,15 @@ export default function PIAnalytics() {
             </h3>
           </div>
           <div className="rounded-xl border p-5" style={{ borderColor: 'var(--border-subtle)' }}>
-            {/* Grants: submitted vs funded */}
+            {/* Grants: pending (proposed) vs active (awarded) — P6-B8 */}
             <div className="mb-5">
               <h4 className="text-[10px] uppercase tracking-wider mb-2" style={{ color: 'var(--slate)' }}>
-                Grants: Submitted vs Funded
+                Grants: Pending vs Active
               </h4>
               <div className="grid grid-cols-2 gap-3">
-                <MetricCard icon={Target} label="Submitted" value={data?.grantsFunnel.submitted || 0} color="var(--gold)" />
-                <MetricCard icon={CheckCircle2} label="Funded" value={data?.grantsFunnel.funded || 0} color="var(--green)" />
+                <MetricCard icon={Target} label="Pending" value={data?.grantsFunnel.submitted || 0} color="var(--gold)" />
+                <MetricCard icon={CheckCircle2} label="Active" value={data?.grantsFunnel.active || 0} color="var(--green)" />
               </div>
-              {data && data.grantsFunnel.submitted > 0 && (
-                <div className="mt-2">
-                  <div
-                    className="h-2.5 rounded-full overflow-hidden"
-                    style={{ backgroundColor: 'var(--border-subtle)' }}
-                  >
-                    <div
-                      className="h-full rounded-full"
-                      style={{
-                        width: `${Math.round((data.grantsFunnel.funded / data.grantsFunnel.submitted) * 100)}%`,
-                        backgroundColor: 'var(--green)',
-                        transition: 'width 0.6s ease',
-                      }}
-                    />
-                  </div>
-                  <span className="text-[10px] mt-1" style={{ color: 'var(--slate)', opacity: 0.75 }}>
-                    {Math.round((data.grantsFunnel.funded / data.grantsFunnel.submitted) * 100)}% success rate
-                  </span>
-                </div>
-              )}
             </div>
 
             {/* Projects by stage */}
@@ -919,6 +901,8 @@ export default function PIAnalytics() {
           )}
         </div>
       </div>
+
+      </QueryState>
     </div>
   )
 }

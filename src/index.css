@@ -948,12 +948,21 @@ a:hover {
 }
 
 /* ── Always-dark sections (ink bg) — don't flip in dark mode ── */
-/* Use on ImpactMetrics, CLIFMap, any section that must stay dark on both themes */
+/* Use on ImpactMetrics, CLIFMap, any section that must stay dark on both
+   themes. The hex literals here are INTENTIONAL — these sections render
+   white text on a dark surface in both light and dark mode, so the bg
+   must NOT theme-flip. Token --always-dark-section-bg pins the value so
+   downstream callers can reference it instead of duplicating the hex.
+   (Phase 7, 2026-05-27 — Codex caveat: do NOT theme-convert .section-ink.) */
+:root {
+  --always-dark-section-bg: #0f1923;       /* light-mode value (also default) */
+  --always-dark-section-bg-deep: #070b10;  /* slightly deeper in dark mode */
+}
 .section-ink {
-  background-color: #0f1923;
+  background-color: var(--always-dark-section-bg);
 }
 .dark .section-ink {
-  background-color: #070b10;
+  background-color: var(--always-dark-section-bg-deep);
 }
 
 /* ── Theme-aware stage colors (AA on the matching bg in both modes) ── */
@@ -996,6 +1005,47 @@ a:hover {
 }
 .dark .section-cream {
   background-color: #0e1319;
+}
+
+/* ── Task-surface semantic tokens (Phase 7, 2026-05-27) ─────────────────
+   Theme-aware CSS-var SSOT for the Today landing + MyTasks page.
+   Replaces the hardcoded JS hex palette previously inlined in
+   src/lib/taskGrouping.ts, components/today/constants.ts and
+   pages/MyTasks/constants.ts. Dark values = the original task-surface
+   palette (preserving 568+ Playwright visual snapshots and axe AA wins).
+   Light values are the app's existing light-mode equivalents (sourced
+   from --ink / --slate / --muted / --gold / --teal / --maroon / --orange
+   / --green pinned hexes in :root above). Accents share the solid AA-safe
+   hexes used by --teal-solid / --maroon-solid / --stage-fill-* so white
+   text and inverted (#0f1923) text both remain readable. */
+:root {
+  /* Page & panel surfaces */
+  --task-page-bg:        #f5f5f5;   /* matches --page-bg in light */
+  --task-panel-bg:       #ffffff;   /* matches --surface-card light */
+  /* Ink hierarchy (text on task surfaces) */
+  --task-ink:            #0f1923;   /* matches --ink hex */
+  --task-ink-muted:      #5a6370;   /* matches --muted (6.0:1 on #fff) */
+  --task-ink-dim:        #7a828c;   /* third-tier metadata; ~4.6:1 on #fff */
+  /* Accents — pinned to the AA-safe hexes already used for solid bgs */
+  --task-accent-gold:    #6b5420;   /* matches --gold light, AA on #fff */
+  --task-accent-teal:    #006b66;   /* matches --teal light, AA on #fff */
+  --task-accent-coral:   #8a1f2e;   /* matches --maroon-solid */
+  --task-accent-orange:  #a23d08;   /* matches --orange light */
+  --task-accent-green:   #066e2f;   /* matches --green light */
+}
+
+.dark {
+  /* Dark = the previous hardcoded palette (preserves visual identity). */
+  --task-page-bg:        #0b1017;
+  --task-panel-bg:       #0f1923;
+  --task-ink:            #e2e8f0;
+  --task-ink-muted:      #b0b5b9;
+  --task-ink-dim:        #7a828c;
+  --task-accent-gold:    #c9a84c;
+  --task-accent-teal:    #5cbcb4;
+  --task-accent-coral:   #f0737e;
+  --task-accent-orange:  #f08a5b;
+  --task-accent-green:   #6ee89a;
 }
 
 /* ── Funding agency colors — brighter in dark mode ── */

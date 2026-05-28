@@ -1,5 +1,6 @@
 import type { AuthUser, Env } from '../helpers';
 import { json, error, generateId } from '../helpers';
+import { idempotentDelete } from '../lib/idempotent-delete';
 
 interface ExpertiseRow {
   id: string
@@ -76,14 +77,8 @@ export async function handleAddExpertise(request: Request, user: AuthUser, env: 
 }
 
 // POST /api/expertise/:id/delete
-export async function handleRemoveExpertise(id: string, env: Env): Promise<Response> {
-  const existing = await env.DB.prepare('SELECT id FROM expertise_tags WHERE id = ?').bind(id).first();
-  if (!existing) {
-    return error('Not found', 404);
-  }
-
-  await env.DB.prepare('DELETE FROM expertise_tags WHERE id = ?').bind(id).run();
-  return json({ data: { deleted: true, id } });
+export async function handleRemoveExpertise(id: string, request: Request, env: Env): Promise<Response> {
+  return idempotentDelete({ table: 'expertise_tags', id, mode: 'hard', request, env });
 }
 
 // GET /api/expertise/suggest?topic=keyword

@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
 import { GraduationCap, Plus, ChevronDown, ChevronRight, X, Check, AlertTriangle } from 'lucide-react'
 import DensityToggle, { useDensity, densityClass } from '../../components/DensityToggle'
@@ -135,11 +136,30 @@ export default function MenteeMilestonesPage() {
     )
   }, [updateMilestone, showUndo])
 
-  // Derive mentee slugs from overview API response; fall back to hardcoded list if not yet loaded
-  const menteeSlugsDerived = useMemo(
-    () => overview.length > 0 ? [...new Set(overview.map((o) => o.mentee_slug))] : MENTEE_SLUGS,
-    [overview],
-  )
+  // P6-A5: derive mentee slugs from the team raw API (includes member_type).
+  // Overview API (milestones already tracked) is the primary source.
+  // Falls back to the legacy hardcoded array until the API responds.
+  const { data: rawTeamData } = useQuery({
+    queryKey: ['team-raw'],
+    queryFn: async (): Promise<{ data: Array<{ slug?: string; member_type?: string }> }> => {
+      const r = await fetch('/api/team')
+      if (!r.ok) throw new Error(`HTTP ${r.status}`)
+      return r.json()
+    },
+    staleTime: 60 * 1000,
+  })
+  const MENTEE_TYPES = new Set(['mentee', 'trainee', 'fellow', 'resident'])
+  const menteeSlugsDerived = useMemo(() => {
+    // Primary: from team API (includes member_type)
+    const fromTeam = (rawTeamData?.data ?? [])
+      .filter((m) => m.member_type && MENTEE_TYPES.has(m.member_type) && m.slug)
+      .map((m) => m.slug as string)
+    if (fromTeam.length > 0) return fromTeam
+    // Secondary: overview API (milestones already tracked)
+    if (overview.length > 0) return [...new Set(overview.map((o) => o.mentee_slug))]
+    // Fallback: legacy hardcoded list
+    return MENTEE_SLUGS
+  }, [rawTeamData, overview])
 
   const overdueTotal = overview.reduce((sum, o) => sum + o.overdue_count, 0)
   const upcomingTotal = overview.reduce((sum, o) => sum + o.upcoming_count, 0)
@@ -434,7 +454,7 @@ export default function MenteeMilestonesPage() {
 
       {/* Add Milestone Modal */}
       <AnimatePresence>
-        {showAddModal && <AddMilestoneModal onClose={() => setShowAddModal(false)} />}
+        {showAddModal && <AddMilestoneModal menteeSlugs={menteeSlugsDerived} onClose={() => setShowAddModal(false)} />}
       </AnimatePresence>
     </div>
   )
@@ -818,9 +838,9 @@ function FilterSelect({
 
 // ── Add Milestone Modal ────────────────────────────────────
 
-function AddMilestoneModal({ onClose }: { onClose: () => void }) {
+function AddMilestoneModal({ menteeSlugs, onClose }: { menteeSlugs: string[]; onClose: () => void }) {
   const createMilestone = useCreateMenteeMilestone()
-  const [menteeSlug, setMenteeSlug] = useState(MENTEE_SLUGS[0])
+  const [menteeSlug, setMenteeSlug] = useState(menteeSlugs[0] ?? MENTEE_SLUGS[0])
   const [milestoneType, setMilestoneType] = useState('committee_meeting')
   const [title, setTitle] = useState('')
   const [dueDate, setDueDate] = useState('')
@@ -888,7 +908,7 @@ function AddMilestoneModal({ onClose }: { onClose: () => void }) {
             </label>
             <InlineSelect
               value={menteeSlug}
-              options={MENTEE_SLUGS.map((s) => ({ value: s, label: getPersonInfo(s).name }))}
+              options={menteeSlugs.map((s) => ({ value: s, label: getPersonInfo(s).name || s }))}
               onChange={setMenteeSlug}
               size="md"
               alwaysShowChevron

@@ -1,35 +1,40 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, parseMentions, actorSlug, isPiRequest, resolveActor } from '../helpers';
+import { json, error, generateId, logActivity, parseMentions, actorSlug, isPiRequest, resolveActor, safeTaskRow, assertProjectVisible, projectRefToCanonical } from '../helpers';
 import { filterFixtures } from '../lib/fixtures';
 import { ctToday } from '../lib/ct-date';
 import { nowInstant } from '../lib/time';
 import { applyMutation } from './mutations';
+// TASK_SELECT_COLS moved to api/lib/task-cols.ts so helpers.ts (safeTaskRow)
+// can import it without creating a circular dependency.
+// Fix 5: removed dead re-export — callers import directly from ../lib/task-cols
+// or via api/helpers.ts which already re-exports it (zero callers used this path).
+import { TASK_SELECT_COLS } from '../lib/task-cols';
 
-// AM-5 (SEC-T0-4): explicit task column list that EXCLUDES the private
-// `notes` column. `notes` is the brain.db private field (team-visible content
-// lives in `description`); `SELECT t.*` leaked it on both the list and the
-// single-task endpoints. This list keeps every column the frontend uses
-// (description, group_override, the v55 op-fields waiting_on/promised_to/
-// promise_date/next_checkin_date, etc.) and stays in sync with the schema
-// (base tasks table + all ALTER ADD COLUMN through schema-v68, minus `notes`).
-// If a column is added to the tasks table, add it here too (or the API stops
-// returning it). Prefixed `t.` so it composes with the meetings LEFT JOIN.
-// Exported so other route modules (proactive-brief, etc.) can reuse without
-// duplicating the column list.
-export const TASK_SELECT_COLS = [
-  'id', 'meeting_id', 'project_id', 'title', 'description', 'assignee',
-  'assigned_by', 'due_date', 'priority', 'status', 'source', 'completed',
-  'completed_at', 'completed_by', 'created_at', 'updated_at', 'deleted_at',
-  'acknowledged_at', 'acknowledged_by', 'watchers', 'reminder_days',
-  'instructions', 'key_link_1', 'key_link_1_desc', 'key_link_2',
-  'key_link_2_desc', 'key_link_3', 'key_link_3_desc', 'effort', 'short_title',
-  'source_thread_id', 'related_message_ids', 'blocked_by', 'description_json',
-  'group_override', 'seq', 'deadline', 'waiting_on', 'promised_to',
-  'promise_date', 'next_checkin_date', 'nick_followup_date',
-  'requires_nick_brain', 'estimated_minutes', 'deadline_type', 'next_artifact',
-  'inbox_event_id', 'last_mutation_id',
-  // NOTE: `notes` is deliberately omitted — private brain.db field.
-].map((c) => `t.${c}`).join(', ');
+// ── Fix 3: guardTaskProject ────────────────────────────────────────────────────
+//
+// Consolidates the repeated pattern:
+//   SELECT project_id FROM tasks WHERE id=?  →  assertProjectVisible
+// used in 6 task-subresource handlers. Returns { block: Response, projectId: null }
+// when the caller is denied, or { block: null, projectId } when allowed. Callers
+// can reuse `projectId` downstream (e.g. the @hermes path in handleAddTaskComment
+// previously did a second identical SELECT).
+async function guardTaskProject(
+  env: Env,
+  request: Request,
+  taskId: string,
+): Promise<{ block: Response; projectId: null } | { block: null; projectId: string | null }> {
+  const task = await env.DB.prepare(
+    'SELECT project_id FROM tasks WHERE id = ? AND deleted_at IS NULL'
+  ).bind(taskId).first<{ project_id: string | null }>();
+  if (!task) {
+    return { block: error('Task not found', 404), projectId: null };
+  }
+  if (task.project_id) {
+    const block = await assertProjectVisible(request, env, task.project_id);
+    if (block) return { block, projectId: null };
+  }
+  return { block: null, projectId: task.project_id ?? null };
+}
 
 // GET /api/tasks/overdue-count?assignee= — lightweight count for sidebar badge
 export async function handleOverdueCount(url: URL, env: Env): Promise<Response> {
@@ -48,7 +53,10 @@ export async function handleOverdueCount(url: URL, env: Env): Promise<Response> 
 // sync-cursor mode: filters seq > N, orders by seq ASC, applies limit
 // (default 2000). Canonical pull path for brain.db's hub.py post-cutover.
 // updated_since/created_since remain for back-compat. seq_after wins.
-export async function handleGetTasks(url: URL, env: Env): Promise<Response> {
+//
+// Fix 2a: canSeePb=false (non-PI callers) filters out tasks belonging to
+// Peripheral Brain category projects. Mirrors the pattern in handleGetRecentTaskUpdates.
+export async function handleGetTasks(url: URL, env: Env, canSeePb = false): Promise<Response> {
   const assignee = url.searchParams.get('assignee');
   const status = url.searchParams.get('status');
   const priority = url.searchParams.get('priority');
@@ -68,7 +76,13 @@ export async function handleGetTasks(url: URL, env: Env): Promise<Response> {
   const includeFixtures = url.searchParams.get('include_fixtures') === '1' || includeDeleted;
 
   const deletedFilter = includeDeleted ? '1=1' : 't.deleted_at IS NULL';
-  let query = `SELECT ${TASK_SELECT_COLS}, m.title as meeting_title, m.date as meeting_date FROM tasks t LEFT JOIN meetings m ON t.meeting_id = m.id WHERE ${deletedFilter}`;
+  // Fix 2a: mirror the PB exclusion pattern from handleGetRecentTaskUpdates.
+  // Non-PI callers must not see tasks that belong to Peripheral Brain projects.
+  const pbExclusion = canSeePb ? '' : ` AND (t.project_id IS NULL OR t.project_id NOT IN (
+    SELECT id FROM projects WHERE category = 'Peripheral Brain'
+    UNION SELECT slug FROM projects WHERE category = 'Peripheral Brain'
+  ))`;
+  let query = `SELECT ${TASK_SELECT_COLS}, m.title as meeting_title, m.date as meeting_date FROM tasks t LEFT JOIN meetings m ON t.meeting_id = m.id WHERE ${deletedFilter}${pbExclusion}`;
   const params: (string | number)[] = [];
 
   if (seqAfterRaw !== null) {
@@ -108,6 +122,12 @@ export async function handleGetTasks(url: URL, env: Env): Promise<Response> {
 
 // POST /api/tasks/:id/status — change task status (todo/in_progress/done/blocked/waiting_external)
 export async function handleUpdateTaskStatus(id: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
+  // T1.1: PB-visibility gate. Mirrors handleGetTaskComments / handlePostTaskUpdate
+  // — non-PI callers cannot mutate tasks attached to Peripheral Brain projects.
+  // API-key callers (PB sync, Hermes) pass via isPiRequest=true.
+  const guard = await guardTaskProject(env, request, id);
+  if (guard.block) return guard.block;
+
   const body = await request.json() as { status: string };
   if (!body.status || !['todo', 'in_progress', 'done', 'blocked', 'waiting_external'].includes(body.status)) {
     return error('status must be one of: todo, in_progress, done, blocked, waiting_external', 400);
@@ -158,11 +178,21 @@ export async function handleUpdateTaskStatus(id: string, request: Request, user:
 // a task visible in GET /api/tasks?limit=500 is always reachable here.
 // mechanic I5: previously no GET-by-PK route existed — direct lookups
 // returned 404 for every task regardless of status.
-export async function handleGetTask(id: string, env: Env): Promise<Response> {
+// Fix 2b: assertProjectVisible guards PB-category task visibility for non-PI callers.
+// T1.4: request is now NON-optional. The previous optional signature created
+// a silent-bypass footgun — any internal caller that forgot to pass the
+// request would skip the PB gate entirely. Single call site in api/index.ts
+// already passes R(c).
+export async function handleGetTask(id: string, env: Env, request: Request): Promise<Response> {
   const task = await env.DB.prepare(
     `SELECT ${TASK_SELECT_COLS}, m.title as meeting_title, m.date as meeting_date FROM tasks t LEFT JOIN meetings m ON t.meeting_id = m.id WHERE t.id = ? AND t.deleted_at IS NULL`
-  ).bind(id).first();
+  ).bind(id).first<Record<string, unknown> & { project_id?: string | null }>();
   if (!task) return error('Task not found', 404);
+  // Gate on PB visibility before returning the task row.
+  if (task.project_id) {
+    const block = await assertProjectVisible(request, env, task.project_id as string);
+    if (block) return block;
+  }
   return json({ data: task });
 }
 
@@ -223,7 +253,13 @@ export async function handleToggleTask(id: string, user: AuthUser, env: Env): Pr
 
   await logActivity(env, 'task', `${newCompleted ? 'Completed' : 'Reopened'}: "${item.description}"`, user.email, id, table === 'action_items' ? 'action_item' : 'task');
 
-  const updated = await env.DB.prepare(`SELECT * FROM ${table} WHERE id = ?`).bind(id).first();
+  // SEC-P2-01: use TASK_SELECT_COLS for tasks to exclude the private `notes`
+  // column. safeTaskRow strips any remnant (defense-in-depth for test stubs
+  // and any future SELECT * that slips in). action_items has no notes column.
+  const raw = table === 'tasks'
+    ? await env.DB.prepare(`SELECT ${TASK_SELECT_COLS} FROM tasks t WHERE t.id = ?`).bind(id).first<Record<string, unknown>>()
+    : await env.DB.prepare(`SELECT * FROM action_items WHERE id = ?`).bind(id).first<Record<string, unknown>>();
+  const updated = (raw && table === 'tasks') ? safeTaskRow(raw) : raw;
   return json({ data: updated });
 }
 
@@ -244,6 +280,11 @@ const VALID_GROUP_OVERRIDES = new Set(['deep', 'priorities', 'quick', 'pb', 'etl
 const TASK_REQUIRED_FIELDS = new Set(['status', 'priority', 'assignee']);
 
 export async function handleUpdateTask(id: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
+  // T1.1: PB-visibility gate. Non-PI callers cannot mutate tasks attached
+  // to Peripheral Brain projects. API-key callers pass via isPiRequest=true.
+  const guard = await guardTaskProject(env, request, id);
+  if (guard.block) return guard.block;
+
   const body = await request.json() as Record<string, unknown>;
 
   // Validate assignee slug exists (same guard as create — Suite 8 propagation).
@@ -252,9 +293,9 @@ export async function handleUpdateTask(id: string, request: Request, user: AuthU
     if (!member) return error(`Unknown assignee "${body.assignee}". Must match team_members.slug.`, 400);
   }
   // Resolve project_id to canonical slug (accept id OR slug). Bogus → NULL.
+  // Pattern D: use projectRefToCanonical from helpers (dedup of inline resolver).
   if (typeof body.project_id === 'string' && body.project_id) {
-    const proj = await env.DB.prepare('SELECT id, slug FROM projects WHERE id = ? OR slug = ? LIMIT 1').bind(body.project_id, body.project_id).first<{ id: string; slug: string | null }>();
-    body.project_id = proj ? (proj.slug || proj.id) : null;
+    body.project_id = await projectRefToCanonical(env, body.project_id);
   }
   // Validate group_override is one of the canonical group keys (or null/empty
   // = clear override + return to auto-classification).
@@ -375,16 +416,14 @@ export async function handleCreateTask(request: Request, user: AuthUser, env: En
   // Validate project_id if provided — match by slug OR id. Leave NULL on
   // bogus input (don't reject the whole create since project link is
   // optional on tasks).
-  let resolvedProjectId = body.project_id ?? null;
+  // Pattern D: use projectRefToCanonical from helpers (dedup of inline resolver).
+  let resolvedProjectId: string | null = body.project_id ?? null;
   if (resolvedProjectId) {
-    const proj = await env.DB.prepare('SELECT id, slug FROM projects WHERE id = ? OR slug = ? LIMIT 1').bind(resolvedProjectId, resolvedProjectId).first<{ id: string; slug: string | null }>();
-    if (!proj) {
+    const canonical = await projectRefToCanonical(env, resolvedProjectId);
+    if (!canonical) {
       console.warn(`Task create: unknown project_id "${resolvedProjectId}" — storing as NULL`);
-      resolvedProjectId = null;
-    } else {
-      // Store the slug form (that's what the existing code expects on read).
-      resolvedProjectId = proj.slug || proj.id;
     }
+    resolvedProjectId = canonical;
   }
 
   const id = generateId('task');  // A1.2: typed ULID
@@ -471,7 +510,10 @@ export async function handleCreateTask(request: Request, user: AuthUser, env: En
 }
 
 // GET /api/tasks/:id/comments
-export async function handleGetTaskComments(taskId: string, env: Env): Promise<Response> {
+export async function handleGetTaskComments(taskId: string, request: Request, env: Env): Promise<Response> {
+  // Fix 3: guardTaskProject consolidates the repeated SELECT+assertProjectVisible pattern.
+  const guard = await guardTaskProject(env, request, taskId);
+  if (guard.block) return guard.block;
   const result = await env.DB.prepare(
     'SELECT * FROM task_comments WHERE task_id = ? ORDER BY created_at DESC'
   ).bind(taskId).all();
@@ -482,6 +524,13 @@ export async function handleGetTaskComments(taskId: string, env: Env): Promise<R
 export async function handleAddTaskComment(taskId: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
   const body = await request.json() as { content: string; author_slug?: string };
   if (!body.content?.trim()) return error('content required', 400);
+
+  // Fix 3: guardTaskProject replaces the two duplicate SELECTs that were here:
+  // one for the gate and one for the @hermes project_id lookup below.
+  // projectId is reused in the @hermes path, eliminating the second round-trip.
+  const guard = await guardTaskProject(env, request, taskId);
+  if (guard.block) return guard.block;
+  const taskProjectId = guard.projectId;
 
   const id = generateId();
   // AM-2: validate/canonicalize author_slug; impersonation requires PI/service.
@@ -519,12 +568,37 @@ export async function handleAddTaskComment(taskId: string, request: Request, use
     }
   } catch (e) { console.error('Failed to create task comment notifications:', e); }
 
+  // Check for @hermes/@claude mention → create AI request + placeholder comment.
+  // Mirrors project-comment Hermes path. source_type='task_comment' so the
+  // listener can route the response back correctly.
+  if (/@(hermes|claude)\b/i.test(body.content)) {
+    try {
+      const aiPrompt = body.content.replace(/@(hermes|claude)/gi, '').trim();
+      if (aiPrompt.length > 5) {
+        // Fix 3: reuse taskProjectId from guardTaskProject — eliminates duplicate SELECT.
+        const projectSlug = taskProjectId;
+        const aiId = generateId();
+        await env.DB.prepare(
+          'INSERT INTO ai_requests (id, source_type, source_id, project_slug, prompt, context, requested_by) VALUES (?, ?, ?, ?, ?, ?, ?)'
+        ).bind(aiId, 'task_comment', id, projectSlug, aiPrompt, `Task: ${taskId}`, user.email).run();
+        // Placeholder comment so the UI shows "Thinking..." immediately.
+        const responseId = generateId();
+        await env.DB.prepare(
+          "INSERT INTO task_comments (id, task_id, author_slug, content, created_at) VALUES (?, ?, ?, ?, datetime('now'))"
+        ).bind(responseId, taskId, 'claude-ai', 'Thinking about this... (AI response pending)').run();
+      }
+    } catch (e) { console.error('Failed to create AI request for @hermes mention in task comment:', e); }
+  }
+
   const created = await env.DB.prepare('SELECT * FROM task_comments WHERE id = ?').bind(id).first();
   return json({ data: created }, 201);
 }
 
 // GET /api/tasks/:id/activity
-export async function handleGetTaskActivity(taskId: string, env: Env): Promise<Response> {
+export async function handleGetTaskActivity(taskId: string, request: Request, env: Env): Promise<Response> {
+  // Fix 3: guardTaskProject consolidates the repeated SELECT+assertProjectVisible pattern.
+  const guard = await guardTaskProject(env, request, taskId);
+  if (guard.block) return guard.block;
   const result = await env.DB.prepare(
     "SELECT * FROM activity_log WHERE related_id = ? AND related_type = 'task' ORDER BY timestamp DESC LIMIT 20"
   ).bind(taskId).all();
@@ -534,15 +608,24 @@ export async function handleGetTaskActivity(taskId: string, env: Env): Promise<R
 // GET /api/tasks/:id/detail — fan-out for TodayPage/UnifiedMyTasks task detail drawer.
 // Returns { why, updates, subtasks, blocks } in a single round-trip so the
 // drawer doesn't have to do four parallel fetches. Read-only.
-export async function handleGetTaskDetail(taskId: string, env: Env): Promise<Response> {
-  // Pull the task itself for the "why" callout. P1: fall back to description's
-  // first paragraph; a future column could replace this with a curated note.
-  const task = await env.DB.prepare(
-    'SELECT id, description FROM tasks WHERE id = ? AND deleted_at IS NULL'
-  ).bind(taskId).first<{ id: string; description: string | null }>();
-  if (!task) return error('Task not found', 404);
+//
+// T2.2 (2026-05-28): route through guardTaskProject for visibility + existence.
+// Previously inlined the SELECT(id, description, project_id) + 404 + assertProjectVisible
+// triad. Now the existence/visibility checks go through the helper (consistent
+// with handleGetTaskComments / handleGetTaskUpdates / handlePostTaskUpdate);
+// the description read still happens inline because the helper only returns
+// project_id. One extra SELECT, but the read path is rare (detail-drawer
+// fan-out) and the consistency win removes a duplication footgun.
+export async function handleGetTaskDetail(taskId: string, request: Request, env: Env): Promise<Response> {
+  const guard = await guardTaskProject(env, request, taskId);
+  if (guard.block) return guard.block;
 
-  const description = task.description ?? '';
+  // P1: "why" callout — fall back to description's first paragraph. Read after
+  // the gate so non-PI callers can't observe description content via a 200 body.
+  const task = await env.DB.prepare(
+    'SELECT description FROM tasks WHERE id = ? AND deleted_at IS NULL'
+  ).bind(taskId).first<{ description: string | null }>();
+  const description = task?.description ?? '';
   const why = description.split(/\n\s*\n/)[0]?.trim().slice(0, 400) || null;
 
   // Updates merge task_updates (Phase 27 — author-written notes) with
@@ -839,16 +922,40 @@ export async function handleBatchUpdateTasks(request: Request, user: AuthUser, e
 // Mirrors the batch-delete notification cleanup added for audit 12.L. Subtasks
 // and task_updates are hard-deleted since they're UI-only artefacts of this task
 // (no external sync to brain.db / Airtable).
-export async function handleDeleteTask(id: string, user: AuthUser, env: Env): Promise<Response> {
+export async function handleDeleteTask(id: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
+  // T1.1: PB-visibility gate. Non-PI callers cannot soft-delete tasks attached
+  // to Peripheral Brain projects. API-key callers (sync) pass via isPiRequest.
+  //
+  // Inline (rather than guardTaskProject) because the idempotent re-delete
+  // path needs to read already-soft-deleted rows; guardTaskProject's
+  // `deleted_at IS NULL` filter would 404 on the second call and break the
+  // documented idempotent: true return.
   const existing = await env.DB.prepare(
-    'SELECT id, title, description, deleted_at FROM tasks WHERE id = ?'
-  ).bind(id).first<{ id: string; title: string | null; description: string | null; deleted_at: string | null }>();
+    'SELECT id, title, description, deleted_at, project_id FROM tasks WHERE id = ?'
+  ).bind(id).first<{ id: string; title: string | null; description: string | null; deleted_at: string | null; project_id: string | null }>();
 
   if (!existing) {
     return error('Task not found', 404);
   }
 
+  // T1.1: PB-visibility gate on the parent project. Done AFTER the existence
+  // probe (so 404 is preserved as the correctness signal) but BEFORE the
+  // idempotent return + cascade — non-PI must not be able to confirm or alter
+  // PB-task lifecycle.
+  if (existing.project_id) {
+    const block = await assertProjectVisible(request, env, existing.project_id);
+    if (block) return block;
+  }
+
   const label = existing.title || existing.description || id;
+
+  // Check idempotency BEFORE cascade: already soft-deleted?
+  // Pre-fix this ran AFTER the cascade, so a retry would re-delete already-
+  // cleaned child rows even when the task was already marked deleted_at.
+  if (existing.deleted_at) {
+    await logActivity(env, 'task_delete', `Deleted task (idempotent): ${label}`, user.email, id, 'task');
+    return json({ data: { deleted: id, title: label, idempotent: true } });
+  }
 
   // Cascade-clean child rows. task_comments / task_updates / task_subtasks all
   // carry a task_id FK-by-convention (not enforced). Leaving them orphans
@@ -863,12 +970,6 @@ export async function handleDeleteTask(id: string, user: AuthUser, env: Env): Pr
     ).bind(id).run();
   } catch (e) {
     console.error('task cascade-clean failed:', e);
-  }
-
-  // Idempotent: already-deleted returns accepted.
-  if (existing.deleted_at) {
-    await logActivity(env, 'task_delete', `Deleted task (idempotent): ${label}`, user.email, id, 'task');
-    return json({ data: { deleted: id, title: label, idempotent: true } });
   }
 
   // Soft-delete via applyMutation — stamps last_mutation_id + records in processed_mutations.
@@ -899,8 +1000,17 @@ export async function handleDeleteTask(id: string, user: AuthUser, env: Env): Pr
 // adding these fields to TABLE_FIELDS which would pollute the PB wire contract.
 // The route_no_raw_writes.test.ts explicitly exempts this function.
 export async function handleAcknowledgeTask(id: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
-  const task = await env.DB.prepare('SELECT * FROM tasks WHERE id = ?').bind(id).first<{ title: string; description: string; assignee: string; assigned_by: string | null; acknowledged_at: string | null }>();
+  const task = await env.DB.prepare('SELECT * FROM tasks WHERE id = ?').bind(id).first<{ title: string; description: string; assignee: string; assigned_by: string | null; acknowledged_at: string | null; project_id: string | null }>();
   if (!task) return error('Task not found', 404);
+
+  // T1.1: PB-visibility gate. Non-PI callers cannot acknowledge tasks attached
+  // to Peripheral Brain projects. Done AFTER existence probe (404 preserved)
+  // and BEFORE idempotent already_acknowledged shortcut so non-PI cannot
+  // confirm a PB-task acknowledgement state.
+  if (task.project_id) {
+    const block = await assertProjectVisible(request, env, task.project_id);
+    if (block) return block;
+  }
 
   if (task.acknowledged_at) {
     return json({ data: { already_acknowledged: true, acknowledged_at: task.acknowledged_at } });
@@ -943,17 +1053,27 @@ export async function handleAcknowledgeTask(id: string, request: Request, user: 
 // 2026-04-28 (Codex review fix): when ?since= is present, ORDER BY ASC so
 // brain.db pull_task_updates can paginate forward without losing rows when
 // volume between pulls exceeds limit. DESC kept for UI-style "newest 100".
-export async function handleGetRecentTaskUpdates(url: URL, env: Env): Promise<Response> {
+// Phase 1b-B: canSeePb=false for non-PI callers — filter out updates for PB-project tasks.
+export async function handleGetRecentTaskUpdates(url: URL, env: Env, canSeePb = false): Promise<Response> {
   const limit = parseInt(url.searchParams.get('limit') || '100')
   const since = url.searchParams.get('since') // ISO timestamp for delta sync
+  // Mirror the category filter from search/activity for non-PI callers.
+  // task_updates doesn't store project_id directly; join through tasks.
+  const pbExclusion = canSeePb ? '' : ` AND (task_id NOT IN (
+    SELECT t.id FROM tasks t
+    WHERE t.project_id IN (
+      SELECT id FROM projects WHERE category = 'Peripheral Brain'
+      UNION SELECT slug FROM projects WHERE category = 'Peripheral Brain'
+    )
+  ))`
   let query = 'SELECT * FROM task_updates'
   const binds: unknown[] = []
   if (since) {
-    query += ' WHERE created_at > ?'
+    query += ` WHERE created_at > ?${pbExclusion}`
     binds.push(since)
     query += ' ORDER BY created_at ASC, id ASC LIMIT ?'
   } else {
-    query += ' ORDER BY created_at DESC LIMIT ?'
+    query += ` WHERE 1=1${pbExclusion} ORDER BY created_at DESC LIMIT ?`
   }
   binds.push(Math.min(limit, 500))
   const stmt = env.DB.prepare(query)
@@ -961,8 +1081,41 @@ export async function handleGetRecentTaskUpdates(url: URL, env: Env): Promise<Re
   return json({ data: result.results || [], count: result.results?.length || 0 })
 }
 
+// GET /api/task-comments/recent — cross-task feed for activity drawers / digest.
+//
+// T2.8 (2026-05-28): extracted from an inline handler in api/index.ts so the
+// /api/task-comments/recent registration is a one-liner alongside
+// /api/task-updates/recent. PB filter mirrors handleGetRecentTaskUpdates'
+// non-PI exclusion (join task_comments → tasks → projects), with LEFT JOINs
+// so orphan task_comments still surface (no project link → no PB risk).
+export async function handleGetRecentTaskComments(url: URL, env: Env, canSeePb = false): Promise<Response> {
+  const limit = Math.min(parseInt(url.searchParams.get('limit') || '200', 10), 500);
+  const since = url.searchParams.get('since');
+  const pbFilter = canSeePb
+    ? ''
+    : " AND (p.category IS NULL OR p.category != 'Peripheral Brain')";
+  const q = since
+    ? `SELECT tc.* FROM task_comments tc
+       LEFT JOIN tasks t ON tc.task_id = t.id
+       LEFT JOIN projects p ON p.id = t.project_id OR p.slug = t.project_id
+       WHERE tc.created_at > ?${pbFilter}
+       ORDER BY tc.created_at DESC LIMIT ?`
+    : `SELECT tc.* FROM task_comments tc
+       LEFT JOIN tasks t ON tc.task_id = t.id
+       LEFT JOIN projects p ON p.id = t.project_id OR p.slug = t.project_id
+       WHERE 1=1${pbFilter}
+       ORDER BY tc.created_at DESC LIMIT ?`;
+  const result = since
+    ? await env.DB.prepare(q).bind(since, limit).all()
+    : await env.DB.prepare(q).bind(limit).all();
+  return json({ data: result.results || [] });
+}
+
 // GET /api/tasks/:id/updates — get task notes/updates
-export async function handleGetTaskUpdates(taskId: string, env: Env): Promise<Response> {
+export async function handleGetTaskUpdates(taskId: string, request: Request, env: Env): Promise<Response> {
+  // Fix 3: guardTaskProject consolidates the repeated SELECT+assertProjectVisible pattern.
+  const guard = await guardTaskProject(env, request, taskId);
+  if (guard.block) return guard.block;
   const result = await env.DB.prepare(
     'SELECT * FROM task_updates WHERE task_id = ? ORDER BY created_at DESC'
   ).bind(taskId).all();
@@ -973,6 +1126,10 @@ export async function handleGetTaskUpdates(taskId: string, env: Env): Promise<Re
 export async function handlePostTaskUpdate(taskId: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
   const body = await request.json() as { content: string; update_type?: string; author_slug?: string };
   if (!body.content?.trim()) return error('content required', 400);
+
+  // Fix 3: guardTaskProject replaces the duplicate SELECT+assertProjectVisible.
+  const guard = await guardTaskProject(env, request, taskId);
+  if (guard.block) return guard.block;
 
   const id = generateId();
   // AM-2: validate/canonicalize author_slug; impersonation requires PI/service.
@@ -1070,12 +1227,10 @@ export async function handleMobileTasksToHub(request: Request, user: AuthUser, e
 
     // Resolve project_id first (PWA may send brain.db slug or id).
     // Must be above the dedup query since project_id is now part of the dedup key.
+    // Pattern D: use projectRefToCanonical from helpers (dedup of inline resolver).
     let resolvedProjectId: string | null = pwaTask.project_id ?? null;
     if (resolvedProjectId) {
-      const proj = await env.DB.prepare(
-        'SELECT id, slug FROM projects WHERE id = ? OR slug = ? LIMIT 1'
-      ).bind(resolvedProjectId, resolvedProjectId).first<{ id: string; slug: string | null }>();
-      resolvedProjectId = proj ? (proj.slug || proj.id) : null;
+      resolvedProjectId = await projectRefToCanonical(env, resolvedProjectId);
     }
 
     // Dedup: same (title, assignee, project_id) already open in Hub?

@@ -1,5 +1,6 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity } from '../helpers';
+import { json, error, generateId, logActivity, projectRefToCanonical } from '../helpers';
+import { idempotentDelete } from '../lib/idempotent-delete';
 
 // GET /api/projects/:slug/papers — papers linked to a project, joined with research_digest
 export async function handleGetPaperLinks(projectSlug: string, env: Env): Promise<Response> {
@@ -26,11 +27,15 @@ export async function handleLinkPaper(
     return error('paper_id and project_slug are required', 400);
   }
 
+  // Z3.2: canonicalize project_slug before insert. paper_project_links stores
+  // a canonical slug for filtering; unresolvable refs store NULL.
+  const canonicalProjectSlug = await projectRefToCanonical(env, body.project_slug);
+
   const id = generateId();
   await env.DB.prepare(
     `INSERT OR IGNORE INTO paper_project_links (id, paper_id, project_slug, linked_by, note)
      VALUES (?, ?, ?, ?, ?)`
-  ).bind(id, body.paper_id, body.project_slug, user.email, body.note ?? null).run();
+  ).bind(id, body.paper_id, canonicalProjectSlug, user.email, body.note ?? null).run();
 
   await logActivity(
     env,
@@ -41,20 +46,12 @@ export async function handleLinkPaper(
     'paper',
   );
 
-  return json({ data: { id, paper_id: body.paper_id, project_slug: body.project_slug } }, 201);
+  return json({ data: { id, paper_id: body.paper_id, project_slug: canonicalProjectSlug } }, 201);
 }
 
 // POST /api/paper-links/:id/delete — unlink a paper from a project
-export async function handleUnlinkPaper(id: string, env: Env): Promise<Response> {
-  const result = await env.DB.prepare(
-    'DELETE FROM paper_project_links WHERE id = ?'
-  ).bind(id).run();
-
-  if (result.meta.changes === 0) {
-    return error('Link not found', 404);
-  }
-
-  return json({ data: { deleted: id } });
+export async function handleUnlinkPaper(id: string, request: Request, env: Env): Promise<Response> {
+  return idempotentDelete({ table: 'paper_project_links', id, mode: 'hard', request, env });
 }
 
 // GET /api/papers/by-project?project_id= — publications linked to a project (with full pub data)

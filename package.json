@@ -6,7 +6,11 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "lint": "eslint .",
+    "lint": "eslint . && npm run lint:select-star && npm run lint:color-concat && npm run lint:no-optional-request",
+    "lint:opacity": "node scripts/check-opacity-floor.mjs",
+    "lint:select-star": "node scripts/check-select-star.mjs --enforce",
+    "lint:color-concat": "node scripts/check-color-string-concat.mjs --enforce",
+    "lint:no-optional-request": "node scripts/check-no-optional-request.mjs",
     "preview": "vite preview",
     "seed": "tsx scripts/seed-d1.ts",
     "db:schema": "wrangler d1 execute mnccore-lab --file=api/bootstrap-schema.sql",

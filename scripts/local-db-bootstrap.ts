@@ -125,9 +125,25 @@ function run() {
   //    D1 migrations are NOT idempotent — many use `ALTER TABLE ... ADD COLUMN`
   //    without `IF NOT EXISTS`, so re-running against a partially-migrated DB
   //    trips "duplicate column" errors.  Always start from scratch.
+  //
+  //    Windows gotcha: if `wrangler dev --local` is running, it holds a SQLite
+  //    lock on the .sqlite file inside this directory and rmSync will throw EBUSY.
+  //    Stop all wrangler dev processes before running test:local:setup on Windows.
   if (existsSync(LOCAL_D1_STATE)) {
     console.log(`  [reset] wiping ${LOCAL_D1_STATE}`)
-    rmSync(LOCAL_D1_STATE, { recursive: true, force: true })
+    try {
+      rmSync(LOCAL_D1_STATE, { recursive: true, force: true })
+    } catch (e: any) {
+      if (e?.code === 'EBUSY') {
+        console.error(
+          `[local-db-bootstrap] ERROR: cannot wipe ${LOCAL_D1_STATE} — file is locked.\n` +
+          `  Stop all running 'wrangler dev --local' processes first, then re-run.\n` +
+          `  (On Windows, wrangler dev holds a SQLite lock that blocks directory removal.)`
+        )
+        process.exit(1)
+      }
+      throw e
+    }
   }
 
   // 1. Base bootstrap-schema.sql

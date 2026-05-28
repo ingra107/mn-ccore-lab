@@ -1,6 +1,7 @@
 import { AwsClient } from 'aws4fetch';
 import type { Env } from '../types';
-import { actorSlug } from '../helpers';
+import { actorSlug, isPiRequest } from '../helpers';
+import { safeRow } from '../lib/task-cols';
 
 interface AuthUser {
   email: string;
@@ -64,6 +65,13 @@ export async function handleUploadUrl(request: Request, user: AuthUser, env: Env
     return error('filename and context required');
   }
 
+  // B11: block uploading a file on a PB-category project for non-PI callers.
+  // Mirror the same canAccessEntity gate used by list/download/delete.
+  const canSeePb = await isPiRequest(request, env);
+  if (!(await canAccessEntity(env, body.context.type, body.context.id, canSeePb))) {
+    return error('Forbidden', 403);
+  }
+
   // Sanitize filename
   const safe = body.filename.replace(/[^a-zA-Z0-9._-]/g, '_');
   const key = `${body.context.type}/${body.context.id}/${Date.now()}-${safe}`;
@@ -100,6 +108,14 @@ export async function handleUploadDone(request: Request, user: AuthUser, env: En
 
   if (!body.key || !body.entityType || !body.entityId) {
     return error('key, entityType, entityId required');
+  }
+
+  // B11: block recording an attachment on a PB-category project for non-PI callers.
+  // The presigned-URL step already gates this, but upload/done is a separate
+  // POST that could be called independently with an already-known key.
+  const canSeePb = await isPiRequest(request, env);
+  if (!(await canAccessEntity(env, body.entityType, body.entityId, canSeePb))) {
+    return error('Forbidden', 403);
   }
 
   // Verify file actually landed in R2 before writing the DB record.
@@ -150,7 +166,8 @@ export async function handleListFiles(url: URL, env: Env, canSeePb = false): Pro
     'SELECT * FROM file_attachments WHERE entity_type = ? AND entity_id = ? ORDER BY created_at DESC'
   ).bind(entityType, entityId).all();
 
-  return json(rows.results || []);
+  const safe = (rows.results || []).map(r => safeRow('file_attachments', r as Record<string, unknown>));
+  return json(safe);
 }
 
 /** GET /api/files/:key+ — generate presigned GET URL for downloading */
@@ -188,10 +205,27 @@ export async function handleGetFile(key: string, env: Env, canSeePb = false): Pr
 }
 
 /** POST /api/files/:id/delete — delete file attachment */
+// SEC-10.3: Idempotent — if the D1 record is already gone (row not found)
+// we still attempt the R2 delete (best-effort) and return 200 with
+// idempotent:true. The ownership gate (canAccessEntity) only fires when the
+// record exists; for already-deleted files we can't re-check the project,
+// so we return idempotent 200 directly.
+//
+// Z4.3 exempt: file_attachments has an R2 side-effect (env.FILES.delete(r2_key))
+// that idempotentDelete() does not model. The R2 delete MUST run before the D1
+// row is removed so the r2_key is still accessible; idempotentDelete()'s hard
+// mode issues the DELETE first and has no hook for pre-mutation side-effects.
+// Keep this handler hand-rolled with the R2 side-effect preserved exactly as
+// written below. If a future version of idempotentDelete() gains a
+// beforeDelete callback, revisit this site.
 export async function handleDeleteFile(id: string, env: Env, canSeePb = false): Promise<Response> {
   // Get the R2 key + parent entity before deleting the record.
   const row = await env.DB.prepare('SELECT r2_key, entity_type, entity_id FROM file_attachments WHERE id = ?').bind(id).first<{ r2_key: string; entity_type: string; entity_id: string }>();
-  if (!row) return error('File not found', 404);
+
+  if (!row) {
+    // Already deleted — idempotent 200.
+    return json({ deleted: id, idempotent: true });
+  }
 
   // B11: block deleting a file on a PB-category project for non-PI callers.
   if (!(await canAccessEntity(env, row.entity_type, row.entity_id, canSeePb))) {
@@ -205,5 +239,5 @@ export async function handleDeleteFile(id: string, env: Env, canSeePb = false): 
 
   // Delete from D1
   await env.DB.prepare('DELETE FROM file_attachments WHERE id = ?').bind(id).run();
-  return json({ deleted: id });
+  return json({ deleted: id, idempotent: false });
 }

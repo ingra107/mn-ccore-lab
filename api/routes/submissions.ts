@@ -1,6 +1,8 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, actorSlug } from '../helpers';
+import { json, error, generateId, logActivity, actorSlug, assertProjectVisible } from '../helpers';
 import { ctToday } from '../lib/ct-date';
+import { withProjectWrite, withExistingRowProject } from '../lib/route-guards';
+import { idempotentDelete } from '../lib/idempotent-delete';
 
 const VALID_EVENT_TYPES = [
   'submitted',
@@ -14,9 +16,13 @@ const VALID_EVENT_TYPES = [
 
 // ── GET /api/submissions?project_id= ──
 // List submission events for a project, ordered by date
-export async function handleGetSubmissions(url: URL, env: Env): Promise<Response> {
+export async function handleGetSubmissions(url: URL, request: Request, env: Env): Promise<Response> {
   const projectId = url.searchParams.get('project_id');
   if (!projectId) return error('project_id required', 400);
+
+  // Phase 1b-B: block non-PI callers from reading submissions of a PB-category project.
+  const block = await assertProjectVisible(request, env, projectId);
+  if (block) return block;
 
   const events = await env.DB.prepare(`
     SELECT * FROM submission_events
@@ -31,95 +37,107 @@ export async function handleGetSubmissions(url: URL, env: Env): Promise<Response
 // Create a new submission event
 export async function handleCreateSubmission(request: Request, user: AuthUser, env: Env): Promise<Response> {
   const body = await request.json() as {
-    project_id: string;
+    project_id?: string;
     event_type: string;
     event_date: string;
     journal?: string;
     notes?: string;
   };
 
-  if (!body.project_id) return error('project_id required', 400);
   if (!body.event_type) return error('event_type required', 400);
   if (!body.event_date) return error('event_date required', 400);
   if (!VALID_EVENT_TYPES.includes(body.event_type as typeof VALID_EVENT_TYPES[number])) {
     return error(`event_type must be one of: ${VALID_EVENT_TYPES.join(', ')}`, 400);
   }
 
-  const id = generateId();
-  await env.DB.prepare(`
-    INSERT INTO submission_events (id, project_id, event_type, event_date, journal, notes)
-    VALUES (?, ?, ?, ?, ?, ?)
-  `).bind(
-    id,
-    body.project_id,
-    body.event_type,
-    body.event_date,
-    body.journal || null,
-    body.notes || null,
-  ).run();
+  // Z2.2 (2026-05-28): withProjectWrite enforces project_id presence +
+  // resolveAndGuardProject in one wrapper. The inner handler receives the
+  // canonical projectId and runs only after the PB visibility gate passes.
+  return withProjectWrite(async (_req, e, projectId, b) => {
+    const id = generateId();
+    await e.DB.prepare(`
+      INSERT INTO submission_events (id, project_id, event_type, event_date, journal, notes)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `).bind(
+      id,
+      projectId,
+      b.event_type,
+      b.event_date,
+      b.journal || null,
+      b.notes || null,
+    ).run();
 
-  const actor = actorSlug(user.email);
-  await logActivity(env, 'submission', `Submission event '${body.event_type}' created for project ${body.project_id}`, actor, id, 'submission_event');
+    const actor = actorSlug(user.email);
+    await logActivity(e, 'submission', `Submission event '${b.event_type}' created for project ${b.project_id}`, actor, id, 'submission_event');
 
-  const created = await env.DB.prepare('SELECT * FROM submission_events WHERE id = ?').bind(id).first();
-  return json({ data: created }, 201);
+    const created = await e.DB.prepare('SELECT * FROM submission_events WHERE id = ?').bind(id).first();
+    return json({ data: created }, 201);
+  })(request, env, body);
 }
 
 // ── POST /api/submissions/:id ──
 // Update a submission event
+// P4 (2026-05-28): migrated to withExistingRowProject so the existing-row
+// existence check + PB visibility gate cannot be bypassed by forgetting to
+// call them. submission_events has no project_id change path (allowedFields
+// does not list project_id), so only the existing row's project is gated; if
+// a future spec adds project_id reparent, also gate the new target as
+// conferences.ts does. Outer signature (id, request, user, env) unchanged.
 export async function handleUpdateSubmission(id: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
-  const body = await request.json() as {
-    event_type?: string;
-    event_date?: string;
-    journal?: string;
-    notes?: string;
-  };
+  return withExistingRowProject('submission_events', async (req, e, rowId, _projectId) => {
+    const body = await req.json() as {
+      event_type?: string;
+      event_date?: string;
+      journal?: string;
+      notes?: string;
+    };
 
-  const sets: string[] = [];
-  const params: (string | null)[] = [];
+    const sets: string[] = [];
+    const params: (string | null)[] = [];
 
-  if (body.event_type !== undefined) {
-    if (!VALID_EVENT_TYPES.includes(body.event_type as typeof VALID_EVENT_TYPES[number])) {
-      return error(`event_type must be one of: ${VALID_EVENT_TYPES.join(', ')}`, 400);
+    if (body.event_type !== undefined) {
+      if (!VALID_EVENT_TYPES.includes(body.event_type as typeof VALID_EVENT_TYPES[number])) {
+        return error(`event_type must be one of: ${VALID_EVENT_TYPES.join(', ')}`, 400);
+      }
+      sets.push('event_type = ?');
+      params.push(body.event_type);
     }
-    sets.push('event_type = ?');
-    params.push(body.event_type);
-  }
-  if (body.event_date !== undefined) { sets.push('event_date = ?'); params.push(body.event_date); }
-  if (body.journal !== undefined) { sets.push('journal = ?'); params.push(body.journal || null); }
-  if (body.notes !== undefined) { sets.push('notes = ?'); params.push(body.notes || null); }
+    if (body.event_date !== undefined) { sets.push('event_date = ?'); params.push(body.event_date); }
+    if (body.journal !== undefined) { sets.push('journal = ?'); params.push(body.journal || null); }
+    if (body.notes !== undefined) { sets.push('notes = ?'); params.push(body.notes || null); }
 
-  if (sets.length === 0) return error('No fields to update', 400);
+    if (sets.length === 0) return error('No fields to update', 400);
 
-  params.push(id);
-  await env.DB.prepare(
-    `UPDATE submission_events SET ${sets.join(', ')} WHERE id = ? AND deleted_at IS NULL`
-  ).bind(...params).run();
+    params.push(rowId);
+    await e.DB.prepare(
+      `UPDATE submission_events SET ${sets.join(', ')} WHERE id = ? AND deleted_at IS NULL`
+    ).bind(...params).run();
 
-  const actor = actorSlug(user.email);
-  await logActivity(env, 'submission', `Submission event ${id} updated`, actor, id, 'submission_event');
+    const actor = actorSlug(user.email);
+    await logActivity(e, 'submission', `Submission event ${rowId} updated`, actor, rowId, 'submission_event');
 
-  const updated = await env.DB.prepare('SELECT * FROM submission_events WHERE id = ?').bind(id).first();
-  if (!updated) return error('Submission event not found', 404);
-  return json({ data: updated });
+    const updated = await e.DB.prepare('SELECT * FROM submission_events WHERE id = ?').bind(rowId).first();
+    if (!updated) return error('Submission event not found', 404);
+    return json({ data: updated });
+  })(request, env, id);
 }
 
 // ── POST /api/submissions/:id/delete ──
-// Soft delete a submission event
-export async function handleDeleteSubmission(id: string, user: AuthUser, env: Env): Promise<Response> {
-  const existing = await env.DB.prepare(
-    'SELECT id FROM submission_events WHERE id = ? AND deleted_at IS NULL'
-  ).bind(id).first();
-  if (!existing) return error('Submission event not found', 404);
-
-  await env.DB.prepare(
-    "UPDATE submission_events SET deleted_at = datetime('now') WHERE id = ?"
-  ).bind(id).run();
-
-  const actor = actorSlug(user.email);
-  await logActivity(env, 'submission', `Submission event ${id} soft-deleted`, actor, id, 'submission_event');
-
-  return json({ data: { id, deleted: true } });
+// Soft delete a submission event.
+// Z4.3 (2026-05-28): hand-rolled idempotent soft-delete replaced by
+// idempotentDelete(mode:'soft'). Semantics unchanged: repeat calls return
+// 200 idempotent:true; PB visibility gate runs pre-mutation.
+export async function handleDeleteSubmission(id: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
+  return idempotentDelete({
+    table: 'submission_events',
+    id,
+    mode: 'soft',
+    request,
+    env,
+    actorSlug: actorSlug(user.email),
+    activityCategory: 'submission',
+    activityEntityType: 'submission_event',
+  });
 }
 
 // ── GET /api/submissions/active ──

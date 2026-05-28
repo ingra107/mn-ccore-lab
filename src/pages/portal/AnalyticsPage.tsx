@@ -4,8 +4,8 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { CheckCircle2, Plus, AlertTriangle, TrendingUp, Users, FolderKanban, Lightbulb, FileText, ChevronLeft, ChevronRight, Calendar, Circle, BarChart3, Download, Copy } from 'lucide-react'
 import PageHeader from '../../components/PageHeader'
 import MetricCard from '../../components/MetricCard'
-import EmptyState from '../../components/EmptyState'
 import { CardSkeleton } from '../../components/LoadingSkeleton'
+import QueryState from '../../components/QueryState'
 import ActivityHeatmap from '../../components/ActivityHeatmap'
 import { staggerContainer, staggerItem } from '../../lib/animations'
 import { useTasks, useProjects, useIdeas, useActivity, useProjectHealth } from '../../hooks/useApiData'
@@ -58,7 +58,7 @@ const RANGE_WEEKS: Record<TimeRange, number> = {
 export default function AnalyticsPage() {
   const { user } = useAuth()
   const isPi = user?.isPi ?? false
-  const { data: tasks = [], isLoading: tasksLoading } = useTasks()
+  const { data: tasks = [], isLoading: tasksLoading, isError: tasksError, error: tasksErr } = useTasks()
   const { data: projects = [], isLoading: projectsLoading } = useProjects()
   const { data: ideas = [] } = useIdeas()
   const { data: activity = [] } = useActivity(100)
@@ -314,29 +314,21 @@ export default function AnalyticsPage() {
 
   if (tasksLoading || projectsLoading) return <CardSkeleton count={6} />
 
-  if (tasks.length === 0 && projects.length === 0) {
-    return (
-      <div>
-        <PageHeader
-          icon={<BarChart3 size={20} />}
-          title="Lab Analytics"
-          subtitle="Track lab performance and trends"
-        />
-        <EmptyState
-          icon={<BarChart3 size={40} />}
-          title="No analytics data yet"
-          subtitle="Analytics appear as projects and tasks are tracked."
-        />
-      </div>
-    )
-  }
+  // P6-C10 / Fix 4: QueryState consolidates the auth-vs-generic-error block and
+  // the empty-state block that were previously duplicated across early returns.
+  const tasksErrStatus = (tasksErr as (Error & { status?: number }) | null)?.status
+  const pageSubtitle = tasksError
+    ? 'Track lab performance and trends'
+    : (tasks.length === 0 && projects.length === 0)
+      ? 'Track lab performance and trends'
+      : `${projects.length} projects, ${pendingTasks} active tasks`
 
   return (
     <div>
       <PageHeader
         icon={<BarChart3 size={20} />}
         title="Lab Analytics"
-        subtitle={`${projects.length} projects, ${pendingTasks} active tasks`}
+        subtitle={pageSubtitle}
         actions={isPi ? (
           <div className="flex items-center gap-2">
             <button
@@ -358,6 +350,16 @@ export default function AnalyticsPage() {
           </div>
         ) : undefined}
       />
+
+      <QueryState
+        isLoading={false}
+        isError={tasksError}
+        isEmpty={tasks.length === 0 && projects.length === 0}
+        errorStatus={tasksErrStatus}
+        emptyIcon={<BarChart3 size={40} />}
+        emptyTitle="No analytics data yet"
+        emptySubtitle="Analytics appear as projects and tasks are tracked."
+      >
 
       {/* Week Navigator + Range Selector */}
       <div className="mt-5 flex items-center gap-3 flex-wrap">
@@ -775,6 +777,7 @@ export default function AnalyticsPage() {
         </div>
       )}
 
+      </QueryState>
     </div>
   )
 }

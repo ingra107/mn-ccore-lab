@@ -1,46 +1,52 @@
 {
-  "version": 2,
-  "created_at": "2026-04-15",
+  "version": 3,
+  "created_at": "2026-05-27",
+  "note": "v3: fixed enums (category/stage/status to canonical), slugs (nick→nick-ingraham, nate→nate-mesfin), added team_members fixture list",
   "prefix": "test_delete_",
   "tag": "hub_sprint_2026-04-15",
+  "team_members": [
+    {"slug": "nick-ingraham", "name": "Nick Ingraham", "role": "pi", "email": "ingra107@umn.edu", "member_type": "faculty", "is_pi": true},
+    {"slug": "nate-mesfin", "name": "Nate Mesfin", "role": "fellow", "email": "nate@umn.edu", "member_type": "fellow", "is_pi": false},
+    {"slug": "claude-ai", "name": "Hermes", "role": "ai", "email": "claude-ai@umn.edu", "member_type": "ai", "is_pi": false}
+  ],
   "projects": [
-    {"title": "test_delete_Sepsis Outcomes Registry", "slug": "test_delete_sepsis_outcomes_reg", "category": "lab", "stage": "Data Collection", "pi": "nick", "description": "test_delete_ dogfood project — sepsis registry baseline"},
-    {"title": "test_delete_ARDS Biomarker Pilot", "slug": "test_delete_ards_biomarker_pilot", "category": "clif", "stage": "Analysis", "pi": "nick", "description": "test_delete_ dogfood project — biomarker pilot"},
-    {"title": "test_delete_Mentee Grant Prep", "slug": "test_delete_mentee_grant_prep", "category": "mentee", "stage": "Writing", "pi": "nate", "description": "test_delete_ dogfood project — mentee K99 prep"},
-    {"title": "test_delete_Ventilator Practice Variation", "slug": "test_delete_vent_practice_var", "category": "clif", "stage": "Review", "pi": "nick", "description": "test_delete_ dogfood project — ventilator variation manuscript (Manuscripts page shows via stage filter)"},
-    {"title": "test_delete_Coordinator Workflow SOP", "slug": "test_delete_coord_workflow_sop", "category": "lab", "stage": "Idea", "pi": "nick", "description": "test_delete_ dogfood project — coordinator SOP"}
+    {"title": "test_delete_Sepsis Outcomes Registry", "slug": "test_delete_sepsis_outcomes_reg", "category": "MNCCORE", "stage": "data_collection", "pi": "nick-ingraham", "description": "test_delete_ dogfood project — sepsis registry baseline"},
+    {"title": "test_delete_ARDS Biomarker Pilot", "slug": "test_delete_ards_biomarker_pilot", "category": "CLIF", "stage": "data_analysis", "pi": "nick-ingraham", "description": "test_delete_ dogfood project — biomarker pilot"},
+    {"title": "test_delete_Mentee Grant Prep", "slug": "test_delete_mentee_grant_prep", "category": "MNCCORE", "stage": "writing", "pi": "nate-mesfin", "description": "test_delete_ dogfood project — mentee K99 prep"},
+    {"title": "test_delete_Ventilator Practice Variation", "slug": "test_delete_vent_practice_var", "category": "CLIF", "stage": "revisions", "pi": "nick-ingraham", "description": "test_delete_ dogfood project — ventilator variation manuscript (Manuscripts page shows via stage filter)"},
+    {"title": "test_delete_Coordinator Workflow SOP", "slug": "test_delete_coord_workflow_sop", "category": "MNCCORE", "stage": "idea", "pi": "nick-ingraham", "description": "test_delete_ dogfood project — coordinator SOP"}
   ],
   "tasks": [
-    {"description": "test_delete_Draft methods section", "project_slug": "test_delete_ards_biomarker_pilot", "status": "in_progress", "priority": "high", "assignee": "nick", "due_in_days": 3},
-    {"description": "test_delete_Review CONSORT diagram", "project_slug": "test_delete_sepsis_outcomes_reg", "status": "todo", "priority": "medium", "assignee": "nate", "due_in_days": 7},
-    {"description": "test_delete_Upload IRB amendment", "project_slug": "test_delete_sepsis_outcomes_reg", "status": "todo", "priority": "urgent", "assignee": "nick", "due_in_days": 1},
-    {"description": "test_delete_Run power analysis", "project_slug": "test_delete_ards_biomarker_pilot", "status": "waiting_external", "priority": "high", "assignee": "nick", "due_in_days": 5},
-    {"description": "test_delete_Schedule T32 interview", "project_slug": "test_delete_mentee_grant_prep", "status": "todo", "priority": "medium", "assignee": "nate", "due_in_days": 14},
-    {"description": "test_delete_Export SOFA analysis", "project_slug": "test_delete_vent_practice_var", "status": "blocked", "priority": "high", "assignee": "nick", "due_in_days": null},
-    {"description": "test_delete_Draft aim 2 specifics", "project_slug": "test_delete_mentee_grant_prep", "status": "todo", "priority": "urgent", "assignee": "nate", "due_in_days": 2},
-    {"description": "test_delete_Finalize figure 1", "project_slug": "test_delete_ards_biomarker_pilot", "status": "in_progress", "priority": "medium", "assignee": "nick", "due_in_days": 4, "subtasks": ["test_delete_Subtask: draft base figure", "test_delete_Subtask: add error bars", "test_delete_Subtask: export SVG"]},
-    {"description": "test_delete_Update cohort flowchart", "project_slug": "test_delete_sepsis_outcomes_reg", "status": "in_progress", "priority": "medium", "assignee": "nate", "due_in_days": 6, "subtasks": ["test_delete_Subtask: pull new N", "test_delete_Subtask: revise boxes"]},
-    {"description": "test_delete_Send revision letter draft", "project_slug": "test_delete_vent_practice_var", "status": "waiting_external", "priority": "high", "assignee": "nick", "due_in_days": 10},
-    {"description": "test_delete_Reconcile author list", "project_slug": "test_delete_vent_practice_var", "status": "todo", "priority": "low", "assignee": "nate", "due_in_days": 21},
-    {"description": "test_delete_Draft cover letter", "project_slug": "test_delete_ards_biomarker_pilot", "status": "todo", "priority": "medium", "assignee": "nick", "due_in_days": 9},
-    {"description": "test_delete_Review resident submissions", "project_slug": "test_delete_coord_workflow_sop", "status": "todo", "priority": "low", "assignee": "nick", "due_in_days": 30},
-    {"description": "test_delete_Annotate meeting transcript", "project_slug": "test_delete_sepsis_outcomes_reg", "status": "todo", "priority": "low", "assignee": "nate", "due_in_days": 14},
-    {"description": "test_delete_Update GitHub README", "project_slug": "test_delete_ards_biomarker_pilot", "status": "done", "priority": "low", "assignee": "nick", "due_in_days": -2},
-    {"description": "test_delete_Meet with statistician", "project_slug": "test_delete_vent_practice_var", "status": "done", "priority": "high", "assignee": "nick", "due_in_days": -1},
-    {"description": "test_delete_Reserve conference room", "project_slug": "test_delete_coord_workflow_sop", "status": "done", "priority": "low", "assignee": "nate", "due_in_days": -5},
-    {"description": "test_delete_Send mentee draft feedback", "project_slug": "test_delete_mentee_grant_prep", "status": "done", "priority": "medium", "assignee": "nick", "due_in_days": -3},
-    {"description": "test_delete_Compile pilot funding report", "project_slug": "test_delete_ards_biomarker_pilot", "status": "todo", "priority": "high", "assignee": "nick", "due_in_days": 12},
-    {"description": "test_delete_Clean CITI training records", "project_slug": "test_delete_coord_workflow_sop", "status": "in_progress", "priority": "medium", "assignee": "nate", "due_in_days": 8},
-    {"description": "test_delete_Refresh Gantt chart", "project_slug": "test_delete_vent_practice_var", "status": "todo", "priority": "medium", "assignee": "nick", "due_in_days": 6},
-    {"description": "test_delete_Archive old drafts", "project_slug": "test_delete_ards_biomarker_pilot", "status": "todo", "priority": "low", "assignee": "nick", "due_in_days": 20},
-    {"description": "test_delete_Update CV sections", "project_slug": "test_delete_mentee_grant_prep", "status": "todo", "priority": "low", "assignee": "nate", "due_in_days": 25},
-    {"description": "test_delete_Schedule biostats consult", "project_slug": "test_delete_sepsis_outcomes_reg", "status": "todo", "priority": "medium", "assignee": "nick", "due_in_days": 4},
-    {"description": "test_delete_Draft specific aims v2", "project_slug": "test_delete_mentee_grant_prep", "status": "in_progress", "priority": "urgent", "assignee": "nate", "due_in_days": 1},
-    {"description": "test_delete_Check data dictionary", "project_slug": "test_delete_vent_practice_var", "status": "todo", "priority": "medium", "assignee": "nick", "due_in_days": 7},
-    {"description": "test_delete_Upload variables spec", "project_slug": "test_delete_ards_biomarker_pilot", "status": "todo", "priority": "medium", "assignee": "nick", "due_in_days": 11},
-    {"description": "test_delete_Review previous aims", "project_slug": "test_delete_mentee_grant_prep", "status": "done", "priority": "medium", "assignee": "nate", "due_in_days": -4},
-    {"description": "test_delete_Run exploratory plots", "project_slug": "test_delete_ards_biomarker_pilot", "status": "in_progress", "priority": "medium", "assignee": "nick", "due_in_days": 3},
-    {"description": "test_delete_Draft scholarly project outline", "project_slug": "test_delete_mentee_grant_prep", "status": "todo", "priority": "high", "assignee": "nate", "due_in_days": 5}
+    {"description": "test_delete_Draft methods section", "project_slug": "test_delete_ards_biomarker_pilot", "status": "in_progress", "priority": "high", "assignee": "nick-ingraham", "due_in_days": 3},
+    {"description": "test_delete_Review CONSORT diagram", "project_slug": "test_delete_sepsis_outcomes_reg", "status": "todo", "priority": "medium", "assignee": "nate-mesfin", "due_in_days": 7},
+    {"description": "test_delete_Upload IRB amendment", "project_slug": "test_delete_sepsis_outcomes_reg", "status": "todo", "priority": "urgent", "assignee": "nick-ingraham", "due_in_days": 1},
+    {"description": "test_delete_Run power analysis", "project_slug": "test_delete_ards_biomarker_pilot", "status": "waiting_external", "priority": "high", "assignee": "nick-ingraham", "due_in_days": 5},
+    {"description": "test_delete_Schedule T32 interview", "project_slug": "test_delete_mentee_grant_prep", "status": "todo", "priority": "medium", "assignee": "nate-mesfin", "due_in_days": 14},
+    {"description": "test_delete_Export SOFA analysis", "project_slug": "test_delete_vent_practice_var", "status": "blocked", "priority": "high", "assignee": "nick-ingraham", "due_in_days": null},
+    {"description": "test_delete_Draft aim 2 specifics", "project_slug": "test_delete_mentee_grant_prep", "status": "todo", "priority": "urgent", "assignee": "nate-mesfin", "due_in_days": 2},
+    {"description": "test_delete_Finalize figure 1", "project_slug": "test_delete_ards_biomarker_pilot", "status": "in_progress", "priority": "medium", "assignee": "nick-ingraham", "due_in_days": 4, "subtasks": ["test_delete_Subtask: draft base figure", "test_delete_Subtask: add error bars", "test_delete_Subtask: export SVG"]},
+    {"description": "test_delete_Update cohort flowchart", "project_slug": "test_delete_sepsis_outcomes_reg", "status": "in_progress", "priority": "medium", "assignee": "nate-mesfin", "due_in_days": 6, "subtasks": ["test_delete_Subtask: pull new N", "test_delete_Subtask: revise boxes"]},
+    {"description": "test_delete_Send revision letter draft", "project_slug": "test_delete_vent_practice_var", "status": "waiting_external", "priority": "high", "assignee": "nick-ingraham", "due_in_days": 10},
+    {"description": "test_delete_Reconcile author list", "project_slug": "test_delete_vent_practice_var", "status": "todo", "priority": "low", "assignee": "nate-mesfin", "due_in_days": 21},
+    {"description": "test_delete_Draft cover letter", "project_slug": "test_delete_ards_biomarker_pilot", "status": "todo", "priority": "medium", "assignee": "nick-ingraham", "due_in_days": 9},
+    {"description": "test_delete_Review resident submissions", "project_slug": "test_delete_coord_workflow_sop", "status": "todo", "priority": "low", "assignee": "nick-ingraham", "due_in_days": 30},
+    {"description": "test_delete_Annotate meeting transcript", "project_slug": "test_delete_sepsis_outcomes_reg", "status": "todo", "priority": "low", "assignee": "nate-mesfin", "due_in_days": 14},
+    {"description": "test_delete_Update GitHub README", "project_slug": "test_delete_ards_biomarker_pilot", "status": "done", "priority": "low", "assignee": "nick-ingraham", "due_in_days": -2},
+    {"description": "test_delete_Meet with statistician", "project_slug": "test_delete_vent_practice_var", "status": "done", "priority": "high", "assignee": "nick-ingraham", "due_in_days": -1},
+    {"description": "test_delete_Reserve conference room", "project_slug": "test_delete_coord_workflow_sop", "status": "done", "priority": "low", "assignee": "nate-mesfin", "due_in_days": -5},
+    {"description": "test_delete_Send mentee draft feedback", "project_slug": "test_delete_mentee_grant_prep", "status": "done", "priority": "medium", "assignee": "nick-ingraham", "due_in_days": -3},
+    {"description": "test_delete_Compile pilot funding report", "project_slug": "test_delete_ards_biomarker_pilot", "status": "todo", "priority": "high", "assignee": "nick-ingraham", "due_in_days": 12},
+    {"description": "test_delete_Clean CITI training records", "project_slug": "test_delete_coord_workflow_sop", "status": "in_progress", "priority": "medium", "assignee": "nate-mesfin", "due_in_days": 8},
+    {"description": "test_delete_Refresh Gantt chart", "project_slug": "test_delete_vent_practice_var", "status": "todo", "priority": "medium", "assignee": "nick-ingraham", "due_in_days": 6},
+    {"description": "test_delete_Archive old drafts", "project_slug": "test_delete_ards_biomarker_pilot", "status": "todo", "priority": "low", "assignee": "nick-ingraham", "due_in_days": 20},
+    {"description": "test_delete_Update CV sections", "project_slug": "test_delete_mentee_grant_prep", "status": "todo", "priority": "low", "assignee": "nate-mesfin", "due_in_days": 25},
+    {"description": "test_delete_Schedule biostats consult", "project_slug": "test_delete_sepsis_outcomes_reg", "status": "todo", "priority": "medium", "assignee": "nick-ingraham", "due_in_days": 4},
+    {"description": "test_delete_Draft specific aims v2", "project_slug": "test_delete_mentee_grant_prep", "status": "in_progress", "priority": "urgent", "assignee": "nate-mesfin", "due_in_days": 1},
+    {"description": "test_delete_Check data dictionary", "project_slug": "test_delete_vent_practice_var", "status": "todo", "priority": "medium", "assignee": "nick-ingraham", "due_in_days": 7},
+    {"description": "test_delete_Upload variables spec", "project_slug": "test_delete_ards_biomarker_pilot", "status": "todo", "priority": "medium", "assignee": "nick-ingraham", "due_in_days": 11},
+    {"description": "test_delete_Review previous aims", "project_slug": "test_delete_mentee_grant_prep", "status": "done", "priority": "medium", "assignee": "nate-mesfin", "due_in_days": -4},
+    {"description": "test_delete_Run exploratory plots", "project_slug": "test_delete_ards_biomarker_pilot", "status": "in_progress", "priority": "medium", "assignee": "nick-ingraham", "due_in_days": 3},
+    {"description": "test_delete_Draft scholarly project outline", "project_slug": "test_delete_mentee_grant_prep", "status": "todo", "priority": "high", "assignee": "nate-mesfin", "due_in_days": 5}
   ],
   "ideas": [
     {"title": "test_delete_PI mentor match program", "description": "test_delete_ — match junior investigators with senior mentors", "research_area": "culture"},
@@ -62,29 +68,29 @@
     {"title": "test_delete_Defer R13 Digest Model B", "rationale": "test_delete_ — ~8h build, stretch only", "project_slug": null, "tags": ["test_delete_", "scope"]}
   ],
   "meetings": [
-    {"title": "test_delete_MNCCORE Biweekly dogfood", "date_in_days": 6, "type": "biweekly", "attendees": ["nick", "nate"], "action_items": [
-      {"description": "test_delete_Circulate agenda", "assignee": "nick", "done": false, "due_in_days": 2},
-      {"description": "test_delete_Prepare mentee updates", "assignee": "nate", "done": false, "due_in_days": 5},
-      {"description": "test_delete_Confirm room booking", "assignee": "nick", "done": true, "due_in_days": 1}
+    {"title": "test_delete_MNCCORE Biweekly dogfood", "date_in_days": 6, "type": "biweekly", "attendees": ["nick-ingraham", "nate-mesfin"], "action_items": [
+      {"description": "test_delete_Circulate agenda", "assignee": "nick-ingraham", "done": false, "due_in_days": 2},
+      {"description": "test_delete_Prepare mentee updates", "assignee": "nate-mesfin", "done": false, "due_in_days": 5},
+      {"description": "test_delete_Confirm room booking", "assignee": "nick-ingraham", "done": true, "due_in_days": 1}
     ]},
-    {"title": "test_delete_Grant Strategy Session dogfood", "date_in_days": 3, "type": "ad_hoc", "attendees": ["nick", "nate"], "action_items": [
-      {"description": "test_delete_Draft aim 1 outline", "assignee": "nate", "done": false, "due_in_days": 3},
-      {"description": "test_delete_Review K99 eligibility", "assignee": "nick", "done": false, "due_in_days": 3},
-      {"description": "test_delete_Collect pilot data figures", "assignee": "nick", "done": false, "due_in_days": 5}
+    {"title": "test_delete_Grant Strategy Session dogfood", "date_in_days": 3, "type": "ad_hoc", "attendees": ["nick-ingraham", "nate-mesfin"], "action_items": [
+      {"description": "test_delete_Draft aim 1 outline", "assignee": "nate-mesfin", "done": false, "due_in_days": 3},
+      {"description": "test_delete_Review K99 eligibility", "assignee": "nick-ingraham", "done": false, "due_in_days": 3},
+      {"description": "test_delete_Collect pilot data figures", "assignee": "nick-ingraham", "done": false, "due_in_days": 5}
     ]},
-    {"title": "test_delete_Lab Ops Standup dogfood", "date_in_days": -2, "type": "standup", "attendees": ["nick", "nate"], "action_items": [
-      {"description": "test_delete_Update calendar invites", "assignee": "nate", "done": true, "due_in_days": -1},
-      {"description": "test_delete_Fix pomodoro server timezone", "assignee": "nick", "done": true, "due_in_days": -1},
-      {"description": "test_delete_Order new badge holders", "assignee": "nate", "done": false, "due_in_days": 4},
-      {"description": "test_delete_Confirm IRB training renewals", "assignee": "nick", "done": false, "due_in_days": 5}
+    {"title": "test_delete_Lab Ops Standup dogfood", "date_in_days": -2, "type": "standup", "attendees": ["nick-ingraham", "nate-mesfin"], "action_items": [
+      {"description": "test_delete_Update calendar invites", "assignee": "nate-mesfin", "done": true, "due_in_days": -1},
+      {"description": "test_delete_Fix pomodoro server timezone", "assignee": "nick-ingraham", "done": true, "due_in_days": -1},
+      {"description": "test_delete_Order new badge holders", "assignee": "nate-mesfin", "done": false, "due_in_days": 4},
+      {"description": "test_delete_Confirm IRB training renewals", "assignee": "nick-ingraham", "done": false, "due_in_days": 5}
     ]}
   ],
   "publications": [
-    {"title": "test_delete_Long-term cognitive outcomes after ARDS", "year": 2025, "journal": "Chest", "authors": ["nick", "nate"], "status": "Published"},
-    {"title": "test_delete_Ventilator weaning outcomes in obese patients", "year": 2024, "journal": "AJRCCM", "authors": ["nick"], "status": "Published"},
-    {"title": "test_delete_Sepsis-3 vs SOFA trajectories", "year": 2025, "journal": "Critical Care Medicine", "authors": ["nick", "nate"], "status": "Published"},
-    {"title": "test_delete_Early mobility and delirium prevention", "year": 2023, "journal": "JAMA", "authors": ["nate"], "status": "Published"},
-    {"title": "test_delete_Outcome prediction using CLIF", "year": 2025, "journal": "Intensive Care Medicine", "authors": ["nick", "nate"], "status": "Published"}
+    {"title": "test_delete_Long-term cognitive outcomes after ARDS", "year": 2025, "journal": "Chest", "authors": ["nick-ingraham", "nate-mesfin"], "status": "published"},
+    {"title": "test_delete_Ventilator weaning outcomes in obese patients", "year": 2024, "journal": "AJRCCM", "authors": ["nick-ingraham"], "status": "published"},
+    {"title": "test_delete_Sepsis-3 vs SOFA trajectories", "year": 2025, "journal": "Critical Care Medicine", "authors": ["nick-ingraham", "nate-mesfin"], "status": "published"},
+    {"title": "test_delete_Early mobility and delirium prevention", "year": 2023, "journal": "JAMA", "authors": ["nate-mesfin"], "status": "published"},
+    {"title": "test_delete_Outcome prediction using CLIF", "year": 2025, "journal": "Intensive Care Medicine", "authors": ["nick-ingraham", "nate-mesfin"], "status": "published"}
   ],
   "task_comments": [
     {"task_description": "test_delete_Draft methods section", "content": "test_delete_Comment: consider adding sensitivity analysis for missing data"},
@@ -105,7 +111,7 @@
   },
   "direct_sql_rows": {
     "grants": [
-      {"title": "test_delete_K99 Fake Exploratory Award", "mechanism": "K99", "pi": "nate", "agency": "NHLBI", "start_date": "2027-01-01", "end_date": "2032-12-31", "proposed": 1, "status": "in_preparation"}
+      {"title": "test_delete_K99 Fake Exploratory Award", "mechanism": "K99", "pi": "nate-mesfin", "agency": "NHLBI", "start_date": "2027-01-01", "end_date": "2032-12-31", "proposed": 1, "status": "in_preparation"}
     ],
     "milestones": [
       {"title": "test_delete_ARDS Biomarker pilot data freeze", "project_slug": "test_delete_ards_biomarker_pilot", "target_days": 14, "status": "pending"},

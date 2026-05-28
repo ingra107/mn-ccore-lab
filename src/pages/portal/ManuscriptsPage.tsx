@@ -54,18 +54,6 @@ const STAGE_LABELS: Record<typeof STAGES[number], string> = {
 }
 const STAGE_ORDER: Record<string, number> = Object.fromEntries(STAGES.map((s, i) => [s, i]))
 
-// M-06: stage-progress dots use --stage-fill-* tokens (per Rule 41) so the
-// current-stage dot stays AA-stable across both themes. --teal flips to a
-// light dark-mode variant where it would fail contrast against row-hover bg.
-const STAGE_FILL_TOKEN: Record<typeof STAGES[number], string> = {
-  idea: 'var(--stage-fill-idea)',
-  data_collection: 'var(--stage-fill-data-collection)',
-  analysis: 'var(--stage-fill-analysis)',
-  writing: 'var(--stage-fill-writing)',
-  review: 'var(--stage-fill-review)',
-  revisions: 'var(--stage-fill-revisions)',
-  published: 'var(--stage-fill-published)',
-}
 
 function daysInStage(project: Project): number {
   const dateStr = project.stage_entered_at || project.updated_at || project.lastActivity
@@ -522,65 +510,6 @@ export default function ManuscriptsPage() {
                                 {tc}
                               </span>
                             )}
-                            {/* Stage progress dots: past=ink-muted, current=stage-fill (M-06),
-                                future=outlined transparent. M-07: each dot is a button
-                                that advances the stage to that target with optimistic
-                                update + 5s undo. */}
-                            <div className="flex items-center gap-0.5 ml-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
-                              {STAGES.map((s, i) => {
-                                const currentIdx = STAGES.indexOf((project.stage as typeof STAGES[number]) || 'idea')
-                                const isCurrent = i === currentIdx
-                                const isPast = i < currentIdx
-                                return (
-                                  <button
-                                    key={s}
-                                    type="button"
-                                    aria-label={`Advance ${project.title} to ${STAGE_LABELS[s]}`}
-                                    aria-current={isCurrent ? 'step' : undefined}
-                                    onClick={(e) => {
-                                      e.preventDefault()
-                                      e.stopPropagation()
-                                      if (isCurrent) return
-                                      const prevStage = project.stage
-                                      const next = toApiStage(s)
-                                      inlineUpdate.mutate({ slug: project.slug, fields: { stage: next } })
-                                      showUndo(`stage → ${STAGE_LABELS[s]}`, () =>
-                                        inlineUpdate.mutate({ slug: project.slug, fields: { stage: prevStage } })
-                                      )
-                                    }}
-                                    style={{
-                                      width: 11, height: 11,
-                                      padding: 3,
-                                      display: 'inline-flex',
-                                      alignItems: 'center',
-                                      justifyContent: 'center',
-                                      borderRadius: 'var(--radius-circle)',
-                                      background: 'transparent',
-                                      border: 'none',
-                                      cursor: isCurrent ? 'default' : 'pointer',
-                                    }}
-                                    title={isCurrent ? `${STAGE_LABELS[s]} (current stage)` : `Advance to ${STAGE_LABELS[s]}`}
-                                  >
-                                    <span
-                                      aria-hidden="true"
-                                      style={{
-                                        width: 5, height: 5, borderRadius: 'var(--radius-circle)',
-                                        background: isPast
-                                          ? 'var(--ink-muted)'
-                                          : isCurrent
-                                            ? STAGE_FILL_TOKEN[s]
-                                            : 'transparent',
-                                        border: !isCurrent && !isPast ? '1px solid var(--border-subtle)' : 'none',
-                                        opacity: !isCurrent && !isPast ? 0.85 : 1,
-                                        transition: 'background 200ms',
-                                        boxSizing: 'border-box',
-                                        display: 'block',
-                                      }}
-                                    />
-                                  </button>
-                                )
-                              })}
-                            </div>
                           </div>
 
                           {/* Status (inline editable) — wrapped to stop click bubbling to parent <Link>. M-01. */}

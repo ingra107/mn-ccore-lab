@@ -10,6 +10,7 @@ import {
   INK, INK_MUTED, INK_DIM, PANEL_BG,
   PRIORITY_COLOR, STATUS_COLOR,
 } from '../constants'
+import { withAlpha } from '../../../lib/taskGrouping'
 
 interface BulkBarProps {
   count: number
@@ -48,7 +49,7 @@ export function BulkBar({ count, onClear, onPlanToday, onSnoozeDay, onComplete, 
     <button
       key={label}
       onClick={onClick}
-      style={{ padding: '3px 9px', fontSize: 11, border: `1px solid ${active ? ACCENT_TEAL : accent ? accent + '40' : 'rgba(255,255,255,0.12)'}`, borderRadius: 4, background: active ? ACCENT_TEAL + '20' : accent ? accent + '15' : 'transparent', color: active ? ACCENT_TEAL : accent ?? INK, fontFamily: 'inherit', cursor: 'pointer' }}
+      style={{ padding: '3px 9px', fontSize: 11, border: `1px solid ${active ? ACCENT_TEAL : accent ? withAlpha(accent, 25) : 'rgba(255,255,255,0.12)'}`, borderRadius: 4, background: active ? withAlpha(ACCENT_TEAL, 13) : accent ? withAlpha(accent, 8) : 'transparent', color: active ? ACCENT_TEAL : accent ?? INK, fontFamily: 'inherit', cursor: 'pointer' }}
     >{label}</button>
   )
 

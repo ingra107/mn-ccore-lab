@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, parseMentions, actorSlug, isPiRequest, resolveActor } from '../helpers';
+import { json, error, generateId, logActivity, parseMentions, actorSlug, isPiRequest, resolveActor, assertProjectVisible } from '../helpers';
 import { ctToday } from '../lib/ct-date';
 import { nowInstant } from '../lib/time';
 import { applyMutation } from './mutations';
@@ -276,7 +276,10 @@ export async function handleGetProjects(url: URL, env: Env, user: AuthUser, apiK
 }
 
 // GET /api/projects/:id/comments
-export async function handleGetComments(projectId: string, env: Env): Promise<Response> {
+export async function handleGetComments(projectId: string, request: Request, env: Env): Promise<Response> {
+  // Phase 1b-B: block non-PI callers from reading PB-category project comments.
+  const block = await assertProjectVisible(request, env, projectId);
+  if (block) return block;
   // URL param may be slug or id. Resolve first so we can match comments by the
   // canonical project.id, while ALSO accepting any legacy rows that were
   // stored against the slug (older writes did so).
@@ -295,7 +298,10 @@ export async function handleGetComments(projectId: string, env: Env): Promise<Re
 }
 
 // GET /api/projects/:slug/updates
-export async function handleGetProjectUpdates(slug: string, env: Env): Promise<Response> {
+export async function handleGetProjectUpdates(slug: string, request: Request, env: Env): Promise<Response> {
+  // Phase 1b-B: block non-PI callers from reading PB-category project updates.
+  const block = await assertProjectVisible(request, env, slug);
+  if (block) return block;
   const result = await env.DB.prepare(
     'SELECT * FROM project_updates WHERE project_id = ? ORDER BY created_at DESC'
   ).bind(slug).all();
@@ -444,19 +450,24 @@ export async function handleProjectHealth(env: Env, canSeePb = false): Promise<R
 // can paginate forward and never miss the oldest rows; when no `since`
 // (UI-style "give me 20 newest"), keep DESC for back-compat. Brain.db
 // pull_project_updates now paginates until response_count < limit.
-export async function handleRecentUpdates(url: URL, env: Env): Promise<Response> {
+export async function handleRecentUpdates(url: URL, env: Env, canSeePb = false): Promise<Response> {
   const limit = Math.min(parseInt(url.searchParams.get('limit') || '20', 10), 500);
   const since = url.searchParams.get('since');
+  // Phase 1b-B: mirror the category filter from search/activity — exclude PB
+  // project updates for non-PI callers. Matches by project_id (id OR slug).
+  const pbExclusion = canSeePb ? '' : ` AND project_id NOT IN (
+    SELECT id FROM projects WHERE category = 'Peripheral Brain'
+    UNION SELECT slug FROM projects WHERE category = 'Peripheral Brain')`;
   let query = 'SELECT * FROM project_updates';
   const binds: unknown[] = [];
   if (since) {
-    query += ' WHERE created_at > ?';
+    query += ` WHERE created_at > ?${pbExclusion}`;
     binds.push(since);
     // Sync mode: ASC + tiebreak on id ensures the client can resume
     // exactly from the last seen (created_at, id) pair without overlap or skip.
     query += ' ORDER BY created_at ASC, id ASC LIMIT ?';
   } else {
-    query += ' ORDER BY created_at DESC LIMIT ?';
+    query += ` WHERE 1=1${pbExclusion} ORDER BY created_at DESC LIMIT ?`;
   }
   binds.push(limit);
   const result = await env.DB.prepare(query).bind(...binds).all();
@@ -544,6 +555,17 @@ export async function handleUpdateProject(
 
   if (!existingCheck) {
     // Project doesn't exist — create it (upsert; preserves legacy behavior).
+    // Run enum guards on the incoming values before INSERT so non-canonical
+    // status/stage/category are rejected with 400 (mirrors the UPDATE branch).
+    const upsertStatus = (body.status as string) || 'active';
+    const upsertStage = (body.stage as string) || 'idea';
+    const upsertCategory = (body.category as string) || 'MNCCORE';
+    for (const [key, val] of [['status', upsertStatus], ['stage', upsertStage], ['category', upsertCategory]] as [string, string][]) {
+      const guard = PROJECT_ENUM_GUARDS[key];
+      if (guard && !guard.has(val)) {
+        return error(`Invalid ${key}: "${val}". Must be one of: ${[...guard].join(', ')}`, 400);
+      }
+    }
     const upsertSlug = (body.slug as string) || id;
     const newId = id.length === 32 ? id : generateId('project');
     const upsertMut = await applyMutation(env, {
@@ -552,10 +574,10 @@ export async function handleUpdateProject(
       op: 'insert',
       payload: {
         title: (body.title as string) || 'Untitled',
-        status: (body.status as string) || 'active',
+        status: upsertStatus,
         description: (body.description as string) || '',
-        category: (body.category as string) || 'MNCCORE',
-        stage: (body.stage as string) || 'idea',
+        category: upsertCategory,
+        stage: upsertStage,
         pi: (body.pi as string) || 'nick',
         slug: upsertSlug,
       },
@@ -583,9 +605,14 @@ export async function handleUpdateProject(
     });
     if (updateProjMut.status !== 'accepted' && updateProjMut.status !== 'merged_clean') {
       // Return current server state so the caller can reconcile (mirrors old LWW guard behavior).
+      // Return 409 (not 200) so fetchApi throws ApiError and the optimistic update
+      // is rolled back. Pre-fix returned 200 which the client treated as success,
+      // causing a silent revert without surfacing the conflict to the caller.
+      // Note: /api/mutations batch per-row-status protocol is unaffected — it always
+      // returns 200 with per-item status fields (separate code path).
       const current = await env.DB.prepare('SELECT * FROM projects WHERE id = ?').bind(existingCheck.id).first();
       return json({ data: current, rejected: updateProjMut.status,
-                    message: `mutation ${updateProjMut.status}: ${updateProjMut.reason ?? ''}` });
+                    message: `mutation ${updateProjMut.status}: ${updateProjMut.reason ?? ''}` }, 409);
     }
 
     // D22 (2026-05-22): typed activity events for meaningful field transitions.
@@ -638,6 +665,17 @@ export async function handleDeleteProject(
     return error('Project not found', 404);
   }
 
+  // Check idempotency BEFORE cascade: already soft-deleted?
+  // Pre-fix this ran AFTER the cascade, so a retry would re-NULL re-associated
+  // tasks. Now the soft-delete check short-circuits before any cascade runs.
+  const projectRow = await env.DB.prepare(
+    'SELECT deleted_at FROM projects WHERE id = ?'
+  ).bind(existing.id).first<{ deleted_at: string | null }>();
+  if (projectRow?.deleted_at) {
+    await logActivity(env, 'project_delete', `Deleted project (idempotent): ${existing.title}`, user.email, existing.id, 'project');
+    return json({ data: { deleted: existing.id, slug: existing.slug, title: existing.title, idempotent: true } });
+  }
+
   // Cascade-clean related rows to avoid FK-like errors or orphaned refs.
   // `comments` and `project_updates` hold a free-form project_id (not an
   // enforced FK), but leaving them behind means stale joins forever.
@@ -671,15 +709,6 @@ export async function handleDeleteProject(
     ]);
   } catch (e) {
     console.error('project cascade-clean failed:', e);
-  }
-
-  // Check idempotency: already soft-deleted?
-  const projectRow = await env.DB.prepare(
-    'SELECT deleted_at FROM projects WHERE id = ?'
-  ).bind(existing.id).first<{ deleted_at: string | null }>();
-  if (projectRow?.deleted_at) {
-    await logActivity(env, 'project_delete', `Deleted project (idempotent): ${existing.title}`, user.email, existing.id, 'project');
-    return json({ data: { deleted: existing.id, slug: existing.slug, title: existing.title, idempotent: true } });
   }
 
   // Soft-delete via applyMutation — stamps last_mutation_id + records in processed_mutations.
@@ -787,7 +816,15 @@ export async function handleAddComment(
     return error('Comment content is required', 400);
   }
 
+  // Phase 1b-extended: block non-PI callers from posting comments on a PB-category project.
+  // assertProjectVisible fails-closed if the project is unknown, so we don't need a
+  // separate existence check for unauthorized callers.
+  const block = await assertProjectVisible(request, env, projectId);
+  if (block) return block;
+
   // Verify project exists (accept either id or slug — URL param can be either).
+  // Reached only when the visibility gate allows it; this lookup still 404s for
+  // PI callers on a genuinely unknown project.
   const project = await env.DB.prepare('SELECT id, title, slug FROM projects WHERE id = ? OR slug = ?').bind(projectId, projectId).first<{ id: string; title: string; slug: string | null }>();
   if (!project) {
     return error('Project not found', 404);
@@ -845,9 +882,11 @@ export async function handleAddComment(
     console.error('Failed to create mention notifications for comment:', e);
   }
 
-  // Check for @hermes/@claude mention → create AI request + placeholder comment
+  // Check for @hermes/@claude mention → create AI request + placeholder comment.
+  // Pass project.id (canonical UUID) not the URL param (which may be a slug) so
+  // the comments.project_id FK and ai_requests.project_slug both resolve correctly.
   try {
-    await handleClaudeMention(body.content, 'project_comment', commentId, projectId, user, env);
+    await handleClaudeMention(body.content, 'project_comment', commentId, project.id, user, env);
   } catch (e) {
     console.error('Failed to create AI request for @hermes mention:', e);
   }
@@ -859,6 +898,10 @@ export async function handleAddComment(
 export async function handlePostProjectUpdate(slug: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
   const body = await request.json() as { content: string; update_type?: string; author?: string };
   if (!body.content) return error('content required', 400);
+
+  // Phase 1b-extended: block non-PI callers from posting updates on a PB-category project.
+  const block = await assertProjectVisible(request, env, slug);
+  if (block) return block;
 
   const id = generateId();
   // AM-2: project_updates.author is an actor identity. Pre-fix it stored a raw

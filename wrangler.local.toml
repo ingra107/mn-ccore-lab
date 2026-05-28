@@ -25,6 +25,13 @@ database_name = "mnccore-lab"
 database_id = "b8453e9b-7c5f-4029-b07d-dd89c05d00cf"
 preview_database_id = "local"
 
+# Local-only secrets for the test auth bypass (getAuthUser X-Test-Mode-Key path).
+# TEST_MODE_KEY gates the X-Test-Mode-Key / X-Test-User auth bypass.
+# Value is a fixed deterministic string for local-only use — NOT a production secret.
+[vars]
+TEST_MODE_KEY = "local-test-key-do-not-use-in-prod"
+REQUIRE_AUTH = "0"
+
 # Everything below this line is intentionally omitted vs wrangler.toml:
 #   - [triggers] crons       (prod-only scheduled Worker)
 #   - [[r2_buckets]] FILES   (prod R2 bucket; local tests don't exercise it)

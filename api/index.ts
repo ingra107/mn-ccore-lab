@@ -1,7 +1,12 @@
 import { Hono } from 'hono';
 import type { Context, Next } from 'hono';
 import type { Env } from './types';
-import { corsHeaders, json, error, getAuthUser, isPiRequest, getPiEmails, ensureTeamMember } from './helpers';
+import { corsHeaders, json, error, getAuthUser, isPiRequest, getPiEmails, ensureTeamMember, actorSlugFromRequest, logActivity, assertProjectVisible } from './helpers';
+// Z1.3 (2026-05-28): metadata-first route registration. Every defineRoute({...})
+// below populates ROUTE_REGISTRY; bindRegistryToHono(app) wires them all into
+// the Hono app at the end of the file (before app.notFound). Replaces the
+// raw app.get/post calls.
+import { defineRoute, bindRegistryToHono } from './lib/route-dsl';
 import type { AuthUser } from './helpers';
 import { validateApiKey } from './middleware/api-key-auth';
 import { handleVersion, bumpVersion } from './lib/version';
@@ -11,7 +16,7 @@ import { notifyClients } from './lib/notify';
 import { handleUploadUrl, handleUploadDone, handleListFiles, handleGetFile, handleDeleteFile } from './routes/uploads';
 
 // ── Route modules ──────────────────────────────────────────
-import { handleGetTasks, handleGetTask, handleActionItems, handleOverdueCount, handleUpdateTaskStatus, handleToggleTask, handleUpdateTask, handleCreateTask, handleGetTaskComments, handleAddTaskComment, handleGetTaskActivity, handleGetTaskDetail, handleGetTaskUpdates, handleGetRecentTaskUpdates, handlePostTaskUpdate, handleBatchUpdateTasks, handleAcknowledgeTask, handleDeleteTask, handleMobileTasksToHub } from './routes/tasks';
+import { handleGetTasks, handleGetTask, handleActionItems, handleOverdueCount, handleUpdateTaskStatus, handleToggleTask, handleUpdateTask, handleCreateTask, handleGetTaskComments, handleAddTaskComment, handleGetTaskActivity, handleGetTaskDetail, handleGetTaskUpdates, handleGetRecentTaskUpdates, handleGetRecentTaskComments, handlePostTaskUpdate, handleBatchUpdateTasks, handleAcknowledgeTask, handleDeleteTask, handleMobileTasksToHub } from './routes/tasks';
 import { handleInboxEvents, handleSyncBulkInboxEvents, handleDeleteInboxEvent } from './routes/inbox-events';
 import { handleMutations } from './routes/mutations';
 import { handleGetProjects, handleGetProject, handleCreateProject, handleGetComments, handleGetProjectUpdates, handleProjectHealth, handleRecentUpdates, handleUpdateProject, handleDeleteProject, handleGetDeletedProjectsSince, handleAddComment, handlePostProjectUpdate, handleGetMilestones, handleUpdateMilestoneNote, handleUpdateMilestoneCompletion } from './routes/projects';
@@ -96,6 +101,10 @@ type AppEnv = {
     /** Effective user for handler calls. On writes this falls back to the
      *  anonymous shim unless REQUIRE_AUTH is set + auth is missing. */
     user: AuthUser;
+    /** T2.7: precomputed PB visibility flag (set by the /api/* middleware).
+     *  True iff the caller can see Peripheral Brain content (PI email or
+     *  valid API key). Read via the CSP helper at handler registrations. */
+    canSeePb: boolean;
   };
 };
 
@@ -153,10 +162,36 @@ function isPublicGet(path: string): boolean {
 // ─────────────────────────────────────────────────────────────────────────────
 // Global error handler — matches old top-level try/catch behavior.
 // Any thrown error from a handler becomes a 500 JSON response with corsHeaders.
+//
+// SEC-10.1: In production, suppress raw error messages (SQL/D1/stack details
+// that could leak internal schema). Return a sanitized envelope with a
+// correlation request_id so support can cross-reference console.error logs.
+// In dev / test (TEST_MODE_KEY present or ENVIRONMENT=development) the full
+// message is included for debuggability.
 // ─────────────────────────────────────────────────────────────────────────────
-app.onError((err, _c) => {
+app.onError((err, c) => {
   const message = err instanceof Error ? err.message : 'Internal server error';
-  return error(message, 500);
+  // Generate a short correlation ID (first 12 chars of a random hex string).
+  const requestId = Array.from(crypto.getRandomValues(new Uint8Array(8)))
+    .map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 12);
+
+  // Determine if we're in a dev/test context where detailed errors are safe.
+  const env = c.get('env') as unknown as { ENVIRONMENT?: string; TEST_MODE_KEY?: string } | undefined;
+  const isDev = env?.ENVIRONMENT === 'development' || Boolean(env?.TEST_MODE_KEY);
+
+  // Always log full details server-side for correlation.
+  const url = new URL(c.req.url);
+  console.error(`[error] request_id=${requestId} method=${c.req.method} path=${url.pathname} message=${message}`, err instanceof Error ? err.stack : err);
+
+  if (isDev) {
+    // Dev/test: include message for debuggability.
+    return error(message, 500);
+  }
+  // Prod: sanitized envelope only — never expose raw error messages to clients.
+  return new Response(JSON.stringify({ error: 'Internal error', request_id: requestId }), {
+    status: 500,
+    headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+  });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -280,6 +315,40 @@ app.use('*', async (c, next) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// 5b. T2.7 (2026-05-28): canSeePb middleware — resolve PB visibility ONCE.
+// 12+ list-route registrations were doing `await isPiRequest(R(c), E(c))`
+// inline at the handler invocation site. Each call re-parses the JWT or
+// re-validates the API key. Compute once per request, stash on context,
+// and let handlers read it via c.get('canSeePb').
+//
+// Polarity: canSeePb = true when the caller is permitted to see PB content
+// (PI email OR valid API key). Matches the handler signature shape
+// (handler(url, env, canSeePb = false)). The 'false' default in handlers
+// means "fail-closed" (no PB) on any path that forgets to forward the flag.
+// ─────────────────────────────────────────────────────────────────────────────
+app.use('/api/*', async (c, next) => {
+  const env = c.get('env');
+  c.set('canSeePb', await isPiRequest(c.req.raw, env));
+  await next();
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SEC-10.4: Rate limiting — ABSENT from this middleware stack (2026-05-27).
+// Investigation: no rate-limit layer exists anywhere in api/index.ts or
+// api/middleware/. The full middleware chain is:
+//   (1) test-mode DB swap, (2) API-key auth, (3) PI gate /api/pb/*,
+//   (4) GET auth lockdown, (5) POST/PUT auth gate, (6) version bump.
+// The app is gated behind Cloudflare Access (JWT) on /portal/* so raw
+// unauthenticated abuse is already blocked at the edge for the portal paths.
+// API endpoints at /api/* rely on the X-API-Key / JWT auth gate as the
+// primary protection; a KV-backed per-IP token bucket would be the right
+// next step for further hardening but is deferred — the risk profile is
+// acceptable given CF Access + auth gates on all write paths.
+// Follow-up: add RATE_LIMIT_ENABLED flag + KV token bucket when a Durable
+// Object or KV namespace is provisioned for this purpose.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ─────────────────────────────────────────────────────────────────────────────
 // 5. Version bump + realtime notify (runs AFTER handler).
 // Any successful non-GET response triggers a fire-and-forget version bump
 // (React Query uses /api/version to invalidate) and a DO broadcast to
@@ -307,22 +376,41 @@ const E = (c: Context<AppEnv>) => c.get('env');
 const U = (c: Context<AppEnv>) => new URL(c.req.url);
 const R = (c: Context<AppEnv>) => c.req.raw;
 const USER = (c: Context<AppEnv>) => c.get('user');
+// T2.7: precomputed canSeePb (set by the /api/* middleware above). True iff
+// the caller can see Peripheral Brain content (PI email or valid API key).
+// Replaces `await isPiRequest(R(c), E(c))` at handler-invocation sites that
+// were re-doing JWT parsing / API-key validation on every route call.
+const CSP = (c: Context<AppEnv>) => c.get('canSeePb') === true;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Meta + auth endpoints
 // ─────────────────────────────────────────────────────────────────────────────
-app.get('/api/auth/me', async (c) => {
+defineRoute({
+  method: 'GET',
+  path: '/api/auth/me',
+  auth: 'public',
+  handler: async (c) => {
   const env = E(c);
   const user = c.get('authedUser') || (await getAuthUser(c.req.raw, env));
   if (!user) return json({ authenticated: false }, 200);
   const piEmails = await getPiEmails(env);
   const isPi = piEmails.has(user.email.toLowerCase());
   return json({ authenticated: true, isPi, ...user });
+},
 });
 
-app.get('/api/version', (c) => handleVersion(E(c)));
+defineRoute({
+  method: 'GET',
+  path: '/api/version',
+  auth: 'public',
+  handler: (c) => handleVersion(E(c)),
+});
 
-app.get('/api/health', async (c) => {
+defineRoute({
+  method: 'GET',
+  path: '/api/health',
+  auth: 'public',
+  handler: async (c) => {
   const env = E(c);
   const failures: string[] = [];
   const checks: Record<string, unknown> = {};
@@ -371,72 +459,293 @@ app.get('/api/health', async (c) => {
     status: ok ? 200 : 503,
     headers: { 'Content-Type': 'application/json', ...corsHeaders },
   });
+},
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PB sector GETs (PI-gated by middleware above)
 // ─────────────────────────────────────────────────────────────────────────────
-app.get('/api/pb/command-center', (c) => handleCommandCenter(E(c), U(c).searchParams.get('date') || undefined));
-app.get('/api/pb/plan/history', (c) => handlePlanHistory(R(c), E(c)));
-app.get('/api/pb/dispatch/pending', (c) => handleGetPendingDispatch(E(c)));
-app.get('/api/pb/today', (c) => handleGetTodayMd(E(c)));
-app.get('/api/sessions', (c) => handleGetSessions(U(c), E(c)));
-app.get('/api/lane3/:table', (c) => handleLane3List(c.req.param('table'), U(c), E(c)));
-app.get('/api/pb/sessions', (c) => handlePBSessions(R(c), E(c)));
-app.get('/api/pb/sessions/stats', (c) => handlePBSessionStats(E(c)));
-app.get('/api/pb/health', (c) => handlePBHealth(E(c)));
-app.get('/api/pb/relay', (c) => handleGetRelay(E(c)));
+defineRoute({
+  method: 'GET',
+  path: '/api/pb/command-center',
+  auth: 'pi',
+  entity: 'pb',
+  visibility: 'na',
+  handler: (c) => handleCommandCenter(E(c), U(c).searchParams.get('date') || undefined),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/pb/plan/history',
+  auth: 'pi',
+  entity: 'pb',
+  visibility: 'na',
+  handler: (c) => handlePlanHistory(R(c), E(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/pb/dispatch/pending',
+  auth: 'pi',
+  entity: 'pb',
+  visibility: 'na',
+  handler: (c) => handleGetPendingDispatch(E(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/pb/today',
+  auth: 'pi',
+  entity: 'pb',
+  visibility: 'na',
+  handler: (c) => handleGetTodayMd(E(c)),
+});
+// PI-gated: sessions + lane3 contain private brain.db data. R(c) carries JWT/API-key
+// so isPiRequest inside the handler can distinguish PI/service from team callers.
+defineRoute({
+  method: 'GET',
+  path: '/api/sessions',
+  auth: 'authed',
+  entity: 'sessions',
+  visibility: 'na',
+  handler: (c) => handleGetSessions(U(c), E(c), R(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/lane3/:table',
+  auth: 'authed',
+  entity: 'misc',
+  visibility: 'na',
+  handler: (c) => handleLane3List(c.req.param('table'), U(c), E(c), R(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/pb/sessions',
+  auth: 'pi',
+  entity: 'pb',
+  visibility: 'na',
+  handler: (c) => handlePBSessions(R(c), E(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/pb/sessions/stats',
+  auth: 'pi',
+  entity: 'pb',
+  visibility: 'na',
+  handler: (c) => handlePBSessionStats(E(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/pb/health',
+  auth: 'pi',
+  entity: 'pb',
+  visibility: 'na',
+  handler: (c) => handlePBHealth(E(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/pb/relay',
+  auth: 'pi',
+  entity: 'pb',
+  visibility: 'na',
+  handler: (c) => handleGetRelay(E(c)),
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PI Analytics
 // ─────────────────────────────────────────────────────────────────────────────
 // /api/pi/analytics retired 2026-05-05 (5.9): 0 callers, overlapped /api/analytics/pi-dashboard
-app.get('/api/analytics/pi-dashboard', (c) => handlePIDashboard(E(c)));
-app.get('/api/analytics/mentee-velocity', (c) => handleMenteeVelocity(E(c)));
-app.get('/api/analytics/response-time', (c) => handleResponseTime(E(c)));
-app.get('/api/analytics/team-engagement', (c) => handleTeamEngagement(E(c)));
-app.get('/api/analytics/contributions', (c) => handleContributionsDecay(U(c), E(c)));
-app.get('/api/team/by-expertise', (c) => handleTeamByExpertise(U(c), E(c)));
+defineRoute({
+  method: 'GET',
+  path: '/api/analytics/pi-dashboard',
+  auth: 'authed',
+  entity: 'analytics',
+  visibility: 'na',
+  handler: (c) => handlePIDashboard(E(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/analytics/mentee-velocity',
+  auth: 'authed',
+  entity: 'analytics',
+  visibility: 'na',
+  handler: (c) => handleMenteeVelocity(E(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/analytics/response-time',
+  auth: 'authed',
+  entity: 'analytics',
+  visibility: 'na',
+  handler: (c) => handleResponseTime(E(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/analytics/team-engagement',
+  auth: 'authed',
+  entity: 'analytics',
+  visibility: 'na',
+  handler: (c) => handleTeamEngagement(E(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/analytics/contributions',
+  auth: 'authed',
+  entity: 'analytics',
+  visibility: 'na',
+  handler: (c) => handleContributionsDecay(U(c), E(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/team/by-expertise',
+  auth: 'authed',
+  entity: 'team',
+  visibility: 'na',
+  handler: (c) => handleTeamByExpertise(U(c), E(c)),
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Digest (specific first, catch-all last)
 // ─────────────────────────────────────────────────────────────────────────────
-app.get('/api/digest/dates', (c) => handleDigestDates(E(c)));
-app.get('/api/digest/comment-counts', (c) => handleDigestCommentCounts(U(c), E(c)));
-app.get('/api/digest', (c) => handleGetDigest(U(c), E(c)));
-app.get('/api/digest/:id/comments', (c) => handleGetDigestComments(c.req.param('id'), E(c)));
+defineRoute({
+  method: 'GET',
+  path: '/api/digest/dates',
+  auth: 'public',
+  handler: (c) => handleDigestDates(E(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/digest/comment-counts',
+  auth: 'public',
+  handler: (c) => handleDigestCommentCounts(U(c), E(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/digest',
+  auth: 'public',
+  handler: (c) => handleGetDigest(U(c), E(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/digest/:id/comments',
+  auth: 'public',
+  handler: (c) => handleGetDigestComments(c.req.param('id'), E(c)),
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Cross-Project Insight Engine
 // ─────────────────────────────────────────────────────────────────────────────
-app.get('/api/insights/connections', (c) => handleInsightConnections(E(c)));
-app.get('/api/insights/suggestions', (c) => handleInsightSuggestions(U(c), E(c)));
-app.get('/api/insights/dashboard', async (c) => {
+defineRoute({
+  method: 'GET',
+  path: '/api/insights/connections',
+  auth: 'authed',
+  entity: 'insights',
+  visibility: 'na',
+  handler: (c) => handleInsightConnections(E(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/insights/suggestions',
+  auth: 'authed',
+  entity: 'insights',
+  visibility: 'na',
+  handler: (c) => handleInsightSuggestions(U(c), E(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/insights/dashboard',
+  auth: 'authed',
+  entity: 'insights',
+  visibility: 'pb-aware',
+  handler: async (c) => {
   if (!(await isPiRequest(c.req.raw, E(c)))) return error('Forbidden — PI access only', 403);
   const week = c.req.query('week') || undefined;
   return handleInsightsDashboard(E(c), week);
+},
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Papers
 // ─────────────────────────────────────────────────────────────────────────────
-app.get('/api/papers/by-project', (c) => handlePapersByProject(U(c), E(c)));
-app.get('/api/papers/by-publication', (c) => handlePapersByPublication(U(c), E(c)));
+defineRoute({
+  method: 'GET',
+  path: '/api/papers/by-project',
+  auth: 'authed',
+  entity: 'misc',
+  visibility: 'na',
+  handler: (c) => handlePapersByProject(U(c), E(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/papers/by-publication',
+  auth: 'authed',
+  entity: 'misc',
+  visibility: 'na',
+  handler: (c) => handlePapersByPublication(U(c), E(c)),
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Projects (ordering matters: revisions > papers > dependencies > :slug etc.)
 // ─────────────────────────────────────────────────────────────────────────────
-app.get('/api/projects/health', async (c) => handleProjectHealth(E(c), await isPiRequest(R(c), E(c))));
+defineRoute({
+  method: 'GET',
+  path: '/api/projects/health',
+  auth: 'public',
+  handler: (c) => handleProjectHealth(E(c), CSP(c)),
+});
 // Tombstone endpoint — consumed by sync_d1_pull.pull_hub_projects to mirror
 // Hub project deletes into brain.db. Airtable cascade comment: handleDeleteProject
 // writes deleted_at and (when secrets present) DELETEs the matching Airtable rec.
-app.get('/api/projects/deleted-since', (c) => handleGetDeletedProjectsSince(U(c), E(c)));
-app.get('/api/projects/:slug/comments', (c) => handleGetComments(c.req.param('slug'), E(c)));
-app.get('/api/projects/:slug/updates', (c) => handleGetProjectUpdates(c.req.param('slug'), E(c)));
-app.get('/api/projects/:slug/documents', (c) => handleGetProjectDocuments(c.req.param('slug'), E(c)));
-app.get('/api/projects/:slug/papers', (c) => handleGetPaperLinks(c.req.param('slug'), E(c)));
-app.get('/api/projects/:slug/dependencies', (c) => handleGetProjectDependencies(c.req.param('slug'), E(c)));
-app.get('/api/projects/:slug/revisions', async (c) => {
+defineRoute({
+  method: 'GET',
+  path: '/api/projects/deleted-since',
+  auth: 'public',
+  handler: (c) => handleGetDeletedProjectsSince(U(c), E(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/projects/:slug/comments',
+  auth: 'authed',
+  entity: 'projects',
+  visibility: 'na',
+  handler: (c) => handleGetComments(c.req.param('slug'), R(c), E(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/projects/:slug/updates',
+  auth: 'authed',
+  entity: 'projects',
+  visibility: 'na',
+  handler: (c) => handleGetProjectUpdates(c.req.param('slug'), R(c), E(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/projects/:slug/documents',
+  auth: 'authed',
+  entity: 'projects',
+  visibility: 'na',
+  handler: (c) => handleGetProjectDocuments(c.req.param('slug'), R(c), E(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/projects/:slug/papers',
+  auth: 'authed',
+  entity: 'projects',
+  visibility: 'na',
+  handler: (c) => handleGetPaperLinks(c.req.param('slug'), E(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/projects/:slug/dependencies',
+  auth: 'authed',
+  entity: 'projects',
+  visibility: 'na',
+  handler: (c) => handleGetProjectDependencies(c.req.param('slug'), E(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/projects/:slug/revisions',
+  auth: 'authed',
+  entity: 'projects',
+  visibility: 'na',
+  handler: async (c) => {
   const ref = c.req.param('slug');
   const env = E(c);
   const proj = await env.DB.prepare(
@@ -446,239 +755,849 @@ app.get('/api/projects/:slug/revisions', async (c) => {
   const projectId = proj.slug || proj.id;
   const rewrittenUrl = new URL(c.req.url);
   rewrittenUrl.searchParams.set('project_id', projectId);
-  return handleGetRevisions(rewrittenUrl, env);
+  return handleGetRevisions(rewrittenUrl, R(c), env);
+},
 });
-app.get('/api/projects', (c) => handleGetProjects(U(c), E(c), c.get('user'), c.get('apiKeyValid') === true));
+defineRoute({
+  method: 'GET',
+  path: '/api/projects',
+  auth: 'public',
+  handler: (c) => handleGetProjects(U(c), E(c), c.get('user'), c.get('apiKeyValid') === true),
+});
 // GET /api/projects/:id — single-record fetch by id or slug (codex Q4 2026-05-12).
 // Must be registered AFTER static paths (/health, /deleted-since) and before POST routes
 // so Hono resolves statics first. Mirrors handleGetTask pattern (tasks.ts:133).
-app.get('/api/projects/:id', (c) => handleGetProject(c.req.param('id'), E(c), c.get('user'), c.get('apiKeyValid') === true));
+defineRoute({
+  method: 'GET',
+  path: '/api/projects/:id',
+  auth: 'public',
+  handler: (c) => handleGetProject(c.req.param('id'), E(c), c.get('user'), c.get('apiKeyValid') === true),
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Meetings (specific first, parameterized last)
 // ─────────────────────────────────────────────────────────────────────────────
-app.get('/api/meetings/cadence-check', (c) => handleCadenceCheck(E(c)));
-app.get('/api/meetings/next', (c) => handleNextMeeting(E(c)));
-app.get('/api/meetings/:id/agenda', (c) => handleGetAgendaItems(c.req.param('id'), E(c)));
-app.get('/api/meetings/:id/generate-agenda', (c) => handleGenerateAgenda(c.req.param('id'), E(c)));
-app.get('/api/meetings/:id/prep', (c) => handleMeetingPrep(c.req.param('id'), E(c)));
-app.get('/api/meetings/:id', (c) => handleGetMeeting(c.req.param('id'), E(c)));
-app.get('/api/meetings', (c) => handleGetMeetings(E(c), c.get('authedUser') !== null || c.get('apiKeyValid') === true));
+defineRoute({
+  method: 'GET',
+  path: '/api/meetings/cadence-check',
+  auth: 'authed',
+  entity: 'meetings',
+  visibility: 'na',
+  handler: (c) => handleCadenceCheck(E(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/meetings/next',
+  auth: 'public',
+  handler: (c) => handleNextMeeting(E(c)),
+});
+// Agenda/prep/generate-agenda are auth-gated (isAuthed flag mirrors handleGetMeeting pattern).
+// Unauth callers get 401; authed team members get the full internal content.
+defineRoute({
+  method: 'GET',
+  path: '/api/meetings/:id/agenda',
+  auth: 'authed',
+  entity: 'meetings',
+  visibility: 'na',
+  handler: (c) => handleGetAgendaItems(c.req.param('id'), E(c), c.get('authedUser') !== null || c.get('apiKeyValid') === true),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/meetings/:id/generate-agenda',
+  auth: 'authed',
+  entity: 'meetings',
+  visibility: 'pb-aware',
+  handler: (c) => handleGenerateAgenda(c.req.param('id'), E(c), c.get('authedUser') !== null || c.get('apiKeyValid') === true, CSP(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/meetings/:id/prep',
+  auth: 'authed',
+  entity: 'meetings',
+  visibility: 'pb-aware',
+  handler: (c) => handleMeetingPrep(c.req.param('id'), E(c), c.get('authedUser') !== null || c.get('apiKeyValid') === true, CSP(c)),
+});
+// Meeting detail — authed callers get full row; unauth get public-safe cols only.
+defineRoute({
+  method: 'GET',
+  path: '/api/meetings/:id',
+  auth: 'authed',
+  entity: 'meetings',
+  visibility: 'na',
+  handler: (c) => handleGetMeeting(c.req.param('id'), E(c), c.get('authedUser') !== null || c.get('apiKeyValid') === true),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/meetings',
+  auth: 'public',
+  handler: (c) => handleGetMeetings(E(c), c.get('authedUser') !== null || c.get('apiKeyValid') === true),
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Dependencies
 // ─────────────────────────────────────────────────────────────────────────────
-app.get('/api/dependencies', (c) => handleGetDependencies(E(c)));
+defineRoute({
+  method: 'GET',
+  path: '/api/dependencies',
+  auth: 'authed',
+  entity: 'dependencies',
+  visibility: 'na',
+  handler: (c) => handleGetDependencies(E(c)),
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Revisions
 // ─────────────────────────────────────────────────────────────────────────────
-app.get('/api/revisions/active', (c) => handleGetActiveRevisions(E(c)));
-app.get('/api/revisions/:id/comments', (c) => handleGetRevisionComments(c.req.param('id'), E(c)));
-app.get('/api/revisions', (c) => handleGetRevisions(U(c), E(c)));
-app.get('/api/manuscripts/attention', async (c) => {
+defineRoute({
+  method: 'GET',
+  path: '/api/revisions/active',
+  auth: 'authed',
+  entity: 'revisions',
+  visibility: 'pb-aware',
+  handler: (c) => handleGetActiveRevisions(E(c), CSP(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/revisions/:id/comments',
+  auth: 'authed',
+  entity: 'revisions',
+  visibility: 'na',
+  handler: (c) => handleGetRevisionComments(c.req.param('id'), R(c), E(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/revisions',
+  auth: 'authed',
+  entity: 'revisions',
+  visibility: 'na',
+  handler: (c) => handleGetRevisions(U(c), R(c), E(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/manuscripts/attention',
+  auth: 'authed',
+  entity: 'manuscripts',
+  visibility: 'na',
+  handler: async (c) => {
   const env = E(c);
   const user = c.get('authedUser') || (await getAuthUser(c.req.raw, env));
   if (!user) return c.json({ error: 'auth required' }, 401);
   return handleAttentionManuscripts(U(c), user, env);
+},
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Submissions
 // ─────────────────────────────────────────────────────────────────────────────
-app.get('/api/submissions/active', (c) => handleGetActiveSubmissions(E(c)));
-app.get('/api/submissions', (c) => handleGetSubmissions(U(c), E(c)));
+defineRoute({
+  method: 'GET',
+  path: '/api/submissions/active',
+  auth: 'authed',
+  entity: 'submissions',
+  visibility: 'na',
+  handler: (c) => handleGetActiveSubmissions(E(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/submissions',
+  auth: 'authed',
+  entity: 'submissions',
+  visibility: 'na',
+  handler: (c) => handleGetSubmissions(U(c), R(c), E(c)),
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Grants
 // ─────────────────────────────────────────────────────────────────────────────
-app.get('/api/grants/similar', (c) => handleSimilarGrants(U(c), E(c)));
-app.get('/api/grants/timeline', (c) => handleGrantsTimeline(E(c)));
-app.get('/api/grants', (c) => handleGetGrants(E(c)));
+defineRoute({
+  method: 'GET',
+  path: '/api/grants/similar',
+  auth: 'authed',
+  entity: 'grants',
+  visibility: 'na',
+  handler: (c) => handleSimilarGrants(U(c), E(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/grants/timeline',
+  auth: 'public',
+  handler: (c) => handleGrantsTimeline(E(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/grants',
+  auth: 'public',
+  handler: (c) => handleGetGrants(E(c)),
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Narratives
 // ─────────────────────────────────────────────────────────────────────────────
-app.get('/api/narratives', (c) => handleGetNarratives(E(c)));
+defineRoute({
+  method: 'GET',
+  path: '/api/narratives',
+  auth: 'authed',
+  entity: 'narratives',
+  visibility: 'na',
+  handler: (c) => handleGetNarratives(E(c)),
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Decisions
 // ─────────────────────────────────────────────────────────────────────────────
-app.get('/api/decisions/similar', (c) => handleSimilarDecisions(U(c), E(c)));
-app.get('/api/decisions/similar-by-id', (c) => handleSimilarDecisionsById(U(c), E(c)));
-app.get('/api/decisions/review', (c) => handleGetDecisionsNeedingReview(E(c)));
-app.get('/api/decisions/tags', (c) => handleGetDecisionTags(E(c)));
-app.get('/api/decisions', (c) => handleGetDecisions(U(c), E(c)));
+defineRoute({
+  method: 'GET',
+  path: '/api/decisions/similar',
+  auth: 'authed',
+  entity: 'decisions',
+  visibility: 'na',
+  handler: (c) => handleSimilarDecisions(U(c), E(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/decisions/similar-by-id',
+  auth: 'authed',
+  entity: 'decisions',
+  visibility: 'na',
+  handler: (c) => handleSimilarDecisionsById(U(c), E(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/decisions/review',
+  auth: 'authed',
+  entity: 'decisions',
+  visibility: 'na',
+  handler: (c) => handleGetDecisionsNeedingReview(E(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/decisions/tags',
+  auth: 'authed',
+  entity: 'decisions',
+  visibility: 'na',
+  handler: (c) => handleGetDecisionTags(E(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/decisions',
+  auth: 'authed',
+  entity: 'decisions',
+  visibility: 'na',
+  handler: (c) => handleGetDecisions(U(c), E(c)),
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Expertise
 // ─────────────────────────────────────────────────────────────────────────────
-app.get('/api/expertise/suggest', (c) => handleSuggestExperts(U(c), E(c)));
-app.get('/api/expertise', (c) => handleGetExpertise(U(c), E(c)));
+defineRoute({
+  method: 'GET',
+  path: '/api/expertise/suggest',
+  auth: 'authed',
+  entity: 'expertise',
+  visibility: 'na',
+  handler: (c) => handleSuggestExperts(U(c), E(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/expertise',
+  auth: 'public',
+  handler: (c) => handleGetExpertise(U(c), E(c)),
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // AI requests
 // ─────────────────────────────────────────────────────────────────────────────
-app.get('/api/ai-requests', (c) => handleGetAIRequests(U(c), E(c)));
+defineRoute({
+  method: 'GET',
+  path: '/api/ai-requests',
+  auth: 'authed',
+  entity: 'ai-requests',
+  visibility: 'na',
+  handler: (c) => handleGetAIRequests(U(c), E(c)),
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Questions (specific /:id/answers BEFORE catch-all /:id)
 // ─────────────────────────────────────────────────────────────────────────────
-app.get('/api/questions', (c) => handleGetQuestions(U(c), E(c)));
-app.get('/api/questions/:id/answers', async (c) => {
+defineRoute({
+  method: 'GET',
+  path: '/api/questions',
+  auth: 'authed',
+  entity: 'questions',
+  visibility: 'na',
+  handler: (c) => handleGetQuestions(U(c), E(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/questions/:id/answers',
+  auth: 'authed',
+  entity: 'questions',
+  visibility: 'na',
+  handler: async (c) => {
   const env = E(c);
   const rows = await env.DB.prepare(
     'SELECT * FROM lab_answers WHERE question_id = ? ORDER BY is_accepted DESC, created_at ASC'
   ).bind(c.req.param('id')).all();
   return json({ data: rows.results || [] });
+},
 });
-app.get('/api/questions/:id', (c) => handleGetQuestionDetail(c.req.param('id'), E(c)));
+defineRoute({
+  method: 'GET',
+  path: '/api/questions/:id',
+  auth: 'authed',
+  entity: 'questions',
+  visibility: 'na',
+  handler: (c) => handleGetQuestionDetail(c.req.param('id'), E(c)),
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Simple exact-match GETs
 // ─────────────────────────────────────────────────────────────────────────────
-app.get('/api/publications', (c) => handleGetPublications(U(c), E(c)));
-app.get('/api/team', (c) => handleGetTeam(E(c), c.get('authedUser') !== null || c.get('apiKeyValid') === true));
-app.get('/api/team/slugs', (c) => handleTeamSlugs(E(c)));
-app.get('/api/team/pulse', (c) => handleTeamPulse(U(c), E(c), c.get('authedUser') !== null || c.get('apiKeyValid') === true));
-app.get('/api/graph/collaboration', (c) => handleCollaborationGraph(E(c)));
-app.get('/api/stats', (c) => handleGetStats(E(c)));
-app.get('/api/citations', (c) => handleGetCitations(E(c)));
-app.get('/api/activity', async (c) => handleGetActivity(U(c), E(c), await isPiRequest(R(c), E(c))));
-app.get('/api/activity/heatmap', (c) => handleActivityHeatmap(U(c), E(c)));
-app.get('/api/tasks/overdue-count', (c) => handleOverdueCount(U(c), E(c)));
-app.get('/api/tasks', (c) => handleGetTasks(U(c), E(c)));
-app.get('/api/action-items', (c) => handleActionItems(U(c), E(c)));
-app.get('/api/updates/recent', (c) => handleRecentUpdates(U(c), E(c)));
-app.get('/api/task-updates/recent', (c) => handleGetRecentTaskUpdates(U(c), E(c)));
-app.get('/api/task-comments/recent', async (c) => {
-  const url = U(c);
-  const env = E(c);
-  const limit = Math.min(parseInt(url.searchParams.get('limit') || '200', 10), 500);
-  const since = url.searchParams.get('since');
-  const q = since
-    ? 'SELECT * FROM task_comments WHERE created_at > ? ORDER BY created_at DESC LIMIT ?'
-    : 'SELECT * FROM task_comments ORDER BY created_at DESC LIMIT ?';
-  const result = since
-    ? await env.DB.prepare(q).bind(since, limit).all()
-    : await env.DB.prepare(q).bind(limit).all();
-  return json({ data: result.results || [] });
+defineRoute({
+  method: 'GET',
+  path: '/api/publications',
+  auth: 'public',
+  handler: (c) => handleGetPublications(U(c), E(c)),
 });
-app.get('/api/notifications', (c) => handleNotifications(U(c), R(c), E(c)));
-app.get('/api/notifications/count', (c) => handleNotificationCount(U(c), R(c), E(c)));
-app.get('/api/commitments', (c) => handleCommitments(U(c), E(c)));
-app.get('/api/ideas', (c) => handleGetIdeas(U(c), E(c)));
+defineRoute({
+  method: 'GET',
+  path: '/api/team',
+  auth: 'public',
+  handler: (c) => handleGetTeam(E(c), c.get('authedUser') !== null || c.get('apiKeyValid') === true),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/team/slugs',
+  auth: 'public',
+  handler: (c) => handleTeamSlugs(E(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/team/pulse',
+  auth: 'public',
+  handler: (c) => handleTeamPulse(U(c), E(c), c.get('authedUser') !== null || c.get('apiKeyValid') === true),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/graph/collaboration',
+  auth: 'public',
+  handler: (c) => handleCollaborationGraph(E(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/stats',
+  auth: 'public',
+  handler: (c) => handleGetStats(E(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/citations',
+  auth: 'public',
+  handler: (c) => handleGetCitations(E(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/activity',
+  auth: 'public',
+  handler: (c) => handleGetActivity(U(c), E(c), CSP(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/activity/heatmap',
+  auth: 'authed',
+  entity: 'activity',
+  visibility: 'na',
+  handler: (c) => handleActivityHeatmap(U(c), E(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/tasks/overdue-count',
+  auth: 'authed',
+  entity: 'tasks',
+  visibility: 'na',
+  handler: (c) => handleOverdueCount(U(c), E(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/tasks',
+  auth: 'authed',
+  entity: 'tasks',
+  visibility: 'pb-aware',
+  handler: (c) => handleGetTasks(U(c), E(c), CSP(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/action-items',
+  auth: 'authed',
+  entity: 'tasks',
+  visibility: 'na',
+  handler: (c) => handleActionItems(U(c), E(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/updates/recent',
+  auth: 'authed',
+  entity: 'projects',
+  visibility: 'pb-aware',
+  handler: (c) => handleRecentUpdates(U(c), E(c), CSP(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/task-updates/recent',
+  auth: 'authed',
+  entity: 'tasks',
+  visibility: 'pb-aware',
+  handler: (c) => handleGetRecentTaskUpdates(U(c), E(c), CSP(c)),
+});
+// T2.8 (2026-05-28): extracted to api/routes/tasks.ts::handleGetRecentTaskComments
+// — one-liner alongside /api/task-updates/recent. Single place to maintain.
+defineRoute({
+  method: 'GET',
+  path: '/api/task-comments/recent',
+  auth: 'authed',
+  entity: 'tasks',
+  visibility: 'pb-aware',
+  handler: (c) => handleGetRecentTaskComments(U(c), E(c), CSP(c)),
+});
+// Notifications: recipient derived from auth (R(c) carries the JWT/test headers)
+defineRoute({
+  method: 'GET',
+  path: '/api/notifications',
+  auth: 'authed',
+  entity: 'notifications',
+  visibility: 'na',
+  handler: (c) => handleNotifications(U(c), R(c), E(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/notifications/count',
+  auth: 'authed',
+  entity: 'notifications',
+  visibility: 'na',
+  handler: (c) => handleNotificationCount(U(c), R(c), E(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/commitments',
+  auth: 'authed',
+  entity: 'tasks',
+  visibility: 'na',
+  handler: (c) => handleCommitments(U(c), E(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/ideas',
+  auth: 'authed',
+  entity: 'ideas',
+  visibility: 'na',
+  handler: (c) => handleGetIdeas(U(c), E(c)),
+});
 // GET /api/inbox retired 2026-05-05 (5.3a) — use /api/inbox-events
-app.get('/api/search', async (c) => handleGetSearch(U(c), E(c), await isPiRequest(R(c), E(c))));
-app.get('/api/settings', (c) => handleGetSettings(E(c)));
-app.get('/api/workflow-templates', (c) => handleGetWorkflowTemplates(E(c)));
-app.get('/api/calendar/events', (c) => handleCalendarEvents(U(c), E(c)));
+defineRoute({
+  method: 'GET',
+  path: '/api/search',
+  auth: 'authed',
+  entity: 'search',
+  visibility: 'pb-aware',
+  handler: (c) => handleGetSearch(U(c), E(c), CSP(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/settings',
+  auth: 'authed',
+  entity: 'settings',
+  visibility: 'na',
+  handler: (c) => handleGetSettings(E(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/workflow-templates',
+  auth: 'authed',
+  entity: 'settings',
+  visibility: 'na',
+  handler: (c) => handleGetWorkflowTemplates(E(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/calendar/events',
+  auth: 'authed',
+  entity: 'calendar',
+  visibility: 'na',
+  handler: (c) => handleCalendarEvents(U(c), E(c)),
+});
 
 // Personal iCal calendar feeds (issue #45). Per-user, secret URL stays in D1.
 // These use `authedUser` (real JWT identity) not `user` (anonymous fallback)
 // because the feed_url is a secret — no anonymous access path.
-app.get('/api/integrations/calendar/feeds', (c) => handleListFeeds(E(c), c.get('authedUser')));
-app.post('/api/integrations/calendar/feeds', (c) => handleAddFeed(R(c), E(c), c.get('authedUser'), (p) => c.executionCtx.waitUntil(p)));
-app.post('/api/integrations/calendar/feeds/:id/delete', (c) => handleDeleteFeed(E(c), c.get('authedUser'), c.req.param('id')));
-app.get('/api/integrations/calendar/events', (c) => handleListEvents(U(c), E(c), c.get('authedUser'), (p) => c.executionCtx.waitUntil(p)));
+defineRoute({
+  method: 'GET',
+  path: '/api/integrations/calendar/feeds',
+  auth: 'authed',
+  entity: 'calendar-feeds',
+  visibility: 'na',
+  handler: (c) => handleListFeeds(E(c), c.get('authedUser')),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/integrations/calendar/feeds',
+  auth: 'authed',
+  entity: 'calendar-feeds',
+  visibility: 'na',
+  handler: (c) => handleAddFeed(R(c), E(c), c.get('authedUser'), (p) => c.executionCtx.waitUntil(p)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/integrations/calendar/feeds/:id/delete',
+  auth: 'authed',
+  entity: 'calendar-feeds',
+  visibility: 'na',
+  handler: (c) => handleDeleteFeed(R(c), E(c), c.get('authedUser'), c.req.param('id')),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/integrations/calendar/events',
+  auth: 'authed',
+  entity: 'calendar-feeds',
+  visibility: 'na',
+  handler: (c) => handleListEvents(U(c), E(c), c.get('authedUser'), (p) => c.executionCtx.waitUntil(p)),
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Files (presigned URLs etc.)
 // ─────────────────────────────────────────────────────────────────────────────
-app.get('/api/files', async (c) => handleListFiles(U(c), E(c), await isPiRequest(R(c), E(c))));
+defineRoute({
+  method: 'GET',
+  path: '/api/files',
+  auth: 'authed',
+  entity: 'files',
+  visibility: 'pb-aware',
+  handler: (c) => handleListFiles(U(c), E(c), CSP(c)),
+});
 // GET /api/files/:key+ — presigned download URL. Key can contain slashes
 // (R2 key paths). Hono's wildcard match in the URL `:*` isn't used because
 // we need the full rest-of-path as a single string — match regex-style.
-app.get('/api/files/:rest{.+}', async (c) => {
+defineRoute({
+  method: 'GET',
+  path: '/api/files/:rest{.+}',
+  auth: 'authed',
+  entity: 'files',
+  visibility: 'pb-aware',
+  handler: (c) => {
   const key = c.req.param('rest');
-  return handleGetFile(key, E(c), await isPiRequest(R(c), E(c)));
+  return handleGetFile(key, E(c), CSP(c));
+},
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Team subroutes
 // ─────────────────────────────────────────────────────────────────────────────
-app.get('/api/team/:slug/cv-data', (c) => handleCVData(c.req.param('slug'), E(c)));
-app.get('/api/team/:slug/trajectory', (c) => handleTrajectory(c.req.param('slug'), E(c)));
-app.get('/api/team/:slug/contributions', (c) => handleGetContributions(c.req.param('slug'), U(c), E(c)));
+defineRoute({
+  method: 'GET',
+  path: '/api/team/:slug/cv-data',
+  auth: 'authed',
+  entity: 'team',
+  visibility: 'na',
+  handler: (c) => handleCVData(c.req.param('slug'), E(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/team/:slug/trajectory',
+  auth: 'authed',
+  entity: 'team',
+  visibility: 'na',
+  handler: (c) => handleTrajectory(c.req.param('slug'), E(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/team/:slug/contributions',
+  auth: 'authed',
+  entity: 'team',
+  visibility: 'na',
+  handler: (c) => handleGetContributions(c.req.param('slug'), U(c), E(c)),
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Deadline cascade
 // ─────────────────────────────────────────────────────────────────────────────
-app.get('/api/deadline-cascade/all', (c) => handleGetAllCascades(E(c)));
-app.get('/api/deadline-cascade/impact', (c) => handleGetImpact(U(c), E(c)));
-app.get('/api/deadline-cascade', (c) => handleGetCascade(U(c), E(c)));
+defineRoute({
+  method: 'GET',
+  path: '/api/deadline-cascade/all',
+  auth: 'authed',
+  entity: 'deadline-cascade',
+  visibility: 'pb-aware',
+  handler: (c) => handleGetAllCascades(E(c), CSP(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/deadline-cascade/impact',
+  auth: 'authed',
+  entity: 'deadline-cascade',
+  visibility: 'na',
+  handler: (c) => handleGetImpact(U(c), R(c), E(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/deadline-cascade',
+  auth: 'authed',
+  entity: 'deadline-cascade',
+  visibility: 'na',
+  handler: (c) => handleGetCascade(U(c), R(c), E(c)),
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Mentee milestones
 // ─────────────────────────────────────────────────────────────────────────────
-app.get('/api/mentee-milestones/overview', (c) => handleMenteeMilestoneOverview(E(c)));
-app.get('/api/mentee-milestones', (c) => handleGetMenteeMilestones(U(c), E(c)));
+defineRoute({
+  method: 'GET',
+  path: '/api/mentee-milestones/overview',
+  auth: 'authed',
+  entity: 'mentee-milestones',
+  visibility: 'na',
+  handler: (c) => handleMenteeMilestoneOverview(E(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/mentee-milestones',
+  auth: 'authed',
+  entity: 'mentee-milestones',
+  visibility: 'na',
+  handler: (c) => handleGetMenteeMilestones(U(c), E(c)),
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Milestones (project + grant share a handler for listing)
 // ─────────────────────────────────────────────────────────────────────────────
-app.get('/api/milestones', (c) => handleGetMilestones(U(c), E(c)));
+defineRoute({
+  method: 'GET',
+  path: '/api/milestones',
+  auth: 'authed',
+  entity: 'projects',
+  visibility: 'na',
+  handler: (c) => handleGetMilestones(U(c), E(c)),
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Grant post-award milestones
 // ─────────────────────────────────────────────────────────────────────────────
-app.get('/api/grant-milestones/upcoming', (c) => handleUpcomingGrantMilestones(U(c), E(c)));
-app.get('/api/grant-milestones', (c) => handleGetGrantMilestones(U(c), E(c)));
+defineRoute({
+  method: 'GET',
+  path: '/api/grant-milestones/upcoming',
+  auth: 'authed',
+  entity: 'grant-milestones',
+  visibility: 'na',
+  handler: (c) => handleUpcomingGrantMilestones(U(c), E(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/grant-milestones',
+  auth: 'authed',
+  entity: 'grant-milestones',
+  visibility: 'na',
+  handler: (c) => handleGetGrantMilestones(U(c), E(c)),
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Regulatory
 // ─────────────────────────────────────────────────────────────────────────────
-app.get('/api/regulatory/expiring', (c) => handleGetExpiringItems(U(c), E(c)));
-app.get('/api/regulatory/:id/ics', (c) => handleRegulatoryIcs(c.req.param('id'), E(c)));
-app.get('/api/regulatory', (c) => handleGetRegulatoryItems(U(c), E(c)));
+defineRoute({
+  method: 'GET',
+  path: '/api/regulatory/expiring',
+  auth: 'authed',
+  entity: 'regulatory',
+  visibility: 'pb-aware',
+  handler: (c) => handleGetExpiringItems(U(c), E(c), CSP(c)),
+});
+// Auth-only (not PI) — team members need iCal access to renewal reminders.
+defineRoute({
+  method: 'GET',
+  path: '/api/regulatory/:id/ics',
+  auth: 'authed',
+  entity: 'regulatory',
+  visibility: 'na',
+  handler: (c) => handleRegulatoryIcs(c.req.param('id'), E(c), R(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/regulatory',
+  auth: 'authed',
+  entity: 'regulatory',
+  visibility: 'pb-aware',
+  handler: (c) => handleGetRegulatoryItems(U(c), R(c), E(c), CSP(c)),
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Conferences
 // ─────────────────────────────────────────────────────────────────────────────
-app.get('/api/conferences/upcoming', (c) => handleGetUpcomingConferences(E(c)));
-app.get('/api/conferences', (c) => handleGetConferences(U(c), E(c)));
+defineRoute({
+  method: 'GET',
+  path: '/api/conferences/upcoming',
+  auth: 'authed',
+  entity: 'conferences',
+  visibility: 'pb-aware',
+  handler: (c) => handleGetUpcomingConferences(E(c), CSP(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/conferences',
+  auth: 'authed',
+  entity: 'conferences',
+  visibility: 'pb-aware',
+  handler: (c) => handleGetConferences(U(c), R(c), E(c), CSP(c)),
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Email drafts (reads)
 // ─────────────────────────────────────────────────────────────────────────────
-app.get('/api/email-drafts', (c) => handleGetEmailDrafts(U(c), E(c)));
-app.get('/api/email-drafts/pending', (c) => handleGetPendingDrafts(E(c)));
+defineRoute({
+  method: 'GET',
+  path: '/api/email-drafts',
+  auth: 'authed',
+  entity: 'email-drafts',
+  visibility: 'na',
+  handler: (c) => handleGetEmailDrafts(U(c), E(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/email-drafts/pending',
+  auth: 'authed',
+  entity: 'email-drafts',
+  visibility: 'na',
+  handler: (c) => handleGetPendingDrafts(E(c)),
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Proactive brief / digest preview / file activity
 // ─────────────────────────────────────────────────────────────────────────────
-app.get('/api/proactive-brief', (c) => handleProactiveBrief(R(c), E(c)));
-app.get('/api/digest-preview', (c) => handleDigestPreview(U(c), E(c)));
+defineRoute({
+  method: 'GET',
+  path: '/api/proactive-brief',
+  auth: 'authed',
+  entity: 'proactive-brief',
+  visibility: 'na',
+  handler: (c) => handleProactiveBrief(R(c), E(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/digest-preview',
+  auth: 'authed',
+  entity: 'digest',
+  visibility: 'na',
+  handler: (c) => handleDigestPreview(U(c), E(c)),
+});
 // /api/file-activity/heatmap (and potentially future subpaths) — the original
 // used pathname.match(/^\/api\/file-activity\/heatmap/), so we preserve the
 // prefix behavior with an explicit route on the exact path. No other
 // subpaths existed, so a wildcard match isn't necessary.
-app.get('/api/file-activity/heatmap', (c) => handleGetFileActivity(U(c), E(c)));
+defineRoute({
+  method: 'GET',
+  path: '/api/file-activity/heatmap',
+  auth: 'authed',
+  entity: 'file-activity',
+  visibility: 'na',
+  handler: (c) => handleGetFileActivity(U(c), E(c)),
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Reactions (read)
 // ─────────────────────────────────────────────────────────────────────────────
-app.get('/api/reactions', (c) => handleGetReactions(U(c), E(c)));
+defineRoute({
+  method: 'GET',
+  path: '/api/reactions',
+  auth: 'authed',
+  entity: 'reactions',
+  visibility: 'na',
+  handler: (c) => handleGetReactions(U(c), E(c)),
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Task sub-resource GETs
 // ─────────────────────────────────────────────────────────────────────────────
-app.get('/api/tasks/:id/comments', (c) => handleGetTaskComments(c.req.param('id'), E(c)));
-app.get('/api/tasks/:id/files', async (c) => {
-  const env = E(c);
-  const { results } = await env.DB.prepare(
-    'SELECT * FROM task_files WHERE task_id = ? ORDER BY created_at DESC'
-  ).bind(c.req.param('id')).all();
-  return json({ data: results });
+defineRoute({
+  method: 'GET',
+  path: '/api/tasks/:id/comments',
+  auth: 'authed',
+  entity: 'tasks',
+  visibility: 'na',
+  handler: (c) => handleGetTaskComments(c.req.param('id'), R(c), E(c)),
 });
-app.get('/api/tasks/:id/updates', (c) => handleGetTaskUpdates(c.req.param('id'), E(c)));
-app.get('/api/tasks/:id/activity', (c) => handleGetTaskActivity(c.req.param('id'), E(c)));
-app.get('/api/tasks/:id/detail', (c) => handleGetTaskDetail(c.req.param('id'), E(c)));
-app.get('/api/tasks/:id/subtasks', (c) => handleGetSubtasks(c.req.param('id'), E(c)));
-app.get('/api/tasks/:id/handoffs', (c) => handleGetHandoffs(c.req.param('id'), E(c)));
+defineRoute({
+  method: 'GET',
+  path: '/api/tasks/:id/files',
+  auth: 'authed',
+  entity: 'tasks',
+  visibility: 'pb-aware',
+  handler: async (c) => {
+  const env = E(c);
+  // Auth required — task files are team-internal content.
+  const authedUser = c.get('authedUser');
+  if (!authedUser && c.get('apiKeyValid') !== true) return error('Authentication required', 401);
+  // Phase 1b-extended: if the task belongs to a PB-category project, block non-PI
+  // callers from listing the file metadata. Mirrors the read-side gates on
+  // task comments/updates/activity (api/routes/tasks.ts).
+  const taskId = c.req.param('id');
+  const taskRowForGate = await env.DB.prepare(
+    'SELECT project_id FROM tasks WHERE id = ? AND deleted_at IS NULL'
+  ).bind(taskId).first<{ project_id: string | null }>();
+  if (taskRowForGate?.project_id) {
+    const block = await assertProjectVisible(R(c), env, taskRowForGate.project_id);
+    if (block) return block;
+  }
+  const { results } = await env.DB.prepare(
+    'SELECT id, task_id, filename, url, file_type, uploaded_by, created_at FROM task_files WHERE task_id = ? ORDER BY created_at DESC'
+  ).bind(taskId).all();
+  return json({ data: results });
+},
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/tasks/:id/updates',
+  auth: 'authed',
+  entity: 'tasks',
+  visibility: 'na',
+  handler: (c) => handleGetTaskUpdates(c.req.param('id'), R(c), E(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/tasks/:id/activity',
+  auth: 'authed',
+  entity: 'tasks',
+  visibility: 'na',
+  handler: (c) => handleGetTaskActivity(c.req.param('id'), R(c), E(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/tasks/:id/detail',
+  auth: 'authed',
+  entity: 'tasks',
+  visibility: 'na',
+  handler: (c) => handleGetTaskDetail(c.req.param('id'), R(c), E(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/tasks/:id/subtasks',
+  auth: 'authed',
+  entity: 'tasks',
+  visibility: 'na',
+  handler: (c) => handleGetSubtasks(c.req.param('id'), E(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/tasks/:id/handoffs',
+  auth: 'authed',
+  entity: 'tasks',
+  visibility: 'na',
+  handler: (c) => handleGetHandoffs(c.req.param('id'), E(c)),
+});
 // GET /api/tasks/:id — fetch single task by PK (mechanic I5: was missing, always 404)
 // Must come AFTER all /api/tasks/:id/<sub-path> routes so hono routes specifics first.
-app.get('/api/tasks/:id', (c) => handleGetTask(c.req.param('id'), E(c)));
+defineRoute({
+  method: 'GET',
+  path: '/api/tasks/:id',
+  auth: 'authed',
+  entity: 'tasks',
+  visibility: 'na',
+  handler: (c) => handleGetTask(c.req.param('id'), E(c), R(c)),
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ── Writes (POST / PUT / PATCH) ──────────────────────────────────────────────
@@ -687,104 +1606,454 @@ app.get('/api/tasks/:id', (c) => handleGetTask(c.req.param('id'), E(c)));
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Uploads
-app.post('/api/upload/url', (c) => handleUploadUrl(R(c), USER(c), E(c)));
-app.post('/api/upload/done', (c) => handleUploadDone(R(c), USER(c), E(c)));
-app.post('/api/files/:id/delete', async (c) => handleDeleteFile(c.req.param('id'), E(c), await isPiRequest(R(c), E(c))));
+defineRoute({
+  method: 'POST',
+  path: '/api/upload/url',
+  auth: 'authed',
+  entity: 'misc',
+  visibility: 'na',
+  handler: (c) => handleUploadUrl(R(c), USER(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/upload/done',
+  auth: 'authed',
+  entity: 'misc',
+  visibility: 'na',
+  handler: (c) => handleUploadDone(R(c), USER(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/files/:id/delete',
+  auth: 'authed',
+  entity: 'files',
+  visibility: 'pb-aware',
+  handler: (c) => handleDeleteFile(c.req.param('id'), E(c), CSP(c)),
+});
 
 // Projects (specific first)
-app.post('/api/projects', (c) => handleCreateProject(R(c), USER(c), E(c)));
-app.post('/api/projects/:slug/delete', (c) => handleDeleteProject(c.req.param('slug'), USER(c), E(c), U(c)));
-app.post('/api/projects/:slug/comments', (c) => handleAddComment(c.req.param('slug'), R(c), USER(c), E(c)));
-app.post('/api/projects/:slug/updates', (c) => handlePostProjectUpdate(c.req.param('slug'), R(c), USER(c), E(c)));
-app.post('/api/projects/:slug/documents', (c) => handleCreateProjectDocument(c.req.param('slug'), R(c), USER(c), E(c)));
-app.post('/api/projects/:slug/documents/:docId/delete', (c) => handleDeleteProjectDocument(c.req.param('docId'), E(c)));
-app.post('/api/projects/:slug', (c) => handleUpdateProject(c.req.param('slug'), R(c), USER(c), E(c)));
+defineRoute({
+  method: 'POST',
+  path: '/api/projects',
+  auth: 'authed',
+  entity: 'projects',
+  visibility: 'na',
+  handler: (c) => handleCreateProject(R(c), USER(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/projects/:slug/delete',
+  auth: 'authed',
+  entity: 'projects',
+  visibility: 'na',
+  handler: (c) => handleDeleteProject(c.req.param('slug'), USER(c), E(c), U(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/projects/:slug/comments',
+  auth: 'authed',
+  entity: 'projects',
+  visibility: 'na',
+  handler: (c) => handleAddComment(c.req.param('slug'), R(c), USER(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/projects/:slug/updates',
+  auth: 'authed',
+  entity: 'projects',
+  visibility: 'na',
+  handler: (c) => handlePostProjectUpdate(c.req.param('slug'), R(c), USER(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/projects/:slug/documents',
+  auth: 'authed',
+  entity: 'projects',
+  visibility: 'na',
+  handler: (c) => handleCreateProjectDocument(c.req.param('slug'), R(c), USER(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/projects/:slug/documents/:docId/delete',
+  auth: 'authed',
+  entity: 'projects',
+  visibility: 'na',
+  handler: (c) => handleDeleteProjectDocument(c.req.param('docId'), R(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/projects/:slug',
+  auth: 'authed',
+  entity: 'projects',
+  visibility: 'na',
+  handler: (c) => handleUpdateProject(c.req.param('slug'), R(c), USER(c), E(c)),
+});
 
 // Team
-app.post('/api/team/:slug', (c) => handleUpdateTeamMember(c.req.param('slug'), R(c), USER(c), E(c), c.get('apiKeyValid') === true));
+defineRoute({
+  method: 'POST',
+  path: '/api/team/:slug',
+  auth: 'authed',
+  entity: 'team',
+  visibility: 'na',
+  handler: (c) => handleUpdateTeamMember(c.req.param('slug'), R(c), USER(c), E(c), c.get('apiKeyValid') === true),
+});
 
 // Inbox events (W2a) — specific-before-generic
-app.post('/api/inbox-events/sync-bulk', (c) => handleSyncBulkInboxEvents(R(c), USER(c), E(c)));
-app.post('/api/inbox-events/:id/delete', (c) => handleDeleteInboxEvent(c.req.param('id'), USER(c), E(c)));
-app.get('/api/inbox-events', (c) => handleInboxEvents(U(c), E(c)));
+defineRoute({
+  method: 'POST',
+  path: '/api/inbox-events/sync-bulk',
+  auth: 'authed',
+  entity: 'inbox-events',
+  visibility: 'na',
+  handler: (c) => handleSyncBulkInboxEvents(R(c), USER(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/inbox-events/:id/delete',
+  auth: 'authed',
+  entity: 'inbox-events',
+  visibility: 'na',
+  handler: (c) => handleDeleteInboxEvent(c.req.param('id'), R(c), USER(c), E(c)),
+});
+// PI-or-API-key gate: raw_payload_json/notes are private to Nick's capture pipeline.
+defineRoute({
+  method: 'GET',
+  path: '/api/inbox-events',
+  auth: 'authed',
+  entity: 'inbox-events',
+  visibility: 'na',
+  handler: (c) => handleInboxEvents(U(c), E(c), R(c)),
+});
 
 // Mutations (A3) — single endpoint for every brain.db -> Hub write.
 // Ships AFTER pre-A3 snapshot manifest verifier exits 0 on both PB
 // machines + schema-v58 (processed_mutations) + v59 (last_mutation_id)
 // applied to D1 prod.
-app.post('/api/mutations', (c) => handleMutations(R(c), USER(c), E(c)));
+defineRoute({
+  method: 'POST',
+  path: '/api/mutations',
+  auth: 'authed',
+  entity: 'mutations',
+  visibility: 'na',
+  handler: (c) => handleMutations(R(c), USER(c), E(c)),
+});
 
 // Tasks — specific-before-generic
-app.post('/api/tasks/batch', (c) => handleBatchUpdateTasks(R(c), USER(c), E(c)));
-app.post('/api/tasks/:id/delete', (c) => handleDeleteTask(c.req.param('id'), USER(c), E(c)));
-app.post('/api/tasks/:id/acknowledge', (c) => handleAcknowledgeTask(c.req.param('id'), R(c), USER(c), E(c)));
-app.post('/api/tasks/:id/status', (c) => handleUpdateTaskStatus(c.req.param('id'), R(c), USER(c), E(c)));
-app.post('/api/tasks/:id/comments', (c) => handleAddTaskComment(c.req.param('id'), R(c), USER(c), E(c)));
-app.post('/api/tasks/:id/updates', (c) => handlePostTaskUpdate(c.req.param('id'), R(c), USER(c), E(c)));
-app.post('/api/tasks/:id/subtasks/reorder', (c) => handleReorderSubtasks(c.req.param('id'), R(c), E(c)));
-app.post('/api/tasks/:id/subtasks', (c) => handleCreateSubtask(c.req.param('id'), R(c), USER(c), E(c)));
-app.post('/api/tasks/:id/handoffs', (c) => handleCreateHandoff(c.req.param('id'), R(c), USER(c), E(c)));
-app.post('/api/tasks/:id/files', async (c) => {
+defineRoute({
+  method: 'POST',
+  path: '/api/tasks/batch',
+  auth: 'authed',
+  entity: 'tasks',
+  visibility: 'na',
+  handler: (c) => handleBatchUpdateTasks(R(c), USER(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/tasks/:id/delete',
+  auth: 'authed',
+  entity: 'tasks',
+  visibility: 'na',
+  handler: (c) => handleDeleteTask(c.req.param('id'), R(c), USER(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/tasks/:id/acknowledge',
+  auth: 'authed',
+  entity: 'tasks',
+  visibility: 'na',
+  handler: (c) => handleAcknowledgeTask(c.req.param('id'), R(c), USER(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/tasks/:id/status',
+  auth: 'authed',
+  entity: 'tasks',
+  visibility: 'na',
+  handler: (c) => handleUpdateTaskStatus(c.req.param('id'), R(c), USER(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/tasks/:id/comments',
+  auth: 'authed',
+  entity: 'tasks',
+  visibility: 'na',
+  handler: (c) => handleAddTaskComment(c.req.param('id'), R(c), USER(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/tasks/:id/updates',
+  auth: 'authed',
+  entity: 'tasks',
+  visibility: 'na',
+  handler: (c) => handlePostTaskUpdate(c.req.param('id'), R(c), USER(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/tasks/:id/subtasks/reorder',
+  auth: 'authed',
+  entity: 'tasks',
+  visibility: 'na',
+  handler: (c) => handleReorderSubtasks(c.req.param('id'), R(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/tasks/:id/subtasks',
+  auth: 'authed',
+  entity: 'tasks',
+  visibility: 'na',
+  handler: (c) => handleCreateSubtask(c.req.param('id'), R(c), USER(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/tasks/:id/handoffs',
+  auth: 'authed',
+  entity: 'tasks',
+  visibility: 'na',
+  handler: (c) => handleCreateHandoff(c.req.param('id'), R(c), USER(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/tasks/:id/files',
+  auth: 'authed',
+  entity: 'tasks',
+  visibility: 'pb-aware',
+  handler: async (c) => {
   const env = E(c);
-  const user = USER(c);
   const id = c.req.param('id');
+  // Owner-or-PI gate: only the task owner/assignee or a PI may attach files.
+  const callerSlug = await actorSlugFromRequest(R(c), env);
+  if (!callerSlug) return error('Authentication required', 401);
+  // Phase 1b-extended: also gate on PB-project visibility. Pull project_id in
+  // the same row read so we don't pay a second round-trip.
+  const task = await env.DB.prepare(
+    'SELECT assignee, project_id FROM tasks WHERE id = ? LIMIT 1'
+  ).bind(id).first<{ assignee: string | null; project_id: string | null }>();
+  if (!task) return error('Task not found', 404);
+  if (task.project_id) {
+    const block = await assertProjectVisible(R(c), env, task.project_id);
+    if (block) return block;
+  }
+  // Null-assignee guard: unassigned tasks are NOT locked to any owner.
+  // Only block when assignee is non-null AND differs AND caller is not PI.
+  if (task.assignee != null && task.assignee !== callerSlug && !(await isPiRequest(R(c), env))) {
+    return error('Forbidden', 403);
+  }
   const body = await c.req.json() as { filename: string; url: string; file_type?: string };
   const newId = crypto.randomUUID().slice(0, 8);
   await env.DB.prepare(
     'INSERT INTO task_files (id, task_id, filename, url, file_type, uploaded_by) VALUES (?, ?, ?, ?, ?, ?)'
-  ).bind(newId, id, body.filename, body.url, body.file_type || 'link', user.email).run();
+  ).bind(newId, id, body.filename, body.url, body.file_type || 'link', callerSlug).run();
+  await logActivity(env, 'task_file_attach', `Attached file "${body.filename}" to task ${id}`, callerSlug, id, 'task');
   return json({ data: { id: newId, task_id: id, filename: body.filename, url: body.url } });
+},
 });
-app.post('/api/tasks/:id', (c) => handleUpdateTask(c.req.param('id'), R(c), USER(c), E(c)));
-app.post('/api/tasks', (c) => handleCreateTask(R(c), USER(c), E(c)));
-app.post('/api/sync/mobile-tasks-to-hub', (c) => handleMobileTasksToHub(R(c), USER(c), E(c)));
+defineRoute({
+  method: 'POST',
+  path: '/api/tasks/:id',
+  auth: 'authed',
+  entity: 'tasks',
+  visibility: 'na',
+  handler: (c) => handleUpdateTask(c.req.param('id'), R(c), USER(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/tasks',
+  auth: 'authed',
+  entity: 'tasks',
+  visibility: 'na',
+  handler: (c) => handleCreateTask(R(c), USER(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/sync/mobile-tasks-to-hub',
+  auth: 'authed',
+  entity: 'misc',
+  visibility: 'na',
+  handler: (c) => handleMobileTasksToHub(R(c), USER(c), E(c)),
+});
 
-// Task-files (deletion uses the legacy /api/task-files/:id/delete path)
-app.post('/api/task-files/:id/delete', async (c) => {
+// Task-files (deletion uses the legacy /api/task-files/:id/delete path).
+// Owner-or-PI gate: look up the file's task assignee; only they or a PI may delete.
+// Hard-delete is intentional (task_files has no deleted_at column — schema-v34).
+// logActivity provides the audit trail in lieu of a soft-delete tombstone.
+defineRoute({
+  method: 'POST',
+  path: '/api/task-files/:id/delete',
+  auth: 'authed',
+  entity: 'tasks',
+  visibility: 'pb-aware',
+  handler: async (c) => {
   const env = E(c);
-  await env.DB.prepare('DELETE FROM task_files WHERE id = ?').bind(c.req.param('id')).run();
-  return json({ data: { deleted: c.req.param('id') } });
+  const fileId = c.req.param('id');
+  const callerSlug = await actorSlugFromRequest(R(c), env);
+  if (!callerSlug) return error('Authentication required', 401);
+  // Look up the file to get the parent task, its assignee, and project_id.
+  const fileRow = await env.DB.prepare(
+    'SELECT tf.id, tf.task_id, tf.filename, t.assignee, t.project_id FROM task_files tf LEFT JOIN tasks t ON tf.task_id = t.id WHERE tf.id = ? LIMIT 1'
+  ).bind(fileId).first<{ id: string; task_id: string; filename: string; assignee: string | null; project_id: string | null }>();
+  // SEC-10.3 + Phase 1b-extended: idempotent — repeat delete (row already gone)
+  // returns 200 with idempotent:true. Codex flagged that the prior 404 leaked
+  // existence of file IDs to non-owners.
+  if (!fileRow) return json({ data: { deleted: fileId, idempotent: true } });
+  // Phase 1b-extended: gate on PB-project visibility before the assignee check.
+  // A non-PI knowing a PB task-file id must not be able to delete (or learn
+  // about its existence via a different error code).
+  if (fileRow.project_id) {
+    const block = await assertProjectVisible(R(c), env, fileRow.project_id);
+    if (block) return block;
+  }
+  // Null-assignee guard: unassigned tasks are NOT locked to any owner.
+  // Only block when assignee is non-null AND differs AND caller is not PI.
+  if (fileRow.assignee != null && fileRow.assignee !== callerSlug && !(await isPiRequest(R(c), env))) {
+    return error('Forbidden', 403);
+  }
+  await env.DB.prepare('DELETE FROM task_files WHERE id = ?').bind(fileId).run();
+  await logActivity(env, 'task_file_delete', `Deleted file "${fileRow.filename}" from task ${fileRow.task_id}`, callerSlug, fileRow.task_id, 'task');
+  return json({ data: { deleted: fileId, idempotent: false } });
+},
 });
 
 // Subtasks
-app.post('/api/subtasks/:id/toggle', (c) => handleToggleSubtask(c.req.param('id'), USER(c), E(c)));
-app.post('/api/subtasks/:id/delete', (c) => handleDeleteSubtask(c.req.param('id'), E(c)));
+defineRoute({
+  method: 'POST',
+  path: '/api/subtasks/:id/toggle',
+  auth: 'authed',
+  entity: 'subtasks',
+  visibility: 'na',
+  handler: (c) => handleToggleSubtask(c.req.param('id'), USER(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/subtasks/:id/delete',
+  auth: 'authed',
+  entity: 'subtasks',
+  visibility: 'na',
+  handler: (c) => handleDeleteSubtask(c.req.param('id'), R(c), E(c)),
+});
 
 // Action items (backward compat)
-app.post('/api/action-items/:id/toggle', (c) => handleToggleTask(c.req.param('id'), USER(c), E(c)));
-app.post('/api/action-items', (c) => handleCreateTask(R(c), USER(c), E(c)));
+defineRoute({
+  method: 'POST',
+  path: '/api/action-items/:id/toggle',
+  auth: 'authed',
+  entity: 'tasks',
+  visibility: 'na',
+  handler: (c) => handleToggleTask(c.req.param('id'), USER(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/action-items',
+  auth: 'authed',
+  entity: 'tasks',
+  visibility: 'na',
+  handler: (c) => handleCreateTask(R(c), USER(c), E(c)),
+});
 
 // Meetings
-app.post('/api/meetings', (c) => handleCreateMeeting(R(c), USER(c), E(c)));
-app.post('/api/meetings/:id/notes', (c) => handleUpdateMeetingNotes(c.req.param('id'), R(c), USER(c), E(c)));
-app.post('/api/meetings/:id/agenda/reorder', (c) => handleReorderAgenda(c.req.param('id'), R(c), E(c)));
-app.post('/api/meetings/:id/agenda', (c) => handleAddAgendaItem(c.req.param('id'), R(c), USER(c), E(c)));
+defineRoute({
+  method: 'POST',
+  path: '/api/meetings',
+  auth: 'authed',
+  entity: 'meetings',
+  visibility: 'na',
+  handler: (c) => handleCreateMeeting(R(c), USER(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/meetings/:id/notes',
+  auth: 'authed',
+  entity: 'meetings',
+  visibility: 'na',
+  handler: (c) => handleUpdateMeetingNotes(c.req.param('id'), R(c), USER(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/meetings/:id/agenda/reorder',
+  auth: 'authed',
+  entity: 'meetings',
+  visibility: 'na',
+  handler: (c) => handleReorderAgenda(c.req.param('id'), R(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/meetings/:id/agenda',
+  auth: 'authed',
+  entity: 'meetings',
+  visibility: 'na',
+  handler: (c) => handleAddAgendaItem(c.req.param('id'), R(c), USER(c), E(c)),
+});
 
 // Milestones
-app.post('/api/milestones/:id/note', (c) => handleUpdateMilestoneNote(c.req.param('id'), R(c), USER(c), E(c)));
-app.post('/api/milestones/:id/complete', (c) => handleUpdateMilestoneCompletion(c.req.param('id'), R(c), USER(c), E(c)));
+defineRoute({
+  method: 'POST',
+  path: '/api/milestones/:id/note',
+  auth: 'authed',
+  entity: 'projects',
+  visibility: 'na',
+  handler: (c) => handleUpdateMilestoneNote(c.req.param('id'), R(c), USER(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/milestones/:id/complete',
+  auth: 'authed',
+  entity: 'projects',
+  visibility: 'na',
+  handler: (c) => handleUpdateMilestoneCompletion(c.req.param('id'), R(c), USER(c), E(c)),
+});
 
 // Commitments
-app.post('/api/commitments', (c) => handleCreateCommitment(R(c), E(c)));
-
-// Notifications
-app.post('/api/notifications/read-all', async (c) => {
-  const env = E(c);
-  const user = USER(c);
-  let recipient = user.email.split('@')[0];
-  try {
-    const body = await c.req.json() as Record<string, string>;
-    if (body.recipient) recipient = body.recipient;
-  } catch {}
-  return handleMarkAllNotificationsRead(recipient, env);
+defineRoute({
+  method: 'POST',
+  path: '/api/commitments',
+  auth: 'authed',
+  entity: 'tasks',
+  visibility: 'na',
+  handler: (c) => handleCreateCommitment(R(c), E(c)),
 });
-app.post('/api/notifications/:id/read', (c) => handleMarkNotificationRead(c.req.param('id'), E(c)));
+
+// Notifications — read-all derives recipient from the authenticated caller slug,
+// not from a user-supplied ?recipient= or body field (prevents cross-user spoofing).
+defineRoute({
+  method: 'POST',
+  path: '/api/notifications/read-all',
+  auth: 'authed',
+  entity: 'notifications',
+  visibility: 'na',
+  handler: async (c) => {
+  const env = E(c);
+  const callerSlug = await actorSlugFromRequest(R(c), env);
+  if (!callerSlug) return error('Authentication required', 401);
+  return handleMarkAllNotificationsRead(callerSlug, env);
+},
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/notifications/:id/read',
+  auth: 'authed',
+  entity: 'notifications',
+  visibility: 'na',
+  handler: (c) => handleMarkNotificationRead(c.req.param('id'), R(c), E(c)),
+});
 
 // Reactions
-app.post('/api/reactions', (c) => handleToggleReaction(R(c), USER(c), E(c)));
+defineRoute({
+  method: 'POST',
+  path: '/api/reactions',
+  auth: 'authed',
+  entity: 'reactions',
+  visibility: 'na',
+  handler: (c) => handleToggleReaction(R(c), USER(c), E(c)),
+});
 
 // Publications
-app.post('/api/publications', async (c) => {
+defineRoute({
+  method: 'POST',
+  path: '/api/publications',
+  auth: 'authed',
+  entity: 'publications',
+  visibility: 'na',
+  handler: async (c) => {
   const env = E(c);
   const body = await c.req.json() as { title: string; authors: string; journal?: string; year?: number; doi?: string; pubmed?: string; abstract?: string; topics?: string[]; status?: string };
   const id = crypto.randomUUID().slice(0, 8);
@@ -792,19 +2061,62 @@ app.post('/api/publications', async (c) => {
     `INSERT INTO publications (id, title, authors, journal, year, doi, pubmed, abstract, topics, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ).bind(id, body.title, body.authors, body.journal || null, body.year || null, body.doi || null, body.pubmed || null, body.abstract || null, JSON.stringify(body.topics || []), body.status || 'Published').run();
   return json({ data: { id, title: body.title } });
+},
 });
 
 // Handoffs
-app.post('/api/handoffs/:id/acknowledge', (c) => handleAcknowledgeHandoff(c.req.param('id'), USER(c), E(c)));
+defineRoute({
+  method: 'POST',
+  path: '/api/handoffs/:id/acknowledge',
+  auth: 'authed',
+  entity: 'handoffs',
+  visibility: 'na',
+  handler: (c) => handleAcknowledgeHandoff(c.req.param('id'), USER(c), E(c)),
+});
 
 // Settings
-app.post('/api/settings', (c) => handleUpdateSettings(R(c), E(c)));
-app.post('/api/workflow-templates', (c) => handleCreateWorkflowTemplate(R(c), E(c)));
+defineRoute({
+  method: 'POST',
+  path: '/api/settings',
+  auth: 'authed',
+  entity: 'settings',
+  visibility: 'na',
+  handler: (c) => handleUpdateSettings(R(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/workflow-templates',
+  auth: 'authed',
+  entity: 'settings',
+  visibility: 'na',
+  handler: (c) => handleCreateWorkflowTemplate(R(c), E(c)),
+});
 
 // Ideas
-app.post('/api/ideas', (c) => handleCreateIdea(R(c), USER(c), E(c)));
-app.post('/api/ideas/:id/vote', (c) => handleVoteIdea(c.req.param('id'), E(c)));
-app.post('/api/ideas/:id', (c) => handleUpdateIdea(c.req.param('id'), R(c), USER(c), E(c)));
+defineRoute({
+  method: 'POST',
+  path: '/api/ideas',
+  auth: 'authed',
+  entity: 'ideas',
+  visibility: 'na',
+  handler: (c) => handleCreateIdea(R(c), USER(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/ideas/:id/vote',
+  auth: 'authed',
+  entity: 'ideas',
+  visibility: 'na',
+  handler: (c) => handleVoteIdea(c.req.param('id'), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/ideas/:id',
+  auth: 'authed',
+  entity: 'ideas',
+  visibility: 'na',
+  handler: (c) => handleUpdateIdea(c.req.param('id'), R(c), USER(c), E(c)),
+});
 
 // Inbox — POST /api/inbox + /api/inbox/sync retired 2026-05-05 (5.3a); use /api/inbox-events/sync-bulk
 
@@ -814,7 +2126,13 @@ app.post('/api/ideas/:id', (c) => handleUpdateIdea(c.req.param('id'), R(c), USER
 // reports so Nick (sole pre-launch user, can't yet sign in via CF Access)
 // can submit. Pattern mirrors the rest of /api: writes are anonymous-OK
 // pre-launch, gated post-launch via REQUIRE_AUTH=1.
-app.post('/api/bug-report', async (c) => {
+defineRoute({
+  method: 'POST',
+  path: '/api/bug-report',
+  auth: 'authed',
+  entity: 'bug-report',
+  visibility: 'na',
+  handler: async (c) => {
   const env = E(c);
   const requireAuth = (env as unknown as { REQUIRE_AUTH?: string }).REQUIRE_AUTH === '1';
   if (requireAuth) {
@@ -826,115 +2144,529 @@ app.post('/api/bug-report', async (c) => {
     if (!authed && !apiKeyValid) return error('Authentication required to file a bug', 401);
   }
   return handleBugReport(c.req.raw, env);
+},
 });
 
 // Digest
-app.post('/api/digest', (c) => handleCreateDigestPaper(R(c), E(c)));
-app.post('/api/digest/:id/comments', (c) => handleCreateDigestComment(c.req.param('id'), R(c), USER(c), E(c)));
-app.post('/api/digest/:id/status', (c) => handleUpdateDigestStatus(c.req.param('id'), R(c), USER(c), E(c)));
+defineRoute({
+  method: 'POST',
+  path: '/api/digest',
+  auth: 'authed',
+  entity: 'digest',
+  visibility: 'na',
+  handler: (c) => handleCreateDigestPaper(R(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/digest/:id/comments',
+  auth: 'authed',
+  entity: 'digest',
+  visibility: 'na',
+  handler: (c) => handleCreateDigestComment(c.req.param('id'), R(c), USER(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/digest/:id/status',
+  auth: 'authed',
+  entity: 'digest',
+  visibility: 'na',
+  handler: (c) => handleUpdateDigestStatus(c.req.param('id'), R(c), USER(c), E(c)),
+});
 
 // Paper links
-app.post('/api/paper-links', (c) => handleLinkPaper(R(c), USER(c), E(c)));
-app.post('/api/paper-links/:id/delete', (c) => handleUnlinkPaper(c.req.param('id'), E(c)));
+defineRoute({
+  method: 'POST',
+  path: '/api/paper-links',
+  auth: 'authed',
+  entity: 'paper-links',
+  visibility: 'na',
+  handler: (c) => handleLinkPaper(R(c), USER(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/paper-links/:id/delete',
+  auth: 'authed',
+  entity: 'paper-links',
+  visibility: 'na',
+  handler: (c) => handleUnlinkPaper(c.req.param('id'), R(c), E(c)),
+});
 
 // Dependencies
-app.post('/api/dependencies', (c) => handleCreateDependency(R(c), USER(c), E(c)));
-app.post('/api/dependencies/:id/delete', (c) => handleDeleteDependency(c.req.param('id'), E(c)));
+defineRoute({
+  method: 'POST',
+  path: '/api/dependencies',
+  auth: 'authed',
+  entity: 'dependencies',
+  visibility: 'na',
+  handler: (c) => handleCreateDependency(R(c), USER(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/dependencies/:id/delete',
+  auth: 'authed',
+  entity: 'dependencies',
+  visibility: 'na',
+  handler: (c) => handleDeleteDependency(c.req.param('id'), R(c), E(c)),
+});
 
 // Decisions
-app.post('/api/decisions', (c) => handleCreateDecision(R(c), USER(c), E(c)));
-app.post('/api/decisions/:id/outcome', (c) => handleUpdateDecisionOutcome(c.req.param('id'), R(c), USER(c), E(c)));
-app.post('/api/decisions/:id/update', (c) => handleUpdateDecision(c.req.param('id'), R(c), USER(c), E(c)));
+defineRoute({
+  method: 'POST',
+  path: '/api/decisions',
+  auth: 'authed',
+  entity: 'decisions',
+  visibility: 'na',
+  handler: (c) => handleCreateDecision(R(c), USER(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/decisions/:id/outcome',
+  auth: 'authed',
+  entity: 'decisions',
+  visibility: 'na',
+  handler: (c) => handleUpdateDecisionOutcome(c.req.param('id'), R(c), USER(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/decisions/:id/update',
+  auth: 'authed',
+  entity: 'decisions',
+  visibility: 'na',
+  handler: (c) => handleUpdateDecision(c.req.param('id'), R(c), USER(c), E(c)),
+});
 
 // Expertise
-app.post('/api/expertise', (c) => handleAddExpertise(R(c), USER(c), E(c)));
-app.post('/api/expertise/:id/delete', (c) => handleRemoveExpertise(c.req.param('id'), E(c)));
+defineRoute({
+  method: 'POST',
+  path: '/api/expertise',
+  auth: 'authed',
+  entity: 'expertise',
+  visibility: 'na',
+  handler: (c) => handleAddExpertise(R(c), USER(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/expertise/:id/delete',
+  auth: 'authed',
+  entity: 'expertise',
+  visibility: 'na',
+  handler: (c) => handleRemoveExpertise(c.req.param('id'), R(c), E(c)),
+});
 
 // Questions / Answers
-app.post('/api/questions', (c) => handleCreateQuestion(R(c), USER(c), E(c)));
-app.post('/api/questions/:id/answers', (c) => handleCreateAnswer(c.req.param('id'), R(c), USER(c), E(c)));
-app.post('/api/answers/:id/accept', (c) => handleAcceptAnswer(c.req.param('id'), R(c), USER(c), E(c)));
+defineRoute({
+  method: 'POST',
+  path: '/api/questions',
+  auth: 'authed',
+  entity: 'questions',
+  visibility: 'na',
+  handler: (c) => handleCreateQuestion(R(c), USER(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/questions/:id/answers',
+  auth: 'authed',
+  entity: 'questions',
+  visibility: 'na',
+  handler: (c) => handleCreateAnswer(c.req.param('id'), R(c), USER(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/answers/:id/accept',
+  auth: 'authed',
+  entity: 'questions',
+  visibility: 'na',
+  handler: (c) => handleAcceptAnswer(c.req.param('id'), R(c), USER(c), E(c)),
+});
 
 // AI requests
-app.post('/api/ai-requests', (c) => handleCreateAIRequest(R(c), USER(c), E(c)));
-app.post('/api/ai-requests/:id/response', (c) => handleUpdateAIResponse(c.req.param('id'), R(c), E(c)));
+defineRoute({
+  method: 'POST',
+  path: '/api/ai-requests',
+  auth: 'authed',
+  entity: 'ai-requests',
+  visibility: 'na',
+  handler: (c) => handleCreateAIRequest(R(c), USER(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/ai-requests/:id/response',
+  auth: 'authed',
+  entity: 'ai-requests',
+  visibility: 'na',
+  handler: (c) => handleUpdateAIResponse(c.req.param('id'), R(c), E(c)),
+});
 
 // PB sector writes
-app.post('/api/pb/capture', (c) => handlePBCapture(R(c), USER(c), E(c)));
-app.post('/api/pb/defer', (c) => handlePBDefer(R(c), USER(c), E(c)));
-app.post('/api/pb/plan', (c) => handleCreateOrUpdatePlan(R(c), USER(c), E(c)));
-app.post('/api/pb/plan/reorder', (c) => handleReorderPlan(R(c), E(c)));
-app.post('/api/pb/plan/promote', (c) => handlePromoteTask(R(c), E(c)));
-app.post('/api/pb/pomodoro/start', (c) => handleStartPomodoro(R(c), USER(c), E(c)));
-app.post('/api/pb/pomodoro/complete', (c) => handleCompletePomodoro(R(c), USER(c), E(c)));
-app.post('/api/pb/reflection', (c) => handleSaveReflection(R(c), USER(c), E(c)));
-app.post('/api/pb/dispatch/add', (c) => handleAddToDispatch(R(c), USER(c), E(c)));
-app.post('/api/pb/dispatch/send', (c) => handleSendDispatch(R(c), USER(c), E(c)));
-app.post('/api/pb/dispatch/complete', (c) => handleCompleteDispatchItem(R(c), E(c)));
-app.post('/api/pb/sessions', (c) => handleCreatePBSession(R(c), USER(c), E(c)));
-app.post('/api/pb/sessions/bulk', (c) => handleBulkCreatePBSessions(R(c), USER(c), E(c)));
+defineRoute({
+  method: 'POST',
+  path: '/api/pb/capture',
+  auth: 'pi',
+  entity: 'pb',
+  visibility: 'na',
+  handler: (c) => handlePBCapture(R(c), USER(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/pb/defer',
+  auth: 'pi',
+  entity: 'pb',
+  visibility: 'na',
+  handler: (c) => handlePBDefer(R(c), USER(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/pb/plan',
+  auth: 'pi',
+  entity: 'pb',
+  visibility: 'na',
+  handler: (c) => handleCreateOrUpdatePlan(R(c), USER(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/pb/plan/reorder',
+  auth: 'pi',
+  entity: 'pb',
+  visibility: 'na',
+  handler: (c) => handleReorderPlan(R(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/pb/plan/promote',
+  auth: 'pi',
+  entity: 'pb',
+  visibility: 'na',
+  handler: (c) => handlePromoteTask(R(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/pb/pomodoro/start',
+  auth: 'pi',
+  entity: 'pb',
+  visibility: 'na',
+  handler: (c) => handleStartPomodoro(R(c), USER(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/pb/pomodoro/complete',
+  auth: 'pi',
+  entity: 'pb',
+  visibility: 'na',
+  handler: (c) => handleCompletePomodoro(R(c), USER(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/pb/reflection',
+  auth: 'pi',
+  entity: 'pb',
+  visibility: 'na',
+  handler: (c) => handleSaveReflection(R(c), USER(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/pb/dispatch/add',
+  auth: 'pi',
+  entity: 'pb',
+  visibility: 'na',
+  handler: (c) => handleAddToDispatch(R(c), USER(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/pb/dispatch/send',
+  auth: 'pi',
+  entity: 'pb',
+  visibility: 'na',
+  handler: (c) => handleSendDispatch(R(c), USER(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/pb/dispatch/complete',
+  auth: 'pi',
+  entity: 'pb',
+  visibility: 'na',
+  handler: (c) => handleCompleteDispatchItem(R(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/pb/sessions',
+  auth: 'pi',
+  entity: 'pb',
+  visibility: 'na',
+  handler: (c) => handleCreatePBSession(R(c), USER(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/pb/sessions/bulk',
+  auth: 'pi',
+  entity: 'pb',
+  visibility: 'na',
+  handler: (c) => handleBulkCreatePBSessions(R(c), USER(c), E(c)),
+});
 // POST /api/pb/today retired 2026-05-05 (5.9): 0 callers; GET preserved for frontend use
-app.post('/api/pb/relay', (c) => handleCreateRelay(R(c), USER(c), E(c)));
+defineRoute({
+  method: 'POST',
+  path: '/api/pb/relay',
+  auth: 'pi',
+  entity: 'pb',
+  visibility: 'na',
+  handler: (c) => handleCreateRelay(R(c), USER(c), E(c)),
+});
 // Relay completion uses a numeric index in the path — Hono matches :index
 // against one URL segment. Original regex was /^\/api\/pb\/relay\/\d+\/complete$/;
 // we rely on `parseInt` + NaN guard since a non-digit segment would have fallen
 // through to 404 in the original anyway.
-app.post('/api/pb/relay/:index/complete', (c) => {
+defineRoute({
+  method: 'POST',
+  path: '/api/pb/relay/:index/complete',
+  auth: 'pi',
+  entity: 'pb',
+  visibility: 'na',
+  handler: (c) => {
   const index = parseInt(c.req.param('index'), 10);
   if (Number.isNaN(index)) return error('Not found', 404);
   return handleCompleteRelay(R(c), E(c), index);
+},
 });
 
 // Impact check — route removed 2026-05-05 (5.3b); handleCheckImpact used internally by cron at line 1269
 
 // Revisions (specific /:id/comments BEFORE /:id)
-app.post('/api/revisions', (c) => handleCreateRevision(R(c), USER(c), E(c)));
-app.post('/api/revisions/comments/:id', (c) => handleUpdateRevisionComment(c.req.param('id'), R(c), USER(c), E(c)));
-app.post('/api/revisions/:id/comments', (c) => handleCreateRevisionComment(c.req.param('id'), R(c), USER(c), E(c)));
-app.post('/api/revisions/:id', (c) => handleUpdateRevision(c.req.param('id'), R(c), USER(c), E(c)));
+defineRoute({
+  method: 'POST',
+  path: '/api/revisions',
+  auth: 'authed',
+  entity: 'revisions',
+  visibility: 'na',
+  handler: (c) => handleCreateRevision(R(c), USER(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/revisions/comments/:id',
+  auth: 'authed',
+  entity: 'revisions',
+  visibility: 'na',
+  handler: (c) => handleUpdateRevisionComment(c.req.param('id'), R(c), USER(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/revisions/:id/comments',
+  auth: 'authed',
+  entity: 'revisions',
+  visibility: 'na',
+  handler: (c) => handleCreateRevisionComment(c.req.param('id'), R(c), USER(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/revisions/:id',
+  auth: 'authed',
+  entity: 'revisions',
+  visibility: 'na',
+  handler: (c) => handleUpdateRevision(c.req.param('id'), R(c), USER(c), E(c)),
+});
 
 // Submissions
-app.post('/api/submissions', (c) => handleCreateSubmission(R(c), USER(c), E(c)));
-app.post('/api/submissions/:id/delete', (c) => handleDeleteSubmission(c.req.param('id'), USER(c), E(c)));
-app.post('/api/submissions/:id', (c) => handleUpdateSubmission(c.req.param('id'), R(c), USER(c), E(c)));
+defineRoute({
+  method: 'POST',
+  path: '/api/submissions',
+  auth: 'authed',
+  entity: 'submissions',
+  visibility: 'na',
+  handler: (c) => handleCreateSubmission(R(c), USER(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/submissions/:id/delete',
+  auth: 'authed',
+  entity: 'submissions',
+  visibility: 'na',
+  handler: (c) => handleDeleteSubmission(c.req.param('id'), R(c), USER(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/submissions/:id',
+  auth: 'authed',
+  entity: 'submissions',
+  visibility: 'na',
+  handler: (c) => handleUpdateSubmission(c.req.param('id'), R(c), USER(c), E(c)),
+});
 
 // Mentee milestones
-app.post('/api/mentee-milestones', (c) => handleCreateMenteeMilestone(R(c), USER(c), E(c)));
-app.post('/api/mentee-milestones/:id/complete', (c) => handleCompleteMenteeMilestone(c.req.param('id'), USER(c), E(c)));
-app.post('/api/mentee-milestones/:id', (c) => handleUpdateMenteeMilestone(c.req.param('id'), R(c), USER(c), E(c)));
+defineRoute({
+  method: 'POST',
+  path: '/api/mentee-milestones',
+  auth: 'authed',
+  entity: 'mentee-milestones',
+  visibility: 'na',
+  handler: (c) => handleCreateMenteeMilestone(R(c), USER(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/mentee-milestones/:id/complete',
+  auth: 'authed',
+  entity: 'mentee-milestones',
+  visibility: 'na',
+  handler: (c) => handleCompleteMenteeMilestone(c.req.param('id'), USER(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/mentee-milestones/:id',
+  auth: 'authed',
+  entity: 'mentee-milestones',
+  visibility: 'na',
+  handler: (c) => handleUpdateMenteeMilestone(c.req.param('id'), R(c), USER(c), E(c)),
+});
 
 // Grant post-award milestones
-app.post('/api/grant-milestones', (c) => handleCreateGrantMilestone(R(c), USER(c), E(c)));
-app.post('/api/grant-milestones/:id/complete', (c) => handleCompleteGrantMilestone(c.req.param('id'), USER(c), E(c)));
-app.post('/api/grant-milestones/:id', (c) => handleUpdateGrantMilestone(c.req.param('id'), R(c), USER(c), E(c)));
+defineRoute({
+  method: 'POST',
+  path: '/api/grant-milestones',
+  auth: 'authed',
+  entity: 'grant-milestones',
+  visibility: 'na',
+  handler: (c) => handleCreateGrantMilestone(R(c), USER(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/grant-milestones/:id/complete',
+  auth: 'authed',
+  entity: 'grant-milestones',
+  visibility: 'na',
+  handler: (c) => handleCompleteGrantMilestone(c.req.param('id'), USER(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/grant-milestones/:id',
+  auth: 'authed',
+  entity: 'grant-milestones',
+  visibility: 'na',
+  handler: (c) => handleUpdateGrantMilestone(c.req.param('id'), R(c), USER(c), E(c)),
+});
 
 // Grants (PATCH only — R10 inline editing)
-app.post('/api/grants/:id', (c) => handleUpdateGrant(c.req.param('id'), R(c), E(c)));
+defineRoute({
+  method: 'POST',
+  path: '/api/grants/:id',
+  auth: 'authed',
+  entity: 'grants',
+  visibility: 'na',
+  handler: (c) => handleUpdateGrant(c.req.param('id'), R(c), E(c)),
+});
 
 // Regulatory
-app.post('/api/regulatory', (c) => handleCreateRegulatoryItem(R(c), USER(c), E(c)));
-app.post('/api/regulatory/:id/renew', (c) => handleRenewRegulatoryItem(c.req.param('id'), R(c), USER(c), E(c)));
-app.post('/api/regulatory/:id', (c) => handleUpdateRegulatoryItem(c.req.param('id'), R(c), USER(c), E(c)));
+defineRoute({
+  method: 'POST',
+  path: '/api/regulatory',
+  auth: 'authed',
+  entity: 'regulatory',
+  visibility: 'na',
+  handler: (c) => handleCreateRegulatoryItem(R(c), USER(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/regulatory/:id/renew',
+  auth: 'authed',
+  entity: 'regulatory',
+  visibility: 'na',
+  handler: (c) => handleRenewRegulatoryItem(c.req.param('id'), R(c), USER(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/regulatory/:id',
+  auth: 'authed',
+  entity: 'regulatory',
+  visibility: 'na',
+  handler: (c) => handleUpdateRegulatoryItem(c.req.param('id'), R(c), USER(c), E(c)),
+});
 
 // Conferences
-app.post('/api/conferences', (c) => handleCreateConference(R(c), USER(c), E(c)));
-app.post('/api/conferences/:id/delete', (c) => handleDeleteConference(c.req.param('id'), USER(c), E(c)));
-app.post('/api/conferences/:id', (c) => handleUpdateConference(c.req.param('id'), R(c), USER(c), E(c)));
+defineRoute({
+  method: 'POST',
+  path: '/api/conferences',
+  auth: 'authed',
+  entity: 'conferences',
+  visibility: 'na',
+  handler: (c) => handleCreateConference(R(c), USER(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/conferences/:id/delete',
+  auth: 'authed',
+  entity: 'conferences',
+  visibility: 'na',
+  handler: (c) => handleDeleteConference(c.req.param('id'), R(c), USER(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/conferences/:id',
+  auth: 'authed',
+  entity: 'conferences',
+  visibility: 'na',
+  handler: (c) => handleUpdateConference(c.req.param('id'), R(c), USER(c), E(c)),
+});
 
 // Deadline dependencies
-app.post('/api/deadline-dependencies', (c) => handleCreateDeadlineDependency(R(c), USER(c), E(c)));
-app.post('/api/deadline-dependencies/:id/delete', (c) => handleDeleteDeadlineDependency(c.req.param('id'), E(c)));
+defineRoute({
+  method: 'POST',
+  path: '/api/deadline-dependencies',
+  auth: 'authed',
+  entity: 'deadline-cascade',
+  visibility: 'na',
+  handler: (c) => handleCreateDeadlineDependency(R(c), USER(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/deadline-dependencies/:id/delete',
+  auth: 'authed',
+  entity: 'deadline-cascade',
+  visibility: 'na',
+  handler: (c) => handleDeleteDeadlineDependency(c.req.param('id'), R(c), E(c)),
+});
 
 // Digest email
-app.post('/api/digest-email', (c) => handleGenerateDigestEmail(R(c), E(c)));
-app.post('/api/digest-email/send', (c) => handleSendDigestEmail(R(c), E(c)));
-app.post('/api/digest-email/daily', (c) => handleSendDailyDigests(E(c), R(c)));
+defineRoute({
+  method: 'POST',
+  path: '/api/digest-email',
+  auth: 'authed',
+  entity: 'digest',
+  visibility: 'na',
+  handler: (c) => handleGenerateDigestEmail(R(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/digest-email/send',
+  auth: 'authed',
+  entity: 'digest',
+  visibility: 'na',
+  handler: (c) => handleSendDigestEmail(R(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/digest-email/daily',
+  auth: 'authed',
+  entity: 'digest',
+  visibility: 'na',
+  handler: (c) => handleSendDailyDigests(E(c), R(c)),
+});
 
 // Email drafts sync
-app.post('/api/email-drafts/sync-bulk', (c) => handleSyncEmailDrafts(R(c), E(c)));
+defineRoute({
+  method: 'POST',
+  path: '/api/email-drafts/sync-bulk',
+  auth: 'authed',
+  entity: 'email-drafts',
+  visibility: 'na',
+  handler: (c) => handleSyncEmailDrafts(R(c), E(c)),
+});
 
 // File activity sync
-app.post('/api/file-activity/sync', (c) => handleSyncFileActivity(R(c), E(c)));
+defineRoute({
+  method: 'POST',
+  path: '/api/file-activity/sync',
+  auth: 'authed',
+  entity: 'file-activity',
+  visibility: 'na',
+  handler: (c) => handleSyncFileActivity(R(c), E(c)),
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // /api/admin/migrate and /api/test-cleanup removed 2026-05-15.
@@ -952,6 +2684,13 @@ app.post('/api/file-activity/sync', (c) => handleSyncFileActivity(R(c), E(c)));
 // consolidate on 404 for every unmatched combo. If a caller depended on 405,
 // they still get a 4xx — no silent 200.
 // ─────────────────────────────────────────────────────────────────────────────
+
+// Z1.3 (2026-05-28): wire every defineRoute({...}) above into the Hono app.
+// Single registration site — replaces the per-line app.get/post calls that
+// the migration deleted. ROUTE_REGISTRY is populated by side-effect as each
+// defineRoute({...}) above evaluates at module-load.
+bindRegistryToHono(app);
+
 app.notFound(() => error('Not found', 404));
 
 // ─────────────────────────────────────────────────────────────────────────────

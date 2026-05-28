@@ -1,6 +1,7 @@
 import type { AuthUser, Env } from '../helpers';
 import { json, error, generateId, logActivity, actorSlug } from '../helpers';
 import { nowInstant } from '../lib/time';
+import { idempotentDelete } from '../lib/idempotent-delete';
 
 interface SubtaskRow {
   id: string
@@ -78,18 +79,8 @@ export async function handleToggleSubtask(subtaskId: string, user: AuthUser, env
 }
 
 // POST /api/subtasks/:id/delete — delete a subtask
-export async function handleDeleteSubtask(subtaskId: string, env: Env): Promise<Response> {
-  const existing = await env.DB.prepare(
-    'SELECT * FROM task_subtasks WHERE id = ?'
-  ).bind(subtaskId).first<SubtaskRow>();
-
-  if (!existing) {
-    return error('Subtask not found', 404);
-  }
-
-  await env.DB.prepare('DELETE FROM task_subtasks WHERE id = ?').bind(subtaskId).run();
-
-  return json({ data: null, deleted: true });
+export async function handleDeleteSubtask(subtaskId: string, request: Request, env: Env): Promise<Response> {
+  return idempotentDelete({ table: 'task_subtasks', id: subtaskId, mode: 'hard', request, env });
 }
 
 // POST /api/tasks/:id/subtasks/reorder — reorder subtasks

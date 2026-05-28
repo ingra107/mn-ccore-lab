@@ -15,7 +15,8 @@
 // rejected-stale rows synced.
 
 import type { AuthUser, Env } from '../helpers';
-import { json, error, logActivity } from '../helpers';
+import { json, error, logActivity, isPiRequest } from '../helpers';
+import { idempotentDelete } from '../lib/idempotent-delete';
 
 const INBOX_EVENT_ALLOWED_SOURCES = new Set([
   'telegram', 'gmail', 'hub_pwa', 'file_watcher', 'pomodoro',
@@ -23,12 +24,22 @@ const INBOX_EVENT_ALLOWED_SOURCES = new Set([
 ]);
 
 // GET /api/inbox-events
+//   PI-or-API-key gate: inbox_events contain raw_payload_json and notes
+//   fields that are private to Nick's capture pipeline. Team JWT callers → 403.
+//   API-key callers (PB sync) are granted access via isPiRequest Bearer check.
 //   ?seq_after=N        — switches to seq-cursor mode (ORDER BY seq ASC, LIMIT)
 //   ?include_deleted=1  — include soft-deletes (sync mirrors tombstones)
 //   ?source=...         — UI filter
 //   ?triaged=0|1        — UI filter (triaged_at IS NULL when 0)
 //   ?limit=N            — default 2000 in seq mode, no cap otherwise
-export async function handleInboxEvents(url: URL, env: Env): Promise<Response> {
+export async function handleInboxEvents(url: URL, env: Env, request: Request): Promise<Response> {
+  // Z1.6 (2026-05-28): request is now required (was optional). The fail-closed
+  // path collapses to the standard PI gate — callers MUST forward the raw
+  // request. defineRoute() registration in api/index.ts already does this
+  // unconditionally via R(c).
+  if (!(await isPiRequest(request, env))) {
+    return error('Forbidden — PI access only', 403);
+  }
   const seqAfterRaw = url.searchParams.get('seq_after');
   const includeDeleted = url.searchParams.get('include_deleted') === '1';
   const source = url.searchParams.get('source');
@@ -36,7 +47,14 @@ export async function handleInboxEvents(url: URL, env: Env): Promise<Response> {
   const limitRaw = url.searchParams.get('limit');
 
   const deletedFilter = includeDeleted ? '1=1' : 'deleted_at IS NULL';
-  let query = `SELECT * FROM inbox_events WHERE ${deletedFilter}`;
+  // Explicit column list (not SELECT *) — Z3.3 lint compliance. This route is
+  // PI-only gated and legitimately returns raw_payload_json + notes to Nick.
+  // safeRow would strip them, so we use an explicit projection instead.
+  let query = `SELECT id, source, source_external_id, raw_text, raw_payload_json,
+    raw_hash, suggested_project_id, suggested_action, confidence,
+    captured_at, triaged_at, triage_outcome, resulting_task_id, triaged_by,
+    notes, last_mutation_id, seq, deleted_at, updated_at, created_at
+    FROM inbox_events WHERE ${deletedFilter}`;
   const params: (string | number)[] = [];
 
   if (seqAfterRaw !== null) {
@@ -80,11 +98,19 @@ export async function handleInboxEvents(url: URL, env: Env): Promise<Response> {
 // stale client (older client_updated_at than the row's existing updated_at)
 // is rejected via the WHERE clause; the response status flips to
 // 'rejected_stale' so brain.db's IdentityBoundary doesn't mark it synced.
+//
+// PI-or-API-key gate (M-2): mirrors the PI gate on the GET sibling.
+// raw_payload_json/notes fields are private to Nick's capture pipeline;
+// team JWT callers must NOT write to them.  API-key (PB sync) path is
+// granted access via isPiRequest's Bearer check.
 export async function handleSyncBulkInboxEvents(
   request: Request,
   user: AuthUser,
   env: Env,
 ): Promise<Response> {
+  if (!(await isPiRequest(request, env))) {
+    return error('Forbidden — PI access only', 403);
+  }
   const body = await request.json() as {
     events: Array<{
       id: string;
@@ -221,24 +247,24 @@ export async function handleSyncBulkInboxEvents(
 }
 
 // POST /api/inbox-events/:id/delete — soft-delete tombstone.
+// Note: idempotentDelete soft mode sets deleted_at only (not updated_at).
+// The sync layer detects deletions via deleted_at IS NOT NULL in the seq-cursor
+// pull (handleInboxEvents ?include_deleted=1), so the updated_at omission is
+// intentional — the seq column advances on write via the outbox lane, not here.
 export async function handleDeleteInboxEvent(
   id: string,
+  request: Request,
   user: AuthUser,
   env: Env,
 ): Promise<Response> {
-  const existing = await env.DB.prepare(
-    'SELECT id, deleted_at FROM inbox_events WHERE id = ?'
-  ).bind(id).first<{ id: string; deleted_at: string | null }>();
-
-  if (!existing) return error('inbox_event not found', 404);
-  if (existing.deleted_at) {
-    return json({ data: { ok: true, idempotent: true, id } });
-  }
-
-  await env.DB.prepare(
-    "UPDATE inbox_events SET deleted_at = datetime('now'), updated_at = datetime('now') WHERE id = ?"
-  ).bind(id).run();
-
-  await logActivity(env, 'inbox_event', `Deleted inbox_event`, user.email, id, 'inbox_event');
-  return json({ data: { ok: true, id } });
+  return idempotentDelete({
+    table: 'inbox_events',
+    id,
+    mode: 'soft',
+    request,
+    env,
+    actorSlug: user.email,
+    activityCategory: 'inbox_event',
+    activityEntityType: 'inbox_event',
+  });
 }

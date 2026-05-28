@@ -22,7 +22,8 @@
 // write path through this endpoint as part of A3 ship.
 
 import type { AuthUser, Env, ValidationFlags } from '../helpers';
-import { json, error, generateId, assertProtectedNotNull, getValidationFlags } from '../helpers';
+import { json, error, generateId, assertProtectedNotNull, getValidationFlags, safeTaskRow, safeRow, projectRefToCanonical } from '../helpers';
+import { FK_SLUG_FIELDS } from '../lib/task-cols';
 import { nowInstant } from '../lib/time';
 import { assertEnumDomain, assertCompletionTriad } from '../lib/enum-domains';
 
@@ -31,6 +32,11 @@ const ALLOWED_TABLES = new Set([
   // Stage 3 Phase 1 — 9 semantic tables
   'sessions', 'agent_knowledge', 'memory_facts', 'pomodoro_sessions', 'decisions',
   'kg_entities', 'kg_relations', 'kg_relation_type_registry', 'trajectories',
+  // Z3.2 (2026-05-28) — 6 project-linked tables added to FK_SLUG_FIELDS registry.
+  // ALLOWED_TABLES must include them or applyInsert's FK_SLUG_FIELDS loop is
+  // dead code (processOne rejects unknown tables before reaching applyInsert).
+  'submission_events', 'conference_submissions', 'regulatory_items',
+  'manuscript_revisions', 'project_documents', 'deadline_dependencies',
 ]);
 
 const ALLOWED_OPS = new Set(['insert', 'update', 'delete', 'append']);
@@ -553,6 +559,27 @@ export async function applyInsert(env: Env, mut: Mutation, user: AuthUser, flags
           canonical_id: flags?.dedup ? dup.id : undefined,
           reason: `deduped: active task with same (title, project_id) exists as ${dup.id}`,
         });
+      }
+    }
+  }
+
+  // T2.6 (2026-05-28): FK_SLUG_FIELDS registry replaces the tasks-only
+  // project_id branch. Each column listed for this table is canonicalized
+  // via projectRefToCanonical; unresolvable refs become NULL (no reject —
+  // PB may push before the project row arrives on Hub, then a later sync
+  // resolves it). Matches the /api/tasks direct-route behavior. Originally
+  // Fix 7 (2026-04-xx) — was hardcoded to ('tasks', 'project_id'); now
+  // any new table with a projects FK can register here.
+  const fkFields = FK_SLUG_FIELDS[mut.table] ?? [];
+  if (mut.payload && fkFields.length > 0) {
+    const payloadRec = mut.payload as Record<string, unknown>;
+    for (const field of fkFields) {
+      if (field in payloadRec) {
+        const rawRef = payloadRec[field] as string | null | undefined;
+        if (rawRef) {
+          const canonical = await projectRefToCanonical(env, rawRef);
+          payloadRec[field] = canonical ?? null;
+        }
       }
     }
   }
@@ -1189,12 +1216,15 @@ async function readCanonical(
     const row = await env.DB.prepare(
       `SELECT * FROM ${table} WHERE ${clause}`
     ).bind(...vals).first<Record<string, unknown>>();
-    return row;
+    // T2.5 (SEC-P2-03): safeRow(table, row) consults TABLE_PRIVATE_COLS for
+    // the table; no-op when the table has no registered private cols. Replaces
+    // the tasks-only `table === 'tasks' ? safeTaskRow(row) : row` ternary.
+    return row ? safeRow(table, row) : null;
   }
   const row = await env.DB.prepare(
     `SELECT * FROM ${table} WHERE ${pk} = ?`
   ).bind(recordId).first<Record<string, unknown>>();
-  return row;
+  return row ? safeRow(table, row) : null;
 }
 
 // Exported for tests/mutations.hash.test.ts. Internal call sites use it

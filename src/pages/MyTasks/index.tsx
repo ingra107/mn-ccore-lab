@@ -28,7 +28,6 @@ import { ListView } from './views/ListView'
 import { useTaskFilter } from './hooks/useTaskFilter'
 import { useSelection } from './hooks/useSelection'
 import {
-  PAGE_BG, INK,
   todayKey, readPlannedToday,
   type ViewMode, type GroupKey, type QuickViewKey, type FilterState, type FilterOption,
 } from './constants'
@@ -234,7 +233,7 @@ export default function UnifiedMyTasks() {
   const isLoading = tasksQuery.isLoading || projectsQuery.isLoading
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: PAGE_BG, color: INK, fontFamily: 'var(--font-sans), \'DM Sans\', system-ui, sans-serif', overflow: 'hidden' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: 'var(--task-page-bg)', color: 'var(--task-ink)', fontFamily: 'var(--font-sans), \'DM Sans\', system-ui, sans-serif', overflow: 'hidden' }}>
       <TopBar
         view={view} setView={setView}
         search={search} setSearch={setSearch}

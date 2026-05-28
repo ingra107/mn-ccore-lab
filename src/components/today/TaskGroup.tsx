@@ -5,7 +5,7 @@
 
 import { useMemo } from 'react'
 import { TaskRow } from './TaskRow'
-import { GROUP_META, INK_DIM, PANEL_BG, type GroupKey } from './constants'
+import { GROUP_META, INK_DIM, PANEL_BG, withAlpha, type GroupKey } from './constants'
 import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow as TaskRowData } from '../../lib/api'
 
@@ -26,7 +26,7 @@ export function TaskGroup({ gkey, tasks, projectsByPid, state, expandedId, onExp
         <span style={{ fontSize: 14 }}>{meta.icon}</span>
         <h4 style={{ fontSize: 12, fontWeight: 700, color: '#fff', letterSpacing: '0.06em', textTransform: 'uppercase', margin: 0 }}>{meta.label}</h4>
         <span style={{ fontSize: 11, color: INK_DIM, fontVariantNumeric: 'tabular-nums' }}>{doneCount}/{tasks.length}</span>
-        <div style={{ flex: 1, height: 1, background: `${meta.color}22`, marginLeft: 4 }} />
+        <div style={{ flex: 1, height: 1, background: withAlpha(meta.color, 13), marginLeft: 4 }} />
       </div>
       <div style={{ background: PANEL_BG, border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8, overflow: 'hidden' }}>
         {sorted.map((t) => (

@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, actorSlug } from '../helpers';
+import { json, error, generateId, logActivity, actorSlug, assertProjectVisible, projectRefToCanonical, resolveAndGuardProject } from '../helpers';
 
 // ── Types ──────────────────────────────────────────────────
 
@@ -156,9 +156,23 @@ function computeImpact(
 
 // ── GET /api/deadline-cascade?project_id= ──────────────────
 
-export async function handleGetCascade(url: URL, env: Env): Promise<Response> {
-  const projectId = url.searchParams.get('project_id');
-  if (!projectId) return error('project_id required', 400);
+export async function handleGetCascade(url: URL, request: Request, env: Env): Promise<Response> {
+  const rawProjectId = url.searchParams.get('project_id');
+  if (!rawProjectId) return error('project_id required', 400);
+
+  // T2.4 (2026-05-28): resolveAndGuardProject combines canonicalize + visibility
+  // gate into one DB round-trip (was two SELECTs).
+  //
+  // P4-exemption (2026-05-28): withExistingRowProject is NOT used here because
+  // this is a GET read path that takes project_id from the URL (not an UPDATE
+  // on an existing row by row-id). resolveAndGuardProject is the correct primitive
+  // for this pattern — it canonicalizes the project_id slug and gates visibility
+  // in a single SELECT, which is exactly what withExistingRowProject does internally
+  // for its table lookup. The P4 codex flag referred to Update handlers that
+  // hand-roll SELECT + assertProjectVisible; this GET handler was already
+  // correctly structured and needs no further migration.
+  const { block, projectId } = await resolveAndGuardProject(request, env, rawProjectId);
+  if (block) return block;
 
   // Get all milestones and tasks for this project
   const milestones = await env.DB.prepare(
@@ -214,14 +228,26 @@ export async function handleGetCascade(url: URL, env: Env): Promise<Response> {
 }
 
 // ── GET /api/deadline-cascade/impact?id=&type=&new_date= ───
-
-export async function handleGetImpact(url: URL, env: Env): Promise<Response> {
+//
+// Phase 1b-extended: this returns the projected ripple from changing a single
+// node's date. The starting node's project is known via id+type; if it
+// resolves to a PB-category project, gate the call (non-PI must not learn
+// downstream impact of a PB milestone). We gate at the entry point rather
+// than filtering nodes from the result so PI-only graphs return 403, not
+// "0 nodes shifted" — which would silently mislead the UI.
+export async function handleGetImpact(url: URL, request: Request, env: Env): Promise<Response> {
   const id = url.searchParams.get('id');
   const type = url.searchParams.get('type');
   const newDate = url.searchParams.get('new_date');
 
   if (!id || !type || !newDate) {
     return error('id, type, and new_date are required', 400);
+  }
+
+  const startProjId = await nodeProjectId(env, id, type);
+  if (startProjId) {
+    const block = await assertProjectVisible(request, env, startProjId);
+    if (block) return block;
   }
 
   // Get all dependencies (full graph)
@@ -283,26 +309,31 @@ export async function handleGetImpact(url: URL, env: Env): Promise<Response> {
 }
 
 // ── GET /api/deadline-cascade/all ──────────────────────────
+// Phase 1b-extended: cross-project feed. For non-PI callers, filter the node
+// list to non-PB projects AND drop any dependency edge whose either endpoint
+// referenced a PB node — otherwise the response leaks PB node IDs via the
+// dependency table even though their content is filtered out.
+export async function handleGetAllCascades(env: Env, canSeePb = false): Promise<Response> {
+  const pbFilter = canSeePb ? '' : " AND (p.category IS NULL OR p.category != 'Peripheral Brain')";
 
-export async function handleGetAllCascades(env: Env): Promise<Response> {
-  // Get all dependencies
   const allDeps = await env.DB.prepare('SELECT * FROM deadline_dependencies ORDER BY created_at ASC').all();
-  const deps = (allDeps.results || []) as DeadlineDep[];
-
-  // Collect all referenced node IDs
-  const nodeIdsSet = new Set<string>();
-  for (const dep of deps) {
-    nodeIdsSet.add(dep.upstream_id);
-    nodeIdsSet.add(dep.downstream_id);
-  }
+  const depsRaw = (allDeps.results || []) as DeadlineDep[];
 
   // Also get all milestones and tasks with due dates for context
   const milestones = await env.DB.prepare(
-    'SELECT m.id, m.title, m.target_date as due_date, m.status, m.project_id, p.title as project_title FROM milestones m LEFT JOIN projects p ON m.project_id = p.slug WHERE m.target_date IS NOT NULL ORDER BY m.target_date ASC'
+    `SELECT m.id, m.title, m.target_date as due_date, m.status, m.project_id, p.title as project_title
+     FROM milestones m
+     LEFT JOIN projects p ON m.project_id = p.slug OR m.project_id = p.id
+     WHERE m.target_date IS NOT NULL${pbFilter}
+     ORDER BY m.target_date ASC`
   ).all();
 
   const tasks = await env.DB.prepare(
-    'SELECT t.id, COALESCE(t.title, t.description) as title, t.due_date, t.status, t.project_id, p.title as project_title FROM tasks t LEFT JOIN projects p ON t.project_id = p.slug WHERE t.due_date IS NOT NULL AND t.completed = 0 ORDER BY t.due_date ASC'
+    `SELECT t.id, COALESCE(t.title, t.description) as title, t.due_date, t.status, t.project_id, p.title as project_title
+     FROM tasks t
+     LEFT JOIN projects p ON t.project_id = p.slug OR t.project_id = p.id
+     WHERE t.due_date IS NOT NULL AND t.completed = 0${pbFilter}
+     ORDER BY t.due_date ASC`
   ).all();
 
   const nodes: DeadlineNode[] = [
@@ -326,10 +357,35 @@ export async function handleGetAllCascades(env: Env): Promise<Response> {
     })),
   ];
 
-  return json({ data: { nodes, dependencies: deps } as CascadeGraph });
+  // Drop edges whose either endpoint isn't in the (already PB-filtered) node set.
+  const visibleNodeIds = new Set(nodes.map(n => n.id));
+  const dependencies = canSeePb
+    ? depsRaw
+    : depsRaw.filter(d => visibleNodeIds.has(d.upstream_id) && visibleNodeIds.has(d.downstream_id));
+
+  return json({ data: { nodes, dependencies } as CascadeGraph });
 }
 
 // ── POST /api/deadline-dependencies ────────────────────────
+
+// Phase 1b-extended helper: resolve the parent project of a milestone/task node
+// referenced by a deadline_dependencies row. Returns null when the node is
+// project-less or not found (lookup is best-effort).
+async function nodeProjectId(env: Env, nodeId: string, nodeType: string): Promise<string | null> {
+  if (nodeType === 'milestone') {
+    const r = await env.DB.prepare('SELECT project_id FROM milestones WHERE id = ?').bind(nodeId).first<{ project_id: string | null }>();
+    return r?.project_id ?? null;
+  }
+  if (nodeType === 'task') {
+    const r = await env.DB.prepare('SELECT project_id FROM tasks WHERE id = ?').bind(nodeId).first<{ project_id: string | null }>();
+    return r?.project_id ?? null;
+  }
+  // 'deadline' — check milestones then tasks
+  const m = await env.DB.prepare('SELECT project_id FROM milestones WHERE id = ?').bind(nodeId).first<{ project_id: string | null }>();
+  if (m) return m.project_id ?? null;
+  const t = await env.DB.prepare('SELECT project_id FROM tasks WHERE id = ?').bind(nodeId).first<{ project_id: string | null }>();
+  return t?.project_id ?? null;
+}
 
 export async function handleCreateDeadlineDependency(request: Request, user: AuthUser, env: Env): Promise<Response> {
   const body = await request.json() as {
@@ -350,6 +406,21 @@ export async function handleCreateDeadlineDependency(request: Request, user: Aut
 
   if (body.upstream_id === body.downstream_id) return error('Cannot create self-referencing dependency', 400);
 
+  // Phase 1b-extended: deadline_dependencies span a graph that can cross
+  // projects. Gate BOTH endpoints (upstream + downstream) so a non-PI cannot
+  // attach a PB milestone/task to a non-PB one (or vice versa) and use the
+  // edge to leak/poison a PB cascade.
+  const upstreamProjId = await nodeProjectId(env, body.upstream_id, body.upstream_type);
+  if (upstreamProjId) {
+    const block = await assertProjectVisible(request, env, upstreamProjId);
+    if (block) return block;
+  }
+  const downstreamProjId = await nodeProjectId(env, body.downstream_id, body.downstream_type);
+  if (downstreamProjId) {
+    const block = await assertProjectVisible(request, env, downstreamProjId);
+    if (block) return block;
+  }
+
   // Check for duplicate
   const existing = await env.DB.prepare(
     'SELECT id FROM deadline_dependencies WHERE upstream_id = ? AND downstream_id = ?'
@@ -368,11 +439,36 @@ export async function handleCreateDeadlineDependency(request: Request, user: Aut
 }
 
 // ── POST /api/deadline-dependencies/:id/delete ─────────────
-
-export async function handleDeleteDeadlineDependency(id: string, env: Env): Promise<Response> {
-  const existing = await env.DB.prepare('SELECT id FROM deadline_dependencies WHERE id = ?').bind(id).first();
-  if (!existing) return error('Dependency not found', 404);
-
-  await env.DB.prepare('DELETE FROM deadline_dependencies WHERE id = ?').bind(id).run();
-  return json({ data: { deleted: true, id } });
+// Hard-delete (deadline_dependencies has no deleted_at column).
+// SEC-10.3: Idempotent — check meta.changes; repeat calls return 200 with
+// idempotent:true instead of 404.
+// Phase 1b-extended: gate on the existing edge's BOTH endpoints (mirrors
+// handleCreateDeadlineDependency). If the row is already gone we return 200
+// idempotent without leaking existence.
+//
+// Z4.3 exempt: deadline_dependencies straddles TWO project IDs (upstream_id +
+// downstream_id). idempotentDelete() supports a single project_id gate via a
+// single assertProjectVisible call; this handler needs a DOUBLE gate — one for
+// the upstream node's project and one for the downstream node's project. Until
+// idempotentDelete() gains a multi-project hook, this delete stays hand-rolled
+// with the double gate preserved exactly as written below.
+export async function handleDeleteDeadlineDependency(id: string, request: Request, env: Env): Promise<Response> {
+  const existing = await env.DB.prepare(
+    'SELECT upstream_id, upstream_type, downstream_id, downstream_type FROM deadline_dependencies WHERE id = ?'
+  ).bind(id).first<{ upstream_id: string; upstream_type: string; downstream_id: string; downstream_type: string }>();
+  if (existing) {
+    const upstreamProjId = await nodeProjectId(env, existing.upstream_id, existing.upstream_type);
+    if (upstreamProjId) {
+      const block = await assertProjectVisible(request, env, upstreamProjId);
+      if (block) return block;
+    }
+    const downstreamProjId = await nodeProjectId(env, existing.downstream_id, existing.downstream_type);
+    if (downstreamProjId) {
+      const block = await assertProjectVisible(request, env, downstreamProjId);
+      if (block) return block;
+    }
+  }
+  const result = await env.DB.prepare('DELETE FROM deadline_dependencies WHERE id = ?').bind(id).run();
+  const changed = (result.meta?.changes ?? 0) > 0;
+  return json({ data: { deleted: true, id, idempotent: !changed } });
 }

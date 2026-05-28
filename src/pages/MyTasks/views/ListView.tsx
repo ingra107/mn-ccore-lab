@@ -22,7 +22,7 @@ import {
   GROUP_META,
   ACCENT_GOLD, ACCENT_ORANGE, ACCENT_CORAL, ACCENT_TEAL,
   INK, INK_MUTED, INK_DIM, PAGE_BG,
-  todayKey, daysSince,
+  todayKey, daysSince, withAlpha,
   type GroupKey, type FilterOption,
 } from '../constants'
 import type { TaskRow } from '../../../lib/api'
@@ -108,13 +108,13 @@ export function ListView({ filtered, selected, toggleSelect, setSelected, setDra
   return (
     <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
       <div ref={scrollRef} style={{ flex: 1, overflow: 'auto' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '32px 26px 1fr 150px 100px 80px 110px 110px 70px', padding: '6px 16px', borderBottom: '1px solid rgba(255,255,255,0.08)', fontSize: 9.5, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#5a6068', position: 'sticky', top: 0, background: PAGE_BG, zIndex: 1 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '32px 26px 1fr 150px 100px 80px 110px 110px 70px', padding: '6px 16px', borderBottom: '1px solid rgba(255,255,255,0.08)', fontSize: 9.5, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: INK_DIM, position: 'sticky', top: 0, background: PAGE_BG, zIndex: 1 }}>
           <div></div><div></div>
           <div>Title</div><div>Project</div><div>Due</div><div>P</div>
           <div>Status</div><div>Owner</div><div style={{ textAlign: 'right' }}>Links</div>
         </div>
         {filtered.length === 0 && (
-          <div style={{ padding: 40, textAlign: 'center', color: '#5a6068', fontSize: 13, fontStyle: 'italic' }}>no tasks match</div>
+          <div style={{ padding: 40, textAlign: 'center', color: INK_DIM, fontSize: 13, fontStyle: 'italic' }}>no tasks match</div>
         )}
         {filtered.length > 0 && (
           <div style={{ height: virtualizer.getTotalSize(), width: '100%', position: 'relative' }}>
@@ -152,7 +152,7 @@ export function ListView({ filtered, selected, toggleSelect, setSelected, setDra
           </div>
         )}
       </div>
-      <div style={{ padding: '5px 16px', borderTop: '1px solid rgba(255,255,255,0.06)', background: 'rgba(0,0,0,0.2)', fontSize: 10, color: '#5a6068', display: 'flex', gap: 14, flexShrink: 0 }}>
+      <div style={{ padding: '5px 16px', borderTop: '1px solid rgba(255,255,255,0.06)', background: 'rgba(0,0,0,0.2)', fontSize: 10, color: INK_DIM, display: 'flex', gap: 14, flexShrink: 0 }}>
         <span style={{ fontFamily: 'var(--font-mono), JetBrains Mono, monospace' }}>{filtered.length > 0 ? `${cursor + 1}/${filtered.length}` : '0/0'}</span>
         <span style={{ flex: 1 }} />
         <span><kbd style={kbdStyle}>j</kbd>/<kbd style={kbdStyle}>k</kbd> move</span>
@@ -196,7 +196,7 @@ function ListRow({ task, project, isCursor, isSelected, onClick, onDouble, onSel
     <div
       onClick={onClick}
       onDoubleClick={onDouble}
-      style={{ display: 'grid', gridTemplateColumns: '32px 26px 1fr 150px 100px 80px 110px 110px 70px', padding: '5px 16px', alignItems: 'center', fontSize: 12, height: 44, borderBottom: '1px solid rgba(255,255,255,0.04)', borderLeft: `3px solid ${isCursor ? meta.color : planned ? ACCENT_GOLD : 'transparent'}`, background: isCursor ? `${meta.color}12` : isSelected ? 'rgba(201,168,76,0.06)' : 'transparent', opacity: isCompleted ? 0.5 : 1, cursor: 'pointer', boxSizing: 'border-box' }}
+      style={{ display: 'grid', gridTemplateColumns: '32px 26px 1fr 150px 100px 80px 110px 110px 70px', padding: '5px 16px', alignItems: 'center', fontSize: 12, height: 44, borderBottom: '1px solid rgba(255,255,255,0.04)', borderLeft: `3px solid ${isCursor ? meta.color : planned ? ACCENT_GOLD : 'transparent'}`, background: isCursor ? withAlpha(meta.color, 7) : isSelected ? 'rgba(201,168,76,0.06)' : 'transparent', opacity: isCompleted ? 0.5 : 1, cursor: 'pointer', boxSizing: 'border-box' }}
     >
       <div style={{ color: meta.color, fontSize: 10, fontWeight: 700, textAlign: 'center' }}>{isCursor ? '▶' : ''}</div>
       <div onClick={stop}><input type="checkbox" checked={isSelected} onChange={onSelect} onClick={stop} style={{ accentColor: meta.color, cursor: 'pointer' }} /></div>

@@ -33,9 +33,11 @@ export async function handleTeamSlugs(env: Env): Promise<Response> {
 }
 
 // GET /api/team/:slug/cv-data
+// Pattern C (Phase 1b-B): use the public column projection to prevent email/auto_created leakage.
+// This endpoint is publicly reachable (no auth wall); SELECT * would expose PII.
 export async function handleCVData(slug: string, env: Env): Promise<Response> {
   const [member, pubs, grants, mentees] = await Promise.all([
-    env.DB.prepare('SELECT * FROM team_members WHERE slug = ?').bind(slug).first(),
+    env.DB.prepare(`SELECT ${TEAM_PUBLIC_COLS} FROM team_members WHERE slug = ?`).bind(slug).first(),
     env.DB.prepare("SELECT * FROM publications WHERE author_slugs LIKE ? ORDER BY year DESC")
       .bind(`%"${slug}"%`).all(),
     env.DB.prepare('SELECT * FROM grants WHERE pi = ? ORDER BY proposed ASC, mechanism ASC').bind(slug).all(),

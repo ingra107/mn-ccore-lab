@@ -1,14 +1,18 @@
 import type { Env } from '../helpers';
-import { json, error, generateId } from '../helpers';
+import { json, error, generateId, actorSlugFromRequest, isPiRequest } from '../helpers';
 import { nowInstant } from '../lib/time';
 
-// GET /api/notifications?recipient=&unread=
+// GET /api/notifications?unread=
+// Recipient is always derived from the authenticated caller — the ?recipient=
+// query param is IGNORED to prevent one team member reading another's feed.
 export async function handleNotifications(url: URL, request: Request, env: Env): Promise<Response> {
-  const recipient = url.searchParams.get('recipient') || '';
+  const callerSlug = await actorSlugFromRequest(request, env);
+  if (!callerSlug) return error('Authentication required', 401);
+
   const unread = url.searchParams.get('unread');
 
-  let query = 'SELECT * FROM notifications WHERE recipient_slug = ?';
-  const params: string[] = [recipient];
+  let query = 'SELECT id, recipient_slug, type, title, message, read, read_at, related_id, related_type, created_at FROM notifications WHERE recipient_slug = ?';
+  const params: string[] = [callerSlug];
 
   if (unread === '1') {
     query += ' AND read = 0';
@@ -23,13 +27,16 @@ export async function handleNotifications(url: URL, request: Request, env: Env):
   }
 }
 
-// GET /api/notifications/count?recipient=
+// GET /api/notifications/count
+// Count is always for the authenticated caller — ?recipient= param IGNORED.
 export async function handleNotificationCount(url: URL, request: Request, env: Env): Promise<Response> {
-  const recipient = url.searchParams.get('recipient') || '';
+  const callerSlug = await actorSlugFromRequest(request, env);
+  if (!callerSlug) return error('Authentication required', 401);
+
   try {
     const result = await env.DB.prepare(
       'SELECT COUNT(*) as count FROM notifications WHERE recipient_slug = ? AND read = 0'
-    ).bind(recipient).first();
+    ).bind(callerSlug).first();
     return json({ count: (result as Record<string, unknown>)?.count ?? 0 });
   } catch {
     return json({ count: 0 });
@@ -37,7 +44,21 @@ export async function handleNotificationCount(url: URL, request: Request, env: E
 }
 
 // POST /api/notifications/:id/read
-export async function handleMarkNotificationRead(id: string, env: Env): Promise<Response> {
+// Owner-or-PI gate: only the recipient or a PI may mark a notification read.
+export async function handleMarkNotificationRead(id: string, request: Request, env: Env): Promise<Response> {
+  const callerSlug = await actorSlugFromRequest(request, env);
+  if (!callerSlug) return error('Authentication required', 401);
+
+  // Look up the notification's owner before updating.
+  const notif = await env.DB.prepare(
+    'SELECT recipient_slug FROM notifications WHERE id = ?'
+  ).bind(id).first<{ recipient_slug: string }>();
+  if (!notif) return error('Notification not found', 404);
+
+  if (notif.recipient_slug !== callerSlug && !(await isPiRequest(request, env))) {
+    return error('Forbidden', 403);
+  }
+
   // read_at timestamp lets the UI show "read 5m ago" and lets sync diff
   // legit "already seen" from "marked read but unseen".
   await env.DB.prepare(
@@ -47,6 +68,10 @@ export async function handleMarkNotificationRead(id: string, env: Env): Promise<
 }
 
 // POST /api/notifications/read-all
+// Caller-identity is supplied by index.ts (derived from auth); recipient param
+// is the canonical slug resolved by the route registration, not from a raw
+// user-supplied query string. Kept as-is because read-all always targets the
+// authed user's own slug (resolved in index.ts before this call).
 export async function handleMarkAllNotificationsRead(recipient: string, env: Env): Promise<Response> {
   await env.DB.prepare(
     "UPDATE notifications SET read = 1, read_at = datetime('now') WHERE recipient_slug = ? AND read = 0"

@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId } from '../helpers';
+import { json, error, generateId, projectRefToCanonical } from '../helpers';
 
 // GET /api/ai-requests?status=&project_slug=
 export async function handleGetAIRequests(url: URL, env: Env): Promise<Response> {
@@ -43,6 +43,12 @@ export async function handleCreateAIRequest(
     return error('source_type, source_id, and prompt are required', 400);
   }
 
+  // Z3.2: canonicalize project_slug before insert so stored refs are stable
+  // slugs (not raw ids or stale aliases). Unresolvable refs store NULL.
+  const canonicalProjectSlug = body.project_slug
+    ? await projectRefToCanonical(env, body.project_slug)
+    : null;
+
   const id = generateId();
   await env.DB.prepare(
     'INSERT INTO ai_requests (id, source_type, source_id, project_slug, prompt, context, requested_by) VALUES (?, ?, ?, ?, ?, ?, ?)'
@@ -50,7 +56,7 @@ export async function handleCreateAIRequest(
     id,
     body.source_type,
     body.source_id,
-    body.project_slug || null,
+    canonicalProjectSlug,
     body.prompt.trim(),
     body.context || null,
     user.email,

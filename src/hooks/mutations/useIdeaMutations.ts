@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { createIdea, updateIdea, voteIdea } from '../../lib/api'
 import type { IdeaRow } from '../../lib/api'
+import { rollbackSnapshots } from './utils'
 
 // ── Idea mutations ──────────────────────────────────────────
 
@@ -52,11 +53,17 @@ export function useVoteIdea() {
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey: ['ideas'] })
       const queries = queryClient.getQueriesData<IdeaRow[]>({ queryKey: ['ideas'] })
+      const snapshots = queries.map(([key, data]) => ({ key, data }))
       for (const [key, data] of queries) {
         if (data) {
           queryClient.setQueryData(key, data.map((i) => i.id === id ? { ...i, votes: i.votes + 1 } : i))
         }
       }
+      return { snapshots }
+    },
+
+    onError: (_err, _id, context) => {
+      rollbackSnapshots(queryClient, context?.snapshots)
     },
 
     onSettled: () => {
