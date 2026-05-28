@@ -122,6 +122,12 @@ export async function handleGetTasks(url: URL, env: Env, canSeePb = false): Prom
 
 // POST /api/tasks/:id/status — change task status (todo/in_progress/done/blocked/waiting_external)
 export async function handleUpdateTaskStatus(id: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
+  // T1.1: PB-visibility gate. Mirrors handleGetTaskComments / handlePostTaskUpdate
+  // — non-PI callers cannot mutate tasks attached to Peripheral Brain projects.
+  // API-key callers (PB sync, Hermes) pass via isPiRequest=true.
+  const guard = await guardTaskProject(env, request, id);
+  if (guard.block) return guard.block;
+
   const body = await request.json() as { status: string };
   if (!body.status || !['todo', 'in_progress', 'done', 'blocked', 'waiting_external'].includes(body.status)) {
     return error('status must be one of: todo, in_progress, done, blocked, waiting_external', 400);
@@ -173,13 +179,17 @@ export async function handleUpdateTaskStatus(id: string, request: Request, user:
 // mechanic I5: previously no GET-by-PK route existed — direct lookups
 // returned 404 for every task regardless of status.
 // Fix 2b: assertProjectVisible guards PB-category task visibility for non-PI callers.
-export async function handleGetTask(id: string, env: Env, request?: Request): Promise<Response> {
+// T1.4: request is now NON-optional. The previous optional signature created
+// a silent-bypass footgun — any internal caller that forgot to pass the
+// request would skip the PB gate entirely. Single call site in api/index.ts
+// already passes R(c).
+export async function handleGetTask(id: string, env: Env, request: Request): Promise<Response> {
   const task = await env.DB.prepare(
     `SELECT ${TASK_SELECT_COLS}, m.title as meeting_title, m.date as meeting_date FROM tasks t LEFT JOIN meetings m ON t.meeting_id = m.id WHERE t.id = ? AND t.deleted_at IS NULL`
   ).bind(id).first<Record<string, unknown> & { project_id?: string | null }>();
   if (!task) return error('Task not found', 404);
   // Gate on PB visibility before returning the task row.
-  if (request && task.project_id) {
+  if (task.project_id) {
     const block = await assertProjectVisible(request, env, task.project_id as string);
     if (block) return block;
   }
@@ -270,6 +280,11 @@ const VALID_GROUP_OVERRIDES = new Set(['deep', 'priorities', 'quick', 'pb', 'etl
 const TASK_REQUIRED_FIELDS = new Set(['status', 'priority', 'assignee']);
 
 export async function handleUpdateTask(id: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
+  // T1.1: PB-visibility gate. Non-PI callers cannot mutate tasks attached
+  // to Peripheral Brain projects. API-key callers pass via isPiRequest=true.
+  const guard = await guardTaskProject(env, request, id);
+  if (guard.block) return guard.block;
+
   const body = await request.json() as Record<string, unknown>;
 
   // Validate assignee slug exists (same guard as create — Suite 8 propagation).
@@ -904,13 +919,29 @@ export async function handleBatchUpdateTasks(request: Request, user: AuthUser, e
 // Mirrors the batch-delete notification cleanup added for audit 12.L. Subtasks
 // and task_updates are hard-deleted since they're UI-only artefacts of this task
 // (no external sync to brain.db / Airtable).
-export async function handleDeleteTask(id: string, user: AuthUser, env: Env): Promise<Response> {
+export async function handleDeleteTask(id: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
+  // T1.1: PB-visibility gate. Non-PI callers cannot soft-delete tasks attached
+  // to Peripheral Brain projects. API-key callers (sync) pass via isPiRequest.
+  //
+  // Inline (rather than guardTaskProject) because the idempotent re-delete
+  // path needs to read already-soft-deleted rows; guardTaskProject's
+  // `deleted_at IS NULL` filter would 404 on the second call and break the
+  // documented idempotent: true return.
   const existing = await env.DB.prepare(
-    'SELECT id, title, description, deleted_at FROM tasks WHERE id = ?'
-  ).bind(id).first<{ id: string; title: string | null; description: string | null; deleted_at: string | null }>();
+    'SELECT id, title, description, deleted_at, project_id FROM tasks WHERE id = ?'
+  ).bind(id).first<{ id: string; title: string | null; description: string | null; deleted_at: string | null; project_id: string | null }>();
 
   if (!existing) {
     return error('Task not found', 404);
+  }
+
+  // T1.1: PB-visibility gate on the parent project. Done AFTER the existence
+  // probe (so 404 is preserved as the correctness signal) but BEFORE the
+  // idempotent return + cascade — non-PI must not be able to confirm or alter
+  // PB-task lifecycle.
+  if (existing.project_id) {
+    const block = await assertProjectVisible(request, env, existing.project_id);
+    if (block) return block;
   }
 
   const label = existing.title || existing.description || id;
@@ -966,8 +997,17 @@ export async function handleDeleteTask(id: string, user: AuthUser, env: Env): Pr
 // adding these fields to TABLE_FIELDS which would pollute the PB wire contract.
 // The route_no_raw_writes.test.ts explicitly exempts this function.
 export async function handleAcknowledgeTask(id: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
-  const task = await env.DB.prepare('SELECT * FROM tasks WHERE id = ?').bind(id).first<{ title: string; description: string; assignee: string; assigned_by: string | null; acknowledged_at: string | null }>();
+  const task = await env.DB.prepare('SELECT * FROM tasks WHERE id = ?').bind(id).first<{ title: string; description: string; assignee: string; assigned_by: string | null; acknowledged_at: string | null; project_id: string | null }>();
   if (!task) return error('Task not found', 404);
+
+  // T1.1: PB-visibility gate. Non-PI callers cannot acknowledge tasks attached
+  // to Peripheral Brain projects. Done AFTER existence probe (404 preserved)
+  // and BEFORE idempotent already_acknowledged shortcut so non-PI cannot
+  // confirm a PB-task acknowledgement state.
+  if (task.project_id) {
+    const block = await assertProjectVisible(request, env, task.project_id);
+    if (block) return block;
+  }
 
   if (task.acknowledged_at) {
     return json({ data: { already_acknowledged: true, acknowledged_at: task.acknowledged_at } });

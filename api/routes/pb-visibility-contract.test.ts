@@ -70,6 +70,10 @@ import {
   handlePostTaskUpdate,
   handleGetTasks,
   handleGetTask,
+  handleUpdateTaskStatus,
+  handleUpdateTask,
+  handleDeleteTask,
+  handleAcknowledgeTask,
 } from './tasks'
 import {
   handleGetRevisions,
@@ -459,6 +463,41 @@ const patternWriteCases: PatternWriteCase[] = [
     callPiOnPb:       () => handlePostTaskUpdate('task1', piPost({ content: 'hi' }), { email: PI_EMAIL, name: 'Nick' }, pbEnv({ taskProjectId: 'pb-proj' })),
     callApiKeyOnPb:   () => handlePostTaskUpdate('task1', apiKeyPost({ content: 'hi' }), { email: 'service@api', name: 'S' }, pbEnv({ taskProjectId: 'pb-proj' })),
   },
+  // T1.1 (2026-05-28): the 4 mutation handlers that were previously unguarded
+  // — non-PI could mutate a PB-task's status/fields/lifecycle even though the
+  // GETs for the same task were 403-ed. handleUpdateTaskStatus, handleUpdateTask,
+  // handleDeleteTask, handleAcknowledgeTask now call guardTaskProject (or its
+  // inline equivalent) FIRST. Note: only the gate is exercised here — the
+  // PI/API-key success path traverses applyMutation; the stub's .run()/.first()
+  // returns enough for the pipeline to reach an 'accepted'/'merged_clean' result.
+  {
+    label: 'POST /api/tasks/:id/status (handleUpdateTaskStatus) — T1.1 mutation gate',
+    callNonPiOnPb:    () => handleUpdateTaskStatus('task1', nonPiPost({ status: 'in_progress' }), { email: NON_PI_EMAIL, name: 'Nate' }, pbEnv({ taskProjectId: 'pb-proj' })),
+    callNonPiOnNonPb: () => handleUpdateTaskStatus('task1', nonPiPost({ status: 'in_progress' }), { email: NON_PI_EMAIL, name: 'Nate' }, nonPbEnv({ taskProjectId: 'mnccore-proj' })),
+    callPiOnPb:       () => handleUpdateTaskStatus('task1', piPost({ status: 'in_progress' }), { email: PI_EMAIL, name: 'Nick' }, pbEnv({ taskProjectId: 'pb-proj' })),
+    callApiKeyOnPb:   () => handleUpdateTaskStatus('task1', apiKeyPost({ status: 'in_progress' }), { email: 'service@api', name: 'S' }, pbEnv({ taskProjectId: 'pb-proj' })),
+  },
+  {
+    label: 'POST /api/tasks/:id (handleUpdateTask) — T1.1 mutation gate',
+    callNonPiOnPb:    () => handleUpdateTask('task1', nonPiPost({ title: 'edited' }), { email: NON_PI_EMAIL, name: 'Nate' }, pbEnv({ taskProjectId: 'pb-proj' })),
+    callNonPiOnNonPb: () => handleUpdateTask('task1', nonPiPost({ title: 'edited' }), { email: NON_PI_EMAIL, name: 'Nate' }, nonPbEnv({ taskProjectId: 'mnccore-proj' })),
+    callPiOnPb:       () => handleUpdateTask('task1', piPost({ title: 'edited' }), { email: PI_EMAIL, name: 'Nick' }, pbEnv({ taskProjectId: 'pb-proj' })),
+    callApiKeyOnPb:   () => handleUpdateTask('task1', apiKeyPost({ title: 'edited' }), { email: 'service@api', name: 'S' }, pbEnv({ taskProjectId: 'pb-proj' })),
+  },
+  {
+    label: 'POST /api/tasks/:id/delete (handleDeleteTask) — T1.1 mutation gate',
+    callNonPiOnPb:    () => handleDeleteTask('task1', nonPiPost({}), { email: NON_PI_EMAIL, name: 'Nate' }, pbEnv({ taskProjectId: 'pb-proj' })),
+    callNonPiOnNonPb: () => handleDeleteTask('task1', nonPiPost({}), { email: NON_PI_EMAIL, name: 'Nate' }, nonPbEnv({ taskProjectId: 'mnccore-proj' })),
+    callPiOnPb:       () => handleDeleteTask('task1', piPost({}), { email: PI_EMAIL, name: 'Nick' }, pbEnv({ taskProjectId: 'pb-proj' })),
+    callApiKeyOnPb:   () => handleDeleteTask('task1', apiKeyPost({}), { email: 'service@api', name: 'S' }, pbEnv({ taskProjectId: 'pb-proj' })),
+  },
+  {
+    label: 'POST /api/tasks/:id/acknowledge (handleAcknowledgeTask) — T1.1 mutation gate',
+    callNonPiOnPb:    () => handleAcknowledgeTask('task1', nonPiPost({}), { email: NON_PI_EMAIL, name: 'Nate' }, pbEnv({ taskProjectId: 'pb-proj' })),
+    callNonPiOnNonPb: () => handleAcknowledgeTask('task1', nonPiPost({}), { email: NON_PI_EMAIL, name: 'Nate' }, nonPbEnv({ taskProjectId: 'mnccore-proj' })),
+    callPiOnPb:       () => handleAcknowledgeTask('task1', piPost({}), { email: PI_EMAIL, name: 'Nick' }, pbEnv({ taskProjectId: 'pb-proj' })),
+    callApiKeyOnPb:   () => handleAcknowledgeTask('task1', apiKeyPost({}), { email: 'service@api', name: 'S' }, pbEnv({ taskProjectId: 'pb-proj' })),
+  },
   // Lifecycle CRUD — submissions
   {
     label: 'POST /api/submissions (handleCreateSubmission)',
@@ -717,13 +756,64 @@ describe('PB-visibility contract — registry drift guard', () => {
   it('Pattern W (writes) registry has at least the expected number of cases', () => {
     // Phase 1b-extended: 2 project subresource + 2 doc CRUD + 2 task sub
     // + 3 submissions + 2 conferences (create+delete) + 3 regulatory
-    // + 4 revisions = 18
-    expect(patternWriteCases.length).toBeGreaterThanOrEqual(18)
+    // + 4 revisions = 18; T1.1 adds 4 task-mutation gates = 22
+    expect(patternWriteCases.length).toBeGreaterThanOrEqual(22)
   })
 
   it('Pattern B (feeds) registry has at least the expected number of cases', () => {
     // 3 originals + 5 new cross-project feeds + 1 Fix 2a (handleGetTasks list) = 9
     expect(patternBCases.length).toBeGreaterThanOrEqual(9)
+  })
+})
+
+// ── T1.2: revision-comments existence oracle ──────────────────────────────────
+//
+// Pre-fix: handleGetRevisionComments returned 200/[] on unknown revisionId,
+// while known PB revisions returned 403 — the asymmetry let an attacker probe
+// revision IDs. Both PI and non-PI must now get 404 for unknown ids.
+
+describe('T1.2 — handleGetRevisionComments existence oracle (unknown revision → 404 for all)', () => {
+  // Null-revision env: the FROM manuscript_revisions WHERE id query returns null,
+  // simulating an unknown / typo-hunt revisionId.
+  function nullRevEnv(): Env {
+    return {
+      TEST_MODE_KEY: 'local-test-key-do-not-use-in-prod',
+      PB_API_KEY: 'valid-test-api-key',
+      DB: {
+        prepare: (sql: string) => ({
+          bind: (..._args: unknown[]) => ({
+            first: async () => {
+              if (/pi_emails/.test(sql)) return { value: JSON.stringify([PI_EMAIL]) }
+              return null
+            },
+            all: async () => ({ results: [] }),
+            run: async () => ({ success: true, meta: { changes: 1 } }),
+          }),
+          first: async () => {
+            if (/pi_emails/.test(sql)) return { value: JSON.stringify([PI_EMAIL]) }
+            return null
+          },
+          all: async () => ({ results: [] }),
+          run: async () => ({ success: true, meta: { changes: 1 } }),
+        }),
+        batch: async () => [],
+      },
+    } as unknown as Env
+  }
+
+  it('non-PI caller on unknown revisionId → 404 (was 200/[] pre-fix)', async () => {
+    const res = await handleGetRevisionComments('unknown-rev', nonPiRequest(), nullRevEnv())
+    expect(res.status).toBe(404)
+  })
+
+  it('PI caller on unknown revisionId → 404 (was 200/[] pre-fix)', async () => {
+    const res = await handleGetRevisionComments('unknown-rev', piRequest(), nullRevEnv())
+    expect(res.status).toBe(404)
+  })
+
+  it('API-key caller on unknown revisionId → 404', async () => {
+    const res = await handleGetRevisionComments('unknown-rev', apiKeyRequest(), nullRevEnv())
+    expect(res.status).toBe(404)
   })
 })
 

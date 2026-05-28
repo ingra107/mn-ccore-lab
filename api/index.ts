@@ -796,7 +796,7 @@ app.post('/api/mutations', (c) => handleMutations(R(c), USER(c), E(c)));
 
 // Tasks — specific-before-generic
 app.post('/api/tasks/batch', (c) => handleBatchUpdateTasks(R(c), USER(c), E(c)));
-app.post('/api/tasks/:id/delete', (c) => handleDeleteTask(c.req.param('id'), USER(c), E(c)));
+app.post('/api/tasks/:id/delete', (c) => handleDeleteTask(c.req.param('id'), R(c), USER(c), E(c)));
 app.post('/api/tasks/:id/acknowledge', (c) => handleAcknowledgeTask(c.req.param('id'), R(c), USER(c), E(c)));
 app.post('/api/tasks/:id/status', (c) => handleUpdateTaskStatus(c.req.param('id'), R(c), USER(c), E(c)));
 app.post('/api/tasks/:id/comments', (c) => handleAddTaskComment(c.req.param('id'), R(c), USER(c), E(c)));

@@ -489,7 +489,13 @@ describe('Fix 3b — handleDeleteTask: idempotency check runs BEFORE cascade', (
     };
 
     const env = { DB: db, TEST_MODE_KEY, PB_API_KEY: 'valid-test-api-key' } as unknown as Env;
-    const res = await handleDeleteTask('task_Z', NICK, env);
+    // T1.1 (2026-05-28): handleDeleteTask now takes (id, request, user, env) — added request
+    // arg for the PB-visibility gate. PI request bypasses the gate.
+    const req = new Request('https://x/api/tasks/task_Z/delete', {
+      method: 'POST',
+      headers: { 'X-Test-Mode-Key': TEST_MODE_KEY, 'X-Test-User': NICK.email },
+    });
+    const res = await handleDeleteTask('task_Z', req, NICK, env);
 
     const body = await res.json() as Record<string, unknown>;
     expect(res.status).toBe(200);

@@ -7,7 +7,7 @@
 
 import { LinkRow, ProjectLink } from './primitives'
 import { TaskDetailDrawer } from './TaskDetailDrawer'
-import { tagForTask } from './constants'
+import { tagForTask, withAlpha } from './constants'
 import { ACCENT_GOLD, ACCENT_TEAL, ACCENT_GREEN, INK, INK_DIM, type LinkKind } from './constants'
 import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow } from '../../lib/api'
@@ -40,7 +40,7 @@ export function PlannedTaskRow({ task, project, state, timeHint, small = false, 
             <span style={{ fontSize: 11, flexShrink: 0 }} aria-hidden="true">{tag}</span>
             <span style={{ fontSize: 13, color: isDone ? INK_DIM : INK, textDecoration: isDone ? 'line-through' : 'none', fontWeight: 500 }}>{task.title}</span>
             {task.group_override && (
-              <span title={`Moved manually (${task.group_override})`} style={{ fontSize: 9, color: ACCENT_TEAL, padding: '1px 4px', background: 'rgba(92,188,180,0.10)', borderRadius: 3 }}>📍</span>
+              <span title={`Moved manually (${task.group_override})`} style={{ fontSize: 9, color: ACCENT_TEAL, padding: '1px 4px', background: withAlpha(ACCENT_TEAL, 10), borderRadius: 3 }}>📍</span>
             )}
             <ProjectLink name={project?.name ?? null} slug={project?.slug} />
             <LinkRow links={links} />

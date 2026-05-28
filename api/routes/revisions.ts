@@ -169,9 +169,17 @@ export async function handleUpdateRevision(id: string, request: Request, user: A
 // ── GET /api/revisions/:id/comments ──
 // List comments for a revision
 // Phase 1b-extended: gate on the parent revision's project visibility.
+//
+// T1.2 (2026-05-28): closed the existence oracle. Pre-fix returned 200/[]
+// when the revision row was null, while a KNOWN PB revision returned 403 —
+// the status-code asymmetry let an attacker probe revision IDs from the
+// blocked response. Now: 404 when the revision doesn't exist, regardless of
+// PB status; 403 only when the revision exists AND the caller can't see its
+// parent project. Both PI and non-PI get 404 for unknown ids.
 export async function handleGetRevisionComments(revisionId: string, request: Request, env: Env): Promise<Response> {
   const revision = await env.DB.prepare('SELECT project_id FROM manuscript_revisions WHERE id = ?').bind(revisionId).first<{ project_id: string | null }>();
-  if (revision?.project_id) {
+  if (!revision) return error('Revision not found', 404);
+  if (revision.project_id) {
     const block = await assertProjectVisible(request, env, revision.project_id);
     if (block) return block;
   }
