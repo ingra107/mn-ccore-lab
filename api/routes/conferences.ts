@@ -1,6 +1,8 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, actorSlug, buildUpdate, assertProjectVisible, projectRefToCanonical, resolveAndGuardProject } from '../helpers';
+import { json, error, generateId, logActivity, actorSlug, buildUpdate, assertProjectVisible, resolveAndGuardProject } from '../helpers';
 import { ctToday } from '../lib/ct-date';
+import { withOptionalProjectWrite } from '../lib/route-guards';
+import { idempotentDelete } from '../lib/idempotent-delete';
 
 const VALID_SUBMISSION_TYPES = ['abstract', 'oral', 'poster', 'workshop', 'invited'] as const;
 const VALID_STATUSES = ['planning', 'submitted', 'accepted', 'preparing', 'presented', 'rejected'] as const;
@@ -131,44 +133,39 @@ export async function handleCreateConference(request: Request, user: AuthUser, e
     return error(`presentation_type must be one of: ${VALID_PRESENTATION_TYPES.join(', ')}`, 400);
   }
 
-  // T2.4 (2026-05-28): resolveAndGuardProject combines projectRefToCanonical
-  // + assertProjectVisible into one DB round-trip when a project is supplied.
-  // Project-less conference rows are allowed (lab-wide conferences with no
-  // manuscript link) — keep the optional shape.
-  let resolvedProjectId: string | null = null;
-  if (body.project_id) {
-    const { block, projectId } = await resolveAndGuardProject(request, env, body.project_id);
-    if (block) return block;
-    resolvedProjectId = projectId;
-  }
+  // Z2.3 (2026-05-28): withOptionalProjectWrite enforces the PB visibility gate
+  // when project_id is present; project-less rows (lab-wide conferences with no
+  // manuscript link) pass through with projectId=null. Inner handler receives
+  // the canonical projectId — bypass-via-forget is structurally impossible.
+  return withOptionalProjectWrite(async (_req, e, projectId, b) => {
+    const id = generateId();
+    await e.DB.prepare(`
+      INSERT INTO conference_submissions (id, project_id, conference, conference_date, submission_type, title, authors, abstract_due, abstract_submitted_at, accepted_at, presentation_type, materials_status, travel_booked, notes, status)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).bind(
+      id,
+      projectId,
+      b.conference,
+      b.conference_date || null,
+      b.submission_type,
+      b.title,
+      b.authors || null,
+      b.abstract_due || null,
+      b.abstract_submitted_at || null,
+      b.accepted_at || null,
+      b.presentation_type || null,
+      b.materials_status || 'not_started',
+      b.travel_booked ? 1 : 0,
+      b.notes || null,
+      b.status || 'planning',
+    ).run();
 
-  const id = generateId();
-  await env.DB.prepare(`
-    INSERT INTO conference_submissions (id, project_id, conference, conference_date, submission_type, title, authors, abstract_due, abstract_submitted_at, accepted_at, presentation_type, materials_status, travel_booked, notes, status)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).bind(
-    id,
-    resolvedProjectId,
-    body.conference,
-    body.conference_date || null,
-    body.submission_type,
-    body.title,
-    body.authors || null,
-    body.abstract_due || null,
-    body.abstract_submitted_at || null,
-    body.accepted_at || null,
-    body.presentation_type || null,
-    body.materials_status || 'not_started',
-    body.travel_booked ? 1 : 0,
-    body.notes || null,
-    body.status || 'planning',
-  ).run();
+    const actor = actorSlug(user.email);
+    await logActivity(e, 'conference', `Conference submission "${b.title}" created for ${b.conference}`, actor, id, 'conference_submission');
 
-  const actor = actorSlug(user.email);
-  await logActivity(env, 'conference', `Conference submission "${body.title}" created for ${body.conference}`, actor, id, 'conference_submission');
-
-  const created = await env.DB.prepare('SELECT * FROM conference_submissions WHERE id = ?').bind(id).first();
-  return json({ data: created }, 201);
+    const created = await e.DB.prepare('SELECT * FROM conference_submissions WHERE id = ?').bind(id).first();
+    return json({ data: created }, 201);
+  })(request, env, body);
 }
 
 // ── POST /api/conferences/:id ──
@@ -222,23 +219,19 @@ export async function handleUpdateConference(id: string, request: Request, user:
 
 // ── POST /api/conferences/:id/delete ──
 // Hard-delete (conference_submissions has no deleted_at column).
-// SEC-10.3: Idempotent — attempt the DELETE and check changes.meta.changes.
-// A repeat call (row already gone) returns 200 with idempotent:true instead of 404.
-// Phase 1b-extended: gate on the existing row's project (if any) before delete.
+// Z4.3 (2026-05-28): hand-rolled idempotent hard-delete replaced by
+// idempotentDelete(mode:'hard'). Semantics unchanged: repeat calls return
+// 200 idempotent:true; PB visibility gate runs pre-mutation when project_id
+// present.
 export async function handleDeleteConference(id: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
-  const existing = await env.DB.prepare('SELECT project_id FROM conference_submissions WHERE id = ?').bind(id).first<{ project_id: string | null }>();
-  if (existing?.project_id) {
-    const block = await assertProjectVisible(request, env, existing.project_id);
-    if (block) return block;
-  }
-
-  const result = await env.DB.prepare('DELETE FROM conference_submissions WHERE id = ?').bind(id).run();
-  const changed = (result.meta?.changes ?? 0) > 0;
-
-  if (changed) {
-    const actor = actorSlug(user.email);
-    await logActivity(env, 'conference', `Conference submission ${id} deleted`, actor, id, 'conference_submission');
-  }
-
-  return json({ data: { id, deleted: true, idempotent: !changed } });
+  return idempotentDelete({
+    table: 'conference_submissions',
+    id,
+    mode: 'hard',
+    request,
+    env,
+    actorSlug: actorSlug(user.email),
+    activityCategory: 'conference',
+    activityEntityType: 'conference_submission',
+  });
 }

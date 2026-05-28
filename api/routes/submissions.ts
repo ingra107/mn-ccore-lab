@@ -1,6 +1,8 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, actorSlug, assertProjectVisible, projectRefToCanonical, resolveAndGuardProject } from '../helpers';
+import { json, error, generateId, logActivity, actorSlug, assertProjectVisible } from '../helpers';
 import { ctToday } from '../lib/ct-date';
+import { withProjectWrite } from '../lib/route-guards';
+import { idempotentDelete } from '../lib/idempotent-delete';
 
 const VALID_EVENT_TYPES = [
   'submitted',
@@ -35,43 +37,42 @@ export async function handleGetSubmissions(url: URL, request: Request, env: Env)
 // Create a new submission event
 export async function handleCreateSubmission(request: Request, user: AuthUser, env: Env): Promise<Response> {
   const body = await request.json() as {
-    project_id: string;
+    project_id?: string;
     event_type: string;
     event_date: string;
     journal?: string;
     notes?: string;
   };
 
-  if (!body.project_id) return error('project_id required', 400);
   if (!body.event_type) return error('event_type required', 400);
   if (!body.event_date) return error('event_date required', 400);
   if (!VALID_EVENT_TYPES.includes(body.event_type as typeof VALID_EVENT_TYPES[number])) {
     return error(`event_type must be one of: ${VALID_EVENT_TYPES.join(', ')}`, 400);
   }
 
-  // T2.4 (2026-05-28): resolveAndGuardProject combines projectRefToCanonical
-  // + assertProjectVisible into one DB round-trip (was two SELECTs).
-  const { block, projectId: resolvedProjectId } = await resolveAndGuardProject(request, env, body.project_id);
-  if (block) return block;
+  // Z2.2 (2026-05-28): withProjectWrite enforces project_id presence +
+  // resolveAndGuardProject in one wrapper. The inner handler receives the
+  // canonical projectId and runs only after the PB visibility gate passes.
+  return withProjectWrite(async (_req, e, projectId, b) => {
+    const id = generateId();
+    await e.DB.prepare(`
+      INSERT INTO submission_events (id, project_id, event_type, event_date, journal, notes)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `).bind(
+      id,
+      projectId,
+      b.event_type,
+      b.event_date,
+      b.journal || null,
+      b.notes || null,
+    ).run();
 
-  const id = generateId();
-  await env.DB.prepare(`
-    INSERT INTO submission_events (id, project_id, event_type, event_date, journal, notes)
-    VALUES (?, ?, ?, ?, ?, ?)
-  `).bind(
-    id,
-    resolvedProjectId,
-    body.event_type,
-    body.event_date,
-    body.journal || null,
-    body.notes || null,
-  ).run();
+    const actor = actorSlug(user.email);
+    await logActivity(e, 'submission', `Submission event '${b.event_type}' created for project ${b.project_id}`, actor, id, 'submission_event');
 
-  const actor = actorSlug(user.email);
-  await logActivity(env, 'submission', `Submission event '${body.event_type}' created for project ${body.project_id}`, actor, id, 'submission_event');
-
-  const created = await env.DB.prepare('SELECT * FROM submission_events WHERE id = ?').bind(id).first();
-  return json({ data: created }, 201);
+    const created = await e.DB.prepare('SELECT * FROM submission_events WHERE id = ?').bind(id).first();
+    return json({ data: created }, 201);
+  })(request, env, body);
 }
 
 // ── POST /api/submissions/:id ──
@@ -126,33 +127,20 @@ export async function handleUpdateSubmission(id: string, request: Request, user:
 
 // ── POST /api/submissions/:id/delete ──
 // Soft delete a submission event.
-// SEC-10.3: Idempotent — check existence WITHOUT filtering deleted_at first,
-// then only apply the soft-delete when not already deleted. Repeat calls
-// return 200 with idempotent:true instead of 404.
-// Phase 1b-extended: gate on the existing row's project before any state change.
+// Z4.3 (2026-05-28): hand-rolled idempotent soft-delete replaced by
+// idempotentDelete(mode:'soft'). Semantics unchanged: repeat calls return
+// 200 idempotent:true; PB visibility gate runs pre-mutation.
 export async function handleDeleteSubmission(id: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
-  const existing = await env.DB.prepare(
-    'SELECT id, deleted_at, project_id FROM submission_events WHERE id = ?'
-  ).bind(id).first<{ id: string; deleted_at: string | null; project_id: string | null }>();
-  if (!existing) return error('Submission event not found', 404);
-  if (existing.project_id) {
-    const block = await assertProjectVisible(request, env, existing.project_id);
-    if (block) return block;
-  }
-
-  if (existing.deleted_at !== null) {
-    // Already soft-deleted — return idempotent 200 without re-logging.
-    return json({ data: { id, deleted: true, idempotent: true } });
-  }
-
-  await env.DB.prepare(
-    "UPDATE submission_events SET deleted_at = datetime('now') WHERE id = ?"
-  ).bind(id).run();
-
-  const actor = actorSlug(user.email);
-  await logActivity(env, 'submission', `Submission event ${id} soft-deleted`, actor, id, 'submission_event');
-
-  return json({ data: { id, deleted: true, idempotent: false } });
+  return idempotentDelete({
+    table: 'submission_events',
+    id,
+    mode: 'soft',
+    request,
+    env,
+    actorSlug: actorSlug(user.email),
+    activityCategory: 'submission',
+    activityEntityType: 'submission_event',
+  });
 }
 
 // ── GET /api/submissions/active ──
