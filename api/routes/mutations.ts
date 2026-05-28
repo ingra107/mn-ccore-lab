@@ -32,6 +32,11 @@ const ALLOWED_TABLES = new Set([
   // Stage 3 Phase 1 — 9 semantic tables
   'sessions', 'agent_knowledge', 'memory_facts', 'pomodoro_sessions', 'decisions',
   'kg_entities', 'kg_relations', 'kg_relation_type_registry', 'trajectories',
+  // Z3.2 (2026-05-28) — 6 project-linked tables added to FK_SLUG_FIELDS registry.
+  // ALLOWED_TABLES must include them or applyInsert's FK_SLUG_FIELDS loop is
+  // dead code (processOne rejects unknown tables before reaching applyInsert).
+  'submission_events', 'conference_submissions', 'regulatory_items',
+  'manuscript_revisions', 'project_documents', 'deadline_dependencies',
 ]);
 
 const ALLOWED_OPS = new Set(['insert', 'update', 'delete', 'append']);
