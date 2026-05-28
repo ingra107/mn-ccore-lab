@@ -433,9 +433,9 @@ app.get('/api/projects/health', async (c) => handleProjectHealth(E(c), await isP
 // Hub project deletes into brain.db. Airtable cascade comment: handleDeleteProject
 // writes deleted_at and (when secrets present) DELETEs the matching Airtable rec.
 app.get('/api/projects/deleted-since', (c) => handleGetDeletedProjectsSince(U(c), E(c)));
-app.get('/api/projects/:slug/comments', (c) => handleGetComments(c.req.param('slug'), E(c)));
-app.get('/api/projects/:slug/updates', (c) => handleGetProjectUpdates(c.req.param('slug'), E(c)));
-app.get('/api/projects/:slug/documents', (c) => handleGetProjectDocuments(c.req.param('slug'), E(c)));
+app.get('/api/projects/:slug/comments', (c) => handleGetComments(c.req.param('slug'), R(c), E(c)));
+app.get('/api/projects/:slug/updates', (c) => handleGetProjectUpdates(c.req.param('slug'), R(c), E(c)));
+app.get('/api/projects/:slug/documents', (c) => handleGetProjectDocuments(c.req.param('slug'), R(c), E(c)));
 app.get('/api/projects/:slug/papers', (c) => handleGetPaperLinks(c.req.param('slug'), E(c)));
 app.get('/api/projects/:slug/dependencies', (c) => handleGetProjectDependencies(c.req.param('slug'), E(c)));
 app.get('/api/projects/:slug/revisions', async (c) => {
@@ -478,7 +478,7 @@ app.get('/api/dependencies', (c) => handleGetDependencies(E(c)));
 // ─────────────────────────────────────────────────────────────────────────────
 // Revisions
 // ─────────────────────────────────────────────────────────────────────────────
-app.get('/api/revisions/active', (c) => handleGetActiveRevisions(E(c)));
+app.get('/api/revisions/active', async (c) => handleGetActiveRevisions(E(c), await isPiRequest(R(c), E(c))));
 app.get('/api/revisions/:id/comments', (c) => handleGetRevisionComments(c.req.param('id'), E(c)));
 app.get('/api/revisions', (c) => handleGetRevisions(U(c), E(c)));
 app.get('/api/manuscripts/attention', async (c) => {
@@ -492,7 +492,7 @@ app.get('/api/manuscripts/attention', async (c) => {
 // Submissions
 // ─────────────────────────────────────────────────────────────────────────────
 app.get('/api/submissions/active', (c) => handleGetActiveSubmissions(E(c)));
-app.get('/api/submissions', (c) => handleGetSubmissions(U(c), E(c)));
+app.get('/api/submissions', (c) => handleGetSubmissions(U(c), R(c), E(c)));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Grants
@@ -554,8 +554,8 @@ app.get('/api/activity/heatmap', (c) => handleActivityHeatmap(U(c), E(c)));
 app.get('/api/tasks/overdue-count', (c) => handleOverdueCount(U(c), E(c)));
 app.get('/api/tasks', (c) => handleGetTasks(U(c), E(c)));
 app.get('/api/action-items', (c) => handleActionItems(U(c), E(c)));
-app.get('/api/updates/recent', (c) => handleRecentUpdates(U(c), E(c)));
-app.get('/api/task-updates/recent', (c) => handleGetRecentTaskUpdates(U(c), E(c)));
+app.get('/api/updates/recent', async (c) => handleRecentUpdates(U(c), E(c), await isPiRequest(R(c), E(c))));
+app.get('/api/task-updates/recent', async (c) => handleGetRecentTaskUpdates(U(c), E(c), await isPiRequest(R(c), E(c))));
 app.get('/api/task-comments/recent', async (c) => {
   const url = U(c);
   const env = E(c);
@@ -612,7 +612,7 @@ app.get('/api/team/:slug/contributions', (c) => handleGetContributions(c.req.par
 // ─────────────────────────────────────────────────────────────────────────────
 app.get('/api/deadline-cascade/all', (c) => handleGetAllCascades(E(c)));
 app.get('/api/deadline-cascade/impact', (c) => handleGetImpact(U(c), E(c)));
-app.get('/api/deadline-cascade', (c) => handleGetCascade(U(c), E(c)));
+app.get('/api/deadline-cascade', (c) => handleGetCascade(U(c), R(c), E(c)));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Mentee milestones
@@ -637,13 +637,13 @@ app.get('/api/grant-milestones', (c) => handleGetGrantMilestones(U(c), E(c)));
 app.get('/api/regulatory/expiring', (c) => handleGetExpiringItems(U(c), E(c)));
 // Auth-only (not PI) — team members need iCal access to renewal reminders.
 app.get('/api/regulatory/:id/ics', (c) => handleRegulatoryIcs(c.req.param('id'), E(c), R(c)));
-app.get('/api/regulatory', (c) => handleGetRegulatoryItems(U(c), E(c)));
+app.get('/api/regulatory', (c) => handleGetRegulatoryItems(U(c), R(c), E(c)));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Conferences
 // ─────────────────────────────────────────────────────────────────────────────
 app.get('/api/conferences/upcoming', (c) => handleGetUpcomingConferences(E(c)));
-app.get('/api/conferences', (c) => handleGetConferences(U(c), E(c)));
+app.get('/api/conferences', (c) => handleGetConferences(U(c), R(c), E(c)));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Email drafts (reads)
@@ -670,7 +670,7 @@ app.get('/api/reactions', (c) => handleGetReactions(U(c), E(c)));
 // ─────────────────────────────────────────────────────────────────────────────
 // Task sub-resource GETs
 // ─────────────────────────────────────────────────────────────────────────────
-app.get('/api/tasks/:id/comments', (c) => handleGetTaskComments(c.req.param('id'), E(c)));
+app.get('/api/tasks/:id/comments', (c) => handleGetTaskComments(c.req.param('id'), R(c), E(c)));
 app.get('/api/tasks/:id/files', async (c) => {
   const env = E(c);
   // Auth required — task files are team-internal content.
@@ -681,9 +681,9 @@ app.get('/api/tasks/:id/files', async (c) => {
   ).bind(c.req.param('id')).all();
   return json({ data: results });
 });
-app.get('/api/tasks/:id/updates', (c) => handleGetTaskUpdates(c.req.param('id'), E(c)));
-app.get('/api/tasks/:id/activity', (c) => handleGetTaskActivity(c.req.param('id'), E(c)));
-app.get('/api/tasks/:id/detail', (c) => handleGetTaskDetail(c.req.param('id'), E(c)));
+app.get('/api/tasks/:id/updates', (c) => handleGetTaskUpdates(c.req.param('id'), R(c), E(c)));
+app.get('/api/tasks/:id/activity', (c) => handleGetTaskActivity(c.req.param('id'), R(c), E(c)));
+app.get('/api/tasks/:id/detail', (c) => handleGetTaskDetail(c.req.param('id'), R(c), E(c)));
 app.get('/api/tasks/:id/subtasks', (c) => handleGetSubtasks(c.req.param('id'), E(c)));
 app.get('/api/tasks/:id/handoffs', (c) => handleGetHandoffs(c.req.param('id'), E(c)));
 // GET /api/tasks/:id — fetch single task by PK (mechanic I5: was missing, always 404)

@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, actorSlug, buildUpdate } from '../helpers';
+import { json, error, generateId, logActivity, actorSlug, buildUpdate, assertProjectVisible } from '../helpers';
 import { ctToday } from '../lib/ct-date';
 
 const VALID_SUBMISSION_TYPES = ['abstract', 'oral', 'poster', 'workshop', 'invited'] as const;
@@ -8,9 +8,16 @@ const VALID_MATERIALS = ['not_started', 'drafting', 'review', 'final'] as const;
 const VALID_PRESENTATION_TYPES = ['poster', 'oral', 'rapid', 'workshop'] as const;
 
 // ── GET /api/conferences?project_id=&status= ──
-export async function handleGetConferences(url: URL, env: Env): Promise<Response> {
+export async function handleGetConferences(url: URL, request: Request, env: Env): Promise<Response> {
   const projectId = url.searchParams.get('project_id');
   const status = url.searchParams.get('status');
+
+  // Phase 1b-B: when scoped to a specific project, block non-PI callers from
+  // reading conference submissions of a PB-category project.
+  if (projectId) {
+    const block = await assertProjectVisible(request, env, projectId);
+    if (block) return block;
+  }
 
   let query = 'SELECT * FROM conference_submissions WHERE 1=1';
   const params: string[] = [];
@@ -143,6 +150,12 @@ export async function handleCreateConference(request: Request, user: AuthUser, e
 
 // ── POST /api/conferences/:id ──
 export async function handleUpdateConference(id: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
+  // Phase 1b-B: resolve the conference submission's project and gate on PB visibility.
+  const existing_conf = await env.DB.prepare('SELECT project_id FROM conference_submissions WHERE id = ?').bind(id).first<{ project_id: string | null }>();
+  if (existing_conf?.project_id) {
+    const block = await assertProjectVisible(request, env, existing_conf.project_id);
+    if (block) return block;
+  }
   const body = await request.json() as Record<string, unknown>;
   const allowedFields = [
     'project_id', 'conference', 'conference_date', 'submission_type', 'title',

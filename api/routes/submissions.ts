@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, actorSlug } from '../helpers';
+import { json, error, generateId, logActivity, actorSlug, assertProjectVisible } from '../helpers';
 import { ctToday } from '../lib/ct-date';
 
 const VALID_EVENT_TYPES = [
@@ -14,9 +14,13 @@ const VALID_EVENT_TYPES = [
 
 // ── GET /api/submissions?project_id= ──
 // List submission events for a project, ordered by date
-export async function handleGetSubmissions(url: URL, env: Env): Promise<Response> {
+export async function handleGetSubmissions(url: URL, request: Request, env: Env): Promise<Response> {
   const projectId = url.searchParams.get('project_id');
   if (!projectId) return error('project_id required', 400);
+
+  // Phase 1b-B: block non-PI callers from reading submissions of a PB-category project.
+  const block = await assertProjectVisible(request, env, projectId);
+  if (block) return block;
 
   const events = await env.DB.prepare(`
     SELECT * FROM submission_events

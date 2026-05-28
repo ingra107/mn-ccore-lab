@@ -1,10 +1,13 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, isPiRequest, resolveActor } from '../helpers';
+import { json, error, generateId, logActivity, isPiRequest, resolveActor, assertProjectVisible } from '../helpers';
 
 type DocType = 'folder' | 'draft' | 'data' | 'protocol' | 'submission' | 'link';
 
 // GET /api/projects/:slug/documents — list documents linked to a project
-export async function handleGetProjectDocuments(projectSlug: string, env: Env): Promise<Response> {
+export async function handleGetProjectDocuments(projectSlug: string, request: Request, env: Env): Promise<Response> {
+  // Phase 1b-B: block non-PI callers from listing documents of a PB-category project.
+  const block = await assertProjectVisible(request, env, projectSlug);
+  if (block) return block;
   const result = await env.DB.prepare(
     `SELECT * FROM project_documents
      WHERE project_id = ?

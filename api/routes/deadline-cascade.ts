@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, actorSlug } from '../helpers';
+import { json, error, generateId, logActivity, actorSlug, assertProjectVisible } from '../helpers';
 
 // ── Types ──────────────────────────────────────────────────
 
@@ -156,9 +156,13 @@ function computeImpact(
 
 // ── GET /api/deadline-cascade?project_id= ──────────────────
 
-export async function handleGetCascade(url: URL, env: Env): Promise<Response> {
+export async function handleGetCascade(url: URL, request: Request, env: Env): Promise<Response> {
   const projectId = url.searchParams.get('project_id');
   if (!projectId) return error('project_id required', 400);
+
+  // Phase 1b-B: block non-PI callers from seeing the cascade graph of a PB-category project.
+  const block = await assertProjectVisible(request, env, projectId);
+  if (block) return block;
 
   // Get all milestones and tasks for this project
   const milestones = await env.DB.prepare(

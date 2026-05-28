@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, parseMentions, actorSlug, isPiRequest, resolveActor, safeTaskRow } from '../helpers';
+import { json, error, generateId, logActivity, parseMentions, actorSlug, isPiRequest, resolveActor, safeTaskRow, assertProjectVisible, projectRefToCanonical } from '../helpers';
 import { filterFixtures } from '../lib/fixtures';
 import { ctToday } from '../lib/ct-date';
 import { nowInstant } from '../lib/time';
@@ -236,9 +236,9 @@ export async function handleUpdateTask(id: string, request: Request, user: AuthU
     if (!member) return error(`Unknown assignee "${body.assignee}". Must match team_members.slug.`, 400);
   }
   // Resolve project_id to canonical slug (accept id OR slug). Bogus → NULL.
+  // Pattern D: use projectRefToCanonical from helpers (dedup of inline resolver).
   if (typeof body.project_id === 'string' && body.project_id) {
-    const proj = await env.DB.prepare('SELECT id, slug FROM projects WHERE id = ? OR slug = ? LIMIT 1').bind(body.project_id, body.project_id).first<{ id: string; slug: string | null }>();
-    body.project_id = proj ? (proj.slug || proj.id) : null;
+    body.project_id = await projectRefToCanonical(env, body.project_id);
   }
   // Validate group_override is one of the canonical group keys (or null/empty
   // = clear override + return to auto-classification).
@@ -359,16 +359,14 @@ export async function handleCreateTask(request: Request, user: AuthUser, env: En
   // Validate project_id if provided — match by slug OR id. Leave NULL on
   // bogus input (don't reject the whole create since project link is
   // optional on tasks).
-  let resolvedProjectId = body.project_id ?? null;
+  // Pattern D: use projectRefToCanonical from helpers (dedup of inline resolver).
+  let resolvedProjectId: string | null = body.project_id ?? null;
   if (resolvedProjectId) {
-    const proj = await env.DB.prepare('SELECT id, slug FROM projects WHERE id = ? OR slug = ? LIMIT 1').bind(resolvedProjectId, resolvedProjectId).first<{ id: string; slug: string | null }>();
-    if (!proj) {
+    const canonical = await projectRefToCanonical(env, resolvedProjectId);
+    if (!canonical) {
       console.warn(`Task create: unknown project_id "${resolvedProjectId}" — storing as NULL`);
-      resolvedProjectId = null;
-    } else {
-      // Store the slug form (that's what the existing code expects on read).
-      resolvedProjectId = proj.slug || proj.id;
     }
+    resolvedProjectId = canonical;
   }
 
   const id = generateId('task');  // A1.2: typed ULID
@@ -455,7 +453,13 @@ export async function handleCreateTask(request: Request, user: AuthUser, env: En
 }
 
 // GET /api/tasks/:id/comments
-export async function handleGetTaskComments(taskId: string, env: Env): Promise<Response> {
+export async function handleGetTaskComments(taskId: string, request: Request, env: Env): Promise<Response> {
+  // Phase 1b-B: if the task belongs to a PB-category project, block non-PI callers.
+  const task = await env.DB.prepare('SELECT project_id FROM tasks WHERE id = ? AND deleted_at IS NULL').bind(taskId).first<{ project_id: string | null }>();
+  if (task?.project_id) {
+    const block = await assertProjectVisible(request, env, task.project_id);
+    if (block) return block;
+  }
   const result = await env.DB.prepare(
     'SELECT * FROM task_comments WHERE task_id = ? ORDER BY created_at DESC'
   ).bind(taskId).all();
@@ -508,7 +512,13 @@ export async function handleAddTaskComment(taskId: string, request: Request, use
 }
 
 // GET /api/tasks/:id/activity
-export async function handleGetTaskActivity(taskId: string, env: Env): Promise<Response> {
+export async function handleGetTaskActivity(taskId: string, request: Request, env: Env): Promise<Response> {
+  // Phase 1b-B: if the task belongs to a PB-category project, block non-PI callers.
+  const task = await env.DB.prepare('SELECT project_id FROM tasks WHERE id = ? AND deleted_at IS NULL').bind(taskId).first<{ project_id: string | null }>();
+  if (task?.project_id) {
+    const block = await assertProjectVisible(request, env, task.project_id);
+    if (block) return block;
+  }
   const result = await env.DB.prepare(
     "SELECT * FROM activity_log WHERE related_id = ? AND related_type = 'task' ORDER BY timestamp DESC LIMIT 20"
   ).bind(taskId).all();
@@ -518,13 +528,19 @@ export async function handleGetTaskActivity(taskId: string, env: Env): Promise<R
 // GET /api/tasks/:id/detail — fan-out for TodayPage/UnifiedMyTasks task detail drawer.
 // Returns { why, updates, subtasks, blocks } in a single round-trip so the
 // drawer doesn't have to do four parallel fetches. Read-only.
-export async function handleGetTaskDetail(taskId: string, env: Env): Promise<Response> {
+export async function handleGetTaskDetail(taskId: string, request: Request, env: Env): Promise<Response> {
   // Pull the task itself for the "why" callout. P1: fall back to description's
   // first paragraph; a future column could replace this with a curated note.
   const task = await env.DB.prepare(
-    'SELECT id, description FROM tasks WHERE id = ? AND deleted_at IS NULL'
-  ).bind(taskId).first<{ id: string; description: string | null }>();
+    'SELECT id, description, project_id FROM tasks WHERE id = ? AND deleted_at IS NULL'
+  ).bind(taskId).first<{ id: string; description: string | null; project_id: string | null }>();
   if (!task) return error('Task not found', 404);
+
+  // Phase 1b-B: if the task belongs to a PB-category project, block non-PI callers.
+  if (task.project_id) {
+    const block = await assertProjectVisible(request, env, task.project_id);
+    if (block) return block;
+  }
 
   const description = task.description ?? '';
   const why = description.split(/\n\s*\n/)[0]?.trim().slice(0, 400) || null;
@@ -927,17 +943,27 @@ export async function handleAcknowledgeTask(id: string, request: Request, user: 
 // 2026-04-28 (Codex review fix): when ?since= is present, ORDER BY ASC so
 // brain.db pull_task_updates can paginate forward without losing rows when
 // volume between pulls exceeds limit. DESC kept for UI-style "newest 100".
-export async function handleGetRecentTaskUpdates(url: URL, env: Env): Promise<Response> {
+// Phase 1b-B: canSeePb=false for non-PI callers — filter out updates for PB-project tasks.
+export async function handleGetRecentTaskUpdates(url: URL, env: Env, canSeePb = false): Promise<Response> {
   const limit = parseInt(url.searchParams.get('limit') || '100')
   const since = url.searchParams.get('since') // ISO timestamp for delta sync
+  // Mirror the category filter from search/activity for non-PI callers.
+  // task_updates doesn't store project_id directly; join through tasks.
+  const pbExclusion = canSeePb ? '' : ` AND (task_id NOT IN (
+    SELECT t.id FROM tasks t
+    WHERE t.project_id IN (
+      SELECT id FROM projects WHERE category = 'Peripheral Brain'
+      UNION SELECT slug FROM projects WHERE category = 'Peripheral Brain'
+    )
+  ))`
   let query = 'SELECT * FROM task_updates'
   const binds: unknown[] = []
   if (since) {
-    query += ' WHERE created_at > ?'
+    query += ` WHERE created_at > ?${pbExclusion}`
     binds.push(since)
     query += ' ORDER BY created_at ASC, id ASC LIMIT ?'
   } else {
-    query += ' ORDER BY created_at DESC LIMIT ?'
+    query += ` WHERE 1=1${pbExclusion} ORDER BY created_at DESC LIMIT ?`
   }
   binds.push(Math.min(limit, 500))
   const stmt = env.DB.prepare(query)
@@ -946,7 +972,13 @@ export async function handleGetRecentTaskUpdates(url: URL, env: Env): Promise<Re
 }
 
 // GET /api/tasks/:id/updates — get task notes/updates
-export async function handleGetTaskUpdates(taskId: string, env: Env): Promise<Response> {
+export async function handleGetTaskUpdates(taskId: string, request: Request, env: Env): Promise<Response> {
+  // Phase 1b-B: if the task belongs to a PB-category project, block non-PI callers.
+  const task = await env.DB.prepare('SELECT project_id FROM tasks WHERE id = ? AND deleted_at IS NULL').bind(taskId).first<{ project_id: string | null }>();
+  if (task?.project_id) {
+    const block = await assertProjectVisible(request, env, task.project_id);
+    if (block) return block;
+  }
   const result = await env.DB.prepare(
     'SELECT * FROM task_updates WHERE task_id = ? ORDER BY created_at DESC'
   ).bind(taskId).all();
@@ -1054,12 +1086,10 @@ export async function handleMobileTasksToHub(request: Request, user: AuthUser, e
 
     // Resolve project_id first (PWA may send brain.db slug or id).
     // Must be above the dedup query since project_id is now part of the dedup key.
+    // Pattern D: use projectRefToCanonical from helpers (dedup of inline resolver).
     let resolvedProjectId: string | null = pwaTask.project_id ?? null;
     if (resolvedProjectId) {
-      const proj = await env.DB.prepare(
-        'SELECT id, slug FROM projects WHERE id = ? OR slug = ? LIMIT 1'
-      ).bind(resolvedProjectId, resolvedProjectId).first<{ id: string; slug: string | null }>();
-      resolvedProjectId = proj ? (proj.slug || proj.id) : null;
+      resolvedProjectId = await projectRefToCanonical(env, resolvedProjectId);
     }
 
     // Dedup: same (title, assignee, project_id) already open in Hub?

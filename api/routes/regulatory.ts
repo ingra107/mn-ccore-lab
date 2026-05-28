@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, actorSlug, buildUpdate, getAuthUser } from '../helpers';
+import { json, error, generateId, logActivity, actorSlug, buildUpdate, getAuthUser, assertProjectVisible } from '../helpers';
 import { ctToday } from '../lib/ct-date';
 import { nowInstant } from '../lib/time';
 
@@ -17,8 +17,15 @@ const VALID_TYPES = ['irb', 'irb_amendment', 'dua', 'dta', 'coi', 'training', 'o
 const VALID_STATUSES = ['active', 'expired', 'pending', 'exempt'] as const;
 
 // GET /api/regulatory?project_id=
-export async function handleGetRegulatoryItems(url: URL, env: Env): Promise<Response> {
+export async function handleGetRegulatoryItems(url: URL, request: Request, env: Env): Promise<Response> {
   const projectId = url.searchParams.get('project_id');
+
+  // Phase 1b-B: when scoped to a specific project, block non-PI callers from
+  // reading regulatory items of a PB-category project.
+  if (projectId) {
+    const block = await assertProjectVisible(request, env, projectId);
+    if (block) return block;
+  }
 
   let query = 'SELECT * FROM regulatory_items WHERE 1=1';
   const params: string[] = [];

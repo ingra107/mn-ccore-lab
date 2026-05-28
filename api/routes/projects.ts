@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, parseMentions, actorSlug, isPiRequest, resolveActor } from '../helpers';
+import { json, error, generateId, logActivity, parseMentions, actorSlug, isPiRequest, resolveActor, assertProjectVisible } from '../helpers';
 import { ctToday } from '../lib/ct-date';
 import { nowInstant } from '../lib/time';
 import { applyMutation } from './mutations';
@@ -276,7 +276,10 @@ export async function handleGetProjects(url: URL, env: Env, user: AuthUser, apiK
 }
 
 // GET /api/projects/:id/comments
-export async function handleGetComments(projectId: string, env: Env): Promise<Response> {
+export async function handleGetComments(projectId: string, request: Request, env: Env): Promise<Response> {
+  // Phase 1b-B: block non-PI callers from reading PB-category project comments.
+  const block = await assertProjectVisible(request, env, projectId);
+  if (block) return block;
   // URL param may be slug or id. Resolve first so we can match comments by the
   // canonical project.id, while ALSO accepting any legacy rows that were
   // stored against the slug (older writes did so).
@@ -295,7 +298,10 @@ export async function handleGetComments(projectId: string, env: Env): Promise<Re
 }
 
 // GET /api/projects/:slug/updates
-export async function handleGetProjectUpdates(slug: string, env: Env): Promise<Response> {
+export async function handleGetProjectUpdates(slug: string, request: Request, env: Env): Promise<Response> {
+  // Phase 1b-B: block non-PI callers from reading PB-category project updates.
+  const block = await assertProjectVisible(request, env, slug);
+  if (block) return block;
   const result = await env.DB.prepare(
     'SELECT * FROM project_updates WHERE project_id = ? ORDER BY created_at DESC'
   ).bind(slug).all();
@@ -444,19 +450,24 @@ export async function handleProjectHealth(env: Env, canSeePb = false): Promise<R
 // can paginate forward and never miss the oldest rows; when no `since`
 // (UI-style "give me 20 newest"), keep DESC for back-compat. Brain.db
 // pull_project_updates now paginates until response_count < limit.
-export async function handleRecentUpdates(url: URL, env: Env): Promise<Response> {
+export async function handleRecentUpdates(url: URL, env: Env, canSeePb = false): Promise<Response> {
   const limit = Math.min(parseInt(url.searchParams.get('limit') || '20', 10), 500);
   const since = url.searchParams.get('since');
+  // Phase 1b-B: mirror the category filter from search/activity — exclude PB
+  // project updates for non-PI callers. Matches by project_id (id OR slug).
+  const pbExclusion = canSeePb ? '' : ` AND project_id NOT IN (
+    SELECT id FROM projects WHERE category = 'Peripheral Brain'
+    UNION SELECT slug FROM projects WHERE category = 'Peripheral Brain')`;
   let query = 'SELECT * FROM project_updates';
   const binds: unknown[] = [];
   if (since) {
-    query += ' WHERE created_at > ?';
+    query += ` WHERE created_at > ?${pbExclusion}`;
     binds.push(since);
     // Sync mode: ASC + tiebreak on id ensures the client can resume
     // exactly from the last seen (created_at, id) pair without overlap or skip.
     query += ' ORDER BY created_at ASC, id ASC LIMIT ?';
   } else {
-    query += ' ORDER BY created_at DESC LIMIT ?';
+    query += ` WHERE 1=1${pbExclusion} ORDER BY created_at DESC LIMIT ?`;
   }
   binds.push(limit);
   const result = await env.DB.prepare(query).bind(...binds).all();
