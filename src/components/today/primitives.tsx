@@ -11,7 +11,7 @@
 
 import { Link } from 'react-router-dom'
 import { PATHS } from '../../constants/paths'
-import { ACCENT_GOLD, INK, INK_MUTED, type LinkKind } from './constants'
+import { ACCENT_GOLD, INK, INK_MUTED, withAlpha, type LinkKind } from './constants'
 
 export function LinkIcon({ kind, size = 12 }: { kind: LinkKind; size?: number }) {
   const common = { width: size, height: size, viewBox: '0 0 16 16', fill: 'none', stroke: 'currentColor', strokeWidth: 1.5, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
@@ -88,14 +88,14 @@ export function Pill({ icon, label, count, color = INK_MUTED, onClick, emphasis 
       style={{
         display: 'inline-flex', alignItems: 'center', gap: 6,
         padding: emphasis ? '6px 12px' : '5px 10px',
-        background: emphasis ? `${color}14` : 'rgba(255,255,255,0.02)',
-        border: `1px solid ${emphasis ? color + '55' : color + '30'}`,
+        background: emphasis ? withAlpha(color, 8) : 'rgba(255,255,255,0.02)',
+        border: `1px solid ${emphasis ? withAlpha(color, 33) : withAlpha(color, 19)}`,
         borderRadius: 999, cursor: onClick ? 'pointer' : 'default',
         fontFamily: 'inherit', color: emphasis ? color : INK,
         fontSize: 12, fontWeight: 500, transition: 'all 150ms', whiteSpace: 'nowrap',
       }}
-      onMouseEnter={(e) => { e.currentTarget.style.background = `${color}22`; e.currentTarget.style.borderColor = color + '70' }}
-      onMouseLeave={(e) => { e.currentTarget.style.background = emphasis ? `${color}14` : 'rgba(255,255,255,0.02)'; e.currentTarget.style.borderColor = emphasis ? color + '55' : color + '30' }}
+      onMouseEnter={(e) => { e.currentTarget.style.background = withAlpha(color, 13); e.currentTarget.style.borderColor = withAlpha(color, 44) }}
+      onMouseLeave={(e) => { e.currentTarget.style.background = emphasis ? withAlpha(color, 8) : 'rgba(255,255,255,0.02)'; e.currentTarget.style.borderColor = emphasis ? withAlpha(color, 33) : withAlpha(color, 19) }}
     >
       <span style={{ fontSize: 12, lineHeight: 1 }}>{icon}</span>
       {count !== undefined && (

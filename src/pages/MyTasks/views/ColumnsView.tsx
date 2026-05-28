@@ -10,10 +10,10 @@ import { Chip, LinksBar } from '../primitives'
 import { InlineDetail } from '../components/InlineDetail'
 import {
   GROUP_META, GROUP_ORDER,
-  ACCENT_GOLD, ACCENT_ORANGE, ACCENT_CORAL,
+  ACCENT_GOLD, ACCENT_TEAL, ACCENT_ORANGE, ACCENT_CORAL,
   INK, INK_DIM, PAGE_BG,
   PRIORITY_COLOR, PRIORITY_SHORT,
-  todayKey, daysSince, dueLabel, dueColor,
+  todayKey, daysSince, dueLabel, dueColor, withAlpha,
   type GroupKey,
 } from '../constants'
 import type { TaskRow } from '../../../lib/api'
@@ -57,7 +57,7 @@ export function ColumnsView({ filtered, byGroup, selected, toggleSelect, expande
           const incomplete = tasks.filter((t) => t.completed === 0 && t.status !== 'done').length
           return (
             <div key={gkey} style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 4px 8px', borderBottom: `1px solid ${meta.color}25`, marginBottom: 8, position: 'sticky', top: 0, background: PAGE_BG, zIndex: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 4px 8px', borderBottom: `1px solid ${withAlpha(meta.color, 15)}`, marginBottom: 8, position: 'sticky', top: 0, background: PAGE_BG, zIndex: 1 }}>
                 <span style={{ fontSize: 14 }}>{meta.icon}</span>
                 <h3 style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: meta.color, margin: 0 }}>{meta.label}</h3>
                 <span style={{ fontSize: 11, color: INK_DIM, marginLeft: 'auto' }}>
@@ -66,7 +66,7 @@ export function ColumnsView({ filtered, byGroup, selected, toggleSelect, expande
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {tasks.length === 0 && (
-                  <div style={{ padding: '20px 8px', textAlign: 'center', fontSize: 11, color: '#5a6068', fontStyle: 'italic' }}>nothing here</div>
+                  <div style={{ padding: '20px 8px', textAlign: 'center', fontSize: 11, color: INK_DIM, fontStyle: 'italic' }}>nothing here</div>
                 )}
                 {tasks.map((t) => (
                   <Card
@@ -86,7 +86,7 @@ export function ColumnsView({ filtered, byGroup, selected, toggleSelect, expande
         })}
       </div>
       {filtered.length === 0 && (
-        <div style={{ padding: 40, textAlign: 'center', color: '#5a6068', fontSize: 13, fontStyle: 'italic' }}>no tasks match</div>
+        <div style={{ padding: 40, textAlign: 'center', color: INK_DIM, fontSize: 13, fontStyle: 'italic' }}>no tasks match</div>
       )}
     </div>
   )
@@ -105,9 +105,9 @@ function Card({ task, project, selected, onSelect, expanded, onExpand, planned }
     <div
       onClick={(e) => { if ((e.target as HTMLElement).dataset.stop) return; onExpand() }}
       style={{
-        background: selected ? `${meta.color}15` : isCompleted ? 'rgba(255,255,255,0.015)' : 'rgba(255,255,255,0.025)',
-        border: `1px solid ${selected ? meta.color + '55' : 'rgba(255,255,255,0.06)'}`,
-        borderLeft: `2px solid ${planned ? ACCENT_GOLD : meta.color + '50'}`,
+        background: selected ? withAlpha(meta.color, 8) : isCompleted ? 'rgba(255,255,255,0.015)' : 'rgba(255,255,255,0.025)',
+        border: `1px solid ${selected ? withAlpha(meta.color, 33) : 'rgba(255,255,255,0.06)'}`,
+        borderLeft: `2px solid ${planned ? ACCENT_GOLD : withAlpha(meta.color, 31)}`,
         borderRadius: 5, padding: '8px 10px', cursor: 'pointer', opacity: isCompleted ? 0.5 : 1, transition: 'background 120ms',
       }}
     >
@@ -116,7 +116,7 @@ function Card({ task, project, selected, onSelect, expanded, onExpand, planned }
         <span style={{ fontSize: 12, marginTop: 1, flexShrink: 0 }} aria-hidden="true">{(task as TaskRow & { _tag?: string })._tag ?? '📝'}</span>
         <div style={{ flex: 1, minWidth: 0, fontSize: 12.5, lineHeight: 1.35, color: isCompleted ? INK_DIM : INK, textDecoration: isCompleted ? 'line-through' : 'none', fontWeight: 500, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{task.title}</div>
         {task.group_override && (
-          <span title={`Moved here manually (override: ${task.group_override})`} style={{ fontSize: 9, color: '#5cbcb4', padding: '1px 4px', background: 'rgba(92,188,180,0.10)', borderRadius: 3, letterSpacing: '0.04em', flexShrink: 0 }}>📍</span>
+          <span title={`Moved here manually (override: ${task.group_override})`} style={{ fontSize: 9, color: ACCENT_TEAL, padding: '1px 4px', background: 'rgba(92,188,180,0.10)', borderRadius: 3, letterSpacing: '0.04em', flexShrink: 0 }}>📍</span>
         )}
         <Chip color={PRIORITY_COLOR[task.priority] ?? INK_DIM}>{PRIORITY_SHORT[task.priority] ?? task.priority}</Chip>
       </div>

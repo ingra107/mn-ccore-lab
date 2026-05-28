@@ -8,7 +8,7 @@
 import { ProjectLink } from './primitives'
 import { TaskDetailDrawer } from './TaskDetailDrawer'
 import { tagForTask } from './constants'
-import { ACCENT_GOLD, ACCENT_GREEN, ACCENT_CORAL, ACCENT_ORANGE, INK, INK_DIM, INK_MUTED, todayKey } from './constants'
+import { ACCENT_GOLD, ACCENT_TEAL, ACCENT_GREEN, ACCENT_CORAL, ACCENT_ORANGE, INK, INK_DIM, INK_MUTED, todayKey } from './constants'
 import { formatRelativeTime, formatShortDate } from '../../lib/dateUtils'
 import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow as TaskRowData } from '../../lib/api'
@@ -20,7 +20,7 @@ const PRIORITY_COLOR: Record<string, string> = {
   urgent: ACCENT_CORAL,
   high: ACCENT_ORANGE,
   medium: ACCENT_GOLD,
-  low: '#7a828c',
+  low: INK_DIM,
 }
 
 // Tabular-nums short due-date label. Today / Tomorrow / Nd ago / in Nd /
@@ -95,7 +95,7 @@ export function TaskRow({ task, project, state, expandedId, onExpand, projectsBy
             <span style={{ fontSize: 11, flexShrink: 0 }} aria-hidden="true">{tag}</span>
             <span style={{ fontSize: 13, color: isDone ? INK_DIM : INK, textDecoration: isDone ? 'line-through' : 'none', fontWeight: 500, lineHeight: 1.4 }}>{task.title}</span>
             {task.group_override && (
-              <span title={`Moved manually (${task.group_override})`} style={{ fontSize: 9, color: '#5cbcb4', padding: '1px 4px', background: 'rgba(92,188,180,0.10)', borderRadius: 3 }}>📍</span>
+              <span title={`Moved manually (${task.group_override})`} style={{ fontSize: 9, color: ACCENT_TEAL, padding: '1px 4px', background: 'rgba(92,188,180,0.10)', borderRadius: 3 }}>📍</span>
             )}
             <ProjectLink name={project?.name ?? null} slug={project?.slug} />
             {planned && !isDone && (

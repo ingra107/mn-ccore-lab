@@ -11,10 +11,10 @@ import { Chip } from '../primitives'
 import { InlineDetail } from '../components/InlineDetail'
 import {
   GROUP_META, GROUP_ORDER,
-  ACCENT_GOLD, ACCENT_ORANGE, ACCENT_CORAL,
+  ACCENT_GOLD, ACCENT_TEAL, ACCENT_ORANGE, ACCENT_CORAL,
   INK, INK_MUTED, INK_DIM,
   PRIORITY_COLOR, PRIORITY_SHORT,
-  todayKey, daysSince, dueLabel, dueColor,
+  todayKey, daysSince, dueLabel, dueColor, withAlpha,
   type GroupKey,
 } from '../constants'
 import type { TaskRow } from '../../../lib/api'
@@ -61,7 +61,7 @@ export function LanesView({ byGroup, selected, toggleSelect, expanded, setExpand
           <section key={gkey} style={{ marginBottom: 18, background: 'rgba(255,255,255,0.015)', borderRadius: 8, border: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden' }}>
             <button
               onClick={() => toggleC(gkey)}
-              style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left', borderBottom: isCollapsed ? 'none' : `1px solid ${meta.color}25` }}
+              style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left', borderBottom: isCollapsed ? 'none' : `1px solid ${withAlpha(meta.color, 15)}` }}
             >
               <span style={{ fontSize: 14, transition: 'transform 200ms', display: 'inline-block', transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0)', color: meta.color, width: 10 }}>▾</span>
               <span style={{ fontSize: 16 }}>{meta.icon}</span>
@@ -75,7 +75,7 @@ export function LanesView({ byGroup, selected, toggleSelect, expanded, setExpand
             {!isCollapsed && (
               <div style={{ padding: '8px 14px 12px' }}>
                 {visible.length === 0 && (
-                  <div style={{ padding: '12px 4px', fontSize: 12, color: '#5a6068', fontStyle: 'italic' }}>nothing here</div>
+                  <div style={{ padding: '12px 4px', fontSize: 12, color: INK_DIM, fontStyle: 'italic' }}>nothing here</div>
                 )}
                 {visible.map((t) => (
                   <LaneRow
@@ -117,7 +117,7 @@ function LaneRow({ task, project, selected, onSelect, expanded, onExpand, planne
     <div>
       <div
         onClick={(e) => { if ((e.target as HTMLElement).dataset.stop) return; onExpand() }}
-        style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 8px', borderRadius: 4, background: selected ? `${meta.color}15` : expanded ? 'rgba(255,255,255,0.03)' : 'transparent', borderLeft: `2px solid ${planned ? ACCENT_GOLD : meta.color + '30'}`, opacity: isCompleted ? 0.5 : 1, cursor: 'pointer', transition: 'background 120ms' }}
+        style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 8px', borderRadius: 4, background: selected ? withAlpha(meta.color, 8) : expanded ? 'rgba(255,255,255,0.03)' : 'transparent', borderLeft: `2px solid ${planned ? ACCENT_GOLD : withAlpha(meta.color, 19)}`, opacity: isCompleted ? 0.5 : 1, cursor: 'pointer', transition: 'background 120ms' }}
       >
         <input type="checkbox" checked={selected} onChange={onSelect} onClick={(e) => e.stopPropagation()} data-stop="1" style={{ accentColor: meta.color, cursor: 'pointer' }} />
         <span style={{ fontSize: 12, flexShrink: 0 }} aria-hidden="true">{(task as TaskRow & { _tag?: string })._tag ?? '📝'}</span>
@@ -129,7 +129,7 @@ function LaneRow({ task, project, selected, onSelect, expanded, onExpand, planne
         </div>
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
           {task.group_override && (
-            <span title={`Moved manually (${task.group_override})`} style={{ fontSize: 9, color: '#5cbcb4', padding: '1px 4px', background: 'rgba(92,188,180,0.10)', borderRadius: 3 }}>📍</span>
+            <span title={`Moved manually (${task.group_override})`} style={{ fontSize: 9, color: ACCENT_TEAL, padding: '1px 4px', background: 'rgba(92,188,180,0.10)', borderRadius: 3 }}>📍</span>
           )}
           {planned && <Chip color={ACCENT_GOLD} filled>📌 today</Chip>}
           {task.status === 'waiting_external' && <Chip color={ACCENT_ORANGE} filled>⏳ waiting</Chip>}
@@ -137,7 +137,7 @@ function LaneRow({ task, project, selected, onSelect, expanded, onExpand, planne
           {overdueDays > 0 && <Chip color={ACCENT_CORAL} filled>{overdueDays}d late</Chip>}
           {task.due_date && <span style={{ fontSize: 11, color: dueCol, minWidth: 56, textAlign: 'right' }}>{dueText}</span>}
           <Chip color={PRIORITY_COLOR[task.priority] ?? INK_DIM}>{PRIORITY_SHORT[task.priority] ?? task.priority}</Chip>
-          <span style={{ fontSize: 10, color: '#5a6068', marginLeft: 2, width: 10 }}>{expanded ? '▾' : '▸'}</span>
+          <span style={{ fontSize: 10, color: INK_DIM, marginLeft: 2, width: 10 }}>{expanded ? '▾' : '▸'}</span>
         </div>
       </div>
       {expanded && (

@@ -12,7 +12,7 @@ export {
   GROUP_ORDER,
   ACCENT_GOLD, ACCENT_TEAL, ACCENT_CORAL, ACCENT_ORANGE, ACCENT_GREEN,
   INK, INK_MUTED, INK_DIM, PAGE_BG, PANEL_BG,
-  todayKey, daysSince, tagForTask,
+  todayKey, daysSince, tagForTask, withAlpha,
 } from '../../lib/taskGrouping'
 
 import type { GroupKey } from '../../lib/taskGrouping'
@@ -35,17 +35,33 @@ export interface FilterOption { v: string | null; l: string }
 // Constants
 // ──────────────────────────────────────────────────────────────────────────
 
+// GROUP_META + STATUS_COLOR + PRIORITY_COLOR reference CSS-var tokens so
+// the chips / dots / borders flip with theme (Phase 7, 2026-05-27). The
+// MyTasks "quick" lane is coral here (P3 with overdue tinge) whereas
+// Today's quick lane is orange — that's an intentional surface difference
+// kept from the original constants. PB grey uses --task-ink-muted.
 export const GROUP_META: Record<GroupKey, GroupMeta> = {
-  deep:       { icon: '🎯', label: 'Deep work',        color: '#c9a84c', desc: 'Scheduled focus blocks' },
-  priorities: { icon: '✅', label: 'Priorities',       color: '#5cbcb4', desc: 'P1 ops & commitments' },
-  quick:      { icon: '⚡', label: 'Quick',            color: '#f0737e', desc: 'Sub-15-min lifts' },
-  pb:         { icon: '🧠', label: 'Peripheral Brain', color: '#9aa0a6', desc: 'Reflection & low-urgency' },
-  etl:        { icon: '🔧', label: 'CQODE · CLIF ETL', color: '#5cbcb4', desc: 'Data pipeline ops' },
+  deep:       { icon: '🎯', label: 'Deep work',        color: 'var(--task-accent-gold)',   desc: 'Scheduled focus blocks' },
+  priorities: { icon: '✅', label: 'Priorities',       color: 'var(--task-accent-teal)',   desc: 'P1 ops & commitments' },
+  quick:      { icon: '⚡', label: 'Quick',            color: 'var(--task-accent-coral)',  desc: 'Sub-15-min lifts' },
+  pb:         { icon: '🧠', label: 'Peripheral Brain', color: 'var(--task-ink-muted)',     desc: 'Reflection & low-urgency' },
+  etl:        { icon: '🔧', label: 'CQODE · CLIF ETL', color: 'var(--task-accent-teal)',   desc: 'Data pipeline ops' },
 }
 
 export const STATUS_LABEL: Record<string, string> = { todo: 'Todo', in_progress: 'Active', waiting_external: 'Waiting', blocked: 'Blocked', done: 'Done' }
-export const STATUS_COLOR: Record<string, string> = { todo: '#9aa0a6', in_progress: '#5cbcb4', waiting_external: '#f08a5b', blocked: '#f0737e', done: '#6ee89a' }
-export const PRIORITY_COLOR: Record<string, string> = { urgent: '#f0737e', high: '#f0737e', medium: '#c9a84c', low: '#9aa0a6' }
+export const STATUS_COLOR: Record<string, string> = {
+  todo:             'var(--task-ink-muted)',
+  in_progress:      'var(--task-accent-teal)',
+  waiting_external: 'var(--task-accent-orange)',
+  blocked:          'var(--task-accent-coral)',
+  done:             'var(--task-accent-green)',
+}
+export const PRIORITY_COLOR: Record<string, string> = {
+  urgent: 'var(--task-accent-coral)',
+  high:   'var(--task-accent-coral)',
+  medium: 'var(--task-accent-gold)',
+  low:    'var(--task-ink-muted)',
+}
 export const PRIORITY_SHORT: Record<string, string> = { urgent: 'P1', high: 'P1', medium: 'P2', low: 'P3' }
 
 // Mentee slugs derived from researchTeam (CD spec — Mentee filter chip).
