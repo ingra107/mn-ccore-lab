@@ -33,8 +33,8 @@ import {
 } from 'lucide-react'
 import PageHeader from '../../components/PageHeader'
 import MetricCard from '../../components/MetricCard'
-import EmptyState from '../../components/EmptyState'
 import { CardSkeleton } from '../../components/LoadingSkeleton'
+import QueryState from '../../components/QueryState'
 import { staggerContainer, staggerItem } from '../../lib/animations'
 import { getPersonInfo } from '../../data/team'
 import Avatar from '../../components/Avatar'
@@ -321,40 +321,8 @@ export default function PIAnalytics() {
 
   if (isLoading) return <CardSkeleton count={6} />
 
-  // P6-C10: distinguish auth error from empty/network error.
-  if (isError) {
-    const isAuth = errorStatus === 401 || errorStatus === 403
-    return (
-      <div>
-        <PageHeader icon={<Shield size={20} />} title="PI Dashboard" subtitle="Evidence-based leadership metrics" />
-        <EmptyState
-          icon={<LineChart size={40} />}
-          title={isAuth ? 'Sign in to view PI Analytics' : 'Could not load PI Analytics'}
-          subtitle={isAuth
-            ? 'Your session may have expired. Refresh and sign in with your UMN account.'
-            : 'Refresh the page or contact support if this persists.'}
-        />
-      </div>
-    )
-  }
-
-  if (!data) {
-    return (
-      <div>
-        <PageHeader
-          icon={<Shield size={20} />}
-          title="PI Dashboard"
-          subtitle="Evidence-based leadership metrics"
-        />
-        <EmptyState
-          icon={<LineChart size={40} />}
-          title="No PI analytics available"
-          subtitle="Metrics appear as your team logs activity, tasks, and publications."
-        />
-      </div>
-    )
-  }
-
+  // P6-C10 / Fix 4: QueryState consolidates the auth-vs-generic-error block and
+  // the empty-state block that were previously duplicated across early returns.
   const commitRate = data && data.commitments.total > 0
     ? Math.round((data.commitments.completed / data.commitments.total) * 100)
     : 0
@@ -419,6 +387,16 @@ export default function PIAnalytics() {
           </button>
         </div>
       </PageHeader>
+
+      <QueryState
+        isLoading={false}
+        isError={isError}
+        isEmpty={!data}
+        errorStatus={errorStatus}
+        emptyIcon={<LineChart size={40} />}
+        emptyTitle="No PI analytics available"
+        emptySubtitle="Metrics appear as your team logs activity, tasks, and publications."
+      >
 
       {/* Top-line hero stats — DD-6 display variant (Fraunces 60px + gold label) */}
       <motion.div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" variants={staggerContainer} initial="hidden" animate="visible">
@@ -923,6 +901,8 @@ export default function PIAnalytics() {
           )}
         </div>
       </div>
+
+      </QueryState>
     </div>
   )
 }

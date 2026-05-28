@@ -298,8 +298,19 @@ describe('canSeePbProject + assertProjectVisible — A2', () => {
     expect(result).toBe(true)
   })
 
-  it('unknown project ref → canSeePbProject false (fail-closed)', async () => {
+  it('PI caller + unknown project ref → canSeePbProject true (PI pass-through; route handles 404)', async () => {
+    // Fix 1: PI/API-key callers get true on unknown refs so the route's own 404
+    // logic runs. Previously this was fail-closed, causing a spurious 403 before
+    // the 404 was ever reached (soft-deleted PB projects triggered this).
     const req = makePbRequest('ingra107@umn.edu')
+    const result = await canSeePbProject(req, env, 'does-not-exist')
+    expect(result).toBe(true)
+  })
+
+  it('non-PI caller + unknown project ref → canSeePbProject false (fail-closed)', async () => {
+    // Non-PI callers remain fail-closed on unknown refs — the ref could be a PB
+    // project and we can't prove otherwise without a DB row.
+    const req = makePbRequest('nate@umn.edu')
     const result = await canSeePbProject(req, env, 'does-not-exist')
     expect(result).toBe(false)
   })
@@ -323,8 +334,18 @@ describe('canSeePbProject + assertProjectVisible — A2', () => {
     expect(response).toBeNull()
   })
 
-  it('assertProjectVisible: unknown ref → 403 (fail-closed)', async () => {
+  it('assertProjectVisible: PI + unknown ref → null (pass; route handles 404)', async () => {
+    // Fix 1: PI callers pass through on unknown refs so the route returns 404,
+    // not the spurious 403 that was generated when soft-deleted PB projects
+    // returned null from the (now-removed) deleted_at IS NULL filter.
     const req = makePbRequest('ingra107@umn.edu')
+    const response = await assertProjectVisible(req, env, 'not-a-project')
+    expect(response).toBeNull()
+  })
+
+  it('assertProjectVisible: non-PI + unknown ref → 403 (fail-closed)', async () => {
+    // Non-PI callers still get 403 on unknown refs — the ref could be a PB project.
+    const req = makePbRequest('nate@umn.edu')
     const response = await assertProjectVisible(req, env, 'not-a-project')
     expect(response).not.toBeNull()
     expect(response!.status).toBe(403)

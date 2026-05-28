@@ -68,6 +68,8 @@ import {
   handleGetRecentTaskUpdates,
   handleAddTaskComment,
   handlePostTaskUpdate,
+  handleGetTasks,
+  handleGetTask,
 } from './tasks'
 import {
   handleGetRevisions,
@@ -191,7 +193,7 @@ function makeEnv(projectCategory: 'Peripheral Brain' | 'MNCCORE', opts: EnvOpts 
             if (/FROM projects/.test(sql)) {
               return { id: 'proj-id', slug: 'test-proj', category: projectCategory, title: 'Test Project' }
             }
-            if (/FROM tasks WHERE id/.test(sql) || /FROM tasks t WHERE t\.id/.test(sql)) {
+            if (/FROM tasks WHERE id/.test(sql) || /FROM tasks t WHERE t\.id/.test(sql) || /FROM tasks t LEFT JOIN/.test(sql)) {
               return { id: 'task-id', project_id: taskProjectId, description: 'Test task desc', title: 'Test task' }
             }
             if (/FROM conference_submissions WHERE id/.test(sql)) {
@@ -354,6 +356,14 @@ const patternACases: PatternACase[] = [
     callNonPiOnNonPb: () => handleGetImpact(new URL('https://x/?id=task1&type=task&new_date=2026-06-01'), nonPiRequest(), nonPbEnv({ taskProjectId: 'mnccore-proj' })),
     callPiOnPb:       () => handleGetImpact(new URL('https://x/?id=task1&type=task&new_date=2026-06-01'), piRequest(), pbEnv({ taskProjectId: 'pb-proj' })),
     callApiKeyOnPb:   () => handleGetImpact(new URL('https://x/?id=task1&type=task&new_date=2026-06-01'), apiKeyRequest(), pbEnv({ taskProjectId: 'pb-proj' })),
+  },
+  // Fix 2b: GET /api/tasks/:id is now gated by assertProjectVisible (was unguarded)
+  {
+    label: 'GET /api/tasks/:id (handleGetTask) — Fix 2b: single task PB gate',
+    callNonPiOnPb:    () => handleGetTask('task1', pbEnv({ taskProjectId: 'pb-proj' }), nonPiRequest()),
+    callNonPiOnNonPb: () => handleGetTask('task1', nonPbEnv({ taskProjectId: 'mnccore-proj' }), nonPiRequest()),
+    callPiOnPb:       () => handleGetTask('task1', pbEnv({ taskProjectId: 'pb-proj' }), piRequest()),
+    callApiKeyOnPb:   () => handleGetTask('task1', pbEnv({ taskProjectId: 'pb-proj' }), apiKeyRequest()),
   },
 ]
 
@@ -596,6 +606,12 @@ const patternBCases: PatternBCase[] = [
     callNonPi: () => handleGetRecentTaskUpdates(new URL('https://x/api/task-updates/recent'), pbEnv({ feedRows: mixedFeedRows }), false),
     callPi:    () => handleGetRecentTaskUpdates(new URL('https://x/api/task-updates/recent'), pbEnv({ feedRows: mixedFeedRows }), true),
   },
+  // Fix 2a: GET /api/tasks (list) is now gated by canSeePb flag (was unguarded)
+  {
+    label: 'GET /api/tasks (list, handleGetTasks) — Fix 2a: PB-project tasks filtered for non-PI',
+    callNonPi: () => handleGetTasks(new URL('https://x/api/tasks'), pbEnv({ feedRows: mixedFeedRows }), false),
+    callPi:    () => handleGetTasks(new URL('https://x/api/tasks'), pbEnv({ feedRows: mixedFeedRows }), true),
+  },
   {
     label: 'GET /api/revisions/active — filtered for non-PI',
     callNonPi: () => handleGetActiveRevisions(pbEnv({ feedRows: mixedFeedRows }), false),
@@ -694,8 +710,8 @@ describe('PB-visibility contract — Pattern B (cross-project feed filters; body
 
 describe('PB-visibility contract — registry drift guard', () => {
   it('Pattern A registry has at least the expected number of cases', () => {
-    // 12 originals + 3 Phase 1b-extended = 15
-    expect(patternACases.length).toBeGreaterThanOrEqual(15)
+    // 12 originals + 3 Phase 1b-extended + 1 Fix 2b (handleGetTask) = 16
+    expect(patternACases.length).toBeGreaterThanOrEqual(16)
   })
 
   it('Pattern W (writes) registry has at least the expected number of cases', () => {
@@ -706,7 +722,68 @@ describe('PB-visibility contract — registry drift guard', () => {
   })
 
   it('Pattern B (feeds) registry has at least the expected number of cases', () => {
-    // 3 originals + 5 new cross-project feeds = 8
-    expect(patternBCases.length).toBeGreaterThanOrEqual(8)
+    // 3 originals + 5 new cross-project feeds + 1 Fix 2a (handleGetTasks list) = 9
+    expect(patternBCases.length).toBeGreaterThanOrEqual(9)
+  })
+})
+
+// ── Fix 1: soft-deleted project — PI pass-through, non-PI fail-closed ─────────
+//
+// Before Fix 1, canSeePbProject filtered with `deleted_at IS NULL`. A soft-deleted
+// PB project returned proj=null → fail-closed for EVERYONE including PI. Fix 1
+// drops the filter so deleted rows are readable (category doesn't change on
+// soft-delete) and changes unknown-ref handling so PI/API-key pass through while
+// non-PI remain fail-closed.
+//
+// These tests use a "null-project env" — the DB stub returns null for any
+// FROM projects query — simulating the old code's behavior on a soft-deleted row.
+// With Fix 1, PI gets true (pass-through) and non-PI still gets false.
+
+describe('Fix 1 — canSeePbProject: soft-deleted/unknown project — PI pass-through, non-PI fail-closed', () => {
+  // Env whose DB returns null for any project lookup (simulates deleted row that
+  // the old deleted_at IS NULL filter would have excluded).
+  const nullProjEnv: import('../helpers').Env = {
+    TEST_MODE_KEY: 'local-test-key-do-not-use-in-prod',
+    PB_API_KEY: 'valid-test-api-key',
+    DB: {
+      prepare: (sql: string) => ({
+        bind: (..._args: unknown[]) => ({
+          first: async () => {
+            if (/pi_emails/.test(sql)) return { value: JSON.stringify([PI_EMAIL]) }
+            // All other queries return null — project not found (deleted or unknown)
+            return null
+          },
+          all: async () => ({ results: [] }),
+          run: async () => ({ success: true, meta: { changes: 1 } }),
+        }),
+        first: async () => {
+          if (/pi_emails/.test(sql)) return { value: JSON.stringify([PI_EMAIL]) }
+          return null
+        },
+        all: async () => ({ results: [] }),
+        run: async () => ({ success: true, meta: { changes: 1 } }),
+      }),
+      batch: async () => [],
+    },
+  } as unknown as import('../helpers').Env
+
+  it('PI caller on soft-deleted/unknown PB project → pass (true); route can return its own 404', async () => {
+    // PI should not get a spurious 403 for soft-deleted projects (Fix 1 regression).
+    const { canSeePbProject } = await import('../helpers')
+    const result = await canSeePbProject(piRequest(), nullProjEnv, 'soft-deleted-pb-proj')
+    expect(result).toBe(true)
+  })
+
+  it('API-key caller on soft-deleted/unknown PB project → pass (true)', async () => {
+    const { canSeePbProject } = await import('../helpers')
+    const result = await canSeePbProject(apiKeyRequest(), nullProjEnv, 'soft-deleted-pb-proj')
+    expect(result).toBe(true)
+  })
+
+  it('non-PI caller on soft-deleted/unknown project → fail-closed (false)', async () => {
+    // Non-PI must still be blocked on unknown refs — the ref could be a PB project.
+    const { canSeePbProject } = await import('../helpers')
+    const result = await canSeePbProject(nonPiRequest(), nullProjEnv, 'soft-deleted-pb-proj')
+    expect(result).toBe(false)
   })
 })

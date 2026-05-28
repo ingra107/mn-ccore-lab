@@ -594,7 +594,7 @@ app.get('/api/citations', (c) => handleGetCitations(E(c)));
 app.get('/api/activity', async (c) => handleGetActivity(U(c), E(c), await isPiRequest(R(c), E(c))));
 app.get('/api/activity/heatmap', (c) => handleActivityHeatmap(U(c), E(c)));
 app.get('/api/tasks/overdue-count', (c) => handleOverdueCount(U(c), E(c)));
-app.get('/api/tasks', (c) => handleGetTasks(U(c), E(c)));
+app.get('/api/tasks', async (c) => handleGetTasks(U(c), E(c), await isPiRequest(R(c), E(c))));
 app.get('/api/action-items', (c) => handleActionItems(U(c), E(c)));
 app.get('/api/updates/recent', async (c) => handleRecentUpdates(U(c), E(c), await isPiRequest(R(c), E(c))));
 app.get('/api/task-updates/recent', async (c) => handleGetRecentTaskUpdates(U(c), E(c), await isPiRequest(R(c), E(c))));
@@ -757,7 +757,7 @@ app.get('/api/tasks/:id/subtasks', (c) => handleGetSubtasks(c.req.param('id'), E
 app.get('/api/tasks/:id/handoffs', (c) => handleGetHandoffs(c.req.param('id'), E(c)));
 // GET /api/tasks/:id — fetch single task by PK (mechanic I5: was missing, always 404)
 // Must come AFTER all /api/tasks/:id/<sub-path> routes so hono routes specifics first.
-app.get('/api/tasks/:id', (c) => handleGetTask(c.req.param('id'), E(c)));
+app.get('/api/tasks/:id', (c) => handleGetTask(c.req.param('id'), E(c), R(c)));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ── Writes (POST / PUT / PATCH) ──────────────────────────────────────────────

@@ -6,8 +6,35 @@ import { nowInstant } from '../lib/time';
 import { applyMutation } from './mutations';
 // TASK_SELECT_COLS moved to api/lib/task-cols.ts so helpers.ts (safeTaskRow)
 // can import it without creating a circular dependency.
+// Fix 5: removed dead re-export — callers import directly from ../lib/task-cols
+// or via api/helpers.ts which already re-exports it (zero callers used this path).
 import { TASK_SELECT_COLS } from '../lib/task-cols';
-export { TASK_SELECT_COLS } from '../lib/task-cols';
+
+// ── Fix 3: guardTaskProject ────────────────────────────────────────────────────
+//
+// Consolidates the repeated pattern:
+//   SELECT project_id FROM tasks WHERE id=?  →  assertProjectVisible
+// used in 6 task-subresource handlers. Returns { block: Response, projectId: null }
+// when the caller is denied, or { block: null, projectId } when allowed. Callers
+// can reuse `projectId` downstream (e.g. the @hermes path in handleAddTaskComment
+// previously did a second identical SELECT).
+async function guardTaskProject(
+  env: Env,
+  request: Request,
+  taskId: string,
+): Promise<{ block: Response; projectId: null } | { block: null; projectId: string | null }> {
+  const task = await env.DB.prepare(
+    'SELECT project_id FROM tasks WHERE id = ? AND deleted_at IS NULL'
+  ).bind(taskId).first<{ project_id: string | null }>();
+  if (!task) {
+    return { block: error('Task not found', 404), projectId: null };
+  }
+  if (task.project_id) {
+    const block = await assertProjectVisible(request, env, task.project_id);
+    if (block) return { block, projectId: null };
+  }
+  return { block: null, projectId: task.project_id ?? null };
+}
 
 // GET /api/tasks/overdue-count?assignee= — lightweight count for sidebar badge
 export async function handleOverdueCount(url: URL, env: Env): Promise<Response> {
@@ -26,7 +53,10 @@ export async function handleOverdueCount(url: URL, env: Env): Promise<Response> 
 // sync-cursor mode: filters seq > N, orders by seq ASC, applies limit
 // (default 2000). Canonical pull path for brain.db's hub.py post-cutover.
 // updated_since/created_since remain for back-compat. seq_after wins.
-export async function handleGetTasks(url: URL, env: Env): Promise<Response> {
+//
+// Fix 2a: canSeePb=false (non-PI callers) filters out tasks belonging to
+// Peripheral Brain category projects. Mirrors the pattern in handleGetRecentTaskUpdates.
+export async function handleGetTasks(url: URL, env: Env, canSeePb = false): Promise<Response> {
   const assignee = url.searchParams.get('assignee');
   const status = url.searchParams.get('status');
   const priority = url.searchParams.get('priority');
@@ -46,7 +76,13 @@ export async function handleGetTasks(url: URL, env: Env): Promise<Response> {
   const includeFixtures = url.searchParams.get('include_fixtures') === '1' || includeDeleted;
 
   const deletedFilter = includeDeleted ? '1=1' : 't.deleted_at IS NULL';
-  let query = `SELECT ${TASK_SELECT_COLS}, m.title as meeting_title, m.date as meeting_date FROM tasks t LEFT JOIN meetings m ON t.meeting_id = m.id WHERE ${deletedFilter}`;
+  // Fix 2a: mirror the PB exclusion pattern from handleGetRecentTaskUpdates.
+  // Non-PI callers must not see tasks that belong to Peripheral Brain projects.
+  const pbExclusion = canSeePb ? '' : ` AND (t.project_id IS NULL OR t.project_id NOT IN (
+    SELECT id FROM projects WHERE category = 'Peripheral Brain'
+    UNION SELECT slug FROM projects WHERE category = 'Peripheral Brain'
+  ))`;
+  let query = `SELECT ${TASK_SELECT_COLS}, m.title as meeting_title, m.date as meeting_date FROM tasks t LEFT JOIN meetings m ON t.meeting_id = m.id WHERE ${deletedFilter}${pbExclusion}`;
   const params: (string | number)[] = [];
 
   if (seqAfterRaw !== null) {
@@ -136,11 +172,17 @@ export async function handleUpdateTaskStatus(id: string, request: Request, user:
 // a task visible in GET /api/tasks?limit=500 is always reachable here.
 // mechanic I5: previously no GET-by-PK route existed — direct lookups
 // returned 404 for every task regardless of status.
-export async function handleGetTask(id: string, env: Env): Promise<Response> {
+// Fix 2b: assertProjectVisible guards PB-category task visibility for non-PI callers.
+export async function handleGetTask(id: string, env: Env, request?: Request): Promise<Response> {
   const task = await env.DB.prepare(
     `SELECT ${TASK_SELECT_COLS}, m.title as meeting_title, m.date as meeting_date FROM tasks t LEFT JOIN meetings m ON t.meeting_id = m.id WHERE t.id = ? AND t.deleted_at IS NULL`
-  ).bind(id).first();
+  ).bind(id).first<Record<string, unknown> & { project_id?: string | null }>();
   if (!task) return error('Task not found', 404);
+  // Gate on PB visibility before returning the task row.
+  if (request && task.project_id) {
+    const block = await assertProjectVisible(request, env, task.project_id as string);
+    if (block) return block;
+  }
   return json({ data: task });
 }
 
@@ -454,12 +496,9 @@ export async function handleCreateTask(request: Request, user: AuthUser, env: En
 
 // GET /api/tasks/:id/comments
 export async function handleGetTaskComments(taskId: string, request: Request, env: Env): Promise<Response> {
-  // Phase 1b-B: if the task belongs to a PB-category project, block non-PI callers.
-  const task = await env.DB.prepare('SELECT project_id FROM tasks WHERE id = ? AND deleted_at IS NULL').bind(taskId).first<{ project_id: string | null }>();
-  if (task?.project_id) {
-    const block = await assertProjectVisible(request, env, task.project_id);
-    if (block) return block;
-  }
+  // Fix 3: guardTaskProject consolidates the repeated SELECT+assertProjectVisible pattern.
+  const guard = await guardTaskProject(env, request, taskId);
+  if (guard.block) return guard.block;
   const result = await env.DB.prepare(
     'SELECT * FROM task_comments WHERE task_id = ? ORDER BY created_at DESC'
   ).bind(taskId).all();
@@ -471,13 +510,12 @@ export async function handleAddTaskComment(taskId: string, request: Request, use
   const body = await request.json() as { content: string; author_slug?: string };
   if (!body.content?.trim()) return error('content required', 400);
 
-  // Phase 1b-extended: if the task belongs to a PB-category project, block non-PI
-  // callers from posting comments. Same pattern as handleGetTaskComments.
-  const taskRowForGate = await env.DB.prepare('SELECT project_id FROM tasks WHERE id = ? AND deleted_at IS NULL').bind(taskId).first<{ project_id: string | null }>();
-  if (taskRowForGate?.project_id) {
-    const block = await assertProjectVisible(request, env, taskRowForGate.project_id);
-    if (block) return block;
-  }
+  // Fix 3: guardTaskProject replaces the two duplicate SELECTs that were here:
+  // one for the gate and one for the @hermes project_id lookup below.
+  // projectId is reused in the @hermes path, eliminating the second round-trip.
+  const guard = await guardTaskProject(env, request, taskId);
+  if (guard.block) return guard.block;
+  const taskProjectId = guard.projectId;
 
   const id = generateId();
   // AM-2: validate/canonicalize author_slug; impersonation requires PI/service.
@@ -522,9 +560,8 @@ export async function handleAddTaskComment(taskId: string, request: Request, use
     try {
       const aiPrompt = body.content.replace(/@(hermes|claude)/gi, '').trim();
       if (aiPrompt.length > 5) {
-        // Look up the task's project_id so ai_requests.project_slug is populated.
-        const taskRow = await env.DB.prepare('SELECT project_id FROM tasks WHERE id = ? AND deleted_at IS NULL').bind(taskId).first<{ project_id: string | null }>();
-        const projectSlug = taskRow?.project_id ?? null;
+        // Fix 3: reuse taskProjectId from guardTaskProject — eliminates duplicate SELECT.
+        const projectSlug = taskProjectId;
         const aiId = generateId();
         await env.DB.prepare(
           'INSERT INTO ai_requests (id, source_type, source_id, project_slug, prompt, context, requested_by) VALUES (?, ?, ?, ?, ?, ?, ?)'
@@ -544,12 +581,9 @@ export async function handleAddTaskComment(taskId: string, request: Request, use
 
 // GET /api/tasks/:id/activity
 export async function handleGetTaskActivity(taskId: string, request: Request, env: Env): Promise<Response> {
-  // Phase 1b-B: if the task belongs to a PB-category project, block non-PI callers.
-  const task = await env.DB.prepare('SELECT project_id FROM tasks WHERE id = ? AND deleted_at IS NULL').bind(taskId).first<{ project_id: string | null }>();
-  if (task?.project_id) {
-    const block = await assertProjectVisible(request, env, task.project_id);
-    if (block) return block;
-  }
+  // Fix 3: guardTaskProject consolidates the repeated SELECT+assertProjectVisible pattern.
+  const guard = await guardTaskProject(env, request, taskId);
+  if (guard.block) return guard.block;
   const result = await env.DB.prepare(
     "SELECT * FROM activity_log WHERE related_id = ? AND related_type = 'task' ORDER BY timestamp DESC LIMIT 20"
   ).bind(taskId).all();
@@ -1006,12 +1040,9 @@ export async function handleGetRecentTaskUpdates(url: URL, env: Env, canSeePb = 
 
 // GET /api/tasks/:id/updates — get task notes/updates
 export async function handleGetTaskUpdates(taskId: string, request: Request, env: Env): Promise<Response> {
-  // Phase 1b-B: if the task belongs to a PB-category project, block non-PI callers.
-  const task = await env.DB.prepare('SELECT project_id FROM tasks WHERE id = ? AND deleted_at IS NULL').bind(taskId).first<{ project_id: string | null }>();
-  if (task?.project_id) {
-    const block = await assertProjectVisible(request, env, task.project_id);
-    if (block) return block;
-  }
+  // Fix 3: guardTaskProject consolidates the repeated SELECT+assertProjectVisible pattern.
+  const guard = await guardTaskProject(env, request, taskId);
+  if (guard.block) return guard.block;
   const result = await env.DB.prepare(
     'SELECT * FROM task_updates WHERE task_id = ? ORDER BY created_at DESC'
   ).bind(taskId).all();
@@ -1023,13 +1054,9 @@ export async function handlePostTaskUpdate(taskId: string, request: Request, use
   const body = await request.json() as { content: string; update_type?: string; author_slug?: string };
   if (!body.content?.trim()) return error('content required', 400);
 
-  // Phase 1b-extended: if the task belongs to a PB-category project, block non-PI
-  // callers. Mirrors the read-side gate at handleGetTaskUpdates.
-  const taskRowForGate = await env.DB.prepare('SELECT project_id FROM tasks WHERE id = ? AND deleted_at IS NULL').bind(taskId).first<{ project_id: string | null }>();
-  if (taskRowForGate?.project_id) {
-    const block = await assertProjectVisible(request, env, taskRowForGate.project_id);
-    if (block) return block;
-  }
+  // Fix 3: guardTaskProject replaces the duplicate SELECT+assertProjectVisible.
+  const guard = await guardTaskProject(env, request, taskId);
+  if (guard.block) return guard.block;
 
   const id = generateId();
   // AM-2: validate/canonicalize author_slug; impersonation requires PI/service.

@@ -562,12 +562,18 @@ export async function projectRefToCanonical(env: Env, ref: string): Promise<stri
  */
 export async function canSeePbProject(request: Request, env: Env, projectRef: string): Promise<boolean> {
   // Resolve the project row to read its category.
+  // Note: deleted_at filter intentionally omitted — the category field does
+  // not change on soft-delete, so we can safely read it from deleted rows.
+  // This prevents a race where a soft-deleted PB project returns proj=null
+  // and the function fails-closed even for PI/API-key callers, causing a
+  // spurious 403 before the route's own 404 logic can run.
   const proj = await env.DB.prepare(
-    'SELECT id, slug, category FROM projects WHERE (id = ? OR slug = ?) AND deleted_at IS NULL LIMIT 1'
+    'SELECT id, slug, category FROM projects WHERE (id = ? OR slug = ?) LIMIT 1'
   ).bind(projectRef, projectRef).first<{ id: string; slug: string | null; category: string | null }>();
 
-  // Unknown ref → fail-closed (treat as not-visible).
-  if (!proj) return false;
+  // Truly unknown ref (not in DB at all) → PI/API-key pass through so the
+  // route can return its own 404; non-PI fail-closed (could be a PB project).
+  if (!proj) return isPiRequest(request, env);
 
   // Non-PB categories are visible to everyone.
   if (proj.category !== 'Peripheral Brain') return true;
