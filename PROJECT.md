@@ -5,7 +5,7 @@ created: 2026-03-25
 status: active
 domain: Research
 tier: 2-Biweekly
-next_action: Hub hardening branch `hub-hardening-2026-05-27` READY for review/merge/deploy (2026-05-28). 34 commits, 602/602 API tests, build green. Phases 0-10 + Phase 5 prod data cleanup + 3 Codex review passes + drift cleanup all shipped. Deploy ACTIVATES the 4 Phase-A1 validators (flag-on, code-gated on deploy of `fc7c08f9`+). PB main has 3 new commits (Phase 3 retry/fail-loud, skill docs, push canonicalize). Schema v70 (`idx_projects_slug_active` UNIQUE partial). See SESSION-HANDOFF.md + CHANGELOG.md + docs/superpowers/plans/2026-05-27-hub-hardening-plan.md + Scratch/audit-2026-05-27/.
+next_action: Hub hardening + primitive-enforcement branch `hub-hardening-2026-05-27` MERGED to main (2026-05-28). **68 commits** = 34 hardening + 21 primitive sweep + 6 codex-pass-5 BLOCK fixes + 7 misc. **691/691 API tests, build green.** Codex pass-4 (meta-review) recommended 11 class-of-bug eliminator primitives → all shipped. Codex pass-5 caught 2 FAIL (FK_SLUG_FIELDS dead via ALLOWED_TABLES rejection + revisions oracle still leaking 404/403) + 5 AMEND → fixed in Wave 4 + re-verified. Deploy ACTIVATES the 4 Phase-A1 validators (flag-on, code-gated on deploy of `fc7c08f9`+). PB branch `primitive-write-result-2026-05-28` merged: WriteResult typed return replaces bool at 11 query.py writers; `__bool__` raises TypeError on truthiness bypass. Schema v70 (`idx_projects_slug_active` UNIQUE partial). See SESSION-HANDOFF.md + CHANGELOG.md + docs/superpowers/plans/2026-05-28-primitive-enforcement-plan.md + Scratch/audit-2026-05-27/codex/pass4-primitives/synthesis.md + Scratch/audit-2026-05-27/codex/pass5-final/.
 primary_folder: C:/Users/ingra107/mn-ccore-lab
 ---
 

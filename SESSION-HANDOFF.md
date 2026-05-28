@@ -1,6 +1,33 @@
 # Session Handoff — 2026-05-28
 
-## ▶▶ CURRENT — Hub hardening branch READY for review/merge/deploy
+## ▶▶ CURRENT — Hub hardening + primitive-enforcement MERGED to main; deploy pending
+
+**Hub HEAD on main:** post-merge; the branch `hub-hardening-2026-05-27` was merged `--no-ff` with **68 commits** (34 hardening + 21 primitive sweep + 6 codex-pass-5 BLOCK fixes + 7 misc). **691/691 API tests, build green.** **PB main HEAD:** post-merge; the branch `primitive-write-result-2026-05-28` was merged with 3 commits (WriteResult typed return). All four codex review passes recorded (`Scratch/audit-2026-05-27/codex/{synthesis,pass2-synthesis,pass3-final/synthesis,pass4-primitives/synthesis,pass5-final/...}.md`).
+
+**The 11 codex-pass-4-recommended class-of-bug eliminator primitives (the "slope-changing" structural work, all shipped):**
+1. `defineRoute()` DSL at `api/lib/route-dsl.ts` — 236 routes migrated in `api/index.ts`; metadata explicit not path-derived
+2. Generated route contract test at `api/routes/route-contract.generated.test.ts` — auto-emits PB-403 assertion per registered route
+3. Typed branded Request at `api/lib/typed-request.ts` (`AuthedRequest`/`PIRequest`/`ProjectVisibleRequest`) + `request?:` lint. **Adoption deferred** (~200 handlers still take raw Request) — codex pass-5 said "either adopt or narrow claim to lint-only"; we shipped the lint, deferred adoption to a follow-on branch.
+4. Runtime entity guard wrappers at `api/lib/route-guards.ts` (`withProjectWrite`/`withTaskProject`/`withExistingRowProject`) — 4 hand-rolled create-sites + 5 hand-rolled update-sites migrated
+5. `TABLE_PRIVATE_COLS` expansion — email_drafts/inbox_events/regulatory_items/file_attachments (+gmail_draft_url, +r2_key added in Wave 4)
+6. `FK_SLUG_FIELDS` expansion + `ALLOWED_TABLES` unblocking (Wave 4 fix — registry was dead until ALLOWED_TABLES caught up) + canonicalize at 6 direct-write routes that bypass `/api/mutations`
+7. `SELECT *` lint at `scripts/check-select-star.mjs` — table-aware; 8-site baseline burned to 0 (W3-A); `--enforce` mode wired in package.json (W4-C)
+8. `hiddenResource()` helper at `api/lib/hidden-resource.ts` — applied at the revision oracle path (W4-BE; the Phase 10 "fix" was incomplete)
+9. `idempotentDelete()` wrapper at `api/lib/idempotent-delete.ts` — mode soft/hard; 9 sites migrated (3 in Wave 2 + 6 sibling sweep in Wave 4); 2 exemption-documented (deadline-cascade double-project gate; uploads R2 side-effect)
+10. PB `WriteResult` typed return — silent `if result:` bypass is a TypeError; 11 writers + 22 callers + 13 tests; status semantics: `accepted`/`merged_clean`/`conflict` have `.ok=True` (Hub-wins convergence is rest state, not failure)
+11. `cleanupWrapper.runCleanup()` at `scripts/cleanup-wrapper.mjs` — requires verified `_final_summary.json`
+
+**Defensive lints (warn-on-new in dev, `--enforce` in package.json composite for CI):** color-concat (339-site baseline; recommends `withAlpha()`), `SELECT *` (empty baseline post W3-A), `request?:` (3 grandfathered cron-dual-invoke baselined → future Z1.7 to split cron from HTTP).
+
+**Plan (primitive-enforcement):** `docs/superpowers/plans/2026-05-28-primitive-enforcement-plan.md`. 7 phases (Z1-Z7), 25 tasks, executed by 17 parallel subagent dispatches across 4 waves.
+
+## ▶ NEXT — deploy decision
+
+The only remaining decision: deploy. `npm run deploy:pages:gated` ACTIVATES the 4 Phase-A1 validators in `lab_settings` (flag-on since 2026-05-26; code ships with this branch). Phase 5 cleanup removed every prod row that would trip a validator → activation should be a no-op for the team. Post-deploy smoke plan (≥330s wait for the 5-min validator-flag cache, then probe each validator in order: `hub_validate_enums` → `completion_tombstone` → `conflict_hash` → `dedup_adoptable`).
+
+Deferred items NOT in this merge: full typed-Request adoption (~200 handlers), generated-contract-test behavior matrix (currently shape-only), Z1.7 cron-vs-HTTP split for the 3 grandfathered `request?:` sites.
+
+## ▶▶ (HISTORY) Hub hardening branch READY for review/merge/deploy
 
 **Branch:** `hub-hardening-2026-05-27` (34 commits since the plan; not yet merged to `main`, not yet deployed). **Hub: 602/602 API tests passing, build green, working tree clean.** **PB main: 3 new commits** (Phase 3 retry/fail-loud + skill-doc corrections + push canonicalization). All Codex critical findings closed across three review passes (`Scratch/audit-2026-05-27/codex/{synthesis,pass2-synthesis,pass3-final/synthesis}.md`).
 
