@@ -120,34 +120,59 @@ export async function handleUpdateMeetingNotes(meetingId: string, request: Reque
 // GET /api/meetings/:id/prep — facilitator prep view data.
 // Auth-gated: prep data contains task details, prior action items, activity log.
 // Unauth callers get 401 (mirrors the handleGetMeeting pattern).
-export async function handleMeetingPrep(meetingId: string, env: Env, isAuthed = false): Promise<Response> {
+// Phase 1b-extended: cross-project feed; filter PB-category rows for non-PI.
+// `canSeePb` is piped from the dispatch site (`await isPiRequest(...)`).
+export async function handleMeetingPrep(meetingId: string, env: Env, isAuthed = false, canSeePb = false): Promise<Response> {
   if (!isAuthed) return error('Authentication required', 401);
   const meeting = await env.DB.prepare('SELECT * FROM meetings WHERE id = ?').bind(meetingId).first();
   if (!meeting) return error('Meeting not found', 404);
+
+  const pbFilter = canSeePb ? '' : " AND (p.category IS NULL OR p.category != 'Peripheral Brain')";
 
   // Find the previous meeting (for carry-forward context)
   const prevMeeting = await env.DB.prepare(
     'SELECT id, date, title FROM meetings WHERE date < ? ORDER BY date DESC LIMIT 1'
   ).bind(meeting.date as string).first();
 
-  // Action items from previous meeting (if any)
+  // Action items from previous meeting (if any).
+  // Join to projects so PB-category tasks are filtered for non-PI callers.
   const prevActionItems = prevMeeting
     ? (await env.DB.prepare(
-        'SELECT id, description, assignee, completed, due_date FROM tasks WHERE meeting_id = ? ORDER BY completed ASC, assignee'
+        `SELECT t.id, t.description, t.assignee, t.completed, t.due_date
+         FROM tasks t
+         LEFT JOIN projects p ON p.id = t.project_id OR p.slug = t.project_id
+         WHERE t.meeting_id = ?${pbFilter}
+         ORDER BY t.completed ASC, t.assignee`
       ).bind(prevMeeting.id).all()).results
     : [];
 
-  // Recent project activity (last 14 days) — stage changes, completed tasks, comments
+  // Recent project activity (last 14 days) — stage changes, completed tasks, comments.
+  // Filter by related_type='project' joining to projects, plus pass through
+  // non-project activities (which can't be PB-leaking) unchanged.
   const twoWeeksAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
   const recentActivity = (await env.DB.prepare(
-    'SELECT type, description, actor, related_id as entity_id, related_type as entity_type, timestamp as created_at FROM activity_log WHERE timestamp > ? ORDER BY timestamp DESC LIMIT 30'
+    canSeePb
+      ? `SELECT a.type, a.description, a.actor, a.related_id as entity_id, a.related_type as entity_type, a.timestamp as created_at
+         FROM activity_log a
+         WHERE a.timestamp > ?
+         ORDER BY a.timestamp DESC LIMIT 30`
+      : `SELECT a.type, a.description, a.actor, a.related_id as entity_id, a.related_type as entity_type, a.timestamp as created_at
+         FROM activity_log a
+         LEFT JOIN projects p ON a.related_type = 'project' AND (p.id = a.related_id OR p.slug = a.related_id)
+         WHERE a.timestamp > ?
+           AND (a.related_type != 'project' OR p.category IS NULL OR p.category != 'Peripheral Brain')
+         ORDER BY a.timestamp DESC LIMIT 30`
   ).bind(twoWeeksAgo).all()).results;
 
   // Upcoming deadlines (next 14 days)
   const twoWeeksOut = ctToday(14);
   const today = ctToday();
   const upcomingDeadlines = (await env.DB.prepare(
-    'SELECT id, title, description, assignee, due_date, priority, status FROM tasks WHERE due_date BETWEEN ? AND ? AND completed = 0 ORDER BY due_date'
+    `SELECT t.id, t.title, t.description, t.assignee, t.due_date, t.priority, t.status
+     FROM tasks t
+     LEFT JOIN projects p ON p.id = t.project_id OR p.slug = t.project_id
+     WHERE t.due_date BETWEEN ? AND ? AND t.completed = 0${pbFilter}
+     ORDER BY t.due_date`
   ).bind(today, twoWeeksOut).all()).results;
 
   // Current meeting's agenda items
@@ -157,7 +182,11 @@ export async function handleMeetingPrep(meetingId: string, env: Env, isAuthed = 
 
   // Overdue tasks
   const overdueTasks = (await env.DB.prepare(
-    'SELECT id, title, description, assignee, due_date, priority FROM tasks WHERE due_date < ? AND completed = 0 ORDER BY due_date'
+    `SELECT t.id, t.title, t.description, t.assignee, t.due_date, t.priority
+     FROM tasks t
+     LEFT JOIN projects p ON p.id = t.project_id OR p.slug = t.project_id
+     WHERE t.due_date < ? AND t.completed = 0${pbFilter}
+     ORDER BY t.due_date`
   ).bind(today).all()).results;
 
   return json({
@@ -176,7 +205,8 @@ export async function handleMeetingPrep(meetingId: string, env: Env, isAuthed = 
 // GET /api/meetings/:id/generate-agenda — autogenerate agenda from carried-forward + open items.
 // Auth-gated: generated agenda surfaces task titles, assignees, regulatory items (internal).
 // Unauth callers get 401 (mirrors the handleGetMeeting pattern).
-export async function handleGenerateAgenda(meetingId: string, env: Env, isAuthed = false): Promise<Response> {
+// Phase 1b-extended: cross-project feed; filter PB-category rows for non-PI.
+export async function handleGenerateAgenda(meetingId: string, env: Env, isAuthed = false, canSeePb = false): Promise<Response> {
   if (!isAuthed) return error('Authentication required', 401);
   const meeting = await env.DB.prepare('SELECT * FROM meetings WHERE id = ?').bind(meetingId).first<{ id: string; title: string; date: string }>();
   if (!meeting) return error('Meeting not found', 404);
@@ -188,12 +218,15 @@ export async function handleGenerateAgenda(meetingId: string, env: Env, isAuthed
 
   const prevDate = prevMeeting?.date ?? '1970-01-01';
 
+  const pbFilterP = canSeePb ? '' : " AND (p.category IS NULL OR p.category != 'Peripheral Brain')";
+
   // 1. Carried-forward and open action items from previous meetings
   const carriedForward = await env.DB.prepare(
     `SELECT t.id, t.title, t.description, t.assignee, t.due_date, t.status
      FROM tasks t
      JOIN meetings m ON t.meeting_id = m.id
-     WHERE m.date < ? AND (t.completed = 0 OR t.status NOT IN ('done','completed'))
+     LEFT JOIN projects p ON p.id = t.project_id OR p.slug = t.project_id
+     WHERE m.date < ? AND (t.completed = 0 OR t.status NOT IN ('done','completed'))${pbFilterP}
      ORDER BY m.date DESC, t.created_at
      LIMIT 20`
   ).bind(meeting.date).all<{ id: string; title: string; description: string; assignee: string; due_date: string; status: string }>();
@@ -202,33 +235,36 @@ export async function handleGenerateAgenda(meetingId: string, env: Env, isAuthed
   const today = ctToday();
   const weekOut = ctToday(7);
   const urgentTasks = await env.DB.prepare(
-    `SELECT id, title, assignee, due_date, priority, status
-     FROM tasks
-     WHERE status IN ('todo','in_progress','waiting_external')
-       AND priority IN ('high','urgent')
-       AND due_date BETWEEN ? AND ?
-       AND (deleted_at IS NULL OR deleted_at = '')
-     ORDER BY due_date
+    `SELECT t.id, t.title, t.assignee, t.due_date, t.priority, t.status
+     FROM tasks t
+     LEFT JOIN projects p ON p.id = t.project_id OR p.slug = t.project_id
+     WHERE t.status IN ('todo','in_progress','waiting_external')
+       AND t.priority IN ('high','urgent')
+       AND t.due_date BETWEEN ? AND ?
+       AND (t.deleted_at IS NULL OR t.deleted_at = '')${pbFilterP}
+     ORDER BY t.due_date
      LIMIT 15`
   ).bind(today, weekOut).all<{ id: string; title: string; assignee: string; due_date: string; priority: string; status: string }>();
 
   // 3. Stalled manuscripts / projects (in active status but not updated in 30+ days)
+  const pbFilterDirect = canSeePb ? '' : " AND (category IS NULL OR category != 'Peripheral Brain')";
   const stalledProjects = await env.DB.prepare(
     `SELECT id, title, stage, category, updated_at
      FROM projects
      WHERE status IN ('active','In Review','In Preparation')
-       AND julianday('now') - julianday(updated_at) > 30
+       AND julianday('now') - julianday(updated_at) > 30${pbFilterDirect}
      ORDER BY updated_at ASC
      LIMIT 8`
   ).all<{ id: string; title: string; stage: string; category: string; updated_at: string }>();
 
   // 4. Regulatory items expiring within 60 days
   const regulatory = await env.DB.prepare(
-    `SELECT id, title, item_type, expiration_date, status
-     FROM regulatory_items
-     WHERE status IN ('active','action_needed','expiring_soon')
-       AND expiration_date < date('now', '+60 days')
-     ORDER BY expiration_date ASC
+    `SELECT r.id, r.title, r.item_type, r.expiration_date, r.status
+     FROM regulatory_items r
+     LEFT JOIN projects p ON p.id = r.project_id OR p.slug = r.project_id
+     WHERE r.status IN ('active','action_needed','expiring_soon')
+       AND r.expiration_date < date('now', '+60 days')${pbFilterP}
+     ORDER BY r.expiration_date ASC
      LIMIT 10`
   ).all<{ id: string; title: string; item_type: string; expiration_date: string; status: string }>();
 
@@ -237,7 +273,7 @@ export async function handleGenerateAgenda(meetingId: string, env: Env, isAuthed
     `SELECT pu.id, pu.content, pu.update_type, pu.author, pu.created_at, p.title as project_title
      FROM project_updates pu
      LEFT JOIN projects p ON pu.project_id = p.id OR pu.project_id = p.slug
-     WHERE pu.created_at > ?
+     WHERE pu.created_at > ?${pbFilterP}
      ORDER BY pu.created_at DESC
      LIMIT 15`
   ).bind(prevDate).all<{ id: string; content: string; update_type: string; author: string; created_at: string; project_title: string }>();

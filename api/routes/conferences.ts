@@ -8,7 +8,9 @@ const VALID_MATERIALS = ['not_started', 'drafting', 'review', 'final'] as const;
 const VALID_PRESENTATION_TYPES = ['poster', 'oral', 'rapid', 'workshop'] as const;
 
 // ── GET /api/conferences?project_id=&status= ──
-export async function handleGetConferences(url: URL, request: Request, env: Env): Promise<Response> {
+// Phase 1b-extended: when no project_id filter is supplied, this is a
+// cross-project feed; filter PB-category rows out for non-PI callers.
+export async function handleGetConferences(url: URL, request: Request, env: Env, canSeePb = false): Promise<Response> {
   const projectId = url.searchParams.get('project_id');
   const status = url.searchParams.get('status');
 
@@ -19,19 +21,27 @@ export async function handleGetConferences(url: URL, request: Request, env: Env)
     if (block) return block;
   }
 
-  let query = 'SELECT * FROM conference_submissions WHERE 1=1';
+  // Phase 1b-extended cross-project filter: only applied when there's no
+  // explicit project_id scope (the per-project gate above already covers that).
+  const pbFilter = (!projectId && !canSeePb)
+    ? " AND (p.category IS NULL OR p.category != 'Peripheral Brain')"
+    : '';
+
+  let query = `SELECT cs.* FROM conference_submissions cs
+               LEFT JOIN projects p ON p.id = cs.project_id OR p.slug = cs.project_id
+               WHERE 1=1${pbFilter}`;
   const params: string[] = [];
 
   if (projectId) {
-    query += ' AND project_id = ?';
+    query += ' AND cs.project_id = ?';
     params.push(projectId);
   }
   if (status) {
-    query += ' AND status = ?';
+    query += ' AND cs.status = ?';
     params.push(status);
   }
 
-  query += ' ORDER BY CASE WHEN abstract_due IS NOT NULL THEN abstract_due WHEN conference_date IS NOT NULL THEN conference_date ELSE created_at END ASC';
+  query += ' ORDER BY CASE WHEN cs.abstract_due IS NOT NULL THEN cs.abstract_due WHEN cs.conference_date IS NOT NULL THEN cs.conference_date ELSE cs.created_at END ASC';
 
   const result = await env.DB.prepare(query).bind(...params).all();
   return json({ data: result.results || [], count: result.results?.length || 0 });
@@ -39,13 +49,15 @@ export async function handleGetConferences(url: URL, request: Request, env: Env)
 
 // ── GET /api/conferences/upcoming ──
 // Conferences with deadlines in the next 90 days
-export async function handleGetUpcomingConferences(env: Env): Promise<Response> {
+// Phase 1b-extended: cross-project feed; filter PB-category rows for non-PI.
+export async function handleGetUpcomingConferences(env: Env, canSeePb = false): Promise<Response> {
   // AM-7: bind CT-anchored today / today+90 instead of SQLite date('now')
   // (UTC), which after ~6pm CT shifted the 90-day window a day. abstract_due
   // and conference_date are CT calendar dates. Bind order matches the textual
   // ? order: today, +90, today, +90, today (WHERE), then today (ORDER BY).
   const today = ctToday();
   const in90 = ctToday(90);
+  const pbFilter = canSeePb ? '' : " AND (p.category IS NULL OR p.category != 'Peripheral Brain')";
   const result = await env.DB.prepare(`
     SELECT cs.*, p.title as project_title, p.slug as project_slug
     FROM conference_submissions cs
@@ -55,7 +67,7 @@ export async function handleGetUpcomingConferences(env: Env): Promise<Response> 
         (cs.abstract_due IS NOT NULL AND cs.abstract_due >= ? AND cs.abstract_due <= ?)
         OR (cs.conference_date IS NOT NULL AND cs.conference_date >= ? AND cs.conference_date <= ?)
         OR (cs.status IN ('accepted', 'preparing') AND cs.conference_date >= ?)
-      )
+      )${pbFilter}
     ORDER BY
       CASE
         WHEN cs.abstract_due IS NOT NULL AND cs.abstract_due >= ? AND cs.status = 'planning' THEN cs.abstract_due
@@ -124,6 +136,15 @@ export async function handleCreateConference(request: Request, user: AuthUser, e
     ? (await projectRefToCanonical(env, body.project_id))
     : null;
 
+  // Phase 1b-extended: block non-PI callers from creating conference submissions
+  // tied to a PB-category project. Mirror the read-side gate (handleGetConferences).
+  // Project-less conference rows are allowed (lab-wide conferences with no
+  // manuscript link) — only gate when a project is supplied.
+  if (resolvedProjectId) {
+    const block = await assertProjectVisible(request, env, resolvedProjectId);
+    if (block) return block;
+  }
+
   const id = generateId();
   await env.DB.prepare(`
     INSERT INTO conference_submissions (id, project_id, conference, conference_date, submission_type, title, authors, abstract_due, abstract_submitted_at, accepted_at, presentation_type, materials_status, travel_booked, notes, status)
@@ -185,6 +206,17 @@ export async function handleUpdateConference(id: string, request: Request, user:
     return error(`presentation_type must be one of: ${VALID_PRESENTATION_TYPES.join(', ')}`, 400);
   }
 
+  // Phase 1b-extended: if the update reparents the conference submission to a
+  // NEW project_id, gate that target too. Pre-fix, a non-PI could reparent a
+  // non-PB conference onto a PB project (since the only gate above is on the
+  // existing row's project). Resolve id-or-slug first.
+  if (typeof body.project_id === 'string' && body.project_id) {
+    const targetProjectId = await projectRefToCanonical(env, body.project_id);
+    if (!targetProjectId) return error(`Unknown project "${body.project_id}"`, 400);
+    const block = await assertProjectVisible(request, env, targetProjectId);
+    if (block) return block;
+  }
+
   await env.DB.prepare(`UPDATE conference_submissions SET ${sql} WHERE id = ?`).bind(...params, id).run();
 
   const actor = actorSlug(user.email);
@@ -199,7 +231,14 @@ export async function handleUpdateConference(id: string, request: Request, user:
 // Hard-delete (conference_submissions has no deleted_at column).
 // SEC-10.3: Idempotent — attempt the DELETE and check changes.meta.changes.
 // A repeat call (row already gone) returns 200 with idempotent:true instead of 404.
-export async function handleDeleteConference(id: string, user: AuthUser, env: Env): Promise<Response> {
+// Phase 1b-extended: gate on the existing row's project (if any) before delete.
+export async function handleDeleteConference(id: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
+  const existing = await env.DB.prepare('SELECT project_id FROM conference_submissions WHERE id = ?').bind(id).first<{ project_id: string | null }>();
+  if (existing?.project_id) {
+    const block = await assertProjectVisible(request, env, existing.project_id);
+    if (block) return block;
+  }
+
   const result = await env.DB.prepare('DELETE FROM conference_submissions WHERE id = ?').bind(id).run();
   const changed = (result.meta?.changes ?? 0) > 0;
 

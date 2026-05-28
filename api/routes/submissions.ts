@@ -53,6 +53,11 @@ export async function handleCreateSubmission(request: Request, user: AuthUser, e
   const resolvedProjectId = await projectRefToCanonical(env, body.project_id);
   if (!resolvedProjectId) return error(`Unknown project "${body.project_id}"`, 400);
 
+  // Phase 1b-extended: block non-PI callers from creating submission events on
+  // a PB-category project. Mirror the read-side gate (handleGetSubmissions).
+  const block = await assertProjectVisible(request, env, resolvedProjectId);
+  if (block) return block;
+
   const id = generateId();
   await env.DB.prepare(`
     INSERT INTO submission_events (id, project_id, event_type, event_date, journal, notes)
@@ -76,6 +81,17 @@ export async function handleCreateSubmission(request: Request, user: AuthUser, e
 // ── POST /api/submissions/:id ──
 // Update a submission event
 export async function handleUpdateSubmission(id: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
+  // Phase 1b-extended: gate on the existing row's project (the row being edited)
+  // BEFORE applying any update. submission_events has no `project_id` change path
+  // (allowedFields here does not list project_id), so we only check the existing
+  // row's project. If a future spec adds project_id mutation to the allowed list,
+  // also gate the NEW target project as the conferences/regulatory paths do.
+  const existing = await env.DB.prepare('SELECT project_id FROM submission_events WHERE id = ?').bind(id).first<{ project_id: string | null }>();
+  if (existing?.project_id) {
+    const block = await assertProjectVisible(request, env, existing.project_id);
+    if (block) return block;
+  }
+
   const body = await request.json() as {
     event_type?: string;
     event_date?: string;
@@ -117,11 +133,16 @@ export async function handleUpdateSubmission(id: string, request: Request, user:
 // SEC-10.3: Idempotent — check existence WITHOUT filtering deleted_at first,
 // then only apply the soft-delete when not already deleted. Repeat calls
 // return 200 with idempotent:true instead of 404.
-export async function handleDeleteSubmission(id: string, user: AuthUser, env: Env): Promise<Response> {
+// Phase 1b-extended: gate on the existing row's project before any state change.
+export async function handleDeleteSubmission(id: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
   const existing = await env.DB.prepare(
-    'SELECT id, deleted_at FROM submission_events WHERE id = ?'
-  ).bind(id).first<{ id: string; deleted_at: string | null }>();
+    'SELECT id, deleted_at, project_id FROM submission_events WHERE id = ?'
+  ).bind(id).first<{ id: string; deleted_at: string | null; project_id: string | null }>();
   if (!existing) return error('Submission event not found', 404);
+  if (existing.project_id) {
+    const block = await assertProjectVisible(request, env, existing.project_id);
+    if (block) return block;
+  }
 
   if (existing.deleted_at !== null) {
     // Already soft-deleted — return idempotent 200 without re-logging.

@@ -20,7 +20,9 @@ const VALID_TYPES = ['irb', 'irb_amendment', 'dua', 'dta', 'coi', 'training', 'o
 const VALID_STATUSES = ['active', 'expired', 'pending', 'exempt', 'action_needed', 'expiring_soon'] as const;
 
 // GET /api/regulatory?project_id=
-export async function handleGetRegulatoryItems(url: URL, request: Request, env: Env): Promise<Response> {
+// Phase 1b-extended: cross-project feed when project_id is absent — filter PB
+// rows for non-PI callers.
+export async function handleGetRegulatoryItems(url: URL, request: Request, env: Env, canSeePb = false): Promise<Response> {
   const projectId = url.searchParams.get('project_id');
 
   // Phase 1b-B: when scoped to a specific project, block non-PI callers from
@@ -30,22 +32,29 @@ export async function handleGetRegulatoryItems(url: URL, request: Request, env: 
     if (block) return block;
   }
 
-  let query = 'SELECT * FROM regulatory_items WHERE 1=1';
+  const pbFilter = (!projectId && !canSeePb)
+    ? " AND (p.category IS NULL OR p.category != 'Peripheral Brain')"
+    : '';
+
+  let query = `SELECT r.* FROM regulatory_items r
+               LEFT JOIN projects p ON p.id = r.project_id OR p.slug = r.project_id
+               WHERE 1=1${pbFilter}`;
   const params: string[] = [];
 
   if (projectId) {
-    query += ' AND project_id = ?';
+    query += ' AND r.project_id = ?';
     params.push(projectId);
   }
 
-  query += ' ORDER BY CASE status WHEN \'expired\' THEN 0 WHEN \'active\' THEN 1 WHEN \'pending\' THEN 2 WHEN \'exempt\' THEN 3 END, expiration_date ASC, created_at DESC';
+  query += ' ORDER BY CASE r.status WHEN \'expired\' THEN 0 WHEN \'active\' THEN 1 WHEN \'pending\' THEN 2 WHEN \'exempt\' THEN 3 END, r.expiration_date ASC, r.created_at DESC';
 
   const result = await env.DB.prepare(query).bind(...params).all();
   return json({ data: result.results || [], count: result.results?.length || 0 });
 }
 
 // GET /api/regulatory/expiring?days=30
-export async function handleGetExpiringItems(url: URL, env: Env): Promise<Response> {
+// Phase 1b-extended: cross-project feed; filter PB rows for non-PI callers.
+export async function handleGetExpiringItems(url: URL, env: Env, canSeePb = false): Promise<Response> {
   const days = parseInt(url.searchParams.get('days') || '30', 10);
   const now = new Date();
   // AM-7: CT-anchored cutoff (was UTC `cutoff.toISOString()`, which after ~6pm
@@ -54,6 +63,7 @@ export async function handleGetExpiringItems(url: URL, env: Env): Promise<Respon
   // (`nowIso` was dead — never referenced in the query — so it's removed.)
   const cutoffIso = ctToday(days);
 
+  const pbFilter = canSeePb ? '' : " AND (p.category IS NULL OR p.category != 'Peripheral Brain')";
   // Get items expiring within N days (including already expired), joined with project title
   const result = await env.DB.prepare(`
     SELECT r.*, p.title as project_title, p.slug as project_slug
@@ -61,7 +71,7 @@ export async function handleGetExpiringItems(url: URL, env: Env): Promise<Respon
     LEFT JOIN projects p ON r.project_id = p.slug OR r.project_id = p.id
     WHERE r.status IN ('active','action_needed','expiring_soon','pending')
       AND r.expiration_date IS NOT NULL
-      AND r.expiration_date <= ?
+      AND r.expiration_date <= ?${pbFilter}
     ORDER BY r.expiration_date ASC
   `).bind(cutoffIso).all();
 
@@ -105,6 +115,11 @@ export async function handleCreateRegulatoryItem(request: Request, user: AuthUse
   const resolvedProjectId = await projectRefToCanonical(env, body.project_id);
   if (!resolvedProjectId) return error(`Unknown project "${body.project_id}"`, 400);
 
+  // Phase 1b-extended: block non-PI callers from creating regulatory items on
+  // a PB-category project. Mirror the read-side gate (handleGetRegulatoryItems).
+  const block = await assertProjectVisible(request, env, resolvedProjectId);
+  if (block) return block;
+
   const id = generateId();
   const status = body.status || 'active';
 
@@ -132,6 +147,16 @@ export async function handleCreateRegulatoryItem(request: Request, user: AuthUse
 
 // POST /api/regulatory/:id — update item
 export async function handleUpdateRegulatoryItem(id: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
+  // Phase 1b-extended: gate on the existing row's project before mutation.
+  // allowedFields below does NOT include project_id, so we don't need a target
+  // gate here — the item can't be re-parented through this endpoint. If a
+  // future spec adds project_id to allowedFields, also gate the new target.
+  const existing = await env.DB.prepare('SELECT project_id FROM regulatory_items WHERE id = ?').bind(id).first<{ project_id: string | null }>();
+  if (existing?.project_id) {
+    const block = await assertProjectVisible(request, env, existing.project_id);
+    if (block) return block;
+  }
+
   const body = await request.json() as Record<string, unknown>;
   const allowedFields = ['title', 'item_type', 'protocol_number', 'approved_date', 'expiration_date', 'renewal_due', 'status', 'notes'];
   const { sql, params, hasUpdates } = buildUpdate(body, allowedFields);
@@ -165,6 +190,13 @@ export async function handleRegulatoryIcs(id: string, env: Env, request?: Reques
   if (!user) return error('Authentication required', 401);
   const item = await env.DB.prepare('SELECT * FROM regulatory_items WHERE id = ?').bind(id).first() as Record<string, any> | null;
   if (!item) return error('Regulatory item not found', 404);
+
+  // Phase 1b-extended: block non-PI callers from generating an ICS for a
+  // regulatory item attached to a PB-category project.
+  if (item.project_id) {
+    const block = await assertProjectVisible(request, env, item.project_id as string);
+    if (block) return block;
+  }
 
   const renewalDate = (item.renewal_due || item.expiration_date) as string | null;
   if (!renewalDate) return error('No renewal date on this item', 400);
@@ -219,6 +251,13 @@ export async function handleRenewRegulatoryItem(id: string, request: Request, us
   // Get the existing item
   const existing = await env.DB.prepare('SELECT * FROM regulatory_items WHERE id = ?').bind(id).first() as Record<string, any> | null;
   if (!existing) return error('Regulatory item not found', 404);
+
+  // Phase 1b-extended: gate on the existing row's project. The renew creates a
+  // new row that inherits existing.project_id, so the same gate covers both.
+  if (existing.project_id) {
+    const block = await assertProjectVisible(request, env, existing.project_id as string);
+    if (block) return block;
+  }
 
   // Archive the old item and create the new item atomically so a failed
   // INSERT never leaves the old item orphaned in 'expired' state.

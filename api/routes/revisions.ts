@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, actorSlug, projectRefToCanonical } from '../helpers';
+import { json, error, generateId, logActivity, actorSlug, projectRefToCanonical, assertProjectVisible } from '../helpers';
 
 // ── Types ──
 
@@ -32,9 +32,13 @@ const VALID_COMMENT_STATUSES = ['pending', 'in_progress', 'done', 'wont_fix'];
 
 // ── GET /api/revisions?project_id= ──
 // List revisions for a project with comment counts
-export async function handleGetRevisions(url: URL, env: Env): Promise<Response> {
+// Phase 1b-extended: gate on the parent project's visibility.
+export async function handleGetRevisions(url: URL, request: Request, env: Env): Promise<Response> {
   const projectId = url.searchParams.get('project_id');
   if (!projectId) return error('project_id required', 400);
+
+  const block = await assertProjectVisible(request, env, projectId);
+  if (block) return block;
 
   const revisions = await env.DB.prepare(`
     SELECT r.*,
@@ -71,6 +75,10 @@ export async function handleCreateRevision(request: Request, user: AuthUser, env
   if (!ref) return error('project_id or project_slug required', 400);
   const projectId = await projectRefToCanonical(env, ref);
   if (!projectId) return error(`Unknown project "${ref}"`, 400);
+
+  // Phase 1b-extended: gate on parent-project visibility before the insert.
+  const block = await assertProjectVisible(request, env, projectId);
+  if (block) return block;
 
   // Auto-detect round number if not provided
   let round = body.round;
@@ -112,7 +120,14 @@ export async function handleCreateRevision(request: Request, user: AuthUser, env
 
 // ── POST /api/revisions/:id ──
 // Update revision fields (status, dates, journal, notes)
+// Phase 1b-extended: gate on the existing row's parent project.
 export async function handleUpdateRevision(id: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
+  const existing = await env.DB.prepare('SELECT project_id FROM manuscript_revisions WHERE id = ?').bind(id).first<{ project_id: string | null }>();
+  if (existing?.project_id) {
+    const block = await assertProjectVisible(request, env, existing.project_id);
+    if (block) return block;
+  }
+
   const body = await request.json() as {
     submitted_at?: string;
     response_due?: string;
@@ -153,7 +168,14 @@ export async function handleUpdateRevision(id: string, request: Request, user: A
 
 // ── GET /api/revisions/:id/comments ──
 // List comments for a revision
-export async function handleGetRevisionComments(revisionId: string, env: Env): Promise<Response> {
+// Phase 1b-extended: gate on the parent revision's project visibility.
+export async function handleGetRevisionComments(revisionId: string, request: Request, env: Env): Promise<Response> {
+  const revision = await env.DB.prepare('SELECT project_id FROM manuscript_revisions WHERE id = ?').bind(revisionId).first<{ project_id: string | null }>();
+  if (revision?.project_id) {
+    const block = await assertProjectVisible(request, env, revision.project_id);
+    if (block) return block;
+  }
+
   const comments = await env.DB.prepare(
     'SELECT * FROM reviewer_comments WHERE revision_id = ? ORDER BY reviewer_number ASC, created_at ASC'
   ).bind(revisionId).all();
@@ -174,11 +196,15 @@ export async function handleCreateRevisionComment(revisionId: string, request: R
 
   if (!body.comment_text) return error('comment_text required', 400);
 
-  // Verify revision exists
+  // Verify revision exists + pull parent project for Phase 1b-extended gating.
   const revision = await env.DB.prepare(
-    'SELECT id FROM manuscript_revisions WHERE id = ?'
-  ).bind(revisionId).first();
+    'SELECT id, project_id FROM manuscript_revisions WHERE id = ?'
+  ).bind(revisionId).first<{ id: string; project_id: string | null }>();
   if (!revision) return error('Revision not found', 404);
+  if (revision.project_id) {
+    const block = await assertProjectVisible(request, env, revision.project_id);
+    if (block) return block;
+  }
 
   const status = body.status && VALID_COMMENT_STATUSES.includes(body.status)
     ? body.status : 'pending';
@@ -206,7 +232,16 @@ export async function handleCreateRevisionComment(revisionId: string, request: R
 
 // ── POST /api/revisions/comments/:id ──
 // Update a reviewer comment (status, response_text, assigned_to)
+// Phase 1b-extended: gate on the revision's parent project (two hops).
 export async function handleUpdateRevisionComment(id: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
+  const parent = await env.DB.prepare(
+    'SELECT r.project_id FROM reviewer_comments c LEFT JOIN manuscript_revisions r ON r.id = c.revision_id WHERE c.id = ?'
+  ).bind(id).first<{ project_id: string | null }>();
+  if (parent?.project_id) {
+    const block = await assertProjectVisible(request, env, parent.project_id);
+    if (block) return block;
+  }
+
   const body = await request.json() as {
     status?: string;
     response_text?: string;
