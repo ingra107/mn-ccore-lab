@@ -16,7 +16,7 @@ platform for Nick's critical-care research group at UMN.
 
 **Live:** https://mn-ccore-lab.pages.dev  (LIVE for team — CF Access gates `/portal/*` via @umn.edu)
 **Repo:** https://github.com/ingra107/mn-ccore-lab  (720+ commits)
-**Current HEAD:** `0b5e0b86` on main (2026-05-28, hub-hardening-2026-05-27 merged — 68-commit hardening + primitive-enforcement sweep), schema v70 (Phase 5 added `idx_projects_slug_active` partial UNIQUE index). Verify the live deploy with `wrangler pages deployment list --project-name mn-ccore-lab`. See SESSION-HANDOFF.md + WORKPLAN.md for current state.
+**Current HEAD:** `9a4df88a` on main (2026-05-28, codex final-audit amendments — oracle fix, route-count pin, triad cleanup, doc corrections), schema v70 (Phase 5 added `idx_projects_slug_active` partial UNIQUE index). Verify the live deploy with `wrangler pages deployment list --project-name mn-ccore-lab`. See SESSION-HANDOFF.md + WORKPLAN.md for current state.
 **Quality gate:** 🟢 GREEN — build clean, inspection 149/149 post-simplify, smoke 27/27 (pre-simplify baseline), deep-audit 14/14 clean, axe WCAG 2.1 AA clean across 29 pages × 2 color schemes, schema-drift CI green.
 
 ## 🚨 Read these FIRST every session
