@@ -5,7 +5,7 @@ created: 2026-03-25
 status: active
 domain: Research
 tier: 2-Biweekly
-next_action: Full-system audit + brainstorm IN PROGRESS (2026-05-27) — every endpoint/read/write/hook/page/button verified vs the new Hub-first model + Playwright visual verification + simplification/UX-clarity → collate → Codex audit → plan. GROUND TRUTH (post PB Phase D/E/F): tasks/projects are Hub-first (D1 canonical, brain.db = pull-cache; outbox deleted for tasks/projects edits ONLY, still live for PB-local tables); schema v69; Plan 1B DONE (time lint ENFORCE); M2/M3/M4 done; M5 activity-timeline+comments plan READY (gated on Nick review). See SESSION-HANDOFF.md + WORKPLAN.md + Scratch/audit-2026-05-27/GROUND-TRUTH.md.
+next_action: Hub hardening branch `hub-hardening-2026-05-27` READY for review/merge/deploy (2026-05-28). 34 commits, 602/602 API tests, build green. Phases 0-10 + Phase 5 prod data cleanup + 3 Codex review passes + drift cleanup all shipped. Deploy ACTIVATES the 4 Phase-A1 validators (flag-on, code-gated on deploy of `fc7c08f9`+). PB main has 3 new commits (Phase 3 retry/fail-loud, skill docs, push canonicalize). Schema v70 (`idx_projects_slug_active` UNIQUE partial). See SESSION-HANDOFF.md + CHANGELOG.md + docs/superpowers/plans/2026-05-27-hub-hardening-plan.md + Scratch/audit-2026-05-27/.
 primary_folder: C:/Users/ingra107/mn-ccore-lab
 ---
 

@@ -1,10 +1,32 @@
-# Session Handoff — 2026-05-27
+# Session Handoff — 2026-05-28
 
-## ▶▶ CURRENT — Full-system audit + brainstorm IN PROGRESS
+## ▶▶ CURRENT — Hub hardening branch READY for review/merge/deploy
 
-**Read `Scratch/audit-2026-05-27/GROUND-TRUTH.md` first** — it is the verified current state after the PB Phase D/E/F simplification. Headlines: tasks/projects are now **Hub-first** (D1 canonical, brain.db = pull-cache; the outbox edit lane was deleted **for tasks/projects only** — outbox still serves PB-local semantic tables + `inbox_events`); schema **v69**; **Plan 1B DONE** (time-discipline lint = ENFORCE); M2/M3/M4 done; **M5** (activity-timeline + comments) plan READY, gated on Nick's review. A full-system audit — every endpoint/read/write/hook/page/button + Playwright visual verification + simplification/UX-clarity — is IN PROGRESS → collate → Codex audit → plan.
+**Branch:** `hub-hardening-2026-05-27` (34 commits since the plan; not yet merged to `main`, not yet deployed). **Hub: 602/602 API tests passing, build green, working tree clean.** **PB main: 3 new commits** (Phase 3 retry/fail-loud + skill-doc corrections + push canonicalization). All Codex critical findings closed across three review passes (`Scratch/audit-2026-05-27/codex/{synthesis,pass2-synthesis,pass3-final/synthesis}.md`).
 
-> ⚠️ **SUPERSEDED — do NOT action.** Everything below referencing "Phase β", the `lww_zone_shadow.jsonl` review gate, "P1 SYNC-FIDELITY", and the "DEDICATED COORDINATED SESSION" is done or moot. Phase β shipped as a forward primitive 2026-05-25 (Tasks 8/9 descoped); the shadow-log window is moot post-enforce (zero divergences by construction → no file is ever written). Kept below as history only.
+**What landed (full plan: `docs/superpowers/plans/2026-05-27-hub-hardening-plan.md`):**
+- **Phase 0** local test env repaired to v69 + canonical seed + PI/non-PI fixtures + `TEST_MODE_KEY`.
+- **Phase 1a** 4 shared ACL/visibility primitives (`actorSlugFromRequest`, `assertProjectVisible`, `projectRefToCanonical`, `safeTaskRow`).
+- **Phase 1b** full ACL + PB-visibility sweep across **~50 endpoints** — READS + WRITES + cross-project FEEDS + meeting sub-routes. Notifications scoped to authed user; task-files attach/list/delete gated; sessions/lane3/inbox-events PI-gated; PB content blocked for non-PI on every project-linked CRUD + every feed. API-key passthrough preserved (PB-sync/hub_ai_listener still work).
+- **Phase 2** `notes` privacy leak closed (tasks.ts/meetings.ts `SELECT *` + `/api/mutations` canonical_payload).
+- **Phase 3 (PB)** Hub-first writes no longer silently lose updates — soft-failures durably INSERT a retry envelope (drain processes it; dead-letter after 3) + fail-loud caller doctrine. `/process` cannot strike a task off TODAY.md on a False return.
+- **Phase 4** Hermes slug→id, upsert enum guard, delete idempotency-before-cascade (projects + tasks routes), single-project conflict→409, regulatory enum drift, `projectRefToCanonical` sweep, `/api/mutations` insert-path project_id resolver.
+- **Phase 5** prod-data cleanup: **27 zz-test/fixture projects soft-deleted**, enum drift normalized, **78 orphan tasks reconciled** (69 + 9 drift), schema **v70** (`idx_projects_slug_active` UNIQUE partial index). PB push canonicalize (`hub_payload.py`) closes the orphan-class at the producer.
+- **Phase 6** UX — dead controls wired/removed, fake dashboard data fixed (mentee velocity quoted-LIKE, grants relabeled "active", Day Score rename resolves dual-Lab-Health), shared `<QueryState>` distinguishes loading/auth-error/empty.
+- **Phase 7** design ethos semantic tokens — `--task-*` CSS vars (light + dark, axe-AA-pinned); JS palette swapped to vars (`withAlpha()` helper); Today + MyTasks no longer dark-locked (light mode works); `section-ink` always-dark preserved; opacity-floor lint (WARN); monospace removed from pb-sector; Hermes Sparkles → HermesMark; sub-24px tap targets bumped.
+- **Phase 8** WebSocket invalidation one-liner (was a silent no-op); Manuscripts redundant stage dots removed; Grants milestone panel consolidated to Post-Award.
+- **Phase 9** doc drift — REFERENCE routing table, PB skill docs (sync push is a no-op for tasks/projects), hub-schema-sync agent.md DB name + wrapper.
+- **Phase 10** coverage gaps — global error sanitization in prod (request_id + log-only details); PB-visibility contract test (15 reads + 18 writes + 8 feeds with body inspection + drift guard); delete-semantics standardized (idempotent 200); rate-limit gap documented (no middleware exists; `RATE_LIMIT_ENABLED` flag recommendation).
+
+## ▶ NEXT SESSION — three decisions
+
+1. **Review the branch.** Diff against `main`: 34 commits, scoped, path-explicit, ingra107-authored, no Claude attribution. Tests + build green.
+2. **Merge + deploy decision.** Deploy ACTIVATES the 4 Phase-A1 validators — they were already flag-ON in `lab_settings` (set 2026-05-26) but the validator CODE doesn't ship in the current live deploy `a3ff900` (which predates `fc7c08f9`). Post-deploy plan: wait ≥330s for the 5-min validator-flag cache → smoke-test the 4 in order (`hub_validate_enums` → `completion_tombstone` → `conflict_hash` → `dedup_adoptable`) by writing a deliberately-invalid task per validator + verifying rejection. Phase 5 cleanup already removed every prod row that would trip a validator, so activation should be a no-op for the team.
+3. **Schema v70** doc bumps landed in CLAUDE.md/REFERENCE.md/PROJECT.md.
+
+**Artifacts:** audit bundle at `Scratch/audit-2026-05-27/` (FINAL-PLAN.md, COLLATED-PLAN.md, GROUND-TRUTH.md, findings/01-10, codex/{synthesis, pass2-synthesis, pass3-final/synthesis}). Phase 5 drift log at `~/Peripheral-Brain/Scratch/phase5-cleanup/_drift_cleanup_2026-05-28.json`.
+
+> ⚠️ **SUPERSEDED — do NOT action.** Everything below referencing "Phase β", the `lww_zone_shadow.jsonl` review gate, "P1 SYNC-FIDELITY", and the "DEDICATED COORDINATED SESSION" is done or moot. Phase β shipped as a forward primitive 2026-05-25 (Tasks 8/9 descoped); the shadow-log window is moot post-enforce. Kept below as history only.
 
 ## ▶▶ (HISTORY) NEXT SESSION — Phase β of Increment 1A (COORDINATED, both machines)
 
