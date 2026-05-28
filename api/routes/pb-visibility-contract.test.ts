@@ -291,13 +291,11 @@ const patternACases: PatternACase[] = [
     callApiKeyOnPb:   () => handleGetConferences(new URL('https://x/?project_id=pb-proj'), apiKeyRequest(), pbEnv(), true),
   },
   {
-    label: 'POST /api/conferences/:id (handleUpdateConference)',
-    callNonPiOnPb:    () => handleUpdateConference('conf1', nonPiPost({ notes: 'x' }), { email: NON_PI_EMAIL, name: 'Nate' }, pbEnv({ confProjectId: 'pb-proj' })),
-    callNonPiOnNonPb: () => handleUpdateConference('conf1', nonPiPost({ notes: 'x' }), { email: NON_PI_EMAIL, name: 'Nate' }, nonPbEnv({ confProjectId: 'mnccore-proj' })),
-    callPiOnPb:       () => handleUpdateConference('conf1', piPost({ notes: 'x' }), { email: PI_EMAIL, name: 'Nick' }, pbEnv({ confProjectId: 'pb-proj' })),
-    callApiKeyOnPb:   () => handleUpdateConference('conf1', apiKeyPost({ notes: 'x' }), { email: 'service@api', name: 'S' }, pbEnv({ confProjectId: 'pb-proj' })),
-  },
-  {
+    // NOTE: handleUpdateConference was moved from Pattern A to Pattern W
+    // (codex final-audit #2, 2026-05-28) because it uses withExistingRowProject,
+    // which returns hiddenResource() 404 for hidden rows — not 403. The Pattern A
+    // loop asserts 403 for all cases; this handler now belongs in Pattern W with
+    // blockedStatus: 404 where the per-case expected status is respected.
     label: 'GET /api/regulatory?project_id= (handleGetRegulatoryItems)',
     callNonPiOnPb:    () => handleGetRegulatoryItems(new URL('https://x/?project_id=pb-proj'), nonPiRequest(), pbEnv(), false),
     callNonPiOnNonPb: () => handleGetRegulatoryItems(new URL('https://x/?project_id=mnccore-proj'), nonPiRequest(), nonPbEnv(), false),
@@ -407,10 +405,16 @@ describe('PB-visibility contract — Pattern A (assertProjectVisible gates)', ()
 interface PatternWriteCase {
   label: string
   // Each handler returns 201/200 on success. The test asserts:
-  //   non-PI on PB     → 403
+  //   non-PI on PB     → blockedStatus (default 403; withExistingRowProject handlers use 404)
   //   non-PI on non-PB → 2xx
   //   PI on PB         → 2xx
   //   API-key on PB    → 2xx
+  //
+  // blockedStatus=404: handlers using withExistingRowProject return hiddenResource()
+  // (uniform 404 envelope) for BOTH "row missing" and "row hidden" paths — the
+  // existence oracle fix (codex final-audit #2, 2026-05-28). Handlers using
+  // withProjectWrite / assertProjectVisible return 403 (visibility gate, no oracle).
+  blockedStatus?: 403 | 404
   callNonPiOnPb: () => Promise<Response>
   callNonPiOnNonPb: () => Promise<Response>
   callPiOnPb: () => Promise<Response>
@@ -506,7 +510,9 @@ const patternWriteCases: PatternWriteCase[] = [
     callApiKeyOnPb:   () => handleCreateSubmission(apiKeyPost({ project_id: 'pb-proj', event_type: 'submitted', event_date: '2026-05-27' }), { email: 'service@api', name: 'S' }, pbEnv()),
   },
   {
+    // withExistingRowProject: both "row missing" and "row hidden" return hiddenResource() 404.
     label: 'POST /api/submissions/:id (handleUpdateSubmission)',
+    blockedStatus: 404,
     callNonPiOnPb:    () => handleUpdateSubmission('sub1', nonPiPost({ notes: 'x' }), { email: NON_PI_EMAIL, name: 'Nate' }, pbEnv({ subProjectId: 'pb-proj' })),
     callNonPiOnNonPb: () => handleUpdateSubmission('sub1', nonPiPost({ notes: 'x' }), { email: NON_PI_EMAIL, name: 'Nate' }, nonPbEnv({ subProjectId: 'mnccore-proj' })),
     callPiOnPb:       () => handleUpdateSubmission('sub1', piPost({ notes: 'x' }), { email: PI_EMAIL, name: 'Nick' }, pbEnv({ subProjectId: 'pb-proj' })),
@@ -519,7 +525,17 @@ const patternWriteCases: PatternWriteCase[] = [
     callPiOnPb:       () => handleDeleteSubmission('sub1', piPost({}), { email: PI_EMAIL, name: 'Nick' }, pbEnv({ subProjectId: 'pb-proj' })),
     callApiKeyOnPb:   () => handleDeleteSubmission('sub1', apiKeyPost({}), { email: 'service@api', name: 'S' }, pbEnv({ subProjectId: 'pb-proj' })),
   },
-  // Lifecycle CRUD — conferences (create + delete; update covered above in Pattern A)
+  // Lifecycle CRUD — conferences (create + delete + update)
+  // handleUpdateConference moved from Pattern A (codex final-audit #2, 2026-05-28):
+  // it uses withExistingRowProject → hidden rows return hiddenResource() 404, not 403.
+  {
+    label: 'POST /api/conferences/:id (handleUpdateConference)',
+    blockedStatus: 404,
+    callNonPiOnPb:    () => handleUpdateConference('conf1', nonPiPost({ notes: 'x' }), { email: NON_PI_EMAIL, name: 'Nate' }, pbEnv({ confProjectId: 'pb-proj' })),
+    callNonPiOnNonPb: () => handleUpdateConference('conf1', nonPiPost({ notes: 'x' }), { email: NON_PI_EMAIL, name: 'Nate' }, nonPbEnv({ confProjectId: 'mnccore-proj' })),
+    callPiOnPb:       () => handleUpdateConference('conf1', piPost({ notes: 'x' }), { email: PI_EMAIL, name: 'Nick' }, pbEnv({ confProjectId: 'pb-proj' })),
+    callApiKeyOnPb:   () => handleUpdateConference('conf1', apiKeyPost({ notes: 'x' }), { email: 'service@api', name: 'S' }, pbEnv({ confProjectId: 'pb-proj' })),
+  },
   {
     label: 'POST /api/conferences (handleCreateConference)',
     callNonPiOnPb:    () => handleCreateConference(nonPiPost({ project_id: 'pb-proj', conference: 'C', submission_type: 'abstract', title: 'T' }), { email: NON_PI_EMAIL, name: 'Nate' }, pbEnv()),
@@ -543,7 +559,9 @@ const patternWriteCases: PatternWriteCase[] = [
     callApiKeyOnPb:   () => handleCreateRegulatoryItem(apiKeyPost({ project_id: 'pb-proj', item_type: 'irb', title: 'T' }), { email: 'service@api', name: 'S' }, pbEnv()),
   },
   {
+    // withExistingRowProject: both "row missing" and "row hidden" return hiddenResource() 404.
     label: 'POST /api/regulatory/:id (handleUpdateRegulatoryItem)',
+    blockedStatus: 404,
     callNonPiOnPb:    () => handleUpdateRegulatoryItem('reg1', nonPiPost({ notes: 'x' }), { email: NON_PI_EMAIL, name: 'Nate' }, pbEnv({ regProjectId: 'pb-proj' })),
     callNonPiOnNonPb: () => handleUpdateRegulatoryItem('reg1', nonPiPost({ notes: 'x' }), { email: NON_PI_EMAIL, name: 'Nate' }, nonPbEnv({ regProjectId: 'mnccore-proj' })),
     callPiOnPb:       () => handleUpdateRegulatoryItem('reg1', piPost({ notes: 'x' }), { email: PI_EMAIL, name: 'Nick' }, pbEnv({ regProjectId: 'pb-proj' })),
@@ -565,7 +583,9 @@ const patternWriteCases: PatternWriteCase[] = [
     callApiKeyOnPb:   () => handleCreateRevision(apiKeyPost({ project_id: 'pb-proj' }), { email: 'service@api', name: 'S' }, pbEnv()),
   },
   {
+    // withExistingRowProject: both "row missing" and "row hidden" return hiddenResource() 404.
     label: 'POST /api/revisions/:id (handleUpdateRevision)',
+    blockedStatus: 404,
     callNonPiOnPb:    () => handleUpdateRevision('rev1', nonPiPost({ notes: 'x' }), { email: NON_PI_EMAIL, name: 'Nate' }, pbEnv({ revProjectId: 'pb-proj' })),
     callNonPiOnNonPb: () => handleUpdateRevision('rev1', nonPiPost({ notes: 'x' }), { email: NON_PI_EMAIL, name: 'Nate' }, nonPbEnv({ revProjectId: 'mnccore-proj' })),
     callPiOnPb:       () => handleUpdateRevision('rev1', piPost({ notes: 'x' }), { email: PI_EMAIL, name: 'Nick' }, pbEnv({ revProjectId: 'pb-proj' })),
@@ -589,10 +609,11 @@ const patternWriteCases: PatternWriteCase[] = [
 
 describe('PB-visibility contract — Pattern W (write-side gates)', () => {
   for (const tc of patternWriteCases) {
+    const expectedBlock = tc.blockedStatus ?? 403
     describe(tc.label, () => {
-      it('non-PI caller is blocked (403) on a PB-parent', async () => {
+      it(`non-PI caller is blocked (${expectedBlock}) on a PB-parent`, async () => {
         const res = await tc.callNonPiOnPb()
-        expect(res.status, `Expected 403 for non-PI on PB parent`).toBe(403)
+        expect(res.status, `Expected ${expectedBlock} for non-PI on PB parent`).toBe(expectedBlock)
       })
 
       it('non-PI caller is allowed (2xx) on a non-PB parent', async () => {
@@ -758,14 +779,20 @@ describe('PB-visibility contract — registry drift guard', () => {
     // 12 originals + 3 Phase 1b-extended + 1 Fix 2b (handleGetTask) = 16
     // -1: handleGetRevisionComments moved to P8 oracle section (P8 2026-05-28;
     //     now returns 404 not 403, so it can't use the shared 403-asserting loop)
-    expect(patternACases.length).toBeGreaterThanOrEqual(15)
+    // -1: handleUpdateConference moved to Pattern W with blockedStatus:404 (codex #2,
+    //     2026-05-28; uses withExistingRowProject so hidden row → 404 not 403)
+    expect(patternACases.length).toBeGreaterThanOrEqual(14)
   })
 
   it('Pattern W (writes) registry has at least the expected number of cases', () => {
     // Phase 1b-extended: 2 project subresource + 2 doc CRUD + 2 task sub
     // + 3 submissions + 2 conferences (create+delete) + 3 regulatory
-    // + 4 revisions = 18; T1.1 adds 4 task-mutation gates = 22
-    expect(patternWriteCases.length).toBeGreaterThanOrEqual(22)
+    // + 4 revisions = 18; T1.1 adds 4 task-mutation gates = 22;
+    // +1 handleUpdateConference moved from Pattern A (codex #2, 2026-05-28) = 23;
+    // +1 handleUpdateRevision (withExistingRowProject, blockedStatus:404) already in W = no change
+    // Net: handleUpdateRevision, handleUpdateSubmission, handleUpdateRegulatoryItem,
+    // handleUpdateConference all carry blockedStatus:404; count stays >= 22 (was 22, now 23)
+    expect(patternWriteCases.length).toBeGreaterThanOrEqual(23)
   })
 
   it('Pattern B (feeds) registry has at least the expected number of cases', () => {

@@ -11,6 +11,7 @@
 
 import type { Env } from '../helpers';
 import { resolveAndGuardProject, error } from '../helpers';
+import { hiddenResource } from './hidden-resource';
 
 /**
  * withProjectWrite — guarantee a write handler runs only after the body's
@@ -98,6 +99,12 @@ export function withTaskProject(
  * withExistingRowProject — for update/delete handlers that take a row id and
  * need the row's parent project resolved + gated BEFORE mutation. Generic over
  * table name; the table must have a `project_id` column.
+ *
+ * Existence oracle fix (codex final-audit #2, 2026-05-28): both the missing-row
+ * path and the hidden-row path return hiddenResource() (404, uniform envelope)
+ * so callers cannot distinguish "row does not exist" from "row exists but is
+ * attached to a PB project the caller cannot see." This closes the status-code
+ * oracle that the Z4.1 hidden-resource primitive was designed to prevent.
  */
 export function withExistingRowProject(
   table: string,
@@ -107,10 +114,10 @@ export function withExistingRowProject(
     const row = await env.DB.prepare(
       `SELECT project_id FROM ${table} WHERE id = ?`,
     ).bind(rowId).first<{ project_id: string | null }>();
-    if (!row) return error(`${table} row not found`, 404);
+    if (!row) return hiddenResource();
     if (row.project_id) {
       const { block, projectId } = await resolveAndGuardProject(req, env, row.project_id);
-      if (block) return block;
+      if (block) return hiddenResource();
       return inner(req, env, rowId, projectId);
     }
     return inner(req, env, rowId, null);

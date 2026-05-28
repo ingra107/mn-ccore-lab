@@ -290,7 +290,10 @@ describe('handleGetConferences — PB visibility gate (when project_id provided)
 // ── 6. Conference update ──────────────────────────────────────────────────────
 
 describe('handleUpdateConference — PB visibility gate (from conf.project_id)', () => {
-  it('blocks non-PI caller updating a conference tied to a PB project', async () => {
+  it('blocks non-PI caller updating a conference tied to a PB project (returns 404 via hiddenResource)', async () => {
+    // withExistingRowProject returns hiddenResource() (404, uniform envelope) for
+    // both "row missing" and "row exists but PB-hidden" — existence oracle fix
+    // (codex final-audit #2, 2026-05-28). Previously returned 403.
     const env = makeEnv('Peripheral Brain', { confProjectId: 'pb-proj' })
     const req = new Request('https://x/api/conferences/conf1', {
       method: 'POST',
@@ -303,7 +306,7 @@ describe('handleUpdateConference — PB visibility gate (from conf.project_id)',
     })
     const user = { email: NON_PI_EMAIL, name: 'Nate' }
     const res = await handleUpdateConference('conf1', req, user, env)
-    expect(res.status).toBe(403)
+    expect(res.status).toBe(404)
   })
 
   it('allows non-PI caller updating a conference tied to a non-PB project', async () => {
