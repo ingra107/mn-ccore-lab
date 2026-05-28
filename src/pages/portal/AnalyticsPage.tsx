@@ -58,7 +58,7 @@ const RANGE_WEEKS: Record<TimeRange, number> = {
 export default function AnalyticsPage() {
   const { user } = useAuth()
   const isPi = user?.isPi ?? false
-  const { data: tasks = [], isLoading: tasksLoading } = useTasks()
+  const { data: tasks = [], isLoading: tasksLoading, isError: tasksError, error: tasksErr } = useTasks()
   const { data: projects = [], isLoading: projectsLoading } = useProjects()
   const { data: ideas = [] } = useIdeas()
   const { data: activity = [] } = useActivity(100)
@@ -313,6 +313,24 @@ export default function AnalyticsPage() {
   }
 
   if (tasksLoading || projectsLoading) return <CardSkeleton count={6} />
+
+  // P6-C10: distinguish auth error from empty data.
+  if (tasksError) {
+    const status = (tasksErr as (Error & { status?: number }) | null)?.status
+    const isAuth = status === 401 || status === 403
+    return (
+      <div>
+        <PageHeader icon={<BarChart3 size={20} />} title="Lab Analytics" subtitle="Track lab performance and trends" />
+        <EmptyState
+          icon={<BarChart3 size={40} />}
+          title={isAuth ? 'Sign in to view Analytics' : 'Could not load analytics data'}
+          subtitle={isAuth
+            ? 'Your session may have expired. Refresh and sign in with your UMN account.'
+            : 'Refresh the page or contact support if this persists.'}
+        />
+      </div>
+    )
+  }
 
   if (tasks.length === 0 && projects.length === 0) {
     return (

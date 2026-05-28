@@ -55,7 +55,7 @@ export default function DeadlinesPage() {
     else { setSortKey(key as DeadlineSortKey); setSortAsc(true) }
   }
 
-  const { data: tasks = [], isLoading: tasksLoading } = useTasks()
+  const { data: tasks = [], isLoading: tasksLoading, isError: tasksError, error: tasksErr } = useTasks()
   const { data: grants = [], isLoading: grantsLoading } = useGrantTimeline()
   const { data: projectsList = [] } = useProjects()
   const projectMap = useMemo(() => {
@@ -194,6 +194,24 @@ export default function DeadlinesPage() {
       : 'Deadlines | MN-CCORE'
     return () => { document.title = 'MN-CCORE Lab Hub' }
   }, [overdue.length])
+
+  // P6-C10: distinguish auth error from empty data (shows blank on 401 otherwise)
+  if (tasksError) {
+    const status = (tasksErr as (Error & { status?: number }) | null)?.status
+    const isAuth = status === 401 || status === 403
+    return (
+      <div className="content-container">
+        <PageHeader icon={<Clock size={20} />} title="Deadlines & Milestones" subtitle="" />
+        <EmptyState
+          icon={<Clock size={40} />}
+          title={isAuth ? 'Sign in to view Deadlines' : 'Could not load deadlines'}
+          subtitle={isAuth
+            ? 'Your session may have expired. Refresh and sign in with your UMN account.'
+            : 'Refresh the page or contact support if this persists.'}
+        />
+      </div>
+    )
+  }
 
   return (
     <div className="content-container">
