@@ -436,6 +436,13 @@ export async function handleCreateDeadlineDependency(request: Request, user: Aut
 // Phase 1b-extended: gate on the existing edge's BOTH endpoints (mirrors
 // handleCreateDeadlineDependency). If the row is already gone we return 200
 // idempotent without leaking existence.
+//
+// Z4.3 exempt: deadline_dependencies straddles TWO project IDs (upstream_id +
+// downstream_id). idempotentDelete() supports a single project_id gate via a
+// single assertProjectVisible call; this handler needs a DOUBLE gate — one for
+// the upstream node's project and one for the downstream node's project. Until
+// idempotentDelete() gains a multi-project hook, this delete stays hand-rolled
+// with the double gate preserved exactly as written below.
 export async function handleDeleteDeadlineDependency(id: string, request: Request, env: Env): Promise<Response> {
   const existing = await env.DB.prepare(
     'SELECT upstream_id, upstream_type, downstream_id, downstream_type FROM deadline_dependencies WHERE id = ?'

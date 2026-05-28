@@ -208,6 +208,14 @@ export async function handleGetFile(key: string, env: Env, canSeePb = false): Pr
 // idempotent:true. The ownership gate (canAccessEntity) only fires when the
 // record exists; for already-deleted files we can't re-check the project,
 // so we return idempotent 200 directly.
+//
+// Z4.3 exempt: file_attachments has an R2 side-effect (env.FILES.delete(r2_key))
+// that idempotentDelete() does not model. The R2 delete MUST run before the D1
+// row is removed so the r2_key is still accessible; idempotentDelete()'s hard
+// mode issues the DELETE first and has no hook for pre-mutation side-effects.
+// Keep this handler hand-rolled with the R2 side-effect preserved exactly as
+// written below. If a future version of idempotentDelete() gains a
+// beforeDelete callback, revisit this site.
 export async function handleDeleteFile(id: string, env: Env, canSeePb = false): Promise<Response> {
   // Get the R2 key + parent entity before deleting the record.
   const row = await env.DB.prepare('SELECT r2_key, entity_type, entity_id FROM file_attachments WHERE id = ?').bind(id).first<{ r2_key: string; entity_type: string; entity_id: string }>();

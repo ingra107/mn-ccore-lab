@@ -1,5 +1,6 @@
 import type { AuthUser, Env } from '../helpers';
 import { json, error, generateId, logActivity, isPiRequest, resolveActor, assertProjectVisible } from '../helpers';
+import { idempotentDelete } from '../lib/idempotent-delete';
 
 type DocType = 'folder' | 'draft' | 'data' | 'protocol' | 'submission' | 'link';
 
@@ -67,31 +68,26 @@ export async function handleCreateProjectDocument(
 }
 
 // DELETE /api/projects/:slug/documents/:docId — remove a document link
-// Hard-delete (project_documents has no deleted_at column).
-// SEC-10.3: Idempotent — check meta.changes; repeat calls return 200 with
-// idempotent:true instead of 404.
+// Hard-delete (project_documents has no deleted_at column; Z4.3 migration).
+// SEC-10.3: Idempotent — idempotentDelete() handles the meta.changes check;
+// repeat calls return 200 with idempotent:true instead of 404.
 //
-// Phase 1b-extended: gate the delete on the parent project's visibility so a
-// non-PI caller who knows a PB document id cannot delete it. Resolve the
-// document's project_id, then call assertProjectVisible. If the document row
-// is already gone we return idempotent 200 (no project to gate on).
+// Phase 1b-extended: idempotentDelete() gates on project_id via
+// assertProjectVisible before mutating — PB-category projects are protected.
+// If the document row is already gone the pre-flight SELECT returns null and
+// we return idempotent 200 (no project to gate on).
 export async function handleDeleteProjectDocument(
   docId: string,
   request: Request,
   env: Env,
 ): Promise<Response> {
-  const doc = await env.DB.prepare(
-    'SELECT project_id FROM project_documents WHERE id = ?'
-  ).bind(docId).first<{ project_id: string | null }>();
-  if (doc?.project_id) {
-    const block = await assertProjectVisible(request, env, doc.project_id);
-    if (block) return block;
-  }
-
-  const result = await env.DB.prepare(
-    'DELETE FROM project_documents WHERE id = ?'
-  ).bind(docId).run();
-
-  const changed = (result.meta?.changes ?? 0) > 0;
-  return json({ data: { deleted: docId, idempotent: !changed } });
+  // Z4.3: collapsed from hand-rolled SELECT→gate→DELETE to idempotentDelete().
+  // mode:'hard' because project_documents has no deleted_at column.
+  return idempotentDelete({
+    table: 'project_documents',
+    id: docId,
+    mode: 'hard',
+    request,
+    env,
+  });
 }
