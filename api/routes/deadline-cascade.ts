@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, actorSlug, assertProjectVisible } from '../helpers';
+import { json, error, generateId, logActivity, actorSlug, assertProjectVisible, projectRefToCanonical } from '../helpers';
 
 // ── Types ──────────────────────────────────────────────────
 
@@ -157,8 +157,12 @@ function computeImpact(
 // ── GET /api/deadline-cascade?project_id= ──────────────────
 
 export async function handleGetCascade(url: URL, request: Request, env: Env): Promise<Response> {
-  const projectId = url.searchParams.get('project_id');
-  if (!projectId) return error('project_id required', 400);
+  const rawProjectId = url.searchParams.get('project_id');
+  if (!rawProjectId) return error('project_id required', 400);
+
+  // Resolve id-or-slug to canonical stored form before querying child tables.
+  const projectId = await projectRefToCanonical(env, rawProjectId);
+  if (!projectId) return error(`Unknown project "${rawProjectId}"`, 400);
 
   // Phase 1b-B: block non-PI callers from seeing the cascade graph of a PB-category project.
   const block = await assertProjectVisible(request, env, projectId);

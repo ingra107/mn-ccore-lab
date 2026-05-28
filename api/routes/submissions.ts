@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, actorSlug, assertProjectVisible } from '../helpers';
+import { json, error, generateId, logActivity, actorSlug, assertProjectVisible, projectRefToCanonical } from '../helpers';
 import { ctToday } from '../lib/ct-date';
 
 const VALID_EVENT_TYPES = [
@@ -49,13 +49,17 @@ export async function handleCreateSubmission(request: Request, user: AuthUser, e
     return error(`event_type must be one of: ${VALID_EVENT_TYPES.join(', ')}`, 400);
   }
 
+  // Resolve project_id-or-slug to canonical form (slug || id) so FK is consistent.
+  const resolvedProjectId = await projectRefToCanonical(env, body.project_id);
+  if (!resolvedProjectId) return error(`Unknown project "${body.project_id}"`, 400);
+
   const id = generateId();
   await env.DB.prepare(`
     INSERT INTO submission_events (id, project_id, event_type, event_date, journal, notes)
     VALUES (?, ?, ?, ?, ?, ?)
   `).bind(
     id,
-    body.project_id,
+    resolvedProjectId,
     body.event_type,
     body.event_date,
     body.journal || null,

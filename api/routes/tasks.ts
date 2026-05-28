@@ -507,6 +507,29 @@ export async function handleAddTaskComment(taskId: string, request: Request, use
     }
   } catch (e) { console.error('Failed to create task comment notifications:', e); }
 
+  // Check for @hermes/@claude mention → create AI request + placeholder comment.
+  // Mirrors project-comment Hermes path. source_type='task_comment' so the
+  // listener can route the response back correctly.
+  if (/@(hermes|claude)\b/i.test(body.content)) {
+    try {
+      const aiPrompt = body.content.replace(/@(hermes|claude)/gi, '').trim();
+      if (aiPrompt.length > 5) {
+        // Look up the task's project_id so ai_requests.project_slug is populated.
+        const taskRow = await env.DB.prepare('SELECT project_id FROM tasks WHERE id = ? AND deleted_at IS NULL').bind(taskId).first<{ project_id: string | null }>();
+        const projectSlug = taskRow?.project_id ?? null;
+        const aiId = generateId();
+        await env.DB.prepare(
+          'INSERT INTO ai_requests (id, source_type, source_id, project_slug, prompt, context, requested_by) VALUES (?, ?, ?, ?, ?, ?, ?)'
+        ).bind(aiId, 'task_comment', id, projectSlug, aiPrompt, `Task: ${taskId}`, user.email).run();
+        // Placeholder comment so the UI shows "Thinking..." immediately.
+        const responseId = generateId();
+        await env.DB.prepare(
+          "INSERT INTO task_comments (id, task_id, author_slug, content, created_at) VALUES (?, ?, ?, ?, datetime('now'))"
+        ).bind(responseId, taskId, 'claude-ai', 'Thinking about this... (AI response pending)').run();
+      }
+    } catch (e) { console.error('Failed to create AI request for @hermes mention in task comment:', e); }
+  }
+
   const created = await env.DB.prepare('SELECT * FROM task_comments WHERE id = ?').bind(id).first();
   return json({ data: created }, 201);
 }
@@ -850,6 +873,14 @@ export async function handleDeleteTask(id: string, user: AuthUser, env: Env): Pr
 
   const label = existing.title || existing.description || id;
 
+  // Check idempotency BEFORE cascade: already soft-deleted?
+  // Pre-fix this ran AFTER the cascade, so a retry would re-delete already-
+  // cleaned child rows even when the task was already marked deleted_at.
+  if (existing.deleted_at) {
+    await logActivity(env, 'task_delete', `Deleted task (idempotent): ${label}`, user.email, id, 'task');
+    return json({ data: { deleted: id, title: label, idempotent: true } });
+  }
+
   // Cascade-clean child rows. task_comments / task_updates / task_subtasks all
   // carry a task_id FK-by-convention (not enforced). Leaving them orphans
   // bloats the DB and creates stale joins forever. Notifications cleanup
@@ -863,12 +894,6 @@ export async function handleDeleteTask(id: string, user: AuthUser, env: Env): Pr
     ).bind(id).run();
   } catch (e) {
     console.error('task cascade-clean failed:', e);
-  }
-
-  // Idempotent: already-deleted returns accepted.
-  if (existing.deleted_at) {
-    await logActivity(env, 'task_delete', `Deleted task (idempotent): ${label}`, user.email, id, 'task');
-    return json({ data: { deleted: id, title: label, idempotent: true } });
   }
 
   // Soft-delete via applyMutation — stamps last_mutation_id + records in processed_mutations.

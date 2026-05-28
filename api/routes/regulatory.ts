@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, actorSlug, buildUpdate, getAuthUser, assertProjectVisible } from '../helpers';
+import { json, error, generateId, logActivity, actorSlug, buildUpdate, getAuthUser, assertProjectVisible, projectRefToCanonical } from '../helpers';
 import { ctToday } from '../lib/ct-date';
 import { nowInstant } from '../lib/time';
 
@@ -14,7 +14,10 @@ function escapeIcs(s: string): string {
 }
 
 const VALID_TYPES = ['irb', 'irb_amendment', 'dua', 'dta', 'coi', 'training', 'other'] as const;
-const VALID_STATUSES = ['active', 'expired', 'pending', 'exempt'] as const;
+// 'action_needed' and 'expiring_soon' are produced by the read query at line 59
+// (handleGetExpiringItems WHERE clause). Omitting them from VALID_STATUSES caused
+// validation to reject values the system itself writes.
+const VALID_STATUSES = ['active', 'expired', 'pending', 'exempt', 'action_needed', 'expiring_soon'] as const;
 
 // GET /api/regulatory?project_id=
 export async function handleGetRegulatoryItems(url: URL, request: Request, env: Env): Promise<Response> {
@@ -98,6 +101,10 @@ export async function handleCreateRegulatoryItem(request: Request, user: AuthUse
     return error(`Invalid status. Must be one of: ${VALID_STATUSES.join(', ')}`, 400);
   }
 
+  // Resolve project_id-or-slug to canonical form so FK is consistent.
+  const resolvedProjectId = await projectRefToCanonical(env, body.project_id);
+  if (!resolvedProjectId) return error(`Unknown project "${body.project_id}"`, 400);
+
   const id = generateId();
   const status = body.status || 'active';
 
@@ -105,7 +112,7 @@ export async function handleCreateRegulatoryItem(request: Request, user: AuthUse
     'INSERT INTO regulatory_items (id, project_id, item_type, title, protocol_number, approved_date, expiration_date, renewal_due, status, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
   ).bind(
     id,
-    body.project_id,
+    resolvedProjectId,
     body.item_type,
     body.title,
     body.protocol_number || null,

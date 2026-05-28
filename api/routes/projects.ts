@@ -555,6 +555,17 @@ export async function handleUpdateProject(
 
   if (!existingCheck) {
     // Project doesn't exist — create it (upsert; preserves legacy behavior).
+    // Run enum guards on the incoming values before INSERT so non-canonical
+    // status/stage/category are rejected with 400 (mirrors the UPDATE branch).
+    const upsertStatus = (body.status as string) || 'active';
+    const upsertStage = (body.stage as string) || 'idea';
+    const upsertCategory = (body.category as string) || 'MNCCORE';
+    for (const [key, val] of [['status', upsertStatus], ['stage', upsertStage], ['category', upsertCategory]] as [string, string][]) {
+      const guard = PROJECT_ENUM_GUARDS[key];
+      if (guard && !guard.has(val)) {
+        return error(`Invalid ${key}: "${val}". Must be one of: ${[...guard].join(', ')}`, 400);
+      }
+    }
     const upsertSlug = (body.slug as string) || id;
     const newId = id.length === 32 ? id : generateId('project');
     const upsertMut = await applyMutation(env, {
@@ -563,10 +574,10 @@ export async function handleUpdateProject(
       op: 'insert',
       payload: {
         title: (body.title as string) || 'Untitled',
-        status: (body.status as string) || 'active',
+        status: upsertStatus,
         description: (body.description as string) || '',
-        category: (body.category as string) || 'MNCCORE',
-        stage: (body.stage as string) || 'idea',
+        category: upsertCategory,
+        stage: upsertStage,
         pi: (body.pi as string) || 'nick',
         slug: upsertSlug,
       },
@@ -594,9 +605,14 @@ export async function handleUpdateProject(
     });
     if (updateProjMut.status !== 'accepted' && updateProjMut.status !== 'merged_clean') {
       // Return current server state so the caller can reconcile (mirrors old LWW guard behavior).
+      // Return 409 (not 200) so fetchApi throws ApiError and the optimistic update
+      // is rolled back. Pre-fix returned 200 which the client treated as success,
+      // causing a silent revert without surfacing the conflict to the caller.
+      // Note: /api/mutations batch per-row-status protocol is unaffected — it always
+      // returns 200 with per-item status fields (separate code path).
       const current = await env.DB.prepare('SELECT * FROM projects WHERE id = ?').bind(existingCheck.id).first();
       return json({ data: current, rejected: updateProjMut.status,
-                    message: `mutation ${updateProjMut.status}: ${updateProjMut.reason ?? ''}` });
+                    message: `mutation ${updateProjMut.status}: ${updateProjMut.reason ?? ''}` }, 409);
     }
 
     // D22 (2026-05-22): typed activity events for meaningful field transitions.
@@ -649,6 +665,17 @@ export async function handleDeleteProject(
     return error('Project not found', 404);
   }
 
+  // Check idempotency BEFORE cascade: already soft-deleted?
+  // Pre-fix this ran AFTER the cascade, so a retry would re-NULL re-associated
+  // tasks. Now the soft-delete check short-circuits before any cascade runs.
+  const projectRow = await env.DB.prepare(
+    'SELECT deleted_at FROM projects WHERE id = ?'
+  ).bind(existing.id).first<{ deleted_at: string | null }>();
+  if (projectRow?.deleted_at) {
+    await logActivity(env, 'project_delete', `Deleted project (idempotent): ${existing.title}`, user.email, existing.id, 'project');
+    return json({ data: { deleted: existing.id, slug: existing.slug, title: existing.title, idempotent: true } });
+  }
+
   // Cascade-clean related rows to avoid FK-like errors or orphaned refs.
   // `comments` and `project_updates` hold a free-form project_id (not an
   // enforced FK), but leaving them behind means stale joins forever.
@@ -682,15 +709,6 @@ export async function handleDeleteProject(
     ]);
   } catch (e) {
     console.error('project cascade-clean failed:', e);
-  }
-
-  // Check idempotency: already soft-deleted?
-  const projectRow = await env.DB.prepare(
-    'SELECT deleted_at FROM projects WHERE id = ?'
-  ).bind(existing.id).first<{ deleted_at: string | null }>();
-  if (projectRow?.deleted_at) {
-    await logActivity(env, 'project_delete', `Deleted project (idempotent): ${existing.title}`, user.email, existing.id, 'project');
-    return json({ data: { deleted: existing.id, slug: existing.slug, title: existing.title, idempotent: true } });
   }
 
   // Soft-delete via applyMutation — stamps last_mutation_id + records in processed_mutations.
@@ -856,9 +874,11 @@ export async function handleAddComment(
     console.error('Failed to create mention notifications for comment:', e);
   }
 
-  // Check for @hermes/@claude mention → create AI request + placeholder comment
+  // Check for @hermes/@claude mention → create AI request + placeholder comment.
+  // Pass project.id (canonical UUID) not the URL param (which may be a slug) so
+  // the comments.project_id FK and ai_requests.project_slug both resolve correctly.
   try {
-    await handleClaudeMention(body.content, 'project_comment', commentId, projectId, user, env);
+    await handleClaudeMention(body.content, 'project_comment', commentId, project.id, user, env);
   } catch (e) {
     console.error('Failed to create AI request for @hermes mention:', e);
   }

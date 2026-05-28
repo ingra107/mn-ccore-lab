@@ -22,7 +22,7 @@
 // write path through this endpoint as part of A3 ship.
 
 import type { AuthUser, Env, ValidationFlags } from '../helpers';
-import { json, error, generateId, assertProtectedNotNull, getValidationFlags, safeTaskRow } from '../helpers';
+import { json, error, generateId, assertProtectedNotNull, getValidationFlags, safeTaskRow, projectRefToCanonical } from '../helpers';
 import { nowInstant } from '../lib/time';
 import { assertEnumDomain, assertCompletionTriad } from '../lib/enum-domains';
 
@@ -554,6 +554,19 @@ export async function applyInsert(env: Env, mut: Mutation, user: AuthUser, flags
           reason: `deduped: active task with same (title, project_id) exists as ${dup.id}`,
         });
       }
+    }
+  }
+
+  // Fix 7: resolve project_id for tasks inserts so raw slugs are never stored.
+  // The direct /api/tasks route already calls projectRefToCanonical; the
+  // /api/mutations path accepted payload.project_id raw, leaving orphaned refs
+  // when PB pushed a slug-form project_id. Matches tasks-route behavior: unresolvable
+  // → NULL (no reject — PB may push before the project row arrives on Hub).
+  if (mut.table === 'tasks' && mut.payload && 'project_id' in (mut.payload as Record<string, unknown>)) {
+    const rawPid = (mut.payload as Record<string, unknown>).project_id as string | null | undefined;
+    if (rawPid) {
+      const canonical = await projectRefToCanonical(env, rawPid);
+      (mut.payload as Record<string, unknown>).project_id = canonical ?? null;
     }
   }
 

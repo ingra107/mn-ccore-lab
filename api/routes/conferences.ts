@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, actorSlug, buildUpdate, assertProjectVisible } from '../helpers';
+import { json, error, generateId, logActivity, actorSlug, buildUpdate, assertProjectVisible, projectRefToCanonical } from '../helpers';
 import { ctToday } from '../lib/ct-date';
 
 const VALID_SUBMISSION_TYPES = ['abstract', 'oral', 'poster', 'workshop', 'invited'] as const;
@@ -119,13 +119,18 @@ export async function handleCreateConference(request: Request, user: AuthUser, e
     return error(`presentation_type must be one of: ${VALID_PRESENTATION_TYPES.join(', ')}`, 400);
   }
 
+  // Resolve project_id-or-slug to canonical form; NULL if omitted or unresolvable.
+  const resolvedProjectId = body.project_id
+    ? (await projectRefToCanonical(env, body.project_id))
+    : null;
+
   const id = generateId();
   await env.DB.prepare(`
     INSERT INTO conference_submissions (id, project_id, conference, conference_date, submission_type, title, authors, abstract_due, abstract_submitted_at, accepted_at, presentation_type, materials_status, travel_booked, notes, status)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).bind(
     id,
-    body.project_id || null,
+    resolvedProjectId,
     body.conference,
     body.conference_date || null,
     body.submission_type,

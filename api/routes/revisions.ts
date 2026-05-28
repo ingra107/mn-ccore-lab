@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, actorSlug } from '../helpers';
+import { json, error, generateId, logActivity, actorSlug, projectRefToCanonical } from '../helpers';
 
 // ── Types ──
 
@@ -65,15 +65,12 @@ export async function handleCreateRevision(request: Request, user: AuthUser, env
     reviewer_comments?: string;
   };
 
-  // Accept project_id OR project_slug; resolve to the canonical id stored
-  // on manuscript_revisions.project_id (same pattern as /api/tasks create).
+  // Accept project_id OR project_slug; resolve to the canonical stored form via
+  // projectRefToCanonical (single source of truth, same as /api/tasks create).
   const ref = body.project_id || body.project_slug;
   if (!ref) return error('project_id or project_slug required', 400);
-  const proj = await env.DB.prepare(
-    'SELECT id, slug FROM projects WHERE id = ? OR slug = ? LIMIT 1'
-  ).bind(ref, ref).first<{ id: string; slug: string | null }>();
-  if (!proj) return error(`Unknown project "${ref}"`, 400);
-  const projectId = proj.slug || proj.id;
+  const projectId = await projectRefToCanonical(env, ref);
+  if (!projectId) return error(`Unknown project "${ref}"`, 400);
 
   // Auto-detect round number if not provided
   let round = body.round;
