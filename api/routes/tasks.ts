@@ -608,21 +608,24 @@ export async function handleGetTaskActivity(taskId: string, request: Request, en
 // GET /api/tasks/:id/detail — fan-out for TodayPage/UnifiedMyTasks task detail drawer.
 // Returns { why, updates, subtasks, blocks } in a single round-trip so the
 // drawer doesn't have to do four parallel fetches. Read-only.
+//
+// T2.2 (2026-05-28): route through guardTaskProject for visibility + existence.
+// Previously inlined the SELECT(id, description, project_id) + 404 + assertProjectVisible
+// triad. Now the existence/visibility checks go through the helper (consistent
+// with handleGetTaskComments / handleGetTaskUpdates / handlePostTaskUpdate);
+// the description read still happens inline because the helper only returns
+// project_id. One extra SELECT, but the read path is rare (detail-drawer
+// fan-out) and the consistency win removes a duplication footgun.
 export async function handleGetTaskDetail(taskId: string, request: Request, env: Env): Promise<Response> {
-  // Pull the task itself for the "why" callout. P1: fall back to description's
-  // first paragraph; a future column could replace this with a curated note.
+  const guard = await guardTaskProject(env, request, taskId);
+  if (guard.block) return guard.block;
+
+  // P1: "why" callout — fall back to description's first paragraph. Read after
+  // the gate so non-PI callers can't observe description content via a 200 body.
   const task = await env.DB.prepare(
-    'SELECT id, description, project_id FROM tasks WHERE id = ? AND deleted_at IS NULL'
-  ).bind(taskId).first<{ id: string; description: string | null; project_id: string | null }>();
-  if (!task) return error('Task not found', 404);
-
-  // Phase 1b-B: if the task belongs to a PB-category project, block non-PI callers.
-  if (task.project_id) {
-    const block = await assertProjectVisible(request, env, task.project_id);
-    if (block) return block;
-  }
-
-  const description = task.description ?? '';
+    'SELECT description FROM tasks WHERE id = ? AND deleted_at IS NULL'
+  ).bind(taskId).first<{ description: string | null }>();
+  const description = task?.description ?? '';
   const why = description.split(/\n\s*\n/)[0]?.trim().slice(0, 400) || null;
 
   // Updates merge task_updates (Phase 27 — author-written notes) with

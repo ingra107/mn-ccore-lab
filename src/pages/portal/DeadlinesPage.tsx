@@ -6,6 +6,7 @@ import { Clock, List, GanttChartSquare, AlertTriangle, FolderKanban, Pencil, X, 
 import DensityToggle, { useDensity, densityClass } from '../../components/DensityToggle'
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
+import QueryState from '../../components/QueryState'
 import ToggleButton from '../../components/ToggleButton'
 import Avatar from '../../components/Avatar'
 import InlineSelect from '../../components/InlineSelect'
@@ -195,20 +196,18 @@ export default function DeadlinesPage() {
     return () => { document.title = 'MN-CCORE Lab Hub' }
   }, [overdue.length])
 
-  // P6-C10: distinguish auth error from empty data (shows blank on 401 otherwise)
+  // T2.1 (2026-05-28): adopt QueryState for auth-error consistency.
+  // Mirrors AnalyticsPage / PIAnalytics post-/simplify so the auth-vs-generic
+  // error message is identical across pages. errorStatus drives the 401/403
+  // "Sign in" copy; otherwise the generic "Something went wrong" message.
   if (tasksError) {
     const status = (tasksErr as (Error & { status?: number }) | null)?.status
-    const isAuth = status === 401 || status === 403
     return (
       <div className="content-container">
         <PageHeader icon={<Clock size={20} />} title="Deadlines & Milestones" subtitle="" />
-        <EmptyState
-          icon={<Clock size={40} />}
-          title={isAuth ? 'Sign in to view Deadlines' : 'Could not load deadlines'}
-          subtitle={isAuth
-            ? 'Your session may have expired. Refresh and sign in with your UMN account.'
-            : 'Refresh the page or contact support if this persists.'}
-        />
+        <QueryState isLoading={false} isError={true} errorStatus={status}>
+          {null}
+        </QueryState>
       </div>
     )
   }
