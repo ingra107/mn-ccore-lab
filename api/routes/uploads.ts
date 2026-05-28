@@ -1,6 +1,7 @@
 import { AwsClient } from 'aws4fetch';
 import type { Env } from '../types';
 import { actorSlug, isPiRequest } from '../helpers';
+import { safeRow } from '../lib/task-cols';
 
 interface AuthUser {
   email: string;
@@ -165,7 +166,8 @@ export async function handleListFiles(url: URL, env: Env, canSeePb = false): Pro
     'SELECT * FROM file_attachments WHERE entity_type = ? AND entity_id = ? ORDER BY created_at DESC'
   ).bind(entityType, entityId).all();
 
-  return json(rows.results || []);
+  const safe = (rows.results || []).map(r => safeRow('file_attachments', r as Record<string, unknown>));
+  return json(safe);
 }
 
 /** GET /api/files/:key+ — generate presigned GET URL for downloading */

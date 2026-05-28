@@ -53,7 +53,8 @@ export const TASK_PRIVATE_COLS = new Set<string>(['notes']);
  */
 export const TABLE_PRIVATE_COLS: Record<string, Set<string>> = {
   tasks: TASK_PRIVATE_COLS,
-  email_drafts: new Set<string>(['body_text', 'body_html', 'thread_id']),
+  email_drafts: new Set<string>(['body_text', 'body_html', 'thread_id', 'gmail_draft_url']),
+  file_attachments: new Set<string>(['r2_key']),
   inbox_events: new Set<string>(['raw_payload_json', 'notes']),
   regulatory_items: new Set<string>(['notes']),
 };
