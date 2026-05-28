@@ -816,7 +816,15 @@ export async function handleAddComment(
     return error('Comment content is required', 400);
   }
 
+  // Phase 1b-extended: block non-PI callers from posting comments on a PB-category project.
+  // assertProjectVisible fails-closed if the project is unknown, so we don't need a
+  // separate existence check for unauthorized callers.
+  const block = await assertProjectVisible(request, env, projectId);
+  if (block) return block;
+
   // Verify project exists (accept either id or slug — URL param can be either).
+  // Reached only when the visibility gate allows it; this lookup still 404s for
+  // PI callers on a genuinely unknown project.
   const project = await env.DB.prepare('SELECT id, title, slug FROM projects WHERE id = ? OR slug = ?').bind(projectId, projectId).first<{ id: string; title: string; slug: string | null }>();
   if (!project) {
     return error('Project not found', 404);
@@ -890,6 +898,10 @@ export async function handleAddComment(
 export async function handlePostProjectUpdate(slug: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
   const body = await request.json() as { content: string; update_type?: string; author?: string };
   if (!body.content) return error('content required', 400);
+
+  // Phase 1b-extended: block non-PI callers from posting updates on a PB-category project.
+  const block = await assertProjectVisible(request, env, slug);
+  if (block) return block;
 
   const id = generateId();
   // AM-2: project_updates.author is an actor identity. Pre-fix it stored a raw

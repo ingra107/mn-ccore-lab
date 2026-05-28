@@ -37,6 +37,10 @@ export async function handleCreateProjectDocument(
     return error('url is required', 400);
   }
 
+  // Phase 1b-extended: block non-PI callers from attaching documents to a PB-category project.
+  const block = await assertProjectVisible(request, env, projectSlug);
+  if (block) return block;
+
   const id = generateId();
   const docType = body.doc_type || 'link';
   // AM-2: validate/canonicalize created_by; impersonation requires PI/service.
@@ -66,10 +70,24 @@ export async function handleCreateProjectDocument(
 // Hard-delete (project_documents has no deleted_at column).
 // SEC-10.3: Idempotent — check meta.changes; repeat calls return 200 with
 // idempotent:true instead of 404.
+//
+// Phase 1b-extended: gate the delete on the parent project's visibility so a
+// non-PI caller who knows a PB document id cannot delete it. Resolve the
+// document's project_id, then call assertProjectVisible. If the document row
+// is already gone we return idempotent 200 (no project to gate on).
 export async function handleDeleteProjectDocument(
   docId: string,
+  request: Request,
   env: Env,
 ): Promise<Response> {
+  const doc = await env.DB.prepare(
+    'SELECT project_id FROM project_documents WHERE id = ?'
+  ).bind(docId).first<{ project_id: string | null }>();
+  if (doc?.project_id) {
+    const block = await assertProjectVisible(request, env, doc.project_id);
+    if (block) return block;
+  }
+
   const result = await env.DB.prepare(
     'DELETE FROM project_documents WHERE id = ?'
   ).bind(docId).run();

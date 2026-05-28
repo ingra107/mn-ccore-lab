@@ -471,6 +471,14 @@ export async function handleAddTaskComment(taskId: string, request: Request, use
   const body = await request.json() as { content: string; author_slug?: string };
   if (!body.content?.trim()) return error('content required', 400);
 
+  // Phase 1b-extended: if the task belongs to a PB-category project, block non-PI
+  // callers from posting comments. Same pattern as handleGetTaskComments.
+  const taskRowForGate = await env.DB.prepare('SELECT project_id FROM tasks WHERE id = ? AND deleted_at IS NULL').bind(taskId).first<{ project_id: string | null }>();
+  if (taskRowForGate?.project_id) {
+    const block = await assertProjectVisible(request, env, taskRowForGate.project_id);
+    if (block) return block;
+  }
+
   const id = generateId();
   // AM-2: validate/canonicalize author_slug; impersonation requires PI/service.
   // claude-ai (Hermes) is always allowed by resolveActor.
@@ -1014,6 +1022,14 @@ export async function handleGetTaskUpdates(taskId: string, request: Request, env
 export async function handlePostTaskUpdate(taskId: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
   const body = await request.json() as { content: string; update_type?: string; author_slug?: string };
   if (!body.content?.trim()) return error('content required', 400);
+
+  // Phase 1b-extended: if the task belongs to a PB-category project, block non-PI
+  // callers. Mirrors the read-side gate at handleGetTaskUpdates.
+  const taskRowForGate = await env.DB.prepare('SELECT project_id FROM tasks WHERE id = ? AND deleted_at IS NULL').bind(taskId).first<{ project_id: string | null }>();
+  if (taskRowForGate?.project_id) {
+    const block = await assertProjectVisible(request, env, taskRowForGate.project_id);
+    if (block) return block;
+  }
 
   const id = generateId();
   // AM-2: validate/canonicalize author_slug; impersonation requires PI/service.
