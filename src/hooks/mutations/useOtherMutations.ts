@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { fetchApi, createDependency, deleteDependency, addExpertise, removeExpertise, createQuestion, createAnswer, acceptAnswer, createRevision, updateRevision, createRevisionComment, updateRevisionComment, createMenteeMilestone, updateMenteeMilestone, createSubmissionEvent, deleteSubmissionEvent, createGrantMilestone, updateGrantMilestone, completeGrantMilestone, createConference, updateConference, deleteConference } from '../../lib/api'
+import { rollbackSnapshots } from './utils'
 import { nowInstant } from '../../lib/time'
 import type { DependencyRow, ExpertiseTag, RevisionRow, ReviewerCommentRow, MenteeMilestoneRow, SubmissionEventRow, SubmissionEventType, GrantMilestoneRow, ConferenceSubmissionRow, ConferenceSubmissionType, ConferenceStatus, MaterialsStatus, PresentationType } from '../../lib/api'
 
@@ -17,11 +18,19 @@ export function useUpdateDigestStatus() {
 
     onMutate: async ({ id, status }) => {
       await queryClient.cancelQueries({ queryKey: ['digest'] })
+      // Snapshot all matching digest queries before the optimistic update
+      const queries = queryClient.getQueriesData<unknown[]>({ queryKey: ['digest'] })
+      const snapshots = queries.map(([key, data]) => ({ key, data }))
       // Optimistic update across all digest queries
       queryClient.setQueriesData({ queryKey: ['digest'] }, (old: unknown) => {
         if (!Array.isArray(old)) return old
         return old.map((p: Record<string, unknown>) => p.id === id ? { ...p, status } : p)
       })
+      return { snapshots }
+    },
+
+    onError: (_err, _vars, context) => {
+      rollbackSnapshots(queryClient, context?.snapshots)
     },
 
     onSettled: () => {
