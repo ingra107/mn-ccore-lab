@@ -15,6 +15,7 @@
  *
  * Tables mirrored (same set as scripts/seed/phase0-direct-sql.ts + the API
  * path from scripts/seed/phase0-seed.ts):
+ *   team_members (PI + non-PI + claude-ai), lab_settings (pi_emails),
  *   projects, tasks, ideas, hub_decisions, meetings, publications,
  *   task_comments, reactions, grants, milestones, manuscript_revisions,
  *   research_digest
@@ -93,6 +94,33 @@ function run() {
   const plan = JSON.parse(readFileSync(PLAN_PATH, 'utf-8'))
   console.log(`[local-db-seed] seeding local D1 from ${PLAN_PATH}`)
 
+  // ---- team_members ----
+  // Seed PI (nick-ingraham), non-PI (nate-mesfin), and Hermes (claude-ai).
+  // These slugs are required for task assignee validation and ACL tests.
+  // INSERT OR IGNORE so re-runs don't fail on existing rows.
+  const piEmails: string[] = []
+  for (const m of plan.team_members ?? []) {
+    const id = mintId('tm')
+    d1Execute(
+      `INSERT OR IGNORE INTO team_members (id, name, slug, role, email, member_type, auto_created) VALUES (` +
+      `${sqlEscape(id)}, ${sqlEscape(m.name)}, ${sqlEscape(m.slug)}, ${sqlEscape(m.role)}, ` +
+      `${sqlEscape(m.email)}, ${sqlEscape(m.member_type)}, 0)`
+    )
+    if (m.is_pi) piEmails.push(m.email)
+  }
+  d1Flush('team_members')
+
+  // ---- lab_settings: pi_emails ----
+  // Required for isPiRequest() to return correct PI/non-PI split in local tests.
+  // INSERT OR REPLACE so re-runs update if the fixture changes.
+  if (piEmails.length > 0) {
+    const piEmailsJson = JSON.stringify(piEmails)
+    d1Execute(
+      `INSERT OR REPLACE INTO lab_settings (key, value) VALUES ('pi_emails', ${sqlEscape(piEmailsJson)})`
+    )
+  }
+  d1Flush('lab_settings')
+
   // ---- projects ----
   const projectIdBySlug = new Map<string, string>()
   for (const p of plan.projects) {
@@ -102,9 +130,9 @@ function run() {
     const description = stripPrefix(p.description)
     projectIdBySlug.set(p.slug, id)
     d1Execute(
-      `INSERT INTO projects (id, title, slug, category, stage, pi, description) VALUES (` +
+      `INSERT INTO projects (id, title, slug, category, stage, status, pi, description) VALUES (` +
       `${sqlEscape(id)}, ${sqlEscape(title)}, ${sqlEscape(slug)}, ${sqlEscape(p.category)}, ` +
-      `${sqlEscape(p.stage)}, ${sqlEscape(p.pi)}, ${sqlEscape(description)})`
+      `${sqlEscape(p.stage)}, 'active', ${sqlEscape(p.pi)}, ${sqlEscape(description)})`
     )
   }
   d1Flush('projects')
