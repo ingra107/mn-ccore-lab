@@ -1,10 +1,12 @@
 import type { Env } from './types';
 import { verifyCfAccessJwt } from './jwt-verify';
 import { validateApiKey } from './middleware/api-key-auth';
-import { TASK_PRIVATE_COLS } from './lib/task-cols';
+import { safeRow } from './lib/task-cols';
 // Re-export so Phase 1b callers can import TASK_SELECT_COLS from the same
 // shared root without touching the internal lib path.
-export { TASK_SELECT_COLS } from './lib/task-cols';
+// T2.5: TABLE_PRIVATE_COLS + safeRow added — preferred over the tasks-only
+// TASK_PRIVATE_COLS + safeTaskRow pair for new code.
+export { TASK_SELECT_COLS, TABLE_PRIVATE_COLS, TASK_PRIVATE_COLS, safeRow } from './lib/task-cols';
 
 export type { Env };
 
@@ -683,21 +685,15 @@ export async function resolveAndGuardProject(
  * field). Before returning any such row to callers, pass it through this
  * function to omit all TASK_PRIVATE_COLS.
  *
- * The strip-list is driven by `TASK_PRIVATE_COLS` from `api/lib/task-cols.ts`,
- * which must stay in sync with the `notes` omission in `TASK_SELECT_COLS`.
- * Adding a new private column: add it to TASK_PRIVATE_COLS only — safeTaskRow
- * picks it up automatically.
+ * T2.5 (2026-05-28): backward-compat wrapper around the generic safeRow()
+ * — the strip-list is driven by TABLE_PRIVATE_COLS['tasks'] (same Set as
+ * TASK_PRIVATE_COLS). New code should call safeRow('tasks', row) directly;
+ * this wrapper exists for the ~10 callsites that still use safeTaskRow.
  *
  * Returns a shallow copy — does not mutate the input.
  */
 export function safeTaskRow(row: Record<string, unknown>): Record<string, unknown> {
-  const result: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(row)) {
-    if (!TASK_PRIVATE_COLS.has(key)) {
-      result[key] = value;
-    }
-  }
-  return result;
+  return safeRow('tasks', row);
 }
 
 /** Build a dynamic UPDATE clause from allowed fields */

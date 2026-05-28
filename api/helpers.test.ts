@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   actorSlug, assertProtectedNotNull, resolveActor,
   actorSlugFromRequest, canSeePbProject, assertProjectVisible,
-  projectRefToCanonical, safeTaskRow,
+  projectRefToCanonical, safeTaskRow, safeRow, TABLE_PRIVATE_COLS,
 } from './helpers'
 import type { AuthUser, Env } from './helpers'
 
@@ -397,5 +397,38 @@ describe('safeTaskRow — A4', () => {
     const safe = safeTaskRow(row)
     expect(row).toHaveProperty('notes') // original unchanged
     expect(safe).not.toHaveProperty('notes')
+  })
+})
+
+// ── T2.5: safeRow registry-driven dispatch ───────────────────────────────────
+
+describe('safeRow + TABLE_PRIVATE_COLS — T2.5', () => {
+  it('strips tasks.notes when called with table=tasks', () => {
+    const row = { id: 'task_1', notes: 'secret', title: 'public' }
+    const safe = safeRow('tasks', row)
+    expect(safe).not.toHaveProperty('notes')
+    expect(safe.title).toBe('public')
+  })
+
+  it('returns row unchanged for a table with no private cols (projects)', () => {
+    const row = { id: 'proj_1', title: 'My project', category: 'MNCCORE' }
+    const safe = safeRow('projects', row)
+    expect(safe).toEqual(row)
+  })
+
+  it('returns row unchanged for an unknown table', () => {
+    const row = { id: 'x_1', foo: 'bar' }
+    const safe = safeRow('not_a_table', row)
+    expect(safe).toEqual(row)
+  })
+
+  it('TABLE_PRIVATE_COLS contains tasks → {notes}', () => {
+    expect(TABLE_PRIVATE_COLS.tasks).toBeDefined()
+    expect(TABLE_PRIVATE_COLS.tasks.has('notes')).toBe(true)
+  })
+
+  it('safeTaskRow remains a backward-compat wrapper around safeRow', () => {
+    const row = { id: 'task_compat', notes: 'secret', title: 'x' }
+    expect(safeTaskRow(row)).toEqual(safeRow('tasks', row))
   })
 })

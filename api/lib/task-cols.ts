@@ -39,3 +39,38 @@ export const TASK_SELECT_COLS = [
  * TASK_PRIVATE_COLS MUST be absent from TASK_SELECT_COLS.
  */
 export const TASK_PRIVATE_COLS = new Set<string>(['notes']);
+
+/**
+ * T2.5 (2026-05-28) · `TABLE_PRIVATE_COLS` — per-table registry of private
+ * columns. Generalizes the tasks-only TASK_PRIVATE_COLS so future tables with
+ * private fields can register them once and have every SELECT * return path
+ * pick them up via `safeRow(table, row)`.
+ *
+ * Adding a private column to a new table: add the table key here with a Set
+ * of column names. safeRow strips them automatically; the old per-table
+ * helpers (safeTaskRow) stay as backward-compat re-exports.
+ */
+export const TABLE_PRIVATE_COLS: Record<string, Set<string>> = {
+  tasks: TASK_PRIVATE_COLS,
+};
+
+/**
+ * T2.5 (2026-05-28) · `safeRow(table, row)` — strip TABLE_PRIVATE_COLS[table]
+ * columns from any row. No-op when the table has no registered private cols.
+ * Returns a shallow copy (matches safeTaskRow's contract: never mutates input).
+ *
+ * Used by api/routes/mutations.ts::readCanonical to replace the tasks-only
+ * special case (`table === 'tasks' ? safeTaskRow(row) : row`) with a
+ * registry-driven dispatch.
+ */
+export function safeRow(table: string, row: Record<string, unknown>): Record<string, unknown> {
+  const privateCols = TABLE_PRIVATE_COLS[table];
+  if (!privateCols || privateCols.size === 0) return row;
+  const result: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(row)) {
+    if (!privateCols.has(key)) {
+      result[key] = value;
+    }
+  }
+  return result;
+}
