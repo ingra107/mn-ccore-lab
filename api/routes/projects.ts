@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, parseMentions, actorSlug, isPiRequest, resolveActor, assertProjectVisible } from '../helpers';
+import { json, error, generateId, logActivity, parseMentions, actorSlug, isPiRequest, resolveActor, assertProjectVisible, canSeePbProjectRow } from '../helpers';
 import { ctToday } from '../lib/ct-date';
 import { nowInstant } from '../lib/time';
 import { applyMutation } from './mutations';
@@ -548,10 +548,11 @@ export async function handleUpdateProject(
   }
 
   // Check row existence to distinguish "row not found" (fallback INSERT)
-  // from "row found" (UPDATE). Fetch stage/pi/title for typed activity events (D22).
+  // from "row found" (UPDATE). Fetch stage/pi/title for typed activity events (D22)
+  // and category for the PB visibility gate below.
   const existingCheck = await env.DB.prepare(
-    'SELECT id, stage, pi, title FROM projects WHERE id = ? OR slug = ? LIMIT 1'
-  ).bind(id, id).first<{ id: string; stage: string | null; pi: string | null; title: string | null }>();
+    'SELECT id, stage, pi, title, category FROM projects WHERE id = ? OR slug = ? LIMIT 1'
+  ).bind(id, id).first<{ id: string; stage: string | null; pi: string | null; title: string | null; category: string | null }>();
 
   if (!existingCheck) {
     // Project doesn't exist — create it (upsert; preserves legacy behavior).
@@ -560,6 +561,13 @@ export async function handleUpdateProject(
     const upsertStatus = (body.status as string) || 'active';
     const upsertStage = (body.stage as string) || 'idea';
     const upsertCategory = (body.category as string) || 'MNCCORE';
+    // T3.1 (2026-05-28): PI visibility gate for upsert-INSERT path.
+    // A non-PI caller must not create a Peripheral Brain project.
+    // Mirrors the UPDATE branch gate added below. assertProjectVisible is
+    // called on upsert with the incoming category because no row exists yet.
+    if (upsertCategory === 'Peripheral Brain' && !isNick(user, await isPiRequest(request, env))) {
+      return error('Project not found', 403);
+    }
     for (const [key, val] of [['status', upsertStatus], ['stage', upsertStage], ['category', upsertCategory]] as [string, string][]) {
       const guard = PROJECT_ENUM_GUARDS[key];
       if (guard && !guard.has(val)) {
@@ -588,6 +596,13 @@ export async function handleUpdateProject(
       return error(`mutation rejected: ${upsertMut.status} — ${upsertMut.reason ?? ''}`, 409);
     }
   } else {
+    // T3.1 (2026-05-28): PI visibility gate for UPDATE path. Mirrors the read
+    // side (handleGetComments, handleGetProjectUpdates, etc.) which all call
+    // assertProjectVisible. Pre-fix: any CF Access-authed team member could
+    // overwrite or rename Nick's Peripheral Brain projects (security finding F04).
+    const block = await assertProjectVisible(request, env, existingCheck.id);
+    if (block) return block;
+
     // Build patch from validated fields
     const patchFields: Record<string, unknown> = {};
     for (let i = 0; i < updates.length; i++) {
@@ -655,14 +670,26 @@ export async function handleDeleteProject(
   id: string,
   user: AuthUser,
   env: Env,
+  request: Request,
   url?: URL,
 ): Promise<Response> {
   const existing = await env.DB.prepare(
-    'SELECT id, title, slug FROM projects WHERE id = ? OR slug = ?'
-  ).bind(id, id).first<{ id: string; title: string; slug: string }>();
+    'SELECT id, title, slug, category FROM projects WHERE id = ? OR slug = ?'
+  ).bind(id, id).first<{ id: string; title: string; slug: string; category: string | null }>();
 
   if (!existing) {
     return error('Project not found', 404);
+  }
+
+  // T3.1 (2026-05-28): PI visibility gate for DELETE path. Mirrors the UPDATE
+  // gate and the read-side gates (assertProjectVisible). Pre-fix: any CF
+  // Access-authed team member could soft-delete Nick's Peripheral Brain projects
+  // (security finding F04). Symmetric with handleUpdateProject's gate above.
+  //
+  // canSeePbProjectRow is used here (instead of assertProjectVisible) because
+  // `existing` already carries the row's category — no second DB query needed.
+  if (!(await canSeePbProjectRow(request, env, existing))) {
+    return error('Project not found', 403);
   }
 
   // Check idempotency BEFORE cascade: already soft-deleted?

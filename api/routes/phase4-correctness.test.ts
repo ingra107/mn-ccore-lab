@@ -417,8 +417,8 @@ describe('Fix 3 — handleDeleteProject: idempotency check runs BEFORE cascade',
           first: async () => {
             // Route by SQL content so we don't rely on call-count ordering
             // across separate prepare() invocations.
-            if (sql.includes('SELECT id, title, slug FROM projects WHERE id = ? OR slug = ?')) {
-              return { id: 'proj_X', title: 'Dead Project', slug: 'dead-project' };
+            if (sql.includes('FROM projects WHERE id = ? OR slug = ?')) {
+              return { id: 'proj_X', title: 'Dead Project', slug: 'dead-project', category: 'MNCCORE' };
             }
             if (sql.includes('SELECT deleted_at FROM projects WHERE id = ?')) {
               return { deleted_at: '2026-05-01T00:00:00Z' };  // already deleted
@@ -437,7 +437,7 @@ describe('Fix 3 — handleDeleteProject: idempotency check runs BEFORE cascade',
     };
 
     const env = { DB: db, TEST_MODE_KEY, PB_API_KEY: 'valid-test-api-key' } as unknown as Env;
-    const res = await handleDeleteProject('proj_X', NICK, env);
+    const res = await handleDeleteProject('proj_X', NICK, env, makeRequest({}));
 
     const body = await res.json() as Record<string, unknown>;
     expect(res.status).toBe(200);

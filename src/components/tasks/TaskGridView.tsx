@@ -1429,7 +1429,7 @@ function TaskGridRow({
                   fetch(`/api/tasks/${task.id}/comments`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ text: commentDraft.trim() }),
+                    body: JSON.stringify({ content: commentDraft.trim() }),
                   })
                   setCommentDraft('')
                   setQuickComment(false)

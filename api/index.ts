@@ -1646,7 +1646,7 @@ defineRoute({
   auth: 'authed',
   entity: 'projects',
   visibility: 'na',
-  handler: (c) => handleDeleteProject(c.req.param('slug'), USER(c), E(c), U(c)),
+  handler: (c) => handleDeleteProject(c.req.param('slug'), USER(c), E(c), R(c), U(c)),
 });
 defineRoute({
   method: 'POST',

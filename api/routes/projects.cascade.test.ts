@@ -114,6 +114,14 @@ function makeUser(): AuthUser {
   return { email: 'ingra107@umn.edu', name: 'Nick' } as AuthUser
 }
 
+// Minimal request stub for handlers that accept a request param.
+function makeRequest(): Request {
+  return new Request('https://x/api/test', {
+    method: 'POST',
+    headers: { 'X-Test-Mode-Key': 'local-test-key-do-not-use-in-prod', 'X-Test-User': 'ingra107@umn.edu' },
+  })
+}
+
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 beforeEach(() => {
@@ -132,7 +140,7 @@ describe('handleDeleteProject — cascade-clean uses DB.batch() (B-CRIT-05)', ()
       onBatch: (stmts) => capturedStmts.push(...stmts),
     })
 
-    const response = await handleDeleteProject('proj_TEST', makeUser(), env)
+    const response = await handleDeleteProject('proj_TEST', makeUser(), env, makeRequest())
     const body = await response.json() as Record<string, unknown>
 
     // batch() called exactly once
@@ -150,7 +158,7 @@ describe('handleDeleteProject — cascade-clean uses DB.batch() (B-CRIT-05)', ()
   it('does NOT call DB.batch() when project is not found (returns 404)', async () => {
     const env = makeEnv({ projectFirstResult: null })
 
-    const response = await handleDeleteProject('proj_MISSING', makeUser(), env)
+    const response = await handleDeleteProject('proj_MISSING', makeUser(), env, makeRequest())
 
     expect(response.status).toBe(404)
     expect((env.DB.batch as ReturnType<typeof vi.fn>).mock.calls).toHaveLength(0)
@@ -172,7 +180,7 @@ describe('handleDeleteProject — cascade-clean uses DB.batch() (B-CRIT-05)', ()
     const env = makeEnv({ batchThrows: true })
 
     // Function should not throw — error is caught internally
-    const response = await handleDeleteProject('proj_TEST', makeUser(), env)
+    const response = await handleDeleteProject('proj_TEST', makeUser(), env, makeRequest())
 
     // console.error called with the cascade failure message
     expect(consoleSpy).toHaveBeenCalledWith(
@@ -198,7 +206,7 @@ describe('handleDeleteProject — cascade-clean uses DB.batch() (B-CRIT-05)', ()
       deletedAtResult: { deleted_at: '2026-05-09T10:00:00Z' },
     })
 
-    const response = await handleDeleteProject('proj_TEST', makeUser(), env)
+    const response = await handleDeleteProject('proj_TEST', makeUser(), env, makeRequest())
     const body = await response.json() as { data: { idempotent: boolean } }
 
     expect(response.status).toBe(200)

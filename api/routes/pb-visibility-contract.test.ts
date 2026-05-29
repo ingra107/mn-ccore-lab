@@ -29,6 +29,8 @@ import {
   handleRecentUpdates,
   handleAddComment,
   handlePostProjectUpdate,
+  handleUpdateProject,
+  handleDeleteProject,
 } from './projects'
 import {
   handleGetProjectDocuments,
@@ -500,6 +502,23 @@ const patternWriteCases: PatternWriteCase[] = [
     callNonPiOnNonPb: () => handleAcknowledgeTask('task1', nonPiPost({}), { email: NON_PI_EMAIL, name: 'Nate' }, nonPbEnv({ taskProjectId: 'mnccore-proj' })),
     callPiOnPb:       () => handleAcknowledgeTask('task1', piPost({}), { email: PI_EMAIL, name: 'Nick' }, pbEnv({ taskProjectId: 'pb-proj' })),
     callApiKeyOnPb:   () => handleAcknowledgeTask('task1', apiKeyPost({}), { email: 'service@api', name: 'S' }, pbEnv({ taskProjectId: 'pb-proj' })),
+  },
+  // Project direct writes (T3.1 — F04 security fix, 2026-05-28)
+  // handleUpdateProject and handleDeleteProject previously had no PI gate.
+  // They now call assertProjectVisible / canSeePbProjectRow on the existing row.
+  {
+    label: 'POST /api/projects/:slug (handleUpdateProject) — T3.1 PI gate',
+    callNonPiOnPb:    () => handleUpdateProject('pb-proj', nonPiPost({ status: 'active' }), { email: NON_PI_EMAIL, name: 'Nate' }, pbEnv()),
+    callNonPiOnNonPb: () => handleUpdateProject('mnccore-proj', nonPiPost({ status: 'active' }), { email: NON_PI_EMAIL, name: 'Nate' }, nonPbEnv()),
+    callPiOnPb:       () => handleUpdateProject('pb-proj', piPost({ status: 'active' }), { email: PI_EMAIL, name: 'Nick' }, pbEnv()),
+    callApiKeyOnPb:   () => handleUpdateProject('pb-proj', apiKeyPost({ status: 'active' }), { email: 'service@api', name: 'S' }, pbEnv()),
+  },
+  {
+    label: 'POST /api/projects/:slug/delete (handleDeleteProject) — T3.1 PI gate',
+    callNonPiOnPb:    () => handleDeleteProject('pb-proj', { email: NON_PI_EMAIL, name: 'Nate' }, pbEnv(), nonPiPost({})),
+    callNonPiOnNonPb: () => handleDeleteProject('mnccore-proj', { email: NON_PI_EMAIL, name: 'Nate' }, nonPbEnv(), nonPiPost({})),
+    callPiOnPb:       () => handleDeleteProject('pb-proj', { email: PI_EMAIL, name: 'Nick' }, pbEnv(), piPost({})),
+    callApiKeyOnPb:   () => handleDeleteProject('pb-proj', { email: 'service@api', name: 'S' }, pbEnv(), apiKeyPost({})),
   },
   // Lifecycle CRUD — submissions
   {
