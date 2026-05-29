@@ -406,7 +406,13 @@ export async function handleMutations(
   const flags = await getValidationFlags(env);
 
   for (const mut of body.mutations) {
-    const result = await processOne(env, mut, inBatchResults, user, flags);
+    let result: MutationResult;
+    try {
+      result = await processOne(env, mut, inBatchResults, user, flags);
+    } catch (e) {
+      console.error('infra error in processOne', mut.mutation_id, (e as Error).message);
+      result = mutErr(mut.mutation_id ?? '<missing>', `infra error: ${(e as Error).message}`);
+    }
     results.push(result);
     inBatchResults.set(mut.mutation_id, result);
   }
