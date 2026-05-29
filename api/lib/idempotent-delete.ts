@@ -12,6 +12,12 @@ import type { Env } from '../helpers';
 import { json, logActivity, assertProjectVisible } from '../helpers';
 import { hiddenResource } from './hidden-resource';
 
+// Tables that carry a `status` column and must have status='deleted' co-set
+// alongside deleted_at on every soft-delete path (M33, 2026-05-29: forward
+// guard). Mirrors STATUS_BEARING_DELETE_TABLES in mutations.ts — kept here
+// as a local constant to avoid a circular import (lib → route).
+const STATUS_BEARING_DELETE_TABLES = new Set(['tasks', 'projects']);
+
 export interface IdempotentDeleteArgs {
   table: string;
   id: string;
@@ -71,8 +77,15 @@ export async function idempotentDelete(args: IdempotentDeleteArgs): Promise<Resp
       return json({ data: { id, deleted: true, idempotent: true } });
     }
 
+    // Co-set status='deleted' for status-bearing tables (M33, 2026-05-29).
+    // tasks and projects must read status='deleted' AND deleted_at IS NOT NULL
+    // so PB's pull guard (hub.py:1315-1339) accepts the tombstone instead of
+    // refusing it as malformed. Lane-3 tables have no status column — exclude.
+    const extraSet = STATUS_BEARING_DELETE_TABLES.has(table)
+      ? `, status = 'deleted'`
+      : '';
     await env.DB.prepare(
-      `UPDATE ${table} SET deleted_at = datetime('now') WHERE id = ?`,
+      `UPDATE ${table} SET deleted_at = datetime('now')${extraSet} WHERE id = ?`,
     ).bind(id).run();
 
     if (args.actorSlug && args.activityCategory) {

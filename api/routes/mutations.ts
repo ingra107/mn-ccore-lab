@@ -75,6 +75,12 @@ const TABLES_WITH_UPDATED_AT = new Set([
   'kg_entities', 'kg_relations', 'kg_relation_type_registry', 'trajectories',
 ]);
 
+// Tables that carry a `status` column and must have status='deleted' co-set
+// alongside deleted_at on every soft-delete path. Lane-3 tables (agent_knowledge,
+// decisions, etc.) have no `status` column — a blanket co-set would D1-error.
+// (M33, 2026-05-29: forward guard for Hub tombstone repair.)
+const STATUS_BEARING_DELETE_TABLES = new Set(['tasks', 'projects']);
+
 // Per-table primary key column lookup.
 // Tables with PK = 'id' (tasks, projects, inbox_events, project_state_log,
 // kg_entities, memory_facts) are omitted — they fall through to the default.
@@ -964,9 +970,17 @@ export async function applyDelete(env: Env, mut: Mutation, user: AuthUser): Prom
   }
 
   // Stamp updated_at only for tables that carry the column (M32).
+  // Co-set status='deleted' for status-bearing tables (M33, 2026-05-29): ensures
+  // the Hub tombstone shape is consistent (deleted_at + status='deleted') so
+  // PB's pull guard (hub.py:1315-1339) accepts the row instead of refusing it
+  // as a malformed tombstone. Lane-3 tables have no status column — exclude them
+  // via STATUS_BEARING_DELETE_TABLES.
+  const statusClause = STATUS_BEARING_DELETE_TABLES.has(mut.table)
+    ? `, status = 'deleted'`
+    : '';
   const setClause = TABLES_WITH_UPDATED_AT.has(mut.table)
-    ? `deleted_at = datetime('now'), updated_at = datetime('now'), last_mutation_id = ?`
-    : `deleted_at = datetime('now'), last_mutation_id = ?`;
+    ? `deleted_at = datetime('now'), updated_at = datetime('now'), last_mutation_id = ?${statusClause}`
+    : `deleted_at = datetime('now'), last_mutation_id = ?${statusClause}`;
   await env.DB.prepare(
     `UPDATE ${mut.table} SET ${setClause} WHERE ${deleteWhere}`
   ).bind(...deleteVals).run();
