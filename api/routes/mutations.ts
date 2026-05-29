@@ -263,6 +263,14 @@ const TABLE_FIELDS: Record<string, Set<string>> = {
     'key_link_1', 'key_link_1_desc', 'key_link_2', 'key_link_2_desc',
     'key_link_3', 'key_link_3_desc',
     'state', 'next_artifact', 'last_meaningful_movement', 'stale_active_since',
+    // schema-v71 promotion (2026-05-29): 17 fields promoted PB-only -> Hub-canonical.
+    // Bucket B (converge) + Bucket C (reference). All same-named on the wire.
+    // journal is a NEW column, separate from the PWA journal_name field.
+    // Decision: Peripheral-Brain/Context/Decisions/2026-05-29-promote-project-fields-hub-canonical.md
+    'next_action', 'due_date', 'tier', 'domain',
+    'citation', 'doi', 'pubmed_id', 'publication_date', 'journal',
+    'author_role', 'primary_folder', 'manuscript_path', 'analysis_path',
+    'key_files', 'github_url', 'box_url', 'context_links',
     'created_at',
   ]),
   inbox_events: new Set([

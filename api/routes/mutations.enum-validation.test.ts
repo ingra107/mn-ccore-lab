@@ -184,13 +184,12 @@ describe('enum-domains.generated.json well-formedness', () => {
 
   it('every TABLE_FIELDS enum column for tasks/projects has a domain', () => {
     // The enum columns the validator must cover (Hub wire field names). These
-    // are exactly the enum columns in mutations.ts TABLE_FIELDS — projects.tier
-    // and projects.domain are PB-only cache fields (dropped from the wire), so
-    // they are correctly ABSENT from the mirror (Step-0 audit confirmed Hub D1
-    // has no `tier` column).
+    // are exactly the enum columns in mutations.ts TABLE_FIELDS. schema-v71
+    // (2026-05-29) promoted projects.tier + projects.domain PB-only -> Hub-
+    // canonical, so they now DO cross the wire and the validator covers them.
     const required: Record<string, string[]> = {
       tasks: ['status', 'priority', 'effort', 'deadline_type', 'next_artifact'],
-      projects: ['status', 'stage', 'state', 'category'],
+      projects: ['status', 'stage', 'state', 'category', 'tier', 'domain'],
     }
     for (const [table, fields] of Object.entries(required)) {
       const domains = file.tables[table]
@@ -218,11 +217,18 @@ describe('enum-domains.generated.json well-formedness', () => {
     expect(file.tables.tasks.priority.nullable).toBe(true)
   })
 
-  it('PB-only cache enums (projects.tier/domain) are NOT in the wire mirror', () => {
-    // They are dropped from the Hub wire payload, so the validator never sees
-    // them — emitting a domain would contradict the wire surface (ethos #10).
-    expect(file.tables.projects.tier).toBeUndefined()
-    expect(file.tables.projects.domain).toBeUndefined()
+  it('promoted enums (projects.tier/domain) ARE in the wire mirror (schema-v71)', () => {
+    // schema-v71 (2026-05-29) promoted projects.tier + projects.domain
+    // PB-only -> Hub-canonical. They now round-trip /api/mutations, so the
+    // validator MUST cover them (the inverse of the pre-v71 assertion).
+    expect(file.tables.projects.tier).toBeDefined()
+    expect(new Set(file.tables.projects.tier.canonical)).toEqual(
+      new Set(['1-Weekly', '2-Biweekly', '3-Monthly'])
+    )
+    expect(file.tables.projects.domain).toBeDefined()
+    expect(new Set(file.tables.projects.domain.canonical)).toEqual(
+      new Set(['Research', 'Grants', 'Teaching', 'Personal', 'Professional Development'])
+    )
   })
 })
 

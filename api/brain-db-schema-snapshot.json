@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-12T00:00:00.000000+00:00",
+  "generated_at": "2026-05-29T15:19:57.929922+00:00",
   "note": "Checked-in schema snapshot for Hub CI test (mutations.schema-drift.test.ts). Update when brain.db schema changes. hub-schema-sync specialist owns updates. Regenerate: python scripts/db/generate_hub_schema_snapshot.py --out <mn-ccore-lab>/api/brain-db-schema-snapshot.json",
   "hub_to_local": {
     "tasks": {
@@ -14,13 +14,17 @@
   },
   "brain_cols": {
     "tasks": [
+      "assigned_by",
       "assignee",
       "blocked_by",
       "completed",
       "completed_at",
+      "completed_by",
       "created_at",
       "deadline",
       "deadline_type",
+      "deleted_at",
+      "description_json",
       "due_date",
       "effort",
       "email_link",
@@ -33,6 +37,7 @@
       "key_link_2_desc",
       "key_link_3",
       "key_link_3_desc",
+      "meeting_id",
       "milestone_id",
       "milestone_name",
       "name",
@@ -42,26 +47,15 @@
       "notes",
       "priority",
       "project_id",
-      "project_key_link_1",
-      "project_key_link_1_desc",
-      "project_key_link_2",
-      "project_key_link_2_desc",
-      "project_key_link_3",
-      "project_key_link_3_desc",
       "project_name",
       "promise_date",
       "promised_to",
       "related_message_ids",
       "requires_nick_brain",
       "short_title",
+      "source",
       "source_thread_id",
       "status",
-      "task_key_link_1",
-      "task_key_link_1_desc",
-      "task_key_link_2",
-      "task_key_link_2_desc",
-      "task_key_link_3",
-      "task_key_link_3_desc",
       "thread_id",
       "waiting_on",
       "waiting_since"
@@ -93,12 +87,14 @@
       "next_action",
       "next_artifact",
       "notes",
+      "pi",
       "primary_folder",
       "publication_date",
       "pubmed_id",
       "short_name",
       "slug",
       "stage",
+      "stage_notes",
       "stale_active_since",
       "state",
       "status",
@@ -124,6 +120,7 @@
       "triaged_by"
     ],
     "day_capacity": [
+      "created_at",
       "date",
       "day_type",
       "declared_at",
@@ -140,23 +137,13 @@
     ]
   },
   "hub_only_fields": {
-    "tasks": [
-      "assigned_by",
-      "completed_by",
-      "description_json",
-      "meeting_id",
-      "source"
-    ],
+    "tasks": [],
     "projects": [
-      "pi",
       "pi_context",
-      "stage_notes",
       "strategic_context"
     ],
     "inbox_events": [],
-    "day_capacity": [
-      "created_at"
-    ],
+    "day_capacity": [],
     "project_state_log": []
   }
 }

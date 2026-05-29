@@ -11,6 +11,17 @@
         "legacy_aliases": {},
         "nullable": true
       },
+      "domain": {
+        "canonical": [
+          "Research",
+          "Grants",
+          "Teaching",
+          "Personal",
+          "Professional Development"
+        ],
+        "legacy_aliases": {},
+        "nullable": true
+      },
       "stage": {
         "canonical": [
           "idea",
@@ -87,6 +98,19 @@
           "Waiting": "waiting_external"
         },
         "nullable": false
+      },
+      "tier": {
+        "canonical": [
+          "1-Weekly",
+          "2-Biweekly",
+          "3-Monthly"
+        ],
+        "legacy_aliases": {
+          "Biweekly": "2-Biweekly",
+          "Monthly": "3-Monthly",
+          "Weekly": "1-Weekly"
+        },
+        "nullable": true
       }
     },
     "tasks": {
