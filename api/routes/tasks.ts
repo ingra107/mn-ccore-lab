@@ -334,13 +334,18 @@ export async function handleUpdateTask(id: string, request: Request, user: AuthU
       updates.push('completed = ?');
       params.push(isDone ? 1 : 0);
     }
-    if (isDone && !('completed_at' in body)) {
+    // completed_at and completed_by: set on done, CLEAR on reopen.
+    // The previous isDone-only guard left stale completed_at/completed_by on
+    // rows that were reopened via handleUpdateTask (single-item update path).
+    // Bulk paths (bulkAction/status, bulkAction/uncomplete) already null both
+    // fields unconditionally — this makes the single-item path symmetric.
+    if (!('completed_at' in body)) {
       updates.push('completed_at = ?');
-      params.push(nowInstant());
+      params.push(isDone ? nowInstant() : null);
     }
-    if (isDone && !('completed_by' in body)) {
+    if (!('completed_by' in body)) {
       updates.push('completed_by = ?');
-      params.push(user.email);
+      params.push(isDone ? user.email : null);
     }
   }
 
@@ -435,6 +440,11 @@ export async function handleCreateTask(request: Request, user: AuthUser, env: En
   const status = body.status && ['todo', 'in_progress', 'done', 'blocked', 'waiting_external'].includes(body.status)
     ? body.status : 'todo';
 
+  // Co-fill completion triad so the insert is internally consistent from birth.
+  // assertCompletionTriad enforces status='done' <=> completed=1 <=> completed_at present;
+  // the insert payload must satisfy this invariant, not rely on downstream defaults.
+  const isInsertDone = status === 'done';
+
   const createMutResult = await applyMutation(env, {
     table: 'tasks',
     record_id: id,
@@ -451,6 +461,9 @@ export async function handleCreateTask(request: Request, user: AuthUser, env: En
       priority,
       status,
       source,
+      completed: isInsertDone ? 1 : 0,
+      completed_at: isInsertDone ? nowInstant() : null,
+      completed_by: isInsertDone ? user.email : null,
       key_link_1: body.key_link_1 ?? null,
       key_link_1_desc: body.key_link_1_desc ?? null,
       key_link_2: body.key_link_2 ?? null,
@@ -1268,6 +1281,7 @@ export async function handleMobileTasksToHub(request: Request, user: AuthUser, e
           source: 'mobile',
           completed: completedInt,
           completed_at: completedInt ? nowInstant() : null,
+          completed_by: completedInt ? user.email : null,
           notes: pwaTask.notes ?? null,
           effort: pwaTask.effort ?? null,
           short_title: pwaTask.short_title ?? null,
