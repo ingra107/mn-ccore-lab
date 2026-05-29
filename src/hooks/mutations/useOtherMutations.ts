@@ -108,11 +108,12 @@ export function useCreateHandoff(taskId: string) {
       assessment?: string
       recommendation?: string
     }) =>
-      fetch(`/api/tasks/${taskId}/handoffs`, {
+      // M09: use fetchApi so non-OK responses throw ApiError and reach onError
+      // (pre-fix: raw fetch().then(json) silently resolved with error JSON body).
+      fetchApi(`/api/tasks/${taskId}/handoffs`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(input),
-      }).then((r) => r.json()),
+      }),
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['handoffs', taskId] })
       queryClient.invalidateQueries({ queryKey: ['tasks'] })
@@ -127,7 +128,8 @@ export function useAcknowledgeHandoff(taskId: string) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (handoffId: string) =>
-      fetch(`/api/handoffs/${handoffId}/acknowledge`, { method: 'POST' }).then((r) => r.json()),
+      // M09: use fetchApi so non-OK responses throw ApiError and reach onError.
+      fetchApi(`/api/handoffs/${handoffId}/acknowledge`, { method: 'POST' }),
     onMutate: async (handoffId) => {
       await queryClient.cancelQueries({ queryKey: ['handoffs', taskId] })
       const prev = queryClient.getQueryData<{ id: string; acknowledged: number }[]>(['handoffs', taskId])

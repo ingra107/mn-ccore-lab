@@ -99,7 +99,7 @@ describe('processOne envelope validation — partial-batch atomicity guard', () 
     const req = new Request('https://example.com/api/mutations', {
       method: 'POST',
       body: JSON.stringify({ mutations: [badMut] }),
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', 'Authorization': 'Bearer test-key' },
     })
 
     const resp = await handleMutations(req, user, env)
@@ -123,7 +123,7 @@ describe('processOne envelope validation — partial-batch atomicity guard', () 
     const req = new Request('https://example.com/api/mutations', {
       method: 'POST',
       body: JSON.stringify({ mutations: [badMut] }),
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', 'Authorization': 'Bearer test-key' },
     })
 
     const resp = await handleMutations(req, user, env)
@@ -145,7 +145,7 @@ describe('processOne envelope validation — partial-batch atomicity guard', () 
     const req = new Request('https://example.com/api/mutations', {
       method: 'POST',
       body: JSON.stringify({ mutations: [badMut] }),
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', 'Authorization': 'Bearer test-key' },
     })
 
     const resp = await handleMutations(req, user, env)
@@ -173,7 +173,7 @@ describe('processOne envelope validation — partial-batch atomicity guard', () 
     const req = new Request('https://example.com/api/mutations', {
       method: 'POST',
       body: JSON.stringify({ mutations: [mut1, mut2] }),
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', 'Authorization': 'Bearer test-key' },
     })
 
     const resp = await handleMutations(req, user, env)

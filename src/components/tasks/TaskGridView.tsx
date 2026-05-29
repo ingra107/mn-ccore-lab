@@ -1426,14 +1426,31 @@ function TaskGridRow({
               onChange={(e) => setCommentDraft(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && commentDraft.trim()) {
-                  fetch(`/api/tasks/${task.id}/comments`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ content: commentDraft.trim() }),
-                  })
-                  setCommentDraft('')
-                  setQuickComment(false)
-                  showUndo('Comment added', () => {})
+                  // M08: await the fetch and check res.ok before showing success
+                  // (pre-fix: fire-and-forget, toast showed before response).
+                  const content = commentDraft.trim();
+                  setCommentDraft('');
+                  setQuickComment(false);
+                  (async () => {
+                    try {
+                      const res = await fetch(`/api/tasks/${task.id}/comments`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ content }),
+                      });
+                      if (!res.ok) {
+                        // Restore draft so the user can retry
+                        setCommentDraft(content);
+                        setQuickComment(true);
+                        console.error('quick-comment failed', res.status);
+                      } else {
+                        showUndo('Comment added', () => {});
+                      }
+                    } catch {
+                      setCommentDraft(content);
+                      setQuickComment(true);
+                    }
+                  })();
                 }
                 if (e.key === 'Escape') { setQuickComment(false); setCommentDraft('') }
                 e.stopPropagation()

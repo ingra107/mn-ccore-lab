@@ -134,11 +134,18 @@ const fakeUser: AuthUser = {
   isNick: false,
 } as unknown as AuthUser
 
+// M07: handleMutations now requires PI/API-key auth. Use a stable test key so
+// validateApiKey(request, env) returns true, bypassing the getPiEmails DB call.
+const TEST_API_KEY = 'test-mutations-api-key'
+
 function makeRequest(mutations: Mutation[]): Request {
   return new Request('https://example.com/api/mutations', {
     method: 'POST',
     body: JSON.stringify({ mutations }),
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${TEST_API_KEY}`,
+    },
   })
 }
 
@@ -164,7 +171,7 @@ describe('mutations canonical_payload — SEC-P2-03 notes not in response', () =
       },
     })
 
-    const env = { DB: db } as unknown as Env
+    const env = { DB: db, PB_API_KEY: TEST_API_KEY } as unknown as Env
     const mut: Mutation = {
       mutation_id: 'mut_notes_test_update_0001',
       origin_machine: 'home',
@@ -206,7 +213,7 @@ describe('mutations canonical_payload — SEC-P2-03 notes not in response', () =
       },
     })
 
-    const env = { DB: db } as unknown as Env
+    const env = { DB: db, PB_API_KEY: TEST_API_KEY } as unknown as Env
     const mut: Mutation = {
       mutation_id: 'mut_notes_test_update_0002',
       origin_machine: 'home',
@@ -235,7 +242,7 @@ describe('mutations canonical_payload — SEC-P2-03 notes not in response', () =
     const newTaskId = 'task_01hwtest_mut_notes_insert_0001'
     const db = makeStubDB()  // empty store — insert creates the row
 
-    const env = { DB: db } as unknown as Env
+    const env = { DB: db, PB_API_KEY: TEST_API_KEY } as unknown as Env
     const mut: Mutation = {
       mutation_id: 'mut_notes_test_insert_0001',
       origin_machine: 'home',
@@ -288,7 +295,7 @@ describe('mutations canonical_payload — SEC-P2-03 notes not in response', () =
       },
     })
 
-    const env = { DB: db } as unknown as Env
+    const env = { DB: db, PB_API_KEY: TEST_API_KEY } as unknown as Env
     const mut: Mutation = {
       mutation_id: 'mut_notes_test_proj_0001',
       origin_machine: 'home',

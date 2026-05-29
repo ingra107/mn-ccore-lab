@@ -138,6 +138,7 @@ function makeStubDB(seedRows: Record<string, Record<string, unknown>> = {}) {
 }
 
 const fakeUser: AuthUser = { email: 'test@example.com', role: 'admin', name: 'Test User' } as unknown as AuthUser
+const TEST_API_KEY = 'test-dedup-api-key' // M07: handleMutations requires PI/API-key auth
 
 // ── mutations.ts applyInsert dedup tests ────────────────────────────────────
 
@@ -189,11 +190,11 @@ describe('mutations.ts applyInsert — I18 (title, project_id) dedup', () => {
       issued_at: nowInstant(),
     }
 
-    const fakeEnv = { DB: db } as unknown as Env
+    const fakeEnv = { DB: db, PB_API_KEY: TEST_API_KEY } as unknown as Env
     const req = new Request('https://example.com/api/mutations', {
       method: 'POST',
       body: JSON.stringify({ mutations: [mut] }),
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${TEST_API_KEY}` },
     })
 
     const resp = await handleMutations(req, fakeUser, fakeEnv)
@@ -240,11 +241,11 @@ describe('mutations.ts applyInsert — I18 (title, project_id) dedup', () => {
       issued_at: nowInstant(),
     }
 
-    const fakeEnv = { DB: db } as unknown as Env
+    const fakeEnv = { DB: db, PB_API_KEY: TEST_API_KEY } as unknown as Env
     const req = new Request('https://example.com/api/mutations', {
       method: 'POST',
       body: JSON.stringify({ mutations: [mut] }),
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${TEST_API_KEY}` },
     })
 
     const resp = await handleMutations(req, fakeUser, fakeEnv)
@@ -291,11 +292,11 @@ describe('mutations.ts applyInsert — I18 (title, project_id) dedup', () => {
       issued_at: nowInstant(),
     }
 
-    const fakeEnv = { DB: db } as unknown as Env
+    const fakeEnv = { DB: db, PB_API_KEY: TEST_API_KEY } as unknown as Env
     const req = new Request('https://example.com/api/mutations', {
       method: 'POST',
       body: JSON.stringify({ mutations: [mut] }),
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${TEST_API_KEY}` },
     })
 
     const resp = await handleMutations(req, fakeUser, fakeEnv)
@@ -340,11 +341,11 @@ describe('mutations.ts applyInsert — I18 (title, project_id) dedup', () => {
       issued_at: nowInstant(),
     }
 
-    const fakeEnv = { DB: db } as unknown as Env
+    const fakeEnv = { DB: db, PB_API_KEY: TEST_API_KEY } as unknown as Env
     const req = new Request('https://example.com/api/mutations', {
       method: 'POST',
       body: JSON.stringify({ mutations: [mut] }),
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${TEST_API_KEY}` },
     })
 
     const resp = await handleMutations(req, fakeUser, fakeEnv)
@@ -480,7 +481,7 @@ describe('partial index race backstop — concurrent dup INSERT (18:00:27 shape)
     const { handleMutations } = await import('./mutations')
 
     const title = 'Approve: MECHANIC: I18 — 0p+19t'
-    const fakeEnv = { DB: db } as unknown as Env
+    const fakeEnv = { DB: db, PB_API_KEY: TEST_API_KEY } as unknown as Env
 
     // Machine-home (winner) mutation — arrives first
     const mutHome: Mutation = {
@@ -528,7 +529,7 @@ describe('partial index race backstop — concurrent dup INSERT (18:00:27 shape)
     const reqHome = new Request('https://example.com/api/mutations', {
       method: 'POST',
       body: JSON.stringify({ mutations: [mutHome] }),
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${TEST_API_KEY}` },
     })
     const respHome = await handleMutations(reqHome, fakeUser, fakeEnv)
     const bodyHome = await respHome.json() as { results: Array<{ status: string; reason?: string }> }
@@ -542,7 +543,7 @@ describe('partial index race backstop — concurrent dup INSERT (18:00:27 shape)
     const reqWork = new Request('https://example.com/api/mutations', {
       method: 'POST',
       body: JSON.stringify({ mutations: [mutWork] }),
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${TEST_API_KEY}` },
     })
     const respWork = await handleMutations(reqWork, fakeUser, fakeEnv)
     const bodyWork = await respWork.json() as { results: Array<{ status: string; reason?: string }> }
@@ -606,7 +607,7 @@ describe('partial index race backstop — concurrent dup INSERT (18:00:27 shape)
 
     const { handleMutations } = await import('./mutations')
     const title = 'Approve: MECHANIC: I18 — 0p+19t'
-    const fakeEnvNoIndex = { DB: noIndexDB } as unknown as Env
+    const fakeEnvNoIndex = { DB: noIndexDB, PB_API_KEY: TEST_API_KEY } as unknown as Env
 
     for (const [origin, id] of [['home', 'task_winner_noindex'], ['work', 'task_loser_noindex']] as const) {
       const mut: Mutation = {
@@ -624,7 +625,7 @@ describe('partial index race backstop — concurrent dup INSERT (18:00:27 shape)
       const req = new Request('https://example.com/api/mutations', {
         method: 'POST',
         body: JSON.stringify({ mutations: [mut] }),
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${TEST_API_KEY}` },
       })
       await handleMutations(req, fakeUser, fakeEnvNoIndex)
     }
@@ -771,7 +772,7 @@ describe('Phase 1.4 — mobile dedup includes project_id', () => {
 
     const req = new Request('https://example.com/api/sync/mobile-tasks-to-hub', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${TEST_API_KEY}` },
       body: JSON.stringify({
         tasks: [{
           id: 'mobile_xyz',
@@ -809,7 +810,7 @@ describe('Phase 1.4 — mobile dedup includes project_id', () => {
 
     const req = new Request('https://example.com/api/sync/mobile-tasks-to-hub', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${TEST_API_KEY}` },
       body: JSON.stringify({
         tasks: [{ id: 'mobile_dup', title: 'dup title', assignee: 'nick-ingraham', project_id: 'proj_C' }],
       }),

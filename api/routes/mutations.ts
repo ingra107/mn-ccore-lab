@@ -22,7 +22,7 @@
 // write path through this endpoint as part of A3 ship.
 
 import type { AuthUser, Env, ValidationFlags } from '../helpers';
-import { json, error, generateId, assertProtectedNotNull, getValidationFlags, safeTaskRow, safeRow, projectRefToCanonical } from '../helpers';
+import { json, error, generateId, assertProtectedNotNull, getValidationFlags, safeTaskRow, safeRow, projectRefToCanonical, isPiRequest } from '../helpers';
 import { FK_SLUG_FIELDS } from '../lib/task-cols';
 import { nowInstant } from '../lib/time';
 import { assertEnumDomain, assertCompletionTriad } from '../lib/enum-domains';
@@ -40,6 +40,40 @@ const ALLOWED_TABLES = new Set([
 ]);
 
 const ALLOWED_OPS = new Set(['insert', 'update', 'delete', 'append']);
+
+// M32 (2026-05-28): per-table column support for applyDelete.
+//
+// applyDelete issues:
+//   UPDATE <table> SET deleted_at = datetime('now'), updated_at = datetime('now'), ...
+//
+// Not all ALLOWED_TABLES carry both columns. Verified against live D1 schema:
+//
+//   Has deleted_at + updated_at  → full soft-delete SQL works as-is
+//   Has deleted_at, no updated_at → omit updated_at from the SET clause
+//   Has neither                   → reject op=delete with a clear error
+//
+// Columns confirmed present per PRAGMA table_info on prod D1 (2026-05-28):
+//
+//   deleted_at only (no updated_at):  day_capacity, submission_events
+//   neither:  project_state_log, manuscript_revisions, deadline_dependencies,
+//             conference_submissions, regulatory_items, project_documents
+
+// Tables that support soft-delete (have deleted_at column).
+const DELETE_CAPABLE_TABLES = new Set([
+  'tasks', 'projects', 'inbox_events',
+  'sessions', 'agent_knowledge', 'memory_facts', 'pomodoro_sessions', 'decisions',
+  'kg_entities', 'kg_relations', 'kg_relation_type_registry', 'trajectories',
+  // These have deleted_at but no updated_at — see TABLES_WITH_UPDATED_AT
+  'day_capacity', 'submission_events',
+]);
+
+// Subset of DELETE_CAPABLE_TABLES that also carry updated_at.
+// applyDelete stamps updated_at only for tables in this set.
+const TABLES_WITH_UPDATED_AT = new Set([
+  'tasks', 'projects', 'inbox_events',
+  'sessions', 'agent_knowledge', 'memory_facts', 'pomodoro_sessions', 'decisions',
+  'kg_entities', 'kg_relations', 'kg_relation_type_registry', 'trajectories',
+]);
 
 // Per-table primary key column lookup.
 // Tables with PK = 'id' (tasks, projects, inbox_events, project_state_log,
@@ -324,6 +358,19 @@ export async function handleMutations(
   user: AuthUser,
   env: Env,
 ): Promise<Response> {
+  // M07 (2026-05-28): PI/API-key gate — same class as the projects.ts security
+  // fix (ea90492a). /api/mutations is the PB→Hub canonical write path; it must
+  // only be accessible to the PI or a valid PB_API_KEY bearer. Any CF-Access-
+  // authed team member could otherwise POST arbitrary mutations against tasks and
+  // projects, bypassing the per-route PI gates that protect PB-owned rows.
+  // Mirrors handleSyncBulkInboxEvents (inbox-events.ts:111) and handleInboxEvents
+  // (inbox-events.ts:40). PB scripts use Bearer PB_API_KEY → isPiRequest returns
+  // true via validateApiKey; Hub-UI routes that originate writes call applyMutation
+  // directly (not through this endpoint) so they are unaffected.
+  if (!(await isPiRequest(request, env))) {
+    return error('Forbidden — PI access only', 403);
+  }
+
   let body: { mutations?: Mutation[] };
   try {
     body = await request.json();
@@ -836,7 +883,13 @@ export async function applyUpdate(env: Env, mut: Mutation, user: AuthUser, flags
 }
 
 export async function applyDelete(env: Env, mut: Mutation, user: AuthUser): Promise<MutationResult> {
-  // Soft delete via deleted_at (the 5 domain tables all support it post-W2a).
+  // Soft-delete via deleted_at. Not all ALLOWED_TABLES carry deleted_at — guard
+  // here so a delete on a non-capable table returns a clear error instead of a
+  // D1_ERROR at runtime. See DELETE_CAPABLE_TABLES / TABLES_WITH_UPDATED_AT.
+  // (M32, 2026-05-28: stale "5 domain tables" comment corrected; guard added.)
+  if (!DELETE_CAPABLE_TABLES.has(mut.table)) {
+    return mutErr(mut.mutation_id, `op=delete not supported on ${mut.table} (no deleted_at column)`);
+  }
   // Idempotent: already-deleted returns accepted.
   const current = await readCanonical(env, mut.table, mut.record_id);
   if (!current) {
@@ -910,8 +963,12 @@ export async function applyDelete(env: Env, mut: Mutation, user: AuthUser): Prom
     }
   }
 
+  // Stamp updated_at only for tables that carry the column (M32).
+  const setClause = TABLES_WITH_UPDATED_AT.has(mut.table)
+    ? `deleted_at = datetime('now'), updated_at = datetime('now'), last_mutation_id = ?`
+    : `deleted_at = datetime('now'), last_mutation_id = ?`;
   await env.DB.prepare(
-    `UPDATE ${mut.table} SET deleted_at = datetime('now'), updated_at = datetime('now'), last_mutation_id = ? WHERE ${deleteWhere}`
+    `UPDATE ${mut.table} SET ${setClause} WHERE ${deleteWhere}`
   ).bind(...deleteVals).run();
 
   const r = await readCanonical(env, mut.table, mut.record_id);
@@ -987,13 +1044,15 @@ export async function applyMutation(
  *      movement timestamp (e.g. from an even more recent completion), the CASE
  *      preserves the existing value.
  *
- *   3. Pull-back correctness: brain.db's hub.py pull-back (~line 1817) gates on
- *      `if d1_v and d1_v != existing` for last_meaningful_movement. After this
- *      write, D1 will carry a truthy value → pull correctly propagates to
- *      brain.db. NOTE: stale_active_since clearing (NULL) does NOT propagate via
- *      the current pull-back (truthy gate skips NULL). A companion fix to
- *      hub.py::_w1col loop is REQUIRED for full symmetry — see STATUS:
- *      scope-question note in the session response.
+ *   3. Pull-back correctness: brain.db's hub.py pull-back uses key-presence
+ *      propagation for W1 fields (hub.py:2502-2514). The pull-back iterates
+ *      `if field_key in item:` — both non-null values AND explicit NULLs are
+ *      applied when the key is present in the Hub row. stale_active_since = NULL
+ *      written here IS propagated to brain.db on the next pull because the D1
+ *      row carries the key with a null value and the pull-back's key-presence
+ *      gate does not skip nulls. (M45 doc-fix 2026-05-28: the prior note claimed
+ *      NULL could not pull back; that was written before hub.py:2502-2514 shipped
+ *      the key-presence gate.)
  */
 async function advanceProjectMovement(
   env: Env,

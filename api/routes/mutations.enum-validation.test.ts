@@ -20,6 +20,8 @@ import { enumFieldsFor, canonicalizeValue, assertEnumDomain, assertCompletionTri
 import enumDomains from '../enum-domains.generated.json'
 
 const fakeUser = { email: 'test@example.com', role: 'admin' } as AuthUser
+// M07: handleMutations now requires PI/API-key auth.
+const TEST_API_KEY = 'test-enum-validation-api-key'
 
 // ── Stub DB with lab_settings flags + tasks/projects store ──────────────────
 
@@ -149,14 +151,17 @@ function makeStubDB(opts: {
 }
 
 function envWith(db: Env['DB']): Env {
-  return { DB: db } as unknown as Env
+  return { DB: db, PB_API_KEY: TEST_API_KEY } as unknown as Env
 }
 
 async function runMutation(env: Env, mut: Mutation) {
   const req = new Request('https://example.com/api/mutations', {
     method: 'POST',
     body: JSON.stringify({ mutations: [mut] }),
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${TEST_API_KEY}`,
+    },
   })
   const resp = await handleMutations(req, fakeUser, env)
   const body = (await resp.json()) as { results: Array<Record<string, unknown>> }
