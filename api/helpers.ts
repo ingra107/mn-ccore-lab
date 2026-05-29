@@ -442,9 +442,15 @@ export function assertProtectedNotNull(
  *   hub_validate_completion_tombstone
  *   hub_dedup_adoptable
  *
- * DEPLOY POSTURE: seeded OFF in prod. Validators are dormant (zero behavior
- * change) until each flag is flipped ON via a single UPDATE lab_settings, after
- * the read-only Step-0 prod-D1 audit confirms zero un-aliasable values.
+ * DEPLOY POSTURE (original rollout): seeded OFF in prod; validators dormant
+ * (zero behavior change) until each flag is flipped ON via a single UPDATE
+ * lab_settings, after the read-only Step-0 prod-D1 audit confirms zero
+ * un-aliasable values.
+ * STATUS 2026-05-29 (verified via direct D1 read of lab_settings): ALL FOUR
+ * flags are now ON in prod (hub_validate_enums, hub_validate_conflict_hash,
+ * hub_validate_completion_tombstone, hub_dedup_adoptable = '1'). The validators
+ * are LIVE — do NOT assume dormant. (Read the lab_settings row, not this
+ * default, to know real state: the default below is the fail-safe, not the value.)
  */
 export interface ValidationFlags {
   enums: boolean;
