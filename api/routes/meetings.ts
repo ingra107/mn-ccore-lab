@@ -369,9 +369,23 @@ function normalizeMeetingTitle(title: string): string {
     .replace(/\s+/g, ' ')
 }
 
-// POST /api/meetings — create meeting (dedup by date+normalized title)
+// POST /api/meetings — create meeting (dedup by date+normalized title).
+//
+// Slice 4 (2026-05-29): the PB meeting-debrief pipeline POSTs the structured
+// `notes` (and optional `decisions`) summary here. Both columns already exist
+// in schema-v2.sql (no migration). Two paths persist them now:
+//   - INSERT path: notes/decisions land on first push.
+//   - DEDUP (upsert) path: when a meeting on the same (date, normalized title)
+//     already exists, a re-push that CARRIES a summary UPDATEs notes/decisions
+//     so a summary generated AFTER the first (summary-less) push refreshes the
+//     row. We never clobber an existing non-null value with a null payload
+//     (COALESCE-style guard in SQL), so a bare insert-only re-push is a no-op
+//     on those fields.
 export async function handleCreateMeeting(request: Request, user: AuthUser, env: Env): Promise<Response> {
-  const body = await request.json() as { date: string; title: string; type?: string; attendees?: string[] };
+  const body = await request.json() as {
+    date: string; title: string; type?: string; attendees?: string[];
+    notes?: string | null; decisions?: string | null;
+  };
   if (!body.date || !body.title) return error('date and title required', 400);
 
   const normalizedTitle = normalizeMeetingTitle(body.title);
@@ -386,13 +400,33 @@ export async function handleCreateMeeting(request: Request, user: AuthUser, env:
     (m) => normalizeMeetingTitle(m.title) === normalizedTitle,
   );
   if (existing) {
+    // Upsert: if the re-push carries notes/decisions, refresh the row. The
+    // COALESCE-on-null-payload pattern means a null/absent field never wipes
+    // an existing value — only a provided (non-null) summary overwrites.
+    const hasNotes = body.notes !== undefined && body.notes !== null;
+    const hasDecisions = body.decisions !== undefined && body.decisions !== null;
+    if (hasNotes || hasDecisions) {
+      await env.DB.prepare(
+        `UPDATE meetings
+            SET notes = COALESCE(?, notes),
+                decisions = COALESCE(?, decisions),
+                updated_at = datetime('now')
+          WHERE id = ?`
+      ).bind(hasNotes ? body.notes : null, hasDecisions ? body.decisions : null, existing.id).run();
+      const refreshed = await env.DB.prepare('SELECT * FROM meetings WHERE id = ?').bind(existing.id).first();
+      return json({ data: refreshed }, 200);
+    }
     return json({ data: existing }, 200);
   }
 
   const id = `mtg-${body.date}-${generateId().slice(0, 8)}`;
   await env.DB.prepare(
-    'INSERT INTO meetings (id, date, title, type, attendees, status) VALUES (?, ?, ?, ?, ?, ?)'
-  ).bind(id, body.date, body.title, body.type ?? 'biweekly', body.attendees ? JSON.stringify(body.attendees) : null, 'upcoming').run();
+    'INSERT INTO meetings (id, date, title, type, attendees, notes, decisions, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+  ).bind(
+    id, body.date, body.title, body.type ?? 'biweekly',
+    body.attendees ? JSON.stringify(body.attendees) : null,
+    body.notes ?? null, body.decisions ?? null, 'upcoming',
+  ).run();
 
   await logActivity(env, 'meeting', `Created meeting: "${body.title}" on ${body.date}`, user.email, id, 'meeting');
 
