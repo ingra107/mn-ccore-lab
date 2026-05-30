@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 import { CheckCircle2, Plus, AlertTriangle, TrendingUp, Users, FolderKanban, Lightbulb, FileText, ChevronLeft, ChevronRight, Calendar, Circle, BarChart3, Download, Copy } from 'lucide-react'
 import PageHeader from '../../components/PageHeader'
+import PageContainer from '../../components/PageContainer'
 import MetricCard from '../../components/MetricCard'
 import { CardSkeleton } from '../../components/LoadingSkeleton'
 import QueryState from '../../components/QueryState'
@@ -324,7 +325,7 @@ export default function AnalyticsPage() {
       : `${projects.length} projects, ${pendingTasks} active tasks`
 
   return (
-    <div>
+    <PageContainer>
       <PageHeader
         icon={<BarChart3 size={20} />}
         title="Lab Analytics"
@@ -778,6 +779,6 @@ export default function AnalyticsPage() {
       )}
 
       </QueryState>
-    </div>
+    </PageContainer>
   )
 }

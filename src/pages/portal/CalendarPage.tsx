@@ -327,7 +327,7 @@ function MonthView({ currentDate, events, denseWeek = false }: { currentDate: Da
             {week.map((cell, ci) => {
               if (cell.kind === 'fill') {
                 return (
-                  <div key={`fill-${wi}-${ci}`} className="min-h-[80px] border-b border-r" style={{ borderColor: 'var(--border-subtle)', backgroundColor: 'var(--hover-subtle)' }} />
+                  <div key={`fill-${wi}-${ci}`} className="md:min-h-[80px] border-b border-r" style={{ borderColor: 'var(--border-subtle)', backgroundColor: 'var(--hover-subtle)' }} />
                 )
               }
               const dateStr = cell.dateStr
@@ -348,7 +348,7 @@ function DayCellRender({ dateStr, today, dayEvents }: { dateStr: string; today: 
   const dayNum = parseInt(dateStr.split('-')[2])
   const isToday = dateStr === today
   return (
-    <div className="min-h-[80px] p-1.5 border-b border-r relative" style={{ borderColor: 'var(--border-subtle)', backgroundColor: isToday ? 'var(--teal-hover)' : 'var(--cream)', boxShadow: isToday ? 'inset 0 0 0 2px rgba(45,138,138,0.2)' : 'none' }}>
+    <div className="md:min-h-[80px] p-1.5 border-b border-r relative" style={{ borderColor: 'var(--border-subtle)', backgroundColor: isToday ? 'var(--teal-hover)' : 'var(--cream)', boxShadow: isToday ? 'inset 0 0 0 2px rgba(45,138,138,0.2)' : 'none' }}>
       <span className={`inline-flex items-center justify-center text-xs font-medium ${isToday ? 'rounded-full' : ''}`} style={{ width: isToday ? 24 : 'auto', height: isToday ? 24 : 'auto', color: isToday ? 'var(--ink-bright, #fff)' : 'var(--ink)', backgroundColor: isToday ? 'var(--teal-solid)' : 'transparent' }}>
         {dayNum}
       </span>
@@ -406,7 +406,7 @@ function WeekView({ weekStart, events }: { weekStart: Date; events: CalendarEven
         const dayEvents = eventsByDate.get(dateStr) || []
 
         return (
-          <div key={dateStr} className="rounded-lg border min-h-[300px]" style={{ borderColor: isToday ? 'var(--teal)' : 'var(--border-subtle)', backgroundColor: isToday ? 'var(--teal-hover)' : 'var(--cream)' }}>
+          <div key={dateStr} className="rounded-lg border md:min-h-[300px]" style={{ borderColor: isToday ? 'var(--teal)' : 'var(--border-subtle)', backgroundColor: isToday ? 'var(--teal-hover)' : 'var(--cream)' }}>
             {/* Day header */}
             <div className="px-2 py-2 border-b text-center" style={{ borderColor: 'var(--border-subtle)' }}>
               <div className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>{dayNames[i]}</div>

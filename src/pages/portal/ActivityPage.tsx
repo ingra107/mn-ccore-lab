@@ -11,6 +11,7 @@ import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 import { getPersonInfo, getMemberBySlug, directors } from '../../data/team'
 import { formatRelativeTime, formatMediumDate, localDateKey } from '../../lib/dateUtils'
 import PageHeader from '../../components/PageHeader'
+import PageContainer from '../../components/PageContainer'
 import EmptyState from '../../components/EmptyState'
 import InlineSelect from '../../components/InlineSelect'
 import { staggerContainer, staggerItem } from '../../lib/animations'
@@ -102,7 +103,7 @@ export default function ActivityPage() {
   useEffect(() => { setFocusedIndex(-1) }, [filterTypes, filterPerson])
 
   return (
-    <div>
+    <PageContainer>
       <PageHeader
         icon={<ActivityIcon size={20} />}
         title="Activity"
@@ -259,7 +260,7 @@ export default function ActivityPage() {
           />
         )}
       </div>
-    </div>
+    </PageContainer>
   )
 }
 

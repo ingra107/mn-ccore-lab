@@ -8,6 +8,7 @@ import SmartCompose from '../../components/SmartCompose'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CardSkeleton } from '../../components/LoadingSkeleton'
 import PageHeader from '../../components/PageHeader'
+import PageContainer from '../../components/PageContainer'
 import EmptyStateComponent from '../../components/EmptyState'
 import ToggleButton from '../../components/ToggleButton'
 import Avatar from '../../components/Avatar'
@@ -65,7 +66,7 @@ export default function AskTheLab() {
   const openCount = questions.filter((q) => q.status === 'open').length
 
   return (
-    <div>
+    <PageContainer>
       <PageHeader
         icon={<HelpCircle size={20} />}
         title="Ask the Lab"
@@ -135,7 +136,7 @@ export default function AskTheLab() {
 
       {/* Create modal */}
       <CreateQuestionModal open={showCreate} onClose={() => setShowCreate(false)} />
-    </div>
+    </PageContainer>
   )
 }
 

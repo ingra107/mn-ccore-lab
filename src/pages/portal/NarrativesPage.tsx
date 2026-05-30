@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { BookOpen, GitBranch, FileText, Search } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import PageHeader from '../../components/PageHeader'
+import PageContainer from '../../components/PageContainer'
 import EmptyState from '../../components/EmptyState'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
 import { useNarratives } from '../../hooks/useApiData'
@@ -49,7 +50,7 @@ export default function NarrativesPage() {
   useListKeyboardNav({ itemCount: filteredNarratives.length, focusedIndex, setFocusedIndex })
 
   return (
-    <div>
+    <PageContainer>
       <PageHeader
         icon={<BookOpen size={20} />}
         title="Research Narratives"
@@ -191,6 +192,6 @@ export default function NarrativesPage() {
           ))}
         </div>
       )}
-    </div>
+    </PageContainer>
   )
 }
