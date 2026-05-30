@@ -9,6 +9,7 @@ import {
   AlertTriangle, Calendar,
 } from 'lucide-react'
 import PageHeader from '../../components/PageHeader'
+import PageContainer from '../../components/PageContainer'
 import EmptyState from '../../components/EmptyState'
 import { TextSkeleton } from '../../components/LoadingSkeleton'
 import { formatBrandName } from '../../components/BrandName'
@@ -468,7 +469,7 @@ export default function SearchPage() {
   }
 
   return (
-    <div>
+    <PageContainer>
       <PageHeader icon={<Search size={20} />} title="Search" subtitle="Find anything across the lab" />
 
       {/* S-04: sticky search input + chips so input stays visible during scroll. */}
@@ -800,7 +801,7 @@ export default function SearchPage() {
 
       {/* Suppress lint use of submittedQueries — kept for future analytics surfaces. */}
       <span style={{ display: 'none' }}>{submittedQueries.size}</span>
-    </div>
+    </PageContainer>
   )
 }
 

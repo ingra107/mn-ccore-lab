@@ -6,6 +6,7 @@ import type { PBSessionRow } from '../../hooks/useApiData'
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 import { formatMediumDate, localDateKey } from '../../lib/dateUtils'
 import PageHeader from '../../components/PageHeader'
+import PageContainer from '../../components/PageContainer'
 import EmptyState from '../../components/EmptyState'
 import InlineSelect from '../../components/InlineSelect'
 import { staggerContainer, staggerItem } from '../../lib/animations'
@@ -263,7 +264,7 @@ export default function SessionHistory() {
   const isLoading = sessionsLoading || statsLoading
 
   return (
-    <div>
+    <PageContainer>
       <PageHeader
         icon={<History size={20} />}
         title="Session History"
@@ -566,6 +567,6 @@ export default function SessionHistory() {
           </span>
         </div>
       )}
-    </div>
+    </PageContainer>
   )
 }

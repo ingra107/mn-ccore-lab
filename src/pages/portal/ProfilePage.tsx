@@ -5,6 +5,7 @@
 
 import { useState, useEffect } from 'react'
 import { Navigate, Link } from 'react-router-dom'
+import { PATHS } from '../../constants/paths'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { User, Save, Calendar as CalendarIcon, Settings as SettingsIcon, ExternalLink } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
@@ -113,7 +114,7 @@ export default function ProfilePage() {
   })
 
   if (authLoading) return <TextSkeleton lines={6} />
-  if (!isAuthenticated) return <Navigate to="/portal/dashboard" replace />
+  if (!isAuthenticated) return <Navigate to={PATHS.dashboard} replace />
   if (!slug) {
     return (
       <div className="content-container">
@@ -168,7 +169,7 @@ export default function ProfilePage() {
               </span>
             ) : null}
             <Link
-              to={`/portal/team/${slug}`}
+              to={PATHS.teamMember(slug)}
               className="inline-flex items-center gap-1 text-[11px]"
               style={{ color: 'var(--teal)' }}
             >
@@ -224,7 +225,7 @@ export default function ProfilePage() {
       {/* Settings link */}
       <section>
         <Link
-          to="/portal/settings"
+          to={PATHS.settings}
           className="inline-flex items-center gap-2 text-xs"
           style={{ color: 'var(--teal)' }}
         >

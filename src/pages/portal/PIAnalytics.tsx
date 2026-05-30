@@ -32,6 +32,7 @@ import {
   Copy,
 } from 'lucide-react'
 import PageHeader from '../../components/PageHeader'
+import PageContainer from '../../components/PageContainer'
 import MetricCard from '../../components/MetricCard'
 import { CardSkeleton } from '../../components/LoadingSkeleton'
 import QueryState from '../../components/QueryState'
@@ -344,7 +345,7 @@ export default function PIAnalytics() {
   }
 
   return (
-    <div>
+    <PageContainer>
       <PageHeader
         icon={<Shield size={20} />}
         title="PI Dashboard"
@@ -903,6 +904,6 @@ export default function PIAnalytics() {
       </div>
 
       </QueryState>
-    </div>
+    </PageContainer>
   )
 }

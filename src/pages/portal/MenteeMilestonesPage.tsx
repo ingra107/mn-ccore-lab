@@ -5,6 +5,7 @@ import { GraduationCap, Plus, ChevronDown, ChevronRight, X, Check, AlertTriangle
 import DensityToggle, { useDensity, densityClass } from '../../components/DensityToggle'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
 import PageHeader from '../../components/PageHeader'
+import PageContainer from '../../components/PageContainer'
 import EmptyState from '../../components/EmptyState'
 import Avatar from '../../components/Avatar'
 import InlineSelect from '../../components/InlineSelect'
@@ -181,7 +182,7 @@ export default function MenteeMilestonesPage() {
   })
 
   return (
-    <div>
+    <PageContainer>
       <PageHeader
         icon={<GraduationCap size={20} />}
         title="Mentee Milestones"
@@ -456,7 +457,7 @@ export default function MenteeMilestonesPage() {
       <AnimatePresence>
         {showAddModal && <AddMilestoneModal menteeSlugs={menteeSlugsDerived} onClose={() => setShowAddModal(false)} />}
       </AnimatePresence>
-    </div>
+    </PageContainer>
   )
 }
 

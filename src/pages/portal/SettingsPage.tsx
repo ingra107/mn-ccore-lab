@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { Link } from 'react-router-dom'
+import { PUBLIC_PATHS } from '../../constants/paths'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import {
@@ -203,7 +204,7 @@ export default function SettingsPage() {
 
       {/* Team Directory shortcut */}
       <Link
-        to="/team"
+        to={PUBLIC_PATHS.publicTeam}
         className="inline-flex items-center gap-2 mb-4 px-4 py-2.5 rounded-lg border transition-colors hover:bg-black/5 dark:hover:bg-white/5"
         style={{
           borderColor: 'var(--border-subtle)',
@@ -386,7 +387,7 @@ export default function SettingsPage() {
             </p>
           </div>
           <Link
-            to="/team"
+            to={PUBLIC_PATHS.publicTeam}
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border transition-colors hover:bg-black/5 dark:hover:bg-white/5"
             style={{
               borderColor: 'var(--border-subtle)',

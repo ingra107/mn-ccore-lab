@@ -7,6 +7,7 @@ import {
 } from 'lucide-react'
 import { staggerContainer, staggerItem } from '../../lib/animations'
 import PageHeader from '../../components/PageHeader'
+import PageContainer from '../../components/PageContainer'
 import EmptyState from '../../components/EmptyState'
 import MetricCard from '../../components/MetricCard'
 import InlineSelect from '../../components/InlineSelect'
@@ -115,7 +116,7 @@ export default function MeetingNotesPage() {
   if (isLoading) return <TableSkeleton rows={5} cols={3} />
 
   return (
-    <div>
+    <PageContainer>
       <PageHeader
         icon={<FileText size={20} />}
         title="Meeting Transcripts"
@@ -223,7 +224,7 @@ export default function MeetingNotesPage() {
 
       {/* Upload/Paste Modal */}
       {showCreate && <TranscriptModal onClose={() => setShowCreate(false)} meetings={meetings} />}
-    </div>
+    </PageContainer>
   )
 }
 
