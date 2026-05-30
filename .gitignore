@@ -62,3 +62,15 @@ review/post-*-*/
 .stitch/.project-id
 .stitch/node_modules/
 .stitch/package-lock.json
+
+# Local scratch + machine-specific generated output (2026-05-30)
+Scratch/
+Archive/Scratch/
+__pycache__/
+review/audit-results.json
+review/test-summary.txt
+scripts/fixtures/
+scripts/seed/_local-*.sql
+scripts/_incremental-migrate.py
+
+backups/
