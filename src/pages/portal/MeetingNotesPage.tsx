@@ -19,6 +19,22 @@ import { PATHS } from '../../constants/paths'
 
 const HOWTO_STORAGE_KEY = 'mnccore-meeting-transcripts-howto-expanded'
 
+// schema-v72: parse the JSON `tags` array (discussed projects/topics) off a
+// meeting row. Tolerant of null / malformed values.
+function parseTags(tags: string | null | undefined): string[] {
+  if (!tags) return []
+  try {
+    const v = JSON.parse(tags)
+    return Array.isArray(v) ? v.filter((t): t is string => typeof t === 'string') : []
+  } catch {
+    return []
+  }
+}
+
+function tagLabel(slug: string): string {
+  return slug.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+}
+
 function HowTranscriptsWorkPanel({ collapsedByDefault }: { collapsedByDefault: boolean }) {
   const [expanded, setExpanded] = useState<boolean>(() => {
     try {
@@ -85,6 +101,7 @@ export default function MeetingNotesPage() {
     return meetings.filter(m =>
       m.title.toLowerCase().includes(q) ||
       (m.notes || '').toLowerCase().includes(q) ||
+      parseTags(m.tags).some(t => t.toLowerCase().includes(q)) ||
       m.date.includes(q)
     )
   }, [meetings, searchQuery])
@@ -161,6 +178,25 @@ export default function MeetingNotesPage() {
                   <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
                     {formatMediumDate(m.date)}
                   </span>
+                  {/* schema-v72: discussed-project / topic tag chips */}
+                  {parseTags(m.tags).length > 0 && (
+                    <span className="flex flex-wrap items-center gap-1 mt-1">
+                      {parseTags(m.tags).slice(0, 4).map((t) => (
+                        <span
+                          key={t}
+                          className="text-[9px] px-1.5 py-0.5 rounded-full truncate max-w-[10rem]"
+                          style={{ color: 'var(--teal)', backgroundColor: 'var(--teal-active)' }}
+                        >
+                          {tagLabel(t)}
+                        </span>
+                      ))}
+                      {parseTags(m.tags).length > 4 && (
+                        <span className="text-[9px]" style={{ color: 'var(--slate)', opacity: 0.75 }}>
+                          +{parseTags(m.tags).length - 4}
+                        </span>
+                      )}
+                    </span>
+                  )}
                 </div>
                 {m.notes ? (
                   <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ color: 'var(--green)', backgroundColor: 'var(--green-hover)' }}>

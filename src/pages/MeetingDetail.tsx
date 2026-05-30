@@ -435,9 +435,14 @@ export default function MeetingDetail() {
           <div style={{ height: '1px', background: 'linear-gradient(to right, var(--gold), transparent)', opacity: 0.85, marginTop: '1.5rem' }} />
         </motion.div>
 
-        {/* Projects discussed — derived from action items' project_id */}
+        {/* Projects discussed — schema-v72 `tags` (everything the meeting
+            touched, set by the PB push) when present; else fall back to the
+            action items' project_id. */}
         {(() => {
-          const projectSlugs = [...new Set(actionItems.filter(a => a.project_id).map(a => a.project_id!))]
+          const tagSlugs = parseJsonArray(meeting.tags)
+          const projectSlugs = tagSlugs.length > 0
+            ? tagSlugs
+            : [...new Set(actionItems.filter(a => a.project_id).map(a => a.project_id!))]
           if (projectSlugs.length === 0) return null
           return (
             <div className="flex items-center gap-2 mt-4 flex-wrap">

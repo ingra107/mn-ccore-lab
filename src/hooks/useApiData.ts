@@ -328,6 +328,9 @@ export interface MeetingRow {
   agenda: string | null
   notes: string | null
   decisions: string | null
+  // schema-v72: JSON array of the projects/topics this meeting discussed
+  // (the PB push sends every discussed-project slug; null on legacy rows).
+  tags: string | null
   status: string
   created_at: string
   updated_at: string
@@ -396,6 +399,7 @@ function staticToMeetingRows(): MeetingRow[] {
     agenda: JSON.stringify(m.agenda || []),
     notes: m.notes || null,
     decisions: JSON.stringify(m.decisions || []),
+    tags: null,
     status: m.date >= localDateKey() ? 'upcoming' : 'completed',
     created_at: m.date,
     updated_at: m.date,
@@ -473,6 +477,7 @@ export function useMeetingDetail(id: string) {
       agenda: JSON.stringify(staticMeeting.agenda || []),
       notes: staticMeeting.notes || null,
       decisions: JSON.stringify(staticMeeting.decisions || []),
+      tags: null,
       status: 'completed',
       created_at: staticMeeting.date,
       updated_at: staticMeeting.date,

@@ -1,0 +1,28 @@
+-- schema-v72-meetings-tags.sql (2026-05-29)
+-- Multi-tagging for meetings: a `tags` column holding a JSON array of the
+-- projects/topics a meeting discussed. Replaces the prior hardcoded
+-- "MN-CCORE: " title convention on the PB push path -- the meeting now carries
+-- the matched calendar title PLUS a structured `tags` array of every discussed
+-- project slug (NOT confidence-gated -- routing stays gated, tags reflect
+-- everything touched) and any topic keywords.
+--
+-- Single nullable TEXT column (JSON-encoded array, e.g. ["r03-...","mn-ccore"]).
+-- Purely additive, no default, no backfill -- existing rows read NULL until the
+-- PB pipeline re-pushes a summarized meeting. Reversible: column left inert on
+-- rollback (no destructive DROP).
+--
+-- Paired code changes (same deploy):
+--   - api/routes/meetings.ts: handleCreateMeeting destructures `tags`,
+--     JSON.stringify into the INSERT, COALESCE-upsert on the dedup path
+--     (null/absent never wipes existing tags -- mirrors notes/decisions).
+--   - PB: scripts/db/sync/aux_writers.py push_meetings sends `tags` + the
+--     matched calendar title; scripts/meetings/meeting_debrief.py threads the
+--     discussed-project slugs + title onto the ingest manifest entry.
+--
+-- Decision doc: Peripheral-Brain/Context/Decisions/2026-05-29-meeting-multi-tagging.md
+--
+-- APPLY (prod + test D1 -- HOLD for Nick, do NOT run from an agent):
+--   wrangler d1 execute mnccore-lab      --remote --file=api/schema-v72-meetings-tags.sql
+--   wrangler d1 execute mnccore-lab-test --remote --file=api/schema-v72-meetings-tags.sql
+
+ALTER TABLE meetings ADD COLUMN tags TEXT;

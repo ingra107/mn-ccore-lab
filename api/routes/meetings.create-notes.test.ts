@@ -50,22 +50,25 @@ function makeStatefulEnv(seed: Row[] = []): { env: Env; meetings: Row[] } {
         },
         run: async () => {
           if (upper.startsWith('INSERT INTO MEETINGS')) {
-            // INSERT (id, date, title, type, attendees, notes, decisions, status)
-            const [id, date, title, type, attendees, notes, decisions, status] = args
+            // INSERT (id, date, title, type, attendees, notes, decisions, tags, status)
+            const [id, date, title, type, attendees, notes, decisions, tags, status] = args
             meetings.push({
               id, date, title, type, attendees,
               notes: notes ?? null, decisions: decisions ?? null,
+              tags: tags ?? null,
               status, created_at: '2026-05-29T00:00:00Z', updated_at: '2026-05-29T00:00:00Z',
             })
             return { meta: { changes: 1 } }
           }
           if (upper.startsWith('UPDATE MEETINGS')) {
-            // UPDATE ... SET notes = COALESCE(?, notes), decisions = COALESCE(?, decisions), updated_at = ... WHERE id = ?
-            const [notesArg, decisionsArg, id] = args
+            // UPDATE ... SET notes = COALESCE(?, notes), decisions = COALESCE(?, decisions),
+            //               tags = COALESCE(?, tags), updated_at = ... WHERE id = ?
+            const [notesArg, decisionsArg, tagsArg, id] = args
             const row = meetings.find((m) => m.id === id)
             if (row) {
               if (notesArg !== null && notesArg !== undefined) row.notes = notesArg
               if (decisionsArg !== null && decisionsArg !== undefined) row.decisions = decisionsArg
+              if (tagsArg !== null && tagsArg !== undefined) row.tags = tagsArg
               row.updated_at = '2026-05-29T12:00:00Z'
               return { meta: { changes: 1 } }
             }
@@ -234,5 +237,111 @@ describe('handleCreateMeeting — Slice 4 notes/decisions persistence', () => {
     expect(res.status).toBe(200)
     expect(meetings).toHaveLength(1)
     expect(meetings[0].notes).toBe(existingNotes)
+  })
+})
+
+describe('handleCreateMeeting — schema-v72 tags (multi-tagging) persistence', () => {
+  it('persists tags as a JSON array on the INSERT path', async () => {
+    const { env, meetings } = makeStatefulEnv()
+    const tags = ['r03-decision-making-styles-of-medical-trainees', 'mn-ccore', 'k23-aims']
+    const res = await handleCreateMeeting(
+      makeRequest({
+        date: '2026-05-29',
+        title: 'Nick / Adams 1:1', // real calendar title, NOT "MN-CCORE: …"
+        type: 'biweekly',
+        tags,
+      }),
+      makeUser(), env,
+    )
+    const body = await res.json() as { data: Row }
+
+    expect(res.status).toBe(201)
+    // Stored JSON-encoded (mirrors the attendees column shape).
+    expect(meetings[0].tags).toBe(JSON.stringify(tags))
+    expect(JSON.parse(body.data.tags as string)).toEqual(tags)
+    // And the title is the calendar title, not a hardcoded prefix.
+    expect(body.data.title).toBe('Nick / Adams 1:1')
+  })
+
+  it('INSERT with absent tags persists null (no array)', async () => {
+    const { env, meetings } = makeStatefulEnv()
+    const res = await handleCreateMeeting(
+      makeRequest({ date: '2026-05-29', title: 'Bare Meeting' }),
+      makeUser(), env,
+    )
+    expect(res.status).toBe(201)
+    expect(meetings[0].tags).toBeNull()
+  })
+
+  it('UPDATEs tags on the dedup path — late tagging refreshes the row', async () => {
+    // First push (note written before extraction): no tags yet.
+    const { env, meetings } = makeStatefulEnv()
+    await handleCreateMeeting(
+      makeRequest({ date: '2026-05-29', title: 'Lab Sync', type: 'biweekly' }),
+      makeUser(), env,
+    )
+    expect(meetings).toHaveLength(1)
+    expect(meetings[0].tags).toBeNull()
+
+    // Second push (same normalized title) now carries the discussed-project tags.
+    const tags = ['mn-ccore', 'r03-decision-making-styles-of-medical-trainees']
+    const res = await handleCreateMeeting(
+      makeRequest({ date: '2026-05-29', title: 'lab  sync', tags }),
+      makeUser(), env,
+    )
+    const body = await res.json() as { data: Row }
+
+    expect(res.status).toBe(200)
+    expect(meetings).toHaveLength(1) // no duplicate
+    expect(JSON.parse(meetings[0].tags as string)).toEqual(tags)
+    expect(JSON.parse(body.data.tags as string)).toEqual(tags)
+  })
+
+  it('dedup re-push with absent tags does NOT wipe existing tags', async () => {
+    const existingTags = JSON.stringify(['mn-ccore', 'k23-aims'])
+    const { env, meetings } = makeStatefulEnv([
+      {
+        id: 'mtg-2026-05-29-tag00001',
+        date: '2026-05-29',
+        title: 'Lab Sync',
+        notes: 'kept notes',
+        decisions: null,
+        tags: existingTags,
+        status: 'upcoming',
+      },
+    ])
+    // Re-push carrying notes but NO tags — tags must survive untouched.
+    const res = await handleCreateMeeting(
+      makeRequest({ date: '2026-05-29', title: 'lab sync', notes: 'refreshed notes' }),
+      makeUser(), env,
+    )
+    const body = await res.json() as { data: Row }
+    expect(res.status).toBe(200)
+    expect(meetings).toHaveLength(1)
+    expect(meetings[0].tags).toBe(existingTags) // not clobbered
+    expect(meetings[0].notes).toBe('refreshed notes') // notes still refreshed
+    expect(body.data.tags).toBe(existingTags)
+  })
+
+  it('dedup re-push with EXPLICIT null tags still does not wipe existing tags', async () => {
+    const existingTags = JSON.stringify(['mn-ccore'])
+    const { env, meetings } = makeStatefulEnv([
+      {
+        id: 'mtg-2026-05-29-tag00002',
+        date: '2026-05-29',
+        title: 'Lab Sync',
+        notes: 'n',
+        decisions: null,
+        tags: existingTags,
+        status: 'upcoming',
+      },
+    ])
+    const res = await handleCreateMeeting(
+      makeRequest({ date: '2026-05-29', title: 'lab sync', tags: null }),
+      makeUser(), env,
+    )
+    expect(res.status).toBe(200)
+    expect(meetings).toHaveLength(1)
+    expect(meetings[0].tags).toBe(existingTags)
   })
 })

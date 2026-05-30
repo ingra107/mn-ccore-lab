@@ -381,12 +381,24 @@ function normalizeMeetingTitle(title: string): string {
 //     row. We never clobber an existing non-null value with a null payload
 //     (COALESCE-style guard in SQL), so a bare insert-only re-push is a no-op
 //     on those fields.
+//
+// Multi-tagging (schema-v72, 2026-05-29): the PB push also carries `tags` — a
+// JSON array of every project slug (+ topic keyword) the meeting discussed (NOT
+// confidence-gated; routing stays gated, tags reflect everything touched). It
+// is persisted exactly like notes/decisions: JSON.stringify'd into the INSERT
+// and COALESCE-upserted on the dedup path so a null/absent `tags` never wipes
+// an existing value. Column added by api/schema-v72-meetings-tags.sql.
 export async function handleCreateMeeting(request: Request, user: AuthUser, env: Env): Promise<Response> {
   const body = await request.json() as {
     date: string; title: string; type?: string; attendees?: string[];
-    notes?: string | null; decisions?: string | null;
+    notes?: string | null; decisions?: string | null; tags?: string[] | null;
   };
   if (!body.date || !body.title) return error('date and title required', 400);
+
+  // `tags` arrives as an array; persist as a JSON string (matches `attendees`).
+  // An explicit null / absent tags stays null so the COALESCE guard below can
+  // distinguish "no tags this push" from "wipe the tags".
+  const tagsJson = Array.isArray(body.tags) ? JSON.stringify(body.tags) : null;
 
   const normalizedTitle = normalizeMeetingTitle(body.title);
 
@@ -400,19 +412,26 @@ export async function handleCreateMeeting(request: Request, user: AuthUser, env:
     (m) => normalizeMeetingTitle(m.title) === normalizedTitle,
   );
   if (existing) {
-    // Upsert: if the re-push carries notes/decisions, refresh the row. The
+    // Upsert: if the re-push carries notes/decisions/tags, refresh the row. The
     // COALESCE-on-null-payload pattern means a null/absent field never wipes
-    // an existing value — only a provided (non-null) summary overwrites.
+    // an existing value — only a provided (non-null) summary/tags overwrites.
     const hasNotes = body.notes !== undefined && body.notes !== null;
     const hasDecisions = body.decisions !== undefined && body.decisions !== null;
-    if (hasNotes || hasDecisions) {
+    const hasTags = tagsJson !== null;
+    if (hasNotes || hasDecisions || hasTags) {
       await env.DB.prepare(
         `UPDATE meetings
             SET notes = COALESCE(?, notes),
                 decisions = COALESCE(?, decisions),
+                tags = COALESCE(?, tags),
                 updated_at = datetime('now')
           WHERE id = ?`
-      ).bind(hasNotes ? body.notes : null, hasDecisions ? body.decisions : null, existing.id).run();
+      ).bind(
+        hasNotes ? body.notes : null,
+        hasDecisions ? body.decisions : null,
+        hasTags ? tagsJson : null,
+        existing.id,
+      ).run();
       const refreshed = await env.DB.prepare('SELECT * FROM meetings WHERE id = ?').bind(existing.id).first();
       return json({ data: refreshed }, 200);
     }
@@ -421,11 +440,11 @@ export async function handleCreateMeeting(request: Request, user: AuthUser, env:
 
   const id = `mtg-${body.date}-${generateId().slice(0, 8)}`;
   await env.DB.prepare(
-    'INSERT INTO meetings (id, date, title, type, attendees, notes, decisions, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+    'INSERT INTO meetings (id, date, title, type, attendees, notes, decisions, tags, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
   ).bind(
     id, body.date, body.title, body.type ?? 'biweekly',
     body.attendees ? JSON.stringify(body.attendees) : null,
-    body.notes ?? null, body.decisions ?? null, 'upcoming',
+    body.notes ?? null, body.decisions ?? null, tagsJson, 'upcoming',
   ).run();
 
   await logActivity(env, 'meeting', `Created meeting: "${body.title}" on ${body.date}`, user.email, id, 'meeting');
