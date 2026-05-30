@@ -462,15 +462,28 @@ async function processOne(
   }
 
   // Idempotency: previously processed?
+  //
+  // M46 (2026-05-29): fetch `outcome` alongside the JSON so we can detect
+  // `dependency_failed` rows and re-evaluate rather than replaying the poison.
   const prior = await env.DB.prepare(
-    'SELECT original_response_json FROM processed_mutations WHERE mutation_id = ?'
-  ).bind(mut.mutation_id).first<{ original_response_json: string }>();
+    'SELECT outcome, original_response_json FROM processed_mutations WHERE mutation_id = ?'
+  ).bind(mut.mutation_id).first<{ outcome: string; original_response_json: string }>();
   if (prior) {
-    try {
-      return JSON.parse(prior.original_response_json) as MutationResult;
-    } catch {
-      // Manifest corruption -- shouldn't happen but never throw
-      return mutErr(mut.mutation_id, 'idempotency record unparseable');
+    // M46: if the cached verdict was `dependency_failed`, fall through and
+    // re-evaluate — the parent may have succeeded since this was first tried.
+    // recordProcessedAtomic will UPSERT to the new terminal outcome on success.
+    // ALL OTHER outcomes (accepted / merged_clean / conflict / error) replay
+    // verbatim — this preserves the v58 "deterministic verdict on retry"
+    // contract and the Bug-Y atomic claim for every non-transient outcome.
+    if (prior.outcome === 'dependency_failed') {
+      // fall through to dependency re-evaluation below
+    } else {
+      try {
+        return JSON.parse(prior.original_response_json) as MutationResult;
+      } catch {
+        // Manifest corruption -- shouldn't happen but never throw
+        return mutErr(mut.mutation_id, 'idempotency record unparseable');
+      }
     }
   }
 
@@ -1358,6 +1371,13 @@ function mutErr(mutation_id: string, reason: string): MutationResult {
   return { mutation_id, status: 'error', reason };
 }
 
+// Terminal statuses that can supersede a cached `dependency_failed` row.
+// `error` is intentionally excluded — a transient error should NOT overwrite
+// the `dependency_failed` record; a subsequent retry may still succeed.
+const TERMINAL_STATUSES = new Set<MutationResult['status']>([
+  'accepted', 'merged_clean', 'conflict',
+]);
+
 async function recordProcessedAtomic(
   env: Env, mut: Mutation, result: MutationResult,
 ): Promise<MutationResult | null> {
@@ -1384,6 +1404,33 @@ async function recordProcessedAtomic(
   const changes = (ins.meta?.changes as number | undefined) ?? 0;
   if (changes > 0) {
     return null; // we won; caller returns its own result
+  }
+
+  // M46 (2026-05-29): dependency_failed → terminal upgrade path.
+  //
+  // INSERT lost to DO NOTHING — either a concurrent race OR (the M46 case) a
+  // previously persisted `dependency_failed` row. If the existing row is
+  // `dependency_failed` AND our freshly-computed result is terminal, upgrade
+  // the row so future retries don't loop back to the early-return gate.
+  //
+  // The WHERE clause on `outcome='dependency_failed'` makes the UPDATE a
+  // no-op if a concurrent request already upgraded it — safe double-apply.
+  // `error` outcome intentionally excluded from TERMINAL_STATUSES; a
+  // transient compute error must not overwrite the `dependency_failed`
+  // record (a subsequent retry may succeed cleanly).
+  //
+  // Bug-Y invariant preserved: this path only fires when changes===0 AND
+  // the existing row is `dependency_failed`; a concurrent race on an
+  // `accepted`/`merged_clean`/`conflict` row is NOT upgraded — those rows
+  // remain write-once (DO NOTHING wins; we read-back their value below).
+  if (TERMINAL_STATUSES.has(result.status)) {
+    const upd = await env.DB.prepare(
+      `UPDATE processed_mutations SET outcome = ?, original_response_json = ?, processed_at = datetime('now') WHERE mutation_id = ? AND outcome = 'dependency_failed'`
+    ).bind(result.status, JSON.stringify(result), mut.mutation_id).run();
+    const upgraded = (upd.meta?.changes as number | undefined) ?? 0;
+    if (upgraded > 0) {
+      return null; // we upgraded the row; caller's result is now canonical
+    }
   }
 
   // Race lost: another request wrote the canonical processed_mutations row.

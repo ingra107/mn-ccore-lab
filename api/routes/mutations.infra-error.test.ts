@@ -126,7 +126,7 @@ describe('Layer-3 Hub-500 fix — per-item infra error catch', () => {
 
     const db = makeMockDb({
       poisonMutationId: mut2.mutation_id,
-      poisonSqlPattern: /SELECT original_response_json FROM processed_mutations/,
+      poisonSqlPattern: /SELECT .+ FROM processed_mutations/,
     })
     const env = makeEnv(db)
     const user = makeUser()
@@ -170,7 +170,7 @@ describe('Layer-3 Hub-500 fix — per-item infra error catch', () => {
     const mut = baseMut()
     const db = makeMockDb({
       poisonMutationId: mut.mutation_id,
-      poisonSqlPattern: /SELECT original_response_json FROM processed_mutations/,
+      poisonSqlPattern: /SELECT .+ FROM processed_mutations/,
     })
     const env = makeEnv(db)
     const user = makeUser()
