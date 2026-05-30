@@ -14,8 +14,10 @@
  * API write patterns as inspection.spec.ts (POST /api/tasks, POST /api/tasks/:id).
  */
 import { test, expect } from '@playwright/test'
+import { cleanupTestTasks, cleanupTestCommitments } from './test-cleanup'
 
-const BASE = 'https://mn-ccore-lab.pages.dev'
+// Honour the same env var as playwright.config.prod.ts.
+const BASE = process.env.PLAYWRIGHT_BASE_URL || 'https://mn-ccore-lab.pages.dev'
 
 test.describe('M5 — Workflow fields persist end-to-end', () => {
   let taskId: string
@@ -112,4 +114,17 @@ test.describe('M5 — Commitments to_slug persists', () => {
     expect(created, 'Commitment should be findable by to_slug query').toBeTruthy()
     expect(created?.to_slug, 'to_slug should persist as "graffy"').toBe('graffy')
   })
+})
+
+// ───────────────────────────────────────────────────────────────────
+// CLEANUP — Remove all M5_SMOKE_DELETE test fixtures after the suite.
+// ───────────────────────────────────────────────────────────────────
+test.afterAll(async ({ request }) => {
+  const [tasks, commitments] = await Promise.all([
+    cleanupTestTasks(request),
+    cleanupTestCommitments(request),
+  ])
+  if (tasks + commitments > 0) {
+    console.log(`[m5-smoke] Cleaned ${tasks} task(s), ${commitments} commitment(s) from Hub D1.`)
+  }
 })

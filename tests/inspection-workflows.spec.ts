@@ -18,10 +18,12 @@
  *             npx playwright test tests/inspection-workflows.spec.ts --grep "SYNC"
  */
 import { test, expect, type Page } from '@playwright/test'
-import { cleanupTestTasks } from './test-cleanup'
+import { cleanupTestTasks, cleanupTestMeetings, cleanupTestIdeas, cleanupTestDecisions } from './test-cleanup'
 import { P } from './helpers/paths'
 
-const BASE = 'https://mn-ccore-lab.pages.dev'
+// Honour PLAYWRIGHT_BASE_URL so test:smoke against a preview deploy targets
+// the preview, not hardcoded prod.
+const BASE = process.env.PLAYWRIGHT_BASE_URL || 'https://mn-ccore-lab.pages.dev'
 
 // ── Helpers ──────────────────────────────────────────────────────────
 
@@ -2094,9 +2096,18 @@ test.describe('API — New feature endpoints (schema v37+)', () => {
 })
 
 // ═══════════════════════════════════════════════════════════════════
-// CLEANUP — Delete all test-created tasks from Hub D1
+// CLEANUP — Delete all test-created rows from Hub D1
+// Covers tasks, meetings, ideas, and decisions created by this spec.
 // ═══════════════════════════════════════════════════════════════════
 test.afterAll(async ({ request }) => {
-  const deleted = await cleanupTestTasks(request)
-  if (deleted > 0) console.log(`Cleanup: deleted ${deleted} test tasks from Hub D1`)
+  const [tasks, meetings, ideas, decisions] = await Promise.all([
+    cleanupTestTasks(request),
+    cleanupTestMeetings(request),
+    cleanupTestIdeas(request),
+    cleanupTestDecisions(request),
+  ])
+  const total = tasks + meetings + ideas + decisions
+  if (total > 0) {
+    console.log(`[inspection-workflows] Cleaned ${tasks} task(s), ${meetings} meeting(s), ${ideas} idea(s), ${decisions} decision(s) from Hub D1.`)
+  }
 })

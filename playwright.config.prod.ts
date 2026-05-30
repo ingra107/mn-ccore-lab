@@ -20,11 +20,20 @@ import { defineConfig } from '@playwright/test'
  * (Phase 4 Task 22 Step 6) gates deploy on the historical ≥212-passed
  * baseline. Moving inspection to local-only would break that gate. It's
  * re-run ONCE per deploy, not on every dev cycle.
+ *
+ * NOTE: globalSetup (test-seed.ts) was removed 2026-05-30.
+ * test-seed.ts posted directly to https://mn-ccore-lab.pages.dev with only
+ * X-Test-Mode: true but without X-Test-Mode-Key, so the DB_TEST swap in
+ * api/index.ts never fired — every seeded row landed in the real prod DB.
+ * The inspection suite's own afterAll(cleanupTestTasks) only covered tasks,
+ * leaving projects/meetings/ideas/decisions permanently in prod.
+ * Fix: no pre-seeding on prod. globalTeardown cleans up whatever the tests
+ * themselves create (tasks, projects, meetings, ideas, decisions, commitments).
  */
 export default defineConfig({
   testDir: './tests',
   testMatch: ['**/tests/smoke.spec.ts', '**/tests/inspection.spec.ts'],
-  globalSetup: './tests/test-seed.ts',
+  globalTeardown: './tests/global-teardown.ts',
   timeout: 30_000,
   retries: 0,
   use: {

@@ -14,10 +14,12 @@
  * Score:      X passed / Y total = Z%
  */
 import { test, expect, type Page } from '@playwright/test'
-import { cleanupTestTasks } from './test-cleanup'
+import { cleanupTestTasks, cleanupTestIdeas, cleanupTestDecisions } from './test-cleanup'
 import { P } from './helpers/paths'
 
-const BASE = 'https://mn-ccore-lab.pages.dev'
+// Honour PLAYWRIGHT_BASE_URL so test:smoke against a preview deploy targets
+// the preview, not hardcoded prod.
+const BASE = process.env.PLAYWRIGHT_BASE_URL || 'https://mn-ccore-lab.pages.dev'
 
 // Helper: collect page errors (excluding known WebSocket issue)
 async function loadPage(page: Page, path: string) {
@@ -1574,9 +1576,18 @@ test.describe('VISUAL — Full page screenshots for visual regression', () => {
 })
 
 // ═══════════════════════════════════════════════════════════════════
-// CLEANUP — Delete all test-created tasks from Hub D1
+// CLEANUP — Delete all test-created rows from Hub D1
+// Covers tasks, ideas, and decisions created by this spec.
+// Projects and meetings are handled by globalTeardown (global-teardown.ts).
 // ═══════════════════════════════════════════════════════════════════
 test.afterAll(async ({ request }) => {
-  const deleted = await cleanupTestTasks(request)
-  if (deleted > 0) console.log(`Cleanup: deleted ${deleted} test tasks from Hub D1`)
+  const [tasks, ideas, decisions] = await Promise.all([
+    cleanupTestTasks(request),
+    cleanupTestIdeas(request),
+    cleanupTestDecisions(request),
+  ])
+  const total = tasks + ideas + decisions
+  if (total > 0) {
+    console.log(`[inspection] Cleaned ${tasks} task(s), ${ideas} idea(s), ${decisions} decision(s) from Hub D1.`)
+  }
 })
