@@ -1,0 +1,3 @@
+[submodule "pb-schema"]
+	path = pb-schema
+	url = ../pb-schema
