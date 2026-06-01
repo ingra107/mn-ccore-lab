@@ -146,6 +146,13 @@ below; OVERLAP items are noted against existing T2/T4 entries (codex added concr
 - **DH-2** ✅ DROPPED 2026-05-22 — verified generic `public/manifest.webmanifest` exists; no Pulse-
   specific kiosk manifest needed.
 
+### Round 6 — Task-UI consistency follow-ups (2026-06-01; P0–P2 shipped in commits `4ed8e657`/`b1f10a04`/`aa15f556`. These are the explicitly-tracked remainders — NOT "optional/deferred," they live here so they don't get lost.)
+
+- **DH-3** ⏳ *(M)* **Finish the §4 status-as-truth sweep.** ~85 UI sites still branch on `completed === 1 || status === 'done'` (the dual-check). Core surfaces now use `isTaskDone(t)` (`lib/taskGrouping`); sweep the rest for consistency. **Honest priority: hygiene, not a bug** — the dual-check works today; this is maintainability/consistency so future edits have one done-ness rule. Lowest-urgency of the four.
+- **DH-4** ⏳ *(S–M)* **Consolidate the due-label TEXT helper.** Three slightly-different label wordings exist: `DueChip`/`rowDueLabel` in `components/tasks/TaskRow.tsx` ("Nd ago"), `labelFor` in `components/DueLabel.tsx` ("Nd overdue"/"Yesterday"), `dueLabel` in `MyTasks/constants.ts`. Extract one `dueLabelText(due, overdue)` (in `lib/dateUtils.ts`) and call it from all three. The `/simplify` reuse + altitude agents flagged this as the top reuse finding (2026-06-01). Deferred at session-close because unifying the wording is a cross-surface visual change needing screenshot verification. **Real consistency win — do this one.**
+- **DH-5** ⏳ *(S)* **Post-deploy visual verification** of two P1 things I could NOT screenshot on the local seed: ProjectDetail **Key Links compact chips** (detail route doesn't resolve seeded slugs locally) + the editor **Due-date `noContainer` box**. Confirm on the deployed site after next deploy.
+- **DH-6** ⏳ *(S)* **Page-level empty-state consistency** (§5 leftover). Route any remaining ad-hoc "no X" page-level strings through `<EmptyState>`. Per-column "nothing here" lane hints are intentionally lightweight — leave those. Needs empty data to verify.
+
 ## T2 — UX & polish (during adoption; not blockers)
 
 - **UX-1** Brand primitives adoption (HermesMark on AskTheLab/MeetingDetail/notifications; HeartbeatDivider; EmptyStateArt). *(M)*

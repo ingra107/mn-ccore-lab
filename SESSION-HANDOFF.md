@@ -20,9 +20,12 @@ Executed the `review/MN-CCORE Lab Hub Design System (5)/design/` handoff (Round 
 ### ⚠️ Incident + lesson (shared-worktree concurrency)
 Mid-session a `git stash` (signature: `WIP→reset: moving to HEAD` at 07:02) — most likely a `git pull --autostash` triggered by the **concurrent second Claude session in this same working tree** — swept ~17 uncommitted files. Recovered by hand re-application + commit (no work lost; the dangling stash `1903677f` is redundant/safe to drop). **Lesson:** running two Claude sessions on one checkout shares one index/worktree — uncommitted edits are fragile. Mitigation: commit-per-chunk, or give the second session its own `git worktree`.
 
-### ▶ NEXT (optional)
-- Broader §4 sweep (~85 other harmless `completed`-dual-check UI sites) + consolidate the due-label text helper (TaskRow `DueChip` / `DueLabel` / MyTasks `dueLabel`) into one — deferred P1 debt.
-- Nothing deployed this session — task-UI is shipped to `main` only.
+### ▶ NEXT — tracked in WORKPLAN.md (NOT "optional" — see `## T1 — Design-handoff leftovers` → Round 6, items DH-3…DH-6)
+- **DH-4** *(do this one)* consolidate the due-label text helper (TaskRow `DueChip` / `DueLabel` / MyTasks `dueLabel` → one `dueLabelText`).
+- **DH-5** post-deploy visual verify of ProjectDetail Key Links chips + editor Due-date box (couldn't verify on local seed).
+- **DH-3** finish the §4 `isTaskDone` sweep across the ~85 remaining dual-check sites (hygiene, not a bug — lowest urgency).
+- **DH-6** page-level empty-state consistency pass.
+- **Deploy:** nothing deployed this session — task-UI is on `main` only. Check live-vs-main + decide (see the 2026-05-28 section below for the still-pending hub-hardening deploy + its validator activation).
 
 ---
 
