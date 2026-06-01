@@ -133,8 +133,17 @@ export default function Projects() {
   const [focusedIndex, setFocusedIndex] = useState(-1)
   const rowRefs = useRef<(HTMLDivElement | null)[]>([])
   type ProjectSortKey = 'title' | 'status' | 'stage' | 'pi' | 'category'
-  const [sortKey, setSortKey] = useState<ProjectSortKey>('stage')
+  const [sortKey, setSortKey] = useState<ProjectSortKey>('category')
   const [sortAsc, setSortAsc] = useState(true)
+
+  // Domain ordering for GROUP sort: Grants pinned first, then Research, then the rest alpha.
+  const DOMAIN_ORDER: Record<string, number> = {
+    'Grants': 0,
+    'Research': 1,
+    'Teaching': 2,
+    'Professional Development': 3,
+    'Personal': 4,
+  }
   const [pinnedSlugs, setPinnedSlugs] = useState<Set<string>>(() => {
     try { return new Set(JSON.parse(localStorage.getItem('pinned-projects') || '[]')) } catch { return new Set() }
   })
@@ -177,7 +186,14 @@ export default function Projects() {
           break
         }
         case 'pi': cmp = (a.pi || '').localeCompare(b.pi || ''); break
-        case 'category': cmp = (a.category || '').localeCompare(b.category || ''); break
+        case 'category': {
+          // Sort by domain (Grants first) then by category, then by title.
+          const domA = DOMAIN_ORDER[a.domain ?? ''] ?? 99
+          const domB = DOMAIN_ORDER[b.domain ?? ''] ?? 99
+          cmp = domA - domB
+          if (cmp === 0) cmp = (a.category || '').localeCompare(b.category || '')
+          break
+        }
       }
       if (cmp === 0) cmp = a.title.localeCompare(b.title)
       return sortAsc ? cmp : -cmp
@@ -412,14 +428,50 @@ export default function Projects() {
               >
                 {(() => {
                   let lastStage = ''
+                  let lastDomain = ''
                   return filtered.map((project, index) => {
                     const projectHealth = healthBySlug.get(project.slug)
                     const showStageHeader = project.stage !== lastStage
                     lastStage = project.stage ?? ''
+                    const thisDomain = project.domain ?? 'Other'
+                    const showDomainHeader = sortKey === 'category' && thisDomain !== lastDomain
+                    if (sortKey === 'category') lastDomain = thisDomain
                     const isFocused = focusedIndex === index
 
                     return (
                       <motion.div key={project.slug} variants={staggerItem} ref={setRowRef(index)}>
+                        {/* Domain group divider — shown when sorting by GROUP (domain-bucketed) */}
+                        {showDomainHeader && (
+                          <div
+                            className="flex items-center"
+                            style={{ padding: '20px 16px 8px', gap: 'var(--sp-sm)' }}
+                          >
+                            <span
+                              style={{
+                                fontSize: 'var(--label-size)',
+                                fontWeight: 'var(--label-weight)',
+                                color: thisDomain === 'Grants' ? 'var(--gold)' : 'var(--slate)',
+                                opacity: thisDomain === 'Grants' ? 1 : 0.55,
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.06em',
+                                flexShrink: 0,
+                              }}
+                            >
+                              — {thisDomain}
+                            </span>
+                            <span
+                              style={{
+                                fontSize: 'var(--label-size)',
+                                color: 'var(--slate)',
+                                opacity: 0.75,
+                                flexShrink: 0,
+                              }}
+                            >
+                              {filtered.filter((p) => (p.domain ?? 'Other') === thisDomain).length}
+                            </span>
+                            <div style={{ flex: 1, height: '1px', background: 'var(--border-subtle)' }} />
+                          </div>
+                        )}
                         {/* Stage group divider — minimal, just text */}
                         {showStageHeader && sortKey === 'stage' && (
                           <div

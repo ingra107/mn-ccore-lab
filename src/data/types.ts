@@ -111,6 +111,9 @@ export interface Project {
   published_year?: number | null
   doi?: string | null
   created_at?: string
+  // schema-v71: promoted from Peripheral Brain
+  domain?: string | null
+  next_action?: string | null
 }
 
 export interface Mentee {
