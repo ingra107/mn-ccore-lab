@@ -28,7 +28,7 @@ import { ListView } from './views/ListView'
 import { useTaskFilter } from './hooks/useTaskFilter'
 import { useSelection } from './hooks/useSelection'
 import {
-  todayKey, readPlannedToday,
+  todayKey, readPlannedToday, isTaskDone,
   type ViewMode, type GroupKey, type QuickViewKey, type FilterState, type FilterOption,
 } from './constants'
 import { localDateKey } from '../../lib/dateUtils'
@@ -197,7 +197,7 @@ export default function UnifiedMyTasks() {
   // 'complete' path as InlineDetail + the bulk bar; un-complete reopens via a
   // direct status/completed write (there is no bulk 'uncomplete' action).
   const onToggleComplete = useCallback((task: TaskRow) => {
-    const isDone = task.completed === 1 || task.status === 'done'
+    const isDone = isTaskDone(task)
     if (isDone) {
       updateTask.mutate({ id: task.id, fields: { status: 'todo', completed: 0 } }, {
         onSuccess: () => undoToast.showSuccess('Marked not done'),

@@ -64,6 +64,17 @@ export function withAlpha(color: string, pct: number): string {
   return `color-mix(in srgb, ${color} ${pct}%, transparent)`
 }
 
+/**
+ * Canonical done-ness (handoff §4). `status` is the single source of truth —
+ * derive done from `status === 'done'`, NOT the separate `completed` flag.
+ * `completed`/`completed_at` are still WRITTEN through the mutations for API /
+ * back-compat, but UI must not branch on both. One helper so every surface
+ * agrees on what "done" means.
+ */
+export function isTaskDone(t: { status?: string | null }): boolean {
+  return t.status === 'done'
+}
+
 /** Today's date as YYYY-MM-DD string in browser local time. */
 export function todayKey(): string {
   const d = new Date()

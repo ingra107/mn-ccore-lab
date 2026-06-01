@@ -5,13 +5,13 @@
 
 import { useMemo } from 'react'
 import { TaskRow } from './TaskRow'
-import { GROUP_META, INK_DIM, PANEL_BG, withAlpha, type GroupKey } from './constants'
+import { GROUP_META, INK_DIM, PANEL_BG, withAlpha, isTaskDone, type GroupKey } from './constants'
 import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow as TaskRowData } from '../../lib/api'
 
 export function TaskGroup({ gkey, tasks, projectsByPid, state, expandedId, onExpand }: { gkey: GroupKey; tasks: TaskRowData[]; projectsByPid: Map<string, { name: string; slug: string; category?: string | null }>; state: TodayStateApi; expandedId: string | null; onExpand: (id: string) => void }) {
   const meta = GROUP_META[gkey]
-  const doneCount = tasks.filter((t) => state.done[t.id] || t.completed === 1).length
+  const doneCount = tasks.filter((t) => state.done[t.id] || isTaskDone(t)).length
   const sorted = useMemo(() => {
     const planned = tasks.filter((t) => state.planned[t.id] && !state.done[t.id])
     const active = tasks.filter((t) => !state.planned[t.id] && !state.done[t.id])

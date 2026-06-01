@@ -22,7 +22,7 @@ import {
   GROUP_META,
   ACCENT_GOLD, ACCENT_ORANGE, ACCENT_CORAL, ACCENT_TEAL,
   INK, INK_MUTED, INK_DIM, PAGE_BG,
-  todayKey, daysSince, withAlpha,
+  todayKey, daysSince, withAlpha, isTaskDone,
   type GroupKey, type FilterOption,
 } from '../constants'
 import type { TaskRow } from '../../../lib/api'
@@ -186,7 +186,7 @@ function ListRow({ task, project, isCursor, isSelected, onClick, onDouble, onSel
   const today = todayKey()
   const overdueDays = task.due_date && task.due_date.slice(0, 10) < today ? daysSince(task.due_date) : 0
   const stale = task.updated_at && daysSince(task.updated_at) >= 10 && task.status === 'in_progress' ? daysSince(task.updated_at) : 0
-  const isCompleted = task.completed === 1 || task.status === 'done'
+  const isCompleted = isTaskDone(task)
 
   // Stop click-bubbling on inline-edit cells so clicking them doesn't move
   // the cursor / open the drawer. Each cell wraps with this guard.

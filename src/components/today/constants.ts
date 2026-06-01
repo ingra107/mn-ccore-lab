@@ -13,7 +13,7 @@ export {
   GROUP_ORDER,
   ACCENT_GOLD, ACCENT_TEAL, ACCENT_CORAL, ACCENT_ORANGE, ACCENT_GREEN,
   INK, INK_MUTED, INK_DIM, PAGE_BG, PANEL_BG,
-  todayKey, daysSince, tagForTask, withAlpha,
+  todayKey, daysSince, tagForTask, withAlpha, isTaskDone,
 } from '../../lib/taskGrouping'
 
 import { todayKey } from '../../lib/taskGrouping'

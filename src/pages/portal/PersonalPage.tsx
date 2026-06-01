@@ -28,6 +28,7 @@ import type { UserRole } from '../../lib/roleDefaults'
 import { PATHS } from '../../constants/paths'
 import TaskDetailPanel from '../../components/tasks/TaskDetailPanel'
 import { TaskRow as SharedTaskRow } from '../../components/tasks/TaskRow'
+import { isTaskDone } from '../../lib/taskGrouping'
 import { useUndoToast } from '../../components/UndoToast'
 import type { TaskRow } from '../../lib/api'
 import { staggerContainer, staggerItem } from '../../lib/animations'
@@ -368,7 +369,7 @@ function HubTaskRow({
   onStatusChange: (id: string, status: string) => void
   onOpenDetail: (task: TaskRow) => void
 }) {
-  const isDone = task.status === 'done' || task.completed === 1
+  const isDone = isTaskDone(task)
   return (
     <SharedTaskRow
       task={task}

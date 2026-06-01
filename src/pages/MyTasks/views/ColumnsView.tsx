@@ -18,7 +18,7 @@ import {
   GROUP_META, GROUP_ORDER,
   ACCENT_ORANGE,
   INK_DIM, PAGE_BG,
-  daysSince, withAlpha,
+  daysSince, withAlpha, isTaskDone,
   type GroupKey,
 } from '../constants'
 import type { TaskRow } from '../../../lib/api'
@@ -116,7 +116,7 @@ function rowExtraMeta(task: TaskRow) {
 }
 
 export function MyTasksRow({ task, project, selected, selectionActive, onSelect, onToggleComplete, expanded, onExpand, planned, stack }: { task: TaskRow; project: { name: string; slug: string } | null; selected: boolean; selectionActive: boolean; onSelect: () => void; onToggleComplete: () => void; expanded: boolean; onExpand: () => void; planned: boolean; stack?: boolean }) {
-  const isDone = task.completed === 1 || task.status === 'done'
+  const isDone = isTaskDone(task)
   return (
     <SharedTaskRow
       task={task}

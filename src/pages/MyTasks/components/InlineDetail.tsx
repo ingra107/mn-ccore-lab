@@ -16,7 +16,7 @@ import {
   INK, INK_DIM, PAGE_BG, PANEL_BG,
   STATUS_LABEL, STATUS_COLOR,
   MOVE_OPTIONS,
-  readTodayState, writeTodayState,
+  readTodayState, writeTodayState, isTaskDone,
 } from '../constants'
 import { withAlpha } from '../../../lib/taskGrouping'
 import type { TaskRow } from '../../../lib/api'
@@ -91,12 +91,12 @@ export function InlineDetail({ task, projectName }: { task: TaskRow; projectName
   // MT-10 — single-row Complete button. Without it the only completion path
   // was select-then-bulk (3 clicks for what should be 1).
   const complete = useCallback(() => {
-    if (task.completed === 1 || task.status === 'done') return
+    if (isTaskDone(task)) return
     bulkUpdate.mutate({ ids: [task.id], action: 'complete' }, {
       onSuccess: () => undoToast.showSuccess('Completed'),
     })
   }, [task.id, task.completed, task.status, bulkUpdate, undoToast])
-  const isCompleted = task.completed === 1 || task.status === 'done'
+  const isCompleted = isTaskDone(task)
 
   return (
     <div onClick={(e) => e.stopPropagation()} style={{ marginTop: 10, paddingTop: 10, borderTop: '1px dashed rgba(255,255,255,0.08)' }}>
