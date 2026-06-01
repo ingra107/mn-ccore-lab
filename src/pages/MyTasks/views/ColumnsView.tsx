@@ -60,7 +60,7 @@ export function ColumnsView({ filtered, byGroup, selected, toggleSelect, onToggl
         {visibleGroups.map((gkey) => {
           const meta = GROUP_META[gkey]
           const tasks = byGroup[gkey]
-          const incomplete = tasks.filter((t) => t.completed === 0 && t.status !== 'done').length
+          const incomplete = tasks.filter((t) => !isTaskDone(t)).length
           return (
             <div key={gkey} style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 4px 8px', borderBottom: `1px solid ${withAlpha(meta.color, 15)}`, marginBottom: 8, position: 'sticky', top: 0, background: PAGE_BG, zIndex: 1 }}>

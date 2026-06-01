@@ -322,7 +322,6 @@ function MyTasksColumn({
                 <HubTaskRow
                   key={task.id}
                   task={task}
-                  isOverdue={group === 'overdue'}
                   onStatusChange={onStatusChange}
                   onOpenDetail={onOpenDetail}
                 />
@@ -365,7 +364,6 @@ function HubTaskRow({
   onOpenDetail,
 }: {
   task: TaskRow
-  isOverdue: boolean
   onStatusChange: (id: string, status: string) => void
   onOpenDetail: (task: TaskRow) => void
 }) {
