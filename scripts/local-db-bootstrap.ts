@@ -63,6 +63,15 @@ const FRESH_BOOTSTRAP_SKIP: ReadonlySet<string> = new Set([
   // NOT EXISTS) so skipping v48 for fresh bootstrap is safe.  Prod ran
   // v48 AFTER the columns were already present via a different path.
   'schema-v48-index-reconcile.sql',
+  // schema-v48.sql is the superseded MONOLITH — never applied to prod as-is.
+  // Prod split it into schema-v48-stage3-8tables.sql + schema-v49-pomodoro-
+  // rename.sql (both still applied below).  The monolith's
+  // `CREATE INDEX idx_pomodoro_machine ON pomodoro_sessions(machine_id)` is a
+  // no-op-then-fail on a fresh bootstrap: v20 already created pomodoro_sessions
+  // WITHOUT machine_id, so the CREATE TABLE IF NOT EXISTS is skipped and the
+  // index throws "no such column: machine_id", aborting the whole chain (which
+  // is why blocked_by from v49 never landed → GET /api/tasks 500). Skip it.
+  'schema-v48.sql',
 ])
 
 function parseMigrationFile(file: string): MigrationFile | null {
