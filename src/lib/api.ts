@@ -56,9 +56,6 @@ export interface ProjectRow {
   created_at: string
   updated_at: string
   stage_entered_at: string | null
-  // schema-v71: promoted from Peripheral Brain
-  domain: string | null
-  next_action: string | null
 }
 
 export interface GrantRow {

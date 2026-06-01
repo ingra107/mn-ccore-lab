@@ -132,13 +132,9 @@ function rowToProject(row: ProjectRow): Project {
     pi: row.pi || '',
     slug: row.slug || '',
     stage: row.stage as Project['stage'],
-    short_name: row.short_name || undefined,
     strategic_context: row.strategic_context || undefined,
     updated_at: row.updated_at || undefined,
     stage_entered_at: row.stage_entered_at || undefined,
-    // schema-v71 fields
-    domain: row.domain ?? null,
-    next_action: row.next_action ?? null,
   }
 }
 
