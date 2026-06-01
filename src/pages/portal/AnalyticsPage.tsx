@@ -10,7 +10,7 @@ import QueryState from '../../components/QueryState'
 import ActivityHeatmap from '../../components/ActivityHeatmap'
 import { staggerContainer, staggerItem } from '../../lib/animations'
 import { useTasks, useProjects, useIdeas, useActivity, useProjectHealth } from '../../hooks/useApiData'
-import { formatShortDate, localDateKey } from '../../lib/dateUtils'
+import { formatShortDate, localDateKey, isOverdue } from '../../lib/dateUtils'
 import { useAuth } from '../../hooks/useAuth'
 import { getPersonInfo } from '../../data/team'
 import Avatar from '../../components/Avatar'
@@ -92,12 +92,11 @@ export default function AnalyticsPage() {
     priorStart.setDate(priorStart.getDate() - 7)
     const priorStartStr = priorStart.toISOString()
     const priorEndStr = startStr
-    const now = new Date()
     const priorRefDate = new Date(selectedWeekStart)
 
     const completed = tasks.filter((t) => t.completed_at && t.completed_at >= startStr && t.completed_at < endStr).length
     const created = tasks.filter((t) => t.created_at >= startStr && t.created_at < endStr).length
-    const overdue = tasks.filter((t) => !t.completed && t.due_date && new Date(t.due_date + 'T23:59:59') < now).length
+    const overdue = tasks.filter((t) => !t.completed && isOverdue(t.due_date)).length
     const activityCount = activity.filter((a) => a.timestamp >= startStr && a.timestamp < endStr).length
 
     const completedPrior = tasks.filter((t) => t.completed_at && t.completed_at >= priorStartStr && t.completed_at < priorEndStr).length
@@ -111,13 +110,12 @@ export default function AnalyticsPage() {
   // Task completion by person — only computed for PIs (individual metrics are PI-only)
   const completionByPerson = useMemo(() => {
     if (!isPi) return []
-    const now = new Date()
     const map = new Map<string, { total: number; done: number; overdue: number }>()
     for (const t of tasks) {
       const entry = map.get(t.assignee) || { total: 0, done: 0, overdue: 0 }
       entry.total++
       if (t.completed) entry.done++
-      if (!t.completed && t.due_date && new Date(t.due_date + 'T23:59:59') < now) entry.overdue++
+      if (!t.completed && isOverdue(t.due_date)) entry.overdue++
       map.set(t.assignee, entry)
     }
     return [...map.entries()]

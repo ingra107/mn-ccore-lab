@@ -3,7 +3,7 @@ import { CalendarDays, FolderKanban, Flag, RotateCcw, Eye, AlertTriangle, CheckC
 import { useUndoToast } from '../UndoToast'
 import Avatar from '../Avatar'
 import { getPersonInfo } from '../../data/team'
-import { formatShortDate } from '../../lib/dateUtils'
+import { formatShortDate, isOverdue as isPastDue } from '../../lib/dateUtils'
 import { formatBrandName } from '../BrandName'
 import TaskTitle from './TaskTitle'
 import { updateTask } from '../../lib/api'
@@ -39,7 +39,7 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
     return map
   }, [projects])
   const priority = PRIORITY_CONFIG[task.priority as keyof typeof PRIORITY_CONFIG] || PRIORITY_CONFIG.medium
-  const isOverdue = task.due_date && !task.completed && new Date(task.due_date + 'T23:59:59') < new Date()
+  const isOverdue = !task.completed && isPastDue(task.due_date)
   const isDone = task.status === 'done'
 
   const PRIORITY_CYCLE = ['low', 'medium', 'high', 'urgent'] as const

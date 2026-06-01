@@ -4,7 +4,7 @@ import { AlertTriangle, CalendarDays, ShieldAlert, CheckCircle2 } from 'lucide-r
 import type { TaskRow } from '../../lib/api'
 import { useExpiringRegulatory } from '../../hooks/useApiData'
 import { PATHS } from '../../constants/paths'
-import { localDateKey } from '../../lib/dateUtils'
+import { localDateKey, isOverdue } from '../../lib/dateUtils'
 
 interface StatusLineProps {
   tasks: TaskRow[]
@@ -30,7 +30,7 @@ export default function StatusLine({ tasks, loading }: StatusLineProps) {
     const weekEnd = new Date(today); weekEnd.setDate(weekEnd.getDate() + 7)
     const todayStr = localDateKey(today)
 
-    const overdue = tasks.filter((t) => !t.completed && t.due_date && new Date(t.due_date + 'T23:59:59') < now).length
+    const overdue = tasks.filter((t) => !t.completed && isOverdue(t.due_date)).length
     const thisWeek = tasks.filter((t) => {
       if (t.completed || !t.due_date) return false
       const d = new Date(t.due_date + 'T12:00:00')

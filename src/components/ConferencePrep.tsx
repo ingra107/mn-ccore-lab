@@ -6,7 +6,7 @@ import InlineSelect from './InlineSelect'
 import { useUndoToast } from './UndoToast'
 import { useConferences } from '../hooks/useApiData'
 import { useCreateConference, useUpdateConference, useDeleteConference } from '../hooks/useMutations'
-import { formatShortDate, localDateKey } from '../lib/dateUtils'
+import { formatShortDate, localDateKey, isOverdue } from '../lib/dateUtils'
 import type { ConferenceSubmissionRow, ConferenceSubmissionType, ConferenceStatus, MaterialsStatus } from '../lib/api'
 
 const STATUS_OPTIONS: { value: ConferenceStatus; label: string; color: string }[] = [
@@ -214,10 +214,10 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
                       <span
                         style={{
                           fontSize: 'var(--label-size)',
-                          color: new Date(conf.abstract_due + 'T23:59:59') < new Date() && conf.status === 'planning'
+                          color: isOverdue(conf.abstract_due) && conf.status === 'planning'
                             ? 'var(--maroon)'
                             : 'var(--ink)',
-                          fontWeight: new Date(conf.abstract_due + 'T23:59:59') < new Date() && conf.status === 'planning' ? 600 : 400,
+                          fontWeight: isOverdue(conf.abstract_due) && conf.status === 'planning' ? 600 : 400,
                         }}
                       >
                         {formatShortDate(conf.abstract_due)}

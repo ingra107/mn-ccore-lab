@@ -9,7 +9,7 @@ import {
   Activity, BarChart3, Settings,
 } from 'lucide-react'
 import { spring } from '../lib/animations'
-import { localDateKey } from '../lib/dateUtils'
+import { localDateKey, isOverdue } from '../lib/dateUtils'
 import { useTasks, useProjects, useTeam, useMeetingsApi } from '../hooks/useApiData'
 import { useAuth } from '../hooks/useAuth'
 import { getPersonInfo } from '../data/team'
@@ -245,7 +245,7 @@ export default function CommandPalette() {
     items.push({
       id: 'filter-overdue',
       label: 'Overdue Tasks',
-      sublabel: `${tasks.filter(t => !t.completed && t.due_date && new Date(t.due_date + 'T23:59:59') < new Date()).length} tasks past due`,
+      sublabel: `${tasks.filter(t => !t.completed && isOverdue(t.due_date)).length} tasks past due`,
       icon: AlertTriangle,
       action: () => { navigate(`${PATHS.myTasks}?status=todo`); setOpen(false) },
       category: 'filter',

@@ -13,6 +13,7 @@ import ToggleButton from '../../components/ToggleButton'
 import InlineSelect from '../../components/InlineSelect'
 import TaskGridView from '../../components/tasks/TaskGridView'
 import TaskTitle from '../../components/tasks/TaskTitle'
+import { isOverdue } from '../../lib/dateUtils'
 // Alternate views are lazy — most users open MyTasks in 'list' (grid).
 const TaskBoardView = lazy(() => import('../../components/tasks/TaskBoardView'))
 const TaskStandUpView = lazy(() => import('../../components/tasks/TaskStandUpView'))
@@ -231,7 +232,7 @@ export default function MyTasks() {
     switch (quickFilter) {
       case 'today': return base.filter(t => t.due_date && new Date(t.due_date + 'T12:00:00') >= today && new Date(t.due_date + 'T12:00:00') < tomorrow)
       case 'this_week': return base.filter(t => t.due_date && new Date(t.due_date + 'T12:00:00') >= today && new Date(t.due_date + 'T12:00:00') < weekEnd)
-      case 'overdue': return base.filter(t => !t.completed && t.due_date && new Date(t.due_date + 'T23:59:59') < now)
+      case 'overdue': return base.filter(t => !t.completed && isOverdue(t.due_date))
       case 'no_date': return base.filter(t => !t.due_date)
       case 'stale': {
         const stale = new Date(now.getTime() - 14 * 86400000)
@@ -341,7 +342,7 @@ export default function MyTasks() {
     return {
       today: active.filter(t => t.due_date && new Date(t.due_date + 'T12:00:00') >= today && new Date(t.due_date + 'T12:00:00') < tomorrow).length,
       this_week: active.filter(t => t.due_date && new Date(t.due_date + 'T12:00:00') >= today && new Date(t.due_date + 'T12:00:00') < weekEnd).length,
-      overdue: active.filter(t => t.due_date && new Date(t.due_date + 'T23:59:59') < now).length,
+      overdue: active.filter(t => isOverdue(t.due_date)).length,
       no_date: active.filter(t => !t.due_date).length,
       stale: (() => {
         const stale = new Date(now.getTime() - 14 * 86400000)
@@ -371,7 +372,7 @@ export default function MyTasks() {
     const now = new Date()
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
     const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1)
-    const overdue = active.filter(t => t.due_date && new Date(t.due_date + 'T23:59:59') < now)
+    const overdue = active.filter(t => isOverdue(t.due_date))
       .sort((a, b) => (a.due_date || '').localeCompare(b.due_date || ''))
     const dueToday = active.filter(t => t.due_date && new Date(t.due_date + 'T12:00:00') >= today && new Date(t.due_date + 'T12:00:00') < tomorrow)
       .sort((a, b) => {
@@ -1146,7 +1147,7 @@ function SortableFocusItem({ task, index, isPinned, onSelect, onPin, onUnpin }: 
         </div>
       </div>
       {task.due_date && (
-        <span className="text-[10px] flex-shrink-0" style={{ color: new Date(task.due_date + 'T23:59:59') < new Date() ? 'var(--maroon)' : 'var(--slate)', opacity: 0.85 }}>
+        <span className="text-[10px] flex-shrink-0" style={{ color: isOverdue(task.due_date) ? 'var(--maroon)' : 'var(--slate)', opacity: 0.85 }}>
           {task.due_date}
         </span>
       )}

@@ -32,6 +32,7 @@ import {
   type ViewMode, type GroupKey, type QuickViewKey, type FilterState, type FilterOption,
 } from './constants'
 import { localDateKey } from '../../lib/dateUtils'
+import type { TaskRow } from '../../lib/api'
 
 export default function UnifiedMyTasks() {
   usePageMeta('My Tasks · MN-CCORE', 'Library / workbench for triage, filtering, and bulk actions across all your tasks.')
@@ -191,6 +192,23 @@ export default function UnifiedMyTasks() {
     })
   }, [selected, bulkUpdate, clearSelection, undoToast])
 
+  // Single-row complete toggle for the shared Done square (handoff §0 rule 2 —
+  // the square completes on every surface). Complete uses the same bulk
+  // 'complete' path as InlineDetail + the bulk bar; un-complete reopens via a
+  // direct status/completed write (there is no bulk 'uncomplete' action).
+  const onToggleComplete = useCallback((task: TaskRow) => {
+    const isDone = task.completed === 1 || task.status === 'done'
+    if (isDone) {
+      updateTask.mutate({ id: task.id, fields: { status: 'todo', completed: 0 } }, {
+        onSuccess: () => undoToast.showSuccess('Marked not done'),
+      })
+    } else {
+      bulkUpdate.mutate({ ids: [task.id], action: 'complete' }, {
+        onSuccess: () => undoToast.showSuccess('Completed'),
+      })
+    }
+  }, [updateTask, bulkUpdate, undoToast])
+
   const onBulkArchive = useCallback(() => {
     if (!window.confirm(`Archive ${selected.size} task${selected.size === 1 ? '' : 's'}? They'll be soft-deleted.`)) return
     const ids = [...selected]
@@ -264,9 +282,9 @@ export default function UnifiedMyTasks() {
           {isLoading ? (
             <div style={{ padding: 24 }}><TableSkeleton /></div>
           ) : view === 'columns' ? (
-            <ColumnsView filtered={filtered} byGroup={byGroup} selected={selected} toggleSelect={toggleSelect} expanded={expanded} setExpanded={setExpanded} projectsByPid={projectsByPid} plannedSet={plannedSet} filterGroup={filter.group} />
+            <ColumnsView filtered={filtered} byGroup={byGroup} selected={selected} toggleSelect={toggleSelect} onToggleComplete={onToggleComplete} expanded={expanded} setExpanded={setExpanded} projectsByPid={projectsByPid} plannedSet={plannedSet} filterGroup={filter.group} />
           ) : view === 'lanes' ? (
-            <LanesView byGroup={byGroup} selected={selected} toggleSelect={toggleSelect} expanded={expanded} setExpanded={setExpanded} projectsByPid={projectsByPid} plannedSet={plannedSet} filterGroup={filter.group} />
+            <LanesView byGroup={byGroup} selected={selected} toggleSelect={toggleSelect} onToggleComplete={onToggleComplete} expanded={expanded} setExpanded={setExpanded} projectsByPid={projectsByPid} plannedSet={plannedSet} filterGroup={filter.group} />
           ) : (
             <ListView filtered={filtered} selected={selected} toggleSelect={toggleSelect} setSelected={setSelected} setDrawer={setDrawer} projectsByPid={projectsByPid} projectOptions={projectOptions} plannedSet={plannedSet} />
           )}

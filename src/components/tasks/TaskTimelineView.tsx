@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState, useCallback } from 'react'
 import { getPersonInfo } from '../../data/team'
-import { formatShortDate, localDateKey } from '../../lib/dateUtils'
+import { formatShortDate, localDateKey, isOverdue as isPastDue } from '../../lib/dateUtils'
 import { useProjects } from '../../hooks/useApiData'
 import type { TaskRow } from '../../lib/api'
 
@@ -148,7 +148,7 @@ export default function TaskTimelineView({ tasks, onStatusChange, onOpenDetail }
               const barStart = Math.max(createdX, LABEL_WIDTH)
               const barEnd = dueX
               const barWidth = Math.max(barEnd - barStart, 8)
-              const isOverdue = new Date(task.due_date! + 'T23:59:59') < new Date()
+              const isOverdue = isPastDue(task.due_date)
               const color = statusColors[task.status] || statusColors.todo
               const opacity = priorityOpacity[task.priority] || 0.7
 

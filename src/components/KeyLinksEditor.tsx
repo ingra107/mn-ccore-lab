@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link2, Plus, Pencil, Trash2, Check, X } from 'lucide-react'
+import { Link2, Plus, Pencil, Check, X } from 'lucide-react'
 import { classifyUrl } from '../lib/urlClassify'
 import { useToast } from '../hooks/useToast'
 
@@ -59,10 +59,13 @@ function LinkRow({
     }
   }
 
+  // Compact inline chip (handoff §2): icon + label + remove, with a
+  // hover-revealed edit pencil. Replaces the full-width padded row so links
+  // sit in a wrapping chip strip on both the task editor and ProjectDetail.
   return (
-    <div
-      className="group flex items-center gap-2 px-3 py-2 rounded-lg"
-      style={{ backgroundColor: 'var(--ice)' }}
+    <span
+      className="group inline-flex items-center gap-1.5"
+      style={{ padding: '4px 7px 4px 9px', borderRadius: 'var(--radius-md)', background: 'var(--ice)', border: '1px solid var(--border-subtle)', maxWidth: 220 }}
     >
       <a
         href={isHttp ? href : url}
@@ -70,44 +73,39 @@ function LinkRow({
         rel={isHttp ? 'noopener noreferrer' : undefined}
         onClick={isHttp ? undefined : handleNonHttpClick}
         style={{ color: 'var(--teal)', display: 'flex', alignItems: 'center', flexShrink: 0 }}
+        title={isHttp ? url : `Click to copy path: ${url}`}
       >
-        <Icon size={14} />
+        <Icon size={13} />
       </a>
-      <div className="flex-1 min-w-0">
-        <a
-          href={isHttp ? href : url}
-          target={isHttp ? '_blank' : undefined}
-          rel={isHttp ? 'noopener noreferrer' : undefined}
-          onClick={isHttp ? undefined : handleNonHttpClick}
-          className="text-sm truncate block hover:underline"
-          style={{ color: 'var(--teal)', textDecoration: 'underline', textUnderlineOffset: '2px', fontWeight: 500 }}
-          title={isHttp ? url : `Click to copy path: ${url}`}
-        >
-          {link.desc || url}
-        </a>
-        <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
-          {typeLabel}{!isHttp ? ' · click to copy' : ''}
-        </span>
-      </div>
-      <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
-        <button
-          onClick={onEdit}
-          title="Edit link"
-          aria-label="Edit link"
-          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: '2px' }}
-        >
-          <Pencil size={12} />
-        </button>
-        <button
-          onClick={onRemove}
-          title="Remove link"
-          aria-label="Remove link"
-          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: '2px' }}
-        >
-          <Trash2 size={12} />
-        </button>
-      </div>
-    </div>
+      <a
+        href={isHttp ? href : url}
+        target={isHttp ? '_blank' : undefined}
+        rel={isHttp ? 'noopener noreferrer' : undefined}
+        onClick={isHttp ? undefined : handleNonHttpClick}
+        className="text-xs hover:underline"
+        style={{ color: 'var(--teal)', textDecoration: 'underline', textUnderlineOffset: '2px', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+        title={isHttp ? url : `Click to copy path: ${url}`}
+      >
+        {link.desc || typeLabel || url}
+      </a>
+      <button
+        onClick={onEdit}
+        title="Edit link"
+        aria-label="Edit link"
+        className="opacity-0 group-hover:opacity-100 transition-opacity"
+        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: 0, display: 'grid', flexShrink: 0 }}
+      >
+        <Pencil size={11} />
+      </button>
+      <button
+        onClick={onRemove}
+        title="Remove link"
+        aria-label="Remove link"
+        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: 0, display: 'grid', flexShrink: 0, opacity: 0.7 }}
+      >
+        <X size={12} />
+      </button>
+    </span>
   )
 }
 
@@ -250,16 +248,17 @@ export default function KeyLinksEditor({ links, onSave, maxSlots = 3 }: Props) {
         Key Links
       </label>
 
-      <div className="flex flex-col gap-1.5">
+      <div className="flex flex-wrap items-center gap-2">
         {populated.map((link, idx) => {
           if (editingIdx === idx) {
             return (
-              <LinkForm
-                key={`edit-${idx}`}
-                initial={link}
-                onSave={(v) => handleEditSave(idx, v)}
-                onCancel={() => setEditingIdx(null)}
-              />
+              <div key={`edit-${idx}`} style={{ flexBasis: '100%', minWidth: 240 }}>
+                <LinkForm
+                  initial={link}
+                  onSave={(v) => handleEditSave(idx, v)}
+                  onCancel={() => setEditingIdx(null)}
+                />
+              </div>
             )
           }
           return (
@@ -273,11 +272,13 @@ export default function KeyLinksEditor({ links, onSave, maxSlots = 3 }: Props) {
         })}
 
         {addingNew && (
-          <LinkForm
-            initial={{ url: null, desc: null }}
-            onSave={handleAdd}
-            onCancel={() => setAddingNew(false)}
-          />
+          <div style={{ flexBasis: '100%', minWidth: 240 }}>
+            <LinkForm
+              initial={{ url: null, desc: null }}
+              onSave={handleAdd}
+              onCancel={() => setAddingNew(false)}
+            />
+          </div>
         )}
 
         {canAdd && !addingNew && (

@@ -11,6 +11,7 @@ import {
 } from '../hooks/useApiData'
 import { useGrantTimeline } from '../hooks/useGrantTimeline'
 import { isProjectActive } from '../lib/taskConstants'
+import { isOverdue } from '../lib/dateUtils'
 import { formatBrandName } from '../components/BrandName'
 import HeartbeatLine from '../components/HeartbeatLine'
 import PulseScene from '../components/pulse/PulseScene'
@@ -61,9 +62,7 @@ export default function Pulse() {
   const { data: team = [] } = useTeam()
 
   const pendingTasks = tasks.filter((t) => !t.completed)
-  const overdueTasks = pendingTasks.filter(
-    (t) => t.due_date && new Date(t.due_date + 'T23:59:59') < new Date(),
-  )
+  const overdueTasks = pendingTasks.filter((t) => isOverdue(t.due_date))
   const activeProjects = projects.filter((p) => isProjectActive(p.status)).length
   const completedThisWeek = useMemo(() => {
     const cutoff = new Date()

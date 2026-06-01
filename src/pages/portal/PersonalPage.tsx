@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   CheckSquare, Clock, Calendar,
-  Activity, ArrowRight, Circle, AlertTriangle, TrendingUp,
+  Activity, ArrowRight, AlertTriangle, TrendingUp,
   Send, Lightbulb, User, History,
   ChevronDown,
 } from 'lucide-react'
@@ -19,7 +19,7 @@ import { useAuth } from '../../hooks/useAuth'
 import { emailToSlug } from '../../lib/emailSlug'
 import { useUserRole } from '../../hooks/useUserRole'
 import { getPersonInfo } from '../../data/team'
-import { formatShortDate, formatRelativeTime } from '../../lib/dateUtils'
+import { formatShortDate, formatRelativeTime, isOverdue } from '../../lib/dateUtils'
 import { isProductionVisible, isProductionVisibleActivity } from '../../lib/isProductionVisible'
 import TaskTitle from '../../components/tasks/TaskTitle'
 import { useRecentlyViewed } from '../../hooks/useRecentlyViewed'
@@ -27,6 +27,7 @@ import { ROLE_LABELS } from '../../lib/roleDefaults'
 import type { UserRole } from '../../lib/roleDefaults'
 import { PATHS } from '../../constants/paths'
 import TaskDetailPanel from '../../components/tasks/TaskDetailPanel'
+import { TaskRow as SharedTaskRow } from '../../components/tasks/TaskRow'
 import { useUndoToast } from '../../components/UndoToast'
 import type { TaskRow } from '../../lib/api'
 import { staggerContainer, staggerItem } from '../../lib/animations'
@@ -317,7 +318,7 @@ function MyTasksColumn({
             {/* Task rows */}
             <div className="flex flex-col">
               {groupTasks.map((task) => (
-                <TaskRow
+                <HubTaskRow
                   key={task.id}
                   task={task}
                   isOverdue={group === 'overdue'}
@@ -350,10 +351,15 @@ function MyTasksColumn({
 }
 
 // ── Single Task Row ──────────────────────────────────────────
+// Now a thin adapter over the shared src/components/tasks/TaskRow.tsx. My Hub's
+// status-circle becomes the canonical Done square (handoff §1 — "the only
+// change here: the status circle becomes the same Done checkbox used
+// everywhere"). Body click still opens the full TaskDetailPanel (My Hub has no
+// inline expand), so the shared row's caret is hidden and the click routes to
+// onOpenDetail. in-progress is now conveyed by the shared teal reserved dot.
 
-function TaskRow({
+function HubTaskRow({
   task,
-  isOverdue,
   onStatusChange,
   onOpenDetail,
 }: {
@@ -362,69 +368,18 @@ function TaskRow({
   onStatusChange: (id: string, status: string) => void
   onOpenDetail: (task: TaskRow) => void
 }) {
+  const isDone = task.status === 'done' || task.completed === 1
   return (
-    <div
-      className="flex items-center gap-2 rounded-md transition-colors cursor-pointer"
-      style={{ minHeight: 32, padding: '3px 6px' }}
-      onClick={() => onOpenDetail(task)}
-      onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.04)')}
-      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-    >
-      {/* Status circle */}
-      <button
-        onClick={(e) => {
-          e.stopPropagation()
-          onStatusChange(task.id, task.status === 'todo' ? 'in_progress' : 'done')
-        }}
-        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', flexShrink: 0 }}
-        title="Cycle status"
-      >
-        <Circle
-          size={13}
-          style={{
-            color: task.status === 'in_progress' ? 'var(--teal)' : isOverdue ? 'var(--maroon)' : 'var(--slate)',
-            opacity: task.status === 'in_progress' ? 1 : 0.85,
-          }}
-        />
-      </button>
-
-      {/* Title */}
-      <span
-        className="flex-1 truncate"
-        style={{ fontSize: 'var(--text-label)', color: isOverdue ? 'var(--maroon)' : 'var(--ink)', lineHeight: '1.4' }}
-      >
-        <TaskTitle title={task.title} fallback={task.description} />
-      </span>
-
-      {/* Priority badge (urgent/high only) */}
-      {(task.priority === 'urgent' || task.priority === 'high') && (
-        <span
-          className="text-[10px] px-1 py-0.5 rounded flex-shrink-0"
-          style={{
-            color: task.priority === 'urgent' ? 'var(--maroon)' : 'var(--orange)',
-            backgroundColor: task.priority === 'urgent' ? 'var(--maroon-hover)' : 'var(--orange-hover)',
-            fontWeight: 500,
-          }}
-        >
-          {task.priority}
-        </span>
-      )}
-
-      {/* Due date */}
-      {task.due_date && (
-        <span
-          className="flex-shrink-0"
-          style={{
-            fontSize: 'var(--text-label)',
-            color: isOverdue ? 'var(--maroon)' : 'var(--slate)',
-            fontWeight: isOverdue ? 600 : 400,
-            opacity: isOverdue ? 1 : 0.85,
-          }}
-        >
-          {isOverdue ? 'Overdue' : formatShortDate(task.due_date)}
-        </span>
-      )}
-    </div>
+    <SharedTaskRow
+      task={task}
+      project={null}
+      dense
+      hideCaret
+      isDone={isDone}
+      onToggleDone={() => onStatusChange(task.id, isDone ? 'todo' : 'done')}
+      isExpanded={false}
+      onToggleExpand={() => onOpenDetail(task)}
+    />
   )
 }
 
@@ -669,7 +624,7 @@ export default function PersonalPage() {
   const pendingTasks = useMemo(() => myTasks.filter((t) => !t.completed), [myTasks])
 
   const overdueTasks = useMemo(
-    () => pendingTasks.filter((t) => t.due_date && new Date(t.due_date + 'T23:59:59') < new Date()),
+    () => pendingTasks.filter((t) => isOverdue(t.due_date)),
     [pendingTasks]
   )
 
@@ -679,7 +634,7 @@ export default function PersonalPage() {
     const now = new Date()
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
     const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1)
-    const overdue = pendingTasks.filter(t => t.due_date && new Date(t.due_date + 'T23:59:59') < now)
+    const overdue = pendingTasks.filter(t => isOverdue(t.due_date))
       .sort((a, b) => (a.due_date || '').localeCompare(b.due_date || ''))
     const dueToday = pendingTasks.filter(t => t.due_date
       && new Date(t.due_date + 'T12:00:00') >= today

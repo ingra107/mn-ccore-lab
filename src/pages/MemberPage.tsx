@@ -897,11 +897,8 @@ function MemberMilestones({ slug }: { slug: string }) {
 
   if (isLoading || milestones.length === 0) return null
 
-  const now = new Date()
   const enriched = milestones.map((m: MenteeMilestoneRow) => {
-    const isOverdueCalc = m.due_date && m.status !== 'completed'
-      ? new Date(m.due_date + 'T23:59:59') < now
-      : false
+    const isOverdueCalc = m.status !== 'completed' && isOverdue(m.due_date)
     return { ...m, _isOverdue: isOverdueCalc || m.status === 'overdue' }
   })
 

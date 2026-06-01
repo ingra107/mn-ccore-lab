@@ -1,30 +1,36 @@
 // ColumnsView — Kanban renderer. All 5 task groups side-by-side, horizontal
 // scroll on small viewports w/ visible thin scrollbar + right-edge fade.
-// Click a card body → inline expand within the card (CD spec).
+//
+// Rows now use the shared <TaskRow> (src/components/tasks/TaskRow.tsx) in
+// `stack` mode (narrow column → title gets full width, meta stacks beneath it
+// per handoff rule #5). Square = complete; shift-click / long-press = select
+// (the old persistent select-checkbox is gone, handoff §0 rule 2-3); body
+// click = inline expand within the column. Surface-specific chips (waiting /
+// stale) ride in via `extraMeta`; the InlineDetail action panel is the
+// expanded `children`.
 //
 // Extracted from src/pages/portal/UnifiedMyTasks.tsx (ColumnsView + Card).
 
-import { Link } from 'react-router-dom'
-import { PATHS } from '../../../constants/paths'
-import { Chip, LinksBar } from '../primitives'
+import { TaskRow as SharedTaskRow } from '../../../components/tasks/TaskRow'
+import { Chip } from '../primitives'
 import { InlineDetail } from '../components/InlineDetail'
 import {
   GROUP_META, GROUP_ORDER,
-  ACCENT_GOLD, ACCENT_TEAL, ACCENT_ORANGE, ACCENT_CORAL,
-  INK, INK_DIM, PAGE_BG,
-  PRIORITY_COLOR, PRIORITY_SHORT,
-  todayKey, daysSince, dueLabel, dueColor, withAlpha,
+  ACCENT_ORANGE,
+  INK_DIM, PAGE_BG,
+  daysSince, withAlpha,
   type GroupKey,
 } from '../constants'
 import type { TaskRow } from '../../../lib/api'
 
-export function ColumnsView({ filtered, byGroup, selected, toggleSelect, expanded, setExpanded, projectsByPid, plannedSet, filterGroup }: { filtered: TaskRow[]; byGroup: Record<GroupKey, TaskRow[]>; selected: Set<string>; toggleSelect: (id: string) => void; expanded: string | null; setExpanded: (id: string | null) => void; projectsByPid: Map<string, { name: string; slug: string }>; plannedSet: Set<string>; filterGroup?: GroupKey | null }) {
+export function ColumnsView({ filtered, byGroup, selected, toggleSelect, onToggleComplete, expanded, setExpanded, projectsByPid, plannedSet, filterGroup }: { filtered: TaskRow[]; byGroup: Record<GroupKey, TaskRow[]>; selected: Set<string>; toggleSelect: (id: string) => void; onToggleComplete: (task: TaskRow) => void; expanded: string | null; setExpanded: (id: string | null) => void; projectsByPid: Map<string, { name: string; slug: string }>; plannedSet: Set<string>; filterGroup?: GroupKey | null }) {
   // MT-16 — when a Group filter is active, only render the matching column
   // (others would just be "nothing here" empty lanes that eat horizontal
   // space and obscure the filter result).
   const visibleGroups = filterGroup ? GROUP_ORDER.filter(g => g === filterGroup) : GROUP_ORDER
   const colCount = visibleGroups.length
   const minWidth = colCount * 280
+  const selectionActive = selected.size > 0
   // Mobile scroll cue — right-edge fade gradient + visible thin scrollbar so
   // users discover the 5 columns scroll horizontally on small viewports
   // (eval Issue 5).
@@ -64,20 +70,23 @@ export function ColumnsView({ filtered, byGroup, selected, toggleSelect, expande
                   {incomplete}{tasks.length > incomplete && <span style={{ opacity: 0.5 }}> · {tasks.length - incomplete}✓</span>}
                 </span>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <div style={{ background: 'var(--task-panel-bg)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8, overflow: 'hidden' }}>
                 {tasks.length === 0 && (
                   <div style={{ padding: '20px 8px', textAlign: 'center', fontSize: 11, color: INK_DIM, fontStyle: 'italic' }}>nothing here</div>
                 )}
                 {tasks.map((t) => (
-                  <Card
+                  <MyTasksRow
                     key={t.id}
                     task={t}
                     project={t.project_id ? projectsByPid.get(t.project_id) ?? null : null}
                     selected={selected.has(t.id)}
+                    selectionActive={selectionActive}
                     onSelect={() => toggleSelect(t.id)}
+                    onToggleComplete={() => onToggleComplete(t)}
                     expanded={expanded === t.id}
                     onExpand={() => setExpanded(expanded === t.id ? null : t.id)}
                     planned={plannedSet.has(t.id)}
+                    stack
                   />
                 ))}
               </div>
@@ -92,47 +101,42 @@ export function ColumnsView({ filtered, byGroup, selected, toggleSelect, expande
   )
 }
 
-function Card({ task, project, selected, onSelect, expanded, onExpand, planned }: { task: TaskRow; project: { name: string; slug: string } | null; selected: boolean; onSelect: () => void; expanded: boolean; onExpand: () => void; planned: boolean }) {
-  const meta = GROUP_META[(task as TaskRow & { _group?: GroupKey })._group ?? 'deep']
-  const today = todayKey()
-  const overdueDays = task.due_date && task.due_date.slice(0, 10) < today ? daysSince(task.due_date) : 0
+// Surface-specific chips (waiting / stale) that aren't part of the canonical
+// row meta. planned / due / project / override-pin are all handled by the
+// shared row itself.
+function rowExtraMeta(task: TaskRow) {
   const stale = task.updated_at && daysSince(task.updated_at) >= 10 && task.status === 'in_progress' ? daysSince(task.updated_at) : 0
-  const dueText = dueLabel(task.due_date)
-  const dueCol = dueColor(task)
-  const isCompleted = task.completed === 1 || task.status === 'done'
-
+  if (task.status !== 'waiting_external' && stale <= 0) return null
   return (
-    <div
-      onClick={(e) => { if ((e.target as HTMLElement).dataset.stop) return; onExpand() }}
-      style={{
-        background: selected ? withAlpha(meta.color, 8) : isCompleted ? 'rgba(255,255,255,0.015)' : 'rgba(255,255,255,0.025)',
-        border: `1px solid ${selected ? withAlpha(meta.color, 33) : 'rgba(255,255,255,0.06)'}`,
-        borderLeft: `2px solid ${planned ? ACCENT_GOLD : withAlpha(meta.color, 31)}`,
-        borderRadius: 5, padding: '8px 10px', cursor: 'pointer', opacity: isCompleted ? 0.5 : 1, transition: 'background 120ms',
-      }}
+    <>
+      {task.status === 'waiting_external' && <Chip color={ACCENT_ORANGE} filled>⏳ waiting</Chip>}
+      {stale > 0 && <Chip color={ACCENT_ORANGE}>{stale}d stale</Chip>}
+    </>
+  )
+}
+
+export function MyTasksRow({ task, project, selected, selectionActive, onSelect, onToggleComplete, expanded, onExpand, planned, stack }: { task: TaskRow; project: { name: string; slug: string } | null; selected: boolean; selectionActive: boolean; onSelect: () => void; onToggleComplete: () => void; expanded: boolean; onExpand: () => void; planned: boolean; stack?: boolean }) {
+  const isDone = task.completed === 1 || task.status === 'done'
+  return (
+    <SharedTaskRow
+      task={task}
+      project={project}
+      dense
+      stack={stack}
+      isDone={isDone}
+      onToggleDone={onToggleComplete}
+      isExpanded={expanded}
+      onToggleExpand={onExpand}
+      isSelected={selected}
+      selectionActive={selectionActive}
+      onToggleSelect={onSelect}
+      isPlanned={planned}
+      plannedLabel="today"
+      showGroupOverridePin
+      leadingTag={(task as TaskRow & { _tag?: string })._tag ?? '📝'}
+      extraMeta={rowExtraMeta(task)}
     >
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 4 }}>
-        <input type="checkbox" checked={selected} onChange={onSelect} data-stop="1" onClick={(e) => e.stopPropagation()} style={{ marginTop: 2, accentColor: meta.color, cursor: 'pointer' }} />
-        <span style={{ fontSize: 12, marginTop: 1, flexShrink: 0 }} aria-hidden="true">{(task as TaskRow & { _tag?: string })._tag ?? '📝'}</span>
-        <div style={{ flex: 1, minWidth: 0, fontSize: 12.5, lineHeight: 1.35, color: isCompleted ? INK_DIM : INK, textDecoration: isCompleted ? 'line-through' : 'none', fontWeight: 500, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{task.title}</div>
-        {task.group_override && (
-          <span title={`Moved here manually (override: ${task.group_override})`} style={{ fontSize: 9, color: ACCENT_TEAL, padding: '1px 4px', background: 'rgba(92,188,180,0.10)', borderRadius: 3, letterSpacing: '0.04em', flexShrink: 0 }}>📍</span>
-        )}
-        <Chip color={PRIORITY_COLOR[task.priority] ?? INK_DIM}>{PRIORITY_SHORT[task.priority] ?? task.priority}</Chip>
-      </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10.5, color: INK_DIM, paddingLeft: 22, flexWrap: 'wrap' }}>
-        {project && (
-          <Link to={PATHS.project(project.slug)} onClick={(e) => e.stopPropagation()} style={{ color: INK_DIM, textDecoration: 'none', maxWidth: 130, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={project.name}>{project.name}</Link>
-        )}
-        {task.due_date && <><span style={{ opacity: 0.4 }}>·</span><span style={{ color: dueCol, fontWeight: 500 }}>{dueText}</span></>}
-        {planned && <Chip color={ACCENT_GOLD} filled>📌 today</Chip>}
-        {task.status === 'waiting_external' && <Chip color={ACCENT_ORANGE} filled>⏳ waiting</Chip>}
-        {stale > 0 && <Chip color={ACCENT_ORANGE}>{stale}d stale</Chip>}
-        {overdueDays > 0 && <Chip color={ACCENT_CORAL} filled>{overdueDays}d late</Chip>}
-        <span style={{ flex: 1 }} />
-        <LinksBar task={task} />
-      </div>
-      {expanded && <InlineDetail task={task} projectName={project?.name} />}
-    </div>
+      <InlineDetail task={task} projectName={project?.name} />
+    </SharedTaskRow>
   )
 }

@@ -3,6 +3,7 @@ import { CalendarDays, CheckCircle2, AlertTriangle, Clock } from 'lucide-react'
 import { useTasks, useMeetingsApi } from '../../hooks/useApiData'
 import { useAuth } from '../../hooks/useAuth'
 import { emailToSlug } from '../../lib/emailSlug'
+import { isOverdue } from '../../lib/dateUtils'
 import BentoCard from './BentoCard'
 
 export default function YourWeekCard() {
@@ -25,10 +26,7 @@ export default function YourWeekCard() {
       new Date(t.due_date + 'T12:00:00') < weekEnd
     ).length
 
-    const overdue = myTasks.filter(t =>
-      !t.completed && t.due_date &&
-      new Date(t.due_date + 'T23:59:59') < now
-    ).length
+    const overdue = myTasks.filter(t => !t.completed && isOverdue(t.due_date)).length
 
     const completedThisWeek = myTasks.filter(t =>
       t.completed && t.completed_at &&

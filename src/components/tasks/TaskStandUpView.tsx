@@ -3,7 +3,7 @@ import { CheckCircle2, Circle, Clock, AlertTriangle } from 'lucide-react'
 import Avatar from '../Avatar'
 import { useUndoToast } from '../UndoToast'
 import { getPersonInfo } from '../../data/team'
-import { formatShortDate } from '../../lib/dateUtils'
+import { formatShortDate, isOverdue as isPastDue } from '../../lib/dateUtils'
 import { useProjects } from '../../hooks/useApiData'
 import type { TaskRow } from '../../lib/api'
 import TaskTitle from './TaskTitle'
@@ -70,7 +70,7 @@ export default function TaskStandUpView({ tasks, onStatusChange, onOpenDetail }:
 
   // Team summary stats
   const totalOpen = grouped.reduce((sum, [, g]) => sum + g.todo.length + g.in_progress.length + g.blocked.length, 0)
-  const totalOverdue = grouped.reduce((sum, [, g]) => sum + [...g.todo, ...g.in_progress].filter(t => t.due_date && new Date(t.due_date + 'T23:59:59') < new Date()).length, 0)
+  const totalOverdue = grouped.reduce((sum, [, g]) => sum + [...g.todo, ...g.in_progress].filter(t => isPastDue(t.due_date)).length, 0)
   const totalBlocked = grouped.reduce((sum, [, g]) => sum + g.blocked.length, 0)
 
   return (
@@ -137,7 +137,7 @@ export default function TaskStandUpView({ tasks, onStatusChange, onOpenDetail }:
                   </span>
                   {(() => {
                     const overdueCount = [...groups.todo, ...groups.in_progress].filter(
-                      (t) => t.due_date && new Date(t.due_date + 'T23:59:59') < new Date()
+                      (t) => isPastDue(t.due_date)
                     ).length
                     return overdueCount > 0 ? (
                       <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ color: 'var(--maroon)', backgroundColor: 'var(--maroon-hover)' }}>
@@ -284,7 +284,7 @@ function TaskSection({
       </div>
       <div className="flex flex-col gap-1 pl-4">
         {tasks.map((task) => {
-          const isOverdue = task.due_date && !task.completed && new Date(task.due_date + 'T23:59:59') < new Date()
+          const isOverdue = !task.completed && isPastDue(task.due_date)
           const projectName = task.project_id ? projectMap.get(task.project_id) : undefined
           return (
             <div

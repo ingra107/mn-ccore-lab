@@ -18,7 +18,7 @@ import { useTasks, useUpcomingConferences, useProjects } from '../../hooks/useAp
 import { useUpdateTaskStatus, useUpdateTask, useBulkUpdateTasks } from '../../hooks/useMutations'
 import { useGrantTimeline } from '../../hooks/useGrantTimeline'
 import { getPersonInfo } from '../../data/team'
-import { formatShortDate, localDateKey } from '../../lib/dateUtils'
+import { formatShortDate, localDateKey, isOverdue } from '../../lib/dateUtils'
 import { PATHS } from '../../constants/paths'
 import { useQueryClient } from '@tanstack/react-query'
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
@@ -140,7 +140,7 @@ export default function DeadlinesPage() {
         project: task.project_id || undefined,
         status: task.status,
         priority: task.priority,
-        isOverdue: !task.completed && dueDate < now,
+        isOverdue: !task.completed && isOverdue(task.due_date),
         daysUntil,
       })
     }
@@ -158,7 +158,7 @@ export default function DeadlinesPage() {
           type: 'milestone',
           project: grant.title,
           status: milestone.status,
-          isOverdue: milestone.status !== 'completed' && dueDate < now,
+          isOverdue: milestone.status !== 'completed' && isOverdue(milestone.target_date),
           daysUntil,
           future_note: milestone.future_note,
           future_note_author: milestone.future_note_author,

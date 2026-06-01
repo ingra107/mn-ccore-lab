@@ -16,6 +16,7 @@ import {
   useExpiringRegulatory,
   useMenteeMilestones,
 } from './useApiData'
+import { isOverdue } from '../lib/dateUtils'
 
 const STALLED_THRESHOLD_DAYS = 30
 
@@ -49,13 +50,7 @@ export function useLabHealthSignals(options?: { enabled?: boolean }): LabHealthS
   return useMemo(() => {
     const now = Date.now()
 
-    const overdueCount = (tasks ?? []).filter((t: any) => {
-      if (t.completed) return false
-      if (t.status === 'done' || t.status === 'completed') return false
-      if (!t.due_date) return false
-      const d = new Date(t.due_date + 'T23:59:59').getTime()
-      return !isNaN(d) && d < now
-    }).length
+    const overdueCount = (tasks ?? []).filter((t: any) => !t.completed && isOverdue(t.due_date, t.status)).length
 
     const stalledManuscriptCount = (projects ?? []).filter((p: any) => {
       if (!p.stage || p.stage === 'published') return false

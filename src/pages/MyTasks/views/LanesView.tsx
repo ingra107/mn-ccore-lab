@@ -1,20 +1,20 @@
 // LanesView — stacked-section renderer. Focus one group, peek at others
-// (collapse to peek shows first 4 rows; "+N more" reveals all). Click a
-// row body → inline detail slides in below the row (CD spec).
+// (collapse to peek shows first 4 rows; "+N more" reveals all). Each lane is
+// its own soft box on the flat page (the chosen "My Tasks Before and After"
+// look, handoff §5). Rows use the shared <TaskRow> via MyTasksRow — square =
+// complete, shift-click / long-press = select, body click = inline detail
+// below the row.
 //
 // Extracted from src/pages/portal/UnifiedMyTasks.tsx (LanesView + LaneRow).
 
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { PATHS } from '../../../constants/paths'
 import { Chip } from '../primitives'
-import { InlineDetail } from '../components/InlineDetail'
+import { MyTasksRow } from './ColumnsView'
 import {
   GROUP_META, GROUP_ORDER,
-  ACCENT_GOLD, ACCENT_TEAL, ACCENT_ORANGE, ACCENT_CORAL,
-  INK, INK_MUTED, INK_DIM,
-  PRIORITY_COLOR, PRIORITY_SHORT,
-  todayKey, daysSince, dueLabel, dueColor, withAlpha,
+  ACCENT_GOLD, ACCENT_CORAL,
+  INK_MUTED, INK_DIM,
+  todayKey, withAlpha,
   type GroupKey,
 } from '../constants'
 import type { TaskRow } from '../../../lib/api'
@@ -35,7 +35,7 @@ function writeSet(key: string, s: Set<GroupKey>) {
   try { window.localStorage.setItem(key, JSON.stringify([...s])) } catch { /* ignore */ }
 }
 
-export function LanesView({ byGroup, selected, toggleSelect, expanded, setExpanded, projectsByPid, plannedSet, filterGroup }: { byGroup: Record<GroupKey, TaskRow[]>; selected: Set<string>; toggleSelect: (id: string) => void; expanded: string | null; setExpanded: (id: string | null) => void; projectsByPid: Map<string, { name: string; slug: string }>; plannedSet: Set<string>; filterGroup?: GroupKey | null }) {
+export function LanesView({ byGroup, selected, toggleSelect, onToggleComplete, expanded, setExpanded, projectsByPid, plannedSet, filterGroup }: { byGroup: Record<GroupKey, TaskRow[]>; selected: Set<string>; toggleSelect: (id: string) => void; onToggleComplete: (task: TaskRow) => void; expanded: string | null; setExpanded: (id: string | null) => void; projectsByPid: Map<string, { name: string; slug: string }>; plannedSet: Set<string>; filterGroup?: GroupKey | null }) {
   // MT-16 — when a Group filter is active, only render the matching lane.
   const visibleGroups = filterGroup ? GROUP_ORDER.filter(g => g === filterGroup) : GROUP_ORDER
   const [collapsed, setCollapsed] = useState<Set<GroupKey>>(() => readSet(LS_COLLAPSED))
@@ -44,6 +44,7 @@ export function LanesView({ byGroup, selected, toggleSelect, expanded, setExpand
   useEffect(() => { writeSet(LS_PEEK, peek) }, [peek])
   const toggleC = (k: GroupKey) => setCollapsed((s) => { const n = new Set(s); n.has(k) ? n.delete(k) : n.add(k); return n })
   const toggleP = (k: GroupKey) => setPeek((s) => { const n = new Set(s); n.has(k) ? n.delete(k) : n.add(k); return n })
+  const selectionActive = selected.size > 0
 
   return (
     <div style={{ flex: 1, overflow: 'auto', padding: '12px 28px 40px', maxWidth: 1100, margin: '0 auto', width: '100%' }}>
@@ -73,17 +74,19 @@ export function LanesView({ byGroup, selected, toggleSelect, expanded, setExpand
               <span style={{ fontSize: 11, color: INK_MUTED, minWidth: 40, textAlign: 'right' }}>{tasks.length}</span>
             </button>
             {!isCollapsed && (
-              <div style={{ padding: '8px 14px 12px' }}>
+              <div>
                 {visible.length === 0 && (
-                  <div style={{ padding: '12px 4px', fontSize: 12, color: INK_DIM, fontStyle: 'italic' }}>nothing here</div>
+                  <div style={{ padding: '12px 16px', fontSize: 12, color: INK_DIM, fontStyle: 'italic' }}>nothing here</div>
                 )}
                 {visible.map((t) => (
-                  <LaneRow
+                  <MyTasksRow
                     key={t.id}
                     task={t}
                     project={t.project_id ? projectsByPid.get(t.project_id) ?? null : null}
                     selected={selected.has(t.id)}
+                    selectionActive={selectionActive}
                     onSelect={() => toggleSelect(t.id)}
+                    onToggleComplete={() => onToggleComplete(t)}
                     expanded={expanded === t.id}
                     onExpand={() => setExpanded(expanded === t.id ? null : t.id)}
                     planned={plannedSet.has(t.id)}
@@ -92,7 +95,7 @@ export function LanesView({ byGroup, selected, toggleSelect, expanded, setExpand
                 {hidden > 0 && (
                   <button
                     onClick={() => toggleP(gkey)}
-                    style={{ marginTop: 6, padding: '6px 10px', fontSize: 11.5, fontWeight: 500, border: '1px dashed rgba(255,255,255,0.08)', borderRadius: 4, background: 'transparent', color: INK_DIM, fontFamily: 'inherit', cursor: 'pointer', width: '100%', textAlign: 'center' }}
+                    style={{ margin: '6px 14px 12px', padding: '6px 10px', fontSize: 11.5, fontWeight: 500, border: '1px dashed rgba(255,255,255,0.08)', borderRadius: 4, background: 'transparent', color: INK_DIM, fontFamily: 'inherit', cursor: 'pointer', width: 'calc(100% - 28px)', textAlign: 'center' }}
                   >{isPeek ? '▴ show less' : `▾ +${hidden} more`}</button>
                 )}
               </div>
@@ -100,51 +103,6 @@ export function LanesView({ byGroup, selected, toggleSelect, expanded, setExpand
           </section>
         )
       })}
-    </div>
-  )
-}
-
-function LaneRow({ task, project, selected, onSelect, expanded, onExpand, planned }: { task: TaskRow; project: { name: string; slug: string } | null; selected: boolean; onSelect: () => void; expanded: boolean; onExpand: () => void; planned: boolean }) {
-  const meta = GROUP_META[(task as TaskRow & { _group?: GroupKey })._group ?? 'deep']
-  const today = todayKey()
-  const overdueDays = task.due_date && task.due_date.slice(0, 10) < today ? daysSince(task.due_date) : 0
-  const stale = task.updated_at && daysSince(task.updated_at) >= 10 && task.status === 'in_progress' ? daysSince(task.updated_at) : 0
-  const dueText = dueLabel(task.due_date)
-  const dueCol = dueColor(task)
-  const isCompleted = task.completed === 1 || task.status === 'done'
-
-  return (
-    <div>
-      <div
-        onClick={(e) => { if ((e.target as HTMLElement).dataset.stop) return; onExpand() }}
-        style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 8px', borderRadius: 4, background: selected ? withAlpha(meta.color, 8) : expanded ? 'rgba(255,255,255,0.03)' : 'transparent', borderLeft: `2px solid ${planned ? ACCENT_GOLD : withAlpha(meta.color, 19)}`, opacity: isCompleted ? 0.5 : 1, cursor: 'pointer', transition: 'background 120ms' }}
-      >
-        <input type="checkbox" checked={selected} onChange={onSelect} onClick={(e) => e.stopPropagation()} data-stop="1" style={{ accentColor: meta.color, cursor: 'pointer' }} />
-        <span style={{ fontSize: 12, flexShrink: 0 }} aria-hidden="true">{(task as TaskRow & { _tag?: string })._tag ?? '📝'}</span>
-        <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={{ fontSize: 13, fontWeight: 500, color: isCompleted ? INK_DIM : INK, textDecoration: isCompleted ? 'line-through' : 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 360 }}>{task.title}</span>
-          {project && (
-            <Link to={PATHS.project(project.slug)} onClick={(e) => e.stopPropagation()} style={{ fontSize: 11, color: INK_DIM, textDecoration: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: '0 1 160px' }}>{project.name}</Link>
-          )}
-        </div>
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-          {task.group_override && (
-            <span title={`Moved manually (${task.group_override})`} style={{ fontSize: 9, color: ACCENT_TEAL, padding: '1px 4px', background: 'rgba(92,188,180,0.10)', borderRadius: 3 }}>📍</span>
-          )}
-          {planned && <Chip color={ACCENT_GOLD} filled>📌 today</Chip>}
-          {task.status === 'waiting_external' && <Chip color={ACCENT_ORANGE} filled>⏳ waiting</Chip>}
-          {stale > 0 && <Chip color={ACCENT_ORANGE}>{stale}d stale</Chip>}
-          {overdueDays > 0 && <Chip color={ACCENT_CORAL} filled>{overdueDays}d late</Chip>}
-          {task.due_date && <span style={{ fontSize: 11, color: dueCol, minWidth: 56, textAlign: 'right' }}>{dueText}</span>}
-          <Chip color={PRIORITY_COLOR[task.priority] ?? INK_DIM}>{PRIORITY_SHORT[task.priority] ?? task.priority}</Chip>
-          <span style={{ fontSize: 10, color: INK_DIM, marginLeft: 2, width: 10 }}>{expanded ? '▾' : '▸'}</span>
-        </div>
-      </div>
-      {expanded && (
-        <div style={{ paddingLeft: 30, paddingRight: 8, marginBottom: 4 }}>
-          <InlineDetail task={task} projectName={project?.name} />
-        </div>
-      )}
     </div>
   )
 }

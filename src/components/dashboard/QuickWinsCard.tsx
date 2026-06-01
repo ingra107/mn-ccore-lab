@@ -4,6 +4,7 @@ import { useTasks } from '../../hooks/useApiData'
 import { useAuth } from '../../hooks/useAuth'
 import { emailToSlug } from '../../lib/emailSlug'
 import BentoCard from './BentoCard'
+import DueLabel from '../DueLabel'
 
 /**
  * "Quick Wins" — tasks that are close to done or low-effort.
@@ -58,14 +59,7 @@ export default function QuickWinsCard() {
               <span className="text-[12px] truncate flex-1" style={{ color: 'var(--ink)' }}>
                 {task.title || task.description}
               </span>
-              {task.due_date && (
-                <span className="text-[10px] flex-shrink-0" style={{
-                  color: new Date(task.due_date + 'T23:59:59') < new Date() ? 'var(--maroon)' : 'var(--slate)',
-                  opacity: 0.85,
-                }}>
-                  {task.due_date}
-                </span>
-              )}
+              <DueLabel due={task.due_date} className="text-[10px] flex-shrink-0" style={{ opacity: 0.85 }} />
             </div>
           ))}
       </div>

@@ -438,7 +438,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
 
             {/* Row 2: Due Date + Project */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--sp-md)' }}>
-              <FieldBlock label="Due Date" icon={CalendarDays}>
+              <FieldBlock label="Due Date" icon={CalendarDays} noContainer>
                 <DateInput value={task.due_date || ''} onChange={(v) => handleFieldUpdate('due_date', v || null)} />
               </FieldBlock>
               <FieldBlock label="Project" icon={FolderKanban} noContainer>

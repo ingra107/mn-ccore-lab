@@ -9,7 +9,8 @@ import HoverCard from '../../HoverCard'
 import type { HoverCardData } from '../../HoverCard'
 import { useHoverCard } from '../../../hooks/useHoverCard'
 import { getPersonInfo } from '../../../data/team'
-import { formatMediumDate, formatShortDate } from '../../../lib/dateUtils'
+import { formatShortDate } from '../../../lib/dateUtils'
+import InlineDatePicker from '../../InlineDatePicker'
 import { useTeam } from '../../../hooks/useApiData'
 import { STATUS_OPTIONS, PRIORITY_OPTIONS } from '../../../lib/taskConstants'
 
@@ -298,48 +299,14 @@ export function AssigneeSelect({ value, onChange }: { value: string; onChange: (
 }
 
 // ── Date Input ───────────────────────────────────────────────
+// One date affordance everywhere (handoff §3): the boxed date button is
+// retired in favour of the shared, portal-positioned InlineDatePicker (which
+// also carries the canonical overdue/today/this-week labels + quick presets).
+// Kept as a thin wrapper so the `''`↔`null` contract its callers rely on is
+// preserved.
 
 export function DateInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  const inputRef = useRef<HTMLInputElement>(null)
-  const isOverdue = value && new Date(value + 'T23:59:59') < new Date()
-
-  const formatted = value ? formatMediumDate(value) : null
-
-  return (
-    <div className="flex items-center gap-2">
-      <button
-        onClick={() => inputRef.current?.showPicker()}
-        className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm transition-colors hover:bg-black/[0.03] dark:hover:bg-white/[0.05]"
-        style={{
-          color: isOverdue ? 'var(--maroon)' : formatted ? 'var(--ink)' : 'var(--slate)',
-          fontWeight: isOverdue ? 600 : 400,
-          cursor: 'pointer',
-          background: 'none',
-          border: 'none',
-          opacity: formatted ? 1 : 0.85,
-        }}
-      >
-        {formatted || 'Set date...'}
-      </button>
-      <input
-        ref={inputRef}
-        type="date"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="sr-only"
-        tabIndex={-1}
-      />
-      {value && (
-        <button
-          onClick={() => onChange('')}
-          className="text-xs px-1.5 py-0.5 rounded"
-          style={{ color: 'var(--slate)', cursor: 'pointer', background: 'none', border: 'none', opacity: 'var(--ink-hint)' }}
-        >
-          &times;
-        </button>
-      )}
-    </div>
-  )
+  return <InlineDatePicker value={value || null} onChange={(d) => onChange(d ?? '')} />
 }
 
 // ── Workflow Section ─────────────────────────────────────────
