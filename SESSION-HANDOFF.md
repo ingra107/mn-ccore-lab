@@ -1,6 +1,32 @@
-# Session Handoff — 2026-05-28
+# Session Handoff — 2026-06-01
 
-## ▶▶ CURRENT — Hub hardening + primitive-enforcement MERGED to main; deploy pending
+## ▶▶ CURRENT — Task-UI consistency refactor (P0–P2) MERGED + pushed to main
+
+Executed the `review/MN-CCORE Lab Hub Design System (5)/design/` handoff (Round 6 task-UI consistency pass), P0→P2. **tsc + build green; P0 surfaces visually verified (dark + light) on the local stack.** All on `main` + **pushed** (author ingra107, no Claude attribution):
+
+- `4ed8e657` — **P0 + P1 + P1.5**
+- `b1f10a04` — **P2 §4** (status-as-truth)
+- `aa15f556` — `/simplify` session-close cleanup
+- `a19a7aa0` — local test-harness fix
+
+**P0 — one shared row.** New `src/components/tasks/TaskRow.tsx` is the single canonical row: square = complete (never select/promote), body-click = expand, shift-click / long-press = select, full non-truncating titles on one fixed left edge, reserved priority dot, theme-aware `--task-*` tokens. Surfaces now use **thin adapters** that preserve all prior behavior — `today/TaskRow.tsx` (drag-to-plan, Right Now, workflow badges, drawer), `MyTasksRow` in `MyTasks/views/ColumnsView.tsx` (+ reused by `LanesView`), `HubTaskRow` in `portal/PersonalPage.tsx`. **Don't fork the row — extend its props.** **My Tasks List view is deliberately left as the protected power grid** (j/k/e/x nav + inline-edit columns; CLAUDE.md Rule 60).
+
+**P1 — editor + due-date consistency.** Due-date field made uniform (`noContainer`); Key Links → compact inline chips in `KeyLinksEditor.tsx` (auto-applies to ProjectDetail); one date control (`DateInput` delegates to `InlineDatePicker`); new `src/components/DueLabel.tsx` + a sweep replacing hand-rolled `new Date(due+'T23:59:59') < new Date()` with `dateUtils.isOverdue()` across dashboard cards / Analytics / Deadlines / Grants / task views / Pulse / etc.
+
+**P2 §4 — status-as-truth.** New `lib/taskGrouping.isTaskDone(t)` (= `t.status === 'done'`) adopted on the core surfaces; `completed`/`completed_at` still written through mutations. **§5 (no-double-bg + click-affordance) verified ALREADY-COMPLIANT** via screenshots + code inspection — no changes (the double-bg problem was the My Tasks/Today one P0 already fixed; TaskGridView already does body=open / checkbox=select).
+
+**Harness:** `scripts/local-db-bootstrap.ts` now skips the superseded monolithic `schema-v48.sql` (it collided with v20's `pomodoro_sessions`, aborting the migration chain so `tasks.blocked_by` never landed → `/api/tasks` 500). `npm run test:local:setup` works again.
+
+### ⚠️ Incident + lesson (shared-worktree concurrency)
+Mid-session a `git stash` (signature: `WIP→reset: moving to HEAD` at 07:02) — most likely a `git pull --autostash` triggered by the **concurrent second Claude session in this same working tree** — swept ~17 uncommitted files. Recovered by hand re-application + commit (no work lost; the dangling stash `1903677f` is redundant/safe to drop). **Lesson:** running two Claude sessions on one checkout shares one index/worktree — uncommitted edits are fragile. Mitigation: commit-per-chunk, or give the second session its own `git worktree`.
+
+### ▶ NEXT (optional)
+- Broader §4 sweep (~85 other harmless `completed`-dual-check UI sites) + consolidate the due-label text helper (TaskRow `DueChip` / `DueLabel` / MyTasks `dueLabel`) into one — deferred P1 debt.
+- Nothing deployed this session — task-UI is shipped to `main` only.
+
+---
+
+## ▶▶ (2026-05-28 — still-relevant deploy context) Hub hardening + primitive-enforcement MERGED to main; deploy pending
 
 **Hub HEAD on main:** post-merge; the branch `hub-hardening-2026-05-27` was merged `--no-ff` with **68 commits** (34 hardening + 21 primitive sweep + 6 codex-pass-5 BLOCK fixes + 7 misc). **691/691 API tests, build green.** **PB main HEAD:** post-merge; the branch `primitive-write-result-2026-05-28` was merged with 3 commits (WriteResult typed return). All four codex review passes recorded (`Scratch/audit-2026-05-27/codex/{synthesis,pass2-synthesis,pass3-final/synthesis,pass4-primitives/synthesis,pass5-final/...}.md`).
 

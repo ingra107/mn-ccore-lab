@@ -3,6 +3,16 @@
 
 > Historical phase records moved from CLAUDE.md to keep the operating guide focused on current state. Each section is a complete record of what shipped, decisions made, and scores achieved.
 
+## 2026-06-01 — Task-UI consistency refactor (Round 6 design handoff, P0–P2; commits `4ed8e657`, `b1f10a04`, `aa15f556`, `a19a7aa0`)
+
+Executed `review/MN-CCORE Lab Hub Design System (5)/design/` (the "Unified Task Model" handoff). **tsc + build green; P0 surfaces visually verified light + dark on the local stack.** Pushed to `main`.
+
+- **P0 — one shared `<TaskRow>`** (`src/components/tasks/TaskRow.tsx`, new): replaces the ~10 divergent per-surface row renderers. Contract: square = complete everywhere (never select/promote), body-click = expand, shift-click / long-press = select, full non-truncating titles on one fixed left edge, reserved priority dot, theme-aware `--task-*` tokens. Today / My Hub / My Tasks (Columns + Lanes) now render via **thin adapters** (`today/TaskRow`, `MyTasksRow`, `HubTaskRow`) that preserve every prior behavior (drag-to-plan, Right Now, v55 workflow badges, bulk bar, lane peek, inline detail). My Tasks **List view left as the protected power grid** (Rule 60).
+- **P1 — editor + due-date consistency:** uniform Due-date field (`noContainer` on the `FieldBlock`); Key Links → compact inline chips (`KeyLinksEditor`, also ProjectDetail); single date control (`DateInput` → `InlineDatePicker`); new `<DueLabel>` (`src/components/DueLabel.tsx`) + a sweep replacing hand-rolled `new Date(due+'T23:59:59') < new Date()` overdue math with `dateUtils.isOverdue()` across dashboard cards, Analytics, Deadlines, Grants, task/standup/timeline views, MemberPage, CommandPalette, ConferencePrep, Pulse, lab-health signals.
+- **P2 §4 — status-as-truth:** `lib/taskGrouping.isTaskDone(t)` (= `status === 'done'`) on the core surfaces; `completed`/`completed_at` still written through mutations. **§5 verified already-compliant** (no double-bg on data pages; TaskGridView already body=open / checkbox=select) — no code changes.
+- **Test harness fix:** `scripts/local-db-bootstrap.ts` skips the superseded monolithic `schema-v48.sql` (collided with v20's `pomodoro_sessions`, aborting the chain → `tasks.blocked_by` missing → `/api/tasks` 500). Local setup works again.
+- **Incident:** a concurrent second Claude session in the same worktree triggered a `git stash` (likely `pull --autostash`) that swept ~17 uncommitted files mid-session; recovered by hand + commit, no work lost. Lesson recorded in SESSION-HANDOFF: commit-per-chunk or isolate the second session in a `git worktree`.
+
 ## 2026-05-28 — Primitive-enforcement pass: 11 class-of-bug eliminators + codex-pass-5 BLOCK→fix arc (branch `hub-hardening-2026-05-27`, +28 commits over the hardening pass; PB branch `primitive-write-result-2026-05-28`, +3 commits)
 
 Follow-on to the 2026-05-27/28 hardening below. **Codex pass-4 (meta-review)** of 7 prior review rounds noticed the SAME bug classes kept recurring (alpha-suffix concat caught 3 times across rounds, missing visibility gate caught 3+, optional-Request footgun) and codified the principle: *"the fix is a new primitive, not another rule"* (codex ethos #4). Nick authorized the full sweep before merge. **691/691 Hub API tests, build green; PB 458 db + 1290 integration tests green.**
