@@ -34,6 +34,10 @@
 import { readFileSync } from 'fs'
 import { resolve } from 'path'
 import { describe, it, expect } from 'vitest'
+// F1 (2026-06-02): TABLE_FIELDS is now the pb-schema package SSOT. Import
+// directly so the drift test always sees the live contract, not a regex parse
+// of source text (which broke when TABLE_FIELDS moved to an import statement).
+import { TABLE_FIELDS } from '../../pb-schema/pb_schema/generated/field-authority.generated.ts'
 
 // ── Shared: read mutations.ts source once ──────────────────────────────────
 
@@ -173,31 +177,11 @@ interface BrainDbSnapshot {
   hub_only_fields: Record<string, string[]>
 }
 
-// Extract TABLE_FIELDS from mutations.ts source as a set per table.
-function extractTableFields(src: string): Record<string, Set<string>> {
-  const tableFields: Record<string, Set<string>> = {}
-
-  // Match: tasks: new Set([ ... ])
-  const tablePattern = /(\w+):\s*new Set\(\[\s*([\s\S]*?)\s*\]\)/g
-  let m: RegExpExecArray | null
-  // eslint-disable-next-line no-cond-assign
-  while ((m = tablePattern.exec(src)) !== null) {
-    const tableName = m[1]
-    const fieldsBlock = m[2]
-    const fields = new Set<string>()
-    // Extract quoted field names
-    const fieldPattern = /'(\w+)'/g
-    let fm: RegExpExecArray | null
-    // eslint-disable-next-line no-cond-assign
-    while ((fm = fieldPattern.exec(fieldsBlock)) !== null) {
-      fields.add(fm[1])
-    }
-    if (fields.size > 0) {
-      tableFields[tableName] = fields
-    }
-  }
-  return tableFields
-}
+// NOTE (F1, 2026-06-02): TABLE_FIELDS is now imported from the pb-schema package
+// (the generated TS module is the SSOT). The old extractTableFields() regex-parser
+// on the mutations.ts source text has been removed — it was a fragile workaround
+// for the inline literal and breaks now that TABLE_FIELDS is an import statement.
+// Task C uses the live imported TABLE_FIELDS directly.
 
 describe('_HUB_ONLY_FIELDS schema drift gate (Task C)', () => {
   let snapshot: BrainDbSnapshot
@@ -217,12 +201,10 @@ describe('_HUB_ONLY_FIELDS schema drift gate (Task C)', () => {
     return
   }
 
-  const tableFields = extractTableFields(mutationsSrc)
-
-  it('TABLE_FIELDS was parsed successfully from mutations.ts', () => {
-    expect(Object.keys(tableFields)).toContain('tasks')
-    expect(Object.keys(tableFields)).toContain('projects')
-    expect(tableFields['tasks'].size).toBeGreaterThan(10)
+  it('TABLE_FIELDS from pb-schema covers tasks and projects', () => {
+    expect(Object.keys(TABLE_FIELDS)).toContain('tasks')
+    expect(Object.keys(TABLE_FIELDS)).toContain('projects')
+    expect(TABLE_FIELDS['tasks'].size).toBeGreaterThan(10)
   })
 
   it('snapshot.brain_cols was loaded', () => {
@@ -232,7 +214,7 @@ describe('_HUB_ONLY_FIELDS schema drift gate (Task C)', () => {
 
   for (const table of ['tasks', 'projects']) {
     it(`${table}: computed hub_only_fields matches snapshot.hub_only_fields`, () => {
-      const hubFields = tableFields[table]
+      const hubFields = TABLE_FIELDS[table]
       if (!hubFields) return // table not in TABLE_FIELDS — skip
 
       const brainCols = new Set(snapshot.brain_cols[table] ?? [])

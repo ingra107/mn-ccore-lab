@@ -26,6 +26,7 @@ import { json, error, generateId, assertProtectedNotNull, getValidationFlags, sa
 import { FK_SLUG_FIELDS } from '../lib/task-cols';
 import { nowInstant } from '../lib/time';
 import { assertEnumDomain, assertCompletionTriad } from '../lib/enum-domains';
+import { TABLE_FIELDS } from '../../pb-schema/pb_schema/generated/field-authority.generated.ts';
 
 const ALLOWED_TABLES = new Set([
   'tasks', 'projects', 'inbox_events', 'day_capacity', 'project_state_log',
@@ -239,104 +240,12 @@ function compositeWhere(cols: string[], parts: unknown[]): { clause: string; val
   return { clause, vals: parts };
 }
 
-// Per-table column whitelists. Mutations carrying fields not in the
-// whitelist are rejected with status='error' (rather than silently dropped).
-// Keeps schema drift visible.
-const TABLE_FIELDS: Record<string, Set<string>> = {
-  tasks: new Set([
-    'title', 'description', 'description_json', 'assignee', 'assigned_by',
-    'project_id', 'meeting_id',
-    'due_date', 'deadline', 'status', 'completed', 'completed_at', 'completed_by',
-    'priority', 'effort', 'source', 'source_thread_id', 'related_message_ids',
-    'short_title', 'notes', 'blocked_by',
-    'key_link_1', 'key_link_1_desc', 'key_link_2', 'key_link_2_desc',
-    'key_link_3', 'key_link_3_desc', 'group_override',
-    'waiting_on', 'promised_to', 'promise_date',
-    'next_checkin_date', 'nick_followup_date',
-    'requires_nick_brain', 'estimated_minutes',
-    'deadline_type', 'next_artifact', 'inbox_event_id',
-    'created_at',
-  ]),
-  projects: new Set([
-    'title', 'short_name', 'status', 'stage', 'category', 'pi', 'pi_context', 'strategic_context',
-    'slug', 'description', 'stage_notes',
-    'key_link_1', 'key_link_1_desc', 'key_link_2', 'key_link_2_desc',
-    'key_link_3', 'key_link_3_desc',
-    'state', 'next_artifact', 'last_meaningful_movement', 'stale_active_since',
-    // schema-v71 promotion (2026-05-29): 17 fields promoted PB-only -> Hub-canonical.
-    // Bucket B (converge) + Bucket C (reference). All same-named on the wire.
-    // journal is a NEW column, separate from the PWA journal_name field.
-    // Decision: Peripheral-Brain/Context/Decisions/2026-05-29-promote-project-fields-hub-canonical.md
-    'next_action', 'due_date', 'tier', 'domain',
-    'citation', 'doi', 'pubmed_id', 'publication_date', 'journal',
-    'author_role', 'primary_folder', 'manuscript_path', 'analysis_path',
-    'key_files', 'github_url', 'box_url', 'context_links',
-    'created_at',
-  ]),
-  inbox_events: new Set([
-    'source', 'source_external_id', 'raw_text', 'raw_payload_json', 'raw_hash',
-    'suggested_project_id', 'suggested_action', 'confidence',
-    'captured_at', 'triaged_at', 'triage_outcome', 'resulting_task_id',
-    'triaged_by', 'notes', 'created_at',
-  ]),
-  day_capacity: new Set([
-    'date', 'day_type', 'declared_at', 'source', 'created_at',
-  ]),
-  project_state_log: new Set([
-    'project_id', 'old_state', 'new_state', 'reason', 'actor', 'created_at',
-  ]),
-  sessions: new Set([
-    'session_id', 'started_at', 'ended_at', 'summary', 'context',
-    'projects_touched', 'skills_used', 'token_estimate', 'machine_id',
-    'created_at',
-  ]),
-  agent_knowledge: new Set([
-    'category', 'topic', 'knowledge', 'source',
-    'learned_at', 'updated_at', 'confidence', 'tags',
-    'valid_from', 'valid_to', 'superseded_by', 'machine_id',
-    'created_at',
-  ]),
-  memory_facts: new Set([
-    'id', 'text', 'category', 'confidence', 'status',
-    'confusion_risk', 'is_negative_constraint',
-    'superseded_by', 'superseded_at', 'supersession_reason',
-    'source_type', 'source_session_id',
-    'access_count', 'days_active', 'last_relevance_score',
-    'created_at', 'updated_at', 'promoted_at', 'last_accessed',
-    'source_machine_id',
-  ]),
-  pomodoro_sessions: new Set([
-    'task_id', 'project_id', 'start_time', 'end_time',
-    'duration_min', 'completed', 'notes', 'created_at',
-    'source', 'confidence_score', 'phase', 'machine_id',
-  ]),
-  decisions: new Set([
-    'context_id', 'date', 'title', 'topic', 'tags', 'content',
-    'file_path', 'indexed_at', 'outcome', 'outcome_date',
-    'machine_id', 'created_at',
-  ]),
-  kg_entities: new Set([
-    'id', 'entity_type', 'name', 'canonical_name', 'attributes',
-    'description', 'importance_score', 'access_count', 'last_accessed',
-    'source_type', 'source_id', 'created_at', 'updated_at',
-    'valid_from', 'valid_until',
-  ]),
-  kg_relations: new Set([
-    'source_id', 'target_id', 'relation_type', 'attributes',
-    'confidence', 'weight', 'valid_from', 'valid_until',
-    'superseded_by', 'extraction_source', 'extraction_ref',
-    'extracted_from', 'created_at', 'last_validated',
-  ]),
-  kg_relation_type_registry: new Set([
-    'relation_type', 'inverse_name', 'is_transitive', 'is_temporal',
-    'default_weight', 'category', 'description', 'staleness_days',
-    'created_at', 'updated_at',
-  ]),
-  trajectories: new Set([
-    'task', 'steps', 'outcome', 'insight', 'project_id',
-    'created_at', 'access_count', 'last_accessed', 'machine_id',
-  ]),
-};
+// Per-table column whitelists imported from the pb-schema package (F1 SSOT).
+// pb-schema/pb_schema/generated/field-authority.generated.ts is the canonical
+// source; mutations carrying fields not in the whitelist are rejected with
+// status='error' (rather than silently dropped).
+// To update: bump the pb-schema submodule pointer (sync_from_pb.py on PB machine)
+// then `git -C pb-schema fetch origin && git -C pb-schema checkout <sha>`.
 
 export interface Mutation {
   mutation_id: string;
