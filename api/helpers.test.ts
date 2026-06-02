@@ -207,14 +207,14 @@ describe('projectRefToCanonical — A3', () => {
     { id: 'proj_PB', slug: 'pb-project', category: 'Peripheral Brain' },
   ])
 
-  it('resolves by id → returns slug form when slug present', async () => {
+  it('resolves by id → returns typed PK (P2: id always, not slug)', async () => {
     const result = await projectRefToCanonical(env, 'proj_ABC')
-    expect(result).toBe('my-project')
+    expect(result).toBe('proj_ABC')
   })
 
-  it('resolves by slug → returns slug form', async () => {
+  it('resolves by slug → returns typed PK (P2: id always, not slug)', async () => {
     const result = await projectRefToCanonical(env, 'my-project')
-    expect(result).toBe('my-project')
+    expect(result).toBe('proj_ABC')
   })
 
   it('resolves by id → returns id form when slug is null', async () => {

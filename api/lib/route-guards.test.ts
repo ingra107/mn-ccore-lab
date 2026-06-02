@@ -45,8 +45,8 @@ describe('withProjectWrite()', () => {
     const res = await guard(stubRequest(), stubEnvWithProject(), { project_id: 'mnccore-proj' });
     expect(res.status).toBe(200);
     expect(inner).toHaveBeenCalledTimes(1);
-    // projectId arg is the canonical slug returned by the project lookup
-    expect(inner.mock.calls[0][2]).toBe('mnccore-proj');
+    // projectId arg is the canonical typed PK (P2: proj.id, not slug)
+    expect(inner.mock.calls[0][2]).toBe('proj-1');
   });
 
   it('returns 400 when body has no project_id', async () => {
@@ -86,7 +86,8 @@ describe('withOptionalProjectWrite()', () => {
     const res = await guard(stubRequest(), stubEnvWithProject(), { project_id: 'mnccore-proj' });
     expect(res.status).toBe(200);
     expect(inner).toHaveBeenCalledTimes(1);
-    expect(inner.mock.calls[0][2]).toBe('mnccore-proj');
+    // projectId arg is the canonical typed PK (P2: proj.id, not slug)
+    expect(inner.mock.calls[0][2]).toBe('proj-1');
   });
 
   it('returns block when project_id is present but project not found', async () => {

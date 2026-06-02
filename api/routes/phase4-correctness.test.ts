@@ -714,9 +714,9 @@ describe('Fix 6 — project-ref resolver: slug resolves to canonical before INSE
     expect(res.status).toBe(201);
     const submissionInsert = inserts.find(i => i.sql.includes('submission_events') && i.sql.includes('INSERT'));
     expect(submissionInsert).toBeDefined();
-    // project_id stored is the resolved slug/id ('some-project' which is the slug form)
-    // projectRefToCanonical returns slug || id → 'some-project'
-    expect(submissionInsert!.binds[1]).toBe('some-project');
+    // P2: projectRefToCanonical returns proj.id (typed PK), not slug.
+    // Stub returns { id: 'proj-uuid-s', slug: 'some-project' } → canonical = 'proj-uuid-s'.
+    expect(submissionInsert!.binds[1]).toBe('proj-uuid-s');
   });
 
   it('submissions: returns 400 when project_id slug is unknown', async () => {
@@ -774,7 +774,9 @@ describe('Fix 6 — project-ref resolver: slug resolves to canonical before INSE
     expect(res.status).toBe(201);
     const confInsert = inserts.find(i => i.sql.includes('conference_submissions') && i.sql.includes('INSERT'));
     expect(confInsert).toBeDefined();
-    expect(confInsert!.binds[1]).toBe('clif-study');  // slug form is canonical here
+    // P2: projectRefToCanonical returns proj.id (typed PK), not slug.
+    // Stub returns { id: 'proj-uuid-c', slug: 'clif-study' } → canonical = 'proj-uuid-c'.
+    expect(confInsert!.binds[1]).toBe('proj-uuid-c');
   });
 
   // ── regulatory.ts ──
@@ -891,13 +893,14 @@ describe('Fix 7 — applyInsert: tasks.project_id slug resolved to canonical', (
 
     const env = { DB: db, TEST_MODE_KEY, PB_API_KEY: 'valid-test-api-key' } as unknown as Env;
 
-    // With slug as input → should return slug (since slug || id = slug)
+    // P2: canonical = proj.id (typed PK), not slug.
+    // With slug as input → resolver finds the row, returns proj.id.
     const result = await projectRefToCanonical(env, 'my-slug');
-    expect(result).toBe('my-slug');
+    expect(result).toBe('proj-uuid-7');
 
-    // With UUID as input → should return slug (canonical form)
+    // With UUID as input → resolver finds the row, returns proj.id (same value).
     const result2 = await projectRefToCanonical(env, 'proj-uuid-7');
-    expect(result2).toBe('my-slug');
+    expect(result2).toBe('proj-uuid-7');
 
     // With unknown ref → null
     const db2 = {

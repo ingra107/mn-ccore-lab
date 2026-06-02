@@ -73,7 +73,8 @@ const NICK: AuthUser = { email: 'ingra107@umn.edu', name: 'Nick' }
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('Fix 7 integration — applyInsert slug resolution (real applyInsert, no mock)', () => {
-  it('resolves a slug-form project_id to canonical slug before INSERT', async () => {
+  it('resolves a slug-form project_id to canonical typed PK before INSERT (P2)', async () => {
+    // P2: canonical = proj.id (typed PK), not slug. Caller passes slug; stored value must be the PK.
     const db = makeStubDB({
       projectRow: { id: 'proj_canonical_uuid', slug: 'my-project-slug', category: 'MNCCORE' },
     })
@@ -87,27 +88,25 @@ describe('Fix 7 integration — applyInsert slug resolution (real applyInsert, n
       payload: {
         title: 'Fix 7 slug resolution test',
         status: 'todo',
-        // Caller passes the raw slug (not UUID) — applyInsert must resolve it
+        // Caller passes the raw slug — applyInsert must resolve to proj.id
         project_id: 'my-project-slug',
       },
     }, NICK)
 
     expect(result.status).toMatch(/^(accepted|merged_clean)$/)
 
-    // The INSERT bindings must contain the resolved canonical value.
-    // projectRow.slug = 'my-project-slug' — resolveAndGuardProject returns slug || id,
-    // so canonical = 'my-project-slug'. The INSERT is still 'my-project-slug' here
-    // because that IS the canonical form (slug takes priority over id).
+    // P2: canonical = proj.id ('proj_canonical_uuid'), not slug.
     const insertArgs = db._insertBindings[0]
     expect(insertArgs).toBeDefined()
-    // project_id column must NOT be the raw input if a UUID is the canonical form;
-    // verify canonical resolution ran (the canonical = slug || id path)
-    const projectIdIdx = (insertArgs as unknown[]).indexOf('my-project-slug')
+    const projectIdIdx = (insertArgs as unknown[]).indexOf('proj_canonical_uuid')
     expect(projectIdIdx).toBeGreaterThanOrEqual(0)
+    // Slug must NOT appear in INSERT bindings (it was replaced by the typed PK)
+    const slugIdx = (insertArgs as unknown[]).indexOf('my-project-slug')
+    expect(slugIdx).toBe(-1)
   })
 
-  it('resolves a UUID-form project_id to canonical slug before INSERT', async () => {
-    // Caller passes the UUID; projectRow.slug = 'my-project-slug' is canonical
+  it('resolves a UUID-form project_id to canonical typed PK before INSERT (P2)', async () => {
+    // Caller passes the UUID directly; proj.id = 'proj_canonical_uuid' is already canonical.
     const db = makeStubDB({
       projectRow: { id: 'proj_canonical_uuid', slug: 'my-project-slug', category: 'MNCCORE' },
     })
@@ -121,21 +120,21 @@ describe('Fix 7 integration — applyInsert slug resolution (real applyInsert, n
       payload: {
         title: 'Fix 7 UUID resolution test',
         status: 'todo',
-        // Caller passes the raw UUID — applyInsert must resolve to slug
+        // Caller passes the typed PK directly — stored value is also the typed PK.
         project_id: 'proj_canonical_uuid',
       },
     }, NICK)
 
     expect(result.status).toMatch(/^(accepted|merged_clean)$/)
 
-    // After resolution: canonical = slug || id = 'my-project-slug' (slug wins)
+    // P2: canonical = proj.id ('proj_canonical_uuid') — UUID IS the canonical form.
     const insertArgs = db._insertBindings[0]
     expect(insertArgs).toBeDefined()
-    const resolvedIdx = (insertArgs as unknown[]).indexOf('my-project-slug')
+    const resolvedIdx = (insertArgs as unknown[]).indexOf('proj_canonical_uuid')
     expect(resolvedIdx).toBeGreaterThanOrEqual(0)
-    // UUID must NOT appear in INSERT bindings (it was replaced by canonical slug)
-    const uuidIdx = (insertArgs as unknown[]).indexOf('proj_canonical_uuid')
-    expect(uuidIdx).toBe(-1)
+    // Slug must NOT appear in INSERT bindings (proj.id was used, not slug)
+    const slugIdx = (insertArgs as unknown[]).indexOf('my-project-slug')
+    expect(slugIdx).toBe(-1)
   })
 
   it('sets project_id to null when project ref does not resolve', async () => {
