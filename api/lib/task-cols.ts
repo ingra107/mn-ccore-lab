@@ -103,5 +103,6 @@ export const FK_SLUG_FIELDS: Record<string, string[]> = {
   regulatory_items: ['project_id'],
   manuscript_revisions: ['project_id'],
   project_documents: ['project_id'],
-  deadline_dependencies: ['project_id'],  // covers the deadline_cascade graph
+  // deadline_dependencies intentionally absent: no project_id column (straddles
+  // upstream_id + downstream_id); Z4.3 exempts it from FK_SLUG_FIELDS handling.
 };

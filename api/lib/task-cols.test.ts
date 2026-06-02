@@ -33,7 +33,7 @@ describe('FK_SLUG_FIELDS — Z3.2 expansion', () => {
     const expectedTables = [
       'tasks', 'submission_events', 'conference_submissions',
       'regulatory_items', 'manuscript_revisions', 'project_documents',
-      'deadline_dependencies',
+      // deadline_dependencies intentionally absent: no project_id column (Z4.3 exempt)
     ]
     for (const t of expectedTables) {
       expect(FK_SLUG_FIELDS[t], `${t} should be registered`).toContain('project_id')

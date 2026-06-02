@@ -637,7 +637,7 @@ export async function canSeePbProjectRow(
  * T2.4 (2026-05-28) · `resolveAndGuardProject` — combined resolver + visibility
  * gate. Single SELECT for id/slug/category; returns either a 403 block plus a
  * null projectId (caller `return block;`s) or null block + the canonical
- * projectId (`slug || id`) for downstream use.
+ * projectId (typed `proj_*` PK) for downstream use.
  *
  * Replaces the 2-statement pattern at 6 write-side call sites:
  *
