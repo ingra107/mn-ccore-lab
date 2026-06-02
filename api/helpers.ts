@@ -532,15 +532,18 @@ export async function actorSlugFromRequest(request: Request, env: Env): Promise<
 }
 
 /**
- * A3 · `projectRefToCanonical` — resolve a project id-or-slug to the
- * canonical stored form (`slug || id`), or null when the ref is unresolvable.
+ * P2 · `projectRefToCanonical` — resolve a project id-or-slug to the
+ * canonical typed PK (`proj_*`), or null when the ref is unresolvable.
  *
- * Extracts the repeated resolver from api/routes/tasks.ts so there is ONE
- * implementation. Three callsites in tasks.ts (handleUpdateTask,
- * handleCreateTask, PWA batch) each duplicated:
- *   SELECT id, slug FROM projects WHERE id = ? OR slug = ?
- *   result = proj.slug || proj.id
- * This function is the single source of truth for that logic.
+ * POST-P2-REKEY: returns `proj.id` always — Hub stores canonical typed PKs
+ * after the P2 D1 data migration rewrites all slug/hex project_id FKs.
+ * The resolver still accepts slugs and hex ids as input (slug=? arm retained)
+ * so inbound writes from older PB clients or Hub UI routes resolve cleanly
+ * during + after the migration window.
+ *
+ * PRE-P2 (historic note): returned `proj.slug || proj.id`, which stored slugs
+ * as FKs. That caused advanceProjectMovement to require `id=? OR slug=?` to
+ * match both forms. Post-P2 the slug arm there is dropped; only `id=?` needed.
  *
  * Returns null (not an error) on unknown refs — callers decide whether to
  * store NULL or reject (task create tolerates NULL; ACL gate rejects).
@@ -548,10 +551,10 @@ export async function actorSlugFromRequest(request: Request, env: Env): Promise<
 export async function projectRefToCanonical(env: Env, ref: string): Promise<string | null> {
   if (!ref) return null;
   const proj = await env.DB.prepare(
-    'SELECT id, slug FROM projects WHERE id = ? OR slug = ? LIMIT 1'
-  ).bind(ref, ref).first<{ id: string; slug: string | null }>();
+    'SELECT id FROM projects WHERE id = ? OR slug = ? LIMIT 1'
+  ).bind(ref, ref).first<{ id: string }>();
   if (!proj) return null;
-  return proj.slug || proj.id;
+  return proj.id;
 }
 
 /**
@@ -645,7 +648,7 @@ export async function canSeePbProjectRow(
  *
  *   → const { block, projectId } = await resolveAndGuardProject(request, env, ref);
  *     if (block) return block;
- *     // projectId is the canonical slug-or-id for downstream INSERT/UPDATE.
+ *     // projectId is the canonical proj_ typed PK for downstream INSERT/UPDATE.
  *
  * Unknown refs (proj=null) fail-closed for non-PI (consistent with
  * canSeePbProject) and return a 404 (not 403) so callers don't need a
@@ -677,10 +680,13 @@ export async function resolveAndGuardProject(
     return { block: error(`Unknown project "${ref}"`, 400), projectId: null };
   }
 
-  const canonical = proj.slug || proj.id;
+  // Post-P2: always return proj.id (typed proj_ PK), never slug.
+  // Pre-P2 this was `proj.slug || proj.id`, which stored slugs as FKs in child
+  // tables. After the P2 re-key the DB holds typed PKs everywhere; returning
+  // the slug here would re-pollute child rows inserted post-deploy.
   const visible = await canSeePbProjectRow(request, env, proj);
   if (!visible) return { block: error('Project not found', 403), projectId: null };
-  return { block: null, projectId: canonical };
+  return { block: null, projectId: proj.id };
 }
 
 /**

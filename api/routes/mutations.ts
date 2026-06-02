@@ -973,24 +973,38 @@ export async function applyDelete(env: Env, mut: Mutation, user: AuthUser): Prom
   } else if (mut.table === 'projects') {
     // B7 (SEC-T0-7): mirror the full child-table cascade from handleDeleteProject
     // so PB-origin project deletes (this path) clean up the same dependents the
-    // Hub-UI route does. `mut.record_id` is the project's canonical id; child
-    // rows may key by id OR slug, so resolve the slug and match both.
+    // Hub-UI route does. `mut.record_id` is the project's canonical typed PK.
     // (entity_aliases is a PB-side brain.db table, not present in Hub D1, so
     // there's no Hub alias row to clear here.)
+    //
+    // P2-REKEY: child rows are keyed by canonical typed PK after the P2 D1 data
+    // migration; the slug-lookup + dual-bind pattern is dropped. project_dependencies
+    // still uses slug-keyed from_slug/to_slug columns by deliberate design — those
+    // are deleted via the projects.slug read below (separate query, not FK-PK
+    // cascade). See §3 project_dependencies decision in p2-pk-rekey-CONSOLIDATED.md.
     try {
+      // project_dependencies is slug-keyed by design; resolve slug for that table only.
       const proj = await env.DB.prepare('SELECT slug FROM projects WHERE id = ?').bind(mut.record_id).first<{ slug: string | null }>();
-      const slug = proj?.slug ?? mut.record_id;
-      await env.DB.batch([
-        env.DB.prepare('DELETE FROM comments WHERE project_id = ? OR project_id = ?').bind(mut.record_id, slug),
-        env.DB.prepare('DELETE FROM project_updates WHERE project_id = ? OR project_id = ?').bind(mut.record_id, slug),
-        env.DB.prepare('DELETE FROM project_documents WHERE project_id = ? OR project_id = ?').bind(mut.record_id, slug),
-        env.DB.prepare('DELETE FROM milestones WHERE project_id = ? OR project_id = ?').bind(mut.record_id, slug),
-        env.DB.prepare('DELETE FROM conference_submissions WHERE project_id = ? OR project_id = ?').bind(mut.record_id, slug),
-        env.DB.prepare('DELETE FROM submission_events WHERE project_id = ? OR project_id = ?').bind(mut.record_id, slug),
-        env.DB.prepare('DELETE FROM regulatory_items WHERE project_id = ? OR project_id = ?').bind(mut.record_id, slug),
-        env.DB.prepare('DELETE FROM project_dependencies WHERE from_slug = ? OR to_slug = ? OR from_slug = ? OR to_slug = ?').bind(slug, slug, mut.record_id, mut.record_id),
-        env.DB.prepare("UPDATE tasks SET project_id = NULL, updated_at = datetime('now') WHERE (project_id = ? OR project_id = ?) AND deleted_at IS NULL").bind(mut.record_id, slug),
-      ]);
+      const slug = proj?.slug ?? null;
+      const cascadeStmts = [
+        env.DB.prepare('DELETE FROM comments WHERE project_id = ?').bind(mut.record_id),
+        env.DB.prepare('DELETE FROM project_updates WHERE project_id = ?').bind(mut.record_id),
+        env.DB.prepare('DELETE FROM project_documents WHERE project_id = ?').bind(mut.record_id),
+        env.DB.prepare('DELETE FROM milestones WHERE project_id = ?').bind(mut.record_id),
+        env.DB.prepare('DELETE FROM conference_submissions WHERE project_id = ?').bind(mut.record_id),
+        env.DB.prepare('DELETE FROM submission_events WHERE project_id = ?').bind(mut.record_id),
+        env.DB.prepare('DELETE FROM regulatory_items WHERE project_id = ?').bind(mut.record_id),
+        // manuscript_revisions: added to cascade (completeness sweep 2026-06-01 gap)
+        env.DB.prepare('DELETE FROM manuscript_revisions WHERE project_id = ?').bind(mut.record_id),
+        env.DB.prepare("UPDATE tasks SET project_id = NULL, updated_at = datetime('now') WHERE project_id = ? AND deleted_at IS NULL").bind(mut.record_id),
+      ];
+      // project_dependencies: slug-keyed; only delete if slug is known.
+      if (slug) {
+        cascadeStmts.push(
+          env.DB.prepare('DELETE FROM project_dependencies WHERE from_slug = ? OR to_slug = ?').bind(slug, slug)
+        );
+      }
+      await env.DB.batch(cascadeStmts);
     } catch (e) {
       console.error('applyDelete project cascade failed:', e);
     }
@@ -1148,11 +1162,9 @@ async function advanceProjectMovement(
   // while killing the mixed-zone wrong-winner bug. stale_active_since + updated_at
   // unconditional (movement = project unstale), matching prior behavior.
   //
-  // Uses id = ? OR slug = ? because tasks.project_id may store the project's
-  // slug (assigned via the Hub UI resolve path in tasks.ts resolvedProjectId =
-  // proj.slug || proj.id) rather than the PK. Matching only id = ? silently
-  // misses slug-backed tasks, leaving last_meaningful_movement un-advanced.
-  // Both bindings carry the same projectId value; D1 will match at most one row.
+  // P2-REKEY: matches only `id = ?` — after the P2 D1 data migration all
+  // tasks.project_id FKs are canonical typed PKs (proj_*), so the `OR slug = ?`
+  // arm is no longer needed and is removed to enforce the invariant.
   // Non-fatal wrapper: a missing projects row (orphaned task) or transient D1
   // error must not abort the task mutation that already succeeded. Log clearly
   // so operational issues surface in wrangler tail without aborting the caller.
@@ -1165,8 +1177,8 @@ async function advanceProjectMovement(
       END,
       stale_active_since = NULL,
       updated_at = datetime('now')
-    WHERE id = ? OR slug = ?
-  `).bind(tsUtc, tsUtc, projectId, projectId).run().catch((e: Error) => {
+    WHERE id = ?
+  `).bind(tsUtc, tsUtc, projectId).run().catch((e: Error) => {
     console.error('advanceProjectMovement: project update failed:', e.message);
   });
 }

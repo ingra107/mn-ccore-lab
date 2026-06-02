@@ -749,12 +749,14 @@ defineRoute({
   const ref = c.req.param('slug');
   const env = E(c);
   const proj = await env.DB.prepare(
-    'SELECT id, slug FROM projects WHERE id = ? OR slug = ? LIMIT 1'
-  ).bind(ref, ref).first<{ id: string; slug: string | null }>();
+    'SELECT id FROM projects WHERE id = ? OR slug = ? LIMIT 1'
+  ).bind(ref, ref).first<{ id: string }>();
   if (!proj) return json({ data: [] });
-  const projectId = proj.slug || proj.id;
+  // Post-P2: use proj.id (typed proj_ PK) so the filter matches rewritten rows.
+  // Pre-P2 this was `proj.slug || proj.id`; manuscript_revisions.project_id is
+  // a FK that will hold typed PKs after the P2 data migration.
   const rewrittenUrl = new URL(c.req.url);
-  rewrittenUrl.searchParams.set('project_id', projectId);
+  rewrittenUrl.searchParams.set('project_id', proj.id);
   return handleGetRevisions(rewrittenUrl, R(c), env);
 },
 });
