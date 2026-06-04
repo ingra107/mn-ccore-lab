@@ -14,7 +14,7 @@ import {
   GROUP_META, GROUP_ORDER,
   ACCENT_GOLD, ACCENT_CORAL,
   INK_MUTED, INK_DIM,
-  todayKey, withAlpha,
+  todayKey, withAlpha, isTaskDone,
   type GroupKey,
 } from '../constants'
 import type { TaskRow } from '../../../lib/api'
@@ -56,8 +56,8 @@ export function LanesView({ byGroup, selected, toggleSelect, onToggleComplete, e
         const visible = isCollapsed ? [] : isPeek ? tasks : tasks.slice(0, 4)
         const hidden = tasks.length - visible.length
         const today = todayKey()
-        const overdueInLane = tasks.filter((t) => t.due_date && t.due_date.slice(0, 10) < today && t.completed === 0).length
-        const plannedInLane = tasks.filter((t) => plannedSet.has(t.id) && t.completed === 0).length
+        const overdueInLane = tasks.filter((t) => t.due_date && t.due_date.slice(0, 10) < today && !isTaskDone(t)).length
+        const plannedInLane = tasks.filter((t) => plannedSet.has(t.id) && !isTaskDone(t)).length
         return (
           <section key={gkey} style={{ marginBottom: 18, background: 'rgba(255,255,255,0.015)', borderRadius: 8, border: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden' }}>
             <button

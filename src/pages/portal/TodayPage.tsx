@@ -25,7 +25,7 @@ import {
   INK, INK_MUTED, INK_DIM, PAGE_BG, PANEL_BG,
   todayKey, daysSince, formatTodayDate,
   meetingToEvent, calendarEventToTodayEvent, isToday, hoursSinceLastSync,
-  getGroupForTask,
+  getGroupForTask, isTaskDone,
   type GroupKey, type TodayEvent, type DailyCounts,
 } from '../../components/today/constants'
 import { PillStrip } from '../../components/today/PillStrip'
@@ -150,7 +150,7 @@ export default function TodayPage() {
     const sevenDaysAgoMs = Date.now() - 7 * 86400000
     const relevantSlugs = new Set<string>()
     for (const t of allTasks) {
-      if (t.completed === 1 || t.status === 'done') continue
+      if (isTaskDone(t)) continue
       if (!t.project_id) continue
       if (userSlug && t.assignee !== userSlug) continue
       const existing = nextByProject.get(t.project_id)

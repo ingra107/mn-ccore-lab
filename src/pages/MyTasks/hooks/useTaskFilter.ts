@@ -10,7 +10,7 @@ import {
   GROUP_ORDER,
   MENTEE_SLUGS,
   todayKey, daysSince,
-  getGroupForTask, tagForTask,
+  getGroupForTask, tagForTask, isTaskDone,
   type GroupKey, type FilterState, type QuickViewKey,
 } from '../constants'
 import type { TaskRow } from '../../../lib/api'
@@ -31,11 +31,11 @@ export function useTaskFilter({ allTasks, filter, search, quickView, plannedSet,
   const filtered = useMemo(() => {
     let base: TaskRow[] = allTasks
     if (quickView === 'today') base = base.filter((t) => plannedSet.has(t.id) || t.due_date?.slice(0, 10) === today)
-    if (quickView === 'overdue') base = base.filter((t) => t.due_date && t.due_date.slice(0, 10) < today && t.completed === 0)
-    if (quickView === 'waiting') base = base.filter((t) => t.status === 'waiting_external' && t.completed === 0)
-    if (quickView === 'stale') base = base.filter((t) => daysSince(t.updated_at) >= 10 && t.status === 'in_progress' && t.completed === 0)
+    if (quickView === 'overdue') base = base.filter((t) => t.due_date && t.due_date.slice(0, 10) < today && !isTaskDone(t))
+    if (quickView === 'waiting') base = base.filter((t) => t.status === 'waiting_external' && !isTaskDone(t))
+    if (quickView === 'stale') base = base.filter((t) => daysSince(t.updated_at) >= 10 && t.status === 'in_progress' && !isTaskDone(t))
     return base.filter((t) => {
-      if (filter.hideCompleted && (t.completed === 1 || t.status === 'done')) return false
+      if (filter.hideCompleted && isTaskDone(t)) return false
       if (filter.priority && t.priority !== filter.priority) return false
       if (filter.project && t.project_id !== filter.project) return false
       if (filter.mentee) {
@@ -61,9 +61,9 @@ export function useTaskFilter({ allTasks, filter, search, quickView, plannedSet,
       g[k].push(t)
     }
     const rank = (t: TaskRow): number => {
-      if (t.completed === 1 || t.status === 'done') return 2 // done sinks
-      if (plannedSet.has(t.id)) return 0                     // planned floats
-      return 1                                                 // active middle
+      if (isTaskDone(t)) return 2           // done sinks
+      if (plannedSet.has(t.id)) return 0   // planned floats
+      return 1                              // active middle
     }
     for (const k of GROUP_ORDER) {
       g[k].sort((a, b) => rank(a) - rank(b))
