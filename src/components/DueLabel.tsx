@@ -12,26 +12,7 @@
 // Overdue detection delegates to dateUtils.isOverdue() — never re-implement the
 // `new Date(due + 'T23:59:59') < new Date()` comparison inline.
 
-import { isOverdue, formatShortDate, localDateKey } from '../lib/dateUtils'
-
-function labelFor(due: string, overdue: boolean): string {
-  const dueDay = due.slice(0, 10)
-  const today = localDateKey()
-  if (overdue) {
-    const start = new Date(dueDay + 'T12:00:00')
-    const t0 = new Date(); t0.setHours(12, 0, 0, 0)
-    const days = Math.round((t0.getTime() - start.getTime()) / 86400000)
-    return days <= 1 ? 'Yesterday' : `${days}d overdue`
-  }
-  if (dueDay === today) return 'Today'
-  const target = new Date(dueDay + 'T12:00:00')
-  if (isNaN(target.getTime())) return dueDay
-  const t0 = new Date(); t0.setHours(12, 0, 0, 0)
-  const days = Math.round((target.getTime() - t0.getTime()) / 86400000)
-  if (days === 1) return 'Tomorrow'
-  if (days > 0 && days <= 7) return `in ${days}d`
-  return formatShortDate(due)
-}
+import { isOverdue, dueLabelText, localDateKey } from '../lib/dateUtils'
 
 export default function DueLabel({
   due,
@@ -54,7 +35,7 @@ export default function DueLabel({
       className={className}
       style={{ color, fontVariantNumeric: 'tabular-nums', fontWeight: overdue ? 600 : 400, whiteSpace: 'nowrap', ...style }}
     >
-      {labelFor(due, overdue)}
+      {dueLabelText(due, overdue)}
     </span>
   )
 }

@@ -76,3 +76,41 @@ export function getDaysAgo(dateStr: string): number {
 export function localDateKey(d: Date = new Date()): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
+
+/**
+ * Canonical due-date label text shared across ALL surfaces (TaskRow DueChip,
+ * DueLabel, MyTasks constants.ts). Returns the WORD / FORMAT for a given due
+ * date and overdue state so every surface reads identically (DH-4 — 2026-06-04).
+ *
+ * Wording chosen: `labelFor()` in DueLabel.tsx was already the "standard-palette
+ * SSOT" per handoff §3. The three divergent versions were:
+ *   • TaskRow `rowDueLabel()`:  "Nd ago"       ← retired
+ *   • DueLabel `labelFor()`:    "Nd overdue"   ← adopted as canonical
+ *   • constants `dueLabel()`:   "Nd overdue" (same wording, different casing/format) ← replaced
+ *
+ * "Nd overdue" (e.g. "3d overdue") is clearest because:
+ *   1. It communicates the lag, not just the direction ("overdue" is informative).
+ *   2. It mirrors the standard-palette DueLabel already on deployed dashboard pages.
+ *   3. "Nd ago" was TaskRow-only and could be confused with "edit was 3d ago".
+ *
+ * @param due     ISO date string (at least YYYY-MM-DD)
+ * @param overdue Result of isOverdue(due, status) — caller pre-computes once
+ */
+export function dueLabelText(due: string, overdue: boolean): string {
+  const dueDay = due.slice(0, 10)
+  const today = localDateKey()
+  const noon = (d: string) => new Date(d + 'T12:00:00')
+  const todayNoon = () => { const d = new Date(); d.setHours(12, 0, 0, 0); return d }
+
+  if (overdue) {
+    const days = Math.round((todayNoon().getTime() - noon(dueDay).getTime()) / 86400000)
+    return days <= 1 ? 'Yesterday' : `${days}d overdue`
+  }
+  if (dueDay === today) return 'Today'
+  const target = noon(dueDay)
+  if (isNaN(target.getTime())) return dueDay
+  const days = Math.round((target.getTime() - todayNoon().getTime()) / 86400000)
+  if (days === 1) return 'Tomorrow'
+  if (days > 0 && days <= 7) return `in ${days}d`
+  return formatShortDate(due)
+}

@@ -34,6 +34,7 @@ import {
   ACCENT_GOLD, ACCENT_TEAL, ACCENT_CORAL, ACCENT_ORANGE, ACCENT_GREEN,
   INK, INK_MUTED, INK_DIM, withAlpha, todayKey,
 } from '../../lib/taskGrouping'
+import { dueLabelText, isOverdue } from '../../lib/dateUtils'
 import type { TaskRow as TaskRowData } from '../../lib/api'
 
 // Reserved priority-dot color. urgent/high carry a colored dot; everything
@@ -74,34 +75,19 @@ export function DoneBox({ done, onToggle, color = ACCENT_GREEN }: { done: boolea
 }
 
 // Due-date chip — tabular-nums; coral overdue, gold today, muted otherwise.
-// (A standalone <DueLabel> primitive lands in P1 §3; this keeps the row
-// self-contained for P0 without yet sweeping every call site.)
-function rowDueLabel(due: string): string {
-  const today = todayKey()
+// Delegates to dueLabelText() from dateUtils so the wording is identical
+// across all surfaces (DH-4 consolidation, 2026-06-04).
+function DueChip({ due, status }: { due: string; status?: string }) {
   const dueDay = due.slice(0, 10)
-  if (dueDay === today) return 'Today'
-  const target = new Date(dueDay + 'T12:00:00')
-  if (isNaN(target.getTime())) return dueDay
-  const days = Math.round((target.getTime() - Date.now()) / 86400000)
-  if (days === 1) return 'Tomorrow'
-  if (days === -1) return 'Yesterday'
-  if (days < 0) return `${Math.abs(days)}d ago`
-  if (days <= 7) return `in ${days}d`
-  return target.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-}
-
-function DueChip({ due }: { due: string }) {
-  const today = todayKey()
-  const dueDay = due.slice(0, 10)
-  const overdue = dueDay < today
-  const isToday = dueDay === today
+  const overdue = isOverdue(due, status)
+  const isToday = !overdue && dueDay === todayKey()
   const color = overdue ? ACCENT_CORAL : isToday ? ACCENT_GOLD : INK_MUTED
   return (
     <span
       title={`Due ${dueDay}`}
       style={{ fontSize: 11, color, fontVariantNumeric: 'tabular-nums', fontWeight: overdue ? 600 : 500, flexShrink: 0, whiteSpace: 'nowrap' }}
     >
-      {rowDueLabel(due)}
+      {dueLabelText(due, overdue)}
     </span>
   )
 }
@@ -231,7 +217,7 @@ export function TaskRow(props: SharedTaskRowProps) {
       {isPlanned && !isDone && <PlannedChip label={plannedLabel} />}
       {extraMeta}
       <ProjectTag project={project} />
-      {task.due_date && !isDone && <DueChip due={task.due_date} />}
+      {task.due_date && !isDone && <DueChip due={task.due_date} status={task.status} />}
     </>
   )
 
