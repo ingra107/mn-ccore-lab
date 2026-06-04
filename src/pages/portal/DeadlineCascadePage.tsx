@@ -6,6 +6,7 @@ import PageContainer from '../../components/PageContainer'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
 import DeadlineCascade from '../../components/DeadlineCascade'
 import ToggleButton from '../../components/ToggleButton'
+import EmptyState from '../../components/EmptyState'
 import { useAllCascades, useDeadlineImpact } from '../../hooks/useApiData'
 import type { CascadeGraph, DeadlineNode } from '../../lib/api'
 
@@ -116,20 +117,11 @@ export default function DeadlineCascadePage() {
         {isLoading ? (
           <TableSkeleton rows={8} cols={3} />
         ) : projectGroups.length === 0 ? (
-          <div style={{
-            textAlign: 'center',
-            padding: '60px 20px',
-            color: 'var(--slate)',
-            opacity: 0.75,
-          }}>
-            <GitBranch size={40} style={{ margin: '0 auto var(--sp-md)', opacity: 0.85 }} />
-            <p style={{ fontSize: '14px', fontWeight: 500, margin: '0 0 var(--sp-xs)' }}>
-              No deadline chains yet
-            </p>
-            <p style={{ fontSize: '12px', margin: 0, opacity: 0.85 }}>
-              Create dependency links between milestones and tasks to visualize cascade impacts.
-            </p>
-          </div>
+          <EmptyState
+            icon={<GitBranch size={40} />}
+            title="No deadline chains yet"
+            subtitle="Create dependency links between milestones and tasks to visualize cascade impacts."
+          />
         ) : (
           <motion.div
             initial="hidden"

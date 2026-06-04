@@ -62,6 +62,7 @@ import SmartCompose from '../components/SmartCompose'
 import ProjectDocuments from './project/ProjectDocuments'
 import { PATHS } from '../constants/paths'
 import EmptyStateArt from '../components/EmptyStateArt'
+import EmptyState from '../components/EmptyState'
 
 type Tab = 'overview' | 'tasks' | 'notes' | 'comments' | 'files' | 'activity' | 'revisions' | 'literature'
 
@@ -1979,12 +1980,11 @@ function ProjectDetailInner({ project }: InnerProps) {
               </div>
             </div>
             {filtered.length === 0 ? (
-              <div className="text-center py-12">
-                <CheckCircle2 size={32} style={{ color: 'var(--teal)', opacity: 0.85, margin: '0 auto var(--sp-md)' }} />
-                <p style={{ fontSize: '14px', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
-                  {taskFilter === 'active' ? 'No active tasks.' : taskFilter === 'done' ? 'No completed tasks.' : taskFilter === 'blocked' ? 'No blocked tasks.' : 'No tasks for this project.'}
-                </p>
-              </div>
+              <EmptyState
+                icon={<CheckCircle2 size={32} />}
+                title={taskFilter === 'active' ? 'No active tasks' : taskFilter === 'done' ? 'No completed tasks' : taskFilter === 'blocked' ? 'No blocked tasks' : 'No tasks for this project'}
+                subtitle={taskFilter === 'all' ? 'Create a task above to start tracking work for this project.' : undefined}
+              />
             ) : (
               <TaskGridView
                 tasks={filtered}
