@@ -140,6 +140,7 @@
     "tasks": [],
     "projects": [
       "pi_context",
+      "stage_entered_at",
       "strategic_context"
     ],
     "inbox_events": [],
