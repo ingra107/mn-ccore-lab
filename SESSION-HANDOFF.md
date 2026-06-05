@@ -1,8 +1,12 @@
 # Session Handoff — 2026-06-04
 
-## ▶▶ CURRENT — All merged work DEPLOYED + LIVE; `short_title` now renders on the Hub
+## ▶▶ CURRENT — Round-6 design batch COMMITTED (drag fix + P3–P6); awaiting push + deploy go
 
-**Live = `4d17036f` · deploy `59b02aa8` (2026-06-04) · origin/main pushed. HEAD = `fc4069bf`** (trailing session-close docs/simplify — behavior-identical, ships next deploy). The 2026-06-01 "deploy pending" banner is **RESOLVED** — everything on `main` is deployed (don't re-triage a deploy decision).
+**Live = `59b02aa8` on `4d17036f` (short_title; 2026-06-04). HEAD = `663043e5`.** A 6-commit design batch (`a231fea7`…`663043e5`) is **committed on `main` but NOT pushed and NOT deployed.** Build + `tsc --noEmit` green; drag fix verified **3/3** on the local journeys stack (re-verified green after P3–P6). **Awaiting Nick's go for `git push` (first push of the session is classifier-gated) + `npm run deploy:pages:gated`** — a big team-facing batch, so confirm before shipping.
+
+**The committed-but-undeployed batch (detail: `CHANGELOG.md` top + `WORKPLAN.md` → TASK-UI CONTINUATION, now ✅ COMPLETE):**
+- **`a231fea7` — Today drag-to-plan FIXED** (Nick-reported). Root cause: grip was `opacity:0`-until-hover (users grabbed the non-draggable row body → no `dragstart`) + all timeline drop zones render above the task list with no HTML5 auto-scroll (below-fold tasks unreachable). Fix: always-visible grip + a **📌 no-drag plan button** (works on touch via `@media hover:none`) + `useDragAutoScroll`. Proof: `tests/local/journeys/drag-to-plan.spec.ts` (3/3). Rule 58 intact.
+- **`c4fbb3ec` P3** `<DueLabel>` consolidation (5 surfaces; NOT full-row-into-cards — taxonomy) · **`958d835f` P4** global Settings density + skeleton/touch fixes · **`4a21efce` P5** new `src/components/ui/` {Button,Chip,Field,Modal} + adoptions · **`663043e5` P6** mobile pass (iOS focus-zoom, touch-reveal, overflow, PAGE-6, UX-8).
 
 **Shipped since 2026-06-01 (all deployed):**
 - **`4d17036f` (06-04) — Hub renders `short_title`.** The shared `TaskRow` now displays `short_title || title` (full title on hover via native `title=` + still full in the detail drawer). The brain.db/D1 `short_title` field always synced to the Hub and was returned by `/api/tasks` (it's in `TASK_SELECT_COLS`), but the frontend read it **nowhere** — so 219–365-char RO3 titles dominated Today/MyTasks after Round-6 removed truncation (Rule 68). **Pure display gap; the short titles already existed in D1.** Backlog reconciled to 0 (1 straggler generated via `BrainDB.update_task`). Generation stays automated via **`generate-today` Phase 1b (daily, home)** — NOT a cron; no new schedule added. CLAUDE.md Rule 68 updated.
@@ -11,10 +15,10 @@
 
 **▶ OPEN THREAD — P2 Hub re-key prod-D1 migration (un-run, GATED).** The P2 *code* (typed project PK on FK columns) is deployed, but the **prod-D1 data rekey has not run**. Tool: `scripts/p2_hub_rekey_apply.py` (committed `4d... tidy`; dry-run default, fail-closed assertions). Template: `scratch/p2-hub-rekey.sql` (gitignored, regenerated from brain.db). Gates: ✅ F1 codegen · ✅ 4 ex-no-anchor projects · ✅ sentinel — ⬜ **HISTORICAL-table per-table policy** · ⬜ **`project_dependencies` slug-keyed decision** · ⬜ **Nick's go + both machines up + soft-freeze.** Likely safe cleanup (the resolve path handles project FK id-OR-slug, Rule 20) rather than a live mismatch — **confirm before running.**
 
-**▶ NEXT — Task-UI continuation** (full detail in `WORKPLAN.md` → **"TASK-UI CONTINUATION"** block — the post-compact pickup point):
-- **🐞 Today drag-to-plan is broken** (Nick-reported 2026-06-04). All wiring present (source `today/TaskRow.tsx:27-30,67-68` → shared `Grip`; drop targets `today/Timeline.tsx` → `state.planAt`; Timeline rendered) → **live regression, needs `/run` + systematic-debugging**, not a missing wire. Suspects + repro in WORKPLAN.
-- **Round-6 design audit:** P0–P2 shipped + live; **P3–P6 NOT done** — P3 reach (shared row into dashboard cards / pb-sector / grids), P4 §6 density/polish, P5 §7 `<Button>/<Chip>/<Field>/<Modal>` primitives, P6 §8 mobile pass. Verified phase table + guardrails in WORKPLAN.
-- **DH-5** post-deploy visual verify (ProjectDetail Key Links chips + editor Due-date box) — now doable on live `59b02aa8`.
+**▶ NEXT:**
+- **Push + deploy the design batch** (Nick's go) → then **DH-5** post-deploy visual verify (ProjectDetail Key Links chips + editor Due-date box) on the fresh deploy.
+- **Deferred P6 responsive-redesign items** (need interactive mobile testing, not additive CSS): CreateTaskModal→BottomSheet (+ UX-7 BottomSheet focus trap first), MyTasks ListView fixed-grid, MenteeMilestones/Deadlines grid overflow (PAGE-7), UX-9 tablet-breakpoint split-brain. Tracked in WORKPLAN → TASK-UI CONTINUATION.
+- **P2 Hub re-key** prod-D1 migration (OPEN THREAD above) when Nick's ready.
 
 **Loose working-tree files (after 06-04 tidy):** `dist-dryrun/` deleted + gitignored. `review/audit-results.json` stays tracked-but-gitignore-intended (machine-generated; shows as `M` — harmless, just never commit it; a clean untrack needs a bare index commit that Rule 13 bans, so left as-is). Still untracked by design: `review/MN-CCORE Lab Hub Design System (5)/` (the Round-6 design-tool source — like prior handoffs, zip+commit it if you want it preserved in git; otherwise local-only).
 

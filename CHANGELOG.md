@@ -3,6 +3,16 @@
 
 > Historical phase records moved from CLAUDE.md to keep the operating guide focused on current state. Each section is a complete record of what shipped, decisions made, and scores achieved.
 
+## 2026-06-04 — Today drag-to-plan fix + Round-6 design audit P3–P6 (commits `a231fea7`…`663043e5`)
+
+Resolved Nick's "can't drag on Today" report (multi-agent runtime diagnosis: post-P0 the drag grip was `opacity:0` until hover so users grabbed the non-draggable row body; and all timeline drop zones render *above* the task list with no native HTML5 auto-scroll). **Drag verified 3/3 on the local journeys stack; re-verified green after P3–P6.** Then completed the deferred Round-6 design phases. **Build + `tsc --noEmit` green throughout; presentation-only — no routes/API/hooks/schema.** Batch **not yet deployed** (awaiting push+deploy go).
+
+- **Drag fix (`a231fea7`):** grip always faintly visible (0.3 → 0.6 hover) + larger hit target; new additive `onTogglePlan` prop renders a 📌 plan button (the planned chip becomes the unplan control) — a reliable no-drag path that also works on touch; `useDragAutoScroll` window auto-scroll near viewport edges during a drag; `data-task-id`/`data-plan-btn` hooks + `tests/local/journeys/drag-to-plan.spec.ts`. Rule 58 intact (drag=plan-slot, 📌=plan-no-drag, body=expand, ▶=promote).
+- **P3 (`c4fbb3ec`):** consolidated due-date rendering onto the shared `<DueLabel>` in 5 hand-rolled surfaces (ActionBoardCard, MyItemsCard, TaskCard, EveningTaskSlot, FocusTaskSlot). Deliberately NOT the full row into cards — that would violate the dashboard=cards taxonomy (Critical Rule 17). EveningTaskSlot/FocusTaskSlot now actually show the due date (was in the data, never rendered).
+- **P4 (`958d835f`):** global Table-density control in Settings→Appearance (reuses the shared `hub-table-density` key, so it's the default every table inherits); 📌 button made touch-reachable (`@media hover:none`); skeleton shimmer timing reconciled (1.5s→1.8s) + AskTheLab adopts `<TextSkeleton>`. Per-view density toggles kept (additive); desktop 44px NOT forced (Critical Rule 9 precise-click).
+- **P5 (`4a21efce`):** new `src/components/ui/` primitives — `Button`/`Chip`/`Field`/`Modal` codifying the *dominant existing* patterns with design tokens baked in; adopted one proof each (CreateTaskModal footer / Today workflow badges / CreateProjectModal fields / BugReportModal — the last also removes a Rule-45-violating backdrop blur). Adoption is incremental.
+- **P6 (`663043e5`):** mobile pass — iOS focus-zoom guard (16px inputs <768px), `[data-hover-actions]` touch-reveal, RightNowCard overflow fix, IdeasPage mobile Edit/Archive (PAGE-6), sidebar `aria-modal` (UX-8). Deferred (need responsive redesign, not additive CSS): CreateTaskModal→BottomSheet, MyTasks ListView fixed-grid, MenteeMilestones/Deadlines grid, UX-9 tablet breakpoint.
+
 ## 2026-06-04 — Hub renders `short_title` on the shared TaskRow (`4d17036f`; simplify `fc4069bf`)
 
 The brain.db/D1 `short_title` field (PB-generated for long task names, in `TASK_SELECT_COLS`, returned by `/api/tasks`) synced to the Hub but was read **nowhere** in the frontend — so 219–365-char titles (the RO3 resubmission tasks) dominated Today/MyTasks rows after Round-6 removed truncation (Rule 68). **Pure display gap; the short titles already existed in D1.**
