@@ -15,8 +15,8 @@
 // detail endpoints before this fix. Prefixed `t.` so it composes with the
 // meetings LEFT JOIN. Exported so other route modules (proactive-brief, etc.)
 // can reuse without duplicating the column list.
-export const TASK_SELECT_COLS = [
-  'id', 'meeting_id', 'project_id', 'title', 'description', 'assignee',
+const TASK_PLAIN_COLS = [
+  'id', 'meeting_id', 'title', 'description', 'assignee',
   'assigned_by', 'due_date', 'priority', 'status', 'source', 'completed',
   'completed_at', 'completed_by', 'created_at', 'updated_at', 'deleted_at',
   'acknowledged_at', 'acknowledged_by', 'watchers', 'reminder_days',
@@ -28,7 +28,28 @@ export const TASK_SELECT_COLS = [
   'requires_nick_brain', 'estimated_minutes', 'deadline_type', 'next_artifact',
   'inbox_event_id', 'last_mutation_id',
   // NOTE: `notes` is deliberately omitted — private brain.db field.
-].map((c) => `t.${c}`).join(', ');
+  // NOTE: `project_id` is NOT in this list — it is resolved to slug below.
+];
+
+// `project_id` slug-resolution at the READ boundary (Direction 1, 2026-06-05).
+// STORAGE holds the typed proj_* PK (P2 `aa85c71b`), but every read consumer —
+// the Hub frontend's slug-keyed project maps AND the PB→Hub pull (which reads
+// the field as `d1_project_slug`) — expects the SLUG. Resolving here, in the
+// ONE shared column list, means no task-read endpoint can leak the typed PK
+// (the half-migration bug). Correlated subquery, id-only lookup: projects.id is
+// the unique PK and `slug == id` holds on 0 rows, so COALESCE is unambiguous —
+// it returns the project's slug for the typed-PK majority and falls back to the
+// raw stored value for any legacy slug-stored straggler. (Internal mutation
+// paths — applyInsert/advanceProjectMovement/cascade — keep using the stored
+// typed PK; this is purely the wire/presentation form.) See decision doc
+// Context/Decisions/2026-06-05-tasks-project-id-store-typed-present-slug.md.
+const PROJECT_ID_AS_SLUG =
+  'COALESCE((SELECT p.slug FROM projects p WHERE p.id = t.project_id), t.project_id) AS project_id';
+
+export const TASK_SELECT_COLS = [
+  ...TASK_PLAIN_COLS.map((c) => `t.${c}`),
+  PROJECT_ID_AS_SLUG,
+].join(', ');
 
 /**
  * Columns that must be stripped from a full task row (SELECT *) before the

@@ -40,14 +40,15 @@ export async function handleGetMeeting(id: string, env: Env, isAuthed = false): 
   if (!meeting) return error('Meeting not found', 404);
 
   // SEC-P2-02: exclude the private `notes` column from task rows returned in
-  // the meeting detail. TASK_SELECT_COLS prefixes cols with `t.` for JOIN
-  // queries; strip the prefix for a plain FROM tasks query. safeTaskRow
-  // provides defense-in-depth (strips any remnant notes).
+  // the meeting detail (TASK_SELECT_COLS omits it; safeTaskRow is defense-in-
+  // depth). Alias the table `t` and use TASK_SELECT_COLS verbatim so its
+  // embedded project_id slug-resolution subquery (which references t.project_id)
+  // resolves correctly. (The prior `.replace(/\bt\./g,'')` strip was a fragile
+  // hack once project_id became a correlated subquery — aliasing is the root fix.)
   // Meeting agenda/notes (the meeting row itself) are team-internal-visible
   // by design — only the task rows in action_items are the leak risk.
-  const taskCols = TASK_SELECT_COLS.replace(/\bt\./g, '');
   const [actionItemsRaw, agendaItems] = await Promise.all([
-    env.DB.prepare(`SELECT ${taskCols} FROM tasks WHERE meeting_id = ? ORDER BY created_at`).bind(id).all<Record<string, unknown>>(),
+    env.DB.prepare(`SELECT ${TASK_SELECT_COLS} FROM tasks t WHERE t.meeting_id = ? ORDER BY t.created_at`).bind(id).all<Record<string, unknown>>(),
     env.DB.prepare('SELECT * FROM agenda_items WHERE meeting_id = ? ORDER BY sort_order, created_at').bind(id).all(),
   ]);
   const actionItems = { ...actionItemsRaw, results: (actionItemsRaw.results ?? []).map(safeTaskRow) };

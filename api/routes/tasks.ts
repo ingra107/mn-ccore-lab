@@ -97,7 +97,15 @@ export async function handleGetTasks(url: URL, env: Env, canSeePb = false): Prom
   if (assignee) { query += ' AND t.assignee = ?'; params.push(assignee); }
   if (status) { query += ' AND t.status = ?'; params.push(status); }
   if (priority) { query += ' AND t.priority = ?'; params.push(priority); }
-  if (project) { query += ' AND t.project_id = ?'; params.push(project); }
+  // Direction 1 (2026-06-05): tasks.project_id STORES the typed proj_* PK, but
+  // callers filter by slug (projectOptions use p.slug). Resolve the ref to its
+  // typed PK and match either form — the typed-PK majority via the resolved id,
+  // and any legacy slug-stored task row via the raw value. Accepts an id param
+  // too (the subquery's `id = ?` arm). See api/lib/task-cols.ts.
+  if (project) {
+    query += ' AND (t.project_id = (SELECT id FROM projects WHERE slug = ? OR id = ? LIMIT 1) OR t.project_id = ?)';
+    params.push(project, project, project);
+  }
   if (meetingId) { query += ' AND t.meeting_id = ?'; params.push(meetingId); }
   if (source) { query += ' AND t.source = ?'; params.push(source); }
   if (completed !== null && completed !== undefined) {

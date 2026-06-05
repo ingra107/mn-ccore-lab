@@ -196,11 +196,19 @@ function makeEnv(projectCategory: 'Peripheral Brain' | 'MNCCORE', opts: EnvOpts 
         bind: (..._args: unknown[]) => ({
           first: async () => {
             if (/pi_emails/.test(sql)) return { value: JSON.stringify([PI_EMAIL]) }
-            if (/FROM projects/.test(sql)) {
-              return { id: 'proj-id', slug: 'test-proj', category: projectCategory, title: 'Test Project' }
-            }
+            // Task SELECTs (TASK_SELECT_COLS) now embed a `FROM projects p`
+            // slug-resolution subquery (Direction 1, 2026-06-05), so they must be
+            // matched by their `FROM tasks` clause BEFORE the generic projects
+            // gate check below — otherwise a task fetch is misrouted to a project
+            // row and its project_id (the PB-gate input) goes missing.
             if (/FROM tasks WHERE id/.test(sql) || /FROM tasks t WHERE t\.id/.test(sql) || /FROM tasks t LEFT JOIN/.test(sql)) {
               return { id: 'task-id', project_id: taskProjectId, description: 'Test task desc', title: 'Test task' }
+            }
+            // The project gate query is unaliased (`FROM projects WHERE (id=? OR
+            // slug=?)`); the task subquery is aliased (`FROM projects p WHERE`),
+            // so `FROM projects WHERE` matches only the gate, not the subquery.
+            if (/FROM projects WHERE/.test(sql)) {
+              return { id: 'proj-id', slug: 'test-proj', category: projectCategory, title: 'Test Project' }
             }
             if (/FROM conference_submissions WHERE id/.test(sql)) {
               return { project_id: confProjectId }
