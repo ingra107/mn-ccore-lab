@@ -89,7 +89,16 @@ The highest-leverage durable artifact. Build it so convergence can't half-finish
 Decide per-table: migrate to typed PK or document as a deliberate slug-keyed exception. (Downgraded
 from the p2 §3 gates — no longer blocking, but close them out.)
 
-## ALREADY DONE (this session, 2026-06-05) — do NOT redo
+## ALREADY DONE — do NOT redo
+- **Slice A DONE 2026-06-05** (Hub + work brain.db converged to typed-only kg). Tool
+  `~/Peripheral-Brain/scripts/db/slice_a_kg_typed_rekey.py`; record `Scratch/slice-a-kg-2026-06-05/
+  SLICE-A-COMPLETE.md`. Dual-planned (builder) + 4-agent adversarially verified. Hub: 105 orphan
+  entities + 35 rels → canonical; 174+451 deleted_at-only tombstones healed; GAP-4 task FK +
+  dead-source edge. brain.db: kg-only pull + local TEST/children cleanup. **FINDING:**
+  `PB_BRAIN_EVENT_LOGS=on` gates the Lane-3 pull (`hub.py:1253`) → the "live bleed via pull" was NOT
+  active; Hub was the dirty store, now clean. OPEN: HOME brain.db still stale (flag-gated pull —
+  converge via kg-only flag-off pull); the flag/stuck-event-log/outbox-retirement transition is
+  Nick's architectural call; 5 KEEP slug nodes deferred (B2 create-new-project candidates).
 - tasks.project_id browser-boundary fix (Direction 1) + 5-row backfill = **Slice B DONE**, deployed.
 - 9a007fd1 Today fixes verified+deployed; edit-more + P6 shipped; key_links = no bug.
 - Doc corrections (false divergence struck; kg-lane fixed) committed+pushed.

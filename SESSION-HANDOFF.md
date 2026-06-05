@@ -12,13 +12,26 @@ do not re-investigate (verified facts are in the plan). Decision: PB
 wire); slug = a one-way human projection (URL + display) only — a LEAF, never a hub. Ends the
 recurring "slug load-bearing on an internal machine path" class (tasks, kg, propagation gaps).
 
-**Order:** **Slice A** (kg re-key → typed `project:<proj_*>`, tiered for the dual-use namespace,
-Hub-first — the only flow ACTIVELY corrupting data on every pull) → build the symmetric
-**completeness GATE** (the primitive — SSOT surface list + schema-introspection + runtime guards +
-round-trip test + both-store/HOME dry-run) → **Slice C** (replication wire → typed PK via a
-dedicated typed contract; browser `/api/tasks` STAYS slug; cross-repo, gated on the gate + HOME
-verification + snapshots, fail-closed alias-resolving) → **Slice D** (project_dependencies /
-HISTORICAL disposition). **Slice B** (5 straggler rows → typed) already DONE.
+**Order:** ~~Slice A~~ **DONE 2026-06-05** → build the symmetric **completeness GATE** (the
+primitive — SSOT surface list + schema-introspection + runtime guards + round-trip test +
+both-store/HOME dry-run) → **Slice C** (replication wire → typed PK via a dedicated typed contract;
+browser `/api/tasks` STAYS slug; cross-repo, gated on the gate + HOME verification + snapshots,
+fail-closed alias-resolving) → **Slice D** (project_dependencies / HISTORICAL disposition).
+**Slice B** (5 straggler rows → typed) already DONE.
+
+**✅ SLICE A COMPLETE (2026-06-05) — Hub + work brain.db converged to typed-only kg.** Record:
+`~/Peripheral-Brain/Scratch/slice-a-kg-2026-06-05/SLICE-A-COMPLETE.md`. Tool:
+`~/Peripheral-Brain/scripts/db/slice_a_kg_typed_rekey.py` (dual-planned + 4-agent adversarially
+verified). Hub: 105 typed-orphan entities + 35 orphan rels re-keyed/merged to canonical `proj_*`,
+174+451 `deleted_at`-only tombstones healed, GAP-4 (`tasks.project_id='multidiseasepred-xie'`
+slug→typed + dead-source edge). brain.db converged via kg-only pull + local TEST/children cleanup.
+Both stores verified 0 typed-orphan / 0 orphan-rel / 0 orphan-edges; 5 KEEP slug nodes by design.
+**⚠️ MAJOR FINDING:** `PB_BRAIN_EVENT_LOGS=on` gates the Lane-3 pull (`hub.py:1253`) → the audit's
+"live bleed via pull" was NOT active (kg pull skipped; brain.db wasn't being re-poisoned). Hub was
+the dirty store; now clean. **OPEN:** (1) HOME brain.db kg still stale (flag-gated pull) — converge
+via kg-only flag-off pull; (2) the flag / stuck event-log lane / outbox-retirement transition
+(2026-06-03 handoff) is the systemic blocker to automatic cross-machine kg sync — Nick's
+architectural call; (3) 5 KEEP slug nodes = B2 "create-new-project" candidates (deferred).
 
 **HEADs:** Hub `main` `5921ce18` (live deploy `8cc00130` / `7653955d`); PB `main` `b3ef97e5`.
 **Guardrails:** don't run `p2_hub_rekey_apply.py` as-is (projects.id already converged; doesn't
