@@ -5,7 +5,7 @@ created: 2026-03-25
 status: active
 domain: Research
 tier: 2-Biweekly
-next_action: All merged Hub work DEPLOYED + LIVE (2026-06-04, deploy `59b02aa8` on `4d17036f`). Latest ship — the shared `TaskRow` now renders `short_title || title`, so long task titles (the 219–365-char RO3 tasks) no longer dominate Today/MyTasks rows; the short titles already existed in D1, the frontend just never read the field. short-title generation stays automated via PB `generate-today` Phase 1b (daily, not a cron). **One open thread:** the P2 Hub re-key prod-D1 migration (`scripts/p2_hub_rekey_apply.py`, dry-run/fail-closed) is un-run + GATED on 2 policy decisions (HISTORICAL-table handling, `project_dependencies` slug-keying) + Nick's go + a both-machines soft-freeze. Only remaining DH item: DH-5 post-deploy visual verify (ProjectDetail Key Links chips + editor Due-date box). See SESSION-HANDOFF.md + CHANGELOG.md.
+next_action: Round-6 Task-UI design audit COMPLETE + DEPLOYED (2026-06-05, deploy `0d024aee` on `1bbb2406`). Today drag-to-plan bug FIXED (always-visible grip + a 📌 no-drag plan button that also works on touch + `useDragAutoScroll`; verified 3/3 on the local journeys stack) and the deferred design phases shipped: P3 `<DueLabel>` consolidation (5 surfaces), P4 global Settings density + skeleton/touch consistency, P5 new `src/components/ui/` {Button,Chip,Field,Modal} primitives, P6 mobile pass (iOS focus-zoom, touch-reveal, overflow, PAGE-6, UX-8). Presentation-only; build + `tsc` green. **Open threads:** DH-5 post-deploy visual verify (ProjectDetail Key Links chips — needs eyes on a real project; local seed has no key_links) + the deferred P6 responsive-redesign items (CreateTaskModal→BottomSheet, MyTasks ListView grid, UX-9 tablet breakpoint) + the still-gated P2 Hub re-key prod-D1 migration. See SESSION-HANDOFF.md + CHANGELOG.md.
 primary_folder: C:/Users/ingra107/mn-ccore-lab
 ---
 
@@ -16,7 +16,7 @@ platform for Nick's critical-care research group at UMN.
 
 **Live:** https://mn-ccore-lab.pages.dev  (LIVE for team — CF Access gates `/portal/*` via @umn.edu)
 **Repo:** https://github.com/ingra107/mn-ccore-lab  (720+ commits)
-**Current HEAD:** `fc4069bf` on main, pushed (2026-06-04 — short_title display fix `4d17036f` + session-close docs/simplify). **Live deploy `59b02aa8`** (Production/main, on `4d17036f`; the trailing docs/simplify commits are behavior-identical and ship with the next deploy). Schema v70. Verify the live deploy with `wrangler pages deployment list --project-name mn-ccore-lab`. See SESSION-HANDOFF.md + WORKPLAN.md for current state.
+**Current HEAD:** `1bbb2406` on main, pushed (2026-06-05 — Round-6 design batch: Today drag fix + P3–P6 + docs). **Live deploy `0d024aee`** (Production/main, on `1bbb2406`; live bundle hash verified == local build). Schema v70. Verify the live deploy with `wrangler pages deployment list --project-name mn-ccore-lab`. See SESSION-HANDOFF.md + WORKPLAN.md for current state.
 **Quality gate:** 🟢 GREEN — build clean, inspection 149/149 post-simplify, smoke 27/27 (pre-simplify baseline), deep-audit 14/14 clean, axe WCAG 2.1 AA clean across 29 pages × 2 color schemes, schema-drift CI green.
 
 ## 🚨 Read these FIRST every session

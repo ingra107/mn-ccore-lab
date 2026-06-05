@@ -1,8 +1,8 @@
 # Session Handoff — 2026-06-04
 
-## ▶▶ CURRENT — Round-6 design batch COMMITTED (drag fix + P3–P6); awaiting push + deploy go
+## ▶▶ CURRENT — Round-6 design batch DEPLOYED + LIVE (drag fix + P3–P6)
 
-**Live = `59b02aa8` on `4d17036f` (short_title; 2026-06-04). HEAD = `663043e5`.** A 6-commit design batch (`a231fea7`…`663043e5`) is **committed on `main` but NOT pushed and NOT deployed.** Build + `tsc --noEmit` green; drag fix verified **3/3** on the local journeys stack (re-verified green after P3–P6). **Awaiting Nick's go for `git push` (first push of the session is classifier-gated) + `npm run deploy:pages:gated`** — a big team-facing batch, so confirm before shipping.
+**Live = deploy `0d024aee` on `1bbb2406` (2026-06-05) · origin/main pushed.** The Round-6 design batch (`a231fea7`…`663043e5` + docs `1bbb2406`) is **DEPLOYED + LIVE** — live frontend bundle hash verified **== local build** (`index-Dt-iZcHv.js`), `/api/version` 200 production. Build + `tsc --noEmit` green; drag fix verified **3/3** on the local journeys stack (re-verified green after P3–P6). Don't re-triage a deploy decision.
 
 **The committed-but-undeployed batch (detail: `CHANGELOG.md` top + `WORKPLAN.md` → TASK-UI CONTINUATION, now ✅ COMPLETE):**
 - **`a231fea7` — Today drag-to-plan FIXED** (Nick-reported). Root cause: grip was `opacity:0`-until-hover (users grabbed the non-draggable row body → no `dragstart`) + all timeline drop zones render above the task list with no HTML5 auto-scroll (below-fold tasks unreachable). Fix: always-visible grip + a **📌 no-drag plan button** (works on touch via `@media hover:none`) + `useDragAutoScroll`. Proof: `tests/local/journeys/drag-to-plan.spec.ts` (3/3). Rule 58 intact.
