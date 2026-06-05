@@ -1,6 +1,33 @@
 # Session Handoff — 2026-06-05
 
-## ▶▶ CURRENT — project_id read-boundary fix + edit-more + P6 + 9a007fd1 ALL DEPLOYED
+## ▶▶▶ AUTO MODE (post-compact) — EXECUTE: Project-Identity Convergence
+
+**START HERE. Approved + prioritized by Nick (2026-06-05).** Read + execute the ticket queue in
+`docs/superpowers/plans/2026-06-05-project-identity-convergence.md` IN ORDER — do not re-triage,
+do not re-investigate (verified facts are in the plan). Decision: PB
+`Context/Decisions/2026-06-05-project-identity-single-machine-identity.md`. Reconciled design:
+`Scratch/project-id-decision-2026-06-05/SYNTHESIS-project-identity-northstar.md`.
+
+**Decision:** ONE machine identity = typed `proj_*` everywhere internal (storage / FK / kg / sync
+wire); slug = a one-way human projection (URL + display) only — a LEAF, never a hub. Ends the
+recurring "slug load-bearing on an internal machine path" class (tasks, kg, propagation gaps).
+
+**Order:** **Slice A** (kg re-key → typed `project:<proj_*>`, tiered for the dual-use namespace,
+Hub-first — the only flow ACTIVELY corrupting data on every pull) → build the symmetric
+**completeness GATE** (the primitive — SSOT surface list + schema-introspection + runtime guards +
+round-trip test + both-store/HOME dry-run) → **Slice C** (replication wire → typed PK via a
+dedicated typed contract; browser `/api/tasks` STAYS slug; cross-repo, gated on the gate + HOME
+verification + snapshots, fail-closed alias-resolving) → **Slice D** (project_dependencies /
+HISTORICAL disposition). **Slice B** (5 straggler rows → typed) already DONE.
+
+**HEADs:** Hub `main` `5921ce18` (live deploy `8cc00130` / `7653955d`); PB `main` `b3ef97e5`.
+**Guardrails:** don't run `p2_hub_rekey_apply.py` as-is (projects.id already converged; doesn't
+cover kg right); don't blind-rewrite `project:*` (dual-use namespace — tier it); don't flip the
+wire before the gate + HOME verify; don't let `COALESCE(...,raw)` tolerance leak into internal channels.
+
+---
+
+## ▶▶ (2026-06-05, DONE this session) project_id read-boundary fix + edit-more + P6 + 9a007fd1 ALL DEPLOYED
 
 **Live = deploy `7653955d` on commit `8cc00130` (2026-06-05) · both repos pushed · /api/version 200 production.** Ultracode session cleared the entire WORKPLAN "▶▶▶ NEXT SESSION" queue. Build + `tsc` green; **API suite 732/732**; journeys **6/6**; resolver verified against live prod data.
 
