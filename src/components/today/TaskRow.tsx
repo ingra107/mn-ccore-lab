@@ -66,6 +66,7 @@ export function TaskRow({ task, project, state, expandedId, onExpand, projectsBy
       showGroupOverridePin
       draggable={!isDone}
       onDragStart={onDragStart}
+      onTogglePlan={() => (planned?.slot === 'strip' ? state.unplan(task.id) : state.planAt(task.id, 'strip'))}
       leadingTag={tagForTask(task, projectsByPid)}
       belowTitle={workflowBadges}
     >

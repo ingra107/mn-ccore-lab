@@ -22,7 +22,7 @@ export function PlannedTaskRow({ task, project, state, timeHint, small = false, 
   if (task.key_link_2) links.push('claude')
   if (task.key_link_3) links.push('brief')
   return (
-    <div style={{ background: isNow ? 'rgba(201,168,76,0.10)' : 'rgba(201,168,76,0.03)', border: `1px ${isNow ? 'solid' : 'dashed'} rgba(201,168,76,${isNow ? 0.35 : 0.18})`, borderRadius: 6, overflow: 'hidden', transition: 'all 120ms' }}>
+    <div data-task-id={task.id} style={{ background: isNow ? 'rgba(201,168,76,0.10)' : 'rgba(201,168,76,0.03)', border: `1px ${isNow ? 'solid' : 'dashed'} rgba(201,168,76,${isNow ? 0.35 : 0.18})`, borderRadius: 6, overflow: 'hidden', transition: 'all 120ms' }}>
       <div onClick={() => !isDone && onExpand(task.id)} style={{ display: 'flex', gap: 10, padding: small ? '6px 10px' : '8px 12px', alignItems: 'flex-start', cursor: isDone ? 'default' : 'pointer' }}>
         {timeHint && (
           <span style={{ fontSize: 11, color: ACCENT_GOLD, fontVariantNumeric: 'tabular-nums', fontWeight: 500, minWidth: 64, paddingTop: 1 }}>{timeHint}</span>

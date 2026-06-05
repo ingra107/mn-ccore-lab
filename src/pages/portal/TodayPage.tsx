@@ -19,6 +19,7 @@ import HeartbeatLine from '../../components/HeartbeatLine'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
 import { researchTeam } from '../../data/team'
 import { useTodayState } from '../../hooks/useTodayState'
+import { useDragAutoScroll } from '../../hooks/useDragAutoScroll'
 import {
   GROUP_ORDER,
   ACCENT_GOLD, ACCENT_GREEN,
@@ -43,6 +44,10 @@ export default function TodayPage() {
   usePageMeta('Today · MN-CCORE', 'Operating-day landing — what to work on, who you\'re meeting, what\'s overdue.')
   const { user } = useAuth()
   const userSlug = emailToSlug(user?.email)
+  // Native HTML5 drag can't scroll the window; without this a below-fold task
+  // can't be dragged up to the timeline drop zones. Drag = plan into a slot;
+  // the 📌 row button is the no-drag path. (Today drag-to-plan fix, 2026-06-04.)
+  useDragAutoScroll()
 
   const tasksQuery = useTasks(userSlug ? { assignee: userSlug } : undefined)
   const projectsQuery = useProjects()
@@ -304,7 +309,7 @@ export default function TodayPage() {
           <span style={{ fontSize: 13, color: INK_MUTED }}>{formatTodayDate()}</span>
         </div>
         <div style={{ fontSize: 13, color: INK_DIM, marginBottom: 16 }}>
-          Click a task to expand · drag ⋮⋮ to plan · click a meeting for notes.
+          Click a task to expand · 📌 or drag ⋮⋮ to plan · click a meeting for notes.
         </div>
 
         <PillStrip counts={counts} />
@@ -329,7 +334,7 @@ export default function TodayPage() {
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14, marginTop: 8 }}>
           <h2 style={{ fontSize: 18, fontWeight: 600, color: '#fff', letterSpacing: '-0.02em', margin: 0 }}>📋 All today's tasks</h2>
-          <span style={{ fontSize: 12, color: INK_DIM }}>click to expand · ⋮⋮ to plan · ▶ to promote</span>
+          <span style={{ fontSize: 12, color: INK_DIM }}>click to expand · 📌 or drag ⋮⋮ to plan · ▶ to promote</span>
           <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.08)' }} />
         </div>
 

@@ -108,12 +108,26 @@ function ProjectTag({ project }: { project: { name: string; slug: string } | nul
   )
 }
 
-function PlannedChip({ label = 'planned' }: { label?: string }) {
-  return (
-    <span style={{ fontSize: 10, color: ACCENT_GOLD, padding: '1px 6px', background: withAlpha(ACCENT_GOLD, 14), borderRadius: 4, letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>
-      📌 {label}
-    </span>
-  )
+function PlannedChip({ label = 'planned', onUnplan }: { label?: string; onUnplan?: () => void }) {
+  const base = { fontSize: 10, color: ACCENT_GOLD, padding: '1px 6px', background: withAlpha(ACCENT_GOLD, 14), borderRadius: 4, letterSpacing: '0.04em', whiteSpace: 'nowrap' as const }
+  // When the surface wires planning (Today), the chip itself is the unplan
+  // control — so there is exactly one 📌 on the row (status + toggle), never a
+  // duplicate pushpin alongside a separate plan button.
+  if (onUnplan) {
+    return (
+      <button
+        type="button"
+        onClick={(e) => { e.stopPropagation(); onUnplan() }}
+        onMouseDown={(e) => e.stopPropagation()}
+        title="Planned for today — click to unplan"
+        aria-label="Unplan task"
+        style={{ ...base, border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}
+      >
+        📌 {label}
+      </button>
+    )
+  }
+  return <span style={base}>📌 {label}</span>
 }
 
 export interface SharedTaskRowProps {
@@ -143,6 +157,13 @@ export interface SharedTaskRowProps {
   draggable?: boolean
   onDragStart?: (e: React.DragEvent) => void
 
+  // ── plan WITHOUT dragging ── ONLY active when onTogglePlan is provided
+  // (Today). A 📌 button (or the planned-chip when already planned) toggles
+  // the task in/out of the "no specific time" plan, sidestepping the HTML5
+  // drag entirely. Distinct from draggable (drag = plan into a specific slot),
+  // body-click (expand), and ▶ (promote) — Rule 58 keeps these un-conflated.
+  onTogglePlan?: () => void
+
   // ── state cues ──
   isPlanned?: boolean
   plannedLabel?: string
@@ -170,7 +191,7 @@ function Grip({ show, draggable, onDragStart }: { show: boolean; draggable?: boo
       onClick={(e) => e.stopPropagation()}
       onMouseDown={(e) => e.stopPropagation()}
       title="Drag up to the timeline to plan this task"
-      style={{ width: 12, display: 'grid', placeItems: 'center', cursor: 'grab', color: INK_MUTED, opacity: show ? 0.55 : 0, transition: 'opacity 140ms', fontSize: 13, lineHeight: 1, flexShrink: 0, userSelect: 'none' }}
+      style={{ width: 16, display: 'grid', placeItems: 'center', cursor: 'grab', color: INK_MUTED, opacity: show ? 0.6 : 0.3, transition: 'opacity 140ms', fontSize: 13, lineHeight: 1, flexShrink: 0, userSelect: 'none' }}
     >
       ⋮⋮
     </div>
@@ -181,7 +202,7 @@ export function TaskRow(props: SharedTaskRowProps) {
   const {
     task, project, isDone, onToggleDone, isExpanded, onToggleExpand, hideCaret,
     isSelected = false, selectionActive = false, onToggleSelect,
-    draggable = false, onDragStart,
+    draggable = false, onDragStart, onTogglePlan,
     isPlanned = false, plannedLabel, isRightNow = false, showGroupOverridePin = false,
     dense = false, stack = false,
     leadingTag, extraMeta, belowTitle, children,
@@ -221,7 +242,25 @@ export function TaskRow(props: SharedTaskRowProps) {
 
   const rightMeta = (
     <>
-      {isPlanned && !isDone && <PlannedChip label={plannedLabel} />}
+      {isPlanned && !isDone && <PlannedChip label={plannedLabel} onUnplan={onTogglePlan} />}
+      {/* Plan-without-dragging: a hover-revealed 📌 button, shown only on
+          surfaces that wire onTogglePlan and only while the task is unplanned
+          (once planned, the PlannedChip above is the unplan control). The HTML5
+          drag remains the path to a *specific* timeline slot; this is the
+          reliable "just plan it for today" path that needs no drag/scroll. */}
+      {onTogglePlan && !isDone && !isPlanned && (
+        <button
+          type="button"
+          data-plan-btn={task.id}
+          onClick={(e) => { e.stopPropagation(); onTogglePlan() }}
+          onMouseDown={(e) => e.stopPropagation()}
+          title="Plan for today (no specific time)"
+          aria-label="Plan task for today"
+          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0 2px', fontSize: 12, color: ACCENT_GOLD, lineHeight: 1, flexShrink: 0, visibility: hover ? 'visible' : 'hidden' }}
+        >
+          📌
+        </button>
+      )}
       {extraMeta}
       <ProjectTag project={project} />
       {task.due_date && !isDone && <DueChip due={task.due_date} status={task.status} />}
@@ -230,6 +269,7 @@ export function TaskRow(props: SharedTaskRowProps) {
 
   return (
     <div
+      data-task-id={task.id}
       style={{
         borderBottom: `1px solid ${withAlpha(INK, 6)}`,
         background: isSelected ? withAlpha(ACCENT_TEAL, 14)
