@@ -16,7 +16,7 @@ platform for Nick's critical-care research group at UMN.
 
 **Live:** https://mn-ccore-lab.pages.dev  (LIVE for team — CF Access gates `/portal/*` via @umn.edu)
 **Repo:** https://github.com/ingra107/mn-ccore-lab  (720+ commits)
-**Current HEAD:** `1bbb2406` on main, pushed (2026-06-05 — Round-6 design batch: Today drag fix + P3–P6 + docs). **Live deploy `0d024aee`** (Production/main, on `1bbb2406`; live bundle hash verified == local build). Schema v70. Verify the live deploy with `wrangler pages deployment list --project-name mn-ccore-lab`. See SESSION-HANDOFF.md + WORKPLAN.md for current state.
+**Current HEAD:** `c8aabe0a` (trailing CI-only fixes, author ingra107). **Live deploy = `0d024aee` on `1bbb2406`** — the authoritative product baseline (live bundle hash verified == local build). On main since the deploy but **NOT yet deployed/runtime-verified:** `9a007fd1` (3 Today row UI fixes — undo-on-complete / planned-strip DoneBox+grip / uncompletable Completed-today) + docs/CI commits. Schema v70. Verify the live deploy with `wrangler pages deployment list --project-name mn-ccore-lab`. See SESSION-HANDOFF.md + WORKPLAN.md (→ "▶▶▶ NEXT SESSION") for current state.
 **Quality gate:** 🟢 GREEN — build clean, inspection 149/149 post-simplify, smoke 27/27 (pre-simplify baseline), deep-audit 14/14 clean, axe WCAG 2.1 AA clean across 29 pages × 2 color schemes, schema-drift CI green.
 
 ## 🚨 Read these FIRST every session
