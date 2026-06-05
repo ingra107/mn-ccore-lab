@@ -212,6 +212,14 @@ export function TaskRow(props: SharedTaskRowProps) {
     ? PRIORITY_COLOR[task.priority]
     : (task.status === 'in_progress' ? ACCENT_TEAL : 'transparent')
 
+  // Prefer the curated short_title (PB-generated for long task names) for the row.
+  // The full title stays available on hover (native title attr) and in the expanded
+  // drawer. A complete short title is not a truncation — Rule 68 unaffected.
+  const displayTitle = task.short_title || task.title
+  const fullTitleHover = task.short_title && task.short_title !== task.title
+    ? (task.title ?? undefined)
+    : undefined
+
   const rightMeta = (
     <>
       {isPlanned && !isDone && <PlannedChip label={plannedLabel} />}
@@ -252,10 +260,10 @@ export function TaskRow(props: SharedTaskRowProps) {
         {stack ? (
           /* narrow rail: title full-width, meta stacks below */
           <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 5, paddingTop: 1 }}>
-            <span style={{ fontSize: 13.5, color: isDone ? INK_MUTED : INK, fontWeight: 500, textDecoration: isDone ? 'line-through' : 'none', lineHeight: 1.4, textWrap: 'pretty' as const }}>
+            <span title={fullTitleHover} style={{ fontSize: 13.5, color: isDone ? INK_MUTED : INK, fontWeight: 500, textDecoration: isDone ? 'line-through' : 'none', lineHeight: 1.4, textWrap: 'pretty' as const }}>
               {leadingTag && <span style={{ marginRight: 6 }} aria-hidden="true">{leadingTag}</span>}
               {isRightNow && <RightNowBadge />}
-              <TaskTitle title={task.title} fallback={task.description} />
+              <TaskTitle title={displayTitle} fallback={task.description} />
             </span>
             <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
               {rightMeta}
@@ -266,10 +274,10 @@ export function TaskRow(props: SharedTaskRowProps) {
           <div style={{ flex: 1, minWidth: 0, paddingTop: 1 }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 9 }}>
               {/* title — full, wraps, never clipped */}
-              <span style={{ flex: 1, minWidth: 0, fontSize: 13.5, color: isDone ? INK_MUTED : INK, fontWeight: 500, textDecoration: isDone ? 'line-through' : 'none', lineHeight: 1.4, textWrap: 'pretty' as const }}>
+              <span title={fullTitleHover} style={{ flex: 1, minWidth: 0, fontSize: 13.5, color: isDone ? INK_MUTED : INK, fontWeight: 500, textDecoration: isDone ? 'line-through' : 'none', lineHeight: 1.4, textWrap: 'pretty' as const }}>
                 {leadingTag && <span style={{ marginRight: 6 }} aria-hidden="true">{leadingTag}</span>}
                 {isRightNow && <RightNowBadge />}
-                <TaskTitle title={task.title} fallback={task.description} />
+                <TaskTitle title={displayTitle} fallback={task.description} />
                 {showGroupOverridePin && task.group_override && (
                   <span title={`Moved manually (${task.group_override})`} style={{ fontSize: 9, color: ACCENT_TEAL, padding: '1px 4px', background: withAlpha(ACCENT_TEAL, 10), borderRadius: 3, marginLeft: 6 }}>📍</span>
                 )}
