@@ -11,8 +11,10 @@
 
 **▶ OPEN THREAD — P2 Hub re-key prod-D1 migration (un-run, GATED).** The P2 *code* (typed project PK on FK columns) is deployed, but the **prod-D1 data rekey has not run**. Tool: `scripts/p2_hub_rekey_apply.py` (committed `4d... tidy`; dry-run default, fail-closed assertions). Template: `scratch/p2-hub-rekey.sql` (gitignored, regenerated from brain.db). Gates: ✅ F1 codegen · ✅ 4 ex-no-anchor projects · ✅ sentinel — ⬜ **HISTORICAL-table per-table policy** · ⬜ **`project_dependencies` slug-keyed decision** · ⬜ **Nick's go + both machines up + soft-freeze.** Likely safe cleanup (the resolve path handles project FK id-OR-slug, Rule 20) rather than a live mismatch — **confirm before running.**
 
-**▶ NEXT — only remaining DH item:**
-- **DH-5** post-deploy visual verify: ProjectDetail **Key Links compact chips** + editor **Due-date `noContainer` box** (couldn't verify on local seed; now deployable on live `59b02aa8`).
+**▶ NEXT — Task-UI continuation** (full detail in `WORKPLAN.md` → **"TASK-UI CONTINUATION"** block — the post-compact pickup point):
+- **🐞 Today drag-to-plan is broken** (Nick-reported 2026-06-04). All wiring present (source `today/TaskRow.tsx:27-30,67-68` → shared `Grip`; drop targets `today/Timeline.tsx` → `state.planAt`; Timeline rendered) → **live regression, needs `/run` + systematic-debugging**, not a missing wire. Suspects + repro in WORKPLAN.
+- **Round-6 design audit:** P0–P2 shipped + live; **P3–P6 NOT done** — P3 reach (shared row into dashboard cards / pb-sector / grids), P4 §6 density/polish, P5 §7 `<Button>/<Chip>/<Field>/<Modal>` primitives, P6 §8 mobile pass. Verified phase table + guardrails in WORKPLAN.
+- **DH-5** post-deploy visual verify (ProjectDetail Key Links chips + editor Due-date box) — now doable on live `59b02aa8`.
 
 **Loose working-tree files (after 06-04 tidy):** `dist-dryrun/` deleted + gitignored. `review/audit-results.json` stays tracked-but-gitignore-intended (machine-generated; shows as `M` — harmless, just never commit it; a clean untrack needs a bare index commit that Rule 13 bans, so left as-is). Still untracked by design: `review/MN-CCORE Lab Hub Design System (5)/` (the Round-6 design-tool source — like prior handoffs, zip+commit it if you want it preserved in git; otherwise local-only).
 

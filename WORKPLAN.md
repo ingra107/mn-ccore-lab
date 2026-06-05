@@ -1,8 +1,34 @@
-# Hub Workplan — updated 2026-05-22
+# Hub Workplan — updated 2026-06-04
 
 > Single source of truth for **remaining** work. Completed items are a compact ledger at the
 > bottom — do not re-expand them. Supersedes the Apr-28 synthesis, May-5 codex plan,
 > design-handoff TICKETS, and hub-future-ideas (all historical now).
+
+---
+
+## ▶▶ TASK-UI CONTINUATION — point here after compact (added 2026-06-04)
+
+Self-contained pickup block for the **Round-6 Task-UI design audit** (P0–P2 SHIPPED + LIVE; **P3–P6 NOT done**) plus the open Today-page drag bug. **Source handoff (full P0–P6 spec + §0–§8 + acceptance checklist + ⚠️GUARDRAILS):** `review/MN-CCORE Lab Hub Design System (5)/design/Handoff — Task UI Consistency Pass.md`. The `.html`/`.jsx` mocks in that folder are the visual source of truth (`Unified Task Model.html`, `consistency-mockup/*.jsx`). Live deploy when this was written: `59b02aa8` on `4d17036f`.
+
+### 🐞 BUG — Today drag-to-plan is broken (NEW, Nick-reported 2026-06-04)
+Nick can't drag tasks on the Today page (intended: drag the `⋮⋮` grip → a timeline gap or the bottom "planned · no specific time" strip to plan a task). **All the wiring IS present — this is a live regression needing RUNTIME debugging (`/run` + systematic-debugging), not a missing wire:**
+- **Drag SOURCE wired:** `src/components/today/TaskRow.tsx:27-30,67-68` — adapter passes `draggable={!isDone}` + `onDragStart` (sets `dataTransfer text/plain = task.id`) into the shared `Grip` (`src/components/tasks/TaskRow.tsx:164-178`: real `draggable` div, `cursor:grab`, **always mounted when draggable** but opacity-gated `show ? 0.55 : 0` so it's invisible until row hover; stops propagation on mousedown/click so the row's long-press/click don't eat the drag).
+- **Drop TARGETS wired:** `src/components/today/Timeline.tsx` `DropZone` (lines 40-50: `onDragOver` preventDefault + `onDrop` → `getData('text/plain')` → `onDropTask(id,slot)` → `state.planAt`), between-meeting zones (228), after-last-meeting (267), bottom no-time strip (321). Timeline IS rendered (`TodayPage.tsx:321`). `useTodayState` exposes `planAt`/`unplan`.
+- **Suspects to check first:** (a) HTML5 `dragstart` being swallowed (global `user-select:none` / `touch-action` / a parent `draggable={false}` / pointer-events); (b) the only *no-time* drop is the Timeline bottom strip — does it render + is it reachable when there are **0 meetings today**?; (c) `dense` mode (Today passes `dense`) or a desktop-vs-touch divergence; (d) the grip is invisible until hover — confirm hover actually reveals it and the 12px target is grabbable. **Repro:** open Today, hover a task row to reveal `⋮⋮`, drag onto a timeline gap or the bottom "drop a task here" strip → expect it to plan (📌). Design intent: handoff §1 + CLAUDE.md Rule 58 (drag `⋮⋮` = plan; body-click = expand; explicit `▶` = promote — never conflate).
+
+### Round-6 design audit — phase status (VERIFIED 2026-06-04 against code)
+- **P0 ✅** shared `<TaskRow>` on Today / My Tasks (Columns + Lanes) / My Hub. (List view excluded by design — protected power grid, Rule 60.)
+- **P1 ✅** editor date-box `noContainer`, compact Key Links chips, one date control (`InlineDatePicker`), `<DueLabel>` + `isOverdue()` sweep. **⬜ DH-5 still open:** post-deploy visual verify of ProjectDetail Key Links chips + editor Due-date box (now doable on the live deploy).
+- **P2 ✅** status-as-truth (§4; DH-3 finished the ~85-site `isTaskDone` sweep), §5 click-affordance verified-compliant, page empty-states via `<EmptyState>` (DH-6).
+- **P3 ❌ NOT done — "reach":** roll the shared `<TaskRow>` + `<DueLabel>` into **dashboard cards** (`ActionBoardCard`/`MyItemsCard`/`QuickWinsCard`/`UpcomingCard`/`YourWeekCard`), **pb-sector** slots (`EveningTaskSlot`/`FocusTaskSlot`), **grids** (`TaskCard`, `TaskGridView`/`TaskBoardView`). Verified: none import the shared row today (only the 3 P0 adapters do).
+- **P4 ❌ NOT done — §6 polish:** global **density setting** in Settings (retire per-view `DensityToggle`), 44px hit targets, uniform loading skeletons. No global density setting exists.
+- **P5 ❌ NOT done — §7 visual primitives:** shared `<Button>/<Chip>/<Field>/<Modal>` (`src/components/ui/` does not exist) + token-snapping sweep (literal px radii/gaps → `--radius-*`/`--sp-*`, 3 icon sizes, tabular-nums, one focus ring, `--shadow-*`). Additive-first; adopt surface-by-surface.
+- **P6 ⚠️ MOSTLY NOT done — §8 mobile pass:** systematic pass not run. Pre-existing pieces: swipe on TaskGridRow + TaskDetailPanel (Rule 56), `BottomSheet`. Missing: **≥16px inputs** (iOS focus-zoom fix), single-column Today collapse, flexbox `min-width:0` truncation audit, 44px targets, bottom-sheet detail for the editor. Related scattered items: **UX-7/8/9, PAGE-6/7** (below).
+- **Acceptance checklist** (handoff bottom): P0–P2 boxes met; **(P5)** + **(P6)** boxes unmet.
+- **⚠️ GUARDRAILS still bind** (handoff): presentation/consistency only — **do NOT** touch routes/API/hooks/schema; keep `completed`/`completed_at` written but branch UI on `status`; existing CSS color vars only; keep both themes; additive-first, swap one surface at a time + visually diff each; **stop-and-ask before any DO-NOT area.**
+
+### Also-open (not Round-6, but the live next-decision): P2 Hub re-key prod-D1 migration
+P2 drop-slug **code is deployed**; the **prod-D1 data rekey is un-run + GATED.** Tool `scripts/p2_hub_rekey_apply.py` (dry-run default, fail-closed), template `scratch/p2-hub-rekey.sql` (gitignored). Gates: ⬜ HISTORICAL-table per-table policy · ⬜ `project_dependencies` slug-keyed decision · ⬜ Nick's go + both machines up + soft-freeze. Full detail in `SESSION-HANDOFF.md` → OPEN THREAD.
 
 ---
 
@@ -146,12 +172,12 @@ below; OVERLAP items are noted against existing T2/T4 entries (codex added concr
 - **DH-2** ✅ DROPPED 2026-05-22 — verified generic `public/manifest.webmanifest` exists; no Pulse-
   specific kiosk manifest needed.
 
-### Round 6 — Task-UI consistency follow-ups (2026-06-01; P0–P2 shipped in commits `4ed8e657`/`b1f10a04`/`aa15f556`. These are the explicitly-tracked remainders — NOT "optional/deferred," they live here so they don't get lost.)
+### Round 6 — Task-UI consistency follow-ups (P0–P2 shipped `4ed8e657`/`b1f10a04`/`aa15f556`; DH sweep done 2026-06-04 `b5f38d10`/`b733c424`/`fc91ccd9`. See the TASK-UI CONTINUATION block at the top for the full P3–P6 status + the Today drag bug.)
 
-- **DH-3** ⏳ *(M)* **Finish the §4 status-as-truth sweep.** ~85 UI sites still branch on `completed === 1 || status === 'done'` (the dual-check). Core surfaces now use `isTaskDone(t)` (`lib/taskGrouping`); sweep the rest for consistency. **Honest priority: hygiene, not a bug** — the dual-check works today; this is maintainability/consistency so future edits have one done-ness rule. Lowest-urgency of the four.
-- **DH-4** ⏳ *(S–M)* **Consolidate the due-label TEXT helper.** Three slightly-different label wordings exist: `DueChip`/`rowDueLabel` in `components/tasks/TaskRow.tsx` ("Nd ago"), `labelFor` in `components/DueLabel.tsx` ("Nd overdue"/"Yesterday"), `dueLabel` in `MyTasks/constants.ts`. Extract one `dueLabelText(due, overdue)` (in `lib/dateUtils.ts`) and call it from all three. The `/simplify` reuse + altitude agents flagged this as the top reuse finding (2026-06-01). Deferred at session-close because unifying the wording is a cross-surface visual change needing screenshot verification. **Real consistency win — do this one.**
-- **DH-5** ⏳ *(S)* **Post-deploy visual verification** of two P1 things I could NOT screenshot on the local seed: ProjectDetail **Key Links compact chips** (detail route doesn't resolve seeded slugs locally) + the editor **Due-date `noContainer` box**. Confirm on the deployed site after next deploy.
-- **DH-6** ⏳ *(S)* **Page-level empty-state consistency** (§5 leftover). Route any remaining ad-hoc "no X" page-level strings through `<EmptyState>`. Per-column "nothing here" lane hints are intentionally lightweight — leave those. Needs empty data to verify.
+- **DH-3** ✅ **DONE 2026-06-04** (`b733c424`) — §4 status-as-truth sweep: replaced dual-checks with `isTaskDone()`.
+- **DH-4** ✅ **DONE 2026-06-04** (`b5f38d10`) — extracted one `dueLabelText()`; the three divergent helpers now delegate.
+- **DH-5** ⏳ *(S)* **Post-deploy visual verification** of two P1 things not screenshot-able on the local seed: ProjectDetail **Key Links compact chips** + the editor **Due-date `noContainer` box**. Now confirmable on the live deploy (`59b02aa8`). **Only remaining DH item.**
+- **DH-6** ✅ **DONE 2026-06-04** (`fc91ccd9`) — page-level empty-states routed through `<EmptyState>`.
 
 ## T2 — UX & polish (during adoption; not blockers)
 
