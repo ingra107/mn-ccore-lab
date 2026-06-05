@@ -3,6 +3,7 @@ import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-
 import { CSS } from '@dnd-kit/utilities'
 import { Moon, GripVertical, Circle, Plus } from 'lucide-react'
 import { motion } from 'framer-motion'
+import DueLabel from '../DueLabel'
 
 interface EveningTask {
   id: string
@@ -74,6 +75,7 @@ function SortableEveningItem({ task, onComplete, onClickTitle }: {
               {task.project_title}
             </span>
           )}
+          <DueLabel due={task.due_date} style={{ fontSize: 11 }} />
         </div>
       </div>
     </div>

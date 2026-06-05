@@ -4,6 +4,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { Target, GripVertical, Circle, Plus } from 'lucide-react'
 import { motion } from 'framer-motion'
 import PomodoroCircles from './PomodoroCircles'
+import DueLabel from '../DueLabel'
 
 interface FocusTask {
   id: string
@@ -91,6 +92,7 @@ function SortableFocusItem({ task, index, pomodorosCompleted, pomodoroActive, on
               {task.project_title}
             </span>
           )}
+          <DueLabel due={task.due_date} style={{ fontSize: 11 }} />
         </div>
 
         {/* Pomodoro */}

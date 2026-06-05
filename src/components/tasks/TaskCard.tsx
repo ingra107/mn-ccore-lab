@@ -3,7 +3,8 @@ import { CalendarDays, FolderKanban, Flag, RotateCcw, Eye, AlertTriangle, CheckC
 import { useUndoToast } from '../UndoToast'
 import Avatar from '../Avatar'
 import { getPersonInfo } from '../../data/team'
-import { formatShortDate, isOverdue as isPastDue } from '../../lib/dateUtils'
+import { isOverdue as isPastDue } from '../../lib/dateUtils'
+import DueLabel from '../DueLabel'
 import { formatBrandName } from '../BrandName'
 import TaskTitle from './TaskTitle'
 import { updateTask } from '../../lib/api'
@@ -144,15 +145,9 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
 
             {/* Due date */}
             {task.due_date && (
-              <span
-                className="flex items-center gap-1 text-[11px]"
-                style={{
-                  color: isOverdue ? 'var(--maroon)' : 'var(--slate)',
-                  fontWeight: isOverdue ? 600 : 400,
-                }}
-              >
+              <span className="flex items-center gap-1 text-[11px]">
                 <CalendarDays size={10} />
-                {isOverdue ? 'Overdue' : formatShortDate(task.due_date)}
+                <DueLabel due={task.due_date} status={task.status} style={{ fontSize: 11 }} />
               </span>
             )}
 

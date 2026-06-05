@@ -10,6 +10,7 @@ import { getPersonInfo } from '../../data/team'
 import { isOverdue } from '../../lib/dateUtils'
 import BentoCard from './BentoCard'
 import { PATHS } from '../../constants/paths'
+import DueLabel from '../DueLabel'
 
 function MyItemsCard() {
   const { user } = useAuth()
@@ -112,12 +113,12 @@ function MyItemsCard() {
                 <div
                   style={{
                     fontSize: '10px',
-                    color: overdue ? 'var(--maroon)' : 'var(--slate)',
-                    opacity: overdue ? 1 : 0.85,
+                    color: 'var(--slate)',
+                    opacity: 0.85,
                     marginTop: '1px',
                   }}
                 >
-                  {info.name.split(' ')[0]} {item.due_date ? `· ${overdue ? 'overdue' : 'due'} ${new Date(item.due_date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : ''}
+                  {info.name.split(' ')[0]}{item.due_date ? <> · <DueLabel due={item.due_date} style={{ fontSize: '10px' }} /></> : ''}
                 </div>
               </div>
             </div>

@@ -8,7 +8,7 @@ import { formatBrandName } from '../BrandName'
 import { useUpdateTaskStatus } from '../../hooks/useMutations'
 import { useUndoToast } from '../UndoToast'
 import { getPersonInfo } from '../../data/team'
-import { formatShortDate } from '../../lib/dateUtils'
+import DueLabel from '../DueLabel'
 import { PATHS } from '../../constants/paths'
 
 const statusIcon: Record<string, { icon: typeof Circle; color: string }> = {
@@ -55,7 +55,6 @@ function ActionBoardCard() {
                       </span>
                     </div>
                     {assigneeItems.map((item) => {
-                      const isOverdue = item.due_date && new Date(item.due_date) < new Date()
                       const si = statusIcon[item.status] || statusIcon.todo
                       const StatusIcon = si.icon
                       return (
@@ -83,11 +82,7 @@ function ActionBoardCard() {
                               {item.title || item.description}
                             </p>
                             <div className="flex items-center gap-2 mt-0.5">
-                              {item.due_date && (
-                                <span style={{ fontSize: '10px', color: isOverdue ? 'var(--maroon)' : 'var(--slate)', opacity: isOverdue ? 1 : 0.85, fontWeight: isOverdue ? 600 : 400 }}>
-                                  {isOverdue ? 'Overdue' : `Due ${formatShortDate(item.due_date)}`}
-                                </span>
-                              )}
+                              <DueLabel due={item.due_date} style={{ fontSize: 10 }} />
                               {item.priority && item.priority !== 'medium' && (
                                 <span style={{ fontSize: '10px', color: item.priority === 'urgent' ? 'var(--maroon)' : item.priority === 'high' ? 'var(--orange)' : 'var(--slate)', opacity: 0.85 }}>
                                   {item.priority}
