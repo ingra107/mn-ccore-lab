@@ -82,3 +82,99 @@ test.describe('Today: plan a task (📌 button + drag)', () => {
     expect(await page.locator('[data-plan-btn]').count()).toBe(0)
   })
 })
+
+/**
+ * Today complete/undo/uncomplete regression spec (9a007fd1, 2026-06-05).
+ *
+ * Guards Nick's three live-reported Today row bugs:
+ *   (a) completing a task fires the 5s undo toast and Undo reopens it
+ *       (design principle #8 — markDone was silently un-undoable).
+ *   (b) the "Planned today · no specific time" strip row uses the shared
+ *       DoneBox (aria-label "Mark done") AND has a draggable grip so it can
+ *       be re-slotted (it never got the P0 shared-row treatment).
+ *   (c) "Completed today" items are clickable (DoneBox) to uncomplete.
+ *
+ * Hooks reused: [data-plan-btn] (unplanned task), [data-testid="undo-toast"]
+ * + [data-testid="undo-button"] (UndoToast), DoneBox aria-label
+ * "Mark done"/"Mark not done", [data-b2-timeline] (timeline strip),
+ * [data-b2-completed] (completed-today section header).
+ */
+test.describe('Today: complete + undo + uncomplete (9a007fd1)', () => {
+  test('completing a task shows the undo toast and Undo reopens it', async ({ journeyPage: page }) => {
+    const errors = await go(page, P.dashboard)
+    expect(errors).toEqual([])
+
+    // An unplanned task row (has the 📌 plan button) is a stable target.
+    const planBtn = page.locator('[data-plan-btn]').first()
+    await expect(planBtn).toHaveCount(1, { timeout: 10_000 })
+    const taskId = await planBtn.getAttribute('data-plan-btn')
+    expect(taskId).toBeTruthy()
+
+    const row = page.locator(`[data-task-id="${taskId}"]`).first()
+    await row.hover()
+    // Complete via the shared DoneBox (the square = complete everywhere).
+    await row.locator('[aria-label="Mark done"]').first().click()
+
+    // markDone now fires the 5s undo toast.
+    const toast = page.getByTestId('undo-toast')
+    await expect(toast).toBeVisible({ timeout: 4_000 })
+
+    // Undo reopens the task: its DoneBox returns to the not-done state.
+    await page.getByTestId('undo-button').first().click()
+    await expect(toast).toBeHidden({ timeout: 4_000 })
+    await expect(
+      page.locator(`[data-task-id="${taskId}"] [aria-label="Mark done"]`).first(),
+    ).toBeVisible({ timeout: 6_000 })
+  })
+
+  test('planned-strip row has a Mark-done DoneBox and a draggable grip', async ({ journeyPage: page }) => {
+    const errors = await go(page, P.dashboard)
+    expect(errors).toEqual([])
+
+    const planBtn = page.locator('[data-plan-btn]').first()
+    await expect(planBtn).toHaveCount(1, { timeout: 10_000 })
+    const taskId = await planBtn.getAttribute('data-plan-btn')
+    expect(taskId).toBeTruthy()
+
+    const row = page.locator(`[data-task-id="${taskId}"]`).first()
+    await row.hover()
+    await planBtn.click()
+
+    // The planned task now renders in the timeline strip as a PlannedTaskRow.
+    const stripRow = page.locator(`[data-b2-timeline] [data-task-id="${taskId}"]`).first()
+    await expect(stripRow).toBeVisible({ timeout: 4_000 })
+
+    // It must carry the shared DoneBox (Mark done) and a drag grip to re-slot.
+    await expect(stripRow.locator('[aria-label="Mark done"]').first()).toBeVisible()
+    await expect(stripRow.locator('[draggable="true"]').first()).toHaveCount(1)
+  })
+
+  test('a Completed-today item can be unchecked via its DoneBox', async ({ journeyPage: page }) => {
+    const errors = await go(page, P.dashboard)
+    expect(errors).toEqual([])
+
+    const planBtn = page.locator('[data-plan-btn]').first()
+    await expect(planBtn).toHaveCount(1, { timeout: 10_000 })
+    const taskId = await planBtn.getAttribute('data-plan-btn')
+    expect(taskId).toBeTruthy()
+
+    // Complete the task and dismiss the undo toast so the completion stands.
+    const row = page.locator(`[data-task-id="${taskId}"]`).first()
+    await row.hover()
+    await row.locator('[aria-label="Mark done"]').first().click()
+    await page.getByRole('button', { name: 'Close' }).first().click().catch(() => {})
+
+    // Expand the "Completed today" section.
+    const completed = page.locator('[data-b2-completed]')
+    await expect(completed).toBeVisible({ timeout: 6_000 })
+    await completed.locator('div').first().click()
+
+    // The completed item renders the shared DoneBox in its done state — and is
+    // clickable to uncomplete (the bug fix). Wait for the refetch to surface it.
+    const doneBox = completed.locator('[aria-label="Mark not done"]').first()
+    await expect(doneBox).toBeVisible({ timeout: 12_000 })
+    await doneBox.click()
+    // Unchecking removes it from the completed list.
+    await expect(completed.locator('[aria-label="Mark not done"]')).toHaveCount(0, { timeout: 6_000 })
+  })
+})
