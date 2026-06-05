@@ -2,7 +2,7 @@
 
 ## ▶▶ CURRENT — All merged work DEPLOYED + LIVE; `short_title` now renders on the Hub
 
-**Live = HEAD = `4d17036f` · deploy `59b02aa8` (2026-06-04) · origin/main pushed.** The 2026-06-01 "deploy pending" banner is **RESOLVED** — everything on `main` is deployed (don't re-triage a deploy decision).
+**Live = `4d17036f` · deploy `59b02aa8` (2026-06-04) · origin/main pushed. HEAD = `fc4069bf`** (trailing session-close docs/simplify — behavior-identical, ships next deploy). The 2026-06-01 "deploy pending" banner is **RESOLVED** — everything on `main` is deployed (don't re-triage a deploy decision).
 
 **Shipped since 2026-06-01 (all deployed):**
 - **`4d17036f` (06-04) — Hub renders `short_title`.** The shared `TaskRow` now displays `short_title || title` (full title on hover via native `title=` + still full in the detail drawer). The brain.db/D1 `short_title` field always synced to the Hub and was returned by `/api/tasks` (it's in `TASK_SELECT_COLS`), but the frontend read it **nowhere** — so 219–365-char RO3 titles dominated Today/MyTasks after Round-6 removed truncation (Rule 68). **Pure display gap; the short titles already existed in D1.** Backlog reconciled to 0 (1 straggler generated via `BrainDB.update_task`). Generation stays automated via **`generate-today` Phase 1b (daily, home)** — NOT a cron; no new schedule added. CLAUDE.md Rule 68 updated.
@@ -126,7 +126,7 @@ Deferred items NOT in this merge: full typed-Request adoption (~200 handlers), g
 
 | Item | Value |
 |------|-------|
-| HEAD | Hub `4d17036f` on main, pushed (2026-06-04 — short_title display fix; preceded by B-8/DH-6/DH-3/DH-4 `12036dc5`…`b5f38d10` on 06-04, F1+P2-drop-slug `33293abe`/`aa85c71b` on 06-02). |
+| HEAD | Hub `fc4069bf` on main, pushed (2026-06-04 — session-close docs/simplify atop short_title fix `4d17036f`; preceded by B-8/DH-6/DH-3/DH-4 `12036dc5`…`b5f38d10` on 06-04, F1+P2-drop-slug `33293abe`/`aa85c71b` on 06-02). Live deploy is on `4d17036f` — the close commits are behavior-identical. |
 | Deploy | `59b02aa8.mn-ccore-lab.pages.dev` (2026-06-04) — Production/main, LIVE on `4d17036f`. Verify: `wrangler pages deployment list --project-name mn-ccore-lab`. |
 | Build | GREEN (0 TS errors, `npm run build` 2026-06-04) |
 | API tests | Hub API suite green as of the 2026-05-28 hub-hardening merge (**691/691**); not re-run this session (frontend-only change). PB `tests/sync/`: 328 passed / 2 skip / 0 failures (2026-05-24). |

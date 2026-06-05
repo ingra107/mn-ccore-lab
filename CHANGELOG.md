@@ -3,6 +3,17 @@
 
 > Historical phase records moved from CLAUDE.md to keep the operating guide focused on current state. Each section is a complete record of what shipped, decisions made, and scores achieved.
 
+## 2026-06-04 — Hub renders `short_title` on the shared TaskRow (`4d17036f`; simplify `fc4069bf`)
+
+The brain.db/D1 `short_title` field (PB-generated for long task names, in `TASK_SELECT_COLS`, returned by `/api/tasks`) synced to the Hub but was read **nowhere** in the frontend — so 219–365-char titles (the RO3 resubmission tasks) dominated Today/MyTasks rows after Round-6 removed truncation (Rule 68). **Pure display gap; the short titles already existed in D1.**
+
+- `src/lib/api.ts`: `short_title?` added to the `TaskRow` interface (value already arrived via the response cast).
+- `src/components/tasks/TaskRow.tsx`: renders `short_title || title`, full title on hover (native `title=`) + still full in the detail drawer. Covers Today / My Hub / My Tasks (Columns + Lanes) via the one shared row. CLAUDE.md Rule 68 updated.
+- Backlog reconciled to 0 (1 straggler generated via `BrainDB.update_task`). Generation stays automated via PB `generate-today` Phase 1b (daily) — not a cron; no new schedule added.
+- Deployed `59b02aa8` (LIVE). `fc4069bf` = behavior-identical session-close simplify (derive `fullTitleHover` from `displayTitle`); ships next deploy.
+
+Also landed 06-02→06-04 (earlier sessions; see SESSION-HANDOFF): DH-4 `dueLabelText`, DH-3 `isTaskDone` sweep, DH-6 page empty-states, B-8 mutations/projects allowlist-lag (`12036dc5`…`b5f38d10`); F1 pb-schema submodule import + P2 drop-slug (typed project PK on FK cols) (`33293abe`/`aa85c71b`). The P2 prod-D1 data rekey itself remains **un-run + gated** (`scripts/p2_hub_rekey_apply.py`).
+
 ## 2026-06-01 — Task-UI consistency refactor (Round 6 design handoff, P0–P2; commits `4ed8e657`, `b1f10a04`, `aa15f556`, `a19a7aa0`)
 
 Executed `review/MN-CCORE Lab Hub Design System (5)/design/` (the "Unified Task Model" handoff). **tsc + build green; P0 surfaces visually verified light + dark on the local stack.** Pushed to `main`.
