@@ -1,0 +1,66 @@
+{
+  "$schema_note": "Hub-store SLICE of the Project-Identity Completeness Gate SSOT. CANONICAL source is PB scripts/db/project_identity_surfaces.json; this file is the Hub-committed copy so the Hub CI job (scripts/check-project-identity-gate.py, wired in .github/workflows/schema-drift.yml) can run WITHOUT a PB checkout. The hub_d1 surfaces + keep_slug_kg_nodes + kg_namespace + known_residues.hub_d1 here MUST stay byte-equal to the PB canonical — enforced by PB tests/db/test_project_identity_gate.py::test_hub_copy_matches_pb_hub_slice. North-star + decision: PB Context/Decisions/2026-06-05-project-identity-single-machine-identity.md.",
+  "version": 1,
+  "generated": "2026-06-05",
+  "policies": {
+    "typed_required": "Live machine/identity path. The STORED value MUST be a typed proj_* PK (or NULL). The browser read may PRESENT a slug, but storage is asserted typed. Any non-typed stored value is a HARD FAILURE.",
+    "exempt_display_mirror": "Append-only, read-only mirror of a Hub presentation field. Not a machine-routing FK. Exempt from typed assertion; documented, not failed.",
+    "exempt_historical": "Append-only forensic / analytics / audit surface. Default LEAVE. Non-typed legacy values are EXPECTED. Reported as informational, never a hard failure.",
+    "keep_slug_kg": "The documented 5 KEEP slug-form kg nodes. Exempt from the slug-form kg assertion. ANY slug-form active project: kg node OUTSIDE this set is a HARD FAILURE."
+  },
+  "kg_namespace": {
+    "note": "project:* is a DUAL-USE kg namespace. Most slug-suffix nodes are extractor GARBAGE (project:hub.py, project:/process, file paths) — NOT identity surfaces. The gate's kg assertions scope to ACTIVE nodes/relations only. A node is a typed project node iff id LIKE 'project:proj_%'. An ACTIVE slug-form project node (id LIKE 'project:%' AND NOT LIKE 'project:proj_%') is a FAILURE unless in keep_slug_kg.",
+    "typed_node_pattern": "project:proj_%",
+    "slug_node_pattern_active": "id LIKE 'project:%' AND id NOT LIKE 'project:proj_%'",
+    "typed_orphan_patterns": ["project:proj_01KP9A2XM9%", "project:proj_01KP9FM30%"],
+    "test_orphan_ids": ["project:proj_TESTAMR0000000000000000001", "project:proj_TESTOTHER00000000000000001"]
+  },
+  "known_residues": {
+    "$note": "Pre-identified defects the gate FOUND that are tracked for a follow-up fix but are NOT this slice's remit (Slice E builds the gate; Slice A owns kg reconciliation). Each entry downgrades that EXACT finding from hard-fail to WARN. Remove the entry when the fix lands; the gate then hard-fails on any regression. Anything NOT listed here stays fail-closed.",
+    "hub_d1": {
+      "L1_kg_node_vs_table": {
+        "dangling_rel_missing_node": [
+          {"missing_node": "project:proj_2SSMRNK4N7R9P7BG5JJ4YEP5WM", "project": "clif-iv-fluids-sepsis", "via_relation": "project:proj_2SSMRNK4N7R9P7BG5JJ4YEP5WM -related_to-> organization:clif-(common-longitudinal-icu-data-format)", "found": "2026-06-05", "remedy": "Slice A follow-up: MINT the missing canonical kg node on Hub (the project IS live; brain.db already has the node — pure per-store propagation gap), then drop this entry. Resurrect-safe additive mint, zero-risk."}
+        ]
+      }
+    }
+  },
+  "keep_slug_kg_nodes": [
+    "project:clif-sipa",
+    "project:covid-19-hospital-resource-scarcity-and-excess-mortality",
+    "project:covid-19-hospital-resource-scarcity-and-excess-mortality-analysis",
+    "project:minnesota-covid-wave-mortality-study",
+    "project:opioid-stewardship-project"
+  ],
+  "surfaces": {
+    "hub_d1": [
+      {"table": "projects", "column": "id", "kind": "storage_pk", "policy": "typed_required", "note": "parent project PK; converged 76/76 typed (Hub arbiter)"},
+      {"table": "tasks", "column": "project_id", "kind": "fk", "policy": "typed_required", "note": "storage typed; read presents slug via task-cols.ts"},
+      {"table": "comments", "column": "project_id", "kind": "fk", "policy": "typed_required"},
+      {"table": "project_updates", "column": "project_id", "kind": "fk", "policy": "typed_required"},
+      {"table": "milestones", "column": "project_id", "kind": "fk", "policy": "typed_required"},
+      {"table": "conference_submissions", "column": "project_id", "kind": "fk", "policy": "typed_required"},
+      {"table": "submission_events", "column": "project_id", "kind": "fk", "policy": "typed_required"},
+      {"table": "regulatory_items", "column": "project_id", "kind": "fk", "policy": "typed_required"},
+      {"table": "manuscript_revisions", "column": "project_id", "kind": "fk", "policy": "typed_required"},
+      {"table": "project_documents", "column": "project_id", "kind": "fk", "policy": "typed_required"},
+      {"table": "project_publications", "column": "project_id", "kind": "fk", "policy": "typed_required"},
+      {"table": "pomodoro_sessions", "column": "project_id", "kind": "fk", "policy": "typed_required"},
+      {"table": "trajectories", "column": "project_id", "kind": "fk", "policy": "typed_required"},
+      {"table": "action_items", "column": "project_id", "kind": "fk", "policy": "typed_required"},
+      {"table": "agenda_items", "column": "project_id", "kind": "fk", "policy": "typed_required"},
+      {"table": "ideas", "column": "project_id", "kind": "fk", "policy": "typed_required"},
+      {"table": "inbox", "column": "project_id", "kind": "fk", "policy": "typed_required"},
+      {"table": "inbox_events", "column": "suggested_project_id", "kind": "fk", "policy": "typed_required"},
+      {"table": "project_state_log", "column": "project_id", "kind": "fk", "policy": "exempt_historical", "note": "append-only state log"},
+      {"table": "file_activity_daily", "column": "project_id", "kind": "fk", "policy": "exempt_historical", "note": "daily file-activity rollup (analytics). Holds dead legacy rec_* + 'test' rollup keys that map to NO live project. Not a machine-routing FK; forensic/analytics aggregate."},
+      {"table": "kg_entities", "column": "id", "kind": "kg_composite", "policy": "typed_required"},
+      {"table": "kg_relations", "column": "source_id", "kind": "kg_composite", "policy": "typed_required"},
+      {"table": "kg_relations", "column": "target_id", "kind": "kg_composite", "policy": "typed_required"}
+    ]
+  },
+  "introspection": {
+    "column_match": "lower(column) matches %project%id% (any column whose lowercased name contains 'project' and 'id').",
+    "rule": "Every %project%id% column discovered on Hub D1 via sqlite_master/pragma MUST appear in surfaces.hub_d1. Any column NOT listed is an UNKNOWN SURFACE = HARD FAILURE (fail-closed)."
+  }
+}

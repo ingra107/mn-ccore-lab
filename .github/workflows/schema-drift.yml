@@ -232,6 +232,22 @@ jobs:
         # Exit 1 if any gap found; gaps listed in job log.
         run: npm run audit:schema-contract
 
+      - name: Project-identity completeness gate (Slice E, fail-closed)
+        # Symmetric Project-Identity Convergence gate — the Hub D1 half. Asserts
+        # ONE machine identity = typed proj_* PK across every identity-bearing
+        # project surface on prod D1 (storage, FK columns, kg composite keys),
+        # FAIL-CLOSED: an UNKNOWN %project%id% column not in the committed SSOT
+        # (scripts/project-identity-surfaces.json) red-fails the job. Also runs
+        # Slice-A verify assertions a-d + today's-lessons L1/L2 (kg-node vs
+        # projects-table; tombstone valid_until co-set). Stdlib Python; reuses
+        # the same D1-scoped CLOUDFLARE_API_TOKEN this workflow already uses.
+        # Decision: PB Context/Decisions/2026-06-05-project-identity-single-machine-identity.md
+        # Canonical both-store gate: PB scripts/db/project_identity_gate.py.
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: python3 scripts/check-project-identity-gate.py
+
       - name: Time-discipline lint (Increment 1A R20/R21, ENFORCE)
         # Hub-local stdlib mirror — does NOT depend on a PB checkout. ENFORCE
         # mode (hard-fail) since the Plan 1B display-site migration cleared the
