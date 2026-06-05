@@ -216,9 +216,8 @@ export function TaskRow(props: SharedTaskRowProps) {
   // The full title stays available on hover (native title attr) and in the expanded
   // drawer. A complete short title is not a truncation — Rule 68 unaffected.
   const displayTitle = task.short_title || task.title
-  const fullTitleHover = task.short_title && task.short_title !== task.title
-    ? (task.title ?? undefined)
-    : undefined
+  // Full title on hover only when a (differing) short_title is what's shown.
+  const fullTitleHover = displayTitle !== task.title ? task.title : undefined
 
   const rightMeta = (
     <>
