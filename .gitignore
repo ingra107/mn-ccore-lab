@@ -65,6 +65,7 @@ review/post-*-*/
 
 # Local scratch + machine-specific generated output (2026-05-30)
 Scratch/
+dist-dryrun/
 Archive/Scratch/
 __pycache__/
 review/audit-results.json

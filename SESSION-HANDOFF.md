@@ -1,6 +1,24 @@
-# Session Handoff — 2026-06-01
+# Session Handoff — 2026-06-04
 
-## ▶▶ CURRENT — Task-UI consistency refactor (P0–P2) MERGED + pushed to main
+## ▶▶ CURRENT — All merged work DEPLOYED + LIVE; `short_title` now renders on the Hub
+
+**Live = HEAD = `4d17036f` · deploy `59b02aa8` (2026-06-04) · origin/main pushed.** The 2026-06-01 "deploy pending" banner is **RESOLVED** — everything on `main` is deployed (don't re-triage a deploy decision).
+
+**Shipped since 2026-06-01 (all deployed):**
+- **`4d17036f` (06-04) — Hub renders `short_title`.** The shared `TaskRow` now displays `short_title || title` (full title on hover via native `title=` + still full in the detail drawer). The brain.db/D1 `short_title` field always synced to the Hub and was returned by `/api/tasks` (it's in `TASK_SELECT_COLS`), but the frontend read it **nowhere** — so 219–365-char RO3 titles dominated Today/MyTasks after Round-6 removed truncation (Rule 68). **Pure display gap; the short titles already existed in D1.** Backlog reconciled to 0 (1 straggler generated via `BrainDB.update_task`). Generation stays automated via **`generate-today` Phase 1b (daily, home)** — NOT a cron; no new schedule added. CLAUDE.md Rule 68 updated.
+- **`12036dc5` B-8** (mutations/projects allowlist-lag), **`fc91ccd9` DH-6** (page empty-states via `<EmptyState>`), **`b733c424` DH-3** (`isTaskDone` sweep), **`b5f38d10` DH-4** (`dueLabelText`) — 06-04.
+- **`33293abe` F1** (pb-schema submodule import, CONTRACT_VERSION 0.2.0), **`aa85c71b` P2 drop-slug** (store typed project PK not slug on FK cols) + test updates — 06-02.
+
+**▶ OPEN THREAD — P2 Hub re-key prod-D1 migration (un-run, GATED).** The P2 *code* (typed project PK on FK columns) is deployed, but the **prod-D1 data rekey has not run**. Tool: `scripts/p2_hub_rekey_apply.py` (committed `4d... tidy`; dry-run default, fail-closed assertions). Template: `scratch/p2-hub-rekey.sql` (gitignored, regenerated from brain.db). Gates: ✅ F1 codegen · ✅ 4 ex-no-anchor projects · ✅ sentinel — ⬜ **HISTORICAL-table per-table policy** · ⬜ **`project_dependencies` slug-keyed decision** · ⬜ **Nick's go + both machines up + soft-freeze.** Likely safe cleanup (the resolve path handles project FK id-OR-slug, Rule 20) rather than a live mismatch — **confirm before running.**
+
+**▶ NEXT — only remaining DH item:**
+- **DH-5** post-deploy visual verify: ProjectDetail **Key Links compact chips** + editor **Due-date `noContainer` box** (couldn't verify on local seed; now deployable on live `59b02aa8`).
+
+**Loose working-tree files (after 06-04 tidy):** `dist-dryrun/` deleted + gitignored. `review/audit-results.json` stays tracked-but-gitignore-intended (machine-generated; shows as `M` — harmless, just never commit it; a clean untrack needs a bare index commit that Rule 13 bans, so left as-is). Still untracked by design: `review/MN-CCORE Lab Hub Design System (5)/` (the Round-6 design-tool source — like prior handoffs, zip+commit it if you want it preserved in git; otherwise local-only).
+
+---
+
+## ▶▶ (HISTORY 2026-06-01) Task-UI consistency refactor (P0–P2) MERGED + pushed to main
 
 Executed the `review/MN-CCORE Lab Hub Design System (5)/design/` handoff (Round 6 task-UI consistency pass), P0→P2. **tsc + build green; P0 surfaces visually verified (dark + light) on the local stack.** All on `main` + **pushed** (author ingra107, no Claude attribution):
 
@@ -108,11 +126,11 @@ Deferred items NOT in this merge: full typed-Request adoption (~200 handlers), g
 
 | Item | Value |
 |------|-------|
-| HEAD | Hub `68b8d861` on main, pushed (Increment 1A Phase α — Hub: `be2eb1d4`/`40058df6`/`d9398a83`/`68b8d861`; spec `5715e6eb`/`799ee275`; plan `d2de8ee2`/`217989c3`; redaction `66e5c9d0`). PB α commits local + Syncthing-propagating: `569a604a`/`43b9eb68`/`c00db519` (PB HEAD `c00db519`). |
-| Deploy | `17d7cdd1.mn-ccore-lab.pages.dev` (2026-05-23, Increment 1A Phase α) — LIVE on `68b8d861`. `/api/health` ok (tasks 759/projects 93/team 19, 0 failures). Shipped: Task 4 LMM churn-fix + `tasks.notes` redaction (`66e5c9d0`) + `time.ts` + lint CI. |
-| Build | GREEN (0 TS errors) |
-| API tests | **208/208** passing (Hub). PB `tests/sync/`: ✅ **328 passed / 2 skip / 0 failures** (was 18 stale-test failures — triaged + retired as test debt, PB commit `4427a808`, 2026-05-24). |
-| Schema | **v69** prod D1 (commitments.to_slug). brain.db migration high-water **093** (sync_status neutralized/inert; mig-088 = `blocked_by` legacy-ID backfill, NOT timestamp-normalize — that migration was descoped). |
+| HEAD | Hub `4d17036f` on main, pushed (2026-06-04 — short_title display fix; preceded by B-8/DH-6/DH-3/DH-4 `12036dc5`…`b5f38d10` on 06-04, F1+P2-drop-slug `33293abe`/`aa85c71b` on 06-02). |
+| Deploy | `59b02aa8.mn-ccore-lab.pages.dev` (2026-06-04) — Production/main, LIVE on `4d17036f`. Verify: `wrangler pages deployment list --project-name mn-ccore-lab`. |
+| Build | GREEN (0 TS errors, `npm run build` 2026-06-04) |
+| API tests | Hub API suite green as of the 2026-05-28 hub-hardening merge (**691/691**); not re-run this session (frontend-only change). PB `tests/sync/`: 328 passed / 2 skip / 0 failures (2026-05-24). |
+| Schema | **v70** prod D1 (`idx_projects_slug_active` partial UNIQUE, Phase 5 2026-05-28). brain.db migration high-water **093**. |
 | API auth | GET endpoints locked down (unchanged from 2026-05-15) |
 | Team adoption | Not yet broadly directed. |
 
