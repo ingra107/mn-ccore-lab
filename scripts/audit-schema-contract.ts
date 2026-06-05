@@ -32,6 +32,11 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
+// F1 (2026-06-02): TABLE_FIELDS is the pb-schema generated SSOT — import it
+// directly, the same source mutations.ts imports. (Was regex-parsed out of
+// mutations.ts source text, which broke when the inline literal became an
+// import. Mirrors api/routes/mutations.schema-drift.test.ts.)
+import { TABLE_FIELDS } from '../pb-schema/pb_schema/generated/field-authority.generated.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -124,51 +129,18 @@ function deriveSchemaFromFiles(): Map<string, TableSchema> {
   return tables;
 }
 
-// ── 2. Parse TABLE_FIELDS from mutations.ts ───────────────────────────────────
+// ── 2. Load TABLE_FIELDS from the pb-schema generated SSOT ────────────────────
+// The generated export is Record<string, Set<string>>. Convert to the Map the
+// consumer expects, preserving the original lower-cased table/field normalization
+// so downstream gap detection is byte-for-byte unchanged from the old parser.
 
 function parseTableFields(): Map<string, Set<string>> {
-  const mutationsPath = path.join(REPO_ROOT, 'api', 'routes', 'mutations.ts');
-  const content = fs.readFileSync(mutationsPath, 'utf8');
-
   const result = new Map<string, Set<string>>();
-
-  // Find the TABLE_FIELDS const block
-  const tfStart = content.indexOf('const TABLE_FIELDS:');
-  if (tfStart === -1) throw new Error('TABLE_FIELDS not found in mutations.ts');
-
-  // Find the matching closing brace — scan forward
-  let depth = 0;
-  let blockStart = -1;
-  let blockEnd = -1;
-  for (let i = tfStart; i < content.length; i++) {
-    if (content[i] === '{') {
-      if (depth === 0) blockStart = i;
-      depth++;
-    } else if (content[i] === '}') {
-      depth--;
-      if (depth === 0) { blockEnd = i; break; }
-    }
+  for (const [table, fields] of Object.entries(TABLE_FIELDS)) {
+    const lowered = new Set<string>();
+    for (const f of fields) lowered.add(f.toLowerCase());
+    result.set(table.toLowerCase(), lowered);
   }
-  if (blockStart === -1 || blockEnd === -1) throw new Error('Could not delimit TABLE_FIELDS block');
-
-  const block = content.slice(blockStart, blockEnd + 1);
-
-  // Parse table name -> Set([...]) entries.
-  // Each entry looks like: tableName: new Set([ 'field1', 'field2', ... ]),
-  const tableRe = /(\w+):\s*new\s+Set\s*\(\s*\[([^\]]*(?:\][^)]*\[)*[^\]]*)\]\s*\)/gs;
-  let tm: RegExpExecArray | null;
-  while ((tm = tableRe.exec(block)) !== null) {
-    const tableName = tm[1].toLowerCase();
-    const fieldsRaw = tm[2];
-    const fields = new Set<string>();
-    const fieldRe = /'([^']+)'/g;
-    let fm: RegExpExecArray | null;
-    while ((fm = fieldRe.exec(fieldsRaw)) !== null) {
-      fields.add(fm[1].toLowerCase());
-    }
-    result.set(tableName, fields);
-  }
-
   return result;
 }
 
@@ -202,7 +174,11 @@ function parseRouteAllowedFields(): RouteAllowedFields[] {
       const re = new RegExp(`const\\s+${setName}\\s*=\\s*new\\s+Set\\s*\\(\\s*\\[([^\\]]+)\\]\\s*\\)`, 's');
       const m = re.exec(content);
       if (!m) continue;
-      const fieldsRaw = m[1];
+      // Strip // and /* */ comments before extracting quoted field names.
+      // A comment apostrophe (e.g. "this route's field-whitelist") would
+      // otherwise poison the single-quote matcher and pair quotes across
+      // real fields, emitting comment fragments as phantom field names.
+      const fieldsRaw = m[1].replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/\/\/[^\n]*/g, ' ');
       const fields = new Set<string>();
       const fieldRe = /'([^']+)'/g;
       let fm: RegExpExecArray | null;
