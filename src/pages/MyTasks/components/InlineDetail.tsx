@@ -14,12 +14,13 @@ import { localDateKey } from '../../../lib/dateUtils'
 import {
   ACCENT_GOLD, ACCENT_TEAL, ACCENT_GREEN,
   INK, INK_DIM, PAGE_BG, PANEL_BG,
-  STATUS_LABEL, STATUS_COLOR,
   MOVE_OPTIONS,
   readTodayState, writeTodayState, isTaskDone,
 } from '../constants'
 import { withAlpha } from '../../../lib/taskGrouping'
 import type { TaskRow } from '../../../lib/api'
+import { TaskQuickEditChips } from '../../../components/tasks/TaskQuickEditChips'
+import TaskDetailPanel from '../../../components/tasks/TaskDetailPanel'
 
 export function InlineDetail({ task, projectName }: { task: TaskRow; projectName?: string | null }) {
   // Real handlers (no longer decorative). Reach for mutations directly so the
@@ -31,6 +32,7 @@ export function InlineDetail({ task, projectName }: { task: TaskRow; projectName
   const isPromoted = snap.rightNow === task.id
   const isPlanned = !!snap.planned?.[task.id]
   const [moveOpen, setMoveOpen] = useState(false)
+  const [fullEditorTask, setFullEditorTask] = useState<TaskRow | null>(null)
   const moveRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
     if (!moveOpen) return
@@ -143,14 +145,26 @@ export function InlineDetail({ task, projectName }: { task: TaskRow; projectName
         )}
         <button onClick={archive} title="Soft-delete this task" disabled={bulkUpdate.isPending} style={{ padding: '4px 10px', fontSize: 10.5, borderRadius: 4, border: 'none', background: 'transparent', color: INK_DIM, fontFamily: 'inherit', cursor: bulkUpdate.isPending ? 'wait' : 'pointer' }}>Archive</button>
       </div>
-      <div style={{ fontSize: 10.5, color: INK_DIM, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-        <span><span style={{ opacity: 0.6 }}>updated</span> {task.updated_at?.slice(0, 10) ?? '—'}</span>
-        <span><span style={{ opacity: 0.6 }}>status</span> <span style={{ color: STATUS_COLOR[task.status] }}>{STATUS_LABEL[task.status] ?? task.status}</span></span>
-        {projectName && <span><span style={{ opacity: 0.6 }}>project</span> {projectName}</span>}
-      </div>
+      {/* Quick-edit chips: Status / Priority / Due / Project + open-full-editor */}
+      <TaskQuickEditChips
+        task={task}
+        updateTask={updateTask}
+        undoToast={undoToast}
+        onOpenFullEditor={() => setFullEditorTask(task)}
+      />
+
       <div style={{ marginTop: 8 }}>
         <SmartCompose taskId={task.id} placeholder="Add a note or @hermes…" />
       </div>
+
+      {/* Full editor panel — TaskDetailPanel handles its own backdrop, Escape,
+          focus-trap, and close-on-click-outside (Rule 18). */}
+      {fullEditorTask && (
+        <TaskDetailPanel
+          task={fullEditorTask}
+          onClose={() => setFullEditorTask(null)}
+        />
+      )}
     </div>
   )
 }

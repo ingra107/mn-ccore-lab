@@ -16,6 +16,8 @@ import { useUndoToast } from '../UndoToast'
 import { LinkRow } from './primitives'
 import { WorkflowSection } from '../tasks/detail/FieldControls'
 import type { WorkflowFields } from '../tasks/detail/FieldControls'
+import { TaskQuickEditChips } from '../tasks/TaskQuickEditChips'
+import TaskDetailPanel from '../tasks/TaskDetailPanel'
 import {
   ACCENT_GOLD, ACCENT_TEAL, ACCENT_ORANGE, ACCENT_GREEN,
   INK, INK_MUTED, INK_DIM, PAGE_BG, PANEL_BG,
@@ -42,6 +44,7 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
   // Move → popover wiring (parity with UnifiedMyTasks).
   const updateTask = useUpdateTask()
   const undoToast = useUndoToast()
+  const [fullEditorTask, setFullEditorTask] = useState<TaskRow | null>(null)
 
   // Subtask toggle — TP-03. The drawer's subtasks come from useTaskDetail
   // (`['task-detail', taskId]`), not the `['subtasks', taskId]` cache that
@@ -119,6 +122,15 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
         <LinkRow links={linkSet} />
         {project && <span style={{ marginLeft: 'auto', fontSize: 11, color: INK_DIM }}>{project.name}</span>}
       </div>
+
+      {/* Quick-edit chips: Status / Priority / Due / Project + open-full-editor */}
+      <TaskQuickEditChips
+        task={task}
+        updateTask={updateTask}
+        undoToast={undoToast}
+        onOpenFullEditor={() => setFullEditorTask(task)}
+      />
+
       {why && (
         <div style={{ marginBottom: 14, padding: '10px 12px', background: 'rgba(201,168,76,0.04)', borderLeft: '2px solid rgba(201,168,76,0.30)', borderRadius: 3 }}>
           <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: ACCENT_GOLD, marginBottom: 4 }}>Why this matters</div>
@@ -183,6 +195,15 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
         <WorkflowSection fields={workflowFields} onChange={saveWorkflowField} />
       </div>
       <SmartCompose taskId={task.id} placeholder="Add a note, or @hermes for AI…" />
+
+      {/* Full editor panel — mounted locally; TaskDetailPanel handles backdrop,
+          Escape, focus-trap, and close-on-click-outside itself (Rule 18). */}
+      {fullEditorTask && (
+        <TaskDetailPanel
+          task={fullEditorTask}
+          onClose={() => setFullEditorTask(null)}
+        />
+      )}
     </div>
   )
 }
