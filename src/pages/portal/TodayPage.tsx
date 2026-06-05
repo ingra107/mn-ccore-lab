@@ -17,6 +17,7 @@ import { emailToSlug } from '../../lib/emailSlug'
 import { usePageMeta } from '../../hooks/usePageMeta'
 import HeartbeatLine from '../../components/HeartbeatLine'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
+import { DoneBox } from '../../components/tasks/TaskRow'
 import { researchTeam } from '../../data/team'
 import { useTodayState } from '../../hooks/useTodayState'
 import { useDragAutoScroll } from '../../hooks/useDragAutoScroll'
@@ -365,13 +366,19 @@ export default function TodayPage() {
           {completedOpen && (
             <div style={{ marginTop: 12, paddingLeft: 20 }}>
               {doneTodayDetail.map((t) => (
-                <div key={t.id} style={{ fontSize: 12, color: INK_MUTED, padding: '2px 0', paddingLeft: 12, textDecoration: 'line-through' }}>{t.title}</div>
+                <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '3px 0', paddingLeft: 12 }}>
+                  <DoneBox done onToggle={() => state.uncheck(t.id)} />
+                  <span style={{ fontSize: 12, color: INK_MUTED, textDecoration: 'line-through' }}>{t.short_title || t.title}</span>
+                </div>
               ))}
               {localDoneIds.map((id) => {
                 const t = (tasksQuery.data ?? []).find((x) => x.id === id)
                 if (!t) return null
                 return (
-                  <div key={id} style={{ fontSize: 12, color: INK_MUTED, padding: '2px 0', paddingLeft: 12, textDecoration: 'line-through' }}>{t.title}</div>
+                  <div key={id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '3px 0', paddingLeft: 12 }}>
+                    <DoneBox done onToggle={() => state.uncheck(id)} />
+                    <span style={{ fontSize: 12, color: INK_MUTED, textDecoration: 'line-through' }}>{t.short_title || t.title}</span>
+                  </div>
                 )
               })}
             </div>

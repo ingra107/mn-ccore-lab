@@ -8,6 +8,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { todayKey, type PlannedSlot } from '../components/today/constants'
 import { useUpdateTaskStatus } from './mutations/useTaskMutations'
+import { useUndoToast } from '../components/UndoToast'
 
 export interface TodayStateShape {
   rightNow: string | null
@@ -27,6 +28,7 @@ export interface TodayStateApi extends TodayStateShape {
 export function useTodayState(allTaskIds: string[], completedTodayIds: string[] = []): TodayStateApi {
   const storageKey = `today_state_${todayKey()}`
   const updateStatus = useUpdateTaskStatus()
+  const undoToast = useUndoToast()
   const [state, setState] = useState<TodayStateShape>(() => {
     if (typeof window === 'undefined') return { rightNow: null, planned: {}, done: {} }
     try {
@@ -90,6 +92,10 @@ export function useTodayState(allTaskIds: string[], completedTodayIds: string[] 
   }, [])
 
   const markDone = useCallback((id: string) => {
+    // Capture prior plan/Right-Now state so Undo can restore it (design
+    // principle #8 — optimistic UI + a 5s undo on every state change).
+    const prevSlot = state.planned[id]?.slot
+    const wasRightNow = state.rightNow === id
     setState((p) => {
       const nextDone = { ...p.done, [id]: true }
       const nextPlanned = { ...p.planned }
@@ -112,7 +118,17 @@ export function useTodayState(allTaskIds: string[], completedTodayIds: string[] 
         return { ...p, done: nextDone }
       }),
     })
-  }, [updateStatus])
+    undoToast.showUndo('Task completed', () => {
+      // Undo: re-open the task and restore its prior planned slot / Right Now.
+      setState((p) => {
+        const nextDone = { ...p.done }
+        delete nextDone[id]
+        const nextPlanned = prevSlot ? { ...p.planned, [id]: { slot: prevSlot } } : p.planned
+        return { ...p, done: nextDone, planned: nextPlanned, rightNow: wasRightNow ? id : p.rightNow }
+      })
+      updateStatus.mutate({ id, status: 'todo' })
+    })
+  }, [updateStatus, undoToast, state])
 
   const uncheck = useCallback((id: string) => {
     setState((p) => {
