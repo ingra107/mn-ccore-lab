@@ -1,5 +1,12 @@
 # Session Handoff — 2026-06-05
 
+## ⏸️ PAUSED pending the PB P3-cut (2026-06-05). Project-identity is ORTHOGONAL + on hold.
+
+> The brain-sync **P3 cut is mid-soak**; finishing it takes priority. **Next-session START HERE:**
+> `~/Peripheral-Brain/Scratch/plans/2026-06-06-NEXT-SESSION-finish-p3-cut-and-decide.md` (home active → can close the cut).
+> Project-identity status below: **Slice A DONE (Hub+work kg), gate (Slice E) shipped; 5 KEEP + home-kg + Slice C pending.**
+> Do NOT resume Slice C or kg-data work until the P3 cut is closed (it's the lane Slice C rides). Don't conflate the two.
+
 ## ▶▶▶ AUTO MODE (post-compact) — EXECUTE: Project-Identity Convergence
 
 **START HERE. Approved + prioritized by Nick (2026-06-05).** Read + execute the ticket queue in
