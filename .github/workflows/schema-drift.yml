@@ -39,7 +39,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           # pb-schema is a PRIVATE git submodule (ingra107/pb-schema) holding the
           # generated TABLE_FIELDS SSOT that the schema-contract lint imports
@@ -70,9 +70,9 @@ jobs:
         run: python3 scripts/check-schema-versions.py
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: '22'
+          node-version: '24'
 
       - name: Install wrangler
         run: npm install -g wrangler@^4.14.0
@@ -213,7 +213,7 @@ jobs:
 
       - name: Upload drift artifact
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: schema-drift-diff
           path: |
