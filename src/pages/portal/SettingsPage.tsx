@@ -12,6 +12,7 @@ import EmptyState from '../../components/EmptyState'
 import { TextSkeleton } from '../../components/LoadingSkeleton'
 import { staggerContainer, staggerItem } from '../../lib/animations'
 import InlineSelect from '../../components/InlineSelect'
+import DensityToggle, { useDensity } from '../../components/DensityToggle'
 import { useLabPrefs } from '../../hooks/useLabPrefs'
 import RangeSlider from '../../components/RangeSlider'
 import CalendarFeedsPanel from '../../components/CalendarFeedsPanel'
@@ -36,6 +37,27 @@ const LAB_ICON_OPTIONS = [
   { name: 'beaker', Icon: Beaker },
   { name: 'book', Icon: BookOpen },
 ] as const
+
+// Global table-density preference. Backed by the same `hub-table-density`
+// localStorage key the per-view DensityToggles use, so setting it here becomes
+// the default every data table inherits on its next mount. The in-table toggles
+// remain as in-context overrides (kept deliberately — additive-first).
+function DensityControl() {
+  const [density, setDensity] = useDensity()
+  return (
+    <div className="mt-4 pt-4" style={{ borderTop: '1px solid var(--border-subtle)' }}>
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <div className="text-[12px] font-medium" style={{ color: 'var(--ink)' }}>Table density</div>
+          <div className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.75 }}>
+            Row spacing on data tables (Tasks, Deadlines, Manuscripts…). Each table also has its own toggle.
+          </div>
+        </div>
+        <DensityToggle value={density} onChange={setDensity} />
+      </div>
+    </div>
+  )
+}
 
 function LabIconPicker({ value, onChange }: { value: string; onChange: (next: string) => void }) {
   // Legacy emoji values fall through to no-selection — picking any tile migrates.
@@ -470,6 +492,7 @@ export default function SettingsPage() {
           <p className="text-[10px] mt-1" style={{ color: 'var(--slate)', opacity: 0.75 }}>
             You can also toggle with <kbd className="text-[10px] px-1 py-0.5 rounded" style={{ background: 'var(--border-subtle)' }}>Ctrl+.</kbd>
           </p>
+          <DensityControl />
         </SettingsSection>
         )}
 

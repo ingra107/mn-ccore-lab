@@ -6,7 +6,7 @@ import HermesResponse from '../../components/HermesResponse'
 import HermesPending, { isHermesPending } from '../../components/HermesPending'
 import SmartCompose from '../../components/SmartCompose'
 import { motion, AnimatePresence } from 'framer-motion'
-import { CardSkeleton } from '../../components/LoadingSkeleton'
+import { CardSkeleton, TextSkeleton } from '../../components/LoadingSkeleton'
 import PageHeader from '../../components/PageHeader'
 import PageContainer from '../../components/PageContainer'
 import EmptyStateComponent from '../../components/EmptyState'
@@ -278,10 +278,7 @@ function QuestionExpanded({ questionId }: { questionId: string }) {
   if (isLoading || !detail) {
     return (
       <div className="px-5 py-6 border-t" style={{ borderColor: 'var(--border-subtle)' }}>
-        <div className="animate-pulse flex flex-col gap-3">
-          <div className="h-4 rounded w-3/4" style={{ backgroundColor: 'var(--border-subtle)' }} />
-          <div className="h-4 rounded w-1/2" style={{ backgroundColor: 'var(--border-subtle)' }} />
-        </div>
+        <TextSkeleton lines={2} widths={['75%', '50%']} />
       </div>
     )
   }

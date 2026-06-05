@@ -252,6 +252,7 @@ export function TaskRow(props: SharedTaskRowProps) {
         <button
           type="button"
           data-plan-btn={task.id}
+          className="today-plan-btn"
           onClick={(e) => { e.stopPropagation(); onTogglePlan() }}
           onMouseDown={(e) => e.stopPropagation()}
           title="Plan for today (no specific time)"

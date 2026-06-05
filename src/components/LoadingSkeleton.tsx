@@ -2,7 +2,7 @@ const skeletonStyle: React.CSSProperties = {
   backgroundColor: 'var(--ink)',
   opacity: 0.06,
   borderRadius: 'var(--radius-sm)',
-  animation: 'skeleton-pulse 1.5s ease-in-out infinite',
+  animation: 'skeleton-pulse 1.8s ease-in-out infinite',
 }
 
 function SkeletonBar({ width = '100%', height = 14 }: { width?: string | number; height?: number }) {
