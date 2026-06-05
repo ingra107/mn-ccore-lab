@@ -7,6 +7,8 @@ import { emailToSlug } from '../../lib/emailSlug'
 import InlineAssigneePicker from '../InlineAssigneePicker'
 import InlineSelect from '../InlineSelect'
 import { Button } from '../ui/Button'
+import BottomSheet from '../BottomSheet'
+import { useIsMobile } from '../../hooks/useIsMobile'
 
 interface CreateTaskModalProps {
   open: boolean
@@ -71,6 +73,7 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
   const { data: projects = [] } = useProjects()
   const { user } = useAuth()
   const defaultAssignee = user?.email ? emailToSlug(user.email) : ''
+  const isMobile = useIsMobile()
 
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -217,6 +220,263 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
 
   if (!open) return null
 
+  // Shared form body — rendered inside BottomSheet on mobile, inside the
+  // centered modal panel on desktop. The desktop path attaches modalRef for
+  // its own focus trap; the mobile path relies on BottomSheet's UX-7 trap.
+  const formBody = (
+    <>
+      {/* Template strip — horizontally scrollable */}
+      <div
+        className="flex gap-1.5 px-5 pt-3 pb-1.5 overflow-x-auto"
+        style={{
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none',
+          WebkitOverflowScrolling: 'touch',
+          flexWrap: 'nowrap',
+        }}
+      >
+        {TASK_TEMPLATES.map(t => {
+          const Icon = t.icon
+          return (
+            <button
+              key={t.label}
+              type="button"
+              onClick={() => {
+                setTitle(t.title)
+                setDescription(t.description)
+                setPriority(t.priority)
+              }}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-medium flex-shrink-0 transition-colors"
+              style={{
+                background: 'none',
+                border: '1px solid var(--border-subtle)',
+                cursor: 'pointer',
+                color: 'var(--slate)',
+                opacity: 0.85,
+              }}
+              onMouseOver={e => { e.currentTarget.style.borderColor = 'var(--teal)'; e.currentTarget.style.color = 'var(--teal)'; e.currentTarget.style.opacity = '1' }}
+              onMouseOut={e => { e.currentTarget.style.borderColor = 'var(--border-subtle)'; e.currentTarget.style.color = 'var(--slate)'; e.currentTarget.style.opacity = '0.7' }}
+            >
+              <Icon size={11} />
+              {t.label}
+            </button>
+          )
+        })}
+      </div>
+
+      {/* Form */}
+      <form onSubmit={handleSubmit} className="p-5 pt-3 flex flex-col gap-3.5">
+        {/* Title */}
+        <div>
+          <label
+            htmlFor="task-title"
+            className="block text-xs font-medium mb-1"
+            style={{ color: 'var(--slate)' }}
+          >
+            Title *
+          </label>
+          <input
+            id="task-title"
+            type="text"
+            data-testid="task-title-input"
+            value={title}
+            onChange={handleTitleChange}
+            placeholder="e.g., Complete BMI subgroup analysis for AJRCCM revision"
+            className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-1"
+            style={{
+              ...selectStyle,
+              borderColor: 'var(--border-subtle)',
+            }}
+            aria-required="true"
+            autoFocus
+          />
+          {/* Autofill suggestion chips */}
+          {visibleSuggestions.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+              <Sparkles size={12} style={{ color: 'var(--teal)', opacity: 0.85, flexShrink: 0 }} />
+              {visibleSuggestions.map((s) => (
+                <button
+                  key={s.field}
+                  type="button"
+                  onClick={() => acceptSuggestion(s)}
+                  className="rounded-full px-2.5 py-0.5 transition-colors"
+                  style={{
+                    fontSize: 'var(--label-size)',
+                    lineHeight: '18px',
+                    color: 'var(--teal)',
+                    border: '1px solid var(--teal)',
+                    background: 'transparent',
+                    cursor: 'pointer',
+                    opacity: 0.85,
+                    whiteSpace: 'nowrap',
+                    maxWidth: '220px',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                  }}
+                  title={`Set ${s.field}: ${s.label}`}
+                >
+                  {s.field === 'project' && '\u{1F4C1} '}
+                  {s.field === 'priority' && '\u{26A1} '}
+                  {s.field === 'assignee' && '\u{1F464} '}
+                  {s.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Description */}
+        <div>
+          <label
+            htmlFor="task-description"
+            className="block text-xs font-medium mb-1"
+            style={{ color: 'var(--slate)' }}
+          >
+            Description
+          </label>
+          <textarea
+            id="task-description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Additional details..."
+            rows={2}
+            className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-1 resize-none"
+            style={selectStyle}
+          />
+        </div>
+
+        {/* Owner + Priority row */}
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label
+              id="task-assignee-label"
+              htmlFor="task-assignee"
+              className="block text-xs font-medium mb-1"
+              style={{ color: 'var(--slate)' }}
+            >
+              Owner * <span style={{ fontWeight: 400, opacity: 'var(--ink-label)' }}>(responsible)</span>
+            </label>
+            <div
+              id="task-assignee"
+              aria-required="true"
+              role="group"
+              aria-labelledby="task-assignee-label"
+            >
+              <InlineAssigneePicker
+                value={assignee}
+                onChange={(slug) => { setAssignee(slug); setAssigneeTouched(true) }}
+              />
+            </div>
+          </div>
+          <div>
+            <label
+              htmlFor="task-priority"
+              className="block text-xs font-medium mb-1"
+              style={{ color: 'var(--slate)' }}
+            >
+              Priority
+            </label>
+            <InlineSelect
+              value={priority}
+              options={[
+                { value: 'low', label: 'Low' },
+                { value: 'medium', label: 'Medium' },
+                { value: 'high', label: 'High' },
+                { value: 'urgent', label: 'Urgent' },
+              ]}
+              onChange={setPriority}
+              size="md"
+              alwaysShowChevron
+            />
+          </div>
+        </div>
+
+        {/* Project + Due Date row */}
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label
+              htmlFor="task-project"
+              className="block text-xs font-medium mb-1"
+              style={{ color: 'var(--slate)' }}
+            >
+              Project <span style={{ fontWeight: 400, opacity: 'var(--ink-label)' }}>(optional)</span>
+            </label>
+            <InlineSelect
+              value={projectId}
+              options={[{ value: '', label: 'No Project' }, ...projects.map((p) => ({ value: p.slug, label: p.title })
+              )]}
+              onChange={setProjectId}
+              size="md"
+              alwaysShowChevron
+            />
+          </div>
+          <div>
+            <label
+              htmlFor="task-due-date"
+              className="block text-xs font-medium mb-1"
+              style={{ color: 'var(--slate)' }}
+            >
+              Due Date
+            </label>
+            <input
+              id="task-due-date"
+              type="date"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+              className="w-full rounded-md border px-2.5 py-2 text-sm"
+              style={selectStyle}
+            />
+          </div>
+        </div>
+
+        {/* Submit */}
+        <div className="flex items-center justify-between gap-2 mt-2">
+          <p className="text-[10px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
+            Tasks can also be created from meetings and project pages
+          </p>
+        </div>
+        {(!title.trim() || !assignee) && (
+          <p id="task-submit-hint" className="text-[11px]" style={{ color: 'var(--slate)', opacity: 0.85 }}>
+            {!title.trim() && !assignee
+              ? 'Title and owner are required.'
+              : !title.trim()
+                ? 'Title is required.'
+                : 'Owner is required.'}
+          </p>
+        )}
+        <div className="flex justify-end gap-2">
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={onClose}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            variant="primary"
+            data-testid="task-submit"
+            disabled={!title.trim() || !assignee}
+            aria-describedby={!title.trim() || !assignee ? 'task-submit-hint' : undefined}
+          >
+            Create Task
+          </Button>
+        </div>
+      </form>
+    </>
+  )
+
+  // Mobile — render inside BottomSheet. BottomSheet (UX-7) owns focus
+  // trapping; the desktop focus-trap useEffect won't fire (modalRef is null).
+  if (isMobile) {
+    return (
+      <BottomSheet open={open} onClose={onClose} title="New Task">
+        {formBody}
+      </BottomSheet>
+    )
+  }
+
+  // Desktop — original centered modal, unchanged.
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center"
@@ -252,244 +512,7 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
             <X size={18} />
           </button>
         </div>
-
-        {/* Template strip — horizontally scrollable on mobile */}
-        <div
-          className="flex gap-1.5 px-5 pt-3 pb-1.5 overflow-x-auto"
-          style={{
-            scrollbarWidth: 'none',
-            msOverflowStyle: 'none',
-            WebkitOverflowScrolling: 'touch',
-            flexWrap: 'nowrap',
-          }}
-        >
-          {TASK_TEMPLATES.map(t => {
-            const Icon = t.icon
-            return (
-              <button
-                key={t.label}
-                type="button"
-                onClick={() => {
-                  setTitle(t.title)
-                  setDescription(t.description)
-                  setPriority(t.priority)
-                }}
-                className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-medium flex-shrink-0 transition-colors"
-                style={{
-                  background: 'none',
-                  border: '1px solid var(--border-subtle)',
-                  cursor: 'pointer',
-                  color: 'var(--slate)',
-                  opacity: 0.85,
-                }}
-                onMouseOver={e => { e.currentTarget.style.borderColor = 'var(--teal)'; e.currentTarget.style.color = 'var(--teal)'; e.currentTarget.style.opacity = '1' }}
-                onMouseOut={e => { e.currentTarget.style.borderColor = 'var(--border-subtle)'; e.currentTarget.style.color = 'var(--slate)'; e.currentTarget.style.opacity = '0.7' }}
-              >
-                <Icon size={11} />
-                {t.label}
-              </button>
-            )
-          })}
-        </div>
-
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="p-5 pt-3 flex flex-col gap-3.5">
-          {/* Title */}
-          <div>
-            <label
-              htmlFor="task-title"
-              className="block text-xs font-medium mb-1"
-              style={{ color: 'var(--slate)' }}
-            >
-              Title *
-            </label>
-            <input
-              id="task-title"
-              type="text"
-              data-testid="task-title-input"
-              value={title}
-              onChange={handleTitleChange}
-              placeholder="e.g., Complete BMI subgroup analysis for AJRCCM revision"
-              className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-1"
-              style={{
-                ...selectStyle,
-                borderColor: 'var(--border-subtle)',
-              }}
-              aria-required="true"
-              autoFocus
-            />
-            {/* Autofill suggestion chips */}
-            {visibleSuggestions.length > 0 && (
-              <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
-                <Sparkles size={12} style={{ color: 'var(--teal)', opacity: 0.85, flexShrink: 0 }} />
-                {visibleSuggestions.map((s) => (
-                  <button
-                    key={s.field}
-                    type="button"
-                    onClick={() => acceptSuggestion(s)}
-                    className="rounded-full px-2.5 py-0.5 transition-colors"
-                    style={{
-                      fontSize: 'var(--label-size)',
-                      lineHeight: '18px',
-                      color: 'var(--teal)',
-                      border: '1px solid var(--teal)',
-                      background: 'transparent',
-                      cursor: 'pointer',
-                      opacity: 0.85,
-                      whiteSpace: 'nowrap',
-                      maxWidth: '220px',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                    }}
-                    title={`Set ${s.field}: ${s.label}`}
-                  >
-                    {s.field === 'project' && '\u{1F4C1} '}
-                    {s.field === 'priority' && '\u{26A1} '}
-                    {s.field === 'assignee' && '\u{1F464} '}
-                    {s.label}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Description */}
-          <div>
-            <label
-              htmlFor="task-description"
-              className="block text-xs font-medium mb-1"
-              style={{ color: 'var(--slate)' }}
-            >
-              Description
-            </label>
-            <textarea
-              id="task-description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Additional details..."
-              rows={2}
-              className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-1 resize-none"
-              style={selectStyle}
-            />
-          </div>
-
-          {/* Owner + Priority row */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label
-                id="task-assignee-label"
-                htmlFor="task-assignee"
-                className="block text-xs font-medium mb-1"
-                style={{ color: 'var(--slate)' }}
-              >
-                Owner * <span style={{ fontWeight: 400, opacity: 'var(--ink-label)' }}>(responsible)</span>
-              </label>
-              <div
-                id="task-assignee"
-                aria-required="true"
-                role="group"
-                aria-labelledby="task-assignee-label"
-              >
-                <InlineAssigneePicker
-                  value={assignee}
-                  onChange={(slug) => { setAssignee(slug); setAssigneeTouched(true) }}
-                />
-              </div>
-            </div>
-            <div>
-              <label
-                htmlFor="task-priority"
-                className="block text-xs font-medium mb-1"
-                style={{ color: 'var(--slate)' }}
-              >
-                Priority
-              </label>
-              <InlineSelect
-                value={priority}
-                options={[
-                  { value: 'low', label: 'Low' },
-                  { value: 'medium', label: 'Medium' },
-                  { value: 'high', label: 'High' },
-                  { value: 'urgent', label: 'Urgent' },
-                ]}
-                onChange={setPriority}
-                size="md"
-                alwaysShowChevron
-              />
-            </div>
-          </div>
-
-          {/* Project + Due Date row */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label
-                htmlFor="task-project"
-                className="block text-xs font-medium mb-1"
-                style={{ color: 'var(--slate)' }}
-              >
-                Project <span style={{ fontWeight: 400, opacity: 'var(--ink-label)' }}>(optional)</span>
-              </label>
-              <InlineSelect
-                value={projectId}
-                options={[{ value: '', label: 'No Project' }, ...projects.map((p) => ({ value: p.slug, label: p.title }))]}
-                onChange={setProjectId}
-                size="md"
-                alwaysShowChevron
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="task-due-date"
-                className="block text-xs font-medium mb-1"
-                style={{ color: 'var(--slate)' }}
-              >
-                Due Date
-              </label>
-              <input
-                id="task-due-date"
-                type="date"
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
-                className="w-full rounded-md border px-2.5 py-2 text-sm"
-                style={selectStyle}
-              />
-            </div>
-          </div>
-
-          {/* Submit */}
-          <div className="flex items-center justify-between gap-2 mt-2">
-            <p className="text-[10px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
-              Tasks can also be created from meetings and project pages
-            </p>
-          </div>
-          {(!title.trim() || !assignee) && (
-            <p id="task-submit-hint" className="text-[11px]" style={{ color: 'var(--slate)', opacity: 0.85 }}>
-              {!title.trim() && !assignee
-                ? 'Title and owner are required.'
-                : !title.trim()
-                  ? 'Title is required.'
-                  : 'Owner is required.'}
-            </p>
-          )}
-          <div className="flex justify-end gap-2">
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={onClose}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              variant="primary"
-              data-testid="task-submit"
-              disabled={!title.trim() || !assignee}
-              aria-describedby={!title.trim() || !assignee ? 'task-submit-hint' : undefined}
-            >
-              Create Task
-            </Button>
-          </div>
-        </form>
+        {formBody}
       </div>
     </div>
   )

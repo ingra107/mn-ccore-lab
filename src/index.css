@@ -1806,3 +1806,27 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
     min-height: 44px !important;
   }
 }
+
+/* P6 — MyTasks ListView mobile grid (P6-LIST-MOBILE, 2026-06-05)
+   The full 9-col desktop power grid is preserved; below 768px it collapses
+   to 4 visible columns [cursor | checkbox | title | status] so the list is
+   usable on phones. Inline edit controls are hidden (tap a row → double-tap
+   opens TaskDetailPanel drawer via the existing j/k/e handler). Rule 60
+   desktop grid is completely untouched — overrides apply only at < 768px. */
+@media (max-width: 767px) {
+  .list-view-header,
+  .list-view-row {
+    /* cursor(32) | checkbox(26) | title(1fr) | status(110) */
+    grid-template-columns: 32px 26px 1fr 110px !important;
+    height: auto !important;
+    min-height: 44px;
+  }
+  /* Hide non-essential columns — grid items set to none don't consume a column track */
+  .list-view-col-project,
+  .list-view-col-due,
+  .list-view-col-priority,
+  .list-view-col-owner,
+  .list-view-col-links {
+    display: none !important;
+  }
+}

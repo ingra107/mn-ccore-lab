@@ -1,4 +1,4 @@
-import { useEffect, type ReactNode } from 'react'
+import { useEffect, useRef, type ReactNode } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X } from 'lucide-react'
 import { createPortal } from 'react-dom'
@@ -11,6 +11,8 @@ import { createPortal } from 'react-dom'
  *
  * Closes on: backdrop tap, X button, or swipe-down (>30% height).
  * Respects prefers-reduced-motion (instant mount, no slide).
+ * UX-7: Tab-key focus trap — keeps keyboard navigation inside the sheet
+ * (pattern copied from src/components/ui/Modal.tsx).
  */
 interface BottomSheetProps {
   open: boolean
@@ -20,15 +22,63 @@ interface BottomSheetProps {
 }
 
 export default function BottomSheet({ open, onClose, title, children }: BottomSheetProps) {
+  const panelRef = useRef<HTMLDivElement>(null)
+
+  // Focus panel on open so Tab starts inside the sheet, not behind it.
+  useEffect(() => {
+    if (open && panelRef.current) {
+      panelRef.current.focus()
+    }
+  }, [open])
+
+  // Escape key + body-scroll lock + Tab focus trap (UX-7)
   useEffect(() => {
     if (!open) return
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
-    window.addEventListener('keydown', onKey)
+
     // iOS-Safari body lock — prevents rubber-band scroll behind the sheet.
     const prevOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
+
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose()
+        return
+      }
+      if (e.key !== 'Tab') return
+
+      if (!panelRef.current) return
+      const all = panelRef.current.querySelectorAll<HTMLElement>(
+        'input, select, textarea, button, [tabindex]:not([tabindex="-1"])',
+      )
+      const focusable = Array.from(all).filter((el) => {
+        if (el.hasAttribute('disabled')) return false
+        if (el.getAttribute('aria-hidden') === 'true') return false
+        const style = window.getComputedStyle(el)
+        if (style.display === 'none' || style.visibility === 'hidden') return false
+        return true
+      })
+      if (focusable.length === 0) return
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      const active = document.activeElement as HTMLElement | null
+
+      if (active && !panelRef.current.contains(active)) {
+        e.preventDefault()
+        first.focus()
+        return
+      }
+      if (e.shiftKey && active === first) {
+        e.preventDefault()
+        last.focus()
+      } else if (!e.shiftKey && active === last) {
+        e.preventDefault()
+        first.focus()
+      }
+    }
+
+    document.addEventListener('keydown', handler)
     return () => {
-      window.removeEventListener('keydown', onKey)
+      document.removeEventListener('keydown', handler)
       document.body.style.overflow = prevOverflow
     }
   }, [open, onClose])
@@ -49,9 +99,11 @@ export default function BottomSheet({ open, onClose, title, children }: BottomSh
             aria-hidden
           />
           <motion.div
+            ref={panelRef}
             role="dialog"
             aria-modal="true"
             aria-label={title ?? 'Compose'}
+            tabIndex={-1}
             className="fixed left-0 right-0 bottom-0"
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
@@ -64,6 +116,7 @@ export default function BottomSheet({ open, onClose, title, children }: BottomSh
               if (info.offset.y > 120 || info.velocity.y > 500) onClose()
             }}
             style={{
+              outline: 'none',
               zIndex: 'var(--z-modal)' as any,
               background: 'var(--cream)',
               borderTopLeftRadius: 'var(--radius-2xl)',

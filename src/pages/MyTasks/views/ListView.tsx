@@ -108,10 +108,16 @@ export function ListView({ filtered, selected, toggleSelect, setSelected, setDra
   return (
     <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
       <div ref={scrollRef} style={{ flex: 1, overflow: 'auto' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '32px 26px 1fr 150px 100px 80px 110px 110px 70px', padding: '6px 16px', borderBottom: '1px solid rgba(255,255,255,0.08)', fontSize: 9.5, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: INK_DIM, position: 'sticky', top: 0, background: PAGE_BG, zIndex: 1 }}>
-          <div></div><div></div>
-          <div>Title</div><div>Project</div><div>Due</div><div>P</div>
-          <div>Status</div><div>Owner</div><div style={{ textAlign: 'right' }}>Links</div>
+        <div className="list-view-header" style={{ display: 'grid', gridTemplateColumns: '32px 26px 1fr 150px 100px 80px 110px 110px 70px', padding: '6px 16px', borderBottom: '1px solid rgba(255,255,255,0.08)', fontSize: 9.5, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: INK_DIM, position: 'sticky', top: 0, background: PAGE_BG, zIndex: 1 }}>
+          <div className="list-view-col-cursor"></div>
+          <div className="list-view-col-select"></div>
+          <div>Title</div>
+          <div className="list-view-col-project">Project</div>
+          <div className="list-view-col-due">Due</div>
+          <div className="list-view-col-priority">P</div>
+          <div className="list-view-col-status">Status</div>
+          <div className="list-view-col-owner">Owner</div>
+          <div className="list-view-col-links" style={{ textAlign: 'right' }}>Links</div>
         </div>
         {filtered.length === 0 && (
           <div style={{ padding: 40, textAlign: 'center', color: INK_DIM, fontSize: 13, fontStyle: 'italic' }}>no tasks match</div>
@@ -194,12 +200,13 @@ function ListRow({ task, project, isCursor, isSelected, onClick, onDouble, onSel
 
   return (
     <div
+      className="list-view-row"
       onClick={onClick}
       onDoubleClick={onDouble}
       style={{ display: 'grid', gridTemplateColumns: '32px 26px 1fr 150px 100px 80px 110px 110px 70px', padding: '5px 16px', alignItems: 'center', fontSize: 12, height: 44, borderBottom: '1px solid rgba(255,255,255,0.04)', borderLeft: `3px solid ${isCursor ? meta.color : planned ? ACCENT_GOLD : 'transparent'}`, background: isCursor ? withAlpha(meta.color, 7) : isSelected ? 'rgba(201,168,76,0.06)' : 'transparent', opacity: isCompleted ? 0.5 : 1, cursor: 'pointer', boxSizing: 'border-box' }}
     >
-      <div style={{ color: meta.color, fontSize: 10, fontWeight: 700, textAlign: 'center' }}>{isCursor ? '▶' : ''}</div>
-      <div onClick={stop}><input type="checkbox" checked={isSelected} onChange={onSelect} onClick={stop} style={{ accentColor: meta.color, cursor: 'pointer' }} /></div>
+      <div className="list-view-col-cursor" style={{ color: meta.color, fontSize: 10, fontWeight: 700, textAlign: 'center' }}>{isCursor ? '▶' : ''}</div>
+      <div className="list-view-col-select" onClick={stop}><input type="checkbox" checked={isSelected} onChange={onSelect} onClick={stop} style={{ accentColor: meta.color, cursor: 'pointer' }} /></div>
       <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: isCompleted ? INK_DIM : INK, textDecoration: isCompleted ? 'line-through' : 'none', fontWeight: 500, paddingRight: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
         <span style={{ width: 6, height: 6, borderRadius: '50%', background: meta.color + '80', flexShrink: 0 }} />
         <span style={{ fontSize: 11, flexShrink: 0 }} aria-hidden="true">{(task as TaskRow & { _tag?: string })._tag ?? '📝'}</span>
@@ -210,7 +217,7 @@ function ListRow({ task, project, isCursor, isSelected, onClick, onDouble, onSel
         {stale > 0 && <span style={{ fontSize: 9, color: ACCENT_ORANGE }}>{stale}d stale</span>}
       </div>
       {/* Project — inline editable */}
-      <div onClick={stop} style={{ overflow: 'hidden' }}>
+      <div className="list-view-col-project" onClick={stop} style={{ overflow: 'hidden' }}>
         <InlineSelect
           value={task.project_id ?? ''}
           options={projectSelectOptions}
@@ -218,11 +225,11 @@ function ListRow({ task, project, isCursor, isSelected, onClick, onDouble, onSel
         />
       </div>
       {/* Due — inline date picker */}
-      <div onClick={stop}>
+      <div className="list-view-col-due" onClick={stop}>
         <InlineDatePicker value={task.due_date ?? null} onChange={onDateChange} />
       </div>
       {/* Priority — inline */}
-      <div onClick={stop}>
+      <div className="list-view-col-priority" onClick={stop}>
         <InlineSelect
           value={task.priority}
           options={PRIORITY_OPTIONS.map(p => ({ value: p.value, label: p.label, color: p.color }))}
@@ -230,7 +237,7 @@ function ListRow({ task, project, isCursor, isSelected, onClick, onDouble, onSel
         />
       </div>
       {/* Status — inline */}
-      <div onClick={stop}>
+      <div className="list-view-col-status" onClick={stop}>
         <InlineSelect
           value={task.status}
           options={STATUS_OPTIONS.map(s => ({ value: s.value, label: s.label, color: s.color }))}
@@ -238,10 +245,10 @@ function ListRow({ task, project, isCursor, isSelected, onClick, onDouble, onSel
         />
       </div>
       {/* Owner — inline assignee picker w/ Avatar (MT-19, drops raw slug) */}
-      <div onClick={stop} style={{ overflow: 'hidden' }}>
+      <div className="list-view-col-owner" onClick={stop} style={{ overflow: 'hidden' }}>
         <InlineAssigneePicker value={task.assignee} onChange={onAssigneeChange} compact />
       </div>
-      <div style={{ textAlign: 'right' }} onClick={stop}><LinksBar task={task} /></div>
+      <div className="list-view-col-links" style={{ textAlign: 'right' }} onClick={stop}><LinksBar task={task} /></div>
     </div>
   )
 }
