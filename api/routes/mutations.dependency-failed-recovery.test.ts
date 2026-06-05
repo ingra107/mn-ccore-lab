@@ -102,7 +102,7 @@ function makeM46StubDB() {
                 const col = pair.slice(0, eqIdx).trim()
                 const placeholder = pair.slice(eqIdx + 1).trim()
                 if (placeholder.toLowerCase().includes('datetime')) {
-                  row[col] = new Date().toISOString().replace('T', ' ').slice(0, 19)
+                  row[col] = nowInstant().replace('T', ' ').slice(0, 19)
                 } else if (placeholder.toUpperCase() === 'NULL') {
                   row[col] = null
                 } else {
