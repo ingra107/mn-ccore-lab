@@ -40,6 +40,18 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # pb-schema is a PRIVATE git submodule (ingra107/pb-schema) holding the
+          # generated TABLE_FIELDS SSOT that the schema-contract lint imports
+          # (F1, 2026-06-02). The default GITHUB_TOKEN is scoped to this repo only
+          # and cannot read the sibling private repo, so submodule checkout needs a
+          # PAT with Contents:Read on BOTH ingra107/mn-ccore-lab and ingra107/pb-schema.
+          #
+          # SECRET REQUIRED (repo admin, Settings -> Secrets and variables -> Actions):
+          #   PB_SCHEMA_PAT — fine-grained PAT, Contents: Read-only, scoped to
+          #   ingra107/mn-ccore-lab + ingra107/pb-schema.
+          submodules: recursive
+          token: ${{ secrets.PB_SCHEMA_PAT }}
 
       - name: Schema version integrity (INFRA-5)
         # Fast pre-flight using stdlib Python — no Node/wrangler required.
