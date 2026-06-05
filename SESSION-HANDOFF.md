@@ -1,6 +1,22 @@
-# Session Handoff — 2026-06-04
+# Session Handoff — 2026-06-05
 
-## ▶▶ CURRENT — Round-6 design batch DEPLOYED + LIVE (drag fix + P3–P6)
+## ▶▶ CURRENT — project_id read-boundary fix + edit-more + P6 + 9a007fd1 ALL DEPLOYED
+
+**Live = deploy `7653955d` on commit `8cc00130` (2026-06-05) · both repos pushed · /api/version 200 production.** Ultracode session cleared the entire WORKPLAN "▶▶▶ NEXT SESSION" queue. Build + `tsc` green; **API suite 732/732**; journeys **6/6**; resolver verified against live prod data.
+
+**1. `tasks.project_id` slug↔id — FIXED (the DECISION-FIRST item).** Decided **Direction 1 (store typed `proj_*` PK, present the SLUG at the read boundary)** via dual cold-plan + Codex + live-prod ground truth. Resolution is ONE chokepoint — a `COALESCE((SELECT p.slug FROM projects p WHERE p.id=t.project_id), t.project_id) AS project_id` subquery in `TASK_SELECT_COLS` (`api/lib/task-cols.ts`) — fixes the slug-keyed frontend AND the PB→Hub pull (same `/api/tasks` seq-cursor handler). `?project=` resolves slug→id; `meetings.ts` aliased `tasks t` (dropped the fragile `.replace`). Commit `e7d00d04`. **5 slug-straggler task rows backfilled → typed PK in prod D1** (Nick-authorized; verified 0 remain; needed for the id-only internal mutation paths). Decision doc + registry + plan-banner: PB `63367967`. CLAUDE.md rule added. ⚠️ **Do NOT re-key the frontend to `p.id`, do NOT run `p2_hub_rekey_apply.py`** — parent-table rekey already converged in prod (Hub 76/76 + brain.db 73/73 typed); cross-machine typed PKs CAN diverge (`peripheral-brain-system` Hub `proj_7F27…` ≠ brain.db `proj_01KP9FM305…`), so slug is the stable wire form.
+- **2. `9a007fd1` Today fixes — runtime-verified + DEPLOYED.** journeys spec extended (undo-on-complete, planned-strip DoneBox+grip, Completed-today uncheck) — 6/6. Commit `897d5d81`.
+- **3. edit-more — SHIPPED** (`73977e43`): shared `TaskQuickEditChips` (Status/Priority/Due/Project + "Open full editor →") on Today's `TaskDetailDrawer` + MyTasks `InlineDetail`, reusing FieldControls; full panel mounts locally.
+- **4. P6 responsive — SHIPPED** (`8cc00130`): BottomSheet focus trap (UX-7), CreateTaskModal→BottomSheet on mobile, MyTasks ListView mobile grid (desktop power-grid untouched). PAGE-7 already present. **UX-9 tablet breakpoint DEFERRED** (global layout change; flagged).
+- **5. key_links PB→Hub — NOT a bug.** Both sides have the same 3 projects with key_links; plumbing fully wired; it's a data-entry gap.
+
+**▶ Remaining (small):** (a) **DH-5** — Nick's eyes on live Key Links (CF Access gated; data + component verified, can't automate). (b) **edit-more / P6 post-deploy visual** confirm (presentation-only; not journey-covered). (c) optional follow-up: reconcile the PB-project per-store typed-PK divergence (non-urgent; sync bridges on slug). (d) **UX-9** tablet breakpoint (deferred). The P2 prod rekey is now **moot** (parent table already typed) — its consolidated plan is banner-superseded.
+
+**Session investigation artifacts (gitignored):** `Scratch/project-id-decision-2026-06-05/` (A1 ground-truth, A2 dual-cold-plan, codex synthesis + blind-spots, B3 key_links, S1 edit-more/P6 scope).
+
+---
+
+## ▶▶ (HISTORY 2026-06-04) Round-6 design batch DEPLOYED + LIVE (drag fix + P3–P6)
 
 **Live = deploy `0d024aee` on `1bbb2406` (2026-06-05) · origin/main pushed.** The Round-6 design batch (`a231fea7`…`663043e5` + docs `1bbb2406`) is **DEPLOYED + LIVE** — live frontend bundle hash verified **== local build** (`index-Dt-iZcHv.js`), `/api/version` 200 production. Build + `tsc --noEmit` green; drag fix verified **3/3** on the local journeys stack (re-verified green after P3–P6). Don't re-triage a deploy decision.
 
