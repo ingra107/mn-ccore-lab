@@ -796,8 +796,50 @@ function IdeaRowView({
           >
             {formatRelativeTime(idea.created_at)}
           </span>
-          <div style={{ width: 18, height: 18, flexShrink: 0, marginLeft: 'auto' }}>
-            <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="2xs" variant="ice" />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-xs)', marginLeft: 'auto', flexShrink: 0 }}>
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                onEdit()
+              }}
+              className="rounded-md flex items-center justify-center"
+              style={{
+                background: 'none',
+                border: '1px solid var(--border-subtle)',
+                color: 'var(--slate)',
+                cursor: 'pointer',
+                padding: '4px',
+                minHeight: '44px',
+                minWidth: '44px',
+              }}
+              aria-label="Edit idea"
+              title="Edit"
+            >
+              <Pencil size={12} />
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                onStatusChange('archived')
+              }}
+              className="rounded-md flex items-center justify-center"
+              style={{
+                background: 'none',
+                border: '1px solid var(--border-subtle)',
+                color: 'var(--slate)',
+                cursor: 'pointer',
+                padding: '4px',
+                minHeight: '44px',
+                minWidth: '44px',
+              }}
+              aria-label="Archive idea"
+              title="Archive"
+            >
+              <Archive size={12} />
+            </button>
+            <div style={{ width: 18, height: 18, flexShrink: 0 }}>
+              <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="2xs" variant="ice" />
+            </div>
           </div>
         </div>
       </div>

@@ -1572,6 +1572,26 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
   }
 }
 
+/* P6 mobile pass — iOS Safari auto-zooms (and pans) when focusing a form
+   control whose font-size is < 16px. Force 16px on touch-width viewports so
+   tapping any input/textarea/select doesn't trigger the zoom jump. Applies to
+   form controls only (not buttons), so dense desktop tables are unaffected. */
+@media (max-width: 768px) {
+  input, textarea, select {
+    font-size: 16px !important;
+  }
+}
+
+/* P6 mobile pass — hover-only action clusters are unreachable on touch (no
+   hover event fires). Any cluster that opts in via [data-hover-actions] is
+   revealed on touch devices. (Desktop keeps the clean hover-reveal.) */
+@media (hover: none) {
+  [data-hover-actions] {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+  }
+}
+
 /* C7 R5 — Dismiss/close buttons + inline links + portal action links (WCAG 2.5.5) */
 @media (max-width: 768px) {
   /* Close / dismiss icon-only buttons (X buttons excluded from R3 rule) */

@@ -116,7 +116,12 @@ export default function PortalLayout() {
             className="fixed inset-0 bg-black/40 z-30 lg:hidden"
             onClick={() => setMobileOpen(false)}
           />
-          <div className="lg:hidden fixed top-0 left-0 z-40">
+          <div
+            className="lg:hidden fixed top-0 left-0 z-40"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Navigation menu"
+          >
             <Sidebar collapsed={false} onToggle={() => setMobileOpen(false)} onNavigate={() => setMobileOpen(false)} />
           </div>
         </>
