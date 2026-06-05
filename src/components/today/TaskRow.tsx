@@ -15,6 +15,7 @@ import { TaskDetailDrawer } from './TaskDetailDrawer'
 import { tagForTask } from './constants'
 import { ACCENT_GOLD, ACCENT_CORAL, INK_MUTED } from './constants'
 import { formatShortDate } from '../../lib/dateUtils'
+import { Chip } from '../ui/Chip'
 import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow as TaskRowData } from '../../lib/api'
 
@@ -34,19 +35,19 @@ export function TaskRow({ task, project, state, expandedId, onExpand, projectsBy
   const workflowBadges = !isDone && (task.waiting_on || task.promised_to || task.next_checkin_date) ? (
     <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 4 }}>
       {task.waiting_on && (
-        <span title={`Waiting on: ${task.waiting_on}`} style={{ fontSize: 10, color: ACCENT_GOLD, padding: '1px 5px', background: 'rgba(201,168,76,0.10)', borderRadius: 3, maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <Chip color={ACCENT_GOLD} title={`Waiting on: ${task.waiting_on}`} style={{ maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis' }}>
           ⏳ {task.waiting_on}
-        </span>
+        </Chip>
       )}
       {task.promised_to && (
-        <span title={`Promised to: ${task.promised_to}${task.promise_date ? ` by ${task.promise_date}` : ''}`} style={{ fontSize: 10, color: ACCENT_CORAL, padding: '1px 5px', background: 'rgba(231,111,82,0.10)', borderRadius: 3, maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <Chip color={ACCENT_CORAL} title={`Promised to: ${task.promised_to}${task.promise_date ? ` by ${task.promise_date}` : ''}`} style={{ maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis' }}>
           🤝 {task.promised_to}{task.promise_date ? ` · ${formatShortDate(task.promise_date)}` : ''}
-        </span>
+        </Chip>
       )}
       {task.next_checkin_date && !task.waiting_on && (
-        <span title={`Check in: ${task.next_checkin_date}`} style={{ fontSize: 10, color: INK_MUTED, padding: '1px 5px', background: 'rgba(176,181,185,0.10)', borderRadius: 3 }}>
+        <Chip color={INK_MUTED} title={`Check in: ${task.next_checkin_date}`}>
           ↻ {formatShortDate(task.next_checkin_date)}
-        </span>
+        </Chip>
       )}
     </div>
   ) : null

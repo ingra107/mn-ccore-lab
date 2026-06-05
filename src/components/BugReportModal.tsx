@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { X, Send, Image, Loader2 } from 'lucide-react'
 import { useLocation } from 'react-router-dom'
+import Modal from './ui/Modal'
 
 interface BugReportModalProps {
   open: boolean
@@ -86,16 +87,6 @@ export default function BugReportModal({ open, onClose }: BugReportModalProps) {
     }
   }, [compressImage])
 
-  // Escape to close
-  useEffect(() => {
-    if (!open) return
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-    }
-    document.addEventListener('keydown', handler)
-    return () => document.removeEventListener('keydown', handler)
-  }, [open, onClose])
-
   // Ctrl+Enter to submit
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
@@ -139,60 +130,41 @@ export default function BugReportModal({ open, onClose }: BugReportModalProps) {
     }
   }
 
-  if (!open) return null
-
-  return (
+  const footer = !result ? (
     <>
-      {/* Backdrop */}
-      <div
-        style={{
-          position: 'fixed',
-          inset: 0,
-          background: 'rgba(0,0,0,0.6)',
-          zIndex: 'var(--z-modal-backdrop)',
-        }}
+      <button
         onClick={onClose}
-      />
-
-      {/* Modal */}
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label="Report a bug"
+        className="cursor-pointer px-4 py-2 rounded-md text-sm"
         style={{
-          position: 'fixed',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: '90vw',
-          maxWidth: '520px',
-          background: 'var(--cream)',
-          borderRadius: 'var(--radius-xl)',
-          boxShadow: 'var(--shadow-elevated)',
-          zIndex: 'var(--z-modal)',
-          overflow: 'hidden',
+          background: 'none',
+          border: '1px solid var(--border-subtle)',
+          color: 'var(--slate)',
+          cursor: 'pointer',
         }}
       >
-        {/* Header */}
-        <div
-          className="flex items-center justify-between px-5 py-4"
-          style={{ borderBottom: '1px solid var(--border-subtle)' }}
-        >
-          <h2 style={{ fontSize: 'var(--text-md)', fontWeight: 600, color: 'var(--ink)', margin: 0 }}>
-            Report a Bug
-          </h2>
-          <button
-            onClick={onClose}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: '4px' }}
-            aria-label="Close"
-          >
-            <X size={18} />
-          </button>
-        </div>
+        Cancel
+      </button>
+      <button
+        onClick={handleSubmit}
+        disabled={!description.trim() || submitting}
+        className="cursor-pointer px-4 py-2 rounded-md text-sm flex items-center gap-2"
+        style={{
+          background: description.trim() && !submitting ? 'var(--teal-solid)' : 'var(--surface-2)',
+          color: description.trim() && !submitting ? 'var(--cream)' : 'var(--slate)',
+          border: 'none',
+          cursor: description.trim() && !submitting ? 'pointer' : 'default',
+          opacity: description.trim() && !submitting ? 1 : 0.85,
+        }}
+      >
+        {submitting ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+        {submitting ? 'Submitting...' : 'Submit'}
+      </button>
+    </>
+  ) : undefined
 
-        {/* Body */}
-        <div className="px-5 py-4">
-          {result ? (
+  return (
+    <Modal open={open} onClose={onClose} title="Report a Bug" maxWidth="md" footer={footer}>
+      {result ? (
             // Success state
             <div className="text-center py-4">
               <div
@@ -342,44 +314,6 @@ export default function BugReportModal({ open, onClose }: BugReportModalProps) {
               )}
             </>
           )}
-        </div>
-
-        {/* Footer (only when form is showing) */}
-        {!result && (
-          <div
-            className="flex items-center justify-end gap-2 px-5 py-3"
-            style={{ borderTop: '1px solid var(--border-subtle)' }}
-          >
-            <button
-              onClick={onClose}
-              className="cursor-pointer px-4 py-2 rounded-md text-sm"
-              style={{
-                background: 'none',
-                border: '1px solid var(--border-subtle)',
-                color: 'var(--slate)',
-                cursor: 'pointer',
-              }}
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleSubmit}
-              disabled={!description.trim() || submitting}
-              className="cursor-pointer px-4 py-2 rounded-md text-sm flex items-center gap-2"
-              style={{
-                background: description.trim() && !submitting ? 'var(--teal-solid)' : 'var(--surface-2)',
-                color: description.trim() && !submitting ? 'var(--cream)' : 'var(--slate)',
-                border: 'none',
-                cursor: description.trim() && !submitting ? 'pointer' : 'default',
-                opacity: description.trim() && !submitting ? 1 : 0.85,
-              }}
-            >
-              {submitting ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
-              {submitting ? 'Submitting...' : 'Submit'}
-            </button>
-          </div>
-        )}
-      </div>
-    </>
+        </Modal>
   )
 }

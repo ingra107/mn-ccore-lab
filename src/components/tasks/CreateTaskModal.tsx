@@ -6,6 +6,7 @@ import { useAuth } from '../../hooks/useAuth'
 import { emailToSlug } from '../../lib/emailSlug'
 import InlineAssigneePicker from '../InlineAssigneePicker'
 import InlineSelect from '../InlineSelect'
+import { Button } from '../ui/Button'
 
 interface CreateTaskModalProps {
   open: boolean
@@ -471,34 +472,22 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
             </p>
           )}
           <div className="flex justify-end gap-2">
-            <button
+            <Button
               type="button"
+              variant="secondary"
               onClick={onClose}
-              className="px-4 py-2 rounded-md text-sm transition-colors"
-              style={{
-                color: 'var(--slate)',
-                cursor: 'pointer',
-                background: 'none',
-                border: '1px solid var(--border-subtle)',
-              }}
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
+              variant="primary"
               data-testid="task-submit"
               disabled={!title.trim() || !assignee}
               aria-describedby={!title.trim() || !assignee ? 'task-submit-hint' : undefined}
-              className="px-4 py-2 rounded-md text-sm font-medium transition-colors"
-              style={{
-                backgroundColor: !title.trim() || !assignee ? 'var(--border-subtle)' : 'var(--teal)',
-                color: !title.trim() || !assignee ? 'var(--slate)' : 'var(--ink-bright, #fff)',
-                cursor: !title.trim() || !assignee ? 'not-allowed' : 'pointer',
-                border: 'none',
-              }}
             >
               Create Task
-            </button>
+            </Button>
           </div>
         </form>
       </div>

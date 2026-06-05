@@ -4,6 +4,7 @@ import { useAuth } from '../hooks/useAuth'
 import { emailToSlug } from '../lib/emailSlug'
 import InlineSelect from './InlineSelect'
 import InlineAssigneePicker from './InlineAssigneePicker'
+import Field from './ui/Field'
 
 interface CreateProjectModalProps {
   open: boolean
@@ -44,12 +45,6 @@ const STAGES = [
   { value: 'published', label: 'Published' },
 ]
 
-const selectStyle: React.CSSProperties = {
-  fontSize: 'var(--value-size)',
-  color: 'var(--ink)',
-  backgroundColor: 'var(--cream)',
-  borderColor: 'var(--border-subtle)',
-}
 
 export default function CreateProjectModal({ open, onClose, onCreate }: CreateProjectModalProps) {
   const { user } = useAuth()
@@ -156,82 +151,56 @@ export default function CreateProjectModal({ open, onClose, onCreate }: CreatePr
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-5 flex flex-col gap-3.5">
           {/* Title */}
-          <div>
-            <label
-              htmlFor="project-title"
-              className="block text-xs font-medium mb-1"
-              style={{ color: 'var(--slate)' }}
-            >
-              Title *
-            </label>
+          <Field label="Title" required htmlFor="project-title">
             <input
               id="project-title"
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g., Ventilator Liberation Prediction Model"
-              className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-1"
+              className="w-full outline-none focus:ring-0"
               style={{
-                ...selectStyle,
-                borderColor: 'var(--border-subtle)',
+                fontSize: 'var(--text-small)',
+                color: 'var(--ink)',
+                background: 'transparent',
+                border: 'none',
               }}
               aria-required="true"
               autoFocus
             />
-          </div>
+          </Field>
 
           {/* Category + Stage row */}
           <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label
-                htmlFor="create-project-category"
-                className="block text-xs font-medium mb-1"
-                style={{ color: 'var(--slate)' }}
-              >
-                Category
-              </label>
+            <Field label="Category" htmlFor="create-project-category" noContainer>
               <InlineSelect value={category} options={categories} onChange={setCategory} />
-            </div>
-            <div>
-              <label
-                htmlFor="create-project-stage"
-                className="block text-xs font-medium mb-1"
-                style={{ color: 'var(--slate)' }}
-              >
-                Stage
-              </label>
+            </Field>
+            <Field label="Stage" htmlFor="create-project-stage" noContainer>
               <InlineSelect value={stage} options={STAGES} onChange={setStage} />
-            </div>
+            </Field>
           </div>
 
           {/* PI */}
-          <div>
-            <label
-              className="block text-xs font-medium mb-1"
-              style={{ color: 'var(--slate)' }}
-            >
-              PI
-            </label>
+          <Field label="PI" noContainer>
             <InlineAssigneePicker value={pi} onChange={setPi} />
-          </div>
+          </Field>
 
           {/* Description */}
-          <div>
-            <label
-              className="block text-xs font-medium mb-1"
-              style={{ color: 'var(--slate)' }}
-            >
-              Description <span style={{ fontWeight: 400, opacity: 'var(--ink-label)' }}>(optional)</span>
-            </label>
+          <Field label="Description" hint="Optional — brief project description">
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Brief project description..."
               rows={3}
-              className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-1 resize-none"
-              style={selectStyle}
+              className="w-full outline-none resize-none"
+              style={{
+                fontSize: 'var(--text-small)',
+                color: 'var(--ink)',
+                background: 'transparent',
+                border: 'none',
+              }}
             />
-          </div>
+          </Field>
 
           {/* Submit */}
           {!title.trim() && (
