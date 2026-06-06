@@ -1,0 +1,34 @@
+-- schema-v73-projects-type.sql (2026-06-06)
+-- Add fine-grained `projects.type` column to Hub D1. This stores Nick's
+-- personal taxonomy (R01/R03/K/CLIF/Nick_Lab/Friends/Mentees/Admin/Personal)
+-- losslessly, independently of the coarse 3-bucket `category` column the team
+-- already uses (MNCCORE/CLIF/Peripheral Brain).
+--
+-- Rationale:
+--   - `category` (coarse) answers "whose scope?" for the team view; it stays
+--     unchanged and Hub-UI-editable as before.
+--   - `type` (fine) answers "what kind of work is this for Nick?" and must
+--     survive a full Hub-rebuild without collapsing to the lossy 3-bucket
+--     default. Before this column, `type` was collapsed to `category` on the
+--     PB→Hub wire and lost on rebuild (incident: 2026-05-27 rebuild downgraded
+--     3 R01/R03 grants to Nick_Lab).
+--   - The two columns are INDEPENDENT -- no CHECK constraint coupling them.
+--     `category` may be set to a non-default value; `type` is the source of
+--     truth for the fine classification.
+--   - PB co-derives `category` from `type` only when `type` itself appears in
+--     the mutation patch (field-scoped, not forced on every write).
+--
+-- Column: nullable TEXT, no default. Purely additive -- no backfill here.
+-- Per-row values are seeded by a separate Phase-4 backfill (mirrors the
+-- seed_promoted_project_fields.py pattern from v71). Reversible: column is
+-- left inert on rollback (no destructive DROP).
+--
+-- Decision doc pointer:
+--   Peripheral-Brain/Scratch/plans/2026-06-06-slice-b-b3-b4-execution.md
+--   (Phase 2 of the B-3+B-4 cross-repo slice)
+--
+-- APPLY:
+--   scripts/wrangler-d1 d1 execute mnccore-lab-test --remote --file=api/schema-v73-projects-type.sql
+--   scripts/wrangler-d1 d1 execute mnccore-lab      --remote --file=api/schema-v73-projects-type.sql
+
+ALTER TABLE projects ADD COLUMN type TEXT;

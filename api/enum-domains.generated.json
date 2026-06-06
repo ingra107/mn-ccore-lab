@@ -111,6 +111,21 @@
           "Weekly": "1-Weekly"
         },
         "nullable": true
+      },
+      "type": {
+        "canonical": [
+          "R01",
+          "R03",
+          "K",
+          "CLIF",
+          "Nick_Lab",
+          "Friends",
+          "Mentees",
+          "Admin",
+          "Personal"
+        ],
+        "legacy_aliases": {},
+        "nullable": true
       }
     },
     "tasks": {
