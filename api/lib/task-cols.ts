@@ -27,6 +27,10 @@ const TASK_PLAIN_COLS = [
   'promise_date', 'next_checkin_date', 'nick_followup_date',
   'requires_nick_brain', 'estimated_minutes', 'deadline_type', 'next_artifact',
   'inbox_event_id', 'last_mutation_id',
+  // Slice B B-5 (2026-06-06): waiting_since + email_link promoted from PB-only
+  // to Hub-canonical synced columns. Must be in TASK_PLAIN_COLS so pull returns
+  // them (write-accept without read-expose = not Hub-rebuildable, R10 class).
+  'waiting_since', 'email_link',
   // NOTE: `notes` is deliberately omitted — private brain.db field.
   // NOTE: `project_id` is NOT in this list — it is resolved to slug below.
 ];

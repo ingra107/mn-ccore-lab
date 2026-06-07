@@ -1,0 +1,36 @@
+-- schema-v74-tasks-waiting-since-email-link.sql (2026-06-06)
+-- Slice B B-5: promote tasks.waiting_since + tasks.email_link from PB-only
+-- cache to Hub-canonical synced columns.
+--
+-- Rationale:
+--   - waiting_since: when Nick replies to an email thread, the task goes
+--     status=waiting_external with a waiting_since timestamp (canonical UTC
+--     space-sep 'YYYY-MM-DD HH:MM:SS' — PB emits now_instant()). Durable PB
+--     content with no Hub column = the 2026-05-29 stranding class; promoting it
+--     makes brain.db Hub-rebuildable for it and lets it converge home<->work.
+--   - email_link: a Gmail thread URL on the task. Same durable-content rationale.
+--   - thread_id STAYS PB-only cache (NOT promoted) — it is not == source_thread_id
+--     and will be derived later (B-11/B-12).
+--   - milestone_id is NOT promoted (0 live task refs — retire, not migrate).
+--
+-- Both columns: nullable TEXT, no default. Purely additive -- no backfill here.
+-- Per-row values are seeded by a separate backfill on the PB machine
+-- (Peripheral-Brain/scripts/db/backfill_tasks_waiting_email.py), mirroring the
+-- v73 projects.type seed pattern. Reversible: columns are left inert on
+-- rollback (no destructive DROP); D1 Time-Travel (30d) is the data backstop.
+--
+-- Worker acceptance: tasks.{waiting_since,email_link} enter TABLE_FIELDS via the
+-- regenerated pb-schema field-authority.generated.ts (imported by mutations.ts);
+-- this ALTER + the Worker deploy of that regenerated artifact together make Hub
+-- ACCEPT the fields BEFORE PB pushes them (R10 lockstep — never ship the data
+-- migration ahead of Hub accepting the field).
+--
+-- Decision doc pointer:
+--   Peripheral-Brain/Context/Decisions/2026-06-06-slice-b-b5-b2-waiting-email-migrate.md
+--
+-- APPLY (test FIRST, probe, then prod):
+--   scripts/wrangler-d1 d1 execute mnccore-lab-test --remote --file=api/schema-v74-tasks-waiting-since-email-link.sql
+--   scripts/wrangler-d1 d1 execute mnccore-lab      --remote --file=api/schema-v74-tasks-waiting-since-email-link.sql
+
+ALTER TABLE tasks ADD COLUMN waiting_since TEXT;
+ALTER TABLE tasks ADD COLUMN email_link TEXT;
