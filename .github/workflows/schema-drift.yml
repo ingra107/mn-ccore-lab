@@ -53,6 +53,18 @@ jobs:
           submodules: recursive
           token: ${{ secrets.PB_SCHEMA_PAT }}
 
+      - name: pb-schema contract manifest verify (fail-closed)
+        # Slice 6 (PB 2026-06-08): the pb-schema submodule is a versioned contract
+        # bundle (committed generated/* + manifest.json). PB (schema_dsl_codegen)
+        # is the sole emitter. This renderer-free, PB-free hash check asserts the
+        # committed artifacts the Worker bundles (field-authority.generated.ts,
+        # enum-domains.generated.json) match their manifest SHA-256 — the Hub-side
+        # always-present integrity backstop that closes the SKIP-LOUD gap on this
+        # repo too. NO continue-on-error: exit 1 fails the job. Pure stdlib Python;
+        # no wrangler, no D1, no secrets.
+        run: python3 -m pb_schema.verify
+        working-directory: pb-schema
+
       - name: Schema version integrity (INFRA-5)
         # Fast pre-flight using stdlib Python — no Node/wrangler required.
         # Checks three structural properties of the api/schema-v*.sql file set:
