@@ -56,6 +56,25 @@ export const TASK_SELECT_COLS = [
 ].join(', ');
 
 /**
+ * A2 (Slice C, 2026-06-08): `TASK_SELECT_COLS_TYPED` — sync/wire read shape.
+ *
+ * Returns the raw stored `t.project_id` (the typed `proj_*` PK) instead of the
+ * COALESCE slug-resolution. Consumed by `handleGetTasks` when `?wire=typed` is
+ * present (gated to authenticated/PI callers via `canSeePb`). The browser/Hub-UI
+ * always uses the default TASK_SELECT_COLS (slug form); PB sync pull uses typed
+ * so the brain.db cache stores the same PK form that Hub stores internally.
+ *
+ * Do NOT pass PROJECT_ID_AS_SLUG here — that would defeat the purpose (PB would
+ * receive slugs instead of typed PKs, which is the P2 half-migration bug class).
+ *
+ * TASK_SELECT_COLS is pinned by task-cols.test.ts:52-63 and MUST NOT change.
+ */
+export const TASK_SELECT_COLS_TYPED = [
+  ...TASK_PLAIN_COLS.map((c) => `t.${c}`),
+  't.project_id',
+].join(', ');
+
+/**
  * Columns that must be stripped from a full task row (SELECT *) before the
  * row is returned to callers. Currently only `notes`. Add here if future
  * private columns are introduced — safeTaskRow uses this list.

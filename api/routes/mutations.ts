@@ -1138,6 +1138,27 @@ async function applyPatch(
     }
   }
 
+  // A1 (Slice C, 2026-06-08): FK slug → typed-PK canonicalization on the UPDATE
+  // path. applyInsert already canonicalizes FK slug fields via FK_SLUG_FIELDS
+  // (mutations.ts:562-573). applyPatch was the gap: an UPDATE carrying a slug
+  // project_id stored it raw. This is the root-cause fix (Level-1-by-construction:
+  // a slug-stored FK value on update is now UNREPRESENTABLE regardless of wire).
+  // Mirrors the applyInsert loop exactly — idempotent (typed input → no-op;
+  // unresolvable → NULL, matching insert behavior).
+  const fkFields = FK_SLUG_FIELDS[mut.table] ?? [];
+  if (fkFields.length > 0) {
+    for (const field of fkFields) {
+      if (field in effectivePatch) {
+        const rawRef = effectivePatch[field] as string | null | undefined;
+        if (rawRef) {
+          const canonical = await projectRefToCanonical(env, rawRef);
+          // Shallow-copy before mutating so the caller's patch object is safe.
+          effectivePatch = { ...effectivePatch, [field]: canonical ?? null };
+        }
+      }
+    }
+  }
+
   const patchKeys = Object.keys(effectivePatch || {});
   const setClauses = [...patchKeys.map(k => `${k} = ?`), 'updated_at = datetime(\'now\')', 'last_mutation_id = ?'];
   // vals only covers SET clause bindings; WHERE clause bindings appended separately below

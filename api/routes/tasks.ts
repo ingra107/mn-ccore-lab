@@ -8,7 +8,7 @@ import { applyMutation } from './mutations';
 // can import it without creating a circular dependency.
 // Fix 5: removed dead re-export — callers import directly from ../lib/task-cols
 // or via api/helpers.ts which already re-exports it (zero callers used this path).
-import { TASK_SELECT_COLS } from '../lib/task-cols';
+import { TASK_SELECT_COLS, TASK_SELECT_COLS_TYPED } from '../lib/task-cols';
 
 // ── Fix 3: guardTaskProject ────────────────────────────────────────────────────
 //
@@ -75,6 +75,14 @@ export async function handleGetTasks(url: URL, env: Env, canSeePb = false): Prom
   // UI views never want them (R4-P1-01).
   const includeFixtures = url.searchParams.get('include_fixtures') === '1' || includeDeleted;
 
+  // A2 (Slice C, 2026-06-08): ?wire=typed returns the raw stored `proj_*` PK in
+  // project_id (TASK_SELECT_COLS_TYPED) instead of the COALESCE slug form used by
+  // the browser. Gated to authenticated/PI callers only (canSeePb) — a public
+  // browser request never receives raw PKs. The sync pull path (hub.py seq_after
+  // cursor) uses this to store the canonical typed PK in brain.db's local cache.
+  const wireTyped = url.searchParams.get('wire') === 'typed' && canSeePb;
+  const selectCols = wireTyped ? TASK_SELECT_COLS_TYPED : TASK_SELECT_COLS;
+
   const deletedFilter = includeDeleted ? '1=1' : 't.deleted_at IS NULL';
   // Fix 2a: mirror the PB exclusion pattern from handleGetRecentTaskUpdates.
   // Non-PI callers must not see tasks that belong to Peripheral Brain projects.
@@ -82,7 +90,7 @@ export async function handleGetTasks(url: URL, env: Env, canSeePb = false): Prom
     SELECT id FROM projects WHERE category = 'Peripheral Brain'
     UNION SELECT slug FROM projects WHERE category = 'Peripheral Brain'
   ))`;
-  let query = `SELECT ${TASK_SELECT_COLS}, m.title as meeting_title, m.date as meeting_date FROM tasks t LEFT JOIN meetings m ON t.meeting_id = m.id WHERE ${deletedFilter}${pbExclusion}`;
+  let query = `SELECT ${selectCols}, m.title as meeting_title, m.date as meeting_date FROM tasks t LEFT JOIN meetings m ON t.meeting_id = m.id WHERE ${deletedFilter}${pbExclusion}`;
   const params: (string | number)[] = [];
 
   if (seqAfterRaw !== null) {
