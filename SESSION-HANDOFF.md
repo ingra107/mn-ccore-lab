@@ -1,5 +1,16 @@
 # Session Handoff — 2026-06-09
 
+## ▶ NEXT — Design polish round is teed up (3 parallel workstreams; see WORKPLAN.md top)
+
+The post-deploy work split into three **parallel-capable** workstreams (`WORKPLAN.md` → "PARALLEL WORKSTREAMS 2026-06-09"):
+- **A (ACTIVE) — Claude Design polish round.** Brief + prompt are on `main`: `docs/design-briefs/2026-06-09-next-design-audit-{brief,PROMPT}.md` (+ Codex audit `…-codex-hub-simplify-audit.md`). Scope = visual polish + workflow efficiency + "no dead ends" + delight; **width consistency = Tier-1**; the date-picker "first click pops the calendar grid AND the +1d/+1wk presets together" is the click-efficiency archetype to hunt. ⚠️ **Today / the daily-cockpit / the operating-day plan are OUT** (→ Workstream B). **Next action: Nick re-snapshots the repo in Claude Design → pastes the PROMPT → Design returns TICKETS.md → we implement.**
+- **B (QUEUED — its own session) — "Today driver."** The operating-day plan split-brain (Today `localStorage` / MyTasks / PB Sector D1) + the one-cockpit IA + meeting-capture persistence. ⛔ Deferred from A; do NOT touch Today in the polish round.
+- **C (QUEUED — parallelizable) — ENG-only backlog.** Dead `handleUpsertTodayMd`, Narratives data-contract break, query-resource primitive, stage model, legacy MyTasks, Personal `PATHS`.
+
+Below: what shipped this session (the Slice C/D/E deploy that closed the B-5 skew).
+
+---
+
 ## ✅ Slice C/D/E DEPLOYED to pages.dev — B-5 skew CLOSED (2026-06-09)
 
 **Live = deploy `90626636` on commit `7bb1ccef` (HEAD) — Production/main.** Was stuck on B-5 (`dbf9cf97`/`1cd193f2`) for 2 days. `/api/version` 200 production; `/api/dependencies` 401 (clean auth-gate, no longer the column-error 500). Identity deploy-gate `npm run predeploy:identity` → **PASS**.
