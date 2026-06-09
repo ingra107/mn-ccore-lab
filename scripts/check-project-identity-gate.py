@@ -54,6 +54,21 @@ DB = "mnccore-lab"
 _PROJECT_ID_COL = re.compile(r"project.*id", re.IGNORECASE)
 _TYPED_PREFIX = "proj_"
 
+# Hub D1 kg is a DETACHED store post-P4 (2026-06-05/09): there is NO steady-state
+# brain.db -> Hub kg propagation path (PB `upsert_kg_entity` is event-first/no-
+# outbox; the Lane-3 kg pull is gated OFF under PB_BRAIN_EVENT_LOGS=on;
+# mutations.ts' kg rail is unfed; reenqueue_brain_to_hub is rollback-only).
+# Cross-machine kg now syncs home<->work via the brain event log, NOT via Hub.
+# PB cannot repair Hub-only kg drift through its normal write path, so HARD-gating
+# Hub kg integrity is a maintenance trap (codex 2026-06-09 Q3). The kg graph-
+# integrity checks (a/b/c/L1/L2) are therefore WARN-only on Hub: drift stays
+# VISIBLE in the report but never blocks Hub CI. The fail-closed introspection +
+# d_fk_typed (live, PB-repairable FK/storage identity surfaces: projects.id,
+# tasks.project_id, ...) stay HARD. Decision: PB
+# Context/Decisions/2026-06-09-slice-d-project-dependencies-historical-disposition.md
+# + Docs/ld_brain_sync.md §6 ④. Keep in lockstep with PB project_identity_gate.py::_demote_hub_kg.
+_KG_CHECK_SEVERITY = "warn"
+
 
 def load_surfaces() -> dict:
     return json.loads(SURFACES_JSON.read_text(encoding="utf-8"))
@@ -132,7 +147,7 @@ def run_checks(query, surfaces: dict, *, table_exists) -> list[dict]:
                               for i in ns["test_orphan_ids"])
         n = _scalar(query(f"SELECT COUNT(*) n FROM kg_entities WHERE {_active()} "
                           f"AND (({like}) OR id IN ({in_clause}))"))
-        add("a_active_typed_orphan_kg_nodes", n == 0, "hard",
+        add("a_active_typed_orphan_kg_nodes", n == 0, _KG_CHECK_SEVERITY,
             f"active typed-orphan project kg nodes = {n}")
 
     # b. relations touching orphan/tombstoned node.
@@ -147,7 +162,7 @@ def run_checks(query, surfaces: dict, *, table_exists) -> list[dict]:
             f"IS NOT NULL)) OR EXISTS (SELECT 1 FROM kg_entities e WHERE "
             f"e.id=r.target_id AND (e.deleted_at IS NOT NULL OR e.valid_until "
             f"IS NOT NULL)))"))
-        add("b_active_rels_touching_orphan_or_tombstoned", n == 0, "hard",
+        add("b_active_rels_touching_orphan_or_tombstoned", n == 0, _KG_CHECK_SEVERITY,
             f"active relations -> typed-orphan or tombstoned node = {n}")
 
     # c. slug-form kg nodes == KEEP set.
@@ -156,7 +171,7 @@ def run_checks(query, surfaces: dict, *, table_exists) -> list[dict]:
             f"SELECT id FROM kg_entities WHERE id LIKE 'project:%' "
             f"AND id NOT LIKE 'project:proj_%' AND {_active()}")}
         extra = sorted(found - keep)
-        add("c_slug_form_kg_nodes_eq_keep_set", not extra, "hard",
+        add("c_slug_form_kg_nodes_eq_keep_set", not extra, _KG_CHECK_SEVERITY,
             f"active slug-form project nodes={len(found)} (KEEP={len(keep)}); "
             f"unexpected={extra if extra else 0}", {"extra": extra})
 
@@ -198,7 +213,9 @@ def run_checks(query, surfaces: dict, *, table_exists) -> list[dict]:
         unexpected = sorted(n for n in missing if n not in known_nodes)
         tracked = sorted(n for n in missing if n in known_nodes)
         hard_ok = (orphan_nodes == 0 and not unexpected)
-        severity = "hard" if (not hard_ok or not tracked) else "warn"
+        # Hub kg is detached-legacy → warn-only (see _KG_CHECK_SEVERITY); drift
+        # stays visible in `ok`/`data` but never CI-blocks.
+        severity = _KG_CHECK_SEVERITY
         ok = hard_ok and not tracked
         add("L1_kg_node_vs_table", ok, severity,
             f"typed kg nodes with no live project row = {orphan_nodes}; "
@@ -219,7 +236,7 @@ def run_checks(query, surfaces: dict, *, table_exists) -> list[dict]:
                 "SELECT COUNT(*) n FROM kg_relations WHERE (source_id LIKE "
                 "'project:%' OR target_id LIKE 'project:%') AND deleted_at "
                 "IS NOT NULL AND valid_until IS NULL"))
-        add("L2_tombstone_co_sets_valid_until", ent == 0 and rel == 0, "hard",
+        add("L2_tombstone_co_sets_valid_until", ent == 0 and rel == 0, _KG_CHECK_SEVERITY,
             f"deleted_at-only project kg tombstones: entities={ent} relations={rel}")
 
     return results
