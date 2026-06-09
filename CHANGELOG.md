@@ -3,6 +3,16 @@
 
 > Historical phase records moved from CLAUDE.md to keep the operating guide focused on current state. Each section is a complete record of what shipped, decisions made, and scores achieved.
 
+## 2026-06-09 — Slice C/D/E deployed to pages.dev (deploy `90626636` on `7bb1ccef`); B-5 wrong-surface skew closed
+
+Pages.dev had been stuck on B-5 (`dbf9cf97`/`1cd193f2`) for 2 days while `main` carried Slice C/D/E. Root cause: the PB sessions that shipped Slice C (`18680afa`) and Slice D (`7bb1ccef`) deployed the Hub Worker via **`wrangler deploy` → the unused `mn-ccore-lab-api.workers.dev`** and smoke-tested *that* surface, while the team's real surface (`pages.dev`) only updates via `wrangler pages deploy`. Slice D's **prod-D1 migration WAS applied** (shared D1), so live B-5 code (queried `from_slug`/`to_slug`) hit a table re-keyed to `from_project_id`/`to_project_id` → **`/api/dependencies` + `/api/narratives` 500'd in prod**, unnoticed. Fixed by `npm run deploy:pages:gated`. `/api/version` 200; `/api/dependencies` 401 (clean auth-gate); identity deploy-gate PASS.
+
+- **Slice C — replication wire flipped slug→typed `proj_*`** (PB `2af4538e`/`755d7345`; Hub `18680afa`). `applyPatch` now FK-canonicalizes slug→typed (slug-stored FK unrepresentable on UPDATE); new sync-only `TASK_SELECT_COLS_TYPED` + `?wire=typed` (gated to `canSeePb`); `predeploy:identity` deploy gate added. Browser `/api/tasks` stays slug. Tests 741/741.
+- **Slice D — `project_dependencies` typed-PK migration applied to prod** (`7bb1ccef`). Re-keyed `(from_slug,to_slug)` → `from_project_id`/`to_project_id` typed FK `REFERENCES projects(id) ON UPDATE/DELETE CASCADE`, `UNIQUE(from,to)`, `CHECK(from<>to)`. DROP+recreate (D1 has no DROP COLUMN); started empty (all 8 prod rows were slug-rename-stranded double-orphans). API wire still emits `from_slug`/`to_slug` via JOIN → zero frontend changes. Rollback bookmark in the PB decision doc. Tests 751/751.
+- **Slice E gate gap fixed (this session).** Slice D never registered its two typed FK columns in the Project-Identity Completeness Gate SSOT → `predeploy:identity` fail-closed on `introspection_fail_closed`. Registered `project_dependencies.from_project_id`/`to_project_id` (`typed_required`) in both byte-equal copies (PB `scripts/db/project_identity_surfaces.json` + Hub `scripts/project-identity-surfaces.json`). Gate → PASS.
+- **Doc reconciliation (this session).** Hub docs lagged PB reality: schema v70→**v74** (CLAUDE.md/REFERENCE.md), `tasks.project_id` rule corrected (sync wire now typed; the "Hub kg still slug-format" justification was obsolete after Slice A), SESSION-HANDOFF rewritten.
+- **Context (PB-side, not in this repo's history):** B-5 (`waiting_since`/`email_link` → Hub-canonical, v74, deployed pages.dev `dbf9cf97` 2026-06-07), Slice A (kg re-keyed typed on Hub+work), pb-schema sole-emitter manifest (VERSION 0.3.2; Hub CI runs `python -m pb_schema.verify`).
+
 ## 2026-06-05 — project_id read-boundary fix + edit-more + P6 + 9a007fd1 deploy (deploy `7653955d` on `8cc00130`)
 
 Ultracode session clearing the WORKPLAN "NEXT SESSION" queue. **Build + `tsc` green; API suite 732/732; journeys 6/6; resolver verified against live prod data. Deployed `7653955d` on `8cc00130`; both repos pushed; /api/version 200.**

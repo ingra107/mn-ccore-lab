@@ -1,3 +1,36 @@
+# Session Handoff — 2026-06-09
+
+## ✅ Slice C/D/E DEPLOYED to pages.dev — B-5 skew CLOSED (2026-06-09)
+
+**Live = deploy `90626636` on commit `7bb1ccef` (HEAD) — Production/main.** Was stuck on B-5 (`dbf9cf97`/`1cd193f2`) for 2 days. `/api/version` 200 production; `/api/dependencies` 401 (clean auth-gate, no longer the column-error 500). Identity deploy-gate `npm run predeploy:identity` → **PASS**.
+
+### Why this deploy was needed — the wrong-surface root cause (LESSON)
+The PB sessions that "shipped" **Slice C** (`18680afa`, wire-flip Hub code) and **Slice D** (`7bb1ccef`, `project_dependencies` typed-PK migration) deployed the Hub Worker via **`wrangler deploy` → the unused `mn-ccore-lab-api.workers.dev`**, and smoke-tested against *that* surface (it has the new code + sees the migrated D1, so it passed). **But the team's real surface is `pages.dev`, which only updates via `wrangler pages deploy`** — it stayed on B-5. Meanwhile Slice D's **prod-D1 migration WAS applied** (D1 is shared across both Workers). Net live state until today: B-5 code (queries `from_slug`/`to_slug`) against a D1 table re-keyed to `from_project_id`/`to_project_id` → **`/api/dependencies` + `/api/narratives` 500'd in prod**, unnoticed because the smoke tests hit workers.dev. The Slice-D rollback runbook itself uses `npx wrangler deploy` — the tell. **Rule: a Hub deploy is `npm run deploy:pages:gated` (= `wrangler pages deploy`). `wrangler deploy` does NOT touch the team's site.** (This is the 2nd recurrence; see CLAUDE.md Quick Reference deploy row.)
+
+### Slice-E gate gap fixed (was blocking the deploy)
+Slice D added `project_dependencies.from_project_id`/`to_project_id` (typed FK) but **never registered them in the Project-Identity gate SSOT** → `predeploy:identity` fail-closed on `introspection_fail_closed`. Fixed: added both columns (`policy: typed_required`) to **both** byte-equal SSOT copies — PB canonical `scripts/db/project_identity_surfaces.json` + Hub copy `scripts/project-identity-surfaces.json`. Gate now PASS (both columns verified 0 non-typed; the L1 kg dangling-rel stays a tracked WARN). **These two edits + the 4 doc updates below are committed this session.**
+
+### Project-identity convergence — now fully LIVE (storage + wire + display all converged)
+The PB-side arc (Slices A–E) is closed AND now actually deployed to pages.dev:
+- **Schema is v74** (was documented v70): v71 project fields, v72 meeting tags, v73 `projects.type`, v74 `waiting_since`/`email_link`; + Slice-D `project_dependencies` DROP+recreate (unnumbered DDL).
+- **`tasks.project_id` 3-axis contract (CORRECTED):** storage = typed `proj_*` · **sync wire = typed `proj_*` (Slice C, 2026-06-09)** · browser `/api/tasks` display = slug (COALESCE in `task-cols.ts`). The old CLAUDE.md "wire = slug / PB pull reads slug" was true only of the browser read; the **sync** wire is now typed.
+- **kg converged + detached:** Slice A re-keyed Hub + work kg to typed `proj_*` (the old "Hub kg still slug-format / never propagated" is FALSE now). Hub kg is a **detached store post-P4** (no steady-state PB→Hub kg path; cross-machine kg rides the brain event log) → the gate's 5 Hub-kg checks are WARN-only.
+- **`waiting_since`/`email_link`** promoted PB-only → Hub-canonical (v74, synced, in `/api/tasks`).
+- **pb-schema:** sole-emitter manifest (VERSION 0.3.2); Hub CI runs `python -m pb_schema.verify`. One non-urgent pointer bump to `70c7196` still pending PB-side.
+
+### Sync is SAFE across any deploy boundary (verified in code)
+PB pull requests `?wire=typed` but tolerates a slug response (B-5 ignored the param); `_resolve_task_project_fk` (PB `hub.py:375`) resolves slug OR typed, **fails closed** on unresolvable refs, and never clobbers a link to NULL. PB push (`hub_payload.py:334`) sends typed `proj_*`; B-5 `applyInsert` canonicalizes idempotently. No silent loss occurred during the 2-day skew.
+
+---
+
+# Session Handoff — 2026-06-07
+
+## ✅ Slice B B-5 DEPLOYED to pages.dev (2026-06-07)
+
+**Deploy `dbf9cf97` on commit `1cd193f2` — Production/main, LIVE.** `waiting_since` + `email_link` promoted from PB-only to Hub-canonical on tasks. Round-trip verified on `https://mn-ccore-lab.pages.dev/api/mutations` → `status: accepted`, `result_seq: 6120`; GET returned both fields; cleanup confirmed (seq: 6121).
+
+**Note:** The prior session ran `wrangler deploy` (standalone Worker) which updated `mn-ccore-lab-api.workers.dev` only. pages.dev deploys via `npm run build && wrangler pages deploy dist --project-name mn-ccore-lab --branch main` (MANUAL, no CI auto-deploy on push). This B-5 deploy used that mechanism.
+
 # Session Handoff — 2026-06-05
 
 ## ⏸️ PAUSED pending the PB P3-cut (2026-06-05). Project-identity is ORTHOGONAL + on hold.
