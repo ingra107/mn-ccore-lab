@@ -6,6 +6,14 @@
 
 ---
 
+## SCOPE THIS ROUND (Nick, 2026-06-09)
+
+**This is a visual-polish + workflow-efficiency + "no dead ends" round. North-star: a busy PI sits down and *falls in love* using it.** In scope: making it look good (consistency, the bg fix, **width is Tier-1**), making every click do something real and fast, making sure every endpoint/control has a purpose, and making things sit where they make sense.
+
+⛔ **OUT OF SCOPE this round — deferred to its own dedicated session:** the **Today page**, the **daily-cockpit IA** (Today vs My Hub vs PB Sector), and the **operating-day plan model** (the localStorage-vs-Hub split-brain). Nick: *"not ideal to have a local and a hub-based one, but that's where we are… that should be its own session."* **Do not restructure Today or the plan this round.** Today-related findings below are kept as evidence but tagged ⛔ DEFERRED.
+
+---
+
 ## 0. Who this is for, and what we've strived for
 
 **Nick Ingraham** — PI of a pulmonary/critical-care research lab at UMN. Physician-scientist running ~64 projects, 5+ mentees, multiple R01/R03 grants, CLIF-consortium work, manuscripts, and clinical duty. The Hub is **his operating surface AND the team's** (20+ members). Daily pattern: **morning triage → mid-meeting quick-wins → heavy context-switching**. He runs a parallel single-user "Peripheral Brain" CLI (brain.db) that syncs to the Hub (Cloudflare D1).
@@ -90,7 +98,7 @@ From the **design CLAUDE.md** — Nick's **operating-day "B2" model** (the menta
 
 **Codex loose ends (beyond §2C):** Today meeting notes local-only ✓ (`Timeline.tsx:69`); transcript/audio UI unwired; **dead `handleUpsertTodayMd`** ✓ (`pb-today.ts`, unregistered, delete); Narratives API/UI contract mismatch (`pub_date` vs `year`; stage colors); mobile-only-desktop status edits on MenteeMilestones (`:697`) + Deadlines (`:599`); completed-row **compound-opacity violation** (`TaskRow.tsx:281` dims the whole row — breaks CLAUDE.md Rule 43); Personal uses root paths not `PATHS` (`PersonalPage.tsx:974`); legacy MyTasks possibly parked (verify/delete).
 
-**Codex "works-for-Nick" (the IA truth):** *too many "where do I work?" surfaces* — Today vs My Hub/Personal vs PB Sector all show overdue/due-today strips with different data + a different plan model. **Morning triage is not one state.** Meeting flow loses notes at the capture moment. This is the single biggest workflow finding and it's an **information-architecture** question only a design audit can resolve.
+**Codex "works-for-Nick" (the IA truth) — ⛔ DEFERRED to its own session:** *too many "where do I work?" surfaces* — Today vs My Hub/Personal vs PB Sector all show overdue/due-today strips with different data + a different plan model. **Morning triage is not one state.** This is the single biggest workflow finding, but Nick has **deferred the Today/cockpit/plan restructure to a dedicated session** — it is NOT in this polish round. **Of the table above, Primitive #1 (Durable Operating-Day Plan) is ⛔ DEFERRED.** Primitives #3 (Query Resource) and #7 (Stage Model) are **ENG-only** (not a design-audit concern → WORKPLAN backlog). The rest (#2 DataPage Shell, #4 Universal Row, #5 Field Editor, #6 Modal Shell, #8 Project Activity overlap) are visual/IA-consistency wins that **ARE** in scope.
 
 ---
 
@@ -104,30 +112,28 @@ From `WORKPLAN.md` — the Hub's reason for being, in priority order:
 
 ---
 
-## 5. What the next Claude Design audit should focus on (synthesis)
+## 5. What the next Claude Design audit should focus on (this round)
 
-> Merged + prioritized from Codex (§3) + the Claude-side inventory (§2) + the north-star (§4). Tiered: the IA questions only a design audit can answer first, then the consistency primitives, then the workflow surfaces. The companion PROMPT operationalizes these.
+> **North-star: a busy PI sits down and *falls in love* using it.** Every change earns its place by making the Hub look intentional, respond instantly, and never dead-end. Organized by Nick's three pillars. **Width is explicitly Tier-1.** Today/cockpit/plan are ⛔ out of scope (see the scope box up top).
 
-### Tier 1 — Information architecture & the operating day (the big questions)
-1. **Decide the ONE daily cockpit.** There are three "where do I work?" surfaces with overlapping content + *different plan models*: Today (`localStorage` plan), My Hub/Personal (duplicate overdue/due-today strips), PB Sector (D1 `dailyPlan`). Design must decide what the single morning-triage cockpit is and what belongs on the first viewport — *don't add cards; collapse surfaces.*
-2. **Design the durable Right Now / Planned / Done model** as one visual system shared by Today + My Tasks (today the plan is a browser-local blob that doesn't sync or reach PB Sector). This is the §3 Primitive #1 made visible.
-3. **Make meeting rows obviously save to the record.** Today's "take notes" textarea is local-only scratch state that vanishes on refresh; the real persisted notes mutation lives only on MeetingDetail. Redesign so capture = persistence, and resolve the transcript/audio "coming soon" dead controls (wire to Hermes or hide).
+### Pillar 1 — Make it look good (visual consistency & polish)
+1. **ONE page-width rule. [TIER-1 — Nick-flagged "very important"]** A single max-width (or a documented data-vs-dashboard split) applied to every data page + all three My Tasks views. No width jump as you navigate (today 1440 vs 1100 vs horizontal-scroll). `src/index.css:920` vs `MyTasks/views/LanesView.tsx:50`.
+2. **Fix the light-mode background inversion.** Flat `--cream` (white) page + subtle `--ice` (grey) cards — kill the grey-page/white-card "tint behind the cards" that re-introduces the "feels heavy" look. Consistent on every surface, correct in both themes. `src/index.css:20,95,746,1023-1024`.
+3. **Token / spacing / radius / icon-size discipline + columnar-table polish + accent & opacity discipline.** Snap literal px to the token scale (sizes/paddings/radii currently drift a few px and read "slightly off"); kill the completed-row whole-row dim (compound-opacity, breaks Rule 43 — use muted title/border); ration color to meaning. Everything should read *deliberate*.
 
-### Tier 2 — Consistency primitives (visual systems to standardize once)
-4. **Fix the light-mode background inversion** — one token-family change: flat `--cream` page + subtle `--ice` cards (kill the grey-page/white-card tint-behind-cards that re-introduces the "feels heavy" look). Consistent across every surface, correct in both themes.
-5. **Establish ONE page-width rule** — a single max-width (or a documented data-vs-dashboard split) for all three My Tasks views + every data page. No width jump on navigation.
-6. **Produce a DataPage Shell spec** — header / filters / table / empty-error-loading / density / mobile fallback — so Projects/Manuscripts/Grants/Decisions/Deadlines stop hand-rolling it (§3 Primitive #2).
-7. **Audit task rows at 360/390/768px** — ListView, Deadlines, MenteeMilestones, Today timeline; finish the mobile-only-desktop status/action controls; extend the shared row+editor into the remaining forks.
-8. **Accent + opacity discipline** — kill the completed-row **compound-opacity** violation (whole-row dim breaks Rule 43 — use muted title/border), and replace every **`window.alert()`** failure path with the optimistic-UI + undo-toast the ethos mandates.
-9. **Define modal vs bottom-sheet once** — including transcript/create/edit flows; everything routes through `ui/Modal` / `BottomSheet`.
+### Pillar 2 — Every click does something real (efficiency & no dead ends) [TIER-1 on the click-efficiency class]
+4. **Surface every affordance on the FIRST click — the date-picker archetype.** Editing a due date today drills: click → "edit mode" shows a raw value (e.g. `05/01`) → click again → a calendar → and the +1d/+1wk quick options are a *separate* reveal. **Nick wants ONE click to pop both an actual month-calendar grid AND the quick presets together** — pick a day from the grid or a preset, immediately. (`src/components/InlineDatePicker.tsx`: `:162` trigger → `:88+` editing renders a native input + `:71-86` presets, not an immediate calendar.) **Then hunt for the whole CLASS:** multi-click chains, "edit modes" that show a raw value instead of the rich control, hidden affordances, anything that takes 2 clicks where 1 would do. This is the heart of the "fall in love" ask.
+5. **No dead controls — every button/affordance does a real thing or is removed:** transcript/audio "coming soon" (`MeetingNotesPage.tsx:258,341`), the Settings AI-tab placeholder (`SettingsPage.tsx:197`), mobile-only-disabled status edits (`MenteeMilestonesPage.tsx:697`, `DeadlinesPage.tsx:599`), and replace every `window.alert()` failure with the optimistic-UI + undo-toast the ethos mandates (`ProjectDetail.tsx:298-329` et al.).
+6. **Snappy, low-friction interactions everywhere** — inline-edit affordances always visible (▾), auto-save on blur, instant optimistic feedback, undo toast, no spinners for actions.
 
-### Tier 3 — Workflow surfaces that serve Nick (the north-star)
-10. **Surface the delegation workflow (P2)** — `waiting_on`/`promised_to`/`promise_date`/`next_checkin` + commitments in the row/detail UI. The mentee-promise loop (promises made in meetings to 5 mentees) has schema but zero UI.
-11. **ProjectDetail as research System-of-Record (P3)** — collapse notes/comments/activity into one chronological research-activity stream (§3 Primitive #8); wire the Activity tab + project **staleness** ("what moved / what's stalled" across 64 projects).
-12. **Close the Settings gaps that serve the daily loop** — personal link shortcuts (per-user `obsidian://`/`claude://`/local-path chips), default-view preference, surface ShortcutHelp, make the AI tab real.
-13. **One canonical "what should I focus on"** — reconcile Today's client `HermesSuggests` vs Dashboard's server `ProactiveBrief` into one brief on Today.
-14. **PI/mentee oversight as an actual check-in workflow** (not just milestone inventory) + Lab Overview rework (PAGE-5) + My Hub design pass (INFRA-6) + the tablet breakpoint split-brain (UX-9, 768–1024px iPad-portrait nav).
-15. **Treat Narratives as suspect** — its API/UI data contract is broken (stage colors can't match, `pub_date` vs `year`); design should not polish broken semantics — fix the contract or shelve the page.
+### Pillar 3 — Every endpoint has a purpose + things make sense where they are (IA sanity & no orphans)
+7. **No orphans.** Every route / control / endpoint either has a live, sensible purpose or is removed (e.g., dead `handleUpsertTodayMd`; verify/retire legacy MyTasks). Things sit where a user expects them.
+8. **Consolidate & standardize what EXISTS (not new features):** a **DataPage shell** so Projects/Manuscripts/Grants/Decisions/Deadlines stop hand-rolling filters/sort/density/empty/width (§3 #2); the **shared row + field-editor** extended into the remaining forks — ListView/Deadlines/Personal (§3 #4/#5); **modal vs bottom-sheet defined once** (§3 #6); ProjectDetail's overlapping notes/comments/activity tabs made to make sense (§3 #8).
+9. **Mobile coherence** — task rows + controls audited at 360/390/768px (incl. the 768–1024 iPad-portrait nav split-brain), so nothing clips, overlaps, or silently disables on touch.
+
+### Secondary / candidate (flag — likely future rounds, not the polish focus)
+- The v55 **delegation workflow** UI (`waiting_on`/`promised_to`/…) + commitments — a real feature build, not polish; flag for a later round.
+- **ENG-only backlog** (not a *design* audit): the query-resource primitive, the canonical stage model + the **Narratives** data-contract break (stage colors can't match; `pub_date` vs `year`) — design should not polish broken semantics; I can queue these to `WORKPLAN.md`.
 
 ---
 
