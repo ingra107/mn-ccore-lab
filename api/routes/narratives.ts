@@ -16,7 +16,15 @@ export async function handleGetNarratives(env: Env): Promise<Response> {
     env.DB.prepare(
       "SELECT id, title, slug, category, stage, status, description, pi FROM projects WHERE status = 'active' ORDER BY category, title"
     ).all(),
-    env.DB.prepare('SELECT from_slug, to_slug, relationship_type FROM project_dependencies').all(),
+    // Slice D (2026-06-09): project_dependencies is now keyed on proj_* PKs
+    // (from_project_id / to_project_id). Resolve back to slugs via JOIN so the
+    // category-grouping logic below (which matches on project.slug) is unchanged.
+    env.DB.prepare(
+      `SELECT pf.slug AS from_slug, pt.slug AS to_slug, d.relationship_type
+       FROM project_dependencies d
+       JOIN projects pf ON pf.id = d.from_project_id
+       JOIN projects pt ON pt.id = d.to_project_id`,
+    ).all(),
     env.DB.prepare(
       "SELECT id, title, topics, author_slugs, year FROM publications WHERE year >= (CAST(strftime('%Y', 'now') AS INTEGER) - 3) ORDER BY year DESC"
     ).all(),

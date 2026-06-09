@@ -731,11 +731,26 @@ export async function handleDeleteProject(
   // Verified against schema: project_documents (project_id), milestones
   // (project_id), conference_submissions (project_id), submission_events
   // (project_id), regulatory_items (project_id), project_dependencies
-  // (from_slug/to_slug — slug-based, no project_id column). Pre-fix only
+  // (Slice D 2026-06-09: now keyed on from_project_id/to_project_id, proj_* PKs —
+  // see scripts/migrations/slice-d-dep-rekey.sql). Pre-fix only
   // comments/project_updates/tasks were handled, leaving the rest orphaned.
   // All wrapped in one batch() so D1 rolls back the whole cascade on any error
   // (B-CRIT-05 atomicity). project_id columns store either the canonical id OR
   // the slug, so every match is `= id OR = slug`.
+  //
+  // R3 (codex catch + builder verify, 2026-06-09): this is a SOFT delete (the
+  // applyMutation below stamps deleted_at; the row persists), so the FK
+  // ON DELETE CASCADE on project_dependencies does NOT fire here — only a HARD
+  // project delete cascades. This manual statement is what clears edges for a
+  // soft-deleted project, and it MUST key on the proj_* PK now (the old
+  // from_slug/to_slug columns no longer exist post-Slice-D). Pre-fix the broken
+  // slug statement would throw "no such column: from_slug" and — because batch()
+  // is atomic — POISON the ENTIRE cascade (silently, via the swallowing catch),
+  // leaving comments/docs/milestones/tasks orphaned too. The catch now FAILS
+  // LOUD: a cascade failure aborts the delete with a 500 instead of leaving the
+  // DB half-cleaned. The edge match keys on existing.id (the canonical proj_*);
+  // a belt-and-suspenders OR existing.slug arm is omitted because edges store
+  // only proj_* PKs after Slice D.
   try {
     await env.DB.batch([
       env.DB.prepare('DELETE FROM comments WHERE project_id = ? OR project_id = ?').bind(existing.id, existing.slug),
@@ -745,11 +760,14 @@ export async function handleDeleteProject(
       env.DB.prepare('DELETE FROM conference_submissions WHERE project_id = ? OR project_id = ?').bind(existing.id, existing.slug),
       env.DB.prepare('DELETE FROM submission_events WHERE project_id = ? OR project_id = ?').bind(existing.id, existing.slug),
       env.DB.prepare('DELETE FROM regulatory_items WHERE project_id = ? OR project_id = ?').bind(existing.id, existing.slug),
-      env.DB.prepare('DELETE FROM project_dependencies WHERE from_slug = ? OR to_slug = ? OR from_slug = ? OR to_slug = ?').bind(existing.slug, existing.slug, existing.id, existing.id),
+      env.DB.prepare('DELETE FROM project_dependencies WHERE from_project_id = ? OR to_project_id = ?').bind(existing.id, existing.id),
       env.DB.prepare('UPDATE tasks SET project_id = NULL, updated_at = datetime(\'now\') WHERE (project_id = ? OR project_id = ?) AND deleted_at IS NULL').bind(existing.id, existing.slug),
     ]);
   } catch (e) {
+    // R3: fail loud — a swallowed cascade failure leaves orphaned child rows.
+    // Abort the delete so the caller sees it instead of a silently half-deleted project.
     console.error('project cascade-clean failed:', e);
+    return error(`project cascade-clean failed: ${(e as Error).message}`, 500);
   }
 
   // Soft-delete via applyMutation — stamps last_mutation_id + records in processed_mutations.

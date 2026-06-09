@@ -164,39 +164,32 @@ describe('handleDeleteProject — cascade-clean uses DB.batch() (B-CRIT-05)', ()
     expect((env.DB.batch as ReturnType<typeof vi.fn>).mock.calls).toHaveLength(0)
   })
 
-  it('swallows batch() error — continues to idempotency check (catch block fires)', async () => {
-    // This test confirms the try/catch around batch() is still in place.
-    // When D1 batch fails in production, the cascade is a best-effort cleanup;
-    // the soft-delete mutation via applyMutation still proceeds.
-    //
-    // NOTE on rollback semantics: in a real D1 runtime, if batch() throws,
-    // D1 has already rolled back all 3 statements. The catch block here means
-    // the function *continues* — it does NOT abort the delete. This is
-    // intentional: losing cascade rows is recoverable; blocking the delete
-    // (which stamps deleted_at via applyMutation) would leave the project
-    // alive in both D1 and brain.db.
+  it('FAILS LOUD on batch() error — aborts the delete with 500, does NOT proceed (R3, Slice D 2026-06-09)', async () => {
+    // R3 re-judgment (2026-06-09): the prior contract SWALLOWED a batch() failure
+    // and continued the soft-delete, on the theory that "losing cascade rows is
+    // recoverable." That theory is false: batch() is ATOMIC, so a single broken
+    // statement (e.g. the pre-Slice-D from_slug/to_slug reference to a renamed
+    // column) rolls back the WHOLE cascade — silently orphaning comments, docs,
+    // milestones, and tasks while the project is stamped deleted. A half-deleted
+    // project with dangling children is worse than a blocked delete. The handler
+    // now returns 500 and does NOT call applyMutation on cascade failure.
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 
     const env = makeEnv({ batchThrows: true })
 
-    // Function should not throw — error is caught internally
     const response = await handleDeleteProject('proj_TEST', makeUser(), env, makeRequest())
 
-    // console.error called with the cascade failure message
+    // console.error still logs the cascade failure (observability retained).
     expect(consoleSpy).toHaveBeenCalledWith(
       'project cascade-clean failed:',
       expect.any(Error),
     )
 
-    // applyMutation still called — soft-delete still proceeds
-    expect(mockApplyMutation).toHaveBeenCalledTimes(1)
-    expect(mockApplyMutation).toHaveBeenCalledWith(
-      env,
-      expect.objectContaining({ op: 'delete', table: 'projects', record_id: 'proj_TEST' }),
-    )
+    // applyMutation MUST NOT be called — the soft-delete is aborted.
+    expect(mockApplyMutation).not.toHaveBeenCalled()
 
-    // Response is still a successful delete (not an error)
-    expect(response.status).toBe(200)
+    // Response is a 500 error, not a successful delete.
+    expect(response.status).toBe(500)
 
     consoleSpy.mockRestore()
   })
