@@ -1,8 +1,40 @@
-# Hub Workplan — updated 2026-06-04
+# Hub Workplan — updated 2026-06-09
 
 > Single source of truth for **remaining** work. Completed items are a compact ledger at the
 > bottom — do not re-expand them. Supersedes the Apr-28 synthesis, May-5 codex plan,
 > design-handoff TICKETS, and hub-future-ideas (all historical now).
+
+---
+
+## ▶▶▶ PARALLEL WORKSTREAMS (2026-06-09) — three independent tracks; nothing here is lost
+
+Per Nick (2026-06-09), the post-project-identity work splits into three **parallel-capable** workstreams. Keep them distinct — don't conflate. A is active; B + C are queued and can run alongside.
+
+### A — Design polish round (ACTIVE — out for Claude Design)
+Visual polish + workflow efficiency + "no dead ends" + delight. North-star: a busy PI sits down and *falls in love*. **Width consistency = Tier-1.** The date-picker "first click surfaces the calendar grid AND the +1d/+1wk presets together" is the archetype of the click-efficiency class to hunt.
+- **Brief:** `docs/design-briefs/2026-06-09-next-design-audit-brief.md`
+- **Prompt (paste into Claude Design):** `docs/design-briefs/2026-06-09-next-design-audit-PROMPT.md`
+- **Codex audit (provenance):** `docs/design-briefs/2026-06-09-codex-hub-simplify-audit.md`
+- **Next:** Nick re-snapshots the repo in Claude Design → pastes the prompt → Design returns `TICKETS.md` → we implement.
+
+### B — "Today driver" session (QUEUED — its own dedicated session; ⛔ DEFERRED from A)
+The operating-day surface restructure. **Do NOT touch in the design-polish round.** Scope:
+- **The plan split-brain (Codex #1):** Today plan = `localStorage` (`useTodayState.ts:29`); MyTasks writes that *same* localStorage blob (`MyTasks/index.tsx:166`); PB Sector uses a *separate* D1 `dailyPlan` (`PBSector.tsx:102`). → ONE durable, synced plan. Nick: *"not ideal… but that's where we are; its own session."*
+- **The "one daily cockpit" IA:** Today vs My Hub/Personal vs PB Sector all show overdue/due-today strips with different data + different plan models. Decide the single morning-triage surface; what each other becomes.
+- **Meeting-capture persistence:** Today's meeting notes are local-only (`Timeline.tsx:69`) and vanish on refresh; the real persisted mutation lives only on MeetingDetail. Make capture = save.
+- Detail: the Codex audit (Primitive #1 + Works-for-Nick §C) + the brief's ⛔-DEFERRED items.
+
+### C — ENG-only backlog (QUEUED — parallelizable; not a design concern)
+Pure-engineering loose ends from the Codex audit; can run alongside A/B.
+- **Dead `handleUpsertTodayMd`** — exported, never registered (`api/routes/pb-today.ts`; POST retired 2026-05-05) → delete.
+- **Narratives data-contract break** — API emits lowercase stage + `year`; UI expects Title-Case + `pub_date` → stage colors can't match, dates mismatch (`api/routes/narratives.ts:37,107`; `NarrativesPage.tsx:16,184`). Fix the contract or shelve the page.
+- **Query-Resource primitive** — many hooks bypass `fetchApi`'s typed errors and silently return `[]`/`null` (`useApiData.ts:271,301,515,1729`); `QueryState` is opt-in → real-empty vs error-empty indistinguishable.
+- **Canonical research-stage model** — stage label/color/API-vocab drift across ProjectDetail / narratives / NarrativesPage.
+- **Legacy MyTasks** (`UnifiedMyTasks.tsx` shim) — verify no external caller; delete if dead.
+- **Personal uses root gated paths, not `PATHS`** (`PersonalPage.tsx:974`).
+- Detail: Codex audit §B loose-ends table + §A #3/#7.
+
+> The 2026-06-05 "NEXT SESSION" block below is **largely RESOLVED** — project_id fix deployed (`7653955d`), the `9a007fd1` Today row fixes deployed, Slice C/D/E deployed (`90626636`, 2026-06-09). DH-5 (Key Links visual verify) is now folded into Workstream A. Kept below for any straggler context only.
 
 ---
 
