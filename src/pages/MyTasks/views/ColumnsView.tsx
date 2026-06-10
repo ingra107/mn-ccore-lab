@@ -15,6 +15,7 @@ import { TaskRow as SharedTaskRow } from '../../../components/tasks/TaskRow'
 import { Chip } from '../primitives'
 import { InlineDetail } from '../components/InlineDetail'
 import { OverdueBanner } from './OverdueBanner'
+import { NoTasksMatch, LaneEmpty } from './MyTasksEmpty'
 import {
   GROUP_META, GROUP_ORDER,
   ACCENT_ORANGE,
@@ -78,9 +79,7 @@ export function ColumnsView({ filtered, byGroup, selected, toggleSelect, onToggl
                 </span>
               </div>
               <div style={{ background: 'var(--task-panel-bg)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8, overflow: 'hidden' }}>
-                {tasks.length === 0 && (
-                  <div style={{ padding: '20px 8px', textAlign: 'center', fontSize: 11, color: INK_DIM, fontStyle: 'italic' }}>nothing here</div>
-                )}
+                {tasks.length === 0 && <LaneEmpty compact />}
                 {tasks.map((t) => (
                   <MyTasksRow
                     key={t.id}
@@ -101,9 +100,7 @@ export function ColumnsView({ filtered, byGroup, selected, toggleSelect, onToggl
           )
         })}
       </div>
-      {filtered.length === 0 && (
-        <div style={{ padding: 40, textAlign: 'center', color: INK_DIM, fontSize: 13, fontStyle: 'italic' }}>no tasks match</div>
-      )}
+      {filtered.length === 0 && <NoTasksMatch />}
     </div>
   )
 }

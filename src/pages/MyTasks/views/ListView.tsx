@@ -27,6 +27,7 @@ import {
 } from '../constants'
 import { isOverdue } from '../../../lib/dateUtils'
 import { OverdueBanner } from './OverdueBanner'
+import { NoTasksMatch } from './MyTasksEmpty'
 import type { TaskRow } from '../../../lib/api'
 
 interface ListViewProps {
@@ -126,9 +127,7 @@ export function ListView({ filtered, selected, toggleSelect, setSelected, setDra
           <div className="list-view-col-owner">Owner</div>
           <div className="list-view-col-links" style={{ textAlign: 'right' }}>Links</div>
         </div>
-        {filtered.length === 0 && (
-          <div style={{ padding: 40, textAlign: 'center', color: INK_DIM, fontSize: 13, fontStyle: 'italic' }}>no tasks match</div>
-        )}
+        {filtered.length === 0 && <NoTasksMatch />}
         {filtered.length > 0 && (
           <div style={{ height: virtualizer.getTotalSize(), width: '100%', position: 'relative' }}>
             {virtualizer.getVirtualItems().map((row) => {

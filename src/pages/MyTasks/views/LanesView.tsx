@@ -11,6 +11,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Chip } from '../primitives'
 import { MyTasksRow } from './ColumnsView'
 import { OverdueBanner } from './OverdueBanner'
+import { LaneEmpty } from './MyTasksEmpty'
 import {
   GROUP_META, GROUP_ORDER,
   ACCENT_GOLD, ACCENT_CORAL,
@@ -84,9 +85,7 @@ export function LanesView({ byGroup, selected, toggleSelect, onToggleComplete, e
             </button>
             {!isCollapsed && (
               <div>
-                {visible.length === 0 && (
-                  <div style={{ padding: '12px 16px', fontSize: 12, color: INK_DIM, fontStyle: 'italic' }}>nothing here</div>
-                )}
+                {visible.length === 0 && <LaneEmpty />}
                 {visible.map((t) => (
                   <MyTasksRow
                     key={t.id}
