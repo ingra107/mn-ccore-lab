@@ -1063,7 +1063,7 @@ function ProjectDetailInner({ project }: InnerProps) {
               </div>
             </div>
             {pendingTasks.length === 0 ? (
-              <div style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.7, padding: '12px 0' }}>
+              <div style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.85, padding: '12px 0' }}>
                 No open tasks.{' '}
                 <button
                   type="button"
@@ -1150,7 +1150,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                 )}
               </div>
               {recentActivity.length === 0 ? (
-                <p style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.7, margin: 0, padding: '4px 0' }}>
+                <p style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.85, margin: 0, padding: '4px 0' }}>
                   No activity yet.
                 </p>
               ) : (

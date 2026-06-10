@@ -76,7 +76,7 @@ export function ColumnsView({ filtered, byGroup, selected, toggleSelect, onToggl
                 <span style={{ fontSize: 14 }}>{meta.icon}</span>
                 <h3 style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: meta.color, margin: 0 }}>{meta.label}</h3>
                 <span style={{ fontSize: 11, color: INK_DIM, marginLeft: 'auto' }}>
-                  {incomplete}{tasks.length > incomplete && <span style={{ opacity: 0.5 }}> · {tasks.length - incomplete}✓</span>}
+                  {incomplete}{tasks.length > incomplete && <span> · {tasks.length - incomplete}✓</span>}
                 </span>
               </div>
               <div style={{ background: 'var(--task-panel-bg)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8, overflow: 'hidden' }}>

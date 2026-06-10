@@ -85,7 +85,7 @@ export default function EntityNotFound({
 
         {siblings.length > 0 && (
           <div style={{ marginTop: '1.75rem' }}>
-            <p style={{ fontSize: '11px', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--slate)', opacity: 0.75, marginBottom: '0.5rem' }}>
+            <p style={{ fontSize: '11px', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--slate)', opacity: 0.85, marginBottom: '0.5rem' }}>
               Recent {lower}s
             </p>
             <div className="flex flex-col gap-1">

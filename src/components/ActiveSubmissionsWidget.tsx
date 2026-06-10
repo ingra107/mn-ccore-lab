@@ -93,7 +93,7 @@ function MiniCard({ row }: { row: ActiveSubmissionRow }) {
           </span>
         )}
         {!row.revision_due_date && row.days_since_submission !== null && row.days_since_submission !== undefined && (
-          <span className="ml-auto" style={{ color: 'var(--slate)', opacity: 0.75, flexShrink: 0 }}>
+          <span className="ml-auto" style={{ color: 'var(--slate)', opacity: 0.85, flexShrink: 0 }}>
             {row.days_since_submission}d ago
           </span>
         )}
@@ -114,7 +114,7 @@ export default function ActiveSubmissionsWidget() {
         <h3 style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ink)', margin: 0 }}>
           Active submissions
         </h3>
-        <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.75 }}>
+        <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.85 }}>
           {rows.length === 1 ? '1 paper' : `${rows.length} papers`}
         </span>
       </div>

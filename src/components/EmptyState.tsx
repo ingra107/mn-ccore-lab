@@ -58,7 +58,7 @@ export default function EmptyState({ icon, title, subtitle, action, compact = fa
             fontSize: compact ? 12 : 13,
             fontWeight: 400,
             color: 'var(--slate)',
-            opacity: 0.75,
+            opacity: 0.85,
             margin: 0,
             marginTop: 6,
             maxWidth: 280,
