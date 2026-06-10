@@ -704,8 +704,16 @@ export async function handleGetTaskDetail(taskId: string, request: Request, env:
     text: u.content,
     kind: 'note' as const,
   }));
+  // De-dupe the "Posted note on X: Y" echo. handlePostTaskUpdate writes the
+  // note into task_updates AND logs a `task_update` activity row quoting the
+  // same content. Both sources merge into this one drawer feed, so the note
+  // rendered twice (once as kind:'note', once as kind:'event'). The activity
+  // echo stays a legitimate ENTRY on the global ActivityPage timeline and the
+  // task-scoped /activity feed (TaskActivityFeed) — it's only redundant HERE,
+  // where the real note already appears. Filtering at read also retroactively
+  // suppresses legacy echo rows already persisted in activity_log.
   const eventUpdates = (activityRes.results as ActivityRow[])
-    .filter((a) => a.description)
+    .filter((a) => a.description && a.type !== 'task_update')
     .map((a) => ({
       id: a.id,
       when: a.timestamp,
