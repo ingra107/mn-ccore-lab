@@ -2,7 +2,7 @@ import { useParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import {
-  ArrowLeft, CheckCircle2, Circle, Clock, AlertTriangle,
+  CheckCircle2, Circle, Clock, AlertTriangle,
   Calendar, ListChecks, Activity, Flag, Printer,
 } from 'lucide-react'
 import { usePageMeta } from '../hooks/usePageMeta'
@@ -16,6 +16,7 @@ import { PRIORITY_COLORS } from '../lib/taskConstants'
 import { getMeetingFacilitator } from '../lib/facilitator'
 import { PATHS } from '../constants/paths'
 import { staggerContainer, staggerItem } from '../lib/animations'
+import EntityNotFound from '../components/EntityNotFound'
 
 interface PrepData {
   meeting: { id: string; title: string; date: string; status: string; attendees: string | null }
@@ -59,15 +60,12 @@ export default function MeetingPrep() {
 
   if (!data) {
     return (
-      <div className="content-container" style={{ paddingTop: '2rem' }}>
-        <Link to={PATHS.meetings} className="inline-flex items-center gap-2 mb-6"
-          style={{ fontSize: '14px', color: 'var(--slate)', textDecoration: 'none' }}>
-          <ArrowLeft size={16} /> Back to Meetings
-        </Link>
-        <h1 style={{ fontWeight: 600, fontSize: '1.75rem', color: 'var(--ink)' }}>
-          Meeting not found
-        </h1>
-      </div>
+      <EntityNotFound
+        entityLabel="Meeting"
+        reference={id}
+        artVariant="meetings"
+        backTo={{ to: PATHS.meetings, label: 'Back to Meetings' }}
+      />
     )
   }
 

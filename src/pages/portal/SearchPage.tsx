@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
   Search, CheckSquare, FolderKanban, Users, Lightbulb,
@@ -242,7 +242,10 @@ function TypeBadge({ result }: { result: SearchResult }) {
 }
 
 export default function SearchPage() {
-  const [query, setQuery] = useState('')
+  const [searchParams] = useSearchParams()
+  // S8: seed the box from ?q= so EntityNotFound's "Search for X" link lands
+  // on a real query (e.g. arriving from a dead project/meeting slug).
+  const [query, setQuery] = useState(() => searchParams.get('q') ?? '')
   const [debouncedQuery, setDebouncedQuery] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
   const [recentSearches, setRecentSearches] = useState(getRecentSearches)

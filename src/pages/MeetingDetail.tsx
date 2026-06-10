@@ -4,7 +4,6 @@ import Breadcrumb from '../components/Breadcrumb'
 import RoundPrompt from '../components/RoundPrompt'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  ArrowLeft,
   Calendar,
   CheckCircle2,
   Circle,
@@ -53,6 +52,8 @@ import { formatLongDate, formatShortDate } from '../lib/dateUtils'
 import { getMeetingFacilitator } from '../lib/facilitator'
 import { PATHS } from '../constants/paths'
 import SmartCompose from '../components/SmartCompose'
+import HeartbeatLine from '../components/HeartbeatLine'
+import EntityNotFound from '../components/EntityNotFound'
 
 function buildMemberHoverData(slug: string): HoverCardData {
   const p = getPersonInfo(slug)
@@ -228,24 +229,20 @@ export default function MeetingDetail() {
 
   if (isLoading) {
     return (
-      <div className="content-container" style={{ paddingTop: '4rem', textAlign: 'center' }}>
-        <div className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin mx-auto"
-          style={{ borderColor: 'var(--gold)', borderTopColor: 'transparent' }} />
+      <div className="content-container" style={{ paddingTop: '4rem', display: 'flex', justifyContent: 'center', opacity: 0.85 }}>
+        <HeartbeatLine variant="slow" color="var(--gold)" strokeWidth={1.5} width="100%" height={48} />
       </div>
     )
   }
 
   if (!meeting) {
     return (
-      <div className="content-container" style={{ paddingTop: '2rem', paddingBottom: '4rem' }}>
-        <Link to={PATHS.meetings} className="inline-flex items-center gap-2 mb-6"
-          style={{ fontSize: '14px', color: 'var(--slate)', textDecoration: 'none' }}>
-          <ArrowLeft size={16} /> Back to Meetings
-        </Link>
-        <h1 style={{ fontWeight: 600, fontSize: '1.75rem', color: 'var(--ink)' }}>
-          Meeting not found
-        </h1>
-      </div>
+      <EntityNotFound
+        entityLabel="Meeting"
+        reference={id}
+        artVariant="meetings"
+        backTo={{ to: PATHS.meetings, label: 'Back to Meetings' }}
+      />
     )
   }
 

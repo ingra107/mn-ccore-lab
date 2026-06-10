@@ -41,6 +41,7 @@ import TaskCard from '../components/tasks/TaskCard'
 import TaskGridView from '../components/tasks/TaskGridView'
 import CreateTaskModal from '../components/tasks/CreateTaskModal'
 import TaskDetailPanel from '../components/tasks/TaskDetailPanel'
+import EntityNotFound from '../components/EntityNotFound'
 import type { Project } from '../data/types'
 import type { TaskRow } from '../lib/api'
 import RevisionTracker from '../components/RevisionTracker'
@@ -146,32 +147,13 @@ export default function ProjectDetail() {
 
   if (!project) {
     return (
-      <div className="content-container" style={{ paddingTop: '2rem', paddingBottom: '4rem' }}>
-        <Link
-          to={PATHS.projects}
-          className="inline-flex items-center gap-2 mb-6"
-          style={{
-            fontSize: '14px',
-            color: 'var(--slate)',
-            textDecoration: 'none',
-          }}
-        >
-          <ArrowLeft size={16} />
-          Back to Pipeline
-        </Link>
-        <h1
-          style={{
-            fontWeight: 600,
-            fontSize: '1.75rem',
-            color: 'var(--ink)',
-          }}
-        >
-          Project not found
-        </h1>
-        <p style={{ color: 'var(--slate)', marginTop: '0.5rem' }}>
-          No project matches the slug "{slug}".
-        </p>
-      </div>
+      <EntityNotFound
+        entityLabel="Project"
+        reference={slug}
+        artVariant="grants"
+        backTo={{ to: PATHS.projects, label: 'Back to Pipeline' }}
+        siblings={projects.slice(0, 5).map((p) => ({ label: p.title, to: PATHS.project(p.slug) }))}
+      />
     )
   }
 
