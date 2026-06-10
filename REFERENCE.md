@@ -23,7 +23,7 @@ shims in `src/App.tsx` placed outside `RequireAuth`.
 | Calendar | `/portal/calendar` | — |
 | Analytics | `/portal/analytics`, `/portal/pi-analytics`, `/portal/personal` | — |
 | Team (portal) | `/portal/team/:slug`, `/portal/team/:slug/trajectory` | Phase 36c — keeps chrome for logged-in users |
-| Other | `/portal/settings`, `/portal/search`, `/portal/activity`, `/portal/narratives`, `/portal/sessions`, `/portal/ask`, `/portal/digest`, `/portal/pb`, `/portal/mentee-milestones` | — |
+| Other | `/portal/settings`, `/portal/search`, `/portal/activity`, `/portal/narratives`, `/portal/sessions`, `/portal/ask`, `/portal/digest`, `/portal/mentee-milestones` | `/portal/pb` retired 2026-06-10 (IA-1) |
 | **Public (marketing)** | `/`, `/team`, `/team/:slug`, `/team/:slug/trajectory`, `/nick`, `/nate`, `/publications`, `/publications/:id`, `/network`, `/contact`, `/pulse` | Layout chrome — no auth |
 | **Redirects** | `/dashboard`, `/projects/:slug`, ... → `/portal/...` | `<Navigate>` shims; outside `RequireAuth` so bookmarks bounce pre-auth |
 
@@ -57,7 +57,7 @@ server-side via X-API-Key + `REQUIRE_AUTH` + JWT verify.
 | workflow_templates | 3+ | Custom project stage templates |
 | email_drafts | dynamic | Email draft status synced from brain.db (schema v37) |
 | file_activity_daily | dynamic | Aggregated daily file activity from brain.db (schema v37) |
-| daily_plans | dynamic | PB Sector daily plans (star/focus/quick/evening tasks) |
+| daily_plans | RETIRED 2026-06-10 | code path removed (IA-1; plan = tasks.planned_for/plan_slot/plan_rank); table drop pending 24h dogfood (decision: PB `Context/Decisions/2026-06-10-daily-plans-retirement.md`) |
 | pomodoro_sessions | dynamic | Focus sessions synced from brain.db |
 | daily_reflections | dynamic | End-of-day reflections |
 | dispatch_queue | dynamic | Claude action items from Hub |

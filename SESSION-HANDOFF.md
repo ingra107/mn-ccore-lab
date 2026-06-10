@@ -1,3 +1,43 @@
+# Session Handoff — 2026-06-10 (PM, arc 2) — TODAY-COCKPIT IA CONSOLIDATION + pb-schema 0.4.0
+
+## ✅ IA consolidation EXECUTED + pb-schema 0.4.0 adopted (same session as Phase 1 below)
+
+- **IA-1 — daily_plans RETIRED** (`433b2083`, −1434 lines, substrate-swap gated): audit verdict
+  DEAD (1 prod row from 2026-03-31, sidebar flag already false, 0 PB CLI refs, nothing to
+  migrate). Removed: `/portal/pb` PBSector page + nav/paths, 8 API routes (command-center, plan
+  CRUD/reorder/promote/history, reflection, pomodoro start/complete) + handlers + orphaned hooks
+  (`usePBMutations.ts` deleted) + monitors that probed the dead page (deep-audit 11.G/11.H,
+  inspection-scanner, feature-registry, 3 Playwright specs); route-contract 239→231. KEPT:
+  capture/defer routes, dispatch lane, `pb/sessions*` (pomodoro telemetry, 788 rows), pb-today.
+  **D1 `daily_plans`+`daily_reflections` NOT dropped** — 24h dogfood first; brain.db follow-up
+  task `task_01KTSB808F8SGNAYT2EDR42M1D` (due 06-11) owns the drop. Decision doc:
+  PB `Context/Decisions/2026-06-10-daily-plans-retirement.md`; I37 matrix:
+  PB `Context/Topics/substrate-swaps/daily-plans-retirement.yaml`. IA-2 (Personal already on the
+  todayPlan primitive — no local plan state found), IA-3 (today_md = KEEP, artifact), IA-4
+  (pomodoro KEEP / intention+gratitude+reflections NOT migrated, 1 row each, M5 is future home).
+- **pb-schema 0.4.0 adopted** (`8fc11923`, submodule 6f61981→b09cf29 per the PB session's
+  request): `notes` wire alias RETIRED + `acknowledged_at/by` ADDED to the tasks contract.
+  Adaptations: PWA mobile create stops sending `notes` (contract now rejects it — M5 D1 wire half
+  force-resolved); notes-leak test asserts reject-outright (supersedes accept-and-strip);
+  brain-db-schema-snapshot regenerated (acknowledged_* = hub_only). **HUB-7 FIXED** —
+  `handleAcknowledgeTask` routes through `applyMutation` (was contract-blocked).
+- **NEW from Nick (live, queued):** folder/Obsidian links are unreliable — "sometimes it does
+  something and other times it doesn't... still haven't had successful opening of a folder or
+  obsidian file" (workon for R03 DID work). Wants ONE uniform link presentation everywhere
+  (editor/inline/feeds) with TODAY.md's vocabulary: folder, workon, obsidian, gmail thread,
+  draft links. → **top of the next-session queue** (debug per-surface URI building/encoding vs
+  the working workon verb + unify on `useProtocolLaunch`/`classifyUrl` chips).
+
+### ▶ NEXT (arc-2 additions; Phase-1 NEXT list below still applies)
+1. **Folder-links reliability + uniform chips** (Nick's live ask — above).
+2. **2026-06-11: the 24h dogfood task** — if clean, DROP daily_plans + daily_reflections
+   (snapshot first), fill the decision doc's dogfood table, flip the I37 yaml to retired.
+3. PB session: regen-side commits were held for the submodule bump — now landed; they commit
+   schema_dsl/schema_contract/aux_writers + mirror `_HUB_ONLY_FIELDS` (acknowledged_*) in
+   janitor_dead_letters.py if their drift gate needs it.
+
+---
+
 # Session Handoff — 2026-06-10 (PM) — UNIFIED ACTIVITY TIMELINE PHASE 1
 
 ## ✅ activity_entries (schema v77) SHIPPED + DEPLOYED — deploy `70e23a6a` on `3c1a493d`
