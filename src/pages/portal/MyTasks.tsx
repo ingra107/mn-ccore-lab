@@ -14,6 +14,7 @@ import InlineSelect from '../../components/InlineSelect'
 import TaskGridView from '../../components/tasks/TaskGridView'
 import TaskTitle from '../../components/tasks/TaskTitle'
 import { isOverdue } from '../../lib/dateUtils'
+import { parseDbUtc } from '../../lib/time'
 // Alternate views are lazy — most users open MyTasks in 'list' (grid).
 const TaskBoardView = lazy(() => import('../../components/tasks/TaskBoardView'))
 const TaskStandUpView = lazy(() => import('../../components/tasks/TaskStandUpView'))
@@ -237,7 +238,7 @@ export default function MyTasks() {
       case 'no_date': return base.filter(t => !t.due_date)
       case 'stale': {
         const stale = new Date(now.getTime() - labPrefs.taskStaleDays * 86400000)
-        return base.filter(t => t.status === 'in_progress' && new Date(t.updated_at || t.created_at) < stale)
+        return base.filter(t => t.status === 'in_progress' && parseDbUtc(t.updated_at || t.created_at) < stale)
       }
       default: return base
     }
@@ -347,7 +348,7 @@ export default function MyTasks() {
       no_date: active.filter(t => !t.due_date).length,
       stale: (() => {
         const stale = new Date(now.getTime() - labPrefs.taskStaleDays * 86400000)
-        return active.filter(t => t.status === 'in_progress' && new Date(t.updated_at || t.created_at) < stale).length
+        return active.filter(t => t.status === 'in_progress' && parseDbUtc(t.updated_at || t.created_at) < stale).length
       })(),
       waiting_on: allTasks.filter(t => !t.completed && (t.waiting_on || (t.assignee !== piSlug && (t.status === 'todo' || t.status === 'in_progress' || t.status === 'waiting_external')))).length,
     }
@@ -485,7 +486,7 @@ export default function MyTasks() {
   // Task completion streak
   const streak = useMemo(() => {
     const completed = tasks.filter(t => t.completed && t.completed_at).map(t => {
-      const d = new Date(t.completed_at!)
+      const d = parseDbUtc(t.completed_at!)
       return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
     })
     if (completed.length === 0) return 0

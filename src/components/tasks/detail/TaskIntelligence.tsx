@@ -3,6 +3,7 @@ import { Brain, TrendingUp } from 'lucide-react'
 import { useProjectUpdates } from '../../../hooks/useApiData'
 import { useToast } from '../../../hooks/useToast'
 import HermesMark from '../../HermesMark'
+import { parseDbUtc } from '../../../lib/time'
 import type { TaskRow } from '../../../lib/api'
 
 interface TaskIntelligenceProps {
@@ -40,7 +41,7 @@ function computeRelevance(task: TaskRow): { score: number; rationale: string } {
     reasons.push('waiting on external')
   }
 
-  const updated = task.updated_at ? new Date(task.updated_at) : null
+  const updated = task.updated_at ? parseDbUtc(task.updated_at) : null
   if (updated) {
     const ageDays = (now.getTime() - updated.getTime()) / (1000 * 60 * 60 * 24)
     if (ageDays > 7 && task.status !== 'done') {
@@ -72,7 +73,7 @@ function bucketUpdatesByWeek(updates: { created_at: string }[], weeks: number): 
   const now = Date.now()
   const weekMs = 7 * 24 * 60 * 60 * 1000
   for (const u of updates) {
-    const t = new Date(u.created_at).getTime()
+    const t = parseDbUtc(u.created_at).getTime()
     if (Number.isNaN(t)) continue
     const ageWeeks = Math.floor((now - t) / weekMs)
     if (ageWeeks >= 0 && ageWeeks < weeks) {

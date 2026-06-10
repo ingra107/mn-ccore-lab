@@ -15,6 +15,7 @@ import type { MenteeMilestoneRow } from '../../hooks/useApiData'
 import { useCreateMenteeMilestone, useUpdateMenteeMilestone } from '../../hooks/useMutations'
 import { getPersonInfo } from '../../data/team'
 import { formatShortDate, isOverdue, getDaysAgo } from '../../lib/dateUtils'
+import { parseDbUtc } from '../../lib/time'
 import { isProductionVisible } from '../../lib/isProductionVisible'
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 
@@ -93,7 +94,7 @@ export default function MenteeMilestonesPage() {
     ]
     for (const [slug, entries] of perActorEntries) {
       if (entries.length > 0 && entries[0].timestamp) {
-        const ts = new Date(entries[0].timestamp).getTime()
+        const ts = parseDbUtc(entries[0].timestamp).getTime()
         if (!isNaN(ts)) {
           map.set(slug, Math.floor((now - ts) / 86400000))
         }

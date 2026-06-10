@@ -38,6 +38,7 @@ import { useScrollReveal } from '../../hooks/useScrollReveal'
 import { useLabPrefs } from '../../hooks/useLabPrefs'
 import { toApiStage, stageIndex } from '../../lib/stageNormalize'
 import { PATHS } from '../../constants/paths'
+import { parseDbUtc } from '../../lib/time'
 
 // S4 (Nick, 2026-06-09): a manuscript = a project whose canonical stage is
 // >= writing (writing / submitted / revisions / accepted / published). The
@@ -760,7 +761,7 @@ export default function ManuscriptsPage() {
                 // M-11: canonical names live on the Project type. created_at
                 // backfills the year if published_year is missing.
                 const journal = p.journal_name || ''
-                const year = p.published_year || (p.created_at ? new Date(p.created_at).getFullYear() : '')
+                const year = p.published_year || (p.created_at ? parseDbUtc(p.created_at).getFullYear() : '')
                 const doi = p.doi
                 return (
                   <div

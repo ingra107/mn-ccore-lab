@@ -20,6 +20,7 @@ import { staggerContainer, staggerItem } from '../../lib/animations'
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 import { PATHS } from '../../constants/paths'
 import { formatRelativeTime } from '../../lib/dateUtils'
+import { parseDbUtc } from '../../lib/time'
 import { getPersonInfo, getAllMembers } from '../../data/team'
 
 interface SearchResult {
@@ -368,7 +369,7 @@ export default function SearchPage() {
       const cutoff = Date.now() - (timeFilter === '7d' ? 7 : 30) * 86400_000
       out = out.filter(r => {
         if (!r.timestamp) return false
-        return new Date(r.timestamp).getTime() >= cutoff
+        return parseDbUtc(r.timestamp).getTime() >= cutoff
       })
     }
     if (statusFilter !== 'all') {

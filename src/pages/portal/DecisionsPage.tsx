@@ -26,6 +26,7 @@ import { useUndoToast } from '../../components/UndoToast'
 import { useProjects } from '../../hooks/useApiData'
 import { getPersonInfo } from '../../data/team'
 import { formatShortDate, formatRelativeTime } from '../../lib/dateUtils'
+import { parseDbUtc } from '../../lib/time'
 import { parseTagsString } from '../../lib/tagUtils'
 import { SENTIMENT_CONFIG } from '../../components/SentimentBadge'
 import { PATHS } from '../../constants/paths'
@@ -70,7 +71,7 @@ function DecisionTimeline({
     const sorted = [...decisions].sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''))
     const buckets = new Map<string, DecisionRow[]>()
     for (const d of sorted) {
-      const dt = new Date(d.created_at)
+      const dt = parseDbUtc(d.created_at)
       const key = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}`
       const list = buckets.get(key) ?? []
       list.push(d)
@@ -245,7 +246,7 @@ function ReviewCard({
     ? projects.find((p) => p.slug === decision.project_slug)?.title
     : null
   const days = Math.floor(
-    (new Date().getTime() - new Date(decision.created_at).getTime()) /
+    (new Date().getTime() - parseDbUtc(decision.created_at).getTime()) /
       (1000 * 60 * 60 * 24)
   )
 

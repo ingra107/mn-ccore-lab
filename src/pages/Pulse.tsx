@@ -12,6 +12,7 @@ import {
 import { useGrantTimeline } from '../hooks/useGrantTimeline'
 import { isProjectActive } from '../lib/taskConstants'
 import { isOverdue } from '../lib/dateUtils'
+import { parseDbUtc } from '../lib/time'
 import { formatBrandName } from '../components/BrandName'
 import HeartbeatLine from '../components/HeartbeatLine'
 import PulseScene from '../components/pulse/PulseScene'
@@ -68,7 +69,7 @@ export default function Pulse() {
     const cutoff = new Date()
     cutoff.setDate(cutoff.getDate() - 7)
     return tasks.filter(
-      (t) => t.completed && t.updated_at && new Date(t.updated_at) > cutoff,
+      (t) => t.completed && t.updated_at && parseDbUtc(t.updated_at) > cutoff,
     ).length
   }, [tasks])
   const health = healthData?.summary

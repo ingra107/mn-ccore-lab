@@ -11,6 +11,7 @@ import ActivityHeatmap from '../../components/ActivityHeatmap'
 import { staggerContainer, staggerItem } from '../../lib/animations'
 import { useTasks, useProjects, useIdeas, useActivity, useProjectHealth } from '../../hooks/useApiData'
 import { formatShortDate, localDateKey, isOverdue } from '../../lib/dateUtils'
+import { parseDbUtc } from '../../lib/time'
 import { useAuth } from '../../hooks/useAuth'
 import { getPersonInfo } from '../../data/team'
 import Avatar from '../../components/Avatar'
@@ -181,7 +182,7 @@ export default function AnalyticsPage() {
       { label: '2m+', max: Infinity, count: 0, fill: 'var(--maroon)' },
     ]
     for (const t of active) {
-      const age = Math.floor((now.getTime() - new Date(t.created_at).getTime()) / 86400000)
+      const age = Math.floor((now.getTime() - parseDbUtc(t.created_at).getTime()) / 86400000)
       const bucket = buckets.find(b => age < b.max) || buckets[buckets.length - 1]
       bucket.count++
     }
@@ -660,7 +661,7 @@ export default function AnalyticsPage() {
             </BarChart>
           </ResponsiveContainer>
           <p className="text-[10px] mt-3" style={{ color: 'var(--muted)' }}>
-            {tasks.filter(t => !t.completed && t.created_at && (new Date().getTime() - new Date(t.created_at).getTime()) > 28 * 86400000).length} tasks older than 4 weeks
+            {tasks.filter(t => !t.completed && t.created_at && (new Date().getTime() - parseDbUtc(t.created_at).getTime()) > 28 * 86400000).length} tasks older than 4 weeks
           </p>
         </div>
 

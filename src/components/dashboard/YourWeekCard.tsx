@@ -4,6 +4,7 @@ import { useTasks, useMeetingsApi } from '../../hooks/useApiData'
 import { useAuth } from '../../hooks/useAuth'
 import { emailToSlug } from '../../lib/emailSlug'
 import { isOverdue } from '../../lib/dateUtils'
+import { parseDbUtc } from '../../lib/time'
 import BentoCard from './BentoCard'
 
 export default function YourWeekCard() {
@@ -30,7 +31,7 @@ export default function YourWeekCard() {
 
     const completedThisWeek = myTasks.filter(t =>
       t.completed && t.completed_at &&
-      new Date(t.completed_at) >= weekStart
+      parseDbUtc(t.completed_at) >= weekStart
     ).length
 
     const meetingsThisWeek = meetings.filter(m =>

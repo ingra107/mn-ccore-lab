@@ -1,11 +1,12 @@
 import { useMemo } from 'react'
 import { Activity } from 'lucide-react'
+import { parseDbUtc } from '../../lib/time'
 import type { PBHealthData } from '../../hooks/useApiData'
 
 function StatusDot({ timestamp }: { timestamp: string | null }) {
   const color = useMemo(() => {
     if (!timestamp) return 'var(--maroon)'
-    const age = Date.now() - new Date(timestamp).getTime()
+    const age = Date.now() - parseDbUtc(timestamp).getTime()
     const hours = age / (1000 * 60 * 60)
     if (hours < 1) return 'var(--green-light)'     // green — fresh
     if (hours < 6) return 'var(--gold)' // gold — stale
@@ -28,7 +29,7 @@ function StatusDot({ timestamp }: { timestamp: string | null }) {
 
 function formatTimestamp(ts: string | null): string {
   if (!ts) return 'never'
-  const d = new Date(ts)
+  const d = parseDbUtc(ts)
   if (isNaN(d.getTime())) return 'invalid'
   const now = Date.now()
   const diffMin = Math.floor((now - d.getTime()) / 60000)

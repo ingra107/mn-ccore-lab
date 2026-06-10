@@ -7,6 +7,7 @@ import { useLabPrefs } from '../hooks/useLabPrefs'
 import type { ManuscriptsAttentionRow } from '../lib/api'
 import { PATHS } from '../constants/paths'
 import { formatShortDate } from '../lib/dateUtils'
+import { parseDbUtc } from '../lib/time'
 
 export type AttentionFilter = 'revisions-overdue' | 'awaiting-review' | 'stale-drafts' | null
 
@@ -316,7 +317,7 @@ function renderRow(kind: SubgroupKey, r: ManuscriptsAttentionRow) {
 
   if (kind === 'awaiting-review') {
     const snippet = (r.comment_text ?? '').slice(0, 80)
-    const ageDays = r.created_at ? Math.max(0, Math.floor((Date.now() - new Date(r.created_at).getTime()) / 86_400_000)) : 0
+    const ageDays = r.created_at ? Math.max(0, Math.floor((Date.now() - parseDbUtc(r.created_at).getTime()) / 86_400_000)) : 0
     return (
       <Link
         key={r.id}
@@ -348,7 +349,7 @@ function renderRow(kind: SubgroupKey, r: ManuscriptsAttentionRow) {
   }
 
   // stale-drafts
-  const ageDays = r.updated_at ? Math.max(0, Math.floor((Date.now() - new Date(r.updated_at).getTime()) / 86_400_000)) : 0
+  const ageDays = r.updated_at ? Math.max(0, Math.floor((Date.now() - parseDbUtc(r.updated_at).getTime()) / 86_400_000)) : 0
   return (
     <Link
       key={r.id}

@@ -1,6 +1,7 @@
 import { History } from 'lucide-react'
 import { useSimilarDecisionsById } from '../hooks/useApiData'
 import SentimentBadge from './SentimentBadge'
+import { parseDbUtc } from '../lib/time'
 
 interface Props {
   decisionId: string
@@ -70,7 +71,7 @@ export default function SimilarDecisionsPanel({ decisionId, projects }: Props) {
               )}
               <div className="flex items-center gap-2 flex-wrap">
                 <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
-                  {new Date(d.created_at).toLocaleDateString()}
+                  {parseDbUtc(d.created_at).toLocaleDateString()}
                 </span>
                 {projTitle && (
                   <span style={{ fontSize: '10px', color: 'var(--teal)' }}>

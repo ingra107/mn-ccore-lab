@@ -27,6 +27,7 @@ import { useLongPress } from '../../hooks/useLongPress'
 import { useSwipeAction } from '../../hooks/useSwipeAction'
 import { motion } from 'framer-motion'
 import { localDateKey } from '../../lib/dateUtils'
+import { parseDbUtc } from '../../lib/time'
 
 // ── Column definitions for resize + tab nav ─────────────────
 // Full column set: checkbox + DATA_COLUMNS + actions
@@ -1326,7 +1327,7 @@ function TaskGridRow({
                   }}
                 />
                 {task.status === 'in_progress' && task.created_at && (() => {
-                  const days = Math.floor((Date.now() - new Date(task.created_at).getTime()) / 86400000)
+                  const days = Math.floor((Date.now() - parseDbUtc(task.created_at).getTime()) / 86400000)
                   if (days < 7) return null
                   return (
                     <span

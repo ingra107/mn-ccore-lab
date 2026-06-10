@@ -21,6 +21,7 @@ import { emailToSlug } from '../../lib/emailSlug'
 import { useUserRole } from '../../hooks/useUserRole'
 import { getPersonInfo } from '../../data/team'
 import { formatShortDate, formatRelativeTime, isOverdue } from '../../lib/dateUtils'
+import { parseDbUtc } from '../../lib/time'
 import { isProductionVisible, isProductionVisibleActivity } from '../../lib/isProductionVisible'
 import TaskTitle from '../../components/tasks/TaskTitle'
 import { useRecentlyViewed } from '../../hooks/useRecentlyViewed'
@@ -639,7 +640,7 @@ export default function PersonalPage() {
   const completedThisWeek = useMemo(() => {
     const now = new Date()
     const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay())
-    return myTasks.filter((t) => t.completed && t.completed_at && new Date(t.completed_at) >= weekStart).length
+    return myTasks.filter((t) => t.completed && t.completed_at && parseDbUtc(t.completed_at) >= weekStart).length
   }, [myTasks])
 
   // Sort pending tasks: overdue first, then by due_date, then by priority

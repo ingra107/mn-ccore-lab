@@ -8,6 +8,7 @@ import { useDebounce } from '../hooks/useDebounce'
 import SentimentBadge from './SentimentBadge'
 import InlineSelect from './InlineSelect'
 import { parseTagsString } from '../lib/tagUtils'
+import { parseDbUtc } from '../lib/time'
 
 // ── Tag auto-suggestion ──────────────────────────────────────
 
@@ -224,7 +225,7 @@ export default function CreateDecisionModal({ projects, onCreate, onClose }: Pro
                       </p>
                     )}
                     <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
-                      {new Date(d.created_at).toLocaleDateString()}
+                      {parseDbUtc(d.created_at).toLocaleDateString()}
                     </span>
                   </div>
                 ))}

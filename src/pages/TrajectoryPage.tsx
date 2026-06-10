@@ -21,6 +21,7 @@ import { getMemberBySlug } from '../data/team'
 import ActivityHeatmap from '../components/ActivityHeatmap'
 import HeartbeatLine from '../components/HeartbeatLine'
 import { PATHS } from '../constants/paths'
+import { parseDbUtc } from '../lib/time'
 
 // ── Stage colors ───────────────────────────────────────────
 
@@ -1094,7 +1095,7 @@ function ContributionTimeline({ entries }: { entries: TimelineEntry[] }) {
         const config = TYPE_CONFIG[entry.type]
         const Icon = config.icon
         const dateStr = entry.timestamp
-          ? new Date(entry.timestamp).toLocaleDateString('en-US', {
+          ? parseDbUtc(entry.timestamp).toLocaleDateString('en-US', {
               month: 'short',
               day: 'numeric',
             })
