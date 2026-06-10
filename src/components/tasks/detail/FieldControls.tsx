@@ -9,7 +9,6 @@ import HoverCard from '../../HoverCard'
 import type { HoverCardData } from '../../HoverCard'
 import { useHoverCard } from '../../../hooks/useHoverCard'
 import { getPersonInfo } from '../../../data/team'
-import { formatShortDate } from '../../../lib/dateUtils'
 import InlineDatePicker from '../../InlineDatePicker'
 import { useTeam } from '../../../hooks/useApiData'
 import { STATUS_OPTIONS, PRIORITY_OPTIONS } from '../../../lib/taskConstants'
@@ -338,24 +337,12 @@ function WorkflowTextInput({ value, placeholder, onSave }: { value: string; plac
   )
 }
 
+// P1-4: route through the shared InlineDatePicker so the FIRST click opens the
+// rich in-app popover (presets + month grid + Clear), not the native OS picker
+// via showPicker(). The native-input path was the last surviving instance of
+// the date click-chain class P1-3 retired.
 function WorkflowDateInput({ value, onSave }: { value: string; onSave: (v: string | null) => void }) {
-  const inputRef = useRef<HTMLInputElement>(null)
-  const formatted = value ? formatShortDate(value) : null
-  return (
-    <div className="flex items-center gap-2">
-      <button
-        onClick={() => inputRef.current?.showPicker()}
-        className="text-sm rounded-md px-2.5 py-1.5 transition-colors hover:bg-black/[0.03] dark:hover:bg-white/[0.05]"
-        style={{ color: formatted ? 'var(--ink)' : 'var(--slate)', opacity: formatted ? 1 : 0.7, cursor: 'pointer', background: 'none', border: '1px solid var(--border-subtle)' }}
-      >
-        {formatted || 'Set date…'}
-      </button>
-      <input ref={inputRef} type="date" value={value} onChange={(e) => onSave(e.target.value || null)} className="sr-only" tabIndex={-1} />
-      {value && (
-        <button onClick={() => onSave(null)} className="text-xs px-1 rounded" style={{ color: 'var(--slate)', cursor: 'pointer', background: 'none', border: 'none', opacity: 0.6 }}>&times;</button>
-      )}
-    </div>
-  )
+  return <InlineDatePicker value={value || null} onChange={onSave} />
 }
 
 export function WorkflowSection({ fields, onChange }: { fields: WorkflowFields; onChange: (patch: Partial<WorkflowFields>) => void }) {
