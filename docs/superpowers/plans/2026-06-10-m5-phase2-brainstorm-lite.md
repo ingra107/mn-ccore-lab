@@ -36,6 +36,12 @@ but the composer write path gets the WRITE-path smoke per the arc-4 lesson.
 2. **Kill the writer class**: retarget PB's breadcrumb appends (query.py 4 sites) to post activity
    entries Hub-first instead of mutating `notes` — PB-session work, handoff doc needed.
 3. `descriptionLog.ts` deleted ONLY after (2) lands and one sync cycle shows no new dated lines.
+4. **Nightly gardener (Nick 2026-06-10, refined):** deterministic structure during the day, one
+   bounded LLM pass at night over ONLY that day's new `activity_entries` (the delta is a known
+   set — no searching). Scope: machine-origin entries only (completions, breadcrumbs, system) —
+   classify/dedup/condense; NEVER rewrites human-authored comments (provenance). This is the
+   surviving form of the spec's "nightly Haiku" idea; design it with P2-B since the retarget
+   defines what machine-origin entries look like.
 
 ### P2-C — Physical drops (quick, substrate-swap gated)
 `task_comments` + `task_updates` are write-frozen and the legacy endpoints serve projections over
