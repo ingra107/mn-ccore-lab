@@ -56,9 +56,9 @@ import SubmissionTimeline from '../components/SubmissionTimeline'
 import ConferencePrep from '../components/ConferencePrep'
 import InsightPanel from '../components/InsightPanel'
 import ProjectLiterature from './project/ProjectLiterature'
-import ProjectActivity from './project/ProjectActivity'
-import ProjectUpdateFeed from '../components/ProjectUpdateFeed'
-import ProjectComments from '../components/ProjectComments'
+import ActivityStream, { type StreamFilter } from '../components/project/ActivityStream'
+import ProjectDecisions from './project/ProjectDecisions'
+import ProjectDependencies from './project/ProjectDependencies'
 import SmartCompose from '../components/SmartCompose'
 import ProjectDocuments from './project/ProjectDocuments'
 import { PATHS } from '../constants/paths'
@@ -67,7 +67,9 @@ import { useOpenParam } from '../hooks/useOpenParam'
 import EmptyStateArt from '../components/EmptyStateArt'
 import EmptyState from '../components/EmptyState'
 
-type Tab = 'overview' | 'tasks' | 'notes' | 'comments' | 'files' | 'activity' | 'revisions' | 'literature'
+// P2-5: notes + comments collapsed into the single chronological `activity`
+// stream (Notes / Comments / All are filters over it, not separate tabs).
+type Tab = 'overview' | 'tasks' | 'files' | 'activity' | 'revisions' | 'literature'
 
 // Values are D1 lowercase canonical; labels are Title Case for display.
 const STAGES = ['idea', 'data_collection', 'analysis', 'writing', 'review', 'revisions', 'published'] as const
@@ -179,11 +181,20 @@ function ProjectDetailInner({ project }: InnerProps) {
   const { isAuthenticated, user } = useAuth()
   const isPi = user?.isPi ?? false
 
-  // Tabs — support ?tab= query param for deep linking + write-back on switch (PD-2)
+  // Tabs — support ?tab= query param for deep linking + write-back on switch (PD-2).
+  // P2-5: legacy ?tab=notes / ?tab=comments deep-links resolve to the unified
+  // `activity` tab with the matching stream filter pre-selected.
   const [searchParams, setSearchParams] = useSearchParams()
+  const [streamFilter, setStreamFilter] = useState<StreamFilter>(() => {
+    const tab = searchParams.get('tab')
+    if (tab === 'notes') return 'notes'
+    if (tab === 'comments') return 'comments'
+    return 'all'
+  })
   const initialTab = (() => {
     const tab = searchParams.get('tab')
-    if (tab && ['overview', 'tasks', 'notes', 'comments', 'files', 'activity', 'revisions', 'literature'].includes(tab)) return tab as Tab
+    if (tab === 'notes' || tab === 'comments') return 'activity' as Tab
+    if (tab && ['overview', 'tasks', 'files', 'activity', 'revisions', 'literature'].includes(tab)) return tab as Tab
     return 'overview' as Tab
   })()
   const [activeTab, setActiveTabState] = useState<Tab>(initialTab)
@@ -197,6 +208,11 @@ function ProjectDetailInner({ project }: InnerProps) {
     }
     setSearchParams(next, { replace: true })
   }, [searchParams, setSearchParams])
+  // Jump to the activity stream pre-filtered (used by the Recent-activity card).
+  const goToStream = useCallback((filter: StreamFilter) => {
+    setStreamFilter(filter)
+    setActiveTab('activity')
+  }, [setActiveTab])
   const [showCreateTask, setShowCreateTask] = useState(false)
   const [taskFilter, setTaskFilter] = useState<'all' | 'active' | 'done' | 'blocked'>('active')
   const createTask = useCreateTask()
@@ -328,8 +344,6 @@ function ProjectDetailInner({ project }: InnerProps) {
   const [strategicDraft, setStrategicDraft] = useState(project.strategic_context ?? '')
   const { data: apiMeetings = [] } = useMeetingsApi()
 
-  // Stage changer state
-  const [confirmStage, setConfirmStage] = useState<Stage | null>(null)
   // Brain.db's granular stages map onto the 6 canonical strip stages
   // (lib/stageNormalize). P2-R2-14.
   const currentStageIndex = stageIndex(project.stage)
@@ -505,15 +519,16 @@ function ProjectDetailInner({ project }: InnerProps) {
   }, [apiMeetings])
   const addAgenda = useAddAgendaItem(nextUpcomingMeeting?.id ?? '')
 
-  function handleStageClick(stage: Stage) {
+  // S17 (2026-06-09): instant write + 5s undo, matching Projects/Manuscripts.
+  // Stage writes go through toApiStage() (Rule 35) — the API 400s on
+  // non-canonical values and silently reverts the optimistic update.
+  function handleStageChange(stage: Stage) {
     if (stage === project.stage) return
-    setConfirmStage(stage)
-  }
-
-  function confirmStageChange() {
-    if (!confirmStage) return
-    d1Update.mutate({ stage: toApiStage(confirmStage) })
-    setConfirmStage(null)
+    const prevStage = project.stage ?? 'idea'
+    d1Update.mutate({ stage: toApiStage(stage) })
+    showUndo(`Stage → ${STAGE_LABELS[stage]}`, () =>
+      d1Update.mutate({ stage: toApiStage(prevStage) }),
+    )
   }
 
   function handleDescSave() {
@@ -788,10 +803,7 @@ function ProjectDetailInner({ project }: InnerProps) {
           <InlineSelect
             value={project.stage || 'idea'}
             options={STAGES.map((s) => ({ value: s, label: STAGE_LABELS[s] }))}
-            onChange={(val) => {
-              if (val === project.stage) return
-              setConfirmStage(val as Stage)
-            }}
+            onChange={(val) => handleStageChange(val as Stage)}
           />
 
           {isAuthenticated && nextUpcomingMeeting && (
@@ -949,13 +961,12 @@ function ProjectDetailInner({ project }: InnerProps) {
         aria-label="Project sections"
       >
         {(() => {
+          const activityCount = projectUpdates.length + projectComments.length
           const tabs: Array<{ id: Tab; label: string }> = [
             { id: 'overview', label: 'Overview' },
             { id: 'tasks', label: `Tasks${pendingTasks.length ? ` (${pendingTasks.length})` : ''}` },
-            { id: 'notes', label: `Notes${projectUpdates.length ? ` (${projectUpdates.length})` : ''}` },
-            { id: 'comments', label: `Comments${projectComments.length ? ` (${projectComments.length})` : ''}` },
+            { id: 'activity', label: `Activity${activityCount ? ` (${activityCount})` : ''}` },
             { id: 'files', label: `Files${filesData.length ? ` (${filesData.length})` : ''}` },
-            { id: 'activity', label: 'Activity' },
             { id: 'revisions', label: `Revisions${revisions.length ? ` (${revisions.length})` : ''}` },
             { id: 'literature', label: `Literature${papers.length ? ` (${papers.length})` : ''}` },
           ]
@@ -1131,7 +1142,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                 {recentActivity.length > 0 && (
                   <button
                     type="button"
-                    onClick={() => setActiveTab('activity')}
+                    onClick={() => goToStream('all')}
                     style={{ fontSize: '11px', color: 'var(--teal)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
                   >
                     All →
@@ -1153,7 +1164,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                     return (
                       <div
                         key={item.id}
-                        onClick={() => setActiveTab(item.kind === 'note' ? 'notes' : 'comments')}
+                        onClick={() => goToStream(item.kind === 'note' ? 'notes' : 'comments')}
                         style={{
                           display: 'flex', alignItems: 'flex-start', gap: '6px',
                           fontSize: '11px', color: 'var(--ink)', lineHeight: 1.35,
@@ -1507,7 +1518,7 @@ function ProjectDetailInner({ project }: InnerProps) {
               >
                 <motion.button
                   type="button"
-                  onClick={() => handleStageClick(stage)}
+                  onClick={() => handleStageChange(stage)}
                   className="cursor-pointer"
                   style={{
                     width: isCurrent ? '20px' : '14px',
@@ -1551,66 +1562,8 @@ function ProjectDetailInner({ project }: InnerProps) {
           })}
         </div>
 
-        {/* Stage change confirmation modal */}
-        <AnimatePresence>
-          {confirmStage && (
-            <motion.div
-              initial={{ opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.15 }}
-              style={{
-                marginTop: '12px',
-                padding: 'var(--sp-md) var(--sp-lg)',
-                borderRadius: 'var(--radius-lg)',
-                background: 'var(--ice)',
-                border: '1px solid rgba(201, 168, 76, 0.3)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                flexWrap: 'wrap',
-              }}
-            >
-              <span
-                style={{
-                  fontSize: '14px',
-                  color: 'var(--ink)',
-                  flex: 1,
-                }}
-              >
-                Move to <strong>{confirmStage ? STAGE_LABELS[confirmStage] : ''}</strong>?
-              </span>
-              <div className="flex items-center gap-2">
-                <motion.button
-                  type="button"
-                  onClick={confirmStageChange}
-                  className="cursor-pointer px-3 py-1 rounded-md text-sm font-medium"
-                  style={{
-                    background: 'var(--gold)',
-                    color: '#0f1923',
-                    border: 'none',
-                    }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  Confirm
-                </motion.button>
-                <motion.button
-                  type="button"
-                  onClick={() => setConfirmStage(null)}
-                  className="cursor-pointer px-3 py-1 rounded-md text-sm font-medium"
-                  style={{
-                    background: 'transparent',
-                    color: 'var(--slate)',
-                    border: '1px solid var(--ice)',
-                    }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  Cancel
-                </motion.button>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {/* S17: confirmation banner removed — stage change is now instant +
+            5s undo (handleStageChange), matching Projects/Manuscripts. */}
       </motion.div>
 
       {/* Details section */}
@@ -1855,64 +1808,6 @@ function ProjectDetailInner({ project }: InnerProps) {
 
       </div>)}
 
-      {/* ── NOTES TAB ── */}
-      {activeTab === 'notes' && (
-        <div role="tabpanel" id="projectdetail-tabpanel-notes" aria-labelledby="projectdetail-tab-notes">
-          {/* Notes vs Comments explainer — dismissible one-time banner (PD-4) */}
-          {!notesCommentsBannerDismissed && (
-            <div
-              style={{
-                marginBottom: '1rem',
-                padding: '12px 16px',
-                borderRadius: 'var(--radius-lg)',
-                background: 'var(--surface-1)',
-                border: '1px solid var(--border-subtle)',
-                fontSize: '12px',
-                color: 'var(--muted)',
-                lineHeight: 1.5,
-                display: 'flex',
-                alignItems: 'flex-start',
-                gap: '8px',
-              }}
-            >
-              <div style={{ flex: 1 }}>
-                <strong style={{ color: 'var(--ink)', fontWeight: 600 }}>Notes vs Comments:</strong>{' '}
-                <span><strong>Notes</strong> are an informal progress log — visible to the team, auto-timestamped (e.g. "Talked with Peter, he'll run the script and get back next week"). <strong>Comments</strong> are team discussion (@mentions notify).</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  try { localStorage.setItem('mnccore.banner.notes-comments.dismissed', '1') } catch {}
-                  setNotesCommentsBannerDismissed(true)
-                }}
-                aria-label="Dismiss explainer"
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: 'var(--muted)',
-                  cursor: 'pointer',
-                  padding: '2px',
-                  lineHeight: 0,
-                  flexShrink: 0,
-                }}
-              >
-                <X size={14} />
-              </button>
-            </div>
-          )}
-          <div id="updates" style={{ scrollMarginTop: '60px' }}>
-            <ProjectUpdateFeed projectSlug={project.slug} />
-          </div>
-        </div>
-      )}
-
-      {/* ── COMMENTS TAB ── */}
-      {activeTab === 'comments' && (
-        <div role="tabpanel" id="projectdetail-tabpanel-comments" aria-labelledby="projectdetail-tab-comments" style={{ scrollMarginTop: '60px' }}>
-          <ProjectComments projectSlug={project.slug} />
-        </div>
-      )}
-
       {/* ── FILES TAB ── */}
       {activeTab === 'files' && (
         <div role="tabpanel" id="projectdetail-tabpanel-files" aria-labelledby="projectdetail-tab-files" style={{ marginBottom: '2rem' }}>
@@ -2030,10 +1925,86 @@ function ProjectDetailInner({ project }: InnerProps) {
         </div>
       )}
 
-      {/* ── ACTIVITY TAB ── */}
+      {/* ── ACTIVITY TAB ── (P2-5: one chronological stream; Notes/Comments/All
+            are filters over it, not separate tabs) */}
       {activeTab === 'activity' && (
-        <div role="tabpanel" id="projectdetail-tabpanel-activity" aria-labelledby="projectdetail-tab-activity">
-          <ProjectActivity project={project} isPi={isPi} />
+        <div role="tabpanel" id="projectdetail-tabpanel-activity" aria-labelledby="projectdetail-tab-activity" style={{ scrollMarginTop: '60px' }}>
+          {/* Notes vs Comments explainer — dismissible one-time banner (PD-4 / S18) */}
+          {!notesCommentsBannerDismissed && (
+            <div
+              style={{
+                marginBottom: '1rem',
+                padding: '12px 16px',
+                borderRadius: 'var(--radius-lg)',
+                background: 'var(--surface-1)',
+                border: '1px solid var(--border-subtle)',
+                fontSize: '12px',
+                color: 'var(--muted)',
+                lineHeight: 1.5,
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '8px',
+              }}
+            >
+              <div style={{ flex: 1 }}>
+                <strong style={{ color: 'var(--ink)', fontWeight: 600 }}>Notes vs Comments:</strong>{' '}
+                <span><strong>Notes</strong> are an informal progress log — visible to the team, auto-timestamped (e.g. "Talked with Peter, he'll run the script and get back next week"). <strong>Comments</strong> are team discussion (@mentions notify).</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  try { localStorage.setItem('mnccore.banner.notes-comments.dismissed', '1') } catch {}
+                  setNotesCommentsBannerDismissed(true)
+                }}
+                aria-label="Dismiss explainer"
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--muted)',
+                  cursor: 'pointer',
+                  padding: '2px',
+                  lineHeight: 0,
+                  flexShrink: 0,
+                }}
+              >
+                <X size={14} />
+              </button>
+            </div>
+          )}
+
+          {/* Stream filters: All / Notes / Comments */}
+          <div className="flex items-center gap-1.5 mb-4" role="group" aria-label="Filter activity stream">
+            {(['all', 'notes', 'comments'] as const).map((f) => (
+              <button
+                key={f}
+                type="button"
+                aria-pressed={streamFilter === f}
+                onClick={() => setStreamFilter(f)}
+                className="text-[11px] px-3 py-1 rounded-full font-medium transition-colors"
+                style={{
+                  background: streamFilter === f ? 'var(--teal-active)' : 'none',
+                  color: streamFilter === f ? 'var(--teal)' : 'var(--slate)',
+                  border: `1px solid ${streamFilter === f ? 'var(--teal)' : 'var(--border-subtle)'}`,
+                  cursor: 'pointer',
+                  opacity: streamFilter === f ? 1 : 0.85,
+                }}
+              >
+                {f === 'all' ? 'All' : f === 'notes' ? 'Notes' : 'Comments'}
+              </button>
+            ))}
+          </div>
+
+          <ActivityStream project={project} filter={streamFilter} />
+
+          {/* Project decisions + dependencies management surfaces — shown only in
+              the unfiltered ('all') view; their items already appear inline in
+              the stream above, these provide the add/manage affordances. */}
+          {streamFilter === 'all' && (
+            <>
+              <ProjectDecisions projectSlug={project.slug} />
+              <ProjectDependencies project={project} isPi={isPi} />
+            </>
+          )}
         </div>
       )}
 
