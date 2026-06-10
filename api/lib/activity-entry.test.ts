@@ -178,12 +178,19 @@ function makeEnv(fx: Partial<Fixtures> = {}) {
             // Project feed: WHERE project_id = ?  — single-predicate (project-entity
             // rows store project_id = entity_id, so this captures both project-level
             // rows AND task rows rolled up by project_id).
-            if (/FROM activity_entries/.test(sql) && /WHERE project_id = \?/.test(sql)) {
+            if (/FROM activity_entries/.test(sql) && /WHERE (ae\.)?project_id = \?/.test(sql)) {
               const projId = binds[0] as string
               let rows = ae.filter(r => r.project_id === projId)
               rows = applyVisibilityFilter(rows, sql, binds)
               rows = [...rows].sort((a, b) => (a.created_at < b.created_at ? 1 : a.created_at > b.created_at ? -1 : (a.id < b.id ? 1 : -1)))
-              return { results: rows.map(r => projectRowForSql(sql, r)) }
+              return { results: rows.map(r => {
+                const out = projectRowForSql(sql, r)
+                // Mirror the LEFT JOIN tasks → task_title column when selected.
+                if (/task_title/.test(sql)) {
+                  out.task_title = r.entity_type === 'task' ? (tasks[r.entity_id]?.title ?? null) : null
+                }
+                return out
+              }) }
             }
             // Legacy activity_log read in detail handler — empty.
             if (/FROM activity_log/.test(sql)) return { results: [] }
@@ -438,11 +445,14 @@ describe('handleGetProjectActivity — whole-picture feed', () => {
     await handleAddTaskComment('t1', natePostReq({ content: 'task-level' }), NATE, ctx.env)
     await postActivityEntry({ env: ctx.env, user: NICK, entityType: 'project', entityId: 'proj_a', kind: 'update', body: 'project-level', actorSlug: 'nick-ingraham' })
     const res = await handleGetProjectActivity('alpha', piReq(), ctx.env)
-    const body = await res.json() as { data: { entity_type: string; body: string }[] }
+    const body = await res.json() as { data: { entity_type: string; body: string; task_title?: string | null }[] }
     const bodies = body.data.map(d => d.body).sort()
     expect(bodies).toEqual(['project-level', 'task-level'])
     expect(body.data.some(d => d.entity_type === 'task')).toBe(true)
     expect(body.data.some(d => d.entity_type === 'project')).toBe(true)
+    // task rows carry the joined display title; project rows don't.
+    expect(body.data.find(d => d.entity_type === 'task')?.task_title).toBe('Task One')
+    expect(body.data.find(d => d.entity_type === 'project')?.task_title ?? null).toBeNull()
   })
 })
 

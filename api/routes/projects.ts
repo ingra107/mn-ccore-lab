@@ -320,18 +320,22 @@ export async function handleGetProjectActivity(idOrSlug: string, request: Reques
   if (block) return block;
   const canonicalId = await projectRefToCanonical(env, idOrSlug);
   if (!canonicalId) return json({ data: [] });
-  const vis = await activityVisibilityGate(request, env);
+  const vis = await activityVisibilityGate(request, env, 'ae');
   // Whole-picture: every row tied to this project. postActivityEntry stores
   // project_id = entity_id for project-entity rows (api/lib/activity-entry.ts:
   // `projectId = entityId` in the project branch) and the task's project_id for
   // task-entity rows, so a single `project_id = ?` predicate captures both —
   // covered cleanly by idx_ae_project, no OR that would defeat the index.
+  // task_title (short_title || title, Rule 68 display form) is joined in so the
+  // feed can NAME the originating task — entity_id alone renders meaningless.
   const result = await env.DB.prepare(
-    `SELECT id, entity_type, entity_id, project_id, kind, visibility, actor_slug, body, mentions_json, update_type, metadata_json, created_at
-     FROM activity_entries
-     WHERE project_id = ?
+    `SELECT ae.id, ae.entity_type, ae.entity_id, ae.project_id, ae.kind, ae.visibility, ae.actor_slug, ae.body, ae.mentions_json, ae.update_type, ae.metadata_json, ae.created_at,
+            CASE WHEN ae.entity_type = 'task' THEN COALESCE(t.short_title, t.title) END AS task_title
+     FROM activity_entries ae
+     LEFT JOIN tasks t ON ae.entity_type = 'task' AND t.id = ae.entity_id
+     WHERE ae.project_id = ?
        AND ${vis.clause}
-     ORDER BY created_at DESC, id DESC`
+     ORDER BY ae.created_at DESC, ae.id DESC`
   ).bind(canonicalId, ...vis.binds).all();
   return json({ data: result.results || [], count: result.results?.length || 0 });
 }

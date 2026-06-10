@@ -75,6 +75,8 @@ interface UnifiedEntryRow {
   update_type: UpdateType | null
   metadata_json: string | null
   created_at: string
+  /** Joined server-side for task-entity rows: COALESCE(short_title, title). */
+  task_title?: string | null
   // derived at render — not stored
   _renderKind?: string
 }
@@ -362,7 +364,7 @@ export default function ActivityStream({ project, filter }: Props) {
           />
         </div>
       ) : (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-2">
           <AnimatePresence mode="popLayout">
             {visible.map((event) => (
               <StreamItem key={event.id} event={event} onToggleAction={(id) => {
@@ -541,9 +543,8 @@ function UnifiedEntryItem({ entry }: { entry: UnifiedEntryRow }) {
   const isHermes = entry.actor_slug === 'claude-ai'
   const person = getPersonInfo(entry.actor_slug)
 
-  // Task-link label derived from entity_id (short fallback — full title
-  // would need a lookup; entity_id is enough for a ?openTask= deep link).
   const taskHref = isTask ? `/portal/my-tasks?openTask=${encodeURIComponent(entry.entity_id)}` : null
+  const taskLabel = entry.task_title || null
 
   // Left-bar color + badge logic mirrors TaskActivityFeed.
   let barColor = 'rgba(201,168,76,0.35)'   // default: gold (comment)
@@ -565,18 +566,37 @@ function UnifiedEntryItem({ entry }: { entry: UnifiedEntryRow }) {
   } else if (entry.kind === 'comment') {
     barColor = 'rgba(201,168,76,0.35)'
     badgeEl = null // no badge for plain comments
-  } else if (entry.kind === 'completion') {
-    barColor = 'var(--green)'
-    badgeEl = (
-      <span
-        className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded"
-        style={{ fontSize: '10px', background: 'rgba(34,197,94,0.1)', color: 'var(--green)' }}
-      >
-        <CheckCircle size={9} aria-hidden="true" /> Completed
-      </span>
-    )
   } else if (entry.kind === 'system') {
     barColor = 'var(--border-subtle)'
+  }
+
+  // Completions render as compact one-liners (like the task feed's
+  // CompletionEntry) — a full card per checkmark made the feed needlessly tall
+  // (Nick 2026-06-10). body, when present, is the completion note.
+  if (entry.kind === 'completion') {
+    return (
+      <motion.div {...itemMotion} className="flex items-center gap-2 py-1 px-1">
+        <CheckCircle size={14} className="flex-shrink-0" style={{ color: 'var(--green)', opacity: 0.85, flexShrink: 0 }} aria-hidden="true" />
+        <span style={{ fontSize: 'var(--label-size)', color: 'var(--ink)', flex: 1, minWidth: 0, lineHeight: 1.4 }}>
+          <span style={{ fontWeight: 500 }}>{person.name}</span>
+          {' completed '}
+          {isTask && taskHref ? (
+            <a
+              href={taskHref}
+              onClick={(e) => e.stopPropagation()}
+              style={{ color: 'var(--teal)', fontWeight: 500, textDecoration: 'none' }}
+            >
+              {taskLabel || 'a task'}
+            </a>
+          ) : (
+            taskLabel || 'a task'
+          )}
+          {entry.body ? <> — <LinkifiedText text={entry.body} /></> : null}
+        </span>
+        {entry.visibility === 'author' && <AuthorOnlyBadge />}
+        <EntryTime ts={entry.created_at} />
+      </motion.div>
+    )
   }
 
   if (isHermes) {
@@ -587,7 +607,7 @@ function UnifiedEntryItem({ entry }: { entry: UnifiedEntryRow }) {
         className="detail-card"
       >
         {isTask && taskHref && (
-          <TaskOriginBadge taskHref={taskHref} entityId={entry.entity_id} />
+          <TaskOriginBadge taskHref={taskHref} entityId={entry.entity_id} label={taskLabel} />
         )}
         <div className="flex items-center gap-1.5 mb-1">
           <HermesMark size={14} variant="avatar" />
@@ -612,7 +632,7 @@ function UnifiedEntryItem({ entry }: { entry: UnifiedEntryRow }) {
       >
         <Circle size={5} className="flex-shrink-0 mt-1.5" style={{ color: 'var(--teal)', opacity: 0.85, fill: 'var(--teal)', flexShrink: 0 }} aria-hidden="true" />
         {isTask && taskHref && (
-          <TaskOriginBadge taskHref={taskHref} entityId={entry.entity_id} inline />
+          <TaskOriginBadge taskHref={taskHref} entityId={entry.entity_id} label={taskLabel} inline />
         )}
         <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.85, flex: 1, lineHeight: 1.4 }}>
           <LinkifiedText text={entry.body} />
@@ -629,7 +649,7 @@ function UnifiedEntryItem({ entry }: { entry: UnifiedEntryRow }) {
       style={{
         background: 'var(--cream)',
         borderRadius: 'var(--radius-lg)',
-        padding: 'var(--sp-md)',
+        padding: 'var(--sp-sm) var(--sp-md)',
         borderLeft: `3px solid ${barColor}`,
         // Task-originated rows get a subtle left-inset visual distinction.
         ...(isTask ? { marginLeft: 4, borderLeftWidth: 2 } : {}),
@@ -637,7 +657,7 @@ function UnifiedEntryItem({ entry }: { entry: UnifiedEntryRow }) {
       className="detail-card"
     >
       {isTask && taskHref && (
-        <TaskOriginBadge taskHref={taskHref} entityId={entry.entity_id} />
+        <TaskOriginBadge taskHref={taskHref} entityId={entry.entity_id} label={taskLabel} />
       )}
       <div className="flex items-start gap-3">
         <div className="flex-shrink-0 mt-0.5" style={{ width: 28, height: 28 }}>
@@ -659,13 +679,15 @@ function UnifiedEntryItem({ entry }: { entry: UnifiedEntryRow }) {
   )
 }
 
-/** Small badge linking back to the originating task in the project feed. */
-function TaskOriginBadge({ taskHref, entityId, inline }: { taskHref: string; entityId: string; inline?: boolean }) {
+/** Small badge linking back to the originating task in the project feed.
+ *  Shows the task's display title (short_title || title, joined server-side)
+ *  so the feed names the task instead of a bare "task" chip. */
+function TaskOriginBadge({ taskHref, entityId, label, inline }: { taskHref: string; entityId: string; label?: string | null; inline?: boolean }) {
   return (
     <a
       href={taskHref}
       onClick={(e) => e.stopPropagation()}
-      aria-label={`Go to task ${entityId}`}
+      aria-label={`Go to task ${label || entityId}`}
       className="inline-flex items-center gap-1"
       style={{
         fontSize: '9px',
@@ -678,10 +700,14 @@ function TaskOriginBadge({ taskHref, entityId, inline }: { taskHref: string; ent
         marginRight: inline ? 4 : 0,
         flexShrink: 0,
         display: 'inline-flex',
+        maxWidth: 260,
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
       }}
     >
-      <ClipboardList size={9} aria-hidden="true" />
-      task
+      <ClipboardList size={9} aria-hidden="true" style={{ flexShrink: 0 }} />
+      {label || 'task'}
     </a>
   )
 }
