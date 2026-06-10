@@ -8,15 +8,14 @@
 // task accounts don't paint every row up-front. Owner column resolves slug
 // → name + Avatar via getPersonInfo (MT-19).
 
-import { useEffect, useRef, useMemo, useCallback } from 'react'
+import { useEffect, useRef, useMemo } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { LinksBar } from '../primitives'
 import { useListKeyboard } from '../hooks/useListKeyboard'
 import InlineSelect from '../../../components/InlineSelect'
 import InlineDatePicker from '../../../components/InlineDatePicker'
 import InlineAssigneePicker from '../../../components/InlineAssigneePicker'
-import { useUpdateTask } from '../../../hooks/useMutations'
-import { useUndoToast } from '../../../components/UndoToast'
+import { useTaskFieldEditors } from '../../../hooks/useTaskFieldEditors'
 import { STATUS_OPTIONS, PRIORITY_OPTIONS } from '../../../lib/taskConstants'
 import {
   GROUP_META,
@@ -45,8 +44,12 @@ export function ListView({ filtered, selected, toggleSelect, setSelected, setDra
   const scrollRef = useRef<HTMLDivElement>(null)
   const { cursor, setCursor } = useListKeyboard({ filtered, toggleSelect, setDrawer, setSelected })
 
-  const updateTask = useUpdateTask()
-  const { showUndo } = useUndoToast()
+  // P2-3: the five common-field handlers (status/priority/assignee/due/project)
+  // come from the shared useTaskFieldEditors hook — one optimistic + undo
+  // implementation across ListView, Deadlines and any future task surface. The
+  // power-grid's keyboard model + inline-edit columns are untouched (Rule 60);
+  // only the duplicated mutation+undo bodies were lifted out.
+  const { onStatusChange, onPriorityChange, onAssigneeChange, onDateChange, onProjectChange } = useTaskFieldEditors()
 
   // MT-04 — virtualize. 44px row + 1px border ≈ 45. Use measureElement for
   // any future expanded-state without changing this default.
@@ -62,42 +65,6 @@ export function ListView({ filtered, selected, toggleSelect, setSelected, setDra
     if (cursor < 0 || cursor >= filtered.length) return
     virtualizer.scrollToIndex(cursor, { align: 'auto', behavior: 'auto' })
   }, [cursor, filtered.length, virtualizer])
-
-  // Inline edit handlers — fire via useUpdateTask + UndoToast (Rule "Optimistic
-  // UI + undo. Never spinners for actions"). Wrap in useCallback so the row
-  // memos can stay stable.
-  const onStatusChange = useCallback((id: string, prev: string, next: string) => {
-    if (prev === next) return
-    updateTask.mutate({ id, fields: { status: next, completed: next === 'done' ? 1 : 0 } })
-    const label = STATUS_OPTIONS.find(o => o.value === next)?.label ?? next
-    showUndo(`Status → ${label}`, () => updateTask.mutate({ id, fields: { status: prev, completed: prev === 'done' ? 1 : 0 } }))
-  }, [updateTask, showUndo])
-
-  const onPriorityChange = useCallback((id: string, prev: string, next: string) => {
-    if (prev === next) return
-    updateTask.mutate({ id, fields: { priority: next } })
-    const label = PRIORITY_OPTIONS.find(o => o.value === next)?.label ?? next
-    showUndo(`Priority → ${label}`, () => updateTask.mutate({ id, fields: { priority: prev } }))
-  }, [updateTask, showUndo])
-
-  const onAssigneeChange = useCallback((id: string, prev: string, next: string) => {
-    if (prev === next) return
-    updateTask.mutate({ id, fields: { assignee: next } })
-    showUndo('Reassigned', () => updateTask.mutate({ id, fields: { assignee: prev } }))
-  }, [updateTask, showUndo])
-
-  const onDateChange = useCallback((id: string, prev: string | null, next: string | null) => {
-    if (prev === next) return
-    updateTask.mutate({ id, fields: { due_date: next } })
-    showUndo(next ? `Due → ${next}` : 'Due cleared', () => updateTask.mutate({ id, fields: { due_date: prev } }))
-  }, [updateTask, showUndo])
-
-  const onProjectChange = useCallback((id: string, prev: string | null, next: string) => {
-    const newVal = next || null
-    if (prev === newVal) return
-    updateTask.mutate({ id, fields: { project_id: newVal } })
-    showUndo(newVal ? 'Project set' : 'Project cleared', () => updateTask.mutate({ id, fields: { project_id: prev } }))
-  }, [updateTask, showUndo])
 
   // Project options for the inline select — include "—" / clear option.
   const projectSelectOptions = useMemo<{ value: string; label: string }[]>(() => (

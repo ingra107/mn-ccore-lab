@@ -15,7 +15,8 @@ import { useUndoToast } from '../../components/UndoToast'
 import BulkActionToolbar from '../../components/tasks/BulkActionToolbar'
 import { ColumnHeader, TableContainer } from '../../components/table'
 import { useTasks, useUpcomingConferences, useProjects } from '../../hooks/useApiData'
-import { useUpdateTaskStatus, useUpdateTask, useBulkUpdateTasks, useUpdateGrantMilestone } from '../../hooks/useMutations'
+import { useUpdateTask, useBulkUpdateTasks, useUpdateGrantMilestone } from '../../hooks/useMutations'
+import { useTaskFieldEditors } from '../../hooks/useTaskFieldEditors'
 import { useGrantTimeline } from '../../hooks/useGrantTimeline'
 import { getPersonInfo } from '../../data/team'
 import { formatShortDate, localDateKey, isOverdue } from '../../lib/dateUtils'
@@ -66,12 +67,15 @@ export default function DeadlinesPage() {
     }
     return map
   }, [projectsList])
-  const updateTaskStatus = useUpdateTaskStatus()
   const updateTask = useUpdateTask()
   const bulkUpdate = useBulkUpdateTasks()
   const updateMilestone = useUpdateGrantMilestone()
   const queryClient = useQueryClient()
   const { showUndo } = useUndoToast()
+  // P2-3: shared task field editors (status + due here) — one optimistic + undo
+  // implementation across ListView and Deadlines. Milestone status stays local
+  // (grant-milestone mutation + grants-timeline invalidation are Deadlines-specific).
+  const taskEditors = useTaskFieldEditors()
   const [selectedTask, setSelectedTask] = useState<TaskRow | null>(null)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const toggleSelect = (id: string) => setSelectedIds(prev => { const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next })
@@ -116,11 +120,11 @@ export default function DeadlinesPage() {
     if (task) setSelectedTask(task)
   }, [tasks])
 
+  // P2-3: delegate task status to the shared editor (signature adapter — the
+  // row callback is (id, next, prev); the shared hook is (id, prev, next)).
   const handleStatusChange = useCallback((id: string, newStatus: string, prevStatus: string) => {
-    updateTaskStatus.mutate({ id, status: newStatus })
-    const labels: Record<string, string> = { todo: 'To Do', in_progress: 'In Progress', done: 'Done', blocked: 'Blocked', waiting_external: 'Waiting (External)' }
-    showUndo(`Status → ${labels[newStatus] || newStatus}`, () => updateTaskStatus.mutate({ id, status: prevStatus }))
-  }, [updateTaskStatus, showUndo])
+    taskEditors.onStatusChange(id, prevStatus, newStatus)
+  }, [taskEditors])
 
   // S12: grant-milestone status is now editable from Deadlines via the existing
   // mutation. The mutation invalidates grant-milestones* but NOT this page's
@@ -134,15 +138,12 @@ export default function DeadlinesPage() {
     )
   }, [updateMilestone, queryClient, showUndo])
 
+  // P2-3: delegate task due-date edits to the shared editor (resolves prev from
+  // the row here, since the row callback is (id, newDate) only).
   const handleDueDateChange = useCallback((id: string, newDate: string | null) => {
     const task = tasks.find(t => t.id === id)
-    const prevDate = task?.due_date ?? null
-    updateTask.mutate({ id, fields: { due_date: newDate } })
-    showUndo(
-      newDate ? `Due → ${newDate}` : 'Cleared due date',
-      () => updateTask.mutate({ id, fields: { due_date: prevDate } }),
-    )
-  }, [tasks, updateTask, showUndo])
+    taskEditors.onDateChange(id, task?.due_date ?? null, newDate)
+  }, [tasks, taskEditors])
 
   // Aggregate all deadlines
   const deadlines = useMemo(() => {
