@@ -289,7 +289,10 @@ export async function handleToggleTask(id: string, user: AuthUser, env: Env): Pr
 // completed so brain.db backfills can carry authentic historical
 // timestamps (prior behavior stamped datetime('now') even when the
 // client passed an explicit value from the local DB).
-const TASK_ALLOWED_FIELDS = new Set(['title', 'description', 'description_json', 'assignee', 'assigned_by', 'due_date', 'deadline', 'priority', 'status', 'project_id', 'meeting_id', 'blocked_by', 'key_link_1', 'key_link_1_desc', 'key_link_2', 'key_link_2_desc', 'key_link_3', 'key_link_3_desc', 'notes', 'effort', 'short_title', 'source_thread_id', 'related_message_ids', 'completed', 'completed_at', 'completed_by', 'group_override',
+// `notes` REMOVED 2026-06-10 (pb-schema 0.4.0 retired the wire alias): the
+// route filter now silently drops a stray `notes` so a legacy client's update
+// doesn't 409 the whole patch at applyMutation's TABLE_FIELDS gate.
+const TASK_ALLOWED_FIELDS = new Set(['title', 'description', 'description_json', 'assignee', 'assigned_by', 'due_date', 'deadline', 'priority', 'status', 'project_id', 'meeting_id', 'blocked_by', 'key_link_1', 'key_link_1_desc', 'key_link_2', 'key_link_2_desc', 'key_link_3', 'key_link_3_desc', 'effort', 'short_title', 'source_thread_id', 'related_message_ids', 'completed', 'completed_at', 'completed_by', 'group_override',
   // W1 (schema-v55) operational metadata
   'waiting_on', 'promised_to', 'promise_date', 'next_checkin_date', 'nick_followup_date',
   'requires_nick_brain', 'estimated_minutes', 'deadline_type', 'next_artifact', 'inbox_event_id',
@@ -436,7 +439,7 @@ export async function handleCreateTask(request: Request, user: AuthUser, env: En
     // 2026-04-20 Airtable Funeral Phase 1 (schema v47): richer fields
     // sent by gmail-airtable.js Apps Script + peripheral-brain-mobile PWA.
     // Previously only stored in Airtable; now stored structured in Hub.
-    notes?: string | null;
+    // (`notes` dropped from the wire 2026-06-10 — pb-schema 0.4.0.)
     effort?: string | null;
     short_title?: string | null;
     source_thread_id?: string | null;
@@ -504,11 +507,16 @@ export async function handleCreateTask(request: Request, user: AuthUser, env: En
       key_link_2_desc: body.key_link_2_desc ?? null,
       key_link_3: body.key_link_3 ?? null,
       key_link_3_desc: body.key_link_3_desc ?? null,
-      notes: body.notes ?? null,
       effort: body.effort ?? null,
       short_title: body.short_title ?? null,
       source_thread_id: body.source_thread_id ?? null,
       related_message_ids: body.related_message_ids ?? null,
+      // PB §2D (2026-06-10): every source_thread_id-bearing task is minted
+      // HERE (Apps Script "Email Tasks") — derive the Gmail-thread link at
+      // create so PB's backfill_email_links.py + invariant I40 can retire.
+      email_link: body.source_thread_id
+        ? `https://mail.google.com/mail/u/1/#inbox/${body.source_thread_id}`
+        : null,
     },
     route: 'handleCreateTask',
     user,
@@ -1386,6 +1394,10 @@ export async function handleMobileTasksToHub(request: Request, user: AuthUser, e
           short_title: pwaTask.short_title ?? null,
           source_thread_id: pwaTask.source_thread_id ?? null,
           related_message_ids: pwaTask.related_message_ids ?? null,
+          // PB §2D: derive the Gmail-thread link at create (see handleCreateTask).
+          email_link: pwaTask.source_thread_id
+            ? `https://mail.google.com/mail/u/1/#inbox/${pwaTask.source_thread_id}`
+            : null,
         },
         route: 'handleMobileTasksToHub',
         user,

@@ -524,3 +524,58 @@ describe('Stage 3 Phase 3.6: sessions upsert-on-miss', () => {
     expect(upsertSql).toBeUndefined()
   })
 })
+
+// ── Create-payload ↔ wire-contract drift guard (2026-06-10) ─────────────────
+// REGRESSION: pb-schema 0.4.0 removed `notes` from TABLE_FIELDS.tasks while
+// handleCreateTask still built `notes: null` into its insert payload — EVERY
+// POST /api/tasks create 409'd in prod ("unknown fields for tasks: notes")
+// and no test caught it. This test mirrors the FULL key set the two create
+// routes (handleCreateTask, handleMobileTasksToHub) build, so any future
+// contract shrink under a route payload fails HERE instead of in prod.
+// (If you add a key to a create payload, add it here too.)
+describe('create-route payload keys stay within the wire contract', () => {
+  it('the handleCreateTask payload key set is accepted end-to-end', async () => {
+    const db = makeStubDB()
+    const env = { DB: db } as unknown as import('../helpers').Env
+    const user = { email: 'test@example.com' } as import('../helpers').AuthUser
+
+    const result = await applyMutation(env, {
+      table: 'tasks',
+      record_id: 'task_01hwtest_contract_keys_001',
+      op: 'insert',
+      payload: {
+        // Mirrors handleCreateTask (api/routes/tasks.ts) exactly:
+        title: 'Contract-keys probe',
+        description: 'probe',
+        assignee: 'nick-ingraham',
+        assigned_by: 'test@example.com',
+        meeting_id: null,
+        project_id: null,
+        due_date: null,
+        deadline: null,
+        priority: 'medium',
+        status: 'todo',
+        source: 'hub',
+        completed: 0,
+        completed_at: null,
+        completed_by: null,
+        key_link_1: null, key_link_1_desc: null,
+        key_link_2: null, key_link_2_desc: null,
+        key_link_3: null, key_link_3_desc: null,
+        effort: null,
+        short_title: null,
+        source_thread_id: 'FMfcgzTESTthread01',
+        related_message_ids: null,
+        // PB §2D: derived at create from source_thread_id.
+        email_link: 'https://mail.google.com/mail/u/1/#inbox/FMfcgzTESTthread01',
+      },
+      route: 'handleCreateTask',
+      user,
+    })
+
+    expect(result.status).toBe('accepted')
+    const row = db._store.get('task_01hwtest_contract_keys_001')
+    expect(row?.email_link).toBe('https://mail.google.com/mail/u/1/#inbox/FMfcgzTESTthread01')
+    expect(row).not.toHaveProperty('notes')
+  })
+})
