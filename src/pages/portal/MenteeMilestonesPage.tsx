@@ -7,6 +7,7 @@ import { TableSkeleton } from '../../components/LoadingSkeleton'
 import PageHeader from '../../components/PageHeader'
 import PageContainer from '../../components/PageContainer'
 import EmptyState from '../../components/EmptyState'
+import EmptyStateArt from '../../components/EmptyStateArt'
 import Avatar from '../../components/Avatar'
 import InlineSelect from '../../components/InlineSelect'
 import { useUndoToast } from '../../components/UndoToast'
@@ -37,10 +38,6 @@ const STATUS_OPTIONS = [
   { value: 'completed', label: 'Completed', color: 'var(--green)' },
   { value: 'overdue', label: 'Overdue', color: 'var(--maroon)' },
 ]
-
-// TODO: Remove this hardcoded list once AddMilestoneModal receives mentee slugs as a prop
-// derived from the useMenteeOverview() API response (mentee_slug field).
-const MENTEE_SLUGS = ['dan-shyu', 'beret-fitzgerald', 'claire-collins']
 
 // ── Activity Lapse Detection (P2-06) ───────────────────────
 // Neutral framing: "Needs check-in" reads as a PI todo, not a trainee judgment.
@@ -137,9 +134,8 @@ export default function MenteeMilestonesPage() {
     )
   }, [updateMilestone, showUndo])
 
-  // P6-A5: derive mentee slugs from the team raw API (includes member_type).
-  // Overview API (milestones already tracked) is the primary source.
-  // Falls back to the legacy hardcoded array until the API responds.
+  // P3-4: derive mentee slugs from the team raw API (member_type), falling back
+  // to the overview API (mentees with tracked milestones). No hardcoded roster.
   const { data: rawTeamData } = useQuery({
     queryKey: ['team-raw'],
     queryFn: async (): Promise<{ data: Array<{ slug?: string; member_type?: string }> }> => {
@@ -156,10 +152,10 @@ export default function MenteeMilestonesPage() {
       .filter((m) => m.member_type && MENTEE_TYPES.has(m.member_type) && m.slug)
       .map((m) => m.slug as string)
     if (fromTeam.length > 0) return fromTeam
-    // Secondary: overview API (milestones already tracked)
+    // Secondary: overview API (mentees with tracked milestones)
     if (overview.length > 0) return [...new Set(overview.map((o) => o.mentee_slug))]
-    // Fallback: legacy hardcoded list
-    return MENTEE_SLUGS
+    // No hardcoded fallback (P3-4) — empty until team/overview data loads.
+    return [] as string[]
   }, [rawTeamData, overview])
 
   const overdueTotal = overview.reduce((sum, o) => sum + o.overdue_count, 0)
@@ -357,7 +353,7 @@ export default function MenteeMilestonesPage() {
           <TableSkeleton rows={8} cols={5} />
         ) : flatList.length === 0 ? (
           <EmptyState
-            icon={<GraduationCap size={40} />}
+            icon={<EmptyStateArt variant="grants" />}
             title="Nothing scheduled yet"
             subtitle="Track committee meetings, IRB submissions, scholarly projects, and qualifying exams for each mentee in one place."
             action={{ label: 'Add Milestone', onClick: () => setShowAddModal(true) }}
@@ -745,6 +741,16 @@ function MilestoneRow({
               size="sm-icon"
             />
           </div>
+          {/* P3-5: status edit works on touch — same shared editor as desktop.
+              stopPropagation so tapping the control doesn't toggle row expand. */}
+          <div className="ml-auto" onClick={(e) => e.stopPropagation()}>
+            <InlineSelect
+              value={item.status}
+              options={STATUS_OPTIONS}
+              onChange={(val) => onStatusChange(item.id, val, item.status)}
+              size="sm"
+            />
+          </div>
         </div>
       </div>
 
@@ -841,7 +847,7 @@ function FilterSelect({
 
 function AddMilestoneModal({ menteeSlugs, onClose }: { menteeSlugs: string[]; onClose: () => void }) {
   const createMilestone = useCreateMenteeMilestone()
-  const [menteeSlug, setMenteeSlug] = useState(menteeSlugs[0] ?? MENTEE_SLUGS[0])
+  const [menteeSlug, setMenteeSlug] = useState(menteeSlugs[0] ?? '')
   const [milestoneType, setMilestoneType] = useState('committee_meeting')
   const [title, setTitle] = useState('')
   const [dueDate, setDueDate] = useState('')

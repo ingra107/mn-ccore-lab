@@ -729,6 +729,26 @@ function DeadlineItemRow({ item, onStatusChange, onMilestoneStatusChange, onDueD
             }}>
               {item.type === 'milestone' ? 'Milestone' : 'Task'}
             </span>
+            {/* P3-5: status edit works on touch — same shared editor as desktop. */}
+            {item.type === 'task' && onStatusChange ? (
+              <div onClick={(e) => e.stopPropagation()}>
+                <InlineSelect
+                  value={item.status}
+                  options={STATUS_OPTIONS}
+                  onChange={(val) => onStatusChange(item.id, val, item.status)}
+                  size="sm"
+                />
+              </div>
+            ) : item.type === 'milestone' && onMilestoneStatusChange ? (
+              <div onClick={(e) => e.stopPropagation()}>
+                <InlineSelect
+                  value={item.status}
+                  options={MILESTONE_STATUS_OPTIONS}
+                  onChange={(val) => onMilestoneStatusChange(item.id, val, item.status)}
+                  size="sm"
+                />
+              </div>
+            ) : null}
             {person && (
               <div style={{ width: 18, height: 18, flexShrink: 0 }}>
                 <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="sm-icon" variant="ice" />
