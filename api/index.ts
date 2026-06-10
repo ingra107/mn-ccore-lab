@@ -26,7 +26,7 @@ import { handleGetCitations } from './routes/citations';
 import { handleGetTeam, handleTeamSlugs, handleCVData, handleUpdateTeamMember } from './routes/team';
 import { handleGetDigest, handleDigestDates, handleUpdateDigestStatus, handleCreateDigestPaper, handleGetDigestComments, handleCreateDigestComment, handleDigestCommentCounts } from './routes/digest';
 import { handleGetIdeas, handleCreateIdea, handleUpdateIdea, handleVoteIdea } from './routes/ideas';
-import { handleBugReport } from './routes/bug-report';
+import { handleBugReport, handleListBugReports, handleUpdateBugReportStatus } from './routes/bug-report';
 import { handleNotifications, handleNotificationCount, handleMarkNotificationRead, handleMarkAllNotificationsRead, handleCommitments, handleCreateCommitment } from './routes/notifications';
 import { handleGetSearch } from './routes/search';
 import { handleGetSettings, handleUpdateSettings, handleGetWorkflowTemplates, handleCreateWorkflowTemplate } from './routes/settings';
@@ -2145,8 +2145,28 @@ defineRoute({
     const apiKeyValid = c.var.apiKeyValid === true;
     if (!authed && !apiKeyValid) return error('Authentication required to file a bug', 401);
   }
-  return handleBugReport(c.req.raw, env);
+  return handleBugReport(c.req.raw, env, c.get('authedUser'));
 },
+});
+
+// Bug Squasher queue — PI/API-key gated (in-handler isPiRequest, same idiom
+// as the PB-sync reads). The squasher (scripts/bug-squasher.bat) lists open
+// bugs then marks each resolved/dismissed as it works through them.
+defineRoute({
+  method: 'GET',
+  path: '/api/bug-reports',
+  auth: 'pi',
+  entity: 'bug-report',
+  visibility: 'na',
+  handler: (c) => handleListBugReports(R(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/bug-reports/:id/status',
+  auth: 'pi',
+  entity: 'bug-report',
+  visibility: 'na',
+  handler: (c) => handleUpdateBugReportStatus(c.req.param('id'), R(c), E(c)),
 });
 
 // Digest
