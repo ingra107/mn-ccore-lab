@@ -1,11 +1,10 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { FolderKanban, GitBranch, Plus, List, LayoutGrid, Star } from 'lucide-react'
-import DensityToggle, { useDensity, densityClass } from '../components/DensityToggle'
+import { useDensity, densityClass } from '../components/DensityToggle'
 import { stageIndex, toApiStage } from '../lib/stageNormalize'
 import { usePageMeta } from '../hooks/usePageMeta'
-import { useScrollReveal } from '../hooks/useScrollReveal'
 import { useProjects, useDependencies, useProjectHealth, useTasks } from '../hooks/useApiData'
 import { useCreateProject } from '../hooks/useMutations'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
@@ -15,6 +14,7 @@ import { PROJECT_STATUS_OPTIONS, normalizeProjectStatus, isProjectActive } from 
 import ProjectCard from '../components/ProjectCard'
 import ProjectDependencyMap from '../components/ProjectDependencyMap'
 import CreateProjectModal from '../components/CreateProjectModal'
+import DataPage from '../components/DataPage'
 import { ColumnHeader, TableContainer } from '../components/table'
 import { directors } from '../data/team'
 import { displayName } from '../lib/nameUtils'
@@ -124,9 +124,22 @@ export default function Projects() {
       queryClient.invalidateQueries({ queryKey: ['activity'] })
     },
   })
-  const headerRef = useScrollReveal<HTMLDivElement>()
   const [density, setDensity] = useDensity()
-  const [activeCategory, setActiveCategory] = useState<string>('all')
+  // S10: category is URL-backed so ⌘K "Filter CLIF Projects" (which navigates
+  // to PATHS.projects + '?category=CLIF') lands pre-filtered, and saved/shared
+  // links round-trip. Same pattern ManuscriptsPage uses. Absent param = 'all'.
+  const [searchParams, setSearchParams] = useSearchParams()
+  const VALID_CATEGORY_KEYS = useMemo(() => new Set(CATEGORY_FILTERS.map((f) => f.key as string)), [])
+  const categoryParam = searchParams.get('category')
+  const activeCategory = categoryParam && VALID_CATEGORY_KEYS.has(categoryParam) ? categoryParam : 'all'
+  const setActiveCategory = useCallback((next: string) => {
+    setSearchParams((prev) => {
+      const out = new URLSearchParams(prev)
+      if (next && next !== 'all') out.set('category', next)
+      else out.delete('category')
+      return out
+    }, { replace: true })
+  }, [setSearchParams])
   const [viewMode, setViewMode] = useState<'list' | 'pipeline'>('list')
   const [showDeps, setShowDeps] = useState(false)
   const [showCreate, setShowCreate] = useState(false)
@@ -226,144 +239,95 @@ export default function Projects() {
 
 
   return (
-    <div style={{ minHeight: '100vh', overflowX: 'hidden' }}>
-      <div className="content-container" style={{ paddingBottom: '6rem' }}>
-        {/* Page Header */}
-        <div ref={headerRef} className="fade-in-up" style={{ marginBottom: '1rem', paddingTop: '1rem' }}>
-          <div className="flex items-center gap-2.5">
-            <div style={{ width: 28, height: 28, borderRadius: 'var(--radius-lg)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--teal-active)', flexShrink: 0 }}>
-              <FolderKanban size={16} style={{ color: 'var(--teal)' }} />
-            </div>
-            <h1
-              style={{
-                fontWeight: 600,
-                fontSize: 'clamp(1.35rem, 3vw, 1.75rem)',
-                color: 'var(--ink)',
-                margin: 0,
-                lineHeight: 1.15,
-              }}
-            >
-              Research Pipeline
-            </h1>
+    <>
+    <DataPage
+      icon={<FolderKanban size={20} />}
+      title="Research Pipeline"
+      actions={
+        <button
+          onClick={() => setShowCreate(true)}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg new-project-btn"
+          style={{
+            background: 'transparent',
+            color: 'var(--teal)',
+            fontSize: '13px',
+            fontWeight: 600,
+            border: '1px solid var(--border-subtle)',
+            cursor: 'pointer',
+            transition: 'background 0.15s',
+          }}
+        >
+          <Plus size={14} />
+          New Project
+        </button>
+      }
+      views={[
+        { key: 'list', icon: <List size={14} />, label: 'List' },
+        { key: 'pipeline', icon: <LayoutGrid size={14} />, label: 'Pipeline' },
+      ]}
+      activeView={viewMode}
+      onViewChange={(v) => setViewMode(v as 'list' | 'pipeline')}
+      filters={
+        <>
+          <PageTooltip id="projects-pipeline-hint" text="Try Pipeline view for a visual overview" />
+          {CATEGORY_FILTERS.map((f) => (
             <button
-              onClick={() => setShowCreate(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg ml-auto new-project-btn"
+              key={f.key}
+              type="button"
+              onClick={() => setActiveCategory(f.key)}
+              className="cursor-pointer inline-flex items-center px-2.5 py-1 text-xs filter-pill"
               style={{
-                background: 'transparent',
-                color: 'var(--teal)',
-                fontSize: '13px',
-                fontWeight: 600,
-                border: '1px solid var(--border-subtle)',
-                cursor: 'pointer',
-                transition: 'background 0.15s',
+                fontWeight: 'var(--label-weight)',
+                fontSize: 'var(--label-size)',
+                borderRadius: 'var(--radius-md)',
+                background: activeCategory === f.key ? 'var(--teal-solid)' : 'transparent',
+                color: activeCategory === f.key ? 'var(--ink-bright, #fff)' : 'var(--slate)',
+                border: activeCategory === f.key ? '1px solid var(--teal)' : '1px solid transparent',
+                transition: 'all 0.15s',
               }}
             >
-              <Plus size={14} />
-              New Project
+              {f.label}
             </button>
-          </div>
-        </div>
-
-        {/* Controls bar: view toggle + filters + stats */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-          <div className="flex items-center gap-4">
-            {/* View toggle */}
-            <div
-              className="flex items-center rounded-lg overflow-hidden"
+          ))}
+        </>
+      }
+      rightExtra={
+        <>
+          <span
+            className="text-xs"
+            style={{
+              color: 'var(--slate)',
+              whiteSpace: 'nowrap',
+            }}
+          >
+              {totalCount} projects &middot; {mncoreCount} MN-CCORE &middot; {clifCount} CLIF{pbCount > 0 ? ` \u00b7 ${pbCount} PB` : ''}
+          </span>
+          {viewMode === 'pipeline' && (
+            <button
+              type="button"
+              onClick={() => setShowDeps(!showDeps)}
+              className="cursor-pointer inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs"
               style={{
-                border: '1px solid var(--border-subtle)',
-              }}
-            >
-              <button
-                onClick={() => setViewMode('list')}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs cursor-pointer"
-                style={{
-                  fontWeight: 500,
-                  background: viewMode === 'list' ? 'var(--teal-solid)' : 'transparent',
-                  color: viewMode === 'list' ? 'var(--ink-bright, #fff)' : 'var(--slate)',
-                  border: 'none',
-                  transition: 'all 0.15s',
-                }}
-              >
-                <List size={14} />
-                List
-              </button>
-              <button
-                onClick={() => setViewMode('pipeline')}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs cursor-pointer"
-                style={{
-                  fontWeight: 500,
-                  background: viewMode === 'pipeline' ? 'var(--teal-solid)' : 'transparent',
-                  color: viewMode === 'pipeline' ? 'var(--ink-bright, #fff)' : 'var(--slate)',
-                  border: 'none',
-                  transition: 'all 0.15s',
-                }}
-              >
-                <LayoutGrid size={14} />
-                Pipeline
-              </button>
-            </div>
-            <PageTooltip id="projects-pipeline-hint" text="Try Pipeline view for a visual overview" />
-
-            {/* Category filter pills — wraps onto multiple rows on mobile to prevent horizontal overflow */}
-            <div className="flex flex-wrap items-center gap-2">
-              {CATEGORY_FILTERS.map((f) => (
-                <button
-                  key={f.key}
-                  type="button"
-                  onClick={() => setActiveCategory(f.key)}
-                  className="cursor-pointer inline-flex items-center px-2.5 py-1 text-xs filter-pill"
-                  style={{
-                    fontWeight: 'var(--label-weight)',
-                    fontSize: 'var(--label-size)',
-                    borderRadius: 'var(--radius-md)',
-                    background: activeCategory === f.key ? 'var(--teal-solid)' : 'transparent',
-                    color: activeCategory === f.key ? 'var(--ink-bright, #fff)' : 'var(--slate)',
-                    border: activeCategory === f.key ? '1px solid var(--teal)' : '1px solid transparent',
-                    transition: 'all 0.15s',
-                  }}
-                >
-                  {f.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Summary stats + density + dependency toggle */}
-          <div className="flex items-center gap-3">
-            <DensityToggle value={density} onChange={setDensity} />
-            <span
-              className="text-xs"
-              style={{
-                color: 'var(--slate)',
+                fontSize: 'var(--label-size)',
+                fontWeight: 'var(--label-weight)',
+                background: showDeps ? 'var(--teal-solid)' : 'transparent',
+                color: showDeps ? 'var(--ink-bright, #fff)' : 'var(--teal)',
+                border: '1px solid rgba(45, 138, 138, 0.2)',
+                transition: 'all 0.2s',
                 whiteSpace: 'nowrap',
               }}
             >
-              {totalCount} projects &middot; {mncoreCount} MN-CCORE &middot; {clifCount} CLIF{pbCount > 0 ? ` \u00b7 ${pbCount} PB` : ''}
-            </span>
-            {viewMode === 'pipeline' && (
-              <button
-                type="button"
-                onClick={() => setShowDeps(!showDeps)}
-                className="cursor-pointer inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs"
-                style={{
-                  fontSize: 'var(--label-size)',
-                  fontWeight: 'var(--label-weight)',
-                  background: showDeps ? 'var(--teal-solid)' : 'transparent',
-                  color: showDeps ? 'var(--ink-bright, #fff)' : 'var(--teal)',
-                  border: '1px solid rgba(45, 138, 138, 0.2)',
-                  transition: 'all 0.2s',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                <GitBranch size={12} />
-                Dependencies
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Dependency map (collapsible, pipeline only) */}
+              <GitBranch size={12} />
+              Dependencies
+            </button>
+          )}
+        </>
+      }
+      showDensity
+      density={density}
+      onDensityChange={setDensity}
+      beforeBody={
+        /* Dependency map (collapsible, pipeline only) */
         <AnimatePresence>
           {showDeps && viewMode === 'pipeline' && (
             <motion.div
@@ -377,7 +341,8 @@ export default function Projects() {
             </motion.div>
           )}
         </AnimatePresence>
-
+      }
+    >
         {/* ─── LIST VIEW ─── */}
         {viewMode === 'list' && (
           <TableContainer className={densityClass(density)}>
@@ -906,7 +871,7 @@ export default function Projects() {
             </div>
           </>
         )}
-      </div>
+      </DataPage>
 
       {/* Create Project Modal */}
       <CreateProjectModal
@@ -985,7 +950,7 @@ export default function Projects() {
           background: var(--gold-emphasis) !important;
         }
       `}</style>
-    </div>
+    </>
   )
 }
 
