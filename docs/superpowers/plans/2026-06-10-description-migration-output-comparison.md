@@ -72,7 +72,11 @@ dedup), human-reviewable per-project diff third, description-strip last.
 
 1. Legacy activity_log backfill: **OVERRIDDEN — Nick wants it.** Smart-session agent dispatched to
    mine the real data out (report: `2026-06-10-activity-log-backfill-report.md` when it lands).
-2. Parser vs LLM: **this document is the requested evidence** — awaiting Nick's read.
+2. Parser vs LLM: **DECIDED — LLM-on-parse (Nick 2026-06-10: "agreed go LLM using parse").**
+   Deterministic `parseDescriptionLog` spine → LLM judgment layer (date-resolve undated tags,
+   split glued entries, dedup, completion-vs-update classification; bodies VERBATIM, truncated
+   text never completed, spam-collapse flagged not silent) → per-project review diffs for Nick →
+   inserts + description-strip only after his diff review.
 3. PB writer retarget vs nightly sweep: **RETARGET — Nick confirmed** ("yes retarget for sure
    because i don't want description muddied"). PB-session work: repoint the 4 BrainDB breadcrumb
    sites (query.py:1960, :2001, :2084, :2650) to post activity entries Hub-first instead of
