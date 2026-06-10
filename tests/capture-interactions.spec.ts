@@ -322,10 +322,12 @@ test('14-keyboard-nav → J/K/Space/Enter on task list', async ({ page }) => {
   await page.keyboard.press('Escape')
 })
 
-test('15-quick-add-nlp → Ctrl+N NLP token parsing', async ({ page }) => {
+test('15-quick-add-nlp → q opens quick-add for NLP token parsing', async ({ page }) => {
+  // S11: quick-add shortcut is `q` (Cmd/Ctrl+N is browser-reserved).
   await page.goto(`${BASE}${P.dashboard}`, { waitUntil: 'networkidle' })
   await page.waitForTimeout(500)
-  await page.keyboard.press('Control+n')
+  await page.mouse.click(5, 5)
+  await page.keyboard.press('q')
   await page.waitForTimeout(400)
   await frame(page, '15-quick-add', 'a-opened')
   await page.keyboard.type('@nick review CLIF draft p2 Friday')

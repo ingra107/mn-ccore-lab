@@ -58,14 +58,15 @@ test('targeted', async ({ page, context }) => {
     await page.keyboard.press('Escape')
   }
 
-  // 5. Quick-add via Ctrl+N
+  // 5. Quick-add via `q` (S11 — Cmd/Ctrl+N is browser-reserved and never fired)
   await page.goto(`${BASE}${P.dashboard}`)
   await page.waitForTimeout(2000)
-  await page.keyboard.press('Control+n')
+  await page.mouse.click(5, 5)
+  await page.keyboard.press('q')
   await page.waitForTimeout(500)
   const modal = await page.locator('[role="dialog"], [aria-modal="true"]').count()
-  log(`Ctrl+N: modals=${modal}`)
-  await page.screenshot({ path: path.join(OUT, '05-ctrl-n.png') })
+  log(`q quick-add: modals=${modal}`)
+  await page.screenshot({ path: path.join(OUT, '05-quick-add.png') })
   await page.keyboard.press('Escape')
 
   // 6. /personal — does Personal/My Hub differ from /my-tasks?

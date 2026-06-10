@@ -2231,15 +2231,18 @@ test.describe('FEATURE — Quick Capture bar', () => {
     }
   })
 
-  test('Quick Capture → Ctrl+N focuses input', async ({ page }) => {
+  test('Quick Capture → q opens the canonical quick-add modal', async ({ page }) => {
+    // S11/P2-10: the dashboard capture bar is now a trigger into the one
+    // canonical quick-add modal; `q` opens it (Cmd/Ctrl+N was browser-reserved).
     await go(page, P.dashboard)
-    await page.keyboard.press('Control+n')
+    await page.mouse.click(5, 5)
+    await page.keyboard.press('q')
     await page.waitForTimeout(300)
-    const focused = await page.evaluate(() => {
+    const opened = await page.evaluate(() => {
       const el = document.activeElement as HTMLInputElement
       return el?.placeholder || el?.tagName || 'nothing'
     })
-    console.log(`Ctrl+N focused: ${focused}`)
+    console.log(`q opened quick-add, focused: ${opened}`)
   })
 })
 

@@ -81,10 +81,13 @@ test('network-states → 6 captures of the knowledge graph', async ({ page }) =>
 // ─────────────────────────────────────────────────────────────────────
 // Modals — trigger each, capture open state.
 
-test('modal-create-task → Ctrl+N opens global quick-add', async ({ page }) => {
+test('modal-create-task → q opens global quick-add', async ({ page }) => {
+  // S11: the quick-add shortcut is `q` (Cmd/Ctrl+N is browser-reserved and
+  // never fired). Click the body first so focus is not in any input.
   await page.goto(BASE + P.dashboard, { waitUntil: 'networkidle' })
   await page.waitForTimeout(500)
-  await page.keyboard.press('Control+n')
+  await page.mouse.click(5, 5)
+  await page.keyboard.press('q')
   await page.waitForTimeout(500)
   await page.screenshot({ path: path.join(OUT_DIR, 'rich-modal-01-create-task.png'), fullPage: false })
   await page.keyboard.press('Escape')
