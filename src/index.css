@@ -84,7 +84,9 @@
 
   /* Shadow elevation system */
   --shadow-flat: none;
-  --shadow-card: 0 1px 3px rgba(0,0,0,0.08);
+  /* P1-2: light-mode card elevation is now a hairline ring, not a drop
+     shadow on a grey wash. Dark mode keeps a real shadow (see .dark). */
+  --shadow-card: 0 0 0 1px rgba(15, 25, 35, 0.06);
   --shadow-card-hover: 0 6px 16px rgba(15, 25, 35, 0.18);
   --shadow-elevated: 0 4px 12px rgba(0,0,0,0.15);
 
@@ -109,8 +111,12 @@
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
 
-  --bg-rgb: 255, 255, 255;
-  --page-bg: #f5f5f5;
+  /* P1-2 (2026-06-09): light-mode bg inversion. The page is now the LIGHTEST
+     layer (cream #faf8f3); cards step DOWN to #f4f5f7 + a hairline (see
+     --surface-card / --task-panel-bg below). Was #f5f5f5 page behind #ffffff
+     cards — a tint behind the cards, the inverse of Round-6 Rule #1. */
+  --bg-rgb: 250, 248, 243;
+  --page-bg: #faf8f3;
   color-scheme: light dark;
 
   /* FAB stack — desktop baseline (no MobileTabBar).
@@ -316,8 +322,14 @@ html[data-density="relaxed"] {
   /* Sidebar surface — DARKER than content (3-plane depth, matches Linear) */
   --sidebar-bg: color-mix(in oklch, var(--cream), black 12%);
 
-  /* Surface elevation — card bg above page bg */
-  --surface-card: #ffffff;
+  /* Surface elevation — card bg BELOW the page bg (P1-2 inversion).
+     Page = cream #faf8f3 (lightest); card steps down to ice #f4f5f7 + a
+     hairline. No more white card floating on a grey wash. */
+  --surface-card: #f4f5f7;
+  /* Card hairline — 1px rgba(15,25,35,.06) ring, replaces the drop-shadow
+     on the grey wash (P1-2). Consumers that use box-shadow: var(--shadow-card)
+     pick this up; dark mode keeps its real shadow (overridden in .dark). */
+  --card-hairline: 0 0 0 1px rgba(15, 25, 35, 0.06);
 
   /* Focus ring — WCAG AA teal (gold fails in light mode) */
   --focus-ring: oklch(0.55 0.12 190 / 0.5);
@@ -1041,8 +1053,8 @@ a:hover {
    text and inverted (#0f1923) text both remain readable. */
 :root {
   /* Page & panel surfaces */
-  --task-page-bg:        #f5f5f5;   /* matches --page-bg in light */
-  --task-panel-bg:       #ffffff;   /* matches --surface-card light */
+  --task-page-bg:        #faf8f3;   /* P1-2: cream page = lightest layer */
+  --task-panel-bg:       #f4f5f7;   /* P1-2: ice panel = a hair darker */
   /* Ink hierarchy (text on task surfaces) */
   --task-ink:            #0f1923;   /* matches --ink hex */
   --task-ink-muted:      #5a6370;   /* matches --muted (6.0:1 on #fff) */
@@ -1761,10 +1773,11 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
    backdrop-filter blur (replaces with solid surface-1 background). */
 @media (prefers-reduced-transparency: reduce) {
   :root {
-    --surface-card: #ffffff;
-    --surface-1: #f5f5f5;
-    --surface-2: #eaeaea;
-    --surface-3: #dfdfdf;
+    /* P1-2: opaque card stays a hair below the cream page (#faf8f3). */
+    --surface-card: #f4f5f7;
+    --surface-1: #f0f1f3;
+    --surface-2: #e7e9ec;
+    --surface-3: #dde0e4;
     --hover-subtle: rgba(0, 0, 0, 0.04);
     --border-subtle: rgba(15, 25, 35, 0.12);
     --border-default: rgba(15, 25, 35, 0.20);
