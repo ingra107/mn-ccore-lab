@@ -17,6 +17,7 @@ echo %date% %time% ARGS: %* >> "%TEMP%\mnccore-handler.log"
 ::                                            The hardcoded basename "Start Claude.bat" IS the
 ::                                            allowlist — no other filename is ever executed.
 ::   mnccore://process                      → run %USERPROFILE%\Peripheral-Brain\Quick_Process.bat.
+::   mnccore://bugsquash                     → run <this dir>\bug-squasher.bat (sibling).
 ::   <anything else>                         → message + exit 1.
 ::
 :: Defence-in-depth: the browser's external-protocol confirmation dialog is the
@@ -61,6 +62,10 @@ if "!url:~0,7!"=="workon/" (
 )
 if /I "!url!"=="process" (
     call :verb_process
+    exit /b !errorlevel!
+)
+if /I "!url!"=="bugsquash" (
+    call :verb_bugsquash
     exit /b !errorlevel!
 )
 
@@ -163,6 +168,26 @@ if defined MNCCORE_HANDLER_DRYRUN (
 )
 :: CWD = the PB repo root so relative paths inside Quick_Process.bat resolve.
 start "" /D "%USERPROFILE%\Peripheral-Brain" "!qp!"
+exit /b 0
+
+
+:: ── :verb_bugsquash ── run the sibling bug-squasher.bat ──────────────────────
+:: SECURITY: the only thing this verb runs is the literal sibling file
+:: "%~dp0bug-squasher.bat" (same directory as this handler). Refuses if it
+:: doesn't exist. No path argument is taken — nothing arbitrary is reachable.
+:verb_bugsquash
+set "bs=%~dp0bug-squasher.bat"
+if not exist "!bs!" (
+    call :fail "bugsquash: bug-squasher.bat not found at !bs!"
+    exit /b 1
+)
+if defined MNCCORE_HANDLER_DRYRUN (
+    echo DRYRUN bugsquash: start "" /D "%~dp0.." "!bs!"
+    exit /b 0
+)
+:: CWD = the Hub repo root so the Claude session starts there (bug-squasher.bat
+:: also cd's there itself, but set it here too for the spawned window title/dir).
+start "" /D "%~dp0.." "!bs!"
 exit /b 0
 
 

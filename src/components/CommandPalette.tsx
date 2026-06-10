@@ -6,12 +6,13 @@ import {
   Clock, FolderKanban, FileText, Lightbulb, HelpCircle, BookOpen, DollarSign,
   Users, Plus, ArrowRight, Command, CalendarPlus,
   CheckCircle2, AlertTriangle, Flag, CircleDot, Scale, GitBranch,
-  Activity, BarChart3, Settings,
+  Activity, BarChart3, Settings, Bug,
 } from 'lucide-react'
 import { spring } from '../lib/animations'
 import { localDateKey, isOverdue } from '../lib/dateUtils'
 import { useTasks, useProjects, useTeam, useMeetingsApi } from '../hooks/useApiData'
 import { useAuth } from '../hooks/useAuth'
+import { useProtocolLaunch } from '../hooks/useProtocolLaunch'
 import { getPersonInfo } from '../data/team'
 import { PATHS, PUBLIC_PATHS } from '../constants/paths'
 import { emailToSlug } from '../lib/emailSlug'
@@ -45,6 +46,7 @@ export default function CommandPalette() {
   const { data: meetings = [] } = useMeetingsApi({ enabled: open })
   const { user } = useAuth()
   const currentUserSlug = emailToSlug(user?.email)
+  const { launch } = useProtocolLaunch()
 
   const [recentRoutes, setRecentRoutes] = useState<string[]>(() => {
     try {
@@ -208,6 +210,28 @@ export default function CommandPalette() {
       action: () => { navigate(`${PATHS.decisions}?create=true`); setOpen(false) },
       category: 'action',
     })
+
+    // Bug Squasher — PI ONLY, and exposed ONLY here (no nav/menu surface).
+    // Fires mnccore://bugsquash through the protocol-launch chokepoint, which
+    // opens a local Claude Code session to work through open bug reports. The
+    // toast is honest: the local handler must be installed for it to actually
+    // launch (otherwise the URI is a silent no-op, like every other local
+    // protocol affordance).
+    if (user?.isPi) {
+      items.push({
+        id: 'action-bug-squasher',
+        label: 'Bug Squasher',
+        sublabel: 'Open a Claude session to fix all open bug reports',
+        icon: Bug,
+        action: () => {
+          void launch('mnccore://bugsquash', {
+            successMessage: 'Launching Bug Squasher… (needs the mnccore:// handler installed on this machine)',
+          })
+          setOpen(false)
+        },
+        category: 'action',
+      })
+    }
 
     // Quick Filters
     items.push({
@@ -377,7 +401,7 @@ export default function CommandPalette() {
     }
 
     return items
-  }, [tasks, projects, team, meetings, navigate])
+  }, [tasks, projects, team, meetings, navigate, user?.isPi, launch])
 
   // Project mode: when query starts with `/`
   const isProjectMode = query.startsWith('/')
