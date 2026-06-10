@@ -806,3 +806,37 @@ of 3 cleaned entries · ALL flags. Multi-line bodies render internal newlines as
 - **flags:**
   - AT 50-CHAR CAPTURE LIMIT (likely truncated; kept VERBATIM, never completed — verify) on 2026-03-25: 'Complete VA Form 10-5345 Pre-Employment Examinatio'
   - AT 50-CHAR CAPTURE LIMIT (likely truncated; kept VERBATIM, never completed — verify) on 2026-05-11: 'Provide BLS/ACLS certification for VA WOC credenti'
+
+---
+
+# EXECUTED 2026-06-10 (evening) — Nick: "go"
+
+Runbook ran same-evening with a live correction. **Final prod state: 407 `description_line`
+entries (the original 298 + 109 from the encoded-blob repair) · 0 JSON-encoded descriptions ·
+0 line-start dated lines anywhere in `projects.description`.**
+
+- Delta check vs the package snapshot: 0 changed rows. Pre-strip snapshot saved
+  (`Scratch/desc-migration-2026-06-10/snapshot_pre_strip.json`) + D1 Time-Travel 30d backstop.
+- `apply.sql` rehearsed on `mnccore-lab-test` (then cleaned), prod-applied (298 rows), re-run
+  proven idempotent (0 writes). `strip.sql` rewrote 53 descriptions. NOTE: D1 rejects
+  `BEGIN TRANSACTION;` — executed via `.d1.sql` variants with the wrapper lines stripped.
+- **CORRECTION — the double-encoded class was 9 projects, not 2.** The package flagged only the
+  2 zero-entry cases; 7 more had a JSON-stringified PREFIX (literal `"` + `\n`/`✓` escapes)
+  that the spine read as one undated lead line — their clean appended tails migrated, the blobs
+  silently survived as "leads". `repair_encoded.py` (same pipeline, `raw_decode` the prefix)
+  fixed all 9 in two rounds: +82 entries (round 1: clif-p2, pcori, lpv-adherence,
+  provider-variation incl. the real 68-completion 2026-02-16 cluster) and +27 entries (round 2:
+  cci-in-ards, lpv-precision, fluid-shortage, mnccore-minnesota, severe-hyponatremia). Both
+  rounds idempotency-proven (re-run = 0 writes). Real static leads retained (pcori 230 chars,
+  fluid-shortage 59, mnccore 115, severe-hyponatremia 116).
+- `updated_at` bumped on all 55 affected projects so PB's Hub-wins pull takes the stripped
+  descriptions into local `notes` — without this, PB's stale notes cache would resurrect the
+  dated lines on its next breadcrumb push.
+- Live verification: r03 feed shows 31 migrated entries; provider-variation 107 project entries.
+- **Rollback:** `DELETE FROM activity_entries WHERE source_table='description_line';` + restore
+  descriptions from `snapshot_pre_strip.json`.
+- **STILL OPEN (PB session, now higher urgency):** retarget the 4 breadcrumb writers
+  (`query.py:1960/2001/2084/2650`) — until then any PB complete-with-note/reopen/breadcrumb
+  appends a NEW dated line to notes→description (single line on a clean description; re-runnable
+  delta exists in `Scratch/desc-migration-2026-06-10/pipeline.py`). Then DELETE
+  `src/lib/descriptionLog.ts` after one clean sync cycle.
