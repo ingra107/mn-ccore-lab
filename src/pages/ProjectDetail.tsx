@@ -283,6 +283,9 @@ function ProjectDetailInner({ project }: InnerProps) {
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
+  // S21: tasks-tab "Copy task list" button — flip-to-check feedback like its
+  // siblings (was zero-feedback).
+  const [tasksCopied, setTasksCopied] = useState(false)
 
   // Action menu (archive / delete / duplicate) — PD-7
   const navigate = useNavigate()
@@ -1858,13 +1861,15 @@ function ProjectDetailInner({ project }: InnerProps) {
                   onClick={() => {
                     const lines = pendingTasks.map(t => `- [ ] ${t.title || t.description}${t.due_date ? ` (due ${t.due_date})` : ''}`)
                     navigator.clipboard.writeText(lines.join('\n'))
+                    setTasksCopied(true)
+                    setTimeout(() => setTasksCopied(false), 2000)
                   }}
                   className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-colors border"
-                  style={{ color: 'var(--slate)', borderColor: 'var(--border-subtle)', background: 'none', cursor: 'pointer', opacity: 0.85 }}
-                  title="Copy task list to clipboard"
+                  style={{ color: tasksCopied ? 'var(--green)' : 'var(--slate)', borderColor: tasksCopied ? 'var(--green)' : 'var(--border-subtle)', background: 'none', cursor: 'pointer', opacity: tasksCopied ? 1 : 0.85 }}
+                  title={tasksCopied ? 'Copied!' : 'Copy task list to clipboard'}
                 >
-                  <FileText size={11} />
-                  Copy
+                  {tasksCopied ? <Check size={11} /> : <FileText size={11} />}
+                  {tasksCopied ? 'Copied' : 'Copy'}
                 </button>
                 <button
                   onClick={() => setShowCreateTask(true)}

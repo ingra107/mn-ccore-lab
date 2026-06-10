@@ -328,7 +328,7 @@ export default function ManuscriptsPage() {
               fontSize: '12px',
               fontWeight: active ? 600 : 400,
               cursor: 'pointer',
-              transition: 'all 0.12s ease-out',
+              transition: 'all var(--duration-fast) ease-out',
               opacity: active ? 1 : 0.85,
             }}
           >
@@ -359,7 +359,7 @@ export default function ManuscriptsPage() {
               fontWeight: 600,
               border: '1px solid var(--border-subtle)',
               cursor: 'pointer',
-              transition: 'background 0.12s ease-out',
+              transition: 'background var(--duration-fast) ease-out',
             }}
           >
             <Plus size={14} />
@@ -399,7 +399,7 @@ export default function ManuscriptsPage() {
                 fontSize: '12px',
                 fontWeight: filterStalled ? 600 : 400,
                 cursor: 'pointer',
-                transition: 'all 0.12s ease-out',
+                transition: 'all var(--duration-fast) ease-out',
                 opacity: filterStalled ? 1 : 0.85,
               }}
               title={`Manuscripts stalled in stage for more than ${stalledThresholdDays} days`}
@@ -528,7 +528,7 @@ export default function ManuscriptsPage() {
                             borderBottom: '1px solid var(--border-subtle)',
                             alignItems: 'center',
                             cursor: 'pointer',
-                            transition: 'background 0.12s ease-out',
+                            transition: 'background var(--duration-fast) ease-out',
                           }}
                         >
                           <div className="flex items-center gap-2.5" style={{ paddingRight: '16px' }}>
@@ -618,7 +618,7 @@ export default function ManuscriptsPage() {
                             padding: `var(--row-padding-y, 12px) 16px`,
                             borderBottom: '1px solid var(--border-subtle)',
                             cursor: 'pointer',
-                            transition: 'background 0.12s ease-out',
+                            transition: 'background var(--duration-fast) ease-out',
                           }}
                         >
                           {/* Title row: category icon + title + task count */}
@@ -957,7 +957,7 @@ function DroppableColumn({
         borderTop: isOver ? '2px solid var(--gold)' : '2px solid var(--teal)',
         padding: 'var(--sp-lg)',
         minHeight: '200px',
-        transition: 'background 0.12s ease-out, border-color 0.12s ease-out',
+        transition: 'background var(--duration-fast) ease-out, border-color var(--duration-fast) ease-out',
       }}
     >
       {children}

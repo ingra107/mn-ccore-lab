@@ -560,7 +560,7 @@ export default function GrantsPage() {
             <TableContainer>
               {/* Column headers */}
               <div
-                className="hidden sm:grid col-header-row"
+                className="hidden sm:grid"
                 style={{ gridTemplateColumns: 'minmax(200px, 2fr) 120px 100px 80px minmax(120px, 1fr) 100px' }}
               >
                 <ColumnHeader label="TITLE" sortKey="title" currentSort={sortKey} sortAsc={sortAsc} onSort={handleSort} />

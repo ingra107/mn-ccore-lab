@@ -18,7 +18,7 @@ import PageHeader from '../components/PageHeader'
 import InlineSelect from '../components/InlineSelect'
 import InlineAssigneePicker from '../components/InlineAssigneePicker'
 import { getMeetingFacilitator } from '../lib/facilitator'
-import { parseCarriedForward } from '../lib/textUtils'
+import { parseCarriedForward, emDashifyTitle } from '../lib/textUtils'
 import { formatFullDate, formatShortDate, localDateKey } from '../lib/dateUtils'
 import PageTooltip, { dismissPageTooltip } from '../components/PageTooltip'
 import type { Meeting, ActionItem } from '../data/types'
@@ -169,7 +169,7 @@ function MeetingDetail({ meeting, onToggleAction }: MeetingDetailProps) {
           </div>
           <div className="flex-1 min-w-0">
             <h2 className="text-xl font-medium leading-snug" style={{ color: 'var(--ink)', margin: 0 }}>
-              {meeting.title}
+              {emDashifyTitle(meeting.title)}
             </h2>
             <p className="text-sm mt-1" style={{ color: 'var(--slate)', opacity: 0.85 }}>
               {formatFullDate(meeting.date)}
@@ -794,7 +794,7 @@ export default function Meetings() {
                       )}
                     </div>
                     <p style={{ fontSize: '12px', color: isSelected ? 'var(--ink)' : 'var(--slate)', margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', opacity: isSelected ? 1 : 0.85, fontWeight: isSelected ? 500 : 400 }}>
-                      {meeting.title}
+                      {emDashifyTitle(meeting.title)}
                     </p>
                     {isNext && (
                       <span style={{ fontSize: '10px', color: 'var(--teal)', marginTop: '2px', display: 'block', opacity: 0.8 }}>

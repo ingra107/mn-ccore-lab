@@ -34,7 +34,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useToggleActionItem, useAddAgendaItem, useUpdateMeetingNotes, useCreateDecision, useCreateTask } from '../hooks/useMutations'
 import FileUpload from '../components/FileUpload'
 import TypingIndicator from '../components/TypingIndicator'
-import { parseCarriedForward } from '../lib/textUtils'
+import { parseCarriedForward, emDashifyTitle } from '../lib/textUtils'
 import { parseQuickAddInput } from '../lib/parseQuickAdd'
 import { emailToSlug } from '../lib/emailSlug'
 import { useAuth } from '../hooks/useAuth'
@@ -422,7 +422,7 @@ export default function MeetingDetail() {
           </div>
 
           <h1 style={{ fontWeight: 600, fontSize: 'clamp(1.5rem, 3.5vw, 2.25rem)', color: 'var(--ink)', lineHeight: 1.15, margin: 0 }}>
-            {meeting.title}
+            {emDashifyTitle(meeting.title)}
           </h1>
           <p style={{ fontSize: '15px', color: 'var(--slate)', marginTop: '6px' }}>
             {formatLongDate(meeting.date)}

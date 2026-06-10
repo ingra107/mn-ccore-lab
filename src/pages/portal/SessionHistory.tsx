@@ -174,7 +174,10 @@ function StatCard({ label, value, sub }: { label: string; value: string | number
       <div style={{ fontSize: 11, fontWeight: 500, color: 'var(--slate)', opacity: 0.75, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 'var(--sp-xs)' }}>
         {label}
       </div>
-      <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--ink)', lineHeight: 1.2, fontFamily: 'var(--font-display)' }}>
+      {/* S21: portal stats use DM Sans, not Fraunces. --font-display is public-
+          pages-only (Rule 7); the sanctioned portal metric look is fontWeight
+          700 (--weight-metric) in the body font. */}
+      <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--ink)', lineHeight: 1.2 }}>
         {value}
       </div>
       {sub && (

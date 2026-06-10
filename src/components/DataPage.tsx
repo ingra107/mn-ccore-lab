@@ -113,8 +113,9 @@ export default function DataPage({
 
   return (
     <div style={{ minHeight: '100vh', overflowX: 'hidden' }}>
-      {/* Centered band (P1-1). */}
-      <div className="content-container" style={{ paddingBottom: '6rem' }}>
+      {/* Centered band (P1-1). PortalLayout's <main> owns bottom clearance
+          (pb-[calc(3rem+56px+safe-area)]) — no rogue page-level paddingBottom. */}
+      <div className="content-container">
         <PageHeader icon={icon} title={title} count={count} subtitle={subtitle} actions={actions}>
           {showControls && (
             <TableControls

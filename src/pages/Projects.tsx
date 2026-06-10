@@ -23,7 +23,6 @@ import { displayName } from '../lib/nameUtils'
 import type { Project } from '../data/types'
 import { useProjectKeyboardNav } from '../hooks/useProjectKeyboardNav'
 import { staggerContainer, staggerItem } from '../lib/animations'
-import PageTooltip from '../components/PageTooltip'
 import { stripConsortiumPrefix } from '../lib/textUtils'
 import { PATHS } from '../constants/paths'
 
@@ -314,7 +313,9 @@ export default function Projects() {
       onViewChange={(v) => setViewMode(v as 'list' | 'pipeline')}
       filters={
         <>
-          <PageTooltip id="projects-pipeline-hint" text="Try Pipeline view for a visual overview" />
+          {/* S21: removed the "Try Pipeline view" promo coach-mark — it rendered
+              inline in the toolbar and occluded the Pipeline toggle mid-word.
+              The Pipeline view toggle (above) is already visible chrome. */}
           {CATEGORY_FILTERS.map((f) => (
             <button
               key={f.key}
@@ -477,7 +478,7 @@ export default function Projects() {
                               borderBottom: '1px solid var(--border-subtle)',
                               alignItems: 'center',
                               cursor: 'pointer',
-                              transition: 'background 0.12s ease-out',
+                              transition: 'background var(--duration-fast) ease-out',
                             }}
                           >
                             {/* Title with pin star, category dot, and health indicator */}
@@ -491,12 +492,15 @@ export default function Projects() {
                                   padding: 0,
                                   flexShrink: 0,
                                   color: pinnedSlugs.has(project.slug) ? 'var(--gold)' : 'var(--slate)',
-                                  opacity: pinnedSlugs.has(project.slug) ? 1 : 0.15,
+                                  // S21/P1-11: a 0.15 pin star was an invisible
+                                  // affordance (especially on touch). Raise the
+                                  // resting floor to discoverable-but-quiet.
+                                  opacity: pinnedSlugs.has(project.slug) ? 1 : 0.45,
                                   transition: 'opacity 150ms ease, color 150ms ease',
                                   lineHeight: 0,
                                 }}
-                                onMouseOver={(e) => { if (!pinnedSlugs.has(project.slug)) e.currentTarget.style.opacity = '0.5' }}
-                                onMouseOut={(e) => { if (!pinnedSlugs.has(project.slug)) e.currentTarget.style.opacity = '0.15' }}
+                                onMouseOver={(e) => { if (!pinnedSlugs.has(project.slug)) e.currentTarget.style.opacity = '0.75' }}
+                                onMouseOut={(e) => { if (!pinnedSlugs.has(project.slug)) e.currentTarget.style.opacity = '0.45' }}
                                 title={pinnedSlugs.has(project.slug) ? 'Unpin project' : 'Pin to top'}
                               >
                                 <Star size={12} fill={pinnedSlugs.has(project.slug) ? 'var(--gold)' : 'none'} />
@@ -649,7 +653,7 @@ export default function Projects() {
                               padding: `var(--row-padding-y) 16px`,
                               borderBottom: '1px solid var(--border-subtle)',
                               cursor: 'pointer',
-                              transition: 'background 0.12s ease-out',
+                              transition: 'background var(--duration-fast) ease-out',
                             }}
                           >
                             {/* Title row */}
@@ -944,7 +948,7 @@ export default function Projects() {
 
         .project-list-row:hover {
           background: var(--gold-hover) !important;
-          transition: background 0.12s ease-out !important;
+          transition: background var(--duration-fast) ease-out !important;
         }
         .project-list-row:active {
           background: var(--gold-active) !important;

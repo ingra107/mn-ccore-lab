@@ -24,7 +24,6 @@ import { PATHS } from '../../constants/paths'
 import { useQueryClient } from '@tanstack/react-query'
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 import TaskDetailPanel from '../../components/tasks/TaskDetailPanel'
-import PageTooltip from '../../components/PageTooltip'
 import type { TaskRow } from '../../lib/api'
 
 interface DeadlineItem {
@@ -303,7 +302,9 @@ export default function DeadlinesPage() {
             <Download size={12} />
             Export
           </button>
-          <PageTooltip id="deadlines-timeline-hint" text="Switch to Timeline for a visual map" />
+          {/* S21: removed the "Switch to Timeline" promo coach-mark — it sat
+              inline in the toolbar and overlapped interactive chrome. The
+              Timeline view toggle (above) is already visible. */}
 
           <InlineSelect
             value={filterType}

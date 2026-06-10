@@ -70,3 +70,14 @@ export function stripConsortiumPrefix(title: string): { clean: string; consortiu
   }
   return { clean: title }
 }
+
+/**
+ * S21: render-time typographic cleanup for titles that carry a literal `--`
+ * double-hyphen (e.g. "Biweekly Meeting -- April 07"). Collapses ` -- ` (and
+ * bare `--`) to a proper em-dash for display ONLY — never mutate the stored
+ * value (no data migration). Idempotent.
+ */
+export function emDashifyTitle(title: string): string {
+  if (!title) return title
+  return title.replace(/\s*--\s*/g, ' — ')
+}

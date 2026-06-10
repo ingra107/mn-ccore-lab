@@ -16,6 +16,7 @@ import { useAuth } from '../../hooks/useAuth'
 import { emailToSlug } from '../../lib/emailSlug'
 import { getPersonInfo } from '../../data/team'
 import { PATHS } from '../../constants/paths'
+import { stageLabel, toApiStage } from '../../lib/stageNormalize'
 import { usePageMeta } from '../../hooks/usePageMeta'
 
 interface DashboardData {
@@ -237,7 +238,8 @@ export default function InsightsPage() {
 
   return (
     <div style={{ minHeight: '100vh' }}>
-      <div className="content-container" style={{ paddingBottom: '6rem' }}>
+      {/* PortalLayout's <main> owns bottom clearance — no rogue paddingBottom. */}
+      <div className="content-container">
         <PageHeader
           icon={<TrendingUp size={20} />}
           title="Operational Insights"
@@ -602,15 +604,30 @@ function ConnectionsPanel() {
 }
 
 function PipelineFunnel({ rows }: { rows: DashboardData['pipelineFunnel'] }) {
-  const max = Math.max(1, ...rows.map((r) => r.count))
+  // S21: the API funnel can emit two buckets that both display as the same
+  // canonical stage (e.g. raw "idea" + legacy "Idea", or "submitted"+"Review").
+  // Canonicalize each row's stage through stageLabel() and merge same-label
+  // buckets so a stage never appears twice. Order preserved by first appearance.
+  const mergedRows = useMemo(() => {
+    const order: string[] = []
+    const byLabel = new Map<string, number>()
+    for (const r of rows) {
+      const label = stageLabel(r.stage) || r.stage
+      if (!byLabel.has(label)) order.push(label)
+      byLabel.set(label, (byLabel.get(label) ?? 0) + r.count)
+    }
+    return order.map((label) => ({ stage: label, count: byLabel.get(label) ?? 0 }))
+  }, [rows])
+  const max = Math.max(1, ...mergedRows.map((r) => r.count))
   return (
     <div style={{ padding: 'var(--sp-lg)', borderRadius: 'var(--radius-xl)', background: 'var(--surface-1)', border: '1px solid var(--border-subtle)' }}>
       <SectionHeader icon={<FlaskConical size={14} />} label="Pipeline funnel" />
       <div className="flex flex-col" style={{ gap: 6 }}>
-        {rows.map((r) => {
+        {mergedRows.map((r) => {
           const pct = (r.count / max) * 100
-          // INS-08: bars deeplink to /portal/projects?stage=:stage
-          const href = `${PATHS.projects}?stage=${encodeURIComponent(r.stage)}`
+          // INS-08: bars deeplink to /portal/projects?stage=:stage. The label is
+          // canonical; send the API stage value so the Projects filter matches.
+          const href = `${PATHS.projects}?stage=${encodeURIComponent(toApiStage(r.stage))}`
           return (
             <Link
               key={r.stage}

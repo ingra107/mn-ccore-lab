@@ -236,6 +236,10 @@ function ReviewCard({
 }) {
   const [outcome, setOutcome] = useState('')
   const [sentiment, setSentiment] = useState('neutral')
+  // S21: the outcome form is collapsed by default — a one-line "Record outcome →"
+  // prompt that expands on click. Eight always-expanded textareas stacked before
+  // any content was a chore-wall; logging the decisions first is the priority.
+  const [formOpen, setFormOpen] = useState(false)
   const person = decision.decided_by ? getPersonInfo(decision.decided_by) : null
   const projectTitle = decision.project_slug
     ? projects.find((p) => p.slug === decision.project_slug)?.title
@@ -320,6 +324,28 @@ function ReviewCard({
           )}
         </div>
       </div>
+      {!formOpen ? (
+        <button
+          type="button"
+          onClick={() => setFormOpen(true)}
+          className="w-full p-3 flex items-center gap-2 cursor-pointer"
+          style={{
+            background: 'var(--gold-hover)',
+            borderTop: '1px solid var(--border-subtle)',
+            borderLeft: '3px solid var(--gold)',
+            color: 'var(--ink)',
+            fontSize: 'var(--text-small)',
+            fontWeight: 500,
+            textAlign: 'left',
+          }}
+        >
+          <Scale size={13} style={{ color: 'var(--gold)', flexShrink: 0 }} />
+          <span style={{ flex: 1, minWidth: 0 }}>
+            Made {days} days ago · Record outcome
+          </span>
+          <span aria-hidden="true" style={{ color: 'var(--gold)' }}>→</span>
+        </button>
+      ) : (
       <div
         className="p-4"
         style={{
@@ -386,6 +412,7 @@ function ReviewCard({
           </button>
         </div>
       </div>
+      )}
     </div>
   )
 }
