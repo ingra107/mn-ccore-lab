@@ -5,8 +5,7 @@
 > committed `dc697fbb` (shared activityRender module, INSERT…RETURNING, project-feed index fix, gmailThreadUrl
 > helper); 3 deferred refactors → PB `Docs/tech-debt-backlog.md`; doc sweep + 2 new auto-memories
 > (local-launch debugging, contract-change payload sweep). Final state: **790/790 API tests · 231 routes ·
-> schema v77 · live deploy `a4f0ee1c`** (the simplify+docs commits are behavior-identical, not yet deployed —
-> fold into the next deploy).
+> schema v77 · live deploy `be2458ea` on `1f9e46be` = HEAD** (live == main, no skew).
 
 ## ✅ IA consolidation EXECUTED + pb-schema 0.4.0 adopted (same session as Phase 1 below)
 
