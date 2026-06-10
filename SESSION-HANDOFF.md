@@ -1,3 +1,19 @@
+# Session Handoff — 2026-06-10
+
+## ✅ Nick's live-review fixes + LOCAL-LAUNCH PARITY + comment→/process loop — DEPLOYED `db13bba2` on `e6816434`
+
+**Two deploys today atop yesterday's round; both repos pushed.**
+1. **Nick's 4 live-review fixes (deploy `fab0997b`):** ONE anchored left edge on ALL portal surfaces (Today/My Hub/MyTasks/Calendar/Lab Overview now share the data pages' band edge — verified 320px@1440/480px@1920 on all; the full-bleed taxonomy exemption is DEAD, CLAUDE.md amended); Today+MyTasks page-wide bg tint removed; planned rows show `short_title`; 📌 plan button moved inline after the title.
+2. **TODAY.md-parity local launch (deploy `db13bba2`):** `mnccore://` is now a verb router (`scripts/mnccore-handler.bat`): `open/<path>` (Explorer) · `workon/<folder>` (runs ONLY `<folder>\Start Claude.bat` — basename pin = allowlist) · `process` (runs `%USERPROFILE%\Peripheral-Brain\Quick_Process.bat`). Per Nick: executes on the machine he's SITTING AT (no listener routing). **Registered on the WORK machine** via new portable `scripts/setup-mnccore-protocol.bat` (HKCU, derives paths from `%~dp0`+`%USERPROFILE%` — works for home user `ingra` too); handler dry-run verified incl. space-encoded Box paths + refusal gates. UI: ProjectDetail "Open folder"/"Work on this in Claude" (primary_folder now surfaced through rowToProject — was never read by the frontend before), TaskDetailPanel 📂/▶, Today header PI-only `⚙ Process` button (fire-and-forget). CLAUDE.md Rule 69.
+3. **Hub comments → /process:** `GET /api/task-comments/recent?since=` (existing route extended: +`task_title`, ASC forward-cursor when `since` present; pb-aware gated; 7-case vitest). PB `scripts/process_hub_comments.py` (filter: ALL nick-ingraham comments + any-author `@claude|@hermes`; drops `claude-ai` + "Thinking about this" placeholders; SyncCursor `hub_task_comments`, advance-after-emit) + /process SKILL.md phase 0a2. Live dry-run: auth OK, 0 comments in prod (table empty — first real comment exercises it).
+
+### ▶ NEXT
+1. **Nick: run `scripts\setup-mnccore-protocol.bat` on the HOME machine** (once, no admin; restart browser). Work machine = DONE this session. Then click-test: ProjectDetail folder/work-on buttons + Today ⚙ Process.
+2. **First real loop test:** leave a comment on a Hub task → click ⚙ Process (or run Quick_Process.bat) → verify the comment lands in the /process triage + cursor advances.
+3. Yesterday's queue (unchanged): Today-cockpit IA consolidation plan; deferred polish residue (JS-hover pass, spacing-token tail, legacy my-tasks-legacy retire, local-seed schema drift, 768px journey spec); Query-Resource phased pass.
+
+---
+
 # Session Handoff — 2026-06-09 (evening)
 
 ## ✅ ALL THREE WORKSTREAMS (A+B+C) SHIPPED + DEPLOYED — deploy `8c5b8950` on `0f3d09a8`, HEAD `fd5182da`
