@@ -55,6 +55,7 @@ review/massive-audit/
 review/gh-issues/
 review/post-track-a-*/
 review/post-*-*/
+review/mobile-sweep-*/
 
 # Stitch design sandbox — generated mockups, regenerate via stitch-design skill
 .stitch/designs/

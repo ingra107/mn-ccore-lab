@@ -30,8 +30,10 @@ const BugReportModal = lazy(() => import('./BugReportModal'))
 
 /**
  * Mobile bottom tab bar — 4 primary routes + "More" overflow drawer
- * that exposes the remaining ~14 portal routes. Hidden on tablet/desktop
- * via `md:hidden`. Respects safe-area-inset-bottom.
+ * that exposes the remaining ~14 portal routes. Hidden on desktop via
+ * `lg:hidden` — it stays visible through iPad portrait (768–1023), the band
+ * where the desktop sidebar is absent (UX-9, 2026-06-09). Respects
+ * safe-area-inset-bottom.
  */
 export default function MobileTabBar() {
   const { pathname } = useLocation()
@@ -63,7 +65,7 @@ export default function MobileTabBar() {
   return (
     <>
       <nav
-        className="md:hidden fixed bottom-0 left-0 right-0 flex items-stretch justify-around border-t"
+        className="lg:hidden fixed bottom-0 left-0 right-0 flex items-stretch justify-around border-t"
         style={{
           zIndex: 'var(--z-sidebar)',
           backgroundColor: 'var(--surface-1)',
@@ -126,7 +128,7 @@ export default function MobileTabBar() {
       {/* Bottom-sheet overflow drawer */}
       {overflowOpen && (
         <div
-          className="md:hidden fixed inset-0"
+          className="lg:hidden fixed inset-0"
           role="dialog"
           aria-modal="true"
           aria-label="All sections"

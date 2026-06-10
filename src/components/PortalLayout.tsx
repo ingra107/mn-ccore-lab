@@ -240,13 +240,15 @@ export default function PortalLayout() {
         </header>
 
         {/* Page content */}
-        {/* Mobile: leave room for MobileTabBar (56px) + safe-area + breathing
-            room. Audit caught content covered on calendar + project detail
-            with the prior 1rem buffer; bumped to 3rem so the last row
-            comfortably clears the tab bar instead of just touching it. */}
+        {/* Mobile + iPad portrait: leave room for MobileTabBar (56px) +
+            safe-area + breathing room. The tab bar lives through <1024 (UX-9),
+            so the bottom clearance must persist to lg too — switching it off at
+            md (768) re-introduced the covered-last-row bug at 768–1023.
+            Audit caught content covered on calendar + project detail with the
+            prior 1rem buffer; 3rem so the last row comfortably clears the bar. */}
         <main
           id="portal-main"
-          className="portal-content p-4 md:p-6 lg:p-8 pb-[calc(3rem+56px+env(safe-area-inset-bottom))] md:pb-6 lg:pb-8"
+          className="portal-content p-4 md:p-6 lg:p-8 pb-[calc(3rem+56px+env(safe-area-inset-bottom))] lg:pb-8"
           style={{ flex: 1 }}
         >
           <AnimatePresence mode="wait" initial={false}>

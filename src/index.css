@@ -130,8 +130,11 @@
   --fab-stack-3: calc(var(--fab-base) + (var(--fab-height) + var(--fab-gap)) * 2);/* Quick Capture Inbox */
 }
 
-/* Mobile: lift the whole stack above MobileTabBar (56px) + safe area. */
-@media (max-width: 767px) {
+/* Mobile + tablet: lift the whole stack above MobileTabBar (56px) + safe area.
+   UX-9 (2026-06-09): the tab bar now stays through iPad portrait (lg:hidden,
+   <1024), so the FAB lift must extend to 1023 too — otherwise the FABs sit on
+   top of the tab bar at 768–1023. */
+@media (max-width: 1023px) {
   :root {
     --fab-base: calc(72px + env(safe-area-inset-bottom, 0px));
   }
@@ -1608,6 +1611,25 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
 @media (hover: none) {
   .today-plan-btn {
     visibility: visible !important;
+  }
+}
+
+/* UX-9 (2026-06-09): iPad portrait (768–1023) is a touch device but sits
+   ABOVE the prior 768px width gate, so it missed the touch-target floor +
+   the iOS no-zoom font rule. Key these on `(hover: none) and (pointer: coarse)`
+   so they reach every touch device regardless of width, without imposing a
+   44px floor on a 900px desktop window driven by a mouse (which would bloat
+   dense tables). Desktop power-grid is untouched: it has a fine pointer. */
+@media (hover: none) and (pointer: coarse) and (min-width: 769px) {
+  button:not(.kbd-shortcut):not(.close-button):not([aria-label="Close"]),
+  a.inline-link,
+  select,
+  .filter-chip,
+  .inline-select-trigger {
+    min-height: 44px;
+  }
+  input, textarea, select {
+    font-size: 16px !important;
   }
 }
 
