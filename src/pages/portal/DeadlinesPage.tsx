@@ -541,8 +541,16 @@ function DeadlineItemRow({ item, onStatusChange, onMilestoneStatusChange, onDueD
 }) {
   const person = item.assignee ? getPersonInfo(item.assignee) : null
   const isDone = item.status === 'done' || item.status === 'completed'
+  // P2-2 visual standardization: carry the shared TaskRow's P1-12 overdue
+  // signal (coral left edge, Rule 59) so "what's slipping" reads in one sweep
+  // here too. P1-7: no whole-row opacity dim — done-ness reads from line-through
+  // + muted title, keeping metadata above the 0.85 floor (no compound opacity).
+  const rowOverdue = item.isOverdue && !isDone
   return (
-    <div style={{ borderBottom: '1px solid var(--border-subtle)', opacity: isDone ? 0.85 : 1 }}>
+    <div style={{
+      borderBottom: '1px solid var(--border-subtle)',
+      boxShadow: rowOverdue ? 'inset 2px 0 0 var(--maroon-solid)' : 'none',
+    }}>
       {/* Desktop row — hidden on mobile */}
       <div
         className="deadline-list-row hidden sm:grid hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors"
