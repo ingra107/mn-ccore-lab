@@ -8,7 +8,7 @@
 3. **Hub comments → /process:** `GET /api/task-comments/recent?since=` (existing route extended: +`task_title`, ASC forward-cursor when `since` present; pb-aware gated; 7-case vitest). PB `scripts/process_hub_comments.py` (filter: ALL nick-ingraham comments + any-author `@claude|@hermes`; drops `claude-ai` + "Thinking about this" placeholders; SyncCursor `hub_task_comments`, advance-after-emit) + /process SKILL.md phase 0a2. Live dry-run: auth OK, 0 comments in prod (table empty — first real comment exercises it).
 
 ### ▶ NEXT
-1. **Nick: run `scripts\setup-mnccore-protocol.bat` on the HOME machine** (once, no admin; restart browser). Work machine = DONE this session. Then click-test: ProjectDetail folder/work-on buttons + Today ⚙ Process.
+1. **Nick: one direct command on the HOME machine** — `cmd /c "C:\Users\ingra\mn-ccore-lab\scripts\setup-mnccore-protocol.bat"` (10s, no admin; then restart the browser there). A relay (req_20260610_074404_work) already pulled home's Hub repo to `b764a137` so the scripts are staged; home's classifier correctly refused the registry write itself (relayed approval ≠ direct authorization for persistent system changes). Work machine = registered + verified this session. Then click-test on either machine: ProjectDetail folder/work-on buttons + Today ⚙ Process.
 2. **First real loop test:** leave a comment on a Hub task → click ⚙ Process (or run Quick_Process.bat) → verify the comment lands in the /process triage + cursor advances.
 3. Yesterday's queue (unchanged): Today-cockpit IA consolidation plan; deferred polish residue (JS-hover pass, spacing-token tail, legacy my-tasks-legacy retire, local-seed schema drift, 768px journey spec); Query-Resource phased pass.
 
