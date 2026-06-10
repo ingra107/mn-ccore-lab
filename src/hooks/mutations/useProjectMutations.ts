@@ -123,6 +123,8 @@ export function useAddComment(projectId: string) {
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['comments', projectId] })
       queryClient.invalidateQueries({ queryKey: ['activity'] })
+      // P2-A: comments land in activity_entries — refresh the unified feed.
+      queryClient.invalidateQueries({ queryKey: ['project-activity'] })
     },
   })
 }
@@ -142,6 +144,8 @@ export function usePostProjectUpdate(projectSlug: string) {
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['project-updates', projectSlug] })
       queryClient.invalidateQueries({ queryKey: ['activity'] })
+      // P2-A: notes land in activity_entries — refresh the unified feed.
+      queryClient.invalidateQueries({ queryKey: ['project-activity', projectSlug] })
     },
   })
 }

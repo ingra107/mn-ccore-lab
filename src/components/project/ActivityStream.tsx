@@ -33,11 +33,7 @@ import {
   ClipboardList,
 } from 'lucide-react'
 import {
-  useProjectUpdates,
-  useComments,
   useActionItems,
-  type ProjectUpdateRow,
-  type Comment,
   type ActionItemRow,
 } from '../../hooks/useApiData'
 import { usePostProjectUpdate, useAddComment, useToggleActionItem } from '../../hooks/useMutations'
@@ -99,18 +95,16 @@ const NOTE_TYPE_CONFIG: Record<string, { icon: typeof TrendingUp; color: string;
 }
 
 // Discriminated union of every event kind the stream carries.
+// P2-A (2026-06-10): the legacy 'note'/'comment' arms are GONE — the project
+// composers write activity_entries now and the old endpoints are projections
+// over the same rows, so merging both sources would render every entry twice.
 type StreamEvent =
-  | { kind: 'note';          ts: string; id: string; row: ProjectUpdateRow }
-  | { kind: 'comment';       ts: string; id: string; row: Comment }
   | { kind: 'action';        ts: string; id: string; row: ActionItemRow }
   | { kind: 'unified-entry'; ts: string; id: string; row: UnifiedEntryRow }
 
 export default function ActivityStream({ project, filter }: Props) {
   const slug = project.slug
 
-  // ── Legacy sources (Phase 1: kept as-is; composers still write these tables) ──
-  const { data: updates = [] } = useProjectUpdates(slug)
-  const { data: comments = [] } = useComments(slug)
   const { data: actionRows = [] } = useActionItems()
 
   // ── Unified feed (Design C, v77) — whole-picture project activity ────────────
@@ -153,55 +147,31 @@ export default function ActivityStream({ project, filter }: Props) {
     [actionRows, project.slug, project.title],
   )
 
-  // Merge all sources into one time-ordered list, newest first.
+  // Merge sources into one time-ordered list, newest first. The unified feed
+  // IS the project's activity (project rows + task rollup); action items are
+  // the only remaining sidecar source.
   const events = useMemo(() => {
     const out: StreamEvent[] = []
-    for (const u of updates) out.push({ kind: 'note', ts: u.created_at, id: `note-${u.id}`, row: u })
-    for (const c of comments) out.push({ kind: 'comment', ts: c.created_at, id: `comment-${c.id}`, row: c })
     // Action items only appear in the unfiltered ('all') view.
     if (filter === 'all') {
       for (const a of relatedActions) out.push({ kind: 'action', ts: a.created_at, id: `act-${a.id}`, row: a })
     }
-    // Unified feed rows — project-level rows are additive here alongside legacy;
-    // task-originated rows (_renderKind starts with 'task-') are new to this feed.
-    // NOTE: project-level unified rows (entity_type='project') may duplicate some
-    // legacy project_updates/comments until Phase 2 retargets the composers. For
-    // Phase 1 we include ALL unified rows to keep the "whole picture" promise and
-    // let the server-side backfill (only 3 rows) add minimal noise.
     for (const e of unifiedEntries) {
       out.push({ kind: 'unified-entry', ts: e.created_at, id: `ue-${e.id}`, row: e })
     }
     return out.sort((a, b) => (a.ts > b.ts ? -1 : a.ts < b.ts ? 1 : 0))
-  }, [updates, comments, relatedActions, unifiedEntries, filter])
+  }, [relatedActions, unifiedEntries, filter])
 
   // Apply the active filter.
   const visible = useMemo(() => {
     if (filter === 'notes') {
-      return events.filter((e) => {
-        if (e.kind === 'note') return true
-        if (e.kind === 'unified-entry') {
-          const rk = e.row._renderKind ?? ''
-          return rk === 'update' // project-level update from unified feed
-        }
-        return false
-      })
+      return events.filter((e) => e.kind === 'unified-entry' && (e.row._renderKind ?? '') === 'update')
     }
     if (filter === 'comments') {
-      return events.filter((e) => {
-        if (e.kind === 'comment') return true
-        if (e.kind === 'unified-entry') {
-          const rk = e.row._renderKind ?? ''
-          return rk === 'comment' // project-level comment from unified feed
-        }
-        return false
-      })
+      return events.filter((e) => e.kind === 'unified-entry' && (e.row._renderKind ?? '') === 'comment')
     }
     if (filter === 'task-activity') {
-      return events.filter((e) => {
-        if (e.kind !== 'unified-entry') return false
-        const rk = e.row._renderKind ?? ''
-        return rk.startsWith('task-')
-      })
+      return events.filter((e) => e.kind === 'unified-entry' && (e.row._renderKind ?? '').startsWith('task-'))
     }
     // 'all'
     return events
@@ -383,10 +353,6 @@ export default function ActivityStream({ project, filter }: Props) {
 
 function StreamItem({ event, onToggleAction }: { event: StreamEvent; onToggleAction: (id: string) => void }) {
   switch (event.kind) {
-    case 'note':
-      return <NoteItem update={event.row} />
-    case 'comment':
-      return <CommentItem comment={event.row} />
     case 'action':
       return <ActionItemRowView action={event.row} onToggle={onToggleAction} />
     case 'unified-entry':
@@ -400,89 +366,6 @@ const itemMotion = {
   animate: { opacity: 1, y: 0 },
   exit: { opacity: 0, x: -20 },
   transition: { duration: 0.2 },
-}
-
-function NoteItem({ update }: { update: ProjectUpdateRow }) {
-  const config = NOTE_TYPE_CONFIG[update.update_type] || NOTE_TYPE_CONFIG.progress
-  const Icon = config.icon
-  const person = getPersonInfo(update.author)
-  return (
-    <motion.div
-      {...itemMotion}
-      style={{ background: 'var(--cream)', borderRadius: 'var(--radius-lg)', padding: 'var(--sp-md)', borderLeft: `3px solid ${config.color}` }}
-      className="detail-card"
-    >
-      <div className="flex items-start gap-3">
-        <div className="flex-shrink-0 mt-0.5" style={{ width: 28, height: 28 }}>
-          <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="base-sm" variant="ice" />
-        </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div className="flex items-center gap-2 mb-1 flex-wrap">
-            <span style={{ fontSize: 'var(--value-size)', fontWeight: 600, color: 'var(--ink)' }}>{person.name}</span>
-            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded"
-              style={{ fontSize: '10px', background: config.bg, color: config.color }}>
-              <Icon size={9} /> {config.label}
-            </span>
-            <MetaTime ts={update.created_at} />
-          </div>
-          <p style={{ fontSize: 'var(--value-size)', color: 'var(--ink)', lineHeight: 1.5, margin: 0, whiteSpace: 'pre-wrap' }}>
-            {update.content}
-          </p>
-          <ReactionBar targetType="project_update" targetId={update.id} />
-        </div>
-      </div>
-    </motion.div>
-  )
-}
-
-function CommentItem({ comment }: { comment: Comment }) {
-  const isAI = comment.author_slug === 'claude-ai'
-  if (isAI) {
-    return (
-      <motion.div {...itemMotion} className="flex gap-3">
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ background: 'var(--gold-hover)', border: '1px solid rgba(201,168,76,0.15)', borderRadius: 'var(--radius-lg)', padding: 'var(--sp-sm) var(--sp-md)' }}>
-            <div className="flex items-center gap-1.5 mb-1">
-              <HermesMark size={14} variant="avatar" />
-              <span style={{ fontSize: '10px', color: 'var(--gold)', fontWeight: 500 }}>Hermes</span>
-              <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 'var(--ink-label)', marginLeft: 'auto' }}>
-                {formatRelativeTime(comment.created_at)}
-              </span>
-            </div>
-            {isHermesPending(comment.content) ? (
-              <HermesPending askedAt={comment.created_at} />
-            ) : (
-              <HermesResponse content={comment.content} />
-            )}
-            <ReactionBar targetType="comment" targetId={comment.id} />
-          </div>
-        </div>
-      </motion.div>
-    )
-  }
-  const info = comment.author_slug ? getPersonInfo(comment.author_slug) : null
-  const isKnown = info && info.name !== 'Unknown'
-  const displayName = isKnown ? info!.name : (comment.author_name || 'Team Member')
-  const initials = isKnown
-    ? info!.initials
-    : (comment.author_name || 'U').split(' ').map((n) => n[0]).join('').toUpperCase()
-  return (
-    <motion.div {...itemMotion} className="flex gap-3">
-      <div className="flex-shrink-0 mt-0.5" style={{ width: 28, height: 28 }}>
-        <Avatar name={displayName} initials={initials} variant="ice" size="base-sm" />
-      </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div className="flex items-baseline gap-2 flex-wrap">
-          <span style={{ fontSize: 'var(--value-size)', fontWeight: 600, color: 'var(--ink)' }}>{displayName}</span>
-          <MetaTime ts={comment.created_at} />
-        </div>
-        <p style={{ fontSize: 'var(--value-size)', color: 'var(--ink)', lineHeight: 1.5, margin: '2px 0 0', whiteSpace: 'pre-wrap' }}>
-          {comment.content}
-        </p>
-        <ReactionBar targetType="comment" targetId={comment.id} />
-      </div>
-    </motion.div>
-  )
 }
 
 function ActionItemRowView({ action, onToggle }: { action: ActionItemRow; onToggle: (id: string) => void }) {
@@ -620,6 +503,7 @@ function UnifiedEntryItem({ entry }: { entry: UnifiedEntryRow }) {
         ) : (
           <HermesResponse content={entry.body} />
         )}
+        {!isTask && <ReactionBar targetType="comment" targetId={entry.id} />}
       </motion.div>
     )
   }
@@ -673,6 +557,15 @@ function UnifiedEntryItem({ entry }: { entry: UnifiedEntryRow }) {
           <p style={{ fontSize: 'var(--value-size)', color: 'var(--ink)', lineHeight: 1.5, margin: 0, whiteSpace: 'pre-wrap' }}>
             <LinkifiedText text={entry.body} />
           </p>
+          {/* Reactions on project-level notes/comments (target ids carry over —
+              backfilled rows preserved their legacy ids). Task rows match the
+              task feed, which has no reactions. */}
+          {!isTask && (
+            <ReactionBar
+              targetType={entry.kind === 'update' ? 'project_update' : 'comment'}
+              targetId={entry.id}
+            />
+          )}
         </div>
       </div>
     </motion.div>

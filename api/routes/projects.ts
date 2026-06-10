@@ -3,7 +3,7 @@ import { json, error, generateId, logActivity, parseMentions, actorSlug, isPiReq
 import { ctToday } from '../lib/ct-date';
 import { nowInstant } from '../lib/time';
 import { applyMutation } from './mutations';
-import { activityVisibilityGate } from '../lib/activity-entry';
+import { activityVisibilityGate, postActivityEntry } from '../lib/activity-entry';
 
 // Stage 4 #12-followup (2026-05-09): Nick-only visibility gate for
 // 'Peripheral Brain' category. Two ways to be "Nick" for this gate:
@@ -20,32 +20,10 @@ function isNick(user: AuthUser, apiKeyValid?: boolean): boolean {
   return user.email === 'ingra107@umn.edu' || user.email === 'nicholas.ingraham@gmail.com';
 }
 
-// ── AI Co-Scientist: detect @hermes/@claude mentions and create pending request ──
-async function handleClaudeMention(
-  content: string,
-  sourceType: string,
-  sourceId: string,
-  projectId: string,
-  user: AuthUser,
-  env: Env,
-): Promise<void> {
-  if (!/@(hermes|claude)\b/i.test(content)) return;
-
-  const aiPrompt = content.replace(/@(hermes|claude)/gi, '').trim();
-  if (aiPrompt.length <= 5) return;
-
-  // Create AI request record
-  const aiId = generateId();
-  await env.DB.prepare(
-    'INSERT INTO ai_requests (id, source_type, source_id, project_slug, prompt, context, requested_by) VALUES (?, ?, ?, ?, ?, ?, ?)'
-  ).bind(aiId, sourceType, sourceId, projectId, aiPrompt, `Project: ${projectId}`, user.email).run();
-
-  // Create a placeholder comment from "claude-ai"
-  const responseId = generateId();
-  await env.DB.prepare(
-    "INSERT INTO comments (id, project_id, author_id, content, created_at) VALUES (?, ?, ?, ?, datetime('now'))"
-  ).bind(responseId, projectId, 'claude-ai', 'Thinking about this... (AI response pending)').run();
-}
+// (P2-A 2026-06-10: the per-route @hermes copy `handleClaudeMention` is gone —
+// project composers route through postActivityEntry, which owns Hermes
+// dispatch + the placeholder. questions.ts keeps its own Ask-the-Lab copy
+// until that surface converges.)
 
 // GET /api/milestones?project_id=&grant_id=
 export async function handleGetMilestones(url: URL, env: Env): Promise<Response> {
@@ -281,20 +259,24 @@ export async function handleGetComments(projectId: string, request: Request, env
   // Phase 1b-B: block non-PI callers from reading PB-category project comments.
   const block = await assertProjectVisible(request, env, projectId);
   if (block) return block;
-  // URL param may be slug or id. Resolve first so we can match comments by the
-  // canonical project.id, while ALSO accepting any legacy rows that were
-  // stored against the slug (older writes did so).
+  // P2-A (2026-06-10): PROJECTION over activity_entries (legacy `comments` is
+  // frozen; its 2 rows were backfilled with ids preserved). Byte-preserved
+  // legacy shape: author_id is the team_members.id (entries store the slug, so
+  // join by slug), 'claude-ai' passes through as its own author_id.
   const project = await env.DB.prepare('SELECT id FROM projects WHERE id = ? OR slug = ?').bind(projectId, projectId).first<{ id: string }>();
   const canonicalId = project?.id ?? projectId;
+  const vis = await activityVisibilityGate(request, env, 'ae');
   const result = await env.DB.prepare(
-    `SELECT c.id, c.content, c.created_at, c.author_id,
-       COALESCE(t.name, CASE WHEN c.author_id = 'claude-ai' THEN 'Claude AI' END) as author_name,
-       COALESCE(t.slug, CASE WHEN c.author_id = 'claude-ai' THEN 'claude-ai' END) as author_slug
-     FROM comments c
-     LEFT JOIN team_members t ON c.author_id = t.id
-     WHERE c.project_id = ? OR c.project_id = ?
-     ORDER BY c.created_at DESC`
-  ).bind(canonicalId, projectId).all();
+    `SELECT ae.id, ae.body AS content, ae.created_at,
+       CASE WHEN ae.actor_slug = 'claude-ai' THEN 'claude-ai' ELSE t.id END AS author_id,
+       COALESCE(t.name, CASE WHEN ae.actor_slug = 'claude-ai' THEN 'Claude AI' END) as author_name,
+       CASE WHEN ae.actor_slug = 'claude-ai' THEN 'claude-ai' ELSE t.slug END as author_slug
+     FROM activity_entries ae
+     LEFT JOIN team_members t ON t.slug = ae.actor_slug
+     WHERE ae.entity_type = 'project' AND ae.entity_id = ? AND ae.kind = 'comment'
+       AND ${vis.clause}
+     ORDER BY ae.created_at DESC, ae.id DESC`
+  ).bind(canonicalId, ...vis.binds).all();
   return json({ data: result.results, count: result.results.length });
 }
 
@@ -303,10 +285,21 @@ export async function handleGetProjectUpdates(slug: string, request: Request, en
   // Phase 1b-B: block non-PI callers from reading PB-category project updates.
   const block = await assertProjectVisible(request, env, slug);
   if (block) return block;
+  // P2-A (2026-06-10): PROJECTION over activity_entries (legacy project_updates
+  // is frozen; it had 0 rows). Byte-preserved legacy row shape — project_id
+  // echoes the slug param exactly as the old table stored it.
+  const canonicalId = await projectRefToCanonical(env, slug);
+  if (!canonicalId) return json({ data: [], count: 0 });
+  const vis = await activityVisibilityGate(request, env, 'ae');
   const result = await env.DB.prepare(
-    'SELECT * FROM project_updates WHERE project_id = ? ORDER BY created_at DESC'
-  ).bind(slug).all();
-  return json({ data: result.results, count: result.results.length });
+    `SELECT ae.id, ae.actor_slug AS author, ae.body AS content, ae.update_type, ae.created_at
+     FROM activity_entries ae
+     WHERE ae.entity_type = 'project' AND ae.entity_id = ? AND ae.kind = 'update'
+       AND ${vis.clause}
+     ORDER BY ae.created_at DESC, ae.id DESC`
+  ).bind(canonicalId, ...vis.binds).all();
+  const rows = (result.results || []).map((r: any) => ({ ...r, project_id: slug }));
+  return json({ data: rows, count: rows.length });
 }
 
 // GET /api/projects/:idOrSlug/activity — the whole-picture project feed
@@ -931,63 +924,27 @@ export async function handleAddComment(
   // AM-2: validate/canonicalize author_slug; impersonation requires PI/service.
   const actor = await resolveActor(env, user, body.author_slug, { allowImpersonation: await isPiRequest(request, env) });
   if ('error' in actor) return error(actor.error, 400);
-  const authorSlugResolved = actor.slug;
-  const member = await env.DB.prepare('SELECT id FROM team_members WHERE slug = ?')
-    .bind(authorSlugResolved)
-    .first<{ id: string }>();
 
-  // Use the resolved project.id (not URL param) to keep comments.project_id
-  // canonical. URL can be slug, but we store against projects.id.
-  const commentId = generateId();
-  await env.DB.prepare(
-    'INSERT INTO comments (id, project_id, author_id, content) VALUES (?, ?, ?, ?)'
-  ).bind(commentId, project.id, member?.id ?? null, body.content.trim()).run();
+  // P2-A (2026-06-10): the composer writes the unified timeline, not the
+  // legacy `comments` table. postActivityEntry owns @mention notifications,
+  // Hermes dispatch + placeholder, and @me visibility — the per-route copies
+  // of those side effects are gone (was the 3rd copy, per tech-debt).
+  const posted = await postActivityEntry({
+    env,
+    user,
+    entityType: 'project',
+    entityId: project.id,
+    kind: 'comment',
+    body: body.content,
+    actorSlug: actor.slug,
+    projectSlug: project.slug ?? null,
+  });
+  if (!posted.ok) return error(posted.error, posted.status);
 
   await logActivity(env, 'comment', `Commented on "${project.title}"`, user.email, project.id, 'project');
 
-  // Create notifications for @mentions
-  try {
-    const mentions = parseMentions(body.content);
-    if (mentions.length > 0) {
-      const validSlugs = await env.DB.prepare(
-        'SELECT slug FROM team_members WHERE slug IN (' + mentions.map(() => '?').join(',') + ')'
-      ).bind(...mentions).all();
-
-      const validSet = new Set((validSlugs.results || []).map((r: any) => r.slug));
-      const authorSlug = actorSlug(user.email);
-      // source_id references the PROJECT (what the user cares about on click),
-      // not the comment row id. Link resolves to the project's canonical slug
-      // so old id-based URLs keep working.
-      const targets = mentions.filter((slug) => validSet.has(slug) && slug !== authorSlug);
-      if (targets.length > 0) {
-        const title = `${user.name || user.email} mentioned you in a comment`;
-        const bodyPreview = body.content.trim().slice(0, 200);
-        const link = `/projects/${project.slug ?? projectId}`;
-        const stmt = env.DB.prepare(
-          'INSERT INTO notifications (id, recipient_slug, type, source_type, source_id, title, body, link) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
-        );
-        await env.DB.batch(
-          targets.map((slug) =>
-            stmt.bind(generateId(), slug, 'mention', 'project_comment', project.id, title, bodyPreview, link)
-          )
-        );
-      }
-    }
-  } catch (e) {
-    // Notification creation should not break the main comment operation
-    console.error('Failed to create mention notifications for comment:', e);
-  }
-
-  // Check for @hermes/@claude mention → create AI request + placeholder comment.
-  // Pass project.id (canonical UUID) not the URL param (which may be a slug) so
-  // the comments.project_id FK and ai_requests.project_slug both resolve correctly.
-  try {
-    await handleClaudeMention(body.content, 'project_comment', commentId, project.id, user, env);
-  } catch (e) {
-    console.error('Failed to create AI request for @hermes mention:', e);
-  }
-
-  return json({ data: { id: commentId, project_id: projectId, content: body.content.trim(), author: user.email } }, 201);
+  // Byte-preserved legacy response shape (project_id echoes the URL param).
+  return json({ data: { id: posted.row.id, project_id: projectId, content: String(posted.row.body ?? ''), author: user.email } }, 201);
 }
 
 // POST /api/projects/:slug/updates — post project update
@@ -999,48 +956,41 @@ export async function handlePostProjectUpdate(slug: string, request: Request, us
   const block = await assertProjectVisible(request, env, slug);
   if (block) return block;
 
-  const id = generateId();
-  // AM-2: project_updates.author is an actor identity. Pre-fix it stored a raw
-  // email (user.email) or an unvalidated body.author. Resolve to a canonical
-  // team slug; impersonation requires PI/service.
+  // AM-2: the author is an actor identity. Resolve to a canonical team slug;
+  // impersonation requires PI/service.
   const actor = await resolveActor(env, user, body.author, { allowImpersonation: await isPiRequest(request, env) });
   if ('error' in actor) return error(actor.error, 400);
-  await env.DB.prepare(
-    'INSERT INTO project_updates (id, project_id, author, content, update_type) VALUES (?, ?, ?, ?, ?)'
-  ).bind(id, slug, actor.slug, body.content, body.update_type ?? 'progress').run();
+
+  // P2-A (2026-06-10): notes write the unified timeline keyed by the canonical
+  // typed project id (legacy project_updates stored the raw slug). The slug
+  // stays the wire/display form in the response below.
+  const canonicalId = await projectRefToCanonical(env, slug);
+  if (!canonicalId) return error('Project not found', 404);
+
+  const posted = await postActivityEntry({
+    env,
+    user,
+    entityType: 'project',
+    entityId: canonicalId,
+    kind: 'update',
+    updateType: body.update_type ?? 'progress',
+    body: body.content,
+    actorSlug: actor.slug,
+    projectSlug: slug,
+  });
+  if (!posted.ok) return error(posted.error, posted.status);
 
   await logActivity(env, 'project_update', `Posted update on ${slug}: "${body.content.slice(0, 100)}"`, user.email, slug, 'project');
 
-  // Create notifications for @mentions
-  try {
-    const mentions = parseMentions(body.content);
-    if (mentions.length > 0) {
-      const validSlugs = await env.DB.prepare(
-        'SELECT slug FROM team_members WHERE slug IN (' + mentions.map(() => '?').join(',') + ')'
-      ).bind(...mentions).all();
-
-      const validSet = new Set((validSlugs.results || []).map((r: any) => r.slug));
-      const authorSlug = actorSlug(user.email);
-      const targets = mentions.filter((m) => validSet.has(m) && m !== authorSlug);
-      if (targets.length > 0) {
-        const title = `${user.name || user.email} mentioned you in a project update`;
-        const bodyPreview = body.content.slice(0, 200);
-        const link = `/projects/${slug}`;
-        const stmt = env.DB.prepare(
-          'INSERT INTO notifications (id, recipient_slug, type, source_type, source_id, title, body, link) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
-        );
-        await env.DB.batch(
-          targets.map((mentionSlug) =>
-            stmt.bind(generateId(), mentionSlug, 'mention', 'project_update', id, title, bodyPreview, link)
-          )
-        );
-      }
-    }
-  } catch (e) {
-    // Notification creation should not break the main update operation
-    console.error('Failed to create mention notifications for project update:', e);
-  }
-
-  const created = await env.DB.prepare('SELECT * FROM project_updates WHERE id = ?').bind(id).first();
-  return json({ data: created }, 201);
+  // Byte-preserved legacy project_updates row shape (project_id = slug).
+  return json({
+    data: {
+      id: posted.row.id,
+      project_id: slug,
+      author: posted.row.actor_slug,
+      content: posted.row.body,
+      update_type: posted.row.update_type,
+      created_at: posted.row.created_at,
+    },
+  }, 201);
 }

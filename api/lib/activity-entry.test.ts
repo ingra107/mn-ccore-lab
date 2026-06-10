@@ -22,7 +22,7 @@ import {
   handleDeleteTask,
   handleGetTaskActivity,
 } from '../routes/tasks'
-import { handleGetProjectActivity } from '../routes/projects'
+import { handleGetProjectActivity, handleAddComment, handlePostProjectUpdate, handleGetComments, handleGetProjectUpdates } from '../routes/projects'
 
 const TEST_MODE_KEY = 'local-test-key-do-not-use-in-prod'
 const PI_EMAIL = 'ingra107@umn.edu'
@@ -178,6 +178,29 @@ function makeEnv(fx: Partial<Fixtures> = {}) {
             // Project feed: WHERE project_id = ?  — single-predicate (project-entity
             // rows store project_id = entity_id, so this captures both project-level
             // rows AND task rows rolled up by project_id).
+            // Project-entity projections (P2-A): comments / updates over
+            // activity_entries with the legacy shapes.
+            if (/FROM activity_entries/.test(sql) && /entity_type = 'project' AND ae\.entity_id = \?/.test(sql)) {
+              const projId = binds[0] as string
+              let rows = ae.filter(r => r.entity_type === 'project' && r.entity_id === projId)
+              if (/kind = 'comment'/.test(sql)) rows = rows.filter(r => r.kind === 'comment')
+              if (/kind = 'update'/.test(sql)) rows = rows.filter(r => r.kind === 'update')
+              rows = applyVisibilityFilter(rows, sql, binds)
+              rows = [...rows].sort((a, b) => (a.created_at < b.created_at ? 1 : a.created_at > b.created_at ? -1 : (a.id < b.id ? 1 : -1)))
+              if (/AS author_id|author_id/.test(sql)) {
+                // comments projection shape
+                return { results: rows.map(r => ({
+                  id: r.id, content: r.body, created_at: r.created_at,
+                  author_id: r.actor_slug === 'claude-ai' ? 'claude-ai' : `member_${r.actor_slug}`,
+                  author_name: r.actor_slug === 'claude-ai' ? 'Claude AI' : null,
+                  author_slug: r.actor_slug,
+                })) }
+              }
+              // updates projection shape (project_id is re-mapped by the handler)
+              return { results: rows.map(r => ({
+                id: r.id, author: r.actor_slug, content: r.body, update_type: r.update_type, created_at: r.created_at,
+              })) }
+            }
             if (/FROM activity_entries/.test(sql) && /WHERE (ae\.)?project_id = \?/.test(sql)) {
               const projId = binds[0] as string
               let rows = ae.filter(r => r.project_id === projId)
@@ -453,6 +476,55 @@ describe('handleGetProjectActivity — whole-picture feed', () => {
     // task rows carry the joined display title; project rows don't.
     expect(body.data.find(d => d.entity_type === 'task')?.task_title).toBe('Task One')
     expect(body.data.find(d => d.entity_type === 'project')?.task_title ?? null).toBeNull()
+  })
+})
+
+// ── P2-A: project composer retarget + legacy-shape projections ───────────────────
+
+describe('P2-A — project composers write activity_entries; old reads are projections', () => {
+  it('handleAddComment lands in activity_entries and round-trips through handleGetComments', async () => {
+    const ctx = makeEnv(FX)
+    const res = await handleAddComment('alpha', natePostReq({ content: 'hello project' }), NATE, ctx.env)
+    expect(res.status).toBe(201)
+    const row = ctx.ae.find(r => r.entity_type === 'project' && r.kind === 'comment')
+    expect(row).toBeDefined()
+    expect(row!.entity_id).toBe('proj_a')
+    expect(row!.actor_slug).toBe('nate-mesfin')
+
+    const read = await handleGetComments('alpha', piReq(), ctx.env)
+    const body = await read.json() as { data: Record<string, unknown>[] }
+    expect(Object.keys(body.data[0]).sort()).toEqual(['author_id', 'author_name', 'author_slug', 'content', 'created_at', 'id'])
+    expect(body.data[0].content).toBe('hello project')
+    expect(body.data[0].author_slug).toBe('nate-mesfin')
+  })
+
+  it('handlePostProjectUpdate lands in activity_entries; response + projection keep the legacy slug-keyed shape', async () => {
+    const ctx = makeEnv(FX)
+    const res = await handlePostProjectUpdate('alpha', natePostReq({ content: 'a note', update_type: 'blocker' }), NATE, ctx.env)
+    expect(res.status).toBe(201)
+    const created = await res.json() as { data: Record<string, unknown> }
+    expect(created.data.project_id).toBe('alpha') // slug echo, not the typed id
+    expect(created.data.author).toBe('nate-mesfin')
+    expect(created.data.update_type).toBe('blocker')
+
+    const row = ctx.ae.find(r => r.entity_type === 'project' && r.kind === 'update')
+    expect(row).toBeDefined()
+    expect(row!.entity_id).toBe('proj_a') // stored against the canonical typed id
+
+    const read = await handleGetProjectUpdates('alpha', piReq(), ctx.env)
+    const body = await read.json() as { data: Record<string, unknown>[] }
+    expect(Object.keys(body.data[0]).sort()).toEqual(['author', 'content', 'created_at', 'id', 'project_id', 'update_type'])
+    expect(body.data[0].project_id).toBe('alpha')
+    expect(body.data[0].update_type).toBe('blocker')
+  })
+
+  it('project comment + update roll into the whole-picture project feed', async () => {
+    const ctx = makeEnv(FX)
+    await handleAddComment('alpha', natePostReq({ content: 'c1' }), NATE, ctx.env)
+    await handlePostProjectUpdate('alpha', natePostReq({ content: 'u1' }), NATE, ctx.env)
+    const res = await handleGetProjectActivity('alpha', piReq(), ctx.env)
+    const body = await res.json() as { data: { kind: string }[] }
+    expect(body.data.map(d => d.kind).sort()).toEqual(['comment', 'update'])
   })
 })
 

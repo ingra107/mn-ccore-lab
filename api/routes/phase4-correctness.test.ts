@@ -133,6 +133,16 @@ describe('Fix 1 — handleAddComment: @hermes uses project.id (UUID), not URL sl
             if (/FROM projects WHERE/.test(sql) && /id\s*=\s*\?\s*OR\s+slug\s*=\s*\?/.test(sql)) {
               return { id: 'proj-uuid-001', title: 'My Project', slug: 'my-project' };
             }
+            // postActivityEntry's project existence check (P2-A retarget).
+            if (/SELECT id FROM projects WHERE id = \? LIMIT 1/.test(sql)) {
+              return { id: 'proj-uuid-001' };
+            }
+            // postActivityEntry's INSERT ... RETURNING * write path — record it
+            // alongside .run() inserts so the placeholder assertion sees it.
+            if (/INSERT INTO activity_entries/.test(sql) && /RETURNING \*/.test(sql)) {
+              inserts.push({ sql, binds: [...boundVals] });
+              return { id: boundVals[0], body: boundVals[7], actor_slug: boundVals[6], update_type: boundVals[9], created_at: '2026-06-10 00:00:00' };
+            }
             if (sql.includes('FROM team_members WHERE slug = ?')) return { id: 'member_001' };
             if (sql.includes('FROM team_members WHERE email =')) return { id: 'member_001', slug: 'nick-ingraham' };
             return null;
@@ -163,16 +173,16 @@ describe('Fix 1 — handleAddComment: @hermes uses project.id (UUID), not URL sl
     // project_slug is at bind index 3.
     expect(aiInsert!.binds[3]).toBe('proj-uuid-001');
 
-    // Find placeholder comment INSERT — project_id bind (index 1) should be project.id.
-    // SQL pattern: INSERT INTO comments (id, project_id, author_id, content, created_at)
-    // The content value 'Thinking about...' is a bind param, not in the SQL string.
-    const placeholderCommentInserts = inserts.filter(i =>
-      i.sql.includes('INSERT INTO comments') &&
+    // P2-A retarget: the placeholder is an activity_entries row (not a legacy
+    // comments row). entity_id bind (index 2) must be project.id.
+    const placeholderInserts = inserts.filter(i =>
+      i.sql.includes('INSERT INTO activity_entries') &&
       (i.binds as string[]).some(b => typeof b === 'string' && b.includes('Thinking about'))
     );
-    expect(placeholderCommentInserts.length).toBe(1);
-    // project_id is at bind index 1
-    expect(placeholderCommentInserts[0].binds[1]).toBe('proj-uuid-001');
+    expect(placeholderInserts.length).toBe(1);
+    expect(placeholderInserts[0].binds[2]).toBe('proj-uuid-001');
+    // No legacy comments-table write anywhere on this path.
+    expect(inserts.some(i => i.sql.includes('INSERT INTO comments'))).toBe(false);
   });
 
   it('does not create ai_request when no @hermes mention', async () => {
@@ -187,6 +197,12 @@ describe('Fix 1 — handleAddComment: @hermes uses project.id (UUID), not URL sl
           first: async () => {
             if (/FROM projects WHERE/.test(sql) && /id\s*=\s*\?\s*OR\s+slug\s*=\s*\?/.test(sql)) {
               return { id: 'proj-uuid-001', title: 'My Project', slug: 'my-project' };
+            }
+            if (/SELECT id FROM projects WHERE id = \? LIMIT 1/.test(sql)) {
+              return { id: 'proj-uuid-001' };
+            }
+            if (/INSERT INTO activity_entries/.test(sql) && /RETURNING \*/.test(sql)) {
+              return { id: boundVals[0], body: boundVals[7], actor_slug: boundVals[6], created_at: '2026-06-10 00:00:00' };
             }
             if (sql.includes('FROM team_members WHERE slug = ?')) return { id: 'member_001' };
             if (sql.includes('FROM team_members WHERE email =')) return { id: 'member_001', slug: 'nick-ingraham' };
@@ -203,7 +219,8 @@ describe('Fix 1 — handleAddComment: @hermes uses project.id (UUID), not URL sl
     const env = { DB: db, TEST_MODE_KEY, PB_API_KEY: 'valid-test-api-key' } as unknown as Env;
     const req = makeRequest({ content: 'Great work everyone!' });
 
-    await handleAddComment('my-project', req, NICK, env);
+    const res = await handleAddComment('my-project', req, NICK, env);
+    expect(res.status).toBe(201); // the write itself succeeds via postActivityEntry
 
     const aiInsert = inserts.find(i => i.sql.includes('ai_requests'));
     expect(aiInsert).toBeUndefined();

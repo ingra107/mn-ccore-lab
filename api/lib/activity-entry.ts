@@ -62,6 +62,12 @@ export interface PostActivityEntryInput {
   visibility?: Visibility;
   /** Pre-derived project_id for a task entry (saves a SELECT when the caller already has it). */
   taskProjectId?: string | null;
+  /**
+   * For project entities: the project's slug, used to preserve the legacy
+   * mention-notification link shape (`/projects/<slug>`). Optional — when
+   * absent the link falls back to `/projects?open=<entityId>`.
+   */
+  projectSlug?: string | null;
   /** Backfill idempotency: original table + row id. When set, INSERT OR IGNORE + return existing on conflict. */
   sourceTable?: string | null;
   sourceId?: string | null;
@@ -241,6 +247,7 @@ export async function postActivityEntry(input: PostActivityEntryInput): Promise<
         mentions,
         actorName: user.name || user.email,
         bodyPreview: body.slice(0, 200),
+        projectSlug: input.projectSlug ?? null,
       });
     } catch (e) {
       console.error('postActivityEntry: mention notifications failed:', e);
@@ -281,6 +288,7 @@ async function fireMentionNotifications(
     mentions: string[];
     actorName: string;
     bodyPreview: string;
+    projectSlug?: string | null;
   },
 ): Promise<void> {
   if (args.mentions.length === 0) return;
@@ -296,7 +304,9 @@ async function fireMentionNotifications(
   const link =
     args.entityType === 'task'
       ? `/tasks?open=${args.entityId}`
-      : `/projects?open=${args.entityId}`;
+      : args.projectSlug
+        ? `/projects/${args.projectSlug}` // legacy project-mention link shape
+        : `/projects?open=${args.entityId}`;
   const verb = args.kind === 'comment' ? 'mentioned you' : 'mentioned you in a task note';
   const title = `${args.actorName} ${verb}`;
   const stmt = env.DB.prepare(
