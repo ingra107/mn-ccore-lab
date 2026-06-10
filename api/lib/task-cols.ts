@@ -31,6 +31,12 @@ const TASK_PLAIN_COLS = [
   // to Hub-canonical synced columns. Must be in TASK_PLAIN_COLS so pull returns
   // them (write-accept without read-expose = not Hub-rebuildable, R10 class).
   'waiting_since', 'email_link',
+  // Workstream B (schema-v75, 2026-06-09): the Today operating-day plan as synced
+  // task columns (replaces the per-browser today_state_* localStorage blob).
+  // planned_for (civil date) / plan_slot ('right_now'|'strip'|'between-<n>') /
+  // plan_rank (REAL ordering). Must be read-exposed so /api/tasks returns them for
+  // the Today/MyTasks frontend AND so PB pull mirrors them (R10 Hub-rebuildable).
+  'planned_for', 'plan_slot', 'plan_rank',
   // NOTE: `notes` is deliberately omitted — private brain.db field.
   // NOTE: `project_id` is NOT in this list — it is resolved to slug below.
 ];

@@ -291,8 +291,15 @@ export async function handleToggleTask(id: string, user: AuthUser, env: Env): Pr
 const TASK_ALLOWED_FIELDS = new Set(['title', 'description', 'description_json', 'assignee', 'assigned_by', 'due_date', 'deadline', 'priority', 'status', 'project_id', 'meeting_id', 'blocked_by', 'key_link_1', 'key_link_1_desc', 'key_link_2', 'key_link_2_desc', 'key_link_3', 'key_link_3_desc', 'notes', 'effort', 'short_title', 'source_thread_id', 'related_message_ids', 'completed', 'completed_at', 'completed_by', 'group_override',
   // W1 (schema-v55) operational metadata
   'waiting_on', 'promised_to', 'promise_date', 'next_checkin_date', 'nick_followup_date',
-  'requires_nick_brain', 'estimated_minutes', 'deadline_type', 'next_artifact', 'inbox_event_id']);
+  'requires_nick_brain', 'estimated_minutes', 'deadline_type', 'next_artifact', 'inbox_event_id',
+  // Workstream B (schema-v75, 2026-06-09): Today operating-day plan as synced columns.
+  'planned_for', 'plan_slot', 'plan_rank']);
 const VALID_GROUP_OVERRIDES = new Set(['deep', 'priorities', 'quick', 'pb', 'etl']);
+// plan_slot vocabulary: 'right_now' | 'strip' | 'between-<n>' (<n> a non-negative
+// integer timeline-gap index). Parametric (between-<n>) so it's value-guarded here,
+// NOT via the enum-domain trigger. NULL/'' clears the slot. Mirrors group_override's
+// posture (a Hub write-boundary guard, 400 on junk).
+const VALID_PLAN_SLOT_RE = /^(right_now|strip|between-\d+)$/;
 const TASK_REQUIRED_FIELDS = new Set(['status', 'priority', 'assignee']);
 
 export async function handleUpdateTask(id: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
@@ -320,6 +327,16 @@ export async function handleUpdateTask(id: string, request: Request, user: AuthU
     if (v === '' || v === undefined) body.group_override = null;
     else if (v !== null && (typeof v !== 'string' || !VALID_GROUP_OVERRIDES.has(v))) {
       return error(`Invalid group_override "${v}". Must be one of deep/priorities/quick/pb/etl or null.`, 400);
+    }
+  }
+  // Validate plan_slot (Workstream B). '' / undefined = clear; null = clear;
+  // otherwise must match right_now | strip | between-<n>. 400 on junk so an
+  // optimistic Today plan-write surfaces an error instead of silently reverting.
+  if ('plan_slot' in body) {
+    const v = body.plan_slot;
+    if (v === '' || v === undefined) body.plan_slot = null;
+    else if (v !== null && (typeof v !== 'string' || !VALID_PLAN_SLOT_RE.test(v))) {
+      return error(`Invalid plan_slot "${v}". Must be right_now, strip, between-<n>, or null.`, 400);
     }
   }
 
