@@ -1,5 +1,12 @@
 # M5 — Activity-Timeline + Comments (Increment 2) Build Plan
 
+> **🚨 STOP — READ `Scratch-handoff/2026-06-10-HUB-SESSION-BRIEF.md` FIRST (2026-06-10).** This plan
+> now has a sibling design (`task_messages` handoff, same date) that targets the SAME source tables
+> with a DIFFERENT store — the brief carries the collision analysis, the codex referee ruling on the
+> target store, Nick's binding 2026-06-10 requirements (also in the ADDENDUM below), and the
+> staleness list (this plan was verified vs 5/26 HEAD; P2-5 ActivityStream, descriptionLog.ts, v75/v76
+> shipped since — re-grep every citation before edit). Do not execute this plan standalone.
+
 > **For agentic workers:** REQUIRED SUB-SKILL — use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax. Dispatch domain specialists per task: **hub-backend** (`api/routes/*.ts`, `mutations.ts`, D1, wrangler deploy), **hub-frontend** (`src/**/*.tsx`, composer/feed UI), **builder** (PB `scripts/db/*`, outbox/hub.py/query.py/hub_payload.py, migrations, lint). Builder cannot edit Hub `.ts` directly — those steps return "next: dispatch hub-backend/hub-frontend" to the COO.
 
 **Goal:** Collapse the four overlapping per-item text surfaces (`description` / `notes` / `comments` / `updates`) into a clean two-part model — a stable **Description** body plus a unified **Activity timeline** (system events + human comments) with a frictionless `@`-mention composer — without ever breaking the live team's description reads.
