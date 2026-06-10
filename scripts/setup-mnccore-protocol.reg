@@ -1,5 +1,14 @@
 Windows Registry Editor Version 5.00
 
+; SUPERSEDED 2026-06-10 by scripts\setup-mnccore-protocol.bat.
+; This .reg hardcodes C:\Users\ingra107\... so it only registers correctly on
+; the work laptop. The .bat derives the handler path from its own location
+; (%~dp0) and works as-is on both work (ingra107) AND home (ingra). Kept for
+; reference only — prefer the .bat. Also: the handler is now a verb router
+; (open / launch / workon / process), but the registration target is unchanged
+; (mnccore-handler.bat "%1"), so this file's command line is still structurally
+; valid for the work machine if you ever need a quick re-import.
+
 [HKEY_CURRENT_USER\Software\Classes\mnccore]
 @="URL:MN-CCORE Protocol"
 "URL Protocol"=""
