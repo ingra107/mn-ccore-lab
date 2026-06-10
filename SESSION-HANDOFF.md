@@ -1,6 +1,23 @@
-# Session Handoff — 2026-06-09
+# Session Handoff — 2026-06-09 (evening)
 
-## ▶ NEXT — Design polish round is teed up (3 parallel workstreams; see WORKPLAN.md top)
+## ✅ ALL THREE WORKSTREAMS (A+B+C) SHIPPED + DEPLOYED — deploy `8c5b8950` on `0f3d09a8`, HEAD `fd5182da`
+
+**One session executed the whole queue: 52 commits, 5 agent waves, 751/751 API tests, deployed + smoke-verified. Schema is v75.** Full record: `CHANGELOG.md` top entry. The work:
+- **A (design polish):** all 30 `docs/design-audits/2026-06-09-polish/TICKETS.md` tickets + all 21 cold-audit `SUPPLEMENTAL-TICKETS.md` tickets (S1–S21). The cold audit ran FIRST (4 lenses, 40 fresh prod screenshots at `review/claude-design-20260609T-audit/`), then merged with Claude Design's round per Nick. Headline fixes: deep-link consumers (`useOpenParam` — search→task/⌘K/copy-link now actually open the task), Manuscripts = **stage ≥ writing** (was a filter tautology rendering all 78 projects), fake snooze-undo fixed, ProjectDetail category silent-revert fixed, Activity "anonymous" actors canonicalized at the `logActivity` chokepoint, anchored-column width tokens (`--col-main: 960px`) + `DataPage` shell, first-click date popover, honest sync clock, one staleness truth (Settings sliders), global compact density (per-view toggles REMOVED), capture shortcut **`q`** (Cmd+N was browser-reserved, never fired), `useIsMobile` **768→1024** (UX-9: 768–1023 iPad-portrait = mobile-nav).
+- **B (Today driver):** Nick decided **Today = THE cockpit; plan = synced task columns** `planned_for`/`plan_slot`/`plan_rank` (D1 v75 prod+test, brain.db mig 100/101, pb-schema 0.3.3, generic pull-back = zero new sync code). `useTodayState` re-backed via `src/lib/todayPlan.ts` (same API, one-time LS migration, `right_now` singleton). TODAY.md pins planned tasks (`📌▶`/`📌`). Meeting-capture on Today now persists to `meetings.notes` (debounced; `cal-*` iCal events honestly disabled). Decision: PB `Context/Decisions/2026-06-09-today-plan-task-columns.md`.
+- **C (ENG backlog):** dead handler deleted, Narratives contract fixed (+ canonical `stageLabel()`/`stageColor()`), UnifiedMyTasks shim gone, PersonalPage→PATHS. Query-Resource primitive = proposal only (65 swallow-sites; needs paired error-UI; phased plan in the C agent report).
+
+### ▶ NEXT (queued, none urgent)
+1. **Nick eyeballs the live round** — esp. Today (plan now synced — plan a task, reload, check another browser), My Tasks overdue-first + `OverdueBanner`, Manuscripts (now a real subset), the new date popover, iPad-portrait nav. Post-deploy smoke all green but design is taste.
+2. **B follow-up (its own session, plan written):** `docs/superpowers/plans/2026-06-09-today-cockpit-ia-consolidation-plan.md` — PB Sector planner retirement/migration (`daily_plans`), Personal strip removal, the stale `lab_settings.today_md` view verdict, pomodoro/intention disposition.
+3. **Deferred with rationale:** JS-hover→CSS conversion (218 sites/57 files — dedicated pass); spacing token long-tail (342-site WARN baseline via new `scripts/check-token-snap.mjs`); ~25 borderline 0.75-opacity slate sites (codemod candidate); legacy `/portal/my-tasks-legacy` page retire (`/substrate-swap`-gated); Query-Resource phased pass; local-seed schema drift (`scripts/local-db-seed.ts` missing `waiting_since` etc. — blocks local journey tests; hub-backend candidate); a 768px journey spec to lock in UX-9.
+4. **CLAUDE.md rules were updated this session** (v75, plan columns, `q` shortcut, useIsMobile 1024, Manuscripts identity, global density) — trust CLAUDE.md over older handoff sections below.
+
+---
+
+# Session Handoff — 2026-06-09 (morning, historical)
+
+## ▶ (DONE — see above) Design polish round was teed up (3 parallel workstreams; see WORKPLAN.md top)
 
 The post-deploy work split into three **parallel-capable** workstreams (`WORKPLAN.md` → "PARALLEL WORKSTREAMS 2026-06-09"):
 - **A (ACTIVE) — Claude Design polish round.** Brief + prompt are on `main`: `docs/design-briefs/2026-06-09-next-design-audit-{brief,PROMPT}.md` (+ Codex audit `…-codex-hub-simplify-audit.md`). Scope = visual polish + workflow efficiency + "no dead ends" + delight; **width consistency = Tier-1**; the date-picker "first click pops the calendar grid AND the +1d/+1wk presets together" is the click-efficiency archetype to hunt. ⚠️ **Today / the daily-cockpit / the operating-day plan are OUT** (→ Workstream B). **Next action: Nick re-snapshots the repo in Claude Design → pastes the PROMPT → Design returns TICKETS.md → we implement.**

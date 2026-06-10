@@ -5,7 +5,7 @@ created: 2026-03-25
 status: active
 domain: Research
 tier: 2-Biweekly
-next_action: Slice C/D/E DEPLOYED to pages.dev (2026-06-09, deploy `90626636` on `7bb1ccef`) — B-5 wrong-surface skew CLOSED (live had been stuck on B-5 while prod D1 was migrated → `/api/dependencies` 500'd; fixed by deploying `main`; verified 200; identity deploy-gate PASS). Schema **v74**. ▶ NEXT = the **Claude Design polish round**: brief + prompt are on `main` (`docs/design-briefs/2026-06-09-next-design-audit-{brief,PROMPT}.md`) — Nick re-snapshots the repo in Claude Design + pastes the prompt. Scope = visual polish + workflow efficiency + "no dead ends" + delight; **width = Tier-1**; Today/cockpit/plan are OUT. Two parallel-capable workstreams queued in `WORKPLAN.md` ("PARALLEL WORKSTREAMS 2026-06-09"): **B** = "Today driver" (operating-day plan restructure — its own session); **C** = ENG-only backlog (Narratives contract, query primitive, dead endpoint). See SESSION-HANDOFF.md + WORKPLAN.md top.
+next_action: ALL THREE WORKSTREAMS (A design-polish + B Today-plan-store + C ENG backlog) SHIPPED + DEPLOYED 2026-06-09 evening — deploy `8c5b8950` on `0f3d09a8`, 52 commits, 751/751 API tests, smoke green. Schema **v75** (Today plan = synced `planned_for`/`plan_slot`/`plan_rank` task columns; Today = THE cockpit per Nick). All 30 Design TICKETS + 21 cold-audit SUPPLEMENTAL tickets done (`docs/design-audits/2026-06-09-polish/`). ▶ NEXT = (1) Nick eyeballs the live round (Today synced plan, My Tasks overdue-first, Manuscripts stage≥writing subset, date popover, iPad-portrait nav); (2) the Today-cockpit IA consolidation session (plan written: `docs/superpowers/plans/2026-06-09-today-cockpit-ia-consolidation-plan.md`). Deferred items listed in SESSION-HANDOFF.md ▶ NEXT.
 primary_folder: C:/Users/ingra107/mn-ccore-lab
 ---
 
@@ -16,7 +16,7 @@ platform for Nick's critical-care research group at UMN.
 
 **Live:** https://mn-ccore-lab.pages.dev  (LIVE for team — CF Access gates `/portal/*` via @umn.edu)
 **Repo:** https://github.com/ingra107/mn-ccore-lab  (720+ commits)
-**Current HEAD:** `b7f53cb2` (author ingra107). **Live deploy = `90626636` on `7bb1ccef`** (2026-06-09) — Slice C/D/E live on pages.dev, the B-5 wrong-surface skew closed. Schema **v74**. Verify the live deploy with `wrangler pages deployment list --project-name mn-ccore-lab`. See SESSION-HANDOFF.md + WORKPLAN.md (→ "PARALLEL WORKSTREAMS 2026-06-09") for current state.
+**Current HEAD:** `fd5182da` (author ingra107). **Live deploy = `8c5b8950` on `0f3d09a8`** (2026-06-09 evening) — the full A+B+C workstream round live on pages.dev. Schema **v75**. Verify the live deploy with `wrangler pages deployment list --project-name mn-ccore-lab`. See SESSION-HANDOFF.md top + CHANGELOG.md top for the round's record.
 **Quality gate:** 🟢 GREEN — build clean, inspection 149/149 post-simplify, smoke 27/27 (pre-simplify baseline), deep-audit 14/14 clean, axe WCAG 2.1 AA clean across 29 pages × 2 color schemes, schema-drift CI green.
 
 ## 🚨 Read these FIRST every session

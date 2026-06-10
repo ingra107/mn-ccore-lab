@@ -6,9 +6,9 @@
 
 ---
 
-## ▶▶▶ PARALLEL WORKSTREAMS (2026-06-09) — three independent tracks; nothing here is lost
+## ▶▶▶ PARALLEL WORKSTREAMS (2026-06-09) — ✅ ALL THREE SHIPPED + DEPLOYED 2026-06-09 evening
 
-Per Nick (2026-06-09), the post-project-identity work splits into three **parallel-capable** workstreams. Keep them distinct — don't conflate. A is active; B + C are queued and can run alongside.
+**A + B + C all executed in one session (deploy `8c5b8950` on `0f3d09a8`; CHANGELOG.md top = full record).** A = all 30 TICKETS + 21 cold-audit supplemental (`docs/design-audits/2026-06-09-polish/`); B = Today plan as synced task columns (v75) + meeting-capture persistence, with the IA consolidation as a written plan (`docs/superpowers/plans/2026-06-09-today-cockpit-ia-consolidation-plan.md` — that consolidation is the remaining B work, its own session); C = 4 commits + the Query-Resource proposal (the one C item deliberately not built — 65 swallow-sites need a phased pass paired with error-UI). Deferred residue is listed in SESSION-HANDOFF.md ▶ NEXT. Original workstream definitions kept below for provenance.
 
 ### A — Design polish round (ACTIVE — out for Claude Design)
 Visual polish + workflow efficiency + "no dead ends" + delight. North-star: a busy PI sits down and *falls in love*. **Width consistency = Tier-1.** The date-picker "first click surfaces the calendar grid AND the +1d/+1wk presets together" is the archetype of the click-efficiency class to hunt.
