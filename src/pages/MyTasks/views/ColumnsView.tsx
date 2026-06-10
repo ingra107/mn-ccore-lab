@@ -26,7 +26,7 @@ import {
 } from '../constants'
 import type { TaskRow } from '../../../lib/api'
 
-export function ColumnsView({ filtered, byGroup, selected, toggleSelect, onToggleComplete, expanded, setExpanded, projectsByPid, plannedSet, filterGroup }: { filtered: TaskRow[]; byGroup: Record<GroupKey, TaskRow[]>; selected: Set<string>; toggleSelect: (id: string) => void; onToggleComplete: (task: TaskRow) => void; expanded: string | null; setExpanded: (id: string | null) => void; projectsByPid: Map<string, { name: string; slug: string }>; plannedSet: Set<string>; filterGroup?: GroupKey | null }) {
+export function ColumnsView({ filtered, byGroup, selected, toggleSelect, onToggleComplete, onOpenEditor, expanded, setExpanded, projectsByPid, plannedSet, filterGroup }: { filtered: TaskRow[]; byGroup: Record<GroupKey, TaskRow[]>; selected: Set<string>; toggleSelect: (id: string) => void; onToggleComplete: (task: TaskRow) => void; onOpenEditor: (id: string) => void; expanded: string | null; setExpanded: (id: string | null) => void; projectsByPid: Map<string, { name: string; slug: string }>; plannedSet: Set<string>; filterGroup?: GroupKey | null }) {
   // MT-16 — when a Group filter is active, only render the matching column
   // (others would just be "nothing here" empty lanes that eat horizontal
   // space and obscure the filter result).
@@ -98,6 +98,7 @@ export function ColumnsView({ filtered, byGroup, selected, toggleSelect, onToggl
                     selectionActive={selectionActive}
                     onSelect={() => toggleSelect(t.id)}
                     onToggleComplete={() => onToggleComplete(t)}
+                    onOpenEditor={() => onOpenEditor(t.id)}
                     expanded={expanded === t.id}
                     onExpand={() => setExpanded(expanded === t.id ? null : t.id)}
                     planned={plannedSet.has(t.id)}
@@ -129,7 +130,7 @@ function rowExtraMeta(task: TaskRow, staleDays: number) {
   )
 }
 
-export function MyTasksRow({ task, project, selected, selectionActive, onSelect, onToggleComplete, expanded, onExpand, planned, stack }: { task: TaskRow; project: { name: string; slug: string } | null; selected: boolean; selectionActive: boolean; onSelect: () => void; onToggleComplete: () => void; expanded: boolean; onExpand: () => void; planned: boolean; stack?: boolean }) {
+export function MyTasksRow({ task, project, selected, selectionActive, onSelect, onToggleComplete, onOpenEditor, expanded, onExpand, planned, stack }: { task: TaskRow; project: { name: string; slug: string } | null; selected: boolean; selectionActive: boolean; onSelect: () => void; onToggleComplete: () => void; onOpenEditor?: () => void; expanded: boolean; onExpand: () => void; planned: boolean; stack?: boolean }) {
   const isDone = isTaskDone(task)
   const { prefs } = useLabPrefs()
   return (
@@ -140,6 +141,7 @@ export function MyTasksRow({ task, project, selected, selectionActive, onSelect,
       stack={stack}
       isDone={isDone}
       onToggleDone={onToggleComplete}
+      onOpenEditor={onOpenEditor}
       isExpanded={expanded}
       onToggleExpand={onExpand}
       isSelected={selected}

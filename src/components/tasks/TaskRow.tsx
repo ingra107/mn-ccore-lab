@@ -146,6 +146,13 @@ export interface SharedTaskRowProps {
   // Hide the inline expand caret (e.g. My Hub opens a full panel, not inline).
   hideCaret?: boolean
 
+  // ── title-click opens the full editor ── ONLY active when provided (Nick
+  // 2026-06-10: "if I click the title I should have the editor come up").
+  // The TITLE text becomes its own click target → full TaskDetailPanel; body
+  // click elsewhere keeps onToggleExpand. Shift-click / selection-mode click /
+  // long-press on the title still select (they bubble to the row handler).
+  onOpenEditor?: () => void
+
   // ── multi-select ── ONLY active when onToggleSelect is provided.
   // shift-click or long-press (~420ms) toggles; while ≥1 row is selected a
   // plain click also toggles (selectionActive).
@@ -203,6 +210,7 @@ function Grip({ show, draggable, onDragStart }: { show: boolean; draggable?: boo
 export function TaskRow(props: SharedTaskRowProps) {
   const {
     task, project, isDone, onToggleDone, isExpanded, onToggleExpand, hideCaret,
+    onOpenEditor,
     isSelected = false, selectionActive = false, onToggleSelect,
     draggable = false, onDragStart, onTogglePlan,
     isPlanned = false, plannedLabel, isRightNow = false, showGroupOverridePin = false,
@@ -245,6 +253,30 @@ export function TaskRow(props: SharedTaskRowProps) {
   const displayTitle = task.short_title || task.title
   // Full title on hover only when a (differing) short_title is what's shown.
   const fullTitleHover = displayTitle !== task.title ? task.title : undefined
+
+  // Title-click → full editor (only when the surface wires onOpenEditor).
+  // Select gestures keep working from the title: shift-click / selection-mode
+  // click / post-long-press click all BUBBLE to the row's handleClick instead
+  // of opening the editor. Underline-on-row-hover is the affordance.
+  const titleNode = onOpenEditor ? (
+    <span
+      role="button"
+      tabIndex={0}
+      title={fullTitleHover ?? 'Open task editor'}
+      onClick={(e) => {
+        if (lpTimer.current === 'fired') return            // long-press selected — let the row swallow it
+        if (selectable && (e.shiftKey || selectionActive)) return  // bubble → select
+        e.stopPropagation()
+        onOpenEditor()
+      }}
+      onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); onOpenEditor() } }}
+      style={{ cursor: 'pointer', textDecoration: hover && !isDone ? 'underline' : undefined, textDecorationStyle: 'dotted', textUnderlineOffset: 3 }}
+    >
+      <TaskTitle title={displayTitle} fallback={task.description} />
+    </span>
+  ) : (
+    <TaskTitle title={displayTitle} fallback={task.description} />
+  )
 
   // Plan-without-dragging: a 📌 button shown only on surfaces that wire
   // onTogglePlan and only while the task is unplanned (once planned, the
@@ -320,10 +352,10 @@ export function TaskRow(props: SharedTaskRowProps) {
         {stack ? (
           /* narrow rail: title full-width, meta stacks below */
           <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 5, paddingTop: 1 }}>
-            <span title={fullTitleHover} style={{ fontSize: 13.5, color: isDone ? INK_MUTED : INK, fontWeight: 500, textDecoration: isDone ? 'line-through' : 'none', lineHeight: 1.4, textWrap: 'pretty' as const }}>
+            <span title={onOpenEditor ? undefined : fullTitleHover} style={{ fontSize: 13.5, color: isDone ? INK_MUTED : INK, fontWeight: 500, textDecoration: isDone ? 'line-through' : 'none', lineHeight: 1.4, textWrap: 'pretty' as const }}>
               {leadingTag && <span style={{ marginRight: 6 }} aria-hidden="true">{leadingTag}</span>}
               {isRightNow && <RightNowBadge />}
-              <TaskTitle title={displayTitle} fallback={task.description} />
+              {titleNode}
               {planBtn && <span style={{ marginLeft: 4, whiteSpace: 'nowrap' }}>{planBtn}</span>}
             </span>
             <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
@@ -335,10 +367,10 @@ export function TaskRow(props: SharedTaskRowProps) {
           <div style={{ flex: 1, minWidth: 0, paddingTop: 1 }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 9 }}>
               {/* title — full, wraps, never clipped */}
-              <span title={fullTitleHover} style={{ flex: 1, minWidth: 0, fontSize: 13.5, color: isDone ? INK_MUTED : INK, fontWeight: 500, textDecoration: isDone ? 'line-through' : 'none', lineHeight: 1.4, textWrap: 'pretty' as const }}>
+              <span title={onOpenEditor ? undefined : fullTitleHover} style={{ flex: 1, minWidth: 0, fontSize: 13.5, color: isDone ? INK_MUTED : INK, fontWeight: 500, textDecoration: isDone ? 'line-through' : 'none', lineHeight: 1.4, textWrap: 'pretty' as const }}>
                 {leadingTag && <span style={{ marginRight: 6 }} aria-hidden="true">{leadingTag}</span>}
                 {isRightNow && <RightNowBadge />}
-                <TaskTitle title={displayTitle} fallback={task.description} />
+                {titleNode}
                 {showGroupOverridePin && task.group_override && (
                   <span title={`Moved manually (${task.group_override})`} style={{ fontSize: 9, color: ACCENT_TEAL, padding: '1px 4px', background: withAlpha(ACCENT_TEAL, 10), borderRadius: 3, marginLeft: 6 }}>📍</span>
                 )}

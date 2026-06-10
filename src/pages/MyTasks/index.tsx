@@ -317,9 +317,9 @@ export default function UnifiedMyTasks() {
           {isLoading ? (
             <div className="mt-band" style={{ paddingTop: 24, paddingBottom: 24 }}><div style={{ maxWidth: 'var(--col-main)' }}><TableSkeleton /></div></div>
           ) : view === 'columns' ? (
-            <ColumnsView filtered={filtered} byGroup={byGroup} selected={selected} toggleSelect={toggleSelect} onToggleComplete={onToggleComplete} expanded={expanded} setExpanded={setExpanded} projectsByPid={projectsByPid} plannedSet={plannedSet} filterGroup={filter.group} />
+            <ColumnsView filtered={filtered} byGroup={byGroup} selected={selected} toggleSelect={toggleSelect} onToggleComplete={onToggleComplete} onOpenEditor={setDrawer} expanded={expanded} setExpanded={setExpanded} projectsByPid={projectsByPid} plannedSet={plannedSet} filterGroup={filter.group} />
           ) : view === 'lanes' ? (
-            <LanesView byGroup={byGroup} selected={selected} toggleSelect={toggleSelect} onToggleComplete={onToggleComplete} expanded={expanded} setExpanded={setExpanded} projectsByPid={projectsByPid} plannedSet={plannedSet} filterGroup={filter.group} />
+            <LanesView byGroup={byGroup} selected={selected} toggleSelect={toggleSelect} onToggleComplete={onToggleComplete} onOpenEditor={setDrawer} expanded={expanded} setExpanded={setExpanded} projectsByPid={projectsByPid} plannedSet={plannedSet} filterGroup={filter.group} />
           ) : (
             <ListView filtered={filtered} selected={selected} toggleSelect={toggleSelect} setSelected={setSelected} setDrawer={setDrawer} projectsByPid={projectsByPid} projectOptions={projectOptions} plannedSet={plannedSet} />
           )}

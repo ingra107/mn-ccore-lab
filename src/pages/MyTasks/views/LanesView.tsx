@@ -38,7 +38,7 @@ function writeSet(key: string, s: Set<GroupKey>) {
   try { window.localStorage.setItem(key, JSON.stringify([...s])) } catch { /* ignore */ }
 }
 
-export function LanesView({ byGroup, selected, toggleSelect, onToggleComplete, expanded, setExpanded, projectsByPid, plannedSet, filterGroup }: { byGroup: Record<GroupKey, TaskRow[]>; selected: Set<string>; toggleSelect: (id: string) => void; onToggleComplete: (task: TaskRow) => void; expanded: string | null; setExpanded: (id: string | null) => void; projectsByPid: Map<string, { name: string; slug: string }>; plannedSet: Set<string>; filterGroup?: GroupKey | null }) {
+export function LanesView({ byGroup, selected, toggleSelect, onToggleComplete, onOpenEditor, expanded, setExpanded, projectsByPid, plannedSet, filterGroup }: { byGroup: Record<GroupKey, TaskRow[]>; selected: Set<string>; toggleSelect: (id: string) => void; onToggleComplete: (task: TaskRow) => void; onOpenEditor: (id: string) => void; expanded: string | null; setExpanded: (id: string | null) => void; projectsByPid: Map<string, { name: string; slug: string }>; plannedSet: Set<string>; filterGroup?: GroupKey | null }) {
   // MT-16 — when a Group filter is active, only render the matching lane.
   const visibleGroups = filterGroup ? GROUP_ORDER.filter(g => g === filterGroup) : GROUP_ORDER
   const [collapsed, setCollapsed] = useState<Set<GroupKey>>(() => readSet(LS_COLLAPSED))
@@ -97,6 +97,7 @@ export function LanesView({ byGroup, selected, toggleSelect, onToggleComplete, e
                     selectionActive={selectionActive}
                     onSelect={() => toggleSelect(t.id)}
                     onToggleComplete={() => onToggleComplete(t)}
+                    onOpenEditor={() => onOpenEditor(t.id)}
                     expanded={expanded === t.id}
                     onExpand={() => setExpanded(expanded === t.id ? null : t.id)}
                     planned={plannedSet.has(t.id)}
