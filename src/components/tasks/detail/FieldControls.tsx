@@ -71,6 +71,57 @@ export function EditableTitle({ value, onSave }: { value: string; onSave: (v: st
   )
 }
 
+// ── Editable Short Title ─────────────────────────────────────
+// Mirrors ProjectDetail's short_name affordance (click-to-edit span → input,
+// save on blur/Enter, Escape cancels). The row renders `short_title || title`
+// (Rule 68), so edits surface immediately. Empty state invites adding one.
+
+export function EditableShortTitle({ value, onSave }: { value: string; onSave: (v: string) => void }) {
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState(value)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => { setDraft(value) }, [value])
+  useEffect(() => { if (editing) inputRef.current?.focus() }, [editing])
+
+  const save = () => {
+    setEditing(false)
+    if (draft.trim() !== value.trim()) onSave(draft.trim())
+  }
+
+  if (editing) {
+    return (
+      <input
+        ref={inputRef}
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={save}
+        onKeyDown={(e) => { if (e.key === 'Enter') save(); if (e.key === 'Escape') { setDraft(value); setEditing(false) } }}
+        placeholder="Short title (concise row label)…"
+        className="w-full text-sm outline-none border-b pb-0.5"
+        style={{ color: 'var(--ink)', borderColor: 'var(--teal)', background: 'none', minWidth: 0 }}
+      />
+    )
+  }
+
+  return (
+    <span
+      onClick={() => setEditing(true)}
+      className="cursor-text hover:bg-black/[0.02] dark:hover:bg-white/[0.04] rounded px-1 -mx-1 py-0.5 transition-colors"
+      style={{
+        display: 'block',
+        fontSize: 'var(--value-size)',
+        color: 'var(--slate)',
+        opacity: 0.85,
+        fontStyle: value ? 'normal' : 'italic',
+        overflowWrap: 'anywhere',
+      }}
+    >
+      {value || 'Add short title…'}
+    </span>
+  )
+}
+
 // ── Editable Textarea ────────────────────────────────────────
 
 export function EditableTextarea({ value, onSave, placeholder }: { value: string; onSave: (v: string) => void; placeholder: string }) {

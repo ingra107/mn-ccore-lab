@@ -83,7 +83,7 @@ function LinkRow({
         rel={isHttp ? 'noopener noreferrer' : undefined}
         onClick={isHttp ? undefined : handleNonHttpClick}
         className="text-xs hover:underline"
-        style={{ color: 'var(--teal)', textDecoration: 'underline', textUnderlineOffset: '2px', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+        style={{ color: 'var(--teal)', textDecoration: 'underline', textUnderlineOffset: '2px', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}
         title={isHttp ? url : `Click to copy path: ${url}`}
       >
         {link.desc || typeLabel || url}

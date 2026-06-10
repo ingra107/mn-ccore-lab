@@ -4,14 +4,14 @@ import {
   CalendarDays, FolderKanban, ArrowRightLeft,
   FileText, MessageSquare, Upload, Eye, ScrollText,
   Users, Bell, ClipboardList, Link2, Trash2, Plus, ExternalLink, RefreshCw, Copy, Check,
-  ChevronUp, ChevronDown, Send, Paperclip, AtSign, Smile,
+  ChevronUp, ChevronDown, Send, Paperclip, AtSign, Smile, Type,
 } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import CollapsibleSection from '../CollapsibleSection'
 import FileUpload from '../FileUpload'
 const RichTextEditor = lazy(() => import('../RichTextEditor'))
-import { useUpdateTask, useUpdateTaskStatus, useAcknowledgeTask, usePostTaskUpdate } from '../../hooks/useMutations'
+import { useUpdateTask, useUpdateTaskStatus, useAcknowledgeTask, usePostTaskUpdate, useBulkUpdateTasks } from '../../hooks/useMutations'
 import { useProjects } from '../../hooks/useApiData'
 import WorkOnActions from '../WorkOnActions'
 import { useToast } from '../../hooks/useToast'
@@ -30,7 +30,7 @@ import type { TaskRow } from '../../lib/api'
 import { PATHS } from '../../constants/paths'
 
 // ── Detail sub-modules ──────────────────────────────────────
-import { FieldBlock, EditableTitle, EditableTextarea, StatusSelect, PrioritySelect, AssigneeSelect, DateInput, ProjectSelect } from './detail/FieldControls'
+import { FieldBlock, EditableTitle, EditableShortTitle, EditableTextarea, StatusSelect, PrioritySelect, AssigneeSelect, DateInput, ProjectSelect } from './detail/FieldControls'
 import { TaskDependenciesSection } from './detail/TaskDependencies'
 import { SubtaskSection } from './detail/SubtaskSection'
 import { HandoffSection } from './detail/HandoffSection'
@@ -64,6 +64,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
   const panelRef = useRef<HTMLDivElement>(null)
   const updateTask = useUpdateTask()
   const updateStatus = useUpdateTaskStatus()
+  const bulkUpdate = useBulkUpdateTasks()
   const qc = useQueryClient()
   const navigate = useNavigate()
 
@@ -242,6 +243,39 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
     showUndo(`Status → ${labels[status] || status}`, () => updateStatus.mutate({ id: task.id, status: prev }))
   }
 
+  // Delete with a real 5s undo. The server has NO un-delete path
+  // (op:'delete' is a one-way tombstone, no restore/reopen endpoint), so undo
+  // is implemented as a delayed commit: optimistically drop the row from every
+  // ['tasks'] cache + close the panel now, then fire the actual server delete
+  // only after the 5s window elapses. Undo restores the snapshots and cancels
+  // the pending server call — nothing ever hits D1.
+  const handleDeleteTask = () => {
+    const id = task.id
+    const label = task.short_title || task.title || task.description || 'task'
+
+    // Snapshot every ['tasks'] cache so undo is exact.
+    const snapshots = qc.getQueriesData<TaskRow[]>({ queryKey: ['tasks'] })
+    snapshots.forEach(([key, data]) => {
+      if (!data) return
+      qc.setQueryData<TaskRow[]>(key, data.filter((t) => t.id !== id))
+    })
+
+    let committed = false
+    const commitTimer = setTimeout(() => {
+      committed = true
+      bulkUpdate.mutate({ ids: [id], action: 'delete' })
+    }, 5000)
+
+    showUndo(`Deleted "${label}"`, () => {
+      if (committed) return
+      clearTimeout(commitTimer)
+      snapshots.forEach(([key, data]) => { if (data) qc.setQueryData(key, data) })
+      qc.invalidateQueries({ queryKey: ['tasks'] })
+    })
+
+    onClose()
+  }
+
   return (
     <>
       {/* Backdrop — tap to dismiss + fades with swipe progress on mobile. */}
@@ -283,6 +317,9 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
           borderLeft: '1px solid var(--border-subtle)',
           animation: reduceMotion ? 'none' : 'slideIn 200ms ease-out',
           touchAction: 'pan-y',
+          // No content may force sideways scroll. The panel scrolls vertically
+          // only; long unbroken strings / chips wrap or ellipsize instead.
+          overflowX: 'hidden',
         }}
       >
         {/* Header */}
@@ -351,15 +388,63 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
         </div>
 
         {/* Always visible: Title + Status */}
-        <div className="px-5 pt-5 pb-3 flex flex-col gap-4">
-          <div id="task-detail-title" tabIndex={-1} style={{ outline: 'none' }}>
+        <div className="px-5 pt-5 pb-3 flex flex-col gap-4" style={{ minWidth: 0 }}>
+          <div id="task-detail-title" tabIndex={-1} style={{ outline: 'none', minWidth: 0, overflowWrap: 'anywhere' }}>
             <EditableTitle
               value={task.title || task.description}
               onSave={(v) => handleFieldUpdate('title', v)}
             />
+            {/* Short title — concise row label (Rule 68). Editable inline,
+                mirrors ProjectDetail's short_name affordance. */}
+            <div className="flex items-center" style={{ gap: 'var(--sp-xs)', marginTop: 'var(--sp-xs)', minWidth: 0 }}>
+              <label
+                className="flex items-center flex-shrink-0"
+                style={{ gap: 'var(--sp-xs)', fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', fontWeight: 'var(--label-weight)' }}
+              >
+                <Type size={11} style={{ opacity: 0.85 }} />
+                Short title
+              </label>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <EditableShortTitle
+                  value={task.short_title || ''}
+                  onSave={(v) => handleFieldUpdate('short_title', v || null)}
+                />
+              </div>
+            </div>
           </div>
 
-          <StatusSelect value={task.status} onChange={handleStatusChange} />
+          {/* Status row + quiet Delete affordance (Nick: prefer delete over a
+              false check-off). Delete sits after blocked/done. */}
+          <div className="flex items-start justify-between gap-2" style={{ minWidth: 0 }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <StatusSelect value={task.status} onChange={handleStatusChange} />
+            </div>
+            <button
+              type="button"
+              data-testid="delete-task"
+              onClick={handleDeleteTask}
+              title="Delete this task"
+              aria-label="Delete task"
+              className="flex items-center gap-1 flex-shrink-0 rounded-lg transition-colors"
+              style={{
+                background: 'none',
+                border: '1px solid transparent',
+                color: 'var(--maroon)',
+                opacity: 0.85,
+                cursor: 'pointer',
+                fontSize: 'var(--text-small)',
+                fontWeight: 500,
+                padding: '6px 10px',
+                alignSelf: 'flex-start',
+                whiteSpace: 'nowrap',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.borderColor = 'var(--maroon)'; e.currentTarget.style.background = 'color-mix(in srgb, var(--maroon) 7%, transparent)' }}
+              onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.85'; e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.background = 'none' }}
+            >
+              <Trash2 size={12} />
+              Delete
+            </button>
+          </div>
 
           {/* Task age + source info */}
           <div className="flex items-center gap-2 flex-wrap">
