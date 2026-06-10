@@ -10,6 +10,7 @@ import { useCreateProject } from '../hooks/useMutations'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { updateProject } from '../lib/api'
 import InlineSelect from '../components/InlineSelect'
+import { useUndoToast } from '../components/UndoToast'
 import { PROJECT_STATUS_OPTIONS, normalizeProjectStatus, isProjectActive } from '../lib/taskConstants'
 import ProjectCard from '../components/ProjectCard'
 import ProjectDependencyMap from '../components/ProjectDependencyMap'
@@ -137,6 +138,22 @@ export default function Projects() {
       queryClient.invalidateQueries({ queryKey: ['activity'] })
     },
   })
+  const { showUndo } = useUndoToast()
+
+  // S17: stage editing is one grammar everywhere — instant + undo (design Rule 8),
+  // matching ManuscriptsPage's handleFieldChange. Captures the prior stage so the
+  // toast can restore it; the UI 6-stage value is mapped to the 7-value API
+  // canonical via toApiStage() (Rule 35 — the API 400s a non-canonical value,
+  // which surfaces as a silent revert).
+  const handleStageChange = useCallback((slug: string, nextStage: string, prevStage: string | null | undefined) => {
+    if (nextStage === prevStage) return
+    inlineUpdate.mutate({ slug, fields: { stage: toApiStage(nextStage) } })
+    showUndo(
+      `Stage → ${STAGE_LABELS[nextStage as Stage] ?? nextStage}`,
+      () => inlineUpdate.mutate({ slug, fields: { stage: toApiStage(prevStage || 'idea') } }),
+    )
+  }, [inlineUpdate, showUndo])
+
   const [density, setDensity] = useDensity()
   // S10: category is URL-backed so ⌘K "Filter CLIF Projects" (which navigates
   // to PATHS.projects + '?category=CLIF') lands pre-filtered, and saved/shared
@@ -581,11 +598,11 @@ export default function Projects() {
                               onChange={(val) => inlineUpdate.mutate({ slug: project.slug, fields: { status: val } })}
                             />
 
-                            {/* Stage (inline editable) */}
+                            {/* Stage (inline editable) — S17: instant + undo */}
                             <InlineSelect
                               value={project.stage || 'idea'}
                               options={STAGES.map((s) => ({ value: s, label: STAGE_LABELS[s] }))}
-                              onChange={(val) => inlineUpdate.mutate({ slug: project.slug, fields: { stage: toApiStage(val) } })}
+                              onChange={(val) => handleStageChange(project.slug, val, project.stage)}
                             />
 
                             {/* PI (inline editable) — S19: resolve the current
@@ -681,7 +698,7 @@ export default function Projects() {
                               <InlineSelect
                                 value={project.stage || 'idea'}
                                 options={STAGES.map((s) => ({ value: s, label: STAGE_LABELS[s] }))}
-                                onChange={(val) => inlineUpdate.mutate({ slug: project.slug, fields: { stage: toApiStage(val) } })}
+                                onChange={(val) => handleStageChange(project.slug, val, project.stage)}
                               />
                               <div onClick={(e) => e.preventDefault()} style={{ marginLeft: 'auto' }}>
                                 <InlineSelect

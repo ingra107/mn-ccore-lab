@@ -179,6 +179,20 @@ export default function ManuscriptsPage() {
     showUndo(`${field} → ${value}`, () => inlineUpdate.mutate({ slug, fields: { [field]: prev } }))
   }
 
+  // S17: stage editing is instant + undo, identical to Projects.tsx and the
+  // pipeline drag path below. The UI 6-stage value MUST map through toApiStage()
+  // to the 7-value API canonical (Rule 35) — handleFieldChange passed the raw UI
+  // value, which the API 400s, surfacing as a silent optimistic revert. This
+  // single chokepoint removes that drift for the list views.
+  const handleStageChange = (slug: string, nextStage: string, prevStage: string | null | undefined) => {
+    if (nextStage === prevStage) return
+    inlineUpdate.mutate({ slug, fields: { stage: toApiStage(nextStage) } })
+    showUndo(
+      `Stage → ${STAGE_LABELS[nextStage as typeof STAGES[number]] ?? nextStage}`,
+      () => inlineUpdate.mutate({ slug, fields: { stage: toApiStage(prevStage || 'idea') } }),
+    )
+  }
+
   const manuscripts = useMemo(() => {
     // S4: a manuscript is a project at stage >= writing. Earlier-stage
     // projects (idea / data collection / analysis) live only on Projects.
@@ -552,12 +566,13 @@ export default function ManuscriptsPage() {
                             />
                           </div>
 
-                          {/* Stage (inline editable) — wrapped to stop click bubbling. M-01. */}
+                          {/* Stage (inline editable) — wrapped to stop click bubbling. M-01.
+                              S17: instant + undo + toApiStage() canonicalization. */}
                           <div onClick={(e) => e.stopPropagation()}>
                             <InlineSelect
                               value={project.stage || 'idea'}
                               options={STAGES.map((s) => ({ value: s, label: STAGE_LABELS[s] }))}
-                              onChange={(val) => handleFieldChange(project.slug, 'stage', val, project.stage)}
+                              onChange={(val) => handleStageChange(project.slug, val, project.stage)}
                             />
                           </div>
 
@@ -645,7 +660,7 @@ export default function ManuscriptsPage() {
                               <InlineSelect
                                 value={project.stage || 'idea'}
                                 options={STAGES.map((s) => ({ value: s, label: STAGE_LABELS[s] }))}
-                                onChange={(val) => handleFieldChange(project.slug, 'stage', val, project.stage)}
+                                onChange={(val) => handleStageChange(project.slug, val, project.stage)}
                               />
                             </div>
                             {/* Category — inline editable on mobile too */}
