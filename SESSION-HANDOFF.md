@@ -28,6 +28,29 @@
   draft links. → **top of the next-session queue** (debug per-surface URI building/encoding vs
   the working workon verb + unify on `useProtocolLaunch`/`classifyUrl` chips).
 
+## ✅ (arc 4) ⚠️INCIDENT+HOTFIX: creates 409'd ~70min · email_link-at-create SHIPPED — deploy `a4f0ee1c` on `1fb69bbd`
+
+- **INCIDENT (self-inflicted, caught via PB's FYI nudge):** the 0.4.0 contract adoption
+  (`8fc11923`) fixed the PWA payload but MISSED `handleCreateTask`, which unconditionally built
+  `notes: null` into its insert payload → **every POST /api/tasks create 409'd in prod**
+  ("unknown fields for tasks: notes") from deploy `d742cf12` until `a4f0ee1c` (~70 min).
+  **Zero real losses** — both rejected mutations in the window were my own probes (verified via
+  `processed_mutations`). **Class gap:** 789 tests had NO end-to-end create-payload-vs-contract
+  coverage. **Class fix shipped:** a drift-guard test mirrors the FULL create-payload key set
+  through applyMutation — a future contract shrink under a route payload fails in CI, not prod.
+  Also removed `notes` from `TASK_ALLOWED_FIELDS` (stray legacy `notes` on update is silently
+  dropped instead of 409ing the whole patch).
+- **email_link at create (PB §2D handoff) — LIVE:** both create paths (handleCreateTask +
+  handleMobileTasksToHub) derive `email_link = https://mail.google.com/mail/u/1/#inbox/
+  <source_thread_id>` when source_thread_id is present (Apps Script "Email Tasks"). Live-verified
+  (probe created with derived link, then soft-deleted). **PB may retire backfill_email_links.py +
+  invariant I40 after one clean janitor cycle.** Pairs with arc-3's email_link Gmail chip.
+- PB's other FYIs: worker redeploy ✓ (4 deploys since the bump); HUB-7 ✓ (shipped `8fc11923`);
+  since_id on task-updates/project-updates /recent = declined for now (their 1ms-floor + client
+  dedup works; YAGNI).
+- Home chat message sent (pull + Obsidian winget upgrade); Monitor armed for the HOME reply.
+- 790/790 tests · tsc green.
+
 ## ✅ (arc 3) FOLDER LINKS FIXED + uniform chips SHIPPED — deploy `b5bd159f` on `9b63fa67`
 
 - **THE folder bug (reproduced live → fix proven live):** `verb_open` in `mnccore-handler.bat`
