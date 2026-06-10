@@ -120,6 +120,10 @@ export default function MeetingDetail() {
   // Local action item order — persists in state during session
   // IMPORTANT: must be declared BEFORE conditional early returns to satisfy Rules of Hooks
   const [actionOrder, setActionOrder] = useState<string[]>([])
+  // S9: agenda drag order — same local-order pattern as actions. Without this
+  // the agenda drag computed arrayMove + POSTed but never wrote the new order,
+  // so the item visually snapped back until a refetch.
+  const [agendaOrder, setAgendaOrder] = useState<string[]>([])
   // Dedupe Cartesian duplicates from join (mirrors MyItems.tsx:678).
   // Key: normalized title + assignee + due. Newest updated_at wins.
   const dedupedActionItems = useMemo(() => {
@@ -250,7 +254,22 @@ export default function MeetingDetail() {
   const decisions = parseJsonArray(meeting.decisions)
   const statusStyle = STATUS_COLORS[meeting.status] || STATUS_COLORS.completed
   const actionItems = dedupedActionItems
-  const teamAgendaItems = meeting.agenda_items || []
+  const rawTeamAgendaItems = meeting.agenda_items || []
+  // S9: apply the local drag order so a reordered agenda stays put (mirrors
+  // orderedPendingActions). Items with no recorded order sink to the bottom in
+  // their original relative order.
+  const teamAgendaItems = (() => {
+    if (agendaOrder.length === 0) return rawTeamAgendaItems
+    const orderMap = new Map(agendaOrder.map((id, i) => [id, i]))
+    return [...rawTeamAgendaItems].sort((a, b) => {
+      const ai = orderMap.get(a.id)
+      const bi = orderMap.get(b.id)
+      if (ai === undefined && bi === undefined) return 0
+      if (ai === undefined) return 1
+      if (bi === undefined) return -1
+      return ai - bi
+    })
+  })()
 
   async function handleAgendaDragEnd(event: DragEndEvent) {
     const { active, over } = event
@@ -258,7 +277,12 @@ export default function MeetingDetail() {
 
     const oldIndex = teamAgendaItems.findIndex(i => i.id === active.id)
     const newIndex = teamAgendaItems.findIndex(i => i.id === over.id)
+    if (oldIndex === -1 || newIndex === -1) return
     const reordered = arrayMove(teamAgendaItems, oldIndex, newIndex)
+
+    // S9: write the new order to local state FIRST (optimistic) so the item
+    // stays where dropped, then persist. Mirrors handleActionDragEnd.
+    setAgendaOrder(reordered.map(i => i.id))
 
     // Persist to API
     fetch(`/api/meetings/${meeting!.id}/agenda/reorder`, {
