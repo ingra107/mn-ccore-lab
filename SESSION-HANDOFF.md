@@ -1,4 +1,28 @@
-# Session Handoff — 2026-06-10
+# Session Handoff — 2026-06-10 (continued)
+
+## ✅ Live-review batch 2 + Bug Squasher — DEPLOYED `1ee47a05` on `15362986`
+
+Nick live-drove the morning's deploys and filed a stream of items; ALL shipped + deployed (11 commits `8afe0fdf`..`15362986`):
+- **Anchored-left + FLUID-RIGHT wide mode** (`.band-anchored-wide`): My Tasks Columns + Projects Pipeline now share the title's left edge AND expand rightward (no h-scroll; Grants was the reference). Root cause: ColumnsView nested a 960px col-main cap inside the band.
+- **Task editor:** editable `short_title` (mirrors project short_name; write-path verified allowlisted), quiet **Delete** at the end of the status row (soft-delete, 5s undo via delayed-commit — server has no un-delete), h-scroll killed (flex min-width-0 class).
+- **Folder-open FIXED on real data:** `primary_folder` values are heterogeneous (`file:///` + %20 / backslash / plain) — new `normalizeLocalFolderPath()` chokepoint + handler-side file:/// strip (both-ends). Toast now honest ("Opening folder… (path copied as backup)"). **Obsidian:** vault `.md` key links → `obsidian://open?vault=Peripheral-Brain&file=…` chips (username-agnostic, works both machines).
+- **"Posted note" double-entry** killed (read-side filter in the one feed that merges task_updates + activity_log; other surfaces depend on the emit).
+- **CLASS: viewer-local timestamps.** New `parseDbUtc()`/`formatDbLocal()` in time.ts (bare SQLite `YYYY-MM-DD HH:MM:SS` = UTC); dateUtils.safeParse delegates; ~30 sites swept across two passes (incl. relative-time, day-grouping, age computations). Store UTC, display local — done.
+- **Description dated-log renders newest-first** (`src/lib/descriptionLog.ts`; static lead prose stays pinned on top). Interim fix — the real cure is M5.
+- **⌘K `create=true` CLASS fixed:** 4 broken generator→consumer pairs (My Tasks, Meetings, Decisions + PersonalPage's double-broken query-dropping `<Navigate>` shim → new `NavigateKeepSearch`). All palette create commands now open their modals.
+- **Create-task default due = today** (`todayCivil()`; quick-add `q` capture deliberately stays dateless — inbox semantics, documented judgment).
+- **Bug Squasher (schema v76):** `bug_reports` D1 table (the old /api/bug-report only made GitHub issues) + `GET /api/bug-reports?status=` + `POST /api/bug-reports/:id/status` (PI/API-key; 766/766 tests) + `scripts/bug-squasher.bat` (launches a Claude session that fetches open bugs, fixes, marks resolved, deploys) + `mnccore://bugsquash` verb + **⌘K-only, PI-only "Bug Squasher" command**.
+- **mnccore:// registered on BOTH machines** (work: this session; home: via home-work chat — Nick approved in-session there; browser restart at home still pending).
+- **M5 plan addendum** (`docs/superpowers/plans/2026-05-26-m5-timeline-build-plan.md`): Nick's Description-vs-Activity requirements (static description / newest-first activity / task events feed project activity / nightly Haiku legacy-description migration / compact link chips). M5 needs its own brainstorm session — Nick's call.
+
+### ▶ NEXT
+1. **M5 brainstorm session** (the Description→Activity split) — plan + addendum are the inputs; run superpowers:brainstorming first.
+2. Nick: home browser restart (protocol registered); first ⚙ Process / Bug Squasher click-tests; his /process run should pick up Hub comments (collector live — watch `data/hub_comments_digest.md` in PB).
+3. Carried: Today-cockpit IA consolidation plan; deferred polish residue (JS-hover pass, spacing-token tail, legacy my-tasks-legacy retire, local-seed schema drift, 768px journey spec); Query-Resource phased pass; param-strip wart in IdeasPage:67/AskTheLab:44 (setSearchParams({}) nukes all params — harmless today).
+
+---
+
+# Session Handoff — 2026-06-10 (morning)
 
 ## ✅ Nick's live-review fixes + LOCAL-LAUNCH PARITY + comment→/process loop — DEPLOYED `db13bba2` on `e6816434`
 

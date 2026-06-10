@@ -299,3 +299,17 @@ PB HEAD `77d74578`, Hub HEAD `d8ef5979`. All codex citations re-validated; line 
 **New finding (amendment to codex):** `SmartCompose` already has a "Custom mode" consumed by `ProjectUpdateFeed`, `ProjectComments`, ProjectDetail compose (`SmartCompose.tsx:9-14`) — the project-side composers are likely ALREADY on MentionInput, reducing C1 scope to the two task-side raw inputs. Confirm via grep in Task C1.
 
 **Mirror tables (PB, verified this session):** `d1_task_updates` 160 rows, `d1_project_updates` 23 rows, `d1_task_comments` 0 (inert) — matches spec; fate deferred to a follow-up plan (Task B3).
+
+
+---
+
+## ADDENDUM — Nick's requirements (2026-06-10, verbatim intent; fold into the build)
+
+Nick independently re-derived this plan's core while live-reviewing ("this is a big class level thing that might require appropriate brainstorming"):
+1. **Description = static one-time brief summary.** "when i think of description i think more of a onetime description of the project... not a running list of things we have done to move it along. i feel like that is activity." (= exactly Model A's split; the dated `[YYYY-MM-DD]` log lines currently appended into description are the mislabeled Activity.)
+2. **Activity displays MOST-RECENT-FIRST.** Interim display fix shipped 2026-06-10 (`0609bb33`: `src/lib/descriptionLog.ts` parses lead-prose + dated entries, renders newest-first) — M5 replaces the parse-hack with real timeline rows.
+3. **Task-level events feed PROJECT activity.** "if something in tasks happens shouldn't that show in the project activity because it helps see the whole picture?!" — the unified timeline must include task creates/completes/notes/comments for the project's tasks (visibility-gated per the spec).
+4. **Nightly cleanup pass** ("a nice simple haiku task to comb through things and clean up those at night"): a janitor/Haiku job that migrates legacy dated-log lines OUT of `description` into timeline rows, leaving the static summary — the data-migration half of Model A, run incrementally at night rather than one big bang.
+5. **Compact link chips are loved** — keep `LinkifiedText`/`classifyUrl` chip rendering (github.com pills, Obsidian pills) in timeline rows: "doesn't take up a bunch of space... so easy to click."
+
+Run this build through brainstorming first (Nick's own call) — the spec + this addendum are the inputs.
