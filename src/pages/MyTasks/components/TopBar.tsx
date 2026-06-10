@@ -39,10 +39,13 @@ export function TopBar({ view, setView, search, setSearch, filter, setFilter, qu
   const hasFilters = filter.priority || filter.project || filter.mentee || filter.group || search || quickView !== 'all'
   return (
     <div style={{ padding: '14px 24px 12px', borderBottom: '1px solid rgba(255,255,255,0.06)', flexShrink: 0 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 10 }}>
+      {/* P2-6: title row wraps so the search input + Create Task drop to a
+          second line on narrow widths instead of clipping the fixed-260 search
+          and overlapping the title. */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 10, flexWrap: 'wrap' }}>
         <h1 style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-0.02em', margin: 0, color: '#fff' }}>My Tasks</h1>
         <span aria-live="polite" aria-atomic="true" style={{ fontSize: 11, color: INK_DIM, fontVariantNumeric: 'tabular-nums' }}>{taskCount} visible</span>
-        <div style={{ flex: 1 }} />
+        <div style={{ flex: 1, minWidth: 12 }} />
         <button
           onClick={onCreateTask}
           style={{
@@ -50,6 +53,7 @@ export function TopBar({ view, setView, search, setSearch, filter, setFilter, qu
             padding: '6px 14px', borderRadius: 6, fontSize: 13, fontWeight: 500,
             fontFamily: 'inherit', cursor: 'pointer', border: 'none',
             backgroundColor: ACCENT_TEAL, color: 'var(--ink-bright, #fff)',
+            flexShrink: 0, whiteSpace: 'nowrap',
           }}
         >
           <Plus size={15} />
@@ -59,7 +63,7 @@ export function TopBar({ view, setView, search, setSearch, filter, setFilter, qu
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search tasks…"
-          style={{ padding: '6px 12px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6, color: INK, fontSize: 12, width: 260, fontFamily: 'inherit', outline: 'none' }}
+          style={{ padding: '6px 12px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6, color: INK, fontSize: 12, flex: '1 1 200px', minWidth: 140, maxWidth: 260, fontFamily: 'inherit', outline: 'none' }}
         />
       </div>
       <div style={{ display: 'flex', gap: 4, marginBottom: 8, flexWrap: 'wrap' }}>

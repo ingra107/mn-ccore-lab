@@ -51,7 +51,7 @@ export function FilterChip({ label, value, options, onChange }: { label: string;
 
   const active = options.find((o) => o.v === value)
   return (
-    <div ref={ref} style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 999, background: 'rgba(255,255,255,0.02)', fontSize: 11, height: 26 }}>
+    <div ref={ref} style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 999, background: 'rgba(255,255,255,0.02)', fontSize: 11, minHeight: 26 }}>
       <span style={{ color: INK_DIM, paddingLeft: 10, paddingRight: 6, letterSpacing: '0.02em' }}>{label}</span>
       <button
         onClick={() => setOpen(!open)}
