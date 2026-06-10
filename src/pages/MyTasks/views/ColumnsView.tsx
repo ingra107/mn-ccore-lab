@@ -32,20 +32,26 @@ export function ColumnsView({ filtered, byGroup, selected, toggleSelect, onToggl
   // space and obscure the filter result).
   const visibleGroups = filterGroup ? GROUP_ORDER.filter(g => g === filterGroup) : GROUP_ORDER
   const colCount = visibleGroups.length
-  const minWidth = colCount * 280
+  // 2026-06-10b: align the grid's intrinsic floor to the column minmax floor
+  // (260px) instead of 280px. Inside .band-anchored-wide the grid fills the
+  // fluid width and only overflows (h-scroll) when colCount*260 + gaps exceeds
+  // the available viewport — so the floor must match the minmax(260px,...) below
+  // or the grid would force a scroll a touch early.
+  const minWidth = colCount * 260
   const selectionActive = selected.size > 0
   // Mobile scroll cue — right-edge fade gradient + visible thin scrollbar so
   // users discover the 5 columns scroll horizontally on small viewports
   // (eval Issue 5).
   return (
-    // P1-1 (Nick 2026-06-10): .mt-band centers on --content-band (matching the
-    // data pages); the inner Kanban board is left-anchored to --col-main within
-    // the band so its left edge equals Projects + the other two views + Today.
-    // The grid still h-scrolls INSIDE --col-main when the columns exceed it
-    // (colCount × 260 > 960 at 4+ columns) — the intended "Columns scrolls
-    // inside --col-main" behavior.
-    <div className="mt-band" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
-    <div className="mt-columns-scroll" style={{ flex: 1, overflow: 'auto', paddingTop: 12, paddingBottom: 20, position: 'relative', maxWidth: 'var(--col-main)', width: '100%' }}>
+    // 2026-06-10b (Nick): Columns is WIDE multi-column content, so it uses
+    // .band-anchored-wide — left edge anchored identical to the toolbar + data
+    // pages, right edge FLUID to the viewport (minus standard right padding).
+    // The kanban grid grows rightward to fit; it only h-scrolls when the columns
+    // exceed the available viewport width (not when they exceed an arbitrary
+    // 960px box). Dropped the maxWidth:--col-main cap that previously crammed
+    // 4-5 columns into 960px and forced a horizontal scroll inside the band.
+    <div className="band-anchored-wide" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+    <div className="mt-columns-scroll" style={{ flex: 1, overflow: 'auto', paddingTop: 12, paddingBottom: 20, position: 'relative', width: '100%' }}>
       <style>{`
         .mt-columns-scroll { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.18) transparent; }
         .mt-columns-scroll::-webkit-scrollbar { height: 8px; }

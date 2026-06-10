@@ -1001,6 +1001,60 @@ a:hover {
 @media (min-width: 1024px) {
   .mt-band { padding-left: 3rem; padding-right: 3rem; }
 }
+/* Mobile parity with .content-container (Nick 2026-06-10b): the data pages
+   tighten to 12px below 640px; mirror it here so My Tasks' toolbar/title/views
+   share the SAME left edge as the rest of the app on small screens (and so the
+   .band-anchored-wide views, which match this, stay aligned with the toolbar). */
+@media (max-width: 640px) {
+  .mt-band { padding-left: 12px; padding-right: 12px; }
+}
+
+/* ── Anchored wide band (Nick 2026-06-10b) ──
+   Completes the anchored-edge rule: LEFT edge anchored (identical to
+   .content-container's content edge), RIGHT edge FLUID to the viewport minus
+   the standard responsive right padding. Use this for genuinely WIDE,
+   multi-column content that should grow rightward to fit instead of being
+   capped at --col-main and h-scrolling inside a 960px box: My Tasks Columns
+   (kanban), Projects Pipeline (kanban), and any future Gantt-/board-like view.
+
+   How the left edge stays IDENTICAL to .content-container at every width:
+   .content-container is `max-width:1296px; margin:auto; padding-left:P`, so its
+   content's left edge from the viewport = max(P, (100% - 1296px)/2 + P) — i.e.
+   P below the band width, then it tracks the centered band above it. We
+   reproduce that edge as this element's own margin-left, drop the
+   --content-band max-width cap, and pad only the right side (P), so content
+   extends from the anchored left edge to (viewport - P) and only h-scrolls
+   when its intrinsic width exceeds THAT. Padding tiers match .content-container
+   / .mt-band exactly (1.5 / 2 / 3rem at base / 640 / 1024) so the left edge is
+   pixel-identical to the toolbar + the data pages on the same viewport.
+
+   Mobile (<640px): the band width never binds, so margin-left collapses to the
+   12px tier (matching the .content-container mobile override) — graceful. */
+.band-anchored-wide {
+  max-width: none;
+  margin-left: max(1.5rem, calc((100% - var(--content-band)) / 2 + 1.5rem));
+  margin-right: 1.5rem;
+  padding-left: 0;
+  padding-right: 0;
+}
+@media (min-width: 640px) {
+  .band-anchored-wide {
+    margin-left: max(2rem, calc((100% - var(--content-band)) / 2 + 2rem));
+    margin-right: 2rem;
+  }
+}
+@media (min-width: 1024px) {
+  .band-anchored-wide {
+    margin-left: max(3rem, calc((100% - var(--content-band)) / 2 + 3rem));
+    margin-right: 3rem;
+  }
+}
+@media (max-width: 640px) {
+  .band-anchored-wide {
+    margin-left: max(12px, calc((100% - var(--content-band)) / 2 + 12px));
+    margin-right: 12px;
+  }
+}
 
 /* ── Section Header accent line ── */
 .section-header-line {
