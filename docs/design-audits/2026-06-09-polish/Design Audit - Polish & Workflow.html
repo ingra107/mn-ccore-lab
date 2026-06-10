@@ -1,0 +1,1098 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>MN-CCORE Hub · Polish + Workflow Audit · Jun 9 2026</title>
+<link rel="stylesheet" href="colors_and_type.css"/>
+<style>
+  :root{
+    --bg:#0b1017;
+    --surface:#11161f;
+    --surface-2:#151b26;
+    --line:#1e2634;
+    --line-soft:#161d28;
+    --ink:#e7edf3;
+    --ink-dim:#aab3be;
+    --ink-faint:#6e7683;
+    --gold:#c9a84c;
+    --teal:#5cc2c8;
+    --teal-deep:#177e89;
+    --red:#e66a6a;
+    --amber:#dd9a4e;
+    --green:#6ee89a;
+  }
+  html,body{margin:0;background:var(--bg);color:var(--ink);font-family:'DM Sans',system-ui,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased}
+  *{box-sizing:border-box}
+  ::selection{background:var(--gold);color:#0b1017}
+
+  /* ── Top bar ── */
+  .topbar{position:sticky;top:0;z-index:50;background:rgba(11,16,23,0.9);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+  .topbar-inner{max-width:1200px;margin:0 auto;padding:16px 32px;display:flex;align-items:center;gap:28px;flex-wrap:wrap}
+  .topbar .brand{display:flex;align-items:center;gap:12px}
+  .topbar .ecg{width:34px;height:18px}
+  .topbar .brand b{font-weight:600;letter-spacing:-0.01em;color:var(--ink)}
+  .topbar .meta{color:var(--ink-faint);font-size:12px;letter-spacing:0.04em}
+  .topbar .meta strong{color:var(--ink-dim);font-weight:500}
+  .topbar nav{margin-left:auto;display:flex;gap:22px;font-size:12.5px}
+  .topbar nav a{color:var(--ink-dim);text-decoration:none;padding:3px 0;border-bottom:1px solid transparent;white-space:nowrap}
+  .topbar nav a:hover{color:var(--gold);border-bottom-color:var(--gold)}
+
+  .wrap{max-width:1200px;margin:0 auto;padding:0 32px}
+
+  /* ── Hero ── */
+  .hero{padding:78px 0 36px}
+  .eyebrow{font-size:11.5px;font-weight:600;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold)}
+  .eyebrow.dim{color:var(--ink-faint)}
+  .hero h1{font-family:'Fraunces',serif;font-weight:400;font-size:80px;line-height:0.98;letter-spacing:-0.025em;margin:20px 0 22px;text-wrap:balance;max-width:1000px}
+  .hero h1 em{font-style:italic;color:var(--gold)}
+  .hero .sub{font-size:21px;line-height:1.55;color:var(--ink-dim);max-width:830px;text-wrap:pretty}
+  .hero .sub b{color:var(--ink);font-weight:500}
+
+  /* ── Scope banner ── */
+  .scope{margin:40px 0 8px;border:1px solid rgba(230,106,106,0.3);background:linear-gradient(180deg,rgba(230,106,106,0.05),transparent);border-radius:12px;padding:22px 26px;display:grid;grid-template-columns:auto 1fr;gap:22px;align-items:start}
+  .scope .tag{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--red);white-space:nowrap;padding-top:2px}
+  .scope p{margin:0;font-size:14.5px;color:var(--ink-dim);line-height:1.55}
+  .scope p b{color:var(--ink);font-weight:600}
+
+  /* ── Summary cards ── */
+  .summary{padding:44px 0 8px;display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+  .sum-card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:22px 24px}
+  .sum-card .n{font-family:'Fraunces',serif;font-size:54px;font-weight:400;line-height:0.95;letter-spacing:-0.025em;color:var(--ink)}
+  .sum-card .n.p1{color:var(--red)}
+  .sum-card .n.p2{color:var(--gold)}
+  .sum-card .n.p3{color:var(--teal)}
+  .sum-card .l{margin-top:8px;font-size:11.5px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-faint)}
+  .sum-card p{margin:9px 0 0;font-size:13px;color:var(--ink-dim);line-height:1.45}
+
+  /* ── Section ── */
+  .section{padding:58px 0 16px;border-top:1px solid var(--line);margin-top:48px}
+  .section-head{display:flex;align-items:flex-start;justify-content:space-between;gap:32px;margin-bottom:14px}
+  .section-head .pillar-no{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--gold);letter-spacing:0.1em}
+  .section-head h2{font-family:'Fraunces',serif;font-weight:400;font-size:46px;letter-spacing:-0.02em;margin:6px 0 0;color:var(--ink);max-width:760px;line-height:1.02}
+  .section-head .aside{font-size:13px;color:var(--ink-faint);max-width:340px;text-align:right;line-height:1.5;flex-shrink:0;padding-top:8px}
+  .lede{font-size:17px;color:var(--ink-dim);max-width:820px;line-height:1.6;margin:8px 0 36px;text-wrap:pretty}
+  .lede b{color:var(--ink);font-weight:500}
+
+  /* ── Finding block ── */
+  .finding{margin:0 0 56px}
+  .finding-head{display:flex;align-items:baseline;gap:14px;margin-bottom:6px;flex-wrap:wrap}
+  .finding-head .id{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink-faint);letter-spacing:0.04em}
+  .finding-head h3{font-family:'Fraunces',serif;font-weight:400;font-size:30px;letter-spacing:-0.018em;margin:0;color:var(--ink)}
+  .badge{display:inline-flex;align-items:center;gap:7px;font-size:10.5px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:4px 9px;border-radius:999px}
+  .badge::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor}
+  .badge.t1{background:rgba(230,106,106,0.13);color:var(--red);border:1px solid rgba(230,106,106,0.4)}
+  .badge.p1{background:rgba(230,106,106,0.13);color:var(--red);border:1px solid rgba(230,106,106,0.35)}
+  .badge.p2{background:rgba(201,168,76,0.13);color:var(--gold);border:1px solid rgba(201,168,76,0.35)}
+  .badge.p3{background:rgba(92,194,200,0.12);color:var(--teal);border:1px solid rgba(92,194,200,0.35)}
+  .finding > .desc{font-size:15.5px;color:var(--ink-dim);line-height:1.6;max-width:840px;margin:14px 0 22px;text-wrap:pretty}
+  .finding > .desc b{color:var(--ink);font-weight:500}
+  .finding > .desc code,.src code{font-family:'JetBrains Mono',monospace;font-size:0.86em;background:var(--surface-2);padding:1px 6px;border-radius:4px;border:1px solid var(--line);color:var(--ink)}
+  .src{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--ink-faint);letter-spacing:0.01em;margin-top:6px}
+  .src::before{content:'⌖ ';color:var(--teal-deep)}
+
+  /* ── Before/After comparison frame ── */
+  .ba{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin:6px 0 4px}
+  .ba.stack{grid-template-columns:1fr}
+  .ba-cell{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--surface)}
+  .ba-cell .cap{display:flex;align-items:center;gap:9px;padding:11px 16px;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;border-bottom:1px solid var(--line);color:var(--ink-faint)}
+  .ba-cell .cap .dot{width:8px;height:8px;border-radius:50%}
+  .ba-cell.before .cap .dot{background:var(--red)}
+  .ba-cell.after .cap .dot{background:var(--green)}
+  .ba-cell.before .cap b{color:var(--red);font-weight:600}
+  .ba-cell.after .cap b{color:var(--green);font-weight:600}
+  .ba-cell .cap .tail{margin-left:auto;text-transform:none;letter-spacing:0;color:var(--ink-faint);font-size:11.5px;font-family:'JetBrains Mono',monospace}
+  .ba-stage{padding:26px;display:flex;align-items:center;justify-content:center;min-height:200px}
+
+  /* ── Mini browser frame (for width + bg demos) ── */
+  .mini{width:100%;border-radius:8px;overflow:hidden;border:1px solid rgba(0,0,0,0.4);box-shadow:0 8px 30px rgba(0,0,0,0.4)}
+  .mini .chrome{height:26px;background:#0c1219;display:flex;align-items:center;gap:6px;padding:0 11px;border-bottom:1px solid #000}
+  .mini .chrome i{width:8px;height:8px;border-radius:50%;background:#2a3340;display:block}
+  .mini .chrome .url{margin-left:10px;font-family:'JetBrains Mono',monospace;font-size:10px;color:#5a6470}
+  .mini .viewport{position:relative;height:168px;overflow:hidden}
+  .mini .vp-page{position:absolute;inset:0}
+  .mini .gut{position:absolute;top:0;bottom:0;background:repeating-linear-gradient(45deg,rgba(230,106,106,0.10) 0 6px,transparent 6px 12px)}
+  .mini .col{position:absolute;top:14px;bottom:0;border-radius:6px 6px 0 0}
+  .mini .wlabel{position:absolute;top:6px;font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:0.04em;z-index:3}
+
+  /* skeleton content inside surface demos */
+  .sk{border-radius:5px}
+  .sk-line{height:7px;border-radius:3px;background:currentColor;opacity:0.16}
+  .sk-chip{height:14px;border-radius:999px;background:currentColor;opacity:0.12}
+
+  /* ── Surface swatch demo (bg inversion) ── */
+  .surf-demo{width:100%;height:208px;border-radius:8px;padding:18px;display:flex;flex-direction:column;gap:12px;position:relative}
+  .surf-demo .tagline{position:absolute;top:10px;right:12px;font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:0.04em}
+  .surf-card{border-radius:8px;padding:13px 15px;display:flex;flex-direction:column;gap:8px}
+  .surf-card .row{display:flex;align-items:center;gap:9px}
+  .surf-card .sq{width:14px;height:14px;border-radius:4px;border:1.5px solid;flex-shrink:0}
+
+  /* ── Task row recreations ── */
+  .panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px;width:100%;max-width:480px}
+  .trow{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:7px}
+  .trow .dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+  .trow .box{width:15px;height:15px;border-radius:4px;border:1.5px solid var(--ink-faint);flex-shrink:0;display:grid;place-items:center}
+  .trow .box.done{background:var(--green);border-color:var(--green)}
+  .trow .box.done::after{content:'✓';color:#0b1017;font-size:10px;font-weight:800}
+  .trow .ttl{font-size:13.5px;color:var(--ink);font-weight:500}
+  .trow .ttl.done{text-decoration:line-through;color:var(--ink-faint)}
+  .trow .meta{margin-left:auto;font-size:11px;color:var(--ink-faint);font-family:'JetBrains Mono',monospace}
+
+  /* ── Inventory list (dead controls, orphans) ── */
+  .inv{list-style:none;margin:18px 0 0;padding:0;border-top:1px solid var(--line)}
+  .inv li{display:grid;grid-template-columns:128px 1fr;gap:20px;padding:16px 0;border-bottom:1px solid var(--line);align-items:start}
+  .inv .where{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-faint);line-height:1.5;letter-spacing:-0.01em}
+  .inv .where b{display:block;color:var(--teal);font-weight:500;margin-bottom:3px;letter-spacing:0.02em}
+  .inv .what{font-size:14.5px;color:var(--ink);line-height:1.55}
+  .inv .what .dead{color:var(--red);font-weight:500}
+  .inv .fix{margin-top:5px;font-size:13.5px;color:var(--ink-dim);line-height:1.5}
+  .inv .fix::before{content:'→ ';color:var(--gold);font-weight:600}
+
+  /* ── Primitive cards (consolidation) ── */
+  .prims{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;margin-top:10px}
+  .prim{border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:22px 24px}
+  .prim h4{font-family:'Fraunces',serif;font-weight:400;font-size:21px;color:var(--ink);margin:0 0 4px;letter-spacing:-0.01em}
+  .prim .collapses{font-size:12px;color:var(--ink-faint);margin-bottom:12px}
+  .prim .collapses b{color:var(--amber);font-weight:500}
+  .prim p{font-size:13.5px;color:var(--ink-dim);line-height:1.55;margin:0}
+  .prim .forks{margin:12px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:5px}
+  .prim .forks li{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-faint);display:flex;gap:8px;align-items:baseline}
+  .prim .forks li::before{content:'×';color:var(--red);font-weight:700}
+  .prim .arrow{margin-top:12px;font-size:13px;color:var(--green);display:flex;gap:8px;align-items:baseline}
+  .prim .arrow::before{content:'→';font-weight:700}
+
+  /* ── Token spec sheet ── */
+  .spec{border:1px solid var(--line);border-radius:12px;overflow:hidden;margin:8px 0 0}
+  .spec .spec-head{padding:14px 22px;background:var(--surface-2);border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px}
+  .spec .spec-head b{font-size:14px;color:var(--ink);font-weight:600}
+  .spec .spec-head span{font-size:12px;color:var(--ink-faint)}
+  table.tok{width:100%;border-collapse:collapse;font-size:13px}
+  table.tok th{text-align:left;font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint);font-weight:500;padding:11px 22px;border-bottom:1px solid var(--line);background:var(--surface)}
+  table.tok td{padding:11px 22px;border-bottom:1px solid var(--line-soft);color:var(--ink-dim);vertical-align:middle}
+  table.tok tr:last-child td{border-bottom:none}
+  table.tok .mono{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink)}
+  table.tok .sw{display:inline-block;width:16px;height:16px;border-radius:4px;vertical-align:middle;margin-right:9px;border:1px solid rgba(255,255,255,0.12)}
+  table.tok .was{color:var(--red);text-decoration:line-through;opacity:0.7}
+  table.tok .now{color:var(--green)}
+
+  /* ── Closing / priorities ── */
+  .closing{padding:80px 0 40px;border-top:1px solid var(--line);margin-top:56px}
+  .closing h2{font-family:'Fraunces',serif;font-weight:400;font-size:54px;letter-spacing:-0.02em;margin:14px 0 22px;color:var(--ink);max-width:880px;line-height:1.0}
+  .closing h2 em{font-style:italic;color:var(--gold)}
+  .closing .body{font-size:17px;line-height:1.65;color:var(--ink-dim);max-width:830px;margin-bottom:14px;text-wrap:pretty}
+  .prio-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:38px}
+  .prio{border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:26px 24px}
+  .prio.p1{border-color:rgba(230,106,106,0.34)}
+  .prio.p2{border-color:rgba(201,168,76,0.32)}
+  .prio.p3{border-color:rgba(92,194,200,0.3)}
+  .prio .tag{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:12px}
+  .prio.p1 .tag{color:var(--red)}
+  .prio.p2 .tag{color:var(--gold)}
+  .prio.p3 .tag{color:var(--teal)}
+  .prio h4{font-size:16px;color:var(--ink);margin:0 0 12px;font-weight:600}
+  .prio ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:9px}
+  .prio li{font-size:13px;color:var(--ink-dim);line-height:1.45;padding-left:16px;position:relative}
+  .prio li::before{content:'';position:absolute;left:0;top:7px;width:5px;height:5px;border-radius:50%;background:currentColor;opacity:0.5}
+  .ticket-ptr{margin-top:40px;padding:20px 24px;border:1px dashed var(--line);border-radius:10px;display:flex;align-items:center;gap:14px;font-size:14px;color:var(--ink-dim)}
+  .ticket-ptr code{font-family:'JetBrains Mono',monospace;color:var(--gold);background:var(--surface-2);padding:3px 9px;border-radius:5px;border:1px solid var(--line)}
+
+  .foot{padding:40px 0 80px;color:var(--ink-faint);font-size:12.5px;line-height:1.6;border-top:1px solid var(--line);margin-top:20px}
+
+  /* ── Interactive date-picker demo ── */
+  .dpdemo{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  .dp-stage{border:1px solid var(--line);border-radius:12px;background:var(--surface);overflow:visible;display:flex;flex-direction:column}
+  .dp-stage .cap{display:flex;align-items:center;gap:9px;padding:11px 16px;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;border-bottom:1px solid var(--line);color:var(--ink-faint)}
+  .dp-stage .cap .dot{width:8px;height:8px;border-radius:50%}
+  .dp-stage.before .cap .dot{background:var(--red)}
+  .dp-stage.after .cap .dot{background:var(--green)}
+  .dp-stage .cap .clicks{margin-left:auto;text-transform:none;letter-spacing:0;font-family:'JetBrains Mono',monospace;font-size:11px}
+  .dp-stage .cap .clicks b{font-weight:600}
+  .dp-body{padding:30px 26px 40px;min-height:330px;position:relative}
+  .dp-context{font-size:12px;color:var(--ink-faint);margin-bottom:20px;display:flex;align-items:center;gap:10px}
+  .dp-context .lbl{color:var(--ink-dim)}
+
+  .dp-trigger{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:6px;border:1px solid transparent;background:none;cursor:pointer;font-size:12.5px;font-family:'DM Sans',sans-serif;font-variant-numeric:tabular-nums;transition:all 140ms}
+  .dp-trigger:hover{border-color:var(--line);background:var(--surface-2)}
+  .dp-trigger .cal{width:12px;height:12px;opacity:0.8}
+  .dp-trigger .cv{font-weight:500}
+
+  /* raw native-ish input (before) */
+  .dp-rawinput{display:inline-flex;align-items:center;gap:8px;padding:5px 10px;border:1px solid var(--teal);border-radius:6px;background:#0c1219;font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--ink)}
+  .dp-rawinput .blink{width:1px;height:14px;background:var(--teal);animation:blink 1s step-end infinite}
+  @keyframes blink{50%{opacity:0}}
+  .dp-hint{margin-top:14px;font-size:11.5px;color:var(--ink-faint);max-width:230px;line-height:1.5}
+  .dp-hint .k{color:var(--gold)}
+
+  /* popover */
+  .pop{position:absolute;z-index:20;opacity:1;background:#10151d;border:1px solid var(--line);border-radius:11px;box-shadow:0 12px 40px rgba(0,0,0,0.55);padding:12px;animation:pop 140ms var(--ease-out)}
+  @keyframes pop{from{transform:translateY(-4px) scale(0.98)}to{transform:none}}
+  .pop-presets{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:11px}
+  .pop-presets button{font-size:11px;font-family:'DM Sans',sans-serif;padding:5px 10px;border-radius:999px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink-dim);cursor:pointer;transition:all 120ms}
+  .pop-presets button:hover{border-color:var(--gold);color:var(--gold)}
+  .cal-head{display:flex;align-items:center;justify-content:space-between;padding:2px 4px 9px}
+  .cal-head .mo{font-size:12.5px;font-weight:600;color:var(--ink)}
+  .cal-head button{background:none;border:none;color:var(--ink-dim);cursor:pointer;font-size:14px;padding:2px 7px;border-radius:5px}
+  .cal-head button:hover{background:var(--surface-2);color:var(--ink)}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+  .cal-grid .dow{font-size:9.5px;color:var(--ink-faint);text-align:center;padding:3px 0;font-family:'JetBrains Mono',monospace}
+  .cal-grid .cell{font-size:11.5px;text-align:center;padding:6px 0;border-radius:6px;cursor:pointer;color:var(--ink-dim);font-variant-numeric:tabular-nums;transition:background 100ms}
+  .cal-grid .cell:hover{background:var(--surface-3);color:var(--ink)}
+  .cal-grid .cell.muted{color:#3a434f;cursor:default}
+  .cal-grid .cell.muted:hover{background:none}
+  .cal-grid .cell.today{box-shadow:inset 0 0 0 1px var(--teal-deep)}
+  .cal-grid .cell.sel{background:var(--gold);color:#0b1017;font-weight:600}
+  .pop-foot{margin-top:10px;padding-top:9px;border-top:1px solid var(--line-soft);display:flex;justify-content:space-between;align-items:center}
+  .pop-foot .clr{font-size:11px;color:var(--red);background:none;border:none;cursor:pointer;opacity:0.85}
+  .pop-foot .clr:hover{opacity:1}
+  .clickpulse{position:absolute;border-radius:999px;background:var(--gold);opacity:0.4;pointer-events:none;animation:pulse 500ms ease-out forwards}
+  @keyframes pulse{from{transform:scale(0.5);opacity:0.5}to{transform:scale(2.4);opacity:0}}
+
+  @media (max-width:880px){
+    .summary{grid-template-columns:1fr 1fr}
+    .ba,.dpdemo,.prims,.prio-grid{grid-template-columns:1fr}
+    .hero h1{font-size:54px}
+    .section-head{flex-direction:column}
+    .section-head .aside{text-align:left}
+    .inv li{grid-template-columns:1fr;gap:6px}
+  }
+</style>
+</head>
+<body>
+<template id="__bundler_thumbnail">
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="#0b1017"/><path d="M16 52 h18 l5 -16 l8 30 l6 -22 l4 8 h23" fill="none" stroke="#c9a84c" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/></svg>
+</template>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <svg class="ecg" viewBox="0 0 60 30"><path d="M2 16 h14 l3 -10 l5 19 l4 -13 l2 5 h26" fill="none" stroke="#c9a84c" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg>
+      <b>MN-CCORE Lab Hub</b>
+    </div>
+    <div class="meta"><strong>Design Audit</strong> · Polish + Workflow · <strong>Jun 9 2026</strong></div>
+    <nav>
+      <a href="#p1">Look good</a>
+      <a href="#p2">Every click real</a>
+      <a href="#p3">No orphans</a>
+      <a href="#spec">Spec sheet</a>
+      <a href="#close">Backlog</a>
+    </nav>
+  </div>
+</header>
+
+<div class="wrap">
+  <!-- ── HERO ── -->
+  <section class="hero">
+    <div class="eyebrow">Visual Polish · Workflow Efficiency · No Dead Ends</div>
+    <h1>A busy PI sits down<br/>and <em>falls in love</em><br/>using it.</h1>
+    <p class="sub">This round is not a redesign — it's the pass that makes the Hub feel <b>intentional, instant, and honest</b>. Every surface should read deliberate; every click should pay off; every control should do a real thing or be gone. Grounded in the live code, organized by Nick's three pillars.</p>
+  </section>
+
+  <!-- ── SCOPE ── -->
+  <div class="scope">
+    <div class="tag">⛔ Out of scope</div>
+    <p><b>The Today page, the daily-cockpit IA</b> (Today vs My Hub vs PB Sector), and <b>the operating-day plan model</b> (the localStorage-vs-Hub split-brain) are deferred to their own dedicated session. Nothing below restructures Today or the plan. Today-adjacent evidence appears only where it bears on a polish fix.</p>
+  </div>
+
+  <!-- ── ALIGNMENT ── -->
+  <div style="margin:36px 0 8px;border:1px solid rgba(201,168,76,0.28);background:linear-gradient(180deg,rgba(201,168,76,0.05),transparent);border-radius:12px;padding:26px 28px">
+    <div style="font-size:11.5px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold)">What you told me · Jun 9 — and where each piece lands</div>
+    <p style="font-size:15px;color:var(--ink-dim);line-height:1.6;max-width:880px;margin:12px 0 22px">You named the real pain: <i>"when I look at the page I don't see clearly my main priority… so much is overdue but not organized, I read through so much before I know where to focus."</i> And the reason you live in the Obsidian CLI: <i>"it's the only thing I can reliably talk to Claude with, click work-on, and add context that gets acted on now."</i> Your loves: <b>beautiful calm surfaces · trust the data is current · smart-when-asked.</b> Here's the honest split — what this polish round fixes, and what I'm routing to the deferred session so it isn't lost.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:22px">
+      <div style="border:1px solid var(--line);border-radius:10px;padding:18px 20px;background:var(--surface)">
+        <div style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--green);font-weight:600;margin-bottom:12px">✓ Fixed this round (in scope)</div>
+        <ul style="margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:11px;font-size:13.5px;color:var(--ink-dim);line-height:1.5">
+          <li><b style="color:var(--ink);font-weight:600">Calm surfaces</b> → the width + bg + opacity + token pillar (1.1–1.3).</li>
+          <li><b style="color:var(--ink);font-weight:600">Priority you can see without reading</b> → overdue/coral hierarchy + sort-to-top on My Tasks &amp; data pages (1.4).</li>
+          <li><b style="color:var(--ink);font-weight:600">Trust the data</b> → an honest sync clock + one staleness truth (3.x). The status bar currently <i>lies</i>.</li>
+          <li><b style="color:var(--ink);font-weight:600">Capture that's reliable</b> → collapse 4 capture surfaces into one; no dead capture/work-on controls (3.2).</li>
+          <li><b style="color:var(--ink);font-weight:600">Compact, me-first</b> → density default = compact. Full mobile sweep still included for the team.</li>
+        </ul>
+      </div>
+      <div style="border:1px solid rgba(230,106,106,0.28);border-radius:10px;padding:18px 20px;background:var(--surface)">
+        <div style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--red);font-weight:600;margin-bottom:12px">⛔ Routed to the deferred Today session</div>
+        <ul style="margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:11px;font-size:13.5px;color:var(--ink-dim);line-height:1.5">
+          <li><b style="color:var(--ink);font-weight:600">A cockpit that shows your #1 priority</b> the moment you land — the real cure for "I read too much to know where to focus." That's the Today/IA rework.</li>
+          <li><b style="color:var(--ink);font-weight:600">Capture → act → talk to Claude, now</b> — the in-app Claude/Co-Scientist loop + the localStorage-vs-Hub plan that makes "work on this" real. The reason you fall back to the CLI.</li>
+          <li><b style="color:var(--ink);font-weight:600">Hermes</b> stays quiet + on-demand (your call) — no proactive surfacing added this round.</li>
+        </ul>
+        <p style="font-size:12px;color:var(--ink-faint);margin:14px 0 0;line-height:1.5">I won't pretend polish solves the focus problem — it makes priority <i>legible everywhere it can</i>, and puts the cockpit at the top of the next session.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SUMMARY ── -->
+  <div class="summary">
+    <div class="sum-card"><div class="n p1">13</div><div class="l">P1 · Make&nbsp;it&nbsp;right</div><p>Width (Tier-1), bg inversion, date control, priority-at-a-glance, honest sync clock, Heartbeat loaders, visible affordances, dead controls + alerts.</p></div>
+    <div class="sum-card"><div class="n p2">10</div><div class="l">P2 · Consolidate</div><p>DataPage shell, shared row + field-editor, one modal/sheet, one staleness truth, one capture surface, empty states, mobile.</p></div>
+    <div class="sum-card"><div class="n p3">7</div><div class="l">P3 · Make&nbsp;sense</div><p>Orphan routes, overlapping ProjectDetail tabs, compact-default density, sensible placement, opacity floor.</p></div>
+    <div class="sum-card"><div class="n">3</div><div class="l">Pillars</div><p>Look good · every click real · every endpoint has a purpose. North-star throughout.</p></div>
+  </div>
+</div>
+
+<!-- ════════════════ PILLAR 1 ════════════════ -->
+<div class="wrap">
+  <section class="section" id="p1">
+    <div class="section-head">
+      <div>
+        <div class="pillar-no">PILLAR 1</div>
+        <h2>Make it look good.</h2>
+      </div>
+      <div class="aside">Visual consistency &amp; polish. One width, one background layer, tokens that don't drift. The surface should look like one hand made it.</div>
+    </div>
+    <p class="lede">Three things make the Hub read "slightly off" everywhere at once: the centered column <b>jumps width</b> as you navigate, the light-mode page carries a <b>tint behind its cards</b>, and literal pixel values <b>drift off the token scale</b>. Each is a one-primitive fix.</p>
+
+    <!-- 1.1 WIDTH -->
+    <div class="finding">
+      <div class="finding-head">
+        <span class="id">1.1</span>
+        <h3>One page-width rule</h3>
+        <span class="badge t1">Tier-1 · Nick-flagged</span>
+      </div>
+      <p class="desc">The centered column has no single source of truth. Data pages use <code>.content-container</code> at <b>1440px</b>; My Tasks <b>Lanes caps at 1100px</b>; Columns is <code>colCount × 280</code> and scrolls horizontally; List is virtualized full-bleed. The column visibly resizes Today → Projects → My Tasks, and <b>even between My Tasks' own three views</b>. Nothing feels anchored.</p>
+      <div class="src">src/index.css:920 (<code>max-width:1440px</code>) · src/pages/MyTasks/views/LanesView.tsx:50 (<code>maxWidth:1100</code>)</div>
+
+      <div class="ba" style="margin-top:24px">
+        <div class="ba-cell before">
+          <div class="cap"><span class="dot"></span><b>Today</b> &nbsp;·&nbsp; wide reading column <span class="tail">1440px</span></div>
+          <div class="ba-stage" style="padding:18px">
+            <div class="mini">
+              <div class="chrome"><i></i><i></i><i></i><span class="url">/portal/projects</span></div>
+              <div class="viewport" style="background:#0c1219">
+                <div class="gut" style="left:0;width:5%"></div><div class="gut" style="right:0;width:5%"></div>
+                <div class="col" style="left:5%;right:5%;background:#0f1923;border:1px solid #1e2634"></div>
+                <span class="wlabel" style="left:6%;color:#6e7683">1440</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="ba-cell before">
+          <div class="cap"><span class="dot"></span><b>My Tasks · Lanes</b> &nbsp;·&nbsp; narrower <span class="tail">1100px</span></div>
+          <div class="ba-stage" style="padding:18px">
+            <div class="mini">
+              <div class="chrome"><i></i><i></i><i></i><span class="url">/portal/my-tasks</span></div>
+              <div class="viewport" style="background:#0c1219">
+                <div class="gut" style="left:0;width:16%"></div><div class="gut" style="right:0;width:16%"></div>
+                <div class="col" style="left:16%;right:16%;background:#0f1923;border:1px solid #1e2634"></div>
+                <span class="wlabel" style="left:17%;color:#6e7683">1100</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="desc" style="margin:14px 0 6px">Nick's real complaint isn't the number — it's that <b>the focus moves when you switch tabs</b>, while some pages waste a huge empty middle. So the rule isn't "two max-widths." It's <b>one anchored column</b>:</p>
+      <p class="desc" style="margin:0 0 18px"><b>The fix — anchor the primary column; let rails extend outward.</b> One centered <b>content band</b> on every page. Inside it, the <b>primary column keeps the same left edge and the same measure everywhere</b>. A right-hand helper rail (like Today's) lives in the space <i>beside</i> it — it never pushes or recenters the main column. Pages without a rail simply leave that space empty; the column you're reading stays exactly where it was. Switching tabs never shifts your focus, and a table never stretches across 1440px of empty middle.</p>
+      <div class="ba-cell after" style="max-width:none">
+        <div class="cap"><span class="dot"></span><b>Proposed</b> &nbsp;·&nbsp; same band, same left edge, rail is additive <span class="tail">--content-band / --col-main / --col-rail</span></div>
+        <div class="ba-stage" style="padding:24px;flex-direction:column;gap:16px;align-items:stretch;position:relative">
+          <div class="mini">
+            <div class="chrome"><i></i><i></i><i></i><span class="url">/portal/projects &nbsp;·&nbsp; no rail</span></div>
+            <div class="viewport" style="background:#0c1219;height:118px">
+              <div class="col" style="left:11%;width:46%;background:#0f1923;border:1px solid #1e2634"></div>
+              <span class="wlabel" style="left:12%;color:var(--green)">--col-main &nbsp;(left edge fixed)</span>
+              <div style="position:absolute;left:59%;right:11%;top:14px;bottom:0;border-radius:6px 6px 0 0;border:1px dashed rgba(110,232,154,0.25);display:flex;align-items:center;justify-content:center"><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#3f5a48">no rail · stays empty</span></div>
+            </div>
+          </div>
+          <div class="mini">
+            <div class="chrome"><i></i><i></i><i></i><span class="url">/portal/today &nbsp;·&nbsp; right rail extends outward</span></div>
+            <div class="viewport" style="background:#0c1219;height:118px">
+              <div class="col" style="left:11%;width:46%;background:#0f1923;border:1px solid #1e2634"></div>
+              <span class="wlabel" style="left:12%;color:var(--green)">--col-main &nbsp;(identical edge + width)</span>
+              <div class="col" style="left:59%;right:11%;background:rgba(92,194,200,0.07);border:1px solid rgba(92,194,200,0.3)"></div>
+              <span class="wlabel" style="left:60%;color:var(--teal)">--col-rail</span>
+            </div>
+          </div>
+          <div style="position:absolute;left:calc(24px + 11%);top:46px;bottom:24px;width:0;border-left:1px dashed rgba(201,168,76,0.5);pointer-events:none"></div>
+        </div>
+      </div>
+      <p class="desc" style="margin-top:16px">Three tokens: <code>--content-band</code> (centered, identical on every page), <code>--col-main</code> (the anchored primary column — tables, lists, detail) and <code>--col-rail</code> (the optional right rail). The gold guide line is the invariant: <b>the main column's left edge is the same pixel on Projects, My Tasks and Today.</b> All three My Tasks views and every data page use <code>--col-main</code>; Columns still scrolls inside it. Dashboards (pure card grids) may fill the full band — the one documented exception. Zero per-page <code>maxWidth</code> literals.</p>
+    </div>
+
+    <!-- 1.2 BG INVERSION -->
+    <div class="finding">
+      <div class="finding-head">
+        <span class="id">1.2</span>
+        <h3>The light-mode background is inverted</h3>
+        <span class="badge p1">P1 · Felt-heavy</span>
+      </div>
+      <p class="desc">Round-6 Rule #1: <b>one background layer</b> — the page is the flat base, only cards carry a surface. Shipped light mode does the opposite: <code>--task-page-bg: #f5f5f5</code> (grey) <b>page</b> behind <code>--task-panel-bg: #ffffff</code> (white) <b>cards</b>. That's a tint <i>behind</i> the cards — the exact "feels heavy" look Rule #1 was written to kill. Dark mode is correct (page darker than card); this is light-mode-specific.</p>
+      <div class="src">src/index.css:20, 95, 746, 1023–1024</div>
+
+      <div class="ba" style="margin-top:24px">
+        <div class="ba-cell before">
+          <div class="cap"><span class="dot"></span><b>Shipped</b> &nbsp;·&nbsp; grey page, white cards <span class="tail">tint behind cards</span></div>
+          <div class="ba-stage" style="padding:18px;background:#0c1219">
+            <div class="surf-demo" style="background:#f5f5f5">
+              <span class="tagline" style="color:#9aa0a8">page #f5f5f5</span>
+              <div class="surf-card" style="background:#ffffff;box-shadow:0 1px 3px rgba(0,0,0,0.10)">
+                <div class="row" style="color:#0f1923"><span class="sq" style="border-color:#066e2f;background:#066e2f"></span><span style="font-size:12.5px;font-weight:500">Submit R01 renewal draft</span></div>
+                <div class="sk-line" style="color:#0f1923;width:70%"></div>
+              </div>
+              <div class="surf-card" style="background:#ffffff;box-shadow:0 1px 3px rgba(0,0,0,0.10)">
+                <div class="row" style="color:#0f1923"><span class="sq" style="border-color:#9aa0a8"></span><span style="font-size:12.5px;font-weight:500">CLIF ETL · validate cohort</span></div>
+                <div class="sk-line" style="color:#0f1923;width:54%"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="ba-cell after">
+          <div class="cap"><span class="dot"></span><b>Corrected</b> &nbsp;·&nbsp; flat white page, soft grey cards <span class="tail">one layer</span></div>
+          <div class="ba-stage" style="padding:18px;background:#0c1219">
+            <div class="surf-demo" style="background:#faf8f3">
+              <span class="tagline" style="color:#b3ada0">page --cream #faf8f3</span>
+              <div class="surf-card" style="background:#f4f5f7;border:1px solid rgba(15,25,35,0.06)">
+                <div class="row" style="color:#0f1923"><span class="sq" style="border-color:#066e2f;background:#066e2f"></span><span style="font-size:12.5px;font-weight:500">Submit R01 renewal draft</span></div>
+                <div class="sk-line" style="color:#0f1923;width:70%"></div>
+              </div>
+              <div class="surf-card" style="background:#f4f5f7;border:1px solid rgba(15,25,35,0.06)">
+                <div class="row" style="color:#0f1923"><span class="sq" style="border-color:#7a828c"></span><span style="font-size:12.5px;font-weight:500">CLIF ETL · validate cohort</span></div>
+                <div class="sk-line" style="color:#0f1923;width:54%"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="desc" style="margin-top:18px">Swap the two tokens so the page is the lightest surface and cards step <i>down</i> a hair to <code>--ice</code>. The card stops floating on a grey wash; the eye reads one calm plane with objects on it. Specified in full in the <a href="#spec" style="color:var(--teal)">spec sheet ↓</a>.</p>
+    </div>
+
+    <!-- 1.3 TOKEN DISCIPLINE -->
+    <div class="finding">
+      <div class="finding-head">
+        <span class="id">1.3</span>
+        <h3>Token, opacity &amp; completed-row discipline</h3>
+        <span class="badge p1">P1</span>
+      </div>
+      <p class="desc">Two specific offenders plus a sweep. <b>(a)</b> The completed task row dims the <i>whole row</i> with <code>opacity: isDone ? 0.6 : 1</code> — and <i>also</i> mutes the title colour and strikes it through. That's <b>compound opacity</b> (Rule 43): the metadata, due chip and project link all drop below the 0.85 readable floor. <b>(b)</b> Literal px paddings/radii drift a few px off the 8px grid and the radius scale, reading "almost aligned." Ration both to tokens.</p>
+      <div class="src">src/components/tasks/TaskRow.tsx:281 (whole-row <code>opacity:0.6</code>) + 303/317 (title already muted)</div>
+
+      <div class="ba" style="margin-top:24px">
+        <div class="ba-cell before">
+          <div class="cap"><span class="dot"></span><b>Whole-row 0.6</b> <span class="tail">compound opacity</span></div>
+          <div class="ba-stage">
+            <div class="panel" style="opacity:1">
+              <div class="trow"><span class="box done"></span><span class="ttl done" style="opacity:0.6">Email Sarah re: IRB amendment</span><span class="meta" style="opacity:0.6">2d ago · Quick</span></div>
+              <div class="trow"><span class="box"></span><span class="ttl">Draft aim 2 for R03</span><span class="meta">Fri · Deep</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="ba-cell after">
+          <div class="cap"><span class="dot"></span><b>Muted title + border only</b> <span class="tail">≥0.85 floor held</span></div>
+          <div class="ba-stage">
+            <div class="panel">
+              <div class="trow"><span class="box done"></span><span class="ttl done">Email Sarah re: IRB amendment</span><span class="meta">2d ago · Quick</span></div>
+              <div class="trow"><span class="box"></span><span class="ttl">Draft aim 2 for R03</span><span class="meta">Fri · Deep</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="desc" style="margin-top:18px">Doneness is already signalled by the filled check, the line-through and the muted title colour (<code>INK_MUTED</code>). The extra whole-row <code>opacity:0.6</code> is redundant <i>and</i> it stacks on those — drop it. Metadata stays legible; the row still reads "done" at a glance.</p>
+    </div>
+
+    <!-- 1.4 PRIORITY AT A GLANCE -->
+    <div class="finding">
+      <div class="finding-head">
+        <span class="id">1.4</span>
+        <h3>Priority you can see without reading</h3>
+        <span class="badge t1">Tier-1 · Nick's daily friction</span>
+      </div>
+      <p class="desc">Your words: <i>"I don't see clearly my main priority… so much overdue but not organized, I read through so much before I know where to focus."</i> The cockpit-level cure (a landing that surfaces your #1 thing) is the deferred Today session. But the in-scope half is real: <b>on My Tasks and every data page, overdue should be unmistakable and float to the top — so the eye lands on what's late before it reads anything.</b> Today the signal is buried: overdue is a small coral chip among many, and the <code>10d / 14d / 30d</code> "stale" thresholds disagree (3.3), so "what's slipping" never reads at a glance.</p>
+      <div class="src">My Tasks quick-filters exist (overdue/stale) but aren't the default order · TaskRow due chip competes with project/meta · stale def varies per surface</div>
+      <div class="ba" style="margin-top:24px">
+        <div class="ba-cell before">
+          <div class="cap"><span class="dot"></span><b>Flat list</b> <span class="tail">overdue buried in the mix</span></div>
+          <div class="ba-stage">
+            <div class="panel">
+              <div class="trow"><span class="box"></span><span class="ttl">Review Nate's cardiac abstract</span><span class="meta">Jun 14</span></div>
+              <div class="trow"><span class="box"></span><span class="ttl">Draft aim 2 for R03</span><span class="meta" style="color:var(--red)">3d late</span></div>
+              <div class="trow"><span class="box"></span><span class="ttl">CLIF ETL · cohort validate</span><span class="meta">Jun 11</span></div>
+              <div class="trow"><span class="box"></span><span class="ttl">Sign IRB amendment</span><span class="meta" style="color:var(--red)">8d late</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="ba-cell after">
+          <div class="cap"><span class="dot"></span><b>Overdue floats up, coral leads</b> <span class="tail">focus before you read</span></div>
+          <div class="ba-stage">
+            <div class="panel">
+              <div style="display:flex;align-items:center;gap:8px;padding:6px 12px 9px"><span style="width:6px;height:6px;border-radius:50%;background:var(--red)"></span><span style="font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--red);font-weight:600">2 overdue · oldest first</span></div>
+              <div class="trow" style="background:rgba(230,106,106,0.06);border-left:2px solid var(--red)"><span class="box"></span><span class="ttl">Sign IRB amendment</span><span class="meta" style="color:var(--red);font-weight:600">8d late</span></div>
+              <div class="trow" style="background:rgba(230,106,106,0.06);border-left:2px solid var(--red)"><span class="box"></span><span class="ttl">Draft aim 2 for R03</span><span class="meta" style="color:var(--red);font-weight:600">3d late</span></div>
+              <div class="trow"><span class="box"></span><span class="ttl">CLIF ETL · cohort validate</span><span class="meta">in 2d</span></div>
+              <div class="trow"><span class="box"></span><span class="ttl">Review Nate's cardiac abstract</span><span class="meta">in 5d</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="desc" style="margin-top:18px">Default-sort overdue to the top (oldest-late first), give the group a single coral header with a live count, and let the row's left edge carry the only coral accent so it reads in one sweep. Same treatment, same tokens, on My Tasks + Projects + Manuscripts + Grants + Deadlines via the DataPage shell — so "where do I focus" is answered by the <i>shape</i> of the page before you read a word. <b>The deep cockpit version stays routed to the Today session.</b></p>
+    </div>
+  </section>
+</div>
+
+<!-- ════════════════ PILLAR 2 ════════════════ -->
+<div class="wrap">
+  <section class="section" id="p2">
+    <div class="section-head">
+      <div>
+        <div class="pillar-no">PILLAR 2</div>
+        <h2>Every click does something real.</h2>
+      </div>
+      <div class="aside">Efficiency &amp; no dead ends. One click should surface the whole control. Nothing should "come soon." No native alert should ever fire.</div>
+    </div>
+    <p class="lede">The single biggest "fall in love" lever: <b>collapse the click-chains</b>. The date picker is the archetype — but it names a whole class. And no control should promise a thing it can't do.</p>
+
+    <!-- 2.1 DATE PICKER — INTERACTIVE -->
+    <div class="finding">
+      <div class="finding-head">
+        <span class="id">2.1</span>
+        <h3>Surface the whole control on the first click</h3>
+        <span class="badge t1">Tier-1 · The archetype</span>
+      </div>
+      <p class="desc">Editing a due date today <b>drills three levels</b>: click the chip → an "edit mode" shows a raw <code>05/01</code> native field → click <i>that</i> → the OS calendar → and the +1d / +1wk presets are a <i>separate</i> strip. Nick wants <b>one click to pop a real month grid AND the quick presets together</b> — pick a day or a preset, instantly. Try both:</p>
+      <div class="src">src/components/InlineDatePicker.tsx:162 (trigger) → :88+ (native input) + :71–86 (presets, separate)</div>
+
+      <div class="dpdemo" style="margin-top:24px">
+        <div class="dp-stage before" id="dpBefore">
+          <div class="cap"><span class="dot"></span><b>Shipped</b><span class="clicks" id="beforeClicks">clicks: <b>0</b></span></div>
+          <div class="dp-body">
+            <div class="dp-context"><span class="lbl">Due</span><span id="beforeMount"></span></div>
+            <div class="dp-hint">Click the chip, then the raw field, then reach for a preset — <span class="k">three separate moves</span> to set one date.</div>
+          </div>
+        </div>
+        <div class="dp-stage after" id="dpAfter">
+          <div class="cap"><span class="dot"></span><b>Proposed</b><span class="clicks" id="afterClicks">clicks: <b>0</b></span></div>
+          <div class="dp-body">
+            <div class="dp-context"><span class="lbl">Due</span><span id="afterMount"></span></div>
+            <div class="dp-hint">One click pops the <span class="k">full calendar + presets together</span>. Pick a day or a preset — done in one move.</div>
+          </div>
+        </div>
+      </div>
+      <p class="desc" style="margin-top:20px"><b>Then hunt the whole class.</b> Anything that opens an "edit mode" showing a raw value instead of the rich control is the same bug: status that reveals a bare text field before its menu, project reassign that drills, the meeting-notes flow. The rule — <b>the control IS the affordance; one click reveals all of it.</b></p>
+    </div>
+
+    <!-- 2.2 DEAD CONTROLS -->
+    <div class="finding">
+      <div class="finding-head">
+        <span class="id">2.2</span>
+        <h3>No dead controls. No native alerts.</h3>
+        <span class="badge p1">P1</span>
+      </div>
+      <p class="desc">Every button does a real thing or it's removed. A PI in back-to-back meetings should never hit a control that shrugs. And the ethos is <b>optimistic UI + undo toast — never a spinner or a browser <code>alert()</code></b> for an action.</p>
+      <ul class="inv">
+        <li>
+          <div class="where"><b>MeetingNotes</b>MeetingNotesPage.tsx:258, 341</div>
+          <div>
+            <div class="what">"Process Meeting" modal ships two <span class="dead">dead controls</span>: an <b>Upload Audio</b> tab that's a disabled "coming soon" drop zone, and <b>Process Transcript</b>, which only fires a <i>"coming soon — AI not yet wired"</i> toast.</div>
+            <div class="fix">Until AI is wired: hide the audio tab entirely; make "Process" save the pasted transcript as a real note (the honest, useful action). No promise the app can't keep.</div>
+          </div>
+        </li>
+        <li>
+          <div class="where"><b>ProjectDetail</b>ProjectDetail.tsx:298–329</div>
+          <div>
+            <div class="what">Delete / duplicate failure paths fire <span class="dead">native <code>window.alert()</code></span> dialogs (also MyTasks/index:185, SmartCompose:241, MorningThoughtCompose:84/100).</div>
+            <div class="fix">Replace with the optimistic mutation + an undo/error toast already in the system. The jarring OS dialog is the opposite of "feels designed."</div>
+          </div>
+        </li>
+        <li>
+          <div class="where"><b>Settings · AI</b>SettingsPage.tsx:197</div>
+          <div>
+            <div class="what">The AI tab is a self-described <span class="dead">"placeholder inputs"</span> panel — really just a link to the Team Directory.</div>
+            <div class="fix">Either fill it with the real settings it implies, or remove the tab and surface the Directory link where it belongs. An empty tab erodes trust in the rest.</div>
+          </div>
+        </li>
+        <li>
+          <div class="where"><b>Milestones / Deadlines</b>MenteeMilestonesPage:697 · DeadlinesPage:599</div>
+          <div>
+            <div class="what">Status edits are <span class="dead">silently disabled on mobile</span> — the control renders but does nothing on touch.</div>
+            <div class="fix">Make the status control work on touch (it's the same field-editor primitive), or don't render it. A control that no-ops on tap is a dead end a phone user can't escape.</div>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <!-- 2.3 HEARTBEAT LOADER -->
+    <div class="finding">
+      <div class="finding-head">
+        <span class="id">2.3</span>
+        <h3>The Heartbeat is the loading state</h3>
+        <span class="badge p1">P1 · Brand + ethos</span>
+      </div>
+      <p class="desc">You already built the answer. <code>HeartbeatLine.tsx</code> is a reusable ECG-pulse component — its own docstring lists <i>"Loading skeletons (replacing spinners)"</i> as a use, it shares the favicon trace, and it's reduced-motion safe. Yet <b>~7 surfaces still spin a raw CSS spinner</b> — including the <b>app-boot screen</b> — and dashboard cards show literal <i>"Loading…"</i> text. A generic spinner is the opposite of "feels designed"; the lab's own pulse is sitting right there.</p>
+      <div class="src">spinners: App.tsx:154 · Digest.tsx:1010 · MeetingDetail.tsx:228 · MyItems.tsx:668 · TrajectoryPage.tsx:1218,1500 · ProjectComments.tsx:103 &nbsp;·&nbsp; primitive: HeartbeatLine.tsx</div>
+      <style>
+        @keyframes _spin{to{transform:rotate(360deg)}}
+        @keyframes _ecg{from{stroke-dashoffset:520}to{stroke-dashoffset:0}}
+        .spinner-demo{width:34px;height:34px;border-radius:50%;border:3px solid rgba(255,255,255,0.12);border-top-color:var(--ink-faint);animation:_spin 0.8s linear infinite}
+        .ecg-demo path.trace{stroke-dasharray:520;animation:_ecg 1.4s var(--ease-out) infinite}
+        .ecg-demo path.base{opacity:0.22}
+      </style>
+      <div class="ba" style="margin-top:24px">
+        <div class="ba-cell before">
+          <div class="cap"><span class="dot"></span><b>Generic spinner</b> <span class="tail">on app boot + 6 more</span></div>
+          <div class="ba-stage" style="flex-direction:column;gap:14px">
+            <div class="spinner-demo"></div>
+            <div style="font-size:11px;color:var(--ink-faint);font-family:'JetBrains Mono',monospace">Loading…</div>
+          </div>
+        </div>
+        <div class="ba-cell after">
+          <div class="cap"><span class="dot"></span><b>HeartbeatLine</b> <span class="tail">brand signature · reduced-motion safe</span></div>
+          <div class="ba-stage" style="flex-direction:column;gap:12px">
+            <svg class="ecg-demo" viewBox="0 0 200 40" width="180" height="36" fill="none"><path class="base" d="M2 20 h54 l6 -13 l8 26 l7 -20 l5 7 h32 l6 -9 l7 16 h53" stroke="var(--gold)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><path class="trace" d="M2 20 h54 l6 -13 l8 26 l7 -20 l5 7 h32 l6 -9 l7 16 h53" stroke="var(--gold)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg>
+            <div style="font-size:11px;color:var(--ink-faint);font-family:'JetBrains Mono',monospace">same pulse as the favicon &amp; kiosk</div>
+          </div>
+        </div>
+      </div>
+      <p class="desc" style="margin-top:18px">Route every route-level and card loader through <code>HeartbeatLine</code> (or a content skeleton for tables). The same motif already lives on the kiosk, the digest header and the empty states — making it the loading state too closes the loop: the Hub <i>pulses</i> while it thinks. Action buttons keep their inline state, but no full-page spinner survives.</p>
+    </div>
+
+    <!-- 2.4 ALWAYS-VISIBLE AFFORDANCE -->
+    <div class="finding">
+      <div class="finding-head">
+        <span class="id">2.4</span>
+        <h3>Affordances are visible, not hover-summoned</h3>
+        <span class="badge p1">P1 · Discoverability + touch</span>
+      </div>
+      <p class="desc">Your own rule: <i>inline-edit affordances always visible (▾)</i>. But the task row dims its expand caret and meta to <code>opacity: 0.35</code> until you hover (<code>TaskRow:329,340</code>), and the drag grip to <code>0.3</code> (<code>:194</code>). On desktop that hides the "there's more here" signal until the cursor lands; <b>on touch there's no hover at all</b>, so the affordance is permanently ghosted — a discoverability dead end on the device a PI uses between meetings.</p>
+      <div class="src">src/components/tasks/TaskRow.tsx:194 (grip 0.3) · :329, :340 (caret/meta 0.35, hover-gated)</div>
+      <div class="ba" style="margin-top:24px">
+        <div class="ba-cell before">
+          <div class="cap"><span class="dot"></span><b>Hover-gated 0.35</b> <span class="tail">invisible on touch</span></div>
+          <div class="ba-stage">
+            <div class="panel">
+              <div class="trow"><span style="opacity:0.3;color:var(--ink-faint);font-size:13px">⠿</span><span class="box"></span><span class="ttl">Draft aim 2 for R03</span><span class="meta" style="opacity:0.35">Fri</span><span style="opacity:0.35;color:var(--ink-faint);font-size:11px">▸</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="ba-cell after">
+          <div class="cap"><span class="dot"></span><b>Resting ≥0.6, full on hover</b> <span class="tail">touch-discoverable</span></div>
+          <div class="ba-stage">
+            <div class="panel">
+              <div class="trow"><span style="opacity:0.6;color:var(--ink-faint);font-size:13px">⠿</span><span class="box"></span><span class="ttl">Draft aim 2 for R03</span><span class="meta">Fri</span><span style="color:var(--ink-dim);font-size:11px">▸</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="desc" style="margin-top:18px">Lift the resting opacity to a discoverable floor (grip ≥0.6, caret/meta full at the readable tier) and keep hover as a subtle <i>emphasis</i>, not a reveal. The row still reads calm; the "click to expand / drag to plan" signal is present the moment you look — and it survives touch.</p>
+    </div>
+  </section>
+</div>
+<div class="wrap">
+  <section class="section" id="p3">
+    <div class="section-head">
+      <div>
+        <div class="pillar-no">PILLAR 3</div>
+        <h2>Every endpoint has a purpose.</h2>
+      </div>
+      <div class="aside">IA sanity &amp; no orphans. Things sit where a user expects. What exists is consolidated — not re-forked.</div>
+    </div>
+    <p class="lede">Two moves: <b>retire what's orphaned</b>, and <b>collapse what's been re-implemented</b> into the primitives that already won. This is consolidation of what exists — not new features.</p>
+
+    <!-- 3.1 ORPHANS -->
+    <div class="finding">
+      <div class="finding-head">
+        <span class="id">3.1</span>
+        <h3>Retire the orphans</h3>
+        <span class="badge p3">P3</span>
+      </div>
+      <ul class="inv">
+        <li>
+          <div class="where"><b>Dead handler</b>pb-today.ts</div>
+          <div>
+            <div class="what"><code>handleUpsertTodayMd</code> is <span class="dead">defined but never registered</span> on any route — unreachable code.</div>
+            <div class="fix">Delete it. Unreachable endpoints are landmines for the next person reading the route map.</div>
+          </div>
+        </li>
+        <li>
+          <div class="where"><b>Legacy MyTasks</b>verify / retire</div>
+          <div>
+            <div class="what">A possibly-parked legacy MyTasks implementation lingers alongside the shipped three-view page.</div>
+            <div class="fix">Confirm it's unrouted, then delete — or, if still linked anywhere, redirect to the canonical page. One My Tasks, one truth.</div>
+          </div>
+        </li>
+        <li>
+          <div class="where"><b>Personal paths</b>PersonalPage.tsx:974</div>
+          <div>
+            <div class="what">Navigates with hardcoded root paths instead of the <code>PATHS</code> constant every other surface uses.</div>
+            <div class="fix">Route through <code>src/constants/paths.ts</code> so links can't silently rot when routes move.</div>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <!-- 3.2 TRUST -->
+    <div class="finding">
+      <div class="finding-head">
+        <span class="id">3.2</span>
+        <h3>Trust: an honest clock, one staleness truth</h3>
+        <span class="badge t1">Tier-1 · “current &amp; correct”</span>
+      </div>
+      <p class="desc">You said the data being <b>current and correct</b> is one of the three things that would make you love it. Two things quietly break that trust. <b>(a) The global status bar lies:</b> <code>StatusBar</code>'s “Last synced” resets to <code>new Date()</code> on <i>any</i> react-query cache success — so it reads “just now” even when the real PB→Hub sync is days stale. Meanwhile <code>hoursSinceLastSync()</code> reads the <i>actual</i> sync time and goes coral past 24h. The Hub shows you a green “fresh” signal that isn't true. <b>(b) “Stale” means three different things:</b> <code>10d</code> on My Tasks chips, <code>14d</code> in the dashboard + portal filter, <code>30d</code> for manuscripts, and <i>health-score &lt; 50</i> for Projects — so “what's slipping” never gives one answer.</p>
+      <div class="src">StatusBar.tsx:8–22 (fake <code>lastSynced</code>) vs today/constants.ts:121 (real) · stale: ColumnsView/ListView 10d · MyTasks.tsx 14d · manuscripts 30d · Projects.tsx:48 health&lt;50</div>
+      <div class="ba" style="margin-top:24px">
+        <div class="ba-cell before">
+          <div class="cap"><span class="dot"></span><b>Status bar reads “just now”</b> <span class="tail">but PB synced 2 days ago</span></div>
+          <div class="ba-stage">
+            <div style="display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:6px;background:var(--surface-2);border:1px solid var(--line)"><span style="width:7px;height:7px;border-radius:50%;background:var(--green)"></span><span style="font-size:12px;color:var(--ink-dim)">Last synced: just now</span></div>
+          </div>
+        </div>
+        <div class="ba-cell after">
+          <div class="cap"><span class="dot"></span><b>Real sync time, coral past 24h</b> <span class="tail">the truth</span></div>
+          <div class="ba-stage">
+            <div style="display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:6px;background:rgba(230,106,106,0.08);border:1px solid rgba(230,106,106,0.3)"><span style="width:7px;height:7px;border-radius:50%;background:var(--red)"></span><span style="font-size:12px;color:var(--ink)">PB synced <b>2d ago</b> · stale</span></div>
+          </div>
+        </div>
+      </div>
+      <p class="desc" style="margin-top:18px">Point the status bar at the <i>real</i> PB→Hub sync timestamp (the one Today already uses), coral past 24h per Rule 59 — a green clock must mean fresh. And pick <b>one staleness definition</b> (a single configurable threshold, the <code>days-since-meaningful-movement</code> already half-built) so every surface agrees on what's slipping. Trust is the cheapest, highest-leverage thing in this whole audit.</p>
+    </div>
+
+    <!-- 3.3 CONSOLIDATION PRIMITIVES -->
+    <div class="finding">
+      <div class="finding-head">
+        <span class="id">3.3</span>
+        <h3>Collapse the remaining divergence</h3>
+        <span class="badge p2">P2 · Primitives</span>
+      </div>
+      <p class="desc">The shared <code>&lt;TaskRow&gt;</code> proved the model — one row killed ten. These five classes are the next "one primitive collapses many." <b>Extend via props — never re-fork a per-surface variant.</b></p>
+      <div class="prims">
+        <div class="prim">
+          <h4>DataPage shell</h4>
+          <div class="collapses">Collapses: <b>5 hand-rolled page scaffolds</b></div>
+          <p>Projects / Manuscripts / Grants / Decisions / Deadlines each re-implement filter + sort + view + density + loading + empty + width state.</p>
+          <ul class="forks">
+            <li>Projects.tsx:129</li>
+            <li>ManuscriptsPage.tsx:102</li>
+            <li>GrantsPage.tsx:382</li>
+            <li>DecisionsPage.tsx:751</li>
+          </ul>
+          <div class="arrow">One <code>&lt;DataPage&gt;</code> shell owns chrome + the width rule (1.1)</div>
+        </div>
+        <div class="prim">
+          <h4>Shared row + field-editor</h4>
+          <div class="collapses">Collapses: <b>3 row forks · 2 editor forks</b></div>
+          <p>The won <code>&lt;TaskRow&gt;</code> + <code>TaskQuickEditChips</code> are re-implemented in ListView, Deadlines and Personal's TodayHero rows.</p>
+          <ul class="forks">
+            <li>ListView.tsx:190, :66</li>
+            <li>DeadlinesPage.tsx:500, :568</li>
+            <li>PersonalPage.tsx:837</li>
+          </ul>
+          <div class="arrow">Extend the shared row/editor with props for these surfaces</div>
+        </div>
+        <div class="prim">
+          <h4>One modal / sheet shell</h4>
+          <div class="collapses">Collapses: <b>2 hand-rolled dialogs</b></div>
+          <p><code>ui/Modal</code> already has portal + escape + focus-trap, but MeetingNotes and CreateProject hand-roll their own. Define <b>modal vs bottom-sheet once</b> (sheet on mobile).</p>
+          <ul class="forks">
+            <li>MeetingNotesPage.tsx:242</li>
+            <li>CreateProjectModal.tsx:67</li>
+          </ul>
+          <div class="arrow">Route both through <code>ui/Modal</code>; one responsive shell</div>
+        </div>
+        <div class="prim">
+          <h4>ProjectDetail tabs make sense</h4>
+          <div class="collapses">Collapses: <b>overlapping notes / comments / activity</b></div>
+          <p>ProjectDetail splits notes/comments/activity into tabs; Activity then <i>re-embeds</i> decisions, deps, updates, comments and actions — the same content twice.</p>
+          <ul class="forks">
+            <li>ProjectDetail.tsx:67</li>
+            <li>ProjectActivity.tsx:51</li>
+          </ul>
+          <div class="arrow">One chronological stream; tabs filter it, don't duplicate it</div>
+        </div>
+        <div class="prim">
+          <h4>One capture surface</h4>
+          <div class="collapses">Collapses: <b>4 capture entries</b> · <span style="color:var(--gold)">your CLI fallback</span></div>
+          <p>You reach for the Obsidian CLI because in-Hub capture isn't one reliable thing. It's <i>four</i>: the ⌘K modal, the inbox, the bar, and Personal's own box — each slightly different.</p>
+          <ul class="forks">
+            <li>GlobalQuickAddModal.tsx</li>
+            <li>QuickCaptureInbox.tsx</li>
+            <li>QuickCaptureBar.tsx</li>
+            <li>PersonalPage.tsx:147</li>
+          </ul>
+          <div class="arrow">One capture primitive, reachable everywhere, always lands</div>
+        </div>
+      </div>
+      <p class="desc" style="margin-top:18px">The capture→<i>act</i>→talk-to-Claude loop that fully replaces your CLI is the deferred session (it needs the plan model + in-app Claude). But collapsing four capture surfaces into one reliable, omnipresent control — and making sure “work on this” is never a dead button — is in scope now, and it's the first step toward not needing the terminal.</p>
+    </div>
+
+    <!-- 3.4 EMPTY STATES -->
+    <div class="finding">
+      <div class="finding-head">
+        <span class="id">3.4</span>
+        <h3>The designed empty state, everywhere it matters</h3>
+        <span class="badge p2">P2</span>
+      </div>
+      <p class="desc">There's a real <code>EmptyState</code> component and an <code>EmptyStateArt</code> set of <b>8 lab-aesthetic line illustrations</b>, used on ~20 surfaces. But the page you live in daily — <b>My Tasks</b> — and Today's timeline fall back to bare italic text: <code>"nothing here"</code>, <code>"no tasks match"</code>, <code>"No meetings on today's calendar."</code> The polish primitive exists; the highest-traffic surfaces skip it. "All caught up" should feel like a reward, not a shrug.</p>
+      <div class="src">bare text: ColumnsView.tsx:75,98 · LanesView.tsx:79 · ListView.tsx:123 · today/Timeline.tsx:165 &nbsp;·&nbsp; primitive: EmptyState.tsx · EmptyStateArt.tsx (8 variants)</div>
+      <div class="ba" style="margin-top:24px">
+        <div class="ba-cell before">
+          <div class="cap"><span class="dot"></span><b>Bare italic fallback</b> <span class="tail">My Tasks · Today</span></div>
+          <div class="ba-stage">
+            <div style="font-style:italic;color:var(--ink-faint);font-size:13px">no tasks match</div>
+          </div>
+        </div>
+        <div class="ba-cell after">
+          <div class="cap"><span class="dot"></span><b>EmptyState + Heartbeat art</b> <span class="tail">already built</span></div>
+          <div class="ba-stage" style="flex-direction:column;gap:12px">
+            <svg viewBox="0 0 200 40" width="120" height="26" fill="none" style="opacity:0.7"><path d="M2 20 h60 l6 -12 l8 24 l7 -18 l5 6 h99" stroke="var(--gold)" stroke-width="1.75" stroke-linejoin="round" stroke-linecap="round"/></svg>
+            <div style="font-size:14px;color:var(--ink);font-weight:500">All caught up</div>
+            <div style="font-size:12px;color:var(--ink-faint)">Nothing matches these filters — clear them to see everything.</div>
+          </div>
+        </div>
+      </div>
+      <p class="desc" style="margin-top:18px">Route the three My Tasks views and Today's timeline through the existing <code>EmptyState</code> (with the right <code>EmptyStateArt</code> variant + a clear-filters action). It's a small change with an outsized "made with care" payoff — and it folds naturally into the DataPage shell (3.2), which should own the empty/loading states once.</p>
+    </div>
+
+    <!-- 3.5 MOBILE -->
+    <div class="finding">
+      <div class="finding-head">
+        <span class="id">3.5</span>
+        <h3>Mobile coherence</h3>
+        <span class="badge p2">P2 · full sweep</span>
+      </div>
+      <p class="desc">You're <b>desktop-first</b>, but you want this done right for the 20-person team — so it's a <b>full sweep</b> this round. Audit task rows + controls at <b>360 / 390 / 768px</b> (incl. the 768–1024px iPad-portrait nav split-brain) so nothing clips, overlaps or silently disables on touch. The status-edit no-op (2.2) and the hover-gated affordances (2.4) both fail hardest here. Pair every "disabled on mobile" with a working touch path, give every target ≥44px, let titles wrap — and specify the breakpoints once in the DataPage shell (3.3) rather than per page.</p>
+    </div>
+  </section>
+</div>
+
+<!-- ════════════════ SPEC SHEET ════════════════ -->
+<div class="wrap">
+  <section class="section" id="spec">
+    <div class="section-head">
+      <div>
+        <div class="pillar-no">SPEC SHEET</div>
+        <h2>The corrected tokens.</h2>
+      </div>
+      <div class="aside">Drop-in values for the two structural fixes. Everything snaps to a token; nothing stays a per-page literal.</div>
+    </div>
+
+    <div class="spec">
+      <div class="spec-head"><b>Light-mode surfaces</b><span>fixes the bg inversion (1.2) — page becomes the lightest layer, cards step down</span></div>
+      <table class="tok">
+        <thead><tr><th style="width:30%">Token</th><th style="width:30%">Was (inverted)</th><th>Now (one layer)</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">--page-bg / --task-page-bg</td><td><span class="sw" style="background:#f5f5f5"></span><span class="mono was">#f5f5f5</span> grey</td><td><span class="sw" style="background:#faf8f3"></span><span class="mono now">#faf8f3</span> --cream (flat page)</td></tr>
+          <tr><td class="mono">--task-panel-bg / cards</td><td><span class="sw" style="background:#ffffff"></span><span class="mono was">#ffffff</span> white (floats)</td><td><span class="sw" style="background:#f4f5f7"></span><span class="mono now">#f4f5f7</span> --ice (sits down)</td></tr>
+          <tr><td class="mono">card border</td><td><span class="mono was">shadow only</span></td><td><span class="mono now">1px rgba(15,25,35,.06)</span> hairline</td></tr>
+          <tr><td class="mono">.dark (unchanged)</td><td colspan="2" style="color:var(--ink-faint)">page <span class="mono">#0b1017</span> · card <span class="mono">#0f1923</span> — already correct, page darker than card. Leave alone.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="spec" style="margin-top:22px">
+      <div class="spec-head"><b>Anchored-column rule</b><span>fixes the width jump (1.1) — the main column's left edge never moves; rails extend outward</span></div>
+      <table class="tok">
+        <thead><tr><th style="width:30%">Token</th><th style="width:22%">Value</th><th>Applies to</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">--content-band</td><td class="mono now">1232px</td><td>The centered band, <b>identical on every page</b>. = main + gap + rail.</td></tr>
+          <tr><td class="mono">--col-main</td><td class="mono now">880px</td><td>The anchored primary column — tables, lists, detail. <b>Same left edge + width on every page</b> (all 3 My Tasks views included).</td></tr>
+          <tr><td class="mono">--col-rail</td><td class="mono now">320px</td><td>Optional right rail (Today's context, filters). Lives beside the column; empty space when absent — the column never expands to fill it.</td></tr>
+          <tr><td class="mono">dashboards</td><td class="mono">full band</td><td>Pure card grids may use the whole <code>--content-band</code> — the one documented exception.</td></tr>
+          <tr><td class="mono">per-page maxWidth literals</td><td class="was mono">delete</td><td>No <code>maxWidth:1100</code> in LanesView, no bare <code>1440</code> in <code>.content-container</code>. Tokens only.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="spec" style="margin-top:22px">
+      <div class="spec-head"><b>First-click date control</b><span>fixes 2.1 — replaces the native-input drill in InlineDatePicker.tsx</span></div>
+      <table class="tok">
+        <thead><tr><th style="width:30%">Behaviour</th><th style="width:30%">Was</th><th>Now</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">click the chip</td><td class="was">→ raw <code>05/01</code> field</td><td class="now">→ popover: month grid + presets together</td></tr>
+          <tr><td class="mono">calendar</td><td class="was">2nd click (OS picker)</td><td class="now">rendered immediately, in-app, keyboard-navigable</td></tr>
+          <tr><td class="mono">presets</td><td class="was">separate strip</td><td class="now">inline at top: Today · Tmrw · Next Mon · +1wk</td></tr>
+          <tr><td class="mono">clicks to set a date</td><td class="was">3</td><td class="now">1</td></tr>
+          <tr><td class="mono">commit</td><td colspan="2" style="color:var(--ink-faint)">pick day or preset → optimistic write + close. Esc reverts. Outside-click commits pending. Clear in footer.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<!-- ════════════════ CLOSING ════════════════ -->
+<div class="wrap">
+  <section class="closing" id="close">
+    <div class="eyebrow">The backlog</div>
+    <h2>Three pillars, <em>thirty tickets</em>, one north-star.</h2>
+    <p class="body">Every ticket is file-scoped and honors the shipped primitives — extend rows via props, never re-fork; List view stays the protected power-grid; dark-first and rationed color hold. Full detail, acceptance criteria and file:lines live in <code style="font-family:'JetBrains Mono',monospace;color:var(--gold)">TICKETS.md</code>.</p>
+    <div class="prio-grid">
+      <div class="prio p1">
+        <div class="tag">P1 · Make it right</div>
+        <h4>13 tickets — ship first</h4>
+        <ul>
+          <li>Anchored-column width rule (Tier-1) — left edge never moves</li>
+          <li>Priority-at-a-glance — overdue floats up, coral leads</li>
+          <li>Honest sync clock — real PB→Hub time, not fake “now”</li>
+          <li>Light-mode bg inversion — swap page/card tokens</li>
+          <li>First-click date control — calendar + presets popover</li>
+          <li>Heartbeat loaders — retire ~7 spinners + “Loading…”</li>
+          <li>Always-visible affordances — drop hover-gated 0.35</li>
+          <li>Completed-row compound-opacity — muted title only</li>
+          <li>Kill dead controls — MeetingNotes audio + transcript</li>
+          <li>Replace every <code style="font-size:11px">window.alert()</code> with undo-toast</li>
+          <li>Settings AI tab — remove the placeholder</li>
+          <li>Token/spacing/radius snap sweep</li>
+        </ul>
+      </div>
+      <div class="prio p2">
+        <div class="tag">P2 · Consolidate</div>
+        <h4>10 tickets — primitives</h4>
+        <ul>
+          <li>DataPage shell — 5 pages, one scaffold</li>
+          <li>Extend shared row into ListView / Deadlines / Personal</li>
+          <li>Field-editor + inline common-fields on data pages</li>
+          <li>One staleness truth — unify 10 / 14 / 30d</li>
+          <li>One capture surface — 4 entries → one</li>
+          <li>One modal/sheet shell — MeetingNotes + CreateProject</li>
+          <li>ProjectDetail: one activity stream, tabs filter it</li>
+          <li>Designed empty states into My Tasks + Today</li>
+          <li>Mobile coherence sweep — 360 / 390 / 768</li>
+        </ul>
+      </div>
+      <div class="prio p3">
+        <div class="tag">P3 · Make sense</div>
+        <h4>7 tickets — sensible placement</h4>
+        <ul>
+          <li>Delete dead <code style="font-size:11px">handleUpsertTodayMd</code></li>
+          <li>Verify / retire legacy MyTasks</li>
+          <li>Personal → route through <code style="font-size:11px">PATHS</code></li>
+          <li>Mentee-list hardcoded fallback → data</li>
+          <li>One global density — <b>compact default</b>, retire per-view</li>
+          <li>Mobile status-edit — working touch path</li>
+          <li>Opacity ≥0.85 floor sweep across surfaces</li>
+        </ul>
+      </div>
+    </div>
+    <div class="ticket-ptr">
+      <span style="color:var(--gold);font-size:18px">◆</span>
+      <div>Hand <code>TICKETS.md</code> + this audit to Claude Code and run the <b style="color:var(--ink);font-weight:600">continuous build order</b> end to end — no stop-gates, pre-approved. Out of scope, by Nick's call: <b style="color:var(--ink-dim);font-weight:500">Today, the cockpit IA, and the plan model</b> — their own session.</div>
+    </div>
+  </section>
+
+  <div class="foot">
+    Grounded in the linked <code style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-dim)">mn-ccore-lab</code> source as of Jun 9 2026. Mockups recreate live surfaces from the shipped <code style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-dim)">colors_and_type.css</code> tokens. Findings cite file:line; severity follows Nick's three-pillar framing. North-star throughout: a busy PI sits down and falls in love.
+  </div>
+</div>
+
+<script>
+(function(){
+  // ── Shared helpers ──
+  function fmt(d){ return d.toLocaleDateString('en-US',{month:'short',day:'numeric'}); }
+  function iso(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+  const today = new Date(); today.setHours(12,0,0,0);
+  function presetDates(){
+    const t=new Date(today);
+    const tm=new Date(today); tm.setDate(tm.getDate()+1);
+    const nm=new Date(today); nm.setDate(nm.getDate()+((8-nm.getDay())%7||7));
+    const wk=new Date(today); wk.setDate(wk.getDate()+7);
+    return [['Today',t],['Tomorrow',tm],['Next Mon',nm],['+1 Week',wk]];
+  }
+  function pulse(stage,x,y){
+    const p=document.createElement('span'); p.className='clickpulse';
+    p.style.left=(x-14)+'px'; p.style.top=(y-14)+'px'; p.style.width='28px'; p.style.height='28px';
+    stage.appendChild(p); setTimeout(()=>p.remove(),520);
+  }
+
+  // ════ BEFORE (shipped) — three-click drill ════
+  const beforeMount=document.getElementById('beforeMount');
+  const beforeClicks=document.querySelector('#beforeClicks b');
+  let bClicks=0, bVal=null, bStage='chip'; // chip → rawedit → presets
+  function bRender(){
+    beforeMount.innerHTML='';
+    if(bStage==='chip'){
+      const btn=document.createElement('button'); btn.className='dp-trigger';
+      btn.style.color = bVal? 'var(--gold)':'var(--ink-faint)';
+      btn.innerHTML='<svg class="cal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg><span class="cv">'+(bVal?fmt(bVal):'Set date')+'</span><span style="opacity:.6;font-size:10px">▾</span>';
+      btn.onclick=e=>{ bClicks++; beforeClicks.textContent=bClicks; bStage='rawedit'; bRender(); };
+      beforeMount.appendChild(btn);
+    } else if(bStage==='rawedit'){
+      const wrap=document.createElement('span'); wrap.style.position='relative';
+      const inp=document.createElement('button'); inp.className='dp-rawinput';
+      inp.innerHTML='<span style="color:var(--teal)">'+(bVal?iso(bVal).slice(5):'mm / dd')+'</span><span class="blink"></span><svg class="cal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-left:4px;opacity:.7"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>';
+      inp.title='click again for the OS calendar…';
+      inp.onclick=()=>{ bClicks++; beforeClicks.textContent=bClicks; bStage='oscal'; bRender(); };
+      wrap.appendChild(inp);
+      // separate preset strip below
+      const strip=document.createElement('div'); strip.className='pop-presets'; strip.style.marginTop='12px';
+      presetDates().forEach(([lbl,d])=>{ const b=document.createElement('button'); b.textContent=lbl; b.onclick=()=>{ bClicks++; beforeClicks.textContent=bClicks; bVal=d; bStage='chip'; bRender(); }; strip.appendChild(b); });
+      wrap.appendChild(strip);
+      const note=document.createElement('div'); note.className='dp-hint'; note.style.marginTop='10px';
+      note.innerHTML='Presets are a <span class="k">separate</span> reveal — and the calendar is still <span class="k">one more click</span> away in the OS picker.';
+      wrap.appendChild(note);
+      beforeMount.appendChild(wrap);
+    } else if(bStage==='oscal'){
+      const wrap=document.createElement('span'); wrap.style.position='relative';
+      const tag=document.createElement('span'); tag.className='dp-rawinput'; tag.innerHTML='<span style="color:var(--ink-faint)">native OS calendar…</span>';
+      wrap.appendChild(tag);
+      const cal=buildCalendar(bVal, d=>{ bClicks++; beforeClicks.textContent=bClicks; bVal=d; bStage='chip'; bRender(); }, false);
+      cal.style.position='static'; cal.style.marginTop='10px'; cal.style.boxShadow='none'; cal.style.animation='none';
+      wrap.appendChild(cal);
+      beforeMount.appendChild(wrap);
+    }
+  }
+
+  // ════ AFTER (proposed) — one click, full popover ════
+  const afterMount=document.getElementById('afterMount');
+  const afterClicks=document.querySelector('#afterClicks b');
+  let aClicks=0, aVal=null, aOpen=false;
+  function aRender(){
+    afterMount.innerHTML='';
+    const wrap=document.createElement('span'); wrap.style.position='relative';
+    const btn=document.createElement('button'); btn.className='dp-trigger';
+    btn.style.color = aVal? 'var(--gold)':'var(--ink-faint)';
+    if(aOpen){ btn.style.borderColor='var(--line)'; btn.style.background='var(--surface-2)'; }
+    btn.innerHTML='<svg class="cal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg><span class="cv">'+(aVal?fmt(aVal):'Set date')+'</span><span style="opacity:.6;font-size:10px">▾</span>';
+    btn.onclick=()=>{ if(!aOpen){ aClicks++; afterClicks.textContent=aClicks; } aOpen=!aOpen; aRender(); };
+    wrap.appendChild(btn);
+    if(aOpen){
+      const pop=document.createElement('div'); pop.className='pop'; pop.style.top='calc(100% + 8px)'; pop.style.left='0'; pop.style.minWidth='248px';
+      const presets=document.createElement('div'); presets.className='pop-presets';
+      presetDates().forEach(([lbl,d])=>{ const b=document.createElement('button'); b.textContent=lbl; b.onclick=()=>{ aVal=d; aOpen=false; aRender(); }; presets.appendChild(b); });
+      pop.appendChild(presets);
+      pop.appendChild(buildCalendar(aVal, d=>{ aVal=d; aOpen=false; aRender(); }, true));
+      const foot=document.createElement('div'); foot.className='pop-foot';
+      const span=document.createElement('span'); span.style.fontSize='11px'; span.style.color='var(--ink-faint)'; span.textContent= aVal? fmt(aVal): 'pick a day or preset';
+      const clr=document.createElement('button'); clr.className='clr'; clr.textContent='Clear';
+      clr.onclick=()=>{ aVal=null; aOpen=false; aRender(); };
+      foot.appendChild(span); foot.appendChild(clr); pop.appendChild(foot);
+      wrap.appendChild(pop);
+    }
+    afterMount.appendChild(wrap);
+  }
+
+  // shared calendar builder
+  function buildCalendar(sel, onPick, withToday){
+    const cal=document.createElement('div'); cal.style.position='static';
+    let view = sel? new Date(sel): new Date(today); view.setDate(1);
+    function draw(){
+      cal.innerHTML='';
+      const head=document.createElement('div'); head.className='cal-head';
+      const prev=document.createElement('button'); prev.textContent='‹'; prev.onclick=e=>{e.stopPropagation(); view.setMonth(view.getMonth()-1); draw();};
+      const mo=document.createElement('div'); mo.className='mo'; mo.textContent=view.toLocaleDateString('en-US',{month:'long',year:'numeric'});
+      const next=document.createElement('button'); next.textContent='›'; next.onclick=e=>{e.stopPropagation(); view.setMonth(view.getMonth()+1); draw();};
+      head.appendChild(prev); head.appendChild(mo); head.appendChild(next); cal.appendChild(head);
+      const grid=document.createElement('div'); grid.className='cal-grid';
+      ['S','M','T','W','T','F','S'].forEach(d=>{ const c=document.createElement('div'); c.className='dow'; c.textContent=d; grid.appendChild(c); });
+      const first=new Date(view.getFullYear(),view.getMonth(),1);
+      const start=first.getDay();
+      const dim=new Date(view.getFullYear(),view.getMonth()+1,0).getDate();
+      for(let i=0;i<start;i++){ const c=document.createElement('div'); c.className='cell muted'; grid.appendChild(c); }
+      for(let d=1; d<=dim; d++){
+        const cell=document.createElement('div'); cell.className='cell'; cell.textContent=d;
+        const cd=new Date(view.getFullYear(),view.getMonth(),d);
+        if(withToday && cd.toDateString()===today.toDateString()) cell.classList.add('today');
+        if(sel && cd.toDateString()===sel.toDateString()) cell.classList.add('sel');
+        cell.onclick=e=>{ e.stopPropagation(); onPick(cd); };
+        grid.appendChild(cell);
+      }
+      cal.appendChild(grid);
+    }
+    draw();
+    return cal;
+  }
+
+  // close after-popover on outside click
+  document.addEventListener('mousedown', e=>{
+    if(aOpen && !document.getElementById('afterMount').contains(e.target)){ aOpen=false; aRender(); }
+  });
+
+  bRender(); aRender();
+})();
+</script>
+</body>
+</html>
