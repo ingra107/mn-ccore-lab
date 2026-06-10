@@ -62,6 +62,19 @@ const CATEGORY_DOT: Record<string, string> = {
 
 const STAGE_ORDER: Record<string, number> = Object.fromEntries(STAGES.map((s, i) => [s, i]))
 
+// S19: PI dropdown options. Directors are the canonical choices; if the current
+// PI value is a non-director slug (legacy "nick", a bare email, a non-director
+// member), prepend a resolved option so InlineSelect renders a clean display
+// name instead of the raw slug.
+function piOptions(currentPi?: string | null): { value: string; label: string }[] {
+  const base = directors.map((d) => ({ value: d.slug, label: displayName(d.slug, 'display') }))
+  const pi = (currentPi || '').trim()
+  if (pi && !base.some((o) => o.value === pi)) {
+    return [{ value: pi, label: displayName(pi, 'display') }, ...base]
+  }
+  return base
+}
+
 const HEALTH_STATUS_COLOR: Record<string, string> = {
   'Healthy': 'var(--green)',
   'Needs Attention': 'var(--gold)',
@@ -575,11 +588,13 @@ export default function Projects() {
                               onChange={(val) => inlineUpdate.mutate({ slug: project.slug, fields: { stage: toApiStage(val) } })}
                             />
 
-                            {/* PI (inline editable) */}
+                            {/* PI (inline editable) — S19: resolve the current
+                                value through displayName so a non-director slug
+                                (e.g. "nick") never renders raw in the cell. */}
                             <div onClick={(e) => e.preventDefault()}>
                               <InlineSelect
                                 value={project.pi || ''}
-                                options={directors.map(d => ({ value: d.slug, label: displayName(d.slug, 'display') }))}
+                                options={piOptions(project.pi)}
                                 onChange={(val) => inlineUpdate.mutate({ slug: project.slug, fields: { pi: val } })}
                               />
                             </div>

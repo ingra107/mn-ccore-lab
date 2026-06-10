@@ -97,6 +97,19 @@ const CATEGORY_LABEL: Record<string, string> = {
   mentee: 'Mentee',
 }
 
+// S19: one PI resolver + one avatar fallback style. displayName() canonicalizes
+// any slug (legacy "nick", bare email, non-director member) to a clean name +
+// initials; getPersonInfo supplies the curated photo. Avatar always derives its
+// fallback initials from the same displayName source — no mixed styles.
+function piDisplay(slug: string | null | undefined): { name: string; initials: string; photoUrl: string | undefined } {
+  if (!slug) return { name: 'Unassigned', initials: '—', photoUrl: undefined }
+  return {
+    name: displayName(slug, 'display'),
+    initials: displayName(slug, 'initials'),
+    photoUrl: getPersonInfo(slug).photoUrl,
+  }
+}
+
 // Canonical options only — drives category filter pills and InlineSelect
 // inline editor. Users cannot re-assign projects to legacy values.
 const CANONICAL_CATEGORY_KEYS = ['MNCCORE', 'CLIF', 'Peripheral Brain'] as const
@@ -251,11 +264,12 @@ export default function ManuscriptsPage() {
 
   // M-14: derive PI options from data instead of hardcoding nick + nate.
   // New PIs (mentees taking over a manuscript, visiting faculty) auto-appear.
-  // Names render via getPersonInfo for slug -> display-name resolution.
+  // S19: labels render via displayName() so a legacy slug ("nick") resolves to
+  // a clean name ("Nick Ingraham"), not the raw slug.
   const piOptions = useMemo(() => {
     const slugs = [...new Set(projects.map((p) => p.pi).filter(Boolean) as string[])]
     return slugs
-      .map((slug) => ({ value: slug, label: getPersonInfo(slug).name }))
+      .map((slug) => ({ value: slug, label: displayName(slug, 'display') }))
       .sort((a, b) => a.label.localeCompare(b.label))
   }, [projects])
 
@@ -462,7 +476,7 @@ export default function ManuscriptsPage() {
                 let lastStage = ''
                 let flatIndex = 0
                 return manuscripts.map((project) => {
-                  const pi = getPersonInfo(project.pi)
+                  const pi = piDisplay(project.pi)
                   const showStageHeader = project.stage !== lastStage
                   lastStage = project.stage ?? ''
                   const tc = taskCounts.get(project.slug) || 0
@@ -851,7 +865,7 @@ export default function ManuscriptsPage() {
 type StageKey = typeof STAGES[number]
 
 function PipelineCard({ project, dragging }: { project: Project; dragging?: boolean }) {
-  const pi = getPersonInfo(project.pi)
+  const pi = piDisplay(project.pi)
   return (
     <div
       className="project-card"
@@ -879,6 +893,8 @@ function PipelineCard({ project, dragging }: { project: Project; dragging?: bool
         <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.75 }}>
           {project.pi ? displayName(project.pi, 'short') : pi.name}
         </span>
+        {/* S19: avatar + label both resolve through piDisplay/displayName — one
+            consistent fallback style. */}
       </div>
     </div>
   )
