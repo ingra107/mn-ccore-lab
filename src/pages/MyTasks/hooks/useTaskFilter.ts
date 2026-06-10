@@ -14,6 +14,7 @@ import {
   type GroupKey, type FilterState, type QuickViewKey,
 } from '../constants'
 import { isOverdue } from '../../../lib/dateUtils'
+import { useLabPrefs } from '../../../hooks/useLabPrefs'
 import type { TaskRow } from '../../../lib/api'
 
 export interface UseTaskFilterArgs {
@@ -27,6 +28,10 @@ export interface UseTaskFilterArgs {
 
 export function useTaskFilter({ allTasks, filter, search, quickView, plannedSet, projectsByPid }: UseTaskFilterArgs) {
   const today = todayKey()
+  // P2-9: ONE staleness threshold (days-since-meaningful-movement), shared
+  // with every stale chip/filter and surfaced in Settings → Lab Preferences.
+  const { prefs } = useLabPrefs()
+  const taskStaleDays = prefs.taskStaleDays
 
   // Apply quick-view + filters + search.
   const filtered = useMemo(() => {
@@ -34,7 +39,7 @@ export function useTaskFilter({ allTasks, filter, search, quickView, plannedSet,
     if (quickView === 'today') base = base.filter((t) => plannedSet.has(t.id) || t.due_date?.slice(0, 10) === today)
     if (quickView === 'overdue') base = base.filter((t) => t.due_date && t.due_date.slice(0, 10) < today && !isTaskDone(t))
     if (quickView === 'waiting') base = base.filter((t) => t.status === 'waiting_external' && !isTaskDone(t))
-    if (quickView === 'stale') base = base.filter((t) => daysSince(t.updated_at) >= 10 && t.status === 'in_progress' && !isTaskDone(t))
+    if (quickView === 'stale') base = base.filter((t) => daysSince(t.updated_at) >= taskStaleDays && t.status === 'in_progress' && !isTaskDone(t))
     return base.filter((t) => {
       if (filter.hideCompleted && isTaskDone(t)) return false
       if (filter.priority && t.priority !== filter.priority) return false
@@ -51,7 +56,7 @@ export function useTaskFilter({ allTasks, filter, search, quickView, plannedSet,
       if (search && !t.title.toLowerCase().includes(search.toLowerCase())) return false
       return true
     }).map((t) => ({ ...t, _group: getGroupForTask(t, projectsByPid), _tag: tagForTask(t, projectsByPid) }) as TaskRow & { _group: GroupKey; _tag: string })
-  }, [allTasks, filter, search, quickView, plannedSet, today, projectsByPid])
+  }, [allTasks, filter, search, quickView, plannedSet, today, projectsByPid, taskStaleDays])
 
   // Bucket by group, then sort each bucket: planned → active → done.
   // CLAUDE.md Rule 62: planned tasks float to top, done sinks to bottom with strikethrough.

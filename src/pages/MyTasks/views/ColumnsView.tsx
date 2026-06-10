@@ -12,6 +12,7 @@
 // Extracted from src/pages/portal/UnifiedMyTasks.tsx (ColumnsView + Card).
 
 import { TaskRow as SharedTaskRow } from '../../../components/tasks/TaskRow'
+import { useLabPrefs } from '../../../hooks/useLabPrefs'
 import { Chip } from '../primitives'
 import { InlineDetail } from '../components/InlineDetail'
 import { OverdueBanner } from './OverdueBanner'
@@ -108,8 +109,8 @@ export function ColumnsView({ filtered, byGroup, selected, toggleSelect, onToggl
 // Surface-specific chips (waiting / stale) that aren't part of the canonical
 // row meta. planned / due / project / override-pin are all handled by the
 // shared row itself.
-function rowExtraMeta(task: TaskRow) {
-  const stale = task.updated_at && daysSince(task.updated_at) >= 10 && task.status === 'in_progress' ? daysSince(task.updated_at) : 0
+function rowExtraMeta(task: TaskRow, staleDays: number) {
+  const stale = task.updated_at && daysSince(task.updated_at) >= staleDays && task.status === 'in_progress' ? daysSince(task.updated_at) : 0
   if (task.status !== 'waiting_external' && stale <= 0) return null
   return (
     <>
@@ -121,6 +122,7 @@ function rowExtraMeta(task: TaskRow) {
 
 export function MyTasksRow({ task, project, selected, selectionActive, onSelect, onToggleComplete, expanded, onExpand, planned, stack }: { task: TaskRow; project: { name: string; slug: string } | null; selected: boolean; selectionActive: boolean; onSelect: () => void; onToggleComplete: () => void; expanded: boolean; onExpand: () => void; planned: boolean; stack?: boolean }) {
   const isDone = isTaskDone(task)
+  const { prefs } = useLabPrefs()
   return (
     <SharedTaskRow
       task={task}
@@ -138,7 +140,7 @@ export function MyTasksRow({ task, project, selected, selectionActive, onSelect,
       plannedLabel="today"
       showGroupOverridePin
       leadingTag={(task as TaskRow & { _tag?: string })._tag ?? '📝'}
-      extraMeta={rowExtraMeta(task)}
+      extraMeta={rowExtraMeta(task, prefs.taskStaleDays)}
     >
       <InlineDetail task={task} projectName={project?.name} />
     </SharedTaskRow>

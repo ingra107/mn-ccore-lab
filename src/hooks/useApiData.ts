@@ -135,6 +135,11 @@ function rowToProject(row: ProjectRow): Project {
     strategic_context: row.strategic_context || undefined,
     updated_at: row.updated_at || undefined,
     stage_entered_at: row.stage_entered_at || undefined,
+    // INFRA-8 / P2-9: re-surface pipeline-movement metadata that rowToProject
+    // previously dropped, so the unified staleness basis can read
+    // days-since-meaningful-movement instead of falling back to updated_at.
+    last_meaningful_movement: row.last_meaningful_movement || undefined,
+    stale_active_since: row.stale_active_since || undefined,
   }
 }
 

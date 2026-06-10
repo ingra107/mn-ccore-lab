@@ -23,6 +23,7 @@ const TaskDetailPanel = lazy(loadTaskDetailPanel)
 import CreateTaskModal from '../../components/tasks/CreateTaskModal'
 import { useUndoToast } from '../../components/UndoToast'
 import { useTasks, useProjects } from '../../hooks/useApiData'
+import { useLabPrefs } from '../../hooks/useLabPrefs'
 import { useAuth } from '../../hooks/useAuth'
 import { emailToSlug } from '../../lib/emailSlug'
 import type { TaskRow } from '../../lib/api'
@@ -108,6 +109,8 @@ export default function MyTasks() {
   // When Cloudflare Access is enabled, this will filter to the authenticated user's slug
   const { data: allTasks = [], isLoading } = useTasks()
   const { data: projects = [] } = useProjects()
+  // P2-9: shared staleness threshold (days-since-meaningful-movement).
+  const { prefs: labPrefs } = useLabPrefs()
   const createTask = useCreateTask()
   const updateStatus = useUpdateTaskStatus()
   const updateTask = useUpdateTask()
@@ -235,12 +238,12 @@ export default function MyTasks() {
       case 'overdue': return base.filter(t => !t.completed && isOverdue(t.due_date))
       case 'no_date': return base.filter(t => !t.due_date)
       case 'stale': {
-        const stale = new Date(now.getTime() - 14 * 86400000)
+        const stale = new Date(now.getTime() - labPrefs.taskStaleDays * 86400000)
         return base.filter(t => t.status === 'in_progress' && new Date(t.updated_at || t.created_at) < stale)
       }
       default: return base
     }
-  }, [tasks, allTasks, showCompleted, quickFilter, piSlug])
+  }, [tasks, allTasks, showCompleted, quickFilter, piSlug, labPrefs.taskStaleDays])
   const displayTasks = quickFiltered
 
   // ── Keyboard shortcut state ──────────────────────────────────
@@ -345,12 +348,12 @@ export default function MyTasks() {
       overdue: active.filter(t => isOverdue(t.due_date)).length,
       no_date: active.filter(t => !t.due_date).length,
       stale: (() => {
-        const stale = new Date(now.getTime() - 14 * 86400000)
+        const stale = new Date(now.getTime() - labPrefs.taskStaleDays * 86400000)
         return active.filter(t => t.status === 'in_progress' && new Date(t.updated_at || t.created_at) < stale).length
       })(),
       waiting_on: allTasks.filter(t => !t.completed && (t.waiting_on || (t.assignee !== piSlug && (t.status === 'todo' || t.status === 'in_progress' || t.status === 'waiting_external')))).length,
     }
-  }, [tasks, allTasks, piSlug])
+  }, [tasks, allTasks, piSlug, labPrefs.taskStaleDays])
 
   // T-07 — track TodayHero visibility for sticky overdue pill
   const todayHeroRef = useRef<HTMLDivElement>(null)

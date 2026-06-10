@@ -93,6 +93,10 @@ export interface Project {
   lastActivity?: string
   updated_at?: string
   stage_entered_at?: string
+  // W1 pipeline-movement metadata — drives the unified P2-9 staleness basis
+  // (days-since-meaningful-movement) on Projects "Needs Attention".
+  last_meaningful_movement?: string
+  stale_active_since?: string
   notes?: ProjectNote[]
   pi_context?: string
   strategic_context?: string

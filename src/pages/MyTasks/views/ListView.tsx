@@ -16,6 +16,7 @@ import InlineSelect from '../../../components/InlineSelect'
 import InlineDatePicker from '../../../components/InlineDatePicker'
 import InlineAssigneePicker from '../../../components/InlineAssigneePicker'
 import { useTaskFieldEditors } from '../../../hooks/useTaskFieldEditors'
+import { useLabPrefs } from '../../../hooks/useLabPrefs'
 import { STATUS_OPTIONS, PRIORITY_OPTIONS } from '../../../lib/taskConstants'
 import {
   GROUP_META,
@@ -50,6 +51,8 @@ export function ListView({ filtered, selected, toggleSelect, setSelected, setDra
   // power-grid's keyboard model + inline-edit columns are untouched (Rule 60);
   // only the duplicated mutation+undo bodies were lifted out.
   const { onStatusChange, onPriorityChange, onAssigneeChange, onDateChange, onProjectChange } = useTaskFieldEditors()
+  // P2-9: one shared staleness threshold (days-since-meaningful-movement).
+  const { prefs } = useLabPrefs()
 
   // MT-04 — virtualize. 44px row + 1px border ≈ 45. Use measureElement for
   // any future expanded-state without changing this default.
@@ -124,6 +127,7 @@ export function ListView({ filtered, selected, toggleSelect, setSelected, setDra
                     onDateChange={(next) => onDateChange(t.id, t.due_date, next)}
                     onProjectChange={(next) => onProjectChange(t.id, t.project_id, next)}
                     projectSelectOptions={projectSelectOptions}
+                    staleDays={prefs.taskStaleDays}
                   />
                 </div>
               )
@@ -159,14 +163,15 @@ interface ListRowProps {
   onDateChange: (val: string | null) => void
   onProjectChange: (val: string) => void
   projectSelectOptions: { value: string; label: string }[]
+  staleDays: number
 }
 
-function ListRow({ task, project, isCursor, isSelected, onClick, onDouble, onSelect, planned, onStatusChange, onPriorityChange, onAssigneeChange, onDateChange, onProjectChange, projectSelectOptions }: ListRowProps) {
+function ListRow({ task, project, isCursor, isSelected, onClick, onDouble, onSelect, planned, onStatusChange, onPriorityChange, onAssigneeChange, onDateChange, onProjectChange, projectSelectOptions, staleDays }: ListRowProps) {
   const meta = GROUP_META[(task as TaskRow & { _group?: GroupKey })._group ?? 'deep']
   // Rule 68: status-aware isOverdue(), never a hand-rolled date compare.
   const overdue = !!task.due_date && !isTaskDone(task) && isOverdue(task.due_date, task.status)
   const overdueDays = overdue && task.due_date ? daysSince(task.due_date) : 0
-  const stale = task.updated_at && daysSince(task.updated_at) >= 10 && task.status === 'in_progress' ? daysSince(task.updated_at) : 0
+  const stale = task.updated_at && daysSince(task.updated_at) >= staleDays && task.status === 'in_progress' ? daysSince(task.updated_at) : 0
   const isCompleted = isTaskDone(task)
 
   // Stop click-bubbling on inline-edit cells so clicking them doesn't move

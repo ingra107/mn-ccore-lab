@@ -403,7 +403,7 @@ export default function SettingsPage() {
 
         {/* Lab preferences — T-29 attention thresholds */}
         {activeTab === 'lab' && (
-        <SettingsSection title="Lab Preferences" subtitle="Per-user thresholds for Manuscripts triage surface" icon={FlaskConical}>
+        <SettingsSection title="Lab Preferences" subtitle="Staleness & attention thresholds — one definition (days since meaningful movement), per-domain defaults" icon={FlaskConical}>
           <LabPrefsPanel />
         </SettingsSection>
         )}
@@ -650,6 +650,34 @@ function LabPrefsPanel() {
           max={365}
           unitLabel="days"
           ariaLabel="Stale drafts threshold in days"
+        />
+      </SettingsField>
+
+      <SettingsField
+        label="Stale tasks — flag after"
+        hint={`In-progress tasks with no meaningful movement for this many days show a "stale" chip on My Tasks and feed the Stale quick-filter. Default ${defaults.taskStaleDays}d.`}
+      >
+        <RangeSlider
+          value={prefs.taskStaleDays}
+          onChange={(n) => update({ taskStaleDays: n })}
+          min={0}
+          max={365}
+          unitLabel="days"
+          ariaLabel="Stale tasks threshold in days"
+        />
+      </SettingsField>
+
+      <SettingsField
+        label="Stale projects — flag after"
+        hint={`Active projects with no meaningful movement for this many days surface in the Projects "Needs Attention" filter (alongside low-health projects). Default ${defaults.projectStaleDays}d.`}
+      >
+        <RangeSlider
+          value={prefs.projectStaleDays}
+          onChange={(n) => update({ projectStaleDays: n })}
+          min={0}
+          max={365}
+          unitLabel="days"
+          ariaLabel="Stale projects threshold in days"
         />
       </SettingsField>
 

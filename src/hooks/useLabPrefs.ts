@@ -1,19 +1,33 @@
 import { useCallback, useEffect, useState } from 'react'
 
 /**
- * T-29 Lab Preferences — per-user thresholds for "Needs your attention"
- * groupings on the Manuscripts page. Stored in localStorage (not D1) since
- * these are individual triage preferences, not shared lab config.
+ * T-29 Lab Preferences — per-user thresholds for staleness / "Needs your
+ * attention" surfaces. Stored in localStorage (not D1) since these are
+ * individual triage preferences, not shared lab config.
  *
- * Defaults from the spec ¶2: review=7d, stale=30d.
+ * P2-9 (2026-06-09) — ONE staleness mechanism. "Stale" everywhere means
+ * days-since-meaningful-movement, but with sensible per-domain default
+ * thresholds (Nick decision #4): task ~10d, manuscript ~30d, project ~30d.
+ * Every stale chip / filter / sort reads these; Projects "needs attention"
+ * staleness reconciles to projectStaleDays (its health score may keep other
+ * inputs, but its STALENESS input uses this shared threshold).
+ *
+ * Defaults: manuscriptReview=7d, manuscriptStale=30d, taskStale=10d, projectStale=30d.
  */
 export interface LabPrefs {
   manuscriptsReviewDays: number
   manuscriptsStaleDays: number
+  taskStaleDays: number
+  projectStaleDays: number
 }
 
 const LS_KEY = 'mnccore.labprefs.v1'
-const DEFAULTS: LabPrefs = { manuscriptsReviewDays: 7, manuscriptsStaleDays: 30 }
+const DEFAULTS: LabPrefs = {
+  manuscriptsReviewDays: 7,
+  manuscriptsStaleDays: 30,
+  taskStaleDays: 10,
+  projectStaleDays: 30,
+}
 
 function readPrefs(): LabPrefs {
   try {
@@ -23,6 +37,8 @@ function readPrefs(): LabPrefs {
     return {
       manuscriptsReviewDays: clampInt(parsed.manuscriptsReviewDays, DEFAULTS.manuscriptsReviewDays),
       manuscriptsStaleDays: clampInt(parsed.manuscriptsStaleDays, DEFAULTS.manuscriptsStaleDays),
+      taskStaleDays: clampInt(parsed.taskStaleDays, DEFAULTS.taskStaleDays),
+      projectStaleDays: clampInt(parsed.projectStaleDays, DEFAULTS.projectStaleDays),
     }
   } catch {
     return DEFAULTS
@@ -49,6 +65,8 @@ export function useLabPrefs() {
       const next = { ...prev, ...patch }
       next.manuscriptsReviewDays = clampInt(next.manuscriptsReviewDays, DEFAULTS.manuscriptsReviewDays)
       next.manuscriptsStaleDays = clampInt(next.manuscriptsStaleDays, DEFAULTS.manuscriptsStaleDays)
+      next.taskStaleDays = clampInt(next.taskStaleDays, DEFAULTS.taskStaleDays)
+      next.projectStaleDays = clampInt(next.projectStaleDays, DEFAULTS.projectStaleDays)
       try { localStorage.setItem(LS_KEY, JSON.stringify(next)) } catch { /* unavailable */ }
       return next
     })

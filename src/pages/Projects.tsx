@@ -6,6 +6,8 @@ import { useDensity, densityClass } from '../components/DensityToggle'
 import { stageIndex, toApiStage } from '../lib/stageNormalize'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useProjects, useDependencies, useProjectHealth, useTasks } from '../hooks/useApiData'
+import { useLabPrefs } from '../hooks/useLabPrefs'
+import { daysSince } from '../lib/taskGrouping'
 import { useCreateProject } from '../hooks/useMutations'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { updateProject } from '../lib/api'
@@ -40,7 +42,8 @@ const STAGE_LABELS: Record<Stage, string> = {
 }
 
 // Stage 4 #12-followup (2026-05-08): 3-bucket canonical categories.
-// 'stale' is a pseudo-filter (health score < 50) not a real category value.
+// 'stale' is a pseudo-filter (P2-9: stale-by-shared-threshold OR health < 50),
+// not a real category value.
 const CATEGORY_FILTERS = [
   { key: 'all', label: 'All' },
   { key: 'MNCCORE', label: 'MN-CCORE' },
@@ -97,6 +100,10 @@ export default function Projects() {
   const { data: allTasks = [] } = useTasks()
   const { data: dependencies = [] } = useDependencies()
   const { data: healthData } = useProjectHealth()
+  // P2-9: shared staleness threshold (days-since-meaningful-movement). The
+  // "Needs Attention" filter's STALENESS input reconciles to this single basis
+  // (health score may still weight other inputs, but staleness is one truth).
+  const { prefs } = useLabPrefs()
 
   // Task counts per project
   const taskCountByProject = useMemo(() => {
@@ -199,8 +206,18 @@ export default function Projects() {
     if (activeCategory === 'all') base = projects
     else if (activeCategory === 'stale') {
       base = projects.filter(p => {
+        if (!isProjectActive(p.status)) return false
+        // P2-9: ONE staleness basis = days-since-meaningful-movement, gated by
+        // the shared projectStaleDays pref (Settings → Lab Preferences). Falls
+        // back to updated_at when last_meaningful_movement isn't populated.
+        const movedAt = p.last_meaningful_movement || p.updated_at
+        const isStale = daysSince(movedAt) >= prefs.projectStaleDays
+        // Health score keeps its other inputs, but staleness is reconciled to
+        // the shared threshold above — a project needs attention if it's stale
+        // OR its overall health is low.
         const h = healthBySlug.get(p.slug)
-        return isProjectActive(p.status) && (!h || h.score < 50)
+        const lowHealth = !!h && h.score < 50
+        return isStale || lowHealth
       })
     }
     else base = projects.filter((p) => p.category === activeCategory)
@@ -225,7 +242,7 @@ export default function Projects() {
       if (cmp === 0) cmp = a.title.localeCompare(b.title)
       return sortAsc ? cmp : -cmp
     })
-  }, [activeCategory, projects, sortKey, sortAsc, pinnedSlugs])
+  }, [activeCategory, projects, sortKey, sortAsc, pinnedSlugs, healthBySlug, prefs.projectStaleDays])
 
   // Project slugs in display order for keyboard nav
   const projectSlugs = useMemo(() => filtered.map((p) => p.slug), [filtered])

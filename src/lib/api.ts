@@ -56,6 +56,11 @@ export interface ProjectRow {
   created_at: string
   updated_at: string
   stage_entered_at: string | null
+  // W1 (schema-v55) pipeline-movement metadata. The GET handler returns these
+  // (SELECT *), so the frontend can read days-since-meaningful-movement for the
+  // unified P2-9 staleness basis without re-deriving it from updated_at.
+  last_meaningful_movement?: string | null
+  stale_active_since?: string | null
 }
 
 export interface GrantRow {
