@@ -3,6 +3,10 @@
 
 > Historical phase records moved from CLAUDE.md to keep the operating guide focused on current state. Each section is a complete record of what shipped, decisions made, and scores achieved.
 
+## 2026-06-10 — Live-review batch 2 + local-launch parity + Bug Squasher (deploys `fab0997b` → `db13bba2` → `1ee47a05`)
+
+Nick live-drove the round and filed a stream of items; all shipped same-day (~33 commits). Three deploys: (1) **edge fixes** — one anchored left edge on ALL surfaces + anchored-left/FLUID-RIGHT wide mode (`.band-anchored-wide`: My Tasks Columns + Projects Pipeline expand rightward, no h-scroll), page tints removed, planned rows show short_title, 📌 after title; (2) **local-launch parity** — `mnccore://` verb router (open/workon/process/bugsquash) registered on BOTH machines (home via the home-work chat; its classifier correctly required Nick's in-session approval), folder-path normalization both ends (`normalizeLocalFolderPath` — primary_folder data is heterogeneous file:///%20/backslash), Obsidian vault `.md` chips, ProjectDetail/TaskDetailPanel/Today launch buttons, Hub-comments→/process collector (`GET /api/task-comments/recent` extended + PB `process_hub_comments.py`, scope: Nick's comments + team @claude); (3) **batch 2** — task editor short_title/quiet-Delete-with-undo/h-scroll fix, "Posted note" double-entry killed, **viewer-local timestamps class fix** (`parseDbUtc`/`formatDbLocal`, ~45 sites over two sweeps), description dated-log newest-first (`descriptionLog.ts`, interim until M5), ⌘K `create=true` class fixed (4 dead pairs + `NavigateKeepSearch`), create-task default due=today, **Bug Squasher** (schema **v76** `bug_reports` + GET/POST endpoints + bat + ⌘K-only PI-only command). M5 plan gained Nick's Description-vs-Activity addendum. Tests 766/766; schema v76; route count 238.
+
 ## 2026-06-09 (evening) — Design-polish round + Today plan store + ENG backlog: ALL THREE WORKSTREAMS SHIPPED (deploy `8c5b8950` on `0f3d09a8`)
 
 One session executed Workstreams A+B+C end-to-end: **52 commits, 5 agent waves, build + tsc green throughout, 751/751 API tests, deployed + smoke-verified.** Schema **v75**.

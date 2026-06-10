@@ -30,10 +30,11 @@ shims in `src/App.tsx` placed outside `RequireAuth`.
 **API routes** (`/api/*`) are NOT gated by CF Access. Auth enforced
 server-side via X-API-Key + `REQUIRE_AUTH` + JWT verify.
 
-## D1 Tables (75 — sqlite_master, excl. sqlite_/internal; schema v74)
+## D1 Tables (76 — sqlite_master, excl. sqlite_/internal; schema v76)
 
 | Table | Rows | Purpose |
 |-------|------|---------|
+| bug_reports | 0+ | Bug Squasher queue (schema v76, 2026-06-10): status open/resolved/dismissed + resolved_at + context cols; mirrors /api/bug-report GitHub issues. GET /api/bug-reports?status= + POST /api/bug-reports/:id/status (PI/API-key). |
 | team_members | 19 | Lab personnel + roles + `email` column (schema v43). Slugs use `preferred_name-last_name` format post Phase 36b. |
 | projects | 64 | Research projects with stages + `deleted_at` (schema v45) + indexed `title` (v46). |
 | publications | 100+ | PubMed-sourced publications |
@@ -63,7 +64,7 @@ server-side via X-API-Key + `REQUIRE_AUTH` + JWT verify.
 | pb_sessions | dynamic | Claude Code session history synced from brain.db |
 | inbox | dynamic | Quick Capture entries (FAB + Ctrl+I); synced nightly to PB Inbox/*.md (Phase 32) |
 
-## API Endpoints (~225 via Hono v4.12 — Phase 36)
+## API Endpoints (238 registered routes via Hono v4.12 — count pinned by the route-contract snapshot test)
 
 > Route table is `api/index.ts` (Hono declarative). Route handlers live in
 > `api/routes/*.ts` and are untouched by the Hono migration. Middleware
@@ -225,7 +226,7 @@ server-side via X-API-Key + `REQUIRE_AUTH` + JWT verify.
 | `src/components/dashboard/ProactiveBriefCard.tsx` | Overdue/due-today/focus suggestion intelligence card (Phase 29) |
 | `src/components/dashboard/SystemHealthMiniCard.tsx` | Green/amber/red sync health indicator (Phase 29) |
 | `src/components/dashboard/FileActivityCard.tsx` | GitHub-style calendar heatmap of file activity (Phase 29) |
-| `src/components/QuickCaptureBar.tsx` | Dashboard top input, Ctrl+N, idea: prefix parsing (Phase 29) |
+| `src/components/QuickCaptureBar.tsx` | Dashboard capture trigger → opens the canonical GlobalQuickAddModal (shortcut `q`; Ctrl+N retired 2026-06-10 — browser-reserved, never fired) |
 | `api/routes/email-drafts.ts` | Email draft sync + pending count API (Phase 29) |
 | `api/routes/proactive-brief.ts` | Computed intelligence: overdue, stale, focus suggestion (Phase 29) |
 | `api/routes/file-activity.ts` | File activity heatmap + sync API (Phase 29) |

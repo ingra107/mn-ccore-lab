@@ -34,6 +34,15 @@ Pure-engineering loose ends from the Codex audit; can run alongside A/B.
 - **Personal uses root gated paths, not `PATHS`** (`PersonalPage.tsx:974`).
 - Detail: Codex audit §B loose-ends table + §A #3/#7.
 
+### Tech-debt captures (from the 2026-06-10 session-close /simplify review — durable, not session-task-list)
+| Date | Item | Where | Effort | Status |
+|---|---|---|---|---|
+| 2026-06-10 | Route-DSL `auth:'pi'` metadata is NOT middleware-enforced — handlers also inline `isPiRequest` (split invites a forgotten-guard bug). Centralize enforcement in the registry binding; strip in-handler checks. | api/index.ts + api/routes/bug-report.ts (+5 sibling routes) | ~2h | OPEN |
+| 2026-06-10 | `dateUtils.safeParse` wraps `time.parseDbUtc` — two import paths for one parser; converge callers on one name. | src/lib/{dateUtils,time}.ts | ~1h | OPEN |
+| 2026-06-10 | `useOpenParam` is wired per-page; if the `?open=`/`?create=` consumer count grows past ~10 pages, hoist to a router-level convention. | src/hooks/useOpenParam.ts consumers | ~4h | OPEN |
+| 2026-06-10 | Task delete undo = client delayed-commit (5s) because no server un-delete exists; add a restore endpoint if a trash/archive feature ever builds. | api/routes/tasks.ts + TaskDetailPanel | ~3h | OPEN |
+| 2026-06-10 | IdeasPage:67 + AskTheLab:44 strip create-param with `setSearchParams({})` (nukes ALL params); migrate to useOpenParam. | 2 files | S | OPEN |
+
 > The 2026-06-05 "NEXT SESSION" block below is **largely RESOLVED** — project_id fix deployed (`7653955d`), the `9a007fd1` Today row fixes deployed, Slice C/D/E deployed (`90626636`, 2026-06-09). DH-5 (Key Links visual verify) is now folded into Workstream A. Kept below for any straggler context only.
 
 ---
