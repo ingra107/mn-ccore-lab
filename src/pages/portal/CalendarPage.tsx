@@ -135,7 +135,10 @@ export default function CalendarPage() {
   }
 
   return (
-    <div>
+    // P1-1 (Nick 2026-06-10): Calendar shares the universal anchored band + left
+    // edge — wrap in .content-container so its primary column's left edge matches
+    // the data pages and every other operating surface.
+    <div className="content-container">
       <PageHeader
         icon={<Calendar size={20} />}
         title="Lab Calendar"

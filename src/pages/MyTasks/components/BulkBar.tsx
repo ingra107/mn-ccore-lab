@@ -64,7 +64,11 @@ export function BulkBar({ count, onClear, onPlanToday, onSnoozeDay, onComplete, 
 
   return (
     <div ref={pickerRef} style={{ position: 'relative', flexShrink: 0 }}>
-      <div style={{ padding: '8px 24px', background: 'rgba(201,168,76,0.08)', borderBottom: '1px solid rgba(201,168,76,0.2)', display: 'flex', alignItems: 'center', gap: 8, fontSize: 12 }}>
+      {/* P1-1: full-width gold strip + border (outer), band-centered content
+          (.mt-band inner) so the bulk bar's controls align to the same left edge
+          as the toolbar + views. */}
+      <div style={{ paddingTop: 8, paddingBottom: 8, background: 'rgba(201,168,76,0.08)', borderBottom: '1px solid rgba(201,168,76,0.2)' }}>
+       <div className="mt-band" style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12 }}>
         <span style={{ color: ACCENT_GOLD, fontWeight: 600 }}>{count} selected</span>
         <span style={{ color: INK_DIM }}>·</span>
         {btn('📌 Plan today', onPlanToday, ACCENT_GOLD)}
@@ -76,10 +80,11 @@ export function BulkBar({ count, onClear, onPlanToday, onSnoozeDay, onComplete, 
         {btn('Archive', onArchive, ACCENT_CORAL)}
         <div style={{ flex: 1 }} />
         <button onClick={onClear} style={{ background: 'none', border: 'none', color: INK_MUTED, fontSize: 11, cursor: 'pointer', fontFamily: 'inherit' }}>Deselect</button>
+       </div>
       </div>
       {/* Picker popover — replaces window.prompt() (CD spec: dark-first picker, not native modal). Esc / outside-click close. */}
       {picker && (
-        <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, padding: '10px 24px', background: PANEL_BG, borderBottom: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 4px 12px rgba(0,0,0,0.4)', zIndex: 20, display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
+        <div className="mt-band" style={{ position: 'absolute', top: '100%', left: 0, right: 0, paddingTop: 10, paddingBottom: 10, background: PANEL_BG, borderBottom: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 4px 12px rgba(0,0,0,0.4)', zIndex: 20, display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
           <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: INK_DIM, marginRight: 6 }}>
             {picker === 'reassign' ? 'Reassign to' : picker === 'priority' ? 'Set priority' : 'Set status'}
           </span>

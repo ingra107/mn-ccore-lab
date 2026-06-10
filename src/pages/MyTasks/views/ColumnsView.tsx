@@ -38,12 +38,14 @@ export function ColumnsView({ filtered, byGroup, selected, toggleSelect, onToggl
   // users discover the 5 columns scroll horizontally on small viewports
   // (eval Issue 5).
   return (
-    // P1-1 anchored column: the Kanban board holds to --col-main, left-anchored
-    // (padding-left matches Lanes/List at 24px) so the board's left edge equals
-    // the other two views. The grid still h-scrolls INSIDE --col-main when the
-    // columns exceed it (colCount × 280 > 960 at 4+ columns) — the intended
-    // "Columns scrolls inside --col-main" behavior.
-    <div className="mt-columns-scroll" style={{ flex: 1, overflow: 'auto', padding: '12px 24px 20px', position: 'relative', maxWidth: 'var(--col-main)' }}>
+    // P1-1 (Nick 2026-06-10): .mt-band centers on --content-band (matching the
+    // data pages); the inner Kanban board is left-anchored to --col-main within
+    // the band so its left edge equals Projects + the other two views + Today.
+    // The grid still h-scrolls INSIDE --col-main when the columns exceed it
+    // (colCount × 260 > 960 at 4+ columns) — the intended "Columns scrolls
+    // inside --col-main" behavior.
+    <div className="mt-band" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+    <div className="mt-columns-scroll" style={{ flex: 1, overflow: 'auto', paddingTop: 12, paddingBottom: 20, position: 'relative', maxWidth: 'var(--col-main)', width: '100%' }}>
       <style>{`
         .mt-columns-scroll { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.18) transparent; }
         .mt-columns-scroll::-webkit-scrollbar { height: 8px; }
@@ -102,6 +104,7 @@ export function ColumnsView({ filtered, byGroup, selected, toggleSelect, onToggl
         })}
       </div>
       {filtered.length === 0 && <NoTasksMatch />}
+    </div>
     </div>
   )
 }

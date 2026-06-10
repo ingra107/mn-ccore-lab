@@ -268,7 +268,12 @@ export default function UnifiedMyTasks() {
   const isLoading = tasksQuery.isLoading || projectsQuery.isLoading
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: 'var(--task-page-bg)', color: 'var(--task-ink)', fontFamily: 'var(--font-sans), \'DM Sans\', system-ui, sans-serif', overflow: 'hidden' }}>
+    /* P1-1 + fix (Nick 2026-06-10): no page-wide bg tint — My Tasks sits on the
+       global page bg like every other page ("background color around the entire
+       page"). The toolbar + views band-center their content via .mt-band so the
+       primary column's left edge matches the data pages. Cards/rows keep their
+       own surfaces. */
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', color: 'var(--task-ink)', fontFamily: 'var(--font-sans), \'DM Sans\', system-ui, sans-serif', overflow: 'hidden' }}>
       <TopBar
         view={view} setView={setView}
         search={search} setSearch={setSearch}
@@ -297,7 +302,7 @@ export default function UnifiedMyTasks() {
       <div style={{ flex: 1, minHeight: 0, display: 'flex', overflow: 'hidden' }}>
         <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           {isLoading ? (
-            <div style={{ padding: 24 }}><TableSkeleton /></div>
+            <div className="mt-band" style={{ paddingTop: 24, paddingBottom: 24 }}><div style={{ maxWidth: 'var(--col-main)' }}><TableSkeleton /></div></div>
           ) : view === 'columns' ? (
             <ColumnsView filtered={filtered} byGroup={byGroup} selected={selected} toggleSelect={toggleSelect} onToggleComplete={onToggleComplete} expanded={expanded} setExpanded={setExpanded} projectsByPid={projectsByPid} plannedSet={plannedSet} filterGroup={filter.group} />
           ) : view === 'lanes' ? (

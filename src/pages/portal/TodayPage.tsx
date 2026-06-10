@@ -247,7 +247,7 @@ export default function TodayPage() {
     .filter((id) => id !== state.rightNow)
     .map((id) => tasks.find((t) => t.id === id))
     .filter((t): t is TaskRow => !!t)
-    .map((t) => ({ id: t.id, title: t.title }))
+    .map((t) => ({ id: t.id, title: t.title, short_title: t.short_title }))
 
   // Pill counts. Cache-confirmed completions + deduped local-only completions.
   const doneTodayCount = doneTodayDetail.length + localDoneIds.length
@@ -293,27 +293,45 @@ export default function TodayPage() {
     )
   }
 
+  // P1-1 (Nick 2026-06-10): Today shares the universal anchored band + left edge.
+  // The grid is centered on --content-band with the same responsive padding as
+  // .content-container (data pages), so the main column's left edge lands at the
+  // same pixel as Projects/Manuscripts/Grants. Main maps to --col-main, rail to
+  // --col-rail. No page-wide bg tint — Today sits on the global page bg like
+  // every other page (fix: "background color around the entire page"); only
+  // cards/panels carry their own surface.
   return (
-    <div className="b2-grid" style={{ background: 'var(--task-page-bg)', color: 'var(--task-ink)', fontFamily: 'var(--font-sans), \'DM Sans\', system-ui, sans-serif', minHeight: '100%' }}>
+    <div className="b2-grid" style={{ color: 'var(--task-ink)', fontFamily: 'var(--font-sans), \'DM Sans\', system-ui, sans-serif', minHeight: '100%' }}>
       <style>{`
         @keyframes b2pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
         /* Hover tints: rgba lifts in dark mode, darken in light mode.
            Both schemes get a 4% overlay against their respective bg. */
         .b2-proj:hover { background: rgba(127,127,127,0.06); }
         .b2-proj-link:hover { color: var(--task-accent-teal) !important; opacity: 1 !important; text-decoration: underline; }
-        /* Desktop: 1fr main + 340px right rail. Mobile: stack with rail
-           below main (rail collapses to 220px tall horizontal scroll
-           cards). 1024 breakpoint matches the data-page tablet
-           breakpoint per the columnar table density rules. */
-        .b2-grid { display: grid; grid-template-columns: 1fr 340px; }
-        .b2-main { padding: 28px 32px; border-right: 1px solid var(--border-subtle); min-width: 0; }
-        /* Rail uses the page bg directly (not panel) — sits as a darker
-           recess in dark mode and a slightly off-white panel in light. */
-        .b2-rail { padding: 28px 20px; background: var(--task-page-bg); overflow-y: auto; border-left: 1px solid var(--border-subtle); }
+        /* Centered band (P1-1): identical to .content-container so the left
+           edge matches the data pages exactly. main = --col-main, rail =
+           --col-rail. Below 1024 the rail stacks under main. */
+        .b2-grid {
+          display: grid;
+          grid-template-columns: minmax(0, var(--col-main)) var(--col-rail);
+          max-width: var(--content-band);
+          margin-left: auto; margin-right: auto;
+          padding-left: 1.5rem; padding-right: 1.5rem;
+        }
+        .b2-main { padding: 28px 32px 28px 0; min-width: 0; }
+        /* Rail is a recessed panel beside the main column. No page-wide tint;
+           it carries its own subtle surface so it reads as a distinct rail. */
+        .b2-rail { padding: 28px 0 28px 24px; overflow-y: auto; border-left: 1px solid var(--border-subtle); }
+        @media (min-width: 640px) {
+          .b2-grid { padding-left: 2rem; padding-right: 2rem; }
+        }
+        @media (min-width: 1024px) {
+          .b2-grid { padding-left: 3rem; padding-right: 3rem; }
+        }
         @media (max-width: 1024px) {
           .b2-grid { grid-template-columns: 1fr; }
-          .b2-main { padding: 20px 16px; border-right: none; border-bottom: 1px solid var(--border-subtle); }
-          .b2-rail { padding: 16px; border-left: none; }
+          .b2-main { padding: 20px 0; border-bottom: 1px solid var(--border-subtle); }
+          .b2-rail { padding: 16px 0 0; border-left: none; }
         }
       `}</style>
 

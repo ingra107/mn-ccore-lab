@@ -730,7 +730,12 @@ export default function PersonalPage() {
   if (tasksLoading) return <CardSkeleton count={4} />
 
   return (
-    <div>
+    // P1-1 (Nick 2026-06-10): My Hub shares the universal anchored band + left
+    // edge. Wrapping in .content-container lands the primary column's left edge
+    // at the same pixel as the data pages (Projects/Manuscripts/Grants) and the
+    // other operating surfaces (Today / My Tasks / Calendar). No page-wide tint
+    // — cards keep their own --surface-* surfaces.
+    <div className="content-container">
       {/* Header row */}
       <div className="flex items-start justify-between gap-4">
         <PageHeader

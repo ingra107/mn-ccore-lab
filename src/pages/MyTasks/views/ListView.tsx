@@ -79,11 +79,13 @@ export function ListView({ filtered, selected, toggleSelect, setSelected, setDra
   const kbdStyle = { fontFamily: 'var(--font-mono), JetBrains Mono, monospace', fontSize: 9, padding: '1px 4px', background: 'rgba(255,255,255,0.08)', borderRadius: 2, color: INK_MUTED }
 
   return (
-    // P1-1 anchored column: the power-grid holds to --col-main, left-anchored
-    // (padding-left matches Lanes' 24px) so its left edge equals the other two
-    // views. 960px keeps the 8 fixed columns + 1fr Title from h-scrolling.
+    // P1-1 (Nick 2026-06-10): .mt-band centers on --content-band (matching the
+    // data pages); the inner --col-main power-grid is left-anchored within the
+    // band so its left edge equals Projects + the other two views + Today. 960px
+    // keeps the 8 fixed columns + 1fr Title from h-scrolling.
     <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
       <div ref={scrollRef} style={{ flex: 1, overflow: 'auto' }}>
+       <div className="mt-band">
         <div style={{ maxWidth: 'var(--col-main)' }}>
         <div style={{ padding: '10px 16px 0' }}><OverdueBanner tasks={filtered} /></div>
         <div className="list-view-header" style={{ display: 'grid', gridTemplateColumns: '32px 26px 1fr 150px 100px 80px 110px 110px 70px', padding: '6px 16px', borderBottom: '1px solid rgba(255,255,255,0.08)', fontSize: 9.5, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: INK_DIM, position: 'sticky', top: 0, background: PAGE_BG, zIndex: 1 }}>
@@ -135,14 +137,18 @@ export function ListView({ filtered, selected, toggleSelect, setSelected, setDra
           </div>
         )}
         </div>
+       </div>
       </div>
-      <div style={{ padding: '5px 16px', borderTop: '1px solid rgba(255,255,255,0.06)', background: 'rgba(0,0,0,0.2)', fontSize: 10, color: INK_DIM, display: 'flex', gap: 14, flexShrink: 0 }}>
+      {/* P1-1: full-width footer border, band-centered keyboard-hint content. */}
+      <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', background: 'rgba(0,0,0,0.2)', flexShrink: 0 }}>
+       <div className="mt-band" style={{ paddingTop: 5, paddingBottom: 5, fontSize: 10, color: INK_DIM, display: 'flex', gap: 14 }}>
         <span style={{ fontFamily: 'var(--font-mono), JetBrains Mono, monospace' }}>{filtered.length > 0 ? `${cursor + 1}/${filtered.length}` : '0/0'}</span>
         <span style={{ flex: 1 }} />
         <span><kbd style={kbdStyle}>j</kbd>/<kbd style={kbdStyle}>k</kbd> move</span>
         <span><kbd style={kbdStyle}>x</kbd> select</span>
         <span><kbd style={kbdStyle}>e</kbd>/<kbd style={kbdStyle}>⏎</kbd> drawer</span>
         <span><kbd style={kbdStyle}>esc</kbd> deselect</span>
+       </div>
       </div>
     </div>
   )

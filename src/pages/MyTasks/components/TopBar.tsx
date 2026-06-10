@@ -38,7 +38,12 @@ export function TopBar({ view, setView, search, setSearch, filter, setFilter, qu
   ]
   const hasFilters = filter.priority || filter.project || filter.mentee || filter.group || search || quickView !== 'all'
   return (
-    <div style={{ padding: '14px 24px 12px', borderBottom: '1px solid rgba(255,255,255,0.06)', flexShrink: 0 }}>
+    // P1-1 (Nick 2026-06-10): the border-bottom spans full width (visual
+    // separator) but the toolbar CONTENT is band-centered via .mt-band so its
+    // left edge matches the views below + the data pages. Vertical padding
+    // stays on the outer; horizontal padding comes from .mt-band.
+    <div style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', flexShrink: 0, paddingTop: 14, paddingBottom: 12 }}>
+     <div className="mt-band">
       {/* P2-6: title row wraps so the search input + Create Task drop to a
           second line on narrow widths instead of clipping the fixed-260 search
           and overlapping the title. */}
@@ -122,6 +127,7 @@ export function TopBar({ view, setView, search, setSearch, filter, setFilter, qu
           >clear all</button>
         )}
       </div>
+     </div>
     </div>
   )
 }

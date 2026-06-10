@@ -980,6 +980,28 @@ a:hover {
   }
 }
 
+/* ── My Tasks band (P1-1, Nick 2026-06-10) ──
+   My Tasks is a height:100vh flex-col where the toolbar + views scroll
+   independently, so it can't simply wrap in one .content-container. Instead the
+   full-width chrome strips (TopBar / BulkBar / each view's scroll area) keep
+   their full-bleed borders, and their *inner content* gets .mt-band — the SAME
+   centered band + responsive padding as .content-container — so the primary
+   column's left edge matches the data pages and the other operating surfaces
+   exactly. Identical padding ramp to .content-container above. */
+.mt-band {
+  max-width: var(--content-band);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+@media (min-width: 640px) {
+  .mt-band { padding-left: 2rem; padding-right: 2rem; }
+}
+@media (min-width: 1024px) {
+  .mt-band { padding-left: 3rem; padding-right: 3rem; }
+}
+
 /* ── Section Header accent line ── */
 .section-header-line {
   flex: 1;

@@ -52,10 +52,12 @@ export function LanesView({ byGroup, selected, toggleSelect, onToggleComplete, e
   const allTasks = useMemo(() => visibleGroups.flatMap((g) => byGroup[g]), [visibleGroups, byGroup])
 
   return (
-    // P1-1 anchored column: content holds to --col-main, left-anchored (not
-    // centered) so the left edge is identical to Columns + List. The 1100px
-    // literal is gone. Outer scroll fills the surface; inner wrapper anchors.
-    <div style={{ flex: 1, overflow: 'auto', padding: '12px 24px 40px' }}>
+    // P1-1 (Nick 2026-06-10): outer scroll fills the surface; .mt-band centers
+    // on --content-band (matching the data pages); the inner --col-main block is
+    // left-anchored within the band so the primary column's left edge equals
+    // Projects + the other two views + Today. The 1100px literal is gone.
+    <div style={{ flex: 1, overflow: 'auto', paddingTop: 12, paddingBottom: 40 }}>
+     <div className="mt-band">
       <div style={{ maxWidth: 'var(--col-main)', width: '100%' }}>
       <OverdueBanner tasks={allTasks} />
       {visibleGroups.map((gkey) => {
@@ -112,6 +114,7 @@ export function LanesView({ byGroup, selected, toggleSelect, onToggleComplete, e
         )
       })}
       </div>
+     </div>
     </div>
   )
 }
