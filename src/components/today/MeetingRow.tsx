@@ -9,7 +9,9 @@
 import { useState } from 'react'
 import { ACCENT_TEAL, ACCENT_GOLD, INK, INK_DIM, type TodayEvent } from './constants'
 
-export function EventRow({ e, onDismiss, overlap = false, note, onNote }: { e: TodayEvent; onDismiss: (id: string) => void; overlap?: boolean; note?: string; onNote: (id: string, v: string) => void }) {
+export type SaveStatus = 'idle' | 'saving' | 'saved'
+
+export function EventRow({ e, onDismiss, overlap = false, note, onNote, saveStatus = 'idle', isCalEvent = false }: { e: TodayEvent; onDismiss: (id: string) => void; overlap?: boolean; note?: string; onNote: (id: string, v: string) => void; saveStatus?: SaveStatus; isCalEvent?: boolean }) {
   const [expanded, setExpanded] = useState(false)
   return (
     <div style={{ position: 'relative', background: 'rgba(92,188,180,0.06)', border: `1px solid rgba(92,188,180,${overlap ? 0.35 : 0.18})`, borderRadius: 6, overflow: 'hidden' }}>
@@ -48,12 +50,22 @@ export function EventRow({ e, onDismiss, overlap = false, note, onNote }: { e: T
       </div>
       {expanded && (
         <div style={{ padding: '12px 14px 14px', borderTop: '1px solid rgba(92,188,180,0.18)', background: 'rgba(92,188,180,0.02)' }}>
-          <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: INK_DIM, marginBottom: 4 }}>Meeting notes</div>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 4 }}>
+            <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: INK_DIM }}>Meeting notes</div>
+            {!isCalEvent && saveStatus === 'saving' && (
+              <span style={{ fontSize: 10, color: INK_DIM }}>saving…</span>
+            )}
+            {!isCalEvent && saveStatus === 'saved' && (
+              <span style={{ fontSize: 10, color: ACCENT_TEAL }}>saved</span>
+            )}
+          </div>
           <textarea
-            value={note || ''}
-            onChange={(ev) => onNote(e.id, ev.target.value)}
-            placeholder="Jot notes as the meeting happens…"
-            style={{ width: '100%', minHeight: 72, background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 4, padding: '8px 10px', color: INK, fontSize: 12, fontFamily: 'inherit', outline: 'none', resize: 'vertical', boxSizing: 'border-box', lineHeight: 1.5 }}
+            value={isCalEvent ? '' : (note || '')}
+            onChange={isCalEvent ? undefined : (ev) => onNote(e.id, ev.target.value)}
+            readOnly={isCalEvent}
+            disabled={isCalEvent}
+            placeholder={isCalEvent ? 'Personal calendar event — no meeting record' : 'Jot notes as the meeting happens…'}
+            style={{ width: '100%', minHeight: 72, background: isCalEvent ? 'rgba(0,0,0,0.12)' : 'rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 4, padding: '8px 10px', color: isCalEvent ? INK_DIM : INK, fontSize: 12, fontFamily: 'inherit', outline: 'none', resize: isCalEvent ? 'none' : 'vertical', boxSizing: 'border-box', lineHeight: 1.5, cursor: isCalEvent ? 'not-allowed' : undefined }}
           />
         </div>
       )}

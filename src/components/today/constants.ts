@@ -51,6 +51,9 @@ export interface TodayEvent {
   // these undefined and render as untimed.
   startMin?: number
   endMin?: number
+  // Persisted meeting notes from D1. Populated for real team meetings
+  // (id without cal- prefix); undefined for personal iCal events (cal-*).
+  notes?: string | null
 }
 
 export interface DailyCounts {
@@ -134,7 +137,7 @@ export function formatTodayDate(): string {
 
 export function meetingToEvent(m: MeetingRow): TodayEvent {
   // Hub MeetingRow has only `date`, no time fields. Render as untimed.
-  return { id: m.id, time: '—', title: m.title }
+  return { id: m.id, time: '—', title: m.title, notes: m.notes }
 }
 
 // TP-10: detect a meeting URL in the location field. ics-parser already

@@ -13,7 +13,7 @@
 // excessively tall. alignItems: 'start' on the grid ensures each column
 // renders at its natural height rather than stretching to the tallest column.
 
-import { EventRow } from './MeetingRow'
+import { EventRow, type SaveStatus } from './MeetingRow'
 import { ACCENT_CORAL, INK_DIM } from './constants'
 import { withAlpha } from '../../lib/taskGrouping'
 import type { TodayEvent } from './constants'
@@ -26,9 +26,10 @@ interface OverlapBandProps {
   onDismiss: (id: string) => void
   notes: Record<string, string>
   onNote: (id: string, v: string) => void
+  saveStates?: Record<string, SaveStatus>
 }
 
-export function OverlapBand({ events, onDismiss, notes, onNote }: OverlapBandProps) {
+export function OverlapBand({ events, onDismiss, notes, onNote, saveStates }: OverlapBandProps) {
   if (events.length < 2) return null
 
   // Compute per-event stagger offsets. Events without startMin (untimed) get
@@ -88,6 +89,8 @@ export function OverlapBand({ events, onDismiss, notes, onNote }: OverlapBandPro
                 onDismiss={onDismiss}
                 note={notes[e.id]}
                 onNote={onNote}
+                saveStatus={saveStates?.[e.id] ?? 'idle'}
+                isCalEvent={e.id.startsWith('cal-')}
               />
             </div>
           )

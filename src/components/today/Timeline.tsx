@@ -9,7 +9,7 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { PATHS } from '../../constants/paths'
-import { EventRow } from './MeetingRow'
+import { EventRow, type SaveStatus } from './MeetingRow'
 import { OverlapBand } from './OverlapBand'
 import { PlannedTaskRow } from './PlannedTaskRow'
 import {
@@ -18,6 +18,43 @@ import {
 } from './constants'
 import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow } from '../../lib/api'
+import { useUpdateMeetingNotes } from '../../hooks/mutations/useMeetingMutations'
+
+// MeetingNotesAutoSave — renderless helper that debounces a notes string and
+// fires useUpdateMeetingNotes when the user pauses typing for DEBOUNCE_MS.
+// Instantiated once per real D1 meeting that has been touched this session.
+// - Fires ONLY when notes differs from lastSavedRef (avoids re-saves on rerender).
+// - onStatus callback lets Timeline track saving/saved badge.
+const DEBOUNCE_MS = 1500
+function MeetingNotesAutoSave({ meetingId, notes, onStatus }: { meetingId: string; notes: string; onStatus: (id: string, status: SaveStatus) => void }) {
+  const mutation = useUpdateMeetingNotes(meetingId)
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const lastSavedRef = useRef<string>(notes) // initialised to the hydrated value
+  const onStatusRef = useRef(onStatus)
+  onStatusRef.current = onStatus
+
+  useEffect(() => {
+    // Don't fire on the initial mount value (already persisted).
+    if (notes === lastSavedRef.current) return
+
+    onStatusRef.current(meetingId, 'saving')
+    if (timerRef.current) clearTimeout(timerRef.current)
+    timerRef.current = setTimeout(() => {
+      lastSavedRef.current = notes
+      mutation.mutate(notes, {
+        onSuccess: () => onStatusRef.current(meetingId, 'saved'),
+        onError: () => onStatusRef.current(meetingId, 'idle'),
+      })
+    }, DEBOUNCE_MS)
+
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [notes, meetingId])
+
+  return null
+}
 
 // TP-09: 1px now-line. Updates every 60s via setInterval. Static — no
 // animation — so prefers-reduced-motion is a no-op.
@@ -68,6 +105,27 @@ interface TimelineProps {
 export function Timeline({ events, tasks, state, projectsByPid, expandedId, onExpand }: TimelineProps) {
   const [dismissedMeetings, setDismissedMeetings] = useState<Record<string, boolean>>({})
   const [meetingNotes, setMeetingNotes] = useState<Record<string, string>>({})
+  const [meetingSaveState, setMeetingSaveState] = useState<Record<string, SaveStatus>>({})
+
+  // Hydrate local notes state from persisted D1 meeting notes on mount and
+  // whenever the events list changes identity (new day / refetch). We only
+  // populate entries that carry a notes value so existing local edits are not
+  // overwritten mid-session — the effect is gated on `id` set change, not on
+  // the notes string itself. cal-* events have no notes field and are skipped.
+  useEffect(() => {
+    setMeetingNotes((prev) => {
+      const next = { ...prev }
+      for (const e of events) {
+        if (e.id.startsWith('cal-')) continue          // iCal event — no D1 row
+        if (e.notes != null && !(e.id in next)) {
+          next[e.id] = e.notes                          // hydrate only on first appearance
+        }
+      }
+      return next
+    })
+  // Re-run when the set of meeting ids changes (new day / data reload).
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [events.map((e) => e.id).join(',')])
   const visibleMeetings = events.filter((e) => !dismissedMeetings[e.id])
   const onDropTask = useCallback((id: string, slot: PlannedSlot) => state.planAt(id, slot), [state])
 
@@ -150,8 +208,21 @@ export function Timeline({ events, tasks, state, projectsByPid, expandedId, onEx
   const plannedStripIds = state.plannedIds().filter((id) => state.planned[id]?.slot === 'strip' && id !== state.rightNow)
   const plannedStripTasks = plannedStripIds.map((id) => tasks.find((t) => t.id === id)).filter((t): t is TaskRow => !!t)
 
+  // Collect real D1 meeting ids that have local notes to auto-save.
+  // We render one MeetingNotesAutoSave per touched real meeting (not cal-*).
+  const touchedMeetingIds = Object.keys(meetingNotes).filter((id) => !id.startsWith('cal-'))
+
   return (
     <section data-b2-timeline style={{ marginBottom: 24 }}>
+      {/* Renderless auto-savers — one per real D1 meeting with in-session notes */}
+      {touchedMeetingIds.map((id) => (
+        <MeetingNotesAutoSave
+          key={id}
+          meetingId={id}
+          notes={meetingNotes[id] ?? ''}
+          onStatus={(mid, status) => setMeetingSaveState((s) => ({ ...s, [mid]: status }))}
+        />
+      ))}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
         <span style={{ fontSize: 14 }}>📅</span>
         <h3 style={{ fontSize: 13, fontWeight: 600, color: '#fff', letterSpacing: '-0.01em', margin: 0 }}>Today · timeline</h3>
@@ -244,6 +315,8 @@ export function Timeline({ events, tasks, state, projectsByPid, expandedId, onEx
                   onDismiss={(id) => setDismissedMeetings((s) => ({ ...s, [id]: true }))}
                   note={meetingNotes[head.id]}
                   onNote={(id, v) => setMeetingNotes((s) => ({ ...s, [id]: v }))}
+                  saveStatus={meetingSaveState[head.id] ?? 'idle'}
+                  isCalEvent={head.id.startsWith('cal-')}
                 />
               ) : (
                 <OverlapBand
@@ -251,6 +324,7 @@ export function Timeline({ events, tasks, state, projectsByPid, expandedId, onEx
                   onDismiss={(id) => setDismissedMeetings((s) => ({ ...s, [id]: true }))}
                   notes={meetingNotes}
                   onNote={(id, v) => setMeetingNotes((s) => ({ ...s, [id]: v }))}
+                  saveStates={meetingSaveState}
                 />
               )}
             </div>
