@@ -1,3 +1,71 @@
+# Session Handoff — 2026-06-10 (EVENING) — P2-A SHIPPED · backfill DONE · Activity fixes · Obsidian shell fixed
+
+> **State: 793/793 API tests · live deploy on `7debd8ea` = HEAD (pushed) · D1 unchanged at v77.**
+> Evening session executed Nick's queue + "keep going": dogfood interim check, PB artifact rescue,
+> M5 P2 brainstorm-lite (+ Nick's calls), activity_log backfill, live-review fixes, **P2-A complete**.
+
+## ✅ This session (newest first)
+
+- **P2-A — project composer retarget SHIPPED + smoke-proven** (`5f2890e1`, Rule 70 amended `7debd8ea`):
+  project notes/comments → `postActivityEntry` (typed `proj_*` entity keys; new `projectSlug` input
+  preserves the legacy `/projects/<slug>` mention-link); GET comments/updates = byte-preserved
+  projections; `comments`(2 rows backfilled, ids+timestamps preserved, idempotent)/`project_updates`
+  (0 rows) FROZEN; `handleClaudeMention` deleted (3rd Hermes copy — projects.ts half of the
+  tech-debt item; questions.ts remains); ActivityStream = unified-feed-only (legacy merge removed —
+  re-adding double-renders) + ReactionBar on project rows. Prod smoke: probe project → note+comment
+  through new path → projections byte-identical → cascade-delete left 0 orphan entries.
+- **⚠️ P2-C SCOPED — DO NOT naively drop the 4 frozen tables:** ~12 live readers still query
+  `comments`/`project_updates` directly (contributions{,-decay}, insights×3, meeting-cadence,
+  meetings:295, search:166, digest index.ts:2737, handleRecentUpdates projects.ts:486, health agg
+  projects.ts:361-364, delete-cascades in mutations.ts/projects.ts). Harmless today (tables
+  near-empty + frozen) but a drop under them = the Slice-D 500 class. **P2-C = repoint those
+  readers to activity_entries, THEN substrate-swap-gated drop of all 4 twins
+  (task_comments/task_updates/comments/project_updates).**
+- **activity_log backfill DONE (Nick overrode the skip recommendation):** agent mined all 22,220
+  rows → 30 real completions imported (idempotent `source_table='activity_log'`; rollback = one
+  DELETE). Report: `docs/superpowers/plans/2026-06-10-activity-log-backfill-report.md` (`3d194c24`).
+  Generic bodies blanked → body uniformly = completion-note slot. Ambiguous leftovers listed in the
+  report for Nick (system events on live tasks; completions on hard-deleted tasks).
+- **Nick's live-review fixes DEPLOYED** (`2a5037b9`): project Activity names the originating task
+  (`task_title` JOIN in `/api/projects/:slug/activity` + titled TaskOriginBadge); completions =
+  compact one-liners (actor + linked title + optional note); tighter card padding + stream gap.
+  Folder chips / workon / My-Tasks title-click / ⚙ Process all PASSED Nick's click-tests.
+- **Obsidian root-caused + FIXED on WORK machine:** app self-updated (1.12.7 asar) but the
+  installer shell exe was ancient → protocol args dropped (flash, no page). Force-reinstalled via
+  `winget install --force Obsidian.Obsidian`, relaunched, fired test URI. **HOME machine needs the
+  same one-liner.** Awaiting Nick's visual confirm.
+- **M5 P2 brainstorm-lite + Nick's calls** (`7819d226`, comparison `d4480b55`+`548b2dce`, gardener
+  `80d4f8a6`): backfill=YES (done); parser-vs-LLM = evidence doc built from real R03 data (Nick
+  leaning LLM, reviewing); **retarget CONFIRMED** ("don't want description muddied") — PB owes the
+  4 breadcrumb-site repoint (query.py:1960/2001/2084/2650); nightly gardener recorded (machine-origin
+  entries only, never rewrites human comments). Order P2-A→P2-C→P2-B approved.
+- **Dogfood interim (daily_plans): CLEAN but window runs to ~13:00 CT 06-11** (retirement deployed
+  13:01 today — NOT 24h yet). Evidence: 8/8 retired routes 404, pb/sessions 200, health 200, 0 open
+  bug_reports, only mutation errors = the 2 documented arc-4 probes. **No drop done.**
+- **PB coordination:** the staged-but-never-committed retirement artifacts rescued → PB `3b775d48`
+  (decision doc + I37 yaml, pushed). I40 clock tracked PB-side (gate 1/2 met). Tech-debt row
+  updated PB `f1ac6e88`. Mirror-table disposition was already done PB-side (`779bcfbf`).
+- **Latent gap noted (pre-existing, NOT P2-A):** the ai_requests Hermes lane has **0 completed
+  requests ever** — `handleUpdateAIResponse` only updates `ai_requests`; nothing ever writes the
+  response into a feed or replaces the 'Thinking…' placeholder. The live Hermes write-back is the
+  dispatch lane (pb-sector → postActivityEntry). Needs its own small fix: on response, post a
+  claude-ai activity entry (and retire/replace the placeholder row).
+
+### ▶ NEXT
+1. **2026-06-11 ~13:00+: the daily_plans DROP** (dogfood task `task_01KTSB808F8SGNAYT2EDR42M1D`):
+   snapshot → DROP `daily_plans`+`daily_reflections` (test then prod via `scripts/wrangler-d1`) →
+   REFERENCE.md rows → fill the decision-doc dogfood table → flip I37 yaml to retired.
+2. **P2-C session:** repoint the ~12 legacy-table readers (list above) to activity_entries, then
+   substrate-swap-gated drop of the 4 frozen twins (their own dogfood window started 06-10).
+3. **Nick:** Obsidian click-test confirm (work; home needs `winget install --force Obsidian.Obsidian`
+   + browser restart), @me test, eyeball the new completion one-liners + titled task chips.
+4. **P2-B (PB pairing):** PB repoints the 4 breadcrumb writers; then one-shot description migration
+   (LLM-cleaned per Nick's lean, pending his read of the comparison doc) → delete descriptionLog.ts.
+5. **Riders still open:** feed-renderer unification (ActivityEntryItem), filterMatchesKind/LinkChip,
+   questions.ts Hermes copy, ai_requests response-lane fix (item above).
+
+---
+
 # Session Handoff — 2026-06-10 (PM session, arcs 2-4) — IA CONSOLIDATION · pb-schema 0.4.0 · FOLDER LINKS · email_link
 > One PM session, four arcs (newest first below): arc 4 = create-409 incident+hotfix + email_link-at-create ·
 > arc 3 = folder-link fix + uniform chips · arc 2 = IA-1 daily_plans retirement + 0.4.0 adoption + HUB-7 ·
