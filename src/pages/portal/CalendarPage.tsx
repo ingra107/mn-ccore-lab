@@ -28,6 +28,16 @@ const eventIcons: Record<string, typeof Calendar> = {
   milestone: Diamond,
 }
 
+// S13: every calendar event type gets a sensible destination, not just
+// meetings. Tasks open via the S1 deep-link consumer on My Tasks; milestones
+// (deadlines) land on the Deadlines page.
+function eventLinkTo(e: CalendarEvent): string | null {
+  if (e.type === 'meeting') return PATHS.meeting(e.id)
+  if (e.type === 'task') return `${PATHS.myTasks}?open=${e.id}`
+  if (e.type === 'milestone') return PATHS.deadlines
+  return null
+}
+
 export default function CalendarPage() {
   const [view, setView] = useState<ViewMode>('month')
   const [currentDate, setCurrentDate] = useState(new Date())
@@ -355,10 +365,11 @@ function DayCellRender({ dateStr, today, dayEvents }: { dateStr: string; today: 
       <div className="flex flex-col gap-0.5 mt-0.5">
         {dayEvents.slice(0, 3).map((e) => {
           const config = eventColors[e.type] || eventColors.task
-          const Wrapper = e.type === 'meeting' ? Link : 'div' as any
-          const wrapperProps = e.type === 'meeting' ? { to: PATHS.meeting(e.id) } : {}
+          const to = eventLinkTo(e)
+          const Wrapper = to ? Link : 'div' as any
+          const wrapperProps = to ? { to } : {}
           return (
-            <Wrapper key={e.id} {...wrapperProps} className="text-[10px] px-1 py-0.5 rounded truncate block" style={{ color: config.color, backgroundColor: config.bg, textDecoration: 'none', cursor: e.type === 'meeting' ? 'pointer' : 'default' }} title={formatBrandName(e.title)}>
+            <Wrapper key={e.id} {...wrapperProps} className="text-[10px] px-1 py-0.5 rounded truncate block" style={{ color: config.color, backgroundColor: config.bg, textDecoration: 'none', cursor: to ? 'pointer' : 'default' }} title={formatBrandName(e.title)}>
               {(() => { const t = formatBrandName(e.title); return t.length > 20 ? t.slice(0, 20) + '...' : t })()}
             </Wrapper>
           )
@@ -465,12 +476,13 @@ function DayView({ date, events }: { date: Date; events: CalendarEvent[] }) {
               const config = eventColors[e.type] || eventColors.task
               const Icon = eventIcons[e.type] || Calendar
               const assignee = e.meta?.assignee as string | undefined
-              const Wrapper = e.type === 'meeting' ? Link : 'div' as any
-              const wrapperProps = e.type === 'meeting' ? { to: PATHS.meeting(e.id) } : {}
+              const to = eventLinkTo(e)
+              const Wrapper = to ? Link : 'div' as any
+              const wrapperProps = to ? { to } : {}
 
               return (
                 <motion.div key={e.id} variants={staggerItem}>
-                  <Wrapper {...wrapperProps} className="flex items-center gap-4 px-4 py-3 rounded-lg border transition-colors hover:shadow-sm" style={{ borderColor: 'var(--border-subtle)', textDecoration: 'none', cursor: e.type === 'meeting' ? 'pointer' : 'default' }}>
+                  <Wrapper {...wrapperProps} className="flex items-center gap-4 px-4 py-3 rounded-lg border transition-colors hover:shadow-sm" style={{ borderColor: 'var(--border-subtle)', textDecoration: 'none', cursor: to ? 'pointer' : 'default' }}>
                     <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: config.bg }}>
                       <Icon size={18} style={{ color: config.color }} />
                     </div>
@@ -533,8 +545,9 @@ function AgendaView({ events }: { events: CalendarEvent[] }) {
                 const config = eventColors[e.type] || eventColors.task
                 const Icon = eventIcons[e.type] || Calendar
                 const assignee = e.meta?.assignee as string | undefined
-                const AgendaWrapper = e.type === 'meeting' ? Link : 'div' as any
-                const agendaProps = e.type === 'meeting' ? { to: PATHS.meeting(e.id) } : {}
+                const to = eventLinkTo(e)
+                const AgendaWrapper = to ? Link : 'div' as any
+                const agendaProps = to ? { to } : {}
                 return (
                   <motion.div key={e.id} variants={staggerItem}>
                     <AgendaWrapper {...agendaProps} className="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors" style={{ textDecoration: 'none' }}>
