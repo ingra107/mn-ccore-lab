@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, parseMentions, actorSlug, isPiRequest, resolveActor, safeTaskRow, assertProjectVisible, projectRefToCanonical } from '../helpers';
+import { json, error, generateId, logActivity, actorSlug, isPiRequest, resolveActor, safeTaskRow, assertProjectVisible, projectRefToCanonical } from '../helpers';
 import { filterFixtures } from '../lib/fixtures';
 import { ctToday } from '../lib/ct-date';
 import { nowInstant } from '../lib/time';
@@ -9,6 +9,7 @@ import { applyMutation } from './mutations';
 // Fix 5: removed dead re-export — callers import directly from ../lib/task-cols
 // or via api/helpers.ts which already re-exports it (zero callers used this path).
 import { TASK_SELECT_COLS, TASK_SELECT_COLS_TYPED } from '../lib/task-cols';
+import { postActivityEntry, activityVisibilityGate } from '../lib/activity-entry';
 
 // ── Fix 3: guardTaskProject ────────────────────────────────────────────────────
 //
@@ -556,98 +557,86 @@ export async function handleCreateTask(request: Request, user: AuthUser, env: En
 }
 
 // GET /api/tasks/:id/comments
+// Projection over activity_entries (kind='comment') preserving the legacy
+// task_comments response shape (id, task_id, author_slug, content, created_at)
+// so the frontend + PB's process_hub_comments.py consume it unmodified.
 export async function handleGetTaskComments(taskId: string, request: Request, env: Env): Promise<Response> {
   // Fix 3: guardTaskProject consolidates the repeated SELECT+assertProjectVisible pattern.
   const guard = await guardTaskProject(env, request, taskId);
   if (guard.block) return guard.block;
+  const vis = await activityVisibilityGate(request, env);
   const result = await env.DB.prepare(
-    'SELECT * FROM task_comments WHERE task_id = ? ORDER BY created_at DESC'
-  ).bind(taskId).all();
+    `SELECT id, entity_id AS task_id, actor_slug AS author_slug, body AS content, created_at
+     FROM activity_entries
+     WHERE entity_type = 'task' AND entity_id = ? AND kind = 'comment' AND ${vis.clause}
+     ORDER BY created_at DESC, id DESC`
+  ).bind(taskId, ...vis.binds).all();
   return json({ data: result.results || [] });
 }
 
 // POST /api/tasks/:id/comments
+// Writes through the unified postActivityEntry() primitive (kind='comment').
+// That primitive owns @me/visibility, @mention notifications (preserving
+// source_type='task_comment'), and the @hermes dispatch + placeholder — so this
+// handler is now just actor resolution + the activity_log echo + response shaping.
 export async function handleAddTaskComment(taskId: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
-  const body = await request.json() as { content: string; author_slug?: string };
+  const body = await request.json() as { content: string; author_slug?: string; visibility?: string };
   if (!body.content?.trim()) return error('content required', 400);
 
   // Fix 3: guardTaskProject replaces the two duplicate SELECTs that were here:
   // one for the gate and one for the @hermes project_id lookup below.
-  // projectId is reused in the @hermes path, eliminating the second round-trip.
+  // projectId is reused (passed to postActivityEntry), eliminating a round-trip.
   const guard = await guardTaskProject(env, request, taskId);
   if (guard.block) return guard.block;
   const taskProjectId = guard.projectId;
 
-  const id = generateId();
   // AM-2: validate/canonicalize author_slug; impersonation requires PI/service.
   // claude-ai (Hermes) is always allowed by resolveActor.
   const actor = await resolveActor(env, user, body.author_slug, { allowImpersonation: await isPiRequest(request, env) });
   if ('error' in actor) return error(actor.error, 400);
   const authorSlug = actor.slug;
 
-  await env.DB.prepare(
-    'INSERT INTO task_comments (id, task_id, author_slug, content) VALUES (?, ?, ?, ?)'
-  ).bind(id, taskId, authorSlug, body.content.trim()).run();
+  const posted = await postActivityEntry({
+    env,
+    user,
+    entityType: 'task',
+    entityId: taskId,
+    kind: 'comment',
+    body: body.content,
+    actorSlug: authorSlug,
+    visibility: body.visibility === 'author' ? 'author' : undefined,
+    taskProjectId,
+  });
+  if (!posted.ok) return error(posted.error, posted.status);
 
   await logActivity(env, 'comment', `Commented on task`, authorSlug, taskId, 'task');
 
-  // Create notifications for @mentions — batch one round-trip instead of
-  // N serial inserts when a comment @-mentions multiple people.
-  //
-  // source_id references the TASK (what the user cares about), not the
-  // comment row id — clicking the notification takes them to the task
-  // detail panel via ?open=. Found via deep-audit Suite 4.
-  try {
-    const mentions = parseMentions(body.content).filter((slug) => slug !== authorSlug);
-    if (mentions.length > 0) {
-      const title = `${user.name || user.email} mentioned you`;
-      const bodyPreview = body.content.trim().slice(0, 200);
-      const link = `/tasks?open=${taskId}`;
-      const stmt = env.DB.prepare(
-        'INSERT INTO notifications (id, recipient_slug, type, source_type, source_id, title, body, link) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
-      );
-      await env.DB.batch(
-        mentions.map((slug) =>
-          stmt.bind(generateId(), slug, 'mention', 'task_comment', taskId, title, bodyPreview, link)
-        )
-      );
-    }
-  } catch (e) { console.error('Failed to create task comment notifications:', e); }
-
-  // Check for @hermes/@claude mention → create AI request + placeholder comment.
-  // Mirrors project-comment Hermes path. source_type='task_comment' so the
-  // listener can route the response back correctly.
-  if (/@(hermes|claude)\b/i.test(body.content)) {
-    try {
-      const aiPrompt = body.content.replace(/@(hermes|claude)/gi, '').trim();
-      if (aiPrompt.length > 5) {
-        // Fix 3: reuse taskProjectId from guardTaskProject — eliminates duplicate SELECT.
-        const projectSlug = taskProjectId;
-        const aiId = generateId();
-        await env.DB.prepare(
-          'INSERT INTO ai_requests (id, source_type, source_id, project_slug, prompt, context, requested_by) VALUES (?, ?, ?, ?, ?, ?, ?)'
-        ).bind(aiId, 'task_comment', id, projectSlug, aiPrompt, `Task: ${taskId}`, user.email).run();
-        // Placeholder comment so the UI shows "Thinking..." immediately.
-        const responseId = generateId();
-        await env.DB.prepare(
-          "INSERT INTO task_comments (id, task_id, author_slug, content, created_at) VALUES (?, ?, ?, ?, datetime('now'))"
-        ).bind(responseId, taskId, 'claude-ai', 'Thinking about this... (AI response pending)').run();
-      }
-    } catch (e) { console.error('Failed to create AI request for @hermes mention in task comment:', e); }
-  }
-
-  const created = await env.DB.prepare('SELECT * FROM task_comments WHERE id = ?').bind(id).first();
+  // Preserve the legacy task_comments response shape for existing callers.
+  const r = posted.row;
+  const created = {
+    id: r.id,
+    task_id: r.entity_id,
+    author_slug: r.actor_slug,
+    content: r.body,
+    created_at: r.created_at,
+  };
   return json({ data: created }, 201);
 }
 
-// GET /api/tasks/:id/activity
+// GET /api/tasks/:id/activity — the UNIFIED feed (Design C, v77).
+// All activity_entries for the task (every kind), visibility-gated, newest-first.
+// This is the endpoint the frontend will adopt, replacing the 3-way client merge.
 export async function handleGetTaskActivity(taskId: string, request: Request, env: Env): Promise<Response> {
   // Fix 3: guardTaskProject consolidates the repeated SELECT+assertProjectVisible pattern.
   const guard = await guardTaskProject(env, request, taskId);
   if (guard.block) return guard.block;
+  const vis = await activityVisibilityGate(request, env);
   const result = await env.DB.prepare(
-    "SELECT * FROM activity_log WHERE related_id = ? AND related_type = 'task' ORDER BY timestamp DESC LIMIT 20"
-  ).bind(taskId).all();
+    `SELECT id, entity_type, entity_id, project_id, kind, visibility, actor_slug, body, mentions_json, update_type, metadata_json, created_at
+     FROM activity_entries
+     WHERE entity_type = 'task' AND entity_id = ? AND ${vis.clause}
+     ORDER BY created_at DESC, id DESC`
+  ).bind(taskId, ...vis.binds).all();
   return json({ data: result.results || [] });
 }
 
@@ -674,12 +663,18 @@ export async function handleGetTaskDetail(taskId: string, request: Request, env:
   const description = task?.description ?? '';
   const why = description.split(/\n\s*\n/)[0]?.trim().slice(0, 400) || null;
 
-  // Updates merge task_updates (Phase 27 — author-written notes) with
-  // activity_log entries that have meaningful actor + summary.
+  // Updates merge activity_entries (Design C, v77 — author-written notes/comments,
+  // visibility-gated) with legacy activity_log system rows that have meaningful
+  // actor + summary. The activity_entries read covers ALL kinds; the noteUpdates
+  // mapping below renders them as kind:'note'.
+  const vis = await activityVisibilityGate(request, env);
   const [updatesRes, activityRes, subtasksRes, blocksRes] = await Promise.all([
     env.DB.prepare(
-      'SELECT id, content, author_slug, update_type, created_at FROM task_updates WHERE task_id = ? ORDER BY created_at DESC LIMIT 20'
-    ).bind(taskId).all(),
+      `SELECT id, body AS content, actor_slug AS author_slug, update_type, created_at
+       FROM activity_entries
+       WHERE entity_type = 'task' AND entity_id = ? AND ${vis.clause}
+       ORDER BY created_at DESC, id DESC LIMIT 20`
+    ).bind(taskId, ...vis.binds).all(),
     env.DB.prepare(
       "SELECT id, actor, type, description, timestamp FROM activity_log WHERE related_id = ? AND related_type = 'task' ORDER BY timestamp DESC LIMIT 20"
     ).bind(taskId).all(),
@@ -1018,6 +1013,9 @@ export async function handleDeleteTask(id: string, request: Request, user: AuthU
   try {
     await env.DB.prepare('DELETE FROM task_comments WHERE task_id = ?').bind(id).run();
     await env.DB.prepare('DELETE FROM task_updates WHERE task_id = ?').bind(id).run();
+    // Design C (v77): unified-timeline rows for this task. The legacy old-table
+    // deletes stay above (physical drop is a later phase).
+    await env.DB.prepare("DELETE FROM activity_entries WHERE entity_type = 'task' AND entity_id = ?").bind(id).run();
     try { await env.DB.prepare('DELETE FROM task_subtasks WHERE task_id = ?').bind(id).run(); } catch { /* table may not exist */ }
     await env.DB.prepare(
       "DELETE FROM notifications WHERE source_type IN ('task','task_comment') AND source_id = ?"
@@ -1104,30 +1102,39 @@ export async function handleAcknowledgeTask(id: string, request: Request, user: 
 
 // GET /api/task-updates/recent — bulk fetch recent task updates (for sync pull)
 //
+// Design C (v77): projection over activity_entries (kind='update'), preserving
+// the legacy task_updates row shape (id, task_id, author_slug, content,
+// update_type, created_at) so PB's pull stays unmodified.
+//
 // 2026-04-28 (Codex review fix): when ?since= is present, ORDER BY ASC so
 // brain.db pull_task_updates can paginate forward without losing rows when
 // volume between pulls exceeds limit. DESC kept for UI-style "newest 100".
 // Phase 1b-B: canSeePb=false for non-PI callers — filter out updates for PB-project tasks.
+// A server-to-server (canSeePb) caller sees author-only rows too; a non-PB
+// caller is gated to visibility='team' (PB exclusion already removes Nick's PB
+// tasks, but the visibility gate also covers @me notes on shared-project tasks).
 export async function handleGetRecentTaskUpdates(url: URL, env: Env, canSeePb = false): Promise<Response> {
   const limit = parseInt(url.searchParams.get('limit') || '100')
   const since = url.searchParams.get('since') // ISO timestamp for delta sync
   // Mirror the category filter from search/activity for non-PI callers.
-  // task_updates doesn't store project_id directly; join through tasks.
-  const pbExclusion = canSeePb ? '' : ` AND (task_id NOT IN (
+  // activity_entries stores project_id directly, but keep the join-shape filter
+  // for parity with the prior task_updates path (entity_id is the task id).
+  const pbExclusion = canSeePb ? '' : ` AND (entity_id NOT IN (
     SELECT t.id FROM tasks t
     WHERE t.project_id IN (
       SELECT id FROM projects WHERE category = 'Peripheral Brain'
       UNION SELECT slug FROM projects WHERE category = 'Peripheral Brain'
     )
-  ))`
-  let query = 'SELECT * FROM task_updates'
+  )) AND visibility = 'team'`
+  const cols = `id, entity_id AS task_id, actor_slug AS author_slug, body AS content, update_type, created_at`
+  let query = `SELECT ${cols} FROM activity_entries WHERE entity_type = 'task' AND kind = 'update'`
   const binds: unknown[] = []
   if (since) {
-    query += ` WHERE created_at > ?${pbExclusion}`
+    query += ` AND created_at > ?${pbExclusion}`
     binds.push(since)
     query += ' ORDER BY created_at ASC, id ASC LIMIT ?'
   } else {
-    query += ` WHERE 1=1${pbExclusion} ORDER BY created_at DESC LIMIT ?`
+    query += `${pbExclusion} ORDER BY created_at DESC, id DESC LIMIT ?`
   }
   binds.push(Math.min(limit, 500))
   const stmt = env.DB.prepare(query)
@@ -1154,80 +1161,111 @@ export async function handleGetRecentTaskUpdates(url: URL, env: Env, canSeePb = 
 export async function handleGetRecentTaskComments(url: URL, env: Env, canSeePb = false): Promise<Response> {
   const limit = Math.min(parseInt(url.searchParams.get('limit') || '200', 10), 500);
   const since = url.searchParams.get('since');
+  // canSeePb (server-to-server / PB collector) sees author-only rows too; a
+  // non-PB caller is gated to visibility='team' AND non-PB-category projects.
   const pbFilter = canSeePb
     ? ''
-    : " AND (p.category IS NULL OR p.category != 'Peripheral Brain')";
-  const cols = `tc.id, tc.task_id, tc.author_slug, tc.content, tc.created_at, t.title AS task_title`;
-  const q = since
-    ? `SELECT ${cols} FROM task_comments tc
-       LEFT JOIN tasks t ON tc.task_id = t.id
+    : " AND (p.category IS NULL OR p.category != 'Peripheral Brain') AND ae.visibility = 'team'";
+  // Design C (v77): projection over activity_entries (kind='comment') preserving
+  // the legacy row shape (id, task_id, author_slug, content, created_at,
+  // task_title) so the PB /process collector consumes it unmodified. The
+  // `since` cursor stays backward-compatible with a plain timestamp, upgraded
+  // internally to a compound (created_at, id) forward-cursor so a page boundary
+  // sharing a created_at can't skip a row.
+  const cols = `ae.id, ae.entity_id AS task_id, ae.actor_slug AS author_slug, ae.body AS content, ae.created_at, t.title AS task_title`;
+  // Optional compound cursor: ?since=<created_at>&since_id=<id> advances past
+  // the exact (created_at,id) the collector last saw. Plain ?since=<created_at>
+  // still works (since_id defaults empty → pure created_at > ?).
+  const sinceId = url.searchParams.get('since_id');
+  let q: string;
+  let result;
+  if (since) {
+    const cursorClause = sinceId
+      ? '(ae.created_at > ? OR (ae.created_at = ? AND ae.id > ?))'
+      : 'ae.created_at > ?';
+    q = `SELECT ${cols} FROM activity_entries ae
+       LEFT JOIN tasks t ON ae.entity_id = t.id
        LEFT JOIN projects p ON p.id = t.project_id OR p.slug = t.project_id
-       WHERE tc.created_at > ?${pbFilter}
-       ORDER BY tc.created_at ASC, tc.id ASC LIMIT ?`
-    : `SELECT ${cols} FROM task_comments tc
-       LEFT JOIN tasks t ON tc.task_id = t.id
+       WHERE ae.entity_type = 'task' AND ae.kind = 'comment' AND ${cursorClause}${pbFilter}
+       ORDER BY ae.created_at ASC, ae.id ASC LIMIT ?`;
+    result = sinceId
+      ? await env.DB.prepare(q).bind(since, since, sinceId, limit).all()
+      : await env.DB.prepare(q).bind(since, limit).all();
+  } else {
+    q = `SELECT ${cols} FROM activity_entries ae
+       LEFT JOIN tasks t ON ae.entity_id = t.id
        LEFT JOIN projects p ON p.id = t.project_id OR p.slug = t.project_id
-       WHERE 1=1${pbFilter}
-       ORDER BY tc.created_at DESC LIMIT ?`;
-  const result = since
-    ? await env.DB.prepare(q).bind(since, limit).all()
-    : await env.DB.prepare(q).bind(limit).all();
+       WHERE ae.entity_type = 'task' AND ae.kind = 'comment'${pbFilter}
+       ORDER BY ae.created_at DESC, ae.id DESC LIMIT ?`;
+    result = await env.DB.prepare(q).bind(limit).all();
+  }
   return json({ data: result.results || [] });
 }
 
 // GET /api/tasks/:id/updates — get task notes/updates
+// Projection over activity_entries (kind='update') preserving the legacy
+// task_updates shape (id, task_id, author_slug, content, update_type, created_at).
 export async function handleGetTaskUpdates(taskId: string, request: Request, env: Env): Promise<Response> {
   // Fix 3: guardTaskProject consolidates the repeated SELECT+assertProjectVisible pattern.
   const guard = await guardTaskProject(env, request, taskId);
   if (guard.block) return guard.block;
+  const vis = await activityVisibilityGate(request, env);
   const result = await env.DB.prepare(
-    'SELECT * FROM task_updates WHERE task_id = ? ORDER BY created_at DESC'
-  ).bind(taskId).all();
+    `SELECT id, entity_id AS task_id, actor_slug AS author_slug, body AS content, update_type, created_at
+     FROM activity_entries
+     WHERE entity_type = 'task' AND entity_id = ? AND kind = 'update' AND ${vis.clause}
+     ORDER BY created_at DESC, id DESC`
+  ).bind(taskId, ...vis.binds).all();
   return json({ data: result.results || [] });
 }
 
 // POST /api/tasks/:id/updates — post a task note/update
+// Writes through postActivityEntry() (kind='update'). The primitive owns @me/
+// visibility + @mention notifications (preserving source_type='task' for
+// updates) + @hermes dispatch; this handler keeps actor resolution + the
+// activity_log echo + response shaping.
 export async function handlePostTaskUpdate(taskId: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
-  const body = await request.json() as { content: string; update_type?: string; author_slug?: string };
+  const body = await request.json() as { content: string; update_type?: string; author_slug?: string; visibility?: string };
   if (!body.content?.trim()) return error('content required', 400);
 
   // Fix 3: guardTaskProject replaces the duplicate SELECT+assertProjectVisible.
   const guard = await guardTaskProject(env, request, taskId);
   if (guard.block) return guard.block;
 
-  const id = generateId();
   // AM-2: validate/canonicalize author_slug; impersonation requires PI/service.
   const actor = await resolveActor(env, user, body.author_slug, { allowImpersonation: await isPiRequest(request, env) });
   if ('error' in actor) return error(actor.error, 400);
   const authorSlug = actor.slug;
 
-  await env.DB.prepare(
-    'INSERT INTO task_updates (id, task_id, author_slug, content, update_type) VALUES (?, ?, ?, ?, ?)'
-  ).bind(id, taskId, authorSlug, body.content.trim(), body.update_type ?? 'progress').run();
+  const posted = await postActivityEntry({
+    env,
+    user,
+    entityType: 'task',
+    entityId: taskId,
+    kind: 'update',
+    updateType: body.update_type ?? 'progress',
+    body: body.content,
+    actorSlug: authorSlug,
+    visibility: body.visibility === 'author' ? 'author' : undefined,
+    taskProjectId: guard.projectId,
+  });
+  if (!posted.ok) return error(posted.error, posted.status);
 
-  // Look up task title for activity log
+  // Look up task title for the activity_log echo (legacy global timeline row;
+  // postActivityEntry does NOT touch activity_log).
   const task = await env.DB.prepare('SELECT title FROM tasks WHERE id = ?').bind(taskId).first<{ title: string }>();
   await logActivity(env, 'task_update', `Posted note on "${task?.title || taskId}": "${body.content.trim().slice(0, 100)}"`, authorSlug, taskId, 'task');
 
-  // Notify @mentions — single batched INSERT instead of N per-row inserts.
-  try {
-    const mentions = parseMentions(body.content).filter((slug) => slug !== authorSlug);
-    if (mentions.length > 0) {
-      const title = `${user.name || user.email} mentioned you in a task note`;
-      const bodyPreview = body.content.trim().slice(0, 200);
-      const link = `/tasks?open=${taskId}`;
-      const stmt = env.DB.prepare(
-        'INSERT INTO notifications (id, recipient_slug, type, source_type, source_id, title, body, link) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
-      );
-      await env.DB.batch(
-        mentions.map((slug) =>
-          stmt.bind(generateId(), slug, 'mention', 'task', taskId, title, bodyPreview, link)
-        )
-      );
-    }
-  } catch (e) { console.error('Failed to create mention notification:', e); }
-
-  const created = await env.DB.prepare('SELECT * FROM task_updates WHERE id = ?').bind(id).first();
+  // Preserve the legacy task_updates response shape for existing callers.
+  const r = posted.row;
+  const created = {
+    id: r.id,
+    task_id: r.entity_id,
+    author_slug: r.actor_slug,
+    content: r.body,
+    update_type: r.update_type,
+    created_at: r.created_at,
+  };
   return json({ data: created }, 201);
 }
 

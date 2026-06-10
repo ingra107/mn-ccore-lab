@@ -19,7 +19,7 @@ import { handleUploadUrl, handleUploadDone, handleListFiles, handleGetFile, hand
 import { handleGetTasks, handleGetTask, handleActionItems, handleOverdueCount, handleUpdateTaskStatus, handleToggleTask, handleUpdateTask, handleCreateTask, handleGetTaskComments, handleAddTaskComment, handleGetTaskActivity, handleGetTaskDetail, handleGetTaskUpdates, handleGetRecentTaskUpdates, handleGetRecentTaskComments, handlePostTaskUpdate, handleBatchUpdateTasks, handleAcknowledgeTask, handleDeleteTask, handleMobileTasksToHub } from './routes/tasks';
 import { handleInboxEvents, handleSyncBulkInboxEvents, handleDeleteInboxEvent } from './routes/inbox-events';
 import { handleMutations } from './routes/mutations';
-import { handleGetProjects, handleGetProject, handleCreateProject, handleGetComments, handleGetProjectUpdates, handleProjectHealth, handleRecentUpdates, handleUpdateProject, handleDeleteProject, handleGetDeletedProjectsSince, handleAddComment, handlePostProjectUpdate, handleGetMilestones, handleUpdateMilestoneNote, handleUpdateMilestoneCompletion } from './routes/projects';
+import { handleGetProjects, handleGetProject, handleCreateProject, handleGetComments, handleGetProjectUpdates, handleGetProjectActivity, handleProjectHealth, handleRecentUpdates, handleUpdateProject, handleDeleteProject, handleGetDeletedProjectsSince, handleAddComment, handlePostProjectUpdate, handleGetMilestones, handleUpdateMilestoneNote, handleUpdateMilestoneCompletion } from './routes/projects';
 import { handleGetMeetings, handleNextMeeting, handleGetMeeting, handleGetAgendaItems, handleAddAgendaItem, handleReorderAgenda, handleCreateMeeting, handleUpdateMeetingNotes, handleMeetingPrep, handleGenerateAgenda } from './routes/meetings';
 import { handleGetPublications, handleGetGrants, handleCollaborationGraph, handleGetStats, handleGrantsTimeline, handleUpdateGrant } from './routes/publications';
 import { handleGetCitations } from './routes/citations';
@@ -714,6 +714,16 @@ defineRoute({
   entity: 'projects',
   visibility: 'na',
   handler: (c) => handleGetProjectUpdates(c.req.param('slug'), R(c), E(c)),
+});
+// Design C (v77): whole-picture project activity feed (project rows + task
+// rollup by project_id). Visibility-gated inside the handler.
+defineRoute({
+  method: 'GET',
+  path: '/api/projects/:slug/activity',
+  auth: 'authed',
+  entity: 'projects',
+  visibility: 'na',
+  handler: (c) => handleGetProjectActivity(c.req.param('slug'), R(c), E(c)),
 });
 defineRoute({
   method: 'GET',

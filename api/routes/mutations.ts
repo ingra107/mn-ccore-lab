@@ -870,6 +870,9 @@ export async function applyDelete(env: Env, mut: Mutation, user: AuthUser): Prom
       await env.DB.batch([
         env.DB.prepare('DELETE FROM task_comments WHERE task_id = ?').bind(mut.record_id),
         env.DB.prepare('DELETE FROM task_updates WHERE task_id = ?').bind(mut.record_id),
+        // Design C (v77): unified-timeline rows for this task (legacy old-table
+        // deletes kept above; physical drop is a later phase).
+        env.DB.prepare("DELETE FROM activity_entries WHERE entity_type = 'task' AND entity_id = ?").bind(mut.record_id),
         env.DB.prepare("DELETE FROM notifications WHERE source_type IN ('task','task_comment') AND source_id = ?").bind(mut.record_id),
       ]);
     } catch (e) {
@@ -905,6 +908,9 @@ export async function applyDelete(env: Env, mut: Mutation, user: AuthUser): Prom
         env.DB.prepare('DELETE FROM regulatory_items WHERE project_id = ?').bind(mut.record_id),
         // manuscript_revisions: added to cascade (completeness sweep 2026-06-01 gap)
         env.DB.prepare('DELETE FROM manuscript_revisions WHERE project_id = ?').bind(mut.record_id),
+        // Design C (v77): clear the project's own unified-timeline rows. Task
+        // rows survive (the tasks are soft-orphaned to project_id=NULL below).
+        env.DB.prepare("DELETE FROM activity_entries WHERE entity_type = 'project' AND entity_id = ?").bind(mut.record_id),
         env.DB.prepare("UPDATE tasks SET project_id = NULL, updated_at = datetime('now') WHERE project_id = ? AND deleted_at IS NULL").bind(mut.record_id),
       ];
       // project_dependencies: slug-keyed; only delete if slug is known.

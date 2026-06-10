@@ -134,7 +134,7 @@ beforeEach(() => {
 })
 
 describe('handleDeleteProject — cascade-clean uses DB.batch() (B-CRIT-05)', () => {
-  it('calls DB.batch() exactly once with 9 statements (structural guard)', async () => {
+  it('calls DB.batch() exactly once with 10 statements (structural guard)', async () => {
     const capturedStmts: unknown[] = []
     const env = makeEnv({
       onBatch: (stmts) => capturedStmts.push(...stmts),
@@ -146,9 +146,10 @@ describe('handleDeleteProject — cascade-clean uses DB.batch() (B-CRIT-05)', ()
     // batch() called exactly once
     expect((env.DB.batch as ReturnType<typeof vi.fn>).mock.calls).toHaveLength(1)
 
-    // batch() received exactly 9 statements (B7 expanded cascade)
+    // batch() received exactly 10 statements: B7 expanded cascade (9) + the
+    // Design C (v77) activity_entries project-row clear (+1).
     const [batchArg] = (env.DB.batch as ReturnType<typeof vi.fn>).mock.calls[0] as [unknown[]]
-    expect(batchArg).toHaveLength(9)
+    expect(batchArg).toHaveLength(10)
 
     // Deleted successfully
     expect(response.status).toBe(200)

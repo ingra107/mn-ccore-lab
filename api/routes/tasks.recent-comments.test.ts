@@ -37,38 +37,57 @@ function makeUrl(qs: string): URL {
 }
 
 describe('handleGetRecentTaskComments', () => {
+  // Design C (v77): projection over activity_entries (alias `ae`, kind='comment')
+  // preserving the legacy row shape + task_title join + ASC since-cursor.
   it('joins the parent task title as task_title', async () => {
     const { env, captured } = makeEnv()
     await handleGetRecentTaskComments(makeUrl(''), env, true)
     expect(captured[0].sql).toContain('t.title AS task_title')
   })
 
+  it('reads activity_entries with kind=comment', async () => {
+    const { env, captured } = makeEnv()
+    await handleGetRecentTaskComments(makeUrl(''), env, true)
+    expect(captured[0].sql).toContain('FROM activity_entries ae')
+    expect(captured[0].sql).toContain("ae.kind = 'comment'")
+  })
+
   it('with `since`: orders created_at ASC with id tiebreak and binds since+limit', async () => {
     const { env, captured } = makeEnv()
     const since = '2026-06-09T00:00:00Z'
     await handleGetRecentTaskComments(makeUrl(`?since=${encodeURIComponent(since)}&limit=50`), env, true)
-    expect(captured[0].sql).toContain('ORDER BY tc.created_at ASC, tc.id ASC')
-    expect(captured[0].sql).toContain('tc.created_at > ?')
+    expect(captured[0].sql).toContain('ORDER BY ae.created_at ASC, ae.id ASC')
+    expect(captured[0].sql).toContain('ae.created_at > ?')
     expect(captured[0].binds).toEqual([since, 50])
+  })
+
+  it('with compound `since`+`since_id`: advances past the exact (created_at,id) cursor', async () => {
+    const { env, captured } = makeEnv()
+    const since = '2026-06-09T00:00:00Z'
+    await handleGetRecentTaskComments(makeUrl(`?since=${encodeURIComponent(since)}&since_id=ae9&limit=50`), env, true)
+    expect(captured[0].sql).toContain('ae.created_at = ? AND ae.id > ?')
+    expect(captured[0].binds).toEqual([since, since, 'ae9', 50])
   })
 
   it('without `since`: orders DESC (newest-first UI back-compat) and binds limit only', async () => {
     const { env, captured } = makeEnv()
     await handleGetRecentTaskComments(makeUrl('?limit=10'), env, true)
-    expect(captured[0].sql).toContain('ORDER BY tc.created_at DESC')
+    expect(captured[0].sql).toContain('ORDER BY ae.created_at DESC, ae.id DESC')
     expect(captured[0].binds).toEqual([10])
   })
 
-  it('non-PB caller (canSeePb=false) excludes Peripheral Brain category', async () => {
+  it('non-PB caller (canSeePb=false) excludes Peripheral Brain category + author-only rows', async () => {
     const { env, captured } = makeEnv()
     await handleGetRecentTaskComments(makeUrl(''), env, false)
     expect(captured[0].sql).toContain("p.category != 'Peripheral Brain'")
+    expect(captured[0].sql).toContain("ae.visibility = 'team'")
   })
 
-  it('PB caller (canSeePb=true) has no category exclusion', async () => {
+  it('PB caller (canSeePb=true) has no category exclusion and sees author-only', async () => {
     const { env, captured } = makeEnv()
     await handleGetRecentTaskComments(makeUrl(''), env, true)
     expect(captured[0].sql).not.toContain('Peripheral Brain')
+    expect(captured[0].sql).not.toContain("ae.visibility = 'team'")
   })
 
   it('clamps limit to 500', async () => {

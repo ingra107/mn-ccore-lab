@@ -262,6 +262,8 @@ describe('Fix 2: applyDelete cascades for tasks table', () => {
     const sqls = db._batchedSqls.join(' ')
     expect(sqls).toContain('task_comments')
     expect(sqls).toContain('task_updates')
+    // Design C (v77): unified-timeline rows are cleared in the same batch.
+    expect(sqls).toContain('activity_entries')
     expect(sqls).toContain('notifications')
   })
 

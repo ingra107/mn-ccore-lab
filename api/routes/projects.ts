@@ -1,8 +1,9 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, parseMentions, actorSlug, isPiRequest, resolveActor, assertProjectVisible, canSeePbProjectRow } from '../helpers';
+import { json, error, generateId, logActivity, parseMentions, actorSlug, isPiRequest, resolveActor, assertProjectVisible, canSeePbProjectRow, projectRefToCanonical } from '../helpers';
 import { ctToday } from '../lib/ct-date';
 import { nowInstant } from '../lib/time';
 import { applyMutation } from './mutations';
+import { activityVisibilityGate } from '../lib/activity-entry';
 
 // Stage 4 #12-followup (2026-05-09): Nick-only visibility gate for
 // 'Peripheral Brain' category. Two ways to be "Nick" for this gate:
@@ -306,6 +307,31 @@ export async function handleGetProjectUpdates(slug: string, request: Request, en
     'SELECT * FROM project_updates WHERE project_id = ? ORDER BY created_at DESC'
   ).bind(slug).all();
   return json({ data: result.results, count: result.results.length });
+}
+
+// GET /api/projects/:idOrSlug/activity — the whole-picture project feed
+// (Design C, v77). Returns the project's own activity_entries UNION all task
+// entries belonging to the project (entity_type='task' AND project_id=<id>),
+// visibility-gated, newest-first. The slug is resolved to the canonical typed
+// proj_* id so the project_id rollup join matches the stored task FKs.
+export async function handleGetProjectActivity(idOrSlug: string, request: Request, env: Env): Promise<Response> {
+  // PB-category visibility: non-PI callers can't read PB project feeds.
+  const block = await assertProjectVisible(request, env, idOrSlug);
+  if (block) return block;
+  const canonicalId = await projectRefToCanonical(env, idOrSlug);
+  if (!canonicalId) return json({ data: [] });
+  const vis = await activityVisibilityGate(request, env);
+  // Whole-picture: rows that ARE this project (entity_type='project') OR task
+  // rows rolled up by project_id. project_id is stored on task entries at write
+  // time, so this is one indexed query (idx_ae_project + idx_ae_entity).
+  const result = await env.DB.prepare(
+    `SELECT id, entity_type, entity_id, project_id, kind, visibility, actor_slug, body, mentions_json, update_type, metadata_json, created_at
+     FROM activity_entries
+     WHERE ((entity_type = 'project' AND entity_id = ?) OR (entity_type = 'task' AND project_id = ?))
+       AND ${vis.clause}
+     ORDER BY created_at DESC, id DESC`
+  ).bind(canonicalId, canonicalId, ...vis.binds).all();
+  return json({ data: result.results || [], count: result.results?.length || 0 });
 }
 
 // GET /api/projects/health — project health metrics (scored 0-100)
@@ -761,6 +787,11 @@ export async function handleDeleteProject(
       env.DB.prepare('DELETE FROM submission_events WHERE project_id = ? OR project_id = ?').bind(existing.id, existing.slug),
       env.DB.prepare('DELETE FROM regulatory_items WHERE project_id = ? OR project_id = ?').bind(existing.id, existing.slug),
       env.DB.prepare('DELETE FROM project_dependencies WHERE from_project_id = ? OR to_project_id = ?').bind(existing.id, existing.id),
+      // Design C (v77): clear the project's own unified-timeline rows. Task rows
+      // (entity_type='task') are intentionally NOT removed here — the cascade
+      // below soft-orphans those tasks (project_id=NULL) rather than deleting
+      // them, so their activity history survives with the task.
+      env.DB.prepare("DELETE FROM activity_entries WHERE entity_type = 'project' AND (entity_id = ? OR entity_id = ?)").bind(existing.id, existing.slug),
       env.DB.prepare('UPDATE tasks SET project_id = NULL, updated_at = datetime(\'now\') WHERE (project_id = ? OR project_id = ?) AND deleted_at IS NULL').bind(existing.id, existing.slug),
     ]);
   } catch (e) {

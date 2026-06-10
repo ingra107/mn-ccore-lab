@@ -67,11 +67,12 @@ describe('route contract — generated from ROUTE_REGISTRY', () => {
     // Snapshot: 236 routes as of hub-hardening-2026-05-27 merge (commit 0b5e0b86).
     // 238 as of 2026-06-10 — Bug Squasher added GET /api/bug-reports +
     // POST /api/bug-reports/:id/status (+2).
+    // 239 as of 2026-06-10 — Design C (v77) added GET /api/projects/:slug/activity (+1).
     // Adding a route → increment this number. Removing a route → decrement it.
     // This makes route deletion require explicit acknowledgment, preventing
     // silent surface regression (codex final-audit finding #9, 2026-05-28).
     // If you are intentionally adding or removing routes, update this count.
-    expect(ROUTE_REGISTRY).toHaveLength(238)
+    expect(ROUTE_REGISTRY).toHaveLength(239)
   })
 
   it('every non-public route has either entity or visibility metadata', () => {

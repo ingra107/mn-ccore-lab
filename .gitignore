@@ -77,3 +77,4 @@ scripts/_incremental-migrate.py
 
 backups/
 review/edge-fix-0610b/
+data/snapshots/

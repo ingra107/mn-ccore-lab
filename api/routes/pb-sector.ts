@@ -3,6 +3,7 @@ import { json, error, generateId, logActivity, projectRefToCanonical } from '../
 import { ctToday } from '../lib/ct-date';
 import { nowInstant } from '../lib/time';
 import { applyMutation } from './mutations';
+import { postActivityEntry } from '../lib/activity-entry';
 
 // GET /api/pb/command-center?date=YYYY-MM-DD
 export async function handleCommandCenter(env: Env, planDate?: string): Promise<Response> {
@@ -608,14 +609,24 @@ export async function handleCompleteDispatchItem(request: Request, env: Env): Pr
     "UPDATE dispatch_queue SET status = 'completed', completed_at = ?, response = ? WHERE id = ?"
   ).bind(now, body.response || null, body.id).run()
 
-  // If this item has a task_id, also post the response as a task comment
+  // If this item has a task_id, also post the response as a task comment.
+  // Design C (v77): the AI answer lands in the unified timeline via
+  // postActivityEntry(kind='comment', actor_slug='claude-ai'). fireSideEffects
+  // is false — an AI reply that quotes @someone (or @hermes) must not re-fire
+  // mention notifications or a recursive AI request.
   if (body.response) {
     const item = await env.DB.prepare('SELECT task_id FROM dispatch_queue WHERE id = ?').bind(body.id).first() as any
     if (item?.task_id) {
-      const commentId = generateId()
-      await env.DB.prepare(
-        'INSERT INTO task_comments (id, task_id, author_slug, content, created_at) VALUES (?, ?, ?, ?, ?)'
-      ).bind(commentId, item.task_id, 'claude-ai', body.response, now).run()
+      await postActivityEntry({
+        env,
+        user: { email: 'claude-ai', name: 'Hermes' },
+        entityType: 'task',
+        entityId: item.task_id,
+        kind: 'comment',
+        body: body.response,
+        actorSlug: 'claude-ai',
+        fireSideEffects: false,
+      })
     }
   }
 

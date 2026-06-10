@@ -229,7 +229,8 @@ describe('Fix 1b — handleAddTaskComment: @hermes creates ai_request + placehol
           },
           first: async () => {
             // Route by SQL content
-            if (sql.includes('FROM task_comments WHERE id =')) return { id: 'tc-001', task_id: 'task-001', author_slug: 'nick-ingraham', content: '@hermes help' };
+            // Design C (v77): comment write/read now lands in activity_entries.
+            if (sql.includes('FROM activity_entries WHERE id =')) return { id: 'ae-001', entity_id: 'task-001', actor_slug: 'nick-ingraham', body: '@hermes help', created_at: '2026-06-10 00:00:00' };
             if (sql.includes('FROM team_members WHERE slug =')) return { id: 'member_001', slug: 'nick-ingraham' };
             if (sql.includes('FROM team_members WHERE email =')) return { id: 'member_001', slug: 'nick-ingraham' };
             if (sql.includes('FROM tasks WHERE id = ? AND deleted_at IS NULL')) return { project_id: 'proj-slug-001' };
@@ -262,19 +263,24 @@ describe('Fix 1b — handleAddTaskComment: @hermes creates ai_request + placehol
     // Find ai_requests INSERT
     const aiInsert = inserts.find(i => i.sql.includes('ai_requests'));
     expect(aiInsert).toBeDefined();
-    // source_type should be 'task_comment' (bind index 1)
+    // source_type should be 'task_comment' (bind index 1) — preserved through
+    // postActivityEntry's Hermes dispatch so the listener routes the answer back.
     expect(aiInsert!.binds[1]).toBe('task_comment');
 
-    // Find placeholder task comment — the content 'Thinking about...' is a bind value
+    // Find the placeholder — Design C (v77): it is now an activity_entries row
+    // (kind='comment', actor_slug='claude-ai') with body 'Thinking about...'.
     const placeholderInserts = inserts.filter(i =>
-      i.sql.includes('INSERT INTO task_comments') &&
+      i.sql.includes('INSERT') && i.sql.includes('activity_entries') &&
       (i.binds as string[]).some(b => typeof b === 'string' && b.includes('Thinking about'))
     );
     expect(placeholderInserts.length).toBe(1);
-    // task_id is at bind index 1
-    expect(placeholderInserts[0].binds[1]).toBe('task-001');
-    // author_slug is at bind index 2
-    expect(placeholderInserts[0].binds[2]).toBe('claude-ai');
+    // activity_entries insert bind order: id, entity_type, entity_id, project_id,
+    // kind, visibility, actor_slug, body, ...
+    const ph = placeholderInserts[0].binds as unknown[];
+    expect(ph[1]).toBe('task');          // entity_type
+    expect(ph[2]).toBe('task-001');      // entity_id
+    expect(ph[4]).toBe('comment');       // kind
+    expect(ph[6]).toBe('claude-ai');     // actor_slug
   });
 
   it('does not create ai_request when content has no @hermes mention', async () => {
