@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { GitBranch, Filter, RotateCcw } from 'lucide-react'
 import PageHeader from '../../components/PageHeader'
@@ -7,10 +8,13 @@ import { TableSkeleton } from '../../components/LoadingSkeleton'
 import DeadlineCascade from '../../components/DeadlineCascade'
 import ToggleButton from '../../components/ToggleButton'
 import EmptyState from '../../components/EmptyState'
+import EmptyStateArt from '../../components/EmptyStateArt'
+import { PATHS } from '../../constants/paths'
 import { useAllCascades, useDeadlineImpact } from '../../hooks/useApiData'
 import type { CascadeGraph, DeadlineNode } from '../../lib/api'
 
 export default function DeadlineCascadePage() {
+  const navigate = useNavigate()
   const { data: allData, isLoading } = useAllCascades()
   const [filterAtRisk, setFilterAtRisk] = useState(false)
 
@@ -118,9 +122,10 @@ export default function DeadlineCascadePage() {
           <TableSkeleton rows={8} cols={3} />
         ) : projectGroups.length === 0 ? (
           <EmptyState
-            icon={<GitBranch size={40} />}
+            icon={<EmptyStateArt variant="grants" />}
             title="No deadline chains yet"
             subtitle="Create dependency links between milestones and tasks to visualize cascade impacts."
+            action={{ label: 'Go to Deadlines', onClick: () => navigate(PATHS.deadlines) }}
           />
         ) : (
           <motion.div

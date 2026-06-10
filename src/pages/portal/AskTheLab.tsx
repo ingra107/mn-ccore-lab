@@ -10,6 +10,7 @@ import { CardSkeleton, TextSkeleton } from '../../components/LoadingSkeleton'
 import PageHeader from '../../components/PageHeader'
 import PageContainer from '../../components/PageContainer'
 import EmptyStateComponent from '../../components/EmptyState'
+import EmptyStateArt from '../../components/EmptyStateArt'
 import ToggleButton from '../../components/ToggleButton'
 import Avatar from '../../components/Avatar'
 import InlineSelect from '../../components/InlineSelect'
@@ -117,7 +118,7 @@ export default function AskTheLab() {
           <CardSkeleton count={3} />
         ) : filteredQuestions.length === 0 ? (
           <EmptyStateComponent
-            icon={<HelpCircle size={40} />}
+            icon={<EmptyStateArt variant="decisions" />}
             title={searchQuery ? 'No matching questions' : 'Ask the lab — or @hermes'}
             subtitle={searchQuery ? 'Try different search terms.' : 'Post a research question for teammates, or tag @hermes in the body to get an AI response. Every question becomes a searchable record.'}
             action={!searchQuery ? { label: 'Ask a question', onClick: () => setShowCreate(true) } : undefined}
