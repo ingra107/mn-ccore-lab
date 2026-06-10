@@ -363,10 +363,12 @@ function ProjectDetailInner({ project }: InnerProps) {
   // DISPLAY transform (never mutates the stored description): the dated entries
   // render newest-first while the static summary sentence stays pinned on top.
   // Interim until the M5 static-summary/Activity-timeline split lands.
-  const descLog = useMemo(
-    () => parseDescriptionLog(project.description ?? ''),
-    [project.description],
-  )
+  const descLog = useMemo(() => {
+    const parsed = parseDescriptionLog(project.description ?? '')
+    // Entries pre-reversed to newest-first so the render path doesn't
+    // copy+reverse on every render.
+    return { ...parsed, entries: [...parsed.entries].reverse() }
+  }, [project.description])
   const [editingShortName, setEditingShortName] = useState(false)
   const [shortNameDraft, setShortNameDraft] = useState(project.short_name ?? '')
   const [editingTitle, setEditingTitle] = useState(false)
@@ -1671,9 +1673,10 @@ function ProjectDetailInner({ project }: InnerProps) {
                 />
               ) : descLog.entries.length > 0 ? (
                 // Dated-log render: leading summary pinned on top, dated entries
-                // NEWEST-FIRST. Collapsed = lead + the 2 most-recent entries.
+                // NEWEST-FIRST (pre-reversed in the descLog memo). Collapsed =
+                // lead + the 2 most-recent entries.
                 (() => {
-                  const newest = [...descLog.entries].reverse()
+                  const newest = descLog.entries
                   const COLLAPSE_AFTER = 2
                   const hasMore = newest.length > COLLAPSE_AFTER
                   const shown = descExpanded ? newest : newest.slice(0, COLLAPSE_AFTER)
