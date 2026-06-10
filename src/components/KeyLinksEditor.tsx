@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link2, Plus, Pencil, Check, X } from 'lucide-react'
 import { classifyUrl } from '../lib/urlClassify'
-import { useToast } from '../hooks/useToast'
+import { useProtocolLaunch } from '../hooks/useProtocolLaunch'
 
 // Shared editor for the 3-slot key_link_1/2/3 + _desc pattern used on tasks
 // and projects. Display mode shows teal underlined links; edit mode swaps in
@@ -36,27 +36,16 @@ function LinkRow({
 }) {
   const url = link.url || ''
   const { href, Icon, typeLabel, isHttp } = classifyUrl(url)
-  const { showSuccess } = useToast()
+  const { launch } = useProtocolLaunch()
 
-  // Local paths + .bat scripts use the `mnccore://` custom protocol that
-  // requires a Windows URL handler registration on the user's machine. If
-  // the handler isn't installed the browser silently does nothing, so
-  // click-to-copy is the reliable fallback: the path lands in clipboard,
-  // user can paste into Win+R or File Explorer. The protocol nav still
-  // fires (fire-and-forget) in case the handler IS installed.
-  const handleNonHttpClick = async (e: React.MouseEvent) => {
+  // Non-http links fire through the ONE protocol-launch chokepoint
+  // (clipboard backup + toast). Was a local duplicate of the same logic.
+  const handleNonHttpClick = (e: React.MouseEvent) => {
     e.preventDefault()
-    try {
-      await navigator.clipboard.writeText(url)
-      showSuccess(`${typeLabel} path copied — paste in Win+R or Explorer`)
-    } catch {
-      window.prompt('Copy path:', url)
-    }
-    try {
-      window.location.href = href
-    } catch {
-      // ignore — custom protocol without handler is a no-op on most systems
-    }
+    void launch(href, {
+      copyText: url,
+      successMessage: `Opening ${typeLabel.toLowerCase()}… (path copied as backup)`,
+    })
   }
 
   // Compact inline chip (handoff §2): icon + label + remove, with a

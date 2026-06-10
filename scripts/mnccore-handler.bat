@@ -92,17 +92,22 @@ exit /b 0
 
 
 :: ── :verb_open <path> ── Explorer-open an existing path ──────────────────────
+:: ⚠️ The variable MUST NOT be named "path" — `set "path=..."` clobbers %PATH%,
+:: after which cmd cannot resolve `explorer.exe` and the open dies with a
+:: flash-and-close console ('explorer.exe' is not recognized). That was THE bug
+:: behind every silent folder-open failure 2026-06-10; reproduced live before
+:: the fix. %SystemRoot% is belt-and-braces so resolution never depends on PATH.
 :verb_open
-set "path=%~1"
-if not exist "!path!" (
-    call :fail "Path not found: !path!"
+set "target=%~1"
+if not exist "!target!" (
+    call :fail "Path not found: !target!"
     exit /b 1
 )
 if defined MNCCORE_HANDLER_DRYRUN (
-    echo DRYRUN open: explorer.exe "!path!"
+    echo DRYRUN open: "%SystemRoot%\explorer.exe" "!target!"
     exit /b 0
 )
-explorer.exe "!path!"
+"%SystemRoot%\explorer.exe" "!target!"
 exit /b 0
 
 

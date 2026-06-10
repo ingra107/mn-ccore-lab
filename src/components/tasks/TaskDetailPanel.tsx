@@ -20,6 +20,7 @@ import { formatRelativeTime } from '../../lib/dateUtils'
 import { appendCharToInput } from '../../lib/textUtils'
 import TypingIndicator from '../TypingIndicator'
 import { getPersonInfo, getAllMembers, directors } from '../../data/team'
+import { classifyUrl, shortLabelForUrl } from '../../lib/urlClassify'
 import Avatar from '../Avatar'
 import InlineSelect from '../InlineSelect'
 import PresenceAvatars from '../PresenceAvatars'
@@ -950,20 +951,42 @@ function DetailKeyLinks({
     { url: task.key_link_3, desc: task.key_link_3_desc },
   ]
 
+  // email_link (v74, PB email-triage capture) was synced + returned by
+  // /api/tasks but rendered NOWHERE until 2026-06-10 — the short_title class
+  // again. System-populated, so it renders as a read-only Gmail chip rather
+  // than occupying an editable key-link slot.
+  const gmail = task.email_link ? classifyUrl(task.email_link) : null
+
   return (
-    <KeyLinksEditor
-      links={links}
-      onSave={(next) => {
-        onUpdate({
-          key_link_1: next[0]?.url || null,
-          key_link_1_desc: next[0]?.desc || null,
-          key_link_2: next[1]?.url || null,
-          key_link_2_desc: next[1]?.desc || null,
-          key_link_3: next[2]?.url || null,
-          key_link_3_desc: next[2]?.desc || null,
-        })
-      }}
-    />
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      {gmail && (
+        <a
+          href={gmail.href}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
+          title={task.email_link ?? undefined}
+          className="inline-flex items-center gap-1.5 self-start"
+          style={{ fontSize: 12, color: 'var(--teal)', background: 'var(--teal-active)', borderRadius: 'var(--radius-sm)', padding: '3px 8px', textDecoration: 'none' }}
+        >
+          <gmail.Icon size={12} />
+          <span>{shortLabelForUrl(task.email_link!)}</span>
+        </a>
+      )}
+      <KeyLinksEditor
+        links={links}
+        onSave={(next) => {
+          onUpdate({
+            key_link_1: next[0]?.url || null,
+            key_link_1_desc: next[0]?.desc || null,
+            key_link_2: next[1]?.url || null,
+            key_link_2_desc: next[1]?.desc || null,
+            key_link_3: next[2]?.url || null,
+            key_link_3_desc: next[2]?.desc || null,
+          })
+        }}
+      />
+    </div>
   )
 }
 

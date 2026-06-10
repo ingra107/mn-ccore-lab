@@ -132,6 +132,10 @@ export interface TaskRow {
   key_link_2_desc: string | null
   key_link_3: string | null
   key_link_3_desc: string | null
+  /** Gmail-thread URL captured by PB's email triage (schema v74, Hub-canonical
+   *  since Slice B B-5). System-populated — read-only in the UI; rendered as a
+   *  "Gmail thread" chip next to the key links (2026-06-10). */
+  email_link?: string | null
   /** User-set group override for /portal/my-tasks bucketing (Hub feature, schema v50).
    *  Values: 'deep' | 'priorities' | 'quick' | 'pb' | 'etl' | null. NULL = auto-classify
    *  via getGroupForTask. Syncs to brain.db so TODAY.md generation honors it. */

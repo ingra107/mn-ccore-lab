@@ -6,14 +6,24 @@
  * and href rewriting for Box folder paths, .bat scripts, etc.
  */
 
-import { BookText, ExternalLink, FolderOpen, Play } from 'lucide-react'
+import { BookText, ExternalLink, FolderOpen, Mail, Play } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
 export interface ClassifiedUrl {
   href: string
   Icon: LucideIcon
-  typeLabel: 'Link' | 'Script' | 'Folder' | 'Obsidian'
+  typeLabel: 'Link' | 'Script' | 'Folder' | 'Obsidian' | 'Gmail'
   isHttp: boolean
+}
+
+/**
+ * Gmail URL semantics (TODAY.md link-vocabulary parity, Nick 2026-06-10):
+ * a mail.google.com URL is a "Gmail draft" when its fragment/path targets a
+ * draft, otherwise a "Gmail thread". Used for both the chip icon and label.
+ */
+export function gmailKind(url: string): 'draft' | 'thread' | null {
+  if (!/^https?:\/\/mail\.google\.com\//i.test(url)) return null
+  return /#drafts|[/#]drafts?\b/i.test(url) ? 'draft' : 'thread'
 }
 
 /**
@@ -98,6 +108,9 @@ export function normalizeLocalFolderPath(raw: string): string {
 
 export function classifyUrl(url: string): ClassifiedUrl {
   const isHttp = url.startsWith('http')
+  if (isHttp && gmailKind(url)) {
+    return { href: url, Icon: Mail, typeLabel: 'Gmail', isHttp: true }
+  }
   const isDrivePath = /^[A-Za-z]:/.test(url)
   const isUncPath = url.startsWith('\\\\')
   const isLocalPath = url.startsWith('file:///') || isDrivePath || isUncPath || (url.startsWith('/') && !url.startsWith('//'))
@@ -167,6 +180,8 @@ export const MNCCORE_PROCESS_URI = 'mnccore://process'
 export function shortLabelForUrl(url: string): string {
   try {
     if (url.startsWith('http')) {
+      const gk = gmailKind(url)
+      if (gk) return gk === 'draft' ? 'Gmail draft' : 'Gmail thread'
       return new URL(url).hostname.replace(/^www\./, '')
     }
     if (url.startsWith('file:///') || /^[A-Za-z]:/.test(url) || url.startsWith('\\\\')) {

@@ -1,5 +1,6 @@
 import React from 'react'
 import { classifyUrl, shortLabelForUrl } from '../lib/urlClassify'
+import { useProtocolLaunch } from '../hooks/useProtocolLaunch'
 
 /**
  * Render text with auto-linkified URLs. Pure URLs are replaced with
@@ -13,12 +14,17 @@ import { classifyUrl, shortLabelForUrl } from '../lib/urlClassify'
  * feedback (2026-04-23).
  */
 
-// URL matcher: http(s)://... plus file:/// and bare C:\ paths up to a
-// whitespace. Greedy-ish but stops at whitespace. Trailing punctuation
-// (.,;:!?) is trimmed after match so "see https://x.com." doesn't
-// capture the period.
-const URL_RE = /(https?:\/\/\S+|file:\/\/\/\S+|[A-Z]:\\\S+)/g
-const TRAILING_PUNCT_RE = /[.,;:!?)\]}>'"]+$/
+// URL matcher: http(s)://... and file:/// stop at whitespace (URLs are
+// %-encoded by convention). Bare drive paths (`C:\...` OR `C:/...` — both
+// slash styles appear in live data) are LINE-bounded so paths containing
+// spaces ("...\R Proposal\.R03-Grant") chip as ONE link instead of
+// truncating at the first space — the 2026-06-10 "chip fired a nonexistent
+// path" bug. Cost: prose following a path on the same line over-captures;
+// the handler's exists-check + copied-path toast make that recoverable,
+// while truncation was silently wrong on EVERY spaced path. Trailing
+// punctuation/whitespace is trimmed after match.
+const URL_RE = /(https?:\/\/\S+|file:\/\/\/\S+|[A-Za-z]:[\\/][^\n<>"|?*]+)/g
+const TRAILING_PUNCT_RE = /[\s.,;:!?)\]}>'"]+$/
 
 interface Props {
   text: string
@@ -27,6 +33,7 @@ interface Props {
 }
 
 export default function LinkifiedText({ text, className, style }: Props) {
+  const { launch } = useProtocolLaunch()
   if (!text) return null
   const parts: React.ReactNode[] = []
   let lastIdx = 0
@@ -49,12 +56,17 @@ export default function LinkifiedText({ text, className, style }: Props) {
 
     const { href, Icon, isHttp, typeLabel } = classifyUrl(rawUrl)
     const label = shortLabelForUrl(rawUrl)
+    // Non-http chips fire through the ONE protocol-launch chokepoint
+    // (clipboard backup + toast feedback) — the old inline handler copied
+    // silently, so a failed fire looked like the click did nothing.
     const handleClick = (e: React.MouseEvent) => {
       e.stopPropagation()
       if (isHttp) return
       e.preventDefault()
-      navigator.clipboard.writeText(rawUrl).catch(() => window.prompt('Copy path:', rawUrl))
-      try { window.location.href = href } catch { /* no-op */ }
+      void launch(href, {
+        copyText: rawUrl,
+        successMessage: `Opening ${typeLabel.toLowerCase()}… (path copied as backup)`,
+      })
     }
     parts.push(
       <a

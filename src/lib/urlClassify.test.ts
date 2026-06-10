@@ -7,6 +7,7 @@ import {
   obsidianVaultRelPath,
   buildObsidianUri,
   shortLabelForUrl,
+  gmailKind,
 } from './urlClassify'
 
 // The three real `projects.primary_folder` shapes seen in live /api/projects data.
@@ -133,5 +134,29 @@ describe('Obsidian vault markdown classification', () => {
     expect(
       shortLabelForUrl('C:/Users/ingra107/Peripheral-Brain/Projects/clif/PROJECT.md'),
     ).toBe('Obsidian · PROJECT')
+  })
+})
+
+describe('Gmail link vocabulary (TODAY.md parity, 2026-06-10)', () => {
+  const THREAD = 'https://mail.google.com/mail/u/0/#inbox/FMfcgzQbdrXmKlPqRsTv'
+  const DRAFT = 'https://mail.google.com/mail/u/0/#drafts?compose=ABCdef123'
+
+  it('gmailKind distinguishes thread vs draft vs non-gmail', () => {
+    expect(gmailKind(THREAD)).toBe('thread')
+    expect(gmailKind(DRAFT)).toBe('draft')
+    expect(gmailKind('https://github.com/ingra107/mn-ccore-lab')).toBeNull()
+    expect(gmailKind('C:/Users/ingra107/Box')).toBeNull()
+  })
+
+  it('classifyUrl gives Gmail links the Gmail typeLabel and keeps them http', () => {
+    const c = classifyUrl(THREAD)
+    expect(c.typeLabel).toBe('Gmail')
+    expect(c.isHttp).toBe(true)
+    expect(c.href).toBe(THREAD)
+  })
+
+  it('shortLabelForUrl labels Gmail thread and draft semantically', () => {
+    expect(shortLabelForUrl(THREAD)).toBe('Gmail thread')
+    expect(shortLabelForUrl(DRAFT)).toBe('Gmail draft')
   })
 })

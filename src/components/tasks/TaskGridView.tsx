@@ -12,7 +12,7 @@ import { CSS } from '@dnd-kit/utilities'
 import InlineAssigneePicker from '../InlineAssigneePicker'
 import InlineDatePicker from '../InlineDatePicker'
 import { useUndoToast } from '../UndoToast'
-import { useToast } from '../../hooks/useToast'
+import { useProtocolLaunch } from '../../hooks/useProtocolLaunch'
 import { classifyUrl } from '../../lib/urlClassify'
 import TaskTitle from './TaskTitle'
 import TaskContextMenu from './TaskContextMenu'
@@ -1473,29 +1473,21 @@ function TaskGridRow({
 
 function KeyLinkIcon({ url, label }: { url: string; label?: string | null }) {
   const [copied, setCopied] = useState(false)
-  const { showSuccess } = useToast()
+  const { launch } = useProtocolLaunch()
 
   const { href, Icon, typeLabel, isHttp } = classifyUrl(url)
 
-  // Local paths + .bat/.ps1 scripts use the `mnccore://` custom protocol.
-  // Copy path to clipboard first (reliable fallback), then fire the protocol
-  // link (works if the handler is registered). Matches KeyLinksEditor pattern.
-  const handleNonHttpClick = async (e: React.MouseEvent) => {
+  // Non-http links fire through the ONE protocol-launch chokepoint
+  // (clipboard backup + toast). Was a local duplicate of the same logic.
+  const handleNonHttpClick = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    try {
-      await navigator.clipboard.writeText(url)
-      showSuccess(`${typeLabel} path copied — paste in Win+R or Explorer`)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 1500)
-    } catch {
-      window.prompt('Copy path:', url)
-    }
-    try {
-      window.location.href = href
-    } catch {
-      // ignore — custom protocol without handler is a no-op on most systems
-    }
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1500)
+    void launch(href, {
+      copyText: url,
+      successMessage: `Opening ${typeLabel.toLowerCase()}… (path copied as backup)`,
+    })
   }
 
   return (
