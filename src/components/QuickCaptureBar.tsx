@@ -1,62 +1,23 @@
-import { useState, useRef, useEffect, useCallback } from 'react'
-import { Send, Check, Plus } from 'lucide-react'
-import { usePBCapture } from '../hooks/useMutations'
+import { Plus } from 'lucide-react'
+import { openGlobalQuickAdd } from './GlobalQuickAddModal'
 
+// P2-10: QuickCaptureBar is no longer a separate capture input with its own
+// submit path. Per Decision #5 the ⌘-style quick-add modal is the SINGLE
+// canonical capture surface, so this dashboard affordance is now a trigger that
+// opens that one modal (one component, one submit path, one optimistic toast).
+// The previous bespoke usePBCapture input + Ctrl+N focus handler are retired;
+// the documented shortcut is `q` (S11 — Ctrl+N was browser-reserved).
 export default function QuickCaptureBar({ noMargin }: { noMargin?: boolean }) {
-  const [text, setText] = useState('')
-  const [showSuccess, setShowSuccess] = useState(false)
-  const inputRef = useRef<HTMLInputElement>(null)
-  const capture = usePBCapture()
-
-  // Ctrl+N focuses the input from anywhere on dashboard
-  useEffect(() => {
-    function handleKeyDown(e: KeyboardEvent) {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
-        e.preventDefault()
-        inputRef.current?.focus()
-      }
-    }
-    document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [])
-
-  const handleSubmit = useCallback(() => {
-    const trimmed = text.trim()
-    if (!trimmed) return
-
-    // Parse prefix: "idea:" -> type='idea', "note:" -> type='note', otherwise 'task'
-    let type: 'task' | 'idea' | 'note' = 'task'
-    let captureText = trimmed
-
-    if (/^idea:/i.test(trimmed)) {
-      type = 'idea'
-      captureText = trimmed.replace(/^idea:\s*/i, '')
-    } else if (/^note:/i.test(trimmed)) {
-      type = 'note'
-      captureText = trimmed.replace(/^note:\s*/i, '')
-    }
-
-    capture.mutate(
-      { text: captureText, type },
-      {
-        onSuccess: () => {
-          setText('')
-          setShowSuccess(true)
-          setTimeout(() => setShowSuccess(false), 1500)
-        },
-      }
-    )
-  }, [text, capture])
-
   return (
     <div
       className={noMargin ? 'relative' : 'relative mb-4'}
-      style={{
-        width: '100%',
-      }}
+      style={{ width: '100%' }}
     >
-      <div
-        className="flex items-center gap-2"
+      <button
+        type="button"
+        onClick={openGlobalQuickAdd}
+        aria-label="Quick add task (press q)"
+        className="flex items-center gap-2 w-full text-left"
         style={{
           height: 40,
           padding: '0 var(--sp-md)',
@@ -64,83 +25,26 @@ export default function QuickCaptureBar({ noMargin }: { noMargin?: boolean }) {
           border: '1px solid var(--border-default)',
           background: 'var(--cream)',
           boxShadow: '0 0 0 1px var(--border-subtle)',
+          cursor: 'pointer',
           transition: 'border-color 150ms ease, box-shadow 150ms ease',
         }}
+        onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--teal)' }}
+        onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border-default)' }}
       >
         <Plus size={14} style={{ color: 'var(--teal)', opacity: 0.85, flexShrink: 0 }} />
-        <input
-          ref={inputRef}
-          type="text"
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              e.preventDefault()
-              handleSubmit()
-            }
-          }}
-          placeholder="Quick capture... (task, idea:, note:)"
-          disabled={capture.isPending}
-          className="flex-1 bg-transparent border-none outline-none text-[13px]"
-          style={{
-            color: 'var(--ink)',
-            fontFamily: 'inherit',
-          }}
-        />
-
-        {/* Success flash */}
-        {showSuccess && (
-          <div
-            className="flex items-center gap-1"
-            style={{
-              color: 'var(--green)',
-              fontSize: '11px',
-              fontWeight: 500,
-              animation: 'fadeInOut 1.5s ease forwards',
-            }}
-          >
-            <Check size={12} />
-            Captured
-          </div>
-        )}
-
-        {/* Submit button (visible when text is entered) */}
-        {text.trim() && !showSuccess && (
-          <button
-            onClick={handleSubmit}
-            disabled={capture.isPending}
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: capture.isPending ? 'wait' : 'pointer',
-              color: 'var(--teal)',
-              padding: 'var(--sp-xs)',
-              display: 'flex',
-              alignItems: 'center',
-              opacity: capture.isPending ? 0.85 : 0.85,
-              transition: 'opacity 150ms ease',
-            }}
-          >
-            <Send size={14} />
-          </button>
-        )}
-
-        {/* Keyboard hint */}
-        {!text && !showSuccess && (
-          <span className="text-[10px] flex-shrink-0" style={{ color: 'var(--slate)', opacity: 0.75 }}>
-            Ctrl+N
-          </span>
-        )}
-      </div>
-
-      <style>{`
-        @keyframes fadeInOut {
-          0% { opacity: 0; transform: translateX(4px); }
-          20% { opacity: 1; transform: translateX(0); }
-          80% { opacity: 1; }
-          100% { opacity: 0; }
-        }
-      `}</style>
+        <span
+          className="flex-1 text-[13px]"
+          style={{ color: 'var(--slate)', opacity: 0.85, fontFamily: 'inherit' }}
+        >
+          Quick add a task…
+        </span>
+        <span
+          className="text-[10px] flex-shrink-0"
+          style={{ color: 'var(--slate)', opacity: 0.75 }}
+        >
+          q
+        </span>
+      </button>
     </div>
   )
 }

@@ -307,8 +307,8 @@ export default function PortalLayout() {
           boxShadow: '0 2px 8px rgba(45,138,138,0.25)',
           opacity: 0.85,
         }}
-        aria-label="Quick add task (Ctrl+N)"
-        title="Quick add task (Ctrl+N)"
+        aria-label="Quick add task (press q)"
+        title="Quick add task (press q)"
       >
         <Plus size={20} strokeWidth={2.5} />
       </button>

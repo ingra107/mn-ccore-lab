@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   CheckSquare, Clock, Calendar,
   Activity, ArrowRight, AlertTriangle, TrendingUp,
-  Send, Lightbulb, User, History,
+  Lightbulb, User, History,
   ChevronDown,
 } from 'lucide-react'
 import PageHeader from '../../components/PageHeader'
@@ -13,7 +13,8 @@ import OnboardingChecklist from '../../components/OnboardingChecklist'
 import { useOnboarding } from '../../hooks/useOnboarding'
 import { useTasks, useActivity, useExpiringRegulatory } from '../../hooks/useApiData'
 import { useProjects } from '../../hooks/useApiData'
-import { useUpdateTaskStatus, useUpdateTask, useCreateIdea } from '../../hooks/useMutations'
+import { useUpdateTaskStatus, useUpdateTask } from '../../hooks/useMutations'
+import { openGlobalQuickAdd } from '../../components/GlobalQuickAddModal'
 import { useTaskKeyboardShortcuts } from '../../hooks/useTaskKeyboardShortcuts'
 import { useAuth } from '../../hooks/useAuth'
 import { emailToSlug } from '../../lib/emailSlug'
@@ -143,53 +144,37 @@ function RoleSelector({ role, onSelect }: { role: UserRole; onSelect: (role: Use
 }
 
 // ── Quick Capture ────────────────────────────────────────────
+// P2-10: Personal's capture is no longer a separate idea-input with its own
+// submit path. Per Decision #5 the quick-add modal is the single canonical
+// capture, so this is a trigger that opens that one modal (one component, one
+// submit path, one optimistic toast). The documented shortcut is `q` (S11).
 
 function QuickCapture() {
-  const [value, setValue] = useState('')
-  const createIdea = useCreateIdea()
-  const { showSuccess } = useUndoToast()
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!value.trim()) return
-    createIdea.mutate({ title: value.trim() }, {
-      onSuccess: () => showSuccess('Idea captured'),
-    })
-    setValue('')
-  }
-
   return (
-    <form onSubmit={handleSubmit} className="flex items-center gap-2">
+    <button
+      type="button"
+      onClick={openGlobalQuickAdd}
+      aria-label="Quick add task (press q)"
+      className="flex items-center gap-2 w-full text-left rounded-lg border px-3 py-1.5 transition-colors"
+      style={{
+        borderColor: 'var(--border-subtle)',
+        backgroundColor: 'var(--cream)',
+        cursor: 'pointer',
+      }}
+      onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--teal)' }}
+      onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border-subtle)' }}
+    >
       <Lightbulb size={14} style={{ color: 'var(--gold)', opacity: 0.85, flexShrink: 0 }} />
-      <input
-        type="text"
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        placeholder="Quick capture — idea, thought, note..."
-        className="flex-1 rounded-lg border px-3 py-1.5 text-xs outline-none focus:ring-1"
-        style={{
-          borderColor: 'var(--border-subtle)',
-          color: 'var(--ink)',
-          backgroundColor: 'var(--cream)',
-          fontSize: 'var(--text-label)',
-        }}
-      />
-      <AnimatePresence>
-        {value.trim() && (
-          <motion.button
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            transition={{ duration: 0.15 }}
-            type="submit"
-            className="p-1.5 rounded-lg"
-            style={{ backgroundColor: 'var(--teal-solid)', color: '#fff', border: 'none', cursor: 'pointer' }}
-          >
-            <Send size={12} />
-          </motion.button>
-        )}
-      </AnimatePresence>
-    </form>
+      <span
+        className="flex-1 text-xs"
+        style={{ color: 'var(--slate)', opacity: 0.85, fontSize: 'var(--text-label)' }}
+      >
+        Quick capture — task, idea, thought…
+      </span>
+      <span className="text-[10px] flex-shrink-0" style={{ color: 'var(--slate)', opacity: 0.75 }}>
+        q
+      </span>
+    </button>
   )
 }
 

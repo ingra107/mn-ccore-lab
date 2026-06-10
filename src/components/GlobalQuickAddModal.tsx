@@ -1,5 +1,14 @@
 /**
- * Global quick-add modal — open from anywhere via Cmd+N / Ctrl+N.
+ * Global quick-add modal — the single canonical capture surface (Decision #5).
+ *
+ * Open from anywhere via the `q` shortcut (single key, no modifier; only when
+ * no input/textarea/contenteditable is focused — matching Ideas' `n` precedent),
+ * the floating "+" FAB, or the `mn-ccore:open-quick-add` window event (which
+ * lets any surface — QuickCaptureBar, Personal's quick capture — route into this
+ * one primitive instead of forking its own capture input).
+ *
+ * The old Cmd/Ctrl+N binding (S11) was browser-reserved (new window) and could
+ * never fire in Chrome/Edge/Firefox.
  *
  * Renders a floating panel with QuickAddTaskInput. On submit it POSTs
  * a new task to the D1 API using the parsed token values.
@@ -241,23 +250,41 @@ function GlobalQuickAddModal({ isOpen, onClose }: Props) {
   )
 }
 
-// ── Hook: Cmd+N / Ctrl+N shortcut ───────────────────────────
+// ── Shortcut + global opener ─────────────────────────────────
+// S11: the documented capture shortcut is now `q` — a single, interceptable
+// key (Cmd/Ctrl+N is browser-reserved and never fired). It only triggers when
+// no text field is focused and no modifier is held, matching Ideas' `n`. Any
+// surface can also open the canonical modal by dispatching the
+// `mn-ccore:open-quick-add` window event (P2-10 — one capture primitive).
+
+export const QUICK_ADD_EVENT = 'mn-ccore:open-quick-add'
+
+/** Dispatch from anywhere to open the single canonical quick-add modal. */
+export function openGlobalQuickAdd() {
+  window.dispatchEvent(new Event(QUICK_ADD_EVENT))
+}
 
 export function useQuickAddShortcut(open: () => void) {
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      const isMac = navigator.platform.toUpperCase().includes('MAC')
-      const modKey = isMac ? e.metaKey : e.ctrlKey
-      if (modKey && e.key === 'n') {
-        const target = e.target as HTMLElement
-        const tag = target.tagName.toLowerCase()
-        if (tag === 'input' || tag === 'textarea' || target.isContentEditable) return
-        e.preventDefault()
-        open()
-      }
+      // ignore modified `q` (Cmd+Q quit, Ctrl+Q etc.) and IME composition
+      if (e.metaKey || e.ctrlKey || e.altKey || e.isComposing) return
+      if (e.key !== 'q' && e.key !== 'Q') return
+      const target = e.target as HTMLElement
+      const tag = target.tagName.toLowerCase()
+      if (tag === 'input' || tag === 'textarea' || target.isContentEditable) return
+      e.preventDefault()
+      open()
     }
     document.addEventListener('keydown', handler)
-    return () => document.removeEventListener('keydown', handler)
+    // P2-10: global event opener so QuickCaptureBar / Personal capture / any
+    // future surface route into this one modal instead of forking capture.
+    const onEvent = () => open()
+    window.addEventListener(QUICK_ADD_EVENT, onEvent)
+    return () => {
+      document.removeEventListener('keydown', handler)
+      window.removeEventListener(QUICK_ADD_EVENT, onEvent)
+    }
   }, [open])
 }
 
