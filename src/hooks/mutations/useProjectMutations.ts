@@ -1,13 +1,21 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useNavigate } from 'react-router-dom'
 import { createProject, updateProject, addProjectComment, fetchApi } from '../../lib/api'
 import type { Project } from '../../data/types'
 import type { Comment, ProjectDocumentRow } from '../useApiData'
 import { nowInstant } from '../../lib/time'
+import { useUndoToast } from '../../components/UndoToast'
+import { PATHS } from '../../constants/paths'
 
 // ── Project mutations ───────────────────────────────────────
 
 export function useCreateProject() {
   const queryClient = useQueryClient()
+  // S16: creates must not end in silence. Both consumers (Projects /
+  // Manuscripts) call .mutate(input) with no onSuccess, so the toast +
+  // navigation live here so every create surfaces a working "Open →".
+  const navigate = useNavigate()
+  const { showSuccess } = useUndoToast()
 
   return useMutation({
     mutationFn: (input: {
@@ -17,6 +25,14 @@ export function useCreateProject() {
       description?: string
       pi?: string
     }) => createProject(input),
+
+    onSuccess: (resp) => {
+      const slug = resp?.data?.slug
+      showSuccess(
+        'Project created',
+        slug ? { label: 'Open →', onClick: () => navigate(PATHS.project(slug)) } : undefined,
+      )
+    },
 
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['projects'] })

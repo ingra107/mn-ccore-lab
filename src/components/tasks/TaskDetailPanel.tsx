@@ -7,6 +7,7 @@ import {
   ChevronUp, ChevronDown, Send, Paperclip, AtSign, Smile,
 } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useNavigate } from 'react-router-dom'
 import CollapsibleSection from '../CollapsibleSection'
 import FileUpload from '../FileUpload'
 const RichTextEditor = lazy(() => import('../RichTextEditor'))
@@ -62,18 +63,26 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
   const updateTask = useUpdateTask()
   const updateStatus = useUpdateTaskStatus()
   const qc = useQueryClient()
+  const navigate = useNavigate()
+
+  // S14: in-panel task swap. Clicking a dependency (blocked-by / blocks) opens
+  // that task IN the panel without a parent round-trip. The swap target
+  // overrides taskProp until the panel is reopened on a different task.
+  const [swapTask, setSwapTask] = useState<TaskRow | null>(null)
+  useEffect(() => { setSwapTask(null) }, [taskProp?.id])
+  const baseTask = swapTask ?? taskProp
 
   // Parent pages hold selectedTask as a state snapshot. After a mutation
   // the ['tasks', ...] cache updates but that snapshot goes stale (GH #7).
   // Subscribe to the cache and surface the freshest row for this task id.
-  const [liveTask, setLiveTask] = useState<TaskRow | null>(taskProp)
-  useEffect(() => { setLiveTask(taskProp) }, [taskProp])
+  const [liveTask, setLiveTask] = useState<TaskRow | null>(baseTask)
+  useEffect(() => { setLiveTask(baseTask) }, [baseTask])
   useEffect(() => {
-    if (!taskProp?.id) return
+    if (!baseTask?.id) return
     const findFresh = (): TaskRow | null => {
       const queries = qc.getQueriesData<TaskRow[]>({ queryKey: ['tasks'] })
       for (const [, data] of queries) {
-        const fresh = data?.find(t => t.id === taskProp.id)
+        const fresh = data?.find(t => t.id === baseTask.id)
         if (fresh) return fresh
       }
       return null
@@ -85,8 +94,8 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
       if (fresh) setLiveTask(fresh)
     })
     return unsub
-  }, [qc, taskProp?.id])
-  const task = liveTask ?? taskProp
+  }, [qc, baseTask?.id])
+  const task = liveTask ?? baseTask
   const viewerSlugs = usePresence('task', task?.id)
   const [quickAddHasContent, setQuickAddHasContent] = useState(false)
   const taskSelfIntent: Intent = quickAddHasContent ? 'commenting' : 'viewing'
@@ -442,7 +451,23 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
                 <DateInput value={task.due_date || ''} onChange={(v) => handleFieldUpdate('due_date', v || null)} />
               </FieldBlock>
               <FieldBlock label="Project" icon={FolderKanban} noContainer>
-                <ProjectSelect value={task.project_id || ''} onChange={(v) => handleFieldUpdate('project_id', v || null)} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-sm)', minWidth: 0 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <ProjectSelect value={task.project_id || ''} onChange={(v) => handleFieldUpdate('project_id', v || null)} />
+                  </div>
+                  {/* S14: a path from the task to its project's detail page. */}
+                  {task.project_id && (
+                    <button
+                      type="button"
+                      onClick={() => { onClose(); navigate(PATHS.project(task.project_id!)) }}
+                      title="Open project"
+                      aria-label="Open project"
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', flexShrink: 0, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--teal)', fontSize: 'var(--text-small)', fontWeight: 500, padding: '2px 4px' }}
+                    >
+                      Open <ExternalLink size={12} />
+                    </button>
+                  )}
+                </div>
               </FieldBlock>
             </div>
 
@@ -562,8 +587,9 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
               />
             </div>
 
-            {/* Dependencies */}
-            <TaskDependenciesSection task={task} onFieldUpdate={handleFieldUpdate} onOpenTask={() => {}} />
+            {/* Dependencies — S14: clicking a blocker/blocked task swaps the
+                panel to it instead of dead-ending on a no-op handler. */}
+            <TaskDependenciesSection task={task} onFieldUpdate={handleFieldUpdate} onOpenTask={(t) => setSwapTask(t)} />
 
             {/* Handoffs */}
             <CollapsibleSection
@@ -1037,7 +1063,9 @@ function OverviewQuickAdd({
     comment: '@emma can you double-check the propensity score weights? @hermes pull recent JAMA papers on this',
   }
   const TOOLTIPS = {
-    note: 'Private progress log — lab-notebook style',
+    // S18: notes render for every viewer; the privacy split is M5. Don't
+    // promise privacy the app doesn't deliver yet.
+    note: 'Informal progress log — visible to the team',
     comment: 'Talk to teammates — @mention works',
   }
 

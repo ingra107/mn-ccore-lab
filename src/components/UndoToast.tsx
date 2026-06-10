@@ -1,6 +1,11 @@
 import { useState, useCallback, useRef, useEffect, useMemo, createContext, useContext } from 'react'
 import { Undo2, X, Check } from 'lucide-react'
 
+interface ToastAction {
+  label: string
+  onClick: () => void
+}
+
 interface UndoToast {
   id: string
   type: 'undo'
@@ -12,13 +17,17 @@ interface SuccessToast {
   id: string
   type: 'success'
   message: string
+  // S16: an optional named action (e.g. "Open →") so create flows can offer a
+  // working follow-through instead of dead-ending in silence. Distinct from
+  // the Undo affordance, which is reserved for the undo-toast variant.
+  action?: ToastAction
 }
 
 type Toast = UndoToast | SuccessToast
 
 interface ToastContextType {
   showUndo: (message: string, onUndo: () => void) => void
-  showSuccess: (message: string) => void
+  showSuccess: (message: string, action?: ToastAction) => void
 }
 
 const ToastContext = createContext<ToastContextType>({ showUndo: () => {}, showSuccess: () => {} })
@@ -61,9 +70,9 @@ export function UndoToastProvider({ children }: { children: React.ReactNode }) {
     timers.current.set(id, timer)
   }, [])
 
-  const showSuccess = useCallback((message: string) => {
+  const showSuccess = useCallback((message: string, action?: ToastAction) => {
     const id = Date.now().toString() + '-s'
-    setToasts((prev) => [...prev, { id, type: 'success', message }])
+    setToasts((prev) => [...prev, { id, type: 'success', message, action }])
 
     // Auto-dismiss after 3 seconds (shorter than undo)
     const timer = setTimeout(() => {
@@ -153,6 +162,27 @@ export function UndoToastProvider({ children }: { children: React.ReactNode }) {
               <Check size={14} style={{ color: 'var(--teal)', flexShrink: 0 }} />
             )}
             <span style={{ flex: 1 }}>{toast.message}</span>
+            {toast.type === 'success' && toast.action && (
+              <button
+                data-testid="toast-action-button"
+                onClick={() => { toast.action!.onClick(); dismiss(toast.id) }}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  padding: 'var(--sp-xs) var(--sp-sm)',
+                  borderRadius: 'var(--radius-md)',
+                  border: 'none',
+                  background: 'rgba(255,255,255,0.15)',
+                  color: 'var(--gold)',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                {toast.action.label}
+              </button>
+            )}
             {toast.type === 'undo' && (
               <button
                 data-testid="undo-button"
