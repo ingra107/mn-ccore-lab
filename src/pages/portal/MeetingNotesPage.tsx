@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
@@ -10,6 +10,7 @@ import { staggerContainer, staggerItem } from '../../lib/animations'
 import PageHeader from '../../components/PageHeader'
 import PageContainer from '../../components/PageContainer'
 import EmptyState from '../../components/EmptyState'
+import Modal from '../../components/ui/Modal'
 import MetricCard from '../../components/MetricCard'
 import InlineSelect from '../../components/InlineSelect'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
@@ -224,7 +225,7 @@ export default function MeetingNotesPage() {
       </div>
 
       {/* Upload/Paste Modal */}
-      {showCreate && <TranscriptModal onClose={() => setShowCreate(false)} meetings={meetings} />}
+      <TranscriptModal open={showCreate} onClose={() => setShowCreate(false)} meetings={meetings} />
     </PageContainer>
   )
 }
@@ -233,29 +234,12 @@ export default function MeetingNotesPage() {
 
 // ── Transcript Modal ─────────────────────────────────────────
 
-function TranscriptModal({ onClose, meetings }: { onClose: () => void; meetings: { id: string; title: string; date: string }[] }) {
+function TranscriptModal({ open, onClose, meetings }: { open: boolean; onClose: () => void; meetings: { id: string; title: string; date: string }[] }) {
   const [transcript, setTranscript] = useState('')
   const [meetingId, setMeetingId] = useState('')
   const [saving, setSaving] = useState(false)
   const { showSuccess } = useUndoToast()
   const queryClient = useQueryClient()
-  const modalRef = useRef<HTMLDivElement>(null)
-
-  // Focus trap + Escape
-  useEffect(() => {
-    if (!modalRef.current) return
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') { onClose(); return }
-      if (e.key !== 'Tab') return
-      const focusable = modalRef.current!.querySelectorAll<HTMLElement>('input, select, textarea, button, [tabindex]:not([tabindex="-1"])')
-      if (focusable.length === 0) return
-      const first = focusable[0], last = focusable[focusable.length - 1]
-      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus() }
-      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus() }
-    }
-    document.addEventListener('keydown', handler)
-    return () => document.removeEventListener('keydown', handler)
-  }, [onClose])
 
   // P1-5: AI processing isn't wired yet, so the honest, useful action is to
   // SAVE the pasted transcript as the meeting's notes. Optimistic close.
@@ -282,71 +266,64 @@ function TranscriptModal({ onClose, meetings }: { onClose: () => void; meetings:
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'rgba(15,25,35,0.5)' }} onClick={onClose}>
-      <div ref={modalRef} role="dialog" aria-modal="true" aria-label="Process Meeting Notes" className="rounded-xl shadow-xl border w-full max-w-lg mx-4 max-h-[85vh] overflow-y-auto" style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--border-subtle)' }} onClick={(e) => e.stopPropagation()}>
-        <div className="px-5 py-3.5 border-b flex items-center justify-between" style={{ borderColor: 'var(--border-subtle)' }}>
-          <h3 className="text-lg flex items-center gap-2" style={{ fontWeight: 500, color: 'var(--ink)' }}>
-            <Brain size={18} style={{ color: 'var(--teal)' }} />
-            Process Meeting
-          </h3>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)' }}>
-            &times;
+    <Modal
+      open={open}
+      onClose={onClose}
+      title="Process Meeting"
+      maxWidth="lg"
+      footer={
+        <>
+          <button onClick={onClose} className="px-4 py-2 rounded-md text-sm" style={{ color: 'var(--slate)', cursor: 'pointer', background: 'none', border: '1px solid var(--border-subtle)' }}>
+            Cancel
           </button>
+          <button
+            onClick={handleProcess}
+            disabled={!transcript.trim() || !meetingId || saving}
+            className="px-4 py-2 rounded-md text-sm font-medium flex items-center gap-2"
+            style={{ backgroundColor: 'var(--teal-solid)', color: 'var(--ink-bright, #fff)', cursor: (!transcript.trim() || !meetingId || saving) ? 'not-allowed' : 'pointer', border: 'none', opacity: (!transcript.trim() || !meetingId || saving) ? 0.85 : 1 }}
+          >
+            <FileText size={14} />
+            {saving ? 'Saving…' : 'Save Transcript'}
+          </button>
+        </>
+      }
+    >
+      <div className="flex flex-col gap-4">
+        {/* P1-5: Audio tab removed (AI not wired). Pasting a transcript saves
+            it as the meeting's notes — the honest, useful action. */}
+
+        {/* Link to meeting — required, since this is the save target */}
+        <div>
+          <label htmlFor="meeting-notes-link" className="block text-xs font-medium mb-1" style={{ color: 'var(--slate)' }}>
+            Link to Meeting
+          </label>
+          <InlineSelect
+            value={meetingId}
+            options={[
+              { value: '', label: 'Select meeting...' },
+              ...meetings.map((m) => ({ value: m.id, label: `${m.title} (${formatMediumDate(m.date)})` })),
+            ]}
+            onChange={setMeetingId}
+            size="md"
+            alwaysShowChevron
+          />
         </div>
 
-        <div className="p-5 flex flex-col gap-4">
-          {/* P1-5: Audio tab removed (AI not wired). Pasting a transcript saves
-              it as the meeting's notes — the honest, useful action. */}
-
-          {/* Link to meeting — required, since this is the save target */}
-          <div>
-            <label htmlFor="meeting-notes-link" className="block text-xs font-medium mb-1" style={{ color: 'var(--slate)' }}>
-              Link to Meeting
-            </label>
-            <InlineSelect
-              value={meetingId}
-              options={[
-                { value: '', label: 'Select meeting...' },
-                ...meetings.map((m) => ({ value: m.id, label: `${m.title} (${formatMediumDate(m.date)})` })),
-              ]}
-              onChange={setMeetingId}
-              size="md"
-              alwaysShowChevron
-            />
-          </div>
-
-          {/* Input area */}
-          <div>
-            <label className="block text-xs font-medium mb-1" style={{ color: 'var(--slate)' }}>
-              Paste Transcript
-            </label>
-            <textarea
-              value={transcript}
-              onChange={(e) => setTranscript(e.target.value)}
-              placeholder="Paste your meeting transcript here..."
-              rows={8}
-              className="w-full rounded-md border px-3 py-2 text-sm outline-none resize-none"
-              style={{ borderColor: 'var(--border-subtle)' }}
-            />
-          </div>
-
-          {/* Submit */}
-          <div className="flex justify-end gap-2">
-            <button onClick={onClose} className="px-4 py-2 rounded-md text-sm" style={{ color: 'var(--slate)', cursor: 'pointer', background: 'none', border: '1px solid var(--border-subtle)' }}>
-              Cancel
-            </button>
-            <button
-              onClick={handleProcess}
-              disabled={!transcript.trim() || !meetingId || saving}
-              className="px-4 py-2 rounded-md text-sm font-medium flex items-center gap-2"
-              style={{ backgroundColor: 'var(--teal-solid)', color: 'var(--ink-bright, #fff)', cursor: (!transcript.trim() || !meetingId || saving) ? 'not-allowed' : 'pointer', border: 'none', opacity: (!transcript.trim() || !meetingId || saving) ? 0.85 : 1 }}
-            >
-              <FileText size={14} />
-              {saving ? 'Saving…' : 'Save Transcript'}
-            </button>
-          </div>
+        {/* Input area */}
+        <div>
+          <label className="block text-xs font-medium mb-1" style={{ color: 'var(--slate)' }}>
+            Paste Transcript
+          </label>
+          <textarea
+            value={transcript}
+            onChange={(e) => setTranscript(e.target.value)}
+            placeholder="Paste your meeting transcript here..."
+            rows={8}
+            className="w-full rounded-md border px-3 py-2 text-sm outline-none resize-none"
+            style={{ borderColor: 'var(--border-subtle)' }}
+          />
         </div>
       </div>
-    </div>
+    </Modal>
   )
 }

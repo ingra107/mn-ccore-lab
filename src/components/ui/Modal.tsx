@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
+import { useIsMobile } from '../../hooks/useIsMobile'
 
 const MAX_WIDTHS: Record<'sm' | 'md' | 'lg', number> = {
   sm: 420,
@@ -15,10 +16,18 @@ export interface ModalProps {
   maxWidth?: 'sm' | 'md' | 'lg'
   children: React.ReactNode
   footer?: React.ReactNode
+  /**
+   * P2-4 responsive shell rule (defined ONCE here):
+   *   'responsive' (default) — bottom-sheet < 768px, centered modal >= 768px.
+   *   'modal'                — always centered (opt out of the sheet behavior).
+   */
+  variant?: 'responsive' | 'modal'
 }
 
-export default function Modal({ open, onClose, title, maxWidth = 'md', children, footer }: ModalProps) {
+export default function Modal({ open, onClose, title, maxWidth = 'md', children, footer, variant = 'responsive' }: ModalProps) {
   const panelRef = useRef<HTMLDivElement>(null)
+  const isMobile = useIsMobile()
+  const asSheet = variant === 'responsive' && isMobile
 
   // Focus panel on open
   useEffect(() => {
@@ -83,7 +92,7 @@ export default function Modal({ open, onClose, title, maxWidth = 'md', children,
         inset: 0,
         background: 'rgba(0,0,0,0.6)',
         display: 'flex',
-        alignItems: 'center',
+        alignItems: asSheet ? 'flex-end' : 'center',
         justifyContent: 'center',
         zIndex: 'var(--z-modal-backdrop)' as unknown as number,
       }}
@@ -99,17 +108,33 @@ export default function Modal({ open, onClose, title, maxWidth = 'md', children,
         style={{
           background: 'var(--cream)',
           border: '1px solid var(--border-subtle)',
-          borderRadius: 'var(--radius-xl)',
           boxShadow: 'var(--shadow-elevated)',
-          width: '90vw',
-          maxWidth: `${maxWidthPx}px`,
-          margin: '0 var(--sp-lg)',
-          maxHeight: '88vh',
-          overflow: 'hidden',
           zIndex: 'var(--z-modal)' as unknown as number,
           display: 'flex',
           flexDirection: 'column',
           outline: 'none',
+          ...(asSheet
+            ? {
+                // Bottom-sheet: full-width, anchored to the bottom edge, rounded
+                // top corners, safe-area padding for the home indicator.
+                width: '100%',
+                maxWidth: '100%',
+                margin: 0,
+                borderRadius: 'var(--radius-xl) var(--radius-xl) 0 0',
+                borderBottom: 'none',
+                maxHeight: '90vh',
+                paddingBottom: 'env(safe-area-inset-bottom)',
+                overflow: 'hidden',
+              }
+            : {
+                // Centered modal (desktop / tablet).
+                borderRadius: 'var(--radius-xl)',
+                width: '90vw',
+                maxWidth: `${maxWidthPx}px`,
+                margin: '0 var(--sp-lg)',
+                maxHeight: '88vh',
+                overflow: 'hidden',
+              }),
         }}
         onClick={(e) => e.stopPropagation()}
       >

@@ -1,14 +1,22 @@
-import { useState, useRef, useEffect } from 'react'
-import { X } from 'lucide-react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '../hooks/useAuth'
 import { emailToSlug } from '../lib/emailSlug'
 import InlineSelect from './InlineSelect'
 import InlineAssigneePicker from './InlineAssigneePicker'
 import Field from './ui/Field'
+import Modal from './ui/Modal'
+
+/** S15: optional prefill (e.g. promoting an Idea into a project). */
+export interface CreateProjectPrefill {
+  title?: string
+  description?: string
+  pi?: string
+}
 
 interface CreateProjectModalProps {
   open: boolean
   onClose: () => void
+  prefill?: CreateProjectPrefill
   onCreate: (project: {
     title: string
     category?: string
@@ -46,7 +54,7 @@ const STAGES = [
 ]
 
 
-export default function CreateProjectModal({ open, onClose, onCreate }: CreateProjectModalProps) {
+export default function CreateProjectModal({ open, onClose, prefill, onCreate }: CreateProjectModalProps) {
   const { user } = useAuth()
 
   const isNick = checkIsNick(user.email)
@@ -58,36 +66,16 @@ export default function CreateProjectModal({ open, onClose, onCreate }: CreatePr
   const [pi, setPi] = useState(emailToSlug(user.email))
   const [description, setDescription] = useState('')
 
-  const modalRef = useRef<HTMLDivElement>(null)
-
-  // Focus trap
+  // S15: seed the form from prefill whenever the modal opens (e.g. promoting
+  // an approved idea). Re-runs on open so a second promotion gets fresh values.
   useEffect(() => {
-    if (!open || !modalRef.current) return
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') { onClose(); return }
-      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-        e.preventDefault()
-        const form = modalRef.current?.querySelector('form')
-        if (form) form.requestSubmit()
-        return
-      }
-      if (e.key !== 'Tab') return
-      const focusable = modalRef.current!.querySelectorAll<HTMLElement>(
-        'input, select, textarea, button, [tabindex]:not([tabindex="-1"])'
-      )
-      if (focusable.length === 0) return
-      const first = focusable[0]
-      const last = focusable[focusable.length - 1]
-      if (e.shiftKey && document.activeElement === first) {
-        e.preventDefault()
-        last.focus()
-      } else if (!e.shiftKey && document.activeElement === last) {
-        e.preventDefault()
-        first.focus()
-      }
-    }
-    document.addEventListener('keydown', handler)
-    return () => document.removeEventListener('keydown', handler)
+    if (!open) return
+    setTitle(prefill?.title ?? '')
+    setDescription(prefill?.description ?? '')
+    setPi(prefill?.pi ?? emailToSlug(user.email))
+    setCategory('MNCCORE')
+    setStage('idea')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -111,135 +99,116 @@ export default function CreateProjectModal({ open, onClose, onCreate }: CreatePr
     onClose()
   }
 
-  if (!open) return null
-
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)' }}
-      onClick={onClose}
-    >
-      <div
-        ref={modalRef}
-        role="dialog"
-        aria-modal="true"
-        aria-label="Create new project"
-        className="rounded-xl shadow-xl border w-full max-w-lg mx-4 card-elevated"
-        style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--border-subtle)' }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div
-          className="flex items-center justify-between px-5 py-3.5 border-b"
-          style={{ borderColor: 'var(--border-subtle)' }}
-        >
-          <h3
-            className="text-lg"
-            style={{ fontWeight: 400, color: 'var(--ink)' }}
-          >
-            New Project
-          </h3>
+    <Modal
+      open={open}
+      onClose={onClose}
+      title="New Project"
+      maxWidth="lg"
+      footer={
+        <>
           <button
+            type="button"
             onClick={onClose}
-            aria-label="Close"
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: 'var(--sp-xs)' }}
+            className="px-4 py-2 rounded-md text-sm transition-colors"
+            style={{
+              color: 'var(--slate)',
+              cursor: 'pointer',
+              background: 'none',
+              border: '1px solid var(--border-subtle)',
+            }}
           >
-            <X size={18} />
+            Cancel
           </button>
+          <button
+            type="submit"
+            form="create-project-form"
+            disabled={!title.trim()}
+            aria-describedby={!title.trim() ? 'project-submit-hint' : undefined}
+            className="px-4 py-2 rounded-md text-sm font-medium transition-colors"
+            style={{
+              backgroundColor: !title.trim() ? 'var(--border-subtle)' : 'var(--gold)',
+              color: !title.trim() ? 'var(--slate)' : 'var(--ink)',
+              cursor: !title.trim() ? 'not-allowed' : 'pointer',
+              border: 'none',
+              fontWeight: 600,
+            }}
+          >
+            Create Project
+          </button>
+        </>
+      }
+    >
+      <form
+        id="create-project-form"
+        onSubmit={handleSubmit}
+        onKeyDown={(e) => {
+          if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+            e.preventDefault()
+            e.currentTarget.requestSubmit()
+          }
+        }}
+        className="flex flex-col gap-3.5"
+      >
+        {/* Title */}
+        <Field label="Title" required htmlFor="project-title">
+          <input
+            id="project-title"
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="e.g., Ventilator Liberation Prediction Model"
+            className="w-full outline-none focus:ring-0"
+            style={{
+              fontSize: 'var(--text-small)',
+              color: 'var(--ink)',
+              background: 'transparent',
+              border: 'none',
+            }}
+            aria-required="true"
+            autoFocus
+          />
+        </Field>
+
+        {/* Category + Stage row */}
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Category" htmlFor="create-project-category" noContainer>
+            <InlineSelect value={category} options={categories} onChange={setCategory} />
+          </Field>
+          <Field label="Stage" htmlFor="create-project-stage" noContainer>
+            <InlineSelect value={stage} options={STAGES} onChange={setStage} />
+          </Field>
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="p-5 flex flex-col gap-3.5">
-          {/* Title */}
-          <Field label="Title" required htmlFor="project-title">
-            <input
-              id="project-title"
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g., Ventilator Liberation Prediction Model"
-              className="w-full outline-none focus:ring-0"
-              style={{
-                fontSize: 'var(--text-small)',
-                color: 'var(--ink)',
-                background: 'transparent',
-                border: 'none',
-              }}
-              aria-required="true"
-              autoFocus
-            />
-          </Field>
+        {/* PI */}
+        <Field label="PI" noContainer>
+          <InlineAssigneePicker value={pi} onChange={setPi} />
+        </Field>
 
-          {/* Category + Stage row */}
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Category" htmlFor="create-project-category" noContainer>
-              <InlineSelect value={category} options={categories} onChange={setCategory} />
-            </Field>
-            <Field label="Stage" htmlFor="create-project-stage" noContainer>
-              <InlineSelect value={stage} options={STAGES} onChange={setStage} />
-            </Field>
-          </div>
+        {/* Description */}
+        <Field label="Description" hint="Optional — brief project description">
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Brief project description..."
+            rows={3}
+            className="w-full outline-none resize-none"
+            style={{
+              fontSize: 'var(--text-small)',
+              color: 'var(--ink)',
+              background: 'transparent',
+              border: 'none',
+            }}
+          />
+        </Field>
 
-          {/* PI */}
-          <Field label="PI" noContainer>
-            <InlineAssigneePicker value={pi} onChange={setPi} />
-          </Field>
-
-          {/* Description */}
-          <Field label="Description" hint="Optional — brief project description">
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Brief project description..."
-              rows={3}
-              className="w-full outline-none resize-none"
-              style={{
-                fontSize: 'var(--text-small)',
-                color: 'var(--ink)',
-                background: 'transparent',
-                border: 'none',
-              }}
-            />
-          </Field>
-
-          {/* Submit */}
-          {!title.trim() && (
-            <p id="project-submit-hint" className="text-[11px]" style={{ color: 'var(--slate)', opacity: 0.85 }}>
-              Title is required.
-            </p>
-          )}
-          <div className="flex justify-end gap-2 mt-1">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 rounded-md text-sm transition-colors"
-              style={{
-                color: 'var(--slate)',
-                cursor: 'pointer',
-                background: 'none',
-                border: '1px solid var(--border-subtle)',
-              }}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={!title.trim()}
-              aria-describedby={!title.trim() ? 'project-submit-hint' : undefined}
-              className="px-4 py-2 rounded-md text-sm font-medium transition-colors"
-              style={{
-                backgroundColor: !title.trim() ? 'var(--border-subtle)' : 'var(--gold)',
-                color: !title.trim() ? 'var(--slate)' : 'var(--ink)',
-                cursor: !title.trim() ? 'not-allowed' : 'pointer',
-                border: 'none',
-                fontWeight: 600,
-              }}
-            >
-              Create Project
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        {/* Submit hint */}
+        {!title.trim() && (
+          <p id="project-submit-hint" className="text-[11px]" style={{ color: 'var(--slate)', opacity: 0.85 }}>
+            Title is required.
+          </p>
+        )}
+      </form>
+    </Modal>
   )
 }

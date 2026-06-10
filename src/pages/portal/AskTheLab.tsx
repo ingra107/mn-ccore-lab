@@ -1,6 +1,6 @@
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { HelpCircle, Plus, X, MessageSquare, Check, ChevronDown, ChevronUp, Search } from 'lucide-react'
+import { HelpCircle, Plus, MessageSquare, Check, ChevronDown, ChevronUp, Search } from 'lucide-react'
 import HermesMark from '../../components/HermesMark'
 import HermesResponse from '../../components/HermesResponse'
 import HermesPending, { isHermesPending } from '../../components/HermesPending'
@@ -11,6 +11,7 @@ import PageHeader from '../../components/PageHeader'
 import PageContainer from '../../components/PageContainer'
 import EmptyStateComponent from '../../components/EmptyState'
 import EmptyStateArt from '../../components/EmptyStateArt'
+import Modal from '../../components/ui/Modal'
 import ToggleButton from '../../components/ToggleButton'
 import Avatar from '../../components/Avatar'
 import InlineSelect from '../../components/InlineSelect'
@@ -422,30 +423,6 @@ function CreateQuestionModal({ open, onClose }: { open: boolean; onClose: () => 
   const createQuestion = useCreateQuestion()
   const { data: projects = [] } = useProjects()
   const { showSuccess } = useToast()
-  const modalRef = useRef<HTMLDivElement>(null)
-
-  // Focus trap + Escape
-  useEffect(() => {
-    if (!open || !modalRef.current) return
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') { onClose(); return }
-      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-        e.preventDefault()
-        const form = modalRef.current?.querySelector('form')
-        if (form) form.requestSubmit()
-        return
-      }
-      if (e.key !== 'Tab') return
-      const focusable = modalRef.current!.querySelectorAll<HTMLElement>('input, select, textarea, button, [tabindex]:not([tabindex="-1"])')
-      if (focusable.length === 0) return
-      const first = focusable[0], last = focusable[focusable.length - 1]
-      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus() }
-      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus() }
-    }
-    document.addEventListener('keydown', handler)
-    modalRef.current.querySelector<HTMLElement>('textarea')?.focus()
-    return () => document.removeEventListener('keydown', handler)
-  }, [open, onClose])
 
   const submitQuestion = () => {
     if (!questionText.trim()) return
@@ -467,116 +444,105 @@ function CreateQuestionModal({ open, onClose }: { open: boolean; onClose: () => 
     submitQuestion()
   }
 
-  if (!open) return null
-
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{ backgroundColor: 'rgba(15,25,35,0.5)' }}
-      onClick={onClose}
-    >
-      <div
-        ref={modalRef}
-        role="dialog"
-        aria-modal="true"
-        aria-label="New Question"
-        className="rounded-xl shadow-xl border w-full max-w-md mx-4"
-        style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--border-subtle)' }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between px-5 py-3.5 border-b" style={{ borderColor: 'var(--border-subtle)' }}>
-          <h3 className="text-lg" style={{ fontWeight: 500, color: 'var(--ink)' }}>
-            New Question
-          </h3>
-          <button onClick={onClose} aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: 'var(--sp-xs)' }}>
-            <X size={18} />
+    <Modal
+      open={open}
+      onClose={onClose}
+      title="New Question"
+      maxWidth="md"
+      footer={
+        <>
+          <button type="button" onClick={onClose} className="px-4 py-2 rounded-md text-sm" style={{ color: 'var(--slate)', cursor: 'pointer', background: 'none', border: '1px solid var(--border-subtle)' }}>
+            Cancel
           </button>
+          <button
+            type="submit"
+            form="ask-lab-form"
+            disabled={!questionText.trim()}
+            aria-describedby={!questionText.trim() ? 'question-submit-hint' : undefined}
+            className="px-4 py-2 rounded-md text-sm font-medium"
+            style={{
+              backgroundColor: !questionText.trim() ? 'var(--border-subtle)' : 'var(--teal)',
+              color: !questionText.trim() ? 'var(--slate)' : 'var(--ink-bright, #fff)',
+              cursor: !questionText.trim() ? 'not-allowed' : 'pointer',
+              border: 'none',
+            }}
+          >
+            Ask the Lab
+          </button>
+        </>
+      }
+    >
+      <form
+        id="ask-lab-form"
+        onSubmit={handleSubmit}
+        onKeyDown={(e) => {
+          if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+            e.preventDefault()
+            e.currentTarget.requestSubmit()
+          }
+        }}
+        className="flex flex-col gap-3.5"
+      >
+        <div>
+          <label htmlFor="question-text" className="block text-xs font-medium mb-1" style={{ color: 'var(--slate)' }}>
+            Question *
+          </label>
+          {/* SmartCompose (D14) — @-mention dropdown surfaces @hermes in the
+              team list. The modal footer's "Ask the Lab" button drives the
+              form (hideSubmitButton); Cmd+Enter submits via the form keydown. */}
+          <SmartCompose
+            theme="light"
+            bare
+            value={questionText}
+            onChange={setQuestionText}
+            onSubmit={async () => submitQuestion()}
+            uploadContext={{ type: 'question', id: 'new', entityType: 'question' }}
+            placeholder="What do you want to know? (use @hermes for AI)"
+            rows={3}
+            alwaysShowToolbar
+            hideSubmitButton
+            hideKbdHint
+            autoFocus
+          />
         </div>
 
-        <form onSubmit={handleSubmit} className="p-5 flex flex-col gap-3.5">
-          <div>
-            <label htmlFor="question-text" className="block text-xs font-medium mb-1" style={{ color: 'var(--slate)' }}>
-              Question *
-            </label>
-            {/* SmartCompose (D14) — @-mention dropdown surfaces @hermes
-                in the team list so a user typing the prefix gets a real
-                hint that AI assist is wired. Modal's own submit button
-                ("Ask the Lab") drives the form, so SmartCompose's button
-                is hidden via hideSubmitButton. Cmd+Enter still triggers
-                the modal's form-level handler via the keydown listener
-                in the focus-trap effect. */}
-            <SmartCompose
-              theme="light"
-              bare
-              value={questionText}
-              onChange={setQuestionText}
-              onSubmit={async () => submitQuestion()}
-              uploadContext={{ type: 'question', id: 'new', entityType: 'question' }}
-              placeholder="What do you want to know? (use @hermes for AI)"
-              rows={3}
-              alwaysShowToolbar
-              hideSubmitButton
-              hideKbdHint
-              autoFocus
-            />
-          </div>
+        <div>
+          <label className="block text-xs font-medium mb-1" style={{ color: 'var(--slate)' }}>
+            Context
+          </label>
+          <textarea
+            value={context}
+            onChange={(e) => setContext(e.target.value)}
+            placeholder="Help others understand your question"
+            rows={2}
+            className="w-full rounded-md border px-3 py-2 text-sm outline-none resize-none"
+            style={{ borderColor: 'var(--border-subtle)' }}
+          />
+        </div>
 
-          <div>
-            <label className="block text-xs font-medium mb-1" style={{ color: 'var(--slate)' }}>
-              Context
-            </label>
-            <textarea
-              value={context}
-              onChange={(e) => setContext(e.target.value)}
-              placeholder="Help others understand your question"
-              rows={2}
-              className="w-full rounded-md border px-3 py-2 text-sm outline-none resize-none"
-              style={{ borderColor: 'var(--border-subtle)' }}
-            />
-          </div>
+        <div>
+          <label htmlFor="ask-lab-related-project" className="block text-xs font-medium mb-1" style={{ color: 'var(--slate)' }}>
+            Related Project
+          </label>
+          <InlineSelect
+            value={projectSlug}
+            options={[
+              { value: '', label: 'None (general question)' },
+              ...projects.map((p) => ({ value: p.slug, label: p.title })),
+            ]}
+            onChange={setProjectSlug}
+            size="md"
+            alwaysShowChevron
+          />
+        </div>
 
-          <div>
-            <label htmlFor="ask-lab-related-project" className="block text-xs font-medium mb-1" style={{ color: 'var(--slate)' }}>
-              Related Project
-            </label>
-            <InlineSelect
-              value={projectSlug}
-              options={[
-                { value: '', label: 'None (general question)' },
-                ...projects.map((p) => ({ value: p.slug, label: p.title })),
-              ]}
-              onChange={setProjectSlug}
-              size="md"
-              alwaysShowChevron
-            />
-          </div>
-
-          {!questionText.trim() && (
-            <p id="question-submit-hint" className="text-[11px]" style={{ color: 'var(--slate)', opacity: 0.85 }}>
-              Question is required.
-            </p>
-          )}
-          <div className="flex justify-end gap-2 mt-2">
-            <button type="button" onClick={onClose} className="px-4 py-2 rounded-md text-sm" style={{ color: 'var(--slate)', cursor: 'pointer', background: 'none', border: '1px solid var(--border-subtle)' }}>
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={!questionText.trim()}
-              aria-describedby={!questionText.trim() ? 'question-submit-hint' : undefined}
-              className="px-4 py-2 rounded-md text-sm font-medium"
-              style={{
-                backgroundColor: !questionText.trim() ? 'var(--border-subtle)' : 'var(--teal)',
-                color: !questionText.trim() ? 'var(--slate)' : 'var(--ink-bright, #fff)',
-                cursor: !questionText.trim() ? 'not-allowed' : 'pointer',
-                border: 'none',
-              }}
-            >
-              Ask the Lab
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        {!questionText.trim() && (
+          <p id="question-submit-hint" className="text-[11px]" style={{ color: 'var(--slate)', opacity: 0.85 }}>
+            Question is required.
+          </p>
+        )}
+      </form>
+    </Modal>
   )
 }
