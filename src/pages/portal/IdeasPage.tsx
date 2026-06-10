@@ -1,17 +1,18 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Plus, ThumbsUp, X, Lightbulb, Pencil, Archive } from 'lucide-react'
+import { Plus, ThumbsUp, X, Lightbulb, Pencil, Archive, Rocket } from 'lucide-react'
 import DensityToggle, { useDensity, densityClass } from '../../components/DensityToggle'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
 import Avatar from '../../components/Avatar'
 import InlineSelect from '../../components/InlineSelect'
+import CreateProjectModal from '../../components/CreateProjectModal'
 import { useUndoToast } from '../../components/UndoToast'
 import { ColumnHeader, TableContainer } from '../../components/table'
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 import { useIdeas } from '../../hooks/useApiData'
-import { useCreateIdea, useVoteIdea, useUpdateIdea } from '../../hooks/useMutations'
+import { useCreateIdea, useVoteIdea, useUpdateIdea, useCreateProject } from '../../hooks/useMutations'
 import { useToast } from '../../hooks/useToast'
 import { getPersonInfo } from '../../data/team'
 import { formatRelativeTime } from '../../lib/dateUtils'
@@ -72,9 +73,12 @@ export default function IdeasPage() {
   const { data: ideas = [], isLoading } = useIdeas(filterStatus ? { status: filterStatus } : undefined)
   const vote = useVoteIdea()
   const updateIdea = useUpdateIdea()
+  const createProject = useCreateProject()
   const { showUndo } = useUndoToast()
   const [focusedIndex, setFocusedIndex] = useState(-1)
   const [editingId, setEditingId] = useState<string | null>(null)
+  // S15: the approved idea currently being promoted into a project.
+  const [promotingIdea, setPromotingIdea] = useState<IdeaRow | null>(null)
 
   const handleSort = (key: string) => {
     if (sortKey === key) {
@@ -165,6 +169,25 @@ export default function IdeasPage() {
       },
     })
     setEditingId(null)
+  }
+
+  // S15: promote an approved idea into a project. CreateProjectModal is
+  // prefilled; on create we fire the project mutation (it toasts "Open →" via
+  // useCreateProject) then archive the source idea so the board doesn't keep a
+  // duplicate. The new project's title carries the idea text forward as the link.
+  const handlePromoteCreate = (idea: IdeaRow) => (project: {
+    title: string; category?: string; stage?: string; description?: string; pi?: string
+  }) => {
+    createProject.mutate(project)
+    // Archive the source idea, noting the promotion in its description.
+    const note = `Promoted to project "${project.title}".`
+    updateIdea.mutate({
+      id: idea.id,
+      fields: {
+        status: 'archived',
+        description: idea.description ? `${idea.description}\n\n${note}` : note,
+      },
+    })
   }
 
   const activeCount = ideas.filter((i) => i.status !== 'archived' && i.status !== 'parked').length
@@ -370,6 +393,23 @@ export default function IdeasPage() {
                               onChange={(v) => handleIdeaStatusChange(idea.id, v, idea.status)}
                             />
                           </div>
+                          {/* S15: approved ideas can promote straight to a project */}
+                          {idea.status === 'approved' && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setPromotingIdea(idea) }}
+                              className="mt-2 w-full inline-flex items-center justify-center gap-1.5 rounded-md text-xs font-medium"
+                              style={{
+                                background: 'var(--teal-active)',
+                                color: 'var(--teal)',
+                                border: '1px solid rgba(45,138,138,0.2)',
+                                cursor: 'pointer',
+                                padding: '5px 8px',
+                              }}
+                            >
+                              <Rocket size={12} />
+                              Promote to project
+                            </button>
+                          )}
                         </div>
                       )
                     })}
@@ -440,6 +480,7 @@ export default function IdeasPage() {
                     setEditingId(null)
                     setExpandedId(null)
                   }}
+                  onPromote={() => setPromotingIdea(idea)}
                 />
               ))}
             </div>
@@ -496,6 +537,18 @@ export default function IdeasPage() {
 
       {/* Create modal */}
       <CreateIdeaModal open={showCreate} onClose={() => setShowCreate(false)} />
+
+      {/* S15: promote-an-idea → prefilled project create */}
+      <CreateProjectModal
+        open={!!promotingIdea}
+        onClose={() => setPromotingIdea(null)}
+        prefill={promotingIdea ? {
+          title: promotingIdea.title,
+          description: promotingIdea.description ?? undefined,
+          pi: promotingIdea.submitted_by || undefined,
+        } : undefined}
+        onCreate={promotingIdea ? handlePromoteCreate(promotingIdea) : () => {}}
+      />
     </div>
   )
 }
@@ -512,6 +565,7 @@ function IdeaRowView({
   onEdit,
   onEditSave,
   onEditCancel,
+  onPromote,
 }: {
   idea: IdeaRow
   isFocused: boolean
@@ -523,6 +577,7 @@ function IdeaRowView({
   onEdit: () => void
   onEditSave: (fields: { title: string; description: string; research_area: string }) => void
   onEditCancel: () => void
+  onPromote: () => void
 }) {
   const person = getPersonInfo(idea.submitted_by)
   const [editTitle, setEditTitle] = useState(idea.title)
@@ -686,9 +741,32 @@ function IdeaRowView({
 
         {/* Actions (hover-only ghost buttons) */}
         <div
-         
+
           className="idea-actions flex items-center justify-end gap-1"
         >
+          {/* S15: promote approved ideas to a project */}
+          {idea.status === 'approved' && (
+            <button
+              className="rounded-md"
+              onClick={(e) => { e.stopPropagation(); onPromote() }}
+              style={{
+                background: 'none',
+                border: '1px solid rgba(45,138,138,0.3)',
+                color: 'var(--teal)',
+                cursor: 'pointer',
+                padding: '4px',
+                minHeight: '44px',
+                minWidth: '44px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+              aria-label="Promote idea to project"
+              title="Promote to project"
+            >
+              <Rocket size={12} />
+            </button>
+          )}
           <button
             className="rounded-md"
             onClick={(e) => {
@@ -797,6 +875,25 @@ function IdeaRowView({
             {formatRelativeTime(idea.created_at)}
           </span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-xs)', marginLeft: 'auto', flexShrink: 0 }}>
+            {idea.status === 'approved' && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onPromote() }}
+                className="rounded-md flex items-center justify-center"
+                style={{
+                  background: 'none',
+                  border: '1px solid rgba(45,138,138,0.3)',
+                  color: 'var(--teal)',
+                  cursor: 'pointer',
+                  padding: '4px',
+                  minHeight: '44px',
+                  minWidth: '44px',
+                }}
+                aria-label="Promote idea to project"
+                title="Promote to project"
+              >
+                <Rocket size={12} />
+              </button>
+            )}
             <button
               onClick={(e) => {
                 e.stopPropagation()
