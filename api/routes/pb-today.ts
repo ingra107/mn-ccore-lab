@@ -1,5 +1,5 @@
 import type { Env } from '../helpers';
-import { json, error } from '../helpers';
+import { json } from '../helpers';
 
 // GET /api/pb/today — returns the raw TODAY.md content
 export async function handleGetTodayMd(env: Env): Promise<Response> {
@@ -10,14 +10,6 @@ export async function handleGetTodayMd(env: Env): Promise<Response> {
   return json({ data: { content: row?.value || '' } });
 }
 
-// POST /api/pb/today — upsert the TODAY.md content
-export async function handleUpsertTodayMd(request: Request, env: Env): Promise<Response> {
-  const body = await request.json() as { content: string };
-  if (typeof body.content !== 'string') return error('content (string) required', 400);
-
-  await env.DB.prepare(
-    "INSERT OR REPLACE INTO lab_settings (key, value, updated_at) VALUES ('today_md', ?, datetime('now'))"
-  ).bind(body.content).run();
-
-  return json({ data: { content: body.content } });
-}
+// POST /api/pb/today (upsert TODAY.md) was retired 2026-05-05 (5.9): 0 callers.
+// The handler was deleted 2026-06-09 (dead-code sweep). GET above is preserved
+// for the frontend's read-only TODAY.md view (src/hooks/useApiData.ts).
