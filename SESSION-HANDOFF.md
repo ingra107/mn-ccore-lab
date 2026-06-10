@@ -28,8 +28,30 @@
   draft links. → **top of the next-session queue** (debug per-surface URI building/encoding vs
   the working workon verb + unify on `useProtocolLaunch`/`classifyUrl` chips).
 
-### ▶ NEXT (arc-2 additions; Phase-1 NEXT list below still applies)
-1. **Folder-links reliability + uniform chips** (Nick's live ask — above).
+## ✅ (arc 3) FOLDER LINKS FIXED + uniform chips SHIPPED — deploy `b5bd159f` on `9b63fa67`
+
+- **THE folder bug (reproduced live → fix proven live):** `verb_open` in `mnccore-handler.bat`
+  did `set "path=%~1"` — clobbering `%PATH%` so cmd couldn't resolve `explorer.exe`; EVERY
+  open-click died in a flash-and-close console while workon worked (`start` builtin + different
+  var). Fixed (renamed var + `%SystemRoot%\explorer.exe`); post-fix the R03 folder verifiably
+  opened (Shell.Application window enumeration). The handler log (`%TEMP%\mnccore-handler.log`)
+  was the ground truth.
+- **Obsidian (NOT our code):** the machine's Obsidian INSTALLER is outdated and drops protocol
+  args ("Your Obsidian installer is out of date… better CLI support"); the app package
+  self-updates (1.12.7) but the shell doesn't. Our URIs verified correct (22/22 tests).
+  **→ NICK: reinstall Obsidian from obsidian.md/download (work + home, 2 min each).**
+- **Uniform chips:** LinkifiedText matcher fixed (forward-slash drive paths + line-bounded
+  spaced paths — was backslash-only + truncated at first space); ALL non-http clicks unified on
+  the `useProtocolLaunch` chokepoint (3 silent duplicates removed — LinkifiedText had NO toast);
+  Gmail vocabulary added (`gmailKind` → "Gmail thread"/"Gmail draft" chips w/ Mail icon);
+  **`email_link` (v74) rendered NOWHERE until now** (short_title class) — read-only Gmail chip
+  above the key links in the task editor.
+- **→ NICK (home machine):** `git pull` in mn-ccore-lab gets the handler fix (registry points at
+  the script path — no re-registration needed).
+
+### ▶ NEXT (arc-2/3 additions; Phase-1 NEXT list below still applies)
+1. **Nick: reinstall Obsidian (both machines) + home `git pull`** — then click-test: folder
+   chip, workon, an Obsidian vault-note key link, and the new Gmail chip on an email-captured task.
 2. **2026-06-11: the 24h dogfood task** — if clean, DROP daily_plans + daily_reflections
    (snapshot first), fill the decision doc's dogfood table, flip the I37 yaml to retired.
 3. PB session: regen-side commits were held for the submodule bump — now landed; they commit
