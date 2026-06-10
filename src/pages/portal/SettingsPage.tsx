@@ -4,7 +4,7 @@ import { PUBLIC_PATHS } from '../../constants/paths'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import {
-  Settings, Type, Layers, Plus, X, GripVertical, Check, Bot, Info, Palette, RotateCcw, Sun, Moon, Users, ArrowRight,
+  Settings, Type, Layers, Plus, X, GripVertical, Check, Palette, RotateCcw, Sun, Moon, Users, ArrowRight,
   FlaskConical, Microscope, Brain, Heart, Activity, Stethoscope, Dna, Atom, BookOpen, Beaker, Link2,
 } from 'lucide-react'
 import PageHeader from '../../components/PageHeader'
@@ -170,10 +170,12 @@ export default function SettingsPage() {
   }
 
   // P2-05: tabbed layout. Hash-route deep-linkable (/settings#ai).
+  // P1-9: AI tab removed (Nick, 2026-06-09) — it was placeholder copy + a
+  // duplicate Team Directory link. The Directory link already lives at the top
+  // of this page (its sensible home), so nothing is lost.
   const TABS = [
     { key: 'profile', label: 'Profile' },
     { key: 'templates', label: 'Templates' },
-    { key: 'ai', label: 'AI' },
     { key: 'lab', label: 'Lab' },
     { key: 'integrations', label: 'Integrations' },
     { key: 'appearance', label: 'Appearance' },
@@ -194,7 +196,7 @@ export default function SettingsPage() {
     const profileKeys = ['lab_name', 'lab_description', 'lab_icon', 'lab_type']
     if (profileKeys.some((k) => JSON.stringify(initial[k]) !== JSON.stringify((settings as any)[k]))) out.add('profile')
     // Other tabs either save outside the settings row (appearance = localStorage,
-    // AI = placeholder inputs, danger = actions) or have no tracked fields yet.
+    // danger = actions) or have no tracked fields yet.
     return out
   }, [settings])
   type TabKey = (typeof TABS)[number]['key']
@@ -396,37 +398,6 @@ export default function SettingsPage() {
           </motion.div>
 
           <CreateTemplateForm onSubmit={(name, stages) => createTemplate.mutate({ name, stages })} />
-        </SettingsSection>
-        )}
-
-        {/* AI Meeting Context */}
-        {activeTab === 'ai' && (
-        <SettingsSection title="AI Meeting Context" subtitle="AI uses each member's role to recognize speakers and assign tasks in meeting notes" icon={Bot}>
-          <div className="flex items-start gap-2 mb-4 px-1">
-            <Info size={12} style={{ color: 'var(--teal)', marginTop: 2, flexShrink: 0 }} />
-            <p className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.85, lineHeight: 1.5 }}>
-              Speaker recognition and task attribution use each team member's <strong>Role</strong> field. Edit roles in the Team Directory to update what the AI knows about each person.
-            </p>
-          </div>
-          <Link
-            to={PUBLIC_PATHS.publicTeam}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border transition-colors hover:bg-black/5 dark:hover:bg-white/5"
-            style={{
-              borderColor: 'var(--border-subtle)',
-              textDecoration: 'none',
-              color: 'var(--ink)',
-              backgroundColor: 'var(--surface-1)',
-            }}
-          >
-            <div className="flex items-center justify-center w-7 h-7 rounded-md flex-shrink-0" style={{ backgroundColor: 'var(--teal-active)' }}>
-              <Users size={14} style={{ color: 'var(--teal)' }} />
-            </div>
-            <div style={{ flex: 1 }}>
-              <span className="text-sm font-medium" style={{ color: 'var(--ink)' }}>Team Directory</span>
-              <span className="ml-2 text-[11px]" style={{ color: 'var(--slate)', opacity: 0.85 }}>Edit member roles and expertise tags</span>
-            </div>
-            <ArrowRight size={14} style={{ color: 'var(--slate)', opacity: 0.75 }} />
-          </Link>
         </SettingsSection>
         )}
 
