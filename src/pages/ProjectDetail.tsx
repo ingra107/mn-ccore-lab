@@ -61,6 +61,8 @@ import ProjectComments from '../components/ProjectComments'
 import SmartCompose from '../components/SmartCompose'
 import ProjectDocuments from './project/ProjectDocuments'
 import { PATHS } from '../constants/paths'
+import { CATEGORY_OPTIONS } from '../constants/categories'
+import { useOpenParam } from '../hooks/useOpenParam'
 import EmptyStateArt from '../components/EmptyStateArt'
 import EmptyState from '../components/EmptyState'
 
@@ -189,7 +191,7 @@ interface InnerProps {
 function ProjectDetailInner({ project }: InnerProps) {
   // D1 mutations
   const d1Update = useUpdateProject(project.slug)
-  const { showUndo } = useUndoToast()
+  const { showUndo, showSuccess } = useUndoToast()
   const { data: projectUpdates = [] } = useProjectUpdates(project.slug)
   const { data: projectComments = [] } = useComments(project.slug)
   const { isAuthenticated, user } = useAuth()
@@ -250,15 +252,24 @@ function ProjectDetailInner({ project }: InnerProps) {
   const handleBulkAction = (action: 'complete' | 'uncomplete' | 'assign' | 'priority' | 'delete' | 'snooze' | 'status', value?: string) => {
     if (action === 'snooze') {
       const days = parseInt(value || '1', 10)
+      // S2: capture prior due dates before mutating so Undo restores the exact
+      // pre-snooze values; report tasks skipped for having no due date.
+      const prior: Array<{ id: string; due_date: string }> = []
+      let skipped = 0
       for (const id of selectedIds) {
         const task = projectTasks.find(t => t.id === id)
-        if (!task?.due_date) continue
+        if (!task?.due_date) { skipped++; continue }
+        prior.push({ id, due_date: task.due_date })
         const d = new Date(task.due_date + 'T12:00:00')
         d.setDate(d.getDate() + days)
         const newDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
         handleFieldChange(id, 'due_date', newDate)
       }
-      showUndo(`Snoozed ${selectedIds.size} task(s) +${days}d`, () => {})
+      const snoozedLabel = `${prior.length} snoozed +${days}d`
+      const skippedLabel = skipped > 0 ? ` · ${skipped} skipped (no due date)` : ''
+      showUndo(`${snoozedLabel}${skippedLabel}`, () => {
+        for (const p of prior) handleFieldChange(p.id, 'due_date', p.due_date)
+      })
       setSelectedIds(new Set())
       return
     }
@@ -295,11 +306,11 @@ function ProjectDetailInner({ project }: InnerProps) {
         queryClient.invalidateQueries({ queryKey: ['projects'] })
         navigate(PATHS.projects)
       } else {
-        window.alert('Delete failed. Please try again or contact Nick.')
+        showSuccess('Delete failed — please try again or contact Nick.')
       }
     } catch (err) {
       console.error('Delete project failed', err)
-      window.alert('Delete failed. Please try again.')
+      showSuccess('Delete failed — please try again.')
     }
   }
   const handleDuplicateProject = async () => {
@@ -322,11 +333,11 @@ function ProjectDetailInner({ project }: InnerProps) {
         queryClient.invalidateQueries({ queryKey: ['projects'] })
         navigate(`${PATHS.projects}/${json.data.slug}`)
       } else {
-        window.alert('Duplicate failed.')
+        showSuccess('Duplicate failed — please try again.')
       }
     } catch (err) {
       console.error('Duplicate project failed', err)
-      window.alert('Duplicate failed.')
+      showSuccess('Duplicate failed — please try again.')
     }
   }
 
@@ -379,6 +390,18 @@ function ProjectDetailInner({ project }: InnerProps) {
 
   // Task detail panel
   const [selectedTask, setSelectedTask] = useState<TaskRow | null>(null)
+
+  // S1: consume `?openTask=<id>` deep-links (search emits
+  // /portal/projects/<slug>?openTask=<id>). Open the task's detail panel once
+  // this project's tasks have loaded.
+  useOpenParam(
+    'openTask',
+    (id) => {
+      const t = projectTasks.find((pt) => pt.id === id)
+      if (t) setSelectedTask(t)
+    },
+    { ready: projectTasks.length > 0 },
+  )
 
   // Presence: who else is viewing this project right now (Slack-style)
   const viewerSlugs = usePresence('project', project.slug)
@@ -752,15 +775,12 @@ function ProjectDetailInner({ project }: InnerProps) {
         {/* Meta row: category, PI, status, stage, agenda button — all inline-editable */}
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-1.5">
-            <CategoryIcon category={project.category || 'lab'} size={14} />
+            <CategoryIcon category={project.category || 'MNCCORE'} size={14} />
+            {/* S3: canonical 3-bucket options — legacy clif/lab/nate/mentee
+                400'd at the API and silently reverted. */}
             <InlineSelect
-              value={project.category || 'lab'}
-              options={[
-                { value: 'clif', label: 'CLIF' },
-                { value: 'lab', label: 'Lab' },
-                { value: 'nate', label: 'Mesfin' },
-                { value: 'mentee', label: 'Mentee' },
-              ]}
+              value={project.category || ''}
+              options={CATEGORY_OPTIONS}
               onChange={(val) => d1Update.mutate({ category: val } as Partial<Project>)}
             />
           </div>
@@ -1875,7 +1895,7 @@ function ProjectDetailInner({ project }: InnerProps) {
             >
               <div style={{ flex: 1 }}>
                 <strong style={{ color: 'var(--ink)', fontWeight: 600 }}>Notes vs Comments:</strong>{' '}
-                <span><strong>Notes</strong> are your own progress log (private, auto-timestamped — e.g. "Talked with Peter, he'll run the script and get back next week"). <strong>Comments</strong> are team discussion (visible to everyone, @mentions notify).</span>
+                <span><strong>Notes</strong> are an informal progress log — visible to the team, auto-timestamped (e.g. "Talked with Peter, he'll run the script and get back next week"). <strong>Comments</strong> are team discussion (@mentions notify).</span>
               </div>
               <button
                 type="button"
@@ -2055,7 +2075,17 @@ function ProjectDetailInner({ project }: InnerProps) {
         open={showCreateTask}
         onClose={() => setShowCreateTask(false)}
         onCreate={(task) => {
-          createTask.mutate({ ...task, project_id: project.slug })
+          createTask.mutate({ ...task, project_id: project.slug }, {
+            // S16: confirm the create + offer a working "Open →" into the new
+            // task's detail panel instead of dead-ending in silence.
+            onSuccess: (resp) => {
+              const created = resp?.data
+              showSuccess(
+                'Task created',
+                created ? { label: 'Open →', onClick: () => setSelectedTask(created) } : undefined,
+              )
+            },
+          })
           setShowCreateTask(false)
         }}
       />
