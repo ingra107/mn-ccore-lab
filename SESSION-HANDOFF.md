@@ -1,4 +1,55 @@
-# Session Handoff — 2026-06-10 (continued)
+# Session Handoff — 2026-06-10 (PM) — UNIFIED ACTIVITY TIMELINE PHASE 1
+
+## ✅ activity_entries (schema v77) SHIPPED + DEPLOYED — deploy `70e23a6a` on `3c1a493d`
+
+Executed `Scratch-handoff/2026-06-10-HUB-SESSION-BRIEF.md` end-to-end: ground truth → bounded
+brainstorm (4 decisions, all Nick-approved) → UI quick-fixes → Phase 1 build → deploy + smoke.
+**789/789 API tests · build + tsc green · identity gate PASS · smoke verified on prod.**
+
+- **Design settled** (spec `docs/superpowers/specs/2026-06-10-activity-entries-unified-timeline-design.md`,
+  commit `7e804008`): Design C entity-generic `activity_entries`; referee kind spelling
+  (stored `comment|update|completion|system` in `shared/activityKinds.ts`, derived `task-*` at
+  render); `@me` prefix + composer lock toggle → `visibility='author'` SQL-gated; derived all-kinds
+  project rollups (task entries carry `project_id`). **CLAUDE.md Rule 70** is the operating rule.
+- **Ground truth:** 160-vs-3 RESOLVED — brain.db mirror is append-only history of 151 hard-deleted
+  tasks (cascade wiped prod rows). Backfill = the 3 live rows, done + idempotency-proven.
+- **Backend** (`016a9aab`): `postActivityEntry()` primitive (auth, @me, mentions w/ preserved
+  per-kind notification source_types, Hermes on ALL kinds + @me visibility inheritance, project_id
+  derivation, source idempotency); writes retargeted (task comments/updates + pb-sector Hermes);
+  old endpoints = byte-preserved projections (+ optional compound `?since_id=` cursor); NEW
+  `GET /api/tasks/:id/activity` + `GET /api/projects/:slug/activity`; delete cascades clear entries.
+- **Frontend** (`de016706`): TaskActivityFeed 3-way merge DELETED → one unified query w/ disciplined
+  kind-rendering map; @me lock toggle on the task composer; ActivityStream merges the whole-picture
+  feed (task events in project activity, derived kinds, openTask deep-links).
+- **UI quick-fixes** (`3fc55559`, `ac615f7a`): My Tasks picker = List | Lanes | Columns, **List =
+  cold-load default** (localStorage read removed; URL ?view= wins — Rule 60 updated); **title-click
+  opens the full editor** on My Tasks all 3 views via shared-row `onOpenEditor` prop (Rule 71;
+  Today/My Hub deliberately unwired — Rule 58 intact).
+- **Gate/CI:** `activity_entries.project_id` registered in BOTH identity-SSOT copies (Hub `3c1a493d`
+  + PB `cb7e649b`); INFRA-5 schema snapshot was STALE (v75/v76 never registered) — fixed incl. v77
+  (`fb54021b`).
+- **Ride-alongs:** enums flag verified ON · HUB-3 already enforced by `hub_validate_conflict_hash`
+  (brief's claim stale; no change) · notes wire-alias + HUB-7 are **PB-gated** (TABLE_FIELDS is
+  GENERATED from the pb-schema submodule; `acknowledged_*` not in the wire contract) — full hand-off:
+  **`Scratch-handoff/2026-06-10-PHASE1-SHIPPED-pb-handoff.md`** (PB master brief §2B gate is OPEN).
+
+### ▶ NEXT
+1. **Nick eyeballs live:** task detail Activity tab (unified feed + filter pills), @me lock toggle
+   (post one, confirm only-you), a project's Activity (task events now roll up), My Tasks List
+   default + title-click→editor.
+2. **Hub side after PB regens pb-schema:** bump submodule pointer (notes alias retired) + route
+   `handleAcknowledgeTask` through `applyMutation` (HUB-7, once `acknowledged_*` are in contract).
+3. **Phase 2 (deferred, designed):** legacy activity_log backfill; project composer retarget
+   (+ `comments`(2)/`project_updates`(0) backfill); nightly Haiku description-line migration →
+   delete `descriptionLog.ts`; physical drops of task_comments/task_updates after alias traffic
+   confirms unused; mirror-table disposition (PB).
+4. Carried: Today-cockpit IA consolidation plan; polish residue (JS-hover pass, spacing-token tail,
+   my-tasks-legacy retire, local-seed drift, 768px journey spec); Query-Resource phased pass;
+   param-strip wart (IdeasPage:67/AskTheLab:44).
+
+---
+
+# Session Handoff — 2026-06-10 (continued, historical)
 
 ## ✅ Live-review batch 2 + Bug Squasher — DEPLOYED (final session deploy `b3b3ed1a` on `f5299c7e` after the session-close /simplify + v76 doc sweep)
 
