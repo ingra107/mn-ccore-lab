@@ -55,7 +55,7 @@ const STAGE_ALIASES: Record<string, CanonicalStage> = {
   accepted: 'published',
 }
 
-function normalizeStage(stage: string | null | undefined): CanonicalStage | '' {
+export function normalizeStage(stage: string | null | undefined): CanonicalStage | '' {
   if (!stage) return ''
   if (STAGE_ALIASES[stage]) return STAGE_ALIASES[stage]
   if ((CANONICAL_STAGES as readonly string[]).includes(stage)) return stage as CanonicalStage
@@ -93,4 +93,45 @@ type ApiStage = 'idea' | 'data_collection' | 'data_analysis' | 'writing' | 'subm
 
 export function toApiStage(uiStage: string): ApiStage {
   return (UI_TO_API_STAGE[uiStage] ?? uiStage) as ApiStage
+}
+
+// ── Canonical display: label + color, keyed by the canonical lowercase stage ──
+// Any surface that renders a stage indicator should normalizeStage() the raw
+// value (API lowercase OR legacy Title Case) and then look up here, so label
+// text and dot/strip colors stay consistent across ProjectDetail / Narratives /
+// Trajectory / Analytics etc. Colors reuse the WCAG-AA-pinned set from
+// taskConstants.ts STAGE_COLORS (audited 2026-04-18) — keep them in sync.
+const CANONICAL_STAGE_LABELS: Record<CanonicalStage, string> = {
+  idea: 'Idea',
+  data_collection: 'Data Collection',
+  analysis: 'Analysis',
+  writing: 'Writing',
+  review: 'Review',
+  revisions: 'Revisions',
+  published: 'Published',
+}
+
+const CANONICAL_STAGE_COLORS: Record<CanonicalStage, string> = {
+  idea: '#8591a0',
+  data_collection: 'var(--stage-data-collection)',
+  analysis: '#4db5b0',
+  writing: '#dcb355',
+  review: '#d65c66',
+  revisions: '#d65c66',
+  published: '#4ecd77',
+}
+
+// Human-readable stage label for any raw stage value (API lowercase or legacy
+// Title Case). Falls back to the raw string if it can't be normalized.
+export function stageLabel(stage: string | null | undefined): string {
+  const normalized = normalizeStage(stage)
+  if (!normalized) return stage ?? ''
+  return CANONICAL_STAGE_LABELS[normalized]
+}
+
+// WCAG-AA-pinned stage color for any raw stage value. Falls back to --slate.
+export function stageColor(stage: string | null | undefined): string {
+  const normalized = normalizeStage(stage)
+  if (!normalized) return 'var(--slate)'
+  return CANONICAL_STAGE_COLORS[normalized]
 }

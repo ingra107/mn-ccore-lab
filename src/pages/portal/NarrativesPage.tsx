@@ -9,26 +9,27 @@ import { useNarratives } from '../../hooks/useApiData'
 import { usePageMeta } from '../../hooks/usePageMeta'
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 import { PATHS } from '../../constants/paths'
+import { stageColor, stageLabel, normalizeStage } from '../../lib/stageNormalize'
 
-// Stage colors. Data Collection blue needs theme-aware token because
-// neither a single light blue nor a single dark blue passes AA in both
-// modes — flipped via CSS var in index.css. 2026-04-22.
-const STAGE_COLORS: Record<string, string> = {
-  Idea: 'var(--slate)',
-  'Data Collection': 'var(--stage-data-collection)',
-  Analysis: 'var(--teal)',
-  Writing: 'var(--gold)',
-  Review: 'var(--maroon)',
-  Published: 'var(--green)',      // was --green-light (#16a34a = 3:1 on white)
+// The /api/narratives endpoint emits canonical *lowercase* stage values
+// (idea / data_collection / data_analysis / writing / submitted / revisions /
+// published). normalizeStage() folds those onto the 7-stage canonical ladder;
+// stageColor()/stageLabel() (shared, WCAG-AA-pinned) drive the dots + text so
+// colors and labels stay consistent with ProjectDetail / Trajectory / etc.
+// Short pipeline-pill abbreviation, keyed by the normalized canonical stage.
+const STAGE_ABBREV: Record<string, string> = {
+  idea: 'Idea',
+  data_collection: 'Data',
+  analysis: 'Anal',
+  writing: 'Writ',
+  review: 'Rev',
+  revisions: 'R&R',
+  published: 'Pub',
 }
 
-const STAGE_ABBREV: Record<string, string> = {
-  Idea: 'Idea',
-  'Data Collection': 'Data',
-  Analysis: 'Anal',
-  Writing: 'Writ',
-  Review: 'Rev',
-  Published: 'Pub',
+function stageAbbrev(stage: string): string {
+  const normalized = normalizeStage(stage)
+  return (normalized && STAGE_ABBREV[normalized]) || stageLabel(stage) || stage
 }
 
 export default function NarrativesPage() {
@@ -120,12 +121,12 @@ export default function NarrativesPage() {
                         width: s.count > 0 ? 10 + s.count * 4 : 8,
                         height: s.count > 0 ? 10 + s.count * 4 : 8,
                         borderRadius: 'var(--radius-circle)',
-                        background: STAGE_COLORS[s.stage] || 'var(--slate)',
+                        background: stageColor(s.stage),
                         opacity: s.count > 0 ? 1 : 0.25,
                         transition: 'all 0.2s',
-                      }} title={`${s.stage}: ${s.count}`} />
+                      }} title={`${stageLabel(s.stage)}: ${s.count}`} />
                       <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.85, lineHeight: 1 }}>
-                        {STAGE_ABBREV[s.stage] || s.stage}{s.count > 0 ? ` ${s.count}` : ''}
+                        {stageAbbrev(s.stage)}{s.count > 0 ? ` ${s.count}` : ''}
                       </span>
                     </div>
                   </div>
@@ -141,12 +142,12 @@ export default function NarrativesPage() {
                     className="flex items-center gap-2 p-2 rounded-lg hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors"
                     style={{ textDecoration: 'none' }}
                   >
-                    <div style={{ width: 6, height: 6, borderRadius: 'var(--radius-circle)', background: STAGE_COLORS[p.stage] || 'var(--slate)', flexShrink: 0 }} />
+                    <div style={{ width: 6, height: 6, borderRadius: 'var(--radius-circle)', background: stageColor(p.stage), flexShrink: 0 }} />
                     <span style={{ fontSize: 'var(--value-size)', color: 'var(--ink)', flex: 1 }}>
                       {p.title}
                     </span>
-                    <span style={{ fontSize: '10px', color: STAGE_COLORS[p.stage] }}>
-                      {p.stage}
+                    <span style={{ fontSize: '10px', color: stageColor(p.stage) }}>
+                      {stageLabel(p.stage)}
                     </span>
                   </Link>
                 ))}
@@ -181,9 +182,11 @@ export default function NarrativesPage() {
                       <span style={{ fontSize: '12px', color: 'var(--muted)' }}>
                         {p.title}
                       </span>
-                      <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75, marginLeft: 'var(--sp-sm)' }}>
-                        {p.pub_date}
-                      </span>
+                      {p.year != null && (
+                        <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75, marginLeft: 'var(--sp-sm)' }}>
+                          {p.year}
+                        </span>
+                      )}
                     </Link>
                   ))}
                 </div>

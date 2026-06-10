@@ -1327,7 +1327,8 @@ interface NarrativeArc {
   connectedCount: number
   sharedTopics: { topic: string; count: number }[]
   stageDistribution: { stage: string; count: number }[]
-  relatedPubs: { id: string; title: string; pub_date: string }[]
+  // API emits `year` (publications.year); not a full pub_date. See api/routes/narratives.ts.
+  relatedPubs: { id: string; title: string; year: number | null }[]
 }
 
 export function useNarratives() {
