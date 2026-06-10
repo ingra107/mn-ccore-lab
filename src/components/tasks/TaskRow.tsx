@@ -191,7 +191,9 @@ function Grip({ show, draggable, onDragStart }: { show: boolean; draggable?: boo
       onClick={(e) => e.stopPropagation()}
       onMouseDown={(e) => e.stopPropagation()}
       title="Drag up to the timeline to plan this task"
-      style={{ width: 16, display: 'grid', placeItems: 'center', cursor: 'grab', color: INK_MUTED, opacity: show ? 0.6 : 0.3, transition: 'opacity 140ms', fontSize: 13, lineHeight: 1, flexShrink: 0, userSelect: 'none' }}
+      // P1-11: grip is discoverable at rest (≥0.6, works on touch where there is
+      // no hover); hover lifts it to full emphasis rather than revealing it.
+      style={{ width: 16, display: 'grid', placeItems: 'center', cursor: 'grab', color: INK_MUTED, opacity: show ? 1 : 0.6, transition: 'opacity 140ms', fontSize: 13, lineHeight: 1, flexShrink: 0, userSelect: 'none' }}
     >
       ⋮⋮
     </div>
@@ -233,6 +235,10 @@ export function TaskRow(props: SharedTaskRowProps) {
     ? PRIORITY_COLOR[task.priority]
     : (task.status === 'in_progress' ? ACCENT_TEAL : 'transparent')
 
+  // P1-12: overdue rows carry a coral left edge (Rule 59 — coral = overdue).
+  // Done tasks never read as overdue. Uses the shared isOverdue() (Rule 68).
+  const rowOverdue = !isDone && !!task.due_date && isOverdue(task.due_date, task.status)
+
   // Prefer the curated short_title (PB-generated for long task names) for the row.
   // The full title stays available on hover (native title attr) and in the expanded
   // drawer. A complete short title is not a truncation — Rule 68 unaffected.
@@ -272,13 +278,19 @@ export function TaskRow(props: SharedTaskRowProps) {
     <div
       data-task-id={task.id}
       style={{
-        borderBottom: `1px solid ${withAlpha(INK, 6)}`,
+        // P1-12: overdue rows carry a coral left edge so "what's slipping" reads
+        // in one sweep. Selection's teal inset wins when both apply.
+        borderBottom: `1px solid ${withAlpha(INK, isDone ? 4 : 6)}`,
         background: isSelected ? withAlpha(ACCENT_TEAL, 14)
           : isRightNow ? withAlpha(ACCENT_GOLD, 6)
           : isExpanded ? withAlpha(INK, 3)
           : 'transparent',
-        boxShadow: isSelected ? `inset 2px 0 0 ${ACCENT_TEAL}` : 'none',
-        opacity: isDone ? 0.6 : 1,
+        // P1-7: NO whole-row opacity — that compounded with the muted title and
+        // dropped meta/due below the 0.85 floor (Rule 43). Doneness now reads
+        // from the filled check + line-through + muted title alone.
+        boxShadow: isSelected
+          ? `inset 2px 0 0 ${ACCENT_TEAL}`
+          : (rowOverdue ? `inset 2px 0 0 ${ACCENT_CORAL}` : 'none'),
         transition: 'background 160ms',
       }}
     >
@@ -326,7 +338,9 @@ export function TaskRow(props: SharedTaskRowProps) {
               <div style={{ display: 'flex', alignItems: 'center', gap: 9, flexShrink: 0, paddingTop: 1 }}>
                 {rightMeta}
                 {!hideCaret && (
-                  <span style={{ color: INK_DIM, opacity: hover || isExpanded ? 1 : 0.35, transition: 'opacity 140ms', flexShrink: 0, fontSize: 11 }}>
+                  // P1-11: expand caret is always discoverable (readable tier,
+                  // subordinate to the title; visible on touch). Hover = emphasis.
+                  <span style={{ color: INK_MUTED, opacity: hover || isExpanded ? 1 : 0.7, transition: 'opacity 140ms', flexShrink: 0, fontSize: 11 }}>
                     {isExpanded ? '▾' : '▸'}
                   </span>
                 )}
@@ -337,7 +351,8 @@ export function TaskRow(props: SharedTaskRowProps) {
         )}
 
         {stack && !hideCaret && (
-          <span style={{ color: INK_DIM, opacity: hover || isExpanded ? 1 : 0.35, transition: 'opacity 140ms', flexShrink: 0, fontSize: 11, paddingTop: 2 }}>
+          // P1-11: stacked-rail caret — same discoverable-at-rest treatment.
+          <span style={{ color: INK_MUTED, opacity: hover || isExpanded ? 1 : 0.7, transition: 'opacity 140ms', flexShrink: 0, fontSize: 11, paddingTop: 2 }}>
             {isExpanded ? '▾' : '▸'}
           </span>
         )}
