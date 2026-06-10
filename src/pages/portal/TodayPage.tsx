@@ -81,7 +81,11 @@ export default function TodayPage() {
   }, [projectsQuery.data])
 
   const allTaskIds = useMemo(() => tasks.map((t) => t.id), [tasks])
-  const state = useTodayState(allTaskIds, completedTodayIds)
+  // Workstream B (schema v75): the plan is now SYNCED task columns; useTodayState
+  // derives rightNow/planned from these rows (planned_for/plan_slot/plan_rank) and
+  // PATCHes the task on plan/promote/unplan. Pass the open-task rows (a right_now
+  // / planned task is never done, so the open list is the right derivation source).
+  const state = useTodayState(tasks, completedTodayIds)
 
   // Local done flags that are genuine completions for the "Completed today"
   // surface: NOT already counted by the cache (doneTodayDetail) and whose task

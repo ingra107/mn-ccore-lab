@@ -29,10 +29,11 @@ import { useTaskFilter } from './hooks/useTaskFilter'
 import { useSelection } from './hooks/useSelection'
 import { useOpenParam } from '../../hooks/useOpenParam'
 import {
-  todayKey, readPlannedToday, isTaskDone,
+  readPlannedToday, isTaskDone,
   type ViewMode, type GroupKey, type QuickViewKey, type FilterState, type FilterOption,
 } from './constants'
 import { localDateKey } from '../../lib/dateUtils'
+import { useTodayPlan } from '../../lib/todayPlan'
 import type { TaskRow } from '../../lib/api'
 
 export default function UnifiedMyTasks() {
@@ -122,7 +123,10 @@ export default function UnifiedMyTasks() {
   }, [])
 
   // Re-read planned set on each render so /portal/dashboard updates flow through.
-  const plannedSet = useMemo(() => readPlannedToday(), [tasksQuery.data])
+  // Workstream B (schema v75): planned-today derives from the SYNCED task columns
+  // (planned_for == today), not the retired today_state_* localStorage blob.
+  const plannedSet = useMemo(() => readPlannedToday(tasksQuery.data ?? []), [tasksQuery.data])
+  const plan = useTodayPlan()
 
   const projectsByPid = useMemo(() => {
     const m = new Map<string, { name: string; slug: string; category?: string | null }>()
@@ -177,16 +181,15 @@ export default function UnifiedMyTasks() {
   }, [createTask, undoToast])
 
   const onBulkPlanToday = useCallback(() => {
-    // Writes to today_state localStorage so TodayPage picks them up.
-    const key = `today_state_${todayKey()}`
-    let snap: { rightNow?: string | null; planned?: Record<string, { slot: string }>; done?: Record<string, boolean> } = {}
-    try { snap = JSON.parse(window.localStorage.getItem(key) || '{}') } catch { /* ignore */ }
-    snap.planned = snap.planned ?? {}
-    for (const id of selected) snap.planned[id] = { slot: 'strip' }
-    try { window.localStorage.setItem(key, JSON.stringify(snap)) } catch { /* ignore */ }
+    // Workstream B (schema v75): plan-for-today PATCHes the synced task columns
+    // (planned_for/plan_slot/plan_rank) via the shared todayPlan primitive — no
+    // more today_state_* localStorage. TodayPage derives the plan from the same
+    // columns, so the two surfaces stay in sync across devices + team members.
+    const all = tasksQuery.data ?? []
+    for (const id of selected) plan.planTask(id, 'strip', all)
     undoToast.showSuccess(`Planned ${selected.size} task${selected.size === 1 ? '' : 's'} for today`)
     clearSelection()
-  }, [selected, clearSelection, undoToast])
+  }, [selected, clearSelection, undoToast, plan, tasksQuery.data])
 
   const onBulkSnoozeDay = useCallback(() => {
     // No batch due_date action; loop via single-task updates.

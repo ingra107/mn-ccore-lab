@@ -119,20 +119,16 @@ export function dueColor(t: TaskRow): string {
   return INK_MUTED
 }
 
-// Read planned-today set from TodayPage's localStorage shape so the two pages stay in sync.
-export function readPlannedToday(): Set<string> {
-  try {
-    const raw = window.localStorage.getItem(`today_state_${todayKey()}`)
-    if (!raw) return new Set()
-    const parsed = JSON.parse(raw) as { planned?: Record<string, unknown> }
-    return new Set(Object.keys(parsed.planned ?? {}))
-  } catch { return new Set() }
-}
-
-// Helpers for the today_state localStorage shape — shared with TodayPage.
-export function readTodayState(): { rightNow?: string | null; planned?: Record<string, { slot: string }>; done?: Record<string, boolean> } {
-  try { return JSON.parse(window.localStorage.getItem(`today_state_${todayKey()}`) || '{}') } catch { return {} }
-}
-export function writeTodayState(snap: object): void {
-  try { window.localStorage.setItem(`today_state_${todayKey()}`, JSON.stringify(snap)) } catch { /* ignore */ }
+// Planned-today set — Workstream B (schema v75): derives from the SYNCED task
+// columns (planned_for == today), NOT the retired today_state_* localStorage blob.
+// Return type unchanged (Set<string>) so `plannedSet` → useTaskFilter is identical.
+// `tasks` is optional (default []) — the only caller (MyTasks/index.tsx) passes the
+// tasks query data; a zero-arg call returns an empty set (no LS fallback).
+export function readPlannedToday(tasks: TaskRow[] = []): Set<string> {
+  const today = todayKey()
+  const s = new Set<string>()
+  for (const t of tasks) {
+    if (t.planned_for && t.planned_for.slice(0, 10) === today) s.add(t.id)
+  }
+  return s
 }

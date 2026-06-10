@@ -134,6 +134,16 @@ export interface TaskRow {
   promised_to?: string | null
   promise_date?: string | null
   next_checkin_date?: string | null
+  /** Today operating-day plan (schema v75, Workstream B). Synced task columns
+   *  that replace the per-browser today_state_* localStorage blob.
+   *  - planned_for: civil date 'YYYY-MM-DD'. "planned today" = == todayKey().
+   *    NULL = unplanned. Self-expiring (no history table).
+   *  - plan_slot: 'right_now' | 'strip' | `between-${n}`. right_now is a
+   *    singleton per assignee-day (enforced in src/lib/todayPlan.ts).
+   *  - plan_rank: REAL ordering within the plan (fractional). */
+  planned_for?: string | null
+  plan_slot?: string | null
+  plan_rank?: number | null
   created_at: string
   updated_at?: string
   meeting_title?: string

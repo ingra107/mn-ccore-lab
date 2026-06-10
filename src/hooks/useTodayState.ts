@@ -1,14 +1,30 @@
-// useTodayState — localStorage-backed daily plan (rightNow / planned / done).
-// Extracted from src/pages/portal/TodayPage.tsx during the component-split
-// refactor. Per HANDOFF §2: "already separable — promote/plan/done state."
+// useTodayState — the Today/MyTasks plan SEAM. Same TodayStateApi contract as
+// before; the BACKING STORE flipped from the per-browser `today_state_*`
+// localStorage blob to three SYNCED task columns (planned_for / plan_slot /
+// plan_rank) via src/lib/todayPlan.ts (Workstream B, schema v75, 2026-06-09).
 //
-// Shape persists to `today_state_${YYYY-MM-DD}` so UnifiedMyTasks can read +
-// mutate the same snapshot (see helpers in MyTasks/components/InlineDetail).
+// What changed vs the LS era:
+//   - `rightNow` + `planned` now DERIVE from today's task rows (planned_for ==
+//     today). plan/promote/unplan PATCH the task (optimistic, Hub-first) instead
+//     of writing LS. The plan is durable + cross-device — every team member's
+//     Today cockpit reads the same synced plan.
+//   - `done` stays PURELY optimistic-local (completions are already durable via
+//     `status`; this map is the instant-feedback + undo layer, reconciled against
+//     the cache). It no longer persists to LS — a reload re-derives done-ness from
+//     the cache (completed_at/status), so nothing is lost.
+//   - `thoughts` (morning scratchpad) is OUT OF SCOPE and stays in LS (handled by
+//     MorningThoughtCompose, not this hook).
+//
+// The hook now takes the task ROWS (it needs plan_slot/plan_rank to derive),
+// not just ids. Callers already hold the rows.
 
-import { useState, useEffect, useCallback } from 'react'
-import { todayKey, type PlannedSlot } from '../components/today/constants'
+import { useState, useEffect, useCallback, useMemo } from 'react'
+import type { PlannedSlot } from '../components/today/constants'
 import { useUpdateTaskStatus } from './mutations/useTaskMutations'
 import { useUndoToast } from '../components/UndoToast'
+import { useTodayPlan, useLegacyPlanMigration, derivePlanState } from '../lib/todayPlan'
+import { todayKey } from '../lib/taskGrouping'
+import type { TaskRow } from '../lib/api'
 
 export interface TodayStateShape {
   rightNow: string | null
@@ -25,131 +41,93 @@ export interface TodayStateApi extends TodayStateShape {
   unplan: (id: string) => void
 }
 
-export function useTodayState(allTaskIds: string[], completedTodayIds: string[] = []): TodayStateApi {
-  const storageKey = `today_state_${todayKey()}`
+export function useTodayState(tasks: TaskRow[], completedTodayIds: string[] = []): TodayStateApi {
   const updateStatus = useUpdateTaskStatus()
   const undoToast = useUndoToast()
-  const [state, setState] = useState<TodayStateShape>(() => {
-    if (typeof window === 'undefined') return { rightNow: null, planned: {}, done: {} }
-    try {
-      const raw = window.localStorage.getItem(storageKey)
-      if (raw) return JSON.parse(raw) as TodayStateShape
-    } catch { /* ignore */ }
-    return { rightNow: null, planned: {}, done: {} }
-  })
+  const plan = useTodayPlan()
+  const migrate = useLegacyPlanMigration()
 
-  // Persist on change.
-  useEffect(() => {
-    try { window.localStorage.setItem(storageKey, JSON.stringify(state)) } catch { /* ignore */ }
-  }, [state, storageKey])
+  // `done` is the only LOCAL state now — optimistic completion feedback + undo.
+  // (rightNow/planned derive from the synced task columns below.)
+  const [done, setDone] = useState<Record<string, boolean>>({})
 
-  // Trim planned entries pointing at tasks no longer in the data set.
-  // Skip when allTaskIds is empty — that's the loading state (tasks query
-  // hasn't resolved yet) and trimming would wipe restored localStorage
-  // before the user's planned snapshot can render. Issue #47.
-  // Done entries are NOT trimmed — `state.done` survives the API
-  // completion that removes the task from the open list, so the
-  // "Completed today" group keeps it. The storage key is per-day so done
-  // entries roll over naturally at midnight. Issue #46.
+  // One-time LS→columns migration: once tasks have loaded, lift any legacy
+  // today_state_* plan onto the synced columns, then stop reading LS for plan.
+  // Idempotent (flagged per-day) — safe to call on every tasks change.
   useEffect(() => {
-    if (allTaskIds.length === 0) return
-    const ids = new Set(allTaskIds)
-    setState((prev) => {
-      let changed = false
-      const next: TodayStateShape = { ...prev, planned: { ...prev.planned } }
-      for (const id of Object.keys(next.planned)) if (!ids.has(id)) { delete next.planned[id]; changed = true }
-      if (next.rightNow && !ids.has(next.rightNow)) { next.rightNow = null; changed = true }
-      return changed ? next : prev
-    })
-  }, [allTaskIds])
+    if (tasks.length === 0) return
+    migrate(tasks)
+  }, [tasks, migrate])
+
+  // Derive rightNow + planned from today's synced task rows. Self-expiring:
+  // only planned_for == today participates.
+  const { rightNow, planned } = useMemo(() => derivePlanState(tasks), [tasks])
 
   // Reconcile optimistic done-flags against the cache (the source of truth).
   // markDone sets done[id] for instant feedback; once the cache CONFIRMS the
-  // task is completed today, the "Completed today" surface renders it straight
-  // from the cache, so we prune the optimistic flag. This prevents (a) double
-  // count / double-display (cache + localStorage both listing the same task)
-  // and (b) a stale "done" after a cross-surface reopen — the flag is already
-  // gone by then, so the reopened (completed=0) task correctly shows open again.
+  // task is completed today, the "Completed today" surface renders straight from
+  // the cache, so we prune the optimistic flag (prevents double-count + a stale
+  // "done" after a cross-surface reopen). Issue #46.
   useEffect(() => {
     if (completedTodayIds.length === 0) return
     const confirmed = new Set(completedTodayIds)
-    setState((prev) => {
+    setDone((prev) => {
       let changed = false
-      const nextDone = { ...prev.done }
-      for (const id of Object.keys(nextDone)) if (confirmed.has(id)) { delete nextDone[id]; changed = true }
-      return changed ? { ...prev, done: nextDone } : prev
+      const next = { ...prev }
+      for (const id of Object.keys(next)) if (confirmed.has(id)) { delete next[id]; changed = true }
+      return changed ? next : prev
     })
   }, [completedTodayIds])
 
-  const plannedIds = useCallback(() => Object.keys(state.planned).filter((id) => !state.done[id]), [state])
+  const plannedIds = useCallback(() => Object.keys(planned).filter((id) => !done[id]), [planned, done])
 
   const promote = useCallback((id: string) => {
-    setState((p) => ({
-      ...p,
-      planned: p.planned[id] ? p.planned : { ...p.planned, [id]: { slot: 'strip' } },
-      rightNow: id,
-    }))
-  }, [])
+    plan.promoteToRightNow(id, tasks)
+  }, [plan, tasks])
 
   const markDone = useCallback((id: string) => {
     // Capture prior plan/Right-Now state so Undo can restore it (design
     // principle #8 — optimistic UI + a 5s undo on every state change).
-    const prevSlot = state.planned[id]?.slot
-    const wasRightNow = state.rightNow === id
-    setState((p) => {
-      const nextDone = { ...p.done, [id]: true }
-      const nextPlanned = { ...p.planned }
-      delete nextPlanned[id]
-      let nextRight = p.rightNow
-      if (id === p.rightNow) {
-        const remaining = Object.keys(nextPlanned).filter((k) => !nextDone[k])
-        nextRight = remaining[0] || null
-      }
-      return { rightNow: nextRight, planned: nextPlanned, done: nextDone }
-    })
-    // Persist to D1 so /tasks reflects the change. Issue #46. On write failure,
-    // roll back the optimistic done flag — otherwise the task shows "done" until
-    // midnight despite never having completed server-side (the cache rollback in
-    // useUpdateTaskStatus.onError reverts completed=0, but can't see this flag).
+    const wasPlanned = !!planned[id]
+    const wasRightNow = rightNow === id
+    const prevSlot = planned[id]?.slot
+
+    setDone((p) => ({ ...p, [id]: true }))
+    // Unplan on completion (mark-done unplans + sinks — Rule 61). The status
+    // write below makes the completion durable.
+    if (wasPlanned) plan.unplanTask(id)
+
+    // Persist completion to D1 so /tasks reflects it. On write failure, roll back
+    // the optimistic done flag (the cache rollback in useUpdateTaskStatus.onError
+    // reverts completed=0, but can't see this local flag). Issue #46.
     updateStatus.mutate({ id, status: 'done' }, {
-      onError: () => setState((p) => {
-        const nextDone = { ...p.done }
-        delete nextDone[id]
-        return { ...p, done: nextDone }
-      }),
+      onError: () => setDone((p) => { const n = { ...p }; delete n[id]; return n }),
     })
     undoToast.showUndo('Task completed', () => {
       // Undo: re-open the task and restore its prior planned slot / Right Now.
-      setState((p) => {
-        const nextDone = { ...p.done }
-        delete nextDone[id]
-        const nextPlanned = prevSlot ? { ...p.planned, [id]: { slot: prevSlot } } : p.planned
-        return { ...p, done: nextDone, planned: nextPlanned, rightNow: wasRightNow ? id : p.rightNow }
-      })
+      setDone((p) => { const n = { ...p }; delete n[id]; return n })
+      if (wasRightNow) plan.promoteToRightNow(id, tasks)
+      else if (wasPlanned) plan.planTask(id, prevSlot ?? 'strip', tasks)
       updateStatus.mutate({ id, status: 'todo' })
     })
-  }, [updateStatus, undoToast, state])
+  }, [updateStatus, undoToast, plan, planned, rightNow, tasks])
 
   const uncheck = useCallback((id: string) => {
-    setState((p) => {
-      const nextDone = { ...p.done }
-      delete nextDone[id]
-      return { ...p, done: nextDone }
-    })
+    setDone((p) => { const n = { ...p }; delete n[id]; return n })
     updateStatus.mutate({ id, status: 'todo' })
   }, [updateStatus])
 
   const planAt = useCallback((id: string, slot: PlannedSlot) => {
-    setState((p) => ({ ...p, planned: { ...p.planned, [id]: { slot } } }))
-  }, [])
+    plan.setPlanSlot(id, slot)
+  }, [plan])
 
   const unplan = useCallback((id: string) => {
-    setState((p) => {
-      const nextPlanned = { ...p.planned }
-      delete nextPlanned[id]
-      return { ...p, planned: nextPlanned, rightNow: p.rightNow === id ? null : p.rightNow }
-    })
-  }, [])
+    plan.unplanTask(id)
+  }, [plan])
 
-  return { ...state, plannedIds, promote, markDone, uncheck, planAt, unplan }
+  return { rightNow, planned, done, plannedIds, promote, markDone, uncheck, planAt, unplan }
 }
+
+// Re-export todayKey for callers that imported it transitively from here (none
+// today, but keeps the seam self-contained if a consumer needs the day key).
+export { todayKey }

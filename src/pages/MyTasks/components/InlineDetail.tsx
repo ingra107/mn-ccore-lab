@@ -15,8 +15,10 @@ import {
   ACCENT_GOLD, ACCENT_TEAL, ACCENT_GREEN,
   INK, INK_DIM, PAGE_BG, PANEL_BG,
   MOVE_OPTIONS,
-  readTodayState, writeTodayState, isTaskDone,
+  isTaskDone,
 } from '../constants'
+import { useTodayPlan } from '../../../lib/todayPlan'
+import { todayKey } from '../../../lib/taskGrouping'
 import { withAlpha } from '../../../lib/taskGrouping'
 import type { TaskRow } from '../../../lib/api'
 import { TaskQuickEditChips } from '../../../components/tasks/TaskQuickEditChips'
@@ -28,9 +30,12 @@ export function InlineDetail({ task, projectName }: { task: TaskRow; projectName
   const updateTask = useUpdateTask()
   const bulkUpdate = useBulkUpdateTasks()
   const undoToast = useUndoToast()
-  const snap = readTodayState()
-  const isPromoted = snap.rightNow === task.id
-  const isPlanned = !!snap.planned?.[task.id]
+  const plan = useTodayPlan()
+  // Workstream B (schema v75): promoted / planned derive from the SYNCED task
+  // columns on THIS row (planned_for == today), not the retired today_state_* LS.
+  const plannedToday = !!task.planned_for && task.planned_for.slice(0, 10) === todayKey()
+  const isPromoted = plannedToday && task.plan_slot === 'right_now'
+  const isPlanned = plannedToday
   const [moveOpen, setMoveOpen] = useState(false)
   const [fullEditorTask, setFullEditorTask] = useState<TaskRow | null>(null)
   const moveRef = useRef<HTMLDivElement>(null)
@@ -53,21 +58,16 @@ export function InlineDetail({ task, projectName }: { task: TaskRow; projectName
   }, [task.id, updateTask, undoToast])
 
   const promote = useCallback(() => {
-    const s = readTodayState()
-    s.rightNow = task.id
-    s.planned = s.planned ?? {}
-    if (!s.planned[task.id]) s.planned[task.id] = { slot: 'strip' }
-    writeTodayState(s)
+    // PATCHes the synced columns (right_now singleton enforced via the cache);
+    // tasks=[] → useTodayPlan scans the ['tasks'] cache for the prior right_now.
+    plan.promoteToRightNow(task.id, [])
     undoToast.showSuccess('Promoted to Right Now on Today')
-  }, [task.id, undoToast])
+  }, [task.id, plan, undoToast])
 
   const planToday = useCallback(() => {
-    const s = readTodayState()
-    s.planned = s.planned ?? {}
-    s.planned[task.id] = { slot: 'strip' }
-    writeTodayState(s)
+    plan.planTask(task.id, 'strip')
     undoToast.showSuccess('Planned for today')
-  }, [task.id, undoToast])
+  }, [task.id, plan, undoToast])
 
   const snooze = useCallback(() => {
     const tomorrow = new Date()
