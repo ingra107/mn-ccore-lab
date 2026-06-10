@@ -263,8 +263,8 @@ export default function App() {
                   <Route path="/portal/overview" element={<ErrorBoundary><PageErrorBoundary pageName="LabOverview"><Dashboard /></PageErrorBoundary></ErrorBoundary>} />
                   <Route path="/portal/personal" element={<ErrorBoundary><PersonalPage /></ErrorBoundary>} />
                   <Route path="/portal/my-items" element={<ErrorBoundary><MyItems /></ErrorBoundary>} />
-                  {/* MyTasks Round 2 — unified 3-view page (Columns / Lanes / List).
-                      View choice persists in localStorage.mt_view (Rule 55). */}
+                  {/* MyTasks Round 2 — unified 3-view page (List / Lanes / Columns,
+                      List default on bare arrival; ?view= deep-links win). */}
                   <Route path="/portal/my-tasks" element={<ErrorBoundary><PageErrorBoundary pageName="MyTasks"><UnifiedMyTasks /></PageErrorBoundary></ErrorBoundary>} />
                   {/* Legacy MyTasks (pre-Round 2). Kept for one sprint as a
                       safety net; remove once Round 2 has soaked. */}

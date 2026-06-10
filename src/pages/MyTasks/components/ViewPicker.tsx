@@ -1,6 +1,7 @@
-// ViewPicker — segmented pill that switches Columns / Lanes / List view.
-// Lives far-left of the filter row (CLAUDE.md Rule 60). Persists to
-// localStorage.mt_view via the parent's setView callback.
+// ViewPicker — segmented pill that switches List / Lanes / Columns view.
+// Lives far-left of the filter row (CLAUDE.md Rule 60). Order + List-first
+// default per Nick (2026-06-10): "List | Lanes | Columns with List as default
+// when I come to the page."
 //
 // Extracted from src/pages/portal/UnifiedMyTasks.tsx.
 
@@ -8,9 +9,9 @@ import { ACCENT_TEAL, INK_MUTED, type ViewMode } from '../constants'
 
 export function ViewPicker({ view, setView }: { view: ViewMode; setView: (v: ViewMode) => void }) {
   const views: { k: ViewMode; l: string; icon: string; desc: string }[] = [
-    { k: 'columns', l: 'Columns', icon: '⊞', desc: 'Kanban board · all groups side-by-side' },
-    { k: 'lanes',   l: 'Lanes',   icon: '☰', desc: 'Stacked lanes · collapse and peek' },
     { k: 'list',    l: 'List',    icon: '≡', desc: 'Dense table · keyboard-first' },
+    { k: 'lanes',   l: 'Lanes',   icon: '☰', desc: 'Stacked lanes · collapse and peek' },
+    { k: 'columns', l: 'Columns', icon: '⊞', desc: 'Kanban board · all groups side-by-side' },
   ]
   return (
     // P2-6: pill height is content-driven (minHeight, not fixed) so the touch

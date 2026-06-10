@@ -6,7 +6,8 @@
 // - List:    Power mode — dense table, j/k/e/x keyboard nav, side drawer
 //
 // View picker lives far-left of the filter row (CD called this out — not a
-// sidebar, not a tab, not a top-right toggle). Persists to localStorage.mt_view.
+// sidebar, not a tab, not a top-right toggle). Order List | Lanes | Columns;
+// bare arrival defaults to List (Nick 2026-06-10); URL ?view= deep-links win.
 
 import { useState, useMemo, useCallback, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
@@ -45,19 +46,18 @@ export default function UnifiedMyTasks() {
   const projectsQuery = useProjects()
 
   // URL-backed state so DD-2 saved views can capture/restore via the
-  // SavedViewsMenu. View persists to localStorage too (per CD memory)
-  // so first-load picks up last shape even if URL is bare.
+  // SavedViewsMenu. Bare arrival ALWAYS opens List (Nick 2026-06-10: "List as
+  // default when I come to the page") — URL `?view=` deep-links and saved
+  // views still win; the old localStorage.mt_view read is gone so a stale
+  // persisted choice can't override the cold-load default.
   const [searchParams, setSearchParams] = useSearchParams()
 
   const initialView: ViewMode = (() => {
     const fromUrl = searchParams.get('view') as ViewMode | null
     if (fromUrl === 'columns' || fromUrl === 'lanes' || fromUrl === 'list') return fromUrl
-    try { return (window.localStorage.getItem('mt_view') as ViewMode) || 'columns' } catch { return 'columns' }
+    return 'list'
   })()
   const [view, setView] = useState<ViewMode>(initialView)
-  useEffect(() => {
-    try { window.localStorage.setItem('mt_view', view) } catch { /* ignore */ }
-  }, [view])
 
   const [search, setSearch] = useState(searchParams.get('q') ?? '')
   const [filter, setFilter] = useState<FilterState>({
@@ -82,7 +82,7 @@ export default function UnifiedMyTasks() {
     const next = new URLSearchParams()
     if (search) next.set('q', search)
     if (quickView !== 'all') next.set('filter', quickView)
-    if (view !== 'columns') next.set('view', view)
+    if (view !== 'list') next.set('view', view)
     if (filter.priority) next.set('priority', filter.priority)
     if (filter.project) next.set('project', filter.project)
     if (filter.mentee) next.set('mentee', filter.mentee)
@@ -118,7 +118,7 @@ export default function UnifiedMyTasks() {
     setQuickView((p.get('filter') as QuickViewKey | null) ?? 'all')
     const v = p.get('view') as ViewMode | null
     if (v === 'columns' || v === 'lanes' || v === 'list') setView(v)
-    else setView('columns')
+    else setView('list')
     setFilter({
       priority: p.get('priority'),
       project: p.get('project'),
