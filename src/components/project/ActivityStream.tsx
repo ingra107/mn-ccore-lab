@@ -1,27 +1,26 @@
-// ActivityStream — P2-5 (Nick decision #6, 2026-06-09).
+// ActivityStream — P2-5 (Nick decision #6, 2026-06-09) + Phase-1 unified feed (Design C, v77).
 //
-// ONE chronological activity stream for a project. The old ProjectDetail
-// tabs (Notes / Comments / Activity) split the same content across three
-// panels and ProjectActivity re-embedded notes + comments a SECOND time —
-// the same rows rendered twice. This collapses all of it into a single
-// merged, time-ordered feed; the tab strip's Notes / Comments / All become
-// FILTERS over this one stream, not duplicate renderers.
+// Phase 1 adds a fourth source alongside the legacy three: GET /api/projects/:slug/activity
+// returns the whole-picture project feed — project-level rows AND task rows rolled up
+// by project_id, all from activity_entries. Task-originated rows are rendered with a
+// distinct task glyph + task entity link so users can see task chatter in context.
 //
-// Sources merged client-side (no new backend — every source already carries
-// created_at): project updates ("notes"), comments, and meeting action items.
-// The note + comment composers (MentionInput via SmartCompose — Rule 7) post
-// into the stream; the action-item toggle stays as an inline affordance.
+// Legacy sources (project_updates / comments / action_items) are KEPT as-is — project
+// composers still write those tables in Phase 1 (their retarget is Phase 2). The unified
+// feed rows are ADDITIVE. De-duplication against the legacy rows is not needed: only
+// task_comments + task_updates were backfilled and those never appeared in the project
+// stream before.
 //
-// Decisions + Dependencies keep their own dedicated sections in ProjectDetail
-// (they each have a distinct management UI and link out, and were NOT the
-// duplicated content — the duplication this fixes is notes/comments that
-// rendered in both their own tab AND the Activity tab). Rendering them once
-// in their section avoids the "same content twice" the ticket targets.
+// Filter pills are extended to cover unified-feed derived kinds:
+//   'all'          — everything
+//   'notes'        — legacy project updates + unified kind='update' (project entity)
+//   'comments'     — legacy comments + unified kind='comment' (project entity)
+//   'task-activity' — task-originated unified rows (kind='task-comment', 'task-update', etc.)
 //
-// Notes remain a team-visible informal progress log (S18 copy) — the notes
-// data architecture is unchanged; M5 owns the notes/description privacy split.
+// Design ref: docs/superpowers/specs/2026-06-10-activity-entries-unified-timeline-design.md
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   CheckCircle2,
@@ -30,7 +29,10 @@ import {
   AlertTriangle,
   CheckCircle,
   HelpCircle,
+  Terminal,
   Activity as ActivityIcon,
+  ClipboardList,
+  Lock,
 } from 'lucide-react'
 import {
   useProjectUpdates,
@@ -53,10 +55,34 @@ import ReactionBar from '../ReactionBar'
 import HermesMark from '../HermesMark'
 import HermesResponse from '../HermesResponse'
 import HermesPending, { isHermesPending } from '../HermesPending'
+import LinkifiedText from '../LinkifiedText'
 import EmptyState from '../EmptyState'
 import type { Project } from '../../data/types'
+import type { StoredKind, UpdateType } from '../../../shared/activityKinds'
+import { deriveRenderKind } from '../../../shared/activityKinds'
 
-export type StreamFilter = 'all' | 'notes' | 'comments'
+// ── Unified feed row shape (activity_entries) ─────────────────────────────────
+
+interface UnifiedEntryRow {
+  id: string
+  entity_type: string
+  entity_id: string
+  project_id: string | null
+  kind: StoredKind
+  visibility: 'team' | 'author'
+  actor_slug: string
+  body: string
+  mentions_json: string | null
+  update_type: UpdateType | null
+  metadata_json: string | null
+  created_at: string
+  // derived at render — not stored
+  _renderKind?: string
+}
+
+// ── Filter taxonomy ───────────────────────────────────────────────────────────
+
+export type StreamFilter = 'all' | 'notes' | 'comments' | 'task-activity'
 
 interface Props {
   project: Project
@@ -65,23 +91,45 @@ interface Props {
 
 // Note-type pills (mirrors ProjectUpdateFeed TYPE_CONFIG).
 const NOTE_TYPE_CONFIG: Record<string, { icon: typeof TrendingUp; color: string; bg: string; borderBg: string; label: string }> = {
-  progress: { icon: TrendingUp, color: 'var(--teal)', bg: 'var(--teal-active)', borderBg: 'rgba(45, 138, 138, 0.25)', label: 'Progress' },
-  blocker: { icon: AlertTriangle, color: 'var(--maroon)', bg: 'rgba(122, 0, 25, 0.1)', borderBg: 'rgba(122, 0, 25, 0.25)', label: 'Blocker' },
-  result: { icon: CheckCircle, color: 'var(--green-light)', bg: 'rgba(34, 197, 94, 0.1)', borderBg: 'rgba(34, 197, 94, 0.25)', label: 'Result' },
-  question: { icon: HelpCircle, color: 'var(--gold)', bg: 'var(--gold-active)', borderBg: 'rgba(201, 168, 76, 0.25)', label: 'Question' },
+  progress: { icon: TrendingUp,    color: 'var(--teal)',        bg: 'var(--teal-active)',       borderBg: 'rgba(45,138,138,0.25)',   label: 'Progress' },
+  blocker:  { icon: AlertTriangle, color: 'var(--maroon)',      bg: 'rgba(122,0,25,0.1)',       borderBg: 'rgba(122,0,25,0.25)',     label: 'Blocker' },
+  result:   { icon: CheckCircle,   color: 'var(--green-light)', bg: 'rgba(34,197,94,0.1)',      borderBg: 'rgba(34,197,94,0.25)',    label: 'Result' },
+  question: { icon: HelpCircle,    color: 'var(--gold)',        bg: 'var(--gold-active)',        borderBg: 'rgba(201,168,76,0.25)',  label: 'Question' },
 }
 
 // Discriminated union of every event kind the stream carries.
 type StreamEvent =
-  | { kind: 'note'; ts: string; id: string; row: ProjectUpdateRow }
-  | { kind: 'comment'; ts: string; id: string; row: Comment }
-  | { kind: 'action'; ts: string; id: string; row: ActionItemRow }
+  | { kind: 'note';          ts: string; id: string; row: ProjectUpdateRow }
+  | { kind: 'comment';       ts: string; id: string; row: Comment }
+  | { kind: 'action';        ts: string; id: string; row: ActionItemRow }
+  | { kind: 'unified-entry'; ts: string; id: string; row: UnifiedEntryRow }
 
 export default function ActivityStream({ project, filter }: Props) {
   const slug = project.slug
+
+  // ── Legacy sources (Phase 1: kept as-is; composers still write these tables) ──
   const { data: updates = [] } = useProjectUpdates(slug)
   const { data: comments = [] } = useComments(slug)
   const { data: actionRows = [] } = useActionItems()
+
+  // ── Unified feed (Design C, v77) — whole-picture project activity ────────────
+  // Includes project-level activity_entries AND task rows rolled up by project_id.
+  // Task-originated rows are additive — no de-dupe needed (task_comments /
+  // task_updates were backfilled but never appeared in the project stream before).
+  const { data: unifiedEntries = [] } = useQuery<UnifiedEntryRow[]>({
+    queryKey: ['project-activity', slug],
+    queryFn: async () => {
+      const res = await fetch(`/api/projects/${slug}/activity`)
+      if (!res.ok) return []
+      const data = await res.json() as { data?: UnifiedEntryRow[] }
+      return (data.data || []).map((e) => ({
+        ...e,
+        _renderKind: deriveRenderKind(e.entity_type, e.kind),
+      }))
+    },
+    staleTime: 30 * 1000,
+    enabled: !!slug,
+  })
 
   const { isAuthenticated, user } = useAuth()
   const { showSuccess } = useToast()
@@ -104,23 +152,57 @@ export default function ActivityStream({ project, filter }: Props) {
     [actionRows, project.slug, project.title],
   )
 
-  // Merge every source into one time-ordered list, newest first.
+  // Merge all sources into one time-ordered list, newest first.
   const events = useMemo(() => {
     const out: StreamEvent[] = []
     for (const u of updates) out.push({ kind: 'note', ts: u.created_at, id: `note-${u.id}`, row: u })
     for (const c of comments) out.push({ kind: 'comment', ts: c.created_at, id: `comment-${c.id}`, row: c })
-    // Action items only appear in the unfiltered ('all') view — Notes/Comments
-    // filters carry only their own kind.
+    // Action items only appear in the unfiltered ('all') view.
     if (filter === 'all') {
       for (const a of relatedActions) out.push({ kind: 'action', ts: a.created_at, id: `act-${a.id}`, row: a })
     }
+    // Unified feed rows — project-level rows are additive here alongside legacy;
+    // task-originated rows (_renderKind starts with 'task-') are new to this feed.
+    // NOTE: project-level unified rows (entity_type='project') may duplicate some
+    // legacy project_updates/comments until Phase 2 retargets the composers. For
+    // Phase 1 we include ALL unified rows to keep the "whole picture" promise and
+    // let the server-side backfill (only 3 rows) add minimal noise.
+    for (const e of unifiedEntries) {
+      out.push({ kind: 'unified-entry', ts: e.created_at, id: `ue-${e.id}`, row: e })
+    }
     return out.sort((a, b) => (a.ts > b.ts ? -1 : a.ts < b.ts ? 1 : 0))
-  }, [updates, comments, relatedActions, filter])
+  }, [updates, comments, relatedActions, unifiedEntries, filter])
 
-  // Apply the active filter (notes / comments / all).
+  // Apply the active filter.
   const visible = useMemo(() => {
-    if (filter === 'notes') return events.filter((e) => e.kind === 'note')
-    if (filter === 'comments') return events.filter((e) => e.kind === 'comment')
+    if (filter === 'notes') {
+      return events.filter((e) => {
+        if (e.kind === 'note') return true
+        if (e.kind === 'unified-entry') {
+          const rk = e.row._renderKind ?? ''
+          return rk === 'update' // project-level update from unified feed
+        }
+        return false
+      })
+    }
+    if (filter === 'comments') {
+      return events.filter((e) => {
+        if (e.kind === 'comment') return true
+        if (e.kind === 'unified-entry') {
+          const rk = e.row._renderKind ?? ''
+          return rk === 'comment' // project-level comment from unified feed
+        }
+        return false
+      })
+    }
+    if (filter === 'task-activity') {
+      return events.filter((e) => {
+        if (e.kind !== 'unified-entry') return false
+        const rk = e.row._renderKind ?? ''
+        return rk.startsWith('task-')
+      })
+    }
+    // 'all'
     return events
   }, [events, filter])
 
@@ -141,7 +223,12 @@ export default function ActivityStream({ project, filter }: Props) {
     })
 
   // In 'all' the composer toggles note/comment; in a single filter it is fixed.
-  const activeComposeKind = filter === 'all' ? composeKind : filter === 'comments' ? 'comment' : 'note'
+  // task-activity filter has no composer (task activity is authored on the task itself).
+  const activeComposeKind =
+    filter === 'all' ? composeKind :
+    filter === 'comments' ? 'comment' :
+    filter === 'task-activity' ? null :
+    'note'
 
   const signedOut = !isAuthenticated && import.meta.env.PROD
 
@@ -218,7 +305,11 @@ export default function ActivityStream({ project, filter }: Props) {
           </div>
         )}
 
-        {signedOut ? (
+        {activeComposeKind === null ? (
+          <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.85 }}>
+            Task activity originates on individual tasks. Switch to Notes or Comments to post here.
+          </span>
+        ) : signedOut ? (
           <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.85 }}>
             <a href="/api/auth/login" style={{ color: 'var(--teal)', fontWeight: 500, textDecoration: 'underline' }}>Sign in</a>
             {activeComposeKind === 'note' ? ' to post notes' : ' to comment'}
@@ -258,16 +349,15 @@ export default function ActivityStream({ project, filter }: Props) {
           <EmptyState
             icon={<ActivityIcon size={28} />}
             title={
-              filter === 'notes'
-                ? 'No notes yet'
-                : filter === 'comments'
-                  ? 'No comments yet'
-                  : 'No activity yet'
+              filter === 'notes'         ? 'No notes yet' :
+              filter === 'comments'      ? 'No comments yet' :
+              filter === 'task-activity' ? 'No task activity yet' :
+              'No activity yet'
             }
             subtitle={
-              filter === 'comments'
-                ? 'Be the first to discuss this project.'
-                : 'Post a note above to keep the team informed.'
+              filter === 'comments'      ? 'Be the first to discuss this project.' :
+              filter === 'task-activity' ? 'Task updates and comments will appear here.' :
+              'Post a note above to keep the team informed.'
             }
             compact
           />
@@ -298,6 +388,8 @@ function StreamItem({ event, onToggleAction }: { event: StreamEvent; onToggleAct
       return <CommentItem comment={event.row} />
     case 'action':
       return <ActionItemRowView action={event.row} onToggle={onToggleAction} />
+    case 'unified-entry':
+      return <UnifiedEntryItem entry={event.row} />
   }
 }
 
@@ -435,6 +527,192 @@ function ActionItemRowView({ action, onToggle }: { action: ActionItemRow; onTogg
         </div>
       </div>
     </motion.div>
+  )
+}
+
+// ── Unified entry renderer (Design C, v77 activity_entries rows) ─────────────
+//
+// Handles both project-level rows (entity_type='project') and task-originated
+// rows (entity_type='task', _renderKind='task-comment'|'task-update' etc.).
+// Task rows get a small task glyph + an entity link so you can navigate to the
+// task that generated the chatter.
+
+const UNIFIED_UPDATE_TYPE: Record<string, { icon: typeof TrendingUp; color: string; bg: string; label: string }> = {
+  progress: { icon: TrendingUp,    color: 'var(--teal)',   bg: 'var(--teal-active)',     label: 'Progress' },
+  blocker:  { icon: AlertTriangle, color: 'var(--maroon)', bg: 'rgba(122,0,25,0.1)',     label: 'Blocker' },
+  result:   { icon: CheckCircle,   color: 'var(--green)',  bg: 'rgba(34,197,94,0.1)',    label: 'Result' },
+  question: { icon: HelpCircle,    color: 'var(--gold)',   bg: 'var(--gold-active)',      label: 'Question' },
+  session:  { icon: Terminal,      color: 'var(--slate)',  bg: 'rgba(100,116,139,0.08)', label: 'Session' },
+}
+
+function UnifiedEntryItem({ entry }: { entry: UnifiedEntryRow }) {
+  const isTask = entry.entity_type === 'task'
+  const isHermes = entry.actor_slug === 'claude-ai'
+  const person = getPersonInfo(entry.actor_slug)
+
+  // Task-link label derived from entity_id (short fallback — full title
+  // would need a lookup; entity_id is enough for a ?openTask= deep link).
+  const taskHref = isTask ? `/portal/my-tasks?openTask=${encodeURIComponent(entry.entity_id)}` : null
+
+  // Left-bar color + badge logic mirrors TaskActivityFeed.
+  let barColor = 'rgba(201,168,76,0.35)'   // default: gold (comment)
+  let badgeEl: ReactNode = null
+
+  if (entry.kind === 'update') {
+    const ut = entry.update_type || 'progress'
+    const cfg = UNIFIED_UPDATE_TYPE[ut] || UNIFIED_UPDATE_TYPE.progress
+    const Icon = cfg.icon
+    barColor = cfg.color
+    badgeEl = (
+      <span
+        className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded"
+        style={{ fontSize: '10px', background: cfg.bg, color: cfg.color }}
+      >
+        <Icon size={9} aria-hidden="true" /> {cfg.label}
+      </span>
+    )
+  } else if (entry.kind === 'comment') {
+    barColor = 'rgba(201,168,76,0.35)'
+    badgeEl = null // no badge for plain comments
+  } else if (entry.kind === 'completion') {
+    barColor = 'var(--green)'
+    badgeEl = (
+      <span
+        className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded"
+        style={{ fontSize: '10px', background: 'rgba(34,197,94,0.1)', color: 'var(--green)' }}
+      >
+        <CheckCircle size={9} aria-hidden="true" /> Completed
+      </span>
+    )
+  } else if (entry.kind === 'system') {
+    barColor = 'var(--border-subtle)'
+  }
+
+  if (isHermes) {
+    return (
+      <motion.div
+        {...itemMotion}
+        style={{ background: 'var(--gold-hover)', border: '1px solid rgba(201,168,76,0.15)', borderRadius: 'var(--radius-lg)', padding: 'var(--sp-sm) var(--sp-md)' }}
+        className="detail-card"
+      >
+        {isTask && taskHref && (
+          <TaskOriginBadge taskHref={taskHref} entityId={entry.entity_id} />
+        )}
+        <div className="flex items-center gap-1.5 mb-1">
+          <HermesMark size={14} variant="avatar" />
+          <span style={{ fontSize: '10px', color: 'var(--gold)', fontWeight: 500 }}>Hermes</span>
+          {entry.visibility === 'author' && <AuthorOnlyBadge />}
+          <MetaTime ts={entry.created_at} />
+        </div>
+        {isHermesPending(entry.body) ? (
+          <HermesPending askedAt={entry.created_at} />
+        ) : (
+          <HermesResponse content={entry.body} />
+        )}
+      </motion.div>
+    )
+  }
+
+  if (entry.kind === 'system') {
+    return (
+      <motion.div
+        {...itemMotion}
+        className="flex items-start gap-2 py-1 px-1"
+      >
+        <Circle size={5} className="flex-shrink-0 mt-1.5" style={{ color: 'var(--teal)', opacity: 0.85, fill: 'var(--teal)', flexShrink: 0 }} aria-hidden="true" />
+        {isTask && taskHref && (
+          <TaskOriginBadge taskHref={taskHref} entityId={entry.entity_id} inline />
+        )}
+        <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.85, flex: 1, lineHeight: 1.4 }}>
+          <LinkifiedText text={entry.body} />
+        </span>
+        {entry.visibility === 'author' && <AuthorOnlyBadge />}
+        <MetaTime ts={entry.created_at} />
+      </motion.div>
+    )
+  }
+
+  return (
+    <motion.div
+      {...itemMotion}
+      style={{
+        background: 'var(--cream)',
+        borderRadius: 'var(--radius-lg)',
+        padding: 'var(--sp-md)',
+        borderLeft: `3px solid ${barColor}`,
+        // Task-originated rows get a subtle left-inset visual distinction.
+        ...(isTask ? { marginLeft: 4, borderLeftWidth: 2 } : {}),
+      }}
+      className="detail-card"
+    >
+      {isTask && taskHref && (
+        <TaskOriginBadge taskHref={taskHref} entityId={entry.entity_id} />
+      )}
+      <div className="flex items-start gap-3">
+        <div className="flex-shrink-0 mt-0.5" style={{ width: 28, height: 28 }}>
+          <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="base-sm" variant="ice" />
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div className="flex items-center gap-2 mb-1 flex-wrap">
+            <span style={{ fontSize: 'var(--value-size)', fontWeight: 600, color: 'var(--ink)' }}>{person.name}</span>
+            {badgeEl}
+            {entry.visibility === 'author' && <AuthorOnlyBadge />}
+            <MetaTime ts={entry.created_at} />
+          </div>
+          <p style={{ fontSize: 'var(--value-size)', color: 'var(--ink)', lineHeight: 1.5, margin: 0, whiteSpace: 'pre-wrap' }}>
+            <LinkifiedText text={entry.body} />
+          </p>
+        </div>
+      </div>
+    </motion.div>
+  )
+}
+
+/** Small badge linking back to the originating task in the project feed. */
+function TaskOriginBadge({ taskHref, entityId, inline }: { taskHref: string; entityId: string; inline?: boolean }) {
+  return (
+    <a
+      href={taskHref}
+      onClick={(e) => e.stopPropagation()}
+      aria-label={`Go to task ${entityId}`}
+      className="inline-flex items-center gap-1"
+      style={{
+        fontSize: '9px',
+        color: 'var(--teal)',
+        background: 'var(--teal-active)',
+        borderRadius: 'var(--radius-sm)',
+        padding: '1px 5px',
+        textDecoration: 'none',
+        marginBottom: inline ? 0 : 4,
+        marginRight: inline ? 4 : 0,
+        flexShrink: 0,
+        display: 'inline-flex',
+      }}
+    >
+      <ClipboardList size={9} aria-hidden="true" />
+      task
+    </a>
+  )
+}
+
+/** Author-only visibility hint (mirrors TaskActivityFeed treatment). */
+function AuthorOnlyBadge() {
+  return (
+    <span
+      title="Visible only to you"
+      aria-label="Only visible to you"
+      className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded"
+      style={{
+        fontSize: '9px',
+        color: 'var(--slate)',
+        background: 'rgba(100,116,139,0.1)',
+        opacity: 0.85,
+        flexShrink: 0,
+      }}
+    >
+      <Lock size={7} aria-hidden="true" />
+      only you
+    </span>
   )
 }
 

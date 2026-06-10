@@ -4,7 +4,7 @@ import {
   CalendarDays, FolderKanban, ArrowRightLeft,
   FileText, MessageSquare, Upload, Eye, ScrollText,
   Users, Bell, ClipboardList, Link2, Trash2, Plus, ExternalLink, RefreshCw, Copy, Check,
-  ChevronUp, ChevronDown, Send, Paperclip, AtSign, Smile, Type,
+  ChevronUp, ChevronDown, Send, Paperclip, AtSign, Smile, Type, Lock,
 } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
@@ -1123,6 +1123,9 @@ function OverviewQuickAdd({
   const [mode, setMode] = useState<'note' | 'comment'>('comment')
   const [text, setText] = useState('')
   const [forHermes, setForHermes] = useState(false)
+  // @me visibility toggle — when true, prepends '@me ' so the server strips it
+  // and stores visibility='author'. Tooltip explains the semantics.
+  const [meOnly, setMeOnly] = useState(false)
   const [dragOver, setDragOver] = useState(false)
   const [uploading, setUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -1177,13 +1180,17 @@ function OverviewQuickAdd({
   function reset() {
     setText('')
     setForHermes(false)
+    setMeOnly(false)
   }
 
   async function submitComment(content: string) {
+    // Prepend '@me ' when the author-only toggle is active — the server's
+    // postActivityEntry() strips the prefix and sets visibility='author'.
+    const body = meOnly ? `@me ${content}` : content
     const res = await fetch(`/api/tasks/${taskId}/comments`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ content }),
+      body: JSON.stringify({ content: body }),
     })
     if (!res.ok) throw new Error('comment failed')
     if (forHermes) {
@@ -1415,34 +1422,61 @@ function OverviewQuickAdd({
 
         <TypingIndicator slugs={typingPeers} className="self-start" />
 
-        {/* Hermes toggle — only relevant on comments. Shows up after typing. */}
-        {mode === 'comment' && text.trim() && (
-          <button
-            type="button"
-            onClick={() => setForHermes((v) => !v)}
-            className="flex items-center gap-1.5 self-start px-2 py-0.5 rounded-full transition-colors"
-            style={{
-              fontSize: '10px',
-              fontWeight: 600,
-              background: forHermes ? 'var(--gold-emphasis)' : 'rgba(100,116,139,0.06)',
-              color: forHermes ? 'var(--gold)' : 'var(--slate)',
-              border: `1px solid ${forHermes ? 'rgba(201,168,76,0.3)' : 'rgba(100,116,139,0.1)'}`,
-              cursor: 'pointer',
-              textTransform: 'uppercase',
-              letterSpacing: '0.3px',
-            }}
-          >
-            <span
+        {/* Row of secondary toggles — shown when there is content to post */}
+        {text.trim() && (
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Hermes toggle — only relevant on comments */}
+            {mode === 'comment' && (
+              <button
+                type="button"
+                onClick={() => setForHermes((v) => !v)}
+                className="flex items-center gap-1.5 px-2 py-0.5 rounded-full transition-colors"
+                style={{
+                  fontSize: '10px',
+                  fontWeight: 600,
+                  background: forHermes ? 'var(--gold-emphasis)' : 'rgba(100,116,139,0.06)',
+                  color: forHermes ? 'var(--gold)' : 'var(--slate)',
+                  border: `1px solid ${forHermes ? 'rgba(201,168,76,0.3)' : 'rgba(100,116,139,0.1)'}`,
+                  cursor: 'pointer',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.3px',
+                }}
+              >
+                <span
+                  style={{
+                    width: 6,
+                    height: 6,
+                    borderRadius: 'var(--radius-circle)',
+                    background: forHermes ? 'var(--gold)' : 'var(--slate)',
+                    opacity: forHermes ? 1 : 0.85,
+                  }}
+                />
+                {forHermes ? 'For Hermes' : '@ Hermes'}
+              </button>
+            )}
+
+            {/* @me visibility toggle — prepends '@me ' so server strips +
+                stores visibility='author'. Works for both notes and comments. */}
+            <button
+              type="button"
+              onClick={() => setMeOnly((v) => !v)}
+              aria-label={meOnly ? 'Remove author-only visibility: visible to team' : 'Make visible only to you (@me)'}
+              title="Visible only to you (@me)"
+              className="flex items-center gap-1 px-2 py-0.5 rounded-full transition-colors"
               style={{
-                width: 6,
-                height: 6,
-                borderRadius: 'var(--radius-circle)',
-                background: forHermes ? 'var(--gold)' : 'var(--slate)',
-                opacity: forHermes ? 1 : 0.85,
+                fontSize: '10px',
+                fontWeight: meOnly ? 600 : 400,
+                background: meOnly ? 'rgba(100,116,139,0.12)' : 'transparent',
+                color: meOnly ? 'var(--slate)' : 'var(--slate)',
+                border: `1px solid ${meOnly ? 'var(--border-subtle)' : 'rgba(100,116,139,0.1)'}`,
+                cursor: 'pointer',
+                opacity: meOnly ? 1 : 0.85,
               }}
-            />
-            {forHermes ? 'For Hermes' : '@ Hermes'}
-          </button>
+            >
+              <Lock size={9} aria-hidden="true" />
+              {meOnly ? 'Only me' : 'Only me?'}
+            </button>
+          </div>
         )}
       </form>
     </div>
