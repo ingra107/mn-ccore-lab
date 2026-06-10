@@ -15,7 +15,7 @@ import {
   type DragStartEvent,
 } from '@dnd-kit/core'
 import { useDensity, densityClass } from '../../components/DensityToggle'
-import { TableSkeleton } from '../../components/LoadingSkeleton'
+import DataPage from '../../components/DataPage'
 import Avatar from '../../components/Avatar'
 import CreateProjectModal from '../../components/CreateProjectModal'
 import { useProjects, useTasks, useManuscriptsAttention } from '../../hooks/useApiData'
@@ -29,17 +29,28 @@ import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 import { getPersonInfo } from '../../data/team'
 import { displayName } from '../../lib/nameUtils'
 import type { Project } from '../../data/types'
-import PageHeader from '../../components/PageHeader'
 import NeedsAttentionDashboard, { type AttentionFilter } from '../../components/NeedsAttentionDashboard'
 import ActiveSubmissionsWidget from '../../components/ActiveSubmissionsWidget'
-import { ColumnHeader, TableContainer, TableControls } from '../../components/table'
+import { ColumnHeader, TableContainer } from '../../components/table'
 import EmptyState from '../../components/EmptyState'
 
 import { usePageMeta } from '../../hooks/usePageMeta'
 import { useScrollReveal } from '../../hooks/useScrollReveal'
 import { useLabPrefs } from '../../hooks/useLabPrefs'
-import { toApiStage } from '../../lib/stageNormalize'
+import { toApiStage, stageIndex } from '../../lib/stageNormalize'
 import { PATHS } from '../../constants/paths'
+
+// S4 (Nick, 2026-06-09): a manuscript = a project whose canonical stage is
+// >= writing (writing / submitted / revisions / accepted / published). The
+// old filter `p.status !== 'published' || p.stage === 'published'` was a
+// tautology — `status` is active/waiting_external/blocked/done, never
+// 'published' — so it admitted ALL projects. stageIndex() normalizes legacy
+// + API stage strings; writing is index 3 on the canonical ladder.
+const WRITING_STAGE_INDEX = stageIndex('writing')
+function isManuscriptStage(stage: string | null | undefined): boolean {
+  const idx = stageIndex(stage)
+  return idx >= 0 && idx >= WRITING_STAGE_INDEX
+}
 
 // Values are D1 lowercase canonical; labels are Title Case for display.
 const STAGES = ['idea', 'data_collection', 'analysis', 'writing', 'review', 'revisions', 'published'] as const
@@ -156,7 +167,9 @@ export default function ManuscriptsPage() {
   }
 
   const manuscripts = useMemo(() => {
-    let filtered = projects.filter((p) => p.status !== 'published' || p.stage === 'published')
+    // S4: a manuscript is a project at stage >= writing. Earlier-stage
+    // projects (idea / data collection / analysis) live only on Projects.
+    let filtered = projects.filter((p) => isManuscriptStage(p.stage))
     if (filterPI) filtered = filtered.filter((p) => p.pi === filterPI)
     if (filterCategory) filtered = filtered.filter((p) => p.category === filterCategory)
     if (filterStalled) filtered = filtered.filter((p) => p.stage !== 'published' && daysInStage(p) > stalledThresholdDays)
@@ -230,8 +243,10 @@ export default function ManuscriptsPage() {
   const activeCount = manuscripts.filter((p) => p.stage !== 'published').length
   const writingCount = manuscripts.filter((p) => p.stage === 'writing').length
 
+  // S4: stalled count scoped to the manuscript subset (stage >= writing, not
+  // yet published), so the pill count matches the page's own taxonomy.
   const stalledCount = useMemo(() =>
-    projects.filter(p => p.stage !== 'published' && daysInStage(p) > stalledThresholdDays).length
+    projects.filter(p => isManuscriptStage(p.stage) && p.stage !== 'published' && daysInStage(p) > stalledThresholdDays).length
   , [projects, stalledThresholdDays])
 
   // M-14: derive PI options from data instead of hardcoding nick + nate.
@@ -255,162 +270,159 @@ export default function ManuscriptsPage() {
     'Track MN-CCORE manuscripts from idea to publication.'
   )
 
+  const manuscriptCategoryPills = (
+    /* GH #39: category quick-filter pills. URL-synced so saved views capture state. */
+    <div
+      role="tablist"
+      aria-label="Filter manuscripts by category"
+      className="flex flex-wrap items-center"
+      style={{ gap: '6px', padding: 'var(--sp-sm) 0 var(--sp-md)' }}
+    >
+      {[
+        { value: '', label: 'All' },
+        ...CATEGORY_OPTIONS.map(({ value, label }) => ({ value, label })),
+      ].map((opt) => {
+        const active = filterCategory === opt.value
+        return (
+          <button
+            key={opt.value || 'all'}
+            role="tab"
+            aria-selected={active}
+            aria-controls="manuscripts-table"
+            onClick={() => setFilterCategory(opt.value)}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '4px 12px',
+              borderRadius: 'var(--radius-full)',
+              border: active ? '1px solid var(--teal)' : '1px solid var(--border-subtle)',
+              background: active ? 'var(--teal-subtle)' : 'transparent',
+              color: active ? 'var(--teal)' : 'var(--slate)',
+              fontSize: '12px',
+              fontWeight: active ? 600 : 400,
+              cursor: 'pointer',
+              transition: 'all 0.12s ease-out',
+              opacity: active ? 1 : 0.85,
+            }}
+          >
+            {opt.value && (
+              <CategoryIcon category={opt.value} size={12} />
+            )}
+            {opt.label}
+          </button>
+        )
+      })}
+    </div>
+  )
+
   return (
-    <div style={{ minHeight: '100vh' }}>
-      <div className="content-container" style={{ paddingBottom: '6rem' }}>
-        <PageHeader
-          icon={<FileText size={20} />}
-          title="Manuscripts"
-          count={activeCount}
-          actions={
+    <>
+      <DataPage
+        icon={<FileText size={20} />}
+        title="Manuscripts"
+        count={activeCount}
+        actions={
+          <button
+            onClick={() => setShowCreate(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg new-project-btn"
+            style={{
+              background: 'transparent',
+              color: 'var(--teal)',
+              fontSize: '13px',
+              fontWeight: 600,
+              border: '1px solid var(--border-subtle)',
+              cursor: 'pointer',
+              transition: 'background 0.12s ease-out',
+            }}
+          >
+            <Plus size={14} />
+            New Manuscript
+          </button>
+        }
+        views={[
+          { key: 'list', icon: <List size={14} />, label: 'List' },
+          { key: 'pipeline', icon: <GitBranch size={14} />, label: 'Pipeline' },
+          { key: 'trophy', icon: <BookOpen size={14} />, label: 'Trophy' },
+        ]}
+        activeView={view}
+        onViewChange={(v) => setView(v as 'list' | 'pipeline' | 'trophy')}
+        filters={
+          <>
+            <InlineSelect
+              value={filterPI}
+              options={[
+                { value: '', label: 'All PIs' },
+                ...piOptions,
+              ]}
+              onChange={setFilterPI}
+              alwaysShowChevron
+            />
+            {/* Stalled filter pill */}
             <button
-              onClick={() => setShowCreate(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg new-project-btn"
+              onClick={() => setFilterStalled(!filterStalled)}
               style={{
-                background: 'transparent',
-                color: 'var(--teal)',
-                fontSize: '13px',
-                fontWeight: 600,
-                border: '1px solid var(--border-subtle)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px',
+                padding: '4px 10px',
+                borderRadius: 'var(--radius-full)',
+                border: filterStalled ? '1px solid var(--orange)' : '1px solid var(--border-subtle)',
+                background: filterStalled ? 'var(--orange-hover)' : 'transparent',
+                color: filterStalled ? 'var(--orange)' : 'var(--slate)',
+                fontSize: '12px',
+                fontWeight: filterStalled ? 600 : 400,
                 cursor: 'pointer',
-                transition: 'background 0.12s ease-out',
+                transition: 'all 0.12s ease-out',
+                opacity: filterStalled ? 1 : 0.85,
               }}
+              title={`Manuscripts stalled in stage for more than ${stalledThresholdDays} days`}
             >
-              <Plus size={14} />
-              New Manuscript
-            </button>
-          }
-        >
-          <TableControls
-            views={[
-              { key: 'list', icon: <List size={14} />, label: 'List' },
-              { key: 'pipeline', icon: <GitBranch size={14} />, label: 'Pipeline' },
-              { key: 'trophy', icon: <BookOpen size={14} />, label: 'Trophy' },
-            ]}
-            activeView={view}
-            onViewChange={(v) => setView(v as 'list' | 'pipeline' | 'trophy')}
-            filters={
-              <>
-                <InlineSelect
-                  value={filterPI}
-                  options={[
-                    { value: '', label: 'All PIs' },
-                    ...piOptions,
-                  ]}
-                  onChange={setFilterPI}
-                  alwaysShowChevron
-                />
-                {/* Stalled filter pill */}
-                <button
-                  onClick={() => setFilterStalled(!filterStalled)}
+              Stalled
+              {stalledCount > 0 && (
+                <span
                   style={{
-                    display: 'flex',
+                    display: 'inline-flex',
                     alignItems: 'center',
-                    gap: '5px',
-                    padding: '4px 10px',
+                    justifyContent: 'center',
+                    minWidth: '16px',
+                    height: '16px',
                     borderRadius: 'var(--radius-full)',
-                    border: filterStalled ? '1px solid var(--orange)' : '1px solid var(--border-subtle)',
-                    background: filterStalled ? 'var(--orange-hover)' : 'transparent',
-                    color: filterStalled ? 'var(--orange)' : 'var(--slate)',
-                    fontSize: '12px',
-                    fontWeight: filterStalled ? 600 : 400,
-                    cursor: 'pointer',
-                    transition: 'all 0.12s ease-out',
-                    opacity: filterStalled ? 1 : 0.85,
+                    background: 'var(--orange)',
+                    color: 'white',
+                    fontSize: '10px',
+                    fontWeight: 700,
+                    padding: '0 4px',
                   }}
-                  title={`Manuscripts stalled in stage for more than ${stalledThresholdDays} days`}
                 >
-                  Stalled
-                  {stalledCount > 0 && (
-                    <span
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        minWidth: '16px',
-                        height: '16px',
-                        borderRadius: 'var(--radius-full)',
-                        background: 'var(--orange)',
-                        color: 'white',
-                        fontSize: '10px',
-                        fontWeight: 700,
-                        padding: '0 4px',
-                      }}
-                    >
-                      {stalledCount}
-                    </span>
-                  )}
-                </button>
-              </>
-            }
-            showDensity
-            density={density}
-            onDensityChange={setDensity}
-            count={activeCount}
-            countLabel="manuscripts"
-          />
-        </PageHeader>
-
-        {/* T-29: Needs your attention — three-subgroup triage computed from
-            manuscript_revisions + reviewer_comments + publications. Replaces
-            the earlier ActiveRevisionsDashboard flat list. */}
-        {!isLoading && (
-          <NeedsAttentionDashboard filter={attentionFilter} onFilterChange={setAttentionFilter} />
-        )}
-
-        {/* M-12 (D25): Active submissions horizontal scroll — papers currently
-            in flight. List view only; pipeline + trophy have their own shape. */}
-        {!isLoading && view === 'list' && <ActiveSubmissionsWidget />}
-
-        {/* GH #39: category quick-filter pills. URL-synced so saved views capture state. */}
-        <div
-          role="tablist"
-          aria-label="Filter manuscripts by category"
-          className="flex flex-wrap items-center"
-          style={{ gap: '6px', padding: 'var(--sp-sm) 0 var(--sp-md)' }}
-        >
-          {[
-            { value: '', label: 'All' },
-            ...CATEGORY_OPTIONS.map(({ value, label }) => ({ value, label })),
-          ].map((opt) => {
-            const active = filterCategory === opt.value
-            return (
-              <button
-                key={opt.value || 'all'}
-                role="tab"
-                aria-selected={active}
-                aria-controls="manuscripts-table"
-                onClick={() => setFilterCategory(opt.value)}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  padding: '4px 12px',
-                  borderRadius: 'var(--radius-full)',
-                  border: active ? '1px solid var(--teal)' : '1px solid var(--border-subtle)',
-                  background: active ? 'var(--teal-subtle)' : 'transparent',
-                  color: active ? 'var(--teal)' : 'var(--slate)',
-                  fontSize: '12px',
-                  fontWeight: active ? 600 : 400,
-                  cursor: 'pointer',
-                  transition: 'all 0.12s ease-out',
-                  opacity: active ? 1 : 0.85,
-                }}
-              >
-                {opt.value && (
-                  <CategoryIcon category={opt.value} size={12} />
-                )}
-                {opt.label}
-              </button>
-            )
-          })}
-        </div>
-
-        {/* Loading skeleton */}
-        {isLoading && <TableSkeleton rows={6} cols={5} />}
-
+                  {stalledCount}
+                </span>
+              )}
+            </button>
+          </>
+        }
+        showDensity
+        density={density}
+        onDensityChange={setDensity}
+        controlsCount={activeCount}
+        controlsCountLabel="manuscripts"
+        isLoading={isLoading}
+        skeletonRows={6}
+        skeletonCols={5}
+        beforeBody={
+          <>
+            {/* T-29: Needs your attention — three-subgroup triage. */}
+            {!isLoading && (
+              <NeedsAttentionDashboard filter={attentionFilter} onFilterChange={setAttentionFilter} />
+            )}
+            {/* M-12 (D25): Active submissions — list view only. */}
+            {!isLoading && view === 'list' && <ActiveSubmissionsWidget />}
+            {manuscriptCategoryPills}
+          </>
+        }
+      >
         {/* ─── LIST VIEW ─── */}
-        {!isLoading && view === 'list' && (
+        {view === 'list' && (
           <TableContainer id="manuscripts-table" className={densityClass(density)}>
             {/* Table header — sortable */}
             <div
@@ -692,7 +704,7 @@ export default function ManuscriptsPage() {
         )}
 
         {/* ─── PIPELINE VIEW ─── M-13: drag-and-drop between stages */}
-        {!isLoading && view === 'pipeline' && (
+        {view === 'pipeline' && (
           <PipelineBoard
             byStage={byStage}
             onStageChange={(slug, prevStage, nextStage) => {
@@ -706,7 +718,7 @@ export default function ManuscriptsPage() {
         )}
 
         {/* ─── TROPHY VIEW (P3-03) ─── cover-style cards for Published manuscripts */}
-        {!isLoading && view === 'trophy' && (() => {
+        {view === 'trophy' && (() => {
           const published = manuscripts.filter((p) => p.stage === 'published')
           if (published.length === 0) {
             return (
@@ -788,7 +800,7 @@ export default function ManuscriptsPage() {
             </div>
           )
         })()}
-      </div>
+      </DataPage>
 
       <CreateProjectModal
         open={showCreate}
@@ -825,7 +837,7 @@ export default function ManuscriptsPage() {
           }
         }
       `}</style>
-    </div>
+    </>
   )
 }
 
