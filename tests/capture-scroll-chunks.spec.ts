@@ -41,7 +41,6 @@ const TARGETS: Target[] = [
   { slug: '08-manuscripts',         path: P.manuscripts },
   { slug: '14-analytics',           path: P.analytics },
   { slug: '15-pi-analytics',        path: P.piAnalytics },
-  { slug: '17-pb-sector',           path: P.pb },
   { slug: '35-trajectory-public',   path: P.publicTrajectory('nick-ingraham') },
   { slug: '36-trajectory-portal',   path: P.teamTrajectory('nick-ingraham') },
   { slug: '40-publication-detail',  path: P.publication('ingraham-2026-adhere-lpv') },

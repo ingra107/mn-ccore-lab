@@ -759,24 +759,6 @@
       "covered": true
     },
     {
-      "id": "api-get-pb-command-center",
-      "component": "api/routes/pb-sector.ts",
-      "type": "api",
-      "description": "GET /api/pb/command-center — PB command center",
-      "test_file": "tests/inspection-workflows.spec.ts",
-      "test_name": "API GET: PB command center",
-      "covered": true
-    },
-    {
-      "id": "api-get-pb-plan-history",
-      "component": "api/routes/pb-sector.ts",
-      "type": "api",
-      "description": "GET /api/pb/plan/history — PB plan history",
-      "test_file": "tests/inspection-workflows.spec.ts",
-      "test_name": "API GET: PB plan history",
-      "covered": true
-    },
-    {
       "id": "api-get-pb-sessions",
       "component": "api/routes/pb-sessions.ts",
       "type": "api",
@@ -1098,15 +1080,6 @@
       "description": "My Items page renders",
       "test_file": "tests/inspection-workflows.spec.ts",
       "test_name": "ROUTE: My Items (/my-items) renders",
-      "covered": true
-    },
-    {
-      "id": "page-render-pb-sector",
-      "component": "src/pages/portal/PBSector.tsx",
-      "type": "render",
-      "description": "PB Sector / Planner page renders",
-      "test_file": "tests/inspection-workflows.spec.ts",
-      "test_name": "ROUTE: PB Sector / Planner (/pb) renders",
       "covered": true
     },
     {
@@ -1998,15 +1971,6 @@
       "description": "Drag-and-drop reorder meeting agenda items",
       "test_file": "tests/inspection-workflows.spec.ts",
       "test_name": "JOURNEY: Create meeting → add agenda",
-      "covered": true
-    },
-    {
-      "id": "drag-pb-sector",
-      "component": "src/pages/portal/PBSector.tsx",
-      "type": "drag",
-      "description": "Drag-and-drop reorder PB Sector task slots",
-      "test_file": "tests/inspection-workflows.spec.ts",
-      "test_name": "ROUTE: PB Sector / Planner (/pb) renders",
       "covered": true
     },
     {
@@ -2928,33 +2892,6 @@
       "covered": false
     },
     {
-      "id": "api-post-pb-plan",
-      "component": "api/routes/pb-sector.ts",
-      "type": "api",
-      "description": "POST /api/pb/plan — create/update daily plan",
-      "test_file": null,
-      "test_name": null,
-      "covered": false
-    },
-    {
-      "id": "api-post-pb-pomodoro-start",
-      "component": "api/routes/pb-sector.ts",
-      "type": "api",
-      "description": "POST /api/pb/pomodoro/start — start pomodoro",
-      "test_file": null,
-      "test_name": null,
-      "covered": false
-    },
-    {
-      "id": "api-post-pb-reflection",
-      "component": "api/routes/pb-sector.ts",
-      "type": "api",
-      "description": "POST /api/pb/reflection — save reflection",
-      "test_file": null,
-      "test_name": null,
-      "covered": false
-    },
-    {
       "id": "api-post-digest-status",
       "component": "api/routes/digest.ts",
       "type": "api",
@@ -3347,9 +3284,6 @@
     "api-get-email-drafts-pending",
     "api-get-pb-relay",
     "api-get-pb-dispatch-pending",
-    "api-post-pb-plan",
-    "api-post-pb-pomodoro-start",
-    "api-post-pb-reflection",
     "api-post-digest-status",
     "api-post-revisions-create",
     "api-post-meetings-notes",
@@ -3369,9 +3303,9 @@
     "form-publication-search"
   ],
   "summary": {
-    "total": 369,
-    "covered": 318,
-    "uncovered": 51,
-    "coverage_pct": 86.2
+    "total": 362,
+    "covered": 314,
+    "uncovered": 48,
+    "coverage_pct": 86.7
   }
 }

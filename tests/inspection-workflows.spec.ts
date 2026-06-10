@@ -83,14 +83,6 @@ test.describe('ROUTE — Missing portal pages', () => {
     await page.screenshot({ path: 'review/route-my-items.png' })
   })
 
-  test('ROUTE: PB Sector / Planner (/pb) renders', async ({ page }) => {
-    const errors = await loadPage(page, P.pb)
-    expect(errors).toEqual([])
-    const crashed = await page.locator('text=Something went wrong').count()
-    expect(crashed).toBe(0)
-    await page.screenshot({ path: 'review/route-pb-sector.png' })
-  })
-
   test('ROUTE: Pulse / Kiosk (/pulse) renders', async ({ page }) => {
     const errors = await loadPage(page, P.pulse)
     expect(errors).toEqual([])
@@ -153,8 +145,6 @@ test.describe('API — Missing GET endpoints', () => {
     ['/api/mentee-milestones', 'Mentee milestones'],
     ['/api/mentee-milestones/overview', 'Mentee milestones overview'],
     ['/api/analytics/contributions?slug=nick', 'Contribution analytics'],
-    ['/api/pb/command-center', 'PB command center'],
-    ['/api/pb/plan/history', 'PB plan history'],
     ['/api/pb/sessions', 'PB session history'],
     ['/api/pb/sessions/stats', 'PB session stats'],
     ['/api/pb/today', 'PB today data'],
@@ -1246,30 +1236,6 @@ test.describe('JOURNEY — My Tasks daily triage', () => {
   })
 })
 
-test.describe('JOURNEY — PB Sector planner flow', () => {
-  test('JOURNEY: PB Sector → star task → focus tasks → pomodoro → reflection', async ({ page }) => {
-    await loadPage(page, P.pb)
-    await page.waitForTimeout(1000)
-
-    // 1. Check main planner sections
-    const sections = ['Star', 'Focus', 'Evening', 'Quick', 'Pomodoro', 'Reflection']
-    for (const section of sections) {
-      const found = await page.locator(`text=${section}`).first().isVisible({ timeout: 2000 }).catch(() => false)
-      console.log(`PB section "${section}": ${found}`)
-    }
-
-    // 2. Check dispatch badge
-    const dispatch = page.locator('[class*="dispatch"], text=Dispatch').first()
-    console.log(`Dispatch badge: ${await dispatch.isVisible().catch(() => false)}`)
-
-    // 3. Check calendar timeline
-    const calendar = page.locator('[class*="calendar"], [class*="timeline"]').first()
-    console.log(`Calendar timeline: ${await calendar.isVisible().catch(() => false)}`)
-
-    await page.screenshot({ path: 'review/journey-pb-sector.png' })
-  })
-})
-
 test.describe('JOURNEY — Team member exploration', () => {
   test('JOURNEY: Team page → click member → see profile → cv link → trajectory link', async ({ page }) => {
     await loadPage(page, P.publicTeam)
@@ -1998,7 +1964,7 @@ test.describe('A11Y — Focus management', () => {
 
 test.describe('VISUAL — Missing page screenshots', () => {
   const missingPages = [
-    P.deadlineCascade, P.myItems, P.pb, P.pulse, P.network,
+    P.deadlineCascade, P.myItems, P.pulse, P.network,
     '/team/nick-ingraham/cv', '/team/nick-ingraham/trajectory',
   ]
 

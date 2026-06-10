@@ -90,19 +90,8 @@ async function main() {
       bug(s, 'UPLOAD-URL-FAIL', 'P2', '11.F POST /api/upload/url', `HTTP ${uploadResp.status()}`, '200 or 4xx with schema')
     }
 
-    // ═══════════════════ DAILY PLANS (PB Sector) ═══════════════════
-    section(s, '11.G  Daily plan endpoint')
-    const todayIso = new Date().toISOString().slice(0, 10)
-    const plan = await apiGet<{ date?: string; star_task_id?: string | null }>(s, `/api/daily-plans/${todayIso}`)
-    if (plan !== null) pass(s, `11.G /api/daily-plans/${todayIso} responds`)
-    else log(s, `  11.G INFO: no daily plan for ${todayIso} (may not exist)`)
-
-    // ═══════════════════ POMODORO (PB Sector) ═══════════════════
-    section(s, '11.H  Pomodoro endpoints (POST /api/pb/pomodoro/start and /complete)')
-    // Just verify the START endpoint exists (400 on missing body = reachable)
-    const pomoResp = await s.api.post('/api/pb/pomodoro/start', { data: {} })
-    if (pomoResp.status() === 400 || pomoResp.ok()) pass(s, `11.H /api/pb/pomodoro/start reachable (${pomoResp.status()})`)
-    else bug(s, 'POMODORO-START-FAIL', 'P2', '11.H POST /api/pb/pomodoro/start', `HTTP ${pomoResp.status()}`, '200 or 400')
+    // 11.G (daily plans) + 11.H (pomodoro) removed 2026-06-10 — PB Sector Daily
+    // Plan routes retired (superseded by tasks.planned_for/plan_slot/plan_rank).
 
     // ═══════════════════ MEETING PREP ═══════════════════
     section(s, '11.I  Meeting prep endpoint (find most recent meeting, check prep data)')

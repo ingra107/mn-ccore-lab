@@ -49,7 +49,6 @@ const PORTAL_STATIC = [
   '/portal/analytics',
   '/portal/pi/analytics',
   '/portal/mentee-milestones',
-  '/portal/pb',
   '/portal/sessions',
   '/portal/settings',
 ]

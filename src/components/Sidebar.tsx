@@ -22,7 +22,6 @@ import {
   ExternalLink,
   Bug,
   Shield,
-  Terminal,
   History,
   TrendingUp,
   GraduationCap,
@@ -52,12 +51,6 @@ interface NavItem {
   icon: React.ComponentType<{ size?: number }>
   badge?: number
   hint?: string // small secondary text (e.g. "Today")
-}
-
-// Feature flags — flip to expose deferred surfaces in the sidebar nav.
-// Routes still resolve via App.tsx for direct-link access.
-const FEATURE_FLAGS = {
-  peripheralBrain: false, // /pb (Daily Plan) — empty state until PB integration ships
 }
 
 interface NavGroup {
@@ -161,9 +154,6 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
           {
             title: 'PI Tools',
             items: [
-              // PB Sector hidden until Peripheral Brain integration ships (P2-07).
-              // Route /pb still resolves for direct-link access.
-              ...(FEATURE_FLAGS.peripheralBrain ? [{ to: PATHS.pb, label: 'Daily Plan', icon: Terminal }] : []),
               { to: PATHS.sessions, label: 'Session History', icon: History },
               { to: PATHS.piAnalytics, label: 'PI Dashboard', icon: Shield },
             ],

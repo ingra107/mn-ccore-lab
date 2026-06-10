@@ -140,7 +140,6 @@ const DecisionsPage = lazy(() => import('./pages/portal/DecisionsPage'))
 const NarrativesPage = lazy(() => import('./pages/portal/NarrativesPage'))
 const AskTheLab = lazy(() => import('./pages/portal/AskTheLab'))
 const PIAnalytics = lazy(() => import('./pages/portal/PIAnalytics'))
-const PBSector = lazy(() => import('./pages/portal/PBSector'))
 const SessionHistory = lazy(() => import('./pages/portal/SessionHistory'))
 const MenteeMilestonesPage = lazy(() => import('./pages/portal/MenteeMilestonesPage'))
 const DeadlineCascadePage = lazy(() => import('./pages/portal/DeadlineCascadePage'))
@@ -247,7 +246,6 @@ export default function App() {
                 <Route path="/pi/analytics" element={<Navigate to="/portal/pi/analytics" replace />} />
                 <Route path="/pi-analytics" element={<Navigate to="/portal/pi/analytics" replace />} />
                 <Route path="/mentee-milestones" element={<Navigate to="/portal/mentee-milestones" replace />} />
-                <Route path="/pb" element={<Navigate to="/portal/pb" replace />} />
                 <Route path="/sessions" element={<Navigate to="/portal/sessions" replace />} />
                 <Route path="/settings" element={<Navigate to="/portal/settings" replace />} />
 
@@ -292,7 +290,6 @@ export default function App() {
                   <Route path="/portal/insights" element={<ErrorBoundary><InsightsPage /></ErrorBoundary>} />
                   <Route path="/portal/pi/analytics" element={<ErrorBoundary><PageErrorBoundary pageName="PIAnalytics"><PIAnalytics /></PageErrorBoundary></ErrorBoundary>} />
                   <Route path="/portal/mentee-milestones" element={<ErrorBoundary><MenteeMilestonesPage /></ErrorBoundary>} />
-                  <Route path="/portal/pb" element={<ErrorBoundary><PBSector /></ErrorBoundary>} />
                   <Route path="/portal/sessions" element={<ErrorBoundary><SessionHistory /></ErrorBoundary>} />
                   <Route path="/portal/settings" element={<ErrorBoundary><SettingsPage /></ErrorBoundary>} />
                   <Route path="/portal/profile" element={<ErrorBoundary><ProfilePage /></ErrorBoundary>} />

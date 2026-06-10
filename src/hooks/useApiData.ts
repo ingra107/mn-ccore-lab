@@ -63,9 +63,6 @@ import type {
   CascadeGraph,
   ImpactResult,
   PBSessionRow,
-  DailyPlanRow,
-  PomodoroSessionRow,
-  DailyReflectionRow,
 } from '../lib/api'
 import { localDateKey } from '../lib/dateUtils'
 
@@ -1352,57 +1349,7 @@ export function useNarratives() {
   })
 }
 
-// ── PB Sector (Command Center) ─────────────────────────────
-
-interface PBCommandCenterData {
-  greeting: string
-  mode: string
-  today: string
-  targetDate: string
-  nudges: string[]
-  sections: {
-    focusNow: TaskRow[]
-    today: TaskRow[]
-    thisWeek: TaskRow[]
-    backlog: TaskRow[]
-    recentlyCompleted: TaskRow[]
-  }
-  stats: {
-    totalOpen: number
-    overdue: number
-    completedRecently: number
-  }
-  projects: ProjectRow[]
-  milestones: MenteeMilestoneRow[]
-  commitments: Record<string, unknown>[]
-  meetings: MeetingRow[]
-  recentActivity: Record<string, unknown>[]
-  blockedTasks: TaskRow[]
-  decisionsForReview: Record<string, unknown>[]
-  dailyPlan: DailyPlanRow | null
-  pomodoroSessions: PomodoroSessionRow[]
-  dailyReflection: DailyReflectionRow | null
-  carryForward: { starTask?: TaskRow; focusTasks: TaskRow[] }
-  suggestions: {
-    starCandidates: TaskRow[]
-    focusCandidates: TaskRow[]
-    quickWinCandidates: TaskRow[]
-  }
-}
-
-export function usePBCommandCenter(date?: string) {
-  return useQuery({
-    queryKey: ['pb-command-center', date],
-    queryFn: async () => {
-      const params = date ? `?date=${date}` : ''
-      const res = await fetch(`/api/pb/command-center${params}`)
-      if (!res.ok) return null
-      return (await res.json()).data as PBCommandCenterData
-    },
-    staleTime: 60 * 1000,
-    refetchInterval: 5 * 60 * 1000,
-  })
-}
+// ── PB Sector (dispatch queue — Hermes lane) ───────────────
 
 export function useDispatchPending() {
   return useQuery({

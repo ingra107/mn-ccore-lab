@@ -37,7 +37,6 @@ export const P = {
   insights: '/portal/insights',
   piAnalytics: '/portal/pi/analytics',
   menteeMilestones: '/portal/mentee-milestones',
-  pb: '/portal/pb',
   sessions: '/portal/sessions',
   settings: '/portal/settings',
   teamMember: (slug: string) => `/portal/team/${slug}`,

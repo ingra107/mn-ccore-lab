@@ -159,43 +159,6 @@ export interface TaskRow {
   meeting_date?: string
 }
 
-export interface DailyPlanRow {
-  id: string
-  plan_date: string
-  star_task_id: string | null
-  focus_task_ids: string | null
-  quick_win_ids: string | null
-  evening_task_ids: string | null
-  intention: string | null
-  gratitude: string | null
-  status: 'planning' | 'executing' | 'reviewing' | 'closed'
-  created_at: string
-  updated_at: string
-}
-
-export interface PomodoroSessionRow {
-  id: string
-  task_id: string
-  plan_date: string
-  slot_type: 'star' | 'focus' | 'quick_win'
-  started_at: string
-  completed_at: string | null
-  duration_minutes: number
-  completed: number
-  created_at: string
-}
-
-export interface DailyReflectionRow {
-  id: string
-  plan_date: string
-  highlight: string | null
-  learned: string | null
-  energy_rating: number | null
-  focus_rating: number | null
-  notes: string | null
-  created_at: string
-}
-
 export interface PBSessionRow {
   id: string
   started_at: string

@@ -49,7 +49,6 @@ export const PATHS = {
   insights: `${PORTAL_PREFIX}/insights`,
   piAnalytics: `${PORTAL_PREFIX}/pi/analytics`,
   menteeMilestones: `${PORTAL_PREFIX}/mentee-milestones`,
-  pb: `${PORTAL_PREFIX}/pb`,
   sessions: `${PORTAL_PREFIX}/sessions`,
   settings: `${PORTAL_PREFIX}/settings`,
   profile: `${PORTAL_PREFIX}/profile`,

@@ -1878,12 +1878,6 @@
     "sample": "rgba(201,168,76,0.15)"
   },
   {
-    "file": "src/pages/portal/PBSector.tsx",
-    "line": 384,
-    "kind": "token-rgba-literal",
-    "sample": "rgba(201,168,76,0.2)"
-  },
-  {
     "file": "src/pages/portal/ProfilePage.tsx",
     "line": 161,
     "kind": "token-rgba-literal",

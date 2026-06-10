@@ -1983,42 +1983,8 @@ test.describe('EXHAUSTIVE — Every interactive element verified', () => {
     await page.screenshot({ path: 'review/exhaustive-error-graceful.png' })
   })
 
-  // ── PB Sector (3 tests) ──────────────────────────────────────────
-
-  test('34. PB Sector loads with sections: navigate to /pb → verify Star, Focus, Quick, Evening sections', async ({ page }) => {
-    await go(page, P.pb)
-    for (const section of ['Star', 'Focus', 'Quick', 'Evening']) {
-      const found = await page.locator(`text=${section}`).first().isVisible({ timeout: 3000 }).catch(() => false)
-      console.log(`PB section "${section}": ${found}`)
-    }
-    await page.screenshot({ path: 'review/exhaustive-pb-sections.png' })
-  })
-
-  test('35. PB Sector pomodoro circles: verify PomodoroCircles component renders', async ({ page }) => {
-    await go(page, P.pb)
-    const circles = page.locator('[class*="pomodoro"], [class*="Pomodoro"], circle, [class*="circle"]').first()
-    const visible = await circles.isVisible({ timeout: 3000 }).catch(() => false)
-    console.log(`Pomodoro circles visible: ${visible}`)
-    if (visible) {
-      const circleCount = await page.locator('circle, [class*="circle"]').count()
-      console.log(`Circle elements: ${circleCount}`)
-    }
-    await page.screenshot({ path: 'review/exhaustive-pb-pomodoro.png' })
-  })
-
-  test('36. PB quick capture: type in capture bar → verify text appears', async ({ page }) => {
-    await go(page, P.pb)
-    const input = page.locator('input[placeholder*="capture"], input[placeholder*="Capture"], input[placeholder*="add"], textarea').first()
-    if (await input.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await input.click()
-      await input.fill('Test PB quick capture')
-      const value = await input.inputValue()
-      expect(value).toContain('Test PB quick capture')
-      console.log(`PB capture input value: "${value}"`)
-      await page.screenshot({ path: 'review/exhaustive-pb-capture.png' })
-      await input.clear()
-    }
-  })
+  // PB Sector tests 34-36 removed 2026-06-10 — /portal/pb retired (Daily Plan
+  // superseded by tasks.planned_for/plan_slot/plan_rank, see src/lib/todayPlan.ts).
 
   // ── Other Pages (4 tests) ────────────────────────────────────────
 

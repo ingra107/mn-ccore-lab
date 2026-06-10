@@ -50,7 +50,6 @@ const HERO_PAGES: PageCapture[] = [
   { slug: '14-analytics',             path: P.analytics },
   { slug: '15-pi-analytics',          path: P.piAnalytics },
   { slug: '16-mentee-milestones',     path: P.menteeMilestones },
-  { slug: '17-pb-sector',             path: P.pb },
   { slug: '18-settings',              path: P.settings },
   { slug: '19-team-public',           path: P.publicTeam },
   { slug: '20-team-member-portal',    path: P.teamMember('nick-ingraham') },

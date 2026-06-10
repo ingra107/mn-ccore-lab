@@ -55,7 +55,7 @@ import { handlePIDashboard, handleMenteeVelocity, handleResponseTime, handleTeam
 import { handleCadenceCheck } from './routes/meeting-cadence';
 import { handleGetAIRequests, handleCreateAIRequest, handleUpdateAIResponse } from './routes/ai-requests';
 import { escapeHtml } from './lib/escapeHtml';
-import { handleCommandCenter, handlePBCapture, handlePBDefer, handleCreateOrUpdatePlan, handleReorderPlan, handlePromoteTask, handleStartPomodoro, handleCompletePomodoro, handleSaveReflection, handlePlanHistory, handleAddToDispatch, handleGetPendingDispatch, handleSendDispatch, handleCompleteDispatchItem } from './routes/pb-sector';
+import { handlePBCapture, handlePBDefer, handleAddToDispatch, handleGetPendingDispatch, handleSendDispatch, handleCompleteDispatchItem } from './routes/pb-sector';
 import { handlePBSessions, handlePBSessionStats, handleCreatePBSession, handleBulkCreatePBSessions } from './routes/pb-sessions';
 import { handleGetSessions } from './routes/sessions';
 import { handleLane3List } from './routes/lane3';
@@ -465,22 +465,6 @@ defineRoute({
 // ─────────────────────────────────────────────────────────────────────────────
 // PB sector GETs (PI-gated by middleware above)
 // ─────────────────────────────────────────────────────────────────────────────
-defineRoute({
-  method: 'GET',
-  path: '/api/pb/command-center',
-  auth: 'pi',
-  entity: 'pb',
-  visibility: 'na',
-  handler: (c) => handleCommandCenter(E(c), U(c).searchParams.get('date') || undefined),
-});
-defineRoute({
-  method: 'GET',
-  path: '/api/pb/plan/history',
-  auth: 'pi',
-  entity: 'pb',
-  visibility: 'na',
-  handler: (c) => handlePlanHistory(R(c), E(c)),
-});
 defineRoute({
   method: 'GET',
   path: '/api/pb/dispatch/pending',
@@ -2345,54 +2329,6 @@ defineRoute({
   entity: 'pb',
   visibility: 'na',
   handler: (c) => handlePBDefer(R(c), USER(c), E(c)),
-});
-defineRoute({
-  method: 'POST',
-  path: '/api/pb/plan',
-  auth: 'pi',
-  entity: 'pb',
-  visibility: 'na',
-  handler: (c) => handleCreateOrUpdatePlan(R(c), USER(c), E(c)),
-});
-defineRoute({
-  method: 'POST',
-  path: '/api/pb/plan/reorder',
-  auth: 'pi',
-  entity: 'pb',
-  visibility: 'na',
-  handler: (c) => handleReorderPlan(R(c), E(c)),
-});
-defineRoute({
-  method: 'POST',
-  path: '/api/pb/plan/promote',
-  auth: 'pi',
-  entity: 'pb',
-  visibility: 'na',
-  handler: (c) => handlePromoteTask(R(c), E(c)),
-});
-defineRoute({
-  method: 'POST',
-  path: '/api/pb/pomodoro/start',
-  auth: 'pi',
-  entity: 'pb',
-  visibility: 'na',
-  handler: (c) => handleStartPomodoro(R(c), USER(c), E(c)),
-});
-defineRoute({
-  method: 'POST',
-  path: '/api/pb/pomodoro/complete',
-  auth: 'pi',
-  entity: 'pb',
-  visibility: 'na',
-  handler: (c) => handleCompletePomodoro(R(c), USER(c), E(c)),
-});
-defineRoute({
-  method: 'POST',
-  path: '/api/pb/reflection',
-  auth: 'pi',
-  entity: 'pb',
-  visibility: 'na',
-  handler: (c) => handleSaveReflection(R(c), USER(c), E(c)),
 });
 defineRoute({
   method: 'POST',

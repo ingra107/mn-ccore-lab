@@ -338,8 +338,6 @@ def generate_test_stub(feature: dict) -> str:
         page_path = "/publications"
     elif "search" in filepath.lower():
         page_path = "/portal/search"
-    elif "pb" in filepath.lower() or "sector" in filepath.lower():
-        page_path = "/portal/pb"
 
     if ftype == "api":
         return f"""  test('API: {desc}', async ({{ request }}) => {{
