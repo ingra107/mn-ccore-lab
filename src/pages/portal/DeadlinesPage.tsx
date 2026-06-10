@@ -15,7 +15,7 @@ import { useUndoToast } from '../../components/UndoToast'
 import BulkActionToolbar from '../../components/tasks/BulkActionToolbar'
 import { ColumnHeader, TableContainer } from '../../components/table'
 import { useTasks, useUpcomingConferences, useProjects } from '../../hooks/useApiData'
-import { useUpdateTaskStatus, useUpdateTask, useBulkUpdateTasks } from '../../hooks/useMutations'
+import { useUpdateTaskStatus, useUpdateTask, useBulkUpdateTasks, useUpdateGrantMilestone } from '../../hooks/useMutations'
 import { useGrantTimeline } from '../../hooks/useGrantTimeline'
 import { getPersonInfo } from '../../data/team'
 import { formatShortDate, localDateKey, isOverdue } from '../../lib/dateUtils'
@@ -69,6 +69,8 @@ export default function DeadlinesPage() {
   const updateTaskStatus = useUpdateTaskStatus()
   const updateTask = useUpdateTask()
   const bulkUpdate = useBulkUpdateTasks()
+  const updateMilestone = useUpdateGrantMilestone()
+  const queryClient = useQueryClient()
   const { showUndo } = useUndoToast()
   const [selectedTask, setSelectedTask] = useState<TaskRow | null>(null)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
@@ -82,15 +84,24 @@ export default function DeadlinesPage() {
   const handleBulkAction = useCallback((action: 'complete' | 'uncomplete' | 'assign' | 'priority' | 'delete' | 'snooze' | 'status', value?: string) => {
     if (action === 'snooze') {
       const days = parseInt(value || '1', 10)
+      // S2: capture prior due dates before mutating so Undo restores the exact
+      // pre-snooze values; report tasks skipped for having no due date.
+      const prior: Array<{ id: string; due_date: string }> = []
+      let skipped = 0
       for (const id of selectedIds) {
         const task = tasks.find(t => t.id === id)
-        if (!task?.due_date) continue
+        if (!task?.due_date) { skipped++; continue }
+        prior.push({ id, due_date: task.due_date })
         const d = new Date(task.due_date + 'T12:00:00')
         d.setDate(d.getDate() + days)
         const newDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
         handleFieldChange(id, 'due_date', newDate)
       }
-      showUndo(`Snoozed ${selectedIds.size} task(s) +${days}d`, () => {})
+      const snoozedLabel = `${prior.length} snoozed +${days}d`
+      const skippedLabel = skipped > 0 ? ` · ${skipped} skipped (no due date)` : ''
+      showUndo(`${snoozedLabel}${skippedLabel}`, () => {
+        for (const p of prior) handleFieldChange(p.id, 'due_date', p.due_date)
+      })
       setSelectedIds(new Set())
       return
     }
@@ -110,6 +121,18 @@ export default function DeadlinesPage() {
     const labels: Record<string, string> = { todo: 'To Do', in_progress: 'In Progress', done: 'Done', blocked: 'Blocked', waiting_external: 'Waiting (External)' }
     showUndo(`Status → ${labels[newStatus] || newStatus}`, () => updateTaskStatus.mutate({ id, status: prevStatus }))
   }, [updateTaskStatus, showUndo])
+
+  // S12: grant-milestone status is now editable from Deadlines via the existing
+  // mutation. The mutation invalidates grant-milestones* but NOT this page's
+  // grants-timeline query, so refresh it explicitly on settle.
+  const handleMilestoneStatusChange = useCallback((id: string, newStatus: string, prevStatus: string) => {
+    const invalidate = { onSettled: () => queryClient.invalidateQueries({ queryKey: ['grants-timeline'] }) }
+    updateMilestone.mutate({ id, fields: { status: newStatus } }, invalidate)
+    const labels: Record<string, string> = { upcoming: 'Upcoming', in_progress: 'In Progress', completed: 'Completed', overdue: 'Overdue' }
+    showUndo(`Milestone → ${labels[newStatus] || newStatus}`, () =>
+      updateMilestone.mutate({ id, fields: { status: prevStatus } }, invalidate),
+    )
+  }, [updateMilestone, queryClient, showUndo])
 
   const handleDueDateChange = useCallback((id: string, newDate: string | null) => {
     const task = tasks.find(t => t.id === id)
@@ -414,7 +437,7 @@ export default function DeadlinesPage() {
                 { title: `Completed (${completed.length})`, items: completed.slice(0, 5), color: 'var(--green)' },
               ].filter(g => g.items.length > 0).map((group) => (
                 <motion.div key={group.title} variants={{ hidden: { y: 8 }, visible: { y: 0 } }}>
-                  <DeadlineTableSection title={group.title} items={group.items} color={group.color} onStatusChange={handleStatusChange} onDueDateChange={handleDueDateChange} onOpenDetail={handleOpenDetail} projectMap={projectMap} selectedIds={selectedIds} onToggleSelect={toggleSelect} />
+                  <DeadlineTableSection title={group.title} items={group.items} color={group.color} onStatusChange={handleStatusChange} onMilestoneStatusChange={handleMilestoneStatusChange} onDueDateChange={handleDueDateChange} onOpenDetail={handleOpenDetail} projectMap={projectMap} selectedIds={selectedIds} onToggleSelect={toggleSelect} />
                 </motion.div>
               ))}
             </motion.div>
@@ -495,11 +518,20 @@ const STATUS_OPTIONS = [
   { value: 'done', label: 'Done', color: 'var(--green)' },
 ]
 
+// S12: grant-milestone status vocab (mirrors GrantsPage MILESTONE_STATUS_OPTIONS).
+const MILESTONE_STATUS_OPTIONS = [
+  { value: 'upcoming', label: 'Upcoming', color: 'var(--slate)' },
+  { value: 'in_progress', label: 'In Progress', color: 'var(--teal)' },
+  { value: 'completed', label: 'Completed', color: 'var(--green)' },
+  { value: 'overdue', label: 'Overdue', color: 'var(--maroon)' },
+]
+
 // ── Reusable deadline item row ───────────────────────────────────────────────
 
-function DeadlineItemRow({ item, onStatusChange, onDueDateChange, onOpenDetail, projectMap, selectedIds, onToggleSelect }: {
+function DeadlineItemRow({ item, onStatusChange, onMilestoneStatusChange, onDueDateChange, onOpenDetail, projectMap, selectedIds, onToggleSelect }: {
   item: DeadlineItem
   onStatusChange?: (id: string, newStatus: string, prevStatus: string) => void
+  onMilestoneStatusChange?: (id: string, newStatus: string, prevStatus: string) => void
   onDueDateChange?: (id: string, newDate: string | null) => void
   onOpenDetail?: (item: DeadlineItem) => void
   projectMap: Map<string, string>
@@ -555,15 +587,31 @@ function DeadlineItemRow({ item, onStatusChange, onDueDateChange, onOpenDetail, 
           {item.title}
         </span>
 
-        {/* Project */}
-        <span style={{
-          fontSize: 'var(--text-small)',
-          color: 'var(--teal)',
-          opacity: 0.85,
-          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const,
-        }}>
-          {item.project ? (projectMap.get(item.project) || item.project) : ''}
-        </span>
+        {/* Project — S12: milestone rows link to the Grants page */}
+        {item.type === 'milestone' && item.project ? (
+          <Link
+            to={PATHS.grants}
+            onClick={(e) => e.stopPropagation()}
+            className="hover:underline"
+            style={{
+              fontSize: 'var(--text-small)',
+              color: 'var(--teal)',
+              textDecoration: 'none',
+              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const,
+            }}
+          >
+            {item.project}
+          </Link>
+        ) : (
+          <span style={{
+            fontSize: 'var(--text-small)',
+            color: 'var(--teal)',
+            opacity: 0.85,
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const,
+          }}>
+            {item.project ? (projectMap.get(item.project) || item.project) : ''}
+          </span>
+        )}
 
         {/* Due date — inline editable for tasks, read-only for milestones (grant timeline is server-derived) */}
         {item.type === 'task' && onDueDateChange ? (
@@ -596,13 +644,20 @@ function DeadlineItemRow({ item, onStatusChange, onDueDateChange, onOpenDetail, 
           )}
         </div>
 
-        {/* Status — InlineSelect for tasks */}
+        {/* Status — InlineSelect for tasks; S12: editable for milestones too */}
         <div onClick={(e) => e.stopPropagation()}>
           {item.type === 'task' && onStatusChange ? (
             <InlineSelect
               value={item.status}
               options={STATUS_OPTIONS}
               onChange={(val) => onStatusChange(item.id, val, item.status)}
+              size="sm"
+            />
+          ) : item.type === 'milestone' && onMilestoneStatusChange ? (
+            <InlineSelect
+              value={item.status}
+              options={MILESTONE_STATUS_OPTIONS}
+              onChange={(val) => onMilestoneStatusChange(item.id, val, item.status)}
               size="sm"
             />
           ) : (
@@ -692,7 +747,7 @@ const VIRTUAL_THRESHOLD = 20  // sections exceeding this row count get virtualiz
 // Row heights match CSS density values: compact=36, default=44, relaxed=52
 const DENSITY_ROW_HEIGHT: Record<string, number> = { compact: 36, default: 44, relaxed: 52 }
 
-function DeadlineTableSection({ title, items, color, onStatusChange, onDueDateChange, onOpenDetail, projectMap, selectedIds, onToggleSelect }: { title: string; items: DeadlineItem[]; color: string; onStatusChange?: (id: string, newStatus: string, prevStatus: string) => void; onDueDateChange?: (id: string, newDate: string | null) => void; onOpenDetail?: (item: DeadlineItem) => void; projectMap: Map<string, string>; selectedIds?: Set<string>; onToggleSelect?: (id: string) => void }) {
+function DeadlineTableSection({ title, items, color, onStatusChange, onMilestoneStatusChange, onDueDateChange, onOpenDetail, projectMap, selectedIds, onToggleSelect }: { title: string; items: DeadlineItem[]; color: string; onStatusChange?: (id: string, newStatus: string, prevStatus: string) => void; onMilestoneStatusChange?: (id: string, newStatus: string, prevStatus: string) => void; onDueDateChange?: (id: string, newDate: string | null) => void; onOpenDetail?: (item: DeadlineItem) => void; projectMap: Map<string, string>; selectedIds?: Set<string>; onToggleSelect?: (id: string) => void }) {
   const [expanded, setExpanded] = useState(!title.startsWith('Completed'))
   const useVirtual = expanded && items.length > VIRTUAL_THRESHOLD
   const parentRef = useRef<HTMLDivElement>(null)
@@ -731,6 +786,7 @@ function DeadlineTableSection({ title, items, color, onStatusChange, onDueDateCh
           key={item.id}
           item={item}
           onStatusChange={onStatusChange}
+          onMilestoneStatusChange={onMilestoneStatusChange}
           onDueDateChange={onDueDateChange}
           onOpenDetail={onOpenDetail}
           projectMap={projectMap}
@@ -761,6 +817,7 @@ function DeadlineTableSection({ title, items, color, onStatusChange, onDueDateCh
                   <DeadlineItemRow
                     item={item}
                     onStatusChange={onStatusChange}
+                    onMilestoneStatusChange={onMilestoneStatusChange}
                     onDueDateChange={onDueDateChange}
                     onOpenDetail={onOpenDetail}
                     projectMap={projectMap}
