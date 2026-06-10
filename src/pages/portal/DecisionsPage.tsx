@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
+import { useOpenParam } from '../../hooks/useOpenParam'
 import {
   Scale,
   Plus,
@@ -419,9 +420,12 @@ function DecisionRowItem({
 
   return (
     <div
+      // S1: anchor for deep-link scroll-to (?open=<id>).
+      id={`decision-${decision.id}`}
       style={{
         borderBottom: '1px solid var(--row-separator, var(--border-subtle))',
         background: focused ? 'var(--hover-subtle)' : 'transparent',
+        scrollMarginTop: '96px',
       }}
     >
       <div
@@ -872,6 +876,22 @@ export default function DecisionsPage() {
   const recordedCount = allDecisions.filter(
     (d) => d.outcome_status !== 'pending'
   ).length
+
+  // S1: consume `?open=<decisionId>` deep-links (search emits
+  // /portal/decisions?open=<id>). Force list view (rows only render there),
+  // expand the target, and scroll it into view once decisions have loaded.
+  useOpenParam(
+    'open',
+    (id) => {
+      setViewMode('list')
+      setExpandedId(id)
+      requestAnimationFrame(() => {
+        const el = document.getElementById(`decision-${id}`)
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      })
+    },
+    { ready: !isLoading },
+  )
 
   useListKeyboardNav({
     itemCount: viewMode === 'list' ? filteredDecisions.length : 0,

@@ -27,6 +27,7 @@ import { LanesView } from './views/LanesView'
 import { ListView } from './views/ListView'
 import { useTaskFilter } from './hooks/useTaskFilter'
 import { useSelection } from './hooks/useSelection'
+import { useOpenParam } from '../../hooks/useOpenParam'
 import {
   todayKey, readPlannedToday, isTaskDone,
   type ViewMode, type GroupKey, type QuickViewKey, type FilterState, type FilterOption,
@@ -86,9 +87,22 @@ export default function UnifiedMyTasks() {
     if (filter.mentee) next.set('mentee', filter.mentee)
     if (filter.group) next.set('group', filter.group)
     if (!filter.hideCompleted) next.set('hideCompleted', '0')
+    // S1: carry a not-yet-consumed `open` deep-link param through this sync so
+    // useOpenParam can still see it. Without this the sync would strip `open`
+    // on first render before the consumer fires.
+    const openParam = searchParams.get('open')
+    if (openParam) next.set('open', openParam)
     // Avoid spamming history: replace, not push.
     setSearchParams(next, { replace: true })
+    // searchParams intentionally omitted from deps: this effect mirrors local
+    // state INTO the URL; reading the live `open` value each run suffices.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, quickView, view, filter, setSearchParams])
+
+  // S1: consume `?open=<taskId>` deep-links (search results, ⌘K palette pick,
+  // Copy-task-link, context-menu open-in-new-tab). Open the detail drawer for
+  // that task once the task collection has loaded, then strip the param.
+  useOpenParam('open', (id) => setDrawer(id), { ready: !tasksQuery.isLoading })
 
   const currentQuery = searchParams.toString()
   const applyView = useCallback((q: string) => {
@@ -182,7 +196,7 @@ export default function UnifiedMyTasks() {
     const ids = [...selected]
     Promise.all(ids.map((id) => updateTask.mutateAsync({ id, fields: { due_date: due } })))
       .then(() => { undoToast.showSuccess(`Snoozed ${ids.length} task${ids.length === 1 ? '' : 's'} +1d`); clearSelection() })
-      .catch((err) => { console.error('Snooze failed:', err); alert('Snooze failed') })
+      .catch((err) => { console.error('Snooze failed:', err); undoToast.showSuccess('Snooze failed — please try again.') })
   }, [selected, updateTask, clearSelection, undoToast])
 
   const onBulkComplete = useCallback(() => {
