@@ -39,15 +39,24 @@ export default function ActivityPage() {
     })
   }
   const [filterPerson, setFilterPerson] = useState('')
+  // S5: windowed load — render a bounded page, "Load more" reveals the next
+  // chunk. The page previously rendered all 200 rows at ~14.7K px tall.
+  const PAGE_SIZE = 50
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
   const { data: rawActivity = [], isLoading } = useActivity(200)
   const allActivity = useMemo(
     () => rawActivity.filter((a) => isProductionVisibleActivity({ description: a.description })),
     [rawActivity],
   )
 
+  // S5: an actor is "real" only if it resolves to a person. Empty / literal
+  // 'anonymous' rows (legacy unauthed writes) are system rows, not people.
+  const isRealActor = (actor: string | null | undefined): actor is string =>
+    !!actor && actor !== 'anonymous'
+
   // Unique actors for person filter
   const actors = useMemo(() => {
-    const slugs = [...new Set(allActivity.map(a => a.actor).filter(Boolean))] as string[]
+    const slugs = [...new Set(allActivity.map(a => a.actor).filter(isRealActor))]
     return slugs.map(slug => ({ slug, name: getPersonInfo(slug).name })).sort((a, b) => a.name.localeCompare(b.name))
   }, [allActivity])
 
@@ -56,7 +65,7 @@ export default function ActivityPage() {
     if (allActivity.length === 0) return null
     const counts = new Map<string, number>()
     for (const a of allActivity) {
-      if (a.actor) counts.set(a.actor, (counts.get(a.actor) || 0) + 1)
+      if (isRealActor(a.actor)) counts.set(a.actor, (counts.get(a.actor) || 0) + 1)
     }
     let best = '', max = 0
     for (const [slug, count] of counts) {
@@ -65,12 +74,16 @@ export default function ActivityPage() {
     return best ? getPersonInfo(best).name.split(' ')[0] : null
   }, [allActivity])
 
-  const filtered = useMemo(() => {
+  const filteredAll = useMemo(() => {
     let result = allActivity
     if (filterTypes.length > 0) result = result.filter((a) => filterTypes.includes(a.type))
     if (filterPerson) result = result.filter((a) => a.actor === filterPerson)
     return result
   }, [allActivity, filterTypes, filterPerson])
+
+  // S5: bound the rendered set to the current window.
+  const filtered = useMemo(() => filteredAll.slice(0, visibleCount), [filteredAll, visibleCount])
+  const hasMore = filteredAll.length > filtered.length
 
   // Counts per type for chip labels — full pool, not filtered
   const countByType = useMemo(() => {
@@ -99,15 +112,15 @@ export default function ActivityPage() {
     setFocusedIndex,
   })
 
-  // Reset focus when filter changes
-  useEffect(() => { setFocusedIndex(-1) }, [filterTypes, filterPerson])
+  // Reset focus + window when filter changes
+  useEffect(() => { setFocusedIndex(-1); setVisibleCount(PAGE_SIZE) }, [filterTypes, filterPerson])
 
   return (
     <PageContainer>
       <PageHeader
         icon={<ActivityIcon size={20} />}
         title="Activity"
-        subtitle={`${filtered.length}${filterTypes.length > 0 || filterPerson ? ` of ${allActivity.length}` : ''} recent actions${mostActive ? ` · Most active: ${mostActive}` : ''}`}
+        subtitle={`${filteredAll.length}${filterTypes.length > 0 || filterPerson ? ` of ${allActivity.length}` : ''} recent actions${mostActive ? ` · Most active: ${mostActive}` : ''}`}
         count={allActivity.length}
         actions={
           <div className="flex items-center gap-2">
@@ -214,7 +227,7 @@ export default function ActivityPage() {
                 </h3>
                 <motion.div className="flex flex-col border-l-2" style={{ borderColor: isToday ? 'var(--teal)' : 'var(--border-subtle)', paddingLeft: 'var(--sp-md)' }} variants={staggerContainer} initial="hidden" animate="visible">
                   {items.map((item) => {
-                    const person = item.actor ? getPersonInfo(item.actor) : null
+                    const person = isRealActor(item.actor) ? getPersonInfo(item.actor) : null
                     const isFocused = focusedIndex === flatIndex
                     flatIndex++
                     return (
@@ -236,9 +249,12 @@ export default function ActivityPage() {
                           {person && <span style={{ fontWeight: 500 }}>{person.name} </span>}
                           {item.description}
                         </p>
-                        <span className="text-[10px] px-1.5 py-0.5 rounded-full capitalize flex-shrink-0" style={{ color: 'var(--teal)', backgroundColor: 'var(--teal-hover)' }}>
-                          {item.type.replace('_', ' ')}
-                        </span>
+                        {/* S5: drop the redundant type pill when a type filter is active. */}
+                        {filterTypes.length === 0 && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-full capitalize flex-shrink-0" style={{ color: 'var(--teal)', backgroundColor: 'var(--teal-hover)' }}>
+                            {item.type.replace('_', ' ')}
+                          </span>
+                        )}
                         <span className="text-[10px] flex-shrink-0" style={{ color: 'var(--slate)', opacity: 0.75, minWidth: 48, textAlign: 'right' }}>
                           {formatRelativeTime(item.timestamp)}
                         </span>
@@ -258,6 +274,18 @@ export default function ActivityPage() {
               ? `Nothing matches the selected type filter${filterTypes.length > 1 ? 's' : ''}. Try 'All' or pick a different type.`
               : 'Task completions, status changes, comments, and project updates will stream in here as the team works.'}
           />
+        )}
+        {/* S5: windowed load — reveal the next chunk instead of one 14.7K-px page. */}
+        {!isLoading && hasMore && (
+          <div className="flex justify-center pt-1">
+            <button
+              onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
+              className="rounded-full px-4 py-1.5 text-xs border transition-colors"
+              style={{ borderColor: 'var(--border-subtle)', color: 'var(--slate)', background: 'transparent', cursor: 'pointer' }}
+            >
+              Load more ({filteredAll.length - filtered.length} more)
+            </button>
+          </div>
         )}
       </div>
     </PageContainer>

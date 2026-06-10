@@ -218,6 +218,24 @@ export function generateId(kind?: 'task' | 'project' | 'inbox_event' | 'mut'): s
   return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
+/**
+ * S5 (2026-06-09): canonicalize the actor at the single write chokepoint so
+ * every `logActivity` call site lands a real team slug, never a raw email or
+ * the unauthed `'anonymous'` sentinel rendered literally on the feed.
+ *
+ *   - email-looking actors (`mesfin@umn.edu`) → `actorSlug()` slug
+ *     (`nate-mesfin`). Most call sites historically passed `user.email`.
+ *   - the unauthed fallback identity (`'anonymous'`) → null, so the feed can
+ *     render it as a neutral system row instead of a person named "anonymous".
+ *   - already-slug actors (`nick-ingraham`, `claude-ai`) pass through.
+ */
+function canonicalizeActorForLog(actor: string | null | undefined): string | null {
+  const raw = typeof actor === 'string' ? actor.trim() : '';
+  if (!raw || raw === 'anonymous') return null;
+  if (raw.includes('@')) return actorSlug(raw);
+  return raw;
+}
+
 export async function logActivity(
   env: Env,
   type: string,
@@ -228,7 +246,7 @@ export async function logActivity(
 ): Promise<void> {
   await env.DB.prepare(
     'INSERT INTO activity_log (id, type, description, actor, related_id, related_type) VALUES (?, ?, ?, ?, ?, ?)'
-  ).bind(generateId(), type, description, actor, relatedId ?? null, relatedType ?? null).run();
+  ).bind(generateId(), type, description, canonicalizeActorForLog(actor), relatedId ?? null, relatedType ?? null).run();
 }
 
 export function parseMentions(text: string): string[] {
