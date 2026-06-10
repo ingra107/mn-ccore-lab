@@ -6,14 +6,53 @@
  * and href rewriting for Box folder paths, .bat scripts, etc.
  */
 
-import { ExternalLink, FolderOpen, Play } from 'lucide-react'
+import { BookText, ExternalLink, FolderOpen, Play } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
 export interface ClassifiedUrl {
   href: string
   Icon: LucideIcon
-  typeLabel: 'Link' | 'Script' | 'Folder'
+  typeLabel: 'Link' | 'Script' | 'Folder' | 'Obsidian'
   isHttp: boolean
+}
+
+/**
+ * The Obsidian vault that maps to the Peripheral-Brain folder. Verified against
+ * PB's own URI builder (scripts/today/utils.py → `?vault=Peripheral-Brain`).
+ * Both machines open the same vault name; only the on-disk user dir differs.
+ */
+const OBSIDIAN_VAULT = 'Peripheral-Brain'
+
+/**
+ * Detect a NORMALIZED local path (forward slashes, no file://) that lives inside
+ * the Peripheral-Brain Obsidian vault AND is a markdown note. Matches the vault
+ * segment for ANY user dir — `/Users/ingra107/Peripheral-Brain/` (work) and
+ * `/Users/ingra/Peripheral-Brain/` (home) both resolve, so the same key link
+ * opens on either machine. Returns the vault-relative path (no leading slash,
+ * `.md` extension stripped — Obsidian's `open` action appends it on resolve), or
+ * null when the path is not a vault markdown note.
+ */
+export function obsidianVaultRelPath(normalizedPath: string): string | null {
+  if (!normalizedPath || !/\.md$/i.test(normalizedPath)) return null
+  // Split on the vault folder boundary. The leading `/Users/<anything>/` is
+  // matched loosely so we don't pin a username; we only require the literal
+  // Peripheral-Brain folder segment followed by at least one path component.
+  const m = normalizedPath.match(/[/\\]Peripheral-Brain[/\\](.+)$/i)
+  if (!m) return null
+  const rel = m[1].replace(/\.md$/i, '')
+  return rel.length > 0 ? rel : null
+}
+
+/**
+ * Build `obsidian://open?vault=Peripheral-Brain&file=<vault-relative-path>` for
+ * a markdown note inside the vault. The `file` value is the vault-relative path
+ * (percent-encoded; `/` separators preserved so Obsidian resolves nested notes).
+ */
+export function buildObsidianUri(vaultRelPath: string): string {
+  // encodeURIComponent escapes `/` to %2F; Obsidian wants the slashes intact
+  // for nested folders, so re-introduce them. Spaces → %20, other chars escaped.
+  const file = encodeURIComponent(vaultRelPath).replace(/%2F/gi, '/')
+  return `obsidian://open?vault=${encodeURIComponent(OBSIDIAN_VAULT)}&file=${file}`
 }
 
 /**
@@ -72,6 +111,18 @@ export function classifyUrl(url: string): ClassifiedUrl {
     }
   }
   if (isLocalPath) {
+    // A markdown note inside the Peripheral-Brain vault opens in Obsidian, not
+    // Explorer. Normalize first so the vault-segment match sees forward slashes.
+    const normalized = normalizeLocalFolderPath(url)
+    const vaultRel = obsidianVaultRelPath(normalized)
+    if (vaultRel) {
+      return {
+        href: buildObsidianUri(vaultRel),
+        Icon: BookText,
+        typeLabel: 'Obsidian',
+        isHttp: false,
+      }
+    }
     return {
       href: buildOpenFolderUri(url),
       Icon: FolderOpen,
@@ -120,6 +171,12 @@ export function shortLabelForUrl(url: string): string {
     }
     if (url.startsWith('file:///') || /^[A-Za-z]:/.test(url) || url.startsWith('\\\\')) {
       const clean = normalizeLocalFolderPath(url)
+      // A vault markdown note labels as "Obsidian · <note name>".
+      const vaultRel = obsidianVaultRelPath(clean)
+      if (vaultRel) {
+        const noteName = vaultRel.split('/').filter(Boolean).pop() || vaultRel
+        return `Obsidian · ${noteName}`
+      }
       const parts = clean.split('/').filter(Boolean)
       return parts.slice(-3).join(' / ')
     }

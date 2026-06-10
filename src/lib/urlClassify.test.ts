@@ -4,6 +4,9 @@ import {
   buildOpenFolderUri,
   buildWorkOnUri,
   classifyUrl,
+  obsidianVaultRelPath,
+  buildObsidianUri,
+  shortLabelForUrl,
 } from './urlClassify'
 
 // The three real `projects.primary_folder` shapes seen in live /api/projects data.
@@ -73,5 +76,62 @@ describe('classifyUrl routes local folders through the normalizer', () => {
     expect(c.typeLabel).toBe('Link')
     expect(c.isHttp).toBe(true)
     expect(c.href).toBe('https://github.com/ingra107/mn-ccore-lab')
+  })
+})
+
+describe('Obsidian vault markdown classification', () => {
+  it('extracts the vault-relative path (no .md) for a work-machine vault note', () => {
+    expect(
+      obsidianVaultRelPath('C:/Users/ingra107/Peripheral-Brain/Projects/clif/PROJECT.md'),
+    ).toBe('Projects/clif/PROJECT')
+  })
+
+  it('works for the home-machine user dir too (no hardcoded username)', () => {
+    expect(
+      obsidianVaultRelPath('C:/Users/ingra/Peripheral-Brain/Context/Topics/rules.md'),
+    ).toBe('Context/Topics/rules')
+  })
+
+  it('returns null for a non-.md file inside the vault', () => {
+    expect(
+      obsidianVaultRelPath('C:/Users/ingra107/Peripheral-Brain/data/brain.db'),
+    ).toBeNull()
+  })
+
+  it('returns null for a .md file outside the vault', () => {
+    expect(obsidianVaultRelPath('C:/Users/ingra107/Box/Research/notes.md')).toBeNull()
+  })
+
+  it('builds the obsidian://open URI with the verified vault name + slashes intact', () => {
+    expect(buildObsidianUri('Projects/clif/PROJECT')).toBe(
+      'obsidian://open?vault=Peripheral-Brain&file=Projects/clif/PROJECT',
+    )
+  })
+
+  it('percent-encodes spaces in the note path but keeps folder slashes', () => {
+    expect(buildObsidianUri('Context/Meeting Notes/2026-06-10')).toBe(
+      'obsidian://open?vault=Peripheral-Brain&file=Context/Meeting%20Notes/2026-06-10',
+    )
+  })
+
+  it('classifyUrl routes a vault .md key link to Obsidian, not Explorer', () => {
+    const c = classifyUrl(
+      'file:///C:/Users/ingra107/Peripheral-Brain/Projects/clif/PROJECT.md',
+    )
+    expect(c.typeLabel).toBe('Obsidian')
+    expect(c.isHttp).toBe(false)
+    expect(c.href).toBe('obsidian://open?vault=Peripheral-Brain&file=Projects/clif/PROJECT')
+  })
+
+  it('classifyUrl still treats a non-vault .md path as a plain folder open', () => {
+    const c = classifyUrl('C:/Users/ingra107/Box/Research/notes.md')
+    expect(c.typeLabel).toBe('Folder')
+    expect(c.href).toBe('mnccore://open/C:/Users/ingra107/Box/Research/notes.md')
+  })
+
+  it('shortLabelForUrl labels a vault note as "Obsidian · <name>"', () => {
+    expect(
+      shortLabelForUrl('C:/Users/ingra107/Peripheral-Brain/Projects/clif/PROJECT.md'),
+    ).toBe('Obsidian · PROJECT')
   })
 })
