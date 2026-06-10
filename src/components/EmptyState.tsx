@@ -6,9 +6,15 @@ interface EmptyStateProps {
     label: string
     onClick: () => void
   }
+  /**
+   * P2-8: compact variant for tight rails (Today timeline, side panels).
+   * Smaller padding + type so the designed empty state fits without
+   * restructuring the surrounding layout.
+   */
+  compact?: boolean
 }
 
-export default function EmptyState({ icon, title, subtitle, action }: EmptyStateProps) {
+export default function EmptyState({ icon, title, subtitle, action, compact = false }: EmptyStateProps) {
   return (
     <div
       style={{
@@ -16,7 +22,7 @@ export default function EmptyState({ icon, title, subtitle, action }: EmptyState
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '48px 24px',
+        padding: compact ? '20px 16px' : '48px 24px',
         textAlign: 'center',
       }}
     >
@@ -35,11 +41,11 @@ export default function EmptyState({ icon, title, subtitle, action }: EmptyState
       {/* Title */}
       <p
         style={{
-          fontSize: 16,
+          fontSize: compact ? 14 : 16,
           fontWeight: 500,
           color: 'var(--ink)',
           margin: 0,
-          marginTop: 'var(--sp-md)',
+          marginTop: compact ? 'var(--sp-sm)' : 'var(--sp-md)',
         }}
       >
         {title}
@@ -49,7 +55,7 @@ export default function EmptyState({ icon, title, subtitle, action }: EmptyState
       {subtitle && (
         <p
           style={{
-            fontSize: 13,
+            fontSize: compact ? 12 : 13,
             fontWeight: 400,
             color: 'var(--slate)',
             opacity: 0.75,
@@ -72,12 +78,12 @@ export default function EmptyState({ icon, title, subtitle, action }: EmptyState
             display: 'inline-flex',
             alignItems: 'center',
             gap: 6,
-            marginTop: 'var(--sp-lg)',
-            padding: 'var(--sp-sm) var(--sp-lg)',
+            marginTop: compact ? 'var(--sp-md)' : 'var(--sp-lg)',
+            padding: compact ? 'var(--sp-xs) var(--sp-md)' : 'var(--sp-sm) var(--sp-lg)',
             borderRadius: 'var(--radius-lg)',
             border: '1px solid var(--border-subtle)',
             background: 'none',
-            fontSize: 13,
+            fontSize: compact ? 12 : 13,
             fontWeight: 500,
             color: 'var(--ink)',
             cursor: 'pointer',

@@ -7,13 +7,15 @@
 // Extracted from src/pages/portal/TodayPage.tsx (B2_Timeline + DropZone).
 
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
-import { Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { PATHS } from '../../constants/paths'
+import EmptyState from '../EmptyState'
+import EmptyStateArt from '../EmptyStateArt'
 import { EventRow, type SaveStatus } from './MeetingRow'
 import { OverlapBand } from './OverlapBand'
 import { PlannedTaskRow } from './PlannedTaskRow'
 import {
-  ACCENT_GOLD, ACCENT_TEAL, ACCENT_CORAL, INK_MUTED, INK_DIM,
+  ACCENT_GOLD, ACCENT_TEAL, ACCENT_CORAL, INK_DIM,
   type PlannedSlot, type TodayEvent,
 } from './constants'
 import type { TodayStateApi } from '../../hooks/useTodayState'
@@ -103,6 +105,7 @@ interface TimelineProps {
 }
 
 export function Timeline({ events, tasks, state, projectsByPid, expandedId, onExpand }: TimelineProps) {
+  const navigate = useNavigate()
   const [dismissedMeetings, setDismissedMeetings] = useState<Record<string, boolean>>({})
   const [meetingNotes, setMeetingNotes] = useState<Record<string, string>>({})
   const [meetingSaveState, setMeetingSaveState] = useState<Record<string, SaveStatus>>({})
@@ -232,9 +235,14 @@ export function Timeline({ events, tasks, state, projectsByPid, expandedId, onEx
         )}
       </div>
       {visibleMeetings.length === 0 && (
-        <div style={{ padding: '16px 20px', textAlign: 'center', background: 'rgba(255,255,255,0.02)', border: '1px dashed rgba(255,255,255,0.12)', borderRadius: 8 }}>
-          <div style={{ fontSize: 12, color: INK_MUTED, marginBottom: 4 }}>No meetings on today's calendar.</div>
-          <Link to={PATHS.settings} style={{ fontSize: 11, color: ACCENT_TEAL, textDecoration: 'underline' }}>Connect a calendar in Settings</Link>
+        <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px dashed rgba(255,255,255,0.12)', borderRadius: 8 }}>
+          <EmptyState
+            compact
+            icon={<EmptyStateArt variant="meetings" width={96} height={72} />}
+            title="No meetings today"
+            subtitle="A clear calendar. Connect a feed if you expected to see meetings here."
+            action={{ label: 'Connect a calendar →', onClick: () => navigate(PATHS.settings) }}
+          />
         </div>
       )}
       <div ref={meetingsListRef} style={{ display: 'flex', flexDirection: 'column', gap: 4, position: 'relative' }}>
