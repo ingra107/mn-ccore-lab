@@ -14,7 +14,6 @@ import {
   Check,
   AlertTriangle,
 } from 'lucide-react'
-import { useDensity, densityClass } from '../../components/DensityToggle'
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
@@ -378,7 +377,6 @@ type SortKey = 'title' | 'pi' | 'mechanism' | 'status' | 'start_date' | 'end_dat
 
 export default function GrantsPage() {
   const { data: grants = [], isLoading } = useGrantTimeline()
-  const [density, setDensity] = useDensity()
   const [view, setView] = useState<ViewMode>('list')
   const [filter, setFilter] = useState<FilterMode>('all')
   const [sortKey, setSortKey] = useState<SortKey>('start_date')
@@ -508,9 +506,6 @@ export default function GrantsPage() {
           activeView={view}
           onViewChange={(v) => setView(v as ViewMode)}
           filters={filterPills}
-          showDensity
-          density={density}
-          onDensityChange={setDensity}
           count={filteredGrants.length}
           countLabel="grants"
         />
@@ -562,7 +557,7 @@ export default function GrantsPage() {
               subtitle="Active awards and proposals in flight show up here with live countdowns to the next deadline."
             />
           ) : (
-            <TableContainer className={densityClass(density)}>
+            <TableContainer>
               {/* Column headers */}
               <div
                 className="hidden sm:grid col-header-row"
@@ -868,7 +863,7 @@ export default function GrantsPage() {
             </p>
           </div>
         ) : (
-          <div className={densityClass(density)}>
+          <div>
             <div
               className="hidden sm:grid"
               style={{

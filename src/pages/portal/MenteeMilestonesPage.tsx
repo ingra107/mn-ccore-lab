@@ -2,7 +2,6 @@ import { useState, useMemo, useCallback } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
 import { GraduationCap, Plus, ChevronDown, ChevronRight, X, Check, AlertTriangle } from 'lucide-react'
-import DensityToggle, { useDensity, densityClass } from '../../components/DensityToggle'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
 import PageHeader from '../../components/PageHeader'
 import PageContainer from '../../components/PageContainer'
@@ -53,7 +52,6 @@ function getTypeLabel(type: string): string {
 // ── Main Page ──────────────────────────────────────────────
 
 export default function MenteeMilestonesPage() {
-  const [density, setDensity] = useDensity()
   const [filterMentee, setFilterMentee] = useState('')
   const [filterType, setFilterType] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
@@ -221,8 +219,6 @@ export default function MenteeMilestonesPage() {
             options={STATUS_OPTIONS.map((s) => ({ value: s.value, label: s.label }))}
           />
 
-          <DensityToggle value={density} onChange={setDensity} />
-
           {/* Add button */}
           <button
             onClick={() => setShowAddModal(true)}
@@ -359,7 +355,7 @@ export default function MenteeMilestonesPage() {
             action={{ label: 'Add Milestone', onClick: () => setShowAddModal(true) }}
           />
         ) : (
-          <div className={`table-container ${densityClass(density)}`}>
+          <div className="table-container">
             {/* Column headers */}
             <div
               className="hidden sm:grid"

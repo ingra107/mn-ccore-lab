@@ -3,7 +3,7 @@ import { useVirtualizer } from '@tanstack/react-virtual'
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { Clock, List, GanttChartSquare, AlertTriangle, FolderKanban, Pencil, X, Check, GitBranch, Presentation, Download } from 'lucide-react'
-import DensityToggle, { useDensity, densityClass } from '../../components/DensityToggle'
+import { useDensity } from '../../components/DensityToggle'
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
 import QueryState from '../../components/QueryState'
@@ -48,7 +48,6 @@ export default function DeadlinesPage() {
   const [view, setView] = useState<ViewMode>('list')
   const [filterType, setFilterType] = useState<string>('')
   const [focusedIndex, setFocusedIndex] = useState(-1)
-  const [density, setDensity] = useDensity()
   type DeadlineSortKey = 'title' | 'project' | 'due_date' | 'assignee' | 'status' | 'type'
   const [sortKey, setSortKey] = useState<DeadlineSortKey>('due_date')
   const [sortAsc, setSortAsc] = useState(true)
@@ -305,7 +304,6 @@ export default function DeadlinesPage() {
             Export
           </button>
           <PageTooltip id="deadlines-timeline-hint" text="Switch to Timeline for a visual map" />
-          <DensityToggle value={density} onChange={setDensity} />
 
           <InlineSelect
             value={filterType}
@@ -360,7 +358,7 @@ export default function DeadlinesPage() {
           final list layout pixel-for-pixel. Prevents layout thrash when data swaps in. */}
       <div className="mt-5" style={{ minHeight: 'calc(100vh - 280px)', contain: 'layout' }}>
         {isLoading ? (
-          <TableContainer className={densityClass(density)}>
+          <TableContainer>
             <div
               className="hidden sm:grid"
               style={{
@@ -398,7 +396,7 @@ export default function DeadlinesPage() {
             ))}
           </TableContainer>
         ) : view === 'list' ? (
-          <TableContainer className={densityClass(density)}>
+          <TableContainer>
             {/* Column headers — hidden on mobile */}
             <div
               className="hidden sm:grid"

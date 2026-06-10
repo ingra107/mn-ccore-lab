@@ -14,7 +14,6 @@ import {
   type DragEndEvent,
   type DragStartEvent,
 } from '@dnd-kit/core'
-import { useDensity, densityClass } from '../../components/DensityToggle'
 import DataPage from '../../components/DataPage'
 import Avatar from '../../components/Avatar'
 import CreateProjectModal from '../../components/CreateProjectModal'
@@ -121,7 +120,6 @@ const CATEGORY_OPTIONS = CANONICAL_CATEGORY_KEYS.map((value) => ({
 }))
 
 export default function ManuscriptsPage() {
-  const [density, setDensity] = useDensity()
   // P3-03: 'trophy' = cover-style grid for Published manuscripts.
   const [view, setView] = useState<'list' | 'pipeline' | 'trophy'>('list')
   const [filterPI, setFilterPI] = useState<string>('')
@@ -429,9 +427,6 @@ export default function ManuscriptsPage() {
             </button>
           </>
         }
-        showDensity
-        density={density}
-        onDensityChange={setDensity}
         controlsCount={activeCount}
         controlsCountLabel="manuscripts"
         isLoading={isLoading}
@@ -451,7 +446,7 @@ export default function ManuscriptsPage() {
       >
         {/* ─── LIST VIEW ─── */}
         {view === 'list' && (
-          <TableContainer id="manuscripts-table" className={densityClass(density)}>
+          <TableContainer id="manuscripts-table">
             {/* Table header — sortable */}
             <div
               className="hidden sm:grid manuscripts-grid-row"

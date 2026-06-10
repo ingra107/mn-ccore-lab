@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react'
 import { Outlet, useLocation, Link } from 'react-router-dom'
-import { Menu, X, Sun, Moon, Monitor, Search, Plus, AlignJustify, AlignLeft } from 'lucide-react'
+import { Menu, X, Sun, Moon, Monitor, Search, Plus } from 'lucide-react'
 import { AnimatePresence } from 'framer-motion'
 import { useDarkMode } from '../hooks/useDarkMode'
 import Sidebar from './Sidebar'
@@ -13,7 +13,6 @@ import RouteProgressBar from './RouteProgressBar'
 import ScrollToTop from './ScrollToTop'
 import MobileTabBar from './MobileTabBar'
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts'
-import { useDensity } from '../hooks/useDensity'
 import { useFavicon } from '../hooks/useFavicon'
 import { useRealtimeSync } from '../hooks/useRealtimeSync'
 import { UndoToastProvider } from './UndoToast'
@@ -23,7 +22,6 @@ import { PATHS } from '../constants/paths'
 
 export default function PortalLayout() {
   const { mode, setTheme } = useDarkMode()
-  const { density, toggle: toggleDensity } = useDensity()
   useFavicon()
   useRealtimeSync()
   const [showThemeMenu, setShowThemeMenu] = useState(false)
@@ -193,16 +191,8 @@ export default function PortalLayout() {
             <PhaseReleaseBanner />
           </div>
 
-          {/* Density toggle */}
-          <button
-            onClick={toggleDensity}
-            className="flex items-center justify-center min-w-[44px] min-h-[44px] rounded-md transition-colors"
-            style={{ color: 'var(--slate)' }}
-            aria-label={`Switch to ${density === 'comfortable' ? 'compact' : 'comfortable'} view`}
-            title={`${density === 'comfortable' ? 'Compact' : 'Comfortable'} view`}
-          >
-            {density === 'comfortable' ? <AlignJustify size={18} /> : <AlignLeft size={18} />}
-          </button>
+          {/* P3-7: per-surface density toggle removed — one global density lives
+              in Settings → Appearance (key: hub-table-density, compact default). */}
 
           {/* Theme picker */}
           <div className="relative">

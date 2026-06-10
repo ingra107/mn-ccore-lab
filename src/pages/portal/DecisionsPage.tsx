@@ -18,7 +18,6 @@ import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
 import Avatar from '../../components/Avatar'
 import InlineSelect from '../../components/InlineSelect'
-import DensityToggle, { useDensity, densityClass } from '../../components/DensityToggle'
 import { useDecisions, useDecisionsForReview, useDecisionTags } from '../../hooks/useApiData'
 import { isProductionVisible } from '../../lib/isProductionVisible'
 import { useCreateDecision, useUpdateDecisionOutcome } from '../../hooks/useMutations'
@@ -759,7 +758,6 @@ export default function DecisionsPage() {
   const [showCreate, setShowCreate] = useState(false)
   const [focusedIndex, setFocusedIndex] = useState(-1)
   const [expandedId, setExpandedId] = useState<string | null>(null)
-  const [density, setDensity] = useDensity()
   const [sortKey, setSortKey] = useState<DecisionSortKey>('created_at')
   const [sortAsc, setSortAsc] = useState(false)
 
@@ -986,7 +984,6 @@ export default function DecisionsPage() {
                 Timeline
               </button>
             </div>
-            <DensityToggle value={density} onChange={setDensity} />
             <button
               onClick={() => setShowCreate(true)}
               className="flex items-center gap-2 px-4 py-2"
@@ -1172,7 +1169,7 @@ export default function DecisionsPage() {
         ) : viewMode === 'timeline' ? (
           <DecisionTimeline decisions={filteredDecisions} projects={projects} />
         ) : (
-          <TableContainer className={densityClass(density)} ariaLabel="Decisions">
+          <TableContainer ariaLabel="Decisions">
             <div
               style={{
                 display: 'grid',

@@ -11,23 +11,56 @@ const modes: { key: Density; icon: typeof List; title: string }[] = [
   { key: 'relaxed', icon: StretchHorizontal, title: 'Relaxed' },
 ]
 
-export function useDensity(): [Density, (d: Density) => void] {
-  const [density, setDensity] = useState<Density>(() => {
-    try {
-      return (localStorage.getItem(STORAGE_KEY) as Density) || 'default'
-    } catch { return 'default' }
-  })
+// P3-7 (2026-06-09): ONE global density. Compact is the default (Nick is the
+// daily power user and wants maximum info density). The density class is
+// applied at the document root (<html>) so `--row-height` cascades to every
+// page — there is no longer a per-view toggle or per-page wrapper class. The
+// only control lives in Settings → Appearance. The `index.html` pre-paint
+// script sets the same class synchronously to avoid CLS on first render.
+const VALID: Density[] = ['compact', 'default', 'relaxed']
 
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, density)
-  }, [density])
-
-  return [density, setDensity]
+function readDensity(): Density {
+  try {
+    const v = localStorage.getItem(STORAGE_KEY) as Density | null
+    return v && VALID.includes(v) ? v : 'compact'
+  } catch { return 'compact' }
 }
 
-export function densityClass(density: Density): string {
-  if (density === 'compact') return 'density-compact'
-  if (density === 'relaxed') return 'density-relaxed'
+function applyRootDensity(density: Density) {
+  if (typeof document === 'undefined') return
+  const root = document.documentElement
+  root.classList.remove('density-compact', 'density-relaxed')
+  if (density === 'compact') root.classList.add('density-compact')
+  else if (density === 'relaxed') root.classList.add('density-relaxed')
+  root.setAttribute('data-density', density)
+}
+
+export function useDensity(): [Density, (d: Density) => void] {
+  const [density, setDensityState] = useState<Density>(() => readDensity())
+
+  // Apply at the document root + persist. One source of truth; every table
+  // inherits `--row-height` from <html>.
+  useEffect(() => {
+    applyRootDensity(density)
+    try { localStorage.setItem(STORAGE_KEY, density) } catch { /* unavailable */ }
+  }, [density])
+
+  // Cross-tab / cross-component sync — Settings is the single control but any
+  // surface that reads the hook stays in step.
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === STORAGE_KEY) setDensityState(readDensity())
+    }
+    window.addEventListener('storage', onStorage)
+    return () => window.removeEventListener('storage', onStorage)
+  }, [])
+
+  return [density, setDensityState]
+}
+
+// Retained for any lingering import; with root-level density it always returns
+// '' (the root class drives `--row-height`). Per-page wrappers are gone.
+export function densityClass(_density: Density): string {
   return ''
 }
 

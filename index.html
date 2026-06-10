@@ -10,15 +10,20 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="manifest" href="/manifest.webmanifest">
-    <!-- Synchronous density init: set data-density on <html> before first paint to prevent CLS -->
+    <!-- P3-7: Synchronous density init. ONE global density (key: hub-table-density),
+         compact by default. Sets the density-* class + data-density on <html> before
+         first paint so --row-height is correct from render 1 (no CLS). -->
     <script>
       (function() {
+        var d = 'compact';
         try {
-          var d = localStorage.getItem('mn-ccore-density') || 'comfortable';
-          document.documentElement.setAttribute('data-density', d);
-        } catch (e) {
-          document.documentElement.setAttribute('data-density', 'comfortable');
-        }
+          var stored = localStorage.getItem('hub-table-density');
+          if (stored === 'compact' || stored === 'default' || stored === 'relaxed') d = stored;
+        } catch (e) { /* default compact */ }
+        var root = document.documentElement;
+        root.setAttribute('data-density', d);
+        if (d === 'compact') root.classList.add('density-compact');
+        else if (d === 'relaxed') root.classList.add('density-relaxed');
       })();
     </script>
     <meta name="description" content="MN-CCORE: Minnesota Critical Care Outcomes & Research Effort at the University of Minnesota. Multi-center ICU research, CLIF Consortium, provider variation, and clinical decision-making." />

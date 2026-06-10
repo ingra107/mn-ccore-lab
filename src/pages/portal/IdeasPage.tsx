@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Plus, ThumbsUp, X, Lightbulb, Pencil, Archive, Rocket } from 'lucide-react'
-import DensityToggle, { useDensity, densityClass } from '../../components/DensityToggle'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
@@ -44,7 +43,6 @@ const GRID_COLS = 'minmax(200px, 3fr) 120px 100px 80px 80px 80px'
 
 export default function IdeasPage() {
   const [searchParams, setSearchParams] = useSearchParams()
-  const [density, setDensity] = useDensity()
   const [showCreate, setShowCreate] = useState(false)
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [filterStatus, setFilterStatus] = useState<string>('')
@@ -287,14 +285,12 @@ export default function IdeasPage() {
                 </button>
               ))}
             </div>
-
-            <DensityToggle value={density} onChange={setDensity} />
           </div>
         )}
       </PageHeader>
 
       {/* Content */}
-      <div className={`mt-5 ${densityClass(density)}`}>
+      <div className="mt-5">
         {isLoading ? (
           <TableSkeleton rows={6} cols={6} />
         ) : isEmpty ? (

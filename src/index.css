@@ -251,22 +251,28 @@
   --cell-font-size: var(--text-base);  /* 14px → ~21px text height → 21+30+1 ≈ 52px */
 }
 
-/* Synchronous density via data-density attribute on <html> (set before first paint by inline script)
-   Prevents CLS on tables: row-height is correct from first render, no React effect reflow needed */
+/* P3-7: Synchronous density via data-density attribute on <html> (set before
+   first paint by the inline script in index.html). Prevents CLS on tables:
+   row-height is correct from first render, no React effect reflow needed.
+   ONE global density (key: hub-table-density), compact by default. The
+   density-compact / density-relaxed classes above (also applied at <html>)
+   are the React-side equivalent; data-density="default" maps to the :root
+   baseline. `comfortable` retained as a legacy alias for any stale value. */
 html[data-density="compact"] {
   --row-height: 36px;
   --row-padding-y: 8px;
   --cell-font-size: var(--text-small);
 }
-html[data-density="comfortable"] {
-  --row-height: 44px;
-  --row-padding-y: 11px;
-  --cell-font-size: var(--text-body);
-}
 html[data-density="relaxed"] {
   --row-height: 52px;
   --row-padding-y: 15px;
   --cell-font-size: var(--text-base);
+}
+html[data-density="default"],
+html[data-density="comfortable"] {
+  --row-height: 44px;
+  --row-padding-y: 11px;
+  --cell-font-size: var(--text-body);
 }
 
 /* ── UX Tokens — consistent interactive elements across all pages ── */

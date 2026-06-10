@@ -2,7 +2,6 @@ import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { FolderKanban, GitBranch, Plus, List, LayoutGrid, Star } from 'lucide-react'
-import { useDensity, densityClass } from '../components/DensityToggle'
 import { stageIndex, toApiStage } from '../lib/stageNormalize'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useProjects, useDependencies, useProjectHealth, useTasks } from '../hooks/useApiData'
@@ -161,7 +160,6 @@ export default function Projects() {
     )
   }, [inlineUpdate, showUndo])
 
-  const [density, setDensity] = useDensity()
   // S10: category is URL-backed so ⌘K "Filter CLIF Projects" (which navigates
   // to PATHS.projects + '?category=CLIF') lands pre-filtered, and saved/shared
   // links round-trip. Same pattern ManuscriptsPage uses. Absent param = 'all'.
@@ -370,9 +368,6 @@ export default function Projects() {
           )}
         </>
       }
-      showDensity
-      density={density}
-      onDensityChange={setDensity}
       beforeBody={
         /* Dependency map (collapsible, pipeline only) */
         <AnimatePresence>
@@ -392,7 +387,7 @@ export default function Projects() {
     >
         {/* ─── LIST VIEW ─── */}
         {viewMode === 'list' && (
-          <TableContainer className={densityClass(density)}>
+          <TableContainer>
 
             {/* Table header */}
             <div

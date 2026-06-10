@@ -30,7 +30,6 @@ import type { TaskRow } from '../../lib/api'
 import { useCreateTask, useUpdateTaskStatus, useUpdateTask, useBulkUpdateTasks } from '../../hooks/useMutations'
 import BulkActionToolbar from '../../components/tasks/BulkActionToolbar'
 import { getPersonInfo } from '../../data/team'
-import DensityToggle, { useDensity, densityClass } from '../../components/DensityToggle'
 import { useTaskKeyboardShortcuts } from '../../hooks/useTaskKeyboardShortcuts'
 
 type ViewMode = 'list' | 'board' | 'standup' | 'timeline'
@@ -67,7 +66,6 @@ export default function MyTasks() {
   const [showCreate, setShowCreate] = useState(() => searchParams.get('create') === 'true')
   const [groupBy, setGroupBy] = useState<GroupBy>('due_date')
   const [sortBy, setSortBy] = useState<SortBy>('due_date')
-  const [density, setDensity] = useDensity()
 
   // DD-1 pilot — MyTasks only. Mode toggle between "Now" (hero strip +
   // Focus Next, no dense table) and "Data" (dense table, no hero).
@@ -599,8 +597,6 @@ export default function MyTasks() {
             </button>
           )}
 
-          <DensityToggle value={density} onChange={setDensity} />
-
           {/* DD-2 v1 — Saved views (per-page, localStorage-scoped). Captures
               the current URL query string on save; applying re-writes search
               params so every bit of filter + sort + mode state round-trips. */}
@@ -1027,7 +1023,7 @@ export default function MyTasks() {
           content; if both strips are empty the table falls through so the
           "All caught up!" empty state still renders. */}
       <div
-        className={`mt-5 ${densityClass(density)}`}
+        className="mt-5"
         style={{
           display: effectiveMode === 'now'
             && (todayHeroLists.overdue.length > 0 || todayHeroLists.dueToday.length > 0 || focusTasks.length > 0)

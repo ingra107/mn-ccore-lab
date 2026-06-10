@@ -38,10 +38,10 @@ const LAB_ICON_OPTIONS = [
   { name: 'book', Icon: BookOpen },
 ] as const
 
-// Global table-density preference. Backed by the same `hub-table-density`
-// localStorage key the per-view DensityToggles use, so setting it here becomes
-// the default every data table inherits on its next mount. The in-table toggles
-// remain as in-context overrides (kept deliberately — additive-first).
+// P3-7 (2026-06-09): the ONE global table-density control. Backed by the
+// `hub-table-density` key, applied at the document root so every data table
+// inherits `--row-height`. Per-view DensityToggles were removed — this is the
+// single place density is set. Compact is the default.
 function DensityControl() {
   const [density, setDensity] = useDensity()
   return (
@@ -50,7 +50,7 @@ function DensityControl() {
         <div>
           <div className="text-[12px] font-medium" style={{ color: 'var(--ink)' }}>Table density</div>
           <div className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.75 }}>
-            Row spacing on data tables (Tasks, Deadlines, Manuscripts…). Each table also has its own toggle.
+            Row spacing on every data table (Tasks, Deadlines, Manuscripts…). Applies everywhere. Default: compact.
           </div>
         </div>
         <DensityToggle value={density} onChange={setDensity} />
