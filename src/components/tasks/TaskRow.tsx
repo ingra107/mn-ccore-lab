@@ -246,28 +246,36 @@ export function TaskRow(props: SharedTaskRowProps) {
   // Full title on hover only when a (differing) short_title is what's shown.
   const fullTitleHover = displayTitle !== task.title ? task.title : undefined
 
+  // Plan-without-dragging: a 📌 button shown only on surfaces that wire
+  // onTogglePlan and only while the task is unplanned (once planned, the
+  // PlannedChip in the right meta is the unplan control). The HTML5 drag remains
+  // the path to a *specific* timeline slot; this is the reliable "just plan it
+  // for today" path that needs no drag/scroll.
+  //
+  // Position (Nick 2026-06-10): the pin renders inline IMMEDIATELY AFTER the
+  // title text, not in the right meta cluster near the project — Nick's mouse is
+  // by the task name when he reaches for it. Hover-revealed on desktop;
+  // always-on for touch via the @media (hover:none) rule on .today-plan-btn
+  // (index.css). Rule 58's four affordances stay distinct: drag grip ⋮⋮ /
+  // 📌 plan / body-click expand / ▶ promote.
+  const planBtn = onTogglePlan && !isDone && !isPlanned ? (
+    <button
+      type="button"
+      data-plan-btn={task.id}
+      className="today-plan-btn"
+      onClick={(e) => { e.stopPropagation(); onTogglePlan() }}
+      onMouseDown={(e) => e.stopPropagation()}
+      title="Plan for today (no specific time)"
+      aria-label="Plan task for today"
+      style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0 2px', fontSize: 12, color: ACCENT_GOLD, lineHeight: 1, flexShrink: 0, verticalAlign: 'baseline', visibility: hover ? 'visible' : 'hidden' }}
+    >
+      📌
+    </button>
+  ) : null
+
   const rightMeta = (
     <>
       {isPlanned && !isDone && <PlannedChip label={plannedLabel} onUnplan={onTogglePlan} />}
-      {/* Plan-without-dragging: a hover-revealed 📌 button, shown only on
-          surfaces that wire onTogglePlan and only while the task is unplanned
-          (once planned, the PlannedChip above is the unplan control). The HTML5
-          drag remains the path to a *specific* timeline slot; this is the
-          reliable "just plan it for today" path that needs no drag/scroll. */}
-      {onTogglePlan && !isDone && !isPlanned && (
-        <button
-          type="button"
-          data-plan-btn={task.id}
-          className="today-plan-btn"
-          onClick={(e) => { e.stopPropagation(); onTogglePlan() }}
-          onMouseDown={(e) => e.stopPropagation()}
-          title="Plan for today (no specific time)"
-          aria-label="Plan task for today"
-          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0 2px', fontSize: 12, color: ACCENT_GOLD, lineHeight: 1, flexShrink: 0, visibility: hover ? 'visible' : 'hidden' }}
-        >
-          📌
-        </button>
-      )}
       {extraMeta}
       <ProjectTag project={project} />
       {task.due_date && !isDone && <DueChip due={task.due_date} status={task.status} />}
@@ -316,6 +324,7 @@ export function TaskRow(props: SharedTaskRowProps) {
               {leadingTag && <span style={{ marginRight: 6 }} aria-hidden="true">{leadingTag}</span>}
               {isRightNow && <RightNowBadge />}
               <TaskTitle title={displayTitle} fallback={task.description} />
+              {planBtn && <span style={{ marginLeft: 4, whiteSpace: 'nowrap' }}>{planBtn}</span>}
             </span>
             <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
               {rightMeta}
@@ -333,6 +342,7 @@ export function TaskRow(props: SharedTaskRowProps) {
                 {showGroupOverridePin && task.group_override && (
                   <span title={`Moved manually (${task.group_override})`} style={{ fontSize: 9, color: ACCENT_TEAL, padding: '1px 4px', background: withAlpha(ACCENT_TEAL, 10), borderRadius: 3, marginLeft: 6 }}>📍</span>
                 )}
+                {planBtn && <span style={{ marginLeft: 4, whiteSpace: 'nowrap' }}>{planBtn}</span>}
               </span>
               {/* right meta — aligned to first line */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 9, flexShrink: 0, paddingTop: 1 }}>
