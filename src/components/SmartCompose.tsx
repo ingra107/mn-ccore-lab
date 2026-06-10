@@ -238,7 +238,7 @@ export default function SmartCompose(props: SmartComposeProps) {
       undoToast.showSuccess(`Attached ${file.name}`)
     } catch (err) {
       console.error('Attach failed:', err)
-      alert(`Attach failed: ${err instanceof Error ? err.message : 'unknown'}`)
+      undoToast.showSuccess(`Attach failed: ${err instanceof Error ? err.message : 'please try again.'}`)
     } finally {
       setUploading(false)
     }

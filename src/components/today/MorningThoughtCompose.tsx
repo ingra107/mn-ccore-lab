@@ -81,7 +81,7 @@ export function MorningThoughtCompose() {
         undoToast.showSuccess('Sent to Hermes')
       } catch (err) {
         console.error('Morning thought → Hermes failed:', err)
-        alert(`Sending to Hermes failed: ${err instanceof Error ? err.message : 'unknown'}`)
+        undoToast.showSuccess(`Sending to Hermes failed: ${err instanceof Error ? err.message : 'please try again.'}`)
       }
       return
     }
@@ -97,7 +97,7 @@ export function MorningThoughtCompose() {
 
     // Route 3 — default: create a task in the user's default group.
     if (!userSlug) {
-      alert('Sign in to capture tasks.')
+      undoToast.showSuccess('Sign in to capture tasks.')
       return
     }
     const due_date = isEvening ? tomorrowISO() : undefined
