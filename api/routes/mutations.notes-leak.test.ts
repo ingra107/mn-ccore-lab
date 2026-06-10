@@ -238,7 +238,11 @@ describe('mutations canonical_payload — SEC-P2-03 notes not in response', () =
     expect(payload).toHaveProperty('assignee', 'nate-mesfin')
   })
 
-  it('task INSERT canonical_payload does not contain notes', async () => {
+  it('task INSERT carrying notes is REJECTED outright (pb-schema 0.4.0 wire contract)', async () => {
+    // pb-schema 0.4.0 (2026-06-10) retired the vestigial `notes` wire alias from
+    // TABLE_FIELDS.tasks. The old SEC-P2-03 behavior (accept + strip from the
+    // canonical_payload echo) is superseded: an unknown field now ERRORS, which
+    // makes the leak structurally impossible AND keeps schema drift visible.
     const newTaskId = 'task_01hwtest_mut_notes_insert_0001'
     const db = makeStubDB()  // empty store — insert creates the row
 
@@ -269,13 +273,9 @@ describe('mutations canonical_payload — SEC-P2-03 notes not in response', () =
       results: Array<{ status: string; canonical_payload?: Record<string, unknown> }>
     }
 
-    expect(body.results[0].status).toBe('accepted')
-    const payload = body.results[0].canonical_payload
-    // Strict: an accepted insert MUST return a canonical_payload, and it must
-    // never carry notes. (No conditional guard — that would let the leak
-    // assertion pass vacuously if the payload were ever absent.)
-    expect(payload).toBeDefined()
-    expect(payload).not.toHaveProperty('notes')
+    expect(body.results[0].status).toBe('error')
+    // And the error echo must not leak the note text back either.
+    expect(JSON.stringify(body.results[0])).not.toContain('PRIVATE note')
   })
 
   it('non-task table mutations are unaffected by task-specific stripping', async () => {

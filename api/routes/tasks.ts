@@ -1080,9 +1080,20 @@ export async function handleAcknowledgeTask(id: string, request: Request, user: 
   const now = nowInstant();
   const acknowledgedBy = overrideSlug ?? actorSlug(user.email);
 
-  await env.DB.prepare(
-    "UPDATE tasks SET acknowledged_at = ?, acknowledged_by = ?, updated_at = datetime('now') WHERE id = ?"
-  ).bind(now, acknowledgedBy, id).run();
+  // HUB-7 (2026-06-10): route through applyMutation so last_mutation_id is
+  // stamped (same pattern as handleToggleTask). Unblocked by pb-schema 0.4.0,
+  // which added acknowledged_at/acknowledged_by to the tasks wire contract.
+  const ackMutResult = await applyMutation(env, {
+    table: 'tasks',
+    record_id: id,
+    op: 'update',
+    patch: { acknowledged_at: now, acknowledged_by: acknowledgedBy },
+    route: 'handleAcknowledgeTask',
+    user,
+  });
+  if (ackMutResult.status !== 'accepted' && ackMutResult.status !== 'merged_clean') {
+    return error(`mutation rejected: ${ackMutResult.status} — ${ackMutResult.reason ?? ''}`, 409);
+  }
 
   await logActivity(env, 'task', `Acknowledged: "${task.title || task.description}"`, user.email, id, 'task');
 
@@ -1371,7 +1382,6 @@ export async function handleMobileTasksToHub(request: Request, user: AuthUser, e
           completed: completedInt,
           completed_at: completedInt ? nowInstant() : null,
           completed_by: completedInt ? user.email : null,
-          notes: pwaTask.notes ?? null,
           effort: pwaTask.effort ?? null,
           short_title: pwaTask.short_title ?? null,
           source_thread_id: pwaTask.source_thread_id ?? null,
