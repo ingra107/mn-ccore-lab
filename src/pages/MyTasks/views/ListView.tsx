@@ -106,8 +106,12 @@ export function ListView({ filtered, selected, toggleSelect, setSelected, setDra
   const kbdStyle = { fontFamily: 'var(--font-mono), JetBrains Mono, monospace', fontSize: 9, padding: '1px 4px', background: 'rgba(255,255,255,0.08)', borderRadius: 2, color: INK_MUTED }
 
   return (
+    // P1-1 anchored column: the power-grid holds to --col-main, left-anchored
+    // (padding-left matches Lanes' 24px) so its left edge equals the other two
+    // views. 960px keeps the 8 fixed columns + 1fr Title from h-scrolling.
     <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
       <div ref={scrollRef} style={{ flex: 1, overflow: 'auto' }}>
+        <div style={{ maxWidth: 'var(--col-main)' }}>
         <div className="list-view-header" style={{ display: 'grid', gridTemplateColumns: '32px 26px 1fr 150px 100px 80px 110px 110px 70px', padding: '6px 16px', borderBottom: '1px solid rgba(255,255,255,0.08)', fontSize: 9.5, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: INK_DIM, position: 'sticky', top: 0, background: PAGE_BG, zIndex: 1 }}>
           <div className="list-view-col-cursor"></div>
           <div className="list-view-col-select"></div>
@@ -157,6 +161,7 @@ export function ListView({ filtered, selected, toggleSelect, setSelected, setDra
             })}
           </div>
         )}
+        </div>
       </div>
       <div style={{ padding: '5px 16px', borderTop: '1px solid rgba(255,255,255,0.06)', background: 'rgba(0,0,0,0.2)', fontSize: 10, color: INK_DIM, display: 'flex', gap: 14, flexShrink: 0 }}>
         <span style={{ fontFamily: 'var(--font-mono), JetBrains Mono, monospace' }}>{filtered.length > 0 ? `${cursor + 1}/${filtered.length}` : '0/0'}</span>

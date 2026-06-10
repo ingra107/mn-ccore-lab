@@ -47,7 +47,11 @@ export function LanesView({ byGroup, selected, toggleSelect, onToggleComplete, e
   const selectionActive = selected.size > 0
 
   return (
-    <div style={{ flex: 1, overflow: 'auto', padding: '12px 28px 40px', maxWidth: 1100, margin: '0 auto', width: '100%' }}>
+    // P1-1 anchored column: content holds to --col-main, left-anchored (not
+    // centered) so the left edge is identical to Columns + List. The 1100px
+    // literal is gone. Outer scroll fills the surface; inner wrapper anchors.
+    <div style={{ flex: 1, overflow: 'auto', padding: '12px 24px 40px' }}>
+      <div style={{ maxWidth: 'var(--col-main)', width: '100%' }}>
       {visibleGroups.map((gkey) => {
         const meta = GROUP_META[gkey]
         const tasks = byGroup[gkey]
@@ -103,6 +107,7 @@ export function LanesView({ byGroup, selected, toggleSelect, onToggleComplete, e
           </section>
         )
       })}
+      </div>
     </div>
   )
 }

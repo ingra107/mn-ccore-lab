@@ -35,7 +35,12 @@ export function ColumnsView({ filtered, byGroup, selected, toggleSelect, onToggl
   // users discover the 5 columns scroll horizontally on small viewports
   // (eval Issue 5).
   return (
-    <div className="mt-columns-scroll" style={{ flex: 1, overflow: 'auto', padding: '12px 20px 20px', position: 'relative' }}>
+    // P1-1 anchored column: the Kanban board holds to --col-main, left-anchored
+    // (padding-left matches Lanes/List at 24px) so the board's left edge equals
+    // the other two views. The grid still h-scrolls INSIDE --col-main when the
+    // columns exceed it (colCount × 280 > 960 at 4+ columns) — the intended
+    // "Columns scrolls inside --col-main" behavior.
+    <div className="mt-columns-scroll" style={{ flex: 1, overflow: 'auto', padding: '12px 24px 20px', position: 'relative', maxWidth: 'var(--col-main)' }}>
       <style>{`
         .mt-columns-scroll { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.18) transparent; }
         .mt-columns-scroll::-webkit-scrollbar { height: 8px; }

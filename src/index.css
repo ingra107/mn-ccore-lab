@@ -55,6 +55,24 @@
   --tracking-heading: -0.02em;   /* 24px headings */
   --tracking-body: 0;            /* 16px and below */
 
+  /* ── Anchored-column width system (P1-1, 2026-06-09) ──
+     One source of truth for the centered band + its anchored primary column.
+     PRINCIPLE (Nick, 2026-06-09): the primary column's left edge + width stay
+     identical on every page, so the user's focus never moves on nav. An
+     optional right rail extends OUTWARD into the band beside the column — it
+     never recenters or widens the main column. Pages with no rail leave that
+     space empty rather than re-centering. Dashboards (pure card grids) may
+     fill the full band — the one documented exception.
+
+     --col-main settled at 960px (not the ticket's starting 880px): the widest
+     real table is the My Tasks List power-grid (8 fixed columns = 678px + 32px
+     padding); 880px would crush its 1fr Title column to ~170px and truncate
+     short_titles, 960px gives it ~250px and keeps every data table from
+     horizontally scrolling. Honors decision #1 (principle over px). */
+  --content-band: 1296px;  /* centered band = main + 16px gap + rail */
+  --col-main: 960px;       /* anchored primary column (tables, lists, detail) */
+  --col-rail: 320px;       /* optional right rail; absent = empty, no expand */
+
   /* Border-radius scale */
   --radius-sm: 4px;
   --radius-md: 6px;
@@ -915,9 +933,12 @@ a:hover {
   color: #ffffff;
 }
 
-/* ── Content container — guaranteed centering ── */
+/* ── Content container — now the centered band (P1-1) ──
+   Was a 1440px literal; redefined in terms of --content-band so every page
+   that uses .content-container shares the band width. Class name unchanged
+   on purpose (no global rename this wave — concurrent page edits). */
 .content-container {
-  max-width: 1440px;
+  max-width: var(--content-band);
   margin-left: auto;
   margin-right: auto;
   padding-left: 1.5rem;
