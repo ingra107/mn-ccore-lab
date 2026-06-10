@@ -27,14 +27,14 @@ export default function WorkOnActions({ primaryFolder, projectLabel, variant = '
     launch(buildOpenFolderUri(primaryFolder), {
       copyText: primaryFolder,
       successMessage: 'Opening folder…',
-      copyMessage: 'Folder path copied — paste in Win+R or Explorer',
+      copyMessage: 'Opening folder… (path copied as backup)',
     })
 
   const workOn = () =>
     launch(buildWorkOnUri(primaryFolder), {
       copyText: primaryFolder,
       successMessage: `Launching Claude${label} on this machine…`,
-      copyMessage: `Folder path copied — open it and run "Start Claude.bat"`,
+      copyMessage: `Launching Claude${label}… (path copied as backup — run "Start Claude.bat" if it doesn't open)`,
     })
 
   if (variant === 'compact') {

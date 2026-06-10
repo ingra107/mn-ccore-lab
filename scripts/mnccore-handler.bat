@@ -68,11 +68,20 @@ call :fail "Unknown mnccore:// verb: !url!"
 exit /b 1
 
 
-:: ── :decode <varname> ── URL-decode forward slashes + %20 in-place ───────────
+:: ── :decode <varname> ── normalize a path arg in-place ───────────────────────
+:: Defense-in-depth (the frontend's normalizeLocalFolderPath already does this,
+:: but a hand-built or legacy mnccore:// URL may still carry a file:/// prefix or
+:: percent-encoding). Order: strip a leading file:/// or file:// token FIRST
+:: (before any slash flip), then URL-decode %20, then map forward → back slashes.
 :decode
 set "_d=!%~1!"
-set "_d=!_d:/=\!"
+:: Strip leading file:/// (3 slashes) then file:// (2) — longest first.
+if /I "!_d:~0,8!"=="file:///" set "_d=!_d:~8!"
+if /I "!_d:~0,7!"=="file://" set "_d=!_d:~7!"
+:: URL-decode the space escape before flipping slashes.
 set "_d=!_d:%%20= !"
+:: Forward → back slashes (Explorer/exists want backslashes; both work for start).
+set "_d=!_d:/=\!"
 set "%~1=!_d!"
 exit /b 0
 

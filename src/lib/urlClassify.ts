@@ -16,6 +16,47 @@ export interface ClassifiedUrl {
   isHttp: boolean
 }
 
+/**
+ * Normalize a heterogeneous local-folder/file path into the ONE canonical
+ * forward-slash shape the `mnccore://` Windows handler can `if exist`-check.
+ *
+ * `projects.primary_folder` (and hand-typed key links) arrive in three shapes
+ * seen in live /api/projects data:
+ *   - file URL + percent-encoding:  file:///C:/Users/ingra107/Box/K%20proposal/
+ *   - plain forward slashes:        C:/Users/ingra107/Box/.../CIRCLE_ORIGIN
+ *   - backslashes + spaces:         C:\Users\ingra107\Box\...\ATS Working Group
+ * Wrapping the RAW value made the handler receive e.g.
+ *   mnccore://open/file:///C:/...   → the exists-check failed → error window.
+ *
+ * Steps: strip a leading file://[/], percent-DECODE, backslashes→forward,
+ * collapse the doubled leading slash a UNC/`file://host` form can leave, trim
+ * trailing slashes. UNC paths (`\\server\share`) keep their leading `//`.
+ */
+export function normalizeLocalFolderPath(raw: string): string {
+  if (!raw) return ''
+  let p = raw.trim()
+  const isUnc = p.startsWith('\\\\') || p.startsWith('//')
+  // Strip a leading file:/// or file:// (with or without the third slash).
+  p = p.replace(/^file:\/\/\/?/i, '')
+  // Percent-decode (%20 → space, etc). Be defensive: a malformed sequence
+  // (lone %) throws in decodeURIComponent — fall back to the raw value.
+  try {
+    p = decodeURIComponent(p)
+  } catch {
+    /* leave p as-is on a malformed escape sequence */
+  }
+  // Backslashes → forward slashes.
+  p = p.replace(/\\/g, '/')
+  if (isUnc) {
+    // Preserve exactly one leading `//` for a UNC share.
+    p = '//' + p.replace(/^\/+/, '')
+  }
+  // Trim trailing slashes (but never reduce a bare "/" or UNC "//" to empty).
+  p = p.replace(/\/+$/, '')
+  if (!p && isUnc) return '//'
+  return p
+}
+
 export function classifyUrl(url: string): ClassifiedUrl {
   const isHttp = url.startsWith('http')
   const isDrivePath = /^[A-Za-z]:/.test(url)
@@ -24,7 +65,7 @@ export function classifyUrl(url: string): ClassifiedUrl {
   const isBat = url.endsWith('.bat') || url.endsWith('.cmd') || url.endsWith('.ps1')
   if (isBat) {
     return {
-      href: `mnccore://launch/${url.replace('file:///', '')}`,
+      href: `mnccore://launch/${normalizeLocalFolderPath(url)}`,
       Icon: Play,
       typeLabel: 'Script',
       isHttp: false,
@@ -32,7 +73,7 @@ export function classifyUrl(url: string): ClassifiedUrl {
   }
   if (isLocalPath) {
     return {
-      href: `mnccore://open/${url.replace('file:///', '')}`,
+      href: buildOpenFolderUri(url),
       Icon: FolderOpen,
       typeLabel: 'Folder',
       isHttp: false,
@@ -42,29 +83,21 @@ export function classifyUrl(url: string): ClassifiedUrl {
 }
 
 /**
- * Encode a local folder/file path into the `mnccore://` path segment, matching
- * the encoding `classifyUrl` uses for `open/` (strip a leading `file:///`; the
- * handler URL-decodes %20 + maps `/`→`\`). Kept as one helper so the workon /
- * open / launch builders all agree on the path shape the Windows handler parses.
- */
-function encodeLocalPath(path: string): string {
-  return path.replace(/^file:\/\/\//, '')
-}
-
-/**
  * Build `mnccore://workon/<folder>` — the verb that launches
  * "<folder>\Start Claude.bat" in that folder (TODAY.md-parity local launch).
  * The handler refuses unless the folder exists AND contains that exact bat,
  * so a bad/empty `primary_folder` is a safe no-op (clipboard fallback still
- * fires client-side).
+ * fires client-side). The path is normalized to the canonical forward-slash
+ * shape first so the handler's `if exist` check sees a real path regardless of
+ * the heterogeneous form `primary_folder` arrives in.
  */
 export function buildWorkOnUri(folderPath: string): string {
-  return `mnccore://workon/${encodeLocalPath(folderPath)}`
+  return `mnccore://workon/${normalizeLocalFolderPath(folderPath)}`
 }
 
 /** Build `mnccore://open/<folder>` for an Explorer open of a local path. */
 export function buildOpenFolderUri(folderPath: string): string {
-  return `mnccore://open/${encodeLocalPath(folderPath)}`
+  return `mnccore://open/${normalizeLocalFolderPath(folderPath)}`
 }
 
 /**
@@ -86,7 +119,7 @@ export function shortLabelForUrl(url: string): string {
       return new URL(url).hostname.replace(/^www\./, '')
     }
     if (url.startsWith('file:///') || /^[A-Za-z]:/.test(url) || url.startsWith('\\\\')) {
-      const clean = url.replace(/^file:\/\/\//, '').replace(/\\/g, '/')
+      const clean = normalizeLocalFolderPath(url)
       const parts = clean.split('/').filter(Boolean)
       return parts.slice(-3).join(' / ')
     }
