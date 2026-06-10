@@ -13,6 +13,7 @@ import {
   getGroupForTask, tagForTask, isTaskDone,
   type GroupKey, type FilterState, type QuickViewKey,
 } from '../constants'
+import { isOverdue } from '../../../lib/dateUtils'
 import type { TaskRow } from '../../../lib/api'
 
 export interface UseTaskFilterArgs {
@@ -54,6 +55,10 @@ export function useTaskFilter({ allTasks, filter, search, quickView, plannedSet,
 
   // Bucket by group, then sort each bucket: planned → active → done.
   // CLAUDE.md Rule 62: planned tasks float to top, done sinks to bottom with strikethrough.
+  // P1-12 (decision #2): WITHIN the active tier, overdue floats to the top,
+  // oldest-late first — so "where do I focus" is answered by the page's shape.
+  // This rides INSIDE the planned→active→done ordering (Rule 62), it does not
+  // fight the group model: planned still floats above overdue, done still sinks.
   const byGroup = useMemo(() => {
     const g: Record<GroupKey, TaskRow[]> = { deep: [], priorities: [], quick: [], pb: [], etl: [] }
     for (const t of filtered) {
@@ -65,11 +70,32 @@ export function useTaskFilter({ allTasks, filter, search, quickView, plannedSet,
       if (plannedSet.has(t.id)) return 0   // planned floats
       return 1                              // active middle
     }
+    // Overdue tasks sort first inside the active tier, oldest-late first.
+    const overdueRank = (t: TaskRow): number =>
+      (!isTaskDone(t) && t.due_date && isOverdue(t.due_date, t.status)) ? 0 : 1
     for (const k of GROUP_ORDER) {
-      g[k].sort((a, b) => rank(a) - rank(b))
+      g[k].sort((a, b) => {
+        const r = rank(a) - rank(b)
+        if (r !== 0) return r
+        const o = overdueRank(a) - overdueRank(b)
+        if (o !== 0) return o
+        // both overdue → oldest-late first (earliest due_date wins)
+        if (overdueRank(a) === 0 && a.due_date && b.due_date) {
+          return a.due_date.slice(0, 10) < b.due_date.slice(0, 10) ? -1
+            : a.due_date.slice(0, 10) > b.due_date.slice(0, 10) ? 1 : 0
+        }
+        return 0
+      })
     }
     return g
   }, [filtered, plannedSet])
 
-  return { filtered, byGroup }
+  // P1-12: live count of overdue (not-done) tasks across the filtered set, for
+  // the coral group header. One source of truth so every view agrees.
+  const overdueCount = useMemo(
+    () => filtered.filter((t) => !isTaskDone(t) && t.due_date && isOverdue(t.due_date, t.status)).length,
+    [filtered],
+  )
+
+  return { filtered, byGroup, overdueCount }
 }

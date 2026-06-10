@@ -7,16 +7,18 @@
 //
 // Extracted from src/pages/portal/UnifiedMyTasks.tsx (LanesView + LaneRow).
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Chip } from '../primitives'
 import { MyTasksRow } from './ColumnsView'
+import { OverdueBanner } from './OverdueBanner'
 import {
   GROUP_META, GROUP_ORDER,
   ACCENT_GOLD, ACCENT_CORAL,
   INK_MUTED, INK_DIM,
-  todayKey, withAlpha, isTaskDone,
+  withAlpha, isTaskDone,
   type GroupKey,
 } from '../constants'
+import { isOverdue } from '../../../lib/dateUtils'
 import type { TaskRow } from '../../../lib/api'
 
 // MT-17 — persist lane collapsed/peek state to localStorage so reload
@@ -45,6 +47,8 @@ export function LanesView({ byGroup, selected, toggleSelect, onToggleComplete, e
   const toggleC = (k: GroupKey) => setCollapsed((s) => { const n = new Set(s); n.has(k) ? n.delete(k) : n.add(k); return n })
   const toggleP = (k: GroupKey) => setPeek((s) => { const n = new Set(s); n.has(k) ? n.delete(k) : n.add(k); return n })
   const selectionActive = selected.size > 0
+  // P1-12 banner needs the flat task set across all visible lanes.
+  const allTasks = useMemo(() => visibleGroups.flatMap((g) => byGroup[g]), [visibleGroups, byGroup])
 
   return (
     // P1-1 anchored column: content holds to --col-main, left-anchored (not
@@ -52,6 +56,7 @@ export function LanesView({ byGroup, selected, toggleSelect, onToggleComplete, e
     // literal is gone. Outer scroll fills the surface; inner wrapper anchors.
     <div style={{ flex: 1, overflow: 'auto', padding: '12px 24px 40px' }}>
       <div style={{ maxWidth: 'var(--col-main)', width: '100%' }}>
+      <OverdueBanner tasks={allTasks} />
       {visibleGroups.map((gkey) => {
         const meta = GROUP_META[gkey]
         const tasks = byGroup[gkey]
@@ -59,8 +64,8 @@ export function LanesView({ byGroup, selected, toggleSelect, onToggleComplete, e
         const isPeek = peek.has(gkey)
         const visible = isCollapsed ? [] : isPeek ? tasks : tasks.slice(0, 4)
         const hidden = tasks.length - visible.length
-        const today = todayKey()
-        const overdueInLane = tasks.filter((t) => t.due_date && t.due_date.slice(0, 10) < today && !isTaskDone(t)).length
+        // Rule 68: status-aware isOverdue(), never a hand-rolled date compare.
+        const overdueInLane = tasks.filter((t) => !isTaskDone(t) && t.due_date && isOverdue(t.due_date, t.status)).length
         const plannedInLane = tasks.filter((t) => plannedSet.has(t.id) && !isTaskDone(t)).length
         return (
           <section key={gkey} style={{ marginBottom: 18, background: 'rgba(255,255,255,0.015)', borderRadius: 8, border: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden' }}>

@@ -14,6 +14,7 @@
 import { TaskRow as SharedTaskRow } from '../../../components/tasks/TaskRow'
 import { Chip } from '../primitives'
 import { InlineDetail } from '../components/InlineDetail'
+import { OverdueBanner } from './OverdueBanner'
 import {
   GROUP_META, GROUP_ORDER,
   ACCENT_ORANGE,
@@ -61,6 +62,7 @@ export function ColumnsView({ filtered, byGroup, selected, toggleSelect, onToggl
           }
         }
       `}</style>
+      <OverdueBanner tasks={filtered} />
       <div style={{ display: 'grid', gridTemplateColumns: `repeat(${colCount}, minmax(260px, 1fr))`, gap: 14, minWidth }}>
         {visibleGroups.map((gkey) => {
           const meta = GROUP_META[gkey]

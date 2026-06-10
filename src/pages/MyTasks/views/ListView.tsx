@@ -22,9 +22,11 @@ import {
   GROUP_META,
   ACCENT_GOLD, ACCENT_ORANGE, ACCENT_CORAL, ACCENT_TEAL,
   INK, INK_MUTED, INK_DIM, PAGE_BG,
-  todayKey, daysSince, withAlpha, isTaskDone,
+  daysSince, withAlpha, isTaskDone,
   type GroupKey, type FilterOption,
 } from '../constants'
+import { isOverdue } from '../../../lib/dateUtils'
+import { OverdueBanner } from './OverdueBanner'
 import type { TaskRow } from '../../../lib/api'
 
 interface ListViewProps {
@@ -112,6 +114,7 @@ export function ListView({ filtered, selected, toggleSelect, setSelected, setDra
     <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
       <div ref={scrollRef} style={{ flex: 1, overflow: 'auto' }}>
         <div style={{ maxWidth: 'var(--col-main)' }}>
+        <div style={{ padding: '10px 16px 0' }}><OverdueBanner tasks={filtered} /></div>
         <div className="list-view-header" style={{ display: 'grid', gridTemplateColumns: '32px 26px 1fr 150px 100px 80px 110px 110px 70px', padding: '6px 16px', borderBottom: '1px solid rgba(255,255,255,0.08)', fontSize: 9.5, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: INK_DIM, position: 'sticky', top: 0, background: PAGE_BG, zIndex: 1 }}>
           <div className="list-view-col-cursor"></div>
           <div className="list-view-col-select"></div>
@@ -194,8 +197,9 @@ interface ListRowProps {
 
 function ListRow({ task, project, isCursor, isSelected, onClick, onDouble, onSelect, planned, onStatusChange, onPriorityChange, onAssigneeChange, onDateChange, onProjectChange, projectSelectOptions }: ListRowProps) {
   const meta = GROUP_META[(task as TaskRow & { _group?: GroupKey })._group ?? 'deep']
-  const today = todayKey()
-  const overdueDays = task.due_date && task.due_date.slice(0, 10) < today ? daysSince(task.due_date) : 0
+  // Rule 68: status-aware isOverdue(), never a hand-rolled date compare.
+  const overdue = !!task.due_date && !isTaskDone(task) && isOverdue(task.due_date, task.status)
+  const overdueDays = overdue && task.due_date ? daysSince(task.due_date) : 0
   const stale = task.updated_at && daysSince(task.updated_at) >= 10 && task.status === 'in_progress' ? daysSince(task.updated_at) : 0
   const isCompleted = isTaskDone(task)
 
@@ -208,7 +212,7 @@ function ListRow({ task, project, isCursor, isSelected, onClick, onDouble, onSel
       className="list-view-row"
       onClick={onClick}
       onDoubleClick={onDouble}
-      style={{ display: 'grid', gridTemplateColumns: '32px 26px 1fr 150px 100px 80px 110px 110px 70px', padding: '5px 16px', alignItems: 'center', fontSize: 12, height: 44, borderBottom: '1px solid rgba(255,255,255,0.04)', borderLeft: `3px solid ${isCursor ? meta.color : planned ? ACCENT_GOLD : 'transparent'}`, background: isCursor ? withAlpha(meta.color, 7) : isSelected ? 'rgba(201,168,76,0.06)' : 'transparent', opacity: isCompleted ? 0.5 : 1, cursor: 'pointer', boxSizing: 'border-box' }}
+      style={{ display: 'grid', gridTemplateColumns: '32px 26px 1fr 150px 100px 80px 110px 110px 70px', padding: '5px 16px', alignItems: 'center', fontSize: 12, height: 44, borderBottom: '1px solid rgba(255,255,255,0.04)', borderLeft: `3px solid ${isCursor ? meta.color : planned ? ACCENT_GOLD : overdue ? ACCENT_CORAL : 'transparent'}`, background: isCursor ? withAlpha(meta.color, 7) : isSelected ? 'rgba(201,168,76,0.06)' : 'transparent', opacity: isCompleted ? 0.5 : 1, cursor: 'pointer', boxSizing: 'border-box' }}
     >
       <div className="list-view-col-cursor" style={{ color: meta.color, fontSize: 10, fontWeight: 700, textAlign: 'center' }}>{isCursor ? '▶' : ''}</div>
       <div className="list-view-col-select" onClick={stop}><input type="checkbox" checked={isSelected} onChange={onSelect} onClick={stop} style={{ accentColor: meta.color, cursor: 'pointer' }} /></div>
