@@ -53,7 +53,10 @@ export function PlannedTaskRow({ task, project, state, timeHint, small = false, 
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
             {isNow && <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: ACCENT_GOLD, padding: '1px 5px', background: 'rgba(201,168,76,0.14)', borderRadius: 3 }}>Now</span>}
             <span style={{ fontSize: 11, flexShrink: 0 }} aria-hidden="true">{tag}</span>
-            <span style={{ fontSize: 13, color: isDone ? INK_DIM : INK, textDecoration: isDone ? 'line-through' : 'none', fontWeight: 500 }}>{task.title}</span>
+            {/* Rule 68: planned rows show the curated short_title (full title on
+                hover via native title= + in the expanded drawer), matching the
+                unplanned rows below. A complete short title is not a truncation. */}
+            <span title={task.short_title && task.short_title !== task.title ? task.title : undefined} style={{ fontSize: 13, color: isDone ? INK_DIM : INK, textDecoration: isDone ? 'line-through' : 'none', fontWeight: 500 }}>{task.short_title || task.title}</span>
             {task.group_override && (
               <span title={`Moved manually (${task.group_override})`} style={{ fontSize: 9, color: ACCENT_TEAL, padding: '1px 4px', background: withAlpha(ACCENT_TEAL, 10), borderRadius: 3 }}>📍</span>
             )}

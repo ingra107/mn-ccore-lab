@@ -15,7 +15,7 @@ import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow } from '../../lib/api'
 import SmartCompose from '../SmartCompose'
 
-export function RightNow({ task, project, queueTasks, state }: { task: TaskRow | null; project: { name: string; slug: string } | null; queueTasks: Array<{ id: string; title: string }>; state: TodayStateApi }) {
+export function RightNow({ task, project, queueTasks, state }: { task: TaskRow | null; project: { name: string; slug: string } | null; queueTasks: Array<{ id: string; title: string; short_title?: string | null }>; state: TodayStateApi }) {
   const [expanded, setExpanded] = useState(false)
   if (!task) {
     return (
@@ -55,9 +55,10 @@ export function RightNow({ task, project, queueTasks, state }: { task: TaskRow |
             <button
               key={q.id}
               onClick={() => state.promote(q.id)}
+              title={q.short_title && q.short_title !== q.title ? q.title : undefined}
               style={{ padding: '3px 9px', background: 'rgba(201,168,76,0.06)', color: ACCENT_GOLD, border: '1px solid rgba(201,168,76,0.22)', borderRadius: 999, fontFamily: 'inherit', fontSize: 11, fontWeight: 500, cursor: 'pointer', maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
             >
-              ↻ {q.title}
+              ↻ {q.short_title || q.title}
             </button>
           ))}
         </div>
