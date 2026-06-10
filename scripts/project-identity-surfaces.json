@@ -52,6 +52,7 @@
       {"table": "ideas", "column": "project_id", "kind": "fk", "policy": "typed_required"},
       {"table": "inbox", "column": "project_id", "kind": "fk", "policy": "typed_required"},
       {"table": "inbox_events", "column": "suggested_project_id", "kind": "fk", "policy": "typed_required"},
+      {"table": "activity_entries", "column": "project_id", "kind": "fk", "policy": "typed_required", "note": "v77 unified timeline (2026-06-10): derived at write by postActivityEntry() from tasks.project_id (typed proj_*) for task rows; = entity_id for project rows; NULL for unlinked tasks. Whole-picture project feed keys on it."},
       {"table": "project_dependencies", "column": "from_project_id", "kind": "fk", "policy": "typed_required", "note": "Slice D (2026-06-09): re-keyed from (from_slug,to_slug) to typed proj_* FK REFERENCES projects(id) ON UPDATE/DELETE CASCADE; table started empty. Browser wire still emits from_slug via JOIN (dependencies.ts/narratives.ts)."},
       {"table": "project_dependencies", "column": "to_project_id", "kind": "fk", "policy": "typed_required", "note": "Slice D (2026-06-09): typed proj_* FK REFERENCES projects(id) ON UPDATE/DELETE CASCADE; pairs with from_project_id (UNIQUE(from,to), CHECK from<>to)."},
       {"table": "project_state_log", "column": "project_id", "kind": "fk", "policy": "exempt_historical", "note": "append-only state log"},
