@@ -9,6 +9,7 @@ import InlineSelect from '../InlineSelect'
 import { Button } from '../ui/Button'
 import BottomSheet from '../BottomSheet'
 import { useIsMobile } from '../../hooks/useIsMobile'
+import { todayCivil } from '../../lib/time'
 
 interface CreateTaskModalProps {
   open: boolean
@@ -80,13 +81,25 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
   const [assignee, setAssignee] = useState(defaultAssignee)
   const [assigneeTouched, setAssigneeTouched] = useState(false)
   const [projectId, setProjectId] = useState('')
-  const [dueDate, setDueDate] = useState('')
+  // Due date defaults to today's LOCAL civil date (viewer zone). Via todayCivil()
+  // — never a raw new Date().toISOString() (the R20/R21 time-discipline lint
+  // hard-fails that). `dueTouched` lets a user clear/change it without the
+  // open-effect re-stamping today over their choice.
+  const [dueDate, setDueDate] = useState<string>(() => todayCivil())
+  const [dueTouched, setDueTouched] = useState(false)
   const [priority, setPriority] = useState('medium')
 
   // When modal opens, re-derive default assignee if user hasn't touched it
   useEffect(() => {
     if (open && !assigneeTouched) setAssignee(defaultAssignee)
   }, [open, defaultAssignee, assigneeTouched])
+
+  // When the modal (re)opens, default the due date to today unless the user has
+  // edited it this session. Re-stamps today on each fresh open so a modal opened
+  // yesterday and reopened today shows today, not the stale day.
+  useEffect(() => {
+    if (open && !dueTouched) setDueDate(todayCivil())
+  }, [open, dueTouched])
 
   // Autofill suggestions
   const [suggestions, setSuggestions] = useState<AutofillSuggestions>({
@@ -159,7 +172,8 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
     setAssignee(defaultAssignee)
     setAssigneeTouched(false)
     setProjectId('')
-    setDueDate('')
+    setDueDate(todayCivil())
+    setDueTouched(false)
     setPriority('medium')
     setSuggestions({ project: null, priority: null, assignee: null })
     setAcceptedFields(new Set())
@@ -422,7 +436,7 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
               id="task-due-date"
               type="date"
               value={dueDate}
-              onChange={(e) => setDueDate(e.target.value)}
+              onChange={(e) => { setDueDate(e.target.value); setDueTouched(true) }}
               className="w-full rounded-md border px-2.5 py-2 text-sm"
               style={selectStyle}
             />
