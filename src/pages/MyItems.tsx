@@ -26,6 +26,7 @@ import { useUndoToast } from '../components/UndoToast'
 import { useCommitments } from '../hooks/useCommitments'
 import type { CommitmentRow } from '../hooks/useCommitments'
 import { getPersonInfo } from '../data/team'
+import HeartbeatLine from '../components/HeartbeatLine'
 import { formatRelativeTime, formatShortDate, isOverdue } from '../lib/dateUtils'
 import { parseCarriedForward } from '../lib/textUtils'
 import { PATHS } from '../constants/paths'
@@ -660,19 +661,18 @@ export default function MyItems() {
     })
   }, [notifications])
 
-  // Loading state
+  // Loading state — P1-10: branded heartbeat, not a raw spinner.
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center" style={{ minHeight: '60vh' }}>
-        <div
-          className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin"
-          style={{ borderColor: 'var(--gold)', borderTopColor: 'transparent' }}
-        />
+      <div className="flex items-center justify-center" style={{ minHeight: '60vh', opacity: 0.85 }}>
+        <HeartbeatLine variant="slow" color="var(--gold)" strokeWidth={1.5} width={280} height={48} />
       </div>
     )
   }
 
-  const displayName = user?.name || userSlug
+  // S19: never render a raw slug as a name. Prefer the JWT display name, then
+  // the resolved person name; getPersonInfo turns "nick-ingraham" into "Nick".
+  const displayName = user?.name || getPersonInfo(userSlug).name
 
   return (
     <div style={{ minHeight: '100vh' }}>
