@@ -10,11 +10,36 @@ export { TASK_SELECT_COLS, TABLE_PRIVATE_COLS, TASK_PRIVATE_COLS, safeRow } from
 
 export type { Env };
 
-export const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, POST, PUT, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization, Cf-Access-Jwt-Assertion',
-};
+// HUB-4: allowed browser origins for CORS (portal + localhost dev).
+// PB Python scripts are server-side (no Origin header → no CORS restriction).
+// Cloudflare Access already gates browser access to @umn.edu accounts;
+// this is a defence-in-depth origin allowlist for browser CORS.
+const ALLOWED_ORIGINS = new Set([
+  'https://mn-ccore-lab.pages.dev',
+  // localhost variants for wrangler dev / Vite dev server
+  'http://localhost:5173',
+  'http://localhost:8787',
+]);
+
+/**
+ * Return CORS headers for the given request Origin.
+ * Allowed origins are reflected exactly (enables credentials if ever needed).
+ * Unknown origins (or no Origin header, i.e. server-side callers) get '*'.
+ */
+export function corsHeadersFor(requestOrigin?: string | null): Record<string, string> {
+  const allow = requestOrigin && ALLOWED_ORIGINS.has(requestOrigin)
+    ? requestOrigin
+    : '*';
+  return {
+    'Access-Control-Allow-Origin': allow,
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, Cf-Access-Jwt-Assertion',
+  };
+}
+
+// Static fallback (backward-compat for call sites that don't have a request).
+// Server-side programmatic callers (PB Python) send no Origin → '*' is correct.
+export const corsHeaders = corsHeadersFor();
 
 export function json(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {

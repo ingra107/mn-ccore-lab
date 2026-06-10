@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import type { Context, Next } from 'hono';
 import type { Env } from './types';
-import { corsHeaders, json, error, getAuthUser, isPiRequest, getPiEmails, ensureTeamMember, actorSlugFromRequest, logActivity, assertProjectVisible } from './helpers';
+import { corsHeaders, corsHeadersFor, json, error, getAuthUser, isPiRequest, getPiEmails, ensureTeamMember, actorSlugFromRequest, logActivity, assertProjectVisible } from './helpers';
 // Z1.3 (2026-05-28): metadata-first route registration. Every defineRoute({...})
 // below populates ROUTE_REGISTRY; bindRegistryToHono(app) wires them all into
 // the Hono app at the end of the file (before app.notFound). Replaces the
@@ -200,7 +200,13 @@ app.onError((err, c) => {
 // corsHeaders via middleware because every json()/error() helper from
 // ./helpers already includes them.
 // ─────────────────────────────────────────────────────────────────────────────
-app.options('*', () => new Response(null, { status: 204, headers: corsHeaders }));
+// HUB-4: reflect the exact request Origin for allowed browser origins so
+// credentials can be supported if ever needed; unknown origins fall through to
+// '*'. Server-side callers (PB Python, Hermes) send no Origin → '*' is fine.
+app.options('*', (c) => new Response(null, {
+  status: 204,
+  headers: corsHeadersFor(c.req.header('origin')),
+}));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. Test-mode DB swap.
