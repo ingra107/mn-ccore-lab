@@ -3,10 +3,17 @@
  * All functions accept ISO date strings and handle timezone-safe parsing.
  */
 
-// Append T12:00:00 to date-only strings to avoid midnight timezone rollover
+import { parseDbUtc } from './time'
+
+// Parse any incoming date/timestamp string into a viewer-correct Date.
+// Delegates to time.ts:parseDbUtc — the single chokepoint that (a) noon-anchors
+// date-only strings to avoid midnight UTC rollover and (b) treats a bare
+// `YYYY-MM-DD HH:MM:SS` (D1's UTC datetime, no zone suffix) as UTC instead of
+// letting `new Date()` mis-read it as local wall-clock. Date-only behaviour is
+// unchanged from the old length===10 noon shim; bare datetimes are now
+// UTC-correct (previously off by the viewer's offset).
 function safeParse(dateStr: string): Date {
-  if (dateStr.length === 10) return new Date(dateStr + 'T12:00:00')
-  return new Date(dateStr)
+  return parseDbUtc(dateStr)
 }
 
 /** "Mar 25" */
@@ -31,7 +38,10 @@ export function formatFullDate(dateStr: string): string {
 
 /** "just now", "5m ago", "3h ago", "2d ago", or "Mar 25" */
 export function formatRelativeTime(dateStr: string): string {
-  const d = new Date(dateStr)
+  // UTC-correct: a bare D1 `YYYY-MM-DD HH:MM:SS` is UTC. The old `new Date()`
+  // read it as local, so a note posted "just now" from a UTC string showed
+  // "5h ago"/"6h ago" (the viewer's offset) instead of "just now".
+  const d = safeParse(dateStr)
   const now = new Date()
   const diffMs = now.getTime() - d.getTime()
   const diffMin = Math.floor(diffMs / 60000)

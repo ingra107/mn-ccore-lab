@@ -10,6 +10,7 @@ import { useHoverCard } from '../../hooks/useHoverCard'
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 import { getPersonInfo, getMemberBySlug, directors } from '../../data/team'
 import { formatRelativeTime, formatMediumDate, localDateKey } from '../../lib/dateUtils'
+import { parseDbUtc } from '../../lib/time'
 import PageHeader from '../../components/PageHeader'
 import PageContainer from '../../components/PageContainer'
 import EmptyState from '../../components/EmptyState'
@@ -92,11 +93,16 @@ export default function ActivityPage() {
     return m
   }, [allActivity])
 
-  // Group by date
+  // Group by VIEWER-LOCAL date. activity_log.timestamp is a bare D1 UTC string
+  // (`YYYY-MM-DD HH:MM:SS`, no `T`/zone). The old `.split('T')[0]` (a) never
+  // split — the bare format has no `T`, so every row got a unique key and the
+  // day grouping silently broke — and (b) would have grouped by UTC day anyway.
+  // parseDbUtc treats the string as UTC; localDateKey buckets by the viewer's
+  // own calendar day (matching the Today/Yesterday labels just below).
   const grouped = useMemo(() => {
     const map = new Map<string, typeof filtered>()
     for (const item of filtered) {
-      const date = item.timestamp.split('T')[0]
+      const date = localDateKey(parseDbUtc(item.timestamp))
       const list = map.get(date) || []
       list.push(item)
       map.set(date, list)

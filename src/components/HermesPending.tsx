@@ -23,6 +23,7 @@ import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import HermesMark from './HermesMark'
 import { getRealtimeBus } from '../lib/realtimeBus'
+import { parseDbUtc } from '../lib/time'
 
 /** The exact placeholder content the backend writes for a pending Hermes
  *  answer. Match against this — don't re-type the literal at call sites. */
@@ -43,7 +44,10 @@ function formatElapsed(seconds: number): string {
 }
 
 export default function HermesPending({ askedAt }: { askedAt: string }) {
-  const asked = new Date(askedAt).getTime()
+  // askedAt is a bare D1 `created_at` (UTC, no zone). new Date() would read it
+  // as local and make elapsed jump by the viewer's offset; parseDbUtc treats
+  // the bare string as UTC so "thinking for 5s" is actually 5s.
+  const asked = parseDbUtc(askedAt).getTime()
   const [elapsed, setElapsed] = useState(() =>
     Math.max(0, Math.floor((Date.now() - asked) / 1000)),
   )

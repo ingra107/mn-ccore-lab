@@ -33,6 +33,7 @@ import { useAuth } from '../hooks/useAuth'
 import { getPersonInfo } from '../data/team'
 import TypingIndicator from '../components/TypingIndicator'
 import { formatShortDate, formatMediumDate, localDateKey } from '../lib/dateUtils'
+import { formatDbLocal } from '../lib/time'
 import Avatar from '../components/Avatar'
 import InlineSelect from '../components/InlineSelect'
 import InlineAssigneePicker from '../components/InlineAssigneePicker'
@@ -1177,7 +1178,8 @@ function ProjectDetailInner({ project }: InnerProps) {
                     const info = item.author ? getPersonInfo(item.author) : null
                     const isKnown = info && info.name !== 'Unknown'
                     const attributor = isKnown ? info!.name.split(' ')[0] : (item.kind === 'note' ? 'Note' : 'Comment')
-                    const dt = new Date(item.created_at)
+                    // UTC-correct tooltip: created_at is a bare D1 UTC string.
+                    const fullWhen = formatDbLocal(item.created_at, 'datetime')
                     const rel = formatShortDate(item.created_at)
                     return (
                       <div
@@ -1191,7 +1193,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                         }}
                         onMouseEnter={(e) => e.currentTarget.style.background = 'var(--hover-subtle)'}
                         onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-                        title={dt.toLocaleString()}
+                        title={fullWhen}
                       >
                         <span
                           style={{
