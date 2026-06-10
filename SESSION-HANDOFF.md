@@ -1,6 +1,6 @@
 # Session Handoff — 2026-06-10 (continued)
 
-## ✅ Live-review batch 2 + Bug Squasher — DEPLOYED `1ee47a05` on `15362986`
+## ✅ Live-review batch 2 + Bug Squasher — DEPLOYED (final session deploy `b3b3ed1a` on `f5299c7e` after the session-close /simplify + v76 doc sweep)
 
 Nick live-drove the morning's deploys and filed a stream of items; ALL shipped + deployed (11 commits `8afe0fdf`..`15362986`):
 - **Anchored-left + FLUID-RIGHT wide mode** (`.band-anchored-wide`): My Tasks Columns + Projects Pipeline now share the title's left edge AND expand rightward (no h-scroll; Grants was the reference). Root cause: ColumnsView nested a 960px col-main cap inside the band.
