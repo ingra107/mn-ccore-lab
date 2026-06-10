@@ -9,7 +9,7 @@ import { PATHS } from '../../constants/paths'
 import { Pill } from './primitives'
 import {
   ACCENT_GOLD, ACCENT_TEAL, ACCENT_CORAL, ACCENT_ORANGE, ACCENT_GREEN,
-  INK_MUTED, type DailyCounts,
+  type DailyCounts,
 } from './constants'
 import { withAlpha } from '../../lib/taskGrouping'
 
@@ -44,7 +44,9 @@ export function PillStrip({ counts }: { counts: DailyCounts }) {
       >
         <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: healthColor }}>Day score</span>
         <span style={{ fontSize: 18, fontWeight: 700, color: healthColor, fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>{dayScore}</span>
-        <span style={{ fontSize: 11, color: INK_MUTED }}>{counts.overdue} overdue · {counts.stalled} stalled</span>
+        {/* S20: the "X overdue · Y stalled" subtitle was a 3rd restatement of the
+            overdue/stalled pills in the same row — dropped. The score + pills say
+            it once; the full breakdown stays in the hover tooltip + the rail. */}
       </Link>
     </div>
   )

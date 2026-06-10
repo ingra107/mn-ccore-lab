@@ -262,6 +262,16 @@ export default function TodayPage() {
   const isLoading = tasksQuery.isLoading || projectsQuery.isLoading
   const isError = tasksQuery.isError || projectsQuery.isError
   const [completedOpen, setCompletedOpen] = useState(false)
+  // S20: the how-to micro-copy under the H1 is now a one-time dismissible hint
+  // (was permanent above-the-fold clutter). The same instructions also sit
+  // contextually next to "All today's tasks", so dismissing loses nothing.
+  const [howToDismissed, setHowToDismissed] = useState<boolean>(() => {
+    try { return localStorage.getItem('mnccore-today-howto-dismissed') === '1' } catch { return false }
+  })
+  const dismissHowTo = useCallback(() => {
+    setHowToDismissed(true)
+    try { localStorage.setItem('mnccore-today-howto-dismissed', '1') } catch { /* ok */ }
+  }, [])
 
   if (isError) {
     return (
@@ -313,9 +323,21 @@ export default function TodayPage() {
           <HeartbeatLine width={60} height={14} color={ACCENT_GOLD} variant="static" />
           <span style={{ fontSize: 13, color: INK_MUTED }}>{formatTodayDate()}</span>
         </div>
-        <div style={{ fontSize: 13, color: INK_DIM, marginBottom: 16 }}>
-          Click a task to expand · 📌 or drag ⋮⋮ to plan · click a meeting for notes.
-        </div>
+        {!howToDismissed && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: INK_DIM, marginBottom: 16 }}>
+            <span style={{ flex: 1, minWidth: 0 }}>
+              Click a task to expand · 📌 or drag ⋮⋮ to plan · click a meeting for notes.
+            </span>
+            <button
+              type="button"
+              onClick={dismissHowTo}
+              aria-label="Dismiss tip"
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: INK_DIM, fontSize: 16, lineHeight: 1, padding: '2px 6px', flexShrink: 0, opacity: 0.85 }}
+            >
+              ×
+            </button>
+          </div>
+        )}
 
         <PillStrip counts={counts} />
 

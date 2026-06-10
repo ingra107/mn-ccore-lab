@@ -36,7 +36,10 @@ export function RightNow({ task, project, queueTasks, state }: { task: TaskRow |
       <div style={{ display: 'flex', gap: 14, padding: '12px 18px', alignItems: 'center', flexWrap: 'wrap' }}>
         <span style={{ width: 8, height: 8, borderRadius: '50%', background: ACCENT_GOLD, boxShadow: `0 0 8px ${ACCENT_GOLD}`, animation: 'b2pulse 1.6s ease-in-out infinite', flexShrink: 0 }} />
         <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: ACCENT_GOLD, flexShrink: 0 }}>Right now</span>
-        <span style={{ fontSize: 14, fontWeight: 600, color: '#fff', letterSpacing: '-0.01em', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{task.title}</span>
+        {/* S20: hero title wraps to 2 lines (was single-line ellipsis that
+            truncated while the full task rendered below) + uses short_title
+            per Rule 68 (curated concise title; full title on hover). */}
+        <span title={task.title} style={{ fontSize: 14, fontWeight: 600, color: '#fff', letterSpacing: '-0.01em', flex: 1, minWidth: 0, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{task.short_title || task.title}</span>
         {project && (
           <Link to={PATHS.project(project.slug)} style={{ fontSize: 11, color: ACCENT_GOLD, fontWeight: 500, flexShrink: 0, textDecoration: 'none' }}>{project.name}</Link>
         )}

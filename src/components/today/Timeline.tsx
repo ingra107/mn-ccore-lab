@@ -399,9 +399,15 @@ export function Timeline({ events, tasks, state, projectsByPid, expandedId, onEx
           </div>
         )}
       </div>
-      <div style={{ marginTop: 8 }}>
-        <DropZone slot="strip" label="drop a task above to plan it for later today" onDropTask={onDropTask} />
-      </div>
+      {/* S20: only show the trailing drop affordance when the strip already
+          has tasks (an "add another" cue below the list). When the strip is
+          empty its own dashed band already invites a drop — a second stacked
+          drop-zone hint saying the same thing is redundant clutter. */}
+      {plannedStripTasks.length > 0 && (
+        <div style={{ marginTop: 8 }}>
+          <DropZone slot="strip" label="drop a task above to plan it for later today" onDropTask={onDropTask} />
+        </div>
+      )}
     </section>
   )
 }
