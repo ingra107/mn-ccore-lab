@@ -2,9 +2,10 @@ import { useState, useMemo, useRef, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
-  Brain, Mic, Upload, FileText, CheckCircle2, Clock, ArrowRight,
+  Brain, Upload, FileText, CheckCircle2, Clock, ArrowRight,
   Sparkles, Users, Search,
 } from 'lucide-react'
+import { useQueryClient } from '@tanstack/react-query'
 import { staggerContainer, staggerItem } from '../../lib/animations'
 import PageHeader from '../../components/PageHeader'
 import PageContainer from '../../components/PageContainer'
@@ -128,8 +129,8 @@ export default function MeetingNotesPage() {
             className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
             style={{ backgroundColor: 'var(--teal-solid)', color: 'var(--ink-bright, #fff)', border: 'none', cursor: 'pointer' }}
           >
-            <Upload size={16} />
-            Upload Audio
+            <FileText size={16} />
+            Add Transcript
           </button>
         }
       />
@@ -233,10 +234,11 @@ export default function MeetingNotesPage() {
 // ── Transcript Modal ─────────────────────────────────────────
 
 function TranscriptModal({ onClose, meetings }: { onClose: () => void; meetings: { id: string; title: string; date: string }[] }) {
-  const [mode, setMode] = useState<'audio' | 'transcript'>('transcript')
   const [transcript, setTranscript] = useState('')
   const [meetingId, setMeetingId] = useState('')
-  const { showUndo } = useUndoToast()
+  const [saving, setSaving] = useState(false)
+  const { showSuccess } = useUndoToast()
+  const queryClient = useQueryClient()
   const modalRef = useRef<HTMLDivElement>(null)
 
   // Focus trap + Escape
@@ -255,10 +257,28 @@ function TranscriptModal({ onClose, meetings }: { onClose: () => void; meetings:
     return () => document.removeEventListener('keydown', handler)
   }, [onClose])
 
-  const handleProcess = () => {
-    if (!transcript.trim()) return
-    // Transcript AI processing is not yet available. Show informational toast.
-    showUndo('Transcript processing coming soon — AI analysis not yet wired up', () => {})
+  // P1-5: AI processing isn't wired yet, so the honest, useful action is to
+  // SAVE the pasted transcript as the meeting's notes. Optimistic close.
+  const handleProcess = async () => {
+    if (!transcript.trim() || !meetingId || saving) return
+    setSaving(true)
+    try {
+      const res = await fetch(`/api/meetings/${meetingId}/notes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notes: transcript.trim() }),
+      })
+      if (!res.ok) throw new Error(`/api/meetings/${meetingId}/notes ${res.status}`)
+      queryClient.invalidateQueries({ queryKey: ['meeting', meetingId] })
+      queryClient.invalidateQueries({ queryKey: ['meetings'] })
+      queryClient.invalidateQueries({ queryKey: ['activity'] })
+      showSuccess('Transcript saved to meeting notes')
+      onClose()
+    } catch (err) {
+      console.error('Save transcript failed:', err)
+      showSuccess('Saving transcript failed — please try again.')
+      setSaving(false)
+    }
   }
 
   return (
@@ -275,40 +295,13 @@ function TranscriptModal({ onClose, meetings }: { onClose: () => void; meetings:
         </div>
 
         <div className="p-5 flex flex-col gap-4">
-          {/* Mode tabs */}
-          <div className="flex gap-2">
-            <button
-              onClick={() => setMode('transcript')}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm border"
-              style={{
-                borderColor: mode === 'transcript' ? 'var(--teal)' : 'var(--border-subtle)',
-                backgroundColor: mode === 'transcript' ? 'var(--teal-active)' : 'transparent',
-                color: mode === 'transcript' ? 'var(--teal)' : 'var(--slate)',
-                cursor: 'pointer',
-              }}
-            >
-              <FileText size={14} />
-              Paste Transcript
-            </button>
-            <button
-              onClick={() => setMode('audio')}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm border"
-              style={{
-                borderColor: mode === 'audio' ? 'var(--teal)' : 'var(--border-subtle)',
-                backgroundColor: mode === 'audio' ? 'var(--teal-active)' : 'transparent',
-                color: mode === 'audio' ? 'var(--teal)' : 'var(--slate)',
-                cursor: 'pointer',
-              }}
-            >
-              <Mic size={14} />
-              Upload Audio
-            </button>
-          </div>
+          {/* P1-5: Audio tab removed (AI not wired). Pasting a transcript saves
+              it as the meeting's notes — the honest, useful action. */}
 
-          {/* Link to meeting */}
+          {/* Link to meeting — required, since this is the save target */}
           <div>
             <label htmlFor="meeting-notes-link" className="block text-xs font-medium mb-1" style={{ color: 'var(--slate)' }}>
-              Link to Meeting (optional)
+              Link to Meeting
             </label>
             <InlineSelect
               value={meetingId}
@@ -323,36 +316,19 @@ function TranscriptModal({ onClose, meetings }: { onClose: () => void; meetings:
           </div>
 
           {/* Input area */}
-          {mode === 'transcript' ? (
-            <div>
-              <label className="block text-xs font-medium mb-1" style={{ color: 'var(--slate)' }}>
-                Paste Transcript
-              </label>
-              <textarea
-                value={transcript}
-                onChange={(e) => setTranscript(e.target.value)}
-                placeholder="Paste your meeting transcript here..."
-                rows={8}
-                className="w-full rounded-md border px-3 py-2 text-sm outline-none resize-none"
-                style={{ borderColor: 'var(--border-subtle)' }}
-              />
-            </div>
-          ) : (
-            /* Audio upload is not yet implemented — muted drop zone with clear label */
-            <div
-              aria-disabled="true"
-              className="border-2 border-dashed rounded-lg p-8 text-center"
-              style={{ borderColor: 'var(--border-subtle)', opacity: 0.6, cursor: 'not-allowed' }}
-            >
-              <Upload size={32} style={{ color: 'var(--slate)', opacity: 0.75, margin: '0 auto var(--sp-sm)' }} />
-              <p className="text-sm font-medium" style={{ color: 'var(--slate)' }}>
-                Audio upload coming soon
-              </p>
-              <p className="text-[10px] mt-1" style={{ color: 'var(--slate)', opacity: 0.75 }}>
-                Use "Paste Transcript" above for now
-              </p>
-            </div>
-          )}
+          <div>
+            <label className="block text-xs font-medium mb-1" style={{ color: 'var(--slate)' }}>
+              Paste Transcript
+            </label>
+            <textarea
+              value={transcript}
+              onChange={(e) => setTranscript(e.target.value)}
+              placeholder="Paste your meeting transcript here..."
+              rows={8}
+              className="w-full rounded-md border px-3 py-2 text-sm outline-none resize-none"
+              style={{ borderColor: 'var(--border-subtle)' }}
+            />
+          </div>
 
           {/* Submit */}
           <div className="flex justify-end gap-2">
@@ -361,12 +337,12 @@ function TranscriptModal({ onClose, meetings }: { onClose: () => void; meetings:
             </button>
             <button
               onClick={handleProcess}
-              disabled={!transcript.trim()}
+              disabled={!transcript.trim() || !meetingId || saving}
               className="px-4 py-2 rounded-md text-sm font-medium flex items-center gap-2"
-              style={{ backgroundColor: 'var(--teal-solid)', color: 'var(--ink-bright, #fff)', cursor: 'pointer', border: 'none', opacity: !transcript.trim() ? 0.85 : 1 }}
+              style={{ backgroundColor: 'var(--teal-solid)', color: 'var(--ink-bright, #fff)', cursor: (!transcript.trim() || !meetingId || saving) ? 'not-allowed' : 'pointer', border: 'none', opacity: (!transcript.trim() || !meetingId || saving) ? 0.85 : 1 }}
             >
-              <Brain size={14} />
-              Process with AI
+              <FileText size={14} />
+              {saving ? 'Saving…' : 'Save Transcript'}
             </button>
           </div>
         </div>
