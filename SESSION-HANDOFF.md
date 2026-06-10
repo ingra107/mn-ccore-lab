@@ -1,4 +1,12 @@
-# Session Handoff — 2026-06-10 (PM, arc 2) — TODAY-COCKPIT IA CONSOLIDATION + pb-schema 0.4.0
+# Session Handoff — 2026-06-10 (PM session, arcs 2-4) — IA CONSOLIDATION · pb-schema 0.4.0 · FOLDER LINKS · email_link
+> One PM session, four arcs (newest first below): arc 4 = create-409 incident+hotfix + email_link-at-create ·
+> arc 3 = folder-link fix + uniform chips · arc 2 = IA-1 daily_plans retirement + 0.4.0 adoption + HUB-7 ·
+> arc 1 = activity_entries Phase 1 (own section further down). Session-close ran at end: /simplify pass
+> committed `dc697fbb` (shared activityRender module, INSERT…RETURNING, project-feed index fix, gmailThreadUrl
+> helper); 3 deferred refactors → PB `Docs/tech-debt-backlog.md`; doc sweep + 2 new auto-memories
+> (local-launch debugging, contract-change payload sweep). Final state: **790/790 API tests · 231 routes ·
+> schema v77 · live deploy `a4f0ee1c`** (the simplify+docs commits are behavior-identical, not yet deployed —
+> fold into the next deploy).
 
 ## ✅ IA consolidation EXECUTED + pb-schema 0.4.0 adopted (same session as Phase 1 below)
 

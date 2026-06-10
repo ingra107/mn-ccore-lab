@@ -51,20 +51,21 @@ server-side via X-API-Key + `REQUIRE_AUTH` + JWT verify.
 | collaboration_network | dynamic | Inter-member collaboration links |
 | tasks | 601 | Unified task system (+ key_link_1/2/3 + _desc columns, schema v37; composite index `(completed, due_date, created_at DESC)` v46). |
 | ideas | dynamic | Research ideas board with voting |
-| task_comments | dynamic | Per-task discussion threads |
-| task_updates | dynamic | Per-task notes/progress entries (schema v36) |
+| activity_entries | dynamic | **v77 unified timeline (2026-06-10)** — ALL task/project human messages + completions/system events; ONE write path `postActivityEntry()` (CLAUDE.md Rule 70) |
+| task_comments | FROZEN (0 rows) | direct writes dead 2026-06-10 — old endpoints are projections over activity_entries; physical drop = Phase 2 |
+| task_updates | FROZEN (3 rows backfilled) | direct writes dead 2026-06-10 — projections over activity_entries; physical drop = Phase 2 |
 | lab_settings | 7 | Key-value settings store (includes `pi_emails` JSON, schema v44) |
 | workflow_templates | 3+ | Custom project stage templates |
 | email_drafts | dynamic | Email draft status synced from brain.db (schema v37) |
 | file_activity_daily | dynamic | Aggregated daily file activity from brain.db (schema v37) |
 | daily_plans | RETIRED 2026-06-10 | code path removed (IA-1; plan = tasks.planned_for/plan_slot/plan_rank); table drop pending 24h dogfood (decision: PB `Context/Decisions/2026-06-10-daily-plans-retirement.md`) |
 | pomodoro_sessions | dynamic | Focus sessions synced from brain.db |
-| daily_reflections | dynamic | End-of-day reflections |
+| daily_reflections | RETIRED 2026-06-10 | retired with daily_plans (1 row; drop pending the same 24h dogfood) |
 | dispatch_queue | dynamic | Claude action items from Hub |
 | pb_sessions | dynamic | Claude Code session history synced from brain.db |
 | inbox | dynamic | Quick Capture entries (FAB + Ctrl+I); synced nightly to PB Inbox/*.md (Phase 32) |
 
-## API Endpoints (238 registered routes via Hono v4.12 — count pinned by the route-contract snapshot test)
+## API Endpoints (231 registered routes via Hono v4.12 — count pinned by the route-contract snapshot test; 239→231 on the 2026-06-10 daily-plan retirement, +1 project activity)
 
 > Route table is `api/index.ts` (Hono declarative). Route handlers live in
 > `api/routes/*.ts` and are untouched by the Hono migration. Middleware
@@ -95,10 +96,11 @@ server-side via X-API-Key + `REQUIRE_AUTH` + JWT verify.
 - GET /api/tasks (7 filters, `include_deleted=1` surfaces soft-deletes for sync)
 - POST /api/tasks (accepts `key_link_1/_desc/2/3` + `status`), POST /api/tasks/:id, POST /api/tasks/:id/status
 - POST /api/tasks/:id/acknowledge (accepts `body.slug` override for server-side / API-key callers)
-- GET /api/tasks/:id/comments, POST /api/tasks/:id/comments
-- **GET /api/task-comments/recent?since=&limit=** — bulk fetch for brain.db mirror sync (Phase 35)
-- GET /api/tasks/:id/updates, POST /api/tasks/:id/updates (notes/progress entries)
-- GET /api/tasks/:id/activity
+- GET /api/tasks/:id/comments, POST /api/tasks/:id/comments — **projection over activity_entries since v77** (shape byte-preserved; writes via postActivityEntry)
+- **GET /api/task-comments/recent?since=&since_id=&limit=** — projection; compound (created_at,id) cursor since 2026-06-10 (PB collector adopted)
+- GET /api/tasks/:id/updates, POST /api/tasks/:id/updates — projection over activity_entries (kind='update')
+- GET /api/tasks/:id/activity — **the unified v77 feed** (all kinds, visibility-gated, newest-first)
+- GET /api/projects/:slug/activity — whole-picture project feed (project rows ∪ task rows by project_id)
 - POST /api/tasks/sync-bulk (brain.db bulk load)
 - blocked_by field for task dependencies
 
@@ -356,7 +358,7 @@ Discovered during the 2026-04-17/18 deep-audit. Canonical, non-obvious patterns 
 - Task URL params use `id` only (no slug concept on tasks).
 
 ### Single-entity GET endpoints
-- **There is no `GET /api/tasks/:id`.** Only list endpoint + sub-resources (`/:id/comments`, `/:id/files`, `/:id/updates`, `/:id/activity`, `/:id/subtasks`, `/:id/handoffs`). Clients fetch the full list and filter by id. Deep-audit harness has `apiGetTaskFromList()` to mirror this.
+- **`GET /api/tasks/:id` EXISTS** (added post-mechanic-I5; registered after the `/:id/<sub>` routes so Hono matches specifics first). Sub-resources: `/:id/comments`, `/:id/files`, `/:id/updates`, `/:id/activity`, `/:id/subtasks`, `/:id/handoffs`. The deep-audit harness `apiGetTaskFromList()` predates it and still list-filters — fine.
 - **There is no `GET /api/projects/:slug`** either — list + sub-resources only.
 - **Questions:** answers are embedded inside `GET /api/questions/:id` (as `data.answers[]`). **`GET /api/questions/:id/answers`** also exists as a dedicated list endpoint (Phase 35).
 
@@ -416,7 +418,7 @@ A few endpoints break the `{ data: ... }` convention. Noted here so client code 
 - `POST /api/digest/:id/status` (not `/api/digest/:id`) toggles save/dismiss.
 - `/api/team-members` does **not** exist — use `/api/team`.
 - `/api/calendar` does **not** exist — use `/api/calendar/events`.
-- `/api/pomodoro` does **not** exist — use `/api/pb/pomodoro/start` and `/complete`.
+- `/api/pomodoro` does **not** exist; `/api/pb/pomodoro/start`+`/complete` were RETIRED 2026-06-10 (Daily Plan substrate — their only caller was the PBSector timer). Pomodoro telemetry still flows via `POST /api/pb/sessions`/`/bulk` (PB push) + `GET /api/pb/sessions/stats` (TodayPage reads).
 - `/api/dispatch` does **not** exist — use `/api/pb/dispatch/pending` + `/api/pb/dispatch/add` + `/complete`.
 - `/api/sessions` does **not** exist — use `/api/pb/sessions`.
 - `/api/grants` is **read + status only**. POST /api/grants does not exist; grants flow in via brain.db sync.
