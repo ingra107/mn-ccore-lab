@@ -439,7 +439,7 @@ function UpcomingCard({ deadlines, overdue }: { deadlines: TaskRow[]; overdue: T
   ].slice(0, 5)
 
   return (
-    <CompactCard title="Upcoming" icon={Calendar} viewAllTo="/deadlines" viewAllLabel="All deadlines">
+    <CompactCard title="Upcoming" icon={Calendar} viewAllTo={PATHS.deadlines} viewAllLabel="All deadlines">
       {items.length === 0 ? (
         <p style={{ fontSize: 'var(--text-label)', color: 'var(--slate)', opacity: 0.75, textAlign: 'center', padding: '12px 0' }}>
           No upcoming deadlines
@@ -974,9 +974,9 @@ export default function PersonalPage() {
       {/* Quick Actions + Recently Viewed */}
       <div className="flex items-center gap-3 mt-4 flex-wrap">
         {([
-          { label: 'New Task', to: '/tasks?create=true', icon: CheckSquare, color: 'var(--teal)' },
-          { label: 'Submit Idea', to: '/ideas?create=true', icon: Lightbulb, color: 'var(--gold)' },
-          { label: 'Ask a Question', to: '/ask?create=true', icon: User, color: 'var(--slate)' },
+          { label: 'New Task', to: `${PATHS.tasks}?create=true`, icon: CheckSquare, color: 'var(--teal)' },
+          { label: 'Submit Idea', to: `${PATHS.ideas}?create=true`, icon: Lightbulb, color: 'var(--gold)' },
+          { label: 'Ask a Question', to: `${PATHS.ask}?create=true`, icon: User, color: 'var(--slate)' },
         ]).map((a) => {
           const Icon = a.icon
           return (
