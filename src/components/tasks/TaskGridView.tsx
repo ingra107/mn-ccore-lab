@@ -1472,18 +1472,15 @@ function TaskGridRow({
 // ── Key Link Icons ──────────────────────────────────────────
 
 function KeyLinkIcon({ url, label }: { url: string; label?: string | null }) {
-  const [copied, setCopied] = useState(false)
   const { launch } = useProtocolLaunch()
 
   const { href, Icon, typeLabel, isHttp } = classifyUrl(url)
 
   // Non-http links fire through the ONE protocol-launch chokepoint
-  // (clipboard backup + toast). Was a local duplicate of the same logic.
+  // (clipboard backup + toast — that toast is the single feedback path).
   const handleNonHttpClick = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    setCopied(true)
-    setTimeout(() => setCopied(false), 1500)
     void launch(href, {
       copyText: url,
       successMessage: `Opening ${typeLabel.toLowerCase()}… (path copied as backup)`,
@@ -1518,17 +1515,17 @@ function KeyLinkIcon({ url, label }: { url: string; label?: string | null }) {
           background: 'none',
           border: 'none',
           cursor: 'pointer',
-          color: copied ? 'var(--green)' : 'var(--slate)',
-          opacity: copied ? 1 : 0.85,
+          color: 'var(--slate)',
+          opacity: 0.85,
           transition: 'opacity var(--transition-fast) var(--ease-out), color var(--transition-fast) var(--ease-out)',
           display: 'inline-flex',
           alignItems: 'center',
           padding: '1px',
         }}
-        onMouseEnter={(e) => { if (!copied) e.currentTarget.style.opacity = '0.8' }}
-        onMouseLeave={(e) => { if (!copied) e.currentTarget.style.opacity = '0.35' }}
+        onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.8' }}
+        onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.35' }}
       >
-        {copied ? <Check size={11} /> : <Clipboard size={11} />}
+        <Clipboard size={11} />
       </button>
     </span>
   )

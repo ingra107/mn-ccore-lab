@@ -72,6 +72,19 @@ function makeEnv(fx: Partial<Fixtures> = {}) {
     return null
   }
 
+  // Shared insert used by both the INSERT...run() path (backfill / OR IGNORE) and
+  // the INSERT...RETURNING *.first() path (normal write). Returns the new row.
+  function insertActivityEntry(binds: any[]): AERow {
+    const [id, entity_type, entity_id, project_id, kind, visibility, actor_slug, body, mentions_json, update_type, metadata_json, source_table, source_id] = binds
+    const row: AERow = {
+      id, entity_type, entity_id, project_id, kind, visibility, actor_slug, body,
+      mentions_json, update_type, metadata_json, source_table, source_id,
+      created_at: `2026-06-10 00:00:0${clock++}`,
+    }
+    ae.push(row)
+    return row
+  }
+
   function applyVisibilityFilter(rows: AERow[], sql: string, binds: unknown[]): AERow[] {
     // The gate clause is one of:
     //   1=1                                  (PI/API-key — all)
@@ -137,6 +150,12 @@ function makeEnv(fx: Partial<Fixtures> = {}) {
               const p = Object.values(projects).find(x => x.id === c)!
               return { id: p.id, slug: p.slug, category: p.category }
             }
+            // Non-source insert path: `INSERT INTO activity_entries ... RETURNING *`
+            // resolved via .first() (real D1 supports RETURNING; mirror the run()
+            // insert and return the new row). No conflict possible on this path.
+            if (/INSERT INTO activity_entries/.test(sql) && /RETURNING \*/.test(sql)) {
+              return insertActivityEntry(binds as any[])
+            }
             if (/SELECT \* FROM activity_entries WHERE id = \?/.test(sql)) {
               return ae.find(r => r.id === binds[0]) ?? null
             }
@@ -156,12 +175,12 @@ function makeEnv(fx: Partial<Fixtures> = {}) {
               rows = [...rows].sort((a, b) => (a.created_at < b.created_at ? 1 : a.created_at > b.created_at ? -1 : (a.id < b.id ? 1 : -1)))
               return { results: rows.map(r => projectRowForSql(sql, r)) }
             }
-            // Project feed: (entity_type='project' AND entity_id=?) OR (entity_type='task' AND project_id=?)
-            if (/FROM activity_entries/.test(sql) && /entity_type = 'project' AND entity_id = \?/.test(sql) && /entity_type = 'task' AND project_id = \?/.test(sql)) {
+            // Project feed: WHERE project_id = ?  — single-predicate (project-entity
+            // rows store project_id = entity_id, so this captures both project-level
+            // rows AND task rows rolled up by project_id).
+            if (/FROM activity_entries/.test(sql) && /WHERE project_id = \?/.test(sql)) {
               const projId = binds[0] as string
-              let rows = ae.filter(r =>
-                (r.entity_type === 'project' && r.entity_id === projId) ||
-                (r.entity_type === 'task' && r.project_id === projId))
+              let rows = ae.filter(r => r.project_id === projId)
               rows = applyVisibilityFilter(rows, sql, binds)
               rows = [...rows].sort((a, b) => (a.created_at < b.created_at ? 1 : a.created_at > b.created_at ? -1 : (a.id < b.id ? 1 : -1)))
               return { results: rows.map(r => projectRowForSql(sql, r)) }
@@ -174,17 +193,14 @@ function makeEnv(fx: Partial<Fixtures> = {}) {
           },
           run: async () => {
             if (/INSERT( OR IGNORE)? INTO activity_entries/.test(sql)) {
-              const [id, entity_type, entity_id, project_id, kind, visibility, actor_slug, body, mentions_json, update_type, metadata_json, source_table, source_id] = binds as any[]
+              const sourceTable = (binds as any[])[11]
+              const sourceId = (binds as any[])[12]
               // INSERT OR IGNORE: skip on (source_table, source_id) conflict.
-              if (/OR IGNORE/.test(sql) && source_table != null) {
-                const dup = ae.find(r => r.source_table === source_table && r.source_id === source_id)
+              if (/OR IGNORE/.test(sql) && sourceTable != null) {
+                const dup = ae.find(r => r.source_table === sourceTable && r.source_id === sourceId)
                 if (dup) return { meta: { changes: 0 } }
               }
-              ae.push({
-                id, entity_type, entity_id, project_id, kind, visibility, actor_slug, body,
-                mentions_json, update_type, metadata_json, source_table, source_id,
-                created_at: `2026-06-10 00:00:0${clock++}`,
-              })
+              insertActivityEntry(binds as any[])
               return { meta: { changes: 1 } }
             }
             if (/INSERT INTO notifications/.test(sql)) { notifications.push({ binds: [...binds] }); return { meta: {} } }

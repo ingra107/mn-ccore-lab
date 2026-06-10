@@ -34,6 +34,13 @@ import {
 
 export type EntityType = 'task' | 'project';
 
+// Hermes trigger: @hermes / @claude. DETECT_RE gates dispatch (word-boundary so
+// '@claudette' doesn't fire); STRIP_RE removes the mention from the AI prompt
+// (global, no word-boundary so trailing punctuation goes too). Module-scope so
+// the literals aren't recompiled per write.
+const HERMES_DETECT_RE = /@(hermes|claude)\b/i;
+const HERMES_STRIP_RE = /@(hermes|claude)/gi;
+
 export interface PostActivityEntryInput {
   env: Env;
   /** The authenticated caller (drives @mention notification title + Hermes requested_by). */
@@ -178,39 +185,41 @@ export async function postActivityEntry(input: PostActivityEntryInput): Promise<
 
   // ── insert (idempotent when a backfill source is provided) ─────────────────
   const id = generateId(); // 'ae_'-prefix is conceptual; generateId() mints a hex id (matches comments/updates legacy ids)
-  const insertSql = sourceTable
-    ? `INSERT OR IGNORE INTO activity_entries
-         (id, entity_type, entity_id, project_id, kind, visibility, actor_slug, body, mentions_json, update_type, metadata_json, source_table, source_id, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`
-    : `INSERT INTO activity_entries
-         (id, entity_type, entity_id, project_id, kind, visibility, actor_slug, body, mentions_json, update_type, metadata_json, source_table, source_id, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`;
-  await env.DB.prepare(insertSql)
-    .bind(
-      id,
-      entityType,
-      entityId,
-      projectId,
-      kind,
-      visibility,
-      actorSlug,
-      body,
-      mentionsJson,
-      updateType,
-      metadata ? JSON.stringify(metadata) : null,
-      sourceTable,
-      sourceId,
-    )
-    .run();
+  const cols = `(id, entity_type, entity_id, project_id, kind, visibility, actor_slug, body, mentions_json, update_type, metadata_json, source_table, source_id, created_at)`;
+  const vals = `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`;
+  const binds = [
+    id,
+    entityType,
+    entityId,
+    projectId,
+    kind,
+    visibility,
+    actorSlug,
+    body,
+    mentionsJson,
+    updateType,
+    metadata ? JSON.stringify(metadata) : null,
+    sourceTable,
+    sourceId,
+  ] as const;
 
-  // Resolve the canonical row. With a backfill source, INSERT OR IGNORE may have
-  // skipped on a UNIQUE(source_table, source_id) conflict — return the existing
-  // row (idempotency: a re-run never duplicates and yields the original row).
-  let row = await env.DB.prepare('SELECT * FROM activity_entries WHERE id = ?').bind(id).first<Record<string, unknown>>();
-  if (!row && sourceTable) {
-    row = await env.DB.prepare(
-      'SELECT * FROM activity_entries WHERE source_table = ? AND source_id = ? LIMIT 1'
-    ).bind(sourceTable, sourceId).first<Record<string, unknown>>();
+  let row: Record<string, unknown> | null;
+  if (sourceTable) {
+    // Backfill path: INSERT OR IGNORE may skip on a UNIQUE(source_table,
+    // source_id) conflict, where RETURNING yields nothing — so insert, then
+    // resolve the canonical row (the freshly-inserted one, or the pre-existing
+    // one on conflict). Idempotency: a re-run never duplicates.
+    await env.DB.prepare(`INSERT OR IGNORE INTO activity_entries ${cols} ${vals}`).bind(...binds).run();
+    row = await env.DB.prepare('SELECT * FROM activity_entries WHERE id = ?').bind(id).first<Record<string, unknown>>();
+    if (!row) {
+      row = await env.DB.prepare(
+        'SELECT * FROM activity_entries WHERE source_table = ? AND source_id = ? LIMIT 1'
+      ).bind(sourceTable, sourceId).first<Record<string, unknown>>();
+    }
+  } else {
+    // Normal path: no conflict possible, so RETURNING * gives the canonical row
+    // in one round trip.
+    row = await env.DB.prepare(`INSERT INTO activity_entries ${cols} ${vals} RETURNING *`).bind(...binds).first<Record<string, unknown>>();
   }
 
   // ── side effects: @mention notifications + Hermes dispatch ──────────────────
@@ -243,7 +252,7 @@ export async function postActivityEntry(input: PostActivityEntryInput): Promise<
     // (kind='comment', actor_slug='claude-ai'). When the triggering entry is
     // author-only (@me), the placeholder INHERITS visibility='author' so the AI
     // reply can't leak the note to the team.
-    if (/@(hermes|claude)\b/i.test(body)) {
+    if (HERMES_DETECT_RE.test(body)) {
       try {
         await dispatchHermes(env, {
           entityType,
@@ -312,7 +321,7 @@ async function dispatchHermes(
     requestedBy: string;
   },
 ): Promise<void> {
-  const aiPrompt = args.body.replace(/@(hermes|claude)/gi, '').trim();
+  const aiPrompt = args.body.replace(HERMES_STRIP_RE, '').trim();
   if (aiPrompt.length <= 5) return;
 
   // source_type mirrors the legacy task-comment Hermes path so the listener

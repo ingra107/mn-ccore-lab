@@ -37,6 +37,14 @@ async function guardTaskProject(
   return { block: null, projectId: task.project_id ?? null };
 }
 
+// PB §2D (2026-06-10): derive a task's Gmail-thread deep link from its
+// source_thread_id at create time. The exact URL string is a PB contract —
+// backfill_email_links.py + invariant I40 pin this format — so keep both task
+// mint paths (handleCreateTask, handleMobileTasksToHub) producing it identically.
+function gmailThreadUrl(threadId: string | null | undefined): string | null {
+  return threadId ? `https://mail.google.com/mail/u/1/#inbox/${threadId}` : null;
+}
+
 // GET /api/tasks/overdue-count?assignee= — lightweight count for sidebar badge
 export async function handleOverdueCount(url: URL, env: Env): Promise<Response> {
   const assignee = url.searchParams.get('assignee')
@@ -514,9 +522,7 @@ export async function handleCreateTask(request: Request, user: AuthUser, env: En
       // PB §2D (2026-06-10): every source_thread_id-bearing task is minted
       // HERE (Apps Script "Email Tasks") — derive the Gmail-thread link at
       // create so PB's backfill_email_links.py + invariant I40 can retire.
-      email_link: body.source_thread_id
-        ? `https://mail.google.com/mail/u/1/#inbox/${body.source_thread_id}`
-        : null,
+      email_link: gmailThreadUrl(body.source_thread_id),
     },
     route: 'handleCreateTask',
     user,
@@ -1395,9 +1401,7 @@ export async function handleMobileTasksToHub(request: Request, user: AuthUser, e
           source_thread_id: pwaTask.source_thread_id ?? null,
           related_message_ids: pwaTask.related_message_ids ?? null,
           // PB §2D: derive the Gmail-thread link at create (see handleCreateTask).
-          email_link: pwaTask.source_thread_id
-            ? `https://mail.google.com/mail/u/1/#inbox/${pwaTask.source_thread_id}`
-            : null,
+          email_link: gmailThreadUrl(pwaTask.source_thread_id),
         },
         route: 'handleMobileTasksToHub',
         user,

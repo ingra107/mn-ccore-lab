@@ -29,10 +29,8 @@ import {
   AlertTriangle,
   CheckCircle,
   HelpCircle,
-  Terminal,
   Activity as ActivityIcon,
   ClipboardList,
-  Lock,
 } from 'lucide-react'
 import {
   useProjectUpdates,
@@ -60,6 +58,7 @@ import EmptyState from '../EmptyState'
 import type { Project } from '../../data/types'
 import type { StoredKind, UpdateType } from '../../../shared/activityKinds'
 import { deriveRenderKind } from '../../../shared/activityKinds'
+import { UPDATE_TYPE_CONFIG, AuthorOnlyBadge, EntryTime } from '../activity/activityRender'
 
 // ── Unified feed row shape (activity_entries) ─────────────────────────────────
 
@@ -537,14 +536,6 @@ function ActionItemRowView({ action, onToggle }: { action: ActionItemRow; onTogg
 // Task rows get a small task glyph + an entity link so you can navigate to the
 // task that generated the chatter.
 
-const UNIFIED_UPDATE_TYPE: Record<string, { icon: typeof TrendingUp; color: string; bg: string; label: string }> = {
-  progress: { icon: TrendingUp,    color: 'var(--teal)',   bg: 'var(--teal-active)',     label: 'Progress' },
-  blocker:  { icon: AlertTriangle, color: 'var(--maroon)', bg: 'rgba(122,0,25,0.1)',     label: 'Blocker' },
-  result:   { icon: CheckCircle,   color: 'var(--green)',  bg: 'rgba(34,197,94,0.1)',    label: 'Result' },
-  question: { icon: HelpCircle,    color: 'var(--gold)',   bg: 'var(--gold-active)',      label: 'Question' },
-  session:  { icon: Terminal,      color: 'var(--slate)',  bg: 'rgba(100,116,139,0.08)', label: 'Session' },
-}
-
 function UnifiedEntryItem({ entry }: { entry: UnifiedEntryRow }) {
   const isTask = entry.entity_type === 'task'
   const isHermes = entry.actor_slug === 'claude-ai'
@@ -560,7 +551,7 @@ function UnifiedEntryItem({ entry }: { entry: UnifiedEntryRow }) {
 
   if (entry.kind === 'update') {
     const ut = entry.update_type || 'progress'
-    const cfg = UNIFIED_UPDATE_TYPE[ut] || UNIFIED_UPDATE_TYPE.progress
+    const cfg = UPDATE_TYPE_CONFIG[ut] || UPDATE_TYPE_CONFIG.progress
     const Icon = cfg.icon
     barColor = cfg.color
     badgeEl = (
@@ -602,7 +593,7 @@ function UnifiedEntryItem({ entry }: { entry: UnifiedEntryRow }) {
           <HermesMark size={14} variant="avatar" />
           <span style={{ fontSize: '10px', color: 'var(--gold)', fontWeight: 500 }}>Hermes</span>
           {entry.visibility === 'author' && <AuthorOnlyBadge />}
-          <MetaTime ts={entry.created_at} />
+          <EntryTime ts={entry.created_at} />
         </div>
         {isHermesPending(entry.body) ? (
           <HermesPending askedAt={entry.created_at} />
@@ -627,7 +618,7 @@ function UnifiedEntryItem({ entry }: { entry: UnifiedEntryRow }) {
           <LinkifiedText text={entry.body} />
         </span>
         {entry.visibility === 'author' && <AuthorOnlyBadge />}
-        <MetaTime ts={entry.created_at} />
+        <EntryTime ts={entry.created_at} />
       </motion.div>
     )
   }
@@ -657,7 +648,7 @@ function UnifiedEntryItem({ entry }: { entry: UnifiedEntryRow }) {
             <span style={{ fontSize: 'var(--value-size)', fontWeight: 600, color: 'var(--ink)' }}>{person.name}</span>
             {badgeEl}
             {entry.visibility === 'author' && <AuthorOnlyBadge />}
-            <MetaTime ts={entry.created_at} />
+            <EntryTime ts={entry.created_at} />
           </div>
           <p style={{ fontSize: 'var(--value-size)', color: 'var(--ink)', lineHeight: 1.5, margin: 0, whiteSpace: 'pre-wrap' }}>
             <LinkifiedText text={entry.body} />
@@ -692,27 +683,6 @@ function TaskOriginBadge({ taskHref, entityId, inline }: { taskHref: string; ent
       <ClipboardList size={9} aria-hidden="true" />
       task
     </a>
-  )
-}
-
-/** Author-only visibility hint (mirrors TaskActivityFeed treatment). */
-function AuthorOnlyBadge() {
-  return (
-    <span
-      title="Visible only to you"
-      aria-label="Only visible to you"
-      className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded"
-      style={{
-        fontSize: '9px',
-        color: 'var(--slate)',
-        background: 'rgba(100,116,139,0.1)',
-        opacity: 0.85,
-        flexShrink: 0,
-      }}
-    >
-      <Lock size={7} aria-hidden="true" />
-      only you
-    </span>
   )
 }
 

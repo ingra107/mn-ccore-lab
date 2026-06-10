@@ -321,16 +321,18 @@ export async function handleGetProjectActivity(idOrSlug: string, request: Reques
   const canonicalId = await projectRefToCanonical(env, idOrSlug);
   if (!canonicalId) return json({ data: [] });
   const vis = await activityVisibilityGate(request, env);
-  // Whole-picture: rows that ARE this project (entity_type='project') OR task
-  // rows rolled up by project_id. project_id is stored on task entries at write
-  // time, so this is one indexed query (idx_ae_project + idx_ae_entity).
+  // Whole-picture: every row tied to this project. postActivityEntry stores
+  // project_id = entity_id for project-entity rows (api/lib/activity-entry.ts:
+  // `projectId = entityId` in the project branch) and the task's project_id for
+  // task-entity rows, so a single `project_id = ?` predicate captures both —
+  // covered cleanly by idx_ae_project, no OR that would defeat the index.
   const result = await env.DB.prepare(
     `SELECT id, entity_type, entity_id, project_id, kind, visibility, actor_slug, body, mentions_json, update_type, metadata_json, created_at
      FROM activity_entries
-     WHERE ((entity_type = 'project' AND entity_id = ?) OR (entity_type = 'task' AND project_id = ?))
+     WHERE project_id = ?
        AND ${vis.clause}
      ORDER BY created_at DESC, id DESC`
-  ).bind(canonicalId, canonicalId, ...vis.binds).all();
+  ).bind(canonicalId, ...vis.binds).all();
   return json({ data: result.results || [], count: result.results?.length || 0 });
 }
 

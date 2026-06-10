@@ -19,27 +19,20 @@
 // Timestamps: parseDbUtc → formatDbLocal (viewer-local via time.ts chokepoints).
 // Body: LinkifiedText (keeps compact link-chip treatment Nick loves).
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
-  TrendingUp,
-  AlertTriangle,
-  CheckCircle,
   CheckCircle2,
-  HelpCircle,
-  Terminal,
   MessageSquare,
   Circle,
-  Lock,
 } from 'lucide-react'
 import { getPersonInfo } from '../../../data/team'
-import { formatRelativeTime } from '../../../lib/dateUtils'
-import { parseDbUtc, formatDbLocal } from '../../../lib/time'
 import Avatar from '../../Avatar'
 import LinkifiedText from '../../LinkifiedText'
 import HermesMark from '../../HermesMark'
 import HermesResponse from '../../HermesResponse'
 import HermesPending, { isHermesPending } from '../../HermesPending'
+import { UPDATE_TYPE_CONFIG, AuthorOnlyBadge, EntryTime } from '../../activity/activityRender'
 import type { StoredKind, UpdateType } from '../../../../shared/activityKinds'
 
 // ── Shape ────────────────────────────────────────────────────────────────────
@@ -57,17 +50,6 @@ export interface ActivityEntryRow {
   update_type: UpdateType | null
   metadata_json: string | null
   created_at: string
-}
-
-// ── Kind rendering maps ───────────────────────────────────────────────────────
-
-// update_type sub-kinds (only for kind='update')
-const UPDATE_TYPE_CONFIG: Record<string, { icon: typeof TrendingUp; color: string; bg: string; borderColor: string; label: string }> = {
-  progress: { icon: TrendingUp,    color: 'var(--teal)',   bg: 'var(--teal-active)',            borderColor: 'rgba(45,138,138,0.4)',    label: 'Progress' },
-  blocker:  { icon: AlertTriangle, color: 'var(--maroon)', bg: 'rgba(122,0,25,0.1)',            borderColor: 'rgba(122,0,25,0.4)',      label: 'Blocker' },
-  result:   { icon: CheckCircle,   color: 'var(--green)',  bg: 'rgba(34,197,94,0.1)',           borderColor: 'rgba(34,197,94,0.4)',     label: 'Result' },
-  question: { icon: HelpCircle,    color: 'var(--gold)',   bg: 'var(--gold-active)',             borderColor: 'rgba(201,168,76,0.4)',   label: 'Question' },
-  session:  { icon: Terminal,      color: 'var(--slate)',  bg: 'rgba(100,116,139,0.08)',        borderColor: 'rgba(100,116,139,0.25)', label: 'Session' },
 }
 
 // ── Feed filter pills ─────────────────────────────────────────────────────────
@@ -106,7 +88,10 @@ export function TaskActivityFeed({ taskId }: { taskId: string }) {
     enabled: !!taskId,
   })
 
-  const visible = filter === 'all' ? entries : entries.filter((e) => matchesFilter(e, filter))
+  const visible = useMemo(
+    () => (filter === 'all' ? entries : entries.filter((e) => matchesFilter(e, filter))),
+    [entries, filter],
+  )
 
   return (
     <div className="flex flex-col gap-2">
@@ -175,45 +160,6 @@ function ActivityEntryItem({ entry }: { entry: ActivityEntryRow }) {
   return <SystemEntry entry={entry} />
 }
 
-// ── Timestamp helper ──────────────────────────────────────────────────────────
-
-function EntryTime({ ts, className }: { ts: string; className?: string }) {
-  const d = parseDbUtc(ts)
-  const abs = isNaN(d.getTime()) ? ts : formatDbLocal(ts, 'datetime')
-  const rel = formatRelativeTime(ts)
-  return (
-    <span
-      className={className}
-      title={abs}
-      style={{ fontSize: '10px', color: 'var(--slate)', opacity: 'var(--ink-label)', flexShrink: 0 }}
-    >
-      {rel}
-    </span>
-  )
-}
-
-// ── Author-only badge ─────────────────────────────────────────────────────────
-
-function AuthorOnlyHint() {
-  return (
-    <span
-      title="Visible only to you"
-      aria-label="Only visible to you"
-      className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded"
-      style={{
-        fontSize: '9px',
-        color: 'var(--slate)',
-        background: 'rgba(100,116,139,0.1)',
-        opacity: 0.85,
-        flexShrink: 0,
-      }}
-    >
-      <Lock size={7} aria-hidden="true" />
-      only you
-    </span>
-  )
-}
-
 // ── Update entry (kind='update') ──────────────────────────────────────────────
 
 function UpdateEntry({ entry }: { entry: ActivityEntryRow }) {
@@ -248,7 +194,7 @@ function UpdateEntry({ entry }: { entry: ActivityEntryRow }) {
             >
               <Icon size={8} aria-hidden="true" /> {config.label}
             </span>
-            {entry.visibility === 'author' && <AuthorOnlyHint />}
+            {entry.visibility === 'author' && <AuthorOnlyBadge />}
             <EntryTime ts={entry.created_at} className="ml-auto" />
           </div>
           <p
@@ -292,7 +238,7 @@ function CommentEntry({ entry }: { entry: ActivityEntryRow }) {
             >
               <MessageSquare size={8} aria-hidden="true" /> Comment
             </span>
-            {entry.visibility === 'author' && <AuthorOnlyHint />}
+            {entry.visibility === 'author' && <AuthorOnlyBadge />}
             <EntryTime ts={entry.created_at} className="ml-auto" />
           </div>
           <p
@@ -322,7 +268,7 @@ function HermesEntry({ entry }: { entry: ActivityEntryRow }) {
       <div className="flex items-center gap-1.5 mb-1.5">
         <HermesMark size={14} variant="avatar" />
         <span style={{ fontSize: '10px', color: 'var(--gold)', fontWeight: 500 }}>Hermes</span>
-        {entry.visibility === 'author' && <AuthorOnlyHint />}
+        {entry.visibility === 'author' && <AuthorOnlyBadge />}
         <EntryTime ts={entry.created_at} className="ml-auto" />
       </div>
       {isHermesPending(entry.body) ? (
@@ -351,7 +297,7 @@ function CompletionEntry({ entry }: { entry: ActivityEntryRow }) {
         {entry.body ? ` — ` : ' completed this task'}
         {entry.body ? <LinkifiedText text={entry.body} /> : null}
       </span>
-      {entry.visibility === 'author' && <AuthorOnlyHint />}
+      {entry.visibility === 'author' && <AuthorOnlyBadge />}
       <EntryTime ts={entry.created_at} />
     </div>
   )
@@ -373,7 +319,7 @@ function SystemEntry({ entry }: { entry: ActivityEntryRow }) {
       >
         <LinkifiedText text={entry.body} />
       </span>
-      {entry.visibility === 'author' && <AuthorOnlyHint />}
+      {entry.visibility === 'author' && <AuthorOnlyBadge />}
       <EntryTime ts={entry.created_at} />
     </div>
   )

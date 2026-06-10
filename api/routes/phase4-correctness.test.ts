@@ -230,6 +230,17 @@ describe('Fix 1b — handleAddTaskComment: @hermes creates ai_request + placehol
           first: async () => {
             // Route by SQL content
             // Design C (v77): comment write/read now lands in activity_entries.
+            // Normal writes use `INSERT ... RETURNING *` resolved via first() — record
+            // the insert (so placeholder-insert assertions still see it) and echo a row
+            // back from the binds so postActivityEntry continues.
+            if (sql.includes('INSERT INTO activity_entries') && sql.includes('RETURNING *')) {
+              inserts.push({ sql, binds: [...boundVals] });
+              return {
+                id: boundVals[0], entity_type: boundVals[1], entity_id: boundVals[2], project_id: boundVals[3],
+                kind: boundVals[4], visibility: boundVals[5], actor_slug: boundVals[6], body: boundVals[7],
+                created_at: '2026-06-10 00:00:00',
+              };
+            }
             if (sql.includes('FROM activity_entries WHERE id =')) return { id: 'ae-001', entity_id: 'task-001', actor_slug: 'nick-ingraham', body: '@hermes help', created_at: '2026-06-10 00:00:00' };
             if (sql.includes('FROM team_members WHERE slug =')) return { id: 'member_001', slug: 'nick-ingraham' };
             if (sql.includes('FROM team_members WHERE email =')) return { id: 'member_001', slug: 'nick-ingraham' };
