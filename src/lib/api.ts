@@ -61,6 +61,10 @@ export interface ProjectRow {
   // unified P2-9 staleness basis without re-deriving it from updated_at.
   last_meaningful_movement?: string | null
   stale_active_since?: string | null
+  // Local working-folder path (schema v71, returned by GET /api/projects via
+  // SELECT *). Drives the mnccore:// "Open folder" / "Work on this in Claude"
+  // affordances. NULL for projects without a local/Box working dir.
+  primary_folder?: string | null
 }
 
 export interface GrantRow {

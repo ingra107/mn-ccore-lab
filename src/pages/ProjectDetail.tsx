@@ -18,6 +18,7 @@ import {
   X,
   Check,
   Link2,
+  FolderOpen,
   MoreVertical,
   Archive,
   Trash2,
@@ -46,6 +47,7 @@ import type { Project } from '../data/types'
 import type { TaskRow } from '../lib/api'
 import RevisionTracker from '../components/RevisionTracker'
 import KeyLinksEditor from '../components/KeyLinksEditor'
+import WorkOnActions from '../components/WorkOnActions'
 import LinkifiedText from '../components/LinkifiedText'
 import FileUpload from '../components/FileUpload'
 import PresenceAvatars from '../components/PresenceAvatars'
@@ -1106,6 +1108,19 @@ function ProjectDetailInner({ project }: InnerProps) {
 
           {/* Right column (1/3): Key Links (top) + Recent Activity (bottom) */}
           <div className="md:col-span-1 flex flex-col gap-4">
+            {/* Local launch — Open folder + Work on this in Claude (mnccore://).
+                Only when the project has a working folder. */}
+            {project.primary_folder && (
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <FolderOpen size={13} style={{ color: 'var(--teal)' }} />
+                  <span style={{ fontSize: '10px', fontWeight: 500, color: 'var(--slate)', opacity: 'var(--ink-label)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                    On this machine
+                  </span>
+                </div>
+                <WorkOnActions primaryFolder={project.primary_folder} projectLabel={project.short_name || project.title} />
+              </div>
+            )}
             {/* Key Links strip */}
             <div>
               <div className="flex items-center gap-2 mb-2">

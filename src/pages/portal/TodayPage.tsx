@@ -13,6 +13,8 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { useTasks, useProjects, useMeetingsApi, useExpiringRegulatory, useUserCalendarEvents, usePBSessionStats } from '../../hooks/useApiData'
 import { useAuth } from '../../hooks/useAuth'
+import { useProtocolLaunch } from '../../hooks/useProtocolLaunch'
+import { MNCCORE_PROCESS_URI } from '../../lib/urlClassify'
 import { emailToSlug } from '../../lib/emailSlug'
 import { usePageMeta } from '../../hooks/usePageMeta'
 import HeartbeatLine from '../../components/HeartbeatLine'
@@ -44,6 +46,7 @@ import type { TaskRow } from '../../lib/api'
 export default function TodayPage() {
   usePageMeta('Today · MN-CCORE', 'Operating-day landing — what to work on, who you\'re meeting, what\'s overdue.')
   const { user } = useAuth()
+  const { launch: launchProcess } = useProtocolLaunch()
   const userSlug = emailToSlug(user?.email)
   // Native HTML5 drag can't scroll the window; without this a below-fold task
   // can't be dragged up to the timeline drop zones. Drag = plan into a slot;
@@ -340,6 +343,28 @@ export default function TodayPage() {
           <h1 style={{ fontSize: 32, fontWeight: 600, color: 'var(--task-ink)', letterSpacing: '-0.03em', margin: 0 }}>Today</h1>
           <HeartbeatLine width={60} height={14} color={ACCENT_GOLD} variant="static" />
           <span style={{ fontSize: 13, color: INK_MUTED }}>{formatTodayDate()}</span>
+          <div style={{ flex: 1 }} />
+          {/* PI-only: run /process on THIS machine via the mnccore:// local
+              protocol (fire-and-forget). Gold = user-driven action (Rule 59).
+              No server route — purely a local-protocol trigger. */}
+          {user.isPi && (
+            <button
+              type="button"
+              onClick={() => launchProcess(MNCCORE_PROCESS_URI, {
+                successMessage: 'Launching /process on this machine…',
+                copyMessage: 'Launching /process on this machine…',
+              })}
+              title="Run /process on this machine"
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6, alignSelf: 'center',
+                background: 'rgba(201,168,76,0.12)', border: '1px solid rgba(201,168,76,0.35)',
+                color: ACCENT_GOLD, borderRadius: 6, padding: '5px 11px',
+                fontSize: 13, fontWeight: 500, cursor: 'pointer', flexShrink: 0,
+              }}
+            >
+              ⚙ Process
+            </button>
+          )}
         </div>
         {!howToDismissed && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: INK_DIM, marginBottom: 16 }}>

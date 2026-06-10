@@ -1127,26 +1127,36 @@ export async function handleGetRecentTaskUpdates(url: URL, env: Env, canSeePb = 
   return json({ data: result.results || [], count: result.results?.length || 0 })
 }
 
-// GET /api/task-comments/recent — cross-task feed for activity drawers / digest.
+// GET /api/task-comments/recent — cross-task feed for activity drawers / digest
+// AND the PB /process collector (scripts/process_hub_comments.py).
 //
 // T2.8 (2026-05-28): extracted from an inline handler in api/index.ts so the
 // /api/task-comments/recent registration is a one-liner alongside
 // /api/task-updates/recent. PB filter mirrors handleGetRecentTaskUpdates'
 // non-PI exclusion (join task_comments → tasks → projects), with LEFT JOINs
 // so orphan task_comments still surface (no project link → no PB risk).
+//
+// 2026-06-10 (TODAY.md-parity build): the row shape now joins the parent task's
+// title (`task_title`) so the PB collector can render an actionable digest
+// without an N+1 task lookup, and — when `since` is present (cursor/sync mode) —
+// orders created_at ASC with an id tiebreak so the collector can advance its
+// SyncCursor monotonically and never skip a row at a page boundary. The no-since
+// UI case keeps DESC ("give me the N newest") for back-compat with existing
+// activity-drawer callers.
 export async function handleGetRecentTaskComments(url: URL, env: Env, canSeePb = false): Promise<Response> {
   const limit = Math.min(parseInt(url.searchParams.get('limit') || '200', 10), 500);
   const since = url.searchParams.get('since');
   const pbFilter = canSeePb
     ? ''
     : " AND (p.category IS NULL OR p.category != 'Peripheral Brain')";
+  const cols = `tc.id, tc.task_id, tc.author_slug, tc.content, tc.created_at, t.title AS task_title`;
   const q = since
-    ? `SELECT tc.* FROM task_comments tc
+    ? `SELECT ${cols} FROM task_comments tc
        LEFT JOIN tasks t ON tc.task_id = t.id
        LEFT JOIN projects p ON p.id = t.project_id OR p.slug = t.project_id
        WHERE tc.created_at > ?${pbFilter}
-       ORDER BY tc.created_at DESC LIMIT ?`
-    : `SELECT tc.* FROM task_comments tc
+       ORDER BY tc.created_at ASC, tc.id ASC LIMIT ?`
+    : `SELECT ${cols} FROM task_comments tc
        LEFT JOIN tasks t ON tc.task_id = t.id
        LEFT JOIN projects p ON p.id = t.project_id OR p.slug = t.project_id
        WHERE 1=1${pbFilter}

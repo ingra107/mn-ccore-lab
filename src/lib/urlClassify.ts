@@ -42,6 +42,38 @@ export function classifyUrl(url: string): ClassifiedUrl {
 }
 
 /**
+ * Encode a local folder/file path into the `mnccore://` path segment, matching
+ * the encoding `classifyUrl` uses for `open/` (strip a leading `file:///`; the
+ * handler URL-decodes %20 + maps `/`→`\`). Kept as one helper so the workon /
+ * open / launch builders all agree on the path shape the Windows handler parses.
+ */
+function encodeLocalPath(path: string): string {
+  return path.replace(/^file:\/\/\//, '')
+}
+
+/**
+ * Build `mnccore://workon/<folder>` — the verb that launches
+ * "<folder>\Start Claude.bat" in that folder (TODAY.md-parity local launch).
+ * The handler refuses unless the folder exists AND contains that exact bat,
+ * so a bad/empty `primary_folder` is a safe no-op (clipboard fallback still
+ * fires client-side).
+ */
+export function buildWorkOnUri(folderPath: string): string {
+  return `mnccore://workon/${encodeLocalPath(folderPath)}`
+}
+
+/** Build `mnccore://open/<folder>` for an Explorer open of a local path. */
+export function buildOpenFolderUri(folderPath: string): string {
+  return `mnccore://open/${encodeLocalPath(folderPath)}`
+}
+
+/**
+ * The verb-only `mnccore://process` URI — runs Quick_Process.bat on the local
+ * machine. No path segment (the handler matches the bare verb).
+ */
+export const MNCCORE_PROCESS_URI = 'mnccore://process'
+
+/**
  * Domain-aware short label for a URL. Used in chip text when the link has
  * no user-provided description.
  *   https://github.com/ingra107/mn-ccore-lab/pull/42 -> github.com

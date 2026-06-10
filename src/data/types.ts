@@ -107,6 +107,11 @@ export interface Project {
   key_link_2_desc?: string | null
   key_link_3?: string | null
   key_link_3_desc?: string | null
+  // Local working-folder path (brain.db→D1, schema v71). Drives the
+  // "Open folder" / "Work on this in Claude" mnccore:// affordances. The
+  // folder is expected to contain a generated "Start Claude.bat". NULL for
+  // projects without a Box/local working dir.
+  primary_folder?: string | null
   // Trophy / publication metadata (M-11). Populated for stage='Published'
   // projects via the linked publications row. NULL until the project is
   // shipped + linked. journal_name is the canonical field name; older

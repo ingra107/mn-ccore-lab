@@ -12,6 +12,8 @@ import CollapsibleSection from '../CollapsibleSection'
 import FileUpload from '../FileUpload'
 const RichTextEditor = lazy(() => import('../RichTextEditor'))
 import { useUpdateTask, useUpdateTaskStatus, useAcknowledgeTask, usePostTaskUpdate } from '../../hooks/useMutations'
+import { useProjects } from '../../hooks/useApiData'
+import WorkOnActions from '../WorkOnActions'
 import { useToast } from '../../hooks/useToast'
 import { useUndoToast } from '../UndoToast'
 import { formatRelativeTime } from '../../lib/dateUtils'
@@ -96,6 +98,13 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
     return unsub
   }, [qc, baseTask?.id])
   const task = liveTask ?? baseTask
+  // Resolve the task's project to surface its local working folder (mnccore://
+  // open/workon affordances). task.project_id is the slug projection from
+  // /api/tasks; match by slug first, fall back to id.
+  const projectsQuery = useProjects()
+  const taskProject = task?.project_id
+    ? (projectsQuery.data ?? []).find((p) => p.slug === task.project_id)
+    : undefined
   const viewerSlugs = usePresence('task', task?.id)
   const [quickAddHasContent, setQuickAddHasContent] = useState(false)
   const taskSelfIntent: Intent = quickAddHasContent ? 'commenting' : 'viewing'
@@ -455,6 +464,17 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <ProjectSelect value={task.project_id || ''} onChange={(v) => handleFieldUpdate('project_id', v || null)} />
                   </div>
+                  {/* Local launch — Open folder + Work on this in Claude
+                      (mnccore://). Only when the linked project has a working
+                      folder. Compact icon variant to sit inline next to the
+                      project select. */}
+                  {taskProject?.primary_folder && (
+                    <WorkOnActions
+                      primaryFolder={taskProject.primary_folder}
+                      projectLabel={taskProject.title}
+                      variant="compact"
+                    />
+                  )}
                   {/* S14: a path from the task to its project's detail page. */}
                   {task.project_id && (
                     <button
