@@ -57,7 +57,7 @@ export function ProjectsCard({ projects }: { projects: ProjectEntry[] }) {
         value={q}
         onChange={(e) => setQ(e.target.value)}
         placeholder="Jump to project…"
-        style={{ width: '100%', padding: '6px 10px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 4, fontSize: 12, color: INK, outline: 'none', fontFamily: 'inherit', marginBottom: 8, boxSizing: 'border-box' }}
+        style={{ width: '100%', padding: '6px 10px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 'var(--radius-sm)', fontSize: 12, color: INK, outline: 'none', fontFamily: 'inherit', marginBottom: 8, boxSizing: 'border-box' }}
       />
       <div style={{ maxHeight: 320, overflowY: 'auto' }}>
         {shown.length === 0 && (
@@ -66,7 +66,7 @@ export function ProjectsCard({ projects }: { projects: ProjectEntry[] }) {
           </div>
         )}
         {shown.map((p) => (
-          <Link key={p.slug} to={PATHS.project(p.slug)} className="b2-proj" style={{ display: 'block', padding: 8, borderRadius: 4, textDecoration: 'none' }}>
+          <Link key={p.slug} to={PATHS.project(p.slug)} className="b2-proj" style={{ display: 'block', padding: 8, borderRadius: 'var(--radius-sm)', textDecoration: 'none' }}>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 2 }}>
               <span style={{ fontSize: 12, color: INK, fontWeight: 500, flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</span>
               {p.relevantToday && !useAll && (

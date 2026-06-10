@@ -267,7 +267,7 @@ export default function SmartCompose(props: SmartComposeProps) {
         width: '100%',
         background: 'rgba(255,255,255,0.02)',
         border: '1px solid rgba(255,255,255,0.06)',
-        borderRadius: 4,
+        borderRadius: 'var(--radius-sm)',
         padding: '6px 10px',
         color: INK_DARK,
         fontSize: 12,
@@ -328,7 +328,7 @@ export default function SmartCompose(props: SmartComposeProps) {
               padding: 6,
               background: isDark ? '#0f1923' : 'var(--cream)',
               border: isDark ? '1px solid rgba(255,255,255,0.12)' : '1px solid var(--border-subtle)',
-              borderRadius: 6,
+              borderRadius: 'var(--radius-md)',
               display: 'flex',
               gap: 2,
               zIndex: 20,
@@ -429,7 +429,7 @@ function ToolbarBtn({ children, onClick, label, active, disabled, theme }: { chi
       disabled={disabled}
       style={{
         display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-        width: 22, height: 22, borderRadius: 4,
+        width: 22, height: 22, borderRadius: 'var(--radius-sm)',
         background: active ? activeBg : 'transparent',
         border: active ? activeBorder : baseBorder,
         color: active ? activeColor : baseColor,

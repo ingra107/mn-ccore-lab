@@ -18,13 +18,13 @@ export function PulseCard({ focusMin, syncHours, milestones, mentees }: { focusM
         <h4 style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: ACCENT_GOLD, margin: 0 }}>Pulse</h4>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginBottom: 10 }}>
-        <div style={{ padding: '8px 10px', background: 'rgba(255,255,255,0.03)', borderRadius: 4 }}>
+        <div style={{ padding: '8px 10px', background: 'rgba(255,255,255,0.03)', borderRadius: 'var(--radius-sm)' }}>
           <div style={{ fontSize: 10, color: INK_MUTED, letterSpacing: '0.04em' }}>FOCUS</div>
           <div style={{ fontSize: 18, fontWeight: 700, color: '#fff', fontVariantNumeric: 'tabular-nums' }}>
             {focusMin}<span style={{ fontSize: 11, color: INK_MUTED, fontWeight: 400, marginLeft: 2 }}>min</span>
           </div>
         </div>
-        <div style={{ padding: '8px 10px', background: 'rgba(255,255,255,0.03)', borderRadius: 4 }} title={syncHours === Infinity ? 'No sync recorded yet' : `Last brain.db sync ${syncHours}h ago`}>
+        <div style={{ padding: '8px 10px', background: 'rgba(255,255,255,0.03)', borderRadius: 'var(--radius-sm)' }} title={syncHours === Infinity ? 'No sync recorded yet' : `Last brain.db sync ${syncHours}h ago`}>
           <div style={{ fontSize: 10, color: INK_MUTED, letterSpacing: '0.04em' }}>SYNC</div>
           <div style={{ fontSize: 18, fontWeight: 700, color: syncColor, fontVariantNumeric: 'tabular-nums' }}>
             {syncLabel}<span style={{ fontSize: 11, color: INK_MUTED, fontWeight: 400, marginLeft: 2 }}>h</span>

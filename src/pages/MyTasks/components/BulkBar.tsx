@@ -49,7 +49,7 @@ export function BulkBar({ count, onClear, onPlanToday, onSnoozeDay, onComplete, 
     <button
       key={label}
       onClick={onClick}
-      style={{ padding: '3px 9px', fontSize: 11, border: `1px solid ${active ? ACCENT_TEAL : accent ? withAlpha(accent, 25) : 'rgba(255,255,255,0.12)'}`, borderRadius: 4, background: active ? withAlpha(ACCENT_TEAL, 13) : accent ? withAlpha(accent, 8) : 'transparent', color: active ? ACCENT_TEAL : accent ?? INK, fontFamily: 'inherit', cursor: 'pointer' }}
+      style={{ padding: '3px 9px', fontSize: 11, border: `1px solid ${active ? ACCENT_TEAL : accent ? withAlpha(accent, 25) : 'rgba(255,255,255,0.12)'}`, borderRadius: 'var(--radius-sm)', background: active ? withAlpha(ACCENT_TEAL, 13) : accent ? withAlpha(accent, 8) : 'transparent', color: active ? ACCENT_TEAL : accent ?? INK, fontFamily: 'inherit', cursor: 'pointer' }}
     >{label}</button>
   )
 
@@ -87,21 +87,21 @@ export function BulkBar({ count, onClear, onPlanToday, onSnoozeDay, onComplete, 
             <button
               key={p}
               onClick={() => { onPriority(p); setPicker(null) }}
-              style={{ padding: '4px 10px', fontSize: 11, borderRadius: 4, border: `1px solid ${PRIORITY_COLOR[p] ?? INK_DIM}40`, background: `${PRIORITY_COLOR[p] ?? INK_DIM}15`, color: PRIORITY_COLOR[p] ?? INK, fontFamily: 'inherit', cursor: 'pointer' }}
+              style={{ padding: '4px 10px', fontSize: 11, borderRadius: 'var(--radius-sm)', border: `1px solid ${PRIORITY_COLOR[p] ?? INK_DIM}40`, background: `${PRIORITY_COLOR[p] ?? INK_DIM}15`, color: PRIORITY_COLOR[p] ?? INK, fontFamily: 'inherit', cursor: 'pointer' }}
             >{p}</button>
           ))}
           {picker === 'status' && STATUS_OPTS.map((s) => (
             <button
               key={s.v}
               onClick={() => { onStatus(s.v); setPicker(null) }}
-              style={{ padding: '4px 10px', fontSize: 11, borderRadius: 4, border: `1px solid ${STATUS_COLOR[s.v] ?? INK_DIM}40`, background: `${STATUS_COLOR[s.v] ?? INK_DIM}15`, color: STATUS_COLOR[s.v] ?? INK, fontFamily: 'inherit', cursor: 'pointer' }}
+              style={{ padding: '4px 10px', fontSize: 11, borderRadius: 'var(--radius-sm)', border: `1px solid ${STATUS_COLOR[s.v] ?? INK_DIM}40`, background: `${STATUS_COLOR[s.v] ?? INK_DIM}15`, color: STATUS_COLOR[s.v] ?? INK, fontFamily: 'inherit', cursor: 'pointer' }}
             >{s.l}</button>
           ))}
           {picker === 'reassign' && assigneeOptions.map((a) => (
             <button
               key={a.slug}
               onClick={() => { onReassign(a.slug); setPicker(null) }}
-              style={{ padding: '4px 10px', fontSize: 11, borderRadius: 4, border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.02)', color: INK, fontFamily: 'inherit', cursor: 'pointer' }}
+              style={{ padding: '4px 10px', fontSize: 11, borderRadius: 'var(--radius-sm)', border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.02)', color: INK, fontFamily: 'inherit', cursor: 'pointer' }}
             >{a.name}</button>
           ))}
           <span style={{ flex: 1 }} />

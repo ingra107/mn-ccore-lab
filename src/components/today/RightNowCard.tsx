@@ -32,7 +32,7 @@ export function RightNow({ task, project, queueTasks, state }: { task: TaskRow |
   if (task.key_link_3) heroLinks.push('brief')
 
   return (
-    <div style={{ marginBottom: 20, background: 'linear-gradient(90deg, rgba(201,168,76,0.12), rgba(201,168,76,0.02))', border: '1px solid rgba(201,168,76,0.28)', borderLeft: `3px solid ${ACCENT_GOLD}`, borderRadius: 8, boxShadow: '0 0 24px rgba(201,168,76,0.06)' }}>
+    <div style={{ marginBottom: 20, background: 'linear-gradient(90deg, rgba(201,168,76,0.12), rgba(201,168,76,0.02))', border: '1px solid rgba(201,168,76,0.28)', borderLeft: `3px solid ${ACCENT_GOLD}`, borderRadius: 'var(--radius-lg)', boxShadow: '0 0 24px rgba(201,168,76,0.06)' }}>
       <div style={{ display: 'flex', gap: 14, padding: '12px 18px', alignItems: 'center', flexWrap: 'wrap' }}>
         <span style={{ width: 8, height: 8, borderRadius: '50%', background: ACCENT_GOLD, boxShadow: `0 0 8px ${ACCENT_GOLD}`, animation: 'b2pulse 1.6s ease-in-out infinite', flexShrink: 0 }} />
         <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: ACCENT_GOLD, flexShrink: 0 }}>Right now</span>
@@ -43,8 +43,8 @@ export function RightNow({ task, project, queueTasks, state }: { task: TaskRow |
         {project && (
           <Link to={PATHS.project(project.slug)} style={{ fontSize: 11, color: ACCENT_GOLD, fontWeight: 500, flexShrink: 0, textDecoration: 'none' }}>{project.name}</Link>
         )}
-        <button onClick={() => setExpanded(true)} title="Expand and focus chat" style={{ padding: '5px 10px', background: ACCENT_GOLD, color: PAGE_BG, border: 'none', borderRadius: 4, fontFamily: 'inherit', fontSize: 12, fontWeight: 600, cursor: 'pointer', flexShrink: 0 }}>▶ Work</button>
-        <button onClick={() => state.markDone(task.id)} style={{ padding: '5px 10px', background: 'transparent', color: INK, border: '1px solid rgba(255,255,255,0.14)', borderRadius: 4, fontFamily: 'inherit', fontSize: 12, cursor: 'pointer', flexShrink: 0 }}>✓ Done</button>
+        <button onClick={() => setExpanded(true)} title="Expand and focus chat" style={{ padding: '5px 10px', background: ACCENT_GOLD, color: PAGE_BG, border: 'none', borderRadius: 'var(--radius-sm)', fontFamily: 'inherit', fontSize: 12, fontWeight: 600, cursor: 'pointer', flexShrink: 0 }}>▶ Work</button>
+        <button onClick={() => state.markDone(task.id)} style={{ padding: '5px 10px', background: 'transparent', color: INK, border: '1px solid rgba(255,255,255,0.14)', borderRadius: 'var(--radius-sm)', fontFamily: 'inherit', fontSize: 12, cursor: 'pointer', flexShrink: 0 }}>✓ Done</button>
         <LinkRow links={heroLinks} />
         <button onClick={() => setExpanded(!expanded)} title={expanded ? 'Collapse' : 'Expand'} style={{ background: 'none', border: 'none', color: INK_DIM, fontSize: 12, cursor: 'pointer', padding: '2px 6px', flexShrink: 0 }}>{expanded ? '▾' : '▸'}</button>
       </div>

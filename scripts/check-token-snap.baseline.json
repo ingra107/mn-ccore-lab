@@ -1,0 +1,2054 @@
+[
+  {
+    "file": "src/components/ActiveSubmissionsWidget.tsx",
+    "line": 140,
+    "kind": "spacing-px-literal",
+    "sample": "paddingBottom: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/components/ActiveSubmissionsWidget.tsx",
+    "line": 161,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/components/CLIFMap.tsx",
+    "line": 108,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/components/ConferencePrep.tsx",
+    "line": 316,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/components/ConferencePrep.tsx",
+    "line": 316,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/components/ConferencePrep.tsx",
+    "line": 347,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/components/ConferencePrep.tsx",
+    "line": 347,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/components/ConferencePrep.tsx",
+    "line": 385,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/components/ConferencePrep.tsx",
+    "line": 425,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/components/CreateDecisionModal.tsx",
+    "line": 138,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/components/CreateDecisionModal.tsx",
+    "line": 362,
+    "kind": "spacing-px-literal",
+    "sample": "marginRight: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/components/dashboard/ActionBoardCard.tsx",
+    "line": 109,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/components/dashboard/CLIFMiniCard.tsx",
+    "line": 131,
+    "kind": "spacing-px-literal",
+    "sample": "marginTop: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/components/dashboard/EmailDraftsCard.tsx",
+    "line": 41,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/components/dashboard/GrantTimelineCard.tsx",
+    "line": 134,
+    "kind": "spacing-px-literal",
+    "sample": "paddingLeft: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/components/dashboard/MyItemsCard.tsx",
+    "line": 96,
+    "kind": "spacing-px-literal",
+    "sample": "paddingLeft: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/components/dashboard/ProjectHealthCard.tsx",
+    "line": 46,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/components/dashboard/ProjectHealthCard.tsx",
+    "line": 249,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/components/dashboard/TeamPulseCard.tsx",
+    "line": 60,
+    "kind": "spacing-px-literal",
+    "sample": "paddingBottom: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/components/FileUpload.tsx",
+    "line": 174,
+    "kind": "spacing-px-literal",
+    "sample": "marginTop: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/components/GlobalQuickAddModal.tsx",
+    "line": 150,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/components/GlobalQuickAddModal.tsx",
+    "line": 192,
+    "kind": "spacing-px-literal",
+    "sample": "marginLeft: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/components/GlobalQuickAddModal.tsx",
+    "line": 216,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 12px → var(--sp-md)"
+  },
+  {
+    "file": "src/components/HermesResponse.tsx",
+    "line": 80,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/components/HermesResponse.tsx",
+    "line": 95,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/components/InlineAssigneePicker.tsx",
+    "line": 191,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/components/InlineDatePicker.tsx",
+    "line": 179,
+    "kind": "spacing-px-literal",
+    "sample": "padding: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/components/InlineDatePicker.tsx",
+    "line": 185,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/components/InlineDatePicker.tsx",
+    "line": 185,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/components/InlineDatePicker.tsx",
+    "line": 203,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/components/InlineDatePicker.tsx",
+    "line": 254,
+    "kind": "spacing-px-literal",
+    "sample": "marginTop: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/components/InlineSelect.tsx",
+    "line": 102,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/components/KeyLinksEditor.tsx",
+    "line": 179,
+    "kind": "spacing-px-literal",
+    "sample": "marginRight: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/components/KeyLinksEditor.tsx",
+    "line": 196,
+    "kind": "spacing-px-literal",
+    "sample": "marginRight: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/components/Layout.tsx",
+    "line": 258,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/components/Layout.tsx",
+    "line": 440,
+    "kind": "spacing-px-literal",
+    "sample": "paddingLeft: 24px → var(--sp-xl)"
+  },
+  {
+    "file": "src/components/Layout.tsx",
+    "line": 441,
+    "kind": "spacing-px-literal",
+    "sample": "paddingRight: 16px → var(--sp-lg)"
+  },
+  {
+    "file": "src/components/Layout.tsx",
+    "line": 442,
+    "kind": "spacing-px-literal",
+    "sample": "marginLeft: 16px → var(--sp-lg)"
+  },
+  {
+    "file": "src/components/MenteeDashboard.tsx",
+    "line": 185,
+    "kind": "spacing-px-literal",
+    "sample": "marginRight: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/components/MentionInput.tsx",
+    "line": 258,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/components/MentionInput.tsx",
+    "line": 283,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/components/MobileTabBar.tsx",
+    "line": 149,
+    "kind": "spacing-px-literal",
+    "sample": "padding: 16px → var(--sp-lg)"
+  },
+  {
+    "file": "src/components/MobileTabBar.tsx",
+    "line": 187,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 12px → var(--sp-md)"
+  },
+  {
+    "file": "src/components/MobileTabBar.tsx",
+    "line": 195,
+    "kind": "spacing-px-literal",
+    "sample": "paddingLeft: 12px → var(--sp-md)"
+  },
+  {
+    "file": "src/components/MobileTabBar.tsx",
+    "line": 228,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 12px → var(--sp-md)"
+  },
+  {
+    "file": "src/components/MobileTabBar.tsx",
+    "line": 236,
+    "kind": "spacing-px-literal",
+    "sample": "paddingLeft: 12px → var(--sp-md)"
+  },
+  {
+    "file": "src/components/NeedsAttentionDashboard.tsx",
+    "line": 301,
+    "kind": "spacing-px-literal",
+    "sample": "columnGap: 12px → var(--sp-md)"
+  },
+  {
+    "file": "src/components/NeedsAttentionDashboard.tsx",
+    "line": 333,
+    "kind": "spacing-px-literal",
+    "sample": "columnGap: 12px → var(--sp-md)"
+  },
+  {
+    "file": "src/components/NeedsAttentionDashboard.tsx",
+    "line": 365,
+    "kind": "spacing-px-literal",
+    "sample": "columnGap: 12px → var(--sp-md)"
+  },
+  {
+    "file": "src/components/NotificationBell.tsx",
+    "line": 123,
+    "kind": "spacing-px-literal",
+    "sample": "marginTop: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/components/PageHeader.tsx",
+    "line": 47,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/components/PageTooltip.tsx",
+    "line": 90,
+    "kind": "spacing-px-literal",
+    "sample": "padding: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/components/pb-sector/TodayView.tsx",
+    "line": 365,
+    "kind": "spacing-px-literal",
+    "sample": "marginLeft: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/components/pb-sector/TodayView.tsx",
+    "line": 413,
+    "kind": "spacing-px-literal",
+    "sample": "paddingLeft: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/components/PresenceAvatars.tsx",
+    "line": 71,
+    "kind": "spacing-px-literal",
+    "sample": "marginRight: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/components/PresenceAvatars.tsx",
+    "line": 75,
+    "kind": "spacing-px-literal",
+    "sample": "marginRight: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/components/project/ActivityStream.tsx",
+    "line": 163,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/components/ProjectCard.tsx",
+    "line": 55,
+    "kind": "spacing-px-literal",
+    "sample": "marginTop: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/components/ProjectCard.tsx",
+    "line": 55,
+    "kind": "spacing-px-literal",
+    "sample": "marginLeft: 16px → var(--sp-lg)"
+  },
+  {
+    "file": "src/components/ProjectDependencyMap.tsx",
+    "line": 466,
+    "kind": "spacing-px-literal",
+    "sample": "marginLeft: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/components/ProjectUpdateFeed.tsx",
+    "line": 91,
+    "kind": "spacing-px-literal",
+    "sample": "marginTop: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/components/PublicationLibrary.tsx",
+    "line": 126,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/components/pulse/PulseMetric.tsx",
+    "line": 85,
+    "kind": "spacing-px-literal",
+    "sample": "marginTop: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/components/QuickAddTaskInput.tsx",
+    "line": 45,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/components/QuickAddTaskInput.tsx",
+    "line": 72,
+    "kind": "spacing-px-literal",
+    "sample": "marginTop: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/components/QuickCaptureInbox.tsx",
+    "line": 308,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/components/RangeSlider.tsx",
+    "line": 87,
+    "kind": "spacing-px-literal",
+    "sample": "marginLeft: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/components/RequireAuth.tsx",
+    "line": 121,
+    "kind": "spacing-px-literal",
+    "sample": "marginTop: 24px → var(--sp-xl)"
+  },
+  {
+    "file": "src/components/RequireAuth.tsx",
+    "line": 122,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 32px → var(--sp-2xl)"
+  },
+  {
+    "file": "src/components/RequireAuth.tsx",
+    "line": 181,
+    "kind": "spacing-px-literal",
+    "sample": "paddingTop: 24px → var(--sp-xl)"
+  },
+  {
+    "file": "src/components/RequireAuth.tsx",
+    "line": 186,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 12px → var(--sp-md)"
+  },
+  {
+    "file": "src/components/RequireAuth.tsx",
+    "line": 337,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 12px → var(--sp-md)"
+  },
+  {
+    "file": "src/components/RevisionTracker.tsx",
+    "line": 154,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 16px → var(--sp-lg)"
+  },
+  {
+    "file": "src/components/RevisionTracker.tsx",
+    "line": 171,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/components/RevisionTracker.tsx",
+    "line": 198,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/components/RevisionTracker.tsx",
+    "line": 310,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 12px → var(--sp-md)"
+  },
+  {
+    "file": "src/components/RevisionTracker.tsx",
+    "line": 717,
+    "kind": "spacing-px-literal",
+    "sample": "marginTop: 12px → var(--sp-md)"
+  },
+  {
+    "file": "src/components/SavedViewsMenu.tsx",
+    "line": 178,
+    "kind": "spacing-px-literal",
+    "sample": "marginRight: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/components/Sidebar.tsx",
+    "line": 226,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/components/SmartCompose.tsx",
+    "line": 308,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/components/SmartCompose.tsx",
+    "line": 396,
+    "kind": "radius-px-literal",
+    "sample": "borderRadius: 4px → var(--radius-sm)"
+  },
+  {
+    "file": "src/components/SmartCompose.tsx",
+    "line": 405,
+    "kind": "spacing-px-literal",
+    "sample": "paddingTop: 12px → var(--sp-md)"
+  },
+  {
+    "file": "src/components/SubmissionTimeline.tsx",
+    "line": 142,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 16px → var(--sp-lg)"
+  },
+  {
+    "file": "src/components/SubmissionTimeline.tsx",
+    "line": 149,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/components/SubmissionTimeline.tsx",
+    "line": 163,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/components/SubmissionTimeline.tsx",
+    "line": 186,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/components/SubmissionTimeline.tsx",
+    "line": 207,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 12px → var(--sp-md)"
+  },
+  {
+    "file": "src/components/SubmissionTimeline.tsx",
+    "line": 208,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/components/SubmissionTimeline.tsx",
+    "line": 229,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/components/SubmissionTimeline.tsx",
+    "line": 292,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 12px → var(--sp-md)"
+  },
+  {
+    "file": "src/components/SubmissionTimeline.tsx",
+    "line": 326,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/components/SubmissionTimeline.tsx",
+    "line": 433,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 16px → var(--sp-lg)"
+  },
+  {
+    "file": "src/components/SubmissionTimeline.tsx",
+    "line": 434,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/components/SubmissionTimeline.tsx",
+    "line": 450,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/components/SubmissionTimeline.tsx",
+    "line": 476,
+    "kind": "spacing-px-literal",
+    "sample": "paddingLeft: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/components/tasks/detail/HandoffSection.tsx",
+    "line": 126,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/components/tasks/detail/TaskIntelligence.tsx",
+    "line": 206,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/components/tasks/detail/TaskIntelligence.tsx",
+    "line": 241,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/components/tasks/TaskBoardView.tsx",
+    "line": 248,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/components/tasks/TaskDetailPanel.tsx",
+    "line": 800,
+    "kind": "spacing-px-literal",
+    "sample": "marginTop: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/components/tasks/TaskGridView.tsx",
+    "line": 387,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/components/tasks/TaskGridView.tsx",
+    "line": 1014,
+    "kind": "spacing-px-literal",
+    "sample": "paddingRight: 12px → var(--sp-md)"
+  },
+  {
+    "file": "src/components/tasks/TaskQuickEditChips.tsx",
+    "line": 97,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/components/tasks/TaskQuickEditChips.tsx",
+    "line": 280,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/components/tasks/TaskRow.tsx",
+    "line": 112,
+    "kind": "radius-px-literal",
+    "sample": "borderRadius: 4px → var(--radius-sm)"
+  },
+  {
+    "file": "src/components/tasks/TaskRow.tsx",
+    "line": 320,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/components/today/MeetingRow.tsx",
+    "line": 17,
+    "kind": "radius-px-literal",
+    "sample": "borderRadius: 6px → var(--radius-md)"
+  },
+  {
+    "file": "src/components/today/MeetingRow.tsx",
+    "line": 18,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 12px → var(--sp-md)"
+  },
+  {
+    "file": "src/components/today/MeetingRow.tsx",
+    "line": 32,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/components/today/MeetingRow.tsx",
+    "line": 53,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/components/today/MeetingRow.tsx",
+    "line": 53,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/components/today/MeetingRow.tsx",
+    "line": 68,
+    "kind": "radius-px-literal",
+    "sample": "borderRadius: 4px → var(--radius-sm)"
+  },
+  {
+    "file": "src/components/today/OverlapBand.tsx",
+    "line": 53,
+    "kind": "radius-px-literal",
+    "sample": "borderRadius: 8px → var(--radius-lg)"
+  },
+  {
+    "file": "src/components/today/OverlapBand.tsx",
+    "line": 99,
+    "kind": "spacing-px-literal",
+    "sample": "marginTop: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/components/today/PillStrip.tsx",
+    "line": 31,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/components/today/PlannedTaskRow.tsx",
+    "line": 32,
+    "kind": "radius-px-literal",
+    "sample": "borderRadius: 6px → var(--radius-md)"
+  },
+  {
+    "file": "src/components/today/PlannedTaskRow.tsx",
+    "line": 53,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/components/today/primitives.tsx",
+    "line": 41,
+    "kind": "radius-px-literal",
+    "sample": "borderRadius: 4px → var(--radius-sm)"
+  },
+  {
+    "file": "src/components/today/rail/HermesSuggestsCard.tsx",
+    "line": 63,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/components/today/rail/HermesSuggestsCard.tsx",
+    "line": 67,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/components/today/rail/NeedsAttentionCard.tsx",
+    "line": 20,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/components/today/rail/NeedsAttentionCard.tsx",
+    "line": 24,
+    "kind": "spacing-px-literal",
+    "sample": "padding: 12px → var(--sp-md)"
+  },
+  {
+    "file": "src/components/today/rail/NeedsAttentionCard.tsx",
+    "line": 24,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/components/today/rail/NeedsAttentionCard.tsx",
+    "line": 25,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/components/today/rail/NeedsAttentionCard.tsx",
+    "line": 32,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/components/today/rail/NeedsAttentionCard.tsx",
+    "line": 49,
+    "kind": "spacing-px-literal",
+    "sample": "padding: 12px → var(--sp-md)"
+  },
+  {
+    "file": "src/components/today/rail/NeedsAttentionCard.tsx",
+    "line": 49,
+    "kind": "radius-px-literal",
+    "sample": "borderRadius: 6px → var(--radius-md)"
+  },
+  {
+    "file": "src/components/today/rail/NeedsAttentionCard.tsx",
+    "line": 50,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/components/today/rail/NeedsAttentionCard.tsx",
+    "line": 55,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/components/today/rail/ProjectsCard.tsx",
+    "line": 49,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/components/today/rail/ProjectsCard.tsx",
+    "line": 49,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/components/today/rail/ProjectsCard.tsx",
+    "line": 60,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/components/today/rail/ProjectsCard.tsx",
+    "line": 69,
+    "kind": "spacing-px-literal",
+    "sample": "padding: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/components/today/rail/ProjectsCard.tsx",
+    "line": 87,
+    "kind": "spacing-px-literal",
+    "sample": "marginTop: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/components/today/rail/PulseCard.tsx",
+    "line": 16,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/components/today/rail/PulseCard.tsx",
+    "line": 36,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/components/today/rail/PulseCard.tsx",
+    "line": 38,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/components/today/rail/PulseCard.tsx",
+    "line": 47,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/components/today/rail/PulseCard.tsx",
+    "line": 49,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/components/today/RightNowCard.tsx",
+    "line": 22,
+    "kind": "radius-px-literal",
+    "sample": "borderRadius: 8px → var(--radius-lg)"
+  },
+  {
+    "file": "src/components/today/RightNowCard.tsx",
+    "line": 68,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/components/today/RightNowCard.tsx",
+    "line": 71,
+    "kind": "spacing-px-literal",
+    "sample": "marginTop: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/components/today/TaskDetailDrawer.tsx",
+    "line": 87,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 12px → var(--sp-md)"
+  },
+  {
+    "file": "src/components/today/TaskDetailDrawer.tsx",
+    "line": 87,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/components/today/TaskDetailDrawer.tsx",
+    "line": 100,
+    "kind": "spacing-px-literal",
+    "sample": "marginTop: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/components/today/TaskDetailDrawer.tsx",
+    "line": 136,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/components/today/TaskDetailDrawer.tsx",
+    "line": 140,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 16px → var(--sp-lg)"
+  },
+  {
+    "file": "src/components/today/TaskDetailDrawer.tsx",
+    "line": 160,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/components/today/TaskDetailDrawer.tsx",
+    "line": 177,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/components/today/TaskDetailDrawer.tsx",
+    "line": 183,
+    "kind": "spacing-px-literal",
+    "sample": "marginTop: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/components/today/TaskDetailDrawer.tsx",
+    "line": 193,
+    "kind": "spacing-px-literal",
+    "sample": "paddingTop: 12px → var(--sp-md)"
+  },
+  {
+    "file": "src/components/today/TaskDetailDrawer.tsx",
+    "line": 194,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/components/today/TaskGroup.tsx",
+    "line": 25,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/components/today/TaskGroup.tsx",
+    "line": 29,
+    "kind": "spacing-px-literal",
+    "sample": "marginLeft: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/components/today/TaskGroup.tsx",
+    "line": 31,
+    "kind": "radius-px-literal",
+    "sample": "borderRadius: 8px → var(--radius-lg)"
+  },
+  {
+    "file": "src/components/today/TaskRow.tsx",
+    "line": 36,
+    "kind": "spacing-px-literal",
+    "sample": "marginTop: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/components/today/Timeline.tsx",
+    "line": 91,
+    "kind": "radius-px-literal",
+    "sample": "borderRadius: 6px → var(--radius-md)"
+  },
+  {
+    "file": "src/components/today/Timeline.tsx",
+    "line": 219,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 24px → var(--sp-xl)"
+  },
+  {
+    "file": "src/components/today/Timeline.tsx",
+    "line": 229,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 12px → var(--sp-md)"
+  },
+  {
+    "file": "src/components/today/Timeline.tsx",
+    "line": 238,
+    "kind": "radius-px-literal",
+    "sample": "borderRadius: 8px → var(--radius-lg)"
+  },
+  {
+    "file": "src/components/today/Timeline.tsx",
+    "line": 248,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/components/today/Timeline.tsx",
+    "line": 367,
+    "kind": "spacing-px-literal",
+    "sample": "marginTop: 16px → var(--sp-lg)"
+  },
+  {
+    "file": "src/components/today/Timeline.tsx",
+    "line": 367,
+    "kind": "radius-px-literal",
+    "sample": "borderRadius: 8px → var(--radius-lg)"
+  },
+  {
+    "file": "src/components/today/Timeline.tsx",
+    "line": 377,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/components/today/Timeline.tsx",
+    "line": 377,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/components/today/Timeline.tsx",
+    "line": 386,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/components/today/Timeline.tsx",
+    "line": 407,
+    "kind": "spacing-px-literal",
+    "sample": "marginTop: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/components/UndoToast.tsx",
+    "line": 133,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/components/UndoToast.tsx",
+    "line": 149,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 12px → var(--sp-md)"
+  },
+  {
+    "file": "src/components/UndoToast.tsx",
+    "line": 172,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/components/UndoToast.tsx",
+    "line": 193,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/Digest.tsx",
+    "line": 291,
+    "kind": "spacing-px-literal",
+    "sample": "marginLeft: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/Digest.tsx",
+    "line": 437,
+    "kind": "spacing-px-literal",
+    "sample": "marginTop: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/Home.tsx",
+    "line": 350,
+    "kind": "spacing-px-literal",
+    "sample": "marginTop: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/pages/MeetingDetail.tsx",
+    "line": 512,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/pages/MeetingDetail.tsx",
+    "line": 517,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/MeetingDetail.tsx",
+    "line": 528,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/pages/MeetingDetail.tsx",
+    "line": 656,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/MeetingDetail.tsx",
+    "line": 713,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/pages/MeetingDetail.tsx",
+    "line": 1093,
+    "kind": "spacing-px-literal",
+    "sample": "paddingBottom: 12px → var(--sp-md)"
+  },
+  {
+    "file": "src/pages/MeetingDetail.tsx",
+    "line": 1093,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 12px → var(--sp-md)"
+  },
+  {
+    "file": "src/pages/Meetings.tsx",
+    "line": 341,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/pages/Meetings.tsx",
+    "line": 365,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/pages/Meetings.tsx",
+    "line": 565,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/Meetings.tsx",
+    "line": 619,
+    "kind": "spacing-px-literal",
+    "sample": "marginLeft: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/Meetings.tsx",
+    "line": 730,
+    "kind": "spacing-px-literal",
+    "sample": "padding: 12px → var(--sp-md)"
+  },
+  {
+    "file": "src/pages/Meetings.tsx",
+    "line": 730,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/pages/Meetings.tsx",
+    "line": 767,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/pages/Meetings.tsx",
+    "line": 831,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 12px → var(--sp-md)"
+  },
+  {
+    "file": "src/pages/MemberPage.tsx",
+    "line": 122,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/MyItems.tsx",
+    "line": 718,
+    "kind": "spacing-px-literal",
+    "sample": "marginTop: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/MyTasks/components/BulkBar.tsx",
+    "line": 67,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/pages/MyTasks/components/FilterChip.tsx",
+    "line": 60,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/MyTasks/components/FilterChip.tsx",
+    "line": 64,
+    "kind": "spacing-px-literal",
+    "sample": "marginTop: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/MyTasks/components/FilterChip.tsx",
+    "line": 64,
+    "kind": "radius-px-literal",
+    "sample": "borderRadius: 6px → var(--radius-md)"
+  },
+  {
+    "file": "src/pages/MyTasks/components/FilterChip.tsx",
+    "line": 74,
+    "kind": "radius-px-literal",
+    "sample": "borderRadius: 4px → var(--radius-sm)"
+  },
+  {
+    "file": "src/pages/MyTasks/components/InlineDetail.tsx",
+    "line": 106,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/pages/MyTasks/components/InlineDetail.tsx",
+    "line": 110,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/pages/MyTasks/components/InlineDetail.tsx",
+    "line": 120,
+    "kind": "spacing-px-literal",
+    "sample": "marginTop: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/MyTasks/components/InlineDetail.tsx",
+    "line": 156,
+    "kind": "spacing-px-literal",
+    "sample": "marginTop: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/pages/MyTasks/components/TopBar.tsx",
+    "line": 50,
+    "kind": "radius-px-literal",
+    "sample": "borderRadius: 6px → var(--radius-md)"
+  },
+  {
+    "file": "src/pages/MyTasks/components/TopBar.tsx",
+    "line": 62,
+    "kind": "radius-px-literal",
+    "sample": "borderRadius: 6px → var(--radius-md)"
+  },
+  {
+    "file": "src/pages/MyTasks/components/TopBar.tsx",
+    "line": 65,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/pages/MyTasks/components/TopBar.tsx",
+    "line": 65,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/MyTasks/index.tsx",
+    "line": 300,
+    "kind": "spacing-px-literal",
+    "sample": "padding: 24px → var(--sp-xl)"
+  },
+  {
+    "file": "src/pages/MyTasks/primitives.tsx",
+    "line": 14,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/MyTasks/primitives.tsx",
+    "line": 14,
+    "kind": "radius-px-literal",
+    "sample": "borderRadius: 4px → var(--radius-sm)"
+  },
+  {
+    "file": "src/pages/MyTasks/views/ColumnsView.tsx",
+    "line": 75,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/pages/MyTasks/views/ColumnsView.tsx",
+    "line": 75,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/pages/MyTasks/views/ColumnsView.tsx",
+    "line": 82,
+    "kind": "radius-px-literal",
+    "sample": "borderRadius: 8px → var(--radius-lg)"
+  },
+  {
+    "file": "src/pages/MyTasks/views/LanesView.tsx",
+    "line": 72,
+    "kind": "radius-px-literal",
+    "sample": "borderRadius: 8px → var(--radius-lg)"
+  },
+  {
+    "file": "src/pages/MyTasks/views/LanesView.tsx",
+    "line": 106,
+    "kind": "radius-px-literal",
+    "sample": "borderRadius: 4px → var(--radius-sm)"
+  },
+  {
+    "file": "src/pages/MyTasks/views/OverdueBanner.tsx",
+    "line": 27,
+    "kind": "radius-px-literal",
+    "sample": "borderRadius: 8px → var(--radius-lg)"
+  },
+  {
+    "file": "src/pages/portal/DeadlinesPage.tsx",
+    "line": 711,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/portal/DeadlinesPage.tsx",
+    "line": 1217,
+    "kind": "spacing-px-literal",
+    "sample": "marginLeft: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/portal/DecisionsPage.tsx",
+    "line": 87,
+    "kind": "spacing-px-literal",
+    "sample": "paddingTop: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/portal/DecisionsPage.tsx",
+    "line": 103,
+    "kind": "spacing-px-literal",
+    "sample": "marginTop: 12px → var(--sp-md)"
+  },
+  {
+    "file": "src/pages/portal/DecisionsPage.tsx",
+    "line": 194,
+    "kind": "spacing-px-literal",
+    "sample": "marginTop: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/portal/DecisionsPage.tsx",
+    "line": 382,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/pages/portal/DecisionsPage.tsx",
+    "line": 521,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/portal/DecisionsPage.tsx",
+    "line": 985,
+    "kind": "spacing-px-literal",
+    "sample": "marginRight: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/portal/DecisionsPage.tsx",
+    "line": 1008,
+    "kind": "spacing-px-literal",
+    "sample": "marginRight: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/portal/GrantsPage.tsx",
+    "line": 710,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/portal/GrantsPage.tsx",
+    "line": 714,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/portal/GrantsPage.tsx",
+    "line": 723,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/portal/GrantsPage.tsx",
+    "line": 727,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/portal/GrantsPage.tsx",
+    "line": 731,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/portal/GrantsPage.tsx",
+    "line": 739,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/portal/GrantsPage.tsx",
+    "line": 1033,
+    "kind": "spacing-px-literal",
+    "sample": "marginTop: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/portal/GrantsPage.tsx",
+    "line": 1041,
+    "kind": "spacing-px-literal",
+    "sample": "marginTop: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/pages/portal/GrantsPage.tsx",
+    "line": 1144,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/portal/GrantsPage.tsx",
+    "line": 1157,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/portal/GrantsPage.tsx",
+    "line": 1170,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/portal/GrantsPage.tsx",
+    "line": 1184,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/portal/GrantsPage.tsx",
+    "line": 1196,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/portal/IdeasPage.tsx",
+    "line": 335,
+    "kind": "spacing-px-literal",
+    "sample": "padding: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/portal/IdeasPage.tsx",
+    "line": 413,
+    "kind": "spacing-px-literal",
+    "sample": "padding: 12px → var(--sp-md)"
+  },
+  {
+    "file": "src/pages/portal/IdeasPage.tsx",
+    "line": 753,
+    "kind": "spacing-px-literal",
+    "sample": "padding: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/portal/IdeasPage.tsx",
+    "line": 777,
+    "kind": "spacing-px-literal",
+    "sample": "padding: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/portal/IdeasPage.tsx",
+    "line": 800,
+    "kind": "spacing-px-literal",
+    "sample": "padding: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/portal/IdeasPage.tsx",
+    "line": 883,
+    "kind": "spacing-px-literal",
+    "sample": "padding: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/portal/IdeasPage.tsx",
+    "line": 904,
+    "kind": "spacing-px-literal",
+    "sample": "padding: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/portal/IdeasPage.tsx",
+    "line": 924,
+    "kind": "spacing-px-literal",
+    "sample": "padding: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/portal/IdeasPage.tsx",
+    "line": 977,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/portal/IdeasPage.tsx",
+    "line": 988,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/portal/IdeasPage.tsx",
+    "line": 997,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/portal/IdeasPage.tsx",
+    "line": 1029,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/portal/IdeasPage.tsx",
+    "line": 1034,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/portal/IdeasPage.tsx",
+    "line": 1040,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/portal/IdeasPage.tsx",
+    "line": 1045,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/portal/IdeasPage.tsx",
+    "line": 1049,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/portal/IdeasPage.tsx",
+    "line": 1053,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/portal/InsightsPage.tsx",
+    "line": 215,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/portal/InsightsPage.tsx",
+    "line": 348,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/pages/portal/InsightsPage.tsx",
+    "line": 385,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/portal/InsightsPage.tsx",
+    "line": 401,
+    "kind": "spacing-px-literal",
+    "sample": "paddingRight: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/pages/portal/InsightsPage.tsx",
+    "line": 431,
+    "kind": "spacing-px-literal",
+    "sample": "marginTop: 12px → var(--sp-md)"
+  },
+  {
+    "file": "src/pages/portal/InsightsPage.tsx",
+    "line": 431,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 12px → var(--sp-md)"
+  },
+  {
+    "file": "src/pages/portal/InsightsPage.tsx",
+    "line": 438,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/portal/InsightsPage.tsx",
+    "line": 465,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/portal/InsightsPage.tsx",
+    "line": 474,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/pages/portal/InsightsPage.tsx",
+    "line": 534,
+    "kind": "spacing-px-literal",
+    "sample": "marginTop: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/portal/InsightsPage.tsx",
+    "line": 544,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/pages/portal/InsightsPage.tsx",
+    "line": 559,
+    "kind": "spacing-px-literal",
+    "sample": "marginTop: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/portal/InsightsPage.tsx",
+    "line": 581,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/portal/InsightsPage.tsx",
+    "line": 638,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/pages/portal/InsightsPage.tsx",
+    "line": 654,
+    "kind": "spacing-px-literal",
+    "sample": "paddingRight: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/pages/portal/InsightsPage.tsx",
+    "line": 717,
+    "kind": "spacing-px-literal",
+    "sample": "marginTop: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/pages/portal/InsightsPage.tsx",
+    "line": 719,
+    "kind": "spacing-px-literal",
+    "sample": "marginTop: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/pages/portal/InsightsPage.tsx",
+    "line": 868,
+    "kind": "spacing-px-literal",
+    "sample": "marginTop: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/portal/InsightsPage.tsx",
+    "line": 868,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 12px → var(--sp-md)"
+  },
+  {
+    "file": "src/pages/portal/InsightsPage.tsx",
+    "line": 872,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/pages/portal/ManuscriptsPage.tsx",
+    "line": 500,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/pages/portal/ManuscriptsPage.tsx",
+    "line": 534,
+    "kind": "spacing-px-literal",
+    "sample": "paddingRight: 16px → var(--sp-lg)"
+  },
+  {
+    "file": "src/pages/portal/ManuscriptsPage.tsx",
+    "line": 625,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/pages/portal/ManuscriptsPage.tsx",
+    "line": 635,
+    "kind": "spacing-px-literal",
+    "sample": "marginTop: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/portal/ManuscriptsPage.tsx",
+    "line": 1024,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 12px → var(--sp-md)"
+  },
+  {
+    "file": "src/pages/portal/MenteeMilestonesPage.tsx",
+    "line": 642,
+    "kind": "spacing-px-literal",
+    "sample": "paddingRight: 12px → var(--sp-md)"
+  },
+  {
+    "file": "src/pages/portal/MenteeMilestonesPage.tsx",
+    "line": 706,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/portal/MenteeMilestonesPage.tsx",
+    "line": 766,
+    "kind": "spacing-px-literal",
+    "sample": "marginLeft: 16px → var(--sp-lg)"
+  },
+  {
+    "file": "src/pages/portal/MenteeMilestonesPage.tsx",
+    "line": 776,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/pages/portal/MenteeMilestonesPage.tsx",
+    "line": 794,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/portal/MenteeMilestonesPage.tsx",
+    "line": 806,
+    "kind": "spacing-px-literal",
+    "sample": "marginTop: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/pages/portal/MenteeMilestonesPage.tsx",
+    "line": 909,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/portal/MenteeMilestonesPage.tsx",
+    "line": 923,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/portal/MenteeMilestonesPage.tsx",
+    "line": 937,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/portal/MenteeMilestonesPage.tsx",
+    "line": 962,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/portal/MenteeMilestonesPage.tsx",
+    "line": 984,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/portal/MyTasks.tsx",
+    "line": 659,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/pages/portal/NarrativesPage.tsx",
+    "line": 113,
+    "kind": "spacing-px-literal",
+    "sample": "marginRight: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/portal/PersonalPage.tsx",
+    "line": 483,
+    "kind": "spacing-px-literal",
+    "sample": "marginTop: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/portal/PersonalPage.tsx",
+    "line": 530,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/pages/portal/PersonalPage.tsx",
+    "line": 1070,
+    "kind": "spacing-px-literal",
+    "sample": "marginLeft: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/portal/SearchPage.tsx",
+    "line": 864,
+    "kind": "spacing-px-literal",
+    "sample": "marginRight: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/portal/SearchPage.tsx",
+    "line": 879,
+    "kind": "spacing-px-literal",
+    "sample": "marginTop: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/portal/SettingsPage.tsx",
+    "line": 66,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/pages/portal/TodayPage.tsx",
+    "line": 280,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 12px → var(--sp-md)"
+  },
+  {
+    "file": "src/pages/portal/TodayPage.tsx",
+    "line": 281,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/pages/portal/TodayPage.tsx",
+    "line": 321,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/portal/TodayPage.tsx",
+    "line": 327,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 16px → var(--sp-lg)"
+  },
+  {
+    "file": "src/pages/portal/TodayPage.tsx",
+    "line": 327,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/pages/portal/TodayPage.tsx",
+    "line": 344,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/pages/portal/TodayPage.tsx",
+    "line": 344,
+    "kind": "radius-px-literal",
+    "sample": "borderRadius: 6px → var(--radius-md)"
+  },
+  {
+    "file": "src/pages/portal/TodayPage.tsx",
+    "line": 362,
+    "kind": "spacing-px-literal",
+    "sample": "marginTop: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/pages/portal/TodayPage.tsx",
+    "line": 384,
+    "kind": "spacing-px-literal",
+    "sample": "paddingTop: 16px → var(--sp-lg)"
+  },
+  {
+    "file": "src/pages/portal/TodayPage.tsx",
+    "line": 384,
+    "kind": "spacing-px-literal",
+    "sample": "marginTop: 24px → var(--sp-xl)"
+  },
+  {
+    "file": "src/pages/portal/TodayPage.tsx",
+    "line": 385,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/pages/portal/TodayPage.tsx",
+    "line": 393,
+    "kind": "spacing-px-literal",
+    "sample": "marginTop: 12px → var(--sp-md)"
+  },
+  {
+    "file": "src/pages/portal/TodayPage.tsx",
+    "line": 395,
+    "kind": "spacing-px-literal",
+    "sample": "paddingLeft: 12px → var(--sp-md)"
+  },
+  {
+    "file": "src/pages/portal/TodayPage.tsx",
+    "line": 395,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/pages/portal/TodayPage.tsx",
+    "line": 404,
+    "kind": "spacing-px-literal",
+    "sample": "paddingLeft: 12px → var(--sp-md)"
+  },
+  {
+    "file": "src/pages/portal/TodayPage.tsx",
+    "line": 404,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/pages/project/ProjectDecisions.tsx",
+    "line": 121,
+    "kind": "spacing-px-literal",
+    "sample": "marginTop: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/project/ProjectDependencies.tsx",
+    "line": 120,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 12px → var(--sp-md)"
+  },
+  {
+    "file": "src/pages/project/ProjectDependencies.tsx",
+    "line": 142,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/project/ProjectDependencies.tsx",
+    "line": 168,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/project/ProjectDependencies.tsx",
+    "line": 191,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/project/ProjectLiterature.tsx",
+    "line": 358,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 12px → var(--sp-md)"
+  },
+  {
+    "file": "src/pages/ProjectDetail.tsx",
+    "line": 570,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 16px → var(--sp-lg)"
+  },
+  {
+    "file": "src/pages/ProjectDetail.tsx",
+    "line": 709,
+    "kind": "spacing-px-literal",
+    "sample": "marginTop: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/ProjectDetail.tsx",
+    "line": 716,
+    "kind": "spacing-px-literal",
+    "sample": "padding: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/ProjectDetail.tsx",
+    "line": 724,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/pages/ProjectDetail.tsx",
+    "line": 741,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/pages/ProjectDetail.tsx",
+    "line": 757,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/pages/ProjectDetail.tsx",
+    "line": 870,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 12px → var(--sp-md)"
+  },
+  {
+    "file": "src/pages/ProjectDetail.tsx",
+    "line": 955,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 24px → var(--sp-xl)"
+  },
+  {
+    "file": "src/pages/ProjectDetail.tsx",
+    "line": 1183,
+    "kind": "spacing-px-literal",
+    "sample": "marginTop: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/ProjectDetail.tsx",
+    "line": 1210,
+    "kind": "spacing-px-literal",
+    "sample": "paddingTop: 12px → var(--sp-md)"
+  },
+  {
+    "file": "src/pages/ProjectDetail.tsx",
+    "line": 1226,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/pages/ProjectDetail.tsx",
+    "line": 1262,
+    "kind": "spacing-px-literal",
+    "sample": "paddingTop: 12px → var(--sp-md)"
+  },
+  {
+    "file": "src/pages/ProjectDetail.tsx",
+    "line": 1266,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/ProjectDetail.tsx",
+    "line": 1555,
+    "kind": "spacing-px-literal",
+    "sample": "marginTop: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/pages/ProjectDetail.tsx",
+    "line": 1601,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 16px → var(--sp-lg)"
+  },
+  {
+    "file": "src/pages/ProjectDetail.tsx",
+    "line": 1610,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 4px → var(--sp-xs)"
+  },
+  {
+    "file": "src/pages/ProjectDetail.tsx",
+    "line": 1707,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 16px → var(--sp-lg)"
+  },
+  {
+    "file": "src/pages/ProjectDetail.tsx",
+    "line": 1716,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/pages/ProjectDetail.tsx",
+    "line": 1751,
+    "kind": "spacing-px-literal",
+    "sample": "marginTop: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/pages/ProjectDetail.tsx",
+    "line": 1825,
+    "kind": "spacing-px-literal",
+    "sample": "marginTop: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/pages/ProjectDetail.tsx",
+    "line": 1951,
+    "kind": "spacing-px-literal",
+    "sample": "gap: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/pages/Projects.tsx",
+    "line": 485,
+    "kind": "spacing-px-literal",
+    "sample": "paddingRight: 16px → var(--sp-lg)"
+  },
+  {
+    "file": "src/pages/Projects.tsx",
+    "line": 660,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 8px → var(--sp-sm)"
+  },
+  {
+    "file": "src/pages/TrajectoryPage.tsx",
+    "line": 91,
+    "kind": "spacing-px-literal",
+    "sample": "marginBottom: 12px → var(--sp-md)"
+  }
+]

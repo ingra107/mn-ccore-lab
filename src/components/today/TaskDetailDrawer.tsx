@@ -86,18 +86,18 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
     <div onClick={(e) => e.stopPropagation()} style={{ padding: '14px 16px 16px', background: 'rgba(0,0,0,0.20)', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 12, flexWrap: 'wrap' }}>
         {!isNow && (
-          <button onClick={() => state.promote(task.id)} style={{ padding: '6px 12px', background: ACCENT_GOLD, color: PAGE_BG, border: 'none', borderRadius: 4, fontFamily: 'inherit', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>▶ Work on this now</button>
+          <button onClick={() => state.promote(task.id)} style={{ padding: '6px 12px', background: ACCENT_GOLD, color: PAGE_BG, border: 'none', borderRadius: 'var(--radius-sm)', fontFamily: 'inherit', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>▶ Work on this now</button>
         )}
         {!isPlanned && !isNow && (
-          <button onClick={() => state.planAt(task.id, 'strip')} style={{ padding: '6px 12px', background: 'rgba(201,168,76,0.08)', color: ACCENT_GOLD, border: '1px solid rgba(201,168,76,0.30)', borderRadius: 4, fontFamily: 'inherit', fontSize: 12, fontWeight: 500, cursor: 'pointer' }}>📌 Plan for today</button>
+          <button onClick={() => state.planAt(task.id, 'strip')} style={{ padding: '6px 12px', background: 'rgba(201,168,76,0.08)', color: ACCENT_GOLD, border: '1px solid rgba(201,168,76,0.30)', borderRadius: 'var(--radius-sm)', fontFamily: 'inherit', fontSize: 12, fontWeight: 500, cursor: 'pointer' }}>📌 Plan for today</button>
         )}
         {isPlanned && !isNow && (
-          <button onClick={() => state.unplan(task.id)} style={{ padding: '6px 12px', background: 'transparent', color: INK_MUTED, border: '1px solid rgba(255,255,255,0.14)', borderRadius: 4, fontFamily: 'inherit', fontSize: 12, cursor: 'pointer' }}>Unplan</button>
+          <button onClick={() => state.unplan(task.id)} style={{ padding: '6px 12px', background: 'transparent', color: INK_MUTED, border: '1px solid rgba(255,255,255,0.14)', borderRadius: 'var(--radius-sm)', fontFamily: 'inherit', fontSize: 12, cursor: 'pointer' }}>Unplan</button>
         )}
         <div ref={moveRef} style={{ position: 'relative' }}>
-          <button onClick={() => setMoveOpen((o) => !o)} title="Move to a different group (writes group_override)" style={{ padding: '6px 12px', background: moveOpen ? withAlpha(ACCENT_TEAL, 20) : 'transparent', color: moveOpen ? ACCENT_TEAL : INK, border: `1px solid ${moveOpen ? ACCENT_TEAL : 'rgba(255,255,255,0.14)'}`, borderRadius: 4, fontFamily: 'inherit', fontSize: 12, cursor: 'pointer' }}>Move →</button>
+          <button onClick={() => setMoveOpen((o) => !o)} title="Move to a different group (writes group_override)" style={{ padding: '6px 12px', background: moveOpen ? withAlpha(ACCENT_TEAL, 20) : 'transparent', color: moveOpen ? ACCENT_TEAL : INK, border: `1px solid ${moveOpen ? ACCENT_TEAL : 'rgba(255,255,255,0.14)'}`, borderRadius: 'var(--radius-sm)', fontFamily: 'inherit', fontSize: 12, cursor: 'pointer' }}>Move →</button>
           {moveOpen && (
-            <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: 4, minWidth: 200, background: PANEL_BG, border: '1px solid rgba(255,255,255,0.12)', borderRadius: 4, zIndex: 30, boxShadow: '0 4px 12px rgba(0,0,0,0.4)' }}>
+            <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: 4, minWidth: 200, background: PANEL_BG, border: '1px solid rgba(255,255,255,0.12)', borderRadius: 'var(--radius-sm)', zIndex: 30, boxShadow: '0 4px 12px rgba(0,0,0,0.4)' }}>
               {TODAY_MOVE_OPTIONS.map((opt) => (
                 <button
                   key={opt.key}

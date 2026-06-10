@@ -21,7 +21,7 @@ export function NeedsAttentionCard({ overdueTasks, stalledProjects }: { overdueT
         <span style={{ width: 6, height: 6, borderRadius: '50%', background: ACCENT_CORAL }} />
         <h4 style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: ACCENT_CORAL, margin: 0 }}>Needs attention</h4>
       </div>
-      <div style={{ padding: 12, background: 'rgba(240,115,126,0.04)', border: '1px solid rgba(240,115,126,0.15)', borderRadius: 6, marginBottom: 8 }}>
+      <div style={{ padding: 12, background: 'rgba(240,115,126,0.04)', border: '1px solid rgba(240,115,126,0.15)', borderRadius: 'var(--radius-md)', marginBottom: 8 }}>
         <div style={{ fontSize: 10, color: ACCENT_CORAL, marginBottom: 4, fontWeight: 600, letterSpacing: '0.04em' }}>OVERDUE</div>
         {overdueTasks.length === 0 && (
           <div style={{ fontSize: 11, color: INK_DIM, fontStyle: 'italic' }}>None — clean slate.</div>
