@@ -965,7 +965,7 @@ export default function PersonalPage() {
       {/* Quick Actions + Recently Viewed */}
       <div className="flex items-center gap-3 mt-4 flex-wrap">
         {([
-          { label: 'New Task', to: `${PATHS.tasks}?create=true`, icon: CheckSquare, color: 'var(--teal)' },
+          { label: 'New Task', to: `${PATHS.myTasks}?create=true`, icon: CheckSquare, color: 'var(--teal)' },
           { label: 'Submit Idea', to: `${PATHS.ideas}?create=true`, icon: Lightbulb, color: 'var(--gold)' },
           { label: 'Ask a Question', to: `${PATHS.ask}?create=true`, icon: User, color: 'var(--slate)' },
         ]).map((a) => {

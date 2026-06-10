@@ -1,6 +1,6 @@
 import { lazy, Suspense, Component } from 'react'
 import type { ReactNode, ErrorInfo } from 'react'
-import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useParams, useLocation } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MotionConfig } from 'framer-motion'
 import Layout from './components/Layout'
@@ -174,6 +174,18 @@ function NavigateWithParams({ to }: { to: string }) {
   return <Navigate to={resolved} replace />
 }
 
+/**
+ * Redirect shim that PRESERVES the query string. Plain <Navigate to="/x">
+ * drops `?create=true` / `?open=<id>` etc., which silently breaks deep-links
+ * that hop through a redirect (e.g. /portal/tasks?create=true →
+ * /portal/my-tasks). Use this for any legacy-path shim whose target hosts a
+ * deep-link consumer.
+ */
+function NavigateKeepSearch({ to }: { to: string }) {
+  const { search } = useLocation()
+  return <Navigate to={`${to}${search}`} replace />
+}
+
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
@@ -257,7 +269,7 @@ export default function App() {
                   {/* Legacy MyTasks (pre-Round 2). Kept for one sprint as a
                       safety net; remove once Round 2 has soaked. */}
                   <Route path="/portal/my-tasks-legacy" element={<ErrorBoundary><MyTasksLegacy /></ErrorBoundary>} />
-                  <Route path="/portal/tasks" element={<Navigate to="/portal/my-tasks" replace />} />
+                  <Route path="/portal/tasks" element={<NavigateKeepSearch to="/portal/my-tasks" />} />
                   <Route path="/portal/calendar" element={<ErrorBoundary><CalendarPage /></ErrorBoundary>} />
                   <Route path="/portal/deadlines" element={<ErrorBoundary><DeadlinesPage /></ErrorBoundary>} />
                   <Route path="/portal/deadline-cascade" element={<ErrorBoundary><DeadlineCascadePage /></ErrorBoundary>} />

@@ -919,6 +919,10 @@ export default function DecisionsPage() {
     { ready: !isLoading },
   )
 
+  // Consume `?create=true` deep-links (⌘K "Log Decision") — open the create
+  // modal then strip the param. Consumer half of the create=true class.
+  useOpenParam('create', () => setShowCreate(true))
+
   useListKeyboardNav({
     itemCount: viewMode === 'list' ? filteredDecisions.length : 0,
     focusedIndex,

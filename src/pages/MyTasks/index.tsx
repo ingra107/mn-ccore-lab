@@ -93,6 +93,12 @@ export default function UnifiedMyTasks() {
     // on first render before the consumer fires.
     const openParam = searchParams.get('open')
     if (openParam) next.set('open', openParam)
+    // Same carry-through for the `create=true` deep-link (⌘K "Create Task",
+    // Today/My-Hub quick actions, the `c` shortcut). Without it this state→URL
+    // sync strips `create` before the consumer below opens the modal — the
+    // class bug that left ⌘K → Create Task dead-ending on My Tasks.
+    const createParam = searchParams.get('create')
+    if (createParam) next.set('create', createParam)
     // Avoid spamming history: replace, not push.
     setSearchParams(next, { replace: true })
     // searchParams intentionally omitted from deps: this effect mirrors local
@@ -165,6 +171,13 @@ export default function UnifiedMyTasks() {
 
   // ── Create task ─────────────────────────────────────────────
   const [showCreate, setShowCreate] = useState(false)
+  // Consume `?create=true` deep-links (⌘K "Create Task", Today/My-Hub quick
+  // actions, the `c` keyboard shortcut). Opens the CreateTaskModal then strips
+  // the param. This is the consumer half of the create=true class — UnifiedMyTasks
+  // is the live /portal/my-tasks page (the legacy portal/MyTasks.tsx had a
+  // consumer but is only mounted at /portal/my-tasks-legacy). `ready` is true
+  // immediately — the modal doesn't depend on the task collection being loaded.
+  useOpenParam('create', () => setShowCreate(true))
   const createTask = useCreateTask()
   const handleCreate = useCallback((task: {
     title: string

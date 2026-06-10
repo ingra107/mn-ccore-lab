@@ -23,6 +23,7 @@ import { formatFullDate, formatShortDate, localDateKey } from '../lib/dateUtils'
 import PageTooltip, { dismissPageTooltip } from '../components/PageTooltip'
 import type { Meeting, ActionItem } from '../data/types'
 import { PATHS } from '../constants/paths'
+import { useOpenParam } from '../hooks/useOpenParam'
 
 type FilterMode = 'all' | 'decisions' | 'actions'
 
@@ -433,6 +434,9 @@ export default function Meetings() {
   const [newActionProject, setNewActionProject] = useState('')
 
   const [showAddMeeting, setShowAddMeeting] = useState(false)
+  // Consume `?create=true` deep-links (⌘K "Schedule Meeting") — open the Record
+  // Meeting form, then strip the param. Consumer half of the create=true class.
+  useOpenParam('create', () => setShowAddMeeting(true))
   const [newMeetingDate, setNewMeetingDate] = useState('')
   const [newMeetingTitle, setNewMeetingTitle] = useState('')
   const [newMeetingAttendees, setNewMeetingAttendees] = useState<string[]>(['nick-ingraham', 'nate-mesfin'])
