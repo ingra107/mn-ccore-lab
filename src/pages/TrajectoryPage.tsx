@@ -19,6 +19,7 @@ import { useTrajectory, useContributions } from '../hooks/useApiData'
 import type { TrajectoryData, ContributionsData } from '../hooks/useApiData'
 import { getMemberBySlug } from '../data/team'
 import ActivityHeatmap from '../components/ActivityHeatmap'
+import HeartbeatLine from '../components/HeartbeatLine'
 import { PATHS } from '../constants/paths'
 
 // ── Stage colors ───────────────────────────────────────────
@@ -1213,11 +1214,8 @@ function ContributionsPanel({ slug, memberName }: { slug: string; memberName: st
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-16">
-        <div
-          className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin"
-          style={{ borderColor: 'var(--gold)', borderTopColor: 'transparent' }}
-        />
+      <div className="flex items-center justify-center py-16" role="status" aria-label="Loading">
+        <HeartbeatLine width={200} height={52} color="var(--gold)" ariaLabel="Loading" />
       </div>
     )
   }
@@ -1495,11 +1493,8 @@ export default function TrajectoryPage() {
           >
             {/* Loading state */}
             {isLoading && (
-              <div className="flex items-center justify-center py-16">
-                <div
-                  className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin"
-                  style={{ borderColor: 'var(--gold)', borderTopColor: 'transparent' }}
-                />
+              <div className="flex items-center justify-center py-16" role="status" aria-label="Loading">
+                <HeartbeatLine width={200} height={52} color="var(--gold)" ariaLabel="Loading" />
               </div>
             )}
 

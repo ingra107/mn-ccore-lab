@@ -144,7 +144,7 @@ export default function PomodoroStatsCard() {
   }, [stats])
 
   return (
-    <BentoCard title="Focus Time" icon={Timer} subtitle={isLoading ? 'Loading...' : `${weekHours}h this week`}>
+    <BentoCard title="Focus Time" icon={Timer} subtitle={isLoading ? undefined : `${weekHours}h this week`}>
       {isLoading ? (
         <div className="flex flex-col gap-2">
           {[1, 2, 3].map(i => (

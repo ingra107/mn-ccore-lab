@@ -16,7 +16,7 @@ export default function EmailDraftsCard() {
   const count = drafts.length
 
   return (
-    <BentoCard title="Email Drafts" icon={Mail} subtitle={isLoading ? 'Loading...' : `${count} pending`}>
+    <BentoCard title="Email Drafts" icon={Mail} subtitle={isLoading ? undefined : `${count} pending`}>
       {isLoading ? (
         <div className="flex flex-col gap-2">
           {[1, 2, 3].map(i => (

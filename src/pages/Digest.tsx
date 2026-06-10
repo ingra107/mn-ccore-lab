@@ -25,6 +25,7 @@ import { getPersonInfo } from '../data/team'
 import { formatMediumDate } from '../lib/dateUtils'
 import Avatar from '../components/Avatar'
 import PageHeader from '../components/PageHeader'
+import HeartbeatLine from '../components/HeartbeatLine'
 
 type StatusFilter = 'all' | 'new' | 'saved'
 
@@ -1004,16 +1005,8 @@ export default function Digest() {
           {/* Paper list — outer wrapper reserves stable height to prevent CLS during load */}
           <div style={{ minHeight: '600px' }}>
           {isLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="flex flex-col items-center gap-3">
-                <div
-                  className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin"
-                  style={{ borderColor: 'var(--gold)', borderTopColor: 'transparent' }}
-                />
-                <span className="text-sm" style={{ color: 'var(--slate)' }}>
-                  Loading digest...
-                </span>
-              </div>
+            <div className="flex items-center justify-center py-12" role="status" aria-label="Loading digest">
+              <HeartbeatLine width={200} height={52} color="var(--gold)" ariaLabel="Loading digest" />
             </div>
           ) : filteredPapers.length === 0 ? (
             searchQuery ? (

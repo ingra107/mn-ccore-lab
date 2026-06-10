@@ -68,7 +68,7 @@ export default function FileActivityCard() {
       title="File Activity"
       icon={FileCode}
       size="span-2"
-      subtitle={isLoading ? 'Loading...' : `${totalThisWeek} files this week`}
+      subtitle={isLoading ? undefined : `${totalThisWeek} files this week`}
     >
       {isLoading ? (
         <div className="flex flex-col gap-2">

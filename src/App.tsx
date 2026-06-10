@@ -8,6 +8,7 @@ import PortalLayout from './components/PortalLayout'
 import ViewTransitionWrapper from './components/ViewTransitionWrapper'
 import PageErrorBoundary from './components/PageErrorBoundary'
 import RequireAuth from './components/RequireAuth'
+import HeartbeatLine from './components/HeartbeatLine'
 const Home = lazy(() => import('./pages/Home'))
 import { AuthProvider } from './context/AuthContext'
 import { PATHS } from './constants/paths'
@@ -147,16 +148,12 @@ const Pulse = lazy(() => import('./pages/Pulse'))
 const GrantsPage = lazy(() => import('./pages/portal/GrantsPage'))
 
 function PageLoader() {
+  // P1-10: the lab's own ECG pulse instead of a generic spinner. HeartbeatLine
+  // is reduced-motion safe (pauses fully-drawn) and shares the favicon trace.
   return (
     <div className="flex items-center justify-center min-h-[60vh]">
-      <div className="flex flex-col items-center gap-3">
-        <div
-          className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin"
-          style={{ borderColor: 'var(--gold)', borderTopColor: 'transparent' }}
-        />
-        <span className="text-sm" style={{ color: 'var(--slate)' }}>
-          Loading...
-        </span>
+      <div className="flex flex-col items-center gap-3" role="status" aria-label="Loading">
+        <HeartbeatLine width={180} height={48} color="var(--gold)" ariaLabel="Loading" />
       </div>
     </div>
   )

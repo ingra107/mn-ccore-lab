@@ -10,6 +10,7 @@ import { emailToSlug } from '../lib/emailSlug'
 import { formatRelativeTime } from '../lib/dateUtils'
 import { getPersonInfo } from '../data/team'
 import Avatar from './Avatar'
+import HeartbeatLine from './HeartbeatLine'
 import SmartCompose from './SmartCompose'
 import ReactionBar from './ReactionBar'
 import { useToast } from '../hooks/useToast'
@@ -98,11 +99,8 @@ export default function ProjectComments({ projectSlug }: Props) {
 
         {/* Comments list */}
         {isLoading ? (
-          <div style={{ textAlign: 'center', padding: '20px 0' }}>
-            <div
-              className="w-5 h-5 rounded-full border-2 border-t-transparent animate-spin mx-auto"
-              style={{ borderColor: 'var(--gold)', borderTopColor: 'transparent' }}
-            />
+          <div style={{ display: 'flex', justifyContent: 'center', padding: '16px 0' }} role="status" aria-label="Loading comments">
+            <HeartbeatLine width={140} height={36} color="var(--gold)" ariaLabel="Loading comments" />
           </div>
         ) : comments.length > 0 ? (
           <div className="flex flex-col gap-3">
