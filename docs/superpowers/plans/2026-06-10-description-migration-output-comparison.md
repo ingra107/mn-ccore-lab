@@ -73,6 +73,13 @@ dedup), human-reviewable per-project diff third, description-strip last.
 1. Legacy activity_log backfill: **OVERRIDDEN — Nick wants it.** Smart-session agent dispatched to
    mine the real data out (report: `2026-06-10-activity-log-backfill-report.md` when it lands).
 2. Parser vs LLM: **this document is the requested evidence** — awaiting Nick's read.
-3. PB writer retarget vs nightly sweep: explained to Nick; pending his call (no urgency — PB-session
-   work either way).
+3. PB writer retarget vs nightly sweep: **RETARGET — Nick confirmed** ("yes retarget for sure
+   because i don't want description muddied"). PB-session work: repoint the 4 BrainDB breadcrumb
+   sites (query.py:1960, :2001, :2084, :2650) to post activity entries Hub-first instead of
+   appending to notes. `descriptionLog.ts` deletes only after that lands + one clean sync cycle.
+   Separately, Nick floated a DIFFERENT nightly idea — LLM-tidying his own posted activity
+   comments (e.g., a ramble → "moved to xyz project"); assessed as not-needed-now: actionable
+   comments are the existing comment→/process + Hermes lane's job (act on them, don't rewrite
+   them), and rewriting posted human messages destroys provenance. If wanted later: non-destructive
+   derived summary alongside the original, never a rewrite. YAGNI for now.
 4. Order P2-A → P2-C → P2-B: **approved.**
