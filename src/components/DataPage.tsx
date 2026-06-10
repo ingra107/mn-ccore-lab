@@ -64,6 +64,13 @@ interface DataPageProps {
   //    dashboards, category pill rows the page owns). ──
   beforeBody?: ReactNode
 
+  /** Opt the body OUT of the --col-main cap into anchored-wide mode (Nick
+   *  2026-06-10b): same anchored left edge, but the body grows rightward to
+   *  the viewport (minus standard right padding) instead of being capped at
+   *  960px and h-scrolling inside it. For genuinely WIDE multi-column bodies
+   *  (e.g. the Projects Pipeline kanban). Leave false for normal tables. */
+  wideBody?: boolean
+
   // ── State ──
   isLoading?: boolean
   /** Skeleton geometry while loading. */
@@ -100,6 +107,7 @@ export default function DataPage({
   controlsCountLabel,
   hideControls,
   beforeBody,
+  wideBody,
   isLoading,
   skeletonRows = 6,
   skeletonCols = 5,
@@ -110,6 +118,25 @@ export default function DataPage({
   const showControls =
     !hideControls &&
     (views || filters || rightExtra || showDensity || controlsCount !== undefined)
+
+  const body = (
+    <>
+      {beforeBody}
+
+      {isLoading ? (
+        <TableSkeleton rows={skeletonRows} cols={skeletonCols} />
+      ) : isEmpty && empty ? (
+        <EmptyState
+          icon={<EmptyStateArt variant={empty.variant ?? 'generic'} />}
+          title={empty.title}
+          subtitle={empty.subtitle}
+          action={empty.action}
+        />
+      ) : (
+        children
+      )}
+    </>
+  )
 
   return (
     <div style={{ minHeight: '100vh', overflowX: 'hidden' }}>
@@ -135,24 +162,20 @@ export default function DataPage({
 
         {/* Anchored primary column (P1-1): left edge + width identical on
             every data page. Pages with no rail leave the space beside it
-            empty rather than re-centering. */}
-        <div style={{ maxWidth: 'var(--col-main)' }}>
-          {beforeBody}
-
-          {isLoading ? (
-            <TableSkeleton rows={skeletonRows} cols={skeletonCols} />
-          ) : isEmpty && empty ? (
-            <EmptyState
-              icon={<EmptyStateArt variant={empty.variant ?? 'generic'} />}
-              title={empty.title}
-              subtitle={empty.subtitle}
-              action={empty.action}
-            />
-          ) : (
-            children
-          )}
-        </div>
+            empty rather than re-centering. When wideBody, the body renders in
+            a sibling full-width wrapper below (it can't be both inside the
+            1296px band AND fluid past it), so only the non-wide body sits
+            here. */}
+        {!wideBody && <div style={{ maxWidth: 'var(--col-main)' }}>{body}</div>}
       </div>
+
+      {/* Anchored-wide body (Nick 2026-06-10b): rendered OUTSIDE the band so it
+          can grow rightward to the viewport (minus standard right padding); the
+          .band-anchored-wide left edge is computed to match .content-container's
+          content edge exactly, so the header above and this body share one left
+          edge at every viewport width. Used for wide multi-column bodies like
+          the Projects Pipeline kanban. */}
+      {wideBody && <div className="band-anchored-wide">{body}</div>}
     </div>
   )
 }

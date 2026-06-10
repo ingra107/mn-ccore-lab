@@ -311,6 +311,11 @@ export default function Projects() {
       ]}
       activeView={viewMode}
       onViewChange={(v) => setViewMode(v as 'list' | 'pipeline')}
+      /* 2026-06-10b (Nick): the Pipeline kanban is WIDE multi-column content —
+         let it grow rightward to fit (anchored left edge, fluid right) instead
+         of cramming 7 stages into --col-main and h-scrolling inside the band.
+         The List/table view stays at --col-main. */
+      wideBody={viewMode === 'pipeline'}
       filters={
         <>
           {/* S21: removed the "Try Pipeline view" promo coach-mark — it rendered
