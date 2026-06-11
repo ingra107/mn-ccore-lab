@@ -1,5 +1,5 @@
 import { useMemo, useState, lazy, Suspense } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 const BugReportModal = lazy(() => import('./BugReportModal'))
 import {
   LayoutDashboard,
@@ -100,6 +100,7 @@ const navGroups: NavGroup[] = [
 
 export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProps) {
   const location = useLocation()
+  const navigate = useNavigate()
   const { user } = useAuth()
   const { isDark } = useDarkMode()
   const userSlug = emailToSlug(user?.email)
@@ -280,13 +281,22 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
                   {!collapsed && item.badge !== undefined && item.badge > 0 && (
                     <span
                       className="ml-auto text-xs px-1.5 py-0.5 rounded-full"
-                      title={item.to === PATHS.myTasks ? `${item.badge} task${item.badge === 1 ? '' : 's'} you haven't opened yet` : undefined}
+                      title={item.to === PATHS.myTasks ? `${item.badge} task${item.badge === 1 ? '' : 's'} you haven't opened yet — click to triage in My Items` : undefined}
+                      // The My Tasks badge is its OWN click target (Nick
+                      // 2026-06-11): the count → My Items "New for You" triage
+                      // list, while the rest of the row still goes to My Tasks.
+                      role={item.to === PATHS.myTasks ? 'link' : undefined}
+                      tabIndex={item.to === PATHS.myTasks ? 0 : undefined}
+                      aria-label={item.to === PATHS.myTasks ? `${item.badge} new tasks — open My Items` : undefined}
+                      onClick={item.to === PATHS.myTasks ? (e) => { e.preventDefault(); e.stopPropagation(); navigate(PATHS.myItems); onNavigate?.() } : undefined}
+                      onKeyDown={item.to === PATHS.myTasks ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); navigate(PATHS.myItems); onNavigate?.() } } : undefined}
                       style={{
                         // My Tasks badge = "new to you" (gold, Rule 59), drains
                         // on open via auto-acknowledge. Gold bg takes a fixed
                         // dark literal, not var(--ink) (CLAUDE.md gold rule).
                         backgroundColor: item.to === PATHS.myTasks ? 'var(--gold)' : 'var(--maroon-solid)',
                         color: item.to === PATHS.myTasks ? '#1a1a1a' : 'var(--ink-bright, #fff)',
+                        cursor: item.to === PATHS.myTasks ? 'pointer' : undefined,
                       }}
                     >
                       {item.badge}

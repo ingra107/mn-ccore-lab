@@ -17,8 +17,9 @@ import { usePageMeta } from '../hooks/usePageMeta'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 import { useAuth } from '../hooks/useAuth'
 import { emailToSlug } from '../lib/emailSlug'
-import { useActionItems } from '../hooks/useApiData'
+import { useActionItems, useTasks } from '../hooks/useApiData'
 import type { ActionItemRow } from '../hooks/useApiData'
+import type { TaskRow } from '../lib/api'
 import { useNotifications, useUnreadCount, useMarkRead, useMarkAllRead } from '../hooks/useNotifications'
 import type { NotificationRow } from '../hooks/useNotifications'
 import { useToggleActionItem } from '../hooks/useMutations'
@@ -568,6 +569,16 @@ export default function MyItems() {
   const { data: allActionItems = [] } = useActionItems(
     userSlug ? { assignee: userSlug } : undefined
   )
+  // "New for you" (Slack-style seen, 2026-06-11): open tasks assigned to you
+  // that you haven't OPENED yet (acknowledged_at IS NULL). Clicking one
+  // deep-links into My Tasks (?open=<id>) which opens the editor and
+  // auto-acknowledges — the item leaves this list on its own. Same population
+  // as the gold sidebar badge + the ✦ New quick filter.
+  const { data: myOpenTasks = [] } = useTasks({ assignee: userSlug, completed: '0' })
+  const newTasks = useMemo(
+    () => myOpenTasks.filter((t: TaskRow) => !t.acknowledged_at),
+    [myOpenTasks]
+  )
   const { data: notifications = [] } = useNotifications(userSlug)
   const { data: unreadCount = 0 } = useUnreadCount(userSlug)
   const markRead = useMarkRead(userSlug)
@@ -767,6 +778,12 @@ export default function MyItems() {
           }}
         >
           <StatCard
+            count={newTasks.length}
+            label="New to You"
+            icon={<BellDot size={20} />}
+            accentColor="var(--gold)"
+          />
+          <StatCard
             count={pending.length}
             label="Pending Action Items"
             icon={<Circle size={20} />}
@@ -785,6 +802,68 @@ export default function MyItems() {
             accentColor="var(--maroon)"
           />
         </div>
+
+        {/* New for you — unseen tasks, the badge's population. Each row opens
+            the task editor (My Tasks ?open= deep-link), which auto-acks, so
+            items remove themselves from this list once looked at. */}
+        {newTasks.length > 0 && (
+          <div style={{ marginBottom: '2.5rem' }}>
+            <SectionHeader title="New for You" />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {newTasks.map((t: TaskRow) => (
+                <Link
+                  key={t.id}
+                  to={`${PATHS.myTasks}?open=${t.id}`}
+                  className="card"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    padding: '10px 14px',
+                    textDecoration: 'none',
+                    borderLeft: '3px solid var(--gold)',
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: '9px',
+                      fontWeight: 700,
+                      letterSpacing: '0.08em',
+                      color: 'var(--gold)',
+                      background: 'var(--gold-active)',
+                      padding: '1px 5px',
+                      borderRadius: '3px',
+                      flexShrink: 0,
+                    }}
+                  >
+                    NEW
+                  </span>
+                  <span
+                    title={t.title}
+                    style={{
+                      flex: 1,
+                      minWidth: 0,
+                      fontSize: '13.5px',
+                      fontWeight: 500,
+                      color: 'var(--ink)',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {t.short_title || t.title}
+                  </span>
+                  {t.due_date && (
+                    <span style={{ fontSize: '11px', color: isOverdue(t.due_date, t.status) ? 'var(--maroon)' : 'var(--slate)', opacity: 0.85, flexShrink: 0, fontVariantNumeric: 'tabular-nums' }}>
+                      {formatShortDate(t.due_date)}
+                    </span>
+                  )}
+                  <span style={{ fontSize: '11px', color: 'var(--teal)', flexShrink: 0 }}>Open →</span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Pending Action Items */}
         <div style={{ marginBottom: '2.5rem' }}>
