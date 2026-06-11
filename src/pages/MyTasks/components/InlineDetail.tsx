@@ -1,8 +1,8 @@
 // InlineDetail — task detail panel that expands inline within Columns + Lanes
 // views. Action bar (Work / Plan today / Move → / Snooze / Archive) +
-// description blurb + meta line + SmartCompose input. Per CD spec: action
-// bar mirrors the TaskDetailDrawer on TodayPage, so behaviour is consistent
-// across surfaces.
+// SmartCompose directly under action bar + 3-entry newest-first activity peek +
+// meta line. Per CD spec: action bar mirrors the TaskDetailDrawer on TodayPage,
+// so behaviour is consistent across surfaces.
 //
 // Extracted from src/pages/portal/UnifiedMyTasks.tsx.
 
@@ -10,6 +10,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import SmartCompose from '../../../components/SmartCompose'
 import { useUpdateTask, useBulkUpdateTasks } from '../../../hooks/useMutations'
 import { useUndoToast } from '../../../components/UndoToast'
+import { useTaskDetail } from '../../../hooks/useApiData'
 import { localDateKey } from '../../../lib/dateUtils'
 import {
   ACCENT_GOLD, ACCENT_TEAL, ACCENT_GREEN,
@@ -24,7 +25,10 @@ import type { TaskRow } from '../../../lib/api'
 import { TaskQuickEditChips } from '../../../components/tasks/TaskQuickEditChips'
 import TaskDetailPanel from '../../../components/tasks/TaskDetailPanel'
 
-export function InlineDetail({ task, projectName }: { task: TaskRow; projectName?: string | null }) {
+// Muted color for feed items (not in the re-exported constants set).
+const INK_MUTED = 'rgba(226,232,240,0.70)'
+
+export function InlineDetail({ task, projectName, onOpenEditor }: { task: TaskRow; projectName?: string | null; onOpenEditor?: () => void }) {
   // Real handlers (no longer decorative). Reach for mutations directly so the
   // component is self-contained and the parent doesn't need to drill props.
   const updateTask = useUpdateTask()
@@ -38,7 +42,13 @@ export function InlineDetail({ task, projectName }: { task: TaskRow; projectName
   const isPlanned = plannedToday
   const [moveOpen, setMoveOpen] = useState(false)
   const [fullEditorTask, setFullEditorTask] = useState<TaskRow | null>(null)
+  const [descExpanded, setDescExpanded] = useState(false)
   const moveRef = useRef<HTMLDivElement>(null)
+
+  // Activity peek — same hook TaskDetailDrawer uses; no new endpoint (A2).
+  const detailQuery = useTaskDetail(task.id)
+  const peekUpdates = (detailQuery.data?.updates ?? []).slice(0, 3)
+
   useEffect(() => {
     if (!moveOpen) return
     const close = (e: MouseEvent) => { if (moveRef.current && !moveRef.current.contains(e.target as Node)) setMoveOpen(false) }
@@ -100,13 +110,42 @@ export function InlineDetail({ task, projectName }: { task: TaskRow; projectName
   }, [task.id, task.completed, task.status, bulkUpdate, undoToast])
   const isCompleted = isTaskDone(task)
 
+  // "view all →" opens the full editor via the prop path that already exists
+  // in MyTasksRow → InlineDetail chain (opens TaskDetailPanel, Rule 71).
+  const handleViewAll = useCallback(() => {
+    if (onOpenEditor) onOpenEditor()
+    else setFullEditorTask(task)
+  }, [onOpenEditor, task])
+
   return (
     <div onClick={(e) => e.stopPropagation()} style={{ marginTop: 10, paddingTop: 10, borderTop: '1px dashed rgba(255,255,255,0.08)' }}>
+
+      {/* Description — clamped to ~3 lines with "more" expander (C) */}
       {task.description && (
-        <div style={{ fontSize: 11, color: ACCENT_GOLD, marginBottom: 8, fontStyle: 'italic', padding: '6px 10px', background: 'rgba(201,168,76,0.05)', borderLeft: `2px solid ${ACCENT_GOLD}`, borderRadius: 3 }}>
-          💡 {task.description.split('\n')[0].slice(0, 220)}
+        <div style={{ marginBottom: 10 }}>
+          <div
+            style={{
+              fontSize: 11,
+              color: INK_MUTED,
+              lineHeight: 1.5,
+              ...(descExpanded ? {} : {
+                display: '-webkit-box',
+                WebkitLineClamp: 3,
+                WebkitBoxOrient: 'vertical' as React.CSSProperties['WebkitBoxOrient'],
+                overflow: 'hidden',
+              }),
+            }}
+          >{task.description}</div>
+          {!descExpanded && (
+            <button
+              onClick={() => setDescExpanded(true)}
+              style={{ fontSize: 10, color: INK_DIM, background: 'transparent', border: 'none', padding: '1px 0', cursor: 'pointer', fontFamily: 'inherit' }}
+            >more</button>
+          )}
         </div>
       )}
+
+      {/* Action bar */}
       <div style={{ display: 'flex', gap: 6, marginBottom: 8, flexWrap: 'wrap', position: 'relative' }}>
         {!isPromoted && (
           <button onClick={promote} title="Promote to Right Now on Today" style={{ padding: '4px 10px', fontSize: 10.5, borderRadius: 'var(--radius-sm)', border: `1px solid ${ACCENT_GOLD}`, background: ACCENT_GOLD, color: PAGE_BG, fontWeight: 600, fontFamily: 'inherit', cursor: 'pointer' }}>▶ Work on this</button>
@@ -145,6 +184,35 @@ export function InlineDetail({ task, projectName }: { task: TaskRow; projectName
         )}
         <button onClick={archive} title="Soft-delete this task" disabled={bulkUpdate.isPending} style={{ padding: '4px 10px', fontSize: 10.5, borderRadius: 'var(--radius-sm)', border: 'none', background: 'transparent', color: INK_DIM, fontFamily: 'inherit', cursor: bulkUpdate.isPending ? 'wait' : 'pointer' }}>Archive</button>
       </div>
+
+      {/* SmartCompose — directly under action bar (A2) with @me lock toggle */}
+      <div style={{ marginBottom: 10 }}>
+        <SmartCompose taskId={task.id} placeholder="Add a note or @hermes…" showMeLock bare />
+      </div>
+
+      {/* Activity peek — 3-entry newest-first (A2); "view all →" opens full editor */}
+      {(peekUpdates.length > 0 || detailQuery.isLoading) && (
+        <div style={{ marginBottom: 10, paddingTop: 8, borderTop: '1px dashed rgba(255,255,255,0.06)' }}>
+          {detailQuery.isLoading && <div style={{ fontSize: 10, color: INK_DIM, fontStyle: 'italic' }}>Loading activity…</div>}
+          {peekUpdates.map((u, i) => {
+            const isHermes = u.who === 'claude-ai' || u.who === 'hermes'
+            const isMe = u.who === 'nick-ingraham' || u.who === 'nick'
+            const nameColor = isHermes ? ACCENT_GOLD : isMe ? ACCENT_TEAL : INK_MUTED
+            return (
+              <div key={u.id ?? i} style={{ display: 'flex', gap: 6, padding: '3px 0', alignItems: 'baseline' }}>
+                <span style={{ fontSize: 10, fontWeight: 600, color: nameColor, flexShrink: 0 }}>{isHermes ? 'Hermes' : u.who}</span>
+                <span style={{ fontSize: 10, color: INK_DIM, flexShrink: 0, fontVariantNumeric: 'tabular-nums' }}>{u.when?.slice(0, 10) ?? ''}</span>
+                <span style={{ fontSize: 11, color: INK_MUTED, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{u.text}</span>
+              </div>
+            )
+          })}
+          <button
+            onClick={handleViewAll}
+            style={{ fontSize: 10, color: ACCENT_TEAL, background: 'transparent', border: 'none', padding: '3px 0', cursor: 'pointer', fontFamily: 'inherit' }}
+          >view all →</button>
+        </div>
+      )}
+
       {/* Quick-edit chips: Status / Priority / Due / Project + open-full-editor */}
       <TaskQuickEditChips
         task={task}
@@ -152,10 +220,6 @@ export function InlineDetail({ task, projectName }: { task: TaskRow; projectName
         undoToast={undoToast}
         onOpenFullEditor={() => setFullEditorTask(task)}
       />
-
-      <div style={{ marginTop: 8 }}>
-        <SmartCompose taskId={task.id} placeholder="Add a note or @hermes…" />
-      </div>
 
       {/* Full editor panel — TaskDetailPanel handles its own backdrop, Escape,
           focus-trap, and close-on-click-outside (Rule 18). */}

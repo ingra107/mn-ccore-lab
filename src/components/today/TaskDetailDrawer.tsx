@@ -1,7 +1,8 @@
 // TaskDetailDrawer — inline expand drawer for tasks on TodayPage.
 // Shown when the user clicks a task row body (CD spec: "click expands, doesn't
-// promote"). Action bar with ▶ Work / 📌 Plan / Move → / Unplan; Why callout;
-// Subtasks + Blocks (left); Recent updates (right); SmartCompose chat at bottom.
+// promote"). Action bar with ▶ Work / 📌 Plan / Move → / Unplan; SmartCompose
+// directly under action bar; full-width activity feed under composer; chips +
+// subtasks/blocks/workflow below the feed.
 //
 // Extracted from src/pages/portal/TodayPage.tsx (B2_TaskDetail). Same Move→
 // popover wiring as UnifiedMyTasks InlineDetail (writes group_override on tasks).
@@ -31,8 +32,6 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
   const isNow = state.rightNow === task.id
   const detailQuery = useTaskDetail(task.id)
   const detail = detailQuery.data
-  // Why: prefer server-derived first paragraph, fall back to local cut.
-  const why = detail?.why ?? task.description?.split('\n')[0]?.trim() ?? null
   const linkSet: LinkKind[] = []
   if (task.key_link_1) linkSet.push('folder')
   if (task.key_link_2) linkSet.push('claude')
@@ -41,10 +40,14 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
   const updates = detail?.updates ?? []
   const blocks = detail?.blocks ?? []
 
+  // Next step: first open subtask (Option 1 per design doc B).
+  const nextStep = subtasks.find((s) => s.completed !== 1) ?? null
+
   // Move → popover wiring (parity with UnifiedMyTasks).
   const updateTask = useUpdateTask()
   const undoToast = useUndoToast()
   const [fullEditorTask, setFullEditorTask] = useState<TaskRow | null>(null)
+  const [descExpanded, setDescExpanded] = useState(false)
 
   // Subtask toggle — TP-03. The drawer's subtasks come from useTaskDetail
   // (`['task-detail', taskId]`), not the `['subtasks', taskId]` cache that
@@ -84,6 +87,7 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
 
   return (
     <div onClick={(e) => e.stopPropagation()} style={{ padding: '14px 16px 16px', background: 'rgba(0,0,0,0.20)', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+      {/* Action bar */}
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 12, flexWrap: 'wrap' }}>
         {!isNow && (
           <button onClick={() => state.promote(task.id)} style={{ padding: '6px 12px', background: ACCENT_GOLD, color: PAGE_BG, border: 'none', borderRadius: 'var(--radius-sm)', fontFamily: 'inherit', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>▶ Work on this now</button>
@@ -123,78 +127,116 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
         {project && <span style={{ marginLeft: 'auto', fontSize: 11, color: INK_DIM }}>{project.name}</span>}
       </div>
 
-      {/* Quick-edit chips: Status / Priority / Due / Project + open-full-editor */}
-      <TaskQuickEditChips
-        task={task}
-        updateTask={updateTask}
-        undoToast={undoToast}
-        onOpenFullEditor={() => setFullEditorTask(task)}
-      />
-
-      {why && (
-        <div style={{ marginBottom: 14, padding: '10px 12px', background: 'rgba(201,168,76,0.04)', borderLeft: '2px solid rgba(201,168,76,0.30)', borderRadius: 3 }}>
-          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: ACCENT_GOLD, marginBottom: 4 }}>Why this matters</div>
-          <div style={{ fontSize: 12, color: INK, lineHeight: 1.55 }}>{why}</div>
-        </div>
-      )}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-        <div>
-          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: INK_DIM, marginBottom: 6 }}>Subtasks</div>
-          {detailQuery.isLoading && <div style={{ fontSize: 11, color: INK_DIM, fontStyle: 'italic' }}>Loading…</div>}
-          {!detailQuery.isLoading && subtasks.length === 0 && <div style={{ fontSize: 11, color: INK_DIM, fontStyle: 'italic' }}>None yet.</div>}
-          {subtasks.map((s) => (
-            <div key={s.id} style={{ display: 'flex', gap: 6, padding: '3px 0', alignItems: 'flex-start' }}>
-              <input
-                type="checkbox"
-                checked={s.completed === 1}
-                onChange={() => toggleSubtask.mutate(s.id, {
-                  onSettled: () => queryClient.invalidateQueries({ queryKey: ['task-detail', task.id] }),
-                })}
-                style={{ marginTop: 2, accentColor: ACCENT_GREEN, cursor: 'pointer' }}
-              />
-              <span style={{ fontSize: 12, color: s.completed === 1 ? INK_DIM : INK, textDecoration: s.completed === 1 ? 'line-through' : 'none', lineHeight: 1.4 }}>{s.title}</span>
-            </div>
-          ))}
-          {blocks.length > 0 && (
-            <div style={{ marginTop: 10 }}>
-              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: ACCENT_ORANGE, marginBottom: 4 }}>Blocks</div>
-              {blocks.map((b) => (
-                <div key={b.id} style={{ fontSize: 11, color: INK, padding: '2px 0' }}>↳ {b.title}</div>
-              ))}
-            </div>
+      {/* Description — clamped to ~3 lines with "more" expander (C) */}
+      {task.description && (
+        <div style={{ marginBottom: 12 }}>
+          <div
+            style={{
+              fontSize: 12,
+              color: INK_MUTED,
+              lineHeight: 1.55,
+              ...(descExpanded ? {} : {
+                display: '-webkit-box',
+                WebkitLineClamp: 3,
+                WebkitBoxOrient: 'vertical' as React.CSSProperties['WebkitBoxOrient'],
+                overflow: 'hidden',
+              }),
+            }}
+          >{task.description}</div>
+          {!descExpanded && task.description.length > 0 && (
+            <button
+              onClick={() => setDescExpanded(true)}
+              style={{ fontSize: 11, color: INK_DIM, background: 'transparent', border: 'none', padding: '2px 0', cursor: 'pointer', fontFamily: 'inherit' }}
+            >more</button>
           )}
         </div>
-        <div>
-          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: INK_DIM, marginBottom: 6 }}>Recent updates</div>
-          {detailQuery.isLoading && <div style={{ fontSize: 11, color: INK_DIM, fontStyle: 'italic' }}>Loading…</div>}
-          {!detailQuery.isLoading && updates.length === 0 && <div style={{ fontSize: 11, color: INK_DIM, fontStyle: 'italic' }}>No updates logged.</div>}
-          {updates.slice(0, 8).map((u, i) => {
-            const isHermes = u.who === 'claude-ai' || u.who === 'hermes'
-            const isMe = u.who === 'nick-ingraham' || u.who === 'nick'
-            const color = isHermes ? ACCENT_GOLD : isMe ? ACCENT_TEAL : INK_MUTED
-            return (
-              <div key={u.id ?? i} style={{ padding: '6px 0', borderBottom: i < updates.length - 1 && i < 7 ? '1px dashed rgba(255,255,255,0.06)' : 'none' }}>
-                <div style={{ display: 'flex', gap: 8, alignItems: 'baseline', marginBottom: 2 }}>
-                  <span style={{ fontSize: 10, fontWeight: 600, color, letterSpacing: '0.04em' }}>{isHermes ? 'Hermes' : u.who}</span>
-                  <span style={{ fontSize: 10, color: INK_DIM, fontVariantNumeric: 'tabular-nums' }}>{u.when?.slice(0, 16) ?? ''}</span>
-                </div>
-                <div style={{ fontSize: 12, color: INK, lineHeight: 1.45 }}>{u.text}</div>
-                {u.kind === 'note' && u.id && (
-                  <div style={{ marginTop: 4 }}>
-                    <ReactionBar targetType="task_update" targetId={u.id} compact />
-                  </div>
-                )}
-              </div>
-            )
-          })}
+      )}
+
+      {/* SmartCompose — directly under action bar (A1) with @me lock toggle */}
+      <SmartCompose taskId={task.id} placeholder="Add a note, or @hermes for AI…" showMeLock bare />
+
+      {/* Next step — first open subtask (B: replaces "Why this matters" callout) */}
+      {nextStep && (
+        <div style={{ marginTop: 10, display: 'flex', alignItems: 'flex-start', gap: 6 }}>
+          <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: INK_DIM, flexShrink: 0, paddingTop: 1 }}>Next step</span>
+          <button
+            onClick={() => toggleSubtask.mutate(nextStep.id, {
+              onSettled: () => queryClient.invalidateQueries({ queryKey: ['task-detail', task.id] }),
+            })}
+            style={{ fontSize: 12, color: INK, background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left', lineHeight: 1.4 }}
+          >☐ {nextStep.title}</button>
         </div>
+      )}
+
+      {/* Activity feed — full-width, newest-first, directly under composer (A1) */}
+      <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: INK_DIM, marginBottom: 6 }}>Activity</div>
+        {detailQuery.isLoading && <div style={{ fontSize: 11, color: INK_DIM, fontStyle: 'italic' }}>Loading…</div>}
+        {!detailQuery.isLoading && updates.length === 0 && <div style={{ fontSize: 11, color: INK_DIM, fontStyle: 'italic' }}>No updates logged.</div>}
+        {updates.slice(0, 8).map((u, i) => {
+          const isHermes = u.who === 'claude-ai' || u.who === 'hermes'
+          const isMe = u.who === 'nick-ingraham' || u.who === 'nick'
+          const color = isHermes ? ACCENT_GOLD : isMe ? ACCENT_TEAL : INK_MUTED
+          return (
+            <div key={u.id ?? i} style={{ padding: '6px 0', borderBottom: i < updates.length - 1 && i < 7 ? '1px dashed rgba(255,255,255,0.06)' : 'none' }}>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'baseline', marginBottom: 2 }}>
+                <span style={{ fontSize: 10, fontWeight: 600, color, letterSpacing: '0.04em' }}>{isHermes ? 'Hermes' : u.who}</span>
+                <span style={{ fontSize: 10, color: INK_DIM, fontVariantNumeric: 'tabular-nums' }}>{u.when?.slice(0, 16) ?? ''}</span>
+              </div>
+              <div style={{ fontSize: 12, color: INK, lineHeight: 1.45 }}>{u.text}</div>
+              {u.kind === 'note' && u.id && (
+                <div style={{ marginTop: 4 }}>
+                  <ReactionBar targetType="task_update" targetId={u.id} compact />
+                </div>
+              )}
+            </div>
+          )
+        })}
       </div>
+
+      {/* Quick-edit chips: Status / Priority / Due / Project + open-full-editor (A1: below fold) */}
+      <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+        <TaskQuickEditChips
+          task={task}
+          updateTask={updateTask}
+          undoToast={undoToast}
+          onOpenFullEditor={() => setFullEditorTask(task)}
+        />
+      </div>
+
+      {/* Subtasks + Blocks (A1: below fold) */}
+      <div style={{ marginTop: 14 }}>
+        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: INK_DIM, marginBottom: 6 }}>Subtasks</div>
+        {detailQuery.isLoading && <div style={{ fontSize: 11, color: INK_DIM, fontStyle: 'italic' }}>Loading…</div>}
+        {!detailQuery.isLoading && subtasks.length === 0 && <div style={{ fontSize: 11, color: INK_DIM, fontStyle: 'italic' }}>None yet.</div>}
+        {subtasks.map((s) => (
+          <div key={s.id} style={{ display: 'flex', gap: 6, padding: '3px 0', alignItems: 'flex-start' }}>
+            <input
+              type="checkbox"
+              checked={s.completed === 1}
+              onChange={() => toggleSubtask.mutate(s.id, {
+                onSettled: () => queryClient.invalidateQueries({ queryKey: ['task-detail', task.id] }),
+              })}
+              style={{ marginTop: 2, accentColor: ACCENT_GREEN, cursor: 'pointer' }}
+            />
+            <span style={{ fontSize: 12, color: s.completed === 1 ? INK_DIM : INK, textDecoration: s.completed === 1 ? 'line-through' : 'none', lineHeight: 1.4 }}>{s.title}</span>
+          </div>
+        ))}
+        {blocks.length > 0 && (
+          <div style={{ marginTop: 10 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: ACCENT_ORANGE, marginBottom: 4 }}>Blocks</div>
+            {blocks.map((b) => (
+              <div key={b.id} style={{ fontSize: 11, color: INK, padding: '2px 0' }}>↳ {b.title}</div>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* Workflow fields — v55 (waiting_on / next_checkin_date / promised_to / promise_date) */}
       <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
         <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: INK_DIM, marginBottom: 8 }}>Workflow</div>
         <WorkflowSection fields={workflowFields} onChange={saveWorkflowField} />
       </div>
-      <SmartCompose taskId={task.id} placeholder="Add a note, or @hermes for AI…" />
 
       {/* Full editor panel — mounted locally; TaskDetailPanel handles backdrop,
           Escape, focus-trap, and close-on-click-outside itself (Rule 18). */}

@@ -786,7 +786,6 @@ export interface TaskDetailUpdate { id: string; when: string; who: string; text:
 export interface TaskDetailSubtask { id: string; title: string; completed: number }
 export interface TaskDetailBlock { id: string; title: string }
 export interface TaskDetailPayload {
-  why: string | null
   updates: TaskDetailUpdate[]
   subtasks: TaskDetailSubtask[]
   blocks: TaskDetailBlock[]
@@ -796,9 +795,9 @@ export function useTaskDetail(taskId: string | null) {
   return useQuery({
     queryKey: ['task-detail', taskId],
     queryFn: async (): Promise<TaskDetailPayload> => {
-      if (!taskId) return { why: null, updates: [], subtasks: [], blocks: [] }
+      if (!taskId) return { updates: [], subtasks: [], blocks: [] }
       const res = await fetch(`/api/tasks/${taskId}/detail`)
-      if (!res.ok) return { why: null, updates: [], subtasks: [], blocks: [] }
+      if (!res.ok) return { updates: [], subtasks: [], blocks: [] }
       const data = await res.json() as { data: TaskDetailPayload }
       return data.data
     },

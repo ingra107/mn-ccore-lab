@@ -70,6 +70,10 @@ interface BaseProps {
   hideKbdHint?: boolean
   /** Hide the inline Post button (e.g., when the surrounding form supplies its own submit). */
   hideSubmitButton?: boolean
+  /** Show the @me 🔒 private-note lock toggle. When the user enables it,
+   *  "@me " is prepended to the content on submit (Rule 70: @me prefix
+   *  → visibility='author'). Opt-in per-surface; off by default. */
+  showMeLock?: boolean
 }
 
 interface TaskModeProps extends BaseProps {
@@ -109,7 +113,10 @@ export default function SmartCompose(props: SmartComposeProps) {
     submittingLabel = 'Posting…',
     hideKbdHint = false,
     hideSubmitButton = false,
+    showMeLock = false,
   } = props
+
+  const [meLocked, setMeLocked] = useState(false)
 
   const isCustomMode = 'onSubmit' in props && typeof props.onSubmit === 'function'
   const taskMutation = usePostTaskUpdate(isCustomMode ? '' : (props as TaskModeProps).taskId)
@@ -170,8 +177,10 @@ export default function SmartCompose(props: SmartComposeProps) {
   }, [setVal])
 
   const submit = useCallback(async () => {
-    const content = val.trim()
-    if (!content) return
+    const raw = val.trim()
+    if (!raw) return
+    // Prepend @me prefix when the private-note lock is engaged (Rule 70).
+    const content = showMeLock && meLocked && !raw.startsWith('@me ') ? `@me ${raw}` : raw
     if (isCustomMode) {
       const onSubmit = (props as CustomModeProps).onSubmit
       try {
@@ -190,7 +199,7 @@ export default function SmartCompose(props: SmartComposeProps) {
         },
       })
     }
-  }, [val, isCustomMode, props, isControlled, setVal, taskMutation, undoToast])
+  }, [val, showMeLock, meLocked, isCustomMode, props, isControlled, setVal, taskMutation, undoToast])
 
   const onKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
@@ -308,6 +317,34 @@ export default function SmartCompose(props: SmartComposeProps) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 6, position: 'relative' }}>
           <ToolbarBtn theme={theme} label="Mention someone" onClick={() => insertAtCursor('@')}><AtSign size={11} /></ToolbarBtn>
           <ToolbarBtn theme={theme} label="Add emoji" onClick={() => setEmojiOpen((o) => !o)} active={emojiOpen}><Smile size={11} /></ToolbarBtn>
+          {showMeLock && (
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => setMeLocked((l) => !l)}
+              title={meLocked ? 'Private note (only you see this) — click to post publicly' : 'Post publicly — click to make private'}
+              aria-label={meLocked ? 'Private note lock on' : 'Private note lock off'}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 3,
+                padding: '1px 6px', borderRadius: 'var(--radius-sm)',
+                border: meLocked
+                  ? `1px solid ${isDark ? 'rgba(201,168,76,0.50)' : 'var(--gold)'}`
+                  : `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'var(--border-subtle)'}`,
+                background: meLocked
+                  ? (isDark ? 'rgba(201,168,76,0.12)' : 'var(--gold-active)')
+                  : 'transparent',
+                color: meLocked
+                  ? (isDark ? ACCENT_GOLD : 'var(--gold-on-emphasis)')
+                  : (isDark ? INK_DIM_DARK : 'var(--slate)'),
+                fontSize: 9,
+                fontWeight: meLocked ? 700 : 400,
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+                letterSpacing: '0.04em',
+                whiteSpace: 'nowrap',
+              }}
+            >@me {meLocked ? '🔒' : '🔓'}</button>
+          )}
           {uploadContext && (
             <ToolbarBtn theme={theme} label="Attach file" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
               {uploading ? <Loader2 size={11} className="animate-spin" /> : <Paperclip size={11} />}

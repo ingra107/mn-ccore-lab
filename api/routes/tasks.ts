@@ -680,14 +680,6 @@ export async function handleGetTaskDetail(taskId: string, request: Request, env:
   const guard = await guardTaskProject(env, request, taskId);
   if (guard.block) return guard.block;
 
-  // P1: "why" callout — fall back to description's first paragraph. Read after
-  // the gate so non-PI callers can't observe description content via a 200 body.
-  const task = await env.DB.prepare(
-    'SELECT description FROM tasks WHERE id = ? AND deleted_at IS NULL'
-  ).bind(taskId).first<{ description: string | null }>();
-  const description = task?.description ?? '';
-  const why = description.split(/\n\s*\n/)[0]?.trim().slice(0, 400) || null;
-
   // Updates merge activity_entries (Design C, v77 — author-written notes/comments,
   // visibility-gated) with legacy activity_log system rows that have meaningful
   // actor + summary. The activity_entries read covers ALL kinds; the noteUpdates
@@ -748,7 +740,6 @@ export async function handleGetTaskDetail(taskId: string, request: Request, env:
 
   return json({
     data: {
-      why,
       updates,
       subtasks: subtasksRes.results ?? [],
       blocks: blocksRes.results ?? [],

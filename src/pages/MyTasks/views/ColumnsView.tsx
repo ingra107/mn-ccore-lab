@@ -153,7 +153,7 @@ export function MyTasksRow({ task, project, selected, selectionActive, onSelect,
       leadingTag={(task as TaskRow & { _tag?: string })._tag ?? '📝'}
       extraMeta={rowExtraMeta(task, prefs.taskStaleDays)}
     >
-      <InlineDetail task={task} projectName={project?.name} />
+      <InlineDetail task={task} projectName={project?.name} onOpenEditor={onOpenEditor} />
     </SharedTaskRow>
   )
 }
