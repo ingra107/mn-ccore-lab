@@ -13,7 +13,7 @@
 // Safety: we NEVER use dangerouslySetInnerHTML — every node is a real React
 // element, so raw HTML in the markdown renders as literal text (no injection).
 
-import React, { Fragment, type ReactNode } from 'react'
+import React, { Fragment, useMemo, type ReactNode } from 'react'
 import LinkifiedText from './LinkifiedText'
 
 interface Props {
@@ -118,6 +118,21 @@ function renderEmphasis(text: string, keyPrefix: string): ReactNode[] {
 // ── block parsing ───────────────────────────────────────────────────────────
 
 export default function MarkdownView({ source, className }: Props) {
+  // Parse once per source change — long artifacts re-parse on every parent
+  // render otherwise. (Keep the /g regex literals function-local: hoisting
+  // them shares lastIndex state across calls, a stateful-regex bug.)
+  const blocks = useMemo(() => parseBlocks(source), [source])
+
+  return (
+    <div className={className} style={{ fontSize: 'var(--value-size, 15px)' }}>
+      {blocks.map((b, idx) => (
+        <Fragment key={idx}>{b}</Fragment>
+      ))}
+    </div>
+  )
+}
+
+function parseBlocks(source: string): ReactNode[] {
   const blocks: ReactNode[] = []
   const lines = (source || '').replace(/\r\n/g, '\n').split('\n')
   let i = 0
@@ -272,11 +287,5 @@ export default function MarkdownView({ source, className }: Props) {
     )
   }
 
-  return (
-    <div className={className} style={{ fontSize: 'var(--value-size, 15px)' }}>
-      {blocks.map((b, idx) => (
-        <Fragment key={idx}>{b}</Fragment>
-      ))}
-    </div>
-  )
+  return blocks
 }

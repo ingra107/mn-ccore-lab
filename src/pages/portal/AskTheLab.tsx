@@ -307,6 +307,10 @@ function QuestionExpanded({ questionId }: { questionId: string }) {
           {detail.answers.map((answer) => {
             // Adapt AnswerRow → ActivityEntryItemRow for the unified Slack-thread renderer.
             // kind='comment' (gold bar, no badge) — answers are discussion entries.
+            // ⚠️ entity_type='question' is NOT a DB activity_entries value — it's an
+            // opaque passthrough. ActivityEntryItem must stay free of per-entity-type
+            // layout forks beyond 'task' (its only special case today); if one is ever
+            // added, this adapter needs an explicit mapping, not silent fallthrough.
             const entryRow: ActivityEntryItemRow = {
               id: answer.id,
               entity_type: 'question',

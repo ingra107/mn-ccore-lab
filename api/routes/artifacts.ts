@@ -61,16 +61,17 @@ export async function handleGetArtifacts(url: URL, env: Env): Promise<Response> 
 // Single artifact + its version history (newest-first). The page renders body_md
 // and offers the history dropdown from `versions`.
 export async function handleGetArtifact(id: string, env: Env): Promise<Response> {
-  const artifact = await env.DB.prepare(
-    'SELECT * FROM artifacts WHERE id = ? LIMIT 1'
-  ).bind(id).first<ArtifactRow>();
+  // One D1 round-trip for both reads — the page always wants artifact + history.
+  const [artifactRes, versionsRes] = await env.DB.batch([
+    env.DB.prepare('SELECT * FROM artifacts WHERE id = ? LIMIT 1').bind(id),
+    env.DB.prepare(
+      'SELECT artifact_id, version, revised_by, revision_note, created_at FROM artifact_versions WHERE artifact_id = ? ORDER BY version DESC'
+    ).bind(id),
+  ]);
+  const artifact = (artifactRes.results as ArtifactRow[] | undefined)?.[0];
   if (!artifact) return error('Artifact not found', 404);
 
-  const versions = await env.DB.prepare(
-    'SELECT artifact_id, version, revised_by, revision_note, created_at FROM artifact_versions WHERE artifact_id = ? ORDER BY version DESC'
-  ).bind(id).all();
-
-  return json({ data: { ...artifact, versions: versions.results || [] } });
+  return json({ data: { ...artifact, versions: versionsRes.results || [] } });
 }
 
 // ── POST /api/artifacts ─────────────────────────────────────────────────────────
