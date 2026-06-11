@@ -313,7 +313,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
         role="dialog"
         aria-modal="true"
         aria-labelledby="task-detail-title"
-        className="fixed right-0 top-0 h-full z-50 overflow-y-auto shadow-2xl task-detail-panel card-elevated"
+        className="fixed z-50 task-detail-panel"
         onTouchStart={handleTouchStart}
         drag={typeof window !== 'undefined' && window.innerWidth < 768 ? 'x' : false}
         dragConstraints={{ left: 0, right: 0 }}
@@ -327,19 +327,42 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
           const width = panelRef.current?.offsetWidth ?? 400
           if (info.offset.x > width * 0.3 || info.velocity.x > 500) onClose()
         }}
-        style={{
+        style={isMobilePanel ? {
+          // Mobile: full-height flush sheet — unchanged behaviour
           x: dragX,
+          right: 0,
+          top: 0,
+          bottom: 0,
           width: 'clamp(420px, 40vw, 640px)',
           maxWidth: '90vw',
           backgroundColor: 'var(--cream)',
           borderLeft: '1px solid var(--border-subtle)',
           animation: reduceMotion ? 'none' : 'slideIn 200ms ease-out',
           touchAction: 'pan-y',
-          // No content may force sideways scroll. The panel scrolls vertically
-          // only; long unbroken strings / chips wrap or ellipsize instead.
+          overflowX: 'hidden',
+          overflowY: 'auto',
+        } : {
+          // Desktop: floating side-peek — inset 12px all edges, rounded all corners
+          x: dragX,
+          right: 12,
+          top: 12,
+          bottom: 12,
+          height: 'calc(100vh - 24px)',
+          width: 'clamp(420px, 40vw, 640px)',
+          maxWidth: 'calc(90vw - 12px)',
+          backgroundColor: 'var(--cream)',
+          borderRadius: 'var(--radius-xl)',
+          overflow: 'hidden',
+          boxShadow: '0 8px 40px rgba(0,0,0,0.45)',
+          animation: reduceMotion ? 'none' : 'slideIn 200ms ease-out',
+          touchAction: 'pan-y',
           overflowX: 'hidden',
         }}
       >
+        {/* Inner scroll container — carries overflow-y-auto so sticky header
+            sticks within the rounded card and content clips to the border-radius.
+            Mobile uses the root motion.div overflow directly (no wrapping needed). */}
+        <div style={isMobilePanel ? {} : { height: '100%', overflowY: 'auto', overflowX: 'hidden' }}>
         {/* Header — flat: same surface as panel, single hairline bottom only */}
         <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-3" style={{ backgroundColor: 'var(--cream)', borderBottom: '1px solid var(--border-subtle)' }}>
           <div className="flex items-center gap-2">
@@ -545,7 +568,6 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
               style={{
                 background: 'var(--surface-2)',
                 borderRadius: 'var(--radius-lg)',
-                boxShadow: 'var(--shadow-card)',
                 padding: 'var(--sp-sm) var(--sp-md)',
               }}
             >
@@ -817,10 +839,15 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
             from { transform: translateX(100%); }
             to { transform: translateX(0); }
           }
+          /* Change 1: Due pill — suppress InlineDatePicker button's own hover
+             border so the outer ghost pill is the only hover affordance. */
+          [data-ghost-pill] button:hover {
+            border-color: transparent !important;
+          }
           .dark .task-detail-panel {
             background-color: var(--cream) !important;
             background-image: linear-gradient(var(--surface-2), var(--surface-2)) !important;
-            border-color: var(--border-subtle) !important;
+            /* Desktop floating panel has no left border; mobile still uses border-left via inline style */
           }
           .dark .task-detail-panel select {
             color-scheme: dark;
@@ -859,6 +886,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
             }
           }
         `}</style>
+        </div>{/* end inner scroll container */}
       </motion.div>
     </>
   )
@@ -1086,9 +1114,13 @@ function ProjectInlineGhostSelect({ value, onChange }: { value: string; onChange
 
 function DueInlineSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   // Thin wrapper: DateInput renders the InlineDatePicker popover on click.
-  // Ghost resting: no border/bg. Hover: subtle tint on the wrapping pill.
+  // Ghost resting: no border/bg. Hover: subtle tint on the OUTER pill only.
+  // The inner InlineDatePicker button has its own hover border — suppress it
+  // here with data-ghost-pill so it doesn't double-outline within the pill.
+  // (The CSS rule lives in the panel <style> block below.)
   return (
     <div
+      data-ghost-pill
       title="Due date"
       className="transition-colors"
       style={{
