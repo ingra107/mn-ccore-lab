@@ -81,14 +81,14 @@ export function ListView({ filtered, selected, toggleSelect, setSelected, setDra
 
   return (
     // Bug #70 (Nick 2026-06-11): the List grid was capped at --col-main (960px),
-    // leaving the 1fr Title column ~250px at 1920. Now .band-anchored-wide —
-    // left edge anchored identical to the toolbar + data pages, right edge
-    // FLUID to the viewport (same treatment as the Columns view / Projects
-    // Pipeline) — so the Title column absorbs the extra width. FULL width, no
-    // cap (Nick follow-up: "same full width of hub").
+    // leaving the 1fr Title column ~250px at 1920. Now it fills the FULL
+    // centered band — .mt-band with no inner --col-main cap — so its width
+    // matches Calendar and My Hub exactly (same left AND right edge; Nick:
+    // "the same width as calendar and hub", not fluid-to-viewport). The 1fr
+    // Title column absorbs the extra band width.
     <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
       <div ref={scrollRef} style={{ flex: 1, overflow: 'auto' }}>
-       <div className="band-anchored-wide">
+       <div className="mt-band">
         <div>
         <div style={{ padding: '10px 16px 0' }}><OverdueBanner tasks={filtered} /></div>
         <div className="list-view-header" style={{ display: 'grid', gridTemplateColumns: '32px 26px 1fr 150px 100px 80px 110px 110px 70px', padding: '6px 16px', borderBottom: '1px solid rgba(255,255,255,0.08)', fontSize: 9.5, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: INK_DIM, position: 'sticky', top: 0, background: PAGE_BG, zIndex: 1 }}>
@@ -142,10 +142,9 @@ export function ListView({ filtered, selected, toggleSelect, setSelected, setDra
         </div>
        </div>
       </div>
-      {/* P1-1: full-width footer border; hints share the table's anchored band
-          (Bug #70: matches the widened grid, not the old centered band). */}
+      {/* P1-1: full-width footer border, band-centered keyboard-hint content. */}
       <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', background: 'rgba(0,0,0,0.2)', flexShrink: 0 }}>
-       <div className="band-anchored-wide" style={{ paddingTop: 5, paddingBottom: 5, fontSize: 10, color: INK_DIM, display: 'flex', gap: 14 }}>
+       <div className="mt-band" style={{ paddingTop: 5, paddingBottom: 5, fontSize: 10, color: INK_DIM, display: 'flex', gap: 14 }}>
         <span style={{ fontFamily: 'var(--font-mono), JetBrains Mono, monospace' }}>{filtered.length > 0 ? `${cursor + 1}/${filtered.length}` : '0/0'}</span>
         <span style={{ flex: 1 }} />
         <span><kbd style={kbdStyle}>j</kbd>/<kbd style={kbdStyle}>k</kbd> move</span>
