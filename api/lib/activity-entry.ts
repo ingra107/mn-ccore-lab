@@ -32,7 +32,7 @@ import {
   type Visibility,
 } from '../../shared/activityKinds';
 
-export type EntityType = 'task' | 'project';
+export type EntityType = 'task' | 'project' | 'artifact';
 
 // Hermes trigger: @hermes / @claude. DETECT_RE gates dispatch (word-boundary so
 // '@claudette' doesn't fire); STRIP_RE removes the mention from the AI prompt
@@ -136,8 +136,8 @@ export async function postActivityEntry(input: PostActivityEntryInput): Promise<
   if (!isStoredKind(kind)) {
     return { ok: false, error: `kind must be one of ${STORED_KINDS.join('|')}`, status: 400 };
   }
-  if (entityType !== 'task' && entityType !== 'project') {
-    return { ok: false, error: `unknown entity_type "${entityType}" (expected 'task'|'project')`, status: 400 };
+  if (entityType !== 'task' && entityType !== 'project' && entityType !== 'artifact') {
+    return { ok: false, error: `unknown entity_type "${entityType}" (expected 'task'|'project'|'artifact')`, status: 400 };
   }
   if (input.visibility !== undefined && !isVisibility(input.visibility)) {
     return { ok: false, error: `visibility must be one of ${VISIBILITIES.join('|')}`, status: 400 };
@@ -176,6 +176,15 @@ export async function postActivityEntry(input: PostActivityEntryInput): Promise<
       if (!task) return { ok: false, error: 'Task not found', status: 404 };
       projectId = task.project_id ?? null;
     }
+  } else if (entityType === 'artifact') {
+    // artifact entity: project_id = the artifact's origin project_id (so artifact
+    // activity rolls up into that project's whole-picture feed when it has one).
+    // Confirm the artifact row exists.
+    const art = await env.DB.prepare(
+      'SELECT project_id FROM artifacts WHERE id = ? LIMIT 1'
+    ).bind(entityId).first<{ project_id: string | null }>();
+    if (!art) return { ok: false, error: 'Artifact not found', status: 404 };
+    projectId = art.project_id ?? null;
   } else {
     // project entity: project_id = entity_id; confirm the project row exists.
     const proj = await env.DB.prepare(
@@ -300,13 +309,17 @@ async function fireMentionNotifications(
       ? args.kind === 'comment'
         ? 'task_comment'
         : 'task'
-      : 'project';
+      : args.entityType === 'artifact'
+        ? 'artifact_comment'
+        : 'project';
   const link =
     args.entityType === 'task'
       ? `/tasks?open=${args.entityId}`
-      : args.projectSlug
-        ? `/projects/${args.projectSlug}` // legacy project-mention link shape
-        : `/projects?open=${args.entityId}`;
+      : args.entityType === 'artifact'
+        ? `/portal/artifacts/${args.entityId}`
+        : args.projectSlug
+          ? `/projects/${args.projectSlug}` // legacy project-mention link shape
+          : `/projects?open=${args.entityId}`;
   const verb = args.kind === 'comment' ? 'mentioned you' : 'mentioned you in a task note';
   const title = `${args.actorName} ${verb}`;
   const stmt = env.DB.prepare(
@@ -336,8 +349,15 @@ async function dispatchHermes(
 
   // source_type mirrors the legacy task-comment Hermes path so the listener
   // routes the response back correctly. Project entities use 'project_comment'
-  // (the existing project Hermes convention).
-  const sourceType = args.entityType === 'task' ? 'task_comment' : 'project_comment';
+  // (the existing project Hermes convention); artifacts use 'artifact_comment'
+  // so the listener takes the revision path (fetch artifact + comments →
+  // regenerate → POST /:id/revise) instead of a plain comment reply.
+  const sourceType =
+    args.entityType === 'task'
+      ? 'task_comment'
+      : args.entityType === 'artifact'
+        ? 'artifact_comment'
+        : 'project_comment';
   const projectSlug = args.projectId;
   const aiId = generateId();
   await env.DB.prepare(

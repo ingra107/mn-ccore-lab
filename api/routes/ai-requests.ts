@@ -119,7 +119,9 @@ export async function handleUpdateAIResponse(
   // 2. Post the response into the unified timeline for comment-sourced requests.
   if (
     status === 'completed' &&
-    (updated.source_type === 'task_comment' || updated.source_type === 'project_comment')
+    (updated.source_type === 'task_comment' ||
+      updated.source_type === 'project_comment' ||
+      updated.source_type === 'artifact_comment')
   ) {
     await _postHermesResponse(env, updated, body.response.trim());
   }
@@ -138,7 +140,12 @@ async function _postHermesResponse(
   responseText: string,
 ): Promise<void> {
   const isTask = req.source_type === 'task_comment';
-  const entityType: EntityType = isTask ? 'task' : 'project';
+  const entityType: EntityType =
+    req.source_type === 'task_comment'
+      ? 'task'
+      : req.source_type === 'artifact_comment'
+        ? 'artifact'
+        : 'project';
 
   // Resolve the triggering entry to get entity_id + visibility.
   const trigEntry = await env.DB.prepare(

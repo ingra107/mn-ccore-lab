@@ -71,11 +71,15 @@ describe('route contract — generated from ROUTE_REGISTRY', () => {
     // 231 as of 2026-06-10 — PB Sector Daily Plan retirement (-8): command-center,
     // plan, plan/reorder, plan/promote, plan/history, reflection, pomodoro/start,
     // pomodoro/complete. Superseded by tasks.planned_for/plan_slot/plan_rank.
+    // 238 as of 2026-06-11 — Hermes Artifacts v1 (+7): GET /api/artifacts,
+    // GET /api/artifacts/:id/activity, GET /api/artifacts/:id, POST /api/artifacts,
+    // POST /api/artifacts/:id/revise, POST /api/artifacts/:id/comments,
+    // POST /api/artifacts/:id/delete.
     // Adding a route → increment this number. Removing a route → decrement it.
     // This makes route deletion require explicit acknowledgment, preventing
     // silent surface regression (codex final-audit finding #9, 2026-05-28).
     // If you are intentionally adding or removing routes, update this count.
-    expect(ROUTE_REGISTRY).toHaveLength(231)
+    expect(ROUTE_REGISTRY).toHaveLength(238)
   })
 
   it('every non-public route has either entity or visibility metadata', () => {

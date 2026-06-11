@@ -6,7 +6,7 @@ import {
   Search, CheckSquare, FolderKanban, Users, Lightbulb,
   MessageSquare, Activity, ArrowRight, X, Clock, Trash2,
   ScrollText, Scale, Paperclip, ListChecks, BookOpen, Banknote,
-  AlertTriangle, Calendar,
+  AlertTriangle, Calendar, FileText,
 } from 'lucide-react'
 import PageHeader from '../../components/PageHeader'
 import PageContainer from '../../components/PageContainer'
@@ -49,6 +49,7 @@ const typeConfig: Record<string, { icon: typeof Search; color: string; label: st
   file: { icon: Paperclip, color: 'var(--slate)', label: 'File' },
   publication: { icon: BookOpen, color: 'var(--gold)', label: 'Publication' },
   grant: { icon: Banknote, color: 'var(--green)', label: 'Grant' },
+  artifact: { icon: FileText, color: 'var(--gold)', label: 'Artifact' },
   activity: { icon: Activity, color: 'var(--slate)', label: 'Activity' },
 }
 

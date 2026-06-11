@@ -30,6 +30,7 @@ export const PATHS = {
 
   projects: `${PORTAL_PREFIX}/projects`,
   project: (slug: string) => `${PORTAL_PREFIX}/projects/${slug}`,
+  artifact: (id: string) => `${PORTAL_PREFIX}/artifacts/${id}`,
   manuscripts: `${PORTAL_PREFIX}/manuscripts`,
   ideas: `${PORTAL_PREFIX}/ideas`,
   ask: `${PORTAL_PREFIX}/ask`,

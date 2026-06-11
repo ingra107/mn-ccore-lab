@@ -6,6 +6,7 @@ import { json } from '../helpers';
 const TYPE_PRIORITY: Record<string, number> = {
   task: 10,
   project: 8,
+  artifact: 7,
   meeting: 6,
   idea: 5,
   decision: 5,
@@ -136,13 +137,13 @@ export async function handleGetSearch(url: URL, env: Env, canSeePb = false): Pro
   const pbProjectIdSet = `SELECT id FROM projects WHERE category = 'Peripheral Brain'
       UNION SELECT slug FROM projects WHERE category = 'Peripheral Brain'`;
 
-  // Search across 14 tables in parallel — Slack-parity unified search.
+  // Search across 15 tables in parallel — Slack-parity unified search.
   // Promise.allSettled isolates each source: one D1 timeout or transient
   // error returns partial results rather than a total search failure.
   const SOURCE_NAMES = [
     'tasks', 'projects', 'meetings', 'ideas', 'comments', 'activity',
     'notes', 'taskNotes', 'taskComments', 'decisions', 'files', 'actionItems',
-    'publications', 'grants',
+    'publications', 'grants', 'artifacts',
   ] as const;
 
   const settled = await Promise.allSettled([
@@ -207,6 +208,10 @@ export async function handleGetSearch(url: URL, env: Env, canSeePb = false): Pro
     env.DB.prepare(
       'SELECT project_number, title, pi_name, fiscal_year, total_cost, last_synced FROM nih_grants WHERE (title LIKE ? OR pi_name LIKE ? OR abstract LIKE ?) LIMIT ?'
     ).bind(like, like, like, limit).all(),
+    // Artifacts (Hermes deliverables) — title + body markdown.
+    env.DB.prepare(
+      'SELECT id, title, body_md, version, created_by, updated_at FROM artifacts WHERE (title LIKE ? OR body_md LIKE ?) LIMIT ?'
+    ).bind(like, like, limit).all(),
   ]);
 
   // Unpack settled results — failed sources yield empty rows and are logged.
@@ -214,7 +219,7 @@ export async function handleGetSearch(url: URL, env: Env, canSeePb = false): Pro
   const [
     tasks, projects, meetings, ideas, comments, activity,
     notes, taskNotes, taskComments, decisions, files, actionItems,
-    publications, grants,
+    publications, grants, artifacts,
   ] = settled.map((outcome, i) => {
     if (outcome.status === 'fulfilled') return outcome.value;
     failedSources.push(SOURCE_NAMES[i]);
@@ -575,6 +580,33 @@ export async function handleGetSearch(url: URL, env: Env, canSeePb = false): Pro
     });
   }
 
+  // Artifacts (Hermes deliverables)
+  for (const a of (artifacts.results || []) as any[]) {
+    const timestamp = a.updated_at;
+    const score = TYPE_PRIORITY.artifact
+      + recencyBoost(timestamp)
+      + titleMatchBonus(a.title, q);
+    const match = pickMatch(q, [
+      { name: 'title', value: a.title },
+      { name: 'body', value: a.body_md },
+    ]);
+    results.push({
+      id: a.id,
+      type: 'artifact',
+      title: a.title,
+      subtitle: `artifact · v${a.version} · ${a.created_by}`,
+      url: `/portal/artifacts/${a.id}`,
+      score,
+      timestamp,
+      snippet: match.snippet,
+      matchedField: match.matchedField,
+      details: {
+        version: a.version,
+        created_by: a.created_by,
+      },
+    });
+  }
+
   // Sort by score descending, then by recency as tiebreaker
   results.sort((a, b) => {
     if (b.score !== a.score) return b.score - a.score;
@@ -583,7 +615,7 @@ export async function handleGetSearch(url: URL, env: Env, canSeePb = false): Pro
     return bTime - aTime;
   });
 
-  // Return top 50 — with 14 entity types searched, 20 was too narrow
+  // Return top 50 — with 15 entity types searched, 20 was too narrow
   // (notes/decisions/files got pushed out by tasks/projects hitting the
   // cap). 50 gives per-type visibility without overwhelming the UI.
   const top = results.slice(0, 50);

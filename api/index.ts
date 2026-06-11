@@ -54,6 +54,7 @@ import { handleCheckImpact } from './routes/impact-trace';
 import { handlePIDashboard, handleMenteeVelocity, handleResponseTime, handleTeamEngagement, handleTeamByExpertise } from './routes/pi-dashboard';
 import { handleCadenceCheck } from './routes/meeting-cadence';
 import { handleGetAIRequests, handleCreateAIRequest, handleUpdateAIResponse } from './routes/ai-requests';
+import { handleGetArtifacts, handleGetArtifact, handleGetArtifactActivity, handleCreateArtifact, handleReviseArtifact, handleDeleteArtifact, handleAddArtifactComment } from './routes/artifacts';
 import { escapeHtml } from './lib/escapeHtml';
 import { handlePBCapture, handlePBDefer, handleAddToDispatch, handleGetPendingDispatch, handleSendDispatch, handleCompleteDispatchItem } from './routes/pb-sector';
 import { handlePBSessions, handlePBSessionStats, handleCreatePBSession, handleBulkCreatePBSessions } from './routes/pb-sessions';
@@ -1026,6 +1027,36 @@ defineRoute({
   entity: 'ai-requests',
   visibility: 'na',
   handler: (c) => handleGetAIRequests(U(c), E(c)),
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Artifacts (Hermes Artifacts v1) — specific /:id/activity BEFORE catch-all /:id.
+// /api/artifacts list is authed (team-visible; CF Access gates /portal). The
+// :id/activity feed is visibility-gated in-handler (author-only @me rows).
+// ─────────────────────────────────────────────────────────────────────────────
+defineRoute({
+  method: 'GET',
+  path: '/api/artifacts',
+  auth: 'authed',
+  entity: 'artifacts',
+  visibility: 'na',
+  handler: (c) => handleGetArtifacts(U(c), E(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/artifacts/:id/activity',
+  auth: 'authed',
+  entity: 'artifacts',
+  visibility: 'na',
+  handler: (c) => handleGetArtifactActivity(c.req.param('id'), R(c), E(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/artifacts/:id',
+  auth: 'authed',
+  entity: 'artifacts',
+  visibility: 'na',
+  handler: (c) => handleGetArtifact(c.req.param('id'), E(c)),
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -2327,6 +2358,41 @@ defineRoute({
   entity: 'ai-requests',
   visibility: 'na',
   handler: (c) => handleUpdateAIResponse(c.req.param('id'), R(c), E(c)),
+});
+
+// Artifacts writes — specific-before-generic. Create is authed (Hermes via API
+// key, or a team member). Revise/comments authed; delete PI-gated in-handler.
+defineRoute({
+  method: 'POST',
+  path: '/api/artifacts/:id/revise',
+  auth: 'authed',
+  entity: 'artifacts',
+  visibility: 'na',
+  handler: (c) => handleReviseArtifact(c.req.param('id'), R(c), USER(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/artifacts/:id/comments',
+  auth: 'authed',
+  entity: 'artifacts',
+  visibility: 'na',
+  handler: (c) => handleAddArtifactComment(c.req.param('id'), R(c), USER(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/artifacts/:id/delete',
+  auth: 'authed',
+  entity: 'artifacts',
+  visibility: 'na',
+  handler: (c) => handleDeleteArtifact(c.req.param('id'), R(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/artifacts',
+  auth: 'authed',
+  entity: 'artifacts',
+  visibility: 'na',
+  handler: (c) => handleCreateArtifact(R(c), USER(c), E(c)),
 });
 
 // PB sector writes
