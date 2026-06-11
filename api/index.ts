@@ -2738,9 +2738,9 @@ export default {
             'SELECT COUNT(*) as c FROM notifications WHERE recipient_slug = ? AND read = 0'
           ).bind(member.slug).first<{ c: number }>();
 
-          // Get recent team activity (last 24 hours)
+          // Get recent team activity (last 24 hours) — activity_entries kind='update'
           const recentUpdates = await env.DB.prepare(
-            "SELECT author, content, project_id FROM project_updates WHERE created_at > datetime('now', '-1 day') AND author != ? ORDER BY created_at DESC LIMIT 5"
+            "SELECT actor_slug AS author, body AS content, project_id FROM activity_entries WHERE entity_type='project' AND kind='update' AND created_at > datetime('now', '-1 day') AND actor_slug != ? ORDER BY created_at DESC LIMIT 5"
           ).bind(member.slug).all<{ author: string; content: string; project_id: string }>();
 
           // Get milestones with Future Me notes due within 3 days

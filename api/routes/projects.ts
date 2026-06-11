@@ -363,10 +363,12 @@ export async function handleProjectHealth(env: Env, canSeePb = false): Promise<R
 
   // Six aggregation queries — whole-table scans but one-shot.
   const [updatesAgg, tasksCompAgg, activityAgg, commentsAgg, tasksVelocityAgg, milestonesAgg] = await Promise.all([
-    env.DB.prepare('SELECT project_id, MAX(created_at) as latest FROM project_updates GROUP BY project_id').all<{ project_id: string; latest: string }>(),
+    // project updates → activity_entries kind='update', entity_type='project'
+    env.DB.prepare("SELECT project_id, MAX(created_at) as latest FROM activity_entries WHERE entity_type='project' AND kind='update' GROUP BY project_id").all<{ project_id: string; latest: string }>(),
     env.DB.prepare('SELECT project_id, MAX(completed_at) as latest, COUNT(*) as done_count, SUM(CASE WHEN due_date IS NOT NULL AND completed_at <= due_date || \'T23:59:59\' THEN 1 ELSE 0 END) as on_time_count, SUM(CASE WHEN due_date IS NOT NULL THEN 1 ELSE 0 END) as with_due_count FROM tasks WHERE completed = 1 AND completed_at IS NOT NULL GROUP BY project_id').all<{ project_id: string; latest: string; done_count: number; on_time_count: number; with_due_count: number }>(),
     env.DB.prepare("SELECT related_id, MAX(timestamp) as latest FROM activity_log WHERE related_type = 'project' GROUP BY related_id").all<{ related_id: string; latest: string }>(),
-    env.DB.prepare('SELECT project_id, MAX(created_at) as latest FROM comments GROUP BY project_id').all<{ project_id: string; latest: string }>(),
+    // project comments → activity_entries kind='comment', entity_type='project'
+    env.DB.prepare("SELECT project_id, MAX(created_at) as latest FROM activity_entries WHERE entity_type='project' AND kind='comment' GROUP BY project_id").all<{ project_id: string; latest: string }>(),
     env.DB.prepare('SELECT project_id, COUNT(*) as pending_count, SUM(CASE WHEN due_date IS NOT NULL AND due_date < ? THEN 1 ELSE 0 END) as overdue_count FROM tasks WHERE completed = 0 AND deleted_at IS NULL GROUP BY project_id').bind(nowIso).all<{ project_id: string; pending_count: number; overdue_count: number }>(),
     env.DB.prepare("SELECT project_id, MIN(target_date) as next_target FROM milestones WHERE status IN ('pending', 'in_progress') AND target_date IS NOT NULL GROUP BY project_id").all<{ project_id: string; next_target: string }>(),
   ]);
@@ -488,16 +490,20 @@ export async function handleRecentUpdates(url: URL, env: Env, canSeePb = false):
   const pbExclusion = canSeePb ? '' : ` AND project_id NOT IN (
     SELECT id FROM projects WHERE category = 'Peripheral Brain'
     UNION SELECT slug FROM projects WHERE category = 'Peripheral Brain')`;
-  let query = 'SELECT * FROM project_updates';
+  // Repointed to activity_entries (kind='update', entity_type='project') after project_updates
+  // was frozen (P2-A, 2026-06-10). Column aliases preserve the legacy wire shape so PB's
+  // pull_project_updates / d1_project_updates mirror keep working unchanged.
+  const cols = `id, project_id, actor_slug AS author, body AS content, update_type, created_at`;
+  let query = `SELECT ${cols} FROM activity_entries WHERE entity_type='project' AND kind='update'`;
   const binds: unknown[] = [];
   if (since) {
-    query += ` WHERE created_at > ?${pbExclusion}`;
+    query += ` AND created_at > ?${pbExclusion}`;
     binds.push(since);
     // Sync mode: ASC + tiebreak on id ensures the client can resume
     // exactly from the last seen (created_at, id) pair without overlap or skip.
     query += ' ORDER BY created_at ASC, id ASC LIMIT ?';
   } else {
-    query += ` WHERE 1=1${pbExclusion} ORDER BY created_at DESC LIMIT ?`;
+    query += `${pbExclusion} ORDER BY created_at DESC LIMIT ?`;
   }
   binds.push(limit);
   const result = await env.DB.prepare(query).bind(...binds).all();

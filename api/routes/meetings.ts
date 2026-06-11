@@ -289,13 +289,13 @@ export async function handleGenerateAgenda(meetingId: string, env: Env, isAuthed
        ORDER BY r.expiration_date ASC
        LIMIT 10`
     ).all<{ id: string; title: string; item_type: string; expiration_date: string; status: string }>(),
-    // 5. Recent project updates since previous meeting
+    // 5. Recent project updates since previous meeting (activity_entries kind='update')
     env.DB.prepare(
-      `SELECT pu.id, pu.content, pu.update_type, pu.author, pu.created_at, p.title as project_title
-       FROM project_updates pu
-       LEFT JOIN projects p ON pu.project_id = p.id OR pu.project_id = p.slug
-       WHERE pu.created_at > ?${pbFilterP}
-       ORDER BY pu.created_at DESC
+      `SELECT ae.id, ae.body AS content, ae.update_type, ae.actor_slug AS author, ae.created_at, p.title as project_title
+       FROM activity_entries ae
+       LEFT JOIN projects p ON ae.project_id = p.id
+       WHERE ae.entity_type='project' AND ae.kind='update' AND ae.created_at > ?${pbFilterP}
+       ORDER BY ae.created_at DESC
        LIMIT 15`
     ).bind(prevDate).all<{ id: string; content: string; update_type: string; author: string; created_at: string; project_title: string }>(),
   ]);

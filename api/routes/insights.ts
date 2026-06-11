@@ -313,13 +313,14 @@ export async function handleInsightsDashboard(env: Env, weekArg?: string): Promi
   // SQLite date anchor: 'now' or a literal date string.
   const anchor = weekEndIso ? `'${weekEndIso}'` : `'now'`
 
-  // 1. Stalled projects (no project_updates in 14d), with WoW delta
+  // 1. Stalled projects (no project activity_entries kind='update' in 14d), with WoW delta
   const stalledNow = await env.DB.prepare(
     `SELECT COUNT(*) as c FROM projects p
      WHERE p.deleted_at IS NULL AND p.status = 'active'
        AND NOT EXISTS (
-         SELECT 1 FROM project_updates pu
-         WHERE pu.project_id = p.id AND pu.created_at > datetime(${anchor}, '-${STALL_THRESHOLD_DAYS} days')
+         SELECT 1 FROM activity_entries ae
+         WHERE ae.entity_type='project' AND ae.kind='update' AND ae.project_id = p.id
+           AND ae.created_at > datetime(${anchor}, '-${STALL_THRESHOLD_DAYS} days')
        )`
   ).first<{ c: number }>()
 
@@ -327,10 +328,10 @@ export async function handleInsightsDashboard(env: Env, weekArg?: string): Promi
     `SELECT COUNT(*) as c FROM projects p
      WHERE p.deleted_at IS NULL AND p.status = 'active'
        AND NOT EXISTS (
-         SELECT 1 FROM project_updates pu
-         WHERE pu.project_id = p.id
-           AND pu.created_at > datetime(${anchor}, '-${STALL_THRESHOLD_DAYS + 7} days')
-           AND pu.created_at <= datetime(${anchor}, '-7 days')
+         SELECT 1 FROM activity_entries ae
+         WHERE ae.entity_type='project' AND ae.kind='update' AND ae.project_id = p.id
+           AND ae.created_at > datetime(${anchor}, '-${STALL_THRESHOLD_DAYS + 7} days')
+           AND ae.created_at <= datetime(${anchor}, '-7 days')
        )`
   ).first<{ c: number }>()
 
@@ -434,11 +435,11 @@ export async function handleInsightsDashboard(env: Env, weekArg?: string): Promi
   // 7. Velocity scatter + 8. stalled registry (single combined query)
   const scatterRes = await env.DB.prepare(
     `SELECT p.slug, p.title,
-       MAX(pu.created_at) as last_update,
+       MAX(ae.created_at) as last_update,
        (SELECT COUNT(*) FROM tasks t
           WHERE t.project_id = p.id AND t.deleted_at IS NULL AND t.completed = 0) as open_tasks
      FROM projects p
-     LEFT JOIN project_updates pu ON pu.project_id = p.id
+     LEFT JOIN activity_entries ae ON ae.entity_type='project' AND ae.kind='update' AND ae.project_id = p.id
      WHERE p.deleted_at IS NULL AND p.status = 'active'
      GROUP BY p.id, p.slug, p.title`
   ).all<{ slug: string; title: string; last_update: string | null; open_tasks: number }>()
@@ -486,10 +487,10 @@ export async function handleInsightsDashboard(env: Env, weekArg?: string): Promi
       `SELECT COUNT(*) as c FROM projects p
        WHERE p.deleted_at IS NULL AND p.status = 'active'
          AND NOT EXISTS (
-           SELECT 1 FROM project_updates pu
-           WHERE pu.project_id = p.id
-             AND pu.created_at > datetime(?, '-${STALL_THRESHOLD_DAYS} days')
-             AND pu.created_at <= datetime(?, '+1 day')
+           SELECT 1 FROM activity_entries ae
+           WHERE ae.entity_type='project' AND ae.kind='update' AND ae.project_id = p.id
+             AND ae.created_at > datetime(?, '-${STALL_THRESHOLD_DAYS} days')
+             AND ae.created_at <= datetime(?, '+1 day')
          )`
     ).bind(endIso, endIso).first<{ c: number }>()
   )

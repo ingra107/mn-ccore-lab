@@ -51,12 +51,14 @@ export async function handleContributionsDecay(url: URL, env: Env): Promise<Resp
       "SELECT completed_at FROM tasks WHERE completed_by LIKE ? AND completed = 1 AND completed_at > ?"
     ).bind(`%${slug}%`, cutoff).all(),
 
+    // project updates → activity_entries kind='update', entity_type='project'
     env.DB.prepare(
-      "SELECT created_at FROM project_updates WHERE author LIKE ? AND created_at > ?"
+      "SELECT created_at FROM activity_entries WHERE entity_type='project' AND kind='update' AND actor_slug LIKE ? AND created_at > ?"
     ).bind(`%${slug}%`, cutoff).all(),
 
+    // comments → activity_entries kind='comment'
     env.DB.prepare(
-      "SELECT created_at FROM comments WHERE author_id LIKE ? AND created_at > ?"
+      "SELECT created_at FROM activity_entries WHERE kind='comment' AND actor_slug LIKE ? AND created_at > ?"
     ).bind(`%${slug}%`, cutoff).all(),
 
     env.DB.prepare(
