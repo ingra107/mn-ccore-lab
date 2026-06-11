@@ -51,7 +51,7 @@ Hub API detects @hermes mention (regex: /@(hermes|claude)\b/i)
 Creates ai_requests record (status: pending)
 Creates placeholder answer: "Thinking about this..."
     |
-hub_ai_listener.py (home laptop, polls every 10s)
+hub_ai_listener.py (home laptop, polls every 60s)
     |
 Picks up pending request
 Builds prompt with conversation history
@@ -76,3 +76,13 @@ Team member sees Hermes response (gold badge) in 20-40 seconds
 | Listener not running | Health check auto-restarts every 60 min. Manual: `python scripts/scheduled/hub_ai_listener.py` |
 | "Thinking about this..." stuck | Check home machine is online and has internet |
 | PB_API_KEY errors | Verify env var is set: `echo %PB_API_KEY%` on home machine |
+
+## Artifacts lane (v1, 2026-06-11)
+
+Responses >1500 chars OR explicit document asks become versioned artifact pages at
+`/portal/artifacts/<id>` (POST /api/artifacts) with a short teaser + link posted to the feed;
+`@hermes` comments on an artifact create `ai_requests` with `source_type='artifact_comment'`
+→ the listener regenerates and POSTs `/:id/revise` (version++, history kept). Short answers
+unchanged. ⚠️ Listener fetch contract: Hub list endpoints return `{data, count}` — the
+listener read a nonexistent `requests` key until 2026-06-11 (PB `b794fddf`); verify response
+keys against route source when adding consumers.
