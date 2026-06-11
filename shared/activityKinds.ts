@@ -47,3 +47,45 @@ export function deriveRenderKind(entityType: string, kind: StoredKind): string {
   if (entityType === 'task') return `task-${kind}`;
   return kind;
 }
+
+// ── Task-feed filter taxonomy ─────────────────────────────────────────────────
+
+/** Subset-filter labels used by TaskActivityFeed. */
+export const TASK_FEED_FILTERS = ['all', 'discussion', 'notes', 'system'] as const;
+export type TaskFeedFilter = (typeof TASK_FEED_FILTERS)[number];
+
+/** Subset-filter labels used by ActivityStream (project feed). */
+export const STREAM_FILTERS = ['all', 'notes', 'comments', 'task-activity'] as const;
+export type StreamFilter = (typeof STREAM_FILTERS)[number];
+
+/**
+ * Returns true if a row's stored kind (plus optional entityType) passes through
+ * the given feed filter.
+ *
+ * Replaces the two private `matchesFilter` functions that were formerly
+ * duplicated in TaskActivityFeed and ActivityStream — same logic, one place.
+ *
+ * @param filter      - The active filter pill value.
+ * @param entityType  - activity_entries.entity_type ('task' | 'project' | ...).
+ * @param kind        - activity_entries.kind (StoredKind).
+ */
+export function filterMatchesKind(
+  filter: TaskFeedFilter | StreamFilter,
+  entityType: string,
+  kind: StoredKind,
+): boolean {
+  if (filter === 'all') return true;
+
+  // ── TaskActivityFeed filters ──────────────────────────────────────────────
+  if (filter === 'discussion') return kind === 'comment';
+  if (filter === 'notes')      return kind === 'update';
+  if (filter === 'system')     return kind === 'completion' || kind === 'system';
+
+  // ── ActivityStream filters ────────────────────────────────────────────────
+  // 'task-activity' matches any row whose entity originates from a task.
+  if (filter === 'task-activity') return entityType === 'task';
+  // 'comments' matches only project-entity comment rows (not task-sourced ones).
+  if (filter === 'comments') return kind === 'comment' && entityType !== 'task';
+
+  return true;
+}

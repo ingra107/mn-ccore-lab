@@ -20,7 +20,8 @@ import { formatRelativeTime } from '../../lib/dateUtils'
 import { appendCharToInput } from '../../lib/textUtils'
 import TypingIndicator from '../TypingIndicator'
 import { getPersonInfo, getAllMembers, directors } from '../../data/team'
-import { classifyUrl, shortLabelForUrl } from '../../lib/urlClassify'
+import { shortLabelForUrl } from '../../lib/urlClassify'
+import LinkChip from '../LinkChip'
 import Avatar from '../Avatar'
 import InlineSelect from '../InlineSelect'
 import PresenceAvatars from '../PresenceAvatars'
@@ -954,24 +955,17 @@ function DetailKeyLinks({
   // email_link (v74, PB email-triage capture) was synced + returned by
   // /api/tasks but rendered NOWHERE until 2026-06-10 — the short_title class
   // again. System-populated, so it renders as a read-only Gmail chip rather
-  // than occupying an editable key-link slot.
-  const gmail = task.email_link ? classifyUrl(task.email_link) : null
+  // than occupying an editable key-link slot. LinkChip is the shared chip
+  // primitive extracted from this pattern.
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      {gmail && (
-        <a
-          href={gmail.href}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={(e) => e.stopPropagation()}
-          title={task.email_link ?? undefined}
-          className="inline-flex items-center gap-1.5 self-start"
-          style={{ fontSize: 12, color: 'var(--teal)', background: 'var(--teal-active)', borderRadius: 'var(--radius-sm)', padding: '3px 8px', textDecoration: 'none' }}
-        >
-          <gmail.Icon size={12} />
-          <span>{shortLabelForUrl(task.email_link!)}</span>
-        </a>
+      {task.email_link && (
+        <LinkChip
+          url={task.email_link}
+          label={shortLabelForUrl(task.email_link)}
+          stopPropagation={true}
+        />
       )}
       <KeyLinksEditor
         links={links}

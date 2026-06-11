@@ -12,7 +12,7 @@
 //
 // Design ref: docs/superpowers/specs/2026-06-10-activity-entries-unified-timeline-design.md
 
-import { useMemo, useState, type ReactNode } from 'react'
+import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -23,7 +23,6 @@ import {
   CheckCircle,
   HelpCircle,
   Activity as ActivityIcon,
-  ClipboardList,
 } from 'lucide-react'
 import {
   useActionItems,
@@ -36,38 +35,19 @@ import { getPersonInfo } from '../../data/team'
 import { formatRelativeTime } from '../../lib/dateUtils'
 import { useToast } from '../../hooks/useToast'
 import { useUndoToast } from '../UndoToast'
-import Avatar from '../Avatar'
 import SmartCompose from '../SmartCompose'
-import ReactionBar from '../ReactionBar'
-import HermesMark from '../HermesMark'
-import HermesResponse from '../HermesResponse'
-import HermesPending, { isHermesPending } from '../HermesPending'
-import LinkifiedText from '../LinkifiedText'
 import EmptyState from '../EmptyState'
 import type { Project } from '../../data/types'
-import type { StoredKind, UpdateType } from '../../../shared/activityKinds'
-import { deriveRenderKind } from '../../../shared/activityKinds'
-import { UPDATE_TYPE_CONFIG, AuthorOnlyBadge, EntryTime } from '../activity/activityRender'
+import { deriveRenderKind, filterMatchesKind } from '../../../shared/activityKinds'
+import {
+  ActivityEntryItem,
+  type ActivityEntryItemRow,
+} from '../activity/activityRender'
 
 // ── Unified feed row shape (activity_entries) ─────────────────────────────────
 
-interface UnifiedEntryRow {
-  id: string
-  entity_type: string
-  entity_id: string
-  project_id: string | null
-  kind: StoredKind
-  visibility: 'team' | 'author'
-  actor_slug: string
-  body: string
-  mentions_json: string | null
-  update_type: UpdateType | null
-  metadata_json: string | null
-  created_at: string
-  /** Joined server-side for task-entity rows: COALESCE(short_title, title). */
-  task_title?: string | null
-  // derived at render — not stored
-  _renderKind?: string
+interface UnifiedEntryRow extends ActivityEntryItemRow {
+  // All fields from ActivityEntryItemRow; no additions needed.
 }
 
 // ── Filter taxonomy ───────────────────────────────────────────────────────────
@@ -94,6 +74,15 @@ const NOTE_TYPE_CONFIG: Record<string, { icon: typeof TrendingUp; color: string;
 type StreamEvent =
   | { kind: 'action';        ts: string; id: string; row: ActionItemRow }
   | { kind: 'unified-entry'; ts: string; id: string; row: UnifiedEntryRow }
+
+// motion props shared across all animated stream items.
+const itemMotion = {
+  layout: true as const,
+  initial: { opacity: 0, y: -8 },
+  animate: { opacity: 1, y: 0 },
+  exit: { opacity: 0, x: -20 },
+  transition: { duration: 0.2 },
+}
 
 export default function ActivityStream({ project, filter }: Props) {
   const slug = project.slug
@@ -155,19 +144,14 @@ export default function ActivityStream({ project, filter }: Props) {
     return out.sort((a, b) => (a.ts > b.ts ? -1 : a.ts < b.ts ? 1 : 0))
   }, [relatedActions, unifiedEntries, filter])
 
-  // Apply the active filter.
+  // Apply the active filter via filterMatchesKind (shared/activityKinds.ts).
   const visible = useMemo(() => {
-    if (filter === 'notes') {
-      return events.filter((e) => e.kind === 'unified-entry' && (e.row._renderKind ?? '') === 'update')
-    }
-    if (filter === 'comments') {
-      return events.filter((e) => e.kind === 'unified-entry' && (e.row._renderKind ?? '') === 'comment')
-    }
-    if (filter === 'task-activity') {
-      return events.filter((e) => e.kind === 'unified-entry' && (e.row._renderKind ?? '').startsWith('task-'))
-    }
-    // 'all'
-    return events
+    if (filter === 'all') return events
+    return events.filter(
+      (e) =>
+        e.kind === 'unified-entry' &&
+        filterMatchesKind(filter, e.row.entity_type, e.row.kind),
+    )
   }, [events, filter])
 
   const handlePostNote = (content: string) =>
@@ -349,16 +333,22 @@ function StreamItem({ event, onToggleAction }: { event: StreamEvent; onToggleAct
     case 'action':
       return <ActionItemRowView action={event.row} onToggle={onToggleAction} />
     case 'unified-entry':
-      return <UnifiedEntryItem entry={event.row} />
+      return (
+        <ActivityEntryItem
+          entry={event.row}
+          // Project-stream surface settings:
+          avatarSize="base-sm"
+          textSize="var(--value-size)"
+          avatarGap="gap-3"
+          showCommentBadge={false}
+          showReactions={true}
+          showTaskOriginBadge={true}
+          taskOriginBorderWidth={2}
+          cardPadding="var(--sp-sm) var(--sp-md)"
+          motionProps={itemMotion}
+        />
+      )
   }
-}
-
-const itemMotion = {
-  layout: true as const,
-  initial: { opacity: 0, y: -8 },
-  animate: { opacity: 1, y: 0 },
-  exit: { opacity: 0, x: -20 },
-  transition: { duration: 0.2 },
 }
 
 function ActionItemRowView({ action, onToggle }: { action: ActionItemRow; onToggle: (id: string) => void }) {
@@ -404,197 +394,6 @@ function ActionItemRowView({ action, onToggle }: { action: ActionItemRow; onTogg
         </div>
       </div>
     </motion.div>
-  )
-}
-
-// ── Unified entry renderer (Design C, v77 activity_entries rows) ─────────────
-//
-// Handles both project-level rows (entity_type='project') and task-originated
-// rows (entity_type='task', _renderKind='task-comment'|'task-update' etc.).
-// Task rows get a small task glyph + an entity link so you can navigate to the
-// task that generated the chatter.
-
-function UnifiedEntryItem({ entry }: { entry: UnifiedEntryRow }) {
-  const isTask = entry.entity_type === 'task'
-  const isHermes = entry.actor_slug === 'claude-ai'
-  const person = getPersonInfo(entry.actor_slug)
-
-  const taskHref = isTask ? `/portal/my-tasks?openTask=${encodeURIComponent(entry.entity_id)}` : null
-  const taskLabel = entry.task_title || null
-
-  // Left-bar color + badge logic mirrors TaskActivityFeed.
-  let barColor = 'rgba(201,168,76,0.35)'   // default: gold (comment)
-  let badgeEl: ReactNode = null
-
-  if (entry.kind === 'update') {
-    const ut = entry.update_type || 'progress'
-    const cfg = UPDATE_TYPE_CONFIG[ut] || UPDATE_TYPE_CONFIG.progress
-    const Icon = cfg.icon
-    barColor = cfg.color
-    badgeEl = (
-      <span
-        className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded"
-        style={{ fontSize: '10px', background: cfg.bg, color: cfg.color }}
-      >
-        <Icon size={9} aria-hidden="true" /> {cfg.label}
-      </span>
-    )
-  } else if (entry.kind === 'comment') {
-    barColor = 'rgba(201,168,76,0.35)'
-    badgeEl = null // no badge for plain comments
-  } else if (entry.kind === 'system') {
-    barColor = 'var(--border-subtle)'
-  }
-
-  // Completions render as compact one-liners (like the task feed's
-  // CompletionEntry) — a full card per checkmark made the feed needlessly tall
-  // (Nick 2026-06-10). body, when present, is the completion note.
-  if (entry.kind === 'completion') {
-    return (
-      <motion.div {...itemMotion} className="flex items-center gap-2 py-1 px-1">
-        <CheckCircle size={14} className="flex-shrink-0" style={{ color: 'var(--green)', opacity: 0.85, flexShrink: 0 }} aria-hidden="true" />
-        <span style={{ fontSize: 'var(--label-size)', color: 'var(--ink)', flex: 1, minWidth: 0, lineHeight: 1.4 }}>
-          <span style={{ fontWeight: 500 }}>{person.name}</span>
-          {' completed '}
-          {isTask && taskHref ? (
-            <a
-              href={taskHref}
-              onClick={(e) => e.stopPropagation()}
-              style={{ color: 'var(--teal)', fontWeight: 500, textDecoration: 'none' }}
-            >
-              {taskLabel || 'a task'}
-            </a>
-          ) : (
-            taskLabel || 'a task'
-          )}
-          {entry.body ? <> — <LinkifiedText text={entry.body} /></> : null}
-        </span>
-        {entry.visibility === 'author' && <AuthorOnlyBadge />}
-        <EntryTime ts={entry.created_at} />
-      </motion.div>
-    )
-  }
-
-  if (isHermes) {
-    return (
-      <motion.div
-        {...itemMotion}
-        style={{ background: 'var(--gold-hover)', border: '1px solid rgba(201,168,76,0.15)', borderRadius: 'var(--radius-lg)', padding: 'var(--sp-sm) var(--sp-md)' }}
-        className="detail-card"
-      >
-        {isTask && taskHref && (
-          <TaskOriginBadge taskHref={taskHref} entityId={entry.entity_id} label={taskLabel} />
-        )}
-        <div className="flex items-center gap-1.5 mb-1">
-          <HermesMark size={14} variant="avatar" />
-          <span style={{ fontSize: '10px', color: 'var(--gold)', fontWeight: 500 }}>Hermes</span>
-          {entry.visibility === 'author' && <AuthorOnlyBadge />}
-          <EntryTime ts={entry.created_at} />
-        </div>
-        {isHermesPending(entry.body) ? (
-          <HermesPending askedAt={entry.created_at} />
-        ) : (
-          <HermesResponse content={entry.body} />
-        )}
-        {!isTask && <ReactionBar targetType="comment" targetId={entry.id} />}
-      </motion.div>
-    )
-  }
-
-  if (entry.kind === 'system') {
-    return (
-      <motion.div
-        {...itemMotion}
-        className="flex items-start gap-2 py-1 px-1"
-      >
-        <Circle size={5} className="flex-shrink-0 mt-1.5" style={{ color: 'var(--teal)', opacity: 0.85, fill: 'var(--teal)', flexShrink: 0 }} aria-hidden="true" />
-        {isTask && taskHref && (
-          <TaskOriginBadge taskHref={taskHref} entityId={entry.entity_id} label={taskLabel} inline />
-        )}
-        <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.85, flex: 1, lineHeight: 1.4 }}>
-          <LinkifiedText text={entry.body} />
-        </span>
-        {entry.visibility === 'author' && <AuthorOnlyBadge />}
-        <EntryTime ts={entry.created_at} />
-      </motion.div>
-    )
-  }
-
-  return (
-    <motion.div
-      {...itemMotion}
-      style={{
-        background: 'var(--cream)',
-        borderRadius: 'var(--radius-lg)',
-        padding: 'var(--sp-sm) var(--sp-md)',
-        borderLeft: `3px solid ${barColor}`,
-        // Task-originated rows get a subtle left-inset visual distinction.
-        ...(isTask ? { marginLeft: 4, borderLeftWidth: 2 } : {}),
-      }}
-      className="detail-card"
-    >
-      {isTask && taskHref && (
-        <TaskOriginBadge taskHref={taskHref} entityId={entry.entity_id} label={taskLabel} />
-      )}
-      <div className="flex items-start gap-3">
-        <div className="flex-shrink-0 mt-0.5" style={{ width: 28, height: 28 }}>
-          <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="base-sm" variant="ice" />
-        </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div className="flex items-center gap-2 mb-1 flex-wrap">
-            <span style={{ fontSize: 'var(--value-size)', fontWeight: 600, color: 'var(--ink)' }}>{person.name}</span>
-            {badgeEl}
-            {entry.visibility === 'author' && <AuthorOnlyBadge />}
-            <EntryTime ts={entry.created_at} />
-          </div>
-          <p style={{ fontSize: 'var(--value-size)', color: 'var(--ink)', lineHeight: 1.5, margin: 0, whiteSpace: 'pre-wrap' }}>
-            <LinkifiedText text={entry.body} />
-          </p>
-          {/* Reactions on project-level notes/comments (target ids carry over —
-              backfilled rows preserved their legacy ids). Task rows match the
-              task feed, which has no reactions. */}
-          {!isTask && (
-            <ReactionBar
-              targetType={entry.kind === 'update' ? 'project_update' : 'comment'}
-              targetId={entry.id}
-            />
-          )}
-        </div>
-      </div>
-    </motion.div>
-  )
-}
-
-/** Small badge linking back to the originating task in the project feed.
- *  Shows the task's display title (short_title || title, joined server-side)
- *  so the feed names the task instead of a bare "task" chip. */
-function TaskOriginBadge({ taskHref, entityId, label, inline }: { taskHref: string; entityId: string; label?: string | null; inline?: boolean }) {
-  return (
-    <a
-      href={taskHref}
-      onClick={(e) => e.stopPropagation()}
-      aria-label={`Go to task ${label || entityId}`}
-      className="inline-flex items-center gap-1"
-      style={{
-        fontSize: '9px',
-        color: 'var(--teal)',
-        background: 'var(--teal-active)',
-        borderRadius: 'var(--radius-sm)',
-        padding: '1px 5px',
-        textDecoration: 'none',
-        marginBottom: inline ? 0 : 4,
-        marginRight: inline ? 4 : 0,
-        flexShrink: 0,
-        display: 'inline-flex',
-        maxWidth: 260,
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
-        whiteSpace: 'nowrap',
-      }}
-    >
-      <ClipboardList size={9} aria-hidden="true" style={{ flexShrink: 0 }} />
-      {label || 'task'}
-    </a>
   )
 }
 
