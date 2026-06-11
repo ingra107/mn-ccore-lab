@@ -160,3 +160,68 @@ describe('Gmail link vocabulary (TODAY.md parity, 2026-06-10)', () => {
     expect(shortLabelForUrl(DRAFT)).toBe('Gmail draft')
   })
 })
+
+// ── Wikilink key links (PB TODAY.md vocabulary) — the R03 IWD bug class ──────
+// PB stores key links as `[[note|label]]`. Pre-fix these fell through to the
+// generic Link arm: the chip href was the literal `[[...]]`, the browser
+// navigated to it as a relative URL ("website flashes, Obsidian never opens").
+import { parseWikilink } from './urlClassify'
+
+describe('parseWikilink', () => {
+  it('parses bare-name wikilink with alias (the live R03 IWD shape)', () => {
+    expect(parseWikilink('[[iwd-r03-resubmission-revisions-2026-05-29|R03 Revision IWD]]')).toEqual({
+      target: 'iwd-r03-resubmission-revisions-2026-05-29',
+      alias: 'R03 Revision IWD',
+    })
+  })
+
+  it('parses path-style wikilink (the live CHEST IWD shape)', () => {
+    expect(parseWikilink('[[Projects/lpv-adherence-paper/iwd-lpv-revision-chest-cc|CHEST revision IWD]]')).toEqual({
+      target: 'Projects/lpv-adherence-paper/iwd-lpv-revision-chest-cc',
+      alias: 'CHEST revision IWD',
+    })
+  })
+
+  it('parses alias-less wikilink and strips a .md extension', () => {
+    expect(parseWikilink('[[Context/Topics/rules.md]]')).toEqual({
+      target: 'Context/Topics/rules',
+      alias: null,
+    })
+  })
+
+  it('rejects non-wikilink strings', () => {
+    expect(parseWikilink('https://example.com')).toBeNull()
+    expect(parseWikilink('C:/Users/ingra107/Peripheral-Brain/x.md')).toBeNull()
+    expect(parseWikilink('[[]]')).toBeNull()
+  })
+})
+
+describe('classifyUrl — wikilinks', () => {
+  it('classifies a wikilink as an Obsidian chip with a real obsidian:// href', () => {
+    const c = classifyUrl('[[iwd-r03-resubmission-revisions-2026-05-29|R03 Revision IWD]]')
+    expect(c.typeLabel).toBe('Obsidian')
+    expect(c.isHttp).toBe(false)
+    expect(c.href).toBe(
+      'obsidian://open?vault=Peripheral-Brain&file=iwd-r03-resubmission-revisions-2026-05-29',
+    )
+  })
+
+  it('keeps path separators intact for path-style wikilinks', () => {
+    const c = classifyUrl('[[Projects/lpv-adherence-paper/iwd-lpv-revision-chest-cc|x]]')
+    expect(c.href).toBe(
+      'obsidian://open?vault=Peripheral-Brain&file=Projects/lpv-adherence-paper/iwd-lpv-revision-chest-cc',
+    )
+  })
+})
+
+describe('shortLabelForUrl — wikilinks', () => {
+  it('uses the alias when present', () => {
+    expect(shortLabelForUrl('[[iwd-r03-resubmission-revisions-2026-05-29|R03 Revision IWD]]')).toBe(
+      'R03 Revision IWD',
+    )
+  })
+
+  it('falls back to Obsidian · <note name> without an alias', () => {
+    expect(shortLabelForUrl('[[Projects/clif/PROJECT]]')).toBe('Obsidian · PROJECT')
+  })
+})

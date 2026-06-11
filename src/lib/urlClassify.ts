@@ -54,6 +54,22 @@ export function obsidianVaultRelPath(normalizedPath: string): string | null {
 }
 
 /**
+ * Parse an Obsidian wikilink string: `[[target]]` or `[[target|alias]]`.
+ * PB writes key links in this form (TODAY.md link vocabulary) — the target is
+ * either a bare note name (`iwd-r03-resubmission-revisions-2026-05-29`) or a
+ * vault-relative path (`Projects/lpv-adherence-paper/iwd-...`). Obsidian's
+ * `open?file=` resolves BOTH exactly like a wikilink, so the target passes
+ * through unchanged (`.md` stripped if present).
+ */
+export function parseWikilink(value: string): { target: string; alias: string | null } | null {
+  const m = value.trim().match(/^\[\[([^\]|]+)(?:\|([^\]]+))?\]\]$/)
+  if (!m) return null
+  const target = m[1].trim().replace(/\.md$/i, '')
+  if (!target) return null
+  return { target, alias: m[2]?.trim() || null }
+}
+
+/**
  * Build `obsidian://open?vault=Peripheral-Brain&file=<vault-relative-path>` for
  * a markdown note inside the vault. The `file` value is the vault-relative path
  * (percent-encoded; `/` separators preserved so Obsidian resolves nested notes).
@@ -107,6 +123,14 @@ export function normalizeLocalFolderPath(raw: string): string {
 }
 
 export function classifyUrl(url: string): ClassifiedUrl {
+  // Obsidian wikilink form `[[note|label]]` (PB-written key links). Without
+  // this branch the literal `[[...]]` fell through to the generic Link arm and
+  // the browser navigated to it as a RELATIVE URL — the "website flashes,
+  // nothing opens" bug (Nick 2026-06-10).
+  const wiki = parseWikilink(url)
+  if (wiki) {
+    return { href: buildObsidianUri(wiki.target), Icon: BookText, typeLabel: 'Obsidian', isHttp: false }
+  }
   const isHttp = url.startsWith('http')
   if (isHttp && gmailKind(url)) {
     return { href: url, Icon: Mail, typeLabel: 'Gmail', isHttp: true }
@@ -179,6 +203,12 @@ export const MNCCORE_PROCESS_URI = 'mnccore://process'
  */
 export function shortLabelForUrl(url: string): string {
   try {
+    const wiki = parseWikilink(url)
+    if (wiki) {
+      if (wiki.alias) return wiki.alias
+      const noteName = wiki.target.split('/').filter(Boolean).pop() || wiki.target
+      return `Obsidian · ${noteName}`
+    }
     if (url.startsWith('http')) {
       const gk = gmailKind(url)
       if (gk) return gk === 'draft' ? 'Gmail draft' : 'Gmail thread'
