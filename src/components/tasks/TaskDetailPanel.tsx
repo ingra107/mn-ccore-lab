@@ -4,7 +4,7 @@ import {
   CalendarDays, FolderKanban, ArrowRightLeft,
   FileText, MessageSquare, Upload, Eye, ScrollText,
   Users, Bell, ClipboardList, Link2, Trash2, Plus, ExternalLink, RefreshCw, Copy, Check,
-  ChevronUp, ChevronDown, Send, Paperclip, AtSign, Smile, Type, Lock,
+  ChevronUp, ChevronDown, Send, Paperclip, AtSign, Smile, Type, Lock, Loader2,
 } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
@@ -507,8 +507,12 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
         </div>
 
         {/* Composer zone — above tabs, visible on every tab.
+            Structural divider gives clear rhythm: title/fields → composer → tabs.
             Mobile keeps sticky-bottom override (deliberate per-breakpoint). */}
-        <div className="px-5 pb-3">
+        <div
+          className="px-5 pb-3"
+          style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: 'var(--sp-md)' }}
+        >
           <OverviewQuickAdd
             taskId={task.id}
             taskTitle={task.title}
@@ -1341,10 +1345,15 @@ function TaskFilesSection({ taskId }: { taskId: string }) {
 
 // ── Overview Quick Add ──────────────────────────────────────
 //
-// Surfaces a single fast-capture input on the Overview tab so users
-// don't have to tab over to Notes / Comments. Mode toggle keeps the
-// Phase 27 "three distinct surfaces" decision visible — the placeholder
-// changes to make it crystal-clear what each one is for.
+// Single compact row at idle: [COMMENT|NOTE pills] [full-width input].
+// No icons left of the input, no indentation.
+//
+// When focused or has content (composing), the textarea grows to 2 rows
+// and a Slack-style action row appears BELOW the box:
+//   left: quiet icon-buttons (attach, @, emoji, @me lock, Hermes)
+//   right: Post button
+//
+// Mobile: whole component sticks to the panel's scroll-container bottom.
 function OverviewQuickAdd({
   taskId,
   taskTitle,
@@ -1360,9 +1369,8 @@ function OverviewQuickAdd({
 }) {
   const [mode, setMode] = useState<'note' | 'comment'>('comment')
   const [text, setText] = useState('')
+  const [focused, setFocused] = useState(false)
   const [forHermes, setForHermes] = useState(false)
-  // @me visibility toggle — when true, prepends '@me ' so the server strips it
-  // and stores visibility='author'. Tooltip explains the semantics.
   const [meOnly, setMeOnly] = useState(false)
   const [dragOver, setDragOver] = useState(false)
   const [uploading, setUploading] = useState(false)
@@ -1375,7 +1383,10 @@ function OverviewQuickAdd({
   const { showSuccess } = useToast()
   const queryClient = useQueryClient()
 
-  // T-04 inline file drop — Slack parity. Same presigned-R2 flow as FileUpload.
+  // Composing = focused OR has text — drives textarea rows + action row visibility.
+  const composing = focused || text.trim().length > 0
+
+  // T-04 inline file drop — same presigned-R2 flow as FileUpload.
   const uploadToCompose = useCallback(async (file: File) => {
     setUploading(true)
     try {
@@ -1405,12 +1416,10 @@ function OverviewQuickAdd({
   }, [taskId, queryClient])
 
   const PLACEHOLDERS = {
-    note: 'Pulled cohort, n=412 after exclusions. APACHE>25 worked. Stuck on merge — using ENC_ID not HOSP_ID',
-    comment: '@emma can you double-check the propensity score weights? @hermes pull recent JAMA papers on this',
+    note: 'Log progress, blockers, thoughts…',
+    comment: '@mention a teammate or @hermes for AI help',
   }
   const TOOLTIPS = {
-    // S18: notes render for every viewer; the privacy split is M5. Don't
-    // promise privacy the app doesn't deliver yet.
     note: 'Informal progress log — visible to the team',
     comment: 'Talk to teammates — @mention works',
   }
@@ -1422,8 +1431,6 @@ function OverviewQuickAdd({
   }
 
   async function submitComment(content: string) {
-    // Prepend '@me ' when the author-only toggle is active — the server's
-    // postActivityEntry() strips the prefix and sets visibility='author'.
     const body = meOnly ? `@me ${content}` : content
     const res = await fetch(`/api/tasks/${taskId}/comments`, {
       method: 'POST',
@@ -1432,7 +1439,6 @@ function OverviewQuickAdd({
     })
     if (!res.ok) throw new Error('comment failed')
     if (forHermes) {
-      // Dispatch hand-off so Hermes picks up the comment.
       fetch('/api/pb/dispatch/add', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1469,98 +1475,27 @@ function OverviewQuickAdd({
   return (
     <div
       style={{
-        borderTop: '1px solid var(--border-subtle)',
-        paddingTop: 'var(--sp-lg)',
-        marginTop: 'var(--sp-sm)',
-        // Mobile: stick the compose form to the bottom of the panel's scroll
-        // container so the iOS keyboard doesn't shove it out of reach.
-        // env(safe-area-inset-bottom) clears the home indicator.
+        // Mobile: stick to panel's scroll-container bottom so iOS keyboard
+        // doesn't push it out of reach.
         ...(isMobile ? {
           position: 'sticky' as const,
           bottom: 0,
           background: 'var(--cream)',
-          paddingBottom: 'calc(var(--sp-md) + env(safe-area-inset-bottom))',
+          paddingBottom: 'calc(var(--sp-sm) + env(safe-area-inset-bottom))',
           paddingLeft: 'var(--sp-lg)',
           paddingRight: 'var(--sp-lg)',
           marginLeft: 'calc(-1 * var(--sp-lg))',
           marginRight: 'calc(-1 * var(--sp-lg))',
+          paddingTop: 'var(--sp-sm)',
           zIndex: 1,
           boxShadow: '0 -6px 16px rgba(0,0,0,0.08)',
         } : null),
       }}
     >
-      <label
-        className="flex items-center gap-1.5 mb-1.5"
-        style={{
-          color: 'var(--slate)',
-          opacity: 'var(--ink-label)',
-          fontWeight: 'var(--label-weight)',
-          fontSize: 'var(--label-size)',
-        }}
-      >
-        <Plus size={11} />
-        Quick add
-      </label>
-
-      {/* Segmented mode pills — single shared fill makes "modes of one input"
-          obvious. Tooltip on each pill replaces the helper-line below the
-          textarea (per design ticket § 0 Ask 1). */}
-      <div className="flex items-center mb-2">
+      <form onSubmit={handleSubmit}>
+        {/* ── Idle row: [COMMENT|NOTE pills] [textarea] ── */}
         <div
-          className="inline-flex rounded-md overflow-hidden"
-          style={{ border: '1px solid var(--border-subtle)' }}
-          role="tablist"
-          aria-label="Quick add mode"
-        >
-          {(['comment', 'note'] as const).map((m) => {
-            const isActive = mode === m
-            return (
-              <button
-                key={m}
-                type="button"
-                role="tab"
-                aria-selected={isActive ? "true" : "false"}
-                onClick={() => setMode(m)}
-                title={TOOLTIPS[m]}
-                className="cursor-pointer inline-flex items-center gap-1 transition-all"
-                style={{
-                  fontSize: '10px',
-                  fontWeight: isActive ? 600 : 400,
-                  padding: '3px 10px',
-                  background: isActive ? 'var(--teal-active)' : 'transparent',
-                  color: isActive ? 'var(--teal)' : 'var(--slate)',
-                  border: 'none',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.04em',
-                }}
-              >
-                {m === 'comment' ? <MessageSquare size={10} /> : <ScrollText size={10} />}
-                {m}
-              </button>
-            )
-          })}
-        </div>
-        <button
-          type="button"
-          onClick={() => onJumpToTab('activity')}
-          className="ml-auto cursor-pointer inline-flex items-center gap-1"
-          style={{
-            fontSize: '10px',
-            color: 'var(--slate)',
-            opacity: 0.65,
-            background: 'none',
-            border: 'none',
-            padding: '3px 4px',
-          }}
-          title="Jump to full Activity tab"
-        >
-          See all →
-        </button>
-      </div>
-
-      <form onSubmit={handleSubmit} className="flex flex-col gap-1.5">
-        <div
-          className="flex gap-2 items-end"
+          className="flex items-center gap-2"
           onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
           onDragLeave={() => setDragOver(false)}
           onDrop={(e) => {
@@ -1568,38 +1503,52 @@ function OverviewQuickAdd({
             setDragOver(false)
             Array.from(e.dataTransfer.files || []).forEach(uploadToCompose)
           }}
-          style={{ outline: dragOver ? '2px dashed var(--teal)' : 'none', outlineOffset: '2px', borderRadius: 'var(--radius-lg)' }}
+          style={{
+            outline: dragOver ? '2px dashed var(--teal)' : 'none',
+            outlineOffset: '2px',
+            borderRadius: 'var(--radius-lg)',
+          }}
         >
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={uploading}
-            title="Attach file (drop or paste an image too)"
-            className="flex-shrink-0 p-2 rounded-lg"
-            style={{ border: '1px solid var(--border-subtle)', background: 'transparent', color: 'var(--slate)', cursor: uploading ? 'wait' : 'pointer', opacity: uploading ? 0.55 : 0.85 }}
+          {/* Segmented mode pills */}
+          <div
+            className="inline-flex rounded-md overflow-hidden flex-shrink-0"
+            style={{ border: '1px solid var(--border-subtle)' }}
+            role="tablist"
+            aria-label="Quick add mode"
           >
-            <Paperclip size={12} />
-          </button>
-          <button
-            type="button"
-            onClick={() => appendCh('@')}
-            title="Mention teammate (@name)"
-            className="flex-shrink-0 p-2 rounded-lg"
-            style={{ border: '1px solid var(--border-subtle)', background: 'transparent', color: 'var(--gold)', cursor: 'pointer', opacity: 0.85 }}
-          >
-            <AtSign size={12} />
-          </button>
-          <button
-            type="button"
-            onClick={() => appendCh(':')}
-            title="Add emoji reaction (:emoji:)"
-            className="flex-shrink-0 p-2 rounded-lg"
-            style={{ border: '1px solid var(--border-subtle)', background: 'transparent', color: 'var(--slate)', cursor: 'pointer', opacity: 0.85 }}
-          >
-            <Smile size={12} />
-          </button>
+            {(['comment', 'note'] as const).map((m) => {
+              const isActive = mode === m
+              return (
+                <button
+                  key={m}
+                  type="button"
+                  role="tab"
+                  aria-selected={isActive ? "true" : "false"}
+                  onClick={() => setMode(m)}
+                  title={TOOLTIPS[m]}
+                  className="cursor-pointer inline-flex items-center gap-1 transition-all"
+                  style={{
+                    fontSize: '10px',
+                    fontWeight: isActive ? 600 : 400,
+                    padding: '3px 8px',
+                    background: isActive ? 'var(--teal-active)' : 'transparent',
+                    color: isActive ? 'var(--teal)' : 'var(--slate)',
+                    border: 'none',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.04em',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {m === 'comment' ? <MessageSquare size={9} /> : <ScrollText size={9} />}
+                  {m}
+                </button>
+              )
+            })}
+          </div>
+
+          {/* Full-width input — no icons left of it */}
           <input
-            ref={fileInputRef}
+            ref={fileInputRef as unknown as React.RefObject<HTMLInputElement>}
             type="file"
             multiple
             onChange={(e) => { Array.from(e.target.files || []).forEach(uploadToCompose); e.target.value = '' }}
@@ -1608,6 +1557,7 @@ function OverviewQuickAdd({
           <textarea
             ref={textareaRef}
             value={text}
+            rows={composing ? 2 : 1}
             onChange={(e) => {
               const v = e.target.value
               setText(v)
@@ -1620,103 +1570,222 @@ function OverviewQuickAdd({
               if (fileItem) { e.preventDefault(); const f = fileItem.getAsFile(); if (f) uploadToCompose(f) }
             }}
             placeholder={PLACEHOLDERS[mode]}
-            rows={2}
+            onFocus={(e) => {
+              setFocused(true)
+              e.currentTarget.style.borderColor = 'var(--teal)'
+            }}
+            onBlur={(e) => {
+              // Delay so toolbar button clicks register before composing goes false
+              setTimeout(() => setFocused(false), 150)
+              e.currentTarget.style.borderColor = 'var(--border-subtle)'
+              broadcastTyping(false)
+              onContentChange?.(false)
+            }}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
                 e.preventDefault()
                 handleSubmit(e)
               }
             }}
-            className="flex-1 rounded-md border text-sm outline-none resize-none"
+            className="flex-1 outline-none resize-none"
             style={{
               fontSize: 'var(--value-size)',
               color: 'var(--ink)',
               background: 'var(--cream)',
               border: '1px solid var(--border-subtle)',
-              borderRadius: 'var(--radius-lg)',
-              padding: '8px 10px',
+              borderRadius: 'var(--radius-md)',
+              padding: composing ? '7px 10px' : '4px 10px',
               lineHeight: 1.5,
-              transition: 'border-color 0.15s',
+              transition: 'border-color 0.15s, padding 0.1s',
+              minHeight: composing ? undefined : 28,
             }}
-            onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--teal)')}
-            onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border-subtle)'; broadcastTyping(false); onContentChange?.(false) }}
           />
-          {text.trim() && (
-            <button
-              type="submit"
-              className="cursor-pointer flex-shrink-0 p-2 rounded-lg"
-              style={{
-                background: forHermes && mode === 'comment' ? 'var(--gold)' : 'var(--teal-solid)',
-                color: 'var(--ink-bright, #fff)',
-                border: 'none',
-                transition: 'background-color 0.15s',
-              }}
-              title={`${mode === 'comment' ? (forHermes ? 'Post + dispatch to Hermes' : 'Post comment') : 'Add note'} · Ctrl+Enter`}
-            >
-              <Send size={14} />
-            </button>
-          )}
         </div>
 
-        <TypingIndicator slugs={typingPeers} className="self-start" />
+        {/* ── Composing action row (Slack-style): below the textarea ── */}
+        {composing && (
+          <div
+            className="flex items-center gap-1"
+            style={{ marginTop: 6 }}
+          >
+            {/* Left: quiet icon-buttons */}
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              aria-label="Attach file"
+              title="Attach file (drop or paste an image too)"
+              className="flex-shrink-0 inline-flex items-center justify-center"
+              style={composerIconBtn}
+            >
+              {uploading
+                ? <Loader2 size={12} className="animate-spin" />
+                : <Paperclip size={12} />}
+            </button>
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => appendCh('@')}
+              aria-label="Mention teammate"
+              title="@mention a teammate"
+              className="flex-shrink-0 inline-flex items-center justify-center"
+              style={composerIconBtn}
+            >
+              <AtSign size={12} />
+            </button>
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => appendCh(':')}
+              aria-label="Add emoji"
+              title="Add emoji (:emoji:)"
+              className="flex-shrink-0 inline-flex items-center justify-center"
+              style={composerIconBtn}
+            >
+              <Smile size={12} />
+            </button>
 
-        {/* Row of secondary toggles — shown when there is content to post */}
-        {text.trim() && (
-          <div className="flex items-center gap-2 flex-wrap">
-            {/* Hermes toggle — only relevant on comments */}
+            {/* @me lock */}
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => setMeOnly((v) => !v)}
+              aria-label={meOnly ? 'Author-only: only you see this' : 'Post publicly — click to restrict to only you'}
+              title="Visible only to you (@me)"
+              className="flex-shrink-0 inline-flex items-center gap-1"
+              style={{
+                ...composerIconBtn,
+                paddingLeft: 5,
+                paddingRight: 5,
+                border: meOnly
+                  ? '1px solid var(--border-subtle)'
+                  : '1px solid transparent',
+                background: meOnly ? 'rgba(100,116,139,0.10)' : 'transparent',
+                color: meOnly ? 'var(--slate)' : 'var(--slate)',
+                opacity: meOnly ? 1 : 0.65,
+                fontWeight: meOnly ? 600 : 400,
+                fontSize: 9,
+                letterSpacing: '0.04em',
+                textTransform: 'uppercase',
+              }}
+            >
+              <Lock size={9} aria-hidden="true" />
+              {meOnly ? 'only me' : 'only me?'}
+            </button>
+
+            {/* Hermes toggle — only relevant for comments */}
             {mode === 'comment' && (
               <button
                 type="button"
+                onMouseDown={(e) => e.preventDefault()}
                 onClick={() => setForHermes((v) => !v)}
-                className="flex items-center gap-1.5 px-2 py-0.5 rounded-full transition-colors"
+                aria-label={forHermes ? 'Hermes will be notified' : 'Notify Hermes AI'}
+                title="Route to Hermes AI"
+                className="flex-shrink-0 inline-flex items-center gap-1"
                 style={{
-                  fontSize: '10px',
-                  fontWeight: 600,
-                  background: forHermes ? 'var(--gold-emphasis)' : 'rgba(100,116,139,0.06)',
+                  ...composerIconBtn,
+                  paddingLeft: 5,
+                  paddingRight: 5,
+                  border: forHermes
+                    ? '1px solid rgba(201,168,76,0.35)'
+                    : '1px solid transparent',
+                  background: forHermes ? 'var(--gold-active)' : 'transparent',
                   color: forHermes ? 'var(--gold)' : 'var(--slate)',
-                  border: `1px solid ${forHermes ? 'rgba(201,168,76,0.3)' : 'rgba(100,116,139,0.1)'}`,
-                  cursor: 'pointer',
+                  opacity: forHermes ? 1 : 0.65,
+                  fontWeight: forHermes ? 600 : 400,
+                  fontSize: 9,
+                  letterSpacing: '0.04em',
                   textTransform: 'uppercase',
-                  letterSpacing: '0.3px',
                 }}
               >
                 <span
                   style={{
-                    width: 6,
-                    height: 6,
+                    width: 5,
+                    height: 5,
                     borderRadius: 'var(--radius-circle)',
                     background: forHermes ? 'var(--gold)' : 'var(--slate)',
-                    opacity: forHermes ? 1 : 0.85,
+                    flexShrink: 0,
+                    opacity: forHermes ? 1 : 0.65,
                   }}
                 />
-                {forHermes ? 'For Hermes' : '@ Hermes'}
+                {forHermes ? 'for hermes' : 'hermes?'}
               </button>
             )}
 
-            {/* @me visibility toggle — prepends '@me ' so server strips +
-                stores visibility='author'. Works for both notes and comments. */}
+            {/* Spacer pushes Post + See-all to the right */}
+            <span style={{ flex: 1 }} />
+
+            {/* See all link */}
             <button
               type="button"
-              onClick={() => setMeOnly((v) => !v)}
-              aria-label={meOnly ? 'Remove author-only visibility: visible to team' : 'Make visible only to you (@me)'}
-              title="Visible only to you (@me)"
-              className="flex items-center gap-1 px-2 py-0.5 rounded-full transition-colors"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => onJumpToTab('activity')}
               style={{
                 fontSize: '10px',
-                fontWeight: meOnly ? 600 : 400,
-                background: meOnly ? 'rgba(100,116,139,0.12)' : 'transparent',
-                color: meOnly ? 'var(--slate)' : 'var(--slate)',
-                border: `1px solid ${meOnly ? 'var(--border-subtle)' : 'rgba(100,116,139,0.1)'}`,
+                color: 'var(--slate)',
+                opacity: 0.55,
+                background: 'none',
+                border: 'none',
+                padding: '0 4px',
                 cursor: 'pointer',
-                opacity: meOnly ? 1 : 0.85,
+                whiteSpace: 'nowrap',
               }}
+              title="Jump to full Activity tab"
             >
-              <Lock size={9} aria-hidden="true" />
-              {meOnly ? 'Only me' : 'Only me?'}
+              See all →
             </button>
+
+            {/* Post button — only when there's content */}
+            {text.trim() && (
+              <button
+                type="submit"
+                aria-label={mode === 'comment'
+                  ? (forHermes ? 'Post comment and notify Hermes' : 'Post comment')
+                  : 'Add note'}
+                title={`${mode === 'comment' ? (forHermes ? 'Post + dispatch to Hermes' : 'Post comment') : 'Add note'} · Ctrl+Enter`}
+                className="flex-shrink-0 inline-flex items-center justify-center"
+                style={{
+                  background: forHermes && mode === 'comment' ? 'var(--gold)' : 'var(--teal-solid)',
+                  color: 'var(--ink-bright, #fff)',
+                  border: 'none',
+                  borderRadius: 'var(--radius-sm)',
+                  padding: '3px 8px',
+                  cursor: 'pointer',
+                  fontSize: 11,
+                  fontWeight: 600,
+                  fontFamily: 'inherit',
+                  transition: 'background-color 0.15s',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 4,
+                }}
+              >
+                <Send size={11} aria-hidden="true" />
+                Post
+              </button>
+            )}
           </div>
         )}
+
+        {/* Typing indicator */}
+        <TypingIndicator slugs={typingPeers} className="self-start" style={{ marginTop: 2 }} />
       </form>
     </div>
   )
+}
+
+// Shared icon-button style for the composing action row (OverviewQuickAdd)
+const composerIconBtn: React.CSSProperties = {
+  width: 24,
+  height: 24,
+  borderRadius: 'var(--radius-sm)',
+  border: '1px solid transparent',
+  background: 'transparent',
+  color: 'var(--slate)',
+  opacity: 0.70,
+  cursor: 'pointer',
+  padding: 0,
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
 }

@@ -23,7 +23,7 @@
 //     card shells used by ProjectDetail / MeetingDetail / AskTheLab.
 
 import { useState, useRef, useCallback, useEffect } from 'react'
-import { Paperclip, Smile, AtSign, Loader2 } from 'lucide-react'
+import { Paperclip, Smile, AtSign, Loader2, Send } from 'lucide-react'
 import MentionInput from './MentionInput'
 import { usePostTaskUpdate } from '../hooks/useMutations'
 import { useUndoToast } from './UndoToast'
@@ -313,17 +313,33 @@ export default function SmartCompose(props: SmartComposeProps) {
         rows={rows}
         style={textareaStyle}
       />
+      <input
+        ref={fileInputRef}
+        type="file"
+        style={{ display: 'none' }}
+        onChange={(e) => { handleFiles(e.target.files); e.target.value = '' }}
+      />
+      {/* Slack-style action row — below the textarea, left = quiet icon-buttons, right = Post */}
       {showToolbar && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 6, position: 'relative' }}>
+          {/* Attach */}
+          {uploadContext && (
+            <ToolbarBtn theme={theme} label="Attach file" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
+              {uploading ? <Loader2 size={11} className="animate-spin" /> : <Paperclip size={11} />}
+            </ToolbarBtn>
+          )}
+          {/* @mention */}
           <ToolbarBtn theme={theme} label="Mention someone" onClick={() => insertAtCursor('@')}><AtSign size={11} /></ToolbarBtn>
+          {/* Emoji */}
           <ToolbarBtn theme={theme} label="Add emoji" onClick={() => setEmojiOpen((o) => !o)} active={emojiOpen}><Smile size={11} /></ToolbarBtn>
+          {/* @me lock */}
           {showMeLock && (
             <button
               type="button"
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => setMeLocked((l) => !l)}
-              title={meLocked ? 'Private note (only you see this) — click to post publicly' : 'Post publicly — click to make private'}
-              aria-label={meLocked ? 'Private note lock on' : 'Private note lock off'}
+              title={meLocked ? 'Private note — click to post publicly' : 'Post publicly — click to make private'}
+              aria-label={meLocked ? 'Private note lock on — only you see this' : 'Private note lock off — visible to team'}
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: 3,
                 padding: '1px 6px', borderRadius: 'var(--radius-sm)',
@@ -338,24 +354,16 @@ export default function SmartCompose(props: SmartComposeProps) {
                   : (isDark ? INK_DIM_DARK : 'var(--slate)'),
                 fontSize: 9,
                 fontWeight: meLocked ? 700 : 400,
+                opacity: meLocked ? 1 : 0.65,
                 cursor: 'pointer',
                 fontFamily: 'inherit',
                 letterSpacing: '0.04em',
+                textTransform: 'uppercase',
                 whiteSpace: 'nowrap',
               }}
             >@me {meLocked ? '🔒' : '🔓'}</button>
           )}
-          {uploadContext && (
-            <ToolbarBtn theme={theme} label="Attach file" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
-              {uploading ? <Loader2 size={11} className="animate-spin" /> : <Paperclip size={11} />}
-            </ToolbarBtn>
-          )}
-          <input
-            ref={fileInputRef}
-            type="file"
-            style={{ display: 'none' }}
-            onChange={(e) => { handleFiles(e.target.files); e.target.value = '' }}
-          />
+          {/* Emoji picker — opens above the toolbar */}
           {emojiOpen && (
             <div style={{
               position: 'absolute',
@@ -384,13 +392,30 @@ export default function SmartCompose(props: SmartComposeProps) {
               ))}
             </div>
           )}
+          {/* Spacer */}
           <span style={{ flex: 1 }} />
+          {/* ⌘⏎ hint */}
+          {!hideKbdHint && val.trim().length > 0 && (
+            <kbd style={{
+              fontFamily: 'var(--font-mono), JetBrains Mono, monospace',
+              fontSize: 9,
+              padding: '1px 4px',
+              border: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid var(--border-subtle)',
+              borderRadius: 2,
+              color: isDark ? INK_DIM_DARK : 'var(--muted)',
+            }}>⌘⏎</kbd>
+          )}
+          {/* Post button */}
           {!hideSubmitButton && val.trim().length > 0 && (
             <button
               type="button"
               onClick={submit}
               disabled={submitting}
+              aria-label={submitting ? submittingLabel : submitLabel}
               style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 3,
                 padding: isDark ? '3px 10px' : '4px 12px',
                 fontSize: 11,
                 background: submitBg,
@@ -401,17 +426,10 @@ export default function SmartCompose(props: SmartComposeProps) {
                 fontFamily: 'inherit',
                 fontWeight: 600,
               }}
-            >{submitting ? submittingLabel : submitLabel}</button>
-          )}
-          {!hideKbdHint && (
-            <kbd style={{
-              fontFamily: 'var(--font-mono), JetBrains Mono, monospace',
-              fontSize: 9,
-              padding: '1px 4px',
-              border: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid var(--border-subtle)',
-              borderRadius: 2,
-              color: isDark ? INK_DIM_DARK : 'var(--muted)',
-            }}>⌘ ⏎</kbd>
+            >
+              <Send size={10} aria-hidden="true" />
+              {submitting ? submittingLabel : submitLabel}
+            </button>
           )}
         </div>
       )}
