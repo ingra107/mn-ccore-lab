@@ -1,5 +1,5 @@
 import { useState, useMemo, lazy, Suspense } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   ArrowLeft,
@@ -26,6 +26,7 @@ import type { TaskRow } from '../lib/api'
 // clicked the first time.
 const TaskDetailPanel = lazy(() => import('../components/tasks/TaskDetailPanel'))
 import { useNotifications, useUnreadCount, useMarkRead, useMarkAllRead } from '../hooks/useNotifications'
+import { useUnseenActivity } from '../hooks/useEntitySeen'
 import type { NotificationRow } from '../hooks/useNotifications'
 import { useToggleActionItem } from '../hooks/useMutations'
 import { useUndoToast } from '../components/UndoToast'
@@ -589,6 +590,24 @@ export default function MyItems() {
   // itself from the list. The panel subscribes to the query cache (Rule 18),
   // so the prop is just the initial snapshot.
   const [openTask, setOpenTask] = useState<TaskRow | null>(null)
+  const navigate = useNavigate()
+
+  // New ACTIVITY (teal — distinct from gold NEW assignments): tasks/projects
+  // you've already seen that have entries by others since your last look.
+  // Task rows open the in-place editor (marks seen → row self-removes);
+  // project rows go to the project page (its visit marks seen).
+  const { data: unseenActivity } = useUnseenActivity()
+  const activityRows = unseenActivity?.rows ?? []
+  const taskById = useMemo(() => new Map(myOpenTasks.map((t: TaskRow) => [t.id, t])), [myOpenTasks])
+  const openActivityRow = (r: { entity_type: string; entity_id: string; project_slug: string | null }) => {
+    if (r.entity_type === 'task') {
+      const t = taskById.get(r.entity_id)
+      if (t) setOpenTask(t)
+      else navigate(`${PATHS.myTasks}?open=${r.entity_id}`)
+    } else if (r.project_slug) {
+      navigate(PATHS.project(r.project_slug))
+    }
+  }
   const { data: notifications = [] } = useNotifications(userSlug)
   const { data: unreadCount = 0 } = useUnreadCount(userSlug)
   const markRead = useMarkRead(userSlug)
@@ -873,6 +892,75 @@ export default function MyItems() {
                       {formatShortDate(t.due_date)}
                     </span>
                   )}
+                  <span style={{ fontSize: '11px', color: 'var(--teal)', flexShrink: 0 }}>Open →</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* New ACTIVITY — teal, deliberately distinct from the gold New-for-You
+            list above: these are things you've SEEN that have new conversation
+            on them (comments/updates by others since your last look). */}
+        {activityRows.length > 0 && (
+          <div style={{ marginBottom: '2.5rem' }}>
+            <SectionHeader title="New Activity" />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {activityRows.map((r) => (
+                <button
+                  key={`${r.entity_type}:${r.entity_id}`}
+                  type="button"
+                  onClick={() => openActivityRow(r)}
+                  className="card"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    padding: '10px 14px',
+                    width: '100%',
+                    textAlign: 'left',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                    borderLeft: '3px solid var(--teal)',
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: '9px',
+                      fontWeight: 700,
+                      letterSpacing: '0.08em',
+                      color: 'var(--teal)',
+                      background: 'var(--teal-active)',
+                      padding: '1px 5px',
+                      borderRadius: '3px',
+                      flexShrink: 0,
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    ● {r.new_count} NEW
+                  </span>
+                  <span style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--slate)', opacity: 0.7, flexShrink: 0 }}>
+                    {r.entity_type}
+                  </span>
+                  <span
+                    title={r.title ?? undefined}
+                    style={{
+                      flex: 1,
+                      minWidth: 0,
+                      fontSize: '13.5px',
+                      fontWeight: 500,
+                      color: 'var(--ink)',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {r.title ?? r.entity_id}
+                  </span>
+                  <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.75, flexShrink: 0 }}>
+                    {formatRelativeTime(r.latest_at)}
+                  </span>
                   <span style={{ fontSize: '11px', color: 'var(--teal)', flexShrink: 0 }}>Open →</span>
                 </button>
               ))}

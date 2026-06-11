@@ -31,6 +31,7 @@ import { Link } from 'react-router-dom'
 import { PATHS } from '../../constants/paths'
 import { useAuth } from '../../hooks/useAuth'
 import { emailToSlug } from '../../lib/emailSlug'
+import { useUnseenActivity } from '../../hooks/useEntitySeen'
 import TaskTitle from './TaskTitle'
 import {
   ACCENT_GOLD, ACCENT_TEAL, ACCENT_CORAL, ACCENT_ORANGE, ACCENT_GREEN,
@@ -229,6 +230,13 @@ export function TaskRow(props: SharedTaskRowProps) {
   const { user } = useAuth()
   const isNewToViewer = !isDone && !!task.assignee && task.assignee === emailToSlug(user?.email) && !task.acknowledged_at
 
+  // New-ACTIVITY signal (distinct from NEW assignment — Nick 2026-06-11):
+  // a task you've already seen has activity by others since your last look.
+  // Teal (communication), never gold; the gold NEW pill wins when both apply.
+  // TanStack dedupes the query across rows (one fetch, 30s stale).
+  const { data: unseen } = useUnseenActivity()
+  const activityRow = !isDone && !isNewToViewer ? unseen?.tasks.get(task.id) : undefined
+
   const selectable = !!onToggleSelect
 
   const startPress = (e: React.MouseEvent) => {
@@ -314,13 +322,22 @@ export function TaskRow(props: SharedTaskRowProps) {
   ) : null
 
   // Gold NEW pill right after the title — same accent + meaning as the
-  // sidebar unseen badge and the ✦ New quick filter.
+  // sidebar unseen badge and the ✦ New quick filter. When instead the task has
+  // new ACTIVITY since the viewer's last look, a teal ● chip renders — the two
+  // signals are deliberately distinct (assignment vs conversation).
   const newChip = isNewToViewer ? (
     <span
       title="New to you — you haven't opened this yet"
       style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: ACCENT_GOLD, background: withAlpha(ACCENT_GOLD, 14), padding: '1px 5px', borderRadius: 3, marginLeft: 6, whiteSpace: 'nowrap' }}
     >
       NEW
+    </span>
+  ) : activityRow ? (
+    <span
+      title={`${activityRow.new_count} new ${activityRow.new_count === 1 ? 'entry' : 'entries'} since you last opened this`}
+      style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: ACCENT_TEAL, background: withAlpha(ACCENT_TEAL, 14), padding: '1px 5px', borderRadius: 3, marginLeft: 6, whiteSpace: 'nowrap' }}
+    >
+      ● {activityRow.new_count} new
     </span>
   ) : null
 

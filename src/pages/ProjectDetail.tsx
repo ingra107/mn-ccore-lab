@@ -25,6 +25,7 @@ import {
   Copy as CopyIcon,
 } from 'lucide-react'
 import { usePageMeta } from '../hooks/usePageMeta'
+import { useMarkSeen } from '../hooks/useEntitySeen'
 import { useProjects, useMeetingsApi, useTasks, useProjectUpdates, useRevisions, useComments, useProjectPapers } from '../hooks/useApiData'
 import { useUpdateProject, useAddAgendaItem, useUpdateTaskStatus, useUpdateTask, useBulkUpdateTasks, useCreateTask } from '../hooks/useMutations'
 import { useUndoToast } from '../components/UndoToast'
@@ -92,6 +93,17 @@ export default function ProjectDetail() {
   const { data: projects = [], isLoading, isError } = useProjects()
 
   const project = projects.find((p) => p.slug === slug)
+
+  // New-activity signal (entity_seen v81): visiting the project page IS the
+  // "seen" mark — project activity newer than this visit re-flags as ● new.
+  const markSeen = useMarkSeen()
+  const seenProjectId = (project as { id?: string } | undefined)?.id
+  const seenFiredRef = useRef<string | null>(null)
+  useEffect(() => {
+    if (!seenProjectId || seenFiredRef.current === seenProjectId) return
+    seenFiredRef.current = seenProjectId
+    markSeen('project', seenProjectId)
+  }, [seenProjectId, markSeen])
 
   usePageMeta(
     project ? `${project.title} | MN-CCORE` : 'Project Not Found | MN-CCORE',

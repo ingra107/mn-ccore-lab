@@ -20,6 +20,7 @@ import { useTaskFieldEditors } from '../../../hooks/useTaskFieldEditors'
 import { useLabPrefs } from '../../../hooks/useLabPrefs'
 import { useAuth } from '../../../hooks/useAuth'
 import { emailToSlug } from '../../../lib/emailSlug'
+import { useUnseenActivity } from '../../../hooks/useEntitySeen'
 import { STATUS_OPTIONS, PRIORITY_OPTIONS } from '../../../lib/taskConstants'
 import {
   GROUP_META,
@@ -59,6 +60,8 @@ export function ListView({ filtered, selected, toggleSelect, setSelected, setDra
   // NEW-to-you chip (Slack-style seen): viewer slug computed once for all rows.
   const { user } = useAuth()
   const viewerSlug = emailToSlug(user?.email)
+  // New-ACTIVITY map (teal ● chip — distinct from gold NEW assignment).
+  const { data: unseen } = useUnseenActivity()
 
   // MT-04 — virtualize. 44px row + 1px border ≈ 45. Use measureElement for
   // any future expanded-state without changing this default.
@@ -142,6 +145,7 @@ export function ListView({ filtered, selected, toggleSelect, setSelected, setDra
                     projectSelectOptions={projectSelectOptions}
                     staleDays={prefs.taskStaleDays}
                     isNew={!!t.assignee && t.assignee === viewerSlug && !t.acknowledged_at && !isTaskDone(t)}
+                    newActivity={!isTaskDone(t) ? unseen?.tasks.get(t.id)?.new_count ?? 0 : 0}
                   />
                 </div>
               )
@@ -183,9 +187,10 @@ interface ListRowProps {
   projectSelectOptions: { value: string; label: string; color?: string }[]
   staleDays: number
   isNew: boolean
+  newActivity: number
 }
 
-function ListRow({ task, project, isCursor, isSelected, onClick, onDouble, onSelect, planned, onStatusChange, onPriorityChange, onAssigneeChange, onDateChange, onProjectChange, projectSelectOptions, staleDays, isNew }: ListRowProps) {
+function ListRow({ task, project, isCursor, isSelected, onClick, onDouble, onSelect, planned, onStatusChange, onPriorityChange, onAssigneeChange, onDateChange, onProjectChange, projectSelectOptions, staleDays, isNew, newActivity }: ListRowProps) {
   const meta = GROUP_META[(task as TaskRow & { _group?: GroupKey })._group ?? 'deep']
   // Rule 68: status-aware isOverdue(), never a hand-rolled date compare.
   const overdue = !!task.due_date && !isTaskDone(task) && isOverdue(task.due_date, task.status)
@@ -226,6 +231,7 @@ function ListRow({ task, project, isCursor, isSelected, onClick, onDouble, onSel
           style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', cursor: 'pointer' }}
         >{task.title}</span>
         {isNew && <span title="New to you — you haven't opened this yet" style={{ fontSize: 9, color: ACCENT_GOLD, fontWeight: 700, letterSpacing: '0.08em', background: withAlpha(ACCENT_GOLD, 14), padding: '1px 5px', borderRadius: 3, flexShrink: 0 }}>NEW</span>}
+        {!isNew && newActivity > 0 && <span title={`${newActivity} new ${newActivity === 1 ? 'entry' : 'entries'} since you last opened this`} style={{ fontSize: 9, color: ACCENT_TEAL, fontWeight: 700, letterSpacing: '0.08em', background: withAlpha(ACCENT_TEAL, 14), padding: '1px 5px', borderRadius: 3, flexShrink: 0 }}>● {newActivity} new</span>}
         {task.group_override && <span title={`Moved manually (${task.group_override})`} style={{ fontSize: 10, color: ACCENT_TEAL, flexShrink: 0 }}>📍</span>}
         {planned && <span style={{ fontSize: 9, color: ACCENT_GOLD, fontWeight: 700, letterSpacing: '0.1em' }}>PLANNED</span>}
         {overdueDays > 0 && <span style={{ fontSize: 9, color: ACCENT_CORAL, fontWeight: 700 }}>{overdueDays}d LATE</span>}

@@ -15,6 +15,7 @@ import { useEffect, useMemo, useRef } from 'react'
 import { useAuth } from './useAuth'
 import { emailToSlug } from '../lib/emailSlug'
 import { useAcknowledgeTask } from './useMutations'
+import { useMarkSeen } from './useEntitySeen'
 
 interface AckableTask {
   id: string
@@ -27,8 +28,11 @@ export function useAutoAcknowledge(task: AckableTask | null | undefined) {
   const { user } = useAuth()
   const viewerSlug = useMemo(() => emailToSlug(user?.email), [user?.email])
   const { mutate: ackMutate } = useAcknowledgeTask()
-  // Session-local guard so optimistic-rollback on a failed POST can't loop.
+  const markSeen = useMarkSeen()
+  // Session-local guards so optimistic-rollback on a failed POST can't loop
+  // (ack) and repeated re-renders don't spam the seen upsert.
   const fired = useRef<Set<string>>(new Set())
+  const seenFired = useRef<Set<string>>(new Set())
 
   const id = task?.id
   const assignee = task?.assignee
@@ -37,10 +41,19 @@ export function useAutoAcknowledge(task: AckableTask | null | undefined) {
 
   useEffect(() => {
     if (!id || !viewerSlug) return
+
+    // Mark SEEN for ANY viewer — feeds the new-activity signal (entity_seen,
+    // schema v81): "you looked at this task at T"; activity after T re-flags.
+    if (!seenFired.current.has(id)) {
+      seenFired.current.add(id)
+      markSeen('task', id)
+    }
+
+    // Acknowledge only as the ASSIGNEE — feeds the one-shot NEW signal.
     if (assignee !== viewerSlug) return
     if (acknowledgedAt || status === 'done') return
     if (fired.current.has(id)) return
     fired.current.add(id)
     ackMutate(id)
-  }, [id, assignee, acknowledgedAt, status, viewerSlug, ackMutate])
+  }, [id, assignee, acknowledgedAt, status, viewerSlug, ackMutate, markSeen])
 }

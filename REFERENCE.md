@@ -30,10 +30,11 @@ shims in `src/App.tsx` placed outside `RequireAuth`.
 **API routes** (`/api/*`) are NOT gated by CF Access. Auth enforced
 server-side via X-API-Key + `REQUIRE_AUTH` + JWT verify.
 
-## D1 Tables (73 — sqlite_master, excl. sqlite_/internal; schema v80)
+## D1 Tables (74 — sqlite_master, excl. sqlite_/internal; schema v81)
 
 | Table | Rows | Purpose |
 |-------|------|---------|
+| entity_seen | dynamic | Per-viewer seen tracking (schema v81, 2026-06-11): (entity_type, entity_id, viewer_slug, last_seen_at). Powers the new-activity signal (teal ● chips) vs NEW-assignment (gold, acknowledged_at). POST /api/seen + GET /api/seen/unseen. Hub-only, no PB lockstep. |
 | artifacts | 0+ | Hermes Artifacts v1 (schema v79, 2026-06-11): md-stored deliverables rendered at /portal/artifacts/:id; version, typed proj_* project_id + task_id origin links. Long Hermes responses (>1500 chars / explicit doc ask) land here. |
 | artifact_versions | 0+ | Append-only revision history for artifacts (artifact_id, version, body_md, revised_by, revision_note). Comment-driven revisions via @hermes bump version. |
 | bug_reports | 0+ | Bug Squasher queue (schema v76, 2026-06-10): status open/resolved/dismissed + resolved_at + context cols; mirrors /api/bug-report GitHub issues. GET /api/bug-reports?status= + POST /api/bug-reports/:id/status (PI/API-key). |
@@ -65,7 +66,7 @@ server-side via X-API-Key + `REQUIRE_AUTH` + JWT verify.
 | pb_sessions | dynamic | Claude Code session history synced from brain.db |
 | inbox | dynamic | Quick Capture entries (FAB + Ctrl+I); synced nightly to PB Inbox/*.md (Phase 32) |
 
-## API Endpoints (238 registered routes via Hono v4.12 — count pinned by the route-contract snapshot test; 231→238 on the 2026-06-11 Hermes Artifacts v1)
+## API Endpoints (240 registered routes via Hono v4.12 — count pinned by the route-contract snapshot test; 238→240 on the 2026-06-11 entity_seen / new-activity signal)
 
 > Route table is `api/index.ts` (Hono declarative). Route handlers live in
 > `api/routes/*.ts` and are untouched by the Hono migration. Middleware

@@ -17,6 +17,7 @@ import { handleUploadUrl, handleUploadDone, handleListFiles, handleGetFile, hand
 
 // ── Route modules ──────────────────────────────────────────
 import { handleGetTasks, handleGetTask, handleActionItems, handleOverdueCount, handleUpdateTaskStatus, handleToggleTask, handleUpdateTask, handleCreateTask, handleGetTaskComments, handleAddTaskComment, handleGetTaskActivity, handleGetTaskDetail, handleGetTaskUpdates, handleGetRecentTaskUpdates, handleGetRecentTaskComments, handlePostTaskUpdate, handleBatchUpdateTasks, handleAcknowledgeTask, handleDeleteTask, handleMobileTasksToHub } from './routes/tasks';
+import { handleMarkSeen, handleGetUnseenActivity } from './routes/seen';
 import { handleInboxEvents, handleSyncBulkInboxEvents, handleDeleteInboxEvent } from './routes/inbox-events';
 import { handleMutations } from './routes/mutations';
 import { handleGetProjects, handleGetProject, handleCreateProject, handleGetComments, handleGetProjectUpdates, handleGetProjectActivity, handleProjectHealth, handleRecentUpdates, handleUpdateProject, handleDeleteProject, handleGetDeletedProjectsSince, handleAddComment, handlePostProjectUpdate, handleGetMilestones, handleUpdateMilestoneNote, handleUpdateMilestoneCompletion } from './routes/projects';
@@ -1159,6 +1160,24 @@ defineRoute({
   entity: 'tasks',
   visibility: 'na',
   handler: (c) => handleOverdueCount(U(c), E(c)),
+});
+// Per-viewer seen tracking (schema v81) — the new-activity signal, distinct
+// from NEW-assignment (acknowledged_at). See api/routes/seen.ts header.
+defineRoute({
+  method: 'POST',
+  path: '/api/seen',
+  auth: 'authed',
+  entity: 'tasks',
+  visibility: 'na',
+  handler: (c) => handleMarkSeen(R(c), E(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/seen/unseen',
+  auth: 'authed',
+  entity: 'tasks',
+  visibility: 'na',
+  handler: (c) => handleGetUnseenActivity(R(c), E(c)),
 });
 defineRoute({
   method: 'GET',
