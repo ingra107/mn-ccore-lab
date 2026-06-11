@@ -9,6 +9,7 @@
 // email_link with it; clearing it clears the link.
 
 import { describe, it, expect } from 'vitest'
+import { nowInstant } from '../lib/time'
 import { handleUpdateTask } from './tasks'
 
 function makeStubDB() {
@@ -41,7 +42,7 @@ function makeStubDB() {
               for (const pair of pairs) {
                 const [col, placeholder] = pair.split('=').map((s: string) => s.trim())
                 if (placeholder && placeholder.includes('datetime')) {
-                  row[col] = new Date().toISOString().replace('T', ' ').slice(0, 19)
+                  row[col] = nowInstant().replace('T', ' ').slice(0, 19)
                 } else if (placeholder && placeholder.toUpperCase() === 'NULL') {
                   row[col] = null
                 } else {
