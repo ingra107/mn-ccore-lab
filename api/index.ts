@@ -249,7 +249,14 @@ app.use('*', async (c, next) => {
   // JWKS so we cache the result on the context instead of re-verifying.
   const authed = await getAuthUser(c.req.raw, env);
   c.set('authedUser', authed);
-  c.set('user', authed || { email: 'anonymous', name: 'Team Member' });
+  // Brief-7 (2026-06-11): PB API-key callers land as 'anonymous' because they
+  // carry no CF Access JWT — actorSlug('anonymous') returns the literal string
+  // 'anonymous', which renders as a person named "anonymous" on all feeds.
+  // Fix: when a valid API key is present and no browser session is resolved,
+  // use Nick's canonical identity (the service key IS Nick's automation; PB is
+  // his personal system). actorSlug('ingra107@umn.edu') → 'nick-ingraham' via LUT.
+  const pbServiceUser = { email: 'ingra107@umn.edu', name: 'Nick' };
+  c.set('user', authed || (result === true ? pbServiceUser : { email: 'anonymous', name: 'Team Member' }));
   // Auto-provision a team_members row on first sight. Cheap (1 indexed
   // SELECT for known users; INSERT only for new). Failure is non-fatal —
   // we don't want auth to break because the directory write hiccupped.
@@ -316,7 +323,10 @@ app.use('*', async (c, next) => {
   if (requireAuth && !authedUser && !hasApiKey) {
     return error('Authentication required', 401);
   }
-  c.set('user', authedUser || { email: 'anonymous', name: 'Team Member' });
+  // Brief-7: same identity resolution as the GET middleware above —
+  // valid API key without a browser session → Nick's canonical identity.
+  const pbServiceUser2 = { email: 'ingra107@umn.edu', name: 'Nick' };
+  c.set('user', authedUser || (hasApiKey ? pbServiceUser2 : { email: 'anonymous', name: 'Team Member' }));
   await next();
 });
 

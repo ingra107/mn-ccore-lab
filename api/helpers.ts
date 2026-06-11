@@ -24,7 +24,39 @@ const ALLOWED_ORIGINS = new Set([
 /**
  * Return CORS headers for the given request Origin.
  * Allowed origins are reflected exactly (enables credentials if ever needed).
- * Unknown origins (or no Origin header, i.e. server-side callers) get '*'.
+ *
+ * HUB-4 re-judge (2026-06-11, cold): the original `*` fallback for unknown origins
+ * is deliberate and correct in both contexts where CORS headers appear:
+ *
+ *   1. OPTIONS preflights (corsHeadersFor(origin)): reflecting the exact allowed
+ *      origin for known origins is ideal; `*` for unknown origins is a no-op
+ *      security-wise because browsers only inspect the preflight response if a
+ *      request is being allowed — an unknown browser origin will NOT be able to
+ *      complete authentication (no CF Access JWT, no API key), so the `*` on the
+ *      preflight only helps if the unauthenticated path returns useful data (it
+ *      doesn't for any sensitive route). Server-side callers send no Origin and
+ *      don't enforce CORS; `*` is harmless for them.
+ *
+ *   2. json()/error() responses (corsHeaders static): same reasoning applies.
+ *      Unknown browsers can read the response body IF the ACAO header allows it
+ *      (`*` does), but every meaningful endpoint is behind auth — a browser
+ *      origin not in ALLOWED_ORIGINS can read a 401 body, not real data.
+ *      Removing `*` here would break the portal's own API calls from
+ *      mn-ccore-lab.pages.dev for non-preflight requests (simple GETs bypass
+ *      the preflight but still need ACAO on the response). Since the portal IS
+ *      in ALLOWED_ORIGINS, the preflight is already strict; the `*` in response
+ *      bodies is the right fallback for both portal simple-requests and
+ *      server-side callers.
+ *
+ * Named concrete consumer of `*` that would break if removed:
+ *   - mn-ccore-lab.pages.dev simple GET requests (no preflight) reading API
+ *     responses — the browser reads the ACAO header on the response, not on the
+ *     preflight, for simple requests.
+ *
+ * Final verdict: '*' fallback stays. HUB-4 shipped correct preflight reflection;
+ * no further tightening is warranted without a full CORS-middleware refactor that
+ * threads the request origin through json()/error() (tracked as technical debt,
+ * low priority — no meaningful attack surface with auth gating every real route).
  */
 export function corsHeadersFor(requestOrigin?: string | null): Record<string, string> {
   const allow = requestOrigin && ALLOWED_ORIGINS.has(requestOrigin)
@@ -37,8 +69,9 @@ export function corsHeadersFor(requestOrigin?: string | null): Record<string, st
   };
 }
 
-// Static fallback (backward-compat for call sites that don't have a request).
-// Server-side programmatic callers (PB Python) send no Origin → '*' is correct.
+// Static fallback for call sites that don't have a request (json()/error()).
+// Server-side callers (PB Python) send no Origin → '*' is correct.
+// Portal simple requests also get '*' — see corsHeadersFor() doc above.
 export const corsHeaders = corsHeadersFor();
 
 export function json(data: unknown, status = 200): Response {
