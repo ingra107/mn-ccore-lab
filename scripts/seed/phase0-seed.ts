@@ -227,16 +227,19 @@ async function run() {
   }
 
   // ---- task comments ----
+  // POST /api/tasks/:id/comments is a projection over activity_entries since
+  // schema-v78 (task_comments table dropped 2026-06-10). Old manifest rows
+  // keep the 'task_comments' tag — check both keys for idempotency.
   for (const c of plan.task_comments) {
     const taskId = taskIdByDescription.get(c.task_description)
     if (!taskId) { console.warn(`  skip comment — unknown task ${c.task_description}`); continue }
     assertPrefix('comment.content', c.content)
     const label = c.content.slice(0, 60)
-    if (wasSeeded('task_comments', label)) continue
+    if (wasSeeded('task_comments', label) || wasSeeded('activity_entries', label)) continue
     const resp = await post(`/api/tasks/${taskId}/comments`, { content: c.content })
     const id = idFrom(resp)
-    manifest.rows.push({ table: 'task_comments', id, label })
-    seededLabels.add(`task_comments:${label}`)
+    manifest.rows.push({ table: 'activity_entries', id, label })
+    seededLabels.add(`activity_entries:${label}`)
     saveManifest(manifest)
   }
 
