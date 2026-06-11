@@ -1,9 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { HelpCircle, Plus, MessageSquare, Check, ChevronDown, ChevronUp, Search } from 'lucide-react'
-import HermesMark from '../../components/HermesMark'
-import HermesResponse from '../../components/HermesResponse'
-import HermesPending, { isHermesPending } from '../../components/HermesPending'
 import SmartCompose from '../../components/SmartCompose'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CardSkeleton, TextSkeleton } from '../../components/LoadingSkeleton'
@@ -15,6 +12,8 @@ import Modal from '../../components/ui/Modal'
 import ToggleButton from '../../components/ToggleButton'
 import Avatar from '../../components/Avatar'
 import InlineSelect from '../../components/InlineSelect'
+import { ActivityEntryItem } from '../../components/activity/activityRender'
+import type { ActivityEntryItemRow } from '../../components/activity/activityRender'
 import { useQuestions, useQuestionDetail, useProjects } from '../../hooks/useApiData'
 import { useCreateQuestion, useCreateAnswer, useAcceptAnswer } from '../../hooks/useMutations'
 import { useToast } from '../../hooks/useToast'
@@ -306,80 +305,66 @@ function QuestionExpanded({ questionId }: { questionId: string }) {
             {detail.answers.length} Answer{detail.answers.length !== 1 ? 's' : ''}
           </p>
           {detail.answers.map((answer) => {
-            const isAI = answer.author_slug === 'claude-ai'
-            const answerPerson = getPersonInfo(answer.author_slug)
-
-            if (isAI) {
-              return (
-                <div
-                  key={answer.id}
-                  className="p-3 rounded-lg"
-                  style={{
-                    background: 'var(--gold-hover)',
-                    border: '1px solid rgba(201,168,76,0.15)',
-                  }}
-                >
-                  <div className="flex items-center gap-1.5 mb-1">
-                    <HermesMark size={14} variant="avatar" />
-                    <span style={{ fontSize: '10px', color: 'var(--gold-on-emphasis)', fontWeight: 500 }}>
-                      Hermes
-                    </span>
-                    <span className="ml-auto" style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75 }}>
-                      {formatRelativeTime(answer.created_at)}
-                    </span>
-                  </div>
-                  {isHermesPending(answer.content) ? (
-                    <HermesPending askedAt={answer.created_at} />
-                  ) : (
-                    <HermesResponse content={answer.content} />
-                  )}
-                </div>
-              )
+            // Adapt AnswerRow → ActivityEntryItemRow for the unified Slack-thread renderer.
+            // kind='comment' (gold bar, no badge) — answers are discussion entries.
+            const entryRow: ActivityEntryItemRow = {
+              id: answer.id,
+              entity_type: 'question',
+              entity_id: answer.question_id,
+              project_id: null,
+              kind: 'comment',
+              visibility: 'team',
+              actor_slug: answer.author_slug,
+              body: answer.content,
+              mentions_json: null,
+              update_type: null,
+              metadata_json: null,
+              created_at: answer.created_at,
             }
 
             return (
+              // Accepted-answer wrapper: subtle teal ring on top of the entry card.
+              // The entry card itself handles background + left-bar; we add an outer
+              // ring only on accepted rows so the card's own styling stays untouched.
               <div
                 key={answer.id}
-                className="flex gap-3 p-3 rounded-lg"
-                style={{
-                  backgroundColor: answer.is_accepted ? 'var(--teal-hover)' : 'rgba(0,0,0,0.015)',
-                  border: answer.is_accepted ? '1px solid rgba(45,138,138,0.15)' : '1px solid transparent',
-                }}
+                style={
+                  answer.is_accepted
+                    ? { borderRadius: 'var(--radius-lg)', outline: '1px solid rgba(45,138,138,0.25)' }
+                    : undefined
+                }
               >
-                <div style={{ width: 24, height: 24, flexShrink: 0, paddingTop: 2 }}>
-                  <Avatar name={answerPerson.name} initials={answerPerson.initials} photoUrl={answerPerson.photoUrl} size="tight" variant="ice" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs font-medium" style={{ color: 'var(--ink)' }}>
-                      {answerPerson.name}
-                    </span>
-                    <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
-                      {formatRelativeTime(answer.created_at)}
-                    </span>
-                    {answer.is_accepted === 1 && (
-                      <span className="flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-full" style={{ color: 'var(--teal)', backgroundColor: 'var(--teal-active)' }}>
-                        <Check size={10} />
-                        Accepted
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-sm leading-relaxed" style={{ color: 'var(--ink)' }}>
-                    {answer.content}
-                  </p>
+                <ActivityEntryItem entry={entryRow} />
 
-                  {/* Accept button — PI OR the asker can accept (Stack Overflow model). D1 in DECISIONS-RESOLVED. */}
-                  {!answer.is_accepted && detail.status === 'open' && (user?.isPi || userSlug === detail.asked_by) && (
+                {/* Accepted badge + accept action — surface-specific, below the card */}
+                {answer.is_accepted === 1 && (
+                  <div
+                    className="flex items-center gap-1 px-3 pb-1"
+                    style={{ fontSize: 'var(--text-caption)' }}
+                  >
+                    <Check size={10} style={{ color: 'var(--teal)' }} aria-hidden="true" />
+                    <span style={{ color: 'var(--teal)' }}>Accepted answer</span>
+                  </div>
+                )}
+                {/* Accept button — PI OR the asker can accept (Stack Overflow model). D1 in DECISIONS-RESOLVED. */}
+                {!answer.is_accepted && detail.status === 'open' && (user?.isPi || userSlug === detail.asked_by) && (
+                  <div className="px-3 pb-1">
                     <button
                       onClick={() => acceptAnswerMut.mutate(answer.id)}
-                      className="mt-2 flex items-center gap-1 px-2 py-1 rounded-md text-xs transition-colors hover:bg-black/5"
-                      style={{ color: 'var(--teal)', background: 'none', border: '1px solid rgba(45,138,138,0.2)', cursor: 'pointer' }}
+                      className="flex items-center gap-1 px-2 py-1 rounded-md transition-colors hover:bg-black/5"
+                      style={{
+                        fontSize: 'var(--text-caption)',
+                        color: 'var(--teal)',
+                        background: 'none',
+                        border: '1px solid rgba(45,138,138,0.2)',
+                        cursor: 'pointer',
+                      }}
                     >
-                      <Check size={12} />
+                      <Check size={10} aria-hidden="true" />
                       Accept Answer
                     </button>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             )
           })}

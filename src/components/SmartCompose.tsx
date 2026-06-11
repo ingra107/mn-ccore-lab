@@ -9,8 +9,8 @@
 //   2) **Custom mode**: pass `onSubmit` (and optionally `value` + `onChange`
 //      to share state) plus `uploadContext` for R2 keying. SmartCompose
 //      becomes a presentation primitive — caller owns submission.
-//      Used by ProjectDetail compose, ProjectUpdateFeed, ProjectComments,
-//      MeetingDetail (notes + action items), AskTheLab, TodayPage morning
+//      Used by ProjectDetail compose (ActivityStream), MeetingDetail (notes + action items),
+//      AskTheLab, TodayPage morning
 //      thought, RightNow chat. (D14 — Phase A foundations.)
 //
 // Closes Phase 38 eval Issue 8 (compose toolbar @/:/📎 were decorative)

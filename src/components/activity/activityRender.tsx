@@ -4,8 +4,8 @@
 // map, the author-only badge, and the viewer-local timestamp can't drift
 // between the two feeds.
 //
-// Scope note: ProjectUpdateFeed's legacy TYPE_CONFIG is deliberately NOT folded
-// in here — that surface is retired in Phase 2.
+// Scope note: ProjectUpdateFeed's legacy TYPE_CONFIG was retired in Phase 2 (P2-A);
+// ProjectUpdateFeed.tsx was deleted post-P2-A (all project activity routes through ActivityStream).
 //
 // ActivityEntryItem (the per-row renderer) is exported from here.
 // Props contract captures every intentional per-surface difference between the

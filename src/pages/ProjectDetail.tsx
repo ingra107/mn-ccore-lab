@@ -426,7 +426,7 @@ function ProjectDetailInner({ project }: InnerProps) {
       .slice(0, 3)
   }, [projectUpdates, projectComments])
 
-  // Quick compose state — inline on landing card, defers to ProjectUpdateFeed-style mutation
+  // Quick compose state — inline on landing card; posts via postProjectActivity to activity_entries
   const [quickComposeText, setQuickComposeText] = useState('')
   const projectSelfIntent: Intent = quickComposeText.trim().length > 0 ? 'commenting' : 'viewing'
   const projectPeerIntents = useIntentBroadcast('project', project.slug, projectSelfIntent)
