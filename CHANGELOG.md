@@ -3,6 +3,29 @@
 
 > Historical phase records moved from CLAUDE.md to keep the operating guide focused on current state. Each section is a complete record of what shipped, decisions made, and scores achieved.
 
+## 2026-06-11 (PARALLEL, Bug Squasher → seen-model arc) — attention signals · schema v81 · the 231-phantom badge · click-opens-the-thing
+
+One Nick-driven arc from bug #70 to a full Slack-style attention model, all deployed same-day.
+**Bug #70** (`aa7d55b5`→`f56b0536`): List view DoneBox completion on the side, full-band width
+(= Calendar/My Hub), `--content-band` 1296→1440 (universal edge nearer the nav). **One color
+language** (`1a19b296`, `b292c47b`): project teal in every view; status/priority/project-status →
+`--task-accent-*` tokens. **Seen model** (`911d1ec3`): auto-acknowledge on detail-open (explicit
+button deleted), bell mounted in the portal sidebar (mark-all-read on CLOSE), My Hub's dead-end
+badge removed; 274 unread = 10 weeks of assignment notices. **Badge honesty** (`611f4257`,
+`40d3e83c`): My Tasks badge = unseen (gold, drains on open, clicks → My Items "New for You"
+in-place editor); **the 231 "overdue" was 100% soft-deleted phantoms** (overdue-count lacked
+deleted_at; true overdue = 0); self-created tasks born-acked at the mutation chokepoint.
+**Click-opens-the-thing** (`0e22c430`): 209 notification links were dead — plain `<Navigate>`
+shims dropped `?open=`; all legacy redirects → `NavigateKeepSearch`; links minted
+`/portal/my-tasks?open=`; owner re-notification on comments/updates (@me/self/mentioned skipped).
+**Schema v81 `entity_seen`** (`a496a684`, Nick-approved prod apply): teal ● n NEW activity signal
+vs gold ✦ NEW assignment; routes 240, tables 74; reassignment resets ack (`649791f7`) +
+AttentionChip = THE premium chip primitive. **Icon discipline** (`4c56c606`): 1.5px absolute
+strokes + SquareCheck (Rule 74). Close: simplify pass (`de99aaf9` — merged double SELECT,
+ICON_PROPS, NavigateKeepSearch ×22 class closure), canon codified (design-system "Attention &
+Notification Canon" + "Icon Discipline", CLAUDE.md Rules 73-74), 5 class-sweep Hub tasks queued,
+style memory written. **846/846 API tests · live deploy = HEAD · schema v81.**
+
 ## 2026-06-11 (EVENING) — THE STYLE LOCK: 8 panel rounds → house canon ("lock it in this is great!!!")
 
 Nick live-drove rounds 4-8 on TaskDetailPanel to a validated house style, now CANON in

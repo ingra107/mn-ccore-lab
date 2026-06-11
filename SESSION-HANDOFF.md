@@ -10,7 +10,42 @@
 > until-interactive, box-budget-of-one, floating composer, pill controls, GhostSelect canonical,
 > floating side-peek panels, title-group/action-group rhythm, one-line empty states. N1/N1b/N1c
 > execute AGAINST that doc. Parallel session also landed schema v81 `entity_seen` (new-activity
-> teal signal) + AttentionChip — counts now 74 tables / 240 routes / 844 tests.
+> teal signal) + AttentionChip — counts now 74 tables / 240 routes / 846 API tests.
+
+## ◀ PARALLEL SESSION RECORD (2026-06-11 — bug #70 → Slack-style seen model → attention signals)
+
+One arc, all deployed (live = HEAD at this close), Nick-driven end to end:
+
+- **Bug #70 RESOLVED** (only open bug; 0 remain): List view DoneBox completion on the side
+  (multiselect demoted to x/shift-click), List = full `.mt-band` width (= Calendar/My Hub),
+  `--content-band` 1296→1440 (universal edge ~72px nearer the nav at 1920).
+- **One color language:** status/priority/project-status converged on `--task-accent-*`
+  (matches the shared-row dots); List project column teal like Lanes.
+- **Slack-style seen model:** auto-acknowledge on any task-detail open (`useAutoAcknowledge`;
+  explicit Acknowledge button DELETED; self-created tasks born-acked in `applyInsert`;
+  reassignment resets ack in `applyPatch`); NotificationBell now IN the portal sidebar
+  (mark-all-read on dropdown CLOSE); My Hub's misleading unread badge removed.
+- **Badge honesty:** My Tasks badge = UNSEEN (gold, drains on open, click → My Items "New for
+  You" triage). THE 231 "OVERDUE" WAS 100% SOFT-DELETED PHANTOMS (overdue-count lacked a
+  deleted_at guard — fixed; Nick's true overdue = 0). `/api/tasks/overdue-count` → `{count, unseen}`.
+- **Schema v81 `entity_seen`** (test+prod, Nick-approved): per-viewer seen tracking → teal
+  ● n NEW activity signal (vs gold ✦ NEW assignment), `POST /api/seen` + `GET /api/seen/unseen`
+  (routes 240), AttentionChip = THE chip primitive, My Items "New Activity" section.
+- **Click-opens-the-thing:** ROOT CAUSE of dead notification clicks = plain `<Navigate>` shims
+  dropping `?open=` (209 dead links); ALL legacy redirects now `NavigateKeepSearch`; new
+  notification links minted `/portal/my-tasks?open=`; My Items rows open TaskDetailPanel
+  IN PLACE; owner re-notification on task comments/updates (no @mention needed; @me/self/
+  mentioned-already skipped).
+- **Premium pass:** sidebar icons 1.5px absolute strokes + `SquareCheck` (Rule 74); AttentionChip
+  anatomy (hairline 28% border, whisper 9% fill) — canon in design-system.md.
+- **Codified:** design-system.md "Attention & Notification Canon" + "Icon Discipline";
+  CLAUDE.md Rules 73-74; memory `feedback_nick-style-2026-06-11` (8 style rules).
+- **5 Hub tasks queued (task_01KTWD89..–task_01KTWD8D..) for the class sweeps** — icon pass
+  site-wide, one pill/chip language, badge-honesty audit, deep-link integrity audit, style-
+  learnings consistency hunt. ⚠️ These OVERLAP N1b's de-box screenshot sweep — run them off the
+  SAME audit pass, don't duplicate.
+- **Nick's pending click-tests:** teal ● 1 new chip on the lit-review task (seeded demo row);
+  bell open→close clears the 274 notification backlog; badge → My Items → in-place editor loop.
 
 **N1 — MOBILE VISUAL AUDIT (step one, audit-then-tickets).** Nick: "too many visual issues to
 make it functional at this point." Dispatch an audit (Playwright mobile viewports 375/390/430 +

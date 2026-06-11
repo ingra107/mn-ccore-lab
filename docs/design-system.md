@@ -199,3 +199,44 @@ surfaces → card interiors). Deviations need Nick's explicit OK.
    composer; then tabs. "What is this" and "act on it" are distinct groups.
 8. **Empty states are one quiet line.** Ghost text at `--ink-hint` ("Add description…",
    "No activity yet") — never a reserved bordered block, never a pre-rendered toolbar.
+
+## ATTENTION & NOTIFICATION CANON (Nick-driven, 2026-06-11 seen-model session)
+
+The Slack-style seen model shipped 2026-06-11 (auto-acknowledge, entity_seen v81, portal
+bell). These principles are CANON for any future badge, chip, counter, or notification:
+
+1. **Two distinct attention signals, never conflated.** Gold ✦ NEW = an ASSIGNMENT you've
+   never opened (`tasks.acknowledged_at IS NULL`; one-shot, cleared by opening; reset by
+   reassignment). Teal ● n NEW = new CONVERSATION on something you've already seen
+   (`entity_seen` vs `activity_entries`; recurring). Gold wins when both could apply.
+   Render ONLY through `src/components/tasks/AttentionChip.tsx` — never fork a chip.
+2. **Badge honesty.** A count in the nav must be (a) what it claims, (b) drainable by
+   interacting with the thing it counts, and (c) a door to the pointed list behind it.
+   Nick (verbatim class): "a badge that doesn't drain when you interact is noise"; a badge
+   with no clickable list behind it "makes it seem like you can click and there is a list
+   … but that isn't possible". The 231-overdue badge failed all three (and was counting
+   soft-deleted rows). Never ship a permanently-red ambient-guilt number.
+3. **Seeing is the interaction.** Opening a thing marks it seen/acknowledged/read — never
+   an explicit "Acknowledge"/"mark read" chore. Bell dropdown: unread highlights persist
+   while open, everything marks read on close (Slack semantics).
+4. **Clicks open the actionable entity, never "just another page".** Every notification /
+   attention row deep-links into the entity's editor (in-place panel when the surface can
+   host one, `?open=` deep-link otherwise). Corollary: ALL legacy redirects use
+   `NavigateKeepSearch` — a plain `<Navigate>` silently drops `?open=`/`?create=` and
+   produces exactly the "lands on a bare page" failure (209 notification links were dead
+   for weeks this way).
+5. **Premium chip anatomy** (the AttentionChip recipe — reuse for any future signal pill):
+   full-radius pill, hairline border at ~28% of the accent, whisper fill at ~9%, 8.5px
+   700-weight caps with 0.12em tracking, tabular numerals, glyph not punctuation (✦ /
+   ringed 5px dot). No animation (Rule 44); the Right-Now glow stays the page's only glow.
+
+## ICON DISCIPLINE (Nick 2026-06-11: "looks pixely and not premium")
+
+- **Small icons get a true 1.5px stroke**: lucide's default `strokeWidth=2` on its 24-grid
+  scales to a soft ~1.5px at size 16-18 with no pixel alignment — fuzzy on standard-DPI.
+  Use `strokeWidth={1.5} absoluteStrokeWidth` (see `ICON_PROPS` in `Sidebar.tsx`).
+- **Contained glyphs over overflowing ones** at small sizes (`SquareCheck` not
+  `CheckSquare` — the overflowing check reads busy at 18px).
+- **Class-sweep pending**: this is currently applied only to the Sidebar. The site-wide
+  pass (MobileTabBar, toolbars, panels, empty states) is a queued task — apply the same
+  treatment wherever icons render at ≤20px.
