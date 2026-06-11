@@ -4,6 +4,7 @@ import { ctToday } from '../lib/ct-date';
 import { nowInstant } from '../lib/time';
 import { applyMutation } from './mutations';
 import { activityVisibilityGate, postActivityEntry } from '../lib/activity-entry';
+import { enumFieldsFor } from '../lib/enum-domains';
 
 // Stage 4 #12-followup (2026-05-09): Nick-only visibility gate for
 // 'Peripheral Brain' category. Two ways to be "Nick" for this gate:
@@ -529,10 +530,16 @@ const PROJECT_ALLOWED_FIELDS = new Set([
 ]);
 const PROJECT_REQUIRED_FIELDS = new Set(['status', 'stage', 'category']);
 
-// Canonical enum guards — reject arbitrary string storage. Keep in sync with
-// Peripheral-Brain's scripts/db/enums.py (R10 taxonomy). Found during deep
-// audit Suite 2 — "bogus_value" was round-tripping through PUT/POST.
-const PROJECT_STATUS_VALUES = new Set(['active', 'waiting_external', 'blocked', 'done']);
+// Canonical enum guards — reject arbitrary string storage. Sourced from
+// api/enum-domains.generated.json (SSOT via pb-schema submodule) so the set
+// stays in lockstep with Peripheral-Brain's scripts/db/enums.py and the
+// /api/mutations enum-domain validator — no manual keep-in-sync required.
+// SEAM-7 (2026-06-10): 'deleted' added to projects.status; deriving from the
+// generated JSON prevents the 4-value hardcoded allowlist from silently
+// rejecting the new value here while mutations.ts accepted it.
+const PROJECT_STATUS_VALUES = new Set(
+  enumFieldsFor('projects')?.status?.canonical ?? ['active', 'waiting_external', 'blocked', 'done'],
+);
 const PROJECT_STAGE_VALUES = new Set(['idea', 'data_collection', 'data_analysis', 'writing', 'submitted', 'revisions', 'accepted', 'published']);
 // Stage 4 #12-followup (2026-05-09): three-bucket two-views model.
 // MNCCORE = team-visible lab work (Ingraham/Mesfin/Grant/Friends/Mentees)
