@@ -9,6 +9,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { PATHS } from '../../constants/paths'
+import { useIsMobile } from '../../hooks/useIsMobile'
 import { LinkRow } from './primitives'
 import { ACCENT_GOLD, INK, INK_MUTED, INK_DIM, PAGE_BG, type LinkKind } from './constants'
 import type { TodayStateApi } from '../../hooks/useTodayState'
@@ -17,6 +18,10 @@ import SmartCompose from '../SmartCompose'
 
 export function RightNow({ task, project, queueTasks, state }: { task: TaskRow | null; project: { name: string; slug: string } | null; queueTasks: Array<{ id: string; title: string; short_title?: string | null }>; state: TodayStateApi }) {
   const [expanded, setExpanded] = useState(false)
+  // N1.05 — phones: keep the title readable (it was shrinking to glyph
+  // slivers because flex:1/minWidth:0 compresses before wrap fires) and let
+  // the action cluster wrap as ONE right-aligned unit instead of scattering.
+  const isPhone = useIsMobile(768)
   if (!task) {
     return (
       <div style={{ padding: '16px 20px', marginBottom: 20, textAlign: 'center', background: 'rgba(255,255,255,0.02)', border: '1px dashed rgba(255,255,255,0.14)', borderRadius: 8 }}>
@@ -39,14 +44,18 @@ export function RightNow({ task, project, queueTasks, state }: { task: TaskRow |
         {/* S20: hero title wraps to 2 lines (was single-line ellipsis that
             truncated while the full task rendered below) + uses short_title
             per Rule 68 (curated concise title; full title on hover). */}
-        <span title={task.title} style={{ fontSize: 14, fontWeight: 600, color: '#fff', letterSpacing: '-0.01em', flex: 1, minWidth: 0, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{task.short_title || task.title}</span>
-        {project && (
-          <Link to={PATHS.project(project.slug)} style={{ fontSize: 11, color: ACCENT_GOLD, fontWeight: 500, flexShrink: 0, textDecoration: 'none' }}>{project.name}</Link>
-        )}
-        <button onClick={() => setExpanded(true)} title="Expand and focus chat" style={{ padding: '5px 10px', background: ACCENT_GOLD, color: PAGE_BG, border: 'none', borderRadius: 'var(--radius-sm)', fontFamily: 'inherit', fontSize: 12, fontWeight: 600, cursor: 'pointer', flexShrink: 0 }}>▶ Work</button>
-        <button onClick={() => state.markDone(task.id)} style={{ padding: '5px 10px', background: 'transparent', color: INK, border: '1px solid rgba(255,255,255,0.14)', borderRadius: 'var(--radius-sm)', fontFamily: 'inherit', fontSize: 12, cursor: 'pointer', flexShrink: 0 }}>✓ Done</button>
-        <LinkRow links={heroLinks} />
-        <button onClick={() => setExpanded(!expanded)} title={expanded ? 'Collapse' : 'Expand'} style={{ background: 'none', border: 'none', color: INK_DIM, fontSize: 12, cursor: 'pointer', padding: '2px 6px', flexShrink: 0 }}>{expanded ? '▾' : '▸'}</button>
+        <span title={task.title} style={{ fontSize: 14, fontWeight: 600, color: '#fff', letterSpacing: '-0.01em', flex: 1, minWidth: isPhone ? '12ch' : 0, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{task.short_title || task.title}</span>
+        {/* Action cluster — one flex unit so phone wrap moves it whole to its
+            own right-aligned line instead of scattering buttons per-item. */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0, marginLeft: isPhone ? 'auto' : 0 }}>
+          {project && (
+            <Link to={PATHS.project(project.slug)} style={{ fontSize: 11, color: ACCENT_GOLD, fontWeight: 500, flexShrink: 0, textDecoration: 'none', maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{project.name}</Link>
+          )}
+          <button onClick={() => setExpanded(true)} title="Expand and focus chat" style={{ padding: '5px 10px', background: ACCENT_GOLD, color: PAGE_BG, border: 'none', borderRadius: 'var(--radius-sm)', fontFamily: 'inherit', fontSize: 12, fontWeight: 600, cursor: 'pointer', flexShrink: 0 }}>▶ Work</button>
+          <button onClick={() => state.markDone(task.id)} style={{ padding: '5px 10px', background: 'transparent', color: INK, border: '1px solid rgba(255,255,255,0.14)', borderRadius: 'var(--radius-sm)', fontFamily: 'inherit', fontSize: 12, cursor: 'pointer', flexShrink: 0 }}>✓ Done</button>
+          <LinkRow links={heroLinks} />
+          <button onClick={() => setExpanded(!expanded)} title={expanded ? 'Collapse' : 'Expand'} style={{ background: 'none', border: 'none', color: INK_DIM, fontSize: 12, cursor: 'pointer', padding: '2px 6px', flexShrink: 0 }}>{expanded ? '▾' : '▸'}</button>
+        </div>
       </div>
       {queueTasks.length > 0 && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0 18px 10px', flexWrap: 'wrap' }}>

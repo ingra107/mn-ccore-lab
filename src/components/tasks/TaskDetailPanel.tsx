@@ -585,13 +585,17 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
         </div>
 
         {/* Tab Bar — sits below the composer card with its own border-b. */}
-        <div className="flex px-5" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+        {/* N1.04: scrollable when narrow — without overflow-x the strip clips
+            Files/Details on phones AND tablets with no way to reach them. */}
+        <div className="flex px-5" style={{ borderBottom: '1px solid var(--border-subtle)', overflowX: 'auto', scrollbarWidth: 'none' }}>
           {TABS.map(({ key, label, icon: Icon }) => (
             <button
               key={key}
               onClick={() => setActiveTab(key)}
               className="flex items-center gap-1.5 px-3 py-2.5 text-[12px] font-medium transition-colors"
               style={{
+                whiteSpace: 'nowrap',
+                flexShrink: 0,
                 color: activeTab === key ? 'var(--teal)' : 'var(--slate)',
                 opacity: activeTab === key ? 1 : 0.85,
                 borderBottom: activeTab === key ? '2px solid var(--teal)' : '2px solid transparent',

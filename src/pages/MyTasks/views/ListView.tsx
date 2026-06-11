@@ -230,7 +230,7 @@ function ListRow({ task, project, isCursor, isSelected, onClick, onDouble, onSel
           title={task.title}
           onClick={(e) => { e.stopPropagation(); onDouble() }}
           style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', cursor: 'pointer' }}
-        >{task.title}</span>
+        >{task.short_title || task.title}</span>
         {isNew && <AttentionChip kind="new" />}
         {!isNew && newActivity > 0 && <AttentionChip kind="activity" count={newActivity} />}
         {task.group_override && <span title={`Moved manually (${task.group_override})`} style={{ fontSize: 10, color: ACCENT_TEAL, flexShrink: 0 }}>📍</span>}

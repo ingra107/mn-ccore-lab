@@ -130,7 +130,11 @@ export default function InlineSelect({ value, options, onChange, size = 'sm', al
           }
         }}
       >
-        {current?.label || value}
+        {/* N1.01: inline-flex children don't ellipsize a bare text node —
+            without this span the label hard-clips mid-word in narrow cells. */}
+        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>
+          {current?.label || value}
+        </span>
         <ChevronDown
           size={10}
           className={alwaysShowChevron ? 'inline-select-chevron-always' : 'inline-select-chevron'}

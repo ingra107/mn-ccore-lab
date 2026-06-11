@@ -1714,13 +1714,15 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
   }
 }
 
-/* P6 mobile pass — hover-only action clusters are unreachable on touch (no
-   hover event fires). Any cluster that opts in via [data-hover-actions] is
-   revealed on touch devices. (Desktop keeps the clean hover-reveal.) */
+/* N1.07 (supersedes the P6 force-show) — the only [data-hover-actions]
+   cluster (TaskCard) is an ABSOLUTE overlay centered on the card; force-
+   showing it on touch painted icons on top of the wrapped title + avatar on
+   every phone/tablet. Every action it carries is reachable via tap → detail
+   panel, so on touch the overlay hides instead. If a future cluster needs
+   touch visibility, give it reserved in-flow space — never an overlay. */
 @media (hover: none) {
   [data-hover-actions] {
-    opacity: 1 !important;
-    pointer-events: auto !important;
+    display: none !important;
   }
 }
 
@@ -1949,14 +1951,35 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
 @media (max-width: 767px) {
   .list-view-header,
   .list-view-row {
-    /* cursor(32) | done-box(26) | title(1fr) | status(110) */
-    grid-template-columns: 32px 26px 1fr 110px !important;
+    /* done-box(26) | title(1fr) | due(70) — N1.01: the keyboard-cursor arrow
+       column is dead UI on touch and the status text was redundant beside the
+       DoneBox; title gets the freed width. */
+    grid-template-columns: 26px 1fr 70px !important;
     height: auto !important;
     min-height: 44px;
   }
   /* Hide non-essential columns — grid items set to none don't consume a column track */
+  .list-view-col-cursor,
   .list-view-col-project,
-  .list-view-col-due,
+  .list-view-col-priority,
+  .list-view-col-status,
+  .list-view-col-owner,
+  .list-view-col-links {
+    display: none !important;
+  }
+}
+
+/* N1.01 — the 768-1023 band runs mobile-nav chrome (useIsMobile = 1024) but
+   previously fell through to the desktop tracks (678px fixed + 1fr), crushing
+   the Title column to ZERO width at 768. Mid collapse for the tablet band:
+   keep project/due/status, drop cursor/priority/owner/links. */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .list-view-header,
+  .list-view-row {
+    /* done(26) | title(1fr) | project(130) | due(90) | status(110) */
+    grid-template-columns: 26px 1fr 130px 90px 110px !important;
+  }
+  .list-view-col-cursor,
   .list-view-col-priority,
   .list-view-col-owner,
   .list-view-col-links {

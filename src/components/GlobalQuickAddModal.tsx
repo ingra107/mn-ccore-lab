@@ -118,15 +118,18 @@ function GlobalQuickAddModal({ isOpen, onClose }: Props) {
           {/* Panel */}
           <motion.div
             key="gqa-panel"
-            initial={{ opacity: 0, scale: 0.96, y: -10 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.96, y: -10 }}
+            // N1.03: the centering offset must live in the motion values —
+            // framer-motion's animated transform REPLACES style.transform, so
+            // a style-level translateX(-50%) is silently dropped and the
+            // panel's left edge pins to 50vw (overflowing right on phones).
+            initial={{ opacity: 0, scale: 0.96, y: -10, x: '-50%' }}
+            animate={{ opacity: 1, scale: 1, y: 0, x: '-50%' }}
+            exit={{ opacity: 0, scale: 0.96, y: -10, x: '-50%' }}
             transition={{ duration: 0.18, ease: [0.34, 1.1, 0.64, 1] }}
             style={{
               position: 'fixed',
               top: '22%',
               left: '50%',
-              transform: 'translateX(-50%)',
               zIndex: 'var(--z-modal)',
               width: '100%',
               maxWidth: 'min(560px, calc(100vw - 32px))',

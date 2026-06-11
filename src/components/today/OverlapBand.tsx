@@ -17,6 +17,7 @@ import { EventRow, type SaveStatus } from './MeetingRow'
 import { ACCENT_CORAL, INK_DIM } from './constants'
 import { withAlpha } from '../../lib/taskGrouping'
 import type { TodayEvent } from './constants'
+import { useIsMobile } from '../../hooks/useIsMobile'
 
 // 2px per minute: 30 min stagger → 60px, 1 hour → 120px.
 const PX_PER_MIN = 2
@@ -30,6 +31,10 @@ interface OverlapBandProps {
 }
 
 export function OverlapBand({ events, onDismiss, notes, onNote, saveStates }: OverlapBandProps) {
+  // N1.06 — phones can't afford side-by-side columns (titles vanished);
+  // stack the colliding events vertically and let the order convey sequence
+  // (the per-minute stagger margins only make sense in the columnar layout).
+  const isPhone = useIsMobile(768)
   if (events.length < 2) return null
 
   // Compute per-event stagger offsets. Events without startMin (untimed) get
@@ -74,13 +79,13 @@ export function OverlapBand({ events, onDismiss, notes, onNote, saveStates }: Ov
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: `repeat(${events.length}, minmax(0, 1fr))`,
+          gridTemplateColumns: isPhone ? '1fr' : `repeat(${events.length}, minmax(0, 1fr))`,
           gap: 6,
           alignItems: 'start',
         }}
       >
         {events.map((e) => {
-          const topOffset = staggerPx(e)
+          const topOffset = isPhone ? 0 : staggerPx(e)
           return (
             <div key={e.id} style={topOffset > 0 ? { marginTop: topOffset } : undefined}>
               <EventRow

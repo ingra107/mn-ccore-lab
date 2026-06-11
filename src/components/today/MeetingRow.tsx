@@ -8,20 +8,31 @@
 
 import { useState } from 'react'
 import { ACCENT_TEAL, ACCENT_GOLD, INK, INK_DIM, type TodayEvent } from './constants'
+import { useIsMobile } from '../../hooks/useIsMobile'
 
 export type SaveStatus = 'idle' | 'saving' | 'saved'
 
 export function EventRow({ e, onDismiss, overlap = false, note, onNote, saveStatus = 'idle', isCalEvent = false }: { e: TodayEvent; onDismiss: (id: string) => void; overlap?: boolean; note?: string; onNote: (id: string, v: string) => void; saveStatus?: SaveStatus; isCalEvent?: boolean }) {
   const [expanded, setExpanded] = useState(false)
+  // N1.06 — phones: the single-line ellipsis title was crushed to 2-3 chars
+  // by ~200px of row chrome. Let it wrap to 2 lines and drop the location
+  // pill (it's in the expanded view's context anyway).
+  const isPhone = useIsMobile(768)
   return (
     <div style={{ position: 'relative', background: 'rgba(92,188,180,0.06)', border: `1px solid rgba(92,188,180,${overlap ? 0.35 : 0.18})`, borderRadius: 6, overflow: 'hidden' }}>
-      <div onClick={() => setExpanded(!expanded)} style={{ display: 'flex', gap: 12, padding: '10px 14px', alignItems: 'center', cursor: 'pointer' }}>
-        <span style={{ fontSize: 11, fontWeight: 600, color: ACCENT_TEAL, fontVariantNumeric: 'tabular-nums', minWidth: overlap ? 90 : 72, lineHeight: 1.3 }}>
+      <div onClick={() => setExpanded(!expanded)} style={{ display: 'flex', gap: isPhone ? 8 : 12, padding: '10px 14px', alignItems: 'center', cursor: 'pointer' }}>
+        <span style={{ fontSize: 11, fontWeight: 600, color: ACCENT_TEAL, fontVariantNumeric: 'tabular-nums', minWidth: isPhone ? 0 : overlap ? 90 : 72, lineHeight: 1.3, flexShrink: 0 }}>
           {e.time}
-          {e.end && <span style={{ color: INK_DIM, fontWeight: 400 }}> – {e.end}</span>}
+          {e.end && !isPhone && <span style={{ color: INK_DIM, fontWeight: 400 }}> – {e.end}</span>}
         </span>
         <span style={{ width: 6, height: 6, borderRadius: '50%', background: ACCENT_TEAL, flexShrink: 0 }} />
-        <span style={{ flex: 1, fontSize: 13, color: INK, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.title}</span>
+        <span
+          style={
+            isPhone
+              ? { flex: 1, fontSize: 13, color: INK, minWidth: '10ch', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', lineHeight: 1.35 }
+              : { flex: 1, fontSize: 13, color: INK, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }
+          }
+        >{e.title}</span>
         {e.meetingUrl && (
           <a
             href={e.meetingUrl}
@@ -37,7 +48,7 @@ export function EventRow({ e, onDismiss, overlap = false, note, onNote, saveStat
             <span>Join</span>
           </a>
         )}
-        {e.loc && <span style={{ fontSize: 11, color: ACCENT_TEAL }}>📍 {e.loc}</span>}
+        {e.loc && !isPhone && <span style={{ fontSize: 11, color: ACCENT_TEAL }}>📍 {e.loc}</span>}
         {note && note.length > 0 && <span title="Has notes" style={{ fontSize: 11, color: ACCENT_GOLD }}>📝</span>}
         <span style={{ fontSize: 11, color: INK_DIM }}>{expanded ? '▾' : '▸'}</span>
         <button

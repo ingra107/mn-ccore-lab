@@ -30,6 +30,7 @@ import { useRef, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { PATHS } from '../../constants/paths'
 import { useAuth } from '../../hooks/useAuth'
+import { useIsMobile } from '../../hooks/useIsMobile'
 import { emailToSlug } from '../../lib/emailSlug'
 import { useUnseenActivity } from '../../hooks/useEntitySeen'
 import { AttentionChip } from './AttentionChip'
@@ -184,7 +185,10 @@ export interface SharedTaskRowProps {
 
   // ── layout ──
   dense?: boolean
-  stack?: boolean   // narrow rail: title full-width, meta stacks beneath it
+  /** Narrow rail: title full-width, meta stacks beneath it. N1.02: defaults
+   *  to TRUE below 768px (Rule 15 content axis) so every adapter gets phone
+   *  stacking for free — pass an explicit boolean to override. */
+  stack?: boolean
 
   // ── content slots ──
   leadingTag?: ReactNode   // category glyph left of the title (🧠/🔧/💰…)
@@ -218,9 +222,15 @@ export function TaskRow(props: SharedTaskRowProps) {
     isSelected = false, selectionActive = false, onToggleSelect,
     draggable = false, onDragStart, onTogglePlan,
     isPlanned = false, plannedLabel, isRightNow = false, showGroupOverridePin = false,
-    dense = false, stack = false,
+    dense = false, stack: stackProp,
     leadingTag, extraMeta, belowTitle, children,
   } = props
+
+  // N1.02 — phone viewports stack by default (the audit found Today/Lanes
+  // rendering one-word-per-line titles because no adapter passed `stack`).
+  // 768 = the Rule 15 content-driven stacking axis, NOT the 1024 nav split.
+  const isPhone = useIsMobile(768)
+  const stack = stackProp ?? isPhone
 
   const [hover, setHover] = useState(false)
   const lpTimer = useRef<ReturnType<typeof setTimeout> | 'fired' | null>(null)
