@@ -198,7 +198,7 @@ export async function handleUpdateTaskStatus(id: string, request: Request, user:
       const assignerSlug = actorSlug(item.assigned_by);
       await env.DB.prepare(
         'INSERT INTO notifications (id, recipient_slug, type, source_type, source_id, title, body, link) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
-      ).bind(generateId(), assignerSlug, 'update', 'task', id, `${user.name || user.email} completed a task`, (item.title || item.description).slice(0, 200), `/tasks?open=${id}`).run();
+      ).bind(generateId(), assignerSlug, 'update', 'task', id, `${user.name || user.email} completed a task`, (item.title || item.description).slice(0, 200), `/portal/my-tasks?open=${id}`).run();
     } catch (e) { console.error('Failed to create completion notification:', e); }
   }
 
@@ -567,7 +567,7 @@ export async function handleCreateTask(request: Request, user: AuthUser, env: En
         id,
         `${user.name || user.email} assigned you a task`,
         title.slice(0, 200),
-        `/tasks?open=${id}`,
+        `/portal/my-tasks?open=${id}`,
       ).run();
 
       // Email notification (fire-and-forget, only if Resend configured)
@@ -1117,13 +1117,16 @@ export async function handleAcknowledgeTask(id: string, request: Request, user: 
 
   await logActivity(env, 'task', `Acknowledged: "${task.title || task.description}"`, user.email, id, 'task');
 
-  // Notify the assigner that the task was acknowledged
-  if (task.assigned_by) {
+  // Notify the assigner that the task was acknowledged. Skip self-acks:
+  // with auto-acknowledge-on-view (2026-06-11) this fires on every first open,
+  // and a self-assigned task would otherwise notify the opener about their own
+  // glance — the exact noise loop the seen-model removes.
+  if (task.assigned_by && actorSlug(task.assigned_by) !== actorSlug(user.email)) {
     try {
       const assignerSlug = actorSlug(task.assigned_by);
       await env.DB.prepare(
         'INSERT INTO notifications (id, recipient_slug, type, source_type, source_id, title, body, link) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
-      ).bind(generateId(), assignerSlug, 'update', 'task', id, `${user.name || user.email} acknowledged a task`, (task.title || task.description).slice(0, 200), `/tasks?open=${id}`).run();
+      ).bind(generateId(), assignerSlug, 'update', 'task', id, `${user.name || user.email} opened the task you assigned`, (task.title || task.description).slice(0, 200), `/portal/my-tasks?open=${id}`).run();
     } catch (e) { console.error('Failed to create acknowledge notification:', e); }
   }
 

@@ -262,6 +262,41 @@ export async function postActivityEntry(input: PostActivityEntryInput): Promise<
       console.error('postActivityEntry: mention notifications failed:', e);
     }
 
+    // Owner re-notification (Nick 2026-06-11: "things should renotify me if i
+    // have a comment or something"): a team-visible comment/update on a task
+    // notifies the task's ASSIGNEE even without an @mention, so activity on
+    // your stuff re-lights the bell. Skips: author-only (@me) entries (notify
+    // no one), self-activity (actor == assignee), and assignees already
+    // covered by the richer "mentioned you" notification above. Link is the
+    // direct portal deep-link — opens the task editor, not "another page".
+    if (visibility === 'team' && entityType === 'task' && (kind === 'comment' || kind === 'update')) {
+      try {
+        const t = await env.DB.prepare(
+          'SELECT assignee, title FROM tasks WHERE id = ? AND deleted_at IS NULL'
+        ).bind(entityId).first<{ assignee: string | null; title: string | null }>();
+        const assignee = t?.assignee;
+        if (assignee && assignee !== actorSlug && !mentions.includes(assignee)) {
+          const actorName = user.name || user.email;
+          const verb = kind === 'comment' ? 'commented on' : 'posted an update on';
+          const title = `${actorName} ${verb} "${(t?.title ?? 'your task').slice(0, 80)}"`;
+          await env.DB.prepare(
+            'INSERT INTO notifications (id, recipient_slug, type, source_type, source_id, title, body, link) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+          ).bind(
+            generateId(),
+            assignee,
+            'update',
+            kind === 'comment' ? 'task_comment' : 'task',
+            entityId,
+            title,
+            body.slice(0, 200),
+            `/portal/my-tasks?open=${entityId}`,
+          ).run();
+        }
+      } catch (e) {
+        console.error('postActivityEntry: owner notification failed:', e);
+      }
+    }
+
     // Hermes: @hermes|@claude fires the existing ai_requests insert + a
     // 'Thinking about this...' placeholder for ALL kinds (Nick: note-vs-comment
     // distinction is noise). The placeholder is itself an activity_entries row
@@ -314,7 +349,10 @@ async function fireMentionNotifications(
         : 'project';
   const link =
     args.entityType === 'task'
-      ? `/tasks?open=${args.entityId}`
+      // Direct portal deep-link (2026-06-11) — opens the task editor without
+      // the legacy /tasks redirect hop. Old /tasks?open= links still work via
+      // the NavigateKeepSearch shim in App.tsx.
+      ? `/portal/my-tasks?open=${args.entityId}`
       : args.entityType === 'artifact'
         ? `/portal/artifacts/${args.entityId}`
         : args.projectSlug

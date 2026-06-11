@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, lazy, Suspense } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -20,6 +20,11 @@ import { emailToSlug } from '../lib/emailSlug'
 import { useActionItems, useTasks } from '../hooks/useApiData'
 import type { ActionItemRow } from '../hooks/useApiData'
 import type { TaskRow } from '../lib/api'
+
+// In-place task editor (Nick 2026-06-11: clicking a NEW item must open the
+// actionable thing, not just another page). Lazy — only loads when a row is
+// clicked the first time.
+const TaskDetailPanel = lazy(() => import('../components/tasks/TaskDetailPanel'))
 import { useNotifications, useUnreadCount, useMarkRead, useMarkAllRead } from '../hooks/useNotifications'
 import type { NotificationRow } from '../hooks/useNotifications'
 import { useToggleActionItem } from '../hooks/useMutations'
@@ -579,6 +584,11 @@ export default function MyItems() {
     () => myOpenTasks.filter((t: TaskRow) => !t.acknowledged_at),
     [myOpenTasks]
   )
+  // In-place editor: clicking a New-for-You row opens TaskDetailPanel right
+  // here (stays until closed); opening auto-acknowledges, so the row removes
+  // itself from the list. The panel subscribes to the query cache (Rule 18),
+  // so the prop is just the initial snapshot.
+  const [openTask, setOpenTask] = useState<TaskRow | null>(null)
   const { data: notifications = [] } = useNotifications(userSlug)
   const { data: unreadCount = 0 } = useUnreadCount(userSlug)
   const markRead = useMarkRead(userSlug)
@@ -811,16 +821,21 @@ export default function MyItems() {
             <SectionHeader title="New for You" />
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {newTasks.map((t: TaskRow) => (
-                <Link
+                <button
                   key={t.id}
-                  to={`${PATHS.myTasks}?open=${t.id}`}
+                  type="button"
+                  onClick={() => setOpenTask(t)}
                   className="card"
                   style={{
                     display: 'flex',
                     alignItems: 'center',
                     gap: '10px',
                     padding: '10px 14px',
-                    textDecoration: 'none',
+                    width: '100%',
+                    textAlign: 'left',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
                     borderLeft: '3px solid var(--gold)',
                   }}
                 >
@@ -859,7 +874,7 @@ export default function MyItems() {
                     </span>
                   )}
                   <span style={{ fontSize: '11px', color: 'var(--teal)', flexShrink: 0 }}>Open →</span>
-                </Link>
+                </button>
               ))}
             </div>
           </div>
@@ -1053,6 +1068,15 @@ export default function MyItems() {
           </div>
         )}
       </div>
+
+      {/* In-place task editor for New-for-You rows — stays open until closed
+          (esc / ✕ / outside-click are TaskDetailPanel's own affordances).
+          Opening as the assignee auto-acknowledges, draining the NEW list. */}
+      {openTask && (
+        <Suspense fallback={null}>
+          <TaskDetailPanel task={openTask} onClose={() => setOpenTask(null)} />
+        </Suspense>
+      )}
     </div>
   )
 }

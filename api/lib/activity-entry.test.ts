@@ -54,7 +54,7 @@ const byCreatedDesc = (a: AERow, b: AERow) =>
   a.created_at < b.created_at ? 1 : a.created_at > b.created_at ? -1 : a.id < b.id ? 1 : -1
 
 interface Fixtures {
-  tasks: Record<string, { project_id: string | null; deleted_at?: string | null; title?: string }>
+  tasks: Record<string, { project_id: string | null; deleted_at?: string | null; title?: string; assignee?: string | null }>
   projects: Record<string, { id: string; slug: string | null; category: string | null }>
   teamSlugs: Set<string>
 }
@@ -123,6 +123,12 @@ function makeEnv(fx: Partial<Fixtures> = {}) {
             if (/SELECT project_id FROM tasks WHERE id = \?/.test(sql)) {
               const t = tasks[binds[0] as string]
               return t && t.deleted_at == null ? { project_id: t.project_id } : null
+            }
+            // Owner re-notification lookup (2026-06-11): assignee + title.
+            if (/SELECT assignee, title FROM tasks WHERE id = \? AND deleted_at IS NULL/.test(sql)) {
+              const t = tasks[binds[0] as string]
+              if (!t || t.deleted_at != null) return null
+              return { assignee: t.assignee ?? null, title: t.title ?? '' }
             }
             if (/FROM tasks WHERE id = \? AND deleted_at IS NULL/.test(sql)) {
               const t = tasks[binds[0] as string]
@@ -368,6 +374,41 @@ describe('read visibility gate — author-only rows hidden from other actors', (
 })
 
 // ── validation ──────────────────────────────────────────────────────────────────
+
+describe('owner re-notification — activity on YOUR task re-lights the bell (2026-06-11)', () => {
+  const OWNED = { tasks: { t1: { project_id: 'proj_a', title: 'Task One', assignee: 'nick-ingraham' } }, projects: FX.projects, teamSlugs: FX.teamSlugs } as Partial<Fixtures>
+
+  it('team comment by another actor notifies the assignee with a portal deep-link', async () => {
+    const { env, notifications } = makeEnv(OWNED)
+    const r = await postActivityEntry({ env, user: NATE, entityType: 'task', entityId: 't1', kind: 'comment', body: 'made progress on this', actorSlug: 'nate-mesfin' })
+    expect(r.ok).toBe(true)
+    const owner = notifications.find(n => (n.binds as unknown[])[1] === 'nick-ingraham')
+    expect(owner).toBeTruthy()
+    const binds = owner!.binds as unknown[]
+    expect(binds[2]).toBe('update')                          // type
+    expect(binds[7]).toBe('/portal/my-tasks?open=t1')        // direct editor deep-link
+  })
+
+  it('author-only (@me) entries notify NO ONE', async () => {
+    const { env, notifications } = makeEnv(OWNED)
+    await postActivityEntry({ env, user: NATE, entityType: 'task', entityId: 't1', kind: 'comment', body: '@me private thought', actorSlug: 'nate-mesfin' })
+    expect(notifications.length).toBe(0)
+  })
+
+  it('self-activity (actor == assignee) does not notify', async () => {
+    const { env, notifications } = makeEnv(OWNED)
+    await postActivityEntry({ env, user: NICK, entityType: 'task', entityId: 't1', kind: 'comment', body: 'note to self, team-visible', actorSlug: 'nick-ingraham' })
+    expect(notifications.length).toBe(0)
+  })
+
+  it('assignee already @mentioned gets ONLY the richer mention notification (no dup)', async () => {
+    const { env, notifications } = makeEnv(OWNED)
+    await postActivityEntry({ env, user: NATE, entityType: 'task', entityId: 't1', kind: 'comment', body: 'hey @nick-ingraham look at this', actorSlug: 'nate-mesfin' })
+    const toNick = notifications.filter(n => (n.binds as unknown[])[1] === 'nick-ingraham')
+    expect(toNick.length).toBe(1)
+    expect((toNick[0].binds as unknown[])[2]).toBe('mention')
+  })
+})
 
 describe('postActivityEntry — validation', () => {
   it('rejects an unknown kind', async () => {

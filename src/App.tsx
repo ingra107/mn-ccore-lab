@@ -220,13 +220,17 @@ export default function App() {
                     auth. Kept indefinitely; cost is negligible. */}
                 <Route path="/dashboard" element={<Navigate to="/portal/dashboard" replace />} />
                 <Route path="/personal" element={<Navigate to="/portal/personal" replace />} />
-                <Route path="/my-items" element={<Navigate to="/portal/my-items" replace />} />
-                <Route path="/my-tasks" element={<Navigate to="/portal/my-tasks" replace />} />
-                <Route path="/tasks" element={<Navigate to="/portal/my-tasks" replace />} />
+                {/* Entity-bearing legacy redirects MUST keep the query string —
+                    notification links are minted as /tasks?open=<id>; a plain
+                    <Navigate> drops ?open so the click landed on "just another
+                    page" instead of opening the task (Nick 2026-06-11). */}
+                <Route path="/my-items" element={<NavigateKeepSearch to="/portal/my-items" />} />
+                <Route path="/my-tasks" element={<NavigateKeepSearch to="/portal/my-tasks" />} />
+                <Route path="/tasks" element={<NavigateKeepSearch to="/portal/my-tasks" />} />
                 <Route path="/calendar" element={<Navigate to="/portal/calendar" replace />} />
                 <Route path="/deadlines" element={<Navigate to="/portal/deadlines" replace />} />
                 <Route path="/deadline-cascade" element={<Navigate to="/portal/deadline-cascade" replace />} />
-                <Route path="/projects" element={<Navigate to="/portal/projects" replace />} />
+                <Route path="/projects" element={<NavigateKeepSearch to="/portal/projects" />} />
                 <Route path="/projects/:slug" element={<NavigateWithParams to="/portal/projects/:slug" />} />
                 <Route path="/manuscripts" element={<Navigate to="/portal/manuscripts" replace />} />
                 <Route path="/ideas" element={<Navigate to="/portal/ideas" replace />} />
