@@ -3,6 +3,22 @@
 
 > Historical phase records moved from CLAUDE.md to keep the operating guide focused on current state. Each section is a complete record of what shipped, decisions made, and scores achieved.
 
+## 2026-06-11 (EVENING) — THE STYLE LOCK: 8 panel rounds → house canon ("lock it in this is great!!!")
+
+Nick live-drove rounds 4-8 on TaskDetailPanel to a validated house style, now CANON in
+`docs/design-system.md` "THE LOCKED PANEL STYLE": **R4** (`68985776`) borderless-until-interactive
+(bare-typography title, ghost field selects, ghost description with one-line empty state, quiet
+add-link/subtasks). **R5** (`0f0d7c32`) `GhostSelect` primitive (opaque themed menus replacing
+native white dropdowns, Rule 45) + one-surface flattening (band tints dead; composer = the one
+inset card). **R6** (`aba74719`) floating composer (no outline), type-to-search project picker,
+scroll-stable menus (reposition not close), full pill rounding. **R7** (`6103caa2`) floating
+side-peek panel (12px inset, radius-xl all corners, one deep shadow), due-pill inner-hover-border
+fix, composer shadow removed. **R8** (`d04cb0b1`+`7c490e01`) calendar icon dropped; metadata
+snugged under the title group / fields+composer = the action group. 844/844 throughout. Memory +
+design-system codified; N1b sweep propagates app-wide. Parallel session same window: schema
+**v81** `entity_seen` new-activity signal (`a496a684`) + AttentionChip (`649791f7`) — routes 240,
+74 tables.
+
 ## 2026-06-11 (PM, live-review cycle) — Slack-shaped composers + thread anatomy EVERYWHERE · Ask-the-Lab converged · 4 legacy components deleted
 
 Nick live-tested the morning's editor and drove 3 polish rounds + a parity wave, all same-day. **Composers** (`95b2752c`, `ca538d62`): idle = ONE row (COMMENT|NOTE pills inline w/ full-width un-indented input), Slack-style action row BELOW on focus (icons + "Only me"/"Hermes" pill toggles, no wrapped micro-labels); section rhythm title→fields→composer→tabs w/ tinted header band (`702e25a1`); Recent Activity first in Overview; created·acknowledged one-liner; compact avatar-pill assignee; minimal empty states. **Slack-thread entry anatomy** (`a80b7132`): ActivityEntryItem = avatar·name·timestamp·kind-badge / indented body / uniform rhythm; per-kind variation confined to accent bar + badge slot; completions/system events gained the full anatomy; callers' cosmetic props collapsed. **Parity wave** (`a97a0a0b`): AskTheLab answers converged onto ActivityEntryItem via adapter (accepted-answer ring mounted outside the renderer); ProjectComments.tsx + ProjectUpdateFeed.tsx DELETED (grep-proven dead post-P2-A). **Timeline content cleanup:** the 5 prod entries with embedded raw typed IDs rewritten (guarded UPDATEs; incl. Nick's "Comment processed: …[proj_…]" example — class is dead, P2-B killed the writers; gardener owns future machine-entry noise). All patterns codified in `docs/design-system.md` "Conversation Surfaces" + design-prefs memory. Session-close /simplify: MarkdownView parse memoized, artifact GET batched (1 D1 round-trip), 2 deferrals → PB tech-debt backlog; 3 dead-import findings were false positives (verified). docs: hermes.md 60s+artifacts lane, TESTING.md count un-drifted. Nick-side ride-alongs same window: Bug #70, List-view width/teal-project-column, --task-accent-* convergence. **838/838 · final deploy = HEAD.**

@@ -165,3 +165,37 @@ Title block → inline field row (Status/Priority/Project/Due ▾) → composer 
 DISTINCT sections (structural `--border-subtle` separation + consistent padding scale).
 Metadata (created · acknowledged) is one quiet one-liner. Assignee is a compact avatar-pill,
 same visual weight as the field-row selects.
+
+## THE LOCKED PANEL STYLE (Nick-validated 2026-06-11: "lock it in this is great") — house canon
+
+Eight live-review rounds on TaskDetailPanel converged the house style. These principles are
+CANON for every surface; the N1b de-box sweep propagates them (drawers → toolbars → composer
+surfaces → card interiors). Deviations need Nick's explicit OK.
+
+1. **One continuous surface.** No alternating background bands to separate sections. Separation
+   = whitespace rhythm + the tab row's own active underline. Sticky headers get a single
+   hairline, not their own band.
+2. **Borderless until interactive.** Resting = quiet text + ▾ affordance; hover = `--hover-subtle`
+   tint ONLY (never an outline — and watch for INNER components leaking their own hover borders,
+   e.g. the DateInput-inside-pill case, `[data-ghost-pill]` override); keyboard focus = visible
+   ring (a11y; only the resting/hover border is banned).
+3. **Box budget of one.** Per view, exactly ONE input-inviting element is boxed/elevated — the
+   composer. It floats: `--surface-2` bg + radius only, NO outline, NO shadow. Search inputs are
+   the other legitimate box. Tables keep their grid (structural); their toolbars de-box.
+4. **Pill controls.** Inline field triggers (status/priority/project/due/assignee) and mode
+   toggles are full-radius pills (`--radius-full`, ~3px 10px padding). Chips only where semantic
+   (links, sources). NO redundant icons inside pills when the value is self-describing (the
+   calendar-icon-on-due case).
+5. **GhostSelect is the canonical picker** (`src/components/ui/GhostSelect.tsx`): ghost pill
+   trigger; fully-opaque themed menu (Rule 45), radius-lg corners; portal-positioned and
+   REPOSITIONS on scroll (never close-on-scroll); keyboard nav; `searchable` prop for long lists
+   (auto-focused filter input — projects etc.). Never native `<select>` on styled surfaces.
+6. **Floating side-peek panels.** Detail panels inset from the viewport (~12px top/right/bottom),
+   `--radius-xl` ALL corners, `overflow: hidden`, ONE large soft shadow
+   (`0 8px 40px rgba(0,0,0,0.45)` dark), no hard edge-bolted walls. Mobile stays a full-screen
+   sheet.
+7. **Title-group / action-group rhythm.** Descriptive metadata (created · acknowledged · source)
+   snugs UNDER the title block; the editable field row OPENS the action section with the
+   composer; then tabs. "What is this" and "act on it" are distinct groups.
+8. **Empty states are one quiet line.** Ghost text at `--ink-hint` ("Add description…",
+   "No activity yet") — never a reserved bordered block, never a pre-rendered toolbar.

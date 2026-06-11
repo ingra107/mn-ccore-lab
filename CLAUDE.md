@@ -136,7 +136,7 @@ Nick's CLI         Team's Hub
 
 (Airtable retired 2026-04-21. `entity_aliases.alias_kind='airtable_legacy'` rows resolve forever for historical lookups.)
 
-- **API:** Cloudflare Worker, 238 registered routes via Hono v4.12 (`api/index.ts`). Middleware chain: OPTIONS preflight → test-mode DB swap → API-key auth → authed-user resolve → PI gate for `/api/pb/*` GETs → REQUIRE_AUTH gate for POST/PUT → version-bump-on-success. Do NOT add routes with raw `url.pathname === ...` comparisons — use `app.get/post('/api/...', handler)`.
+- **API:** Cloudflare Worker, 240 registered routes via Hono v4.12 (`api/index.ts`). Middleware chain: OPTIONS preflight → test-mode DB swap → API-key auth → authed-user resolve → PI gate for `/api/pb/*` GETs → REQUIRE_AUTH gate for POST/PUT → version-bump-on-success. Do NOT add routes with raw `url.pathname === ...` comparisons — use `app.get/post('/api/...', handler)`.
 - **Auth:** CF Access gates `mn-ccore-lab.pages.dev/portal/*` (single destination). JWT via JWKS in `api/jwt-verify.ts`. `REQUIRE_AUTH=1` + `VITE_REQUIRE_AUTH=1` both active. `/api/*` is NOT gated by CF Access (auth via X-API-Key + `REQUIRE_AUTH` + JWT server-side). `getAuthUser()` and `isPiRequest()` are `async` — callers must `await`.
 - **Email:** Resend (`api/lib/email.ts`) + daily digest (`api/routes/digest-email.ts`). Preview: `/api/digest-preview?member=nick`
 - **Sync:** `scripts/db/sync/` module in PB, invoked via `python scripts/db/sync.py {pull|push|sync|status}`. Scheduled + /process-triggered.

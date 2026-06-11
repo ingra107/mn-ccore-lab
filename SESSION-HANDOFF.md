@@ -4,6 +4,13 @@
 > next session just start tackling them." Each ticket is self-contained — no re-triaging.
 > **Nick's own first move (not a ticket): review the gardener's FIRST --apply artifact**
 > (PB `data/gardener/runs/`, maiden run 2026-06-11 22:40 home).
+>
+> **THE HOUSE STYLE IS LOCKED** (evening, 8 panel rounds, Nick: "lock it in this is great!!!"):
+> 8-point canon in `docs/design-system.md` "THE LOCKED PANEL STYLE" — one surface, borderless-
+> until-interactive, box-budget-of-one, floating composer, pill controls, GhostSelect canonical,
+> floating side-peek panels, title-group/action-group rhythm, one-line empty states. N1/N1b/N1c
+> execute AGAINST that doc. Parallel session also landed schema v81 `entity_seen` (new-activity
+> teal signal) + AttentionChip — counts now 74 tables / 240 routes / 844 tests.
 
 **N1 — MOBILE VISUAL AUDIT (step one, audit-then-tickets).** Nick: "too many visual issues to
 make it functional at this point." Dispatch an audit (Playwright mobile viewports 375/390/430 +
@@ -13,6 +20,13 @@ defects (screenshot evidence, file:line where known, S/M/L), append to this dock
 Relevant standing rules: 15 (row-height @media scoping), 55 (useIsMobile=1024, tab bar, sheets,
 FAB lift), mobile sticky-bottom compose (deliberate), Rule 56 swipe. AUDIT ONLY first — fixes are
 follow-on tickets Nick reviews.
+
+**N1c — Composer @mention autocomplete (Nick 2026-06-11 close: "when i @ hermes or someone in
+the task detail it doesn't try to autopopulate").** The panel/drawer composers (OverviewQuickAdd
++ SmartCompose) don't surface mention suggestions while typing `@`. Rule 7 says @mentions use
+`MentionInput` — either those composers bypass it or its typeahead isn't wired in this context.
+Add a mention-typeahead popover (team slugs + `hermes`, GhostSelect-style opaque menu, keyboard
+nav) at the `@` caret in BOTH composer primitives. Small/medium; high-traffic surface.
 
 **N1b — App-wide de-box sweep (Nick 2026-06-11: "less boxyness everywhere").** After the panel
 style is validated: propagate borderless-until-interactive beyond it. Rule: **box budget of one
