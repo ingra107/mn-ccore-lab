@@ -1,3 +1,25 @@
+# ▶ NEXT SESSION HEADLINE: TASK-description migration (Nick 2026-06-11 morning)
+
+> Nick spotted it live: **592 tasks still carry dated-log-polluted descriptions** — the 2026-06-10
+> description migration + P2-B retarget scoped PROJECTS only; tasks were never migrated. Projects
+> verified clean; **zero new dated lines anywhere since the retarget** (source is dead — this is
+> one-time historical cleanup). Nick approved: dry-run staged 2026-06-11 morning → review +
+> execute next session. Artifacts: `Scratch/task-desc-migration-2026-06-11/` + runbook at
+> `docs/superpowers/plans/2026-06-11-task-desc-migration-dryrun.md` (agent emitting now; mirrors
+> the proven project pipeline — proposed entries / apply.d1.sql / strip.d1.sql, NOT executed).
+
+## ✅ Morning additions (2026-06-11, after the closure header below)
+
+- **I40 fired TRUE-POSITIVE (02:51):** Apps Script UPDATE path (handleUpdateTask) stamped
+  source_thread_id onto 6 existing tasks with no email_link — only the create paths derived.
+  Fix `e6f3ab45` (derived pair on UPDATE + 3 tests) + `82059168` (lint), deployed; Nick-approved
+  backfill; remaining=0. PB retires I40 after the next clean Apps Script morning.
+- **applyInsert now stamps `updated_at`** (`cd6644bc`, deployed + prod-verified): insert was the
+  only mutation op that didn't — every Hub-created row carried updated_at NULL (and PB's pull
+  cold-insert separately dropped contract-extension fields; PB-side fix `e2518446`). 12/12 +
+  4/4 regression tests, proven-fail-on-pre-fix-form.
+- Tests now **820/820** · live deploy = HEAD.
+
 # ✅ DOCKET EXECUTED 2026-06-10/11 NIGHT (PB ultracode session) — ALL TICKETS CLOSED
 
 > **T1 ✅** daily_plans+daily_reflections DROPPED test+prod (~23:20 CDT; snapshots+DDL
