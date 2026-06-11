@@ -58,9 +58,7 @@ server-side via X-API-Key + `REQUIRE_AUTH` + JWT verify.
 | workflow_templates | 3+ | Custom project stage templates |
 | email_drafts | dynamic | Email draft status synced from brain.db (schema v37) |
 | file_activity_daily | dynamic | Aggregated daily file activity from brain.db (schema v37) |
-| daily_plans | RETIRED 2026-06-10 | code path removed (IA-1; plan = tasks.planned_for/plan_slot/plan_rank); table drop pending 24h dogfood (decision: PB `Context/Decisions/2026-06-10-daily-plans-retirement.md`) |
 | pomodoro_sessions | dynamic | Focus sessions synced from brain.db |
-| daily_reflections | RETIRED 2026-06-10 | retired with daily_plans (1 row; drop pending the same 24h dogfood) |
 | dispatch_queue | dynamic | Claude action items from Hub |
 | pb_sessions | dynamic | Claude Code session history synced from brain.db |
 | inbox | dynamic | Quick Capture entries (FAB + Ctrl+I); synced nightly to PB Inbox/*.md (Phase 32) |
