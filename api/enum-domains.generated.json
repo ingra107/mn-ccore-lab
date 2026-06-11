@@ -82,7 +82,8 @@
           "active",
           "waiting_external",
           "blocked",
-          "done"
+          "done",
+          "deleted"
         ],
         "legacy_aliases": {
           "Active": "active",
