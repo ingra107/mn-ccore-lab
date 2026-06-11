@@ -1,21 +1,14 @@
-// ActivityStream — P2-5 (Nick decision #6, 2026-06-09) + Phase-1 unified feed (Design C, v77).
+// ActivityStream — the whole-picture project feed (Design C, v77; P2-A 2026-06-10).
 //
-// Phase 1 adds a fourth source alongside the legacy three: GET /api/projects/:slug/activity
-// returns the whole-picture project feed — project-level rows AND task rows rolled up
-// by project_id, all from activity_entries. Task-originated rows are rendered with a
-// distinct task glyph + task entity link so users can see task chatter in context.
+// ONE data source: GET /api/projects/:slug/activity — project-level
+// activity_entries AND task rows rolled up by project_id. The composers write
+// activity_entries (postActivityEntry) and the legacy endpoints are
+// projections over the same rows, so merging legacy sources here would render
+// every entry twice (the P2-A removal). Action items remain the only sidecar.
 //
-// Legacy sources (project_updates / comments / action_items) are KEPT as-is — project
-// composers still write those tables in Phase 1 (their retarget is Phase 2). The unified
-// feed rows are ADDITIVE. De-duplication against the legacy rows is not needed: only
-// task_comments + task_updates were backfilled and those never appeared in the project
-// stream before.
-//
-// Filter pills are extended to cover unified-feed derived kinds:
-//   'all'          — everything
-//   'notes'        — legacy project updates + unified kind='update' (project entity)
-//   'comments'     — legacy comments + unified kind='comment' (project entity)
-//   'task-activity' — task-originated unified rows (kind='task-comment', 'task-update', etc.)
+// Filter pills map to derived kinds:
+//   'all' — everything · 'notes' — kind='update' (project entity) ·
+//   'comments' — kind='comment' (project entity) · 'task-activity' — task-* rows
 //
 // Design ref: docs/superpowers/specs/2026-06-10-activity-entries-unified-timeline-design.md
 

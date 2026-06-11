@@ -263,9 +263,11 @@ export async function handleGetComments(projectId: string, request: Request, env
   // frozen; its 2 rows were backfilled with ids preserved). Byte-preserved
   // legacy shape: author_id is the team_members.id (entries store the slug, so
   // join by slug), 'claude-ai' passes through as its own author_id.
-  const project = await env.DB.prepare('SELECT id FROM projects WHERE id = ? OR slug = ?').bind(projectId, projectId).first<{ id: string }>();
-  const canonicalId = project?.id ?? projectId;
-  const vis = await activityVisibilityGate(request, env, 'ae');
+  const [resolvedId, vis] = await Promise.all([
+    projectRefToCanonical(env, projectId),
+    activityVisibilityGate(request, env, 'ae'),
+  ]);
+  const canonicalId = resolvedId ?? projectId;
   const result = await env.DB.prepare(
     `SELECT ae.id, ae.body AS content, ae.created_at,
        CASE WHEN ae.actor_slug = 'claude-ai' THEN 'claude-ai' ELSE t.id END AS author_id,
@@ -288,9 +290,11 @@ export async function handleGetProjectUpdates(slug: string, request: Request, en
   // P2-A (2026-06-10): PROJECTION over activity_entries (legacy project_updates
   // is frozen; it had 0 rows). Byte-preserved legacy row shape — project_id
   // echoes the slug param exactly as the old table stored it.
-  const canonicalId = await projectRefToCanonical(env, slug);
+  const [canonicalId, vis] = await Promise.all([
+    projectRefToCanonical(env, slug),
+    activityVisibilityGate(request, env, 'ae'),
+  ]);
   if (!canonicalId) return json({ data: [], count: 0 });
-  const vis = await activityVisibilityGate(request, env, 'ae');
   const result = await env.DB.prepare(
     `SELECT ae.id, ae.actor_slug AS author, ae.body AS content, ae.update_type, ae.created_at
      FROM activity_entries ae
@@ -958,13 +962,14 @@ export async function handlePostProjectUpdate(slug: string, request: Request, us
 
   // AM-2: the author is an actor identity. Resolve to a canonical team slug;
   // impersonation requires PI/service.
-  const actor = await resolveActor(env, user, body.author, { allowImpersonation: await isPiRequest(request, env) });
-  if ('error' in actor) return error(actor.error, 400);
-
   // P2-A (2026-06-10): notes write the unified timeline keyed by the canonical
   // typed project id (legacy project_updates stored the raw slug). The slug
   // stays the wire/display form in the response below.
-  const canonicalId = await projectRefToCanonical(env, slug);
+  const [actor, canonicalId] = await Promise.all([
+    isPiRequest(request, env).then((pi) => resolveActor(env, user, body.author, { allowImpersonation: pi })),
+    projectRefToCanonical(env, slug),
+  ]);
+  if ('error' in actor) return error(actor.error, 400);
   if (!canonicalId) return error('Project not found', 404);
 
   const posted = await postActivityEntry({

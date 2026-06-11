@@ -43,8 +43,8 @@ server-side via X-API-Key + `REQUIRE_AUTH` + JWT verify.
 | meetings | 20+ | Biweekly meetings + agendas |
 | agenda_items | dynamic | Per-meeting agenda items |
 | action_items | 50+ | Legacy action items (pre-task system) |
-| project_updates | dynamic | Per-project status updates |
-| project_comments | dynamic | Threaded project comments |
+| project_updates | dynamic | Per-project status updates (FROZEN 2026-06-10 — projection over activity_entries) |
+| project_comments | dynamic | Threaded project comments (FROZEN 2026-06-10 — projection over activity_entries) |
 | research_digest | 152+ | Weekly paper digests |
 | notifications | dynamic | In-app notification feed |
 | commitments | dynamic | Team commitments tracker |

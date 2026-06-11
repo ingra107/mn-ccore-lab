@@ -94,10 +94,17 @@ target. Legacy backfill = Phase 2.
 **Phase 1 (this session):** v77 table + `shared/activityKinds.ts` + `postActivityEntry()` +
 projections + Hermes retarget + backfill (3 rows, snapshot-gated per M5 A1 doctrine: export +
 restore drill) + task feed unification + project feed derived rollup + notes wire-alias ride-along.
-**Phase 2+ (deferred):** legacy `activity_log` backfill; `comments`(2)+`project_updates`(0)
-backfill + project composer retarget; nightly Haiku `[YYYY-MM-DD]` description-line migration
-(then DELETE `descriptionLog.ts`); PB lockstep leak removal (M5 C/D — PB session owns);
-mirror-table disposition; physical drops after alias traffic confirms unused.
+**Phase 2+ (status as of 2026-06-10 late evening):**
+- ~~legacy `activity_log` backfill~~ DONE (`3d194c24` — 30 real completions; rest is
+  telemetry/stubs, report `docs/superpowers/plans/2026-06-10-activity-log-backfill-report.md`)
+- ~~`comments`+`project_updates` backfill + project composer retarget~~ DONE (P2-A `5f2890e1`)
+- ~~description-line migration~~ DONE (executed LLM-on-parse, 407 entries; record at the bottom
+  of `docs/superpowers/plans/2026-06-11-description-migration-review.md`). `descriptionLog.ts`
+  deletion still gated on the PB breadcrumb-writer retarget + one clean cycle.
+- ~~mirror-table disposition~~ DONE PB-side (`779bcfbf` mig-104).
+- STILL OPEN: PB breadcrumb-writer retarget (PB session owns); legacy-table reader repoint +
+  physical drops of the 4 frozen twins (P2-C — see SESSION-HANDOFF docket); PB lockstep leak
+  removal (M5 C/D).
 
 ## Description doctrine (unchanged from M5/addendum)
 

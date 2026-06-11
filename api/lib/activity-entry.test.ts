@@ -49,6 +49,10 @@ interface AERow {
   created_at: string
 }
 
+/** Newest-first by (created_at, id) — the compound cursor order every feed uses. */
+const byCreatedDesc = (a: AERow, b: AERow) =>
+  a.created_at < b.created_at ? 1 : a.created_at > b.created_at ? -1 : a.id < b.id ? 1 : -1
+
 interface Fixtures {
   tasks: Record<string, { project_id: string | null; deleted_at?: string | null; title?: string }>
   projects: Record<string, { id: string; slug: string | null; category: string | null }>
@@ -172,7 +176,7 @@ function makeEnv(fx: Partial<Fixtures> = {}) {
               if (/kind = 'comment'/.test(sql)) rows = rows.filter(r => r.kind === 'comment')
               if (/kind = 'update'/.test(sql)) rows = rows.filter(r => r.kind === 'update')
               rows = applyVisibilityFilter(rows, sql, binds)
-              rows = [...rows].sort((a, b) => (a.created_at < b.created_at ? 1 : a.created_at > b.created_at ? -1 : (a.id < b.id ? 1 : -1)))
+              rows = [...rows].sort(byCreatedDesc)
               return { results: rows.map(r => projectRowForSql(sql, r)) }
             }
             // Project feed: WHERE project_id = ?  — single-predicate (project-entity
@@ -186,7 +190,7 @@ function makeEnv(fx: Partial<Fixtures> = {}) {
               if (/kind = 'comment'/.test(sql)) rows = rows.filter(r => r.kind === 'comment')
               if (/kind = 'update'/.test(sql)) rows = rows.filter(r => r.kind === 'update')
               rows = applyVisibilityFilter(rows, sql, binds)
-              rows = [...rows].sort((a, b) => (a.created_at < b.created_at ? 1 : a.created_at > b.created_at ? -1 : (a.id < b.id ? 1 : -1)))
+              rows = [...rows].sort(byCreatedDesc)
               if (/AS author_id|author_id/.test(sql)) {
                 // comments projection shape
                 return { results: rows.map(r => ({
@@ -205,7 +209,7 @@ function makeEnv(fx: Partial<Fixtures> = {}) {
               const projId = binds[0] as string
               let rows = ae.filter(r => r.project_id === projId)
               rows = applyVisibilityFilter(rows, sql, binds)
-              rows = [...rows].sort((a, b) => (a.created_at < b.created_at ? 1 : a.created_at > b.created_at ? -1 : (a.id < b.id ? 1 : -1)))
+              rows = [...rows].sort(byCreatedDesc)
               return { results: rows.map(r => {
                 const out = projectRowForSql(sql, r)
                 // Mirror the LEFT JOIN tasks → task_title column when selected.
