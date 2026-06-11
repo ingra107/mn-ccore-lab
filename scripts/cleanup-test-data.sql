@@ -2,11 +2,8 @@
 -- FK-ordered deletion: dependent records first
 -- Usage: npx wrangler d1 execute mnccore-lab --remote --file=scripts/cleanup-test-data.sql
 
--- Task comments on test tasks
-DELETE FROM task_comments WHERE task_id IN (SELECT id FROM tasks WHERE id LIKE 'test_delete_%' OR title LIKE 'test_delete_%');
-
--- Task updates (notes) on test tasks
-DELETE FROM task_updates WHERE task_id IN (SELECT id FROM tasks WHERE id LIKE 'test_delete_%' OR title LIKE 'test_delete_%');
+-- Activity entries on test tasks (task_comments/task_updates dropped schema-v78, 2026-06-10)
+DELETE FROM activity_entries WHERE entity_type = 'task' AND entity_id IN (SELECT id FROM tasks WHERE id LIKE 'test_delete_%' OR title LIKE 'test_delete_%');
 
 -- Subtasks of test tasks
 DELETE FROM task_subtasks WHERE task_id IN (SELECT id FROM tasks WHERE id LIKE 'test_delete_%' OR title LIKE 'test_delete_%');
@@ -26,8 +23,8 @@ DELETE FROM action_items WHERE meeting_id IN (SELECT id FROM meetings WHERE id L
 DELETE FROM agenda_items WHERE meeting_id IN (SELECT id FROM meetings WHERE id LIKE 'test_delete_%' OR title LIKE 'test_delete_%');
 DELETE FROM meetings WHERE id LIKE 'test_delete_%' OR title LIKE 'test_delete_%';
 
--- Projects + updates (projects use `title` not `name`; no project_comments table)
-DELETE FROM project_updates WHERE project_id IN (SELECT id FROM projects WHERE slug LIKE 'test_delete_%' OR title LIKE 'test_delete_%');
+-- Projects (project_updates dropped schema-v78, 2026-06-10; activity_entries cascade handles it)
+DELETE FROM activity_entries WHERE entity_type = 'project' AND entity_id IN (SELECT id FROM projects WHERE slug LIKE 'test_delete_%' OR title LIKE 'test_delete_%');
 DELETE FROM projects WHERE slug LIKE 'test_delete_%' OR title LIKE 'test_delete_%';
 
 -- Grants + milestones

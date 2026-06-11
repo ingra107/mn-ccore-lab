@@ -216,17 +216,17 @@ function run() {
   }
   d1Flush('publications')
 
-  // ---- task comments ----
+  // ---- task comments (retargeted to activity_entries, schema-v78 dropped task_comments) ----
   for (const c of plan.task_comments ?? []) {
     const taskId = taskIdByOriginalDesc.get(c.task_description)
     if (!taskId) continue
     const id = mintId('cmt')
     d1Execute(
-      `INSERT INTO task_comments (id, task_id, content, author_slug) VALUES (` +
-      `${sqlEscape(id)}, ${sqlEscape(taskId)}, ${sqlEscape(stripPrefix(c.content))}, 'nick')`
+      `INSERT INTO activity_entries (id, entity_type, entity_id, project_id, kind, visibility, actor_slug, body, created_at) VALUES (` +
+      `${sqlEscape(id)}, 'task', ${sqlEscape(taskId)}, NULL, 'comment', 'team', 'nick', ${sqlEscape(stripPrefix(c.content))}, datetime('now'))`
     )
   }
-  d1Flush('task_comments')
+  d1Flush('activity_entries')
 
   // ---- reactions ----
   const emojiMap: Record<string, string> = { 'thumbs-up': '\u{1F44D}', 'eyes': '\u{1F440}', 'fire': '\u{1F525}' }

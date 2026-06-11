@@ -8,8 +8,8 @@
  *   - Tasks with invalid status / priority enum values
  *   - Projects with duplicate slugs
  *   - Projects with invalid status / stage / category enum values
- *   - Comments / project_updates with project_id pointing at missing projects
- *   - task_comments with task_id pointing at missing tasks
+ *   - activity_entries (project) with entity_id pointing at missing projects
+ *   - activity_entries (task) with entity_id pointing at missing tasks
  *   - subtasks with parent task_id missing
  *   - Ideas / decisions with author_slug not in team_members
  *   - Notifications with source_id pointing at missing entity
@@ -86,11 +86,13 @@ async function main() {
     else bug(s, 'PROJ-DUP-SLUGS', 'P0', '12.E Duplicate project slugs', JSON.stringify(dupSlugs).slice(0, 300), 'all unique')
 
     section(s, '12.F  Projects with invalid status enum')
+    // Derived from api/enum-domains.generated.json projects.status.canonical
+    // (pb-schema 0.5.0 added 'deleted'). Never hand-copy — re-run codegen if this list drifts.
     const badProjStatus = d1Query<{ status: string; n: number }>(
-      "SELECT status, COUNT(*) as n FROM projects WHERE status IS NOT NULL AND status NOT IN ('active','waiting_external','blocked','done') GROUP BY status"
+      "SELECT status, COUNT(*) as n FROM projects WHERE status IS NOT NULL AND status NOT IN ('active','waiting_external','blocked','done','deleted') GROUP BY status"
     )
     if (badProjStatus.length === 0) pass(s, '12.F All project status values canonical')
-    else bug(s, 'PROJ-BAD-STATUS', 'P1', '12.F Projects with invalid status', JSON.stringify(badProjStatus).slice(0, 200), "all in R10 canonical values")
+    else bug(s, 'PROJ-BAD-STATUS', 'P1', '12.F Projects with invalid status', JSON.stringify(badProjStatus).slice(0, 200), "all in ['active','waiting_external','blocked','done','deleted']")
 
     section(s, '12.G  Projects with invalid stage enum')
     const badProjStage = d1Query<{ stage: string; n: number }>(
@@ -106,21 +108,23 @@ async function main() {
     if (badProjCat.length === 0) pass(s, '12.H All project category values canonical')
     else bug(s, 'PROJ-BAD-CATEGORY', 'P2', '12.H Projects with invalid category', JSON.stringify(badProjCat).slice(0, 200), 'all in canonical category enum')
 
-    section(s, '12.I  task_comments with task_id pointing to missing task')
-    const orphanTaskComments = d1Query<{ count: number }>(
-      'SELECT COUNT(*) as count FROM task_comments WHERE task_id NOT IN (SELECT id FROM tasks)'
+    section(s, '12.I  activity_entries (task) with entity_id pointing to missing task')
+    // task_comments dropped (schema-v78, 2026-06-10) — orphan check now targets activity_entries.
+    const orphanTaskAe = d1Query<{ count: number }>(
+      "SELECT COUNT(*) as count FROM activity_entries WHERE entity_type='task' AND entity_id NOT IN (SELECT id FROM tasks)"
     )
-    const otc = Number(orphanTaskComments?.[0]?.count ?? 0)
-    if (otc === 0) pass(s, '12.I All task_comments point to existing tasks')
-    else bug(s, 'ORPHAN-TASK-COMMENTS', 'P1', '12.I task_comments with missing task', `${otc} rows`, '0')
+    const otc = Number(orphanTaskAe?.[0]?.count ?? 0)
+    if (otc === 0) pass(s, '12.I All task activity_entries point to existing tasks')
+    else bug(s, 'ORPHAN-TASK-AE', 'P1', '12.I task activity_entries with missing task', `${otc} rows`, '0')
 
-    section(s, '12.J  comments with project_id pointing to missing project')
-    const orphanProjComments = d1Query<{ count: number }>(
-      'SELECT COUNT(*) as count FROM comments WHERE project_id NOT IN (SELECT id FROM projects) AND project_id NOT IN (SELECT slug FROM projects WHERE slug IS NOT NULL)'
+    section(s, '12.J  activity_entries (project) with entity_id pointing to missing project')
+    // comments dropped (schema-v78, 2026-06-10) — orphan check now targets activity_entries.
+    const orphanProjAe = d1Query<{ count: number }>(
+      "SELECT COUNT(*) as count FROM activity_entries WHERE entity_type='project' AND entity_id NOT IN (SELECT id FROM projects) AND entity_id NOT IN (SELECT slug FROM projects WHERE slug IS NOT NULL)"
     )
-    const opc = Number(orphanProjComments?.[0]?.count ?? 0)
-    if (opc === 0) pass(s, '12.J All project comments point to existing projects')
-    else bug(s, 'ORPHAN-PROJ-COMMENTS', 'P2', '12.J comments with missing project', `${opc} rows`, '0')
+    const opc = Number(orphanProjAe?.[0]?.count ?? 0)
+    if (opc === 0) pass(s, '12.J All project activity_entries point to existing projects')
+    else bug(s, 'ORPHAN-PROJ-AE', 'P2', '12.J project activity_entries with missing project', `${opc} rows`, '0')
 
     section(s, '12.K  subtasks with parent task_id missing')
     const orphanSubtasks = d1Query<{ count: number }>(

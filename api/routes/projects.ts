@@ -795,8 +795,7 @@ export async function handleDeleteProject(
   // only proj_* PKs after Slice D.
   try {
     await env.DB.batch([
-      env.DB.prepare('DELETE FROM comments WHERE project_id = ? OR project_id = ?').bind(existing.id, existing.slug),
-      env.DB.prepare('DELETE FROM project_updates WHERE project_id = ? OR project_id = ?').bind(existing.id, existing.slug),
+      // comments/project_updates dropped (schema-v78, 2026-06-10).
       env.DB.prepare('DELETE FROM project_documents WHERE project_id = ? OR project_id = ?').bind(existing.id, existing.slug),
       env.DB.prepare('DELETE FROM milestones WHERE project_id = ? OR project_id = ?').bind(existing.id, existing.slug),
       env.DB.prepare('DELETE FROM conference_submissions WHERE project_id = ? OR project_id = ?').bind(existing.id, existing.slug),

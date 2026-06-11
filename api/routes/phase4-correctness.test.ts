@@ -321,7 +321,7 @@ describe('Fix 1b — handleAddTaskComment: @hermes creates ai_request + placehol
           bind: (...args: unknown[]) => { boundVals = [...boundVals, ...args]; return stmt; },
           run: async () => { inserts.push({ sql }); return { success: true, meta: {}, results: [] }; },
           first: async () => {
-            if (sql.includes('FROM task_comments WHERE id =')) return { id: 'tc-001' };
+            if (sql.includes('FROM activity_entries WHERE id =')) return { id: 'ae-001', entity_id: 'task-001', actor_slug: 'nick-ingraham', body: 'regular comment', created_at: '2026-06-10 00:00:00' };
             if (sql.includes('FROM team_members')) return { id: 'member_001', slug: 'nick-ingraham' };
             return null;
           },
@@ -498,8 +498,8 @@ describe('Fix 3b — handleDeleteTask: idempotency check runs BEFORE cascade', (
         const stmt: any = {
           bind: (...args: unknown[]) => { boundVals = [...boundVals, ...args]; return stmt; },
           run: async () => {
-            if (sql.includes('DELETE FROM task_comments') ||
-                sql.includes('DELETE FROM task_updates') ||
+            // task_comments/task_updates dropped (schema-v78, 2026-06-10).
+            if (sql.includes('DELETE FROM activity_entries') ||
                 sql.includes('DELETE FROM task_subtasks') ||
                 sql.includes('DELETE FROM notifications')) {
               deleteRuns.push(sql);

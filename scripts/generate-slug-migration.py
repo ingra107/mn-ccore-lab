@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# STATUS: COMPLETED 2026-04-19. DO NOT RE-RUN — migration already applied to prod.
 """Generate SQL migration to rename team_members slugs to preferred_name-last_name.
 
 Approach: for each rename (old -> new), clone the team_members row with new

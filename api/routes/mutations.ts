@@ -868,10 +868,8 @@ export async function applyDelete(env: Env, mut: Mutation, user: AuthUser): Prom
   if (mut.table === 'tasks') {
     try {
       await env.DB.batch([
-        env.DB.prepare('DELETE FROM task_comments WHERE task_id = ?').bind(mut.record_id),
-        env.DB.prepare('DELETE FROM task_updates WHERE task_id = ?').bind(mut.record_id),
-        // Design C (v77): unified-timeline rows for this task (legacy old-table
-        // deletes kept above; physical drop is a later phase).
+        // Design C (v77): unified-timeline rows for this task.
+        // task_comments/task_updates dropped (schema-v78, 2026-06-10).
         env.DB.prepare("DELETE FROM activity_entries WHERE entity_type = 'task' AND entity_id = ?").bind(mut.record_id),
         env.DB.prepare("DELETE FROM notifications WHERE source_type IN ('task','task_comment') AND source_id = ?").bind(mut.record_id),
       ]);
@@ -899,8 +897,7 @@ export async function applyDelete(env: Env, mut: Mutation, user: AuthUser): Prom
       const proj = await env.DB.prepare('SELECT slug FROM projects WHERE id = ?').bind(mut.record_id).first<{ slug: string | null }>();
       const slug = proj?.slug ?? null;
       const cascadeStmts = [
-        env.DB.prepare('DELETE FROM comments WHERE project_id = ?').bind(mut.record_id),
-        env.DB.prepare('DELETE FROM project_updates WHERE project_id = ?').bind(mut.record_id),
+        // comments/project_updates dropped (schema-v78, 2026-06-10).
         env.DB.prepare('DELETE FROM project_documents WHERE project_id = ?').bind(mut.record_id),
         env.DB.prepare('DELETE FROM milestones WHERE project_id = ?').bind(mut.record_id),
         env.DB.prepare('DELETE FROM conference_submissions WHERE project_id = ?').bind(mut.record_id),

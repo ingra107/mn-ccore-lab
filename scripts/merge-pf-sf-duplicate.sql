@@ -1,3 +1,4 @@
+-- STATUS: COMPLETED 2026-04-19. DO NOT RE-RUN — one-time migration, already applied to prod.
 -- 2026-04-19 DI-4 cleanup: merge duplicate "CLIF: PF-v-SF Oxygenation Severity" project.
 -- Canonical row: id='pf-v-sf-oxygenation-severity' (readable slug).
 -- Duplicate row: id='bc8e7ea601168a403679a13ea5c5db62', slug='clif-pf-sf'.

@@ -1020,15 +1020,11 @@ export async function handleDeleteTask(id: string, request: Request, user: AuthU
     return json({ data: { deleted: id, title: label, idempotent: true } });
   }
 
-  // Cascade-clean child rows. task_comments / task_updates / task_subtasks all
-  // carry a task_id FK-by-convention (not enforced). Leaving them orphans
-  // bloats the DB and creates stale joins forever. Notifications cleanup
-  // mirrors the batch-delete path (deep-audit 12.L).
+  // Cascade-clean child rows. task_subtasks carries a task_id FK-by-convention
+  // (not enforced). Notifications cleanup mirrors the batch-delete path (12.L).
+  // task_comments/task_updates dropped (schema-v78, 2026-06-10).
   try {
-    await env.DB.prepare('DELETE FROM task_comments WHERE task_id = ?').bind(id).run();
-    await env.DB.prepare('DELETE FROM task_updates WHERE task_id = ?').bind(id).run();
-    // Design C (v77): unified-timeline rows for this task. The legacy old-table
-    // deletes stay above (physical drop is a later phase).
+    // Design C (v77): unified-timeline rows for this task.
     await env.DB.prepare("DELETE FROM activity_entries WHERE entity_type = 'task' AND entity_id = ?").bind(id).run();
     try { await env.DB.prepare('DELETE FROM task_subtasks WHERE task_id = ?').bind(id).run(); } catch { /* table may not exist */ }
     await env.DB.prepare(

@@ -227,7 +227,7 @@ describe('Fix 1: applyUpdate rejects updates to deleted rows', () => {
 describe('Fix 2: applyDelete cascades for tasks table', () => {
   const taskId = 'task_01cascade_test_task_000001'
 
-  it('issues DELETE statements for task_comments, task_updates, notifications', async () => {
+  it('issues DELETE statements for activity_entries and notifications (task_comments/task_updates dropped v78)', async () => {
     const db = makeStubDB()
     db._store.set(taskId, {
       id: taskId,
@@ -259,9 +259,10 @@ describe('Fix 2: applyDelete cascades for tasks table', () => {
     expect(result.status).toBe('accepted')
 
     // Cascade SQLs must have been issued via batch()
+    // task_comments/task_updates are dropped (schema-v78, 2026-06-10).
     const sqls = db._batchedSqls.join(' ')
-    expect(sqls).toContain('task_comments')
-    expect(sqls).toContain('task_updates')
+    expect(sqls).not.toContain('task_comments')
+    expect(sqls).not.toContain('task_updates')
     // Design C (v77): unified-timeline rows are cleared in the same batch.
     expect(sqls).toContain('activity_entries')
     expect(sqls).toContain('notifications')
@@ -309,7 +310,7 @@ describe('Fix 2: applyDelete cascades for tasks table', () => {
 describe('Fix 3: applyDelete cascades for projects table', () => {
   const projId = 'proj_01cascade_test_proj_000001'
 
-  it('issues DELETE for comments/project_updates and NULL for tasks.project_id', async () => {
+  it('issues DELETE for project_documents/milestones/activity_entries and NULL for tasks.project_id (comments/project_updates dropped v78)', async () => {
     const db = makeStubDB()
     db._store.set(projId, {
       id: projId,
@@ -341,8 +342,11 @@ describe('Fix 3: applyDelete cascades for projects table', () => {
     expect(result.status).toBe('accepted')
 
     const sqls = db._batchedSqls.join(' ')
-    expect(sqls).toContain('comments')
-    expect(sqls).toContain('project_updates')
+    // comments/project_updates dropped (schema-v78, 2026-06-10).
+    expect(sqls).not.toContain('DELETE FROM comments')
+    expect(sqls).not.toContain('project_updates')
+    // Live cascades: project_documents, milestones, activity_entries, tasks NULL-out.
+    expect(sqls).toContain('project_documents')
     // tasks.project_id should be NULLed (UPDATE not DELETE)
     expect(sqls).toMatch(/project_id|UPDATE tasks/i)
   })

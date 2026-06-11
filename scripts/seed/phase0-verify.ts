@@ -28,7 +28,7 @@ const CHECKS: Check[] = [
   { table: 'research_digest',       where: "title LIKE 'test_delete_%'" },
   { table: 'publications',          where: "title LIKE 'test_delete_%'" },
   { table: 'task_subtasks',         where: "title LIKE 'test_delete_%'" },
-  { table: 'task_comments',         where: "content LIKE 'test_delete_%'" },
+  // task_comments dropped (schema-v78, 2026-06-10) — activity_entries now.
 ]
 
 function count(table: string, where: string): number {

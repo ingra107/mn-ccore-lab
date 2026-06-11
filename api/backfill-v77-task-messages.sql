@@ -1,7 +1,8 @@
 -- backfill-v77-task-messages.sql (2026-06-10)
+-- STATUS: COMPLETED 2026-06-10 (3 task_updates rows migrated to activity_entries;
+-- task_comments had 0 rows). DO NOT RE-RUN — source tables dropped in schema-v78.
 -- Migrate the live task_comments + task_updates rows into the unified
--- activity_entries store (Design C, schema-v77). The ORCHESTRATOR runs this
--- (test FIRST, probe, then prod) — the Hub session only authors it.
+-- activity_entries store (Design C, schema-v77). The ORCHESTRATOR ran this.
 --
 -- Scope (ground truth, live prod D1 2026-06-10): task_updates = 3 rows (all
 -- nick-ingraham, update_type 'progress'); task_comments = 0 rows. Legacy

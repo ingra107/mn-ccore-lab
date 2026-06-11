@@ -21,15 +21,19 @@
 -- Ambiguous smoke-test rows that have no deleted_at are intentionally
 -- NOT included (e.g. "A3 work-rigorous-smoke 2026-04-30 12:03:21",
 -- "M5 peer-adopt smoke 2026-04-28T19:30", "[SMOKE 3.1b] post-deploy verify").
+--
+-- schema-v78 (2026-06-10): task_comments / task_updates / comments /
+-- project_updates are DROPPED. Those DELETE blocks are replaced with
+-- activity_entries equivalents below.
 
 -- ── Delete child rows whose parent is a fixture ──────────────────────
--- task_comments / task_files / task_handoffs / task_subtasks /
--- task_updates all reference tasks(id). `lab_answers` cascades from
--- lab_questions so handled automatically. action_items + agenda_items
--- reference meetings. milestones + project_documents + comments
--- reference projects.
+-- task_files / task_handoffs / task_subtasks reference tasks(id).
+-- `lab_answers` cascades from lab_questions automatically.
+-- action_items + agenda_items reference meetings.
+-- milestones + project_documents reference projects.
 
-DELETE FROM task_comments WHERE task_id IN (
+-- Activity entries for test tasks (replaces task_comments + task_updates, schema-v78)
+DELETE FROM activity_entries WHERE entity_type = 'task' AND entity_id IN (
   SELECT id FROM tasks WHERE
     LOWER(title) LIKE '\_test\_delete\_%' ESCAPE '\' OR
     LOWER(title) LIKE 'test\_delete\_%' ESCAPE '\' OR
@@ -73,17 +77,6 @@ DELETE FROM task_subtasks WHERE task_id IN (
     LOWER(title) LIKE '%<script%' OR
     LOWER(title) LIKE '%inspection test%'
 );
-DELETE FROM task_updates WHERE task_id IN (
-  SELECT id FROM tasks WHERE
-    LOWER(title) LIKE '\_test\_delete\_%' ESCAPE '\' OR
-    LOWER(title) LIKE 'test\_delete\_%' ESCAPE '\' OR
-    LOWER(title) LIKE 'deep-audit-%' OR
-    LOWER(title) LIKE '%\_\_\_cli\_edit' ESCAPE '\' OR
-    LOWER(title) LIKE 'test task%' OR
-    LOWER(title) LIKE '%test_delete_%' OR
-    LOWER(title) LIKE '%<script%' OR
-    LOWER(title) LIKE '%inspection test%'
-);
 
 -- Meeting-related children
 DELETE FROM action_items WHERE meeting_id IN (
@@ -99,9 +92,9 @@ DELETE FROM agenda_items WHERE meeting_id IN (
     LOWER(title) LIKE 'deep-audit-%'
 );
 
--- Project-related children. `comments` and `milestones` reference
--- projects; project_documents references projects too.
-DELETE FROM comments WHERE project_id IN (
+-- Project-related children. milestones + project_documents reference projects.
+-- comments dropped (schema-v78, 2026-06-10) — activity_entries handles it.
+DELETE FROM activity_entries WHERE entity_type = 'project' AND entity_id IN (
   SELECT id FROM projects WHERE
     LOWER(title) LIKE '\_test\_delete\_%' ESCAPE '\' OR
     LOWER(title) LIKE 'test\_delete\_%' ESCAPE '\' OR
@@ -176,10 +169,12 @@ DELETE FROM activity_log WHERE
 -- All project rows confirmed soft-deleted (deleted_at IS NOT NULL).
 -- All task rows confirmed soft-deleted except explicit `AND deleted_at
 -- IS NOT NULL` guards below. No FK children exist for any of these
--- rows (task_comments/files/handoffs/subtasks/updates and
--- project_updates/milestones/comments/project_documents all return 0).
+-- rows (task_files/handoffs/subtasks and
+-- milestones/project_documents all return 0).
 -- processed_mutations rows for these records (~83 task + ~97 project)
 -- are purged here too to avoid idempotency-table bloat.
+-- task_comments / task_updates / comments / project_updates are DROPPED
+-- (schema-v78, 2026-06-10) — those blocks replaced with activity_entries.
 
 -- Helper CTE-equivalent: the project ID set used in multiple places.
 -- D1 doesn't support CTEs in DDL context across statements, so the
@@ -218,9 +213,8 @@ DELETE FROM processed_mutations WHERE record_id IN (
     slug LIKE '_TEST\_DELETE\_proj\_%' ESCAPE '\'
 );
 
--- project_updates (child of projects — present in schema, not in
--- original R4 script; confirmed 0 rows but included for FK correctness)
-DELETE FROM project_updates WHERE project_id IN (
+-- activity_entries for test-fixture projects (project_updates dropped schema-v78)
+DELETE FROM activity_entries WHERE entity_type = 'project' AND entity_id IN (
   SELECT id FROM projects WHERE
     slug LIKE 'zz-test-proj-class1-charact%' OR
     slug LIKE 'zz-winner-class4-charact%' OR
@@ -236,8 +230,9 @@ DELETE FROM project_updates WHERE project_id IN (
 );
 
 -- task child rows for the new task patterns (confirmed 0 rows;
--- included for FK correctness in case any were added after the audit)
-DELETE FROM task_comments WHERE task_id IN (
+-- included for correctness in case any were added after the audit)
+-- task_comments / task_updates dropped (schema-v78, 2026-06-10).
+DELETE FROM activity_entries WHERE entity_type = 'task' AND entity_id IN (
   SELECT id FROM tasks WHERE
     LOWER(title) LIKE 'zz-%' OR
     LOWER(title) LIKE '\_test\_%' ESCAPE '\' OR
@@ -283,21 +278,6 @@ DELETE FROM task_handoffs WHERE task_id IN (
     (LOWER(title) LIKE 'a3 work-rigorous-smoke%' AND deleted_at IS NOT NULL)
 );
 DELETE FROM task_subtasks WHERE task_id IN (
-  SELECT id FROM tasks WHERE
-    LOWER(title) LIKE 'zz-%' OR
-    LOWER(title) LIKE '\_test\_%' ESCAPE '\' OR
-    LOWER(title) LIKE 'f20verify%' OR
-    LOWER(title) LIKE 'enum-gate-test%' OR
-    LOWER(title) LIKE 'leak test%' OR
-    LOWER(title) LIKE '% (delete me)%' OR
-    LOWER(title) LIKE '[smoke test %' OR
-    LOWER(title) LIKE 'a3 work-side smoke%' OR
-    LOWER(title) = 'a1.2 smoke' OR
-    LOWER(title) LIKE 'cleanup b%post%smoke%' OR
-    (LOWER(title) LIKE 'm5 peer-adopt smoke%' AND deleted_at IS NOT NULL) OR
-    (LOWER(title) LIKE 'a3 work-rigorous-smoke%' AND deleted_at IS NOT NULL)
-);
-DELETE FROM task_updates WHERE task_id IN (
   SELECT id FROM tasks WHERE
     LOWER(title) LIKE 'zz-%' OR
     LOWER(title) LIKE '\_test\_%' ESCAPE '\' OR

@@ -43,8 +43,8 @@ server-side via X-API-Key + `REQUIRE_AUTH` + JWT verify.
 | meetings | 20+ | Biweekly meetings + agendas |
 | agenda_items | dynamic | Per-meeting agenda items |
 | action_items | 50+ | Legacy action items (pre-task system) |
-| project_updates | dynamic | Per-project status updates (FROZEN 2026-06-10 — projection over activity_entries) |
-| project_comments | dynamic | Threaded project comments (FROZEN 2026-06-10 — projection over activity_entries) |
+| project_updates | DROPPED 2026-06-10 | schema-v78; snapshots at Scratch/t3-drop-snapshots-2026-06-10/ |
+| project_comments | DROPPED 2026-06-10 | schema-v78 (was `comments` table); snapshots at Scratch/t3-drop-snapshots-2026-06-10/ |
 | research_digest | 152+ | Weekly paper digests |
 | notifications | dynamic | In-app notification feed |
 | commitments | dynamic | Team commitments tracker |
@@ -52,8 +52,8 @@ server-side via X-API-Key + `REQUIRE_AUTH` + JWT verify.
 | tasks | 601 | Unified task system (+ key_link_1/2/3 + _desc columns, schema v37; composite index `(completed, due_date, created_at DESC)` v46). |
 | ideas | dynamic | Research ideas board with voting |
 | activity_entries | dynamic | **v77 unified timeline (2026-06-10)** — ALL task/project human messages + completions/system events; ONE write path `postActivityEntry()` (CLAUDE.md Rule 70) |
-| task_comments | FROZEN (0 rows) | direct writes dead 2026-06-10 — old endpoints are projections over activity_entries; physical drop = Phase 2 |
-| task_updates | FROZEN (3 rows backfilled) | direct writes dead 2026-06-10 — projections over activity_entries; physical drop = Phase 2 |
+| task_comments | DROPPED 2026-06-10 | schema-v78; endpoints remain as activity_entries projections; snapshots at Scratch/t3-drop-snapshots-2026-06-10/ |
+| task_updates | DROPPED 2026-06-10 | schema-v78; endpoints remain as activity_entries projections; snapshots at Scratch/t3-drop-snapshots-2026-06-10/ |
 | lab_settings | 7 | Key-value settings store (includes `pi_emails` JSON, schema v44) |
 | workflow_templates | 3+ | Custom project stage templates |
 | email_drafts | dynamic | Email draft status synced from brain.db (schema v37) |

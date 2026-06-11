@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+# STATUS: PRE-DROP ONLY — the comments/project_updates DELETE sections in the
+# generated SQL reference tables dropped in schema-v78 (2026-06-10).
+# DO NOT re-run this script post-drop without updating those FK-clear lines.
 """
 P2 Hub Re-Key Apply Script
 ==========================

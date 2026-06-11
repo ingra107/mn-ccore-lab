@@ -1,3 +1,4 @@
+-- STATUS: COMPLETED 2026-04-19. DO NOT RE-RUN — one-time migration, already applied to prod.
 -- 2026-04-19 Phase 36b: rename team_members slugs to preferred_name-last_name.
 -- Current slugs are inconsistent (2 directors as first-name, 17 members as
 -- last-name). This migration converges everyone on `preferred-last` so

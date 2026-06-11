@@ -12,11 +12,12 @@
  * Post-fix: env.DB.batch([...]) — D1 executes all statements in a single
  * implicit transaction; any error rolls back the whole batch.
  *
- * B7 (SEC-T0-7, 2026-05-22) expanded the cascade from 3 child statements to 9:
- *   comments, project_updates, project_documents, milestones,
- *   conference_submissions, submission_events, regulatory_items,
- *   project_dependencies, and the tasks.project_id NULL-out. The structural
- *   guard below now asserts 9.
+ * B7 (SEC-T0-7, 2026-05-22) expanded the cascade from 3 child statements to 9.
+ * schema-v78 (2026-06-10) dropped comments + project_updates, leaving 7 live
+ * child statements: project_documents, milestones, conference_submissions,
+ * submission_events, regulatory_items, manuscript_revisions, project_dependencies
+ * + the tasks.project_id NULL-out + Design C activity_entries clear = 9 total.
+ * The structural guard below now asserts 9.
  *
  * ── Atomicity test limitation ────────────────────────────────────────────────
  * True rollback semantics (all 3 statements undo on mid-batch failure) are a
@@ -134,7 +135,7 @@ beforeEach(() => {
 })
 
 describe('handleDeleteProject — cascade-clean uses DB.batch() (B-CRIT-05)', () => {
-  it('calls DB.batch() exactly once with 10 statements (structural guard)', async () => {
+  it('calls DB.batch() exactly once with 8 statements (structural guard)', async () => {
     const capturedStmts: unknown[] = []
     const env = makeEnv({
       onBatch: (stmts) => capturedStmts.push(...stmts),
@@ -146,10 +147,12 @@ describe('handleDeleteProject — cascade-clean uses DB.batch() (B-CRIT-05)', ()
     // batch() called exactly once
     expect((env.DB.batch as ReturnType<typeof vi.fn>).mock.calls).toHaveLength(1)
 
-    // batch() received exactly 10 statements: B7 expanded cascade (9) + the
-    // Design C (v77) activity_entries project-row clear (+1).
+    // batch() received exactly 8 statements: B7 cascade minus comments/project_updates
+    // (dropped schema-v78, 2026-06-10) = project_documents, milestones,
+    // conference_submissions, submission_events, regulatory_items,
+    // project_dependencies, activity_entries, UPDATE tasks.
     const [batchArg] = (env.DB.batch as ReturnType<typeof vi.fn>).mock.calls[0] as [unknown[]]
-    expect(batchArg).toHaveLength(10)
+    expect(batchArg).toHaveLength(8)
 
     // Deleted successfully
     expect(response.status).toBe(200)

@@ -14,13 +14,7 @@ DELETE FROM reactions
        WHERE description LIKE 'test_delete_%' OR title LIKE 'test_delete_%'
     );
 
--- Task comments (child of tasks)
-DELETE FROM task_comments
-  WHERE content LIKE 'test_delete_%'
-     OR task_id IN (
-       SELECT id FROM tasks
-        WHERE description LIKE 'test_delete_%' OR title LIKE 'test_delete_%'
-     );
+-- task_comments dropped (schema-v78, 2026-06-10) — activity_entries handles comments now.
 
 -- Task subtasks (child of tasks)
 DELETE FROM task_subtasks
