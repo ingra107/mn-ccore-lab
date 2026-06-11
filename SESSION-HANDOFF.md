@@ -1,4 +1,26 @@
-# ▶▶▶ NEXT-SESSION DOCKET (2026-06-11) — EXECUTE IN ORDER, ASAP
+# ✅ DOCKET EXECUTED 2026-06-10/11 NIGHT (PB ultracode session) — ALL TICKETS CLOSED
+
+> **T1 ✅** daily_plans+daily_reflections DROPPED test+prod (~23:20 CDT; snapshots+DDL
+> `Scratch/t1-drop-snapshots-2026-06-10/`; codex cold-read SAFE; PB decision doc + I37 yaml
+> retired `d97eef43`; brain.db task completed `.applied=True`; REFERENCE rows removed `82e0558c`).
+> **T2 ✅** tail done: descriptionLog.ts deleted (`ad11f871`, live muddied-count=0).
+> **T3 ✅** P2-C complete: 18 readers + team-pulse (orchestrator catch, `3cdef5c5`) repointed
+> (`a8b605dc`); codex cold-read forced deploy-before-drop; cascade-removal wave `d0d57028`
+> (schema-v78, seeds/tests/deep-audit retargeted, REFERENCE+Rule-70 updated); 4 twins DROPPED
+> test+prod ~00:00 CDT (snapshots `Scratch/t3-drop-snapshots-2026-06-10/`); PB decision doc
+> `2026-06-10-hub-legacy-message-tables-drop.md`.
+> **T4 ✅** Hermes response lane live (`a4e116c1`): placeholder resolved in-place, visibility
+> inherited, 10 tests, prod-smoked. **T5 ✅** ActivityEntryItem unified + filterMatchesKind +
+> LinkChip (`c45f9580`; 13-difference props contract). **T6 ✅** (a) audit verdict ALL-LOW →
+> 0 of 974 imported per Nick's medium/high bar (`docs/superpowers/plans/2026-06-11-t6a-system-events-audit.md`);
+> (b) 12 spam clusters collapsed 41→12 (rollback: `DELETE ... source_id LIKE 'spam_collapse:%'`);
+> 112 truncations proven source-truncated, unrecoverable. Brief-7 ✅ actor=nick-ingraham
+> (+4-row backfill). HUB-4 ✅ CORS '*' KEEP-as-final (named consumer in helpers.ts docblock).
+> **Tests 817/817 · live deploy `4fd2dda4` = HEAD · D1 schema v78.**
+> Carried: phase0-seed.ts task_comments plan-JSON loop (non-live path, next phase0 audit);
+> 13 pre-existing dogfood Playwright failures on main (predate tonight).
+
+# ▼ (executed above) NEXT-SESSION DOCKET (2026-06-11) — EXECUTE IN ORDER, ASAP
 
 > **Nick (2026-06-10 close, verbatim intent): "i would rather just get everything you mentioned
 > done asap" — do NOT wait for the 1pm dogfood-window close; he explicitly waived the remainder
