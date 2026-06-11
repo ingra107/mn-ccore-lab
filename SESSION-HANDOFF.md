@@ -20,9 +20,15 @@ NULL). Full execution record at the bottom of
 **H2 — Nick's @me visibility click-test** (his step, still pending since v77 ship): post an
 @me-locked comment, confirm only-you visibility. Prompt him at session start.
 
-**H3 — Nightly description gardener** (designed, NOT built — `docs/superpowers/plans/2026-06-10-m5-phase2-brainstorm-lite.md`):
-machine-origin entries only, never rewrites human comments. Build only AFTER H1 proves
-descriptions stay clean (it's the keep-clean automation; Nick's call on appetite).
+**H3 ✅ BUILT 2026-06-11** (Nick approved appetite; PB commit `1f1e523f`, 41 tests green,
+real prod dry-run validated — 9 machine-origin admitted, @hermes/Hermes/free-text human notes
+correctly left alone, 0 mutations proposed). PB `scripts/gardener/activity_gardener.py`:
+DELTA (SyncCursor) → fail-closed machine-origin gate (ARM1 source_table allowlist + ARM2
+pinned PB breadcrumb body-templates — live breadcrumbs are provenance-indistinguishable from
+hand-typed notes, so default-DENY) → one bounded Haiku call → validated mutations
+(`gardener_collapse:` rollback pattern). `--dry-run` DEFAULT; **scheduler wiring left for
+Nick** (schedule.json entry named `activity-gardener`, home-only, 22:40 — enable after
+reviewing the first dry-run artifact in PB `data/gardener/runs/`).
 
 **H4 — `questions.ts` Hermes copy convergence** — CONDITIONAL: only if/when Ask-the-Lab gets a
 timeline surface. Don't self-start.
