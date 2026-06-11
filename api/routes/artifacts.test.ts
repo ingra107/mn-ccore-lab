@@ -69,6 +69,7 @@ function makeDb(opts: {
           return null;
         },
         all: async () => {
+          if (/FROM artifacts WHERE id/.test(sql)) return { results: opts.artifact ? [opts.artifact] : [] };
           if (/FROM artifact_versions/.test(sql)) return { results: opts.versions ?? [] };
           if (/FROM artifacts/.test(sql)) return { results: opts.list ?? [] };
           return { results: [] };
@@ -77,9 +78,13 @@ function makeDb(opts: {
       return stmt;
     },
     batch: async (stmts: any[]) => {
-      // Execute each prepared statement's run to capture the writes.
-      for (const s of stmts) { if (s && typeof s.run === 'function') await s.run(); }
-      return stmts.map(() => ({ success: true, meta: {}, results: [] }));
+      // Like D1: per-statement results. run() still fires so write-capture works.
+      const out: unknown[] = [];
+      for (const s of stmts) {
+        if (s && typeof s.run === 'function') await s.run();
+        out.push(s && typeof s.all === 'function' ? await s.all() : { success: true, meta: {}, results: [] });
+      }
+      return out;
     },
   };
 }
