@@ -82,6 +82,19 @@ export function buildObsidianUri(vaultRelPath: string): string {
 }
 
 /**
+ * Build the `mnccore://obsidian/<note>` launch URI — the chip href since
+ * 2026-06-10. The handler opens the note via the Obsidian CLI when Obsidian is
+ * RUNNING (the obsidian:// second-instance handoff drops URIs intermittently;
+ * the CLI never does) and falls back to the obsidian:// protocol on cold start.
+ * The target is a bare note name or vault-relative path — both resolve like a
+ * wikilink on both routes.
+ */
+export function buildObsidianLaunchUri(target: string): string {
+  // encodeURI keeps `/` intact and escapes spaces — the handler decodes %20.
+  return `mnccore://obsidian/${encodeURI(target)}`
+}
+
+/**
  * Normalize a heterogeneous local-folder/file path into the ONE canonical
  * forward-slash shape the `mnccore://` Windows handler can `if exist`-check.
  *
@@ -129,7 +142,7 @@ export function classifyUrl(url: string): ClassifiedUrl {
   // nothing opens" bug (Nick 2026-06-10).
   const wiki = parseWikilink(url)
   if (wiki) {
-    return { href: buildObsidianUri(wiki.target), Icon: BookText, typeLabel: 'Obsidian', isHttp: false }
+    return { href: buildObsidianLaunchUri(wiki.target), Icon: BookText, typeLabel: 'Obsidian', isHttp: false }
   }
   const isHttp = url.startsWith('http')
   if (isHttp && gmailKind(url)) {
@@ -154,7 +167,7 @@ export function classifyUrl(url: string): ClassifiedUrl {
     const vaultRel = obsidianVaultRelPath(normalized)
     if (vaultRel) {
       return {
-        href: buildObsidianUri(vaultRel),
+        href: buildObsidianLaunchUri(vaultRel),
         Icon: BookText,
         typeLabel: 'Obsidian',
         isHttp: false,

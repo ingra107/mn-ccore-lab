@@ -115,13 +115,15 @@ describe('Obsidian vault markdown classification', () => {
     )
   })
 
-  it('classifyUrl routes a vault .md key link to Obsidian, not Explorer', () => {
+  it('classifyUrl routes a vault .md key link to Obsidian via the mnccore handler verb', () => {
     const c = classifyUrl(
       'file:///C:/Users/ingra107/Peripheral-Brain/Projects/clif/PROJECT.md',
     )
     expect(c.typeLabel).toBe('Obsidian')
     expect(c.isHttp).toBe(false)
-    expect(c.href).toBe('obsidian://open?vault=Peripheral-Brain&file=Projects/clif/PROJECT')
+    // 2026-06-10: hrefs route through the handler (CLI warm / protocol cold) —
+    // the raw obsidian:// second-instance handoff drops URIs intermittently.
+    expect(c.href).toBe('mnccore://obsidian/Projects/clif/PROJECT')
   })
 
   it('classifyUrl still treats a non-vault .md path as a plain folder open', () => {
@@ -197,19 +199,18 @@ describe('parseWikilink', () => {
 })
 
 describe('classifyUrl — wikilinks', () => {
-  it('classifies a wikilink as an Obsidian chip with a real obsidian:// href', () => {
+  it('classifies a wikilink as an Obsidian chip routed through the handler verb', () => {
     const c = classifyUrl('[[iwd-r03-resubmission-revisions-2026-05-29|R03 Revision IWD]]')
     expect(c.typeLabel).toBe('Obsidian')
     expect(c.isHttp).toBe(false)
-    expect(c.href).toBe(
-      'obsidian://open?vault=Peripheral-Brain&file=iwd-r03-resubmission-revisions-2026-05-29',
-    )
+    expect(c.href).toBe('mnccore://obsidian/iwd-r03-resubmission-revisions-2026-05-29')
   })
 
-  it('keeps path separators intact for path-style wikilinks', () => {
+  it('keeps path separators intact and encodes spaces for path-style wikilinks', () => {
     const c = classifyUrl('[[Projects/lpv-adherence-paper/iwd-lpv-revision-chest-cc|x]]')
-    expect(c.href).toBe(
-      'obsidian://open?vault=Peripheral-Brain&file=Projects/lpv-adherence-paper/iwd-lpv-revision-chest-cc',
+    expect(c.href).toBe('mnccore://obsidian/Projects/lpv-adherence-paper/iwd-lpv-revision-chest-cc')
+    expect(classifyUrl('[[Context/Meeting Notes/2026-06-10]]').href).toBe(
+      'mnccore://obsidian/Context/Meeting%20Notes/2026-06-10',
     )
   })
 })

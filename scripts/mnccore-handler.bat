@@ -18,6 +18,17 @@ echo %date% %time% ARGS: %* >> "%TEMP%\mnccore-handler.log"
 ::                                            allowlist — no other filename is ever executed.
 ::   mnccore://process                      → run %USERPROFILE%\Peripheral-Brain\Quick_Process.bat.
 ::   mnccore://bugsquash                     → run <this dir>\bug-squasher.bat (sibling).
+::   mnccore://obsidian/<url-encoded-note>  → open a vault note. WARM (Obsidian
+::                                            running): the Obsidian CLI shim
+::                                            (Obsidian.com open) — the protocol's
+::                                            second-instance handoff drops URIs
+::                                            intermittently (Nick 2026-06-10), the
+::                                            CLI never does. COLD: falls back to
+::                                            the obsidian:// protocol (reliable on
+::                                            cold start). Needs Settings → General
+::                                            → Advanced → "Command line interface"
+::                                            ON for the warm path; otherwise the
+::                                            protocol fallback fires.
 ::   <anything else>                         → message + exit 1.
 ::
 :: Defence-in-depth: the browser's external-protocol confirmation dialog is the
@@ -58,6 +69,15 @@ if "!url:~0,7!"=="workon/" (
     set "arg=!url:~7!"
     call :decode arg
     call :verb_workon "!arg!"
+    exit /b !errorlevel!
+)
+:: obsidian note-target decode is %20 → space ONLY (inline below). Do NOT flip
+:: / to \ — the target is a vault-relative note path (or bare name); Obsidian
+:: wants forward slashes. (No ::-comments inside the block — batch parse error.)
+if "!url:~0,9!"=="obsidian/" (
+    set "arg=!url:~9!"
+    set "arg=!arg:%%20= !"
+    call :verb_obsidian "!arg!"
     exit /b !errorlevel!
 )
 if /I "!url!"=="process" (
@@ -193,6 +213,47 @@ if defined MNCCORE_HANDLER_DRYRUN (
 :: CWD = the Hub repo root so the Claude session starts there (bug-squasher.bat
 :: also cd's there itself, but set it here too for the spawned window title/dir).
 start "" /D "%~dp0.." "!bs!"
+exit /b 0
+
+
+:: ── :verb_obsidian <note> ── open a vault note (CLI warm / protocol cold) ────
+:: SECURITY: the only executables this verb runs are the fixed-path Obsidian CLI
+:: shim (%LOCALAPPDATA%\Programs\Obsidian\Obsidian.com) and the obsidian://
+:: protocol handler. The note arg is data, never executed.
+:verb_obsidian
+set "note=%~1"
+if "!note!"=="" (
+    call :fail "obsidian: empty note target"
+    exit /b 1
+)
+set "obscli=%LOCALAPPDATA%\Programs\Obsidian\Obsidian.com"
+:: Re-encode spaces for the protocol-fallback URI (built either way; also used
+:: by dry-run output).
+set "enc=!note: =%%20!"
+:: WARM path: Obsidian running + CLI shim present → CLI open (file= resolves
+:: bare names AND vault-relative paths exactly like a wikilink). Success is
+:: detected by the CLI's "Opened:" line — a disabled CLI prints an error and
+:: we fall through to the protocol instead of silently doing nothing.
+:: Full paths (PATH-independence — same lesson as verb_open's explorer.exe).
+"%SystemRoot%\System32\tasklist.exe" /FI "IMAGENAME eq Obsidian.exe" 2>nul | "%SystemRoot%\System32\find.exe" /I "Obsidian.exe" >nul
+if errorlevel 1 goto :obsidian_proto
+if not exist "!obscli!" goto :obsidian_proto
+if defined MNCCORE_HANDLER_DRYRUN (
+    echo DRYRUN obsidian-cli: "!obscli!" open "file=!note!"
+    exit /b 0
+)
+"!obscli!" open "file=!note!" 2>&1 | findstr /I /C:"Opened:" >nul
+if not errorlevel 1 (
+    echo %date% %time% obsidian CLI opened: !note! >> "%TEMP%\mnccore-handler.log"
+    exit /b 0
+)
+echo %date% %time% obsidian CLI declined (disabled?), protocol fallback: !note! >> "%TEMP%\mnccore-handler.log"
+:obsidian_proto
+if defined MNCCORE_HANDLER_DRYRUN (
+    echo DRYRUN obsidian-proto: start "" "obsidian://open?vault=Peripheral-Brain&file=!enc!"
+    exit /b 0
+)
+start "" "obsidian://open?vault=Peripheral-Brain&file=!enc!"
 exit /b 0
 
 
