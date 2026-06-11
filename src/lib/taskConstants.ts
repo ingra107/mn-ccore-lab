@@ -2,21 +2,28 @@ import { Circle, Clock, CheckCircle2, AlertTriangle, Hourglass } from 'lucide-re
 import { STATUS_BG_EXTENDED } from './statusColors'
 
 // ── Status ──
+// Color SSOT (Nick 2026-06-11, "lean on consistency"): task status/priority
+// colors point at the SAME --task-accent-* tokens the shared TaskRow uses
+// (Lanes/Columns/Today dots), so a status or priority reads as the same color
+// on every surface and in every view. Tokens are the AA-pinned pair in
+// index.css (:root / .dark). Neutral todo/low stay --slate (no accent
+// equivalent — the shared row renders them transparent/dim). "Blocked" maps
+// to coral per Rule 59 (coral = warnings).
 
 export const STATUS_CONFIG = {
   todo: { label: 'To Do', color: 'var(--slate)', icon: 'Circle' },
-  in_progress: { label: 'In Progress', color: 'var(--teal)', icon: 'Clock' },
-  done: { label: 'Done', color: 'var(--green)', icon: 'CheckCircle2' },
-  blocked: { label: 'Blocked', color: 'var(--maroon)', icon: 'AlertTriangle' },
-  waiting_external: { label: 'Waiting (External)', color: 'var(--orange)', icon: 'Hourglass' },
+  in_progress: { label: 'In Progress', color: 'var(--task-accent-teal)', icon: 'Clock' },
+  done: { label: 'Done', color: 'var(--task-accent-green)', icon: 'CheckCircle2' },
+  blocked: { label: 'Blocked', color: 'var(--task-accent-coral)', icon: 'AlertTriangle' },
+  waiting_external: { label: 'Waiting (External)', color: 'var(--task-accent-orange)', icon: 'Hourglass' },
 } as const
 
 export const STATUS_OPTIONS = [
   { value: 'todo', label: 'To Do', icon: Circle, color: 'var(--slate)' },
-  { value: 'in_progress', label: 'In Progress', icon: Clock, color: 'var(--teal)' },
-  { value: 'waiting_external', label: 'Waiting (External)', icon: Hourglass, color: 'var(--orange)' },
-  { value: 'blocked', label: 'Blocked', icon: AlertTriangle, color: 'var(--maroon)' },
-  { value: 'done', label: 'Done', icon: CheckCircle2, color: 'var(--green)' },
+  { value: 'in_progress', label: 'In Progress', icon: Clock, color: 'var(--task-accent-teal)' },
+  { value: 'waiting_external', label: 'Waiting (External)', icon: Hourglass, color: 'var(--task-accent-orange)' },
+  { value: 'blocked', label: 'Blocked', icon: AlertTriangle, color: 'var(--task-accent-coral)' },
+  { value: 'done', label: 'Done', icon: CheckCircle2, color: 'var(--task-accent-green)' },
 ]
 
 /** Delegates to the shared STATUS_BG_EXTENDED map from statusColors.ts */
@@ -27,26 +34,28 @@ export const STATUS_CYCLE = ['todo', 'in_progress', 'done'] as const
 
 // ── Priority ──
 
+// Same SSOT note as Status above: urgent/high/medium match the shared
+// TaskRow's reserved priority-dot palette (coral/orange/gold accents).
 export const PRIORITY_CONFIG = {
-  urgent: { label: 'Urgent', color: 'var(--maroon)', bg: 'rgba(122, 0, 25, 0.14)' },
-  high: { label: 'High', color: 'var(--orange)', bg: 'rgba(194, 65, 12, 0.14)' },
-  medium: { label: 'Med', color: 'var(--gold)', bg: 'rgba(201, 168, 76, 0.14)' },
+  urgent: { label: 'Urgent', color: 'var(--task-accent-coral)', bg: 'rgba(122, 0, 25, 0.14)' },
+  high: { label: 'High', color: 'var(--task-accent-orange)', bg: 'rgba(194, 65, 12, 0.14)' },
+  medium: { label: 'Med', color: 'var(--task-accent-gold)', bg: 'rgba(201, 168, 76, 0.14)' },
   low: { label: 'Low', color: 'var(--slate)', bg: 'rgba(100, 116, 139, 0.14)' },
 } as const
 
 export const PRIORITY_OPTIONS = [
   { value: 'low', label: 'Low', color: 'var(--slate)' },
-  { value: 'medium', label: 'Medium', color: 'var(--gold)' },
-  { value: 'high', label: 'High', color: 'var(--orange)' },
-  { value: 'urgent', label: 'Urgent', color: 'var(--maroon)' },
+  { value: 'medium', label: 'Medium', color: 'var(--task-accent-gold)' },
+  { value: 'high', label: 'High', color: 'var(--task-accent-orange)' },
+  { value: 'urgent', label: 'Urgent', color: 'var(--task-accent-coral)' },
 ]
 
 export const PRIORITY_ORDER: Record<string, number> = { urgent: 0, high: 1, medium: 2, low: 3 }
 export const PRIORITY_COLORS: Record<string, string> = {
   low: 'var(--slate)',
-  medium: 'var(--gold)',
-  high: 'var(--orange)',
-  urgent: 'var(--maroon)',
+  medium: 'var(--task-accent-gold)',
+  high: 'var(--task-accent-orange)',
+  urgent: 'var(--task-accent-coral)',
 }
 
 // ── Project Status ──
@@ -55,9 +64,9 @@ export const PRIORITY_COLORS: Record<string, string> = {
 // orthogonal axis answers "is the project moving?".
 
 export const PROJECT_STATUS_OPTIONS = [
-  { value: 'active', label: 'Active', color: 'var(--teal)' },
-  { value: 'waiting_external', label: 'Waiting (External)', color: 'var(--orange)' },
-  { value: 'blocked', label: 'Blocked', color: 'var(--maroon)' },
+  { value: 'active', label: 'Active', color: 'var(--task-accent-teal)' },
+  { value: 'waiting_external', label: 'Waiting (External)', color: 'var(--task-accent-orange)' },
+  { value: 'blocked', label: 'Blocked', color: 'var(--task-accent-coral)' },
   { value: 'done', label: 'Done', color: 'var(--slate)' },
 ]
 
