@@ -521,11 +521,18 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
         </div>
 
         {/* Composer zone — above tabs, visible on every tab.
-            Structural divider gives clear rhythm: title/fields → composer → tabs.
+            Tinted band makes the header zone (title/fields/composer) visually
+            distinct from the tab-content area below. The border-bottom on the
+            tab bar + the bg shift together create a clear two-section read.
             Mobile keeps sticky-bottom override (deliberate per-breakpoint). */}
         <div
-          className="px-5 pb-3"
-          style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: 'var(--sp-md)' }}
+          className="px-5 pb-4"
+          style={{
+            borderTop: '1px solid var(--border-subtle)',
+            paddingTop: 'var(--sp-md)',
+            background: 'color-mix(in srgb, var(--cream), var(--slate) 3%)',
+            borderBottom: '1px solid var(--border-subtle)',
+          }}
         >
           <OverviewQuickAdd
             taskId={task.id}
@@ -536,8 +543,10 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
           />
         </div>
 
-        {/* Tab Bar */}
-        <div className="flex border-b px-5" style={{ borderColor: 'var(--border-subtle)' }}>
+        {/* Tab Bar — sits immediately below the tinted composer band.
+            The bg shift above + this border-b together make tabs read as
+            a clear navigation region, not a continuation of the header. */}
+        <div className="flex px-5" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
           {TABS.map(({ key, label, icon: Icon }) => (
             <button
               key={key}
@@ -1070,7 +1079,7 @@ function OverviewActivityPeek({
   onViewAll: () => void
 }) {
   return (
-    <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: 'var(--sp-md)' }}>
+    <div>
       <div className="flex items-center justify-between mb-2">
         <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', fontWeight: 'var(--label-weight)' }}>
           Recent activity

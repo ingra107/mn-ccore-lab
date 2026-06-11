@@ -122,11 +122,30 @@ export function TaskActivityFeed({ taskId, peekCount, hidePills }: TaskActivityF
 
       {/* Stream */}
       {isLoading ? (
-        <p className="text-xs text-center py-4" style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)', margin: 0 }}>
+        <p
+          className="text-xs"
+          style={{
+            color: 'var(--slate)',
+            opacity: 'var(--ink-hint)',
+            margin: 0,
+            padding: peekCount ? '2px 0' : '16px 0',
+            textAlign: peekCount ? 'left' : 'center',
+          }}
+        >
           Loading activity…
         </p>
       ) : visible.length === 0 ? (
-        <p className="text-xs text-center py-4" style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)', margin: 0 }}>
+        <p
+          className="text-xs"
+          style={{
+            color: 'var(--slate)',
+            opacity: 'var(--ink-hint)',
+            margin: 0,
+            // Peek mode: one-line minimal hint. Full tab: generous centering.
+            padding: peekCount ? '2px 0' : '16px 0',
+            textAlign: peekCount ? 'left' : 'center',
+          }}
+        >
           {filter === 'all' ? 'No activity yet' : `No ${FILTER_LABELS[filter].toLowerCase()} entries`}
         </p>
       ) : (
