@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react'
 import {
   X, Circle, Clock, User, Flag, Scale,
-  CalendarDays, ArrowRightLeft,
+  ArrowRightLeft,
   FileText, MessageSquare, Upload, Eye, ScrollText,
   Users, Bell, ClipboardList, Link2, Trash2, Plus, ExternalLink, RefreshCw, Copy, Check,
   ChevronUp, ChevronDown, Send, Paperclip, AtSign, Smile, Type, Lock, Loader2,
@@ -1107,7 +1107,6 @@ function DueInlineSelect({ value, onChange }: { value: string; onChange: (v: str
       onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--hover-subtle)' }}
       onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
     >
-      <CalendarDays size={12} style={{ color: 'var(--slate)', opacity: 0.85 }} />
       <DateInput value={value} onChange={onChange} />
     </div>
   )
