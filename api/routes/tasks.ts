@@ -394,6 +394,17 @@ export async function handleUpdateTask(id: string, request: Request, user: AuthU
     }
   }
 
+  // source_thread_id + email_link move as a derived pair on UPDATE, mirroring
+  // both create paths (gmailThreadUrl at :525 / :1400). The Gmail Apps Script
+  // morning run stamps source_thread_id onto matched EXISTING tasks through
+  // this route — without the paired derivation those rows carry a thread id
+  // with no Gmail link (caught live by PB invariant I40 on the first real
+  // Apps Script morning after the create-path fix, 2026-06-11).
+  if ('source_thread_id' in body && !('email_link' in body)) {
+    updates.push('email_link = ?');
+    params.push(gmailThreadUrl(typeof body.source_thread_id === 'string' && body.source_thread_id ? body.source_thread_id : null));
+  }
+
   if (updates.length === 0) return error('No valid fields to update', 400);
 
   // D22 (2026-05-22): snapshot the current assignee before mutation so we can
