@@ -4,7 +4,7 @@ const BugReportModal = lazy(() => import('./BugReportModal'))
 import {
   LayoutDashboard,
   User,
-  CheckSquare,
+  SquareCheck,
   Calendar,
   Clock,
   FolderKanban,
@@ -48,7 +48,7 @@ interface SidebarProps {
 interface NavItem {
   to: string
   label: string
-  icon: React.ComponentType<{ size?: number }>
+  icon: React.ComponentType<{ size?: number; strokeWidth?: number; absoluteStrokeWidth?: boolean }>
   badge?: number
   hint?: string // small secondary text (e.g. "Today")
 }
@@ -67,7 +67,9 @@ const navGroups: NavGroup[] = [
       // for URL compat during the alias window.
       { to: PATHS.dashboard, label: 'Today', icon: LayoutDashboard },
       { to: PATHS.personal, label: 'My Hub', icon: User },
-      { to: PATHS.myTasks, label: 'Tasks', icon: CheckSquare },
+      // SquareCheck (check contained INSIDE the square) over the old
+      // CheckSquare whose check overflowed the frame — reads cleaner at 18px.
+      { to: PATHS.myTasks, label: 'Tasks', icon: SquareCheck },
       { to: PATHS.calendar, label: 'Calendar', icon: Calendar },
       { to: PATHS.overview, label: 'Lab Overview', icon: LayoutGrid },
     ],
@@ -265,7 +267,11 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
                   }}
                   title={collapsed ? item.label : undefined}
                 >
-                  <span style={{ opacity: active ? 1 : 0.85, display: 'flex' }}><Icon size={18} /></span>
+                  {/* Premium icon weight (Nick 2026-06-11): default lucide
+                      stroke (2 on a 24 grid) scales to a fuzzy 1.5px at
+                      size 18. absoluteStrokeWidth pins a true 1.5px stroke —
+                      optically lighter and crisper at this size. */}
+                  <span style={{ opacity: active ? 1 : 0.85, display: 'flex' }}><Icon size={18} strokeWidth={1.5} absoluteStrokeWidth /></span>
                   {!collapsed && <span className="truncate">{item.label}</span>}
                   {!collapsed && item.hint && (
                     <span
@@ -318,7 +324,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
             className="flex items-center gap-2.5 px-2.5 py-2 rounded-md text-sm transition-colors hover:bg-black/5 dark:hover:bg-white/5 w-full cursor-pointer"
             style={{ color: 'var(--slate)', textDecoration: 'none', opacity: 0.85, background: 'none', border: 'none', textAlign: 'left' }}
           >
-            <Bug size={16} />
+            <Bug size={16} strokeWidth={1.5} absoluteStrokeWidth />
             <span>Report a Bug</span>
           </button>
         )}
@@ -334,7 +340,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
             className="flex items-center gap-2.5 px-2.5 py-2 mb-1 rounded-md text-sm transition-colors"
             style={{ color: 'var(--slate)', opacity: 0.75 }}
           >
-            <Search size={16} />
+            <Search size={16} strokeWidth={1.5} absoluteStrokeWidth />
             <span className="flex-1">Search</span>
             <kbd
               className="text-[10px] px-1.5 py-0.5 rounded border"
@@ -353,7 +359,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
           style={{ color: 'var(--slate)' }}
           title={collapsed ? 'Back to Website' : undefined}
         >
-          <ExternalLink size={16} />
+          <ExternalLink size={16} strokeWidth={1.5} absoluteStrokeWidth />
           {!collapsed && <span>Back to Website</span>}
         </Link>
 
@@ -383,7 +389,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
           className="flex items-center gap-2.5 px-2.5 py-2 rounded-md text-sm w-full transition-colors"
           style={{ color: 'var(--slate)', background: 'none', border: 'none', cursor: 'pointer' }}
         >
-          {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+          {collapsed ? <ChevronRight size={16} strokeWidth={1.5} absoluteStrokeWidth /> : <ChevronLeft size={16} strokeWidth={1.5} absoluteStrokeWidth />}
           {!collapsed && <span>Collapse</span>}
         </button>
       </div>
