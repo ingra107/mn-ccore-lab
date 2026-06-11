@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react'
 import {
   X, Circle, Clock, User, Flag, Scale,
-  CalendarDays, FolderKanban, ArrowRightLeft,
+  CalendarDays, ArrowRightLeft,
   FileText, MessageSquare, Upload, Eye, ScrollText,
   Users, Bell, ClipboardList, Link2, Trash2, Plus, ExternalLink, RefreshCw, Copy, Check,
   ChevronUp, ChevronDown, Send, Paperclip, AtSign, Smile, Type, Lock, Loader2,
@@ -34,7 +34,7 @@ import type { TaskRow } from '../../lib/api'
 import { PATHS } from '../../constants/paths'
 
 // ── Detail sub-modules ──────────────────────────────────────
-import { FieldBlock, EditableTitle, EditableShortTitle, EditableTextarea, AssigneeSelect, DateInput } from './detail/FieldControls'
+import { FieldBlock, EditableTitle, EditableShortTitle, EditableTextarea, DateInput } from './detail/FieldControls'
 import { TaskDependenciesSection } from './detail/TaskDependencies'
 import { SubtaskSection } from './detail/SubtaskSection'
 import { HandoffSection } from './detail/HandoffSection'
@@ -485,23 +485,37 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
             </button>
           </div>
 
-          {/* Task age + source info */}
-          <div className="flex items-center gap-2 flex-wrap">
+          {/* Task age + acknowledged + source — single quiet metadata line */}
+          <div className="flex items-center gap-2 flex-wrap" style={{ fontSize: 10, color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
             {task.created_at && (
-              <span className="text-[10px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
-                Created {formatRelativeTime(task.created_at)}
-              </span>
+              <span>Created {formatRelativeTime(task.created_at)}</span>
+            )}
+            {task.acknowledged_at && (
+              <>
+                <span aria-hidden="true">·</span>
+                <span className="flex items-center gap-1">
+                  <Clock size={9} aria-hidden="true" />
+                  Acknowledged {formatRelativeTime(task.acknowledged_at)}
+                  {task.acknowledged_by ? ` by ${task.acknowledged_by}` : ''}
+                </span>
+              </>
             )}
             {task.source && (
-              <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ backgroundColor: 'var(--teal-active)', color: 'var(--teal)' }}>
-                {task.source}
-              </span>
+              <>
+                <span aria-hidden="true">·</span>
+                <span className="px-1.5 py-0.5 rounded-full" style={{ backgroundColor: 'var(--teal-active)', color: 'var(--teal)', opacity: 1 }}>
+                  {task.source}
+                </span>
+              </>
             )}
             {(task as any).recurrence && (
-              <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ backgroundColor: 'var(--gold-active)', color: 'var(--gold)' }}>
-                <RefreshCw size={8} style={{ display: 'inline', marginRight: 2 }} />
-                {(task as any).recurrence}
-              </span>
+              <>
+                <span aria-hidden="true">·</span>
+                <span className="px-1.5 py-0.5 rounded-full" style={{ backgroundColor: 'var(--gold-active)', color: 'var(--gold)', opacity: 1 }}>
+                  <RefreshCw size={8} style={{ display: 'inline', marginRight: 2 }} aria-hidden="true" />
+                  {(task as any).recurrence}
+                </span>
+              </>
             )}
           </div>
         </div>
@@ -557,7 +571,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
             style={{ display: activeTab === 'overview' ? 'flex' : 'none', flexDirection: 'column', gap: 'var(--sp-xl)' }}
           >
 
-            {/* Acknowledge button (compact) */}
+            {/* Acknowledge button (compact) — only when unacknowledged */}
             {task.assignee && !task.acknowledged_at && task.status !== 'done' && (
               <button
                 onClick={() => ackTask.mutate(task.id)}
@@ -576,44 +590,43 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
                 {ackTask.isPending ? 'Acknowledging...' : 'Acknowledge Assignment'}
               </button>
             )}
-            {task.acknowledged_at && (
-              <div className="flex items-center gap-2" style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
-                <Clock size={10} />
-                Acknowledged {formatRelativeTime(task.acknowledged_at)}
-                {task.acknowledged_by ? ` by ${task.acknowledged_by}` : ''}
-              </div>
-            )}
 
-            {/* Assignee row — remains in Overview body */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--sp-md)' }}>
-              <FieldBlock label="Assignee" icon={User} noContainer>
-                <AssigneeSelect value={task.assignee} onChange={(v) => handleFieldUpdate('assignee', v)} />
-              </FieldBlock>
-              {/* Local launch — Open folder + Work on this in Claude (mnccore://).
-                  Only when the linked project has a working folder. */}
+            {/* Recent activity peek — first thing visible after the action button.
+                Nick wants this where project-actions were: high in the panel. */}
+            <OverviewActivityPeek
+              taskId={task.id}
+              onViewAll={() => setActiveTab('activity')}
+            />
+
+            {/* Compact assignee row — small avatar + name inline with ▾ affordance.
+                Same visual weight as the Status/Priority/Project/Due selects above.
+                Project actions (WorkOnActions / Open) follow on the same row. */}
+            <div className="flex items-center gap-3 flex-wrap">
+              <CompactAssigneeRow
+                value={task.assignee}
+                onChange={(v) => handleFieldUpdate('assignee', v)}
+              />
               {(taskProject?.primary_folder || task.project_id) && (
-                <FieldBlock label="Project actions" icon={FolderKanban} noContainer>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-sm)' }}>
-                    {taskProject?.primary_folder && (
-                      <WorkOnActions
-                        primaryFolder={taskProject.primary_folder}
-                        projectLabel={taskProject.title}
-                        variant="compact"
-                      />
-                    )}
-                    {task.project_id && (
-                      <button
-                        type="button"
-                        onClick={() => { onClose(); navigate(PATHS.project(task.project_id!)) }}
-                        title="Open project"
-                        aria-label="Open project"
-                        style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', flexShrink: 0, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--teal)', fontSize: 'var(--text-small)', fontWeight: 500, padding: '2px 4px' }}
-                      >
-                        Open <ExternalLink size={12} />
-                      </button>
-                    )}
-                  </div>
-                </FieldBlock>
+                <div className="flex items-center gap-2 ml-auto">
+                  {taskProject?.primary_folder && (
+                    <WorkOnActions
+                      primaryFolder={taskProject.primary_folder}
+                      projectLabel={taskProject.title}
+                      variant="compact"
+                    />
+                  )}
+                  {task.project_id && (
+                    <button
+                      type="button"
+                      onClick={() => { onClose(); navigate(PATHS.project(task.project_id!)) }}
+                      title="Open project"
+                      aria-label="Open project"
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', flexShrink: 0, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--teal)', fontSize: 'var(--text-small)', fontWeight: 500, padding: '2px 4px' }}
+                    >
+                      Open <ExternalLink size={12} />
+                    </button>
+                  )}
+                </div>
               )}
             </div>
 
@@ -650,14 +663,6 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
 
             {/* Subtasks */}
             <SubtaskSection taskId={task.id} />
-
-            {/* Recent activity peek — 3 newest entries + "view all →" link
-                that switches to the Activity tab. Peek is Overview-only; the
-                full filtered feed lives in the Activity tab. */}
-            <OverviewActivityPeek
-              taskId={task.id}
-              onViewAll={() => setActiveTab('activity')}
-            />
           </div>
 
           {/* ── Intelligence Tab — GH #35 ── */}
@@ -1645,70 +1650,81 @@ function OverviewQuickAdd({
               <Smile size={12} />
             </button>
 
-            {/* @me lock */}
+            {/* @me lock — compact pill, visually consistent with COMMENT/NOTE pills */}
             <button
               type="button"
+              role="switch"
+              aria-checked={meOnly ? "true" : "false"}
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => setMeOnly((v) => !v)}
-              aria-label={meOnly ? 'Author-only: only you see this' : 'Post publicly — click to restrict to only you'}
+              aria-label={meOnly ? 'Only me: this is private to you' : 'Toggle private note — only you see it'}
               title="Visible only to you (@me)"
               className="flex-shrink-0 inline-flex items-center gap-1"
               style={{
-                ...composerIconBtn,
-                paddingLeft: 5,
-                paddingRight: 5,
+                height: 22,
+                paddingLeft: 6,
+                paddingRight: 6,
+                borderRadius: 'var(--radius-sm)',
                 border: meOnly
-                  ? '1px solid var(--border-subtle)'
-                  : '1px solid transparent',
-                background: meOnly ? 'rgba(100,116,139,0.10)' : 'transparent',
-                color: meOnly ? 'var(--slate)' : 'var(--slate)',
-                opacity: meOnly ? 1 : 0.65,
+                  ? '1px solid rgba(100,116,139,0.35)'
+                  : '1px solid var(--border-subtle)',
+                background: meOnly ? 'rgba(100,116,139,0.12)' : 'transparent',
+                color: 'var(--slate)',
+                opacity: meOnly ? 1 : 0.70,
                 fontWeight: meOnly ? 600 : 400,
-                fontSize: 9,
-                letterSpacing: '0.04em',
-                textTransform: 'uppercase',
+                fontSize: 10,
+                whiteSpace: 'nowrap',
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+                flexShrink: 0,
               }}
             >
               <Lock size={9} aria-hidden="true" />
-              {meOnly ? 'only me' : 'only me?'}
+              Only me
             </button>
 
-            {/* Hermes toggle — only relevant for comments */}
+            {/* Hermes toggle — only relevant for comments, pill style */}
             {mode === 'comment' && (
               <button
                 type="button"
+                role="switch"
+                aria-checked={forHermes ? "true" : "false"}
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => setForHermes((v) => !v)}
-                aria-label={forHermes ? 'Hermes will be notified' : 'Notify Hermes AI'}
+                aria-label={forHermes ? 'Hermes notified — click to remove' : 'Notify Hermes AI assistant'}
                 title="Route to Hermes AI"
                 className="flex-shrink-0 inline-flex items-center gap-1"
                 style={{
-                  ...composerIconBtn,
-                  paddingLeft: 5,
-                  paddingRight: 5,
+                  height: 22,
+                  paddingLeft: 6,
+                  paddingRight: 6,
+                  borderRadius: 'var(--radius-sm)',
                   border: forHermes
-                    ? '1px solid rgba(201,168,76,0.35)'
-                    : '1px solid transparent',
+                    ? '1px solid rgba(201,168,76,0.40)'
+                    : '1px solid var(--border-subtle)',
                   background: forHermes ? 'var(--gold-active)' : 'transparent',
                   color: forHermes ? 'var(--gold)' : 'var(--slate)',
-                  opacity: forHermes ? 1 : 0.65,
+                  opacity: forHermes ? 1 : 0.70,
                   fontWeight: forHermes ? 600 : 400,
-                  fontSize: 9,
-                  letterSpacing: '0.04em',
-                  textTransform: 'uppercase',
+                  fontSize: 10,
+                  whiteSpace: 'nowrap',
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                  flexShrink: 0,
                 }}
               >
                 <span
+                  aria-hidden="true"
                   style={{
-                    width: 5,
-                    height: 5,
+                    width: 6,
+                    height: 6,
                     borderRadius: 'var(--radius-circle)',
                     background: forHermes ? 'var(--gold)' : 'var(--slate)',
                     flexShrink: 0,
-                    opacity: forHermes ? 1 : 0.65,
+                    opacity: forHermes ? 1 : 0.70,
                   }}
                 />
-                {forHermes ? 'for hermes' : 'hermes?'}
+                Hermes
               </button>
             )}
 
@@ -1770,6 +1786,110 @@ function OverviewQuickAdd({
         {/* Typing indicator */}
         <TypingIndicator slugs={typingPeers} className="self-start" style={{ marginTop: 2 }} />
       </form>
+    </div>
+  )
+}
+
+// ── Compact Assignee Row ────────────────────────────────────
+// Small inline avatar + name + ▾ affordance — same visual weight as the
+// Status/Priority/Project/Due selects in the header field row.
+function CompactAssigneeRow({ value, onChange }: { value?: string | null; onChange: (v: string) => void }) {
+  const person = value ? getPersonInfo(value) : null
+  const allPeople = [...directors, ...getAllMembers()].filter(p => p.slug)
+  const uniquePeople = allPeople.filter((p, i) => allPeople.findIndex(x => x.slug === p.slug) === i)
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open])
+
+  return (
+    <div ref={ref} style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-label={person ? `Assignee: ${person.name} — change` : 'Assign task'}
+        aria-expanded={open ? "true" : "false"}
+        aria-haspopup="listbox"
+        className="flex items-center gap-1.5 rounded-md"
+        style={{
+          background: 'none',
+          border: '1px solid var(--border-subtle)',
+          cursor: 'pointer',
+          padding: '3px 6px 3px 4px',
+          fontSize: 'var(--label-size)',
+          color: 'var(--ink)',
+          fontFamily: 'inherit',
+        }}
+        onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--teal)')}
+        onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--border-subtle)')}
+      >
+        {person ? (
+          <>
+            <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="2xs" />
+            <span style={{ fontWeight: 500 }}>{person.name.split(' ')[0]}</span>
+          </>
+        ) : (
+          <>
+            <User size={11} style={{ color: 'var(--slate)', opacity: 0.85 }} aria-hidden="true" />
+            <span style={{ color: 'var(--slate)', opacity: 0.85 }}>Unassigned</span>
+          </>
+        )}
+        <span aria-hidden="true" style={{ fontSize: 9, color: 'var(--slate)', opacity: 0.70, marginLeft: 1 }}>▾</span>
+      </button>
+      {open && (
+        <div
+          role="listbox"
+          aria-label="Select assignee"
+          className="absolute z-20 rounded-lg shadow-lg border"
+          style={{
+            top: '100%',
+            left: 0,
+            marginTop: 4,
+            backgroundColor: 'var(--cream)',
+            borderColor: 'var(--border-subtle)',
+            maxHeight: 220,
+            overflowY: 'auto',
+            minWidth: 180,
+          }}
+        >
+          <button
+            role="option"
+            aria-selected={!value ? "true" : "false"}
+            onClick={() => { onChange(''); setOpen(false) }}
+            className="w-full flex items-center gap-2 px-3 py-2 text-left text-[12px]"
+            style={{ background: 'none', border: 'none', borderBottom: '1px solid var(--border-subtle)', cursor: 'pointer', color: 'var(--slate)', opacity: 0.85 }}
+            onMouseOver={e => (e.currentTarget.style.backgroundColor = 'var(--teal-hover)')}
+            onMouseOut={e => (e.currentTarget.style.backgroundColor = 'transparent')}
+          >
+            Unassigned
+          </button>
+          {uniquePeople.map(p => {
+            const info = getPersonInfo(p.slug!)
+            return (
+              <button
+                key={p.slug}
+                role="option"
+                aria-selected={value === p.slug ? "true" : "false"}
+                onClick={() => { onChange(p.slug!); setOpen(false) }}
+                className="w-full flex items-center gap-2 px-3 py-2 text-left text-[12px]"
+                style={{ background: 'none', border: 'none', borderBottom: '1px solid var(--border-subtle)', cursor: 'pointer', color: 'var(--ink)' }}
+                onMouseOver={e => (e.currentTarget.style.backgroundColor = 'var(--teal-hover)')}
+                onMouseOut={e => (e.currentTarget.style.backgroundColor = 'transparent')}
+              >
+                <Avatar name={info.name} initials={info.initials} photoUrl={info.photoUrl} size="xs" />
+                {info.name}
+              </button>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }

@@ -332,36 +332,40 @@ export default function SmartCompose(props: SmartComposeProps) {
           <ToolbarBtn theme={theme} label="Mention someone" onClick={() => insertAtCursor('@')}><AtSign size={11} /></ToolbarBtn>
           {/* Emoji */}
           <ToolbarBtn theme={theme} label="Add emoji" onClick={() => setEmojiOpen((o) => !o)} active={emojiOpen}><Smile size={11} /></ToolbarBtn>
-          {/* @me lock */}
+          {/* @me lock — compact pill consistent with OverviewQuickAdd's pill toggles */}
           {showMeLock && (
             <button
               type="button"
+              role="switch"
+              aria-checked={meLocked ? "true" : "false"}
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => setMeLocked((l) => !l)}
               title={meLocked ? 'Private note — click to post publicly' : 'Post publicly — click to make private'}
               aria-label={meLocked ? 'Private note lock on — only you see this' : 'Private note lock off — visible to team'}
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: 3,
-                padding: '1px 6px', borderRadius: 'var(--radius-sm)',
+                height: 22,
+                padding: '0 6px', borderRadius: 'var(--radius-sm)',
                 border: meLocked
-                  ? `1px solid ${isDark ? 'rgba(201,168,76,0.50)' : 'var(--gold)'}`
+                  ? `1px solid ${isDark ? 'rgba(201,168,76,0.50)' : 'rgba(100,116,139,0.35)'}`
                   : `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'var(--border-subtle)'}`,
                 background: meLocked
-                  ? (isDark ? 'rgba(201,168,76,0.12)' : 'var(--gold-active)')
+                  ? (isDark ? 'rgba(201,168,76,0.12)' : 'rgba(100,116,139,0.12)')
                   : 'transparent',
                 color: meLocked
-                  ? (isDark ? ACCENT_GOLD : 'var(--gold-on-emphasis)')
+                  ? (isDark ? ACCENT_GOLD : 'var(--slate)')
                   : (isDark ? INK_DIM_DARK : 'var(--slate)'),
-                fontSize: 9,
-                fontWeight: meLocked ? 700 : 400,
-                opacity: meLocked ? 1 : 0.65,
+                fontSize: 10,
+                fontWeight: meLocked ? 600 : 400,
+                opacity: meLocked ? 1 : 0.70,
                 cursor: 'pointer',
                 fontFamily: 'inherit',
-                letterSpacing: '0.04em',
-                textTransform: 'uppercase',
                 whiteSpace: 'nowrap',
               }}
-            >@me {meLocked ? '🔒' : '🔓'}</button>
+            >
+              <span aria-hidden="true" style={{ fontSize: 9 }}>{meLocked ? '🔒' : '🔓'}</span>
+              Only me
+            </button>
           )}
           {/* Emoji picker — opens above the toolbar */}
           {emojiOpen && (
