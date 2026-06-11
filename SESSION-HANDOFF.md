@@ -6,16 +6,16 @@
 > on activity_entries; Hermes response lane live; renderers unified). The comment/notes
 > UNIFICATION is DONE — what remains below is the task-DESCRIPTION cleanup + riders.
 
-**H1 — TASK-description migration EXECUTE (headline; Nick-approved staging 2026-06-11).**
-592 tasks carry historical dated-log descriptions (projects-only scope gap; source dead — zero
-new dated lines since P2-B). Dry-run COMPLETE: `docs/superpowers/plans/2026-06-11-task-desc-migration-dryrun.md`
-(commit `a994fb77`) + artifacts `Scratch/task-desc-migration-2026-06-11/` (raw snapshot,
-proposed.json, apply.d1.sql = 903 INSERT OR IGNORE entries [604 update/293 completion/6 blocker],
-strip.d1.sql = 576 UPDATEs w/ updated_at bump for PB pull). **Gate: Nick's 4 answers in the
-report's Open Questions** (① 133 email-metadata lines emit/suppress/collapse, ② blocker kind
-keep-or-fold, ③ strip in ~100-row batches?, ④ NULL-vs-empty on the 77 fully-dated tasks — verify
-renderers first). Then: snapshot → apply via scripts/wrangler-d1 --file → verify counts → strip →
-PB pull takes clean text → re-run muddied GLOB count, expect 0 → fold back to this handoff.
+**H1 ✅ EXECUTED 2026-06-11** (gate answers: ① emit as-is ② keep blocker — normalized to the
+contract-correct `kind='update', update_type='blocker'` since stored `kind='blocker'` was
+off-enum ③ no batching needed (PB pull pages at 2000) ④ NULL verified safe, 0 empty titles).
+Final: **907** entries in prod (903 pipeline + 4 residual), task-description line-start dated
+count = **0**, LIKE = 2 (wikilink false-positives, intentional). Residual sweep caught 18 tasks
+the pipeline missed (14 empty stubs / 3 truly double-encoded `"Sender:…"` / 1 tagged
+`[date mechanic]` line) — `Scratch/task-desc-migration-2026-06-11/residual_cleanup.py`. PB pull
+applied 590; 79 stripped-to-NULL tasks' stale local `notes` cleared (pull's None-guard skips
+NULL). Full execution record at the bottom of
+`docs/superpowers/plans/2026-06-11-task-desc-migration-dryrun.md`.
 
 **H2 — Nick's @me visibility click-test** (his step, still pending since v77 ship): post an
 @me-locked comment, confirm only-you visibility. Prompt him at session start.

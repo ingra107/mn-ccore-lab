@@ -225,3 +225,50 @@ If anything goes wrong:
 2. **Undo strip** (after strip): restore each row from `snapshot_pre_strip.json`:
    one `UPDATE tasks SET description = <original>, updated_at = <original_updated_at> WHERE id = <id>;` per row.
    Script that with the snapshot JSON to generate a restore SQL file.
+
+---
+
+## ✅ EXECUTION RECORD — 2026-06-11 (run by Claude, Nick-approved gate answers)
+
+**Gate answers (Nick, 2026-06-11):** ① email-metadata lines EMIT AS-IS (option a);
+② blocker classification KEPT; ③ batching NOT NEEDED (verified: PB pull paginates at
+2,000 rows/page — 576 bumped tasks fit one page, `hub.py:1605`); ④ NULL descriptions
+verified safe (all `(title || description)` sites guarded by title; prod has 0
+null/empty titles; PB pull has explicit `is not None` guard at `hub.py:2255`).
+
+**Execution (all via `scripts/wrangler-d1`, test → prod):**
+
+1. **Delta check:** re-pull was byte-identical to the dry-run snapshot (592 rows,
+   0 added/removed/changed) — source confirmed dead; no pipeline re-run needed.
+2. **Pre-strip snapshot:** `snapshot_pre_strip.json` (592 rows incl. `updated_at`).
+3. **Apply:** 903 entries inserted (transaction wrapper stripped → `apply.d1.notx.sql`;
+   D1 rejects `BEGIN TRANSACTION`, `--file` is atomic anyway).
+4. **Blocker normalization:** the 6 blocker rows were emitted as stored `kind='blocker'`
+   — OFF-ENUM (Rule 70 / `shared/activityKinds.ts` STORED_KINDS). Normalized to the
+   contract-correct shape `kind='update', update_type='blocker'` in test+prod — the
+   classification is fully retained in `update_type` (its documented home).
+5. **API spot-check (live):** `/api/tasks/:id/activity` verified on email-metadata,
+   completion, and blocker tasks — correct kinds, actor `nick-ingraham`, dated noon-UTC
+   timestamps.
+6. **Strip:** 576 UPDATEs applied. Residual sweep found 18 muddied tasks the pipeline
+   missed, in 3 classes (`residual_cleanup.py` → `residual.sql`, same id/source_id
+   conventions): **A** (14) trailing empty dated stubs `[YYYY-MM-DD] ` — stripped, 3
+   stub-only tasks → NULL; **B** (3) double-encoded JSON-string descriptions (the
+   anomaly class — note: the 2 tasks flagged in this report were ALREADY clean in prod;
+   their wikilink `[[2026-06-09_…]]` merely matches the LIKE filter; the REAL
+   double-encoded tasks were these 3 `"Sender:…"` ones) — decoded, 1 real entry each
+   migrated, lead kept; **C** (1) tagged dated line `[2026-03-26 mechanic]` the
+   `^\[YYYY-MM-DD\]` regex missed — migrated + stripped.
+7. **Final counts (prod):** `activity_entries` source_table='task_description_line'
+   = **907** (604 update/progress + 6 update/blocker + 293 completion + 4 residual);
+   line-start dated descriptions = **0**; LIKE matches = **2** (the wikilink
+   false-positives, intentionally untouched).
+8. **PB pull:** 591 received / 590 applied / 1 dedup. brain.db `notes` residue: the
+   pull's `is not None` guard skips NULL descriptions, so 79 stripped-to-NULL tasks
+   kept old dated text in local `notes` — cleared via targeted local UPDATE gated on
+   `notes == pre-strip description` (notes is PB-local since the 0.4.0 wire-alias
+   retirement; content preserved in activity_entries + snapshots). 7 pre-existing
+   PB-local dated notes (tasks outside this migration) left as-is.
+
+**Rollback unchanged:** `DELETE FROM activity_entries WHERE source_table='task_description_line'`
++ per-row restore from `snapshot_pre_strip.json`.
