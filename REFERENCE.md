@@ -30,10 +30,12 @@ shims in `src/App.tsx` placed outside `RequireAuth`.
 **API routes** (`/api/*`) are NOT gated by CF Access. Auth enforced
 server-side via X-API-Key + `REQUIRE_AUTH` + JWT verify.
 
-## D1 Tables (76 — sqlite_master, excl. sqlite_/internal; schema v76)
+## D1 Tables (73 — sqlite_master, excl. sqlite_/internal; schema v80)
 
 | Table | Rows | Purpose |
 |-------|------|---------|
+| artifacts | 0+ | Hermes Artifacts v1 (schema v79, 2026-06-11): md-stored deliverables rendered at /portal/artifacts/:id; version, typed proj_* project_id + task_id origin links. Long Hermes responses (>1500 chars / explicit doc ask) land here. |
+| artifact_versions | 0+ | Append-only revision history for artifacts (artifact_id, version, body_md, revised_by, revision_note). Comment-driven revisions via @hermes bump version. |
 | bug_reports | 0+ | Bug Squasher queue (schema v76, 2026-06-10): status open/resolved/dismissed + resolved_at + context cols; mirrors /api/bug-report GitHub issues. GET /api/bug-reports?status= + POST /api/bug-reports/:id/status (PI/API-key). |
 | team_members | 19 | Lab personnel + roles + `email` column (schema v43). Slugs use `preferred_name-last_name` format post Phase 36b. |
 | projects | 64 | Research projects with stages + `deleted_at` (schema v45) + indexed `title` (v46). |
@@ -63,7 +65,7 @@ server-side via X-API-Key + `REQUIRE_AUTH` + JWT verify.
 | pb_sessions | dynamic | Claude Code session history synced from brain.db |
 | inbox | dynamic | Quick Capture entries (FAB + Ctrl+I); synced nightly to PB Inbox/*.md (Phase 32) |
 
-## API Endpoints (231 registered routes via Hono v4.12 — count pinned by the route-contract snapshot test; 239→231 on the 2026-06-10 daily-plan retirement, +1 project activity)
+## API Endpoints (238 registered routes via Hono v4.12 — count pinned by the route-contract snapshot test; 231→238 on the 2026-06-11 Hermes Artifacts v1)
 
 > Route table is `api/index.ts` (Hono declarative). Route handlers live in
 > `api/routes/*.ts` and are untouched by the Hono migration. Middleware
@@ -123,6 +125,11 @@ server-side via X-API-Key + `REQUIRE_AUTH` + JWT verify.
 
 ### Calendar & Activity
 - GET /api/calendar/events, /api/activity/heatmap?slug=&days=
+
+### Artifacts (Hermes deliverables, schema v79, 2026-06-11)
+- GET /api/artifacts (?since= for PB collection), GET /api/artifacts/:id, GET /api/artifacts/:id/activity
+- POST /api/artifacts, POST /api/artifacts/:id/revise (version++, old body → artifact_versions)
+- POST /api/artifacts/:id/comments (→ activity_entries entity_type='artifact'), POST /api/artifacts/:id/delete (PI-gated, cascades entries)
 
 ### Search & Settings
 - GET /api/search?q=, /api/settings, /api/workflow-templates

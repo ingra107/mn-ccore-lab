@@ -1,4 +1,32 @@
-# ▶▶▶ HUB-ONLY DOCKET (next Hub session) — EXECUTE IN ORDER
+# ▶ Session 2026-06-11 (DAY) — docket executed + Nick's live asks ALL SHIPPED
+
+> **State: 838/838 API tests · live deploy `57a09c40` = HEAD · D1 schema v80 · 73 tables ·
+> 238 routes.** Full record: CHANGELOG top entry. Shipped today: H1 migration (descriptions
+> clean, 907 entries), Hermes fetch-bug root-cause fix (lane NEVER worked; lit review delivered),
+> H3 gardener built + wired nightly --apply 22:40 home, editor redesign (Rule 72: composer-on-top
+> everywhere, single Activity tab, field row above tabs, NEXT STEP line, clamp), Hermes
+> Artifacts v1 (Rule update in Hermes section; `/portal/artifacts/:id`), drift CI green
+> (snapshot ack + retro v80 parity + artifacts.project_id identity registration).
+
+## OPEN ITEMS (next session / Nick)
+
+1. **HOME listener restart still UNCONFIRMED** — relay `req_20260611_080212_work` picked up but
+   no response; chat message posted (## WORK 08:35) unanswered. Until the home daemon restarts
+   on ≥`b794fddf`, @hermes mentions queue but don't process (work machine can drain manually:
+   `python scripts/scheduled/hub_ai_listener.py --once`). Also confirms the gardener schedule
+   entry + first `--apply` run (artifact lands in PB `data/gardener/runs/` tonight 22:40 — CHECK
+   the first artifact tomorrow).
+2. **Nick click-tests:** redesigned task editor (field row, composer above tabs, Activity tab,
+   Overview peek), drawer composer-on-top + NEXT STEP line + clamp, first real @hermes →
+   artifact flow (needs home listener up or a manual drain), `/portal/artifacts/:id` page.
+3. **Artifacts riders (deferred by design):** Google-Doc export button, OG share card, vault
+   collection script (`GET /api/artifacts?since=` → PB Context/Artifacts/).
+4. **H4 (questions.ts Hermes copy)** — still conditional on Ask-the-Lab timeline surface.
+   **H6 carried backlog** unchanged below.
+
+---
+
+# ▶▶▶ HUB-ONLY DOCKET (executed 2026-06-11 — see session section above)
 
 > State entering this docket: **820/820 API tests · live deploy = HEAD code (`82059168` worker;
 > later commits are docs-only) · D1 schema v78 · unified timeline is THE message substrate**
