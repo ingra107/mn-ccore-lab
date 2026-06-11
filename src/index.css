@@ -464,23 +464,13 @@ h1, h2, h3, h4, h5, h6 { font-weight: var(--weight-heading); }
   border-color: var(--teal);
 }
 
-/* Description editor — resizable, constrained */
+/* Description editor — border is now managed by the DescriptionField
+   component via inline style (borderless until interactive, Rule R4).
+   This class is retained as a no-op for backward compat. */
 .description-editor-wrapper {
-  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
-  background: var(--field-bg);
-  min-height: 80px;
-  height: 120px;
-  max-height: 400px;
   overflow-y: auto;
-  resize: vertical;
   transition: border-color var(--transition-fast);
-}
-.description-editor-wrapper:hover {
-  border-color: var(--border-light);
-}
-.description-editor-wrapper:focus-within {
-  border-color: var(--teal);
 }
 
 /* Dropdown/menu surface — luminance elevation on dark */

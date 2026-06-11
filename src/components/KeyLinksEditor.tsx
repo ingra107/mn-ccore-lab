@@ -271,30 +271,32 @@ export default function KeyLinksEditor({ links, onSave, maxSlots = 3 }: Props) {
         )}
 
         {canAdd && !addingNew && (
+          // Quiet text button — no dashed box. Resting: ghost text.
+          // Hover: subtle tint appears, opacity lifts.
           <button
             onClick={() => setAddingNew(true)}
-            className="flex items-center gap-1.5 self-start"
+            aria-label={populated.length === 0 ? 'Add a key link' : 'Add another key link'}
+            className="flex items-center gap-1 self-start rounded transition-colors"
             style={{
               background: 'none',
-              border: '1px dashed var(--border-subtle)',
-              borderRadius: 'var(--radius-md)',
-              padding: '6px 10px',
+              border: 'none',
+              padding: '3px 4px',
               fontSize: 'var(--text-small)',
-              color: 'var(--slate)',
-              opacity: 0.85,
+              color: 'var(--teal)',
+              opacity: 0.75,
               cursor: 'pointer',
-              transition: 'opacity 0.15s, background 0.15s',
+              fontFamily: 'inherit',
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.opacity = '1'
-              e.currentTarget.style.background = 'var(--ice)'
+              e.currentTarget.style.background = 'var(--teal-hover)'
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.opacity = '0.7'
+              e.currentTarget.style.opacity = '0.75'
               e.currentTarget.style.background = 'none'
             }}
           >
-            <Plus size={12} />
+            <Plus size={11} />
             {populated.length === 0 ? 'Add a key link' : 'Add another'}
           </button>
         )}

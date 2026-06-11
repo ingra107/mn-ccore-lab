@@ -54,8 +54,14 @@ export function EditableTitle({ value, onSave }: { value: string; onSave: (v: st
         onChange={(e) => setDraft(e.target.value)}
         onBlur={save}
         onKeyDown={(e) => { if (e.key === 'Enter') save(); if (e.key === 'Escape') { setDraft(value); setEditing(false) } }}
-        className="w-full text-lg font-semibold outline-none border-b-2 pb-1"
-        style={{ color: 'var(--ink)', borderColor: 'var(--teal)', background: 'none' }}
+        className="w-full outline-none border-b-2 pb-1"
+        style={{
+          fontSize: '1.125rem',
+          fontWeight: 'var(--weight-heading, 600)',
+          color: 'var(--ink)',
+          borderColor: 'var(--teal)',
+          background: 'none',
+        }}
       />
     )
   }
@@ -63,8 +69,19 @@ export function EditableTitle({ value, onSave }: { value: string; onSave: (v: st
   return (
     <h3
       onClick={() => setEditing(true)}
-      className="text-lg font-normal cursor-text hover:bg-black/[0.02] dark:hover:bg-white/[0.04] rounded px-1 -mx-1 py-0.5 transition-colors"
-      style={{ color: 'var(--ink)' }}
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setEditing(true) } }}
+      aria-label="Edit title"
+      className="cursor-text rounded px-1 -mx-1 py-0.5 transition-colors"
+      style={{
+        fontSize: '1.125rem',
+        fontWeight: 'var(--weight-heading, 600)',
+        color: 'var(--ink)',
+        // Resting: no border, no box. Hover: subtle bg tint only.
+        background: 'none',
+      }}
+      onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--hover-subtle)' }}
+      onMouseLeave={(e) => { e.currentTarget.style.background = 'none' }}
     >
       {value}
     </h3>

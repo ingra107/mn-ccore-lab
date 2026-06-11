@@ -524,17 +524,16 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
         </div>
 
         {/* Composer zone — above tabs, visible on every tab.
-            Tinted band makes the header zone (title/fields/composer) visually
-            distinct from the tab-content area below. The border-bottom on the
-            tab bar + the bg shift together create a clear two-section read.
-            Mobile keeps sticky-bottom override (deliberate per-breakpoint). */}
+            Tinted band separates header (title/fields) from tab content.
+            The band bg-shift alone creates the visual break; the tab bar's
+            own borderBottom provides the bottom edge, so no redundant
+            borderBottom here. */}
         <div
           className="px-5 pb-4"
           style={{
             borderTop: '1px solid var(--border-subtle)',
             paddingTop: 'var(--sp-md)',
             background: 'color-mix(in srgb, var(--cream), var(--slate) 3%)',
-            borderBottom: '1px solid var(--border-subtle)',
           }}
         >
           <OverviewQuickAdd
@@ -639,24 +638,14 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
               }}
             />
 
-            {/* Description (rich text, resizable) */}
-            <div>
-              <label className="flex items-center" style={{ gap: 'var(--sp-xs)', fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', fontWeight: 'var(--label-weight)', marginBottom: 'var(--sp-xs)' }}>
-                Description
-              </label>
-              <div className="description-editor-wrapper">
-                <Suspense fallback={<div style={{ height: 120, padding: 'var(--sp-lg)', opacity: 0.85, fontSize: 'var(--text-small)' }}>Loading editor...</div>}>
-                  <RichTextEditor
-                    content={task.description_json || null}
-                    plainTextFallback={task.description}
-                    onUpdate={(json) => {
-                      handleFieldUpdate('description_json', json)
-                    }}
-                    placeholder="Add a description..."
-                  />
-                </Suspense>
-              </div>
-            </div>
+            {/* Description (rich text, ghost empty → editing border).
+                Empty state: one ghost line at --ink-hint, no box.
+                Click → editor opens with toolbar + focus border (autosave on blur). */}
+            <DescriptionField
+              descriptionJson={task.description_json || null}
+              descriptionText={task.description || null}
+              onUpdate={(json) => handleFieldUpdate('description_json', json)}
+            />
 
             {/* Subtasks */}
             <SubtaskSection taskId={task.id} />
@@ -862,6 +851,95 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
   )
 }
 
+// ── Description Field ─────────────────────────────────────
+// Ghost empty state (one "Add description…" line, no box).
+// Click → editor opens with toolbar + focus border. Autosave on blur.
+// Content state: plain prose, no resting border; editor border appears
+// only when isEditing (i.e. the ProseMirror is focused).
+
+function DescriptionField({
+  descriptionJson,
+  descriptionText,
+  onUpdate,
+}: {
+  descriptionJson: string | null
+  descriptionText: string | null
+  onUpdate: (json: string) => void
+}) {
+  const [isEditing, setIsEditing] = useState(false)
+  const isEmpty = !descriptionJson && !descriptionText
+
+  // Click the ghost line OR the read-only prose to enter editing mode.
+  const handleClick = () => {
+    if (!isEditing) setIsEditing(true)
+  }
+
+  return (
+    <div>
+      <label
+        className="flex items-center"
+        style={{ gap: 'var(--sp-xs)', fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', fontWeight: 'var(--label-weight)', marginBottom: 'var(--sp-xs)' }}
+      >
+        Description
+      </label>
+
+      {/* Ghost empty line — shown only when empty AND not editing */}
+      {isEmpty && !isEditing && (
+        <div
+          role="button"
+          tabIndex={0}
+          aria-label="Add description"
+          onClick={handleClick}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleClick() } }}
+          className="cursor-text rounded transition-colors"
+          style={{
+            fontSize: 'var(--value-size)',
+            color: 'var(--slate)',
+            opacity: 'var(--ink-hint)',
+            fontStyle: 'italic',
+            padding: '4px 2px',
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.85' }}
+          onMouseLeave={(e) => { e.currentTarget.style.opacity = String('var(--ink-hint)') }}
+        >
+          Add description…
+        </div>
+      )}
+
+      {/* Rich text editor — border + toolbar appear only while editing.
+          We pass noBorder so the editor's own border doesn't double-render.
+          The wrapper div carries the border controlled by isEditing state.
+          Always rendered (not conditional) so Tiptap keeps its internal
+          state; we use display:none on the wrapper when empty + not editing. */}
+      <div
+        onClick={handleClick}
+        style={
+          isEmpty && !isEditing
+            ? { display: 'none' }
+            : {
+                border: isEditing ? '1px solid var(--teal)' : '1px solid transparent',
+                borderRadius: 'var(--radius-lg)',
+                transition: 'border-color 0.15s',
+                cursor: isEmpty ? 'text' : undefined,
+              }
+        }
+      >
+        <Suspense fallback={<div style={{ height: 80, padding: 'var(--sp-md)', opacity: 0.85, fontSize: 'var(--text-small)' }}>Loading editor...</div>}>
+          <RichTextEditor
+            content={descriptionJson}
+            plainTextFallback={descriptionText}
+            onUpdate={onUpdate}
+            onFocus={() => setIsEditing(true)}
+            onBlur={() => setIsEditing(false)}
+            noBorder
+            placeholder="Add a description..."
+          />
+        </Suspense>
+      </div>
+    </div>
+  )
+}
+
 // ── Watchers Picker ──────────────────────────────────────
 function WatchersPicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const [open, setOpen] = useState(false)
@@ -972,24 +1050,40 @@ function InlineFieldSelect({
   onChange: (v: string) => void
   children: React.ReactNode
 }) {
+  // Ghost resting state: no border, no bg.
+  // Hover: subtle tint. Focus: teal border. ▾ caret stays via appearance:auto.
   return (
     <select
       aria-label={ariaLabel}
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="rounded-md border text-xs"
+      className="rounded-md text-xs transition-colors"
       style={{
         padding: '3px 22px 3px 8px',
         fontSize: 'var(--label-size)',
         color: 'var(--ink)',
-        background: 'var(--cream)',
-        borderColor: 'var(--border-subtle)',
+        background: 'transparent',
+        border: '1px solid transparent',
         cursor: 'pointer',
         outline: 'none',
         appearance: 'auto',
       }}
-      onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--teal)')}
-      onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--border-subtle)')}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.background = 'var(--hover-subtle)'
+        e.currentTarget.style.borderColor = 'transparent'
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.background = 'transparent'
+        e.currentTarget.style.borderColor = 'transparent'
+      }}
+      onFocus={(e) => {
+        e.currentTarget.style.borderColor = 'var(--teal)'
+        e.currentTarget.style.background = 'transparent'
+      }}
+      onBlur={(e) => {
+        e.currentTarget.style.borderColor = 'transparent'
+        e.currentTarget.style.background = 'transparent'
+      }}
     >
       {children}
     </select>
@@ -1007,25 +1101,42 @@ function ProjectInlineSelect({ value, onChange }: { value: string; onChange: (v:
     },
     staleTime: 5 * 60 * 1000,
   })
+  // Ghost resting. When a project is selected keep teal text so users know
+  // where this task lives — that's semantic signal, not a style box.
+  // On hover tint the bg; on focus show teal border.
   return (
     <select
       aria-label="Project"
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="rounded-md border text-xs"
+      className="rounded-md text-xs transition-colors"
       style={{
         padding: '3px 22px 3px 8px',
         fontSize: 'var(--label-size)',
-        color: !!value ? 'var(--teal)' : 'var(--slate)',
-        background: !!value ? 'var(--teal-hover)' : 'var(--cream)',
-        borderColor: 'var(--border-subtle)',
+        color: value ? 'var(--teal)' : 'var(--slate)',
+        background: 'transparent',
+        border: '1px solid transparent',
         cursor: 'pointer',
         outline: 'none',
         appearance: 'auto',
         maxWidth: 160,
       }}
-      onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--teal)')}
-      onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--border-subtle)')}
+      onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--hover-subtle)' }}
+      onMouseLeave={(e) => {
+        // restore to ghost if not focused
+        if (document.activeElement !== e.currentTarget) {
+          e.currentTarget.style.background = 'transparent'
+          e.currentTarget.style.borderColor = 'transparent'
+        }
+      }}
+      onFocus={(e) => {
+        e.currentTarget.style.borderColor = 'var(--teal)'
+        e.currentTarget.style.background = 'transparent'
+      }}
+      onBlur={(e) => {
+        e.currentTarget.style.borderColor = 'transparent'
+        e.currentTarget.style.background = 'transparent'
+      }}
     >
       <option value="">No project</option>
       {projectList.map((p) => (
@@ -1037,14 +1148,24 @@ function ProjectInlineSelect({ value, onChange }: { value: string; onChange: (v:
 
 function DueInlineSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   // Thin wrapper: DateInput renders the InlineDatePicker popover on click.
-  // We keep the compact pill-style trigger with a CalendarDays icon.
+  // Ghost resting: no border/bg. Hover: subtle tint on the wrapping pill.
   return (
     <div
       title="Due date"
-      style={{ display: 'flex', alignItems: 'center', gap: 4,
-        fontSize: 'var(--label-size)', color: value ? 'var(--ink)' : 'var(--slate)',
+      className="rounded-md transition-colors"
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 4,
+        fontSize: 'var(--label-size)',
+        color: value ? 'var(--ink)' : 'var(--slate)',
         opacity: value ? 1 : 0.85,
+        padding: '2px 6px',
+        border: '1px solid transparent',
+        cursor: 'pointer',
       }}
+      onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--hover-subtle)' }}
+      onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
     >
       <CalendarDays size={12} style={{ color: 'var(--slate)', opacity: 0.85 }} />
       <DateInput value={value} onChange={onChange} />
@@ -1814,18 +1935,31 @@ function CompactAssigneeRow({ value, onChange }: { value?: string | null; onChan
         aria-label={person ? `Assignee: ${person.name} — change` : 'Assign task'}
         aria-expanded={open ? "true" : "false"}
         aria-haspopup="listbox"
-        className="flex items-center gap-1.5 rounded-md"
+        className="flex items-center gap-1.5 rounded-md transition-colors"
         style={{
-          background: 'none',
-          border: '1px solid var(--border-subtle)',
+          background: 'transparent',
+          border: '1px solid transparent',
           cursor: 'pointer',
           padding: '3px 6px 3px 4px',
           fontSize: 'var(--label-size)',
           color: 'var(--ink)',
           fontFamily: 'inherit',
         }}
-        onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--teal)')}
-        onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--border-subtle)')}
+        onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--hover-subtle)' }}
+        onMouseLeave={(e) => {
+          if (document.activeElement !== e.currentTarget) {
+            e.currentTarget.style.background = 'transparent'
+            e.currentTarget.style.borderColor = 'transparent'
+          }
+        }}
+        onFocus={(e) => {
+          e.currentTarget.style.borderColor = 'var(--teal)'
+          e.currentTarget.style.background = 'transparent'
+        }}
+        onBlur={(e) => {
+          e.currentTarget.style.borderColor = 'transparent'
+          e.currentTarget.style.background = 'transparent'
+        }}
       >
         {person ? (
           <>

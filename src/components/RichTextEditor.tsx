@@ -9,8 +9,12 @@ interface RichTextEditorProps {
   content: string | null
   plainTextFallback?: string | null
   onUpdate?: (json: string) => void
+  onFocus?: () => void
+  onBlur?: () => void
   readOnly?: boolean
   placeholder?: string
+  /** When true the editor renders without its own border — the parent controls it */
+  noBorder?: boolean
 }
 
 function parseContent(json: string | null, plainText?: string | null): any {
@@ -27,8 +31,11 @@ export default function RichTextEditor({
   content,
   plainTextFallback,
   onUpdate,
+  onFocus,
+  onBlur,
   readOnly = false,
   placeholder = 'Add a description...',
+  noBorder = false,
 }: RichTextEditorProps) {
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined)
 
@@ -54,6 +61,8 @@ export default function RichTextEditor({
         }, 500)
       }
     },
+    onFocus: () => { onFocus?.() },
+    onBlur: () => { onBlur?.() },
   })
 
   useEffect(() => {
@@ -79,9 +88,9 @@ export default function RichTextEditor({
     <div
       className="rich-text-editor"
       style={{
-        border: readOnly ? 'none' : '1px solid var(--border-subtle)',
-        borderRadius: 'var(--radius-md)',
-        minHeight: readOnly ? undefined : '80px',
+        border: (readOnly || noBorder) ? 'none' : '1px solid var(--border-subtle)',
+        borderRadius: (readOnly || noBorder) ? undefined : 'var(--radius-md)',
+        minHeight: (readOnly || noBorder) ? undefined : '80px',
       }}
     >
       {!readOnly && (
