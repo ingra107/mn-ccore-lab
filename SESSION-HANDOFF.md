@@ -14,6 +14,16 @@ Relevant standing rules: 15 (row-height @media scoping), 55 (useIsMobile=1024, t
 FAB lift), mobile sticky-bottom compose (deliberate), Rule 56 swipe. AUDIT ONLY first — fixes are
 follow-on tickets Nick reviews.
 
+**N1b — App-wide de-box sweep (Nick 2026-06-11: "less boxyness everywhere").** After the panel
+style is validated: propagate borderless-until-interactive beyond it. Rule: **box budget of one
+per view** — the input-inviting element is the only boxed/elevated thing; ghost controls
+(GhostSelect = the canonical select everywhere, built in panel round 5); search inputs +
+composers keep boxes; tables keep their grid (structural) but their TOOLBARS de-box; dashboard
+cards stay but their interiors de-box; menus/modals exempt. Run as screenshot-driven
+audit-then-tickets — SHARE the N1 mobile screenshot pass (one sweep feeds both). Wave order:
+drawers (TaskDetailDrawer/InlineDetail) → data-page toolbars → composer surfaces → card
+interiors. Codify in design-system.md once the panel verdict is in.
+
 **N2 — One-time description condense pass (review-gated).** Report of the longest task/project
 descriptions (>~400 chars) with proposed condensed versions side-by-side in a review doc; Nick
 approves line-by-line; originals preserved in the doc; apply only approved rows (guarded UPDATEs
