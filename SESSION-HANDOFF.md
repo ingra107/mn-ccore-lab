@@ -1,3 +1,61 @@
+# ▶▶▶ NEXT-SESSION DOCKET (Nick-ordered 2026-06-11 close) — EXECUTE IN ORDER
+
+> Nick verbatim: "Make sure all these are crystal clear in that order and then we can have the
+> next session just start tackling them." Each ticket is self-contained — no re-triaging.
+> **Nick's own first move (not a ticket): review the gardener's FIRST --apply artifact**
+> (PB `data/gardener/runs/`, maiden run 2026-06-11 22:40 home).
+
+**N1 — MOBILE VISUAL AUDIT (step one, audit-then-tickets).** Nick: "too many visual issues to
+make it functional at this point." Dispatch an audit (Playwright mobile viewports 375/390/430 +
+the 768-1023 tablet band; key surfaces: Today, My Tasks ×3 views, TaskDetailPanel/mobile compose,
+project detail, artifacts page, nav/tab bar/FAB) → produce a TICKET LIST of concrete visual
+defects (screenshot evidence, file:line where known, S/M/L), append to this docket as N1.a, N1.b…
+Relevant standing rules: 15 (row-height @media scoping), 55 (useIsMobile=1024, tab bar, sheets,
+FAB lift), mobile sticky-bottom compose (deliberate), Rule 56 swipe. AUDIT ONLY first — fixes are
+follow-on tickets Nick reviews.
+
+**N2 — One-time description condense pass (review-gated).** Report of the longest task/project
+descriptions (>~400 chars) with proposed condensed versions side-by-side in a review doc; Nick
+approves line-by-line; originals preserved in the doc; apply only approved rows (guarded UPDATEs
++ updated_at bump for PB pull). NEVER auto-rewrite human prose (design-system "Conversation
+Surfaces" + gardener boundary).
+
+**N3 — Artifacts riders:** (a) PB vault-collection script (`GET /api/artifacts?since=` →
+`Context/Artifacts/<date>-<slug>.md`, ride /process or janitor); (b) "Send to Google Doc"
+export button (one-way, md→Doc via Workspace MCP / md_to_docx.py pattern); (c) OG share card
+for `/og/artifact/<id>` (Rule 31 pattern).
+
+**N4 — Overview peek avatar density:** pass `avatarSize="xs"` (20px) on the TaskDetailPanel
+OverviewActivityPeek → TaskActivityFeed call (~line 1086) — one-liner, Nick wants the peek
+tighter. Verify against the Slack-anatomy section (skeleton unchanged, size is a functional prop).
+
+**N5 — JS-hover→CSS pass (218 sites).** The long-carried polish item — Nick: "should happen."
+Convert inline JS hover handlers to CSS rules (index.css patterns; Tailwind v4 group-hover
+constraint per Rule 12). Batch by component family; build+axe spot-checks per batch.
+
+**N6 — Dogfood Playwright failures triage (13 pre-existing on main).** Carried 3 sessions —
+Nick: "should definitely happen." Run `playwright.config.dogfood.ts`, classify each failure:
+real regression vs stale selector vs data-dependent flake; fix or quarantine WITH a reason
+comment; target = dogfood suite green or every skip documented.
+
+**N7 — Legacy `activity_log` disposition (22,220 rows, compat-read only).** "Figure it out":
+enumerate remaining readers (ActivityFeedCard, ActivityPage, useActivity hook + any API),
+decide migrate-those-views-to-activity_entries vs keep-as-frozen-log, then substrate-swap-gated
+retire plan if removable (snapshot first; T6a audit already judged content ALL-LOW).
+
+**N8 (LOWER — Nick: "not sure ask the lab is being used at all"):** H4 Ask-the-Lab data
+convergence (lab_answers → activity_entries + questions.ts Hermes copy). Check usage first
+(lab_questions/lab_answers row counts + recency); if dead, consider retiring the surface
+instead of converging it.
+
+**Carried tail (below the ordered queue, unchanged):** spacing-token tail ·
+`/portal/my-tasks-legacy` retire (substrate-swap-gated) · local-seed schema drift · 768px
+journey spec · Query-Resource phased pass · IdeasPage:67/AskTheLab:44 param-strip · HUB-5
+dedup-PK assessment (Dual-Plan gated) · PB I40 retirement after one clean Apps Script morning ·
+PB sync_lock payload PermissionError warning (watch for recurrence).
+
+---
+
 # ▶ Session 2026-06-11 (FULL DAY) — docket + Nick's live-review cycle ALL SHIPPED
 
 > **State: 838/838 API tests · live deploy = HEAD (final close deploy) · D1 schema v80 ·
