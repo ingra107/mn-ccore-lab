@@ -452,6 +452,41 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
                 />
               </div>
             </div>
+            {/* Task age + acknowledged + source — descriptive metadata, snug
+                under the title group (Nick 2026-06-11: it belongs WITH the
+                title, not floating between the control sections). */}
+            <div className="flex items-center gap-2 flex-wrap" style={{ marginTop: 6, fontSize: 10, color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
+              {task.created_at && (
+                <span>Created {formatRelativeTime(task.created_at)}</span>
+              )}
+              {task.acknowledged_at && (
+                <>
+                  <span aria-hidden="true">·</span>
+                  <span className="flex items-center gap-1">
+                    <Clock size={9} aria-hidden="true" />
+                    Acknowledged {formatRelativeTime(task.acknowledged_at)}
+                    {task.acknowledged_by ? ` by ${task.acknowledged_by}` : ''}
+                  </span>
+                </>
+              )}
+              {task.source && (
+                <>
+                  <span aria-hidden="true">·</span>
+                  <span className="px-1.5 py-0.5 rounded-full" style={{ backgroundColor: 'var(--teal-active)', color: 'var(--teal)', opacity: 1 }}>
+                    {task.source}
+                  </span>
+                </>
+              )}
+              {(task as any).recurrence && (
+                <>
+                  <span aria-hidden="true">·</span>
+                  <span className="px-1.5 py-0.5 rounded-full" style={{ backgroundColor: 'var(--gold-active)', color: 'var(--gold)', opacity: 1 }}>
+                    <RefreshCw size={8} style={{ display: 'inline', marginRight: 2 }} aria-hidden="true" />
+                    {(task as any).recurrence}
+                  </span>
+                </>
+              )}
+            </div>
           </div>
 
           {/* Inline fields row: Status · Priority · Project · Due · Delete
@@ -515,46 +550,13 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
             </button>
           </div>
 
-          {/* Task age + acknowledged + source — single quiet metadata line */}
-          <div className="flex items-center gap-2 flex-wrap" style={{ fontSize: 10, color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
-            {task.created_at && (
-              <span>Created {formatRelativeTime(task.created_at)}</span>
-            )}
-            {task.acknowledged_at && (
-              <>
-                <span aria-hidden="true">·</span>
-                <span className="flex items-center gap-1">
-                  <Clock size={9} aria-hidden="true" />
-                  Acknowledged {formatRelativeTime(task.acknowledged_at)}
-                  {task.acknowledged_by ? ` by ${task.acknowledged_by}` : ''}
-                </span>
-              </>
-            )}
-            {task.source && (
-              <>
-                <span aria-hidden="true">·</span>
-                <span className="px-1.5 py-0.5 rounded-full" style={{ backgroundColor: 'var(--teal-active)', color: 'var(--teal)', opacity: 1 }}>
-                  {task.source}
-                </span>
-              </>
-            )}
-            {(task as any).recurrence && (
-              <>
-                <span aria-hidden="true">·</span>
-                <span className="px-1.5 py-0.5 rounded-full" style={{ backgroundColor: 'var(--gold-active)', color: 'var(--gold)', opacity: 1 }}>
-                  <RefreshCw size={8} style={{ display: 'inline', marginRight: 2 }} aria-hidden="true" />
-                  {(task as any).recurrence}
-                </span>
-              </>
-            )}
-          </div>
         </div>
 
         {/* Composer zone — ONE elevated element on the flat panel surface.
             Desktop: inset card (--surface-2 bg + --border-subtle border + radius).
             Mobile: OverviewQuickAdd handles its own sticky positioning + bg;
             skip the card wrapper so the component's negative-margin breakout works. */}
-        <div className="px-5" style={{ paddingTop: 'var(--sp-lg)', paddingBottom: 'var(--sp-md)' }}>
+        <div className="px-5" style={{ paddingTop: 'var(--sp-xs)', paddingBottom: 'var(--sp-md)' }}>
           {isMobilePanel ? (
             <OverviewQuickAdd
               taskId={task.id}
