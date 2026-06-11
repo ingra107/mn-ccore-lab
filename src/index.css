@@ -69,7 +69,11 @@
      padding); 880px would crush its 1fr Title column to ~170px and truncate
      short_titles, 960px gives it ~250px and keeps every data table from
      horizontally scrolling. Honors decision #1 (principle over px). */
-  --content-band: 1296px;  /* centered band = main + 16px gap + rail */
+  --content-band: 1440px;  /* centered band; ≥ main + 16px gap + rail. Widened
+     1296→1440 (Nick, bug #70 2026-06-11: "left edge can move closer to the nav")
+     — pulls every page's anchored left edge ~72px toward the sidebar at 1920
+     and gives the centered pages the extra width. No change below ~1570px
+     viewports (the padding floor binds there, exactly as before). */
   --col-main: 960px;       /* anchored primary column (tables, lists, detail) */
   --col-rail: 320px;       /* optional right rail; absent = empty, no expand */
 
@@ -1018,8 +1022,9 @@ a:hover {
    (kanban), Projects Pipeline (kanban), and any future Gantt-/board-like view.
 
    How the left edge stays IDENTICAL to .content-container at every width:
-   .content-container is `max-width:1296px; margin:auto; padding-left:P`, so its
-   content's left edge from the viewport = max(P, (100% - 1296px)/2 + P) — i.e.
+   .content-container is `max-width:var(--content-band); margin:auto;
+   padding-left:P`, so its content's left edge from the viewport
+   = max(P, (100% - var(--content-band))/2 + P) — i.e.
    P below the band width, then it tracks the centered band above it. We
    reproduce that edge as this element's own margin-left, drop the
    --content-band max-width cap, and pad only the right side (P), so content
@@ -1947,14 +1952,14 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
 
 /* P6 — MyTasks ListView mobile grid (P6-LIST-MOBILE, 2026-06-05)
    The full 9-col desktop power grid is preserved; below 768px it collapses
-   to 4 visible columns [cursor | checkbox | title | status] so the list is
+   to 4 visible columns [cursor | done-box | title | status] so the list is
    usable on phones. Inline edit controls are hidden (tap a row → double-tap
    opens TaskDetailPanel drawer via the existing j/k/e handler). Rule 60
    desktop grid is completely untouched — overrides apply only at < 768px. */
 @media (max-width: 767px) {
   .list-view-header,
   .list-view-row {
-    /* cursor(32) | checkbox(26) | title(1fr) | status(110) */
+    /* cursor(32) | done-box(26) | title(1fr) | status(110) */
     grid-template-columns: 32px 26px 1fr 110px !important;
     height: auto !important;
     min-height: 44px;

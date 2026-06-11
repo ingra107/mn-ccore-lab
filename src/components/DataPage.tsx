@@ -164,7 +164,7 @@ export default function DataPage({
             every data page. Pages with no rail leave the space beside it
             empty rather than re-centering. When wideBody, the body renders in
             a sibling full-width wrapper below (it can't be both inside the
-            1296px band AND fluid past it), so only the non-wide body sits
+            --content-band AND fluid past it), so only the non-wide body sits
             here. */}
         {!wideBody && <div style={{ maxWidth: 'var(--col-main)' }}>{body}</div>}
       </div>
