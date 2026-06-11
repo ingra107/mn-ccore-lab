@@ -32,6 +32,7 @@ import { PATHS } from '../../constants/paths'
 import { useAuth } from '../../hooks/useAuth'
 import { emailToSlug } from '../../lib/emailSlug'
 import { useUnseenActivity } from '../../hooks/useEntitySeen'
+import { AttentionChip } from './AttentionChip'
 import TaskTitle from './TaskTitle'
 import {
   ACCENT_GOLD, ACCENT_TEAL, ACCENT_CORAL, ACCENT_ORANGE, ACCENT_GREEN,
@@ -321,24 +322,13 @@ export function TaskRow(props: SharedTaskRowProps) {
     </button>
   ) : null
 
-  // Gold NEW pill right after the title — same accent + meaning as the
-  // sidebar unseen badge and the ✦ New quick filter. When instead the task has
-  // new ACTIVITY since the viewer's last look, a teal ● chip renders — the two
-  // signals are deliberately distinct (assignment vs conversation).
+  // Attention chip right after the title — gold ✦ NEW (assignment) wins over
+  // teal ● n NEW (conversation); both render through the shared AttentionChip
+  // so the styling matches the sidebar badge, ✦ New filter, and My Items.
   const newChip = isNewToViewer ? (
-    <span
-      title="New to you — you haven't opened this yet"
-      style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: ACCENT_GOLD, background: withAlpha(ACCENT_GOLD, 14), padding: '1px 5px', borderRadius: 3, marginLeft: 6, whiteSpace: 'nowrap' }}
-    >
-      NEW
-    </span>
+    <AttentionChip kind="new" style={{ marginLeft: 6 }} />
   ) : activityRow ? (
-    <span
-      title={`${activityRow.new_count} new ${activityRow.new_count === 1 ? 'entry' : 'entries'} since you last opened this`}
-      style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: ACCENT_TEAL, background: withAlpha(ACCENT_TEAL, 14), padding: '1px 5px', borderRadius: 3, marginLeft: 6, whiteSpace: 'nowrap' }}
-    >
-      ● {activityRow.new_count} new
-    </span>
+    <AttentionChip kind="activity" count={activityRow.new_count} style={{ marginLeft: 6 }} />
   ) : null
 
   const rightMeta = (

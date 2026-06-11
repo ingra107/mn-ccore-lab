@@ -27,6 +27,7 @@ import type { TaskRow } from '../lib/api'
 const TaskDetailPanel = lazy(() => import('../components/tasks/TaskDetailPanel'))
 import { useNotifications, useUnreadCount, useMarkRead, useMarkAllRead } from '../hooks/useNotifications'
 import { useUnseenActivity } from '../hooks/useEntitySeen'
+import { AttentionChip } from '../components/tasks/AttentionChip'
 import type { NotificationRow } from '../hooks/useNotifications'
 import { useToggleActionItem } from '../hooks/useMutations'
 import { useUndoToast } from '../components/UndoToast'
@@ -858,20 +859,7 @@ export default function MyItems() {
                     borderLeft: '3px solid var(--gold)',
                   }}
                 >
-                  <span
-                    style={{
-                      fontSize: '9px',
-                      fontWeight: 700,
-                      letterSpacing: '0.08em',
-                      color: 'var(--gold)',
-                      background: 'var(--gold-active)',
-                      padding: '1px 5px',
-                      borderRadius: '3px',
-                      flexShrink: 0,
-                    }}
-                  >
-                    NEW
-                  </span>
+                  <AttentionChip kind="new" />
                   <span
                     title={t.title}
                     style={{
@@ -925,21 +913,7 @@ export default function MyItems() {
                     borderLeft: '3px solid var(--teal)',
                   }}
                 >
-                  <span
-                    style={{
-                      fontSize: '9px',
-                      fontWeight: 700,
-                      letterSpacing: '0.08em',
-                      color: 'var(--teal)',
-                      background: 'var(--teal-active)',
-                      padding: '1px 5px',
-                      borderRadius: '3px',
-                      flexShrink: 0,
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    ● {r.new_count} NEW
-                  </span>
+                  <AttentionChip kind="activity" count={r.new_count} />
                   <span style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--slate)', opacity: 0.7, flexShrink: 0 }}>
                     {r.entity_type}
                   </span>

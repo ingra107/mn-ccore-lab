@@ -21,6 +21,7 @@ import { useLabPrefs } from '../../../hooks/useLabPrefs'
 import { useAuth } from '../../../hooks/useAuth'
 import { emailToSlug } from '../../../lib/emailSlug'
 import { useUnseenActivity } from '../../../hooks/useEntitySeen'
+import { AttentionChip } from '../../../components/tasks/AttentionChip'
 import { STATUS_OPTIONS, PRIORITY_OPTIONS } from '../../../lib/taskConstants'
 import {
   GROUP_META,
@@ -230,8 +231,8 @@ function ListRow({ task, project, isCursor, isSelected, onClick, onDouble, onSel
           onClick={(e) => { e.stopPropagation(); onDouble() }}
           style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', cursor: 'pointer' }}
         >{task.title}</span>
-        {isNew && <span title="New to you — you haven't opened this yet" style={{ fontSize: 9, color: ACCENT_GOLD, fontWeight: 700, letterSpacing: '0.08em', background: withAlpha(ACCENT_GOLD, 14), padding: '1px 5px', borderRadius: 3, flexShrink: 0 }}>NEW</span>}
-        {!isNew && newActivity > 0 && <span title={`${newActivity} new ${newActivity === 1 ? 'entry' : 'entries'} since you last opened this`} style={{ fontSize: 9, color: ACCENT_TEAL, fontWeight: 700, letterSpacing: '0.08em', background: withAlpha(ACCENT_TEAL, 14), padding: '1px 5px', borderRadius: 3, flexShrink: 0 }}>● {newActivity} new</span>}
+        {isNew && <AttentionChip kind="new" />}
+        {!isNew && newActivity > 0 && <AttentionChip kind="activity" count={newActivity} />}
         {task.group_override && <span title={`Moved manually (${task.group_override})`} style={{ fontSize: 10, color: ACCENT_TEAL, flexShrink: 0 }}>📍</span>}
         {planned && <span style={{ fontSize: 9, color: ACCENT_GOLD, fontWeight: 700, letterSpacing: '0.1em' }}>PLANNED</span>}
         {overdueDays > 0 && <span style={{ fontSize: 9, color: ACCENT_CORAL, fontWeight: 700 }}>{overdueDays}d LATE</span>}

@@ -317,6 +317,47 @@ describe('applyMutation envelope factory', () => {
     expect(row?.acknowledged_at ?? null).toBeNull()
   })
 
+  it('reassignment clears acknowledged_at — the task is NEW for its new owner (2026-06-11)', async () => {
+    const db = makeStubDB()
+    const tid = 'task_01hwtest_apply_mut_reassign'
+    db._store.set(tid, {
+      id: tid, title: 'Handed off', status: 'todo', seq: 3, deleted_at: null,
+      assignee: 'nick-ingraham', acknowledged_at: '2026-06-10 12:00:00', acknowledged_by: 'nick-ingraham',
+    })
+    const env = { DB: db } as unknown as import('../helpers').Env
+    const user = { email: 'ingra107@umn.edu' } as import('../helpers').AuthUser
+
+    const result = await applyMutation(env, {
+      table: 'tasks', record_id: tid, op: 'update',
+      patch: { assignee: 'dan-shyu' }, route: 'handleUpdateTask', user,
+    })
+
+    expect(result.status).toMatch(/^(accepted|merged_clean)$/)
+    const row = db._store.get(tid)
+    expect(row?.assignee).toBe('dan-shyu')
+    expect(row?.acknowledged_at ?? null).toBeNull()
+    expect(row?.acknowledged_by ?? null).toBeNull()
+  })
+
+  it('a non-assignee patch leaves acknowledged_at untouched (2026-06-11)', async () => {
+    const db = makeStubDB()
+    const tid = 'task_01hwtest_apply_mut_keepack1'
+    db._store.set(tid, {
+      id: tid, title: 'Same owner', status: 'todo', seq: 2, deleted_at: null,
+      assignee: 'nick-ingraham', acknowledged_at: '2026-06-10 12:00:00', acknowledged_by: 'nick-ingraham',
+    })
+    const env = { DB: db } as unknown as import('../helpers').Env
+    const user = { email: 'ingra107@umn.edu' } as import('../helpers').AuthUser
+
+    await applyMutation(env, {
+      table: 'tasks', record_id: tid, op: 'update',
+      patch: { priority: 'high' }, route: 'handleUpdateTask', user,
+    })
+
+    const row = db._store.get(tid)
+    expect(row?.acknowledged_at).toBe('2026-06-10 12:00:00')
+  })
+
   it('mints mut_ id on delete', async () => {
     const db = makeStubDB()
     const delTaskId = 'task_01hwtest_apply_mut_0000003'

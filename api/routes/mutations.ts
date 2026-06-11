@@ -1197,6 +1197,22 @@ async function applyPatch(
     }
   }
 
+  // Reassignment resets the NEW signal (2026-06-11): acknowledged_at means
+  // "the CURRENT assignee has opened this". When a patch hands the task to a
+  // DIFFERENT assignee, the previous assignee's acknowledgement must not count
+  // for the new owner — clear it so the task re-fires the gold NEW pill +
+  // unseen badge for whoever it now belongs to. An explicit acknowledged_at in
+  // the same patch wins (sync echoes / deliberate writes). Self-reassigns
+  // re-acknowledge on the next open via the auto-ack hook.
+  if (
+    mut.table === 'tasks' &&
+    Object.prototype.hasOwnProperty.call(effectivePatch, 'assignee') &&
+    effectivePatch.assignee !== current.assignee &&
+    !Object.prototype.hasOwnProperty.call(effectivePatch, 'acknowledged_at')
+  ) {
+    effectivePatch = { ...effectivePatch, acknowledged_at: null, acknowledged_by: null };
+  }
+
   const patchKeys = Object.keys(effectivePatch || {});
   const setClauses = [...patchKeys.map(k => `${k} = ?`), 'updated_at = datetime(\'now\')', 'last_mutation_id = ?'];
   // vals only covers SET clause bindings; WHERE clause bindings appended separately below
