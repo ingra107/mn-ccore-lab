@@ -336,15 +336,10 @@ function StreamItem({ event, onToggleAction }: { event: StreamEvent; onToggleAct
       return (
         <ActivityEntryItem
           entry={event.row}
-          // Project-stream surface settings:
-          avatarSize="base-sm"
-          textSize="var(--value-size)"
-          avatarGap="gap-3"
-          showCommentBadge={false}
+          // Project-stream: task-origin chip + reactions + animation.
           showReactions={true}
           showTaskOriginBadge={true}
           taskOriginBorderWidth={2}
-          cardPadding="var(--sp-sm) var(--sp-md)"
           motionProps={itemMotion}
         />
       )

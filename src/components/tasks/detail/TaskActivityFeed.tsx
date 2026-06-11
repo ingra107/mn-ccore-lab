@@ -135,14 +135,8 @@ export function TaskActivityFeed({ taskId, peekCount, hidePills }: TaskActivityF
             <ActivityEntryItem
               key={entry.id}
               entry={entry}
-              // Task-feed surface settings:
-              avatarSize="xs"
-              textSize="var(--label-size)"
-              avatarGap="gap-2"
-              showCommentBadge={true}
-              showReactions={false}
-              showTaskOriginBadge={false}
-              cardPadding="10px 12px"
+              // Task-feed: canonical defaults — no overrides needed.
+              // showReactions=false (default), showTaskOriginBadge=false (default).
               // No animation wrapper in the task feed.
             />
           ))}

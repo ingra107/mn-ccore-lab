@@ -349,13 +349,7 @@ export default function ArtifactPage() {
               <ActivityEntryItem
                 key={entry.id}
                 entry={entry}
-                avatarSize="base-sm"
-                textSize="var(--value-size)"
-                avatarGap="gap-3"
-                showCommentBadge={false}
-                showReactions={false}
-                showTaskOriginBadge={false}
-                cardPadding="var(--sp-sm) var(--sp-md)"
+                // Artifact feed: canonical defaults.
               />
             ))}
           </div>
