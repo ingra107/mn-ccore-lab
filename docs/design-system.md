@@ -117,3 +117,51 @@ Full spec details archived in `docs/archived/CLAUDE.md-history-2026-05-15.md`.
 - Row separators: `var(--row-separator)` token (dark: `rgba(255,255,255,0.03)`, light: `rgba(0,0,0,0.04)`)
 - Hover-only badges: `.hover-badge` CSS class — use `visibility: hidden`, not `opacity: 0`
 - Ghost-style action buttons (outline, not filled) + Pin-to-Focus button on MyTasks
+
+## Conversation Surfaces (Nick-approved 2026-06-11 — composers + activity entries)
+
+Two patterns settled during the 2026-06-11 live-review cycle. Every current AND FUTURE surface
+that shows authored messages or accepts them follows these; deviations need Nick's explicit OK.
+
+### Composer anatomy ("Slack-shaped")
+
+- **Idle = ONE compact row:** mode pills (if any) inline-left, then a full-width single-line
+  input. NEVER icons to the left of the input (they indent it and force a second line). NEVER
+  pills on their own row.
+- **Composing (focus or content):** input grows; ONE action row appears BELOW the box —
+  left: quiet icon buttons (attach / mention / emoji) + compact pill toggles ("Only me" 🔒,
+  "Hermes") with `role="switch"` + string `aria-checked`; right: Post. Single line, never wraps
+  at panel-min-width.
+- Pill toggles match the mode-pill styling (height 22, radius-sm, border+tint active state) —
+  no uppercase micro-labels, no letter-spacing.
+- Mobile may keep sticky-bottom compose (deliberate divergence — thumbs reach bottom).
+- Reference implementations: `OverviewQuickAdd` (TaskDetailPanel) + `SmartCompose`.
+
+### Activity-entry anatomy ("Slack-thread")
+
+One renderer owns it: `ActivityEntryItem` in `src/components/activity/activityRender.tsx`.
+Surfaces pass FUNCTIONAL props only (peek count, reactions on/off) — zero cosmetic overrides.
+
+```
+[avatar 28px]  Name (--weight-ui)  ·  timestamp (--ink-hint, viewer-local, <time>)  ·  [kind badge]
+               body (--text-small, --weight-body), indented under the name column
+               [reactions row]
+```
+
+- Per-kind variation confined to the LEFT ACCENT BAR + the BADGE SLOT, nothing else:
+  comment=gold bar/no badge · update=update_type bar+UpdateBadge · completion=green bar+✓ ·
+  system=slate bar+⚙ System pill · Hermes=gold ring card, HermesMark in the avatar/name slot ·
+  @me=🔒 AuthorOnlyBadge inline · task-origin-in-project-feed=TaskOriginBadge secondary line.
+- Uniform vertical rhythm — one spacing token between entries, no per-kind margin drift.
+- Empty states are MINIMAL: one quiet `--ink-hint` line ("No activity yet"), never a tall
+  reserved block.
+- CONTENT cleanliness of machine entries (raw typed IDs, rambling autolog text) is the nightly
+  activity-gardener's job (PB `scripts/gardener/`) — never solve content noise with renderer
+  special-cases, and never machine-rewrite human-authored text.
+
+### Section rhythm (detail panels)
+
+Title block → inline field row (Status/Priority/Project/Due ▾) → composer → tab bar read as
+DISTINCT sections (structural `--border-subtle` separation + consistent padding scale).
+Metadata (created · acknowledged) is one quiet one-liner. Assignee is a compact avatar-pill,
+same visual weight as the field-row selects.
