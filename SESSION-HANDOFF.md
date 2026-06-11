@@ -56,6 +56,125 @@ Relevant standing rules: 15 (row-height @media scoping), 55 (useIsMobile=1024, t
 FAB lift), mobile sticky-bottom compose (deliberate), Rule 56 swipe. AUDIT ONLY first — fixes are
 follow-on tickets Nick reviews.
 
+### ✅ N1 AUDIT EXECUTED 2026-06-11 evening — TICKET LIST (Nick reviews; NO fixes applied)
+
+Captured 70 PNGs (8 surfaces × 6 viewports: 375/390/430 phones, 768+1023 tablet-band edges,
+1440 ride-along) against an ungated preview of HEAD; 7 surface reviews → 70 adversarially
+verified defects → class-collapsed to the 24 tickets below. Screenshots:
+`review/n1-mobile-audit-2026-06-11/` (`<viewport>-<surface>[-cN].png`); raw findings + verdicts in
+`_joined.json` there. Numbered N1.01… (dots, 2-digit — deliberately NOT "N1.b/N1.c", which would
+collide with the existing N1b/N1c docket tickets). The P3 polish tickets and N1.24 overlap the 5
+queued style-sweep Hub tasks + N1b — run those off this same evidence set.
+
+**P1 — broken/unusable on the affected viewport:**
+- **N1.01 [P1/M] My Tasks List responsive grid is broken in two distinct ways.** (a) 768–1023:
+  title column collapses to ZERO width (TITLE/PROJECT headers overlap, no titles render) — the
+  column-collapse gate sits at 767px while mobile-nav mode runs to 1023 (`src/index.css:1949`,
+  `ListView.tsx:106,213`); (b) phones: surviving tracks keep a redundant 110px "To Do" status
+  column + a dead 32px keyboard-cursor arrow column (touch!) while titles truncate to ~12 chars
+  (`index.css:1953`, `ListView.tsx:233`); project cells also hard-clip mid-word at 1023
+  (`InlineSelect.tsx:100`). Fix shape: one responsive track-allocation pass — gate to 1023,
+  drop status/cursor cols on touch, give the freed width to title. Evidence: `t768-mt-list.png`,
+  `m375-mt-list.png`.
+- **N1.02 [P1/M] Shared-row stack mode never engages on phones (Today groups + Lanes).** Today
+  task rows render one-word-per-line title slivers; Lanes squeezes titles to ~150px wrapping 5-6
+  lines beside an empty right column. The shared TaskRow supports stacking but the `today/TaskRow`
+  adapter and `LanesView.tsx:91-104` never enable it (`src/components/today/TaskRow.tsx:56-75`).
+  Evidence: `m375-today-c1.png`, `m390-mt-lanes.png`.
+- **N1.03 [P1/S] Quick-add modal is never horizontally centered** — left edge pinned at 50vw so
+  it overflows the right viewport edge on EVERY viewport incl. desktop (missing translateX(-50%)
+  in the animate transform, `GlobalQuickAddModal.tsx:121-129`). Evidence: `m375-quick-add.png`,
+  `d1440-quick-add.png`.
+- **N1.04 [P1/S] Task-panel tab strip clips Files/Details with no horizontal scroll** — Details
+  unreachable on phones AND tablets (`TaskDetailPanel.tsx:588-611`). Evidence:
+  `m390-task-panel.png`, `t1023-task-panel.png`.
+- **N1.05 [P1/M] Right Now hero card crushes its own title** — glyph slivers at 430, ellipsis at
+  375/768 while free space sits unused, and the card wraps into a ragged 3-row scatter on phones
+  (`RightNowCard.tsx:36-42`). Evidence: `m430-today.png`, `m375-today.png`.
+- **N1.06 [P1/M] Today timeline meeting titles vanish on phones** — 2-3 characters per row
+  (`MeetingRow.tsx:18-24`); the overlap band makes it worse by forcing side-by-side cards with no
+  responsive collapse (`OverlapBand.tsx:77`). Evidence: `m390-today-c1.png`.
+- **N1.07 [P1/M] TaskCard touch-forced hover-action icons render ON TOP of wrapped title text +
+  avatar** on all touch viewports (absolute overlay, no reserved space — `TaskCard.tsx:196` +
+  `index.css:1720`). Hits ProjectDetail and every TaskCard surface. Evidence:
+  `m390-project-detail-c1.png`.
+
+**P2 — clearly wrong but workable:**
+- **N1.08 [P2/S — CLASS] Blanket 44px mobile button min-height deforms the 17px DoneBox into a
+  17×44 vertical capsule on EVERY touch surface** (Today, all 3 My Tasks views, ProjectDetail) —
+  the row's primary control looks broken app-wide (`index.css:1669-1677` + `1694-1701`). Fix
+  shape: exempt the DoneBox (or scope the blanket rule) and give it a proper centered 44px hit
+  AREA instead. Evidence: any `m###-mt-*.png`.
+- **N1.09 [P2/M — CLASS] FAB stack (up to 3: quick-add, capture inbox, scroll-top) covers content
+  and live controls bottom-right on every mobile surface** — rows' right-meta column, labels,
+  even the Columns peek (`index.css:126-145` --fab-stack vars give vertical lift only;
+  `PortalLayout.tsx:251`). Fix shape: content gutter (reserved bottom padding on scroll
+  containers) and/or collapse-on-scroll. Evidence: `m375-mt-lanes.png`, `m430-project-detail.png`.
+- **N1.10 [P2/M] My Tasks toolbar consumes ~55-65% of a phone viewport** — up to seven stacked
+  control rows before the first task (`TopBar.tsx:53-132`). Fix shape: mobile condensation —
+  filters behind one "Filter" pill, single-row toolbar. Evidence: `m375-mt-columns.png`.
+- **N1.11 [P2/S] TaskDetailPanel mobile sheet geometry:** 90vw — a dead sliver of the underlying
+  page shows through (canon says full-screen sheet) — and the bottom tab bar stays ON TOP of the
+  open panel, permanently occluding the last content strip with live nav above a modal
+  (`TaskDetailPanel.tsx:331-344`). Evidence: `m390-task-panel.png`.
+- **N1.12 [P2/S] TaskDetailPanel token mismatch: near-black bands behind sticky header + composer
+  on the cream panel** (`--cream` vs dark-pinned `--surface-2`-ish hexes, `TaskDetailPanel.tsx:849-851`)
+  — violates LOCKED-canon pt 1 (one continuous surface) on ALL viewports incl. desktop.
+  Evidence: `d1440-task-panel.png`.
+- **N1.13 [P2/S] Panel header touch targets 18-22px and tightly clustered** (prev/next chevrons,
+  copy-link — `TaskDetailPanel.tsx:378-409`). Evidence: `m375-task-panel.png`.
+- **N1.14 [P2/L] Columns view is desktop kanban shrunk onto phones** — 5 fixed-260px columns =
+  ~1360px of blind horizontal panning; the clipped peek renders broken fragments (mid-word
+  truncation, orphaned DoneBoxes/priority dots) (`ColumnsView.tsx:40`). Fix shape: phone mode =
+  single-column pager with a lane switcher, or auto-fall-back to List <768. Evidence:
+  `m390-mt-columns.png`.
+- **N1.15 [P2/M] Today timeline mechanics on mobile:** NOW line renders through meeting cards
+  with its label colliding (`Timeline.tsx:164-167`, fraction-of-listHeight positioning); six
+  drag-only drop zones occupy phone space but are dead UI on touch (`Timeline.tsx:79-96`);
+  section headers cram hint text into colliding two-column wraps (`Timeline.tsx:229-236`).
+  Evidence: `m375-today-c1.png`, `t1023-today-c1.png`.
+- **N1.16 [P2/S] ProjectDetail stage stepper: dots stretch into tall gold/gray ellipses below
+  1440** (`ProjectDetail.tsx:1552-1576` — button sets height, dot inherits) **and stage labels
+  truncate to ambiguous fragments** ("Data C…", "Revisio…") on phones (`:2110-2117`). Evidence:
+  `m390-project-detail.png`, `t1023-project-detail.png`.
+- **N1.17 [P2/S — CLASS] Dark-mode tab-strip overflow fade uses a light token → opaque white
+  smear clipping the last tabs** (ProjectDetail `:2107-2109`; same pattern may exist on other
+  scrollable tab strips — sweep). Evidence: `m375-project-detail.png` (dark).
+- **N1.18 [P2/S] ProjectDetail Overview is a cramped 3-col grid at t768** — md:768 grid breakpoint
+  disagrees with useIsMobile=1024, so tablet gets desktop grid inside mobile chrome
+  (`ProjectDetail.tsx:1050`). Evidence: `t768-project-detail.png`.
+- **N1.19 [P2/M] LinkifiedText over-captures prose into the repo-path chip** — rest of sentence
+  swallowed, chip truncates mid-word leaving an orphan period (`LinkifiedText.tsx:26` regex +
+  chip max-width). Evidence: `m430-project-detail.png`, `d1440-project-detail.png`.
+
+**P3 — polish (batchable):**
+- **N1.20 [P3/S] My Tasks toolbar polish batch:** orphaned 1×18px divider stranded when the
+  filter row wraps (`TopBar.tsx:93`), search input dead-stops at 260px on its own row (`:74`),
+  duplicate create affordances (big teal "Create Task" + global teal + FAB, `:57-69`), Lanes
+  header label/description double-wrap (`LanesView.tsx:81-86`).
+- **N1.21 [P3/S] Today header/compose polish batch:** date wraps into a 3-line sliver beside the
+  H1 at 375 (`TodayPage.tsx:342-346`); how-to hint's dismiss × floats detached mid-text
+  (`:370-381`); morning-compose placeholder clips mid-sentence (`MorningThoughtCompose.tsx:58-60`
+  — needs a short mobile placeholder); mixed 12h/24h formats ("8:00 AM" rows vs "18:05" NOW badge,
+  `Timeline.tsx:177-178` hand-format → use `lib/time.ts`).
+- **N1.22 [P3/S] Task-panel text polish batch:** composer placeholder truncates to "@mention a"
+  on phones (`TaskDetailPanel.tsx:1514-1517` — short mobile string); metadata separator-dot
+  orphans at line wraps (`:458-488`); field row wraps raggedly (indented second line, floating
+  Delete — `:495-551`).
+- **N1.23 [P3/S] ProjectDetail polish batch:** duplicate "KEY LINKS"/"Key Links" stacked headers
+  (`KeyLinksEditor.tsx:226-238` unconditional internal header); redundant own-project chip on
+  every task card of the project's own page (`ProjectDetail.tsx:1108-1116`); header meta row
+  orphans the stage label (`:792`).
+- **N1.24 [P3/M — rides queued sweeps] Icon/emoji discipline + box-budget:** MobileTabBar icons
+  skip Rule 74 (default stroke-2 at 20px, no absoluteStrokeWidth — `MobileTabBar.tsx:98,123,184,
+  220,261`); emoji glyphs as functional icons (📌 PlannedChip etc., `TaskRow.tsx:115-134`) —
+  both fold into queued task task_01KTWD89… (icon sweep); ProjectDetail Overview gold band +
+  boxed empty states + Columns box-in-box → fold into N1b de-box sweep. Artifact not-found page
+  is a dead end (no recovery action, FABs float on empty page — `ArtifactPage.tsx:136-148`).
+
+Rejected as deliberate/not-shown by adversarial verify: 2 (recorded in `_joined.json`).
+One unverified finding (Columns peek edge-clip) folded into N1.14.
+
 **N1c — Composer @mention autocomplete (Nick 2026-06-11 close: "when i @ hermes or someone in
 the task detail it doesn't try to autopopulate").** The panel/drawer composers (OverviewQuickAdd
 + SmartCompose) don't surface mention suggestions while typing `@`. Rule 7 says @mentions use
