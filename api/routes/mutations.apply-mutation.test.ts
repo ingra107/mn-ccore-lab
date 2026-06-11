@@ -81,12 +81,28 @@ function makeStubDB() {
           const id = boundVals[0] as string
           if (!store.has(id)) {
             const colsMatch = sql.match(/INSERT INTO \w+ \(([^)]+)\)/)
+            const valsMatch = sql.match(/VALUES \(([^)]+)\)/)
             if (colsMatch) {
               const cols = colsMatch[1].split(',').map((c: string) => c.trim())
+              // Map each VALUES slot to its placeholder so SQL literals like
+              // datetime('now') (NOT bound) resolve, mirroring the UPDATE path.
+              // Bound `?` slots advance through boundVals in order; literal slots
+              // are evaluated inline. Without this, a non-bound updated_at column
+              // would silently map to null and the stamp test couldn't see it.
+              const valTokens = valsMatch
+                ? valsMatch[1].split(',').map((s: string) => s.trim())
+                : cols.map(() => '?')
               const row: Record<string, unknown> = {}
-              // Skip the last bound val if it's last_mutation_id (cols includes it)
+              let boundIdx = 0
               cols.forEach((col: string, i: number) => {
-                row[col] = boundVals[i] ?? null
+                const token = valTokens[i] ?? '?'
+                if (token.includes('datetime')) {
+                  row[col] = nowInstant().replace('T', ' ').slice(0, 19)
+                } else if (token.toUpperCase() === 'NULL') {
+                  row[col] = null
+                } else {
+                  row[col] = boundVals[boundIdx++] ?? null
+                }
               })
               row['seq'] = 1
               store.set(id, row)
@@ -174,6 +190,73 @@ describe('applyMutation envelope factory', () => {
     // origin_machine must reflect the route
     const recorded = db._mutations.get(result.mutation_id)
     expect(recorded?.origin_machine).toBe('hub_ui:handleCreateTask')
+  })
+
+  it('stamps updated_at on insert for updated_at-bearing tables (2026-06-11)', async () => {
+    // REGRESSION: applyInsert was the only mutation op that did NOT stamp
+    // updated_at (applyPatch + applyDelete already did). tasks.updated_at has no
+    // column DEFAULT, so every Hub-CREATE row (Gmail Apps Script, mobile PWA,
+    // Hub QuickCapture) landed with updated_at=NULL until its first UPDATE —
+    // silently dropping a brand-new task from project last-activity rollups
+    // (proactive-brief MAX(t.updated_at)). The insert now stamps datetime('now').
+    const db = makeStubDB()
+    const newTaskId = 'task_01hwtest_apply_mut_updstamp1'
+    const env = { DB: db } as unknown as import('../helpers').Env
+    const user = { email: 'test@example.com' } as import('../helpers').AuthUser
+
+    const result = await applyInsert(env, {
+      table: 'tasks',
+      record_id: newTaskId,
+      op: 'insert',
+      payload: {
+        title: 'Schedule meeting with Reed',
+        description: 'Gmail Apps Script create',
+        assignee: 'nick-ingraham',
+        status: 'todo',
+        priority: 'medium',
+        source: 'gmail',
+      },
+      mutation_id: 'mut_test_updstamp_0000000001',
+      route: 'handleCreateTask',
+      user,
+    } as unknown as Parameters<typeof applyInsert>[1])
+
+    expect(result.status).toBe('accepted')
+    const row = db._store.get(newTaskId)
+    expect(row).toBeTruthy()
+    // updated_at must be a stamped timestamp, NOT null/undefined.
+    expect(row?.updated_at).toBeTruthy()
+    expect(typeof row?.updated_at).toBe('string')
+    expect(row?.updated_at).toMatch(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/)
+  })
+
+  it('insert does NOT override a caller-supplied updated_at (2026-06-11)', async () => {
+    // The stamp is skipped when the payload already carries updated_at — a
+    // deliberate caller value (e.g. a sync echo) wins over datetime('now').
+    const db = makeStubDB()
+    const newTaskId = 'task_01hwtest_apply_mut_updstamp2'
+    const env = { DB: db } as unknown as import('../helpers').Env
+    const user = { email: 'test@example.com' } as import('../helpers').AuthUser
+    const SUPPLIED = '2026-01-02 03:04:05'
+
+    await applyInsert(env, {
+      table: 'tasks',
+      record_id: newTaskId,
+      op: 'insert',
+      payload: {
+        title: 'Caller-supplied updated_at',
+        description: 'x',
+        assignee: 'nick-ingraham',
+        status: 'todo',
+        updated_at: SUPPLIED,
+      },
+      mutation_id: 'mut_test_updstamp_0000000002',
+      route: 'handleCreateTask',
+      user,
+    } as unknown as Parameters<typeof applyInsert>[1])
+
+    const row = db._store.get(newTaskId)
+    expect(row?.updated_at).toBe(SUPPLIED)
   })
 
   it('mints mut_ id on delete', async () => {

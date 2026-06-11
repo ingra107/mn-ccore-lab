@@ -596,13 +596,34 @@ export async function applyInsert(env: Env, mut: Mutation, user: AuthUser, flags
   const vals = [...pkVals, ...payloadVals, mut.mutation_id];
   const placeholders = cols.map(() => '?').join(', ');
 
+  // 2026-06-11: stamp updated_at = datetime('now') on INSERT for tables that
+  // carry the column, MIRRORING applyPatch (update, :1166) + applyDelete (:935)
+  // which already stamp it. The insert was the ONLY mutation op that did NOT —
+  // an asymmetry (ethos #6) that left every Hub-CREATE row (Gmail Apps Script,
+  // mobile PWA, Hub QuickCapture) with updated_at=NULL until its first UPDATE,
+  // because tasks.updated_at has no column DEFAULT (only created_at does). That
+  // NULL silently dropped a brand-new task from project last-activity rollups
+  // (proactive-brief MAX(t.updated_at), projects.ts last-activity dates — MAX/
+  // filters skip NULL) and made Hub-created rows inconsistent with PB-created
+  // ones (PB always stamps updated_at on insert). Guarded by the existing
+  // TABLES_WITH_UPDATED_AT registry; skip when the payload already carries
+  // updated_at (a deliberate caller-supplied value wins — e.g. a sync echo).
+  const insertExtraSet: string[] = [];
+  if (TABLES_WITH_UPDATED_AT.has(mut.table) && !('updated_at' in (mut.payload as Record<string, unknown>))) {
+    cols.push('updated_at');
+    insertExtraSet.push("datetime('now')");
+  }
+  const allPlaceholders = insertExtraSet.length > 0
+    ? `${placeholders}, ${insertExtraSet.join(', ')}`
+    : placeholders;
+
   // Bug Y fix (2026-04-30 stress test): ON CONFLICT DO NOTHING. If two
   // concurrent requests race past the processed_mutations SELECT-gate,
   // both call applyInsert with the same mutation_id + record_id. The
   // first INSERT wins; the second would D1_ERROR UNIQUE on tasks.id.
   // With DO NOTHING, the second silently no-ops and we read back the
   // same canonical state. End-to-end idempotent.
-  const sql = `INSERT INTO ${mut.table} (${cols.join(', ')}) VALUES (${placeholders}) ON CONFLICT${conflictTarget} DO NOTHING`;
+  const sql = `INSERT INTO ${mut.table} (${cols.join(', ')}) VALUES (${allPlaceholders}) ON CONFLICT${conflictTarget} DO NOTHING`;
 
   try {
     await env.DB.prepare(sql).bind(...vals).run();
