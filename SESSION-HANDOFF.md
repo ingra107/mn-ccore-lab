@@ -1,12 +1,15 @@
-# ▶ Session 2026-06-11 (DAY) — docket executed + Nick's live asks ALL SHIPPED
+# ▶ Session 2026-06-11 (FULL DAY) — docket + Nick's live-review cycle ALL SHIPPED
 
-> **State: 838/838 API tests · live deploy `57a09c40` = HEAD · D1 schema v80 · 73 tables ·
-> 238 routes.** Full record: CHANGELOG top entry. Shipped today: H1 migration (descriptions
-> clean, 907 entries), Hermes fetch-bug root-cause fix (lane NEVER worked; lit review delivered),
-> H3 gardener built + wired nightly --apply 22:40 home, editor redesign (Rule 72: composer-on-top
-> everywhere, single Activity tab, field row above tabs, NEXT STEP line, clamp), Hermes
-> Artifacts v1 (Rule update in Hermes section; `/portal/artifacts/:id`), drift CI green
-> (snapshot ack + retro v80 parity + artifacts.project_id identity registration).
+> **State: 838/838 API tests · live deploy = HEAD (final close deploy) · D1 schema v80 ·
+> 73 tables · 238 routes.** Full record: CHANGELOG top two entries (DAY + PM). Morning: H1
+> migration (descriptions clean, 907→912 timeline entries incl. residual+ID-strip), Hermes
+> fetch-bug root-cause fix (lane NEVER worked; lit review delivered), H3 gardener built +
+> wired nightly --apply 22:40 home, editor redesign (Rule 72), Hermes Artifacts v1
+> (`/portal/artifacts/:id`), drift CI green (v80 retro parity). Afternoon live-review cycle:
+> Slack-shaped composers (idle one-row, action row below), Slack-thread entry anatomy in the
+> ONE renderer (ActivityEntryItem), AskTheLab converged, ProjectComments/ProjectUpdateFeed
+> DELETED, 5 raw-ID timeline bodies rewritten, patterns codified in design-system.md
+> "Conversation Surfaces". Nick's style prefs captured in the mn-ccore-lab design-prefs memory.
 
 ## OPEN ITEMS (next session / Nick)
 
