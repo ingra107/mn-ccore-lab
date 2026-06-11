@@ -71,10 +71,13 @@ export function ListView({ filtered, selected, toggleSelect, setSelected, setDra
   }, [cursor, filtered.length, virtualizer])
 
   // Project options for the inline select — include "—" / clear option.
-  const projectSelectOptions = useMemo<{ value: string; label: string }[]>(() => (
+  // Projects render in ACCENT_TEAL to match the shared ProjectTag on the
+  // Lanes/Columns rows (Nick 2026-06-11: same color across views so your
+  // eyes know what it is when you switch). The clear option stays neutral.
+  const projectSelectOptions = useMemo<{ value: string; label: string; color?: string }[]>(() => (
     [{ value: '', label: '—' }, ...projectOptions
       .filter((o): o is { v: string; l: string } => o.v !== null)
-      .map(o => ({ value: o.v, label: o.l }))]
+      .map(o => ({ value: o.v, label: o.l, color: ACCENT_TEAL }))]
   ), [projectOptions])
 
   const kbdStyle = { fontFamily: 'var(--font-mono), JetBrains Mono, monospace', fontSize: 9, padding: '1px 4px', background: 'rgba(255,255,255,0.08)', borderRadius: 2, color: INK_MUTED }
@@ -171,7 +174,7 @@ interface ListRowProps {
   onAssigneeChange: (slug: string) => void
   onDateChange: (val: string | null) => void
   onProjectChange: (val: string) => void
-  projectSelectOptions: { value: string; label: string }[]
+  projectSelectOptions: { value: string; label: string; color?: string }[]
   staleDays: number
 }
 
