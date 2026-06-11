@@ -1,8 +1,32 @@
-# Session Handoff — 2026-06-10 (EVENING) — P2-A SHIPPED · backfill DONE · Activity fixes · Obsidian shell fixed
+# Session Handoff — 2026-06-10 (EVENING) — P2-A · backfill · DESCRIPTION MIGRATION EXECUTED · Obsidian links SOLVED both machines
 
-> **State: 793/793 API tests · live deploy on `7debd8ea` = HEAD (pushed) · D1 unchanged at v77.**
-> Evening session executed Nick's queue + "keep going": dogfood interim check, PB artifact rescue,
-> M5 P2 brainstorm-lite (+ Nick's calls), activity_log backfill, live-review fixes, **P2-A complete**.
+> **State: 793/793 API tests · live deploy on `998d089d` (pushed; later doc commits also pushed) · D1 at v77 + 407 `description_line` entries.**
+> Evening session executed Nick's queue + "keep going" + live link-debugging to resolution.
+
+## ✅ LATE-EVENING ADDITIONS (after the section below was first written)
+
+- **Description migration EXECUTED (Nick: "go", engine: LLM-on-parse):** 407 entries in prod,
+  0 encoded descriptions, 0 line-start dated lines. The double-encoded class was 9 projects not
+  the flagged 2 — repaired via `Scratch/desc-migration-2026-06-10/repair_encoded.py` (raw_decode
+  prefix → same pipeline). `updated_at` bumped on all 55 so PB's pull takes clean descriptions.
+  Full execution record at the bottom of `docs/superpowers/plans/2026-06-11-description-migration-review.md`.
+  **PB owes the breadcrumb-writer retarget URGENTLY** (Nick has the paste-ready prompt) — until
+  then any PB complete-with-note re-adds ONE dated line (delta pipeline re-runs in seconds).
+- **Obsidian links SOLVED — both machines, Nick-confirmed.** TWO stacked bugs: (1) IWD key links
+  are stored as WIKILINKS (`[[note|label]]`) which classifyUrl never handled — chips navigated the
+  SPA to a relative URL ("website flashes"); fixed `a35848f7` (parseWikilink at the chokepoint).
+  (2) obsidian:// warm second-instance handoff drops URIs intermittently — fixed `998d089d`:
+  chips now fire **`mnccore://obsidian/<note>`**; the handler opens via the Obsidian CLI
+  (`Obsidian.com open`, success pinned on its "Opened:" line) when Obsidian is RUNNING, protocol
+  on cold start. Requires Obsidian Settings→General→Advanced→CLI ON (done both machines).
+  Work shell was already current (the "stale installer" was a red herring — NSIS preserves build
+  timestamps); HOME's shell WAS stale → Nick reinstalled + enabled CLI, confirmed working.
+  Handler gotchas learned: `::`-comments inside if-blocks kill the whole bat parser; use full
+  System32 paths for tasklist/find (PATH-independence).
+- **Ride-along deployed:** `fd4f7cb4` HUB-4 request-aware CORS (authored by the concurrent PB
+  session) shipped with the wikilink deploy; 793/793 re-verified including it.
+- Click-test sweep CLOSED: folder ✓ workon ✓ My-Tasks title-click ✓ ⚙ Process ✓ project-Activity
+  titles+density ✓ Obsidian ✓ (work+home). Remaining: Nick's @me test (his call, later).
 
 ## ✅ This session (newest first)
 
