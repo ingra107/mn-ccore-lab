@@ -67,6 +67,14 @@ enumerate remaining readers (ActivityFeedCard, ActivityPage, useActivity hook + 
 decide migrate-those-views-to-activity_entries vs keep-as-frozen-log, then substrate-swap-gated
 retire plan if removable (snapshot first; T6a audit already judged content ALL-LOW).
 
+**N7b — Hermes token tracking (Nick 2026-06-11 close: "if there is a way to track hermes
+tokens").** The listener runs `claude --print` on the Max subscription ($0 marginal) — capture
+per-request usage anyway: claude CLI's JSON output mode reports usage; have
+`hub_ai_listener.py` parse input/output tokens per generation and stamp them onto the
+`ai_requests` row (metadata or two new columns — Hub-only, no PB lockstep) + artifact revisions.
+Surface: a small line in PI Analytics or `/api/ai-requests` totals. S/M; design the column shape
+before writing.
+
 **N8 (LOWER — Nick: "not sure ask the lab is being used at all"):** H4 Ask-the-Lab data
 convergence (lab_answers → activity_entries + questions.ts Hermes copy). Check usage first
 (lab_questions/lab_answers row counts + recency); if dead, consider retiring the surface

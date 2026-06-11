@@ -356,7 +356,6 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
           boxShadow: '0 8px 40px rgba(0,0,0,0.45)',
           animation: reduceMotion ? 'none' : 'slideIn 200ms ease-out',
           touchAction: 'pan-y',
-          overflowX: 'hidden',
         }}
       >
         {/* Inner scroll container — carries overflow-y-auto so sticky header
