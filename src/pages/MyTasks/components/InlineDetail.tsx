@@ -9,6 +9,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import SmartCompose from '../../../components/SmartCompose'
 import { useUpdateTask, useBulkUpdateTasks } from '../../../hooks/useMutations'
+import { useAutoAcknowledge } from '../../../hooks/useAutoAcknowledge'
 import { useUndoToast } from '../../../components/UndoToast'
 import { useTaskDetail } from '../../../hooks/useApiData'
 import { localDateKey } from '../../../lib/dateUtils'
@@ -35,6 +36,9 @@ export function InlineDetail({ task, projectName, onOpenEditor }: { task: TaskRo
   const bulkUpdate = useBulkUpdateTasks()
   const undoToast = useUndoToast()
   const plan = useTodayPlan()
+  // Slack-style seen (Nick 2026-06-11): expanding the row acknowledges the
+  // assignment silently when the viewer is the assignee.
+  useAutoAcknowledge(task)
   // Workstream B (schema v75): promoted / planned derive from the SYNCED task
   // columns on THIS row (planned_for == today), not the retired today_state_* LS.
   const plannedToday = !!task.planned_for && task.planned_for.slice(0, 10) === todayKey()

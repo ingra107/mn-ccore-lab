@@ -11,7 +11,8 @@ import { useNavigate } from 'react-router-dom'
 import CollapsibleSection from '../CollapsibleSection'
 import FileUpload from '../FileUpload'
 const RichTextEditor = lazy(() => import('../RichTextEditor'))
-import { useUpdateTask, useUpdateTaskStatus, useAcknowledgeTask, usePostTaskUpdate, useBulkUpdateTasks } from '../../hooks/useMutations'
+import { useUpdateTask, useUpdateTaskStatus, usePostTaskUpdate, useBulkUpdateTasks } from '../../hooks/useMutations'
+import { useAutoAcknowledge } from '../../hooks/useAutoAcknowledge'
 import { useProjects, useDecisions } from '../../hooks/useApiData'
 import type { DecisionRow } from '../../hooks/useApiData'
 import { parseTagsString } from '../../lib/tagUtils'
@@ -118,7 +119,9 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
   const [quickAddHasContent, setQuickAddHasContent] = useState(false)
   const taskSelfIntent: Intent = quickAddHasContent ? 'commenting' : 'viewing'
   const taskPeerIntents = useIntentBroadcast('task', task?.id, taskSelfIntent)
-  const ackTask = useAcknowledgeTask()
+  // Slack-style seen: opening the panel acknowledges the assignment silently
+  // (assignee-only; replaces the old explicit Acknowledge button).
+  useAutoAcknowledge(task)
   const { showUndo } = useUndoToast()
   // Support ?tab= deep links; retire 'notes' and 'comments' → 'activity'.
   const [activeTab, setActiveTab] = useState<Tab>(() => {
@@ -580,27 +583,12 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
             style={{ display: activeTab === 'overview' ? 'flex' : 'none', flexDirection: 'column', gap: 'var(--sp-xl)' }}
           >
 
-            {/* Acknowledge button (compact) — only when unacknowledged */}
-            {task.assignee && !task.acknowledged_at && task.status !== 'done' && (
-              <button
-                onClick={() => ackTask.mutate(task.id)}
-                disabled={ackTask.isPending}
-                className="flex items-center gap-2 rounded-lg text-xs font-medium transition-all duration-200"
-                style={{
-                  background: 'var(--gold-active)',
-                  color: 'var(--gold)',
-                  border: '1px solid rgba(201,168,76,0.2)',
-                  cursor: 'pointer',
-                  width: 'fit-content',
-                  padding: '6px 12px',
-                }}
-              >
-                <span style={{ width: 6, height: 6, borderRadius: 'var(--radius-circle)', backgroundColor: 'var(--gold)', flexShrink: 0 }} />
-                {ackTask.isPending ? 'Acknowledging...' : 'Acknowledge Assignment'}
-              </button>
-            )}
+            {/* Acknowledgement is now automatic — opening this panel as the
+                assignee fires it (useAutoAcknowledge above). The old explicit
+                "Acknowledge Assignment" button is gone (Nick 2026-06-11:
+                Slack-style — seeing the task IS the acknowledgement). */}
 
-            {/* Recent activity peek — first thing visible after the action button.
+            {/* Recent activity peek — first thing visible in the tab.
                 Nick wants this where project-actions were: high in the panel. */}
             <OverviewActivityPeek
               taskId={task.id}

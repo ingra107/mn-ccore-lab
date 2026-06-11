@@ -13,6 +13,7 @@ import { useTaskDetail } from '../../hooks/useApiData'
 import ReactionBar from '../ReactionBar'
 import SmartCompose from '../SmartCompose'
 import { useUpdateTask, useToggleSubtask } from '../../hooks/useMutations'
+import { useAutoAcknowledge } from '../../hooks/useAutoAcknowledge'
 import { useUndoToast } from '../UndoToast'
 import { LinkRow } from './primitives'
 import { WorkflowSection } from '../tasks/detail/FieldControls'
@@ -30,6 +31,9 @@ import type { TaskRow } from '../../lib/api'
 export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; project: { name: string; slug: string } | null; state: TodayStateApi }) {
   const isPlanned = !!state.planned[task.id]
   const isNow = state.rightNow === task.id
+  // Slack-style seen (Nick 2026-06-11): expanding the drawer acknowledges the
+  // assignment silently when the viewer is the assignee.
+  useAutoAcknowledge(task)
   const detailQuery = useTaskDetail(task.id)
   const detail = detailQuery.data
   const linkSet: LinkKind[] = []

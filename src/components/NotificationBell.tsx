@@ -16,7 +16,10 @@ const TYPE_ICONS: Record<string, typeof Bell> = {
   impact: Sparkles,
 }
 
-export default function NotificationBell() {
+// align: which edge of the bell the dropdown anchors to. 'right' (default)
+// suits a top-right header (public Layout); 'left' lets the dropdown open
+// rightward when the bell lives in the portal sidebar.
+export default function NotificationBell({ align = 'right' }: { align?: 'left' | 'right' }) {
   const { user, isAuthenticated } = useAuth()
   const slug = useMemo(() => emailToSlug(user?.email), [user?.email])
   const { data: notifications = [] } = useNotifications(slug)
@@ -25,6 +28,27 @@ export default function NotificationBell() {
   const markAllRead = useMarkAllRead(slug)
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
+
+  // Slack-style read semantics (Nick 2026-06-11): opening the list IS seeing
+  // it. Unread highlights stay visible while the dropdown is open; when it
+  // closes (or unmounts mid-navigation), everything is marked read. No
+  // per-item "mark as read" chore. Refs keep the unmount cleanup current
+  // without re-running the effect.
+  const wasOpen = useRef(false)
+  const unreadRef = useRef(0)
+  unreadRef.current = unreadCount
+  const markAllRef = useRef(markAllRead.mutate)
+  markAllRef.current = markAllRead.mutate
+  useEffect(() => {
+    if (open) { wasOpen.current = true; return }
+    if (wasOpen.current) {
+      wasOpen.current = false
+      if (unreadRef.current > 0) markAllRef.current()
+    }
+  }, [open])
+  useEffect(() => () => {
+    if (wasOpen.current && unreadRef.current > 0) markAllRef.current()
+  }, [])
 
   // Close on outside click
   useEffect(() => {
@@ -119,7 +143,7 @@ export default function NotificationBell() {
             style={{
               position: 'absolute',
               top: '100%',
-              right: 0,
+              ...(align === 'right' ? { right: 0 } : { left: 0 }),
               marginTop: '8px',
               width: '360px',
               maxHeight: '480px',

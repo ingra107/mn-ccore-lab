@@ -32,7 +32,7 @@ import {
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../hooks/useAuth'
 import { useDarkMode } from '../hooks/useDarkMode'
-import { useUnreadCount } from '../hooks/useNotifications'
+import NotificationBell from './NotificationBell'
 import { useNextMeeting } from '../hooks/useApiData'
 import { PATHS } from '../constants/paths'
 import Avatar from './Avatar'
@@ -107,8 +107,10 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
   const person = userSlug ? getPersonInfo(userSlug) : null
   const isPi = user?.isPi ?? false
 
-  // Badge counts — lightweight queries, NOT full task list
-  const { data: unreadCount = 0 } = useUnreadCount(userSlug || '')
+  // Badge counts — lightweight queries, NOT full task list.
+  // (Unread NOTIFICATIONS moved off the My Hub nav item to the bell in the
+  // header row — the nav badge implied My Hub held a clickable updates list,
+  // which it doesn't. Nick 2026-06-11.)
   const { data: overdueData } = useQuery({
     queryKey: ['overdue-count', userSlug],
     queryFn: async () => {
@@ -168,12 +170,11 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
   const navWithBadges = useMemo(() => allGroups.map(group => ({
     ...group,
     items: group.items.map(item => {
-      if (item.to === PATHS.personal && unreadCount > 0) return { ...item, badge: unreadCount }
       if (item.to === PATHS.myTasks && myOverdue > 0) return { ...item, badge: myOverdue }
       if (item.to === PATHS.meetings && nextMeetingLabel) return { ...item, hint: nextMeetingLabel }
       return item
     }),
-  })), [allGroups, unreadCount, myOverdue, nextMeetingLabel])
+  })), [allGroups, myOverdue, nextMeetingLabel])
 
   const isActive = (path: string) => {
     if (path === PATHS.dashboard) return location.pathname === PATHS.dashboard
@@ -191,7 +192,11 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
         borderColor: 'var(--border-subtle)',
       }}
     >
-      {/* Logo area */}
+      {/* Logo area + notification bell. The bell is THE portal notification
+          surface (Nick 2026-06-11): badge = unread, click = the pointed list
+          of updates (deep-links per item), close = everything marked read
+          (Slack semantics, inside NotificationBell). align="left" so the
+          dropdown opens rightward over the content instead of off-screen. */}
       <div className="flex items-center h-14 px-3 border-b" style={{ borderColor: 'var(--border-subtle)' }}>
         <Link to="/" className="flex items-center gap-2 min-w-0">
           <img
@@ -208,6 +213,11 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
             />
           )}
         </Link>
+        {!collapsed && (
+          <span className="ml-auto">
+            <NotificationBell align="left" />
+          </span>
+        )}
       </div>
 
       {/* Nav groups */}
