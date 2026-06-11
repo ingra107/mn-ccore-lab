@@ -50,7 +50,6 @@ import RevisionTracker from '../components/RevisionTracker'
 import KeyLinksEditor from '../components/KeyLinksEditor'
 import WorkOnActions from '../components/WorkOnActions'
 import LinkifiedText from '../components/LinkifiedText'
-import { parseDescriptionLog } from '../lib/descriptionLog'
 import FileUpload from '../components/FileUpload'
 import PresenceAvatars from '../components/PresenceAvatars'
 import { usePresence, useTyping, useIntentBroadcast, type Intent } from '../hooks/usePresence'
@@ -360,15 +359,6 @@ function ProjectDetailInner({ project }: InnerProps) {
   const [descExpanded, setDescExpanded] = useState(false)
   const [descDraft, setDescDraft] = useState(project.description ?? '')
   // Parse the running description log into leading prose + dated entries. Pure
-  // DISPLAY transform (never mutates the stored description): the dated entries
-  // render newest-first while the static summary sentence stays pinned on top.
-  // Interim until the M5 static-summary/Activity-timeline split lands.
-  const descLog = useMemo(() => {
-    const parsed = parseDescriptionLog(project.description ?? '')
-    // Entries pre-reversed to newest-first so the render path doesn't
-    // copy+reverse on every render.
-    return { ...parsed, entries: [...parsed.entries].reverse() }
-  }, [project.description])
   const [editingShortName, setEditingShortName] = useState(false)
   const [shortNameDraft, setShortNameDraft] = useState(project.short_name ?? '')
   const [editingTitle, setEditingTitle] = useState(false)
@@ -1671,89 +1661,6 @@ function ProjectDetailInner({ project }: InnerProps) {
                     outline: 'none',
                   }}
                 />
-              ) : descLog.entries.length > 0 ? (
-                // Dated-log render: leading summary pinned on top, dated entries
-                // NEWEST-FIRST (pre-reversed in the descLog memo). Collapsed =
-                // lead + the 2 most-recent entries.
-                (() => {
-                  const newest = descLog.entries
-                  const COLLAPSE_AFTER = 2
-                  const hasMore = newest.length > COLLAPSE_AFTER
-                  const shown = descExpanded ? newest : newest.slice(0, COLLAPSE_AFTER)
-                  const onEdit = () => {
-                    setDescDraft(project.description ?? '')
-                    setEditingDescription(true)
-                  }
-                  return (
-                    <div
-                      onClick={onEdit}
-                      title="Click to edit"
-                      style={{
-                        cursor: 'pointer',
-                        padding: 'var(--sp-xs) 0',
-                        borderBottom: '1px dashed transparent',
-                        transition: 'border-color 0.2s',
-                      }}
-                      onMouseEnter={(e) =>
-                        (e.currentTarget.style.borderColor = 'rgba(201, 168, 76, 0.4)')
-                      }
-                      onMouseLeave={(e) =>
-                        (e.currentTarget.style.borderColor = 'transparent')
-                      }
-                    >
-                      {descLog.lead && (
-                        <p
-                          style={{
-                            fontSize: '14px',
-                            color: 'var(--ink)',
-                            lineHeight: 1.6,
-                            margin: '0 0 10px 0',
-                            whiteSpace: 'pre-wrap',
-                          }}
-                        >
-                          <LinkifiedText text={descLog.lead} />
-                        </p>
-                      )}
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        {shown.map((entry, i) => (
-                          <p
-                            key={`${entry.date}-${i}`}
-                            style={{
-                              fontSize: '14px',
-                              color: 'var(--ink)',
-                              lineHeight: 1.6,
-                              margin: 0,
-                              whiteSpace: 'pre-wrap',
-                            }}
-                          >
-                            <LinkifiedText text={entry.text} />
-                          </p>
-                        ))}
-                      </div>
-                      {hasMore && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            setDescExpanded(!descExpanded)
-                          }}
-                          style={{
-                            background: 'none',
-                            border: 'none',
-                            cursor: 'pointer',
-                            fontSize: 'var(--label-size)',
-                            color: 'var(--teal)',
-                            padding: 'var(--sp-xs) 0',
-                            opacity: 0.8,
-                          }}
-                        >
-                          {descExpanded
-                            ? 'Show less'
-                            : `Show ${newest.length - COLLAPSE_AFTER} earlier`}
-                        </button>
-                      )}
-                    </div>
-                  )
-                })()
               ) : (
                 <div>
                   <p
