@@ -45,15 +45,23 @@ function gmailThreadUrl(threadId: string | null | undefined): string | null {
   return threadId ? `https://mail.google.com/mail/u/1/#inbox/${threadId}` : null;
 }
 
-// GET /api/tasks/overdue-count?assignee= — lightweight count for sidebar badge
+// GET /api/tasks/overdue-count?assignee= — lightweight counts for sidebar badge.
+// Returns { count: <overdue>, unseen: <unacknowledged> }. `unseen` (2026-06-11,
+// Slack-style seen model) = open tasks the assignee hasn't OPENED yet
+// (acknowledged_at IS NULL — auto-ack fires on first view; self-created tasks
+// are born acknowledged). Both counts exclude soft-deleted rows (deleted_at
+// guard added same date — deleted overdue tasks previously inflated the badge).
 export async function handleOverdueCount(url: URL, env: Env): Promise<Response> {
   const assignee = url.searchParams.get('assignee')
   const today = ctToday()
-  let query = 'SELECT COUNT(*) as count FROM tasks WHERE completed = 0 AND due_date < ?'
+  let query = `SELECT
+    SUM(CASE WHEN due_date < ? THEN 1 ELSE 0 END) as count,
+    SUM(CASE WHEN acknowledged_at IS NULL THEN 1 ELSE 0 END) as unseen
+    FROM tasks WHERE completed = 0 AND deleted_at IS NULL`
   const params: string[] = [today]
   if (assignee) { query += ' AND assignee = ?'; params.push(assignee) }
-  const result = await env.DB.prepare(query).bind(...params).first<{ count: number }>()
-  return json({ data: { count: result?.count ?? 0 } })
+  const result = await env.DB.prepare(query).bind(...params).first<{ count: number | null; unseen: number | null }>()
+  return json({ data: { count: result?.count ?? 0, unseen: result?.unseen ?? 0 } })
 }
 
 // GET /api/tasks?assignee=&status=&priority=&project=&meeting=&completed=&source=

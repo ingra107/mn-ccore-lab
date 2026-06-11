@@ -15,6 +15,8 @@ import {
 } from '../constants'
 import { isOverdue } from '../../../lib/dateUtils'
 import { useLabPrefs } from '../../../hooks/useLabPrefs'
+import { useAuth } from '../../../hooks/useAuth'
+import { emailToSlug } from '../../../lib/emailSlug'
 import type { TaskRow } from '../../../lib/api'
 
 export interface UseTaskFilterArgs {
@@ -32,10 +34,15 @@ export function useTaskFilter({ allTasks, filter, search, quickView, plannedSet,
   // with every stale chip/filter and surfaced in Settings → Lab Preferences.
   const { prefs } = useLabPrefs()
   const taskStaleDays = prefs.taskStaleDays
+  // 'new' quick view (Slack-style seen, 2026-06-11): YOUR tasks you haven't
+  // opened yet (acknowledged_at IS NULL; auto-ack fires on open, draining it).
+  const { user } = useAuth()
+  const viewerSlug = emailToSlug(user?.email)
 
   // Apply quick-view + filters + search.
   const filtered = useMemo(() => {
     let base: TaskRow[] = allTasks
+    if (quickView === 'new') base = base.filter((t) => t.assignee === viewerSlug && !t.acknowledged_at && !isTaskDone(t))
     if (quickView === 'today') base = base.filter((t) => plannedSet.has(t.id) || t.due_date?.slice(0, 10) === today)
     if (quickView === 'overdue') base = base.filter((t) => t.due_date && t.due_date.slice(0, 10) < today && !isTaskDone(t))
     if (quickView === 'waiting') base = base.filter((t) => t.status === 'waiting_external' && !isTaskDone(t))
@@ -56,7 +63,7 @@ export function useTaskFilter({ allTasks, filter, search, quickView, plannedSet,
       if (search && !t.title.toLowerCase().includes(search.toLowerCase())) return false
       return true
     }).map((t) => ({ ...t, _group: getGroupForTask(t, projectsByPid), _tag: tagForTask(t, projectsByPid) }) as TaskRow & { _group: GroupKey; _tag: string })
-  }, [allTasks, filter, search, quickView, plannedSet, today, projectsByPid, taskStaleDays])
+  }, [allTasks, filter, search, quickView, plannedSet, today, projectsByPid, taskStaleDays, viewerSlug])
 
   // Bucket by group, then sort each bucket: planned → active → done.
   // CLAUDE.md Rule 62: planned tasks float to top, done sinks to bottom with strikethrough.

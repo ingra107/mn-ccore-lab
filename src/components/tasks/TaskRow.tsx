@@ -29,6 +29,8 @@
 import { useRef, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { PATHS } from '../../constants/paths'
+import { useAuth } from '../../hooks/useAuth'
+import { emailToSlug } from '../../lib/emailSlug'
 import TaskTitle from './TaskTitle'
 import {
   ACCENT_GOLD, ACCENT_TEAL, ACCENT_CORAL, ACCENT_ORANGE, ACCENT_GREEN,
@@ -221,6 +223,12 @@ export function TaskRow(props: SharedTaskRowProps) {
   const [hover, setHover] = useState(false)
   const lpTimer = useRef<ReturnType<typeof setTimeout> | 'fired' | null>(null)
 
+  // NEW-to-you chip (Slack-style seen, 2026-06-11): assigned to the viewer and
+  // never opened (acknowledged_at IS NULL). Auto-acknowledge fires when the
+  // detail surface opens, so the chip clears live the moment you look at it.
+  const { user } = useAuth()
+  const isNewToViewer = !isDone && !!task.assignee && task.assignee === emailToSlug(user?.email) && !task.acknowledged_at
+
   const selectable = !!onToggleSelect
 
   const startPress = (e: React.MouseEvent) => {
@@ -305,6 +313,17 @@ export function TaskRow(props: SharedTaskRowProps) {
     </button>
   ) : null
 
+  // Gold NEW pill right after the title — same accent + meaning as the
+  // sidebar unseen badge and the ✦ New quick filter.
+  const newChip = isNewToViewer ? (
+    <span
+      title="New to you — you haven't opened this yet"
+      style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: ACCENT_GOLD, background: withAlpha(ACCENT_GOLD, 14), padding: '1px 5px', borderRadius: 3, marginLeft: 6, whiteSpace: 'nowrap' }}
+    >
+      NEW
+    </span>
+  ) : null
+
   const rightMeta = (
     <>
       {isPlanned && !isDone && <PlannedChip label={plannedLabel} onUnplan={onTogglePlan} />}
@@ -356,6 +375,7 @@ export function TaskRow(props: SharedTaskRowProps) {
               {leadingTag && <span style={{ marginRight: 6 }} aria-hidden="true">{leadingTag}</span>}
               {isRightNow && <RightNowBadge />}
               {titleNode}
+              {newChip}
               {planBtn && <span style={{ marginLeft: 4, whiteSpace: 'nowrap' }}>{planBtn}</span>}
             </span>
             <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
@@ -371,6 +391,7 @@ export function TaskRow(props: SharedTaskRowProps) {
                 {leadingTag && <span style={{ marginRight: 6 }} aria-hidden="true">{leadingTag}</span>}
                 {isRightNow && <RightNowBadge />}
                 {titleNode}
+                {newChip}
                 {showGroupOverridePin && task.group_override && (
                   <span title={`Moved manually (${task.group_override})`} style={{ fontSize: 9, color: ACCENT_TEAL, padding: '1px 4px', background: withAlpha(ACCENT_TEAL, 10), borderRadius: 3, marginLeft: 6 }}>📍</span>
                 )}

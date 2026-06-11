@@ -153,6 +153,9 @@ export function useAcknowledgeTask() {
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] })
       queryClient.invalidateQueries({ queryKey: ['activity'] })
+      // The sidebar "unseen" badge counts acknowledged_at IS NULL — drain it
+      // as soon as an auto-/manual acknowledge lands (Slack-style seen model).
+      queryClient.invalidateQueries({ queryKey: ['overdue-count'] })
     },
   })
 }

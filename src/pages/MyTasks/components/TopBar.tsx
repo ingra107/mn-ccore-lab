@@ -31,6 +31,9 @@ interface TopBarProps {
 export function TopBar({ view, setView, search, setSearch, filter, setFilter, quickView, setQuickView, taskCount, projectOptions, currentQuery, onApplyView, onCreateTask }: TopBarProps) {
   const tabs: { k: QuickViewKey; l: string; color?: string }[] = [
     { k: 'all', l: 'All' },
+    // 'New' = your tasks you haven't opened yet (Slack-style seen; matches the
+    // sidebar badge count + the gold NEW chip on rows). Drains on open.
+    { k: 'new', l: '✦ New', color: ACCENT_GOLD },
     { k: 'today', l: '📌 Today', color: ACCENT_GOLD },
     { k: 'overdue', l: '⚠ Overdue', color: ACCENT_CORAL },
     { k: 'waiting', l: '⏳ Waiting on', color: ACCENT_ORANGE },

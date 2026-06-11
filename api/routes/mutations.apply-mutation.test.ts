@@ -259,6 +259,64 @@ describe('applyMutation envelope factory', () => {
     expect(row?.updated_at).toBe(SUPPLIED)
   })
 
+  it('insert self-ack: a task created by its own assignee is born acknowledged (2026-06-11)', async () => {
+    // Slack-style seen model: "unseen" (acknowledged_at IS NULL) means someone
+    // ELSE put the task in front of you. Self-created tasks (incl. the PB
+    // service user + Apps Script lanes, which resolve to nick-ingraham) are
+    // born acknowledged so they never count as unseen.
+    const db = makeStubDB()
+    const newTaskId = 'task_01hwtest_apply_mut_selfack1'
+    const env = { DB: db } as unknown as import('../helpers').Env
+    const user = { email: 'ingra107@umn.edu' } as import('../helpers').AuthUser // actorSlug → nick-ingraham
+
+    const result = await applyInsert(env, {
+      table: 'tasks',
+      record_id: newTaskId,
+      op: 'insert',
+      payload: {
+        title: 'Self-created task',
+        description: 'x',
+        assignee: 'nick-ingraham',
+        status: 'todo',
+        priority: 'medium',
+      },
+      mutation_id: 'mut_test_selfack_00000000001',
+      route: 'handleCreateTask',
+    } as unknown as Parameters<typeof applyInsert>[1], user)
+
+    expect(result.status).toBe('accepted')
+    const row = db._store.get(newTaskId)
+    expect(row?.acknowledged_at).toBeTruthy()
+    expect(row?.acknowledged_by).toBe('nick-ingraham')
+  })
+
+  it('insert self-ack does NOT fire when assigning to someone else (2026-06-11)', async () => {
+    const db = makeStubDB()
+    const newTaskId = 'task_01hwtest_apply_mut_selfack2'
+    const env = { DB: db } as unknown as import('../helpers').Env
+    const user = { email: 'ingra107@umn.edu' } as import('../helpers').AuthUser
+
+    const result = await applyInsert(env, {
+      table: 'tasks',
+      record_id: newTaskId,
+      op: 'insert',
+      payload: {
+        title: 'Assigned to a mentee',
+        description: 'x',
+        assignee: 'dan-shyu',
+        status: 'todo',
+        priority: 'medium',
+      },
+      mutation_id: 'mut_test_selfack_00000000002',
+      route: 'handleCreateTask',
+    } as unknown as Parameters<typeof applyInsert>[1], user)
+
+    expect(result.status).toBe('accepted')
+    const row = db._store.get(newTaskId)
+    // Stays unseen for the assignee — their auto-ack fires on first open.
+    expect(row?.acknowledged_at ?? null).toBeNull()
+  })
+
   it('mints mut_ id on delete', async () => {
     const db = makeStubDB()
     const delTaskId = 'task_01hwtest_apply_mut_0000003'

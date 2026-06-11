@@ -116,12 +116,16 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
     queryFn: async () => {
       const params = userSlug ? `?assignee=${userSlug}` : ''
       const res = await fetch(`/api/tasks/overdue-count${params}`)
-      const json = await res.json() as { data: { count: number } }
+      const json = await res.json() as { data: { count: number; unseen: number } }
       return json.data
     },
     staleTime: 60_000,
   })
-  const myOverdue = overdueData?.count ?? 0
+  // My Tasks badge = UNSEEN (tasks you haven't opened yet), not overdue
+  // (Nick 2026-06-11: a badge that doesn't drain when you interact is noise —
+  // overdue lives inside the page via OverdueBanner + the ⚠ quick filter).
+  // Drains via auto-acknowledge as tasks are opened.
+  const myUnseen = overdueData?.unseen ?? 0
 
   // Next meeting countdown — uses lightweight /api/meetings/next (not full meetings list)
   const { data: nextMeeting } = useNextMeeting()
@@ -170,11 +174,11 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
   const navWithBadges = useMemo(() => allGroups.map(group => ({
     ...group,
     items: group.items.map(item => {
-      if (item.to === PATHS.myTasks && myOverdue > 0) return { ...item, badge: myOverdue }
+      if (item.to === PATHS.myTasks && myUnseen > 0) return { ...item, badge: myUnseen }
       if (item.to === PATHS.meetings && nextMeetingLabel) return { ...item, hint: nextMeetingLabel }
       return item
     }),
-  })), [allGroups, myOverdue, nextMeetingLabel])
+  })), [allGroups, myUnseen, nextMeetingLabel])
 
   const isActive = (path: string) => {
     if (path === PATHS.dashboard) return location.pathname === PATHS.dashboard
@@ -276,10 +280,13 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
                   {!collapsed && item.badge !== undefined && item.badge > 0 && (
                     <span
                       className="ml-auto text-xs px-1.5 py-0.5 rounded-full"
+                      title={item.to === PATHS.myTasks ? `${item.badge} task${item.badge === 1 ? '' : 's'} you haven't opened yet` : undefined}
                       style={{
-                        backgroundColor: 'var(--maroon-solid)',
-                        color: 'var(--ink-bright, #fff)',
-                        animation: item.to === '/my-tasks' ? 'badge-pulse 2s ease-in-out infinite' : undefined,
+                        // My Tasks badge = "new to you" (gold, Rule 59), drains
+                        // on open via auto-acknowledge. Gold bg takes a fixed
+                        // dark literal, not var(--ink) (CLAUDE.md gold rule).
+                        backgroundColor: item.to === PATHS.myTasks ? 'var(--gold)' : 'var(--maroon-solid)',
+                        color: item.to === PATHS.myTasks ? '#1a1a1a' : 'var(--ink-bright, #fff)',
                       }}
                     >
                       {item.badge}

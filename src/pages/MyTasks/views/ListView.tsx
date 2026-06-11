@@ -18,6 +18,8 @@ import InlineDatePicker from '../../../components/InlineDatePicker'
 import InlineAssigneePicker from '../../../components/InlineAssigneePicker'
 import { useTaskFieldEditors } from '../../../hooks/useTaskFieldEditors'
 import { useLabPrefs } from '../../../hooks/useLabPrefs'
+import { useAuth } from '../../../hooks/useAuth'
+import { emailToSlug } from '../../../lib/emailSlug'
 import { STATUS_OPTIONS, PRIORITY_OPTIONS } from '../../../lib/taskConstants'
 import {
   GROUP_META,
@@ -54,6 +56,9 @@ export function ListView({ filtered, selected, toggleSelect, setSelected, setDra
   const { onStatusChange, onPriorityChange, onAssigneeChange, onDateChange, onProjectChange } = useTaskFieldEditors()
   // P2-9: one shared staleness threshold (days-since-meaningful-movement).
   const { prefs } = useLabPrefs()
+  // NEW-to-you chip (Slack-style seen): viewer slug computed once for all rows.
+  const { user } = useAuth()
+  const viewerSlug = emailToSlug(user?.email)
 
   // MT-04 — virtualize. 44px row + 1px border ≈ 45. Use measureElement for
   // any future expanded-state without changing this default.
@@ -136,6 +141,7 @@ export function ListView({ filtered, selected, toggleSelect, setSelected, setDra
                     onProjectChange={(next) => onProjectChange(t.id, t.project_id, next)}
                     projectSelectOptions={projectSelectOptions}
                     staleDays={prefs.taskStaleDays}
+                    isNew={!!t.assignee && t.assignee === viewerSlug && !t.acknowledged_at && !isTaskDone(t)}
                   />
                 </div>
               )
@@ -176,9 +182,10 @@ interface ListRowProps {
   onProjectChange: (val: string) => void
   projectSelectOptions: { value: string; label: string; color?: string }[]
   staleDays: number
+  isNew: boolean
 }
 
-function ListRow({ task, project, isCursor, isSelected, onClick, onDouble, onSelect, planned, onStatusChange, onPriorityChange, onAssigneeChange, onDateChange, onProjectChange, projectSelectOptions, staleDays }: ListRowProps) {
+function ListRow({ task, project, isCursor, isSelected, onClick, onDouble, onSelect, planned, onStatusChange, onPriorityChange, onAssigneeChange, onDateChange, onProjectChange, projectSelectOptions, staleDays, isNew }: ListRowProps) {
   const meta = GROUP_META[(task as TaskRow & { _group?: GroupKey })._group ?? 'deep']
   // Rule 68: status-aware isOverdue(), never a hand-rolled date compare.
   const overdue = !!task.due_date && !isTaskDone(task) && isOverdue(task.due_date, task.status)
@@ -218,6 +225,7 @@ function ListRow({ task, project, isCursor, isSelected, onClick, onDouble, onSel
           onClick={(e) => { e.stopPropagation(); onDouble() }}
           style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', cursor: 'pointer' }}
         >{task.title}</span>
+        {isNew && <span title="New to you — you haven't opened this yet" style={{ fontSize: 9, color: ACCENT_GOLD, fontWeight: 700, letterSpacing: '0.08em', background: withAlpha(ACCENT_GOLD, 14), padding: '1px 5px', borderRadius: 3, flexShrink: 0 }}>NEW</span>}
         {task.group_override && <span title={`Moved manually (${task.group_override})`} style={{ fontSize: 10, color: ACCENT_TEAL, flexShrink: 0 }}>📍</span>}
         {planned && <span style={{ fontSize: 9, color: ACCENT_GOLD, fontWeight: 700, letterSpacing: '0.1em' }}>PLANNED</span>}
         {overdueDays > 0 && <span style={{ fontSize: 9, color: ACCENT_CORAL, fontWeight: 700 }}>{overdueDays}d LATE</span>}

@@ -22,7 +22,7 @@
 // write path through this endpoint as part of A3 ship.
 
 import type { AuthUser, Env, ValidationFlags } from '../helpers';
-import { json, error, generateId, assertProtectedNotNull, getValidationFlags, safeTaskRow, safeRow, projectRefToCanonical, isPiRequest } from '../helpers';
+import { json, error, generateId, assertProtectedNotNull, getValidationFlags, safeTaskRow, safeRow, projectRefToCanonical, isPiRequest, actorSlug } from '../helpers';
 import { FK_SLUG_FIELDS } from '../lib/task-cols';
 import { nowInstant } from '../lib/time';
 import { assertEnumDomain, assertCompletionTriad } from '../lib/enum-domains';
@@ -549,6 +549,20 @@ export async function applyInsert(env: Env, mut: Mutation, user: AuthUser, flags
           reason: `deduped: active task with same (title, project_id) exists as ${dup.id}`,
         });
       }
+    }
+  }
+
+  // Slack-style seen (2026-06-11): a task created BY its own assignee is born
+  // acknowledged — "unseen" (acknowledged_at IS NULL) means someone ELSE put
+  // it in front of you. Applied at this chokepoint so every create lane gets
+  // it (direct route, Apps Script email tasks, PWA, PB sync — the API-key
+  // lanes resolve to the PB service user → 'nick-ingraham'). An explicit
+  // acknowledged_at in the payload wins.
+  if (mut.table === 'tasks') {
+    const p = mut.payload as Record<string, unknown>;
+    if (p.acknowledged_at == null && typeof p.assignee === 'string' && user?.email && actorSlug(user.email) === p.assignee) {
+      p.acknowledged_at = nowInstant();
+      p.acknowledged_by = p.assignee;
     }
   }
 
