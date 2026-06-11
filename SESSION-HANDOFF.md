@@ -1,12 +1,40 @@
-# ▶ NEXT SESSION HEADLINE: TASK-description migration (Nick 2026-06-11 morning)
+# ▶▶▶ HUB-ONLY DOCKET (next Hub session) — EXECUTE IN ORDER
 
-> Nick spotted it live: **592 tasks still carry dated-log-polluted descriptions** — the 2026-06-10
-> description migration + P2-B retarget scoped PROJECTS only; tasks were never migrated. Projects
-> verified clean; **zero new dated lines anywhere since the retarget** (source is dead — this is
-> one-time historical cleanup). Nick approved: dry-run staged 2026-06-11 morning → review +
-> execute next session. Artifacts: `Scratch/task-desc-migration-2026-06-11/` + runbook at
-> `docs/superpowers/plans/2026-06-11-task-desc-migration-dryrun.md` (agent emitting now; mirrors
-> the proven project pipeline — proposed entries / apply.d1.sql / strip.d1.sql, NOT executed).
+> State entering this docket: **820/820 API tests · live deploy = HEAD code (`82059168` worker;
+> later commits are docs-only) · D1 schema v78 · unified timeline is THE message substrate**
+> (all 4 legacy message tables + daily_plans/reflections physically dropped; every reader/writer
+> on activity_entries; Hermes response lane live; renderers unified). The comment/notes
+> UNIFICATION is DONE — what remains below is the task-DESCRIPTION cleanup + riders.
+
+**H1 — TASK-description migration EXECUTE (headline; Nick-approved staging 2026-06-11).**
+592 tasks carry historical dated-log descriptions (projects-only scope gap; source dead — zero
+new dated lines since P2-B). Dry-run COMPLETE: `docs/superpowers/plans/2026-06-11-task-desc-migration-dryrun.md`
+(commit `a994fb77`) + artifacts `Scratch/task-desc-migration-2026-06-11/` (raw snapshot,
+proposed.json, apply.d1.sql = 903 INSERT OR IGNORE entries [604 update/293 completion/6 blocker],
+strip.d1.sql = 576 UPDATEs w/ updated_at bump for PB pull). **Gate: Nick's 4 answers in the
+report's Open Questions** (① 133 email-metadata lines emit/suppress/collapse, ② blocker kind
+keep-or-fold, ③ strip in ~100-row batches?, ④ NULL-vs-empty on the 77 fully-dated tasks — verify
+renderers first). Then: snapshot → apply via scripts/wrangler-d1 --file → verify counts → strip →
+PB pull takes clean text → re-run muddied GLOB count, expect 0 → fold back to this handoff.
+
+**H2 — Nick's @me visibility click-test** (his step, still pending since v77 ship): post an
+@me-locked comment, confirm only-you visibility. Prompt him at session start.
+
+**H3 — Nightly description gardener** (designed, NOT built — `docs/superpowers/plans/2026-06-10-m5-phase2-brainstorm-lite.md`):
+machine-origin entries only, never rewrites human comments. Build only AFTER H1 proves
+descriptions stay clean (it's the keep-clean automation; Nick's call on appetite).
+
+**H4 — `questions.ts` Hermes copy convergence** — CONDITIONAL: only if/when Ask-the-Lab gets a
+timeline surface. Don't self-start.
+
+**H5 — `scripts/seed/phase0-seed.ts` task_comments plan-JSON loop** — non-live path writing to a
+dropped table if ever fed task_comments entries; clean in the next phase0/seed audit.
+
+**H6 — carried backlog (unchanged, lower priority):** JS-hover→CSS pass (218 sites);
+spacing-token tail; `/portal/my-tasks-legacy` retire (substrate-swap-gated); local-seed schema
+drift; 768px journey spec; Query-Resource phased pass; IdeasPage:67/AskTheLab:44 param-strip;
+HUB-5 dedup-PK assessment (Dual-Plan gated, optional); triage the 13 pre-existing dogfood
+Playwright failures on main; M5 Phase 2 pointer (activity_entries Phase 2+).
 
 ## ✅ Morning additions (2026-06-11, after the closure header below)
 
