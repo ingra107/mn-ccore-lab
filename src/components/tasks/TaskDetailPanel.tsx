@@ -544,8 +544,8 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
             <div
               style={{
                 background: 'var(--surface-2)',
-                border: '1px solid var(--border-subtle)',
                 borderRadius: 'var(--radius-lg)',
+                boxShadow: 'var(--shadow-card)',
                 padding: 'var(--sp-sm) var(--sp-md)',
               }}
             >
@@ -1079,6 +1079,7 @@ function ProjectInlineGhostSelect({ value, onChange }: { value: string; onChange
       options={options}
       triggerColor={value ? 'var(--teal)' : undefined}
       maxWidth={160}
+      searchable
     />
   )
 }
@@ -1089,7 +1090,7 @@ function DueInlineSelect({ value, onChange }: { value: string; onChange: (v: str
   return (
     <div
       title="Due date"
-      className="rounded-md transition-colors"
+      className="transition-colors"
       style={{
         display: 'inline-flex',
         alignItems: 'center',
@@ -1097,9 +1098,11 @@ function DueInlineSelect({ value, onChange }: { value: string; onChange: (v: str
         fontSize: 'var(--label-size)',
         color: value ? 'var(--ink)' : 'var(--slate)',
         opacity: value ? 1 : 0.85,
-        padding: '2px 6px',
+        padding: '3px 10px',
+        borderRadius: 'var(--radius-full)',
         border: '1px solid transparent',
         cursor: 'pointer',
+        transition: 'background 0.12s',
       }}
       onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--hover-subtle)' }}
       onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
@@ -1571,8 +1574,8 @@ function OverviewQuickAdd({
         >
           {/* Segmented mode pills */}
           <div
-            className="inline-flex rounded-md overflow-hidden flex-shrink-0"
-            style={{ border: '1px solid var(--border-subtle)' }}
+            className="inline-flex rounded-full overflow-hidden flex-shrink-0"
+            style={{ background: 'var(--hover-subtle)' }}
             role="tablist"
             aria-label="Quick add mode"
           >
@@ -1590,7 +1593,8 @@ function OverviewQuickAdd({
                   style={{
                     fontSize: '10px',
                     fontWeight: isActive ? 600 : 400,
-                    padding: '3px 8px',
+                    padding: '3px 10px',
+                    borderRadius: 'var(--radius-full)',
                     background: isActive ? 'var(--teal-active)' : 'transparent',
                     color: isActive ? 'var(--teal)' : 'var(--slate)',
                     border: 'none',
@@ -1872,15 +1876,17 @@ function CompactAssigneeRow({ value, onChange }: { value?: string | null; onChan
         aria-label={person ? `Assignee: ${person.name} — change` : 'Assign task'}
         aria-expanded={open ? "true" : "false"}
         aria-haspopup="listbox"
-        className="flex items-center gap-1.5 rounded-md transition-colors"
+        className="flex items-center gap-1.5 transition-colors"
         style={{
           background: 'transparent',
           border: '1px solid transparent',
+          borderRadius: 'var(--radius-full)',
           cursor: 'pointer',
-          padding: '3px 6px 3px 4px',
+          padding: '3px 10px 3px 6px',
           fontSize: 'var(--label-size)',
           color: 'var(--ink)',
           fontFamily: 'inherit',
+          transition: 'background 0.12s, border-color 0.12s',
         }}
         onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--hover-subtle)' }}
         onMouseLeave={(e) => {

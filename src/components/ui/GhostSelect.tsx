@@ -1,13 +1,17 @@
 /**
  * GhostSelect — opaque themed dropdown (Rule 45)
  *
- * Trigger: ghost resting state (value text + ▾, hover tint, focus teal border).
- * Menu: custom popover via createPortal. Fully opaque bg (var(--cream) =
- * #ffffff light / ~#0f1923 dark). Never translucent + backdrop-filter.
+ * Trigger: pill ghost resting state (value text + ▾, hover tint, focus teal
+ * border). Menu: custom popover via createPortal. Fully opaque bg (var(--cream)
+ * = #ffffff light / ~#0f1923 dark). Never translucent + backdrop-filter.
  *
- * ARIA: trigger has role="button", aria-haspopup="listbox", aria-expanded.
- * Menu has role="listbox". Options have role="option" + aria-selected.
- * Keyboard: Enter/Space open, ArrowUp/Down navigate, Esc closes.
+ * ARIA: trigger has role="combobox" (searchable) or "button", aria-haspopup,
+ * aria-expanded. Menu has role="listbox". Options have role="option" +
+ * aria-selected.
+ * Keyboard: Enter/Space open, ArrowUp/Down navigate filtered list, Esc closes.
+ *
+ * Scroll tracking: menu repositions on scroll/resize (rAF-throttled) instead
+ * of closing, so the trigger stays anchored while the user scrolls.
  *
  * Usage:
  *   <GhostSelect
@@ -15,6 +19,7 @@
  *     value="todo"
  *     onChange={v => handleChange(v)}
  *     options={[{ value: 'todo', label: 'To Do' }, ...]}
+ *     searchable  // enables combobox search input in the menu
  *   />
  */
 import { useState, useEffect, useRef, useCallback } from 'react'
@@ -40,6 +45,12 @@ export interface GhostSelectProps {
   triggerStyle?: React.CSSProperties
   /** Optional max-width on the trigger */
   maxWidth?: number
+  /**
+   * When true: renders a search input at the top of the menu (combobox
+   * pattern). Arrow keys navigate the filtered list; typing narrows it.
+   * Best for long option lists (e.g. 60+ projects).
+   */
+  searchable?: boolean
 }
 
 export default function GhostSelect({
@@ -51,15 +62,24 @@ export default function GhostSelect({
   triggerColor,
   triggerStyle,
   maxWidth,
+  searchable,
 }: GhostSelectProps) {
   const [open, setOpen] = useState(false)
   const [focusedIdx, setFocusedIdx] = useState(-1)
+  const [query, setQuery] = useState('')
   const triggerRef = useRef<HTMLButtonElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
+  const searchRef = useRef<HTMLInputElement>(null)
+  const rafRef = useRef<number | null>(null)
   const [pos, setPos] = useState({ top: 0, left: 0, minWidth: 0 })
 
   const currentOption = options.find((o) => o.value === value)
   const displayLabel = triggerLabel ?? (currentOption?.label ?? value)
+
+  // Filtered option list — only active when menu is open
+  const filteredOptions = query
+    ? options.filter((o) => o.label.toLowerCase().includes(query.toLowerCase()))
+    : options
 
   // Position the portal dropdown flush below the trigger button
   const computePosition = useCallback(() => {
@@ -68,10 +88,31 @@ export default function GhostSelect({
     setPos({ top: rect.bottom + 4, left: rect.left, minWidth: rect.width })
   }, [])
 
+  // rAF-throttled reposition for scroll/resize tracking
+  const scheduleReposition = useCallback(() => {
+    if (rafRef.current !== null) return
+    rafRef.current = requestAnimationFrame(() => {
+      rafRef.current = null
+      if (!triggerRef.current) return
+      const rect = triggerRef.current.getBoundingClientRect()
+      // If the trigger has fully scrolled out of view, close
+      if (rect.bottom < 0 || rect.top > window.innerHeight) {
+        setOpen(false)
+        return
+      }
+      setPos({ top: rect.bottom + 4, left: rect.left, minWidth: rect.width })
+    })
+  }, [])
+
   // Open/close side effects
   useEffect(() => {
     if (!open) {
       setFocusedIdx(-1)
+      setQuery('')
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current)
+        rafRef.current = null
+      }
       return
     }
     computePosition()
@@ -85,46 +126,83 @@ export default function GhostSelect({
       const inMenu = menuRef.current?.contains(target)
       if (!inTrigger && !inMenu) setOpen(false)
     }
-    const onScroll = () => setOpen(false)
     document.addEventListener('mousedown', onMouseDown)
-    window.addEventListener('scroll', onScroll, true)
+    // Track scroll/resize to REPOSITION (not close) the menu
+    window.addEventListener('scroll', scheduleReposition, { capture: true, passive: true })
+    window.addEventListener('resize', scheduleReposition, { passive: true })
     return () => {
       document.removeEventListener('mousedown', onMouseDown)
-      window.removeEventListener('scroll', onScroll, true)
+      window.removeEventListener('scroll', scheduleReposition, true)
+      window.removeEventListener('resize', scheduleReposition)
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current)
+        rafRef.current = null
+      }
     }
-  }, [open, computePosition, options, value])
+  }, [open, computePosition, scheduleReposition, options, value])
 
-  // Focus first option row when menu opens
+  // When searchable: auto-focus the search input when the menu opens
   useEffect(() => {
-    if (!open) return
+    if (!open || !searchable) return
+    // Small delay so the portal is rendered before we focus
+    const t = setTimeout(() => searchRef.current?.focus(), 16)
+    return () => clearTimeout(t)
+  }, [open, searchable])
+
+  // When NOT searchable: focus first option row when menu opens
+  useEffect(() => {
+    if (!open || searchable) return
     const first = menuRef.current?.querySelector<HTMLElement>('[role="option"]')
     first?.focus()
-  }, [open])
+  }, [open, searchable])
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  // Reset focused index when filter changes
+  useEffect(() => {
+    setFocusedIdx(filteredOptions.length > 0 ? 0 : -1)
+  }, [query, filteredOptions.length])
+
+  const closeAndRefocus = useCallback(() => {
+    setOpen(false)
+    triggerRef.current?.focus()
+  }, [])
+
+  const handleTriggerKeyDown = (e: React.KeyboardEvent) => {
     if (!open) {
       if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') {
         e.preventDefault()
         setOpen(true)
       }
-      return
+    } else {
+      // When menu is open and focus is on the trigger (non-searchable case)
+      if (e.key === 'Escape' || e.key === 'Tab') {
+        e.preventDefault()
+        closeAndRefocus()
+      }
     }
+  }
+
+  const handleMenuKeyDown = (e: React.KeyboardEvent) => {
+    const listLen = filteredOptions.length
     if (e.key === 'ArrowDown') {
       e.preventDefault()
-      setFocusedIdx((i) => Math.min(i + 1, options.length - 1))
+      setFocusedIdx((i) => Math.min(i + 1, listLen - 1))
     } else if (e.key === 'ArrowUp') {
       e.preventDefault()
       setFocusedIdx((i) => Math.max(i - 1, 0))
     } else if (e.key === 'Enter') {
       e.preventDefault()
-      const pick = options[focusedIdx]
+      const pick = filteredOptions[focusedIdx]
       if (pick) { onChange(pick.value); setOpen(false) }
-    } else if (e.key === 'Escape' || e.key === 'Tab') {
+    } else if (e.key === 'Escape') {
       e.preventDefault()
-      setOpen(false)
-      triggerRef.current?.focus()
+      closeAndRefocus()
+    } else if (e.key === 'Tab') {
+      e.preventDefault()
+      closeAndRefocus()
     }
   }
+
+  const menuId = `ghost-select-menu-${ariaLabel.replace(/\s+/g, '-').toLowerCase()}`
 
   return (
     <>
@@ -132,18 +210,20 @@ export default function GhostSelect({
       <button
         ref={triggerRef}
         type="button"
-        role="button"
+        role={searchable ? 'combobox' : 'button'}
         aria-label={ariaLabel}
         aria-haspopup="listbox"
         aria-expanded={open ? 'true' : 'false'}
+        aria-controls={open ? menuId : undefined}
+        aria-autocomplete={searchable ? 'list' : undefined}
         onClick={() => setOpen((o) => !o)}
-        onKeyDown={handleKeyDown}
-        className="rounded-md text-xs transition-colors"
+        onKeyDown={handleTriggerKeyDown}
         style={{
           display: 'inline-flex',
           alignItems: 'center',
-          gap: 3,
-          padding: '3px 6px 3px 8px',
+          gap: 4,
+          padding: '3px 10px 3px 10px',
+          borderRadius: 'var(--radius-full)',
           fontSize: 'var(--label-size)',
           color: triggerColor ?? 'var(--ink)',
           background: 'transparent',
@@ -154,6 +234,8 @@ export default function GhostSelect({
           maxWidth: maxWidth ?? undefined,
           overflow: maxWidth ? 'hidden' : undefined,
           textOverflow: maxWidth ? 'ellipsis' : undefined,
+          transition: 'background 0.12s, border-color 0.12s',
+          fontFamily: 'inherit',
           ...triggerStyle,
         }}
         onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--hover-subtle)' }}
@@ -182,16 +264,17 @@ export default function GhostSelect({
       {open && createPortal(
         <div
           ref={menuRef}
+          id={menuId}
           role="listbox"
           aria-label={ariaLabel}
-          onKeyDown={handleKeyDown}
+          onKeyDown={handleMenuKeyDown}
           tabIndex={-1}
           style={{
             position: 'fixed',
             top: pos.top,
             left: pos.left,
             minWidth: Math.max(pos.minWidth, 140),
-            maxHeight: 280,
+            maxHeight: 300,
             overflowY: 'auto',
             backgroundColor: 'var(--cream)',
             border: '1px solid var(--border-subtle)',
@@ -199,41 +282,79 @@ export default function GhostSelect({
             boxShadow: 'var(--shadow-menu)',
             zIndex: 9999,
             outline: 'none',
+            display: 'flex',
+            flexDirection: 'column',
           }}
         >
-          {options.map((opt, idx) => {
-            const selected = opt.value === value
-            const focused = idx === focusedIdx
-            return (
-              <button
-                key={opt.value}
-                role="option"
-                aria-selected={selected ? 'true' : 'false'}
-                type="button"
-                tabIndex={focused ? 0 : -1}
-                onClick={() => { onChange(opt.value); setOpen(false) }}
-                onMouseEnter={() => setFocusedIdx(idx)}
-                className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs transition-colors"
+          {/* Search input — pinned at top, auto-focused when searchable */}
+          {searchable && (
+            <div style={{ padding: '6px 8px', borderBottom: '1px solid var(--border-subtle)', flexShrink: 0 }}>
+              <input
+                ref={searchRef}
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={handleMenuKeyDown}
+                placeholder="Search…"
+                aria-label={`Search ${ariaLabel} options`}
                 style={{
-                  border: 'none',
-                  borderBottom: idx < options.length - 1 ? '1px solid var(--border-subtle)' : 'none',
-                  cursor: 'pointer',
-                  color: opt.color ?? 'var(--ink)',
-                  backgroundColor: focused ? 'var(--teal-active)' : selected ? 'var(--hover-subtle)' : 'transparent',
-                  fontWeight: selected ? 600 : 400,
+                  width: '100%',
+                  border: '1px solid var(--border-subtle)',
+                  borderRadius: 'var(--radius-md)',
+                  padding: '4px 8px',
+                  fontSize: 'var(--label-size)',
+                  color: 'var(--ink)',
+                  background: 'var(--cream)',
                   outline: 'none',
                   fontFamily: 'inherit',
                 }}
-              >
-                <span style={{ flex: 1 }}>{opt.label}</span>
-                {selected && (
-                  <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" style={{ color: 'var(--teal)', flexShrink: 0 }}>
-                    <path d="M2 6l3 3 5-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                )}
-              </button>
-            )
-          })}
+                onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--teal)' }}
+                onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border-subtle)' }}
+              />
+            </div>
+          )}
+
+          {/* Options list — scrollable below the search bar */}
+          <div style={{ overflowY: 'auto', flex: 1 }}>
+            {filteredOptions.length === 0 ? (
+              <div style={{ padding: '10px 12px', fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.70 }}>
+                No matches
+              </div>
+            ) : filteredOptions.map((opt, idx) => {
+              const selected = opt.value === value
+              const focused = idx === focusedIdx
+              return (
+                <button
+                  key={opt.value}
+                  role="option"
+                  aria-selected={selected ? 'true' : 'false'}
+                  type="button"
+                  tabIndex={focused ? 0 : -1}
+                  onClick={() => { onChange(opt.value); setOpen(false) }}
+                  onMouseEnter={() => setFocusedIdx(idx)}
+                  className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs transition-colors"
+                  style={{
+                    border: 'none',
+                    borderBottom: idx < filteredOptions.length - 1 ? '1px solid var(--border-subtle)' : 'none',
+                    cursor: 'pointer',
+                    color: opt.color ?? 'var(--ink)',
+                    backgroundColor: focused ? 'var(--teal-active)' : selected ? 'var(--hover-subtle)' : 'transparent',
+                    fontWeight: selected ? 600 : 400,
+                    outline: 'none',
+                    fontFamily: 'inherit',
+                    flexShrink: 0,
+                  }}
+                >
+                  <span style={{ flex: 1 }}>{opt.label}</span>
+                  {selected && (
+                    <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" style={{ color: 'var(--teal)', flexShrink: 0 }}>
+                      <path d="M2 6l3 3 5-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  )}
+                </button>
+              )
+            })}
+          </div>
         </div>,
         document.body,
       )}
