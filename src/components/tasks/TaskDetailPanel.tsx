@@ -14,6 +14,7 @@ const RichTextEditor = lazy(() => import('../RichTextEditor'))
 import { useUpdateTask, useUpdateTaskStatus, usePostTaskUpdate, useBulkUpdateTasks } from '../../hooks/useMutations'
 import { useAutoAcknowledge } from '../../hooks/useAutoAcknowledge'
 import { useProjects, useDecisions } from '../../hooks/useApiData'
+import GhostSelect from '../ui/GhostSelect'
 import type { DecisionRow } from '../../hooks/useApiData'
 import { parseTagsString } from '../../lib/tagUtils'
 import WorkOnActions from '../WorkOnActions'
@@ -76,6 +77,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
   const bulkUpdate = useBulkUpdateTasks()
   const qc = useQueryClient()
   const navigate = useNavigate()
+  const isMobilePanel = useIsMobile()
 
   // S14: in-panel task swap. Clicking a dependency (blocked-by / blocks) opens
   // that task IN the panel without a parent round-trip. The swap target
@@ -338,8 +340,8 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
           overflowX: 'hidden',
         }}
       >
-        {/* Header */}
-        <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-3 border-b" style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--border-subtle)' }}>
+        {/* Header — flat: same surface as panel, single hairline bottom only */}
+        <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-3" style={{ backgroundColor: 'var(--cream)', borderBottom: '1px solid var(--border-subtle)' }}>
           <div className="flex items-center gap-2">
             <span className="text-xs uppercase tracking-wider" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
               Task Detail
@@ -430,31 +432,33 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
           </div>
 
           {/* Inline fields row: Status · Priority · Project · Due · Delete
-              Small compact dropdowns on one row — no right-hand column.
-              Rule 38: every <select> has aria-label. */}
+              GhostSelect for Status/Priority/Project (Rule 45: fully opaque
+              themed menus, not native OS dropdowns). Due stays DateInput. */}
           <div className="flex items-center gap-2 flex-wrap" style={{ minWidth: 0 }}>
-            <InlineFieldSelect
+            <GhostSelect
               aria-label="Status"
               value={task.status}
               onChange={handleStatusChange}
-            >
-              <option value="todo">To Do</option>
-              <option value="in_progress">In Progress</option>
-              <option value="waiting_external">Waiting (Ext.)</option>
-              <option value="blocked">Blocked</option>
-              <option value="done">Done</option>
-            </InlineFieldSelect>
-            <InlineFieldSelect
+              options={[
+                { value: 'todo', label: 'To Do' },
+                { value: 'in_progress', label: 'In Progress' },
+                { value: 'waiting_external', label: 'Waiting (Ext.)' },
+                { value: 'blocked', label: 'Blocked' },
+                { value: 'done', label: 'Done' },
+              ]}
+            />
+            <GhostSelect
               aria-label="Priority"
               value={task.priority || 'medium'}
               onChange={(v) => handleFieldUpdate('priority', v)}
-            >
-              <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high">High</option>
-              <option value="urgent">Urgent</option>
-            </InlineFieldSelect>
-            <ProjectInlineSelect
+              options={[
+                { value: 'low', label: 'Low' },
+                { value: 'medium', label: 'Medium' },
+                { value: 'high', label: 'High' },
+                { value: 'urgent', label: 'Urgent' },
+              ]}
+            />
+            <ProjectInlineGhostSelect
               value={task.project_id || ''}
               onChange={(v) => handleFieldUpdate('project_id', v || null)}
             />
@@ -523,31 +527,40 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
           </div>
         </div>
 
-        {/* Composer zone — above tabs, visible on every tab.
-            Tinted band separates header (title/fields) from tab content.
-            The band bg-shift alone creates the visual break; the tab bar's
-            own borderBottom provides the bottom edge, so no redundant
-            borderBottom here. */}
-        <div
-          className="px-5 pb-4"
-          style={{
-            borderTop: '1px solid var(--border-subtle)',
-            paddingTop: 'var(--sp-md)',
-            background: 'color-mix(in srgb, var(--cream), var(--slate) 3%)',
-          }}
-        >
-          <OverviewQuickAdd
-            taskId={task.id}
-            taskTitle={task.title}
-            projectSlug={task.project_id}
-            onJumpToTab={(tab) => setActiveTab(tab)}
-            onContentChange={setQuickAddHasContent}
-          />
+        {/* Composer zone — ONE elevated element on the flat panel surface.
+            Desktop: inset card (--surface-2 bg + --border-subtle border + radius).
+            Mobile: OverviewQuickAdd handles its own sticky positioning + bg;
+            skip the card wrapper so the component's negative-margin breakout works. */}
+        <div className="px-5" style={{ paddingTop: 'var(--sp-lg)', paddingBottom: 'var(--sp-md)' }}>
+          {isMobilePanel ? (
+            <OverviewQuickAdd
+              taskId={task.id}
+              taskTitle={task.title}
+              projectSlug={task.project_id}
+              onJumpToTab={(tab) => setActiveTab(tab)}
+              onContentChange={setQuickAddHasContent}
+            />
+          ) : (
+            <div
+              style={{
+                background: 'var(--surface-2)',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: 'var(--radius-lg)',
+                padding: 'var(--sp-sm) var(--sp-md)',
+              }}
+            >
+              <OverviewQuickAdd
+                taskId={task.id}
+                taskTitle={task.title}
+                projectSlug={task.project_id}
+                onJumpToTab={(tab) => setActiveTab(tab)}
+                onContentChange={setQuickAddHasContent}
+              />
+            </div>
+          )}
         </div>
 
-        {/* Tab Bar — sits immediately below the tinted composer band.
-            The bg shift above + this border-b together make tabs read as
-            a clear navigation region, not a continuation of the header. */}
+        {/* Tab Bar — sits below the composer card with its own border-b. */}
         <div className="flex px-5" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
           {TABS.map(({ key, label, icon: Icon }) => (
             <button
@@ -1035,62 +1048,13 @@ function WatchersPicker({ value, onChange }: { value: string; onChange: (v: stri
   )
 }
 
-// ── Inline field selects for the compact header row ──────────
-// Small `<select>`-based dropdowns styled to match the design system.
-// Rule 38: every select must carry aria-label.
+// ── Project inline ghost select ──────────────────────────────
+// Uses GhostSelect with teal trigger text when a project is set
+// (semantic signal: user knows where this task lives).
+// The project list comes from the same ['projects'] cache key as ProjectSelect
+// in FieldControls — no extra network request.
 
-function InlineFieldSelect({
-  'aria-label': ariaLabel,
-  value,
-  onChange,
-  children,
-}: {
-  'aria-label': string
-  value: string
-  onChange: (v: string) => void
-  children: React.ReactNode
-}) {
-  // Ghost resting state: no border, no bg.
-  // Hover: subtle tint. Focus: teal border. ▾ caret stays via appearance:auto.
-  return (
-    <select
-      aria-label={ariaLabel}
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className="rounded-md text-xs transition-colors"
-      style={{
-        padding: '3px 22px 3px 8px',
-        fontSize: 'var(--label-size)',
-        color: 'var(--ink)',
-        background: 'transparent',
-        border: '1px solid transparent',
-        cursor: 'pointer',
-        outline: 'none',
-        appearance: 'auto',
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.background = 'var(--hover-subtle)'
-        e.currentTarget.style.borderColor = 'transparent'
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.background = 'transparent'
-        e.currentTarget.style.borderColor = 'transparent'
-      }}
-      onFocus={(e) => {
-        e.currentTarget.style.borderColor = 'var(--teal)'
-        e.currentTarget.style.background = 'transparent'
-      }}
-      onBlur={(e) => {
-        e.currentTarget.style.borderColor = 'transparent'
-        e.currentTarget.style.background = 'transparent'
-      }}
-    >
-      {children}
-    </select>
-  )
-}
-
-function ProjectInlineSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+function ProjectInlineGhostSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const { data: projectList = [] } = useQuery({
     queryKey: ['projects'],
     queryFn: async () => {
@@ -1101,48 +1065,21 @@ function ProjectInlineSelect({ value, onChange }: { value: string; onChange: (v:
     },
     staleTime: 5 * 60 * 1000,
   })
-  // Ghost resting. When a project is selected keep teal text so users know
-  // where this task lives — that's semantic signal, not a style box.
-  // On hover tint the bg; on focus show teal border.
+
+  const options = [
+    { value: '', label: 'No project' },
+    ...projectList.map((p) => ({ value: p.slug, label: p.title })),
+  ]
+
   return (
-    <select
+    <GhostSelect
       aria-label="Project"
       value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className="rounded-md text-xs transition-colors"
-      style={{
-        padding: '3px 22px 3px 8px',
-        fontSize: 'var(--label-size)',
-        color: value ? 'var(--teal)' : 'var(--slate)',
-        background: 'transparent',
-        border: '1px solid transparent',
-        cursor: 'pointer',
-        outline: 'none',
-        appearance: 'auto',
-        maxWidth: 160,
-      }}
-      onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--hover-subtle)' }}
-      onMouseLeave={(e) => {
-        // restore to ghost if not focused
-        if (document.activeElement !== e.currentTarget) {
-          e.currentTarget.style.background = 'transparent'
-          e.currentTarget.style.borderColor = 'transparent'
-        }
-      }}
-      onFocus={(e) => {
-        e.currentTarget.style.borderColor = 'var(--teal)'
-        e.currentTarget.style.background = 'transparent'
-      }}
-      onBlur={(e) => {
-        e.currentTarget.style.borderColor = 'transparent'
-        e.currentTarget.style.background = 'transparent'
-      }}
-    >
-      <option value="">No project</option>
-      {projectList.map((p) => (
-        <option key={p.slug} value={p.slug}>{p.title}</option>
-      ))}
-    </select>
+      onChange={onChange}
+      options={options}
+      triggerColor={value ? 'var(--teal)' : undefined}
+      maxWidth={160}
+    />
   )
 }
 
