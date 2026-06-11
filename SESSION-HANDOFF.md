@@ -10,12 +10,12 @@
 
 ## OPEN ITEMS (next session / Nick)
 
-1. **HOME listener restart still UNCONFIRMED** — relay `req_20260611_080212_work` picked up but
-   no response; chat message posted (## WORK 08:35) unanswered. Until the home daemon restarts
-   on ≥`b794fddf`, @hermes mentions queue but don't process (work machine can drain manually:
-   `python scripts/scheduled/hub_ai_listener.py --once`). Also confirms the gardener schedule
-   entry + first `--apply` run (artifact lands in PB `data/gardener/runs/` tonight 22:40 — CHECK
-   the first artifact tomorrow).
+1. **HOME listener restart ✅ CONFIRMED via chat** (## HOME 13:38Z): stale pre-fix daemon
+   (PID 21736) killed, clean `--once` on fixed code, relaunched PID 21176; gardener schedule
+   entry parses (nightly 22:40 --apply, home). Note: the file-relay path FAILED silently
+   (req archived status:pending, no response — dispatcher Method-1 kill); chat-mode was the
+   working path again. **Tomorrow: review the gardener's FIRST --apply artifact** in PB
+   `data/gardener/runs/` (tonight 22:40 is its maiden mutation run).
 2. **Nick click-tests:** redesigned task editor (field row, composer above tabs, Activity tab,
    Overview peek), drawer composer-on-top + NEXT STEP line + clamp, first real @hermes →
    artifact flow (needs home listener up or a manual drain), `/portal/artifacts/:id` page.
