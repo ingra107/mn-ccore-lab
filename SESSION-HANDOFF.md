@@ -1,3 +1,69 @@
+# ▶▶▶ NEXT-SESSION DOCKET (2026-06-11) — EXECUTE IN ORDER, ASAP
+
+> **Nick (2026-06-10 close, verbatim intent): "i would rather just get everything you mentioned
+> done asap" — do NOT wait for the 1pm dogfood-window close; he explicitly waived the remainder
+> of the daily_plans 24h window (interim checks were fully clean, snapshot + D1 Time-Travel 30d
+> make the drop reversible). He may run this docket from a PB ultracode session — every ticket
+> below is self-contained. Trust CLAUDE.md Rules 70/71; state: 793/793 tests, live deploy must be
+> brought to HEAD first if any code commits exist above the last deploy (check
+> `wrangler pages deployment list`).**
+
+**T1 — daily_plans/daily_reflections DROP (Nick-waived window; brain.db task
+`task_01KTSB808F8SGNAYT2EDR42M1D`).** Snapshot both tables (wrangler-d1 SELECT export to
+Scratch/) → `DROP TABLE daily_plans; DROP TABLE daily_reflections;` on mnccore-lab-test then
+prod via `scripts/wrangler-d1` → remove their REFERENCE.md rows → fill the dogfood table in PB
+`Context/Decisions/2026-06-10-daily-plans-retirement.md` (evidence from the 2026-06-10 interim
+check is in this file's evening section) → flip PB
+`Context/Topics/substrate-swaps/daily-plans-retirement.yaml` `status: retired` → complete the
+brain.db task.
+
+**T2 — PB breadcrumb-writer retarget (PB-repo work, TIME-SENSITIVE — every PB
+complete-with-note until then re-adds a dated line to a clean description).** Full brief:
+`Scratch-handoff/2026-06-11-pb-breadcrumb-retarget-brief.md`. After it lands + one clean sync
+cycle: Hub deletes `src/lib/descriptionLog.ts` (+ its test, + the ProjectDetail import) — run the
+delta pipeline first (`Scratch/desc-migration-2026-06-10/pipeline.py`) to catch any line that
+slipped in.
+
+**T3 — P2-C: legacy-table reader repoint, THEN drop the 4 frozen twins.** Repoint these direct
+readers of `comments`/`project_updates` to `activity_entries` equivalents (byte-shape doesn't
+matter — they're internal aggregations): `api/routes/contributions.ts:17,22`,
+`contributions-decay.ts:55,59`, `insights.ts:321,330,489`, `meeting-cadence.ts:34`,
+`meetings.ts:295`, `search.ts:166`, `index.ts:2737` (digest), `projects.ts:361,364` (health agg),
+`projects.ts:486` (handleRecentUpdates). Keep the delete-cascade DELETEs (mutations.ts:871-872,
+902-903; projects.ts:781-782) until the physical drop, then remove them WITH the drop. Then
+substrate-swap-gated DROP of `task_comments`/`task_updates`/`comments`/`project_updates`
+(snapshot first; their write-freeze started 2026-06-10; Nick's ASAP stance applies here too).
+Update REFERENCE.md + CLAUDE.md Rule 70 ("physical drop deferred" → done).
+
+**T4 — Hermes ai_requests response lane (small, high-visibility).** `handleUpdateAIResponse`
+(api/routes/ai-requests.ts) only updates the `ai_requests` row — NO Hermes response has ever
+reached a feed (0 completed requests ever; the placeholder "Thinking…" rows never resolve). Fix:
+on response for source_type `task_comment`/`project_comment`, post the response via
+`postActivityEntry` (kind='comment', actorSlug='claude-ai', fireSideEffects=false, visibility
+inherited from the triggering entry if findable via ai_requests.source_id → activity_entries.id)
+and ideally UPDATE the placeholder row's body instead of adding a second row. Add tests; smoke
+with a real @hermes mention end-to-end (listener polls every 60s on the home laptop).
+
+**T5 — riders (do with T3/T4 if touching those files anyway):** unify
+TaskActivityFeed/ActivityStream row renderers into one `ActivityEntryItem` (PB tech-debt item);
+`filterMatchesKind()` + LinkChip extraction (PB tech-debt, S); `questions.ts` Hermes copy
+converges only if/when Ask-the-Lab gets a timeline surface; nightly-gardener design rides with
+the P2-B retarget (machine-origin entries only — never rewrite human comments).
+
+**T6 — Nick-decision items (ask, don't assume):** (a) backfill leftovers per
+`docs/superpowers/plans/2026-06-10-activity-log-backfill-report.md` — import 626 "Created task"
++ 348 "Status →" system events as kind='system'? 378 completions on hard-deleted tasks stay
+unimported; (b) migration flags per `2026-06-11-description-migration-review.md` — 112
+completions hard-truncated at 50 chars (live as-is) + 12 spam clusters emitted individually
+(collapse to summary lines?); (c) his @me test is still pending on his side.
+
+**Carried older backlog (unchanged, lower priority):** JS-hover→CSS pass (218 sites),
+spacing-token tail, `/portal/my-tasks-legacy` retire (substrate-swap-gated), local-seed schema
+drift, 768px journey spec, Query-Resource phased pass, IdeasPage:67/AskTheLab:44 param-strip
+wart; PB-side I40/backfill_email_links retirement after one clean janitor cycle.
+
+---
+
 # Session Handoff — 2026-06-10 (EVENING) — P2-A · backfill · DESCRIPTION MIGRATION EXECUTED · Obsidian links SOLVED both machines
 
 > **State: 793/793 API tests · live deploy on `998d089d` (pushed; later doc commits also pushed) · D1 at v77 + 407 `description_line` entries.**
