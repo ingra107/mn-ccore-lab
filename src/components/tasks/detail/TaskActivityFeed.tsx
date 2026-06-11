@@ -57,7 +57,15 @@ const FILTER_LABELS: Record<TaskFeedFilter, string> = {
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-export function TaskActivityFeed({ taskId }: { taskId: string }) {
+interface TaskActivityFeedProps {
+  taskId: string
+  /** When set, render only the first N entries (Overview peek mode). */
+  peekCount?: number
+  /** When true, hide the filter pills (Overview peek mode). */
+  hidePills?: boolean
+}
+
+export function TaskActivityFeed({ taskId, peekCount, hidePills }: TaskActivityFeedProps) {
   const [filter, setFilter] = useState<TaskFeedFilter>('all')
 
   const { data: entries = [], isLoading } = useQuery<ActivityEntryItemRow[]>({
@@ -72,7 +80,7 @@ export function TaskActivityFeed({ taskId }: { taskId: string }) {
     enabled: !!taskId,
   })
 
-  const visible = useMemo(
+  const filtered = useMemo(
     () =>
       filter === 'all'
         ? entries
@@ -80,33 +88,37 @@ export function TaskActivityFeed({ taskId }: { taskId: string }) {
     [entries, filter],
   )
 
+  const visible = peekCount ? filtered.slice(0, peekCount) : filtered
+
   return (
     <div className="flex flex-col gap-2">
-      {/* Filter pills */}
-      <div className="flex items-center gap-1 flex-wrap" role="group" aria-label="Activity filter">
-        {(Object.keys(FILTER_LABELS) as TaskFeedFilter[]).map((f) => {
-          const active = filter === f
-          return (
-            <button
-              key={f}
-              type="button"
-              onClick={() => setFilter(f)}
-              aria-pressed={active ? 'true' : 'false'}
-              className="cursor-pointer inline-flex items-center px-2 py-0.5 rounded-full transition-colors"
-              style={{
-                fontSize: '10px',
-                fontWeight: active ? 600 : 400,
-                background: active ? 'var(--teal-active)' : 'transparent',
-                color: active ? 'var(--teal)' : 'var(--slate)',
-                border: `1px solid ${active ? 'var(--teal)' : 'var(--border-subtle)'}`,
-                opacity: active ? 1 : 0.85,
-              }}
-            >
-              {FILTER_LABELS[f]}
-            </button>
-          )
-        })}
-      </div>
+      {/* Filter pills — hidden in peek mode */}
+      {!hidePills && (
+        <div className="flex items-center gap-1 flex-wrap" role="group" aria-label="Activity filter">
+          {(Object.keys(FILTER_LABELS) as TaskFeedFilter[]).map((f) => {
+            const active = filter === f
+            return (
+              <button
+                key={f}
+                type="button"
+                onClick={() => setFilter(f)}
+                aria-pressed={active ? 'true' : 'false'}
+                className="cursor-pointer inline-flex items-center px-2 py-0.5 rounded-full transition-colors"
+                style={{
+                  fontSize: '10px',
+                  fontWeight: active ? 600 : 400,
+                  background: active ? 'var(--teal-active)' : 'transparent',
+                  color: active ? 'var(--teal)' : 'var(--slate)',
+                  border: `1px solid ${active ? 'var(--teal)' : 'var(--border-subtle)'}`,
+                  opacity: active ? 1 : 0.85,
+                }}
+              >
+                {FILTER_LABELS[f]}
+              </button>
+            )
+          })}
+        </div>
+      )}
 
       {/* Stream */}
       {isLoading ? (

@@ -12,7 +12,9 @@ import CollapsibleSection from '../CollapsibleSection'
 import FileUpload from '../FileUpload'
 const RichTextEditor = lazy(() => import('../RichTextEditor'))
 import { useUpdateTask, useUpdateTaskStatus, useAcknowledgeTask, usePostTaskUpdate, useBulkUpdateTasks } from '../../hooks/useMutations'
-import { useProjects } from '../../hooks/useApiData'
+import { useProjects, useDecisions } from '../../hooks/useApiData'
+import type { DecisionRow } from '../../hooks/useApiData'
+import { parseTagsString } from '../../lib/tagUtils'
 import WorkOnActions from '../WorkOnActions'
 import { useToast } from '../../hooks/useToast'
 import { useUndoToast } from '../UndoToast'
@@ -32,28 +34,32 @@ import type { TaskRow } from '../../lib/api'
 import { PATHS } from '../../constants/paths'
 
 // ── Detail sub-modules ──────────────────────────────────────
-import { FieldBlock, EditableTitle, EditableShortTitle, EditableTextarea, StatusSelect, PrioritySelect, AssigneeSelect, DateInput, ProjectSelect } from './detail/FieldControls'
+import { FieldBlock, EditableTitle, EditableShortTitle, EditableTextarea, AssigneeSelect, DateInput } from './detail/FieldControls'
 import { TaskDependenciesSection } from './detail/TaskDependencies'
 import { SubtaskSection } from './detail/SubtaskSection'
 import { HandoffSection } from './detail/HandoffSection'
-import { TaskComments, ProjectDecisionsSection } from './detail/TaskComments'
-import { TaskUpdateFeed } from './detail/TaskUpdateFeed'
 import { TaskActivityFeed } from './detail/TaskActivityFeed'
 import TaskIntelligence from './detail/TaskIntelligence'
 import KeyLinksEditor from '../KeyLinksEditor'
 import { Brain } from 'lucide-react'
 
-type Tab = 'overview' | 'intelligence' | 'notes' | 'comments' | 'activity' | 'files' | 'details'
+type Tab = 'overview' | 'intelligence' | 'activity' | 'files' | 'details'
 
 const TABS: { key: Tab; label: string; icon: typeof Circle }[] = [
   { key: 'overview', label: 'Overview', icon: Eye },
   { key: 'intelligence', label: 'Intelligence', icon: Brain },
-  { key: 'notes', label: 'Notes', icon: ScrollText },
-  { key: 'comments', label: 'Comments', icon: MessageSquare },
   { key: 'activity', label: 'Activity', icon: Clock },
   { key: 'files', label: 'Files', icon: Upload },
   { key: 'details', label: 'Details', icon: Flag },
 ]
+
+// Deep-link backward compat: ?tab=notes and ?tab=comments from old links
+// resolve to the unified Activity tab.
+function resolveTab(raw: string | null): Tab {
+  if (raw === 'notes' || raw === 'comments') return 'activity'
+  if (raw && (['overview', 'intelligence', 'activity', 'files', 'details'] as string[]).includes(raw)) return raw as Tab
+  return 'overview'
+}
 
 interface TaskDetailPanelProps {
   task: TaskRow | null
@@ -114,7 +120,12 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
   const taskPeerIntents = useIntentBroadcast('task', task?.id, taskSelfIntent)
   const ackTask = useAcknowledgeTask()
   const { showUndo } = useUndoToast()
-  const [activeTab, setActiveTab] = useState<Tab>('overview')
+  // Support ?tab= deep links; retire 'notes' and 'comments' → 'activity'.
+  const [activeTab, setActiveTab] = useState<Tab>(() => {
+    if (typeof window === 'undefined') return 'overview'
+    const raw = new URLSearchParams(window.location.search).get('tab')
+    return resolveTab(raw)
+  })
   const [copied, setCopied] = useState(false)
   // Brief class flash on tab change so the CSS keyframe re-plays. Class
   // is added when activeTab changes, removed ~140ms later. Tab content
@@ -415,19 +426,46 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
             </div>
           </div>
 
-          {/* Status row + quiet Delete affordance (Nick: prefer delete over a
-              false check-off). Delete sits after blocked/done. */}
-          <div className="flex items-start justify-between gap-2" style={{ minWidth: 0 }}>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <StatusSelect value={task.status} onChange={handleStatusChange} />
-            </div>
+          {/* Inline fields row: Status · Priority · Project · Due · Delete
+              Small compact dropdowns on one row — no right-hand column.
+              Rule 38: every <select> has aria-label. */}
+          <div className="flex items-center gap-2 flex-wrap" style={{ minWidth: 0 }}>
+            <InlineFieldSelect
+              aria-label="Status"
+              value={task.status}
+              onChange={handleStatusChange}
+            >
+              <option value="todo">To Do</option>
+              <option value="in_progress">In Progress</option>
+              <option value="waiting_external">Waiting (Ext.)</option>
+              <option value="blocked">Blocked</option>
+              <option value="done">Done</option>
+            </InlineFieldSelect>
+            <InlineFieldSelect
+              aria-label="Priority"
+              value={task.priority || 'medium'}
+              onChange={(v) => handleFieldUpdate('priority', v)}
+            >
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+              <option value="urgent">Urgent</option>
+            </InlineFieldSelect>
+            <ProjectInlineSelect
+              value={task.project_id || ''}
+              onChange={(v) => handleFieldUpdate('project_id', v || null)}
+            />
+            <DueInlineSelect
+              value={task.due_date || ''}
+              onChange={(v) => handleFieldUpdate('due_date', v || null)}
+            />
             <button
               type="button"
               data-testid="delete-task"
               onClick={handleDeleteTask}
               title="Delete this task"
               aria-label="Delete task"
-              className="flex items-center gap-1 flex-shrink-0 rounded-lg transition-colors"
+              className="flex items-center gap-1 flex-shrink-0 rounded-lg transition-colors ml-auto"
               style={{
                 background: 'none',
                 border: '1px solid transparent',
@@ -436,8 +474,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
                 cursor: 'pointer',
                 fontSize: 'var(--text-small)',
                 fontWeight: 500,
-                padding: '6px 10px',
-                alignSelf: 'flex-start',
+                padding: '4px 8px',
                 whiteSpace: 'nowrap',
               }}
               onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.borderColor = 'var(--maroon)'; e.currentTarget.style.background = 'color-mix(in srgb, var(--maroon) 7%, transparent)' }}
@@ -467,6 +504,18 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
               </span>
             )}
           </div>
+        </div>
+
+        {/* Composer zone — above tabs, visible on every tab.
+            Mobile keeps sticky-bottom override (deliberate per-breakpoint). */}
+        <div className="px-5 pb-3">
+          <OverviewQuickAdd
+            taskId={task.id}
+            taskTitle={task.title}
+            projectSlug={task.project_id}
+            onJumpToTab={(tab) => setActiveTab(tab)}
+            onContentChange={setQuickAddHasContent}
+          />
         </div>
 
         {/* Tab Bar */}
@@ -531,51 +580,37 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
               </div>
             )}
 
-            {/* Row 1: Assignee + Priority */}
+            {/* Assignee row — remains in Overview body */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--sp-md)' }}>
               <FieldBlock label="Assignee" icon={User} noContainer>
                 <AssigneeSelect value={task.assignee} onChange={(v) => handleFieldUpdate('assignee', v)} />
               </FieldBlock>
-              <FieldBlock label="Priority" icon={Flag} noContainer>
-                <PrioritySelect value={task.priority} onChange={(v) => handleFieldUpdate('priority', v)} />
-              </FieldBlock>
-            </div>
-
-            {/* Row 2: Due Date + Project */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--sp-md)' }}>
-              <FieldBlock label="Due Date" icon={CalendarDays} noContainer>
-                <DateInput value={task.due_date || ''} onChange={(v) => handleFieldUpdate('due_date', v || null)} />
-              </FieldBlock>
-              <FieldBlock label="Project" icon={FolderKanban} noContainer>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-sm)', minWidth: 0 }}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <ProjectSelect value={task.project_id || ''} onChange={(v) => handleFieldUpdate('project_id', v || null)} />
+              {/* Local launch — Open folder + Work on this in Claude (mnccore://).
+                  Only when the linked project has a working folder. */}
+              {(taskProject?.primary_folder || task.project_id) && (
+                <FieldBlock label="Project actions" icon={FolderKanban} noContainer>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-sm)' }}>
+                    {taskProject?.primary_folder && (
+                      <WorkOnActions
+                        primaryFolder={taskProject.primary_folder}
+                        projectLabel={taskProject.title}
+                        variant="compact"
+                      />
+                    )}
+                    {task.project_id && (
+                      <button
+                        type="button"
+                        onClick={() => { onClose(); navigate(PATHS.project(task.project_id!)) }}
+                        title="Open project"
+                        aria-label="Open project"
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', flexShrink: 0, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--teal)', fontSize: 'var(--text-small)', fontWeight: 500, padding: '2px 4px' }}
+                      >
+                        Open <ExternalLink size={12} />
+                      </button>
+                    )}
                   </div>
-                  {/* Local launch — Open folder + Work on this in Claude
-                      (mnccore://). Only when the linked project has a working
-                      folder. Compact icon variant to sit inline next to the
-                      project select. */}
-                  {taskProject?.primary_folder && (
-                    <WorkOnActions
-                      primaryFolder={taskProject.primary_folder}
-                      projectLabel={taskProject.title}
-                      variant="compact"
-                    />
-                  )}
-                  {/* S14: a path from the task to its project's detail page. */}
-                  {task.project_id && (
-                    <button
-                      type="button"
-                      onClick={() => { onClose(); navigate(PATHS.project(task.project_id!)) }}
-                      title="Open project"
-                      aria-label="Open project"
-                      style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', flexShrink: 0, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--teal)', fontSize: 'var(--text-small)', fontWeight: 500, padding: '2px 4px' }}
-                    >
-                      Open <ExternalLink size={12} />
-                    </button>
-                  )}
-                </div>
-              </FieldBlock>
+                </FieldBlock>
+              )}
             </div>
 
             {/* Key Links — promoted to Overview so users actually see them (prior:
@@ -612,15 +647,12 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
             {/* Subtasks */}
             <SubtaskSection taskId={task.id} />
 
-            {/* P2-01 follow-up: quick add inline so users don't have to tab
-                over to Notes / Comments for a fast capture. Mode toggle
-                makes the difference between the two surfaces explicit. */}
-            <OverviewQuickAdd
+            {/* Recent activity peek — 3 newest entries + "view all →" link
+                that switches to the Activity tab. Peek is Overview-only; the
+                full filtered feed lives in the Activity tab. */}
+            <OverviewActivityPeek
               taskId={task.id}
-              taskTitle={task.title}
-              projectSlug={task.project_id}
-              onJumpToTab={(tab) => setActiveTab(tab)}
-              onContentChange={setQuickAddHasContent}
+              onViewAll={() => setActiveTab('activity')}
             />
           </div>
 
@@ -739,22 +771,6 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
               {task.created_at && <span>Created {formatRelativeTime(task.created_at)}</span>}
               {task.completed_at && <span>Completed {formatRelativeTime(task.completed_at)}</span>}
             </div>
-          </div>
-
-          {/* ── Notes Tab ── */}
-          <div
-            className={tabAnimating === 'notes' ? 'task-detail-tab-content' : ''}
-            style={{ display: activeTab === 'notes' ? 'flex' : 'none', flexDirection: 'column', gap: 'var(--sp-lg)' }}
-          >
-            <TaskUpdateFeed taskId={task.id} />
-          </div>
-
-          {/* ── Comments Tab ── */}
-          <div
-            className={tabAnimating === 'comments' ? 'task-detail-tab-content' : ''}
-            style={{ display: activeTab === 'comments' ? 'flex' : 'none', flexDirection: 'column', gap: 'var(--sp-xl)' }}
-          >
-            <TaskComments taskId={task.id} taskTitle={task.title} projectSlug={task.project_id} />
           </div>
 
           {/* ── Activity Tab ── */}
@@ -930,6 +946,211 @@ function WatchersPicker({ value, onChange }: { value: string; onChange: (v: stri
             )
           })}
         </div>
+      )}
+    </div>
+  )
+}
+
+// ── Inline field selects for the compact header row ──────────
+// Small `<select>`-based dropdowns styled to match the design system.
+// Rule 38: every select must carry aria-label.
+
+function InlineFieldSelect({
+  'aria-label': ariaLabel,
+  value,
+  onChange,
+  children,
+}: {
+  'aria-label': string
+  value: string
+  onChange: (v: string) => void
+  children: React.ReactNode
+}) {
+  return (
+    <select
+      aria-label={ariaLabel}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="rounded-md border text-xs"
+      style={{
+        padding: '3px 22px 3px 8px',
+        fontSize: 'var(--label-size)',
+        color: 'var(--ink)',
+        background: 'var(--cream)',
+        borderColor: 'var(--border-subtle)',
+        cursor: 'pointer',
+        outline: 'none',
+        appearance: 'auto',
+      }}
+      onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--teal)')}
+      onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--border-subtle)')}
+    >
+      {children}
+    </select>
+  )
+}
+
+function ProjectInlineSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const { data: projectList = [] } = useQuery({
+    queryKey: ['projects'],
+    queryFn: async () => {
+      const res = await fetch('/api/projects')
+      if (!res.ok) return []
+      const data = await res.json()
+      return data.data as { slug: string; title: string }[]
+    },
+    staleTime: 5 * 60 * 1000,
+  })
+  return (
+    <select
+      aria-label="Project"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="rounded-md border text-xs"
+      style={{
+        padding: '3px 22px 3px 8px',
+        fontSize: 'var(--label-size)',
+        color: !!value ? 'var(--teal)' : 'var(--slate)',
+        background: !!value ? 'var(--teal-hover)' : 'var(--cream)',
+        borderColor: 'var(--border-subtle)',
+        cursor: 'pointer',
+        outline: 'none',
+        appearance: 'auto',
+        maxWidth: 160,
+      }}
+      onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--teal)')}
+      onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--border-subtle)')}
+    >
+      <option value="">No project</option>
+      {projectList.map((p) => (
+        <option key={p.slug} value={p.slug}>{p.title}</option>
+      ))}
+    </select>
+  )
+}
+
+function DueInlineSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  // Thin wrapper: DateInput renders the InlineDatePicker popover on click.
+  // We keep the compact pill-style trigger with a CalendarDays icon.
+  return (
+    <div
+      title="Due date"
+      style={{ display: 'flex', alignItems: 'center', gap: 4,
+        fontSize: 'var(--label-size)', color: value ? 'var(--ink)' : 'var(--slate)',
+        opacity: value ? 1 : 0.85,
+      }}
+    >
+      <CalendarDays size={12} style={{ color: 'var(--slate)', opacity: 0.85 }} />
+      <DateInput value={value} onChange={onChange} />
+    </div>
+  )
+}
+
+// ── Overview Activity Peek ───────────────────────────────────
+// Shows 3 newest activity entries in the Overview tab + a "view all →"
+// button that switches to the Activity tab. Does NOT duplicate the filter
+// pills (those live in the full Activity tab only).
+// Uses the same ['task-activity', taskId] cache key as TaskActivityFeed —
+// no duplicate network request.
+
+function OverviewActivityPeek({
+  taskId,
+  onViewAll,
+}: {
+  taskId: string
+  onViewAll: () => void
+}) {
+  return (
+    <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: 'var(--sp-md)' }}>
+      <div className="flex items-center justify-between mb-2">
+        <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', fontWeight: 'var(--label-weight)' }}>
+          Recent activity
+        </span>
+        <button
+          type="button"
+          onClick={onViewAll}
+          style={{ fontSize: 'var(--label-size)', color: 'var(--teal)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontWeight: 500 }}
+        >
+          view all →
+        </button>
+      </div>
+      <TaskActivityFeed taskId={taskId} peekCount={3} hidePills />
+    </div>
+  )
+}
+
+// ── Project Decisions Section ───────────────────────────────
+// Used in the Details tab's Related Decisions collapsible.
+
+const DECISIONS_SENTIMENT_BADGE: Record<string, { color: string; bg: string }> = {
+  positive: { color: 'var(--teal)', bg: 'var(--teal-active)' },
+  negative: { color: 'var(--maroon)', bg: 'rgba(128,0,0,0.08)' },
+  neutral: { color: 'var(--slate)', bg: 'rgba(100,116,139,0.08)' },
+  pending: { color: 'var(--gold)', bg: 'var(--gold-active)' },
+}
+
+function ProjectDecisionsSection({ projectSlug }: { projectSlug: string }) {
+  const { data: decisions = [] } = useDecisions(projectSlug)
+
+  if (decisions.length === 0) {
+    return (
+      <p className="text-xs" style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
+        No decisions linked to this project.
+      </p>
+    )
+  }
+
+  return (
+    <div className="flex flex-col gap-2">
+      {decisions.slice(0, 5).map((d: DecisionRow) => {
+        const sentiment = d.outcome_sentiment || 'pending'
+        const badge = DECISIONS_SENTIMENT_BADGE[sentiment] || DECISIONS_SENTIMENT_BADGE.pending
+        const tags = parseTagsString(d.tags)
+
+        return (
+          <div
+            key={d.id}
+            className="p-2.5 rounded-lg"
+            style={{ background: 'var(--gold-hover)', border: '1px solid rgba(201,168,76,0.1)' }}
+          >
+            <div className="flex items-center gap-2 mb-1">
+              <Scale size={11} style={{ color: 'var(--gold)', flexShrink: 0 }} />
+              <span style={{ fontWeight: 600, fontSize: '12px', color: 'var(--ink)' }}>
+                {d.title}
+              </span>
+              <span
+                className="text-[10px] px-1 py-0.5 rounded-full ml-auto"
+                style={{ fontWeight: 'var(--label-weight)', color: badge.color, backgroundColor: badge.bg }}
+              >
+                {sentiment}
+              </span>
+            </div>
+            {d.outcome && (
+              <p style={{ fontSize: 'var(--label-size)', color: 'var(--teal)', margin: '2px 0 0 0' }}>
+                {d.outcome}
+              </p>
+            )}
+            <div className="flex items-center gap-2 mt-1 flex-wrap">
+              <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
+                {formatRelativeTime(d.created_at)}
+              </span>
+              {tags.map(tag => (
+                <span
+                  key={tag}
+                  className="text-[10px] px-1 py-0.5 rounded-full"
+                  style={{ color: 'var(--teal)', backgroundColor: 'var(--teal-hover)' }}
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </div>
+        )
+      })}
+      {decisions.length > 5 && (
+        <p className="text-[10px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)', textAlign: 'center' }}>
+          + {decisions.length - 5} more decisions
+        </p>
       )}
     </div>
   )
@@ -1211,7 +1432,7 @@ function OverviewQuickAdd({
     })
     if (!res.ok) throw new Error('comment failed')
     if (forHermes) {
-      // Same dispatch hand-off as the Comments tab (TaskComments.tsx).
+      // Dispatch hand-off so Hermes picks up the comment.
       fetch('/api/pb/dispatch/add', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1321,7 +1542,7 @@ function OverviewQuickAdd({
         </div>
         <button
           type="button"
-          onClick={() => onJumpToTab(mode === 'comment' ? 'comments' : 'notes')}
+          onClick={() => onJumpToTab('activity')}
           className="ml-auto cursor-pointer inline-flex items-center gap-1"
           style={{
             fontSize: '10px',
@@ -1331,7 +1552,7 @@ function OverviewQuickAdd({
             border: 'none',
             padding: '3px 4px',
           }}
-          title={`Jump to full ${mode === 'comment' ? 'Comments' : 'Notes'} tab`}
+          title="Jump to full Activity tab"
         >
           See all →
         </button>
