@@ -1,7 +1,7 @@
 {
   "description": "Canonical set of api/schema-v*.sql migration files. Regenerate with: python scripts/check-schema-versions.py --update",
-  "hash": "13e77718df45f6332cb42c33a51b7fb7910a2547578a8a58c63f80fe87469710",
-  "file_count": 81,
+  "hash": "e4277080a2cd0b7cb6cdd762ac829b279a97e7aa5a7632dbd8e3285787a5c7fa",
+  "file_count": 82,
   "files": [
     "schema-v2.sql",
     "schema-v3.sql",
@@ -83,11 +83,12 @@
     "schema-v74-tasks-waiting-since-email-link.sql",
     "schema-v75-today-plan-columns.sql",
     "schema-v76-bug-reports-status.sql",
-    "schema-v77-activity-entries.sql"
+    "schema-v77-activity-entries.sql",
+    "schema-v78.sql"
   ],
   "version_range": [
     2,
-    77
+    78
   ],
   "gaps": [
     35,
