@@ -120,9 +120,11 @@ function makeEnv(fx: Partial<Fixtures> = {}) {
             if (/FROM team_members WHERE slug = \?/.test(sql)) {
               return teamSlugs.has(binds[0] as string) ? { 1: 1 } : null
             }
-            if (/SELECT project_id FROM tasks WHERE id = \?/.test(sql)) {
+            if (/SELECT project_id, assignee, title FROM tasks WHERE id = \?/.test(sql)) {
               const t = tasks[binds[0] as string]
-              return t && t.deleted_at == null ? { project_id: t.project_id } : null
+              return t && t.deleted_at == null
+                ? { project_id: t.project_id, assignee: t.assignee ?? null, title: t.title ?? '' }
+                : null
             }
             // Owner re-notification lookup (2026-06-11): assignee + title.
             if (/SELECT assignee, title FROM tasks WHERE id = \? AND deleted_at IS NULL/.test(sql)) {

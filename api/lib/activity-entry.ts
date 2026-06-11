@@ -165,16 +165,20 @@ export async function postActivityEntry(input: PostActivityEntryInput): Promise<
 
   // ── entity existence + project_id derivation ───────────────────────────────
   let projectId: string | null;
+  // Cached by the existence lookup so the owner-notification side effect below
+  // doesn't need a second SELECT on the same row (simplify pass 2026-06-11).
+  let taskMeta: { assignee: string | null; title: string | null } | null = null;
   if (entityType === 'task') {
     if (input.taskProjectId !== undefined) {
       // Caller already resolved the task (e.g. via guardTaskProject) — trust it.
       projectId = input.taskProjectId;
     } else {
       const task = await env.DB.prepare(
-        'SELECT project_id FROM tasks WHERE id = ? AND deleted_at IS NULL'
-      ).bind(entityId).first<{ project_id: string | null }>();
+        'SELECT project_id, assignee, title FROM tasks WHERE id = ? AND deleted_at IS NULL'
+      ).bind(entityId).first<{ project_id: string | null; assignee: string | null; title: string | null }>();
       if (!task) return { ok: false, error: 'Task not found', status: 404 };
       projectId = task.project_id ?? null;
+      taskMeta = { assignee: task.assignee ?? null, title: task.title ?? null };
     }
   } else if (entityType === 'artifact') {
     // artifact entity: project_id = the artifact's origin project_id (so artifact
@@ -271,7 +275,7 @@ export async function postActivityEntry(input: PostActivityEntryInput): Promise<
     // direct portal deep-link — opens the task editor, not "another page".
     if (visibility === 'team' && entityType === 'task' && (kind === 'comment' || kind === 'update')) {
       try {
-        const t = await env.DB.prepare(
+        const t = taskMeta ?? await env.DB.prepare(
           'SELECT assignee, title FROM tasks WHERE id = ? AND deleted_at IS NULL'
         ).bind(entityId).first<{ assignee: string | null; title: string | null }>();
         const assignee = t?.assignee;

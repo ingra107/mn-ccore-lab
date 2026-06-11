@@ -39,6 +39,11 @@ import Avatar from './Avatar'
 import { getPersonInfo } from '../data/team'
 import { emailToSlug } from '../lib/emailSlug'
 
+// Premium icon weight (Nick 2026-06-11): lucide's default stroke (2 on a 24
+// grid) scales fuzzy at small sizes; a true 1.5px absolute stroke is crisper
+// and optically lighter. ONE const so a future weight tweak is one line.
+const ICON_PROPS = { strokeWidth: 1.5, absoluteStrokeWidth: true } as const
+
 interface SidebarProps {
   collapsed: boolean
   onToggle: () => void
@@ -271,7 +276,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
                       stroke (2 on a 24 grid) scales to a fuzzy 1.5px at
                       size 18. absoluteStrokeWidth pins a true 1.5px stroke —
                       optically lighter and crisper at this size. */}
-                  <span style={{ opacity: active ? 1 : 0.85, display: 'flex' }}><Icon size={18} strokeWidth={1.5} absoluteStrokeWidth /></span>
+                  <span style={{ opacity: active ? 1 : 0.85, display: 'flex' }}><Icon size={18} {...ICON_PROPS} /></span>
                   {!collapsed && <span className="truncate">{item.label}</span>}
                   {!collapsed && item.hint && (
                     <span
@@ -324,7 +329,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
             className="flex items-center gap-2.5 px-2.5 py-2 rounded-md text-sm transition-colors hover:bg-black/5 dark:hover:bg-white/5 w-full cursor-pointer"
             style={{ color: 'var(--slate)', textDecoration: 'none', opacity: 0.85, background: 'none', border: 'none', textAlign: 'left' }}
           >
-            <Bug size={16} strokeWidth={1.5} absoluteStrokeWidth />
+            <Bug size={16} {...ICON_PROPS} />
             <span>Report a Bug</span>
           </button>
         )}
@@ -340,7 +345,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
             className="flex items-center gap-2.5 px-2.5 py-2 mb-1 rounded-md text-sm transition-colors"
             style={{ color: 'var(--slate)', opacity: 0.75 }}
           >
-            <Search size={16} strokeWidth={1.5} absoluteStrokeWidth />
+            <Search size={16} {...ICON_PROPS} />
             <span className="flex-1">Search</span>
             <kbd
               className="text-[10px] px-1.5 py-0.5 rounded border"
@@ -359,7 +364,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
           style={{ color: 'var(--slate)' }}
           title={collapsed ? 'Back to Website' : undefined}
         >
-          <ExternalLink size={16} strokeWidth={1.5} absoluteStrokeWidth />
+          <ExternalLink size={16} {...ICON_PROPS} />
           {!collapsed && <span>Back to Website</span>}
         </Link>
 
@@ -389,7 +394,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
           className="flex items-center gap-2.5 px-2.5 py-2 rounded-md text-sm w-full transition-colors"
           style={{ color: 'var(--slate)', background: 'none', border: 'none', cursor: 'pointer' }}
         >
-          {collapsed ? <ChevronRight size={16} strokeWidth={1.5} absoluteStrokeWidth /> : <ChevronLeft size={16} strokeWidth={1.5} absoluteStrokeWidth />}
+          {collapsed ? <ChevronRight size={16} {...ICON_PROPS} /> : <ChevronLeft size={16} {...ICON_PROPS} />}
           {!collapsed && <span>Collapse</span>}
         </button>
       </div>

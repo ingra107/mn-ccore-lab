@@ -218,8 +218,8 @@ export default function App() {
                     equivalent. Placed OUTSIDE RequireAuth so the bounce
                     happens before any auth gate — the portal URL handles
                     auth. Kept indefinitely; cost is negligible. */}
-                <Route path="/dashboard" element={<Navigate to="/portal/dashboard" replace />} />
-                <Route path="/personal" element={<Navigate to="/portal/personal" replace />} />
+                <Route path="/dashboard" element={<NavigateKeepSearch to="/portal/dashboard" />} />
+                <Route path="/personal" element={<NavigateKeepSearch to="/portal/personal" />} />
                 {/* Entity-bearing legacy redirects MUST keep the query string —
                     notification links are minted as /tasks?open=<id>; a plain
                     <Navigate> drops ?open so the click landed on "just another
@@ -227,32 +227,32 @@ export default function App() {
                 <Route path="/my-items" element={<NavigateKeepSearch to="/portal/my-items" />} />
                 <Route path="/my-tasks" element={<NavigateKeepSearch to="/portal/my-tasks" />} />
                 <Route path="/tasks" element={<NavigateKeepSearch to="/portal/my-tasks" />} />
-                <Route path="/calendar" element={<Navigate to="/portal/calendar" replace />} />
-                <Route path="/deadlines" element={<Navigate to="/portal/deadlines" replace />} />
-                <Route path="/deadline-cascade" element={<Navigate to="/portal/deadline-cascade" replace />} />
+                <Route path="/calendar" element={<NavigateKeepSearch to="/portal/calendar" />} />
+                <Route path="/deadlines" element={<NavigateKeepSearch to="/portal/deadlines" />} />
+                <Route path="/deadline-cascade" element={<NavigateKeepSearch to="/portal/deadline-cascade" />} />
                 <Route path="/projects" element={<NavigateKeepSearch to="/portal/projects" />} />
                 <Route path="/projects/:slug" element={<NavigateWithParams to="/portal/projects/:slug" />} />
-                <Route path="/manuscripts" element={<Navigate to="/portal/manuscripts" replace />} />
-                <Route path="/ideas" element={<Navigate to="/portal/ideas" replace />} />
-                <Route path="/ask" element={<Navigate to="/portal/ask" replace />} />
-                <Route path="/decisions" element={<Navigate to="/portal/decisions" replace />} />
-                <Route path="/narratives" element={<Navigate to="/portal/narratives" replace />} />
-                <Route path="/digest" element={<Navigate to="/portal/digest" replace />} />
-                <Route path="/research-digest" element={<Navigate to="/portal/digest" replace />} />
-                <Route path="/search" element={<Navigate to="/portal/search" replace />} />
-                <Route path="/grants" element={<Navigate to="/portal/grants" replace />} />
-                <Route path="/meetings" element={<Navigate to="/portal/meetings" replace />} />
+                <Route path="/manuscripts" element={<NavigateKeepSearch to="/portal/manuscripts" />} />
+                <Route path="/ideas" element={<NavigateKeepSearch to="/portal/ideas" />} />
+                <Route path="/ask" element={<NavigateKeepSearch to="/portal/ask" />} />
+                <Route path="/decisions" element={<NavigateKeepSearch to="/portal/decisions" />} />
+                <Route path="/narratives" element={<NavigateKeepSearch to="/portal/narratives" />} />
+                <Route path="/digest" element={<NavigateKeepSearch to="/portal/digest" />} />
+                <Route path="/research-digest" element={<NavigateKeepSearch to="/portal/digest" />} />
+                <Route path="/search" element={<NavigateKeepSearch to="/portal/search" />} />
+                <Route path="/grants" element={<NavigateKeepSearch to="/portal/grants" />} />
+                <Route path="/meetings" element={<NavigateKeepSearch to="/portal/meetings" />} />
                 <Route path="/meetings/:id" element={<NavigateWithParams to="/portal/meetings/:id" />} />
                 <Route path="/meetings/:id/prep" element={<NavigateWithParams to="/portal/meetings/:id/prep" />} />
-                <Route path="/meeting-prep" element={<Navigate to="/portal/meetings" replace />} />
-                <Route path="/meeting-notes" element={<Navigate to="/portal/meeting-notes" replace />} />
-                <Route path="/activity" element={<Navigate to="/portal/activity" replace />} />
-                <Route path="/analytics" element={<Navigate to="/portal/analytics" replace />} />
+                <Route path="/meeting-prep" element={<NavigateKeepSearch to="/portal/meetings" />} />
+                <Route path="/meeting-notes" element={<NavigateKeepSearch to="/portal/meeting-notes" />} />
+                <Route path="/activity" element={<NavigateKeepSearch to="/portal/activity" />} />
+                <Route path="/analytics" element={<NavigateKeepSearch to="/portal/analytics" />} />
                 <Route path="/pi/analytics" element={<Navigate to="/portal/pi/analytics" replace />} />
                 <Route path="/pi-analytics" element={<Navigate to="/portal/pi/analytics" replace />} />
-                <Route path="/mentee-milestones" element={<Navigate to="/portal/mentee-milestones" replace />} />
-                <Route path="/sessions" element={<Navigate to="/portal/sessions" replace />} />
-                <Route path="/settings" element={<Navigate to="/portal/settings" replace />} />
+                <Route path="/mentee-milestones" element={<NavigateKeepSearch to="/portal/mentee-milestones" />} />
+                <Route path="/sessions" element={<NavigateKeepSearch to="/portal/sessions" />} />
+                <Route path="/settings" element={<NavigateKeepSearch to="/portal/settings" />} />
 
                 {/* Portal pages: sidebar layout — wrapped in RequireAuth so
                     flipping VITE_REQUIRE_AUTH=1 or appending ?strict=1 to
