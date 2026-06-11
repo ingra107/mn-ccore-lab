@@ -22,6 +22,7 @@ import { useToast } from '../../hooks/useToast'
 import { useUndoToast } from '../UndoToast'
 import { formatRelativeTime } from '../../lib/dateUtils'
 import { appendCharToInput } from '../../lib/textUtils'
+import MentionInput from '../MentionInput'
 import TypingIndicator from '../TypingIndicator'
 import { getPersonInfo, getAllMembers, directors } from '../../data/team'
 import { shortLabelForUrl } from '../../lib/urlClassify'
@@ -1650,12 +1651,16 @@ function OverviewQuickAdd({
             onChange={(e) => { Array.from(e.target.files || []).forEach(uploadToCompose); e.target.value = '' }}
             style={{ display: 'none' }}
           />
-          <textarea
-            ref={textareaRef}
+          {/* MentionInput (Rule 7) — N1c: the raw textarea here had no
+              @-typeahead. dropdownPosition='below': this composer sits near
+              the top of the panel's scroll container, so an upward menu
+              would clip. */}
+          <MentionInput
+            inputRef={textareaRef}
             value={text}
             rows={composing ? 2 : 1}
-            onChange={(e) => {
-              const v = e.target.value
+            dropdownPosition="below"
+            onChange={(v) => {
               setText(v)
               const hasContent = v.trim().length > 0
               broadcastTyping(hasContent)
@@ -1683,7 +1688,6 @@ function OverviewQuickAdd({
                 handleSubmit(e)
               }
             }}
-            className="flex-1 outline-none resize-none"
             style={{
               fontSize: 'var(--value-size)',
               color: 'var(--ink)',
@@ -1694,6 +1698,8 @@ function OverviewQuickAdd({
               lineHeight: 1.5,
               transition: 'border-color 0.15s, padding 0.1s',
               minHeight: composing ? undefined : 28,
+              outline: 'none',
+              resize: 'none',
             }}
           />
         </div>

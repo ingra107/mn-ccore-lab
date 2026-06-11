@@ -9,9 +9,19 @@ interface MentionInputProps {
   disabled?: boolean
   rows?: number
   style?: React.CSSProperties
+  className?: string
   onKeyDown?: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void
   onFocus?: (e: React.FocusEvent<HTMLTextAreaElement>) => void
   onBlur?: (e: React.FocusEvent<HTMLTextAreaElement>) => void
+  onPaste?: React.ClipboardEventHandler<HTMLTextAreaElement>
+  /** External handle on the underlying textarea (caret helpers like
+   *  appendCharToInput need it). */
+  inputRef?: React.RefObject<HTMLTextAreaElement | null>
+  /** Where the suggestion menu opens relative to the input. 'above'
+   *  (default) suits bottom-anchored composers; pass 'below' for
+   *  composers near the top of a scroll container (OverviewQuickAdd)
+   *  where an upward menu would clip. */
+  dropdownPosition?: 'above' | 'below'
 }
 
 export default function MentionInput({
@@ -21,9 +31,13 @@ export default function MentionInput({
   disabled,
   rows = 2,
   style,
+  className,
   onKeyDown,
   onFocus,
   onBlur,
+  onPaste,
+  inputRef,
+  dropdownPosition = 'above',
 }: MentionInputProps) {
   const { data: teamSlugs = [] } = useTeamSlugs()
   const [mentionOpen, setMentionOpen] = useState(false)
@@ -223,15 +237,20 @@ export default function MentionInput({
       )}
 
       <textarea
-        ref={textareaRef}
+        ref={(el) => {
+          textareaRef.current = el
+          if (inputRef) (inputRef as React.MutableRefObject<HTMLTextAreaElement | null>).current = el
+        }}
         value={value}
         onChange={handleInputChange}
         onKeyDown={handleKeyDown}
         onFocus={onFocus}
         onBlur={onBlur}
+        onPaste={onPaste}
         placeholder={placeholder}
         disabled={disabled}
         rows={rows}
+        className={className}
         style={{
           ...style,
           width: '100%',
@@ -247,15 +266,16 @@ export default function MentionInput({
         {mentionOpen && filteredSlugs.length > 0 && (
           <motion.div
             ref={dropdownRef}
-            initial={{ opacity: 0, y: -4 }}
+            initial={{ opacity: 0, y: dropdownPosition === 'below' ? 4 : -4 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -4 }}
+            exit={{ opacity: 0, y: dropdownPosition === 'below' ? 4 : -4 }}
             transition={{ duration: 0.12 }}
             style={{
               position: 'absolute',
-              bottom: '100%',
+              ...(dropdownPosition === 'below'
+                ? { top: '100%', marginTop: '4px' }
+                : { bottom: '100%', marginBottom: '4px' }),
               left: 0,
-              marginBottom: '4px',
               width: '240px',
               maxHeight: '200px',
               overflowY: 'auto',

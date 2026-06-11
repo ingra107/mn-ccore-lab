@@ -29,7 +29,10 @@ export async function handleGetTeam(env: Env, isAuthed = false): Promise<Respons
 // GET /api/team/slugs — for @mention autocomplete
 export async function handleTeamSlugs(env: Env): Promise<Response> {
   const result = await env.DB.prepare('SELECT slug, name FROM team_members WHERE slug IS NOT NULL ORDER BY name').all();
-  return json({ data: result.results || [] });
+  // Hermes leads the list: it's the highest-traffic mention target and has no
+  // team_members row (author slug is claude-ai; the mention token is @hermes,
+  // matching the /@(hermes|claude)\b/i detection in questions.ts/projects.ts).
+  return json({ data: [{ slug: 'hermes', name: 'Hermes' }, ...(result.results || [])] });
 }
 
 // GET /api/team/:slug/cv-data
