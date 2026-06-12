@@ -1,3 +1,22 @@
+# ▶ DOCKET STATE after the 2026-06-11 late-evening execution session
+
+> Executed this session (live = HEAD, 848/848 tests, all pushed):
+> **N1 ✅** (audit → 24 tickets → ALL fixed, deploys `b4c6e6b6`+`9a3afa91`) · **N1c ✅**
+> (@mention typeahead: OverviewQuickAdd→MentionInput + hermes in /api/team/slugs,
+> `8a41827a`) · **N1b wave-1 ✅** (`865d6815`: TableControls tint-not-fill class de-box,
+> Projects pills, ProjectDetail gold band + composer pills; remaining waves ride the queued
+> pill-language sweep task) · **N4 ✅** (peek avatars xs) · **N2 report ✅** —
+> `docs/superpowers/plans/2026-06-11-n2-description-condense-review.md`, **APPLY AWAITS
+> NICK's row approvals** (rec: condense rows 6/8/9/15 + Q on 14, keep the rest) ·
+> **N8 check ✅ — Ask the Lab is DEAD** (1 question ever, 2026-04-10; 0 answers): recommend
+> substrate-swap-gated RETIREMENT over H4 convergence — **Nick decides**.
+>
+> **REMAINING in order: N3** (artifacts riders) · **N5** (JS-hover→CSS 218 sites) ·
+> **N6** (dogfood Playwright triage) · **N7** (activity_log disposition) · **N7b** (Hermes
+> token tracking). Nick's pending: phone-test the mobile wave (My Tasks toolbar/Filters
+> pill, task panel full-screen + Done bar, Today timeline, @hermes typeahead), N2 approvals,
+> Ask-the-Lab verdict, gardener maiden --apply artifact review (ran 22:40 tonight, home).
+
 # ▶▶▶ NEXT-SESSION DOCKET (Nick-ordered 2026-06-11 close) — EXECUTE IN ORDER
 
 > Nick verbatim: "Make sure all these are crystal clear in that order and then we can have the
