@@ -195,7 +195,7 @@ export function InlineDetail({ task, projectName, onOpenEditor }: { task: TaskRo
 
       {/* SmartCompose — directly under action bar (A2) with @me lock toggle */}
       <div style={{ marginBottom: 10 }}>
-        <SmartCompose taskId={task.id} placeholder="Add a note or @hermes…" showMeLock showHermesToggle bare alwaysShowToolbar />
+        <SmartCompose taskId={task.id} placeholder="Note or @hermes…" showMeLock showHermesToggle bare alwaysShowToolbar />
       </div>
 
       {/* Next step — first open subtask, silent when none */}

@@ -93,36 +93,6 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
 
   return (
     <div onClick={(e) => e.stopPropagation()} style={{ padding: '14px 16px 16px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-      {/* Description — static context at top; ghost opener when empty */}
-      {task.description ? (
-        <div style={{ marginBottom: 12 }}>
-          <div
-            style={{
-              fontSize: 12,
-              color: INK_MUTED,
-              lineHeight: 1.55,
-              ...(descExpanded ? {} : {
-                display: '-webkit-box',
-                WebkitLineClamp: 3,
-                WebkitBoxOrient: 'vertical' as React.CSSProperties['WebkitBoxOrient'],
-                overflow: 'hidden',
-              }),
-            }}
-          >{task.description}</div>
-          {!descExpanded && task.description.length > 0 && (
-            <button
-              onClick={() => setDescExpanded(true)}
-              style={{ fontSize: 11, color: INK_DIM, background: 'transparent', border: 'none', padding: '2px 0', cursor: 'pointer', fontFamily: 'inherit' }}
-            >more</button>
-          )}
-        </div>
-      ) : (
-        <button
-          onClick={() => setFullEditorTask(task)}
-          style={{ display: 'block', fontSize: 11, color: INK_DIM, background: 'transparent', border: 'none', padding: '0 0 10px', cursor: 'pointer', fontFamily: 'inherit', fontStyle: 'italic' }}
-        >Add description…</button>
-      )}
-
       {/* Action bar */}
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 12, flexWrap: 'wrap' }}>
         {!isDone && (
@@ -167,7 +137,7 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
       </div>
 
       {/* SmartCompose — directly under action bar; @me lock toggle */}
-      <SmartCompose taskId={task.id} placeholder="Add a note, or @hermes for AI…" showMeLock showHermesToggle bare alwaysShowToolbar />
+      <SmartCompose taskId={task.id} placeholder="Note or @hermes…" showMeLock showHermesToggle bare alwaysShowToolbar />
 
       {/* Activity peek — 3 entries newest-first; "view all →" opens full editor */}
       <div style={{ marginTop: 14 }}>
@@ -189,6 +159,36 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
             style={{ fontSize: 12, color: INK, background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left', lineHeight: 1.4 }}
           >☐ {nextStep.title}</button>
         </div>
+      )}
+
+      {/* Description — static context below the live feed; ghost opener when empty */}
+      {task.description ? (
+        <div style={{ marginTop: 12, marginBottom: 4 }}>
+          <div
+            style={{
+              fontSize: 12,
+              color: INK_MUTED,
+              lineHeight: 1.55,
+              ...(descExpanded ? {} : {
+                display: '-webkit-box',
+                WebkitLineClamp: 3,
+                WebkitBoxOrient: 'vertical' as React.CSSProperties['WebkitBoxOrient'],
+                overflow: 'hidden',
+              }),
+            }}
+          >{task.description}</div>
+          {!descExpanded && (
+            <button
+              onClick={() => setDescExpanded(true)}
+              style={{ fontSize: 11, color: INK_DIM, background: 'transparent', border: 'none', padding: '2px 0', cursor: 'pointer', fontFamily: 'inherit' }}
+            >more</button>
+          )}
+        </div>
+      ) : (
+        <button
+          onClick={() => setFullEditorTask(task)}
+          style={{ display: 'block', marginTop: 8, fontSize: 11, color: INK_DIM, background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'inherit', fontStyle: 'italic' }}
+        >Add description…</button>
       )}
 
       {/* Inline field row: Status · Priority · Project · Due — canonical GhostSelect (A1: below fold) */}
