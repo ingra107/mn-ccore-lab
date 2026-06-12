@@ -888,8 +888,11 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
           }
           /* N1.12 — sticky surfaces (header, mobile composer) must carry the
              SAME composite as the panel body; their plain var(--cream) bg
-             rendered as near-black bands on the gradient-lightened panel. */
-          .dark .task-detail-panel .task-detail-sticky {
+             rendered as near-black bands on the gradient-lightened panel.
+             Done bar uses the same fix: color-mix(cream 95%, transparent) was
+             cream-colored in dark mode since it didn't carry the gradient. */
+          .dark .task-detail-panel .task-detail-sticky,
+          .dark .task-detail-panel .task-detail-done-bar {
             background-color: var(--cream) !important;
             background-image: linear-gradient(var(--surface-2), var(--surface-2)) !important;
           }

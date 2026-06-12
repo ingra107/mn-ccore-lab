@@ -827,7 +827,7 @@ function ResultRow({ item, tokens }: { item: SearchResult; tokens: string[] }) {
       >
         <div
           className="w-7 h-7 rounded flex items-center justify-center flex-shrink-0"
-          style={{ backgroundColor: config.color + '14' }}
+          style={{ backgroundColor: `color-mix(in srgb, ${config.color} 8%, transparent)` }}
         >
           {isHermes
             ? <HermesMark variant="icon" size={14} color={config.color} />

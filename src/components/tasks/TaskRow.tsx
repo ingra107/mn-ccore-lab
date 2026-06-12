@@ -210,8 +210,7 @@ function Grip({ show, draggable, onDragStart }: { show: boolean; draggable?: boo
       onClick={(e) => e.stopPropagation()}
       onMouseDown={(e) => e.stopPropagation()}
       title="Drag up to the timeline to plan this task"
-      // P1-11: grip is discoverable at rest (≥0.6, works on touch where there is
-      // no hover); hover lifts it to full emphasis rather than revealing it.
+      className="task-grip"
       style={{ width: 16, display: 'grid', placeItems: 'center', cursor: 'grab', color: INK_MUTED, opacity: show ? 1 : 0.6, transition: 'opacity 140ms', fontSize: 13, lineHeight: 1, flexShrink: 0, userSelect: 'none' }}
     >
       ⋮⋮

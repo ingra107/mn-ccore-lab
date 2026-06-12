@@ -90,20 +90,20 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
   }, [task.id, updateTask])
 
   return (
-    <div onClick={(e) => e.stopPropagation()} style={{ padding: '14px 16px 16px', background: 'rgba(0,0,0,0.20)', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+    <div onClick={(e) => e.stopPropagation()} style={{ padding: '14px 16px 16px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
       {/* Action bar */}
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 12, flexWrap: 'wrap' }}>
         {!isNow && (
           <button onClick={() => state.promote(task.id)} style={{ padding: '6px 12px', background: ACCENT_GOLD, color: PAGE_BG, border: 'none', borderRadius: 'var(--radius-sm)', fontFamily: 'inherit', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>▶ Work on this now</button>
         )}
         {!isPlanned && !isNow && (
-          <button onClick={() => state.planAt(task.id, 'strip')} style={{ padding: '6px 12px', background: 'rgba(201,168,76,0.08)', color: ACCENT_GOLD, border: '1px solid rgba(201,168,76,0.30)', borderRadius: 'var(--radius-sm)', fontFamily: 'inherit', fontSize: 12, fontWeight: 500, cursor: 'pointer' }}>📌 Plan for today</button>
+          <button onClick={() => state.planAt(task.id, 'strip')} style={{ padding: '6px 12px', background: 'transparent', color: ACCENT_GOLD, border: 'none', borderRadius: 'var(--radius-sm)', fontFamily: 'inherit', fontSize: 12, fontWeight: 500, cursor: 'pointer' }}>📌 Plan for today</button>
         )}
         {isPlanned && !isNow && (
-          <button onClick={() => state.unplan(task.id)} style={{ padding: '6px 12px', background: 'transparent', color: INK_MUTED, border: '1px solid rgba(255,255,255,0.14)', borderRadius: 'var(--radius-sm)', fontFamily: 'inherit', fontSize: 12, cursor: 'pointer' }}>Unplan</button>
+          <button onClick={() => state.unplan(task.id)} style={{ padding: '6px 12px', background: 'transparent', color: INK_MUTED, border: 'none', borderRadius: 'var(--radius-sm)', fontFamily: 'inherit', fontSize: 12, cursor: 'pointer' }}>Unplan</button>
         )}
         <div ref={moveRef} style={{ position: 'relative' }}>
-          <button onClick={() => setMoveOpen((o) => !o)} title="Move to a different group (writes group_override)" style={{ padding: '6px 12px', background: moveOpen ? withAlpha(ACCENT_TEAL, 20) : 'transparent', color: moveOpen ? ACCENT_TEAL : INK, border: `1px solid ${moveOpen ? ACCENT_TEAL : 'rgba(255,255,255,0.14)'}`, borderRadius: 'var(--radius-sm)', fontFamily: 'inherit', fontSize: 12, cursor: 'pointer' }}>Move →</button>
+          <button onClick={() => setMoveOpen((o) => !o)} title="Move to a different group (writes group_override)" style={{ padding: '6px 12px', background: moveOpen ? withAlpha(ACCENT_TEAL, 20) : 'transparent', color: moveOpen ? ACCENT_TEAL : INK, border: `1px solid ${moveOpen ? ACCENT_TEAL : 'transparent'}`, borderRadius: 'var(--radius-sm)', fontFamily: 'inherit', fontSize: 12, cursor: 'pointer' }}>Move →</button>
           {moveOpen && (
             <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: 4, minWidth: 200, background: PANEL_BG, border: '1px solid rgba(255,255,255,0.12)', borderRadius: 'var(--radius-sm)', zIndex: 30, boxShadow: '0 4px 12px rgba(0,0,0,0.4)' }}>
               {TODAY_MOVE_OPTIONS.map((opt) => (
@@ -173,7 +173,7 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
       )}
 
       {/* Activity feed — full-width, newest-first, directly under composer (A1) */}
-      <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+      <div style={{ marginTop: 14, paddingTop: 4 }}>
         <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: INK_DIM, marginBottom: 6 }}>Activity</div>
         {detailQuery.isLoading && <div style={{ fontSize: 11, color: INK_DIM, fontStyle: 'italic' }}>Loading…</div>}
         {!detailQuery.isLoading && updates.length === 0 && <div style={{ fontSize: 11, color: INK_DIM, fontStyle: 'italic' }}>No updates logged.</div>}
@@ -182,7 +182,7 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
           const isMe = u.who === 'nick-ingraham' || u.who === 'nick'
           const color = isHermes ? ACCENT_GOLD : isMe ? ACCENT_TEAL : INK_MUTED
           return (
-            <div key={u.id ?? i} style={{ padding: '6px 0', borderBottom: i < updates.length - 1 && i < 7 ? '1px dashed rgba(255,255,255,0.06)' : 'none' }}>
+            <div key={u.id ?? i} style={{ padding: '6px 0' }}>
               <div style={{ display: 'flex', gap: 8, alignItems: 'baseline', marginBottom: 2 }}>
                 <span style={{ fontSize: 10, fontWeight: 600, color, letterSpacing: '0.04em' }}>{isHermes ? 'Hermes' : u.who}</span>
                 <span style={{ fontSize: 10, color: INK_DIM, fontVariantNumeric: 'tabular-nums' }}>{u.when?.slice(0, 16) ?? ''}</span>
@@ -199,7 +199,7 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
       </div>
 
       {/* Quick-edit chips: Status / Priority / Due / Project + open-full-editor (A1: below fold) */}
-      <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+      <div style={{ marginTop: 14 }}>
         <TaskQuickEditChips
           task={task}
           updateTask={updateTask}
@@ -237,7 +237,7 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
       </div>
 
       {/* Workflow fields — v55 (waiting_on / next_checkin_date / promised_to / promise_date) */}
-      <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+      <div style={{ marginTop: 14 }}>
         <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: INK_DIM, marginBottom: 8 }}>Workflow</div>
         <WorkflowSection fields={workflowFields} onChange={saveWorkflowField} />
       </div>
