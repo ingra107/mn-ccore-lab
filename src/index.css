@@ -1657,6 +1657,19 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
   }
 }
 
+/* ── N5 hover utilities (JS-hover → CSS pass, 2026-06-11) ──
+   Replace onMouseEnter/onMouseLeave style-mutation pairs: add the class(es)
+   and set the hover value as an inline CSS custom property, e.g.
+     className="hov-bg hov-border"
+     style={{ '--hov-bg': 'var(--teal-hover)', '--hov-border': 'var(--teal)' }}
+   State-dependent hovers stay declarative: set the custom prop conditionally
+   ('--hov-bg': active ? activeBg : restHoverBg). !important beats the inline
+   resting value; :not(:disabled) preserves the common disabled guard. */
+.hov-bg:hover:not(:disabled) { background: var(--hov-bg) !important; }
+.hov-color:hover:not(:disabled) { color: var(--hov-color) !important; }
+.hov-border:hover:not(:disabled) { border-color: var(--hov-border) !important; }
+.hov-opacity:hover:not(:disabled) { opacity: var(--hov-opacity) !important; }
+
 /* ── Touch target utility (WCAG 2.5.5 — 44×44px minimum) ── */
 .touch-target {
   min-height: 44px;

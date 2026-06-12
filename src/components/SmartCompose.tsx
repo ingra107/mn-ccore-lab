@@ -478,9 +478,15 @@ function ToolbarBtn({ children, onClick, label, active, disabled, theme }: { chi
   const baseBorder = isDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid var(--border-subtle)'
   const activeBorder = isDark ? '1px solid rgba(92,188,180,0.30)' : '1px solid var(--teal)'
   const activeBg = isDark ? 'rgba(92,188,180,0.15)' : 'var(--teal-active)'
+  // N5 — CSS hover via the hov-* utilities. The old !active guard is moot:
+  // hover color/border equal the active values, so hovering an active button
+  // is a visual no-op either way.
+  const hoverColor = activeColor as string
+  const hoverBorder = isDark ? 'rgba(92,188,180,0.30)' : 'var(--teal)'
   return (
     <button
       type="button"
+      className="hov-color hov-border"
       onMouseDown={(e) => e.preventDefault()}
       onClick={onClick}
       title={label}
@@ -496,9 +502,9 @@ function ToolbarBtn({ children, onClick, label, active, disabled, theme }: { chi
         cursor: disabled ? 'not-allowed' : 'pointer',
         opacity: disabled ? 0.5 : 1,
         fontFamily: 'inherit',
-      }}
-      onMouseEnter={(e) => { if (!disabled && !active) { e.currentTarget.style.color = activeColor as string; e.currentTarget.style.borderColor = isDark ? 'rgba(92,188,180,0.30)' : 'var(--teal)' } }}
-      onMouseLeave={(e) => { if (!disabled && !active) { e.currentTarget.style.color = baseColor as string; e.currentTarget.style.borderColor = isDark ? 'rgba(255,255,255,0.06)' : 'var(--border-subtle)' } }}
+        '--hov-color': hoverColor,
+        '--hov-border': hoverBorder,
+      } as React.CSSProperties}
     >{children}</button>
   )
 }
