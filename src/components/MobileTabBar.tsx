@@ -25,12 +25,10 @@ import {
   LayoutGrid,
 } from 'lucide-react'
 import { PATHS } from '../constants/paths'
+import { ICON_PROPS } from '../lib/iconProps'
 
 const BugReportModal = lazy(() => import('./BugReportModal'))
 
-// Rule 74 (N1.24): true 1.5px strokes at ≤20px — lucide's default 2-on-24
-// scales fuzzy at tab-bar sizes. Same recipe as Sidebar's ICON_PROPS.
-const ICON_PROPS = { strokeWidth: 1.5, absoluteStrokeWidth: true } as const
 
 /**
  * Mobile bottom tab bar — 4 primary routes + "More" overflow drawer

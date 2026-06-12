@@ -23,11 +23,15 @@ export async function handleGetAIRequests(url: URL, env: Env): Promise<Response>
 
   query += ' ORDER BY created_at DESC';
 
-  const result = await env.DB.prepare(query).bind(...params).all();
   // N7b — usage rollup across ALL requests (not just the filtered page).
-  const tokens = await env.DB.prepare(
-    'SELECT COALESCE(SUM(input_tokens),0) AS input, COALESCE(SUM(output_tokens),0) AS output, COUNT(input_tokens) AS tracked FROM ai_requests'
-  ).first<{ input: number; output: number; tracked: number }>();
+  // One batched round-trip (/simplify: was two sequential awaits).
+  const [result, tokensRes] = await env.DB.batch([
+    env.DB.prepare(query).bind(...params),
+    env.DB.prepare(
+      'SELECT COALESCE(SUM(input_tokens),0) AS input, COALESCE(SUM(output_tokens),0) AS output, COUNT(input_tokens) AS tracked FROM ai_requests'
+    ),
+  ]);
+  const tokens = (tokensRes.results as { input: number; output: number; tracked: number }[] | undefined)?.[0];
   return json({
     data: result.results || [],
     count: result.results?.length || 0,

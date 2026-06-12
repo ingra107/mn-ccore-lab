@@ -1679,8 +1679,10 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
 }
 
 /* Global mobile touch-target floor — filter chips, selects, inline links.
-   .done-box is exempt (N1.08): it's a 17px square whose 44px hit area comes
-   from its ::before pseudo-element below, not from stretching the visual. */
+   .done-box / .stage-dot are exempt (N1.08/N1.16): small squares/dots whose
+   44px hit area comes from their ::before pseudo-element below, not from
+   stretching the visual. ⚠ The SAME :not() chain exists in the UX-9 tablet
+   block (~60 lines down) — new exemptions must be added in BOTH. */
 @media (max-width: 768px) {
   button:not(.kbd-shortcut):not(.close-button):not([aria-label="Close"]):not(.done-box):not(.stage-dot),
   a.inline-link,

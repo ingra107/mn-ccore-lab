@@ -14,7 +14,7 @@ import { useIsMobile } from '../../../hooks/useIsMobile'
 import {
   GROUP_META, GROUP_ORDER,
   ACCENT_GOLD, ACCENT_TEAL, ACCENT_CORAL, ACCENT_ORANGE, ACCENT_GREEN,
-  INK, INK_MUTED, INK_DIM,
+  INK, INK_MUTED, INK_DIM, withAlpha,
   type ViewMode, type GroupKey, type QuickViewKey, type FilterState, type FilterOption,
 } from '../constants'
 
@@ -100,7 +100,10 @@ export function TopBar({ view, setView, search, setSearch, filter, setFilter, qu
             <button
               key={tab.k}
               onClick={() => setQuickView(tab.k)}
-              style={{ padding: '4px 10px', fontSize: 11, fontWeight: 500, borderRadius: 999, fontFamily: 'inherit', cursor: 'pointer', border: `1px solid ${active ? c + '70' : 'rgba(255,255,255,0.1)'}`, background: active ? c + '15' : 'transparent', color: active ? c : INK_MUTED, flexShrink: 0, whiteSpace: 'nowrap' }}
+              // withAlpha, NOT hex-suffix concat: the accents are var() strings,
+              // so `c + '70'` produced invalid CSS (active pill border/bg never
+              // rendered). /simplify catch, 2026-06-11.
+              style={{ padding: '4px 10px', fontSize: 11, fontWeight: 500, borderRadius: 999, fontFamily: 'inherit', cursor: 'pointer', border: `1px solid ${active ? withAlpha(c, 44) : 'rgba(255,255,255,0.1)'}`, background: active ? withAlpha(c, 8) : 'transparent', color: active ? c : INK_MUTED, flexShrink: 0, whiteSpace: 'nowrap' }}
             >{tab.l}</button>
           )
         })}
@@ -115,7 +118,7 @@ export function TopBar({ view, setView, search, setSearch, filter, setFilter, qu
           <button
             onClick={() => setFiltersOpen((o) => !o)}
             aria-expanded={filtersOpen}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 10px', fontSize: 11, fontWeight: 500, borderRadius: 999, fontFamily: 'inherit', cursor: 'pointer', border: `1px solid ${filtersOpen || activeFilterCount > 0 ? ACCENT_TEAL + '70' : 'rgba(255,255,255,0.1)'}`, background: filtersOpen || activeFilterCount > 0 ? ACCENT_TEAL + '15' : 'transparent', color: filtersOpen || activeFilterCount > 0 ? ACCENT_TEAL : INK_MUTED }}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 10px', fontSize: 11, fontWeight: 500, borderRadius: 999, fontFamily: 'inherit', cursor: 'pointer', border: `1px solid ${filtersOpen || activeFilterCount > 0 ? withAlpha(ACCENT_TEAL, 44) : 'rgba(255,255,255,0.1)'}`, background: filtersOpen || activeFilterCount > 0 ? withAlpha(ACCENT_TEAL, 8) : 'transparent', color: filtersOpen || activeFilterCount > 0 ? ACCENT_TEAL : INK_MUTED }}
           >
             <SlidersHorizontal size={11} strokeWidth={1.5} absoluteStrokeWidth />
             Filters{activeFilterCount > 0 ? ` · ${activeFilterCount}` : ''}

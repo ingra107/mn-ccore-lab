@@ -330,7 +330,7 @@ export default function Projects() {
               // N1b — locked-canon ghost pill: active = teal tint + teal text,
               // never a solid fill block in a toolbar.
               style={{
-                fontWeight: activeCategory === f.key ? 600 : ('var(--label-weight)' as never),
+                fontWeight: activeCategory === f.key ? 600 : ('var(--label-weight)' as React.CSSProperties['fontWeight']),
                 fontSize: 'var(--label-size)',
                 borderRadius: 'var(--radius-full)',
                 background: activeCategory === f.key ? 'var(--teal-active)' : 'transparent',
@@ -362,7 +362,7 @@ export default function Projects() {
               className="cursor-pointer inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs"
               style={{
                 fontSize: 'var(--label-size)',
-                fontWeight: showDeps ? 600 : ('var(--label-weight)' as never),
+                fontWeight: showDeps ? 600 : ('var(--label-weight)' as React.CSSProperties['fontWeight']),
                 background: showDeps ? 'var(--teal-active)' : 'transparent',
                 color: 'var(--teal)',
                 border: '1px solid transparent',

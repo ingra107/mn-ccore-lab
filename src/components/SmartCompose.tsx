@@ -481,8 +481,6 @@ function ToolbarBtn({ children, onClick, label, active, disabled, theme }: { chi
   // N5 — CSS hover via the hov-* utilities. The old !active guard is moot:
   // hover color/border equal the active values, so hovering an active button
   // is a visual no-op either way.
-  const hoverColor = activeColor as string
-  const hoverBorder = isDark ? 'rgba(92,188,180,0.30)' : 'var(--teal)'
   return (
     <button
       type="button"
@@ -502,8 +500,8 @@ function ToolbarBtn({ children, onClick, label, active, disabled, theme }: { chi
         cursor: disabled ? 'not-allowed' : 'pointer',
         opacity: disabled ? 0.5 : 1,
         fontFamily: 'inherit',
-        '--hov-color': hoverColor,
-        '--hov-border': hoverBorder,
+        '--hov-color': activeColor,
+        '--hov-border': isDark ? 'rgba(92,188,180,0.30)' : 'var(--teal)',
       } as React.CSSProperties}
     >{children}</button>
   )

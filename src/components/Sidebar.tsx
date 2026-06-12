@@ -38,11 +38,11 @@ import { PATHS } from '../constants/paths'
 import Avatar from './Avatar'
 import { getPersonInfo } from '../data/team'
 import { emailToSlug } from '../lib/emailSlug'
+import { ICON_PROPS } from '../lib/iconProps'
 
 // Premium icon weight (Nick 2026-06-11): lucide's default stroke (2 on a 24
 // grid) scales fuzzy at small sizes; a true 1.5px absolute stroke is crisper
 // and optically lighter. ONE const so a future weight tweak is one line.
-const ICON_PROPS = { strokeWidth: 1.5, absoluteStrokeWidth: true } as const
 
 interface SidebarProps {
   collapsed: boolean
