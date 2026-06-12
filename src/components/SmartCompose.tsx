@@ -325,13 +325,13 @@ export default function SmartCompose(props: SmartComposeProps) {
           {/* Attach */}
           {uploadContext && (
             <ToolbarBtn theme={theme} label="Attach file" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
-              {uploading ? <Loader2 size={11} className="animate-spin" /> : <Paperclip size={11} />}
+              {uploading ? <Loader2 size={11} className="animate-spin" /> : <Paperclip size={11} strokeWidth={1.5} absoluteStrokeWidth />}
             </ToolbarBtn>
           )}
           {/* @mention */}
-          <ToolbarBtn theme={theme} label="Mention someone" onClick={() => insertAtCursor('@')}><AtSign size={11} /></ToolbarBtn>
+          <ToolbarBtn theme={theme} label="Mention someone" onClick={() => insertAtCursor('@')}><AtSign size={11} strokeWidth={1.5} absoluteStrokeWidth /></ToolbarBtn>
           {/* Emoji */}
-          <ToolbarBtn theme={theme} label="Add emoji" onClick={() => setEmojiOpen((o) => !o)} active={emojiOpen}><Smile size={11} /></ToolbarBtn>
+          <ToolbarBtn theme={theme} label="Add emoji" onClick={() => setEmojiOpen((o) => !o)} active={emojiOpen}><Smile size={11} strokeWidth={1.5} absoluteStrokeWidth /></ToolbarBtn>
           {/* @me lock — compact pill consistent with OverviewQuickAdd's pill toggles */}
           {showMeLock && (
             <button
@@ -431,7 +431,7 @@ export default function SmartCompose(props: SmartComposeProps) {
                 fontWeight: 600,
               }}
             >
-              <Send size={10} aria-hidden="true" />
+              <Send size={10} strokeWidth={1.5} absoluteStrokeWidth aria-hidden="true" />
               {submitting ? submittingLabel : submitLabel}
             </button>
           )}

@@ -100,8 +100,8 @@ function ChipPopover({
           fontFamily: 'inherit',
           fontWeight: 500,
           color,
-          background: open ? `color-mix(in srgb, ${color} 10%, transparent)` : 'transparent',
-          border: `1px solid ${open ? color : 'var(--border-subtle)'}`,
+          background: `color-mix(in srgb, ${color} ${open ? 13 : 9}%, transparent)`,
+          border: `1px solid color-mix(in srgb, ${color} ${open ? 100 : 28}%, transparent)`,
           borderRadius: 999,
           cursor: 'pointer',
           whiteSpace: 'nowrap',
@@ -290,7 +290,7 @@ export function TaskQuickEditChips({
           opacity: 0.7,
         }}
       >
-        <Link2 size={10} />
+        <Link2 size={10} strokeWidth={1.5} absoluteStrokeWidth />
         + Link
       </button>
 
@@ -315,7 +315,7 @@ export function TaskQuickEditChips({
             marginLeft: 'auto',
           }}
         >
-          <ExternalLink size={11} />
+          <ExternalLink size={11} strokeWidth={1.5} absoluteStrokeWidth />
           Open full editor
         </button>
       )}

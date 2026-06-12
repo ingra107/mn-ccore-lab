@@ -25,6 +25,7 @@ import {
   INK, INK_MUTED, INK_DIM, PAGE_BG, PANEL_BG,
   TODAY_MOVE_OPTIONS, withAlpha, type LinkKind,
 } from './constants'
+import { isTaskDone } from '../../lib/taskGrouping'
 import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow } from '../../lib/api'
 
@@ -45,6 +46,7 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
 
   // Next step: first open subtask (Option 1 per design doc B).
   const nextStep = subtasks.find((s) => s.completed !== 1) ?? null
+  const isDone = isTaskDone(task)
 
   // Move → popover wiring (parity with UnifiedMyTasks).
   const updateTask = useUpdateTask()
@@ -90,12 +92,45 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
 
   return (
     <div onClick={(e) => e.stopPropagation()} style={{ padding: '14px 16px 16px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+      {/* Description — static context at top; ghost opener when empty */}
+      {task.description ? (
+        <div style={{ marginBottom: 12 }}>
+          <div
+            style={{
+              fontSize: 12,
+              color: INK_MUTED,
+              lineHeight: 1.55,
+              ...(descExpanded ? {} : {
+                display: '-webkit-box',
+                WebkitLineClamp: 3,
+                WebkitBoxOrient: 'vertical' as React.CSSProperties['WebkitBoxOrient'],
+                overflow: 'hidden',
+              }),
+            }}
+          >{task.description}</div>
+          {!descExpanded && task.description.length > 0 && (
+            <button
+              onClick={() => setDescExpanded(true)}
+              style={{ fontSize: 11, color: INK_DIM, background: 'transparent', border: 'none', padding: '2px 0', cursor: 'pointer', fontFamily: 'inherit' }}
+            >more</button>
+          )}
+        </div>
+      ) : (
+        <button
+          onClick={() => setFullEditorTask(task)}
+          style={{ display: 'block', fontSize: 11, color: INK_DIM, background: 'transparent', border: 'none', padding: '0 0 10px', cursor: 'pointer', fontFamily: 'inherit', fontStyle: 'italic' }}
+        >Add description…</button>
+      )}
+
       {/* Action bar */}
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 12, flexWrap: 'wrap' }}>
-        {!isNow && (
+        {!isDone && (
+          <button onClick={() => state.markDone(task.id)} style={{ padding: '6px 12px', background: 'transparent', color: ACCENT_GREEN, border: 'none', borderRadius: 'var(--radius-sm)', fontFamily: 'inherit', fontSize: 12, cursor: 'pointer' }}>✓ Complete</button>
+        )}
+        {!isNow && !isDone && (
           <button onClick={() => state.promote(task.id)} style={{ padding: '6px 12px', background: ACCENT_GOLD, color: PAGE_BG, border: 'none', borderRadius: 'var(--radius-sm)', fontFamily: 'inherit', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>▶ Work on this now</button>
         )}
-        {!isPlanned && !isNow && (
+        {!isPlanned && !isNow && !isDone && (
           <button onClick={() => state.planAt(task.id, 'strip')} style={{ padding: '6px 12px', background: 'transparent', color: ACCENT_GOLD, border: 'none', borderRadius: 'var(--radius-sm)', fontFamily: 'inherit', fontSize: 12, fontWeight: 500, cursor: 'pointer' }}>📌 Plan for today</button>
         )}
         {isPlanned && !isNow && (
@@ -130,38 +165,18 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
         {project && <span style={{ marginLeft: 'auto', fontSize: 11, color: INK_DIM }}>{project.name}</span>}
       </div>
 
-      {/* Description — clamped to ~3 lines with "more" expander (C) */}
-      {task.description && (
-        <div style={{ marginBottom: 12 }}>
-          <div
-            style={{
-              fontSize: 12,
-              color: INK_MUTED,
-              lineHeight: 1.55,
-              ...(descExpanded ? {} : {
-                display: '-webkit-box',
-                WebkitLineClamp: 3,
-                WebkitBoxOrient: 'vertical' as React.CSSProperties['WebkitBoxOrient'],
-                overflow: 'hidden',
-              }),
-            }}
-          >{task.description}</div>
-          {!descExpanded && task.description.length > 0 && (
-            <button
-              onClick={() => setDescExpanded(true)}
-              style={{ fontSize: 11, color: INK_DIM, background: 'transparent', border: 'none', padding: '2px 0', cursor: 'pointer', fontFamily: 'inherit' }}
-            >more</button>
-          )}
-        </div>
-      )}
-
-      {/* SmartCompose — directly under action bar (A1) with @me lock toggle */}
+      {/* SmartCompose — directly under action bar; @me lock toggle */}
       <SmartCompose taskId={task.id} placeholder="Add a note, or @hermes for AI…" showMeLock bare />
 
-      {/* Next step — first open subtask (B: replaces "Why this matters" callout) */}
+      {/* Activity feed — full feed, filter pills visible, newest-first */}
+      <div style={{ marginTop: 14 }}>
+        <TaskActivityFeed taskId={task.id} />
+      </div>
+
+      {/* Next step — first open subtask */}
       {nextStep && (
-        <div style={{ marginTop: 10, display: 'flex', alignItems: 'flex-start', gap: 6 }}>
-          <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: INK_DIM, flexShrink: 0, paddingTop: 1 }}>Next step</span>
+        <div style={{ marginTop: 12, display: 'flex', alignItems: 'flex-start', gap: 6 }}>
+          <span style={{ fontSize: 10, color: INK_DIM, flexShrink: 0, paddingTop: 1 }}>Next step</span>
           <button
             onClick={() => toggleSubtask.mutate(nextStep.id, {
               onSettled: () => queryClient.invalidateQueries({ queryKey: ['task-detail', task.id] }),
@@ -170,11 +185,6 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
           >☐ {nextStep.title}</button>
         </div>
       )}
-
-      {/* Activity feed — TaskActivityFeed: visibility-gated, newest-first */}
-      <div style={{ marginTop: 14 }}>
-        <TaskActivityFeed taskId={task.id} hidePills />
-      </div>
 
       {/* Quick-edit chips: Status / Priority / Due / Project + open-full-editor (A1: below fold) */}
       <div style={{ marginTop: 14 }}>
@@ -188,7 +198,7 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
 
       {/* Subtasks + Blocks (A1: below fold) */}
       <div style={{ marginTop: 14 }}>
-        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: INK_DIM, marginBottom: 6 }}>Subtasks</div>
+        <div style={{ fontSize: 10, color: INK_DIM, marginBottom: 6 }}>Subtasks</div>
         {detailQuery.isLoading && <div style={{ fontSize: 11, color: INK_DIM, fontStyle: 'italic' }}>Loading…</div>}
         {!detailQuery.isLoading && subtasks.length === 0 && <div style={{ fontSize: 11, color: INK_DIM, fontStyle: 'italic' }}>None yet.</div>}
         {subtasks.map((s) => (
@@ -216,7 +226,7 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
 
       {/* Workflow fields — v55 (waiting_on / next_checkin_date / promised_to / promise_date) */}
       <div style={{ marginTop: 14 }}>
-        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: INK_DIM, marginBottom: 8 }}>Workflow</div>
+        <div style={{ fontSize: 10, color: INK_DIM, marginBottom: 8 }}>Workflow</div>
         <WorkflowSection fields={workflowFields} onChange={saveWorkflowField} />
       </div>
 
