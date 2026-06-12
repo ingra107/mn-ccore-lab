@@ -89,8 +89,9 @@ export default function LinkifiedText({ text, className, style }: Props) {
         style={{
           fontSize: 'inherit',
           color: 'var(--teal)',
-          background: 'var(--teal-active)',
-          borderRadius: 'var(--radius-sm)',
+          background: 'color-mix(in srgb, var(--teal) 9%, transparent)',
+          border: '1px solid color-mix(in srgb, var(--teal) 28%, transparent)',
+          borderRadius: 999,
           padding: '1px 6px',
           textDecoration: 'none',
           whiteSpace: 'nowrap',
