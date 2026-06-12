@@ -308,7 +308,7 @@ export default function Dashboard() {
       title="Unpin"
       aria-label="Unpin card"
     >
-      <Pin size={12} />
+      <Pin size={12} strokeWidth={1.5} absoluteStrokeWidth />
     </button>
   ), [togglePin])
 
@@ -319,7 +319,7 @@ export default function Dashboard() {
       title="Pin to top"
       aria-label="Pin card"
     >
-      <Pin size={12} />
+      <Pin size={12} strokeWidth={1.5} absoluteStrokeWidth />
     </button>
   ), [togglePin])
 
@@ -422,7 +422,7 @@ export default function Dashboard() {
                           alignItems: 'center',
                         }}
                       >
-                        <RotateCcw size={10} />
+                        <RotateCcw size={10} strokeWidth={1.5} absoluteStrokeWidth />
                       </button>
                     </div>
                   )}
@@ -439,7 +439,7 @@ export default function Dashboard() {
                       opacity: showCustomize ? 1 : 0.85,
                     }}
                   >
-                    <Settings2 size={12} />
+                    <Settings2 size={12} strokeWidth={1.5} absoluteStrokeWidth />
                     Customize
                   </button>
                   <span className="hidden md:block">
@@ -498,7 +498,7 @@ export default function Dashboard() {
                   }}
                   title={pinnedCards.has(card.id) ? 'Unpin' : 'Pin to top'}
                 >
-                  <Pin size={14} />
+                  <Pin size={14} strokeWidth={1.5} absoluteStrokeWidth />
                 </button>
               )}
             </div>
@@ -561,7 +561,7 @@ export default function Dashboard() {
               className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-colors portal-footer-link"
               style={{ color: 'var(--ink-bright, #fff)', backgroundColor: 'var(--teal-solid)', textDecoration: 'none' }}
             >
-              <Plus size={12} />
+              <Plus size={12} strokeWidth={1.5} absoluteStrokeWidth />
               Task
             </Link>
             <Link
@@ -569,7 +569,7 @@ export default function Dashboard() {
               className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-colors border hover:bg-black/5 dark:hover:bg-white/5 portal-footer-link"
               style={{ color: 'var(--slate)', borderColor: 'var(--border-subtle)', textDecoration: 'none' }}
             >
-              <CalendarPlus size={12} />
+              <CalendarPlus size={12} strokeWidth={1.5} absoluteStrokeWidth />
               Meeting
             </Link>
             <Link
@@ -577,7 +577,7 @@ export default function Dashboard() {
               className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-colors border hover:bg-black/5 dark:hover:bg-white/5 portal-footer-link"
               style={{ color: 'var(--slate)', borderColor: 'var(--border-subtle)', textDecoration: 'none' }}
             >
-              <FolderPlus size={12} />
+              <FolderPlus size={12} strokeWidth={1.5} absoluteStrokeWidth />
               Idea
             </Link>
           </div>
@@ -598,7 +598,7 @@ export default function Dashboard() {
               color: 'var(--ink)',
             }}
           >
-            <Clock size={18} style={{ color: 'var(--gold)', flexShrink: 0 }} />
+            <Clock size={18} strokeWidth={1.5} absoluteStrokeWidth style={{ color: 'var(--gold)', flexShrink: 0 }} />
             <div className="flex-1">
               <div style={{ fontSize: '13px', fontWeight: 500 }}>
                 {upcomingMeeting.date === localDateKey() ? 'Meeting today' : 'Meeting tomorrow'}: {upcomingMeeting.title}
@@ -629,7 +629,7 @@ export default function Dashboard() {
               transition: 'background-color 150ms ease',
             }}
           >
-            <AlertTriangle size={15} style={{ color: 'var(--maroon)', flexShrink: 0 }} />
+            <AlertTriangle size={15} strokeWidth={1.5} absoluteStrokeWidth style={{ color: 'var(--maroon)', flexShrink: 0 }} />
             <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--maroon)' }}>
               {expiringRegulatory.length} regulatory item{expiringRegulatory.length > 1 ? 's' : ''} expiring within 60 days
             </span>
@@ -644,7 +644,7 @@ export default function Dashboard() {
         {pinnedVisibleCards.length > 0 && (
           <div className="mb-6">
             <div className="flex items-center gap-2 mb-3">
-              <Pin size={14} style={{ color: 'var(--gold)' }} />
+              <Pin size={14} strokeWidth={1.5} absoluteStrokeWidth style={{ color: 'var(--gold)' }} />
               <h2
                 style={{
                   fontSize: '10px',
@@ -663,7 +663,7 @@ export default function Dashboard() {
                 className="dashboard-reset-layout"
                 title="Reset all dashboard layouts to defaults"
               >
-                <RotateCcw size={11} /> Reset layout
+                <RotateCcw size={11} strokeWidth={1.5} absoluteStrokeWidth /> Reset layout
               </button>
             </div>
             <DashboardGrid
@@ -707,7 +707,7 @@ export default function Dashboard() {
                   opacity: 0.85,
                 }}
               >
-                <ChevronDown size={14} />
+                <ChevronDown size={14} strokeWidth={1.5} absoluteStrokeWidth />
                 Show {unpinnedSecondaryCards.length} more card{unpinnedSecondaryCards.length > 1 ? 's' : ''}
               </button>
             )}
@@ -736,7 +736,7 @@ export default function Dashboard() {
                     opacity: 0.85,
                   }}
                 >
-                  <ChevronUp size={14} />
+                  <ChevronUp size={14} strokeWidth={1.5} absoluteStrokeWidth />
                   Show less
                 </button>
               </>

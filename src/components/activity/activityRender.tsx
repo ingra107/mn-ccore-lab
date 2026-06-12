@@ -120,7 +120,7 @@ export function AuthorOnlyBadge() {
         flexShrink: 0,
       }}
     >
-      <Lock size={8} aria-hidden="true" />
+      <Lock size={8} strokeWidth={1.5} absoluteStrokeWidth aria-hidden="true" />
       only you
     </span>
   )
@@ -281,7 +281,7 @@ function TaskOriginBadge({
         marginBottom: 4,
       }}
     >
-      <ClipboardList size={9} aria-hidden="true" style={{ flexShrink: 0 }} />
+      <ClipboardList size={9} strokeWidth={1.5} absoluteStrokeWidth aria-hidden="true" style={{ flexShrink: 0 }} />
       {label || 'task'}
     </a>
   )
@@ -307,7 +307,7 @@ function UpdateBadge({ updateType }: { updateType: UpdateType }) {
         flexShrink: 0,
       }}
     >
-      <Icon size={9} aria-hidden="true" />
+      <Icon size={9} strokeWidth={1.5} absoluteStrokeWidth aria-hidden="true" />
       {cfg.label}
     </span>
   )
@@ -421,7 +421,7 @@ export function ActivityEntryItem({
         className="inline-flex items-center"
         style={{ color: 'var(--green)', flexShrink: 0 }}
       >
-        <CheckCircle2 size={12} aria-hidden="true" />
+        <CheckCircle2 size={12} strokeWidth={1.5} absoluteStrokeWidth aria-hidden="true" />
       </span>
     )
   } else if (entry.kind === 'system') {
@@ -436,7 +436,7 @@ export function ActivityEntryItem({
           flexShrink: 0,
         }}
       >
-        <Settings2 size={9} aria-hidden="true" />
+        <Settings2 size={9} strokeWidth={1.5} absoluteStrokeWidth aria-hidden="true" />
         System
       </span>
     )

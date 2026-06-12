@@ -386,7 +386,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
                   title="Previous task (Alt+↑)"
                   style={{ background: 'none', border: 'none', cursor: onPrev ? 'pointer' : 'default', color: 'var(--slate)', padding: '2px', opacity: onPrev ? 'var(--ink-hint)' : 0.15 }}
                 >
-                  <ChevronUp size={14} />
+                  <ChevronUp size={14} strokeWidth={1.5} absoluteStrokeWidth />
                 </button>
                 <button
                   onClick={onNext}
@@ -394,7 +394,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
                   title="Next task (Alt+↓)"
                   style={{ background: 'none', border: 'none', cursor: onNext ? 'pointer' : 'default', color: 'var(--slate)', padding: '2px', opacity: onNext ? 'var(--ink-hint)' : 0.15 }}
                 >
-                  <ChevronDown size={14} />
+                  <ChevronDown size={14} strokeWidth={1.5} absoluteStrokeWidth />
                 </button>
               </div>
             )}
@@ -410,7 +410,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
               title="Copy task link"
               style={{ background: 'none', border: 'none', cursor: 'pointer', color: copied ? 'var(--green)' : 'var(--slate)', padding: 'var(--sp-xs)', opacity: copied ? 1 : 'var(--ink-hint)', transition: 'all 150ms' }}
             >
-              {copied ? <Check size={14} /> : <Copy size={14} />}
+              {copied ? <Check size={14} strokeWidth={1.5} absoluteStrokeWidth /> : <Copy size={14} strokeWidth={1.5} absoluteStrokeWidth />}
             </button>
             <button
               data-testid="close-detail-panel"
@@ -428,7 +428,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
                 justifyContent: 'center',
               }}
             >
-              <X size={18} />
+              <X size={18} strokeWidth={1.5} absoluteStrokeWidth />
             </button>
           </div>
         </div>
@@ -447,7 +447,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
                 className="flex items-center flex-shrink-0"
                 style={{ gap: 'var(--sp-xs)', fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', fontWeight: 'var(--label-weight)' }}
               >
-                <Type size={11} style={{ opacity: 0.85 }} />
+                <Type size={11} strokeWidth={1.5} absoluteStrokeWidth style={{ opacity: 0.85 }} />
                 Short title
               </label>
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -471,7 +471,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
                 <span className="flex items-center gap-2" style={{ whiteSpace: 'nowrap' }}>
                   <span aria-hidden="true">·</span>
                   <span className="flex items-center gap-1">
-                    <Clock size={9} aria-hidden="true" />
+                    <Clock size={9} strokeWidth={1.5} absoluteStrokeWidth aria-hidden="true" />
                     Acknowledged {formatRelativeTime(task.acknowledged_at)}
                     {task.acknowledged_by ? ` by ${task.acknowledged_by}` : ''}
                   </span>
@@ -489,7 +489,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
                 <span className="flex items-center gap-2" style={{ whiteSpace: 'nowrap' }}>
                   <span aria-hidden="true">·</span>
                   <span className="px-1.5 py-0.5 rounded-full" style={{ backgroundColor: 'var(--gold-active)', color: 'var(--gold)', opacity: 1 }}>
-                    <RefreshCw size={8} style={{ display: 'inline', marginRight: 2 }} aria-hidden="true" />
+                    <RefreshCw size={8} strokeWidth={1.5} absoluteStrokeWidth style={{ display: 'inline', marginRight: 2 }} aria-hidden="true" />
                     {(task as any).recurrence}
                   </span>
                 </span>
@@ -556,7 +556,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
                 '--hov-bg': 'color-mix(in srgb, var(--maroon) 7%, transparent)',
               } as React.CSSProperties}
             >
-              <Trash2 size={12} />
+              <Trash2 size={12} strokeWidth={1.5} absoluteStrokeWidth />
               Delete
             </button>
           </div>
@@ -619,7 +619,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
                 marginBottom: '-1px',
               }}
             >
-              <Icon size={13} />
+              <Icon size={13} strokeWidth={1.5} absoluteStrokeWidth />
               {label}
             </button>
           ))}
@@ -671,7 +671,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
                       aria-label="Open project"
                       style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', flexShrink: 0, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--teal)', fontSize: 'var(--text-small)', fontWeight: 500, padding: '2px 4px' }}
                     >
-                      Open <ExternalLink size={12} />
+                      Open <ExternalLink size={12} strokeWidth={1.5} absoluteStrokeWidth />
                     </button>
                   )}
                 </div>
@@ -763,7 +763,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
             {/* Instructions */}
             <div>
               <label className="flex items-center gap-1.5 mb-1.5" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)', fontWeight: 'var(--label-weight)', fontSize: 'var(--label-size)' }}>
-                <ClipboardList size={11} />
+                <ClipboardList size={11} strokeWidth={1.5} absoluteStrokeWidth />
                 Instructions
               </label>
               <EditableTextarea
@@ -780,7 +780,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
             {/* Handoffs */}
             <CollapsibleSection
               title="Handoffs"
-              icon={<ArrowRightLeft size={11} style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }} />}
+              icon={<ArrowRightLeft size={11} strokeWidth={1.5} absoluteStrokeWidth style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }} />}
               defaultOpen={false}
               storageKey={`task-handoffs-${task.id}`}
             >
@@ -791,7 +791,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
             {task.project_id && (
               <CollapsibleSection
                 title="Related Decisions"
-                icon={<Scale size={11} style={{ color: 'var(--gold)', opacity: 0.85 }} />}
+                icon={<Scale size={11} strokeWidth={1.5} absoluteStrokeWidth style={{ color: 'var(--gold)', opacity: 0.85 }} />}
                 defaultOpen={false}
                 storageKey={`task-decisions-${task.id}`}
               >
@@ -802,7 +802,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
             {/* Files */}
             <CollapsibleSection
               title="Files"
-              icon={<FileText size={11} style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }} />}
+              icon={<FileText size={11} strokeWidth={1.5} absoluteStrokeWidth style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }} />}
               defaultOpen={false}
               storageKey={`task-files-${task.id}`}
             >
@@ -1087,7 +1087,7 @@ function WatchersPicker({ value, onChange }: { value: string; onChange: (v: stri
               onClick={() => removeWatcher(slug)}
               style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--teal)', padding: 0, lineHeight: 1 }}
             >
-              <X size={9} />
+              <X size={9} strokeWidth={1.5} absoluteStrokeWidth />
             </button>
           </span>
         )
@@ -1273,7 +1273,7 @@ function ProjectDecisionsSection({ projectSlug }: { projectSlug: string }) {
             style={{ background: 'var(--gold-hover)', border: '1px solid rgba(201,168,76,0.1)' }}
           >
             <div className="flex items-center gap-2 mb-1">
-              <Scale size={11} style={{ color: 'var(--gold)', flexShrink: 0 }} />
+              <Scale size={11} strokeWidth={1.5} absoluteStrokeWidth style={{ color: 'var(--gold)', flexShrink: 0 }} />
               <span style={{ fontWeight: 600, fontSize: '12px', color: 'var(--ink)' }}>
                 {d.title}
               </span>
@@ -1418,7 +1418,7 @@ function TaskFilesSection({ taskId }: { taskId: string }) {
           className="flex items-center gap-1 text-[11px] px-2 py-1 rounded-lg"
           style={{ background: 'none', border: '1px solid var(--teal)', color: 'var(--teal)', cursor: 'pointer', opacity: 0.8 }}
         >
-          <Plus size={11} />
+          <Plus size={11} strokeWidth={1.5} absoluteStrokeWidth />
           Add Link
         </button>
       </div>
@@ -1464,7 +1464,7 @@ function TaskFilesSection({ taskId }: { taskId: string }) {
         <div className="flex flex-col gap-1">
           {files.map(f => (
             <div key={f.id} className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ backgroundColor: 'var(--ice)' }}>
-              <Link2 size={13} style={{ color: 'var(--teal)', flexShrink: 0 }} />
+              <Link2 size={13} strokeWidth={1.5} absoluteStrokeWidth style={{ color: 'var(--teal)', flexShrink: 0 }} />
               <a
                 href={f.url}
                 target="_blank"
@@ -1475,13 +1475,13 @@ function TaskFilesSection({ taskId }: { taskId: string }) {
                 {f.filename}
               </a>
               <a href={f.url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
-                <ExternalLink size={12} />
+                <ExternalLink size={12} strokeWidth={1.5} absoluteStrokeWidth />
               </a>
               <button
                 onClick={() => deleteFile.mutate(f.id)}
                 style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', opacity: 0.75, padding: '2px' }}
               >
-                <Trash2 size={12} />
+                <Trash2 size={12} strokeWidth={1.5} absoluteStrokeWidth />
               </button>
             </div>
           ))}
@@ -1700,7 +1700,7 @@ function OverviewQuickAdd({
                     whiteSpace: 'nowrap',
                   }}
                 >
-                  {m === 'comment' ? <MessageSquare size={9} /> : <ScrollText size={9} />}
+                  {m === 'comment' ? <MessageSquare size={9} strokeWidth={1.5} absoluteStrokeWidth /> : <ScrollText size={9} strokeWidth={1.5} absoluteStrokeWidth />}
                   {m}
                 </button>
               )
@@ -1785,8 +1785,8 @@ function OverviewQuickAdd({
               style={composerIconBtn}
             >
               {uploading
-                ? <Loader2 size={12} className="animate-spin" />
-                : <Paperclip size={12} />}
+                ? <Loader2 size={12} strokeWidth={1.5} absoluteStrokeWidth className="animate-spin" />
+                : <Paperclip size={12} strokeWidth={1.5} absoluteStrokeWidth />}
             </button>
             <button
               type="button"
@@ -1797,7 +1797,7 @@ function OverviewQuickAdd({
               className="flex-shrink-0 inline-flex items-center justify-center"
               style={composerIconBtn}
             >
-              <AtSign size={12} />
+              <AtSign size={12} strokeWidth={1.5} absoluteStrokeWidth />
             </button>
             <button
               type="button"
@@ -1808,7 +1808,7 @@ function OverviewQuickAdd({
               className="flex-shrink-0 inline-flex items-center justify-center"
               style={composerIconBtn}
             >
-              <Smile size={12} />
+              <Smile size={12} strokeWidth={1.5} absoluteStrokeWidth />
             </button>
 
             {/* @me lock — compact pill, visually consistent with COMMENT/NOTE pills */}
@@ -1840,7 +1840,7 @@ function OverviewQuickAdd({
                 flexShrink: 0,
               }}
             >
-              <Lock size={9} aria-hidden="true" />
+              <Lock size={9} strokeWidth={1.5} absoluteStrokeWidth aria-hidden="true" />
               Only me
             </button>
 
@@ -1937,7 +1937,7 @@ function OverviewQuickAdd({
                   gap: 4,
                 }}
               >
-                <Send size={11} aria-hidden="true" />
+                <Send size={11} strokeWidth={1.5} absoluteStrokeWidth aria-hidden="true" />
                 Post
               </button>
             )}
@@ -2013,7 +2013,7 @@ function CompactAssigneeRow({ value, onChange }: { value?: string | null; onChan
           </>
         ) : (
           <>
-            <User size={11} style={{ color: 'var(--slate)', opacity: 0.85 }} aria-hidden="true" />
+            <User size={11} strokeWidth={1.5} absoluteStrokeWidth style={{ color: 'var(--slate)', opacity: 0.85 }} aria-hidden="true" />
             <span style={{ color: 'var(--slate)', opacity: 0.85 }}>Unassigned</span>
           </>
         )}

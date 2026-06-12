@@ -118,7 +118,7 @@ function ProjectTag({ project }: { project: { name: string; slug: string } | nul
 }
 
 function PlannedChip({ label = 'planned', onUnplan }: { label?: string; onUnplan?: () => void }) {
-  const base = { fontSize: 10, color: ACCENT_GOLD, padding: '1px 6px', background: withAlpha(ACCENT_GOLD, 14), borderRadius: 4, letterSpacing: '0.04em', whiteSpace: 'nowrap' as const }
+  const base = { fontSize: 10, color: ACCENT_GOLD, padding: '1px 6px', background: withAlpha(ACCENT_GOLD, 9), border: `1px solid ${withAlpha(ACCENT_GOLD, 28)}`, borderRadius: 999, letterSpacing: '0.04em', whiteSpace: 'nowrap' as const }
   // When the surface wires planning (Today), the chip itself is the unplan
   // control — so there is exactly one 📌 on the row (status + toggle), never a
   // duplicate pushpin alongside a separate plan button.
@@ -413,7 +413,7 @@ export function TaskRow(props: SharedTaskRowProps) {
                 {titleNode}
                 {newChip}
                 {showGroupOverridePin && task.group_override && (
-                  <span title={`Moved manually (${task.group_override})`} style={{ fontSize: 9, color: ACCENT_TEAL, padding: '1px 4px', background: withAlpha(ACCENT_TEAL, 10), borderRadius: 3, marginLeft: 6 }}>📍</span>
+                  <span title={`Moved manually (${task.group_override})`} style={{ fontSize: 9, color: ACCENT_TEAL, padding: '1px 5px', background: withAlpha(ACCENT_TEAL, 9), border: `1px solid ${withAlpha(ACCENT_TEAL, 28)}`, borderRadius: 999, marginLeft: 6 }}>📍</span>
                 )}
                 {planBtn && <span style={{ marginLeft: 4, whiteSpace: 'nowrap' }}>{planBtn}</span>}
               </span>
@@ -447,7 +447,7 @@ export function TaskRow(props: SharedTaskRowProps) {
 
 function RightNowBadge() {
   return (
-    <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: ACCENT_GOLD, padding: '2px 6px', background: withAlpha(ACCENT_GOLD, 14), borderRadius: 3, marginRight: 6 }}>
+    <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: ACCENT_GOLD, padding: '2px 6px', background: withAlpha(ACCENT_GOLD, 9), border: `1px solid ${withAlpha(ACCENT_GOLD, 28)}`, borderRadius: 999, marginRight: 6 }}>
       Right now
     </span>
   )

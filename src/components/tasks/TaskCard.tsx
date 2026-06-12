@@ -101,7 +101,7 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
             {(() => {
               const opt = STATUS_OPTIONS.find((s) => s.value === task.status) || STATUS_OPTIONS[0]
               const Icon = opt.icon
-              return <Icon size={18} className="status-transition" style={{ color: opt.color }} />
+              return <Icon size={18} strokeWidth={1.5} absoluteStrokeWidth className="status-transition" style={{ color: opt.color }} />
             })()}
           </button>
         </div>
@@ -129,7 +129,7 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
                   backgroundColor: 'rgba(122, 0, 25, 0.1)',
                 }}
               >
-                <AlertTriangle size={9} />
+                <AlertTriangle size={9} strokeWidth={1.5} absoluteStrokeWidth />
                 Blocked
               </span>
             )}
@@ -149,7 +149,7 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
             {/* Due date */}
             {task.due_date && (
               <span className="flex items-center gap-1 text-[11px]">
-                <CalendarDays size={10} />
+                <CalendarDays size={10} strokeWidth={1.5} absoluteStrokeWidth />
                 <DueLabel due={task.due_date} status={task.status} style={{ fontSize: 11 }} />
               </span>
             )}
@@ -166,7 +166,7 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
                   borderRadius: 'var(--radius-sm)',
                 }}
               >
-                <FolderKanban size={10} />
+                <FolderKanban size={10} strokeWidth={1.5} absoluteStrokeWidth />
                 {projectMap.get(task.project_id) || task.project_id}
               </span>
             )}
@@ -221,7 +221,7 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
             touchAction: 'manipulation',
           }}
         >
-          {task.completed ? <RotateCcw size={15} /> : <CheckCircle2 size={15} />}
+          {task.completed ? <RotateCcw size={15} strokeWidth={1.5} absoluteStrokeWidth /> : <CheckCircle2 size={15} strokeWidth={1.5} absoluteStrokeWidth />}
         </button>
 
         {/* Priority cycle */}
@@ -242,7 +242,7 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
             touchAction: 'manipulation',
           }}
         >
-          <Flag size={15} style={{ color: PRIORITY_COLORS[task.priority] || 'var(--slate)' }} />
+          <Flag size={15} strokeWidth={1.5} absoluteStrokeWidth style={{ color: PRIORITY_COLORS[task.priority] || 'var(--slate)' }} />
         </button>
 
         {/* Peek (view details) */}
@@ -263,7 +263,7 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
             touchAction: 'manipulation',
           }}
         >
-          <Eye size={15} />
+          <Eye size={15} strokeWidth={1.5} absoluteStrokeWidth />
         </button>
       </div>
     </div>
