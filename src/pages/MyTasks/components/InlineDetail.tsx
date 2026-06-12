@@ -23,7 +23,8 @@ import { useTodayPlan } from '../../../lib/todayPlan'
 import { todayKey } from '../../../lib/taskGrouping'
 import { withAlpha } from '../../../lib/taskGrouping'
 import type { TaskRow } from '../../../lib/api'
-import { TaskQuickEditChips } from '../../../components/tasks/TaskQuickEditChips'
+import GhostSelect from '../../../components/ui/GhostSelect'
+import { ProjectInlineGhostSelect, DueInlineSelect } from '../../../components/tasks/detail/FieldControls'
 import TaskDetailPanel from '../../../components/tasks/TaskDetailPanel'
 
 // Muted color for feed items (not in the re-exported constants set).
@@ -187,7 +188,7 @@ export function InlineDetail({ task, projectName, onOpenEditor }: { task: TaskRo
 
       {/* SmartCompose — directly under action bar (A2) with @me lock toggle */}
       <div style={{ marginBottom: 10 }}>
-        <SmartCompose taskId={task.id} placeholder="Add a note or @hermes…" showMeLock bare />
+        <SmartCompose taskId={task.id} placeholder="Add a note or @hermes…" showMeLock bare alwaysShowToolbar />
       </div>
 
       {/* Activity peek — 3-entry newest-first; "view all →" opens full editor */}
@@ -199,13 +200,45 @@ export function InlineDetail({ task, projectName, onOpenEditor }: { task: TaskRo
         >view all →</button>
       </div>
 
-      {/* Quick-edit chips: Status / Priority / Due / Project + open-full-editor */}
-      <TaskQuickEditChips
-        task={task}
-        updateTask={updateTask}
-        undoToast={undoToast}
-        onOpenFullEditor={() => setFullEditorTask(task)}
-      />
+      {/* Inline field row: Status · Priority · Project · Due — canonical GhostSelect */}
+      <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', columnGap: 6, rowGap: 4, padding: '8px 0 4px' }} onClick={(e) => e.stopPropagation()}>
+        <GhostSelect
+          aria-label="Status"
+          value={task.status}
+          onChange={(v) => updateTask.mutate({ id: task.id, fields: { status: v } })}
+          options={[
+            { value: 'todo', label: 'To Do' },
+            { value: 'in_progress', label: 'In Progress' },
+            { value: 'waiting_external', label: 'Waiting (Ext.)' },
+            { value: 'blocked', label: 'Blocked' },
+            { value: 'done', label: 'Done' },
+          ]}
+        />
+        <GhostSelect
+          aria-label="Priority"
+          value={task.priority || 'medium'}
+          onChange={(v) => updateTask.mutate({ id: task.id, fields: { priority: v } })}
+          options={[
+            { value: 'low', label: 'Low' },
+            { value: 'medium', label: 'Medium' },
+            { value: 'high', label: 'High' },
+            { value: 'urgent', label: 'Urgent' },
+          ]}
+        />
+        <ProjectInlineGhostSelect
+          value={task.project_id || ''}
+          onChange={(v) => updateTask.mutate({ id: task.id, fields: { project_id: v || null } })}
+        />
+        <DueInlineSelect
+          value={task.due_date || ''}
+          onChange={(v) => updateTask.mutate({ id: task.id, fields: { due_date: v || null } })}
+        />
+        <button
+          onClick={(e) => { e.stopPropagation(); setFullEditorTask(task) }}
+          title="Open full task editor"
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 10px', fontSize: 11, fontFamily: 'inherit', fontWeight: 500, color: 'var(--teal)', background: 'transparent', border: 'none', borderRadius: 999, cursor: 'pointer', marginLeft: 'auto' }}
+        >Open full editor</button>
+      </div>
 
       {/* Full editor panel — TaskDetailPanel handles its own backdrop, Escape,
           focus-trap, and close-on-click-outside (Rule 18). */}

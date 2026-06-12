@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { useQuery } from '@tanstack/react-query'
+import GhostSelect from '../../ui/GhostSelect'
 import {
   Circle, Flag, Check, FolderKanban, Clock, Handshake,
 } from 'lucide-react'
@@ -457,6 +458,64 @@ export function WorkflowSection({ fields, onChange }: { fields: WorkflowFields; 
           <WorkflowDateInput value={fields.promise_date ?? ''} onSave={(v) => onChange({ promise_date: v })} />
         </div>
       </div>
+    </div>
+  )
+}
+
+// ── Inline Ghost Selects (shared by TaskDetailPanel, TaskDetailDrawer, InlineDetail) ──
+
+export function ProjectInlineGhostSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const { data: projectList = [] } = useQuery({
+    queryKey: ['projects'],
+    queryFn: async () => {
+      const res = await fetch('/api/projects')
+      if (!res.ok) return []
+      const data = await res.json()
+      return data.data as { slug: string; title: string }[]
+    },
+    staleTime: 5 * 60 * 1000,
+  })
+
+  const options = [
+    { value: '', label: 'No project' },
+    ...projectList.map((p) => ({ value: p.slug, label: p.title })),
+  ]
+
+  return (
+    <GhostSelect
+      aria-label="Project"
+      value={value}
+      onChange={onChange}
+      options={options}
+      triggerColor={value ? 'var(--teal)' : undefined}
+      maxWidth={160}
+      searchable
+    />
+  )
+}
+
+export function DueInlineSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  return (
+    <div
+      data-ghost-pill
+      title="Due date"
+      className="transition-colors hov-bg"
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 4,
+        fontSize: 'var(--label-size)',
+        color: value ? 'var(--ink)' : 'var(--slate)',
+        opacity: value ? 1 : 0.85,
+        padding: '3px 10px',
+        borderRadius: 'var(--radius-full)',
+        border: '1px solid transparent',
+        cursor: 'pointer',
+        transition: 'background 0.12s',
+        '--hov-bg': 'var(--hover-subtle)',
+      } as React.CSSProperties}
+    >
+      <DateInput value={value} onChange={onChange} />
     </div>
   )
 }

@@ -87,7 +87,7 @@ export function ColumnsView({ filtered, byGroup, selected, toggleSelect, onToggl
                   {incomplete}{tasks.length > incomplete && <span> · {tasks.length - incomplete}✓</span>}
                 </span>
               </div>
-              <div style={{ background: 'var(--task-panel-bg)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8, overflow: 'hidden' }}>
+              <div style={{ overflow: 'hidden' }}>
                 {tasks.length === 0 && <LaneEmpty compact />}
                 {tasks.map((t) => (
                   <MyTasksRow

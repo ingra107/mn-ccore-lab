@@ -71,7 +71,7 @@ export function LanesView({ byGroup, selected, toggleSelect, onToggleComplete, o
         const overdueInLane = tasks.filter((t) => !isTaskDone(t) && t.due_date && isOverdue(t.due_date, t.status)).length
         const plannedInLane = tasks.filter((t) => plannedSet.has(t.id) && !isTaskDone(t)).length
         return (
-          <section key={gkey} style={{ marginBottom: 18, background: 'rgba(255,255,255,0.015)', borderRadius: 8, border: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden' }}>
+          <section key={gkey} style={{ marginBottom: 18, overflow: 'hidden' }}>
             <button
               onClick={() => toggleC(gkey)}
               style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left', borderBottom: isCollapsed ? 'none' : `1px solid ${withAlpha(meta.color, 15)}` }}

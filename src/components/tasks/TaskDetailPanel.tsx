@@ -38,7 +38,7 @@ import type { TaskRow } from '../../lib/api'
 import { PATHS } from '../../constants/paths'
 
 // ── Detail sub-modules ──────────────────────────────────────
-import { FieldBlock, EditableTitle, EditableShortTitle, EditableTextarea, DateInput } from './detail/FieldControls'
+import { FieldBlock, EditableTitle, EditableShortTitle, EditableTextarea, ProjectInlineGhostSelect, DueInlineSelect } from './detail/FieldControls'
 import { TaskDependenciesSection } from './detail/TaskDependencies'
 import { SubtaskSection } from './detail/SubtaskSection'
 import { HandoffSection } from './detail/HandoffSection'
@@ -499,7 +499,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
 
           {/* Inline fields row: Status · Priority · Project · Due · Delete
               GhostSelect for Status/Priority/Project (Rule 45: fully opaque
-              themed menus, not native OS dropdowns). Due stays DateInput. */}
+              themed menus, not native OS dropdowns). */}
           {/* N1.22 — tight rowGap keeps the wrapped field rows reading as one
               group on phones instead of a ragged scatter. */}
           <div className="flex items-center flex-wrap" style={{ minWidth: 0, columnGap: 8, rowGap: 4 }}>
@@ -1133,73 +1133,6 @@ function WatchersPicker({ value, onChange }: { value: string; onChange: (v: stri
           })}
         </div>
       )}
-    </div>
-  )
-}
-
-// ── Project inline ghost select ──────────────────────────────
-// Uses GhostSelect with teal trigger text when a project is set
-// (semantic signal: user knows where this task lives).
-// The project list comes from the same ['projects'] cache key as ProjectSelect
-// in FieldControls — no extra network request.
-
-function ProjectInlineGhostSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  const { data: projectList = [] } = useQuery({
-    queryKey: ['projects'],
-    queryFn: async () => {
-      const res = await fetch('/api/projects')
-      if (!res.ok) return []
-      const data = await res.json()
-      return data.data as { slug: string; title: string }[]
-    },
-    staleTime: 5 * 60 * 1000,
-  })
-
-  const options = [
-    { value: '', label: 'No project' },
-    ...projectList.map((p) => ({ value: p.slug, label: p.title })),
-  ]
-
-  return (
-    <GhostSelect
-      aria-label="Project"
-      value={value}
-      onChange={onChange}
-      options={options}
-      triggerColor={value ? 'var(--teal)' : undefined}
-      maxWidth={160}
-      searchable
-    />
-  )
-}
-
-function DueInlineSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  // Thin wrapper: DateInput renders the InlineDatePicker popover on click.
-  // Ghost resting: no border/bg. Hover: subtle tint on the OUTER pill only.
-  // The inner InlineDatePicker button has its own hover border — suppress it
-  // here with data-ghost-pill so it doesn't double-outline within the pill.
-  // (The CSS rule lives in the panel <style> block below.)
-  return (
-    <div
-      data-ghost-pill
-      title="Due date"
-      className="transition-colors hov-bg"
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 4,
-        fontSize: 'var(--label-size)',
-        color: value ? 'var(--ink)' : 'var(--slate)',
-        opacity: value ? 1 : 0.85,
-        padding: '3px 10px',
-        borderRadius: 'var(--radius-full)',
-        border: '1px solid transparent',
-        cursor: 'pointer',
-        transition: 'background 0.12s',
-        '--hov-bg': 'var(--hover-subtle)',
-      } as React.CSSProperties}
-    >
-      <DateInput value={value} onChange={onChange} />
     </div>
   )
 }
