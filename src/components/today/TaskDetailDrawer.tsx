@@ -167,11 +167,15 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
       </div>
 
       {/* SmartCompose — directly under action bar; @me lock toggle */}
-      <SmartCompose taskId={task.id} placeholder="Add a note, or @hermes for AI…" showMeLock bare alwaysShowToolbar />
+      <SmartCompose taskId={task.id} placeholder="Add a note, or @hermes for AI…" showMeLock showHermesToggle bare alwaysShowToolbar />
 
-      {/* Activity feed — full feed, filter pills visible, newest-first */}
+      {/* Activity peek — 3 entries newest-first; "view all →" opens full editor */}
       <div style={{ marginTop: 14 }}>
-        <TaskActivityFeed taskId={task.id} />
+        <TaskActivityFeed taskId={task.id} peekCount={3} hidePills avatarSize="xs" />
+        <button
+          onClick={() => setFullEditorTask(task)}
+          style={{ fontSize: 10, color: ACCENT_TEAL, background: 'transparent', border: 'none', padding: '3px 0', cursor: 'pointer', fontFamily: 'inherit' }}
+        >view all →</button>
       </div>
 
       {/* Next step — first open subtask */}

@@ -25,6 +25,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { Paperclip, Smile, AtSign, Loader2, Send } from 'lucide-react'
 import MentionInput from './MentionInput'
+import HermesMark from './HermesMark'
 import { usePostTaskUpdate } from '../hooks/useMutations'
 import { useUndoToast } from './UndoToast'
 
@@ -74,6 +75,10 @@ interface BaseProps {
    *  "@me " is prepended to the content on submit (Rule 70: @me prefix
    *  → visibility='author'). Opt-in per-surface; off by default. */
   showMeLock?: boolean
+  /** Show the Hermes ☿ toggle. When active, "@hermes " is prepended on
+   *  submit, directing the note to the AI assistant. Mutually exclusive
+   *  with the @me lock (you can't be private AND send to Hermes). */
+  showHermesToggle?: boolean
 }
 
 interface TaskModeProps extends BaseProps {
@@ -114,9 +119,11 @@ export default function SmartCompose(props: SmartComposeProps) {
     hideKbdHint = false,
     hideSubmitButton = false,
     showMeLock = false,
+    showHermesToggle = false,
   } = props
 
   const [meLocked, setMeLocked] = useState(false)
+  const [hermesLocked, setHermesLocked] = useState(false)
 
   const isCustomMode = 'onSubmit' in props && typeof props.onSubmit === 'function'
   const taskMutation = usePostTaskUpdate(isCustomMode ? '' : (props as TaskModeProps).taskId)
@@ -179,8 +186,12 @@ export default function SmartCompose(props: SmartComposeProps) {
   const submit = useCallback(async () => {
     const raw = val.trim()
     if (!raw) return
-    // Prepend @me prefix when the private-note lock is engaged (Rule 70).
-    const content = showMeLock && meLocked && !raw.startsWith('@me ') ? `@me ${raw}` : raw
+    // Prepend prefix based on active lock (mutually exclusive: @hermes wins over @me).
+    const content = showHermesToggle && hermesLocked && !raw.startsWith('@hermes ')
+      ? `@hermes ${raw}`
+      : showMeLock && meLocked && !raw.startsWith('@me ')
+        ? `@me ${raw}`
+        : raw
     if (isCustomMode) {
       const onSubmit = (props as CustomModeProps).onSubmit
       try {
@@ -199,7 +210,7 @@ export default function SmartCompose(props: SmartComposeProps) {
         },
       })
     }
-  }, [val, showMeLock, meLocked, isCustomMode, props, isControlled, setVal, taskMutation, undoToast])
+  }, [val, showMeLock, meLocked, showHermesToggle, hermesLocked, isCustomMode, props, isControlled, setVal, taskMutation, undoToast])
 
   const onKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
@@ -339,7 +350,12 @@ export default function SmartCompose(props: SmartComposeProps) {
               role="switch"
               aria-checked={meLocked ? "true" : "false"}
               onMouseDown={(e) => e.preventDefault()}
-              onClick={() => setMeLocked((l) => !l)}
+              onClick={() => {
+                setMeLocked((l) => {
+                  if (!l) setHermesLocked(false)
+                  return !l
+                })
+              }}
               title={meLocked ? 'Private note — click to post publicly' : 'Post publicly — click to make private'}
               aria-label={meLocked ? 'Private note lock on — only you see this' : 'Private note lock off — visible to team'}
               style={{
@@ -365,6 +381,46 @@ export default function SmartCompose(props: SmartComposeProps) {
             >
               <span aria-hidden="true" style={{ fontSize: 9 }}>{meLocked ? '🔒' : '🔓'}</span>
               Only me
+            </button>
+          )}
+          {/* Hermes toggle — directs note to the AI assistant on submit */}
+          {showHermesToggle && (
+            <button
+              type="button"
+              role="switch"
+              aria-checked={hermesLocked ? "true" : "false"}
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => {
+                setHermesLocked((h) => {
+                  if (!h) setMeLocked(false)
+                  return !h
+                })
+              }}
+              title={hermesLocked ? 'Sending to Hermes — click to send publicly' : 'Click to direct this note to Hermes AI'}
+              aria-label={hermesLocked ? 'Hermes mode on — note will go to AI assistant' : 'Hermes mode off — click to send to AI assistant'}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 3,
+                height: 22,
+                padding: '0 6px', borderRadius: 'var(--radius-sm)',
+                border: hermesLocked
+                  ? `1px solid ${isDark ? 'rgba(220,179,85,0.55)' : 'rgba(107,84,32,0.35)'}`
+                  : `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'var(--border-subtle)'}`,
+                background: hermesLocked
+                  ? (isDark ? 'rgba(220,179,85,0.12)' : 'rgba(107,84,32,0.10)')
+                  : 'transparent',
+                color: hermesLocked
+                  ? (isDark ? '#dcb355' : 'var(--gold)')
+                  : (isDark ? INK_DIM_DARK : 'var(--slate)'),
+                fontSize: 10,
+                fontWeight: hermesLocked ? 600 : 400,
+                opacity: hermesLocked ? 1 : 0.70,
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              <HermesMark size={11} color={hermesLocked ? (isDark ? '#dcb355' : 'var(--gold)') : 'currentColor'} />
+              Hermes
             </button>
           )}
           {/* Emoji picker — opens above the toolbar */}
