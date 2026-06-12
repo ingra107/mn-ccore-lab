@@ -330,6 +330,30 @@ function UpdateBadge({ updateType }: { updateType: UpdateType }) {
 //
 // Per-surface variation is confined to props (see ActivityEntryItemProps).
 
+// Module-level so React sees a stable component type across renders.
+// An inline definition inside ActivityEntryItem caused remounts on every
+// parent re-render, replaying the Framer Motion initial:opacity-0 animation.
+function ActivityEntryWrapper({
+  motionProps,
+  style,
+  className,
+  children,
+}: {
+  motionProps?: object
+  style?: React.CSSProperties
+  className?: string
+  children: ReactNode
+}) {
+  if (motionProps) {
+    return (
+      <motion.div {...(motionProps as object)} style={style} className={className}>
+        {children}
+      </motion.div>
+    )
+  }
+  return <div style={style} className={className}>{children}</div>
+}
+
 export function ActivityEntryItem({
   entry,
   avatarSize = AVATAR_SIZE,
@@ -352,29 +376,6 @@ export function ActivityEntryItem({
     : null
   const taskLabel = entry.task_title ?? null
 
-  // ── Wrapper: animated in project stream, plain div in task feed ──────────
-  const Wrapper = ({
-    children,
-    style,
-    className,
-  }: {
-    children: ReactNode
-    style?: React.CSSProperties
-    className?: string
-  }) => {
-    if (motionProps) {
-      return (
-        <motion.div {...(motionProps as object)} style={style} className={className}>
-          {children}
-        </motion.div>
-      )
-    }
-    return (
-      <div style={style} className={className}>
-        {children}
-      </div>
-    )
-  }
 
   // ── Determine bar colour ──────────────────────────────────────────────────
   let barColor = KIND_BAR[entry.kind]
@@ -469,7 +470,7 @@ export function ActivityEntryItem({
   // ── Hermes: same skeleton, gold-ring card ────────────────────────────────
   if (isHermes) {
     return (
-      <Wrapper style={cardStyle} className="detail-card">
+      <ActivityEntryWrapper motionProps={motionProps} style={cardStyle} className="detail-card">
         {/* Task-origin chip above the thread (project-feed only) */}
         {showTaskOriginBadge && isTask && taskHref && (
           <TaskOriginBadge
@@ -515,7 +516,7 @@ export function ActivityEntryItem({
         {showReactions && !isTask && (
           <ReactionBar targetType="comment" targetId={entry.id} />
         )}
-      </Wrapper>
+      </ActivityEntryWrapper>
     )
   }
 
@@ -523,7 +524,7 @@ export function ActivityEntryItem({
   //
   // One unified skeleton.  The kind signals via barColor + nameBadge only.
   return (
-    <Wrapper style={cardStyle} className="detail-card">
+    <ActivityEntryWrapper motionProps={motionProps} style={cardStyle} className="detail-card">
       {/* Task-origin chip above the thread (project-feed only) */}
       {showTaskOriginBadge && isTask && taskHref && (
         <TaskOriginBadge
@@ -598,6 +599,6 @@ export function ActivityEntryItem({
           )}
         </div>
       </div>
-    </Wrapper>
+    </ActivityEntryWrapper>
   )
 }

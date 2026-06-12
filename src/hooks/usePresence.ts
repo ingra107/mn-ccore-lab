@@ -165,7 +165,10 @@ export function useTyping(entityType: string, entityId: string | undefined | nul
     })
 
     const ttlCleanup = window.setInterval(() => {
-      setTypingPeers((prev) => prev.filter((p) => Date.now() - p.lastSeen < TYPING_TTL_MS))
+      setTypingPeers((prev) => {
+        const next = prev.filter((p) => Date.now() - p.lastSeen < TYPING_TTL_MS)
+        return next.length === prev.length ? prev : next
+      })
     }, 1_000)
 
     return () => {
