@@ -3,6 +3,11 @@
  *
  * Covers:
  *   - create: validation (title/body_md required), id mint, version=1, actor
+ *   - create + key_link: task_id set + empty slots → slot 1 gets abs URL + desc
+ *   - create + key_link: task_id set + slots 1&2 full → writes slot 3
+ *   - create + key_link: task_id set + all 3 full → no link write, artifact created
+ *   - create + key_link: URL already present in a slot → idempotent, no dup write
+ *   - create + key_link: no task_id → no task UPDATE issued at all
  *   - get: 404 when missing; returns artifact + versions
  *   - revise: archives current body, bumps version, idempotent archive (INSERT OR IGNORE)
  *   - revise: 404 when missing; body_md required
@@ -38,6 +43,7 @@ vi.mock('../helpers', async (importOriginal) => {
 
 import { postActivityEntry } from '../lib/activity-entry';
 import { isPiRequest } from '../helpers';
+import * as helpers from '../helpers';
 import {
   handleGetArtifacts,
   handleGetArtifact,
@@ -56,6 +62,9 @@ function makeDb(opts: {
   artifact?: Record<string, unknown> | null;
   versions?: Record<string, unknown>[];
   list?: Record<string, unknown>[];
+  // task row returned for SELECT key_link_1/2/3 FROM tasks WHERE id = ?
+  // undefined = task not found (null); pass a partial row to simulate slot state.
+  task?: { key_link_1?: string | null; key_link_2?: string | null; key_link_3?: string | null } | null;
   captureWrite?: (sql: string, binds: unknown[]) => void;
 }) {
   return {
@@ -66,6 +75,15 @@ function makeDb(opts: {
         run: async () => { opts.captureWrite?.(sql, [...bound]); return { success: true, meta: {}, results: [] }; },
         first: async () => {
           if (/FROM artifacts WHERE id/.test(sql)) return opts.artifact ?? null;
+          // Task key_link SELECT (resolveKeyLinkSlot path).
+          if (/FROM tasks WHERE id/.test(sql)) {
+            if (opts.task === undefined) return null; // task not found
+            return opts.task === null ? null : {
+              key_link_1: opts.task.key_link_1 ?? null,
+              key_link_2: opts.task.key_link_2 ?? null,
+              key_link_3: opts.task.key_link_3 ?? null,
+            };
+          }
           return null;
         },
         all: async () => {
@@ -138,6 +156,173 @@ describe('artifacts routes', () => {
     expect(insert!.binds).toContain('task_1');
     expect(insert!.binds).toContain('proj_1');
     expect(insert!.binds).toContain('claude-ai');
+  });
+
+  // ── create + key_link auto-backfill ──────────────────────────────────────────
+
+  it('create + key_link: task_id set + all slots empty → slot 1 gets absolute URL + Hermes desc', async () => {
+    const writes: Array<{ sql: string; binds: unknown[] }> = [];
+    const created = { id: 'art_abc', title: 'Lit review', body_md: '# Hi', version: 1, created_by: 'claude-ai' };
+    const env = {
+      DB: makeDb({
+        artifact: created,
+        task: { key_link_1: null, key_link_2: null, key_link_3: null },
+        captureWrite: (sql, binds) => writes.push({ sql, binds }),
+      }),
+    } as unknown as Env;
+
+    const res = await handleCreateArtifact(
+      new Request('https://mn-ccore-lab.pages.dev/api/artifacts', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: 'Lit review', body_md: '# Hi', created_by: 'claude-ai', task_id: 'task_aaa' }),
+      }),
+      { email: 'claude-ai', name: 'Hermes' },
+      env,
+    );
+
+    expect(res.status).toBe(201);
+    // key_link_1 UPDATE fired (via batch — captureWrite intercepts run() inside batch).
+    const linkUpdate = writes.find((w) => /UPDATE tasks SET key_link_1/.test(w.sql));
+    expect(linkUpdate).toBeDefined();
+    // URL must be absolute and contain the art_ id.
+    const url = linkUpdate!.binds[0] as string;
+    expect(url).toMatch(/^https:\/\//);
+    expect(url).toContain('/portal/artifacts/art_');
+    // Description starts with 'Hermes: ' and contains the title.
+    const desc = linkUpdate!.binds[1] as string;
+    expect(desc).toMatch(/^Hermes: /);
+    expect(desc).toContain('Lit review');
+    // WHERE clause targets the right task id.
+    expect(linkUpdate!.binds[2]).toBe('task_aaa');
+  });
+
+  it('create + key_link: slots 1 & 2 full → writes slot 3', async () => {
+    const writes: Array<{ sql: string; binds: unknown[] }> = [];
+    const created = { id: 'art_def', title: 'Methods', body_md: '# Methods', version: 1, created_by: 'claude-ai' };
+    const env = {
+      DB: makeDb({
+        artifact: created,
+        task: {
+          key_link_1: 'https://docs.google.com/doc1',
+          key_link_2: 'https://docs.google.com/doc2',
+          key_link_3: null,
+        },
+        captureWrite: (sql, binds) => writes.push({ sql, binds }),
+      }),
+    } as unknown as Env;
+
+    await handleCreateArtifact(
+      new Request('https://mn-ccore-lab.pages.dev/api/artifacts', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: 'Methods', body_md: '# Methods', created_by: 'claude-ai', task_id: 'task_bbb' }),
+      }),
+      { email: 'claude-ai', name: 'Hermes' },
+      env,
+    );
+
+    const linkUpdate = writes.find((w) => /UPDATE tasks SET key_link_3/.test(w.sql));
+    expect(linkUpdate).toBeDefined();
+    // Confirm slot 1 and 2 UPDATEs were NOT issued.
+    expect(writes.some((w) => /UPDATE tasks SET key_link_1/.test(w.sql))).toBe(false);
+    expect(writes.some((w) => /UPDATE tasks SET key_link_2/.test(w.sql))).toBe(false);
+  });
+
+  it('create + key_link: all 3 slots full → no key_link write, artifact still created (201)', async () => {
+    const writes: Array<{ sql: string; binds: unknown[] }> = [];
+    const created = { id: 'art_ghi', title: 'Results', body_md: '# Results', version: 1, created_by: 'claude-ai' };
+    const env = {
+      DB: makeDb({
+        artifact: created,
+        task: {
+          key_link_1: 'https://example.com/1',
+          key_link_2: 'https://example.com/2',
+          key_link_3: 'https://example.com/3',
+        },
+        captureWrite: (sql, binds) => writes.push({ sql, binds }),
+      }),
+    } as unknown as Env;
+
+    const res = await handleCreateArtifact(
+      new Request('https://mn-ccore-lab.pages.dev/api/artifacts', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: 'Results', body_md: '# Results', created_by: 'claude-ai', task_id: 'task_ccc' }),
+      }),
+      { email: 'claude-ai', name: 'Hermes' },
+      env,
+    );
+
+    expect(res.status).toBe(201);
+    // No task UPDATE of any slot.
+    expect(writes.some((w) => /UPDATE tasks SET key_link/.test(w.sql))).toBe(false);
+    // Artifact INSERT still fired.
+    expect(writes.some((w) => /INSERT INTO artifacts/.test(w.sql))).toBe(true);
+    // linkSkipped reported.
+    const payload = await res.json() as { linkSkipped?: string };
+    expect(payload.linkSkipped).toBe('slots_full');
+  });
+
+  it('create + key_link: URL already in a slot → idempotent, no duplicate UPDATE', async () => {
+    const writes: Array<{ sql: string; binds: unknown[] }> = [];
+    // Pin the ID so we can pre-populate the matching URL in the task row.
+    const fixedHex = 'deadbeef000000000000000000000001';
+    const spy = vi.spyOn(helpers, 'generateId').mockReturnValue(fixedHex);
+    const expectedUrl = `https://mn-ccore-lab.pages.dev/portal/artifacts/art_${fixedHex}`;
+    const created = { id: `art_${fixedHex}`, title: 'Discussion', body_md: '# Disc', version: 1, created_by: 'claude-ai' };
+
+    const env = {
+      DB: makeDb({
+        artifact: created,
+        // Slot 1 already holds the exact URL that will be generated.
+        task: { key_link_1: expectedUrl, key_link_2: null, key_link_3: null },
+        captureWrite: (sql, binds) => writes.push({ sql, binds }),
+      }),
+    } as unknown as Env;
+
+    const res = await handleCreateArtifact(
+      new Request('https://mn-ccore-lab.pages.dev/api/artifacts', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: 'Discussion', body_md: '# Disc', created_by: 'claude-ai', task_id: 'task_ddd' }),
+      }),
+      { email: 'claude-ai', name: 'Hermes' },
+      env,
+    );
+
+    spy.mockRestore();
+
+    expect(res.status).toBe(201);
+    expect(writes.some((w) => /UPDATE tasks SET key_link/.test(w.sql))).toBe(false);
+    const payload = await res.json() as { linkSkipped?: string };
+    expect(payload.linkSkipped).toBe('already_linked');
+  });
+
+  it('create + key_link: no task_id → no task SELECT or UPDATE issued', async () => {
+    const writes: Array<{ sql: string; binds: unknown[] }> = [];
+    const selects: string[] = [];
+    const created = { id: 'art_notask', title: 'Standalone', body_md: '# Stand', version: 1, created_by: 'claude-ai' };
+    // Intercept DB.prepare to capture SELECTs too.
+    const baseDb = makeDb({ artifact: created, task: undefined, captureWrite: (sql, binds) => writes.push({ sql, binds }) });
+    const origPrepare = baseDb.prepare.bind(baseDb);
+    const db = {
+      ...baseDb,
+      prepare: (sql: string) => {
+        if (/FROM tasks/.test(sql)) selects.push(sql);
+        return origPrepare(sql);
+      },
+    };
+    const env = { DB: db } as unknown as Env;
+
+    const res = await handleCreateArtifact(
+      new Request('https://mn-ccore-lab.pages.dev/api/artifacts', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: 'Standalone', body_md: '# Stand', created_by: 'claude-ai' }),
+      }),
+      { email: 'claude-ai', name: 'Hermes' },
+      env,
+    );
+
+    expect(res.status).toBe(201);
+    expect(selects).toHaveLength(0);
+    expect(writes.some((w) => /UPDATE tasks/.test(w.sql))).toBe(false);
   });
 
   // ── get ─────────────────────────────────────────────────────────────────────

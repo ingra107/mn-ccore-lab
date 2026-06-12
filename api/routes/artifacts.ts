@@ -74,12 +74,50 @@ export async function handleGetArtifact(id: string, env: Env): Promise<Response>
   return json({ data: { ...artifact, versions: versionsRes.results || [] } });
 }
 
+// ── key_link slot helpers ────────────────────────────────────────────────────
+// Maximum 120 chars for description so it fits comfortably in Obsidian/TODAY.md.
+const KEY_LINK_DESC_MAX = 120;
+
+interface TaskKeyLinkRow {
+  key_link_1: string | null;
+  key_link_2: string | null;
+  key_link_3: string | null;
+}
+
+// Returns { slot: 1|2|3, alreadyPresent: false } for the first empty slot, or
+// { slot: null, alreadyPresent: false } when all three are occupied, or
+// { slot: null, alreadyPresent: true } when the URL is already linked.
+function resolveKeyLinkSlot(
+  task: TaskKeyLinkRow,
+  url: string,
+): { slot: 1 | 2 | 3 | null; alreadyPresent: boolean } {
+  const slots: [1 | 2 | 3, string | null][] = [
+    [1, task.key_link_1],
+    [2, task.key_link_2],
+    [3, task.key_link_3],
+  ];
+  for (const [n, val] of slots) {
+    if (val === url) return { slot: null, alreadyPresent: true };
+  }
+  for (const [n, val] of slots) {
+    if (!val) return { slot: n, alreadyPresent: false };
+  }
+  return { slot: null, alreadyPresent: false };
+}
+
 // ── POST /api/artifacts ─────────────────────────────────────────────────────────
 // Create an artifact. Callable by Hermes (API key → created_by='claude-ai' when
 // the body says so) and by authed team members. Body:
 //   { title, body_md, task_id?, project_id?, created_by? }
 // project_id is stored as-given (typed proj_* per Slice-C convention — the caller
 // passes the canonical id; we do not slug-resolve here).
+//
+// Level-1 invariant: when task_id is supplied, the artifact CANNOT be created
+// without attempting to link it — the INSERT(artifact) and UPDATE(task key_link)
+// are executed in a single DB.batch([...]) call. If the task row is missing or all
+// 3 slots are full, the artifact is still created but no link is written (both
+// cases are logged via the returned linkSkipped flag in the response — not a
+// failure, just transparent).
 export async function handleCreateArtifact(
   request: Request,
   user: AuthUser,
@@ -104,20 +142,67 @@ export async function handleCreateArtifact(
   if ('error' in actor) return error(actor.error, 400);
 
   const id = mintArtifactId();
-  await env.DB.prepare(
+  const taskId = body.task_id || null;
+
+  // Build the artifact INSERT statement (always executed).
+  const insertArtifact = env.DB.prepare(
     `INSERT INTO artifacts (id, title, body_md, version, task_id, project_id, created_by, created_at, updated_at)
      VALUES (?, ?, ?, 1, ?, ?, ?, datetime('now'), datetime('now'))`
   ).bind(
     id,
     body.title.trim(),
     body.body_md,
-    body.task_id || null,
+    taskId,
     body.project_id || null,
     actor.slug,
-  ).run();
+  );
+
+  // When task_id is provided, attempt to backfill the first empty key_link slot
+  // atomically. We must SELECT the task first to know which slot to target — then
+  // include both the INSERT and the UPDATE in one batch so they land together.
+  let linkSkipped: string | null = null;
+
+  if (taskId) {
+    const task = await env.DB
+      .prepare('SELECT key_link_1, key_link_2, key_link_3 FROM tasks WHERE id = ? LIMIT 1')
+      .bind(taskId)
+      .first<TaskKeyLinkRow>();
+
+    if (!task) {
+      // Task not found — create artifact anyway, note the skip.
+      linkSkipped = 'task_not_found';
+      await insertArtifact.run();
+    } else {
+      // Derive the absolute portal URL for the new artifact (origin from the
+      // inbound request, not hardcoded — works on staging + prod).
+      const origin = new URL(request.url).origin;
+      const artifactUrl = `${origin}/portal/artifacts/${id}`;
+      const { slot, alreadyPresent } = resolveKeyLinkSlot(task, artifactUrl);
+
+      if (alreadyPresent) {
+        // Idempotent — URL already in a slot; just create the artifact.
+        linkSkipped = 'already_linked';
+        await insertArtifact.run();
+      } else if (slot === null) {
+        // All 3 slots occupied — still create the artifact, skip the link.
+        linkSkipped = 'slots_full';
+        await insertArtifact.run();
+      } else {
+        // Atomically insert artifact + write the link in one batch round-trip.
+        const desc = `Hermes: ${body.title.trim()}`.slice(0, KEY_LINK_DESC_MAX);
+        const updateTask = env.DB.prepare(
+          `UPDATE tasks SET key_link_${slot} = ?, key_link_${slot}_desc = ? WHERE id = ?`
+        ).bind(artifactUrl, desc, taskId);
+        await env.DB.batch([insertArtifact, updateTask]);
+      }
+    }
+  } else {
+    // No task_id — plain artifact create, no link attempt.
+    await insertArtifact.run();
+  }
 
   const created = await env.DB.prepare('SELECT * FROM artifacts WHERE id = ?').bind(id).first<ArtifactRow>();
-  return json({ data: created }, 201);
+  return json({ data: created, ...(linkSkipped ? { linkSkipped } : {}) }, 201);
 }
 
 // ── POST /api/artifacts/:id/revise ──────────────────────────────────────────────
