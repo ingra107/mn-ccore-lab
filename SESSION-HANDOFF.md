@@ -1,3 +1,43 @@
+# ▶▶▶ NEXT SESSION — D1: DESIGN-PARITY SWEEP (Nick 2026-06-12, verbatim: "why wouldn't
+# something like the expanded task in Today page get some of the updates that we did to the
+# full task editor… we need to have codex do multiple passes to help find targets for
+# updates and then fix")
+
+**The gap and its cause:** the locked panel style was converged ON TaskDetailPanel (the
+canvas); Rule 72 retrofitted only composer-on-top to the other expand surfaces. The later
+refinements (inline field-row dropdowns, single Activity tab + filter pills, title/metadata
+rhythm, recent-activity peek, NEXT STEP line, GhostSelect everywhere, de-boxed empty states)
+are PANEL-ONLY. Class-level cause: Rule 68 unified the ROW but there are still THREE separate
+task-expand implementations — `TaskDetailDrawer` (Today), `InlineDetail` (My Tasks
+Columns/Lanes), `TaskDetailPanel` (full editor) — so improvements can't propagate. Same
+disease the row had pre-Round-6; the deep fix is shared detail-section primitives, not three
+hand-synced copies.
+
+**Named exemplar (Nick 2026-06-12): the expanded task in LANES view is "very much not
+matching" the new canon — boxy.** That's `InlineDetail` (`src/pages/MyTasks/components/
+InlineDetail.tsx`, rendered by LanesView/ColumnsView inline expand): boxed sections vs the
+panel's one-continuous-surface + box-budget-of-one. Treat InlineDetail (and TaskDetailDrawer
+on Today) as the LEAD targets of the fix wave.
+
+**Execution shape (Nick-specified: CODEX MULTIPLE PASSES, then fix):**
+- **Pass 1 (codex, audit):** inventory every task-expand/detail surface + build a
+  feature/style matrix vs the locked canon, TaskDetailPanel = reference. Surfaces:
+  TaskDetailDrawer, InlineDetail, TaskDetailPanel, My Hub expand (PersonalPage), plus
+  ProjectDetail's task cards' expand path. Matrix rows: field-row dropdowns, composer
+  anatomy (mode pills/@me lock/Hermes toggle/attach), activity feed (ActivityEntryItem
+  params, peek), title/metadata rhythm, GhostSelect usage, empty states, de-box compliance,
+  Done/Complete affordances, mobile behavior.
+- **Pass 2 (codex, second sweep):** beyond task surfaces — which OTHER detail/expand surfaces
+  (project compose area, meeting detail, artifact page comments) diverge from the same canon.
+  Output = prioritized target list with file:line.
+- **Pass 3 (fix wave):** prefer EXTRACTING shared section components (FieldRow,
+  DetailComposer wrapper, MetadataLine) that drawer/inline/panel all render — Rule-68 logic:
+  add props to shared primitives, never re-fork. Nick reviews the target list before the fix
+  wave if any call is a design judgment.
+- **Coordinate with** queued Hub task `task_01KTWD8DDT…` (style-learnings consistency hunt) +
+  the pill-language sweep task — same evidence base, don't duplicate.
+- Codex invocation: `/codex-cli` skill (read it first — encodes auth + safe flags).
+
 # ▶ DOCKET STATE after the 2026-06-11 late-evening execution session
 
 > Executed this session (live = HEAD, 848/848 tests, all pushed):
