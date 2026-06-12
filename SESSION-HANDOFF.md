@@ -11,11 +11,25 @@
 > **N8 check ✅ — Ask the Lab is DEAD** (1 question ever, 2026-04-10; 0 answers): recommend
 > substrate-swap-gated RETIREMENT over H4 convergence — **Nick decides**.
 >
-> **REMAINING in order: N3** (artifacts riders) · **N5** (JS-hover→CSS 218 sites) ·
-> **N6** (dogfood Playwright triage) · **N7** (activity_log disposition) · **N7b** (Hermes
-> token tracking). Nick's pending: phone-test the mobile wave (My Tasks toolbar/Filters
-> pill, task panel full-screen + Done bar, Today timeline, @hermes typeahead), N2 approvals,
-> Ask-the-Lab verdict, gardener maiden --apply artifact review (ran 22:40 tonight, home).
+> **DOCKET 100% EXECUTED (second pass, same evening, Nick: "get all done"):**
+> **N2 APPLIED** (rows 6/8/9/15 condensed via length-guarded UPDATEs + updated_at bump;
+> verified) · **mobile Done-bar fixed** (Nick's click-test bug: "Done" only closed — now
+> ✓ Complete actually completes w/ undo, beside an honest Close) · **N3 ✅** (PB
+> `scripts/collect_artifacts.py` cursor-based vault collection; ArtifactPage Download .md;
+> `/og/artifact/<id>` card + ogImage meta) · **N6 ✅ dogfood 17/17 GREEN** (root cause: the
+> suite predated the CF gate and was testing the Access interstitial — now runs vs ungated
+> preview via DOGFOOD_BASE_URL + fake auth; stale R11 seed-data probes removed w/ tombstone) ·
+> **N7 ✅ SETTLED: KEEP** activity_log (71 live logActivity writers + ~12 analytics readers —
+> "compat read only" was wrong; Rule 70 corrected) · **N7b ✅** (schema v82
+> ai_requests.input/output_tokens test+prod; listener on --output-format json posting usage,
+> PB `4981d9d2`; /api/ai-requests totals rollup; HOME asked via chat to restart the daemon) ·
+> **N5 ✅** (hov-* CSS utility primitive + 51 pure style-mutation hover pairs converted across
+> 28 files; remaining 67 onMouseEnter are stateful-by-design and stay JS).
+>
+> **Nick's pending:** phone re-test (esp. ✓ Complete on the task panel bottom bar), Ask-the-Lab
+> retire verdict (1 question ever, 0 answers — recommend retirement, substrate-swap-gated),
+> gardener maiden --apply artifact review (ran 22:40, home), N1b remaining de-box waves ride
+> the queued pill-language sweep task.
 
 # ▶▶▶ NEXT-SESSION DOCKET (Nick-ordered 2026-06-11 close) — EXECUTE IN ORDER
 
