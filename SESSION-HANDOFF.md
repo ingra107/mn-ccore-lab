@@ -38,6 +38,12 @@ file:line lists per class, then fixes the mechanical ones (visual-value-preservi
 | 9 | bg gradient fading to a TEXT token (`var(--ink)` white smear) | `grep -rn "gradient.*var(--ink)" src` + any fade using non-bg tokens | unchecked |
 | 10 | Action-label honesty (Done bar → Complete/Close) | buttons whose label promises an entity action but only navigates/closes | judgment pass, ride Pass 1 matrix |
 
+**⚠ DIVISION OF LABOR (Nick 2026-06-12, cost rule — applies to D1-pre AND all passes
+below): CODEX finds the targets AND writes the recommended code EXPLICITLY (file:line +
+ready-to-apply diff/snippet per finding — not descriptions); then a CHEAP executor (haiku
+agent or similar) applies the diffs mechanically; orchestrator only verifies (build +
+test:api + spot captures) and commits. No Opus/Fable implementation work on this sweep.**
+
 **Execution shape (Nick-specified: CODEX MULTIPLE PASSES, then fix):**
 - **Pass 1 (codex, audit):** inventory every task-expand/detail surface + build a
   feature/style matrix vs the locked canon, TaskDetailPanel = reference. Surfaces:
