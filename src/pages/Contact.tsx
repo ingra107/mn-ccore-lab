@@ -157,21 +157,15 @@ export default function Contact() {
                     href={link.href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="cursor-pointer flex items-center justify-between p-3 rounded-lg group"
+                    className="cursor-pointer flex items-center justify-between p-3 rounded-lg group hov-border hov-bg"
                     style={{
                       background: 'var(--ice)',
                       border: '1px solid transparent',
                       minHeight: '44px',
                       transition: 'background-color var(--duration-normal) var(--ease-out), border-color var(--duration-normal) var(--ease-out)',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.borderColor = 'var(--gold)'
-                      e.currentTarget.style.background = 'var(--gold-light)'
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.borderColor = 'transparent'
-                      e.currentTarget.style.background = 'var(--ice)'
-                    }}
+                      '--hov-border': 'var(--gold)',
+                      '--hov-bg': 'var(--gold-light)',
+                    } as React.CSSProperties}
                   >
                     <span
                       className="text-sm font-medium"

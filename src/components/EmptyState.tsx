@@ -74,6 +74,7 @@ export default function EmptyState({ icon, title, subtitle, action, compact = fa
         <button
           onClick={action.onClick}
           aria-label={action.label}
+          className="hov-bg"
           style={{
             display: 'inline-flex',
             alignItems: 'center',
@@ -88,13 +89,8 @@ export default function EmptyState({ icon, title, subtitle, action, compact = fa
             color: 'var(--ink)',
             cursor: 'pointer',
             transition: 'background 0.15s ease',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'var(--teal-hover)'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'none'
-          }}
+            '--hov-bg': 'var(--teal-hover)',
+          } as React.CSSProperties}
         >
           {action.label}
         </button>

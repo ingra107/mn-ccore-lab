@@ -52,18 +52,13 @@ export default function InsightPanel({ projectSlug }: InsightPanelProps) {
             <Link
               key={s.slug}
               to={PATHS.project(s.slug)}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hov-border"
               style={{
                 background: 'var(--ice)',
-                border: '1px solid rgba(45,138,138,0.08)',
+                border: '1px solid var(--teal-active)',
                 textDecoration: 'none',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = 'rgba(45,138,138,0.2)'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = 'var(--teal-active)'
-              }}
+                '--hov-border': 'rgba(45,138,138,0.2)',
+              } as React.CSSProperties}
             >
               {/* Strength indicator */}
               <div

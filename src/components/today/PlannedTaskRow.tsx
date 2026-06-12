@@ -66,9 +66,8 @@ export function PlannedTaskRow({ task, project, state, timeHint, small = false, 
             <button
               onClick={(e) => { e.stopPropagation(); state.unplan(task.id) }}
               title="Remove from plan"
-              style={{ marginLeft: 'auto', background: 'none', border: 'none', color: INK_DIM, fontSize: 12, cursor: 'pointer', padding: '0 4px', opacity: 0.5 }}
-              onMouseEnter={(e) => { e.currentTarget.style.opacity = '1' }}
-              onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.5' }}
+              className="hov-opacity"
+              style={{ marginLeft: 'auto', background: 'none', border: 'none', color: INK_DIM, fontSize: 12, cursor: 'pointer', padding: '0 4px', opacity: 0.5, '--hov-opacity': '1' } as React.CSSProperties}
             >×</button>
           </div>
         </div>

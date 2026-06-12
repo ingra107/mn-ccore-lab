@@ -670,6 +670,7 @@ export default function MyTasks() {
               setBannerDismissed(true)
             }}
             title="Dismiss"
+            className="hov-opacity"
             style={{
               background: 'none',
               border: 'none',
@@ -680,9 +681,8 @@ export default function MyTasks() {
               alignItems: 'center',
               flexShrink: 0,
               opacity: 0.85,
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.opacity = '1' }}
-            onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.6' }}
+              '--hov-opacity': '1',
+            } as React.CSSProperties}
             aria-label="Dismiss sign-in banner"
           >
             <X size={14} />
@@ -838,10 +838,8 @@ export default function MyTasks() {
                     <div
                       key={task.id}
                       onClick={() => setSelectedTask(task)}
-                      className="flex items-center gap-2 text-xs rounded px-1.5 py-1 cursor-pointer"
-                      style={{ color: 'var(--ink)', transition: 'background 150ms ease' }}
-                      onMouseEnter={(e) => e.currentTarget.style.background = 'var(--hover-subtle)'}
-                      onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                      className="flex items-center gap-2 text-xs rounded px-1.5 py-1 cursor-pointer hov-bg"
+                      style={{ color: 'var(--ink)', transition: 'background 150ms ease', '--hov-bg': 'var(--hover-subtle)' } as React.CSSProperties}
                     >
                       <span className="text-[10px] flex-shrink-0 font-medium" style={{ color: 'var(--maroon)', minWidth: 40 }}>
                         {daysOverdue}d
@@ -899,10 +897,8 @@ export default function MyTasks() {
                     <div
                       key={task.id}
                       onClick={() => setSelectedTask(task)}
-                      className="flex items-center gap-2 text-xs rounded px-1.5 py-1 cursor-pointer"
-                      style={{ color: 'var(--ink)', transition: 'background 150ms ease' }}
-                      onMouseEnter={(e) => e.currentTarget.style.background = 'var(--hover-subtle)'}
-                      onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                      className="flex items-center gap-2 text-xs rounded px-1.5 py-1 cursor-pointer hov-bg"
+                      style={{ color: 'var(--ink)', transition: 'background 150ms ease', '--hov-bg': 'var(--hover-subtle)' } as React.CSSProperties}
                     >
                       <span className="text-[10px] flex-shrink-0 capitalize font-medium" style={{ color: pColor, minWidth: 40 }}>
                         {task.priority || 'med'}

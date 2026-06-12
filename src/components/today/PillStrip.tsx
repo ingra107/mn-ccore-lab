@@ -38,9 +38,8 @@ export function PillStrip({ counts }: { counts: DailyCounts }) {
       <Link
         to={PATHS.overview}
         title={tooltipText}
-        style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '7px 14px', background: withAlpha(healthColor, 6), border: `1px solid ${withAlpha(healthColor, 31)}`, borderRadius: 999, textDecoration: 'none', transition: 'all 150ms' }}
-        onMouseEnter={(e) => { e.currentTarget.style.background = withAlpha(healthColor, 13) }}
-        onMouseLeave={(e) => { e.currentTarget.style.background = withAlpha(healthColor, 6) }}
+        className="hov-bg"
+        style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '7px 14px', background: withAlpha(healthColor, 6), border: `1px solid ${withAlpha(healthColor, 31)}`, borderRadius: 999, textDecoration: 'none', transition: 'all 150ms', '--hov-bg': withAlpha(healthColor, 13) } as React.CSSProperties}
       >
         <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: healthColor }}>Day score</span>
         <span style={{ fontSize: 18, fontWeight: 700, color: healthColor, fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>{dayScore}</span>

@@ -40,9 +40,8 @@ export function EventRow({ e, onDismiss, overlap = false, note, onNote, saveStat
             rel="noopener noreferrer"
             onClick={(ev) => ev.stopPropagation()}
             title="Open meeting link in a new tab"
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 8px', fontSize: 11, fontWeight: 600, color: ACCENT_GOLD, background: 'rgba(201,168,76,0.10)', border: '1px solid rgba(201,168,76,0.30)', borderRadius: 999, textDecoration: 'none', transition: 'all 120ms' }}
-            onMouseEnter={(ev) => { ev.currentTarget.style.background = 'rgba(201,168,76,0.20)' }}
-            onMouseLeave={(ev) => { ev.currentTarget.style.background = 'rgba(201,168,76,0.10)' }}
+            className="hov-bg"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 8px', fontSize: 11, fontWeight: 600, color: ACCENT_GOLD, background: 'rgba(201,168,76,0.10)', border: '1px solid rgba(201,168,76,0.30)', borderRadius: 999, textDecoration: 'none', transition: 'all 120ms', '--hov-bg': 'rgba(201,168,76,0.20)' } as React.CSSProperties}
           >
             <span aria-hidden="true">🔗</span>
             <span>Join</span>
@@ -54,9 +53,8 @@ export function EventRow({ e, onDismiss, overlap = false, note, onNote, saveStat
         <button
           onClick={(ev) => { ev.stopPropagation(); onDismiss(e.id) }}
           title="Remove from today's view"
-          style={{ background: 'none', border: 'none', color: INK_DIM, fontSize: 14, cursor: 'pointer', padding: '0 4px', lineHeight: 1, opacity: 0.5, transition: 'opacity 120ms' }}
-          onMouseEnter={(ev) => { ev.currentTarget.style.opacity = '1' }}
-          onMouseLeave={(ev) => { ev.currentTarget.style.opacity = '0.5' }}
+          className="hov-opacity"
+          style={{ background: 'none', border: 'none', color: INK_DIM, fontSize: 14, cursor: 'pointer', padding: '0 4px', lineHeight: 1, opacity: 0.5, transition: 'opacity 120ms', '--hov-opacity': '1' } as React.CSSProperties}
         >×</button>
       </div>
       {expanded && (

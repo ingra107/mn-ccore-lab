@@ -147,20 +147,14 @@ export default function LabPageLayout({
                     href={link.href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200"
+                    className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 hov-border hov-color"
                     style={{
                       background: 'var(--ice)',
                       color: 'var(--slate)',
                       border: '1px solid transparent',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.borderColor = 'var(--gold)'
-                      e.currentTarget.style.color = 'var(--gold)'
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.borderColor = 'transparent'
-                      e.currentTarget.style.color = 'var(--slate)'
-                    }}
+                      '--hov-border': 'var(--gold)',
+                      '--hov-color': 'var(--gold)',
+                    } as React.CSSProperties}
                   >
                     {link.label}
                     <ExternalLink size={10} aria-hidden="true" />

@@ -36,14 +36,15 @@ export function LinkRow({ links }: { links: LinkKind[] }) {
           href="#"
           title={k}
           onClick={(e) => e.preventDefault()}
+          className="hov-color hov-border"
           style={{
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
             width: 20, height: 20, borderRadius: 4, color: INK_MUTED,
             background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)',
             textDecoration: 'none', transition: 'all 150ms',
-          }}
-          onMouseEnter={(e) => { e.currentTarget.style.color = ACCENT_GOLD; e.currentTarget.style.borderColor = 'rgba(201,168,76,0.30)' }}
-          onMouseLeave={(e) => { e.currentTarget.style.color = INK_MUTED; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)' }}
+            '--hov-color': ACCENT_GOLD,
+            '--hov-border': 'rgba(201,168,76,0.30)',
+          } as React.CSSProperties}
         >
           <LinkIcon kind={k} />
         </a>
@@ -85,6 +86,7 @@ export function Pill({ icon, label, count, color = INK_MUTED, onClick, emphasis 
     <button
       onClick={onClick}
       title={title}
+      className="hov-bg hov-border"
       style={{
         display: 'inline-flex', alignItems: 'center', gap: 6,
         padding: emphasis ? '6px 12px' : '5px 10px',
@@ -93,9 +95,9 @@ export function Pill({ icon, label, count, color = INK_MUTED, onClick, emphasis 
         borderRadius: 999, cursor: onClick ? 'pointer' : 'default',
         fontFamily: 'inherit', color: emphasis ? color : INK,
         fontSize: 12, fontWeight: 500, transition: 'all 150ms', whiteSpace: 'nowrap',
-      }}
-      onMouseEnter={(e) => { e.currentTarget.style.background = withAlpha(color, 13); e.currentTarget.style.borderColor = withAlpha(color, 44) }}
-      onMouseLeave={(e) => { e.currentTarget.style.background = emphasis ? withAlpha(color, 8) : 'rgba(255,255,255,0.02)'; e.currentTarget.style.borderColor = emphasis ? withAlpha(color, 33) : withAlpha(color, 19) }}
+        '--hov-bg': withAlpha(color, 13),
+        '--hov-border': withAlpha(color, 44),
+      } as React.CSSProperties}
     >
       <span style={{ fontSize: 12, lineHeight: 1 }}>{icon}</span>
       {count !== undefined && (

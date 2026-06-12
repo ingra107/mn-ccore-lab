@@ -126,7 +126,7 @@ export default function RevisionTracker({ projectId }: RevisionTrackerProps) {
         </div>
         <button
           onClick={() => setShowAddForm(!showAddForm)}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hov-bg"
           style={{
             background: 'transparent',
             color: 'var(--teal)',
@@ -135,9 +135,8 @@ export default function RevisionTracker({ projectId }: RevisionTrackerProps) {
             border: '1px solid var(--border-subtle)',
             cursor: 'pointer',
             transition: 'background 150ms ease-out',
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--teal-hover)')}
-          onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+            '--hov-bg': 'var(--teal-hover)',
+          } as React.CSSProperties}
         >
           <Plus size={14} />
           Add Round
@@ -302,7 +301,7 @@ function RevisionRound({ revision, projectId, isExpanded, onToggle, onStatusChan
       {/* Round header */}
       <button
         onClick={onToggle}
-        className="w-full text-left"
+        className="w-full text-left hov-bg"
         style={{
           display: 'grid',
           gridTemplateColumns: '40px 1fr auto',
@@ -313,9 +312,8 @@ function RevisionRound({ revision, projectId, isExpanded, onToggle, onStatusChan
           border: 'none',
           cursor: 'pointer',
           transition: 'background 150ms',
-        }}
-        onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--gold-hover)')}
-        onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+          '--hov-bg': 'var(--gold-hover)',
+        } as React.CSSProperties}
       >
         {/* Round badge */}
         <div

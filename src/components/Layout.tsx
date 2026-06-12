@@ -243,7 +243,7 @@ export default function Layout() {
                   <Link
                     key={link.to}
                     to={link.to}
-                    className="block px-4 py-2.5 text-sm font-medium cursor-pointer transition-colors duration-150"
+                    className="block px-4 py-2.5 text-sm font-medium cursor-pointer transition-colors duration-150 hov-bg hov-border"
                     style={{
                       color: location.pathname === link.to ? 'var(--gold)' : 'var(--ink)',
                       borderLeft: location.pathname === link.to
@@ -256,19 +256,9 @@ export default function Layout() {
                       alignItems: 'center',
                       justifyContent: 'space-between',
                       gap: '8px',
-                    }}
-                    onMouseEnter={(e) => {
-                      if (location.pathname !== link.to) {
-                        e.currentTarget.style.background = 'var(--gold-hover)'
-                        e.currentTarget.style.borderLeftColor = 'rgba(201, 168, 76, 0.4)'
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (location.pathname !== link.to) {
-                        e.currentTarget.style.background = 'transparent'
-                        e.currentTarget.style.borderLeftColor = 'transparent'
-                      }
-                    }}
+                      '--hov-bg': location.pathname !== link.to ? 'var(--gold-hover)' : 'transparent',
+                      '--hov-border': location.pathname !== link.to ? 'rgba(201, 168, 76, 0.4)' : 'transparent',
+                    } as React.CSSProperties}
                   >
                     <span>{link.label}</span>
                     {link.label === 'Today' && pendingCount > 0 && (
@@ -584,14 +574,8 @@ export default function Layout() {
                   <li key={`footer-research-${link.to}`}>
                     <Link
                       to={link.to}
-                      className="text-sm cursor-pointer transition-colors duration-200"
-                      style={{ color: 'rgba(255, 255, 255, 0.7)' }}
-                      onMouseEnter={(e) =>
-                        (e.currentTarget.style.color = 'var(--gold)')
-                      }
-                      onMouseLeave={(e) =>
-                        (e.currentTarget.style.color = 'rgba(255, 255, 255, 0.7)')
-                      }
+                      className="text-sm cursor-pointer transition-colors duration-200 hov-color"
+                      style={{ color: 'rgba(255, 255, 255, 0.7)', '--hov-color': 'var(--gold)' } as React.CSSProperties}
                     >
                       {link.label}
                     </Link>
@@ -616,14 +600,8 @@ export default function Layout() {
                   <li key={`footer-${link.to}-${link.label}`}>
                     <Link
                       to={link.to}
-                      className="text-sm cursor-pointer transition-colors duration-200"
-                      style={{ color: 'rgba(255, 255, 255, 0.7)' }}
-                      onMouseEnter={(e) =>
-                        (e.currentTarget.style.color = 'var(--gold)')
-                      }
-                      onMouseLeave={(e) =>
-                        (e.currentTarget.style.color = 'rgba(255, 255, 255, 0.7)')
-                      }
+                      className="text-sm cursor-pointer transition-colors duration-200 hov-color"
+                      style={{ color: 'rgba(255, 255, 255, 0.7)', '--hov-color': 'var(--gold)' } as React.CSSProperties}
                     >
                       {link.label}
                     </Link>
@@ -664,14 +642,8 @@ export default function Layout() {
                       href={link.href}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-sm cursor-pointer transition-colors duration-200"
-                      style={{ color: 'rgba(255, 255, 255, 0.7)' }}
-                      onMouseEnter={(e) =>
-                        (e.currentTarget.style.color = 'var(--gold)')
-                      }
-                      onMouseLeave={(e) =>
-                        (e.currentTarget.style.color = 'rgba(255, 255, 255, 0.7)')
-                      }
+                      className="text-sm cursor-pointer transition-colors duration-200 hov-color"
+                      style={{ color: 'rgba(255, 255, 255, 0.7)', '--hov-color': 'var(--gold)' } as React.CSSProperties}
                     >
                       {link.label}
                     </a>
@@ -698,14 +670,8 @@ export default function Layout() {
                       href={link.href}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-sm cursor-pointer transition-colors duration-200"
-                      style={{ color: 'rgba(255, 255, 255, 0.7)' }}
-                      onMouseEnter={(e) =>
-                        (e.currentTarget.style.color = 'var(--gold)')
-                      }
-                      onMouseLeave={(e) =>
-                        (e.currentTarget.style.color = 'rgba(255, 255, 255, 0.7)')
-                      }
+                      className="text-sm cursor-pointer transition-colors duration-200 hov-color"
+                      style={{ color: 'rgba(255, 255, 255, 0.7)', '--hov-color': 'var(--gold)' } as React.CSSProperties}
                     >
                       {link.label}
                     </a>

@@ -72,16 +72,15 @@ export function EditableTitle({ value, onSave }: { value: string; onSave: (v: st
       tabIndex={0}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setEditing(true) } }}
       aria-label="Edit title"
-      className="cursor-text rounded px-1 -mx-1 py-0.5 transition-colors"
+      className="cursor-text rounded px-1 -mx-1 py-0.5 transition-colors hov-bg"
       style={{
         fontSize: '1.125rem',
         fontWeight: 'var(--weight-heading, 600)',
         color: 'var(--ink)',
         // Resting: no border, no box. Hover: subtle bg tint only.
         background: 'none',
-      }}
-      onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--hover-subtle)' }}
-      onMouseLeave={(e) => { e.currentTarget.style.background = 'none' }}
+        '--hov-bg': 'var(--hover-subtle)',
+      } as React.CSSProperties}
     >
       {value}
     </h3>

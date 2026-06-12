@@ -125,21 +125,15 @@ export default function NetworkSidebar({
           {/* Close button */}
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 p-2 rounded-lg cursor-pointer transition-colors duration-200"
+            className="absolute top-4 right-4 p-2 rounded-lg cursor-pointer transition-colors duration-200 hov-border hov-color"
             style={{
               background: 'var(--hover-light)',
               border: '1px solid rgba(201, 168, 76, 0.15)',
               color: 'rgba(255, 255, 255, 0.6)',
               zIndex: 'var(--z-dropdown)',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = 'rgba(201, 168, 76, 0.4)'
-              e.currentTarget.style.color = 'rgba(255, 255, 255, 0.9)'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = 'var(--gold-emphasis)'
-              e.currentTarget.style.color = 'rgba(255, 255, 255, 0.6)'
-            }}
+              '--hov-border': 'rgba(201, 168, 76, 0.4)',
+              '--hov-color': 'rgba(255, 255, 255, 0.9)',
+            } as React.CSSProperties}
             aria-label="Close panel"
           >
             <X size={16} />
@@ -310,7 +304,7 @@ function NodeDetail({
       {slug && (
         <Link
           to={slug === 'nick-ingraham' || slug === 'nate-mesfin' ? `/${slug}` : `/team/${slug}`}
-          className="flex items-center gap-2 mb-6 px-4 py-3 rounded-lg transition-all duration-200"
+          className="flex items-center gap-2 mb-6 px-4 py-3 rounded-lg transition-all duration-200 hov-bg hov-border"
           style={{
             background: 'var(--gold-active)',
             border: '1px solid rgba(201, 168, 76, 0.2)',
@@ -318,15 +312,9 @@ function NodeDetail({
             textDecoration: 'none',
             fontSize: '13px',
             fontWeight: 500,
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'var(--gold-emphasis)'
-            e.currentTarget.style.borderColor = 'rgba(201, 168, 76, 0.4)'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'var(--gold-active)'
-            e.currentTarget.style.borderColor = 'rgba(201, 168, 76, 0.2)'
-          }}
+            '--hov-bg': 'var(--gold-emphasis)',
+            '--hov-border': 'rgba(201, 168, 76, 0.4)',
+          } as React.CSSProperties}
         >
           <Users size={14} />
           View full profile

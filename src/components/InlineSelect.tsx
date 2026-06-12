@@ -88,7 +88,7 @@ export default function InlineSelect({ value, options, onChange, size = 'sm', al
     <>
       <button
         ref={buttonRef}
-        className="inline-select-trigger"
+        className="inline-select-trigger hov-bg hov-border"
         aria-expanded={open}
         aria-haspopup="listbox"
         onClick={(e) => {
@@ -118,17 +118,9 @@ export default function InlineSelect({ value, options, onChange, size = 'sm', al
           textOverflow: 'ellipsis',
           color: current?.color || 'var(--slate)',
           transition: 'background-color var(--duration-normal) var(--ease-out), border-color var(--duration-normal) var(--ease-out), box-shadow var(--duration-normal) var(--ease-out)',
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.background = 'var(--teal-hover)'
-          e.currentTarget.style.borderColor = 'var(--border-subtle)'
-        }}
-        onMouseLeave={(e) => {
-          if (!open) {
-            e.currentTarget.style.background = 'none'
-            e.currentTarget.style.borderColor = 'transparent'
-          }
-        }}
+          '--hov-bg': open ? 'none' : 'var(--teal-hover)',
+          '--hov-border': open ? 'transparent' : 'var(--border-subtle)',
+        } as React.CSSProperties}
       >
         {/* N1.01: inline-flex children don't ellipsize a bare text node —
             without this span the label hard-clips mid-word in narrow cells. */}

@@ -384,15 +384,15 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
           <button
             onClick={resetTableConfig}
             title="Reset view to defaults"
+            className="hov-opacity"
             style={{
               display: 'inline-flex', alignItems: 'center', gap: '4px',
               fontSize: '11px', color: 'var(--slate)', opacity: 0.75,
               background: 'none', border: 'none', cursor: 'pointer',
               padding: '2px 6px', borderRadius: 'var(--radius-sm)',
               transition: 'opacity var(--duration-normal) var(--ease-out)',
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.9' }}
-            onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.5' }}
+              '--hov-opacity': '0.9',
+            } as React.CSSProperties}
           >
             <RotateCcw size={11} />
             Reset view
@@ -1163,7 +1163,7 @@ function TaskGridRow({
                     <Link
                       to={PATHS.project(task.project_id)}
                       onClick={(e) => e.stopPropagation()}
-                      className="hover-badge"
+                      className="hover-badge hov-bg hov-color"
                       style={{
                         fontSize: '10px',
                         padding: '1px 5px',
@@ -1179,9 +1179,9 @@ function TaskGridRow({
                         whiteSpace: 'nowrap',
                         textDecoration: 'none',
                         transition: 'background-color 150ms ease, color 150ms ease',
-                      }}
-                      onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--teal-active)'; e.currentTarget.style.color = 'var(--teal)' }}
-                      onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'var(--surface-3)'; e.currentTarget.style.color = 'var(--slate)' }}
+                        '--hov-bg': 'var(--teal-active)',
+                        '--hov-color': 'var(--teal)',
+                      } as React.CSSProperties}
                       title={`Work on ${task.project_id}`}
                     >
                       {(projectMap.get(task.project_id) ?? task.project_id).slice(0, 20)}
@@ -1495,6 +1495,7 @@ function KeyLinkIcon({ url, label }: { url: string; label?: string | null }) {
         rel={isHttp ? 'noopener noreferrer' : undefined}
         onClick={isHttp ? (e) => e.stopPropagation() : handleNonHttpClick}
         title={label || (isHttp ? url : `Click to copy path: ${url}`)}
+        className="hov-opacity"
         style={{
           color: 'var(--teal)',
           opacity: 0.85,
@@ -1502,15 +1503,15 @@ function KeyLinkIcon({ url, label }: { url: string; label?: string | null }) {
           display: 'inline-flex',
           alignItems: 'center',
           padding: '1px',
-        }}
-        onMouseEnter={(e) => { e.currentTarget.style.opacity = '1' }}
-        onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.5' }}
+          '--hov-opacity': '1',
+        } as React.CSSProperties}
       >
         <Icon size={14} />
       </a>
       <button
         onClick={handleNonHttpClick}
         title="Copy link"
+        className="hov-opacity"
         style={{
           background: 'none',
           border: 'none',
@@ -1521,9 +1522,8 @@ function KeyLinkIcon({ url, label }: { url: string; label?: string | null }) {
           display: 'inline-flex',
           alignItems: 'center',
           padding: '1px',
-        }}
-        onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.8' }}
-        onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.35' }}
+          '--hov-opacity': '0.8',
+        } as React.CSSProperties}
       >
         <Clipboard size={11} />
       </button>
@@ -1792,7 +1792,7 @@ function InlineCellSelect({
         aria-controls={open ? listboxId.current : undefined}
         aria-activedescendant={activeDescendant}
         onClick={(e) => { e.stopPropagation(); setOpen(!open) }}
-        className="inline-flex items-center gap-1 rounded-md transition-colors"
+        className="inline-flex items-center gap-1 rounded-md transition-colors hov-bg hov-border"
         style={{
           padding: '3px 8px',
           border: '1px solid transparent',
@@ -1800,9 +1800,9 @@ function InlineCellSelect({
           cursor: 'pointer',
           fontSize: '12px',
           fontWeight: 400,
-        }}
-        onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--border-subtle)'; e.currentTarget.style.background = 'var(--teal-hover)' }}
-        onMouseLeave={(e) => { if (!open) { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.background = 'none' } }}
+          '--hov-bg': open ? 'none' : 'var(--teal-hover)',
+          '--hov-border': open ? 'transparent' : 'var(--border-subtle)',
+        } as React.CSSProperties}
       >
         {renderValue(value)}
         <ChevronDown size={10} className="inline-select-chevron" />

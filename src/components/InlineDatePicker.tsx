@@ -130,7 +130,7 @@ export default function InlineDatePicker({ value, onChange }: InlineDatePickerPr
     <div ref={containerRef} style={{ position: 'relative' }}>
       <button
         onClick={(e) => { e.stopPropagation(); setOpen((o) => !o) }}
-        className="inline-flex items-center gap-1 rounded-md transition-colors"
+        className="inline-flex items-center gap-1 rounded-md transition-colors hov-bg hov-border"
         aria-haspopup="dialog"
         aria-expanded={open}
         style={{
@@ -143,9 +143,9 @@ export default function InlineDatePicker({ value, onChange }: InlineDatePickerPr
           color: isOverdue ? 'var(--maroon)' : isToday ? 'var(--teal)' : isThisWeek ? 'var(--gold)' : 'var(--slate)',
           opacity: 0.85,
           fontVariantNumeric: 'tabular-nums',
-        }}
-        onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--border-subtle)'; e.currentTarget.style.background = 'var(--teal-hover)' }}
-        onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.background = 'none' }}
+          '--hov-bg': 'var(--teal-hover)',
+          '--hov-border': 'var(--border-subtle)',
+        } as React.CSSProperties}
       >
         <CalendarDays size={11} />
         <span>{!value ? 'Set date' : isOverdue

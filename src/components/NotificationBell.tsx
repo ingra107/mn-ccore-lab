@@ -181,19 +181,14 @@ export default function NotificationBell({ align = 'right' }: { align?: 'left' |
                 <button
                   onClick={() => markAllRead.mutate()}
                   disabled={markAllRead.isPending}
-                  className="cursor-pointer inline-flex items-center gap-1 px-2 py-1 rounded-md transition-colors duration-150"
+                  className="cursor-pointer inline-flex items-center gap-1 px-2 py-1 rounded-md transition-colors duration-150 hov-bg"
                   style={{
                     fontSize: '10px',
                     color: 'var(--gold)',
                     background: 'var(--gold-active)',
                     border: 'none',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'var(--gold-emphasis)'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'var(--gold-active)'
-                  }}
+                    '--hov-bg': 'var(--gold-emphasis)',
+                  } as React.CSSProperties}
                 >
                   <CheckCheck size={11} />
                   Mark all read
@@ -249,7 +244,7 @@ export default function NotificationBell({ align = 'right' }: { align?: 'left' |
 
                       const content = (
                         <div
-                          className="flex items-start gap-3"
+                          className="flex items-start gap-3 hov-bg"
                           style={{
                             padding: '10px 16px',
                             cursor: 'pointer',
@@ -260,19 +255,8 @@ export default function NotificationBell({ align = 'right' }: { align?: 'left' |
                             borderLeft: isImpact
                               ? '3px solid var(--gold)'
                               : isUnread ? '3px solid var(--gold)' : '3px solid transparent',
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.background = isImpact
-                              ? 'var(--gold-emphasis)'
-                              : 'var(--gold-active)'
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.background = isImpact
-                              ? 'var(--gold-active)'
-                              : isUnread
-                                ? 'var(--gold-hover)'
-                                : 'transparent'
-                          }}
+                            '--hov-bg': isImpact ? 'var(--gold-emphasis)' : 'var(--gold-active)',
+                          } as React.CSSProperties}
                         >
                           <div
                             className="flex-shrink-0 mt-0.5"

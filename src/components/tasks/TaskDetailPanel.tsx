@@ -540,7 +540,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
               onClick={handleDeleteTask}
               title="Delete this task"
               aria-label="Delete task"
-              className="flex items-center gap-1 flex-shrink-0 rounded-lg transition-colors ml-auto"
+              className="flex items-center gap-1 flex-shrink-0 rounded-lg transition-colors ml-auto hov-opacity hov-border hov-bg"
               style={{
                 background: 'none',
                 border: '1px solid transparent',
@@ -551,9 +551,10 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
                 fontWeight: 500,
                 padding: '4px 8px',
                 whiteSpace: 'nowrap',
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.borderColor = 'var(--maroon)'; e.currentTarget.style.background = 'color-mix(in srgb, var(--maroon) 7%, transparent)' }}
-              onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.85'; e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.background = 'none' }}
+                '--hov-opacity': '1',
+                '--hov-border': 'var(--maroon)',
+                '--hov-bg': 'color-mix(in srgb, var(--maroon) 7%, transparent)',
+              } as React.CSSProperties}
             >
               <Trash2 size={12} />
               Delete
@@ -990,16 +991,15 @@ function DescriptionField({
           aria-label="Add description"
           onClick={handleClick}
           onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleClick() } }}
-          className="cursor-text rounded transition-colors"
+          className="cursor-text rounded transition-colors hov-opacity"
           style={{
             fontSize: 'var(--value-size)',
             color: 'var(--slate)',
             opacity: 'var(--ink-hint)',
             fontStyle: 'italic',
             padding: '4px 2px',
-          }}
-          onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.85' }}
-          onMouseLeave={(e) => { e.currentTarget.style.opacity = String('var(--ink-hint)') }}
+            '--hov-opacity': '0.85',
+          } as React.CSSProperties}
         >
           Add description…
         </div>
@@ -1180,7 +1180,7 @@ function DueInlineSelect({ value, onChange }: { value: string; onChange: (v: str
     <div
       data-ghost-pill
       title="Due date"
-      className="transition-colors"
+      className="transition-colors hov-bg"
       style={{
         display: 'inline-flex',
         alignItems: 'center',
@@ -1193,9 +1193,8 @@ function DueInlineSelect({ value, onChange }: { value: string; onChange: (v: str
         border: '1px solid transparent',
         cursor: 'pointer',
         transition: 'background 0.12s',
-      }}
-      onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--hover-subtle)' }}
-      onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
+        '--hov-bg': 'var(--hover-subtle)',
+      } as React.CSSProperties}
     >
       <DateInput value={value} onChange={onChange} />
     </div>

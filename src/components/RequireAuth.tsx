@@ -219,6 +219,7 @@ function SignInWall() {
         <div style={{ marginTop: 28 }}>
           <a
             href="/"
+            className="hov-opacity hov-border"
             style={{
               fontSize: 13,
               color: '#5cbcb4',
@@ -226,15 +227,9 @@ function SignInWall() {
               textDecoration: 'none',
               borderBottom: '1px solid transparent',
               transition: 'opacity 150ms ease-out, border-color 150ms ease-out',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.opacity = '1'
-              e.currentTarget.style.borderBottomColor = 'currentColor'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.opacity = '0.85'
-              e.currentTarget.style.borderBottomColor = 'transparent'
-            }}
+              '--hov-opacity': '1',
+              '--hov-border': 'currentColor',
+            } as React.CSSProperties}
           >
             ← Back to the public site
           </a>

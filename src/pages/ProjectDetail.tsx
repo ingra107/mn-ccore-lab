@@ -736,6 +736,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                     role="menuitem"
                     onClick={handleArchiveProject}
                     disabled={isArchived}
+                    className="hov-bg"
                     style={{
                       width: '100%', display: 'flex', alignItems: 'center', gap: '8px',
                       padding: '8px 10px', fontSize: '12px', color: 'var(--ink)',
@@ -743,9 +744,8 @@ function ProjectDetailInner({ project }: InnerProps) {
                       cursor: isArchived ? 'not-allowed' : 'pointer',
                       opacity: isArchived ? 0.5 : 1,
                       textAlign: 'left',
-                    }}
-                    onMouseEnter={(e) => { if (!isArchived) e.currentTarget.style.background = 'var(--hover-subtle)' }}
-                    onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                      '--hov-bg': isArchived ? 'transparent' : 'var(--hover-subtle)',
+                    } as React.CSSProperties}
                   >
                     <Archive size={13} />
                     {isArchived ? 'Already archived' : 'Archive project'}
@@ -753,14 +753,14 @@ function ProjectDetailInner({ project }: InnerProps) {
                   <button
                     role="menuitem"
                     onClick={handleDuplicateProject}
+                    className="hov-bg"
                     style={{
                       width: '100%', display: 'flex', alignItems: 'center', gap: '8px',
                       padding: '8px 10px', fontSize: '12px', color: 'var(--ink)',
                       background: 'none', border: 'none', borderRadius: 'var(--radius-md)',
                       cursor: 'pointer', textAlign: 'left',
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.background = 'var(--hover-subtle)'}
-                    onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                      '--hov-bg': 'var(--hover-subtle)',
+                    } as React.CSSProperties}
                   >
                     <CopyIcon size={13} />
                     Duplicate
@@ -769,14 +769,14 @@ function ProjectDetailInner({ project }: InnerProps) {
                   <button
                     role="menuitem"
                     onClick={handleDeleteProject}
+                    className="hov-bg"
                     style={{
                       width: '100%', display: 'flex', alignItems: 'center', gap: '8px',
                       padding: '8px 10px', fontSize: '12px', color: 'var(--maroon)',
                       background: 'none', border: 'none', borderRadius: 'var(--radius-md)',
                       cursor: 'pointer', textAlign: 'left',
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.background = 'var(--hover-subtle)'}
-                    onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                      '--hov-bg': 'var(--hover-subtle)',
+                    } as React.CSSProperties}
                   >
                     <Trash2 size={13} />
                     Delete project…
@@ -1203,14 +1203,14 @@ function ProjectDetailInner({ project }: InnerProps) {
                       <div
                         key={item.id}
                         onClick={() => goToStream(item.kind === 'note' ? 'notes' : 'comments')}
+                        className="hov-bg"
                         style={{
                           display: 'flex', alignItems: 'flex-start', gap: '6px',
                           fontSize: '11px', color: 'var(--ink)', lineHeight: 1.35,
                           padding: '4px 6px', borderRadius: 'var(--radius-md)',
                           cursor: 'pointer', transition: 'background 150ms ease',
-                        }}
-                        onMouseEnter={(e) => e.currentTarget.style.background = 'var(--hover-subtle)'}
-                        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                          '--hov-bg': 'var(--hover-subtle)',
+                        } as React.CSSProperties}
                         title={fullWhen}
                       >
                         <span
@@ -1692,6 +1692,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                       setDescDraft(project.description ?? '')
                       setEditingDescription(true)
                     }}
+                    className="hov-border"
                     style={{
                       fontSize: '14px',
                       color: project.description ? 'var(--ink)' : 'var(--slate)',
@@ -1703,19 +1704,14 @@ function ProjectDetailInner({ project }: InnerProps) {
                       borderBottom: '1px dashed transparent',
                       transition: 'border-color 0.2s',
                       whiteSpace: 'pre-wrap',
+                      '--hov-border': 'rgba(201, 168, 76, 0.4)',
                       ...(!descExpanded && project.description && project.description.length > 200 ? {
                         overflow: 'hidden',
                         display: '-webkit-box',
                         WebkitLineClamp: 3,
                         WebkitBoxOrient: 'vertical' as const,
                       } : {}),
-                    }}
-                    onMouseEnter={(e) =>
-                      (e.currentTarget.style.borderColor = 'rgba(201, 168, 76, 0.4)')
-                    }
-                    onMouseLeave={(e) =>
-                      (e.currentTarget.style.borderColor = 'transparent')
-                    }
+                    } as React.CSSProperties}
                     title="Click to edit"
                   >
                     {project.description

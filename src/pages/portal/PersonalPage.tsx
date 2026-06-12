@@ -74,6 +74,7 @@ function RoleSelector({ role, onSelect }: { role: UserRole; onSelect: (role: Use
     <div ref={ref} style={{ position: 'relative', flexShrink: 0, marginTop: 'var(--sp-xs)' }}>
       <button
         onClick={() => setOpen(!open)}
+        className="hov-border"
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -88,9 +89,8 @@ function RoleSelector({ role, onSelect }: { role: UserRole; onSelect: (role: Use
           color: 'var(--slate)',
           transition: 'border-color 150ms ease, color 150ms ease',
           whiteSpace: 'nowrap',
-        }}
-        onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--border-subtle)' }}
-        onMouseLeave={(e) => { if (!open) e.currentTarget.style.borderColor = 'transparent' }}
+          '--hov-border': open ? 'transparent' : 'var(--border-subtle)',
+        } as React.CSSProperties}
       >
         <span style={{ color: 'var(--teal)', fontSize: 'var(--label-size)' }}>{ROLE_LABELS[role]}</span>
         <ChevronDown size={10} style={{ opacity: 0.85 }} />
@@ -118,6 +118,7 @@ function RoleSelector({ role, onSelect }: { role: UserRole; onSelect: (role: Use
               <button
                 key={opt.value}
                 onClick={() => { onSelect(opt.value); setOpen(false) }}
+                className="hov-bg"
                 style={{
                   display: 'block',
                   width: '100%',
@@ -130,9 +131,8 @@ function RoleSelector({ role, onSelect }: { role: UserRole; onSelect: (role: Use
                   color: isActive ? 'var(--teal)' : 'var(--slate)',
                   textAlign: 'left',
                   transition: 'background 150ms ease, color 150ms ease',
-                }}
-                onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = 'var(--teal-hover)' }}
-                onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.background = 'transparent' }}
+                  '--hov-bg': isActive ? 'transparent' : 'var(--teal-hover)',
+                } as React.CSSProperties}
               >
                 {opt.label}
               </button>
@@ -156,14 +156,13 @@ function QuickCapture() {
       type="button"
       onClick={openGlobalQuickAdd}
       aria-label="Quick add task (press q)"
-      className="flex items-center gap-2 w-full text-left rounded-lg border px-3 py-1.5 transition-colors"
+      className="flex items-center gap-2 w-full text-left rounded-lg border px-3 py-1.5 transition-colors hov-border"
       style={{
         borderColor: 'var(--border-subtle)',
         backgroundColor: 'var(--cream)',
         cursor: 'pointer',
-      }}
-      onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--teal)' }}
-      onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border-subtle)' }}
+        '--hov-border': 'var(--teal)',
+      } as React.CSSProperties}
     >
       <Lightbulb size={14} style={{ color: 'var(--gold)', opacity: 0.85, flexShrink: 0 }} />
       <span
@@ -831,10 +830,8 @@ export default function PersonalPage() {
                     <div
                       key={t.id}
                       onClick={() => setSelectedTask(t)}
-                      className="flex items-center gap-2 text-xs rounded px-1.5 py-1 cursor-pointer"
-                      style={{ color: 'var(--ink)' }}
-                      onMouseEnter={(e) => e.currentTarget.style.background = 'var(--hover-subtle)'}
-                      onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                      className="flex items-center gap-2 text-xs rounded px-1.5 py-1 cursor-pointer hov-bg"
+                      style={{ color: 'var(--ink)', '--hov-bg': 'var(--hover-subtle)' } as React.CSSProperties}
                     >
                       <span className="text-[10px] flex-shrink-0" style={{ color: 'var(--maroon)', fontWeight: 500, minWidth: 40 }}>
                         {t.due_date ? new Date(t.due_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''}
@@ -867,10 +864,8 @@ export default function PersonalPage() {
                     <div
                       key={t.id}
                       onClick={() => setSelectedTask(t)}
-                      className="flex items-center gap-2 text-xs rounded px-1.5 py-1 cursor-pointer"
-                      style={{ color: 'var(--ink)' }}
-                      onMouseEnter={(e) => e.currentTarget.style.background = 'var(--hover-subtle)'}
-                      onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                      className="flex items-center gap-2 text-xs rounded px-1.5 py-1 cursor-pointer hov-bg"
+                      style={{ color: 'var(--ink)', '--hov-bg': 'var(--hover-subtle)' } as React.CSSProperties}
                     >
                       <span className="text-[10px] flex-shrink-0 capitalize font-medium" style={{ color: pColor, minWidth: 40 }}>
                         {t.priority || 'med'}
@@ -936,6 +931,7 @@ export default function PersonalPage() {
                   download={`regulatory-${reg.id}.ics`}
                   title="Download calendar reminder (60-day alert)"
                   onClick={(e) => e.stopPropagation()}
+                  className="hov-opacity"
                   style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -950,9 +946,8 @@ export default function PersonalPage() {
                     textDecoration: 'none',
                     flexShrink: 0,
                     transition: 'opacity var(--duration-fast) ease',
-                  }}
-                  onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.opacity = '1' }}
-                  onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.opacity = '0.7' }}
+                    '--hov-opacity': '1',
+                  } as React.CSSProperties}
                 >
                   <Calendar size={12} />
                 </a>

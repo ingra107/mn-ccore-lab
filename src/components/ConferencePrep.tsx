@@ -281,6 +281,7 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
                   <td style={{ padding: 'var(--sp-sm)' }}>
                     <button
                       onClick={() => handleDelete(conf)}
+                      className="hov-opacity hov-color"
                       style={{
                         background: 'none',
                         border: 'none',
@@ -288,9 +289,9 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
                         color: 'var(--slate)',
                         opacity: 0.75,
                         padding: '2px',
-                      }}
-                      onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.color = 'var(--maroon)' }}
-                      onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.85'; e.currentTarget.style.color = 'var(--slate)' }}
+                        '--hov-opacity': '1',
+                        '--hov-color': 'var(--maroon)',
+                      } as React.CSSProperties}
                     >
                       <Trash2 size={12} />
                     </button>
@@ -419,6 +420,7 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
       ) : (
         <button
           onClick={() => setShowForm(true)}
+          className="hov-opacity"
           style={{
             display: 'inline-flex',
             alignItems: 'center',
@@ -431,9 +433,8 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
             cursor: 'pointer',
             padding: 'var(--sp-xs) 0',
             opacity: 0.85,
-          }}
-          onMouseEnter={(e) => { e.currentTarget.style.opacity = '1' }}
-          onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.7' }}
+            '--hov-opacity': '1',
+          } as React.CSSProperties}
         >
           <Plus size={12} />
           Add Submission

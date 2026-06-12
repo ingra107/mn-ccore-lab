@@ -283,7 +283,7 @@ export default function KeyLinksEditor({ links, onSave, hideLabel = false, maxSl
           <button
             onClick={() => setAddingNew(true)}
             aria-label={populated.length === 0 ? 'Add a key link' : 'Add another key link'}
-            className="flex items-center gap-1 self-start rounded transition-colors"
+            className="flex items-center gap-1 self-start rounded transition-colors hov-opacity hov-bg"
             style={{
               background: 'none',
               border: 'none',
@@ -293,15 +293,9 @@ export default function KeyLinksEditor({ links, onSave, hideLabel = false, maxSl
               opacity: 0.75,
               cursor: 'pointer',
               fontFamily: 'inherit',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.opacity = '1'
-              e.currentTarget.style.background = 'var(--teal-hover)'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.opacity = '0.75'
-              e.currentTarget.style.background = 'none'
-            }}
+              '--hov-opacity': '1',
+              '--hov-bg': 'var(--teal-hover)',
+            } as React.CSSProperties}
           >
             <Plus size={11} />
             {populated.length === 0 ? 'Add a key link' : 'Add another'}

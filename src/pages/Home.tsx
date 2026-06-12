@@ -280,7 +280,7 @@ export default function Home() {
             </a>
             <a
               href="/publications"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm hov-bg hov-border"
               style={{
                 background: 'var(--hover-light)',
                 border: '1px solid rgba(255, 255, 255, 0.12)',
@@ -288,9 +288,9 @@ export default function Home() {
                 fontWeight: 400,
                 textDecoration: 'none',
                 transition: 'background-color var(--duration-normal, 150ms) var(--ease-out), border-color var(--duration-normal, 150ms) var(--ease-out)',
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--hover-medium)'; e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)' }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--hover-light)'; e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.12)' }}
+                '--hov-bg': 'var(--hover-medium)',
+                '--hov-border': 'rgba(255, 255, 255, 0.2)',
+              } as React.CSSProperties}
             >
               Our Research
             </a>

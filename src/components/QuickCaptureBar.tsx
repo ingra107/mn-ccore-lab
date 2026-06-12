@@ -17,7 +17,7 @@ export default function QuickCaptureBar({ noMargin }: { noMargin?: boolean }) {
         type="button"
         onClick={openGlobalQuickAdd}
         aria-label="Quick add task (press q)"
-        className="flex items-center gap-2 w-full text-left"
+        className="flex items-center gap-2 w-full text-left hov-border"
         style={{
           height: 40,
           padding: '0 var(--sp-md)',
@@ -27,9 +27,8 @@ export default function QuickCaptureBar({ noMargin }: { noMargin?: boolean }) {
           boxShadow: '0 0 0 1px var(--border-subtle)',
           cursor: 'pointer',
           transition: 'border-color 150ms ease, box-shadow 150ms ease',
-        }}
-        onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--teal)' }}
-        onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border-default)' }}
+          '--hov-border': 'var(--teal)',
+        } as React.CSSProperties}
       >
         <Plus size={14} style={{ color: 'var(--teal)', opacity: 0.85, flexShrink: 0 }} />
         <span

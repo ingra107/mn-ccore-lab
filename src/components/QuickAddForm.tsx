@@ -36,21 +36,15 @@ export default function QuickAddForm({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
             onClick={onToggle}
-            className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium quick-add-trigger"
+            className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium quick-add-trigger hov-border hov-color"
             style={{
               background: 'var(--ice)',
               color: 'var(--slate)',
               border: '1px dashed rgba(201,168,76,0.3)',
               transition: 'all 0.2s ease',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = 'var(--gold)'
-              e.currentTarget.style.color = 'var(--ink)'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = 'rgba(201,168,76,0.3)'
-              e.currentTarget.style.color = 'var(--slate)'
-            }}
+              '--hov-border': 'var(--gold)',
+              '--hov-color': 'var(--ink)',
+            } as React.CSSProperties}
           >
             <Plus size={14} />
             {triggerLabel}

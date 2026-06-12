@@ -318,22 +318,16 @@ export default function MemberPage() {
         <div className="mb-6 flex flex-wrap gap-2">
           <Link
             to={`${teamBase}/${slug}/trajectory`}
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium"
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium hov-border hov-color"
             style={{
               background: 'var(--ice)',
               color: 'var(--slate)',
               border: '1px solid transparent',
               textDecoration: 'none',
               transition: 'border-color var(--duration-normal) var(--ease-out), color var(--duration-normal) var(--ease-out)',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = 'var(--teal)'
-              e.currentTarget.style.color = 'var(--teal)'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = 'transparent'
-              e.currentTarget.style.color = 'var(--slate)'
-            }}
+              '--hov-border': 'var(--teal)',
+              '--hov-color': 'var(--teal)',
+            } as React.CSSProperties}
           >
             <TrendingUp size={12} />
             View Trajectory
@@ -529,22 +523,16 @@ export default function MemberPage() {
               {isAuthenticated && !showAddTag && (
                 <button
                   onClick={() => setShowAddTag(true)}
-                  className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium"
+                  className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium hov-border hov-color"
                   style={{
                     background: 'transparent',
                     color: 'var(--slate)',
                     border: '1px dashed rgba(100,116,139,0.3)',
                     cursor: 'pointer',
                     transition: 'border-color var(--duration-normal) var(--ease-out), color var(--duration-normal) var(--ease-out)',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = 'var(--gold)'
-                    e.currentTarget.style.color = 'var(--gold)'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = 'rgba(100,116,139,0.3)'
-                    e.currentTarget.style.color = 'var(--slate)'
-                  }}
+                    '--hov-border': 'var(--gold)',
+                    '--hov-color': 'var(--gold)',
+                  } as React.CSSProperties}
                 >
                   <Plus size={10} />
                   Add
