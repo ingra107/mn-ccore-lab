@@ -11,8 +11,8 @@ import SmartCompose from '../../../components/SmartCompose'
 import { useUpdateTask, useBulkUpdateTasks } from '../../../hooks/useMutations'
 import { useAutoAcknowledge } from '../../../hooks/useAutoAcknowledge'
 import { useUndoToast } from '../../../components/UndoToast'
-import { useTaskDetail } from '../../../hooks/useApiData'
 import { localDateKey } from '../../../lib/dateUtils'
+import { TaskActivityFeed } from '../../../components/tasks/detail/TaskActivityFeed'
 import {
   ACCENT_GOLD, ACCENT_TEAL, ACCENT_GREEN,
   INK, INK_DIM, PAGE_BG, PANEL_BG,
@@ -48,10 +48,6 @@ export function InlineDetail({ task, projectName, onOpenEditor }: { task: TaskRo
   const [fullEditorTask, setFullEditorTask] = useState<TaskRow | null>(null)
   const [descExpanded, setDescExpanded] = useState(false)
   const moveRef = useRef<HTMLDivElement>(null)
-
-  // Activity peek — same hook TaskDetailDrawer uses; no new endpoint (A2).
-  const detailQuery = useTaskDetail(task.id)
-  const peekUpdates = (detailQuery.data?.updates ?? []).slice(0, 3)
 
   useEffect(() => {
     if (!moveOpen) return
@@ -194,28 +190,14 @@ export function InlineDetail({ task, projectName, onOpenEditor }: { task: TaskRo
         <SmartCompose taskId={task.id} placeholder="Add a note or @hermes…" showMeLock bare />
       </div>
 
-      {/* Activity peek — 3-entry newest-first (A2); "view all →" opens full editor */}
-      {(peekUpdates.length > 0 || detailQuery.isLoading) && (
-        <div style={{ marginBottom: 10, paddingTop: 8 }}>
-          {detailQuery.isLoading && <div style={{ fontSize: 10, color: INK_DIM, fontStyle: 'italic' }}>Loading activity…</div>}
-          {peekUpdates.map((u, i) => {
-            const isHermes = u.who === 'claude-ai' || u.who === 'hermes'
-            const isMe = u.who === 'nick-ingraham' || u.who === 'nick'
-            const nameColor = isHermes ? ACCENT_GOLD : isMe ? ACCENT_TEAL : INK_MUTED
-            return (
-              <div key={u.id ?? i} style={{ display: 'flex', gap: 6, padding: '3px 0', alignItems: 'baseline' }}>
-                <span style={{ fontSize: 10, fontWeight: 600, color: nameColor, flexShrink: 0 }}>{isHermes ? 'Hermes' : u.who}</span>
-                <span style={{ fontSize: 10, color: INK_DIM, flexShrink: 0, fontVariantNumeric: 'tabular-nums' }}>{u.when?.slice(0, 10) ?? ''}</span>
-                <span style={{ fontSize: 11, color: INK_MUTED, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{u.text}</span>
-              </div>
-            )
-          })}
-          <button
-            onClick={handleViewAll}
-            style={{ fontSize: 10, color: ACCENT_TEAL, background: 'transparent', border: 'none', padding: '3px 0', cursor: 'pointer', fontFamily: 'inherit' }}
-          >view all →</button>
-        </div>
-      )}
+      {/* Activity peek — 3-entry newest-first; "view all →" opens full editor */}
+      <div style={{ marginBottom: 10, paddingTop: 8 }}>
+        <TaskActivityFeed taskId={task.id} peekCount={3} hidePills avatarSize="xs" />
+        <button
+          onClick={handleViewAll}
+          style={{ fontSize: 10, color: ACCENT_TEAL, background: 'transparent', border: 'none', padding: '3px 0', cursor: 'pointer', fontFamily: 'inherit' }}
+        >view all →</button>
+      </div>
 
       {/* Quick-edit chips: Status / Priority / Due / Project + open-full-editor */}
       <TaskQuickEditChips

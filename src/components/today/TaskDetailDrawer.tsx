@@ -10,7 +10,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useTaskDetail } from '../../hooks/useApiData'
-import ReactionBar from '../ReactionBar'
 import SmartCompose from '../SmartCompose'
 import { useUpdateTask, useToggleSubtask } from '../../hooks/useMutations'
 import { useAutoAcknowledge } from '../../hooks/useAutoAcknowledge'
@@ -19,6 +18,7 @@ import { LinkRow } from './primitives'
 import { WorkflowSection } from '../tasks/detail/FieldControls'
 import type { WorkflowFields } from '../tasks/detail/FieldControls'
 import { TaskQuickEditChips } from '../tasks/TaskQuickEditChips'
+import { TaskActivityFeed } from '../tasks/detail/TaskActivityFeed'
 import TaskDetailPanel from '../tasks/TaskDetailPanel'
 import {
   ACCENT_GOLD, ACCENT_TEAL, ACCENT_ORANGE, ACCENT_GREEN,
@@ -41,7 +41,6 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
   if (task.key_link_2) linkSet.push('claude')
   if (task.key_link_3) linkSet.push('brief')
   const subtasks = detail?.subtasks ?? []
-  const updates = detail?.updates ?? []
   const blocks = detail?.blocks ?? []
 
   // Next step: first open subtask (Option 1 per design doc B).
@@ -172,30 +171,9 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
         </div>
       )}
 
-      {/* Activity feed — full-width, newest-first, directly under composer (A1) */}
-      <div style={{ marginTop: 14, paddingTop: 4 }}>
-        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: INK_DIM, marginBottom: 6 }}>Activity</div>
-        {detailQuery.isLoading && <div style={{ fontSize: 11, color: INK_DIM, fontStyle: 'italic' }}>Loading…</div>}
-        {!detailQuery.isLoading && updates.length === 0 && <div style={{ fontSize: 11, color: INK_DIM, fontStyle: 'italic' }}>No updates logged.</div>}
-        {updates.slice(0, 8).map((u, i) => {
-          const isHermes = u.who === 'claude-ai' || u.who === 'hermes'
-          const isMe = u.who === 'nick-ingraham' || u.who === 'nick'
-          const color = isHermes ? ACCENT_GOLD : isMe ? ACCENT_TEAL : INK_MUTED
-          return (
-            <div key={u.id ?? i} style={{ padding: '6px 0' }}>
-              <div style={{ display: 'flex', gap: 8, alignItems: 'baseline', marginBottom: 2 }}>
-                <span style={{ fontSize: 10, fontWeight: 600, color, letterSpacing: '0.04em' }}>{isHermes ? 'Hermes' : u.who}</span>
-                <span style={{ fontSize: 10, color: INK_DIM, fontVariantNumeric: 'tabular-nums' }}>{u.when?.slice(0, 16) ?? ''}</span>
-              </div>
-              <div style={{ fontSize: 12, color: INK, lineHeight: 1.45 }}>{u.text}</div>
-              {u.kind === 'note' && u.id && (
-                <div style={{ marginTop: 4 }}>
-                  <ReactionBar targetType="task_update" targetId={u.id} compact />
-                </div>
-              )}
-            </div>
-          )
-        })}
+      {/* Activity feed — TaskActivityFeed: visibility-gated, newest-first */}
+      <div style={{ marginTop: 14 }}>
+        <TaskActivityFeed taskId={task.id} hidePills />
       </div>
 
       {/* Quick-edit chips: Status / Priority / Due / Project + open-full-editor (A1: below fold) */}
