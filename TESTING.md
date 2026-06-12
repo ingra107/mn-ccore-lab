@@ -1,6 +1,6 @@
 # MN-CCORE Lab Hub — Testing Guide
 
-## Test Suites (838 API vitest tests + 4 Playwright suites; counts drift — trust `npm run test:api` output)
+## Test Suites (API vitest tests (count drifts — `npm run test:api` is the canonical number; 848 as of 2026-06-12) + 4 Playwright suites; counts drift — trust `npm run test:api` output)
 
 | Suite | File | Tests | What It Covers | Run Time |
 |-------|------|-------|----------------|----------|

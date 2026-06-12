@@ -3,6 +3,34 @@
 
 > Historical phase records moved from CLAUDE.md to keep the operating guide focused on current state. Each section is a complete record of what shipped, decisions made, and scores achieved.
 
+## 2026-06-11/12 (LATE EVENING, docket execution) — N1–N8 100% · mobile fix wave · schema v82 · dogfood green
+
+The full Nick-ordered close docket executed in one session (`8a41827a`→`1cc9ea9e`, 17 commits, 5 deploys).
+**N1 mobile wave**: Playwright audit at 375/390/430/768/1023/1440 → 70 verified defects → 24
+class-collapsed tickets → ALL fixed (`b4c6e6b6` P1s, `9a3afa91` P2+P3). Headliners: List title
+column was ZERO-width in the 768–1023 band (collapse gate at 767 vs mobile-nav at 1024); shared
+TaskRow now stacks by default <768 (adapters never passed `stack`); quick-add modal centering
+(framer transform overwrote style.translateX); blanket 44px button floor deformed DoneBox/stage
+dots into capsules (`.done-box`/`.stage-dot` exempt + ::before hit zones); task panel = true
+full-screen sheet ABOVE the tab bar; NOW line = inline divider between meetings; drop zones +
+drag hints hidden on touch. **Done-bar honesty** (`de9d8f50`): the mobile "Done" button only
+CLOSED the panel — now ✓ Complete completes (undo + close) beside Close. **N1c** (`8a41827a`):
+@mention typeahead — OverviewQuickAdd was a raw textarea (Rule 7) AND /api/team/slugs had no
+hermes entry. **N1b wave 1** (`865d6815`): TableControls view toggle = canonical tint-not-fill
+pill (class de-box across every DataPage); ProjectDetail gold band de-boxed. **N2 APPLIED**:
+4 long descriptions condensed (length-guarded UPDATEs; review doc preserves originals).
+**N3**: PB `collect_artifacts.py` vault collection + ArtifactPage Download .md + `/og/artifact/`
+card. **N5** (`87ce5efe`+`03d9fa79`): `hov-*` CSS hover utilities; 51 pure style-mutation
+hover pairs converted across 28 files (remaining 67 are stateful-by-design). **N6**
+(`70e41a0c`): dogfood suite 17 failed → 17/17 green — it predated the CF gate and was testing
+the Access interstitial; now DOGFOOD_BASE_URL=ungated preview + fake auth, stale R11 probes
+removed. **N7** (`f43e6fb5`): activity_log = KEEP (71 live writers + 12 analytics readers;
+"compat read only" was wrong). **N7b schema v82**: `ai_requests.input_tokens/output_tokens`;
+listener on `--output-format json` (PB `4981d9d2`); /api/ai-requests totals rollup. **N8**:
+Ask-the-Lab is dead (1 question ever, 0 answers) — retirement recommended, Nick decides.
+Close: simplify pass (`1cc9ea9e` — withAlpha fix for invalid `var()+hex` pill CSS, D1 batch,
+shared ICON_PROPS lib). Tests 846→848 · routes 240 · tables 74 · D1 v82.
+
 ## 2026-06-11 (PARALLEL, Bug Squasher → seen-model arc) — attention signals · schema v81 · the 231-phantom badge · click-opens-the-thing
 
 One Nick-driven arc from bug #70 to a full Slack-style attention model, all deployed same-day.
