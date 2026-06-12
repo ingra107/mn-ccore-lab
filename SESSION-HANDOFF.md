@@ -56,7 +56,22 @@ Relevant standing rules: 15 (row-height @media scoping), 55 (useIsMobile=1024, t
 FAB lift), mobile sticky-bottom compose (deliberate), Rule 56 swipe. AUDIT ONLY first — fixes are
 follow-on tickets Nick reviews.
 
-### ✅ N1 AUDIT EXECUTED 2026-06-11 evening — TICKET LIST (Nick reviews; NO fixes applied)
+### ✅✅ N1 FIX WAVE EXECUTED same evening — ALL 24 TICKETS SHIPPED (Nick: "i trust you" + 4 AskUserQuestion answers: all-24 / Columns→List <768 / full design latitude / two deploys)
+
+Deploy 1 = P1 batch (`b4c6e6b6`), deploy 2 = P2+P3 batch (`9a3afa91`); both live, 848/848
+tests, visually verified via re-capture at m375+t768 (screenshots in
+`review/n1-mobile-audit-2026-06-11/`, pre-fix evidence in `...-KEEP/`). Deliberate design
+calls (live-reviewable): Columns auto-renders List <768 w/ notice; phone toolbar = Filters
+pill + swipeable quick-views + Create-Task dropped (FAB is the create path); ScrollToTop
+hidden <1024; drop zones + drag hints hidden on touch; NOW line = inline divider between
+meetings; task panel = true full-screen ABOVE the tab bar (its Done bar exit, previously
+COVERED by the tab bar, is now visible — pre-existing affordance, not new); phone stage
+strip shows only the current label; TaskCards hide hover-actions on touch (reachable via
+tap→panel). NOT done here (left to their owners): site-wide emoji→icon sweep + box-budget
+items (queued icon-sweep task + N1b); ProjectDetail header-meta wrap judged acceptable
+clean unit-wrap. Original ticket list below for reference.
+
+### ✅ N1 AUDIT EXECUTED 2026-06-11 evening — TICKET LIST (all fixed, see above)
 
 Captured 70 PNGs (8 surfaces × 6 viewports: 375/390/430 phones, 768+1023 tablet-band edges,
 1440 ride-along) against an ungated preview of HEAD; 7 surface reviews → 70 adversarially
