@@ -117,7 +117,10 @@ export default function UnifiedMyTasks() {
   // S1: consume `?open=<taskId>` deep-links (search results, ⌘K palette pick,
   // Copy-task-link, context-menu open-in-new-tab). Open the detail drawer for
   // that task once the task collection has loaded, then strip the param.
+  // Also handles `?openTask=` produced by ArtifactPage origin-task chips and
+  // activityRender task-entity cards — both param names open the same drawer.
   useOpenParam('open', (id) => setDrawer(id), { ready: !tasksQuery.isLoading })
+  useOpenParam('openTask', (id) => setDrawer(id), { ready: !tasksQuery.isLoading })
 
   const currentQuery = searchParams.toString()
   const applyView = useCallback((q: string) => {

@@ -212,7 +212,7 @@ function MeetingDetail({ meeting, onToggleAction }: MeetingDetailProps) {
         </div>
       </div>
 
-      <div style={{ height: '1px', background: 'var(--border-subtle)', marginBottom: '1.5rem' }} />
+      <div style={{ marginBottom: '1.5rem' }} />
 
       {meeting.attendees && meeting.attendees.length > 0 && (
         <div className="mb-6">
@@ -815,7 +815,7 @@ export default function Meetings() {
             )}
           </div>
 
-          <div style={{ padding: '8px 12px', borderTop: '1px solid var(--border-subtle)', flexShrink: 0 }}>
+          <div style={{ padding: '8px 12px', flexShrink: 0 }}>
             <span className="text-xs" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
               {meetings.length} meetings &middot; {allActionItems.length} actions &middot;{' '}
               {meetings.reduce((acc, m) => acc + (m.decisions?.length ?? 0), 0)} decisions
@@ -838,7 +838,7 @@ export default function Meetings() {
             <motion.div key={selectedMeeting.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}>
               <MeetingDetail meeting={selectedMeeting} onToggleAction={handleToggleAction} />
 
-              <div style={{ marginTop: '2.5rem', paddingTop: '2rem', borderTop: '1px solid var(--border-subtle)' }}>
+              <div style={{ marginTop: '2.5rem', paddingTop: '2rem' }}>
                 <h3 className="text-base font-medium mb-4" style={{ color: 'var(--ink)' }}>All Pending Actions</h3>
 
                 {pendingActions.length > 0 ? (
