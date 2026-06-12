@@ -130,6 +130,16 @@ async function ogTeam(slug: string, env: Env): Promise<string> {
   return svg({ eyebrow: 'MN-CCORE TEAM', title: display, subtitle })
 }
 
+// N3c (2026-06-11): share card for Hermes artifact pages (/portal/artifacts/:id).
+async function ogArtifact(id: string, env: Env): Promise<string> {
+  const row = await env.DB.prepare(
+    'SELECT title, version, created_by, created_at FROM artifacts WHERE id = ?'
+  ).bind(id).first<{ title: string; version: number; created_by: string | null; created_at: string }>()
+  if (!row) return svg({ eyebrow: 'ARTIFACT', title: 'Artifact not found' })
+  const subtitle = `v${row.version} · ${(row.created_at || '').slice(0, 10)}${row.created_by === 'claude-ai' ? ' · by Hermes' : ''}`
+  return svg({ eyebrow: 'LAB ARTIFACT', title: row.title, subtitle, accent: '#dcb355' })
+}
+
 async function ogMeeting(id: string, env: Env): Promise<string> {
   const row = await env.DB.prepare(
     'SELECT title, date, type FROM meetings WHERE id = ?'
@@ -149,6 +159,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     if (type === 'project') body = await ogProject(slug, env)
     else if (type === 'team') body = await ogTeam(slug, env)
     else if (type === 'meeting') body = await ogMeeting(slug, env)
+    else if (type === 'artifact') body = await ogArtifact(slug, env)
     else body = svg({ eyebrow: 'MN-CCORE LAB', title: 'Research operations', subtitle: 'Tasks · Projects · Meetings · Lab knowledge' })
   } catch {
     body = svg({ eyebrow: 'MN-CCORE LAB', title: 'Research operations' })

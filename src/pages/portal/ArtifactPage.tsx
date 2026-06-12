@@ -13,6 +13,7 @@
 import { useState, useMemo } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
+import { usePageMeta } from '../../hooks/usePageMeta'
 import { FileText, History, Copy, ClipboardList, FolderKanban, Send, Lock } from 'lucide-react'
 import PageContainer from '../../components/PageContainer'
 import { TextSkeleton } from '../../components/LoadingSkeleton'
@@ -70,6 +71,13 @@ export default function ArtifactPage() {
     enabled: !!id,
     staleTime: 30 * 1000,
   })
+
+  // N3c — Rule 31 share card for artifact links.
+  usePageMeta(
+    artifact ? `${artifact.title} · MN-CCORE` : 'Artifact · MN-CCORE',
+    'Link-shareable lab artifact',
+    { ogImage: `https://mn-ccore-lab.pages.dev/og/artifact/${id}` },
+  )
 
   const { data: activity = [] } = useQuery<ActivityEntryItemRow[]>({
     queryKey: ['artifact-activity', id],
@@ -258,6 +266,24 @@ export default function ArtifactPage() {
             style={{ fontSize: 11, fontWeight: 500, padding: '3px 10px', borderRadius: 'var(--radius-full)', background: 'var(--surface-2, rgba(100,116,139,0.12))', color: 'var(--slate)', border: '1px solid var(--border-subtle)', marginLeft: 'auto' }}
           >
             <Copy size={11} /> Copy markdown
+          </button>
+          {/* N3b — one-way export: download the .md (Google-Doc conversion
+              rides PB's md_to_docx/Workspace tooling on the vault copy the
+              collection script lands in Context/Artifacts/). */}
+          <button
+            type="button"
+            onClick={() => {
+              const blob = new Blob([artifact.body_md], { type: 'text/markdown' })
+              const a = document.createElement('a')
+              a.href = URL.createObjectURL(blob)
+              a.download = `${artifact.title.replace(/[^\w\- ]+/g, '').trim().replace(/\s+/g, '-').toLowerCase() || artifact.id}.md`
+              a.click()
+              URL.revokeObjectURL(a.href)
+            }}
+            className="inline-flex items-center gap-1 cursor-pointer"
+            style={{ fontSize: 11, fontWeight: 500, padding: '3px 10px', borderRadius: 'var(--radius-full)', background: 'var(--surface-2, rgba(100,116,139,0.12))', color: 'var(--slate)', border: '1px solid var(--border-subtle)' }}
+          >
+            <Send size={11} /> Download .md
           </button>
         </div>
 

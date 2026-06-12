@@ -24,7 +24,15 @@ export async function handleGetAIRequests(url: URL, env: Env): Promise<Response>
   query += ' ORDER BY created_at DESC';
 
   const result = await env.DB.prepare(query).bind(...params).all();
-  return json({ data: result.results || [], count: result.results?.length || 0 });
+  // N7b — usage rollup across ALL requests (not just the filtered page).
+  const tokens = await env.DB.prepare(
+    'SELECT COALESCE(SUM(input_tokens),0) AS input, COALESCE(SUM(output_tokens),0) AS output, COUNT(input_tokens) AS tracked FROM ai_requests'
+  ).first<{ input: number; output: number; tracked: number }>();
+  return json({
+    data: result.results || [],
+    count: result.results?.length || 0,
+    tokens: tokens ?? { input: 0, output: 0, tracked: 0 },
+  });
 }
 
 // POST /api/ai-requests — create a new AI request
@@ -90,7 +98,15 @@ export async function handleUpdateAIResponse(
   request: Request,
   env: Env,
 ): Promise<Response> {
-  const body = await request.json() as { response: string; status?: string };
+  const body = await request.json() as {
+    response: string;
+    status?: string;
+    // N7b (schema v82): per-generation usage from the listener's
+    // `claude --print --output-format json` call. Optional — older listeners
+    // omit them and the columns stay NULL.
+    input_tokens?: number;
+    output_tokens?: number;
+  };
 
   if (!body.response?.trim()) {
     return error('response is required', 400);
@@ -101,10 +117,13 @@ export async function handleUpdateAIResponse(
     return error('status must be completed or failed', 400);
   }
 
+  const inTok = Number.isFinite(body.input_tokens) ? Math.max(0, Math.round(body.input_tokens as number)) : null;
+  const outTok = Number.isFinite(body.output_tokens) ? Math.max(0, Math.round(body.output_tokens as number)) : null;
+
   // 1. Mark the ai_requests row completed.
   await env.DB.prepare(
-    "UPDATE ai_requests SET response = ?, status = ?, responded_at = datetime('now') WHERE id = ?"
-  ).bind(body.response.trim(), status, id).run();
+    "UPDATE ai_requests SET response = ?, status = ?, responded_at = datetime('now'), input_tokens = ?, output_tokens = ? WHERE id = ?"
+  ).bind(body.response.trim(), status, inTok, outTok, id).run();
 
   const updated = await env.DB.prepare('SELECT * FROM ai_requests WHERE id = ?').bind(id).first<{
     id: string;

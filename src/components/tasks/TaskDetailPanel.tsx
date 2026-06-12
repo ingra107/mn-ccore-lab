@@ -22,6 +22,7 @@ import { useToast } from '../../hooks/useToast'
 import { useUndoToast } from '../UndoToast'
 import { formatRelativeTime } from '../../lib/dateUtils'
 import { appendCharToInput } from '../../lib/textUtils'
+import { isTaskDone } from '../../lib/taskGrouping'
 import MentionInput from '../MentionInput'
 import TypingIndicator from '../TypingIndicator'
 import { getPersonInfo, getAllMembers, directors } from '../../data/team'
@@ -836,16 +837,36 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
 
         </div>
 
-        {/* Mobile-only Done pill — always-visible exit for thumbs that
-            don't reach top-right X. Swipe-right-to-dismiss also works. */}
-        <div className="task-detail-done-bar">
+        {/* Mobile-only bottom bar — thumb-reach actions. Nick 2026-06-11: the
+            old single "Done" button only CLOSED the panel — in a task app
+            "Done" reads as "complete the task", so his tap completed nothing.
+            Now: ✓ Complete actually completes (with undo, then closes);
+            Close is labeled as what it is. Swipe-right-to-dismiss still works. */}
+        <div className="task-detail-done-bar" style={{ display: 'flex', gap: 8 }}>
+          <button
+            type="button"
+            onClick={() => {
+              if (!isTaskDone(task)) {
+                handleStatusChange('done')
+                onClose()
+              } else {
+                handleStatusChange('todo')
+              }
+            }}
+            className="task-detail-done-btn"
+            aria-label={isTaskDone(task) ? 'Reopen task' : 'Complete task'}
+            style={{ flex: 2 }}
+          >
+            {isTaskDone(task) ? '↩ Reopen' : '✓ Complete'}
+          </button>
           <button
             type="button"
             onClick={onClose}
-            className="task-detail-done-btn"
-            aria-label="Done — close task"
+            className="task-detail-close-btn"
+            aria-label="Close task panel"
+            style={{ flex: 1 }}
           >
-            Done
+            Close
           </button>
         </div>
 
@@ -902,12 +923,21 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
               z-index: 20;
             }
             .task-detail-done-btn {
-              width: 100%;
               min-height: 48px;
               border-radius: var(--radius-lg);
               border: none;
               background: var(--teal-solid);
               color: #fff;
+              font-weight: var(--weight-ui, 500);
+              font-size: 15px;
+              cursor: pointer;
+            }
+            .task-detail-close-btn {
+              min-height: 48px;
+              border-radius: var(--radius-lg);
+              border: 1px solid var(--border-subtle);
+              background: transparent;
+              color: var(--slate);
               font-weight: var(--weight-ui, 500);
               font-size: 15px;
               cursor: pointer;
