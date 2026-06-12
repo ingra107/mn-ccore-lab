@@ -1,3 +1,32 @@
+# ▶ SESSION 2026-06-12 — D1 PARITY SWEEP — COMPLETED
+
+**5 commits, HEAD = `abc714ec`. All built, NOT yet deployed.**
+
+- **D1-pre + Pass 1** (`6e884f94`): hex-alpha sibling fixes (ListView, SearchPage), Done bar dark composite, grip-on-touch hidden, InlineDetail + TaskDetailDrawer de-boxed (8-point locked canon: removed bg tint, section separators, resting borders, radius fixed to 999 on all chips, TaskQuickEditChips pills converged)
+- **D1 Pass 2** (`ca892788`): Meetings 3×borderTop separators removed; MyTasks now consumes `?openTask=` param — was silently dead-ending from ArtifactPage origin chips + activityRender task cards
+- **D1 Pass 3** (`2a1adca9`): InlineDetail + TaskDetailDrawer activity feeds replaced with `TaskActivityFeed` — shared renderer, visibility-gated, Hermes-aware; removed 40+ lines of hand-rolled feed code
+- **Icon sweep** (`c9751aef`): 55 icons at ≤20px across TaskDetailPanel/TaskCard/Dashboard/activityRender — added `strokeWidth={1.5} absoluteStrokeWidth`; PlannedChip/RightNow/group-pin/PlannedTaskRow "Now" chip radius 3/4→999 + fill 14%→9% + hairline 28% border; LinkChip + DispatchBadge opaque fills converged to 9%/28% AttentionChip canon
+- **Consistency hunt** (`abc714ec`): DispatchBadge border 20%→28%; LinkifiedText → color-mix 9%/28%/999 (matches LinkChip)
+
+**Tasks completed this session (update in Hub):**
+- `task_01KTWD8BV1QS16KK1P6MPFMJC9` — badge honesty audit: PASS (no violations found)
+- `task_01KTWD8CNYNANJHQM13DYPT94S` — deep-link integrity: FIXED (MyTasks ?openTask=)
+- `task_01KTWD89V8YHW3S4P6E0VN1BWS` — icon sweep: DONE (55 fixes in top-4 files; tail ~40 files remain for opportunistic application per Rule 74)
+- `task_01KTWD8AWHS385Z0YCZEV4N8AN` — pill/chip sweep: DONE (PlannedChip, RightNow, 📍 pins, LinkChip, LinkifiedText, DispatchBadge)
+- `task_01KTWD8DDTHDE498FM00SFJTJ9` — style consistency hunt: DONE (same evidence base as above, no duplicate work)
+
+**Deploy when ready:** `npm run deploy:pages:gated` from repo root.
+
+**Remaining D1-pre items (low-priority, apply opportunistically):**
+- Item 2: framer-motion `style.transform` silently replaced on motion elements (8 candidate files)
+- Item 4: Fixed-px grid tracks + 1fr crushing at 768–1023
+- Item 7: Long placeholders on mobile (`Add a note, or @hermes for AI…` in drawers)
+- Item 8: z-order — QuickCaptureInbox/TaskContextMenu/BulkBar already ✓; remaining `z-50` Tailwind modals like CreateDecisionModal (should use --z-modal CSS var)
+- Item 9: gradient fading to `var(--ink)` text token (no hits found; likely CLEAR)
+- Item 10: Action-label honesty (judgment pass; Done bar fixed ✅ last session)
+
+---
+
 # ▶▶▶ NEXT SESSION — D1: DESIGN-PARITY SWEEP (Nick 2026-06-12, verbatim: "why wouldn't
 # something like the expanded task in Today page get some of the updates that we did to the
 # full task editor… we need to have codex do multiple passes to help find targets for
