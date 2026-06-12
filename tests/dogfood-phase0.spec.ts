@@ -1,20 +1,31 @@
 import { test, expect, Page } from '@playwright/test'
 import { P } from './helpers/paths'
+import { injectFakeAuth } from './helpers/capture-auth'
 
 /**
- * Phase 0 dogfood — targeted interactivity probes for R11/R12 gaps.
+ * Dogfood sweep — console-error page health + mobile spot checks.
  *
- * Purpose: verify on the LIVE site (with Phase 0 test_delete_ seed data) that
- * the R11/R12 interaction gaps the plan claims still exist actually persist.
- * Complements the source-level audit in scripts/seed/phase0-bug-log.md.
+ * N6 triage (2026-06-11): the suite predated the CF Access gate, so every
+ * "page" it tested was actually the Cloudflare sign-in interstitial — the 13
+ * chronic page-health failures were ONE cause: the interstitial's own logo
+ * data-URI tripping its CSP. The suite now targets an UNGATED preview deploy
+ * (hash URL) with the fake-auth cookie, same pattern as the capture specs:
  *
- * Scope discipline: each test loads exactly one page and runs ≤3 assertions.
- * NO full page sweeps. NO journey chains. Target ~200 requests total to stay
- * well under the Cloudflare Workers 100K/day cap.
+ *   DOGFOOD_BASE_URL=https://<hash>.mn-ccore-lab.pages.dev \
+ *     npx playwright test --config=playwright.config.dogfood.ts
+ *
+ * Removed in the same triage: the Phase-0 "R11 interaction gap" probes. They
+ * asserted on `test_delete_` seed rows that were cleaned up long ago, and the
+ * gaps they documented (inline due-date editing, Ideas title-click detail,
+ * Grants row detail, Manuscripts inline PI/category) have all since shipped —
+ * their purpose was Phase-0 archaeology, fulfilled. History: git +
+ * scripts/seed/phase0-bug-log.md.
  *
  * NOT included in the main playwright.config.ts — only runs via
  *   npx playwright test --config=playwright.config.dogfood.ts
  */
+
+const BASE = process.env.DOGFOOD_BASE_URL ?? 'https://mn-ccore-lab.pages.dev'
 
 // Collect console errors for every page — noisy red flag is a bug
 const consoleErrorsByPage: Record<string, string[]> = {}
@@ -26,93 +37,8 @@ function captureConsole(page: Page, label: string) {
   })
 }
 
-test.describe('R11 interaction gaps (desktop)', () => {
-  test('R11-4 Deadlines — due_date cell is plain text (gap)', async ({ page }) => {
-    captureConsole(page, 'deadlines')
-    await page.goto(P.deadlines)
-    await expect(page.locator('body')).toBeVisible()
-    // Wait for data to load (find any test_delete_ milestone)
-    const milestoneRow = page.locator('text=/test_delete_/').first()
-    await expect(milestoneRow).toBeVisible({ timeout: 15000 })
-    // The date cell should NOT be an input/select when clicked
-    // Locate a date-like text near a test_delete_ row and click it
-    const dateCells = page.locator('text=/\\d{4}-\\d{2}-\\d{2}|Apr \\d+|May \\d+/').first()
-    if (await dateCells.count() > 0) {
-      await dateCells.click({ trial: false }).catch(() => {})
-      // If an input appeared, the bug is fixed. If not, gap persists.
-      const inputAfterClick = await page.locator('input[type="date"], [role="combobox"]').count()
-      console.log(`[dogfood] /deadlines date cell click → inputs found: ${inputAfterClick}`)
-    }
-  })
-
-  test('R11-5 Manuscripts — PI + Category cells inspection', async ({ page }) => {
-    captureConsole(page, 'manuscripts')
-    await page.goto(P.manuscripts)
-    await expect(page.locator('body')).toBeVisible()
-    // Wait for any test_delete_ row to be visible (row data loaded)
-    const row = page.locator('text=/test_delete_/').first()
-    await expect(row).toBeVisible({ timeout: 15000 })
-    // Count role=combobox elements (InlineSelect renders as role=combobox).
-    // A truly inline-editable PI+Category should show role=combobox on every row.
-    const comboboxes = await page.getByRole('combobox').count()
-    const testRows = await page.locator('text=/test_delete_/').count()
-    console.log(`[dogfood] /manuscripts test_delete_ rows: ${testRows}, comboboxes: ${comboboxes}`)
-    // Gap check: each test row has ~1 combobox (status). If PI+Category were inline,
-    // we'd expect roughly 3x testRows comboboxes. Anything <2x indicates gap persists.
-    const ratio = testRows > 0 ? comboboxes / testRows : 0
-    console.log(`[dogfood] combobox-per-row ratio: ${ratio.toFixed(2)} (gap if <2)`)
-  })
-
-  test('R11-6 Ideas — title click should open detail panel', async ({ page }) => {
-    captureConsole(page, 'ideas')
-    await page.goto(P.ideas)
-    await expect(page.locator('body')).toBeVisible()
-    const idea = page.locator('text=/test_delete_PI mentor match program/').first()
-    await expect(idea).toBeVisible({ timeout: 15000 })
-    // Click the idea title
-    await idea.click().catch(() => {})
-    await page.waitForTimeout(500)
-    // Look for any detail panel indicators
-    const detailPanel = await page.locator('[role="dialog"], [class*="detail"], [class*="expanded"]').count()
-    console.log(`[dogfood] /ideas after click, detail panel elements: ${detailPanel}`)
-  })
-
-  test('R11-8 Grants — row click should open detail', async ({ page }) => {
-    captureConsole(page, 'grants')
-    await page.goto(P.grants)
-    await expect(page.locator('body')).toBeVisible()
-    const grant = page.locator('text=/test_delete_K99 Fake/').first()
-    await expect(grant).toBeVisible({ timeout: 15000 })
-    await grant.click().catch(() => {})
-    await page.waitForTimeout(500)
-    // Check if we navigated away (Link behavior) or if inline detail opened
-    const currentUrl = page.url()
-    const navigatedAway = !currentUrl.endsWith('/grants')
-    console.log(`[dogfood] /grants click outcome: navigatedAway=${navigatedAway}, url=${currentUrl}`)
-  })
-
-  test('Decisions — N-key opens create modal (false claim check)', async ({ page }) => {
-    captureConsole(page, 'decisions')
-    await page.goto(P.decisions)
-    await expect(page.locator('body')).toBeVisible()
-    await page.waitForTimeout(1000) // let page settle
-    // Press 'N' and check if a modal opens
-    await page.keyboard.press('KeyN')
-    await page.waitForTimeout(500)
-    const dialog = await page.locator('[role="dialog"], [class*="modal"]').count()
-    console.log(`[dogfood] /decisions N-key → dialogs opened: ${dialog} (expected 0 — claim is false)`)
-  })
-
-  test('Ideas — N-key opens create modal (positive check)', async ({ page }) => {
-    captureConsole(page, 'ideas-n')
-    await page.goto(P.ideas)
-    await expect(page.locator('body')).toBeVisible()
-    await page.waitForTimeout(1000)
-    await page.keyboard.press('KeyN')
-    await page.waitForTimeout(500)
-    const dialog = await page.locator('[role="dialog"], [class*="modal"], [class*="Create"]').count()
-    console.log(`[dogfood] /ideas N-key → dialogs opened: ${dialog} (expected ≥1)`)
-  })
+test.beforeEach(async ({ context }) => {
+  await injectFakeAuth(context, BASE)
 })
 
 test.describe('R12 mobile viewport checks', () => {
@@ -120,7 +46,7 @@ test.describe('R12 mobile viewport checks', () => {
 
   test('R12-H4 Calendar — prev/next hit-target size', async ({ page }) => {
     captureConsole(page, 'calendar-mobile')
-    await page.goto(P.calendar)
+    await page.goto(BASE + P.calendar)
     await expect(page.locator('body')).toBeVisible()
     await page.waitForTimeout(1500)
     // Find prev button via aria or role; fall back to SVG parent
@@ -140,7 +66,7 @@ test.describe('R12 mobile viewport checks', () => {
 
   test('MobileTabBar — count visible routes', async ({ page }) => {
     captureConsole(page, 'tabbar')
-    await page.goto(P.dashboard)
+    await page.goto(BASE + P.dashboard)
     await expect(page.locator('body')).toBeVisible()
     await page.waitForTimeout(1500)
     // MobileTabBar renders nav with links
@@ -150,7 +76,7 @@ test.describe('R12 mobile viewport checks', () => {
 
   test('Dashboard mobile — scan for sub-44px tap targets', async ({ page }) => {
     captureConsole(page, 'dashboard-mobile')
-    await page.goto(P.dashboard)
+    await page.goto(BASE + P.dashboard)
     await expect(page.locator('body')).toBeVisible()
     await page.waitForTimeout(2000)
     const buttons = page.locator('button, a[href], [role="button"]')
@@ -206,7 +132,7 @@ test.describe('Basic page health', () => {
           errors.push(`console.error: ${text}`)
         }
       })
-      const response = await page.goto(path, { waitUntil: 'networkidle', timeout: 20000 })
+      const response = await page.goto(BASE + path, { waitUntil: 'networkidle', timeout: 20000 })
       expect(response?.status()).toBeLessThan(400)
       // Give the app a moment to finish hydration + initial queries
       await page.waitForTimeout(1500)
