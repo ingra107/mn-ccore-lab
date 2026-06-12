@@ -19,6 +19,25 @@ InlineDetail.tsx`, rendered by LanesView/ColumnsView inline expand): boxed secti
 panel's one-continuous-surface + box-budget-of-one. Treat InlineDetail (and TaskDetailDrawer
 on Today) as the LEAD targets of the fix wave.
 
+**D1-pre (CODEX PASS 0 — run FIRST, mechanical): sibling-class audit of the 2026-06-11
+session's own fixes.** Nick: "check the other stuff you did today... anything else suffer
+from not looking elsewhere to find fixes of similar nature." Each fix below was applied at
+ONE site; codex sweeps the repo for unswept siblings of the same mechanism, outputs
+file:line lists per class, then fixes the mechanical ones (visual-value-preserving only).
+
+| # | Class (today's fix) | Sibling grep / check | Status |
+|---|---|---|---|
+| 1 | Hex-suffix alpha on var() strings (`c+'70'` = invalid CSS; fixed in TopBar w/ `withAlpha`) | `grep -rn "\.color + '\|color + '[0-9a-fA-F]" src` — flag any whose color source is a `var()` string | **2 CONFIRMED: `ListView.tsx:224` `meta.color+'80'` (GROUP_META = ACCENT_* var() strings → group dot bg invisible) · `SearchPage.tsx:830` `config.color+'14'` (var(--teal) etc.)** |
+| 2 | framer-motion: `transform` in `style` silently replaced by animated transform (quick-add centering) | every `motion.*` element that ALSO sets `style.transform` w/ translate/scale — `grep -l "transform.*translate" src` then verify motion usage per file (8 candidate files: CLIFMap, GrantTimelineCard, PomodoroStatsCard, StatusLine, WeeklyProgressCard, HermesPending, Layout, NetworkBackground) | unchecked |
+| 3 | `--cream` flat bg on a surface whose body carries the `--surface-2` gradient composite (task-panel near-black bands) | inside `.task-detail-panel`: any OTHER element setting `background: var(--cream)`/color-mix-on-cream — ⚠ check the mobile Done bar (`.task-detail-done-bar` uses `color-mix(in oklch, var(--cream) 95%…)` — likely the SAME mismatch class in dark) | suspected sibling |
+| 4 | Fixed-px grid tracks + 1fr crushing to zero in the 768–1023 band (ListView title) | `grep -rn "gridTemplateColumns.*px.*1fr" src` — sum fixed tracks; any grid >~600px fixed that lacks a 768–1023 override (check `.task-grid-row` / Deadlines / TableContainer columns) | unchecked |
+| 5 | Blanket 44px button min-height deforming small visual controls (DoneBox/stage-dot exempted) | buttons with inline `width/height ≤ 30` not in the `:not()` exemption chains — carets, priority dots, swap pills, bell internals | unchecked |
+| 6 | Drag-only affordances dead on touch (drop zones hidden) | the `⋮⋮` Grip renders on touch at 0.6 opacity but native DnD never fires there (TaskRow `Grip`); Columns kanban drag on touch; DashboardGrid drag | unchecked — judgment: hide grip on touch? (📌 is the touch path) |
+| 7 | Placeholders too long for narrow inputs (panel composer + morning compose shortened) | remaining long placeholders on mobile-rendered composers: SmartCompose default `'Add a note, or @hermes for AI…'` in drawers, RightNow expanded `'Chat with Claude about this task…'` | unchecked |
+| 8 | Overlays/z-order under MobileTabBar (panel was z-50 under z-100 bar) | `grep -rn "z-50\|z-40" src` on fixed overlays that should sit above nav on mobile (QuickCaptureInbox panel, TaskContextMenu, BulkBar) | unchecked |
+| 9 | bg gradient fading to a TEXT token (`var(--ink)` white smear) | `grep -rn "gradient.*var(--ink)" src` + any fade using non-bg tokens | unchecked |
+| 10 | Action-label honesty (Done bar → Complete/Close) | buttons whose label promises an entity action but only navigates/closes | judgment pass, ride Pass 1 matrix |
+
 **Execution shape (Nick-specified: CODEX MULTIPLE PASSES, then fix):**
 - **Pass 1 (codex, audit):** inventory every task-expand/detail surface + build a
   feature/style matrix vs the locked canon, TaskDetailPanel = reference. Surfaces:
