@@ -1665,14 +1665,50 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
   align-items: center;
 }
 
-/* Global mobile touch-target floor — filter chips, selects, inline links */
+/* Global mobile touch-target floor — filter chips, selects, inline links.
+   .done-box is exempt (N1.08): it's a 17px square whose 44px hit area comes
+   from its ::before pseudo-element below, not from stretching the visual. */
 @media (max-width: 768px) {
-  button:not(.kbd-shortcut):not(.close-button):not([aria-label="Close"]),
+  button:not(.kbd-shortcut):not(.close-button):not([aria-label="Close"]):not(.done-box):not(.stage-dot),
   a.inline-link,
   select,
   .filter-chip,
   .inline-select-trigger {
     min-height: 44px;
+  }
+}
+
+/* N1.15 — drag-and-drop zones are dead UI on touch (native DnD never fires);
+   the 📌 plan button is the touch planning path. Section hints describing
+   drag interactions hide there too (they wrapped into the headers). */
+@media (hover: none) {
+  .today-drop-zone,
+  .today-section-hint {
+    display: none !important;
+  }
+}
+
+/* N1.09 — FAB-clearing bottom gutter for inner scroll containers on mobile
+   widths (window-scrolling pages get the equivalent via portal-content's
+   mobile padding). Clears the 2-FAB stack (quick-add + capture inbox). */
+@media (max-width: 1023px) {
+  .fab-clear {
+    padding-bottom: calc(var(--fab-stack-2) + 56px) !important;
+  }
+}
+
+/* N1.08/N1.16 — small square/dot controls keep their visual size; an
+   invisible ::before restores the 44px touch zone on touch devices. */
+@media (hover: none) {
+  .done-box,
+  .stage-dot {
+    position: relative;
+  }
+  .done-box::before,
+  .stage-dot::before {
+    content: '';
+    position: absolute;
+    inset: -13px;
   }
 }
 
@@ -1692,7 +1728,7 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
    44px floor on a 900px desktop window driven by a mouse (which would bloat
    dense tables). Desktop power-grid is untouched: it has a fine pointer. */
 @media (hover: none) and (pointer: coarse) and (min-width: 769px) {
-  button:not(.kbd-shortcut):not(.close-button):not([aria-label="Close"]),
+  button:not(.kbd-shortcut):not(.close-button):not([aria-label="Close"]):not(.done-box):not(.stage-dot),
   a.inline-link,
   select,
   .filter-chip,

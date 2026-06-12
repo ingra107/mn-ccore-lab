@@ -1,8 +1,12 @@
 import { useState, useEffect } from 'react'
 import { ArrowUp } from 'lucide-react'
+import { useIsMobile } from '../hooks/useIsMobile'
 
 export default function ScrollToTop() {
   const [visible, setVisible] = useState(false)
+  // N1.09 — mobile drops to a 2-FAB stack: flick-scroll makes this FAB
+  // redundant there, and three stacked FABs covered the rows' right meta.
+  const isMobile = useIsMobile()
 
   useEffect(() => {
     const handler = () => setVisible(window.scrollY > 400)
@@ -10,7 +14,7 @@ export default function ScrollToTop() {
     return () => window.removeEventListener('scroll', handler)
   }, [])
 
-  if (!visible) return null
+  if (!visible || isMobile) return null
 
   return (
     <button

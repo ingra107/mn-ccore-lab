@@ -99,7 +99,7 @@ export function ListView({ filtered, selected, toggleSelect, setSelected, setDra
     // "the same width as calendar and hub", not fluid-to-viewport). The 1fr
     // Title column absorbs the extra band width.
     <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
-      <div ref={scrollRef} style={{ flex: 1, overflow: 'auto' }}>
+      <div ref={scrollRef} className="fab-clear" style={{ flex: 1, overflow: 'auto' }}>
        <div className="mt-band">
         <div>
         <div style={{ padding: '10px 16px 0' }}><OverdueBanner tasks={filtered} /></div>

@@ -21,12 +21,15 @@ interface TaskCardProps {
   onStatusChange: (id: string, status: string) => void
   onPriorityChange?: (id: string, priority: string) => void
   compact?: boolean
+  /** N1.23 — hide the project chip when the card renders on its own
+   *  project's page (the chip is redundant noise there). */
+  hideProjectChip?: boolean
   onClick?: () => void
   onMouseEnter?: () => void
   onMouseLeave?: () => void
 }
 
-export default function TaskCard({ task, onStatusChange, onPriorityChange, compact = false, onClick, onMouseEnter, onMouseLeave }: TaskCardProps) {
+export default function TaskCard({ task, onStatusChange, onPriorityChange, compact = false, hideProjectChip = false, onClick, onMouseEnter, onMouseLeave }: TaskCardProps) {
   const { showUndo } = useUndoToast()
   const person = getPersonInfo(task.assignee)
 
@@ -152,7 +155,7 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
             )}
 
             {/* Project */}
-            {task.project_id && !compact && (
+            {task.project_id && !compact && !hideProjectChip && (
               <span
                 className="flex items-center gap-1 text-[11px]"
                 style={{

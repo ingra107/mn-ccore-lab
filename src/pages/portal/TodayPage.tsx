@@ -339,10 +339,12 @@ export default function TodayPage() {
       `}</style>
 
       <main className="b2-main">
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, marginBottom: 4 }}>
+        {/* N1.21 — flexWrap + nowrap date: at 375 the date used to wrap into a
+            3-line sliver squeezed beside the H1; now it drops as one unit. */}
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, marginBottom: 4, flexWrap: 'wrap' }}>
           <h1 style={{ fontSize: 32, fontWeight: 600, color: 'var(--task-ink)', letterSpacing: '-0.03em', margin: 0 }}>Today</h1>
           <HeartbeatLine width={60} height={14} color={ACCENT_GOLD} variant="static" />
-          <span style={{ fontSize: 13, color: INK_MUTED }}>{formatTodayDate()}</span>
+          <span style={{ fontSize: 13, color: INK_MUTED, whiteSpace: 'nowrap' }}>{formatTodayDate()}</span>
           <div style={{ flex: 1 }} />
           {/* PI-only: run /process on THIS machine via the mnccore:// local
               protocol (fire-and-forget). Gold = user-driven action (Rule 59).
@@ -366,8 +368,10 @@ export default function TodayPage() {
             </button>
           )}
         </div>
+        {/* N1.21 — flex-start keeps the dismiss × anchored to the first line
+            instead of floating detached mid-text when the hint wraps. */}
         {!howToDismissed && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: INK_DIM, marginBottom: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: INK_DIM, marginBottom: 16 }}>
             <span style={{ flex: 1, minWidth: 0 }}>
               Click a task to expand · 📌 or drag ⋮⋮ to plan · click a meeting for notes.
             </span>
@@ -403,8 +407,8 @@ export default function TodayPage() {
         />
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14, marginTop: 8 }}>
-          <h2 style={{ fontSize: 18, fontWeight: 600, color: '#fff', letterSpacing: '-0.02em', margin: 0 }}>📋 All today's tasks</h2>
-          <span style={{ fontSize: 12, color: INK_DIM }}>click to expand · 📌 or drag ⋮⋮ to plan · ▶ to promote</span>
+          <h2 style={{ fontSize: 18, fontWeight: 600, color: '#fff', letterSpacing: '-0.02em', margin: 0, whiteSpace: 'nowrap' }}>📋 All today's tasks</h2>
+          <span className="today-section-hint" style={{ fontSize: 12, color: INK_DIM }}>click to expand · 📌 or drag ⋮⋮ to plan · ▶ to promote</span>
           <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.08)' }} />
         </div>
 

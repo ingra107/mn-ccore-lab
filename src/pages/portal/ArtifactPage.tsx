@@ -11,7 +11,7 @@
 // Design ref: docs/superpowers/plans/2026-06-11-hermes-artifacts-design.md.
 
 import { useState, useMemo } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
 import { FileText, History, Copy, ClipboardList, FolderKanban, Send, Lock } from 'lucide-react'
 import PageContainer from '../../components/PageContainer'
@@ -50,6 +50,7 @@ interface Artifact {
 
 export default function ArtifactPage() {
   const { id = '' } = useParams<{ id: string }>()
+  const navigate = useNavigate()
   const qc = useQueryClient()
   const { isAuthenticated } = useAuth()
   const { showSuccess } = useToast()
@@ -137,10 +138,12 @@ export default function ArtifactPage() {
     return (
       <PageContainer>
         <div style={{ paddingTop: '2rem' }}>
+          {/* N1.24 — was a dead end: no recovery action from a stale link. */}
           <EmptyState
             icon={<FileText size={28} />}
             title="Artifact not found"
             subtitle="This artifact may have been deleted, or the link is incorrect."
+            action={{ label: 'Search the Hub →', onClick: () => navigate(PATHS.search) }}
           />
         </div>
       </PageContainer>

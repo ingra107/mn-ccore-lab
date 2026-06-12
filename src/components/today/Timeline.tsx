@@ -79,6 +79,10 @@ function useNowMinutes(): number {
 function DropZone({ slot, label, onDropTask }: { slot: PlannedSlot; label: string; onDropTask: (id: string, slot: PlannedSlot) => void }) {
   return (
     <div
+      // N1.15: .today-drop-zone hides on touch devices (index.css) — native
+      // DnD never fires there, so six dashed zones were dead UI eating phone
+      // space. The 📌 plan button is the touch planning path.
+      className="today-drop-zone"
       onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = ACCENT_GOLD; e.currentTarget.style.background = 'rgba(201,168,76,0.08)' }}
       onDragLeave={(e) => { e.currentTarget.style.borderColor = 'rgba(201,168,76,0.15)'; e.currentTarget.style.background = 'transparent' }}
       onDrop={(e) => {
@@ -137,18 +141,7 @@ export function Timeline({ events, tasks, state, projectsByPid, expandedId, onEx
   // Line color = coral if user is currently inside a meeting, gold otherwise
   // (Rule 59 — coral = warnings/overlap, gold = user-driven action).
   const now = useNowMinutes()
-  const meetingsListRef = useRef<HTMLDivElement | null>(null)
-  const [listHeight, setListHeight] = useState(0)
-  useEffect(() => {
-    const el = meetingsListRef.current
-    if (!el) return
-    const update = () => setListHeight(el.offsetHeight)
-    update()
-    const obs = new ResizeObserver(update)
-    obs.observe(el)
-    return () => obs.disconnect()
-  }, [visibleMeetings.length])
-  const { dayStart, dayEnd, inMeeting, lineTop } = useMemo(() => {
+  const { dayStart, dayEnd, inMeeting } = useMemo(() => {
     const timed = visibleMeetings
       .map((e) => ({ start: e.startMin, end: e.endMin }))
       .filter((t): t is { start: number; end: number | undefined } => typeof t.start === 'number')
@@ -161,23 +154,13 @@ export function Timeline({ events, tasks, state, projectsByPid, expandedId, onEx
       de = Math.max(de, maxEnd + 30)
     }
     const inMtg = visibleMeetings.some((e) => typeof e.startMin === 'number' && typeof e.endMin === 'number' && e.startMin <= now && now < e.endMin)
-    const fraction = listHeight > 0 && de > ds && now >= ds && now <= de
-      ? (now - ds) / (de - ds)
-      : -1
-    const top = fraction >= 0 ? Math.round(fraction * listHeight) : -1
-    return { dayStart: ds, dayEnd: de, inMeeting: inMtg, lineTop: top }
-  }, [visibleMeetings, now, listHeight])
-  const showLine = lineTop >= 0
+    return { dayStart: ds, dayEnd: de, inMeeting: inMtg }
+  }, [visibleMeetings, now])
   const nowColor = inMeeting ? ACCENT_CORAL : ACCENT_GOLD
   // Derive nowLabel from live wall-clock time at render, NOT from the 60s-tick
-  // `now` hook. The hook drives position smoothness (updates every 60s); the
-  // label should always reflect actual current time so it never shows a stale
-  // minute (e.g. "11:00" when it's 11:29). Both read from system clock so
-  // label and position remain consistent to within a few seconds.
-  const nowLabelDate = new Date()
-  const nowLabel = `${String(nowLabelDate.getHours()).padStart(2, '0')}:${String(nowLabelDate.getMinutes()).padStart(2, '0')}`
-  // Suppress unused-var warning for derived window; kept in scope for future work.
-  void dayStart; void dayEnd
+  // `now` hook (which drives placement). N1.21: locale-formatted so it matches
+  // the meeting rows' "8:00 AM" style instead of a hand-built 24h string.
+  const nowLabel = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
 
   // TP-11: cluster overlapping events. Walk events sorted by startMin and
   // merge any whose startMin < cluster.maxEnd into the running cluster.
@@ -215,6 +198,30 @@ export function Timeline({ events, tasks, state, projectsByPid, expandedId, onEx
   // We render one MeetingNotesAutoSave per touched real meeting (not cal-*).
   const touchedMeetingIds = Object.keys(meetingNotes).filter((id) => !id.startsWith('cal-'))
 
+  // N1.15 — the NOW line is an INLINE divider snapped between clusters, not an
+  // absolute fraction-of-listHeight overlay (which cut through the middle of
+  // meeting cards and collided its label with their text). nowIdx = the
+  // cluster index the divider renders BEFORE; clusters.length = after all.
+  const nowIdx = useMemo(() => {
+    if (now < dayStart || now > dayEnd) return -1
+    const timed = clusters
+      .map((c, i) => ({ i, s: c.find((e) => typeof e.startMin === 'number')?.startMin }))
+      .filter((x): x is { i: number; s: number } => typeof x.s === 'number')
+    if (timed.length === 0) return -1
+    const after = timed.find((x) => x.s > now)
+    return after ? after.i : clusters.length
+  }, [clusters, now, dayStart, dayEnd])
+
+  const nowDivider = (
+    <div aria-hidden="true" style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '2px 0' }}>
+      <span style={{ width: 7, height: 7, borderRadius: '50%', background: nowColor, flexShrink: 0 }} />
+      <div style={{ flex: 1, height: 1, background: nowColor, boxShadow: `0 0 4px ${nowColor}80` }} />
+      <span title={inMeeting ? 'Currently in a meeting' : 'Now'} style={{ padding: '1px 5px', fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: nowColor, background: 'rgba(11,16,23,0.90)', borderRadius: 3, flexShrink: 0 }}>
+        {nowLabel} now
+      </span>
+    </div>
+  )
+
   return (
     <section data-b2-timeline style={{ marginBottom: 24 }}>
       {/* Renderless auto-savers — one per real D1 meeting with in-session notes */}
@@ -228,8 +235,10 @@ export function Timeline({ events, tasks, state, projectsByPid, expandedId, onEx
       ))}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
         <span style={{ fontSize: 14 }}>📅</span>
-        <h3 style={{ fontSize: 13, fontWeight: 600, color: '#fff', letterSpacing: '-0.01em', margin: 0 }}>Today · timeline</h3>
-        <span style={{ fontSize: 11, color: INK_DIM }}>drag tasks into the gaps · click meetings to take notes · × to hide</span>
+        <h3 style={{ fontSize: 13, fontWeight: 600, color: '#fff', letterSpacing: '-0.01em', margin: 0, whiteSpace: 'nowrap' }}>Today · timeline</h3>
+        {/* N1.15/N1.21 — hide the drag how-to on phones: it wraps into the
+            title AND describes drag, which doesn't exist on touch. */}
+        <span className="today-section-hint" style={{ fontSize: 11, color: INK_DIM }}>drag tasks into the gaps · click meetings to take notes · × to hide</span>
         {Object.keys(dismissedMeetings).length > 0 && (
           <button onClick={() => setDismissedMeetings({})} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: ACCENT_TEAL, fontSize: 11, cursor: 'pointer' }}>Restore {Object.keys(dismissedMeetings).length} hidden</button>
         )}
@@ -245,53 +254,7 @@ export function Timeline({ events, tasks, state, projectsByPid, expandedId, onEx
           />
         </div>
       )}
-      <div ref={meetingsListRef} style={{ display: 'flex', flexDirection: 'column', gap: 4, position: 'relative' }}>
-        {showLine && (
-          <div
-            aria-hidden="true"
-            style={{
-              position: 'absolute',
-              left: 0,
-              right: 0,
-              top: lineTop,
-              height: 1,
-              background: nowColor,
-              pointerEvents: 'none',
-              zIndex: 2,
-              boxShadow: `0 0 4px ${nowColor}80`,
-            }}
-          >
-            <span
-              style={{
-                position: 'absolute',
-                left: -4,
-                top: -3,
-                width: 7,
-                height: 7,
-                borderRadius: '50%',
-                background: nowColor,
-              }}
-            />
-            <span
-              title={inMeeting ? 'Currently in a meeting' : 'Now'}
-              style={{
-                position: 'absolute',
-                right: 0,
-                top: -7,
-                padding: '1px 5px',
-                fontSize: 9,
-                fontWeight: 700,
-                letterSpacing: '0.08em',
-                textTransform: 'uppercase',
-                color: nowColor,
-                background: 'rgba(11,16,23,0.90)',
-                borderRadius: 3,
-              }}
-            >
-              {nowLabel} now
-            </span>
-          </div>
-        )}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, position: 'relative' }}>
         {clusters.map((cluster, idx) => {
           // Gather planned tasks dropped into the gap BEFORE this cluster.
           const slotKey = `between-${idx}` as PlannedSlot
@@ -304,6 +267,7 @@ export function Timeline({ events, tasks, state, projectsByPid, expandedId, onEx
           const clusterKey = cluster.map((e) => e.id).join('|')
           return (
             <div key={clusterKey}>
+              {nowIdx === idx && nowDivider}
               <DropZone slot={slotKey} label={beforeLabel} onDropTask={onDropTask} />
               {tasksInGap.map((t) => (
                 <PlannedTaskRow
@@ -346,6 +310,7 @@ export function Timeline({ events, tasks, state, projectsByPid, expandedId, onEx
             .filter((t): t is TaskRow => !!t)
           return (
             <div>
+              {nowIdx === clusters.length && nowDivider}
               <DropZone slot={slotKey} label="drop a task here · after last meeting" onDropTask={onDropTask} />
               {tasksInGap.map((t) => (
                 <PlannedTaskRow

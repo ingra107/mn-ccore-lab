@@ -56,7 +56,7 @@ export function LanesView({ byGroup, selected, toggleSelect, onToggleComplete, o
     // on --content-band (matching the data pages); the inner --col-main block is
     // left-anchored within the band so the primary column's left edge equals
     // Projects + the other two views + Today. The 1100px literal is gone.
-    <div style={{ flex: 1, overflow: 'auto', paddingTop: 12, paddingBottom: 40 }}>
+    <div className="fab-clear" style={{ flex: 1, overflow: 'auto', paddingTop: 12, paddingBottom: 40 }}>
      <div className="mt-band">
       <div style={{ maxWidth: 'var(--col-main)', width: '100%' }}>
       <OverdueBanner tasks={allTasks} />
@@ -78,8 +78,10 @@ export function LanesView({ byGroup, selected, toggleSelect, onToggleComplete, o
             >
               <span style={{ fontSize: 14, transition: 'transform 200ms', display: 'inline-block', transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0)', color: meta.color, width: 10 }}>▾</span>
               <span style={{ fontSize: 16 }}>{meta.icon}</span>
-              <h3 style={{ fontSize: 13, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: meta.color, margin: 0 }}>{meta.label}</h3>
-              <span style={{ fontSize: 11, color: INK_DIM, fontStyle: 'italic', marginLeft: 6 }}>{meta.desc}</span>
+              <h3 style={{ fontSize: 13, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: meta.color, margin: 0, whiteSpace: 'nowrap' }}>{meta.label}</h3>
+              {/* N1.20 — single-line description with ellipsis; on phones the
+                  label and desc were double-wrapping into a 4-line header. */}
+              <span style={{ fontSize: 11, color: INK_DIM, fontStyle: 'italic', marginLeft: 6, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0, flexShrink: 1 }}>{meta.desc}</span>
               <div style={{ flex: 1 }} />
               {overdueInLane > 0 && <Chip color={ACCENT_CORAL} filled>{overdueInLane} overdue</Chip>}
               {plannedInLane > 0 && <Chip color={ACCENT_GOLD} filled>{plannedInLane} planned</Chip>}

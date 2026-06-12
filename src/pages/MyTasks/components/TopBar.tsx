@@ -4,11 +4,13 @@
 //
 // Extracted from src/pages/portal/UnifiedMyTasks.tsx.
 
-import { Plus } from 'lucide-react'
+import { useState } from 'react'
+import { Plus, SlidersHorizontal } from 'lucide-react'
 import { researchTeam } from '../../../data/team'
 import SavedViewsMenu from '../../../components/SavedViewsMenu'
 import { ViewPicker } from './ViewPicker'
 import { FilterChip } from './FilterChip'
+import { useIsMobile } from '../../../hooks/useIsMobile'
 import {
   GROUP_META, GROUP_ORDER,
   ACCENT_GOLD, ACCENT_TEAL, ACCENT_CORAL, ACCENT_ORANGE, ACCENT_GREEN,
@@ -29,6 +31,14 @@ interface TopBarProps {
 }
 
 export function TopBar({ view, setView, search, setSearch, filter, setFilter, quickView, setQuickView, taskCount, projectOptions, currentQuery, onApplyView, onCreateTask }: TopBarProps) {
+  // N1.10 — phones: the toolbar consumed ~60% of the viewport (7 wrapped
+  // control rows). Condensed: Create Task drops (the + FAB is the create
+  // path), quick-views become ONE swipeable row, the filter chips collapse
+  // behind a Filters pill with an active-count badge.
+  const isPhone = useIsMobile(768)
+  const [filtersOpen, setFiltersOpen] = useState(false)
+  const activeFilterCount = [filter.group, filter.priority, filter.project, filter.mentee].filter(Boolean).length
+  const showFilterChips = !isPhone || filtersOpen
   const tabs: { k: QuickViewKey; l: string; color?: string }[] = [
     { k: 'all', l: 'All' },
     // 'New' = your tasks you haven't opened yet (Slack-style seen; matches the
@@ -54,27 +64,35 @@ export function TopBar({ view, setView, search, setSearch, filter, setFilter, qu
         <h1 style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-0.02em', margin: 0, color: '#fff' }}>My Tasks</h1>
         <span aria-live="polite" aria-atomic="true" style={{ fontSize: 11, color: INK_DIM, fontVariantNumeric: 'tabular-nums' }}>{taskCount} visible</span>
         <div style={{ flex: 1, minWidth: 12 }} />
-        <button
-          onClick={onCreateTask}
-          style={{
-            display: 'inline-flex', alignItems: 'center', gap: 6,
-            padding: '6px 14px', borderRadius: 6, fontSize: 13, fontWeight: 500,
-            fontFamily: 'inherit', cursor: 'pointer', border: 'none',
-            backgroundColor: ACCENT_TEAL, color: 'var(--ink-bright, #fff)',
-            flexShrink: 0, whiteSpace: 'nowrap',
-          }}
-        >
-          <Plus size={15} />
-          Create Task
-        </button>
+        {/* N1.20 — phones drop this button: the teal + FAB is the create
+            affordance there (two create buttons crowded the layout). */}
+        {!isPhone && (
+          <button
+            onClick={onCreateTask}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              padding: '6px 14px', borderRadius: 6, fontSize: 13, fontWeight: 500,
+              fontFamily: 'inherit', cursor: 'pointer', border: 'none',
+              backgroundColor: ACCENT_TEAL, color: 'var(--ink-bright, #fff)',
+              flexShrink: 0, whiteSpace: 'nowrap',
+            }}
+          >
+            <Plus size={15} />
+            Create Task
+          </button>
+        )}
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search tasks…"
-          style={{ padding: '6px 12px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6, color: INK, fontSize: 12, flex: '1 1 200px', minWidth: 140, maxWidth: 260, fontFamily: 'inherit', outline: 'none' }}
+          // N1.20 — phones: fill the row (the 260px cap left a dead gap).
+          style={{ padding: '6px 12px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6, color: INK, fontSize: 12, flex: '1 1 200px', minWidth: 140, maxWidth: isPhone ? 'none' : 260, fontFamily: 'inherit', outline: 'none' }}
         />
       </div>
-      <div style={{ display: 'flex', gap: 4, marginBottom: 8, flexWrap: 'wrap' }}>
+      {/* N1.10 — phones: one swipeable row instead of a 2-3 row wrap. */}
+      <div style={isPhone
+        ? { display: 'flex', gap: 4, marginBottom: 8, flexWrap: 'nowrap', overflowX: 'auto', scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' as const }
+        : { display: 'flex', gap: 4, marginBottom: 8, flexWrap: 'wrap' }}>
         {tabs.map((tab) => {
           const active = quickView === tab.k
           const c = tab.color || ACCENT_TEAL
@@ -82,7 +100,7 @@ export function TopBar({ view, setView, search, setSearch, filter, setFilter, qu
             <button
               key={tab.k}
               onClick={() => setQuickView(tab.k)}
-              style={{ padding: '4px 10px', fontSize: 11, fontWeight: 500, borderRadius: 999, fontFamily: 'inherit', cursor: 'pointer', border: `1px solid ${active ? c + '70' : 'rgba(255,255,255,0.1)'}`, background: active ? c + '15' : 'transparent', color: active ? c : INK_MUTED }}
+              style={{ padding: '4px 10px', fontSize: 11, fontWeight: 500, borderRadius: 999, fontFamily: 'inherit', cursor: 'pointer', border: `1px solid ${active ? c + '70' : 'rgba(255,255,255,0.1)'}`, background: active ? c + '15' : 'transparent', color: active ? c : INK_MUTED, flexShrink: 0, whiteSpace: 'nowrap' }}
             >{tab.l}</button>
           )
         })}
@@ -90,7 +108,20 @@ export function TopBar({ view, setView, search, setSearch, filter, setFilter, qu
       <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
         <ViewPicker view={view} setView={setView} />
         <SavedViewsMenu page="my-tasks" currentQuery={currentQuery} onApply={onApplyView} />
-        <div style={{ width: 1, height: 18, background: 'rgba(255,255,255,0.08)', margin: '0 4px' }} />
+        {/* N1.20 — divider only when the chips render beside it (it stranded
+            itself at wrapped line ends on phones). */}
+        {showFilterChips && !isPhone && <div style={{ width: 1, height: 18, background: 'rgba(255,255,255,0.08)', margin: '0 4px' }} />}
+        {isPhone && (
+          <button
+            onClick={() => setFiltersOpen((o) => !o)}
+            aria-expanded={filtersOpen}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 10px', fontSize: 11, fontWeight: 500, borderRadius: 999, fontFamily: 'inherit', cursor: 'pointer', border: `1px solid ${filtersOpen || activeFilterCount > 0 ? ACCENT_TEAL + '70' : 'rgba(255,255,255,0.1)'}`, background: filtersOpen || activeFilterCount > 0 ? ACCENT_TEAL + '15' : 'transparent', color: filtersOpen || activeFilterCount > 0 ? ACCENT_TEAL : INK_MUTED }}
+          >
+            <SlidersHorizontal size={11} strokeWidth={1.5} absoluteStrokeWidth />
+            Filters{activeFilterCount > 0 ? ` · ${activeFilterCount}` : ''}
+          </button>
+        )}
+        {showFilterChips && <>
         <FilterChip
           label="Group"
           value={filter.group}
@@ -129,6 +160,7 @@ export function TopBar({ view, setView, search, setSearch, filter, setFilter, qu
             style={{ padding: '4px 10px', fontSize: 11, border: 'none', background: 'transparent', color: ACCENT_CORAL, fontFamily: 'inherit', cursor: 'pointer', textDecoration: 'underline' }}
           >clear all</button>
         )}
+        </>}
       </div>
      </div>
     </div>

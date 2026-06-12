@@ -51,7 +51,7 @@ export function ColumnsView({ filtered, byGroup, selected, toggleSelect, onToggl
     // 960px box). Dropped the maxWidth:--col-main cap that previously crammed
     // 4-5 columns into 960px and forced a horizontal scroll inside the band.
     <div className="band-anchored-wide" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
-    <div className="mt-columns-scroll" style={{ flex: 1, overflow: 'auto', paddingTop: 12, paddingBottom: 20, position: 'relative', width: '100%' }}>
+    <div className="mt-columns-scroll fab-clear" style={{ flex: 1, overflow: 'auto', paddingTop: 12, paddingBottom: 20, position: 'relative', width: '100%' }}>
       <style>{`
         .mt-columns-scroll { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.18) transparent; }
         .mt-columns-scroll::-webkit-scrollbar { height: 8px; }

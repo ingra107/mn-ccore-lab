@@ -329,15 +329,19 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
           if (info.offset.x > width * 0.3 || info.velocity.x > 500) onClose()
         }}
         style={isMobilePanel ? {
-          // Mobile: full-height flush sheet — unchanged behaviour
+          // N1.11 — TRUE full-screen sheet (canon pt 6). The old 90vw cap left
+          // a dead sliver of the page showing through, and z-50 sat UNDER the
+          // MobileTabBar (--z-sidebar: 100) so live nav floated on a modal
+          // surface and occluded the last content strip.
           x: dragX,
+          left: 0,
           right: 0,
           top: 0,
           bottom: 0,
-          width: 'clamp(420px, 40vw, 640px)',
-          maxWidth: '90vw',
+          width: '100%',
+          maxWidth: '100vw',
+          zIndex: 'var(--z-modal-backdrop)',
           backgroundColor: 'var(--cream)',
-          borderLeft: '1px solid var(--border-subtle)',
           animation: reduceMotion ? 'none' : 'slideIn 200ms ease-out',
           touchAction: 'pan-y',
           overflowX: 'hidden',
@@ -364,7 +368,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
             Mobile uses the root motion.div overflow directly (no wrapping needed). */}
         <div style={isMobilePanel ? {} : { height: '100%', overflowY: 'auto', overflowX: 'hidden' }}>
         {/* Header — flat: same surface as panel, single hairline bottom only */}
-        <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-3" style={{ backgroundColor: 'var(--cream)', borderBottom: '1px solid var(--border-subtle)' }}>
+        <div className="task-detail-sticky task-detail-header sticky top-0 z-10 flex items-center justify-between px-5 py-3" style={{ backgroundColor: 'var(--cream)', borderBottom: '1px solid var(--border-subtle)' }}>
           <div className="flex items-center gap-2">
             <span className="text-xs uppercase tracking-wider" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
               Task Detail
@@ -459,32 +463,35 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
               {task.created_at && (
                 <span>Created {formatRelativeTime(task.created_at)}</span>
               )}
+              {/* N1.22 — each separator dot is bundled with its item in one
+                  nowrap unit so a line wrap can never strand a leading or
+                  trailing '·' on its own. */}
               {task.acknowledged_at && (
-                <>
+                <span className="flex items-center gap-2" style={{ whiteSpace: 'nowrap' }}>
                   <span aria-hidden="true">·</span>
                   <span className="flex items-center gap-1">
                     <Clock size={9} aria-hidden="true" />
                     Acknowledged {formatRelativeTime(task.acknowledged_at)}
                     {task.acknowledged_by ? ` by ${task.acknowledged_by}` : ''}
                   </span>
-                </>
+                </span>
               )}
               {task.source && (
-                <>
+                <span className="flex items-center gap-2" style={{ whiteSpace: 'nowrap' }}>
                   <span aria-hidden="true">·</span>
                   <span className="px-1.5 py-0.5 rounded-full" style={{ backgroundColor: 'var(--teal-active)', color: 'var(--teal)', opacity: 1 }}>
                     {task.source}
                   </span>
-                </>
+                </span>
               )}
               {(task as any).recurrence && (
-                <>
+                <span className="flex items-center gap-2" style={{ whiteSpace: 'nowrap' }}>
                   <span aria-hidden="true">·</span>
                   <span className="px-1.5 py-0.5 rounded-full" style={{ backgroundColor: 'var(--gold-active)', color: 'var(--gold)', opacity: 1 }}>
                     <RefreshCw size={8} style={{ display: 'inline', marginRight: 2 }} aria-hidden="true" />
                     {(task as any).recurrence}
                   </span>
-                </>
+                </span>
               )}
             </div>
           </div>
@@ -492,7 +499,9 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
           {/* Inline fields row: Status · Priority · Project · Due · Delete
               GhostSelect for Status/Priority/Project (Rule 45: fully opaque
               themed menus, not native OS dropdowns). Due stays DateInput. */}
-          <div className="flex items-center gap-2 flex-wrap" style={{ minWidth: 0 }}>
+          {/* N1.22 — tight rowGap keeps the wrapped field rows reading as one
+              group on phones instead of a ragged scatter. */}
+          <div className="flex items-center flex-wrap" style={{ minWidth: 0, columnGap: 8, rowGap: 4 }}>
             <GhostSelect
               aria-label="Status"
               value={task.status}
@@ -855,6 +864,13 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
             background-image: linear-gradient(var(--surface-2), var(--surface-2)) !important;
             /* Desktop floating panel has no left border; mobile still uses border-left via inline style */
           }
+          /* N1.12 — sticky surfaces (header, mobile composer) must carry the
+             SAME composite as the panel body; their plain var(--cream) bg
+             rendered as near-black bands on the gradient-lightened panel. */
+          .dark .task-detail-panel .task-detail-sticky {
+            background-color: var(--cream) !important;
+            background-image: linear-gradient(var(--surface-2), var(--surface-2)) !important;
+          }
           .dark .task-detail-panel select {
             color-scheme: dark;
           }
@@ -862,6 +878,12 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
           @media (max-width: 767px) {
             .task-detail-panel .p-5 {
               padding: 1rem !important;
+            }
+            /* N1.13 — header controls (prev/next/copy) were 18-22px targets
+               clustered within ~50px; pad them out to thumbable size. */
+            .task-detail-panel .task-detail-header button {
+              padding: 10px !important;
+              min-width: 40px;
             }
             /* Enlarge close-button hit target to 44×44 for thumb reach. */
             .task-detail-panel .task-detail-close {
@@ -1515,10 +1537,14 @@ function OverviewQuickAdd({
     }
   }, [taskId, queryClient])
 
-  const PLACEHOLDERS = {
-    note: 'Log progress, blockers, thoughts…',
-    comment: '@mention a teammate or @hermes for AI help',
-  }
+  // N1.22 — short strings on phones: the idle one-row input is narrow next
+  // to the mode pills, and the long placeholder clipped to "@mention a".
+  const PLACEHOLDERS = isMobile
+    ? { note: 'Log progress…', comment: '@hermes or @teammate…' }
+    : {
+        note: 'Log progress, blockers, thoughts…',
+        comment: '@mention a teammate or @hermes for AI help',
+      }
   const TOOLTIPS = {
     note: 'Informal progress log — visible to the team',
     comment: 'Talk to teammates — @mention works',
@@ -1574,6 +1600,7 @@ function OverviewQuickAdd({
 
   return (
     <div
+      className={isMobile ? 'task-detail-sticky' : undefined}
       style={{
         // Mobile: stick to panel's scroll-container bottom so iOS keyboard
         // doesn't push it out of reach.

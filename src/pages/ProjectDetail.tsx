@@ -1047,9 +1047,12 @@ function ProjectDetailInner({ project }: InnerProps) {
           marginBottom: '1.5rem',
         }}
       >
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+        {/* N1.18 — lg: not md:. The 768-1023 band runs mobile chrome
+            (useIsMobile=1024); a 3-col grid there crammed three ~230px
+            columns inside a phone-style layout. */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
           {/* Left column (2/3): Open Tasks — always visible, + Add task CTA */}
-          <div className="md:col-span-2">
+          <div className="lg:col-span-2">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <CheckCircle2 size={13} style={{ color: 'var(--teal)' }} />
@@ -1107,6 +1110,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                     <div key={task.id} style={{ minWidth: 0 }}>
                       <TaskCard
                         task={task}
+                        hideProjectChip
                         onStatusChange={(id, status) => {
                           const prev = task.status
                           updateTaskStatus.mutate({ id, status })
@@ -1121,7 +1125,7 @@ function ProjectDetailInner({ project }: InnerProps) {
           </div>
 
           {/* Right column (1/3): Key Links (top) + Recent Activity (bottom) */}
-          <div className="md:col-span-1 flex flex-col gap-4">
+          <div className="lg:col-span-1 flex flex-col gap-4">
             {/* Local launch — Open folder + Work on this in Claude (mnccore://).
                 Only when the project has a working folder. */}
             {project.primary_folder && (
@@ -1144,6 +1148,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                 </span>
               </div>
               <KeyLinksEditor
+                hideLabel
                 links={[
                   { url: project.key_link_1, desc: project.key_link_1_desc },
                   { url: project.key_link_2, desc: project.key_link_2_desc },
@@ -1552,7 +1557,10 @@ function ProjectDetailInner({ project }: InnerProps) {
                 <motion.button
                   type="button"
                   onClick={() => handleStageChange(stage)}
-                  className="cursor-pointer"
+                  // N1.16: .stage-dot exempts this from the blanket 44px mobile
+                  // button min-height (which stretched the dots into tall
+                  // ellipses); a ::before pseudo restores the touch target.
+                  className="cursor-pointer stage-dot"
                   style={{
                     width: isCurrent ? '20px' : '14px',
                     height: isCurrent ? '20px' : '14px',
@@ -1575,7 +1583,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                   title={`Move to ${STAGE_LABELS[stage]}`}
                 />
                 <span
-                  className="project-stage-label"
+                  className={`project-stage-label${isCurrent ? ' is-current' : ''}`}
                   title={STAGE_LABELS[stage]}
                   style={{
                     fontSize: '10px',
@@ -2104,15 +2112,20 @@ function ProjectDetailInner({ project }: InnerProps) {
           background: linear-gradient(to right, transparent, var(--cream));
           z-index: 1;
         }
-        .dark .project-tab-strip-fade {
-          background: linear-gradient(to right, transparent, var(--ink));
-        }
-        /* PD-15: stage strip mobile — truncate labels at narrow widths to prevent horizontal-scroll */
+        /* N1.17 — the .dark override used var(--ink) (the light TEXT token in
+           dark mode), rendering the fade as an opaque white smear over the
+           last tabs. var(--cream) in the base rule is a bg token that flips
+           with the theme, so no dark override is needed. */
+        /* N1.16 — PD-15's 44px ellipsis made every label an ambiguous
+           fragment ("Data C…", "Revisio…"). Phones now show ONLY the current
+           stage's full label; the other dots keep their title tooltips. */
         @media (max-width: 480px) {
           .project-stage-label {
-            max-width: 44px;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            display: none;
+          }
+          .project-stage-label.is-current {
+            display: block;
+            max-width: none;
           }
         }
       `}</style>

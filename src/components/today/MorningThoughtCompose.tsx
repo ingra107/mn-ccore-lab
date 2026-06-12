@@ -23,6 +23,7 @@ import { useCreateTask } from '../../hooks/useMutations'
 import { useUndoToast } from '../UndoToast'
 import { todayKey } from './constants'
 import { nowInstant } from '../../lib/time'
+import { useIsMobile } from '../../hooks/useIsMobile'
 import { localDateKey } from '../../lib/dateUtils'
 
 const DEFAULT_GROUP_OVERRIDE = 'priorities'
@@ -55,9 +56,14 @@ export function MorningThoughtCompose() {
   // Compute "after 5pm" once per render — reasonable for the mount lifetime
   // of this surface. Page is a daily landing; user reloads if they cross 5pm.
   const isEvening = useMemo(() => new Date().getHours() >= 17, [])
-  const placeholder = isEvening
-    ? "Plan tomorrow's first move, or @hermes to delegate…"
-    : 'Morning thought, quick capture, or @hermes to delegate…'
+  // N1.21 — short strings on phones: the long placeholder clipped mid-
+  // sentence in the narrow composer.
+  const isPhone = useIsMobile(768)
+  const placeholder = isPhone
+    ? (isEvening ? "Plan tomorrow's first move…" : 'Quick capture or @hermes…')
+    : isEvening
+      ? "Plan tomorrow's first move, or @hermes to delegate…"
+      : 'Morning thought, quick capture, or @hermes to delegate…'
 
   const handleSubmit = useCallback(async (raw: string) => {
     const content = raw.trim()

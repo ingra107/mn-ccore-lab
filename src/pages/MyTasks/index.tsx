@@ -29,6 +29,7 @@ import { ListView } from './views/ListView'
 import { useTaskFilter } from './hooks/useTaskFilter'
 import { useSelection } from './hooks/useSelection'
 import { useOpenParam } from '../../hooks/useOpenParam'
+import { useIsMobile } from '../../hooks/useIsMobile'
 import {
   readPlannedToday, isTaskDone,
   type ViewMode, type GroupKey, type QuickViewKey, type FilterState, type FilterOption,
@@ -58,6 +59,13 @@ export default function UnifiedMyTasks() {
     return 'list'
   })()
   const [view, setView] = useState<ViewMode>(initialView)
+
+  // N1.14 — Columns is desktop kanban (5 fixed-width columns = ~1360px of
+  // blind horizontal panning at phone widths). Below 768 it renders as List
+  // with a one-line notice; the picker state is preserved so rotating a
+  // tablet or widening the window restores Columns.
+  const isPhone = useIsMobile(768)
+  const effectiveView: ViewMode = isPhone && view === 'columns' ? 'list' : view
 
   const [search, setSearch] = useState(searchParams.get('q') ?? '')
   const [filter, setFilter] = useState<FilterState>({
@@ -316,12 +324,19 @@ export default function UnifiedMyTasks() {
         <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           {isLoading ? (
             <div className="mt-band" style={{ paddingTop: 24, paddingBottom: 24 }}><div style={{ maxWidth: 'var(--col-main)' }}><TableSkeleton /></div></div>
-          ) : view === 'columns' ? (
+          ) : effectiveView === 'columns' ? (
             <ColumnsView filtered={filtered} byGroup={byGroup} selected={selected} toggleSelect={toggleSelect} onToggleComplete={onToggleComplete} onOpenEditor={setDrawer} expanded={expanded} setExpanded={setExpanded} projectsByPid={projectsByPid} plannedSet={plannedSet} filterGroup={filter.group} />
-          ) : view === 'lanes' ? (
+          ) : effectiveView === 'lanes' ? (
             <LanesView byGroup={byGroup} selected={selected} toggleSelect={toggleSelect} onToggleComplete={onToggleComplete} onOpenEditor={setDrawer} expanded={expanded} setExpanded={setExpanded} projectsByPid={projectsByPid} plannedSet={plannedSet} filterGroup={filter.group} />
           ) : (
-            <ListView filtered={filtered} selected={selected} toggleSelect={toggleSelect} setSelected={setSelected} setDrawer={setDrawer} projectsByPid={projectsByPid} projectOptions={projectOptions} plannedSet={plannedSet} />
+            <>
+              {view === 'columns' && (
+                <div className="mt-band" style={{ paddingTop: 8 }}>
+                  <span style={{ fontSize: 11, color: 'var(--muted)', opacity: 0.85 }}>Columns is a desktop view — showing List on this screen.</span>
+                </div>
+              )}
+              <ListView filtered={filtered} selected={selected} toggleSelect={toggleSelect} setSelected={setSelected} setDrawer={setDrawer} projectsByPid={projectsByPid} projectOptions={projectOptions} plannedSet={plannedSet} />
+            </>
           )}
         </div>
       </div>

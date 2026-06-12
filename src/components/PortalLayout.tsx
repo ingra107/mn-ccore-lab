@@ -248,7 +248,7 @@ export default function PortalLayout() {
             prior 1rem buffer; 3rem so the last row comfortably clears the bar. */}
         <main
           id="portal-main"
-          className="portal-content p-4 md:p-6 lg:p-8 pb-[calc(3rem+56px+env(safe-area-inset-bottom))] lg:pb-8"
+          className="portal-content p-4 md:p-6 lg:p-8 pb-[calc(var(--fab-stack-2)+56px)] lg:pb-8"
           style={{ flex: 1 }}
         >
           <AnimatePresence mode="wait" initial={false}>

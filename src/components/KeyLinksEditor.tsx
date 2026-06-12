@@ -21,6 +21,9 @@ interface Props {
    * keeps the same 1-based ordering the caller passes as key_link_1/2/3.
    */
   onSave: (next: KeyLink[]) => void
+  /** N1.23 — suppress the internal "Key Links" label when the host renders
+   *  its own section header (ProjectDetail Overview did, stacking two). */
+  hideLabel?: boolean
   /** Max slots. Defaults to 3 to match the schema. */
   maxSlots?: number
 }
@@ -189,7 +192,7 @@ function LinkForm({
   )
 }
 
-export default function KeyLinksEditor({ links, onSave, maxSlots = 3 }: Props) {
+export default function KeyLinksEditor({ links, onSave, hideLabel = false, maxSlots = 3 }: Props) {
   const [editingIdx, setEditingIdx] = useState<number | null>(null)
   const [addingNew, setAddingNew] = useState(false)
 
@@ -224,18 +227,22 @@ export default function KeyLinksEditor({ links, onSave, maxSlots = 3 }: Props) {
 
   return (
     <div>
-      <label
-        className="flex items-center gap-1.5 mb-1.5"
-        style={{
-          color: 'var(--slate)',
-          opacity: 'var(--ink-label)',
-          fontWeight: 'var(--label-weight)',
-          fontSize: 'var(--label-size)',
-        }}
-      >
-        <Link2 size={11} />
-        Key Links
-      </label>
+      {/* N1.23 — hosts that render their own section header (ProjectDetail
+          Overview) pass hideLabel to avoid stacked duplicate "Key Links". */}
+      {!hideLabel && (
+        <label
+          className="flex items-center gap-1.5 mb-1.5"
+          style={{
+            color: 'var(--slate)',
+            opacity: 'var(--ink-label)',
+            fontWeight: 'var(--label-weight)',
+            fontSize: 'var(--label-size)',
+          }}
+        >
+          <Link2 size={11} />
+          Key Links
+        </label>
+      )}
 
       <div className="flex flex-wrap items-center gap-2">
         {populated.map((link, idx) => {

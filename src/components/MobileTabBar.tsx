@@ -28,6 +28,10 @@ import { PATHS } from '../constants/paths'
 
 const BugReportModal = lazy(() => import('./BugReportModal'))
 
+// Rule 74 (N1.24): true 1.5px strokes at ≤20px — lucide's default 2-on-24
+// scales fuzzy at tab-bar sizes. Same recipe as Sidebar's ICON_PROPS.
+const ICON_PROPS = { strokeWidth: 1.5, absoluteStrokeWidth: true } as const
+
 /**
  * Mobile bottom tab bar — 4 primary routes + "More" overflow drawer
  * that exposes the remaining ~14 portal routes. Hidden on desktop via
@@ -95,7 +99,7 @@ export default function MobileTabBar() {
               aria-current={active ? 'page' : undefined}
               aria-label={tab.label}
             >
-              <Icon size={20} aria-hidden="true" />
+              <Icon size={20} {...ICON_PROPS} aria-hidden="true" />
               <span style={{ fontSize: 'var(--text-micro)', marginTop: 2 }}>{tab.label}</span>
             </Link>
           )
@@ -120,7 +124,7 @@ export default function MobileTabBar() {
           aria-expanded={overflowOpen}
           aria-controls="mobile-overflow-drawer"
         >
-          <MoreHorizontal size={20} aria-hidden="true" />
+          <MoreHorizontal size={20} {...ICON_PROPS} aria-hidden="true" />
           <span style={{ fontSize: 'var(--text-micro)', marginTop: 2 }}>More</span>
         </button>
       </nav>
@@ -181,7 +185,7 @@ export default function MobileTabBar() {
                   color: 'var(--ink-muted)',
                 }}
               >
-                <X size={20} />
+                <X size={20} {...ICON_PROPS} />
               </button>
             </div>
 
@@ -217,7 +221,7 @@ export default function MobileTabBar() {
                         background: active ? 'var(--teal-active)' : 'transparent',
                       }}
                     >
-                      <Icon size={18} aria-hidden="true" />
+                      <Icon size={18} {...ICON_PROPS} aria-hidden="true" />
                       <span>{route.label}</span>
                     </Link>
                   )
@@ -258,7 +262,7 @@ export default function MobileTabBar() {
                   textAlign: 'left',
                 }}
               >
-                <Bug size={18} aria-hidden="true" />
+                <Bug size={18} {...ICON_PROPS} aria-hidden="true" />
                 <span>Report a Bug</span>
               </button>
             </div>

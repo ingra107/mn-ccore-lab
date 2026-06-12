@@ -57,6 +57,10 @@ export function DoneBox({ done, onToggle, color = ACCENT_GREEN }: { done: boolea
   return (
     <button
       type="button"
+      // N1.08: .done-box is excluded from the blanket 44px mobile min-height
+      // (which stretched this 17px square into a 17×44 capsule app-wide);
+      // an invisible ::before pseudo-element restores the 44px touch target.
+      className="done-box"
       onClick={(e) => { e.stopPropagation(); onToggle() }}
       onMouseDown={(e) => e.stopPropagation()}
       title={done ? 'Mark not done' : 'Mark done'}

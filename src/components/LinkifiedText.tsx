@@ -42,11 +42,20 @@ export default function LinkifiedText({ text, className, style }: Props) {
 
   while ((match = URL_RE.exec(text)) !== null) {
     const start = match.index
-    const end = start + match[0].length
+    let matched = match[0]
+    // N1.19 — bare paths are LINE-bounded (so spaced folder names survive),
+    // which over-captured trailing prose into the chip. Punctuation-then-
+    // space ('. ', ', ', '; ') is a prose boundary that essentially never
+    // occurs inside a real path — cut the match there.
+    if (/^[A-Za-z]:/.test(matched)) {
+      const cut = matched.search(/[.,;!?]\s/)
+      if (cut !== -1) matched = matched.slice(0, cut)
+    }
+    const end = start + matched.length
     // Trim trailing punctuation from the URL
-    const trailingMatch = match[0].match(TRAILING_PUNCT_RE)
+    const trailingMatch = matched.match(TRAILING_PUNCT_RE)
     const trail = trailingMatch?.[0] ?? ''
-    const rawUrl = trail ? match[0].slice(0, -trail.length) : match[0]
+    const rawUrl = trail ? matched.slice(0, -trail.length) : matched
     const urlEnd = end - trail.length
 
     // Text before this URL
@@ -97,6 +106,9 @@ export default function LinkifiedText({ text, className, style }: Props) {
 
     if (trail) parts.push(trail)
     lastIdx = urlEnd + trail.length
+    // The match may have been shortened at a prose boundary — rewind the
+    // regex so the text after the cut is scanned as normal prose.
+    URL_RE.lastIndex = lastIdx
   }
 
   if (lastIdx < text.length) {
