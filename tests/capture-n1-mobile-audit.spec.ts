@@ -42,6 +42,11 @@ const SURFACES: Surface[] = [
   { slug: 'quick-add',         path: '/portal/my-tasks?view=list',                       chunks: 0, action: 'quickadd' },
   { slug: 'project-detail',    path: '/portal/projects/mn-ccore-lab-hub',                chunks: 3 },
   { slug: 'artifact-notfound', path: '/portal/artifacts/art_DOES_NOT_EXIST',             chunks: 0 },
+  // N1b de-box sweep ride-alongs (data-page toolbars + dashboard interiors).
+  { slug: 'projects',          path: '/portal/projects',                                 chunks: 1 },
+  { slug: 'manuscripts',       path: '/portal/manuscripts',                              chunks: 1 },
+  { slug: 'deadlines',         path: '/portal/deadlines',                                chunks: 1 },
+  { slug: 'overview',          path: '/portal/overview',                                 chunks: 1 },
 ]
 
 async function scrollThroughEverything(page: import('@playwright/test').Page) {

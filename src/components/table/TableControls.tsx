@@ -64,11 +64,13 @@ export default function TableControls({
     >
       {/* Left side ------------------------------------------------- */}
 
-      {/* View toggle */}
+      {/* View toggle — N1b: locked-canon pill anatomy (matches the My Tasks
+          ViewPicker): full-radius hairline pill, active = teal TINT + teal
+          text, never a solid fill block. */}
       {views && views.length > 0 && onViewChange && (
         <div
-          className="flex items-center rounded-lg overflow-hidden"
-          style={{ border: '1px solid var(--border-subtle)', flexShrink: 0 }}
+          className="flex items-center overflow-hidden"
+          style={{ border: '1px solid var(--border-subtle)', borderRadius: 999, flexShrink: 0 }}
         >
           {views.map((v) => (
             <button
@@ -77,9 +79,9 @@ export default function TableControls({
               title={v.label}
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs cursor-pointer"
               style={{
-                fontWeight: 500,
-                background: activeView === v.key ? 'var(--teal-solid)' : 'transparent',
-                color: activeView === v.key ? 'var(--ink-bright, #fff)' : 'var(--slate)',
+                fontWeight: activeView === v.key ? 600 : 500,
+                background: activeView === v.key ? 'var(--teal-active)' : 'transparent',
+                color: activeView === v.key ? 'var(--teal)' : 'var(--slate)',
                 border: 'none',
                 transition: 'all var(--duration-fast)',
                 whiteSpace: 'nowrap',

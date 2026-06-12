@@ -1299,14 +1299,16 @@ function ProjectDetailInner({ project }: InnerProps) {
         >
           <div className="flex items-center gap-2 mb-2">
             <div style={{ display: 'inline-flex', gap: 4, padding: 2, borderRadius: 'var(--radius-full)', background: 'var(--surface-2)' }}>
+              {/* N1b — mode pills go tint-not-fill (locked canon pt 4), matching
+                  the task panel's COMMENT/NOTE segmented pills. */}
               <button
                 type="button"
                 onClick={() => setQuickComposeKind('note')}
                 style={{
-                  fontSize: '10px', fontWeight: 500, padding: '4px 10px',
+                  fontSize: '10px', fontWeight: quickComposeKind === 'note' ? 600 : 500, padding: '4px 10px',
                   borderRadius: 'var(--radius-full)', border: 'none', cursor: 'pointer',
-                  background: quickComposeKind === 'note' ? 'var(--teal-solid)' : 'transparent',
-                  color: quickComposeKind === 'note' ? 'var(--ink-bright, #fff)' : 'var(--slate)',
+                  background: quickComposeKind === 'note' ? 'var(--teal-active)' : 'transparent',
+                  color: quickComposeKind === 'note' ? 'var(--teal)' : 'var(--slate)',
                 }}
               >
                 Note
@@ -1315,10 +1317,10 @@ function ProjectDetailInner({ project }: InnerProps) {
                 type="button"
                 onClick={() => setQuickComposeKind('comment')}
                 style={{
-                  fontSize: '10px', fontWeight: 500, padding: '4px 10px',
+                  fontSize: '10px', fontWeight: quickComposeKind === 'comment' ? 600 : 500, padding: '4px 10px',
                   borderRadius: 'var(--radius-full)', border: 'none', cursor: 'pointer',
-                  background: quickComposeKind === 'comment' ? 'var(--gold)' : 'transparent',
-                  color: quickComposeKind === 'comment' ? '#0f1923' : 'var(--slate)',
+                  background: quickComposeKind === 'comment' ? 'var(--gold-active)' : 'transparent',
+                  color: quickComposeKind === 'comment' ? 'var(--gold)' : 'var(--slate)',
                 }}
               >
                 Comment
@@ -1370,14 +1372,16 @@ function ProjectDetailInner({ project }: InnerProps) {
           visuals took up screen real estate without supporting any "doing"
           action. Stage indicator below is the canonical interactive stage UI. */}
 
-      {/* Strategic Context — Why This Matters Now */}
+      {/* Strategic Context — Why This Matters Now.
+          N1b — de-boxed: the gold band violated the box budget (composer is
+          the one boxed element); the gold Compass + label carry the section
+          identity, whitespace carries the separation. */}
       {(project.strategic_context || isPi) && (
         <div
-          className="mt-6 p-4 rounded-xl"
+          className="mt-6"
           style={{
-            background: 'var(--gold-hover)',
-            border: '1px solid rgba(201, 168, 76, 0.15)',
             marginBottom: '1.5rem',
+            paddingLeft: 2,
           }}
         >
           <div className="flex items-center justify-between mb-2">

@@ -327,13 +327,15 @@ export default function Projects() {
               type="button"
               onClick={() => setActiveCategory(f.key)}
               className="cursor-pointer inline-flex items-center px-2.5 py-1 text-xs filter-pill"
+              // N1b — locked-canon ghost pill: active = teal tint + teal text,
+              // never a solid fill block in a toolbar.
               style={{
-                fontWeight: 'var(--label-weight)',
+                fontWeight: activeCategory === f.key ? 600 : ('var(--label-weight)' as never),
                 fontSize: 'var(--label-size)',
-                borderRadius: 'var(--radius-md)',
-                background: activeCategory === f.key ? 'var(--teal-solid)' : 'transparent',
-                color: activeCategory === f.key ? 'var(--ink-bright, #fff)' : 'var(--slate)',
-                border: activeCategory === f.key ? '1px solid var(--teal)' : '1px solid transparent',
+                borderRadius: 'var(--radius-full)',
+                background: activeCategory === f.key ? 'var(--teal-active)' : 'transparent',
+                color: activeCategory === f.key ? 'var(--teal)' : 'var(--slate)',
+                border: '1px solid transparent',
                 transition: 'all 0.15s',
               }}
             >
@@ -360,10 +362,10 @@ export default function Projects() {
               className="cursor-pointer inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs"
               style={{
                 fontSize: 'var(--label-size)',
-                fontWeight: 'var(--label-weight)',
-                background: showDeps ? 'var(--teal-solid)' : 'transparent',
-                color: showDeps ? 'var(--ink-bright, #fff)' : 'var(--teal)',
-                border: '1px solid rgba(45, 138, 138, 0.2)',
+                fontWeight: showDeps ? 600 : ('var(--label-weight)' as never),
+                background: showDeps ? 'var(--teal-active)' : 'transparent',
+                color: 'var(--teal)',
+                border: '1px solid transparent',
                 transition: 'all 0.2s',
                 whiteSpace: 'nowrap',
               }}

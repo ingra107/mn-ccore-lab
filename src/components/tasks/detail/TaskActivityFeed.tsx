@@ -63,9 +63,12 @@ interface TaskActivityFeedProps {
   peekCount?: number
   /** When true, hide the filter pills (Overview peek mode). */
   hidePills?: boolean
+  /** N4 — avatar render size forwarded to ActivityEntryItem ('xs' = 20px,
+   *  used by the Overview peek for a tighter read). */
+  avatarSize?: 'xs' | 'base-sm'
 }
 
-export function TaskActivityFeed({ taskId, peekCount, hidePills }: TaskActivityFeedProps) {
+export function TaskActivityFeed({ taskId, peekCount, hidePills, avatarSize }: TaskActivityFeedProps) {
   const [filter, setFilter] = useState<TaskFeedFilter>('all')
 
   const { data: entries = [], isLoading } = useQuery<ActivityEntryItemRow[]>({
@@ -154,9 +157,10 @@ export function TaskActivityFeed({ taskId, peekCount, hidePills }: TaskActivityF
             <ActivityEntryItem
               key={entry.id}
               entry={entry}
-              // Task-feed: canonical defaults — no overrides needed.
-              // showReactions=false (default), showTaskOriginBadge=false (default).
-              // No animation wrapper in the task feed.
+              avatarSize={avatarSize}
+              // Task-feed: otherwise canonical defaults — showReactions=false
+              // (default), showTaskOriginBadge=false (default). No animation
+              // wrapper in the task feed.
             />
           ))}
         </div>

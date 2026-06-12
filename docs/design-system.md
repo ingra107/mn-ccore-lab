@@ -200,6 +200,20 @@ surfaces → card interiors). Deviations need Nick's explicit OK.
 8. **Empty states are one quiet line.** Ghost text at `--ink-hint` ("Add description…",
    "No activity yet") — never a reserved bordered block, never a pre-rendered toolbar.
 
+### De-box sweep status (N1b wave 1, 2026-06-11)
+
+Toolbar de-box is LIVE on the shared chrome: `TableControls`' view toggle is
+the canonical mode-toggle anatomy (full-radius hairline pill, active = teal
+TINT `--teal-active` + teal text, **never a solid `--teal-solid` fill** —
+solid fills are reserved for primary action BUTTONS); Projects category/deps
+pills and ProjectDetail's Note/Comment composer pills match; the gold
+"Why This Matters Now" band on ProjectDetail Overview is de-boxed (icon +
+label carry identity, whitespace carries separation). **Remaining waves**
+(ride the queued one-pill-language sweep task): Digest forYou filter,
+MeetingDetail selected-pills, dashboard-card interiors, Manuscripts resting
+hairlines → transparent. When touching any toolbar control, converge it on
+the TableControls/ViewPicker anatomy — do not mint new active styles.
+
 ## ATTENTION & NOTIFICATION CANON (Nick-driven, 2026-06-11 seen-model session)
 
 The Slack-style seen model shipped 2026-06-11 (auto-acknowledge, entity_seen v81, portal

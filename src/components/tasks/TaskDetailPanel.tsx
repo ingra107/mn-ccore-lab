@@ -1200,7 +1200,8 @@ function OverviewActivityPeek({
           view all →
         </button>
       </div>
-      <TaskActivityFeed taskId={taskId} peekCount={3} hidePills />
+      {/* N4 — xs avatars (20px): Nick wants the Overview peek tighter. */}
+      <TaskActivityFeed taskId={taskId} peekCount={3} hidePills avatarSize="xs" />
     </div>
   )
 }
