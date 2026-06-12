@@ -1,96 +1,30 @@
-# ▶ SESSION 2026-06-12 — D1 PARITY SWEEP — COMPLETED
+# ▶ SESSION 2026-06-12 (CONTINUED) — D1 DESIGN-PARITY SWEEP — EXECUTED + DEPLOYED
 
-**5 commits, HEAD = `abc714ec`. All built, NOT yet deployed.**
+**Live deploy = `d7bd6180` (HEAD = `20a7a797`). All built green, all deployed. Frontend-only — no schema/route/API change (still 74 tables / 240 routes / v82).**
 
-- **D1-pre + Pass 1** (`6e884f94`): hex-alpha sibling fixes (ListView, SearchPage), Done bar dark composite, grip-on-touch hidden, InlineDetail + TaskDetailDrawer de-boxed (8-point locked canon: removed bg tint, section separators, resting borders, radius fixed to 999 on all chips, TaskQuickEditChips pills converged)
-- **D1 Pass 2** (`ca892788`): Meetings 3×borderTop separators removed; MyTasks now consumes `?openTask=` param — was silently dead-ending from ArtifactPage origin chips + activityRender task cards
-- **D1 Pass 3** (`2a1adca9`): InlineDetail + TaskDetailDrawer activity feeds replaced with `TaskActivityFeed` — shared renderer, visibility-gated, Hermes-aware; removed 40+ lines of hand-rolled feed code
-- **Icon sweep** (`c9751aef`): 55 icons at ≤20px across TaskDetailPanel/TaskCard/Dashboard/activityRender — added `strokeWidth={1.5} absoluteStrokeWidth`; PlannedChip/RightNow/group-pin/PlannedTaskRow "Now" chip radius 3/4→999 + fill 14%→9% + hairline 28% border; LinkChip + DispatchBadge opaque fills converged to 9%/28% AttentionChip canon
-- **Consistency hunt** (`abc714ec`): DispatchBadge border 20%→28%; LinkifiedText → color-mix 9%/28%/999 (matches LinkChip)
+This session deployed the prior 5-commit batch AND executed the entire "D1 DESIGN-PARITY SWEEP" arc that was queued below (now DONE — see ✅ block). Plus a flashing-feed bug fix and a session-close simplify extraction.
 
-**Tasks completed this session (update in Hub):**
-- `task_01KTWD8BV1QS16KK1P6MPFMJC9` — badge honesty audit: PASS (no violations found)
-- `task_01KTWD8CNYNANJHQM13DYPT94S` — deep-link integrity: FIXED (MyTasks ?openTask=)
-- `task_01KTWD89V8YHW3S4P6E0VN1BWS` — icon sweep: DONE (55 fixes in top-4 files; tail ~40 files remain for opportunistic application per Rule 74)
-- `task_01KTWD8AWHS385Z0YCZEV4N8AN` — pill/chip sweep: DONE (PlannedChip, RightNow, 📍 pins, LinkChip, LinkifiedText, DispatchBadge)
-- `task_01KTWD8DDTHDE498FM00SFJTJ9` — style consistency hunt: DONE (same evidence base as above, no duplicate work)
+**Commits this session (newest first):**
+- **`20a7a797` refactor(simplify):** extracted `TaskInlineFieldRow` into `FieldControls.tsx` (Rule 68 — TaskDetailDrawer + InlineDetail had two identical GhostSelect field-row blocks, now ONE renderer); **deleted orphaned `TaskQuickEditChips.tsx`** (0 importers after the GhostSelect swap); fixed stale InlineDatePicker comment. Net −311 lines.
+- **`f7cc11f9` D1 parity P3:** TaskDetailDrawer description moved below-fold (action → composer → peek → next-step → description, matching panel canon); SmartCompose placeholders shortened to "Note or @hermes…" on both drawers (D1-pre item 7 ✅).
+- **`a1387ac8` D1 parity P2:** `SmartCompose` gained `showHermesToggle` prop (prepends `@hermes ` on submit, HermesMark icon, **mutually exclusive with the @me lock**); wired on both drawers; InlineDetail gained a NEXT STEP line (first open subtask, interactive); TaskDetailDrawer activity feed → peek-first (3 + "view all →").
+- **`7b9a4f9e` D1 parity P1:** extracted `ProjectInlineGhostSelect` + `DueInlineSelect` from TaskDetailPanel into `FieldControls.tsx` (now exported); replaced `TaskQuickEditChips` (boxed ChipPopover pills) with the canonical GhostSelect inline row on TaskDetailDrawer + InlineDetail; added `alwaysShowToolbar`; removed resting box shells from ColumnsView + LanesView.
+- **`f34e097e` fix(activity):** project activity feed was flashing every second — root cause was an inline `Wrapper` component defined inside `ActivityEntryItem` (re-mounted every render → Framer `initial:{opacity:0}` replayed) → extracted module-level `ActivityEntryWrapper`; also fixed `usePresence.ts` ttlCleanup to bail on a stable reference (was firing setState every 1s).
 
-**Deploy when ready:** `npm run deploy:pages:gated` from repo root.
+**Architecture outcome:** the three task-expand surfaces (TaskDetailDrawer / InlineDetail / TaskDetailPanel) now share `TaskInlineFieldRow` + `ProjectInlineGhostSelect` + `DueInlineSelect` from `FieldControls.tsx`. The drawers match the LOCKED PANEL STYLE canon (one continuous surface, box-budget-of-one composer, GhostSelect controls, composer-on-top, peek-first activity, below-fold description). Rule 68's "add a prop, never re-fork" now holds for the field row too.
 
-**Remaining D1-pre items (low-priority, apply opportunistically):**
-- Item 2: framer-motion `style.transform` silently replaced on motion elements (8 candidate files)
-- Item 4: Fixed-px grid tracks + 1fr crushing at 768–1023
-- Item 7: Long placeholders on mobile (`Add a note, or @hermes for AI…` in drawers)
-- Item 8: z-order — QuickCaptureInbox/TaskContextMenu/BulkBar already ✓; remaining `z-50` Tailwind modals like CreateDecisionModal (should use --z-modal CSS var)
-- Item 9: gradient fading to `var(--ink)` text token (no hits found; likely CLEAR)
-- Item 10: Action-label honesty (judgment pass; Done bar fixed ✅ last session)
+## ✅ "D1 DESIGN-PARITY SWEEP" arc (queued below) — DONE this session
 
----
+Codex Pass 0 (sibling audit) + Pass 1 (expand-surface matrix) ran (`codex-d1-parity-…-last.md`). Verified against code, executed the actionable gaps:
+- Pass 0 sibling classes 1–5: all CLEAR or already-fixed (the hex-alpha siblings ListView:224/SearchPage:830 were fixed in the prior 5-commit batch; classes 2/3/4 verified clean by codex).
+- Pass 1 gaps: GhostSelect field row (P1), alwaysShowToolbar (P2), Hermes toggle (P2), NEXT STEP in InlineDetail (P2), peek-first drawer (P3), description reorder (P3) — **all shipped above.**
+- Codex's proposed `TaskInlineFieldRow` (which didn't exist) — **now created** in the simplify pass.
 
-# ▶▶▶ NEXT SESSION — D1: DESIGN-PARITY SWEEP (Nick 2026-06-12, verbatim: "why wouldn't
-# something like the expanded task in Today page get some of the updates that we did to the
-# full task editor… we need to have codex do multiple passes to help find targets for
-# updates and then fix")
-
-**The gap and its cause:** the locked panel style was converged ON TaskDetailPanel (the
-canvas); Rule 72 retrofitted only composer-on-top to the other expand surfaces. The later
-refinements (inline field-row dropdowns, single Activity tab + filter pills, title/metadata
-rhythm, recent-activity peek, NEXT STEP line, GhostSelect everywhere, de-boxed empty states)
-are PANEL-ONLY. Class-level cause: Rule 68 unified the ROW but there are still THREE separate
-task-expand implementations — `TaskDetailDrawer` (Today), `InlineDetail` (My Tasks
-Columns/Lanes), `TaskDetailPanel` (full editor) — so improvements can't propagate. Same
-disease the row had pre-Round-6; the deep fix is shared detail-section primitives, not three
-hand-synced copies.
-
-**Named exemplar (Nick 2026-06-12): the expanded task in LANES view is "very much not
-matching" the new canon — boxy.** That's `InlineDetail` (`src/pages/MyTasks/components/
-InlineDetail.tsx`, rendered by LanesView/ColumnsView inline expand): boxed sections vs the
-panel's one-continuous-surface + box-budget-of-one. Treat InlineDetail (and TaskDetailDrawer
-on Today) as the LEAD targets of the fix wave.
-
-**D1-pre (CODEX PASS 0 — run FIRST, mechanical): sibling-class audit of the 2026-06-11
-session's own fixes.** Nick: "check the other stuff you did today... anything else suffer
-from not looking elsewhere to find fixes of similar nature." Each fix below was applied at
-ONE site; codex sweeps the repo for unswept siblings of the same mechanism, outputs
-file:line lists per class, then fixes the mechanical ones (visual-value-preserving only).
-
-| # | Class (today's fix) | Sibling grep / check | Status |
-|---|---|---|---|
-| 1 | Hex-suffix alpha on var() strings (`c+'70'` = invalid CSS; fixed in TopBar w/ `withAlpha`) | `grep -rn "\.color + '\|color + '[0-9a-fA-F]" src` — flag any whose color source is a `var()` string | **2 CONFIRMED: `ListView.tsx:224` `meta.color+'80'` (GROUP_META = ACCENT_* var() strings → group dot bg invisible) · `SearchPage.tsx:830` `config.color+'14'` (var(--teal) etc.)** |
-| 2 | framer-motion: `transform` in `style` silently replaced by animated transform (quick-add centering) | every `motion.*` element that ALSO sets `style.transform` w/ translate/scale — `grep -l "transform.*translate" src` then verify motion usage per file (8 candidate files: CLIFMap, GrantTimelineCard, PomodoroStatsCard, StatusLine, WeeklyProgressCard, HermesPending, Layout, NetworkBackground) | unchecked |
-| 3 | `--cream` flat bg on a surface whose body carries the `--surface-2` gradient composite (task-panel near-black bands) | inside `.task-detail-panel`: any OTHER element setting `background: var(--cream)`/color-mix-on-cream — ⚠ check the mobile Done bar (`.task-detail-done-bar` uses `color-mix(in oklch, var(--cream) 95%…)` — likely the SAME mismatch class in dark) | suspected sibling |
-| 4 | Fixed-px grid tracks + 1fr crushing to zero in the 768–1023 band (ListView title) | `grep -rn "gridTemplateColumns.*px.*1fr" src` — sum fixed tracks; any grid >~600px fixed that lacks a 768–1023 override (check `.task-grid-row` / Deadlines / TableContainer columns) | unchecked |
-| 5 | Blanket 44px button min-height deforming small visual controls (DoneBox/stage-dot exempted) | buttons with inline `width/height ≤ 30` not in the `:not()` exemption chains — carets, priority dots, swap pills, bell internals | unchecked |
-| 6 | Drag-only affordances dead on touch (drop zones hidden) | the `⋮⋮` Grip renders on touch at 0.6 opacity but native DnD never fires there (TaskRow `Grip`); Columns kanban drag on touch; DashboardGrid drag | unchecked — judgment: hide grip on touch? (📌 is the touch path) |
-| 7 | Placeholders too long for narrow inputs (panel composer + morning compose shortened) | remaining long placeholders on mobile-rendered composers: SmartCompose default `'Add a note, or @hermes for AI…'` in drawers, RightNow expanded `'Chat with Claude about this task…'` | unchecked |
-| 8 | Overlays/z-order under MobileTabBar (panel was z-50 under z-100 bar) | `grep -rn "z-50\|z-40" src` on fixed overlays that should sit above nav on mobile (QuickCaptureInbox panel, TaskContextMenu, BulkBar) | unchecked |
-| 9 | bg gradient fading to a TEXT token (`var(--ink)` white smear) | `grep -rn "gradient.*var(--ink)" src` + any fade using non-bg tokens | unchecked |
-| 10 | Action-label honesty (Done bar → Complete/Close) | buttons whose label promises an entity action but only navigates/closes | judgment pass, ride Pass 1 matrix |
-
-**⚠ DIVISION OF LABOR (Nick 2026-06-12, cost rule — applies to D1-pre AND all passes
-below): CODEX finds the targets AND writes the recommended code EXPLICITLY (file:line +
-ready-to-apply diff/snippet per finding — not descriptions); then a CHEAP executor (haiku
-agent or similar) applies the diffs mechanically; orchestrator only verifies (build +
-test:api + spot captures) and commits. No Opus/Fable implementation work on this sweep.**
-
-**Execution shape (Nick-specified: CODEX MULTIPLE PASSES, then fix):**
-- **Pass 1 (codex, audit):** inventory every task-expand/detail surface + build a
-  feature/style matrix vs the locked canon, TaskDetailPanel = reference. Surfaces:
-  TaskDetailDrawer, InlineDetail, TaskDetailPanel, My Hub expand (PersonalPage), plus
-  ProjectDetail's task cards' expand path. Matrix rows: field-row dropdowns, composer
-  anatomy (mode pills/@me lock/Hermes toggle/attach), activity feed (ActivityEntryItem
-  params, peek), title/metadata rhythm, GhostSelect usage, empty states, de-box compliance,
-  Done/Complete affordances, mobile behavior.
-- **Pass 2 (codex, second sweep):** beyond task surfaces — which OTHER detail/expand surfaces
-  (project compose area, meeting detail, artifact page comments) diverge from the same canon.
-  Output = prioritized target list with file:line.
-- **Pass 3 (fix wave):** prefer EXTRACTING shared section components (FieldRow,
-  DetailComposer wrapper, MetadataLine) that drawer/inline/panel all render — Rule-68 logic:
-  add props to shared primitives, never re-fork. Nick reviews the target list before the fix
-  wave if any call is a design judgment.
-- **Coordinate with** queued Hub task `task_01KTWD8DDT…` (style-learnings consistency hunt) +
-  the pill-language sweep task — same evidence base, don't duplicate.
-- Codex invocation: `/codex-cli` skill (read it first — encodes auth + safe flags).
+**Remaining low-priority D1-pre items (apply opportunistically, NOT blocking):**
+- Item 2: framer-motion `style.transform` silently replaced on motion elements (8 candidate files — codex Pass 0 found HermesPending/Layout/NetworkBackground CLEAR; 5 listed files don't exist at the cited paths)
+- Item 4: fixed-px grid tracks + 1fr crushing at 768–1023 (codex: ListView already has mobile+tablet overrides; Kanban scroll is intentional)
+- Item 8: z-order — remaining `z-50` Tailwind modals (CreateDecisionModal) should use `--z-modal`
+- N1.20–N1.24 mobile polish batches (see docket below); N1b app-wide de-box sweep; N5 JS-hover→CSS
 
 # ▶ DOCKET STATE after the 2026-06-11 late-evening execution session
 
