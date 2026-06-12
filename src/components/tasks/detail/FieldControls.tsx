@@ -520,6 +520,79 @@ export function DueInlineSelect({ value, onChange }: { value: string; onChange: 
   )
 }
 
+// ── Task Inline Field Row ────────────────────────────────────
+// THE canonical Status·Priority·Project·Due row for the inline expand
+// surfaces (TaskDetailDrawer on Today, InlineDetail on MyTasks). One
+// shared renderer — Rule 68: add a prop, never re-fork per surface.
+// TaskDetailPanel keeps its own variant (Delete button + recurrence
+// context) as the reference; the two DRAWERS share this one.
+
+const STATUS_INLINE_OPTIONS = [
+  { value: 'todo', label: 'To Do' },
+  { value: 'in_progress', label: 'In Progress' },
+  { value: 'waiting_external', label: 'Waiting (Ext.)' },
+  { value: 'blocked', label: 'Blocked' },
+  { value: 'done', label: 'Done' },
+]
+const PRIORITY_INLINE_OPTIONS = [
+  { value: 'low', label: 'Low' },
+  { value: 'medium', label: 'Medium' },
+  { value: 'high', label: 'High' },
+  { value: 'urgent', label: 'Urgent' },
+]
+
+export function TaskInlineFieldRow({
+  status,
+  priority,
+  projectId,
+  dueDate,
+  onUpdate,
+  onOpenEditor,
+  style,
+}: {
+  status: string
+  priority: string | null | undefined
+  projectId: string | null | undefined
+  dueDate: string | null | undefined
+  onUpdate: (fields: Record<string, unknown>) => void
+  onOpenEditor: () => void
+  /** Wrapper style override — surfaces differ only in outer spacing. */
+  style?: React.CSSProperties
+}) {
+  return (
+    <div
+      style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', columnGap: 6, rowGap: 4, ...style }}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <GhostSelect
+        aria-label="Status"
+        value={status}
+        onChange={(v) => onUpdate({ status: v })}
+        options={STATUS_INLINE_OPTIONS}
+      />
+      <GhostSelect
+        aria-label="Priority"
+        value={priority || 'medium'}
+        onChange={(v) => onUpdate({ priority: v })}
+        options={PRIORITY_INLINE_OPTIONS}
+      />
+      <ProjectInlineGhostSelect
+        value={projectId || ''}
+        onChange={(v) => onUpdate({ project_id: v || null })}
+      />
+      <DueInlineSelect
+        value={dueDate || ''}
+        onChange={(v) => onUpdate({ due_date: v || null })}
+      />
+      <button
+        onClick={(e) => { e.stopPropagation(); onOpenEditor() }}
+        title="Open full task editor"
+        style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 10px', fontSize: 11, fontFamily: 'inherit', fontWeight: 500, color: 'var(--teal)', background: 'transparent', border: 'none', borderRadius: 999, cursor: 'pointer', marginLeft: 'auto' }}
+      >Open full editor</button>
+    </div>
+  )
+}
+
 // ── Project Select ───────────────────────────────────────────
 
 export function ProjectSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {

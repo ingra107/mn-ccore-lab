@@ -24,7 +24,7 @@ const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 
 // selection in gold) + Clear in the footer. No native <input type=date> edit
 // mode remains. Pick a day or preset → optimistic write + close. The
 // { value, onChange } contract is unchanged, so every consumer (ListView,
-// Deadlines, Today drawer via DateInput/TaskQuickEditChips, Insights, grid)
+// Deadlines, Today drawer via DateInput/DueInlineSelect, Insights, grid)
 // keeps working without edits.
 export default function InlineDatePicker({ value, onChange }: InlineDatePickerProps) {
   const [open, setOpen] = useState(false)
