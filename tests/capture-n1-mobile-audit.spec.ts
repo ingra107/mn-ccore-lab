@@ -16,7 +16,7 @@ import path from 'node:path'
 import { injectFakeAuth } from './helpers/capture-auth'
 
 const BASE = process.env.CAPTURE_BASE_URL ?? 'https://mn-ccore-lab.pages.dev'
-const OUT_DIR = path.join('review', 'n1-mobile-audit-2026-06-11')
+const OUT_DIR = process.env.CAPTURE_OUT_DIR ?? path.join('review', 'n1-mobile-audit-2026-06-11')
 if (!fs.existsSync(OUT_DIR)) fs.mkdirSync(OUT_DIR, { recursive: true })
 
 // A real, data-rich task for the detail-panel deep link.
@@ -47,6 +47,8 @@ const SURFACES: Surface[] = [
   { slug: 'manuscripts',       path: '/portal/manuscripts',                              chunks: 1 },
   { slug: 'deadlines',         path: '/portal/deadlines',                                chunks: 1 },
   { slug: 'overview',          path: '/portal/overview',                                 chunks: 1 },
+  { slug: 'ideas',             path: '/portal/ideas',                                    chunks: 1 },
+  { slug: 'digest',            path: '/portal/digest',                                   chunks: 1 },
 ]
 
 async function scrollThroughEverything(page: import('@playwright/test').Page) {

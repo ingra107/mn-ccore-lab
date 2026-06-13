@@ -374,23 +374,22 @@ export default function Dashboard() {
                 </div>
 
                 {/* Center: tabs */}
-                <div className="dashboard-tabs" style={{ display: 'flex', gap: '2px', padding: '2px', borderRadius: 'var(--radius-lg)', background: 'var(--surface-1)', flexShrink: 0 }}>
+                {/* N1b de-box: was a --surface-1 tray + solid --stage-fill-analysis
+                    active fill. Converged to the hairline-pill anatomy with a gold
+                    TINT (the Overview's gold identity preserved); --gold-on-emphasis
+                    text is AA on --gold-active both themes (Rule 42). */}
+                <div className="dashboard-tabs" style={{ display: 'flex', borderRadius: 999, border: '1px solid var(--border-subtle)', overflow: 'hidden', flexShrink: 0 }}>
                   {TAB_CONFIG.map(tab => (
                     <button
                       key={tab.id}
                       onClick={() => handleTabChange(tab.id)}
                       style={{
                         padding: '4px 12px',
-                        borderRadius: 'var(--radius-lg)',
                         border: 'none',
                         fontSize: '12px',
                         fontWeight: activeTab === tab.id ? 600 : 400,
-                        // Active tab: theme-agnostic dark-gold fill + white
-                        // text = 7.5:1 AA both themes. --gold flips
-                        // (#6b5420 light / #dcb355 dark) so #1a1a1a text
-                        // failed on light mode. r7 2026-04-22.
-                        color: activeTab === tab.id ? '#fff' : 'var(--slate)',
-                        backgroundColor: activeTab === tab.id ? 'var(--stage-fill-analysis)' : 'transparent',
+                        color: activeTab === tab.id ? 'var(--gold-on-emphasis)' : 'var(--slate)',
+                        backgroundColor: activeTab === tab.id ? 'var(--gold-active)' : 'transparent',
                         opacity: activeTab === tab.id ? 1 : 0.85,
                         cursor: 'pointer',
                         transition: 'color 150ms ease, background-color 150ms ease, opacity 150ms ease',
@@ -834,7 +833,7 @@ export default function Dashboard() {
 
         .customize-panel { background-color: var(--teal-hover); }
         .dark .customize-panel { background-color: var(--teal-hover); }
-        .dark .dashboard-tabs { background: var(--hover-light) !important; }
+        .dark .dashboard-tabs { background: transparent !important; }
 
         @keyframes status-pulse {
           0%, 100% { opacity: 1; box-shadow: 0 0 8px rgba(34, 197, 94, 0.4); }
