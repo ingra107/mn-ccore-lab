@@ -1213,6 +1213,28 @@ async function applyPatch(
     effectivePatch = { ...effectivePatch, acknowledged_at: null, acknowledged_by: null };
   }
 
+  // I40 fix — A3 path (2026-06-13): source_thread_id + email_link move as a
+  // derived pair on the A3 mutations path, mirroring the same derivation in
+  // handleUpdateTask (tasks.ts:411-413). PB outbox patches that carry
+  // source_thread_id (e.g. mail-thread linking after task creation) route
+  // through applyPatch, which did NOT derive email_link — leaving a row with
+  // a thread id and no Gmail link, caught by PB invariant I40 (2026-06-13
+  // audit: 1 task, mut_01KTZZC9E2K2ZJZ6F3NZW8T5RV via PB outbox).
+  // Gmail deep-link URL contract is pinned by I40 + backfill_email_links.py:
+  //   https://mail.google.com/mail/u/1/#inbox/<thread_id>
+  // Precedence: if the patch EXPLICITLY sets email_link, that value wins.
+  if (
+    mut.table === 'tasks' &&
+    Object.prototype.hasOwnProperty.call(effectivePatch, 'source_thread_id') &&
+    !Object.prototype.hasOwnProperty.call(effectivePatch, 'email_link')
+  ) {
+    const threadId = effectivePatch['source_thread_id'];
+    const derivedLink = (typeof threadId === 'string' && threadId)
+      ? `https://mail.google.com/mail/u/1/#inbox/${threadId}`
+      : null;
+    effectivePatch = { ...effectivePatch, email_link: derivedLink };
+  }
+
   const patchKeys = Object.keys(effectivePatch || {});
   const setClauses = [...patchKeys.map(k => `${k} = ?`), 'updated_at = datetime(\'now\')', 'last_mutation_id = ?'];
   // vals only covers SET clause bindings; WHERE clause bindings appended separately below
