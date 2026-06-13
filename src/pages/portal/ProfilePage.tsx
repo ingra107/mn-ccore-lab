@@ -15,6 +15,7 @@ import PageHeader from '../../components/PageHeader'
 import Avatar from '../../components/Avatar'
 import { TextSkeleton } from '../../components/LoadingSkeleton'
 import CalendarFeedsPanel from '../../components/CalendarFeedsPanel'
+import { ICON_PROPS } from '../../lib/iconProps'
 
 interface ProfileForm {
   preferred_name: string
@@ -118,7 +119,7 @@ export default function ProfilePage() {
   if (!slug) {
     return (
       <div className="content-container">
-        <PageHeader icon={<User size={20} />} title="Profile" subtitle="Sign in to view your profile" />
+        <PageHeader icon={<User {...ICON_PROPS} size={20} />} title="Profile" subtitle="Sign in to view your profile" />
       </div>
     )
   }
@@ -126,7 +127,7 @@ export default function ProfilePage() {
   if (!member || !rawRow) {
     return (
       <div className="content-container">
-        <PageHeader icon={<User size={20} />} title="Profile" subtitle="No profile yet" />
+        <PageHeader icon={<User {...ICON_PROPS} size={20} />} title="Profile" subtitle="No profile yet" />
         <p className="text-sm" style={{ color: 'var(--muted)' }}>
           Your team_members row hasn't been provisioned yet. Visit any portal page to trigger auto-create,
           then return here.
@@ -140,7 +141,7 @@ export default function ProfilePage() {
 
   return (
     <div className="content-container">
-      <PageHeader icon={<User size={20} />} title="My Profile" subtitle="Update your profile and connect your calendar." />
+      <PageHeader icon={<User {...ICON_PROPS} size={20} />} title="My Profile" subtitle="Update your profile and connect your calendar." />
 
       {/* Identity card — read-only avatar + name + email */}
       <div
@@ -173,7 +174,7 @@ export default function ProfilePage() {
               className="inline-flex items-center gap-1 text-[11px]"
               style={{ color: 'var(--teal)' }}
             >
-              View public profile <ExternalLink size={11} />
+              View public profile <ExternalLink {...ICON_PROPS} size={11} />
             </Link>
           </div>
         </div>
@@ -204,7 +205,7 @@ export default function ProfilePage() {
         )}
         {showSavedHint && (
           <p className="text-[11px] mt-2 inline-flex items-center gap-1" style={{ color: 'var(--green)' }}>
-            <Save size={11} /> Saved
+            <Save {...ICON_PROPS} size={11} /> Saved
           </p>
         )}
       </section>
@@ -212,7 +213,7 @@ export default function ProfilePage() {
       {/* Calendar feeds */}
       <section className="mb-6">
         <div className="flex items-center gap-2 mb-3">
-          <CalendarIcon size={16} style={{ color: 'var(--teal)' }} />
+          <CalendarIcon {...ICON_PROPS} size={16} style={{ color: 'var(--teal)' }} />
           <h3 className="text-sm font-semibold" style={{ color: 'var(--ink)' }}>Calendar feeds</h3>
         </div>
         <p className="text-[11px] mb-3" style={{ color: 'var(--muted)', lineHeight: 1.5 }}>
@@ -229,7 +230,7 @@ export default function ProfilePage() {
           className="inline-flex items-center gap-2 text-xs"
           style={{ color: 'var(--teal)' }}
         >
-          <SettingsIcon size={14} /> Open full Settings (theme, lab thresholds, etc.)
+          <SettingsIcon {...ICON_PROPS} size={14} /> Open full Settings (theme, lab thresholds, etc.)
         </Link>
       </section>
     </div>

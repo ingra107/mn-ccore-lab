@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { Sparkles } from 'lucide-react'
 import { useInsightSuggestions } from '../hooks/useApiData'
 import { PATHS } from '../constants/paths'
+import { ICON_PROPS } from '../lib/iconProps'
 
 interface InsightPanelProps {
   projectSlug: string
@@ -22,7 +23,7 @@ export default function InsightPanel({ projectSlug }: InsightPanelProps) {
       style={{ marginTop: '1.5rem', marginBottom: '1.5rem' }}
     >
       <div className="flex items-center gap-2 mb-3">
-        <Sparkles size={14} style={{ color: 'var(--teal)' }} />
+        <Sparkles {...ICON_PROPS} size={14} style={{ color: 'var(--teal)' }} />
         <span
           style={{
             fontSize: '10px',

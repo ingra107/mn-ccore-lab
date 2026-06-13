@@ -2,6 +2,7 @@ import { History } from 'lucide-react'
 import { useSimilarDecisionsById } from '../hooks/useApiData'
 import SentimentBadge from './SentimentBadge'
 import { parseDbUtc } from '../lib/time'
+import { ICON_PROPS } from '../lib/iconProps'
 
 interface Props {
   decisionId: string
@@ -34,7 +35,7 @@ export default function SimilarDecisionsPanel({ decisionId, projects }: Props) {
   return (
     <div className="px-4 pb-4" style={{ borderTop: '1px dashed rgba(201,168,76,0.15)' }}>
       <div className="flex items-center gap-1.5 mt-3 mb-2">
-        <History size={12} style={{ color: 'var(--gold)' }} />
+        <History {...ICON_PROPS} size={12} style={{ color: 'var(--gold)' }} />
         <span style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--gold)' }}>
           Related Decisions
         </span>

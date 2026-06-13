@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Calendar } from 'lucide-react'
 import { PATHS } from '../../constants/paths'
+import { ICON_PROPS } from '../../lib/iconProps'
 
 interface CalendarEvent {
   id: string
@@ -47,7 +48,7 @@ export default function CalendarTimeline({ events }: CalendarTimelineProps) {
   return (
     <div>
       <div className="flex items-center gap-2 mb-3">
-        <Calendar size={13} style={{ color: 'var(--gold)', opacity: 0.85 }} />
+        <Calendar {...ICON_PROPS} size={13} style={{ color: 'var(--gold)', opacity: 0.85 }} />
         <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--gold)' }}>
           Today
         </span>

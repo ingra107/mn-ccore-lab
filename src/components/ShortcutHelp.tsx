@@ -2,6 +2,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { useEffect, useRef } from 'react'
 import { X } from 'lucide-react'
 import { spring } from '../lib/animations'
+import { ICON_PROPS } from '../lib/iconProps'
 
 interface ShortcutHelpProps {
   open: boolean
@@ -172,7 +173,7 @@ export default function ShortcutHelp({ open, onClose }: ShortcutHelpProps) {
                 aria-label="Close"
                 style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: 'var(--sp-xs)' }}
               >
-                <X size={16} />
+                <X {...ICON_PROPS} size={16} />
               </button>
             </div>
 

@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect, useMemo, createContext, useContext } from 'react'
 import { Undo2, X, Check } from 'lucide-react'
+import { ICON_PROPS } from '../lib/iconProps'
 
 interface ToastAction {
   label: string
@@ -159,7 +160,7 @@ export function UndoToastProvider({ children }: { children: React.ReactNode }) {
             }}
           >
             {toast.type === 'success' && (
-              <Check size={14} style={{ color: 'var(--teal)', flexShrink: 0 }} />
+              <Check {...ICON_PROPS} size={14} style={{ color: 'var(--teal)', flexShrink: 0 }} />
             )}
             <span style={{ flex: 1 }}>{toast.message}</span>
             {toast.type === 'success' && toast.action && (
@@ -201,7 +202,7 @@ export function UndoToastProvider({ children }: { children: React.ReactNode }) {
                   cursor: 'pointer',
                 }}
               >
-                <Undo2 size={12} />
+                <Undo2 {...ICON_PROPS} size={12} />
                 Undo
               </button>
             )}
@@ -221,7 +222,7 @@ export function UndoToastProvider({ children }: { children: React.ReactNode }) {
                 justifyContent: 'center',
               }}
             >
-              <X size={14} />
+              <X {...ICON_PROPS} size={14} />
             </button>
           </div>
         ))}

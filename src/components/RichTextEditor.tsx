@@ -4,6 +4,7 @@ import Placeholder from '@tiptap/extension-placeholder'
 import Link from '@tiptap/extension-link'
 import { useCallback, useEffect, useRef } from 'react'
 import { Bold, Italic, List, ListOrdered, Link as LinkIcon, Heading2 } from 'lucide-react'
+import { ICON_PROPS } from '../lib/iconProps'
 
 interface RichTextEditorProps {
   content: string | null
@@ -99,22 +100,22 @@ export default function RichTextEditor({
           style={{ borderBottom: '1px solid var(--border-subtle)' }}
         >
           <ToolbarButton active={editor.isActive('bold')} onClick={() => editor.chain().focus().toggleBold().run()}>
-            <Bold size={14} />
+            <Bold {...ICON_PROPS} size={14} />
           </ToolbarButton>
           <ToolbarButton active={editor.isActive('italic')} onClick={() => editor.chain().focus().toggleItalic().run()}>
-            <Italic size={14} />
+            <Italic {...ICON_PROPS} size={14} />
           </ToolbarButton>
           <ToolbarButton active={editor.isActive('heading')} onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}>
-            <Heading2 size={14} />
+            <Heading2 {...ICON_PROPS} size={14} />
           </ToolbarButton>
           <ToolbarButton active={editor.isActive('bulletList')} onClick={() => editor.chain().focus().toggleBulletList().run()}>
-            <List size={14} />
+            <List {...ICON_PROPS} size={14} />
           </ToolbarButton>
           <ToolbarButton active={editor.isActive('orderedList')} onClick={() => editor.chain().focus().toggleOrderedList().run()}>
-            <ListOrdered size={14} />
+            <ListOrdered {...ICON_PROPS} size={14} />
           </ToolbarButton>
           <ToolbarButton active={editor.isActive('link')} onClick={setLink}>
-            <LinkIcon size={14} />
+            <LinkIcon {...ICON_PROPS} size={14} />
           </ToolbarButton>
         </div>
       )}

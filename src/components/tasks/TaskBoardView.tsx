@@ -20,6 +20,7 @@ import TaskCard from './TaskCard'
 import Avatar from '../Avatar'
 import { getPersonInfo } from '../../data/team'
 import type { TaskRow } from '../../lib/api'
+import { ICON_PROPS } from '../../lib/iconProps'
 
 interface TaskBoardViewProps {
   tasks: TaskRow[]
@@ -234,7 +235,7 @@ export default function TaskBoardView({ tasks, onStatusChange, onSelect }: TaskB
     >
       {/* Group By selector */}
       <div className="flex items-center gap-2 mb-3">
-        <Layers size={13} style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }} />
+        <Layers {...ICON_PROPS} size={13} style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }} />
         <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
           Group by:
         </span>
@@ -300,7 +301,7 @@ export default function TaskBoardView({ tasks, onStatusChange, onSelect }: TaskB
                       style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px', display: 'flex', alignItems: 'center', color: col.color }}
                       title="Collapse column"
                     >
-                      <ChevronDown size={12} />
+                      <ChevronDown {...ICON_PROPS} size={12} />
                     </button>
                     <Icon size={14} style={{ color: col.color }} />
                     <span className="text-sm font-medium" style={{ color: col.color }}>
@@ -368,9 +369,9 @@ export default function TaskBoardView({ tasks, onStatusChange, onSelect }: TaskB
                   }}
                 >
                   {isLaneCollapsed ? (
-                    <ChevronRight size={14} style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }} />
+                    <ChevronRight {...ICON_PROPS} size={14} style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }} />
                   ) : (
-                    <ChevronDown size={14} style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }} />
+                    <ChevronDown {...ICON_PROPS} size={14} style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }} />
                   )}
                   {renderLaneLabel(lane.key)}
                   <span
@@ -499,7 +500,7 @@ function CollapsedColumn({
         }}
         title="Expand column"
       >
-        <ChevronRight size={12} />
+        <ChevronRight {...ICON_PROPS} size={12} />
       </button>
 
       {/* Vertical label */}

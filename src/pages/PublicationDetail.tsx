@@ -6,6 +6,7 @@ import { usePageMeta } from '../hooks/usePageMeta'
 import Avatar from '../components/Avatar'
 import { getPersonInfo } from '../data/team'
 import { PATHS } from '../constants/paths'
+import { ICON_PROPS } from '../lib/iconProps'
 
 const TOPIC_DISPLAY: Record<string, string> = {
   clif: 'CLIF',
@@ -47,7 +48,7 @@ export default function PublicationDetail() {
             opacity: 0.85,
           }}
         >
-          <ArrowLeft size={16} />
+          <ArrowLeft {...ICON_PROPS} size={16} />
           Back to Publications
         </Link>
         <h1
@@ -93,7 +94,7 @@ export default function PublicationDetail() {
               opacity: 0.85,
             }}
           >
-            <ArrowLeft size={16} />
+            <ArrowLeft {...ICON_PROPS} size={16} />
             Back to Publications
           </Link>
         </div>
@@ -274,7 +275,7 @@ export default function PublicationDetail() {
                     minHeight: '32px',
                   }}
                 >
-                  DOI <ExternalLink size={10} />
+                  DOI <ExternalLink {...ICON_PROPS} size={10} />
                 </a>
               )}
               {pub.pubmed && (
@@ -291,7 +292,7 @@ export default function PublicationDetail() {
                     minHeight: '32px',
                   }}
                 >
-                  PubMed <ExternalLink size={10} />
+                  PubMed <ExternalLink {...ICON_PROPS} size={10} />
                 </a>
               )}
             </div>
@@ -320,7 +321,7 @@ function TrialRegSection({ pub }: { pub: any }) {
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: 0.25 }} style={{ marginTop: '2rem' }}>
       <div className="flex items-center gap-2 mb-3">
-        <ExternalLink size={16} style={{ color: 'var(--gold)' }} />
+        <ExternalLink {...ICON_PROPS} size={16} style={{ color: 'var(--gold)' }} />
         <h2 style={{ fontWeight: 500, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>Trial Registration</h2>
       </div>
       <a href={href} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--teal)', fontSize: 'var(--value-size)', textDecoration: 'underline' }}>
@@ -338,7 +339,7 @@ function RelatedPublicationsSection({ pub, allPubs }: { pub: any; allPubs: any[]
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: 0.3 }} style={{ marginTop: '2rem' }}>
       <div className="flex items-center gap-2 mb-3">
-        <FolderOpen size={16} style={{ color: 'var(--teal)' }} />
+        <FolderOpen {...ICON_PROPS} size={16} style={{ color: 'var(--teal)' }} />
         <h2 style={{ fontWeight: 500, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>Related Publications</h2>
         <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.75 }}>{related.length}</span>
       </div>
@@ -366,7 +367,7 @@ function PressMentionsSection({ pub }: { pub: any }) {
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: 0.35 }} style={{ marginTop: '2rem' }}>
       <div className="flex items-center gap-2 mb-3">
-        <ExternalLink size={16} style={{ color: 'var(--slate)', opacity: 0.85 }} />
+        <ExternalLink {...ICON_PROPS} size={16} style={{ color: 'var(--slate)', opacity: 0.85 }} />
         <h2 style={{ fontWeight: 500, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>Press & Mentions</h2>
       </div>
       <p style={{ fontSize: 'var(--value-size)', color: 'var(--slate)', opacity: 0.85, margin: 0, padding: '16px 20px', background: 'var(--ice)', borderRadius: 'var(--radius-xl)' }}>
@@ -397,7 +398,7 @@ function LinkedProjectsSection({ publicationId }: { publicationId: string }) {
       style={{ marginTop: '2rem' }}
     >
       <div className="flex items-center gap-2 mb-3">
-        <FolderOpen size={16} style={{ color: 'var(--teal)' }} />
+        <FolderOpen {...ICON_PROPS} size={16} style={{ color: 'var(--teal)' }} />
         <h2
           style={{
             fontWeight: 500,

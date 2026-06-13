@@ -10,6 +10,7 @@ import { CSS } from '@dnd-kit/utilities'
 import CollapsibleSection from '../../CollapsibleSection'
 import { useSubtasks } from '../../../hooks/useApiData'
 import { useCreateSubtask, useToggleSubtask, useDeleteSubtask, useReorderSubtasks } from '../../../hooks/useMutations'
+import { ICON_PROPS } from '../../../lib/iconProps'
 
 // ── Subtask Section (collapsible wrapper) ───────────────────
 
@@ -21,7 +22,7 @@ export function SubtaskSection({ taskId }: { taskId: string }) {
   return (
     <CollapsibleSection
       title="Subtasks"
-      icon={<ListChecks size={11} style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }} />}
+      icon={<ListChecks {...ICON_PROPS} size={11} style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }} />}
       badge={total > 0 ? `${completed}/${total}` : null}
       defaultOpen={total > 0}
       storageKey={`task-subtasks-${taskId}`}
@@ -67,7 +68,7 @@ function SortableSubtaskItem({
         className="cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
         style={{ background: 'none', border: 'none', padding: '2px', color: 'var(--slate)', opacity: undefined }}
       >
-        <GripVertical size={12} style={{ opacity: 0.85 }} />
+        <GripVertical {...ICON_PROPS} size={12} style={{ opacity: 0.85 }} />
       </button>
 
       {/* Toggle button */}
@@ -76,9 +77,9 @@ function SortableSubtaskItem({
         style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', flexShrink: 0 }}
       >
         {subtask.completed ? (
-          <CheckCircle2 size={16} style={{ color: 'var(--teal)' }} />
+          <CheckCircle2 {...ICON_PROPS} size={16} style={{ color: 'var(--teal)' }} />
         ) : (
-          <Circle size={16} style={{ color: 'var(--slate)', opacity: 0.75 }} />
+          <Circle {...ICON_PROPS} size={16} style={{ color: 'var(--slate)', opacity: 0.75 }} />
         )}
       </button>
 
@@ -100,7 +101,7 @@ function SortableSubtaskItem({
         className="opacity-0 group-hover:opacity-100 transition-opacity"
         style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, color: 'var(--slate)', flexShrink: 0 }}
       >
-        <Trash2 size={12} />
+        <Trash2 {...ICON_PROPS} size={12} />
       </button>
     </motion.div>
   )
@@ -150,7 +151,7 @@ function SubtaskChecklist({ taskId }: { taskId: string }) {
   return (
     <div>
       <label className="flex items-center gap-1.5 mb-2" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)', fontWeight: 'var(--label-weight)', fontSize: 'var(--label-size)' }}>
-        <ListChecks size={12} style={{ opacity: 0.85 }} />
+        <ListChecks {...ICON_PROPS} size={12} style={{ opacity: 0.85 }} />
         Subtasks ({completed}/{total})
       </label>
 
@@ -181,7 +182,7 @@ function SubtaskChecklist({ taskId }: { taskId: string }) {
 
       {/* Add subtask input */}
       <form onSubmit={handleAdd} className="flex items-center gap-2">
-        <Plus size={14} style={{ color: 'var(--slate)', opacity: 0.75, flexShrink: 0 }} />
+        <Plus {...ICON_PROPS} size={14} style={{ color: 'var(--slate)', opacity: 0.75, flexShrink: 0 }} />
         <input
           ref={inputRef}
           type="text"

@@ -11,6 +11,7 @@ import SectionDivider from '../components/SectionDivider'
 import PageLayout from '../components/PageLayout'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useScrollRevealGroup } from '../hooks/useScrollReveal'
+import { ICON_PROPS } from '../lib/iconProps'
 
 // High-impact journal names for the "Key Publications" section
 const KEY_JOURNALS = [
@@ -277,7 +278,7 @@ export default function Publications() {
             className="inline-flex items-center gap-1 mt-3 text-[11px] px-2.5 py-1 rounded transition-colors"
             style={{ color: 'var(--slate)', background: 'none', border: '1px solid var(--border-subtle)', cursor: 'pointer', opacity: 0.85 }}
           >
-            <Copy size={10} />
+            <Copy {...ICON_PROPS} size={10} />
             Copy bibliography ({filtered.length})
           </button>
         )}
@@ -289,7 +290,7 @@ export default function Publications() {
         <div style={{ background: 'var(--surface-1)', borderTop: '1px solid var(--border-subtle)', borderBottom: '1px solid var(--border-subtle)', minHeight: '200px', contain: 'layout' }}>
           <section className="py-6 sm:py-8 content-container">
             <div className="flex items-center gap-2 mb-4">
-              <Award size={16} style={{ color: 'var(--gold)' }} aria-hidden="true" />
+              <Award {...ICON_PROPS} size={16} style={{ color: 'var(--gold)' }} aria-hidden="true" />
               <h2
                 className="text-sm"
                 style={{
@@ -370,7 +371,7 @@ export default function Publications() {
                 opacity: viewMode === 'list' ? 1 : 0.85,
               }}
             >
-              <List size={12} />
+              <List {...ICON_PROPS} size={12} />
               List
             </button>
             <button
@@ -384,7 +385,7 @@ export default function Publications() {
                 opacity: viewMode === 'library' ? 1 : 0.85,
               }}
             >
-              <BookOpen size={12} />
+              <BookOpen {...ICON_PROPS} size={12} />
               Library
             </button>
           </div>

@@ -2,6 +2,7 @@ import { memo, useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { Globe, ArrowRight } from 'lucide-react'
 import BentoCard from './BentoCard'
+import { ICON_PROPS } from '../../lib/iconProps'
 
 // Approximate coordinates of CLIF consortium sites on a simplified US map
 // Viewbox: 0,0 to 300,180
@@ -143,7 +144,7 @@ function CLIFMiniCard() {
               transition: 'opacity 0.2s ease',
             }}
           >
-            Learn more <ArrowRight size={10} />
+            Learn more <ArrowRight {...ICON_PROPS} size={10} />
           </Link>
         </div>
       </div>

@@ -22,6 +22,7 @@ import { displayName as formatTier, fullNameForSlug } from '../lib/nameUtils'
 import { isProjectActive, normalizeProjectStatus } from '../lib/taskConstants'
 import WatchButton from '../components/WatchButton'
 import { PATHS } from '../constants/paths'
+import { ICON_PROPS } from '../lib/iconProps'
 
 const TOPIC_DISPLAY: Record<string, string> = {
   clif: 'CLIF',
@@ -76,7 +77,7 @@ function MemberCommitmentCard({ item }: { item: CommitmentRow }) {
             marginTop: 2,
           }}
         >
-          {isDone ? <CheckCircle2 size={20} /> : <Handshake size={20} />}
+          {isDone ? <CheckCircle2 {...ICON_PROPS} size={20} /> : <Handshake {...ICON_PROPS} size={20} />}
         </div>
 
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -329,7 +330,7 @@ export default function MemberPage() {
               '--hov-color': 'var(--teal)',
             } as React.CSSProperties}
           >
-            <TrendingUp size={12} />
+            <TrendingUp {...ICON_PROPS} size={12} />
             View Trajectory
           </Link>
           <WatchButton id={slug} type="person" label={member.name} slug={slug} />
@@ -341,7 +342,7 @@ export default function MemberPage() {
         <>
           <section className="mb-8" id="research-focus">
             <div className="flex items-center gap-3 mb-4">
-              <GraduationCap size={20} style={{ color: 'var(--gold)' }} aria-hidden="true" />
+              <GraduationCap {...ICON_PROPS} size={20} style={{ color: 'var(--gold)' }} aria-hidden="true" />
               <h2
                 className="text-xl sm:text-2xl"
                 style={{
@@ -394,7 +395,7 @@ export default function MemberPage() {
         <>
           <section className="mb-8" id="active-projects">
             <div className="flex items-center gap-3 mb-4">
-              <FlaskConical size={20} style={{ color: 'var(--gold)' }} aria-hidden="true" />
+              <FlaskConical {...ICON_PROPS} size={20} style={{ color: 'var(--gold)' }} aria-hidden="true" />
               <h2
                 className="text-xl sm:text-2xl"
                 style={{
@@ -460,7 +461,7 @@ export default function MemberPage() {
         <>
           <section className="mb-8" id="expertise">
             <div className="flex items-center gap-3 mb-4">
-              <Sparkles size={20} style={{ color: 'var(--gold)' }} aria-hidden="true" />
+              <Sparkles {...ICON_PROPS} size={20} style={{ color: 'var(--gold)' }} aria-hidden="true" />
               <h2
                 className="text-xl sm:text-2xl"
                 style={{
@@ -513,7 +514,7 @@ export default function MemberPage() {
                         style={{ lineHeight: 1 }}
                         title="Remove tag"
                       >
-                        <X size={10} />
+                        <X {...ICON_PROPS} size={10} />
                       </button>
                     )}
                   </motion.span>
@@ -534,7 +535,7 @@ export default function MemberPage() {
                     '--hov-color': 'var(--gold)',
                   } as React.CSSProperties}
                 >
-                  <Plus size={10} />
+                  <Plus {...ICON_PROPS} size={10} />
                   Add
                 </button>
               )}
@@ -625,7 +626,7 @@ export default function MemberPage() {
         <>
           <section className="mb-8" id="activity">
             <div className="flex items-center gap-3 mb-4">
-              <Activity size={20} style={{ color: 'var(--gold)' }} aria-hidden="true" />
+              <Activity {...ICON_PROPS} size={20} style={{ color: 'var(--gold)' }} aria-hidden="true" />
               <h2
                 className="text-xl sm:text-2xl"
                 style={{
@@ -711,7 +712,7 @@ export default function MemberPage() {
           <div className="py-4" />
           <section className="mb-8" id="commitments">
             <div className="flex items-center gap-3 mb-4">
-              <Handshake size={20} style={{ color: 'var(--gold)' }} aria-hidden="true" />
+              <Handshake {...ICON_PROPS} size={20} style={{ color: 'var(--gold)' }} aria-hidden="true" />
               <h2
                 className="text-xl sm:text-2xl"
                 style={{
@@ -899,7 +900,7 @@ function MemberMilestones({ slug }: { slug: string }) {
       <div className="py-4" />
       <section className="mb-8" id="milestones">
         <div className="flex items-center gap-3 mb-4">
-          <GraduationCap size={20} style={{ color: 'var(--teal)' }} aria-hidden="true" />
+          <GraduationCap {...ICON_PROPS} size={20} style={{ color: 'var(--teal)' }} aria-hidden="true" />
           <h2
             className="text-xl sm:text-2xl"
             style={{ fontWeight: 500, color: 'var(--ink)' }}

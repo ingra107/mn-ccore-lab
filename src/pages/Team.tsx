@@ -11,6 +11,7 @@ import { usePublications, useExpertise, useActivity } from '../hooks/useApiData'
 import type { ExpertiseTag } from '../hooks/useApiData'
 import { mentees } from '../data/mentees'
 import { displayName } from '../lib/nameUtils'
+import { ICON_PROPS } from '../lib/iconProps'
 
 export default function Team() {
   const { data: publications = [] } = usePublications()
@@ -130,7 +131,7 @@ export default function Team() {
                 }}
               >
                 {expertiseFilter}
-                <X size={10} />
+                <X {...ICON_PROPS} size={10} />
               </button>
             )}
             {!expertiseFilter && allTags.slice(0, 12).map(({ tag, count }) => (
@@ -277,7 +278,7 @@ export default function Team() {
                     </p>
                   </div>
 
-                  <ArrowRight
+                  <ArrowRight {...ICON_PROPS}
                     size={16}
                     className="flex-shrink-0 mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
                     style={{ color: 'var(--gold)' }}

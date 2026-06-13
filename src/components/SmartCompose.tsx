@@ -28,6 +28,7 @@ import MentionInput from './MentionInput'
 import HermesMark from './HermesMark'
 import { usePostTaskUpdate } from '../hooks/useMutations'
 import { useUndoToast } from './UndoToast'
+import { ICON_PROPS } from '../lib/iconProps'
 
 const EMOJI_QUICK = ['👍', '❤️', '🎉', '👀', '🔥', '💡', '✅', '⚠️', '📝', '🤖', '🚀', '🙏']
 
@@ -336,7 +337,7 @@ export default function SmartCompose(props: SmartComposeProps) {
           {/* Attach */}
           {uploadContext && (
             <ToolbarBtn theme={theme} label="Attach file" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
-              {uploading ? <Loader2 size={11} className="animate-spin" /> : <Paperclip size={11} strokeWidth={1.5} absoluteStrokeWidth />}
+              {uploading ? <Loader2 {...ICON_PROPS} size={11} className="animate-spin" /> : <Paperclip size={11} strokeWidth={1.5} absoluteStrokeWidth />}
             </ToolbarBtn>
           )}
           {/* @mention */}

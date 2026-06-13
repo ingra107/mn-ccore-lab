@@ -36,6 +36,7 @@ import { TableSkeleton } from './LoadingSkeleton'
 import EmptyState from './EmptyState'
 import { getStatusBg } from '../lib/statusColors'
 import { PATHS } from '../constants/paths'
+import { ICON_PROPS } from '../lib/iconProps'
 
 // ── Constants ──
 
@@ -107,7 +108,7 @@ export default function RevisionTracker({ projectId }: RevisionTrackerProps) {
       {/* Header row */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <MessageSquare size={16} style={{ color: 'var(--teal)' }} />
+          <MessageSquare {...ICON_PROPS} size={16} style={{ color: 'var(--teal)' }} />
           <h3
             style={{
               fontWeight: 600,
@@ -138,7 +139,7 @@ export default function RevisionTracker({ projectId }: RevisionTrackerProps) {
             '--hov-bg': 'var(--teal-hover)',
           } as React.CSSProperties}
         >
-          <Plus size={14} />
+          <Plus {...ICON_PROPS} size={14} />
           Add Round
         </button>
       </div>
@@ -226,7 +227,7 @@ export default function RevisionTracker({ projectId }: RevisionTrackerProps) {
                     transition: 'opacity 150ms',
                   }}
                 >
-                  <Send size={13} />
+                  <Send {...ICON_PROPS} size={13} />
                   Create
                 </button>
               </div>
@@ -345,7 +346,7 @@ function RevisionRound({ revision, projectId, isExpanded, onToggle, onStatusChan
             )}
             {isOverdue && (
               <span className="flex items-center gap-1" style={{ fontSize: 'var(--label-size)', color: 'var(--maroon)' }}>
-                <AlertTriangle size={12} />
+                <AlertTriangle {...ICON_PROPS} size={12} />
                 Overdue
               </span>
             )}
@@ -399,9 +400,9 @@ function RevisionRound({ revision, projectId, isExpanded, onToggle, onStatusChan
             </div>
           )}
           {isExpanded ? (
-            <ChevronDown size={16} style={{ color: 'var(--slate)', opacity: 0.75 }} />
+            <ChevronDown {...ICON_PROPS} size={16} style={{ color: 'var(--slate)', opacity: 0.75 }} />
           ) : (
-            <ChevronRight size={16} style={{ color: 'var(--slate)', opacity: 0.75 }} />
+            <ChevronRight {...ICON_PROPS} size={16} style={{ color: 'var(--slate)', opacity: 0.75 }} />
           )}
         </div>
       </button>
@@ -727,7 +728,7 @@ function RevisionCommentsList({ revisionId, projectId }: RevisionCommentsListPro
               padding: 0,
             }}
           >
-            <Plus size={14} />
+            <Plus {...ICON_PROPS} size={14} />
             Add Comment
           </button>
         ) : (
@@ -813,7 +814,7 @@ function RevisionCommentsList({ revisionId, projectId }: RevisionCommentsListPro
                   opacity: newCommentText.trim() ? 1 : 0.85,
                 }}
               >
-                <Plus size={13} />
+                <Plus {...ICON_PROPS} size={13} />
                 Add
               </button>
               <button
@@ -866,7 +867,7 @@ export function ActiveRevisionsDashboard({ revisions }: { revisions: RevisionRow
   return (
     <div style={{ marginBottom: '2rem' }}>
       <div className="flex items-center gap-2 mb-3">
-        <AlertTriangle size={16} style={{ color: 'var(--gold)' }} />
+        <AlertTriangle {...ICON_PROPS} size={16} style={{ color: 'var(--gold)' }} />
         <h2
           style={{
             fontWeight: 600,

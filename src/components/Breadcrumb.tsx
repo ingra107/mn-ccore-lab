@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
+import { ICON_PROPS } from '../lib/iconProps'
 
 interface BreadcrumbProps {
   backTo: string
@@ -23,7 +24,7 @@ export default function Breadcrumb({ backTo, backLabel, current, maxLength = 40 
           className="inline-flex items-center gap-1 hover:!opacity-100 transition-opacity"
           style={{ color: 'var(--slate)', textDecoration: 'none', opacity: 0.85 }}
         >
-          <ArrowLeft size={12} />
+          <ArrowLeft {...ICON_PROPS} size={12} />
           {backLabel}
         </Link>
         {current && (

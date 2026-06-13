@@ -10,6 +10,7 @@ import { usePageMeta } from '../../hooks/usePageMeta'
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 import { PATHS } from '../../constants/paths'
 import { stageColor, stageLabel, normalizeStage } from '../../lib/stageNormalize'
+import { ICON_PROPS } from '../../lib/iconProps'
 
 // The /api/narratives endpoint emits canonical *lowercase* stage values
 // (idea / data_collection / data_analysis / writing / submitted / revisions /
@@ -53,13 +54,13 @@ export default function NarrativesPage() {
   return (
     <PageContainer>
       <PageHeader
-        icon={<BookOpen size={20} />}
+        icon={<BookOpen {...ICON_PROPS} size={20} />}
         title="Research Narratives"
         subtitle={`${filteredNarratives.length}${searchTerm ? ` of ${narratives.length}` : ''} research arcs`}
         count={filteredNarratives.length}
       >
         <div style={{ position: 'relative', width: 200 }}>
-          <Search size={12} style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', color: 'var(--slate)', opacity: 0.75 }} />
+          <Search {...ICON_PROPS} size={12} style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', color: 'var(--slate)', opacity: 0.75 }} />
           <input
             type="text"
             value={searchTerm}
@@ -93,7 +94,7 @@ export default function NarrativesPage() {
             <div key={arc.id} className="p-5 rounded-xl" style={{ background: 'var(--cream)', border: '1px solid var(--border-subtle)' }}>
               {/* Header */}
               <div className="flex items-center gap-2 mb-3">
-                <BookOpen size={16} style={{ color: 'var(--gold)' }} />
+                <BookOpen {...ICON_PROPS} size={16} style={{ color: 'var(--gold)' }} />
                 <h3 style={{ fontWeight: 500, fontSize: '18px', color: 'var(--ink)', margin: 0 }}>
                   {arc.title}
                 </h3>
@@ -102,7 +103,7 @@ export default function NarrativesPage() {
                 </span>
                 {arc.connectedCount > 0 && (
                   <span className="flex items-center gap-1" style={{ fontSize: 'var(--label-size)', color: 'var(--teal)' }}>
-                    <GitBranch size={10} />
+                    <GitBranch {...ICON_PROPS} size={10} />
                     {arc.connectedCount} linked
                   </span>
                 )}
@@ -172,7 +173,7 @@ export default function NarrativesPage() {
               {arc.relatedPubs.length > 0 && (
                 <div>
                   <div className="flex items-center gap-1.5 mb-1.5">
-                    <FileText size={10} style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }} />
+                    <FileText {...ICON_PROPS} size={10} style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }} />
                     <span style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
                       Related publications
                     </span>

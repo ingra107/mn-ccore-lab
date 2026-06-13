@@ -4,6 +4,7 @@ import { ChevronRight, ChevronDown, Calendar, ArrowRight, AlertTriangle, CheckCi
 import type { CascadeGraph, ImpactResult, DeadlineNode } from '../lib/api'
 import { formatShortDate, isOverdue, getDaysUntil } from '../lib/dateUtils'
 import { getStatusColor } from '../lib/statusColors'
+import { ICON_PROPS } from '../lib/iconProps'
 
 // ── Status helpers ──────────────────────────────────────────
 
@@ -160,8 +161,8 @@ function CascadeRow({
             style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center' }}
           >
             {expanded
-              ? <ChevronDown size={14} style={{ color: 'var(--slate)', opacity: 0.75 }} />
-              : <ChevronRight size={14} style={{ color: 'var(--slate)', opacity: 0.75 }} />
+              ? <ChevronDown {...ICON_PROPS} size={14} style={{ color: 'var(--slate)', opacity: 0.75 }} />
+              : <ChevronRight {...ICON_PROPS} size={14} style={{ color: 'var(--slate)', opacity: 0.75 }} />
             }
           </button>
         ) : (
@@ -237,7 +238,7 @@ function CascadeRow({
               gap: 3,
             }}
           >
-            <ArrowRight size={9} />
+            <ArrowRight {...ICON_PROPS} size={9} />
             {impactItem.projected_date ? formatShortDate(impactItem.projected_date) : '?'}
             <span style={{ opacity: 0.85 }}>
               ({impactItem.shift_days > 0 ? '+' : ''}{impactItem.shift_days}d)
@@ -354,7 +355,7 @@ function WhatIfPanel({
     >
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--sp-md)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-sm)' }}>
-          <Calendar size={14} style={{ color: 'var(--gold)' }} />
+          <Calendar {...ICON_PROPS} size={14} style={{ color: 'var(--gold)' }} />
           <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--gold)' }}>
             What-if: Move "{node.title}"
           </span>
@@ -378,7 +379,7 @@ function WhatIfPanel({
         <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.75 }}>
           Current: {node.due_date ? formatShortDate(node.due_date) : 'No date'}
         </span>
-        <ArrowRight size={12} style={{ color: 'var(--slate)', opacity: 0.75 }} />
+        <ArrowRight {...ICON_PROPS} size={12} style={{ color: 'var(--slate)', opacity: 0.75 }} />
         <input
           type="date"
           value={newDate}
@@ -416,7 +417,7 @@ function WhatIfPanel({
       {impactResults.length > 0 && (
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 'var(--sp-sm)' }}>
-            <AlertTriangle size={12} style={{ color: 'var(--gold)' }} />
+            <AlertTriangle {...ICON_PROPS} size={12} style={{ color: 'var(--gold)' }} />
             <span style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--gold)' }}>
               {impactResults.length} downstream {impactResults.length === 1 ? 'item' : 'items'} affected
             </span>
@@ -437,7 +438,7 @@ function WhatIfPanel({
                 <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75, flexShrink: 0 }}>
                   {item.original_date ? formatShortDate(item.original_date) : 'No date'}
                 </span>
-                <ArrowRight size={10} style={{ color: 'var(--gold)', flexShrink: 0 }} />
+                <ArrowRight {...ICON_PROPS} size={10} style={{ color: 'var(--gold)', flexShrink: 0 }} />
                 <span style={{
                   fontSize: '10px',
                   fontWeight: 500,
@@ -575,7 +576,7 @@ export default function DeadlineCascade({
                 </span>
                 {completedCount > 0 && (
                   <span style={{ fontSize: 'var(--label-size)', display: 'flex', alignItems: 'center', gap: 'var(--sp-xs)' }}>
-                    <CheckCircle2 size={10} style={{ color: 'var(--green)' }} />
+                    <CheckCircle2 {...ICON_PROPS} size={10} style={{ color: 'var(--green)' }} />
                     <span style={{ color: 'var(--green)', fontWeight: 500 }}>{completedCount}</span>
                     <span style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>done</span>
                   </span>

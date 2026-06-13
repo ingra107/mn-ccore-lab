@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { ChevronRight } from 'lucide-react'
+import { ICON_PROPS } from '../lib/iconProps'
 
 interface CollapsibleSectionProps {
   title: string
@@ -70,7 +71,7 @@ export default function CollapsibleSection({
           textAlign: 'left',
         }}
       >
-        <ChevronRight
+        <ChevronRight {...ICON_PROPS}
           size={12}
           style={{
             color: 'var(--slate)',

@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, useEffect } from 'react'
 import { X, Send, Image, Loader2 } from 'lucide-react'
 import { useLocation } from 'react-router-dom'
 import Modal from './ui/Modal'
+import { ICON_PROPS } from '../lib/iconProps'
 
 interface BugReportModalProps {
   open: boolean
@@ -156,7 +157,7 @@ export default function BugReportModal({ open, onClose }: BugReportModalProps) {
           opacity: description.trim() && !submitting ? 1 : 0.85,
         }}
       >
-        {submitting ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+        {submitting ? <Loader2 {...ICON_PROPS} size={14} className="animate-spin" /> : <Send {...ICON_PROPS} size={14} />}
         {submitting ? 'Submitting...' : 'Submit'}
       </button>
     </>
@@ -171,7 +172,7 @@ export default function BugReportModal({ open, onClose }: BugReportModalProps) {
                 className="mx-auto mb-3 w-12 h-12 rounded-full flex items-center justify-center"
                 style={{ background: 'rgba(22,163,74,0.1)' }}
               >
-                <Send size={20} style={{ color: 'var(--green)' }} />
+                <Send {...ICON_PROPS} size={20} style={{ color: 'var(--green)' }} />
               </div>
               <p style={{ fontWeight: 500, color: 'var(--ink)', fontSize: 'var(--text-base)' }}>
                 Bug reported!
@@ -261,7 +262,7 @@ export default function BugReportModal({ open, onClose }: BugReportModalProps) {
                     }}
                     aria-label="Remove screenshot"
                   >
-                    <X size={14} />
+                    <X {...ICON_PROPS} size={14} />
                   </button>
                 </div>
               )}
@@ -282,7 +283,7 @@ export default function BugReportModal({ open, onClose }: BugReportModalProps) {
                       cursor: 'pointer',
                     }}
                   >
-                    <Image size={12} />
+                    <Image {...ICON_PROPS} size={12} />
                     Attach photo
                   </button>
                   <span className="text-xs hidden sm:inline" style={{ color: 'var(--slate)', opacity: 0.75 }}>

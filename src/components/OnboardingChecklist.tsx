@@ -15,6 +15,7 @@ import {
 } from '../data/onboarding'
 import type { OnboardingStep } from '../data/onboarding'
 import type { LucideIcon } from 'lucide-react'
+import { ICON_PROPS } from '../lib/iconProps'
 
 const CATEGORY_ICONS: Record<OnboardingStep['category'], LucideIcon> = {
   setup: Settings,
@@ -67,7 +68,7 @@ export default function OnboardingChecklist() {
               background: 'color-mix(in srgb, var(--teal) 12%, transparent)',
             }}
           >
-            <PartyPopper size={20} style={{ color: 'var(--teal)' }} />
+            <PartyPopper {...ICON_PROPS} size={20} style={{ color: 'var(--teal)' }} />
           </div>
           <div className="flex-1">
             <h3 style={{
@@ -92,7 +93,7 @@ export default function OnboardingChecklist() {
             style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--slate)', opacity: 0.75 }}
             title="Dismiss"
           >
-            <X size={16} />
+            <X {...ICON_PROPS} size={16} />
           </button>
         </div>
       </motion.div>
@@ -118,7 +119,7 @@ export default function OnboardingChecklist() {
         transition={{ type: 'spring', stiffness: 400, damping: 30 }}
       >
         <div className="flex items-center gap-3">
-          <Rocket size={16} style={{ color: 'var(--gold)', flexShrink: 0 }} />
+          <Rocket {...ICON_PROPS} size={16} style={{ color: 'var(--gold)', flexShrink: 0 }} />
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1.5">
               <span style={{
@@ -163,7 +164,7 @@ export default function OnboardingChecklist() {
               </p>
             )}
           </div>
-          <ChevronDown size={16} style={{ color: 'var(--slate)', opacity: 0.75, flexShrink: 0 }} />
+          <ChevronDown {...ICON_PROPS} size={16} style={{ color: 'var(--slate)', opacity: 0.75, flexShrink: 0 }} />
         </div>
       </motion.div>
     )
@@ -204,7 +205,7 @@ export default function OnboardingChecklist() {
             flexShrink: 0,
           }}
         >
-          <Rocket size={16} style={{ color: 'var(--gold)' }} />
+          <Rocket {...ICON_PROPS} size={16} style={{ color: 'var(--gold)' }} />
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between">
@@ -230,7 +231,7 @@ export default function OnboardingChecklist() {
                 style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--slate)', opacity: 'var(--ink-label)' }}
                 title="Collapse"
               >
-                <ChevronUp size={14} />
+                <ChevronUp {...ICON_PROPS} size={14} />
               </button>
             </div>
           </div>
@@ -401,7 +402,7 @@ export default function OnboardingChecklist() {
                               border: '1px solid rgba(45,138,138,0.15)',
                             }}
                           >
-                            Go <ArrowRight size={10} />
+                            Go <ArrowRight {...ICON_PROPS} size={10} />
                           </Link>
                         )}
                       </motion.div>

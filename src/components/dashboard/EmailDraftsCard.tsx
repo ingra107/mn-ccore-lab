@@ -1,6 +1,7 @@
 import { Mail } from 'lucide-react'
 import { useEmailDraftsPending } from '../../hooks/useApiData'
 import BentoCard from './BentoCard'
+import { ICON_PROPS } from '../../lib/iconProps'
 
 interface EmailDraft {
   id: string
@@ -50,7 +51,7 @@ export default function EmailDraftsCard() {
               key={draft.id}
               className="flex items-center gap-2 px-2 py-1.5 rounded-lg transition-colors hover:bg-black/[0.03] dark:hover:bg-white/[0.03]"
             >
-              <Mail size={11} style={{ color: 'var(--gold)', flexShrink: 0, opacity: 0.85 }} />
+              <Mail {...ICON_PROPS} size={11} style={{ color: 'var(--gold)', flexShrink: 0, opacity: 0.85 }} />
               {draft.gmail_link ? (
                 <a
                   href={draft.gmail_link}

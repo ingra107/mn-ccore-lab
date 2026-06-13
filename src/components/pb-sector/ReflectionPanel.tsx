@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { BookOpen, ChevronDown, ChevronRight, Sparkles } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { ICON_PROPS } from '../../lib/iconProps'
 
 interface ReflectionPanelProps {
   reflection: {
@@ -78,7 +79,7 @@ export default function ReflectionPanel({ reflection, onSave }: ReflectionPanelP
         className="w-full flex items-center gap-2 px-4 py-3 text-left"
         style={{ background: 'var(--gold-hover)', border: 'none', cursor: 'pointer' }}
       >
-        <BookOpen size={14} style={{ color: 'var(--gold)', opacity: 0.85 }} />
+        <BookOpen {...ICON_PROPS} size={14} style={{ color: 'var(--gold)', opacity: 0.85 }} />
         <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--gold)' }}>
           End of Day
         </span>
@@ -88,7 +89,7 @@ export default function ReflectionPanel({ reflection, onSave }: ReflectionPanelP
           </span>
         )}
         <div className="flex-1" />
-        {expanded ? <ChevronDown size={14} style={{ color: 'var(--gold)', opacity: 0.85 }} /> : <ChevronRight size={14} style={{ color: 'var(--gold)', opacity: 0.85 }} />}
+        {expanded ? <ChevronDown {...ICON_PROPS} size={14} style={{ color: 'var(--gold)', opacity: 0.85 }} /> : <ChevronRight {...ICON_PROPS} size={14} style={{ color: 'var(--gold)', opacity: 0.85 }} />}
       </button>
 
       <AnimatePresence>
@@ -159,7 +160,7 @@ export default function ReflectionPanel({ reflection, onSave }: ReflectionPanelP
                     opacity: hasContent ? 1 : 0.85,
                   }}
                 >
-                  <BookOpen size={12} />
+                  <BookOpen {...ICON_PROPS} size={12} />
                   Close Day
                 </button>
                 <AnimatePresence>
@@ -171,7 +172,7 @@ export default function ReflectionPanel({ reflection, onSave }: ReflectionPanelP
                       className="flex items-center gap-1"
                       style={{ fontSize: 'var(--label-size)', color: 'var(--teal)' }}
                     >
-                      <Sparkles size={12} /> Saved
+                      <Sparkles {...ICON_PROPS} size={12} /> Saved
                     </motion.span>
                   )}
                 </AnimatePresence>

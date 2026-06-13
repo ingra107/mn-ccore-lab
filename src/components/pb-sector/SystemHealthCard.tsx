@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { Activity } from 'lucide-react'
 import { parseDbUtc } from '../../lib/time'
 import type { PBHealthData } from '../../hooks/useApiData'
+import { ICON_PROPS } from '../../lib/iconProps'
 
 function StatusDot({ timestamp }: { timestamp: string | null }) {
   const color = useMemo(() => {
@@ -72,7 +73,7 @@ export default function SystemHealthCard({ data, isLoading }: Props) {
     >
       {/* Header */}
       <div className="flex items-center gap-1.5 px-3 py-2">
-        <Activity size={12} style={{ color: 'var(--teal)', opacity: 0.85 }} />
+        <Activity {...ICON_PROPS} size={12} style={{ color: 'var(--teal)', opacity: 0.85 }} />
         <span style={{
           fontSize: '10px',
           fontWeight: 700,

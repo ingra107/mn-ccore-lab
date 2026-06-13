@@ -17,6 +17,7 @@ import {
   INK, INK_MUTED, INK_DIM, withAlpha,
   type ViewMode, type GroupKey, type QuickViewKey, type FilterState, type FilterOption,
 } from '../constants'
+import { ICON_PROPS } from '../../../lib/iconProps'
 
 interface TopBarProps {
   view: ViewMode; setView: (v: ViewMode) => void
@@ -77,7 +78,7 @@ export function TopBar({ view, setView, search, setSearch, filter, setFilter, qu
               flexShrink: 0, whiteSpace: 'nowrap',
             }}
           >
-            <Plus size={15} />
+            <Plus {...ICON_PROPS} size={15} />
             Create Task
           </button>
         )}

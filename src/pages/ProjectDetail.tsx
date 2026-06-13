@@ -70,6 +70,7 @@ import { CATEGORY_OPTIONS } from '../constants/categories'
 import { useOpenParam } from '../hooks/useOpenParam'
 import EmptyStateArt from '../components/EmptyStateArt'
 import EmptyState from '../components/EmptyState'
+import { ICON_PROPS } from '../lib/iconProps'
 
 // P2-5: notes + comments collapsed into the single chronological `activity`
 // stream (Notes / Comments / All are filters over it, not separate tabs).
@@ -133,7 +134,7 @@ export default function ProjectDetail() {
           className="inline-flex items-center gap-2 mb-6"
           style={{ fontSize: '14px', color: 'var(--slate)', textDecoration: 'none' }}
         >
-          <ArrowLeft size={16} />
+          <ArrowLeft {...ICON_PROPS} size={16} />
           Back to Pipeline
         </Link>
         <EmptyStateArt variant="generic" style={{ marginBottom: '1.5rem', opacity: 0.5 }} />
@@ -694,7 +695,7 @@ function ProjectDetailInner({ project }: InnerProps) {
               style={{ background: 'none', border: 'none', cursor: 'pointer', color: copied ? 'var(--teal)' : 'var(--slate)', opacity: copied ? 1 : 0.85 }}
               title={copied ? 'Link copied!' : 'Copy link'}
             >
-              {copied ? <Check size={14} /> : <Link2 size={14} />}
+              {copied ? <Check {...ICON_PROPS} size={14} /> : <Link2 {...ICON_PROPS} size={14} />}
             </button>
             <WatchButton id={project.slug} type="project" label={project.title} slug={project.slug} />
             {/* Action menu (archive / delete / duplicate) — PD-7 */}
@@ -713,7 +714,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                 aria-haspopup="menu"
                 aria-expanded={actionMenuOpen}
               >
-                <MoreVertical size={14} />
+                <MoreVertical {...ICON_PROPS} size={14} />
               </button>
               {actionMenuOpen && (
                 <div
@@ -747,7 +748,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                       '--hov-bg': isArchived ? 'transparent' : 'var(--hover-subtle)',
                     } as React.CSSProperties}
                   >
-                    <Archive size={13} />
+                    <Archive {...ICON_PROPS} size={13} />
                     {isArchived ? 'Already archived' : 'Archive project'}
                   </button>
                   <button
@@ -762,7 +763,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                       '--hov-bg': 'var(--hover-subtle)',
                     } as React.CSSProperties}
                   >
-                    <CopyIcon size={13} />
+                    <CopyIcon {...ICON_PROPS} size={13} />
                     Duplicate
                   </button>
                   <div style={{ height: '1px', background: 'var(--border-subtle)', margin: '4px 2px' }} />
@@ -778,7 +779,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                       '--hov-bg': 'var(--hover-subtle)',
                     } as React.CSSProperties}
                   >
-                    <Trash2 size={13} />
+                    <Trash2 {...ICON_PROPS} size={13} />
                     Delete project…
                   </button>
                 </div>
@@ -837,7 +838,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                 cursor: 'pointer',
               }}
             >
-              <CalendarPlus size={11} />
+              <CalendarPlus {...ICON_PROPS} size={11} />
               Agenda
             </button>
           )}
@@ -912,7 +913,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                     className="cursor-pointer"
                     style={{ background: 'none', border: 'none', color: 'var(--slate)', opacity: 'var(--ink-label)', padding: '2px' }}
                   >
-                    <X size={14} />
+                    <X {...ICON_PROPS} size={14} />
                   </button>
                 </div>
                 <form
@@ -958,7 +959,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                       style={{ background: 'var(--gold)', color: '#0f1923', border: 'none' }}
                       whileTap={{ scale: 0.95 }}
                     >
-                      <Send size={14} />
+                      <Send {...ICON_PROPS} size={14} />
                     </motion.button>
                   )}
                 </form>
@@ -1055,7 +1056,7 @@ function ProjectDetailInner({ project }: InnerProps) {
           <div className="lg:col-span-2">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
-                <CheckCircle2 size={13} style={{ color: 'var(--teal)' }} />
+                <CheckCircle2 {...ICON_PROPS} size={13} style={{ color: 'var(--teal)' }} />
                 <span style={{ fontSize: '10px', fontWeight: 500, color: 'var(--slate)', opacity: 'var(--ink-label)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                   Open Tasks
                 </span>
@@ -1131,7 +1132,7 @@ function ProjectDetailInner({ project }: InnerProps) {
             {project.primary_folder && (
               <div>
                 <div className="flex items-center gap-2 mb-2">
-                  <FolderOpen size={13} style={{ color: 'var(--teal)' }} />
+                  <FolderOpen {...ICON_PROPS} size={13} style={{ color: 'var(--teal)' }} />
                   <span style={{ fontSize: '10px', fontWeight: 500, color: 'var(--slate)', opacity: 'var(--ink-label)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                     On this machine
                   </span>
@@ -1142,7 +1143,7 @@ function ProjectDetailInner({ project }: InnerProps) {
             {/* Key Links strip */}
             <div>
               <div className="flex items-center gap-2 mb-2">
-                <Link2 size={13} style={{ color: 'var(--teal)' }} />
+                <Link2 {...ICON_PROPS} size={13} style={{ color: 'var(--teal)' }} />
                 <span style={{ fontSize: '10px', fontWeight: 500, color: 'var(--slate)', opacity: 'var(--ink-label)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                   Key Links
                 </span>
@@ -1171,7 +1172,7 @@ function ProjectDetailInner({ project }: InnerProps) {
             <div>
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <Clock size={13} style={{ color: 'var(--gold)' }} />
+                  <Clock {...ICON_PROPS} size={13} style={{ color: 'var(--gold)' }} />
                   <span style={{ fontSize: '10px', fontWeight: 500, color: 'var(--slate)', opacity: 'var(--ink-label)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                     Recent
                   </span>
@@ -1262,7 +1263,7 @@ function ProjectDetailInner({ project }: InnerProps) {
               }}
               aria-label="Open compose"
             >
-              <Send size={14} style={{ flexShrink: 0 }} />
+              <Send {...ICON_PROPS} size={14} style={{ flexShrink: 0 }} />
               <span>{quickComposeText.trim() ? `Draft: ${quickComposeText.slice(0, 40)}…` : 'Add note or comment…'}</span>
             </button>
           </div>
@@ -1386,7 +1387,7 @@ function ProjectDetailInner({ project }: InnerProps) {
         >
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
-              <Compass size={14} style={{ color: 'var(--gold)' }} />
+              <Compass {...ICON_PROPS} size={14} style={{ color: 'var(--gold)' }} />
               <span
                 style={{
                   fontSize: '10px',
@@ -1799,9 +1800,9 @@ function ProjectDetailInner({ project }: InnerProps) {
                     textDecoration: 'none',
                   }}
                 >
-                  <FileText size={14} />
+                  <FileText {...ICON_PROPS} size={14} />
                   Google Doc
-                  <ExternalLink size={10} />
+                  <ExternalLink {...ICON_PROPS} size={10} />
                 </a>
               )}
               {project.startDate && (
@@ -1813,7 +1814,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                     opacity: 0.85,
                   }}
                 >
-                  <Calendar size={13} />
+                  <Calendar {...ICON_PROPS} size={13} />
                   Started {formatMediumDate(project.startDate)}
                 </span>
               )}
@@ -1826,7 +1827,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                     opacity: 0.85,
                   }}
                 >
-                  <Clock size={13} />
+                  <Clock {...ICON_PROPS} size={13} />
                   Last activity {formatMediumDate(project.lastActivity)}
                 </span>
               )}
@@ -1906,7 +1907,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                   style={{ color: tasksCopied ? 'var(--green)' : 'var(--slate)', borderColor: tasksCopied ? 'var(--green)' : 'var(--border-subtle)', background: 'none', cursor: 'pointer', opacity: tasksCopied ? 1 : 0.85 }}
                   title={tasksCopied ? 'Copied!' : 'Copy task list to clipboard'}
                 >
-                  {tasksCopied ? <Check size={11} /> : <FileText size={11} />}
+                  {tasksCopied ? <Check {...ICON_PROPS} size={11} /> : <FileText {...ICON_PROPS} size={11} />}
                   {tasksCopied ? 'Copied' : 'Copy'}
                 </button>
                 <button
@@ -1914,7 +1915,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-colors"
                   style={{ backgroundColor: 'var(--teal-solid)', color: 'var(--ink-bright, #fff)', border: 'none', cursor: 'pointer' }}
                 >
-                  <Plus size={13} />
+                  <Plus {...ICON_PROPS} size={13} />
                   New Task
                 </button>
               </div>
@@ -2010,7 +2011,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                   flexShrink: 0,
                 }}
               >
-                <X size={14} />
+                <X {...ICON_PROPS} size={14} />
               </button>
             </div>
           )}

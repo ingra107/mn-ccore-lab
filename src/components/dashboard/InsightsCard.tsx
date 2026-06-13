@@ -5,6 +5,7 @@ import BentoCard from './BentoCard'
 import { useInsightConnections } from '../../hooks/useApiData'
 import { useQueryClient } from '@tanstack/react-query'
 import { PATHS } from '../../constants/paths'
+import { ICON_PROPS } from '../../lib/iconProps'
 
 function InsightsCard() {
   const { data: connections = [], isLoading } = useInsightConnections()
@@ -40,7 +41,7 @@ function InsightsCard() {
             opacity: refreshing ? 0.85 : 1,
           }}
         >
-          <RefreshCw
+          <RefreshCw {...ICON_PROPS}
             size={10}
             style={{
               transition: 'transform 0.6s ease',

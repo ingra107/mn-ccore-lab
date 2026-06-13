@@ -11,6 +11,7 @@ import { isOverdue } from '../../lib/dateUtils'
 import BentoCard from './BentoCard'
 import { PATHS } from '../../constants/paths'
 import DueLabel from '../DueLabel'
+import { ICON_PROPS } from '../../lib/iconProps'
 
 function MyItemsCard() {
   const { user } = useAuth()
@@ -43,7 +44,7 @@ function MyItemsCard() {
         {/* Summary row */}
         <div className="flex items-center gap-4 mb-1">
           <div className="flex items-center gap-1.5">
-            <Circle size={12} style={{ color: 'var(--gold)' }} />
+            <Circle {...ICON_PROPS} size={12} style={{ color: 'var(--gold)' }} />
             <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--ink)' }}>
               {pending.length}
             </span>
@@ -53,7 +54,7 @@ function MyItemsCard() {
           </div>
           {overdueCount > 0 && (
             <div className="flex items-center gap-1.5">
-              <AlertTriangle size={12} style={{ color: 'var(--maroon)' }} />
+              <AlertTriangle {...ICON_PROPS} size={12} style={{ color: 'var(--maroon)' }} />
               <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--maroon)' }}>
                 {overdueCount}
               </span>
@@ -96,7 +97,7 @@ function MyItemsCard() {
                 paddingLeft: '8px',
               }}
             >
-              <Circle size={12} className="flex-shrink-0 mt-0.5" style={{ color: overdue ? 'var(--maroon)' : 'var(--gold)' }} />
+              <Circle {...ICON_PROPS} size={12} className="flex-shrink-0 mt-0.5" style={{ color: overdue ? 'var(--maroon)' : 'var(--gold)' }} />
               <div className="min-w-0 flex-1">
                 <div
                   style={{
@@ -127,7 +128,7 @@ function MyItemsCard() {
 
         {pending.length === 0 && (
           <div className="flex items-center gap-2 py-3">
-            <CheckCircle2 size={14} style={{ color: 'var(--teal)' }} />
+            <CheckCircle2 {...ICON_PROPS} size={14} style={{ color: 'var(--teal)' }} />
             <span style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.75 }}>
               All caught up
             </span>
@@ -144,7 +145,7 @@ function MyItemsCard() {
             textDecoration: 'none',
           }}
         >
-          View all items <ArrowRight size={10} />
+          View all items <ArrowRight {...ICON_PROPS} size={10} />
         </Link>
       </div>
     </BentoCard>

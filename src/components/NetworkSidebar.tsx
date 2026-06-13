@@ -6,6 +6,7 @@ import Avatar from './Avatar'
 import type { NetworkNode, NetworkEdge } from './CollaborationGraph'
 import { directors, getAllMembers } from '../data/team'
 import type { TeamMember, Director } from '../data/types'
+import { ICON_PROPS } from '../lib/iconProps'
 
 interface NetworkSidebarProps {
   selectedNode: NetworkNode | null
@@ -136,7 +137,7 @@ export default function NetworkSidebar({
             } as React.CSSProperties}
             aria-label="Close panel"
           >
-            <X size={16} />
+            <X {...ICON_PROPS} size={16} />
           </button>
 
           <div className="p-6 pt-14">
@@ -316,9 +317,9 @@ function NodeDetail({
             '--hov-border': 'rgba(201, 168, 76, 0.4)',
           } as React.CSSProperties}
         >
-          <Users size={14} />
+          <Users {...ICON_PROPS} size={14} />
           View full profile
-          <ArrowRight size={12} className="ml-auto" />
+          <ArrowRight {...ICON_PROPS} size={12} className="ml-auto" />
         </Link>
       )}
 
@@ -464,7 +465,7 @@ function EdgeDetail({
             fontSize: '10px',
           }}
         >
-          <BookOpen size={12} className="inline mr-1.5" style={{ verticalAlign: '-2px' }} />
+          <BookOpen {...ICON_PROPS} size={12} className="inline mr-1.5" style={{ verticalAlign: '-2px' }} />
           Shared Publications
         </h4>
         <div className="space-y-3">

@@ -8,6 +8,7 @@ import { localDateKey } from '../../lib/dateUtils'
 import { getPersonInfo } from '../../data/team'
 import BentoCard from './BentoCard'
 import { PATHS } from '../../constants/paths'
+import { ICON_PROPS } from '../../lib/iconProps'
 
 interface Deadline {
   date: string
@@ -145,7 +146,7 @@ function UpcomingCard() {
                 const fInfo = fSlug ? getPersonInfo(fSlug) : null
                 return fInfo ? (
                   <p className="flex items-center gap-1" style={{ fontSize: '10px', color: 'var(--teal)', margin: '2px 0 0 0' }}>
-                    <UserCheck size={10} />
+                    <UserCheck {...ICON_PROPS} size={10} />
                     {fInfo.name.split(' ')[0]}
                   </p>
                 ) : null
@@ -190,7 +191,7 @@ function UpcomingCard() {
           <div className="flex items-center justify-between mt-2">
             {meetingActionCounts.total > 0 && (
               <div className="flex items-center gap-1.5">
-                <ListChecks size={11} style={{ color: 'var(--teal)', opacity: 0.8 }} />
+                <ListChecks {...ICON_PROPS} size={11} style={{ color: 'var(--teal)', opacity: 0.8 }} />
                 <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.85 }}>
                   {meetingActionCounts.pending}/{meetingActionCounts.total} pending
                 </span>
@@ -207,7 +208,7 @@ function UpcomingCard() {
                 marginLeft: 'auto',
               }}
             >
-              View Meeting <ArrowRight size={10} />
+              View Meeting <ArrowRight {...ICON_PROPS} size={10} />
             </Link>
           </div>
         </div>
@@ -219,7 +220,7 @@ function UpcomingCard() {
             border: '1px solid rgba(100, 116, 139, 0.08)',
           }}
         >
-          <CalendarOff size={14} style={{ color: 'var(--slate)', opacity: 0.75 }} />
+          <CalendarOff {...ICON_PROPS} size={14} style={{ color: 'var(--slate)', opacity: 0.75 }} />
           <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
             No meeting scheduled
           </span>
@@ -283,7 +284,7 @@ function UpcomingCard() {
                   }}
                 >
                   {isOverdue && (
-                    <AlertCircle
+                    <AlertCircle {...ICON_PROPS}
                       size={11}
                       style={{
                         color: 'var(--maroon)',

@@ -7,6 +7,7 @@ import { useCreateDependency, useDeleteDependency } from '../../hooks/useMutatio
 import type { Project } from '../../data/types'
 import { PATHS } from '../../constants/paths'
 import InlineSelect from '../../components/InlineSelect'
+import { ICON_PROPS } from '../../lib/iconProps'
 
 interface ProjectDependenciesProps {
   project: Project
@@ -88,7 +89,7 @@ export default function ProjectDependencies({ project, isPi }: ProjectDependenci
             margin: 0,
           }}
         >
-          <GitBranch size={16} style={{ display: 'inline', marginRight: '6px', verticalAlign: '-2px', color: 'var(--teal)' }} />
+          <GitBranch {...ICON_PROPS} size={16} style={{ display: 'inline', marginRight: '6px', verticalAlign: '-2px', color: 'var(--teal)' }} />
           Dependencies
         </h2>
         {isPi && !showAddForm && (
@@ -104,7 +105,7 @@ export default function ProjectDependencies({ project, isPi }: ProjectDependenci
             }}
             whileTap={{ scale: 0.95 }}
           >
-            <Plus size={12} />
+            <Plus {...ICON_PROPS} size={12} />
             Add dependency
           </motion.button>
         )}
@@ -303,7 +304,7 @@ export default function ProjectDependencies({ project, isPi }: ProjectDependenci
                 >
                   {REL_LABELS[dep.relationship_type] || dep.relationship_type}
                 </span>
-                <ArrowRight size={12} style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)', flexShrink: 0 }} />
+                <ArrowRight {...ICON_PROPS} size={12} style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)', flexShrink: 0 }} />
                 <Link
                   to={PATHS.project(dep.to_slug)}
                   style={{
@@ -345,7 +346,7 @@ export default function ProjectDependencies({ project, isPi }: ProjectDependenci
                     whileTap={{ scale: 0.9 }}
                     title="Remove dependency"
                   >
-                    <Trash2 size={12} />
+                    <Trash2 {...ICON_PROPS} size={12} />
                   </motion.button>
                 )}
               </div>
@@ -371,7 +372,7 @@ export default function ProjectDependencies({ project, isPi }: ProjectDependenci
                 >
                   {getProjectTitle(dep.from_slug)}
                 </Link>
-                <ArrowRight size={12} style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)', flexShrink: 0 }} />
+                <ArrowRight {...ICON_PROPS} size={12} style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)', flexShrink: 0 }} />
                 <span
                   style={{
                     fontSize: '10px',
@@ -424,7 +425,7 @@ export default function ProjectDependencies({ project, isPi }: ProjectDependenci
                     whileTap={{ scale: 0.9 }}
                     title="Remove dependency"
                   >
-                    <Trash2 size={12} />
+                    <Trash2 {...ICON_PROPS} size={12} />
                   </motion.button>
                 )}
               </div>

@@ -16,6 +16,7 @@ import { useToast } from '../../hooks/useToast'
 import { getPersonInfo } from '../../data/team'
 import { formatRelativeTime } from '../../lib/dateUtils'
 import type { IdeaRow } from '../../lib/api'
+import { ICON_PROPS } from '../../lib/iconProps'
 
 type SortKey = 'title' | 'submitter' | 'status' | 'votes' | 'created_at'
 
@@ -194,7 +195,7 @@ export default function IdeasPage() {
   return (
     <div className="content-container flex flex-col gap-4">
       <PageHeader
-        icon={<Lightbulb size={20} />}
+        icon={<Lightbulb {...ICON_PROPS} size={20} />}
         title="Ideas Board"
         subtitle={`${activeCount} active ideas`}
         count={activeCount}
@@ -210,7 +211,7 @@ export default function IdeasPage() {
               padding: 'var(--sp-sm) var(--sp-lg)',
             }}
           >
-            <Plus size={16} />
+            <Plus {...ICON_PROPS} size={16} />
             New Idea
           </button>
         }
@@ -402,7 +403,7 @@ export default function IdeasPage() {
                                 padding: '5px 8px',
                               }}
                             >
-                              <Rocket size={12} />
+                              <Rocket {...ICON_PROPS} size={12} />
                               Promote to project
                             </button>
                           )}
@@ -708,7 +709,7 @@ function IdeaRowView({
             }}
             aria-label={`Vote (${idea.votes})`}
           >
-            <ThumbsUp size={13} />
+            <ThumbsUp {...ICON_PROPS} size={13} />
             <span
               style={{
                 fontSize: 'var(--text-small)',
@@ -760,7 +761,7 @@ function IdeaRowView({
               aria-label="Promote idea to project"
               title="Promote to project"
             >
-              <Rocket size={12} />
+              <Rocket {...ICON_PROPS} size={12} />
             </button>
           )}
           <button
@@ -784,7 +785,7 @@ function IdeaRowView({
             aria-label="Edit idea"
             title="Edit"
           >
-            <Pencil size={12} />
+            <Pencil {...ICON_PROPS} size={12} />
           </button>
           <button
             className="rounded-md"
@@ -807,7 +808,7 @@ function IdeaRowView({
             aria-label="Archive idea"
             title="Archive"
           >
-            <Archive size={12} />
+            <Archive {...ICON_PROPS} size={12} />
           </button>
         </div>
       </div>
@@ -844,7 +845,7 @@ function IdeaRowView({
               transition: 'transform var(--duration-normal) var(--ease-out)',
             }}
           >
-            <ThumbsUp size={11} />
+            <ThumbsUp {...ICON_PROPS} size={11} />
             <span style={{ fontSize: 'var(--text-label)', fontWeight: 600 }}>{idea.votes}</span>
           </button>
           <span
@@ -887,7 +888,7 @@ function IdeaRowView({
                 aria-label="Promote idea to project"
                 title="Promote to project"
               >
-                <Rocket size={12} />
+                <Rocket {...ICON_PROPS} size={12} />
               </button>
             )}
             <button
@@ -908,7 +909,7 @@ function IdeaRowView({
               aria-label="Edit idea"
               title="Edit"
             >
-              <Pencil size={12} />
+              <Pencil {...ICON_PROPS} size={12} />
             </button>
             <button
               onClick={(e) => {
@@ -928,7 +929,7 @@ function IdeaRowView({
               aria-label="Archive idea"
               title="Archive"
             >
-              <Archive size={12} />
+              <Archive {...ICON_PROPS} size={12} />
             </button>
             <div style={{ width: 18, height: 18, flexShrink: 0 }}>
               <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="2xs" variant="ice" />
@@ -1147,7 +1148,7 @@ function CreateIdeaModal({ open, onClose }: { open: boolean; onClose: () => void
               padding: 'var(--sp-xs)',
             }}
           >
-            <X size={18} />
+            <X {...ICON_PROPS} size={18} />
           </button>
         </div>
 

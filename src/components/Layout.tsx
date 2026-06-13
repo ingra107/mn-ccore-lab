@@ -8,6 +8,7 @@ import { useAuth } from '../hooks/useAuth'
 import { useTasks, useMeetingsApi } from '../hooks/useApiData'
 import { formatShortDate, localDateKey } from '../lib/dateUtils'
 import PageTransition from './PageTransition'
+import { ICON_PROPS } from '../lib/iconProps'
 
 const navLinks: { to: string; label: string }[] = [
   { to: '/', label: 'Home' },
@@ -213,7 +214,7 @@ export default function Layout() {
                 }}
               >
                 Research
-                <ChevronDown
+                <ChevronDown {...ICON_PROPS}
                   size={14}
                   className="transition-transform duration-200"
                   style={{
@@ -325,7 +326,7 @@ export default function Layout() {
               style={{ color: 'var(--slate)' }}
               aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
             >
-              {isDark ? <Sun size={18} /> : <Moon size={18} />}
+              {isDark ? <Sun {...ICON_PROPS} size={18} /> : <Moon {...ICON_PROPS} size={18} />}
             </button>
           </div>
 
@@ -338,7 +339,7 @@ export default function Layout() {
               style={{ color: 'var(--slate)' }}
               aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
             >
-              {isDark ? <Sun size={18} /> : <Moon size={18} />}
+              {isDark ? <Sun {...ICON_PROPS} size={18} /> : <Moon {...ICON_PROPS} size={18} />}
             </button>
             <button
               onClick={() => setMenuOpen(!menuOpen)}
@@ -396,7 +397,7 @@ export default function Layout() {
               }}
             >
               Research
-              <ChevronDown
+              <ChevronDown {...ICON_PROPS}
                 size={16}
                 className="transition-transform duration-200"
                 style={{
@@ -716,7 +717,7 @@ export default function Layout() {
           }}
           aria-label="Scroll to top"
         >
-          <ChevronUp size={20} />
+          <ChevronUp {...ICON_PROPS} size={20} />
         </button>
       )}
     </div>

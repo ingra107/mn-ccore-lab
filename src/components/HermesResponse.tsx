@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { ExternalLink } from 'lucide-react'
 import { PATHS } from '../constants/paths'
+import { ICON_PROPS } from '../lib/iconProps'
 
 export type HermesCitation =
   | { type: 'project'; slug: string; title: string }
@@ -150,7 +151,7 @@ export default function HermesResponse({ content }: { content: string }) {
               <>
                 <span style={{ opacity: 0.85 }}>{c.type}</span>
                 <span style={{ color: 'var(--ink)', fontWeight: 500 }}>{c.title}</span>
-                {c.type === 'publication' && c.url && <ExternalLink size={10} aria-hidden="true" />}
+                {c.type === 'publication' && c.url && <ExternalLink {...ICON_PROPS} size={10} aria-hidden="true" />}
               </>
             )
             const pillStyle: React.CSSProperties = {

@@ -3,6 +3,7 @@ import { ArrowLeft, Search } from 'lucide-react'
 import EmptyStateArt from './EmptyStateArt'
 import type { EmptyArtVariant } from './EmptyStateArt'
 import { PATHS } from '../constants/paths'
+import { ICON_PROPS } from '../lib/iconProps'
 
 /**
  * S8 — branded entity-not-found state. Replaces the bare "<Thing> not found"
@@ -50,7 +51,7 @@ export default function EntityNotFound({
         className="inline-flex items-center gap-2 mb-6"
         style={{ fontSize: '14px', color: 'var(--slate)', textDecoration: 'none' }}
       >
-        <ArrowLeft size={16} />
+        <ArrowLeft {...ICON_PROPS} size={16} />
         {backTo.label}
       </Link>
 
@@ -71,7 +72,7 @@ export default function EntityNotFound({
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium"
             style={{ background: 'var(--teal-solid)', color: 'var(--ink-bright, #fff)', textDecoration: 'none' }}
           >
-            <Search size={14} />
+            <Search {...ICON_PROPS} size={14} />
             Search{reference ? ` for “${reference}”` : ''}
           </Link>
           <Link

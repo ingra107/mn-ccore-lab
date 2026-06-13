@@ -2,6 +2,7 @@ import { useMemo, useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Sparkles, X } from 'lucide-react'
 import { spring } from '../lib/animations'
+import { ICON_PROPS } from '../lib/iconProps'
 
 // Bump this and add an entry to RELEASES when shipping a meaningful feature
 // set. Each release gets a one-line summary keyed to its version. The ribbon
@@ -88,7 +89,7 @@ export default function ReleaseRibbon() {
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-sm)', flex: 1, minWidth: 0 }}>
-          <Sparkles size={14} style={{ color: 'var(--gold)', flexShrink: 0 }} />
+          <Sparkles {...ICON_PROPS} size={14} style={{ color: 'var(--gold)', flexShrink: 0 }} />
           <span style={{ fontSize: 'var(--text-small)', color: 'var(--ink)', fontWeight: 'var(--weight-ui)' as any }}>
             {release.title}:
           </span>
@@ -110,7 +111,7 @@ export default function ReleaseRibbon() {
             flexShrink: 0,
           }}
         >
-          <X size={14} />
+          <X {...ICON_PROPS} size={14} />
         </button>
       </motion.div>
     </AnimatePresence>

@@ -17,6 +17,7 @@ import EmptyState from '../../components/EmptyState'
 import InlineSelect from '../../components/InlineSelect'
 import { staggerContainer, staggerItem } from '../../lib/animations'
 import { isProductionVisibleActivity } from '../../lib/isProductionVisible'
+import { ICON_PROPS } from '../../lib/iconProps'
 
 const typeOptions = [
   { value: '', label: 'All Types' },
@@ -124,7 +125,7 @@ export default function ActivityPage() {
   return (
     <PageContainer>
       <PageHeader
-        icon={<ActivityIcon size={20} />}
+        icon={<ActivityIcon {...ICON_PROPS} size={20} />}
         title="Activity"
         subtitle={`${filteredAll.length}${filterTypes.length > 0 || filterPerson ? ` of ${allActivity.length}` : ''} recent actions${mostActive ? ` · Most active: ${mostActive}` : ''}`}
         count={allActivity.length}

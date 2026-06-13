@@ -1,6 +1,7 @@
 import { RotateCcw } from 'lucide-react'
 import { parseCarriedForward } from '../../lib/textUtils'
 import { formatBrandName } from '../BrandName'
+import { ICON_PROPS } from '../../lib/iconProps'
 
 /** Renders a task title with `[Carried forward]` lifted into a compact chip.
  *  Use in every row, card, peek, and timeline label so the prefix never
@@ -45,7 +46,7 @@ export default function TaskTitle({
           title={daysCarried ? `Carried forward ${daysCarried} days` : 'Carried forward'}
           aria-label={daysCarried ? `Carried forward ${daysCarried} days` : 'Carried forward'}
         >
-          <RotateCcw size={10} aria-hidden="true" />
+          <RotateCcw {...ICON_PROPS} size={10} aria-hidden="true" />
           {daysCarried ? `${daysCarried}d` : ''}
         </span>
       )}

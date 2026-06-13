@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { ExternalLink, ChevronDown, ClipboardCopy, Check, ArrowRight } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { Publication } from '../data/types'
+import { ICON_PROPS } from '../lib/iconProps'
 
 const TOPIC_DISPLAY: Record<string, string> = {
   clif: 'CLIF',
@@ -242,7 +243,7 @@ export default function PublicationCard({ pub }: { pub: Publication }) {
               animate={{ rotate: expanded ? 180 : 0 }}
               transition={{ duration: 0.2 }}
             >
-              <ChevronDown
+              <ChevronDown {...ICON_PROPS}
                 size={18}
                 style={{ color: 'var(--slate)' }}
               />
@@ -314,7 +315,7 @@ export default function PublicationCard({ pub }: { pub: Publication }) {
                       }}
                       onClick={(e) => e.stopPropagation()}
                     >
-                      DOI <ExternalLink size={10} aria-hidden="true" />
+                      DOI <ExternalLink {...ICON_PROPS} size={10} aria-hidden="true" />
                     </a>
                   )}
                   {pub.pubmed && (
@@ -331,7 +332,7 @@ export default function PublicationCard({ pub }: { pub: Publication }) {
                       }}
                       onClick={(e) => e.stopPropagation()}
                     >
-                      PubMed <ExternalLink size={10} aria-hidden="true" />
+                      PubMed <ExternalLink {...ICON_PROPS} size={10} aria-hidden="true" />
                     </a>
                   )}
                   <button
@@ -347,12 +348,12 @@ export default function PublicationCard({ pub }: { pub: Publication }) {
                   >
                     {copied ? (
                       <>
-                        <Check size={10} aria-hidden="true" />
+                        <Check {...ICON_PROPS} size={10} aria-hidden="true" />
                         Copied!
                       </>
                     ) : (
                       <>
-                        <ClipboardCopy size={10} aria-hidden="true" />
+                        <ClipboardCopy {...ICON_PROPS} size={10} aria-hidden="true" />
                         Copy Citation
                       </>
                     )}
@@ -369,7 +370,7 @@ export default function PublicationCard({ pub }: { pub: Publication }) {
                       minHeight: '32px',
                     }}
                   >
-                    View details <ArrowRight size={10} aria-hidden="true" />
+                    View details <ArrowRight {...ICON_PROPS} size={10} aria-hidden="true" />
                   </Link>
                 </div>
               </div>

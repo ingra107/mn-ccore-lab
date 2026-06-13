@@ -27,6 +27,7 @@ import { PATHS } from '../../constants/paths'
 import { formatRelativeTime } from '../../lib/dateUtils'
 import { parseDbUtc, formatDbLocal } from '../../lib/time'
 import { getPersonInfo } from '../../data/team'
+import { ICON_PROPS } from '../../lib/iconProps'
 
 interface ArtifactVersion {
   artifact_id: string
@@ -169,7 +170,7 @@ export default function ArtifactPage() {
             className="flex-shrink-0 flex items-center justify-center"
             style={{ width: 36, height: 36, borderRadius: 'var(--radius-lg)', background: 'var(--gold-active)', color: 'var(--gold)' }}
           >
-            <FileText size={20} />
+            <FileText {...ICON_PROPS} size={20} />
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <h1 style={{ fontSize: '1.4rem', fontWeight: 600, color: 'var(--ink)', margin: 0, lineHeight: 1.25 }}>
@@ -205,7 +206,7 @@ export default function ArtifactPage() {
                 background: 'var(--teal-active)', color: 'var(--teal)', border: '1px solid var(--teal)',
               }}
             >
-              <History size={11} /> v{artifact.version}
+              <History {...ICON_PROPS} size={11} /> v{artifact.version}
               {artifact.versions.length > 0 && <span style={{ opacity: 0.7 }}>· {artifact.versions.length + 1} total</span>}
             </button>
             {showHistory && (
@@ -243,7 +244,7 @@ export default function ArtifactPage() {
               className="inline-flex items-center gap-1"
               style={{ fontSize: 11, color: 'var(--teal)', background: 'var(--teal-active)', borderRadius: 'var(--radius-full)', padding: '3px 10px', textDecoration: 'none' }}
             >
-              <ClipboardList size={11} /> origin task
+              <ClipboardList {...ICON_PROPS} size={11} /> origin task
             </Link>
           )}
 
@@ -254,7 +255,7 @@ export default function ArtifactPage() {
               className="inline-flex items-center gap-1"
               style={{ fontSize: 11, color: 'var(--gold)', background: 'var(--gold-active)', borderRadius: 'var(--radius-full)', padding: '3px 10px', textDecoration: 'none' }}
             >
-              <FolderKanban size={11} /> origin project
+              <FolderKanban {...ICON_PROPS} size={11} /> origin project
             </Link>
           )}
 
@@ -265,7 +266,7 @@ export default function ArtifactPage() {
             className="inline-flex items-center gap-1 cursor-pointer"
             style={{ fontSize: 11, fontWeight: 500, padding: '3px 10px', borderRadius: 'var(--radius-full)', background: 'var(--surface-2, rgba(100,116,139,0.12))', color: 'var(--slate)', border: '1px solid var(--border-subtle)', marginLeft: 'auto' }}
           >
-            <Copy size={11} /> Copy markdown
+            <Copy {...ICON_PROPS} size={11} /> Copy markdown
           </button>
           {/* N3b — one-way export: download the .md (Google-Doc conversion
               rides PB's md_to_docx/Workspace tooling on the vault copy the
@@ -283,7 +284,7 @@ export default function ArtifactPage() {
             className="inline-flex items-center gap-1 cursor-pointer"
             style={{ fontSize: 11, fontWeight: 500, padding: '3px 10px', borderRadius: 'var(--radius-full)', background: 'var(--surface-2, rgba(100,116,139,0.12))', color: 'var(--slate)', border: '1px solid var(--border-subtle)' }}
           >
-            <Send size={11} /> Download .md
+            <Send {...ICON_PROPS} size={11} /> Download .md
           </button>
         </div>
 
@@ -340,7 +341,7 @@ export default function ArtifactPage() {
                     opacity: authorOnly ? 1 : 0.7,
                   }}
                 >
-                  <Lock size={9} /> {authorOnly ? 'Only you' : 'Visible to team'}
+                  <Lock {...ICON_PROPS} size={9} /> {authorOnly ? 'Only you' : 'Visible to team'}
                 </button>
                 <button
                   type="button"
@@ -355,7 +356,7 @@ export default function ArtifactPage() {
                     cursor: comment.trim() ? 'pointer' : 'not-allowed', opacity: postComment.isPending ? 0.7 : 1,
                   }}
                 >
-                  <Send size={11} /> {postComment.isPending ? 'Posting…' : 'Comment'}
+                  <Send {...ICON_PROPS} size={11} /> {postComment.isPending ? 'Posting…' : 'Comment'}
                 </button>
               </div>
             </>

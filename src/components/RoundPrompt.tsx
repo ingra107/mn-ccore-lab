@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { RefreshCw, Pencil, Check, X, MessageCircle } from 'lucide-react'
 import { ROUND_PROMPTS, CATEGORY_LABELS, hashMeetingId } from '../data/roundPrompts'
+import { ICON_PROPS } from '../lib/iconProps'
 
 const LS_KEY = (id: string) => `roundprompt:${id}`
 
@@ -81,7 +82,7 @@ export default function RoundPrompt({ meetingId }: { meetingId: string }) {
     >
       {/* Label row */}
       <div className="flex items-center gap-1.5 mb-2">
-        <MessageCircle size={12} style={{ color: 'var(--gold)', flexShrink: 0 }} />
+        <MessageCircle {...ICON_PROPS} size={12} style={{ color: 'var(--gold)', flexShrink: 0 }} />
         <span style={{
           fontSize: '10px', color: 'var(--gold)',
           textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600,
@@ -123,7 +124,7 @@ export default function RoundPrompt({ meetingId }: { meetingId: string }) {
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}
             >
-              <Check size={13} />
+              <Check {...ICON_PROPS} size={13} />
             </button>
             <button
               type="button"
@@ -135,7 +136,7 @@ export default function RoundPrompt({ meetingId }: { meetingId: string }) {
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}
             >
-              <X size={13} />
+              <X {...ICON_PROPS} size={13} />
             </button>
           </div>
         </div>
@@ -171,7 +172,7 @@ export default function RoundPrompt({ meetingId }: { meetingId: string }) {
               background: 'transparent', borderColor: 'rgba(201, 168, 76, 0.2)', cursor: 'pointer',
             }}
           >
-            <RefreshCw size={11} /> Shuffle
+            <RefreshCw {...ICON_PROPS} size={11} /> Shuffle
           </button>
 
           <button
@@ -184,7 +185,7 @@ export default function RoundPrompt({ meetingId }: { meetingId: string }) {
               background: 'transparent', borderColor: 'rgba(201, 168, 76, 0.2)', cursor: 'pointer',
             }}
           >
-            <Pencil size={11} /> {isCustom ? 'Edit' : 'Customize'}
+            <Pencil {...ICON_PROPS} size={11} /> {isCustom ? 'Edit' : 'Customize'}
           </button>
 
           {isCustom && (
@@ -198,7 +199,7 @@ export default function RoundPrompt({ meetingId }: { meetingId: string }) {
                 background: 'transparent', borderColor: 'var(--gold-emphasis)', cursor: 'pointer',
               }}
             >
-              <X size={11} /> Reset
+              <X {...ICON_PROPS} size={11} /> Reset
             </button>
           )}
         </div>

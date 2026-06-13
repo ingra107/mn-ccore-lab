@@ -38,6 +38,7 @@ import HeartbeatLine from '../components/HeartbeatLine'
 import { formatRelativeTime, formatShortDate, isOverdue } from '../lib/dateUtils'
 import { parseCarriedForward } from '../lib/textUtils'
 import { PATHS } from '../constants/paths'
+import { ICON_PROPS } from '../lib/iconProps'
 
 // ── Helpers ─────────────────────────────────────────────────
 
@@ -46,13 +47,13 @@ import { PATHS } from '../constants/paths'
 function notificationIcon(type: string) {
   switch (type) {
     case 'mention':
-      return <BellDot size={16} />
+      return <BellDot {...ICON_PROPS} size={16} />
     case 'assignment':
-      return <Clock size={16} />
+      return <Clock {...ICON_PROPS} size={16} />
     case 'deadline':
-      return <AlertTriangle size={16} />
+      return <AlertTriangle {...ICON_PROPS} size={16} />
     default:
-      return <Bell size={16} />
+      return <Bell {...ICON_PROPS} size={16} />
   }
 }
 
@@ -202,7 +203,7 @@ function ActionItemCard({
           }}
           aria-label={item.completed ? 'Mark incomplete' : 'Mark complete'}
         >
-          {item.completed ? <CheckCircle2 size={20} /> : <Circle size={20} />}
+          {item.completed ? <CheckCircle2 {...ICON_PROPS} size={20} /> : <Circle {...ICON_PROPS} size={20} />}
         </button>
 
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -453,7 +454,7 @@ function CommitmentCard({ item }: { item: CommitmentRow }) {
             marginTop: 2,
           }}
         >
-          {isDone ? <CheckCircle2 size={20} /> : <Handshake size={20} />}
+          {isDone ? <CheckCircle2 {...ICON_PROPS} size={20} /> : <Handshake {...ICON_PROPS} size={20} />}
         </div>
 
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -733,7 +734,7 @@ export default function MyItems() {
               textDecoration: 'none',
             }}
           >
-            <ArrowLeft size={14} />
+            <ArrowLeft {...ICON_PROPS} size={14} />
             Back to Dashboard
           </Link>
         </div>
@@ -791,7 +792,7 @@ export default function MyItems() {
               color: 'var(--slate)',
             }}
           >
-            <Bell size={16} style={{ color: 'var(--gold)', flexShrink: 0 }} />
+            <Bell {...ICON_PROPS} size={16} style={{ color: 'var(--gold)', flexShrink: 0 }} />
             <span style={{ flex: 1 }}>
               Showing Nick's items. <a href="/api/auth/login" style={{ color: 'var(--teal)', textDecoration: 'underline' }}>Sign in with @umn.edu</a> to see your own.
             </span>
@@ -810,25 +811,25 @@ export default function MyItems() {
           <StatCard
             count={newTasks.length}
             label="New to You"
-            icon={<BellDot size={20} />}
+            icon={<BellDot {...ICON_PROPS} size={20} />}
             accentColor="var(--gold)"
           />
           <StatCard
             count={pending.length}
             label="Pending Action Items"
-            icon={<Circle size={20} />}
+            icon={<Circle {...ICON_PROPS} size={20} />}
             accentColor="var(--gold)"
           />
           <StatCard
             count={unreadCount}
             label="Unread Notifications"
-            icon={<BellDot size={20} />}
+            icon={<BellDot {...ICON_PROPS} size={20} />}
             accentColor="var(--teal)"
           />
           <StatCard
             count={openCommitments.length}
             label="Open Commitments"
-            icon={<Handshake size={20} />}
+            icon={<Handshake {...ICON_PROPS} size={20} />}
             accentColor="var(--maroon)"
           />
         </div>
@@ -999,7 +1000,7 @@ export default function MyItems() {
                   padding: 'var(--sp-xs) 0',
                 }}
               >
-                <CheckCheck size={14} />
+                <CheckCheck {...ICON_PROPS} size={14} />
                 Mark all read
               </button>
             )}
@@ -1104,7 +1105,7 @@ export default function MyItems() {
                 transition={{ duration: 0.2 }}
                 style={{ color: 'var(--slate)', opacity: 'var(--ink-label)', flexShrink: 0 }}
               >
-                <ChevronDown size={16} />
+                <ChevronDown {...ICON_PROPS} size={16} />
               </motion.span>
             </button>
 

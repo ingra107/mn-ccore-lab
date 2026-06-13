@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { CheckCircle2, Circle, UserCheck, Flag, Trash2, X, AlertTriangle, AlarmClock, ListChecks } from 'lucide-react'
 import { getAllMembers, directors } from '../../data/team'
 import type { TaskRow } from '../../lib/api'
+import { ICON_PROPS } from '../../lib/iconProps'
 
 interface BulkActionToolbarProps {
   selectedIds: Set<string>
@@ -112,7 +113,7 @@ export default function BulkActionToolbar({ selectedIds, selectedTasks, onClear,
               padding: 0,
             }}
           >
-            <X size={12} />
+            <X {...ICON_PROPS} size={12} />
           </button>
 
           {/* Divider */}
@@ -130,7 +131,7 @@ export default function BulkActionToolbar({ selectedIds, selectedTasks, onClear,
               color: allCompleted ? 'rgba(255,255,255,0.8)' : 'var(--teal)',
             }}
           >
-            {allCompleted ? <Circle size={14} /> : <CheckCircle2 size={14} />}
+            {allCompleted ? <Circle {...ICON_PROPS} size={14} /> : <CheckCircle2 {...ICON_PROPS} size={14} />}
             {allCompleted ? 'Reopen' : 'Complete'}
           </button>
 
@@ -146,7 +147,7 @@ export default function BulkActionToolbar({ selectedIds, selectedTasks, onClear,
               disabled={isUpdating}
               style={buttonStyle(showStatus)}
             >
-              <ListChecks size={14} />
+              <ListChecks {...ICON_PROPS} size={14} />
               Status
             </button>
 
@@ -217,7 +218,7 @@ export default function BulkActionToolbar({ selectedIds, selectedTasks, onClear,
               disabled={isUpdating}
               style={buttonStyle(showAssign)}
             >
-              <UserCheck size={14} />
+              <UserCheck {...ICON_PROPS} size={14} />
               Reassign
             </button>
 
@@ -298,7 +299,7 @@ export default function BulkActionToolbar({ selectedIds, selectedTasks, onClear,
               disabled={isUpdating}
               style={buttonStyle(showPriority)}
             >
-              <Flag size={14} />
+              <Flag {...ICON_PROPS} size={14} />
               Priority
             </button>
 
@@ -370,7 +371,7 @@ export default function BulkActionToolbar({ selectedIds, selectedTasks, onClear,
                 color: 'var(--gold)',
               }}
             >
-              <AlarmClock size={14} />
+              <AlarmClock {...ICON_PROPS} size={14} />
               +1 day
             </button>
           )}
@@ -395,7 +396,7 @@ export default function BulkActionToolbar({ selectedIds, selectedTasks, onClear,
               borderColor: deleteConfirm ? 'var(--maroon)' : 'var(--hover-medium)',
             }}
           >
-            {deleteConfirm ? <AlertTriangle size={14} /> : <Trash2 size={14} />}
+            {deleteConfirm ? <AlertTriangle {...ICON_PROPS} size={14} /> : <Trash2 {...ICON_PROPS} size={14} />}
             {deleteConfirm ? 'Confirm?' : 'Delete'}
           </button>
     </div>

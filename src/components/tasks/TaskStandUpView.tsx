@@ -7,6 +7,7 @@ import { formatShortDate, isOverdue as isPastDue } from '../../lib/dateUtils'
 import { useProjects } from '../../hooks/useApiData'
 import type { TaskRow } from '../../lib/api'
 import TaskTitle from './TaskTitle'
+import { ICON_PROPS } from '../../lib/iconProps'
 
 interface TaskStandUpViewProps {
   tasks: TaskRow[]
@@ -298,7 +299,7 @@ function TaskSection({
                 style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px', display: 'flex', flexShrink: 0 }}
                 title="Cycle status"
               >
-                <Circle size={14} style={{ color: config.color, opacity: 0.85 }} />
+                <Circle {...ICON_PROPS} size={14} style={{ color: config.color, opacity: 0.85 }} />
               </button>
               <div className="flex-1 min-w-0">
                 <span

@@ -35,6 +35,7 @@ import SimilarDecisionsPanel from '../../components/SimilarDecisionsPanel'
 import CreateDecisionModal from '../../components/CreateDecisionModal'
 import { ColumnHeader, TableContainer } from '../../components/table'
 import type { DecisionRow } from '../../hooks/useApiData'
+import { ICON_PROPS } from '../../lib/iconProps'
 
 // ── Constants ────────────────────────────────────────────────
 
@@ -210,7 +211,7 @@ function DecisionTimeline({
                     opacity: 0.85,
                   }}
                 >
-                  <FolderKanban size={10} />
+                  <FolderKanban {...ICON_PROPS} size={10} />
                   {projTitle}
                 </Link>
               )}
@@ -271,7 +272,7 @@ function ReviewCard({
     >
       <div className="p-4" style={{ background: 'var(--surface-1)' }}>
         <div className="flex items-center gap-2 mb-2">
-          <Scale size={14} style={{ color: 'var(--gold)' }} />
+          <Scale {...ICON_PROPS} size={14} style={{ color: 'var(--gold)' }} />
           <span
             style={{
               fontWeight: 'var(--weight-heading)',
@@ -319,7 +320,7 @@ function ReviewCard({
                 textDecoration: 'none',
               }}
             >
-              <FolderKanban size={11} />
+              <FolderKanban {...ICON_PROPS} size={11} />
               {projectTitle}
             </Link>
           )}
@@ -340,7 +341,7 @@ function ReviewCard({
             textAlign: 'left',
           }}
         >
-          <Scale size={13} style={{ color: 'var(--gold)', flexShrink: 0 }} />
+          <Scale {...ICON_PROPS} size={13} style={{ color: 'var(--gold)', flexShrink: 0 }} />
           <span style={{ flex: 1, minWidth: 0 }}>
             Made {days} days ago · Record outcome
           </span>
@@ -492,7 +493,7 @@ function DecisionRowItem({
               display: 'inline-flex',
             }}
           >
-            {isExpanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+            {isExpanded ? <ChevronDown {...ICON_PROPS} size={12} /> : <ChevronRight {...ICON_PROPS} size={12} />}
           </span>
           <span
             style={{
@@ -622,7 +623,7 @@ function DecisionRowItem({
                 textDecoration: 'none',
               }}
             >
-              <FolderKanban size={11} style={{ flexShrink: 0 }} />
+              <FolderKanban {...ICON_PROPS} size={11} style={{ flexShrink: 0 }} />
               <span
                 style={{
                   overflow: 'hidden',
@@ -746,7 +747,7 @@ function DecisionRowItem({
                   className="flex items-center gap-1.5 flex-wrap"
                   style={{ marginBottom: 'var(--sp-sm)' }}
                 >
-                  <Tag
+                  <Tag {...ICON_PROPS}
                     size={11}
                     style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}
                   />
@@ -956,7 +957,7 @@ export default function DecisionsPage() {
   return (
     <div className="content-container">
       <PageHeader
-        icon={<Scale size={20} />}
+        icon={<Scale {...ICON_PROPS} size={20} />}
         title="Decision Log"
         subtitle={`${pendingCount} pending review, ${recordedCount} with outcomes`}
         count={allDecisions.length}
@@ -982,7 +983,7 @@ export default function DecisionsPage() {
                   cursor: 'pointer',
                 }}
               >
-                <List
+                <List {...ICON_PROPS}
                   size={14}
                   style={{
                     display: 'inline',
@@ -1005,7 +1006,7 @@ export default function DecisionsPage() {
                   cursor: 'pointer',
                 }}
               >
-                <GitCommitVertical
+                <GitCommitVertical {...ICON_PROPS}
                   size={14}
                   style={{
                     display: 'inline',
@@ -1029,7 +1030,7 @@ export default function DecisionsPage() {
                 cursor: 'pointer',
               }}
             >
-              <Plus size={16} />
+              <Plus {...ICON_PROPS} size={16} />
               Log Decision
             </button>
           </div>
@@ -1086,7 +1087,7 @@ export default function DecisionsPage() {
         </div>
         {tagCounts.length > 0 && allDecisions.length >= 15 && (
           <div className="flex items-center gap-2 flex-wrap mt-2">
-            <Tag
+            <Tag {...ICON_PROPS}
               size={12}
               style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}
             />
@@ -1136,7 +1137,7 @@ export default function DecisionsPage() {
       {reviewDecisions.length > 0 && !filterStatus && !filterTag && (
         <div className="mt-8">
           <div className="flex items-center gap-2 mb-4">
-            <AlertTriangle size={16} style={{ color: 'var(--gold)' }} />
+            <AlertTriangle {...ICON_PROPS} size={16} style={{ color: 'var(--gold)' }} />
             <h2
               style={{
                 fontWeight: 500,

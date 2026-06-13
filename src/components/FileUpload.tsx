@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Upload, File, Trash2, Download, Loader2 } from 'lucide-react'
 import { getPersonInfo } from '../data/team'
 import { formatRelativeTime } from '../lib/dateUtils'
+import { ICON_PROPS } from '../lib/iconProps'
 
 interface FileAttachment {
   id: string
@@ -158,12 +159,12 @@ export default function FileUpload({ entityType, entityId }: FileUploadProps) {
         />
         {uploading ? (
           <div className="flex items-center justify-center gap-2" style={{ color: 'var(--teal)' }}>
-            <Loader2 size={16} className="animate-spin" />
+            <Loader2 {...ICON_PROPS} size={16} className="animate-spin" />
             <span className="text-xs">{uploadProgress}</span>
           </div>
         ) : (
           <div className="flex items-center justify-center gap-2" style={{ color: 'var(--muted)' }}>
-            <Upload size={16} />
+            <Upload {...ICON_PROPS} size={16} />
             <span className="text-xs">Drop a file or click to upload</span>
           </div>
         )}
@@ -181,7 +182,7 @@ export default function FileUpload({ entityType, entityId }: FileUploadProps) {
                 className="flex items-center gap-2 py-1.5 px-2 rounded-md"
                 style={{ fontSize: '12px' }}
               >
-                <File size={14} style={{ color: 'var(--slate)', opacity: 0.85, flexShrink: 0 }} />
+                <File {...ICON_PROPS} size={14} style={{ color: 'var(--slate)', opacity: 0.85, flexShrink: 0 }} />
                 <div className="flex-1 min-w-0">
                   <div className="truncate" style={{ color: 'var(--ink)' }}>{f.filename}</div>
                   {(uploaderName || f.created_at) && (
@@ -202,7 +203,7 @@ export default function FileUpload({ entityType, entityId }: FileUploadProps) {
                   title="Download"
                   style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--teal)', padding: '2px' }}
                 >
-                  <Download size={13} />
+                  <Download {...ICON_PROPS} size={13} />
                 </button>
                 <button
                   onClick={() => {
@@ -213,7 +214,7 @@ export default function FileUpload({ entityType, entityId }: FileUploadProps) {
                   title="Delete"
                   style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--maroon)', padding: '2px', opacity: 0.85 }}
                 >
-                  <Trash2 size={13} />
+                  <Trash2 {...ICON_PROPS} size={13} />
                 </button>
               </div>
             )

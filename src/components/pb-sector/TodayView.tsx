@@ -5,6 +5,7 @@ import { useTodayMd } from '../../hooks/useApiData'
 import { CardSkeleton } from '../LoadingSkeleton'
 import EmptyState from '../EmptyState'
 import { localDateKey } from '../../lib/dateUtils'
+import { ICON_PROPS } from '../../lib/iconProps'
 
 // ── Markdown line types ──────────────────────────────────────
 
@@ -343,7 +344,7 @@ function SectionBlock({ section, onToggleTask }: { section: Section; onToggleTas
         style={{ cursor: 'pointer', background: 'none', border: 'none', padding: 0, textAlign: 'left' }}
       >
         <span style={{ color: 'var(--gold)', opacity: 0.85, transition: 'transform 0.15s' }}>
-          {collapsed ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
+          {collapsed ? <ChevronRight {...ICON_PROPS} size={14} /> : <ChevronDown {...ICON_PROPS} size={14} />}
         </span>
         <span
           style={{
@@ -502,7 +503,7 @@ export default function TodayView() {
       {/* Last synced hint */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <FileText size={14} style={{ color: 'var(--gold)', opacity: 0.85 }} />
+          <FileText {...ICON_PROPS} size={14} style={{ color: 'var(--gold)', opacity: 0.85 }} />
           <span
             style={{
               fontSize: '11px',

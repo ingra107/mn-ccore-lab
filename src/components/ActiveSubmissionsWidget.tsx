@@ -17,6 +17,7 @@ import { useActiveSubmissions } from '../hooks/useApiData'
 import type { ActiveSubmissionRow, SubmissionEventType } from '../lib/api'
 import { PATHS } from '../constants/paths'
 import { formatShortDate } from '../lib/dateUtils'
+import { ICON_PROPS } from '../lib/iconProps'
 
 const EVENT_LABEL: Record<SubmissionEventType, string> = {
   submitted: 'Submitted',
@@ -88,7 +89,7 @@ function MiniCard({ row }: { row: ActiveSubmissionRow }) {
         )}
         {row.revision_due_date && (
           <span className="ml-auto inline-flex items-center gap-1" style={{ color: accent, fontWeight: 500, flexShrink: 0 }}>
-            <Clock size={10} />
+            <Clock {...ICON_PROPS} size={10} />
             {formatShortDate(row.revision_due_date)}
           </span>
         )}
@@ -110,7 +111,7 @@ export default function ActiveSubmissionsWidget() {
   return (
     <div style={{ marginBottom: '1.25rem' }}>
       <div className="flex items-center gap-2 mb-2">
-        <Send size={14} style={{ color: 'var(--teal)' }} />
+        <Send {...ICON_PROPS} size={14} style={{ color: 'var(--teal)' }} />
         <h3 style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ink)', margin: 0 }}>
           Active submissions
         </h3>
@@ -162,7 +163,7 @@ export default function ActiveSubmissionsWidget() {
               }}
             >
               View all
-              <ArrowRight size={11} />
+              <ArrowRight {...ICON_PROPS} size={11} />
             </Link>
           )}
         </div>

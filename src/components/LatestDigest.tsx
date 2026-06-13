@@ -3,6 +3,7 @@ import { Newspaper, ArrowRight } from 'lucide-react'
 import { useDigest } from '../hooks/useApiData'
 import type { DigestPaper } from '../hooks/useApiData'
 import { PATHS } from '../constants/paths'
+import { ICON_PROPS } from '../lib/iconProps'
 
 function relevanceColor(score: number): string {
   if (score >= 80) return 'var(--teal)'
@@ -145,7 +146,7 @@ export default function LatestDigest() {
               whiteSpace: 'nowrap',
             }}
           >
-            {totalText} <ArrowRight size={12} aria-hidden="true" />
+            {totalText} <ArrowRight {...ICON_PROPS} size={12} aria-hidden="true" />
           </Link>
         </div>
 
@@ -167,7 +168,7 @@ export default function LatestDigest() {
             }}
           >
             {totalText}
-            <ArrowRight size={14} aria-hidden="true" />
+            <ArrowRight {...ICON_PROPS} size={14} aria-hidden="true" />
           </Link>
         </div>
       </section>

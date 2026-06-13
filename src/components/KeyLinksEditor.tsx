@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link2, Plus, Pencil, Check, X } from 'lucide-react'
 import { classifyUrl } from '../lib/urlClassify'
 import { useProtocolLaunch } from '../hooks/useProtocolLaunch'
+import { ICON_PROPS } from '../lib/iconProps'
 
 // Shared editor for the 3-slot key_link_1/2/3 + _desc pattern used on tasks
 // and projects. Display mode shows teal underlined links; edit mode swaps in
@@ -87,7 +88,7 @@ function LinkRow({
         className="opacity-0 group-hover:opacity-100 transition-opacity"
         style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: 0, display: 'grid', flexShrink: 0 }}
       >
-        <Pencil size={11} />
+        <Pencil {...ICON_PROPS} size={11} />
       </button>
       <button
         onClick={onRemove}
@@ -95,7 +96,7 @@ function LinkRow({
         aria-label="Remove link"
         style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: 0, display: 'grid', flexShrink: 0, opacity: 0.7 }}
       >
-        <X size={12} />
+        <X {...ICON_PROPS} size={12} />
       </button>
     </span>
   )
@@ -168,7 +169,7 @@ function LinkForm({
           }}
           title="Cancel (Esc)"
         >
-          <X size={12} style={{ display: 'inline', marginRight: 4 }} /> Cancel
+          <X {...ICON_PROPS} size={12} style={{ display: 'inline', marginRight: 4 }} /> Cancel
         </button>
         <button
           onClick={() => canSave && onSave({ url: url.trim(), desc: desc.trim() || null })}
@@ -185,7 +186,7 @@ function LinkForm({
           }}
           title="Save (Ctrl+Enter)"
         >
-          <Check size={12} style={{ display: 'inline', marginRight: 4 }} /> Save
+          <Check {...ICON_PROPS} size={12} style={{ display: 'inline', marginRight: 4 }} /> Save
         </button>
       </div>
     </div>
@@ -239,7 +240,7 @@ export default function KeyLinksEditor({ links, onSave, hideLabel = false, maxSl
             fontSize: 'var(--label-size)',
           }}
         >
-          <Link2 size={11} />
+          <Link2 {...ICON_PROPS} size={11} />
           Key Links
         </label>
       )}
@@ -297,7 +298,7 @@ export default function KeyLinksEditor({ links, onSave, hideLabel = false, maxSl
               '--hov-bg': 'var(--teal-hover)',
             } as React.CSSProperties}
           >
-            <Plus size={11} />
+            <Plus {...ICON_PROPS} size={11} />
             {populated.length === 0 ? 'Add a key link' : 'Add another'}
           </button>
         )}

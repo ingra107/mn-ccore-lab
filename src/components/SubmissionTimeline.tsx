@@ -28,6 +28,7 @@ import { formatRelativeTime, getDaysUntil, localDateKey } from '../lib/dateUtils
 import EmptyState from './EmptyState'
 import InlineSelect from './InlineSelect'
 import { getStatusColor, getStatusBg } from '../lib/statusColors'
+import { ICON_PROPS } from '../lib/iconProps'
 
 // ── Event config ──
 
@@ -387,7 +388,7 @@ function TimelineEvent({
             onMouseEnter={(e) => { (e.target as HTMLElement).style.opacity = '0.8' }}
             onMouseLeave={(e) => { (e.target as HTMLElement).style.opacity = '0.3' }}
           >
-            <Trash2 size={12} />
+            <Trash2 {...ICON_PROPS} size={12} />
           </button>
         </div>
 
@@ -432,7 +433,7 @@ export default function SubmissionTimeline({ projectId }: { projectId: string })
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Send size={14} style={{ color: 'var(--teal)' }} />
+          <Send {...ICON_PROPS} size={14} style={{ color: 'var(--teal)' }} />
           <h3 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--ink)', margin: 0 }}>
             Submission Timeline
           </h3>
@@ -461,7 +462,7 @@ export default function SubmissionTimeline({ projectId }: { projectId: string })
           onMouseEnter={(e) => { (e.target as HTMLElement).style.background = 'var(--teal-hover)' }}
           onMouseLeave={(e) => { (e.target as HTMLElement).style.background = 'transparent' }}
         >
-          <Plus size={12} />
+          <Plus {...ICON_PROPS} size={12} />
           Add Event
         </button>
       </div>
@@ -488,7 +489,7 @@ export default function SubmissionTimeline({ projectId }: { projectId: string })
       ) : (
         !showAdd && (
           <EmptyState
-            icon={<Send size={20} />}
+            icon={<Send {...ICON_PROPS} size={20} />}
             title="No submission events yet"
             subtitle="Track your paper's journey through peer review"
           />

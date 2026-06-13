@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Search, X } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { ICON_PROPS } from '../../lib/iconProps'
 
 interface TaskSearchDropdownProps {
   tasks: any[]
@@ -51,7 +52,7 @@ export default function TaskSearchDropdown({ tasks, excludeIds, isOpen, onClose,
           <div className="rounded-xl shadow-lg overflow-hidden" style={{ background: 'var(--cream)', border: '2px solid var(--gold)' }}>
             {/* Header */}
             <div className="flex items-center gap-2 px-4 py-3" style={{ borderBottom: '1px solid rgba(201,168,76,0.1)' }}>
-              <Search size={16} style={{ color: 'var(--gold)', opacity: 0.85 }} />
+              <Search {...ICON_PROPS} size={16} style={{ color: 'var(--gold)', opacity: 0.85 }} />
               <input
                 ref={inputRef}
                 type="text"
@@ -69,7 +70,7 @@ export default function TaskSearchDropdown({ tasks, excludeIds, isOpen, onClose,
                 }}
               />
               <button onClick={onClose} aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 'var(--sp-xs)', minHeight: 44, minWidth: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
-                <X size={16} style={{ color: 'var(--slate)', opacity: 0.75 }} />
+                <X {...ICON_PROPS} size={16} style={{ color: 'var(--slate)', opacity: 0.75 }} />
               </button>
             </div>
 

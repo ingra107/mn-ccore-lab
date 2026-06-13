@@ -24,6 +24,7 @@ import { useCreateTask } from '../hooks/useMutations'
 import { useToast } from '../hooks/useToast'
 import { useAuth } from '../hooks/useAuth'
 import { emailToSlug } from '../lib/emailSlug'
+import { ICON_PROPS } from '../lib/iconProps'
 
 // ── Token hint pill ──────────────────────────────────────────
 
@@ -155,7 +156,7 @@ function GlobalQuickAddModal({ isOpen, onClose }: Props) {
                   borderBottom: '1px solid rgba(201,168,76,0.1)',
                 }}
               >
-                <Zap size={15} style={{ color: 'var(--gold)', flexShrink: 0 }} />
+                <Zap {...ICON_PROPS} size={15} style={{ color: 'var(--gold)', flexShrink: 0 }} />
                 <span
                   style={{
                     fontSize: '10px',
@@ -196,7 +197,7 @@ function GlobalQuickAddModal({ isOpen, onClose }: Props) {
                   }}
                   aria-label="Close quick add"
                 >
-                  <X size={15} />
+                  <X {...ICON_PROPS} size={15} />
                 </button>
               </div>
 

@@ -25,6 +25,7 @@ import { useProjectKeyboardNav } from '../hooks/useProjectKeyboardNav'
 import { staggerContainer, staggerItem } from '../lib/animations'
 import { stripConsortiumPrefix } from '../lib/textUtils'
 import { PATHS } from '../constants/paths'
+import { ICON_PROPS } from '../lib/iconProps'
 
 // Values are D1 lowercase canonical; labels are Title Case for display.
 const STAGES = ['idea', 'data_collection', 'analysis', 'writing', 'review', 'revisions', 'published'] as const
@@ -285,7 +286,7 @@ export default function Projects() {
   return (
     <>
     <DataPage
-      icon={<FolderKanban size={20} />}
+      icon={<FolderKanban {...ICON_PROPS} size={20} />}
       title="Research Pipeline"
       actions={
         <button
@@ -301,13 +302,13 @@ export default function Projects() {
             transition: 'background 0.15s',
           }}
         >
-          <Plus size={14} />
+          <Plus {...ICON_PROPS} size={14} />
           New Project
         </button>
       }
       views={[
-        { key: 'list', icon: <List size={14} />, label: 'List' },
-        { key: 'pipeline', icon: <LayoutGrid size={14} />, label: 'Pipeline' },
+        { key: 'list', icon: <List {...ICON_PROPS} size={14} />, label: 'List' },
+        { key: 'pipeline', icon: <LayoutGrid {...ICON_PROPS} size={14} />, label: 'Pipeline' },
       ]}
       activeView={viewMode}
       onViewChange={(v) => setViewMode(v as 'list' | 'pipeline')}
@@ -370,7 +371,7 @@ export default function Projects() {
                 whiteSpace: 'nowrap',
               }}
             >
-              <GitBranch size={12} />
+              <GitBranch {...ICON_PROPS} size={12} />
               Dependencies
             </button>
           )}
@@ -510,7 +511,7 @@ export default function Projects() {
                                 onMouseOut={(e) => { if (!pinnedSlugs.has(project.slug)) e.currentTarget.style.opacity = '0.45' }}
                                 title={pinnedSlugs.has(project.slug) ? 'Unpin project' : 'Pin to top'}
                               >
-                                <Star size={12} fill={pinnedSlugs.has(project.slug) ? 'var(--gold)' : 'none'} />
+                                <Star {...ICON_PROPS} size={12} fill={pinnedSlugs.has(project.slug) ? 'var(--gold)' : 'none'} />
                               </button>
                               <span
                                 style={{

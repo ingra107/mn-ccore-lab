@@ -10,6 +10,7 @@ import PageContainer from '../../components/PageContainer'
 import EmptyState from '../../components/EmptyState'
 import InlineSelect from '../../components/InlineSelect'
 import { staggerContainer, staggerItem } from '../../lib/animations'
+import { ICON_PROPS } from '../../lib/iconProps'
 
 // ── Helpers ────────────────────────────────────────────────────
 
@@ -269,17 +270,17 @@ export default function SessionHistory() {
   return (
     <PageContainer>
       <PageHeader
-        icon={<History size={20} />}
+        icon={<History {...ICON_PROPS} size={20} />}
         title="Session History"
         subtitle={stats ? `${filteredSessions.length}${searchTerm ? ` of ${stats.total_sessions}` : ''} sessions` : undefined}
       >
         {/* Filter bar */}
         <div style={{ display: 'flex', gap: 'var(--sp-sm)', flexWrap: 'wrap', alignItems: 'center' }}>
-          <Filter size={14} style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }} />
+          <Filter {...ICON_PROPS} size={14} style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }} />
 
           {/* Search */}
           <div style={{ position: 'relative', minWidth: 160 }}>
-            <Search size={12} style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', color: 'var(--slate)', opacity: 0.75 }} />
+            <Search {...ICON_PROPS} size={12} style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', color: 'var(--slate)', opacity: 0.75 }} />
             <input
               type="text"
               value={searchTerm}
@@ -481,7 +482,7 @@ export default function SessionHistory() {
                     >
                       {/* Time */}
                       <div style={{ fontSize: 12, color: 'var(--slate)', display: 'flex', alignItems: 'center', gap: 'var(--sp-xs)' }}>
-                        <Clock size={11} style={{ opacity: 0.85 }} />
+                        <Clock {...ICON_PROPS} size={11} style={{ opacity: 0.85 }} />
                         {formatTime(session.started_at)}
                       </div>
 
@@ -530,7 +531,7 @@ export default function SessionHistory() {
                       <div style={{ textAlign: 'center', fontSize: 12, fontVariantNumeric: 'tabular-nums' }}>
                         {session.actions_count > 0 ? (
                           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
-                            <Zap size={10} style={{ color: 'var(--gold)', opacity: 0.85 }} />
+                            <Zap {...ICON_PROPS} size={10} style={{ color: 'var(--gold)', opacity: 0.85 }} />
                             {session.actions_count}
                           </span>
                         ) : (
@@ -542,7 +543,7 @@ export default function SessionHistory() {
                       <div style={{ textAlign: 'center', fontSize: 12, fontVariantNumeric: 'tabular-nums' }}>
                         {session.commits_count > 0 ? (
                           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
-                            <GitCommit size={10} style={{ color: 'var(--teal)', opacity: 0.85 }} />
+                            <GitCommit {...ICON_PROPS} size={10} style={{ color: 'var(--teal)', opacity: 0.85 }} />
                             {session.commits_count}
                           </span>
                         ) : (
@@ -561,7 +562,7 @@ export default function SessionHistory() {
       {/* Machine legend */}
       {sessions.length > 0 && (
         <div style={{ marginTop: 20, padding: 'var(--sp-md) var(--sp-lg)', borderRadius: 'var(--radius-lg)', backgroundColor: 'var(--surface)', border: '1px solid var(--border-subtle)', display: 'flex', gap: 'var(--sp-lg)', alignItems: 'center', fontSize: 11, color: 'var(--slate)', opacity: 0.75 }}>
-          <Monitor size={12} />
+          <Monitor {...ICON_PROPS} size={12} />
           <span>
             Machines: {[...new Set(sessions.filter(s => s.machine).map(s => s.machine))].join(', ') || 'none recorded'}
           </span>

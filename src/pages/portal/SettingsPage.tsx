@@ -16,6 +16,7 @@ import DensityToggle, { useDensity } from '../../components/DensityToggle'
 import { useLabPrefs } from '../../hooks/useLabPrefs'
 import RangeSlider from '../../components/RangeSlider'
 import CalendarFeedsPanel from '../../components/CalendarFeedsPanel'
+import { ICON_PROPS } from '../../lib/iconProps'
 
 interface WorkflowTemplate {
   id: string
@@ -224,7 +225,7 @@ export default function SettingsPage() {
 
   return (
     <div className="content-container">
-      <PageHeader icon={<Settings size={20} />} title="Settings" subtitle="Changes are saved automatically" />
+      <PageHeader icon={<Settings {...ICON_PROPS} size={20} />} title="Settings" subtitle="Changes are saved automatically" />
 
       {/* Team Directory shortcut */}
       <Link
@@ -238,13 +239,13 @@ export default function SettingsPage() {
         }}
       >
         <div className="flex items-center justify-center w-7 h-7 rounded-md flex-shrink-0" style={{ backgroundColor: 'var(--teal-active)' }}>
-          <Users size={14} style={{ color: 'var(--teal)' }} />
+          <Users {...ICON_PROPS} size={14} style={{ color: 'var(--teal)' }} />
         </div>
         <div style={{ flex: 1 }}>
           <span className="text-sm font-medium" style={{ color: 'var(--ink)' }}>Team Directory</span>
           <span className="ml-2 text-[11px]" style={{ color: 'var(--slate)', opacity: 0.75 }}>Manage members, roles, and expertise tags</span>
         </div>
-        <ArrowRight size={14} style={{ color: 'var(--slate)', opacity: 0.75 }} />
+        <ArrowRight {...ICON_PROPS} size={14} style={{ color: 'var(--slate)', opacity: 0.75 }} />
       </Link>
 
       {/* Tab strip — P2-05. overflow-x:auto + flex-shrink-0 on buttons so
@@ -430,7 +431,7 @@ export default function SettingsPage() {
               }}
             >
               <div className="flex items-center gap-2 mb-2">
-                <Sun size={12} style={{ color: '#c9a84c' }} />
+                <Sun {...ICON_PROPS} size={12} style={{ color: '#c9a84c' }} />
                 <span className="text-[11px] font-medium" style={{ color: '#0f1923' }}>Light</span>
               </div>
               <div className="rounded" style={{ background: '#f5f5f5', padding: 6 }}>
@@ -450,7 +451,7 @@ export default function SettingsPage() {
               }}
             >
               <div className="flex items-center gap-2 mb-2">
-                <Moon size={12} style={{ color: '#c9a84c' }} />
+                <Moon {...ICON_PROPS} size={12} style={{ color: '#c9a84c' }} />
                 <span className="text-[11px] font-medium" style={{ color: '#e2e8f0' }}>Dark</span>
               </div>
               <div className="rounded" style={{ background: 'color-mix(in oklch, var(--cream), white 3%)', padding: 6 }}>
@@ -572,7 +573,7 @@ export default function SettingsPage() {
         {/* Save indicator */}
         {saved && (
           <div className="fixed bottom-4 right-4 flex items-center gap-2 px-4 py-2 rounded-lg shadow-lg border" style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--teal)' }}>
-            <Check size={14} style={{ color: 'var(--teal)' }} />
+            <Check {...ICON_PROPS} size={14} style={{ color: 'var(--teal)' }} />
             <span className="text-sm" style={{ color: 'var(--teal)' }}>Saved</span>
           </div>
         )}
@@ -692,7 +693,7 @@ function LabPrefsPanel() {
             color: 'var(--slate)', cursor: 'pointer',
           }}
         >
-          <RotateCcw size={11} />
+          <RotateCcw {...ICON_PROPS} size={11} />
           Reset to defaults
         </button>
       </div>
@@ -794,7 +795,7 @@ function CreateTemplateForm({ onSubmit }: { onSubmit: (name: string, stages: str
         className="flex items-center gap-2 px-3 py-2 rounded-md border text-sm transition-colors hover:bg-black/5 mt-2"
         style={{ borderColor: 'var(--border-subtle)', color: 'var(--teal)', cursor: 'pointer', background: 'none' }}
       >
-        <Plus size={14} />
+        <Plus {...ICON_PROPS} size={14} />
         Create Custom Template
       </button>
     )
@@ -805,7 +806,7 @@ function CreateTemplateForm({ onSubmit }: { onSubmit: (name: string, stages: str
       <div className="flex items-center justify-between mb-3">
         <span className="text-sm font-medium" style={{ color: 'var(--ink)' }}>New Workflow Template</span>
         <button onClick={() => setOpen(false)} aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)' }}>
-          <X size={16} />
+          <X {...ICON_PROPS} size={16} />
         </button>
       </div>
 
@@ -824,7 +825,7 @@ function CreateTemplateForm({ onSubmit }: { onSubmit: (name: string, stages: str
           <span className="text-xs font-medium" style={{ color: 'var(--slate)' }}>Stages (in order)</span>
           {stages.map((stage, i) => (
             <div key={i} className="flex items-center gap-2">
-              <GripVertical size={12} style={{ color: 'var(--slate)', opacity: 0.75 }} />
+              <GripVertical {...ICON_PROPS} size={12} style={{ color: 'var(--slate)', opacity: 0.75 }} />
               <input
                 type="text"
                 value={stage}
@@ -835,7 +836,7 @@ function CreateTemplateForm({ onSubmit }: { onSubmit: (name: string, stages: str
               />
               {stages.length > 1 && (
                 <button onClick={() => removeStage(i)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
-                  <X size={14} />
+                  <X {...ICON_PROPS} size={14} />
                 </button>
               )}
             </div>
@@ -845,7 +846,7 @@ function CreateTemplateForm({ onSubmit }: { onSubmit: (name: string, stages: str
             className="flex items-center gap-1 text-xs px-2 py-1 rounded self-start"
             style={{ color: 'var(--teal)', cursor: 'pointer', background: 'none', border: 'none' }}
           >
-            <Plus size={12} /> Add stage
+            <Plus {...ICON_PROPS} size={12} /> Add stage
           </button>
         </div>
 

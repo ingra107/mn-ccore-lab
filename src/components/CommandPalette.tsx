@@ -16,6 +16,7 @@ import { useProtocolLaunch } from '../hooks/useProtocolLaunch'
 import { getPersonInfo } from '../data/team'
 import { PATHS, PUBLIC_PATHS } from '../constants/paths'
 import { emailToSlug } from '../lib/emailSlug'
+import { ICON_PROPS } from '../lib/iconProps'
 
 interface CommandItem {
   id: string
@@ -569,8 +570,8 @@ export default function CommandPalette() {
         {/* Search input */}
         <div className="flex items-center gap-3 px-4 py-3 border-b" style={{ borderColor: 'var(--border-subtle)' }}>
           {isProjectMode
-            ? <FolderKanban size={16} style={{ color: 'var(--teal)', opacity: 0.85 }} />
-            : <Search size={16} style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }} />
+            ? <FolderKanban {...ICON_PROPS} size={16} style={{ color: 'var(--teal)', opacity: 0.85 }} />
+            : <Search {...ICON_PROPS} size={16} style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }} />
           }
           <input
             ref={inputRef}
@@ -636,7 +637,7 @@ export default function CommandPalette() {
                           {item.shortcut}
                         </kbd>
                       )}
-                      {isSelected && <ArrowRight size={12} style={{ color: 'var(--teal)', opacity: 'var(--ink-label)' }} />}
+                      {isSelected && <ArrowRight {...ICON_PROPS} size={12} style={{ color: 'var(--teal)', opacity: 'var(--ink-label)' }} />}
                     </div>
                   )
                 })}
@@ -666,11 +667,11 @@ export default function CommandPalette() {
               style={{ color: 'var(--teal)', background: 'var(--teal-hover)', border: '1px solid rgba(45,138,138,0.3)', cursor: 'pointer' }}
               title="Open full Search page with this query"
             >
-              View all <ArrowRight size={9} />
+              View all <ArrowRight {...ICON_PROPS} size={9} />
             </button>
           )}
           <span className="ml-auto flex items-center gap-1" style={{ opacity: 'var(--ink-label)' }}>
-            <Command size={9} />K to toggle
+            <Command {...ICON_PROPS} size={9} />K to toggle
           </span>
         </div>
       </motion.div>

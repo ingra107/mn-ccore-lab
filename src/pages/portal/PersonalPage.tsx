@@ -34,6 +34,7 @@ import { isTaskDone } from '../../lib/taskGrouping'
 import { useUndoToast } from '../../components/UndoToast'
 import type { TaskRow } from '../../lib/api'
 import { staggerContainer, staggerItem } from '../../lib/animations'
+import { ICON_PROPS } from '../../lib/iconProps'
 
 // ── Onboarding completion check ─────────────────────────────
 function isOnboardingDismissed(): boolean {
@@ -93,7 +94,7 @@ function RoleSelector({ role, onSelect }: { role: UserRole; onSelect: (role: Use
         } as React.CSSProperties}
       >
         <span style={{ color: 'var(--teal)', fontSize: 'var(--label-size)' }}>{ROLE_LABELS[role]}</span>
-        <ChevronDown size={10} style={{ opacity: 0.85 }} />
+        <ChevronDown {...ICON_PROPS} size={10} style={{ opacity: 0.85 }} />
       </button>
 
       {open && (
@@ -164,7 +165,7 @@ function QuickCapture() {
         '--hov-border': 'var(--teal)',
       } as React.CSSProperties}
     >
-      <Lightbulb size={14} style={{ color: 'var(--gold)', opacity: 0.85, flexShrink: 0 }} />
+      <Lightbulb {...ICON_PROPS} size={14} style={{ color: 'var(--gold)', opacity: 0.85, flexShrink: 0 }} />
       <span
         className="flex-1 text-xs"
         style={{ color: 'var(--slate)', opacity: 0.85, fontSize: 'var(--text-label)' }}
@@ -250,7 +251,7 @@ function MyTasksColumn({
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <CheckSquare size={14} style={{ color: 'var(--teal)' }} />
+          <CheckSquare {...ICON_PROPS} size={14} style={{ color: 'var(--teal)' }} />
           <span style={{ fontSize: 'var(--text-base)', fontWeight: 'var(--weight-heading)' as any, color: 'var(--ink)' }}>
             My Tasks
           </span>
@@ -268,7 +269,7 @@ function MyTasksColumn({
           className="flex items-center gap-1 portal-footer-link"
           style={{ fontSize: 'var(--text-label)', color: 'var(--gold)', textDecoration: 'none' }}
         >
-          View all <ArrowRight size={11} />
+          View all <ArrowRight {...ICON_PROPS} size={11} />
         </Link>
       </div>
 
@@ -328,7 +329,7 @@ function MyTasksColumn({
             opacity: 0.85,
           }}
         >
-          +{tasks.length - MAX_TASKS} more tasks <ArrowRight size={10} />
+          +{tasks.length - MAX_TASKS} more tasks <ArrowRight {...ICON_PROPS} size={10} />
         </Link>
       )}
     </div>
@@ -406,7 +407,7 @@ function CompactCard({
             className="flex items-center gap-1 portal-footer-link"
             style={{ fontSize: 'var(--text-label)', color: 'var(--gold)', textDecoration: 'none' }}
           >
-            {viewAllLabel} <ArrowRight size={10} />
+            {viewAllLabel} <ArrowRight {...ICON_PROPS} size={10} />
           </Link>
         )}
       </div>
@@ -436,8 +437,8 @@ function UpcomingCard({ deadlines, overdue }: { deadlines: TaskRow[]; overdue: T
             return (
               <div key={item.id} className="flex items-center gap-2" style={{ minHeight: 28 }}>
                 {isOverdue
-                  ? <AlertTriangle size={11} style={{ color: 'var(--maroon)', flexShrink: 0 }} />
-                  : <Clock size={11} style={{ color: 'var(--teal)', flexShrink: 0, opacity: 0.85 }} />
+                  ? <AlertTriangle {...ICON_PROPS} size={11} style={{ color: 'var(--maroon)', flexShrink: 0 }} />
+                  : <Clock {...ICON_PROPS} size={11} style={{ color: 'var(--teal)', flexShrink: 0, opacity: 0.85 }} />
                 }
                 <span
                   className="flex-1 truncate"
@@ -739,7 +740,7 @@ export default function PersonalPage() {
       {/* Header row */}
       <div className="flex items-start justify-between gap-4">
         <PageHeader
-          icon={<User size={20} />}
+          icon={<User {...ICON_PROPS} size={20} />}
           title={person ? `${person.name.split(' ')[0]}'s Hub` : 'My Hub'}
           subtitle={
             overdueTasks.length > 0
@@ -789,7 +790,7 @@ export default function PersonalPage() {
             border: '1px solid color-mix(in srgb, var(--teal) 20%, transparent)',
           }}
         >
-          <User size={13} style={{ color: 'var(--teal)', flexShrink: 0 }} />
+          <User {...ICON_PROPS} size={13} style={{ color: 'var(--teal)', flexShrink: 0 }} />
           <span style={{ fontSize: 'var(--text-label)', color: 'var(--ink)', flex: 1 }}>
             Sign in with @umn.edu to see your tasks, notifications, and watchlist.
           </span>
@@ -896,7 +897,7 @@ export default function PersonalPage() {
             className="flex items-center gap-3 px-4 py-2.5"
             style={{ textDecoration: 'none', borderRadius: 'var(--radius-xl)' }}
           >
-            <AlertTriangle size={14} style={{ color: 'var(--maroon)', flexShrink: 0 }} />
+            <AlertTriangle {...ICON_PROPS} size={14} style={{ color: 'var(--maroon)', flexShrink: 0 }} />
             <span style={{ fontSize: 'var(--text-label)', fontWeight: 500, color: 'var(--maroon)', flex: 1 }}>
               {expiringRegulatory.length} regulatory item{expiringRegulatory.length > 1 ? 's' : ''} expiring within 60 days
             </span>
@@ -949,7 +950,7 @@ export default function PersonalPage() {
                     '--hov-opacity': '1',
                   } as React.CSSProperties}
                 >
-                  <Calendar size={12} />
+                  <Calendar {...ICON_PROPS} size={12} />
                 </a>
               </div>
             ))}
@@ -989,7 +990,7 @@ export default function PersonalPage() {
         {recent.length > 1 && (
           <>
             <div style={{ width: 1, height: 16, background: 'var(--border-subtle)' }} />
-            <History size={11} style={{ color: 'var(--slate)', opacity: 0.75 }} />
+            <History {...ICON_PROPS} size={11} style={{ color: 'var(--slate)', opacity: 0.75 }} />
             {recent.slice(0, 4).map((page) => (
               <Link
                 key={page.path}
@@ -1055,7 +1056,7 @@ export default function PersonalPage() {
             style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)' }}
             aria-expanded={onboardingExpanded}
           >
-            <ChevronDown
+            <ChevronDown {...ICON_PROPS}
               size={14}
               style={{
                 color: 'var(--slate)',

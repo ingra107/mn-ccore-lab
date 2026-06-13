@@ -39,6 +39,7 @@ import QueryState from '../../components/QueryState'
 import { staggerContainer, staggerItem } from '../../lib/animations'
 import { getPersonInfo } from '../../data/team'
 import Avatar from '../../components/Avatar'
+import { ICON_PROPS } from '../../lib/iconProps'
 
 // ── Types ──────────────────────────────────────────────────
 
@@ -253,9 +254,9 @@ function StackedBar({ segments, height = 28 }: {
 
 // Trend arrow component
 export function TrendArrow({ trend }: { trend: 'up' | 'down' | 'flat' | string }) {
-  if (trend === 'up') return <ArrowUp size={12} style={{ color: 'var(--green)' }} />
-  if (trend === 'down') return <ArrowDown size={12} style={{ color: 'var(--maroon)' }} />
-  return <Minus size={12} style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }} />
+  if (trend === 'up') return <ArrowUp {...ICON_PROPS} size={12} style={{ color: 'var(--green)' }} />
+  if (trend === 'down') return <ArrowDown {...ICON_PROPS} size={12} style={{ color: 'var(--maroon)' }} />
+  return <Minus {...ICON_PROPS} size={12} style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }} />
 }
 
 // ── Main Component ─────────────────────────────────────────
@@ -347,7 +348,7 @@ export default function PIAnalytics() {
   return (
     <PageContainer>
       <PageHeader
-        icon={<Shield size={20} />}
+        icon={<Shield {...ICON_PROPS} size={20} />}
         title="PI Dashboard"
         subtitle="Evidence-based leadership metrics"
       >
@@ -375,7 +376,7 @@ export default function PIAnalytics() {
             className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-colors"
             style={{ color: copied ? 'var(--green)' : 'var(--slate)', border: '1px solid var(--border-subtle)', background: 'none', cursor: 'pointer', opacity: 0.85 }}
           >
-            <Copy size={11} />
+            <Copy {...ICON_PROPS} size={11} />
             {copied ? 'Copied' : 'Copy Report'}
           </button>
           <button
@@ -383,7 +384,7 @@ export default function PIAnalytics() {
             className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-colors"
             style={{ color: 'var(--slate)', border: '1px solid var(--border-subtle)', background: 'none', cursor: 'pointer', opacity: 0.85 }}
           >
-            <Printer size={11} />
+            <Printer {...ICON_PROPS} size={11} />
             Print
           </button>
         </div>
@@ -440,7 +441,7 @@ export default function PIAnalytics() {
         {/* Commitment Scorecard */}
         <div>
           <div className="flex items-center gap-2 mb-3">
-            <Target size={14} style={{ color: 'var(--gold)' }} />
+            <Target {...ICON_PROPS} size={14} style={{ color: 'var(--gold)' }} />
             <h3
               className="text-xs font-normal uppercase tracking-wider"
               style={{ color: 'var(--gold)' }}
@@ -489,7 +490,7 @@ export default function PIAnalytics() {
         {/* Response Time Metrics */}
         <div>
           <div className="flex items-center gap-2 mb-3">
-            <Clock size={14} style={{ color: 'var(--gold)' }} />
+            <Clock {...ICON_PROPS} size={14} style={{ color: 'var(--gold)' }} />
             <h3
               className="text-xs font-normal uppercase tracking-wider"
               style={{ color: 'var(--gold)' }}
@@ -517,21 +518,21 @@ export default function PIAnalytics() {
                 <div className="flex items-center gap-1.5 mt-1">
                   {data?.responseMetrics.trend === 'improving' ? (
                     <>
-                      <TrendingDown size={14} style={{ color: 'var(--green)' }} />
+                      <TrendingDown {...ICON_PROPS} size={14} style={{ color: 'var(--green)' }} />
                       <span className="text-xs" style={{ color: 'var(--green)' }}>
                         Improving
                       </span>
                     </>
                   ) : data?.responseMetrics.trend === 'slowing' ? (
                     <>
-                      <TrendingUp size={14} style={{ color: 'var(--maroon)' }} />
+                      <TrendingUp {...ICON_PROPS} size={14} style={{ color: 'var(--maroon)' }} />
                       <span className="text-xs" style={{ color: 'var(--maroon)' }}>
                         Slowing
                       </span>
                     </>
                   ) : (
                     <>
-                      <Minus size={14} style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }} />
+                      <Minus {...ICON_PROPS} size={14} style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }} />
                       <span className="text-xs" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
                         Stable
                       </span>
@@ -579,7 +580,7 @@ export default function PIAnalytics() {
         {/* Team Engagement Score */}
         <div>
           <div className="flex items-center gap-2 mb-3">
-            <Users size={14} style={{ color: 'var(--gold)' }} />
+            <Users {...ICON_PROPS} size={14} style={{ color: 'var(--gold)' }} />
             <h3
               className="text-xs font-normal uppercase tracking-wider"
               style={{ color: 'var(--gold)' }}
@@ -675,7 +676,7 @@ export default function PIAnalytics() {
         {/* Mentee Publication Velocity */}
         <div>
           <div className="flex items-center gap-2 mb-3">
-            <BookOpen size={14} style={{ color: 'var(--gold)' }} />
+            <BookOpen {...ICON_PROPS} size={14} style={{ color: 'var(--gold)' }} />
             <h3
               className="text-xs font-normal uppercase tracking-wider"
               style={{ color: 'var(--gold)' }}
@@ -738,7 +739,7 @@ export default function PIAnalytics() {
                                 backgroundColor: 'var(--green-hover)',
                               }}
                             >
-                              <TrendingUp size={10} />
+                              <TrendingUp {...ICON_PROPS} size={10} />
                               Publishing
                             </span>
                           ) : (
@@ -772,7 +773,7 @@ export default function PIAnalytics() {
         {/* Publications per Year */}
         <div>
           <div className="flex items-center gap-2 mb-3">
-            <BarChart3 size={14} style={{ color: 'var(--gold)' }} />
+            <BarChart3 {...ICON_PROPS} size={14} style={{ color: 'var(--gold)' }} />
             <h3
               className="text-xs font-normal uppercase tracking-wider"
               style={{ color: 'var(--gold)' }}
@@ -799,7 +800,7 @@ export default function PIAnalytics() {
         {/* Grant Pipeline + Projects by Stage */}
         <div>
           <div className="flex items-center gap-2 mb-3">
-            <DollarSign size={14} style={{ color: 'var(--gold)' }} />
+            <DollarSign {...ICON_PROPS} size={14} style={{ color: 'var(--gold)' }} />
             <h3
               className="text-xs font-normal uppercase tracking-wider"
               style={{ color: 'var(--gold)' }}
@@ -841,7 +842,7 @@ export default function PIAnalytics() {
       {/* Leadership Insights */}
       <div className="mt-6">
         <div className="flex items-center gap-2 mb-3">
-          <Lightbulb size={14} style={{ color: 'var(--gold)' }} />
+          <Lightbulb {...ICON_PROPS} size={14} style={{ color: 'var(--gold)' }} />
           <h3
             className="text-xs font-normal uppercase tracking-wider"
             style={{ color: 'var(--gold)' }}

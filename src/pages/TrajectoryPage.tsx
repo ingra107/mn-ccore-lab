@@ -22,6 +22,7 @@ import ActivityHeatmap from '../components/ActivityHeatmap'
 import HeartbeatLine from '../components/HeartbeatLine'
 import { PATHS } from '../constants/paths'
 import { parseDbUtc } from '../lib/time'
+import { ICON_PROPS } from '../lib/iconProps'
 
 // ── Stage colors ───────────────────────────────────────────
 
@@ -1348,7 +1349,7 @@ export default function TrajectoryPage() {
           opacity: 0.85,
         }}
       >
-        <ArrowLeft size={14} />
+        <ArrowLeft {...ICON_PROPS} size={14} />
         Back to profile
       </Link>
 
@@ -1435,7 +1436,7 @@ export default function TrajectoryPage() {
             cursor: 'pointer',
           }}
         >
-          <Printer size={14} />
+          <Printer {...ICON_PROPS} size={14} />
           Export for Review
         </button>
       </motion.div>

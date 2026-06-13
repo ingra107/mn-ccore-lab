@@ -6,6 +6,7 @@ import type { Publication, Mentee } from '../data/types'
 import { getMemberBySlug } from '../data/team'
 import { projects } from '../data/projects'
 import { isProjectActive, normalizeProjectStatus } from '../lib/taskConstants'
+import { ICON_PROPS } from '../lib/iconProps'
 
 interface ProfileLink {
   label: string
@@ -157,7 +158,7 @@ export default function LabPageLayout({
                     } as React.CSSProperties}
                   >
                     {link.label}
-                    <ExternalLink size={10} aria-hidden="true" />
+                    <ExternalLink {...ICON_PROPS} size={10} aria-hidden="true" />
                   </a>
                 ))}
               </div>
@@ -379,7 +380,7 @@ function ProjectCardItem({ project }: { project: ProjectCard }) {
           <span className={badgeClass(project.status)}>
             {project.status}
           </span>
-          <ArrowRight
+          <ArrowRight {...ICON_PROPS}
             size={14}
             aria-hidden="true"
             className="transition-opacity duration-200"
@@ -556,7 +557,7 @@ function MenteeProfileCard({ mentee }: { mentee: Mentee }) {
             style={{ borderTop: '1px solid rgba(201, 168, 76, 0.1)' }}
           >
             <div className="flex items-center gap-1.5 mb-2">
-              <FlaskConical size={12} style={{ color: 'var(--gold)' }} aria-hidden="true" />
+              <FlaskConical {...ICON_PROPS} size={12} style={{ color: 'var(--gold)' }} aria-hidden="true" />
               <span
                 className="text-xs uppercase"
                 style={{

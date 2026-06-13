@@ -18,6 +18,7 @@ import { formatShortDate, isOverdue, getDaysAgo } from '../../lib/dateUtils'
 import { parseDbUtc } from '../../lib/time'
 import { isProductionVisible } from '../../lib/isProductionVisible'
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
+import { ICON_PROPS } from '../../lib/iconProps'
 
 // ── Constants ──────────────────────────────────────────────
 
@@ -179,7 +180,7 @@ export default function MenteeMilestonesPage() {
   return (
     <PageContainer>
       <PageHeader
-        icon={<GraduationCap size={20} />}
+        icon={<GraduationCap {...ICON_PROPS} size={20} />}
         title="Mentee Milestones"
         subtitle={(() => {
           // R4-P2-05: reconcile subtitle with the table. When a filter is
@@ -231,7 +232,7 @@ export default function MenteeMilestonesPage() {
               cursor: 'pointer',
             }}
           >
-            <Plus size={14} />
+            <Plus {...ICON_PROPS} size={14} />
             Add Milestone
           </button>
         </div>
@@ -308,7 +309,7 @@ export default function MenteeMilestonesPage() {
                           background: 'color-mix(in srgb, var(--maroon) 12%, transparent)',
                         }}
                       >
-                        <AlertTriangle size={10} />
+                        <AlertTriangle {...ICON_PROPS} size={10} />
                         {stats?.overdue_count} overdue
                       </span>
                     )}
@@ -339,7 +340,7 @@ export default function MenteeMilestonesPage() {
             }}
           >
             {getPersonInfo(filterMentee).name}
-            <X size={12} />
+            <X {...ICON_PROPS} size={12} />
           </button>
         </div>
       )}
@@ -496,9 +497,9 @@ function MenteeGroup({
         }}
       >
         {expanded ? (
-          <ChevronDown size={12} style={{ color: 'var(--slate)', opacity: 0.75 }} />
+          <ChevronDown {...ICON_PROPS} size={12} style={{ color: 'var(--slate)', opacity: 0.75 }} />
         ) : (
-          <ChevronRight size={12} style={{ color: 'var(--slate)', opacity: 0.75 }} />
+          <ChevronRight {...ICON_PROPS} size={12} style={{ color: 'var(--slate)', opacity: 0.75 }} />
         )}
         <div style={{ width: 20, height: 20, flexShrink: 0 }}>
           <Avatar
@@ -678,7 +679,7 @@ function MilestoneRow({
               whiteSpace: 'nowrap' as const,
             }}
           >
-            <AlertTriangle size={10} />
+            <AlertTriangle {...ICON_PROPS} size={10} />
             {daysLate > 0 ? `${daysLate}d overdue` : 'Overdue'}
           </span>
         ) : (
@@ -718,7 +719,7 @@ function MilestoneRow({
                 background: 'color-mix(in srgb, var(--maroon) 12%, transparent)',
               }}
             >
-              <AlertTriangle size={9} />
+              <AlertTriangle {...ICON_PROPS} size={9} />
               {daysLate > 0 ? `${daysLate}d overdue` : 'Overdue'}
             </span>
           ) : (
@@ -899,7 +900,7 @@ function AddMilestoneModal({ menteeSlugs, onClose }: { menteeSlugs: string[]; on
             aria-label="Close"
             style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)' }}
           >
-            <X size={18} />
+            <X {...ICON_PROPS} size={18} />
           </button>
         </div>
 
@@ -1038,7 +1039,7 @@ function AddMilestoneModal({ menteeSlugs, onClose }: { menteeSlugs: string[]; on
               opacity: createMilestone.isPending ? 0.85 : 1,
             }}
           >
-            <Check size={14} />
+            <Check {...ICON_PROPS} size={14} />
             {createMilestone.isPending ? 'Creating...' : 'Create Milestone'}
           </button>
         </div>

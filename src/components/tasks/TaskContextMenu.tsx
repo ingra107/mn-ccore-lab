@@ -8,6 +8,7 @@ import type { TaskRow } from '../../lib/api'
 import type { ContextMenuState } from '../../hooks/useContextMenu'
 import { STATUS_CONFIG, PRIORITY_CONFIG } from '../../lib/taskConstants'
 import { PATHS } from '../../constants/paths'
+import { ICON_PROPS } from '../../lib/iconProps'
 
 // ── Constants ──────────────────────────────────────────────────
 
@@ -184,7 +185,7 @@ function SubmenuItem({
         }}
       >
         <span>{label}</span>
-        <ChevronRight size={12} style={submenuIndicatorStyles} />
+        <ChevronRight {...ICON_PROPS} size={12} style={submenuIndicatorStyles} />
       </div>
 
       {open && (
@@ -310,7 +311,7 @@ export default function TaskContextMenu({
                 <Icon size={13} />
                 {s.label}
               </span>
-              {isCurrent && <Check size={12} style={{ opacity: 0.85 }} />}
+              {isCurrent && <Check {...ICON_PROPS} size={12} style={{ opacity: 0.85 }} />}
             </MenuItem>
           )
         })}
@@ -338,7 +339,7 @@ export default function TaskContextMenu({
                 }} />
                 {p.label}
               </span>
-              {isCurrent && <Check size={12} style={{ opacity: 0.85 }} />}
+              {isCurrent && <Check {...ICON_PROPS} size={12} style={{ opacity: 0.85 }} />}
             </MenuItem>
           )
         })}
@@ -379,7 +380,7 @@ export default function TaskContextMenu({
               })}
             >
               <span style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-sm)' }}>
-                <AlarmClock size={12} style={{ opacity: 'var(--ink-label)' }} />
+                <AlarmClock {...ICON_PROPS} size={12} style={{ opacity: 'var(--ink-label)' }} />
                 {opt.label}
               </span>
             </MenuItem>
@@ -393,7 +394,7 @@ export default function TaskContextMenu({
       {onOpenDetail && (
         <MenuItem onClick={() => handleAction(() => onOpenDetail(task))}>
           <span style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-sm)' }}>
-            <ArrowRight size={13} style={{ opacity: 'var(--ink-label)' }} />
+            <ArrowRight {...ICON_PROPS} size={13} style={{ opacity: 'var(--ink-label)' }} />
             Open detail panel
           </span>
           <span style={shortcutStyles}>Enter</span>
@@ -404,7 +405,7 @@ export default function TaskContextMenu({
       {onPeek && (
         <MenuItem onClick={() => handleAction(() => onPeek(task))}>
           <span style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-sm)' }}>
-            <Eye size={13} style={{ opacity: 'var(--ink-label)' }} />
+            <Eye {...ICON_PROPS} size={13} style={{ opacity: 'var(--ink-label)' }} />
             Peek
           </span>
           <span style={shortcutStyles}>Space</span>
@@ -418,7 +419,7 @@ export default function TaskContextMenu({
         window.open(`${PATHS.myTasks}?open=${task.id}`, '_blank')
       })}>
         <span style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-sm)' }}>
-          <ExternalLink size={13} style={{ opacity: 'var(--ink-label)' }} />
+          <ExternalLink {...ICON_PROPS} size={13} style={{ opacity: 'var(--ink-label)' }} />
           Open in new tab
         </span>
       </MenuItem>
@@ -426,7 +427,7 @@ export default function TaskContextMenu({
       {/* Copy task title */}
       <MenuItem onClick={() => handleAction(() => { copyToClipboard(task.title || task.description) })}>
         <span style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-sm)' }}>
-          <Copy size={13} style={{ opacity: 'var(--ink-label)' }} />
+          <Copy {...ICON_PROPS} size={13} style={{ opacity: 'var(--ink-label)' }} />
           Copy task title
         </span>
       </MenuItem>
@@ -437,7 +438,7 @@ export default function TaskContextMenu({
         copyToClipboard(url)
       })}>
         <span style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-sm)' }}>
-          <Link size={13} style={{ opacity: 'var(--ink-label)' }} />
+          <Link {...ICON_PROPS} size={13} style={{ opacity: 'var(--ink-label)' }} />
           Copy link
         </span>
       </MenuItem>
@@ -453,7 +454,7 @@ export default function TaskContextMenu({
         }
       })}>
         <span style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-sm)' }}>
-          <Archive size={13} style={{ opacity: 'var(--ink-label)' }} />
+          <Archive {...ICON_PROPS} size={13} style={{ opacity: 'var(--ink-label)' }} />
           Archive
         </span>
       </MenuItem>

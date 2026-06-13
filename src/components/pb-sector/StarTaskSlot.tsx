@@ -2,6 +2,7 @@ import { useDroppable } from '@dnd-kit/core'
 import { Star, Plus, GripVertical } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import PomodoroCircles from './PomodoroCircles'
+import { ICON_PROPS } from '../../lib/iconProps'
 
 interface StarTaskSlotProps {
   task: any | null
@@ -21,7 +22,7 @@ export default function StarTaskSlot({ task, pomodorosCompleted, pomodoroActive,
   return (
     <div className="mb-6">
       <div className="flex items-center gap-2 mb-2">
-        <Star size={14} style={{ color: 'var(--gold)', fill: 'var(--gold)' }} />
+        <Star {...ICON_PROPS} size={14} style={{ color: 'var(--gold)', fill: 'var(--gold)' }} />
         <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--gold)' }}>
           Your One Thing
         </span>
@@ -52,7 +53,7 @@ export default function StarTaskSlot({ task, pomodorosCompleted, pomodoroActive,
               exit={{ opacity: 0, y: -8 }}
               className="flex items-center gap-3 px-4 py-3"
             >
-              <GripVertical size={14} style={{ color: 'var(--gold)', opacity: 0.85, cursor: 'grab', flexShrink: 0 }} />
+              <GripVertical {...ICON_PROPS} size={14} style={{ color: 'var(--gold)', opacity: 0.85, cursor: 'grab', flexShrink: 0 }} />
 
               {/* Complete button */}
               <button
@@ -113,7 +114,7 @@ export default function StarTaskSlot({ task, pomodorosCompleted, pomodoroActive,
                   <span className="truncate" style={{ fontSize: '14px', color: 'var(--ink)', opacity: 0.85 }}>
                     {suggestion.title || suggestion.description}
                   </span>
-                  <Plus size={14} style={{ color: 'var(--gold)', opacity: 0.85, flexShrink: 0 }} />
+                  <Plus {...ICON_PROPS} size={14} style={{ color: 'var(--gold)', opacity: 0.85, flexShrink: 0 }} />
                 </button>
               ) : (
                 <button
@@ -121,7 +122,7 @@ export default function StarTaskSlot({ task, pomodorosCompleted, pomodoroActive,
                   className="w-full flex items-center justify-center gap-2 py-4"
                   style={{ background: 'none', border: 'none', cursor: 'pointer' }}
                 >
-                  <Plus size={16} style={{ color: 'var(--gold)', opacity: 0.85 }} />
+                  <Plus {...ICON_PROPS} size={16} style={{ color: 'var(--gold)', opacity: 0.85 }} />
                   <span style={{ fontSize: '14px', color: 'var(--gold)', opacity: 0.85, fontStyle: 'italic' }}>
                     What is the ONE thing you must do today?
                   </span>

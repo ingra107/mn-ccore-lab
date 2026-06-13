@@ -17,6 +17,7 @@ import { getMeetingFacilitator } from '../lib/facilitator'
 import { PATHS } from '../constants/paths'
 import { staggerContainer, staggerItem } from '../lib/animations'
 import EntityNotFound from '../components/EntityNotFound'
+import { ICON_PROPS } from '../lib/iconProps'
 
 interface PrepData {
   meeting: { id: string; title: string; date: string; status: string; attendees: string | null }
@@ -83,7 +84,7 @@ export default function MeetingPrep() {
         {/* Header */}
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
           <div className="flex items-center gap-2 mb-2">
-            <ListChecks size={16} style={{ color: 'var(--teal)' }} />
+            <ListChecks {...ICON_PROPS} size={16} style={{ color: 'var(--teal)' }} />
             <span style={{ fontSize: 11, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 500 }}>
               Facilitator Prep
             </span>
@@ -102,7 +103,7 @@ export default function MeetingPrep() {
               style={{ color: 'var(--slate)', borderColor: 'var(--border-subtle)', background: 'none', cursor: 'pointer', opacity: 0.85 }}
               title="Print prep sheet"
             >
-              <Printer size={12} />
+              <Printer {...ICON_PROPS} size={12} />
               Print
             </button>
           </div>
@@ -123,7 +124,7 @@ export default function MeetingPrep() {
                   color: days === 0 ? 'var(--teal)' : 'var(--gold)',
                 }}
               >
-                <Clock size={10} />
+                <Clock {...ICON_PROPS} size={10} />
                 {label}
               </span>
             )
@@ -138,10 +139,10 @@ export default function MeetingPrep() {
           initial="hidden"
           animate="visible"
         >
-          <StatCard icon={<AlertTriangle size={14} />} label="Overdue" value={overdueTasks.length} color="var(--maroon)" />
-          <StatCard icon={<Clock size={14} />} label="Pending from last" value={pendingPrev.length} color="var(--orange)" />
-          <StatCard icon={<Calendar size={14} />} label="Deadlines (14d)" value={upcomingDeadlines.length} color="var(--teal)" />
-          <StatCard icon={<Activity size={14} />} label="Recent activity" value={recentActivity.length} color="var(--gold)" />
+          <StatCard icon={<AlertTriangle {...ICON_PROPS} size={14} />} label="Overdue" value={overdueTasks.length} color="var(--maroon)" />
+          <StatCard icon={<Clock {...ICON_PROPS} size={14} />} label="Pending from last" value={pendingPrev.length} color="var(--orange)" />
+          <StatCard icon={<Calendar {...ICON_PROPS} size={14} />} label="Deadlines (14d)" value={upcomingDeadlines.length} color="var(--teal)" />
+          <StatCard icon={<Activity {...ICON_PROPS} size={14} />} label="Recent activity" value={recentActivity.length} color="var(--gold)" />
         </motion.div>
 
         {/* Three-column layout */}
@@ -149,7 +150,7 @@ export default function MeetingPrep() {
 
           {/* Left: Previous Action Items */}
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-            <SectionHeader icon={<CheckCircle2 size={14} />} title="Previous Action Items" subtitle={previousMeeting ? `From ${formatShortDate(previousMeeting.date)}` : undefined} />
+            <SectionHeader icon={<CheckCircle2 {...ICON_PROPS} size={14} />} title="Previous Action Items" subtitle={previousMeeting ? `From ${formatShortDate(previousMeeting.date)}` : undefined} />
             <div className="detail-card" style={{ background: 'var(--ice)', borderRadius: 'var(--radius-xl)', padding: 'var(--sp-md) var(--sp-lg)' }}>
               {pendingPrev.length > 0 && (
                 <div className="mb-3">
@@ -181,7 +182,7 @@ export default function MeetingPrep() {
 
           {/* Center: Suggested Agenda */}
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
-            <SectionHeader icon={<ListChecks size={14} />} title="Suggested Agenda" />
+            <SectionHeader icon={<ListChecks {...ICON_PROPS} size={14} />} title="Suggested Agenda" />
             <div className="detail-card" style={{ background: 'var(--ice)', borderRadius: 'var(--radius-xl)', padding: 'var(--sp-md) var(--sp-lg)' }}>
               {/* Overdue items first */}
               {overdueTasks.length > 0 && (
@@ -193,7 +194,7 @@ export default function MeetingPrep() {
                     const person = getPersonInfo(task.assignee)
                     return (
                       <div key={task.id} className="flex items-center gap-2 py-1.5" style={{ borderBottom: '1px solid rgba(201,168,76,0.04)' }}>
-                        <Flag size={10} style={{ color: PRIORITY_COLORS[task.priority] || 'var(--slate)', flexShrink: 0 }} />
+                        <Flag {...ICON_PROPS} size={10} style={{ color: PRIORITY_COLORS[task.priority] || 'var(--slate)', flexShrink: 0 }} />
                         <span style={{ fontSize: 12, color: 'var(--ink)', flex: 1 }}>{task.title || task.description}</span>
                         <div style={{ width: 16, height: 16, flexShrink: 0 }}>
                           <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="2xs" variant="ice" />
@@ -229,7 +230,7 @@ export default function MeetingPrep() {
                     const person = getPersonInfo(item.assignee)
                     return (
                       <div key={item.id} className="flex items-center gap-2 py-1.5">
-                        <Circle size={10} style={{ color: 'var(--orange)', flexShrink: 0 }} />
+                        <Circle {...ICON_PROPS} size={10} style={{ color: 'var(--orange)', flexShrink: 0 }} />
                         <span style={{ fontSize: 12, color: 'var(--ink)', flex: 1 }}>{item.description}</span>
                         <div style={{ width: 16, height: 16, flexShrink: 0 }}>
                           <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="2xs" variant="ice" />
@@ -250,14 +251,14 @@ export default function MeetingPrep() {
 
           {/* Right: Upcoming Deadlines + Activity */}
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-            <SectionHeader icon={<Calendar size={14} />} title="Upcoming Deadlines" subtitle="Next 14 days" />
+            <SectionHeader icon={<Calendar {...ICON_PROPS} size={14} />} title="Upcoming Deadlines" subtitle="Next 14 days" />
             <div className="detail-card" style={{ background: 'var(--ice)', borderRadius: 'var(--radius-xl)', padding: 'var(--sp-md) var(--sp-lg)', marginBottom: 'var(--sp-lg)' }}>
               {upcomingDeadlines.length > 0 ? (
                 upcomingDeadlines.slice(0, 8).map(task => {
                   const person = getPersonInfo(task.assignee)
                   return (
                     <div key={task.id} className="flex items-center gap-2 py-1.5" style={{ borderBottom: '1px solid rgba(201,168,76,0.04)' }}>
-                      <Calendar size={10} style={{ color: 'var(--teal)', flexShrink: 0 }} />
+                      <Calendar {...ICON_PROPS} size={10} style={{ color: 'var(--teal)', flexShrink: 0 }} />
                       <span style={{ fontSize: 12, color: 'var(--ink)', flex: 1 }}>{task.title || task.description}</span>
                       <span style={{ fontSize: 10, color: 'var(--slate)', opacity: 0.85 }}>{formatShortDate(task.due_date)}</span>
                       <div style={{ width: 16, height: 16, flexShrink: 0 }}>
@@ -273,7 +274,7 @@ export default function MeetingPrep() {
               )}
             </div>
 
-            <SectionHeader icon={<Activity size={14} />} title="Recent Activity" subtitle="Last 14 days" />
+            <SectionHeader icon={<Activity {...ICON_PROPS} size={14} />} title="Recent Activity" subtitle="Last 14 days" />
             <div className="detail-card" style={{ background: 'var(--ice)', borderRadius: 'var(--radius-xl)', padding: 'var(--sp-md) var(--sp-lg)' }}>
               {recentActivity.length > 0 ? (
                 recentActivity.slice(0, 10).map((act, i) => {
@@ -359,9 +360,9 @@ function ActionRow({ item }: { item: { id: string; description: string; assignee
   return (
     <div className="flex items-center gap-2 py-1.5" style={{ borderBottom: '1px solid rgba(201,168,76,0.04)' }}>
       {item.completed ? (
-        <CheckCircle2 size={12} style={{ color: 'var(--green)', flexShrink: 0 }} />
+        <CheckCircle2 {...ICON_PROPS} size={12} style={{ color: 'var(--green)', flexShrink: 0 }} />
       ) : (
-        <Circle size={12} style={{ color: isOverdue ? 'var(--maroon)' : 'var(--slate)', opacity: 0.85, flexShrink: 0 }} />
+        <Circle {...ICON_PROPS} size={12} style={{ color: isOverdue ? 'var(--maroon)' : 'var(--slate)', opacity: 0.85, flexShrink: 0 }} />
       )}
       <span style={{
         fontSize: 12, color: 'var(--ink)', flex: 1,

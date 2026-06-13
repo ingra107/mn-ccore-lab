@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Send, MessageSquare, ChevronDown, X, Loader2 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { ICON_PROPS } from '../../lib/iconProps'
 
 interface DispatchItem {
   id: string
@@ -36,11 +37,11 @@ export default function DispatchBadge({ items, count, onSend, isSending }: Dispa
           cursor: 'pointer',
         }}
       >
-        <MessageSquare size={12} style={{ color: 'var(--gold)' }} />
+        <MessageSquare {...ICON_PROPS} size={12} style={{ color: 'var(--gold)' }} />
         <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--gold)' }}>
           {count}
         </span>
-        <ChevronDown size={10} style={{ color: 'var(--gold)', opacity: 0.85, transform: expanded ? 'rotate(180deg)' : undefined, transition: 'transform 0.2s' }} />
+        <ChevronDown {...ICON_PROPS} size={10} style={{ color: 'var(--gold)', opacity: 0.85, transform: expanded ? 'rotate(180deg)' : undefined, transition: 'transform 0.2s' }} />
       </button>
 
       {/* Dropdown */}
@@ -60,7 +61,7 @@ export default function DispatchBadge({ items, count, onSend, isSending }: Dispa
                 Dispatch Queue
               </span>
               <button onClick={() => setExpanded(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2 }}>
-                <X size={12} style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }} />
+                <X {...ICON_PROPS} size={12} style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }} />
               </button>
             </div>
 
@@ -109,9 +110,9 @@ export default function DispatchBadge({ items, count, onSend, isSending }: Dispa
                 }}
               >
                 {isSending ? (
-                  <><Loader2 size={12} className="animate-spin" /> Dispatching...</>
+                  <><Loader2 {...ICON_PROPS} size={12} className="animate-spin" /> Dispatching...</>
                 ) : (
-                  <><Send size={12} /> Send to Claude</>
+                  <><Send {...ICON_PROPS} size={12} /> Send to Claude</>
                 )}
               </button>
             </div>

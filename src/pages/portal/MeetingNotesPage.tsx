@@ -19,6 +19,7 @@ import { useMeetingsApi } from '../../hooks/useApiData'
 import { formatMediumDate } from '../../lib/dateUtils'
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 import { PATHS } from '../../constants/paths'
+import { ICON_PROPS } from '../../lib/iconProps'
 
 const HOWTO_STORAGE_KEY = 'mnccore-meeting-transcripts-howto-expanded'
 
@@ -60,7 +61,7 @@ function HowTranscriptsWorkPanel({ collapsedByDefault }: { collapsedByDefault: b
         aria-expanded={expanded}
       >
         <h3 className="text-sm font-normal flex items-center gap-2" style={{ color: 'var(--ink)' }}>
-          <Brain size={16} style={{ color: 'var(--teal)' }} />
+          <Brain {...ICON_PROPS} size={16} style={{ color: 'var(--teal)' }} />
           How Meeting Transcripts Work
         </h3>
         <span className="text-xs" style={{ color: 'var(--slate)', opacity: 0.75 }}>
@@ -120,7 +121,7 @@ export default function MeetingNotesPage() {
   return (
     <PageContainer>
       <PageHeader
-        icon={<FileText size={20} />}
+        icon={<FileText {...ICON_PROPS} size={20} />}
         title="Meeting Transcripts"
         subtitle="Transcription, summaries, and action items"
         count={processedCount}
@@ -130,7 +131,7 @@ export default function MeetingNotesPage() {
             className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
             style={{ backgroundColor: 'var(--teal-solid)', color: 'var(--ink-bright, #fff)', border: 'none', cursor: 'pointer' }}
           >
-            <FileText size={16} />
+            <FileText {...ICON_PROPS} size={16} />
             Add Transcript
           </button>
         }
@@ -154,7 +155,7 @@ export default function MeetingNotesPage() {
             Recent Meetings
           </h3>
           <div className="relative flex-1 max-w-xs">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--slate)', opacity: 0.75 }} />
+            <Search {...ICON_PROPS} size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--slate)', opacity: 0.75 }} />
             <input
               type="text"
               value={searchQuery}
@@ -174,7 +175,7 @@ export default function MeetingNotesPage() {
                 style={{ borderColor: 'var(--border-subtle)', textDecoration: 'none' }}
               >
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: m.notes ? 'var(--green-hover)' : 'rgba(100,116,139,0.06)' }}>
-                  {m.notes ? <CheckCircle2 size={16} style={{ color: 'var(--green)' }} /> : <FileText size={16} style={{ color: 'var(--slate)', opacity: 0.75 }} />}
+                  {m.notes ? <CheckCircle2 {...ICON_PROPS} size={16} style={{ color: 'var(--green)' }} /> : <FileText {...ICON_PROPS} size={16} style={{ color: 'var(--slate)', opacity: 0.75 }} />}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate" style={{ color: 'var(--ink)' }}>{m.title}</p>
@@ -210,7 +211,7 @@ export default function MeetingNotesPage() {
                     No notes
                   </span>
                 )}
-                <ArrowRight size={14} style={{ color: 'var(--slate)', opacity: 0.75 }} />
+                <ArrowRight {...ICON_PROPS} size={14} style={{ color: 'var(--slate)', opacity: 0.75 }} />
               </Link>
             </motion.div>
           ))}
@@ -282,7 +283,7 @@ function TranscriptModal({ open, onClose, meetings }: { open: boolean; onClose: 
             className="px-4 py-2 rounded-md text-sm font-medium flex items-center gap-2"
             style={{ backgroundColor: 'var(--teal-solid)', color: 'var(--ink-bright, #fff)', cursor: (!transcript.trim() || !meetingId || saving) ? 'not-allowed' : 'pointer', border: 'none', opacity: (!transcript.trim() || !meetingId || saving) ? 0.85 : 1 }}
           >
-            <FileText size={14} />
+            <FileText {...ICON_PROPS} size={14} />
             {saving ? 'Saving…' : 'Save Transcript'}
           </button>
         </>

@@ -8,6 +8,7 @@ import { useHoverCard } from '../../hooks/useHoverCard'
 import { useProjectHealth } from '../../hooks/useApiData'
 import type { ProjectHealth, HealthFactors } from '../../hooks/useApiData'
 import { PATHS } from '../../constants/paths'
+import { ICON_PROPS } from '../../lib/iconProps'
 
 const STATUS_COLORS: Record<string, string> = {
   'Healthy': 'var(--green)',
@@ -230,7 +231,7 @@ function ProjectHealthCard() {
                   opacity: 'var(--ink-label)',
                 }}
               >
-                {showHealthy ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                {showHealthy ? <ChevronUp {...ICON_PROPS} size={12} /> : <ChevronDown {...ICON_PROPS} size={12} />}
                 {showHealthy ? 'Hide' : 'Show'} {healthyProjects.length} healthy project{healthyProjects.length !== 1 ? 's' : ''}
               </button>
               {showHealthy &&
@@ -272,7 +273,7 @@ function ProjectHealthCard() {
             borderTop: '1px solid rgba(201, 168, 76, 0.1)',
           }}
         >
-          View all projects <ArrowRight size={11} />
+          View all projects <ArrowRight {...ICON_PROPS} size={11} />
         </Link>
       </div>
     </BentoCard>

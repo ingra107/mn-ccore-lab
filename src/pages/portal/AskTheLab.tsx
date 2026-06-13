@@ -23,6 +23,7 @@ import { getPersonInfo } from '../../data/team'
 import { formatRelativeTime } from '../../lib/dateUtils'
 import { isProductionVisible } from '../../lib/isProductionVisible'
 import type { QuestionRow } from '../../lib/api'
+import { ICON_PROPS } from '../../lib/iconProps'
 
 const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
   open: { label: 'Open', color: 'var(--gold)', bg: 'var(--gold-active)' },
@@ -69,7 +70,7 @@ export default function AskTheLab() {
   return (
     <PageContainer>
       <PageHeader
-        icon={<HelpCircle size={20} />}
+        icon={<HelpCircle {...ICON_PROPS} size={20} />}
         title="Ask the Lab"
         subtitle={`${openCount} open question${openCount !== 1 ? 's' : ''}`}
         count={openCount}
@@ -79,7 +80,7 @@ export default function AskTheLab() {
             className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
             style={{ backgroundColor: 'var(--teal-solid)', color: 'var(--ink-bright, #fff)', border: 'none', cursor: 'pointer' }}
           >
-            <Plus size={16} />
+            <Plus {...ICON_PROPS} size={16} />
             New Question
           </button>
         }
@@ -99,7 +100,7 @@ export default function AskTheLab() {
             )
           })}
           <div className="relative flex-1 max-w-xs">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--slate)', opacity: 0.75 }} />
+            <Search {...ICON_PROPS} size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--slate)', opacity: 0.75 }} />
             <input
               type="text"
               value={searchQuery}
@@ -220,7 +221,7 @@ function QuestionCard({
         <div className="flex items-center gap-3 flex-shrink-0 pt-0.5">
           {/* Answer count badge */}
           <div className="flex items-center gap-1" style={{ color: answerCount > 0 ? 'var(--teal)' : 'var(--slate)', opacity: answerCount > 0 ? 1 : 0.85 }}>
-            <MessageSquare size={14} />
+            <MessageSquare {...ICON_PROPS} size={14} />
             <span className="text-xs font-medium">
               {answerCount}
             </span>
@@ -234,7 +235,7 @@ function QuestionCard({
             {status.label}
           </span>
 
-          {expanded ? <ChevronUp size={16} style={{ color: 'var(--slate)', opacity: 0.75 }} /> : <ChevronDown size={16} style={{ color: 'var(--slate)', opacity: 0.75 }} />}
+          {expanded ? <ChevronUp {...ICON_PROPS} size={16} style={{ color: 'var(--slate)', opacity: 0.75 }} /> : <ChevronDown {...ICON_PROPS} size={16} style={{ color: 'var(--slate)', opacity: 0.75 }} />}
         </div>
       </button>
 
@@ -346,7 +347,7 @@ function QuestionExpanded({ questionId }: { questionId: string }) {
                     className="flex items-center gap-1 px-3 pb-1"
                     style={{ fontSize: 'var(--text-caption)' }}
                   >
-                    <Check size={10} style={{ color: 'var(--teal)' }} aria-hidden="true" />
+                    <Check {...ICON_PROPS} size={10} style={{ color: 'var(--teal)' }} aria-hidden="true" />
                     <span style={{ color: 'var(--teal)' }}>Accepted answer</span>
                   </div>
                 )}
@@ -364,7 +365,7 @@ function QuestionExpanded({ questionId }: { questionId: string }) {
                         cursor: 'pointer',
                       }}
                     >
-                      <Check size={10} aria-hidden="true" />
+                      <Check {...ICON_PROPS} size={10} aria-hidden="true" />
                       Accept Answer
                     </button>
                   </div>

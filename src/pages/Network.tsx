@@ -7,6 +7,7 @@ import CollaborationGraph from '../components/CollaborationGraph'
 import NetworkSidebar from '../components/NetworkSidebar'
 import NetworkFilters, { type NetworkFilterState } from '../components/NetworkFilters'
 import type { NetworkNode, NetworkEdge } from '../components/CollaborationGraph'
+import { ICON_PROPS } from '../lib/iconProps'
 
 export default function Network() {
   usePageMeta(
@@ -119,7 +120,7 @@ export default function Network() {
                 textDecoration: 'none',
               }}
             >
-              <ArrowLeft size={14} />
+              <ArrowLeft {...ICON_PROPS} size={14} />
               Home
             </Link>
             <span style={{ color: 'rgba(201, 168, 76, 0.2)' }}>/</span>

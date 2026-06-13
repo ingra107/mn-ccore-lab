@@ -5,6 +5,7 @@ import { useOnboarding } from '../hooks/useOnboarding'
 import { spring } from '../lib/animations'
 import { formatBrandName } from './BrandName'
 import { PATHS } from '../constants/paths'
+import { ICON_PROPS } from '../lib/iconProps'
 
 export default function WelcomeBanner() {
   const { dismissed, allComplete, dismiss } = useOnboarding()
@@ -60,7 +61,7 @@ export default function WelcomeBanner() {
               alignItems: 'center',
             }}
           >
-            <X size={14} />
+            <X {...ICON_PROPS} size={14} />
           </button>
         </div>
       </motion.div>

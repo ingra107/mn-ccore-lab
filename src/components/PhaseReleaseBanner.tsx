@@ -13,6 +13,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, ChevronRight } from 'lucide-react'
+import { ICON_PROPS } from '../lib/iconProps'
 
 interface Release {
   id: string
@@ -109,7 +110,7 @@ export default function PhaseReleaseBanner() {
       >
         <span className="phase-pill-dot" aria-hidden="true" />
         <span>{shortLabel} shipped</span>
-        <ChevronRight
+        <ChevronRight {...ICON_PROPS}
           size={12}
           style={{
             transform: expanded ? 'rotate(90deg)' : 'rotate(0deg)',
@@ -168,7 +169,7 @@ export default function PhaseReleaseBanner() {
                   justifyContent: 'center',
                 }}
               >
-                <X size={14} />
+                <X {...ICON_PROPS} size={14} />
               </button>
             </div>
             <p style={{ fontSize: 12, color: 'var(--slate)', lineHeight: 1.5, margin: 0 }}>

@@ -5,6 +5,7 @@ import type { TaskRow } from '../../lib/api'
 import { useExpiringRegulatory } from '../../hooks/useApiData'
 import { PATHS } from '../../constants/paths'
 import { localDateKey, isOverdue } from '../../lib/dateUtils'
+import { ICON_PROPS } from '../../lib/iconProps'
 
 interface StatusLineProps {
   tasks: TaskRow[]
@@ -86,7 +87,7 @@ export default function StatusLine({ tasks, loading }: StatusLineProps) {
             border: '1px solid rgba(45,138,138,0.3)',
           }}
         >
-          <CheckCircle2 size={12} />
+          <CheckCircle2 {...ICON_PROPS} size={12} />
           All clear
         </span>
       )}

@@ -1,4 +1,5 @@
 import { ChevronUp, ChevronDown } from 'lucide-react'
+import { ICON_PROPS } from '../../lib/iconProps'
 
 interface ColumnHeaderProps {
   label: string
@@ -53,7 +54,7 @@ export default function ColumnHeader({
       }}
     >
       {label}
-      {isActive && (sortAsc ? <ChevronUp size={10} /> : <ChevronDown size={10} />)}
+      {isActive && (sortAsc ? <ChevronUp {...ICON_PROPS} size={10} /> : <ChevronDown {...ICON_PROPS} size={10} />)}
       {sortRank != null && sortRank > 0 && (
         <span
           style={{

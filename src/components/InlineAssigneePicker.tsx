@@ -6,6 +6,7 @@ import type { HoverCardData } from './HoverCard'
 import { useHoverCard } from '../hooks/useHoverCard'
 import { getPersonInfo, getMemberBySlug, directors, seniorMentors, facultyCollaborators, researchTeam } from '../data/team'
 import { displayName } from '../lib/nameUtils'
+import { ICON_PROPS } from '../lib/iconProps'
 
 interface InlineAssigneePickerProps {
   value: string
@@ -129,7 +130,7 @@ export default function InlineAssigneePicker({ value, onChange, compact }: Inlin
             {value ? displayName(value, 'short') : person.name.split(' ')[0]}
           </span>
         )}
-        <ChevronDown size={10} style={{ opacity: 0.85 }} />
+        <ChevronDown {...ICON_PROPS} size={10} style={{ opacity: 0.85 }} />
       </button>
 
       {memberData && !open && (

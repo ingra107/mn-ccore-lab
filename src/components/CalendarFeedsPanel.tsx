@@ -8,6 +8,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Calendar as CalendarIcon, Info, X } from 'lucide-react'
+import { ICON_PROPS } from '../lib/iconProps'
 
 interface CalendarFeed {
   id: string
@@ -79,7 +80,7 @@ export default function CalendarFeedsPanel() {
         style={{ borderColor: 'var(--border-subtle)', background: 'var(--surface-1)' }}
       >
         <div className="flex items-center gap-2">
-          <CalendarIcon size={14} style={{ color: 'var(--teal)' }} />
+          <CalendarIcon {...ICON_PROPS} size={14} style={{ color: 'var(--teal)' }} />
           <span className="text-sm font-medium" style={{ color: 'var(--ink)' }}>Add a calendar feed</span>
         </div>
         <p className="text-[11px]" style={{ color: 'var(--slate)', opacity: 0.75, lineHeight: 1.5 }}>
@@ -126,7 +127,7 @@ export default function CalendarFeedsPanel() {
       </div>
 
       <div className="flex items-start gap-2 px-1">
-        <Info size={12} style={{ color: 'var(--teal)', marginTop: 2, flexShrink: 0 }} />
+        <Info {...ICON_PROPS} size={12} style={{ color: 'var(--teal)', marginTop: 2, flexShrink: 0 }} />
         <p className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.75, lineHeight: 1.5 }}>
           The URL is the secret — anyone with it can read the calendar. Hub stores it in D1
           and never re-displays it after save (you'll see a host preview instead). Remove a feed any time above.
@@ -149,7 +150,7 @@ function CalendarFeedRow({ feed, onRemove }: { feed: CalendarFeed; onRemove: () 
         className="flex items-center justify-center w-9 h-9 rounded-md flex-shrink-0"
         style={{ background: 'var(--teal-active)' }}
       >
-        <CalendarIcon size={16} style={{ color: 'var(--teal)' }} />
+        <CalendarIcon {...ICON_PROPS} size={16} style={{ color: 'var(--teal)' }} />
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-0.5 flex-wrap">
@@ -186,7 +187,7 @@ function CalendarFeedRow({ feed, onRemove }: { feed: CalendarFeed; onRemove: () 
           color: 'var(--slate)', cursor: 'pointer',
         }}
       >
-        <X size={12} /> Remove
+        <X {...ICON_PROPS} size={12} /> Remove
       </button>
     </div>
   )

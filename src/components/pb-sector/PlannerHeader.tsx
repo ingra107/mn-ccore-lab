@@ -1,6 +1,7 @@
 import { useState, useRef, useMemo } from 'react'
 import { Star, Clock, CheckCircle2, Sun, ChevronLeft, ChevronRight } from 'lucide-react'
 import { localDateKey } from '../../lib/dateUtils'
+import { ICON_PROPS } from '../../lib/iconProps'
 
 interface PlannerHeaderProps {
   greeting: string
@@ -117,7 +118,7 @@ export default function PlannerHeader({ greeting, mode, today, stats, intention,
         <div>
           <div className="flex items-center gap-2 mb-0.5">
             <button onClick={handlePrevDay} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, opacity: 0.85 }} className="hover:opacity-80">
-              <ChevronLeft size={14} style={{ color: 'var(--slate)' }} />
+              <ChevronLeft {...ICON_PROPS} size={14} style={{ color: 'var(--slate)' }} />
             </button>
             <p style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', margin: 0 }}>
               {formatDate(selectedDate)}
@@ -128,7 +129,7 @@ export default function PlannerHeader({ greeting, mode, today, stats, intention,
               )}
             </p>
             <button onClick={handleNextDay} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, opacity: 0.85 }} className="hover:opacity-80">
-              <ChevronRight size={14} style={{ color: 'var(--slate)' }} />
+              <ChevronRight {...ICON_PROPS} size={14} style={{ color: 'var(--slate)' }} />
             </button>
             {/* Quick toggles */}
             <div className="flex gap-1 ml-2">
@@ -186,7 +187,7 @@ export default function PlannerHeader({ greeting, mode, today, stats, intention,
           </span>
           <div className="flex items-center gap-3" style={{ fontSize: 'var(--label-size)', color: 'var(--slate)' }}>
             <span className="flex items-center gap-1">
-              <Clock size={11} /> {stats.totalOpen} open
+              <Clock {...ICON_PROPS} size={11} /> {stats.totalOpen} open
             </span>
             {stats.overdue > 0 && (
               <span className="flex items-center gap-1" style={{ color: 'var(--maroon)' }}>
@@ -195,7 +196,7 @@ export default function PlannerHeader({ greeting, mode, today, stats, intention,
             )}
             {stats.completedRecently > 0 && (
               <span className="flex items-center gap-1" style={{ color: 'var(--teal)' }}>
-                <CheckCircle2 size={11} /> {stats.completedRecently}
+                <CheckCircle2 {...ICON_PROPS} size={11} /> {stats.completedRecently}
               </span>
             )}
           </div>

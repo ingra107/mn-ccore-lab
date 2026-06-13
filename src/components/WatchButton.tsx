@@ -1,5 +1,6 @@
 import { Eye, EyeOff } from 'lucide-react'
 import { useWatchlist } from '../hooks/useWatchlist'
+import { ICON_PROPS } from '../lib/iconProps'
 
 interface WatchButtonProps {
   id: string
@@ -33,7 +34,7 @@ export default function WatchButton({ id, type, label, slug, compact }: WatchBut
         fontSize: '11px',
       }}
     >
-      {watching ? <Eye size={12} /> : <EyeOff size={12} />}
+      {watching ? <Eye {...ICON_PROPS} size={12} /> : <EyeOff {...ICON_PROPS} size={12} />}
       {!compact && (watching ? 'Watching' : 'Watch')}
     </button>
   )

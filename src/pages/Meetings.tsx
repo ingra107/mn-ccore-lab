@@ -24,6 +24,7 @@ import PageTooltip, { dismissPageTooltip } from '../components/PageTooltip'
 import type { Meeting, ActionItem } from '../data/types'
 import { PATHS } from '../constants/paths'
 import { useOpenParam } from '../hooks/useOpenParam'
+import { ICON_PROPS } from '../lib/iconProps'
 
 type FilterMode = 'all' | 'decisions' | 'actions'
 
@@ -177,18 +178,18 @@ function MeetingDetail({ meeting, onToggleAction }: MeetingDetailProps) {
             </p>
             <div className="flex flex-wrap items-center gap-3 mt-2">
               <span className="flex items-center gap-1 text-xs" style={{ color: 'var(--muted)' }}>
-                <Users size={12} />
+                <Users {...ICON_PROPS} size={12} />
                 {meeting.attendees?.length ?? 0} attendees
               </span>
               {totalActions > 0 && (
                 <span className="flex items-center gap-1 text-xs" style={{ color: pendingActions > 0 ? 'var(--gold)' : 'var(--teal)' }}>
-                  <ListChecks size={12} />
+                  <ListChecks {...ICON_PROPS} size={12} />
                   {pendingActions > 0 ? `${pendingActions} pending` : `${totalActions} done`}
                 </span>
               )}
               {fInfo && (
                 <span className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--teal)' }}>
-                  <UserCheck size={12} />
+                  <UserCheck {...ICON_PROPS} size={12} />
                   Facilitated by {fInfo.name}
                 </span>
               )}
@@ -278,8 +279,8 @@ function MeetingDetail({ meeting, onToggleAction }: MeetingDetailProps) {
                     title={item.completed ? 'Mark as pending' : 'Mark as completed'}
                   >
                     {item.completed
-                      ? <CheckCircle2 size={16} style={{ color: 'var(--teal)' }} />
-                      : <Circle size={16} style={{ color: 'var(--gold)' }} />
+                      ? <CheckCircle2 {...ICON_PROPS} size={16} style={{ color: 'var(--teal)' }} />
+                      : <Circle {...ICON_PROPS} size={16} style={{ color: 'var(--gold)' }} />
                     }
                   </button>
                   <div className="flex-1 min-w-0">
@@ -328,7 +329,7 @@ function MeetingDetail({ meeting, onToggleAction }: MeetingDetailProps) {
               display: 'inline-flex', alignItems: 'center', gap: '3px',
             }}
           >
-            <Scale size={10} /> {showDecisionForm ? 'Cancel' : 'Add'}
+            <Scale {...ICON_PROPS} size={10} /> {showDecisionForm ? 'Cancel' : 'Add'}
           </button>
         </div>
         <AnimatePresence>
@@ -391,7 +392,7 @@ function MeetingDetail({ meeting, onToggleAction }: MeetingDetailProps) {
         // modes. --gold light failed with dark text (2.46:1). r7 2026-04-22.
         style={{ fontSize: 'var(--label-size)', background: 'var(--stage-fill-analysis)', color: '#fff', textDecoration: 'none', transition: 'opacity 0.2s' }}
       >
-        View Full Meeting <ArrowRight size={11} />
+        View Full Meeting <ArrowRight {...ICON_PROPS} size={11} />
       </Link>
     </div>
   )
@@ -592,7 +593,7 @@ export default function Meetings() {
       <div className="content-container" style={{ paddingTop: '1.5rem', paddingBottom: '1rem', flexShrink: 0 }}>
         <div ref={headerRef} className="fade-in-up">
           <PageHeader
-            icon={<Users size={18} />}
+            icon={<Users {...ICON_PROPS} size={18} />}
             title="Meeting Hub"
             subtitle={pageSubtitle || undefined}
             count={meetings.length}
@@ -601,7 +602,7 @@ export default function Meetings() {
                 {/* Next meeting pill */}
                 <div className="flex items-center gap-2 px-3 py-2 rounded-xl"
                   style={{ background: 'var(--gold-light)', border: '1px solid rgba(201,168,76,0.25)' }}>
-                  <Calendar size={14} style={{ color: 'var(--gold)', flexShrink: 0 }} />
+                  <Calendar {...ICON_PROPS} size={14} style={{ color: 'var(--gold)', flexShrink: 0 }} />
                   <div>
                     <span className="text-xs font-medium" style={{ color: 'var(--ink)' }}>
                       {nextMeeting.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
@@ -614,13 +615,13 @@ export default function Meetings() {
                       const fInfo = fSlug ? getPersonInfo(fSlug) : null
                       return fInfo ? (
                         <span className="flex items-center gap-1 text-xs" style={{ color: 'var(--teal)', marginTop: 2 }}>
-                          <UserCheck size={10} />
+                          <UserCheck {...ICON_PROPS} size={10} />
                           {fInfo.name.split(' ')[0]}
                         </span>
                       ) : null
                     })()}
                   </div>
-                  <Clock size={12} style={{ color: 'var(--gold)', marginLeft: 4 }} />
+                  <Clock {...ICON_PROPS} size={12} style={{ color: 'var(--gold)', marginLeft: 4 }} />
                 </div>
 
                 {/* Record Meeting */}
@@ -646,7 +647,7 @@ export default function Meetings() {
                       </div>
                     </div>
                     <div>
-                      <label style={labelStyle}><Users size={10} className="inline mr-1" />Attendees</label>
+                      <label style={labelStyle}><Users {...ICON_PROPS} size={10} className="inline mr-1" />Attendees</label>
                       <div className="flex flex-wrap gap-2 mt-1">
                         {TEAM_OPTIONS.slice(0, 10).map((m) => {
                           const selected = newMeetingAttendees.includes(m.slug)
@@ -679,7 +680,7 @@ export default function Meetings() {
                         ))}
                         <button type="button" onClick={addAgendaItem} className="cursor-pointer inline-flex items-center gap-1 text-xs"
                           style={{ background: 'none', border: 'none', color: 'var(--gold)', padding: 'var(--sp-xs) 0' }}>
-                          <Plus size={12} />Add agenda item
+                          <Plus {...ICON_PROPS} size={12} />Add agenda item
                         </button>
                       </div>
                     </div>
@@ -699,7 +700,7 @@ export default function Meetings() {
                 style={{ background: 'var(--gold-hover)', border: '1px solid rgba(201,168,76,0.12)' }}>
                 <summary className="flex items-center gap-2 cursor-pointer list-none"
                   style={{ outline: 'none' }}>
-                  <Activity size={12} style={{ color: 'var(--gold)', flexShrink: 0 }} />
+                  <Activity {...ICON_PROPS} size={12} style={{ color: 'var(--gold)', flexShrink: 0 }} />
                   <span style={{ fontSize: '12px', color: 'var(--ink)', fontWeight: 600 }}>
                     {cadence.emoji} {cadence.recommendation}
                   </span>
@@ -745,7 +746,7 @@ export default function Meetings() {
               ))}
             </div>
             <div className="relative">
-              <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }} />
+              <Search {...ICON_PROPS} size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }} />
               <input type="text" placeholder="Search..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-7 pr-3 py-1.5 rounded-lg text-xs"
                 style={{ background: 'var(--ice)', border: '1px solid rgba(201,168,76,0.15)', color: 'var(--ink)', outline: 'none' }}
@@ -832,7 +833,7 @@ export default function Meetings() {
             onClick={() => setMobileShowDetail(false)}
             style={{ display: 'none', alignItems: 'center', gap: '6px', marginBottom: '12px', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--teal)', fontSize: '13px', padding: '4px 0' }}
           >
-            <ChevronLeft size={16} /> Back to meetings
+            <ChevronLeft {...ICON_PROPS} size={16} /> Back to meetings
           </button>
           {selectedMeeting ? (
             <motion.div key={selectedMeeting.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}>
@@ -855,7 +856,7 @@ export default function Meetings() {
                             onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.2)' }}
                             onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)' }}
                             title="Mark as completed">
-                            <Circle size={16} style={{ color: 'var(--gold)' }} />
+                            <Circle {...ICON_PROPS} size={16} style={{ color: 'var(--gold)' }} />
                           </button>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm leading-snug" style={{ color: 'var(--ink)' }}>
@@ -941,7 +942,7 @@ export default function Meetings() {
                               onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.2)' }}
                               onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)' }}
                               title="Mark as pending">
-                              <CheckCircle2 size={16} style={{ color: 'var(--teal)' }} />
+                              <CheckCircle2 {...ICON_PROPS} size={16} style={{ color: 'var(--teal)' }} />
                             </button>
                             <div className="flex-1 min-w-0">
                               <p className="text-sm leading-snug" style={{ color: 'var(--ink)', textDecoration: 'line-through', opacity: 0.85 }}>

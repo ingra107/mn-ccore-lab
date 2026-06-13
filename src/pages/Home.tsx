@@ -21,6 +21,7 @@ import UpcomingMeetingBanner from '../components/UpcomingMeetingBanner'
 import LatestDigest from '../components/LatestDigest'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { PATHS } from '../constants/paths'
+import { ICON_PROPS } from '../lib/iconProps'
 
 // Lazy-loaded: pulls recharts (PublicationTimeline) — deferred until scrolled into view
 const ResearchImpact = lazy(() => import('../components/ResearchImpact'))
@@ -276,7 +277,7 @@ export default function Home() {
               onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'translateY(0)' }}
             >
               Open Hub
-              <ArrowRight size={15} aria-hidden="true" />
+              <ArrowRight {...ICON_PROPS} size={15} aria-hidden="true" />
             </a>
             <a
               href="/publications"
@@ -663,7 +664,7 @@ export default function Home() {
                   >
                     {affiliate.name}
                   </h3>
-                  <ExternalLink
+                  <ExternalLink {...ICON_PROPS}
                     size={14}
                     className="flex-shrink-0 mt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
                     style={{ color: 'var(--gold)' }}

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Search, X } from 'lucide-react'
+import { ICON_PROPS } from '../lib/iconProps'
 
 interface PublicationSearchProps {
   value: string
@@ -37,7 +38,7 @@ export default function PublicationSearch({
   return (
     <div className="relative">
       <div className="relative">
-        <Search
+        <Search {...ICON_PROPS}
           size={16}
           className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
           style={{ color: 'var(--slate)' }}
@@ -80,7 +81,7 @@ export default function PublicationSearch({
             }}
             aria-label="Clear search"
           >
-            <X size={14} />
+            <X {...ICON_PROPS} size={14} />
           </button>
         )}
       </div>

@@ -13,6 +13,7 @@ import { formatLongDate, formatShortDate, localDateKey } from '../../lib/dateUti
 import type { CalendarEvent } from '../../lib/api'
 import { staggerContainer, staggerItem } from '../../lib/animations'
 import { PATHS } from '../../constants/paths'
+import { ICON_PROPS } from '../../lib/iconProps'
 
 type ViewMode = 'month' | 'week' | 'day' | 'agenda'
 
@@ -140,7 +141,7 @@ export default function CalendarPage() {
     // the data pages and every other operating surface.
     <div className="content-container">
       <PageHeader
-        icon={<Calendar size={20} />}
+        icon={<Calendar {...ICON_PROPS} size={20} />}
         title="Lab Calendar"
         subtitle={(() => {
           const todayStr = localDateKey()
@@ -156,7 +157,7 @@ export default function CalendarPage() {
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm border transition-colors hover:bg-black/5"
             style={{ borderColor: 'var(--border-subtle)', color: 'var(--slate)', cursor: 'pointer', background: 'none' }}
           >
-            <Download size={14} />
+            <Download {...ICON_PROPS} size={14} />
             Export
           </button>
         }
@@ -196,7 +197,7 @@ export default function CalendarPage() {
               className="rounded-md border transition-colors hover:bg-black/5 flex items-center justify-center"
               style={{ minHeight: 44, minWidth: 44, borderColor: 'var(--border-subtle)', cursor: 'pointer', background: 'none' }}
             >
-              <ChevronLeft size={18} style={{ color: 'var(--ink)' }} />
+              <ChevronLeft {...ICON_PROPS} size={18} style={{ color: 'var(--ink)' }} />
             </button>
             <button
               onClick={goToToday}
@@ -211,7 +212,7 @@ export default function CalendarPage() {
               className="rounded-md border transition-colors hover:bg-black/5 flex items-center justify-center"
               style={{ minHeight: 44, minWidth: 44, borderColor: 'var(--border-subtle)', cursor: 'pointer', background: 'none' }}
             >
-              <ChevronRight size={18} style={{ color: 'var(--ink)' }} />
+              <ChevronRight {...ICON_PROPS} size={18} style={{ color: 'var(--ink)' }} />
             </button>
 
             {currentDate.toDateString() !== new Date().toDateString() && (

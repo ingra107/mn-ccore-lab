@@ -54,6 +54,7 @@ import { PATHS } from '../constants/paths'
 import SmartCompose from '../components/SmartCompose'
 import HeartbeatLine from '../components/HeartbeatLine'
 import EntityNotFound from '../components/EntityNotFound'
+import { ICON_PROPS } from '../lib/iconProps'
 
 function buildMemberHoverData(slug: string): HoverCardData {
   const p = getPersonInfo(slug)
@@ -342,7 +343,7 @@ export default function MeetingDetail() {
           <div className="flex flex-wrap items-center gap-2 mb-3">
             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs"
               style={{ fontSize: 'var(--label-size)', background: statusStyle.bg, color: statusStyle.text }}>
-              <Calendar size={12} /> {meeting.status}
+              <Calendar {...ICON_PROPS} size={12} /> {meeting.status}
             </span>
             <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
               {meeting.type}
@@ -359,7 +360,7 @@ export default function MeetingDetail() {
                 background: 'var(--teal-hover)',
               }}
             >
-              <ListChecks size={11} /> Prep View
+              <ListChecks {...ICON_PROPS} size={11} /> Prep View
             </Link>
             <button
               onClick={() => {
@@ -400,7 +401,7 @@ export default function MeetingDetail() {
                 opacity: copiedSummary ? 1 : 0.85,
               }}
             >
-              {copiedSummary ? <Check size={11} /> : <Copy size={11} />}
+              {copiedSummary ? <Check {...ICON_PROPS} size={11} /> : <Copy {...ICON_PROPS} size={11} />}
               {copiedSummary ? 'Copied!' : 'Copy Summary'}
             </button>
             <button
@@ -416,7 +417,7 @@ export default function MeetingDetail() {
                 opacity: generatingAgenda ? 0.85 : 1,
               }}
             >
-              {agendaCopied ? <Check size={11} /> : <Sparkles size={11} />}
+              {agendaCopied ? <Check {...ICON_PROPS} size={11} /> : <Sparkles {...ICON_PROPS} size={11} />}
               {agendaCopied ? 'Copied!' : generatingAgenda ? 'Generating…' : 'Generate Agenda'}
             </button>
           </div>
@@ -434,7 +435,7 @@ export default function MeetingDetail() {
             const facilitatorInfo = facilitatorSlug ? getPersonInfo(facilitatorSlug) : null
             return facilitatorInfo ? (
               <div className="flex items-center gap-2 mt-2">
-                <UserCheck size={14} style={{ color: 'var(--teal)' }} />
+                <UserCheck {...ICON_PROPS} size={14} style={{ color: 'var(--teal)' }} />
                 <span style={{ fontSize: 'var(--label-size)', color: 'var(--teal)' }}>
                   Facilitator:
                 </span>
@@ -496,7 +497,7 @@ export default function MeetingDetail() {
           {/* Left: Agenda (order-2 on mobile so actions show first) */}
           <motion.div className="order-2 lg:order-1" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: 0.1 }}>
             <div className="flex items-center gap-2 mb-3">
-              <ListChecks size={16} style={{ color: 'var(--gold)' }} />
+              <ListChecks {...ICON_PROPS} size={16} style={{ color: 'var(--gold)' }} />
               <h2 style={{ fontWeight: 500, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>
                 Agenda
               </h2>
@@ -546,7 +547,7 @@ export default function MeetingDetail() {
           {/* Right: Action Items (order-1 on mobile so actions show first) */}
           <motion.div className="order-1 lg:order-2" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: 0.15 }}>
             <div className="flex items-center gap-2 mb-3">
-              <CheckCircle2 size={16} style={{ color: 'var(--teal)' }} />
+              <CheckCircle2 {...ICON_PROPS} size={16} style={{ color: 'var(--teal)' }} />
               <h2 style={{ fontWeight: 500, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>
                 Action Items
               </h2>
@@ -589,7 +590,7 @@ export default function MeetingDetail() {
                         className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors"
                         style={{ background: 'var(--teal-solid)', color: 'white', border: 'none', cursor: 'pointer' }}
                       >
-                        <CheckCircle2 size={12} />
+                        <CheckCircle2 {...ICON_PROPS} size={12} />
                         Complete All
                       </button>
                       <button
@@ -597,7 +598,7 @@ export default function MeetingDetail() {
                         className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] transition-colors"
                         style={{ color: 'var(--slate)', background: 'none', border: '1px solid var(--border-subtle)', cursor: 'pointer' }}
                       >
-                        <X size={11} />
+                        <X {...ICON_PROPS} size={11} />
                         Clear
                       </button>
                     </div>
@@ -642,7 +643,7 @@ export default function MeetingDetail() {
         {/* Decisions */}
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: 0.2 }} className="mt-8">
           <div className="flex items-center gap-2 mb-3">
-            <Scale size={16} style={{ color: 'var(--gold)' }} />
+            <Scale {...ICON_PROPS} size={16} style={{ color: 'var(--gold)' }} />
             <h2 style={{ fontWeight: 500, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>
               Decisions
             </h2>
@@ -656,7 +657,7 @@ export default function MeetingDetail() {
                   display: 'flex', alignItems: 'center', gap: '4px',
                 }}
               >
-                <Plus size={12} /> Log Decision
+                <Plus {...ICON_PROPS} size={12} /> Log Decision
               </button>
             )}
           </div>
@@ -751,7 +752,7 @@ export default function MeetingDetail() {
         {meeting.id && (
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: 0.22 }} className="mt-8">
             <div className="flex items-center gap-2 mb-3">
-              <UploadIcon size={16} style={{ color: 'var(--teal)' }} />
+              <UploadIcon {...ICON_PROPS} size={16} style={{ color: 'var(--teal)' }} />
               <h3 style={{ fontWeight: 500, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>
                 Files
               </h3>
@@ -765,7 +766,7 @@ export default function MeetingDetail() {
         {/* Notes */}
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: 0.25 }} className="mt-8">
           <div className="flex items-center gap-2 mb-3">
-            <FileText size={16} style={{ color: 'var(--gold)' }} />
+            <FileText {...ICON_PROPS} size={16} style={{ color: 'var(--gold)' }} />
             <h3 style={{ fontWeight: 500, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>
               Meeting Notes
             </h3>
@@ -870,7 +871,7 @@ function SortableAgendaItem({ item, AGENDA_TYPE_ICONS }: { item: AgendaItemRow; 
   return (
     <div ref={setNodeRef} style={style} className="flex items-start gap-2 py-2" {...attributes}>
       <button {...listeners} aria-label="Reorder item" className="cursor-grab active:cursor-grabbing mt-1 flex-shrink-0" style={{ background: 'none', border: 'none', padding: '2px', color: 'var(--slate)', opacity: 0.75 }}>
-        <GripVertical size={14} />
+        <GripVertical {...ICON_PROPS} size={14} />
       </button>
       <Icon size={14} style={{ color: 'var(--gold)', marginTop: '2px', flexShrink: 0 }} />
       <div style={{ flex: 1 }}>
@@ -910,7 +911,7 @@ function SortableActionItem({ item, onToggle, selected, onToggleSelect, isFocuse
         className="flex-shrink-0 cursor-grab active:cursor-grabbing opacity-0 group-hover/action:opacity-100 transition-opacity"
         style={{ background: 'none', border: 'none', padding: '2px', color: 'var(--slate)', opacity: 0.75 }}
       >
-        <GripVertical size={14} />
+        <GripVertical {...ICON_PROPS} size={14} />
       </button>
       <div style={{ flex: 1 }}>
         <ActionItemRow item={item} onToggle={onToggle} selected={selected} onToggleSelect={onToggleSelect} />
@@ -987,7 +988,7 @@ function ActionItemRow({ item, onToggle, selected, onToggleSelect }: { item: Act
             aria-label={selected ? 'Deselect action item' : 'Select action item'}
           >
             {selected && (
-              <Check size={10} style={{ color: 'white' }} />
+              <Check {...ICON_PROPS} size={10} style={{ color: 'white' }} />
             )}
           </button>
         </div>
@@ -999,7 +1000,7 @@ function ActionItemRow({ item, onToggle, selected, onToggleSelect }: { item: Act
           onClick={(e) => { e.stopPropagation(); onToggle?.(item.id) }}
           style={{ background: 'none', border: 'none', padding: 0, width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', color: item.completed ? 'var(--teal)' : isOverdue ? 'var(--maroon)' : 'var(--slate)', opacity: item.completed ? 1 : 0.85 }}
           title={item.completed ? 'Mark as pending' : 'Mark as completed'}>
-          {item.completed ? <CheckCircle2 size={20} /> : <Circle size={20} />}
+          {item.completed ? <CheckCircle2 {...ICON_PROPS} size={20} /> : <Circle {...ICON_PROPS} size={20} />}
         </button>
       </div>
       <div style={{ flex: 1, paddingTop: '10px' }}>
@@ -1092,7 +1093,7 @@ function AddActionItemForm({ meetingId, isAuthenticated, onSuccess, onContentCha
   return (
     <div style={{ marginBottom: '12px', paddingBottom: '12px', borderBottom: '1px solid rgba(45,138,138,0.08)' }}>
       <div className="flex items-start gap-2">
-        <Plus size={14} style={{ color: 'var(--teal)', opacity: 0.85, flexShrink: 0, marginTop: 10 }} />
+        <Plus {...ICON_PROPS} size={14} style={{ color: 'var(--teal)', opacity: 0.85, flexShrink: 0, marginTop: 10 }} />
         <div style={{ flex: 1, minWidth: 0 }}>
           {!isAuthenticated && import.meta.env.PROD ? (
             <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.75, display: 'inline-block', padding: '8px 0' }}>
@@ -1211,12 +1212,12 @@ function AddAgendaForm({ isAuthenticated, onAdd }: { isAuthenticated: boolean; o
               className="cursor-pointer flex-shrink-0 p-2 rounded-lg"
               style={{ background: 'transparent', border: '1px solid rgba(201, 168, 76, 0.2)', color: 'var(--slate)' }}
               title="Attach document link">
-              <FileText size={14} />
+              <FileText {...ICON_PROPS} size={14} />
             </motion.button>
             <motion.button type="submit" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}
               className="cursor-pointer flex-shrink-0 p-2 rounded-lg"
               style={{ background: 'var(--gold)', color: '#0f1923', border: 'none' }}>
-              <Plus size={14} />
+              <Plus {...ICON_PROPS} size={14} />
             </motion.button>
           </>
         )}
@@ -1271,7 +1272,7 @@ function AttendanceSection({ meetingId, attendees }: { meetingId: string; attend
   return (
     <div className="mt-4">
       <div className="flex items-center gap-2 mb-2">
-        <Users size={14} style={{ color: 'var(--slate)', opacity: 'var(--ink-label)', flexShrink: 0 }} />
+        <Users {...ICON_PROPS} size={14} style={{ color: 'var(--slate)', opacity: 'var(--ink-label)', flexShrink: 0 }} />
         <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 'var(--label-weight)' }}>
           Attendees
         </span>
@@ -1312,7 +1313,7 @@ function AttendanceSection({ meetingId, attendees }: { meetingId: string; attend
               >
                 <Avatar name={p.name} initials={p.initials} photoUrl={p.photoUrl} size="sm-icon" />
                 {p.name.split(' ')[0]}
-                {present && <UserCheck size={10} style={{ marginLeft: 'auto' }} />}
+                {present && <UserCheck {...ICON_PROPS} size={10} style={{ marginLeft: 'auto' }} />}
               </button>
             )
           })}

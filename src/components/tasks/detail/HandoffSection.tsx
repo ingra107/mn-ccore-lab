@@ -8,6 +8,7 @@ import { useTeam, useHandoffs } from '../../../hooks/useApiData'
 import { useCreateHandoff, useAcknowledgeHandoff } from '../../../hooks/useMutations'
 import { useToast } from '../../../hooks/useToast'
 import { formatRelativeTime } from '../../../lib/dateUtils'
+import { ICON_PROPS } from '../../../lib/iconProps'
 
 // ── Handoff Recipient Select ─────────────────────────────────
 
@@ -63,7 +64,7 @@ function HandoffRecipientSelect({ value, onChange, members }: { value: string; o
                   <Avatar name={mp.name} initials={mp.initials} photoUrl={mp.photoUrl} size="sm-plus" variant="ice" />
                 </div>
                 <span className="flex-1">{m.name}</span>
-                {selected && <Check size={14} style={{ color: 'var(--teal)' }} />}
+                {selected && <Check {...ICON_PROPS} size={14} style={{ color: 'var(--teal)' }} />}
               </button>
             )
           })}
@@ -133,7 +134,7 @@ export function HandoffSection({ taskId, currentAssignee }: { taskId: string; cu
         <form onSubmit={handleSubmit}>
           <div className="p-4 rounded-xl" style={{ background: 'var(--teal-hover)', border: '1px solid rgba(45,138,138,0.15)' }}>
             <div className="flex items-center gap-2 mb-3">
-              <ArrowRightLeft size={14} style={{ color: 'var(--teal)' }} />
+              <ArrowRightLeft {...ICON_PROPS} size={14} style={{ color: 'var(--teal)' }} />
               <span style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--teal)' }}>
                 Handoff to...
               </span>
@@ -211,7 +212,7 @@ export function HandoffSection({ taskId, currentAssignee }: { taskId: string; cu
                   opacity: createHandoff.isPending ? 0.85 : 1,
                 }}
               >
-                <ArrowRightLeft size={12} />
+                <ArrowRightLeft {...ICON_PROPS} size={12} />
                 {createHandoff.isPending ? 'Sending...' : 'Send Handoff'}
               </button>
               <button
@@ -237,7 +238,7 @@ export function HandoffSection({ taskId, currentAssignee }: { taskId: string; cu
             fontWeight: 'var(--label-weight)',
           }}
         >
-          <ArrowRightLeft size={12} />
+          <ArrowRightLeft {...ICON_PROPS} size={12} />
           Hand Off
         </button>
       )}
@@ -246,7 +247,7 @@ export function HandoffSection({ taskId, currentAssignee }: { taskId: string; cu
       {handoffs.length > 0 && (
         <div className="mt-3">
           <label className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider mb-2" style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
-            <ArrowRightLeft size={10} />
+            <ArrowRightLeft {...ICON_PROPS} size={10} />
             Handoff History ({handoffs.length})
           </label>
           <div className="flex flex-col gap-2">
@@ -262,7 +263,7 @@ export function HandoffSection({ taskId, currentAssignee }: { taskId: string; cu
                       </div>
                       <span className="text-[11px] font-medium" style={{ color: 'var(--ink)' }}>{from.name}</span>
                     </div>
-                    <ArrowRightLeft size={10} style={{ color: 'var(--teal)', opacity: 'var(--ink-label)' }} />
+                    <ArrowRightLeft {...ICON_PROPS} size={10} style={{ color: 'var(--teal)', opacity: 'var(--ink-label)' }} />
                     <div className="flex items-center gap-1">
                       <div style={{ width: 20, height: 20 }}>
                         <Avatar name={to.name} initials={to.initials} photoUrl={to.photoUrl} size="xs" variant="ice" />
@@ -282,7 +283,7 @@ export function HandoffSection({ taskId, currentAssignee }: { taskId: string; cu
                   <div className="mt-2">
                     {h.acknowledged ? (
                       <span className="flex items-center gap-1 text-[10px]" style={{ color: 'var(--teal)' }}>
-                        <Check size={10} /> Acknowledged {h.acknowledged_at ? formatRelativeTime(h.acknowledged_at) : ''}
+                        <Check {...ICON_PROPS} size={10} /> Acknowledged {h.acknowledged_at ? formatRelativeTime(h.acknowledged_at) : ''}
                       </span>
                     ) : (
                       <button
@@ -295,7 +296,7 @@ export function HandoffSection({ taskId, currentAssignee }: { taskId: string; cu
                           cursor: 'pointer',
                         }}
                       >
-                        <Check size={10} /> Acknowledge
+                        <Check {...ICON_PROPS} size={10} /> Acknowledge
                       </button>
                     )}
                   </div>

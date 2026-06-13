@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { ChevronDown, CalendarDays } from 'lucide-react'
 import { formatShortDate } from '../lib/dateUtils'
+import { ICON_PROPS } from '../lib/iconProps'
 
 interface InlineDatePickerProps {
   value: string | null
@@ -147,14 +148,14 @@ export default function InlineDatePicker({ value, onChange }: InlineDatePickerPr
           '--hov-border': 'var(--border-subtle)',
         } as React.CSSProperties}
       >
-        <CalendarDays size={11} />
+        <CalendarDays {...ICON_PROPS} size={11} />
         <span>{!value ? 'Set date' : isOverdue
           ? (() => { const days = Math.ceil((today.getTime() - dueDate!.getTime()) / 86400000); return days === 1 ? 'Yesterday' : `${days}d ago` })()
           : isToday ? 'Today' : isTomorrow ? 'Tomorrow'
           : isThisWeek ? (() => { const days = Math.ceil((dueDate!.getTime() - today.getTime()) / 86400000); return `in ${days}d` })()
           : formatShortDate(value)
         }</span>
-        <ChevronDown size={10} style={{ opacity: 0.85 }} />
+        <ChevronDown {...ICON_PROPS} size={10} style={{ opacity: 0.85 }} />
       </button>
 
       {open && triggerRect && createPortal(

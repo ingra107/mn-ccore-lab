@@ -10,6 +10,7 @@ import { useUndoToast } from '../UndoToast'
 import { getPersonInfo } from '../../data/team'
 import DueLabel from '../DueLabel'
 import { PATHS } from '../../constants/paths'
+import { ICON_PROPS } from '../../lib/iconProps'
 
 const statusIcon: Record<string, { icon: typeof Circle; color: string }> = {
   todo: { icon: Circle, color: 'var(--slate)' },
@@ -116,7 +117,7 @@ function ActionBoardCard() {
 
         <Link to={PATHS.myTasks} className="flex items-center gap-1 mt-3 pt-2 portal-footer-link"
           style={{ fontSize: 'var(--label-size)', color: 'var(--gold)', textDecoration: 'none', borderTop: '1px solid rgba(201, 168, 76, 0.1)' }}>
-          View all tasks <ArrowRight size={11} />
+          View all tasks <ArrowRight {...ICON_PROPS} size={11} />
         </Link>
       </div>
       <style>{`

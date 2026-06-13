@@ -4,6 +4,7 @@ import { Flag, AlertTriangle, Clock, CheckCircle2, Users, TrendingDown } from 'l
 import CalendarTimeline from './CalendarTimeline'
 import { PATHS } from '../../constants/paths'
 import { localDateKey } from '../../lib/dateUtils'
+import { ICON_PROPS } from '../../lib/iconProps'
 
 interface CalendarEvent {
   id: string
@@ -75,7 +76,7 @@ function MilestoneRow({ milestone }: { milestone: any }) {
 
   return (
     <div className="flex items-start gap-2 py-1">
-      <Flag size={10} style={{ color: isOverdue ? 'var(--maroon)' : isUrgent ? 'var(--gold)' : 'var(--slate)', opacity: 0.85, flexShrink: 0, marginTop: 2 }} />
+      <Flag {...ICON_PROPS} size={10} style={{ color: isOverdue ? 'var(--maroon)' : isUrgent ? 'var(--gold)' : 'var(--slate)', opacity: 0.85, flexShrink: 0, marginTop: 2 }} />
       <div className="flex-1 min-w-0">
         <span className="block truncate" style={{ fontSize: 'var(--label-size)', color: 'var(--ink)', lineHeight: 1.3 }}>
           {milestone.title || milestone.description}
@@ -155,7 +156,7 @@ export default function LandscapeSidebar({ mode, events, milestones, commitments
           <SidebarCard title="Completed" icon={CheckCircle2} iconColor="var(--teal)" linkTo="/portal/tasks" linkLabel="View all">
             {recentlyCompleted.slice(0, 5).map((t: any) => (
               <div key={t.id} className="flex items-center gap-2 py-0.5">
-                <CheckCircle2 size={10} style={{ color: 'var(--teal)', opacity: 0.85, flexShrink: 0 }} />
+                <CheckCircle2 {...ICON_PROPS} size={10} style={{ color: 'var(--teal)', opacity: 0.85, flexShrink: 0 }} />
                 <span className="truncate" style={{ fontSize: 'var(--label-size)', color: 'var(--ink)', opacity: 0.85, textDecoration: 'line-through' }}>
                   {t.title || t.description}
                 </span>
@@ -179,7 +180,7 @@ export default function LandscapeSidebar({ mode, events, milestones, commitments
 
           {stats.overdue > 0 && (
             <div className="flex items-center gap-2 py-1">
-              <AlertTriangle size={10} style={{ color: 'var(--maroon)', opacity: 0.85, flexShrink: 0 }} />
+              <AlertTriangle {...ICON_PROPS} size={10} style={{ color: 'var(--maroon)', opacity: 0.85, flexShrink: 0 }} />
               <Link to={PATHS.tasks} style={{ fontSize: 'var(--label-size)', color: 'var(--maroon)', textDecoration: 'none' }}>
                 {stats.overdue} task{stats.overdue !== 1 ? 's' : ''} overdue
               </Link>
@@ -188,7 +189,7 @@ export default function LandscapeSidebar({ mode, events, milestones, commitments
 
           {staleProjects.length > 0 && (
             <div className="flex items-center gap-2 py-1">
-              <TrendingDown size={10} style={{ color: 'var(--slate)', opacity: 0.75, flexShrink: 0 }} />
+              <TrendingDown {...ICON_PROPS} size={10} style={{ color: 'var(--slate)', opacity: 0.75, flexShrink: 0 }} />
               <Link to={PATHS.projects} style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', textDecoration: 'none', opacity: 0.85 }}>
                 {staleProjects.length} project{staleProjects.length !== 1 ? 's' : ''} stale
               </Link>
@@ -197,7 +198,7 @@ export default function LandscapeSidebar({ mode, events, milestones, commitments
 
           {deepWorkHours !== null && (
             <div className="flex items-center gap-2 py-1 mt-1" style={{ borderTop: '1px solid rgba(201,168,76,0.06)', paddingTop: 6 }}>
-              <Clock size={10} style={{ color: 'var(--teal)', opacity: 0.85, flexShrink: 0 }} />
+              <Clock {...ICON_PROPS} size={10} style={{ color: 'var(--teal)', opacity: 0.85, flexShrink: 0 }} />
               <span style={{ fontSize: '10px', color: 'var(--teal)' }}>
                 {deepWorkHours}h deep work available
               </span>

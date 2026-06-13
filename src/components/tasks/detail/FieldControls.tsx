@@ -13,6 +13,7 @@ import { getPersonInfo } from '../../../data/team'
 import InlineDatePicker from '../../InlineDatePicker'
 import { useTeam } from '../../../hooks/useApiData'
 import { STATUS_OPTIONS, PRIORITY_OPTIONS } from '../../../lib/taskConstants'
+import { ICON_PROPS } from '../../../lib/iconProps'
 
 // ── Field Block Wrapper ──────────────────────────────────────
 
@@ -232,7 +233,7 @@ export function PrioritySelect({ value, onChange }: { value: string; onChange: (
               opacity: active ? 1 : 0.85,
             }}
           >
-            <Flag size={10} />
+            <Flag {...ICON_PROPS} size={10} />
             {p.label}
           </button>
         )
@@ -354,7 +355,7 @@ export function AssigneeSelect({ value, onChange }: { value: string; onChange: (
                     {taskCounts[slug]} tasks
                   </span>
                 ) : null}
-                {selected && <Check size={14} style={{ color: 'var(--teal)' }} />}
+                {selected && <Check {...ICON_PROPS} size={14} style={{ color: 'var(--teal)' }} />}
               </button>
             )
           })}
@@ -420,7 +421,7 @@ export function WorkflowSection({ fields, onChange }: { fields: WorkflowFields; 
         {/* Waiting on */}
         <div className="flex flex-col" style={{ gap: 'var(--sp-xs, 6px)' }}>
           <label className="flex items-center" style={{ gap: 'var(--sp-xs, 6px)', fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', fontWeight: 'var(--label-weight)' }}>
-            <Clock size={11} style={{ opacity: 0.85 }} />
+            <Clock {...ICON_PROPS} size={11} style={{ opacity: 0.85 }} />
             Waiting on
           </label>
           <WorkflowTextInput
@@ -432,7 +433,7 @@ export function WorkflowSection({ fields, onChange }: { fields: WorkflowFields; 
         {/* Next check-in */}
         <div className="flex flex-col" style={{ gap: 'var(--sp-xs, 6px)' }}>
           <label className="flex items-center" style={{ gap: 'var(--sp-xs, 6px)', fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', fontWeight: 'var(--label-weight)' }}>
-            <Clock size={11} style={{ opacity: 0.85 }} />
+            <Clock {...ICON_PROPS} size={11} style={{ opacity: 0.85 }} />
             Next check-in
           </label>
           <WorkflowDateInput value={fields.next_checkin_date ?? ''} onSave={(v) => onChange({ next_checkin_date: v })} />
@@ -440,7 +441,7 @@ export function WorkflowSection({ fields, onChange }: { fields: WorkflowFields; 
         {/* Promised to */}
         <div className="flex flex-col" style={{ gap: 'var(--sp-xs, 6px)' }}>
           <label className="flex items-center" style={{ gap: 'var(--sp-xs, 6px)', fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', fontWeight: 'var(--label-weight)' }}>
-            <Handshake size={11} style={{ opacity: 0.85 }} />
+            <Handshake {...ICON_PROPS} size={11} style={{ opacity: 0.85 }} />
             Promised to
           </label>
           <WorkflowTextInput
@@ -452,7 +453,7 @@ export function WorkflowSection({ fields, onChange }: { fields: WorkflowFields; 
         {/* Promise date */}
         <div className="flex flex-col" style={{ gap: 'var(--sp-xs, 6px)' }}>
           <label className="flex items-center" style={{ gap: 'var(--sp-xs, 6px)', fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', fontWeight: 'var(--label-weight)' }}>
-            <Handshake size={11} style={{ opacity: 0.85 }} />
+            <Handshake {...ICON_PROPS} size={11} style={{ opacity: 0.85 }} />
             By when
           </label>
           <WorkflowDateInput value={fields.promise_date ?? ''} onSave={(v) => onChange({ promise_date: v })} />
@@ -677,7 +678,7 @@ export function ProjectSelect({ value, onChange }: { value: string; onChange: (v
           opacity: current ? 1 : 0.85,
         }}
       >
-        <FolderKanban size={13} style={{ opacity: 0.85 }} />
+        <FolderKanban {...ICON_PROPS} size={13} style={{ opacity: 0.85 }} />
         {current ? current.title : 'No project'}
         <svg width="12" height="12" viewBox="0 0 12 12" style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)' }}><path d="M3 5l3 3 3-3" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
       </button>
@@ -743,7 +744,7 @@ export function ProjectSelect({ value, onChange }: { value: string; onChange: (v
                 style={{ color: 'var(--slate)', cursor: 'pointer', background: 'none', border: 'none', opacity: 0.85 }}
               >
                 No project
-                {!value && <Check size={14} style={{ color: 'var(--teal)', marginLeft: 'auto' }} />}
+                {!value && <Check {...ICON_PROPS} size={14} style={{ color: 'var(--teal)', marginLeft: 'auto' }} />}
               </button>
             )}
             {filtered.map((p, idx) => {
@@ -758,7 +759,7 @@ export function ProjectSelect({ value, onChange }: { value: string; onChange: (v
                   style={{ color: 'var(--ink)', cursor: 'pointer', background: focused ? 'var(--teal-active)' : 'none', border: 'none' }}
                 >
                   <span className="flex-1 truncate">{p.title}</span>
-                  {selected && <Check size={14} style={{ color: 'var(--teal)' }} />}
+                  {selected && <Check {...ICON_PROPS} size={14} style={{ color: 'var(--teal)' }} />}
                 </button>
               )
             })}

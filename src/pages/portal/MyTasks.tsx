@@ -60,6 +60,7 @@ const sortByOptions: { key: SortBy; label: string }[] = [
 ]
 
 import { PRIORITY_ORDER } from '../../lib/taskConstants'
+import { ICON_PROPS } from '../../lib/iconProps'
 
 export default function MyTasks() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -521,14 +522,14 @@ export default function MyTasks() {
   return (
     <div className="content-container">
       <PageHeader
-        icon={<CheckSquare size={20} />}
+        icon={<CheckSquare {...ICON_PROPS} size={20} />}
         title="Tasks"
         subtitle={
           <span className="flex items-center gap-2">
             {pendingCount} active task{pendingCount !== 1 ? 's' : ''}
             {streak >= 2 && (
               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium" style={{ backgroundColor: 'var(--gold-emphasis)', color: 'var(--gold-on-emphasis)' }}>
-                <Flame size={10} />
+                <Flame {...ICON_PROPS} size={10} />
                 {streak}d streak
               </span>
             )}
@@ -546,7 +547,7 @@ export default function MyTasks() {
               cursor: 'pointer',
             }}
           >
-            <Plus size={16} />
+            <Plus {...ICON_PROPS} size={16} />
             New Task
           </button>
         }
@@ -554,7 +555,7 @@ export default function MyTasks() {
         {/* Controls: View + Group By + Sort By */}
         <div className="flex items-center gap-3 flex-wrap">
           <ToggleButton active={view === 'list'} onClick={() => setView('list')}>
-            <List size={14} />
+            <List {...ICON_PROPS} size={14} />
             List
           </ToggleButton>
           <ViewDropdown view={view} setView={setView} views={alternateViews} />
@@ -593,7 +594,7 @@ export default function MyTasks() {
                 opacity: showCompleted ? 1 : 0.85,
               }}
             >
-              <CheckCircle2 size={10} />
+              <CheckCircle2 {...ICON_PROPS} size={10} />
               {showCompleted ? `Hide ${completedCount} done` : `Show ${completedCount} done`}
             </button>
           )}
@@ -685,7 +686,7 @@ export default function MyTasks() {
             } as React.CSSProperties}
             aria-label="Dismiss sign-in banner"
           >
-            <X size={14} />
+            <X {...ICON_PROPS} size={14} />
           </button>
         </div>
       )}
@@ -804,7 +805,7 @@ export default function MyTasks() {
           }}
           title="Jump back to Today Hero"
         >
-          <AlertTriangle size={12} />
+          <AlertTriangle {...ICON_PROPS} size={12} />
           {todayHeroLists.overdue.length} overdue
         </button>
       )}
@@ -940,7 +941,7 @@ export default function MyTasks() {
       {effectiveMode === 'now' && focusTasks.length > 0 && quickFilter === 'all' && !showCompleted && !showAllTasks && (
         <div className="mt-3">
           <div className="flex items-center gap-2 mb-2">
-            <Zap size={14} style={{ color: 'var(--gold)' }} />
+            <Zap {...ICON_PROPS} size={14} style={{ color: 'var(--gold)' }} />
             <span className="text-[10px] uppercase tracking-wider font-medium" style={{ color: 'var(--teal)' }}>
               Focus Next
             </span>
@@ -972,7 +973,7 @@ export default function MyTasks() {
       {quickFilter === 'waiting_on' && displayTasks.length > 0 && (
         <div className="mt-4 rounded-xl border p-4" style={{ borderColor: 'rgba(201,168,76,0.3)', backgroundColor: 'var(--gold-hover)' }}>
           <div className="flex items-center gap-2 mb-3">
-            <Hourglass size={14} style={{ color: 'var(--gold)' }} />
+            <Hourglass {...ICON_PROPS} size={14} style={{ color: 'var(--gold)' }} />
             <span className="text-sm font-medium" style={{ color: 'var(--ink)' }}>
               Waiting On Others
             </span>
@@ -1128,7 +1129,7 @@ function SortableFocusItem({ task, index, isPinned, onSelect, onPin, onUnpin }: 
         className="cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-40 transition-opacity flex-shrink-0"
         style={{ background: 'none', border: 'none', padding: '2px', color: 'var(--slate)' }}
       >
-        <GripVertical size={14} />
+        <GripVertical {...ICON_PROPS} size={14} />
       </button>
       <span className="text-[10px] font-medium" style={{ color: 'var(--teal)', flexShrink: 0, width: '14px', textAlign: 'center' }}>
         {index + 1}
@@ -1155,7 +1156,7 @@ function SortableFocusItem({ task, index, isPinned, onSelect, onPin, onUnpin }: 
         style={{ background: 'none', border: 'none', cursor: 'pointer', color: isPinned ? 'var(--teal)' : 'var(--slate)', minHeight: 44, minWidth: 44, flexShrink: 0 }}
         title={isPinned ? 'Unpin from focus' : 'Pin to focus'}
       >
-        {isPinned ? <X size={14} /> : <Pin size={14} />}
+        {isPinned ? <X {...ICON_PROPS} size={14} /> : <Pin {...ICON_PROPS} size={14} />}
       </button>
     </div>
   )
@@ -1344,7 +1345,7 @@ function ViewDropdown({ view, setView, views }: { view: ViewMode; setView: (v: V
       >
         {currentView && <CurrentIcon size={13} />}
         {currentView ? currentView.label : 'More views'}
-        <ChevronDown size={12} />
+        <ChevronDown {...ICON_PROPS} size={12} />
       </button>
 
       {open && (

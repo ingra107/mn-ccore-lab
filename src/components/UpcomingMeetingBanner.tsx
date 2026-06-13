@@ -6,6 +6,7 @@ import { getMeetingFacilitator } from '../lib/facilitator'
 import { localDateKey } from '../lib/dateUtils'
 import { getPersonInfo } from '../data/team'
 import { PATHS } from '../constants/paths'
+import { ICON_PROPS } from '../lib/iconProps'
 
 export default function UpcomingMeetingBanner() {
   const { data: meetings = [] } = useMeetingsApi()
@@ -155,7 +156,7 @@ export default function UpcomingMeetingBanner() {
                 >
                   View Meeting
                 </span>
-                <ArrowRight
+                <ArrowRight {...ICON_PROPS}
                   size={16}
                   className="transition-transform duration-200 group-hover:translate-x-1"
                   style={{ color: 'var(--gold)' }}

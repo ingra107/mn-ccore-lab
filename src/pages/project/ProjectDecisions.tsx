@@ -5,6 +5,7 @@ import { useDecisions } from '../../hooks/useApiData'
 import type { DecisionRow } from '../../hooks/useApiData'
 import { formatMediumDate } from '../../lib/dateUtils'
 import { PATHS } from '../../constants/paths'
+import { ICON_PROPS } from '../../lib/iconProps'
 
 interface ProjectDecisionsProps {
   projectSlug: string
@@ -32,7 +33,7 @@ export default function ProjectDecisions({ projectSlug }: ProjectDecisionsProps)
             margin: 0,
           }}
         >
-          <Scale size={16} style={{ display: 'inline', marginRight: '6px', verticalAlign: '-2px', color: 'var(--gold)' }} />
+          <Scale {...ICON_PROPS} size={16} style={{ display: 'inline', marginRight: '6px', verticalAlign: '-2px', color: 'var(--gold)' }} />
           Decisions
         </h2>
         <Link
@@ -65,7 +66,7 @@ export default function ProjectDecisions({ projectSlug }: ProjectDecisionsProps)
               }}
             >
               <div className="flex items-center gap-2 mb-1">
-                <Scale size={12} style={{ color: 'var(--gold)', flexShrink: 0 }} />
+                <Scale {...ICON_PROPS} size={12} style={{ color: 'var(--gold)', flexShrink: 0 }} />
                 <span
                   style={{
                     fontSize: 'var(--value-size)',

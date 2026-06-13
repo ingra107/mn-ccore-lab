@@ -3,6 +3,7 @@ import { BookOpen, Link2, X, Plus, Search, Loader2, CheckCircle2 } from 'lucide-
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useProjectPapers, usePublications } from '../../hooks/useApiData'
 import { useUnlinkPaper, useLinkPaper } from '../../hooks/useMutations'
+import { ICON_PROPS } from '../../lib/iconProps'
 
 interface ProjectLiteratureProps {
   projectSlug: string
@@ -18,7 +19,7 @@ export default function ProjectLiterature({ projectSlug, isPi }: ProjectLiteratu
   return (
     <div style={{ marginBottom: '2.5rem' }}>
       <div className="flex items-center gap-2 mb-3">
-        <BookOpen size={16} style={{ color: 'var(--gold)' }} />
+        <BookOpen {...ICON_PROPS} size={16} style={{ color: 'var(--gold)' }} />
         <h2
           style={{
             fontWeight: 'var(--label-weight)',
@@ -50,7 +51,7 @@ export default function ProjectLiterature({ projectSlug, isPi }: ProjectLiteratu
               opacity: 0.8,
             }}
           >
-            <Plus size={12} />
+            <Plus {...ICON_PROPS} size={12} />
             Link Paper
           </button>
         )}
@@ -133,7 +134,7 @@ export default function ProjectLiterature({ projectSlug, isPi }: ProjectLiteratu
                       }}
                       title="View via DOI"
                     >
-                      <Link2 size={11} />
+                      <Link2 {...ICON_PROPS} size={11} />
                       DOI
                     </a>
                   )}
@@ -149,7 +150,7 @@ export default function ProjectLiterature({ projectSlug, isPi }: ProjectLiteratu
                       }}
                       title="Remove link"
                     >
-                      <X size={12} />
+                      <X {...ICON_PROPS} size={12} />
                     </button>
                   )}
                 </div>
@@ -284,7 +285,7 @@ function LinkPaperModal({ projectSlug, linkedPaperIds, onLink, onClose }: {
               marginBottom: '-1px',
             }}
           >
-            <Search size={13} />
+            <Search {...ICON_PROPS} size={13} />
             Search Existing
           </button>
           <button
@@ -297,18 +298,18 @@ function LinkPaperModal({ projectSlug, linkedPaperIds, onLink, onClose }: {
               marginBottom: '-1px',
             }}
           >
-            <Link2 size={13} />
+            <Link2 {...ICON_PROPS} size={13} />
             Add by DOI
           </button>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: 'var(--sp-sm) var(--sp-md)' }}>
-            <X size={16} />
+            <X {...ICON_PROPS} size={16} />
           </button>
         </div>
 
         {/* Search tab */}
         <div style={{ display: tab === 'search' ? 'flex' : 'none', flexDirection: 'column', flex: 1, minHeight: 0 }}>
           <div className="flex items-center gap-2 px-4 py-2.5 border-b" style={{ borderColor: 'var(--border-subtle)' }}>
-            <Search size={14} style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }} />
+            <Search {...ICON_PROPS} size={14} style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }} />
             <input
               autoFocus={tab === 'search'}
               value={search}
@@ -381,7 +382,7 @@ function LinkPaperModal({ projectSlug, linkedPaperIds, onLink, onClose }: {
                 opacity: doiLoading || !doi.trim() ? 0.85 : 1,
               }}
             >
-              {doiLoading ? <Loader2 size={14} className="animate-spin" /> : null}
+              {doiLoading ? <Loader2 {...ICON_PROPS} size={14} className="animate-spin" /> : null}
               Auto-Fill
             </button>
           </div>
@@ -393,7 +394,7 @@ function LinkPaperModal({ projectSlug, linkedPaperIds, onLink, onClose }: {
           {doiData && (
             <div className="flex flex-col gap-2 p-3 rounded-lg" style={{ backgroundColor: 'var(--ice)', border: '1px solid var(--border-subtle)' }}>
               <div className="flex items-center gap-2 mb-1">
-                <CheckCircle2 size={14} style={{ color: 'var(--green)' }} />
+                <CheckCircle2 {...ICON_PROPS} size={14} style={{ color: 'var(--green)' }} />
                 <span className="text-[11px] font-medium" style={{ color: 'var(--green)' }}>Citation found</span>
               </div>
               <p style={{ fontSize: 'var(--value-size)', color: 'var(--ink)', margin: 0, fontWeight: 'var(--label-weight)', lineHeight: 1.4 }}>
@@ -421,7 +422,7 @@ function LinkPaperModal({ projectSlug, linkedPaperIds, onLink, onClose }: {
                   opacity: createAndLink.isPending ? 0.85 : 1,
                 }}
               >
-                <Plus size={14} />
+                <Plus {...ICON_PROPS} size={14} />
                 {createAndLink.isPending ? 'Adding...' : 'Add & Link to Project'}
               </button>
             </div>

@@ -5,6 +5,7 @@ import {
 import CollapsibleSection from '../../CollapsibleSection'
 import { useTasks } from '../../../hooks/useApiData'
 import type { TaskRow } from '../../../lib/api'
+import { ICON_PROPS } from '../../../lib/iconProps'
 
 // ── Helpers ─────────────────────────────────────────────────
 
@@ -66,7 +67,7 @@ export function TaskDependenciesSection({ task, onFieldUpdate, onOpenTask }: { t
   return (
     <CollapsibleSection
       title="Dependencies"
-      icon={<Link2 size={11} style={{ color: hasBlockers ? 'var(--maroon)' : 'var(--slate)', opacity: hasBlockers ? 1 : 0.85 }} />}
+      icon={<Link2 {...ICON_PROPS} size={11} style={{ color: hasBlockers ? 'var(--maroon)' : 'var(--slate)', opacity: hasBlockers ? 1 : 0.85 }} />}
       badge={hasBlockers ? `${blockerTasks.length} blocker${blockerTasks.length > 1 ? 's' : ''}` : null}
       defaultOpen={hasBlockers || hasBlocking}
       storageKey={`task-deps-${task.id}`}
@@ -75,7 +76,7 @@ export function TaskDependenciesSection({ task, onFieldUpdate, onOpenTask }: { t
         {/* Blocked by section */}
         <div>
           <label className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider mb-1.5" style={{ color: 'var(--maroon)', opacity: 0.85 }}>
-            <AlertTriangle size={10} />
+            <AlertTriangle {...ICON_PROPS} size={10} />
             Blocked by
           </label>
 
@@ -83,7 +84,7 @@ export function TaskDependenciesSection({ task, onFieldUpdate, onOpenTask }: { t
             <div className="flex flex-col gap-1 mb-2">
               {blockerTasks.map(bt => (
                 <div key={bt.id} className="flex items-center gap-2 py-1.5 px-2 -mx-1 rounded group hover:bg-black/[0.02] dark:hover:bg-white/[0.04] transition-colors">
-                  <Link2 size={12} style={{ color: 'var(--teal)', flexShrink: 0, opacity: 0.85 }} />
+                  <Link2 {...ICON_PROPS} size={12} style={{ color: 'var(--teal)', flexShrink: 0, opacity: 0.85 }} />
                   <button
                     onClick={() => onOpenTask(bt)}
                     className="flex-1 min-w-0 text-left truncate text-sm"
@@ -103,7 +104,7 @@ export function TaskDependenciesSection({ task, onFieldUpdate, onOpenTask }: { t
                     style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, color: 'var(--slate)', flexShrink: 0 }}
                     title="Remove blocker"
                   >
-                    <X size={12} />
+                    <X {...ICON_PROPS} size={12} />
                   </button>
                 </div>
               ))}
@@ -137,7 +138,7 @@ export function TaskDependenciesSection({ task, onFieldUpdate, onOpenTask }: { t
                 opacity: 0.8,
               }}
             >
-              <Plus size={12} />
+              <Plus {...ICON_PROPS} size={12} />
               Add blocker
             </button>
           )}
@@ -147,13 +148,13 @@ export function TaskDependenciesSection({ task, onFieldUpdate, onOpenTask }: { t
         {hasBlocking && (
           <div>
             <label className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider mb-1.5" style={{ color: 'var(--gold)', opacity: 0.85 }}>
-              <Ban size={10} />
+              <Ban {...ICON_PROPS} size={10} />
               Blocks
             </label>
             <div className="flex flex-col gap-1">
               {blockingTasks.map(bt => (
                 <div key={bt.id} className="flex items-center gap-2 py-1.5 px-2 -mx-1 rounded hover:bg-black/[0.02] dark:hover:bg-white/[0.04] transition-colors">
-                  <Link2 size={12} style={{ color: 'var(--gold)', flexShrink: 0, opacity: 0.85 }} />
+                  <Link2 {...ICON_PROPS} size={12} style={{ color: 'var(--gold)', flexShrink: 0, opacity: 0.85 }} />
                   <button
                     onClick={() => onOpenTask(bt)}
                     className="flex-1 min-w-0 text-left truncate text-sm"
@@ -214,7 +215,7 @@ function BlockerSearchDropdown({ currentTaskId, excludeIds, allTasks, onSelect, 
   return (
     <div ref={ref} className="relative">
       <div className="flex items-center gap-2 rounded-md border px-2.5 py-1.5" style={{ borderColor: 'var(--teal)', background: 'var(--teal-hover)' }}>
-        <Search size={13} style={{ color: 'var(--teal)', opacity: 'var(--ink-label)', flexShrink: 0 }} />
+        <Search {...ICON_PROPS} size={13} style={{ color: 'var(--teal)', opacity: 'var(--ink-label)', flexShrink: 0 }} />
         <input
           ref={inputRef}
           type="text"
@@ -231,7 +232,7 @@ function BlockerSearchDropdown({ currentTaskId, excludeIds, allTasks, onSelect, 
           style={{ color: 'var(--ink)', border: 'none' }}
         />
         <button onClick={onClose} aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: 'var(--sp-xs)', minHeight: 44, minWidth: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
-          <X size={14} />
+          <X {...ICON_PROPS} size={14} />
         </button>
       </div>
 
@@ -247,7 +248,7 @@ function BlockerSearchDropdown({ currentTaskId, excludeIds, allTasks, onSelect, 
               className="flex items-center gap-2 w-full px-3 py-2 text-left text-sm transition-colors hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
               style={{ color: 'var(--ink)', cursor: 'pointer', background: 'none', border: 'none' }}
             >
-              <Link2 size={12} style={{ color: 'var(--teal)', opacity: 'var(--ink-label)', flexShrink: 0 }} />
+              <Link2 {...ICON_PROPS} size={12} style={{ color: 'var(--teal)', opacity: 'var(--ink-label)', flexShrink: 0 }} />
               <span className="flex-1 truncate">{t.title || t.description}</span>
               <span className="text-[10px] flex-shrink-0" style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
                 {t.assignee}

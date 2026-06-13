@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { X } from 'lucide-react'
 import type { Publication } from '../data/types'
+import { ICON_PROPS } from '../lib/iconProps'
 
 const TOPIC_DISPLAY: Record<string, string> = {
   clif: 'CLIF',
@@ -157,7 +158,7 @@ export default function PublicationFilters({
                 transitionDuration: '150ms',
               }}
             >
-              <X size={12} aria-hidden="true" />
+              <X {...ICON_PROPS} size={12} aria-hidden="true" />
               Clear filters
             </motion.button>
           )}

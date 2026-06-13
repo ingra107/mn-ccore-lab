@@ -4,6 +4,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { Moon, GripVertical, Circle, Plus } from 'lucide-react'
 import { motion } from 'framer-motion'
 import DueLabel from '../DueLabel'
+import { ICON_PROPS } from '../../lib/iconProps'
 
 interface EveningTask {
   id: string
@@ -46,7 +47,7 @@ function SortableEveningItem({ task, onComplete, onClickTitle }: {
       >
         {/* Drag handle */}
         <div {...listeners} style={{ cursor: 'grab', touchAction: 'none' }}>
-          <GripVertical size={14} style={{ color: 'var(--slate)', opacity: 0.75 }} />
+          <GripVertical {...ICON_PROPS} size={14} style={{ color: 'var(--slate)', opacity: 0.75 }} />
         </div>
 
         {/* Complete */}
@@ -55,7 +56,7 @@ function SortableEveningItem({ task, onComplete, onClickTitle }: {
           className="flex-shrink-0 hover:scale-110 transition-transform"
           style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
         >
-          <Circle size={16} style={{ color: 'var(--slate)', opacity: 0.75 }} />
+          <Circle {...ICON_PROPS} size={16} style={{ color: 'var(--slate)', opacity: 0.75 }} />
         </button>
 
         {/* Title */}
@@ -102,7 +103,7 @@ export default function EveningTaskSlot({ tasks, onComplete, onClickTitle, onAdd
       </div>
 
       <div className="flex items-center gap-2 mb-2">
-        <Moon size={13} style={{ color: 'var(--gold)', opacity: 0.85 }} />
+        <Moon {...ICON_PROPS} size={13} style={{ color: 'var(--gold)', opacity: 0.85 }} />
         <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--gold)', opacity: 0.85 }}>
           This Evening
         </span>
@@ -146,7 +147,7 @@ export default function EveningTaskSlot({ tasks, onComplete, onClickTitle, onAdd
           }}
           whileHover={{ backgroundColor: 'var(--gold-hover)' }}
         >
-          <Plus size={12} style={{ color: 'var(--gold)', opacity: 0.85 }} />
+          <Plus {...ICON_PROPS} size={12} style={{ color: 'var(--gold)', opacity: 0.85 }} />
           <span style={{ fontSize: '11px', color: 'var(--gold)', opacity: 0.85 }}>
             Defer to evening
           </span>

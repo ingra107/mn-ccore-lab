@@ -39,6 +39,7 @@ import { useLabPrefs } from '../../hooks/useLabPrefs'
 import { toApiStage, stageIndex } from '../../lib/stageNormalize'
 import { PATHS } from '../../constants/paths'
 import { parseDbUtc } from '../../lib/time'
+import { ICON_PROPS } from '../../lib/iconProps'
 
 // S4 (Nick, 2026-06-09): a manuscript = a project whose canonical stage is
 // >= writing (writing / submitted / revisions / accepted / published). The
@@ -346,7 +347,7 @@ export default function ManuscriptsPage() {
   return (
     <>
       <DataPage
-        icon={<FileText size={20} />}
+        icon={<FileText {...ICON_PROPS} size={20} />}
         title="Manuscripts"
         count={activeCount}
         actions={
@@ -363,14 +364,14 @@ export default function ManuscriptsPage() {
               transition: 'background var(--duration-fast) ease-out',
             }}
           >
-            <Plus size={14} />
+            <Plus {...ICON_PROPS} size={14} />
             New Manuscript
           </button>
         }
         views={[
-          { key: 'list', icon: <List size={14} />, label: 'List' },
-          { key: 'pipeline', icon: <GitBranch size={14} />, label: 'Pipeline' },
-          { key: 'trophy', icon: <BookOpen size={14} />, label: 'Trophy' },
+          { key: 'list', icon: <List {...ICON_PROPS} size={14} />, label: 'List' },
+          { key: 'pipeline', icon: <GitBranch {...ICON_PROPS} size={14} />, label: 'Pipeline' },
+          { key: 'trophy', icon: <BookOpen {...ICON_PROPS} size={14} />, label: 'Trophy' },
         ]}
         activeView={view}
         onViewChange={(v) => setView(v as 'list' | 'pipeline' | 'trophy')}
@@ -814,7 +815,7 @@ export default function ManuscriptsPage() {
                           className="inline-flex items-center gap-1 text-[11px] mt-2"
                           style={{ color: 'var(--teal)', textDecoration: 'none' }}
                         >
-                          <ExternalLink size={11} />
+                          <ExternalLink {...ICON_PROPS} size={11} />
                           DOI
                         </a>
                       )}

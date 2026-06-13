@@ -13,6 +13,7 @@ import type { HoverCardData } from './HoverCard'
 import { useHoverCard } from '../hooks/useHoverCard'
 import { usePublications, useActionItems, useProjects } from '../hooks/useApiData'
 import { PATHS } from '../constants/paths'
+import { ICON_PROPS } from '../lib/iconProps'
 
 interface Props {
   slug: string
@@ -44,7 +45,7 @@ export default function MenteeDashboard({ slug, name }: Props) {
         {/* Projects card */}
         <div className="card p-4" style={{ borderRadius: 'var(--radius-xl)' }}>
           <div className="flex items-center gap-2 mb-3">
-            <FlaskConical size={14} style={{ color: 'var(--teal)' }} />
+            <FlaskConical {...ICON_PROPS} size={14} style={{ color: 'var(--teal)' }} />
             <span style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
               Projects
             </span>
@@ -70,7 +71,7 @@ export default function MenteeDashboard({ slug, name }: Props) {
         {/* Action Items card */}
         <div className="card p-4" style={{ borderRadius: 'var(--radius-xl)' }}>
           <div className="flex items-center gap-2 mb-3">
-            <ListChecks size={14} style={{ color: 'var(--gold)' }} />
+            <ListChecks {...ICON_PROPS} size={14} style={{ color: 'var(--gold)' }} />
             <span style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
               Action Items
             </span>
@@ -86,7 +87,7 @@ export default function MenteeDashboard({ slug, name }: Props) {
                 const isOverdue = item.due_date && new Date(item.due_date) < new Date()
                 return (
                   <div key={item.id} className="flex items-start gap-1.5">
-                    <Circle size={10} style={{ color: isOverdue ? 'var(--maroon)' : 'var(--slate)', opacity: 0.85, marginTop: '3px', flexShrink: 0 }} />
+                    <Circle {...ICON_PROPS} size={10} style={{ color: isOverdue ? 'var(--maroon)' : 'var(--slate)', opacity: 0.85, marginTop: '3px', flexShrink: 0 }} />
                     <span style={{ fontSize: '11px', color: 'var(--ink)', lineHeight: 1.3 }}>
                       {item.description.length > 60 ? item.description.slice(0, 57) + '...' : item.description}
                     </span>
@@ -96,7 +97,7 @@ export default function MenteeDashboard({ slug, name }: Props) {
             </div>
           ) : (
             <div className="flex items-center gap-1.5">
-              <CheckCircle2 size={12} style={{ color: 'var(--teal)' }} />
+              <CheckCircle2 {...ICON_PROPS} size={12} style={{ color: 'var(--teal)' }} />
               <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.75 }}>
                 All caught up ({myCompleted.length} done)
               </span>
@@ -107,7 +108,7 @@ export default function MenteeDashboard({ slug, name }: Props) {
         {/* Publications card */}
         <div className="card p-4" style={{ borderRadius: 'var(--radius-xl)' }}>
           <div className="flex items-center gap-2 mb-3">
-            <BookOpen size={14} style={{ color: 'var(--gold)' }} />
+            <BookOpen {...ICON_PROPS} size={14} style={{ color: 'var(--gold)' }} />
             <span style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
               Publications
             </span>
@@ -123,7 +124,7 @@ export default function MenteeDashboard({ slug, name }: Props) {
           {myPubs.length > 0 && (
             <Link to="/publications" className="inline-flex items-center gap-1 mt-2"
               style={{ fontSize: '10px', color: 'var(--gold)', textDecoration: 'none' }}>
-              View all <ArrowRight size={9} />
+              View all <ArrowRight {...ICON_PROPS} size={9} />
             </Link>
           )}
         </div>
@@ -131,7 +132,7 @@ export default function MenteeDashboard({ slug, name }: Props) {
         {/* Activity summary card */}
         <div className="card p-4" style={{ borderRadius: 'var(--radius-xl)' }}>
           <div className="flex items-center gap-2 mb-3">
-            <TrendingUp size={14} style={{ color: 'var(--teal)' }} />
+            <TrendingUp {...ICON_PROPS} size={14} style={{ color: 'var(--teal)' }} />
             <span style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
               Summary
             </span>

@@ -7,6 +7,7 @@ import { emailToSlug } from '../lib/emailSlug'
 import { useNotifications, useUnreadCount, useMarkRead, useMarkAllRead } from '../hooks/useNotifications'
 import { formatRelativeTime, formatMediumDate, localDateKey } from '../lib/dateUtils'
 import { PATHS } from '../constants/paths'
+import { ICON_PROPS } from '../lib/iconProps'
 
 const TYPE_ICONS: Record<string, typeof Bell> = {
   mention: AtSign,
@@ -107,7 +108,7 @@ export default function NotificationBell({ align = 'right' }: { align?: 'left' |
         style={{ color: 'var(--slate)' }}
         aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
       >
-        <Bell size={18} />
+        <Bell {...ICON_PROPS} size={18} />
         {unreadCount > 0 && (
           <span
             style={{
@@ -190,7 +191,7 @@ export default function NotificationBell({ align = 'right' }: { align?: 'left' |
                     '--hov-bg': 'var(--gold-emphasis)',
                   } as React.CSSProperties}
                 >
-                  <CheckCheck size={11} />
+                  <CheckCheck {...ICON_PROPS} size={11} />
                   Mark all read
                 </button>
               )}

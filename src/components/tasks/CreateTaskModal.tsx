@@ -10,6 +10,7 @@ import { Button } from '../ui/Button'
 import BottomSheet from '../BottomSheet'
 import { useIsMobile } from '../../hooks/useIsMobile'
 import { todayCivil } from '../../lib/time'
+import { ICON_PROPS } from '../../lib/iconProps'
 
 interface CreateTaskModalProps {
   open: boolean
@@ -307,7 +308,7 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
           {/* Autofill suggestion chips */}
           {visibleSuggestions.length > 0 && (
             <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
-              <Sparkles size={12} style={{ color: 'var(--teal)', opacity: 0.85, flexShrink: 0 }} />
+              <Sparkles {...ICON_PROPS} size={12} style={{ color: 'var(--teal)', opacity: 0.85, flexShrink: 0 }} />
               {visibleSuggestions.map((s) => (
                 <button
                   key={s.field}
@@ -523,7 +524,7 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
             aria-label="Close"
             style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: 'var(--sp-xs)' }}
           >
-            <X size={18} />
+            <X {...ICON_PROPS} size={18} />
           </button>
         </div>
         {formBody}

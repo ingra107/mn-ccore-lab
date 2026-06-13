@@ -26,6 +26,7 @@ import { formatMediumDate } from '../lib/dateUtils'
 import Avatar from '../components/Avatar'
 import PageHeader from '../components/PageHeader'
 import HeartbeatLine from '../components/HeartbeatLine'
+import { ICON_PROPS } from '../lib/iconProps'
 
 type StatusFilter = 'all' | 'new' | 'saved'
 
@@ -214,7 +215,7 @@ function PaperCard({ paper, projects, commentCount }: { paper: DigestPaper; proj
                 style={{ color: 'var(--teal)' }}
                 title="View via DOI"
               >
-                <Link2 size={11} />
+                <Link2 {...ICON_PROPS} size={11} />
                 DOI
               </a>
             )}
@@ -312,7 +313,7 @@ function PaperCard({ paper, projects, commentCount }: { paper: DigestPaper; proj
                   padding: 0,
                 }}
               >
-                {expanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                {expanded ? <ChevronUp {...ICON_PROPS} size={12} /> : <ChevronDown {...ICON_PROPS} size={12} />}
                 {expanded ? 'Hide abstract' : 'Show abstract'}
               </button>
               {expanded && (
@@ -348,7 +349,7 @@ function PaperCard({ paper, projects, commentCount }: { paper: DigestPaper; proj
             title={isSaved ? 'Unsave' : 'Save paper'}
             aria-label={isSaved ? 'Unsave paper' : 'Save paper'}
           >
-            {isSaved ? <BookmarkCheck size={18} /> : <Bookmark size={18} />}
+            {isSaved ? <BookmarkCheck {...ICON_PROPS} size={18} /> : <Bookmark {...ICON_PROPS} size={18} />}
           </button>
           <button
             onClick={handleDismiss}
@@ -366,7 +367,7 @@ function PaperCard({ paper, projects, commentCount }: { paper: DigestPaper; proj
             title={isDismissed ? 'Restore' : 'Dismiss paper'}
             aria-label={isDismissed ? 'Restore paper' : 'Dismiss paper'}
           >
-            <X size={18} />
+            <X {...ICON_PROPS} size={18} />
           </button>
           <button
             onClick={() => setShowComments(!showComments)}
@@ -385,7 +386,7 @@ function PaperCard({ paper, projects, commentCount }: { paper: DigestPaper; proj
             title="Comments"
             aria-label={`${commentCount || 0} comments`}
           >
-            <MessageCircle size={18} />
+            <MessageCircle {...ICON_PROPS} size={18} />
             {(commentCount ?? 0) > 0 && (
               <span
                 style={{
@@ -426,7 +427,7 @@ function PaperCard({ paper, projects, commentCount }: { paper: DigestPaper; proj
               title="Link to project"
               aria-label="Link paper to a project"
             >
-              {linkSuccess ? <Check size={18} /> : <FolderPlus size={18} />}
+              {linkSuccess ? <Check {...ICON_PROPS} size={18} /> : <FolderPlus {...ICON_PROPS} size={18} />}
             </button>
             {showLinkPicker && projects.length > 0 && (
               <div
@@ -570,7 +571,7 @@ function PaperCard({ paper, projects, commentCount }: { paper: DigestPaper; proj
               }}
               aria-label="Submit comment"
             >
-              <Send size={14} />
+              <Send {...ICON_PROPS} size={14} />
             </button>
           </form>
         </div>
@@ -747,7 +748,7 @@ export default function Digest() {
       {/* Header — compact PageHeader replaces oversized hero (H-02, H-03) */}
       <section className="content-container">
         <PageHeader
-          icon={<Newspaper size={20} />}
+          icon={<Newspaper {...ICON_PROPS} size={20} />}
           title="Research Digest"
           subtitle="Daily PubMed papers relevant to MNCCORE research"
           count={statusCounts.all || undefined}
@@ -817,7 +818,7 @@ export default function Digest() {
 
           {/* Search within papers */}
           <div className="mb-4 relative">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--slate)', opacity: 0.75 }} />
+            <Search {...ICON_PROPS} size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--slate)', opacity: 0.75 }} />
             <input
               type="text"
               value={searchQuery}
@@ -885,7 +886,7 @@ export default function Digest() {
                   transition: 'background-color var(--duration-normal) var(--ease-out), color var(--duration-normal) var(--ease-out), border-color var(--duration-normal) var(--ease-out)',
                 }}
               >
-                <User size={12} />
+                <User {...ICON_PROPS} size={12} />
                 For You
                 <span
                   style={{
@@ -925,7 +926,7 @@ export default function Digest() {
                 style={{ color: 'var(--slate)', background: 'none', border: '1px solid var(--border-subtle)', cursor: 'pointer', opacity: 0.85 }}
                 title="Copy saved papers as bibliography"
               >
-                <Copy size={10} />
+                <Copy {...ICON_PROPS} size={10} />
                 Copy reading list
               </button>
             )}

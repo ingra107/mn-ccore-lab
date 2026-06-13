@@ -7,6 +7,7 @@ import {
 import { useScrollRevealGroup } from '../hooks/useScrollReveal'
 import SectionDivider from '../components/SectionDivider'
 import { usePageMeta } from '../hooks/usePageMeta'
+import { ICON_PROPS } from '../lib/iconProps'
 
 const affiliateLinks = [
   { label: 'CLIF Consortium', href: 'https://clif-icu.com/' },
@@ -62,7 +63,7 @@ export default function Contact() {
           <div>
             <div className="fade-in-up card p-4 sm:p-6 mb-6">
               <div className="flex items-start gap-4 mb-6">
-                <MapPin
+                <MapPin {...ICON_PROPS}
                   size={20}
                   className="flex-shrink-0 mt-0.5"
                   style={{ color: 'var(--gold)' }}
@@ -97,7 +98,7 @@ export default function Contact() {
               </div>
 
               <div className="flex items-start gap-4">
-                <Mail
+                <Mail {...ICON_PROPS}
                   size={20}
                   className="flex-shrink-0 mt-0.5"
                   style={{ color: 'var(--gold)' }}
@@ -173,7 +174,7 @@ export default function Contact() {
                     >
                       {link.label}
                     </span>
-                    <ExternalLink
+                    <ExternalLink {...ICON_PROPS}
                       size={14}
                       className="opacity-0 group-hover:opacity-100 transition-opacity duration-200"
                       style={{ color: 'var(--gold)' }}

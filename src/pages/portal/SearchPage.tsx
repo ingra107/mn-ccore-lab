@@ -22,6 +22,7 @@ import { PATHS } from '../../constants/paths'
 import { formatRelativeTime } from '../../lib/dateUtils'
 import { parseDbUtc } from '../../lib/time'
 import { getPersonInfo, getAllMembers } from '../../data/team'
+import { ICON_PROPS } from '../../lib/iconProps'
 
 interface SearchResult {
   id: string
@@ -168,7 +169,7 @@ function TypeBadge({ result }: { result: SearchResult }) {
           flexShrink: 0,
         }}
       >
-        <Calendar size={9} />
+        <Calendar {...ICON_PROPS} size={9} />
         {d.date}
       </span>
     )
@@ -475,7 +476,7 @@ export default function SearchPage() {
 
   return (
     <PageContainer>
-      <PageHeader icon={<Search size={20} />} title="Search" subtitle="Find anything across the lab" />
+      <PageHeader icon={<Search {...ICON_PROPS} size={20} />} title="Search" subtitle="Find anything across the lab" />
 
       {/* S-04: sticky search input + chips so input stays visible during scroll. */}
       <div
@@ -495,7 +496,7 @@ export default function SearchPage() {
         }}
       >
         <div className="relative">
-          <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: 'var(--slate)', opacity: 0.75 }} />
+          <Search {...ICON_PROPS} size={18} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: 'var(--slate)', opacity: 0.75 }} />
           <input
             ref={inputRef}
             type="text"
@@ -519,7 +520,7 @@ export default function SearchPage() {
               style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', opacity: 0.75 }}
               aria-label="Clear search"
             >
-              <X size={16} />
+              <X {...ICON_PROPS} size={16} />
             </button>
           )}
         </div>
@@ -696,7 +697,7 @@ export default function SearchPage() {
               className="text-[10px] flex items-center gap-1 transition-colors"
               style={{ color: 'var(--slate)', opacity: 0.75, background: 'none', border: 'none', cursor: 'pointer' }}
             >
-              <Trash2 size={9} /> Clear
+              <Trash2 {...ICON_PROPS} size={9} /> Clear
             </button>
           </div>
           <div className="flex flex-wrap gap-1.5">
@@ -711,7 +712,7 @@ export default function SearchPage() {
                   className="flex items-center gap-1"
                   style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', padding: 0 }}
                 >
-                  <Clock size={10} style={{ opacity: 0.85 }} />
+                  <Clock {...ICON_PROPS} size={10} style={{ opacity: 0.85 }} />
                   {s}
                 </button>
                 <button
@@ -719,7 +720,7 @@ export default function SearchPage() {
                   aria-label={`Remove "${s}" from recent searches`}
                   style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', opacity: 0.55, padding: 0, marginLeft: 2 }}
                 >
-                  <X size={10} />
+                  <X {...ICON_PROPS} size={10} />
                 </button>
               </span>
             ))}
@@ -878,7 +879,7 @@ function ResultRow({ item, tokens }: { item: SearchResult; tokens: string[] }) {
             </p>
           ) : null}
         </div>
-        <ArrowRight size={14} style={{ color: 'var(--slate)', opacity: 0.75, flexShrink: 0, marginTop: 4 }} />
+        <ArrowRight {...ICON_PROPS} size={14} style={{ color: 'var(--slate)', opacity: 0.75, flexShrink: 0, marginTop: 4 }} />
       </Link>
     </motion.div>
   )

@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { ArrowRight } from 'lucide-react'
 import { usePublications } from '../hooks/useApiData'
+import { ICON_PROPS } from '../lib/iconProps'
 
 function statusBadgeClass(status: string): string {
   switch (status) {
@@ -140,7 +141,7 @@ export default function FeaturedResearch() {
                   }}
                 >
                   Read more
-                  <ArrowRight size={14} aria-hidden="true" />
+                  <ArrowRight {...ICON_PROPS} size={14} aria-hidden="true" />
                 </Link>
               </div>
             </div>
@@ -158,7 +159,7 @@ export default function FeaturedResearch() {
             }}
           >
             View all {totalCount} publications
-            <ArrowRight size={16} aria-hidden="true" />
+            <ArrowRight {...ICON_PROPS} size={16} aria-hidden="true" />
           </Link>
         </div>
       </div>

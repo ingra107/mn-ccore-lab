@@ -5,6 +5,7 @@ import { useAuth } from '../../hooks/useAuth'
 import { emailToSlug } from '../../lib/emailSlug'
 import BentoCard from './BentoCard'
 import DueLabel from '../DueLabel'
+import { ICON_PROPS } from '../../lib/iconProps'
 
 /**
  * "Quick Wins" — tasks that are close to done or low-effort.
@@ -55,7 +56,7 @@ export default function QuickWinsCard() {
               key={task.id}
               className="flex items-center gap-2 px-2 py-1.5 rounded-lg transition-colors hover:bg-black/[0.03] dark:hover:bg-white/[0.03]"
             >
-              <Zap size={12} style={{ color: 'var(--gold)', flexShrink: 0 }} />
+              <Zap {...ICON_PROPS} size={12} style={{ color: 'var(--gold)', flexShrink: 0 }} />
               <span className="text-[12px] truncate flex-1" style={{ color: 'var(--ink)' }}>
                 {task.title || task.description}
               </span>

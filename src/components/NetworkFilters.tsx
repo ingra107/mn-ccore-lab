@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { Filter, X } from 'lucide-react'
 import type { Publication } from '../data/types'
+import { ICON_PROPS } from '../lib/iconProps'
 
 const TOPIC_DISPLAY: Record<string, string> = {
   clif: 'CLIF',
@@ -117,7 +118,7 @@ export default function NetworkFilters({
       }}
     >
       {/* Filter icon */}
-      <Filter
+      <Filter {...ICON_PROPS}
         size={14}
         style={{ color: 'rgba(201, 168, 76, 0.5)', flexShrink: 0 }}
       />
@@ -258,7 +259,7 @@ export default function NetworkFilters({
             border: '1px solid rgba(201, 168, 76, 0.15)',
           }}
         >
-          <X size={10} />
+          <X {...ICON_PROPS} size={10} />
           Clear
         </motion.button>
       )}

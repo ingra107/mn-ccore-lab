@@ -4,6 +4,7 @@ import { FolderKanban, Clock, Flag, Circle, CheckCircle2, Ban, BookOpen } from '
 import { getPersonInfo } from '../data/team'
 import { formatRelativeTime } from '../lib/dateUtils'
 import { STATUS_CONFIG, PRIORITY_CONFIG, STAGE_COLORS } from '../lib/taskConstants'
+import { ICON_PROPS } from '../lib/iconProps'
 
 // ── Types ────────────────────────────────────────────────────
 
@@ -141,7 +142,7 @@ function PriorityDot({ priority }: { priority: string }) {
       className="inline-flex items-center gap-1 text-[11px] capitalize"
       style={{ color, fontWeight: 400 }}
     >
-      <Flag size={10} />
+      <Flag {...ICON_PROPS} size={10} />
       {priority}
     </span>
   )
@@ -155,7 +156,7 @@ function ProjectContent({ data }: { data: ProjectCardData }) {
     <div className="flex flex-col gap-2.5">
       {/* Title row */}
       <div className="flex items-start gap-2">
-        <FolderKanban size={14} style={{ color: 'var(--teal)', marginTop: 2, flexShrink: 0, opacity: 0.8 }} />
+        <FolderKanban {...ICON_PROPS} size={14} style={{ color: 'var(--teal)', marginTop: 2, flexShrink: 0, opacity: 0.8 }} />
         <span
           className="text-[13px] leading-tight"
           style={{ color: 'var(--ink)', fontWeight: 400 }}
@@ -278,7 +279,7 @@ function MemberContent({ data }: { data: MemberCardData }) {
         {/* Publication count */}
         {data.publicationCount !== undefined && data.publicationCount > 0 && (
           <div className="flex items-center gap-1 text-[10px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
-            <BookOpen size={10} />
+            <BookOpen {...ICON_PROPS} size={10} />
             {data.publicationCount} publication{data.publicationCount !== 1 ? 's' : ''}
           </div>
         )}

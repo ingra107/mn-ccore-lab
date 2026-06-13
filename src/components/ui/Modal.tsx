@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 import { useIsMobile } from '../../hooks/useIsMobile'
+import { ICON_PROPS } from '../../lib/iconProps'
 
 const MAX_WIDTHS: Record<'sm' | 'md' | 'lg', number> = {
   sm: 420,
@@ -173,7 +174,7 @@ export default function Modal({ open, onClose, title, maxWidth = 'md', children,
               justifyContent: 'center',
             }}
           >
-            <X size={16} />
+            <X {...ICON_PROPS} size={16} />
           </button>
         </div>
 

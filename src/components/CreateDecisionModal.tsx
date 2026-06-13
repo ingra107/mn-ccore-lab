@@ -9,6 +9,7 @@ import SentimentBadge from './SentimentBadge'
 import InlineSelect from './InlineSelect'
 import { parseTagsString } from '../lib/tagUtils'
 import { parseDbUtc } from '../lib/time'
+import { ICON_PROPS } from '../lib/iconProps'
 
 // ── Tag auto-suggestion ──────────────────────────────────────
 
@@ -173,7 +174,7 @@ export default function CreateDecisionModal({ projects, onCreate, onClose }: Pro
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: 'var(--border-subtle)' }}>
           <div className="flex items-center gap-2">
-            <Scale size={18} style={{ color: 'var(--gold)' }} />
+            <Scale {...ICON_PROPS} size={18} style={{ color: 'var(--gold)' }} />
             <h3 style={{ fontWeight: 500, fontSize: '17px', color: 'var(--ink)', margin: 0 }}>
               Log a Decision
             </h3>
@@ -183,7 +184,7 @@ export default function CreateDecisionModal({ projects, onCreate, onClose }: Pro
             aria-label="Close"
             style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: 'var(--sp-xs)' }}
           >
-            <X size={18} />
+            <X {...ICON_PROPS} size={18} />
           </button>
         </div>
 
@@ -204,7 +205,7 @@ export default function CreateDecisionModal({ projects, onCreate, onClose }: Pro
             {similarDecisions.length > 0 && (
               <div className="mt-3 p-3 rounded-lg" style={{ background: 'var(--gold-hover)', border: '1px dashed rgba(201,168,76,0.2)' }}>
                 <div className="flex items-center gap-1.5 mb-2">
-                  <History size={12} style={{ color: 'var(--gold)' }} />
+                  <History {...ICON_PROPS} size={12} style={{ color: 'var(--gold)' }} />
                   <span style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--gold)' }}>
                     Similar past decisions
                   </span>
@@ -360,7 +361,7 @@ export default function CreateDecisionModal({ projects, onCreate, onClose }: Pro
                         borderBottom: '1px solid var(--border-subtle)',
                       }}
                     >
-                      <Search size={10} style={{ display: 'inline', verticalAlign: '-1px', marginRight: '4px', opacity: 0.85 }} />
+                      <Search {...ICON_PROPS} size={10} style={{ display: 'inline', verticalAlign: '-1px', marginRight: '4px', opacity: 0.85 }} />
                       {p.title}
                     </button>
                   ))}

@@ -4,6 +4,7 @@ import { useProjectDocuments } from '../../hooks/useApiData'
 import { useAddProjectDocument, useDeleteProjectDocument } from '../../hooks/useMutations'
 import type { ProjectDocumentRow } from '../../hooks/useApiData'
 import InlineSelect from '../../components/InlineSelect'
+import { ICON_PROPS } from '../../lib/iconProps'
 
 interface ProjectDocumentsProps {
   projectSlug: string
@@ -62,7 +63,7 @@ export default function ProjectDocuments({ projectSlug }: ProjectDocumentsProps)
   return (
     <div style={{ marginBottom: '1.5rem' }}>
       <div className="flex items-center gap-2 mb-3">
-        <FolderOpen size={14} style={{ color: 'var(--gold)' }} />
+        <FolderOpen {...ICON_PROPS} size={14} style={{ color: 'var(--gold)' }} />
         <span
           style={{
             fontSize: 'var(--label-size)',
@@ -138,7 +139,7 @@ export default function ProjectDocuments({ projectSlug }: ProjectDocumentsProps)
                     }}
                   >
                     {doc.title}
-                    <ExternalLink
+                    <ExternalLink {...ICON_PROPS}
                       size={10}
                       style={{ opacity: 0.85, flexShrink: 0 }}
                     />
@@ -172,7 +173,7 @@ export default function ProjectDocuments({ projectSlug }: ProjectDocumentsProps)
                     title="Remove document link"
                     aria-label="Remove document link"
                   >
-                    <X size={14} />
+                    <X {...ICON_PROPS} size={14} />
                   </button>
                 </div>
               )
@@ -248,7 +249,7 @@ export default function ProjectDocuments({ projectSlug }: ProjectDocumentsProps)
                 opacity: 0.8,
               }}
             >
-              <Plus size={12} />
+              <Plus {...ICON_PROPS} size={12} />
               Other
             </button>
           </div>
@@ -290,7 +291,7 @@ export default function ProjectDocuments({ projectSlug }: ProjectDocumentsProps)
                 }}
                 aria-label="Cancel"
               >
-                <X size={14} />
+                <X {...ICON_PROPS} size={14} />
               </button>
             </div>
             <div className="flex flex-col gap-2">

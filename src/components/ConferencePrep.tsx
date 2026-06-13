@@ -8,6 +8,7 @@ import { useConferences } from '../hooks/useApiData'
 import { useCreateConference, useUpdateConference, useDeleteConference } from '../hooks/useMutations'
 import { formatShortDate, localDateKey, isOverdue } from '../lib/dateUtils'
 import type { ConferenceSubmissionRow, ConferenceSubmissionType, ConferenceStatus, MaterialsStatus } from '../lib/api'
+import { ICON_PROPS } from '../lib/iconProps'
 
 const STATUS_OPTIONS: { value: ConferenceStatus; label: string; color: string }[] = [
   { value: 'planning', label: 'Planning', color: 'var(--slate)' },
@@ -120,7 +121,7 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
   return (
     <CollapsibleSection
       title="Conferences"
-      icon={<Presentation size={12} style={{ color: 'var(--teal)', opacity: 0.85 }} />}
+      icon={<Presentation {...ICON_PROPS} size={12} style={{ color: 'var(--teal)', opacity: 0.85 }} />}
       badge={activeConfs.length || null}
       storageKey={`conf-${projectId}`}
     >
@@ -264,7 +265,7 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
                       }}
                       title={conf.travel_booked ? 'Travel booked' : 'Travel not booked'}
                     >
-                      <Plane
+                      <Plane {...ICON_PROPS}
                         size={13}
                         style={{
                           color: conf.travel_booked ? 'var(--teal)' : 'var(--slate)',
@@ -272,7 +273,7 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
                         }}
                       />
                       {conf.travel_booked ? (
-                        <Check size={10} style={{ color: 'var(--teal)' }} />
+                        <Check {...ICON_PROPS} size={10} style={{ color: 'var(--teal)' }} />
                       ) : null}
                     </button>
                   </td>
@@ -293,7 +294,7 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
                         '--hov-color': 'var(--maroon)',
                       } as React.CSSProperties}
                     >
-                      <Trash2 size={12} />
+                      <Trash2 {...ICON_PROPS} size={12} />
                     </button>
                   </td>
                 </tr>
@@ -436,7 +437,7 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
             '--hov-opacity': '1',
           } as React.CSSProperties}
         >
-          <Plus size={12} />
+          <Plus {...ICON_PROPS} size={12} />
           Add Submission
         </button>
       )}

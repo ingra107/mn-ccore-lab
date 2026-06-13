@@ -29,6 +29,7 @@ import { getPersonInfo } from '../../data/team'
 import { displayName } from '../../lib/nameUtils'
 import { formatMediumDate, isOverdue, getDaysUntil } from '../../lib/dateUtils'
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
+import { ICON_PROPS } from '../../lib/iconProps'
 
 // ── Gantt chart constants ──────────────────────────────────────
 const CHART_MIN_YEAR = 2023
@@ -493,15 +494,15 @@ export default function GrantsPage() {
   return (
     <div className="content-container">
       <PageHeader
-        icon={<Wallet size={20} />}
+        icon={<Wallet {...ICON_PROPS} size={20} />}
         title="Grants & Funding"
         subtitle={`${active.length} active, ${proposed.length} proposed`}
         count={grants.length}
       >
         <TableControls
           views={[
-            { key: 'list', icon: <List size={14} />, label: 'List' },
-            { key: 'timeline', icon: <GanttChartSquare size={14} />, label: 'Timeline' },
+            { key: 'list', icon: <List {...ICON_PROPS} size={14} />, label: 'List' },
+            { key: 'timeline', icon: <GanttChartSquare {...ICON_PROPS} size={14} />, label: 'Timeline' },
           ]}
           activeView={view}
           onViewChange={(v) => setView(v as ViewMode)}
@@ -679,7 +680,7 @@ export default function GrantsPage() {
                     {/* Period */}
                     <div>
                       <span className="text-xs flex items-center gap-1" style={{ color: 'var(--slate)', opacity: 0.85 }}>
-                        <Calendar size={10} style={{ flexShrink: 0 }} />
+                        <Calendar {...ICON_PROPS} size={10} style={{ flexShrink: 0 }} />
                         {grant.start_date ? formatMediumDate(grant.start_date) : '?'}
                         {' – '}
                         {grant.end_date ? formatMediumDate(grant.end_date) : '?'}
@@ -763,7 +764,7 @@ export default function GrantsPage() {
                 <>
                   <span style={{ opacity: 0.85 }}>·</span>
                   <span className="flex items-center gap-1">
-                    <Banknote size={11} />
+                    <Banknote {...ICON_PROPS} size={11} />
                     {formatFunding(totalFunding)} total funding
                   </span>
                 </>
@@ -800,7 +801,7 @@ export default function GrantsPage() {
       {/* Milestone tracking consolidated in Post-Award tab */}
       {!isLoading && enrichedPostAward.length > 0 && (
         <div className="mt-5 flex items-center gap-2 text-xs" style={{ color: 'var(--slate)', opacity: 0.85 }}>
-          <Diamond size={12} style={{ color: 'var(--gold)', flexShrink: 0 }} />
+          <Diamond {...ICON_PROPS} size={12} style={{ color: 'var(--gold)', flexShrink: 0 }} />
           <span>
             {enrichedPostAward.length} upcoming milestone{enrichedPostAward.length !== 1 ? 's' : ''} —{' '}
             <button
@@ -820,7 +821,7 @@ export default function GrantsPage() {
       <div className="mt-5 rounded-xl border p-4" style={{ borderColor: 'var(--border-subtle)' }}>
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <ClipboardList size={14} style={{ color: 'var(--teal)' }} />
+            <ClipboardList {...ICON_PROPS} size={14} style={{ color: 'var(--teal)' }} />
             <h3 className="text-sm font-normal" style={{ color: 'var(--ink)', margin: 0 }}>
               Post-Award Milestones
             </h3>
@@ -834,7 +835,7 @@ export default function GrantsPage() {
                   background: 'color-mix(in srgb, var(--maroon) 12%, transparent)',
                 }}
               >
-                <AlertTriangle size={10} />
+                <AlertTriangle {...ICON_PROPS} size={10} />
                 {enrichedPostAward.filter((m) => m._isOverdue).length} overdue
               </span>
             )}
@@ -849,7 +850,7 @@ export default function GrantsPage() {
               cursor: 'pointer',
             }}
           >
-            <Plus size={12} />
+            <Plus {...ICON_PROPS} size={12} />
             Add Milestone
           </button>
         </div>
@@ -958,7 +959,7 @@ export default function GrantsPage() {
       {/* Grant Landscape — NIH RePORTER (P3-04: lifted to top tab) */}
       <div className="mt-6 mb-6">
         <div className="flex items-center gap-2 mb-3">
-          <Telescope size={16} style={{ color: 'var(--gold)' }} />
+          <Telescope {...ICON_PROPS} size={16} style={{ color: 'var(--gold)' }} />
           <h3 style={{ fontWeight: 500, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>
             Grant Landscape (NIH RePORTER)
           </h3>
@@ -1135,7 +1136,7 @@ function AddGrantMilestoneModal({
             aria-label="Close"
             style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', opacity: 'var(--ink-label)' as unknown as number }}
           >
-            <X size={18} />
+            <X {...ICON_PROPS} size={18} />
           </button>
         </div>
 
@@ -1240,7 +1241,7 @@ function AddGrantMilestoneModal({
               <span>Saving…</span>
             ) : (
               <>
-                <Check size={14} />
+                <Check {...ICON_PROPS} size={14} />
                 Add Milestone
               </>
             )}

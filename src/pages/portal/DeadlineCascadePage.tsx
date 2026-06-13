@@ -12,6 +12,7 @@ import EmptyStateArt from '../../components/EmptyStateArt'
 import { PATHS } from '../../constants/paths'
 import { useAllCascades, useDeadlineImpact } from '../../hooks/useApiData'
 import type { CascadeGraph, DeadlineNode } from '../../lib/api'
+import { ICON_PROPS } from '../../lib/iconProps'
 
 export default function DeadlineCascadePage() {
   const navigate = useNavigate()
@@ -79,7 +80,7 @@ export default function DeadlineCascadePage() {
   return (
     <PageContainer>
       <PageHeader
-        icon={<GitBranch size={20} />}
+        icon={<GitBranch {...ICON_PROPS} size={20} />}
         // P2-R2-07: page name was "Deadline Cascade" but until dependency
         // graph ships the actual content is grouped deadlines by project.
         // Renamed to match what's on screen.
@@ -94,7 +95,7 @@ export default function DeadlineCascadePage() {
             active={filterAtRisk}
             onClick={() => setFilterAtRisk(!filterAtRisk)}
           >
-            <Filter size={14} />
+            <Filter {...ICON_PROPS} size={14} />
             At Risk Only
           </ToggleButton>
           {(impactId !== null) && (
@@ -110,7 +111,7 @@ export default function DeadlineCascadePage() {
               title="Clear impact simulation"
               aria-label="Reset impact simulation"
             >
-              <RotateCcw size={13} />
+              <RotateCcw {...ICON_PROPS} size={13} />
               Reset
             </button>
           )}

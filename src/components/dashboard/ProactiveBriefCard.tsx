@@ -2,6 +2,7 @@ import { Lightbulb } from 'lucide-react'
 import { useProactiveBrief } from '../../hooks/useApiData'
 import BentoCard from './BentoCard'
 import { PATHS } from '../../constants/paths'
+import { ICON_PROPS } from '../../lib/iconProps'
 
 interface ProactiveBriefData {
   bullets: string[]
@@ -89,7 +90,7 @@ export default function ProactiveBriefCard() {
                 border: '1px solid rgba(45,138,138,0.15)',
               }}
             >
-              <Lightbulb size={12} style={{ color: 'var(--teal)', flexShrink: 0 }} />
+              <Lightbulb {...ICON_PROPS} size={12} style={{ color: 'var(--teal)', flexShrink: 0 }} />
               <div className="flex-1 min-w-0">
                 <span className="text-[10px] font-medium" style={{ color: 'var(--teal)' }}>
                   Suggested focus

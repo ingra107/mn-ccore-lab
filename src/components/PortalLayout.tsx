@@ -19,6 +19,7 @@ import { UndoToastProvider } from './UndoToast'
 import StatusBar from './StatusBar'
 import PhaseReleaseBanner from './PhaseReleaseBanner'
 import { PATHS } from '../constants/paths'
+import { ICON_PROPS } from '../lib/iconProps'
 
 export default function PortalLayout() {
   const { mode, setTheme } = useDarkMode()
@@ -148,7 +149,7 @@ export default function PortalLayout() {
             aria-expanded={mobileOpen}
             style={{ color: 'var(--ink)' }}
           >
-            {mobileOpen ? <X size={20} /> : <Menu size={20} />}
+            {mobileOpen ? <X {...ICON_PROPS} size={20} /> : <Menu {...ICON_PROPS} size={20} />}
           </button>
 
           {/* Mobile brand mark — only below lg, kept tight (28px) so the
@@ -174,7 +175,7 @@ export default function PortalLayout() {
             className="hidden sm:flex items-center gap-2 px-5 py-2 rounded-lg border text-sm transition-colors hover:bg-black/5"
             style={{ borderColor: 'var(--border-subtle)', color: 'var(--slate)', cursor: 'pointer', background: 'none', minWidth: '220px' }}
           >
-            <Search size={14} />
+            <Search {...ICON_PROPS} size={14} />
             <span>Search...</span>
             <kbd className="text-[10px] px-1 py-0.5 rounded border ml-2" style={{ fontFamily: 'var(--font-mono)', borderColor: 'var(--border-subtle)' }}>
               ⌘K
@@ -202,7 +203,7 @@ export default function PortalLayout() {
               style={{ color: 'var(--slate)' }}
               aria-label="Change theme"
             >
-              {mode === 'light' ? <Sun size={18} /> : mode === 'dark' ? <Moon size={18} /> : <Monitor size={18} />}
+              {mode === 'light' ? <Sun {...ICON_PROPS} size={18} /> : mode === 'dark' ? <Moon {...ICON_PROPS} size={18} /> : <Monitor {...ICON_PROPS} size={18} />}
             </button>
             {showThemeMenu && (
               <>

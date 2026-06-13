@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Bookmark, Check, Plus, Trash2, X } from 'lucide-react'
 import { useSavedViews, type SavedView } from '../hooks/useSavedViews'
+import { ICON_PROPS } from '../lib/iconProps'
 
 interface Props {
   /** Page scope — saved views are namespaced per page so MyTasks views don't
@@ -62,7 +63,7 @@ export default function SavedViewsMenu({ page, currentQuery, onApply }: Props) {
           cursor: 'pointer',
         }}
       >
-        <Bookmark size={11} />
+        <Bookmark {...ICON_PROPS} size={11} />
         {activeId ? views.find((v) => v.id === activeId)!.name : 'Views'}
         {views.length > 0 && <span style={{ opacity: 0.7 }}>· {views.length}</span>}
       </button>
@@ -102,7 +103,7 @@ export default function SavedViewsMenu({ page, currentQuery, onApply }: Props) {
               className="w-full flex items-center gap-2 px-3 py-2"
               style={{ border: 'none', background: 'transparent', color: 'var(--teal)', fontSize: '12px', cursor: 'pointer', textAlign: 'left' }}
             >
-              <Plus size={12} />
+              <Plus {...ICON_PROPS} size={12} />
               Save current as view…
             </button>
           ) : (
@@ -138,7 +139,7 @@ export default function SavedViewsMenu({ page, currentQuery, onApply }: Props) {
                   opacity: draftName.trim() ? 1 : 0.45,
                 }}
               >
-                <Check size={14} />
+                <Check {...ICON_PROPS} size={14} />
               </button>
               <button
                 type="button"
@@ -146,7 +147,7 @@ export default function SavedViewsMenu({ page, currentQuery, onApply }: Props) {
                 aria-label="Cancel"
                 style={{ padding: '4px 6px', border: 'none', background: 'transparent', color: 'var(--slate)', cursor: 'pointer' }}
               >
-                <X size={14} />
+                <X {...ICON_PROPS} size={14} />
               </button>
             </form>
           )}
@@ -175,7 +176,7 @@ function SavedViewRow({ view, active, onApply, onRemove }: {
           padding: '2px 0',
         }}
       >
-        {active && <Check size={10} style={{ display: 'inline-block', marginRight: 4 }} />}
+        {active && <Check {...ICON_PROPS} size={10} style={{ display: 'inline-block', marginRight: 4 }} />}
         {view.name}
       </button>
       <button
@@ -187,7 +188,7 @@ function SavedViewRow({ view, active, onApply, onRemove }: {
           color: 'var(--slate)', cursor: 'pointer', opacity: 0.55,
         }}
       >
-        <Trash2 size={11} />
+        <Trash2 {...ICON_PROPS} size={11} />
       </button>
     </div>
   )

@@ -3,6 +3,7 @@ import { Radio, Send, Check, ChevronDown, ChevronUp } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useRelayMessages, useCreateRelay, useCompleteRelay } from '../../hooks/usePBRelay'
 import InlineSelect from '../InlineSelect'
+import { ICON_PROPS } from '../../lib/iconProps'
 
 export default function RelayCard() {
   const { data: messages = [], isLoading } = useRelayMessages()
@@ -53,7 +54,7 @@ export default function RelayCard() {
         className="w-full flex items-center gap-1.5 px-3 py-2"
         style={{ background: 'none', border: 'none', cursor: 'pointer' }}
       >
-        <Radio size={12} style={{ color: 'var(--teal)', opacity: 0.85 }} />
+        <Radio {...ICON_PROPS} size={12} style={{ color: 'var(--teal)', opacity: 0.85 }} />
         <span style={{
           fontSize: '10px',
           fontWeight: 700,
@@ -78,8 +79,8 @@ export default function RelayCard() {
         )}
         <span style={{ marginLeft: 'auto' }}>
           {expanded
-            ? <ChevronUp size={12} style={{ color: 'var(--slate)', opacity: 0.75 }} />
-            : <ChevronDown size={12} style={{ color: 'var(--slate)', opacity: 0.75 }} />
+            ? <ChevronUp {...ICON_PROPS} size={12} style={{ color: 'var(--slate)', opacity: 0.75 }} />
+            : <ChevronDown {...ICON_PROPS} size={12} style={{ color: 'var(--slate)', opacity: 0.75 }} />
           }
         </span>
       </button>
@@ -132,7 +133,7 @@ export default function RelayCard() {
                       style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
                       title="Mark completed"
                     >
-                      <Check size={12} style={{ color: 'var(--green-light)', opacity: 0.85 }} />
+                      <Check {...ICON_PROPS} size={12} style={{ color: 'var(--green-light)', opacity: 0.85 }} />
                     </button>
                   </div>
                 )
@@ -145,7 +146,7 @@ export default function RelayCard() {
                   className="flex items-center gap-2"
                   style={{ fontSize: '10px', opacity: 0.85 }}
                 >
-                  <Check size={10} style={{ color: 'var(--green-light)', flexShrink: 0 }} />
+                  <Check {...ICON_PROPS} size={10} style={{ color: 'var(--green-light)', flexShrink: 0 }} />
                   <span className="tabular-nums" style={{ color: 'var(--slate)' }}>
                     {msg.from}-&gt;{msg.to}
                   </span>
@@ -226,7 +227,7 @@ export default function RelayCard() {
                           opacity: (!topic.trim() || !prompt.trim()) ? 0.85 : 1,
                         }}
                       >
-                        <Send size={9} /> Send
+                        <Send {...ICON_PROPS} size={9} /> Send
                       </button>
                       <button
                         onClick={() => setFormOpen(false)}
@@ -254,7 +255,7 @@ export default function RelayCard() {
                     background: 'none', border: 'none', cursor: 'pointer', padding: 0,
                   }}
                 >
-                  <Send size={9} /> Send Request
+                  <Send {...ICON_PROPS} size={9} /> Send Request
                 </button>
               )}
             </div>

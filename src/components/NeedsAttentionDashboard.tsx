@@ -8,6 +8,7 @@ import type { ManuscriptsAttentionRow } from '../lib/api'
 import { PATHS } from '../constants/paths'
 import { formatShortDate } from '../lib/dateUtils'
 import { parseDbUtc } from '../lib/time'
+import { ICON_PROPS } from '../lib/iconProps'
 
 export type AttentionFilter = 'revisions-overdue' | 'awaiting-review' | 'stale-drafts' | null
 
@@ -119,7 +120,7 @@ export default function NeedsAttentionDashboard({ filter, onFilterChange }: Prop
     <div style={{ marginBottom: '1.5rem' }}>
       {/* Section header with count + section collapse */}
       <div className="flex items-center gap-2 mb-3">
-        <AlertTriangle size={16} style={{ color: 'var(--gold)' }} />
+        <AlertTriangle {...ICON_PROPS} size={16} style={{ color: 'var(--gold)' }} />
         <h2 style={{ fontWeight: 600, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>
           Needs your attention
         </h2>
@@ -134,7 +135,7 @@ export default function NeedsAttentionDashboard({ filter, onFilterChange }: Prop
             cursor: 'pointer', padding: '4px 6px', fontSize: '11px', opacity: 0.75,
           }}
         >
-          {sectionCollapsed ? <ChevronDown size={12} /> : <ChevronUp size={12} />}
+          {sectionCollapsed ? <ChevronDown {...ICON_PROPS} size={12} /> : <ChevronUp {...ICON_PROPS} size={12} />}
           <span>{sectionCollapsed ? 'Show' : 'Hide'}</span>
         </button>
       </div>
@@ -179,8 +180,8 @@ export default function NeedsAttentionDashboard({ filter, onFilterChange }: Prop
                       }}
                     >
                       {openForReal
-                        ? <ChevronDown size={12} style={{ color: 'var(--slate)' }} />
-                        : <ChevronRight size={12} style={{ color: 'var(--slate)' }} />
+                        ? <ChevronDown {...ICON_PROPS} size={12} style={{ color: 'var(--slate)' }} />
+                        : <ChevronRight {...ICON_PROPS} size={12} style={{ color: 'var(--slate)' }} />
                       }
                     </button>
                   )}

@@ -1,5 +1,6 @@
 import { Plus } from 'lucide-react'
 import { openGlobalQuickAdd } from './GlobalQuickAddModal'
+import { ICON_PROPS } from '../lib/iconProps'
 
 // P2-10: QuickCaptureBar is no longer a separate capture input with its own
 // submit path. Per Decision #5 the ⌘-style quick-add modal is the SINGLE
@@ -30,7 +31,7 @@ export default function QuickCaptureBar({ noMargin }: { noMargin?: boolean }) {
           '--hov-border': 'var(--teal)',
         } as React.CSSProperties}
       >
-        <Plus size={14} style={{ color: 'var(--teal)', opacity: 0.85, flexShrink: 0 }} />
+        <Plus {...ICON_PROPS} size={14} style={{ color: 'var(--teal)', opacity: 0.85, flexShrink: 0 }} />
         <span
           className="flex-1 text-[13px]"
           style={{ color: 'var(--slate)', opacity: 0.85, fontFamily: 'inherit' }}

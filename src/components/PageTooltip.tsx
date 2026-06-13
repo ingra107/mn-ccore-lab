@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X } from 'lucide-react'
 import { spring } from '../lib/animations'
+import { ICON_PROPS } from '../lib/iconProps'
 
 interface PageTooltipProps {
   /** Unique key for localStorage persistence */
@@ -89,7 +90,7 @@ export default function PageTooltip({ id, text, delay = 1500 }: PageTooltipProps
             aria-label="Dismiss tooltip"
             style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--cream)', opacity: 0.7, padding: 4, display: 'flex', minWidth: 24, minHeight: 24, alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
           >
-            <X size={14} />
+            <X {...ICON_PROPS} size={14} />
           </button>
         </motion.div>
       )}

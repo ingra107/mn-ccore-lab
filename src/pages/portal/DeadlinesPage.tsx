@@ -25,6 +25,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 import TaskDetailPanel from '../../components/tasks/TaskDetailPanel'
 import type { TaskRow } from '../../lib/api'
+import { ICON_PROPS } from '../../lib/iconProps'
 
 interface DeadlineItem {
   id: string
@@ -226,7 +227,7 @@ export default function DeadlinesPage() {
     const status = (tasksErr as (Error & { status?: number }) | null)?.status
     return (
       <div className="content-container">
-        <PageHeader icon={<Clock size={20} />} title="Deadlines & Milestones" subtitle="" />
+        <PageHeader icon={<Clock {...ICON_PROPS} size={20} />} title="Deadlines & Milestones" subtitle="" />
         <QueryState isLoading={false} isError={true} errorStatus={status}>
           {null}
         </QueryState>
@@ -237,7 +238,7 @@ export default function DeadlinesPage() {
   return (
     <div className="content-container">
       <PageHeader
-        icon={<Clock size={20} />}
+        icon={<Clock {...ICON_PROPS} size={20} />}
         title="Deadlines & Milestones"
         subtitle={overdue.length > 0
           ? `${overdue.length} overdue, ${thisWeek.length + nextWeek.length} upcoming`
@@ -274,7 +275,7 @@ export default function DeadlinesPage() {
               textDecoration: 'none',
             }}
           >
-            <GitBranch size={12} />
+            <GitBranch {...ICON_PROPS} size={12} />
             Cascade View
           </Link>
           <button
@@ -299,7 +300,7 @@ export default function DeadlinesPage() {
             title="Export deadlines as .ics calendar file"
             aria-label="Export to .ics"
           >
-            <Download size={12} />
+            <Download {...ICON_PROPS} size={12} />
             Export
           </button>
           {/* S21: removed the "Switch to Timeline" promo coach-mark — it sat
@@ -336,7 +337,7 @@ export default function DeadlinesPage() {
               borderColor: isOver ? 'rgba(122,0,25,0.2)' : 'rgba(45,138,138,0.2)',
             }}
           >
-            <AlertTriangle size={16} style={{ color: isOver ? 'var(--maroon)' : 'var(--gold)', flexShrink: 0 }} />
+            <AlertTriangle {...ICON_PROPS} size={16} style={{ color: isOver ? 'var(--maroon)' : 'var(--gold)', flexShrink: 0 }} />
             <div className="min-w-0 flex-1 truncate text-sm" style={{ color: 'var(--ink)' }}>
               {nextUrgent.title}
             </div>
@@ -573,7 +574,7 @@ function DeadlineItemRow({ item, onStatusChange, onMilestoneStatusChange, onDueD
               }}
               aria-label={selectedIds?.has(item.id) ? 'Deselect task' : 'Select task'}
             >
-              {selectedIds?.has(item.id) && <Check size={12} style={{ color: 'var(--ink-bright, #fff)' }} />}
+              {selectedIds?.has(item.id) && <Check {...ICON_PROPS} size={12} style={{ color: 'var(--ink-bright, #fff)' }} />}
             </button>
           ) : <div style={{ width: 18 }} />}
         </div>
@@ -700,7 +701,7 @@ function DeadlineItemRow({ item, onStatusChange, onMilestoneStatusChange, onDueD
             }}
             aria-label={selectedIds?.has(item.id) ? 'Deselect task' : 'Select task'}
           >
-            {selectedIds?.has(item.id) && <Check size={12} style={{ color: 'var(--ink-bright, #fff)' }} />}
+            {selectedIds?.has(item.id) && <Check {...ICON_PROPS} size={12} style={{ color: 'var(--ink-bright, #fff)' }} />}
           </button>
         )}
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -901,11 +902,11 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
       >
         {/* Type icon */}
         {isMilestone ? (
-          <FolderKanban size={14} style={{ color: 'var(--gold)', flexShrink: 0 }} />
+          <FolderKanban {...ICON_PROPS} size={14} style={{ color: 'var(--gold)', flexShrink: 0 }} />
         ) : item.isOverdue ? (
-          <AlertTriangle size={14} style={{ color: 'var(--maroon)', flexShrink: 0 }} />
+          <AlertTriangle {...ICON_PROPS} size={14} style={{ color: 'var(--maroon)', flexShrink: 0 }} />
         ) : (
-          <Clock size={14} style={{ color: 'var(--teal)', flexShrink: 0, opacity: 0.85 }} />
+          <Clock {...ICON_PROPS} size={14} style={{ color: 'var(--teal)', flexShrink: 0, opacity: 0.85 }} />
         )}
 
         {/* Title */}
@@ -933,7 +934,7 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
               flexShrink: 0,
             }}
           >
-            <Pencil size={9} />
+            <Pencil {...ICON_PROPS} size={9} />
             Note to future me
           </button>
         )}
@@ -981,7 +982,7 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
         }}>
           <div className="flex items-center justify-between gap-1.5 mb-1">
             <div className="flex items-center gap-1.5">
-              <Clock size={10} style={{ color: 'var(--gold)' }} />
+              <Clock {...ICON_PROPS} size={10} style={{ color: 'var(--gold)' }} />
               <span style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--gold)' }}>
                 Note from past you
               </span>
@@ -992,7 +993,7 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
               className="flex items-center gap-1 transition-colors hover:bg-black/[0.03] dark:hover:bg-white/[0.03] rounded px-1"
               style={{ background: 'none', border: 'none', cursor: 'pointer' }}
             >
-              <Pencil size={9} style={{ color: 'var(--slate)', opacity: 0.75 }} />
+              <Pencil {...ICON_PROPS} size={9} style={{ color: 'var(--slate)', opacity: 0.75 }} />
             </button>
           </div>
           <p style={{ fontSize: '12px', color: 'var(--ink)', lineHeight: 1.5, fontStyle: 'italic', margin: 0 }}>
@@ -1004,7 +1005,7 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
       {/* Future Me note — compact indicator when not due soon */}
       {isMilestone && item.future_note && !isDueSoon && !isDone && (
         <div className="ml-8 mr-3 mt-0.5 mb-1 flex items-center gap-1.5">
-          <Clock size={9} style={{ color: 'var(--gold)', opacity: 0.85 }} />
+          <Clock {...ICON_PROPS} size={9} style={{ color: 'var(--gold)', opacity: 0.85 }} />
           <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75 }}>
             Future Me note attached
           </span>
@@ -1013,7 +1014,7 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
             className="flex items-center gap-1 transition-colors hover:bg-black/[0.03] dark:hover:bg-white/[0.03] rounded px-1"
             style={{ background: 'none', border: 'none', cursor: 'pointer' }}
           >
-            <Pencil size={8} style={{ color: 'var(--slate)', opacity: 0.75 }} />
+            <Pencil {...ICON_PROPS} size={8} style={{ color: 'var(--slate)', opacity: 0.75 }} />
           </button>
         </div>
       )}
@@ -1025,7 +1026,7 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
           border: '1px solid rgba(201,168,76,0.2)',
         }}>
           <div className="flex items-center gap-1.5 mb-2">
-            <Pencil size={10} style={{ color: 'var(--gold)' }} />
+            <Pencil {...ICON_PROPS} size={10} style={{ color: 'var(--gold)' }} />
             <span style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--gold)' }}>
               Note to future me
             </span>
@@ -1055,7 +1056,7 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
               className="flex items-center gap-1 px-2.5 py-1 rounded text-[11px] transition-colors hover:bg-black/[0.04] dark:hover:bg-white/[0.04]"
               style={{ color: 'var(--slate)', background: 'none', border: 'none', cursor: 'pointer' }}
             >
-              <X size={11} />
+              <X {...ICON_PROPS} size={11} />
               Cancel
             </button>
             <button
@@ -1070,7 +1071,7 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
                 opacity: saving ? 0.85 : 1,
               }}
             >
-              <Check size={11} />
+              <Check {...ICON_PROPS} size={11} />
               {saving ? 'Saving...' : 'Save'}
             </button>
           </div>
@@ -1112,7 +1113,7 @@ function UpcomingConferencesSection() {
       }}
     >
       <div className="flex items-center gap-2 mb-3">
-        <Presentation size={14} style={{ color: 'var(--teal)', opacity: 0.85 }} />
+        <Presentation {...ICON_PROPS} size={14} style={{ color: 'var(--teal)', opacity: 0.85 }} />
         <span
           style={{
             fontSize: 'var(--label-size)',

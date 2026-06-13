@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { ArrowUp } from 'lucide-react'
 import { useIsMobile } from '../hooks/useIsMobile'
+import { ICON_PROPS } from '../lib/iconProps'
 
 export default function ScrollToTop() {
   const [visible, setVisible] = useState(false)
@@ -38,7 +39,7 @@ export default function ScrollToTop() {
       title="Scroll to top"
       aria-label="Scroll to top"
     >
-      <ArrowUp size={16} />
+      <ArrowUp {...ICON_PROPS} size={16} />
     </button>
   )
 }

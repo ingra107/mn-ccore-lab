@@ -1,6 +1,7 @@
 import { FolderOpen, Play } from 'lucide-react'
 import { buildOpenFolderUri, buildWorkOnUri } from '../lib/urlClassify'
 import { useProtocolLaunch } from '../hooks/useProtocolLaunch'
+import { ICON_PROPS } from '../lib/iconProps'
 
 // Shared "Open folder" + "Work on this in Claude" action pair for a project
 // that has a primary_folder. Fires the mnccore:// protocol (local launch on
@@ -46,10 +47,10 @@ export default function WorkOnActions({ primaryFolder, projectLabel, variant = '
     return (
       <>
         <button type="button" onClick={openFolder} title="Open project folder" aria-label="Open project folder" style={iconBtn}>
-          <FolderOpen size={13} />
+          <FolderOpen {...ICON_PROPS} size={13} />
         </button>
         <button type="button" onClick={workOn} title="Work on this in Claude (this machine)" aria-label="Work on this in Claude" style={iconBtn}>
-          <Play size={13} />
+          <Play {...ICON_PROPS} size={13} />
         </button>
       </>
     )
@@ -69,7 +70,7 @@ export default function WorkOnActions({ primaryFolder, projectLabel, variant = '
         title="Open the project's working folder in Explorer"
         style={{ ...btn, background: 'var(--ice)', color: 'var(--slate)' }}
       >
-        <FolderOpen size={14} /> Open folder
+        <FolderOpen {...ICON_PROPS} size={14} /> Open folder
       </button>
       <button
         type="button"
@@ -77,7 +78,7 @@ export default function WorkOnActions({ primaryFolder, projectLabel, variant = '
         title="Launch Claude in this project on the machine you're using"
         style={{ ...btn, background: 'var(--teal-solid)', color: 'var(--ink-bright)', border: '1px solid var(--teal-solid)' }}
       >
-        <Play size={14} /> Work on this in Claude
+        <Play {...ICON_PROPS} size={14} /> Work on this in Claude
       </button>
     </div>
   )

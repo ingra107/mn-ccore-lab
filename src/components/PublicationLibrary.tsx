@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { ExternalLink } from 'lucide-react'
 import type { Publication } from '../data/types'
+import { ICON_PROPS } from '../lib/iconProps'
 
 const JOURNAL_COLORS: Record<string, string> = {
   'Critical Care Medicine': 'var(--maroon)',
@@ -160,7 +161,7 @@ export default function PublicationLibrary({ publications }: PublicationLibraryP
                       {pub.authors.split(',')[0]?.trim() || ''}
                     </span>
                     {link && (
-                      <ExternalLink size={11} style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)', flexShrink: 0 }} />
+                      <ExternalLink {...ICON_PROPS} size={11} style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)', flexShrink: 0 }} />
                     )}
                   </div>
                 </a>

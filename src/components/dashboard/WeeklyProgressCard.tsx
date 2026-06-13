@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { TrendingUp } from 'lucide-react'
 import { useTasks } from '../../hooks/useApiData'
 import BentoCard from './BentoCard'
+import { ICON_PROPS } from '../../lib/iconProps'
 
 const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
@@ -129,7 +130,7 @@ export default function WeeklyProgressCard() {
       <MiniBarChart bars={bars} />
       {trend !== 'flat' && (
         <div className="flex items-center gap-1 mt-2">
-          <TrendingUp size={10} style={{ color: trend === 'up' ? 'var(--green)' : 'var(--maroon)', transform: trend === 'down' ? 'scaleY(-1)' : undefined }} />
+          <TrendingUp {...ICON_PROPS} size={10} style={{ color: trend === 'up' ? 'var(--green)' : 'var(--maroon)', transform: trend === 'down' ? 'scaleY(-1)' : undefined }} />
           <span className="text-[10px]" style={{ color: trend === 'up' ? 'var(--green)' : 'var(--maroon)', opacity: 0.85 }}>
             {trend === 'up' ? 'Trending up' : 'Slowing down'}
           </span>

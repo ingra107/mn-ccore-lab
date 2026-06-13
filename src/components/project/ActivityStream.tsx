@@ -43,6 +43,7 @@ import {
   ActivityEntryItem,
   type ActivityEntryItemRow,
 } from '../activity/activityRender'
+import { ICON_PROPS } from '../../lib/iconProps'
 
 // ── Unified feed row shape (activity_entries) ─────────────────────────────────
 
@@ -363,7 +364,7 @@ function ActionItemRowView({ action, onToggle }: { action: ActionItemRow; onTogg
           whileTap={{ scale: 0.85 }}
           aria-label={completed ? 'Mark action item incomplete' : 'Mark action item complete'}
         >
-          {completed ? <CheckCircle2 size={18} /> : <Circle size={18} />}
+          {completed ? <CheckCircle2 {...ICON_PROPS} size={18} /> : <Circle {...ICON_PROPS} size={18} />}
         </motion.button>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div className="flex items-center gap-2 mb-0.5 flex-wrap">

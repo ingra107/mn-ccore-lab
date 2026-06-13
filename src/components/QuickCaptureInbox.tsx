@@ -6,6 +6,7 @@ import { useProjects } from '../hooks/useApiData'
 import { useUndoToast } from './UndoToast'
 import InlineSelect from './InlineSelect'
 import { nowInstant } from '../lib/time'
+import { ICON_PROPS } from '../lib/iconProps'
 
 type InboxTag = 'note' | 'idea' | 'decision' | 'follow-up' | 'meeting-note'
 
@@ -205,7 +206,7 @@ export default function QuickCaptureInbox() {
               gap: 'var(--sp-sm)',
             }}
           >
-            <Inbox size={16} style={{ color: 'var(--teal)', opacity: 0.85 }} />
+            <Inbox {...ICON_PROPS} size={16} style={{ color: 'var(--teal)', opacity: 0.85 }} />
             Quick capture
             <span
               style={{
@@ -233,7 +234,7 @@ export default function QuickCaptureInbox() {
               display: 'flex',
             }}
           >
-            <X size={16} />
+            <X {...ICON_PROPS} size={16} />
           </button>
         </div>
 
@@ -384,7 +385,7 @@ export default function QuickCaptureInbox() {
                 transition: 'opacity 150ms ease',
               }}
             >
-              <Send size={12} />
+              <Send {...ICON_PROPS} size={12} />
               Capture
             </button>
           </div>

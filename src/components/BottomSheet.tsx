@@ -2,6 +2,7 @@ import { useEffect, useRef, type ReactNode } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X } from 'lucide-react'
 import { createPortal } from 'react-dom'
+import { ICON_PROPS } from '../lib/iconProps'
 
 /**
  * DD-7 bottom-sheet primitive — mobile-native compose surface that
@@ -143,7 +144,7 @@ export default function BottomSheet({ open, onClose, title, children }: BottomSh
                   className="p-1 rounded"
                   style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)' }}
                 >
-                  <X size={16} />
+                  <X {...ICON_PROPS} size={16} />
                 </button>
               </div>
             )}

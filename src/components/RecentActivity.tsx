@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { BookOpen, Award, Users, ArrowRight } from 'lucide-react'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 import { usePublications } from '../hooks/useApiData'
+import { ICON_PROPS } from '../lib/iconProps'
 
 interface ActivityItem {
   icon: typeof BookOpen
@@ -80,7 +81,7 @@ export default function RecentActivity() {
               textDecoration: 'none',
             }}
           >
-            All publications <ArrowRight size={12} />
+            All publications <ArrowRight {...ICON_PROPS} size={12} />
           </Link>
         </div>
 

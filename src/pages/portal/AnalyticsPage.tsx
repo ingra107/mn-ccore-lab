@@ -16,6 +16,7 @@ import { useAuth } from '../../hooks/useAuth'
 import { getPersonInfo } from '../../data/team'
 import Avatar from '../../components/Avatar'
 import { PRIORITY_COLORS, isProjectActive } from '../../lib/taskConstants'
+import { ICON_PROPS } from '../../lib/iconProps'
 
 // D1 lowercase stage value → display label.
 const STAGE_DISPLAY: Record<string, string> = {
@@ -326,7 +327,7 @@ export default function AnalyticsPage() {
   return (
     <PageContainer>
       <PageHeader
-        icon={<BarChart3 size={20} />}
+        icon={<BarChart3 {...ICON_PROPS} size={20} />}
         title="Lab Analytics"
         subtitle={pageSubtitle}
         actions={isPi ? (
@@ -336,7 +337,7 @@ export default function AnalyticsPage() {
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors"
               style={{ color: 'var(--slate)', borderColor: 'var(--border-subtle)', background: 'none', cursor: 'pointer' }}
             >
-              <Copy size={14} />
+              <Copy {...ICON_PROPS} size={14} />
               Copy Report
             </button>
             <button
@@ -344,7 +345,7 @@ export default function AnalyticsPage() {
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors"
               style={{ color: 'var(--slate)', borderColor: 'var(--border-subtle)', background: 'none', cursor: 'pointer' }}
             >
-              <Download size={14} />
+              <Download {...ICON_PROPS} size={14} />
               Export CSV
             </button>
           </div>
@@ -369,10 +370,10 @@ export default function AnalyticsPage() {
           className="w-8 h-8 flex items-center justify-center rounded-lg border transition-colors hover:bg-black/5 dark:hover:bg-white/5"
           style={{ borderColor: 'var(--border-subtle)', background: 'none', cursor: 'pointer', color: 'var(--slate)' }}
         >
-          <ChevronLeft size={16} />
+          <ChevronLeft {...ICON_PROPS} size={16} />
         </button>
         <div className="flex items-center gap-2">
-          <Calendar size={14} style={{ color: 'var(--teal)' }} />
+          <Calendar {...ICON_PROPS} size={14} style={{ color: 'var(--teal)' }} />
           <span className="text-sm font-medium" style={{ color: 'var(--ink)' }}>
             {formatWeekRange(selectedWeekStart)}
           </span>
@@ -384,7 +385,7 @@ export default function AnalyticsPage() {
           className="w-8 h-8 flex items-center justify-center rounded-lg border transition-colors hover:bg-black/5 dark:hover:bg-white/5"
           style={{ borderColor: 'var(--border-subtle)', background: 'none', cursor: isCurrentWeek ? 'default' : 'pointer', color: 'var(--slate)', opacity: isCurrentWeek ? 0.85 : 1 }}
         >
-          <ChevronRight size={16} />
+          <ChevronRight {...ICON_PROPS} size={16} />
         </button>
         {!isCurrentWeek && (
           <button
@@ -440,7 +441,7 @@ export default function AnalyticsPage() {
       {weekStats.overdue > 0 ? (
         <div className="mt-4 rounded-xl border p-4" style={{ borderColor: 'var(--maroon)', borderLeftWidth: 3 }}>
           <div className="flex items-center gap-2 mb-2">
-            <AlertTriangle size={14} style={{ color: 'var(--maroon)' }} />
+            <AlertTriangle {...ICON_PROPS} size={14} style={{ color: 'var(--maroon)' }} />
             <h3 className="text-sm font-normal" style={{ color: 'var(--maroon)' }}>
               Attention Required
             </h3>
@@ -451,7 +452,7 @@ export default function AnalyticsPage() {
           <div className="flex flex-col gap-1">
             {tasks.filter(t => !t.completed && t.due_date && new Date(t.due_date + 'T23:59:59') < new Date()).slice(0, 5).map(t => (
               <div key={t.id} className="flex items-center gap-2 text-xs" style={{ color: 'var(--ink)' }}>
-                <Circle size={10} style={{ color: 'var(--maroon)', flexShrink: 0 }} />
+                <Circle {...ICON_PROPS} size={10} style={{ color: 'var(--maroon)', flexShrink: 0 }} />
                 <span className="truncate">{t.title}</span>
                 {t.due_date && <span style={{ color: 'var(--maroon)', fontSize: '10px', flexShrink: 0 }}>Due {formatShortDate(t.due_date)}</span>}
               </div>

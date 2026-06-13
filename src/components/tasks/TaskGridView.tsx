@@ -28,6 +28,7 @@ import { useSwipeAction } from '../../hooks/useSwipeAction'
 import { motion } from 'framer-motion'
 import { localDateKey } from '../../lib/dateUtils'
 import { parseDbUtc } from '../../lib/time'
+import { ICON_PROPS } from '../../lib/iconProps'
 
 // ── Column definitions for resize + tab nav ─────────────────
 // Full column set: checkbox + DATA_COLUMNS + actions
@@ -394,7 +395,7 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
               '--hov-opacity': '0.9',
             } as React.CSSProperties}
           >
-            <RotateCcw size={11} />
+            <RotateCcw {...ICON_PROPS} size={11} />
             Reset view
           </button>
         </div>
@@ -741,7 +742,7 @@ function SortableColumnHeader({
         onClick={(e) => e.stopPropagation()}
         title="Drag to reorder column"
       >
-        <GripVertical size={10} />
+        <GripVertical {...ICON_PROPS} size={10} />
       </button>
       <ColumnHeader
         label={label}
@@ -900,7 +901,7 @@ function TaskGridRow({
           pointerEvents: 'none',
         }}
       >
-        <Check size={14} />&nbsp;{isDone ? 'Reopen' : 'Complete'}
+        <Check {...ICON_PROPS} size={14} />&nbsp;{isDone ? 'Reopen' : 'Complete'}
       </motion.div>
       <motion.div
         aria-hidden
@@ -988,8 +989,8 @@ function TaskGridRow({
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           transition: 'background var(--transition-fast), border var(--transition-fast)',
         }}>
-          {isDone && <CheckCircle2 size={10} style={{ color: '#fff' }} />}
-          {!isDone && selected && <CheckCircle2 size={10} style={{ color: 'var(--teal-solid)' }} />}
+          {isDone && <CheckCircle2 {...ICON_PROPS} size={10} style={{ color: '#fff' }} />}
+          {!isDone && selected && <CheckCircle2 {...ICON_PROPS} size={10} style={{ color: 'var(--teal-solid)' }} />}
         </div>
       </div>
 
@@ -1026,11 +1027,11 @@ function TaskGridRow({
                     }}
                     title={expanded ? 'Collapse subtasks' : 'Expand subtasks'}
                   >
-                    <ChevronRight size={12} style={{ transform: expanded ? 'rotate(90deg)' : 'rotate(0)', transition: 'transform var(--transition-fast) var(--ease-out)' }} />
+                    <ChevronRight {...ICON_PROPS} size={12} style={{ transform: expanded ? 'rotate(90deg)' : 'rotate(0)', transition: 'transform var(--transition-fast) var(--ease-out)' }} />
                   </button>
                   {hasBlockers && (
                     <span className="relative group" style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center' }}>
-                      <Link2 size={12} style={{ color: 'var(--maroon)', opacity: 0.85 }} />
+                      <Link2 {...ICON_PROPS} size={12} style={{ color: 'var(--maroon)', opacity: 0.85 }} />
                       <span
                         className="absolute left-full ml-2 hidden group-hover:block z-30 rounded-lg shadow-lg border py-2 px-3"
                         style={{
@@ -1389,7 +1390,7 @@ function TaskGridRow({
             title="Pin to Focus Next"
             aria-label="Pin to Focus Next"
           >
-            <Pin size={12} />
+            <Pin {...ICON_PROPS} size={12} />
           </button>
         )}
         <button
@@ -1398,7 +1399,7 @@ function TaskGridRow({
           title="Quick comment"
           aria-label="Add quick comment"
         >
-          <MessageSquare size={12} />
+          <MessageSquare {...ICON_PROPS} size={12} />
         </button>
         <button
           className="task-grid-row-action-btn"
@@ -1410,7 +1411,7 @@ function TaskGridRow({
           title="Archive task"
           aria-label="Archive task"
         >
-          <Archive size={12} />
+          <Archive {...ICON_PROPS} size={12} />
         </button>
       </div>
 
@@ -1525,7 +1526,7 @@ function KeyLinkIcon({ url, label }: { url: string; label?: string | null }) {
           '--hov-opacity': '0.8',
         } as React.CSSProperties}
       >
-        <Clipboard size={11} />
+        <Clipboard {...ICON_PROPS} size={11} />
       </button>
     </span>
   )
@@ -1573,16 +1574,16 @@ function InlineSortableSubtask({ subtask, onToggle }: { subtask: { id: string; t
         style={{ background: 'none', border: 'none', padding: '1px', color: 'var(--slate)' }}
         onClick={(e) => e.stopPropagation()}
       >
-        <GripVertical size={10} style={{ opacity: 0.85 }} />
+        <GripVertical {...ICON_PROPS} size={10} style={{ opacity: 0.85 }} />
       </button>
       <button
         onClick={(e) => { e.stopPropagation(); onToggle(subtask.id) }}
         style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', flexShrink: 0 }}
       >
         {subtask.completed ? (
-          <CheckCircle2 size={14} style={{ color: 'var(--teal)' }} />
+          <CheckCircle2 {...ICON_PROPS} size={14} style={{ color: 'var(--teal)' }} />
         ) : (
-          <Circle size={14} style={{ color: 'var(--slate)', opacity: 0.75 }} />
+          <Circle {...ICON_PROPS} size={14} style={{ color: 'var(--slate)', opacity: 0.75 }} />
         )}
       </button>
       <span
@@ -1686,7 +1687,7 @@ function InlineSubtaskRow({ taskId, onHeightChange }: { taskId: string; onHeight
         </DndContext>
 
         <form onSubmit={handleAdd} className="flex items-center gap-2 mt-0.5" onClick={(e) => e.stopPropagation()}>
-          <Plus size={12} style={{ color: 'var(--slate)', opacity: 0.75, flexShrink: 0 }} />
+          <Plus {...ICON_PROPS} size={12} style={{ color: 'var(--slate)', opacity: 0.75, flexShrink: 0 }} />
           <input
             ref={inputRef}
             type="text"
@@ -1805,7 +1806,7 @@ function InlineCellSelect({
         } as React.CSSProperties}
       >
         {renderValue(value)}
-        <ChevronDown size={10} className="inline-select-chevron" />
+        <ChevronDown {...ICON_PROPS} size={10} className="inline-select-chevron" />
       </button>
 
       {open && createPortal(

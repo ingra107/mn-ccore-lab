@@ -1,6 +1,7 @@
 import { type ReactNode } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, X } from 'lucide-react'
+import { ICON_PROPS } from '../lib/iconProps'
 
 interface QuickAddFormProps {
   isOpen: boolean
@@ -46,7 +47,7 @@ export default function QuickAddForm({
               '--hov-color': 'var(--ink)',
             } as React.CSSProperties}
           >
-            <Plus size={14} />
+            <Plus {...ICON_PROPS} size={14} />
             {triggerLabel}
           </motion.button>
         )}
@@ -84,7 +85,7 @@ export default function QuickAddForm({
                     border: '1px solid rgba(201,168,76,0.15)',
                   }}
                 >
-                  <X size={12} />
+                  <X {...ICON_PROPS} size={12} />
                   Cancel
                 </button>
                 <button
@@ -97,7 +98,7 @@ export default function QuickAddForm({
                     border: 'none',
                   }}
                 >
-                  <Plus size={12} />
+                  <Plus {...ICON_PROPS} size={12} />
                   {submitLabel}
                 </button>
               </div>

@@ -8,6 +8,7 @@ import { isProductionVisibleActivity } from '../../lib/isProductionVisible'
 import { getPersonInfo } from '../../data/team'
 import { formatRelativeTime } from '../../lib/dateUtils'
 import { PATHS } from '../../constants/paths'
+import { ICON_PROPS } from '../../lib/iconProps'
 
 interface FeedItem {
   id: string
@@ -162,7 +163,7 @@ function ActivityFeedCard() {
             transition: 'opacity 0.2s ease',
           }}
         >
-          View all <ArrowRight size={11} />
+          View all <ArrowRight {...ICON_PROPS} size={11} />
         </Link>
       </div>
     </BentoCard>

@@ -18,6 +18,7 @@ import { getPersonInfo } from '../../data/team'
 import { PATHS } from '../../constants/paths'
 import { stageLabel, toApiStage } from '../../lib/stageNormalize'
 import { usePageMeta } from '../../hooks/usePageMeta'
+import { ICON_PROPS } from '../../lib/iconProps'
 
 interface DashboardData {
   week: string
@@ -128,7 +129,7 @@ export default function InsightsPage() {
   if (isError) {
     return (
       <div className="content-container">
-        <PageHeader icon={<TrendingUp size={20} />} title="Operational Insights" />
+        <PageHeader icon={<TrendingUp {...ICON_PROPS} size={20} />} title="Operational Insights" />
         <EmptyState
           icon={<AlertTriangle size={40} />}
           title="PI access required"
@@ -160,7 +161,7 @@ export default function InsightsPage() {
           cursor: 'pointer',
         }}
       >
-        <ChevronLeft size={14} />
+        <ChevronLeft {...ICON_PROPS} size={14} />
       </button>
       <button
         type="button"
@@ -182,7 +183,7 @@ export default function InsightsPage() {
           opacity: isCurrent ? 0.4 : 1,
         }}
       >
-        <ChevronRight size={14} />
+        <ChevronRight {...ICON_PROPS} size={14} />
       </button>
       {!isCurrent && (
         <button
@@ -224,7 +225,7 @@ export default function InsightsPage() {
           opacity: isFetching ? 0.7 : 1,
         }}
       >
-        <RefreshCw
+        <RefreshCw {...ICON_PROPS}
           size={12}
           style={{
             transition: 'transform 0.6s ease',
@@ -241,7 +242,7 @@ export default function InsightsPage() {
       {/* PortalLayout's <main> owns bottom clearance — no rogue paddingBottom. */}
       <div className="content-container">
         <PageHeader
-          icon={<TrendingUp size={20} />}
+          icon={<TrendingUp {...ICON_PROPS} size={20} />}
           title="Operational Insights"
           subtitle={`Hub aggregation · ${data.week}${isCurrent ? '' : ' (historical)'}`}
           actions={headerActions}
@@ -335,7 +336,7 @@ export default function InsightsPage() {
 
         {/* Stalled registry */}
         <div style={{ marginTop: 'var(--sp-2xl)' }}>
-          <SectionHeader icon={<AlertTriangle size={14} />} label="Critical stalled project registry" count={data.stalledRegistry.length} />
+          <SectionHeader icon={<AlertTriangle {...ICON_PROPS} size={14} />} label="Critical stalled project registry" count={data.stalledRegistry.length} />
           <StalledRegistry rows={data.stalledRegistry} />
         </div>
       </div>
@@ -375,7 +376,7 @@ function WorkloadHeatmap({ rows }: { rows: DashboardData['workloadHeatmap'] }) {
 
   return (
     <div style={{ padding: 'var(--sp-lg)', borderRadius: 'var(--radius-xl)', background: 'var(--surface-1)', border: '1px solid var(--border-subtle)' }}>
-      <SectionHeader icon={<Activity size={14} />} label="Workload heatmap" count={sorted.length} />
+      <SectionHeader icon={<Activity {...ICON_PROPS} size={14} />} label="Workload heatmap" count={sorted.length} />
       {sorted.length === 0 ? (
         <p style={{ fontSize: 12, color: 'var(--slate)', opacity: 0.85, margin: 0 }}>
           No tasks scheduled for the current week.
@@ -461,7 +462,7 @@ function TasksPerPersonBars({ distribution }: { distribution: { slug: string; co
   const max = Math.max(1, ...sorted.map((r) => r.count))
   return (
     <div style={{ padding: 'var(--sp-lg)', borderRadius: 'var(--radius-xl)', background: 'var(--surface-1)', border: '1px solid var(--border-subtle)' }}>
-      <SectionHeader icon={<Users size={14} />} label="Open tasks per person" count={sorted.length} />
+      <SectionHeader icon={<Users {...ICON_PROPS} size={14} />} label="Open tasks per person" count={sorted.length} />
       <div className="flex flex-col" style={{ gap: 4, marginTop: 6 }}>
         {sorted.map((r) => {
           const person = getPersonInfo(r.slug)
@@ -523,7 +524,7 @@ function ConnectionsPanel() {
 
   return (
     <div style={{ padding: 'var(--sp-lg)', borderRadius: 'var(--radius-xl)', background: 'var(--surface-1)', border: '1px solid var(--border-subtle)' }}>
-      <SectionHeader icon={<Link2 size={14} />} label="Cross-project connections" count={connections.length} />
+      <SectionHeader icon={<Link2 {...ICON_PROPS} size={14} />} label="Cross-project connections" count={connections.length} />
       {isLoading ? (
         <p style={{ fontSize: 12, color: 'var(--slate)', opacity: 0.85, margin: 0 }}>Analyzing connections…</p>
       ) : top5.length === 0 ? (
@@ -591,7 +592,7 @@ function ConnectionsPanel() {
                   }}
                   title={`Open Meetings to schedule a sync between ${edge.fromTitle} and ${edge.toTitle}`}
                 >
-                  <CalendarPlus size={11} />
+                  <CalendarPlus {...ICON_PROPS} size={11} />
                   Schedule sync
                 </Link>
               </div>
@@ -621,7 +622,7 @@ function PipelineFunnel({ rows }: { rows: DashboardData['pipelineFunnel'] }) {
   const max = Math.max(1, ...mergedRows.map((r) => r.count))
   return (
     <div style={{ padding: 'var(--sp-lg)', borderRadius: 'var(--radius-xl)', background: 'var(--surface-1)', border: '1px solid var(--border-subtle)' }}>
-      <SectionHeader icon={<FlaskConical size={14} />} label="Pipeline funnel" />
+      <SectionHeader icon={<FlaskConical {...ICON_PROPS} size={14} />} label="Pipeline funnel" />
       <div className="flex flex-col" style={{ gap: 6 }}>
         {mergedRows.map((r) => {
           const pct = (r.count / max) * 100
@@ -680,7 +681,7 @@ function VelocityScatter({ rows }: { rows: DashboardData['velocityScatter'] }) {
 
   return (
     <div style={{ padding: 'var(--sp-lg)', borderRadius: 'var(--radius-xl)', background: 'var(--surface-1)', border: '1px solid var(--border-subtle)' }}>
-      <SectionHeader icon={<TrendingUp size={14} />} label="Project velocity outliers" count={rows.filter(r => r.isOutlier).length} />
+      <SectionHeader icon={<TrendingUp {...ICON_PROPS} size={14} />} label="Project velocity outliers" count={rows.filter(r => r.isOutlier).length} />
       <p style={{ fontSize: 11, color: 'var(--slate)', opacity: 0.85, margin: '0 0 12px' }}>
         x = days since last update · y = open task count · maroon = outlier (&gt;30d OR &gt;10 tasks)
       </p>
