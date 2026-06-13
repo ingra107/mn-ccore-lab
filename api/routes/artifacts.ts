@@ -189,6 +189,9 @@ export async function handleCreateArtifact(
         await insertArtifact.run();
       } else {
         // Atomically insert artifact + write the link in one batch round-trip.
+        // anti-pattern-allowed: compound batch (insertArtifact + key_link update) requires
+        // atomicity that routing through /api/mutations would break; key_link_N slots are
+        // a write-once link cache, not A3-conflict-resolution targets (no base_seq/hash).
         const desc = `Hermes: ${body.title.trim()}`.slice(0, KEY_LINK_DESC_MAX);
         const updateTask = env.DB.prepare(
           `UPDATE tasks SET key_link_${slot} = ?, key_link_${slot}_desc = ? WHERE id = ?`
