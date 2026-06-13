@@ -11,7 +11,7 @@ import {
   Clock,
   FileText,
   Lightbulb,
-  CheckSquare,
+  SquareCheck,
   Users,
   Activity,
   BarChart3,
@@ -285,7 +285,7 @@ const OVERFLOW_SECTIONS: {
   {
     title: 'Work',
     routes: [
-      { to: PATHS.personal, icon: CheckSquare, label: 'Personal' },
+      { to: PATHS.personal, icon: SquareCheck, label: 'Personal' },
       { to: PATHS.calendar, icon: Calendar, label: 'Calendar' },
       { to: PATHS.deadlines, icon: Clock, label: 'Deadlines' },
       { to: PATHS.myItems, icon: Target, label: 'My Items' },

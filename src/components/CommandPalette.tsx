@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  Search, LayoutDashboard, User, CheckSquare, ListTodo, Calendar,
+  Search, LayoutDashboard, User, SquareCheck, ListTodo, Calendar,
   Clock, FolderKanban, FileText, Lightbulb, HelpCircle, BookOpen, DollarSign,
   Users, Plus, ArrowRight, Command, CalendarPlus,
   CheckCircle2, AlertTriangle, Flag, CircleDot, Scale, GitBranch,
@@ -134,7 +134,7 @@ export default function CommandPalette() {
       { path: PATHS.overview, label: 'Lab Overview', icon: LayoutDashboard },
       { path: PATHS.personal, label: 'My Hub', icon: User, shortcut: 'G H' },
       { path: PATHS.tasks, label: 'All Tasks', icon: ListTodo, shortcut: 'G T' },
-      { path: PATHS.myTasks, label: 'My Tasks', icon: CheckSquare, shortcut: 'G Y' },
+      { path: PATHS.myTasks, label: 'My Tasks', icon: SquareCheck, shortcut: 'G Y' },
       { path: PATHS.calendar, label: 'Calendar', icon: Calendar, shortcut: 'G C' },
       { path: PATHS.deadlines, label: 'Deadlines', icon: Clock, shortcut: 'G K' },
       { path: PATHS.deadlineCascade, label: 'Deadline Cascade', icon: GitBranch },
@@ -359,7 +359,7 @@ export default function CommandPalette() {
         id: `task-${task.id}`,
         label: task.title || task.description,
         sublabel: bits.join(' · ') || task.status,
-        icon: CheckSquare,
+        icon: SquareCheck,
         action: () => { navigate(`${PATHS.myTasks}?open=${task.id}`); setOpen(false) },
         category: 'task',
       })

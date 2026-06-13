@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect, useCallback, lazy, Suspense } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Plus, List, LayoutGrid, GanttChartSquare, Users, ChevronDown, CheckCircle2, CheckSquare, Zap, Flame, X, Pin, GripVertical, Hourglass, AlertTriangle } from 'lucide-react'
+import { Plus, List, LayoutGrid, GanttChartSquare, Users, ChevronDown, CheckCircle2, SquareCheck, Zap, Flame, X, Pin, GripVertical, Hourglass, AlertTriangle } from 'lucide-react'
 import { DndContext, closestCenter, PointerSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core'
 import type { DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
@@ -522,7 +522,7 @@ export default function MyTasks() {
   return (
     <div className="content-container">
       <PageHeader
-        icon={<CheckSquare {...ICON_PROPS} size={20} />}
+        icon={<SquareCheck {...ICON_PROPS} size={20} />}
         title="Tasks"
         subtitle={
           <span className="flex items-center gap-2">

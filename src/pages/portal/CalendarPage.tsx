@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Calendar, ChevronLeft, ChevronRight, Users, CheckSquare, Diamond, Download } from 'lucide-react'
+import { Calendar, ChevronLeft, ChevronRight, Users, SquareCheck, Diamond, Download } from 'lucide-react'
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
 import ToggleButton from '../../components/ToggleButton'
@@ -25,7 +25,7 @@ const eventColors: Record<string, { color: string; bg: string }> = {
 
 const eventIcons: Record<string, typeof Calendar> = {
   meeting: Users,
-  task: CheckSquare,
+  task: SquareCheck,
   milestone: Diamond,
 }
 

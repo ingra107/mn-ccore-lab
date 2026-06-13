@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Link, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
-  Search, CheckSquare, FolderKanban, Users, Lightbulb,
+  Search, SquareCheck, FolderKanban, Users, Lightbulb,
   MessageSquare, Activity, ArrowRight, X, Clock, Trash2,
   ScrollText, Scale, Paperclip, ListChecks, BookOpen, Banknote,
   AlertTriangle, Calendar, FileText,
@@ -37,7 +37,7 @@ interface SearchResult {
 }
 
 const typeConfig: Record<string, { icon: typeof Search; color: string; label: string }> = {
-  task: { icon: CheckSquare, color: 'var(--teal)', label: 'Task' },
+  task: { icon: SquareCheck, color: 'var(--teal)', label: 'Task' },
   project: { icon: FolderKanban, color: 'var(--gold)', label: 'Project' },
   meeting: { icon: Users, color: 'var(--teal)', label: 'Meeting' },
   idea: { icon: Lightbulb, color: 'var(--gold)', label: 'Idea' },
@@ -449,7 +449,7 @@ export default function SearchPage() {
     }
     // Fall back to a default set, append from LRU when partial.
     const defaults = [
-      { path: PATHS.myTasks, label: 'My tasks', icon: CheckSquare, color: 'var(--teal)' },
+      { path: PATHS.myTasks, label: 'My tasks', icon: SquareCheck, color: 'var(--teal)' },
       { path: PATHS.deadlines, label: 'Urgent deadlines', icon: Activity, color: 'var(--maroon)' },
       { path: PATHS.ideas, label: 'New ideas', icon: Lightbulb, color: 'var(--gold)' },
       { path: PATHS.decisions, label: 'Decisions log', icon: MessageSquare, color: 'var(--slate)' },
@@ -464,7 +464,7 @@ export default function SearchPage() {
   }, [])
 
   const iconForJumpToPath = (path: string): { Icon: typeof Search; color: string } => {
-    if (path === PATHS.myTasks || path === PATHS.tasks) return { Icon: CheckSquare, color: 'var(--teal)' }
+    if (path === PATHS.myTasks || path === PATHS.tasks) return { Icon: SquareCheck, color: 'var(--teal)' }
     if (path === PATHS.deadlines) return { Icon: Activity, color: 'var(--maroon)' }
     if (path === PATHS.ideas) return { Icon: Lightbulb, color: 'var(--gold)' }
     if (path === PATHS.decisions) return { Icon: MessageSquare, color: 'var(--slate)' }

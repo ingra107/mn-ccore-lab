@@ -2,7 +2,7 @@ import { useMemo, useState, useEffect, useRef, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  CheckSquare, Clock, Calendar,
+  SquareCheck, Clock, Calendar,
   Activity, ArrowRight, AlertTriangle, TrendingUp,
   Lightbulb, User, History,
   ChevronDown,
@@ -251,7 +251,7 @@ function MyTasksColumn({
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <CheckSquare {...ICON_PROPS} size={14} style={{ color: 'var(--teal)' }} />
+          <SquareCheck {...ICON_PROPS} size={14} style={{ color: 'var(--teal)' }} />
           <span style={{ fontSize: 'var(--text-base)', fontWeight: 'var(--weight-heading)' as any, color: 'var(--ink)' }}>
             My Tasks
           </span>
@@ -379,7 +379,7 @@ function CompactCard({
   children,
 }: {
   title: string
-  icon: typeof CheckSquare
+  icon: typeof SquareCheck
   iconColor?: string
   viewAllTo?: string
   viewAllLabel?: string
@@ -961,7 +961,7 @@ export default function PersonalPage() {
       {/* Quick Actions + Recently Viewed */}
       <div className="flex items-center gap-3 mt-4 flex-wrap">
         {([
-          { label: 'New Task', to: `${PATHS.myTasks}?create=true`, icon: CheckSquare, color: 'var(--teal)' },
+          { label: 'New Task', to: `${PATHS.myTasks}?create=true`, icon: SquareCheck, color: 'var(--teal)' },
           { label: 'Submit Idea', to: `${PATHS.ideas}?create=true`, icon: Lightbulb, color: 'var(--gold)' },
           { label: 'Ask a Question', to: `${PATHS.ask}?create=true`, icon: User, color: 'var(--slate)' },
         ]).map((a) => {
