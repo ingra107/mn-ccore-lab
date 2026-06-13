@@ -47,6 +47,8 @@ review/journey-*.png
 review/*.png
 review/audit-newteammate/
 review/a11y-deep/
+review/debox-audit-*/
+review/n1-mobile-audit-*/
 review/claude-design-*/
 review/claude-design-*.zip
 review/interactions-*/
