@@ -1,6 +1,10 @@
 # ▶ SESSION 2026-06-13 — RULE 74 ICON-DISCIPLINE SITE-WIDE SWEEP — EXECUTED + DEPLOYED
 
-**Live deploy = `62d2896c` (Source `b56a9dd` = HEAD). Frontend-only — no schema/route/API change (still 74 tables / 240 routes / v82).** This deploy also shipped the 2 backend commits that had sat undeployed 21h (`bc636726` i40 derive-email_link on A3 applyPatch, `2506ec35` artifacts batch key_link anti-pattern marker) + `e0c50dd` (artifacts auto-link, already live).
+**Live deploy = `b3187052` (Source `2294ba9` = HEAD). Frontend-only — no schema/route/API change (still 74 tables / 240 routes / v82).** First deploy this session (`62d2896c`) also shipped the 2 backend commits that had sat undeployed 21h (`bc636726` i40 derive-email_link on A3 applyPatch, `2506ec35` artifacts batch key_link anti-pattern marker) + `e0c50dd` (artifacts auto-link, already live).
+
+**Also this session:**
+- **Icon-discipline class CLOSED.** After the 716-site size-prop sweep, verified 0 remaining: className-sized (`w-4 h-4`/`size-4`) lucide icons = 0, inline-style-sized = 0. This codebase sizes icons via the `size` prop consistently, so codex's CSS-sizing concern doesn't manifest here. Rule 74 is now comprehensively applied.
+- **`2294ba9e` N1b de-box wave 2** (deployed): Digest "For You" filter off `--teal-solid` fill → `--teal-active` tint; Manuscripts category tabs + stalled pill resting hairlines → transparent. MeetingDetail "selected-pills" reviewed = NOT a violation (legit action button), left as-is. Remaining de-box wave: **dashboard-card interiors** (broad/subjective — recommend a screenshot audit + Nick direction before sweeping ~20 cards).
 
 Executed the **queued site-wide Rule 74 icon-discipline sweep** (the `task_01KTWD89…` class task — "pixely ≠ premium"):
 - **`bb1da5ed`** — AST-driven codemod (`scripts/icon-props-codemod.cjs`, TS compiler API, offset-splice → formatting preserved) applied `{...ICON_PROPS}` (strokeWidth:1.5, absoluteStrokeWidth:true) to **716 lucide icon sites across 137 files** rendered at size≤20px. Only real JSX icon tags touched (not `icon={Comp}` prop-passes, not explicit-strokeWidth icons, not >20px). Spread placed before size/style so explicit props still win. Previously only Sidebar + MobileTabBar carried the recipe. Codemod committed for re-runnability.
