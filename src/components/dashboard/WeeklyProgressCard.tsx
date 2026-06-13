@@ -80,7 +80,7 @@ function MiniBarChart({ bars }: { bars: BarDatum[] }) {
             left: `${(hovered / (bars.length - 1)) * 80 + 5}%`,
             transform: 'translateX(-50%)',
             background: 'var(--cream, #1a2330)',
-            border: '1px solid var(--border-subtle)',
+            boxShadow: 'var(--shadow-card)', // N1b/Rule 45: overlay = shadow, not border
             borderRadius: 'var(--radius-md, 6px)',
             fontSize: 10,
             color: 'var(--ink)',

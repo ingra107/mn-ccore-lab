@@ -123,11 +123,12 @@ function UpcomingCard() {
       {/* Next Meeting banner */}
       {nextMeeting ? (
         <div
-          className="rounded-lg mb-3"
+          className="mb-3"
           style={{
-            background: 'linear-gradient(135deg, rgba(201, 168, 76, 0.08), rgba(45, 138, 138, 0.06))',
-            border: '1px solid rgba(201, 168, 76, 0.15)',
-            padding: '10px 12px',
+            // N1b de-box: was a bg+border sub-box inside the card. Flattened to
+            // a left-accent section — identity via the accent + whitespace, not a box.
+            borderLeft: '2px solid rgba(201, 168, 76, 0.35)',
+            paddingLeft: '10px',
           }}
         >
           <div className="flex items-start justify-between gap-2 mb-1.5">
@@ -213,13 +214,8 @@ function UpcomingCard() {
           </div>
         </div>
       ) : (
-        <div
-          className="flex items-center gap-2 rounded-lg mb-3 px-3 py-3"
-          style={{
-            background: 'rgba(100, 116, 139, 0.04)',
-            border: '1px solid rgba(100, 116, 139, 0.08)',
-          }}
-        >
+        <div className="flex items-center gap-2 mb-3 px-1 py-2">
+          {/* N1b de-box: empty state is one quiet line, not a bordered block (canon). */}
           <CalendarOff {...ICON_PROPS} size={14} style={{ color: 'var(--slate)', opacity: 0.75 }} />
           <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
             No meeting scheduled

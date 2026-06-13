@@ -93,16 +93,19 @@ function ProjectHealthCard() {
       <div className="flex flex-col h-full">
         {/* View toggle (P3-02) */}
         <div className="flex justify-end mb-2 -mt-1">
-          <div className="flex gap-0.5 rounded p-0.5" style={{ background: 'var(--surface-2)' }}>
+          {/* N1b de-box: was a --surface-2 tray with --cream active button.
+              Converged on TableControls anatomy — hairline pill group, active =
+              --teal-active tint + --teal text, no inner box. */}
+          <div className="flex items-center overflow-hidden" style={{ border: '1px solid var(--border-subtle)', borderRadius: 999 }}>
             {(['list', 'heatmap'] as const).map((m) => (
               <button
                 key={m}
                 onClick={() => persistView(m)}
-                className="text-[10px] px-2 py-0.5 rounded"
+                className="text-[10px] px-2 py-0.5"
                 style={{
-                  background: viewMode === m ? 'var(--cream)' : 'transparent',
-                  color: viewMode === m ? 'var(--ink)' : 'var(--slate)',
-                  fontWeight: viewMode === m ? 500 : 400,
+                  background: viewMode === m ? 'var(--teal-active)' : 'transparent',
+                  color: viewMode === m ? 'var(--teal)' : 'var(--slate)',
+                  fontWeight: viewMode === m ? 600 : 400,
                   border: 'none',
                   cursor: 'pointer',
                   textTransform: 'uppercase' as const,

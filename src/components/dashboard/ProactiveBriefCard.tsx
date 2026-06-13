@@ -84,10 +84,12 @@ export default function ProactiveBriefCard() {
           {/* Suggested focus */}
           {brief.suggested_focus && (
             <div
-              className="flex items-center gap-2 px-3 py-2 rounded-lg mt-1"
+              className="flex items-center gap-2 py-2 mt-1"
               style={{
-                background: 'var(--teal-hover)',
-                border: '1px solid rgba(45,138,138,0.15)',
+                // N1b de-box: was a bg+border sub-box. Left-accent flatten; the
+                // "Start" pill stays (legit action button).
+                borderLeft: '2px solid rgba(45,138,138,0.3)',
+                paddingLeft: '10px',
               }}
             >
               <Lightbulb {...ICON_PROPS} size={12} style={{ color: 'var(--teal)', flexShrink: 0 }} />

@@ -32,14 +32,17 @@ function InsightsCard() {
         <button
           onClick={handleRefresh}
           disabled={refreshing}
-          className="inline-flex items-center gap-1 text-[10px] px-2 py-1 rounded-md transition-colors"
+          className="inline-flex items-center gap-1 text-[10px] px-2 py-1 rounded-md transition-colors hov-bg"
           style={{
+            // N1b de-box: ghost utility button — no resting box/border (not a
+            // primary action). Quiet teal text + icon; hover tint via hov-bg.
             color: 'var(--teal)',
-            background: 'var(--teal-hover)',
-            border: '1px solid color-mix(in srgb, var(--teal) 12%, transparent)',
+            background: 'transparent',
+            border: 'none',
+            '--hov-bg': 'var(--teal-hover)',
             cursor: refreshing ? 'default' : 'pointer',
             opacity: refreshing ? 0.85 : 1,
-          }}
+          } as React.CSSProperties}
         >
           <RefreshCw {...ICON_PROPS}
             size={10}

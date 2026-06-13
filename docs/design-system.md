@@ -215,9 +215,21 @@ filter pill resting hairlines → transparent (1px kept transparent, colored onl
 when active, so no layout shift). MeetingDetail "selected-pills" reviewed = NOT
 a violation (the `--teal-solid` "Complete All" is a legit primary action button;
 the selection bar is the transient one-box for that context) — left as-is.
-**Remaining waves** (ride the queued one-pill-language sweep task): dashboard-card
-interiors. When touching any toolbar control, converge it on the
-TableControls/ViewPicker anatomy — do not mint new active styles.
+**Wave 3 (2026-06-13) — dashboard-card interiors:** flattened 7 box-in-box
+violations (code-audit driven, `src/components/dashboard/`): UpcomingCard
+"Next Meeting" banner + "Suggested focus" (ProactiveBriefCard) bg+border
+sub-boxes → left-accent sections; UpcomingCard empty state bordered block →
+one quiet line; InsightsCard refresh → ghost button (hov-bg); ProjectHealthCard
+view toggle → TableControls hairline-pill anatomy (was --surface-2 tray +
+--cream active); Pomodoro/WeeklyProgress hover tooltips → shadow not border
+(Rule 45). **Kept as semantic/structural** (not violations): date-urgency
+badges, count/status chips, grant/pipeline chart marks, avatar rings,
+StatusLine stage-fill chips. **DEFERRED to Nick (JUDGMENT — app-wide visual
+shift):** BentoCard icon-well `--surface-2` bg + StatsCard mini-stat
+`--gold-active` icon bg (every card gets a 2nd bg layer for icon housing —
+removing it is a deliberate look change); LabHealthScore greeting-chip scope.
+When touching any toolbar control, converge it on the TableControls/ViewPicker
+anatomy — do not mint new active styles.
 
 ## ATTENTION & NOTIFICATION CANON (Nick-driven, 2026-06-11 seen-model session)
 
