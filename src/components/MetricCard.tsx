@@ -1,4 +1,5 @@
 import type { LucideIcon } from 'lucide-react'
+import { ICON_PROPS } from '../lib/iconProps'
 
 // DD-6: headline stat card — big serif number + small gold label.
 // Pulse Kiosk uses the same Fraunces treatment and it's the product's
@@ -26,7 +27,7 @@ function renderDisplayVariant({
         >
           {label}
         </span>
-        <Icon size={16} style={{ color, opacity: 0.85 }} />
+        <Icon {...ICON_PROPS} size={16} style={{ color, opacity: 0.85 }} />
       </div>
       <div
         className="tabular-nums"
@@ -89,7 +90,7 @@ export default function MetricCard({ icon: Icon, label, value, color, subtitle, 
     <div className="rounded-xl border p-3 sm:p-4" style={{ borderColor: 'var(--border-subtle)' }}>
       <div className="flex items-center justify-between mb-1">
         <span className="text-xs" style={{ color: 'var(--slate)' }}>{label}</span>
-        <Icon size={14} style={{ color, opacity: 0.85 }} />
+        <Icon {...ICON_PROPS} size={14} style={{ color, opacity: 0.85 }} />
       </div>
       <div className="text-lg sm:text-xl tabular-nums" style={{ fontWeight: 600, color: 'var(--ink)' }}>{value}</div>
       {showDelta && delta !== null && (

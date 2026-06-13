@@ -2,6 +2,7 @@ import { motion } from 'framer-motion'
 import { useScrollReveal } from '../../hooks/useScrollReveal'
 import type { ReactNode } from 'react'
 import type { LucideIcon } from 'lucide-react'
+import { ICON_PROPS } from '../../lib/iconProps'
 
 type BentoSize = 'span-1' | 'span-2' | 'span-2x2' | 'span-1x2'
 
@@ -93,16 +94,17 @@ export default function BentoCard({
             <div
               className="flex-shrink-0 mt-0.5"
               style={{
+                // N1b de-box: was a --surface-2 icon well (2nd box layer on every
+                // card). Dropped bg+radius — icon floats on the card surface; the
+                // fixed 28px slot keeps title alignment consistent across cards.
                 width: 28,
                 height: 28,
-                borderRadius: 'var(--radius-lg)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                background: 'var(--surface-2)',
               }}
             >
-              <Icon size={15} style={{ color: 'var(--slate)', opacity: 0.85 }} />
+              <Icon {...ICON_PROPS} size={16} style={{ color: 'var(--slate)', opacity: 0.85 }} />
             </div>
           )}
           <div className="min-w-0 flex-1">

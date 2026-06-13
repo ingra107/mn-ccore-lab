@@ -80,7 +80,7 @@ function HowTranscriptsWorkPanel({ collapsedByDefault }: { collapsedByDefault: b
             return (
               <div key={item.step} className="flex flex-col items-center text-center gap-2 p-3">
                 <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--teal-active)' }}>
-                  <Icon size={18} style={{ color: 'var(--teal)' }} />
+                  <Icon {...ICON_PROPS} size={18} style={{ color: 'var(--teal)' }} />
                 </div>
                 <h4 className="text-xs font-semibold" style={{ color: 'var(--ink)' }}>{item.title}</h4>
                 <p className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.85 }}>{item.desc}</p>

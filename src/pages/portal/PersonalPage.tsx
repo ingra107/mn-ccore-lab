@@ -396,7 +396,7 @@ function CompactCard({
     >
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <Icon size={13} style={{ color: iconColor }} />
+          <Icon {...ICON_PROPS} size={13} style={{ color: iconColor }} />
           <span style={{ fontSize: 'var(--text-base)', fontWeight: 'var(--weight-heading)' as any, color: 'var(--ink)' }}>
             {title}
           </span>
@@ -981,7 +981,7 @@ export default function PersonalPage() {
                 transition: 'background 150ms ease',
               }}
             >
-              <Icon size={11} />
+              <Icon {...ICON_PROPS} size={11} />
               {a.label}
             </Link>
           )

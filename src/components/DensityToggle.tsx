@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { AlignJustify, List, StretchHorizontal } from 'lucide-react'
+import { ICON_PROPS } from '../lib/iconProps'
 
 type Density = 'compact' | 'default' | 'relaxed'
 
@@ -98,7 +99,7 @@ export default function DensityToggle({
             transition: `background var(--duration-fast), opacity var(--duration-fast)`,
           }}
         >
-          <Icon size={12} />
+          <Icon {...ICON_PROPS} size={12} />
         </button>
       ))}
     </div>

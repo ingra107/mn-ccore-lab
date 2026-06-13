@@ -273,7 +273,7 @@ export default function NotificationBell({ align = 'right' }: { align?: 'left' |
                               justifyContent: 'center',
                             }}
                           >
-                            <Icon size={14} style={{ color: isImpact ? 'var(--gold)' : isUnread ? 'var(--gold)' : 'var(--slate)' }} />
+                            <Icon {...ICON_PROPS} size={14} style={{ color: isImpact ? 'var(--gold)' : isUnread ? 'var(--gold)' : 'var(--slate)' }} />
                           </div>
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <div

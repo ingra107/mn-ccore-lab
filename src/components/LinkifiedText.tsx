@@ -1,5 +1,6 @@
 import React from 'react'
 import { classifyUrl, shortLabelForUrl } from '../lib/urlClassify'
+import { ICON_PROPS } from '../lib/iconProps'
 import { useProtocolLaunch } from '../hooks/useProtocolLaunch'
 
 /**
@@ -100,7 +101,7 @@ export default function LinkifiedText({ text, className, style }: Props) {
           textOverflow: 'ellipsis',
         }}
       >
-        <Icon size={11} />
+        <Icon {...ICON_PROPS} size={11} />
         <span>{label}</span>
       </a>
     )

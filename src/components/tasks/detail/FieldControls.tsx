@@ -21,7 +21,7 @@ export function FieldBlock({ label, icon: Icon, children, noContainer }: { label
   return (
     <div className="flex flex-col" style={{ gap: 'var(--sp-xs)' }}>
       <label className="flex items-center" style={{ gap: 'var(--sp-xs)', fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', fontWeight: 'var(--label-weight)' }}>
-        <Icon size={11} style={{ opacity: 0.85 }} />
+        <Icon {...ICON_PROPS} size={11} style={{ opacity: 0.85 }} />
         {label}
       </label>
       {noContainer ? (
@@ -203,7 +203,7 @@ export function StatusSelect({ value, onChange }: { value: string; onChange: (v:
               opacity: active ? 1 : 0.85,
             }}
           >
-            <Icon size={12} />
+            <Icon {...ICON_PROPS} size={12} />
             {s.label}
           </button>
         )

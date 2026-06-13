@@ -873,7 +873,7 @@ function SortableAgendaItem({ item, AGENDA_TYPE_ICONS }: { item: AgendaItemRow; 
       <button {...listeners} aria-label="Reorder item" className="cursor-grab active:cursor-grabbing mt-1 flex-shrink-0" style={{ background: 'none', border: 'none', padding: '2px', color: 'var(--slate)', opacity: 0.75 }}>
         <GripVertical {...ICON_PROPS} size={14} />
       </button>
-      <Icon size={14} style={{ color: 'var(--gold)', marginTop: '2px', flexShrink: 0 }} />
+      <Icon {...ICON_PROPS} size={14} style={{ color: 'var(--gold)', marginTop: '2px', flexShrink: 0 }} />
       <div style={{ flex: 1 }}>
         <p style={{ fontSize: 'var(--value-size)', color: 'var(--ink)', margin: 0 }}>{item.content}</p>
         <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>

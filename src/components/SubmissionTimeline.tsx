@@ -307,7 +307,7 @@ function TimelineEvent({
             flexShrink: 0,
           }}
         >
-          <Icon size={12} style={{ color: config.color }} />
+          <Icon {...ICON_PROPS} size={12} style={{ color: config.color }} />
         </div>
         {!isLast && (
           <div

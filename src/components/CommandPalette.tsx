@@ -621,7 +621,7 @@ export default function CommandPalette() {
                       onClick={item.action}
                       onMouseEnter={() => setSelectedIndex(currentIdx)}
                     >
-                      <Icon size={15} style={{ color: isSelected ? 'var(--teal)' : 'var(--slate)', opacity: isSelected ? 1 : 0.85, flexShrink: 0 }} />
+                      <Icon {...ICON_PROPS} size={15} style={{ color: isSelected ? 'var(--teal)' : 'var(--slate)', opacity: isSelected ? 1 : 0.85, flexShrink: 0 }} />
                       <div className="flex-1 min-w-0">
                         <span className="text-sm truncate block" style={{ color: isSelected ? 'var(--teal)' : 'var(--ink)', fontWeight: isSelected ? 500 : 400 }}>
                           {item.label}

@@ -6,6 +6,7 @@ import { usePublications, useProjects, useTeam, useCitations } from '../../hooks
 import { useDashboardMounted } from '../../pages/Dashboard'
 import { isProjectActive } from '../../lib/taskConstants'
 import type { LucideIcon } from 'lucide-react'
+import { ICON_PROPS } from '../../lib/iconProps'
 
 interface StatItem {
   icon: LucideIcon
@@ -33,17 +34,17 @@ function MiniStat({ icon: Icon, value, label, suffix = '', delay, displayOverrid
     <div ref={ref} className="flex items-center gap-2.5 py-2" title={tooltip}>
       <div
         style={{
+          // N1b de-box: was a --gold-active icon box per mini-stat. Dropped
+          // bg+radius — gold glyph floats; fixed slot keeps value alignment.
           width: 32,
           height: 32,
-          borderRadius: 'var(--radius-lg)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'var(--gold-active)',
           flexShrink: 0,
         }}
       >
-        <Icon size={15} style={{ color: 'var(--gold)' }} />
+        <Icon {...ICON_PROPS} size={18} style={{ color: 'var(--gold)' }} />
       </div>
       <div>
         <div

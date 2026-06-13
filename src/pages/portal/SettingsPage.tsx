@@ -88,7 +88,7 @@ function LabIconPicker({ value, onChange }: { value: string; onChange: (next: st
               cursor: 'pointer',
             }}
           >
-            <Icon size={18} />
+            <Icon {...ICON_PROPS} size={18} />
           </button>
         )
       })}
@@ -603,7 +603,7 @@ function SettingsSection({ title, subtitle, icon: Icon, children }: { title: str
     }}>
       <div className="flex items-center gap-3 mb-4">
         <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'var(--teal-active)' }}>
-          <Icon size={16} style={{ color: 'var(--teal)' }} />
+          <Icon {...ICON_PROPS} size={16} style={{ color: 'var(--teal)' }} />
         </div>
         <div>
           <h3 style={{ fontSize: 'var(--text-md)', fontWeight: 'var(--weight-ui)', color: 'var(--ink)', margin: 0 }}>{title}</h3>

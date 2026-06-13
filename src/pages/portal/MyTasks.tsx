@@ -1362,7 +1362,7 @@ function ViewDropdown({ view, setView, views }: { view: ViewMode; setView: (v: V
                 className="w-full flex items-start gap-3 px-3 py-2.5 text-left transition-colors hover:bg-black/5 dark:hover:bg-white/5"
                 style={{ cursor: 'pointer', border: 'none', background: 'none' }}
               >
-                <Icon size={16} style={{ color: view === v.key ? 'var(--teal)' : 'var(--slate)', marginTop: 1, flexShrink: 0 }} />
+                <Icon {...ICON_PROPS} size={16} style={{ color: view === v.key ? 'var(--teal)' : 'var(--slate)', marginTop: 1, flexShrink: 0 }} />
                 <div>
                   <div className="text-sm font-medium" style={{ color: view === v.key ? 'var(--teal)' : 'var(--ink)' }}>
                     {v.label}

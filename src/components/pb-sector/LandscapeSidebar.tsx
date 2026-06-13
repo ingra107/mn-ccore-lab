@@ -42,7 +42,7 @@ function SidebarCard({ title, icon: Icon, iconColor, children, linkTo, linkLabel
     >
       <div className="flex items-center justify-between px-3 py-2">
         <div className="flex items-center gap-1.5">
-          <Icon size={12} style={{ color: iconColor, opacity: 0.85 }} />
+          <Icon {...ICON_PROPS} size={12} style={{ color: iconColor, opacity: 0.85 }} />
           <span style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: iconColor }}>
             {title}
           </span>

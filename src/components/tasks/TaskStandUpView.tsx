@@ -275,7 +275,7 @@ function TaskSection({
   return (
     <div>
       <div className="flex items-center gap-1.5 mb-1.5">
-        <Icon size={12} style={{ color: config.color }} />
+        <Icon {...ICON_PROPS} size={12} style={{ color: config.color }} />
         <span
           className="text-[10px] uppercase tracking-wider font-semibold"
           style={{ color: config.color }}

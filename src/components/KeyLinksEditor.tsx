@@ -68,7 +68,7 @@ function LinkRow({
         style={{ color: 'var(--teal)', display: 'flex', alignItems: 'center', flexShrink: 0 }}
         title={isHttp ? url : `Click to copy path: ${url}`}
       >
-        <Icon size={13} />
+        <Icon {...ICON_PROPS} size={13} />
       </a>
       <a
         href={isHttp ? href : url}

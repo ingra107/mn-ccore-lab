@@ -127,7 +127,7 @@ function StatusBadge({ status }: { status: string }) {
       className="inline-flex items-center gap-1 text-[11px]"
       style={{ color: config.color, fontWeight: 400 }}
     >
-      <Icon size={11} />
+      <Icon {...ICON_PROPS} size={11} />
       {config.label}
     </span>
   )

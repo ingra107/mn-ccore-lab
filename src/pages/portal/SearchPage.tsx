@@ -675,7 +675,7 @@ export default function SearchPage() {
                     className="text-sm flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-black/[0.03] dark:hover:bg-white/[0.04]"
                     style={{ color: 'var(--ink)', textDecoration: 'none' }}
                   >
-                    <Icon size={13} style={{ color }} /> {entry.label}
+                    <Icon {...ICON_PROPS} size={13} style={{ color }} /> {entry.label}
                   </Link>
                 )
               })}
@@ -788,7 +788,7 @@ export default function SearchPage() {
               return (
                 <div key={type}>
                   <div className="flex items-center gap-2 mb-2">
-                    <Icon size={14} style={{ color: config.color }} />
+                    <Icon {...ICON_PROPS} size={14} style={{ color: config.color }} />
                     <span className="text-xs uppercase tracking-wider font-semibold" style={{ color: config.color }}>
                       {config.label}s ({items.length})
                     </span>
@@ -832,7 +832,7 @@ function ResultRow({ item, tokens }: { item: SearchResult; tokens: string[] }) {
         >
           {isHermes
             ? <HermesMark variant="icon" size={14} color={config.color} />
-            : <Icon size={14} style={{ color: config.color }} />}
+            : <Icon {...ICON_PROPS} size={14} style={{ color: config.color }} />}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-start gap-2">

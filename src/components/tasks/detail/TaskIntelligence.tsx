@@ -5,6 +5,7 @@ import { useToast } from '../../../hooks/useToast'
 import HermesMark from '../../HermesMark'
 import { parseDbUtc } from '../../../lib/time'
 import type { TaskRow } from '../../../lib/api'
+import { ICON_PROPS } from '../../../lib/iconProps'
 
 interface TaskIntelligenceProps {
   task: TaskRow
@@ -276,7 +277,7 @@ export default function TaskIntelligence({ task }: TaskIntelligenceProps) {
 function SectionHeader({ icon: Icon, label }: { icon: typeof Brain; label: string }) {
   return (
     <label className="flex items-center gap-1.5" style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
-      <Icon size={10} />
+      <Icon {...ICON_PROPS} size={10} />
       {label}
     </label>
   )

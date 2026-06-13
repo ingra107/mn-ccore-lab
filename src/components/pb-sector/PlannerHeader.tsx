@@ -42,7 +42,7 @@ function EditableField({ value, placeholder, onSave, icon: Icon }: {
 
   return (
     <div className="flex items-center gap-2" style={{ minHeight: 28 }}>
-      <Icon size={13} style={{ color: 'var(--gold)', opacity: 0.85, flexShrink: 0 }} />
+      <Icon {...ICON_PROPS} size={13} style={{ color: 'var(--gold)', opacity: 0.85, flexShrink: 0 }} />
       {editing ? (
         <input
           ref={inputRef}

@@ -363,7 +363,7 @@ function TaskMetricsRow({ metrics }: { metrics: TrajectoryData['taskMetrics'] })
               textAlign: 'center',
             }}
           >
-            <Icon
+            <Icon {...ICON_PROPS}
               size={18}
               style={{ color: card.color, margin: '0 auto 0.5rem', display: 'block', opacity: 0.85 }}
               aria-hidden="true"
@@ -842,7 +842,7 @@ function SectionHeader({
 }) {
   return (
     <div className="flex items-center gap-3 mb-5">
-      <Icon size={20} style={{ color: 'var(--gold)' }} aria-hidden="true" />
+      <Icon {...ICON_PROPS} size={20} style={{ color: 'var(--gold)' }} aria-hidden="true" />
       <h2
         style={{
           fontWeight: 500,
@@ -944,7 +944,7 @@ function ContribMetricCard({
         textAlign: 'center',
       }}
     >
-      <Icon
+      <Icon {...ICON_PROPS}
         size={20}
         style={{ color, margin: '0 auto 0.5rem', display: 'block', opacity: 0.85 }}
         aria-hidden="true"
@@ -1148,7 +1148,7 @@ function ContributionTimeline({ entries }: { entries: TimelineEntry[] }) {
               >
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-                    <Icon size={13} style={{ color: config.color, flexShrink: 0 }} />
+                    <Icon {...ICON_PROPS} size={13} style={{ color: config.color, flexShrink: 0 }} />
                     <span
                       style={{
                         fontSize: '10px',
@@ -1476,7 +1476,7 @@ export default function TrajectoryPage() {
                 letterSpacing: '0.05em',
               }}
             >
-              <Icon size={14} />
+              <Icon {...ICON_PROPS} size={14} />
               {tab.label}
             </button>
           )

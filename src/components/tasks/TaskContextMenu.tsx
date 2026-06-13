@@ -308,7 +308,7 @@ export default function TaskContextMenu({
               onClick={() => handleAction(() => onStatusChange(task.id, s.value))}
             >
               <span style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-sm)' }}>
-                <Icon size={13} />
+                <Icon {...ICON_PROPS} size={13} />
                 {s.label}
               </span>
               {isCurrent && <Check {...ICON_PROPS} size={12} style={{ opacity: 0.85 }} />}

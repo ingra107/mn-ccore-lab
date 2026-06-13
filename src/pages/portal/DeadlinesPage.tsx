@@ -259,7 +259,7 @@ export default function DeadlinesPage() {
                   active={active}
                   onClick={() => setView(v.key)}
                 >
-                  <Icon size={14} />
+                  <Icon {...ICON_PROPS} size={14} />
                   {v.label}
                 </ToggleButton>
               )

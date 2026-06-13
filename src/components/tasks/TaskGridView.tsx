@@ -1507,7 +1507,7 @@ function KeyLinkIcon({ url, label }: { url: string; label?: string | null }) {
           '--hov-opacity': '1',
         } as React.CSSProperties}
       >
-        <Icon size={14} />
+        <Icon {...ICON_PROPS} size={14} />
       </a>
       <button
         onClick={handleNonHttpClick}

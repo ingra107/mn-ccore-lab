@@ -437,7 +437,7 @@ function WeekView({ weekStart, events }: { weekStart: Date; events: CalendarEven
                 const Icon = eventIcons[e.type] || Calendar
                 return (
                   <div key={e.id} className="flex items-start gap-1 p-1.5 rounded" style={{ backgroundColor: config.bg }}>
-                    <Icon size={10} style={{ color: config.color, marginTop: 2, flexShrink: 0 }} />
+                    <Icon {...ICON_PROPS} size={10} style={{ color: config.color, marginTop: 2, flexShrink: 0 }} />
                     <span className="text-[10px] leading-tight" style={{ color: config.color }}>
                       {(() => { const t = formatBrandName(e.title); return t.length > 32 ? t.slice(0, 32) + '...' : t })()}
                     </span>
@@ -488,7 +488,7 @@ function DayView({ date, events }: { date: Date; events: CalendarEvent[] }) {
                 <motion.div key={e.id} variants={staggerItem}>
                   <Wrapper {...wrapperProps} className="flex items-center gap-4 px-4 py-3 rounded-lg border transition-colors hover:shadow-sm" style={{ borderColor: 'var(--border-subtle)', textDecoration: 'none', cursor: to ? 'pointer' : 'default' }}>
                     <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: config.bg }}>
-                      <Icon size={18} style={{ color: config.color }} />
+                      <Icon {...ICON_PROPS} size={18} style={{ color: config.color }} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium" style={{ color: 'var(--ink)' }}>{formatBrandName(e.title)}</p>
@@ -556,7 +556,7 @@ function AgendaView({ events }: { events: CalendarEvent[] }) {
                   <motion.div key={e.id} variants={staggerItem}>
                     <AgendaWrapper {...agendaProps} className="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors" style={{ textDecoration: 'none' }}>
                       <div className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0" style={{ backgroundColor: config.bg }}>
-                        <Icon size={12} style={{ color: config.color }} />
+                        <Icon {...ICON_PROPS} size={12} style={{ color: config.color }} />
                       </div>
                       <span className="flex-1 text-sm" style={{ color: 'var(--ink)' }}>{formatBrandName(e.title)}</span>
                       {assignee && (

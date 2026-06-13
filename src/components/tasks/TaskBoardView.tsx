@@ -303,7 +303,7 @@ export default function TaskBoardView({ tasks, onStatusChange, onSelect }: TaskB
                     >
                       <ChevronDown {...ICON_PROPS} size={12} />
                     </button>
-                    <Icon size={14} style={{ color: col.color }} />
+                    <Icon {...ICON_PROPS} size={14} style={{ color: col.color }} />
                     <span className="text-sm font-medium" style={{ color: col.color }}>
                       {col.label}
                     </span>
@@ -397,7 +397,7 @@ export default function TaskBoardView({ tasks, onStatusChange, onSelect }: TaskB
                             style={{ backgroundColor: col.bg, borderColor: `color-mix(in srgb, ${col.color} 30%, transparent)` }}
                           >
                             <div className="flex items-center gap-1.5">
-                              <Icon size={12} style={{ color: col.color, opacity: 0.85 }} />
+                              <Icon {...ICON_PROPS} size={12} style={{ color: col.color, opacity: 0.85 }} />
                               <span className="text-xs" style={{ color: col.color, opacity: 0.8 }}>
                                 {col.label}
                               </span>
@@ -517,7 +517,7 @@ function CollapsedColumn({
         {label}
       </div>
 
-      <Icon size={14} style={{ color, opacity: 0.85 }} />
+      <Icon {...ICON_PROPS} size={14} style={{ color, opacity: 0.85 }} />
 
       {/* Count badge */}
       <span

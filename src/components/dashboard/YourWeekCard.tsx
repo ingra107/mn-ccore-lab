@@ -6,6 +6,7 @@ import { emailToSlug } from '../../lib/emailSlug'
 import { isOverdue } from '../../lib/dateUtils'
 import { parseDbUtc } from '../../lib/time'
 import BentoCard from './BentoCard'
+import { ICON_PROPS } from '../../lib/iconProps'
 
 export default function YourWeekCard() {
   const { user } = useAuth()
@@ -56,7 +57,7 @@ export default function YourWeekCard() {
           const Icon = item.icon
           return (
             <div key={item.label} className="flex items-center gap-2">
-              <Icon size={14} style={{ color: item.color, flexShrink: 0 }} />
+              <Icon {...ICON_PROPS} size={14} style={{ color: item.color, flexShrink: 0 }} />
               <div>
                 <div style={{ fontSize: '18px', fontWeight: 600, color: item.color, lineHeight: 1 }}>
                   {item.value}

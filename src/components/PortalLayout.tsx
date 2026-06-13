@@ -229,7 +229,7 @@ export default function PortalLayout() {
                         cursor: 'pointer',
                       }}
                     >
-                      <Icon size={15} style={{ opacity: mode === key ? 1 : 0.85 }} />
+                      <Icon {...ICON_PROPS} size={15} style={{ opacity: mode === key ? 1 : 0.85 }} />
                       {label}
                       {mode === key && <span className="ml-auto text-[10px]" style={{ color: 'var(--teal)' }}>&#10003;</span>}
                     </button>

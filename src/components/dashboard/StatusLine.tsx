@@ -95,7 +95,7 @@ export default function StatusLine({ tasks, loading }: StatusLineProps) {
         const muted = count === 0
         const inner = (
           <>
-            <Icon size={11} />
+            <Icon {...ICON_PROPS} size={11} />
             <span>{count} {label}</span>
           </>
         )

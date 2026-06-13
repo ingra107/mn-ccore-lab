@@ -246,7 +246,7 @@ export default function ActivityStream({ project, filter }: Props) {
                     minHeight: '32px',
                   }}
                 >
-                  <Icon size={10} />
+                  <Icon {...ICON_PROPS} size={10} />
                   {config.label}
                 </button>
               )

@@ -99,7 +99,7 @@ export default function RecentActivity() {
                       : 'none',
                 }}
               >
-                <Icon
+                <Icon {...ICON_PROPS}
                   size={16}
                   className="flex-shrink-0 mt-0.5"
                   style={{ color: 'var(--gold)' }}

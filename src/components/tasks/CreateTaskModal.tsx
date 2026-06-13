@@ -272,7 +272,7 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
               onMouseOver={e => { e.currentTarget.style.borderColor = 'var(--teal)'; e.currentTarget.style.color = 'var(--teal)'; e.currentTarget.style.opacity = '1' }}
               onMouseOut={e => { e.currentTarget.style.borderColor = 'var(--border-subtle)'; e.currentTarget.style.color = 'var(--slate)'; e.currentTarget.style.opacity = '0.7' }}
             >
-              <Icon size={11} />
+              <Icon {...ICON_PROPS} size={11} />
               {t.label}
             </button>
           )

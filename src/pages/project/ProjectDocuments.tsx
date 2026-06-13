@@ -117,7 +117,7 @@ export default function ProjectDocuments({ projectSlug }: ProjectDocumentsProps)
                   onMouseEnter={() => setHoveredId(doc.id)}
                   onMouseLeave={() => setHoveredId(null)}
                 >
-                  <Icon
+                  <Icon {...ICON_PROPS}
                     size={16}
                     style={{ color: config.color, flexShrink: 0, opacity: 0.8 }}
                   />
@@ -233,7 +233,7 @@ export default function ProjectDocuments({ projectSlug }: ProjectDocumentsProps)
                     opacity: 0.85,
                   }}
                 >
-                  <Icon size={12} style={{ color: config.color }} />
+                  <Icon {...ICON_PROPS} size={12} style={{ color: config.color }} />
                   {preset.label}
                 </button>
               )
