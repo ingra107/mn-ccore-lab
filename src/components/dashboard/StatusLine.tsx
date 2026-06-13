@@ -69,10 +69,13 @@ export default function StatusLine({ tasks, loading }: StatusLineProps) {
 
   const allZero = chips.every((c) => c.count === 0)
 
+  // Phones: status chips WRAP rather than a nowrap scroll strip — the strip
+  // clipped "0 this week" mid-word with no scroll affordance (read broken).
+  // Few short chips, so wrapping stays compact + everything is visible.
   return (
     <div
       data-testid="dashboard-status-line"
-      className="flex items-center gap-2 flex-wrap max-[640px]:flex-nowrap max-[640px]:overflow-x-auto"
+      className="flex items-center gap-2 flex-wrap"
       style={{ minWidth: 0 }}
     >
       {allZero && (
