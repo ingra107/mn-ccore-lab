@@ -1,6 +1,8 @@
 # ▶ SESSION 2026-06-13 — RULE 74 ICON-DISCIPLINE SITE-WIDE SWEEP — EXECUTED + DEPLOYED
 
-**Live deploy = `aa1794d0` (Source `d5a985dc` = HEAD code). Frontend-only — no schema/route/API change (still 74 tables / 240 routes / v82).** First deploy this session (`62d2896c`) also shipped the 2 backend commits that had sat undeployed 21h (`bc636726` i40 derive-email_link on A3 applyPatch, `2506ec35` artifacts batch key_link anti-pattern marker) + `e0c50dd` (artifacts auto-link, already live). **7 deploys this session.**
+**Live deploy = `1ff0eef0` (Source `e30f7279` = HEAD). Frontend-only — no schema/route/API change (still 74 tables / 240 routes / v82).** First deploy this session (`62d2896c`) also shipped the 2 backend commits that had sat undeployed 21h (`bc636726` i40 derive-email_link on A3 applyPatch, `2506ec35` artifacts batch key_link anti-pattern marker) + `e0c50dd` (artifacts auto-link, already live). **8 deploys this session.**
+
+**`e30f7279` deploy papercut FIXED (verified via the one-command path):** `predeploy:identity` `python3`→`python` (Store-shim abort gone) + the 4 `db:*` npm scripts routed through `bash scripts/wrangler-d1` (verified bash runs under npm-on-Windows) — fixes the d1-lint block AND the CLOUDFLARE_API_TOKEN auth-shadowing on those scripts. `npm run deploy:pages:gated` now runs gate→build→deploy in one command (no more manual workaround). LabHealthScore greeting-chip: Nick chose KEEP as-is (semantic header chip, not a box-budget violation).
 
 **`d5a985dc` mobile status-chip wrap fix (deployed + re-captured-verified):** the dashboard status line used `max-[640px]:flex-nowrap + overflow-x-auto` → a phone scroll strip that clipped "0 this week" mid-word with no scroll affordance (read broken). Dropped the mobile override → chips wrap to 2 rows, fully visible. Verified clean in `review/debox-audit-2026-06-13/verify2/`. Broader mobile re-review (Today, My Tasks, task panel, Today timeline) = NO new defects; the My-Tasks quick-filter strip clip is the *deliberate* N1 swipeable design (not the same bug). **The session's visual work is comprehensively done + screenshot-verified.**
 
@@ -25,7 +27,7 @@ Executed the **queued site-wide Rule 74 icon-discipline sweep** (the `task_01KTW
 
 **Remaining from codex as genuinely-separate follow-on (NOT defects):** CSS-sized icons (`w-4 h-4`, inline width/height ≤20) are NOT caught by a size-prop codemod — a future pass could grep+audit those. Non-literal `size={CONST}`/`size="16"` also skipped (conservative).
 
-> ⚠️ **Deploy gotcha hit this session:** `npm run deploy:pages:gated` aborts at `predeploy:identity` because that script calls `python3` (not on Windows PATH — use `python`). Workaround: run `python scripts/check-project-identity-gate.py` (PASS), then `npm run build`, then `npx wrangler pages deploy dist --project-name mn-ccore-lab --branch main` (note `npx` — bare `wrangler` isn't on bash PATH). Candidate fix: make the npm script call `python` or `py`.
+> ✅ **Deploy now works one-command:** `npm run deploy:pages:gated` runs gate→build→deploy (fixed in `e30f7279`). If you ever invoke wrangler from the Bash tool directly, note bare `wrangler` isn't on bash PATH — use `npx wrangler`.
 
 # ▶ SESSION 2026-06-12 (CONTINUED) — D1 DESIGN-PARITY SWEEP — EXECUTED + DEPLOYED
 
