@@ -1,3 +1,16 @@
+# ▶ SESSION 2026-06-13 — RULE 74 ICON-DISCIPLINE SITE-WIDE SWEEP — EXECUTED + DEPLOYED
+
+**Live deploy = `62d2896c` (Source `b56a9dd` = HEAD). Frontend-only — no schema/route/API change (still 74 tables / 240 routes / v82).** This deploy also shipped the 2 backend commits that had sat undeployed 21h (`bc636726` i40 derive-email_link on A3 applyPatch, `2506ec35` artifacts batch key_link anti-pattern marker) + `e0c50dd` (artifacts auto-link, already live).
+
+Executed the **queued site-wide Rule 74 icon-discipline sweep** (the `task_01KTWD89…` class task — "pixely ≠ premium"):
+- **`bb1da5ed`** — AST-driven codemod (`scripts/icon-props-codemod.cjs`, TS compiler API, offset-splice → formatting preserved) applied `{...ICON_PROPS}` (strokeWidth:1.5, absoluteStrokeWidth:true) to **716 lucide icon sites across 137 files** rendered at size≤20px. Only real JSX icon tags touched (not `icon={Comp}` prop-passes, not explicit-strokeWidth icons, not >20px). Spread placed before size/style so explicit props still win. Previously only Sidebar + MobileTabBar carried the recipe. Codemod committed for re-runnability.
+- **`b56a9ddf`** — the contained-glyph half of Rule 74: `CheckSquare` → `SquareCheck` (17 usages / 6 files: CommandPalette, MobileTabBar, CalendarPage, MyTasks, PersonalPage, SearchPage), matching the Sidebar decision.
+- **Codex-reviewed** (gpt-5.5): verdict SHIP-WITH-FIXES; its flagged edge cases (namespace `import * as` lucide, lucide-name shadowing, trailing import comments) all **verified empirically absent** from the tree → applied diff correct + complete for scope. `tsc -b` + vite build green.
+
+**Remaining from codex as genuinely-separate follow-on (NOT defects):** CSS-sized icons (`w-4 h-4`, inline width/height ≤20) are NOT caught by a size-prop codemod — a future pass could grep+audit those. Non-literal `size={CONST}`/`size="16"` also skipped (conservative).
+
+> ⚠️ **Deploy gotcha hit this session:** `npm run deploy:pages:gated` aborts at `predeploy:identity` because that script calls `python3` (not on Windows PATH — use `python`). Workaround: run `python scripts/check-project-identity-gate.py` (PASS), then `npm run build`, then `npx wrangler pages deploy dist --project-name mn-ccore-lab --branch main` (note `npx` — bare `wrangler` isn't on bash PATH). Candidate fix: make the npm script call `python` or `py`.
+
 # ▶ SESSION 2026-06-12 (CONTINUED) — D1 DESIGN-PARITY SWEEP — EXECUTED + DEPLOYED
 
 **Live deploy = `d7bd6180` (HEAD = `20a7a797`). All built green, all deployed. Frontend-only — no schema/route/API change (still 74 tables / 240 routes / v82).**
