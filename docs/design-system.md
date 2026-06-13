@@ -208,11 +208,16 @@ TINT `--teal-active` + teal text, **never a solid `--teal-solid` fill** —
 solid fills are reserved for primary action BUTTONS); Projects category/deps
 pills and ProjectDetail's Note/Comment composer pills match; the gold
 "Why This Matters Now" band on ProjectDetail Overview is de-boxed (icon +
-label carry identity, whitespace carries separation). **Remaining waves**
-(ride the queued one-pill-language sweep task): Digest forYou filter,
-MeetingDetail selected-pills, dashboard-card interiors, Manuscripts resting
-hairlines → transparent. When touching any toolbar control, converge it on
-the TableControls/ViewPicker anatomy — do not mint new active styles.
+label carry identity, whitespace carries separation). **Wave 2 (2026-06-13):**
+Digest "For You" filter converged off the `--teal-solid` fill → `--teal-active`
+tint (solid fills are action-button-only); Manuscripts category tabs + stalled
+filter pill resting hairlines → transparent (1px kept transparent, colored only
+when active, so no layout shift). MeetingDetail "selected-pills" reviewed = NOT
+a violation (the `--teal-solid` "Complete All" is a legit primary action button;
+the selection bar is the transient one-box for that context) — left as-is.
+**Remaining waves** (ride the queued one-pill-language sweep task): dashboard-card
+interiors. When touching any toolbar control, converge it on the
+TableControls/ViewPicker anatomy — do not mint new active styles.
 
 ## ATTENTION & NOTIFICATION CANON (Nick-driven, 2026-06-11 seen-model session)
 

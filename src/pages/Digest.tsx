@@ -877,12 +877,15 @@ export default function Digest() {
                 onClick={() => setForYouFilter(!forYouFilter)}
                 className="cursor-pointer rounded-full px-3 py-1.5 text-sm flex items-center gap-1.5"
                 style={{
+                  // N1b de-box: filter toggle = teal TINT when active, never a
+                  // solid --teal-solid fill (those are reserved for action buttons).
+                  // Converges on the TableControls/ViewPicker pill anatomy.
                   fontWeight: forYouFilter ? 600 : 400,
-                  background: forYouFilter ? 'var(--teal-solid)' : 'rgba(0, 128, 128, 0.06)',
-                  color: forYouFilter ? 'var(--cream)' : 'var(--teal)',
+                  background: forYouFilter ? 'var(--teal-active)' : 'transparent',
+                  color: 'var(--teal)',
                   border: forYouFilter
                     ? '1px solid var(--teal)'
-                    : '1px solid rgba(0, 128, 128, 0.2)',
+                    : '1px solid var(--border-subtle)',
                   transition: 'background-color var(--duration-normal) var(--ease-out), color var(--duration-normal) var(--ease-out), border-color var(--duration-normal) var(--ease-out)',
                 }}
               >

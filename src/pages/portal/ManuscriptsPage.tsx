@@ -324,7 +324,9 @@ export default function ManuscriptsPage() {
               gap: '6px',
               padding: '4px 12px',
               borderRadius: 'var(--radius-full)',
-              border: active ? '1px solid var(--teal)' : '1px solid var(--border-subtle)',
+              // N1b de-box: resting hairline -> transparent (borderless until
+              // active); 1px kept transparent so the active border adds no shift.
+              border: active ? '1px solid var(--teal)' : '1px solid transparent',
               background: active ? 'var(--teal-subtle)' : 'transparent',
               color: active ? 'var(--teal)' : 'var(--slate)',
               fontSize: '12px',
@@ -395,7 +397,8 @@ export default function ManuscriptsPage() {
                 gap: '5px',
                 padding: '4px 10px',
                 borderRadius: 'var(--radius-full)',
-                border: filterStalled ? '1px solid var(--orange)' : '1px solid var(--border-subtle)',
+                // N1b de-box: resting hairline -> transparent (borderless until active).
+                border: filterStalled ? '1px solid var(--orange)' : '1px solid transparent',
                 background: filterStalled ? 'var(--orange-hover)' : 'transparent',
                 color: filterStalled ? 'var(--orange)' : 'var(--slate)',
                 fontSize: '12px',
