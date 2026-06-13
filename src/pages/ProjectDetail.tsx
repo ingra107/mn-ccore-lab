@@ -1299,9 +1299,10 @@ function ProjectDetailInner({ project }: InnerProps) {
           }
         >
           <div className="flex items-center gap-2 mb-2">
-            <div style={{ display: 'inline-flex', gap: 4, padding: 2, borderRadius: 'var(--radius-full)', background: 'var(--surface-2)' }}>
+            <div style={{ display: 'inline-flex', gap: 4 }}>
               {/* N1b — mode pills go tint-not-fill (locked canon pt 4), matching
-                  the task panel's COMMENT/NOTE segmented pills. */}
+                  the task panel's COMMENT/NOTE segmented pills; tray bg removed
+                  (box-budget — the composer below is the one box). */}
               <button
                 type="button"
                 onClick={() => setQuickComposeKind('note')}
@@ -1321,7 +1322,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                   fontSize: '10px', fontWeight: quickComposeKind === 'comment' ? 600 : 500, padding: '4px 10px',
                   borderRadius: 'var(--radius-full)', border: 'none', cursor: 'pointer',
                   background: quickComposeKind === 'comment' ? 'var(--gold-active)' : 'transparent',
-                  color: quickComposeKind === 'comment' ? 'var(--gold)' : 'var(--slate)',
+                  color: quickComposeKind === 'comment' ? 'var(--gold-on-emphasis)' : 'var(--slate)',
                 }}
               >
                 Comment

@@ -228,6 +228,15 @@ StatusLine stage-fill chips. **DEFERRED to Nick (JUDGMENT — app-wide visual
 shift):** BentoCard icon-well `--surface-2` bg + StatsCard mini-stat
 `--gold-active` icon bg (every card gets a 2nd bg layer for icon housing —
 removing it is a deliberate look change); LabHealthScore greeting-chip scope.
+**Wave 4 (2026-06-13) — one-pill-language convergence:** swept the app for
+divergent active-toggle styles and converged them on the tint anatomy:
+DensityToggle (was `--teal-solid` + white) → `--teal-active` + `--teal`;
+IdeasPage view toggle (was `--surface-2` tray + `--cream`/shadow active) →
+hairline pill group; ActivityStream + ProjectDetail Note/Comment compose
+toggles → ghost pills (tray bg removed, active = tint, teal=note / gold=comment
+via `--gold-on-emphasis` for AA). KEPT as semantic (not toggles): DoneBox/
+subtask-status fills, multi-select checkbox fills (MeetingDetail/Deadlines),
+progress bars, Digest status-tab segmented control (self-consistent gold idiom).
 When touching any toolbar control, converge it on the TableControls/ViewPicker
 anatomy — do not mint new active styles.
 

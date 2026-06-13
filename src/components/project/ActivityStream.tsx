@@ -196,15 +196,18 @@ export default function ActivityStream({ project, filter }: Props) {
         {/* Note / Comment toggle (only in 'all'; the filtered views are fixed) */}
         {filter === 'all' && (
           <div className="flex items-center gap-2 mb-2">
-            <div style={{ display: 'inline-flex', gap: 4, padding: 2, borderRadius: 'var(--radius-full)', background: 'var(--surface-2)' }}>
+            {/* N1b: was a --surface-2 tray with solid teal/gold active fills.
+                De-boxed to ghost pills — active = tint + semantic text color
+                (teal=note, gold=comment), resting transparent. */}
+            <div style={{ display: 'inline-flex', gap: 4 }}>
               <button
                 type="button"
                 onClick={() => setComposeKind('note')}
                 style={{
-                  fontSize: '10px', fontWeight: 500, padding: '4px 12px',
+                  fontSize: '10px', fontWeight: composeKind === 'note' ? 600 : 500, padding: '4px 12px',
                   borderRadius: 'var(--radius-full)', border: 'none', cursor: 'pointer',
-                  background: composeKind === 'note' ? 'var(--teal-solid)' : 'transparent',
-                  color: composeKind === 'note' ? 'var(--ink-bright, #fff)' : 'var(--slate)',
+                  background: composeKind === 'note' ? 'var(--teal-active)' : 'transparent',
+                  color: composeKind === 'note' ? 'var(--teal)' : 'var(--slate)',
                 }}
               >
                 Note
@@ -213,10 +216,10 @@ export default function ActivityStream({ project, filter }: Props) {
                 type="button"
                 onClick={() => setComposeKind('comment')}
                 style={{
-                  fontSize: '10px', fontWeight: 500, padding: '4px 12px',
+                  fontSize: '10px', fontWeight: composeKind === 'comment' ? 600 : 500, padding: '4px 12px',
                   borderRadius: 'var(--radius-full)', border: 'none', cursor: 'pointer',
-                  background: composeKind === 'comment' ? 'var(--gold)' : 'transparent',
-                  color: composeKind === 'comment' ? '#0f1923' : 'var(--slate)',
+                  background: composeKind === 'comment' ? 'var(--gold-active)' : 'transparent',
+                  color: composeKind === 'comment' ? 'var(--gold-on-emphasis)' : 'var(--slate)',
                 }}
               >
                 Comment

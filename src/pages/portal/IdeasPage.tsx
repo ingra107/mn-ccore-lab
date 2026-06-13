@@ -266,20 +266,20 @@ export default function IdeasPage() {
               alwaysShowChevron
             />
 
-            {/* View toggle (P2-10) */}
-            <div className="flex gap-1 rounded-lg p-1" style={{ background: 'var(--surface-2)' }}>
+            {/* View toggle (P2-10) — N1b: TableControls hairline-pill anatomy
+                (was a --surface-2 tray + --cream/shadow active button). */}
+            <div className="flex items-center overflow-hidden" style={{ border: '1px solid var(--border-subtle)', borderRadius: 999 }}>
               {(['kanban', 'list'] as const).map((v) => (
                 <button
                   key={v}
                   onClick={() => setViewMode(v)}
-                  className="px-2.5 py-1 rounded text-xs"
+                  className="px-2.5 py-1 text-xs"
                   style={{
-                    background: viewMode === v ? 'var(--cream)' : 'transparent',
-                    color: viewMode === v ? 'var(--ink)' : 'var(--slate)',
-                    fontWeight: viewMode === v ? 500 : 400,
+                    background: viewMode === v ? 'var(--teal-active)' : 'transparent',
+                    color: viewMode === v ? 'var(--teal)' : 'var(--slate)',
+                    fontWeight: viewMode === v ? 600 : 400,
                     border: 'none',
                     cursor: 'pointer',
-                    boxShadow: viewMode === v ? 'var(--shadow-card)' : 'none',
                   }}
                 >
                   {v === 'kanban' ? 'Board' : 'List'}
