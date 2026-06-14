@@ -1,14 +1,12 @@
 {
-  "generated_at": "2026-06-10T17:59:17.070354+00:00",
+  "generated_at": "2026-06-14T20:58:36.699962+00:00",
   "note": "Checked-in schema snapshot for Hub CI test (mutations.schema-drift.test.ts). Update when brain.db schema changes. hub-schema-sync specialist owns updates. Regenerate: python scripts/db/generate_hub_schema_snapshot.py --out <mn-ccore-lab>/api/brain-db-schema-snapshot.json",
   "hub_to_local": {
     "tasks": {
-      "title": "name",
-      "description": "notes"
+      "title": "name"
     },
     "projects": {
-      "title": "name",
-      "description": "notes"
+      "title": "name"
     }
   },
   "brain_cols": {
@@ -23,6 +21,7 @@
       "deadline",
       "deadline_type",
       "deleted_at",
+      "description",
       "description_json",
       "due_date",
       "effort",
@@ -66,6 +65,7 @@
       "citation",
       "context_links",
       "created_at",
+      "description",
       "doi",
       "domain",
       "due_date",
