@@ -37,7 +37,7 @@
 ## File Structure (all files touched, by repo + phase)
 
 **Phase 1 — additive (independent, shippable alone):**
-- `PB/scripts/db/migrations/083_m5_add_description_column.sql` — *create*. Add `description TEXT` to tasks+projects, backfill from `notes`.
+- `PB/scripts/db/migrations/107_m5_add_description_column.sql` — *create*. Add `description TEXT` to tasks+projects, backfill from `notes`.
 - `PB/scripts/db/schema.sql` — *modify*. Add `description TEXT` to the tasks + projects seed `CREATE TABLE` (fresh-DB parity).
 - `mn-ccore-lab/api/routes/tasks.ts:1356` — *modify*. Drop `|| pwaTask.notes` (additive-safe, ships now).
 
@@ -66,16 +66,17 @@
 
 **Files:** none (operational).
 
-- [ ] **Step 1: Snapshot BOTH brain.dbs.** On THIS machine: `cd ~/Peripheral-Brain && python scripts/db/backup.py` (WAL-safe + verify; writes `data/backups/brain_<ts>.db`). Via `cross-machine-relay` chat, ask the other machine to run the identical command and report the snapshot filename. Record both filenames in the execution log.
+- [ ] **Step 1: Snapshot BOTH brain.dbs.** On THIS machine: `cd ~/Peripheral-Brain && PYTHONPATH=$PWD python scripts/db/backup.py` (WAL-safe + verify; writes `data/backups/brain_<ts>.db`). NOTE: `backup.py` and `sync.py` need `PYTHONPATH=$PWD` (the integrity check imports the `scripts` package); `run_pending_migrations.py` does not. Via `cross-machine-relay` chat, ask the other machine to run the identical command and report the snapshot filename. Record both filenames in the execution log.
 
 - [ ] **Step 2: Confirm both machines at the same migration HEAD + drained outbox.** On THIS machine:
 ```bash
 cd ~/Peripheral-Brain
-sqlite3 data/brain.db "SELECT name FROM schema_migrations ORDER BY name DESC LIMIT 1;"   # expect 082_sessions_started_at_nullable
-sqlite3 data/brain.db "SELECT COUNT(*) FROM outbox WHERE synced_at IS NULL;"               # expect 0 (drained)
-python scripts/db/sync.py status
+# latest APPLIED migration — GLOB filters the non-numbered '__init__' marker (sorts AFTER digits in plain DESC)
+python -c "import sqlite3; print(sqlite3.connect('data/brain.db').execute(\"SELECT name FROM schema_migrations WHERE name GLOB '[0-9]*' ORDER BY name DESC LIMIT 1\").fetchone())"   # expect ('106_project_status_deleted_enum_guard',)
+# the outbox has NO synced_at column (cols: sent_at/ack_at/ack_status/dead_letter_at) — sync.py status is authoritative
+PYTHONPATH=$PWD python scripts/db/sync.py status   # expect: Outbox unsent 0, dead-letter 0; Pending changes local_modified 0
 ```
-Relay the same three to the other machine. **GATE:** both machines must show migration HEAD `082` and a drained outbox before proceeding. If either is behind/dirty, `sync` it first.
+Relay the same three to the other machine. **GATE:** both machines must show migration HEAD `106` and a drained outbox before proceeding. If either is behind/dirty, `sync` it first.
 
 - [ ] **Step 3: Record the current contract version.** `grep CONTRACT_VERSION ~/Peripheral-Brain/pb-schema/pb_schema/generated/field-authority.generated.ts` → expect `'0.5.0'`. This is the version we flip FROM.
 
@@ -88,12 +89,12 @@ Relay the same three to the other machine. **GATE:** both machines must show mig
 ### Task 1: brain.db `description` column migration + seed parity
 
 **Files:**
-- Create: `~/Peripheral-Brain/scripts/db/migrations/083_m5_add_description_column.sql`
+- Create: `~/Peripheral-Brain/scripts/db/migrations/107_m5_add_description_column.sql`
 - Modify: `~/Peripheral-Brain/scripts/db/schema.sql` (tasks + projects `CREATE TABLE`)
 
-- [ ] **Step 1: Write the migration.** Create `083_m5_add_description_column.sql`:
+- [ ] **Step 1: Write the migration.** Create `107_m5_add_description_column.sql`:
 ```sql
--- 083 (M5 notes-privacy): add a real local `description` column to tasks + projects
+-- 107 (M5 notes-privacy): add a real local `description` column to tasks + projects
 -- and backfill it from `notes`. ADDITIVE ONLY — does NOT touch the notes->description
 -- wire rename (that is the separate, relay-gated Phase 2 contract flip in schema_dsl.py).
 -- Safe to ship alone: with the rename unchanged, `notes` still carries the team body on
@@ -112,12 +113,12 @@ UPDATE projects SET description = notes WHERE description IS NULL AND notes IS N
 - [ ] **Step 3: `git add` the migration (it MUST be git-tracked or the runner skips it).**
 ```bash
 cd ~/Peripheral-Brain
-git add scripts/db/migrations/083_m5_add_description_column.sql scripts/db/schema.sql
+git add scripts/db/migrations/107_m5_add_description_column.sql scripts/db/schema.sql
 ```
 
 - [ ] **Step 4: Apply on THIS machine and verify the column + backfill.**
 ```bash
-python scripts/db/run_pending_migrations.py        # expect: migrations: ['083_m5_add_description_column']
+python scripts/db/run_pending_migrations.py        # expect: migrations: ['107_m5_add_description_column']
 sqlite3 data/brain.db "PRAGMA table_info(tasks);"  | grep -i description   # description column present
 sqlite3 data/brain.db "PRAGMA table_info(projects);" | grep -i description
 ```
@@ -134,14 +135,14 @@ Expected: both `0`. If non-zero, re-run the `UPDATE` from Step 1.
 cat > /tmp/m5-p1.txt <<'EOF'
 feat(brain-db): M5 phase 1 — add local description column + backfill from notes
 
-Additive migration 083: adds a real `description` TEXT column to tasks/projects
+Additive migration 107: adds a real `description` TEXT column to tasks/projects
 and backfills it from `notes`. Does not touch the notes->description wire rename
 (that is the relay-gated Phase 2 flip). Seed schema updated for fresh-DB parity.
 EOF
-git commit -F /tmp/m5-p1.txt -- scripts/db/migrations/083_m5_add_description_column.sql scripts/db/schema.sql
+git commit -F /tmp/m5-p1.txt -- scripts/db/migrations/107_m5_add_description_column.sql scripts/db/schema.sql
 ```
 
-- [ ] **Step 7: Roll out to the other machine via relay, then re-audit there.** Ask the other machine (via `cross-machine-relay` chat) to `git pull`, run `python scripts/db/run_pending_migrations.py`, and report the Step-5 audit counts. **GATE for Phase 2:** BOTH machines show `083` applied and audit counts `0`.
+- [ ] **Step 7: Roll out to the other machine via relay, then re-audit there.** Ask the other machine (via `cross-machine-relay` chat) to `git pull`, run `python scripts/db/run_pending_migrations.py`, and report the Step-5 audit counts. **GATE for Phase 2:** BOTH machines show `107` applied and audit counts `0`.
 
 ### Task 2: Hub — drop the `pwaTask.notes` create fallback
 
@@ -185,7 +186,7 @@ git commit -F /tmp/m5-hub-fallback.txt -- api/routes/tasks.ts
 
 ## Phase 2 — The atomic contract flip (relay-gated, lockstep across 3 repos)
 
-> **GATE (codex #2/#4):** do NOT start until Task 1 Step 7 confirms BOTH machines have run 083 and pass the backfill audit. This phase flips the SSOT, the hand-authored copies, the create writer, and BOTH generated artifacts as ONE contract version, then relays before the other machine pulls it. A half-flip false-conflicts or unknown-field-rejects (codex #4).
+> **GATE (codex #2/#4):** do NOT start until Task 1 Step 7 confirms BOTH machines have run 107 and pass the backfill audit. This phase flips the SSOT, the hand-authored copies, the create writer, and BOTH generated artifacts as ONE contract version, then relays before the other machine pulls it. A half-flip false-conflicts or unknown-field-rejects (codex #4).
 
 ### Task 3: Flip the SSOT (`schema_dsl.py`)
 

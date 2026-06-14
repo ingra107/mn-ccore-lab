@@ -1,3 +1,39 @@
+# ▶ M5 PHASE 0 — IN PROGRESS (2026-06-14) — baseline started, 2 reconcile items open before Phase 1
+
+**State: HOME baseline locked; WORK replied; 2 reconcile items gate Phase 1.** Plan (corrected this
+session): `docs/superpowers/plans/2026-06-14-m5-notes-privacy-impl.md`. Cross-machine chat thread:
+`~/PB-State/data/shared/home-work-chat.md` (HOME posted the dead-letter classification + count-delta
+request at 2026-06-14T15:32Z; **awaiting WORK's reply** — a Monitor was watching it this session).
+
+**Baselines captured:**
+| | migration | contract | outbox unsent | local_modified | active dead-letter | tasks/proj | snapshot |
+|---|---|---|---|---|---|---|---|
+| **HOME** | 106 | 0.5.0 | 0 | 0 | **0** (14 manual_merged_clean) | 860 / 79 | `brain_2026-06-14_102213.db` |
+| **WORK** | 106 | 0.5.0 | 0 | 0 | **24** (see below) | 893 / 79 | `brain_2026-06-14_102827.db` |
+
+**2 RECONCILE ITEMS before Phase 1 (the gate):**
+1. **WORK has 2 M5-relevant dead-letters** to classify: a `projects` update (2026-05-29) + a `tasks`
+   update (2026-06-07). HOME asked WORK to report each row's record_id/last_error + whether the target
+   is DELETED/ABSENT on Hub. If stale-update-to-deleted-row (HOME's pattern — all 14 of HOME's DLs were
+   exactly this, resolved `manual_merged_clean`) → mark resolved, proceed. If LIVE row w/ a real pending
+   notes edit → reconcile (land/discard) BEFORE Phase-1 backfill or WORK's `description` backfill diverges
+   from Hub. (WORK's OTHER 22 DLs = pre-P4 kg/agent_knowledge residue, target tables off-outbox since the
+   2026-06-05 rail-cut → **non-blocking**, never send, not tasks/projects.)
+2. **33-task delta** (WORK 893 vs HOME 860; projects match at 79). Likely pull-lag (both outboxes
+   unsent-0 = no un-pushed edits). Fix: both machines `PYTHONPATH=$PWD python scripts/db/sync.py pull` to
+   converge to Hub-canonical, re-confirm counts match.
+
+**FRESH-SESSION NEXT ACTION:** (1) read WORK's chat reply (the 2-DL classification + their task breakdown);
+(2) if both DLs are stale/benign AND counts converged → **execute Phase 1** of the plan (Task 1: additive
+migration **107** `description` column + backfill on BOTH machines via relay; Task 2: Hub `pwaTask.notes`
+fallback drop). Phase 2 (the atomic contract flip) stays relay-gated after Phase 1's both-machine audit.
+
+**Plan corrections applied this session (Phase-0 surfaced them):** migration number `083`→**`107`** (083 was
+already taken — DB is at 106, not the 082 the spec assumed); expected HEAD `082`→`106`; outbox drain-check
+uses `sync.py status` (no `synced_at` column exists); `backup.py`/`sync.py` need `PYTHONPATH=$PWD`.
+
+---
+
 # ▶ DEEP-LINK INTEGRITY AUDIT — DONE 2026-06-14 (audited + last gap fixed + deployed + verified)
 
 **Hub task `task_01KTWD8CNYNANJHQM13DYPT94S` ("deep-link integrity audit") — CLOSED.** Last un-run
