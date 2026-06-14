@@ -1,36 +1,49 @@
-# ▶ M5 PHASE 0 — IN PROGRESS (2026-06-14) — baseline started, 2 reconcile items open before Phase 1
+# ▶ M5 PHASE 0 — baseline DONE (2026-06-14); both gate items resolved/diagnosed. Open question = an id-rekey cleanup (NOT a hard M5 blocker). NEEDS NICK'S CALL on sequencing.
 
-**State: HOME baseline locked; WORK replied; 2 reconcile items gate Phase 1.** Plan (corrected this
-session): `docs/superpowers/plans/2026-06-14-m5-notes-privacy-impl.md`. Cross-machine chat thread:
-`~/PB-State/data/shared/home-work-chat.md` (HOME posted the dead-letter classification + count-delta
-request at 2026-06-14T15:32Z; **awaiting WORK's reply** — a Monitor was watching it this session).
+**State: both machines confirmed at the same clean sync baseline.** Plan (corrected this session):
+`docs/superpowers/plans/2026-06-14-m5-notes-privacy-impl.md`. Cross-machine chat:
+`~/PB-State/data/shared/home-work-chat.md` (full diagnostic thread, last HOME post 15:46Z).
 
-**Baselines captured:**
-| | migration | contract | outbox unsent | local_modified | active dead-letter | tasks/proj | snapshot |
+**Baselines confirmed:**
+| | migration | contract | outbox unsent | local_modified | active dead-letter | active tasks | proj |
 |---|---|---|---|---|---|---|---|
-| **HOME** | 106 | 0.5.0 | 0 | 0 | **0** (14 manual_merged_clean) | 860 / 79 | `brain_2026-06-14_102213.db` |
-| **WORK** | 106 | 0.5.0 | 0 | 0 | **24** (see below) | 893 / 79 | `brain_2026-06-14_102827.db` |
+| **HOME** | 106 | 0.5.0 | 0 | 0 | 0 (14 manual_merged_clean) | 856 | 79 |
+| **WORK** | 106 | 0.5.0 | 0 | 0 | 24 (see ✅ below) | 847 | 79 |
+| **Hub (canonical)** | — | — | — | — | — | **858** | 79 |
 
-**2 RECONCILE ITEMS before Phase 1 (the gate):**
-1. **WORK has 2 M5-relevant dead-letters** to classify: a `projects` update (2026-05-29) + a `tasks`
-   update (2026-06-07). HOME asked WORK to report each row's record_id/last_error + whether the target
-   is DELETED/ABSENT on Hub. If stale-update-to-deleted-row (HOME's pattern — all 14 of HOME's DLs were
-   exactly this, resolved `manual_merged_clean`) → mark resolved, proceed. If LIVE row w/ a real pending
-   notes edit → reconcile (land/discard) BEFORE Phase-1 backfill or WORK's `description` backfill diverges
-   from Hub. (WORK's OTHER 22 DLs = pre-P4 kg/agent_knowledge residue, target tables off-outbox since the
-   2026-06-05 rail-cut → **non-blocking**, never send, not tasks/projects.)
-2. **33-task delta** (WORK 893 vs HOME 860; projects match at 79). Likely pull-lag (both outboxes
-   unsent-0 = no un-pushed edits). Fix: both machines `PYTHONPATH=$PWD python scripts/db/sync.py pull` to
-   converge to Hub-canonical, re-confirm counts match.
+snapshots: HOME `brain_2026-06-14_102213.db`, WORK `brain_2026-06-14_102827.db`.
 
-**FRESH-SESSION NEXT ACTION:** (1) read WORK's chat reply (the 2-DL classification + their task breakdown);
-(2) if both DLs are stale/benign AND counts converged → **execute Phase 1** of the plan (Task 1: additive
-migration **107** `description` column + backfill on BOTH machines via relay; Task 2: Hub `pwaTask.notes`
-fallback drop). Phase 2 (the atomic contract flip) stays relay-gated after Phase 1's both-machine audit.
+**Gate item 1 — dead-letters → ✅ RESOLVED.** WORK confirmed its 2 M5-relevant DLs are safe (both already
+`manual_merged_clean`, janitor "state-equivalent" — the `tasks` one is a LIVE done row, NOT a lost notes
+edit). Its other 22 DLs = inert pre-P4 kg/agent_knowledge residue (off-outbox since 2026-06-05 rail-cut),
+non-blocking. HOME = 0 active (its 14 were manually merged in late May).
 
-**Plan corrections applied this session (Phase-0 surfaced them):** migration number `083`→**`107`** (083 was
-already taken — DB is at 106, not the 082 the spec assumed); expected HEAD `082`→`106`; outbox drain-check
-uses `sync.py status` (no `synced_at` column exists); `backup.py`/`sync.py` need `PYTHONPATH=$PWD`.
+**Gate item 2 — task-count delta → ✅ DIAGNOSED (duplicate identity, NOT lost data).** A `sync.py pull` did
+NOT close it (seq-cursor only). Root cause, verified by title-match (HOME vs Hub GET /api/tasks=858 active):
+the same ~19 late-April DONE tasks exist as BOTH a brain.db `task_01K…` ULID (local-only, never pushed) AND
+a Hub **hex id** (canonical, never pulled) — a missing `entity_aliases` ULID↔hex link. HOME: 19/20 "HOME-only"
+ULIDs already on Hub under a hex twin; only **1** genuinely HOME-only ("Idea: something to think about", test-ish);
+~3 genuinely Hub-missing. So WORK's "28 work-only completions, push-or-drop" framing is wrong — **they are NOT
+lost; pushing them would CREATE ~19 duplicate Hub tasks.** WORK's STOP-before-resync was right; the fix is the
+opposite of push (alias-link the pairs, or drop the local ULID dupes since the Hub hex version is canonical+done).
+WORK asked to run the same title-match on its 28 to find its genuinely-unique residue.
+
+**Why this is NOT a hard M5 blocker:** the duplicate-identity rows are local-only DONE tasks that never sync
+to Hub → the M5 `description` backfill + contract flip don't touch them (their notes/description stays local).
+M5's actual safety concern (codex #2: `description=NULL` blanking Hub bodies) is unaffected by this id divergence.
+
+**NICK'S CALL (the open decision):** (A) clean the id-rekey divergence first — reconcile/drop the ~19 local
+ULID dupes + handle the handful of genuinely-unique rows — THEN M5 Phase 1 (clean substrate); or (B) proceed
+with M5 Phase 1 now (divergence doesn't affect it) and clean the id-rekey separately. Also open: root-cause
+the rekey (why did ULID↔hex never alias? is it ongoing?) — a candidate for /diagnostic-consult-panel.
+
+**FRESH-SESSION NEXT ACTION:** read WORK's title-match reply (its genuinely-unique residue) + get Nick's A/B
+call. If proceeding to **Phase 1**: Task 1 = additive migration **107** (`description` column + backfill on BOTH
+machines via relay); Task 2 = Hub `pwaTask.notes` fallback drop. Phase 2 (atomic flip) stays relay-gated.
+
+**Plan corrections applied this session (Phase-0 surfaced them):** migration `083`→**`107`** (083 taken — DB at
+106, not the spec's 082); expected HEAD `082`→`106`; outbox drain via `sync.py status` (no `synced_at` column);
+`backup.py`/`sync.py` need `PYTHONPATH=$PWD`.
 
 ---
 
