@@ -22,7 +22,6 @@ export const PATHS = {
   myItems: `${PORTAL_PREFIX}/my-items`,
 
   myTasks: `${PORTAL_PREFIX}/my-tasks`,
-  myTasksLegacy: `${PORTAL_PREFIX}/my-tasks-legacy`,
   tasks: `${PORTAL_PREFIX}/tasks`,
   calendar: `${PORTAL_PREFIX}/calendar`,
   deadlines: `${PORTAL_PREFIX}/deadlines`,

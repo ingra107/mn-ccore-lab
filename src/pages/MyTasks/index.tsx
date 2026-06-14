@@ -185,9 +185,8 @@ export default function UnifiedMyTasks() {
   // Consume `?create=true` deep-links (⌘K "Create Task", Today/My-Hub quick
   // actions, the `c` keyboard shortcut). Opens the CreateTaskModal then strips
   // the param. This is the consumer half of the create=true class — UnifiedMyTasks
-  // is the live /portal/my-tasks page (the legacy portal/MyTasks.tsx had a
-  // consumer but is only mounted at /portal/my-tasks-legacy). `ready` is true
-  // immediately — the modal doesn't depend on the task collection being loaded.
+  // is the live /portal/my-tasks page. `ready` is true immediately — the modal
+  // doesn't depend on the task collection being loaded.
   useOpenParam('create', () => setShowCreate(true))
   const createTask = useCreateTask()
   const handleCreate = useCallback((task: {
