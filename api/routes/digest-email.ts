@@ -152,9 +152,14 @@ function formatDueDate(due: string | null): string {
 
 function taskRow(task: DigestTask): string {
   const due = task.due_date ? `<span style="color:#94a3b8;font-size:12px;margin-left:8px;">${formatDueDate(task.due_date)}</span>` : '';
+  // Deep-link the title so the digest lands the task OPEN (Rule 73 deep-link integrity).
+  // Always My Tasks: tasks.project_id here is the typed proj_* PK, not the slug the
+  // /portal/projects/:slug route expects, so a project deep-link would be broken — ?open=
+  // on My Tasks is unambiguous and consumes via useOpenParam.
+  const href = `${HUB_URL}/portal/my-tasks?open=${encodeURIComponent(task.id)}`;
   return `<tr>
     <td style="padding:6px 0;border-bottom:1px solid #f0f0f0;font-size:13px;color:#0f1923;">
-      ${escapeHtml(task.title)}${priorityLabel(task.priority)}${due}
+      <a href="${href}" style="color:#0f1923;text-decoration:none;">${escapeHtml(task.title)}</a>${priorityLabel(task.priority)}${due}
     </td>
   </tr>`;
 }
@@ -289,7 +294,7 @@ function buildDigestHtml(data: DigestData): string {
 
       <!-- CTA -->
       <div style="text-align:center;margin-top:24px;">
-        <a href="${HUB_URL}/my-tasks" style="display:inline-block;padding:10px 28px;background:#2d8a8a;color:white;text-decoration:none;border-radius:6px;font-size:14px;font-weight:500;">
+        <a href="${HUB_URL}/portal/my-tasks" style="display:inline-block;padding:10px 28px;background:#2d8a8a;color:white;text-decoration:none;border-radius:6px;font-size:14px;font-weight:500;">
           Open Hub
         </a>
       </div>
@@ -298,7 +303,7 @@ function buildDigestHtml(data: DigestData): string {
     <!-- Footer -->
     <div style="text-align:center;padding:16px 0;font-size:11px;color:#94a3b8;">
       MN-CCORE Lab Hub &middot; University of Minnesota<br>
-      <a href="${HUB_URL}/settings" style="color:#2d8a8a;text-decoration:none;">Manage notifications</a>
+      <a href="${HUB_URL}/portal/settings" style="color:#2d8a8a;text-decoration:none;">Manage notifications</a>
     </div>
 
   </div>
@@ -612,7 +617,7 @@ async function composeDailyDigest(env: Env, member: CoordinatorMember): Promise<
         </div>
         <p style="margin:0 0 0 16px;font-size:13px;color:${overdueCount > 0 ? '#0f1923' : '#64748b'};">
           ${overdueCount > 0
-            ? `<strong style="color:#dc2626;">${overdueCount}</strong> task${overdueCount > 1 ? 's' : ''} past due — <a href="${HUB_URL}/my-tasks" style="color:#2d8a8a;">review now</a>`
+            ? `<strong style="color:#dc2626;">${overdueCount}</strong> task${overdueCount > 1 ? 's' : ''} past due — <a href="${HUB_URL}/portal/my-tasks" style="color:#2d8a8a;">review now</a>`
             : 'No overdue tasks'}
         </p>
       </div>
@@ -649,7 +654,7 @@ async function composeDailyDigest(env: Env, member: CoordinatorMember): Promise<
         </div>
         <p style="margin:0 0 0 16px;font-size:13px;color:${stalledCount > 0 ? '#0f1923' : '#64748b'};">
           ${stalledCount > 0
-            ? `<strong style="color:#c2410c;">${stalledCount}</strong> manuscript${stalledCount > 1 ? 's' : ''} stalled — <a href="${HUB_URL}/projects" style="color:#2d8a8a;">review pipeline</a>`
+            ? `<strong style="color:#c2410c;">${stalledCount}</strong> manuscript${stalledCount > 1 ? 's' : ''} stalled — <a href="${HUB_URL}/portal/projects" style="color:#2d8a8a;">review pipeline</a>`
             : 'All manuscripts moving'}
         </p>
       </div>
@@ -666,7 +671,7 @@ async function composeDailyDigest(env: Env, member: CoordinatorMember): Promise<
       </div>`}
       <!-- CTA -->
       <div style="text-align:center;margin-top:24px;">
-        <a href="${HUB_URL}/dashboard" style="display:inline-block;padding:10px 28px;background:#2d8a8a;color:white;text-decoration:none;border-radius:6px;font-size:14px;font-weight:500;">
+        <a href="${HUB_URL}/portal/dashboard" style="display:inline-block;padding:10px 28px;background:#2d8a8a;color:white;text-decoration:none;border-radius:6px;font-size:14px;font-weight:500;">
           Open Hub
         </a>
       </div>
@@ -674,7 +679,7 @@ async function composeDailyDigest(env: Env, member: CoordinatorMember): Promise<
     <!-- Footer -->
     <div style="text-align:center;padding:16px 0;font-size:11px;color:#94a3b8;">
       MN-CCORE Lab Hub &middot; University of Minnesota<br>
-      <a href="${HUB_URL}/settings" style="color:#2d8a8a;text-decoration:none;">Manage notifications</a>
+      <a href="${HUB_URL}/portal/settings" style="color:#2d8a8a;text-decoration:none;">Manage notifications</a>
     </div>
   </div>
 </body>
