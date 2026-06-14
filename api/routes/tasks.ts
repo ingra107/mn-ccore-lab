@@ -1323,7 +1323,6 @@ export async function handleMobileTasksToHub(request: Request, user: AuthUser, e
       title?: string;
       name?: string;                    // PWA legacy field name
       description?: string;
-      notes?: string | null;
       due_date?: string | null;
       effort?: string | null;
       short_title?: string | null;
@@ -1351,7 +1350,10 @@ export async function handleMobileTasksToHub(request: Request, user: AuthUser, e
       continue;
     }
     const title = pwaTask.title || pwaTask.name || '';
-    const description = pwaTask.description || pwaTask.notes || title;
+    // M5: `notes` is brain.db-only (not on the wire); `description` is the body
+    // field. Fall back to title, never notes (the notes wire alias was retired
+    // 2026-06-10, pb-schema 0.4.0 — PWA no longer sends it).
+    const description = pwaTask.description || title;
     const assignee = pwaTask.assignee || 'nick-ingraham';
 
     if (!title.trim()) {
