@@ -92,12 +92,3 @@ CREATE TABLE IF NOT EXISTS activity_log (
   actor TEXT,
   timestamp TEXT DEFAULT (datetime('now'))
 );
-
--- Comments (for project discussions)
-CREATE TABLE IF NOT EXISTS comments (
-  id TEXT PRIMARY KEY,
-  project_id TEXT REFERENCES projects(id),
-  author_id TEXT REFERENCES team_members(id),
-  content TEXT NOT NULL,
-  created_at TEXT DEFAULT (datetime('now'))
-);

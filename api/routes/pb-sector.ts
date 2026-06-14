@@ -9,7 +9,7 @@ import { postActivityEntry } from '../lib/activity-entry';
 // plan CRUD/reorder/promote/history, reflection, pomodoro) were retired —
 // superseded by the synced task plan columns (tasks.planned_for/plan_slot/
 // plan_rank, see src/lib/todayPlan.ts). The D1 tables (daily_plans,
-// daily_reflections, hub_pomodoro_slots) remain physically; drop is deferred.
+// daily_reflections, hub_pomodoro_slots) were removed in schema-v78 (2026-06-14).
 // What stays here: quick capture, defer, and the dispatch queue (live Hermes lane).
 
 // POST /api/pb/capture — quick capture (task, idea, or note)
