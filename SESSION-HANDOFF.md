@@ -1,3 +1,23 @@
+# ▶ DEEP-LINK INTEGRITY AUDIT — DONE 2026-06-14 (audited + last gap fixed + deployed + verified)
+
+**Hub task `task_01KTWD8CNYNANJHQM13DYPT94S` ("deep-link integrity audit") — CLOSED.** Last un-run
+sibling of the 2026-06-11 5-task class-sweep batch (icon/pill/badge/style were already done).
+
+- **Audit result:** core fix (2026-06-11) holds — `NavigateKeepSearch` covers ~22 redirect shims;
+  `useOpenParam` consumes `?open=` on every detail-capable page (Rule 63e). **6 of 7 link-generating
+  surfaces already land the entity OPEN** (search `?open=`/`?openTask=`, command palette, notification
+  bell, My Items in-place + `?open=`; OG cards N/A; no meeting-agenda/artifact-teaser entity links).
+- **The one real gap — FIXED (`50f63209`, deployed `9083cc4d`, prod-verified):** daily digest email
+  (`api/routes/digest-email.ts`) rendered task titles as plain text + linked bare paths. Now: task
+  rows deep-link `/portal/my-tasks?open=<id>` (verified 8 live `?open=` rows for nick-ingraham); all
+  7 email links (both digest templates) target `/portal/*` directly. `DigestTask` already carried
+  `id` — no threading needed. Used My-Tasks `?open=` not a project deep-link because `tasks.project_id`
+  is the typed `proj_*` PK here, not the slug the `/portal/projects/:slug` route expects.
+- **Left intentionally (harmless):** 3 plain `<Navigate>` in `App.tsx` (`/pi/analytics`,
+  `/pi-analytics`, catch-all `*`) — all non-parameterized, can't drop `?open=`.
+
+---
+
 # ▶ SESSION 2026-06-13 — RULE 74 ICON-DISCIPLINE SITE-WIDE SWEEP — EXECUTED + DEPLOYED
 
 **Live deploy = `8b12ee7e` (Source `fa5f20cd` = HEAD). Frontend-only — no schema/route/API change (still 74 tables / 240 routes / v82). 9 deploys this session.** First deploy this session (`62d2896c`) also shipped the 2 backend commits that had sat undeployed 21h (`bc636726` i40 derive-email_link on A3 applyPatch, `2506ec35` artifacts batch key_link anti-pattern marker) + `e0c50dd` (artifacts auto-link, already live). **8 deploys this session.**
