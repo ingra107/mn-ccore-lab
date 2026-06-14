@@ -9,12 +9,15 @@
 // Exemptions built in:
 //  - Lines starting with // or * (comments)
 //  - Strings containing 'applyMutation' (the approved path)
-//  - handleBatchUpdateTasks / handleAcknowledgeTask bodies (hub-internal
-//    multi-row paths; not routable through single-row applyMutation)
+//  - handleBatchUpdateTasks body (hub-internal multi-row IN-clause batch path;
+//    not routable through single-row applyMutation)
 //
 // Maintenance: if you add a new route file that writes tasks/projects, add it
 // to routeFiles below AND route through applyMutation().
 // Note: handleSyncBulkTasks deleted 2026-05-12 (codex audit #8); exemption removed.
+//       handleAcknowledgeTask exemption removed 2026-06-14 — HUB-7 routed it
+//       through applyMutation, so it no longer does a raw write; the invariant
+//       now guards it like any other function.
 
 import { readFileSync } from 'node:fs'
 import { describe, it, expect } from 'vitest'
@@ -45,9 +48,9 @@ describe('Phase 3.1 invariant: no raw writes outside mutations.ts', () => {
       // explicitly exempted from the invariant:
       //   - handleBatchUpdateTasks: multi-row IN-clause batch path; per-row
       //     applyMutation conversion deferred (post-Phase-3.1 task).
-      //   - handleAcknowledgeTask: writes acknowledged_at/acknowledged_by which
-      //     are not in TABLE_FIELDS (hub-internal fields, not synced to PB).
-      // (handleSyncBulkTasks deleted 2026-05-12; exemption removed.)
+      // (handleSyncBulkTasks deleted 2026-05-12; exemption removed.
+      //  handleAcknowledgeTask exemption removed 2026-06-14 — HUB-7 routed it
+      //  through applyMutation, so the invariant guards it now.)
       let insideBulkHandler = false
       let braceDepth = 0
 
@@ -57,8 +60,7 @@ describe('Phase 3.1 invariant: no raw writes outside mutations.ts', () => {
 
         // Detect entry into exempted bulk/batch handlers
         if (
-          trimmed.includes('async function handleBatchUpdateTasks') ||
-          trimmed.includes('async function handleAcknowledgeTask')
+          trimmed.includes('async function handleBatchUpdateTasks')
         ) {
           insideBulkHandler = true
           braceDepth = 0
