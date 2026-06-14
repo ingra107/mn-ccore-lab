@@ -1,6 +1,7 @@
 import type { AuthUser, Env } from '../helpers';
 import { json, error, generateId, logActivity, actorSlug, isPiRequest, resolveActor, projectRefToCanonical } from '../helpers';
 import { filterFixtures } from '../lib/fixtures';
+import { HERMES_DETECT_RE, HERMES_STRIP_RE } from '../lib/hermes-mention';
 
 // ── AI Co-Scientist: detect @hermes/@claude mentions in answers ──
 async function handleClaudeMentionInAnswer(
@@ -10,9 +11,9 @@ async function handleClaudeMentionInAnswer(
   user: AuthUser,
   env: Env,
 ): Promise<void> {
-  if (!/@(hermes|claude)\b/i.test(content)) return;
+  if (!HERMES_DETECT_RE.test(content)) return;
 
-  const aiPrompt = content.replace(/@(hermes|claude)/gi, '').trim();
+  const aiPrompt = content.replace(HERMES_STRIP_RE, '').trim();
   if (aiPrompt.length <= 5) return;
 
   // Get question context
@@ -151,8 +152,8 @@ export async function handleCreateQuestion(request: Request, user: AuthUser, env
 
   // Check for @hermes/@claude mention in question → create AI request + placeholder answer
   try {
-    if (/@(hermes|claude)\b/i.test(questionText)) {
-      const aiPrompt = questionText.replace(/@(hermes|claude)/gi, '').trim();
+    if (HERMES_DETECT_RE.test(questionText)) {
+      const aiPrompt = questionText.replace(HERMES_STRIP_RE, '').trim();
       if (aiPrompt.length > 5) {
         const aiId = generateId();
         await env.DB.prepare(

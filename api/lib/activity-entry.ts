@@ -31,15 +31,11 @@ import {
   type StoredKind,
   type Visibility,
 } from '../../shared/activityKinds';
+// Hermes trigger regexes — SSOT in lib/hermes-mention.ts (shared with
+// routes/questions.ts so the trigger pattern can't drift between surfaces).
+import { HERMES_DETECT_RE, HERMES_STRIP_RE } from './hermes-mention';
 
 export type EntityType = 'task' | 'project' | 'artifact';
-
-// Hermes trigger: @hermes / @claude. DETECT_RE gates dispatch (word-boundary so
-// '@claudette' doesn't fire); STRIP_RE removes the mention from the AI prompt
-// (global, no word-boundary so trailing punctuation goes too). Module-scope so
-// the literals aren't recompiled per write.
-const HERMES_DETECT_RE = /@(hermes|claude)\b/i;
-const HERMES_STRIP_RE = /@(hermes|claude)/gi;
 
 export interface PostActivityEntryInput {
   env: Env;
