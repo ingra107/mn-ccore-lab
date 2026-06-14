@@ -1,3 +1,13 @@
+# ▶ M5 — SLICE 1+2 LIVE IN PROD (2026-06-14 PM). Hub at pb-schema 0.6.0; `description` is the wire body, `notes` is brain-only (off the wire). Retirement batch DONE.
+
+**Current state (supersedes the Phase-0 block below):**
+- **M5 notes-privacy LIVE + verified.** PB brain.db mig-107 (description col + backfill) → mig-108 (TODAY-reader). Hub adopted pb-schema 0.6.0 (`a1f7505`) in `a6f5cbf2`: gitlink bump + regenerated `api/brain-db-schema-snapshot.json` (hub_to_local drops the description→notes rename; brain_cols gains description) + new `api/routes/mutations.m5-contract.test.ts` (description ∈ TABLE_FIELDS, notes ∉). Deployed to prod (CF Pages auto-deploy on push); write-path smoke green (body→`description`, `notes` not leaked). `mutations.notes-leak.test.ts` stays valid (Model A keeps notes off the wire) — do NOT change it. `TASK_PRIVATE_COLS={notes}` stays (notes is still Hub's private col). Both machines at 0.6.0, sync resumed.
+- **Retirements DONE (`7ec57b70`/`d20d70e9`/`00c9e26b`):** my-tasks-legacy route + path const + the orphaned `src/pages/portal/MyTasks.tsx` removed (live `/portal/my-tasks` uses `UnifiedMyTasks`→`./pages/MyTasks`, untouched). `bootstrap-schema.sql` no longer re-creates the dead `comments` table. T1/T3 D1 tables (daily_plans, daily_reflections, comments, project_updates, task_comments, task_updates) were ALREADY physically gone since schema-v78 — verified via live prod-D1 query; nothing left to remove. Decision doc: `docs/2026-06-14-retire-legacy-d1-twins-and-my-tasks-legacy.md`.
+- **Also shipped:** HUB-7 stale-residual cleanup (`a95f1e4f`), #4c TaskDetailPanel `<style>`→index.css (`b352b781`), #5f `@hermes` regex SSOT `api/lib/hermes-mention.ts` (`0ebf4732`). HEAD `00c9e26b`; full api suite 865/865.
+- **Note:** much of the 2026-06-14 AM roundup docket was STALE (HUB-7, flag#2, 6/8 of #4/#5, both D1 drops already done) — Fix-Gate each item against live code/prod before acting.
+
+---
+
 # ▶ M5 PHASE 0 — DONE + GREEN (2026-06-14). The "id-rekey divergence" was a DIFF-TOOL ARTIFACT, not a bug. M5 FULLY UNBLOCKED. NO cleanup (cleanup would be DESTRUCTIVE).
 
 **State: both machines at the same clean sync baseline; the one open question (the task-count gap) is RESOLVED — never an integrity fault.** Plan (corrected this session):
