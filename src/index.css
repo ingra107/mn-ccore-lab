@@ -2040,3 +2040,94 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
     display: none !important;
   }
 }
+
+/* ── TaskDetailPanel (4c: moved from inline <style> block 2026-06-14) ────────
+   Static rules extracted from TaskDetailPanel.tsx <style>{`…`}</style>.
+   Namespaced to .task-detail-panel so they can't bleed elsewhere.          */
+
+@keyframes slideIn {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0); }
+}
+
+/* Suppress InlineDatePicker button's own hover border inside ghost pill
+   (Change 1: outer ghost pill is the only hover affordance). */
+[data-ghost-pill] button:hover {
+  border-color: transparent !important;
+}
+
+.dark .task-detail-panel {
+  background-color: var(--cream) !important;
+  background-image: linear-gradient(var(--surface-2), var(--surface-2)) !important;
+  /* Desktop floating panel has no left border; mobile still uses border-left via inline style */
+}
+
+/* N1.12 — sticky surfaces (header, mobile composer) must carry the
+   SAME composite as the panel body; their plain var(--cream) bg
+   rendered as near-black bands on the gradient-lightened panel.
+   Done bar uses the same fix: color-mix(cream 95%, transparent) was
+   cream-colored in dark mode since it didn't carry the gradient. */
+.dark .task-detail-panel .task-detail-sticky,
+.dark .task-detail-panel .task-detail-done-bar {
+  background-color: var(--cream) !important;
+  background-image: linear-gradient(var(--surface-2), var(--surface-2)) !important;
+}
+
+.dark .task-detail-panel select {
+  color-scheme: dark;
+}
+
+.task-detail-done-bar { display: none; }
+
+@media (max-width: 767px) {
+  .task-detail-panel .p-5 {
+    padding: 1rem !important;
+  }
+
+  /* N1.13 — header controls (prev/next/copy) were 18-22px targets
+     clustered within ~50px; pad them out to thumbable size. */
+  .task-detail-panel .task-detail-header button {
+    padding: 10px !important;
+    min-width: 40px;
+  }
+
+  /* Enlarge close-button hit target to 44×44 for thumb reach. */
+  .task-detail-panel .task-detail-close {
+    min-width: 44px !important;
+    min-height: 44px !important;
+  }
+
+  /* Sticky Done bar at panel bottom. */
+  .task-detail-done-bar {
+    display: block;
+    position: sticky;
+    bottom: 0;
+    padding: 12px;
+    background: color-mix(in oklch, var(--cream) 95%, transparent);
+    backdrop-filter: blur(8px);
+    border-top: 1px solid var(--border-subtle);
+    z-index: 20;
+  }
+
+  .task-detail-done-btn {
+    min-height: 48px;
+    border-radius: var(--radius-lg);
+    border: none;
+    background: var(--teal-solid);
+    color: #fff;
+    font-weight: var(--weight-ui, 500);
+    font-size: 15px;
+    cursor: pointer;
+  }
+
+  .task-detail-close-btn {
+    min-height: 48px;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-subtle);
+    background: transparent;
+    color: var(--slate);
+    font-weight: var(--weight-ui, 500);
+    font-size: 15px;
+    cursor: pointer;
+  }
+}
