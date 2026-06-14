@@ -2,6 +2,7 @@ import { useState, useCallback, useMemo, useEffect, createContext, useContext } 
 import { Link } from 'react-router-dom'
 import { ChevronDown, ChevronUp, Settings2, Plus, CalendarPlus, FolderPlus, Pin, RotateCcw, Clock, AlertTriangle } from 'lucide-react'
 import DashboardGrid from '../components/dashboard/DashboardGrid'
+import SegmentedToggle from '../components/ui/SegmentedToggle'
 import { resetLayouts } from '../lib/dashboardLayout'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 import { usePageMeta } from '../hooks/usePageMeta'
@@ -373,32 +374,18 @@ export default function Dashboard() {
                   <LabHealthScore />
                 </div>
 
-                {/* Center: tabs */}
-                {/* N1b de-box: was a --surface-1 tray + solid --stage-fill-analysis
-                    active fill. Converged to the hairline-pill anatomy with a gold
-                    TINT (the Overview's gold identity preserved); --gold-on-emphasis
-                    text is AA on --gold-active both themes (Rule 42). */}
-                <div className="dashboard-tabs" style={{ display: 'flex', borderRadius: 999, border: '1px solid var(--border-subtle)', overflow: 'hidden', flexShrink: 0 }}>
-                  {TAB_CONFIG.map(tab => (
-                    <button
-                      key={tab.id}
-                      onClick={() => handleTabChange(tab.id)}
-                      style={{
-                        padding: '4px 12px',
-                        border: 'none',
-                        fontSize: '12px',
-                        fontWeight: activeTab === tab.id ? 600 : 400,
-                        color: activeTab === tab.id ? 'var(--gold-on-emphasis)' : 'var(--slate)',
-                        backgroundColor: activeTab === tab.id ? 'var(--gold-active)' : 'transparent',
-                        opacity: activeTab === tab.id ? 1 : 0.85,
-                        cursor: 'pointer',
-                        transition: 'color 150ms ease, background-color 150ms ease, opacity 150ms ease',
-                      }}
-                    >
-                      {tab.label}
-                    </button>
-                  ))}
-                </div>
+                {/* Center: tabs — shared SegmentedToggle, gold accent (the
+                    Lab Overview identity). `dashboard-tabs` class keeps the
+                    mobile horizontal-scroll CSS; scrollable opts into overflow. */}
+                <SegmentedToggle
+                  className="dashboard-tabs"
+                  ariaLabel="Dashboard view"
+                  accent="gold"
+                  scrollable
+                  options={TAB_CONFIG.map(tab => ({ value: tab.id, label: tab.label }))}
+                  value={activeTab}
+                  onChange={handleTabChange}
+                />
 
                 {/* Right: adaptive indicator + customize + tooltip */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>

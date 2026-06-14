@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import DensityToggle from '../DensityToggle'
 import InlineSelect from '../InlineSelect'
+import SegmentedToggle from '../ui/SegmentedToggle'
 
 type Density = 'compact' | 'default' | 'relaxed'
 
@@ -64,36 +65,14 @@ export default function TableControls({
     >
       {/* Left side ------------------------------------------------- */}
 
-      {/* View toggle — N1b: locked-canon pill anatomy (matches the My Tasks
-          ViewPicker): full-radius hairline pill, active = teal TINT + teal
-          text, never a solid fill block. */}
-      {views && views.length > 0 && onViewChange && (
-        <div
-          className="flex items-center overflow-hidden"
-          style={{ border: '1px solid var(--border-subtle)', borderRadius: 999, flexShrink: 0 }}
-        >
-          {views.map((v) => (
-            <button
-              key={v.key}
-              onClick={() => onViewChange(v.key)}
-              title={v.label}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs cursor-pointer"
-              style={{
-                fontWeight: activeView === v.key ? 600 : 500,
-                background: activeView === v.key ? 'var(--teal-active)' : 'transparent',
-                color: activeView === v.key ? 'var(--teal)' : 'var(--slate)',
-                border: 'none',
-                transition: 'all var(--duration-fast)',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              <span style={{ display: 'flex', alignItems: 'center', color: 'inherit' }}>
-                {v.icon}
-              </span>
-              {v.label}
-            </button>
-          ))}
-        </div>
+      {/* View toggle — the canonical SegmentedToggle (locked de-box anatomy). */}
+      {views && views.length > 0 && onViewChange && activeView !== undefined && (
+        <SegmentedToggle
+          ariaLabel="View"
+          options={views.map((v) => ({ value: v.key, label: v.label, icon: v.icon }))}
+          value={activeView}
+          onChange={onViewChange}
+        />
       )}
 
       {/* Sort dropdown */}

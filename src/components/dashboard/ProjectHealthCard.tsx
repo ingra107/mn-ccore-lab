@@ -9,6 +9,7 @@ import { useProjectHealth } from '../../hooks/useApiData'
 import type { ProjectHealth, HealthFactors } from '../../hooks/useApiData'
 import { PATHS } from '../../constants/paths'
 import { ICON_PROPS } from '../../lib/iconProps'
+import SegmentedToggle from '../ui/SegmentedToggle'
 
 const STATUS_COLORS: Record<string, string> = {
   'Healthy': 'var(--green)',
@@ -91,31 +92,19 @@ function ProjectHealthCard() {
       icon={HeartPulse}
     >
       <div className="flex flex-col h-full">
-        {/* View toggle (P3-02) */}
+        {/* View toggle (P3-02) — shared SegmentedToggle */}
         <div className="flex justify-end mb-2 -mt-1">
-          {/* N1b de-box: was a --surface-2 tray with --cream active button.
-              Converged on TableControls anatomy — hairline pill group, active =
-              --teal-active tint + --teal text, no inner box. */}
-          <div className="flex items-center overflow-hidden" style={{ border: '1px solid var(--border-subtle)', borderRadius: 999 }}>
-            {(['list', 'heatmap'] as const).map((m) => (
-              <button
-                key={m}
-                onClick={() => persistView(m)}
-                className="text-[10px] px-2 py-0.5"
-                style={{
-                  background: viewMode === m ? 'var(--teal-active)' : 'transparent',
-                  color: viewMode === m ? 'var(--teal)' : 'var(--slate)',
-                  fontWeight: viewMode === m ? 600 : 400,
-                  border: 'none',
-                  cursor: 'pointer',
-                  textTransform: 'uppercase' as const,
-                  letterSpacing: '0.05em',
-                }}
-              >
-                {m}
-              </button>
-            ))}
-          </div>
+          <SegmentedToggle
+            ariaLabel="Project health view"
+            size="sm"
+            uppercase
+            options={[
+              { value: 'list', label: 'list' },
+              { value: 'heatmap', label: 'heatmap' },
+            ]}
+            value={viewMode}
+            onChange={persistView}
+          />
         </div>
 
         {/* Summary counts */}
