@@ -67,6 +67,71 @@ function notificationAccent(type: string): string {
   }
 }
 
+// ── NewItemRow (ROW 83) ─────────────────────────────────────
+// Shared row for "New for You" (task assignments) and "New Activity" (entity
+// activity). Both sections had ~30 lines of near-identical JSX; the only
+// intentional differences are captured in props.
+
+function NewItemRow({
+  onClick,
+  accentColor,
+  chip,
+  entityTypeLabel,
+  title,
+  meta,
+}: {
+  onClick: () => void
+  accentColor: string
+  chip: React.ReactNode
+  entityTypeLabel?: string
+  title: string | null | undefined
+  meta?: React.ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="card"
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '10px',
+        padding: '10px 14px',
+        width: '100%',
+        textAlign: 'left',
+        border: 'none',
+        cursor: 'pointer',
+        fontFamily: 'inherit',
+        borderLeft: `3px solid ${accentColor}`,
+      }}
+    >
+      {chip}
+      {entityTypeLabel && (
+        <span style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--slate)', opacity: 0.7, flexShrink: 0 }}>
+          {entityTypeLabel}
+        </span>
+      )}
+      <span
+        title={title ?? undefined}
+        style={{
+          flex: 1,
+          minWidth: 0,
+          fontSize: '13.5px',
+          fontWeight: 500,
+          color: 'var(--ink)',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        {title}
+      </span>
+      {meta}
+      <span style={{ fontSize: '11px', color: accentColor, flexShrink: 0 }}>Open →</span>
+    </button>
+  )
+}
+
 // ── Stat Card ───────────────────────────────────────────────
 
 function StatCard({
@@ -842,47 +907,18 @@ export default function MyItems() {
             <SectionHeader title="New for You" />
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {newTasks.map((t: TaskRow) => (
-                <button
+                <NewItemRow
                   key={t.id}
-                  type="button"
                   onClick={() => setOpenTask(t)}
-                  className="card"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '10px',
-                    padding: '10px 14px',
-                    width: '100%',
-                    textAlign: 'left',
-                    border: 'none',
-                    cursor: 'pointer',
-                    fontFamily: 'inherit',
-                    borderLeft: '3px solid var(--gold)',
-                  }}
-                >
-                  <AttentionChip kind="new" />
-                  <span
-                    title={t.title}
-                    style={{
-                      flex: 1,
-                      minWidth: 0,
-                      fontSize: '13.5px',
-                      fontWeight: 500,
-                      color: 'var(--ink)',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {t.short_title || t.title}
-                  </span>
-                  {t.due_date && (
+                  accentColor="var(--gold)"
+                  chip={<AttentionChip kind="new" />}
+                  title={t.short_title || t.title}
+                  meta={t.due_date && (
                     <span style={{ fontSize: '11px', color: isOverdue(t.due_date, t.status) ? 'var(--maroon)' : 'var(--slate)', opacity: 0.85, flexShrink: 0, fontVariantNumeric: 'tabular-nums' }}>
                       {formatShortDate(t.due_date)}
                     </span>
                   )}
-                  <span style={{ fontSize: '11px', color: 'var(--teal)', flexShrink: 0 }}>Open →</span>
-                </button>
+                />
               ))}
             </div>
           </div>
@@ -896,48 +932,19 @@ export default function MyItems() {
             <SectionHeader title="New Activity" />
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {activityRows.map((r) => (
-                <button
+                <NewItemRow
                   key={`${r.entity_type}:${r.entity_id}`}
-                  type="button"
                   onClick={() => openActivityRow(r)}
-                  className="card"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '10px',
-                    padding: '10px 14px',
-                    width: '100%',
-                    textAlign: 'left',
-                    border: 'none',
-                    cursor: 'pointer',
-                    fontFamily: 'inherit',
-                    borderLeft: '3px solid var(--teal)',
-                  }}
-                >
-                  <AttentionChip kind="activity" count={r.new_count} />
-                  <span style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--slate)', opacity: 0.7, flexShrink: 0 }}>
-                    {r.entity_type}
-                  </span>
-                  <span
-                    title={r.title ?? undefined}
-                    style={{
-                      flex: 1,
-                      minWidth: 0,
-                      fontSize: '13.5px',
-                      fontWeight: 500,
-                      color: 'var(--ink)',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {r.title ?? r.entity_id}
-                  </span>
-                  <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.75, flexShrink: 0 }}>
-                    {formatRelativeTime(r.latest_at)}
-                  </span>
-                  <span style={{ fontSize: '11px', color: 'var(--teal)', flexShrink: 0 }}>Open →</span>
-                </button>
+                  accentColor="var(--teal)"
+                  chip={<AttentionChip kind="activity" count={r.new_count} />}
+                  entityTypeLabel={r.entity_type}
+                  title={r.title ?? r.entity_id}
+                  meta={
+                    <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.75, flexShrink: 0 }}>
+                      {formatRelativeTime(r.latest_at)}
+                    </span>
+                  }
+                />
               ))}
             </div>
           </div>
