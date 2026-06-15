@@ -11,6 +11,7 @@
 // file is the Today-specific binding.
 
 import { TaskRow as SharedTaskRow } from '../tasks/TaskRow'
+import { useDensity } from '../DensityToggle'
 import { TaskDetailDrawer } from './TaskDetailDrawer'
 import { tagForTask } from './constants'
 import { ACCENT_GOLD, ACCENT_CORAL, INK_MUTED } from './constants'
@@ -20,6 +21,7 @@ import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow as TaskRowData } from '../../lib/api'
 
 export function TaskRow({ task, project, state, expandedId, onExpand, projectsByPid }: { task: TaskRowData; project: { name: string; slug: string } | null; state: TodayStateApi; expandedId: string | null; onExpand: (id: string) => void; projectsByPid: Map<string, { name: string; slug: string; category?: string | null }> }) {
+  const [density] = useDensity()
   const isDone = !!state.done[task.id]
   const isNow = state.rightNow === task.id
   const planned = state.planned[task.id]
@@ -56,7 +58,7 @@ export function TaskRow({ task, project, state, expandedId, onExpand, projectsBy
     <SharedTaskRow
       task={task}
       project={project}
-      dense
+      dense={density === 'compact'}
       isDone={isDone}
       onToggleDone={() => (isDone ? state.uncheck(task.id) : state.markDone(task.id))}
       isExpanded={expanded}

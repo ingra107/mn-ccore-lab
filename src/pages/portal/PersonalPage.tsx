@@ -31,6 +31,7 @@ import { PATHS } from '../../constants/paths'
 import TaskDetailPanel from '../../components/tasks/TaskDetailPanel'
 import { TaskRow as SharedTaskRow } from '../../components/tasks/TaskRow'
 import { isTaskDone } from '../../lib/taskGrouping'
+import { useDensity } from '../../components/DensityToggle'
 import { useUndoToast } from '../../components/UndoToast'
 import type { TaskRow } from '../../lib/api'
 import { staggerContainer, staggerItem } from '../../lib/animations'
@@ -354,11 +355,12 @@ function HubTaskRow({
   onOpenDetail: (task: TaskRow) => void
 }) {
   const isDone = isTaskDone(task)
+  const [density] = useDensity()
   return (
     <SharedTaskRow
       task={task}
       project={null}
-      dense
+      dense={density === 'compact'}
       hideCaret
       isDone={isDone}
       onToggleDone={() => onStatusChange(task.id, isDone ? 'todo' : 'done')}

@@ -13,6 +13,7 @@
 
 import { TaskRow as SharedTaskRow } from '../../../components/tasks/TaskRow'
 import { useLabPrefs } from '../../../hooks/useLabPrefs'
+import { useDensity } from '../../../components/DensityToggle'
 import { Chip } from '../primitives'
 import { InlineDetail } from '../components/InlineDetail'
 import { OverdueBanner } from './OverdueBanner'
@@ -133,11 +134,12 @@ function rowExtraMeta(task: TaskRow, staleDays: number) {
 export function MyTasksRow({ task, project, selected, selectionActive, onSelect, onToggleComplete, onOpenEditor, expanded, onExpand, planned, stack }: { task: TaskRow; project: { name: string; slug: string } | null; selected: boolean; selectionActive: boolean; onSelect: () => void; onToggleComplete: () => void; onOpenEditor?: () => void; expanded: boolean; onExpand: () => void; planned: boolean; stack?: boolean }) {
   const isDone = isTaskDone(task)
   const { prefs } = useLabPrefs()
+  const [density] = useDensity()
   return (
     <SharedTaskRow
       task={task}
       project={project}
-      dense
+      dense={density === 'compact'}
       stack={stack}
       isDone={isDone}
       onToggleDone={onToggleComplete}

@@ -65,6 +65,14 @@ export function densityClass(_density: Density): string {
   return ''
 }
 
+// Architecture note (Phase E, 2026-06-15): SharedTaskRow's `dense` boolean prop
+// is now wired to `density === 'compact'` via useDensity() at every call site
+// (Today adapter, MyTasksRow/ColumnsView, HubTaskRow/PersonalPage). The single
+// control remains in SettingsPage → DensityControl. This file is NOT superseded —
+// useDensity() is the canonical hook; DensityToggle is the Settings UI widget.
+// densityClass() above is a no-op stub for backward compat and can be removed
+// once all callers are confirmed gone (DEPRECATES: densityClass only).
+
 export default function DensityToggle({
   value,
   onChange,
