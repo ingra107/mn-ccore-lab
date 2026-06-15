@@ -28,13 +28,17 @@ interface OverlapBandProps {
   notes: Record<string, string>
   onNote: (id: string, v: string) => void
   saveStates?: Record<string, SaveStatus>
+  /** ROW 24: accept hoisted isPhone from Timeline to share one matchMedia call. */
+  isPhone?: boolean
 }
 
-export function OverlapBand({ events, onDismiss, notes, onNote, saveStates }: OverlapBandProps) {
+export function OverlapBand({ events, onDismiss, notes, onNote, saveStates, isPhone: isPhoneProp }: OverlapBandProps) {
   // N1.06 — phones can't afford side-by-side columns (titles vanished);
   // stack the colliding events vertically and let the order convey sequence
   // (the per-minute stagger margins only make sense in the columnar layout).
-  const isPhone = useIsMobile(768)
+  // ROW 24: fall back to own hook when Timeline doesn't pass the prop.
+  const isPhoneHook = useIsMobile(768)
+  const isPhone = isPhoneProp ?? isPhoneHook
   if (events.length < 2) return null
 
   // Compute per-event stagger offsets. Events without startMin (untimed) get
@@ -96,6 +100,7 @@ export function OverlapBand({ events, onDismiss, notes, onNote, saveStates }: Ov
                 onNote={onNote}
                 saveStatus={saveStates?.[e.id] ?? 'idle'}
                 isCalEvent={e.id.startsWith('cal-')}
+                isPhone={isPhone}
               />
             </div>
           )

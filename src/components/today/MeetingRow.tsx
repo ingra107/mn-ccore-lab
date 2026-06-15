@@ -12,12 +12,15 @@ import { useIsMobile } from '../../hooks/useIsMobile'
 
 export type SaveStatus = 'idle' | 'saving' | 'saved'
 
-export function EventRow({ e, onDismiss, overlap = false, note, onNote, saveStatus = 'idle', isCalEvent = false }: { e: TodayEvent; onDismiss: (id: string) => void; overlap?: boolean; note?: string; onNote: (id: string, v: string) => void; saveStatus?: SaveStatus; isCalEvent?: boolean }) {
+export function EventRow({ e, onDismiss, overlap = false, note, onNote, saveStatus = 'idle', isCalEvent = false, isPhone: isPhoneProp }: { e: TodayEvent; onDismiss: (id: string) => void; overlap?: boolean; note?: string; onNote: (id: string, v: string) => void; saveStatus?: SaveStatus; isCalEvent?: boolean; isPhone?: boolean }) {
   const [expanded, setExpanded] = useState(false)
   // N1.06 — phones: the single-line ellipsis title was crushed to 2-3 chars
   // by ~200px of row chrome. Let it wrap to 2 lines and drop the location
   // pill (it's in the expanded view's context anyway).
-  const isPhone = useIsMobile(768)
+  // ROW 24: accept hoisted isPhone from Timeline; fall back to own hook when
+  // rendered standalone (e.g. tests, stories).
+  const isPhoneHook = useIsMobile(768)
+  const isPhone = isPhoneProp ?? isPhoneHook
   return (
     <div style={{ position: 'relative', background: 'rgba(92,188,180,0.06)', border: `1px solid rgba(92,188,180,${overlap ? 0.35 : 0.18})`, borderRadius: 6, overflow: 'hidden' }}>
       <div onClick={() => setExpanded(!expanded)} style={{ display: 'flex', gap: isPhone ? 8 : 12, padding: '10px 14px', alignItems: 'center', cursor: 'pointer' }}>

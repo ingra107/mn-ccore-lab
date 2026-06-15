@@ -13,6 +13,7 @@ import EmptyState from '../EmptyState'
 import EmptyStateArt from '../EmptyStateArt'
 import { EventRow, type SaveStatus } from './MeetingRow'
 import { OverlapBand } from './OverlapBand'
+import { useIsMobile } from '../../hooks/useIsMobile'
 import { PlannedTaskRow } from './PlannedTaskRow'
 import {
   ACCENT_GOLD, ACCENT_TEAL, ACCENT_CORAL, INK_DIM,
@@ -110,6 +111,9 @@ interface TimelineProps {
 
 export function Timeline({ events, tasks, state, projectsByPid, expandedId, onExpand }: TimelineProps) {
   const navigate = useNavigate()
+  // ROW 24: hoist isPhone here so EventRow + OverlapBand share one matchMedia
+  // listener instead of one per visible meeting row.
+  const isPhone = useIsMobile(768)
   const [dismissedMeetings, setDismissedMeetings] = useState<Record<string, boolean>>({})
   const [meetingNotes, setMeetingNotes] = useState<Record<string, string>>({})
   const [meetingSaveState, setMeetingSaveState] = useState<Record<string, SaveStatus>>({})
@@ -289,6 +293,7 @@ export function Timeline({ events, tasks, state, projectsByPid, expandedId, onEx
                   onNote={(id, v) => setMeetingNotes((s) => ({ ...s, [id]: v }))}
                   saveStatus={meetingSaveState[head.id] ?? 'idle'}
                   isCalEvent={head.id.startsWith('cal-')}
+                  isPhone={isPhone}
                 />
               ) : (
                 <OverlapBand
@@ -297,6 +302,7 @@ export function Timeline({ events, tasks, state, projectsByPid, expandedId, onEx
                   notes={meetingNotes}
                   onNote={(id, v) => setMeetingNotes((s) => ({ ...s, [id]: v }))}
                   saveStates={meetingSaveState}
+                  isPhone={isPhone}
                 />
               )}
             </div>
