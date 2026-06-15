@@ -4,7 +4,7 @@ import {
   ArrowRightLeft,
   FileText, MessageSquare, Upload, Eye, ScrollText,
   Users, Bell, ClipboardList, Link2, Trash2, Plus, ExternalLink, RefreshCw, Copy, Check,
-  ChevronUp, ChevronDown, Send, Paperclip, AtSign, Smile, Type, Lock, Loader2,
+  ChevronUp, ChevronDown, Send, Paperclip, AtSign, Smile, Type, Loader2,
 } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
@@ -39,6 +39,7 @@ import { PATHS } from '../../constants/paths'
 
 // ── Detail sub-modules ──────────────────────────────────────
 import { FieldBlock, EditableTitle, EditableShortTitle, EditableTextarea, ProjectInlineGhostSelect, DueInlineSelect } from './detail/FieldControls'
+import { MeLockToggle } from '../ui/MeLockToggle'
 import { TaskDependenciesSection } from './detail/TaskDependencies'
 import { SubtaskSection } from './detail/SubtaskSection'
 import { HandoffSection } from './detail/HandoffSection'
@@ -1667,38 +1668,11 @@ function OverviewQuickAdd({
               <Smile size={12} strokeWidth={1.5} absoluteStrokeWidth />
             </button>
 
-            {/* @me lock — compact pill, visually consistent with COMMENT/NOTE pills */}
-            <button
-              type="button"
-              role="switch"
-              aria-checked={meOnly ? "true" : "false"}
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => setMeOnly((v) => !v)}
-              aria-label={meOnly ? 'Only me: this is private to you' : 'Toggle private note — only you see it'}
-              title="Visible only to you (@me)"
-              className="flex-shrink-0 inline-flex items-center gap-1"
-              style={{
-                height: 22,
-                paddingLeft: 6,
-                paddingRight: 6,
-                borderRadius: 'var(--radius-sm)',
-                border: meOnly
-                  ? '1px solid rgba(100,116,139,0.35)'
-                  : '1px solid var(--border-subtle)',
-                background: meOnly ? 'rgba(100,116,139,0.12)' : 'transparent',
-                color: 'var(--slate)',
-                opacity: meOnly ? 1 : 0.70,
-                fontWeight: meOnly ? 600 : 400,
-                fontSize: 10,
-                whiteSpace: 'nowrap',
-                cursor: 'pointer',
-                fontFamily: 'inherit',
-                flexShrink: 0,
-              }}
-            >
-              <Lock size={9} strokeWidth={1.5} absoluteStrokeWidth aria-hidden="true" />
-              Only me
-            </button>
+            {/* @me lock — ROW 81: shared MeLockToggle (unified with SmartCompose) */}
+            <MeLockToggle
+              locked={meOnly}
+              onToggle={() => setMeOnly((v) => !v)}
+            />
 
             {/* Hermes toggle — only relevant for comments, pill style */}
             {mode === 'comment' && (

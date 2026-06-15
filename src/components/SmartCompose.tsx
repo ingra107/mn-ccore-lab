@@ -24,6 +24,7 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { Paperclip, Smile, AtSign, Loader2, Send } from 'lucide-react'
+import { MeLockToggle } from './ui/MeLockToggle'
 import MentionInput from './MentionInput'
 import HermesMark from './HermesMark'
 import { usePostTaskUpdate } from '../hooks/useMutations'
@@ -344,45 +345,18 @@ export default function SmartCompose(props: SmartComposeProps) {
           <ToolbarBtn theme={theme} label="Mention someone" onClick={() => insertAtCursor('@')}><AtSign size={11} strokeWidth={1.5} absoluteStrokeWidth /></ToolbarBtn>
           {/* Emoji */}
           <ToolbarBtn theme={theme} label="Add emoji" onClick={() => setEmojiOpen((o) => !o)} active={emojiOpen}><Smile size={11} strokeWidth={1.5} absoluteStrokeWidth /></ToolbarBtn>
-          {/* @me lock — compact pill consistent with OverviewQuickAdd's pill toggles */}
+          {/* @me lock — ROW 81: shared MeLockToggle (unified with TaskDetailPanel) */}
           {showMeLock && (
-            <button
-              type="button"
-              role="switch"
-              aria-checked={meLocked ? "true" : "false"}
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => {
+            <MeLockToggle
+              locked={meLocked}
+              onToggle={() => {
                 setMeLocked((l) => {
                   if (!l) setHermesLocked(false)
                   return !l
                 })
               }}
-              title={meLocked ? 'Private note — click to post publicly' : 'Post publicly — click to make private'}
-              aria-label={meLocked ? 'Private note lock on — only you see this' : 'Private note lock off — visible to team'}
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: 3,
-                height: 22,
-                padding: '0 6px', borderRadius: 'var(--radius-sm)',
-                border: meLocked
-                  ? `1px solid ${isDark ? 'rgba(201,168,76,0.50)' : 'rgba(100,116,139,0.35)'}`
-                  : `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'var(--border-subtle)'}`,
-                background: meLocked
-                  ? (isDark ? 'rgba(201,168,76,0.12)' : 'rgba(100,116,139,0.12)')
-                  : 'transparent',
-                color: meLocked
-                  ? (isDark ? ACCENT_GOLD : 'var(--slate)')
-                  : (isDark ? INK_DIM_DARK : 'var(--slate)'),
-                fontSize: 10,
-                fontWeight: meLocked ? 600 : 400,
-                opacity: meLocked ? 1 : 0.70,
-                cursor: 'pointer',
-                fontFamily: 'inherit',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              <span aria-hidden="true" style={{ fontSize: 9 }}>{meLocked ? '🔒' : '🔓'}</span>
-              Only me
-            </button>
+              theme={theme}
+            />
           )}
           {/* Hermes toggle — directs note to the AI assistant on submit */}
           {showHermesToggle && (
