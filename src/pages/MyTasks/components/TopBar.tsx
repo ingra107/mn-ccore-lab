@@ -90,10 +90,8 @@ export function TopBar({ view, setView, search, setSearch, filter, setFilter, qu
           style={{ padding: '6px 12px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6, color: INK, fontSize: 12, flex: '1 1 200px', minWidth: 140, maxWidth: isPhone ? 'none' : 260, fontFamily: 'inherit', outline: 'none' }}
         />
       </div>
-      {/* N1.10 — phones: one swipeable row instead of a 2-3 row wrap. */}
-      <div style={isPhone
-        ? { display: 'flex', gap: 4, marginBottom: 8, flexWrap: 'nowrap', overflowX: 'auto', scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' as const }
-        : { display: 'flex', gap: 4, marginBottom: 8, flexWrap: 'wrap' }}>
+      {/* N1.10 / ROW 25: swipeable-on-phones → CSS .topbar-tab-strip (@media in index.css) */}
+      <div className="topbar-tab-strip">
         {tabs.map((tab) => {
           const active = quickView === tab.k
           const c = tab.color || ACCENT_TEAL

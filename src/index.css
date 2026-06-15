@@ -2131,3 +2131,84 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
     cursor: pointer;
   }
 }
+
+/* ── ROW 25: CSS @media replacements for JS isPhone branches ────────────────
+   These replace runtime style-object switching in MeetingRow, OverlapBand,
+   and TopBar. All thresholds match the 768px Rule 15 content-stacking axis.  */
+
+/* MeetingRow (EventRow) — timeline meeting card */
+.meeting-row-header {
+  display: flex;
+  gap: 12px;
+  padding: 10px 14px;
+  align-items: center;
+  cursor: pointer;
+}
+.meeting-row-time {
+  font-size: 11px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  min-width: 72px;
+  line-height: 1.3;
+  flex-shrink: 0;
+}
+.meeting-row-time--overlap {
+  min-width: 90px;
+}
+.meeting-row-end { display: inline; }
+.meeting-row-title {
+  flex: 1;
+  font-size: 13px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.meeting-row-loc { display: inline; }
+
+@media (max-width: 767px) {
+  .meeting-row-header { gap: 8px; }
+  .meeting-row-time { min-width: 0; }
+  .meeting-row-time--overlap { min-width: 0; }
+  .meeting-row-end { display: none; }
+  .meeting-row-title {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    white-space: normal;
+    overflow: hidden;
+    line-height: 1.35;
+  }
+  .meeting-row-loc { display: none; }
+}
+
+/* OverlapBand — side-by-side collision band */
+.overlap-band-grid {
+  display: grid;
+  gap: 6px;
+  align-items: start;
+}
+/* grid-template-columns set inline because column count is dynamic (events.length) */
+
+@media (max-width: 767px) {
+  .overlap-band-grid { grid-template-columns: 1fr !important; }
+  .overlap-band-stagger { margin-top: 0 !important; }
+}
+
+/* TopBar — My Tasks quick-view tab strip */
+.topbar-tab-strip {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 767px) {
+  .topbar-tab-strip {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .topbar-tab-strip::-webkit-scrollbar { display: none; }
+}

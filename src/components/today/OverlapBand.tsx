@@ -80,18 +80,20 @@ export function OverlapBand({ events, onDismiss, notes, onNote, saveStates, isPh
       >
         ⚠ Overlap · {events.length}
       </div>
+      {/* ROW 25: grid-cols → .overlap-band-grid (CSS @media overrides to 1fr on
+          phones); stagger margins → .overlap-band-stagger (CSS zeros them on phones) */}
       <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: isPhone ? '1fr' : `repeat(${events.length}, minmax(0, 1fr))`,
-          gap: 6,
-          alignItems: 'start',
-        }}
+        className="overlap-band-grid"
+        style={{ gridTemplateColumns: `repeat(${events.length}, minmax(0, 1fr))` }}
       >
         {events.map((e) => {
-          const topOffset = isPhone ? 0 : staggerPx(e)
+          const topOffset = staggerPx(e)
           return (
-            <div key={e.id} style={topOffset > 0 ? { marginTop: topOffset } : undefined}>
+            <div
+              key={e.id}
+              className={topOffset > 0 ? 'overlap-band-stagger' : undefined}
+              style={topOffset > 0 ? { marginTop: topOffset } : undefined}
+            >
               <EventRow
                 e={e}
                 overlap

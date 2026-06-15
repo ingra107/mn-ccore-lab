@@ -14,28 +14,21 @@ export type SaveStatus = 'idle' | 'saving' | 'saved'
 
 export function EventRow({ e, onDismiss, overlap = false, note, onNote, saveStatus = 'idle', isCalEvent = false, isPhone: isPhoneProp }: { e: TodayEvent; onDismiss: (id: string) => void; overlap?: boolean; note?: string; onNote: (id: string, v: string) => void; saveStatus?: SaveStatus; isCalEvent?: boolean; isPhone?: boolean }) {
   const [expanded, setExpanded] = useState(false)
-  // N1.06 — phones: the single-line ellipsis title was crushed to 2-3 chars
-  // by ~200px of row chrome. Let it wrap to 2 lines and drop the location
-  // pill (it's in the expanded view's context anyway).
-  // ROW 24: accept hoisted isPhone from Timeline; fall back to own hook when
-  // rendered standalone (e.g. tests, stories).
-  const isPhoneHook = useIsMobile(768)
-  const isPhone = isPhoneProp ?? isPhoneHook
+  // N1.06 / ROW 24+25: visual breakpoints moved to CSS (.meeting-row-* in
+  // index.css). isPhone prop accepted for API compatibility with Timeline +
+  // OverlapBand callers (ROW 24); hook runs on standalone renders but value
+  // is unused now that JSX branches are gone.
+  useIsMobile(768) // keeps matchMedia alive on standalone renders
   return (
     <div style={{ position: 'relative', background: 'rgba(92,188,180,0.06)', border: `1px solid rgba(92,188,180,${overlap ? 0.35 : 0.18})`, borderRadius: 6, overflow: 'hidden' }}>
-      <div onClick={() => setExpanded(!expanded)} style={{ display: 'flex', gap: isPhone ? 8 : 12, padding: '10px 14px', alignItems: 'center', cursor: 'pointer' }}>
-        <span style={{ fontSize: 11, fontWeight: 600, color: ACCENT_TEAL, fontVariantNumeric: 'tabular-nums', minWidth: isPhone ? 0 : overlap ? 90 : 72, lineHeight: 1.3, flexShrink: 0 }}>
+      {/* ROW 25: gap/padding/title-clamp/end-time/loc-hide → CSS .meeting-row-* */}
+      <div onClick={() => setExpanded(!expanded)} className="meeting-row-header">
+        <span className={`meeting-row-time${overlap ? ' meeting-row-time--overlap' : ''}`} style={{ color: ACCENT_TEAL, flexShrink: 0 }}>
           {e.time}
-          {e.end && !isPhone && <span style={{ color: INK_DIM, fontWeight: 400 }}> – {e.end}</span>}
+          {e.end && <span className="meeting-row-end" style={{ color: INK_DIM, fontWeight: 400 }}> – {e.end}</span>}
         </span>
         <span style={{ width: 6, height: 6, borderRadius: '50%', background: ACCENT_TEAL, flexShrink: 0 }} />
-        <span
-          style={
-            isPhone
-              ? { flex: 1, fontSize: 13, color: INK, minWidth: '10ch', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', lineHeight: 1.35 }
-              : { flex: 1, fontSize: 13, color: INK, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }
-          }
-        >{e.title}</span>
+        <span className="meeting-row-title" style={{ color: INK }}>{e.title}</span>
         {e.meetingUrl && (
           <a
             href={e.meetingUrl}
@@ -50,7 +43,7 @@ export function EventRow({ e, onDismiss, overlap = false, note, onNote, saveStat
             <span>Join</span>
           </a>
         )}
-        {e.loc && !isPhone && <span style={{ fontSize: 11, color: ACCENT_TEAL }}>📍 {e.loc}</span>}
+        {e.loc && <span className="meeting-row-loc" style={{ fontSize: 11, color: ACCENT_TEAL }}>📍 {e.loc}</span>}
         {note && note.length > 0 && <span title="Has notes" style={{ fontSize: 11, color: ACCENT_GOLD }}>📝</span>}
         <span style={{ fontSize: 11, color: INK_DIM }}>{expanded ? '▾' : '▸'}</span>
         <button
