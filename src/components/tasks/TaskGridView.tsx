@@ -983,6 +983,10 @@ function TaskGridRow({
           onSelect?.(task)
         }
       }}
+      // Issue 2: prevent text-selection on modifier+mousedown (selection starts
+      // on mousedown, not click — preventing here stops the highlighted-text
+      // artifact before click fires).
+      onMouseDown={(e) => { if (e.shiftKey || e.ctrlKey || e.metaKey) e.preventDefault() }}
       onKeyDown={(e) => {
         if (e.key === 'Enter') { e.preventDefault(); onOpenDetail?.(task) }
       }}

@@ -68,6 +68,9 @@ export function ColumnsView({ filtered, byGroup, selected, toggleSelect, selectR
       onClickCapture={(e) => {
         lastModifiers.current = { shift: e.shiftKey, ctrlMeta: e.ctrlKey || e.metaKey }
       }}
+      // Issue 2: prevent text-selection on modifier+mousedown across ALL rows
+      // in the columns container. Capture phase fires before any child handler.
+      onMouseDownCapture={(e) => { if (e.shiftKey || e.ctrlKey || e.metaKey) e.preventDefault() }}
     >
       <style>{`
         .mt-columns-scroll { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.18) transparent; }

@@ -230,8 +230,37 @@ function ListRow({ task, project, isCursor, isSelected, selectModeActive, onClic
       // Both route through onSelect(e) which the parent handles.
       // Plain click → move cursor (unchanged).
       onClick={(e) => { if (e.shiftKey || e.ctrlKey || e.metaKey) { onSelect(e); return } onClick() }}
+      // Issue 2: prevent browser text-selection on modifier+mousedown.
+      // Text selection starts on mousedown; preventing it here stops the
+      // highlighted-text artifact before click ever fires.
+      onMouseDown={(e) => { if (e.shiftKey || e.ctrlKey || e.metaKey) e.preventDefault() }}
       onDoubleClick={onDouble}
-      style={{ display: 'grid', gridTemplateColumns: '32px 26px 1fr 150px 100px 80px 110px 110px 70px', padding: '5px 16px', alignItems: 'center', fontSize: 12, height: 44, borderBottom: '1px solid rgba(255,255,255,0.04)', borderLeft: `3px solid ${isCursor ? meta.color : planned ? ACCENT_GOLD : overdue ? ACCENT_CORAL : 'transparent'}`, background: isCursor ? withAlpha(meta.color, 7) : isSelected ? 'rgba(201,168,76,0.06)' : 'transparent', cursor: selectModeActive ? 'cell' : 'pointer', boxSizing: 'border-box' }}
+      style={{
+        display: 'grid',
+        gridTemplateColumns: '32px 26px 1fr 150px 100px 80px 110px 110px 70px',
+        padding: '5px 16px',
+        alignItems: 'center',
+        fontSize: 12,
+        height: 44,
+        borderBottom: '1px solid rgba(255,255,255,0.04)',
+        // Issue 4/5: selected (teal 3px) wins over cursor/planned/overdue.
+        // Use TEAL for selection — NOT gold — so it's visually distinct from
+        // the planned gold bar and overdue coral bar.
+        borderLeft: `3px solid ${
+          isSelected ? ACCENT_TEAL
+          : isCursor ? meta.color
+          : planned ? ACCENT_GOLD
+          : overdue ? ACCENT_CORAL
+          : 'transparent'
+        }`,
+        // Issue 3: raise selected background from 6% gold to 22% teal so it's
+        // visible in dark mode. Match SharedTaskRow's convention.
+        background: isSelected ? withAlpha(ACCENT_TEAL, 22)
+          : isCursor ? withAlpha(meta.color, 7)
+          : 'transparent',
+        cursor: selectModeActive ? 'cell' : 'pointer',
+        boxSizing: 'border-box',
+      }}
     >
       {/* ROW 85: data-cursor lets CSS suppress the ⇧ hover hint on the active row */}
       <div className="list-view-col-cursor" data-cursor={isCursor ? 'true' : undefined} style={{ color: meta.color, fontSize: 10, fontWeight: 700, textAlign: 'center' }}>{isCursor ? '▶' : ''}</div>

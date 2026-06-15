@@ -70,6 +70,8 @@ export function LanesView({ byGroup, selected, toggleSelect, selectRange, anchor
       onClickCapture={(e) => {
         lastModifiers.current = { shift: e.shiftKey, ctrlMeta: e.ctrlKey || e.metaKey }
       }}
+      // Issue 2: prevent text-selection on modifier+mousedown across ALL lane rows.
+      onMouseDownCapture={(e) => { if (e.shiftKey || e.ctrlKey || e.metaKey) e.preventDefault() }}
     >
      <div className="mt-band">
       <div style={{ maxWidth: 'var(--col-main)', width: '100%' }}>

@@ -254,6 +254,10 @@ export function TaskRow(props: SharedTaskRowProps) {
   const selectable = !!onToggleSelect
 
   const startPress = (e: React.MouseEvent) => {
+    // Issue 2 fix: prevent browser text-selection that starts on mousedown when
+    // modifier keys are held. Click/stopPropagation alone is too late — the
+    // selection extends during mousedown-drag before click fires.
+    if (selectable && (e.shiftKey || e.ctrlKey || e.metaKey)) { e.preventDefault() }
     if (!selectable || e.button !== 0) return
     lpTimer.current = setTimeout(() => { onToggleSelect?.(); lpTimer.current = 'fired' }, 420)
   }
@@ -263,7 +267,11 @@ export function TaskRow(props: SharedTaskRowProps) {
   const handleClick = (e: React.MouseEvent) => {
     // a long-press just fired a select → swallow the click
     if (lpTimer.current === 'fired') { lpTimer.current = null; return }
-    if (selectable && (e.shiftKey || selectionActive)) { onToggleSelect?.(); return }
+    // Issue 6 fix: check e.ctrlKey/e.metaKey directly from the event — don't rely
+    // on selectionActive alone, which lags one render behind the keydown that set
+    // selectModeActive=true. Without this, the first Ctrl+click falls through to
+    // onToggleExpand() before React has re-rendered with the updated selectModeActive.
+    if (selectable && (e.shiftKey || e.ctrlKey || e.metaKey || selectionActive)) { onToggleSelect?.(); return }
     onToggleExpand()
   }
 
@@ -360,15 +368,19 @@ export function TaskRow(props: SharedTaskRowProps) {
         // P1-12: overdue rows carry a coral left edge so "what's slipping" reads
         // in one sweep. Selection's teal inset wins when both apply.
         borderBottom: `1px solid ${withAlpha(INK, isDone ? 4 : 6)}`,
-        background: isSelected ? withAlpha(ACCENT_TEAL, 14)
+        background: isSelected ? withAlpha(ACCENT_TEAL, 22)
           : isRightNow ? withAlpha(ACCENT_GOLD, 6)
           : isExpanded ? withAlpha(INK, 3)
           : 'transparent',
         // P1-7: NO whole-row opacity — that compounded with the muted title and
         // dropped meta/due below the 0.85 floor (Rule 43). Doneness now reads
         // from the filled check + line-through + muted title alone.
+        // Issue 4: selection left bar is TEAL (3px) — visually distinct from
+        // overdue CORAL (2px). Priority: selected > overdue (a selected overdue
+        // row reads teal, not coral — resolves issue 5's "stuck gold line"
+        // confusion by making the selected indicator always win).
         boxShadow: isSelected
-          ? `inset 2px 0 0 ${ACCENT_TEAL}`
+          ? `inset 3px 0 0 ${ACCENT_TEAL}`
           : (rowOverdue ? `inset 2px 0 0 ${ACCENT_CORAL}` : 'none'),
         transition: 'background 160ms',
       }}

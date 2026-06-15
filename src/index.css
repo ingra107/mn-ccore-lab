@@ -1502,35 +1502,55 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
 /* Click-selected row — Detail panel is open against this row.
    Heavier than J/K-focused: 4px edge + 10% bg + soft 1px border via ::after.
    Replaces the global :focus-visible 2px hard outline that read as ugly chrome. */
-.task-grid-row:focus-visible,
-.task-grid-row[data-selected="true"] {
+/* Keyboard focus in TaskGridView — subtle 6% teal bg + 2px left bar.
+   Visually distinct from selection: lighter, narrower bar, no border ring. */
+.task-grid-row:focus-visible {
   outline: none;
-  background: rgba(45, 138, 138, 0.10) !important;
+  background: rgba(45, 138, 138, 0.06) !important;
   position: relative;
 }
-.task-grid-row:focus-visible::before,
+.task-grid-row:focus-visible::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: color-mix(in oklch, var(--teal) 55%, transparent);
+  border-radius: 0 1px 1px 0;
+}
+.dark .task-grid-row:focus-visible {
+  background: rgba(61, 184, 184, 0.08) !important;
+}
+
+/* SELECTED state — issue 3: stronger 20% bg (was 10/14%) so it reads clearly
+   in dark mode. Issue 4: 3px solid teal left bar (wider than 2px focus bar).
+   Teal is distinct from gold (planned) and coral (overdue). */
+.task-grid-row[data-selected="true"] {
+  outline: none;
+  background: rgba(45, 138, 138, 0.20) !important;
+  position: relative;
+}
 .task-grid-row[data-selected="true"]::before {
   content: '';
   position: absolute;
   left: 0;
   top: 0;
   bottom: 0;
-  width: 4px;
+  width: 3px;
   background: var(--teal);
   border-radius: 0 1px 1px 0;
 }
-.task-grid-row:focus-visible::after,
 .task-grid-row[data-selected="true"]::after {
   content: '';
   position: absolute;
   inset: 0;
-  border: 1px solid color-mix(in oklch, var(--teal) 30%, transparent);
+  border: 1px solid color-mix(in oklch, var(--teal) 40%, transparent);
   border-radius: var(--radius-sm);
   pointer-events: none;
 }
-.dark .task-grid-row:focus-visible,
 .dark .task-grid-row[data-selected="true"] {
-  background: rgba(61, 184, 184, 0.14) !important;
+  background: rgba(61, 184, 184, 0.20) !important;
 }
 @media (forced-colors: active) {
   .task-grid-row:focus-visible,
