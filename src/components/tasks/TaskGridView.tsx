@@ -1153,8 +1153,26 @@ function TaskGridRow({
                       tabIndex={0}
                       aria-label={`Open task: ${task.title || task.description || 'untitled'}`}
                       data-testid={`task-title-${task.id}`}
-                      onClick={(e) => { e.stopPropagation(); onOpenDetail?.(task) }}
-                      onDoubleClick={(e) => { e.stopPropagation(); setTitleDraft(task.title || task.description); setEditingTitle(true) }}
+                      onClick={(e) => {
+                        // Modifier-held → route to the same select logic as the row body.
+                        // Ctrl/Meta → toggle+anchor; Shift → range. Never open detail.
+                        if (e.shiftKey && onSelectRange && orderedTaskIds) {
+                          e.preventDefault(); e.stopPropagation()
+                          onSelectRange(task.id, orderedTaskIds, anchorId ?? null)
+                          return
+                        }
+                        if ((e.ctrlKey || e.metaKey) && onToggleSelect) {
+                          e.preventDefault(); e.stopPropagation()
+                          onToggleSelect(task.id)
+                          return
+                        }
+                        e.stopPropagation(); onOpenDetail?.(task)
+                      }}
+                      onDoubleClick={(e) => {
+                        // Never open the title editor while a modifier is held.
+                        if (e.shiftKey || e.ctrlKey || e.metaKey) return
+                        e.stopPropagation(); setTitleDraft(task.title || task.description); setEditingTitle(true)
+                      }}
                       onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); onOpenDetail?.(task) } if (e.key === 'F2') { e.stopPropagation(); setTitleDraft(task.title || task.description); setEditingTitle(true) } }}
                       style={{
                         fontSize: 'var(--text-base)',

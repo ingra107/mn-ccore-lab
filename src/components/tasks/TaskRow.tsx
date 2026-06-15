@@ -294,8 +294,8 @@ export function TaskRow(props: SharedTaskRowProps) {
       tabIndex={0}
       title={fullTitleHover ?? 'Open task editor'}
       onClick={(e) => {
-        if (lpTimer.current === 'fired') return            // long-press selected — let the row swallow it
-        if (selectable && (e.shiftKey || selectionActive)) return  // bubble → select
+        if (lpTimer.current === 'fired') return                          // long-press selected — let the row swallow it
+        if (selectable && (e.shiftKey || e.ctrlKey || e.metaKey || selectionActive)) return  // bubble → select
         e.stopPropagation()
         onOpenEditor()
       }}

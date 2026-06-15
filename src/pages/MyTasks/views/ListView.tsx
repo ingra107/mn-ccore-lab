@@ -247,10 +247,18 @@ function ListRow({ task, project, isCursor, isSelected, selectModeActive, onClic
         <span style={{ fontSize: 11, flexShrink: 0 }} aria-hidden="true">{(task as TaskRow & { _tag?: string })._tag ?? '📝'}</span>
         {/* Title-click opens the full editor (Nick 2026-06-10) — single click,
             not just the double-click/e/⏎ paths. stop() keeps the cursor-move
-            row click from also firing. */}
+            row click from also firing.
+            Modifier-held (Ctrl/Meta/Shift) → bubble to the row's onSelect
+            instead of opening the editor. */}
         <span
           title={task.title}
-          onClick={(e) => { e.stopPropagation(); onDouble() }}
+          onClick={(e) => {
+            if (e.shiftKey || e.ctrlKey || e.metaKey) {
+              // Let it bubble — the row's onClick will route to onSelect(e).
+              return
+            }
+            e.stopPropagation(); onDouble()
+          }}
           style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', cursor: 'pointer' }}
         >{task.short_title || task.title}</span>
         {isNew && <AttentionChip kind="new" />}
