@@ -4,6 +4,7 @@ import { useTasks, useMeetingsApi } from '../../hooks/useApiData'
 import { useAuth } from '../../hooks/useAuth'
 import { emailToSlug } from '../../lib/emailSlug'
 import { isOverdue } from '../../lib/dateUtils'
+import { isTaskDone } from '../../lib/taskGrouping'
 import { parseDbUtc } from '../../lib/time'
 import BentoCard from './BentoCard'
 import { ICON_PROPS } from '../../lib/iconProps'
@@ -23,15 +24,15 @@ export default function YourWeekCard() {
     const myTasks = slug ? tasks.filter(t => t.assignee === slug) : tasks
 
     const dueThisWeek = myTasks.filter(t =>
-      !t.completed && t.due_date &&
+      !isTaskDone(t) && t.due_date &&
       new Date(t.due_date + 'T12:00:00') >= today &&
       new Date(t.due_date + 'T12:00:00') < weekEnd
     ).length
 
-    const overdue = myTasks.filter(t => !t.completed && isOverdue(t.due_date)).length
+    const overdue = myTasks.filter(t => isOverdue(t.due_date, t.status)).length
 
     const completedThisWeek = myTasks.filter(t =>
-      t.completed && t.completed_at &&
+      isTaskDone(t) && t.completed_at &&
       parseDbUtc(t.completed_at) >= weekStart
     ).length
 

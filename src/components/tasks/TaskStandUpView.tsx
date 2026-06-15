@@ -4,6 +4,7 @@ import Avatar from '../Avatar'
 import { useUndoToast } from '../UndoToast'
 import { getPersonInfo } from '../../data/team'
 import { formatShortDate, isOverdue as isPastDue } from '../../lib/dateUtils'
+import { isTaskDone } from '../../lib/taskGrouping'
 import { useProjects } from '../../hooks/useApiData'
 import type { TaskRow } from '../../lib/api'
 import TaskTitle from './TaskTitle'
@@ -285,7 +286,7 @@ function TaskSection({
       </div>
       <div className="flex flex-col gap-1 pl-4">
         {tasks.map((task) => {
-          const isOverdue = !task.completed && isPastDue(task.due_date)
+          const isOverdue = !isTaskDone(task) && isPastDue(task.due_date, task.status)
           const projectName = task.project_id ? projectMap.get(task.project_id) : undefined
           return (
             <div

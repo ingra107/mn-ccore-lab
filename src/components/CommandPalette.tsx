@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import { spring } from '../lib/animations'
 import { localDateKey, isOverdue } from '../lib/dateUtils'
+import { isTaskDone } from '../lib/taskGrouping'
 import { useTasks, useProjects, useTeam, useMeetingsApi } from '../hooks/useApiData'
 import { useAuth } from '../hooks/useAuth'
 import { useProtocolLaunch } from '../hooks/useProtocolLaunch'
@@ -262,7 +263,7 @@ export default function CommandPalette() {
     items.push({
       id: 'filter-due-today',
       label: 'Due Today',
-      sublabel: `${tasks.filter(t => !t.completed && t.due_date === localDateKey()).length} tasks due today`,
+      sublabel: `${tasks.filter(t => !isTaskDone(t) && t.due_date === localDateKey()).length} tasks due today`,
       icon: Clock,
       action: () => { navigate(PATHS.myTasks); setOpen(false) },
       category: 'filter',
@@ -270,7 +271,7 @@ export default function CommandPalette() {
     items.push({
       id: 'filter-overdue',
       label: 'Overdue Tasks',
-      sublabel: `${tasks.filter(t => !t.completed && isOverdue(t.due_date)).length} tasks past due`,
+      sublabel: `${tasks.filter(t => isOverdue(t.due_date, t.status)).length} tasks past due`,
       icon: AlertTriangle,
       action: () => { navigate(`${PATHS.myTasks}?status=todo`); setOpen(false) },
       category: 'filter',
