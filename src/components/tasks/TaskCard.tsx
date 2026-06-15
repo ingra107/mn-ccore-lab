@@ -11,6 +11,7 @@ import { updateTask } from '../../lib/api'
 import { useProjects } from '../../hooks/useApiData'
 import { STATUS_OPTIONS, PRIORITY_CONFIG, PRIORITY_COLORS, STATUS_CYCLE } from '../../lib/taskConstants'
 import type { TaskRow } from '../../lib/api'
+import { isTaskDone } from '../../lib/taskGrouping'
 
 function hasBlockers(task: TaskRow): boolean {
   return !!task.blocked_by && task.blocked_by.split(',').filter(s => s.trim()).length > 0
@@ -43,8 +44,8 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
     return map
   }, [projects])
   const priority = PRIORITY_CONFIG[task.priority as keyof typeof PRIORITY_CONFIG] || PRIORITY_CONFIG.medium
-  const isOverdue = !task.completed && isPastDue(task.due_date)
-  const isDone = task.status === 'done'
+  const isOverdue = !isTaskDone(task) && isPastDue(task.due_date)
+  const isDone = isTaskDone(task)
 
   const PRIORITY_CYCLE = ['low', 'medium', 'high', 'urgent'] as const
   const cyclePriority = () => {
@@ -202,11 +203,11 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
           onClick={(e) => {
             e.stopPropagation()
             const prev = task.status
-            const next = task.completed ? 'todo' : 'done'
+            const next = isTaskDone(task) ? 'todo' : 'done'
             onStatusChange(task.id, next)
-            showUndo(`${task.completed ? 'Reopened' : 'Completed'} task`, () => onStatusChange(task.id, prev))
+            showUndo(`${isTaskDone(task) ? 'Reopened' : 'Completed'} task`, () => onStatusChange(task.id, prev))
           }}
-          title={task.completed ? 'Reopen' : 'Complete'}
+          title={isTaskDone(task) ? 'Reopen' : 'Complete'}
           className="hover:!bg-[rgba(15,25,35,0.10)] dark:hover:!bg-[rgba(255,255,255,0.12)]"
           style={{
             background: 'transparent',
@@ -221,7 +222,7 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
             touchAction: 'manipulation',
           }}
         >
-          {task.completed ? <RotateCcw size={15} strokeWidth={1.5} absoluteStrokeWidth /> : <CheckCircle2 size={15} strokeWidth={1.5} absoluteStrokeWidth />}
+          {isTaskDone(task) ? <RotateCcw size={15} strokeWidth={1.5} absoluteStrokeWidth /> : <CheckCircle2 size={15} strokeWidth={1.5} absoluteStrokeWidth />}
         </button>
 
         {/* Priority cycle */}

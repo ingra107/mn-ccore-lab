@@ -5,6 +5,7 @@ import type { TaskRow } from '../../lib/api'
 import { useExpiringRegulatory } from '../../hooks/useApiData'
 import { PATHS } from '../../constants/paths'
 import { localDateKey, isOverdue } from '../../lib/dateUtils'
+import { isTaskDone } from '../../lib/taskGrouping'
 import { ICON_PROPS } from '../../lib/iconProps'
 
 interface StatusLineProps {
@@ -31,9 +32,9 @@ export default function StatusLine({ tasks, loading }: StatusLineProps) {
     const weekEnd = new Date(today); weekEnd.setDate(weekEnd.getDate() + 7)
     const todayStr = localDateKey(today)
 
-    const overdue = tasks.filter((t) => !t.completed && isOverdue(t.due_date)).length
+    const overdue = tasks.filter((t) => !isTaskDone(t) && isOverdue(t.due_date)).length
     const thisWeek = tasks.filter((t) => {
-      if (t.completed || !t.due_date) return false
+      if (isTaskDone(t) || !t.due_date) return false
       const d = new Date(t.due_date + 'T12:00:00')
       return d >= tomorrow && d < weekEnd
     }).length

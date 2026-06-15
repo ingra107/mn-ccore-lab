@@ -5,6 +5,7 @@ import { useMeetingsApi, useActionItems, useMeetingCadence, useTasks } from '../
 import { useGrantTimeline } from '../../hooks/useGrantTimeline'
 import { getMeetingFacilitator } from '../../lib/facilitator'
 import { localDateKey } from '../../lib/dateUtils'
+import { isTaskDone } from '../../lib/taskGrouping'
 import { getPersonInfo } from '../../data/team'
 import BentoCard from './BentoCard'
 import { PATHS } from '../../constants/paths'
@@ -44,7 +45,7 @@ function UpcomingCard() {
 
     // Open tasks with a due_date (skip completed)
     for (const t of tasks) {
-      if (!t.due_date || t.completed) continue
+      if (!t.due_date || isTaskDone(t)) continue
       const due = new Date(t.due_date + 'T23:59:59')
       const daysUntil = Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
       items.push({

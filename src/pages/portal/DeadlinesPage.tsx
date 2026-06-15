@@ -163,7 +163,7 @@ export default function DeadlinesPage() {
         project: task.project_id || undefined,
         status: task.status,
         priority: task.priority,
-        isOverdue: !task.completed && isOverdue(task.due_date),
+        isOverdue: isOverdue(task.due_date, task.status),
         daysUntil,
       })
     }
