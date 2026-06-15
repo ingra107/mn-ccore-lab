@@ -50,12 +50,29 @@ interface SidebarProps {
   onNavigate?: () => void
 }
 
+/** Data-driven click action for a nav badge (ROW 84). Keeps all badge
+ *  interaction logic in navWithBadges rather than scattered across JSX. */
+interface BadgeAction {
+  /** Tooltip / title for the badge element. Receives the badge count. */
+  title: (count: number) => string
+  /** aria-label for the badge element. Receives the badge count. */
+  ariaLabel: (count: number) => string
+  /** Route to navigate to when the badge is clicked / activated. */
+  navigateTo: string
+  /** Background fill for the badge pill. */
+  badgeBg: string
+  /** Foreground color for the badge pill. */
+  badgeColor: string
+}
+
 interface NavItem {
   to: string
   label: string
   icon: React.ComponentType<{ size?: number; strokeWidth?: number; absoluteStrokeWidth?: boolean }>
   badge?: number
   hint?: string // small secondary text (e.g. "Today")
+  /** Present when the badge is its own click target (navigates elsewhere). */
+  badgeAction?: BadgeAction
 }
 
 interface NavGroup {
@@ -179,10 +196,21 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
   // Inject badge counts into nav items. nextMeetingLabel was missing from
   // the dep array previously — a stale "Today"/"Tomorrow" hint could
   // persist until another dep changed.
+  // ROW 84: badgeAction is defined once here, not in JSX conditionals.
+  const MY_TASKS_BADGE_ACTION: BadgeAction = {
+    title: (n) => `${n} task${n === 1 ? '' : 's'} you haven't opened yet — click to triage in My Items`,
+    ariaLabel: (n) => `${n} new task${n === 1 ? '' : 's'} — open My Items`,
+    navigateTo: PATHS.myItems,
+    badgeBg: 'var(--gold)',
+    // Gold bg takes a fixed dark literal, not var(--ink) (CLAUDE.md gold rule).
+    badgeColor: '#1a1a1a',
+  }
+
   const navWithBadges = useMemo(() => allGroups.map(group => ({
     ...group,
     items: group.items.map(item => {
-      if (item.to === PATHS.myTasks && myUnseen > 0) return { ...item, badge: myUnseen }
+      if (item.to === PATHS.myTasks && myUnseen > 0)
+        return { ...item, badge: myUnseen, badgeAction: MY_TASKS_BADGE_ACTION }
       if (item.to === PATHS.meetings && nextMeetingLabel) return { ...item, hint: nextMeetingLabel }
       return item
     }),
@@ -292,22 +320,21 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
                   {!collapsed && item.badge !== undefined && item.badge > 0 && (
                     <span
                       className="ml-auto text-xs px-1.5 py-0.5 rounded-full"
-                      title={item.to === PATHS.myTasks ? `${item.badge} task${item.badge === 1 ? '' : 's'} you haven't opened yet — click to triage in My Items` : undefined}
+                      // ROW 84: all per-badge interaction driven by badgeAction
+                      // data injected in navWithBadges, not inline path checks.
                       // The My Tasks badge is its OWN click target (Nick
                       // 2026-06-11): the count → My Items "New for You" triage
                       // list, while the rest of the row still goes to My Tasks.
-                      role={item.to === PATHS.myTasks ? 'link' : undefined}
-                      tabIndex={item.to === PATHS.myTasks ? 0 : undefined}
-                      aria-label={item.to === PATHS.myTasks ? `${item.badge} new tasks — open My Items` : undefined}
-                      onClick={item.to === PATHS.myTasks ? (e) => { e.preventDefault(); e.stopPropagation(); navigate(PATHS.myItems); onNavigate?.() } : undefined}
-                      onKeyDown={item.to === PATHS.myTasks ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); navigate(PATHS.myItems); onNavigate?.() } } : undefined}
+                      title={item.badgeAction ? item.badgeAction.title(item.badge) : undefined}
+                      role={item.badgeAction ? 'link' : undefined}
+                      tabIndex={item.badgeAction ? 0 : undefined}
+                      aria-label={item.badgeAction ? item.badgeAction.ariaLabel(item.badge) : undefined}
+                      onClick={item.badgeAction ? (e) => { e.preventDefault(); e.stopPropagation(); navigate(item.badgeAction!.navigateTo); onNavigate?.() } : undefined}
+                      onKeyDown={item.badgeAction ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); navigate(item.badgeAction!.navigateTo); onNavigate?.() } } : undefined}
                       style={{
-                        // My Tasks badge = "new to you" (gold, Rule 59), drains
-                        // on open via auto-acknowledge. Gold bg takes a fixed
-                        // dark literal, not var(--ink) (CLAUDE.md gold rule).
-                        backgroundColor: item.to === PATHS.myTasks ? 'var(--gold)' : 'var(--maroon-solid)',
-                        color: item.to === PATHS.myTasks ? '#1a1a1a' : 'var(--ink-bright, #fff)',
-                        cursor: item.to === PATHS.myTasks ? 'pointer' : undefined,
+                        backgroundColor: item.badgeAction ? item.badgeAction.badgeBg : 'var(--maroon-solid)',
+                        color: item.badgeAction ? item.badgeAction.badgeColor : 'var(--ink-bright, #fff)',
+                        cursor: item.badgeAction ? 'pointer' : undefined,
                       }}
                     >
                       {item.badge}
