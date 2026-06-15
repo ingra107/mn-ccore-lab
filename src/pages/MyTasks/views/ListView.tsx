@@ -212,7 +212,8 @@ function ListRow({ task, project, isCursor, isSelected, onClick, onDouble, onSel
       onDoubleClick={onDouble}
       style={{ display: 'grid', gridTemplateColumns: '32px 26px 1fr 150px 100px 80px 110px 110px 70px', padding: '5px 16px', alignItems: 'center', fontSize: 12, height: 44, borderBottom: '1px solid rgba(255,255,255,0.04)', borderLeft: `3px solid ${isCursor ? meta.color : planned ? ACCENT_GOLD : overdue ? ACCENT_CORAL : 'transparent'}`, background: isCursor ? withAlpha(meta.color, 7) : isSelected ? 'rgba(201,168,76,0.06)' : 'transparent', cursor: 'pointer', boxSizing: 'border-box' }}
     >
-      <div className="list-view-col-cursor" style={{ color: meta.color, fontSize: 10, fontWeight: 700, textAlign: 'center' }}>{isCursor ? '▶' : ''}</div>
+      {/* ROW 85: data-cursor lets CSS suppress the ⇧ hover hint on the active row */}
+      <div className="list-view-col-cursor" data-cursor={isCursor ? 'true' : undefined} style={{ color: meta.color, fontSize: 10, fontWeight: 700, textAlign: 'center' }}>{isCursor ? '▶' : ''}</div>
       {/* Bug #70 (Nick 2026-06-11): completion on the side — the canonical
           DoneBox (square = complete, Rule 68) replaces the always-visible
           multiselect checkbox. Selection stays reachable via x / shift-click;

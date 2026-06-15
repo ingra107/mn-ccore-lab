@@ -2132,6 +2132,26 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
   }
 }
 
+/* ROW 85 — ListView shift-click affordance (desktop only).
+   The footer already says "⇧click select" but that hint is off-screen until
+   you scroll. On hover, show a faint ⇧ glyph in the cursor cell so the
+   interaction is discoverable inline. Suppressed on the active cursor row
+   (which already shows ▶) and on mobile (cursor col is display:none there). */
+.list-view-row:hover .list-view-col-cursor::after {
+  content: '⇧';
+  font-size: 9px;
+  opacity: 0.28;
+  display: block;
+  text-align: center;
+  line-height: 1;
+  pointer-events: none;
+  color: var(--slate);
+}
+/* Don't double-render on the active cursor row (▶ already fills the cell). */
+.list-view-row:hover .list-view-col-cursor[data-cursor="true"]::after {
+  content: none;
+}
+
 /* ── ROW 25: CSS @media replacements for JS isPhone branches ────────────────
    These replace runtime style-object switching in MeetingRow, OverlapBand,
    and TopBar. All thresholds match the 768px Rule 15 content-stacking axis.  */
