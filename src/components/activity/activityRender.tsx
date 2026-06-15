@@ -88,6 +88,38 @@ export const UPDATE_TYPE_CONFIG: Record<UpdateType, UpdateTypeRenderConfig> = {
   session:  { icon: Terminal,      color: 'var(--slate)',  bg: 'rgba(100,116,139,0.08)', borderColor: 'rgba(100,116,139,0.25)', label: 'Session' },
 }
 
+// ── Hoisted static style objects (ROW 82) ────────────────────────────────────
+//
+// Style objects that are identical on every render are hoisted to module-level
+// constants so React sees a stable reference and skips reconciler work.
+// Only truly-static objects (no prop or runtime dependency) live here.
+
+const STYLE_AUTHOR_BADGE: React.CSSProperties = {
+  fontSize: META_FONT_SIZE,
+  color: 'var(--slate)',
+  background: 'rgba(100,116,139,0.1)',
+  opacity: 0.85,
+  flexShrink: 0,
+}
+
+const STYLE_TIME: React.CSSProperties = {
+  fontSize: META_FONT_SIZE,
+  color: 'var(--slate)',
+  opacity: 'var(--ink-hint)' as unknown as number,
+  flexShrink: 0,
+}
+
+const STYLE_TEXT_COL: React.CSSProperties = { flex: 1, minWidth: 0 }
+const STYLE_NAME_ROW: React.CSSProperties = { marginBottom: 4 }
+const STYLE_COMPLETION_ICON: React.CSSProperties = { color: 'var(--green)', flexShrink: 0 }
+const STYLE_SYSTEM_BADGE: React.CSSProperties = {
+  fontSize: META_FONT_SIZE,
+  background: 'rgba(100,116,139,0.08)',
+  color: 'var(--slate)',
+  opacity: 0.85,
+  flexShrink: 0,
+}
+
 // ── Per-kind accent bar colours ───────────────────────────────────────────────
 //
 // The left-bar is the ONLY per-kind structural difference.  Every kind gets a
@@ -112,13 +144,7 @@ export function AuthorOnlyBadge() {
       title="Visible only to you"
       aria-label="Only visible to you"
       className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded"
-      style={{
-        fontSize: META_FONT_SIZE,
-        color: 'var(--slate)',
-        background: 'rgba(100,116,139,0.1)',
-        opacity: 0.85,
-        flexShrink: 0,
-      }}
+      style={STYLE_AUTHOR_BADGE}
     >
       <Lock size={8} strokeWidth={1.5} absoluteStrokeWidth aria-hidden="true" />
       only you
@@ -140,12 +166,7 @@ export function EntryTime({ ts, className }: { ts: string; className?: string })
       dateTime={ts}
       className={className}
       title={abs}
-      style={{
-        fontSize: META_FONT_SIZE,
-        color: 'var(--slate)',
-        opacity: 'var(--ink-hint)',
-        flexShrink: 0,
-      }}
+      style={STYLE_TIME}
     >
       {rel}
     </time>
@@ -420,7 +441,7 @@ export function ActivityEntryItem({
         aria-label="Completed"
         title="Completed"
         className="inline-flex items-center"
-        style={{ color: 'var(--green)', flexShrink: 0 }}
+        style={STYLE_COMPLETION_ICON}
       >
         <CheckCircle2 size={12} strokeWidth={1.5} absoluteStrokeWidth aria-hidden="true" />
       </span>
@@ -429,13 +450,7 @@ export function ActivityEntryItem({
     nameBadge = (
       <span
         className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded"
-        style={{
-          fontSize: META_FONT_SIZE,
-          background: 'rgba(100,116,139,0.08)',
-          color: 'var(--slate)',
-          opacity: 0.85,
-          flexShrink: 0,
-        }}
+        style={STYLE_SYSTEM_BADGE}
       >
         <Settings2 size={9} strokeWidth={1.5} absoluteStrokeWidth aria-hidden="true" />
         System
@@ -551,11 +566,11 @@ export function ActivityEntryItem({
         </div>
 
         {/* Text column */}
-        <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={STYLE_TEXT_COL}>
           {/* Line 1: Name · timestamp · badge */}
           <div
             className="flex items-center gap-1.5 flex-wrap"
-            style={{ marginBottom: 4 }}
+            style={STYLE_NAME_ROW}
           >
             <span
               style={{
