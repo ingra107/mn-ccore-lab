@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 import { PATHS } from '../../constants/paths'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { useAutoAnimate } from '@formkit/auto-animate/react'
-import { CheckCircle2, ChevronDown, ChevronRight, Circle, Archive, Link2, Plus, MessageSquare, Clipboard, Check, GripVertical, Pin, RotateCcw } from 'lucide-react'
+import { CheckCircle2, ChevronDown, ChevronRight, Circle, Archive, Link2, Plus, MessageSquare, Clipboard, Check, GripVertical, Pin, RotateCcw, Square } from 'lucide-react'
 import { DndContext, closestCenter, PointerSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core'
 import type { DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy, horizontalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable'
@@ -171,6 +171,25 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
     const newOrder = arrayMove(orderedDataCols, oldIndex, newIndex)
     setColumnOrder(newOrder)
   }, [orderedDataCols, setColumnOrder])
+
+  // ── Select-mode affordance — true while Ctrl/Meta is physically held ──
+  // Window-level listeners so every row reacts simultaneously. blur handler
+  // prevents stuck-on state if the user Ctrl+Tabs away mid-hold.
+  const [selectModeActive, setSelectModeActive] = useState(false)
+  useEffect(() => {
+    if (!onToggleSelect) return
+    const onDown = (e: KeyboardEvent) => { if (e.key === 'Control' || e.key === 'Meta') setSelectModeActive(true) }
+    const onUp = (e: KeyboardEvent) => { if (e.key === 'Control' || e.key === 'Meta') setSelectModeActive(false) }
+    const onBlur = () => setSelectModeActive(false)
+    window.addEventListener('keydown', onDown)
+    window.addEventListener('keyup', onUp)
+    window.addEventListener('blur', onBlur)
+    return () => {
+      window.removeEventListener('keydown', onDown)
+      window.removeEventListener('keyup', onUp)
+      window.removeEventListener('blur', onBlur)
+    }
+  }, [onToggleSelect])
 
   // ── Column resize state ──
   const [resizingCol, setResizingCol] = useState<string | null>(null)
@@ -375,7 +394,7 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
 
   return (
     <div
-      className="table-container"
+      className={`table-container${selectModeActive && onToggleSelect ? ' task-grid-select-mode' : ''}`}
       aria-label="Tasks"
       style={{ display: 'flex', flexDirection: 'column', height: '100%' }}
     >
@@ -508,6 +527,7 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
                     showUndo={showUndo}
                     selected={selectedIds?.has(task.id)}
                     onToggleSelect={onToggleSelect}
+                    selectModeActive={selectModeActive}
                     isFocused={focusedIndex === virtualRow.index}
                     onFocusIndex={onFocusIndex}
                     onContextMenu={openContextMenu}
@@ -766,7 +786,7 @@ function SortableColumnHeader({
 // ── Grid Row ─────────────────────────────────────────────────
 
 function TaskGridRow({
-  task, allTasks, index, colStyle, orderedDataCols, onStatusChange, onFieldChange, onSelect, onOpenDetail, showUndo, selected, onToggleSelect, isFocused, onFocusIndex, onContextMenu, expanded, onToggleExpand, projectMap, projectOptions, onPinToFocus, isPinnedToFocus, focusedCell, onCellTab, onCellFocus,
+  task, allTasks, index, colStyle, orderedDataCols, onStatusChange, onFieldChange, onSelect, onOpenDetail, showUndo, selected, onToggleSelect, selectModeActive, isFocused, onFocusIndex, onContextMenu, expanded, onToggleExpand, projectMap, projectOptions, onPinToFocus, isPinnedToFocus, focusedCell, onCellTab, onCellFocus,
 }: {
   task: TaskRow
   allTasks: TaskRow[]
@@ -780,6 +800,7 @@ function TaskGridRow({
   showUndo: (msg: string, onUndo: () => void) => void
   selected?: boolean
   onToggleSelect?: (id: string) => void
+  selectModeActive?: boolean
   isFocused?: boolean
   onFocusIndex?: (index: number) => void
   onContextMenu?: (e: React.MouseEvent, taskId: string) => void
@@ -935,7 +956,7 @@ function TaskGridRow({
           task.priority === 'high' ? 'var(--orange)' :
           'transparent'
         }`,
-        cursor: (onOpenDetail || onSelect) ? 'pointer' : 'default',
+        cursor: selectModeActive && onToggleSelect ? 'cell' : (onOpenDetail || onSelect) ? 'pointer' : 'default',
         opacity: isDone ? 0.85 : 1,
         transition: 'background var(--duration-normal) var(--ease-out), opacity var(--duration-normal) var(--ease-out)',
         position: 'relative',
@@ -945,10 +966,16 @@ function TaskGridRow({
       className={`task-grid-row hover:bg-black/[0.02] dark:hover:bg-white/[0.02] ${isFocused ? 'task-row-focused' : ''} ${rowFadeAnim ? 'task-row-complete-fade' : ''}`}
       data-focused={isFocused ? 'true' : undefined}
       tabIndex={0}
-      onClick={() => {
+      onClick={(e) => {
         onFocusIndex?.(index)
-        if (onOpenDetail) onOpenDetail(task)
-        else onSelect?.(task)
+        if ((e.shiftKey || e.ctrlKey || e.metaKey) && onToggleSelect) {
+          e.preventDefault()
+          onToggleSelect(task.id)
+        } else if (onOpenDetail) {
+          onOpenDetail(task)
+        } else {
+          onSelect?.(task)
+        }
       }}
       onKeyDown={(e) => {
         if (e.key === 'Enter') { e.preventDefault(); onOpenDetail?.(task) }
@@ -959,8 +986,11 @@ function TaskGridRow({
       onTouchEnd={longPress.onTouchEnd}
       onTouchCancel={longPress.onTouchCancel}
     >
-      {/* Leftmost circle — 1-click complete (with undo). Ctrl/⌘+click toggles
-          row selection for bulk actions. GH #25. r7 2026-04-22. */}
+      {/* Leftmost circle — 1-click complete (with undo). Ctrl/⌘+click or
+          shift-click toggles row selection for bulk actions (also works on
+          the row body — see row onClick above). GH #25. r7 2026-04-22.
+          While Ctrl/Meta is held (selectModeActive), the visual swaps to a
+          selection-square so it's clear clicking will SELECT, not complete. */}
       <div
         className="task-row-checkbox"
         onClick={(e) => {
@@ -978,20 +1008,43 @@ function TaskGridRow({
             showUndo('Reopened task', () => onStatusChange(task.id, prev))
           }
         }}
-        title={isDone ? 'Click to reopen · Ctrl-click to select' : 'Click to complete · Ctrl-click to select'}
-        aria-label={isDone ? 'Reopen task' : 'Complete task'}
+        title={
+          selectModeActive && onToggleSelect
+            ? (selected ? 'Deselect row' : 'Select row')
+            : isDone
+              ? 'Click to reopen · Ctrl-click to select'
+              : 'Click to complete · Ctrl-click to select'
+        }
+        aria-label={
+          selectModeActive && onToggleSelect
+            ? (selected ? 'Deselect task' : 'Select task')
+            : isDone ? 'Reopen task' : 'Complete task'
+        }
         style={{ cursor: 'pointer' }}
       >
-        <div style={{
-          width: 16, height: 16, borderRadius: 'var(--radius-circle)',
-          border: selected ? '2px solid var(--teal-solid)' : isDone ? 'none' : '1.5px solid var(--border-subtle)',
-          background: isDone ? 'var(--teal-solid)' : selected ? 'var(--teal-emphasis)' : 'transparent',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          transition: 'background var(--transition-fast), border var(--transition-fast)',
-        }}>
-          {isDone && <CheckCircle2 {...ICON_PROPS} size={10} style={{ color: '#fff' }} />}
-          {!isDone && selected && <CheckCircle2 {...ICON_PROPS} size={10} style={{ color: 'var(--teal-solid)' }} />}
-        </div>
+        {selectModeActive && onToggleSelect && !selected ? (
+          /* Select-mode affordance: show a selection-square when Ctrl/Meta held */
+          <div style={{
+            width: 16, height: 16, borderRadius: 'var(--radius-sm)',
+            border: '1.5px solid var(--teal-solid)',
+            background: 'transparent',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            transition: 'background var(--transition-fast), border var(--transition-fast)',
+          }}>
+            <Square {...ICON_PROPS} size={8} style={{ color: 'var(--teal-solid)' }} />
+          </div>
+        ) : (
+          <div style={{
+            width: 16, height: 16, borderRadius: 'var(--radius-circle)',
+            border: selected ? '2px solid var(--teal-solid)' : isDone ? 'none' : '1.5px solid var(--border-subtle)',
+            background: isDone ? 'var(--teal-solid)' : selected ? 'var(--teal-emphasis)' : 'transparent',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            transition: 'background var(--transition-fast), border var(--transition-fast)',
+          }}>
+            {isDone && <CheckCircle2 {...ICON_PROPS} size={10} style={{ color: '#fff' }} />}
+            {!isDone && selected && <CheckCircle2 {...ICON_PROPS} size={10} style={{ color: 'var(--teal-solid)' }} />}
+          </div>
+        )}
       </div>
 
       {/* Data cells — rendered in orderedDataCols order */}

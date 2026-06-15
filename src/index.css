@@ -560,6 +560,17 @@ h1, h2, h3, h4, h5, h6 { font-weight: var(--weight-heading); }
   background: rgba(255, 255, 255, 0.02) !important;
 }
 
+/* Select-mode affordance: while Ctrl/Meta is held the grid container gains
+   .task-grid-select-mode, replacing the neutral hover with a teal tint so
+   it's immediately obvious that clicks will SELECT, not open. */
+.task-grid-select-mode .task-grid-row:hover {
+  background: var(--teal-active) !important;
+  cursor: cell;
+}
+.dark .task-grid-select-mode .task-grid-row:hover {
+  background: var(--teal-active) !important;
+}
+
 /* Density: compact table rows */
 .density-compact .table-container [style*="padding"] {
   /* Applied via density vars below */
