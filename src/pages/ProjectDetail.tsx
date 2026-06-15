@@ -257,7 +257,30 @@ function ProjectDetailInner({ project }: InnerProps) {
 
   // Multi-select for tasks tab
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
-  const toggleSelect = (id: string) => setSelectedIds(prev => { const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next })
+  const [selectAnchorId, setSelectAnchorId] = useState<string | null>(null)
+
+  // Wrapped in useCallback so TaskGridView's selectModeActive useEffect doesn't
+  // reinstall window listeners on every ProjectDetail render (was re-created
+  // per-render as an inline arrow — flagged in Phase G scoping pass).
+  const toggleSelect = useCallback((id: string) => {
+    setSelectedIds(prev => { const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next })
+    setSelectAnchorId(id)
+  }, [])
+
+  const handleSelectRange = useCallback((targetId: string, orderedIds: string[], anchor: string | null) => {
+    if (!anchor || !orderedIds.includes(anchor)) {
+      toggleSelect(targetId)
+      return
+    }
+    const anchorIdx = orderedIds.indexOf(anchor)
+    const targetIdx = orderedIds.indexOf(targetId)
+    if (anchorIdx === -1 || targetIdx === -1) { toggleSelect(targetId); return }
+    const lo = Math.min(anchorIdx, targetIdx)
+    const hi = Math.max(anchorIdx, targetIdx)
+    const rangeIds = orderedIds.slice(lo, hi + 1)
+    setSelectedIds(prev => { const n = new Set(prev); for (const id of rangeIds) n.add(id); return n })
+    // Anchor stays put (same pivot as useSelection.selectRange)
+  }, [toggleSelect])
 
   const handleFieldChange = (id: string, field: string, value: unknown) => {
     updateTask.mutate({ id, fields: { [field]: value } })
@@ -1941,6 +1964,8 @@ function ProjectDetailInner({ project }: InnerProps) {
                 onOpenDetail={setSelectedTask}
                 selectedIds={selectedIds}
                 onToggleSelect={toggleSelect}
+                anchorId={selectAnchorId}
+                onSelectRange={handleSelectRange}
               />
             )}
 

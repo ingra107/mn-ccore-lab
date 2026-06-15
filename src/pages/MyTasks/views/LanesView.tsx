@@ -7,9 +7,10 @@
 //
 // Extracted from src/pages/portal/UnifiedMyTasks.tsx (LanesView + LaneRow).
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Chip } from '../primitives'
 import { MyTasksRow } from './ColumnsView'
+import { useSelectMode } from '../../../hooks/useSelectMode'
 import { OverdueBanner } from './OverdueBanner'
 import { LaneEmpty } from './MyTasksEmpty'
 import {
@@ -38,7 +39,7 @@ function writeSet(key: string, s: Set<GroupKey>) {
   try { window.localStorage.setItem(key, JSON.stringify([...s])) } catch { /* ignore */ }
 }
 
-export function LanesView({ byGroup, selected, toggleSelect, onToggleComplete, onOpenEditor, expanded, setExpanded, projectsByPid, plannedSet, filterGroup }: { byGroup: Record<GroupKey, TaskRow[]>; selected: Set<string>; toggleSelect: (id: string) => void; onToggleComplete: (task: TaskRow) => void; onOpenEditor: (id: string) => void; expanded: string | null; setExpanded: (id: string | null) => void; projectsByPid: Map<string, { name: string; slug: string }>; plannedSet: Set<string>; filterGroup?: GroupKey | null }) {
+export function LanesView({ byGroup, selected, toggleSelect, selectRange, anchorId, onToggleComplete, onOpenEditor, expanded, setExpanded, projectsByPid, plannedSet, filterGroup }: { byGroup: Record<GroupKey, TaskRow[]>; selected: Set<string>; toggleSelect: (id: string) => void; selectRange: (targetId: string, orderedIds: string[], anchor: string | null) => void; anchorId: string | null; onToggleComplete: (task: TaskRow) => void; onOpenEditor: (id: string) => void; expanded: string | null; setExpanded: (id: string | null) => void; projectsByPid: Map<string, { name: string; slug: string }>; plannedSet: Set<string>; filterGroup?: GroupKey | null }) {
   // MT-16 — when a Group filter is active, only render the matching lane.
   const visibleGroups = filterGroup ? GROUP_ORDER.filter(g => g === filterGroup) : GROUP_ORDER
   const [collapsed, setCollapsed] = useState<Set<GroupKey>>(() => readSet(LS_COLLAPSED))
@@ -47,7 +48,14 @@ export function LanesView({ byGroup, selected, toggleSelect, onToggleComplete, o
   useEffect(() => { writeSet(LS_PEEK, peek) }, [peek])
   const toggleC = (k: GroupKey) => setCollapsed((s) => { const n = new Set(s); n.has(k) ? n.delete(k) : n.add(k); return n })
   const toggleP = (k: GroupKey) => setPeek((s) => { const n = new Set(s); n.has(k) ? n.delete(k) : n.add(k); return n })
-  const selectionActive = selected.size > 0
+
+  // Phase G: Ctrl/Meta held → select-mode affordance on rows.
+  const selectModeActive = useSelectMode(true)
+  const selectionActive = selectModeActive || selected.size > 0
+
+  // Track last pointer-event modifiers (capture phase) so onSelect can
+  // route shift→range vs ctrl/plain→toggle without an event arg.
+  const lastModifiers = useRef({ shift: false, ctrlMeta: false })
   // P1-12 banner needs the flat task set across all visible lanes.
   const allTasks = useMemo(() => visibleGroups.flatMap((g) => byGroup[g]), [visibleGroups, byGroup])
 
@@ -56,7 +64,13 @@ export function LanesView({ byGroup, selected, toggleSelect, onToggleComplete, o
     // on --content-band (matching the data pages); the inner --col-main block is
     // left-anchored within the band so the primary column's left edge equals
     // Projects + the other two views + Today. The 1100px literal is gone.
-    <div className="fab-clear" style={{ flex: 1, overflow: 'auto', paddingTop: 12, paddingBottom: 40 }}>
+    <div
+      className="fab-clear"
+      style={{ flex: 1, overflow: 'auto', paddingTop: 12, paddingBottom: 40 }}
+      onClickCapture={(e) => {
+        lastModifiers.current = { shift: e.shiftKey, ctrlMeta: e.ctrlKey || e.metaKey }
+      }}
+    >
      <div className="mt-band">
       <div style={{ maxWidth: 'var(--col-main)', width: '100%' }}>
       <OverdueBanner tasks={allTasks} />
@@ -97,7 +111,14 @@ export function LanesView({ byGroup, selected, toggleSelect, onToggleComplete, o
                     project={t.project_id ? projectsByPid.get(t.project_id) ?? null : null}
                     selected={selected.has(t.id)}
                     selectionActive={selectionActive}
-                    onSelect={() => toggleSelect(t.id)}
+                    onSelect={() => {
+                      if (lastModifiers.current.shift) {
+                        // Range within the visible slice of this lane
+                        selectRange(t.id, visible.map(r => r.id), anchorId)
+                      } else {
+                        toggleSelect(t.id)
+                      }
+                    }}
                     onToggleComplete={() => onToggleComplete(t)}
                     onOpenEditor={() => onOpenEditor(t.id)}
                     expanded={expanded === t.id}

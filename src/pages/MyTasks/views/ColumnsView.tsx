@@ -11,9 +11,11 @@
 //
 // Extracted from src/pages/portal/UnifiedMyTasks.tsx (ColumnsView + Card).
 
+import { useRef } from 'react'
 import { TaskRow as SharedTaskRow } from '../../../components/tasks/TaskRow'
 import { useLabPrefs } from '../../../hooks/useLabPrefs'
 import { useDensity } from '../../../components/DensityToggle'
+import { useSelectMode } from '../../../hooks/useSelectMode'
 import { Chip } from '../primitives'
 import { InlineDetail } from '../components/InlineDetail'
 import { OverdueBanner } from './OverdueBanner'
@@ -27,19 +29,27 @@ import {
 } from '../constants'
 import type { TaskRow } from '../../../lib/api'
 
-export function ColumnsView({ filtered, byGroup, selected, toggleSelect, onToggleComplete, onOpenEditor, expanded, setExpanded, projectsByPid, plannedSet, filterGroup }: { filtered: TaskRow[]; byGroup: Record<GroupKey, TaskRow[]>; selected: Set<string>; toggleSelect: (id: string) => void; onToggleComplete: (task: TaskRow) => void; onOpenEditor: (id: string) => void; expanded: string | null; setExpanded: (id: string | null) => void; projectsByPid: Map<string, { name: string; slug: string }>; plannedSet: Set<string>; filterGroup?: GroupKey | null }) {
+export function ColumnsView({ filtered, byGroup, selected, toggleSelect, selectRange, anchorId, onToggleComplete, onOpenEditor, expanded, setExpanded, projectsByPid, plannedSet, filterGroup }: { filtered: TaskRow[]; byGroup: Record<GroupKey, TaskRow[]>; selected: Set<string>; toggleSelect: (id: string) => void; selectRange: (targetId: string, orderedIds: string[], anchor: string | null) => void; anchorId: string | null; onToggleComplete: (task: TaskRow) => void; onOpenEditor: (id: string) => void; expanded: string | null; setExpanded: (id: string | null) => void; projectsByPid: Map<string, { name: string; slug: string }>; plannedSet: Set<string>; filterGroup?: GroupKey | null }) {
   // MT-16 — when a Group filter is active, only render the matching column
   // (others would just be "nothing here" empty lanes that eat horizontal
   // space and obscure the filter result).
   const visibleGroups = filterGroup ? GROUP_ORDER.filter(g => g === filterGroup) : GROUP_ORDER
   const colCount = visibleGroups.length
+
+  // Phase G: Ctrl/Meta held → select-mode affordance on rows.
+  const selectModeActive = useSelectMode(true)
+
+  // Track the last pointer-event modifiers in a capture-phase ref so that
+  // onSelect (called by SharedTaskRow with no event arg) can read them.
+  const lastModifiers = useRef({ shift: false, ctrlMeta: false })
+
+  const selectionActive = selectModeActive || selected.size > 0
   // 2026-06-10b: align the grid's intrinsic floor to the column minmax floor
   // (260px) instead of 280px. Inside .band-anchored-wide the grid fills the
   // fluid width and only overflows (h-scroll) when colCount*260 + gaps exceeds
   // the available viewport — so the floor must match the minmax(260px,...) below
   // or the grid would force a scroll a touch early.
   const minWidth = colCount * 260
-  const selectionActive = selected.size > 0
   // Mobile scroll cue — right-edge fade gradient + visible thin scrollbar so
   // users discover the 5 columns scroll horizontally on small viewports
   // (eval Issue 5).
@@ -52,7 +62,13 @@ export function ColumnsView({ filtered, byGroup, selected, toggleSelect, onToggl
     // 960px box). Dropped the maxWidth:--col-main cap that previously crammed
     // 4-5 columns into 960px and forced a horizontal scroll inside the band.
     <div className="band-anchored-wide" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
-    <div className="mt-columns-scroll fab-clear" style={{ flex: 1, overflow: 'auto', paddingTop: 12, paddingBottom: 20, position: 'relative', width: '100%' }}>
+    <div
+      className="mt-columns-scroll fab-clear"
+      style={{ flex: 1, overflow: 'auto', paddingTop: 12, paddingBottom: 20, position: 'relative', width: '100%' }}
+      onClickCapture={(e) => {
+        lastModifiers.current = { shift: e.shiftKey, ctrlMeta: e.ctrlKey || e.metaKey }
+      }}
+    >
       <style>{`
         .mt-columns-scroll { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.18) transparent; }
         .mt-columns-scroll::-webkit-scrollbar { height: 8px; }
@@ -97,7 +113,14 @@ export function ColumnsView({ filtered, byGroup, selected, toggleSelect, onToggl
                     project={t.project_id ? projectsByPid.get(t.project_id) ?? null : null}
                     selected={selected.has(t.id)}
                     selectionActive={selectionActive}
-                    onSelect={() => toggleSelect(t.id)}
+                    onSelect={() => {
+                      if (lastModifiers.current.shift) {
+                        // Range-select from anchor to this task in column order
+                        selectRange(t.id, tasks.map(r => r.id), anchorId)
+                      } else {
+                        toggleSelect(t.id)
+                      }
+                    }}
                     onToggleComplete={() => onToggleComplete(t)}
                     onOpenEditor={() => onOpenEditor(t.id)}
                     expanded={expanded === t.id}

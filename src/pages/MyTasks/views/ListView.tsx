@@ -8,11 +8,12 @@
 // task accounts don't paint every row up-front. Owner column resolves slug
 // → name + Avatar via getPersonInfo (MT-19).
 
-import { useEffect, useRef, useMemo } from 'react'
+import { useEffect, useRef, useMemo, useCallback } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { DoneBox } from '../../../components/tasks/TaskRow'
 import { LinksBar } from '../primitives'
 import { useListKeyboard } from '../hooks/useListKeyboard'
+import { useSelectMode } from '../../../hooks/useSelectMode'
 import InlineSelect from '../../../components/InlineSelect'
 import InlineDatePicker from '../../../components/InlineDatePicker'
 import InlineAssigneePicker from '../../../components/InlineAssigneePicker'
@@ -39,6 +40,8 @@ interface ListViewProps {
   filtered: TaskRow[]
   selected: Set<string>
   toggleSelect: (id: string) => void
+  selectRange: (targetId: string, orderedIds: string[], anchor: string | null) => void
+  anchorId: string | null
   setSelected: React.Dispatch<React.SetStateAction<Set<string>>>
   setDrawer: (id: string | null) => void
   projectsByPid: Map<string, { name: string; slug: string }>
@@ -46,9 +49,24 @@ interface ListViewProps {
   plannedSet: Set<string>
 }
 
-export function ListView({ filtered, selected, toggleSelect, setSelected, setDrawer, projectsByPid, projectOptions, plannedSet }: ListViewProps) {
+export function ListView({ filtered, selected, toggleSelect, selectRange, anchorId, setSelected, setDrawer, projectsByPid, projectOptions, plannedSet }: ListViewProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const { cursor, setCursor } = useListKeyboard({ filtered, toggleSelect, setDrawer, setSelected })
+
+  // Phase G: Ctrl/Meta held → cursor:cell affordance on rows.
+  const selectModeActive = useSelectMode(true)
+
+  // Stable ordered id array for range-select (mirrors filtered order).
+  const filteredIds = useMemo(() => filtered.map(t => t.id), [filtered])
+
+  // Route select action: shift → range, ctrl/meta or plain → toggle.
+  const handleRowSelect = useCallback((id: string, e: React.MouseEvent) => {
+    if (e.shiftKey) {
+      selectRange(id, filteredIds, anchorId)
+    } else {
+      toggleSelect(id)
+    }
+  }, [selectRange, filteredIds, anchorId, toggleSelect])
 
   // P2-3: the five common-field handlers (status/priority/assignee/due/project)
   // come from the shared useTaskFieldEditors hook — one optimistic + undo
@@ -134,9 +152,10 @@ export function ListView({ filtered, selected, toggleSelect, setSelected, setDra
                     project={t.project_id ? projectsByPid.get(t.project_id) ?? null : null}
                     isCursor={row.index === cursor}
                     isSelected={selected.has(t.id)}
+                    selectModeActive={selectModeActive}
                     onClick={() => setCursor(row.index)}
                     onDouble={() => setDrawer(t.id)}
-                    onSelect={() => toggleSelect(t.id)}
+                    onSelect={(e) => handleRowSelect(t.id, e)}
                     planned={plannedSet.has(t.id)}
                     onStatusChange={(next) => onStatusChange(t.id, t.status, next)}
                     onPriorityChange={(next) => onPriorityChange(t.id, t.priority, next)}
@@ -176,9 +195,10 @@ interface ListRowProps {
   project: { name: string; slug: string } | null
   isCursor: boolean
   isSelected: boolean
+  selectModeActive: boolean
   onClick: () => void
   onDouble: () => void
-  onSelect: () => void
+  onSelect: (e: React.MouseEvent) => void
   planned: boolean
   onStatusChange: (val: string) => void
   onPriorityChange: (val: string) => void
@@ -191,7 +211,7 @@ interface ListRowProps {
   newActivity: number
 }
 
-function ListRow({ task, project, isCursor, isSelected, onClick, onDouble, onSelect, planned, onStatusChange, onPriorityChange, onAssigneeChange, onDateChange, onProjectChange, projectSelectOptions, staleDays, isNew, newActivity }: ListRowProps) {
+function ListRow({ task, project, isCursor, isSelected, selectModeActive, onClick, onDouble, onSelect, planned, onStatusChange, onPriorityChange, onAssigneeChange, onDateChange, onProjectChange, projectSelectOptions, staleDays, isNew, newActivity }: ListRowProps) {
   const meta = GROUP_META[(task as TaskRow & { _group?: GroupKey })._group ?? 'deep']
   // Rule 68: status-aware isOverdue(), never a hand-rolled date compare.
   const overdue = !!task.due_date && !isTaskDone(task) && isOverdue(task.due_date, task.status)
@@ -206,11 +226,12 @@ function ListRow({ task, project, isCursor, isSelected, onClick, onDouble, onSel
   return (
     <div
       className="list-view-row"
-      // Shift-click selects (matches the shared TaskRow contract) now that the
-      // always-visible checkbox is gone; plain click still moves the cursor.
-      onClick={(e) => { if (e.shiftKey) { onSelect(); return } onClick() }}
+      // Shift-click → range-select. Ctrl/Meta+click → toggle+anchor.
+      // Both route through onSelect(e) which the parent handles.
+      // Plain click → move cursor (unchanged).
+      onClick={(e) => { if (e.shiftKey || e.ctrlKey || e.metaKey) { onSelect(e); return } onClick() }}
       onDoubleClick={onDouble}
-      style={{ display: 'grid', gridTemplateColumns: '32px 26px 1fr 150px 100px 80px 110px 110px 70px', padding: '5px 16px', alignItems: 'center', fontSize: 12, height: 44, borderBottom: '1px solid rgba(255,255,255,0.04)', borderLeft: `3px solid ${isCursor ? meta.color : planned ? ACCENT_GOLD : overdue ? ACCENT_CORAL : 'transparent'}`, background: isCursor ? withAlpha(meta.color, 7) : isSelected ? 'rgba(201,168,76,0.06)' : 'transparent', cursor: 'pointer', boxSizing: 'border-box' }}
+      style={{ display: 'grid', gridTemplateColumns: '32px 26px 1fr 150px 100px 80px 110px 110px 70px', padding: '5px 16px', alignItems: 'center', fontSize: 12, height: 44, borderBottom: '1px solid rgba(255,255,255,0.04)', borderLeft: `3px solid ${isCursor ? meta.color : planned ? ACCENT_GOLD : overdue ? ACCENT_CORAL : 'transparent'}`, background: isCursor ? withAlpha(meta.color, 7) : isSelected ? 'rgba(201,168,76,0.06)' : 'transparent', cursor: selectModeActive ? 'cell' : 'pointer', boxSizing: 'border-box' }}
     >
       {/* ROW 85: data-cursor lets CSS suppress the ⇧ hover hint on the active row */}
       <div className="list-view-col-cursor" data-cursor={isCursor ? 'true' : undefined} style={{ color: meta.color, fontSize: 10, fontWeight: 700, textAlign: 'center' }}>{isCursor ? '▶' : ''}</div>

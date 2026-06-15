@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useRef, useCallback, useId } from 'react'
+import { useSelectMode } from '../../hooks/useSelectMode'
 import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
 import { PATHS } from '../../constants/paths'
@@ -108,6 +109,11 @@ interface TaskGridViewProps {
   onPeek?: (task: TaskRow) => void
   selectedIds?: Set<string>
   onToggleSelect?: (id: string) => void
+  // Range-select (shift+click). anchorId is the pivot task; onSelectRange
+  // receives (targetId, orderedIds, anchorId) — same signature as selectRange
+  // in useSelection. Optional: callers that don't need range-select omit these.
+  anchorId?: string | null
+  onSelectRange?: (targetId: string, orderedIds: string[], anchor: string | null) => void
   focusedIndex?: number
   onFocusIndex?: (index: number) => void
   expandedTasks?: Set<string>
@@ -124,7 +130,7 @@ function parseBlockedByIds(blockedBy: string | null): string[] {
 
 type SortKey = 'priority' | 'due_date' | 'assignee' | 'status' | 'title' | 'project'
 
-export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldChange, onSelect, onOpenDetail, onPeek, selectedIds, onToggleSelect, focusedIndex, onFocusIndex, expandedTasks: controlledExpanded, onToggleExpand: controlledToggleExpand, onPinToFocus, pinnedIds, isLoading }: TaskGridViewProps) {
+export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldChange, onSelect, onOpenDetail, onPeek, selectedIds, onToggleSelect, anchorId, onSelectRange, focusedIndex, onFocusIndex, expandedTasks: controlledExpanded, onToggleExpand: controlledToggleExpand, onPinToFocus, pinnedIds, isLoading }: TaskGridViewProps) {
   const { showUndo } = useUndoToast()
 
   // ── Table config (persisted sort + column widths + column order) ──
@@ -173,23 +179,9 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
   }, [orderedDataCols, setColumnOrder])
 
   // ── Select-mode affordance — true while Ctrl/Meta is physically held ──
-  // Window-level listeners so every row reacts simultaneously. blur handler
-  // prevents stuck-on state if the user Ctrl+Tabs away mid-hold.
-  const [selectModeActive, setSelectModeActive] = useState(false)
-  useEffect(() => {
-    if (!onToggleSelect) return
-    const onDown = (e: KeyboardEvent) => { if (e.key === 'Control' || e.key === 'Meta') setSelectModeActive(true) }
-    const onUp = (e: KeyboardEvent) => { if (e.key === 'Control' || e.key === 'Meta') setSelectModeActive(false) }
-    const onBlur = () => setSelectModeActive(false)
-    window.addEventListener('keydown', onDown)
-    window.addEventListener('keyup', onUp)
-    window.addEventListener('blur', onBlur)
-    return () => {
-      window.removeEventListener('keydown', onDown)
-      window.removeEventListener('keyup', onUp)
-      window.removeEventListener('blur', onBlur)
-    }
-  }, [onToggleSelect])
+  // Extracted to useSelectMode (Phase G) — gated on whether onToggleSelect
+  // is provided so surfaces without selection skip the listeners entirely.
+  const selectModeActive = useSelectMode(!!onToggleSelect)
 
   // ── Column resize state ──
   const [resizingCol, setResizingCol] = useState<string | null>(null)
@@ -303,6 +295,9 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
       return 0
     })
   }, [tasks, sorts, sortKey, sortAsc, compareByKey])
+
+  // Stable sorted id list for range-select (respects current sort order).
+  const sortedIds = useMemo(() => sorted.map(t => t.id), [sorted])
 
   /** Regular click replaces sort; Shift+Click adds secondary sort */
   const handleSort = useCallback((key: string, shiftKey?: boolean) => {
@@ -527,6 +522,9 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
                     showUndo={showUndo}
                     selected={selectedIds?.has(task.id)}
                     onToggleSelect={onToggleSelect}
+                    onSelectRange={onSelectRange}
+                    anchorId={anchorId}
+                    orderedTaskIds={sortedIds}
                     selectModeActive={selectModeActive}
                     isFocused={focusedIndex === virtualRow.index}
                     onFocusIndex={onFocusIndex}
@@ -786,7 +784,7 @@ function SortableColumnHeader({
 // ── Grid Row ─────────────────────────────────────────────────
 
 function TaskGridRow({
-  task, allTasks, index, colStyle, orderedDataCols, onStatusChange, onFieldChange, onSelect, onOpenDetail, showUndo, selected, onToggleSelect, selectModeActive, isFocused, onFocusIndex, onContextMenu, expanded, onToggleExpand, projectMap, projectOptions, onPinToFocus, isPinnedToFocus, focusedCell, onCellTab, onCellFocus,
+  task, allTasks, index, colStyle, orderedDataCols, onStatusChange, onFieldChange, onSelect, onOpenDetail, showUndo, selected, onToggleSelect, onSelectRange, anchorId, orderedTaskIds, selectModeActive, isFocused, onFocusIndex, onContextMenu, expanded, onToggleExpand, projectMap, projectOptions, onPinToFocus, isPinnedToFocus, focusedCell, onCellTab, onCellFocus,
 }: {
   task: TaskRow
   allTasks: TaskRow[]
@@ -800,6 +798,9 @@ function TaskGridRow({
   showUndo: (msg: string, onUndo: () => void) => void
   selected?: boolean
   onToggleSelect?: (id: string) => void
+  onSelectRange?: (targetId: string, orderedIds: string[], anchor: string | null) => void
+  anchorId?: string | null
+  orderedTaskIds?: string[]
   selectModeActive?: boolean
   isFocused?: boolean
   onFocusIndex?: (index: number) => void
@@ -968,7 +969,12 @@ function TaskGridRow({
       tabIndex={0}
       onClick={(e) => {
         onFocusIndex?.(index)
-        if ((e.shiftKey || e.ctrlKey || e.metaKey) && onToggleSelect) {
+        if (e.shiftKey && onSelectRange && orderedTaskIds) {
+          // Shift+click → range from anchor to this task in current sort order
+          e.preventDefault()
+          onSelectRange(task.id, orderedTaskIds, anchorId ?? null)
+        } else if ((e.ctrlKey || e.metaKey) && onToggleSelect) {
+          // Ctrl/Meta+click → toggle + set anchor
           e.preventDefault()
           onToggleSelect(task.id)
         } else if (onOpenDetail) {
