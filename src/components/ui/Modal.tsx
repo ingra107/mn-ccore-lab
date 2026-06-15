@@ -30,6 +30,15 @@ export default function Modal({ open, onClose, title, maxWidth = 'md', children,
   const isMobile = useIsMobile()
   const asSheet = variant === 'responsive' && isMobile
 
+  // Body-scroll-lock: prevent the page from scrolling behind the modal.
+  // Stores and restores the prior overflow value so nested callers compose.
+  useEffect(() => {
+    if (!open) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = prev }
+  }, [open])
+
   // Focus panel on open
   useEffect(() => {
     if (open && panelRef.current) {
