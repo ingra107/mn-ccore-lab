@@ -3,6 +3,12 @@
 
 > Historical phase records moved from CLAUDE.md to keep the operating guide focused on current state. Each section is a complete record of what shipped, decisions made, and scores achieved.
 
+## 2026-06-15 (PM) — bug sweep #70–#79: full open GitHub bug queue cleared in one pass
+
+Ten reported bugs fixed, codex-reviewed, deployed (`c1e72aa4`), and pushed (`f3322214` 9 bugs · `4a95239b` #74 left rail · `5b9509e1` codex fixes). All 10 GitHub issues closed; 9 `bug_reports` rows resolved. Frontend + one API reader fix — no schema/route change (v82 / 74 tables / 240 routes).
+**Headliners:** #76 notifications drawer was empty because the `api/routes/notifications.ts` reader SELECT named columns that don't exist (`message/related_id/related_type`) and omitted `link` — the try/catch returned `[]` while the count still showed unread; fixed to the real schema (verified vs prod D1). #77/#79 key-link chips (Today `LinkRow`, MyTasks `LinksBar`) were dead `<a href="#">`/emoji with "claude" tooltips — rewired to `classifyUrl`+`useProtocolLaunch`+lucide; deleted dead `LinkIcon` + the positional kind hack. #74 all-day/≥3h events moved to a Today-timeline left rail (out of OverlapBand clustering, reuses EventRow, stacks on mobile); codex caught 2 regressions (inMeeting + rail-only drop-gap), both fixed. Plus #71 quick-add modal, #72 opaque mobile nav, #73 zoned `<time>`, #75 newest-at-bottom activity feed + clamp, #78 scroll-anchored expand, #79 emoji→lucide icon sweep. #70 was already fixed (List DoneBox) — closed stale.
+**Process note:** a background icon-sweep agent wiped uncommitted edits mid-session (whole-tree reset); recovered + adopted commit-before-dispatch (memory `repo-environment-gotchas`).
+
 ## 2026-06-11/12 (LATE EVENING, docket execution) — N1–N8 100% · mobile fix wave · schema v82 · dogfood green
 
 The full Nick-ordered close docket executed in one session (`8a41827a`→`1cc9ea9e`, 17 commits, 5 deploys).

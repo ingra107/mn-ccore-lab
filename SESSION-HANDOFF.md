@@ -1,3 +1,21 @@
+# ▶ BUG SWEEP #70–#79 — ALL 10 FIXED + DEPLOYED + PUSHED (2026-06-15 PM)
+
+Cleared the entire open GitHub bug queue in one ultracode pass. **Live deploy = `c1e72aa4` (HEAD `5b9509e1`).** Frontend + one API fix — NO schema/route/table change (still schema v82 / 74 tables / 240 routes). All 10 GitHub issues closed; 9 `bug_reports` rows marked resolved (Bug Squasher queue empty).
+
+**Commits:** `f3322214` (9 bugs, 15 files) · `4a95239b` (#74 timeline left rail) · `5b9509e1` (codex-review fixes).
+
+**What shipped:**
+- **#76** notifications drawer was EMPTY (count showed, no rows to click): `api/routes/notifications.ts` reader SELECT queried nonexistent columns (`message/related_id/related_type`) and omitted `link`; the route's try/catch swallowed the error → `[]`. Now selects the real schema (`source_type/source_id/title/body/link`). Verified vs prod D1 (rows carry `/portal/my-tasks?open=…`). Frontend was already correct (Rule 73) — pure reader fix.
+- **#77/#79 key-links:** Today `LinkRow` (`today/primitives.tsx`) + MyTasks `LinksBar` (`MyTasks/primitives.tsx`) rendered dead `<a href="#">`/emoji chips with the raw kind ("claude") as tooltip. Now carry the real URL → `classifyUrl` + `useProtocolLaunch` + lucide icons + accurate tooltips. Deleted the dead `LinkIcon` SVG-glyph component and the positional kind hack (key_link_1=folder/2=claude/3=brief). `LinkRow` signature `LinkKind[]`→`TaskLink[]` (callsites: RightNowCard, PlannedTaskRow, TaskDetailDrawer).
+- **#74** Today timeline: all-day + ≥3h events render in a **LEFT RAIL** (Nick's pick) out of the OverlapBand clustering + day-window math, reusing `EventRow` (notes/Join preserved); stacks above on mobile. `LONG_EVENT_MIN=180`, new `TodayEvent.isAllDay`, `isRailEvent()` in `Timeline.tsx`. Codex caught + fixed 2 regressions: `inMeeting` must count railed blocks (use `visibleMeetings`), and a rail-only day must still render the trailing drop-gap.
+- **#71** Personal "New Task" → `openGlobalQuickAdd()` (was route-nav). **#72** `MobileTabBar` opaque `--cream` (was `--surface-1` 3% + blur). **#73** activity `<time dateTime>` zoned-UTC ISO (visible relative times were already UTC-correct since 6-10). **#75** dashboard `ActivityFeedCard` newest-at-bottom + 3-line clamp + more/less. **#78** shared `TaskRow` inline-expand scroll-anchored (no jump). **#79** icon sweep 📌/⋮⋮/📍/quick-view-tab-emoji → lucide on My Tasks (categorical group glyphs intentionally kept). **#70** already fixed in code (List DoneBox) — closed stale.
+
+**Method:** 10-agent parallel diagnosis workflow → my verification (caught the #76 agent's wrong *mechanism* + a wrong positional link model) → serialized impl → codex review of the full diff → deploy. ⚠️ **Mid-session a background `hub-frontend` icon-sweep agent WIPED all 11 uncommitted edits (whole-tree reset to HEAD).** Recovered by re-applying everything + committing path-explicit immediately. Rule going forward: never dispatch a background file-editing agent with uncommitted edits in the tree (memory: `repo-environment-gotchas`).
+
+**Open follow-ups (non-blocking):** glance at the #74 left rail on a day with an all-day/3h+ block; if any *absolute* timestamp still shows UTC on mobile (#73), the visible relative times were already correct — point at the exact surface.
+
+---
+
 # ▶ M5 — SLICE 1+2 LIVE IN PROD (2026-06-14 PM). Hub at pb-schema 0.6.0; `description` is the wire body, `notes` is brain-only (off the wire). Retirement batch DONE.
 
 **Current state (supersedes the Phase-0 block below):**
