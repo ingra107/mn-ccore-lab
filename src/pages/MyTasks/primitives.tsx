@@ -1,21 +1,24 @@
 // Shared inline primitives for the MyTasks page tree:
-//   Chip      — colored pill (P1, planned, overdue, etc.)
+//   Chip      — re-exported from ui/Chip (P5) with bordered=true default for
+//               the MyTasks border-style variant. Callers use filled+bordered
+//               for tinted pills and bordered-only for outline pills.
 //   LinksBar  — task key_link icon row
 //
 // Extracted from src/pages/portal/UnifiedMyTasks.tsx. Per HANDOFF spec these
 // have no dedicated file — they sit alongside the rest of MyTasks/ because
 // Card / LaneRow / ListRow / InlineDetail / TaskDrawer all import them.
 
-import { INK_DIM, INK_MUTED, withAlpha } from './constants'
+import { INK_DIM, INK_MUTED } from './constants'
+import { Chip as UiChip, type ChipProps } from '../../components/ui/Chip'
 import { classifyUrl } from '../../lib/urlClassify'
 import { useProtocolLaunch } from '../../hooks/useProtocolLaunch'
 import { ICON_PROPS } from '../../lib/iconProps'
 import type { TaskRow } from '../../lib/api'
 
-export function Chip({ children, color = INK_MUTED, filled = false, title }: { children: React.ReactNode; color?: string; filled?: boolean; title?: string }) {
-  return (
-    <span title={title} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 7px', borderRadius: 4, fontSize: 10, fontWeight: 500, letterSpacing: '0.02em', background: filled ? withAlpha(color, 13) : 'transparent', border: `1px solid ${withAlpha(color, 25)}`, color, whiteSpace: 'nowrap' }}>{children}</span>
-  )
+// MyTasks Chip: always bordered (the distinct variant vs today/TaskRow's filled-only).
+// filled defaults to false (border-only outline); callers pass filled for tinted pills.
+export function Chip({ color = INK_MUTED, filled = false, ...rest }: ChipProps) {
+  return <UiChip color={color} filled={filled} bordered={true} {...rest} />
 }
 
 // Bug #79: these were non-interactive emoji <span>s — every key-link on My

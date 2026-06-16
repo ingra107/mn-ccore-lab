@@ -5,6 +5,8 @@
 // API:
 //   color    — CSS color value (token or hex). Default: 'var(--slate)'.
 //   filled   — show tinted background at 12% alpha. Default: true.
+//   bordered — show 1px border at 25% alpha of color. Default: false.
+//             (MyTasks status chips use this variant — border-only or fill+border.)
 //   size     — 'xs' (10px / 1px 5px) | 'sm' (11px / 2px 7px). Default: 'xs'.
 //   pill     — borderRadius full vs sm. Default: false.
 //   title    — native tooltip string.
@@ -20,6 +22,7 @@ export interface ChipProps {
   children: ReactNode
   color?: string
   filled?: boolean
+  bordered?: boolean
   size?: 'xs' | 'sm'
   pill?: boolean
   title?: string
@@ -30,6 +33,7 @@ export function Chip({
   children,
   color = 'var(--slate)',
   filled = true,
+  bordered = false,
   size = 'xs',
   pill = false,
   title,
@@ -50,6 +54,7 @@ export function Chip({
     borderRadius: pill ? 'var(--radius-full)' : 'var(--radius-sm)',
     color,
     background: filled ? withAlpha(color, 12) : 'transparent',
+    border: bordered ? `1px solid ${withAlpha(color, 25)}` : undefined,
     ...sizeStyles,
     // Caller overrides take highest precedence (e.g. maxWidth, overflow, textOverflow).
     ...style,
