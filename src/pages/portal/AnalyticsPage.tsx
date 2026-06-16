@@ -98,7 +98,7 @@ export default function AnalyticsPage() {
 
     const completed = tasks.filter((t) => t.completed_at && t.completed_at >= startStr && t.completed_at < endStr).length
     const created = tasks.filter((t) => t.created_at >= startStr && t.created_at < endStr).length
-    const overdue = tasks.filter((t) => !t.completed && isOverdue(t.due_date)).length
+    const overdue = tasks.filter((t) => !t.completed && isOverdue(t.due_date, t.status)).length
     const activityCount = activity.filter((a) => a.timestamp >= startStr && a.timestamp < endStr).length
 
     const completedPrior = tasks.filter((t) => t.completed_at && t.completed_at >= priorStartStr && t.completed_at < priorEndStr).length
@@ -117,7 +117,7 @@ export default function AnalyticsPage() {
       const entry = map.get(t.assignee) || { total: 0, done: 0, overdue: 0 }
       entry.total++
       if (t.completed) entry.done++
-      if (!t.completed && isOverdue(t.due_date)) entry.overdue++
+      if (!t.completed && isOverdue(t.due_date, t.status)) entry.overdue++
       map.set(t.assignee, entry)
     }
     return [...map.entries()]

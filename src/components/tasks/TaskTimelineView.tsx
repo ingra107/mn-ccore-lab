@@ -148,7 +148,8 @@ export default function TaskTimelineView({ tasks, onStatusChange, onOpenDetail }
               const barStart = Math.max(createdX, LABEL_WIDTH)
               const barEnd = dueX
               const barWidth = Math.max(barEnd - barStart, 8)
-              const isOverdue = isPastDue(task.due_date)
+              // R4: pass status so done tasks are never marked overdue.
+              const isOverdue = isPastDue(task.due_date, task.status)
               const color = statusColors[task.status] || statusColors.todo
               const opacity = priorityOpacity[task.priority] || 0.7
 

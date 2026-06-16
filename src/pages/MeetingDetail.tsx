@@ -48,7 +48,7 @@ import HoverCard from '../components/HoverCard'
 import type { HoverCardData } from '../components/HoverCard'
 import { useHoverCard } from '../hooks/useHoverCard'
 import { getPersonInfo, getMemberBySlug, directors, getAllMembers } from '../data/team'
-import { formatLongDate, formatShortDate } from '../lib/dateUtils'
+import { formatLongDate, formatShortDate, isOverdue as isItemOverdue } from '../lib/dateUtils'
 import { getMeetingFacilitator } from '../lib/facilitator'
 import { PATHS } from '../constants/paths'
 import SmartCompose from '../components/SmartCompose'
@@ -951,7 +951,9 @@ function AttendeeChip({ slug }: { slug: string }) {
 
 function ActionItemRow({ item, onToggle, selected, onToggleSelect }: { item: ActionItemRowType; onToggle?: (id: string) => void; selected?: boolean; onToggleSelect?: (id: string) => void }) {
   const person = getPersonInfo(item.assignee)
-  const isOverdue = item.due_date && !item.completed && new Date(item.due_date) < new Date()
+  // R4: use canonical isOverdue() (T23:59:59) — hand-rolled `new Date(due) < new Date()`
+  // missed T23:59:59 and showed today's items as overdue. Action items have no status field.
+  const isOverdue = item.due_date && !item.completed && isItemOverdue(item.due_date)
   const hoverCard = useHoverCard()
   const memberData = buildMemberHoverData(item.assignee)
 

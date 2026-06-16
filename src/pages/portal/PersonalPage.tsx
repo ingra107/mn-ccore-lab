@@ -186,15 +186,16 @@ type UrgencyGroup = 'overdue' | 'today' | 'this-week' | 'later'
 
 function getUrgencyGroup(task: TaskRow): UrgencyGroup {
   if (!task.due_date) return 'later'
+  // Use canonical isOverdue() (T23:59:59 — so today's tasks are NOT overdue).
+  // Pass status so done tasks are never classified overdue (R4 fix).
+  if (isOverdue(task.due_date, task.status)) return 'overdue'
   const now = new Date()
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-  const due = new Date(task.due_date + 'T00:00:00')
-  const endOfToday = new Date(today.getTime() + 24 * 60 * 60 * 1000 - 1)
+  const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000)
   const endOfWeek = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000)
-
-  if (due < today) return 'overdue'
-  if (due <= endOfToday) return 'today'
-  if (due <= endOfWeek) return 'this-week'
+  const due = new Date(task.due_date + 'T12:00:00')
+  if (due < tomorrow) return 'today'
+  if (due < endOfWeek) return 'this-week'
   return 'later'
 }
 
@@ -608,10 +609,13 @@ export default function PersonalPage() {
     return allTasks.filter((t) => t.assignee === currentUser)
   }, [allTasks, currentUser])
 
-  const pendingTasks = useMemo(() => myTasks.filter((t) => !t.completed), [myTasks])
+  // R4: use isTaskDone() (status-based) — not the raw `completed` flag —
+  // so a task that is status='done' but has completed=false isn't misread as pending.
+  const pendingTasks = useMemo(() => myTasks.filter((t) => !isTaskDone(t)), [myTasks])
 
   const overdueTasks = useMemo(
-    () => pendingTasks.filter((t) => isOverdue(t.due_date)),
+    // R4: pass status so done tasks are never overdue (isOverdue returns false for status='done').
+    () => pendingTasks.filter((t) => isOverdue(t.due_date, t.status)),
     [pendingTasks]
   )
 
@@ -621,7 +625,8 @@ export default function PersonalPage() {
     const now = new Date()
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
     const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1)
-    const overdue = pendingTasks.filter(t => isOverdue(t.due_date))
+    // R4: pass status arg — done tasks should never appear overdue.
+    const overdue = pendingTasks.filter(t => isOverdue(t.due_date, t.status))
       .sort((a, b) => (a.due_date || '').localeCompare(b.due_date || ''))
     const dueToday = pendingTasks.filter(t => t.due_date
       && new Date(t.due_date + 'T12:00:00') >= today

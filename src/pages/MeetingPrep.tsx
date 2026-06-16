@@ -11,7 +11,7 @@ import Breadcrumb from '../components/Breadcrumb'
 import Avatar from '../components/Avatar'
 import { getPersonInfo } from '../data/team'
 import { emailToSlug } from '../lib/emailSlug'
-import { formatLongDate, formatShortDate } from '../lib/dateUtils'
+import { formatLongDate, formatShortDate, isOverdue as isItemOverdue } from '../lib/dateUtils'
 import { PRIORITY_COLORS } from '../lib/taskConstants'
 import { getMeetingFacilitator } from '../lib/facilitator'
 import { PATHS } from '../constants/paths'
@@ -356,7 +356,8 @@ function SectionHeader({ icon, title, subtitle }: { icon: React.ReactNode; title
 
 function ActionRow({ item }: { item: { id: string; description: string; assignee: string; completed: number; due_date: string | null } }) {
   const person = getPersonInfo(item.assignee)
-  const isOverdue = item.due_date && !item.completed && new Date(item.due_date) < new Date()
+  // R4: canonical isOverdue() uses T23:59:59 — hand-rolled missed same-day items.
+  const isOverdue = item.due_date && !item.completed && isItemOverdue(item.due_date)
   return (
     <div className="flex items-center gap-2 py-1.5" style={{ borderBottom: '1px solid rgba(201,168,76,0.04)' }}>
       {item.completed ? (

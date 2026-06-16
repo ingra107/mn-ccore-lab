@@ -32,7 +32,8 @@ export default function StatusLine({ tasks, loading }: StatusLineProps) {
     const weekEnd = new Date(today); weekEnd.setDate(weekEnd.getDate() + 7)
     const todayStr = localDateKey(today)
 
-    const overdue = tasks.filter((t) => !isTaskDone(t) && isOverdue(t.due_date)).length
+    // R4: pass status — canonical pattern; isTaskDone guard is belt-and-suspenders.
+    const overdue = tasks.filter((t) => !isTaskDone(t) && isOverdue(t.due_date, t.status)).length
     const thisWeek = tasks.filter((t) => {
       if (isTaskDone(t) || !t.due_date) return false
       const d = new Date(t.due_date + 'T12:00:00')
