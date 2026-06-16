@@ -54,7 +54,14 @@ export interface TodayEvent {
   // Persisted meeting notes from D1. Populated for real team meetings
   // (id without cal- prefix); undefined for personal iCal events (cal-*).
   notes?: string | null
+  // #74: true for iCal all-day events. All-day + long (≥3h) events render in
+  // the Today timeline's left rail instead of the main flow.
+  isAllDay?: boolean
 }
+
+// #74: events at/over this many minutes (3h) are "long blocks" — they move to
+// the timeline's left rail so they don't squash short meetings via OverlapBand.
+export const LONG_EVENT_MIN = 180
 
 export interface DailyCounts {
   overdue: number
@@ -201,5 +208,6 @@ export function calendarEventToTodayEvent(e: { id: string; title: string; locati
     meetingUrl,
     startMin: e.isAllDay ? undefined : localMinutesFromIso(e.startAt),
     endMin: e.isAllDay ? undefined : localMinutesFromIso(e.endAt),
+    isAllDay: e.isAllDay,
   }
 }

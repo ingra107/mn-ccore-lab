@@ -16,7 +16,7 @@ import { OverlapBand } from './OverlapBand'
 import { useIsMobile } from '../../hooks/useIsMobile'
 import { PlannedTaskRow } from './PlannedTaskRow'
 import {
-  ACCENT_GOLD, ACCENT_TEAL, ACCENT_CORAL, INK_DIM,
+  ACCENT_GOLD, ACCENT_TEAL, ACCENT_CORAL, INK_DIM, LONG_EVENT_MIN,
   type PlannedSlot, type TodayEvent,
 } from './constants'
 import type { TodayStateApi } from '../../hooks/useTodayState'
@@ -138,6 +138,14 @@ export function Timeline({ events, tasks, state, projectsByPid, expandedId, onEx
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [events.map((e) => e.id).join(',')])
   const visibleMeetings = events.filter((e) => !dismissedMeetings[e.id])
+  // #74: all-day + long (≥3h) events leave the main flow for a left rail so
+  // short meetings stay readable (no equal-column OverlapBand squash) and the
+  // between-meeting gaps stay droppable. Duration is derived from startMin/endMin
+  // so it covers both team meetings and iCal events.
+  const isRailEvent = (e: TodayEvent) =>
+    !!e.isAllDay || (typeof e.startMin === 'number' && typeof e.endMin === 'number' && e.endMin - e.startMin >= LONG_EVENT_MIN)
+  const railEvents = visibleMeetings.filter(isRailEvent)
+  const flowMeetings = visibleMeetings.filter((e) => !isRailEvent(e))
   const onDropTask = useCallback((id: string, slot: PlannedSlot) => state.planAt(id, slot), [state])
 
   // TP-09: now-line. Window = min(startMin) of timed events to max(endMin),
@@ -146,7 +154,7 @@ export function Timeline({ events, tasks, state, projectsByPid, expandedId, onEx
   // (Rule 59 — coral = warnings/overlap, gold = user-driven action).
   const now = useNowMinutes()
   const { dayStart, dayEnd, inMeeting } = useMemo(() => {
-    const timed = visibleMeetings
+    const timed = flowMeetings
       .map((e) => ({ start: e.startMin, end: e.endMin }))
       .filter((t): t is { start: number; end: number | undefined } => typeof t.start === 'number')
     let ds = 7 * 60   // 7:00 default
@@ -157,9 +165,9 @@ export function Timeline({ events, tasks, state, projectsByPid, expandedId, onEx
       ds = Math.min(ds, minStart - 30)
       de = Math.max(de, maxEnd + 30)
     }
-    const inMtg = visibleMeetings.some((e) => typeof e.startMin === 'number' && typeof e.endMin === 'number' && e.startMin <= now && now < e.endMin)
+    const inMtg = flowMeetings.some((e) => typeof e.startMin === 'number' && typeof e.endMin === 'number' && e.startMin <= now && now < e.endMin)
     return { dayStart: ds, dayEnd: de, inMeeting: inMtg }
-  }, [visibleMeetings, now])
+  }, [flowMeetings, now])
   const nowColor = inMeeting ? ACCENT_CORAL : ACCENT_GOLD
   // Derive nowLabel from live wall-clock time at render, NOT from the 60s-tick
   // `now` hook (which drives placement). N1.21: locale-formatted so it matches
@@ -171,8 +179,8 @@ export function Timeline({ events, tasks, state, projectsByPid, expandedId, onEx
   // Untimed events (no startMin) never overlap — each forms a singleton.
   const clusters = useMemo(() => {
     const result: TodayEvent[][] = []
-    const timed = visibleMeetings.filter((e) => typeof e.startMin === 'number')
-    const untimed = visibleMeetings.filter((e) => typeof e.startMin !== 'number')
+    const timed = flowMeetings.filter((e) => typeof e.startMin === 'number')
+    const untimed = flowMeetings.filter((e) => typeof e.startMin !== 'number')
     // Untimed events keep insertion order, each as a 1-event cluster.
     for (const e of untimed) result.push([e])
     // Timed events: sort by start, then cluster by overlap.
@@ -193,7 +201,7 @@ export function Timeline({ events, tasks, state, projectsByPid, expandedId, onEx
     }
     if (current.length > 0) result.push(current)
     return result
-  }, [visibleMeetings])
+  }, [flowMeetings])
 
   const plannedStripIds = state.plannedIds().filter((id) => state.planned[id]?.slot === 'strip' && id !== state.rightNow)
   const plannedStripTasks = plannedStripIds.map((id) => tasks.find((t) => t.id === id)).filter((t): t is TaskRow => !!t)
@@ -258,7 +266,25 @@ export function Timeline({ events, tasks, state, projectsByPid, expandedId, onEx
           />
         </div>
       )}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, position: 'relative' }}>
+      <div style={{ display: railEvents.length > 0 && !isPhone ? 'grid' : 'block', gridTemplateColumns: railEvents.length > 0 && !isPhone ? 'minmax(150px, 190px) minmax(0, 1fr)' : undefined, gap: 12, alignItems: 'start' }}>
+        {railEvents.length > 0 && (
+          <aside aria-label="All-day and long blocks" style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: isPhone ? 8 : 0 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: ACCENT_TEAL, padding: '0 2px 2px' }}>All-day · long blocks</div>
+            {railEvents.map((e) => (
+              <EventRow
+                key={e.id}
+                e={e}
+                onDismiss={(id) => setDismissedMeetings((s) => ({ ...s, [id]: true }))}
+                note={meetingNotes[e.id]}
+                onNote={(id, v) => setMeetingNotes((s) => ({ ...s, [id]: v }))}
+                saveStatus={meetingSaveState[e.id] ?? 'idle'}
+                isCalEvent={e.id.startsWith('cal-')}
+                isPhone={isPhone}
+              />
+            ))}
+          </aside>
+        )}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, position: 'relative' }}>
         {clusters.map((cluster, idx) => {
           // Gather planned tasks dropped into the gap BEFORE this cluster.
           const slotKey = `between-${idx}` as PlannedSlot
@@ -333,6 +359,7 @@ export function Timeline({ events, tasks, state, projectsByPid, expandedId, onEx
             </div>
           )
         })()}
+        </div>
       </div>
       <div
         style={{ marginTop: 16, padding: '12px 14px', background: 'rgba(255,255,255,0.02)', border: '1px dashed rgba(255,255,255,0.10)', borderRadius: 8 }}
