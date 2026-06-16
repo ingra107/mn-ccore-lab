@@ -26,7 +26,7 @@ import { useDragAutoScroll } from '../../hooks/useDragAutoScroll'
 import {
   GROUP_ORDER,
   ACCENT_GOLD, ACCENT_GREEN,
-  INK, INK_MUTED, INK_DIM, PAGE_BG, PANEL_BG,
+  INK, INK_MUTED, INK_DIM, PAGE_BG,
   todayKey, daysSince, formatTodayDate,
   meetingToEvent, calendarEventToTodayEvent, isToday, hoursSinceLastSync,
   getGroupForTask, isTaskDone,
@@ -388,7 +388,7 @@ export default function TodayPage() {
 
         <PillStrip counts={counts} />
 
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '10px 14px', background: PANEL_BG, border: '1px solid rgba(255,255,255,0.08)', borderRadius: 6, marginBottom: 20 }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 20 }}>
           <span style={{ fontSize: 14, marginTop: 2 }}>🧠</span>
           <div style={{ flex: 1, minWidth: 0 }}>
             <MorningThoughtCompose />
