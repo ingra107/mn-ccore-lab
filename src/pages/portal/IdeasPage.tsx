@@ -10,6 +10,7 @@ import CreateProjectModal from '../../components/CreateProjectModal'
 import { useUndoToast } from '../../components/UndoToast'
 import { ColumnHeader, TableContainer } from '../../components/table'
 import SegmentedToggle from '../../components/ui/SegmentedToggle'
+import { Button } from '../../components/ui/Button'
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 import { useIdeas } from '../../hooks/useApiData'
 import { useCreateIdea, useVoteIdea, useUpdateIdea, useCreateProject } from '../../hooks/useMutations'
@@ -201,20 +202,10 @@ export default function IdeasPage() {
         subtitle={`${activeCount} active ideas`}
         count={activeCount}
         actions={
-          <button
-            onClick={() => setShowCreate(true)}
-            className="flex items-center gap-2 rounded-lg text-sm font-medium transition-colors"
-            style={{
-              backgroundColor: 'var(--teal-solid)',
-              color: 'var(--ink-bright)',
-              border: 'none',
-              cursor: 'pointer',
-              padding: 'var(--sp-sm) var(--sp-lg)',
-            }}
-          >
+          <Button variant="primary" onClick={() => setShowCreate(true)}>
             <Plus {...ICON_PROPS} size={16} />
             New Idea
-          </button>
+          </Button>
         }
       >
         {/* Controls - hidden when empty per M-04 */}
@@ -998,20 +989,12 @@ function IdeaRowView({
                 </select>
               </div>
               <div style={{ display: 'flex', gap: 'var(--sp-sm)' }}>
-                <button
-                  type="submit"
-                  disabled={!editTitle.trim()}
-                  style={{ padding: '6px 14px', background: 'var(--teal-solid)', color: 'var(--ink-bright)', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontSize: 'var(--text-small)', fontWeight: 500 }}
-                >
+                <Button type="submit" variant="primary" size="sm" disabled={!editTitle.trim()}>
                   Save
-                </button>
-                <button
-                  type="button"
-                  onClick={onEditCancel}
-                  style={{ padding: '6px 14px', background: 'none', color: 'var(--slate)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontSize: 'var(--text-small)' }}
-                >
+                </Button>
+                <Button type="button" variant="secondary" size="sm" onClick={onEditCancel}>
                   Cancel
-                </button>
+                </Button>
               </div>
             </form>
           ) : (
