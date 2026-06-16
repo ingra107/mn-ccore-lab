@@ -9,7 +9,7 @@
 // sidebar, not a tab, not a top-right toggle). Order List | Lanes | Columns;
 // bare arrival defaults to List (Nick 2026-06-10); URL ?view= deep-links win.
 
-import { useState, useMemo, useCallback, useEffect } from 'react'
+import { useState, useMemo, useCallback, useEffect, lazy, Suspense } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useTasks, useProjects } from '../../hooks/useApiData'
 import { useAuth } from '../../hooks/useAuth'
@@ -26,6 +26,7 @@ import { BulkBar } from './components/BulkBar'
 import { ColumnsView } from './views/ColumnsView'
 import { LanesView } from './views/LanesView'
 import { ListView } from './views/ListView'
+const TaskBoardView = lazy(() => import('../../components/tasks/TaskBoardView'))
 import { useTaskFilter } from './hooks/useTaskFilter'
 import { useSelection } from './hooks/useSelection'
 import { useOpenParam } from '../../hooks/useOpenParam'
@@ -55,7 +56,7 @@ export default function UnifiedMyTasks() {
 
   const initialView: ViewMode = (() => {
     const fromUrl = searchParams.get('view') as ViewMode | null
-    if (fromUrl === 'columns' || fromUrl === 'lanes' || fromUrl === 'list') return fromUrl
+    if (fromUrl === 'columns' || fromUrl === 'lanes' || fromUrl === 'list' || fromUrl === 'board') return fromUrl
     return 'list'
   })()
   const [view, setView] = useState<ViewMode>(initialView)
@@ -65,7 +66,8 @@ export default function UnifiedMyTasks() {
   // with a one-line notice; the picker state is preserved so rotating a
   // tablet or widening the window restores Columns.
   const isPhone = useIsMobile(768)
-  const effectiveView: ViewMode = isPhone && view === 'columns' ? 'list' : view
+  // Both Columns and Board are desktop-only wide layouts; collapse to List on phone.
+  const effectiveView: ViewMode = isPhone && (view === 'columns' || view === 'board') ? 'list' : view
 
   const [search, setSearch] = useState(searchParams.get('q') ?? '')
   const [filter, setFilter] = useState<FilterState>({
@@ -278,6 +280,13 @@ export default function UnifiedMyTasks() {
     })
   }, [selected, bulkUpdate, clearSelection, undoToast])
 
+  // Board-view status drag handler — called by TaskBoardView on drop.
+  const onBoardStatusChange = useCallback((id: string, status: string) => {
+    updateTask.mutate({ id, fields: { status } }, {
+      onSuccess: () => undoToast.showSuccess(`Moved → ${status}`),
+    })
+  }, [updateTask, undoToast])
+
   // Assignee options for bulk Reassign picker — directors + research team + faculty.
   // Uses the same researchTeam used for the Mentee filter.
   const assigneeOptions = useMemo(() => {
@@ -330,11 +339,15 @@ export default function UnifiedMyTasks() {
             <ColumnsView filtered={filtered} byGroup={byGroup} selected={selected} toggleSelect={toggleSelect} selectRange={selectRange} anchorId={anchorId} onToggleComplete={onToggleComplete} onOpenEditor={setDrawer} expanded={expanded} setExpanded={setExpanded} projectsByPid={projectsByPid} plannedSet={plannedSet} filterGroup={filter.group} />
           ) : effectiveView === 'lanes' ? (
             <LanesView byGroup={byGroup} selected={selected} toggleSelect={toggleSelect} selectRange={selectRange} anchorId={anchorId} onToggleComplete={onToggleComplete} onOpenEditor={setDrawer} expanded={expanded} setExpanded={setExpanded} projectsByPid={projectsByPid} plannedSet={plannedSet} filterGroup={filter.group} />
+          ) : effectiveView === 'board' ? (
+            <Suspense fallback={<div className="mt-band" style={{ paddingTop: 24 }}><TableSkeleton /></div>}>
+              <TaskBoardView tasks={filtered} onStatusChange={onBoardStatusChange} onSelect={(t) => setDrawer(t.id)} />
+            </Suspense>
           ) : (
             <>
-              {view === 'columns' && (
+              {(view === 'columns' || view === 'board') && (
                 <div className="mt-band" style={{ paddingTop: 8 }}>
-                  <span style={{ fontSize: 11, color: 'var(--muted)', opacity: 0.85 }}>Columns is a desktop view — showing List on this screen.</span>
+                  <span style={{ fontSize: 11, color: 'var(--muted)', opacity: 0.85 }}>{view === 'board' ? 'Board' : 'Columns'} is a desktop view — showing List on this screen.</span>
                 </div>
               )}
               <ListView filtered={filtered} selected={selected} toggleSelect={toggleSelect} selectRange={selectRange} anchorId={anchorId} setSelected={setSelected} setDrawer={setDrawer} projectsByPid={projectsByPid} projectOptions={projectOptions} plannedSet={plannedSet} />

@@ -12,6 +12,7 @@ export function ViewPicker({ view, setView }: { view: ViewMode; setView: (v: Vie
     { k: 'list',    l: 'List',    icon: '≡', desc: 'Dense table · keyboard-first' },
     { k: 'lanes',   l: 'Lanes',   icon: '☰', desc: 'Stacked lanes · collapse and peek' },
     { k: 'columns', l: 'Columns', icon: '⊞', desc: 'Kanban board · all groups side-by-side' },
+    { k: 'board',   l: 'Board',   icon: '▦', desc: 'Status board · drag to change status' },
   ]
   return (
     // P2-6: pill height is content-driven (minHeight, not fixed) so the touch

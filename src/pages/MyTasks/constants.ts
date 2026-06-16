@@ -23,7 +23,7 @@ import { dueLabelText, isOverdue } from '../../lib/dateUtils'
 // Types
 // ──────────────────────────────────────────────────────────────────────────
 
-export type ViewMode = 'columns' | 'lanes' | 'list'
+export type ViewMode = 'columns' | 'lanes' | 'list' | 'board'
 export type QuickViewKey = 'all' | 'new' | 'today' | 'overdue' | 'waiting' | 'stale'
 
 export interface GroupMeta { icon: string; label: string; color: string; desc: string }
