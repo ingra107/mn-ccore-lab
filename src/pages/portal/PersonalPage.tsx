@@ -20,7 +20,8 @@ import { useAuth } from '../../hooks/useAuth'
 import { emailToSlug } from '../../lib/emailSlug'
 import { useUserRole } from '../../hooks/useUserRole'
 import { getPersonInfo } from '../../data/team'
-import { formatShortDate, formatRelativeTime, isOverdue } from '../../lib/dateUtils'
+import { formatRelativeTime, isOverdue } from '../../lib/dateUtils'
+import DueLabel from '../../components/DueLabel'
 import { parseDbUtc } from '../../lib/time'
 import { isProductionVisible, isProductionVisibleActivity } from '../../lib/isProductionVisible'
 import TaskTitle from '../../components/tasks/TaskTitle'
@@ -449,17 +450,11 @@ function UpcomingCard({ deadlines, overdue }: { deadlines: TaskRow[]; overdue: T
                 >
                   <TaskTitle title={item.title as string | null} fallback={item.description} showChip={false} />
                 </span>
-                <span
-                  style={{
-                    fontSize: 10,
-                    color: isOverdue ? 'var(--maroon)' : 'var(--slate)',
-                    fontWeight: isOverdue ? 600 : 400,
-                    opacity: isOverdue ? 1 : 0.85,
-                    flexShrink: 0,
-                  }}
-                >
-                  {item.due_date ? formatShortDate(item.due_date) : ''}
-                </span>
+                <DueLabel
+                  due={item.due_date}
+                  status={(item as any).status}
+                  style={{ fontSize: 10, flexShrink: 0 }}
+                />
               </div>
             )
           })}

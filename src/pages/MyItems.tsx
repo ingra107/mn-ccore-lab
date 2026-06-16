@@ -39,6 +39,7 @@ import { formatRelativeTime, formatShortDate, isOverdue } from '../lib/dateUtils
 import { parseCarriedForward } from '../lib/textUtils'
 import { PATHS } from '../constants/paths'
 import { ICON_PROPS } from '../lib/iconProps'
+import DueLabel from '../components/DueLabel'
 
 // ── Helpers ─────────────────────────────────────────────────
 
@@ -337,16 +338,7 @@ function ActionItemCard({
             {item.due_date && (
               <>
                 <span style={{ color: 'var(--slate)', opacity: 0.75 }}>&middot;</span>
-                <span
-                  style={{
-                    fontSize: 'var(--label-size)',
-                    color: overdue ? 'var(--maroon)' : 'var(--slate)',
-                    opacity: overdue ? 1 : 0.85,
-                    fontWeight: overdue ? 600 : 400,
-                  }}
-                >
-                  {overdue ? 'overdue' : 'due'} {formatShortDate(item.due_date)}
-                </span>
+                <DueLabel due={item.due_date} style={{ fontSize: 'var(--label-size)' }} />
               </>
             )}
 
@@ -587,16 +579,7 @@ function CommitmentCard({ item }: { item: CommitmentRow }) {
             {item.due_date && (
               <>
                 <span style={{ color: 'var(--slate)', opacity: 0.75 }}>&middot;</span>
-                <span
-                  style={{
-                    fontSize: 'var(--label-size)',
-                    color: overdue ? 'var(--maroon)' : 'var(--slate)',
-                    opacity: overdue ? 1 : 0.85,
-                    fontWeight: overdue ? 600 : 400,
-                  }}
-                >
-                  {overdue ? 'overdue' : 'due'} {formatShortDate(item.due_date)}
-                </span>
+                <DueLabel due={item.due_date} style={{ fontSize: 'var(--label-size)' }} />
               </>
             )}
 

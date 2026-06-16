@@ -31,6 +31,7 @@ import { localDateKey } from '../../lib/dateUtils'
 import { parseDbUtc } from '../../lib/time'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { isTaskDone } from '../../lib/taskGrouping'
+import EmptyState from '../EmptyState'
 
 // ── Column definitions for resize + tab nav ─────────────────
 // Full column set: checkbox + DATA_COLUMNS + actions
@@ -552,11 +553,7 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
             })}
           </div>
         ) : (
-          <div style={{ padding: '48px 16px', textAlign: 'center' }}>
-            <p style={{ fontSize: 'var(--value-size)', color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
-              No tasks match the current filters
-            </p>
-          </div>
+          <EmptyState compact icon={<Square size={24} />} title="No tasks match the current filters" />
         )}
       </div>
 

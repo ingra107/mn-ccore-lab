@@ -378,9 +378,7 @@ function WorkloadHeatmap({ rows }: { rows: DashboardData['workloadHeatmap'] }) {
     <div style={{ padding: 'var(--sp-lg)', borderRadius: 'var(--radius-xl)', background: 'var(--surface-1)', border: '1px solid var(--border-subtle)' }}>
       <SectionHeader icon={<Activity {...ICON_PROPS} size={14} />} label="Workload heatmap" count={sorted.length} />
       {sorted.length === 0 ? (
-        <p style={{ fontSize: 12, color: 'var(--slate)', opacity: 0.85, margin: 0 }}>
-          No tasks scheduled for the current week.
-        </p>
+        <EmptyState compact icon={<EmptyStateArt variant="tasks" title="No tasks" />} title="No tasks scheduled for the current week" />
       ) : (
         <>
           <div role="grid" aria-label="Tasks due this week per member per weekday" style={{ display: 'grid', gridTemplateColumns: '120px repeat(5, 1fr)', gap: 4, alignItems: 'center' }}>

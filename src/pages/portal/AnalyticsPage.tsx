@@ -10,13 +10,15 @@ import QueryState from '../../components/QueryState'
 import ActivityHeatmap from '../../components/ActivityHeatmap'
 import { staggerContainer, staggerItem } from '../../lib/animations'
 import { useTasks, useProjects, useIdeas, useActivity, useProjectHealth } from '../../hooks/useApiData'
-import { formatShortDate, localDateKey, isOverdue } from '../../lib/dateUtils'
+import { localDateKey, isOverdue } from '../../lib/dateUtils'
 import { parseDbUtc } from '../../lib/time'
 import { useAuth } from '../../hooks/useAuth'
 import { getPersonInfo } from '../../data/team'
 import Avatar from '../../components/Avatar'
 import { PRIORITY_COLORS, isProjectActive } from '../../lib/taskConstants'
 import { ICON_PROPS } from '../../lib/iconProps'
+import { isTaskDone } from '../../lib/taskGrouping'
+import DueLabel from '../../components/DueLabel'
 
 // D1 lowercase stage value → display label.
 const STAGE_DISPLAY: Record<string, string> = {
@@ -450,11 +452,11 @@ export default function AnalyticsPage() {
             </span>
           </div>
           <div className="flex flex-col gap-1">
-            {tasks.filter(t => !t.completed && t.due_date && new Date(t.due_date + 'T23:59:59') < new Date()).slice(0, 5).map(t => (
+            {tasks.filter(t => !isTaskDone(t) && t.due_date && isOverdue(t.due_date, t.status)).slice(0, 5).map(t => (
               <div key={t.id} className="flex items-center gap-2 text-xs" style={{ color: 'var(--ink)' }}>
                 <Circle {...ICON_PROPS} size={10} style={{ color: 'var(--maroon)', flexShrink: 0 }} />
-                <span className="truncate">{t.title}</span>
-                {t.due_date && <span style={{ color: 'var(--maroon)', fontSize: '10px', flexShrink: 0 }}>Due {formatShortDate(t.due_date)}</span>}
+                <span className="truncate">{t.short_title || t.title}</span>
+                {t.due_date && <DueLabel due={t.due_date} status={t.status} style={{ fontSize: '10px', flexShrink: 0 }} />}
               </div>
             ))}
           </div>

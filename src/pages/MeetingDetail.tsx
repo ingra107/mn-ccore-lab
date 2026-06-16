@@ -48,13 +48,14 @@ import HoverCard from '../components/HoverCard'
 import type { HoverCardData } from '../components/HoverCard'
 import { useHoverCard } from '../hooks/useHoverCard'
 import { getPersonInfo, getMemberBySlug, directors, getAllMembers } from '../data/team'
-import { formatLongDate, formatShortDate, isOverdue as isItemOverdue } from '../lib/dateUtils'
+import { formatLongDate, isOverdue as isItemOverdue } from '../lib/dateUtils'
 import { getMeetingFacilitator } from '../lib/facilitator'
 import { PATHS } from '../constants/paths'
 import SmartCompose from '../components/SmartCompose'
 import HeartbeatLine from '../components/HeartbeatLine'
 import EntityNotFound from '../components/EntityNotFound'
 import { ICON_PROPS } from '../lib/iconProps'
+import DueLabel from '../components/DueLabel'
 
 function buildMemberHoverData(slug: string): HoverCardData {
   const p = getPersonInfo(slug)
@@ -1029,9 +1030,7 @@ function ActionItemRow({ item, onToggle, selected, onToggleSelect }: { item: Act
             />
           </div>
           {item.due_date && (
-            <span style={{ fontSize: '10px', color: isOverdue ? 'var(--maroon)' : 'var(--slate)', opacity: isOverdue ? 1 : 0.85, fontWeight: isOverdue ? 600 : 400 }}>
-              {isOverdue ? 'Overdue: ' : 'Due '}{formatShortDate(item.due_date)}
-            </span>
+            <DueLabel due={item.due_date} style={{ fontSize: '10px' }} />
           )}
           {item.project_id && (
             <Link to={PATHS.project(item.project_id)} onClick={(e) => e.stopPropagation()} style={{ fontSize: '10px', color: 'var(--gold)', textDecoration: 'none' }}>

@@ -4,7 +4,8 @@ import Avatar from '../Avatar'
 import { useUndoToast } from '../UndoToast'
 import { getPersonInfo } from '../../data/team'
 import { formatShortDate, isOverdue as isPastDue } from '../../lib/dateUtils'
-import { isTaskDone } from '../../lib/taskGrouping'
+import DueLabel from '../DueLabel'
+import EmptyState from '../EmptyState'
 import { useProjects } from '../../hooks/useApiData'
 import type { TaskRow } from '../../lib/api'
 import TaskTitle from './TaskTitle'
@@ -234,12 +235,7 @@ export default function TaskStandUpView({ tasks, onStatusChange, onOpenDetail }:
       })}
 
       {grouped.length === 0 && (
-        <div
-          className="text-center py-12 text-sm"
-          style={{ color: 'var(--slate)', opacity: 0.75 }}
-        >
-          No tasks match the current filters
-        </div>
+        <EmptyState compact icon={<CheckCircle2 size={24} />} title="No tasks match the current filters" />
       )}
     </div>
   )
@@ -286,7 +282,6 @@ function TaskSection({
       </div>
       <div className="flex flex-col gap-1 pl-4">
         {tasks.map((task) => {
-          const isOverdue = !isTaskDone(task) && isPastDue(task.due_date, task.status)
           const projectName = task.project_id ? projectMap.get(task.project_id) : undefined
           return (
             <div
@@ -316,16 +311,11 @@ function TaskSection({
                 )}
               </div>
               {task.due_date && (
-                <span
+                <DueLabel
+                  due={task.due_date}
+                  status={task.status}
                   className="text-[10px] flex-shrink-0"
-                  style={{
-                    color: isOverdue ? 'var(--maroon)' : 'var(--slate)',
-                    fontWeight: isOverdue ? 600 : 400,
-                    opacity: isOverdue ? 1 : 0.85,
-                  }}
-                >
-                  {isOverdue ? 'Overdue' : formatShortDate(task.due_date)}
-                </span>
+                />
               )}
             </div>
           )

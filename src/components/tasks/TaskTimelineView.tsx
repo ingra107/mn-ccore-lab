@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState, useCallback } from 'react'
 import { getPersonInfo } from '../../data/team'
 import { formatShortDate, localDateKey, isOverdue as isPastDue } from '../../lib/dateUtils'
+import EmptyState from '../EmptyState'
 import { useProjects } from '../../hooks/useApiData'
 import type { TaskRow } from '../../lib/api'
 
@@ -105,12 +106,11 @@ export default function TaskTimelineView({ tasks, onStatusChange, onOpenDetail }
 
   if (datedTasks.length === 0 && undatedTasks.length === 0) {
     return (
-      <div
-        className="text-center py-12 text-sm"
-        style={{ color: 'var(--slate)', opacity: 0.75 }}
-      >
-        No tasks match the current filters
-      </div>
+      <EmptyState
+        compact
+        icon={<div style={{ fontSize: 24, lineHeight: 1 }}>📅</div>}
+        title="No tasks match the current filters"
+      />
     )
   }
 
