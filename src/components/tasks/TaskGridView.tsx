@@ -30,6 +30,7 @@ import { motion } from 'framer-motion'
 import { localDateKey } from '../../lib/dateUtils'
 import { parseDbUtc } from '../../lib/time'
 import { ICON_PROPS } from '../../lib/iconProps'
+import { isTaskDone } from '../../lib/taskGrouping'
 
 // ── Column definitions for resize + tab nav ─────────────────
 // Full column set: checkbox + DATA_COLUMNS + actions
@@ -1192,7 +1193,7 @@ function TaskGridRow({
                       }}
                       className="task-title-clickable"
                     >
-                      <TaskTitle title={task.title} fallback={task.description} />
+                      <TaskTitle title={task.short_title || task.title} fallback={task.description} />
                     </span>
                   )}
                   {task.source && task.source !== 'manual' && (
@@ -1975,10 +1976,10 @@ function CalculationsRow({ tasks }: { tasks: TaskRow[] }) {
     const today = localDateKey()
     let overdue = 0, todo = 0, inProgress = 0, done = 0
     for (const t of tasks) {
-      if (t.completed) done++
+      if (isTaskDone(t)) done++
       else if (t.status === 'todo') todo++
       else if (t.status === 'in_progress') inProgress++
-      if (!t.completed && t.due_date && t.due_date < today) overdue++
+      if (!isTaskDone(t) && t.due_date && t.due_date < today) overdue++
     }
     const pct = tasks.length > 0 ? Math.round((done / tasks.length) * 100) : 0
     return [

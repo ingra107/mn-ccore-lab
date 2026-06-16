@@ -239,7 +239,7 @@ export default function CommandPalette() {
     items.push({
       id: 'filter-completed',
       label: 'Completed Tasks',
-      sublabel: `${tasks.filter(t => t.completed).length} tasks done`,
+      sublabel: `${tasks.filter(t => isTaskDone(t)).length} tasks done`,
       icon: CheckCircle2,
       action: () => { navigate(`${PATHS.myTasks}?status=done`); setOpen(false) },
       category: 'filter',
@@ -255,7 +255,7 @@ export default function CommandPalette() {
     items.push({
       id: 'filter-high-priority',
       label: 'High Priority',
-      sublabel: `${tasks.filter(t => !t.completed && (t.priority === 'high' || t.priority === 'urgent')).length} high/urgent tasks`,
+      sublabel: `${tasks.filter(t => !isTaskDone(t) && (t.priority === 'high' || t.priority === 'urgent')).length} high/urgent tasks`,
       icon: Flag,
       action: () => { navigate(`${PATHS.myTasks}?priority=high`); setOpen(false) },
       category: 'filter',
@@ -283,7 +283,7 @@ export default function CommandPalette() {
       items.push({
         id: 'ctx-tasks-filter-mine',
         label: 'Show My Tasks Only',
-        sublabel: `${tasks.filter(t => !t.completed && t.assignee === currentUserSlug).length} tasks assigned to you`,
+        sublabel: `${tasks.filter(t => !isTaskDone(t) && t.assignee === currentUserSlug).length} tasks assigned to you`,
         icon: User,
         action: () => { navigate(`${PATHS.myTasks}?assignee=${currentUserSlug}`); setOpen(false) },
         category: 'context',
@@ -346,7 +346,7 @@ export default function CommandPalette() {
     // only when ≠ current user.
     const projectById: Record<string, string> = {}
     for (const p of projects) projectById[p.slug] = p.title
-    for (const task of tasks.filter((t) => !t.completed)) {
+    for (const task of tasks.filter((t) => !isTaskDone(t))) {
       const pid = (task as any).project_id || (task as any).project_slug
       const projectName = (pid && projectById[pid]) || ''
       const due = task.due_date ? new Date(task.due_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''
@@ -415,7 +415,7 @@ export default function CommandPalette() {
     // Compute task counts per project
     const taskCounts: Record<string, number> = {}
     const nextActions: Record<string, string> = {}
-    for (const task of tasks.filter(t => !t.completed)) {
+    for (const task of tasks.filter(t => !isTaskDone(t))) {
       const pid = (task as any).project_id || (task as any).project_slug
       if (pid) {
         taskCounts[pid] = (taskCounts[pid] || 0) + 1
@@ -658,7 +658,7 @@ export default function CommandPalette() {
           <span style={{ opacity: 'var(--ink-label)' }}>esc close</span>
           {!isProjectMode && <span style={{ opacity: 'var(--ink-label)' }}>/ projects</span>}
           <span style={{ opacity: 'var(--ink-hint)' }}>
-            {tasks.filter(t => !t.completed).length} tasks · {projects.length} projects · {team.length} people · {meetings.length} meetings
+            {tasks.filter(t => !isTaskDone(t)).length} tasks · {projects.length} projects · {team.length} people · {meetings.length} meetings
           </span>
           {query.length >= 2 && (
             <button

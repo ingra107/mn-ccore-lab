@@ -3,6 +3,7 @@ import { TrendingUp } from 'lucide-react'
 import { useTasks } from '../../hooks/useApiData'
 import BentoCard from './BentoCard'
 import { ICON_PROPS } from '../../lib/iconProps'
+import { isTaskDone } from '../../lib/taskGrouping'
 
 const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
@@ -111,7 +112,7 @@ export default function WeeklyProgressCard() {
       const d = new Date(today.getTime() - i * 86400000)
       const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
       const count = tasks.filter(t =>
-        t.completed && t.completed_at &&
+        isTaskDone(t) && t.completed_at &&
         t.completed_at.startsWith(dateStr)
       ).length
       days.push({ label: DAY_LABELS[d.getDay()], count, isToday: i === 0 })

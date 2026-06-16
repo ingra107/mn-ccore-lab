@@ -8,6 +8,7 @@ import { ICON_PROPS } from '../../lib/iconProps'
 interface QuickWinTask {
   id: string
   title: string
+  short_title?: string | null
   description?: string
   project_title?: string
   project_slug?: string
@@ -65,7 +66,7 @@ function SortableQuickWin({ task, onComplete, onClickTitle }: {
             fontSize: 'var(--value-size)', color: 'var(--ink)',
           }}
         >
-          {task.title || task.description}
+          {task.short_title || task.title || task.description}
         </button>
 
         {task.project_title && (

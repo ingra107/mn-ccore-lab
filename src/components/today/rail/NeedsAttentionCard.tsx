@@ -31,7 +31,7 @@ export function NeedsAttentionCard({ overdueTasks, stalledProjects }: { overdueT
           return (
             <div key={t.id} style={{ fontSize: 12, color: INK, padding: '3px 0', display: 'flex', gap: 8 }}>
               <span style={{ color: ACCENT_CORAL, fontVariantNumeric: 'tabular-nums', fontWeight: 500, minWidth: 36, fontSize: 11 }}>{Number.isFinite(days) ? `${days}d` : '—'}</span>
-              <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.title}</span>
+              <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.short_title || t.title}</span>
             </div>
           )
         })}

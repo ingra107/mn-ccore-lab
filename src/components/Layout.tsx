@@ -9,6 +9,7 @@ import { useTasks, useMeetingsApi } from '../hooks/useApiData'
 import { formatShortDate, localDateKey } from '../lib/dateUtils'
 import PageTransition from './PageTransition'
 import { ICON_PROPS } from '../lib/iconProps'
+import { isTaskDone } from '../lib/taskGrouping'
 
 const navLinks: { to: string; label: string }[] = [
   { to: '/', label: 'Home' },
@@ -60,7 +61,7 @@ export default function Layout() {
 
   // Task badge count (pending only, already deduped by useTasks hook)
   const { data: tasks = [] } = useTasks(undefined, { enabled: isAuthenticated })
-  const pendingCount = useMemo(() => tasks.filter((t) => !t.completed).length, [tasks])
+  const pendingCount = useMemo(() => tasks.filter((t) => !isTaskDone(t)).length, [tasks])
 
   // Next upcoming meeting
   const { data: meetings = [] } = useMeetingsApi({ enabled: isAuthenticated })

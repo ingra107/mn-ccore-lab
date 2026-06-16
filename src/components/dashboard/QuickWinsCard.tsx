@@ -6,6 +6,7 @@ import { emailToSlug } from '../../lib/emailSlug'
 import BentoCard from './BentoCard'
 import DueLabel from '../DueLabel'
 import { ICON_PROPS } from '../../lib/iconProps'
+import { isTaskDone } from '../../lib/taskGrouping'
 
 /**
  * "Quick Wins" — tasks that are close to done or low-effort.
@@ -19,8 +20,8 @@ export default function QuickWinsCard() {
   const quickWins = useMemo(() => {
     const now = new Date()
     const active = slug
-      ? tasks.filter(t => !t.completed && t.assignee === slug)
-      : tasks.filter(t => !t.completed)
+      ? tasks.filter(t => !isTaskDone(t) && t.assignee === slug)
+      : tasks.filter(t => !isTaskDone(t))
 
     return active
       .map(t => {

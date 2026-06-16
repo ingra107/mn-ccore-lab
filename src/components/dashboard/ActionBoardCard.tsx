@@ -11,6 +11,7 @@ import { getPersonInfo } from '../../data/team'
 import DueLabel from '../DueLabel'
 import { PATHS } from '../../constants/paths'
 import { ICON_PROPS } from '../../lib/iconProps'
+import { isTaskDone } from '../../lib/taskGrouping'
 
 const statusIcon: Record<string, { icon: typeof Circle; color: string }> = {
   todo: { icon: Circle, color: 'var(--slate)' },
@@ -23,8 +24,8 @@ function ActionBoardCard() {
   const updateStatus = useUpdateTaskStatus()
   const { showUndo } = useUndoToast()
 
-  const pending = items.filter((i) => !i.completed)
-  const completed = items.filter((i) => i.completed)
+  const pending = items.filter((i) => !isTaskDone(i))
+  const completed = items.filter((i) => isTaskDone(i))
 
   // Group pending by assignee
   const byAssignee = new Map<string, typeof pending>()

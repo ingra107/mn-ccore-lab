@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Search, X } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ICON_PROPS } from '../../lib/iconProps'
+import { isTaskDone } from '../../lib/taskGrouping'
 
 interface TaskSearchDropdownProps {
   tasks: any[]
@@ -25,7 +26,7 @@ export default function TaskSearchDropdown({ tasks, excludeIds, isOpen, onClose,
 
   // Filter: not completed, not already in plan, matches query
   const filtered = tasks.filter(t => {
-    if (t.completed) return false
+    if (isTaskDone(t)) return false
     if (excludeIds.has(t.id)) return false
     if (!query) return true
     const q = query.toLowerCase()
