@@ -165,9 +165,12 @@ export function Timeline({ events, tasks, state, projectsByPid, expandedId, onEx
       ds = Math.min(ds, minStart - 30)
       de = Math.max(de, maxEnd + 30)
     }
-    const inMtg = flowMeetings.some((e) => typeof e.startMin === 'number' && typeof e.endMin === 'number' && e.startMin <= now && now < e.endMin)
+    // #74/codex: current-meeting state must consider ALL events (incl. railed
+    // long/all-day blocks) — a ≥3h block happening now should still flip the
+    // now-line to coral, even though it's laid out in the rail.
+    const inMtg = visibleMeetings.some((e) => typeof e.startMin === 'number' && typeof e.endMin === 'number' && e.startMin <= now && now < e.endMin)
     return { dayStart: ds, dayEnd: de, inMeeting: inMtg }
-  }, [flowMeetings, now])
+  }, [flowMeetings, visibleMeetings, now])
   const nowColor = inMeeting ? ACCENT_CORAL : ACCENT_GOLD
   // Derive nowLabel from live wall-clock time at render, NOT from the 60s-tick
   // `now` hook (which drives placement). N1.21: locale-formatted so it matches
@@ -334,7 +337,10 @@ export function Timeline({ events, tasks, state, projectsByPid, expandedId, onEx
             </div>
           )
         })}
-        {clusters.length > 0 && (() => {
+        {(clusters.length > 0 || railEvents.length > 0) && (() => {
+          // Always render the trailing gap when any event exists — on a rail-only
+          // day (no flow clusters) this is the ONLY drop zone, and it keeps
+          // between-slot planned tasks visible instead of orphaning them (codex #74).
           const slotKey = `between-${clusters.length}` as PlannedSlot
           const tasksInGap = state.plannedIds()
             .filter((id) => state.planned[id]?.slot === slotKey)
@@ -343,7 +349,7 @@ export function Timeline({ events, tasks, state, projectsByPid, expandedId, onEx
           return (
             <div>
               {nowIdx === clusters.length && nowDivider}
-              <DropZone slot={slotKey} label="drop a task here · after last meeting" onDropTask={onDropTask} />
+              <DropZone slot={slotKey} label={clusters.length === 0 ? 'drop a task here to plan it for today' : 'drop a task here · after last meeting'} onDropTask={onDropTask} />
               {tasksInGap.map((t) => (
                 <PlannedTaskRow
                   key={t.id}
