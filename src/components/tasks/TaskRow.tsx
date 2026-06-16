@@ -383,9 +383,12 @@ export function TaskRow(props: SharedTaskRowProps) {
         // P1-12: overdue rows carry a coral left edge so "what's slipping" reads
         // in one sweep. Selection's teal inset wins when both apply.
         borderBottom: `1px solid ${withAlpha(INK, isDone ? 4 : 6)}`,
+        // In select mode (selectionActive || isSelected) suppress the
+        // isExpanded bg so teal selection is the SOLE visual emphasis.
+        // Outside select mode isExpanded keeps its subtle ink bg.
         background: isSelected ? withAlpha(ACCENT_TEAL, 22)
           : isRightNow ? withAlpha(ACCENT_GOLD, 6)
-          : isExpanded ? withAlpha(INK, 3)
+          : isExpanded && !selectionActive ? withAlpha(INK, 3)
           : 'transparent',
         // P1-7: NO whole-row opacity — that compounded with the muted title and
         // dropped meta/due below the 0.85 floor (Rule 43). Doneness now reads
