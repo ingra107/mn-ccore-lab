@@ -1,3 +1,18 @@
+# ▶▶ NEXT SESSION — FINISH THE SESSION-HANDOFF REDESIGN (shell-gated). 2026-06-15.
+
+> This file is mid-shrink (1291→~45 lines: generated header + pointers-only). Plan + status:
+> **`docs/superpowers/plans/2026-06-15-session-handoff-shrink-generate.md`** (read §7 phases, §9).
+> DONE: `scripts/gen-session-header.mjs` (built + hardened + codex-audited). DECISION: NO new
+> agent-backlog substrate — steer from `projects.next_action` + `hub-future-ideas.md` + tasks.
+> PENDING (need a healthy shell — MSYS fork crash; serialize bash / UMN IT exclusion): (1) re-run
+> the generator clean; (2) apply the shrink (old version stays in git); (3) wire `--check` into
+> `.githooks/pre-commit` + CI + `session-close`. ⚠️ **NOTHING COMMITTED YET** — first move next
+> session: commit/push the new files (plan + generator + PROJECT.md + this) before a working-tree
+> reset or a background agent wipes them (per `project_repo-environment-gotchas` memory). Codex
+> synthesis (gitignored, ephemeral): `review/codex-handoff-last.md` — conclusions folded into the plan.
+
+---
+
 # ▶ BUG SWEEP #70–#79 — ALL 10 FIXED + DEPLOYED + PUSHED (2026-06-15 PM)
 
 Cleared the entire open GitHub bug queue in one ultracode pass. **Live deploy = `c1e72aa4` (HEAD `5b9509e1`).** Frontend + one API fix — NO schema/route/table change (still schema v82 / 74 tables / 240 routes). All 10 GitHub issues closed; 9 `bug_reports` rows marked resolved (Bug Squasher queue empty).
