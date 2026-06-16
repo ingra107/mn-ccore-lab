@@ -11,7 +11,7 @@ export async function handleNotifications(url: URL, request: Request, env: Env):
 
   const unread = url.searchParams.get('unread');
 
-  let query = 'SELECT id, recipient_slug, type, title, message, read, read_at, related_id, related_type, created_at FROM notifications WHERE recipient_slug = ?';
+  let query = 'SELECT id, recipient_slug, type, source_type, source_id, title, body, link, read, read_at, created_at FROM notifications WHERE recipient_slug = ?';
   const params: string[] = [callerSlug];
 
   if (unread === '1') {

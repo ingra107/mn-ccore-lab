@@ -163,7 +163,7 @@ export function EntryTime({ ts, className }: { ts: string; className?: string })
   const rel = formatRelativeTime(ts)
   return (
     <time
-      dateTime={ts}
+      dateTime={isNaN(d.getTime()) ? ts : d.toISOString()}
       className={className}
       title={abs}
       style={STYLE_TIME}

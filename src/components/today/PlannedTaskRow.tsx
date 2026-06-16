@@ -5,11 +5,11 @@
 // Extracted from src/pages/portal/TodayPage.tsx. Same TaskDetailDrawer
 // expansion as the regular TaskRow (CD spec: click body = expand drawer).
 
-import { LinkRow, ProjectLink } from './primitives'
+import { LinkRow, ProjectLink, type TaskLink } from './primitives'
 import { TaskDetailDrawer } from './TaskDetailDrawer'
 import { DoneBox } from '../tasks/TaskRow'
 import { tagForTask, withAlpha } from './constants'
-import { ACCENT_GOLD, ACCENT_TEAL, INK, INK_DIM, type LinkKind } from './constants'
+import { ACCENT_GOLD, ACCENT_TEAL, INK, INK_DIM } from './constants'
 import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow } from '../../lib/api'
 
@@ -18,10 +18,10 @@ export function PlannedTaskRow({ task, project, state, timeHint, small = false, 
   const isNow = state.rightNow === task.id
   const expanded = expandedId === task.id
   const tag = tagForTask(task, projectsByPid)
-  const links: LinkKind[] = []
-  if (task.key_link_1) links.push('folder')
-  if (task.key_link_2) links.push('claude')
-  if (task.key_link_3) links.push('brief')
+  const links: TaskLink[] = []
+  if (task.key_link_1) links.push({ url: task.key_link_1, desc: task.key_link_1_desc })
+  if (task.key_link_2) links.push({ url: task.key_link_2, desc: task.key_link_2_desc })
+  if (task.key_link_3) links.push({ url: task.key_link_3, desc: task.key_link_3_desc })
   // Drag handle: a planned task stays draggable so it can be re-slotted up into
   // a specific timeline gap (the DropZones call state.planAt for any id).
   const onDragStart = (e: React.DragEvent) => {

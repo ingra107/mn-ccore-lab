@@ -1,4 +1,4 @@
-import { memo, useMemo } from 'react'
+import { memo, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Activity, ArrowRight } from 'lucide-react'
 import BentoCard from './BentoCard'
@@ -17,6 +17,15 @@ interface FeedItem {
   description: string
   time: string
   link?: string
+}
+
+// Collapsed entries clamp to 3 lines (Nick 2026-06-15: consistent height, easier
+// on the eyes); a "more" toggle expands the full text per entry.
+const CLAMP_STYLE: React.CSSProperties = {
+  display: '-webkit-box',
+  WebkitLineClamp: 3,
+  WebkitBoxOrient: 'vertical',
+  overflow: 'hidden',
 }
 
 /**
@@ -43,6 +52,7 @@ function ActivityFeedCard() {
     return rawActivity
       .filter((a) => isProductionVisibleActivity({ description: a.description }))
       .slice(0, 5)
+      .reverse() // newest at the BOTTOM — chronological, easier to read (Nick 2026-06-15)
       .map((a) => {
         const person = a.actor ? getPersonInfo(a.actor) : null
         return {
@@ -55,6 +65,15 @@ function ActivityFeedCard() {
         }
       })
   }, [rawActivity, mounted])
+
+  const [expanded, setExpanded] = useState<Set<string>>(new Set())
+  const toggle = (id: string) =>
+    setExpanded((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
 
   return (
     <BentoCard title="Recent Activity" subtitle="Lab updates" size="span-1x2" icon={Activity} drillDown>
@@ -79,7 +98,7 @@ function ActivityFeedCard() {
                 top: '12px',
                 bottom: '12px',
                 width: '1.5px',
-                background: 'linear-gradient(to bottom, var(--gold), transparent)',
+                background: 'linear-gradient(to top, var(--gold), transparent)',
                 opacity: 0.15,
               }}
             />
@@ -122,6 +141,7 @@ function ActivityFeedCard() {
                         fontSize: '12.5px',
                         color: 'var(--ink)',
                         margin: 0,
+                        ...(expanded.has(item.id) ? null : CLAMP_STYLE),
                       }}
                     >
                       {item.actorName ? (
@@ -130,6 +150,22 @@ function ActivityFeedCard() {
                       {item.actorName ? ' ' : ''}
                       {item.description}
                     </p>
+                    {item.description.length > 120 && (
+                      <button
+                        onClick={() => toggle(item.id)}
+                        style={{
+                          fontSize: '10px',
+                          color: 'var(--teal)',
+                          background: 'none',
+                          border: 'none',
+                          padding: '2px 0 0',
+                          cursor: 'pointer',
+                          opacity: 0.85,
+                        }}
+                      >
+                        {expanded.has(item.id) ? 'less' : 'more'}
+                      </button>
+                    )}
                   </div>
 
                   {/* Time */}

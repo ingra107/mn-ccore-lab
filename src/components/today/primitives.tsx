@@ -1,6 +1,5 @@
 // Shared inline primitives for the Today landing component tree:
-//   LinkIcon  — single SVG glyph for a link kind
-//   LinkRow   — horizontal cluster of LinkIcon chips
+//   LinkRow   — horizontal cluster of functional key-link icon chips
 //   ProjectLink — small "(project name)" link with optional routing
 //   Pill      — clickable rounded count+label chip
 //
@@ -11,44 +10,56 @@
 
 import { Link } from 'react-router-dom'
 import { PATHS } from '../../constants/paths'
-import { ACCENT_GOLD, INK, INK_MUTED, withAlpha, type LinkKind } from './constants'
+import { ACCENT_GOLD, INK, INK_MUTED, withAlpha } from './constants'
+import { classifyUrl } from '../../lib/urlClassify'
+import { useProtocolLaunch } from '../../hooks/useProtocolLaunch'
+import { ICON_PROPS } from '../../lib/iconProps'
 
-export function LinkIcon({ kind, size = 12 }: { kind: LinkKind; size?: number }) {
-  const common = { width: size, height: size, viewBox: '0 0 16 16', fill: 'none', stroke: 'currentColor', strokeWidth: 1.5, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
-  switch (kind) {
-    case 'folder': return (<svg {...common}><path d="M2 4a1 1 0 0 1 1-1h3l1.5 1.5H13a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V4Z" /></svg>)
-    case 'claude': return (<svg {...common}><polygon points="5,3 13,8 5,13" /></svg>)
-    case 'email':  return (<svg {...common}><rect x="2" y="4" width="12" height="9" rx="1" /><path d="m2 5 6 4 6-4" /></svg>)
-    case 'draft':  return (<svg {...common}><path d="M10 2 14 6 6 14H2v-4Z" /></svg>)
-    case 'brief':
-    case 'doc':    return (<svg {...common}><path d="M3 3h7l3 3v7a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" /><path d="M5 8h6M5 11h4" /></svg>)
-    default: return null
-  }
-}
+/** A task key-link: the raw URL + its optional human description. */
+export interface TaskLink { url: string; desc?: string | null }
 
-export function LinkRow({ links }: { links: LinkKind[] }) {
+// Bug #77/#79: these chips used to render dead `<a href="#">` glyphs with the
+// raw kind ("claude") as the tooltip. They now carry the REAL url, classify it
+// (folder / script / gmail / obsidian / link → lucide premium icon) and fire it
+// through the canonical useProtocolLaunch (clipboard + toast for mnccore://),
+// matching LinkChip. Icon-only form is kept for the compact Today surfaces.
+export function LinkRow({ links }: { links: TaskLink[] }) {
+  const { launch } = useProtocolLaunch()
   if (!links.length) return null
   return (
     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-      {links.map((k, i) => (
-        <a
-          key={i}
-          href="#"
-          title={k}
-          onClick={(e) => e.preventDefault()}
-          className="hov-color hov-border"
-          style={{
-            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-            width: 20, height: 20, borderRadius: 4, color: INK_MUTED,
-            background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)',
-            textDecoration: 'none', transition: 'all 150ms',
-            '--hov-color': ACCENT_GOLD,
-            '--hov-border': 'rgba(201,168,76,0.30)',
-          } as React.CSSProperties}
-        >
-          <LinkIcon kind={k} />
-        </a>
-      ))}
+      {links.map((l, i) => {
+        const { href, Icon, typeLabel, isHttp } = classifyUrl(l.url)
+        const title = l.desc || typeLabel
+        return (
+          <a
+            key={i}
+            href={isHttp ? href : l.url}
+            target={isHttp ? '_blank' : undefined}
+            rel={isHttp ? 'noopener noreferrer' : undefined}
+            title={title}
+            aria-label={title}
+            onClick={(e) => {
+              e.stopPropagation()
+              if (!isHttp) {
+                e.preventDefault()
+                void launch(href, { copyText: l.url, successMessage: `Opening ${typeLabel.toLowerCase()}… (path copied as backup)` })
+              }
+            }}
+            className="hov-color hov-border"
+            style={{
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+              width: 20, height: 20, borderRadius: 4, color: INK_MUTED,
+              background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)',
+              textDecoration: 'none', transition: 'all 150ms',
+              '--hov-color': ACCENT_GOLD,
+              '--hov-border': 'rgba(201,168,76,0.30)',
+            } as React.CSSProperties}
+          >
+            <Icon {...ICON_PROPS} size={12} aria-hidden="true" />
+          </a>
+        )
+      })}
     </span>
   )
 }

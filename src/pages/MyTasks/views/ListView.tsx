@@ -9,6 +9,8 @@
 // → name + Avatar via getPersonInfo (MT-19).
 
 import { useEffect, useRef, useMemo, useCallback } from 'react'
+import { MapPin } from 'lucide-react'
+import { ICON_PROPS } from '../../../lib/iconProps'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { DoneBox } from '../../../components/tasks/TaskRow'
 import { LinksBar } from '../primitives'
@@ -292,7 +294,7 @@ function ListRow({ task, project, isCursor, isSelected, selectModeActive, onClic
         >{task.short_title || task.title}</span>
         {isNew && <AttentionChip kind="new" />}
         {!isNew && newActivity > 0 && <AttentionChip kind="activity" count={newActivity} />}
-        {task.group_override && <span title={`Moved manually (${task.group_override})`} style={{ fontSize: 10, color: ACCENT_TEAL, flexShrink: 0 }}>📍</span>}
+        {task.group_override && <span title={`Moved manually (${task.group_override})`} style={{ display: 'inline-flex', alignItems: 'center', color: ACCENT_TEAL, flexShrink: 0 }}><MapPin {...ICON_PROPS} size={11} /></span>}
         {planned && <span style={{ fontSize: 9, color: ACCENT_GOLD, fontWeight: 700, letterSpacing: '0.1em' }}>PLANNED</span>}
         {overdueDays > 0 && <span style={{ fontSize: 9, color: ACCENT_CORAL, fontWeight: 700 }}>{overdueDays}d LATE</span>}
         {stale > 0 && <span style={{ fontSize: 9, color: ACCENT_ORANGE }}>{stale}d stale</span>}

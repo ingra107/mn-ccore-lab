@@ -70,10 +70,9 @@ export default function MobileTabBar() {
         className="lg:hidden fixed bottom-0 left-0 right-0 flex items-stretch justify-around border-t"
         style={{
           zIndex: 'var(--z-sidebar)',
-          backgroundColor: 'var(--surface-1)',
+          backgroundColor: 'var(--cream)',
           borderColor: 'var(--border-subtle)',
           paddingBottom: 'env(safe-area-inset-bottom)',
-          backdropFilter: 'blur(8px)',
         }}
         aria-label="Primary navigation"
       >
@@ -146,7 +145,7 @@ export default function MobileTabBar() {
           <div
             onClick={(e) => e.stopPropagation()}
             style={{
-              background: 'var(--surface-1)',
+              background: 'var(--cream)',
               width: '100%',
               borderTopLeftRadius: 16,
               borderTopRightRadius: 16,
@@ -154,7 +153,7 @@ export default function MobileTabBar() {
               paddingBottom: 'max(16px, env(safe-area-inset-bottom))',
               maxHeight: '75vh',
               overflowY: 'auto',
-              boxShadow: '0 -4px 24px rgba(0,0,0,0.15)',
+              boxShadow: '0 -4px 24px rgba(0,0,0,0.3)',
             }}
           >
             <div className="flex items-center justify-between mb-3">

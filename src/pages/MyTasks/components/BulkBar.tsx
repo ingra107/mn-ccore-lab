@@ -5,6 +5,8 @@
 // Extracted from src/pages/portal/UnifiedMyTasks.tsx.
 
 import { useState, useEffect, useRef } from 'react'
+import { Pin } from 'lucide-react'
+import { ICON_PROPS } from '../../../lib/iconProps'
 import {
   ACCENT_GOLD, ACCENT_TEAL, ACCENT_CORAL, ACCENT_GREEN,
   INK, INK_MUTED, INK_DIM, PANEL_BG,
@@ -71,7 +73,10 @@ export function BulkBar({ count, onClear, onPlanToday, onSnoozeDay, onComplete, 
        <div className="mt-band" style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12 }}>
         <span style={{ color: ACCENT_GOLD, fontWeight: 600 }}>{count} selected</span>
         <span style={{ color: INK_DIM }}>·</span>
-        {btn('📌 Plan today', onPlanToday, ACCENT_GOLD)}
+        <button
+          onClick={onPlanToday}
+          style={{ padding: '3px 9px', fontSize: 11, border: `1px solid ${withAlpha(ACCENT_GOLD, 25)}`, borderRadius: 'var(--radius-sm)', background: withAlpha(ACCENT_GOLD, 8), color: ACCENT_GOLD, fontFamily: 'inherit', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+        ><Pin {...ICON_PROPS} size={11} /> Plan today</button>
         {btn('Snooze +1d', onSnoozeDay)}
         {btn('Status →', () => setPicker(picker === 'status' ? null : 'status'), undefined, picker === 'status')}
         {btn('Reassign', () => setPicker(picker === 'reassign' ? null : 'reassign'), undefined, picker === 'reassign')}

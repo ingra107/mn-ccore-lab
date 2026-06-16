@@ -14,7 +14,7 @@ import SmartCompose from '../SmartCompose'
 import { useUpdateTask, useToggleSubtask } from '../../hooks/useMutations'
 import { useAutoAcknowledge } from '../../hooks/useAutoAcknowledge'
 import { useUndoToast } from '../UndoToast'
-import { LinkRow } from './primitives'
+import { LinkRow, type TaskLink } from './primitives'
 import { WorkflowSection } from '../tasks/detail/FieldControls'
 import type { WorkflowFields } from '../tasks/detail/FieldControls'
 import { TaskInlineFieldRow } from '../tasks/detail/FieldControls'
@@ -23,7 +23,7 @@ import TaskDetailPanel from '../tasks/TaskDetailPanel'
 import {
   ACCENT_GOLD, ACCENT_TEAL, ACCENT_ORANGE, ACCENT_GREEN,
   INK, INK_MUTED, INK_DIM, PAGE_BG, PANEL_BG,
-  TODAY_MOVE_OPTIONS, withAlpha, type LinkKind,
+  TODAY_MOVE_OPTIONS, withAlpha,
 } from './constants'
 import { isTaskDone } from '../../lib/taskGrouping'
 import type { TodayStateApi } from '../../hooks/useTodayState'
@@ -37,10 +37,10 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
   useAutoAcknowledge(task)
   const detailQuery = useTaskDetail(task.id)
   const detail = detailQuery.data
-  const linkSet: LinkKind[] = []
-  if (task.key_link_1) linkSet.push('folder')
-  if (task.key_link_2) linkSet.push('claude')
-  if (task.key_link_3) linkSet.push('brief')
+  const linkSet: TaskLink[] = []
+  if (task.key_link_1) linkSet.push({ url: task.key_link_1, desc: task.key_link_1_desc })
+  if (task.key_link_2) linkSet.push({ url: task.key_link_2, desc: task.key_link_2_desc })
+  if (task.key_link_3) linkSet.push({ url: task.key_link_3, desc: task.key_link_3_desc })
   const subtasks = detail?.subtasks ?? []
   const blocks = detail?.blocks ?? []
 

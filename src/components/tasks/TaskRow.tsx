@@ -26,7 +26,9 @@
 // the row is correct in BOTH light and dark, on the dark Today/MyTasks page
 // AND on My Hub's lighter card surface.
 
-import { useRef, useState, type ReactNode } from 'react'
+import { useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+import { GripVertical, MapPin, Pin } from 'lucide-react'
+import { ICON_PROPS } from '../../lib/iconProps'
 import { Link } from 'react-router-dom'
 import { PATHS } from '../../constants/paths'
 import { useAuth } from '../../hooks/useAuth'
@@ -130,13 +132,13 @@ function PlannedChip({ label = 'planned', onUnplan }: { label?: string; onUnplan
         onMouseDown={(e) => e.stopPropagation()}
         title="Planned for today — click to unplan"
         aria-label="Unplan task"
-        style={{ ...base, border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}
+        style={{ ...base, border: 'none', cursor: 'pointer', fontFamily: 'inherit', display: 'inline-flex', alignItems: 'center', gap: 3 }}
       >
-        📌 {label}
+        <Pin {...ICON_PROPS} size={11} /> {label}
       </button>
     )
   }
-  return <span style={base}>📌 {label}</span>
+  return <span style={{ ...base, display: 'inline-flex', alignItems: 'center', gap: 3 }}><Pin {...ICON_PROPS} size={11} /> {label}</span>
 }
 
 export interface SharedTaskRowProps {
@@ -211,9 +213,9 @@ function Grip({ show, draggable, onDragStart }: { show: boolean; draggable?: boo
       onMouseDown={(e) => e.stopPropagation()}
       title="Drag up to the timeline to plan this task"
       className="task-grip"
-      style={{ width: 16, display: 'grid', placeItems: 'center', cursor: 'grab', color: INK_MUTED, opacity: show ? 1 : 0.6, transition: 'opacity 140ms', fontSize: 13, lineHeight: 1, flexShrink: 0, userSelect: 'none' }}
+      style={{ width: 16, display: 'grid', placeItems: 'center', cursor: 'grab', color: INK_MUTED, opacity: show ? 1 : 0.6, transition: 'opacity 140ms', flexShrink: 0, userSelect: 'none' }}
     >
-      ⋮⋮
+      <GripVertical {...ICON_PROPS} size={14} />
     </div>
   )
 }
@@ -237,6 +239,18 @@ export function TaskRow(props: SharedTaskRowProps) {
 
   const [hover, setHover] = useState(false)
   const lpTimer = useRef<ReturnType<typeof setTimeout> | 'fired' | null>(null)
+
+  // Issue #78: keep the clicked row in place when its inline detail opens — an
+  // expand that pushes the row off-screen otherwise makes the task "jump".
+  // Only on expand: block:'nearest' is a no-op when the row is already fully in
+  // view, and skipping collapse keeps the row put as content shrinks below it.
+  // (Firing unconditionally would scroll off-screen rows into view on mount.)
+  const rowRef = useRef<HTMLDivElement>(null)
+  useLayoutEffect(() => {
+    if (isExpanded && rowRef.current) {
+      rowRef.current.scrollIntoView({ block: 'nearest', behavior: 'instant' as ScrollBehavior })
+    }
+  }, [isExpanded])
 
   // NEW-to-you chip (Slack-style seen, 2026-06-11): assigned to the viewer and
   // never opened (acknowledged_at IS NULL). Auto-acknowledge fires when the
@@ -337,9 +351,9 @@ export function TaskRow(props: SharedTaskRowProps) {
       onMouseDown={(e) => e.stopPropagation()}
       title="Plan for today (no specific time)"
       aria-label="Plan task for today"
-      style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0 2px', fontSize: 12, color: ACCENT_GOLD, lineHeight: 1, flexShrink: 0, verticalAlign: 'baseline', visibility: hover ? 'visible' : 'hidden' }}
+      style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0 2px', color: ACCENT_GOLD, lineHeight: 1, flexShrink: 0, verticalAlign: 'baseline', visibility: hover ? 'visible' : 'hidden', display: 'inline-flex', alignItems: 'center' }}
     >
-      📌
+      <Pin {...ICON_PROPS} size={12} />
     </button>
   ) : null
 
@@ -363,6 +377,7 @@ export function TaskRow(props: SharedTaskRowProps) {
 
   return (
     <div
+      ref={rowRef}
       data-task-id={task.id}
       style={{
         // P1-12: overdue rows carry a coral left edge so "what's slipping" reads
@@ -425,7 +440,9 @@ export function TaskRow(props: SharedTaskRowProps) {
                 {titleNode}
                 {newChip}
                 {showGroupOverridePin && task.group_override && (
-                  <span title={`Moved manually (${task.group_override})`} style={{ fontSize: 9, color: ACCENT_TEAL, padding: '1px 5px', background: withAlpha(ACCENT_TEAL, 9), border: `1px solid ${withAlpha(ACCENT_TEAL, 28)}`, borderRadius: 999, marginLeft: 6 }}>📍</span>
+                  <span title={`Moved manually (${task.group_override})`} style={{ display: 'inline-flex', alignItems: 'center', color: ACCENT_TEAL, padding: '1px 5px', background: withAlpha(ACCENT_TEAL, 9), border: `1px solid ${withAlpha(ACCENT_TEAL, 28)}`, borderRadius: 999, marginLeft: 6 }}>
+                    <MapPin {...ICON_PROPS} size={11} />
+                  </span>
                 )}
                 {planBtn && <span style={{ marginLeft: 4, whiteSpace: 'nowrap' }}>{planBtn}</span>}
               </span>

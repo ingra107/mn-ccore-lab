@@ -5,7 +5,7 @@
 // Extracted from src/pages/portal/UnifiedMyTasks.tsx.
 
 import { useState } from 'react'
-import { Plus, SlidersHorizontal } from 'lucide-react'
+import { AlertTriangle, Clock, Plus, Sparkles, Pin, SlidersHorizontal, Timer } from 'lucide-react'
 import { researchTeam } from '../../../data/team'
 import SavedViewsMenu from '../../../components/SavedViewsMenu'
 import { ViewPicker } from './ViewPicker'
@@ -40,15 +40,15 @@ export function TopBar({ view, setView, search, setSearch, filter, setFilter, qu
   const [filtersOpen, setFiltersOpen] = useState(false)
   const activeFilterCount = [filter.group, filter.priority, filter.project, filter.mentee].filter(Boolean).length
   const showFilterChips = !isPhone || filtersOpen
-  const tabs: { k: QuickViewKey; l: string; color?: string }[] = [
+  const tabs: { k: QuickViewKey; l: React.ReactNode; color?: string }[] = [
     { k: 'all', l: 'All' },
     // 'New' = your tasks you haven't opened yet (Slack-style seen; matches the
     // sidebar badge count + the gold NEW chip on rows). Drains on open.
-    { k: 'new', l: '✦ New', color: ACCENT_GOLD },
-    { k: 'today', l: '📌 Today', color: ACCENT_GOLD },
-    { k: 'overdue', l: '⚠ Overdue', color: ACCENT_CORAL },
-    { k: 'waiting', l: '⏳ Waiting on', color: ACCENT_ORANGE },
-    { k: 'stale', l: '🕰 Stale', color: ACCENT_ORANGE },
+    { k: 'new', l: <><Sparkles {...ICON_PROPS} size={11} style={{ color: ACCENT_GOLD }} /> New</>, color: ACCENT_GOLD },
+    { k: 'today', l: <><Pin {...ICON_PROPS} size={11} style={{ color: ACCENT_GOLD }} /> Today</>, color: ACCENT_GOLD },
+    { k: 'overdue', l: <><AlertTriangle {...ICON_PROPS} size={11} style={{ color: ACCENT_CORAL }} /> Overdue</>, color: ACCENT_CORAL },
+    { k: 'waiting', l: <><Clock {...ICON_PROPS} size={11} style={{ color: ACCENT_ORANGE }} /> Waiting on</>, color: ACCENT_ORANGE },
+    { k: 'stale', l: <><Timer {...ICON_PROPS} size={11} style={{ color: ACCENT_ORANGE }} /> Stale</>, color: ACCENT_ORANGE },
   ]
   const hasFilters = filter.priority || filter.project || filter.mentee || filter.group || search || quickView !== 'all'
   return (
@@ -102,7 +102,7 @@ export function TopBar({ view, setView, search, setSearch, filter, setFilter, qu
               // withAlpha, NOT hex-suffix concat: the accents are var() strings,
               // so `c + '70'` produced invalid CSS (active pill border/bg never
               // rendered). /simplify catch, 2026-06-11.
-              style={{ padding: '4px 10px', fontSize: 11, fontWeight: 500, borderRadius: 999, fontFamily: 'inherit', cursor: 'pointer', border: `1px solid ${active ? withAlpha(c, 44) : 'rgba(255,255,255,0.1)'}`, background: active ? withAlpha(c, 8) : 'transparent', color: active ? c : INK_MUTED, flexShrink: 0, whiteSpace: 'nowrap' }}
+              style={{ padding: '4px 10px', fontSize: 11, fontWeight: 500, borderRadius: 999, fontFamily: 'inherit', cursor: 'pointer', border: `1px solid ${active ? withAlpha(c, 44) : 'rgba(255,255,255,0.1)'}`, background: active ? withAlpha(c, 8) : 'transparent', color: active ? c : INK_MUTED, flexShrink: 0, whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 4 }}
             >{tab.l}</button>
           )
         })}

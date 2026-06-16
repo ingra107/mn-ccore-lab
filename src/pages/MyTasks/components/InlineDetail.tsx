@@ -7,6 +7,8 @@
 // Extracted from src/pages/portal/UnifiedMyTasks.tsx.
 
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { Pin } from 'lucide-react'
+import { ICON_PROPS } from '../../../lib/iconProps'
 import SmartCompose from '../../../components/SmartCompose'
 import { useUpdateTask, useBulkUpdateTasks, useToggleSubtask } from '../../../hooks/useMutations'
 import { useTaskDetail } from '../../../hooks/useApiData'
@@ -158,7 +160,7 @@ export function InlineDetail({ task, projectName, onOpenEditor }: { task: TaskRo
           <button onClick={promote} title="Promote to Right Now on Today" style={{ padding: '4px 10px', fontSize: 10.5, borderRadius: 'var(--radius-sm)', border: 'none', background: ACCENT_GOLD, color: PAGE_BG, fontWeight: 600, fontFamily: 'inherit', cursor: 'pointer' }}>▶ Work on this</button>
         )}
         {!isPlanned && (
-          <button onClick={planToday} title="Add to today's planned strip" style={{ padding: '4px 10px', fontSize: 10.5, borderRadius: 'var(--radius-sm)', border: 'none', background: 'transparent', color: INK, fontFamily: 'inherit', cursor: 'pointer' }}>📌 Plan today</button>
+          <button onClick={planToday} title="Add to today's planned strip" style={{ padding: '4px 10px', fontSize: 10.5, borderRadius: 'var(--radius-sm)', border: 'none', background: 'transparent', color: INK, fontFamily: 'inherit', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}><Pin {...ICON_PROPS} size={12} /> Plan today</button>
         )}
         <div ref={moveRef} style={{ position: 'relative' }}>
           <button onClick={() => setMoveOpen((o) => !o)} title="Move to a different group (changes priority to match)" style={{ padding: '4px 10px', fontSize: 10.5, borderRadius: 'var(--radius-sm)', border: `1px solid ${moveOpen ? ACCENT_TEAL : 'transparent'}`, background: moveOpen ? withAlpha(ACCENT_TEAL, 13) : 'transparent', color: moveOpen ? ACCENT_TEAL : INK, fontFamily: 'inherit', cursor: 'pointer' }}>Move →</button>

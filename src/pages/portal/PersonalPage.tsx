@@ -963,25 +963,38 @@ export default function PersonalPage() {
       {/* Quick Actions + Recently Viewed */}
       <div className="flex items-center gap-3 mt-4 flex-wrap">
         {([
-          { label: 'New Task', to: `${PATHS.myTasks}?create=true`, icon: SquareCheck, color: 'var(--teal)' },
+          { label: 'New Task', onClick: openGlobalQuickAdd, icon: SquareCheck, color: 'var(--teal)' },
           { label: 'Submit Idea', to: `${PATHS.ideas}?create=true`, icon: Lightbulb, color: 'var(--gold)' },
           { label: 'Ask a Question', to: `${PATHS.ask}?create=true`, icon: User, color: 'var(--slate)' },
-        ]).map((a) => {
+        ] as Array<{ label: string; to?: string; onClick?: () => void; icon: typeof SquareCheck; color: string }>).map((a) => {
           const Icon = a.icon
-          return (
+          const sharedClass = 'flex items-center gap-1.5 px-3 py-1.5 rounded-lg border portal-footer-link'
+          const sharedStyle = {
+            fontSize: 'var(--text-label)',
+            fontWeight: 500,
+            color: a.color,
+            borderColor: `color-mix(in srgb, ${a.color} 20%, transparent)`,
+            background: `color-mix(in srgb, ${a.color} 4%, transparent)`,
+            textDecoration: 'none',
+            transition: 'background 150ms ease',
+          }
+          return a.onClick ? (
+            <button
+              key={a.label}
+              type="button"
+              onClick={a.onClick}
+              className={sharedClass}
+              style={{ ...sharedStyle, cursor: 'pointer' }}
+            >
+              <Icon {...ICON_PROPS} size={11} />
+              {a.label}
+            </button>
+          ) : (
             <Link
               key={a.label}
-              to={a.to}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border portal-footer-link"
-              style={{
-                fontSize: 'var(--text-label)',
-                fontWeight: 500,
-                color: a.color,
-                borderColor: `color-mix(in srgb, ${a.color} 20%, transparent)`,
-                background: `color-mix(in srgb, ${a.color} 4%, transparent)`,
-                textDecoration: 'none',
-                transition: 'background 150ms ease',
-              }}
+              to={a.to!}
+              className={sharedClass}
+              style={sharedStyle}
             >
               <Icon {...ICON_PROPS} size={11} />
               {a.label}

@@ -10,8 +10,8 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { PATHS } from '../../constants/paths'
 import { useIsMobile } from '../../hooks/useIsMobile'
-import { LinkRow } from './primitives'
-import { ACCENT_GOLD, INK, INK_MUTED, INK_DIM, PAGE_BG, type LinkKind } from './constants'
+import { LinkRow, type TaskLink } from './primitives'
+import { ACCENT_GOLD, INK, INK_MUTED, INK_DIM, PAGE_BG } from './constants'
 import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow } from '../../lib/api'
 import SmartCompose from '../SmartCompose'
@@ -31,10 +31,11 @@ export function RightNow({ task, project, queueTasks, state }: { task: TaskRow |
     )
   }
   // Build LinkRow set from task's key_link fields (CD spec — hero shows links inline).
-  const heroLinks: LinkKind[] = []
-  if (task.key_link_1) heroLinks.push('folder')
-  if (task.key_link_2) heroLinks.push('claude')
-  if (task.key_link_3) heroLinks.push('brief')
+  // Pass the real URL + desc so each chip classifies + fires correctly (#77).
+  const heroLinks: TaskLink[] = []
+  if (task.key_link_1) heroLinks.push({ url: task.key_link_1, desc: task.key_link_1_desc })
+  if (task.key_link_2) heroLinks.push({ url: task.key_link_2, desc: task.key_link_2_desc })
+  if (task.key_link_3) heroLinks.push({ url: task.key_link_3, desc: task.key_link_3_desc })
 
   return (
     <div style={{ marginBottom: 20, background: 'linear-gradient(90deg, rgba(201,168,76,0.12), rgba(201,168,76,0.02))', border: '1px solid rgba(201,168,76,0.28)', borderLeft: `3px solid ${ACCENT_GOLD}`, borderRadius: 'var(--radius-lg)', boxShadow: '0 0 24px rgba(201,168,76,0.06)' }}>
