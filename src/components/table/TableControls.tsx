@@ -1,9 +1,6 @@
 import type { ReactNode } from 'react'
-import DensityToggle from '../DensityToggle'
 import InlineSelect from '../InlineSelect'
 import SegmentedToggle from '../ui/SegmentedToggle'
-
-type Density = 'compact' | 'default' | 'relaxed'
 
 interface ViewOption {
   key: string
@@ -30,11 +27,6 @@ interface TableControlsProps {
   // Filter pills / any extra left-side controls
   filters?: ReactNode
 
-  // Density
-  showDensity?: boolean
-  density?: Density
-  onDensityChange?: (d: Density) => void
-
   // Count summary
   count?: number
   countLabel?: string
@@ -51,9 +43,6 @@ export default function TableControls({
   sortOptions,
   onSortChange,
   filters,
-  showDensity = false,
-  density,
-  onDensityChange,
   count,
   countLabel,
   rightExtra,
@@ -102,11 +91,6 @@ export default function TableControls({
         <div className="flex items-center gap-2 flex-shrink-0">
           {rightExtra}
         </div>
-      )}
-
-      {/* Density toggle */}
-      {showDensity && density !== undefined && onDensityChange && (
-        <DensityToggle value={density} onChange={onDensityChange} />
       )}
 
       {/* Count summary */}

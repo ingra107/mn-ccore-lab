@@ -25,8 +25,6 @@ import { TableSkeleton } from './LoadingSkeleton'
 import EmptyState from './EmptyState'
 import EmptyStateArt, { type EmptyArtVariant } from './EmptyStateArt'
 
-type Density = 'compact' | 'default' | 'relaxed'
-
 interface ViewOption {
   key: string
   icon: ReactNode
@@ -51,9 +49,6 @@ interface DataPageProps {
   filters?: ReactNode
   /** Extra right-side chrome (e.g. dependency toggle). */
   rightExtra?: ReactNode
-  showDensity?: boolean
-  density?: Density
-  onDensityChange?: (d: Density) => void
   /** Count summary shown in the controls row (e.g. "78 manuscripts"). */
   controlsCount?: number
   controlsCountLabel?: string
@@ -100,9 +95,6 @@ export default function DataPage({
   onViewChange,
   filters,
   rightExtra,
-  showDensity,
-  density,
-  onDensityChange,
   controlsCount,
   controlsCountLabel,
   hideControls,
@@ -117,7 +109,7 @@ export default function DataPage({
 }: DataPageProps) {
   const showControls =
     !hideControls &&
-    (views || filters || rightExtra || showDensity || controlsCount !== undefined)
+    (views || filters || rightExtra || controlsCount !== undefined)
 
   const body = (
     <>
@@ -151,9 +143,6 @@ export default function DataPage({
               onViewChange={onViewChange}
               filters={filters}
               rightExtra={rightExtra}
-              showDensity={showDensity}
-              density={density}
-              onDensityChange={onDensityChange}
               count={controlsCount}
               countLabel={controlsCountLabel}
             />
