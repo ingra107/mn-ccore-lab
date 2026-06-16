@@ -9,6 +9,7 @@ import PageContainer from '../../components/PageContainer'
 import EmptyStateComponent from '../../components/EmptyState'
 import EmptyStateArt from '../../components/EmptyStateArt'
 import Modal from '../../components/ui/Modal'
+import { Button } from '../../components/ui/Button'
 import ToggleButton from '../../components/ToggleButton'
 import Avatar from '../../components/Avatar'
 import InlineSelect from '../../components/InlineSelect'
@@ -75,14 +76,10 @@ export default function AskTheLab() {
         subtitle={`${openCount} open question${openCount !== 1 ? 's' : ''}`}
         count={openCount}
         actions={
-          <button
-            onClick={() => setShowCreate(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-            style={{ backgroundColor: 'var(--teal-solid)', color: 'var(--ink-bright, #fff)', border: 'none', cursor: 'pointer' }}
-          >
+          <Button variant="primary" onClick={() => setShowCreate(true)}>
             <Plus {...ICON_PROPS} size={16} />
             New Question
-          </button>
+          </Button>
         }
       >
         {/* Filter controls */}

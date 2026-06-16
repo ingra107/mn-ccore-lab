@@ -9,6 +9,7 @@ import ViewTransitionWrapper from './components/ViewTransitionWrapper'
 import PageErrorBoundary from './components/PageErrorBoundary'
 import RequireAuth from './components/RequireAuth'
 import HeartbeatLine from './components/HeartbeatLine'
+import { Button } from './components/ui/Button'
 const Home = lazy(() => import('./pages/Home'))
 import { AuthProvider } from './context/AuthContext'
 import { PATHS } from './constants/paths'
@@ -48,18 +49,18 @@ class ErrorBoundary extends Component<
             This page hit an error, but everything else still works. Try refreshing, or navigate to another page.
           </p>
           <div style={{ display: 'flex', gap: 'var(--sp-sm)', marginBottom: 'var(--sp-lg)' }}>
-            <button
+            <Button
+              variant="primary"
               onClick={() => { this.setState({ hasError: false, error: null, showDetail: false }); window.location.reload() }}
-              style={{ fontSize: '13px', padding: '8px 20px', borderRadius: 'var(--radius-lg)', border: 'none', backgroundColor: 'var(--teal-solid)', color: 'var(--ink-bright, #fff)', cursor: 'pointer' }}
             >
               Try again
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="secondary"
               onClick={() => { window.location.href = PATHS.dashboard }}
-              style={{ fontSize: '13px', padding: '8px 20px', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-subtle)', backgroundColor: 'transparent', color: 'var(--slate)', cursor: 'pointer' }}
             >
               Go to Today
-            </button>
+            </Button>
           </div>
           <button
             onClick={() => this.setState({ showDetail: !this.state.showDetail })}

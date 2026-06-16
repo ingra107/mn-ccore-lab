@@ -11,6 +11,7 @@ import PageHeader from '../../components/PageHeader'
 import PageContainer from '../../components/PageContainer'
 import EmptyState from '../../components/EmptyState'
 import Modal from '../../components/ui/Modal'
+import { Button } from '../../components/ui/Button'
 import MetricCard from '../../components/MetricCard'
 import InlineSelect from '../../components/InlineSelect'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
@@ -126,14 +127,10 @@ export default function MeetingNotesPage() {
         subtitle="Transcription, summaries, and action items"
         count={processedCount}
         actions={
-          <button
-            onClick={() => setShowCreate(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-            style={{ backgroundColor: 'var(--teal-solid)', color: 'var(--ink-bright, #fff)', border: 'none', cursor: 'pointer' }}
-          >
+          <Button variant="primary" onClick={() => setShowCreate(true)}>
             <FileText {...ICON_PROPS} size={16} />
             Add Transcript
-          </button>
+          </Button>
         }
       />
 
@@ -274,18 +271,15 @@ function TranscriptModal({ open, onClose, meetings }: { open: boolean; onClose: 
       maxWidth="lg"
       footer={
         <>
-          <button onClick={onClose} className="px-4 py-2 rounded-md text-sm" style={{ color: 'var(--slate)', cursor: 'pointer', background: 'none', border: '1px solid var(--border-subtle)' }}>
-            Cancel
-          </button>
-          <button
+          <Button variant="secondary" onClick={onClose}>Cancel</Button>
+          <Button
+            variant="primary"
             onClick={handleProcess}
             disabled={!transcript.trim() || !meetingId || saving}
-            className="px-4 py-2 rounded-md text-sm font-medium flex items-center gap-2"
-            style={{ backgroundColor: 'var(--teal-solid)', color: 'var(--ink-bright, #fff)', cursor: (!transcript.trim() || !meetingId || saving) ? 'not-allowed' : 'pointer', border: 'none', opacity: (!transcript.trim() || !meetingId || saving) ? 0.85 : 1 }}
           >
             <FileText {...ICON_PROPS} size={14} />
             {saving ? 'Saving…' : 'Save Transcript'}
-          </button>
+          </Button>
         </>
       }
     >
