@@ -1313,15 +1313,12 @@ export default function DecisionsPage() {
         )}
       </div>
 
-      <AnimatePresence>
-        {showCreate && (
-          <CreateDecisionModal
-            projects={projects}
-            onCreate={createDecision}
-            onClose={() => setShowCreate(false)}
-          />
-        )}
-      </AnimatePresence>
+      <CreateDecisionModal
+        open={showCreate}
+        projects={projects}
+        onCreate={createDecision}
+        onClose={() => setShowCreate(false)}
+      />
     </div>
   )
 }

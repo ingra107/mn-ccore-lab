@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { X, Sparkles, FileText, Shield, DollarSign, BarChart3, ClipboardList } from 'lucide-react'
+import { Sparkles, FileText, Shield, DollarSign, BarChart3, ClipboardList } from 'lucide-react'
 import { useTeam, useProjects } from '../../hooks/useApiData'
 import { suggestTaskFields, type AutofillSuggestions, type FieldSuggestion } from '../../lib/taskAutofill'
 import { useAuth } from '../../hooks/useAuth'
@@ -7,8 +7,7 @@ import { emailToSlug } from '../../lib/emailSlug'
 import InlineAssigneePicker from '../InlineAssigneePicker'
 import InlineSelect from '../InlineSelect'
 import { Button } from '../ui/Button'
-import BottomSheet from '../BottomSheet'
-import { useIsMobile } from '../../hooks/useIsMobile'
+import Modal from '../ui/Modal'
 import { todayCivil } from '../../lib/time'
 import { ICON_PROPS } from '../../lib/iconProps'
 
@@ -75,7 +74,6 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
   const { data: projects = [] } = useProjects()
   const { user } = useAuth()
   const defaultAssignee = user?.email ? emailToSlug(user.email) : ''
-  const isMobile = useIsMobile()
 
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -154,8 +152,8 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
     )
   )
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSubmit = useCallback((e?: React.FormEvent) => {
+    e?.preventDefault()
     if (!title.trim() || !assignee) return
 
     onCreate({
@@ -179,75 +177,66 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
     setSuggestions({ project: null, priority: null, assignee: null })
     setAcceptedFields(new Set())
     onClose()
+  }, [title, description, assignee, projectId, dueDate, priority, defaultAssignee, onCreate, onClose])
+
+  const handleSubmitRef = useRef(handleSubmit)
+  handleSubmitRef.current = handleSubmit
+
+  const handleExtraKeyDown = (e: KeyboardEvent) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      e.preventDefault()
+      handleSubmitRef.current()
+    }
   }
 
-  const modalRef = useRef<HTMLDivElement>(null)
-
-  // Focus trap + Escape
-  useEffect(() => {
-    if (!open || !modalRef.current) return
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') { onClose(); return }
-      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-        e.preventDefault()
-        const form = modalRef.current?.querySelector('form')
-        if (form) form.requestSubmit()
-        return
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      title="Create New Task"
+      maxWidth="md"
+      variant="responsive"
+      onExtraKeyDown={handleExtraKeyDown}
+      footer={
+        <div className="flex items-center gap-2 w-full">
+          {(!title.trim() || !assignee) && (
+            <p id="task-submit-hint" className="text-[11px] mr-auto" style={{ color: 'var(--slate)', opacity: 0.85 }}>
+              {!title.trim() && !assignee
+                ? 'Title and owner are required.'
+                : !title.trim()
+                  ? 'Title is required.'
+                  : 'Owner is required.'}
+            </p>
+          )}
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={onClose}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            variant="primary"
+            data-testid="task-submit"
+            disabled={!title.trim() || !assignee}
+            aria-describedby={!title.trim() || !assignee ? 'task-submit-hint' : undefined}
+            onClick={() => handleSubmitRef.current()}
+          >
+            Create Task
+          </Button>
+        </div>
       }
-      if (e.key !== 'Tab') return
-      // Only consider elements that can actually receive focus — disabled
-      // buttons, hidden inputs, aria-hidden elements are in the DOM but
-      // Tab skips them. If the Submit button at the end is disabled (empty
-      // title), Tab tries to skip past it and escapes the modal.
-      // Found via deep-audit a11y persona: MODAL-FOCUS-LEAK.
-      const all = modalRef.current!.querySelectorAll<HTMLElement>(
-        'input, select, textarea, button, [tabindex]:not([tabindex="-1"])'
-      )
-      const focusable = Array.from(all).filter((el) => {
-        if (el.hasAttribute('disabled')) return false
-        if (el.getAttribute('aria-hidden') === 'true') return false
-        const style = window.getComputedStyle(el)
-        if (style.display === 'none' || style.visibility === 'hidden') return false
-        return true
-      })
-      if (focusable.length === 0) return
-      const first = focusable[0]
-      const last = focusable[focusable.length - 1]
-      const active = document.activeElement as HTMLElement | null
-      // If focus has already escaped the modal (e.g. onto the triggering
-      // button or document.body), pull it back to the first focusable.
-      if (active && !modalRef.current!.contains(active)) {
-        e.preventDefault()
-        first.focus()
-        return
-      }
-      if (e.shiftKey && active === first) {
-        e.preventDefault()
-        last.focus()
-      } else if (!e.shiftKey && active === last) {
-        e.preventDefault()
-        first.focus()
-      }
-    }
-    document.addEventListener('keydown', handler)
-    return () => document.removeEventListener('keydown', handler)
-  }, [open])
-
-  if (!open) return null
-
-  // Shared form body — rendered inside BottomSheet on mobile, inside the
-  // centered modal panel on desktop. The desktop path attaches modalRef for
-  // its own focus trap; the mobile path relies on BottomSheet's UX-7 trap.
-  const formBody = (
-    <>
+    >
       {/* Template strip — horizontally scrollable */}
       <div
-        className="flex gap-1.5 px-5 pt-3 pb-1.5 overflow-x-auto"
+        className="flex gap-1.5 pb-1.5 overflow-x-auto"
         style={{
           scrollbarWidth: 'none',
           msOverflowStyle: 'none',
           WebkitOverflowScrolling: 'touch',
           flexWrap: 'nowrap',
+          marginBottom: '12px',
         }}
       >
         {TASK_TEMPLATES.map(t => {
@@ -279,8 +268,7 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
         })}
       </div>
 
-      {/* Form */}
-      <form onSubmit={handleSubmit} className="p-5 pt-3 flex flex-col gap-3.5">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-3.5">
         {/* Title */}
         <div>
           <label
@@ -444,91 +432,10 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
           </div>
         </div>
 
-        {/* Submit */}
-        <div className="flex items-center justify-between gap-2 mt-2">
-          <p className="text-[10px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
-            Tasks can also be created from meetings and project pages
-          </p>
-        </div>
-        {(!title.trim() || !assignee) && (
-          <p id="task-submit-hint" className="text-[11px]" style={{ color: 'var(--slate)', opacity: 0.85 }}>
-            {!title.trim() && !assignee
-              ? 'Title and owner are required.'
-              : !title.trim()
-                ? 'Title is required.'
-                : 'Owner is required.'}
-          </p>
-        )}
-        <div className="flex justify-end gap-2">
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={onClose}
-          >
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            variant="primary"
-            data-testid="task-submit"
-            disabled={!title.trim() || !assignee}
-            aria-describedby={!title.trim() || !assignee ? 'task-submit-hint' : undefined}
-          >
-            Create Task
-          </Button>
-        </div>
+        <p className="text-[10px]" style={{ color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
+          Tasks can also be created from meetings and project pages
+        </p>
       </form>
-    </>
-  )
-
-  // Mobile — render inside BottomSheet. BottomSheet (UX-7) owns focus
-  // trapping; the desktop focus-trap useEffect won't fire (modalRef is null).
-  if (isMobile) {
-    return (
-      <BottomSheet open={open} onClose={onClose} title="New Task">
-        {formBody}
-      </BottomSheet>
-    )
-  }
-
-  // Desktop — original centered modal, unchanged.
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)' }}
-      onClick={onClose}
-    >
-      <div
-        ref={modalRef}
-        role="dialog"
-        aria-label="Create new task"
-        aria-modal="true"
-        data-testid="create-task-modal"
-        className="rounded-xl shadow-xl border w-full max-w-lg mx-4 card-elevated"
-        style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--border-subtle)' }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div
-          className="flex items-center justify-between px-5 py-3.5 border-b"
-          style={{ borderColor: 'var(--border-subtle)' }}
-        >
-          <h3
-            className="text-lg"
-            style={{ fontWeight: 400, color: 'var(--ink)' }}
-          >
-            Create New Task
-          </h3>
-          <button
-            onClick={onClose}
-            aria-label="Close"
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: 'var(--sp-xs)' }}
-          >
-            <X {...ICON_PROPS} size={18} />
-          </button>
-        </div>
-        {formBody}
-      </div>
-    </div>
+    </Modal>
   )
 }
