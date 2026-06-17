@@ -1,7 +1,7 @@
 import type { ButtonHTMLAttributes, CSSProperties } from 'react'
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'ghost' | 'danger'
+  variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'gold' | 'ghost-gold'
   size?: 'sm' | 'md' | 'lg'
 }
 
@@ -25,6 +25,21 @@ const VARIANT_STYLES: Record<NonNullable<ButtonProps['variant']>, CSSProperties>
     background: 'transparent',
     border: '1px solid var(--maroon)',
     color: 'var(--maroon)',
+  },
+  // gold — solid gold fill; for primary actions on the Today/task surfaces that
+  // use ACCENT_GOLD (--task-accent-gold) as their accent (not teal).
+  gold: {
+    background: 'var(--task-accent-gold)',
+    color: 'var(--task-page-bg)',
+    border: 'none',
+  },
+  // ghost-gold — transparent bg, gold text, no border; for secondary/ghost
+  // actions on gold-accented surfaces (e.g. "Plan for today" alongside the
+  // solid gold "Work on this now" button).
+  'ghost-gold': {
+    background: 'none',
+    border: 'none',
+    color: 'var(--task-accent-gold)',
   },
 }
 
@@ -51,6 +66,7 @@ const COMMON_STYLE: CSSProperties = {
   alignItems: 'center',
   justifyContent: 'center',
   gap: 'var(--sp-xs)',
+  fontFamily: 'inherit',
   fontWeight: 'var(--weight-ui)' as CSSProperties['fontWeight'],
   whiteSpace: 'nowrap',
   transition: 'background var(--duration-normal), opacity var(--duration-normal)',

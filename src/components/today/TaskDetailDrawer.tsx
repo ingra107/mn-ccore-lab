@@ -21,11 +21,12 @@ import { TaskInlineFieldRow } from '../tasks/detail/FieldControls'
 import { TaskActivityFeed } from '../tasks/detail/TaskActivityFeed'
 import TaskDetailPanel from '../tasks/TaskDetailPanel'
 import {
-  ACCENT_GOLD, ACCENT_TEAL, ACCENT_ORANGE, ACCENT_GREEN,
-  INK, INK_MUTED, INK_DIM, PAGE_BG, PANEL_BG,
+  ACCENT_TEAL, ACCENT_ORANGE, ACCENT_GREEN,
+  INK, INK_MUTED, INK_DIM, PANEL_BG,
   TODAY_MOVE_OPTIONS, withAlpha,
 } from './constants'
 import { isTaskDone } from '../../lib/taskGrouping'
+import { Button } from '../ui/Button'
 import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow } from '../../lib/api'
 
@@ -98,10 +99,20 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
           <button onClick={() => state.markDone(task.id)} style={{ padding: '6px 12px', background: 'transparent', color: ACCENT_GREEN, border: 'none', borderRadius: 'var(--radius-sm)', fontFamily: 'inherit', fontSize: 12, cursor: 'pointer' }}>✓ Complete</button>
         )}
         {!isNow && !isDone && (
-          <button onClick={() => state.promote(task.id)} style={{ padding: '6px 12px', background: ACCENT_GOLD, color: PAGE_BG, border: 'none', borderRadius: 'var(--radius-sm)', fontFamily: 'inherit', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>▶ Work on this now</button>
+          <Button
+            variant="gold"
+            size="sm"
+            onClick={() => state.promote(task.id)}
+            style={{ padding: '6px 12px', fontSize: 12, fontWeight: 600, borderRadius: 'var(--radius-sm)' }}
+          >▶ Work on this now</Button>
         )}
         {!isPlanned && !isNow && !isDone && (
-          <button onClick={() => state.planAt(task.id, 'strip')} style={{ padding: '6px 12px', background: 'transparent', color: ACCENT_GOLD, border: 'none', borderRadius: 'var(--radius-sm)', fontFamily: 'inherit', fontSize: 12, fontWeight: 500, cursor: 'pointer' }}>📌 Plan for today</button>
+          <Button
+            variant="ghost-gold"
+            size="sm"
+            onClick={() => state.planAt(task.id, 'strip')}
+            style={{ padding: '6px 12px', fontSize: 12, borderRadius: 'var(--radius-sm)' }}
+          >📌 Plan for today</Button>
         )}
         {isPlanned && !isNow && (
           <button onClick={() => state.unplan(task.id)} style={{ padding: '6px 12px', background: 'transparent', color: INK_MUTED, border: 'none', borderRadius: 'var(--radius-sm)', fontFamily: 'inherit', fontSize: 12, cursor: 'pointer' }}>Unplan</button>
