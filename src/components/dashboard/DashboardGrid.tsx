@@ -10,8 +10,11 @@ import {
   saveLayouts,
   type GridCard,
 } from '../../lib/dashboardLayout'
-import 'react-grid-layout/css/styles.css'
-import 'react-resizable/css/styles.css'
+// NOTE: react-grid-layout/css/styles.css and react-resizable/css/styles.css
+// are NOT imported here. react-resizable's CSS embeds a base64 SVG as a CSS
+// background-image: url(data:...) that violates the Cloudflare Pages CSP.
+// All required base styles are vendored into dashboard-grid.css (with the
+// data: URI intentionally omitted — we use ::after pseudo-elements instead).
 import '../../styles/dashboard-grid.css'
 
 const ResponsiveGridLayout = WidthProvider(Responsive)
