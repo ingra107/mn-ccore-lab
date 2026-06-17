@@ -24,7 +24,7 @@ export function TaskGroup({ gkey, tasks, projectsByPid, state, expandedId, onExp
     <div style={{ marginBottom: 20 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, padding: '0 2px' }}>
         <span style={{ fontSize: 14 }}>{meta.icon}</span>
-        <h4 style={{ fontSize: 12, fontWeight: 700, color: '#fff', letterSpacing: '0.06em', textTransform: 'uppercase', margin: 0 }}>{meta.label}</h4>
+        <h4 style={{ fontSize: 12, fontWeight: 700, color: 'var(--task-ink)', letterSpacing: '0.06em', textTransform: 'uppercase', margin: 0 }}>{meta.label}</h4>
         <span style={{ fontSize: 11, color: INK_DIM, fontVariantNumeric: 'tabular-nums' }}>{doneCount}/{tasks.length}</span>
         <div style={{ flex: 1, height: 1, background: withAlpha(meta.color, 13), marginLeft: 4 }} />
       </div>

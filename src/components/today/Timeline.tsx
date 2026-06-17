@@ -296,7 +296,7 @@ export function Timeline({ events, tasks, state, projectsByPid, expandedId, onEx
       ))}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
         <span style={{ fontSize: 16 }}>📅</span>
-        <h2 style={{ fontSize: 18, fontWeight: 600, color: '#fff', letterSpacing: '-0.02em', margin: 0, whiteSpace: 'nowrap' }}>Today · timeline</h2>
+        <h2 style={{ fontSize: 18, fontWeight: 600, color: 'var(--task-ink)', letterSpacing: '-0.02em', margin: 0, whiteSpace: 'nowrap' }}>Today · timeline</h2>
         {/* N1.15/N1.21 — hide the drag how-to on phones: it wraps into the
             title AND describes drag, which doesn't exist on touch. */}
         <span className="today-section-hint" style={{ fontSize: 11, color: INK_DIM }}>drag tasks into the gaps · click meetings to take notes · × to hide</span>

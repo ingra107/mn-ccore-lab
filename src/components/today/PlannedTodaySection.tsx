@@ -62,7 +62,7 @@ export function PlannedTodaySection({
       {/* Section header — clear boundary between calendar and planned list */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
         <span style={{ fontSize: 14 }}>📋</span>
-        <h3 style={{ fontSize: 13, fontWeight: 600, color: '#fff', letterSpacing: '-0.01em', margin: 0, whiteSpace: 'nowrap' }}>Planned today</h3>
+        <h3 style={{ fontSize: 13, fontWeight: 600, color: 'var(--task-ink)', letterSpacing: '-0.01em', margin: 0, whiteSpace: 'nowrap' }}>Planned today</h3>
         <span className="today-section-hint" style={{ fontSize: 11, color: INK_DIM }}>▶ promote · ✓ done · × to unplan</span>
         <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.08)', marginLeft: 4 }} />
       </div>
@@ -99,7 +99,7 @@ export function PlannedTodaySection({
                 <span
                   title={rightNowTask.title}
                   style={{
-                    fontSize: 14, fontWeight: 600, color: '#fff', letterSpacing: '-0.01em',
+                    fontSize: 14, fontWeight: 600, color: 'var(--task-ink)', letterSpacing: '-0.01em',
                     flex: 1, minWidth: isPhone ? '12ch' : 0, overflow: 'hidden',
                     display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
                   }}

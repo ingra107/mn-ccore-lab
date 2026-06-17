@@ -575,15 +575,33 @@ h1, h2, h3, h4, h5, h6 { font-weight: var(--weight-heading); }
 .density-compact .table-container [style*="padding"] {
   /* Applied via density vars below */
 }
+/* ── Column-header color token ──
+   Light mode: #475569 at full opacity = 5.5:1 on #faf8f3 cream canvas (AA).
+   Was: var(--slate) at var(--ink-label)=0.70 opacity ≈ #72818f ≈ 3.6:1 (fail).
+   Dark mode: keeps existing --slate value at 0.85 ink-label opacity (already AA).
+   Phase 1 WCAG-AA table-header fix, 2026-06-17. */
+:root {
+  --col-header-color: #475569;   /* 5.5:1 on #faf8f3 */
+}
+.dark {
+  --col-header-color: var(--slate);  /* #b0b5b9 at --ink-label=0.85 in dark mode */
+}
+
 /* ── Shared column header base (used by ColumnHeader component) ── */
 .col-header {
   font-family: var(--font-sans);
   font-size: 11px;
-  font-weight: 500;
-  color: var(--slate);
-  opacity: var(--ink-label);
+  /* Phase 1: bumped to 600 per audit spec; was 500 */
+  font-weight: 600;
+  color: var(--col-header-color);
+  /* Light mode: full opacity (contrast comes from the token itself).
+     Dark mode: 0.85 opacity applied via .dark override below. */
+  opacity: 1;
   text-transform: uppercase;
   letter-spacing: 0.06em;
+}
+.dark .col-header {
+  opacity: var(--ink-label);  /* 0.85 in dark mode — was the global value */
 }
 
 .density-compact .table-container .col-header {

@@ -62,7 +62,7 @@ export function TopBar({ view, setView, search, setSearch, filter, setFilter, qu
           second line on narrow widths instead of clipping the fixed-260 search
           and overlapping the title. */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 10, flexWrap: 'wrap' }}>
-        <h1 style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-0.02em', margin: 0, color: '#fff' }}>My Tasks</h1>
+        <h1 style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-0.02em', margin: 0, color: 'var(--task-ink)' }}>My Tasks</h1>
         <span aria-live="polite" aria-atomic="true" style={{ fontSize: 11, color: INK_DIM, fontVariantNumeric: 'tabular-nums' }}>{taskCount} visible</span>
         <div style={{ flex: 1, minWidth: 12 }} />
         {/* N1.20 — phones drop this button: the teal + FAB is the create

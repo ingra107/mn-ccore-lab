@@ -284,7 +284,7 @@ export default function TodayPage() {
       <div style={{ background: PAGE_BG, color: INK, fontFamily: 'var(--font-sans), \'DM Sans\', system-ui, sans-serif', minHeight: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
         <div style={{ textAlign: 'center', maxWidth: 340 }}>
           <div style={{ fontSize: 32, marginBottom: 12 }}>⚠️</div>
-          <h2 style={{ fontSize: 18, fontWeight: 600, color: '#fff', marginBottom: 8 }}>Could not load Today</h2>
+          <h2 style={{ fontSize: 18, fontWeight: 600, color: 'var(--task-ink)', marginBottom: 8 }}>Could not load Today</h2>
           <p style={{ fontSize: 13, color: INK_MUTED, marginBottom: 20 }}>
             There was a problem fetching your tasks or projects. Check your connection and try again.
           </p>
@@ -418,7 +418,7 @@ export default function TodayPage() {
         />
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14, marginTop: 8 }}>
-          <h2 style={{ fontSize: 18, fontWeight: 600, color: '#fff', letterSpacing: '-0.02em', margin: 0, whiteSpace: 'nowrap' }}>📋 All today's tasks</h2>
+          <h2 style={{ fontSize: 18, fontWeight: 600, color: 'var(--task-ink)', letterSpacing: '-0.02em', margin: 0, whiteSpace: 'nowrap' }}>📋 All today's tasks</h2>
           <span className="today-section-hint" style={{ fontSize: 12, color: INK_DIM }}>click to expand · 📌 or drag ⋮⋮ to plan · ▶ to promote</span>
           <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.08)' }} />
         </div>
