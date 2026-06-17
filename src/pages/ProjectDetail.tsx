@@ -401,6 +401,14 @@ function ProjectDetailInner({ project }: InnerProps) {
   const [editingTitle, setEditingTitle] = useState(false)
   const [titleDraft, setTitleDraft] = useState(project.title)
   const descRef = useRef<HTMLTextAreaElement>(null)
+  const titleInputRef = useRef<HTMLInputElement>(null)
+  const shortNameInputRef = useRef<HTMLInputElement>(null)
+  const agendaNoteInputRef = useRef<HTMLInputElement>(null)
+  const strategicDraftRef = useRef<HTMLTextAreaElement>(null)
+  useEffect(() => { if (editingTitle) titleInputRef.current?.focus({ preventScroll: true }) }, [editingTitle])
+  useEffect(() => { if (editingShortName) shortNameInputRef.current?.focus({ preventScroll: true }) }, [editingShortName])
+  useEffect(() => { if (editingDescription) descRef.current?.focus({ preventScroll: true }) }, [editingDescription])
+  useEffect(() => { if (editingStrategic) strategicDraftRef.current?.focus({ preventScroll: true }) }, [editingStrategic])
 
   // Notes/Comments explainer banner dismissibility (PD-4)
   const [notesCommentsBannerDismissed, setNotesCommentsBannerDismissed] = useState(() => {
@@ -552,6 +560,7 @@ function ProjectDetailInner({ project }: InnerProps) {
   // Add to meeting agenda
   const [showAgendaForm, setShowAgendaForm] = useState(false)
   const [agendaNote, setAgendaNote] = useState('')
+  useEffect(() => { if (showAgendaForm) agendaNoteInputRef.current?.focus({ preventScroll: true }) }, [showAgendaForm])
   const nextUpcomingMeeting = useMemo(() => {
     const today = localDateKey()
     const upcoming = apiMeetings.find((m) => m.status === 'upcoming')
@@ -628,7 +637,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                     setEditingTitle(false)
                   }
                 }}
-                autoFocus
+                ref={titleInputRef}
                 aria-label="Edit project title"
                 style={{
                   fontWeight: 700,
@@ -675,7 +684,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                     setEditingShortName(false)
                   }
                 }}
-                autoFocus
+                ref={shortNameInputRef}
                 placeholder="Add short name..."
                 style={{
                   fontSize: 'var(--value-size)',
@@ -959,7 +968,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                     value={agendaNote}
                     onChange={(e) => setAgendaNote(e.target.value)}
                     placeholder="What should we discuss?"
-                    autoFocus
+                    ref={agendaNoteInputRef}
                     style={{
                       flex: 1,
                       fontSize: 'var(--value-size)',
@@ -1444,11 +1453,11 @@ function ProjectDetailInner({ project }: InnerProps) {
           {editingStrategic ? (
             <div>
               <textarea
+                ref={strategicDraftRef}
                 value={strategicDraft}
                 onChange={(e) => setStrategicDraft(e.target.value)}
                 placeholder="2-3 sentences: What's the strategic context? Why is this project important right now? What should the team know?"
                 rows={3}
-                autoFocus
                 style={{
                   width: '100%',
                   fontSize: '14px',
@@ -1696,7 +1705,6 @@ function ProjectDetailInner({ project }: InnerProps) {
                       setEditingDescription(false)
                     }
                   }}
-                  autoFocus
                   rows={3}
                   style={{
                     width: '100%',

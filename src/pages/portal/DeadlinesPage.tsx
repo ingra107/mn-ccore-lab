@@ -876,6 +876,10 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
   const [editingNote, setEditingNote] = useState(false)
   const [noteText, setNoteText] = useState(item.future_note || '')
   const [saving, setSaving] = useState(false)
+  const noteTextareaRef = useRef<HTMLTextAreaElement>(null)
+  useEffect(() => {
+    if (editingNote) noteTextareaRef.current?.focus({ preventScroll: true })
+  }, [editingNote])
   const queryClient = useQueryClient()
 
   const handleSaveNote = useCallback(async () => {
@@ -1033,6 +1037,7 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
             </span>
           </div>
           <textarea
+            ref={noteTextareaRef}
             value={noteText}
             onChange={(e) => setNoteText(e.target.value)}
             placeholder="What should you remember when this milestone arrives? Context, decisions, things to watch for..."
@@ -1049,7 +1054,6 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
               background: 'var(--cream)',
               outline: 'none',
             }}
-            autoFocus
           />
           <div className="flex items-center gap-2 mt-2 justify-end">
             <button

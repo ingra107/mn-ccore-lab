@@ -563,13 +563,15 @@ function IdeaRowView({
   const [editTitle, setEditTitle] = useState(idea.title)
   const [editDescription, setEditDescription] = useState(idea.description ?? '')
   const [editArea, setEditArea] = useState(idea.research_area ?? '')
+  const editTitleRef = useRef<HTMLInputElement>(null)
 
-  // Reset edit fields when editing opens
+  // Reset edit fields when editing opens; focus title without scroll
   useEffect(() => {
     if (isEditing) {
       setEditTitle(idea.title)
       setEditDescription(idea.description ?? '')
       setEditArea(idea.research_area ?? '')
+      editTitleRef.current?.focus({ preventScroll: true })
     }
   }, [isEditing, idea.title, idea.description, idea.research_area])
 
@@ -961,10 +963,10 @@ function IdeaRowView({
                 <label style={{ display: 'block', fontSize: '10px', color: 'var(--slate)', opacity: 0.85, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Title</label>
                 <input
                   type="text"
+                  ref={editTitleRef}
                   value={editTitle}
                   onChange={(e) => setEditTitle(e.target.value)}
                   required
-                  autoFocus
                   style={{ width: '100%', padding: '6px 8px', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-sm)', background: 'var(--cream)', color: 'var(--ink)', fontSize: 'var(--text-base)', boxSizing: 'border-box' }}
                 />
               </div>

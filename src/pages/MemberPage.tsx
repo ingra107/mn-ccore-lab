@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useRef, useEffect } from 'react'
 import { useParams, Navigate, Link, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import LabPageLayout, { PublicationsSection } from '../components/LabPageLayout'
@@ -175,6 +175,10 @@ export default function MemberPage() {
   const removeExpertiseMut = useRemoveExpertise(slug || '')
   const [newTag, setNewTag] = useState('')
   const [showAddTag, setShowAddTag] = useState(false)
+  const newTagInputRef = useRef<HTMLInputElement>(null)
+  useEffect(() => {
+    if (showAddTag) newTagInputRef.current?.focus({ preventScroll: true })
+  }, [showAddTag])
   const { isAuthenticated } = useAuth()
   const { data: allCommitments = [] } = useCommitments(slug)
 
@@ -567,7 +571,7 @@ export default function MemberPage() {
                     }
                   }}
                   placeholder="e.g. mechanical ventilation, sepsis..."
-                  autoFocus
+                  ref={newTagInputRef}
                   className="px-3 py-1.5 rounded-md text-sm"
                   style={{
                     background: 'var(--ice)',

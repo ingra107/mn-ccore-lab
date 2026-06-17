@@ -775,6 +775,10 @@ function CreateTemplateForm({ onSubmit }: { onSubmit: (name: string, stages: str
   const [open, setOpen] = useState(false)
   const [name, setName] = useState('')
   const [stages, setStages] = useState<string[]>([''])
+  const nameInputRef = useRef<HTMLInputElement>(null)
+  useEffect(() => {
+    if (open) nameInputRef.current?.focus({ preventScroll: true })
+  }, [open])
 
   const addStage = () => setStages([...stages, ''])
   const removeStage = (i: number) => setStages(stages.filter((_, idx) => idx !== i))
@@ -813,13 +817,13 @@ function CreateTemplateForm({ onSubmit }: { onSubmit: (name: string, stages: str
 
       <div className="flex flex-col gap-3">
         <input
+          ref={nameInputRef}
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Template name (e.g., Clinical Trial)"
           className="w-full rounded-md border px-3 py-2 text-sm outline-none"
           style={{ borderColor: 'var(--border-subtle)' }}
-          autoFocus
         />
 
         <div className="flex flex-col gap-2">

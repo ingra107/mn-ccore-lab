@@ -116,6 +116,10 @@ export default function MeetingDetail() {
   const [showDecisionForm, setShowDecisionForm] = useState(false)
   const [decisionTitle, setDecisionTitle] = useState('')
   const [decisionRationale, setDecisionRationale] = useState('')
+  const decisionTitleRef = useRef<HTMLInputElement>(null)
+  useEffect(() => {
+    if (showDecisionForm) decisionTitleRef.current?.focus({ preventScroll: true })
+  }, [showDecisionForm])
 
   // Multi-select for action items
   const [selectedActionIds, setSelectedActionIds] = useState<Set<string>>(new Set())
@@ -696,7 +700,7 @@ export default function MeetingDetail() {
                     value={decisionTitle}
                     onChange={(e) => setDecisionTitle(e.target.value)}
                     placeholder="What was decided?"
-                    autoFocus
+                    ref={decisionTitleRef}
                     style={{
                       width: '100%', fontSize: 'var(--value-size)', color: 'var(--ink)',
                       background: 'var(--cream)', border: `1px solid ${withAlpha(ACCENT_GOLD, 15)}`, borderRadius: 'var(--radius-lg)',

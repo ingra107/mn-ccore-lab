@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Activity, Calendar, CheckCircle2, Circle, Search, Clock, Plus, Users, UserCheck, ListChecks, ArrowRight, ChevronLeft, Scale } from 'lucide-react'
 import { Link } from 'react-router-dom'
@@ -125,6 +125,10 @@ function MeetingDetail({ meeting, onToggleAction }: MeetingDetailProps) {
   const [showDecisionForm, setShowDecisionForm] = useState(false)
   const [decisionTitle, setDecisionTitle] = useState('')
   const [decisionRationale, setDecisionRationale] = useState('')
+  const decisionTitleRef = useRef<HTMLInputElement>(null)
+  useEffect(() => {
+    if (showDecisionForm) decisionTitleRef.current?.focus({ preventScroll: true })
+  }, [showDecisionForm])
   const createDecision = useCreateDecision()
   const { showSuccess } = useToast()
 
@@ -348,7 +352,7 @@ function MeetingDetail({ meeting, onToggleAction }: MeetingDetailProps) {
                 value={decisionTitle}
                 onChange={(e) => setDecisionTitle(e.target.value)}
                 placeholder="What was decided?"
-                autoFocus
+                ref={decisionTitleRef}
                 style={{
                   width: '100%', fontSize: 'var(--value-size)', color: 'var(--ink)',
                   background: 'var(--cream)', border: `1px solid ${withAlpha(ACCENT_GOLD, 15)}`, borderRadius: 'var(--radius-lg)',
