@@ -174,12 +174,15 @@ export function localMinutesFromIso(iso: string | null | undefined): number | un
 export function isToday(isoDate: string | null | undefined): boolean {
   if (!isoDate) return false
   const today = todayKey()
-  // Use the local date of the parsed timestamp, not the UTC date slice.
-  // isoDate may be a UTC Z-suffix string (e.g. "2026-05-05T21:00:00.000Z");
-  // slicing to 10 gives the UTC date which can differ from local date by up to
-  // 24h in western timezones — causing evening events to appear on the wrong day.
+  // Date-only strings (no 'T' separator, e.g. D1 meeting date field "2026-06-17")
+  // MUST be compared as civil date strings — new Date("2026-06-17") parses as
+  // UTC midnight, which is the PREVIOUS calendar day in western time zones
+  // (CDT = UTC-5: "2026-06-17" → June 16 at 7pm local → wrong day).
+  // Timestamps with a 'T' (iCal events, ISO Z-suffix) go through local-date
+  // conversion below, which correctly maps the instant to the viewer's wall-clock day.
+  if (!isoDate.includes('T')) return isoDate.slice(0, 10) === today
   const d = new Date(isoDate)
-  if (isNaN(d.getTime())) return isoDate.slice(0, 10) === today  // fallback for date-only strings
+  if (isNaN(d.getTime())) return isoDate.slice(0, 10) === today  // fallback for malformed strings
   const local = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
   return local === today
 }

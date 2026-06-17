@@ -305,7 +305,7 @@ export function Timeline({ events, tasks, state, projectsByPid, expandedId, onEx
         )}
       </div>
       {visibleMeetings.length === 0 && (
-        <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px dashed rgba(255,255,255,0.12)', borderRadius: 8 }}>
+        <div style={{ background: withAlpha(ACCENT_GOLD, 3), border: `1px dashed ${withAlpha(ACCENT_GOLD, 15)}`, borderRadius: 8 }}>
           <EmptyState
             compact
             icon={<EmptyStateArt variant="meetings" width={96} height={72} />}
