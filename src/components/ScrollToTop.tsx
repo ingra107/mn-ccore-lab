@@ -21,7 +21,7 @@ export default function ScrollToTop() {
     <button
       data-testid="scroll-to-top"
       onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-      className="fixed z-50 rounded-full shadow-lg border transition-all"
+      className="fixed z-50 rounded-full shadow-lg transition-all"
       style={{
         bottom: 'var(--fab-stack-3)',
         right: 24,
@@ -31,7 +31,7 @@ export default function ScrollToTop() {
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: 'var(--cream)',
-        borderColor: 'var(--border-subtle)',
+        border: 'none',
         color: 'var(--slate)',
         cursor: 'pointer',
         opacity: 0.85,

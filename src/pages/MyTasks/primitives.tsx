@@ -54,9 +54,9 @@ export function LinksBar({ task }: { task: TaskRow }) {
               }
             }}
             className="hov-color"
-            style={{ width: 16, height: 16, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 3, color: INK_DIM, background: 'rgba(255,255,255,0.02)', textDecoration: 'none', transition: 'color 150ms', '--hov-color': INK_MUTED } as React.CSSProperties}
+            style={{ width: 16, height: 16, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: INK_DIM, textDecoration: 'none', transition: 'color 150ms', '--hov-color': INK_MUTED } as React.CSSProperties}
           >
-            <Icon {...ICON_PROPS} size={10} aria-hidden="true" />
+            <Icon {...ICON_PROPS} size={13} aria-hidden="true" />
           </a>
         )
       })}

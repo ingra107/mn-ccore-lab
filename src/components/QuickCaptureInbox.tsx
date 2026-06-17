@@ -433,7 +433,7 @@ export default function QuickCaptureInbox() {
           borderRadius: 'var(--radius-full)',
           background: 'var(--cream)',
           color: 'var(--teal)',
-          border: '1px solid var(--border-subtle)',
+          border: 'none',
           boxShadow: 'var(--shadow-card, 0 2px 8px rgba(0,0,0,0.15))',
           cursor: 'pointer',
           zIndex: 'var(--z-sticky)' as unknown as number,

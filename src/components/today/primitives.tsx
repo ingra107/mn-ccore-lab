@@ -46,17 +46,15 @@ export function LinkRow({ links }: { links: TaskLink[] }) {
                 void launch(href, { copyText: l.url, successMessage: `Opening ${typeLabel.toLowerCase()}… (path copied as backup)` })
               }
             }}
-            className="hov-color hov-border"
+            className="hov-color"
             style={{
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-              width: 20, height: 20, borderRadius: 4, color: INK_MUTED,
-              background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)',
-              textDecoration: 'none', transition: 'all 150ms',
+              width: 20, height: 20, color: INK_MUTED,
+              textDecoration: 'none', transition: 'color 150ms',
               '--hov-color': ACCENT_GOLD,
-              '--hov-border': withAlpha(ACCENT_GOLD, 30),
             } as React.CSSProperties}
           >
-            <Icon {...ICON_PROPS} size={12} aria-hidden="true" />
+            <Icon {...ICON_PROPS} size={14} aria-hidden="true" />
           </a>
         )
       })}

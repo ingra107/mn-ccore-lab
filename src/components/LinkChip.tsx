@@ -9,7 +9,7 @@
 // to import urlClassify directly for display-only uses.
 
 import React from 'react'
-import { classifyUrl } from '../lib/urlClassify'
+import { classifyUrl, shortLabelForUrl } from '../lib/urlClassify'
 import { ICON_PROPS } from '../lib/iconProps'
 import { useProtocolLaunch } from '../hooks/useProtocolLaunch'
 
@@ -71,9 +71,9 @@ export default function LinkChip({
         ...style,
       }}
     >
-      <Icon {...ICON_PROPS} size={12} aria-hidden="true" />
+      <Icon {...ICON_PROPS} size={14} aria-hidden="true" />
       <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-        {label ?? typeLabel ?? url}
+        {label ?? typeLabel ?? shortLabelForUrl(url)}
       </span>
     </a>
   )
