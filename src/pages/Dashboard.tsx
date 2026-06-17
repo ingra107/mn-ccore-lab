@@ -503,7 +503,8 @@ export default function Dashboard() {
                 <button
                   onClick={() => {
                     setShowCustomize(false)
-                    if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' })
+                    // No scrollTo — user clicked "Done" where their eyes are;
+                    // yanking to top (#39 sweep, 2026-06-16) violates click-stays-put rule.
                   }}
                   className="inline-flex items-center gap-1 px-3 py-1 rounded-md text-xs font-medium"
                   style={{

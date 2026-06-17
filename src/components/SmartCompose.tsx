@@ -155,7 +155,9 @@ export default function SmartCompose(props: SmartComposeProps) {
   const undoToast = useUndoToast()
 
   useEffect(() => {
-    if (autoFocus && textareaRef.current) textareaRef.current.focus()
+    // preventScroll: keeps focus without browser-scrolling the textarea into
+    // view on in-page mounts (click-stays-put rule, #39 sweep, 2026-06-16).
+    if (autoFocus && textareaRef.current) textareaRef.current.focus({ preventScroll: true })
   }, [autoFocus])
 
   const externalSubmitting = isCustomMode ? !!(props as CustomModeProps).submitting : taskMutation.isPending

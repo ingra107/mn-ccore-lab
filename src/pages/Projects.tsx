@@ -265,7 +265,10 @@ export default function Projects() {
     togglePin,
   })
 
-  // Scroll focused row into view
+  // Scroll focused row into view — KEEP: this is keyboard-cursor nav only.
+  // focusedIndex is driven by j/k/ArrowUp/ArrowDown in useProjectKeyboardNav;
+  // mouse clicks do NOT change focusedIndex, so no viewport jerk on click.
+  // block:'nearest' is correct (only scrolls if row is outside visible area).
   const setRowRef = useCallback((index: number) => (el: HTMLDivElement | null) => {
     rowRefs.current[index] = el
   }, [])

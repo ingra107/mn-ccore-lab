@@ -495,7 +495,9 @@ export default function CommandPalette() {
   // Reset selection when filter changes
   useEffect(() => { setSelectedIndex(0) }, [filtered])
 
-  // Scroll selected into view
+  // Scroll selected into view — KEEP: keyboard-cursor nav within the palette.
+  // selectedIndex changes on ArrowUp/Down keydown; onMouseEnter also updates
+  // it but the hovered item is already visible so block:'nearest' is a no-op.
   useEffect(() => {
     const el = listRef.current?.children[selectedIndex] as HTMLElement
     el?.scrollIntoView({ block: 'nearest' })
