@@ -33,8 +33,8 @@ import {
   type GroupKey, type TodayEvent, type DailyCounts,
 } from '../../components/today/constants'
 import { PillStrip } from '../../components/today/PillStrip'
-import { RightNow } from '../../components/today/RightNowCard'
 import { Timeline } from '../../components/today/Timeline'
+import { PlannedTodaySection } from '../../components/today/PlannedTodaySection'
 import { TaskGroup } from '../../components/today/TaskGroup'
 import { MorningThoughtCompose } from '../../components/today/MorningThoughtCompose'
 import { HermesSuggestsCard } from '../../components/today/rail/HermesSuggestsCard'
@@ -243,14 +243,16 @@ export default function TodayPage() {
     return [...untimed, ...meetings, ...timed]
   }, [meetingsQuery.data, calendarEventsQuery.data])
 
-  // Right Now lookup.
+  // Planned Today lookup.
   const rightNowTask = state.rightNow ? tasks.find((t) => t.id === state.rightNow) ?? null : null
   const rightNowProject = rightNowTask?.project_id ? projectsByPid.get(rightNowTask.project_id) ?? null : null
-  const queueTasks = state.plannedIds()
-    .filter((id) => id !== state.rightNow)
+  // Strip tasks: planned with slot==='strip', excluding rightNow (which gets its
+  // own highlighted hero row in PlannedTodaySection). Between-N tasks stay inside
+  // the Timeline drop zones where they render contextually.
+  const stripTasks = state.plannedIds()
+    .filter((id) => id !== state.rightNow && state.planned[id]?.slot === 'strip')
     .map((id) => tasks.find((t) => t.id === id))
     .filter((t): t is TaskRow => !!t)
-    .map((t) => ({ id: t.id, title: t.title, short_title: t.short_title }))
 
   // Pill counts. Cache-confirmed completions + deduped local-only completions.
   const doneTodayCount = doneTodayDetail.length + localDoneIds.length
@@ -395,11 +397,19 @@ export default function TodayPage() {
           </div>
         </div>
 
-        <RightNow task={rightNowTask} project={rightNowProject ? { name: rightNowProject.name, slug: rightNowProject.slug } : null} queueTasks={queueTasks} state={state} />
-
         <Timeline
           events={todaysMeetings}
           tasks={tasks}
+          state={state}
+          projectsByPid={projectsByPid}
+          expandedId={expandedId}
+          onExpand={onExpand}
+        />
+
+        <PlannedTodaySection
+          rightNowTask={rightNowTask}
+          rightNowProject={rightNowProject ? { name: rightNowProject.name, slug: rightNowProject.slug } : null}
+          stripTasks={stripTasks}
           state={state}
           projectsByPid={projectsByPid}
           expandedId={expandedId}

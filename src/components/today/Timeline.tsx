@@ -247,9 +247,6 @@ export function Timeline({ events, tasks, state, projectsByPid, expandedId, onEx
     return { start, end }
   }), [clusters])
 
-  const plannedStripIds = state.plannedIds().filter((id) => state.planned[id]?.slot === 'strip' && id !== state.rightNow)
-  const plannedStripTasks = plannedStripIds.map((id) => tasks.find((t) => t.id === id)).filter((t): t is TaskRow => !!t)
-
   // Collect real D1 meeting ids that have local notes to auto-save.
   // We render one MeetingNotesAutoSave per touched real meeting (not cal-*).
   const touchedMeetingIds = Object.keys(meetingNotes).filter((id) => !id.startsWith('cal-'))
@@ -413,51 +410,8 @@ export function Timeline({ events, tasks, state, projectsByPid, expandedId, onEx
         })()}
         </div>
       </div>
-      <div
-        style={{ marginTop: 16, padding: '12px 14px', background: 'rgba(255,255,255,0.02)', border: '1px dashed rgba(255,255,255,0.10)', borderRadius: 8 }}
-        onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = 'rgba(201,168,76,0.40)' }}
-        onDragLeave={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.10)' }}
-        onDrop={(e) => {
-          e.preventDefault()
-          e.currentTarget.style.borderColor = 'rgba(255,255,255,0.10)'
-          const id = e.dataTransfer.getData('text/plain')
-          if (id) state.planAt(id, 'strip')
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-          <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: ACCENT_GOLD }}>Planned today · no specific time</span>
-          <span style={{ fontSize: 11, color: INK_DIM, marginLeft: 'auto' }}>drag anything here to "get to today"</span>
-        </div>
-        {plannedStripTasks.length === 0 ? (
-          <div style={{ padding: '10px 4px', fontSize: 12, color: INK_DIM, fontStyle: 'italic', textAlign: 'center' }}>
-            Empty — drag a task here to plan it without a time slot
-          </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            {plannedStripTasks.map((t) => (
-              <PlannedTaskRow
-                key={t.id}
-                task={t}
-                project={t.project_id ? projectsByPid.get(t.project_id) ?? null : null}
-                state={state}
-                small
-                onExpand={onExpand}
-                expandedId={expandedId}
-                projectsByPid={projectsByPid}
-              />
-            ))}
-          </div>
-        )}
-      </div>
-      {/* S20: only show the trailing drop affordance when the strip already
-          has tasks (an "add another" cue below the list). When the strip is
-          empty its own dashed band already invites a drop — a second stacked
-          drop-zone hint saying the same thing is redundant clutter. */}
-      {plannedStripTasks.length > 0 && (
-        <div style={{ marginTop: 8 }}>
-          <DropZone slot="strip" label="drop a task above to plan it for later today" onDropTask={onDropTask} />
-        </div>
-      )}
+      {/* Strip-slot planned tasks (no specific time) now live in
+          PlannedTodaySection below the timeline — see TodayPage.tsx. */}
     </section>
   )
 }
