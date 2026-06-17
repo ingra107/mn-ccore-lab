@@ -215,16 +215,32 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
           >
             Cancel
           </Button>
-          <Button
-            type="button"
-            variant="primary"
-            data-testid="task-submit"
-            disabled={!title.trim() || !assignee}
-            aria-describedby={!title.trim() || !assignee ? 'task-submit-hint' : undefined}
-            onClick={() => handleSubmitRef.current()}
-          >
-            Create Task
-          </Button>
+          <div className="flex items-center gap-1.5">
+            <Button
+              type="button"
+              variant="primary"
+              data-testid="task-submit"
+              disabled={!title.trim() || !assignee}
+              aria-describedby={!title.trim() || !assignee ? 'task-submit-hint' : undefined}
+              onClick={() => handleSubmitRef.current()}
+            >
+              Create Task
+            </Button>
+            <kbd
+              className="text-[10px] px-1.5 py-0.5 rounded border select-none"
+              style={{
+                fontFamily: 'var(--font-mono)',
+                color: 'var(--slate)',
+                borderColor: 'var(--border-subtle)',
+                backgroundColor: 'var(--cream)',
+                opacity: 0.75,
+                whiteSpace: 'nowrap',
+              }}
+              title="Keyboard shortcut: Ctrl+Enter (Windows) or ⌘+Enter (Mac)"
+            >
+              ⌘ Enter
+            </kbd>
+          </div>
         </div>
       }
     >
