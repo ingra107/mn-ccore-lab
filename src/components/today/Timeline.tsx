@@ -77,7 +77,37 @@ function useNowMinutes(): number {
   return now
 }
 
-function DropZone({ slot, label, onDropTask }: { slot: PlannedSlot; label: string; onDropTask: (id: string, slot: PlannedSlot) => void }) {
+// Format a minute count as "1h 30m" / "45m" / "2h".
+function fmtGap(min: number): string {
+  const h = Math.floor(min / 60)
+  const m = min % 60
+  if (h === 0) return `${m}m`
+  if (m === 0) return `${h}h`
+  return `${h}h ${m}m`
+}
+
+// Map a between-meeting gap (minutes) to a clamped pixel height so a 1h break
+// reads visibly SHORTER than a 3h break — proportional spacing WITHOUT an
+// absolute time axis (keeps the flow-list + droppable gaps, per N1.15). The
+// gap IS the drop zone, so a taller gap also says "room for several tasks".
+// 0.8px/min, floored so a tiny gap is still a usable drop target and ceiled so
+// an all-morning gap doesn't blow out the page. (1h≈48px, 3h≈144px.)
+const GAP_PX_PER_MIN = 0.8
+const GAP_MIN_H = 30
+const GAP_MAX_H = 180
+function gapHeight(min: number): number {
+  return Math.max(GAP_MIN_H, Math.min(GAP_MAX_H, Math.round(min * GAP_PX_PER_MIN)))
+}
+
+function DropZone({ slot, label, onDropTask, gapMin }: { slot: PlannedSlot; label: string; onDropTask: (id: string, slot: PlannedSlot) => void; gapMin?: number | null }) {
+  // A real, timed gap between two meetings → proportional height + a duration
+  // label with a capacity cue. Otherwise (leading/trailing/untimed) keep the
+  // flat default zone + its contextual label.
+  const proportional = typeof gapMin === 'number' && gapMin > 0
+  const slots = proportional ? Math.max(1, Math.floor((gapMin as number) / 30)) : 0
+  const gapLabel = proportional
+    ? `↕ ${fmtGap(gapMin as number)} free · drop tasks here${slots > 1 ? ` · room for ~${slots}` : ''}`
+    : label
   return (
     <div
       // N1.15: .today-drop-zone hides on touch devices (index.css) — native
@@ -93,9 +123,9 @@ function DropZone({ slot, label, onDropTask }: { slot: PlannedSlot; label: strin
         const id = e.dataTransfer.getData('text/plain')
         if (id) onDropTask(id, slot)
       }}
-      style={{ padding: '6px 14px', margin: '4px 0', border: '1px dashed rgba(201,168,76,0.15)', borderRadius: 6, fontSize: 11, color: INK_DIM, textAlign: 'center', transition: 'all 120ms', fontStyle: 'italic' }}
+      style={{ padding: '6px 14px', margin: '4px 0', border: '1px dashed rgba(201,168,76,0.15)', borderRadius: 6, fontSize: 11, color: INK_DIM, textAlign: 'center', transition: 'all 120ms', fontStyle: 'italic', ...(proportional ? { minHeight: gapHeight(gapMin as number), display: 'flex', alignItems: 'center', justifyContent: 'center' } : {}) }}
     >
-      {label}
+      {gapLabel}
     </div>
   )
 }
@@ -206,6 +236,17 @@ export function Timeline({ events, tasks, state, projectsByPid, expandedId, onEx
     return result
   }, [flowMeetings])
 
+  // Per-cluster {start,end} in wall-clock minutes (null for untimed clusters),
+  // used to size the droppable gap BEFORE each cluster by the real time since
+  // the previous cluster ended. Untimed clusters can't anchor a gap → null.
+  const clusterBounds = useMemo(() => clusters.map((c) => {
+    const timed = c.filter((e) => typeof e.startMin === 'number')
+    if (timed.length === 0) return { start: null as number | null, end: null as number | null }
+    const start = Math.min(...timed.map((e) => e.startMin as number))
+    const end = Math.max(...timed.map((e) => (typeof e.endMin === 'number' ? e.endMin : (e.startMin as number) + 30)))
+    return { start, end }
+  }), [clusters])
+
   const plannedStripIds = state.plannedIds().filter((id) => state.planned[id]?.slot === 'strip' && id !== state.rightNow)
   const plannedStripTasks = plannedStripIds.map((id) => tasks.find((t) => t.id === id)).filter((t): t is TaskRow => !!t)
 
@@ -298,10 +339,15 @@ export function Timeline({ events, tasks, state, projectsByPid, expandedId, onEx
           const head = cluster[0]
           const beforeLabel = `drop a task here · before ${head.title}${cluster.length > 1 ? ` (+${cluster.length - 1} overlap)` : ''}`
           const clusterKey = cluster.map((e) => e.id).join('|')
+          // Proportional gap: minutes from the previous cluster's end to this
+          // cluster's start (only when both are timed and there's real space).
+          const prev = idx > 0 ? clusterBounds[idx - 1] : null
+          const cur = clusterBounds[idx]
+          const gapMin = prev && prev.end != null && cur.start != null && cur.start > prev.end ? cur.start - prev.end : null
           return (
             <div key={clusterKey}>
               {nowIdx === idx && nowDivider}
-              <DropZone slot={slotKey} label={beforeLabel} onDropTask={onDropTask} />
+              <DropZone slot={slotKey} label={beforeLabel} onDropTask={onDropTask} gapMin={gapMin} />
               {tasksInGap.map((t) => (
                 <PlannedTaskRow
                   key={t.id}
