@@ -53,6 +53,7 @@ function MiniStat({ icon: Icon, value, label, suffix = '', delay, displayOverrid
             fontWeight: 700,
             color: 'var(--ink)',
             lineHeight: 1.1,
+            fontVariantNumeric: 'tabular-nums',
           }}
         >
           {display}

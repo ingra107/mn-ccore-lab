@@ -80,6 +80,7 @@ function PipelineCard() {
                       fontWeight: 700,
                       color: i === 2 ? 'var(--ink)' : 'var(--gold)',
                       lineHeight: 1,
+                      fontVariantNumeric: 'tabular-nums',
                     }}
                   >
                     {stage.count}

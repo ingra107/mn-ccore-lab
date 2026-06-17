@@ -20,6 +20,7 @@ import { useTaskFieldEditors } from '../../hooks/useTaskFieldEditors'
 import { useGrantTimeline } from '../../hooks/useGrantTimeline'
 import { getPersonInfo } from '../../data/team'
 import { formatShortDate, localDateKey, isOverdue } from '../../lib/dateUtils'
+import DueLabel from '../../components/DueLabel'
 import { PATHS } from '../../constants/paths'
 import { useQueryClient } from '@tanstack/react-query'
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
@@ -475,7 +476,7 @@ export default function DeadlinesPage() {
                   // fails AA. Use --muted directly, no opacity. r7 2026-04-22.
                   <span key={s.label} style={{ fontSize: 'var(--label-size)', color: 'var(--muted)' }}>
                     {s.label}{' '}
-                    <span style={{ fontWeight: 600, color: (s as any).color || 'var(--slate)' }}>
+                    <span style={{ fontWeight: 600, color: (s as any).color || 'var(--slate)', fontVariantNumeric: 'tabular-nums' }}>
                       {s.value}
                     </span>
                   </span>
@@ -632,15 +633,11 @@ function DeadlineItemRow({ item, onStatusChange, onMilestoneStatusChange, onDueD
             />
           </div>
         ) : (
-          <span style={{
-            fontSize: 'var(--text-label)',
-            color: item.isOverdue ? 'var(--maroon)' : 'var(--slate)',
-            fontWeight: item.isOverdue ? 500 : 400,
-            opacity: item.isOverdue ? 1 : 0.85,
-            fontVariantNumeric: 'tabular-nums',
-          }}>
-            {item.isOverdue ? 'Overdue' : formatShortDate(item.due_date)}
-          </span>
+          <DueLabel
+            due={item.due_date}
+            status={item.status}
+            style={{ fontSize: 'var(--text-label)', opacity: item.isOverdue ? 1 : 0.85 }}
+          />
         )}
 
         {/* Assignee */}
@@ -724,13 +721,11 @@ function DeadlineItemRow({ item, onStatusChange, onMilestoneStatusChange, onDueD
                 />
               </div>
             ) : (
-              <span style={{
-                fontSize: 'var(--label-size)',
-                color: item.isOverdue ? 'var(--maroon)' : 'var(--slate)',
-                fontWeight: item.isOverdue ? 500 : 400,
-              }}>
-                {item.isOverdue ? 'Overdue' : formatShortDate(item.due_date)}
-              </span>
+              <DueLabel
+                due={item.due_date}
+                status={item.status}
+                style={{ fontSize: 'var(--label-size)' }}
+              />
             )}
             <span style={{
               fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)',
@@ -966,16 +961,12 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
         )}
 
         {/* Date */}
-        <span
+        <DueLabel
+          due={item.due_date}
+          status={item.status}
           className="text-[11px] flex-shrink-0 w-16 text-right"
-          style={{
-            color: item.isOverdue ? 'var(--maroon)' : 'var(--slate)',
-            fontWeight: item.isOverdue ? 600 : 400,
-            opacity: item.isOverdue ? 1 : 0.85,
-          }}
-        >
-          {item.daysUntil === 0 ? 'Today' : item.daysUntil === 1 ? 'Tomorrow' : formatShortDate(item.due_date)}
-        </span>
+          style={{ opacity: item.isOverdue ? 1 : 0.85 }}
+        />
       </div>
 
       {/* Future Me note callout — shown when milestone is due within 7 days */}

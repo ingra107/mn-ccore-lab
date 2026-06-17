@@ -194,7 +194,7 @@ function UpcomingCard() {
             {meetingActionCounts.total > 0 && (
               <div className="flex items-center gap-1.5">
                 <ListChecks {...ICON_PROPS} size={11} style={{ color: 'var(--teal)', opacity: 0.8 }} />
-                <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.85 }}>
+                <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.85, fontVariantNumeric: 'tabular-nums' }}>
                   {meetingActionCounts.pending}/{meetingActionCounts.total} pending
                 </span>
               </div>
@@ -264,6 +264,7 @@ function UpcomingCard() {
                       ? 'var(--gold)'
                       : 'var(--slate)',
                   lineHeight: 1.3,
+                  fontVariantNumeric: 'tabular-nums',
                 }}
               >
                 {d.date}

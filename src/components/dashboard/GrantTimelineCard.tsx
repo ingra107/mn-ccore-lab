@@ -202,6 +202,7 @@ function GrantTimelineCard() {
                         color: isCurrent ? 'var(--gold)' : 'var(--slate)',
                         opacity: isCurrent ? 1 : 0.85,
                         fontWeight: isCurrent ? 700 : 400,
+                        fontVariantNumeric: 'tabular-nums',
                       }}
                     >
                       {year % 2 === 1 ? `'${String(year).slice(2)}` : ''}

@@ -45,7 +45,7 @@ function MyItemsCard() {
         <div className="flex items-center gap-4 mb-1">
           <div className="flex items-center gap-1.5">
             <Circle {...ICON_PROPS} size={12} style={{ color: 'var(--gold)' }} />
-            <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--ink)' }}>
+            <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--ink)', fontVariantNumeric: 'tabular-nums' }}>
               {pending.length}
             </span>
             <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.85 }}>
@@ -55,7 +55,7 @@ function MyItemsCard() {
           {overdueCount > 0 && (
             <div className="flex items-center gap-1.5">
               <AlertTriangle {...ICON_PROPS} size={12} style={{ color: 'var(--maroon)' }} />
-              <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--maroon)' }}>
+              <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--maroon)', fontVariantNumeric: 'tabular-nums' }}>
                 {overdueCount}
               </span>
               <span style={{ fontSize: '11px', color: 'var(--maroon)', opacity: 0.85 }}>
@@ -74,7 +74,7 @@ function MyItemsCard() {
                   display: 'inline-block',
                 }}
               />
-              <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--gold)' }}>
+              <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--gold)', fontVariantNumeric: 'tabular-nums' }}>
                 {unreadCount}
               </span>
               <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.85 }}>

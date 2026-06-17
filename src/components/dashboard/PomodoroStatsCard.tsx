@@ -159,7 +159,7 @@ export default function PomodoroStatsCard() {
           {/* Streak + top project */}
           <div className="flex items-center justify-between mt-2">
             {streak > 0 && (
-              <span className="text-[10px]" style={{ color: 'var(--teal)', opacity: 0.8 }}>
+              <span className="text-[10px]" style={{ color: 'var(--teal)', opacity: 0.8, fontVariantNumeric: 'tabular-nums' }}>
                 {streak}-day streak
               </span>
             )}

@@ -135,6 +135,7 @@ function ProjectHealthCard() {
                   fontWeight: 700,
                   color: 'var(--ink)',
                   lineHeight: 1,
+                  fontVariantNumeric: 'tabular-nums',
                 }}
               >
                 {s.count}
@@ -377,6 +378,7 @@ function ProjectHealthRow({ project }: { project: ProjectHealth }) {
             opacity: isBad ? 1 : 0.85,
             minWidth: '20px',
             textAlign: 'right',
+            fontVariantNumeric: 'tabular-nums',
           }}
         >
           {project.score}

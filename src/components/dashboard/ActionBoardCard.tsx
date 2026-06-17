@@ -52,7 +52,7 @@ function ActionBoardCard() {
                       <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--ink)' }}>
                         {person.name}
                       </span>
-                      <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 'var(--ink-hint)' }}>
+                      <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 'var(--ink-hint)', fontVariantNumeric: 'tabular-nums' }}>
                         {assigneeItems.length}
                       </span>
                     </div>
