@@ -901,19 +901,19 @@
   },
   {
     "file": "src/components/tasks/TaskCard.tsx",
-    "line": 211,
+    "line": 210,
     "kind": "token-rgba-literal",
     "sample": "rgba(15,25,35,0.10)"
   },
   {
     "file": "src/components/tasks/TaskCard.tsx",
-    "line": 232,
+    "line": 231,
     "kind": "token-rgba-literal",
     "sample": "rgba(15,25,35,0.10)"
   },
   {
     "file": "src/components/tasks/TaskCard.tsx",
-    "line": 253,
+    "line": 252,
     "kind": "token-rgba-literal",
     "sample": "rgba(15,25,35,0.10)"
   },

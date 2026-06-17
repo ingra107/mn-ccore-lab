@@ -3,15 +3,16 @@
 // and other surfaces into one focused component.
 //
 // API:
-//   color    — CSS color value (token or hex). Default: 'var(--slate)'.
-//   filled   — show tinted background at 12% alpha. Default: true.
-//   bordered — show 1px border at 25% alpha of color. Default: false.
-//             (MyTasks status chips use this variant — border-only or fill+border.)
-//   size     — 'xs' (10px / 1px 5px) | 'sm' (11px / 2px 7px). Default: 'xs'.
-//   pill     — borderRadius full vs sm. Default: false.
-//   title    — native tooltip string.
-//   style    — caller overrides merged LAST (highest specificity).
-//   children — content (emoji + text combos are common).
+//   color     — CSS color value (token or hex). Default: 'var(--slate)'.
+//   filled    — show tinted background at 12% alpha. Default: true.
+//   bordered  — show 1px border at 25% alpha of color. Default: false.
+//              (MyTasks status chips use this variant — border-only or fill+border.)
+//   size      — 'xs' (10px / 1px 5px) | 'sm' (11px / 2px 7px). Default: 'xs'.
+//   pill      — borderRadius full vs sm. Default: false.
+//   title     — native tooltip string.
+//   className — passed through to the span (e.g. 'status-transition').
+//   style     — caller overrides merged LAST (highest specificity).
+//   children  — content (emoji + text combos are common).
 //
 // All radius/font-size/gap values use design tokens from src/index.css.
 
@@ -26,6 +27,7 @@ export interface ChipProps {
   size?: 'xs' | 'sm'
   pill?: boolean
   title?: string
+  className?: string
   style?: CSSProperties
 }
 
@@ -37,6 +39,7 @@ export function Chip({
   size = 'xs',
   pill = false,
   title,
+  className,
   style,
 }: ChipProps) {
   const sizeStyles: CSSProperties =
@@ -61,7 +64,7 @@ export function Chip({
   }
 
   return (
-    <span style={chipStyle} title={title}>
+    <span style={chipStyle} title={title} className={className}>
       {children}
     </span>
   )

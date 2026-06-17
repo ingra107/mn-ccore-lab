@@ -12,6 +12,7 @@ import { useProjects } from '../../hooks/useApiData'
 import { STATUS_OPTIONS, PRIORITY_CONFIG, PRIORITY_COLORS, STATUS_CYCLE } from '../../lib/taskConstants'
 import type { TaskRow } from '../../lib/api'
 import { isTaskDone } from '../../lib/taskGrouping'
+import { Chip } from '../ui/Chip'
 
 function hasBlockers(task: TaskRow): boolean {
   return !!task.blocked_by && task.blocked_by.split(',').filter(s => s.trim()).length > 0
@@ -123,29 +124,27 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
           <div className="flex items-center gap-2 mt-1.5 flex-wrap">
             {/* Blocked badge */}
             {isBlocked && !isDone && (
-              <span
-                className="flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded font-medium"
-                style={{
-                  color: 'var(--maroon)',
-                  backgroundColor: 'rgba(122, 0, 25, 0.1)',
-                }}
+              <Chip
+                size="sm"
+                color="var(--maroon)"
+                filled={false}
+                style={{ background: 'rgba(122, 0, 25, 0.1)', padding: '2px 6px' }}
               >
                 <AlertTriangle size={9} strokeWidth={1.5} absoluteStrokeWidth />
                 Blocked
-              </span>
+              </Chip>
             )}
 
             {/* Priority badge */}
-            <span
-              className="text-[11px] px-1.5 py-0.5 rounded font-medium status-transition"
-              style={{
-                color: priority.color,
-                opacity: 0.85,
-                backgroundColor: priority.bg,
-              }}
+            <Chip
+              size="sm"
+              color={priority.color}
+              filled={false}
+              className="status-transition"
+              style={{ background: priority.bg, padding: '2px 6px', opacity: 0.85 }}
             >
               {priority.label}
-            </span>
+            </Chip>
 
             {/* Due date */}
             {task.due_date && (

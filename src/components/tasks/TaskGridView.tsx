@@ -32,6 +32,7 @@ import { parseDbUtc } from '../../lib/time'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { ACCENT_GOLD, isTaskDone, withAlpha } from '../../lib/taskGrouping'
 import EmptyState from '../EmptyState'
+import { Chip } from '../ui/Chip'
 
 // ── Column definitions for resize + tab nav ─────────────────
 // Full column set: checkbox + DATA_COLUMNS + actions
@@ -1441,15 +1442,16 @@ function TaskGridRow({
                     const opt = PRIORITY_OPTIONS.find(o => o.value === val) || PRIORITY_OPTIONS[1]
                     const cfg = PRIORITY_CONFIG[val as keyof typeof PRIORITY_CONFIG]
                     return (
-                      <span className="status-transition" style={{
-                        color: opt.color,
-                        opacity: 0.85,
-                        background: cfg?.bg || 'rgba(100, 116, 139, 0.1)',
-                        padding: '2px 8px',
-                        borderRadius: 'var(--radius-full)',
-                      }}>
+                      <Chip
+                        pill
+                        size="sm"
+                        color={opt.color}
+                        filled={false}
+                        className="status-transition"
+                        style={{ background: cfg?.bg || 'rgba(100, 116, 139, 0.1)', padding: '2px 8px', opacity: 0.85 }}
+                      >
                         {opt.label}
-                      </span>
+                      </Chip>
                     )
                   }}
                 />
