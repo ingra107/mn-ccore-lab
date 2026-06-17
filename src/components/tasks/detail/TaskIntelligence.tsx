@@ -6,6 +6,7 @@ import HermesMark from '../../HermesMark'
 import { parseDbUtc } from '../../../lib/time'
 import type { TaskRow } from '../../../lib/api'
 import { ICON_PROPS } from '../../../lib/iconProps'
+import { ACCENT_GOLD, withAlpha } from '../../../lib/taskGrouping'
 
 interface TaskIntelligenceProps {
   task: TaskRow
@@ -234,7 +235,7 @@ export default function TaskIntelligence({ task }: TaskIntelligenceProps) {
           padding: 'var(--sp-md)',
           borderRadius: 'var(--radius-lg)',
           background: 'var(--gold-hover)',
-          border: '1px solid rgba(201,168,76,0.2)',
+          border: `1px solid ${withAlpha(ACCENT_GOLD, 20)}`,
           display: 'flex',
           flexDirection: 'column',
           gap: 'var(--sp-sm)',

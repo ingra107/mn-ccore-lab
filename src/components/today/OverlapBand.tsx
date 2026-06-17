@@ -14,7 +14,7 @@
 // renders at its natural height rather than stretching to the tallest column.
 
 import { EventRow, type SaveStatus } from './MeetingRow'
-import { ACCENT_CORAL, INK_DIM } from './constants'
+import { ACCENT_CORAL, INK_DIM, PAGE_BG } from './constants'
 import { withAlpha } from '../../lib/taskGrouping'
 import type { TodayEvent } from './constants'
 import { useIsMobile } from '../../hooks/useIsMobile'
@@ -60,7 +60,7 @@ export function OverlapBand({ events, onDismiss, notes, onNote, saveStates, isPh
         margin: '4px 0',
         border: `1px dashed ${withAlpha(ACCENT_CORAL, 40)}`,
         borderRadius: 8,
-        background: 'rgba(240,115,126,0.04)',
+        background: withAlpha(ACCENT_CORAL, 4),
       }}
     >
       <div
@@ -74,7 +74,7 @@ export function OverlapBand({ events, onDismiss, notes, onNote, saveStates, isPh
           letterSpacing: '0.10em',
           textTransform: 'uppercase',
           color: ACCENT_CORAL,
-          background: 'rgba(11,16,23,0.95)',
+          background: withAlpha(PAGE_BG, 95),
           borderRadius: 3,
         }}
       >

@@ -22,6 +22,7 @@ import LatestDigest from '../components/LatestDigest'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { PATHS } from '../constants/paths'
 import { ICON_PROPS } from '../lib/iconProps'
+import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
 
 // Lazy-loaded: pulls recharts (PublicationTimeline) — deferred until scrolled into view
 const ResearchImpact = lazy(() => import('../components/ResearchImpact'))
@@ -168,7 +169,7 @@ export default function Home() {
           className="absolute inset-0"
           style={{
             background:
-              'radial-gradient(ellipse at 20% 40%, rgba(201,168,76,0.12) 0%, transparent 55%), radial-gradient(ellipse at 80% 60%, rgba(45,138,138,0.08) 0%, transparent 50%)',
+              `radial-gradient(ellipse at 20% 40%, ${withAlpha(ACCENT_GOLD, 12)} 0%, transparent 55%), radial-gradient(ellipse at 80% 60%, rgba(45,138,138,0.08) 0%, transparent 50%)`,
             animation: 'gradientShift 20s ease-in-out infinite alternate',
           }}
         />
@@ -302,7 +303,7 @@ export default function Home() {
         <div
           className="relative z-10"
           style={{
-            borderTop: '1px solid rgba(201, 168, 76, 0.25)',
+            borderTop: `1px solid ${withAlpha(ACCENT_GOLD, 25)}`,
             background: 'rgba(0, 0, 0, 0.2)',
             backdropFilter: 'blur(12px)',
             opacity: heroVisible ? 1 : 0,

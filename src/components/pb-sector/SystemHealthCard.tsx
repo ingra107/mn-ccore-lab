@@ -3,6 +3,7 @@ import { Activity } from 'lucide-react'
 import { parseDbUtc } from '../../lib/time'
 import type { PBHealthData } from '../../hooks/useApiData'
 import { ICON_PROPS } from '../../lib/iconProps'
+import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
 
 function StatusDot({ timestamp }: { timestamp: string | null }) {
   const color = useMemo(() => {
@@ -53,7 +54,7 @@ export default function SystemHealthCard({ data, isLoading }: Props) {
       <div
         className="rounded-lg overflow-hidden animate-pulse"
         style={{
-          border: '1px solid rgba(201,168,76,0.1)',
+          border: `1px solid ${withAlpha(ACCENT_GOLD, 10)}`,
           background: 'var(--gold-hover)',
           height: 120,
         }}
@@ -67,7 +68,7 @@ export default function SystemHealthCard({ data, isLoading }: Props) {
     <div
       className="rounded-lg overflow-hidden"
       style={{
-        border: '1px solid rgba(201,168,76,0.1)',
+        border: `1px solid ${withAlpha(ACCENT_GOLD, 10)}`,
         background: 'var(--gold-hover)',
       }}
     >
@@ -116,7 +117,7 @@ export default function SystemHealthCard({ data, isLoading }: Props) {
         </div>
 
         {/* Divider */}
-        <div style={{ borderTop: '1px solid rgba(201,168,76,0.08)', margin: '2px 0' }} />
+        <div style={{ borderTop: `1px solid ${withAlpha(ACCENT_GOLD, 8)}`, margin: '2px 0' }} />
 
         {/* Counts row */}
         <div className="flex items-center gap-3" style={{ fontSize: '10px' }}>

@@ -12,6 +12,7 @@ import PageLayout from '../components/PageLayout'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useScrollRevealGroup } from '../hooks/useScrollReveal'
 import { ICON_PROPS } from '../lib/iconProps'
+import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
 
 // High-impact journal names for the "Key Publications" section
 const KEY_JOURNALS = [
@@ -214,7 +215,7 @@ export default function Publications() {
                       style={{
                         width: 20,
                         height: `${Math.max((count / max) * 24, 2)}px`,
-                        backgroundColor: activeYears.includes(year) ? 'var(--gold)' : 'rgba(201,168,76,0.3)',
+                        backgroundColor: activeYears.includes(year) ? 'var(--gold)' : withAlpha(ACCENT_GOLD, 30),
                       }}
                     />
                     <span className="text-[7px]" style={{ color: activeYears.includes(year) ? 'var(--gold)' : 'var(--slate)', opacity: activeYears.includes(year) ? 1 : 0.85 }}>

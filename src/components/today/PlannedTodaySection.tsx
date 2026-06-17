@@ -20,7 +20,7 @@ import { PATHS } from '../../constants/paths'
 import { useIsMobile } from '../../hooks/useIsMobile'
 import { PlannedTaskRow } from './PlannedTaskRow'
 import { LinkRow, type TaskLink } from './primitives'
-import { ACCENT_GOLD, INK, INK_MUTED, INK_DIM, PAGE_BG } from './constants'
+import { ACCENT_GOLD, INK, INK_MUTED, INK_DIM, PAGE_BG, withAlpha } from './constants'
 import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow } from '../../lib/api'
 import SmartCompose from '../SmartCompose'
@@ -79,11 +79,11 @@ export function PlannedTodaySection({
           {rightNowTask && (
             <div
               style={{
-                background: 'linear-gradient(90deg, rgba(201,168,76,0.12), rgba(201,168,76,0.02))',
-                border: '1px solid rgba(201,168,76,0.28)',
+                background: `linear-gradient(90deg, ${withAlpha(ACCENT_GOLD, 12)}, ${withAlpha(ACCENT_GOLD, 2)})`,
+                border: `1px solid ${withAlpha(ACCENT_GOLD, 28)}`,
                 borderLeft: `3px solid ${ACCENT_GOLD}`,
                 borderRadius: 'var(--radius-lg)',
-                boxShadow: '0 0 24px rgba(201,168,76,0.06)',
+                boxShadow: `0 0 24px ${withAlpha(ACCENT_GOLD, 6)}`,
               }}
             >
               <div style={{ display: 'flex', gap: 14, padding: '12px 18px', alignItems: 'center', flexWrap: 'wrap' }}>
@@ -140,7 +140,7 @@ export function PlannedTodaySection({
                 </div>
               </div>
               {chatExpanded && (
-                <div style={{ padding: '0 18px 14px', borderTop: '1px dashed rgba(201,168,76,0.18)', paddingTop: 10 }}>
+                <div style={{ padding: '0 18px 14px', borderTop: `1px dashed ${withAlpha(ACCENT_GOLD, 18)}`, paddingTop: 10 }}>
                   {rightNowTask.description && (
                     <div style={{ fontSize: 12, color: INK_MUTED, marginBottom: 8, fontStyle: 'italic' }}>
                       {rightNowTask.description.split('\n')[0].slice(0, 280)}

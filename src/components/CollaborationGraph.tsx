@@ -3,6 +3,7 @@ import { GraphCanvas, darkTheme } from 'reagraph'
 import type { GraphCanvasRef } from 'reagraph'
 import type { GraphNode as ReagraphNode, GraphEdge as ReagraphEdge, InternalGraphNode, InternalGraphEdge, Theme } from 'reagraph'
 import type { Publication } from '../data/types'
+import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
 
 // Re-export the same interfaces the sidebar/filters expect
 export interface NetworkNode {
@@ -85,7 +86,7 @@ const mnccoreTheme: Theme = {
   },
   edge: {
     ...darkTheme.edge,
-    fill: 'rgba(201, 168, 76, 0.25)',
+    fill: withAlpha(ACCENT_GOLD, 25),
     activeFill: GOLD,
     opacity: 1,
     selectedOpacity: 1,
@@ -101,8 +102,8 @@ const mnccoreTheme: Theme = {
     activeFill: GOLD,
   },
   lasso: {
-    background: 'rgba(201, 168, 76, 0.1)',
-    border: 'rgba(201, 168, 76, 0.5)',
+    background: withAlpha(ACCENT_GOLD, 10),
+    border: withAlpha(ACCENT_GOLD, 50),
   },
 }
 

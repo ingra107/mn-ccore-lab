@@ -3,6 +3,7 @@ import { Users } from 'lucide-react'
 import BentoCard from './BentoCard'
 import { useTeamPulse } from '../../hooks/useApiData'
 import { directors, getAllMembers } from '../../data/team'
+import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
 
 function TeamPulseCard() {
   const { data } = useTeamPulse(48)
@@ -71,7 +72,7 @@ function TeamPulseCard() {
         </div>
 
         {/* Activity summary */}
-        <div className="flex items-center gap-4 pt-1" style={{ borderTop: '1px solid rgba(201, 168, 76, 0.08)' }}>
+        <div className="flex items-center gap-4 pt-1" style={{ borderTop: `1px solid ${withAlpha(ACCENT_GOLD, 8)}` }}>
           {hasActivity ? (
             <>
               {totalUpdates > 0 && (

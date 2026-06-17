@@ -6,7 +6,7 @@ import { stageIndex, toApiStage } from '../lib/stageNormalize'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useProjects, useDependencies, useProjectHealth, useTasks } from '../hooks/useApiData'
 import { useLabPrefs } from '../hooks/useLabPrefs'
-import { daysSince } from '../lib/taskGrouping'
+import { PANEL_BG, daysSince, withAlpha } from '../lib/taskGrouping'
 import { useCreateProject } from '../hooks/useMutations'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { updateProject } from '../lib/api'
@@ -983,7 +983,7 @@ export default function Projects() {
         }
 
         .filter-pill:hover {
-          background: rgba(15, 25, 35, 0.04);
+          background: ${withAlpha(PANEL_BG, 4)};
         }
 
         /* Dark mode overrides */

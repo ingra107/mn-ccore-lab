@@ -9,6 +9,7 @@ import { useCreateHandoff, useAcknowledgeHandoff } from '../../../hooks/useMutat
 import { useToast } from '../../../hooks/useToast'
 import { formatRelativeTime } from '../../../lib/dateUtils'
 import { ICON_PROPS } from '../../../lib/iconProps'
+import { ACCENT_GOLD, withAlpha } from '../../../lib/taskGrouping'
 
 // ── Handoff Recipient Select ─────────────────────────────────
 
@@ -292,7 +293,7 @@ export function HandoffSection({ taskId, currentAssignee }: { taskId: string; cu
                         style={{
                           color: 'var(--gold)',
                           background: 'var(--gold-active)',
-                          border: '1px solid rgba(201,168,76,0.2)',
+                          border: `1px solid ${withAlpha(ACCENT_GOLD, 20)}`,
                           cursor: 'pointer',
                         }}
                       >

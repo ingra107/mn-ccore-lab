@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useTeamSlugs } from '../hooks/useMentionAutocomplete'
+import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
 
 interface MentionInputProps {
   value: string
@@ -280,7 +281,7 @@ export default function MentionInput({
               maxHeight: '200px',
               overflowY: 'auto',
               background: 'var(--cream)',
-              border: '1px solid rgba(201, 168, 76, 0.2)',
+              border: `1px solid ${withAlpha(ACCENT_GOLD, 20)}`,
               borderRadius: 'var(--radius-lg)',
               boxShadow: 'var(--shadow-menu)',
               zIndex: 'var(--z-dropdown)',

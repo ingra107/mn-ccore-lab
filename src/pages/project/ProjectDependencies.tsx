@@ -8,6 +8,7 @@ import type { Project } from '../../data/types'
 import { PATHS } from '../../constants/paths'
 import InlineSelect from '../../components/InlineSelect'
 import { ICON_PROPS } from '../../lib/iconProps'
+import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
 
 interface ProjectDependenciesProps {
   project: Project
@@ -215,7 +216,7 @@ export default function ProjectDependencies({ project, isPi }: ProjectDependenci
                   fontSize: '12px',
                   color: 'var(--ink)',
                   background: 'var(--cream)',
-                  border: '1px solid rgba(201, 168, 76, 0.15)',
+                  border: `1px solid ${withAlpha(ACCENT_GOLD, 15)}`,
                   borderRadius: 'var(--radius-md)',
                   padding: '6px 10px',
                   outline: 'none',
@@ -289,7 +290,7 @@ export default function ProjectDependencies({ project, isPi }: ProjectDependenci
                 className="flex items-center gap-3"
                 style={{
                   padding: 'var(--sp-sm) 0',
-                  borderBottom: '1px solid rgba(201, 168, 76, 0.08)',
+                  borderBottom: `1px solid ${withAlpha(ACCENT_GOLD, 8)}`,
                 }}
               >
                 <span
@@ -359,7 +360,7 @@ export default function ProjectDependencies({ project, isPi }: ProjectDependenci
                 className="flex items-center gap-3"
                 style={{
                   padding: 'var(--sp-sm) 0',
-                  borderBottom: '1px solid rgba(201, 168, 76, 0.08)',
+                  borderBottom: `1px solid ${withAlpha(ACCENT_GOLD, 8)}`,
                 }}
               >
                 <Link

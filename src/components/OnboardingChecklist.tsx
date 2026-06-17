@@ -16,6 +16,7 @@ import {
 import type { OnboardingStep } from '../data/onboarding'
 import type { LucideIcon } from 'lucide-react'
 import { ICON_PROPS } from '../lib/iconProps'
+import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
 
 const CATEGORY_ICONS: Record<OnboardingStep['category'], LucideIcon> = {
   setup: Settings,
@@ -52,7 +53,7 @@ export default function OnboardingChecklist() {
         style={{
           borderRadius: 'var(--radius-2xl)',
           padding: '1.5rem',
-          background: 'linear-gradient(135deg, rgba(45,138,138,0.06) 0%, rgba(201,168,76,0.06) 100%)',
+          background: `linear-gradient(135deg, rgba(45,138,138,0.06) 0%, ${withAlpha(ACCENT_GOLD, 6)} 100%)`,
           border: '1px solid rgba(45,138,138,0.15)',
         }}
       >
@@ -110,7 +111,7 @@ export default function OnboardingChecklist() {
           borderRadius: 'var(--radius-2xl)',
           padding: '1rem 1.25rem',
           background: 'var(--cream)',
-          border: '1px solid rgba(201,168,76,0.12)',
+          border: `1px solid ${withAlpha(ACCENT_GOLD, 12)}`,
           boxShadow: 'var(--shadow-card)',
           cursor: 'pointer',
         }}
@@ -187,7 +188,7 @@ export default function OnboardingChecklist() {
         borderRadius: 'var(--radius-2xl)',
         padding: '1.5rem',
         background: 'var(--cream)',
-        border: '1px solid rgba(201,168,76,0.12)',
+        border: `1px solid ${withAlpha(ACCENT_GOLD, 12)}`,
         boxShadow: 'var(--shadow-card)',
       }}
     >
@@ -418,7 +419,7 @@ export default function OnboardingChecklist() {
       {/* Footer: dismiss */}
       <div
         className="flex items-center justify-between mt-4 pt-3"
-        style={{ borderTop: '1px solid rgba(201,168,76,0.1)' }}
+        style={{ borderTop: `1px solid ${withAlpha(ACCENT_GOLD, 10)}` }}
       >
         <span style={{
           fontSize: 10,

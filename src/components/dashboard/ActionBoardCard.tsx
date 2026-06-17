@@ -11,7 +11,7 @@ import { getPersonInfo } from '../../data/team'
 import DueLabel from '../DueLabel'
 import { PATHS } from '../../constants/paths'
 import { ICON_PROPS } from '../../lib/iconProps'
-import { isTaskDone } from '../../lib/taskGrouping'
+import { ACCENT_GOLD, isTaskDone, withAlpha } from '../../lib/taskGrouping'
 
 const statusIcon: Record<string, { icon: typeof Circle; color: string }> = {
   todo: { icon: Circle, color: 'var(--slate)' },
@@ -61,7 +61,7 @@ function ActionBoardCard() {
                       const StatusIcon = si.icon
                       return (
                         <div key={item.id} className="flex items-start gap-2 py-1.5 pl-7 action-board-row"
-                          style={{ borderBottom: '1px solid rgba(201, 168, 76, 0.04)', cursor: 'pointer', borderRadius: 'var(--radius-sm)', margin: '0 -4px', padding: '6px 4px 6px 28px', transition: 'background 0.15s' }}
+                          style={{ borderBottom: `1px solid ${withAlpha(ACCENT_GOLD, 4)}`, cursor: 'pointer', borderRadius: 'var(--radius-sm)', margin: '0 -4px', padding: '6px 4px 6px 28px', transition: 'background 0.15s' }}
                           onClick={() => {
                             const next = item.status === 'todo' ? 'in_progress' : 'done'
                             const prev = item.status
@@ -117,7 +117,7 @@ function ActionBoardCard() {
         </div>
 
         <Link to={PATHS.myTasks} className="flex items-center gap-1 mt-3 pt-2 portal-footer-link"
-          style={{ fontSize: 'var(--label-size)', color: 'var(--gold)', textDecoration: 'none', borderTop: '1px solid rgba(201, 168, 76, 0.1)' }}>
+          style={{ fontSize: 'var(--label-size)', color: 'var(--gold)', textDecoration: 'none', borderTop: `1px solid ${withAlpha(ACCENT_GOLD, 10)}` }}>
           View all tasks <ArrowRight {...ICON_PROPS} size={11} />
         </Link>
       </div>

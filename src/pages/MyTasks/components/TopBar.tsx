@@ -100,7 +100,7 @@ export function TopBar({ view, setView, search, setSearch, filter, setFilter, qu
               key={tab.k}
               onClick={() => setQuickView(tab.k)}
               // withAlpha, NOT hex-suffix concat: the accents are var() strings,
-              // so `c + '70'` produced invalid CSS (active pill border/bg never
+              // so the old `color + hexAlpha` pattern produced invalid CSS (active pill border/bg never
               // rendered). /simplify catch, 2026-06-11.
               style={{ padding: '4px 10px', fontSize: 11, fontWeight: 500, borderRadius: 999, fontFamily: 'inherit', cursor: 'pointer', border: `1px solid ${active ? withAlpha(c, 44) : 'rgba(255,255,255,0.1)'}`, background: active ? withAlpha(c, 8) : 'transparent', color: active ? c : INK_MUTED, flexShrink: 0, whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 4 }}
             >{tab.l}</button>

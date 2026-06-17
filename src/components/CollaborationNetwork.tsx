@@ -1,6 +1,7 @@
 import { useMemo, useRef, useEffect, useState } from 'react'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 import { usePublications } from '../hooks/useApiData'
+import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
 
 interface Node {
   id: string
@@ -163,8 +164,8 @@ export default function CollaborationNetwork() {
       ctx.moveTo(source.x * scaleX, source.y * scaleY)
       ctx.lineTo(target.x * scaleX, target.y * scaleY)
       ctx.strokeStyle = isHighlighted
-        ? 'rgba(201, 168, 76, 0.6)'
-        : 'rgba(201, 168, 76, 0.12)'
+        ? withAlpha(ACCENT_GOLD, 60)
+        : withAlpha(ACCENT_GOLD, 12)
       ctx.lineWidth = Math.min(edge.weight * 0.5, 3) * (isHighlighted ? 1.5 : 1)
       ctx.stroke()
     })
@@ -196,7 +197,7 @@ export default function CollaborationNetwork() {
 
       if (isHovered) {
         ctx.font = '500 10px "JetBrains Mono", monospace'
-        ctx.fillStyle = 'rgba(201, 168, 76, 0.8)'
+        ctx.fillStyle = withAlpha(ACCENT_GOLD, 80)
         ctx.fillText(`${node.papers} papers`, x, y + r + 26)
       }
     })

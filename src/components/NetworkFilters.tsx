@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { Filter, X } from 'lucide-react'
 import type { Publication } from '../data/types'
 import { ICON_PROPS } from '../lib/iconProps'
+import { ACCENT_GOLD, PANEL_BG, withAlpha } from '../lib/taskGrouping'
 
 const TOPIC_DISPLAY: Record<string, string> = {
   clif: 'CLIF',
@@ -47,10 +48,10 @@ function Pill({
       style={{
         fontSize: '11px',
         minHeight: '28px',
-        background: active ? 'rgba(201, 168, 76, 0.9)' : 'var(--hover-medium)',
+        background: active ? withAlpha(ACCENT_GOLD, 90) : 'var(--hover-medium)',
         color: active ? '#0f1923' : 'rgba(255, 255, 255, 0.6)',
         border: active
-          ? '1px solid rgba(201, 168, 76, 0.6)'
+          ? `1px solid ${withAlpha(ACCENT_GOLD, 60)}`
           : '1px solid var(--hover-medium)',
         transitionProperty: 'background-color, color, border-color',
         transitionDuration: '150ms',
@@ -111,16 +112,16 @@ export default function NetworkFilters({
     <div
       className="flex flex-wrap items-center gap-3 px-4 py-3 rounded-lg"
       style={{
-        background: 'rgba(15, 25, 35, 0.6)',
+        background: withAlpha(PANEL_BG, 60),
         backdropFilter: 'blur(12px)',
         WebkitBackdropFilter: 'blur(12px)',
-        border: '1px solid rgba(201, 168, 76, 0.12)',
+        border: `1px solid ${withAlpha(ACCENT_GOLD, 12)}`,
       }}
     >
       {/* Filter icon */}
       <Filter {...ICON_PROPS}
         size={14}
-        style={{ color: 'rgba(201, 168, 76, 0.5)', flexShrink: 0 }}
+        style={{ color: withAlpha(ACCENT_GOLD, 50), flexShrink: 0 }}
       />
 
       {/* Year range */}
@@ -225,11 +226,11 @@ export default function NetworkFilters({
           fontSize: '11px',
           minHeight: '28px',
           background: filters.mnccoreOnly
-            ? 'rgba(201, 168, 76, 0.9)'
+            ? withAlpha(ACCENT_GOLD, 90)
             : 'var(--hover-medium)',
           color: filters.mnccoreOnly ? '#0f1923' : 'rgba(255, 255, 255, 0.6)',
           border: filters.mnccoreOnly
-            ? '1px solid rgba(201, 168, 76, 0.6)'
+            ? `1px solid ${withAlpha(ACCENT_GOLD, 60)}`
             : '1px solid var(--hover-medium)',
           transitionProperty: 'background-color, color, border-color',
           transitionDuration: '150ms',
@@ -256,7 +257,7 @@ export default function NetworkFilters({
             fontSize: '10px',
             color: 'rgba(255, 255, 255, 0.5)',
             background: 'transparent',
-            border: '1px solid rgba(201, 168, 76, 0.15)',
+            border: `1px solid ${withAlpha(ACCENT_GOLD, 15)}`,
           }}
         >
           <X {...ICON_PROPS} size={10} />

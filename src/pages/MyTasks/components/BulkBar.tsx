@@ -69,7 +69,7 @@ export function BulkBar({ count, onClear, onPlanToday, onSnoozeDay, onComplete, 
       {/* P1-1: full-width gold strip + border (outer), band-centered content
           (.mt-band inner) so the bulk bar's controls align to the same left edge
           as the toolbar + views. */}
-      <div style={{ paddingTop: 8, paddingBottom: 8, background: 'rgba(201,168,76,0.08)', borderBottom: '1px solid rgba(201,168,76,0.2)' }}>
+      <div style={{ paddingTop: 8, paddingBottom: 8, background: withAlpha(ACCENT_GOLD, 8), borderBottom: `1px solid ${withAlpha(ACCENT_GOLD, 20)}` }}>
        <div className="mt-band" style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12 }}>
         <span style={{ color: ACCENT_GOLD, fontWeight: 600 }}>{count} selected</span>
         <span style={{ color: INK_DIM }}>·</span>

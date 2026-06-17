@@ -10,6 +10,7 @@ import { useProjects } from '../../hooks/useApiData'
 import type { TaskRow } from '../../lib/api'
 import TaskTitle from './TaskTitle'
 import { ICON_PROPS } from '../../lib/iconProps'
+import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
 
 interface TaskStandUpViewProps {
   tasks: TaskRow[]
@@ -80,7 +81,7 @@ export default function TaskStandUpView({ tasks, onStatusChange, onOpenDetail }:
     <div className="table-container flex flex-col gap-6" style={{ padding: '16px 20px' }}>
       {/* Team summary bar */}
       {grouped.length > 1 && (
-        <div className="flex items-center gap-4 p-3 rounded-lg" style={{ background: 'var(--gold-hover)', border: '1px solid rgba(201,168,76,0.08)' }}>
+        <div className="flex items-center gap-4 p-3 rounded-lg" style={{ background: 'var(--gold-hover)', border: `1px solid ${withAlpha(ACCENT_GOLD, 8)}` }}>
           <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)' }}>
             Team: {totalOpen} open across {grouped.length} people
           </span>

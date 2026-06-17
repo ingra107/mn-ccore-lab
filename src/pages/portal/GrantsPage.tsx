@@ -30,6 +30,7 @@ import { displayName } from '../../lib/nameUtils'
 import { formatMediumDate, isOverdue, getDaysUntil } from '../../lib/dateUtils'
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 import { ICON_PROPS } from '../../lib/iconProps'
+import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
 
 // ── Gantt chart constants ──────────────────────────────────────
 const CHART_MIN_YEAR = 2023
@@ -132,7 +133,7 @@ function GanttTooltip({ data, chartWidth }: { data: TooltipData; chartWidth: num
         className="rounded-lg p-3"
         style={{
           background: 'var(--cream)',
-          border: '1px solid rgba(201, 168, 76, 0.3)',
+          border: `1px solid ${withAlpha(ACCENT_GOLD, 30)}`,
           boxShadow: 'var(--shadow-card-hover)',
         }}
       >
@@ -305,7 +306,7 @@ function GanttChart({ grants }: { grants: GrantTimelineItem[] }) {
                 <>
                   <rect
                     x={barX} y={barY + 2} width={Math.max(barWidth, 4)} height={BAR_HEIGHT - 4} rx={6}
-                    fill="rgba(201, 168, 76, 0.08)" stroke={color} strokeWidth={1.5} strokeDasharray="6 4" opacity={0.7}
+                    fill={withAlpha(ACCENT_GOLD, 8)} stroke={color} strokeWidth={1.5} strokeDasharray="6 4" opacity={0.7}
                     className="transition-opacity duration-200 hover:opacity-100"
                   />
                   <clipPath id={`clip-${grant.id}`}>
@@ -1013,7 +1014,7 @@ export default function GrantsPage() {
           <div
             key={grant.project_num}
             className="p-3 rounded-lg mb-2"
-            style={{ background: 'var(--gold-hover)', border: '1px solid rgba(201,168,76,0.08)' }}
+            style={{ background: 'var(--gold-hover)', border: `1px solid ${withAlpha(ACCENT_GOLD, 8)}` }}
           >
             <div className="flex items-start justify-between gap-2">
               <div>

@@ -4,6 +4,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { Zap, GripVertical, Plus } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { ICON_PROPS } from '../../lib/iconProps'
+import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
 
 interface QuickWinTask {
   id: string
@@ -41,7 +42,7 @@ function SortableQuickWin({ task, onComplete, onClickTitle }: {
     <div ref={setNodeRef} style={style} {...attributes}>
       <div
         className="flex items-center gap-2 py-1.5 group"
-        style={{ borderBottom: '1px solid rgba(201,168,76,0.04)' }}
+        style={{ borderBottom: `1px solid ${withAlpha(ACCENT_GOLD, 4)}` }}
       >
         <div {...listeners} style={{ cursor: 'grab', touchAction: 'none' }}>
           <GripVertical {...ICON_PROPS} size={12} style={{ color: 'var(--slate)', opacity: 0.75 }} />
@@ -129,7 +130,7 @@ export default function QuickWinsList({ tasks, onComplete, onClickTitle, onAddCl
           className="w-full flex items-center justify-center gap-1 py-2"
           style={{
             background: 'none', border: 'none', cursor: 'pointer',
-            borderTop: tasks.length > 0 ? '1px solid rgba(201,168,76,0.04)' : undefined,
+            borderTop: tasks.length > 0 ? `1px solid ${withAlpha(ACCENT_GOLD, 4)}` : undefined,
           }}
           whileHover={{ backgroundColor: 'rgba(100,116,139,0.03)' }}
         >

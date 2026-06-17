@@ -2,6 +2,7 @@ import { type ReactNode } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, X } from 'lucide-react'
 import { ICON_PROPS } from '../lib/iconProps'
+import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
 
 interface QuickAddFormProps {
   isOpen: boolean
@@ -41,7 +42,7 @@ export default function QuickAddForm({
             style={{
               background: 'var(--ice)',
               color: 'var(--slate)',
-              border: '1px dashed rgba(201,168,76,0.3)',
+              border: `1px dashed ${withAlpha(ACCENT_GOLD, 30)}`,
               transition: 'all 0.2s ease',
               '--hov-border': 'var(--gold)',
               '--hov-color': 'var(--ink)',
@@ -67,14 +68,14 @@ export default function QuickAddForm({
               className="quick-add-form-container p-4 rounded-xl mt-2"
               style={{
                 background: 'var(--cream)',
-                border: '1px solid rgba(201,168,76,0.2)',
+                border: `1px solid ${withAlpha(ACCENT_GOLD, 20)}`,
                 boxShadow: 'var(--shadow-card)',
               }}
             >
               {children}
 
               {/* Action buttons */}
-              <div className="flex items-center justify-end gap-2 mt-3 pt-3" style={{ borderTop: '1px solid rgba(201,168,76,0.1)' }}>
+              <div className="flex items-center justify-end gap-2 mt-3 pt-3" style={{ borderTop: `1px solid ${withAlpha(ACCENT_GOLD, 10)}` }}>
                 <button
                   type="button"
                   onClick={onCancel}
@@ -82,7 +83,7 @@ export default function QuickAddForm({
                   style={{
                     background: 'transparent',
                     color: 'var(--slate)',
-                    border: '1px solid rgba(201,168,76,0.15)',
+                    border: `1px solid ${withAlpha(ACCENT_GOLD, 15)}`,
                   }}
                 >
                   <X {...ICON_PROPS} size={12} />

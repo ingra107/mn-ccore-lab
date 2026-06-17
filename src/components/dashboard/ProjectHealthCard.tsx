@@ -10,6 +10,7 @@ import type { ProjectHealth, HealthFactors } from '../../hooks/useApiData'
 import { PATHS } from '../../constants/paths'
 import { ICON_PROPS } from '../../lib/iconProps'
 import SegmentedToggle from '../ui/SegmentedToggle'
+import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
 
 const STATUS_COLORS: Record<string, string> = {
   'Healthy': 'var(--green)',
@@ -110,7 +111,7 @@ function ProjectHealthCard() {
         {/* Summary counts */}
         <div
           className="flex items-center gap-4 mb-3 pb-3"
-          style={{ borderBottom: '1px solid rgba(201, 168, 76, 0.08)' }}
+          style={{ borderBottom: `1px solid ${withAlpha(ACCENT_GOLD, 8)}` }}
         >
           {[
             { status: 'Critical' as const, count: summary.critical, label: 'Critical' },
@@ -262,7 +263,7 @@ function ProjectHealthCard() {
             fontSize: 'var(--label-size)',
             color: 'var(--gold)',
             textDecoration: 'none',
-            borderTop: '1px solid rgba(201, 168, 76, 0.1)',
+            borderTop: `1px solid ${withAlpha(ACCENT_GOLD, 10)}`,
           }}
         >
           View all projects <ArrowRight {...ICON_PROPS} size={11} />
@@ -293,7 +294,7 @@ function ProjectHealthRow({ project }: { project: ProjectHealth }) {
       className="flex items-center gap-2.5 py-2 group transition-colors hover:bg-[var(--gold-hover)]"
       style={{
         textDecoration: 'none',
-        borderBottom: '1px solid rgba(201, 168, 76, 0.04)',
+        borderBottom: `1px solid ${withAlpha(ACCENT_GOLD, 4)}`,
         borderRadius: 'var(--radius-sm)',
         padding: 'var(--sp-sm) var(--sp-xs)',
         margin: '0 -4px',

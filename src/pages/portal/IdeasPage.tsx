@@ -19,6 +19,7 @@ import { getPersonInfo } from '../../data/team'
 import { formatRelativeTime } from '../../lib/dateUtils'
 import type { IdeaRow } from '../../lib/api'
 import { ICON_PROPS } from '../../lib/iconProps'
+import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
 
 type SortKey = 'title' | 'submitter' | 'status' | 'votes' | 'created_at'
 
@@ -298,7 +299,7 @@ export default function IdeasPage() {
             if (!lopsided || dismissed) return null
             return (
               <div className="flex items-center gap-3 mb-3 px-3 py-2 rounded-lg"
-                style={{ background: 'var(--gold-hover)', border: '1px solid rgba(201,168,76,0.15)', fontSize: '12px', color: 'var(--slate)' }}>
+                style={{ background: 'var(--gold-hover)', border: `1px solid ${withAlpha(ACCENT_GOLD, 15)}`, fontSize: '12px', color: 'var(--slate)' }}>
                 <span>Most ideas are still in <strong>New</strong>.</span>
                 <button
                   type="button"

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Send, MessageSquare, ChevronDown, X, Loader2 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ICON_PROPS } from '../../lib/iconProps'
+import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
 
 interface DispatchItem {
   id: string
@@ -32,8 +33,8 @@ export default function DispatchBadge({ items, count, onSend, isSending }: Dispa
         onClick={() => setExpanded(!expanded)}
         className="flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-colors"
         style={{
-          background: 'rgba(201,168,76,0.09)',
-          border: '1px solid rgba(201,168,76,0.28)',
+          background: withAlpha(ACCENT_GOLD, 9),
+          border: `1px solid ${withAlpha(ACCENT_GOLD, 28)}`,
           cursor: 'pointer',
         }}
       >
@@ -53,10 +54,10 @@ export default function DispatchBadge({ items, count, onSend, isSending }: Dispa
             exit={{ opacity: 0, y: -4, scale: 0.95 }}
             transition={{ duration: 0.15 }}
             className="absolute right-0 top-full mt-2 z-50 w-80 rounded-lg shadow-lg overflow-hidden"
-            style={{ background: 'var(--cream)', border: '1px solid rgba(201,168,76,0.2)' }}
+            style={{ background: 'var(--cream)', border: `1px solid ${withAlpha(ACCENT_GOLD, 20)}` }}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-3 py-2" style={{ borderBottom: '1px solid rgba(201,168,76,0.1)' }}>
+            <div className="flex items-center justify-between px-3 py-2" style={{ borderBottom: `1px solid ${withAlpha(ACCENT_GOLD, 10)}` }}>
               <span style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--gold)' }}>
                 Dispatch Queue
               </span>
@@ -71,7 +72,7 @@ export default function DispatchBadge({ items, count, onSend, isSending }: Dispa
                 <div
                   key={item.id}
                   className="px-3 py-2"
-                  style={{ borderBottom: '1px solid rgba(201,168,76,0.04)' }}
+                  style={{ borderBottom: `1px solid ${withAlpha(ACCENT_GOLD, 4)}` }}
                 >
                   <div className="flex items-start gap-2">
                     <div
@@ -97,7 +98,7 @@ export default function DispatchBadge({ items, count, onSend, isSending }: Dispa
             </div>
 
             {/* Send button */}
-            <div className="px-3 py-2" style={{ borderTop: '1px solid rgba(201,168,76,0.1)' }}>
+            <div className="px-3 py-2" style={{ borderTop: `1px solid ${withAlpha(ACCENT_GOLD, 10)}` }}>
               <button
                 onClick={() => { onSend(); setExpanded(false) }}
                 disabled={isSending || count === 0}

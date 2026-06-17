@@ -1,3 +1,4 @@
+import { ACCENT_GOLD, withAlpha } from './taskGrouping'
 /**
  * statusColors — Shared status → color map for the 5-color palette.
  *
@@ -72,24 +73,24 @@ export const STATUS_BG_EXTENDED: Record<string, string> = {
   rejected: 'rgba(122, 0, 25, 0.15)',
   wont_fix: 'rgba(122, 0, 25, 0.15)',
   draft: 'rgba(148, 163, 184, 0.15)',
-  review: 'rgba(201, 168, 76, 0.15)',
-  review_received: 'rgba(201, 168, 76, 0.15)',
+  review: withAlpha(ACCENT_GOLD, 15),
+  review_received: withAlpha(ACCENT_GOLD, 15),
   revision_due: 'rgba(122, 0, 25, 0.15)',
   withdrawn: 'rgba(100, 116, 139, 0.15)',
   completed: 'rgba(22, 163, 74, 0.15)',
 
   // Conference-specific
   planning: 'rgba(148, 163, 184, 0.15)',
-  preparing: 'rgba(201, 168, 76, 0.15)',
+  preparing: withAlpha(ACCENT_GOLD, 15),
   presented: 'rgba(22, 163, 74, 0.15)',
 
   // Cascade-specific
   'on-track': 'rgba(60, 130, 130, 0.12)',
-  'at-risk': 'rgba(201, 168, 76, 0.15)',
+  'at-risk': withAlpha(ACCENT_GOLD, 15),
 
   // Materials
   not_started: 'rgba(148, 163, 184, 0.15)',
-  drafting: 'rgba(201, 168, 76, 0.15)',
+  drafting: withAlpha(ACCENT_GOLD, 15),
   final: 'rgba(22, 163, 74, 0.15)',
 }
 

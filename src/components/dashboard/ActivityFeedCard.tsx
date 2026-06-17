@@ -9,6 +9,7 @@ import { getPersonInfo } from '../../data/team'
 import { formatRelativeTime } from '../../lib/dateUtils'
 import { PATHS } from '../../constants/paths'
 import { ICON_PROPS } from '../../lib/iconProps'
+import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
 
 interface FeedItem {
   id: string
@@ -195,7 +196,7 @@ function ActivityFeedCard() {
             fontSize: 'var(--label-size)',
             color: 'var(--gold)',
             textDecoration: 'none',
-            borderTop: '1px solid rgba(201, 168, 76, 0.1)',
+            borderTop: `1px solid ${withAlpha(ACCENT_GOLD, 10)}`,
             transition: 'opacity 0.2s ease',
           }}
         >

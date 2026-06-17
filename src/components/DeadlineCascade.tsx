@@ -5,6 +5,7 @@ import type { CascadeGraph, ImpactResult, DeadlineNode } from '../lib/api'
 import { formatShortDate, isOverdue, getDaysUntil } from '../lib/dateUtils'
 import { getStatusColor } from '../lib/statusColors'
 import { ICON_PROPS } from '../lib/iconProps'
+import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
 
 // ── Status helpers ──────────────────────────────────────────
 
@@ -349,7 +350,7 @@ function WhatIfPanel({
         marginTop: 'var(--sp-md)',
         padding: 'var(--sp-lg)',
         borderRadius: 'var(--radius-lg)',
-        border: '1px solid rgba(201,168,76,0.2)',
+        border: `1px solid ${withAlpha(ACCENT_GOLD, 20)}`,
         background: 'var(--gold-hover)',
       }}
     >
@@ -388,7 +389,7 @@ function WhatIfPanel({
             fontSize: '12px',
             padding: 'var(--sp-xs) var(--sp-sm)',
             borderRadius: 'var(--radius-sm)',
-            border: '1px solid rgba(201,168,76,0.3)',
+            border: `1px solid ${withAlpha(ACCENT_GOLD, 30)}`,
             background: 'var(--cream)',
             color: 'var(--ink)',
             outline: 'none',
@@ -402,7 +403,7 @@ function WhatIfPanel({
             fontWeight: 'var(--label-weight)',
             padding: 'var(--sp-xs) var(--sp-md)',
             borderRadius: 'var(--radius-sm)',
-            border: '1px solid rgba(201,168,76,0.3)',
+            border: `1px solid ${withAlpha(ACCENT_GOLD, 30)}`,
             background: 'var(--gold-active)',
             color: 'var(--gold)',
             cursor: !newDate || isLoading ? 'not-allowed' : 'pointer',

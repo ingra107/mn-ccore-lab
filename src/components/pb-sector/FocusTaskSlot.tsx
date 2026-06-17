@@ -6,6 +6,7 @@ import { motion } from 'framer-motion'
 import PomodoroCircles from './PomodoroCircles'
 import DueLabel from '../DueLabel'
 import { ICON_PROPS } from '../../lib/iconProps'
+import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
 
 interface FocusTask {
   id: string
@@ -52,7 +53,7 @@ function SortableFocusItem({ task, index, pomodorosCompleted, pomodoroActive, on
     <div ref={setNodeRef} style={style} {...attributes}>
       <div
         className="flex items-center gap-3 py-2.5 group"
-        style={{ borderBottom: '1px solid rgba(201,168,76,0.06)' }}
+        style={{ borderBottom: `1px solid ${withAlpha(ACCENT_GOLD, 6)}` }}
       >
         {/* Drag handle */}
         <div {...listeners} style={{ cursor: 'grab', touchAction: 'none' }}>
@@ -169,7 +170,7 @@ export default function FocusTaskSlot({ tasks, pomodoroData, onComplete, onStart
                   className="w-full flex items-center gap-3 py-2.5 text-left"
                   style={{
                     background: 'none', border: 'none', cursor: 'pointer',
-                    borderBottom: i < emptySlots - 1 ? '1px solid rgba(201,168,76,0.04)' : undefined,
+                    borderBottom: i < emptySlots - 1 ? `1px solid ${withAlpha(ACCENT_GOLD, 4)}` : undefined,
                   }}
                   whileHover={{ backgroundColor: 'var(--teal-hover)' }}
                 >
@@ -192,7 +193,7 @@ export default function FocusTaskSlot({ tasks, pomodoroData, onComplete, onStart
                   className="w-full flex items-center gap-3 py-2.5"
                   style={{
                     background: 'none', border: 'none', cursor: 'pointer',
-                    borderBottom: i < emptySlots - 1 ? '1px solid rgba(201,168,76,0.04)' : undefined,
+                    borderBottom: i < emptySlots - 1 ? `1px solid ${withAlpha(ACCENT_GOLD, 4)}` : undefined,
                   }}
                   whileHover={{ backgroundColor: 'var(--teal-hover)' }}
                 >

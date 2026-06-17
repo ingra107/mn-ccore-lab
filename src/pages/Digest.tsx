@@ -27,6 +27,7 @@ import Avatar from '../components/Avatar'
 import PageHeader from '../components/PageHeader'
 import HeartbeatLine from '../components/HeartbeatLine'
 import { ICON_PROPS } from '../lib/iconProps'
+import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
 
 type StatusFilter = 'all' | 'new' | 'saved'
 
@@ -65,7 +66,7 @@ function relevanceColor(score: number): { bg: string; text: string; label: strin
 
 function relevanceColorDark(score: number): { bg: string; text: string } {
   if (score >= 0.7) return { bg: 'rgba(34, 197, 94, 0.15)', text: 'var(--green-light)' }
-  if (score >= 0.4) return { bg: 'rgba(201, 168, 76, 0.2)', text: 'var(--gold)' }
+  if (score >= 0.4) return { bg: withAlpha(ACCENT_GOLD, 20), text: 'var(--gold)' }
   return { bg: 'rgba(100, 116, 139, 0.15)', text: '#94a3b8' }
 }
 
@@ -245,7 +246,7 @@ function PaperCard({ paper, projects, commentCount }: { paper: DigestPaper; proj
                     fontSize: '10px',
                     background: 'var(--gold-active)',
                     color: 'var(--gold)',
-                    border: '1px solid rgba(201, 168, 76, 0.2)',
+                    border: `1px solid ${withAlpha(ACCENT_GOLD, 20)}`,
                   }}
                 >
                   {topic}
@@ -321,7 +322,7 @@ function PaperCard({ paper, projects, commentCount }: { paper: DigestPaper; proj
                   className="text-xs sm:text-sm leading-relaxed mt-1 pl-3"
                   style={{
                     color: 'var(--slate)',
-                    borderLeft: '2px solid rgba(201, 168, 76, 0.3)',
+                    borderLeft: `2px solid ${withAlpha(ACCENT_GOLD, 30)}`,
                   }}
                 >
                   {paper.abstract}
@@ -437,7 +438,7 @@ function PaperCard({ paper, projects, commentCount }: { paper: DigestPaper; proj
                   top: '100%',
                   marginTop: '4px',
                   background: 'var(--cream)',
-                  border: '1px solid rgba(201, 168, 76, 0.2)',
+                  border: `1px solid ${withAlpha(ACCENT_GOLD, 20)}`,
                   borderRadius: 'var(--radius-lg)',
                   boxShadow: 'var(--shadow-menu)',
                   minWidth: '220px',
@@ -474,7 +475,7 @@ function PaperCard({ paper, projects, commentCount }: { paper: DigestPaper; proj
                       color: 'var(--ink)',
                       background: 'none',
                       border: 'none',
-                      borderTop: '1px solid rgba(201, 168, 76, 0.06)',
+                      borderTop: `1px solid ${withAlpha(ACCENT_GOLD, 6)}`,
                       display: 'block',
                     }}
                   >
@@ -776,7 +777,7 @@ export default function Digest() {
                 }}
               >
                 <span>Digest Date</span>
-                <span className="flex-1 h-px" style={{ background: 'rgba(201, 168, 76, 0.2)' }} />
+                <span className="flex-1 h-px" style={{ background: withAlpha(ACCENT_GOLD, 20) }} />
               </div>
               <div className="flex flex-wrap gap-2">
                 {dates.slice(0, 14).map((d) => {
@@ -795,7 +796,7 @@ export default function Digest() {
                         color: isActive ? 'var(--cream)' : 'var(--ink)',
                         border: isActive
                           ? '1px solid var(--gold)'
-                          : '1px solid rgba(201, 168, 76, 0.2)',
+                          : `1px solid ${withAlpha(ACCENT_GOLD, 20)}`,
                         transition: 'background-color var(--duration-normal) var(--ease-out), color var(--duration-normal) var(--ease-out), border-color var(--duration-normal) var(--ease-out)',
                       }}
                     >

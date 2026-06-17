@@ -7,6 +7,7 @@ import { getMemberBySlug } from '../data/team'
 import { projects } from '../data/projects'
 import { isProjectActive, normalizeProjectStatus } from '../lib/taskConstants'
 import { ICON_PROPS } from '../lib/iconProps'
+import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
 
 interface ProfileLink {
   label: string
@@ -541,7 +542,7 @@ function MenteeProfileCard({ mentee }: { mentee: Mentee }) {
                   letterSpacing: '0.02em',
                   background: 'var(--ice)',
                   color: 'var(--slate)',
-                  border: '1px solid rgba(201, 168, 76, 0.12)',
+                  border: `1px solid ${withAlpha(ACCENT_GOLD, 12)}`,
                 }}
               >
                 {interest}
@@ -554,7 +555,7 @@ function MenteeProfileCard({ mentee }: { mentee: Mentee }) {
         {menteeProjects.length > 0 && (
           <div
             className="pt-3"
-            style={{ borderTop: '1px solid rgba(201, 168, 76, 0.1)' }}
+            style={{ borderTop: `1px solid ${withAlpha(ACCENT_GOLD, 10)}` }}
           >
             <div className="flex items-center gap-1.5 mb-2">
               <FlaskConical {...ICON_PROPS} size={12} style={{ color: 'var(--gold)' }} aria-hidden="true" />

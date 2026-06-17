@@ -8,6 +8,7 @@ import NetworkSidebar from '../components/NetworkSidebar'
 import NetworkFilters, { type NetworkFilterState } from '../components/NetworkFilters'
 import type { NetworkNode, NetworkEdge } from '../components/CollaborationGraph'
 import { ICON_PROPS } from '../lib/iconProps'
+import { ACCENT_GOLD, PANEL_BG, withAlpha } from '../lib/taskGrouping'
 
 export default function Network() {
   usePageMeta(
@@ -123,7 +124,7 @@ export default function Network() {
               <ArrowLeft {...ICON_PROPS} size={14} />
               Home
             </Link>
-            <span style={{ color: 'rgba(201, 168, 76, 0.2)' }}>/</span>
+            <span style={{ color: withAlpha(ACCENT_GOLD, 20) }}>/</span>
             <h1
               className="text-lg sm:text-xl"
               style={{
@@ -140,7 +141,7 @@ export default function Network() {
               <div className="flex items-center gap-3 text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>
                 <span><strong style={{ color: 'rgba(45,138,138,0.8)' }}>{networkStats.nodes}</strong> authors</span>
                 <span>&middot;</span>
-                <span><strong style={{ color: 'rgba(201,168,76,0.8)' }}>{networkStats.edges}</strong> connections</span>
+                <span><strong style={{ color: withAlpha(ACCENT_GOLD, 80) }}>{networkStats.edges}</strong> connections</span>
                 <span>&middot;</span>
                 <span>{networkStats.avgConnections} avg</span>
                 {networkStats.hub && (
@@ -196,7 +197,7 @@ export default function Network() {
             className="text-xs px-3 py-1 rounded-full"
             style={{
               color: 'rgba(255, 255, 255, 0.4)',
-              background: 'rgba(15, 25, 35, 0.6)',
+              background: withAlpha(PANEL_BG, 60),
               fontSize: '10px',
             }}
           >

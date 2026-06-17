@@ -23,6 +23,7 @@ import { isProjectActive, normalizeProjectStatus } from '../lib/taskConstants'
 import WatchButton from '../components/WatchButton'
 import { PATHS } from '../constants/paths'
 import { ICON_PROPS } from '../lib/iconProps'
+import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
 
 const TOPIC_DISPLAY: Record<string, string> = {
   clif: 'CLIF',
@@ -363,7 +364,7 @@ export default function MemberPage() {
                       background: 'var(--gold-active)',
                       color: 'var(--gold)',
                       fontWeight: 500,
-                      border: '1px solid rgba(201, 168, 76, 0.2)',
+                      border: `1px solid ${withAlpha(ACCENT_GOLD, 20)}`,
                     }}
                   >
                     {interest}
@@ -375,7 +376,7 @@ export default function MemberPage() {
               className="inline-flex items-center gap-2 px-3 py-2 rounded-md"
               style={{
                 background: 'var(--ice)',
-                border: '1px solid rgba(201, 168, 76, 0.1)',
+                border: `1px solid ${withAlpha(ACCENT_GOLD, 10)}`,
               }}
             >
               <span className="text-xs" style={{ color: 'var(--slate)' }}>
@@ -571,7 +572,7 @@ export default function MemberPage() {
                   style={{
                     background: 'var(--ice)',
                     color: 'var(--ink)',
-                    border: '1px solid rgba(201,168,76,0.2)',
+                    border: `1px solid ${withAlpha(ACCENT_GOLD, 20)}`,
                     outline: 'none',
                     width: '240px',
                   }}

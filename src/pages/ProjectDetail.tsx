@@ -71,6 +71,7 @@ import { useOpenParam } from '../hooks/useOpenParam'
 import EmptyStateArt from '../components/EmptyStateArt'
 import EmptyState from '../components/EmptyState'
 import { ICON_PROPS } from '../lib/iconProps'
+import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
 
 // P2-5: notes + comments collapsed into the single chronological `activity`
 // stream (Notes / Comments / All are filters over it, not separate tabs).
@@ -856,7 +857,7 @@ function ProjectDetailInner({ project }: InnerProps) {
               style={{
                 background: showAgendaForm ? 'var(--gold)' : 'var(--gold-active)',
                 color: showAgendaForm ? '#0f1923' : 'var(--gold-on-emphasis)',
-                border: '1px solid rgba(201,168,76,0.2)',
+                border: `1px solid ${withAlpha(ACCENT_GOLD, 20)}`,
                 fontWeight: 500,
                 cursor: 'pointer',
               }}
@@ -914,7 +915,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                   background: 'var(--ice)',
                   borderRadius: 'var(--radius-lg)',
                   padding: 'var(--sp-md) var(--sp-lg)',
-                  border: '1px solid rgba(201, 168, 76, 0.15)',
+                  border: `1px solid ${withAlpha(ACCENT_GOLD, 15)}`,
                 }}
                 className="detail-card"
               >
@@ -964,7 +965,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                       fontSize: 'var(--value-size)',
                       color: 'var(--ink)',
                       background: 'var(--cream)',
-                      border: '1px solid rgba(201, 168, 76, 0.15)',
+                      border: `1px solid ${withAlpha(ACCENT_GOLD, 15)}`,
                       borderRadius: 'var(--radius-lg)',
                       padding: 'var(--sp-sm) var(--sp-md)',
                       outline: 'none',
@@ -1729,7 +1730,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                       borderBottom: '1px dashed transparent',
                       transition: 'border-color 0.2s',
                       whiteSpace: 'pre-wrap',
-                      '--hov-border': 'rgba(201, 168, 76, 0.4)',
+                      '--hov-border': withAlpha(ACCENT_GOLD, 40),
                       ...(!descExpanded && project.description && project.description.length > 200 ? {
                         overflow: 'hidden',
                         display: '-webkit-box',

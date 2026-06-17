@@ -11,6 +11,7 @@ import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 import { PATHS } from '../../constants/paths'
 import { stageColor, stageLabel, normalizeStage } from '../../lib/stageNormalize'
 import { ICON_PROPS } from '../../lib/iconProps'
+import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
 
 // The /api/narratives endpoint emits canonical *lowercase* stage values
 // (idea / data_collection / data_analysis / writing / submitted / revisions /
@@ -161,7 +162,7 @@ export default function NarrativesPage() {
                     <span
                       key={t.topic}
                       className="px-2 py-0.5 rounded-full text-[10px]"
-                      style={{ background: 'var(--gold-active)', color: 'var(--gold)', border: '1px solid rgba(201,168,76,0.15)' }}
+                      style={{ background: 'var(--gold-active)', color: 'var(--gold)', border: `1px solid ${withAlpha(ACCENT_GOLD, 15)}` }}
                     >
                       {t.topic} ({t.count})
                     </span>

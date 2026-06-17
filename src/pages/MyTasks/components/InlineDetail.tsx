@@ -171,7 +171,7 @@ export function InlineDetail({ task, projectName, onOpenEditor }: { task: TaskRo
                   key={opt.key}
                   onClick={() => moveToGroup(opt)}
                   disabled={updateTask.isPending}
-                  style={{ display: 'block', width: '100%', textAlign: 'left', padding: '6px 10px', fontSize: 11, background: task.group_override === opt.key ? 'rgba(92,188,180,0.15)' : 'transparent', border: 'none', color: task.group_override === opt.key ? ACCENT_TEAL : INK, fontFamily: 'inherit', cursor: updateTask.isPending ? 'wait' : 'pointer' }}
+                  style={{ display: 'block', width: '100%', textAlign: 'left', padding: '6px 10px', fontSize: 11, background: task.group_override === opt.key ? withAlpha(ACCENT_TEAL, 15) : 'transparent', border: 'none', color: task.group_override === opt.key ? ACCENT_TEAL : INK, fontFamily: 'inherit', cursor: updateTask.isPending ? 'wait' : 'pointer' }}
                 >{opt.label}{task.group_override === opt.key ? ' ✓' : ''}</button>
               ))}
               {task.group_override && (

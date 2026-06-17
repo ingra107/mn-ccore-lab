@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { ExternalLink } from 'lucide-react'
 import type { Publication } from '../data/types'
 import { ICON_PROPS } from '../lib/iconProps'
+import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
 
 const JOURNAL_COLORS: Record<string, string> = {
   'Critical Care Medicine': 'var(--maroon)',
@@ -56,7 +57,7 @@ export default function PublicationLibrary({ publications }: PublicationLibraryP
             >
               {pubs.length} paper{pubs.length !== 1 ? 's' : ''}
             </span>
-            <div style={{ flex: 1, height: '1px', background: 'rgba(201, 168, 76, 0.2)' }} />
+            <div style={{ flex: 1, height: '1px', background: withAlpha(ACCENT_GOLD, 20) }} />
           </div>
 
           {/* Horizontal scroll */}

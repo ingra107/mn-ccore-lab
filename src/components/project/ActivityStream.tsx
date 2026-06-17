@@ -44,6 +44,7 @@ import {
   type ActivityEntryItemRow,
 } from '../activity/activityRender'
 import { ICON_PROPS } from '../../lib/iconProps'
+import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
 
 // ── Unified feed row shape (activity_entries) ─────────────────────────────────
 
@@ -65,7 +66,7 @@ const NOTE_TYPE_CONFIG: Record<string, { icon: typeof TrendingUp; color: string;
   progress: { icon: TrendingUp,    color: 'var(--teal)',        bg: 'var(--teal-active)',       borderBg: 'rgba(45,138,138,0.25)',   label: 'Progress' },
   blocker:  { icon: AlertTriangle, color: 'var(--maroon)',      bg: 'rgba(122,0,25,0.1)',       borderBg: 'rgba(122,0,25,0.25)',     label: 'Blocker' },
   result:   { icon: CheckCircle,   color: 'var(--green-light)', bg: 'rgba(34,197,94,0.1)',      borderBg: 'rgba(34,197,94,0.25)',    label: 'Result' },
-  question: { icon: HelpCircle,    color: 'var(--gold)',        bg: 'var(--gold-active)',        borderBg: 'rgba(201,168,76,0.25)',  label: 'Question' },
+  question: { icon: HelpCircle,    color: 'var(--gold)',        bg: 'var(--gold-active)',        borderBg: withAlpha(ACCENT_GOLD, 25),  label: 'Question' },
 }
 
 // Discriminated union of every event kind the stream carries.

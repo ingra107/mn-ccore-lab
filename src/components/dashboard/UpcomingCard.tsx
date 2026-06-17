@@ -5,7 +5,7 @@ import { useMeetingsApi, useActionItems, useMeetingCadence, useTasks } from '../
 import { useGrantTimeline } from '../../hooks/useGrantTimeline'
 import { getMeetingFacilitator } from '../../lib/facilitator'
 import { localDateKey } from '../../lib/dateUtils'
-import { isTaskDone } from '../../lib/taskGrouping'
+import { ACCENT_GOLD, isTaskDone, withAlpha } from '../../lib/taskGrouping'
 import { getPersonInfo } from '../../data/team'
 import BentoCard from './BentoCard'
 import { PATHS } from '../../constants/paths'
@@ -128,7 +128,7 @@ function UpcomingCard() {
           style={{
             // N1b de-box: was a bg+border sub-box inside the card. Flattened to
             // a left-accent section — identity via the accent + whitespace, not a box.
-            borderLeft: '2px solid rgba(201, 168, 76, 0.35)',
+            borderLeft: `2px solid ${withAlpha(ACCENT_GOLD, 35)}`,
             paddingLeft: '10px',
           }}
         >

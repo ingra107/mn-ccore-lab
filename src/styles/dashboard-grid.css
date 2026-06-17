@@ -81,7 +81,7 @@
   align-items: center;
   justify-content: center;
   padding: 0;
-  background: rgba(15, 25, 35, 0.05);
+  background: color-mix(in srgb, var(--task-panel-bg) 5%, transparent);
   border: none;
   border-radius: var(--radius-md, 6px);
   color: var(--slate, #64748b);
@@ -97,7 +97,7 @@
 }
 
 .rgl-drag-handle:hover {
-  background: rgba(15, 25, 35, 0.1);
+  background: color-mix(in srgb, var(--task-panel-bg) 10%, transparent);
   color: var(--ink, #0f1923);
 }
 

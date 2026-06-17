@@ -5,6 +5,7 @@ import { getPersonInfo } from '../data/team'
 import { formatRelativeTime } from '../lib/dateUtils'
 import { STATUS_CONFIG, PRIORITY_CONFIG, STAGE_COLORS } from '../lib/taskConstants'
 import { ICON_PROPS } from '../lib/iconProps'
+import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
 
 // ── Types ────────────────────────────────────────────────────
 
@@ -80,7 +81,7 @@ function MiniAvatar({ slug }: { slug: string }) {
       className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 overflow-hidden"
       style={{
         background: info.photoUrl ? 'transparent' : 'var(--gold-emphasis)',
-        border: '1px solid rgba(201, 168, 76, 0.2)',
+        border: `1px solid ${withAlpha(ACCENT_GOLD, 20)}`,
         fontSize: '10px',
         color: 'var(--gold)',
         fontWeight: 500,
@@ -227,7 +228,7 @@ function MemberContent({ data }: { data: MemberCardData }) {
         className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 overflow-hidden"
         style={{
           background: data.photoUrl ? 'transparent' : 'var(--gold-emphasis)',
-          border: '1px solid rgba(201, 168, 76, 0.25)',
+          border: `1px solid ${withAlpha(ACCENT_GOLD, 25)}`,
           fontSize: '12px',
           color: 'var(--gold)',
           fontWeight: 500,

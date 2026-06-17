@@ -26,6 +26,7 @@ import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 import TaskDetailPanel from '../../components/tasks/TaskDetailPanel'
 import type { TaskRow } from '../../lib/api'
 import { ICON_PROPS } from '../../lib/iconProps'
+import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
 
 interface DeadlineItem {
   id: string
@@ -977,7 +978,7 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
       {isMilestone && item.future_note && isDueSoon && !isDone && (
         <div className="ml-8 mr-3 mt-1 mb-2 p-3 rounded-lg" style={{
           background: 'var(--gold-hover)',
-          border: '1px solid rgba(201,168,76,0.15)',
+          border: `1px solid ${withAlpha(ACCENT_GOLD, 15)}`,
           borderLeft: '3px solid var(--gold)',
         }}>
           <div className="flex items-center justify-between gap-1.5 mb-1">
@@ -1023,7 +1024,7 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
       {isMilestone && editingNote && (
         <div className="ml-8 mr-3 mt-1 mb-2 p-3 rounded-lg" style={{
           background: 'var(--gold-hover)',
-          border: '1px solid rgba(201,168,76,0.2)',
+          border: `1px solid ${withAlpha(ACCENT_GOLD, 20)}`,
         }}>
           <div className="flex items-center gap-1.5 mb-2">
             <Pencil {...ICON_PROPS} size={10} style={{ color: 'var(--gold)' }} />
@@ -1042,7 +1043,7 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
               lineHeight: 1.5,
               width: '100%',
               resize: 'vertical',
-              border: '1px solid rgba(201,168,76,0.15)',
+              border: `1px solid ${withAlpha(ACCENT_GOLD, 15)}`,
               borderRadius: 'var(--radius-md)',
               padding: '8px 10px',
               background: 'var(--cream)',
@@ -1066,7 +1067,7 @@ function DeadlineRow({ item }: { item: DeadlineItem }) {
               style={{
                 color: 'var(--gold)',
                 background: 'var(--gold-active)',
-                border: '1px solid rgba(201,168,76,0.2)',
+                border: `1px solid ${withAlpha(ACCENT_GOLD, 20)}`,
                 cursor: saving ? 'wait' : 'pointer',
                 opacity: saving ? 0.85 : 1,
               }}

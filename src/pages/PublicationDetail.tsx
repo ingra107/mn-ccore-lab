@@ -7,6 +7,7 @@ import Avatar from '../components/Avatar'
 import { getPersonInfo } from '../data/team'
 import { PATHS } from '../constants/paths'
 import { ICON_PROPS } from '../lib/iconProps'
+import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
 
 const TOPIC_DISPLAY: Record<string, string> = {
   clif: 'CLIF',
@@ -270,7 +271,7 @@ export default function PublicationDetail() {
                   style={{
                     background: 'var(--gold-active)',
                     color: 'var(--gold)',
-                    border: '1px solid rgba(201, 168, 76, 0.2)',
+                    border: `1px solid ${withAlpha(ACCENT_GOLD, 20)}`,
                     textDecoration: 'none',
                     minHeight: '32px',
                   }}
@@ -349,7 +350,7 @@ function RelatedPublicationsSection({ pub, allPubs }: { pub: any; allPubs: any[]
             key={p.id}
             to={`/publications/${encodeURIComponent(p.id)}`}
             className="flex items-start gap-3 py-1.5"
-            style={{ textDecoration: 'none', color: 'var(--ink)', borderBottom: '1px solid rgba(201,168,76,0.06)' }}
+            style={{ textDecoration: 'none', color: 'var(--ink)', borderBottom: `1px solid ${withAlpha(ACCENT_GOLD, 6)}` }}
           >
             <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75, flexShrink: 0, minWidth: 36 }}>{p.year}</span>
             <span style={{ fontSize: 'var(--value-size)', flex: 1 }}>{p.title}</span>
@@ -440,7 +441,7 @@ function LinkedProjectsSection({ publicationId }: { publicationId: string }) {
                 className="flex items-center gap-3 py-2 transition-colors"
                 style={{
                   textDecoration: 'none',
-                  borderBottom: '1px solid rgba(201, 168, 76, 0.06)',
+                  borderBottom: `1px solid ${withAlpha(ACCENT_GOLD, 6)}`,
                 }}
               >
                 <span

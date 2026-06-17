@@ -56,6 +56,7 @@ import HeartbeatLine from '../components/HeartbeatLine'
 import EntityNotFound from '../components/EntityNotFound'
 import { ICON_PROPS } from '../lib/iconProps'
 import DueLabel from '../components/DueLabel'
+import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
 
 function buildMemberHoverData(slug: string): HoverCardData {
   const p = getPersonInfo(slug)
@@ -412,7 +413,7 @@ export default function MeetingDetail() {
               style={{
                 fontSize: 'var(--label-size)',
                 color: agendaCopied ? 'var(--green)' : 'var(--gold)',
-                border: `1px solid ${agendaCopied ? 'var(--green)' : 'rgba(201,168,76,0.25)'}`,
+                border: `1px solid ${agendaCopied ? 'var(--green)' : '${withAlpha(ACCENT_GOLD, 25)}'}`,
                 background: agendaCopied ? 'var(--green-hover)' : 'var(--gold-hover)',
                 cursor: generatingAgenda ? 'wait' : 'pointer',
                 opacity: generatingAgenda ? 0.85 : 1,
@@ -688,7 +689,7 @@ export default function MeetingDetail() {
                       },
                     })
                   }}
-                  style={{ marginBottom: decisions.length > 0 ? '12px' : 0, paddingBottom: decisions.length > 0 ? '12px' : 0, borderBottom: decisions.length > 0 ? '1px solid rgba(201,168,76,0.1)' : 'none' }}
+                  style={{ marginBottom: decisions.length > 0 ? '12px' : 0, paddingBottom: decisions.length > 0 ? '12px' : 0, borderBottom: decisions.length > 0 ? `1px solid ${withAlpha(ACCENT_GOLD, 10)}` : 'none' }}
                 >
                   <input
                     type="text"
@@ -698,7 +699,7 @@ export default function MeetingDetail() {
                     autoFocus
                     style={{
                       width: '100%', fontSize: 'var(--value-size)', color: 'var(--ink)',
-                      background: 'var(--cream)', border: '1px solid rgba(201,168,76,0.15)', borderRadius: 'var(--radius-lg)',
+                      background: 'var(--cream)', border: `1px solid ${withAlpha(ACCENT_GOLD, 15)}`, borderRadius: 'var(--radius-lg)',
                       padding: 'var(--sp-sm) var(--sp-md)', outline: 'none', marginBottom: '6px', boxSizing: 'border-box',
                     }}
                     onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--gold)')}
@@ -711,7 +712,7 @@ export default function MeetingDetail() {
                     placeholder="Why? (optional rationale)"
                     style={{
                       width: '100%', fontSize: '12px', color: 'var(--ink)',
-                      background: 'var(--cream)', border: '1px solid rgba(201,168,76,0.1)', borderRadius: 'var(--radius-lg)',
+                      background: 'var(--cream)', border: `1px solid ${withAlpha(ACCENT_GOLD, 10)}`, borderRadius: 'var(--radius-lg)',
                       padding: '6px 12px', outline: 'none', marginBottom: '8px', boxSizing: 'border-box',
                     }}
                   />
@@ -735,7 +736,7 @@ export default function MeetingDetail() {
             </AnimatePresence>
 
             {decisions.map((d, i) => (
-              <div key={i} className="flex items-start gap-3 py-2" style={{ borderBottom: i < decisions.length - 1 ? '1px solid rgba(201, 168, 76, 0.06)' : 'none' }}>
+              <div key={i} className="flex items-start gap-3 py-2" style={{ borderBottom: i < decisions.length - 1 ? `1px solid ${withAlpha(ACCENT_GOLD, 6)}` : 'none' }}>
                 <div style={{ width: 6, height: 6, borderRadius: 'var(--radius-circle)', background: 'var(--gold)', marginTop: '7px', flexShrink: 0 }} />
                 <p style={{ fontSize: 'var(--value-size)', color: 'var(--ink)', lineHeight: 1.5, margin: 0 }}>{d}</p>
               </div>
@@ -961,7 +962,7 @@ function ActionItemRow({ item, onToggle, selected, onToggleSelect }: { item: Act
   return (
     <div
       className="action-item-row flex items-start gap-3 py-2.5"
-      style={{ borderBottom: '1px solid rgba(201, 168, 76, 0.06)', cursor: 'pointer', borderRadius: 'var(--radius-md)', margin: '0 -8px', padding: '10px 8px', transition: 'background 0.15s', background: selected ? 'var(--teal-hover)' : undefined }}
+      style={{ borderBottom: `1px solid ${withAlpha(ACCENT_GOLD, 6)}`, cursor: 'pointer', borderRadius: 'var(--radius-md)', margin: '0 -8px', padding: '10px 8px', transition: 'background 0.15s', background: selected ? 'var(--teal-hover)' : undefined }}
       // role="button" removed (axe nested-interactive): row contains a
       // checkbox button + task-title button inside. Background click still
       // toggles via e.target === e.currentTarget guard.
@@ -1194,7 +1195,7 @@ function AddAgendaForm({ isAuthenticated, onAdd }: { isAuthenticated: boolean; o
             disabled={!isAuthenticated && import.meta.env.PROD}
             style={{
               width: '100%', fontSize: 'var(--value-size)', color: 'var(--ink)',
-              background: 'var(--cream)', border: '1px solid rgba(201, 168, 76, 0.15)', borderRadius: 'var(--radius-lg)',
+              background: 'var(--cream)', border: `1px solid ${withAlpha(ACCENT_GOLD, 15)}`, borderRadius: 'var(--radius-lg)',
               padding: 'var(--sp-sm) var(--sp-md)', outline: 'none', transition: 'border-color 0.2s',
             }}
             onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--gold)')}
@@ -1211,7 +1212,7 @@ function AddAgendaForm({ isAuthenticated, onAdd }: { isAuthenticated: boolean; o
             <motion.button type="button" onClick={() => setShowDocInput(!showDocInput)}
               initial={{ opacity: 0 }} animate={{ opacity: 1 }}
               className="cursor-pointer flex-shrink-0 p-2 rounded-lg"
-              style={{ background: 'transparent', border: '1px solid rgba(201, 168, 76, 0.2)', color: 'var(--slate)' }}
+              style={{ background: 'transparent', border: `1px solid ${withAlpha(ACCENT_GOLD, 20)}`, color: 'var(--slate)' }}
               title="Attach document link">
               <FileText {...ICON_PROPS} size={14} />
             </motion.button>
@@ -1231,7 +1232,7 @@ function AddAgendaForm({ isAuthenticated, onAdd }: { isAuthenticated: boolean; o
               placeholder="Document URL (Google Doc, PDF, etc.)"
               style={{
                 width: '100%', fontSize: '12px', color: 'var(--ink)',
-                background: 'var(--cream)', border: '1px solid rgba(201, 168, 76, 0.15)', borderRadius: 'var(--radius-lg)',
+                background: 'var(--cream)', border: `1px solid ${withAlpha(ACCENT_GOLD, 15)}`, borderRadius: 'var(--radius-lg)',
                 padding: '6px 10px', outline: 'none', marginTop: '6px',
               }}
             />

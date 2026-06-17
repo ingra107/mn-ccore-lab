@@ -17,7 +17,7 @@ import { getPersonInfo } from '../../data/team'
 import Avatar from '../../components/Avatar'
 import { PRIORITY_COLORS, isProjectActive } from '../../lib/taskConstants'
 import { ICON_PROPS } from '../../lib/iconProps'
-import { isTaskDone } from '../../lib/taskGrouping'
+import { ACCENT_GOLD, isTaskDone, withAlpha } from '../../lib/taskGrouping'
 import DueLabel from '../../components/DueLabel'
 
 // D1 lowercase stage value → display label.
@@ -569,7 +569,7 @@ export default function AnalyticsPage() {
                 {pendingTasks} still pending across the lab
               </p>
             </div>
-            <div className="text-center pt-3 mt-3" style={{ borderTop: '1px dashed rgba(201,168,76,0.15)' }}>
+            <div className="text-center pt-3 mt-3" style={{ borderTop: `1px dashed ${withAlpha(ACCENT_GOLD, 15)}` }}>
               <p style={{ fontSize: 'var(--value-size)', color: 'var(--muted)' }}>
                 Individual performance metrics are visible to PIs only
               </p>
@@ -735,7 +735,7 @@ export default function AnalyticsPage() {
                   {counts.map((count, wi) => {
                     const bg = count === 0 ? 'var(--border-subtle)'
                       : count <= 2 ? 'rgba(22, 163, 74, 0.2)'
-                      : count <= 5 ? 'rgba(201, 168, 76, 0.25)'
+                      : count <= 5 ? withAlpha(ACCENT_GOLD, 25)
                       : 'rgba(122, 0, 25, 0.25)'
                     const fg = count === 0 ? 'var(--slate)'
                       : count <= 2 ? 'var(--green)'
@@ -763,13 +763,13 @@ export default function AnalyticsPage() {
               )
             })}
           </div>
-          <div className="flex items-center gap-4 mt-3 pt-2" style={{ borderTop: '1px dashed rgba(201,168,76,0.15)' }}>
+          <div className="flex items-center gap-4 mt-3 pt-2" style={{ borderTop: `1px dashed ${withAlpha(ACCENT_GOLD, 15)}` }}>
             <div className="flex items-center gap-1.5">
               <div className="w-3 h-3 rounded" style={{ backgroundColor: 'rgba(22, 163, 74, 0.2)' }} />
               <span className="text-[10px]" style={{ color: 'var(--slate)' }}>0-2 tasks</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded" style={{ backgroundColor: 'rgba(201, 168, 76, 0.25)' }} />
+              <div className="w-3 h-3 rounded" style={{ backgroundColor: withAlpha(ACCENT_GOLD, 25) }} />
               <span className="text-[10px]" style={{ color: 'var(--slate)' }}>3-5 tasks</span>
             </div>
             <div className="flex items-center gap-1.5">

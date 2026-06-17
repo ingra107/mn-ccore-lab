@@ -17,6 +17,7 @@ import { useLabPrefs } from '../../hooks/useLabPrefs'
 import RangeSlider from '../../components/RangeSlider'
 import CalendarFeedsPanel from '../../components/CalendarFeedsPanel'
 import { ICON_PROPS } from '../../lib/iconProps'
+import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
 
 interface WorkflowTemplate {
   id: string
@@ -365,7 +366,7 @@ export default function SettingsPage() {
                       // Cycle through palette colors for each stage
                       const colors = [
                         { bg: 'var(--teal-active)', text: 'var(--teal)', border: 'rgba(45,138,138,0.3)' },
-                        { bg: 'var(--gold-active)', text: 'var(--gold)', border: 'rgba(201,168,76,0.3)' },
+                        { bg: 'var(--gold-active)', text: 'var(--gold)', border: withAlpha(ACCENT_GOLD, 30) },
                         { bg: 'var(--maroon-hover)', text: 'var(--maroon)', border: 'rgba(122,0,25,0.2)' },
                         { bg: 'rgba(34,197,94,0.1)', text: 'var(--green)', border: 'rgba(34,197,94,0.3)' },
                         // Lighter blue/purple for AA contrast on near-black

@@ -4,6 +4,7 @@ import { GitBranch } from 'lucide-react'
 import BentoCard from './BentoCard'
 import { usePublications } from '../../hooks/useApiData'
 import { useDashboardMounted } from '../../pages/Dashboard'
+import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
 
 interface Stage {
   label: string
@@ -102,7 +103,7 @@ function PipelineCard() {
                       borderRadius: 'var(--radius-lg)',
                       background: `linear-gradient(135deg, ${stage.color}, ${stage.colorEnd})`,
                       transition: `width 0.8s cubic-bezier(0.16, 1, 0.3, 1) ${i * 150}ms`,
-                      border: i === 0 ? '1px solid rgba(201, 168, 76, 0.2)' : 'none',
+                      border: i === 0 ? `1px solid ${withAlpha(ACCENT_GOLD, 20)}` : 'none',
                       position: 'relative',
                     }}
                   >

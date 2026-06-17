@@ -12,7 +12,7 @@
 //
 // Extracted from src/pages/portal/TodayPage.tsx (B2_Rail_Alert).
 
-import { ACCENT_GOLD, INK, INK_MUTED, daysSince } from '../constants'
+import { ACCENT_GOLD, INK, INK_MUTED, daysSince, withAlpha } from '../constants'
 import type { TaskRow } from '../../../lib/api'
 
 interface HermesSuggestsProps {
@@ -59,7 +59,7 @@ export function HermesSuggestsCard({ overdueTasks, stalledProjects, menteesWithD
   if (bullets.length < 3) bullets.push('No backlog drama. Pick one strategic project and write the next 200 words.')
 
   return (
-    <div style={{ padding: 14, background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.20)', borderRadius: 'var(--radius-md)', marginBottom: 14 }}>
+    <div style={{ padding: 14, background: withAlpha(ACCENT_GOLD, 6), border: `1px solid ${withAlpha(ACCENT_GOLD, 20)}`, borderRadius: 'var(--radius-md)', marginBottom: 14 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
         <span style={{ width: 6, height: 6, borderRadius: '50%', background: ACCENT_GOLD }} />
         <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: ACCENT_GOLD }}>Today's focus</span>

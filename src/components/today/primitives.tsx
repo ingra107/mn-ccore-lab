@@ -53,7 +53,7 @@ export function LinkRow({ links }: { links: TaskLink[] }) {
               background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)',
               textDecoration: 'none', transition: 'all 150ms',
               '--hov-color': ACCENT_GOLD,
-              '--hov-border': 'rgba(201,168,76,0.30)',
+              '--hov-border': withAlpha(ACCENT_GOLD, 30),
             } as React.CSSProperties}
           >
             <Icon {...ICON_PROPS} size={12} aria-hidden="true" />

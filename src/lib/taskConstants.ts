@@ -1,5 +1,6 @@
 import { Circle, Clock, CheckCircle2, AlertTriangle, Hourglass } from 'lucide-react'
 import { STATUS_BG_EXTENDED } from './statusColors'
+import { ACCENT_GOLD, withAlpha } from './taskGrouping'
 
 // ── Status ──
 // Color SSOT (Nick 2026-06-11, "lean on consistency"): task status/priority
@@ -39,7 +40,7 @@ export const STATUS_CYCLE = ['todo', 'in_progress', 'done'] as const
 export const PRIORITY_CONFIG = {
   urgent: { label: 'Urgent', color: 'var(--task-accent-coral)', bg: 'rgba(122, 0, 25, 0.14)' },
   high: { label: 'High', color: 'var(--task-accent-orange)', bg: 'rgba(194, 65, 12, 0.14)' },
-  medium: { label: 'Med', color: 'var(--task-accent-gold)', bg: 'rgba(201, 168, 76, 0.14)' },
+  medium: { label: 'Med', color: 'var(--task-accent-gold)', bg: withAlpha(ACCENT_GOLD, 14) },
   low: { label: 'Low', color: 'var(--slate)', bg: 'rgba(100, 116, 139, 0.14)' },
 } as const
 

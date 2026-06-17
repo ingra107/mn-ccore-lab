@@ -30,7 +30,7 @@ import { motion } from 'framer-motion'
 import { localDateKey } from '../../lib/dateUtils'
 import { parseDbUtc } from '../../lib/time'
 import { ICON_PROPS } from '../../lib/iconProps'
-import { isTaskDone } from '../../lib/taskGrouping'
+import { ACCENT_GOLD, isTaskDone, withAlpha } from '../../lib/taskGrouping'
 import EmptyState from '../EmptyState'
 
 // ── Column definitions for resize + tab nav ─────────────────
@@ -927,7 +927,7 @@ function TaskGridRow({
         aria-hidden
         style={{
           position: 'absolute', inset: 0,
-          background: 'var(--gold-hover, rgba(201,168,76,0.15))',
+          background: `var(--gold-hover, ${withAlpha(ACCENT_GOLD, 15)})`,
           color: 'var(--gold)',
           display: 'flex', alignItems: 'center', justifyContent: 'flex-end',
           padding: '0 var(--sp-lg)',

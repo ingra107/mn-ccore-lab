@@ -5,6 +5,7 @@ import { Moon, GripVertical, Circle, Plus } from 'lucide-react'
 import { motion } from 'framer-motion'
 import DueLabel from '../DueLabel'
 import { ICON_PROPS } from '../../lib/iconProps'
+import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
 
 interface EveningTask {
   id: string
@@ -43,7 +44,7 @@ function SortableEveningItem({ task, onComplete, onClickTitle }: {
     <div ref={setNodeRef} style={style} {...attributes}>
       <div
         className="flex items-center gap-3 py-2.5 group"
-        style={{ borderBottom: '1px solid rgba(201,168,76,0.04)' }}
+        style={{ borderBottom: `1px solid ${withAlpha(ACCENT_GOLD, 4)}` }}
       >
         {/* Drag handle */}
         <div {...listeners} style={{ cursor: 'grab', touchAction: 'none' }}>
@@ -118,7 +119,7 @@ export default function EveningTaskSlot({ tasks, onComplete, onClickTitle, onAdd
         ref={setNodeRef}
         className="rounded-lg"
         style={{
-          border: `1px solid ${isOver ? 'var(--gold)' : 'rgba(201,168,76,0.1)'}`,
+          border: `1px solid ${isOver ? 'var(--gold)' : '${withAlpha(ACCENT_GOLD, 10)}'}`,
           background: isOver ? 'var(--gold-hover)' : 'transparent',
           transition: 'all 0.2s ease',
           minHeight: tasks.length === 0 ? 40 : undefined,
@@ -143,7 +144,7 @@ export default function EveningTaskSlot({ tasks, onComplete, onClickTitle, onAdd
           className="w-full flex items-center justify-center gap-1 py-2"
           style={{
             background: 'none', border: 'none', cursor: 'pointer',
-            borderTop: tasks.length > 0 ? '1px solid rgba(201,168,76,0.04)' : undefined,
+            borderTop: tasks.length > 0 ? `1px solid ${withAlpha(ACCENT_GOLD, 4)}` : undefined,
           }}
           whileHover={{ backgroundColor: 'var(--gold-hover)' }}
         >

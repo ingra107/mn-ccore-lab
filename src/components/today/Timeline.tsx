@@ -16,7 +16,7 @@ import { OverlapBand } from './OverlapBand'
 import { useIsMobile } from '../../hooks/useIsMobile'
 import { PlannedTaskRow } from './PlannedTaskRow'
 import {
-  ACCENT_GOLD, ACCENT_TEAL, ACCENT_CORAL, INK_DIM, LONG_EVENT_MIN,
+  ACCENT_GOLD, ACCENT_TEAL, ACCENT_CORAL, INK_DIM, LONG_EVENT_MIN, PAGE_BG, withAlpha,
   type PlannedSlot, type TodayEvent,
 } from './constants'
 import type { TodayStateApi } from '../../hooks/useTodayState'
@@ -122,16 +122,16 @@ function DropZone({ slot, label, onDropTask, gapMin }: { slot: PlannedSlot; labe
       // DnD never fires there, so six dashed zones were dead UI eating phone
       // space. The 📌 plan button is the touch planning path.
       className="today-drop-zone"
-      onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = ACCENT_GOLD; e.currentTarget.style.background = 'rgba(201,168,76,0.08)' }}
-      onDragLeave={(e) => { e.currentTarget.style.borderColor = 'rgba(201,168,76,0.15)'; e.currentTarget.style.background = 'transparent' }}
+      onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = ACCENT_GOLD; e.currentTarget.style.background = withAlpha(ACCENT_GOLD, 8) }}
+      onDragLeave={(e) => { e.currentTarget.style.borderColor = withAlpha(ACCENT_GOLD, 15); e.currentTarget.style.background = 'transparent' }}
       onDrop={(e) => {
         e.preventDefault()
-        e.currentTarget.style.borderColor = 'rgba(201,168,76,0.15)'
+        e.currentTarget.style.borderColor = withAlpha(ACCENT_GOLD, 15)
         e.currentTarget.style.background = 'transparent'
         const id = e.dataTransfer.getData('text/plain')
         if (id) onDropTask(id, slot)
       }}
-      style={{ padding: '6px 14px', margin: '4px 0', border: '1px dashed rgba(201,168,76,0.15)', borderRadius: 6, fontSize: 11, color: INK_DIM, textAlign: 'center', transition: 'all 120ms', fontStyle: 'italic', ...(proportional ? { minHeight: gapHeight(gapMin as number), display: 'flex', alignItems: 'center', justifyContent: 'center' } : {}) }}
+      style={{ padding: '6px 14px', margin: '4px 0', border: `1px dashed ${withAlpha(ACCENT_GOLD, 15)}`, borderRadius: 6, fontSize: 11, color: INK_DIM, textAlign: 'center', transition: 'all 120ms', fontStyle: 'italic', ...(proportional ? { minHeight: gapHeight(gapMin as number), display: 'flex', alignItems: 'center', justifyContent: 'center' } : {}) }}
     >
       {gapLabel}
     </div>
@@ -277,7 +277,7 @@ export function Timeline({ events, tasks, state, projectsByPid, expandedId, onEx
     <div aria-hidden="true" style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '2px 0' }}>
       <span style={{ width: 7, height: 7, borderRadius: '50%', background: nowColor, flexShrink: 0 }} />
       <div style={{ flex: 1, height: 1, background: nowColor, boxShadow: `0 0 4px ${nowColor}80` }} />
-      <span title={inMeeting ? 'Currently in a meeting' : 'Now'} style={{ padding: '1px 5px', fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: nowColor, background: 'rgba(11,16,23,0.90)', borderRadius: 3, flexShrink: 0 }}>
+      <span title={inMeeting ? 'Currently in a meeting' : 'Now'} style={{ padding: '1px 5px', fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: nowColor, background: withAlpha(PAGE_BG, 90), borderRadius: 3, flexShrink: 0 }}>
         {nowLabel} now
       </span>
     </div>

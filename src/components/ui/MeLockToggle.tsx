@@ -11,6 +11,7 @@
 //                   matches the TaskDetailPanel + cream-surface usage).
 
 import { Lock } from 'lucide-react'
+import { withAlpha } from '../../lib/taskGrouping'
 
 const ACCENT_GOLD = '#c9a84c'
 
@@ -40,10 +41,10 @@ export function MeLockToggle({ locked, onToggle, theme = 'light' }: MeLockToggle
         paddingRight: 6,
         borderRadius: 'var(--radius-sm)',
         border: locked
-          ? `1px solid ${isDark ? 'rgba(201,168,76,0.50)' : 'rgba(100,116,139,0.35)'}`
+          ? `1px solid ${isDark ? withAlpha(ACCENT_GOLD, 50) : 'rgba(100,116,139,0.35)'}`
           : `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'var(--border-subtle)'}`,
         background: locked
-          ? (isDark ? 'rgba(201,168,76,0.12)' : 'rgba(100,116,139,0.12)')
+          ? (isDark ? withAlpha(ACCENT_GOLD, 12) : 'rgba(100,116,139,0.12)')
           : 'transparent',
         color: locked
           ? (isDark ? ACCENT_GOLD : 'var(--slate)')

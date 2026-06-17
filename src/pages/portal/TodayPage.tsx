@@ -42,6 +42,7 @@ import { NeedsAttentionCard } from '../../components/today/rail/NeedsAttentionCa
 import { ProjectsCard } from '../../components/today/rail/ProjectsCard'
 import { PulseCard } from '../../components/today/rail/PulseCard'
 import type { TaskRow } from '../../lib/api'
+import { withAlpha } from '../../lib/taskGrouping'
 
 export default function TodayPage() {
   usePageMeta('Today · MN-CCORE', 'Operating-day landing — what to work on, who you\'re meeting, what\'s overdue.')
@@ -361,7 +362,7 @@ export default function TodayPage() {
               title="Run /process on this machine"
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: 6, alignSelf: 'center',
-                background: 'rgba(201,168,76,0.12)', border: '1px solid rgba(201,168,76,0.35)',
+                background: withAlpha(ACCENT_GOLD, 12), border: `1px solid ${withAlpha(ACCENT_GOLD, 35)}`,
                 color: ACCENT_GOLD, borderRadius: 6, padding: '5px 11px',
                 fontSize: 13, fontWeight: 500, cursor: 'pointer', flexShrink: 0,
               }}

@@ -16,6 +16,7 @@ import Avatar from '../../components/Avatar'
 import { TextSkeleton } from '../../components/LoadingSkeleton'
 import CalendarFeedsPanel from '../../components/CalendarFeedsPanel'
 import { ICON_PROPS } from '../../lib/iconProps'
+import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
 
 interface ProfileForm {
   preferred_name: string
@@ -160,7 +161,7 @@ export default function ProfilePage() {
           <p className="text-xs mt-0.5" style={{ color: 'var(--muted)' }}>{user?.email}</p>
           <div className="flex flex-wrap items-center gap-2 mt-2">
             {m.role && (
-              <span className="text-[11px] px-2 py-0.5 rounded" style={{ background: 'rgba(201,168,76,0.14)', color: 'var(--gold)' }}>
+              <span className="text-[11px] px-2 py-0.5 rounded" style={{ background: withAlpha(ACCENT_GOLD, 14), color: 'var(--gold)' }}>
                 {m.role}
               </span>
             )}

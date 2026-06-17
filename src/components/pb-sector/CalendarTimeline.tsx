@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { Calendar } from 'lucide-react'
 import { PATHS } from '../../constants/paths'
 import { ICON_PROPS } from '../../lib/iconProps'
+import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
 
 interface CalendarEvent {
   id: string
@@ -62,7 +63,7 @@ export default function CalendarTimeline({ events }: CalendarTimelineProps) {
       <div
         className="relative rounded-lg overflow-hidden"
         style={{
-          border: '1px solid rgba(201,168,76,0.1)',
+          border: `1px solid ${withAlpha(ACCENT_GOLD, 10)}`,
           height: (END_HOUR - START_HOUR + 1) * HOUR_HEIGHT,
         }}
       >

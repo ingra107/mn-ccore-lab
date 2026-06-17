@@ -12,6 +12,7 @@ import type { ExpertiseTag } from '../hooks/useApiData'
 import { mentees } from '../data/mentees'
 import { displayName } from '../lib/nameUtils'
 import { ICON_PROPS } from '../lib/iconProps'
+import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
 
 export default function Team() {
   const { data: publications = [] } = usePublications()
@@ -401,7 +402,7 @@ export default function Team() {
                 className="fade-in-up text-center p-4 rounded-lg cursor-pointer group"
                 style={{
                   background: 'var(--ice)',
-                  border: '1px solid rgba(201, 168, 76, 0.08)',
+                  border: `1px solid ${withAlpha(ACCENT_GOLD, 8)}`,
                   textDecoration: 'none',
                   transition: 'background-color var(--duration-normal, 150ms) var(--ease-out)',
                   minHeight: '130px',
@@ -488,7 +489,7 @@ export default function Team() {
                 className="fade-in-up text-center p-4 rounded-lg cursor-pointer group"
                 style={{
                   background: 'var(--ice)',
-                  border: '1px solid rgba(201, 168, 76, 0.08)',
+                  border: `1px solid ${withAlpha(ACCENT_GOLD, 8)}`,
                   textDecoration: 'none',
                   transition: 'background-color var(--duration-normal, 150ms) var(--ease-out)',
                   minHeight: '130px',

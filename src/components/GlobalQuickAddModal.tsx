@@ -25,6 +25,7 @@ import { useToast } from '../hooks/useToast'
 import { useAuth } from '../hooks/useAuth'
 import { emailToSlug } from '../lib/emailSlug'
 import { ICON_PROPS } from '../lib/iconProps'
+import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
 
 // ── Token hint pill ──────────────────────────────────────────
 
@@ -140,7 +141,7 @@ function GlobalQuickAddModal({ isOpen, onClose }: Props) {
             <div
               style={{
                 background: 'var(--cream)',
-                border: '1px solid rgba(201,168,76,0.28)',
+                border: `1px solid ${withAlpha(ACCENT_GOLD, 28)}`,
                 borderRadius: 'var(--radius-2xl)',
                 boxShadow: 'var(--shadow-elevated)',
                 overflow: 'hidden',
@@ -153,7 +154,7 @@ function GlobalQuickAddModal({ isOpen, onClose }: Props) {
                   alignItems: 'center',
                   gap: '8px',
                   padding: '12px 16px 10px',
-                  borderBottom: '1px solid rgba(201,168,76,0.1)',
+                  borderBottom: `1px solid ${withAlpha(ACCENT_GOLD, 10)}`,
                 }}
               >
                 <Zap {...ICON_PROPS} size={15} style={{ color: 'var(--gold)', flexShrink: 0 }} />
@@ -178,7 +179,7 @@ function GlobalQuickAddModal({ isOpen, onClose }: Props) {
                     background: 'var(--ice)',
                     padding: '1px 5px',
                     borderRadius: 'var(--radius-sm)',
-                    border: '1px solid rgba(201,168,76,0.15)',
+                    border: `1px solid ${withAlpha(ACCENT_GOLD, 15)}`,
                   }}
                 >
                   esc
@@ -230,7 +231,7 @@ function GlobalQuickAddModal({ isOpen, onClose }: Props) {
                   onClick={handleSubmit}
                   disabled={!parseQuickAddInput(value).title.trim()}
                   style={{
-                    background: parseQuickAddInput(value).title.trim() ? 'var(--gold)' : 'rgba(201,168,76,0.3)',
+                    background: parseQuickAddInput(value).title.trim() ? 'var(--gold)' : withAlpha(ACCENT_GOLD, 30),
                     color: parseQuickAddInput(value).title.trim() ? 'var(--ink)' : 'var(--slate)',
                     border: 'none',
                     borderRadius: 'var(--radius-lg)',

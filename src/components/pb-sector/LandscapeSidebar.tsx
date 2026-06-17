@@ -5,6 +5,7 @@ import CalendarTimeline from './CalendarTimeline'
 import { PATHS } from '../../constants/paths'
 import { localDateKey } from '../../lib/dateUtils'
 import { ICON_PROPS } from '../../lib/iconProps'
+import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
 
 interface CalendarEvent {
   id: string
@@ -38,7 +39,7 @@ function SidebarCard({ title, icon: Icon, iconColor, children, linkTo, linkLabel
   return (
     <div
       className="rounded-lg overflow-hidden"
-      style={{ border: '1px solid rgba(201,168,76,0.1)', background: 'rgba(201,168,76,0.02)' }}
+      style={{ border: `1px solid ${withAlpha(ACCENT_GOLD, 10)}`, background: withAlpha(ACCENT_GOLD, 2) }}
     >
       <div className="flex items-center justify-between px-3 py-2">
         <div className="flex items-center gap-1.5">
@@ -197,7 +198,7 @@ export default function LandscapeSidebar({ mode, events, milestones, commitments
           )}
 
           {deepWorkHours !== null && (
-            <div className="flex items-center gap-2 py-1 mt-1" style={{ borderTop: '1px solid rgba(201,168,76,0.06)', paddingTop: 6 }}>
+            <div className="flex items-center gap-2 py-1 mt-1" style={{ borderTop: `1px solid ${withAlpha(ACCENT_GOLD, 6)}`, paddingTop: 6 }}>
               <Clock {...ICON_PROPS} size={10} style={{ color: 'var(--teal)', opacity: 0.85, flexShrink: 0 }} />
               <span style={{ fontSize: '10px', color: 'var(--teal)' }}>
                 {deepWorkHours}h deep work available

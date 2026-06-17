@@ -7,6 +7,7 @@ import { localDateKey } from '../lib/dateUtils'
 import { getPersonInfo } from '../data/team'
 import { PATHS } from '../constants/paths'
 import { ICON_PROPS } from '../lib/iconProps'
+import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
 
 export default function UpcomingMeetingBanner() {
   const { data: meetings = [] } = useMeetingsApi()
@@ -55,11 +56,11 @@ export default function UpcomingMeetingBanner() {
           style={{
             textDecoration: 'none',
             background:
-              'linear-gradient(135deg, rgba(201,168,76,0.06), rgba(45,138,138,0.04))',
-            border: '1px solid rgba(201,168,76,0.15)',
+              `linear-gradient(135deg, ${withAlpha(ACCENT_GOLD, 6)}, rgba(45,138,138,0.04))`,
+            border: `1px solid ${withAlpha(ACCENT_GOLD, 15)}`,
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = 'rgba(201,168,76,0.3)'
+            e.currentTarget.style.borderColor = withAlpha(ACCENT_GOLD, 30)
             e.currentTarget.style.boxShadow =
               '0 4px 20px var(--gold-active)'
           }}

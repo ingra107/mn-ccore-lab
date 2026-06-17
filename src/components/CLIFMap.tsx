@@ -1,4 +1,5 @@
 import { useRef, useEffect, useState } from 'react'
+import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
 
 interface CLIFSite {
   name: string
@@ -100,7 +101,7 @@ export default function CLIFMap() {
                   padding: '20px 20px 18px',
                   borderRadius: 'var(--radius-xl)',
                   background: 'rgba(255, 255, 255, 0.03)',
-                  border: '1px solid rgba(201, 168, 76, 0.15)',
+                  border: `1px solid ${withAlpha(ACCENT_GOLD, 15)}`,
                 }}
               >
                 <div
@@ -120,7 +121,7 @@ export default function CLIFMap() {
                   <span
                     style={{
                       fontSize: '12px',
-                      color: 'rgba(201, 168, 76, 0.9)',
+                      color: withAlpha(ACCENT_GOLD, 90),
                       fontWeight: 500,
                     }}
                   >
@@ -136,8 +137,8 @@ export default function CLIFMap() {
                       style={{
                         padding: '8px 10px',
                         borderRadius: 'var(--radius-md)',
-                        background: site.isHome ? 'rgba(201, 168, 76, 0.12)' : 'transparent',
-                        border: site.isHome ? '1px solid rgba(201, 168, 76, 0.35)' : '1px solid transparent',
+                        background: site.isHome ? withAlpha(ACCENT_GOLD, 12) : 'transparent',
+                        border: site.isHome ? `1px solid ${withAlpha(ACCENT_GOLD, 35)}` : '1px solid transparent',
                         transition: 'background 150ms ease, border-color 150ms ease',
                       }}
                     >

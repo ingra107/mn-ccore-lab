@@ -4,6 +4,7 @@ import { useDigest } from '../hooks/useApiData'
 import type { DigestPaper } from '../hooks/useApiData'
 import { PATHS } from '../constants/paths'
 import { ICON_PROPS } from '../lib/iconProps'
+import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
 
 function relevanceColor(score: number): string {
   if (score >= 80) return 'var(--teal)'
@@ -27,7 +28,7 @@ function topicPill(topic: string) {
         letterSpacing: '0.02em',
         background: 'var(--gold-active)',
         color: 'var(--slate)',
-        border: '1px solid rgba(201,168,76,0.12)',
+        border: `1px solid ${withAlpha(ACCENT_GOLD, 12)}`,
         whiteSpace: 'nowrap',
       }}
     >

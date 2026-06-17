@@ -11,6 +11,7 @@ import Modal from './ui/Modal'
 import { parseTagsString } from '../lib/tagUtils'
 import { parseDbUtc } from '../lib/time'
 import { ICON_PROPS } from '../lib/iconProps'
+import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
 
 // ── Tag auto-suggestion ──────────────────────────────────────
 
@@ -128,7 +129,7 @@ export default function CreateDecisionModal({ projects, onCreate, onClose, open 
     fontSize: 'var(--value-size)',
     color: 'var(--ink)',
     background: 'var(--cream)',
-    border: '1px solid rgba(201,168,76,0.15)',
+    border: `1px solid ${withAlpha(ACCENT_GOLD, 15)}`,
     borderRadius: 'var(--radius-lg)',
     padding: 'var(--sp-sm) var(--sp-md)',
     outline: 'none',
@@ -179,7 +180,7 @@ export default function CreateDecisionModal({ projects, onCreate, onClose, open 
             autoFocus
           />
           {similarDecisions.length > 0 && (
-            <div className="mt-3 p-3 rounded-lg" style={{ background: 'var(--gold-hover)', border: '1px dashed rgba(201,168,76,0.2)' }}>
+            <div className="mt-3 p-3 rounded-lg" style={{ background: 'var(--gold-hover)', border: `1px dashed ${withAlpha(ACCENT_GOLD, 20)}` }}>
               <div className="flex items-center gap-1.5 mb-2">
                 <History {...ICON_PROPS} size={12} style={{ color: 'var(--gold)' }} />
                 <span style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--gold)' }}>
@@ -187,7 +188,7 @@ export default function CreateDecisionModal({ projects, onCreate, onClose, open 
                 </span>
               </div>
               {similarDecisions.map(d => (
-                <div key={d.id} className="py-2" style={{ borderBottom: '1px solid rgba(201,168,76,0.06)' }}>
+                <div key={d.id} className="py-2" style={{ borderBottom: `1px solid ${withAlpha(ACCENT_GOLD, 6)}` }}>
                   <div className="flex items-center gap-2">
                     <p style={{ fontSize: 'var(--value-size)', fontWeight: 500, color: 'var(--ink)', margin: 0 }}>
                       {d.title}

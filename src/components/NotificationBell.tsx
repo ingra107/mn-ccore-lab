@@ -8,6 +8,7 @@ import { useNotifications, useUnreadCount, useMarkRead, useMarkAllRead } from '.
 import { formatRelativeTime, formatMediumDate, localDateKey } from '../lib/dateUtils'
 import { PATHS } from '../constants/paths'
 import { ICON_PROPS } from '../lib/iconProps'
+import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
 
 const TYPE_ICONS: Record<string, typeof Bell> = {
   mention: AtSign,
@@ -149,7 +150,7 @@ export default function NotificationBell({ align = 'right' }: { align?: 'left' |
               width: '360px',
               maxHeight: '480px',
               background: 'var(--cream)',
-              border: '1px solid rgba(201, 168, 76, 0.2)',
+              border: `1px solid ${withAlpha(ACCENT_GOLD, 20)}`,
               borderRadius: 'var(--radius-xl)',
               boxShadow: 'var(--shadow-elevated)',
               zIndex: 'var(--z-sidebar)',
@@ -162,7 +163,7 @@ export default function NotificationBell({ align = 'right' }: { align?: 'left' |
             <div
               style={{
                 padding: 'var(--sp-md) var(--sp-lg)',
-                borderBottom: '1px solid rgba(201, 168, 76, 0.12)',
+                borderBottom: `1px solid ${withAlpha(ACCENT_GOLD, 12)}`,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
@@ -266,7 +267,7 @@ export default function NotificationBell({ align = 'right' }: { align?: 'left' |
                               height: '28px',
                               borderRadius: 'var(--radius-circle)',
                               background: isImpact
-                                ? 'rgba(201, 168, 76, 0.2)'
+                                ? withAlpha(ACCENT_GOLD, 20)
                                 : isUnread ? 'var(--gold-emphasis)' : 'var(--ice)',
                               display: 'flex',
                               alignItems: 'center',
@@ -359,7 +360,7 @@ export default function NotificationBell({ align = 'right' }: { align?: 'left' |
                 fontSize: 'var(--label-size)',
                 color: 'var(--gold)',
                 textDecoration: 'none',
-                borderTop: '1px solid rgba(201, 168, 76, 0.15)',
+                borderTop: `1px solid ${withAlpha(ACCENT_GOLD, 15)}`,
               }}
             >
               View all items

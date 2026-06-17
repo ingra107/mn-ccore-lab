@@ -9,7 +9,7 @@ import { useTasks, useMeetingsApi } from '../hooks/useApiData'
 import { formatShortDate, localDateKey } from '../lib/dateUtils'
 import PageTransition from './PageTransition'
 import { ICON_PROPS } from '../lib/iconProps'
-import { isTaskDone } from '../lib/taskGrouping'
+import { ACCENT_GOLD, PANEL_BG, isTaskDone, withAlpha } from '../lib/taskGrouping'
 
 const navLinks: { to: string; label: string }[] = [
   { to: '/', label: 'Home' },
@@ -142,14 +142,14 @@ export default function Layout() {
         style={{
           background: scrolled
             ? isDark
-              ? 'rgba(15, 25, 35, 0.85)'
+              ? withAlpha(PANEL_BG, 85)
               : 'rgba(255, 255, 255, 0.85)'
             : isHome
               ? 'rgba(0, 0, 0, 0.3)'
               : 'transparent',
           backdropFilter: scrolled || isHome ? 'blur(8px)' : 'none',
           WebkitBackdropFilter: scrolled || isHome ? 'blur(8px)' : 'none',
-          borderBottom: scrolled ? '1px solid rgba(201, 168, 76, 0.2)' : isHome ? '1px solid var(--border-subtle)' : 'none',
+          borderBottom: scrolled ? `1px solid ${withAlpha(ACCENT_GOLD, 20)}` : isHome ? '1px solid var(--border-subtle)' : 'none',
           padding: scrolled ? '10px 0' : '16px 0',
         }}
       >
@@ -232,7 +232,7 @@ export default function Layout() {
                 style={{
                   minWidth: '180px',
                   background: isDark ? '#0f1923' : '#ffffff',
-                  border: '1px solid rgba(201, 168, 76, 0.2)',
+                  border: `1px solid ${withAlpha(ACCENT_GOLD, 20)}`,
                   boxShadow: 'var(--shadow-menu)',
                   opacity: researchOpen ? 1 : 0,
                   transform: researchOpen ? 'translateY(0)' : 'translateY(-4px)',
@@ -259,7 +259,7 @@ export default function Layout() {
                       justifyContent: 'space-between',
                       gap: '8px',
                       '--hov-bg': location.pathname !== link.to ? 'var(--gold-hover)' : 'transparent',
-                      '--hov-border': location.pathname !== link.to ? 'rgba(201, 168, 76, 0.4)' : 'transparent',
+                      '--hov-border': location.pathname !== link.to ? withAlpha(ACCENT_GOLD, 40) : 'transparent',
                     } as React.CSSProperties}
                   >
                     <span>{link.label}</span>
@@ -360,7 +360,7 @@ export default function Layout() {
             maxHeight: menuOpen ? '600px' : '0',
             opacity: menuOpen ? 1 : 0,
             background: isDark
-              ? 'rgba(15, 25, 35, 0.95)'
+              ? withAlpha(PANEL_BG, 95)
               : 'rgba(255, 255, 255, 0.95)',
             backdropFilter: 'blur(12px)',
           }}
@@ -434,7 +434,7 @@ export default function Layout() {
                     marginLeft: '16px',
                     borderLeft: location.pathname === link.to
                       ? '3px solid var(--gold)'
-                      : '3px solid rgba(201, 168, 76, 0.2)',
+                      : `3px solid ${withAlpha(ACCENT_GOLD, 20)}`,
                   }}
                 >
                   <span>{link.label}</span>
@@ -687,7 +687,7 @@ export default function Layout() {
           <div
             className="mt-8 md:mt-12 pt-6 md:pt-8 text-center text-xs"
             style={{
-              borderTop: '1px solid rgba(201, 168, 76, 0.2)',
+              borderTop: `1px solid ${withAlpha(ACCENT_GOLD, 20)}`,
               color: 'rgba(255, 255, 255, 0.75)',
             }}
           >

@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useRelayMessages, useCreateRelay, useCompleteRelay } from '../../hooks/usePBRelay'
 import InlineSelect from '../InlineSelect'
 import { ICON_PROPS } from '../../lib/iconProps'
+import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
 
 export default function RelayCard() {
   const { data: messages = [], isLoading } = useRelayMessages()
@@ -32,7 +33,7 @@ export default function RelayCard() {
       <div
         className="rounded-lg overflow-hidden animate-pulse"
         style={{
-          border: '1px solid rgba(201,168,76,0.1)',
+          border: `1px solid ${withAlpha(ACCENT_GOLD, 10)}`,
           background: 'var(--gold-hover)',
           height: 80,
         }}
@@ -44,7 +45,7 @@ export default function RelayCard() {
     <div
       className="rounded-lg overflow-hidden"
       style={{
-        border: '1px solid rgba(201,168,76,0.1)',
+        border: `1px solid ${withAlpha(ACCENT_GOLD, 10)}`,
         background: 'var(--gold-hover)',
       }}
     >
@@ -158,7 +159,7 @@ export default function RelayCard() {
 
               {/* Divider before form */}
               {(pending.length > 0 || completed.length > 0) && formOpen && (
-                <div style={{ borderTop: '1px solid rgba(201,168,76,0.08)', margin: '2px 0' }} />
+                <div style={{ borderTop: `1px solid ${withAlpha(ACCENT_GOLD, 8)}`, margin: '2px 0' }} />
               )}
 
               {/* Inline form */}

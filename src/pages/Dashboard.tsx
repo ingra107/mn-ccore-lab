@@ -39,6 +39,7 @@ import FileActivityCard from '../components/dashboard/FileActivityCard'
 import LabHealthScore from '../components/dashboard/LabHealthScore'
 import StatusLine from '../components/dashboard/StatusLine'
 import QuickCaptureBar from '../components/QuickCaptureBar'
+import { ACCENT_GOLD, PANEL_BG, withAlpha } from '../lib/taskGrouping'
 
 // Context to defer non-critical queries until after first paint
 export const DashboardMountedContext = createContext(false)
@@ -578,8 +579,8 @@ export default function Dashboard() {
             to={PATHS.meetingPrep(upcomingMeeting.id)}
             className="flex items-center gap-3 mb-2 px-4 py-3 rounded-xl transition-all"
             style={{
-              background: 'linear-gradient(135deg, rgba(201,168,76,0.08) 0%, rgba(45,138,138,0.06) 100%)',
-              border: '1px solid rgba(201,168,76,0.2)',
+              background: `linear-gradient(135deg, ${withAlpha(ACCENT_GOLD, 8)} 0%, rgba(45,138,138,0.06) 100%)`,
+              border: `1px solid ${withAlpha(ACCENT_GOLD, 20)}`,
               textDecoration: 'none',
               color: 'var(--ink)',
             }}
@@ -781,7 +782,7 @@ export default function Dashboard() {
           padding: 0;
           border: none;
           border-radius: var(--radius-md);
-          background: rgba(15, 25, 35, 0.05);
+          background: ${withAlpha(PANEL_BG, 5)};
           color: var(--gold);
           cursor: pointer;
           opacity: 0;

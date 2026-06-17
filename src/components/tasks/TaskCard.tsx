@@ -11,7 +11,7 @@ import { updateTask } from '../../lib/api'
 import { useProjects } from '../../hooks/useApiData'
 import { STATUS_OPTIONS, PRIORITY_CONFIG, PRIORITY_COLORS, STATUS_CYCLE } from '../../lib/taskConstants'
 import type { TaskRow } from '../../lib/api'
-import { isTaskDone } from '../../lib/taskGrouping'
+import { PANEL_BG, isTaskDone, withAlpha } from '../../lib/taskGrouping'
 
 function hasBlockers(task: TaskRow): boolean {
   return !!task.blocked_by && task.blocked_by.split(',').filter(s => s.trim()).length > 0
@@ -208,7 +208,7 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
             showUndo(`${isTaskDone(task) ? 'Reopened' : 'Completed'} task`, () => onStatusChange(task.id, prev))
           }}
           title={isTaskDone(task) ? 'Reopen' : 'Complete'}
-          className="hover:!bg-[rgba(15,25,35,0.10)] dark:hover:!bg-[rgba(255,255,255,0.12)]"
+          className={`hover:!bg-[${withAlpha(PANEL_BG, 10)}] dark:hover:!bg-[rgba(255,255,255,0.12)]`}
           style={{
             background: 'transparent',
             border: 'none',
@@ -229,7 +229,7 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
         <button
           onClick={(e) => { e.stopPropagation(); cyclePriority() }}
           title={`Priority: ${task.priority}`}
-          className="hover:!bg-[rgba(15,25,35,0.10)] dark:hover:!bg-[rgba(255,255,255,0.12)]"
+          className={`hover:!bg-[${withAlpha(PANEL_BG, 10)}] dark:hover:!bg-[rgba(255,255,255,0.12)]`}
           style={{
             background: 'transparent',
             border: 'none',
@@ -250,7 +250,7 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
         <button
           onClick={(e) => { e.stopPropagation(); onClick?.() }}
           title="View details"
-          className="hover:!bg-[rgba(15,25,35,0.10)] dark:hover:!bg-[rgba(255,255,255,0.12)]"
+          className={`hover:!bg-[${withAlpha(PANEL_BG, 10)}] dark:hover:!bg-[rgba(255,255,255,0.12)]`}
           style={{
             background: 'transparent',
             border: 'none',

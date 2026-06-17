@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useProjectPapers, usePublications } from '../../hooks/useApiData'
 import { useUnlinkPaper, useLinkPaper } from '../../hooks/useMutations'
 import { ICON_PROPS } from '../../lib/iconProps'
+import { ACCENT_GOLD, PANEL_BG, withAlpha } from '../../lib/taskGrouping'
 
 interface ProjectLiteratureProps {
   projectSlug: string
@@ -70,7 +71,7 @@ export default function ProjectLiterature({ projectSlug, isPi }: ProjectLiteratu
               <div
                 key={p.id}
                 className="flex items-start gap-3 py-2.5"
-                style={{ borderBottom: '1px solid rgba(201, 168, 76, 0.06)' }}
+                style={{ borderBottom: `1px solid ${withAlpha(ACCENT_GOLD, 6)}` }}
               >
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p
@@ -255,7 +256,7 @@ function LinkPaperModal({ projectSlug, linkedPaperIds, onLink, onClose }: {
     <>
       <div
         className="fixed inset-0 z-50"
-        style={{ backgroundColor: 'rgba(15, 25, 35, 0.4)' }}
+        style={{ backgroundColor: withAlpha(PANEL_BG, 40) }}
         onClick={onClose}
       />
       <div

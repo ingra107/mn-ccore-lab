@@ -25,6 +25,7 @@ import type { Meeting, ActionItem } from '../data/types'
 import { PATHS } from '../constants/paths'
 import { useOpenParam } from '../hooks/useOpenParam'
 import { ICON_PROPS } from '../lib/iconProps'
+import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
 
 type FilterMode = 'all' | 'decisions' | 'actions'
 
@@ -160,7 +161,7 @@ function MeetingDetail({ meeting, onToggleAction }: MeetingDetailProps) {
         <div className="flex items-start gap-4">
           <div
             className="shrink-0 flex flex-col items-center justify-center rounded-xl"
-            style={{ width: '60px', height: '60px', background: 'var(--gold-light)', border: '1px solid rgba(201,168,76,0.3)' }}
+            style={{ width: '60px', height: '60px', background: 'var(--gold-light)', border: `1px solid ${withAlpha(ACCENT_GOLD, 30)}` }}
           >
             <span style={{ fontSize: '10px', color: 'var(--gold)', textTransform: 'uppercase', letterSpacing: '0.05em', lineHeight: 1 }}>
               {new Date(meeting.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short' })}
@@ -251,7 +252,7 @@ function MeetingDetail({ meeting, onToggleAction }: MeetingDetailProps) {
           <div className="space-y-2">
             {meeting.decisions.map((decision, i) => (
               <div key={i} className="flex gap-2 px-3 py-2 rounded-md text-sm"
-                style={{ background: 'var(--gold-active)', border: '1px solid rgba(201,168,76,0.2)', color: 'var(--ink)' }}>
+                style={{ background: 'var(--gold-active)', border: `1px solid ${withAlpha(ACCENT_GOLD, 20)}`, color: 'var(--ink)' }}>
                 <span style={{ color: 'var(--gold)', flexShrink: 0, marginTop: '1px' }}>&#9670;</span>
                 {decision}
               </div>
@@ -350,11 +351,11 @@ function MeetingDetail({ meeting, onToggleAction }: MeetingDetailProps) {
                 autoFocus
                 style={{
                   width: '100%', fontSize: 'var(--value-size)', color: 'var(--ink)',
-                  background: 'var(--cream)', border: '1px solid rgba(201,168,76,0.15)', borderRadius: 'var(--radius-lg)',
+                  background: 'var(--cream)', border: `1px solid ${withAlpha(ACCENT_GOLD, 15)}`, borderRadius: 'var(--radius-lg)',
                   padding: 'var(--sp-sm) var(--sp-md)', outline: 'none', marginBottom: '6px', boxSizing: 'border-box',
                 }}
                 onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--gold)')}
-                onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(201,168,76,0.15)')}
+                onBlur={(e) => (e.currentTarget.style.borderColor = withAlpha(ACCENT_GOLD, 15))}
               />
               <input
                 type="text"
@@ -363,7 +364,7 @@ function MeetingDetail({ meeting, onToggleAction }: MeetingDetailProps) {
                 placeholder="Why? (optional rationale)"
                 style={{
                   width: '100%', fontSize: '12px', color: 'var(--ink)',
-                  background: 'var(--cream)', border: '1px solid rgba(201,168,76,0.1)', borderRadius: 'var(--radius-lg)',
+                  background: 'var(--cream)', border: `1px solid ${withAlpha(ACCENT_GOLD, 10)}`, borderRadius: 'var(--radius-lg)',
                   padding: '6px 12px', outline: 'none', marginBottom: '8px', boxSizing: 'border-box',
                 }}
               />
@@ -563,7 +564,7 @@ export default function Meetings() {
   }
 
   const inputStyle: React.CSSProperties = {
-    background: 'var(--ice)', border: '1px solid rgba(201,168,76,0.15)', color: 'var(--ink)',
+    background: 'var(--ice)', border: `1px solid ${withAlpha(ACCENT_GOLD, 15)}`, color: 'var(--ink)',
     fontSize: 'var(--value-size)', outline: 'none', borderRadius: 'var(--radius-lg)', padding: '6px 10px', width: '100%',
   }
   const labelStyle: React.CSSProperties = {
@@ -601,7 +602,7 @@ export default function Meetings() {
               <div className="flex items-center gap-3 flex-wrap">
                 {/* Next meeting pill */}
                 <div className="flex items-center gap-2 px-3 py-2 rounded-xl"
-                  style={{ background: 'var(--gold-light)', border: '1px solid rgba(201,168,76,0.25)' }}>
+                  style={{ background: 'var(--gold-light)', border: `1px solid ${withAlpha(ACCENT_GOLD, 25)}` }}>
                   <Calendar {...ICON_PROPS} size={14} style={{ color: 'var(--gold)', flexShrink: 0 }} />
                   <div>
                     <span className="text-xs font-medium" style={{ color: 'var(--ink)' }}>
@@ -654,7 +655,7 @@ export default function Meetings() {
                           return (
                             <button key={m.slug} type="button" onClick={() => toggleAttendee(m.slug)}
                               className="cursor-pointer inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs"
-                              style={{ fontSize: 'var(--label-size)', background: selected ? 'rgba(201,168,76,0.2)' : 'var(--ice)', color: selected ? 'var(--ink)' : 'var(--slate)', border: selected ? '1px solid var(--gold)' : '1px solid rgba(201,168,76,0.1)', transition: 'all 0.15s ease' }}>
+                              style={{ fontSize: 'var(--label-size)', background: selected ? withAlpha(ACCENT_GOLD, 20) : 'var(--ice)', color: selected ? 'var(--ink)' : 'var(--slate)', border: selected ? '1px solid var(--gold)' : `1px solid ${withAlpha(ACCENT_GOLD, 10)}`, transition: 'all 0.15s ease' }}>
                               <div style={{ width: 16, height: 16 }}><Avatar name={m.name} initials={m.initials} photoUrl={m.photoUrl} variant="ice" size="2xs" /></div>
                               {m.name.split(' ')[0]}
                             </button>
@@ -697,7 +698,7 @@ export default function Meetings() {
             const rest = cadence.reasons.slice(1)
             return (
               <details className="mt-3 px-3 py-2 rounded-lg group"
-                style={{ background: 'var(--gold-hover)', border: '1px solid rgba(201,168,76,0.12)' }}>
+                style={{ background: 'var(--gold-hover)', border: `1px solid ${withAlpha(ACCENT_GOLD, 12)}` }}>
                 <summary className="flex items-center gap-2 cursor-pointer list-none"
                   style={{ outline: 'none' }}>
                   <Activity {...ICON_PROPS} size={12} style={{ color: 'var(--gold)', flexShrink: 0 }} />
@@ -749,9 +750,9 @@ export default function Meetings() {
               <Search {...ICON_PROPS} size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }} />
               <input type="text" placeholder="Search..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-7 pr-3 py-1.5 rounded-lg text-xs"
-                style={{ background: 'var(--ice)', border: '1px solid rgba(201,168,76,0.15)', color: 'var(--ink)', outline: 'none' }}
+                style={{ background: 'var(--ice)', border: `1px solid ${withAlpha(ACCENT_GOLD, 15)}`, color: 'var(--ink)', outline: 'none' }}
                 onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--gold)' }}
-                onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(201,168,76,0.15)' }} />
+                onBlur={(e) => { e.currentTarget.style.borderColor = withAlpha(ACCENT_GOLD, 15) }} />
             </div>
           </div>
 
@@ -784,14 +785,14 @@ export default function Meetings() {
                 const pendingCount = meeting.actionItems?.filter((a) => !a.completed).length ?? 0
                 return (
                   <button key={meeting.id} type="button" className="cursor-pointer w-full text-left hov-bg"
-                    style={{ display: 'block', padding: '10px 12px', borderBottom: '1px solid var(--border-subtle)', background: isSelected ? 'rgba(45,138,138,0.08)' : 'transparent', borderLeft: isNext ? '3px solid var(--teal)' : isSelected ? '3px solid rgba(45,138,138,0.4)' : '3px solid transparent', transition: 'background 150ms ease', outline: 'none', '--hov-bg': isSelected ? 'rgba(45,138,138,0.08)' : 'rgba(201,168,76,0.04)' } as React.CSSProperties}
+                    style={{ display: 'block', padding: '10px 12px', borderBottom: '1px solid var(--border-subtle)', background: isSelected ? 'rgba(45,138,138,0.08)' : 'transparent', borderLeft: isNext ? '3px solid var(--teal)' : isSelected ? '3px solid rgba(45,138,138,0.4)' : '3px solid transparent', transition: 'background 150ms ease', outline: 'none', '--hov-bg': isSelected ? 'rgba(45,138,138,0.08)' : withAlpha(ACCENT_GOLD, 4) } as React.CSSProperties}
                     onClick={() => { setSelectedMeetingId(meeting.id); setFocusedIndex(idx); setMobileShowDetail(true); dismissPageTooltip('meetings-prep-hint') }}>
                     <div className="flex items-center justify-between gap-2">
                       <span style={{ fontSize: '11px', color: isNext ? 'var(--teal)' : 'var(--slate)', opacity: isNext ? 1 : 0.85, flexShrink: 0, fontWeight: isNext ? 600 : 400, minWidth: '46px' }}>
                         {formatShortDate(meeting.date)}
                       </span>
                       {actionCount > 0 && (
-                        <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '10px', background: pendingCount > 0 ? 'rgba(201,168,76,0.15)' : 'rgba(45,138,138,0.12)', color: pendingCount > 0 ? 'var(--gold)' : 'var(--teal)', flexShrink: 0, fontWeight: 500 }}>
+                        <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '10px', background: pendingCount > 0 ? withAlpha(ACCENT_GOLD, 15) : 'rgba(45,138,138,0.12)', color: pendingCount > 0 ? 'var(--gold)' : 'var(--teal)', flexShrink: 0, fontWeight: 500 }}>
                           {pendingCount > 0 ? `${pendingCount} actions` : '✓'}
                         </span>
                       )}
@@ -849,7 +850,7 @@ export default function Meetings() {
                       const { isCarried: itemIsCarried, clean: itemClean } = parseCarriedForward(item.description)
                       return (
                         <div key={item.id || item.description} className="flex items-start gap-3 p-3 rounded-lg action-item-card"
-                          style={{ background: 'var(--cream)', border: '1px solid rgba(201,168,76,0.15)', boxShadow: 'var(--shadow-card)' }}>
+                          style={{ background: 'var(--cream)', border: `1px solid ${withAlpha(ACCENT_GOLD, 15)}`, boxShadow: 'var(--shadow-card)' }}>
                           <button type="button" className="cursor-pointer shrink-0 mt-0.5 action-toggle-btn"
                             style={{ background: 'none', border: 'none', padding: 'var(--sp-md)', margin: '-10px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 'var(--radius-sm)', transition: 'transform 0.15s ease', minWidth: '44px', minHeight: '44px' }}
                             onClick={() => item.id && toggleWithUndo(item.id)}
@@ -999,7 +1000,7 @@ export default function Meetings() {
         .carried-count-badge {
           display: inline-flex; align-items: center; justify-content: center;
           font-size: 9px; font-weight: 600; padding: 0px 4px; border-radius: 9999px;
-          background: rgba(201,168,76,0.15); color: var(--gold);
+          background: ${withAlpha(ACCENT_GOLD, 15)}; color: var(--gold);
           margin-right: 4px; vertical-align: middle;
         }
         /* M-34: Mobile — show only list OR detail, not both stacked */

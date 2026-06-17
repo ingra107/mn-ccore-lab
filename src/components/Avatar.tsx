@@ -1,4 +1,5 @@
 import HermesMark from './HermesMark'
+import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
 
 /** Lab-aesthetic generated portrait — used when a team member has no
  *  photo_url. Two stacked geometric arcs (suggesting a tilted-head
@@ -131,7 +132,7 @@ const variantStyles = {
   },
   ice: {
     background: 'var(--ice)',
-    border: '1px solid rgba(201,168,76,0.2)',
+    border: `1px solid ${withAlpha(ACCENT_GOLD, 20)}`,
     color: 'var(--slate)',
   },
 } as const

@@ -6,6 +6,7 @@ import type { DecisionRow } from '../../hooks/useApiData'
 import { formatMediumDate } from '../../lib/dateUtils'
 import { PATHS } from '../../constants/paths'
 import { ICON_PROPS } from '../../lib/iconProps'
+import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
 
 interface ProjectDecisionsProps {
   projectSlug: string
@@ -62,7 +63,7 @@ export default function ProjectDecisions({ projectSlug }: ProjectDecisionsProps)
               key={decision.id}
               style={{
                 padding: '10px 0',
-                borderBottom: '1px solid rgba(201, 168, 76, 0.08)',
+                borderBottom: `1px solid ${withAlpha(ACCENT_GOLD, 8)}`,
               }}
             >
               <div className="flex items-center gap-2 mb-1">

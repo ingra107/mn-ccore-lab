@@ -22,7 +22,7 @@ import { useToast } from '../../hooks/useToast'
 import { useUndoToast } from '../UndoToast'
 import { formatRelativeTime } from '../../lib/dateUtils'
 import { appendCharToInput } from '../../lib/textUtils'
-import { isTaskDone } from '../../lib/taskGrouping'
+import { ACCENT_GOLD, PANEL_BG, isTaskDone, withAlpha } from '../../lib/taskGrouping'
 import MentionInput from '../MentionInput'
 import TypingIndicator from '../TypingIndicator'
 import { getPersonInfo, getAllMembers, directors } from '../../data/team'
@@ -304,7 +304,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
         data-testid="detail-backdrop"
         className="fixed inset-0 z-40"
         style={{
-          backgroundColor: 'rgba(15, 25, 35, 0.3)',
+          backgroundColor: withAlpha(PANEL_BG, 30),
           opacity: backdropOpacity,
         }}
       />
@@ -1127,7 +1127,7 @@ function ProjectDecisionsSection({ projectSlug }: { projectSlug: string }) {
           <div
             key={d.id}
             className="p-2.5 rounded-lg"
-            style={{ background: 'var(--gold-hover)', border: '1px solid rgba(201,168,76,0.1)' }}
+            style={{ background: 'var(--gold-hover)', border: `1px solid ${withAlpha(ACCENT_GOLD, 10)}` }}
           >
             <div className="flex items-center gap-2 mb-1">
               <Scale size={11} strokeWidth={1.5} absoluteStrokeWidth style={{ color: 'var(--gold)', flexShrink: 0 }} />
@@ -1691,7 +1691,7 @@ function OverviewQuickAdd({
                   paddingRight: 6,
                   borderRadius: 'var(--radius-sm)',
                   border: forHermes
-                    ? '1px solid rgba(201,168,76,0.40)'
+                    ? `1px solid ${withAlpha(ACCENT_GOLD, 40)}`
                     : '1px solid var(--border-subtle)',
                   background: forHermes ? 'var(--gold-active)' : 'transparent',
                   color: forHermes ? 'var(--gold)' : 'var(--slate)',

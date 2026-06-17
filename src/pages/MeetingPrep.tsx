@@ -18,6 +18,7 @@ import { PATHS } from '../constants/paths'
 import { staggerContainer, staggerItem } from '../lib/animations'
 import EntityNotFound from '../components/EntityNotFound'
 import { ICON_PROPS } from '../lib/iconProps'
+import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
 
 interface PrepData {
   meeting: { id: string; title: string; date: string; status: string; attendees: string | null }
@@ -193,7 +194,7 @@ export default function MeetingPrep() {
                   {overdueTasks.slice(0, 5).map(task => {
                     const person = getPersonInfo(task.assignee)
                     return (
-                      <div key={task.id} className="flex items-center gap-2 py-1.5" style={{ borderBottom: '1px solid rgba(201,168,76,0.04)' }}>
+                      <div key={task.id} className="flex items-center gap-2 py-1.5" style={{ borderBottom: `1px solid ${withAlpha(ACCENT_GOLD, 4)}` }}>
                         <Flag {...ICON_PROPS} size={10} style={{ color: PRIORITY_COLORS[task.priority] || 'var(--slate)', flexShrink: 0 }} />
                         <span style={{ fontSize: 12, color: 'var(--ink)', flex: 1 }}>{task.title || task.description}</span>
                         <div style={{ width: 16, height: 16, flexShrink: 0 }}>
@@ -212,7 +213,7 @@ export default function MeetingPrep() {
                     Team agenda ({agendaItems.length})
                   </p>
                   {agendaItems.map((item, i) => (
-                    <div key={item.id} className="flex items-start gap-2 py-1.5" style={{ borderBottom: i < agendaItems.length - 1 ? '1px solid rgba(201,168,76,0.04)' : 'none' }}>
+                    <div key={item.id} className="flex items-start gap-2 py-1.5" style={{ borderBottom: i < agendaItems.length - 1 ? `1px solid ${withAlpha(ACCENT_GOLD, 4)}` : 'none' }}>
                       <span style={{ fontSize: 10, color: 'var(--slate)', opacity: 0.85, marginTop: 2, flexShrink: 0 }}>{i + 1}.</span>
                       <span style={{ fontSize: 12, color: 'var(--ink)' }}>{item.content}</span>
                     </div>
@@ -257,7 +258,7 @@ export default function MeetingPrep() {
                 upcomingDeadlines.slice(0, 8).map(task => {
                   const person = getPersonInfo(task.assignee)
                   return (
-                    <div key={task.id} className="flex items-center gap-2 py-1.5" style={{ borderBottom: '1px solid rgba(201,168,76,0.04)' }}>
+                    <div key={task.id} className="flex items-center gap-2 py-1.5" style={{ borderBottom: `1px solid ${withAlpha(ACCENT_GOLD, 4)}` }}>
                       <Calendar {...ICON_PROPS} size={10} style={{ color: 'var(--teal)', flexShrink: 0 }} />
                       <span style={{ fontSize: 12, color: 'var(--ink)', flex: 1 }}>{task.title || task.description}</span>
                       <span style={{ fontSize: 10, color: 'var(--slate)', opacity: 0.85 }}>{formatShortDate(task.due_date)}</span>
@@ -281,7 +282,7 @@ export default function MeetingPrep() {
                   // Rule 34: never split('@')[0] — route through emailToSlug LUT.
                   const person = getPersonInfo(emailToSlug(act.actor || ''))
                   return (
-                    <div key={i} className="flex items-start gap-2 py-1.5" style={{ borderBottom: i < Math.min(recentActivity.length, 10) - 1 ? '1px solid rgba(201,168,76,0.04)' : 'none' }}>
+                    <div key={i} className="flex items-start gap-2 py-1.5" style={{ borderBottom: i < Math.min(recentActivity.length, 10) - 1 ? `1px solid ${withAlpha(ACCENT_GOLD, 4)}` : 'none' }}>
                       <div style={{ width: 16, height: 16, flexShrink: 0, marginTop: 1 }}>
                         <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="2xs" variant="ice" />
                       </div>
@@ -359,7 +360,7 @@ function ActionRow({ item }: { item: { id: string; description: string; assignee
   // R4: canonical isOverdue() uses T23:59:59 — hand-rolled missed same-day items.
   const isOverdue = item.due_date && !item.completed && isItemOverdue(item.due_date)
   return (
-    <div className="flex items-center gap-2 py-1.5" style={{ borderBottom: '1px solid rgba(201,168,76,0.04)' }}>
+    <div className="flex items-center gap-2 py-1.5" style={{ borderBottom: `1px solid ${withAlpha(ACCENT_GOLD, 4)}` }}>
       {item.completed ? (
         <CheckCircle2 {...ICON_PROPS} size={12} style={{ color: 'var(--green)', flexShrink: 0 }} />
       ) : (

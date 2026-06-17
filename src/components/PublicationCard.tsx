@@ -4,6 +4,7 @@ import { ExternalLink, ChevronDown, ClipboardCopy, Check, ArrowRight } from 'luc
 import { motion, AnimatePresence } from 'framer-motion'
 import type { Publication } from '../data/types'
 import { ICON_PROPS } from '../lib/iconProps'
+import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
 
 const TOPIC_DISPLAY: Record<string, string> = {
   clif: 'CLIF',
@@ -265,7 +266,7 @@ export default function PublicationCard({ pub }: { pub: Publication }) {
             <div
               className="px-4 sm:px-6 pb-4 sm:pb-6 pt-0"
               style={{
-                borderTop: '1px solid rgba(201, 168, 76, 0.3)',
+                borderTop: `1px solid ${withAlpha(ACCENT_GOLD, 30)}`,
               }}
             >
               <div className="pt-4 sm:pt-5 sm:pl-36">
@@ -310,7 +311,7 @@ export default function PublicationCard({ pub }: { pub: Publication }) {
                       style={{
                         background: 'var(--gold-active)',
                         color: 'var(--gold)',
-                        border: '1px solid rgba(201, 168, 76, 0.2)',
+                        border: `1px solid ${withAlpha(ACCENT_GOLD, 20)}`,
                         minHeight: '32px',
                       }}
                       onClick={(e) => e.stopPropagation()}
@@ -327,7 +328,7 @@ export default function PublicationCard({ pub }: { pub: Publication }) {
                       style={{
                         background: 'var(--gold-active)',
                         color: 'var(--gold)',
-                        border: '1px solid rgba(201, 168, 76, 0.15)',
+                        border: `1px solid ${withAlpha(ACCENT_GOLD, 15)}`,
                         minHeight: '32px',
                       }}
                       onClick={(e) => e.stopPropagation()}
@@ -342,7 +343,7 @@ export default function PublicationCard({ pub }: { pub: Publication }) {
                     style={{
                       background: 'transparent',
                       color: copied ? 'var(--green)' : 'var(--slate)',
-                      border: '1px solid rgba(201, 168, 76, 0.15)',
+                      border: `1px solid ${withAlpha(ACCENT_GOLD, 15)}`,
                       minHeight: '32px',
                     }}
                   >

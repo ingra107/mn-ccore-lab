@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Search, X } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ICON_PROPS } from '../../lib/iconProps'
-import { isTaskDone } from '../../lib/taskGrouping'
+import { ACCENT_GOLD, PANEL_BG, isTaskDone, withAlpha } from '../../lib/taskGrouping'
 
 interface TaskSearchDropdownProps {
   tasks: any[]
@@ -43,7 +43,7 @@ export default function TaskSearchDropdown({ tasks, excludeIds, isOpen, onClose,
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -4 }}
         className="fixed inset-0 z-50"
-        style={{ background: 'rgba(15,25,35,0.2)' }}
+        style={{ background: withAlpha(PANEL_BG, 20) }}
         onClick={onClose}
       >
         <div
@@ -52,7 +52,7 @@ export default function TaskSearchDropdown({ tasks, excludeIds, isOpen, onClose,
         >
           <div className="rounded-xl shadow-lg overflow-hidden" style={{ background: 'var(--cream)', border: '2px solid var(--gold)' }}>
             {/* Header */}
-            <div className="flex items-center gap-2 px-4 py-3" style={{ borderBottom: '1px solid rgba(201,168,76,0.1)' }}>
+            <div className="flex items-center gap-2 px-4 py-3" style={{ borderBottom: `1px solid ${withAlpha(ACCENT_GOLD, 10)}` }}>
               <Search {...ICON_PROPS} size={16} style={{ color: 'var(--gold)', opacity: 0.85 }} />
               <input
                 ref={inputRef}
@@ -89,7 +89,7 @@ export default function TaskSearchDropdown({ tasks, excludeIds, isOpen, onClose,
                     key={task.id}
                     onClick={() => { onSelect(task); onClose() }}
                     className="w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-[var(--gold-hover)]"
-                    style={{ background: 'transparent', border: 'none', cursor: 'pointer', borderBottom: '1px solid rgba(201,168,76,0.04)' }}
+                    style={{ background: 'transparent', border: 'none', cursor: 'pointer', borderBottom: `1px solid ${withAlpha(ACCENT_GOLD, 4)}` }}
                   >
                     {/* Priority dot */}
                     <div style={{

@@ -46,6 +46,7 @@ import HermesResponse from '../HermesResponse'
 import HermesPending, { isHermesPending } from '../HermesPending'
 import ReactionBar from '../ReactionBar'
 import type { StoredKind, UpdateType } from '../../../shared/activityKinds'
+import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
 
 // ── Design constants ──────────────────────────────────────────────────────────
 //
@@ -84,7 +85,7 @@ export const UPDATE_TYPE_CONFIG: Record<UpdateType, UpdateTypeRenderConfig> = {
   progress: { icon: TrendingUp,    color: 'var(--teal)',   bg: 'var(--teal-active)',     borderColor: 'rgba(45,138,138,0.4)',   label: 'Progress' },
   blocker:  { icon: AlertTriangle, color: 'var(--maroon)', bg: 'rgba(122,0,25,0.1)',     borderColor: 'rgba(122,0,25,0.4)',     label: 'Blocker' },
   result:   { icon: CheckCircle,   color: 'var(--green)',  bg: 'rgba(34,197,94,0.1)',    borderColor: 'rgba(34,197,94,0.4)',    label: 'Result' },
-  question: { icon: HelpCircle,    color: 'var(--gold)',   bg: 'var(--gold-active)',     borderColor: 'rgba(201,168,76,0.4)',   label: 'Question' },
+  question: { icon: HelpCircle,    color: 'var(--gold)',   bg: 'var(--gold-active)',     borderColor: withAlpha(ACCENT_GOLD, 40),   label: 'Question' },
   session:  { icon: Terminal,      color: 'var(--slate)',  bg: 'rgba(100,116,139,0.08)', borderColor: 'rgba(100,116,139,0.25)', label: 'Session' },
 }
 
@@ -127,7 +128,7 @@ const STYLE_SYSTEM_BADGE: React.CSSProperties = {
 // identical across all kinds.
 
 const KIND_BAR: Record<StoredKind, string> = {
-  comment:    'rgba(201,168,76,0.4)',       // gold  — discussion
+  comment:    withAlpha(ACCENT_GOLD, 40),       // gold  — discussion
   update:     'rgba(45,138,138,0.4)',        // teal  — overridden per update_type below
   completion: 'rgba(110,232,154,0.5)',       // green — done
   system:     'rgba(100,116,139,0.25)',      // slate — automated
@@ -404,7 +405,7 @@ export function ActivityEntryItem({
     const ut = entry.update_type
     barColor = UPDATE_TYPE_CONFIG[ut]?.borderColor ?? barColor
   }
-  if (isHermes) barColor = 'rgba(201,168,76,0.35)' // gold for Hermes
+  if (isHermes) barColor = withAlpha(ACCENT_GOLD, 35) // gold for Hermes
 
   // Task-origin rows in the project feed get a subtle left-inset.
   const taskOriginStyle =
@@ -419,7 +420,7 @@ export function ActivityEntryItem({
     padding: cardPadding,
     borderLeft: `3px solid ${barColor}`,
     ...(isHermes
-      ? { border: '1px solid rgba(201,168,76,0.15)', borderLeft: `3px solid ${barColor}` }
+      ? { border: `1px solid ${withAlpha(ACCENT_GOLD, 15)}`, borderLeft: `3px solid ${barColor}` }
       : {}),
     ...taskOriginStyle,
   }

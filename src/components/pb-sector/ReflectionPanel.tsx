@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { BookOpen, ChevronDown, ChevronRight, Sparkles } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ICON_PROPS } from '../../lib/iconProps'
+import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
 
 interface ReflectionPanelProps {
   reflection: {
@@ -73,7 +74,7 @@ export default function ReflectionPanel({ reflection, onSave }: ReflectionPanelP
   const hasContent = highlight || learned || energy || focus
 
   return (
-    <div className="rounded-lg overflow-hidden" style={{ border: '1px solid rgba(201,168,76,0.1)' }}>
+    <div className="rounded-lg overflow-hidden" style={{ border: `1px solid ${withAlpha(ACCENT_GOLD, 10)}` }}>
       <button
         onClick={() => setExpanded(!expanded)}
         className="w-full flex items-center gap-2 px-4 py-3 text-left"
@@ -115,7 +116,7 @@ export default function ReflectionPanel({ reflection, onSave }: ReflectionPanelP
                   className="w-full"
                   style={{
                     fontSize: 'var(--value-size)', color: 'var(--ink)',
-                    background: 'transparent', border: 'none', borderBottom: '1px solid rgba(201,168,76,0.15)',
+                    background: 'transparent', border: 'none', borderBottom: `1px solid ${withAlpha(ACCENT_GOLD, 15)}`,
                     outline: 'none', padding: 'var(--sp-xs) 0',
                   }}
                 />
@@ -134,7 +135,7 @@ export default function ReflectionPanel({ reflection, onSave }: ReflectionPanelP
                   className="w-full"
                   style={{
                     fontSize: 'var(--value-size)', color: 'var(--ink)',
-                    background: 'transparent', border: 'none', borderBottom: '1px solid rgba(201,168,76,0.15)',
+                    background: 'transparent', border: 'none', borderBottom: `1px solid ${withAlpha(ACCENT_GOLD, 15)}`,
                     outline: 'none', padding: 'var(--sp-xs) 0',
                   }}
                 />

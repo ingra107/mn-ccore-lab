@@ -8,6 +8,7 @@ import { useScrollRevealGroup } from '../hooks/useScrollReveal'
 import SectionDivider from '../components/SectionDivider'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { ICON_PROPS } from '../lib/iconProps'
+import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
 
 const affiliateLinks = [
   { label: 'CLIF Consortium', href: 'https://clif-icu.com/' },
@@ -127,7 +128,7 @@ export default function Contact() {
             </div>
 
             {/* Google Maps Embed */}
-            <div className="fade-in-up mb-6 rounded-lg overflow-hidden relative" style={{ border: '1px solid rgba(201, 168, 76, 0.15)', paddingBottom: '56.25%', height: 0 }}>
+            <div className="fade-in-up mb-6 rounded-lg overflow-hidden relative" style={{ border: `1px solid ${withAlpha(ACCENT_GOLD, 15)}`, paddingBottom: '56.25%', height: 0 }}>
               <iframe
                 title="MN-CCORE Lab Location - Mayo Memorial Building, University of Minnesota"
                 src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2822.764!2d-93.2315!3d44.9720!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x52b32d600f4e4541%3A0x6c4e4e1e4e4e4e4e!2sMayo+Memorial+Building%2C+University+of+Minnesota!5e0!3m2!1sen!2sus!4v1"
@@ -192,8 +193,8 @@ export default function Contact() {
               className="p-4 sm:p-6 rounded-lg"
               style={{
                 background:
-                  'linear-gradient(135deg, rgba(201,168,76,0.08) 0%, rgba(232,239,245,0.3) 100%)',
-                border: '1px solid rgba(201, 168, 76, 0.15)',
+                  `linear-gradient(135deg, ${withAlpha(ACCENT_GOLD, 8)} 0%, rgba(232,239,245,0.3) 100%)`,
+                border: `1px solid ${withAlpha(ACCENT_GOLD, 15)}`,
               }}
             >
               <div className="flex items-center gap-3 mb-4 sm:mb-6">
@@ -247,7 +248,7 @@ export default function Contact() {
                 className="p-3 sm:p-4 rounded-lg"
                 style={{
                   background: 'var(--gold-active)',
-                  border: '1px solid rgba(201, 168, 76, 0.12)',
+                  border: `1px solid ${withAlpha(ACCENT_GOLD, 12)}`,
                 }}
               >
                 <p

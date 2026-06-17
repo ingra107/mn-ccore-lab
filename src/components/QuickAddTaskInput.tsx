@@ -10,6 +10,7 @@ import { useRef, useCallback, useEffect } from 'react'
 import { parseQuickAddInput, type TokenType } from '../lib/parseQuickAdd'
 import { formatShortDate } from '../lib/dateUtils'
 import type { ParsedQuickAdd } from '../lib/parseQuickAdd'
+import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
 
 // ── Token color map ──────────────────────────────────────────
 
@@ -46,7 +47,7 @@ function Chip({ label, value, color = 'var(--slate)' }: ChipProps) {
         padding: '2px 7px',
         borderRadius: 'var(--radius-md)',
         background: 'var(--cream)',
-        border: '1px solid rgba(201,168,76,0.18)',
+        border: `1px solid ${withAlpha(ACCENT_GOLD, 18)}`,
         fontFamily: FONT_FAMILY,
         fontSize: '10px',
         lineHeight: '16px',
@@ -73,7 +74,7 @@ function ParsedPreview({ parsed }: { parsed: ParsedQuickAdd }) {
         padding: '7px 10px',
         borderRadius: 'var(--radius-lg)',
         background: 'var(--gold-hover)',
-        border: '1px solid rgba(201,168,76,0.12)',
+        border: `1px solid ${withAlpha(ACCENT_GOLD, 12)}`,
       }}
     >
       {parsed.title && (
@@ -156,7 +157,7 @@ export default function QuickAddTaskInput({
         style={{
           position: 'relative',
           background: 'var(--ice)',
-          border: '1px solid rgba(201,168,76,0.2)',
+          border: `1px solid ${withAlpha(ACCENT_GOLD, 20)}`,
           borderRadius: 'var(--radius-lg)',
           overflow: 'hidden',
           height: '38px',
@@ -221,13 +222,13 @@ export default function QuickAddTaskInput({
           }}
           onFocus={() => {
             if (textareaRef.current?.parentElement) {
-              textareaRef.current.parentElement.style.borderColor = 'rgba(201,168,76,0.5)'
+              textareaRef.current.parentElement.style.borderColor = withAlpha(ACCENT_GOLD, 50)
             }
             onFocusChange?.(true)
           }}
           onBlur={() => {
             if (textareaRef.current?.parentElement) {
-              textareaRef.current.parentElement.style.borderColor = 'rgba(201,168,76,0.2)'
+              textareaRef.current.parentElement.style.borderColor = withAlpha(ACCENT_GOLD, 20)
             }
             onFocusChange?.(false)
           }}

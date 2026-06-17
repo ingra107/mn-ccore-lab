@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { useAuth } from '../hooks/useAuth'
 import HeartbeatLine from './HeartbeatLine'
+import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
 
 /**
  * RequireAuth — route guard + branded sign-in wall.
@@ -72,7 +73,7 @@ function SignInWall() {
         // Subtle radial vignette — pulls the eye to center without competing
         // with the logo. Layered on top of the flat #0b1017 base.
         backgroundImage:
-          'radial-gradient(ellipse 60% 50% at 50% 35%, rgba(201, 168, 76, 0.08), transparent 70%), radial-gradient(ellipse 80% 60% at 50% 100%, rgba(13, 111, 104, 0.06), transparent 70%)',
+          `radial-gradient(ellipse 60% 50% at 50% 35%, ${withAlpha(ACCENT_GOLD, 8)}, transparent 70%), radial-gradient(ellipse 80% 60% at 50% 100%, rgba(13, 111, 104, 0.06), transparent 70%)`,
         color: '#e2e8f0',
         fontFamily: 'var(--font-sans)',
         display: 'flex',
@@ -155,19 +156,19 @@ function SignInWall() {
             fontWeight: 500,
             letterSpacing: '0.01em',
             textDecoration: 'none',
-            border: '1px solid rgba(201, 168, 76, 0.6)',
-            boxShadow: '0 1px 0 rgba(255,255,255,0.08) inset, 0 8px 24px rgba(201,168,76,0.18)',
+            border: `1px solid ${withAlpha(ACCENT_GOLD, 60)}`,
+            boxShadow: `0 1px 0 rgba(255,255,255,0.08) inset, 0 8px 24px ${withAlpha(ACCENT_GOLD, 18)}`,
             transition: 'transform 150ms var(--ease-out, ease-out), box-shadow 150ms var(--ease-out, ease-out)',
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.transform = 'translateY(-1px)'
             e.currentTarget.style.boxShadow =
-              '0 1px 0 rgba(255,255,255,0.12) inset, 0 12px 28px rgba(201,168,76,0.28)'
+              `0 1px 0 rgba(255,255,255,0.12) inset, 0 12px 28px ${withAlpha(ACCENT_GOLD, 28)}`
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.transform = 'translateY(0)'
             e.currentTarget.style.boxShadow =
-              '0 1px 0 rgba(255,255,255,0.08) inset, 0 8px 24px rgba(201,168,76,0.18)'
+              `0 1px 0 rgba(255,255,255,0.08) inset, 0 8px 24px ${withAlpha(ACCENT_GOLD, 18)}`
           }}
         >
           <ShieldIcon />

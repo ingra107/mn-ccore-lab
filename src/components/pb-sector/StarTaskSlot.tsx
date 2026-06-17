@@ -3,6 +3,7 @@ import { Star, Plus, GripVertical } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import PomodoroCircles from './PomodoroCircles'
 import { ICON_PROPS } from '../../lib/iconProps'
+import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
 
 interface StarTaskSlotProps {
   task: any | null
@@ -35,7 +36,7 @@ export default function StarTaskSlot({ task, pomodorosCompleted, pomodoroActive,
           borderRadius: 'var(--radius-xl)',
           border: task
             ? '2px solid var(--gold)'
-            : `2px dashed ${isOver ? 'var(--gold)' : 'rgba(201,168,76,0.25)'}`,
+            : `2px dashed ${isOver ? 'var(--gold)' : withAlpha(ACCENT_GOLD, 25)}`,
           background: task
             ? 'var(--gold-hover)'
             : isOver ? 'var(--gold-hover)' : 'transparent',

@@ -7,7 +7,7 @@
 // prototype source for searchability.
 
 import { useState } from 'react'
-import { ACCENT_TEAL, ACCENT_GOLD, INK, INK_DIM, type TodayEvent } from './constants'
+import { ACCENT_TEAL, ACCENT_GOLD, INK, INK_DIM, withAlpha, type TodayEvent } from './constants'
 import { useIsMobile } from '../../hooks/useIsMobile'
 
 export type SaveStatus = 'idle' | 'saving' | 'saved'
@@ -20,7 +20,7 @@ export function EventRow({ e, onDismiss, overlap = false, note, onNote, saveStat
   // is unused now that JSX branches are gone.
   useIsMobile(768) // keeps matchMedia alive on standalone renders
   return (
-    <div style={{ position: 'relative', background: 'rgba(92,188,180,0.06)', border: `1px solid rgba(92,188,180,${overlap ? 0.35 : 0.18})`, borderRadius: 6, overflow: 'hidden', minHeight }}>
+    <div style={{ position: 'relative', background: withAlpha(ACCENT_TEAL, 6), border: `1px solid rgba(92,188,180,${overlap ? 0.35 : 0.18})`, borderRadius: 6, overflow: 'hidden', minHeight }}>
       {/* ROW 25: gap/padding/title-clamp/end-time/loc-hide → CSS .meeting-row-* */}
       <div onClick={() => setExpanded(!expanded)} className="meeting-row-header">
         <span className={`meeting-row-time${overlap ? ' meeting-row-time--overlap' : ''}`} style={{ color: ACCENT_TEAL, flexShrink: 0 }}>
@@ -37,7 +37,7 @@ export function EventRow({ e, onDismiss, overlap = false, note, onNote, saveStat
             onClick={(ev) => ev.stopPropagation()}
             title="Open meeting link in a new tab"
             className="hov-bg"
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 8px', fontSize: 11, fontWeight: 600, color: ACCENT_GOLD, background: 'rgba(201,168,76,0.10)', border: '1px solid rgba(201,168,76,0.30)', borderRadius: 999, textDecoration: 'none', transition: 'all 120ms', '--hov-bg': 'rgba(201,168,76,0.20)' } as React.CSSProperties}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 8px', fontSize: 11, fontWeight: 600, color: ACCENT_GOLD, background: withAlpha(ACCENT_GOLD, 10), border: `1px solid ${withAlpha(ACCENT_GOLD, 30)}`, borderRadius: 999, textDecoration: 'none', transition: 'all 120ms', '--hov-bg': withAlpha(ACCENT_GOLD, 20) } as React.CSSProperties}
           >
             <span aria-hidden="true">🔗</span>
             <span>Join</span>
@@ -54,7 +54,7 @@ export function EventRow({ e, onDismiss, overlap = false, note, onNote, saveStat
         >×</button>
       </div>
       {expanded && (
-        <div style={{ padding: '12px 14px 14px', borderTop: '1px solid rgba(92,188,180,0.18)', background: 'rgba(92,188,180,0.02)' }}>
+        <div style={{ padding: '12px 14px 14px', borderTop: `1px solid ${withAlpha(ACCENT_TEAL, 18)}`, background: withAlpha(ACCENT_TEAL, 2) }}>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 4 }}>
             <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: INK_DIM }}>Meeting notes</div>
             {!isCalEvent && saveStatus === 'saving' && (

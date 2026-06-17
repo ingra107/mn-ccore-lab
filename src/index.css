@@ -41,14 +41,14 @@
 
   --muted: #5a6370; /* 6.0:1 on #fff, 5.6:1 on #f5f5f5 — was #6b7280 (4.2:1 on grey panels, edge failure). 2026-04-22 */
 
-  --border-light: rgba(201, 168, 76, 0.12);
+  --border-light: color-mix(in srgb, var(--task-accent-gold) 12%, transparent);
   /* Light-mode border alphas bumped per R4-04 — form inputs on /settings
      were barely distinguishable from the surrounding surface at 0.06 /
      0.12 / 0.20. Bumped to 0.08 / 0.14 / 0.24 — visible bordered field
      affordance without adding heaviness. Dark-mode values unchanged. */
-  --border-subtle: rgba(15, 25, 35, 0.08);
-  --border-default: rgba(15, 25, 35, 0.14);
-  --border-strong: rgba(15, 25, 35, 0.24);
+  --border-subtle: color-mix(in srgb, var(--task-panel-bg) 8%, transparent);
+  --border-default: color-mix(in srgb, var(--task-panel-bg) 14%, transparent);
+  --border-strong: color-mix(in srgb, var(--task-panel-bg) 24%, transparent);
 
   /* Letter-spacing — tighten at display sizes (Linear/Vercel/Stripe pattern) */
   --tracking-display: -0.04em;   /* 32px+ headings */
@@ -90,8 +90,8 @@
   --shadow-flat: none;
   /* P1-2: light-mode card elevation is now a hairline ring, not a drop
      shadow on a grey wash. Dark mode keeps a real shadow (see .dark). */
-  --shadow-card: 0 0 0 1px rgba(15, 25, 35, 0.06);
-  --shadow-card-hover: 0 6px 16px rgba(15, 25, 35, 0.18);
+  --shadow-card: 0 0 0 1px color-mix(in srgb, var(--task-panel-bg) 6%, transparent);
+  --shadow-card-hover: 0 6px 16px color-mix(in srgb, var(--task-panel-bg) 18%, transparent);
   --shadow-elevated: 0 4px 12px rgba(0,0,0,0.15);
 
   /* Surface elevation — luminance stepping */
@@ -173,7 +173,7 @@
 
   --muted: color-mix(in oklch, var(--ink) 70%, transparent);
 
-  --border-light: rgba(201, 168, 76, 0.12);
+  --border-light: color-mix(in srgb, var(--task-accent-gold) 12%, transparent);
   --border-subtle: rgba(255, 255, 255, 0.05);
   --border-default: rgba(255, 255, 255, 0.08);
   --border-strong: rgba(255, 255, 255, 0.12);
@@ -217,9 +217,9 @@
   --overlay-medium: rgba(0, 0, 0, 0.40);
   --overlay-heavy: rgba(0, 0, 0, 0.70);
 
-  --gold-hover: rgba(201, 168, 76, 0.06);
-  --gold-active: rgba(201, 168, 76, 0.10);
-  --gold-emphasis: rgba(201, 168, 76, 0.15);
+  --gold-hover: color-mix(in srgb, var(--task-accent-gold) 6%, transparent);
+  --gold-active: color-mix(in srgb, var(--task-accent-gold) 10%, transparent);
+  --gold-emphasis: color-mix(in srgb, var(--task-accent-gold) 15%, transparent);
   --teal-hover: rgba(45, 138, 138, 0.06);
   --teal-active: rgba(45, 138, 138, 0.10);
   --teal-emphasis: rgba(45, 138, 138, 0.15);
@@ -339,10 +339,10 @@ html[data-density="comfortable"] {
      Page = cream #faf8f3 (lightest); card steps down to ice #f4f5f7 + a
      hairline. No more white card floating on a grey wash. */
   --surface-card: #f4f5f7;
-  /* Card hairline — 1px rgba(15,25,35,.06) ring, replaces the drop-shadow
+  /* Card hairline — 1px color-mix(in srgb, var(--task-panel-bg) 6%, transparent) ring, replaces the drop-shadow
      on the grey wash (P1-2). Consumers that use box-shadow: var(--shadow-card)
      pick this up; dark mode keeps its real shadow (overridden in .dark). */
-  --card-hairline: 0 0 0 1px rgba(15, 25, 35, 0.06);
+  --card-hairline: 0 0 0 1px color-mix(in srgb, var(--task-panel-bg) 6%, transparent);
 
   /* Focus ring — WCAG AA teal (gold fails in light mode) */
   --focus-ring: oklch(0.55 0.12 190 / 0.5);
@@ -495,7 +495,7 @@ h1, h2, h3, h4, h5, h6 { font-weight: var(--weight-heading); }
   font-weight: 500;
   padding: 2px 6px;
   border-radius: 9999px;
-  background: rgba(201, 168, 76, 0.12);
+  background: color-mix(in srgb, var(--task-accent-gold) 12%, transparent);
   color: #5a4518;
   white-space: nowrap;
   vertical-align: middle;
@@ -703,7 +703,7 @@ a:hover {
 .dark .idea-row:focus-visible,
 .dark .decision-list-row:focus-visible {
   outline-color: color-mix(in oklch, #5cbcb4 55%, transparent);
-  background: rgba(92, 188, 180, 0.08);
+  background: color-mix(in srgb, var(--task-accent-teal) 8%, transparent);
 }
 
 /* ── Scroll Animations ── */
@@ -860,7 +860,7 @@ a:hover {
 
 /* ── Project card hover ── */
 .project-card:hover {
-  box-shadow: 0 3px 10px rgba(15, 25, 35, 0.08);
+  box-shadow: 0 3px 10px color-mix(in srgb, var(--task-panel-bg) 8%, transparent);
   transition: box-shadow 0.25s ease;
 }
 
@@ -934,7 +934,7 @@ a:hover {
   font-size: 12px;
   font-weight: 500;
   font-family: var(--font-sans);
-  background: rgba(201, 168, 76, 0.15);
+  background: color-mix(in srgb, var(--task-accent-gold) 15%, transparent);
   color: var(--gold);
 }
 
@@ -1112,7 +1112,7 @@ a:hover {
 }
 
 /* ── Gold-on-emphasis text token — gold pill text on gold-emphasis bg.
-      --gold-emphasis is rgba(201,168,76,0.15) = #efebdf on white light-bg
+      --gold-emphasis is color-mix(in srgb, var(--task-accent-gold) 15%, transparent) = #efebdf on white light-bg
       and #2a2618 on dark bg. --gold flips #6b5420 light / #dcb355 dark,
       giving 4.25:1 light (fails AA) / ~8:1 dark. Token pins to darker
       gold in light mode (5.8:1 on #efebdf). r7 2026-04-22. */
@@ -1216,10 +1216,10 @@ a:hover {
   line-height: 1.35;
 }
 .table-row-hover:hover {
-  background-color: rgba(201, 168, 76, 0.06);
+  background-color: color-mix(in srgb, var(--task-accent-gold) 6%, transparent);
 }
 .dark .table-row-hover:hover {
-  background-color: rgba(201, 168, 76, 0.06);
+  background-color: color-mix(in srgb, var(--task-accent-gold) 6%, transparent);
 }
 
 /* ── Print styles ── */
@@ -1312,7 +1312,7 @@ a:hover {
   }
 }
 .context-menu-item:hover {
-  background: rgba(201, 168, 76, 0.06);
+  background: color-mix(in srgb, var(--task-accent-gold) 6%, transparent);
 }
 
 /* Trajectory project cards: gold border + shadow on hover */
@@ -1939,8 +1939,8 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
     --ink-label: 1.0;
     --ink-hint: 1.0;
     /* Stronger borders in light mode */
-    --border-subtle: rgba(15, 25, 35, 0.20);
-    --border-default: rgba(15, 25, 35, 0.35);
+    --border-subtle: color-mix(in srgb, var(--task-panel-bg) 20%, transparent);
+    --border-default: color-mix(in srgb, var(--task-panel-bg) 35%, transparent);
   }
 
   .dark {
@@ -1965,8 +1965,8 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
     --surface-2: #e7e9ec;
     --surface-3: #dde0e4;
     --hover-subtle: rgba(0, 0, 0, 0.04);
-    --border-subtle: rgba(15, 25, 35, 0.12);
-    --border-default: rgba(15, 25, 35, 0.20);
+    --border-subtle: color-mix(in srgb, var(--task-panel-bg) 12%, transparent);
+    --border-default: color-mix(in srgb, var(--task-panel-bg) 20%, transparent);
   }
 
   .dark {
