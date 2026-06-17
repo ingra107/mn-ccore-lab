@@ -123,4 +123,16 @@ if git diff --cached --name-only --diff-filter=AM \
     fi
 fi
 
+# ---------------------------------------------------------------------------
+# Color-string-concat gate (2026-06-16, backlog #44). Blocks commits that
+# introduce new hardcoded rgba task-accent literals. Only runs the lint
+# script — not the full build — to keep pre-commit fast.
+if ! node scripts/check-color-string-concat.mjs --enforce; then
+    echo ""
+    echo "BLOCKED: new hardcoded rgba task-accent literal(s) found."
+    echo "Use withAlpha(TOKEN, pct) from src/lib/taskGrouping.ts instead."
+    echo ""
+    exit 1
+fi
+
 exit 0
