@@ -132,6 +132,54 @@ if ! node scripts/check-color-string-concat.mjs --enforce; then
     echo "BLOCKED: new hardcoded rgba task-accent literal(s) found."
     echo "Use withAlpha(TOKEN, pct) from src/lib/taskGrouping.ts instead."
     echo ""
+    echo "NOTE — two opposite rules depending on context:"
+    echo "  inline-style rgba() literal  → replace with withAlpha(TOKEN, pct)"
+    echo "  static Tailwind -[rgba(...)]  → LEAVE as a static literal (never template it)"
+    echo ""
+    exit 1
+fi
+
+# ---------------------------------------------------------------------------
+# Tailwind arbitrary-value runtime-interpolation gate (2026-06-17, backlog #94).
+# Tailwind JIT emits CSS only for COMPLETE LITERAL arbitrary values seen at
+# build time.  Templating a runtime expression inside a Tailwind arbitrary
+# value slot — e.g.  className={`hover:!bg-[${ withAlpha(X,10) }]`} — produces
+# valid JS that silently emits NO CSS at build time.
+#
+# Pattern flagged:  -[${  appearing in className= / class: contexts inside
+# staged .tsx/.ts/.css files.
+#
+# CORRECT FIXES (depends on what you're building):
+#   A) The value must vary at runtime → use an inline style, NOT a Tailwind class:
+#        style={{ background: withAlpha(PANEL_BG, 10) }}
+#   B) The value is always the same literal → write it as a static Tailwind class:
+#        className="hover:!bg-[rgba(15,25,35,0.10)]"   ← grandfathered static = OK
+#
+# NEVER template a dynamic expression inside a Tailwind arbitrary-value slot.
+tw_interp_hits=""
+for f in $(git diff --cached --name-only --diff-filter=AM); do
+    [ -f "$f" ] || continue
+    case "$f" in *.ts|*.tsx|*.css) ;; *) continue ;; esac
+    while IFS= read -r line; do
+        tw_interp_hits="${tw_interp_hits}${f}: ${line}
+"
+    done < <(grep -nE '\-\[\$\{' "$f" 2>/dev/null || true)
+done
+if [ -n "$tw_interp_hits" ]; then
+    echo ""
+    echo "BLOCKED: Tailwind arbitrary-value slot contains a runtime interpolation."
+    echo "Tailwind JIT only emits CSS for COMPLETE LITERALS — \`-[\${expr}]\` produces"
+    echo "valid JS that silently generates NO CSS at build time."
+    echo ""
+    printf '%s' "$tw_interp_hits"
+    echo ""
+    echo "CORRECT FIXES:"
+    echo "  Runtime value  → use inline style:  style={{ background: withAlpha(TOKEN, pct) }}"
+    echo "  Static value   → write the full literal:  className=\"...-[rgba(15,25,35,0.10)]\""
+    echo ""
+    echo "The static Tailwind arbitrary form (-[rgba(...)]) is grandfathered and fine."
+    echo "The dynamic inline-style form (withAlpha in style={{}}) is also fine."
+    echo "The ONLY forbidden form is -[\${runtime}] inside a className/class value."
     exit 1
 fi
 

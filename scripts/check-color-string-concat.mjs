@@ -133,6 +133,10 @@ if (fs.existsSync(BASELINE)) {
     console.error('')
     console.error('Fix: use withAlpha(token, pct) from src/lib/taskGrouping.ts.')
     console.error('  e.g.  withAlpha(ACCENT_GOLD, 13)  →  color-mix(in srgb, var(--task-accent-gold) 13%, transparent)')
+    console.error('')
+    console.error('NOTE — two opposite rules depending on context:')
+    console.error('  inline-style rgba() literal      → replace with withAlpha(TOKEN, pct)  ← this lint')
+    console.error('  static Tailwind -[rgba(...)] class → LEAVE as a static literal; NEVER template it with ${...}')
     if (enforce) {
       process.exit(1)
     } else {
