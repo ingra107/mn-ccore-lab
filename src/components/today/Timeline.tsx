@@ -99,6 +99,14 @@ function gapHeight(min: number): number {
   return Math.max(GAP_MIN_H, Math.min(GAP_MAX_H, Math.round(min * GAP_PX_PER_MIN)))
 }
 
+// Rail block height ∝ its real duration, on the SAME scale as the between-
+// meeting gaps so a 3h block and a 3h gap read alike. All-day blocks (no timed
+// duration) take the max so they read as spanning the day.
+function railBlockHeight(e: TodayEvent): number {
+  if (e.isAllDay || typeof e.startMin !== 'number' || typeof e.endMin !== 'number') return GAP_MAX_H
+  return gapHeight(e.endMin - e.startMin)
+}
+
 function DropZone({ slot, label, onDropTask, gapMin }: { slot: PlannedSlot; label: string; onDropTask: (id: string, slot: PlannedSlot) => void; gapMin?: number | null }) {
   // A real, timed gap between two meetings → proportional height + a duration
   // label with a capacity cue. Otherwise (leading/trailing/untimed) keep the
@@ -287,8 +295,8 @@ export function Timeline({ events, tasks, state, projectsByPid, expandedId, onEx
         />
       ))}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-        <span style={{ fontSize: 14 }}>📅</span>
-        <h3 style={{ fontSize: 13, fontWeight: 600, color: '#fff', letterSpacing: '-0.01em', margin: 0, whiteSpace: 'nowrap' }}>Today · timeline</h3>
+        <span style={{ fontSize: 16 }}>📅</span>
+        <h2 style={{ fontSize: 18, fontWeight: 600, color: '#fff', letterSpacing: '-0.02em', margin: 0, whiteSpace: 'nowrap' }}>Today · timeline</h2>
         {/* N1.15/N1.21 — hide the drag how-to on phones: it wraps into the
             title AND describes drag, which doesn't exist on touch. */}
         <span className="today-section-hint" style={{ fontSize: 11, color: INK_DIM }}>drag tasks into the gaps · click meetings to take notes · × to hide</span>
@@ -307,9 +315,13 @@ export function Timeline({ events, tasks, state, projectsByPid, expandedId, onEx
           />
         </div>
       )}
-      <div style={{ display: railEvents.length > 0 && !isPhone ? 'grid' : 'block', gridTemplateColumns: railEvents.length > 0 && !isPhone ? 'minmax(150px, 190px) minmax(0, 1fr)' : undefined, gap: 12, alignItems: 'start' }}>
+      {/* Rail on the RIGHT (flow column first): grid is `flow | rail`. The
+          aside stays first in the DOM (so on phone, where the grid collapses
+          to a block, it still stacks ABOVE the timeline) but is placed into
+          column 2 on desktop via gridColumn. */}
+      <div style={{ display: railEvents.length > 0 && !isPhone ? 'grid' : 'block', gridTemplateColumns: railEvents.length > 0 && !isPhone ? 'minmax(0, 1fr) minmax(150px, 190px)' : undefined, gap: 12, alignItems: 'start' }}>
         {railEvents.length > 0 && (
-          <aside aria-label="All-day and long blocks" style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: isPhone ? 8 : 0 }}>
+          <aside aria-label="All-day and long blocks" style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: isPhone ? 8 : 0, gridColumn: railEvents.length > 0 && !isPhone ? 2 : undefined }}>
             <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: ACCENT_TEAL, padding: '0 2px 2px' }}>All-day · long blocks</div>
             {railEvents.map((e) => (
               <EventRow
@@ -321,11 +333,12 @@ export function Timeline({ events, tasks, state, projectsByPid, expandedId, onEx
                 saveStatus={meetingSaveState[e.id] ?? 'idle'}
                 isCalEvent={e.id.startsWith('cal-')}
                 isPhone={isPhone}
+                minHeight={railBlockHeight(e)}
               />
             ))}
           </aside>
         )}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, position: 'relative' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, position: 'relative', gridColumn: railEvents.length > 0 && !isPhone ? 1 : undefined }}>
         {clusters.map((cluster, idx) => {
           // Gather planned tasks dropped into the gap BEFORE this cluster.
           const slotKey = `between-${idx}` as PlannedSlot

@@ -12,7 +12,7 @@ import { useIsMobile } from '../../hooks/useIsMobile'
 
 export type SaveStatus = 'idle' | 'saving' | 'saved'
 
-export function EventRow({ e, onDismiss, overlap = false, note, onNote, saveStatus = 'idle', isCalEvent = false, isPhone: isPhoneProp }: { e: TodayEvent; onDismiss: (id: string) => void; overlap?: boolean; note?: string; onNote: (id: string, v: string) => void; saveStatus?: SaveStatus; isCalEvent?: boolean; isPhone?: boolean }) {
+export function EventRow({ e, onDismiss, overlap = false, note, onNote, saveStatus = 'idle', isCalEvent = false, isPhone: isPhoneProp, minHeight }: { e: TodayEvent; onDismiss: (id: string) => void; overlap?: boolean; note?: string; onNote: (id: string, v: string) => void; saveStatus?: SaveStatus; isCalEvent?: boolean; isPhone?: boolean; minHeight?: number }) {
   const [expanded, setExpanded] = useState(false)
   // N1.06 / ROW 24+25: visual breakpoints moved to CSS (.meeting-row-* in
   // index.css). isPhone prop accepted for API compatibility with Timeline +
@@ -20,7 +20,7 @@ export function EventRow({ e, onDismiss, overlap = false, note, onNote, saveStat
   // is unused now that JSX branches are gone.
   useIsMobile(768) // keeps matchMedia alive on standalone renders
   return (
-    <div style={{ position: 'relative', background: 'rgba(92,188,180,0.06)', border: `1px solid rgba(92,188,180,${overlap ? 0.35 : 0.18})`, borderRadius: 6, overflow: 'hidden' }}>
+    <div style={{ position: 'relative', background: 'rgba(92,188,180,0.06)', border: `1px solid rgba(92,188,180,${overlap ? 0.35 : 0.18})`, borderRadius: 6, overflow: 'hidden', minHeight }}>
       {/* ROW 25: gap/padding/title-clamp/end-time/loc-hide → CSS .meeting-row-* */}
       <div onClick={() => setExpanded(!expanded)} className="meeting-row-header">
         <span className={`meeting-row-time${overlap ? ' meeting-row-time--overlap' : ''}`} style={{ color: ACCENT_TEAL, flexShrink: 0 }}>
