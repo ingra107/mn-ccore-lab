@@ -127,7 +127,13 @@ export function InlineDetail({ task, projectName, onOpenEditor }: { task: TaskRo
   }, [onOpenEditor, task])
 
   return (
-    <div onClick={(e) => e.stopPropagation()} style={{ marginTop: 10, paddingTop: 10 }}>
+    // Drawer inset: horizontal padding matches the row header's 14px so the
+    // action bar and content align with the title column, not the container
+    // edges (the "edge-to-edge boxy" bug — backlog #81). borderTop provides a
+    // soft separator in the same language as the inter-row dividers; no hard
+    // border, no background block — the row's existing expanded background
+    // (withAlpha(INK, 3)) is the only elevation signal.
+    <div onClick={(e) => e.stopPropagation()} style={{ borderTop: `1px solid ${withAlpha(INK, 6)}`, padding: '10px 14px 4px' }}>
 
       {/* Description — clamped to ~3 lines with "more" expander (C) */}
       {task.description && (
