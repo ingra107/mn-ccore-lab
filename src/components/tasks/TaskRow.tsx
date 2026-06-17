@@ -26,7 +26,7 @@
 // the row is correct in BOTH light and dark, on the dark Today/MyTasks page
 // AND on My Hub's lighter card surface.
 
-import { useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+import { useRef, useState, type ReactNode } from 'react'
 import { GripVertical, MapPin, Pin } from 'lucide-react'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { Link } from 'react-router-dom'
@@ -240,17 +240,15 @@ export function TaskRow(props: SharedTaskRowProps) {
   const [hover, setHover] = useState(false)
   const lpTimer = useRef<ReturnType<typeof setTimeout> | 'fired' | null>(null)
 
-  // Issue #78: keep the clicked row in place when its inline detail opens — an
-  // expand that pushes the row off-screen otherwise makes the task "jump".
-  // Only on expand: block:'nearest' is a no-op when the row is already fully in
-  // view, and skipping collapse keeps the row put as content shrinks below it.
-  // (Firing unconditionally would scroll off-screen rows into view on mount.)
-  const rowRef = useRef<HTMLDivElement>(null)
-  useLayoutEffect(() => {
-    if (isExpanded && rowRef.current) {
-      rowRef.current.scrollIntoView({ block: 'nearest', behavior: 'instant' as ScrollBehavior })
-    }
-  }, [isExpanded])
+  // Deliberately NO scroll-into-view on expand. A clicked row's inline detail
+  // renders BELOW its header, which stays put — the browser does not move the
+  // viewport on its own. The prior #78 fix called
+  // rowRef.scrollIntoView({block:'nearest'}) here to "keep the row in place",
+  // but once the drawer makes the row TALLER than the viewport, 'nearest'
+  // scrolled DOWN to the row's lower edge and landed the viewport mid-task — a
+  // jerk (the anti-jump fix itself jumped). Principle (Nick 2026-06-16): the
+  // action happens, the view STAYS PUT, the user scrolls if/where they want.
+  // Do NOT re-introduce an auto-scroll/refocus on expand/select.
 
   // NEW-to-you chip (Slack-style seen, 2026-06-11): assigned to the viewer and
   // never opened (acknowledged_at IS NULL). Auto-acknowledge fires when the
@@ -377,7 +375,6 @@ export function TaskRow(props: SharedTaskRowProps) {
 
   return (
     <div
-      ref={rowRef}
       data-task-id={task.id}
       style={{
         // P1-12: overdue rows carry a coral left edge so "what's slipping" reads
