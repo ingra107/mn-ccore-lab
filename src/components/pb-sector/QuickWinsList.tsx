@@ -3,6 +3,7 @@ import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-
 import { CSS } from '@dnd-kit/utilities'
 import { Zap, GripVertical, Plus } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { DoneBox } from '../tasks/TaskRow'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
 
@@ -48,16 +49,8 @@ function SortableQuickWin({ task, onComplete, onClickTitle }: {
           <GripVertical {...ICON_PROPS} size={12} style={{ color: 'var(--slate)', opacity: 0.75 }} />
         </div>
 
-        <button
-          onClick={() => onComplete(task.id)}
-          className="flex-shrink-0 hover:scale-110 transition-transform"
-          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-        >
-          <div style={{
-            width: 14, height: 14, borderRadius: 'var(--radius-sm)',
-            border: '1.5px solid var(--slate)', opacity: 0.85,
-          }} />
-        </button>
+        {/* C15 DoneBox — canonical square = complete (replaces hand-rolled 14×14 square) */}
+        <DoneBox done={false} onToggle={() => onComplete(task.id)} />
 
         <button
           onClick={() => onClickTitle(task)}
@@ -106,8 +99,8 @@ export default function QuickWinsList({ tasks, onComplete, onClickTitle, onAddCl
         ref={setNodeRef}
         className="rounded-lg"
         style={{
-          border: `1px solid ${isOver ? 'var(--slate)' : 'rgba(100,116,139,0.1)'}`,
-          background: isOver ? 'rgba(100,116,139,0.03)' : 'transparent',
+          border: `1px solid ${isOver ? 'var(--slate)' : withAlpha('var(--slate)', 10)}`,
+          background: isOver ? withAlpha('var(--slate)', 3) : 'transparent',
           transition: 'all 0.2s ease',
           minHeight: tasks.length === 0 ? 40 : undefined,
         }}
@@ -132,7 +125,7 @@ export default function QuickWinsList({ tasks, onComplete, onClickTitle, onAddCl
             background: 'none', border: 'none', cursor: 'pointer',
             borderTop: tasks.length > 0 ? `1px solid ${withAlpha(ACCENT_GOLD, 4)}` : undefined,
           }}
-          whileHover={{ backgroundColor: 'rgba(100,116,139,0.03)' }}
+          whileHover={{ backgroundColor: withAlpha('var(--slate)', 3) }}
         >
           <Plus {...ICON_PROPS} size={12} style={{ color: 'var(--slate)', opacity: 0.75 }} />
           <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.75 }}>

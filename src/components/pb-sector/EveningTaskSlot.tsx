@@ -1,15 +1,18 @@
 import { useDroppable } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Moon, GripVertical, Circle, Plus } from 'lucide-react'
+import { Moon, GripVertical, Plus } from 'lucide-react'
 import { motion } from 'framer-motion'
 import DueLabel from '../DueLabel'
+import { DoneBox } from '../tasks/TaskRow'
+import TaskTitle from '../tasks/TaskTitle'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
 
 interface EveningTask {
   id: string
   title: string
+  short_title?: string | null
   description?: string
   project_title?: string
   project_slug?: string
@@ -51,14 +54,8 @@ function SortableEveningItem({ task, onComplete, onClickTitle }: {
           <GripVertical {...ICON_PROPS} size={14} style={{ color: 'var(--slate)', opacity: 0.75 }} />
         </div>
 
-        {/* Complete */}
-        <button
-          onClick={() => onComplete(task.id)}
-          className="flex-shrink-0 hover:scale-110 transition-transform"
-          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-        >
-          <Circle {...ICON_PROPS} size={16} style={{ color: 'var(--slate)', opacity: 0.75 }} />
-        </button>
+        {/* C15 DoneBox — canonical square = complete */}
+        <DoneBox done={false} onToggle={() => onComplete(task.id)} />
 
         {/* Title */}
         <div className="flex-1 min-w-0">
@@ -70,7 +67,8 @@ function SortableEveningItem({ task, onComplete, onClickTitle }: {
               fontSize: '13px', color: 'var(--muted)',
             }}
           >
-            {task.title || task.description}
+            {/* C2 short_title · C13 TaskTitle ([Carried forward] chip) */}
+            <TaskTitle title={task.short_title || task.title} fallback={task.description} />
           </button>
           {task.project_title && (
             <span style={{ fontSize: '10px', color: 'var(--gold)', opacity: 'var(--ink-label)' }}>

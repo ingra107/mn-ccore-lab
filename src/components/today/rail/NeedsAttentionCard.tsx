@@ -8,6 +8,7 @@ import { Link } from 'react-router-dom'
 import { ACCENT_CORAL, ACCENT_ORANGE, INK, INK_DIM, daysSince, withAlpha } from '../constants'
 import { PATHS } from '../../../constants/paths'
 import type { TaskRow } from '../../../lib/api'
+import TaskTitle from '../../tasks/TaskTitle'
 
 export function NeedsAttentionCard({ overdueTasks, stalledProjects }: { overdueTasks: TaskRow[]; stalledProjects: Array<{ name: string; days: number }> }) {
   // TP-18: when more than 5 in either bucket, append a "+N more →" link
@@ -31,7 +32,8 @@ export function NeedsAttentionCard({ overdueTasks, stalledProjects }: { overdueT
           return (
             <div key={t.id} style={{ fontSize: 12, color: INK, padding: '3px 0', display: 'flex', gap: 8 }}>
               <span style={{ color: ACCENT_CORAL, fontVariantNumeric: 'tabular-nums', fontWeight: 500, minWidth: 36, fontSize: 11 }}>{Number.isFinite(days) ? `${days}d` : '—'}</span>
-              <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.short_title || t.title}</span>
+              {/* C13 TaskTitle — surfaces [Carried forward] chip */}
+              <TaskTitle title={t.short_title || t.title} style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }} />
             </div>
           )
         })}
@@ -46,7 +48,7 @@ export function NeedsAttentionCard({ overdueTasks, stalledProjects }: { overdueT
           </Link>
         )}
       </div>
-      <div style={{ padding: 12, background: 'rgba(240,138,91,0.04)', border: '1px solid rgba(240,138,91,0.15)', borderRadius: 6 }}>
+      <div style={{ padding: 12, background: withAlpha(ACCENT_ORANGE, 4), border: `1px solid ${withAlpha(ACCENT_ORANGE, 15)}`, borderRadius: 6 }}>
         <div style={{ fontSize: 10, color: ACCENT_ORANGE, marginBottom: 4, fontWeight: 600, letterSpacing: '0.04em' }}>STALLED</div>
         {stalledProjects.length === 0 && (
           <div style={{ fontSize: 11, color: INK_DIM, fontStyle: 'italic' }}>Everything's moving.</div>

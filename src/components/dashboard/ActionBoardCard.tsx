@@ -1,6 +1,6 @@
 import { memo } from 'react'
 import { Link } from 'react-router-dom'
-import { CheckCircle2, Circle, Clock, ClipboardList, ArrowRight, AlertTriangle } from 'lucide-react'
+import { CheckCircle2, ClipboardList, ArrowRight } from 'lucide-react'
 import BentoCard from './BentoCard'
 import Avatar from '../Avatar'
 import { useTasks } from '../../hooks/useApiData'
@@ -9,15 +9,11 @@ import { useUpdateTaskStatus } from '../../hooks/useMutations'
 import { useUndoToast } from '../UndoToast'
 import { getPersonInfo } from '../../data/team'
 import DueLabel from '../DueLabel'
+import { DoneBox } from '../tasks/TaskRow'
+import TaskTitle from '../tasks/TaskTitle'
 import { PATHS } from '../../constants/paths'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { ACCENT_GOLD, isTaskDone, withAlpha } from '../../lib/taskGrouping'
-
-const statusIcon: Record<string, { icon: typeof Circle; color: string }> = {
-  todo: { icon: Circle, color: 'var(--slate)' },
-  in_progress: { icon: Clock, color: 'var(--teal)' },
-  blocked: { icon: AlertTriangle, color: 'var(--maroon)' },
-}
 
 function ActionBoardCard() {
   const { data: items = [] } = useTasks() // Already deduped by useTasks hook
@@ -57,8 +53,6 @@ function ActionBoardCard() {
                       </span>
                     </div>
                     {assigneeItems.map((item) => {
-                      const si = statusIcon[item.status] || statusIcon.todo
-                      const StatusIcon = si.icon
                       return (
                         <div key={item.id} className="flex items-start gap-2 py-1.5 pl-7 action-board-row"
                           style={{ borderBottom: `1px solid ${withAlpha(ACCENT_GOLD, 4)}`, cursor: 'pointer', borderRadius: 'var(--radius-sm)', margin: '0 -4px', padding: '6px 4px 6px 28px', transition: 'background 0.15s' }}
@@ -68,20 +62,20 @@ function ActionBoardCard() {
                             updateStatus.mutate({ id: item.id, status: next })
                             showUndo(`Status → ${next === 'done' ? 'Done' : 'In Progress'}`, () => updateStatus.mutate({ id: item.id, status: prev }))
                           }}>
-                          <button type="button" className="cursor-pointer flex-shrink-0 action-board-status-btn"
-                            aria-label={`Mark "${item.title || item.description}" done`}
-                            onClick={(e) => {
-                              e.stopPropagation()
+                          {/* C15 DoneBox — canonical square = complete */}
+                          <DoneBox
+                            done={isTaskDone(item)}
+                            onToggle={() => {
                               const prev = item.status
-                              updateStatus.mutate({ id: item.id, status: 'done' })
-                              showUndo('Completed task', () => updateStatus.mutate({ id: item.id, status: prev }))
+                              const next = isTaskDone(item) ? 'todo' : 'done'
+                              updateStatus.mutate({ id: item.id, status: next })
+                              showUndo(next === 'done' ? 'Completed task' : 'Reopened task', () => updateStatus.mutate({ id: item.id, status: prev }))
                             }}
-                            style={{ '--status-color': si.color, background: 'none', border: 'none', padding: 'var(--sp-sm)', margin: '-8px', color: si.color, opacity: 0.85, transition: 'all 0.15s', minWidth: '44px', minHeight: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center' } as React.CSSProperties}>
-                            <StatusIcon size={14} />
-                          </button>
+                          />
                           <div style={{ flex: 1 }}>
                             <p style={{ fontSize: '11.5px', color: 'var(--ink)', margin: 0, lineHeight: 1.4 }}>
-                              {item.title || item.description}
+                              {/* C2 short_title · C13 TaskTitle ([Carried forward] chip) */}
+                              <TaskTitle title={item.short_title || item.title} fallback={item.description} />
                             </p>
                             <div className="flex items-center gap-2 mt-0.5">
                               <DueLabel due={item.due_date} style={{ fontSize: 10 }} />
@@ -124,7 +118,6 @@ function ActionBoardCard() {
       <style>{`
         .action-board-row:active { background: var(--gold-hover); }
         .action-board-row:hover { background: var(--gold-hover); }
-        .action-board-status-btn:hover { opacity: 1 !important; color: var(--teal) !important; }
       `}</style>
     </BentoCard>
   )

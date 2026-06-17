@@ -1,16 +1,19 @@
 import { useDroppable } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Target, GripVertical, Circle, Plus } from 'lucide-react'
+import { Target, GripVertical, Plus } from 'lucide-react'
 import { motion } from 'framer-motion'
 import PomodoroCircles from './PomodoroCircles'
 import DueLabel from '../DueLabel'
+import { DoneBox } from '../tasks/TaskRow'
+import TaskTitle from '../tasks/TaskTitle'
 import { ICON_PROPS } from '../../lib/iconProps'
-import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
+import { ACCENT_GOLD, ACCENT_TEAL, withAlpha } from '../../lib/taskGrouping'
 
 interface FocusTask {
   id: string
   title: string
+  short_title?: string | null
   description?: string
   project_title?: string
   project_slug?: string
@@ -68,14 +71,8 @@ function SortableFocusItem({ task, index, pomodorosCompleted, pomodoroActive, on
           {index + 1}
         </span>
 
-        {/* Complete */}
-        <button
-          onClick={() => onComplete(task.id)}
-          className="flex-shrink-0 hover:scale-110 transition-transform"
-          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-        >
-          <Circle {...ICON_PROPS} size={16} style={{ color: 'var(--slate)', opacity: 0.75 }} />
-        </button>
+        {/* C15 DoneBox — canonical square = complete */}
+        <DoneBox done={false} onToggle={() => onComplete(task.id)} />
 
         {/* Title */}
         <div className="flex-1 min-w-0">
@@ -87,7 +84,8 @@ function SortableFocusItem({ task, index, pomodorosCompleted, pomodoroActive, on
               fontSize: '14px', color: 'var(--ink)',
             }}
           >
-            {task.title || task.description}
+            {/* C2 short_title · C13 TaskTitle ([Carried forward] chip) */}
+            <TaskTitle title={task.short_title || task.title} fallback={task.description} />
           </button>
           {task.project_title && (
             <span style={{ fontSize: '10px', color: 'var(--gold)', opacity: 0.85 }}>
@@ -133,7 +131,7 @@ export default function FocusTaskSlot({ tasks, pomodoroData, onComplete, onStart
         ref={setDropRef}
         className="rounded-lg overflow-hidden"
         style={{
-          border: `1px solid ${isOver ? 'var(--teal)' : 'rgba(45,138,138,0.15)'}`,
+          border: `1px solid ${isOver ? 'var(--teal)' : withAlpha(ACCENT_TEAL, 15)}`,
           background: isOver ? 'var(--teal-hover)' : 'transparent',
           transition: 'all 0.2s ease',
         }}
