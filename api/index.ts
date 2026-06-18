@@ -76,7 +76,7 @@ import { handleGetProjectDocuments, handleCreateProjectDocument, handleDeletePro
 import { handleProactiveBrief } from './routes/proactive-brief';
 import { handleGetFileActivity, handleSyncFileActivity } from './routes/file-activity';
 import { handleGenerateDigestEmail, handleDigestPreview, handleSendDigestEmail, handleSendDailyDigests } from './routes/digest-email';
-import { pruneAllLedgers, monitorD1Health } from './lib/ledger-retention';
+import { pruneAllLedgers, monitorD1Health, compactProcessedMutationsJson } from './lib/ledger-retention';
 // inbox.ts retired 2026-05-05 (5.3a) — migrated to /api/inbox-events/sync-bulk
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -2789,6 +2789,17 @@ export default {
         // timing out. Runs BEFORE the calendar poll so the DB is lighter before
         // the iCal batch writes.
         const pruneResults = await pruneAllLedgers(env.DB)
+
+        // Compact processed_mutations JSON: null out original_response_json on
+        // 'accepted' rows older than 48h. Cuts per-row size ~10x for the bulk
+        // of the ledger while preserving exact-replay within the practical retry
+        // window. Non-fatal: a compaction failure never blocks the calendar poll.
+        // See: backlog #36, ledger-retention.ts compactProcessedMutationsJson().
+        try {
+          await compactProcessedMutationsJson(env.DB)
+        } catch (e) {
+          console.error('[LedgerCompact] JSON compaction failed (non-fatal):', (e as Error).message)
+        }
 
         // D1 health monitor: row counts + oldest rows for all ledger tables.
         // Inserts a notification for nick-ingraham if any table exceeds its budget.

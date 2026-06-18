@@ -146,6 +146,62 @@ export async function pruneAllLedgers(
   return results;
 }
 
+// ── JSON compaction ──────────────────────────────────────────────────────────
+
+/**
+ * Null out `original_response_json` on `processed_mutations` rows older than
+ * JSON_NULL_AFTER_HOURS (48h) whose outcome is 'accepted'.
+ *
+ * Rationale (backlog #36, 2026-06-18 post-mortem):
+ *   The full response JSON (~1.4 KB per row) is only needed for exact-replay
+ *   fidelity — a client re-sending the same mutation_id within a short window.
+ *   After 48h the practical retry window is closed; keeping the JSON for the
+ *   remaining 5 days of the 7d retention window costs ~10× per-row storage
+ *   with zero benefit. Nulling accepted rows cuts per-row size ~10x.
+ *
+ *   Only 'accepted' rows are nulled. 'conflict', 'merged_clean', and
+ *   'dependency_failed' rows are LEFT with their JSON because those outcomes
+ *   carry non-trivial diagnostic state (canonical_payload, current_payload,
+ *   rejection reason) that may be useful for longer. The replay path handles
+ *   all nulled rows with a synthesized response (see mutations.ts:readPrior).
+ *
+ * Chunked UPDATE to avoid D1 per-statement limits on large result sets.
+ * Returns the number of rows compacted.
+ */
+const JSON_NULL_AFTER_HOURS = 48;
+const JSON_NULL_CHUNK_SIZE = 2_000;
+
+export async function compactProcessedMutationsJson(db: D1Database): Promise<number> {
+  const cutoff = `datetime('now', '-${JSON_NULL_AFTER_HOURS} hours')`;
+  // D1 doesn't natively support LIMIT in UPDATE; use a subquery on the PK.
+  const sql = `
+    UPDATE processed_mutations
+    SET original_response_json = NULL
+    WHERE mutation_id IN (
+      SELECT mutation_id FROM processed_mutations
+      WHERE processed_at < ${cutoff}
+        AND outcome = 'accepted'
+        AND original_response_json IS NOT NULL
+      LIMIT ${JSON_NULL_CHUNK_SIZE}
+    )
+  `;
+
+  let totalCompacted = 0;
+  let iterations = 0;
+  // Safety cap: max 20 iterations per cron run (= 40k rows).
+  while (iterations < 20) {
+    const result = await db.prepare(sql).run();
+    const compacted = (result.meta?.changes as number | undefined) ?? 0;
+    totalCompacted += compacted;
+    iterations++;
+    if (compacted === 0) break;
+  }
+  if (totalCompacted > 0) {
+    console.log(`[LedgerCompact] processed_mutations: nulled JSON on ${totalCompacted} accepted rows (>${JSON_NULL_AFTER_HOURS}h)`);
+  }
+  return totalCompacted;
+}
+
 // ── Health Monitor ───────────────────────────────────────────────────────────
 
 export interface LedgerHealth {

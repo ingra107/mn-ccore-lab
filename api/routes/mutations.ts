@@ -374,9 +374,15 @@ async function processOne(
   //
   // M46 (2026-05-29): fetch `outcome` alongside the JSON so we can detect
   // `dependency_failed` rows and re-evaluate rather than replaying the poison.
+  //
+  // JSON compaction note (backlog #36, 2026-06-18): original_response_json is
+  // nulled for 'accepted' rows older than 48h by compactProcessedMutationsJson().
+  // When it is null, we synthesize a minimal MutationResult from `outcome` —
+  // the client already handled this outcome; exact-replay fidelity only matters
+  // within the practical retry window.
   const prior = await env.DB.prepare(
     'SELECT outcome, original_response_json FROM processed_mutations WHERE mutation_id = ?'
-  ).bind(mut.mutation_id).first<{ outcome: string; original_response_json: string }>();
+  ).bind(mut.mutation_id).first<{ outcome: string; original_response_json: string | null }>();
   if (prior) {
     // M46: if the cached verdict was `dependency_failed`, fall through and
     // re-evaluate — the parent may have succeeded since this was first tried.
@@ -387,6 +393,14 @@ async function processOne(
     if (prior.outcome === 'dependency_failed') {
       // fall through to dependency re-evaluation below
     } else {
+      // If JSON was compacted (null), synthesize a minimal result from outcome.
+      // The outcome field is always preserved; only the verbose payload is dropped.
+      if (prior.original_response_json == null) {
+        return {
+          mutation_id: mut.mutation_id,
+          status: prior.outcome as MutationResult['status'],
+        };
+      }
       try {
         return JSON.parse(prior.original_response_json) as MutationResult;
       } catch {
@@ -1454,12 +1468,25 @@ async function recordProcessedAtomic(
   // Race lost: another request wrote the canonical processed_mutations row.
   // Fetch + return their stored result so both Worker invocations return
   // the same shape to the client.
-  const prior = await env.DB.prepare(
-    'SELECT original_response_json FROM processed_mutations WHERE mutation_id = ?'
-  ).bind(mut.mutation_id).first<{ original_response_json: string }>();
-  if (prior) {
+  //
+  // JSON compaction note (backlog #36, 2026-06-18): original_response_json may
+  // be NULL on accepted rows older than 48h. Fetch outcome alongside so we can
+  // synthesize a minimal result when JSON has been compacted.
+  const priorRace = await env.DB.prepare(
+    'SELECT outcome, original_response_json FROM processed_mutations WHERE mutation_id = ?'
+  ).bind(mut.mutation_id).first<{ outcome: string; original_response_json: string | null }>();
+  if (priorRace) {
+    if (priorRace.original_response_json == null) {
+      // JSON was compacted — synthesize from outcome. The concurrent winner
+      // already returned the full result to ITS caller; both sides need the
+      // same shape, and outcome is preserved permanently.
+      return {
+        mutation_id: mut.mutation_id,
+        status: priorRace.outcome as MutationResult['status'],
+      };
+    }
     try {
-      return JSON.parse(prior.original_response_json) as MutationResult;
+      return JSON.parse(priorRace.original_response_json) as MutationResult;
     } catch {
       // Stored row is corrupt -- fall back to our own freshly-computed result
       // (which is functionally identical since the mutation is deterministic).

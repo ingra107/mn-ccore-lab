@@ -198,7 +198,9 @@ describe('processOne envelope validation — partial-batch atomicity guard', () 
     const src = readFileSync(resolve(__dirname, 'mutations.ts'), 'utf-8')
 
     const originMachineCheckIdx = src.indexOf("return mutErr(mut.mutation_id, 'origin_machine required')")
-    const idempotencySelectIdx = src.indexOf('SELECT original_response_json FROM processed_mutations')
+    // M48 (2026-06-18): SELECT now fetches both outcome + JSON (null-safe compaction).
+    // Match the idempotency check at processOne entry, not the race-lost read-back.
+    const idempotencySelectIdx = src.indexOf('SELECT outcome, original_response_json FROM processed_mutations WHERE mutation_id = ?')
 
     expect(originMachineCheckIdx).toBeGreaterThan(-1)
     expect(idempotencySelectIdx).toBeGreaterThan(-1)
