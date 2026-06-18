@@ -1,0 +1,24 @@
+-- v85: add poll_token to user_calendar_events (atomic swap for pollFeed)
+--
+-- Level-1 durability fix (2026-06-18, post-mortem backlog #34):
+-- pollFeed previously deleted all rows for a feed BEFORE inserting the new
+-- set. If any INSERT chunk failed (D1 timeout under storage pressure), the
+-- cache was left empty and the user saw "connect a calendar" until the next
+-- successful poll. The empty-on-failure state was REPRESENTABLE — now it isn't.
+--
+-- Fix: every INSERT in a poll run carries the same fresh UUID (poll_token).
+-- The DELETE runs LAST, targeting only rows with a different poll_token:
+--   DELETE FROM user_calendar_events WHERE feed_id=? AND poll_token != <new>
+-- If any INSERT fails, old rows (carrying the previous poll_token) remain
+-- intact. Only a fully-completed insert run evicts the prior cache.
+--
+-- poll_token is nullable to allow safe migration of existing rows:
+-- existing rows get poll_token=NULL and are cleaned up by the first successful
+-- poll for each feed (the DELETE ... AND poll_token != <new> matches NULLs
+-- via "NOT NULL = anything" — we use IS NOT ? to cover the NULL case in code).
+--
+-- SQLite can't add a NOT NULL column with no default to an existing table, so
+-- NULL default is intentional here. After rollout, every freshly inserted row
+-- will have a non-NULL poll_token.
+
+ALTER TABLE user_calendar_events ADD COLUMN poll_token TEXT;

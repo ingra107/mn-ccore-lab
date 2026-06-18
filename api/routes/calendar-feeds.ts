@@ -362,36 +362,35 @@ async function pollFeed(env: Env, feed: FeedRow, ownerEmail: string, timeoutMs =
     truncated = true
   }
 
-  // Replace strategy: clear events for this feed, re-insert. Chunked into
-  // batches of INSERT_CHUNK_SIZE so each batch stays under D1's per-batch
-  // timeout. The DELETE runs in its own batch first; if a later chunk
-  // fails the feed will end up partial — last_error captures it so the
-  // next poll retries the full set.
-  try {
-    await env.DB.prepare('DELETE FROM user_calendar_events WHERE feed_id = ?').bind(feed.id).run()
-  } catch (e) {
-    await env.DB.prepare(
-      'UPDATE user_calendar_feeds SET last_polled_at = ?, last_error = ?, etag = NULL, last_modified = NULL WHERE id = ?'
-    ).bind(nowInstant(), `delete: ${(e as Error).message.slice(0, 180)}`, feed.id).run()
-    return
-  }
-
-  // Batched INSERT OR REPLACE. Schema v61 unique key is (feed_id, uid, start_at),
-  // so each recurring instance (same UID, different start_at) lands in its own
-  // row. Same UID + same start_at = REPLACE (handles updates from re-poll).
+  // Atomic swap strategy (Level-1 durability fix, schema v85, 2026-06-18):
+  //
+  // Each poll run mints a fresh UUID (pollToken). Every event row inserted in
+  // this run carries that token. The DELETE of OLD rows runs LAST, after all
+  // INSERT chunks succeed, targeting only rows with a different poll_token:
+  //   DELETE ... WHERE feed_id=? AND (poll_token IS NULL OR poll_token != ?)
+  //
+  // If ANY insert chunk fails: old rows (prior poll_token) remain intact —
+  // the user's calendar cache is never emptied by a failed poll. The empty-
+  // cache state is now structurally unrepresentable: you must successfully
+  // insert before anything is deleted.
+  //
+  // Schema v61 unique key is (feed_id, uid, start_at). Each recurring instance
+  // (same UID, different start_at) lands in its own row. Same UID + same
+  // start_at = REPLACE (handles event updates from re-poll).
   // The JS Map dedupe block was removed — it was collapsing legitimate recurring
   // instances by keeping only last-seen UID, exactly the bug this fix addresses.
+  const pollToken = newId()
   const insertStmt = env.DB.prepare(
     `INSERT OR REPLACE INTO user_calendar_events
-     (id, feed_id, user_slug, uid, summary, description, location, start_at, end_at, is_all_day, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`
+     (id, feed_id, user_slug, uid, summary, description, location, start_at, end_at, is_all_day, updated_at, poll_token)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), ?)`
   )
 
   for (let i = 0; i < inWindow.length; i += INSERT_CHUNK_SIZE) {
     const chunk = inWindow.slice(i, i + INSERT_CHUNK_SIZE)
     const stmts = chunk.map((ev) => insertStmt.bind(
       newId(), feed.id, feed.user_slug, ev.uid, ev.summary, ev.description, ev.location,
-      ev.startAt, ev.endAt, ev.isAllDay ? 1 : 0,
+      ev.startAt, ev.endAt, ev.isAllDay ? 1 : 0, pollToken,
     ))
     try {
       await env.DB.batch(stmts)
@@ -399,11 +398,25 @@ async function pollFeed(env: Env, feed: FeedRow, ownerEmail: string, timeoutMs =
       const msg = `insert chunk ${i}: ${(e as Error).message.slice(0, 160)}`
       // Don't persist conditional headers on partial failure — force a full
       // re-fetch next poll so the events table is rebuilt cleanly.
+      // Old rows (prior poll_token) remain intact: cache never goes empty.
       await env.DB.prepare(
         'UPDATE user_calendar_feeds SET last_polled_at = ?, last_error = ?, etag = NULL, last_modified = NULL WHERE id = ?'
       ).bind(nowInstant(), msg, feed.id).run()
       return
     }
+  }
+
+  // All chunks landed — now evict stale rows from prior polls.
+  // Matches NULL (pre-v85 legacy rows) AND any prior poll_token.
+  try {
+    await env.DB.prepare(
+      'DELETE FROM user_calendar_events WHERE feed_id = ? AND (poll_token IS NULL OR poll_token != ?)'
+    ).bind(feed.id, pollToken).run()
+  } catch (e) {
+    // Eviction failure is non-fatal: stale rows linger until the next
+    // successful poll. The new rows are already live; cache is correct,
+    // just slightly over-sized until eviction succeeds.
+    console.warn(`pollFeed ${feed.id}: stale eviction failed (non-fatal): ${(e as Error).message.slice(0, 180)}`)
   }
 
   console.log(`pollFeed ${feed.id}: 200 OK, parsed ${inWindow.length} events, inserted ${inWindow.length} (${Math.ceil(inWindow.length / INSERT_CHUNK_SIZE)} chunk(s))`)
