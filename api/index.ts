@@ -76,6 +76,7 @@ import { handleGetProjectDocuments, handleCreateProjectDocument, handleDeletePro
 import { handleProactiveBrief } from './routes/proactive-brief';
 import { handleGetFileActivity, handleSyncFileActivity } from './routes/file-activity';
 import { handleGenerateDigestEmail, handleDigestPreview, handleSendDigestEmail, handleSendDailyDigests } from './routes/digest-email';
+import { pruneAllLedgers, monitorD1Health } from './lib/ledger-retention';
 // inbox.ts retired 2026-05-05 (5.3a) — migrated to /api/inbox-events/sync-bulk
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -2767,7 +2768,8 @@ app.notFound(() => error('Not found', 404));
 // - fetch: Hono app, invoked by functions/api/[[route]].ts for all /api/* requests.
 // - scheduled: dispatches by event.cron (explicit switch — each cron fires exactly
 //   one handler):
-//     "0 * * * *"      → DB maintenance prune + calendar feed poller (iCal hourly, 24/day)
+//     "0 * * * *"      → ledger prune (all LEDGER_REGISTRY tables) + D1 health monitor
+//                         + calendar feed poller (iCal hourly, 24/day)
 //     "0 13 * * 1-5"   → morning pulse email (weekday 7 AM CT)
 //     "0 11 * * *"     → coordinator daily digest (6 AM CT every day)
 //   NOTE: cron "*/15 * * * *" was removed in commit 441ec212 (2026-05-05);
@@ -2778,27 +2780,23 @@ export default {
 
   async scheduled(event: ScheduledEvent, env: Env, _ctx: ExecutionContext): Promise<void> {
     switch (event.cron) {
-      // ── DB maintenance prune + iCal feed poller (hourly, 24/day) ──────────
+      // ── DB maintenance prune + D1 health monitor + iCal feed poller ─────
       case '0 * * * *': {
-        // Prune processed_mutations retention (7 days). This table records every
-        // A3 mutation for idempotency de-dup; rows older than the retry window
-        // (7 days is well beyond any real retry scenario) are safe to delete.
-        // Without pruning the table grows ~1000 rows/day and bloats the D1
-        // database, eventually causing storage timeouts on unrelated write ops
-        // (the delete-events step in calendar polling hits this at ~88K rows /
-        // ~125MB DB). Runs BEFORE the calendar poll so the lighter DB benefits
+        // Prune ALL registered ledger tables (bounded-ledger primitive, 2026-06-18).
+        // pruneAllLedgers() replaces the previous single-DELETE for processed_mutations
+        // (e3027fc6). It handles every table in LEDGER_REGISTRY with chunked DELETEs
+        // (5k rows/chunk, max 20 chunks/table/run) so it can dig out a backlog without
+        // timing out. Runs BEFORE the calendar poll so the DB is lighter before
         // the iCal batch writes.
+        const pruneResults = await pruneAllLedgers(env.DB)
+
+        // D1 health monitor: row counts + oldest rows for all ledger tables.
+        // Inserts a notification for nick-ingraham if any table exceeds its budget.
+        // Non-fatal: errors are logged but never block the calendar poll.
         try {
-          const pruneResult = await env.DB.prepare(
-            `DELETE FROM processed_mutations WHERE processed_at < datetime('now', '-7 days')`
-          ).run()
-          if (pruneResult.meta.changes > 0) {
-            console.log(`[HourlyMaint] Pruned ${pruneResult.meta.changes} processed_mutations rows (>7d old)`)
-          }
+          await monitorD1Health(env.DB, pruneResults)
         } catch (e) {
-          // Non-fatal: log and continue. Calendar poll may still succeed on a
-          // lighter-than-worst-case DB. Next hourly attempt will retry.
-          console.error('[HourlyMaint] processed_mutations prune failed:', (e as Error).message)
+          console.error('[D1Health] monitor failed (non-fatal):', (e as Error).message)
         }
 
         console.log('[CalendarCron] Starting iCal feed poll...')
