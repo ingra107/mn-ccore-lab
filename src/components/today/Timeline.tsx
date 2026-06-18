@@ -5,30 +5,31 @@
 // list when meetings have been dismissed.
 //
 // GH#80 Phase 1 (2026-06-18): absolute-positioned calendar-style canvas
-// replacing the flow-list + gapHeight() approach. Key changes:
-//   - Timed flow events sit in a position:relative container sized by
-//     (dayEnd - dayStart) * PX_PER_MIN px. Each event block is absolute:
-//     top = (startMin - dayStart)*PX_PER_MIN, height = duration*PX_PER_MIN.
-//   - Now-line is absolute at top=(now-dayStart)*PX_PER_MIN — kills the
-//     nowIdx snap-between-clusters logic (N1.15 workaround no longer needed).
-//   - Drop zones are transparent absolute overlays filling the free spans
-//     between event clusters, preserving the between-N slot keys exactly.
-//   - Untimed events (no startMin) render below the canvas in a flex column
-//     with their original drop zones (slot indices preserved).
-//   - Rail events (all-day / >=3h) and their aside column are unchanged.
-//   - OverlapBand internals unchanged (Phase 2 will give overlaps true
-//     side-by-side absolute layout).
+// replacing the flow-list + gapHeight() approach.
 //
-// DEPRECATES (Phase 1 kills these):
-//   - gapHeight() + GAP_PX_PER_MIN + GAP_MIN_H + GAP_MAX_H (replaced by
-//     absolute top/height math on PX_PER_MIN scale)
-//   - railBlockHeight() (rail blocks now use true-duration height too, but
-//     the rail itself is Phase 2 — left intact for now)
-//   - nowIdx memo + nowDivider snap-between-clusters (replaced by absolute
-//     now-line at exact minute position)
-//   - "room for ~N" capacity label on DropZone (gapMin prop dropped from
-//     timed canvas drop zones; untimed/leading/trailing keep label)
-//   - fmtGap() — no longer used for drop zone labels
+// GH#80 Phase 2+3 (2026-06-18): full rewrite of overlap handling + rail logic.
+//   - PX_PER_MIN reduced 1.2 → 0.6 (overall height ~50% of Phase 1).
+//   - MIN_BLOCK_H = 24px so 30-min meetings stay legible at 0.6px/min.
+//   - isRailEvent now checks ONLY isAllDay (true all-day events). Timed long
+//     blocks (≥3h) are NO LONGER railed — they render as tall absolute blocks
+//     on the axis at true duration height.
+//   - All-day banner = genuinely all-day events only (no start/end time, or
+//     isAllDay=true from the calendar feed). A 7am-6:30pm timed block is NOT
+//     all-day.
+//   - Google-style side-by-side column packing via interval-graph greedy
+//     coloring. Overlapping events in a cluster each get width=1/cols,
+//     left=colIdx/cols × (right - left). The 3-event-non-pairwise case
+//     correctly yields 2 columns, not 3.
+//   - Hour-label gutter fix: labels live at left:0, width:42px. Tick lines +
+//     event blocks start at left:44px. Events never overlay the labels.
+//
+// DEPRECATES (Phase 2+3 kills these, ON TOP of Phase 1):
+//   - OverlapBand for timed clusters — replaced by in-canvas column layout.
+//     OverlapBand is still used for UNTIMED clusters below the canvas.
+//   - The "All-day · long blocks" rail for TIMED events — long timed events
+//     now render on the axis. Rail survives only for isAllDay events.
+//   - railBlockHeight() reference (dead since Phase 1; fully gone now).
+//   - gapHeight / GAP_* / fmtGap / nowIdx / nowDivider (dead since Phase 1).
 //
 // Extracted from src/pages/portal/TodayPage.tsx (B2_Timeline + DropZone).
 
@@ -42,7 +43,7 @@ import { OverlapBand } from './OverlapBand'
 import { useIsMobile } from '../../hooks/useIsMobile'
 import { PlannedTaskRow } from './PlannedTaskRow'
 import {
-  ACCENT_GOLD, ACCENT_TEAL, ACCENT_CORAL, INK_DIM, LONG_EVENT_MIN, PAGE_BG, withAlpha,
+  ACCENT_GOLD, ACCENT_TEAL, ACCENT_CORAL, INK_DIM, PAGE_BG, withAlpha,
   type PlannedSlot, type TodayEvent,
 } from './constants'
 import type { TodayStateApi } from '../../hooks/useTodayState'
@@ -103,14 +104,17 @@ function useNowMinutes(): number {
   return now
 }
 
-// GH#80 Phase 1: pixels per minute on the absolute-positioned canvas.
-// 1.2px/min: 8am-6pm (600 min) = 720px canvas — fits a typical workday
-// without requiring a scroll. A 30-min meeting = 36px (legible). Tune
-// upward in Phase 2 if Nick wants more density.
-const PX_PER_MIN = 1.2
+// GH#80 Phase 2: reduced from 1.2 to 0.6 px/min so the overall canvas is
+// ~50% shorter. A typical 7am-8pm day (780 min) = ~468px. A 30-min meeting
+// = 18px raw → clamped up to MIN_BLOCK_H (24px) so it stays legible.
+const PX_PER_MIN = 0.6
 
-// Minimum block height so very short meetings (< ~20 min) remain legible.
-const MIN_BLOCK_H = 28
+// Minimum block height so very short meetings (< ~40 min at 0.6px/min) remain
+// legible. 24px holds one line of text with padding.
+const MIN_BLOCK_H = 24
+
+// Left gutter width for hour labels. Event blocks and tick lines start here.
+const GUTTER_W = 44
 
 // Pixel-offset for a minute count on the canvas (relative to dayStart).
 function toY(min: number, dayStart: number): number {
@@ -120,6 +124,54 @@ function toY(min: number, dayStart: number): number {
 function toDuration(min: number): number {
   return Math.max(MIN_BLOCK_H, Math.round(min * PX_PER_MIN))
 }
+
+// ── Interval-graph column packing ──────────────────────────────────────────
+// Greedy interval coloring: assign each event the lowest-index column that
+// doesn't conflict with any already-placed event. The maximum column count
+// used is the true chromatic number of the interval graph — never inflated.
+//
+// For N events that don't all mutually overlap (the "3 events, 2 columns"
+// case) this naturally yields fewer columns than N.
+//
+// Returns an array parallel to `events`: each element is
+//   { colIdx, colCount } where colCount is the total columns used.
+function packColumns(events: TodayEvent[]): Array<{ colIdx: number; colCount: number }> {
+  if (events.length === 0) return []
+  if (events.length === 1) return [{ colIdx: 0, colCount: 1 }]
+
+  // Convert to {start, end} in minutes. Missing endMin → start+30.
+  const intervals = events.map((e) => ({
+    start: e.startMin as number,
+    end: typeof e.endMin === 'number' ? e.endMin : (e.startMin as number) + 30,
+  }))
+
+  const cols: Array<{ colIdx: number }> = new Array(events.length).fill(null).map(() => ({ colIdx: -1 }))
+  // Track the end-minute of the last event placed in each column.
+  const colEnds: number[] = []
+
+  for (let i = 0; i < events.length; i++) {
+    const { start } = intervals[i]
+    // Find the lowest column whose last event has already ended.
+    let placed = false
+    for (let c = 0; c < colEnds.length; c++) {
+      if (colEnds[c] <= start) {
+        cols[i].colIdx = c
+        colEnds[c] = intervals[i].end
+        placed = true
+        break
+      }
+    }
+    if (!placed) {
+      // Open a new column.
+      cols[i].colIdx = colEnds.length
+      colEnds.push(intervals[i].end)
+    }
+  }
+
+  const colCount = colEnds.length
+  return cols.map((c) => ({ colIdx: c.colIdx, colCount }))
+}
+// ──────────────────────────────────────────────────────────────────────────
 
 function DropZone({ slot, label, onDropTask }: { slot: PlannedSlot; label: string; onDropTask: (id: string, slot: PlannedSlot) => void }) {
   return (
@@ -147,6 +199,8 @@ function DropZone({ slot, label, onDropTask }: { slot: PlannedSlot; label: strin
 // canvas. Positioned absolutely to fill the free space between event clusters.
 // The dashed border + label appear only on dragover so they don't clutter the
 // calendar view. Carries the .today-drop-zone class so index.css hides it on touch.
+// Phase 2: left/right adjusted to respect the GUTTER_W gutter so drop zones
+// don't cover the hour labels.
 function AbsoluteDropZone({ slot, label, top, height, onDropTask, tasks, state, projectsByPid, expandedId, onExpand }: {
   slot: PlannedSlot
   label: string
@@ -180,7 +234,7 @@ function AbsoluteDropZone({ slot, label, top, height, onDropTask, tasks, state, 
       style={{
         position: 'absolute',
         top,
-        left: 0,
+        left: GUTTER_W,
         right: 0,
         height: Math.max(height, 12),
         border: `1px dashed transparent`,
@@ -207,6 +261,8 @@ function AbsoluteDropZone({ slot, label, top, height, onDropTask, tasks, state, 
 }
 
 // Time ruler: a thin vertical axis with hour tick labels on the left of the canvas.
+// Phase 2: labels stay at left:0/width:GUTTER_W-2; gridlines start at left:GUTTER_W
+// so events never overlay the labels.
 function TimeRuler({ dayStart, dayEnd }: { dayStart: number; dayEnd: number }) {
   const hours: number[] = []
   const startHour = Math.ceil(dayStart / 60)
@@ -225,7 +281,7 @@ function TimeRuler({ dayStart, dayEnd }: { dayStart: number; dayEnd: number }) {
               position: 'absolute',
               top: y - 8,
               left: 0,
-              width: 42,
+              width: GUTTER_W - 2,
               fontSize: 9,
               fontWeight: 600,
               letterSpacing: '0.04em',
@@ -233,13 +289,14 @@ function TimeRuler({ dayStart, dayEnd }: { dayStart: number; dayEnd: number }) {
               lineHeight: 1,
               userSelect: 'none',
               pointerEvents: 'none',
+              textAlign: 'right',
             }}
           >
             {label}
           </div>
         )
       })}
-      {/* Horizontal tick lines */}
+      {/* Horizontal tick lines — start at GUTTER_W so they never cross labels */}
       {hours.map((h) => (
         <div
           key={`line-${h}`}
@@ -247,7 +304,7 @@ function TimeRuler({ dayStart, dayEnd }: { dayStart: number; dayEnd: number }) {
           style={{
             position: 'absolute',
             top: toY(h * 60, dayStart),
-            left: 44,
+            left: GUTTER_W,
             right: 0,
             height: 1,
             background: withAlpha(ACCENT_TEAL, 8),
@@ -298,12 +355,19 @@ export function Timeline({ events, tasks, state, projectsByPid, expandedId, onEx
   }, [events.map((e) => e.id).join(',')])
 
   const visibleMeetings = events.filter((e) => !dismissedMeetings[e.id])
-  // #74: all-day + long (≥3h) events leave the main flow for a left rail so
-  // short meetings stay readable (no equal-column OverlapBand squash) and the
-  // between-meeting gaps stay droppable. Duration is derived from startMin/endMin
-  // so it covers both team meetings and iCal events.
-  const isRailEvent = (e: TodayEvent) =>
-    !!e.isAllDay || (typeof e.startMin === 'number' && typeof e.endMin === 'number' && e.endMin - e.startMin >= LONG_EVENT_MIN)
+
+  // GH#80 Phase 2: isRailEvent now checks ONLY isAllDay.
+  //
+  // Phase 1 sent ALL events with duration >= LONG_EVENT_MIN (3h) to the rail.
+  // That wrongly banished a timed 7am-6:30pm block to the corner aside instead
+  // of rendering it as a tall absolute block on the axis — Nick's core complaint.
+  //
+  // Phase 2 fix: only calendar-feed events with isAllDay=true (no start/end time)
+  // live in the banner. Every event that has a real startMin/endMin — regardless
+  // of duration — goes onto the absolute axis. The banner label also changes from
+  // "All-day · long blocks" to "All-day events" to reflect the narrower scope.
+  const isRailEvent = (e: TodayEvent) => !!e.isAllDay
+
   const railEvents = visibleMeetings.filter(isRailEvent)
   const flowMeetings = visibleMeetings.filter((e) => !isRailEvent(e))
   const onDropTask = useCallback((id: string, slot: PlannedSlot) => state.planAt(id, slot), [state])
@@ -326,8 +390,7 @@ export function Timeline({ events, tasks, state, projectsByPid, expandedId, onEx
       de = Math.max(de, maxEnd + 30)
     }
     // #74/codex: current-meeting state must consider ALL events (incl. railed
-    // long/all-day blocks) — a ≥3h block happening now should still flip the
-    // now-line to coral, even though it's laid out in the rail.
+    // all-day blocks) — a block happening now should still flip the now-line to coral.
     const inMtg = visibleMeetings.some((e) => typeof e.startMin === 'number' && typeof e.endMin === 'number' && e.startMin <= now && now < e.endMin)
     return { dayStart: ds, dayEnd: de, inMeeting: inMtg }
   }, [flowMeetings, visibleMeetings, now])
@@ -340,10 +403,10 @@ export function Timeline({ events, tasks, state, projectsByPid, expandedId, onEx
   // TP-11: cluster overlapping events. Walk events sorted by startMin and
   // merge any whose startMin < cluster.maxEnd into the running cluster.
   // Untimed events (no startMin) never overlap — each forms a singleton.
-  // GH#80 Phase 1: split into untimedClusters (flex column below canvas) and
-  // timedClusters (absolutely positioned on the canvas). Slot indices are
-  // globally assigned across both groups (untimed first, as before) so that
-  // existing planned tasks route to the correct between-N slot.
+  // GH#80 Phase 2: split into untimedClusters (flex column below canvas) and
+  // timedClusters (absolutely positioned on the canvas with column packing).
+  // Slot indices are globally assigned across both groups (untimed first, as
+  // before) so that existing planned tasks route to the correct between-N slot.
   const { untimedClusters, timedClusters, clusters } = useMemo(() => {
     const result: TodayEvent[][] = []
     const timed = flowMeetings.filter((e) => typeof e.startMin === 'number')
@@ -432,14 +495,12 @@ export function Timeline({ events, tasks, state, projectsByPid, expandedId, onEx
           />
         </div>
       )}
-      {/* Rail on the RIGHT (flow column first): grid is `flow | rail`. The
-          aside stays first in the DOM (so on phone, where the grid collapses
-          to a block, it still stacks ABOVE the timeline) but is placed into
-          column 2 on desktop via gridColumn. */}
-      <div style={{ display: railEvents.length > 0 && !isPhone ? 'grid' : 'block', gridTemplateColumns: railEvents.length > 0 && !isPhone ? 'minmax(0, 1fr) minmax(150px, 190px)' : undefined, gap: 12, alignItems: 'start' }}>
-        {railEvents.length > 0 && (
-          <aside aria-label="All-day and long blocks" style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: isPhone ? 8 : 0, gridColumn: railEvents.length > 0 && !isPhone ? 2 : undefined }}>
-            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: ACCENT_TEAL, padding: '0 2px 2px' }}>All-day · long blocks</div>
+
+      {/* ── All-day banner — ONLY genuinely isAllDay events (Phase 2) ── */}
+      {railEvents.length > 0 && (
+        <div style={{ marginBottom: 8 }}>
+          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: ACCENT_TEAL, padding: '0 2px 4px' }}>All-day events</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             {railEvents.map((e) => (
               <EventRow
                 key={e.id}
@@ -452,135 +513,156 @@ export function Timeline({ events, tasks, state, projectsByPid, expandedId, onEx
                 isPhone={isPhone}
               />
             ))}
-          </aside>
+          </div>
+        </div>
+      )}
+
+      {/* Flow column — untimed clusters + timed absolute canvas */}
+      <div>
+
+        {/* ── Untimed clusters (no startMin) — flex column with original drop zones ── */}
+        {untimedClusters.length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: timedClusters.length > 0 ? 12 : 0 }}>
+            {untimedClusters.map(({ cluster, globalIdx }) => {
+              const slotKey = `between-${globalIdx}` as PlannedSlot
+              const head = cluster[0]
+              const beforeLabel = `drop a task here · before ${head.title}${cluster.length > 1 ? ` (+${cluster.length - 1} overlap)` : ''}`
+              const tasksInGap = state.plannedIds()
+                .filter((id) => state.planned[id]?.slot === slotKey)
+                .map((id) => tasks.find((t) => t.id === id))
+                .filter((t): t is TaskRow => !!t)
+              const clusterKey = cluster.map((e) => e.id).join('|')
+              return (
+                <div key={clusterKey}>
+                  <DropZone slot={slotKey} label={beforeLabel} onDropTask={onDropTask} />
+                  {tasksInGap.map((t) => (
+                    <PlannedTaskRow
+                      key={t.id}
+                      task={t}
+                      project={t.project_id ? projectsByPid.get(t.project_id) ?? null : null}
+                      state={state}
+                      small
+                      onExpand={onExpand}
+                      expandedId={expandedId}
+                      projectsByPid={projectsByPid}
+                    />
+                  ))}
+                  {cluster.length === 1 ? (
+                    <EventRow
+                      e={head}
+                      onDismiss={(id) => setDismissedMeetings((s) => ({ ...s, [id]: true }))}
+                      note={meetingNotes[head.id]}
+                      onNote={(id, v) => setMeetingNotes((s) => ({ ...s, [id]: v }))}
+                      saveStatus={meetingSaveState[head.id] ?? 'idle'}
+                      isCalEvent={head.id.startsWith('cal-')}
+                      isPhone={isPhone}
+                    />
+                  ) : (
+                    <OverlapBand
+                      events={cluster}
+                      onDismiss={(id) => setDismissedMeetings((s) => ({ ...s, [id]: true }))}
+                      notes={meetingNotes}
+                      onNote={(id, v) => setMeetingNotes((s) => ({ ...s, [id]: v }))}
+                      saveStates={meetingSaveState}
+                      isPhone={isPhone}
+                    />
+                  )}
+                </div>
+              )
+            })}
+          </div>
         )}
 
-        {/* Flow column — timed canvas + untimed list below */}
-        <div style={{ gridColumn: railEvents.length > 0 && !isPhone ? 1 : undefined }}>
+        {/* ── Timed canvas — absolute-positioned event blocks ── */}
+        {(timedClusters.length > 0 || railEvents.length > 0) && (
+          <div
+            style={{
+              position: 'relative',
+              height: canvasHeight,
+            }}
+          >
+            {/* Time ruler: labels in GUTTER_W column, gridlines start at GUTTER_W */}
+            <TimeRuler dayStart={dayStart} dayEnd={dayEnd} />
 
-          {/* ── Untimed clusters (no startMin) — flex column with original drop zones ── */}
-          {untimedClusters.length > 0 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: timedClusters.length > 0 ? 12 : 0 }}>
-              {untimedClusters.map(({ cluster, globalIdx }) => {
-                const slotKey = `between-${globalIdx}` as PlannedSlot
-                const head = cluster[0]
-                const beforeLabel = `drop a task here · before ${head.title}${cluster.length > 1 ? ` (+${cluster.length - 1} overlap)` : ''}`
-                const tasksInGap = state.plannedIds()
-                  .filter((id) => state.planned[id]?.slot === slotKey)
-                  .map((id) => tasks.find((t) => t.id === id))
-                  .filter((t): t is TaskRow => !!t)
-                const clusterKey = cluster.map((e) => e.id).join('|')
-                return (
-                  <div key={clusterKey}>
-                    <DropZone slot={slotKey} label={beforeLabel} onDropTask={onDropTask} />
-                    {tasksInGap.map((t) => (
-                      <PlannedTaskRow
-                        key={t.id}
-                        task={t}
-                        project={t.project_id ? projectsByPid.get(t.project_id) ?? null : null}
-                        state={state}
-                        small
-                        onExpand={onExpand}
-                        expandedId={expandedId}
-                        projectsByPid={projectsByPid}
-                      />
-                    ))}
-                    {cluster.length === 1 ? (
-                      <EventRow
-                        e={head}
-                        onDismiss={(id) => setDismissedMeetings((s) => ({ ...s, [id]: true }))}
-                        note={meetingNotes[head.id]}
-                        onNote={(id, v) => setMeetingNotes((s) => ({ ...s, [id]: v }))}
-                        saveStatus={meetingSaveState[head.id] ?? 'idle'}
-                        isCalEvent={head.id.startsWith('cal-')}
-                        isPhone={isPhone}
-                      />
-                    ) : (
-                      <OverlapBand
-                        events={cluster}
-                        onDismiss={(id) => setDismissedMeetings((s) => ({ ...s, [id]: true }))}
-                        notes={meetingNotes}
-                        onNote={(id, v) => setMeetingNotes((s) => ({ ...s, [id]: v }))}
-                        saveStates={meetingSaveState}
-                        isPhone={isPhone}
-                      />
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          )}
-
-          {/* ── Timed canvas — absolute-positioned event blocks ── */}
-          {(timedClusters.length > 0 || railEvents.length > 0) && (
-            <div
-              style={{
-                position: 'relative',
-                height: canvasHeight,
-                // Left pad for the time ruler column.
-                paddingLeft: 50,
-              }}
-            >
-              {/* Time ruler */}
-              <TimeRuler dayStart={dayStart} dayEnd={dayEnd} />
-
-              {/* Now-line — absolute at exact minute position (GH#80 Phase 1).
-                  Replaces the nowIdx snap-between-clusters logic (N1.15). */}
-              {nowInCanvas && (
-                <div
-                  aria-hidden="true"
+            {/* Now-line — absolute at exact minute position (GH#80 Phase 1).
+                Replaces the nowIdx snap-between-clusters logic (N1.15). */}
+            {nowInCanvas && (
+              <div
+                aria-hidden="true"
+                style={{
+                  position: 'absolute',
+                  top: nowTopPx,
+                  left: GUTTER_W,
+                  right: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  zIndex: 10,
+                  pointerEvents: 'none',
+                }}
+              >
+                <span style={{ width: 7, height: 7, borderRadius: '50%', background: nowColor, flexShrink: 0, marginLeft: -4 }} />
+                <div style={{ flex: 1, height: 1, background: nowColor, boxShadow: `0 0 4px ${nowColor}80` }} />
+                <span
+                  title={inMeeting ? 'Currently in a meeting' : 'Now'}
                   style={{
-                    position: 'absolute',
-                    top: nowTopPx,
-                    left: 44,
-                    right: 0,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    zIndex: 10,
-                    pointerEvents: 'none',
+                    padding: '1px 5px',
+                    fontSize: 9,
+                    fontWeight: 700,
+                    letterSpacing: '0.08em',
+                    textTransform: 'uppercase',
+                    color: nowColor,
+                    background: withAlpha(PAGE_BG, 90),
+                    borderRadius: 3,
+                    flexShrink: 0,
+                    marginRight: 2,
                   }}
                 >
-                  <span style={{ width: 7, height: 7, borderRadius: '50%', background: nowColor, flexShrink: 0, marginLeft: -4 }} />
-                  <div style={{ flex: 1, height: 1, background: nowColor, boxShadow: `0 0 4px ${nowColor}80` }} />
-                  <span
-                    title={inMeeting ? 'Currently in a meeting' : 'Now'}
-                    style={{
-                      padding: '1px 5px',
-                      fontSize: 9,
-                      fontWeight: 700,
-                      letterSpacing: '0.08em',
-                      textTransform: 'uppercase',
-                      color: nowColor,
-                      background: withAlpha(PAGE_BG, 90),
-                      borderRadius: 3,
-                      flexShrink: 0,
-                      marginRight: 2,
-                    }}
-                  >
-                    {nowLabel} now
-                  </span>
-                </div>
-              )}
+                  {nowLabel} now
+                </span>
+              </div>
+            )}
 
-              {/* Absolute gap drop zones — transparent overlays covering free spans */}
-              {(() => {
-                const zones: React.ReactNode[] = []
+            {/* Absolute gap drop zones — transparent overlays covering free spans */}
+            {(() => {
+              const zones: React.ReactNode[] = []
 
-                // Leading gap: canvas top → first timed cluster start.
-                if (timedClusters.length > 0) {
-                  const firstGlobalIdx = timedClusters[0].globalIdx
-                  const firstTop = 0
-                  const firstBound = timedClusterBounds[0]
-                  const firstH = toY(firstBound.start, dayStart)
-                  // Always render (may be zero-height, still needed for slot continuity).
+              // Leading gap: canvas top → first timed cluster start.
+              if (timedClusters.length > 0) {
+                const firstGlobalIdx = timedClusters[0].globalIdx
+                const firstTop = 0
+                const firstBound = timedClusterBounds[0]
+                const firstH = toY(firstBound.start, dayStart)
+                // Always render (may be zero-height, still needed for slot continuity).
+                zones.push(
+                  <AbsoluteDropZone
+                    key={`leading-${firstGlobalIdx}`}
+                    slot={`between-${firstGlobalIdx}` as PlannedSlot}
+                    label={`drop a task here · before ${timedClusters[0].cluster[0].title}`}
+                    top={firstTop}
+                    height={firstH}
+                    onDropTask={onDropTask}
+                    tasks={tasks}
+                    state={state}
+                    projectsByPid={projectsByPid}
+                    expandedId={expandedId}
+                    onExpand={onExpand}
+                  />
+                )
+                // Inter-cluster gaps.
+                for (let i = 0; i < timedClusters.length - 1; i++) {
+                  const prevBound = timedClusterBounds[i]
+                  const nextBound = timedClusterBounds[i + 1]
+                  const gapTop = toY(prevBound.end, dayStart)
+                  const gapH = toY(nextBound.start, dayStart) - gapTop
+                  const nextGlobalIdx = timedClusters[i + 1].globalIdx
                   zones.push(
                     <AbsoluteDropZone
-                      key={`leading-${firstGlobalIdx}`}
-                      slot={`between-${firstGlobalIdx}` as PlannedSlot}
-                      label={`drop a task here · before ${timedClusters[0].cluster[0].title}`}
-                      top={firstTop}
-                      height={firstH}
+                      key={`gap-${nextGlobalIdx}`}
+                      slot={`between-${nextGlobalIdx}` as PlannedSlot}
+                      label={`drop a task here · before ${timedClusters[i + 1].cluster[0].title}`}
+                      top={gapTop}
+                      height={gapH}
                       onDropTask={onDropTask}
                       tasks={tasks}
                       state={state}
@@ -589,178 +671,181 @@ export function Timeline({ events, tasks, state, projectsByPid, expandedId, onEx
                       onExpand={onExpand}
                     />
                   )
-                  // Inter-cluster gaps.
-                  for (let i = 0; i < timedClusters.length - 1; i++) {
-                    const prevBound = timedClusterBounds[i]
-                    const nextBound = timedClusterBounds[i + 1]
-                    const gapTop = toY(prevBound.end, dayStart)
-                    const gapH = toY(nextBound.start, dayStart) - gapTop
-                    const nextGlobalIdx = timedClusters[i + 1].globalIdx
-                    zones.push(
-                      <AbsoluteDropZone
-                        key={`gap-${nextGlobalIdx}`}
-                        slot={`between-${nextGlobalIdx}` as PlannedSlot}
-                        label={`drop a task here · before ${timedClusters[i + 1].cluster[0].title}`}
-                        top={gapTop}
-                        height={gapH}
-                        onDropTask={onDropTask}
-                        tasks={tasks}
-                        state={state}
-                        projectsByPid={projectsByPid}
-                        expandedId={expandedId}
-                        onExpand={onExpand}
-                      />
-                    )
-                  }
                 }
+              }
 
-                // Trailing gap: last timed cluster end → canvas bottom.
-                const trailingGlobalIdx = clusters.length
-                const trailingTop = timedClusters.length > 0
-                  ? toY(timedClusterBounds[timedClusterBounds.length - 1].end, dayStart)
-                  : 0
-                const trailingH = canvasHeight - trailingTop
-                const trailingSlot = `between-${trailingGlobalIdx}` as PlannedSlot
-                const trailingTasksInGap = state.plannedIds()
-                  .filter((id) => state.planned[id]?.slot === trailingSlot)
-                  .map((id) => tasks.find((t) => t.id === id))
-                  .filter((t): t is TaskRow => !!t)
-                zones.push(
-                  <div
-                    key="trailing"
-                    className="today-drop-zone"
-                    onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = ACCENT_GOLD; e.currentTarget.style.background = withAlpha(ACCENT_GOLD, 8) }}
-                    onDragLeave={(e) => { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.background = 'transparent' }}
-                    onDrop={(e) => {
-                      e.preventDefault()
-                      e.currentTarget.style.borderColor = 'transparent'
-                      e.currentTarget.style.background = 'transparent'
-                      const id = e.dataTransfer.getData('text/plain')
-                      if (id) onDropTask(id, trailingSlot)
-                    }}
-                    style={{
-                      position: 'absolute',
-                      top: trailingTop,
-                      left: 0,
-                      right: 0,
-                      height: Math.max(trailingH, 12),
-                      border: `1px dashed transparent`,
-                      borderRadius: 4,
-                      transition: 'all 120ms',
-                      zIndex: 1,
-                    }}
-                  >
-                    {trailingTasksInGap.map((t) => (
-                      <PlannedTaskRow
-                        key={t.id}
-                        task={t}
-                        project={t.project_id ? projectsByPid.get(t.project_id) ?? null : null}
-                        state={state}
-                        small
-                        onExpand={onExpand}
-                        expandedId={expandedId}
-                        projectsByPid={projectsByPid}
-                      />
-                    ))}
-                  </div>
-                )
+              // Trailing gap: last timed cluster end → canvas bottom.
+              const trailingGlobalIdx = clusters.length
+              const trailingTop = timedClusters.length > 0
+                ? toY(timedClusterBounds[timedClusterBounds.length - 1].end, dayStart)
+                : 0
+              const trailingH = canvasHeight - trailingTop
+              const trailingSlot = `between-${trailingGlobalIdx}` as PlannedSlot
+              const trailingTasksInGap = state.plannedIds()
+                .filter((id) => state.planned[id]?.slot === trailingSlot)
+                .map((id) => tasks.find((t) => t.id === id))
+                .filter((t): t is TaskRow => !!t)
+              zones.push(
+                <div
+                  key="trailing"
+                  className="today-drop-zone"
+                  onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = ACCENT_GOLD; e.currentTarget.style.background = withAlpha(ACCENT_GOLD, 8) }}
+                  onDragLeave={(e) => { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.background = 'transparent' }}
+                  onDrop={(e) => {
+                    e.preventDefault()
+                    e.currentTarget.style.borderColor = 'transparent'
+                    e.currentTarget.style.background = 'transparent'
+                    const id = e.dataTransfer.getData('text/plain')
+                    if (id) onDropTask(id, trailingSlot)
+                  }}
+                  style={{
+                    position: 'absolute',
+                    top: trailingTop,
+                    left: GUTTER_W,
+                    right: 0,
+                    height: Math.max(trailingH, 12),
+                    border: `1px dashed transparent`,
+                    borderRadius: 4,
+                    transition: 'all 120ms',
+                    zIndex: 1,
+                  }}
+                >
+                  {trailingTasksInGap.map((t) => (
+                    <PlannedTaskRow
+                      key={t.id}
+                      task={t}
+                      project={t.project_id ? projectsByPid.get(t.project_id) ?? null : null}
+                      state={state}
+                      small
+                      onExpand={onExpand}
+                      expandedId={expandedId}
+                      projectsByPid={projectsByPid}
+                    />
+                  ))}
+                </div>
+              )
 
-                return zones
-              })()}
+              return zones
+            })()}
 
-              {/* Absolute event blocks — timed clusters */}
-              {timedClusters.map(({ cluster, globalIdx }, i) => {
-                const bounds = timedClusterBounds[i]
-                const blockTop = toY(bounds.start, dayStart)
-                const blockH = toDuration(bounds.end - bounds.start)
-                const head = cluster[0]
-                const clusterKey = cluster.map((e) => e.id).join('|')
-                return (
-                  <div
-                    key={clusterKey}
-                    style={{
-                      position: 'absolute',
-                      top: blockTop,
-                      left: 0,
-                      right: 0,
-                      height: blockH,
-                      zIndex: 2,
-                    }}
-                  >
-                    {cluster.length === 1 ? (
-                      <EventRow
-                        e={head}
-                        onDismiss={(id) => setDismissedMeetings((s) => ({ ...s, [id]: true }))}
-                        note={meetingNotes[head.id]}
-                        onNote={(id, v) => setMeetingNotes((s) => ({ ...s, [id]: v }))}
-                        saveStatus={meetingSaveState[head.id] ?? 'idle'}
-                        isCalEvent={head.id.startsWith('cal-')}
-                        isPhone={isPhone}
-                        minHeight={blockH}
-                      />
-                    ) : (
-                      <OverlapBand
-                        events={cluster}
-                        onDismiss={(id) => setDismissedMeetings((s) => ({ ...s, [id]: true }))}
-                        notes={meetingNotes}
-                        onNote={(id, v) => setMeetingNotes((s) => ({ ...s, [id]: v }))}
-                        saveStates={meetingSaveState}
-                        isPhone={isPhone}
-                      />
-                    )}
-                  </div>
-                )
-              })}
+            {/* Absolute event blocks — timed clusters with interval-graph column packing.
+                Phase 2: each event gets its own absolute block at the correct position
+                and width fraction. Overlapping events appear side-by-side in columns.
+                No OverlapBand dashed-border for timed events — that is now only used
+                for the untimed cluster section above the canvas. */}
+            {timedClusters.map(({ cluster, globalIdx }, i) => {
+              const bounds = timedClusterBounds[i]
+              // Compute column layout for all events in this cluster.
+              const colLayout = packColumns(cluster)
+              const clusterKey = cluster.map((e) => e.id).join('|')
 
-              {/* Rail-only day with no timed flow events: a single full-canvas drop zone */}
-              {timedClusters.length === 0 && railEvents.length > 0 && (() => {
-                const slotKey = `between-${clusters.length}` as PlannedSlot
-                const soloTasksInGap = state.plannedIds()
-                  .filter((id) => state.planned[id]?.slot === slotKey)
-                  .map((id) => tasks.find((t) => t.id === id))
-                  .filter((t): t is TaskRow => !!t)
-                return (
-                  <div
-                    className="today-drop-zone"
-                    onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = ACCENT_GOLD; e.currentTarget.style.background = withAlpha(ACCENT_GOLD, 8) }}
-                    onDragLeave={(e) => { e.currentTarget.style.borderColor = withAlpha(ACCENT_GOLD, 15); e.currentTarget.style.background = 'transparent' }}
-                    onDrop={(e) => {
-                      e.preventDefault()
-                      e.currentTarget.style.borderColor = withAlpha(ACCENT_GOLD, 15)
-                      e.currentTarget.style.background = 'transparent'
-                      const id = e.dataTransfer.getData('text/plain')
-                      if (id) onDropTask(id, slotKey)
-                    }}
-                    style={{ padding: '6px 14px', margin: '4px 0', border: `1px dashed ${withAlpha(ACCENT_GOLD, 15)}`, borderRadius: 6, fontSize: 11, color: INK_DIM, textAlign: 'center', transition: 'all 120ms', fontStyle: 'italic' }}
-                  >
-                    drop a task here to plan it for today
-                    {soloTasksInGap.map((t) => (
-                      <PlannedTaskRow
-                        key={t.id}
-                        task={t}
-                        project={t.project_id ? projectsByPid.get(t.project_id) ?? null : null}
-                        state={state}
-                        small
-                        onExpand={onExpand}
-                        expandedId={expandedId}
-                        projectsByPid={projectsByPid}
-                      />
-                    ))}
-                  </div>
-                )
-              })()}
-            </div>
-          )}
+              return (
+                <div
+                  key={clusterKey}
+                  style={{
+                    position: 'absolute',
+                    top: toY(bounds.start, dayStart),
+                    left: GUTTER_W,
+                    right: 0,
+                    height: toDuration(bounds.end - bounds.start),
+                    zIndex: 2,
+                    // This container spans the full cluster height. Each event is
+                    // absolutely positioned within it at its own top/height.
+                    pointerEvents: 'none', // let children handle events
+                  }}
+                >
+                  {cluster.map((e, ei) => {
+                    const { colIdx, colCount } = colLayout[ei]
+                    const eStart = e.startMin as number
+                    const eEnd = typeof e.endMin === 'number' ? e.endMin : eStart + 30
+                    const eDuration = eEnd - eStart
+                    const eTop = toY(eStart, dayStart) - toY(bounds.start, dayStart)
+                    const eHeight = toDuration(eDuration)
+                    // Width fraction: 1/colCount of the available container width.
+                    // A 1px gap between adjacent columns.
+                    const colW = `calc(${100 / colCount}% - ${colCount > 1 ? 1 : 0}px)`
+                    const colLeft = colCount > 1
+                      ? `calc(${(colIdx / colCount) * 100}% + ${colIdx > 0 ? 1 : 0}px)`
+                      : '0'
 
-          {/* No timed events and no rail events: show a single flat drop zone */}
-          {timedClusters.length === 0 && railEvents.length === 0 && clusters.length === 0 && (
-            <DropZone
-              slot={`between-0` as PlannedSlot}
-              label="drop a task here to plan it for today"
-              onDropTask={onDropTask}
-            />
-          )}
-        </div>
+                    return (
+                      <div
+                        key={e.id}
+                        style={{
+                          position: 'absolute',
+                          top: eTop,
+                          left: colLeft,
+                          width: colW,
+                          height: eHeight,
+                          pointerEvents: 'auto',
+                          overflow: 'hidden',
+                        }}
+                      >
+                        <EventRow
+                          e={e}
+                          onDismiss={(id) => setDismissedMeetings((s) => ({ ...s, [id]: true }))}
+                          note={meetingNotes[e.id]}
+                          onNote={(id, v) => setMeetingNotes((s) => ({ ...s, [id]: v }))}
+                          saveStatus={meetingSaveState[e.id] ?? 'idle'}
+                          isCalEvent={e.id.startsWith('cal-')}
+                          isPhone={isPhone}
+                          minHeight={eHeight}
+                        />
+                      </div>
+                    )
+                  })}
+                </div>
+              )
+            })}
+
+            {/* Rail-only day with no timed flow events: a single full-canvas drop zone */}
+            {timedClusters.length === 0 && railEvents.length > 0 && (() => {
+              const slotKey = `between-${clusters.length}` as PlannedSlot
+              const soloTasksInGap = state.plannedIds()
+                .filter((id) => state.planned[id]?.slot === slotKey)
+                .map((id) => tasks.find((t) => t.id === id))
+                .filter((t): t is TaskRow => !!t)
+              return (
+                <div
+                  className="today-drop-zone"
+                  onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = ACCENT_GOLD; e.currentTarget.style.background = withAlpha(ACCENT_GOLD, 8) }}
+                  onDragLeave={(e) => { e.currentTarget.style.borderColor = withAlpha(ACCENT_GOLD, 15); e.currentTarget.style.background = 'transparent' }}
+                  onDrop={(e) => {
+                    e.preventDefault()
+                    e.currentTarget.style.borderColor = withAlpha(ACCENT_GOLD, 15)
+                    e.currentTarget.style.background = 'transparent'
+                    const id = e.dataTransfer.getData('text/plain')
+                    if (id) onDropTask(id, slotKey)
+                  }}
+                  style={{ padding: '6px 14px', margin: '4px 0', border: `1px dashed ${withAlpha(ACCENT_GOLD, 15)}`, borderRadius: 6, fontSize: 11, color: INK_DIM, textAlign: 'center', transition: 'all 120ms', fontStyle: 'italic' }}
+                >
+                  drop a task here to plan it for today
+                  {soloTasksInGap.map((t) => (
+                    <PlannedTaskRow
+                      key={t.id}
+                      task={t}
+                      project={t.project_id ? projectsByPid.get(t.project_id) ?? null : null}
+                      state={state}
+                      small
+                      onExpand={onExpand}
+                      expandedId={expandedId}
+                      projectsByPid={projectsByPid}
+                    />
+                  ))}
+                </div>
+              )
+            })()}
+          </div>
+        )}
+
+        {/* No timed events and no rail events: show a single flat drop zone */}
+        {timedClusters.length === 0 && railEvents.length === 0 && clusters.length === 0 && (
+          <DropZone
+            slot={`between-0` as PlannedSlot}
+            label="drop a task here to plan it for today"
+            onDropTask={onDropTask}
+          />
+        )}
       </div>
       {/* Strip-slot planned tasks (no specific time) now live in
           PlannedTodaySection below the timeline — see TodayPage.tsx. */}
