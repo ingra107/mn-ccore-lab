@@ -271,3 +271,111 @@ describe('pollFeed — atomic swap (Level-1 durability, v85)', () => {
     expect(evictionDeletes[0].sql).toMatch(/poll_token/i);
   });
 });
+
+// ── Regression: backlog #117 — cron path must use user_email, not user_slug ──
+//
+// BUG: pollAllStaleFeeds was passing feed.user_slug ("nick-ingraham") as the
+// ownerEmail argument to pollFeed/parseIcs. The ICS parser matches ownerEmail
+// against ATTENDEE mailto: lines ("ingra107@umn.edu") — a slug never matches,
+// so PARTSTAT=DECLINED events were silently inserted to D1 and shown in Today.
+//
+// FIX (schema v86): user_calendar_feeds.user_email stores the owner's real email.
+// pollAllStaleFeeds now passes feed.user_email ?? feed.user_slug. This test
+// confirms that a feed with user_email set causes the cron path to filter out
+// a DECLINED event (zero INSERT batches = event was dropped by the parser).
+describe('pollFeed — cron path uses user_email for PARTSTAT=DECLINED filter (backlog #117)', () => {
+  // ICS with one DECLINED event for ingra107@umn.edu.
+  const OWNER_EMAIL = 'ingra107@umn.edu';
+  const declinedIcs = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//Test//Test//EN',
+    'BEGIN:VEVENT',
+    'UID:declined-cron-test@test.com',
+    'SUMMARY:Declined pitch',
+    // Use a fixed date well inside the polling window (today is used by the cron path,
+    // but we can't predict that precisely — use the same trick as makeIcs).
+    `DTSTART:${new Date().toISOString().replace(/[-:]/g, '').slice(0, 15)}Z`,
+    `DTEND:${new Date(Date.now() + 3600000).toISOString().replace(/[-:]/g, '').slice(0, 15)}Z`,
+    // ATTENDEE line: params BEFORE the colon, mailto: address as value.
+    // The parser stores the full "ATTENDEE;...params...:mailto:..." string.
+    `ATTENDEE;CN=Nick;PARTSTAT=DECLINED:mailto:${OWNER_EMAIL}`,
+    'END:VEVENT',
+    'END:VCALENDAR',
+  ].join('\r\n');
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('filters the DECLINED event when feed.user_email is the real owner email', async () => {
+    // Feed row has user_email set (the v86 path).
+    mockFetch.mockResolvedValue(
+      new Response(declinedIcs, { status: 200, headers: { 'content-type': 'text/calendar' } })
+    );
+    let batchCallCount = 0;
+    const db = makeDb({
+      staleFeeds: [
+        {
+          id: 'feed-declined-email',
+          user_slug: 'nick-ingraham',
+          user_email: OWNER_EMAIL,
+          feed_url: 'https://cal.example.com/declined.ics',
+          feed_label: 'Test',
+          last_polled_at: null,
+          last_error: null,
+          created_at: new Date().toISOString(),
+          etag: null,
+          last_modified: null,
+        },
+      ],
+    });
+
+    // Intercept batch() to count INSERT calls (each chunk = one batch call).
+    const origBatch = db.batch.bind(db);
+    (db as any).batch = async (stmts: unknown[]) => {
+      batchCallCount++;
+      return origBatch(stmts);
+    };
+
+    await pollAllStaleFeeds(makeEnv(db));
+
+    // The DECLINED event was filtered by the parser — zero INSERT chunks fired.
+    expect(batchCallCount).toBe(0);
+  });
+
+  it('does NOT filter the event when feed.user_email is null (legacy row — same as prior behavior)', async () => {
+    // Feed row with user_email=null (pre-v86 legacy): falls back to user_slug,
+    // which will not match the ATTENDEE line, so the event IS inserted.
+    mockFetch.mockResolvedValue(
+      new Response(declinedIcs, { status: 200, headers: { 'content-type': 'text/calendar' } })
+    );
+    let batchCallCount = 0;
+    const db = makeDb({
+      staleFeeds: [
+        {
+          id: 'feed-declined-null-email',
+          user_slug: 'nick-ingraham',
+          user_email: null,
+          feed_url: 'https://cal.example.com/declined.ics',
+          feed_label: 'Test',
+          last_polled_at: null,
+          last_error: null,
+          created_at: new Date().toISOString(),
+          etag: null,
+          last_modified: null,
+        },
+      ],
+    });
+    const origBatch = db.batch.bind(db);
+    (db as any).batch = async (stmts: unknown[]) => {
+      batchCallCount++;
+      return origBatch(stmts);
+    };
+
+    await pollAllStaleFeeds(makeEnv(db));
+
+    // user_slug fallback cannot match the email — event is NOT filtered, IS inserted.
+    expect(batchCallCount).toBeGreaterThan(0);
+  });
+});

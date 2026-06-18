@@ -1,0 +1,29 @@
+-- v86: add user_email to user_calendar_feeds for PARTSTAT=DECLINED cron filtering
+--
+-- Bug (backlog #117, 2026-06-18):
+-- The hourly Cron Trigger calls pollAllStaleFeeds(), which calls pollFeed()
+-- with feed.user_slug as the ownerEmail argument (e.g. "nick-ingraham").
+-- The ICS parser's PARTSTAT=DECLINED filter checks whether the owner's
+-- ATTENDEE line contains the ownerEmail string — but ATTENDEE lines carry
+-- a mailto: address (e.g. "ingra107@umn.edu"), never a slug. A slug can
+-- never match an email address, so the declined-event filter was silently
+-- bypassed on every cron poll. Declined events accumulated in D1 and showed
+-- in Today's timeline.
+--
+-- The on-demand path (handleAddFeed, handleListEvents ?force=1) correctly
+-- passes user.email from the authenticated request, so it was unaffected.
+-- Only the autonomous cron path was broken.
+--
+-- Fix: store the owner's email at feed-creation time so the cron path has
+-- access to it without a user session. The column is nullable to allow safe
+-- migration of existing rows (SQLite cannot add NOT NULL without a default).
+-- Existing rows get user_email=NULL; the cron path falls back to user_slug
+-- (preserving the prior behavior — null is no worse than the old slug) until
+-- the feed is re-connected by the user or until a one-time backfill is run.
+--
+-- After rollout, every newly-connected feed will carry a real email and the
+-- cron path will correctly filter declined events.
+--
+-- Additive. Safe to apply to production D1.
+
+ALTER TABLE user_calendar_feeds ADD COLUMN user_email TEXT;

@@ -94,6 +94,38 @@ describe('parseIcs — basic', () => {
     expect(out).toHaveLength(1)
   })
 
+  // Regression test for backlog #117 (2026-06-18):
+  // The hourly cron path was passing feed.user_slug ("nick-ingraham") as
+  // ownerEmail instead of the user's actual email address ("ingra107@umn.edu").
+  // A slug never matches an ATTENDEE mailto: address, so the PARTSTAT=DECLINED
+  // filter was silently bypassed and declined events appeared in the timeline.
+  it('keeps declined events when ownerEmail is a slug (not an email address)', () => {
+    // Simulates the pre-fix cron path: slug passed where email is expected.
+    const ics = ical(vevent({
+      UID: 'declined-slug-test',
+      SUMMARY: 'Declined meeting',
+      DTSTART: '20260415T140000Z',
+      ATTENDEE: ['CN=Nick;PARTSTAT=DECLINED:mailto:ingra107@umn.edu'],
+    }))
+    // "nick-ingraham" will not match "ingra107@umn.edu", so the event is NOT filtered.
+    const out = parseIcs(ics, { ...WIN, ownerEmail: 'nick-ingraham' })
+    // The event is visible — confirming a slug cannot substitute for the email.
+    // The fix (v86) ensures the cron path passes the actual email, not the slug.
+    expect(out).toHaveLength(1)
+  })
+
+  it('filters declined events when ownerEmail is the actual email address', () => {
+    // Confirms the correct path: real email matches the ATTENDEE line.
+    const ics = ical(vevent({
+      UID: 'declined-email-test',
+      SUMMARY: 'Declined meeting',
+      DTSTART: '20260415T140000Z',
+      ATTENDEE: ['CN=Nick;PARTSTAT=DECLINED:mailto:ingra107@umn.edu'],
+    }))
+    const out = parseIcs(ics, { ...WIN, ownerEmail: 'ingra107@umn.edu' })
+    expect(out).toHaveLength(0)
+  })
+
   it('dedups by (summary, startAt)', () => {
     const ics = ical(
       vevent({ UID: 'dup-1', SUMMARY: 'Same', DTSTART: '20260415T140000Z' }),

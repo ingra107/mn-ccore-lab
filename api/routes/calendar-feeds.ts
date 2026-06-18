@@ -60,6 +60,7 @@ const WINDOW_FWD_DAYS = 14
 interface FeedRow {
   id: string
   user_slug: string
+  user_email: string | null
   feed_url: string
   feed_label: string
   last_polled_at: string | null
@@ -104,7 +105,7 @@ export async function handleListFeeds(env: Env, user: AuthUser | null): Promise<
   if (!user) return error('Unauthorized', 401)
   const slug = actorSlug(user.email)
   const r = await env.DB.prepare(
-    'SELECT id, user_slug, feed_url, feed_label, last_polled_at, last_error, created_at, etag, last_modified FROM user_calendar_feeds WHERE user_slug = ? ORDER BY created_at'
+    'SELECT id, user_slug, user_email, feed_url, feed_label, last_polled_at, last_error, created_at, etag, last_modified FROM user_calendar_feeds WHERE user_slug = ? ORDER BY created_at'
   ).bind(slug).all<FeedRow>()
   const feeds = (r.results ?? []).map((row) => ({
     id: row.id,
@@ -141,8 +142,8 @@ export async function handleAddFeed(
   const id = newId()
   try {
     await env.DB.prepare(
-      'INSERT INTO user_calendar_feeds (id, user_slug, feed_url, feed_label) VALUES (?, ?, ?, ?)'
-    ).bind(id, slug, url, label).run()
+      'INSERT INTO user_calendar_feeds (id, user_slug, user_email, feed_url, feed_label) VALUES (?, ?, ?, ?, ?)'
+    ).bind(id, slug, user.email, url, label).run()
   } catch (e) {
     const msg = (e as Error).message
     if (msg.includes('UNIQUE')) return error('Feed already added', 409)
@@ -154,7 +155,7 @@ export async function handleAddFeed(
   // a typical Google Calendar with weekly recurring meetings).
   const pollPromise = pollFeed(
     env,
-    { id, user_slug: slug, feed_url: url, feed_label: label, last_polled_at: null, last_error: null, created_at: nowInstant(), etag: null, last_modified: null },
+    { id, user_slug: slug, user_email: user.email, feed_url: url, feed_label: label, last_polled_at: null, last_error: null, created_at: nowInstant(), etag: null, last_modified: null },
     user.email,
     FETCH_TIMEOUT_ONDEMAND_MS,
   ).catch((e) => {
@@ -207,7 +208,7 @@ export async function handleListEvents(
   // returns immediately (cached data). Poll runs after response via waitUntil.
   if (forceRefresh) {
     const feeds = await env.DB.prepare(
-      'SELECT id, user_slug, feed_url, feed_label, last_polled_at, last_error, created_at, etag, last_modified FROM user_calendar_feeds WHERE user_slug = ?'
+      'SELECT id, user_slug, user_email, feed_url, feed_label, last_polled_at, last_error, created_at, etag, last_modified FROM user_calendar_feeds WHERE user_slug = ?'
     ).bind(slug).all<FeedRow>()
     const stalenessCutoff = new Date(Date.now() - STALE_MINUTES * 60_000).toISOString()
     const stale = (feeds.results ?? []).filter((f) => !f.last_polled_at || f.last_polled_at < stalenessCutoff)
@@ -254,7 +255,7 @@ export async function handleListEvents(
 export async function pollAllStaleFeeds(env: Env): Promise<void> {
   const stalenessCutoff = new Date(Date.now() - STALE_MINUTES * 60_000).toISOString()
   const r = await env.DB.prepare(
-    `SELECT id, user_slug, feed_url, feed_label, last_polled_at, last_error, created_at, etag, last_modified
+    `SELECT id, user_slug, user_email, feed_url, feed_label, last_polled_at, last_error, created_at, etag, last_modified
      FROM user_calendar_feeds
      WHERE last_polled_at IS NULL OR last_polled_at < ?`
   ).bind(stalenessCutoff).all<FeedRow>()
@@ -269,7 +270,12 @@ export async function pollAllStaleFeeds(env: Env): Promise<void> {
   // hitting D1's concurrent statement ceiling on large calendars.
   for (const feed of stale) {
     try {
-      await pollFeed(env, feed, feed.user_slug, FETCH_TIMEOUT_CRON_MS)
+      // user_email is the owner's address (e.g. "ingra107@umn.edu") — required for
+      // the PARTSTAT=DECLINED filter in the ICS parser. user_slug (e.g. "nick-ingraham")
+      // never matches an ATTENDEE mailto: address, so using it silently bypasses the
+      // declined-event filter. Feeds added pre-v86 have user_email=NULL; fall back to
+      // user_slug in that case (same behavior as before the fix — no worse than prior).
+      await pollFeed(env, feed, feed.user_email ?? feed.user_slug, FETCH_TIMEOUT_CRON_MS)
       console.log(`[CalendarCron] Polled feed ${feed.id} (${feed.user_slug})`)
     } catch (e) {
       console.error(`[CalendarCron] Feed ${feed.id} threw:`, (e as Error).message)
