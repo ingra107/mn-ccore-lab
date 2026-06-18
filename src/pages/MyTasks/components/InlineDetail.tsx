@@ -16,6 +16,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useAutoAcknowledge } from '../../../hooks/useAutoAcknowledge'
 import { useUndoToast } from '../../../components/UndoToast'
 import { localDateKey } from '../../../lib/dateUtils'
+import { STATUS_OPTIONS } from '../../../lib/taskConstants'
 import { TaskActivityFeed } from '../../../components/tasks/detail/TaskActivityFeed'
 import {
   ACCENT_GOLD, ACCENT_TEAL, ACCENT_GREEN,
@@ -233,7 +234,19 @@ export function InlineDetail({ task, projectName, onOpenEditor }: { task: TaskRo
         priority={task.priority}
         projectId={task.project_id}
         dueDate={task.due_date}
-        onUpdate={(fields) => updateTask.mutate({ id: task.id, fields })}
+        onUpdate={(fields) => {
+          const prev = task.status
+          updateTask.mutate({ id: task.id, fields })
+          // Show undo toast for status changes, mirroring useTaskFieldEditors.
+          // (The mutation now derives `completed` from `status` automatically
+          // so the optimistic cache stays consistent — see useUpdateTask.onMutate.)
+          if ('status' in fields && typeof fields.status === 'string' && fields.status !== prev) {
+            const label = STATUS_OPTIONS.find(o => o.value === fields.status)?.label ?? String(fields.status)
+            undoToast.showUndo(`Status → ${label}`, () =>
+              updateTask.mutate({ id: task.id, fields: { status: prev } })
+            )
+          }
+        }}
         onOpenEditor={() => setFullEditorTask(task)}
         style={{ padding: '8px 0 4px' }}
       />

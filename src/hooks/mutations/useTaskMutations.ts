@@ -69,9 +69,23 @@ export function useUpdateTask() {
 
     onMutate: async ({ id, fields }) => {
       await queryClient.cancelQueries({ queryKey: ['tasks'] })
+      // Derive completed / completed_at from status so every caller that sends
+      // { status } gets a consistent optimistic patch. Without this, filters
+      // that check `completed` (Today page: `t.completed === 0`) or mutations
+      // that spread `fields` without completed get a split-brain cache where
+      // status='done' but completed=0 — causing tasks to disappear without
+      // visual confirmation or persist in wrong filter buckets. (Rule 68: UI
+      // branches on status; but we must keep completed in sync so the Today
+      // filter and server both agree on "done-ness" from the same moment.)
+      const statusDerived: Partial<TaskRow> = {}
+      if ('status' in fields && typeof fields.status === 'string') {
+        const isDone = fields.status === TASK_STATUS.DONE
+        statusDerived.completed = isDone ? 1 : 0
+        statusDerived.completed_at = isDone ? nowInstant() : null
+      }
       const { snapshots } = optimisticListUpdate<TaskRow>(
         queryClient, ['tasks'],
-        (tasks) => tasks.map((t) => t.id === id ? { ...t, ...fields } : t),
+        (tasks) => tasks.map((t) => t.id === id ? { ...t, ...fields, ...statusDerived } : t),
       )
       return { snapshots }
     },
