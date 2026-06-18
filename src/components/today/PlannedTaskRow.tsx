@@ -10,11 +10,12 @@ import { TaskDetailDrawer } from './TaskDetailDrawer'
 import { DoneBox } from '../tasks/TaskRow'
 import { tagForTask, withAlpha } from './constants'
 import { ACCENT_GOLD, ACCENT_TEAL, INK, INK_DIM } from './constants'
+import { isTaskDone } from '../../lib/taskGrouping'
 import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow } from '../../lib/api'
 
 export function PlannedTaskRow({ task, project, state, timeHint, small = false, onExpand, expandedId, projectsByPid }: { task: TaskRow; project: { name: string; slug: string } | null; state: TodayStateApi; timeHint?: string; small?: boolean; onExpand: (id: string) => void; expandedId: string | null; projectsByPid: Map<string, { name: string; slug: string; category?: string | null }> }) {
-  const isDone = !!state.done[task.id]
+  const isDone = isTaskDone(task) || !!state.done[task.id]
   const isNow = state.rightNow === task.id
   const expanded = expandedId === task.id
   const tag = tagForTask(task, projectsByPid)
