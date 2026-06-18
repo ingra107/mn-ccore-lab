@@ -183,4 +183,29 @@ if [ -n "$tw_interp_hits" ]; then
     exit 1
 fi
 
+# ---------------------------------------------------------------------------
+# Schema-version snapshot gate (2026-06-18, backlog CI fix). The INFRA-5
+# integrity check (scripts/check-schema-versions.py) previously ran ONLY in
+# the scheduled `D1 Schema Drift Check` workflow — so adding an
+# api/schema-v*.sql file without regenerating scripts/schema-version-snapshot.json
+# failed SILENTLY for days (caught only by a daily CI email). v81/v82 went
+# 5 days RED on main this way. Run the check at commit, but ONLY when a schema
+# file is staged (the exact condition that bites) — zero friction on normal
+# commits. Closes the class: a stale snapshot can no longer reach main.
+if git diff --cached --name-only --diff-filter=AM \
+        | grep -qE "^api/schema-v.*\.sql$"; then
+    if command -v python >/dev/null 2>&1; then
+        if ! python scripts/check-schema-versions.py; then
+            echo ""
+            echo "BLOCKED: api/schema-v*.sql staged but scripts/schema-version-snapshot.json"
+            echo "is stale. Run:"
+            echo "  python scripts/check-schema-versions.py --update"
+            echo "then stage the updated snapshot alongside your schema file(s)."
+            exit 1
+        fi
+    else
+        echo "[hub-precommit] WARN: python not found; skipping schema-version snapshot check."
+    fi
+fi
+
 exit 0
