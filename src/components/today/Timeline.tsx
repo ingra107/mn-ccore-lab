@@ -10,24 +10,41 @@
 // GH#80 Phase 2+3 (2026-06-18): full rewrite of overlap handling + rail logic.
 //   - PX_PER_MIN reduced 1.2 → 0.6 (overall height ~50% of Phase 1).
 //   - MIN_BLOCK_H = 24px so 30-min meetings stay legible at 0.6px/min.
-//   - isRailEvent now checks ONLY isAllDay (true all-day events). Timed long
-//     blocks (≥3h) are NO LONGER railed — they render as tall absolute blocks
-//     on the axis at true duration height.
+//   - DEPRECATED on-axis-long-block packing path (see P4 below).
 //   - All-day banner = genuinely all-day events only (no start/end time, or
 //     isAllDay=true from the calendar feed). A 7am-6:30pm timed block is NOT
 //     all-day.
 //   - Google-style side-by-side column packing via interval-graph greedy
-//     coloring. Overlapping events in a cluster each get width=1/cols,
-//     left=colIdx/cols × (right - left). The 3-event-non-pairwise case
-//     correctly yields 2 columns, not 3.
+//     coloring.
 //   - Hour-label gutter fix: labels live at left:0, width:42px. Tick lines +
 //     event blocks start at left:44px. Events never overlay the labels.
 //
-// DEPRECATES (Phase 2+3 kills these, ON TOP of Phase 1):
-//   - OverlapBand for timed clusters — replaced by in-canvas column layout.
-//     OverlapBand is still used for UNTIMED clusters below the canvas.
-//   - The "All-day · long blocks" rail for TIMED events — long timed events
-//     now render on the axis. Rail survives only for isAllDay events.
+// GH#80 Phase 4 (2026-06-18): REWORK per Nick's real-data corrections.
+//   PROBLEM: A 7am–3pm service block dominated the entire axis, crushing
+//   real meetings into unreadable slivers; Join button ate titles; expand broke.
+//
+//   CHANGES:
+//   1. REVERT on-axis-long-block packing (Phase 2+3 decision): timed long
+//      events (≥LONG_EVENT_MIN = 3h) are RAILED again — compact section to
+//      the RIGHT of the canvas (not left, not the all-day banner). Meetings
+//      own the axis and get full width. "Nick cares least about service blocks."
+//   2. Join button → icon-only (🔗, no pill). Title gets full flex width.
+//   3. Click-to-expand: remove overflow:hidden from absolute event wrapper so
+//      the expanded notes panel isn't clipped. Block auto-grows via z-index
+//      layering instead.
+//   4. Overlap legibility: MIN_COL_W = 120px. If a cluster would produce
+//      columns narrower than that, cap at floor(availW / MIN_COL_W) columns
+//      and stack the remainder in the leftmost column (readable > strict).
+//   5. KEEP: PX_PER_MIN=0.6, hour-label gutter, absolute now-line,
+//      true-duration heights, drag-into-gaps drop.
+//
+// DEPRECATES (Phase 4 explicitly kills the Phase 2+3 on-axis long-block path):
+//   - The Phase 2+3 change to isRailEvent (checks ONLY isAllDay) is REVERTED.
+//     isRailEvent now checks isAllDay OR durationMin ≥ LONG_EVENT_MIN.
+//   - The on-axis timed-long-block packing path is dead — long timed events
+//     never enter timedClusters; they live in longTimedBlocks (compact rail).
+//   - OverlapBand for timed clusters — replaced by in-canvas column layout
+//     (still alive for UNTIMED clusters below the canvas — that survives).
 //   - railBlockHeight() reference (dead since Phase 1; fully gone now).
 //   - gapHeight / GAP_* / fmtGap / nowIdx / nowDivider (dead since Phase 1).
 //
@@ -43,7 +60,8 @@ import { OverlapBand } from './OverlapBand'
 import { useIsMobile } from '../../hooks/useIsMobile'
 import { PlannedTaskRow } from './PlannedTaskRow'
 import {
-  ACCENT_GOLD, ACCENT_TEAL, ACCENT_CORAL, INK_DIM, PAGE_BG, withAlpha,
+  ACCENT_GOLD, ACCENT_TEAL, ACCENT_CORAL, INK_DIM, INK, PAGE_BG, withAlpha,
+  LONG_EVENT_MIN,
   type PlannedSlot, type TodayEvent,
 } from './constants'
 import type { TodayStateApi } from '../../hooks/useTodayState'
@@ -115,6 +133,11 @@ const MIN_BLOCK_H = 24
 
 // Left gutter width for hour labels. Event blocks and tick lines start here.
 const GUTTER_W = 44
+
+// GH#80 Phase 4: minimum column width for side-by-side overlap packing.
+// If a cluster would produce columns narrower than this, we cap the column
+// count so each column stays readable. 120px comfortably shows a title + time.
+const MIN_COL_W = 120
 
 // Pixel-offset for a minute count on the canvas (relative to dayStart).
 function toY(min: number, dayStart: number): number {
@@ -356,19 +379,31 @@ export function Timeline({ events, tasks, state, projectsByPid, expandedId, onEx
 
   const visibleMeetings = events.filter((e) => !dismissedMeetings[e.id])
 
-  // GH#80 Phase 2: isRailEvent now checks ONLY isAllDay.
+  // GH#80 Phase 4: REVERT Phase 2's isRailEvent change.
   //
-  // Phase 1 sent ALL events with duration >= LONG_EVENT_MIN (3h) to the rail.
-  // That wrongly banished a timed 7am-6:30pm block to the corner aside instead
-  // of rendering it as a tall absolute block on the axis — Nick's core complaint.
+  // Phase 2 moved ALL timed long blocks (≥3h) onto the axis, which caused the
+  // 7am–3pm service block to dominate the entire canvas and crush real meetings
+  // into unreadable slivers (Nick's actual-use regression).
   //
-  // Phase 2 fix: only calendar-feed events with isAllDay=true (no start/end time)
-  // live in the banner. Every event that has a real startMin/endMin — regardless
-  // of duration — goes onto the absolute axis. The banner label also changes from
-  // "All-day · long blocks" to "All-day events" to reflect the narrower scope.
-  const isRailEvent = (e: TodayEvent) => !!e.isAllDay
+  // Phase 4 restores the Phase-1 intent: timed long events (≥LONG_EVENT_MIN)
+  // are RAILED — but they go to a compact right-side service-blocks section,
+  // NOT the all-day banner. The all-day banner stays for genuinely isAllDay events.
+  // Meetings (< 3h or untimed) own the axis completely.
+  //
+  // isRailEvent = true → goes to the appropriate rail (all-day banner or long-block strip).
+  // For the long-timed ones we use isLongTimedBlock() to route them to the compact strip.
+  const durationMin = (e: TodayEvent) =>
+    typeof e.startMin === 'number' && typeof e.endMin === 'number'
+      ? e.endMin - e.startMin
+      : 0
 
-  const railEvents = visibleMeetings.filter(isRailEvent)
+  const isLongTimedBlock = (e: TodayEvent) =>
+    !e.isAllDay && typeof e.startMin === 'number' && durationMin(e) >= LONG_EVENT_MIN
+
+  const isRailEvent = (e: TodayEvent) => !!e.isAllDay || isLongTimedBlock(e)
+
+  const railEvents = visibleMeetings.filter((e) => !!e.isAllDay)  // all-day banner only
+  const longTimedBlocks = visibleMeetings.filter(isLongTimedBlock) // compact right strip
   const flowMeetings = visibleMeetings.filter((e) => !isRailEvent(e))
   const onDropTask = useCallback((id: string, slot: PlannedSlot) => state.planAt(id, slot), [state])
 
@@ -462,6 +497,21 @@ export function Timeline({ events, tasks, state, projectsByPid, expandedId, onEx
 
   // Canvas total height
   const canvasHeight = Math.round((dayEnd - dayStart) * PX_PER_MIN)
+
+  // GH#80 Phase 4: measure canvas container width so we can cap column count
+  // to MIN_COL_W. Defaults to 640 (a safe underestimate) until first measure.
+  const canvasWrapRef = useRef<HTMLDivElement | null>(null)
+  const [canvasW, setCanvasW] = useState(640)
+  useEffect(() => {
+    const el = canvasWrapRef.current
+    if (!el) return
+    const ro = new ResizeObserver((entries) => {
+      for (const entry of entries) setCanvasW(entry.contentRect.width)
+    })
+    ro.observe(el)
+    setCanvasW(el.getBoundingClientRect().width)
+    return () => ro.disconnect()
+  }, [])
 
   return (
     <section data-b2-timeline style={{ marginBottom: 24 }}>
@@ -573,12 +623,19 @@ export function Timeline({ events, tasks, state, projectsByPid, expandedId, onEx
           </div>
         )}
 
-        {/* ── Timed canvas — absolute-positioned event blocks ── */}
-        {(timedClusters.length > 0 || railEvents.length > 0) && (
+        {/* ── Timed canvas + long-blocks strip (flex row) ── */}
+        {(timedClusters.length > 0 || railEvents.length > 0 || longTimedBlocks.length > 0) && (
+          // GH#80 Phase 4: outer flex row. Left = absolute canvas (meetings).
+          // Right = compact service-blocks strip (long timed events ≥3h).
+          // The strip is aligned to the canvas top via align-items: flex-start.
+          <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
           <div
+            ref={canvasWrapRef}
             style={{
               position: 'relative',
               height: canvasHeight,
+              flex: 1,
+              minWidth: 0,
             }}
           >
             {/* Time ruler: labels in GUTTER_W column, gridlines start at GUTTER_W */}
@@ -729,14 +786,30 @@ export function Timeline({ events, tasks, state, projectsByPid, expandedId, onEx
             })()}
 
             {/* Absolute event blocks — timed clusters with interval-graph column packing.
-                Phase 2: each event gets its own absolute block at the correct position
-                and width fraction. Overlapping events appear side-by-side in columns.
-                No OverlapBand dashed-border for timed events — that is now only used
-                for the untimed cluster section above the canvas. */}
-            {timedClusters.map(({ cluster, globalIdx }, i) => {
+                Phase 4: overflow:visible on the wrapper (not hidden) so the
+                expanded notes panel doesn't get clipped by the block boundary.
+                The expanded block uses zIndex:3 to float above siblings.
+                MIN_COL_W cap: if the natural colCount would produce columns
+                narrower than MIN_COL_W px, cap colCount so each stays readable.
+                The cap reassigns indices mod cappedCount — events wrap into the
+                fewest columns that fit. */}
+            {timedClusters.map(({ cluster, globalIdx: _globalIdx }, i) => {
               const bounds = timedClusterBounds[i]
               // Compute column layout for all events in this cluster.
-              const colLayout = packColumns(cluster)
+              const rawLayout = packColumns(cluster)
+              const rawColCount = rawLayout.length > 0 ? Math.max(...rawLayout.map((c) => c.colIdx + 1)) : 1
+              // Available px for columns = canvas width - gutter (GUTTER_W already
+              // subtracted by left: GUTTER_W on the cluster container).
+              const availW = Math.max(canvasW - GUTTER_W, MIN_COL_W)
+              const maxCols = Math.max(1, Math.floor(availW / MIN_COL_W))
+              const cappedColCount = Math.min(rawColCount, maxCols)
+              // If capping reduced colCount, reassign indices: simply mod the raw
+              // index to the new cap. This stacks overflowing events into earlier
+              // columns rather than making any column unreadably thin.
+              const colLayout = rawLayout.map((c) => ({
+                colIdx: cappedColCount < rawColCount ? c.colIdx % cappedColCount : c.colIdx,
+                colCount: cappedColCount,
+              }))
               const clusterKey = cluster.map((e) => e.id).join('|')
 
               return (
@@ -749,8 +822,8 @@ export function Timeline({ events, tasks, state, projectsByPid, expandedId, onEx
                     right: 0,
                     height: toDuration(bounds.end - bounds.start),
                     zIndex: 2,
-                    // This container spans the full cluster height. Each event is
-                    // absolutely positioned within it at its own top/height.
+                    // overflow: visible so expanded notes panels float above siblings
+                    overflow: 'visible',
                     pointerEvents: 'none', // let children handle events
                   }}
                 >
@@ -767,7 +840,6 @@ export function Timeline({ events, tasks, state, projectsByPid, expandedId, onEx
                     const colLeft = colCount > 1
                       ? `calc(${(colIdx / colCount) * 100}% + ${colIdx > 0 ? 1 : 0}px)`
                       : '0'
-
                     return (
                       <div
                         key={e.id}
@@ -776,9 +848,14 @@ export function Timeline({ events, tasks, state, projectsByPid, expandedId, onEx
                           top: eTop,
                           left: colLeft,
                           width: colW,
-                          height: eHeight,
+                          // minHeight: true-duration height. No max — when expanded
+                          // the notes panel grows the block down (overflow: visible).
+                          minHeight: eHeight,
                           pointerEvents: 'auto',
-                          overflow: 'hidden',
+                          // overflow: visible so the notes textarea isn't clipped.
+                          // Expanded blocks naturally render on top via DOM order
+                          // (last cluster in DOM is highest in paint order).
+                          overflow: 'visible',
                         }}
                       >
                         <EventRow
@@ -799,7 +876,7 @@ export function Timeline({ events, tasks, state, projectsByPid, expandedId, onEx
             })}
 
             {/* Rail-only day with no timed flow events: a single full-canvas drop zone */}
-            {timedClusters.length === 0 && railEvents.length > 0 && (() => {
+            {timedClusters.length === 0 && (railEvents.length > 0 || longTimedBlocks.length > 0) && (() => {
               const slotKey = `between-${clusters.length}` as PlannedSlot
               const soloTasksInGap = state.plannedIds()
                 .filter((id) => state.planned[id]?.slot === slotKey)
@@ -836,10 +913,57 @@ export function Timeline({ events, tasks, state, projectsByPid, expandedId, onEx
               )
             })()}
           </div>
+          {/* ── GH#80 Phase 4: Long-block service strip (right of canvas) ────────
+              Long timed events (≥3h) render here as compact chips instead of
+              dominating the axis. Nick "cares least" about these — they should
+              be small + out of the way. Width: ~140px fixed. The strip aligns
+              to the canvas top (outer flex is align-items:flex-start).
+              Each chip shows the service name + time range; no expand/notes.
+              ───────────────────────────────────────────────────────────────── */}
+          {longTimedBlocks.length > 0 && (
+            <div style={{ width: 140, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: withAlpha(ACCENT_TEAL, 60), padding: '0 0 4px', whiteSpace: 'nowrap' }}>Service blocks</div>
+              {longTimedBlocks.map((e) => (
+                <div
+                  key={e.id}
+                  style={{
+                    background: withAlpha(ACCENT_TEAL, 5),
+                    border: `1px solid ${withAlpha(ACCENT_TEAL, 18)}`,
+                    borderRadius: 4,
+                    padding: '4px 7px',
+                  }}
+                >
+                  <div style={{ fontSize: 10, color: ACCENT_TEAL, fontWeight: 600, fontVariantNumeric: 'tabular-nums', marginBottom: 2, whiteSpace: 'nowrap' }}>
+                    {e.time}{e.end ? ` – ${e.end}` : ''}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 11,
+                      color: INK,
+                      overflow: 'hidden',
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical',
+                      lineHeight: 1.3,
+                    }}
+                  >
+                    {e.title}
+                  </div>
+                  <button
+                    onClick={(ev) => { ev.stopPropagation(); setDismissedMeetings((s) => ({ ...s, [e.id]: true })) }}
+                    title="Remove from today's view"
+                    className="hov-opacity"
+                    style={{ background: 'none', border: 'none', color: INK_DIM, fontSize: 11, cursor: 'pointer', padding: '2px 0 0', lineHeight: 1, opacity: 0.4, transition: 'opacity 120ms', '--hov-opacity': '1' } as React.CSSProperties}
+                  >× hide</button>
+                </div>
+              ))}
+            </div>
+          )}
+          </div>
         )}
 
         {/* No timed events and no rail events: show a single flat drop zone */}
-        {timedClusters.length === 0 && railEvents.length === 0 && clusters.length === 0 && (
+        {timedClusters.length === 0 && railEvents.length === 0 && longTimedBlocks.length === 0 && clusters.length === 0 && (
           <DropZone
             slot={`between-0` as PlannedSlot}
             label="drop a task here to plan it for today"

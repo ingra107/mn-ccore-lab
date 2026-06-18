@@ -20,7 +20,9 @@ export function EventRow({ e, onDismiss, overlap = false, note, onNote, saveStat
   // is unused now that JSX branches are gone.
   useIsMobile(768) // keeps matchMedia alive on standalone renders
   return (
-    <div style={{ position: 'relative', background: withAlpha(ACCENT_TEAL, 6), border: `1px solid rgba(92,188,180,${overlap ? 0.35 : 0.18})`, borderRadius: 6, overflow: 'hidden', minHeight }}>
+    // GH#80 Phase 4: overflow removed (was 'hidden') so the expanded notes
+    // panel isn't clipped when this row lives inside an absolute canvas block.
+    <div style={{ position: 'relative', background: withAlpha(ACCENT_TEAL, 6), border: `1px solid rgba(92,188,180,${overlap ? 0.35 : 0.18})`, borderRadius: 6, minHeight }}>
       {/* ROW 25: gap/padding/title-clamp/end-time/loc-hide → CSS .meeting-row-* */}
       <div onClick={() => setExpanded(!expanded)} className="meeting-row-header">
         <span className={`meeting-row-time${overlap ? ' meeting-row-time--overlap' : ''}`} style={{ color: ACCENT_TEAL, flexShrink: 0 }}>
@@ -30,17 +32,20 @@ export function EventRow({ e, onDismiss, overlap = false, note, onNote, saveStat
         <span style={{ width: 6, height: 6, borderRadius: '50%', background: ACCENT_TEAL, flexShrink: 0 }} />
         <span className="meeting-row-title" style={{ color: INK }}>{e.title}</span>
         {e.meetingUrl && (
+          // GH#80 P4: Join is an icon-only link. The wide pill ate the title
+          // when blocks were narrow. Icon stays right of the title dot, never
+          // between dot and title text, so title still gets full flex width.
           <a
             href={e.meetingUrl}
             target="_blank"
             rel="noopener noreferrer"
             onClick={(ev) => ev.stopPropagation()}
-            title="Open meeting link in a new tab"
-            className="hov-bg"
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 8px', fontSize: 11, fontWeight: 600, color: ACCENT_GOLD, background: withAlpha(ACCENT_GOLD, 10), border: `1px solid ${withAlpha(ACCENT_GOLD, 30)}`, borderRadius: 999, textDecoration: 'none', transition: 'all 120ms', '--hov-bg': withAlpha(ACCENT_GOLD, 20) } as React.CSSProperties}
+            title="Join meeting"
+            aria-label="Join meeting"
+            className="hov-opacity"
+            style={{ display: 'inline-flex', alignItems: 'center', fontSize: 14, color: ACCENT_GOLD, textDecoration: 'none', flexShrink: 0, padding: '0 2px', opacity: 0.85, transition: 'opacity 120ms', '--hov-opacity': '1' } as React.CSSProperties}
           >
-            <span aria-hidden="true">🔗</span>
-            <span>Join</span>
+            🔗
           </a>
         )}
         {e.loc && <span className="meeting-row-loc" style={{ fontSize: 11, color: ACCENT_TEAL }}>📍 {e.loc}</span>}
