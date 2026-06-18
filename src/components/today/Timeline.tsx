@@ -13,8 +13,8 @@
 //     absolute side-by-side
 //
 // THIS REVISION (codex-plan):
-//   - Replaces the absolute canvas with AgendaGrid (normal-flow flex column)
-//   - buildAgendaModel() produces proportional GapUnit/MeetingUnit/OverlapUnit
+//   - Replaces the absolute canvas with TimelineGrid (normal-flow flex column)
+//   - buildTimelineModel() produces proportional GapUnit/MeetingUnit/OverlapUnit
 //   - Notes expand INSIDE the flow item → opaque, push down (Level-1 fix)
 //   - Service blocks go to a right ~25% column, translucent, NOT consuming gaps
 //   - Side-by-side overlaps via packColumns() with no conflict label
@@ -26,8 +26,8 @@
 //   - canvasWrapRef, canvasW, ResizeObserver
 //   - absolute event block wrappers (top: toY(...), left: GUTTER_W)
 //   - timedClusters, timedClusterBounds, canvasHeight, nowTopPx = toY(now)
-//   - toY(), toDuration() absolute math functions (PX_PER_MIN now in agendaModel.ts)
-//   - OverlapBand for timed clusters (replaced by AgendaOverlapRegion inside AgendaGrid)
+//   - toY(), toDuration() absolute math functions (PX_PER_MIN now in timelineModel.ts)
+//   - OverlapBand for timed clusters (replaced by AgendaOverlapRegion inside TimelineGrid)
 //   - GUTTER_W, MIN_COL_W, MIN_BLOCK_H local constants
 //   - longTimedBlocks boxed right-fixed-width strip
 //
@@ -36,7 +36,7 @@
 //   - meetingNotes/meetingSaveState local state
 //   - dismissedMeetings state + Restore N hidden button
 //   - useNowMinutes() 60s ticker
-//   - All-day banner rendering (allDayEvents pass-through in AgendaGrid)
+//   - All-day banner rendering (allDayEvents pass-through in TimelineGrid)
 //   - DropZone for the pure-untimed-only fallback (no timed events at all)
 
 import { useState, useCallback, useEffect, useRef } from 'react'
@@ -46,7 +46,7 @@ import EmptyState from '../EmptyState'
 import EmptyStateArt from '../EmptyStateArt'
 import { type SaveStatus } from './MeetingRow'
 import { useIsMobile } from '../../hooks/useIsMobile'
-import { AgendaGrid } from './AgendaGrid'
+import { TimelineGrid } from './TimelineGrid'
 import {
   ACCENT_GOLD, ACCENT_TEAL, INK_DIM, withAlpha,
   type PlannedSlot, type TodayEvent,
@@ -227,9 +227,9 @@ export function Timeline({ events, tasks, state, projectsByPid, expandedId, onEx
         </div>
       )}
 
-      {/* Agenda — AgendaGrid handles allDay + service + timed flow */}
+      {/* TimelineGrid handles allDay + service + timed flow */}
       {visibleMeetings.length > 0 && (
-        <AgendaGrid
+        <TimelineGrid
           events={visibleMeetings}
           tasks={tasks}
           state={state}
