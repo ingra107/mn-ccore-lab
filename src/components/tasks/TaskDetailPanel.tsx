@@ -38,7 +38,7 @@ import type { TaskRow } from '../../lib/api'
 import { PATHS } from '../../constants/paths'
 
 // ── Detail sub-modules ──────────────────────────────────────
-import { FieldBlock, EditableTitle, EditableShortTitle, EditableTextarea, ProjectInlineGhostSelect, DueInlineSelect } from './detail/FieldControls'
+import { FieldBlock, EditableTitle, EditableShortTitle, EditableTextarea, ProjectInlineGhostSelect, DueInlineSelect, WorkflowSection, type WorkflowFields } from './detail/FieldControls'
 import { MeLockToggle } from '../ui/MeLockToggle'
 import { TaskDependenciesSection } from './detail/TaskDependencies'
 import { SubtaskSection } from './detail/SubtaskSection'
@@ -700,8 +700,28 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
               onUpdate={(json) => handleFieldUpdate('description_json', json)}
             />
 
-            {/* Subtasks */}
-            <SubtaskSection taskId={task.id} />
+            {/* Subtasks + Workflow — side-by-side (#113). Two equal columns
+                so users see planning context (who/what I'm waiting on,
+                commitments) alongside the checklist without scrolling.
+                WorkflowSection already has an inner grid-cols-2 for its 4
+                fields, so this is purely a layout promotion. */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--sp-xl)', alignItems: 'start' }}>
+              <SubtaskSection taskId={task.id} />
+              <div className="flex flex-col" style={{ gap: 'var(--sp-xs, 6px)' }}>
+                <div style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', fontWeight: 'var(--label-weight)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Workflow</div>
+                <WorkflowSection
+                  fields={{
+                    waiting_on: task.waiting_on ?? null,
+                    next_checkin_date: task.next_checkin_date ?? null,
+                    promised_to: task.promised_to ?? null,
+                    promise_date: task.promise_date ?? null,
+                  } as WorkflowFields}
+                  onChange={(patch) => {
+                    updateTask.mutate({ id: task.id, fields: patch as Record<string, unknown> })
+                  }}
+                />
+              </div>
+            </div>
           </div>
 
           {/* ── Intelligence Tab — GH #35 ── */}

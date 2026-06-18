@@ -1730,10 +1730,13 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
 /* Global mobile touch-target floor — filter chips, selects, inline links.
    .done-box / .stage-dot are exempt (N1.08/N1.16): small squares/dots whose
    44px hit area comes from their ::before pseudo-element below, not from
-   stretching the visual. ⚠ The SAME :not() chain exists in the UX-9 tablet
-   block (~60 lines down) — new exemptions must be added in BOTH. */
+   stretching the visual.
+   .planned-chip is exempt (#111): tiny inline chip — 44px makes it taller
+   than the row header, causing a layout jerk on expand for scheduled tasks.
+   ⚠ The SAME :not() chain exists in the UX-9 tablet block (~60 lines down) —
+   new exemptions must be added in BOTH. */
 @media (max-width: 768px) {
-  button:not(.kbd-shortcut):not(.close-button):not([aria-label="Close"]):not(.done-box):not(.stage-dot),
+  button:not(.kbd-shortcut):not(.close-button):not([aria-label="Close"]):not(.done-box):not(.stage-dot):not(.planned-chip),
   a.inline-link,
   select,
   .filter-chip,
@@ -1795,7 +1798,7 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
    44px floor on a 900px desktop window driven by a mouse (which would bloat
    dense tables). Desktop power-grid is untouched: it has a fine pointer. */
 @media (hover: none) and (pointer: coarse) and (min-width: 769px) {
-  button:not(.kbd-shortcut):not(.close-button):not([aria-label="Close"]):not(.done-box):not(.stage-dot),
+  button:not(.kbd-shortcut):not(.close-button):not([aria-label="Close"]):not(.done-box):not(.stage-dot):not(.planned-chip),
   a.inline-link,
   select,
   .filter-chip,

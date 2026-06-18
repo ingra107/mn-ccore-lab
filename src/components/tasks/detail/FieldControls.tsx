@@ -585,11 +585,9 @@ export function TaskInlineFieldRow({
         value={dueDate || ''}
         onChange={(v) => onUpdate({ due_date: v || null })}
       />
-      <button
-        onClick={(e) => { e.stopPropagation(); onOpenEditor() }}
-        title="Open full task editor"
-        style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 10px', fontSize: 11, fontFamily: 'inherit', fontWeight: 500, color: 'var(--teal)', background: 'transparent', border: 'none', borderRadius: 999, cursor: 'pointer', marginLeft: 'auto' }}
-      >Open full editor</button>
+      {/* "Open full editor" moved to the surface-level action bar (#114).
+          onOpenEditor prop kept for TaskDetailDrawer, which still needs it
+          for the "view all →" / full-panel open path. */}
     </div>
   )
 }

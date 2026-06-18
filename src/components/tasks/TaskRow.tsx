@@ -120,7 +120,12 @@ function ProjectTag({ project }: { project: { name: string; slug: string } | nul
 }
 
 function PlannedChip({ label = 'planned', onUnplan }: { label?: string; onUnplan?: () => void }) {
-  const base = { fontSize: 10, color: ACCENT_GOLD, padding: '1px 6px', background: withAlpha(ACCENT_GOLD, 9), border: `1px solid ${withAlpha(ACCENT_GOLD, 28)}`, borderRadius: 999, letterSpacing: '0.04em', whiteSpace: 'nowrap' as const }
+  // #111: chip height must be stable so planned vs un-planned rows don't differ
+  // in header height (which caused a visual jerk on expand). The .planned-chip
+  // class exempts this button from the 44px mobile min-height rule — same
+  // treatment as .done-box. lineHeight:1 + consistent padding keeps both
+  // the button and span variant at identical height (~16px).
+  const base = { fontSize: 10, color: ACCENT_GOLD, padding: '2px 6px', background: withAlpha(ACCENT_GOLD, 9), border: `1px solid ${withAlpha(ACCENT_GOLD, 28)}`, borderRadius: 999, letterSpacing: '0.04em', whiteSpace: 'nowrap' as const, lineHeight: 1 }
   // When the surface wires planning (Today), the chip itself is the unplan
   // control — so there is exactly one 📌 on the row (status + toggle), never a
   // duplicate pushpin alongside a separate plan button.
@@ -128,11 +133,12 @@ function PlannedChip({ label = 'planned', onUnplan }: { label?: string; onUnplan
     return (
       <button
         type="button"
+        className="planned-chip"
         onClick={(e) => { e.stopPropagation(); onUnplan() }}
         onMouseDown={(e) => e.stopPropagation()}
         title="Planned for today — click to unplan"
         aria-label="Unplan task"
-        style={{ ...base, border: 'none', cursor: 'pointer', fontFamily: 'inherit', display: 'inline-flex', alignItems: 'center', gap: 3 }}
+        style={{ ...base, cursor: 'pointer', fontFamily: 'inherit', display: 'inline-flex', alignItems: 'center', gap: 3 }}
       >
         <Pin {...ICON_PROPS} size={11} /> {label}
       </button>

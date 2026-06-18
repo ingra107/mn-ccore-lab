@@ -194,6 +194,10 @@ export function InlineDetail({ task, projectName, onOpenEditor }: { task: TaskRo
             </div>
           )}
         </div>
+        {/* #114: Open full editor — promoted from TaskInlineFieldRow bottom to
+            action bar next to Move → so it's immediately visible without
+            scrolling past the field row. */}
+        <button onClick={handleViewAll} title="Open full task editor" style={{ padding: '4px 10px', fontSize: 10.5, borderRadius: 'var(--radius-sm)', border: 'none', background: 'transparent', color: 'var(--teal)', fontFamily: 'inherit', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}>⊞ Full editor</button>
         <button onClick={snooze} title="Push due date +1 day" disabled={updateTask.isPending} style={{ padding: '4px 10px', fontSize: 10.5, borderRadius: 'var(--radius-sm)', border: 'none', background: 'transparent', color: INK, fontFamily: 'inherit', cursor: updateTask.isPending ? 'wait' : 'pointer', opacity: updateTask.isPending ? 0.5 : 1 }}>Snooze +1d</button>
         {!isCompleted && (
           <button onClick={complete} title="Mark complete" disabled={bulkUpdate.isPending} style={{ padding: '4px 10px', fontSize: 10.5, borderRadius: 'var(--radius-sm)', border: 'none', background: 'transparent', color: ACCENT_GREEN, fontFamily: 'inherit', cursor: bulkUpdate.isPending ? 'wait' : 'pointer', opacity: bulkUpdate.isPending ? 0.5 : 1 }}>✓ Complete</button>
