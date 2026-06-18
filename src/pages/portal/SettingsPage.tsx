@@ -13,6 +13,7 @@ import { TextSkeleton } from '../../components/LoadingSkeleton'
 import { staggerContainer, staggerItem } from '../../lib/animations'
 import InlineSelect from '../../components/InlineSelect'
 import DensityToggle, { useDensity } from '../../components/DensityToggle'
+import { useTodayView, type TodayView } from '../../hooks/useTodayView'
 import { useLabPrefs } from '../../hooks/useLabPrefs'
 import RangeSlider from '../../components/RangeSlider'
 import CalendarFeedsPanel from '../../components/CalendarFeedsPanel'
@@ -56,6 +57,64 @@ function DensityControl() {
           </div>
         </div>
         <DensityToggle value={density} onChange={setDensity} />
+      </div>
+    </div>
+  )
+}
+
+// Phase 2 (2026-06-18): Today default view. Persisted in localStorage
+// 'mnccore.today.defaultView'. Default = 'timeline'. In-session toggle
+// is ephemeral; this setting controls what view opens on a fresh load.
+function TodayDefaultViewControl() {
+  const { defaultView, setDefault } = useTodayView()
+  const views: { key: TodayView; label: string; desc: string }[] = [
+    { key: 'timeline', label: 'Timeline', desc: 'Drag tasks into gaps — AM planning' },
+    { key: 'agenda', label: 'Agenda', desc: 'Scan a line of meetings + tasks' },
+  ]
+  return (
+    <div className="mt-4 pt-4" style={{ borderTop: '1px solid var(--border-subtle)' }}>
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <div className="text-[12px] font-medium" style={{ color: 'var(--ink)' }}>Today default view</div>
+          <div className="text-[10px]" style={{ color: 'var(--slate)', opacity: 0.75 }}>
+            Which view opens when you load the Today page. In-session toggles are ephemeral. Default: Timeline.
+          </div>
+        </div>
+        <div
+          role="group"
+          aria-label="Today default view"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            border: '1px solid var(--border-subtle)',
+            borderRadius: 6,
+            overflow: 'hidden',
+            flexShrink: 0,
+          }}
+        >
+          {views.map(({ key, label }) => (
+            <button
+              key={key}
+              onClick={() => setDefault(key)}
+              aria-pressed={defaultView === key}
+              title={views.find((v) => v.key === key)?.desc}
+              style={{
+                background: defaultView === key ? withAlpha(ACCENT_GOLD, 15) : 'none',
+                border: 'none',
+                color: defaultView === key ? ACCENT_GOLD : 'var(--slate)',
+                fontSize: 11,
+                fontWeight: defaultView === key ? 600 : 400,
+                cursor: 'pointer',
+                padding: '3px 10px',
+                letterSpacing: '0.02em',
+                transition: 'all 120ms',
+                lineHeight: 1.5,
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   )
@@ -466,6 +525,7 @@ export default function SettingsPage() {
             You can also toggle with <kbd className="text-[10px] px-1 py-0.5 rounded" style={{ background: 'var(--border-subtle)' }}>Ctrl+.</kbd>
           </p>
           <DensityControl />
+          <TodayDefaultViewControl />
         </SettingsSection>
         )}
 
