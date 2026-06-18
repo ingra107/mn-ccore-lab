@@ -2740,7 +2740,7 @@ defineRoute({
 // ─────────────────────────────────────────────────────────────────────────────
 // /api/admin/migrate and /api/test-cleanup removed 2026-05-15.
 // Security: any authenticated user could run DB migrations or delete data.
-// Schema changes go through wrangler d1 execute + migration files in migrations/.
+// Schema changes go through wrangler d1 execute + migration files in migrations/. // wrangler-d1-allowed
 // Test cleanup uses /api/tasks/batch (action='delete').
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -2767,7 +2767,7 @@ app.notFound(() => error('Not found', 404));
 // - fetch: Hono app, invoked by functions/api/[[route]].ts for all /api/* requests.
 // - scheduled: dispatches by event.cron (explicit switch — each cron fires exactly
 //   one handler):
-//     "0 * * * *"      → calendar feed poller (iCal hourly refresh, 24/day)
+//     "0 * * * *"      → DB maintenance prune + calendar feed poller (iCal hourly, 24/day)
 //     "0 13 * * 1-5"   → morning pulse email (weekday 7 AM CT)
 //     "0 11 * * *"     → coordinator daily digest (6 AM CT every day)
 //   NOTE: cron "*/15 * * * *" was removed in commit 441ec212 (2026-05-05);
@@ -2778,8 +2778,29 @@ export default {
 
   async scheduled(event: ScheduledEvent, env: Env, _ctx: ExecutionContext): Promise<void> {
     switch (event.cron) {
-      // ── iCal feed poller (hourly, 24/day) ────────────────────────────────
+      // ── DB maintenance prune + iCal feed poller (hourly, 24/day) ──────────
       case '0 * * * *': {
+        // Prune processed_mutations retention (7 days). This table records every
+        // A3 mutation for idempotency de-dup; rows older than the retry window
+        // (7 days is well beyond any real retry scenario) are safe to delete.
+        // Without pruning the table grows ~1000 rows/day and bloats the D1
+        // database, eventually causing storage timeouts on unrelated write ops
+        // (the delete-events step in calendar polling hits this at ~88K rows /
+        // ~125MB DB). Runs BEFORE the calendar poll so the lighter DB benefits
+        // the iCal batch writes.
+        try {
+          const pruneResult = await env.DB.prepare(
+            `DELETE FROM processed_mutations WHERE processed_at < datetime('now', '-7 days')`
+          ).run()
+          if (pruneResult.meta.changes > 0) {
+            console.log(`[HourlyMaint] Pruned ${pruneResult.meta.changes} processed_mutations rows (>7d old)`)
+          }
+        } catch (e) {
+          // Non-fatal: log and continue. Calendar poll may still succeed on a
+          // lighter-than-worst-case DB. Next hourly attempt will retry.
+          console.error('[HourlyMaint] processed_mutations prune failed:', (e as Error).message)
+        }
+
         console.log('[CalendarCron] Starting iCal feed poll...')
         try {
           await pollAllStaleFeeds(env)

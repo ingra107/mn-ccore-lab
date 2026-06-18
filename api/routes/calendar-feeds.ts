@@ -49,11 +49,13 @@ const MAX_EVENTS_PER_FEED = 5000
 
 // Polling window. Read-side query is bounded by the caller (Today =
 // today + 7 days), but the cache here is sized to support that lookup
-// without missing recent edits. 30 days forward is enough for the
-// "Today timeline + next-week glance" use case; expanding to 90 days
-// 3x'd the row count and pushed past the D1 batch timeout.
+// without missing recent edits. 14 days forward (2× the visible window)
+// covers the user's immediate planning horizon. 30 days caused D1 storage
+// timeouts on large Google Calendars with many daily-recurring events
+// (RRULE expansion to 30d × ~15 events/day = ~450 events → D1 batch
+// timeout). 14 days halves the event set without losing utility.
 const WINDOW_BACK_DAYS = 1
-const WINDOW_FWD_DAYS = 30
+const WINDOW_FWD_DAYS = 14
 
 interface FeedRow {
   id: string
