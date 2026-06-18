@@ -16,6 +16,27 @@ function safeParse(dateStr: string): Date {
   return parseDbUtc(dateStr)
 }
 
+/**
+ * Parse a value that is either a bare date-only string (`YYYY-MM-DD`) or a
+ * full ISO timestamp (with or without a zone suffix).
+ *
+ * This is the canonical defence against the "date-only UTC-midnight" bug class
+ * (GH#82): `new Date("2026-06-17")` → UTC midnight → wrong civil day in any
+ * timezone west of UTC. Route ALL `new Date(d1Value)` calls for fields that
+ * may arrive as date-only through this helper instead.
+ *
+ * Behaviour:
+ *   - `YYYY-MM-DD`                → noon LOCAL (civil-day anchor, no zone math)
+ *   - `YYYY-MM-DD HH:MM:SS[.fff]` → treated as UTC (D1 `datetime('now')`)
+ *   - already zoned (`Z`, `+05:00`, `-06:00`) → passed straight through
+ *   - null/undefined/unparseable  → `Invalid Date` (never throws)
+ *
+ * Implementation delegates to `time.ts:parseDbUtc` — the single chokepoint.
+ * The alias exists so call sites in date-domain code can import from dateUtils
+ * rather than reaching into time.ts directly.
+ */
+export { parseDbUtc as parseDateOnlyOrTimestamp } from './time'
+
 /** "Mar 25" */
 export function formatShortDate(dateStr: string): string {
   return safeParse(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })

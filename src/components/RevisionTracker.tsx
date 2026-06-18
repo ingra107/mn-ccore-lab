@@ -31,7 +31,7 @@ import {
   useUpdateRevisionComment,
 } from '../hooks/useMutations'
 import { getPersonInfo } from '../data/team'
-import { formatMediumDate } from '../lib/dateUtils'
+import { formatMediumDate, parseDateOnlyOrTimestamp } from '../lib/dateUtils'
 import { TableSkeleton } from './LoadingSkeleton'
 import EmptyState from './EmptyState'
 import { getStatusBg } from '../lib/statusColors'
@@ -848,7 +848,10 @@ function RevisionCommentsList({ revisionId, projectId }: RevisionCommentsListPro
 // or daysStale separately yet; when schema-v50 lands (DD-2 / T-29 full)
 // this score expands into the 3-subgroup structure CD specced.
 function urgencyScore(rev: RevisionRow, now: number): number {
-  const due = rev.response_due ? new Date(rev.response_due).getTime() : null
+  // response_due is a TEXT date-only field. new Date("YYYY-MM-DD") → UTC midnight
+  // → wrong civil day in western timezones (GH#82 class). parseDateOnlyOrTimestamp
+  // anchors date-only strings to noon local so the comparison is civil-day-correct.
+  const due = rev.response_due ? parseDateOnlyOrTimestamp(rev.response_due).getTime() : null
   const daysOverdue = due && due < now ? Math.floor((now - due) / 86_400_000) : 0
   const unresolved = (rev.comment_count ?? 0) - (rev.resolved_count ?? 0)
   return Math.min(daysOverdue, 30) + Math.max(0, unresolved)

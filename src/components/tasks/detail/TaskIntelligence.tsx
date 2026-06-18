@@ -3,7 +3,7 @@ import { Brain, TrendingUp } from 'lucide-react'
 import { useProjectUpdates } from '../../../hooks/useApiData'
 import { useToast } from '../../../hooks/useToast'
 import HermesMark from '../../HermesMark'
-import { parseDbUtc } from '../../../lib/time'
+import { parseDateOnlyOrTimestamp } from '../../../lib/dateUtils'
 import type { TaskRow } from '../../../lib/api'
 import { ICON_PROPS } from '../../../lib/iconProps'
 import { ACCENT_GOLD, withAlpha } from '../../../lib/taskGrouping'
@@ -18,7 +18,9 @@ function computeRelevance(task: TaskRow): { score: number; rationale: string } {
   let score = 50
   const reasons: string[] = []
 
-  const due = task.due_date ? new Date(task.due_date) : null
+  // due_date is a D1 date-only field ("YYYY-MM-DD"). new Date("YYYY-MM-DD")
+  // parses as UTC midnight → wrong civil day west of UTC (GH#82 class).
+  const due = task.due_date ? parseDateOnlyOrTimestamp(task.due_date) : null
   const now = new Date()
   if (due && task.status !== 'done' && due.getTime() < now.getTime()) {
     score += 20
@@ -43,7 +45,7 @@ function computeRelevance(task: TaskRow): { score: number; rationale: string } {
     reasons.push('waiting on external')
   }
 
-  const updated = task.updated_at ? parseDbUtc(task.updated_at) : null
+  const updated = task.updated_at ? parseDateOnlyOrTimestamp(task.updated_at) : null
   if (updated) {
     const ageDays = (now.getTime() - updated.getTime()) / (1000 * 60 * 60 * 24)
     if (ageDays > 7 && task.status !== 'done') {
@@ -75,7 +77,7 @@ function bucketUpdatesByWeek(updates: { created_at: string }[], weeks: number): 
   const now = Date.now()
   const weekMs = 7 * 24 * 60 * 60 * 1000
   for (const u of updates) {
-    const t = parseDbUtc(u.created_at).getTime()
+    const t = parseDateOnlyOrTimestamp(u.created_at).getTime()
     if (Number.isNaN(t)) continue
     const ageWeeks = Math.floor((now - t) / weekMs)
     if (ageWeeks >= 0 && ageWeeks < weeks) {
