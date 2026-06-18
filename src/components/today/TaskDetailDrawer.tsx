@@ -27,6 +27,7 @@ import {
 } from './constants'
 import { isTaskDone } from '../../lib/taskGrouping'
 import { STATUS_OPTIONS } from '../../lib/taskConstants'
+import { stripMeetingMarker } from '../../lib/textUtils'
 import { Button } from '../ui/Button'
 import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow } from '../../lib/api'
@@ -172,7 +173,9 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
         </div>
       )}
 
-      {/* Description — static context below the live feed; ghost opener when empty */}
+      {/* Description — static context below the live feed; ghost opener when empty.
+          stripMeetingMarker removes the machine dedup token [meeting:cal-...:hash]
+          from display; stored value stays intact. */}
       {task.description ? (
         <div style={{ marginTop: 12, marginBottom: 4 }}>
           <div
@@ -187,7 +190,7 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
                 overflow: 'hidden',
               }),
             }}
-          >{task.description}</div>
+          >{stripMeetingMarker(task.description)}</div>
           {!descExpanded && (
             <button
               onClick={() => setDescExpanded(true)}

@@ -25,6 +25,7 @@ import {
   isTaskDone,
 } from '../constants'
 import { useTodayPlan } from '../../../lib/todayPlan'
+import { stripMeetingMarker } from '../../../lib/textUtils'
 import { todayKey } from '../../../lib/taskGrouping'
 import { withAlpha } from '../../../lib/taskGrouping'
 import type { TaskRow } from '../../../lib/api'
@@ -151,7 +152,7 @@ export function InlineDetail({ task, projectName, onOpenEditor }: { task: TaskRo
                 overflow: 'hidden',
               }),
             }}
-          >{task.description}</div>
+          >{stripMeetingMarker(task.description)}</div>
           {!descExpanded && (
             <button
               onClick={() => setDescExpanded(true)}

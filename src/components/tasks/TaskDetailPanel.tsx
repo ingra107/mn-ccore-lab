@@ -21,7 +21,7 @@ import WorkOnActions from '../WorkOnActions'
 import { useToast } from '../../hooks/useToast'
 import { useUndoToast } from '../UndoToast'
 import { formatRelativeTime } from '../../lib/dateUtils'
-import { appendCharToInput } from '../../lib/textUtils'
+import { appendCharToInput, stripMeetingMarker } from '../../lib/textUtils'
 import { ACCENT_GOLD, PANEL_BG, isTaskDone, withAlpha } from '../../lib/taskGrouping'
 import MentionInput from '../MentionInput'
 import TypingIndicator from '../TypingIndicator'
@@ -696,7 +696,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
                 Click → editor opens with toolbar + focus border (autosave on blur). */}
             <DescriptionField
               descriptionJson={task.description_json || null}
-              descriptionText={task.description || null}
+              descriptionText={task.description ? stripMeetingMarker(task.description) : null}
               onUpdate={(json) => handleFieldUpdate('description_json', json)}
             />
 

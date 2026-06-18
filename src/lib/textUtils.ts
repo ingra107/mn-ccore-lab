@@ -81,3 +81,21 @@ export function emDashifyTitle(title: string): string {
   if (!title) return title
   return title.replace(/\s*--\s*/g, ' — ')
 }
+
+/**
+ * Strip the machine dedup key `[meeting:cal-...:hash]` from display text.
+ * The token MUST stay in the stored value (dedup + backlink); it should
+ * render as invisible in the Hub UI. Strips any trailing separator (". "
+ * or " . ") left after removing the token, and trims whitespace.
+ *
+ * Examples:
+ *   "From the MNCCORE meeting. Source: [[...]]. [meeting:cal-20260616T1500-mnccore:abc]"
+ *   → "From the MNCCORE meeting. Source: [[...]]."
+ *
+ * Safe to call on strings without the token (no-op).
+ */
+export function stripMeetingMarker(text: string): string {
+  if (!text) return text
+  // Remove `. [meeting:...]` (with optional leading period+space) and trim.
+  return text.replace(/\s*\[meeting:[^\]]+\]\s*\.?\s*$/i, '').trimEnd()
+}
