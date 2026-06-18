@@ -138,9 +138,13 @@ interface TimelineProps {
   projectsByPid: Map<string, { name: string; slug: string; category?: string | null }>
   expandedId: string | null
   onExpand: (id: string) => void
+  // View toggle (Phase 2). When provided, renders the Timeline⇄Agenda toggle
+  // in the section header. activeView tells the toggle which button is active.
+  activeView?: 'timeline' | 'agenda'
+  onToggleView?: (view: 'timeline' | 'agenda') => void
 }
 
-export function Timeline({ events, tasks, state, projectsByPid, expandedId, onExpand }: TimelineProps) {
+export function Timeline({ events, tasks, state, projectsByPid, expandedId, onExpand, activeView, onToggleView }: TimelineProps) {
   const navigate = useNavigate()
   // Hoist isPhone so EventRow + OverlapBand share one matchMedia listener.
   const isPhone = useIsMobile(768)
@@ -205,8 +209,50 @@ export function Timeline({ events, tasks, state, projectsByPid, expandedId, onEx
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
         <span style={{ fontSize: 16 }}>📅</span>
-        <h2 style={{ fontSize: 18, fontWeight: 600, color: 'var(--task-ink)', letterSpacing: '-0.02em', margin: 0, whiteSpace: 'nowrap' }}>Today · timeline</h2>
-        <span className="today-section-hint" style={{ fontSize: 11, color: INK_DIM }}>drag tasks into the gaps · click meetings to take notes · × to hide</span>
+        <h2 style={{ fontSize: 18, fontWeight: 600, color: 'var(--task-ink)', letterSpacing: '-0.02em', margin: 0, whiteSpace: 'nowrap' }}>Today</h2>
+        {/* Timeline⇄Agenda view toggle — rendered when parent passes activeView + onToggleView */}
+        {onToggleView && (
+          <div
+            role="group"
+            aria-label="Today view"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              border: `1px solid ${withAlpha(ACCENT_TEAL, 22)}`,
+              borderRadius: 6,
+              overflow: 'hidden',
+              flexShrink: 0,
+            }}
+          >
+            {(['timeline', 'agenda'] as const).map((v) => (
+              <button
+                key={v}
+                onClick={() => onToggleView(v)}
+                aria-pressed={activeView === v}
+                title={v === 'timeline' ? 'Timeline — drag tasks into gaps' : 'Agenda — scan your day'}
+                style={{
+                  background: activeView === v ? withAlpha(ACCENT_TEAL, 18) : 'transparent',
+                  border: 'none',
+                  color: activeView === v ? ACCENT_TEAL : INK_DIM,
+                  fontSize: 11,
+                  fontWeight: activeView === v ? 600 : 400,
+                  cursor: 'pointer',
+                  padding: '3px 9px',
+                  letterSpacing: '0.02em',
+                  transition: 'all 120ms',
+                  lineHeight: 1.5,
+                }}
+              >
+                {v === 'timeline' ? 'Timeline' : 'Agenda'}
+              </button>
+            ))}
+          </div>
+        )}
+        <span className="today-section-hint" style={{ fontSize: 11, color: INK_DIM }}>
+          {activeView === 'agenda'
+            ? 'scan your day · click to open · × to hide'
+            : 'drag tasks into the gaps · click meetings to take notes · × to hide'}
+        </span>
         {Object.keys(dismissedMeetings).length > 0 && (
           <button onClick={() => setDismissedMeetings({})} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: ACCENT_TEAL, fontSize: 11, cursor: 'pointer' }}>
             Restore {Object.keys(dismissedMeetings).length} hidden

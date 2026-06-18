@@ -20,6 +20,8 @@ import { usePageMeta } from '../../hooks/usePageMeta'
 import HeartbeatLine from '../../components/HeartbeatLine'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
 import { DoneBox } from '../../components/tasks/TaskRow'
+import { useTodayView } from '../../hooks/useTodayView'
+import { AgendaListView } from '../../components/today/AgendaListView'
 import { researchTeam } from '../../data/team'
 import { useTodayState } from '../../hooks/useTodayState'
 import { useDragAutoScroll } from '../../hooks/useDragAutoScroll'
@@ -103,6 +105,10 @@ export default function TodayPage() {
   }, [state.done, completedTodayIds, allTaskIds])
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const onExpand = useCallback((id: string) => { setExpandedId((p) => (p === id ? null : id)) }, [])
+
+  // Phase 2: Timeline⇄Agenda view toggle. Ephemeral session view + persisted
+  // default. The toggle buttons live in the Timeline section header.
+  const { view: todayView, setView: setTodayView } = useTodayView()
 
   // Auto-promote first relevant task on first load when nothing planned and
   // nothing in Right Now. Fixes empty-hero discoverability (eval Issue 2).
@@ -243,6 +249,26 @@ export default function TodayPage() {
     timed.sort((a, b) => (a.startMin ?? 0) - (b.startMin ?? 0))
     return [...untimed, ...meetings, ...timed]
   }, [meetingsQuery.data, calendarEventsQuery.data])
+
+  // Tomorrow events — shown in Agenda mode's Tomorrow section so Nick can
+  // scan ahead without switching views. Only personal iCal events have time;
+  // D1 meetings are date-only so there's no reliable "tomorrow" D1 query here.
+  const tomorrowMeetings: TodayEvent[] = useMemo(() => {
+    const tomorrow = new Date()
+    tomorrow.setDate(tomorrow.getDate() + 1)
+    const tomorrowKey = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, '0')}-${String(tomorrow.getDate()).padStart(2, '0')}`
+    const isTomorrow = (isoDate: string | null | undefined): boolean => {
+      if (!isoDate) return false
+      if (!isoDate.includes('T')) return isoDate.slice(0, 10) === tomorrowKey
+      const d = new Date(isoDate)
+      if (isNaN(d.getTime())) return false
+      const local = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+      return local === tomorrowKey
+    }
+    return (calendarEventsQuery.data ?? [])
+      .filter((e) => isTomorrow(e.startAt))
+      .map(calendarEventToTodayEvent)
+  }, [calendarEventsQuery.data])
 
   // Planned Today lookup.
   const rightNowTask = state.rightNow ? tasks.find((t) => t.id === state.rightNow) ?? null : null
@@ -398,14 +424,75 @@ export default function TodayPage() {
           </div>
         </div>
 
-        <Timeline
-          events={todaysMeetings}
-          tasks={tasks}
-          state={state}
-          projectsByPid={projectsByPid}
-          expandedId={expandedId}
-          onExpand={onExpand}
-        />
+        {/* Today view: Timeline (drag-to-plan) or Agenda (linear scan).
+            The toggle lives in the Timeline section header; AgendaListView
+            renders its own header-less version when view === 'agenda'. */}
+        {todayView === 'timeline' ? (
+          <Timeline
+            events={todaysMeetings}
+            tasks={tasks}
+            state={state}
+            projectsByPid={projectsByPid}
+            expandedId={expandedId}
+            onExpand={onExpand}
+            activeView={todayView}
+            onToggleView={setTodayView}
+          />
+        ) : (
+          <section data-b2-agenda style={{ marginBottom: 24 }}>
+            {/* Header with toggle — mirrors Timeline header for consistent affordance */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+              <span style={{ fontSize: 16 }}>📅</span>
+              <h2 style={{ fontSize: 18, fontWeight: 600, color: 'var(--task-ink)', letterSpacing: '-0.02em', margin: 0, whiteSpace: 'nowrap' }}>Today</h2>
+              <div
+                role="group"
+                aria-label="Today view"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  border: `1px solid ${withAlpha(ACCENT_GOLD, 22)}`,
+                  borderRadius: 6,
+                  overflow: 'hidden',
+                  flexShrink: 0,
+                }}
+              >
+                {(['timeline', 'agenda'] as const).map((v) => (
+                  <button
+                    key={v}
+                    onClick={() => setTodayView(v)}
+                    aria-pressed={todayView === v}
+                    title={v === 'timeline' ? 'Timeline — drag tasks into gaps' : 'Agenda — scan your day'}
+                    style={{
+                      background: todayView === v ? withAlpha(ACCENT_GOLD, 15) : 'transparent',
+                      border: 'none',
+                      color: todayView === v ? ACCENT_GOLD : INK_DIM,
+                      fontSize: 11,
+                      fontWeight: todayView === v ? 600 : 400,
+                      cursor: 'pointer',
+                      padding: '3px 9px',
+                      letterSpacing: '0.02em',
+                      transition: 'all 120ms',
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    {v === 'timeline' ? 'Timeline' : 'Agenda'}
+                  </button>
+                ))}
+              </div>
+              <span style={{ fontSize: 11, color: INK_DIM }}>scan your day · click to open · × to hide</span>
+            </div>
+            <AgendaListView
+              events={todaysMeetings}
+              tomorrowEvents={tomorrowMeetings}
+              tasks={tasks}
+              state={state}
+              projectsByPid={projectsByPid}
+              expandedId={expandedId}
+              onExpand={onExpand}
+              now={new Date().getHours() * 60 + new Date().getMinutes()}
+            />
+          </section>
+        )}
 
         <PlannedTodaySection
           rightNowTask={rightNowTask}
