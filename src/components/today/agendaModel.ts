@@ -18,9 +18,13 @@
 import { LONG_EVENT_MIN, type TodayEvent } from './constants'
 
 // ── Height constants ───────────────────────────────────────────────────────
-export const PX_PER_MIN = 0.6      // matches prior Timeline value
-export const MEETING_FLOOR = 40    // min-height for a meeting block
-export const GAP_FLOOR = 28        // min-height for a gap row
+// PX_PER_MIN raised + MEETING_FLOOR lowered so 30/45/60/90-min blocks are
+// visually distinct: 30→27px(floor), 45→40px, 60→54px, 90→81px.
+// (Prior: PX_PER_MIN=0.6 + MEETING_FLOOR=40 → everything ≤66min was 40px,
+// making 30min look the same as 60min. Nick eval 2026-06-18.)
+export const PX_PER_MIN = 0.9      // raised from 0.6 to distinguish 30/45/60/90min
+export const MEETING_FLOOR = 27    // lowered from 40 — 30min=27px(hits floor), 60min=54px
+export const GAP_FLOOR = 24        // min-height for a gap row
 
 export const pxForMeeting = (min: number): number =>
   Math.max(MEETING_FLOOR, Math.round(min * PX_PER_MIN))

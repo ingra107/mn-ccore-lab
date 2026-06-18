@@ -21,15 +21,16 @@ export function EventRow({ e, onDismiss, overlap = false, note, onNote, saveStat
   useIsMobile(768) // keeps matchMedia alive on standalone renders
   return (
     // GH#80 Phase 4: overflow removed (was 'hidden') so the expanded notes
-    // panel isn't clipped when this row lives inside an absolute canvas block.
-    <div style={{ position: 'relative', background: withAlpha(ACCENT_TEAL, 6), border: `1px solid rgba(92,188,180,${overlap ? 0.35 : 0.18})`, borderRadius: 6, minHeight }}>
+    // panel isn't clipped. data-expanded drives a CSS elevation lift (#106).
+    <div data-expanded={expanded ? 'true' : undefined} style={{ position: 'relative', background: withAlpha(ACCENT_TEAL, 6), border: `1px solid rgba(92,188,180,${overlap ? 0.35 : 0.18})`, borderRadius: 6, minHeight }}>
       {/* ROW 25: gap/padding/title-clamp/end-time/loc-hide → CSS .meeting-row-* */}
       <div onClick={() => setExpanded(!expanded)} className="meeting-row-header">
         <span className={`meeting-row-time${overlap ? ' meeting-row-time--overlap' : ''}`} style={{ color: ACCENT_TEAL, flexShrink: 0 }}>
           {e.time}
           {e.end && <span className="meeting-row-end" style={{ color: INK_DIM, fontWeight: 400 }}> – {e.end}</span>}
         </span>
-        <span style={{ width: 6, height: 6, borderRadius: '50%', background: ACCENT_TEAL, flexShrink: 0 }} />
+        {/* #112: tooltip explains the teal dot — it's a calendar event indicator */}
+        <span title="Calendar event" aria-hidden="true" style={{ width: 6, height: 6, borderRadius: '50%', background: ACCENT_TEAL, flexShrink: 0 }} />
         <span className="meeting-row-title" style={{ color: INK }}>{e.title}</span>
         {e.meetingUrl && (
           // GH#80 P4: Join is an icon-only link. The wide pill ate the title

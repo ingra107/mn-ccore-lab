@@ -275,11 +275,11 @@ function AgendaOverlapRegion({
       >
         {fmtMin(unit.startMin)}
       </div>
-      {/* Side-by-side columns */}
+      {/* Side-by-side columns — #116: wider min (200px) to reduce title truncation */}
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: `repeat(${colCount}, minmax(160px, 1fr))`,
+          gridTemplateColumns: `repeat(${colCount}, minmax(200px, 1fr))`,
           gap: 4,
           overflowX: colCount > 1 ? 'auto' : 'visible',
           alignItems: 'start',
@@ -559,32 +559,43 @@ export function AgendaGrid({
             <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: withAlpha(ACCENT_TEAL, 55), padding: '0 0 3px', whiteSpace: 'nowrap' }}>
               Service
             </div>
-            {serviceBlocks.map((e) => (
-              <div
-                key={e.id}
-                style={{
-                  background: withAlpha(ACCENT_TEAL, 5),
-                  border: `1px solid ${withAlpha(ACCENT_TEAL, 20)}`,
-                  borderRadius: 4,
-                  padding: '5px 7px',
-                  // Translucent — agenda content renders over (z-index 2 on parent)
-                  opacity: 0.85,
-                }}
-              >
-                <div style={{ fontSize: 9, color: ACCENT_TEAL, fontWeight: 600, fontVariantNumeric: 'tabular-nums', marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                  {e.time}{e.end ? ` – ${e.end}` : ''}
+            {serviceBlocks.map((e) => {
+              // #109: service block height proportional to its duration so the
+              // 7am–3pm ICU block visually spans the full morning, not a stub.
+              const svcDuration = typeof e.startMin === 'number' && typeof e.endMin === 'number'
+                ? e.endMin - e.startMin
+                : 0
+              const svcHeight = svcDuration > 0 ? pxForMeeting(svcDuration) : undefined
+              return (
+                <div
+                  key={e.id}
+                  style={{
+                    background: withAlpha(ACCENT_TEAL, 5),
+                    border: `1px solid ${withAlpha(ACCENT_TEAL, 20)}`,
+                    borderRadius: 4,
+                    padding: '5px 7px',
+                    // Translucent — agenda content renders over (z-index 2 on parent)
+                    opacity: 0.85,
+                    // Proportional height mirrors the block's true duration
+                    minHeight: svcHeight,
+                    boxSizing: 'border-box',
+                  }}
+                >
+                  <div style={{ fontSize: 9, color: ACCENT_TEAL, fontWeight: 600, fontVariantNumeric: 'tabular-nums', marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {e.time}{e.end ? ` – ${e.end}` : ''}
+                  </div>
+                  <div style={{ fontSize: 10, color: INK, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', lineHeight: 1.3 }}>
+                    {e.title}
+                  </div>
+                  <button
+                    onClick={(ev) => { ev.stopPropagation(); onDismiss(e.id) }}
+                    title="Remove from today's view"
+                    className="hov-opacity"
+                    style={{ background: 'none', border: 'none', color: INK_DIM, fontSize: 10, cursor: 'pointer', padding: '2px 0 0', lineHeight: 1, opacity: 0.4, transition: 'opacity 120ms', '--hov-opacity': '1' } as React.CSSProperties}
+                  >× hide</button>
                 </div>
-                <div style={{ fontSize: 10, color: INK, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', lineHeight: 1.3 }}>
-                  {e.title}
-                </div>
-                <button
-                  onClick={(ev) => { ev.stopPropagation(); onDismiss(e.id) }}
-                  title="Remove from today's view"
-                  className="hov-opacity"
-                  style={{ background: 'none', border: 'none', color: INK_DIM, fontSize: 10, cursor: 'pointer', padding: '2px 0 0', lineHeight: 1, opacity: 0.4, transition: 'opacity 120ms', '--hov-opacity': '1' } as React.CSSProperties}
-                >× hide</button>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </div>

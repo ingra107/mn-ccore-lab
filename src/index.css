@@ -2242,6 +2242,12 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
   line-height: 1.35;
 }
 .meeting-row-loc { display: inline; }
+/* #116: in narrow overlap columns, relax to 3-line clamp so short titles
+   ("Fell C…" → "Fellow Clinic") show without truncation. Applied via
+   data-agenda-unit="overlap" parent context. */
+[data-agenda-unit="overlap"] .meeting-row-title {
+  -webkit-line-clamp: 3;
+}
 
 @media (max-width: 767px) {
   .meeting-row-header { gap: 8px; }
@@ -2257,6 +2263,15 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
     line-height: 1.35;
   }
   .meeting-row-loc { display: none; }
+}
+
+/* #106: expanded meeting row — lift with shadow so it visually reads as
+   "opened over" while subsequent rows reflow below (normal-flow model, no
+   absolute positioning; the shadow conveys elevation without layout tricks). */
+[data-expanded="true"] {
+  position: relative;
+  z-index: 2;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
 }
 
 /* OverlapBand — side-by-side collision band */
