@@ -4,7 +4,7 @@ import { History, Clock, GitCommit, Zap, Monitor, Filter, Search } from 'lucide-
 import { usePBSessions, usePBSessionStats } from '../../hooks/useApiData'
 import type { PBSessionRow } from '../../hooks/useApiData'
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
-import { formatMediumDate, localDateKey } from '../../lib/dateUtils'
+import { formatMediumDate, localDateKey, parseDateOnlyOrTimestamp } from '../../lib/dateUtils'
 import PageHeader from '../../components/PageHeader'
 import PageContainer from '../../components/PageContainer'
 import EmptyState from '../../components/EmptyState'
@@ -24,7 +24,10 @@ function formatDuration(minutes: number | null): string {
 
 function formatTime(dateStr: string): string {
   try {
-    const d = new Date(dateStr)
+    // D1 bare `YYYY-MM-DD HH:MM:SS` has no zone suffix; new Date() would read it
+    // as LOCAL wall-clock — off by the viewer's UTC offset. parseDateOnlyOrTimestamp
+    // appends 'Z' so the stored UTC time displays as the correct local clock time.
+    const d = parseDateOnlyOrTimestamp(dateStr)
     return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
   } catch {
     return ''

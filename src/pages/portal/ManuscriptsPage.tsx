@@ -39,6 +39,7 @@ import { useLabPrefs } from '../../hooks/useLabPrefs'
 import { toApiStage, stageIndex } from '../../lib/stageNormalize'
 import { PATHS } from '../../constants/paths'
 import { parseDbUtc } from '../../lib/time'
+import { parseDateOnlyOrTimestamp } from '../../lib/dateUtils'
 import { ICON_PROPS } from '../../lib/iconProps'
 
 // S4 (Nick, 2026-06-09): a manuscript = a project whose canonical stage is
@@ -70,7 +71,10 @@ const STAGE_ORDER: Record<string, number> = Object.fromEntries(STAGES.map((s, i)
 function daysInStage(project: Project): number {
   const dateStr = project.stage_entered_at || project.updated_at || project.lastActivity
   if (!dateStr) return 0
-  const ms = Date.now() - new Date(dateStr).getTime()
+  // D1 bare `YYYY-MM-DD HH:MM:SS` has no zone suffix; new Date() would read it
+  // as LOCAL wall-clock — off by the viewer's UTC offset (~5-6h CDT). Route
+  // through parseDateOnlyOrTimestamp which appends 'Z' so elapsed-ms is correct.
+  const ms = Date.now() - parseDateOnlyOrTimestamp(dateStr).getTime()
   return Math.floor(ms / (1000 * 60 * 60 * 24))
 }
 
