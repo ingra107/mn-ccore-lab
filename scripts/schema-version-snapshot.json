@@ -1,7 +1,7 @@
 {
   "description": "Canonical set of api/schema-v*.sql migration files. Regenerate with: python scripts/check-schema-versions.py --update",
-  "hash": "9e5490c4fba60cb617e5eb59a3241a85efe13f4da104ac01b9cb3e1ad456c8bd",
-  "file_count": 84,
+  "hash": "f75b15e990e6e83e3e528c152df2f2535cf9894fb5532bed6a0fcecb240a7eb5",
+  "file_count": 86,
   "files": [
     "schema-v2.sql",
     "schema-v3.sql",
@@ -86,11 +86,13 @@
     "schema-v77-activity-entries.sql",
     "schema-v78.sql",
     "schema-v79-artifacts.sql",
-    "schema-v80-retro-parity.sql"
+    "schema-v80-retro-parity.sql",
+    "schema-v81-entity-seen.sql",
+    "schema-v82-ai-request-tokens.sql"
   ],
   "version_range": [
     2,
-    80
+    82
   ],
   "gaps": [
     35,
