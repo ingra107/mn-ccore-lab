@@ -184,6 +184,27 @@ if [ -n "$tw_interp_hits" ]; then
 fi
 
 # ---------------------------------------------------------------------------
+# Ledger-registry gate (2026-06-18, bounded-ledger primitive).
+# Rejects any new schema-v*.sql that introduces a CREATE TABLE with a
+# timestamp column that lacks a LEDGER_REGISTRY entry in
+# api/lib/ledger-retention.ts. This makes "a ledger with no retention"
+# unrepresentable at commit time (Level-1, post-mortem fix for the
+# 2026-06-18 processed_mutations 88k-row D1 bloat incident).
+# Only runs when a schema-v*.sql file is staged — zero friction otherwise.
+if git diff --cached --name-only --diff-filter=AM \
+        | grep -qE "^api/schema-v.*\.sql$"; then
+    if command -v python >/dev/null 2>&1; then
+        if ! python scripts/check-ledger-registry.py --staged-only; then
+            echo ""
+            echo "Add a LEDGER_REGISTRY entry in api/lib/ledger-retention.ts, then re-commit."
+            exit 1
+        fi
+    else
+        echo "[hub-precommit] WARN: python not found; skipping ledger-registry gate."
+    fi
+fi
+
+# ---------------------------------------------------------------------------
 # Schema-version snapshot gate (2026-06-18, backlog CI fix). The INFRA-5
 # integrity check (scripts/check-schema-versions.py) previously ran ONLY in
 # the scheduled `D1 Schema Drift Check` workflow — so adding an
