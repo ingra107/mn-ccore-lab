@@ -47,7 +47,7 @@ function fmtMin(min: number): string {
   const m = min % 60
   const hour = h > 12 ? h - 12 : h === 0 ? 12 : h
   const ampm = h < 12 ? 'AM' : 'PM'
-  return m === 0 ? `${hour} ${ampm}` : `${hour}:${String(m).padStart(2, '0')}`
+  return m === 0 ? `${hour} ${ampm}` : `${hour}:${String(m).padStart(2, '0')} ${ampm}`
 }
 
 // ── AgendaGapRow ─────────────────────────────────────────────────────────
@@ -496,7 +496,10 @@ export function TimelineGrid({
       {allDayEvents.length > 0 && (
         <div style={{ marginBottom: 8 }}>
           <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: ACCENT_TEAL, padding: '0 2px 4px' }}>All-day events</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          {/* Same unbounded-stack class as the Service column (fixed 21709195):
+              cap the all-day banner so a conference-week pile of all-day events
+              scrolls internally instead of pushing the timeline down the page. */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, maxHeight: 200, overflowY: 'auto', overscrollBehavior: 'contain' }}>
             {allDayEvents.map((e) => (
               <EventRow
                 key={e.id}

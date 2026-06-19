@@ -133,9 +133,6 @@ export interface UntimedUnit {
 
 export type TimelineUnit = GapUnit | MeetingUnit | OverlapUnit | UntimedUnit
 
-/** @deprecated Use TimelineUnit */
-export type AgendaUnit = TimelineUnit
-
 export interface TimelineModel {
   allDayEvents: TodayEvent[]
   serviceBlocks: TodayEvent[]
@@ -145,9 +142,6 @@ export interface TimelineModel {
   /** total globalClusterCount — so trailing gap slot = between-{globalClusterCount} */
   globalClusterCount: number
 }
-
-/** @deprecated Use TimelineModel */
-export type AgendaModel = TimelineModel
 
 // ── Main export ────────────────────────────────────────────────────────────
 
@@ -210,7 +204,7 @@ export function buildTimelineModel(
   }
 
   // 5. Build agendaUnits
-  const units: AgendaUnit[] = []
+  const units: TimelineUnit[] = []
 
   // 5a. Untimed units (each untimed event = its own cluster with a slot key)
   untimedEvents.forEach((e, i) => {
@@ -294,6 +288,3 @@ export function buildTimelineModel(
     globalClusterCount,
   }
 }
-
-/** @deprecated Use buildTimelineModel */
-export const buildAgendaModel = buildTimelineModel
