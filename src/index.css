@@ -1748,8 +1748,9 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
 /* N1.15 — drag-and-drop zones are dead UI on touch (native DnD never fires);
    the 📌 plan button is the touch planning path. Section hints describing
    drag interactions hide there too (they wrapped into the headers).
-   .task-grip: the ⋮⋮ handle renders at 0.6 opacity on touch but native DnD
-   never fires there; hide it so the 📌 plan affordance is the sole path. */
+   .task-grip: the grab handle (co-located with 📌 pin on shared TaskRow;
+   right-side controls on PlannedTaskRow) hides on touch since native DnD
+   never fires there — 📌 is the sole touch planning path. */
 @media (hover: none) {
   .today-drop-zone,
   .today-section-hint,

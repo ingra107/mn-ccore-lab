@@ -209,20 +209,25 @@ export interface SharedTaskRowProps {
   children?: ReactNode     // inline detail rendered under the row when expanded
 }
 
-function Grip({ show, draggable, onDragStart }: { show: boolean; draggable?: boolean; onDragStart?: (e: React.DragEvent) => void }) {
+// DragHandle — hover-revealed grab icon co-located with the 📌 plan pin.
+// Carries the full HTML5 DnD contract (draggable + dataTransfer text/plain id)
+// previously owned by the left-gutter Grip. stopPropagation on click/mousedown
+// prevents row expand from firing when the user grabs this icon.
+// .task-grip class keeps the @media(hover:none) touch-hide rule working.
+function DragHandle({ show, draggable, onDragStart }: { show: boolean; draggable?: boolean; onDragStart?: (e: React.DragEvent) => void }) {
   if (!draggable) return null
   return (
-    <div
+    <span
       draggable
       onDragStart={onDragStart}
       onClick={(e) => e.stopPropagation()}
       onMouseDown={(e) => e.stopPropagation()}
-      title="Drag up to the timeline to plan this task"
+      title="Drag to timeline to schedule this task"
       className="task-grip"
-      style={{ width: 16, display: 'grid', placeItems: 'center', cursor: 'grab', color: INK_MUTED, opacity: show ? 1 : 0.6, transition: 'opacity 140ms', flexShrink: 0, userSelect: 'none' }}
+      style={{ display: 'inline-flex', alignItems: 'center', cursor: 'grab', color: INK_MUTED, visibility: show ? 'visible' : 'hidden', transition: 'visibility 0s', flexShrink: 0, userSelect: 'none', verticalAlign: 'middle', marginLeft: 2 }}
     >
-      <GripVertical {...ICON_PROPS} size={14} />
-    </div>
+      <GripVertical {...ICON_PROPS} size={12} />
+    </span>
   )
 }
 
@@ -416,7 +421,6 @@ export function TaskRow(props: SharedTaskRowProps) {
       >
         {/* fixed left cluster — constant width so titles always start at the same x */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 9, flexShrink: 0, paddingTop: 1 }}>
-          <Grip show={hover && !isDone} draggable={draggable} onDragStart={onDragStart} />
           <DoneBox done={isDone} onToggle={onToggleDone} />
           <span aria-hidden="true" style={{ width: 7, height: 7, borderRadius: '50%', flexShrink: 0, background: dotColor }} />
         </div>
@@ -430,6 +434,7 @@ export function TaskRow(props: SharedTaskRowProps) {
               {titleNode}
               {newChip}
               {planBtn && <span style={{ marginLeft: 4, whiteSpace: 'nowrap' }}>{planBtn}</span>}
+              <DragHandle show={hover && !isDone} draggable={draggable} onDragStart={onDragStart} />
             </span>
             <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
               {rightMeta}
@@ -451,6 +456,7 @@ export function TaskRow(props: SharedTaskRowProps) {
                   </span>
                 )}
                 {planBtn && <span style={{ marginLeft: 4, whiteSpace: 'nowrap' }}>{planBtn}</span>}
+                <DragHandle show={hover && !isDone} draggable={draggable} onDragStart={onDragStart} />
               </span>
               {/* right meta — aligned to first line */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 9, flexShrink: 0, paddingTop: 1 }}>
