@@ -9,17 +9,27 @@
 //     All-day events rendered first in an all-day band.
 //   - Interleaved planned tasks between meetings (the Hub's edge over native
 //     calendar apps — Agenda shows tasks-to-work-through, not just meetings).
+//   - Drop zones between rows (Phase 6): thin .today-drop-zone separators that
+//     accept HTML5 DnD drops from the task list. Slot-only write (no plan_start_min
+//     — Agenda has no time axis). Auto-hidden on touch via CSS (.today-drop-zone).
 //   - Read-mostly: complete tasks (DoneBox) + open drawer (click title).
-//     No drag-to-plan — that stays in Timeline mode.
 //   - Tomorrow section: shows tomorrow's D1 meetings so Nick can scan ahead.
 //   - No notes textarea (scan-mode; click title → drawer for details).
 //   - Now-marker chip on the current meeting/task block.
 //
-// DOES NOT: accept drag-drop, show gap drop-zones, render service-block rail.
-// Those are Timeline-only surfaces.
+// SLOT IDENTITY (Phase 6): buildTimelineModel is now the single source of truth
+// for between-N slot keys. The old local heuristic (between-N = before Nth
+// timed meeting, ignoring untimedCount offset) is DELETED. Both Agenda and
+// Timeline now compute slot identity identically — fixes the slot-offset mismatch
+// bug on days with untimed events (backlog 2026-06-19 OPEN).
+//
+// DEPRECATES: the local between-N heuristic (~AgendaListView.tsx:271-292 in the
+// pre-Phase-6 version), which diverged from buildTimelineModel on days with
+// untimed events.
 
 import { useMemo, useState } from 'react'
 import { PlannedTaskRow } from './PlannedTaskRow'
+import { buildTimelineModel } from './timelineModel'
 import {
   ACCENT_GOLD, ACCENT_TEAL, ACCENT_CORAL, INK, INK_DIM, INK_MUTED,
   withAlpha, type TodayEvent, type PlannedSlot,
@@ -189,6 +199,62 @@ function SectionHeader({ label }: { label: string }) {
   )
 }
 
+// ── AgendaDropSeparator ───────────────────────────────────────────────────
+// Thin .today-drop-zone element that accepts a task dropped from the task list.
+// Slot-only write (no plan_start_min — Agenda has no time axis).
+// Auto-hidden on touch via .today-drop-zone CSS (index.css:1754).
+// Mirrors AgendaGapRow's onDragOver/onDrop shape (TimelineGrid.tsx).
+function AgendaDropSeparator({
+  slot,
+  onDropTask,
+}: {
+  slot: PlannedSlot
+  onDropTask: (id: string, slot: PlannedSlot) => void
+}) {
+  const [dragOver, setDragOver] = useState(false)
+
+  return (
+    <div
+      className="today-drop-zone"
+      onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
+      onDragLeave={() => setDragOver(false)}
+      onDrop={(e) => {
+        e.preventDefault()
+        setDragOver(false)
+        const id = e.dataTransfer.getData('text/plain')
+        if (!id) return
+        onDropTask(id, slot)
+      }}
+      style={{
+        height: dragOver ? 20 : 6,
+        marginTop: 1,
+        marginBottom: 1,
+        borderRadius: 4,
+        border: `1px dashed ${withAlpha(ACCENT_GOLD, dragOver ? 55 : 15)}`,
+        background: dragOver ? withAlpha(ACCENT_GOLD, 8) : 'transparent',
+        transition: 'all 120ms',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        cursor: 'default',
+        overflow: 'hidden',
+      }}
+    >
+      {dragOver && (
+        <span style={{
+          fontSize: 9,
+          color: ACCENT_GOLD,
+          userSelect: 'none',
+          pointerEvents: 'none',
+          letterSpacing: '0.04em',
+        }}>
+          drop here
+        </span>
+      )}
+    </div>
+  )
+}
+
 // ── AgendaListView props ───────────────────────────────────────────────────
 export interface AgendaListViewProps {
   events: TodayEvent[]
@@ -218,30 +284,24 @@ export function AgendaListView({
   const visibleEvents = events.filter((e) => !dismissedIds[e.id])
   const visibleTomorrow = tomorrowEvents.filter((e) => !dismissedIds[e.id])
 
-  // Partition into all-day + timed (sorted by startMin).
-  const allDayEvents = useMemo(() =>
-    visibleEvents.filter((e) => !!e.isAllDay),
-    [visibleEvents])
+  // Slot-only drop handler (Agenda has no time axis — no plan_start_min written).
+  // Same contract as Timeline's onDropTask → state.planAt(id, slot).
+  const onDropTask = (id: string, slot: PlannedSlot) => {
+    state.planAt(id, slot)
+  }
 
-  const timedEvents = useMemo(() =>
-    visibleEvents
-      .filter((e) => !e.isAllDay && typeof e.startMin === 'number')
-      .sort((a, b) => (a.startMin as number) - (b.startMin as number)),
-    [visibleEvents])
+  // Partition into all-day + timed (sorted by startMin) using buildTimelineModel.
+  // buildTimelineModel is the single source of truth for slot identity (Phase 6).
+  // Agenda passes visibleEvents — dismissed events are excluded before the model.
+  const model = useMemo(() => buildTimelineModel(visibleEvents), [visibleEvents])
+  const { allDayEvents, units } = model
 
-  const untimedMeetings = useMemo(() =>
-    visibleEvents.filter((e) => !e.isAllDay && typeof e.startMin !== 'number'),
-    [visibleEvents])
-
-  // All planned task ids.
+  // All planned task ids (excluding done).
   const plannedIds = state.plannedIds()
 
-  // For each timed meeting, find which planned tasks to interleave before it.
-  // A task is "before meeting N" if its slot key resolves to that gap.
-  // We use a simple heuristic: tasks with slot 'between-N' are shown before
-  // the Nth timed meeting cluster (N=0 = before first, N=1 = before second, etc).
-  // The AgendaListView doesn't need per-gap drop targets, so we just show them
-  // in slot order between the meeting they precede.
+  // Build plannedTasksBySlot map: slot → TaskRow[] for rendering tasks
+  // interleaved in their correct gap positions, keyed off the model's slot
+  // (one source of truth — kills the heuristic divergence).
   const plannedTasksBySlot = useMemo(() => {
     const m = new Map<PlannedSlot, TaskRow[]>()
     for (const id of plannedIds) {
@@ -256,15 +316,23 @@ export function AgendaListView({
     return m
   }, [plannedIds, state.planned, tasks])
 
-  // Build the interleaved list for today's timed items.
-  // For each gap index, show planned tasks then the meeting.
-  const rows: Array<
-    | { type: 'task-group'; slot: PlannedSlot; tasks: TaskRow[] }
+  // Build the interleaved rows list from model units.
+  //
+  // Model unit → Agenda row mapping:
+  //   gap      → AgendaDropSeparator (drop zone) + planned tasks in that slot
+  //   meeting  → AgendaEventRow
+  //   overlap  → multiple AgendaEventRow (stacked — Agenda is linear scan, not time axis)
+  //   untimed  → AgendaDropSeparator (for the slot) + AgendaEventRow(s)
+  //
+  // now-marker is injected before the first unit whose startMin > now.
+  type AgendaRow =
+    | { type: 'drop'; slot: PlannedSlot; tasks: TaskRow[] }
     | { type: 'meeting'; event: TodayEvent }
     | { type: 'now' }
-  > = []
 
+  const rows: AgendaRow[] = []
   let nowInserted = false
+
   const tryInsertNow = (beforeMin: number) => {
     if (!nowInserted && now < beforeMin) {
       nowInserted = true
@@ -272,33 +340,43 @@ export function AgendaListView({
     }
   }
 
-  timedEvents.forEach((event, idx) => {
-    // Show tasks planned "between-N" before the Nth meeting.
-    const slot = `between-${idx}` as PlannedSlot
-    const slotTasks = plannedTasksBySlot.get(slot) ?? []
-    if (slotTasks.length > 0) {
-      rows.push({ type: 'task-group', slot, tasks: slotTasks })
-    }
-    tryInsertNow(event.startMin as number)
-    rows.push({ type: 'meeting', event })
-  })
-
-  // Trailing tasks (strip + last between slot).
-  const trailingSlots: PlannedSlot[] = [
-    `between-${timedEvents.length}` as PlannedSlot,
-    'strip',
-  ]
-  for (const slot of trailingSlots) {
-    const slotTasks = plannedTasksBySlot.get(slot) ?? []
-    if (slotTasks.length > 0) {
-      rows.push({ type: 'task-group', slot, tasks: slotTasks })
+  for (const unit of units) {
+    if (unit.kind === 'gap') {
+      tryInsertNow(unit.startMin)
+      const slotTasks = plannedTasksBySlot.get(unit.slot) ?? []
+      rows.push({ type: 'drop', slot: unit.slot, tasks: slotTasks })
+    } else if (unit.kind === 'meeting') {
+      tryInsertNow(unit.startMin)
+      rows.push({ type: 'meeting', event: unit.event })
+    } else if (unit.kind === 'overlap') {
+      tryInsertNow(unit.startMin)
+      // Overlap: render each event as a separate meeting row (stacked in linear Agenda).
+      // Side-by-side is a Timeline-only affordance (requires a time axis).
+      for (const event of unit.events) {
+        rows.push({ type: 'meeting', event })
+      }
+    } else if (unit.kind === 'untimed') {
+      // Untimed events: drop zone for their slot + the event row(s).
+      const slotTasks = plannedTasksBySlot.get(unit.slot) ?? []
+      rows.push({ type: 'drop', slot: unit.slot, tasks: slotTasks })
+      for (const event of unit.events) {
+        rows.push({ type: 'meeting', event })
+      }
     }
   }
 
-  // Insert now-line at end if not yet inserted.
+  // Trailing now-marker if not yet inserted.
   if (!nowInserted) rows.push({ type: 'now' })
 
-  const nowColor = rows.some((r) => r.type === 'meeting') ? ACCENT_CORAL : ACCENT_GOLD
+  // Trailing tasks in 'strip' slot (right_now / strip planned tasks not in any gap).
+  // These live outside the model units — render them after the interleaved section.
+  const stripTasks = plannedTasksBySlot.get('strip') ?? []
+
+  const hasTodayContent = units.length > 0 || plannedIds.length > 0
+
+  const nowColor = units.some((u) => u.kind === 'meeting' || u.kind === 'overlap')
+    ? ACCENT_CORAL
+    : ACCENT_GOLD
 
   const renderNowMarker = () => (
     <div
@@ -338,42 +416,25 @@ export function AgendaListView({
         <div style={{ marginBottom: 8 }}>
           <SectionHeader label="All day" />
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            {allDayEvents.map((e) => (
-              <AgendaEventRow
-                key={e.id}
-                event={e}
-                isNow={false}
-                onDismiss={onDismiss}
-              />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Untimed meetings */}
-      {untimedMeetings.length > 0 && (
-        <div style={{ marginBottom: 8 }}>
-          {allDayEvents.length === 0 && <SectionHeader label="Meetings" />}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            {untimedMeetings.map((e) => (
-              <AgendaEventRow
-                key={e.id}
-                event={e}
-                isNow={false}
-                onDismiss={onDismiss}
-              />
-            ))}
+            {allDayEvents
+              .filter((e) => !dismissedIds[e.id])
+              .map((e) => (
+                <AgendaEventRow
+                  key={e.id}
+                  event={e}
+                  isNow={false}
+                  onDismiss={onDismiss}
+                />
+              ))}
           </div>
         </div>
       )}
 
       {/* Today section header */}
-      {(timedEvents.length > 0 || rows.some((r) => r.type === 'task-group')) && (
-        <SectionHeader label="Today" />
-      )}
+      {hasTodayContent && <SectionHeader label="Today" />}
 
-      {/* Interleaved timed meetings + tasks */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      {/* Interleaved timed meetings, gaps (drop zones + tasks), now-marker */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
         {rows.map((row, i) => {
           if (row.type === 'now') {
             return <div key={`now-${i}`}>{renderNowMarker()}</div>
@@ -391,9 +452,10 @@ export function AgendaListView({
               />
             )
           }
-          // task-group
+          // drop zone + any tasks in this slot
           return (
-            <div key={`tg-${row.slot}`} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <div key={`drop-${row.slot}`} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <AgendaDropSeparator slot={row.slot} onDropTask={onDropTask} />
               {row.tasks.map((task) => (
                 <PlannedTaskRow
                   key={task.id}
@@ -409,6 +471,24 @@ export function AgendaListView({
             </div>
           )
         })}
+
+        {/* Strip tasks: planned tasks not in any gap slot */}
+        {stripTasks.length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 4 }}>
+            {stripTasks.map((task) => (
+              <PlannedTaskRow
+                key={task.id}
+                task={task}
+                project={task.project_id ? projectsByPid.get(task.project_id) ?? null : null}
+                state={state}
+                small
+                onExpand={onExpand}
+                expandedId={expandedId}
+                projectsByPid={projectsByPid}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Restore dismissed */}
