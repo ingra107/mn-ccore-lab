@@ -88,7 +88,9 @@ export function PlannedTaskRow({ task, project, state, timeHint, small = false, 
                 onMouseDown={(e) => e.stopPropagation()}
                 title="Drag to timeline to give this a time slot"
                 className="task-grip"
-                style={{ display: 'inline-flex', alignItems: 'center', cursor: 'grab', color: INK_DIM, visibility: hover ? 'visible' : 'hidden', userSelect: 'none', flexShrink: 0 }}
+                // ~50% larger hit area (Nick 2026-06-19): padding grows the click
+                // target; negative margin absorbs it so the row doesn't shift.
+                style={{ display: 'inline-flex', alignItems: 'center', cursor: 'grab', color: INK_DIM, visibility: hover ? 'visible' : 'hidden', userSelect: 'none', flexShrink: 0, padding: '4px 5px', margin: '-4px -1px' }}
               >
                 <GripVertical {...ICON_PROPS} size={12} />
               </span>

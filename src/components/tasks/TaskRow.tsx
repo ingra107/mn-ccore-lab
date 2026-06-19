@@ -224,7 +224,10 @@ function DragHandle({ show, draggable, onDragStart }: { show: boolean; draggable
       onMouseDown={(e) => e.stopPropagation()}
       title="Drag to timeline to schedule this task"
       className="task-grip"
-      style={{ display: 'inline-flex', alignItems: 'center', cursor: 'grab', color: INK_MUTED, visibility: show ? 'visible' : 'hidden', transition: 'visibility 0s', flexShrink: 0, userSelect: 'none', verticalAlign: 'middle', marginLeft: 2 }}
+      // ~50% larger hit area (Nick 2026-06-19): padding enlarges the click target
+      // without changing the 12px icon's visual size. Negative margin absorbs the
+      // padding so row layout doesn't shift.
+      style={{ display: 'inline-flex', alignItems: 'center', cursor: 'grab', color: INK_MUTED, visibility: show ? 'visible' : 'hidden', transition: 'visibility 0s', flexShrink: 0, userSelect: 'none', verticalAlign: 'middle', marginLeft: 2, padding: '4px 5px', margin: '-4px -1px -4px 1px' }}
     >
       <GripVertical {...ICON_PROPS} size={12} />
     </span>
@@ -360,7 +363,9 @@ export function TaskRow(props: SharedTaskRowProps) {
       onMouseDown={(e) => e.stopPropagation()}
       title="Plan for today (no specific time)"
       aria-label="Plan task for today"
-      style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0 2px', color: ACCENT_GOLD, lineHeight: 1, flexShrink: 0, verticalAlign: 'baseline', visibility: hover ? 'visible' : 'hidden', display: 'inline-flex', alignItems: 'center' }}
+      // ~50% larger hit area (Nick 2026-06-19): padding grows the click target;
+      // negative margin keeps the row layout from shifting.
+      style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px 5px', margin: '-4px -3px', color: ACCENT_GOLD, lineHeight: 1, flexShrink: 0, verticalAlign: 'baseline', visibility: hover ? 'visible' : 'hidden', display: 'inline-flex', alignItems: 'center' }}
     >
       <Pin {...ICON_PROPS} size={12} />
     </button>
