@@ -548,38 +548,52 @@ export function TimelineGrid({
           </div>
         </div>
 
-        {/* Service blocks — right ~25%, translucent (z-index 1) */}
-        {serviceBlocks.length > 0 && (
+        {/* Service blocks — right ~25%, translucent (z-index 1).
+            GH#80 #117 (Nick 2026-06-19): COMPACT 2-up grid, capped to the day
+            height. Prior #109 made each block's minHeight ∝ duration (a 7am–3pm
+            block ≈ 432px); four stacked vertically blew the rail to ~1700px and,
+            being a flex sibling of the agenda, pushed Planned/Tasks far below the
+            fold. Fix: fixed-height compact cards in a 2-column grid (1 col when a
+            single block), bounded by maxHeight = the model's day height so the
+            rail can NEVER elongate the page past the agenda's own day window
+            (internal scroll if there are ever many blocks). The time-range text
+            still conveys the span, so dropping proportional height loses nothing. */}
+        {serviceBlocks.length > 0 && (() => {
+          // Same axis the agenda uses (dayStart→dayEnd × PX_PER_MIN): bounds the
+          // rail to "the full day" with no measurement / ResizeObserver.
+          const serviceDayHeight = Math.round((model.dayEnd - dayStart) * PX_PER_MIN)
+          const serviceCols = serviceBlocks.length <= 1 ? 1 : 2
+          return (
           <div style={{
             width: 'clamp(96px, 25%, 180px)',
             flexShrink: 0,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 4,
             zIndex: 1,
           }}>
             <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: withAlpha(ACCENT_TEAL, 55), padding: '0 0 3px', whiteSpace: 'nowrap' }}>
               Service
             </div>
-            {serviceBlocks.map((e) => {
-              // #109: service block height proportional to its duration so the
-              // 7am–3pm ICU block visually spans the full morning, not a stub.
-              const svcDuration = typeof e.startMin === 'number' && typeof e.endMin === 'number'
-                ? e.endMin - e.startMin
-                : 0
-              const svcHeight = svcDuration > 0 ? pxForMeeting(svcDuration) : undefined
-              return (
+            <div style={{
+              maxHeight: serviceDayHeight,
+              overflowY: 'auto',
+              overscrollBehavior: 'contain',
+              display: 'grid',
+              gridTemplateColumns: `repeat(${serviceCols}, minmax(0, 1fr))`,
+              gridAutoRows: 72,
+              gap: 4,
+              alignContent: 'start',
+            }}>
+              {serviceBlocks.map((e) => (
                 <div
                   key={e.id}
                   style={{
                     background: withAlpha(ACCENT_TEAL, 5),
                     border: `1px solid ${withAlpha(ACCENT_TEAL, 20)}`,
                     borderRadius: 4,
-                    padding: '5px 7px',
+                    padding: '5px 6px',
                     // Translucent — agenda content renders over (z-index 2 on parent)
                     opacity: 0.85,
-                    // Proportional height mirrors the block's true duration
-                    minHeight: svcHeight,
+                    minHeight: 0,
+                    overflow: 'hidden',
                     boxSizing: 'border-box',
                   }}
                 >
@@ -596,10 +610,11 @@ export function TimelineGrid({
                     style={{ background: 'none', border: 'none', color: INK_DIM, fontSize: 10, cursor: 'pointer', padding: '2px 0 0', lineHeight: 1, opacity: 0.4, transition: 'opacity 120ms', '--hov-opacity': '1' } as React.CSSProperties}
                   >× hide</button>
                 </div>
-              )
-            })}
+              ))}
+            </div>
           </div>
-        )}
+          )
+        })()}
       </div>
     </div>
   )
