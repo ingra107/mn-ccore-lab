@@ -21,6 +21,7 @@
 
 import { describe, it, expect, vi } from 'vitest';
 import type { Env } from '../helpers';
+import { nowInstant } from '../lib/time';
 
 // We need to mock fetch() so pollFeed doesn't make real HTTP calls.
 const mockFetch = vi.fn();
@@ -40,7 +41,7 @@ function makeIcs(uid: string, summary: string): string {
     'BEGIN:VEVENT',
     `UID:${uid}@test.com`,
     `SUMMARY:${summary}`,
-    `DTSTART:${new Date().toISOString().replace(/[-:]/g, '').slice(0, 15)}Z`,
+    `DTSTART:${nowInstant().replace(/[-:]/g, '').slice(0, 15)}Z`,
     `DTEND:${new Date(Date.now() + 3600000).toISOString().replace(/[-:]/g, '').slice(0, 15)}Z`,
     'END:VEVENT',
     'END:VCALENDAR',
@@ -144,7 +145,7 @@ describe('pollFeed — atomic swap (Level-1 durability, v85)', () => {
       staleFeeds: [
         { id: 'feed-1', user_slug: 'nick-ingraham', feed_url: 'https://cal.example.com/feed.ics',
           feed_label: 'Test', last_polled_at: null, last_error: null,
-          created_at: new Date().toISOString(), etag: null, last_modified: null },
+          created_at: nowInstant(), etag: null, last_modified: null },
       ],
       capturedDeletes,
     });
@@ -175,7 +176,7 @@ describe('pollFeed — atomic swap (Level-1 durability, v85)', () => {
       staleFeeds: [
         { id: 'feed-2', user_slug: 'nick-ingraham', feed_url: 'https://cal.example.com/feed.ics',
           feed_label: 'Test', last_polled_at: null, last_error: null,
-          created_at: new Date().toISOString(), etag: null, last_modified: null },
+          created_at: nowInstant(), etag: null, last_modified: null },
       ],
       failInsertChunk: { 0: true }, // fail the first (and only) chunk
       capturedDeletes,
@@ -203,7 +204,7 @@ describe('pollFeed — atomic swap (Level-1 durability, v85)', () => {
       staleFeeds: [
         { id: 'feed-3', user_slug: 'nick-ingraham', feed_url: 'https://cal.example.com/feed.ics',
           feed_label: 'Test', last_polled_at: null, last_error: null,
-          created_at: new Date().toISOString(), etag: 'W/"abc123"', last_modified: null },
+          created_at: nowInstant(), etag: 'W/"abc123"', last_modified: null },
       ],
       capturedDeletes,
       capturedSql,
@@ -226,7 +227,7 @@ describe('pollFeed — atomic swap (Level-1 durability, v85)', () => {
       staleFeeds: [
         { id: 'feed-4', user_slug: 'nick-ingraham', feed_url: 'https://cal.example.com/feed.ics',
           feed_label: 'Test', last_polled_at: null, last_error: null,
-          created_at: new Date().toISOString(), etag: null, last_modified: null },
+          created_at: nowInstant(), etag: null, last_modified: null },
       ],
       failEviction: true,
       capturedDeletes,
@@ -252,7 +253,7 @@ describe('pollFeed — atomic swap (Level-1 durability, v85)', () => {
       staleFeeds: [
         { id: 'feed-5', user_slug: 'nick-ingraham', feed_url: 'https://cal.example.com/feed.ics',
           feed_label: 'Test', last_polled_at: null, last_error: null,
-          created_at: new Date().toISOString(), etag: null, last_modified: null },
+          created_at: nowInstant(), etag: null, last_modified: null },
       ],
       capturedDeletes,
     });
@@ -295,7 +296,7 @@ describe('pollFeed — cron path uses user_email for PARTSTAT=DECLINED filter (b
     'SUMMARY:Declined pitch',
     // Use a fixed date well inside the polling window (today is used by the cron path,
     // but we can't predict that precisely — use the same trick as makeIcs).
-    `DTSTART:${new Date().toISOString().replace(/[-:]/g, '').slice(0, 15)}Z`,
+    `DTSTART:${nowInstant().replace(/[-:]/g, '').slice(0, 15)}Z`,
     `DTEND:${new Date(Date.now() + 3600000).toISOString().replace(/[-:]/g, '').slice(0, 15)}Z`,
     // ATTENDEE line: params BEFORE the colon, mailto: address as value.
     // The parser stores the full "ATTENDEE;...params...:mailto:..." string.
@@ -324,7 +325,7 @@ describe('pollFeed — cron path uses user_email for PARTSTAT=DECLINED filter (b
           feed_label: 'Test',
           last_polled_at: null,
           last_error: null,
-          created_at: new Date().toISOString(),
+          created_at: nowInstant(),
           etag: null,
           last_modified: null,
         },
@@ -361,7 +362,7 @@ describe('pollFeed — cron path uses user_email for PARTSTAT=DECLINED filter (b
           feed_label: 'Test',
           last_polled_at: null,
           last_error: null,
-          created_at: new Date().toISOString(),
+          created_at: nowInstant(),
           etag: null,
           last_modified: null,
         },
