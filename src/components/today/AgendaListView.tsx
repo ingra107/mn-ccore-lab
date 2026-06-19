@@ -130,22 +130,26 @@ function AgendaEventRow({
               {durStr}
             </span>
           )}
+          {event.meetingUrl && (
+            // Phase 0: Join inline (🔗) in the title row so a meeting with a URL
+            // isn't taller than other rows — matches MeetingRow's treatment.
+            <a
+              href={event.meetingUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              title="Join meeting"
+              aria-label="Join meeting"
+              style={{ fontSize: 13, color: ACCENT_GOLD, textDecoration: 'none', flexShrink: 0, lineHeight: 1, padding: '0 1px' }}
+            >
+              🔗
+            </a>
+          )}
         </div>
         {event.loc && (
           <div style={{ fontSize: 11, color: INK_DIM, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {event.loc}
           </div>
-        )}
-        {event.meetingUrl && (
-          <a
-            href={event.meetingUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={(e) => e.stopPropagation()}
-            style={{ fontSize: 11, color: ACCENT_TEAL, textDecoration: 'none', display: 'inline-block', marginTop: 2 }}
-          >
-            Join
-          </a>
         )}
       </div>
 
