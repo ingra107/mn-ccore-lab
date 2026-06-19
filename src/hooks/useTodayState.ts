@@ -37,7 +37,14 @@ export interface TodayStateApi extends TodayStateShape {
   promote: (id: string) => void
   markDone: (id: string) => void
   uncheck: (id: string) => void
-  planAt: (id: string, slot: PlannedSlot) => void
+  /** Drop/re-slot a task. Phase 3: pass plan_start_min + estimated_minutes to
+   *  snap a timed block to the top of the gap it was dropped into. */
+  planAt: (
+    id: string,
+    slot: PlannedSlot,
+    plan_start_min?: number | null,
+    estimated_minutes?: number | null,
+  ) => void
   unplan: (id: string) => void
 }
 
@@ -117,8 +124,13 @@ export function useTodayState(tasks: TaskRow[], completedTodayIds: string[] = []
     updateStatus.mutate({ id, status: 'todo' })
   }, [updateStatus])
 
-  const planAt = useCallback((id: string, slot: PlannedSlot) => {
-    plan.setPlanSlot(id, slot)
+  const planAt = useCallback((
+    id: string,
+    slot: PlannedSlot,
+    plan_start_min?: number | null,
+    estimated_minutes?: number | null,
+  ) => {
+    plan.setPlanSlot(id, slot, plan_start_min, estimated_minutes)
   }, [plan])
 
   const unplan = useCallback((id: string) => {

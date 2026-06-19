@@ -30,10 +30,13 @@
 //   - OverlapBand coral badge / "conflict" copy for timed overlaps
 //   - boxed right-fixed-width service rail
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type CSSProperties } from 'react'
 import { EventRow, type SaveStatus } from './MeetingRow'
 import { PlannedTaskRow } from './PlannedTaskRow'
-import { buildTimelineModel, pxForMeeting, PX_PER_MIN, GAP_FLOOR } from './timelineModel'
+import {
+  buildTimelineModel, pxForMeeting, PX_PER_MIN, GAP_FLOOR,
+  TIMELINE_TASK_BLOCKS, packTaskBlocks,
+} from './timelineModel'
 import {
   ACCENT_GOLD, ACCENT_TEAL, ACCENT_CORAL, INK, INK_DIM, withAlpha,
   type TodayEvent, type PlannedSlot,
@@ -50,14 +53,123 @@ function fmtMin(min: number): string {
   return m === 0 ? `${hour} ${ampm}` : `${hour}:${String(m).padStart(2, '0')} ${ampm}`
 }
 
+// ── TimedTaskBlock ─────────────────────────────────────────────────────────
+// Compact absolute-positioned block for a TIMED planned task inside a gap.
+// Renders the task title + duration chip. Click → onExpand (Phase 3 only; the
+// full handle redesign is Phase 5). No pointer/resize handlers (Phase 4).
+// Phase 3 ONLY rendered when TIMELINE_TASK_BLOCKS === true.
+function TimedTaskBlock({
+  task,
+  topPx,
+  heightPx,
+  colIdx,
+  colCount,
+  onExpand,
+  expandedId,
+}: {
+  task: TaskRow
+  topPx: number
+  heightPx: number
+  colIdx: number
+  colCount: number
+  onExpand: (id: string) => void
+  expandedId: string | null
+}) {
+  const expanded = expandedId === task.id
+  const visibleColCount = Math.min(colCount, 3)
+  const leftPct = (colIdx / visibleColCount) * 100
+  const widthPct = (1 / visibleColCount) * 100
+
+  const blockStyle: CSSProperties = {
+    position: 'absolute',
+    top: topPx,
+    height: heightPx,
+    left: `${leftPct}%`,
+    width: `${widthPct}%`,
+    boxSizing: 'border-box',
+    padding: '3px 6px',
+    background: withAlpha(ACCENT_GOLD, 10),
+    border: `1px solid ${withAlpha(ACCENT_GOLD, 30)}`,
+    borderRadius: 5,
+    overflow: 'hidden',
+    cursor: 'pointer',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 2,
+    zIndex: 1,
+  }
+
+  const dur = task.estimated_minutes ?? 30
+  const durLabel = dur < 60 ? `${dur}m` : `${Math.floor(dur / 60)}h${dur % 60 > 0 ? ` ${dur % 60}m` : ''}`
+
+  // The block is click-to-expand only (Phase 3). The expansion (TaskDetailDrawer)
+  // renders in NORMAL FLOW in AgendaGapRow below the timed-blocks layer — this
+  // keeps the GH#80 invariant (expandable content never absolute, always pushes
+  // the gap down). expanded state is signalled via expandedId prop.
+  return (
+    <div
+      style={blockStyle}
+      onClick={() => onExpand(task.id)}
+      title={task.title}
+      data-task-id={task.id}
+      aria-label={`${task.short_title || task.title} — ${durLabel}`}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onExpand(task.id) }
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: 4, minWidth: 0 }}>
+        <span style={{
+          fontSize: 11,
+          fontWeight: 500,
+          color: INK,
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+          flex: 1,
+          minWidth: 0,
+        }}>
+          {task.short_title || task.title}
+        </span>
+        <span style={{
+          fontSize: 9,
+          color: ACCENT_GOLD,
+          padding: '1px 4px',
+          background: withAlpha(ACCENT_GOLD, 12),
+          border: `1px solid ${withAlpha(ACCENT_GOLD, 25)}`,
+          borderRadius: 999,
+          flexShrink: 0,
+          fontVariantNumeric: 'tabular-nums',
+        }}>
+          {durLabel}
+        </span>
+      </div>
+      {expanded && (
+        <span style={{ fontSize: 9, color: ACCENT_GOLD, marginLeft: 2 }}>▾ expanded below</span>
+      )}
+    </div>
+  )
+}
+
 // ── AgendaGapRow ─────────────────────────────────────────────────────────
 // Real in-flow drop target — replaces AbsoluteDropZone.
 // Proportional baseHeight + visible dragover state + free-minutes label.
-// Planned tasks render inside the row; label is below them.
+//
+// Phase 3 (TIMELINE_TASK_BLOCKS):
+//   - Timed tasks (plan_start_min != null) render as absolute blocks inside the
+//     gap's local coordinate space. Gap auto-grows to contain all blocks.
+//   - Untimed tasks keep the existing full-width stacked PlannedTaskRow render
+//     (graceful fallback — drop from Phase-1 regression-free).
+//   - Drop into a timed gap writes plan_start_min=gap.startMin + estimated_minutes.
+//
+// Phase 1 fallback (TIMELINE_TASK_BLOCKS === false):
+//   All tasks render as full-width stacked PlannedTaskRows (unchanged).
 function AgendaGapRow({
   slot,
   freeMinutes,
   baseHeight,
+  gapStartMin,
   tasks,
   state,
   projectsByPid,
@@ -68,18 +180,53 @@ function AgendaGapRow({
   slot: PlannedSlot
   freeMinutes: number
   baseHeight: number
+  /** Minutes-since-midnight of the gap start. Used for absolute block top/height.
+   *  Zero for untimed gaps (UntimedUnit) — those never use the absolute lane. */
+  gapStartMin: number
   tasks: TaskRow[]
   state: TodayStateApi
   projectsByPid: Map<string, { name: string; slug: string; category?: string | null }>
   expandedId: string | null
   onExpand: (id: string) => void
-  onDropTask: (id: string, slot: PlannedSlot) => void
+  /** Phase 3: includes plan_start_min + estimated_minutes for timed drops. */
+  onDropTask: (id: string, slot: PlannedSlot, plan_start_min?: number, estimated_minutes?: number) => void
 }) {
   const [dragOver, setDragOver] = useState(false)
-  const tasksInGap = state.plannedIds()
-    .filter((id) => state.planned[id]?.slot === slot)
-    .map((id) => tasks.find((t) => t.id === id))
-    .filter((t): t is TaskRow => !!t)
+
+  const tasksInGap = useMemo(() =>
+    state.plannedIds()
+      .filter((id) => state.planned[id]?.slot === slot)
+      .map((id) => tasks.find((t) => t.id === id))
+      .filter((t): t is TaskRow => !!t),
+    [state, slot, tasks],
+  )
+
+  // Phase 3: partition into timed (absolute lane) vs untimed (stacked).
+  // Memoized so the downstream useMemos for placements/height don't over-fire.
+  const { timedTasks, untimedTasks } = useMemo(() => {
+    if (TIMELINE_TASK_BLOCKS && gapStartMin > 0) {
+      return {
+        timedTasks: tasksInGap.filter((t) => t.plan_start_min != null),
+        untimedTasks: tasksInGap.filter((t) => t.plan_start_min == null),
+      }
+    }
+    // Phase 1 fallback: all tasks are "untimed" (full-width stack)
+    return { timedTasks: [] as typeof tasksInGap, untimedTasks: tasksInGap }
+  }, [tasksInGap, gapStartMin])
+
+  // Compute absolute placements once; derive container height from them.
+  // Gap auto-grow: max(pxForGap(freeMinutes), tasksExtentPx).
+  // Level-1: timed-block overflow into the next unit is unrepresentable.
+  const timedPlacements = useMemo(
+    () => packTaskBlocks(timedTasks, gapStartMin),
+    [timedTasks, gapStartMin],
+  )
+  const containerMinHeight = useMemo(() => {
+    const base = baseHeight  // already = pxForGap(freeMinutes) from the model
+    if (timedPlacements.length === 0) return base
+    const tasksExtent = Math.max(...timedPlacements.map((p) => p.topPx + p.heightPx))
+    return Math.max(base, tasksExtent)
+  }, [baseHeight, timedPlacements])
 
   const fmtFree = freeMinutes >= 60
     ? `${Math.floor(freeMinutes / 60)}h${freeMinutes % 60 > 0 ? ` ${freeMinutes % 60}m` : ''} free`
@@ -95,29 +242,96 @@ function AgendaGapRow({
         e.preventDefault()
         setDragOver(false)
         const id = e.dataTransfer.getData('text/plain')
-        if (id) onDropTask(id, slot)
+        if (!id) return
+        if (TIMELINE_TASK_BLOCKS && gapStartMin > 0) {
+          // Timed drop: snap to gap start, default 30m if task has no duration.
+          const droppedTask = tasks.find((t) => t.id === id)
+          const estimatedMins = droppedTask?.estimated_minutes ?? 30
+          onDropTask(id, slot, gapStartMin, estimatedMins)
+        } else {
+          onDropTask(id, slot)
+        }
       }}
       style={{
-        minHeight: baseHeight,
+        minHeight: containerMinHeight,
         borderTop: `1px dashed ${withAlpha(ACCENT_GOLD, dragOver ? 55 : 15)}`,
         background: dragOver ? withAlpha(ACCENT_GOLD, 8) : 'transparent',
         transition: 'all 120ms',
         display: 'flex',
         flexDirection: 'column',
+        position: 'relative',  // Phase 3: absolute task blocks position within this container
       }}
     >
-      {tasksInGap.map((t) => (
-        <PlannedTaskRow
-          key={t.id}
-          task={t}
-          project={t.project_id ? projectsByPid.get(t.project_id) ?? null : null}
-          state={state}
-          small
-          onExpand={onExpand}
-          expandedId={expandedId}
-          projectsByPid={projectsByPid}
-        />
-      ))}
+      {/* Phase 3: Absolute-lane timed task blocks */}
+      {timedTasks.length > 0 && (
+        // Overflow-x scroll when colCount > 3 (matches AgendaOverlapRegion posture)
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          overflowX: timedPlacements[0]?.colCount > 3 ? 'auto' : 'visible',
+          overflowY: 'visible',
+          pointerEvents: 'none',  // children re-enable their own pointer events
+        }}>
+          {timedTasks.map((t, i) => {
+            const p = timedPlacements[i]
+            if (!p) return null
+            return (
+              <div key={t.id} style={{ pointerEvents: 'auto' }}>
+                <TimedTaskBlock
+                  task={t}
+                  topPx={p.topPx}
+                  heightPx={p.heightPx}
+                  colIdx={p.colIdx}
+                  colCount={p.colCount}
+                  onExpand={onExpand}
+                  expandedId={expandedId}
+                />
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {/* Normal-flow area: below the timed blocks' extent.
+          Renders (a) the expanded PlannedTaskRow for any timed task whose
+          drawer is open — keeps TaskDetailDrawer in normal flow so it pushes
+          the gap down (GH#80 invariant: absolute content never clips/bleeds);
+          (b) untimed tasks: full-width stacked (Phase-1 graceful fallback). */}
+      <div style={timedTasks.length > 0 ? { marginTop: containerMinHeight } : undefined}>
+        {/* Expanded timed task drawer: render full PlannedTaskRow in normal flow */}
+        {timedTasks
+          .filter((t) => expandedId === t.id)
+          .map((t) => (
+            <PlannedTaskRow
+              key={`expanded-${t.id}`}
+              task={t}
+              project={t.project_id ? projectsByPid.get(t.project_id) ?? null : null}
+              state={state}
+              small
+              onExpand={onExpand}
+              expandedId={expandedId}
+              projectsByPid={projectsByPid}
+            />
+          ))
+        }
+        {/* Untimed tasks: full-width stacked (Phase-1 behavior, graceful fallback) */}
+        {untimedTasks.map((t) => (
+          <PlannedTaskRow
+            key={t.id}
+            task={t}
+            project={t.project_id ? projectsByPid.get(t.project_id) ?? null : null}
+            state={state}
+            small
+            onExpand={onExpand}
+            expandedId={expandedId}
+            projectsByPid={projectsByPid}
+          />
+        ))}
+      </div>
+
       {/* Free-time label — bottom of the gap */}
       <div style={{
         flex: 1,
@@ -350,7 +564,12 @@ export function TimelineGrid({
   now,
   inMeeting,
 }: TimelineGridProps) {
-  const onDropTask = (id: string, slot: PlannedSlot) => state.planAt(id, slot)
+  const onDropTask = (
+    id: string,
+    slot: PlannedSlot,
+    plan_start_min?: number,
+    estimated_minutes?: number,
+  ) => state.planAt(id, slot, plan_start_min, estimated_minutes)
   const nowColor = inMeeting ? ACCENT_CORAL : ACCENT_GOLD
   const nowLabel = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
 
@@ -413,6 +632,7 @@ export function TimelineGrid({
           slot={unit.slot}
           freeMinutes={unit.freeMinutes}
           baseHeight={unit.baseHeight}
+          gapStartMin={unit.startMin}
           tasks={tasks}
           state={state}
           projectsByPid={projectsByPid}
@@ -450,13 +670,15 @@ export function TimelineGrid({
         />
       )
     } else if (unit.kind === 'untimed') {
-      // Untimed events: drop zone + event rows, no time-based now-injection
+      // Untimed events: drop zone + event rows, no time-based now-injection.
+      // gapStartMin=0 → absolute lane disabled (no minute axis for untimed units).
       agendaElements.push(
         <div key={`untimed-${unit.slot}`}>
           <AgendaGapRow
             slot={unit.slot}
             freeMinutes={0}
             baseHeight={GAP_FLOOR}
+            gapStartMin={0}
             tasks={tasks}
             state={state}
             projectsByPid={projectsByPid}

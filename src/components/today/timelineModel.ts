@@ -1,4 +1,8 @@
 // timelineModel.ts — Pure data transform for the Timeline proportional grid.
+//
+// Phase 3 flag: TIMELINE_TASK_BLOCKS gates all absolute-lane rendering inside
+// AgendaGapRow. Set to false to restore the Phase-1 full-width stacked render
+// with one line change (rollback path per the synchronous-swinging-sifakis plan).
 // (Renamed from agendaModel.ts — "Agenda" now refers to the linear list view;
 //  "Timeline" is the absolute-axis drag-to-plan surface.)
 //
@@ -18,6 +22,11 @@
 //     Timeline implementation so existing planned tasks still route correctly.
 
 import { LONG_EVENT_MIN, type TodayEvent } from './constants'
+import type { TaskRow } from '../../lib/api'
+
+// ── Phase 3 feature flag ───────────────────────────────────────────────────
+// One-line rollback to Phase-1 stacked render: set to false.
+export const TIMELINE_TASK_BLOCKS = true
 
 // ── Height constants ───────────────────────────────────────────────────────
 // PX_PER_MIN raised + MEETING_FLOOR lowered so 30/45/60/90-min blocks are
@@ -88,6 +97,92 @@ export function packColumns(events: TodayEvent[]): ColPlacement[] {
 
   const colCount = colEnds.length
   return colIdx.map((ci) => ({ colIdx: ci, colCount }))
+}
+
+// ── Task block packing ────────────────────────────────────────────────────
+//
+// Adapts TaskRow[] to the packColumns() interval-coloring algorithm. Reuses
+// packColumns() directly — does NOT fork the algorithm. The adapter builds the
+// minimal TodayEvent-shaped objects (only startMin/endMin consumed by
+// packColumns) from plan_start_min + estimated_minutes, pre-sorted by start
+// then plan_rank so ties go to the rank-ordered task.
+//
+// Returns parallel to input tasks (same order as sorted timedTasks caller passes).
+
+export interface TaskBlockPlacement extends ColPlacement {
+  /** px from the gap's top edge (plan_start_min - gap.startMin) * PX_PER_MIN */
+  topPx: number
+  /** px height: max(MEETING_FLOOR, estimated_minutes * PX_PER_MIN) */
+  heightPx: number
+}
+
+/** Sort predicate for timed tasks within a gap: by start time, then plan_rank. */
+export function sortTimedTasks(tasks: TaskRow[]): TaskRow[] {
+  return [...tasks].sort((a, b) => {
+    const aStart = a.plan_start_min ?? 0
+    const bStart = b.plan_start_min ?? 0
+    if (aStart !== bStart) return aStart - bStart
+    const aRank = a.plan_rank ?? 0
+    const bRank = b.plan_rank ?? 0
+    return aRank - bRank
+  })
+}
+
+/**
+ * Compute absolute-lane placements for TIMED tasks within a gap.
+ * @param timedTasks - Tasks with plan_start_min != null (pre-sorted by caller
+ *   via sortTimedTasks is fine but not required — this sorts internally).
+ * @param gapStartMin - The gap's startMin (minutes-since-midnight).
+ */
+export function packTaskBlocks(
+  timedTasks: TaskRow[],
+  gapStartMin: number,
+): TaskBlockPlacement[] {
+  if (timedTasks.length === 0) return []
+  const sorted = sortTimedTasks(timedTasks)
+
+  // Build minimal TodayEvent-shaped objects for packColumns().
+  // packColumns only reads .startMin and .endMin.
+  const fakeEvents: TodayEvent[] = sorted.map((t) => {
+    const start = t.plan_start_min as number
+    const dur = t.estimated_minutes ?? 30
+    return {
+      id: t.id,
+      time: '',
+      title: t.title,
+      startMin: start,
+      endMin: start + dur,
+    }
+  })
+
+  const placements = packColumns(fakeEvents)
+
+  return sorted.map((t, i) => {
+    const start = t.plan_start_min as number
+    const dur = t.estimated_minutes ?? 30
+    const topPx = Math.round((start - gapStartMin) * PX_PER_MIN)
+    const heightPx = Math.max(MEETING_FLOOR, Math.round(dur * PX_PER_MIN))
+    return { ...placements[i], topPx, heightPx }
+  })
+}
+
+/**
+ * Compute the minimum gap container height needed to contain all timed task
+ * blocks without overflow into the next timeline unit.
+ * Gap auto-grow: max(pxForGap(freeMinutes), tasksExtentPx).
+ * tasksExtentPx = max over timed tasks of (top + height).
+ * This is computed here (model layer) and used in AgendaGapRow.
+ */
+export function gapAutoHeight(
+  freeMinutes: number,
+  timedTasks: TaskRow[],
+  gapStartMin: number,
+): number {
+  const base = pxForGap(freeMinutes)
+  if (timedTasks.length === 0) return base
+  const placements = packTaskBlocks(timedTasks, gapStartMin)
+  const tasksExtent = Math.max(...placements.map((p) => p.topPx + p.heightPx))
+  return Math.max(base, tasksExtent)
 }
 
 // ── Agenda unit types ─────────────────────────────────────────────────────

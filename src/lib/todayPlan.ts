@@ -96,8 +96,15 @@ export interface TodayPlanApi {
   unplanTask: (id: string) => void
   /** Promote a task to Right Now — singleton: unsets the previous right_now. */
   promoteToRightNow: (id: string, tasks: TaskRow[]) => void
-  /** Set a task's plan_slot (e.g. drop into a timeline gap 'between-<n>'). */
-  setPlanSlot: (id: string, slot: PlannedSlot) => void
+  /** Set a task's plan_slot (e.g. drop into a timeline gap 'between-<n>').
+   *  Phase 3: optionally also writes plan_start_min + estimated_minutes so a
+   *  freshly-dropped task becomes an absolute-positioned timed block. */
+  setPlanSlot: (
+    id: string,
+    slot: PlannedSlot,
+    plan_start_min?: number | null,
+    estimated_minutes?: number | null,
+  ) => void
 }
 
 export function useTodayPlan(): TodayPlanApi {
@@ -132,9 +139,21 @@ export function useTodayPlan(): TodayPlanApi {
     updateTask.mutate({ id, fields: { planned_for: null, plan_slot: null, plan_rank: null } })
   }, [updateTask])
 
-  const setPlanSlot = useCallback((id: string, slot: PlannedSlot) => {
+  const setPlanSlot = useCallback((
+    id: string,
+    slot: PlannedSlot,
+    plan_start_min?: number | null,
+    estimated_minutes?: number | null,
+  ) => {
     // Ensure planned_for is today when (re)slotting; keep existing rank.
-    updateTask.mutate({ id, fields: { planned_for: todayKey(), plan_slot: slot } })
+    // Phase 3: when plan_start_min is supplied (timed drop into a gap), also
+    // write estimated_minutes so the block has a duration. estimated_minutes is
+    // only written if it was NULL on the task (first placement) — the caller
+    // passes `task.estimated_minutes ?? 30` so we always have a value.
+    const fields: Record<string, unknown> = { planned_for: todayKey(), plan_slot: slot }
+    if (plan_start_min != null) fields.plan_start_min = plan_start_min
+    if (estimated_minutes != null) fields.estimated_minutes = estimated_minutes
+    updateTask.mutate({ id, fields })
   }, [updateTask])
 
   const promoteToRightNow = useCallback((id: string, tasks: TaskRow[]) => {
