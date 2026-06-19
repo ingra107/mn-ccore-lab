@@ -1,0 +1,35 @@
+-- schema-v87-plan-start-min.sql (2026-06-19)
+-- Today timeline task-blocks (Phase 2): the FINE time-position of a planned task
+-- becomes a synced TASK COLUMN, completing the Workstream-B plan store added in
+-- schema-v75 (planned_for / plan_slot / plan_rank).
+--
+-- One nullable column on tasks (Hub-canonical, same lane/authority as
+-- plan_slot / plan_rank / group_override):
+--   plan_start_min  INTEGER  minutes-since-midnight (0..1439) of a planned task's
+--                            start time. NULL = planned-but-not-time-positioned
+--                            (today's coarse plan_slot=between-<n>-only behavior).
+--                            plan_slot stays the coarse "which gap"; plan_start_min
+--                            carries the fine within-gap position (two authorities,
+--                            never overloaded). Value-guarded at the Hub write
+--                            boundary (tasks.ts: nullable integer 0..1439), NOT via
+--                            the enum-domain trigger.
+--
+-- Nullable, no default. Purely additive — no backfill (pre-existing planned tasks
+-- are simply not time-positioned until a user drags them on the timeline).
+-- Reversible: column left inert on rollback (no destructive DROP); D1 Time-Travel
+-- (30d) is the data backstop.
+--
+-- Worker acceptance: tasks.plan_start_min enters TABLE_FIELDS via the regenerated
+-- pb-schema field-authority.generated.ts (imported by mutations.ts); this ALTER +
+-- the Worker deploy of that regenerated artifact together make Hub ACCEPT the
+-- field BEFORE PB pushes it (R10 lockstep — never ship the data migration ahead of
+-- Hub accepting the field). TASK_SELECT_COLS (api/lib/task-cols.ts) returns it.
+--
+-- Decision doc pointer:
+--   Peripheral-Brain/Context/Decisions/2026-06-19-today-plan-start-min.md
+--
+-- APPLY (test FIRST, probe, then prod) — sanctioned wrapper ONLY:
+--   scripts/wrangler-d1 d1 execute mnccore-lab-test --remote --file=api/schema-v87-plan-start-min.sql
+--   scripts/wrangler-d1 d1 execute mnccore-lab      --remote --file=api/schema-v87-plan-start-min.sql
+
+ALTER TABLE tasks ADD COLUMN plan_start_min INTEGER;

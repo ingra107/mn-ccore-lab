@@ -1,7 +1,7 @@
 {
   "description": "Canonical set of api/schema-v*.sql migration files. Regenerate with: python scripts/check-schema-versions.py --update",
-  "hash": "e508447550d0bc35f15f14071a999c537c063686187463eaa9469b03a0aa5ee4",
-  "file_count": 90,
+  "hash": "d60d834d18f9a07f1e716c825d35b15e3423cfe6a76782902ce156b01fee83a8",
+  "file_count": 91,
   "files": [
     "schema-v2.sql",
     "schema-v3.sql",
@@ -92,11 +92,12 @@
     "schema-v83-processed-mutations-retention-index.sql",
     "schema-v84-activity-log-retention-index.sql",
     "schema-v85-calendar-events-poll-token.sql",
-    "schema-v86-calendar-feeds-user-email.sql"
+    "schema-v86-calendar-feeds-user-email.sql",
+    "schema-v87-plan-start-min.sql"
   ],
   "version_range": [
     2,
-    86
+    87
   ],
   "gaps": [
     35,

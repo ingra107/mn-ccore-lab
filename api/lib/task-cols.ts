@@ -37,6 +37,10 @@ const TASK_PLAIN_COLS = [
   // plan_rank (REAL ordering). Must be read-exposed so /api/tasks returns them for
   // the Today/MyTasks frontend AND so PB pull mirrors them (R10 Hub-rebuildable).
   'planned_for', 'plan_slot', 'plan_rank',
+  // Today timeline task-blocks Phase 2 (schema-v87, 2026-06-19): fine start time,
+  // minutes since midnight (0..1439); NULL = not time-positioned. Read-exposed so
+  // /api/tasks returns it AND PB pull mirrors it (R10 Hub-rebuildable).
+  'plan_start_min',
   // NOTE: `notes` is deliberately omitted — private brain.db field.
   // NOTE: `project_id` is NOT in this list — it is resolved to slug below.
 ];

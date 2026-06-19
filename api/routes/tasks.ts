@@ -313,7 +313,10 @@ const TASK_ALLOWED_FIELDS = new Set(['title', 'description', 'description_json',
   'waiting_on', 'promised_to', 'promise_date', 'next_checkin_date', 'nick_followup_date',
   'requires_nick_brain', 'estimated_minutes', 'deadline_type', 'next_artifact', 'inbox_event_id',
   // Workstream B (schema-v75, 2026-06-09): Today operating-day plan as synced columns.
-  'planned_for', 'plan_slot', 'plan_rank']);
+  'planned_for', 'plan_slot', 'plan_rank',
+  // Today timeline task-blocks Phase 2 (schema-v87, 2026-06-19): fine start
+  // time, minutes since midnight (0..1439); NULL = not time-positioned.
+  'plan_start_min']);
 const VALID_GROUP_OVERRIDES = new Set(['deep', 'priorities', 'quick', 'pb', 'etl']);
 // plan_slot vocabulary: 'right_now' | 'strip' | 'between-<n>' (<n> a non-negative
 // integer timeline-gap index). Parametric (between-<n>) so it's value-guarded here,
@@ -357,6 +360,17 @@ export async function handleUpdateTask(id: string, request: Request, user: AuthU
     if (v === '' || v === undefined) body.plan_slot = null;
     else if (v !== null && (typeof v !== 'string' || !VALID_PLAN_SLOT_RE.test(v))) {
       return error(`Invalid plan_slot "${v}". Must be right_now, strip, between-<n>, or null.`, 400);
+    }
+  }
+  // Validate plan_start_min (Today timeline task-blocks Phase 2). '' / undefined
+  // = clear (NULL = planned-but-not-time-positioned); null = clear; otherwise an
+  // integer minutes-since-midnight in [0, 1439]. 400 on junk so an optimistic
+  // drag-to-time write surfaces an error instead of silently reverting.
+  if ('plan_start_min' in body) {
+    const v = body.plan_start_min;
+    if (v === '' || v === undefined) body.plan_start_min = null;
+    else if (v !== null && (typeof v !== 'number' || !Number.isInteger(v) || v < 0 || v > 1439)) {
+      return error(`Invalid plan_start_min "${v}". Must be an integer 0..1439 (minutes since midnight) or null.`, 400);
     }
   }
 
