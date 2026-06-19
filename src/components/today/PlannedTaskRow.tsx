@@ -5,6 +5,16 @@
 // Extracted from src/pages/portal/TodayPage.tsx. Same TaskDetailDrawer
 // expansion as the regular TaskRow (CD spec: click body = expand drawer).
 
+// ── helpers ───────────────────────────────────────────────────────────────
+
+/** Format raw minutes as a concise label: 30 → "30m", 60 → "1h", 90 → "1h 30m". */
+function fmtDuration(mins: number): string {
+  if (mins < 60) return `${mins}m`
+  const h = Math.floor(mins / 60)
+  const m = mins % 60
+  return m === 0 ? `${h}h` : `${h}h ${m}m`
+}
+
 import { LinkRow, ProjectLink, type TaskLink } from './primitives'
 import { TaskDetailDrawer } from './TaskDetailDrawer'
 import { DoneBox } from '../tasks/TaskRow'
@@ -63,6 +73,11 @@ export function PlannedTaskRow({ task, project, state, timeHint, small = false, 
             )}
             <ProjectLink name={project?.name ?? null} slug={project?.slug} />
             <LinkRow links={links} />
+            {/* Duration chip — read-only; shows estimated_minutes ?? 30 */}
+            <span
+              title={`Estimated duration${task.estimated_minutes ? '' : ' (default)'}`}
+              style={{ fontSize: 9, color: ACCENT_GOLD, padding: '1px 5px', background: withAlpha(ACCENT_GOLD, 9), border: `1px solid ${withAlpha(ACCENT_GOLD, 28)}`, borderRadius: 999, fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}
+            >{fmtDuration(task.estimated_minutes ?? 30)}</span>
             {!isDone && <span style={{ fontSize: 11, color: INK_DIM }}>{expanded ? '▾' : '▸'}</span>}
             <button
               onClick={(e) => { e.stopPropagation(); state.unplan(task.id) }}

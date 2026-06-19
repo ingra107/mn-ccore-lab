@@ -157,6 +157,14 @@ export interface TaskRow {
   planned_for?: string | null
   plan_slot?: string | null
   plan_rank?: number | null
+  /** Estimated task duration in minutes (schema v55, task-cols allowlist).
+   *  Used by timeline task-blocks (phase 1+) to size blocks and display a
+   *  duration chip. NULL = unset; UI defaults to 30m for display only. */
+  estimated_minutes?: number | null
+  /** Minutes-from-midnight start time assigned during daily planning (phase 2).
+   *  NULL until the timeline places the task. Declared here so phase 2 compiles
+   *  without a type change. */
+  plan_start_min?: number | null
   created_at: string
   updated_at?: string
   meeting_title?: string

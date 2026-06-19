@@ -32,6 +32,20 @@ import { Button } from '../ui/Button'
 import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow } from '../../lib/api'
 
+// ── helpers ───────────────────────────────────────────────────────────────
+
+/** Format a raw minute count as a human label: 30 → "30m", 60 → "1h", 90 → "1h 30m". */
+function fmtDuration(mins: number): string {
+  if (mins < 60) return `${mins}m`
+  const h = Math.floor(mins / 60)
+  const m = mins % 60
+  return m === 0 ? `${h}h` : `${h}h ${m}m`
+}
+
+const DURATION_MIN = 15
+const DURATION_MAX = 480
+const DURATION_STEP = 15
+
 export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; project: { name: string; slug: string } | null; state: TodayStateApi }) {
   const isPlanned = !!state.planned[task.id]
   const isNow = state.rightNow === task.id
@@ -80,6 +94,20 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
       onSuccess: () => { undoToast.showSuccess('Reset to auto-classify'); setMoveOpen(false) },
     })
   }, [task.id, updateTask, undoToast])
+
+  // Duration stepper — local display value initialised from task.estimated_minutes.
+  // Default 30 is READ-TIME only: we only write to Hub when the user actually
+  // clicks − or + (never on open).
+  const [durationMins, setDurationMins] = useState<number>(task.estimated_minutes ?? 30)
+  const adjustDuration = useCallback((delta: number) => {
+    setDurationMins((prev) => {
+      const next = Math.max(DURATION_MIN, Math.min(DURATION_MAX, prev + delta))
+      if (next !== prev) {
+        updateTask.mutate({ id: task.id, fields: { estimated_minutes: next } })
+      }
+      return next
+    })
+  }, [task.id, updateTask])
 
   // Workflow fields — v55 (waiting_on, next_checkin_date, promised_to, promise_date).
   // Distinct from HandoffSection (to_slug + ack). Each field saves individually on blur.
@@ -227,6 +255,24 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
         onOpenEditor={() => setFullEditorTask(task)}
         style={{ marginTop: 14 }}
       />
+
+      {/* Duration stepper — step by 15m, min 15, max 480; writes estimated_minutes on change */}
+      <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
+        <span style={{ fontSize: 10, color: INK_DIM, minWidth: 52 }}>Duration</span>
+        <button
+          onClick={() => adjustDuration(-DURATION_STEP)}
+          disabled={durationMins <= DURATION_MIN}
+          aria-label="Decrease duration by 15 minutes"
+          style={{ width: 22, height: 22, display: 'grid', placeItems: 'center', background: 'transparent', border: `1px solid rgba(255,255,255,0.12)`, borderRadius: 4, color: durationMins <= DURATION_MIN ? INK_DIM : INK, cursor: durationMins <= DURATION_MIN ? 'default' : 'pointer', fontFamily: 'inherit', fontSize: 13, lineHeight: 1, opacity: durationMins <= DURATION_MIN ? 0.35 : 0.8 }}
+        >−</button>
+        <span style={{ fontSize: 11, color: INK, fontVariantNumeric: 'tabular-nums', minWidth: 36, textAlign: 'center' }}>{fmtDuration(durationMins)}</span>
+        <button
+          onClick={() => adjustDuration(DURATION_STEP)}
+          disabled={durationMins >= DURATION_MAX}
+          aria-label="Increase duration by 15 minutes"
+          style={{ width: 22, height: 22, display: 'grid', placeItems: 'center', background: 'transparent', border: `1px solid rgba(255,255,255,0.12)`, borderRadius: 4, color: durationMins >= DURATION_MAX ? INK_DIM : INK, cursor: durationMins >= DURATION_MAX ? 'default' : 'pointer', fontFamily: 'inherit', fontSize: 13, lineHeight: 1, opacity: durationMins >= DURATION_MAX ? 0.35 : 0.8 }}
+        >+</button>
+      </div>
 
       {/* Subtasks + Blocks (A1: below fold) */}
       <div style={{ marginTop: 14 }}>
