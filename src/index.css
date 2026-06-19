@@ -1758,6 +1758,15 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
   }
 }
 
+/* N1.16 — Timeline task-block resize strip: wider hit target on touch.
+   Mouse: 6px (inline style). Touch (@media hover:none): 11px to meet
+   the 44px touch-target recommendation when combined with vertical extent. */
+@media (hover: none) {
+  .task-block-resize-strip {
+    height: 11px !important;
+  }
+}
+
 /* N1.09 — FAB-clearing bottom gutter for inner scroll containers on mobile
    widths (window-scrolling pages get the equivalent via portal-content's
    mobile padding). Clears the 2-FAB stack (quick-add + capture inbox). */

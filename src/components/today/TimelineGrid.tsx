@@ -31,6 +31,7 @@
 //   - boxed right-fixed-width service rail
 
 import { useMemo, useState, type CSSProperties } from 'react'
+import { useTaskBlockGesture } from './useTaskBlockGesture'
 import { EventRow, type SaveStatus } from './MeetingRow'
 import { PlannedTaskRow } from './PlannedTaskRow'
 import {
@@ -55,8 +56,15 @@ function fmtMin(min: number): string {
 
 // ── TimedTaskBlock ─────────────────────────────────────────────────────────
 // Compact absolute-positioned block for a TIMED planned task inside a gap.
-// Renders the task title + duration chip. Click → onExpand (Phase 3 only; the
-// full handle redesign is Phase 5). No pointer/resize handlers (Phase 4).
+//
+// Phase 4: pointer-driven MOVE + RESIZE via useTaskBlockGesture.
+//   - Body drag (onPointerDownBody) → moves the block vertically → writes plan_start_min.
+//   - Bottom-edge 6px strip (11px on touch, @media hover:none) → resizes → writes estimated_minutes.
+//   - Click (movement < 4px) → onExpand(id) — expand behavior preserved.
+//   - Live preview: translateY for move, heightDelta for resize (no PATCH on pointermove).
+//   - Commit once on pointerup, snap to 15min, clamp move to gap bounds.
+//   - Cursor: grab on body, grabbing while dragging, ns-resize on strip.
+//
 // Phase 3 ONLY rendered when TIMELINE_TASK_BLOCKS === true.
 function TimedTaskBlock({
   task,
@@ -64,52 +72,85 @@ function TimedTaskBlock({
   heightPx,
   colIdx,
   colCount,
+  gapStartMin,
+  gapEndMin,
   onExpand,
   expandedId,
+  onMove,
+  onResize,
 }: {
   task: TaskRow
   topPx: number
   heightPx: number
   colIdx: number
   colCount: number
+  /** Gap start in minutes-since-midnight — for move clamp lower bound. */
+  gapStartMin: number
+  /** Gap end in minutes-since-midnight — for move clamp upper bound. */
+  gapEndMin: number
   onExpand: (id: string) => void
   expandedId: string | null
+  /** Called to commit move: writes plan_start_min. */
+  onMove: (id: string, newPlanStartMin: number) => void
+  /** Called to commit resize: writes estimated_minutes. */
+  onResize: (id: string, newEstimatedMinutes: number) => void
 }) {
   const expanded = expandedId === task.id
   const visibleColCount = Math.min(colCount, 3)
   const leftPct = (colIdx / visibleColCount) * 100
   const widthPct = (1 / visibleColCount) * 100
+  const dur = task.estimated_minutes ?? 30
+
+  const [{ translatePx, heightDeltaPx, mode }, { onPointerDownBody, onPointerDownResize }] =
+    useTaskBlockGesture({
+      taskId: task.id,
+      planStartMin: task.plan_start_min ?? gapStartMin,
+      estimatedMinutes: task.estimated_minutes,
+      gapStartMin,
+      gapEndMin,
+      onExpand,
+      onMove,
+      onResize,
+    })
+
+  const isDragging = mode === 'move'
+  const isResizing = mode === 'resize'
+  const liveHeightPx = Math.max(heightPx + heightDeltaPx, 15)  // never collapse below 15px
 
   const blockStyle: CSSProperties = {
     position: 'absolute',
     top: topPx,
-    height: heightPx,
+    height: liveHeightPx,
     left: `${leftPct}%`,
     width: `${widthPct}%`,
     boxSizing: 'border-box',
-    padding: '3px 6px',
-    background: withAlpha(ACCENT_GOLD, 10),
-    border: `1px solid ${withAlpha(ACCENT_GOLD, 30)}`,
+    padding: '3px 6px 3px 6px',
+    background: withAlpha(ACCENT_GOLD, isDragging || isResizing ? 18 : 10),
+    border: `1px solid ${withAlpha(ACCENT_GOLD, isDragging || isResizing ? 50 : 30)}`,
     borderRadius: 5,
     overflow: 'hidden',
-    cursor: 'pointer',
+    cursor: isDragging ? 'grabbing' : 'grab',
     display: 'flex',
     flexDirection: 'column',
     gap: 2,
-    zIndex: 1,
+    zIndex: isDragging || isResizing ? 10 : 1,
+    // Live preview: translateY while dragging (unsnapped, no PATCH per frame)
+    transform: translatePx !== 0 ? `translateY(${translatePx}px)` : undefined,
+    transition: isDragging || isResizing ? 'none' : 'transform 0ms',
+    touchAction: 'none',  // prevent browser scroll-hijack during pointer gesture
+    userSelect: 'none',
+    willChange: isDragging ? 'transform' : isResizing ? 'height' : 'auto',
   }
 
-  const dur = task.estimated_minutes ?? 30
   const durLabel = dur < 60 ? `${dur}m` : `${Math.floor(dur / 60)}h${dur % 60 > 0 ? ` ${dur % 60}m` : ''}`
 
-  // The block is click-to-expand only (Phase 3). The expansion (TaskDetailDrawer)
-  // renders in NORMAL FLOW in AgendaGapRow below the timed-blocks layer — this
-  // keeps the GH#80 invariant (expandable content never absolute, always pushes
-  // the gap down). expanded state is signalled via expandedId prop.
+  // The expansion (TaskDetailDrawer) renders in NORMAL FLOW in AgendaGapRow
+  // below the timed-blocks layer — keeps the GH#80 invariant (expandable
+  // content never absolute, always pushes the gap down).
   return (
     <div
       style={blockStyle}
-      onClick={() => onExpand(task.id)}
+      onPointerDown={onPointerDownBody}
       title={task.title}
       data-task-id={task.id}
       aria-label={`${task.short_title || task.title} — ${durLabel}`}
@@ -119,7 +160,7 @@ function TimedTaskBlock({
         if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onExpand(task.id) }
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 4, minWidth: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 4, minWidth: 0, flex: 1 }}>
         <span style={{
           fontSize: 11,
           fontWeight: 500,
@@ -148,6 +189,24 @@ function TimedTaskBlock({
       {expanded && (
         <span style={{ fontSize: 9, color: ACCENT_GOLD, marginLeft: 2 }}>▾ expanded below</span>
       )}
+      {/* Resize strip — bottom 6px (11px on touch via @media hover:none).
+          Must NOT propagate pointerdown to body handler (stopPropagation in hook). */}
+      <div
+        onPointerDown={onPointerDownResize}
+        style={{
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: 6,
+          cursor: 'ns-resize',
+          // @media (hover:none) / touch: wider 11px strip for touch targets
+          // We achieve the wider strip with a CSS class; inline style covers mouse.
+          touchAction: 'none',
+        }}
+        className="task-block-resize-strip"
+        aria-hidden="true"
+      />
     </div>
   )
 }
@@ -170,6 +229,7 @@ function AgendaGapRow({
   freeMinutes,
   baseHeight,
   gapStartMin,
+  gapEndMin,
   tasks,
   state,
   projectsByPid,
@@ -183,6 +243,8 @@ function AgendaGapRow({
   /** Minutes-since-midnight of the gap start. Used for absolute block top/height.
    *  Zero for untimed gaps (UntimedUnit) — those never use the absolute lane. */
   gapStartMin: number
+  /** Minutes-since-midnight of the gap end. Used for move-clamp upper bound. */
+  gapEndMin: number
   tasks: TaskRow[]
   state: TodayStateApi
   projectsByPid: Map<string, { name: string; slug: string; category?: string | null }>
@@ -286,8 +348,16 @@ function AgendaGapRow({
                   heightPx={p.heightPx}
                   colIdx={p.colIdx}
                   colCount={p.colCount}
+                  gapStartMin={gapStartMin}
+                  gapEndMin={gapEndMin}
                   onExpand={onExpand}
                   expandedId={expandedId}
+                  onMove={(id, newPlanStartMin) =>
+                    state.planAt(id, slot, newPlanStartMin, null)
+                  }
+                  onResize={(id, newEstimatedMinutes) =>
+                    state.planAt(id, slot, null, newEstimatedMinutes)
+                  }
                 />
               </div>
             )
@@ -633,6 +703,7 @@ export function TimelineGrid({
           freeMinutes={unit.freeMinutes}
           baseHeight={unit.baseHeight}
           gapStartMin={unit.startMin}
+          gapEndMin={unit.endMin}
           tasks={tasks}
           state={state}
           projectsByPid={projectsByPid}
@@ -679,6 +750,7 @@ export function TimelineGrid({
             freeMinutes={0}
             baseHeight={GAP_FLOOR}
             gapStartMin={0}
+            gapEndMin={0}
             tasks={tasks}
             state={state}
             projectsByPid={projectsByPid}
