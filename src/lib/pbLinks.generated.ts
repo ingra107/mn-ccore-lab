@@ -155,9 +155,11 @@ const PB_LINK_RULES: PbLinkRule[] = [
 const TERMINAL = /[.,;:)>"']+$/
 
 // The single link tokenizer (mirrors normalize.py _TOKENIZER). Global so we can
-// iterate every token in a body.
+// iterate every token in a body. The drive-letter branch carries a (?<![A-Za-z])
+// lookbehind so the `e:` inside "file:///C:/..." is not mistaken for a Windows
+// drive letter (#136); the shared fixture corpus is the cross-repo gate.
 const TOKENIZER =
-  /https?:\/\/\S+|\[\[[^\]]+\]\]|obsidian:\/\/\S+|(?:[A-Za-z]:[\\/]|\/c\/|~\/|\.\/)\S+/g
+  /https?:\/\/\S+|\[\[[^\]]+\]\]|obsidian:\/\/\S+|(?:(?<![A-Za-z])[A-Za-z]:[\\/]|\/c\/|~\/|\.\/)\S+/g
 
 function expand(template: string, m: RegExpMatchArray): string {
   let out = template.split('\\0').join(m[0])

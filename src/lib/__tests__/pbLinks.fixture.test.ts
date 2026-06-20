@@ -40,7 +40,7 @@ describe('PB_LINK_RULES_HASH drift gate', () => {
 // ---------------------------------------------------------------------------
 // Fixture parity: TS runtime === Python reference for every case
 // ---------------------------------------------------------------------------
-describe('pbLinks.generated normalizeLink — fixture parity (21 cases)', () => {
+describe('pbLinks.generated normalizeLink — fixture parity (shared corpus)', () => {
   for (const { raw, expected } of fixtures) {
     it(`normalizeLink(${JSON.stringify(raw)})`, () => {
       const result = normalizeLink(raw)

@@ -166,5 +166,13 @@
       "canonical_url": "https://app.box.com/folder/342878616000",
       "short_title": "Box folder"
     }
+  },
+  {
+    "raw": "file:///C:/Users/ingra107/Peripheral-Brain/Docs/system-map.md",
+    "expected": {
+      "type": "local_file",
+      "canonical_url": "C:/Users/ingra107/Peripheral-Brain/Docs/system-map.md",
+      "short_title": "C:/Users/ingra107/Peripheral-Brain/Docs/system-map.md"
+    }
   }
 ]
