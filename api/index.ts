@@ -77,6 +77,7 @@ import { handleProactiveBrief } from './routes/proactive-brief';
 import { handleGetFileActivity, handleSyncFileActivity } from './routes/file-activity';
 import { handleGenerateDigestEmail, handleDigestPreview, handleSendDigestEmail, handleSendDailyDigests } from './routes/digest-email';
 import { pruneAllLedgers, monitorD1Health, compactProcessedMutationsJson } from './lib/ledger-retention';
+import { handleGetLinks } from './routes/links';
 // inbox.ts retired 2026-05-05 (5.3a) — migrated to /api/inbox-events/sync-bulk
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1800,6 +1801,17 @@ defineRoute({
   entity: 'mutations',
   visibility: 'na',
   handler: (c) => handleMutations(R(c), USER(c), E(c)),
+});
+
+// Typed-links pull (Phase 2, 2026-06-20) — PI/API-key gated (PB sync lane only).
+// PB hub.py calls GET /links?seq_after=N&include_deleted=1&limit=K.
+defineRoute({
+  method: 'GET',
+  path: '/api/links',
+  auth: 'authed',
+  entity: 'links',
+  visibility: 'na',
+  handler: (c) => handleGetLinks(new URL(R(c).url), R(c), E(c)),
 });
 
 // Tasks — specific-before-generic

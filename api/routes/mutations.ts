@@ -38,6 +38,9 @@ const ALLOWED_TABLES = new Set([
   // dead code (processOne rejects unknown tables before reaching applyInsert).
   'submission_events', 'conference_submissions', 'regulatory_items',
   'manuscript_revisions', 'project_documents', 'deadline_dependencies',
+  // Phase 2 typed-links (2026-06-20): polymorphic link ownership per task/project.
+  // schema-v88-links-table.sql + pb-schema 0.7.0 field-authority.
+  'links',
 ]);
 
 const ALLOWED_OPS = new Set(['insert', 'update', 'delete', 'append']);
@@ -66,6 +69,8 @@ const DELETE_CAPABLE_TABLES = new Set([
   'kg_entities', 'kg_relations', 'kg_relation_type_registry', 'trajectories',
   // These have deleted_at but no updated_at — see TABLES_WITH_UPDATED_AT
   'day_capacity', 'submission_events',
+  // links: full soft-delete (deleted_at + updated_at both present; schema-v88).
+  'links',
 ]);
 
 // Subset of DELETE_CAPABLE_TABLES that also carry updated_at.
@@ -74,6 +79,8 @@ const TABLES_WITH_UPDATED_AT = new Set([
   'tasks', 'projects', 'inbox_events',
   'sessions', 'agent_knowledge', 'memory_facts', 'pomodoro_sessions', 'decisions',
   'kg_entities', 'kg_relations', 'kg_relation_type_registry', 'trajectories',
+  // links carries updated_at (schema-v88); stamp it on delete.
+  'links',
 ]);
 
 // Tables that carry a `status` column and must have status='deleted' co-set
@@ -98,6 +105,9 @@ const PK_COLUMN: Record<string, string | string[]> = {
   pomodoro_sessions: ['start_time', 'source'],
   kg_relations: ['source_id', 'target_id', 'relation_type'],
   trajectories: ['task', 'created_at'],
+  // links: scalar surrogate PK (link_<ULID>); explicit for documentation.
+  // pkColumn() already defaults to 'id'; this entry makes the intent clear.
+  links: 'id',
 };
 
 function pkColumn(table: string): string | string[] {
