@@ -1,0 +1,140 @@
+{
+  "rules": [
+    {
+      "canonical": "https://docs.google.com/document/d/\\1/edit",
+      "id_group": 1,
+      "match": "https?://docs\\.google\\.com/document/d/([\\w-]+)",
+      "title": "Google Doc",
+      "type": "google_doc"
+    },
+    {
+      "canonical": "https://docs.google.com/spreadsheets/d/\\1/edit",
+      "id_group": 1,
+      "match": "https?://docs\\.google\\.com/spreadsheets/d/([\\w-]+)",
+      "title": "Google Sheet",
+      "type": "google_sheet"
+    },
+    {
+      "canonical": "https://docs.google.com/presentation/d/\\1/edit",
+      "id_group": 1,
+      "match": "https?://docs\\.google\\.com/presentation/d/([\\w-]+)",
+      "title": "Google Slides",
+      "type": "google_slide"
+    },
+    {
+      "canonical": "https://docs.google.com/forms/d/\\1/edit",
+      "id_group": 1,
+      "match": "https?://docs\\.google\\.com/forms/d/([\\w-]+)",
+      "title": "Google Form",
+      "type": "google_form"
+    },
+    {
+      "canonical": "https://app.box.com/folder/\\1",
+      "id_group": 1,
+      "match": "https?://[\\w.-]*box\\.com/folder/(\\d+)",
+      "title": "Box folder",
+      "type": "box_folder"
+    },
+    {
+      "canonical": "https://app.box.com/s/\\1",
+      "id_group": 1,
+      "match": "https?://[\\w.-]*box\\.com/s/(\\w+)",
+      "title": "Box folder",
+      "type": "box_folder"
+    },
+    {
+      "canonical": "https://github.com/\\1/issues/\\2",
+      "id_group": 2,
+      "match": "https?://github\\.com/([\\w.-]+/[\\w.-]+)/issues/(\\d+)",
+      "title": "GitHub issue #\\2",
+      "type": "github_issue"
+    },
+    {
+      "canonical": "https://github.com/\\1/tree/\\2",
+      "id_group": 1,
+      "match": "https?://github\\.com/([\\w.-]+/[\\w.-]+)/tree/([\\w./-]+)",
+      "title": "\\1 (\\2)",
+      "type": "github_tree"
+    },
+    {
+      "canonical": "https://github.com/\\1",
+      "id_group": 1,
+      "match": "https?://github\\.com/([\\w.-]+/[\\w.-]+?)(?:\\.git)?/?$",
+      "title": "\\1",
+      "type": "github_repo"
+    },
+    {
+      "canonical": "\\0",
+      "id_group": 1,
+      "match": "https?://mail\\.google\\.com/mail/[^\\s]*#drafts?/([\\w-]+)",
+      "title": "Gmail draft",
+      "type": "gmail_draft"
+    },
+    {
+      "canonical": "\\0",
+      "id_group": 1,
+      "match": "https?://mail\\.google\\.com/mail/[^\\s]*#[\\w-]+/([\\w-]+)",
+      "title": "Gmail thread",
+      "type": "gmail_thread"
+    },
+    {
+      "canonical": "[[\\1]]",
+      "id_group": 1,
+      "match": "\\[\\[([^\\]|]+)(?:\\|[^\\]]+)?\\]\\]",
+      "title": "\\1",
+      "type": "obsidian_note"
+    },
+    {
+      "canonical": "\\0",
+      "id_group": 1,
+      "match": "obsidian://open\\?[^\\s]*file=([\\w%./+-]+)",
+      "title": "\\1",
+      "type": "obsidian_note"
+    },
+    {
+      "canonical": "\\1",
+      "id_group": 1,
+      "match": "((?:[A-Za-z]:[\\\\/]|/c/|~/|\\./)[^\\s]*\\.(?:py|sh|ps1|js|ts|R|qmd|sql|bat))",
+      "title": "\\1",
+      "type": "script"
+    },
+    {
+      "canonical": "\\1",
+      "id_group": 1,
+      "match": "((?:[A-Za-z]:[\\\\/]|/c/|~/|\\./)[^\\s]*\\.[A-Za-z0-9]{1,5})",
+      "title": "\\1",
+      "type": "local_file"
+    },
+    {
+      "canonical": "\\1",
+      "id_group": 1,
+      "match": "((?:[A-Za-z]:[\\\\/]|/c/|~/|\\./)[^\\s]*)",
+      "title": "\\1",
+      "type": "local_folder"
+    },
+    {
+      "canonical": "\\0",
+      "id_group": 0,
+      "match": "https?://[^\\s]+",
+      "title": "Link",
+      "type": "web"
+    }
+  ],
+  "types": [
+    "google_doc",
+    "google_sheet",
+    "google_slide",
+    "google_form",
+    "box_folder",
+    "github_repo",
+    "github_issue",
+    "github_tree",
+    "gmail_thread",
+    "gmail_draft",
+    "obsidian_note",
+    "local_folder",
+    "local_file",
+    "script",
+    "web"
+  ]
+}

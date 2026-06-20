@@ -1,0 +1,170 @@
+[
+  {
+    "raw": "https://docs.google.com/document/d/1ABCdef/edit?usp=sharing",
+    "expected": {
+      "type": "google_doc",
+      "canonical_url": "https://docs.google.com/document/d/1ABCdef/edit",
+      "short_title": "Google Doc"
+    }
+  },
+  {
+    "raw": "https://docs.google.com/spreadsheets/d/1SHEET99/edit#gid=0",
+    "expected": {
+      "type": "google_sheet",
+      "canonical_url": "https://docs.google.com/spreadsheets/d/1SHEET99/edit",
+      "short_title": "Google Sheet"
+    }
+  },
+  {
+    "raw": "https://docs.google.com/presentation/d/1SLIDE77/edit",
+    "expected": {
+      "type": "google_slide",
+      "canonical_url": "https://docs.google.com/presentation/d/1SLIDE77/edit",
+      "short_title": "Google Slides"
+    }
+  },
+  {
+    "raw": "https://docs.google.com/forms/d/1FORM55/edit",
+    "expected": {
+      "type": "google_form",
+      "canonical_url": "https://docs.google.com/forms/d/1FORM55/edit",
+      "short_title": "Google Form"
+    }
+  },
+  {
+    "raw": "https://app.box.com/folder/123456789",
+    "expected": {
+      "type": "box_folder",
+      "canonical_url": "https://app.box.com/folder/123456789",
+      "short_title": "Box folder"
+    }
+  },
+  {
+    "raw": "https://app.box.com/s/abc123token",
+    "expected": {
+      "type": "box_folder",
+      "canonical_url": "https://app.box.com/s/abc123token",
+      "short_title": "Box folder"
+    }
+  },
+  {
+    "raw": "https://github.com/clif/mCIDE/issues/179",
+    "expected": {
+      "type": "github_issue",
+      "canonical_url": "https://github.com/clif/mCIDE/issues/179",
+      "short_title": "GitHub issue #179"
+    }
+  },
+  {
+    "raw": "https://github.com/clif/mCIDE/tree/main/outlier-thresholds",
+    "expected": {
+      "type": "github_tree",
+      "canonical_url": "https://github.com/clif/mCIDE/tree/main/outlier-thresholds",
+      "short_title": "clif/mCIDE (main/outlier-thresholds)"
+    }
+  },
+  {
+    "raw": "https://github.com/clif/mCIDE",
+    "expected": {
+      "type": "github_repo",
+      "canonical_url": "https://github.com/clif/mCIDE",
+      "short_title": "clif/mCIDE"
+    }
+  },
+  {
+    "raw": "https://mail.google.com/mail/u/1/#drafts/r-99887766",
+    "expected": {
+      "type": "gmail_draft",
+      "canonical_url": "https://mail.google.com/mail/u/1/#drafts/r-99887766",
+      "short_title": "Gmail draft"
+    }
+  },
+  {
+    "raw": "https://mail.google.com/mail/u/1/#inbox/FMfcgz123456",
+    "expected": {
+      "type": "gmail_thread",
+      "canonical_url": "https://mail.google.com/mail/u/1/#inbox/FMfcgz123456",
+      "short_title": "Gmail thread"
+    }
+  },
+  {
+    "raw": "[[CLIF mCIDE schema|mCIDE]]",
+    "expected": {
+      "type": "obsidian_note",
+      "canonical_url": "[[CLIF mCIDE schema]]",
+      "short_title": "CLIF mCIDE schema"
+    }
+  },
+  {
+    "raw": "C:\\Users\\ingra107\\Peripheral-Brain\\scripts\\db\\sync.py",
+    "expected": {
+      "type": "script",
+      "canonical_url": "C:\\Users\\ingra107\\Peripheral-Brain\\scripts\\db\\sync.py",
+      "short_title": "C:\\Users\\ingra107\\Peripheral-Brain\\scripts\\db\\sync.py"
+    }
+  },
+  {
+    "raw": "~/Peripheral-Brain/Docs/system-map.md",
+    "expected": {
+      "type": "local_file",
+      "canonical_url": "~/Peripheral-Brain/Docs/system-map.md",
+      "short_title": "~/Peripheral-Brain/Docs/system-map.md"
+    }
+  },
+  {
+    "raw": "C:\\Users\\ingra107\\Box\\Research\\CQODE",
+    "expected": {
+      "type": "local_folder",
+      "canonical_url": "C:\\Users\\ingra107\\Box\\Research\\CQODE",
+      "short_title": "C:\\Users\\ingra107\\Box\\Research\\CQODE"
+    }
+  },
+  {
+    "raw": "https://arpa-h.gov/programs/precise",
+    "expected": {
+      "type": "web",
+      "canonical_url": "https://arpa-h.gov/programs/precise",
+      "short_title": "Link"
+    }
+  },
+  {
+    "raw": "https://docs.google.com/document/d/1z5om70ImuWwpm7y-FvFfxg7V_tDvTtnXnyIrb-Fr9Gg/edit",
+    "expected": {
+      "type": "google_doc",
+      "canonical_url": "https://docs.google.com/document/d/1z5om70ImuWwpm7y-FvFfxg7V_tDvTtnXnyIrb-Fr9Gg/edit",
+      "short_title": "Google Doc"
+    }
+  },
+  {
+    "raw": "https://github.com/AartikSarma/CLIF-PBWPFVC",
+    "expected": {
+      "type": "github_repo",
+      "canonical_url": "https://github.com/AartikSarma/CLIF-PBWPFVC",
+      "short_title": "AartikSarma/CLIF-PBWPFVC"
+    }
+  },
+  {
+    "raw": "https://ucsf.app.box.com/folder/266108194941",
+    "expected": {
+      "type": "box_folder",
+      "canonical_url": "https://app.box.com/folder/266108194941",
+      "short_title": "Box folder"
+    }
+  },
+  {
+    "raw": "https://github.com/Common-Longitudinal-ICU-data-Format/ARF-NIV_TreatmentLocation",
+    "expected": {
+      "type": "github_repo",
+      "canonical_url": "https://github.com/Common-Longitudinal-ICU-data-Format/ARF-NIV_TreatmentLocation",
+      "short_title": "Common-Longitudinal-ICU-data-Format/ARF-NIV_TreatmentLocation"
+    }
+  },
+  {
+    "raw": "https://app.box.com/folder/342878616000",
+    "expected": {
+      "type": "box_folder",
+      "canonical_url": "https://app.box.com/folder/342878616000",
+      "short_title": "Box folder"
+    }
+  }
+]
