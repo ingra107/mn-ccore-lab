@@ -1440,6 +1440,57 @@ export function useMenteeOverview() {
   })
 }
 
+// ── Stored Links (B3 Task 8, 2026-06-21) ─────────────────────
+// Read-only hooks for the stored links table, backed by:
+//   GET /api/tasks/:id/links   → { links: StoredLink[], projectLinks: StoredLink[] }
+//   GET /api/projects/:slug/links → { links: StoredLink[] }
+// Both endpoints are authed (CF Access JWT, no PI/API-key required).
+// Write path stays on the 3-slot key_link_* mutation until P3/P4.
+
+export interface StoredLink {
+  id: string
+  role: string
+  type: string
+  canonical_url: string
+  short_title: string | null
+  sort_order: number
+}
+
+export interface TaskLinksPayload {
+  links: StoredLink[]
+  projectLinks: StoredLink[]
+}
+
+export function useTaskLinks(taskId: string | null) {
+  return useQuery({
+    queryKey: ['task-links', taskId],
+    queryFn: async (): Promise<TaskLinksPayload> => {
+      if (!taskId) return { links: [], projectLinks: [] }
+      const res = await fetch(`/api/tasks/${taskId}/links`)
+      if (!res.ok) return { links: [], projectLinks: [] }
+      const data = await res.json() as TaskLinksPayload
+      return data
+    },
+    staleTime: 60 * 1000,
+    enabled: !!taskId,
+  })
+}
+
+export function useProjectLinks(slug: string | null) {
+  return useQuery({
+    queryKey: ['project-links', slug],
+    queryFn: async (): Promise<StoredLink[]> => {
+      if (!slug) return []
+      const res = await fetch(`/api/projects/${slug}/links`)
+      if (!res.ok) return []
+      const data = await res.json() as { links: StoredLink[] }
+      return data.links ?? []
+    },
+    staleTime: 60 * 1000,
+    enabled: !!slug,
+  })
+}
+
 // ── Deadline Cascade ────────────────────────────────────────
 
 export function useDeadlineImpact(id: string | null, type: string | null, newDate: string | null) {

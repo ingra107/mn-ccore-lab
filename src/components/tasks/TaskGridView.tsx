@@ -15,6 +15,8 @@ import InlineDatePicker from '../InlineDatePicker'
 import { useUndoToast } from '../UndoToast'
 import { useProtocolLaunch } from '../../hooks/useProtocolLaunch'
 import { classifyUrl } from '../../lib/urlClassify'
+import { normalizeLink } from '../../lib/pbLinks.generated'
+import { iconForType } from '../../lib/linkIcon'
 import TaskTitle from './TaskTitle'
 import TaskContextMenu from './TaskContextMenu'
 import { useContextMenu } from '../../hooks/useContextMenu'
@@ -1556,7 +1558,11 @@ function TaskGridRow({
 function KeyLinkIcon({ url, label }: { url: string; label?: string | null }) {
   const { launch } = useProtocolLaunch()
 
-  const { href, Icon, typeLabel, isHttp } = classifyUrl(url)
+  const { href, Icon: FallbackIcon, typeLabel, isHttp } = classifyUrl(url)
+  const resolvedType = normalizeLink(url)?.type
+  const iconSpec = resolvedType ? iconForType(resolvedType) : null
+  const Icon = iconSpec ? iconSpec.Icon : FallbackIcon
+  const iconColor = iconSpec ? iconSpec.color : 'var(--teal)'
 
   // Non-http links fire through the ONE protocol-launch chokepoint
   // (clipboard backup + toast — that toast is the single feedback path).
@@ -1579,7 +1585,7 @@ function KeyLinkIcon({ url, label }: { url: string; label?: string | null }) {
         title={label || (isHttp ? url : `Click to copy path: ${url}`)}
         className="hov-opacity"
         style={{
-          color: 'var(--teal)',
+          color: iconColor,
           opacity: 0.85,
           transition: 'opacity var(--transition-fast) var(--ease-out)',
           display: 'inline-flex',

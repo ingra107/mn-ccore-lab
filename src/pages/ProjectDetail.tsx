@@ -26,7 +26,9 @@ import {
 } from 'lucide-react'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useMarkSeen } from '../hooks/useEntitySeen'
-import { useProjects, useMeetingsApi, useTasks, useProjectUpdates, useRevisions, useComments, useProjectPapers } from '../hooks/useApiData'
+import { useProjects, useMeetingsApi, useTasks, useProjectUpdates, useRevisions, useComments, useProjectPapers, useProjectLinks } from '../hooks/useApiData'
+import type { StoredLink } from '../hooks/useApiData'
+import { iconForType } from '../lib/linkIcon'
 import { useUpdateProject, useAddAgendaItem, useUpdateTaskStatus, useUpdateTask, useBulkUpdateTasks, useCreateTask } from '../hooks/useMutations'
 import { useUndoToast } from '../components/UndoToast'
 import BulkActionToolbar from '../components/tasks/BulkActionToolbar'
@@ -72,6 +74,7 @@ import EmptyStateArt from '../components/EmptyStateArt'
 import EmptyState from '../components/EmptyState'
 import { ICON_PROPS } from '../lib/iconProps'
 import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
+import { useProtocolLaunch } from '../hooks/useProtocolLaunch'
 
 // P2-5: notes + comments collapsed into the single chronological `activity`
 // stream (Notes / Comments / All are filters over it, not separate tabs).
@@ -233,6 +236,9 @@ function ProjectDetailInner({ project }: InnerProps) {
   const [showCreateTask, setShowCreateTask] = useState(false)
   const [taskFilter, setTaskFilter] = useState<'all' | 'active' | 'done' | 'blocked'>('active')
   const createTask = useCreateTask()
+
+  // Stored links for this project (B3 Task 8 — read-only until P3/P4 write path)
+  const { data: projectStoredLinks = [] } = useProjectLinks(project.slug)
 
   // Revisions for this project
   const { data: revisions = [] } = useRevisions(project.slug)
@@ -1181,6 +1187,16 @@ function ProjectDetailInner({ project }: InnerProps) {
                   Key Links
                 </span>
               </div>
+
+              {/* Stored links (authoritative type → brand glyph, read-only until P3/P4) */}
+              {projectStoredLinks.length > 0 && (
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {projectStoredLinks.map((link) => (
+                    <ProjectStoredLinkChip key={link.id} link={link} />
+                  ))}
+                </div>
+              )}
+
               <KeyLinksEditor
                 hideLabel
                 links={[
@@ -2169,6 +2185,54 @@ function ProjectDetailInner({ project }: InnerProps) {
   )
 }
 
+
+// ── Project Stored Link Chip ──────────────────────────────
+// Mode-A labeled chip for project stored links (authoritative type → brand glyph).
+// Write path stays on key_link_* slots until P3/P4.
+
+function ProjectStoredLinkChip({ link }: { link: StoredLink }) {
+  const { launch } = useProtocolLaunch()
+  const { Icon, color } = iconForType(link.type)
+  const url = link.canonical_url
+  const isHttp = url.startsWith('http')
+  const displayLabel = link.short_title || link.canonical_url
+  const tooltip = `${link.type} · ${displayLabel}`
+
+  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.stopPropagation()
+    if (!isHttp) {
+      e.preventDefault()
+      void launch(url, { copyText: url, successMessage: `Opening ${link.type}… (path copied as backup)` })
+    }
+  }
+
+  return (
+    <a
+      href={isHttp ? url : '#'}
+      target={isHttp ? '_blank' : undefined}
+      rel={isHttp ? 'noopener noreferrer' : undefined}
+      onClick={handleClick}
+      title={tooltip}
+      className="inline-flex items-center gap-1.5 self-start"
+      style={{
+        padding: '4px 7px 4px 9px',
+        borderRadius: 'var(--radius-md)',
+        background: 'var(--ice)',
+        border: '1px solid var(--border-subtle)',
+        maxWidth: 240,
+        fontSize: 12,
+        fontWeight: 500,
+        textDecoration: 'none',
+        color: 'var(--slate)',
+      }}
+    >
+      <Icon size={14} strokeWidth={1.5} style={{ color, flexShrink: 0 }} />
+      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>
+        {displayLabel}
+      </span>
+    </a>
+  )
+}
 
 // ProjectKeyLinks (read-only) — superseded by KeyLinksEditor imported from
 // ../components/KeyLinksEditor. The editable editor ships display AND add/edit

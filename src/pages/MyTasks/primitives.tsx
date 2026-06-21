@@ -11,6 +11,8 @@
 import { INK_DIM, INK_MUTED } from './constants'
 import { Chip as UiChip, type ChipProps } from '../../components/ui/Chip'
 import { classifyUrl } from '../../lib/urlClassify'
+import { normalizeLink } from '../../lib/pbLinks.generated'
+import { iconForType } from '../../lib/linkIcon'
 import { useProtocolLaunch } from '../../hooks/useProtocolLaunch'
 import { ICON_PROPS } from '../../lib/iconProps'
 import type { TaskRow } from '../../lib/api'
@@ -36,12 +38,14 @@ export function LinksBar({ task }: { task: TaskRow }) {
   return (
     <span style={{ display: 'inline-flex', gap: 3, alignItems: 'center' }}>
       {links.map((l, i) => {
-        // URL-inferred classification for href + isHttp + typeLabel (needed for
-        // non-http launch). Brand color comes from iconForType once type lands
-        // on the task payload (Task 8 / hub-backend); for now falls back to
-        // URL-inferred Icon so existing key_link_* slots still render correctly.
+        // Resolve icon: prefer stored type if available (from stored links),
+        // then try canonical normalizer (delivers 15-type icons from slot URLs),
+        // then fall back to classifyUrl's coarse 5-bucket icon.
         const { href, Icon: FallbackIcon, typeLabel, isHttp } = classifyUrl(l.url)
-        const Icon = FallbackIcon
+        const resolvedType = (l as { type?: string | null }).type || normalizeLink(l.url)?.type
+        const iconSpec = resolvedType ? iconForType(resolvedType) : null
+        const Icon = iconSpec ? iconSpec.Icon : FallbackIcon
+        const color = iconSpec ? iconSpec.color : INK_DIM
         const tooltip = l.desc || typeLabel
         return (
           <a
@@ -58,7 +62,7 @@ export function LinksBar({ task }: { task: TaskRow }) {
                 void launch(href, { copyText: l.url, successMessage: `Opening ${typeLabel.toLowerCase()}… (path copied as backup)` })
               }
             }}
-            style={{ width: 16, height: 16, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: INK_DIM, textDecoration: 'none', transition: 'color 150ms' }}
+            style={{ width: 16, height: 16, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color, textDecoration: 'none', transition: 'color 150ms' }}
           >
             <Icon {...ICON_PROPS} size={14} aria-hidden="true" />
           </a>

@@ -13,7 +13,10 @@ import FileUpload from '../FileUpload'
 const RichTextEditor = lazy(() => import('../RichTextEditor'))
 import { useUpdateTask, useUpdateTaskStatus, usePostTaskUpdate, useBulkUpdateTasks } from '../../hooks/useMutations'
 import { useAutoAcknowledge } from '../../hooks/useAutoAcknowledge'
-import { useProjects, useDecisions } from '../../hooks/useApiData'
+import { useProjects, useDecisions, useTaskLinks } from '../../hooks/useApiData'
+import type { StoredLink } from '../../hooks/useApiData'
+import { iconForType } from '../../lib/linkIcon'
+import { useProtocolLaunch } from '../../hooks/useProtocolLaunch'
 import GhostSelect from '../ui/GhostSelect'
 import type { DecisionRow } from '../../hooks/useApiData'
 import { parseTagsString } from '../../lib/tagUtils'
@@ -1193,8 +1196,54 @@ function ProjectDecisionsSection({ projectSlug }: { projectSlug: string }) {
 }
 
 // ── Detail Key Links ────────────────────────────────────
-// DetailKeyLinkRow (read-only row with copy button) is superseded by
-// KeyLinksEditor. Editor handles display + add/edit/remove inline.
+// Reads task-owned stored links from GET /api/tasks/:id/links and renders
+// them as Mode-A labeled chips (authoritative stored type → brand glyph).
+// Inherited project links are shown read-only in a separate sub-section.
+// The 3-slot key_link_* WRITE path stays in KeyLinksEditor until P3/P4.
+
+function StoredLinkChip({ link }: { link: StoredLink }) {
+  const { launch } = useProtocolLaunch()
+  const { Icon, color } = iconForType(link.type)
+  const url = link.canonical_url
+  const isHttp = url.startsWith('http')
+  const displayLabel = link.short_title || link.canonical_url
+  const tooltip = `${link.type} · ${displayLabel}`
+
+  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.stopPropagation()
+    if (!isHttp) {
+      e.preventDefault()
+      void launch(url, { copyText: url, successMessage: `Opening ${link.type}… (path copied as backup)` })
+    }
+  }
+
+  return (
+    <a
+      href={isHttp ? url : '#'}
+      target={isHttp ? '_blank' : undefined}
+      rel={isHttp ? 'noopener noreferrer' : undefined}
+      onClick={handleClick}
+      title={tooltip}
+      className="inline-flex items-center gap-1.5 self-start"
+      style={{
+        padding: '4px 7px 4px 9px',
+        borderRadius: 'var(--radius-md)',
+        background: 'var(--ice)',
+        border: '1px solid var(--border-subtle)',
+        maxWidth: 240,
+        fontSize: 12,
+        fontWeight: 500,
+        textDecoration: 'none',
+        color: 'var(--slate)',
+      }}
+    >
+      <Icon size={14} strokeWidth={1.5} style={{ color, flexShrink: 0 }} />
+      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>
+        {displayLabel}
+      </span>
+    </a>
+  )
+}
 
 function DetailKeyLinks({
   task,
@@ -1203,7 +1252,13 @@ function DetailKeyLinks({
   task: TaskRow
   onUpdate: (fields: Record<string, string | null>) => void
 }) {
-  const links = [
+  // Stored links from the links table (authoritative stored type).
+  const { data: linksData } = useTaskLinks(task.id)
+  const storedLinks = linksData?.links ?? []
+  const projectLinks = linksData?.projectLinks ?? []
+
+  // 3-slot key_link_* for the WRITE path (add/edit/remove) — kept until P3/P4.
+  const slotLinks = [
     { url: task.key_link_1, desc: task.key_link_1_desc },
     { url: task.key_link_2, desc: task.key_link_2_desc },
     { url: task.key_link_3, desc: task.key_link_3_desc },
@@ -1212,8 +1267,7 @@ function DetailKeyLinks({
   // email_link (v74, PB email-triage capture) was synced + returned by
   // /api/tasks but rendered NOWHERE until 2026-06-10 — the short_title class
   // again. System-populated, so it renders as a read-only Gmail chip rather
-  // than occupying an editable key-link slot. LinkChip is the shared chip
-  // primitive extracted from this pattern.
+  // than occupying an editable key-link slot.
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -1225,8 +1279,33 @@ function DetailKeyLinks({
           stopPropagation={true}
         />
       )}
+
+      {/* Stored task-owned links (authoritative type → brand glyph). */}
+      {storedLinks.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {storedLinks.map((link) => (
+            <StoredLinkChip key={link.id} link={link} />
+          ))}
+        </div>
+      )}
+
+      {/* Inherited project links — read-only, visually separated. */}
+      {projectLinks.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', fontWeight: 'var(--label-weight)' }}>
+            Project links
+          </span>
+          <div className="flex flex-wrap gap-2">
+            {projectLinks.map((link) => (
+              <StoredLinkChip key={link.id} link={link} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 3-slot write path — editable until P3/P4 lands. */}
       <KeyLinksEditor
-        links={links}
+        links={slotLinks}
         onSave={(next) => {
           onUpdate({
             key_link_1: next[0]?.url || null,

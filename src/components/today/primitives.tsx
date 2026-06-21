@@ -12,6 +12,7 @@ import { Link } from 'react-router-dom'
 import { PATHS } from '../../constants/paths'
 import { INK, INK_MUTED, withAlpha } from './constants'
 import { classifyUrl } from '../../lib/urlClassify'
+import { normalizeLink } from '../../lib/pbLinks.generated'
 import { iconForType } from '../../lib/linkIcon'
 import { useProtocolLaunch } from '../../hooks/useProtocolLaunch'
 import { ICON_PROPS } from '../../lib/iconProps'
@@ -32,9 +33,11 @@ export function LinkRow({ links }: { links: TaskLink[] }) {
   return (
     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
       {links.map((l, i) => {
-        // Prefer stored type; fall back to URL-inferred icon for legacy slots.
-        const stored = l.type ? iconForType(l.type) : null
+        // Prefer stored type; then canonical normalizer (15-type icons from URL);
+        // finally classifyUrl's coarse 5-bucket fallback.
         const { href, Icon: FallbackIcon, typeLabel, isHttp } = classifyUrl(l.url)
+        const resolvedType = l.type || normalizeLink(l.url)?.type
+        const stored = resolvedType ? iconForType(resolvedType) : null
         const Icon = stored ? stored.Icon : FallbackIcon
         const color = stored ? stored.color : INK_MUTED
         const tooltip = l.type && l.desc

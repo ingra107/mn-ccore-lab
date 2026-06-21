@@ -15,6 +15,7 @@
 
 import React from 'react'
 import { classifyUrl, shortLabelForUrl } from '../lib/urlClassify'
+import { normalizeLink } from '../lib/pbLinks.generated'
 import { iconForType } from '../lib/linkIcon'
 import { ICON_PROPS } from '../lib/iconProps'
 import { useProtocolLaunch } from '../hooks/useProtocolLaunch'
@@ -46,13 +47,16 @@ export default function LinkChip({
   stopPropagation = false,
 }: Props) {
   const { href, Icon: FallbackIcon, typeLabel, isHttp } = classifyUrl(url)
-  const stored = type ? iconForType(type) : null
+  // Prefer explicit stored type; then canonical normalizer (15-type icons from URL);
+  // finally classifyUrl's coarse 5-bucket fallback.
+  const resolvedType = type || normalizeLink(url)?.type
+  const stored = resolvedType ? iconForType(resolvedType) : null
   const Icon = stored ? stored.Icon : FallbackIcon
   const color = stored ? stored.color : 'var(--teal)'
   const { launch } = useProtocolLaunch()
 
   const displayLabel = label ?? typeLabel ?? shortLabelForUrl(url)
-  const tooltip = type && displayLabel ? `${type} · ${displayLabel}` : displayLabel
+  const tooltip = resolvedType && displayLabel ? `${resolvedType} · ${displayLabel}` : displayLabel
 
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     if (stopPropagation) e.stopPropagation()

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link2, Plus, Pencil, Check, X } from 'lucide-react'
 import { classifyUrl } from '../lib/urlClassify'
+import { normalizeLink } from '../lib/pbLinks.generated'
 import { iconForType } from '../lib/linkIcon'
 import { useProtocolLaunch } from '../hooks/useProtocolLaunch'
 import { ICON_PROPS } from '../lib/iconProps'
@@ -48,7 +49,10 @@ function LinkRow({
 }) {
   const url = link.url || ''
   const { href, Icon: FallbackIcon, typeLabel, isHttp } = classifyUrl(url)
-  const stored = link.type ? iconForType(link.type) : null
+  // Prefer stored type; then canonical normalizer (15-type icons from URL);
+  // finally classifyUrl's coarse 5-bucket fallback.
+  const resolvedType = link.type || normalizeLink(url)?.type
+  const stored = resolvedType ? iconForType(resolvedType) : null
   const Icon = stored ? stored.Icon : FallbackIcon
   // Mode-A: brand-color glyph on neutral ice/slate pill (Nick 2026-06-17).
   // Labeled chips keep the pill box; only icon-only affordances go borderless.
@@ -56,8 +60,8 @@ function LinkRow({
   const { launch } = useProtocolLaunch()
 
   const displayLabel = link.desc || typeLabel || url
-  const tooltip = link.type
-    ? `${link.type} · ${displayLabel}`
+  const tooltip = resolvedType
+    ? `${resolvedType} · ${displayLabel}`
     : (isHttp ? url : `Click to copy path: ${url}`)
 
   const handleNonHttpClick = (e: React.MouseEvent) => {
