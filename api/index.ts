@@ -77,7 +77,7 @@ import { handleProactiveBrief } from './routes/proactive-brief';
 import { handleGetFileActivity, handleSyncFileActivity } from './routes/file-activity';
 import { handleGenerateDigestEmail, handleDigestPreview, handleSendDigestEmail, handleSendDailyDigests } from './routes/digest-email';
 import { pruneAllLedgers, monitorD1Health, compactProcessedMutationsJson } from './lib/ledger-retention';
-import { handleGetLinks, handleGetTaskLinks, handleGetProjectLinks } from './routes/links';
+import { handleGetLinks, handleGetTaskLinks, handleGetProjectLinks, handleGetAllProjectLinks } from './routes/links';
 // inbox.ts retired 2026-05-05 (5.3a) — migrated to /api/inbox-events/sync-bulk
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1825,6 +1825,16 @@ defineRoute({
   entity: 'links',
   visibility: 'na',
   handler: (c) => handleGetTaskLinks(c.req.param('id'), R(c), E(c)),
+});
+// Bulk project-links (backlog #147) — specific literal path registered BEFORE
+// the parameterized /:slug/links so hono matches it without ambiguity.
+defineRoute({
+  method: 'GET',
+  path: '/api/projects/links',
+  auth: 'authed',
+  entity: 'links',
+  visibility: 'na',
+  handler: (c) => handleGetAllProjectLinks(R(c), E(c)),
 });
 defineRoute({
   method: 'GET',

@@ -319,6 +319,22 @@ async function fetchProjectWithLinks(
   return { fields, explicit };
 }
 
+// ── buildProjectLinks — shared helper ─────────────────────────────────────────
+//
+// Combines explicit links-table rows with derived canonical-field links for one
+// project. Called by handleGetProjectLinks (per-project), handleGetTaskLinks
+// (parent project), and handleGetAllProjectLinks (bulk).
+//
+// Explicit rows first (sort_order ASC, id ASC from the DB query), then derived
+// folder → github → box. Dedup: explicit wins when canonical_url matches.
+export function buildProjectLinks(
+  fields: ProjectLinkFields,
+  explicitRows: Record<string, unknown>[],
+): Record<string, unknown>[] {
+  const derived = buildDerivedProjectLinks(fields, explicitRows);
+  return [...explicitRows, ...derived];
+}
+
 // GET /api/tasks/:id/links
 // Returns { links: StoredLink[], projectLinks: StoredLink[] }.
 // `links`        = task-owned live rows.
@@ -352,10 +368,9 @@ export async function handleGetTaskLinks(
   ]);
 
   const projectExplicit = projectData?.explicit ?? [];
-  const projectDerived = projectData
-    ? buildDerivedProjectLinks(projectData.fields, projectExplicit)
+  const projectLinks = projectData
+    ? buildProjectLinks(projectData.fields, projectExplicit)
     : [];
-  const projectLinks = [...projectExplicit, ...projectDerived];
 
   return json({ links: taskLinks, projectLinks });
 }
@@ -387,8 +402,108 @@ export async function handleGetProjectLinks(
   if (block) return block;
 
   const explicit = await fetchOwnerLinks(env, 'projects', project.id);
-  const derived = buildDerivedProjectLinks(project, explicit);
-  const links = [...explicit, ...derived];
+  const links = buildProjectLinks(project, explicit);
 
   return json({ links });
+}
+
+// GET /api/projects/links — bulk project-links (backlog #147)
+//
+// Returns all visible projects' links in ONE response so the Projects table can
+// populate a links column without N+1 per-row fetches.
+//
+// Response shape:
+//   { projects: { "<projectId>": StoredLink[] } }
+//
+// Keyed by project id (typed proj_* PK) so the frontend can do O(1) index
+// lookups from a table row: `linksByProject[row.id] ?? []`.
+//
+// Efficiency: two bulk queries — no per-project loops:
+//   Q1  SELECT id, primary_folder, github_url, box_url, category FROM projects
+//         WHERE deleted_at IS NULL
+//   Q2  SELECT id, role, type, canonical_url, short_title, sort_order,
+//             owner_id FROM links
+//         WHERE owner_table = 'projects' AND deleted_at IS NULL
+//
+// Q2 rows are grouped in memory by owner_id. Then for each visible project
+// we call buildProjectLinks(fields, explicitRows) to union the derived links.
+//
+// Visibility: PB-category projects are filtered out for non-PI callers (same
+// gate as assertProjectVisible / canSeePbProject). PI/API-key see all.
+// Auth: authed (CF Access JWT — no PI/API-key required for non-PB projects).
+export async function handleGetAllProjectLinks(
+  request: Request,
+  env: Env,
+): Promise<Response> {
+  // Determine caller's PI status once — used to gate PB-category projects.
+  const callerIsPi = await isPiRequest(request, env);
+
+  // Q1: fetch all live projects with the three derived-link source columns.
+  // category is required for the visibility gate.
+  type ProjectBulkRow = { id: string; category: string | null } & ProjectLinkFields;
+  let projects: ProjectBulkRow[];
+  try {
+    const res = await env.DB
+      .prepare(
+        'SELECT id, primary_folder, github_url, box_url, category FROM projects WHERE deleted_at IS NULL',
+      )
+      .all<ProjectBulkRow>();
+    projects = res.results ?? [];
+  } catch (e) {
+    const msg = (e as Error).message ?? String(e);
+    if (/no such table/i.test(msg)) return json({ projects: {} });
+    console.error('handleGetAllProjectLinks Q1 error:', msg);
+    return error(`DB error: ${msg}`, 500);
+  }
+
+  // Q2: fetch ALL live project-owned links in one shot.
+  // Include owner_id so we can group in memory.
+  const FE_LINKS_BULK_COLS = `${FE_LINKS_COLS}, owner_id`;
+  type BulkLinkRow = Record<string, unknown> & { owner_id: string };
+  let allLinks: BulkLinkRow[];
+  try {
+    const res = await env.DB
+      .prepare(
+        `SELECT ${FE_LINKS_BULK_COLS} FROM links
+         WHERE owner_table = 'projects' AND deleted_at IS NULL
+         ORDER BY sort_order ASC, id ASC`,
+      )
+      .all<BulkLinkRow>();
+    allLinks = res.results ?? [];
+  } catch (e) {
+    const msg = (e as Error).message ?? String(e);
+    if (/no such table/i.test(msg)) {
+      // links table not yet migrated; return derived-only links per project.
+      allLinks = [];
+    } else {
+      console.error('handleGetAllProjectLinks Q2 error:', msg);
+      return error(`DB error: ${msg}`, 500);
+    }
+  }
+
+  // Group explicit links by owner_id in memory (O(n)).
+  const explicitByProject = new Map<string, Record<string, unknown>[]>();
+  for (const row of allLinks) {
+    const pid = row.owner_id;
+    if (!explicitByProject.has(pid)) explicitByProject.set(pid, []);
+    // Omit owner_id from the final Link shape — callers don't need it.
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { owner_id: _oid, ...linkFields } = row;
+    explicitByProject.get(pid)!.push(linkFields);
+  }
+
+  // Build the result map: { projectId → Link[] }.
+  // Filter PB-category projects for non-PI callers.
+  const result: Record<string, Record<string, unknown>[]> = {};
+  for (const proj of projects) {
+    // Visibility gate: PB-category projects excluded for non-PI.
+    // We have the category in hand from Q1 so no additional DB lookup needed.
+    // isPiRequest was evaluated once above and cached in callerIsPi.
+    if (proj.category === 'Peripheral Brain' && !callerIsPi) continue;
+
+    const explicit = explicitByProject.get(proj.id) ?? [];
+    result[proj.id] = buildProjectLinks(proj, explicit);
+  }
+
+  return json({ projects: result });
 }

@@ -1,31 +1,36 @@
 // Frontend-accessible links sub-resource tests (B3 Task 8, 2026-06-21)
 // Updated 2026-06-21: derived project-field links (primary_folder, github_url,
 // box_url) are now unioned into projectLinks / links at read time.
+// Updated 2026-06-21: bulk project-links endpoint (backlog #147).
 //
 // Covers:
-//   handleGetTaskLinks   GET /api/tasks/:id/links
-//   handleGetProjectLinks  GET /api/projects/:slug/links
+//   handleGetTaskLinks        GET /api/tasks/:id/links
+//   handleGetProjectLinks     GET /api/projects/:slug/links
+//   handleGetAllProjectLinks  GET /api/projects/links (bulk)
 //
-// Both handlers are authed (CF Access JWT, no PI/API-key required).
+// Both per-item handlers are authed (CF Access JWT, no PI/API-key required).
 // Auth gates (404 for missing task/project, 403 for PB-gated projects) are
 // exercised here; assertProjectVisible itself is integration-tested elsewhere.
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import type { Env } from '../helpers'
 
-// assertProjectVisible must be mockable; mock helpers before importing handlers.
+// assertProjectVisible and isPiRequest must be mockable; mock helpers before
+// importing handlers.
 vi.mock('../helpers', async (importOriginal) => {
   const mod = await importOriginal<typeof import('../helpers')>()
   return {
     ...mod,
     assertProjectVisible: vi.fn().mockResolvedValue(null), // null = allow (default)
+    isPiRequest: vi.fn().mockResolvedValue(false),         // non-PI by default
   }
 })
 
-import { handleGetTaskLinks, handleGetProjectLinks } from './links'
-import { assertProjectVisible } from '../helpers'
+import { handleGetTaskLinks, handleGetProjectLinks, handleGetAllProjectLinks } from './links'
+import { assertProjectVisible, isPiRequest } from '../helpers'
 
 const mockAssertProjectVisible = vi.mocked(assertProjectVisible)
+const mockIsPiRequest = vi.mocked(isPiRequest)
 
 // ── Stub factory ─────────────────────────────────────────────────────────────
 //
@@ -99,6 +104,64 @@ function makeEnv(opts: DbStubOpts = {}): Env {
 
 function makeRequest(path = 'https://hub.test/api/tasks/task_001/links'): Request {
   return new Request(path, { headers: { Authorization: 'Bearer test-jwt' } })
+}
+
+// ── Bulk stub factory ─────────────────────────────────────────────────────────
+//
+// The bulk handler issues two .all() calls with no .bind() arguments before
+// .all(): one on projects (FROM PROJECTS) and one on links (FROM LINKS).
+// We distinguish them by inspecting the SQL string.
+
+type BulkProjectRow = {
+  id: string
+  category?: string | null
+  primary_folder?: string | null
+  github_url?: string | null
+  box_url?: string | null
+}
+
+// BulkLinkRow includes owner_id so the handler can group by project.
+type BulkLinkRow = {
+  id: string
+  role: string
+  type: string
+  canonical_url: string
+  short_title: string
+  sort_order: number
+  owner_id: string
+}
+
+type BulkDbStubOpts = {
+  projectRows?: BulkProjectRow[]
+  linkRows?: BulkLinkRow[]
+}
+
+function makeEnvBulk(opts: BulkDbStubOpts = {}): Env {
+  const {
+    projectRows = [],
+    linkRows = [],
+  } = opts
+
+  return {
+    DB: {
+      prepare: (sql: string) => {
+        const upper = sql.trim().toUpperCase()
+        return {
+          bind: (..._args: unknown[]) => ({
+            first: async () => null,
+            all: async () => ({ results: [] }),
+          }),
+          first: async () => null,
+          // No-bind .all() used by bulk handler for both Q1 and Q2.
+          all: async () => {
+            if (upper.includes('FROM PROJECTS')) return { results: projectRows }
+            if (upper.includes('FROM LINKS')) return { results: linkRows }
+            return { results: [] }
+          },
+        }
+      },
+    },
+  } as unknown as Env
 }
 
 // ── Fixture data ─────────────────────────────────────────────────────────────
@@ -240,7 +303,176 @@ describe('handleGetTaskLinks — GET /api/tasks/:id/links', () => {
   })
 })
 
-// ── handleGetProjectLinks ─────────────────────────────────────────────────────
+// ── handleGetAllProjectLinks ──────────────────────────────────────────────────
+
+describe('handleGetAllProjectLinks — GET /api/projects/links (bulk)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockAssertProjectVisible.mockResolvedValue(null)
+    mockIsPiRequest.mockResolvedValue(false) // non-PI by default
+  })
+
+  it('returns 200 with empty projects map when no projects exist', async () => {
+    const env = makeEnvBulk({ projectRows: [], linkRows: [] })
+    const res = await handleGetAllProjectLinks(makeRequest(), env)
+    expect(res.status).toBe(200)
+    const body = await res.json() as { projects: Record<string, unknown[]> }
+    expect(body.projects).toEqual({})
+  })
+
+  it('returns a map keyed by project id', async () => {
+    const env = makeEnvBulk({
+      projectRows: [
+        { id: 'proj_aaa', category: 'Nick_Lab' },
+        { id: 'proj_bbb', category: 'Nick_Lab' },
+      ],
+      linkRows: [],
+    })
+    const res = await handleGetAllProjectLinks(makeRequest(), env)
+    expect(res.status).toBe(200)
+    const body = await res.json() as { projects: Record<string, unknown[]> }
+    expect(Object.keys(body.projects)).toContain('proj_aaa')
+    expect(Object.keys(body.projects)).toContain('proj_bbb')
+  })
+
+  it('groups explicit links under the correct project id', async () => {
+    const env = makeEnvBulk({
+      projectRows: [
+        { id: 'proj_aaa', category: 'Nick_Lab' },
+        { id: 'proj_bbb', category: 'Nick_Lab' },
+      ],
+      linkRows: [
+        {
+          id: 'lnk_aaa_1', role: 'key', type: 'google_doc',
+          canonical_url: 'https://docs.google.com/d/aaa', short_title: 'Doc A',
+          sort_order: 0, owner_id: 'proj_aaa',
+        },
+        {
+          id: 'lnk_bbb_1', role: 'key', type: 'github_repo',
+          canonical_url: 'https://github.com/ingra107/proj-bbb', short_title: 'proj-bbb',
+          sort_order: 0, owner_id: 'proj_bbb',
+        },
+      ],
+    })
+    const res = await handleGetAllProjectLinks(makeRequest(), env)
+    const body = await res.json() as { projects: Record<string, Record<string, unknown>[]> }
+    expect(body.projects['proj_aaa']).toHaveLength(1)
+    expect(body.projects['proj_aaa'][0].id).toBe('lnk_aaa_1')
+    expect(body.projects['proj_bbb']).toHaveLength(1)
+    expect(body.projects['proj_bbb'][0].id).toBe('lnk_bbb_1')
+  })
+
+  it('includes derived links (primary_folder, github_url, box_url) alongside explicit', async () => {
+    const env = makeEnvBulk({
+      projectRows: [
+        {
+          id: 'proj_aaa',
+          category: 'Nick_Lab',
+          primary_folder: 'C:/Users/ingra107/Box/Research/CIRCLE',
+          github_url: 'https://github.com/ingra107/circle',
+          box_url: 'https://umn.box.com/s/circle',
+        },
+      ],
+      linkRows: [],
+    })
+    const res = await handleGetAllProjectLinks(makeRequest(), env)
+    const body = await res.json() as { projects: Record<string, Record<string, unknown>[]> }
+    const links = body.projects['proj_aaa']
+    const types = links.map(l => l.type)
+    expect(types).toContain('local_folder')
+    expect(types).toContain('github_repo')
+    expect(types).toContain('box_folder')
+  })
+
+  it('deduplicates: explicit link wins over derived with the same canonical_url', async () => {
+    const explicitBoxUrl = 'https://umn.box.com/s/circle'
+    const env = makeEnvBulk({
+      projectRows: [
+        { id: 'proj_aaa', category: 'Nick_Lab', box_url: explicitBoxUrl },
+      ],
+      linkRows: [
+        {
+          id: 'lnk_explicit_box', role: 'key', type: 'box_folder',
+          canonical_url: explicitBoxUrl, short_title: 'Curated Box label',
+          sort_order: 0, owner_id: 'proj_aaa',
+        },
+      ],
+    })
+    const res = await handleGetAllProjectLinks(makeRequest(), env)
+    const body = await res.json() as { projects: Record<string, Record<string, unknown>[]> }
+    const links = body.projects['proj_aaa']
+    const boxLinks = links.filter(l => l.type === 'box_folder')
+    expect(boxLinks).toHaveLength(1)
+    expect(boxLinks[0].id).toBe('lnk_explicit_box')
+    expect(boxLinks[0].short_title).toBe('Curated Box label')
+  })
+
+  it('excludes PB-category projects for non-PI callers', async () => {
+    mockIsPiRequest.mockResolvedValue(false)
+    const env = makeEnvBulk({
+      projectRows: [
+        { id: 'proj_visible', category: 'Nick_Lab' },
+        { id: 'proj_pb', category: 'Peripheral Brain' },
+      ],
+      linkRows: [],
+    })
+    const res = await handleGetAllProjectLinks(makeRequest(), env)
+    const body = await res.json() as { projects: Record<string, unknown[]> }
+    expect(Object.keys(body.projects)).toContain('proj_visible')
+    expect(Object.keys(body.projects)).not.toContain('proj_pb')
+  })
+
+  it('includes PB-category projects for PI/API-key callers', async () => {
+    mockIsPiRequest.mockResolvedValue(true)
+    const env = makeEnvBulk({
+      projectRows: [
+        { id: 'proj_visible', category: 'Nick_Lab' },
+        { id: 'proj_pb', category: 'Peripheral Brain' },
+      ],
+      linkRows: [],
+    })
+    const res = await handleGetAllProjectLinks(makeRequest(), env)
+    const body = await res.json() as { projects: Record<string, unknown[]> }
+    expect(Object.keys(body.projects)).toContain('proj_visible')
+    expect(Object.keys(body.projects)).toContain('proj_pb')
+  })
+
+  it('explicit links do NOT include owner_id in the response shape', async () => {
+    const env = makeEnvBulk({
+      projectRows: [{ id: 'proj_aaa', category: 'Nick_Lab' }],
+      linkRows: [
+        {
+          id: 'lnk_001', role: 'key', type: 'google_doc',
+          canonical_url: 'https://docs.google.com/d/abc', short_title: 'Doc',
+          sort_order: 0, owner_id: 'proj_aaa',
+        },
+      ],
+    })
+    const res = await handleGetAllProjectLinks(makeRequest(), env)
+    const body = await res.json() as { projects: Record<string, Record<string, unknown>[]> }
+    const link = body.projects['proj_aaa'][0]
+    expect(link).not.toHaveProperty('owner_id')
+    // Must carry the six frontend projection fields.
+    expect(link).toHaveProperty('id')
+    expect(link).toHaveProperty('role')
+    expect(link).toHaveProperty('type')
+    expect(link).toHaveProperty('canonical_url')
+    expect(link).toHaveProperty('short_title')
+    expect(link).toHaveProperty('sort_order')
+  })
+
+  it('returns empty array for projects with no explicit or derived links', async () => {
+    const env = makeEnvBulk({
+      projectRows: [
+        { id: 'proj_aaa', category: 'Nick_Lab', primary_folder: null, github_url: null, box_url: null },
+      ],
+      linkRows: [],
+    })
+    const res = await handleGetAllProjectLinks(makeRequest(), env)
+    const body = await res.json() as { projects: Record<string, unknown[]> }
+    expect(body.projects['proj_aaa']).toEqual([])
+  })
+})
 
 describe('handleGetProjectLinks — GET /api/projects/:slug/links', () => {
   beforeEach(() => {
