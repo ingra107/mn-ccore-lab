@@ -75,6 +75,7 @@ export interface ProjectNote {
 }
 
 export interface Project {
+  id?: string        // proj_* PK from D1 (used for bulk-endpoint lookups); absent in static dev data
   title: string
   status: 'active' | 'waiting_external' | 'blocked' | 'done' | string
   description?: string

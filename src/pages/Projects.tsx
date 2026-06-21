@@ -26,6 +26,10 @@ import { staggerContainer, staggerItem } from '../lib/animations'
 import { stripConsortiumPrefix } from '../lib/textUtils'
 import { PATHS } from '../constants/paths'
 import { ICON_PROPS } from '../lib/iconProps'
+import { useAllProjectLinks } from '../hooks/useApiData'
+import type { StoredLink } from '../hooks/useApiData'
+import { iconForType } from '../lib/linkIcon'
+import { useProtocolLaunch } from '../hooks/useProtocolLaunch'
 
 // Values are D1 lowercase canonical; labels are Title Case for display.
 const STAGES = ['idea', 'data_collection', 'analysis', 'writing', 'review', 'revisions', 'published'] as const
@@ -65,6 +69,77 @@ const CATEGORY_DOT: Record<string, string> = {
 
 const STAGE_ORDER: Record<string, number> = Object.fromEntries(STAGES.map((s, i) => [s, i]))
 
+// Mode-B icon-only link bar for a project row.
+// Max 4 icons shown inline; overflow shown as "+N" label.
+// Borderless glyph (Nick 2026-06-17 rule): no outline, sharp, hover tooltip.
+// Non-http links open via useProtocolLaunch (mnccore:// handler + clipboard backup).
+const LINKS_OVERFLOW_THRESHOLD = 4
+function ProjectLinksCell({ links }: { links: StoredLink[] }) {
+  const { launch } = useProtocolLaunch()
+  if (links.length === 0) return null
+  const visible = links.slice(0, LINKS_OVERFLOW_THRESHOLD)
+  const overflow = links.length - visible.length
+  return (
+    <span
+      style={{ display: 'inline-flex', alignItems: 'center', gap: 3, flexWrap: 'nowrap' }}
+      onClick={(e) => e.preventDefault()}
+    >
+      {visible.map((link) => {
+        const { Icon, color } = iconForType(link.type)
+        const isHttp = link.canonical_url.startsWith('http')
+        const tooltip = `${link.type} · ${link.short_title || link.canonical_url}`
+        return (
+          <a
+            key={link.id}
+            href={isHttp ? link.canonical_url : '#'}
+            target={isHttp ? '_blank' : undefined}
+            rel={isHttp ? 'noopener noreferrer' : undefined}
+            title={tooltip}
+            aria-label={tooltip}
+            onClick={(e) => {
+              e.stopPropagation()
+              if (!isHttp) {
+                e.preventDefault()
+                void launch(link.canonical_url, {
+                  copyText: link.canonical_url,
+                  successMessage: `Opening ${link.type}… (path copied as backup)`,
+                })
+              }
+            }}
+            style={{
+              width: 16,
+              height: 16,
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color,
+              textDecoration: 'none',
+              transition: 'opacity 150ms',
+              opacity: 0.85,
+              flexShrink: 0,
+            }}
+          >
+            <Icon {...ICON_PROPS} size={14} aria-hidden="true" />
+          </a>
+        )
+      })}
+      {overflow > 0 && (
+        <span
+          style={{
+            fontSize: '10px',
+            color: 'var(--slate)',
+            opacity: 0.7,
+            flexShrink: 0,
+            lineHeight: 1,
+          }}
+        >
+          +{overflow}
+        </span>
+      )}
+    </span>
+  )
+}
+
 // S19: PI dropdown options. Directors are the canonical choices; if the current
 // PI value is a non-director slug (legacy "nick", a bare email, a non-director
 // member), prepend a resolved option so InlineSelect renders a clean display
@@ -99,6 +174,7 @@ export default function Projects() {
   const { data: allTasks = [] } = useTasks()
   const { data: dependencies = [] } = useDependencies()
   const { data: healthData } = useProjectHealth()
+  const { data: allProjectLinks = {} } = useAllProjectLinks()
   // P2-9: shared staleness threshold (days-since-meaningful-movement). The
   // "Needs Attention" filter's STALENESS input reconciles to this single basis
   // (health score may still weight other inputs, but staleness is one truth).
@@ -405,7 +481,7 @@ export default function Projects() {
             <div
               className="hidden md:grid"
               style={{
-                gridTemplateColumns: 'minmax(320px, 3fr) 110px 110px 120px 80px',
+                gridTemplateColumns: 'minmax(320px, 3fr) 110px 110px 120px 80px 90px',
                 padding: 'var(--sp-sm) var(--sp-xl)',
                 borderBottom: '1px solid var(--border-subtle)',
               }}
@@ -420,6 +496,18 @@ export default function Projects() {
                   onSort={(k) => toggleSort(k as ProjectSortKey)}
                 />
               ))}
+              {/* Links column — not sortable; plain label matches ColumnHeader visual style */}
+              <span
+                style={{
+                  fontSize: 'var(--label-size)',
+                  fontWeight: 'var(--label-weight)',
+                  color: 'var(--slate)',
+                  opacity: 'var(--ink-label)',
+                  userSelect: 'none',
+                }}
+              >
+                Links
+              </span>
             </div>
 
             {/* Stage-grouped rows with stagger animation */}
@@ -484,7 +572,7 @@ export default function Projects() {
                           <div
                             className={`project-list-row${isFocused ? ' project-row-focused' : ''} hidden md:grid`}
                             style={{
-                              gridTemplateColumns: 'minmax(320px, 3fr) 110px 110px 120px 80px',
+                              gridTemplateColumns: 'minmax(320px, 3fr) 110px 110px 120px 80px 90px',
                               padding: `var(--row-padding-y) 24px`,
                               borderBottom: '1px solid var(--border-subtle)',
                               alignItems: 'center',
@@ -655,6 +743,9 @@ export default function Projects() {
                                 onChange={(val) => inlineUpdate.mutate({ slug: project.slug, fields: { category: val } })}
                               />
                             </div>
+
+                            {/* Links — Mode-B icon-only, borderless, stopPropagation handled inside */}
+                            <ProjectLinksCell links={allProjectLinks[project.id ?? ''] ?? []} />
                           </div>
 
                           {/* Mobile: stacked card layout */}

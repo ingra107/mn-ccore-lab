@@ -122,6 +122,7 @@ function rowToTeamMember(row: TeamMemberRow): TeamMember {
 
 function rowToProject(row: ProjectRow): Project {
   return {
+    id: row.id,
     title: row.title,
     status: row.status as Project['status'],
     description: row.description || undefined,
@@ -1488,6 +1489,23 @@ export function useProjectLinks(slug: string | null) {
     },
     staleTime: 60 * 1000,
     enabled: !!slug,
+  })
+}
+
+// Bulk project links — one call covers all projects (no N+1).
+// Endpoint: GET /api/projects/links → { projects: { "<proj_id>": StoredLink[] } }
+// Returns a map keyed by project id (proj_* PK). Projects with no links are
+// absent from the map (callers use `?? []`). staleTime matches per-project hook.
+export function useAllProjectLinks() {
+  return useQuery({
+    queryKey: ['all-project-links'],
+    queryFn: async (): Promise<Record<string, StoredLink[]>> => {
+      const res = await fetch('/api/projects/links')
+      if (!res.ok) return {}
+      const data = await res.json() as { projects: Record<string, StoredLink[]> }
+      return data.projects ?? {}
+    },
+    staleTime: 60 * 1000,
   })
 }
 
