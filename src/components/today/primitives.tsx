@@ -10,35 +10,44 @@
 
 import { Link } from 'react-router-dom'
 import { PATHS } from '../../constants/paths'
-import { ACCENT_GOLD, INK, INK_MUTED, withAlpha } from './constants'
+import { INK, INK_MUTED, withAlpha } from './constants'
 import { classifyUrl } from '../../lib/urlClassify'
+import { iconForType } from '../../lib/linkIcon'
 import { useProtocolLaunch } from '../../hooks/useProtocolLaunch'
 import { ICON_PROPS } from '../../lib/iconProps'
 
-/** A task key-link: the raw URL + its optional human description. */
-export interface TaskLink { url: string; desc?: string | null }
+/** A task key-link: the raw URL + its optional human description.
+ *  `type` is the stored PB link type (e.g. 'google_doc', 'box_folder').
+ *  When present, iconForType() resolves the brand glyph; otherwise falls
+ *  back to URL-inferred classifyUrl() icon. */
+export interface TaskLink { url: string; desc?: string | null; type?: string | null }
 
-// Bug #77/#79: these chips used to render dead `<a href="#">` glyphs with the
-// raw kind ("claude") as the tooltip. They now carry the REAL url, classify it
-// (folder / script / gmail / obsidian / link → lucide premium icon) and fire it
-// through the canonical useProtocolLaunch (clipboard + toast for mnccore://),
-// matching LinkChip. Icon-only form is kept for the compact Today surfaces.
+// Mode-B icon-only link buttons (Nick 2026-06-17): borderless, sharp (size 16
+// via ICON_PROPS), brand-color glyph from stored type, hover tooltip shows
+// "type · desc". Uses stored link.type when available; falls back to
+// classifyUrl() icon for legacy key_link_* slots without a type field.
 export function LinkRow({ links }: { links: TaskLink[] }) {
   const { launch } = useProtocolLaunch()
   if (!links.length) return null
   return (
     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
       {links.map((l, i) => {
-        const { href, Icon, typeLabel, isHttp } = classifyUrl(l.url)
-        const title = l.desc || typeLabel
+        // Prefer stored type; fall back to URL-inferred icon for legacy slots.
+        const stored = l.type ? iconForType(l.type) : null
+        const { href, Icon: FallbackIcon, typeLabel, isHttp } = classifyUrl(l.url)
+        const Icon = stored ? stored.Icon : FallbackIcon
+        const color = stored ? stored.color : INK_MUTED
+        const tooltip = l.type && l.desc
+          ? `${l.type} · ${l.desc}`
+          : l.desc || typeLabel
         return (
           <a
             key={i}
             href={isHttp ? href : l.url}
             target={isHttp ? '_blank' : undefined}
             rel={isHttp ? 'noopener noreferrer' : undefined}
-            title={title}
-            aria-label={title}
+            title={tooltip}
+            aria-label={tooltip}
             onClick={(e) => {
               e.stopPropagation()
               if (!isHttp) {
@@ -46,15 +55,13 @@ export function LinkRow({ links }: { links: TaskLink[] }) {
                 void launch(href, { copyText: l.url, successMessage: `Opening ${typeLabel.toLowerCase()}… (path copied as backup)` })
               }
             }}
-            className="hov-color"
             style={{
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-              width: 20, height: 20, color: INK_MUTED,
+              width: 20, height: 20, color,
               textDecoration: 'none', transition: 'color 150ms',
-              '--hov-color': ACCENT_GOLD,
-            } as React.CSSProperties}
+            }}
           >
-            <Icon {...ICON_PROPS} size={14} aria-hidden="true" />
+            <Icon {...ICON_PROPS} size={16} aria-hidden="true" />
           </a>
         )
       })}

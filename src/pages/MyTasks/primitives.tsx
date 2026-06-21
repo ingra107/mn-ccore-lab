@@ -21,10 +21,10 @@ export function Chip({ color = INK_MUTED, filled = false, ...rest }: ChipProps) 
   return <UiChip color={color} filled={filled} bordered={true} {...rest} />
 }
 
-// Bug #79: these were non-interactive emoji <span>s — every key-link on My
-// Tasks was dead. Now each chip carries the real URL, classifies it to a lucide
-// premium icon, and fires through useProtocolLaunch (clipboard + toast for
-// mnccore://), matching the Today LinkRow + LinkChip.
+// Mode-B icon-only link buttons (Nick 2026-06-17): borderless, sharp (size 14
+// via ICON_PROPS), brand-color glyph from stored type, hover tooltip shows
+// "type · desc". Uses stored link.type when available; falls back to
+// classifyUrl() icon for legacy key_link_* slots without a type field.
 export function LinksBar({ task }: { task: TaskRow }) {
   const { launch } = useProtocolLaunch()
   const links = [
@@ -36,16 +36,21 @@ export function LinksBar({ task }: { task: TaskRow }) {
   return (
     <span style={{ display: 'inline-flex', gap: 3, alignItems: 'center' }}>
       {links.map((l, i) => {
-        const { href, Icon, typeLabel, isHttp } = classifyUrl(l.url)
-        const title = l.desc || typeLabel
+        // URL-inferred classification for href + isHttp + typeLabel (needed for
+        // non-http launch). Brand color comes from iconForType once type lands
+        // on the task payload (Task 8 / hub-backend); for now falls back to
+        // URL-inferred Icon so existing key_link_* slots still render correctly.
+        const { href, Icon: FallbackIcon, typeLabel, isHttp } = classifyUrl(l.url)
+        const Icon = FallbackIcon
+        const tooltip = l.desc || typeLabel
         return (
           <a
             key={i}
             href={isHttp ? href : l.url}
             target={isHttp ? '_blank' : undefined}
             rel={isHttp ? 'noopener noreferrer' : undefined}
-            title={title}
-            aria-label={title}
+            title={tooltip}
+            aria-label={tooltip}
             onClick={(e) => {
               e.stopPropagation()
               if (!isHttp) {
@@ -53,10 +58,9 @@ export function LinksBar({ task }: { task: TaskRow }) {
                 void launch(href, { copyText: l.url, successMessage: `Opening ${typeLabel.toLowerCase()}… (path copied as backup)` })
               }
             }}
-            className="hov-color"
-            style={{ width: 16, height: 16, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: INK_DIM, textDecoration: 'none', transition: 'color 150ms', '--hov-color': INK_MUTED } as React.CSSProperties}
+            style={{ width: 16, height: 16, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: INK_DIM, textDecoration: 'none', transition: 'color 150ms' }}
           >
-            <Icon {...ICON_PROPS} size={13} aria-hidden="true" />
+            <Icon {...ICON_PROPS} size={14} aria-hidden="true" />
           </a>
         )
       })}

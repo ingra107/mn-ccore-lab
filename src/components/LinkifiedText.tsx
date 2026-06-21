@@ -78,6 +78,10 @@ export default function LinkifiedText({ text, className, style }: Props) {
         successMessage: `Opening ${typeLabel.toLowerCase()}… (path copied as backup)`,
       })
     }
+    // Mode-B borderless (Nick 2026-06-17): no pill box on icon-only affordances.
+    // Text label is kept here because inline linkified text is always labeled
+    // (the reader needs context). Icon is URL-inferred (no stored type in
+    // free-form prose). Size bumped from 11 to 14 for crispness (ICON_PROPS).
     parts.push(
       <a
         key={`url-${start}`}
@@ -90,10 +94,6 @@ export default function LinkifiedText({ text, className, style }: Props) {
         style={{
           fontSize: 'inherit',
           color: 'var(--teal)',
-          background: 'color-mix(in srgb, var(--teal) 9%, transparent)',
-          border: '1px solid color-mix(in srgb, var(--teal) 28%, transparent)',
-          borderRadius: 999,
-          padding: '1px 6px',
           textDecoration: 'none',
           whiteSpace: 'nowrap',
           maxWidth: '100%',
@@ -101,7 +101,7 @@ export default function LinkifiedText({ text, className, style }: Props) {
           textOverflow: 'ellipsis',
         }}
       >
-        <Icon {...ICON_PROPS} size={11} />
+        <Icon {...ICON_PROPS} size={14} />
         <span>{label}</span>
       </a>
     )
