@@ -1,16 +1,24 @@
 import { useState } from 'react'
 import { Link2, Plus, Pencil, Check, X } from 'lucide-react'
 import { classifyUrl } from '../lib/urlClassify'
+import { iconForType } from '../lib/linkIcon'
 import { useProtocolLaunch } from '../hooks/useProtocolLaunch'
 import { ICON_PROPS } from '../lib/iconProps'
 
 // Shared editor for the 3-slot key_link_1/2/3 + _desc pattern used on tasks
-// and projects. Display mode shows teal underlined links; edit mode swaps in
-// URL + description inputs. Empty state shows a single "+ Add a link" button.
+// and projects. Display mode shows Mode-A labeled chips (neutral ice/slate pill
+// + brand-color glyph + description). Edit mode swaps in URL + description inputs.
+// Empty state shows a single "+ Add a key link" button.
+//
+// `type` on KeyLink is the stored PB link type (optional — present once the
+// task payload carries stored links from the hub-backend route; absent for
+// legacy key_link_* slots). When present, iconForType() resolves the brand glyph.
 
 interface KeyLink {
   url: string | null | undefined
   desc: string | null | undefined
+  /** Stored PB link type (e.g. 'google_doc'). Optional — enriches icon color when available. */
+  type?: string | null
 }
 
 interface Props {
@@ -39,11 +47,19 @@ function LinkRow({
   onRemove: () => void
 }) {
   const url = link.url || ''
-  const { href, Icon, typeLabel, isHttp } = classifyUrl(url)
+  const { href, Icon: FallbackIcon, typeLabel, isHttp } = classifyUrl(url)
+  const stored = link.type ? iconForType(link.type) : null
+  const Icon = stored ? stored.Icon : FallbackIcon
+  // Mode-A: brand-color glyph on neutral ice/slate pill (Nick 2026-06-17).
+  // Labeled chips keep the pill box; only icon-only affordances go borderless.
+  const iconColor = stored ? stored.color : 'var(--teal)'
   const { launch } = useProtocolLaunch()
 
-  // Non-http links fire through the ONE protocol-launch chokepoint
-  // (clipboard backup + toast). Was a local duplicate of the same logic.
+  const displayLabel = link.desc || typeLabel || url
+  const tooltip = link.type
+    ? `${link.type} · ${displayLabel}`
+    : (isHttp ? url : `Click to copy path: ${url}`)
+
   const handleNonHttpClick = (e: React.MouseEvent) => {
     e.preventDefault()
     void launch(href, {
@@ -52,9 +68,7 @@ function LinkRow({
     })
   }
 
-  // Compact inline chip (handoff §2): icon + label + remove, with a
-  // hover-revealed edit pencil. Replaces the full-width padded row so links
-  // sit in a wrapping chip strip on both the task editor and ProjectDetail.
+  // Mode-A labeled chip: neutral ice/slate pill + brand-color glyph + label.
   return (
     <span
       className="group inline-flex items-center gap-1.5"
@@ -65,10 +79,10 @@ function LinkRow({
         target={isHttp ? '_blank' : undefined}
         rel={isHttp ? 'noopener noreferrer' : undefined}
         onClick={isHttp ? undefined : handleNonHttpClick}
-        style={{ color: 'var(--teal)', display: 'flex', alignItems: 'center', flexShrink: 0 }}
-        title={isHttp ? url : `Click to copy path: ${url}`}
+        style={{ color: iconColor, display: 'flex', alignItems: 'center', flexShrink: 0 }}
+        title={tooltip}
       >
-        <Icon {...ICON_PROPS} size={13} />
+        <Icon {...ICON_PROPS} size={14} />
       </a>
       <a
         href={isHttp ? href : url}
@@ -76,10 +90,10 @@ function LinkRow({
         rel={isHttp ? 'noopener noreferrer' : undefined}
         onClick={isHttp ? undefined : handleNonHttpClick}
         className="text-xs hover:underline"
-        style={{ color: 'var(--teal)', textDecoration: 'underline', textUnderlineOffset: '2px', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}
-        title={isHttp ? url : `Click to copy path: ${url}`}
+        style={{ color: 'var(--slate)', textDecoration: 'none', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}
+        title={tooltip}
       >
-        {link.desc || typeLabel || url}
+        {displayLabel}
       </a>
       <button
         onClick={onEdit}

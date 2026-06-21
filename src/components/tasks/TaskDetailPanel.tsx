@@ -26,7 +26,7 @@ import { ACCENT_GOLD, PANEL_BG, isTaskDone, withAlpha } from '../../lib/taskGrou
 import MentionInput from '../MentionInput'
 import TypingIndicator from '../TypingIndicator'
 import { getPersonInfo, getAllMembers, directors } from '../../data/team'
-import { shortLabelForUrl } from '../../lib/urlClassify'
+import { shortLabelForUrl, gmailKind } from '../../lib/urlClassify'
 import LinkChip from '../LinkChip'
 import Avatar from '../Avatar'
 import InlineSelect from '../InlineSelect'
@@ -1220,6 +1220,7 @@ function DetailKeyLinks({
       {task.email_link && (
         <LinkChip
           url={task.email_link}
+          type={gmailKind(task.email_link) === 'draft' ? 'gmail_draft' : 'gmail_thread'}
           label={shortLabelForUrl(task.email_link)}
           stopPropagation={true}
         />
