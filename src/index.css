@@ -144,6 +144,37 @@
   }
 }
 
+/* ── Link-type brand color tokens ──
+   One token per type: glyph color for Mode-A labeled chips + Mode-B icon
+   buttons. Light values are AA-adjusted (>=3:1 on --ice #f4f5f7 background).
+   GitHub near-black overrides in .dark to the light-on-dark value (colorDark
+   from PB_LINK_ICONS). Other types maintain the same value in both modes
+   because they are already bright enough on dark surfaces. */
+:root {
+  --link-google-doc:    #1A73E8;   /* Google blue */
+  --link-google-sheet:  #188038;   /* Google green */
+  --link-google-slide:  #B26A00;   /* Google amber */
+  --link-google-form:   #673AB7;   /* Google purple */
+  --link-box-folder:    #0061D5;   /* Box blue */
+  --link-github-repo:   #1F2328;   /* GitHub near-black (dark override below) */
+  --link-github-issue:  #1F2328;
+  --link-github-tree:   #1F2328;
+  --link-gmail-thread:  #EA4335;   /* Gmail red */
+  --link-gmail-draft:   #EA4335;
+  --link-obsidian-note: #7C3AED;   /* Obsidian purple */
+  --link-local-folder:  #475569;   /* neutral slate */
+  --link-local-file:    #475569;
+  --link-script:        #475569;
+  --link-web:           #475569;
+}
+
+.dark {
+  /* GitHub near-black → light on dark surfaces (colorDark: #E6EDF3) */
+  --link-github-repo:   #E6EDF3;
+  --link-github-issue:  #E6EDF3;
+  --link-github-tree:   #E6EDF3;
+}
+
 /* ── Dark mode variables ── */
 /* Dark-first: deeper, more neutral dark — OKLCH lightness math */
 .dark {
