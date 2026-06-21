@@ -153,10 +153,178 @@ async function fetchOwnerLinks(
   }
 }
 
+// ── Derived project-field links (read-time union, 2026-06-21) ─────────────────
+//
+// Projects carry three fields that imply canonical links without requiring an
+// explicit row in the `links` table. We union these in at read time so every
+// project with e.g. a primary_folder surfaces a clickable chip automatically,
+// without backfilling derived data into the links table.
+//
+// Derived link shape:
+//   id           — stable synthetic key ('derived:folder' / 'derived:github' /
+//                  'derived:box') so React keys are unique across renders.
+//   role         — 'derived' (distinct from 'key'/'ref' explicit rows so callers
+//                  can distinguish; the frontend StoredLinkChip renders both the
+//                  same way).
+//   type         — PB link type matching StoredLinkChip's iconForType() registry.
+//   canonical_url — launchable URI:
+//                   * local_folder: mnccore://open/<normalized_path> so
+//                     StoredLinkChip's useProtocolLaunch fires the Windows
+//                     handler directly (raw folder paths are NOT navigable in a
+//                     browser; the WorkOnActions precedent confirms this URI).
+//                   * github_repo / box_folder: the http URL as-is (http links
+//                     open in a new tab via StoredLinkChip's isHttp branch).
+//   short_title  — 'Project folder', extracted 'owner/repo' or 'repo', 'Box folder'.
+//   sort_order   — 0 (derived links are appended AFTER explicit rows, so this
+//                  value is used only for tie-breaking within the derived group).
+//
+// Dedup: if a derived canonical_url already appears in an explicit links-table
+// row for the same project, the EXPLICIT row is kept (it may carry a curated
+// title). Best-effort string equality on canonical_url.
+//
+// Order: explicit links-table rows first (sorted by sort_order then id, as
+// returned by fetchOwnerLinks), then derived folder → github → box.
+
+/** Mirrors urlClassify.ts normalizeLocalFolderPath — must stay in sync. */
+function normalizeLocalFolderPath(raw: string): string {
+  if (!raw) return '';
+  let p = raw.trim();
+  const isUnc = p.startsWith('\\\\') || p.startsWith('//');
+  p = p.replace(/^file:\/\/\/?/i, '');
+  try {
+    p = decodeURIComponent(p);
+  } catch {
+    /* leave p as-is on malformed escape */
+  }
+  p = p.replace(/\\/g, '/');
+  if (isUnc) {
+    p = '//' + p.replace(/^\/+/, '');
+  }
+  p = p.replace(/\/+$/, '');
+  if (!p && isUnc) return '//';
+  return p;
+}
+
+/** Extract 'owner/repo' (or 'repo' fallback) from a github.com URL. */
+function githubShortTitle(url: string): string {
+  try {
+    const m = url.match(/github\.com\/([^/?#]+\/[^/?#]+)/i);
+    if (m) return m[1].replace(/\.git$/i, '');
+  } catch { /* ignore */ }
+  return 'Repo';
+}
+
+interface ProjectLinkFields {
+  primary_folder?: string | null;
+  github_url?: string | null;
+  box_url?: string | null;
+}
+
+interface DerivedLink {
+  id: string;
+  role: 'derived';
+  type: string;
+  canonical_url: string;
+  short_title: string;
+  sort_order: number;
+}
+
+/**
+ * Build the derived typed-link entries for a project's canonical fields.
+ * Returns only entries whose field is non-empty AND whose canonical_url is
+ * not already present in the explicit links array (dedup by string equality).
+ * Order: folder → github → box.
+ */
+function buildDerivedProjectLinks(
+  fields: ProjectLinkFields,
+  explicitLinks: Record<string, unknown>[],
+): DerivedLink[] {
+  // Build a set of explicit canonical_urls for dedup (O(n) lookup).
+  const explicitUrls = new Set(
+    explicitLinks.map(l => l.canonical_url as string).filter(Boolean),
+  );
+
+  const derived: DerivedLink[] = [];
+
+  if (fields.primary_folder) {
+    const normalized = normalizeLocalFolderPath(fields.primary_folder);
+    const canonicalUrl = `mnccore://open/${normalized}`;
+    if (!explicitUrls.has(canonicalUrl)) {
+      derived.push({
+        id: 'derived:folder',
+        role: 'derived',
+        type: 'local_folder',
+        canonical_url: canonicalUrl,
+        short_title: 'Project folder',
+        sort_order: 0,
+      });
+    }
+  }
+
+  if (fields.github_url) {
+    const url = fields.github_url.trim();
+    if (url && !explicitUrls.has(url)) {
+      derived.push({
+        id: 'derived:github',
+        role: 'derived',
+        type: 'github_repo',
+        canonical_url: url,
+        short_title: githubShortTitle(url),
+        sort_order: 0,
+      });
+    }
+  }
+
+  if (fields.box_url) {
+    const url = fields.box_url.trim();
+    if (url && !explicitUrls.has(url)) {
+      derived.push({
+        id: 'derived:box',
+        role: 'derived',
+        type: 'box_folder',
+        canonical_url: url,
+        short_title: 'Box folder',
+        sort_order: 0,
+      });
+    }
+  }
+
+  return derived;
+}
+
+// ── fetchProjectWithLinks ───────────────────────────────────────────────────────
+// Fetch the project's canonical-field values + explicit links in one call.
+// Returns null when the project doesn't exist.
+async function fetchProjectWithLinks(
+  env: Env,
+  projectId: string,
+): Promise<{ fields: ProjectLinkFields; explicit: Record<string, unknown>[] } | null> {
+  // Fetch the three derived-link source columns alongside the explicit links.
+  // These are the only project columns we need here; no SELECT * needed.
+  let fields: ProjectLinkFields;
+  try {
+    const row = await env.DB
+      .prepare('SELECT primary_folder, github_url, box_url FROM projects WHERE id = ?')
+      .bind(projectId)
+      .first<ProjectLinkFields>();
+    if (!row) return null;
+    fields = row;
+  } catch (e) {
+    const msg = (e as Error).message ?? String(e);
+    if (/no such table/i.test(msg)) return null;
+    throw e;
+  }
+
+  const explicit = await fetchOwnerLinks(env, 'projects', projectId);
+  return { fields, explicit };
+}
+
 // GET /api/tasks/:id/links
 // Returns { links: StoredLink[], projectLinks: StoredLink[] }.
 // `links`        = task-owned live rows.
-// `projectLinks` = parent project's live rows (for the inherited read-only section).
+// `projectLinks` = parent project's live rows PLUS derived canonical-field links
+//                  (primary_folder, github_url, box_url). Explicit rows first,
+//                  then derived folder → github → box.
 // Both arrays are empty when the owner has no live rows. No error if parent
 // project is absent (unattached task).
 export async function handleGetTaskLinks(
@@ -175,19 +343,28 @@ export async function handleGetTaskLinks(
     if (block) return block;
   }
 
-  // Batch both queries in a single D1 round-trip.
-  const [taskLinks, projectLinks] = await Promise.all([
+  // Fetch task links + project (explicit links + canonical fields) in parallel.
+  const [taskLinks, projectData] = await Promise.all([
     fetchOwnerLinks(env, 'tasks', taskId),
     task.project_id
-      ? fetchOwnerLinks(env, 'projects', task.project_id)
-      : Promise.resolve([] as Record<string, unknown>[]),
+      ? fetchProjectWithLinks(env, task.project_id)
+      : Promise.resolve(null),
   ]);
+
+  const projectExplicit = projectData?.explicit ?? [];
+  const projectDerived = projectData
+    ? buildDerivedProjectLinks(projectData.fields, projectExplicit)
+    : [];
+  const projectLinks = [...projectExplicit, ...projectDerived];
 
   return json({ links: taskLinks, projectLinks });
 }
 
 // GET /api/projects/:slug/links
 // Returns { links: StoredLink[] }.
+// `links` = explicit links-table rows PLUS derived canonical-field links
+//           (primary_folder, github_url, box_url). Explicit rows first,
+//           then derived folder → github → box.
 // `:slug` accepts the project's slug OR its typed PK (proj_*) -- resolves via
 // the same two-arm lookup used in tasks.ts for project_id resolution.
 export async function handleGetProjectLinks(
@@ -196,16 +373,22 @@ export async function handleGetProjectLinks(
   env: Env,
 ): Promise<Response> {
   // Resolve slug/PK to canonical row so we can gate visibility + get the PK.
+  // Also fetch the three derived-link source columns in the same query.
   const project = await env.DB
-    .prepare('SELECT id FROM projects WHERE slug = ? OR id = ? LIMIT 1')
+    .prepare(
+      'SELECT id, primary_folder, github_url, box_url FROM projects WHERE slug = ? OR id = ? LIMIT 1',
+    )
     .bind(slugOrId, slugOrId)
-    .first<{ id: string }>();
+    .first<{ id: string } & ProjectLinkFields>();
   if (!project) return error('Project not found', 404);
 
   // Gate: assertProjectVisible checks Peripheral Brain category for non-PI.
   const block = await assertProjectVisible(request, env, project.id);
   if (block) return block;
 
-  const links = await fetchOwnerLinks(env, 'projects', project.id);
+  const explicit = await fetchOwnerLinks(env, 'projects', project.id);
+  const derived = buildDerivedProjectLinks(project, explicit);
+  const links = [...explicit, ...derived];
+
   return json({ links });
 }
