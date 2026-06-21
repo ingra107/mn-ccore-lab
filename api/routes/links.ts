@@ -18,10 +18,24 @@
 //
 // Auth: PI/API-key gate (same as /api/mutations -- this is a PB-facing endpoint).
 //
+// GET /api/tasks/:id/links -- frontend sub-resource (B3 Task 8, 2026-06-21)
+//
+// Returns the task's own live links plus the parent project's live links in one
+// round-trip. Auth: authed (CF Access JWT -- no PI/API-key needed; frontend-
+// accessible). Read-only: write path (slot-based) unchanged.
+//
+// Response: { links: StoredLink[], projectLinks: StoredLink[] }
+// where StoredLink = { id, role, type, canonical_url, short_title, sort_order }
+//
+// GET /api/projects/:slug/links -- frontend sub-resource (B3 Task 8, 2026-06-21)
+//
+// Returns the project's own live links.
+// Response: { links: StoredLink[] }
+//
 // Decision doc: Peripheral-Brain/Context/Decisions/2026-06-20-links-table.md
 
 import type { Env } from '../types';
-import { json, error, isPiRequest } from '../helpers';
+import { json, error, isPiRequest, assertProjectVisible } from '../helpers';
 
 // Columns returned to the sync pull leg -- matches brain.db links columns that
 // are identity-mapped to Hub (omits brain.db-local bookkeeping: sync_status,
@@ -107,4 +121,91 @@ export async function handleGetLinks(url: URL, request: Request, env: Env): Prom
     console.error('handleGetLinks error:', msg);
     return error(`DB error: ${msg}`, 500);
   }
+}
+
+// ── Frontend-accessible columns (B3 Task 8) ────────────────────────────────────
+// Narrower projection than the sync lane: omits sync bookkeeping (seq,
+// last_mutation_id, source_raw, deleted_at, created_at, updated_at).
+// Consumers: TaskDetailPanel / ProjectDetail / KeyLinksEditor.
+const FE_LINKS_COLS = 'id, role, type, canonical_url, short_title, sort_order';
+
+// Shared query helper: fetch live (non-deleted) links for one owner, ordered
+// by sort_order then id for a stable display sequence.
+async function fetchOwnerLinks(
+  env: Env,
+  ownerTable: 'tasks' | 'projects',
+  ownerId: string,
+): Promise<Record<string, unknown>[]> {
+  try {
+    const res = await env.DB
+      .prepare(
+        `SELECT ${FE_LINKS_COLS} FROM links
+         WHERE owner_table = ? AND owner_id = ? AND deleted_at IS NULL
+         ORDER BY sort_order ASC, id ASC`,
+      )
+      .bind(ownerTable, ownerId)
+      .all<Record<string, unknown>>();
+    return res.results ?? [];
+  } catch (e) {
+    const msg = (e as Error).message ?? String(e);
+    if (/no such table/i.test(msg)) return [];
+    throw e;
+  }
+}
+
+// GET /api/tasks/:id/links
+// Returns { links: StoredLink[], projectLinks: StoredLink[] }.
+// `links`        = task-owned live rows.
+// `projectLinks` = parent project's live rows (for the inherited read-only section).
+// Both arrays are empty when the owner has no live rows. No error if parent
+// project is absent (unattached task).
+export async function handleGetTaskLinks(
+  taskId: string,
+  request: Request,
+  env: Env,
+): Promise<Response> {
+  // Resolve task existence + project visibility in one lookup (mirrors guardTaskProject).
+  const task = await env.DB
+    .prepare('SELECT project_id FROM tasks WHERE id = ? AND deleted_at IS NULL')
+    .bind(taskId)
+    .first<{ project_id: string | null }>();
+  if (!task) return error('Task not found', 404);
+  if (task.project_id) {
+    const block = await assertProjectVisible(request, env, task.project_id);
+    if (block) return block;
+  }
+
+  // Batch both queries in a single D1 round-trip.
+  const [taskLinks, projectLinks] = await Promise.all([
+    fetchOwnerLinks(env, 'tasks', taskId),
+    task.project_id
+      ? fetchOwnerLinks(env, 'projects', task.project_id)
+      : Promise.resolve([] as Record<string, unknown>[]),
+  ]);
+
+  return json({ links: taskLinks, projectLinks });
+}
+
+// GET /api/projects/:slug/links
+// Returns { links: StoredLink[] }.
+// `:slug` accepts the project's slug OR its typed PK (proj_*) -- resolves via
+// the same two-arm lookup used in tasks.ts for project_id resolution.
+export async function handleGetProjectLinks(
+  slugOrId: string,
+  request: Request,
+  env: Env,
+): Promise<Response> {
+  // Resolve slug/PK to canonical row so we can gate visibility + get the PK.
+  const project = await env.DB
+    .prepare('SELECT id FROM projects WHERE slug = ? OR id = ? LIMIT 1')
+    .bind(slugOrId, slugOrId)
+    .first<{ id: string }>();
+  if (!project) return error('Project not found', 404);
+
+  // Gate: assertProjectVisible checks Peripheral Brain category for non-PI.
+  const block = await assertProjectVisible(request, env, project.id);
+  if (block) return block;
+
+  const links = await fetchOwnerLinks(env, 'projects', project.id);
+  return json({ links });
 }

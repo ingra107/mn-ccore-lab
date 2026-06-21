@@ -77,7 +77,7 @@ import { handleProactiveBrief } from './routes/proactive-brief';
 import { handleGetFileActivity, handleSyncFileActivity } from './routes/file-activity';
 import { handleGenerateDigestEmail, handleDigestPreview, handleSendDigestEmail, handleSendDailyDigests } from './routes/digest-email';
 import { pruneAllLedgers, monitorD1Health, compactProcessedMutationsJson } from './lib/ledger-retention';
-import { handleGetLinks } from './routes/links';
+import { handleGetLinks, handleGetTaskLinks, handleGetProjectLinks } from './routes/links';
 // inbox.ts retired 2026-05-05 (5.3a) — migrated to /api/inbox-events/sync-bulk
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1812,6 +1812,27 @@ defineRoute({
   entity: 'links',
   visibility: 'na',
   handler: (c) => handleGetLinks(new URL(R(c).url), R(c), E(c)),
+});
+
+// Frontend-accessible stored-links sub-resources (B3 Task 8, 2026-06-21).
+// Returns { id, role, type, canonical_url, short_title, sort_order } rows;
+// no PI gate -- authenticated team members can read links on tasks/projects
+// they already have access to (gated via assertProjectVisible internally).
+defineRoute({
+  method: 'GET',
+  path: '/api/tasks/:id/links',
+  auth: 'authed',
+  entity: 'links',
+  visibility: 'na',
+  handler: (c) => handleGetTaskLinks(c.req.param('id'), R(c), E(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/projects/:slug/links',
+  auth: 'authed',
+  entity: 'links',
+  visibility: 'na',
+  handler: (c) => handleGetProjectLinks(c.req.param('slug'), R(c), E(c)),
 });
 
 // Tasks — specific-before-generic

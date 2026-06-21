@@ -77,6 +77,7 @@ export type EntityName =
   | 'grant-intelligence'
   | 'decision-replay'
   | 'proactive-brief'
+  | 'links'
   | 'misc'
 
 export type VisibilityPolicy = 'pb-aware' | 'na'

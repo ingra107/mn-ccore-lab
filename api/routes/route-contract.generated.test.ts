@@ -78,11 +78,13 @@ describe('route contract — generated from ROUTE_REGISTRY', () => {
     // 240 as of 2026-06-11 — per-viewer seen tracking / new-activity signal
     // (schema v81, +2): POST /api/seen, GET /api/seen/unseen.
     // 241 as of 2026-06-20 — typed-links Phase 2 (+1): GET /api/links (PB sync pull).
+    // 243 as of 2026-06-21 — B3 Task 8 (+2): GET /api/tasks/:id/links,
+    //   GET /api/projects/:slug/links (frontend-accessible stored-links sub-resources).
     // Adding a route → increment this number. Removing a route → decrement it.
     // This makes route deletion require explicit acknowledgment, preventing
     // silent surface regression (codex final-audit finding #9, 2026-05-28).
     // If you are intentionally adding or removing routes, update this count.
-    expect(ROUTE_REGISTRY).toHaveLength(241)
+    expect(ROUTE_REGISTRY).toHaveLength(243)
   })
 
   it('every non-public route has either entity or visibility metadata', () => {
