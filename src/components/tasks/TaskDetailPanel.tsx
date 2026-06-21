@@ -14,9 +14,7 @@ const RichTextEditor = lazy(() => import('../RichTextEditor'))
 import { useUpdateTask, useUpdateTaskStatus, usePostTaskUpdate, useBulkUpdateTasks } from '../../hooks/useMutations'
 import { useAutoAcknowledge } from '../../hooks/useAutoAcknowledge'
 import { useProjects, useDecisions, useTaskLinks } from '../../hooks/useApiData'
-import type { StoredLink } from '../../hooks/useApiData'
-import { iconForType } from '../../lib/linkIcon'
-import { useProtocolLaunch } from '../../hooks/useProtocolLaunch'
+import StoredLinkChip from '../StoredLinkChip'
 import GhostSelect from '../ui/GhostSelect'
 import type { DecisionRow } from '../../hooks/useApiData'
 import { parseTagsString } from '../../lib/tagUtils'
@@ -1201,50 +1199,6 @@ function ProjectDecisionsSection({ projectSlug }: { projectSlug: string }) {
 // Inherited project links are shown read-only in a separate sub-section.
 // The 3-slot key_link_* WRITE path stays in KeyLinksEditor until P3/P4.
 
-function StoredLinkChip({ link }: { link: StoredLink }) {
-  const { launch } = useProtocolLaunch()
-  const { Icon, color } = iconForType(link.type)
-  const url = link.canonical_url
-  const isHttp = url.startsWith('http')
-  const displayLabel = link.short_title || link.canonical_url
-  const tooltip = `${link.type} · ${displayLabel}`
-
-  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    e.stopPropagation()
-    if (!isHttp) {
-      e.preventDefault()
-      void launch(url, { copyText: url, successMessage: `Opening ${link.type}… (path copied as backup)` })
-    }
-  }
-
-  return (
-    <a
-      href={isHttp ? url : '#'}
-      target={isHttp ? '_blank' : undefined}
-      rel={isHttp ? 'noopener noreferrer' : undefined}
-      onClick={handleClick}
-      title={tooltip}
-      className="inline-flex items-center gap-1.5 self-start"
-      style={{
-        padding: '4px 7px 4px 9px',
-        borderRadius: 'var(--radius-md)',
-        background: 'var(--ice)',
-        border: '1px solid var(--border-subtle)',
-        maxWidth: 240,
-        fontSize: 12,
-        fontWeight: 500,
-        textDecoration: 'none',
-        color: 'var(--slate)',
-      }}
-    >
-      <Icon size={14} strokeWidth={1.5} style={{ color, flexShrink: 0 }} />
-      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>
-        {displayLabel}
-      </span>
-    </a>
-  )
-}
-
 function DetailKeyLinks({
   task,
   onUpdate,
@@ -1252,9 +1206,10 @@ function DetailKeyLinks({
   task: TaskRow
   onUpdate: (fields: Record<string, string | null>) => void
 }) {
-  // Stored links from the links table (authoritative stored type).
+  // Inherited project links from the links table (read-only, visually separated).
+  // Task-own links are no longer shown read-only here — they are already
+  // covered by KeyLinksEditor below (slots backfilled 1:1 from links table).
   const { data: linksData } = useTaskLinks(task.id)
-  const storedLinks = linksData?.links ?? []
   const projectLinks = linksData?.projectLinks ?? []
 
   // 3-slot key_link_* for the WRITE path (add/edit/remove) — kept until P3/P4.
@@ -1278,15 +1233,6 @@ function DetailKeyLinks({
           label={shortLabelForUrl(task.email_link)}
           stopPropagation={true}
         />
-      )}
-
-      {/* Stored task-owned links (authoritative type → brand glyph). */}
-      {storedLinks.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {storedLinks.map((link) => (
-            <StoredLinkChip key={link.id} link={link} />
-          ))}
-        </div>
       )}
 
       {/* Inherited project links — read-only, visually separated. */}
