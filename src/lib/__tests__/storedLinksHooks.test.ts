@@ -161,3 +161,48 @@ describe('projectLinksQueryFn (mirrors useProjectLinks)', () => {
     expect(result).toEqual([])
   })
 })
+
+// ── projectLinks surface guard — drives TaskDetailDrawer + InlineDetail ───────
+// These tests verify that the guard condition used on both surfaces
+// (`projectLinks.length > 0`) correctly evaluates for all payload shapes
+// returned by taskLinksQueryFn. No React needed — pure payload-shape assertions.
+
+describe('projectLinks surface guard (drives TaskDetailDrawer + InlineDetail)', () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('empty projectLinks array → guard is false (section hidden)', async () => {
+    mockFetch({ links: [], projectLinks: [] })
+    const result = await taskLinksQueryFn('task_001')
+    expect(result.projectLinks.length > 0).toBe(false)
+  })
+
+  it('non-empty projectLinks array → guard is true (section shown)', async () => {
+    mockFetch({ links: [], projectLinks: [BOX_LINK] })
+    const result = await taskLinksQueryFn('task_001')
+    expect(result.projectLinks.length > 0).toBe(true)
+  })
+
+  it('projectLinks rows carry fields required by StoredLinkChip (id, type, canonical_url, short_title)', async () => {
+    mockFetch({ links: [], projectLinks: [DOC_LINK, BOX_LINK] })
+    const result = await taskLinksQueryFn('task_001')
+    for (const link of result.projectLinks) {
+      expect(link).toHaveProperty('id')
+      expect(link).toHaveProperty('type')
+      expect(link).toHaveProperty('canonical_url')
+      expect(link).toHaveProperty('short_title')
+    }
+  })
+
+  it('null taskId → projectLinks empty (disabled guard, both surfaces stay hidden)', async () => {
+    const result = await taskLinksQueryFn(null)
+    expect(result.projectLinks.length > 0).toBe(false)
+  })
+
+  it('non-ok fetch → projectLinks empty (both surfaces stay hidden)', async () => {
+    mockFetch({}, 500)
+    const result = await taskLinksQueryFn('task_001')
+    expect(result.projectLinks.length > 0).toBe(false)
+  })
+})

@@ -11,13 +11,14 @@ import { Pin } from 'lucide-react'
 import { ICON_PROPS } from '../../../lib/iconProps'
 import SmartCompose from '../../../components/SmartCompose'
 import { useUpdateTask, useBulkUpdateTasks, useToggleSubtask } from '../../../hooks/useMutations'
-import { useTaskDetail } from '../../../hooks/useApiData'
+import { useTaskDetail, useTaskLinks } from '../../../hooks/useApiData'
 import { useQueryClient } from '@tanstack/react-query'
 import { useAutoAcknowledge } from '../../../hooks/useAutoAcknowledge'
 import { useUndoToast } from '../../../components/UndoToast'
 import { localDateKey } from '../../../lib/dateUtils'
 import { STATUS_OPTIONS } from '../../../lib/taskConstants'
 import { TaskActivityFeed } from '../../../components/tasks/detail/TaskActivityFeed'
+import StoredLinkChip from '../../../components/StoredLinkChip'
 import {
   ACCENT_GOLD, ACCENT_TEAL, ACCENT_GREEN,
   INK, INK_DIM, PAGE_BG, PANEL_BG,
@@ -43,6 +44,8 @@ export function InlineDetail({ task, projectName, onOpenEditor }: { task: TaskRo
   const undoToast = useUndoToast()
   const detailQuery = useTaskDetail(task.id)
   const detail = detailQuery.data
+  const { data: linksData } = useTaskLinks(task.id)
+  const projectLinks = linksData?.projectLinks ?? []
   const nextStep = detail?.subtasks?.find((s) => s.completed !== 1) ?? null
   const toggleSubtask = useToggleSubtask(task.id)
   const queryClient = useQueryClient()
@@ -159,6 +162,20 @@ export function InlineDetail({ task, projectName, onOpenEditor }: { task: TaskRo
               style={{ fontSize: 10, color: INK_DIM, background: 'transparent', border: 'none', padding: '1px 0', cursor: 'pointer', fontFamily: 'inherit' }}
             >more</button>
           )}
+        </div>
+      )}
+
+      {/* Inherited project links — read-only, shown near the top before the action bar. */}
+      {projectLinks.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 8 }}>
+          <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', fontWeight: 'var(--label-weight)' }}>
+            Project links
+          </span>
+          <div className="flex flex-wrap gap-2">
+            {projectLinks.map((link) => (
+              <StoredLinkChip key={link.id} link={link} />
+            ))}
+          </div>
         </div>
       )}
 

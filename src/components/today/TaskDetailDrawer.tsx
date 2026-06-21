@@ -9,7 +9,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { useTaskDetail } from '../../hooks/useApiData'
+import { useTaskDetail, useTaskLinks } from '../../hooks/useApiData'
 import SmartCompose from '../SmartCompose'
 import { useUpdateTask, useToggleSubtask } from '../../hooks/useMutations'
 import { useAutoAcknowledge } from '../../hooks/useAutoAcknowledge'
@@ -20,6 +20,7 @@ import type { WorkflowFields } from '../tasks/detail/FieldControls'
 import { TaskInlineFieldRow } from '../tasks/detail/FieldControls'
 import { TaskActivityFeed } from '../tasks/detail/TaskActivityFeed'
 import TaskDetailPanel from '../tasks/TaskDetailPanel'
+import StoredLinkChip from '../StoredLinkChip'
 import {
   ACCENT_TEAL, ACCENT_ORANGE, ACCENT_GREEN,
   INK, INK_MUTED, INK_DIM, PANEL_BG,
@@ -54,6 +55,8 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
   useAutoAcknowledge(task)
   const detailQuery = useTaskDetail(task.id)
   const detail = detailQuery.data
+  const { data: linksData } = useTaskLinks(task.id)
+  const projectLinks = linksData?.projectLinks ?? []
   const linkSet: TaskLink[] = []
   if (task.key_link_1) linkSet.push({ url: task.key_link_1, desc: task.key_link_1_desc })
   if (task.key_link_2) linkSet.push({ url: task.key_link_2, desc: task.key_link_2_desc })
@@ -175,6 +178,20 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
         <LinkRow links={linkSet} />
         {project && <span style={{ marginLeft: 'auto', fontSize: 11, color: INK_DIM }}>{project.name}</span>}
       </div>
+
+      {/* Inherited project links — read-only, shown under action bar near project context. */}
+      {projectLinks.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 10 }}>
+          <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', fontWeight: 'var(--label-weight)' }}>
+            Project links
+          </span>
+          <div className="flex flex-wrap gap-2">
+            {projectLinks.map((link) => (
+              <StoredLinkChip key={link.id} link={link} />
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* SmartCompose — directly under action bar; @me lock toggle */}
       <SmartCompose taskId={task.id} placeholder="Note or @hermes…" showMeLock showHermesToggle bare alwaysShowToolbar />
