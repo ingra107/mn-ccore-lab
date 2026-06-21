@@ -99,8 +99,8 @@
     "raw": "C:\\Users\\ingra107\\Peripheral-Brain\\scripts\\db\\sync.py",
     "expected": {
       "type": "script",
-      "canonical_url": "C:\\Users\\ingra107\\Peripheral-Brain\\scripts\\db\\sync.py",
-      "short_title": "C:\\Users\\ingra107\\Peripheral-Brain\\scripts\\db\\sync.py"
+      "canonical_url": "~/Peripheral-Brain/scripts/db/sync.py",
+      "short_title": "~/Peripheral-Brain/scripts/db/sync.py"
     }
   },
   {
@@ -115,8 +115,8 @@
     "raw": "C:\\Users\\ingra107\\Box\\Research\\CQODE",
     "expected": {
       "type": "local_folder",
-      "canonical_url": "C:\\Users\\ingra107\\Box\\Research\\CQODE",
-      "short_title": "C:\\Users\\ingra107\\Box\\Research\\CQODE"
+      "canonical_url": "~/Box/Research/CQODE",
+      "short_title": "~/Box/Research/CQODE"
     }
   },
   {
@@ -171,8 +171,32 @@
     "raw": "file:///C:/Users/ingra107/Peripheral-Brain/Docs/system-map.md",
     "expected": {
       "type": "local_file",
-      "canonical_url": "C:/Users/ingra107/Peripheral-Brain/Docs/system-map.md",
-      "short_title": "C:/Users/ingra107/Peripheral-Brain/Docs/system-map.md"
+      "canonical_url": "~/Peripheral-Brain/Docs/system-map.md",
+      "short_title": "~/Peripheral-Brain/Docs/system-map.md"
+    }
+  },
+  {
+    "raw": "file:///C:/Users/ingra107/Box/Research/Peer%20Review/npj%20Health%20Systems/Discordance-RL-Sepsis-Nauka/",
+    "expected": {
+      "type": "local_folder",
+      "canonical_url": "~/Box/Research/Peer Review/npj Health Systems/Discordance-RL-Sepsis-Nauka/",
+      "short_title": "~/Box/Research/Peer Review/npj Health Systems/Discordance-RL-Sepsis-Nauka/"
+    }
+  },
+  {
+    "raw": "file:///C:/Users/ingra107/Box/Kick_Ingraham/Nick/.Attending_Assistant%20Prof/ATS%202026/Infographic%20ATS%20CCA/",
+    "expected": {
+      "type": "local_folder",
+      "canonical_url": "~/Box/Kick_Ingraham/Nick/.Attending_Assistant Prof/ATS 2026/Infographic ATS CCA/",
+      "short_title": "~/Box/Kick_Ingraham/Nick/.Attending_Assistant Prof/ATS 2026/Infographic ATS CCA/"
+    }
+  },
+  {
+    "raw": "C:/Users/ingra/Peripheral-Brain/Docs/system-map.md",
+    "expected": {
+      "type": "local_file",
+      "canonical_url": "~/Peripheral-Brain/Docs/system-map.md",
+      "short_title": "~/Peripheral-Brain/Docs/system-map.md"
     }
   }
 ]

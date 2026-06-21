@@ -1,5 +1,5 @@
 // GENERATED from scripts/links/link_contract.py -- DO NOT EDIT BY HAND.
-// rules_hash=75b95dc82f3af07753f4756ae6bd5d1c6e75550cb73671a43b4108adda013493
+// rules_hash=8834258fca1956b1852d0dde05112b359ea9617cdf534bef34343756b0b8f94a
 // Regenerate: python -X utf8 scripts/links/gen_links.py (in the Peripheral-Brain repo).
 //
 // INERT (Phase 1): exported but not imported by app code. urlClassify.ts is the
@@ -17,7 +17,7 @@ export interface PbCanonicalLink {
   source_raw: string | null
 }
 
-export const PB_LINK_RULES_HASH = '75b95dc82f3af07753f4756ae6bd5d1c6e75550cb73671a43b4108adda013493'
+export const PB_LINK_RULES_HASH = '8834258fca1956b1852d0dde05112b359ea9617cdf534bef34343756b0b8f94a'
 
 interface PbLinkRule {
   type: string
@@ -122,14 +122,14 @@ const PB_LINK_RULES: PbLinkRule[] = [
   {
     "canonical": "\\1",
     "id_group": 1,
-    "match": "((?:[A-Za-z]:[\\\\/]|/c/|~/|\\./)[^\\s]*\\.(?:py|sh|ps1|js|ts|R|qmd|sql|bat))",
+    "match": "((?:[A-Za-z]:[\\\\/]|/c/|~/|\\./)[^\\s]*\\.(?:py|sh|ps1|js|ts|R|qmd|sql|bat))$",
     "title": "\\1",
     "type": "script"
   },
   {
     "canonical": "\\1",
     "id_group": 1,
-    "match": "((?:[A-Za-z]:[\\\\/]|/c/|~/|\\./)[^\\s]*\\.[A-Za-z0-9]{1,5})",
+    "match": "((?:[A-Za-z]:[\\\\/]|/c/|~/|\\./)[^\\s]*\\.[A-Za-z0-9]{1,5})$",
     "title": "\\1",
     "type": "local_file"
   },
@@ -169,19 +169,38 @@ function expand(template: string, m: RegExpMatchArray): string {
   return out
 }
 
+const LOCAL_TYPES = new Set(['script', 'local_file', 'local_folder'])
+// Home-dir prefixes for both laptops (work=ingra107, home=ingra via junction).
+// Hard-coded so canonicalization is machine-independent; mirrors normalize._HOME_RE.
+const HOME_RE = new RegExp('^(?:[A-Za-z]:/|/c/)Users/(?:ingra107|ingra)/')
+
+// Filesystem-aware canonicalization for local paths (#136b) -- mirrors
+// normalize.py _canon_local. The rule templates only echo matched text.
+function canonLocal(p: string): string {
+  p = p.split('\\').join('/')
+  p = p.split('%20').join(' ')
+  p = p.replace(HOME_RE, '~/')
+  return p
+}
+
 function normalizeToken(token: string, titleHint?: string | null): PbCanonicalLink | null {
   for (const rule of PB_LINK_RULES) {
     // Start-anchored: rebuild the rule's regex with a leading ^ (the contract
     // patterns are written unanchored, matched at the token start like Python's
-    // re.match).
+    // re.match). Local-path rules end-anchor their extension in the contract.
     const re = new RegExp('^(?:' + rule.match + ')')
     const m = token.match(re)
     if (m) {
-      const canonical = expand(rule.canonical, m)
+      let canonical = expand(rule.canonical, m)
+      let title = expand(rule.title, m)
+      if (LOCAL_TYPES.has(rule.type)) {
+        canonical = canonLocal(canonical)
+        title = canonLocal(title)
+      }
       return {
         type: rule.type as PbLinkType,
         canonical_url: canonical,
-        short_title: titleHint || expand(rule.title, m),
+        short_title: titleHint || title,
         source_raw: token !== canonical ? token : null,
       }
     }
