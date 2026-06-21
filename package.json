@@ -36,7 +36,6 @@
     "preflight:a11y": "tsx scripts/pre-flight/persona-accessibility.ts",
     "preflight:breaker": "tsx scripts/pre-flight/persona-breaker.ts",
     "predeploy:identity": "python scripts/check-project-identity-gate.py",
-    "deploy:gated": "npm run predeploy:identity && wrangler deploy",
     "deploy:pages:gated": "npm run predeploy:identity && npm run build && wrangler pages deploy dist --project-name mn-ccore-lab --branch main"
   },
   "dependencies": {
