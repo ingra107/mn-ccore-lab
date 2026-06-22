@@ -30,7 +30,7 @@
 //   - OverlapBand coral badge / "conflict" copy for timed overlaps
 //   - boxed right-fixed-width service rail
 
-import { useMemo, useState, type CSSProperties } from 'react'
+import { useMemo, useState, useRef, type CSSProperties } from 'react'
 import { useTaskBlockGesture } from './useTaskBlockGesture'
 import { EventRow, type SaveStatus } from './MeetingRow'
 import { PlannedTaskRow } from './PlannedTaskRow'
@@ -264,6 +264,8 @@ function AgendaGapRow({
   onDropTask: (id: string, slot: PlannedSlot, plan_start_min?: number, estimated_minutes?: number) => void
 }) {
   const [dragOver, setDragOver] = useState(false)
+  // Ref for pointer-Y placement on timed drops (Directive 2: free pointer-Y).
+  const gapDivRef = useRef<HTMLDivElement>(null)
 
   const tasksInGap = useMemo(() =>
     state.plannedIds()
@@ -307,6 +309,7 @@ function AgendaGapRow({
   return (
     <div
       // .today-drop-zone class → hidden on touch (index.css, native DnD doesn't fire there)
+      ref={gapDivRef}
       className="today-drop-zone"
       onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
       onDragLeave={() => setDragOver(false)}
@@ -316,10 +319,20 @@ function AgendaGapRow({
         const id = e.dataTransfer.getData('text/plain')
         if (!id) return
         if (TIMELINE_TASK_BLOCKS && gapStartMin > 0) {
-          // Timed drop: snap to gap start, default 30m if task has no duration.
+          // Directive 2 (2026-06-22): free pointer-Y placement — drop snaps to the
+          // pointer's Y position within the gap, not the gap's start.
+          // minutes = (pointer offset from gap top) / PX_PER_MIN, snapped 15min,
+          // clamped to [gapStartMin, gapEndMin].
           const droppedTask = tasks.find((t) => t.id === id)
           const estimatedMins = droppedTask?.estimated_minutes ?? 30
-          onDropTask(id, slot, gapStartMin, estimatedMins)
+          let startMin = gapStartMin  // fallback if no ref
+          if (gapDivRef.current) {
+            const gapTop = gapDivRef.current.getBoundingClientRect().top
+            const rawMins = gapStartMin + (e.clientY - gapTop) / PX_PER_MIN
+            const snapped = Math.round(rawMins / 15) * 15
+            startMin = Math.max(gapStartMin, Math.min(gapEndMin - 15, snapped))
+          }
+          onDropTask(id, slot, startMin, estimatedMins)
         } else {
           onDropTask(id, slot)
         }
@@ -375,51 +388,63 @@ function AgendaGapRow({
         </div>
       )}
 
-      {/* Normal-flow area: below the timed blocks' extent.
-          Renders (a) the expanded PlannedTaskRow for any timed task whose
-          drawer is open — keeps TaskDetailDrawer in normal flow so it pushes
-          the gap down (GH#80 invariant: absolute content never clips/bleeds);
-          (b) untimed tasks: full-width stacked (Phase-1 graceful fallback). */}
-      <div style={timedTasks.length > 0 ? { marginTop: containerMinHeight } : undefined}>
-        {/* Expanded timed task drawer: render full PlannedTaskRow in normal flow.
-            Gold left border provides a visual link from the block above to this
-            expanded surface, making the connection legible. */}
-        {timedTasks
-          .filter((t) => expandedId === t.id)
-          .map((t) => (
-            <div
-              key={`expanded-${t.id}`}
-              style={{
-                borderLeft: `3px solid ${withAlpha(ACCENT_GOLD, 55)}`,
-                marginBottom: 4,
-              }}
-            >
-              <PlannedTaskRow
-                task={t}
-                project={t.project_id ? projectsByPid.get(t.project_id) ?? null : null}
-                state={state}
-                small
-                onExpand={onExpand}
-                expandedId={expandedId}
-                projectsByPid={projectsByPid}
-              />
-            </div>
-          ))
-        }
-        {/* Untimed tasks: full-width stacked (Phase-1 behavior, graceful fallback) */}
-        {untimedTasks.map((t) => (
-          <PlannedTaskRow
-            key={t.id}
-            task={t}
-            project={t.project_id ? projectsByPid.get(t.project_id) ?? null : null}
-            state={state}
-            small
-            onExpand={onExpand}
-            expandedId={expandedId}
-            projectsByPid={projectsByPid}
-          />
-        ))}
-      </div>
+      {/* Normal-flow expanded drawers — one per timed task, adjacent to its block.
+          Each drawer uses paddingTop = block's bottom edge (topPx + heightPx) so it
+          renders immediately below the block that was clicked, not at the gap bottom.
+          GH#80 invariant preserved: TaskDetailDrawer is never absolute-positioned;
+          it lives in normal flow and pushes the gap container down as it grows.
+          The absolute block layer is overlaid on top (z-index 1); expanded drawers
+          sit in flow below the block layer via paddingTop offset. */}
+      {timedTasks.map((t, i) => {
+        if (expandedId !== t.id) return null
+        const p = timedPlacements[i]
+        // adjacentTopPx: place the drawer flush below the block's bottom edge.
+        const adjacentTopPx = p ? p.topPx + p.heightPx : containerMinHeight
+        return (
+          <div
+            key={`expanded-${t.id}`}
+            style={{
+              paddingTop: adjacentTopPx,
+              // Gold left border visually connects the drawer to the block above.
+              borderLeft: `3px solid ${withAlpha(ACCENT_GOLD, 55)}`,
+              marginBottom: 4,
+              // Ensure the drawer renders above the absolute block layer (z 1) so
+              // it isn't obscured by other blocks rendered after it.
+              position: 'relative',
+              zIndex: 2,
+            }}
+          >
+            <PlannedTaskRow
+              task={t}
+              project={t.project_id ? projectsByPid.get(t.project_id) ?? null : null}
+              state={state}
+              small
+              onExpand={onExpand}
+              expandedId={expandedId}
+              projectsByPid={projectsByPid}
+            />
+          </div>
+        )
+      })}
+
+      {/* Untimed tasks: full-width stacked below the absolute block layer.
+          Wrapped in a marginTop spacer so they start after all timed blocks. */}
+      {untimedTasks.length > 0 && (
+        <div style={timedTasks.length > 0 ? { marginTop: containerMinHeight } : undefined}>
+          {untimedTasks.map((t) => (
+            <PlannedTaskRow
+              key={t.id}
+              task={t}
+              project={t.project_id ? projectsByPid.get(t.project_id) ?? null : null}
+              state={state}
+              small
+              onExpand={onExpand}
+              expandedId={expandedId}
+              projectsByPid={projectsByPid}
+            />
+          ))}
+        </div>
+      )}
 
       {/* Free-time label — bottom of the gap */}
       <div style={{
