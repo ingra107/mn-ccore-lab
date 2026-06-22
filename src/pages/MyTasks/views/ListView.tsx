@@ -36,6 +36,7 @@ import {
 import { isOverdue } from '../../../lib/dateUtils'
 import { OverdueBanner } from './OverdueBanner'
 import { NoTasksMatch } from './MyTasksEmpty'
+import WorkOnActions from '../../../components/WorkOnActions'
 import type { TaskRow } from '../../../lib/api'
 
 interface ListViewProps {
@@ -46,7 +47,7 @@ interface ListViewProps {
   anchorId: string | null
   setSelected: React.Dispatch<React.SetStateAction<Set<string>>>
   setDrawer: (id: string | null) => void
-  projectsByPid: Map<string, { name: string; slug: string }>
+  projectsByPid: Map<string, { name: string; slug: string; primary_folder?: string | null }>
   projectOptions: FilterOption[]
   plannedSet: Set<string>
 }
@@ -194,7 +195,7 @@ export function ListView({ filtered, selected, toggleSelect, selectRange, anchor
 
 interface ListRowProps {
   task: TaskRow
-  project: { name: string; slug: string } | null
+  project: { name: string; slug: string; primary_folder?: string | null } | null
   isCursor: boolean
   isSelected: boolean
   selectModeActive: boolean
@@ -239,7 +240,7 @@ function ListRow({ task, project, isCursor, isSelected, selectModeActive, onClic
       onDoubleClick={onDouble}
       style={{
         display: 'grid',
-        gridTemplateColumns: '32px 26px 1fr 150px 100px 80px 110px 110px 70px',
+        gridTemplateColumns: '32px 26px 1fr 150px 100px 80px 110px 110px 70px 52px',
         padding: '5px 16px',
         alignItems: 'center',
         fontSize: 12,
@@ -333,6 +334,12 @@ function ListRow({ task, project, isCursor, isSelected, selectModeActive, onClic
         <InlineAssigneePicker value={task.assignee} onChange={onAssigneeChange} compact />
       </div>
       <div className="list-view-col-links" style={{ textAlign: 'right' }} onClick={stop}><LinksBar task={task} /></div>
+      {/* WorkOnActions compact — only when project has a folder */}
+      <div className="list-view-col-work" onClick={stop} style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+        {project?.primary_folder && (
+          <WorkOnActions primaryFolder={project.primary_folder} projectLabel={project.name ?? ''} variant="compact" />
+        )}
+      </div>
     </div>
   )
 }

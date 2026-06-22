@@ -30,6 +30,7 @@ import { useAllProjectLinks } from '../hooks/useApiData'
 import type { StoredLink } from '../hooks/useApiData'
 import { iconForType } from '../lib/linkIcon'
 import { useProtocolLaunch } from '../hooks/useProtocolLaunch'
+import WorkOnActions from '../components/WorkOnActions'
 
 // Values are D1 lowercase canonical; labels are Title Case for display.
 const STAGES = ['idea', 'data_collection', 'analysis', 'writing', 'review', 'revisions', 'published'] as const
@@ -572,7 +573,7 @@ export default function Projects() {
                           <div
                             className={`project-list-row${isFocused ? ' project-row-focused' : ''} hidden md:grid`}
                             style={{
-                              gridTemplateColumns: 'minmax(320px, 3fr) 110px 110px 120px 80px 90px',
+                              gridTemplateColumns: 'minmax(320px, 3fr) 110px 110px 120px 80px 90px 52px',
                               padding: `var(--row-padding-y) 24px`,
                               borderBottom: '1px solid var(--border-subtle)',
                               alignItems: 'center',
@@ -746,6 +747,17 @@ export default function Projects() {
 
                             {/* Links — Mode-B icon-only, borderless, stopPropagation handled inside */}
                             <ProjectLinksCell links={allProjectLinks[project.id ?? ''] ?? []} />
+                            {/* WorkOnActions compact — only when project has a folder.
+                                stopPropagation + preventDefault prevents Link navigation. */}
+                            <div
+                              onClick={(e) => { e.preventDefault(); e.stopPropagation() }}
+                              onMouseDown={(e) => e.stopPropagation()}
+                              style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}
+                            >
+                              {project.primary_folder && (
+                                <WorkOnActions primaryFolder={project.primary_folder} projectLabel={project.short_name || project.title} variant="compact" />
+                              )}
+                            </div>
                           </div>
 
                           {/* Mobile: stacked card layout */}

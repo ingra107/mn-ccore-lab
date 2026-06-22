@@ -32,11 +32,12 @@ import { withAlpha } from '../../../lib/taskGrouping'
 import type { TaskRow } from '../../../lib/api'
 import { TaskInlineFieldRow } from '../../../components/tasks/detail/FieldControls'
 import TaskDetailPanel from '../../../components/tasks/TaskDetailPanel'
+import WorkOnActions from '../../../components/WorkOnActions'
 
 // Muted color for feed items (not in the re-exported constants set).
 const INK_MUTED = 'rgba(226,232,240,0.70)'
 
-export function InlineDetail({ task, projectName, onOpenEditor }: { task: TaskRow; projectName?: string | null; onOpenEditor?: () => void }) {
+export function InlineDetail({ task, projectName, primaryFolder, onOpenEditor }: { task: TaskRow; projectName?: string | null; primaryFolder?: string | null; onOpenEditor?: () => void }) {
   // Real handlers (no longer decorative). Reach for mutations directly so the
   // component is self-contained and the parent doesn't need to drill props.
   const updateTask = useUpdateTask()
@@ -181,8 +182,13 @@ export function InlineDetail({ task, projectName, onOpenEditor }: { task: TaskRo
 
       {/* Action bar */}
       <div style={{ display: 'flex', gap: 6, marginBottom: 8, flexWrap: 'wrap', position: 'relative' }}>
+        {/* WorkOnActions compact — real Claude Code launch from project folder */}
+        {primaryFolder ? (
+          <WorkOnActions primaryFolder={primaryFolder} projectLabel={projectName ?? undefined} variant="compact" />
+        ) : null}
+        {/* Separate promote-to-Right-Now (plan slot, not IDE launch) */}
         {!isPromoted && (
-          <button onClick={promote} title="Promote to Right Now on Today" style={{ padding: '4px 10px', fontSize: 10.5, borderRadius: 'var(--radius-sm)', border: 'none', background: ACCENT_GOLD, color: PAGE_BG, fontWeight: 600, fontFamily: 'inherit', cursor: 'pointer' }}>▶ Work on this</button>
+          <button onClick={promote} title="Promote to Right Now on Today" style={{ padding: '4px 10px', fontSize: 10.5, borderRadius: 'var(--radius-sm)', border: 'none', background: ACCENT_GOLD, color: PAGE_BG, fontWeight: 600, fontFamily: 'inherit', cursor: 'pointer' }}>▶ Right now</button>
         )}
         {!isPlanned && (
           <button onClick={planToday} title="Add to today's planned strip" style={{ padding: '4px 10px', fontSize: 10.5, borderRadius: 'var(--radius-sm)', border: 'none', background: 'transparent', color: INK, fontFamily: 'inherit', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}><Pin {...ICON_PROPS} size={12} /> Plan today</button>

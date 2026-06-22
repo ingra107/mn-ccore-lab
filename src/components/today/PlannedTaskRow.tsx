@@ -24,6 +24,7 @@ import { DoneBox } from '../tasks/TaskRow'
 import { tagForTask, withAlpha } from './constants'
 import { ACCENT_GOLD, ACCENT_TEAL, INK, INK_DIM } from './constants'
 import { isTaskDone } from '../../lib/taskGrouping'
+import WorkOnActions from '../WorkOnActions'
 import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow } from '../../lib/api'
 
@@ -93,6 +94,18 @@ export function PlannedTaskRow({ task, project, state, timeHint, small = false, 
                 style={{ display: 'inline-flex', alignItems: 'center', cursor: 'grab', color: INK_DIM, visibility: hover ? 'visible' : 'hidden', userSelect: 'none', flexShrink: 0, padding: '4px 5px', margin: '-4px -1px' }}
               >
                 <GripVertical {...ICON_PROPS} size={12} />
+              </span>
+            )}
+            {/* Compact WorkOnActions — hidden until hover (CSS hov-opacity).
+                stopPropagation prevents the click from expanding the row. */}
+            {project?.primary_folder && (
+              <span
+                onClick={(e) => e.stopPropagation()}
+                onMouseDown={(e) => e.stopPropagation()}
+                className="hov-opacity"
+                style={{ display: 'inline-flex', alignItems: 'center', opacity: 0, '--hov-opacity': '1' } as React.CSSProperties}
+              >
+                <WorkOnActions primaryFolder={project.primary_folder} projectLabel={project.name} variant="compact" />
               </span>
             )}
             <button

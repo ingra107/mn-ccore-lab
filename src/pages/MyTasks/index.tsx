@@ -148,9 +148,9 @@ export default function UnifiedMyTasks() {
   const plan = useTodayPlan()
 
   const projectsByPid = useMemo(() => {
-    const m = new Map<string, { name: string; slug: string; category?: string | null }>()
+    const m = new Map<string, { name: string; slug: string; category?: string | null; primary_folder?: string | null }>()
     for (const p of projectsQuery.data ?? []) {
-      m.set(p.slug, { name: p.title ?? p.slug, slug: p.slug, category: p.category ?? null })
+      m.set(p.slug, { name: p.title ?? p.slug, slug: p.slug, category: p.category ?? null, primary_folder: p.primary_folder ?? null })
     }
     return m
   }, [projectsQuery.data])

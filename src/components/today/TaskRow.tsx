@@ -18,6 +18,7 @@ import { tagForTask } from './constants'
 import { ACCENT_GOLD, ACCENT_CORAL, INK_MUTED } from './constants'
 import { formatShortDate } from '../../lib/dateUtils'
 import { Chip } from '../ui/Chip'
+import WorkOnActions from '../WorkOnActions'
 import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow as TaskRowData } from '../../lib/api'
 
@@ -47,6 +48,15 @@ export function TaskRow({ task, project, state, expandedId, onExpand, projectsBy
       : [],
   )
   const linkMeta = rowLinks.length > 0 ? <LinkRow links={rowLinks} /> : null
+
+  // Compact WorkOnActions (📂 + ▶) — shown when the task's project has a
+  // primary_folder. stopPropagation prevents the icon clicks from bubbling to
+  // the row body expand handler (row-click hazard rule).
+  const workOnMeta = project?.primary_folder ? (
+    <div onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()}>
+      <WorkOnActions primaryFolder={project.primary_folder} projectLabel={project.name} variant="compact" />
+    </div>
+  ) : null
 
   // v55 workflow badges — compact second line, only when a field is set and
   // the task isn't done. Preserved verbatim from the pre-refactor row.
@@ -88,7 +98,7 @@ export function TaskRow({ task, project, state, expandedId, onExpand, projectsBy
       onTogglePlan={() => (planned?.slot === 'strip' ? state.unplan(task.id) : state.planAt(task.id, 'strip'))}
       leadingTag={tagForTask(task, projectsByPid)}
       belowTitle={workflowBadges}
-      extraMeta={linkMeta}
+      extraMeta={<>{workOnMeta}{linkMeta}</>}
     >
       <TaskDetailDrawer task={task} project={project} state={state} />
     </SharedTaskRow>
