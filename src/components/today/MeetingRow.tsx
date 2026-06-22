@@ -55,6 +55,7 @@ export function EventRow({ e, onDismiss, overlap = false, note, onNote, saveStat
         <button
           onClick={(ev) => { ev.stopPropagation(); onDismiss(e.id) }}
           title="Remove from today's view"
+          aria-label={`Hide ${e.title}`}
           className="hov-opacity"
           style={{ background: 'none', border: 'none', color: INK_DIM, fontSize: 14, cursor: 'pointer', padding: '0 4px', lineHeight: 1, opacity: 0.5, transition: 'opacity 120ms', '--hov-opacity': '1' } as React.CSSProperties}
         >×</button>

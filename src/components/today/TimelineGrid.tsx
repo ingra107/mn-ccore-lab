@@ -903,6 +903,7 @@ export function TimelineGrid({
                   <button
                     onClick={(ev) => { ev.stopPropagation(); onDismiss(e.id) }}
                     title="Remove from today's view"
+                    aria-label={`Hide ${e.title}`}
                     className="hov-opacity"
                     style={{ background: 'none', border: 'none', color: INK_DIM, fontSize: 10, cursor: 'pointer', padding: '2px 0 0', lineHeight: 1, opacity: 0.4, transition: 'opacity 120ms', '--hov-opacity': '1' } as React.CSSProperties}
                   >× hide</button>

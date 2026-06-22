@@ -294,7 +294,7 @@ export function buildTimelineModel(
     const maxEnd = Math.max(...timedEvents.map((e) =>
       typeof e.endMin === 'number' ? e.endMin : (e.startMin as number) + 30
     ))
-    dayStart = Math.min(dayStart, minStart - 30)
+    dayStart = Math.max(0, Math.min(dayStart, minStart - 30))
     dayEnd = Math.max(dayEnd, maxEnd + 30)
   }
 

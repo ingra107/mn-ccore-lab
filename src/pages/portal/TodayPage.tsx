@@ -106,6 +106,12 @@ export default function TodayPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const onExpand = useCallback((id: string) => { setExpandedId((p) => (p === id ? null : id)) }, [])
 
+  // Lifted dismiss state (#170) — shared across Timeline↔Agenda so toggling
+  // views does not reset dismissed meetings.
+  const [dismissedEventIds, setDismissedEventIds] = useState<Record<string, boolean>>({})
+  const onDismissEvent = useCallback((id: string) => setDismissedEventIds((s) => ({ ...s, [id]: true })), [])
+  const onRestoreAllDismissed = useCallback(() => setDismissedEventIds({}), [])
+
   // Phase 2: Timeline⇄Agenda view toggle. Ephemeral session view + persisted
   // default. The toggle buttons live in the Timeline section header.
   const { view: todayView, setView: setTodayView } = useTodayView()
@@ -437,6 +443,9 @@ export default function TodayPage() {
             onExpand={onExpand}
             activeView={todayView}
             onToggleView={setTodayView}
+            dismissedIds={dismissedEventIds}
+            onDismiss={onDismissEvent}
+            onRestoreDismissed={onRestoreAllDismissed}
           />
         ) : (
           <section data-b2-agenda style={{ marginBottom: 24 }}>
@@ -489,7 +498,9 @@ export default function TodayPage() {
               projectsByPid={projectsByPid}
               expandedId={expandedId}
               onExpand={onExpand}
-              now={new Date().getHours() * 60 + new Date().getMinutes()}
+              dismissedIds={dismissedEventIds}
+              onDismiss={onDismissEvent}
+              onRestoreDismissed={onRestoreAllDismissed}
             />
           </section>
         )}

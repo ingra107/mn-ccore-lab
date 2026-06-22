@@ -93,7 +93,9 @@ function MeetingNotesAutoSave({ meetingId, notes, onStatus }: { meetingId: strin
 
 // TP-09: 1px now-line. Updates every 60s via setInterval. Static — no
 // animation — so prefers-reduced-motion is a no-op.
-function useNowMinutes(): number {
+// Exported so AgendaListView (and TodayPage) can share the same clock without
+// passing `now` as a prop (fixes #168 agenda now-marker freeze).
+export function useNowMinutes(): number {
   const [now, setNow] = useState(() => {
     const d = new Date()
     return d.getHours() * 60 + d.getMinutes()
@@ -142,13 +144,19 @@ interface TimelineProps {
   // in the section header. activeView tells the toggle which button is active.
   activeView?: 'timeline' | 'agenda'
   onToggleView?: (view: 'timeline' | 'agenda') => void
+  // Lifted dismiss state (#170 — shared across Timeline↔Agenda so toggling
+  // views does not reset dismissed meetings).
+  dismissedIds: Record<string, boolean>
+  onDismiss: (id: string) => void
+  onRestoreDismissed: () => void
 }
 
-export function Timeline({ events, tasks, state, projectsByPid, expandedId, onExpand, activeView, onToggleView }: TimelineProps) {
+export function Timeline({ events, tasks, state, projectsByPid, expandedId, onExpand, activeView, onToggleView, dismissedIds, onDismiss, onRestoreDismissed }: TimelineProps) {
   const navigate = useNavigate()
   // Hoist isPhone so EventRow + OverlapBand share one matchMedia listener.
   const isPhone = useIsMobile(768)
-  const [dismissedMeetings, setDismissedMeetings] = useState<Record<string, boolean>>({})
+  // dismissedMeetings is now provided by TodayPage (lifted, #170).
+  const dismissedMeetings = dismissedIds
   const [meetingNotes, setMeetingNotes] = useState<Record<string, string>>({})
   const [meetingSaveState, setMeetingSaveState] = useState<Record<string, SaveStatus>>({})
 
@@ -254,7 +262,7 @@ export function Timeline({ events, tasks, state, projectsByPid, expandedId, onEx
             : 'drag tasks into the gaps · click meetings to take notes · × to hide'}
         </span>
         {Object.keys(dismissedMeetings).length > 0 && (
-          <button onClick={() => setDismissedMeetings({})} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: ACCENT_TEAL, fontSize: 11, cursor: 'pointer' }}>
+          <button onClick={onRestoreDismissed} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: ACCENT_TEAL, fontSize: 11, cursor: 'pointer' }}>
             Restore {Object.keys(dismissedMeetings).length} hidden
           </button>
         )}
@@ -285,7 +293,7 @@ export function Timeline({ events, tasks, state, projectsByPid, expandedId, onEx
           notes={meetingNotes}
           onNote={(id, v) => setMeetingNotes((s) => ({ ...s, [id]: v }))}
           saveStatus={meetingSaveState}
-          onDismiss={(id) => setDismissedMeetings((s) => ({ ...s, [id]: true }))}
+          onDismiss={onDismiss}
           isPhone={isPhone}
           now={now}
           inMeeting={inMeeting}
