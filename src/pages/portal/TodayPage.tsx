@@ -8,9 +8,9 @@
 //
 // Design language: dark-first, gold/teal/coral accents with assigned meaning
 // (CLAUDE.md Rule 59). Click body = expand drawer; drag handle = plan;
-// explicit ▶ button = promote (Rule 58).
+// 📂▶ Work = open project folder / launch Claude Code.
 
-import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { useTasks, useProjects, useMeetingsApi, useExpiringRegulatory, useUserCalendarEvents, usePBSessionStats } from '../../hooks/useApiData'
 import { useAuth } from '../../hooks/useAuth'
 import { useProtocolLaunch } from '../../hooks/useProtocolLaunch'
@@ -118,28 +118,6 @@ export default function TodayPage() {
   // default. The toggle buttons live in the Timeline section header.
   const { view: todayView, setView: setTodayView } = useTodayView()
 
-  // Auto-promote first relevant task on first load when nothing planned and
-  // nothing in Right Now. Fixes empty-hero discoverability (eval Issue 2).
-  // Picks: longest-overdue → urgent → high → first task. Runs once per
-  // task-list change; user's explicit unplan keeps Right Now empty.
-  const autoPromotedRef = useRef(false)
-  useEffect(() => {
-    if (autoPromotedRef.current) return
-    if (state.rightNow) { autoPromotedRef.current = true; return }
-    if (state.plannedIds().length > 0) { autoPromotedRef.current = true; return }
-    if (tasks.length === 0) return
-    const today = todayKey()
-    const overdue = tasks.filter((t) => t.due_date && t.due_date.slice(0, 10) < today)
-      .sort((a, b) => (a.due_date ?? '').localeCompare(b.due_date ?? ''))
-    const candidate = overdue[0]
-      ?? tasks.find((t) => t.priority === 'urgent')
-      ?? tasks.find((t) => t.priority === 'high')
-      ?? tasks[0]
-    if (candidate) {
-      state.promote(candidate.id)
-      autoPromotedRef.current = true
-    }
-  }, [tasks, state])
 
   // Group bucketing.
   const grouped = useMemo(() => {
@@ -507,7 +485,7 @@ export default function TodayPage() {
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14, marginTop: 8 }}>
           <h2 style={{ fontSize: 18, fontWeight: 600, color: 'var(--task-ink)', letterSpacing: '-0.02em', margin: 0, whiteSpace: 'nowrap' }}>📋 All today's tasks</h2>
-          <span className="today-section-hint" style={{ fontSize: 12, color: INK_DIM }}>click to expand · 📌 or drag ⋮⋮ to plan · ▶ to promote</span>
+          <span className="today-section-hint" style={{ fontSize: 12, color: INK_DIM }}>click to expand · 📌 or drag ⋮⋮ to plan</span>
           <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.08)' }} />
         </div>
 

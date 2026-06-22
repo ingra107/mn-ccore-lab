@@ -184,14 +184,13 @@ export interface SharedTaskRowProps {
   // ── plan WITHOUT dragging ── ONLY active when onTogglePlan is provided
   // (Today). A 📌 button (or the planned-chip when already planned) toggles
   // the task in/out of the "no specific time" plan, sidestepping the HTML5
-  // drag entirely. Distinct from draggable (drag = plan into a specific slot),
-  // body-click (expand), and ▶ (promote) — Rule 58 keeps these un-conflated.
+  // drag entirely. Distinct from draggable (drag = plan into a specific slot)
+  // and body-click (expand).
   onTogglePlan?: () => void
 
   // ── state cues ──
   isPlanned?: boolean
   plannedLabel?: string
-  isRightNow?: boolean
   // group_override pin (📍) — task was manually bucketed.
   showGroupOverridePin?: boolean
 
@@ -240,7 +239,7 @@ export function TaskRow(props: SharedTaskRowProps) {
     onOpenEditor,
     isSelected = false, selectionActive = false, onToggleSelect,
     draggable = false, onDragStart, onTogglePlan,
-    isPlanned = false, plannedLabel, isRightNow = false, showGroupOverridePin = false,
+    isPlanned = false, plannedLabel, showGroupOverridePin = false,
     dense = false, stack: stackProp,
     leadingTag, extraMeta, belowTitle, children,
   } = props
@@ -400,7 +399,6 @@ export function TaskRow(props: SharedTaskRowProps) {
         // isExpanded bg so teal selection is the SOLE visual emphasis.
         // Outside select mode isExpanded keeps its subtle ink bg.
         background: isSelected ? withAlpha(ACCENT_TEAL, 22)
-          : isRightNow ? withAlpha(ACCENT_GOLD, 6)
           : isExpanded && !selectionActive ? withAlpha(INK, 3)
           : 'transparent',
         // P1-7: NO whole-row opacity — that compounded with the muted title and
@@ -435,7 +433,6 @@ export function TaskRow(props: SharedTaskRowProps) {
           <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 5, paddingTop: 1 }}>
             <span title={onOpenEditor ? undefined : fullTitleHover} style={{ fontSize: 13.5, color: isDone ? INK_MUTED : INK, fontWeight: 500, textDecoration: isDone ? 'line-through' : 'none', lineHeight: 1.4, textWrap: 'pretty' as const }}>
               {leadingTag && <span style={{ marginRight: 6 }} aria-hidden="true">{leadingTag}</span>}
-              {isRightNow && <RightNowBadge />}
               {titleNode}
               {newChip}
               {planBtn && <span style={{ marginLeft: 4, whiteSpace: 'nowrap' }}>{planBtn}</span>}
@@ -452,8 +449,7 @@ export function TaskRow(props: SharedTaskRowProps) {
               {/* title — full, wraps, never clipped */}
               <span title={onOpenEditor ? undefined : fullTitleHover} style={{ flex: 1, minWidth: 0, fontSize: 13.5, color: isDone ? INK_MUTED : INK, fontWeight: 500, textDecoration: isDone ? 'line-through' : 'none', lineHeight: 1.4, textWrap: 'pretty' as const }}>
                 {leadingTag && <span style={{ marginRight: 6 }} aria-hidden="true">{leadingTag}</span>}
-                {isRightNow && <RightNowBadge />}
-                {titleNode}
+                  {titleNode}
                 {newChip}
                 {showGroupOverridePin && task.group_override && (
                   <span title={`Moved manually (${task.group_override})`} style={{ display: 'inline-flex', alignItems: 'center', color: ACCENT_TEAL, padding: '1px 5px', background: withAlpha(ACCENT_TEAL, 9), border: `1px solid ${withAlpha(ACCENT_TEAL, 28)}`, borderRadius: 999, marginLeft: 6 }}>
@@ -491,10 +487,3 @@ export function TaskRow(props: SharedTaskRowProps) {
   )
 }
 
-function RightNowBadge() {
-  return (
-    <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: ACCENT_GOLD, padding: '2px 6px', background: withAlpha(ACCENT_GOLD, 9), border: `1px solid ${withAlpha(ACCENT_GOLD, 28)}`, borderRadius: 999, marginRight: 6 }}>
-      Right now
-    </span>
-  )
-}

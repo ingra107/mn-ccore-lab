@@ -30,7 +30,6 @@ import type { TaskRow } from '../../lib/api'
 
 export function PlannedTaskRow({ task, project, state, timeHint, small = false, onExpand, expandedId, projectsByPid }: { task: TaskRow; project: { name: string; slug: string; primary_folder?: string | null } | null; state: TodayStateApi; timeHint?: string; small?: boolean; onExpand: (id: string) => void; expandedId: string | null; projectsByPid: Map<string, { name: string; slug: string; category?: string | null; primary_folder?: string | null }> }) {
   const isDone = isTaskDone(task) || !!state.done[task.id]
-  const isNow = state.rightNow === task.id
   const expanded = expandedId === task.id
   const [hover, setHover] = useState(false)
   const tag = tagForTask(task, projectsByPid)
@@ -50,7 +49,7 @@ export function PlannedTaskRow({ task, project, state, timeHint, small = false, 
       data-task-id={task.id}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
-      style={{ background: isNow ? withAlpha(ACCENT_GOLD, 10) : withAlpha(ACCENT_GOLD, 3), border: `1px ${isNow ? 'solid' : 'dashed'} rgba(201,168,76,${isNow ? 0.35 : 0.18})`, borderRadius: 6, overflow: 'hidden', transition: 'all 120ms' }}
+      style={{ background: withAlpha(ACCENT_GOLD, 3), border: `1px dashed ${withAlpha(ACCENT_GOLD, 18)}`, borderRadius: 6, overflow: 'hidden', transition: 'all 120ms' }}
     >
       <div onClick={() => !isDone && onExpand(task.id)} style={{ display: 'flex', gap: 9, padding: small ? '6px 10px' : '8px 12px', alignItems: 'flex-start', cursor: isDone ? 'default' : 'pointer' }}>
         {timeHint && (
@@ -61,7 +60,6 @@ export function PlannedTaskRow({ task, project, state, timeHint, small = false, 
         </span>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
-            {isNow && <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: ACCENT_GOLD, padding: '1px 5px', background: withAlpha(ACCENT_GOLD, 9), border: `1px solid ${withAlpha(ACCENT_GOLD, 28)}`, borderRadius: 999 }}>Now</span>}
             <span style={{ fontSize: 11, flexShrink: 0 }} aria-hidden="true">{tag}</span>
             {/* Rule 68: planned rows show the curated short_title (full title on
                 hover via native title= + in the expanded drawer), matching the

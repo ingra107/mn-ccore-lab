@@ -20,8 +20,8 @@ import { STATUS_OPTIONS } from '../../../lib/taskConstants'
 import { TaskActivityFeed } from '../../../components/tasks/detail/TaskActivityFeed'
 import StoredLinkChip from '../../../components/StoredLinkChip'
 import {
-  ACCENT_GOLD, ACCENT_TEAL, ACCENT_GREEN,
-  INK, INK_DIM, PAGE_BG, PANEL_BG,
+  ACCENT_TEAL, ACCENT_GREEN,
+  INK, INK_DIM, PANEL_BG,
   MOVE_OPTIONS,
   isTaskDone,
 } from '../constants'
@@ -57,7 +57,6 @@ export function InlineDetail({ task, projectName, primaryFolder, onOpenEditor }:
   // Workstream B (schema v75): promoted / planned derive from the SYNCED task
   // columns on THIS row (planned_for == today), not the retired today_state_* LS.
   const plannedToday = !!task.planned_for && task.planned_for.slice(0, 10) === todayKey()
-  const isPromoted = plannedToday && task.plan_slot === 'right_now'
   const isPlanned = plannedToday
   const [moveOpen, setMoveOpen] = useState(false)
   const [fullEditorTask, setFullEditorTask] = useState<TaskRow | null>(null)
@@ -81,13 +80,6 @@ export function InlineDetail({ task, projectName, primaryFolder, onOpenEditor }:
       onSuccess: () => { undoToast.showSuccess('Reset to auto-classify'); setMoveOpen(false) },
     })
   }, [task.id, updateTask, undoToast])
-
-  const promote = useCallback(() => {
-    // PATCHes the synced columns (right_now singleton enforced via the cache);
-    // tasks=[] → useTodayPlan scans the ['tasks'] cache for the prior right_now.
-    plan.promoteToRightNow(task.id, [])
-    undoToast.showSuccess('Promoted to Right Now on Today')
-  }, [task.id, plan, undoToast])
 
   const planToday = useCallback(() => {
     plan.planTask(task.id, 'strip')
@@ -186,10 +178,6 @@ export function InlineDetail({ task, projectName, primaryFolder, onOpenEditor }:
         {primaryFolder ? (
           <WorkOnActions primaryFolder={primaryFolder} projectLabel={projectName ?? undefined} variant="compact" />
         ) : null}
-        {/* Separate promote-to-Right-Now (plan slot, not IDE launch) */}
-        {!isPromoted && (
-          <button onClick={promote} title="Promote to Right Now on Today" style={{ padding: '4px 10px', fontSize: 10.5, borderRadius: 'var(--radius-sm)', border: 'none', background: ACCENT_GOLD, color: PAGE_BG, fontWeight: 600, fontFamily: 'inherit', cursor: 'pointer' }}>▶ Right now</button>
-        )}
         {!isPlanned && (
           <button onClick={planToday} title="Add to today's planned strip" style={{ padding: '4px 10px', fontSize: 10.5, borderRadius: 'var(--radius-sm)', border: 'none', background: 'transparent', color: INK, fontFamily: 'inherit', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}><Pin {...ICON_PROPS} size={12} /> Plan today</button>
         )}

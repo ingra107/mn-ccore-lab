@@ -25,7 +25,6 @@ import type { TaskRow as TaskRowData } from '../../lib/api'
 export function TaskRow({ task, project, state, expandedId, onExpand, projectsByPid }: { task: TaskRowData; project: { name: string; slug: string; primary_folder?: string | null } | null; state: TodayStateApi; expandedId: string | null; onExpand: (id: string) => void; projectsByPid: Map<string, { name: string; slug: string; category?: string | null; primary_folder?: string | null }> }) {
   const [density] = useDensity()
   const isDone = !!state.done[task.id]
-  const isNow = state.rightNow === task.id
   const planned = state.planned[task.id]
   const expanded = expandedId === task.id && !isDone
 
@@ -89,7 +88,6 @@ export function TaskRow({ task, project, state, expandedId, onExpand, projectsBy
       onToggleDone={() => (isDone ? state.uncheck(task.id) : state.markDone(task.id))}
       isExpanded={expanded}
       onToggleExpand={() => { if (!isDone) onExpand(task.id) }}
-      isRightNow={isNow}
       isPlanned={!!planned}
       plannedLabel={planned?.slot === 'strip' ? 'planned' : 'scheduled'}
       showGroupOverridePin

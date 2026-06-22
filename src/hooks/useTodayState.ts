@@ -27,14 +27,12 @@ import { todayKey } from '../lib/taskGrouping'
 import type { TaskRow } from '../lib/api'
 
 export interface TodayStateShape {
-  rightNow: string | null
   planned: Record<string, { slot: PlannedSlot }>
   done: Record<string, boolean>
 }
 
 export interface TodayStateApi extends TodayStateShape {
   plannedIds: () => string[]
-  promote: (id: string) => void
   markDone: (id: string) => void
   uncheck: (id: string) => void
   /** Drop/re-slot a task. Phase 3: pass plan_start_min + estimated_minutes to
@@ -66,9 +64,9 @@ export function useTodayState(tasks: TaskRow[], completedTodayIds: string[] = []
     migrate(tasks)
   }, [tasks, migrate])
 
-  // Derive rightNow + planned from today's synced task rows. Self-expiring:
+  // Derive planned from today's synced task rows. Self-expiring:
   // only planned_for == today participates.
-  const { rightNow, planned } = useMemo(() => derivePlanState(tasks), [tasks])
+  const { planned } = useMemo(() => derivePlanState(tasks), [tasks])
 
   // Reconcile optimistic done-flags against the cache (the source of truth).
   // markDone sets done[id] for instant feedback; once the cache CONFIRMS the
@@ -88,15 +86,10 @@ export function useTodayState(tasks: TaskRow[], completedTodayIds: string[] = []
 
   const plannedIds = useCallback(() => Object.keys(planned).filter((id) => !done[id]), [planned, done])
 
-  const promote = useCallback((id: string) => {
-    plan.promoteToRightNow(id, tasks)
-  }, [plan, tasks])
-
   const markDone = useCallback((id: string) => {
-    // Capture prior plan/Right-Now state so Undo can restore it (design
-    // principle #8 — optimistic UI + a 5s undo on every state change).
+    // Capture prior plan state so Undo can restore it (design principle #8 —
+    // optimistic UI + a 5s undo on every state change).
     const wasPlanned = !!planned[id]
-    const wasRightNow = rightNow === id
     const prevSlot = planned[id]?.slot
 
     setDone((p) => ({ ...p, [id]: true }))
@@ -111,13 +104,12 @@ export function useTodayState(tasks: TaskRow[], completedTodayIds: string[] = []
       onError: () => setDone((p) => { const n = { ...p }; delete n[id]; return n }),
     })
     undoToast.showUndo('Task completed', () => {
-      // Undo: re-open the task and restore its prior planned slot / Right Now.
+      // Undo: re-open the task and restore its prior planned slot.
       setDone((p) => { const n = { ...p }; delete n[id]; return n })
-      if (wasRightNow) plan.promoteToRightNow(id, tasks)
-      else if (wasPlanned) plan.planTask(id, prevSlot ?? 'strip', tasks)
+      if (wasPlanned) plan.planTask(id, prevSlot ?? 'strip', tasks)
       updateStatus.mutate({ id, status: 'todo' })
     })
-  }, [updateStatus, undoToast, plan, planned, rightNow, tasks])
+  }, [updateStatus, undoToast, plan, planned, tasks])
 
   const uncheck = useCallback((id: string) => {
     setDone((p) => { const n = { ...p }; delete n[id]; return n })
@@ -137,7 +129,7 @@ export function useTodayState(tasks: TaskRow[], completedTodayIds: string[] = []
     plan.unplanTask(id)
   }, [plan])
 
-  return { rightNow, planned, done, plannedIds, promote, markDone, uncheck, planAt, unplan }
+  return { planned, done, plannedIds, markDone, uncheck, planAt, unplan }
 }
 
 // Re-export todayKey for callers that imported it transitively from here (none

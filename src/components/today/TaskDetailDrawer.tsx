@@ -1,8 +1,8 @@
 // TaskDetailDrawer — inline expand drawer for tasks on TodayPage.
-// Shown when the user clicks a task row body (CD spec: "click expands, doesn't
-// promote"). Action bar with ▶ Work / 📌 Plan / Move → / Unplan; SmartCompose
-// directly under action bar; full-width activity feed under composer; chips +
-// subtasks/blocks/workflow below the feed.
+// Shown when the user clicks a task row body. Action bar with 📂▶ Work /
+// 📌 Plan / Move → / Unplan; SmartCompose directly under action bar;
+// full-width activity feed under composer; chips + subtasks/blocks/workflow
+// below the feed.
 //
 // Extracted from src/pages/portal/TodayPage.tsx (B2_TaskDetail). Same Move→
 // popover wiring as UnifiedMyTasks InlineDetail (writes group_override on tasks).
@@ -50,7 +50,6 @@ const DURATION_STEP = 15
 
 export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; project: { name: string; slug: string; primary_folder?: string | null } | null; state: TodayStateApi }) {
   const isPlanned = !!state.planned[task.id]
-  const isNow = state.rightNow === task.id
   // Slack-style seen (Nick 2026-06-11): expanding the drawer acknowledges the
   // assignment silently when the viewer is the assignee.
   useAutoAcknowledge(task)
@@ -147,15 +146,7 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
             style={{ padding: '6px 10px', background: 'none', border: 'none', color: 'rgba(255,255,255,0.25)', fontSize: 12, cursor: 'not-allowed', display: 'inline-flex', alignItems: 'center', gap: 4 }}
           >▶</button>
         )}
-        {!isNow && !isDone && (
-          <Button
-            variant="gold"
-            size="sm"
-            onClick={() => state.promote(task.id)}
-            style={{ padding: '6px 12px', fontSize: 12, fontWeight: 600, borderRadius: 'var(--radius-sm)' }}
-          >Right now</Button>
-        )}
-        {!isPlanned && !isNow && !isDone && (
+        {!isPlanned && !isDone && (
           <Button
             variant="ghost-gold"
             size="sm"
@@ -163,7 +154,7 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
             style={{ padding: '6px 12px', fontSize: 12, borderRadius: 'var(--radius-sm)' }}
           >📌 Plan for today</Button>
         )}
-        {isPlanned && !isNow && (
+        {isPlanned && (
           <button onClick={() => state.unplan(task.id)} style={{ padding: '6px 12px', background: 'transparent', color: INK_MUTED, border: 'none', borderRadius: 'var(--radius-sm)', fontFamily: 'inherit', fontSize: 12, cursor: 'pointer' }}>Unplan</button>
         )}
         <div ref={moveRef} style={{ position: 'relative' }}>
