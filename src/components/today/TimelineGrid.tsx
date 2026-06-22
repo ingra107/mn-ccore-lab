@@ -31,6 +31,7 @@
 //   - boxed right-fixed-width service rail
 
 import { useMemo, useState, useRef, useCallback, type CSSProperties, type ReactNode } from 'react'
+import { GripHorizontal } from 'lucide-react'
 import { useTaskBlockGesture, type FreeWindow } from './useTaskBlockGesture'
 import { EventRow, type SaveStatus } from './MeetingRow'
 import { PlannedTaskRow } from './PlannedTaskRow'
@@ -124,6 +125,7 @@ function TimedTaskBlock({
   const isDragging = mode === 'move'
   const isResizing = mode === 'resize'
   const liveHeightPx = Math.max(heightPx + heightDeltaPx, 15)  // never collapse below 15px
+  const [isHovered, setIsHovered] = useState(false)
 
   const blockStyle: CSSProperties = {
     position: 'absolute',
@@ -159,6 +161,8 @@ function TimedTaskBlock({
     <div
       style={blockStyle}
       onPointerDown={onPointerDownBody}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       title={task.title}
       data-task-id={task.id}
       aria-label={`${task.short_title || task.title} — ${durLabel}`}
@@ -169,6 +173,18 @@ function TimedTaskBlock({
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 4, minWidth: 0, flex: 1 }}>
+        {/* Wide drag-grip indicator — hover-revealed, wider 2×4-style GripHorizontal.
+            Pure visual affordance; the whole block body is the drag target. */}
+        <GripHorizontal
+          size={16}
+          aria-hidden
+          style={{
+            flexShrink: 0,
+            color: ACCENT_GOLD,
+            opacity: (isHovered || isDragging) ? 0.7 : 0,
+            transition: 'opacity 120ms ease',
+          }}
+        />
         <span style={{
           fontSize: 11,
           fontWeight: 500,
