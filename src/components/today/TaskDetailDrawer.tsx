@@ -30,6 +30,7 @@ import { isTaskDone } from '../../lib/taskGrouping'
 import { STATUS_OPTIONS } from '../../lib/taskConstants'
 import { stripMeetingMarker } from '../../lib/textUtils'
 import { Button } from '../ui/Button'
+import WorkOnActions from '../WorkOnActions'
 import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow } from '../../lib/api'
 
@@ -47,7 +48,7 @@ const DURATION_MIN = 15
 const DURATION_MAX = 480
 const DURATION_STEP = 15
 
-export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; project: { name: string; slug: string } | null; state: TodayStateApi }) {
+export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; project: { name: string; slug: string; primary_folder?: string | null } | null; state: TodayStateApi }) {
   const isPlanned = !!state.planned[task.id]
   const isNow = state.rightNow === task.id
   // Slack-style seen (Nick 2026-06-11): expanding the drawer acknowledges the
@@ -131,13 +132,28 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
         {!isDone && (
           <button onClick={() => state.markDone(task.id)} style={{ padding: '6px 12px', background: 'transparent', color: ACCENT_GREEN, border: 'none', borderRadius: 'var(--radius-sm)', fontFamily: 'inherit', fontSize: 12, cursor: 'pointer' }}>✓ Complete</button>
         )}
+        {/* Real Claude Code launch — uses project's primary_folder. Graceful
+            fallback: disabled with tooltip when no folder is set. */}
+        {project?.primary_folder ? (
+          <WorkOnActions
+            primaryFolder={project.primary_folder}
+            projectLabel={project.name}
+            variant="compact"
+          />
+        ) : !isDone && (
+          <button
+            disabled
+            title="Set a project folder to work on this in Claude"
+            style={{ padding: '6px 10px', background: 'none', border: 'none', color: 'rgba(255,255,255,0.25)', fontSize: 12, cursor: 'not-allowed', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+          >▶</button>
+        )}
         {!isNow && !isDone && (
           <Button
             variant="gold"
             size="sm"
             onClick={() => state.promote(task.id)}
             style={{ padding: '6px 12px', fontSize: 12, fontWeight: 600, borderRadius: 'var(--radius-sm)' }}
-          >▶ Work on this now</Button>
+          >Right now</Button>
         )}
         {!isPlanned && !isNow && !isDone && (
           <Button

@@ -262,7 +262,7 @@ export interface AgendaListViewProps {
   tomorrowEvents?: TodayEvent[]
   tasks: TaskRow[]
   state: TodayStateApi
-  projectsByPid: Map<string, { name: string; slug: string; category?: string | null }>
+  projectsByPid: Map<string, { name: string; slug: string; category?: string | null; primary_folder?: string | null }>
   // expandedId/onExpand removed: AgendaListView owns its own expand state so
   // clicking a row here never expands the same task on Timeline (Item 2 fix).
   // Lifted dismiss state (#170 — shared with Timeline so toggling views

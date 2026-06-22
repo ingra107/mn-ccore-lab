@@ -276,7 +276,7 @@ function AgendaGapRow({
   freeWindows: FreeWindow[]
   tasks: TaskRow[]
   state: TodayStateApi
-  projectsByPid: Map<string, { name: string; slug: string; category?: string | null }>
+  projectsByPid: Map<string, { name: string; slug: string; category?: string | null; primary_folder?: string | null }>
   expandedId: string | null
   onExpand: (id: string) => void
   /** Phase 3: includes plan_start_min + estimated_minutes for timed drops. */
@@ -772,7 +772,7 @@ export interface TimelineGridProps {
   events: TodayEvent[]
   tasks: TaskRow[]
   state: TodayStateApi
-  projectsByPid: Map<string, { name: string; slug: string; category?: string | null }>
+  projectsByPid: Map<string, { name: string; slug: string; category?: string | null; primary_folder?: string | null }>
   expandedId: string | null
   onExpand: (id: string) => void
   notes: Record<string, string>

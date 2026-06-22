@@ -78,9 +78,9 @@ export default function TodayPage() {
   const completedTodayIds = useMemo(() => doneTodayDetail.map((t) => t.id), [doneTodayDetail])
 
   const projectsByPid = useMemo(() => {
-    const m = new Map<string, { name: string; slug: string; category?: string | null; lastActivity?: string | null }>()
+    const m = new Map<string, { name: string; slug: string; category?: string | null; lastActivity?: string | null; primary_folder?: string | null }>()
     for (const p of projectsQuery.data ?? []) {
-      const entry = { name: p.title ?? p.slug, slug: p.slug, category: p.category ?? null, lastActivity: p.lastActivity ?? null }
+      const entry = { name: p.title ?? p.slug, slug: p.slug, category: p.category ?? null, lastActivity: p.lastActivity ?? null, primary_folder: p.primary_folder ?? null }
       m.set(p.slug, entry)
     }
     return m
@@ -278,14 +278,10 @@ export default function TodayPage() {
       .map(calendarEventToTodayEvent)
   }, [calendarEventsQuery.data])
 
-  // Planned Today lookup.
-  const rightNowTask = state.rightNow ? tasks.find((t) => t.id === state.rightNow) ?? null : null
-  const rightNowProject = rightNowTask?.project_id ? projectsByPid.get(rightNowTask.project_id) ?? null : null
-  // Strip tasks: planned with slot==='strip', excluding rightNow (which gets its
-  // own highlighted hero row in PlannedTodaySection). Between-N tasks stay inside
-  // the Timeline drop zones where they render contextually.
+  // Strip tasks: planned with slot==='strip'. Between-N tasks stay inside the
+  // Timeline drop zones where they render contextually.
   const stripTasks = state.plannedIds()
-    .filter((id) => id !== state.rightNow && state.planned[id]?.slot === 'strip')
+    .filter((id) => state.planned[id]?.slot === 'strip')
     .map((id) => tasks.find((t) => t.id === id))
     .filter((t): t is TaskRow => !!t)
 
@@ -504,8 +500,6 @@ export default function TodayPage() {
         )}
 
         <PlannedTodaySection
-          rightNowTask={rightNowTask}
-          rightNowProject={rightNowProject ? { name: rightNowProject.name, slug: rightNowProject.slug } : null}
           stripTasks={stripTasks}
           state={state}
           projectsByPid={projectsByPid}

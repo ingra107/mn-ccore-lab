@@ -137,7 +137,7 @@ interface TimelineProps {
   events: TodayEvent[]
   tasks: TaskRow[]
   state: TodayStateApi
-  projectsByPid: Map<string, { name: string; slug: string; category?: string | null }>
+  projectsByPid: Map<string, { name: string; slug: string; category?: string | null; primary_folder?: string | null }>
   // expandedId/onExpand removed: Timeline owns its own expand state so that
   // clicking a timeline block only expands the timeline instance, not list rows
   // that render the same task in PlannedTodaySection / TaskGroup (Item 2 fix).
