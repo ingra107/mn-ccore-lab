@@ -14,7 +14,7 @@ import SmartCompose from '../SmartCompose'
 import { useUpdateTask, useToggleSubtask } from '../../hooks/useMutations'
 import { useAutoAcknowledge } from '../../hooks/useAutoAcknowledge'
 import { useUndoToast } from '../UndoToast'
-import { LinkRow, type TaskLink } from './primitives'
+
 import { WorkflowSection } from '../tasks/detail/FieldControls'
 import type { WorkflowFields } from '../tasks/detail/FieldControls'
 import { TaskInlineFieldRow } from '../tasks/detail/FieldControls'
@@ -57,10 +57,6 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
   const detail = detailQuery.data
   const { data: linksData } = useTaskLinks(task.id)
   const projectLinks = linksData?.projectLinks ?? []
-  const linkSet: TaskLink[] = []
-  if (task.key_link_1) linkSet.push({ url: task.key_link_1, desc: task.key_link_1_desc })
-  if (task.key_link_2) linkSet.push({ url: task.key_link_2, desc: task.key_link_2_desc })
-  if (task.key_link_3) linkSet.push({ url: task.key_link_3, desc: task.key_link_3_desc })
   const subtasks = detail?.subtasks ?? []
   const blocks = detail?.blocks ?? []
 
@@ -126,10 +122,12 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
 
   return (
     <div onClick={(e) => e.stopPropagation()} style={{ padding: '20px 18px 18px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-      {/* Action bar */}
-      <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 12, flexWrap: 'wrap' }}>
+      {/* Action bar — FIX 2: project name removed (shown in title-row parenthetical).
+          FIX 1: LinkRow removed (links already shown in title meta row).
+          FIX 3: marginBottom 12→6; button padding 6px→4px to tighten row height. */}
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 6, flexWrap: 'wrap' }}>
         {!isDone && (
-          <button onClick={() => state.markDone(task.id)} style={{ padding: '6px 12px', background: 'transparent', color: ACCENT_GREEN, border: 'none', borderRadius: 'var(--radius-sm)', fontFamily: 'inherit', fontSize: 12, cursor: 'pointer' }}>✓ Complete</button>
+          <button onClick={() => state.markDone(task.id)} style={{ padding: '4px 10px', background: 'transparent', color: ACCENT_GREEN, border: 'none', borderRadius: 'var(--radius-sm)', fontFamily: 'inherit', fontSize: 12, cursor: 'pointer' }}>✓ Complete</button>
         )}
         {/* Real Claude Code launch — uses project's primary_folder. Graceful
             fallback: disabled with tooltip when no folder is set. */}
@@ -143,7 +141,7 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
           <button
             disabled
             title="Set a project folder to work on this in Claude"
-            style={{ padding: '6px 10px', background: 'none', border: 'none', color: 'rgba(255,255,255,0.25)', fontSize: 12, cursor: 'not-allowed', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+            style={{ padding: '4px 10px', background: 'none', border: 'none', color: 'rgba(255,255,255,0.25)', fontSize: 12, cursor: 'not-allowed', display: 'inline-flex', alignItems: 'center', gap: 4 }}
           >▶</button>
         )}
         {!isPlanned && !isDone && (
@@ -151,14 +149,14 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
             variant="ghost-gold"
             size="sm"
             onClick={() => state.planAt(task.id, 'strip')}
-            style={{ padding: '6px 12px', fontSize: 12, borderRadius: 'var(--radius-sm)' }}
+            style={{ padding: '4px 10px', fontSize: 12, borderRadius: 'var(--radius-sm)' }}
           >📌 Plan for today</Button>
         )}
         {isPlanned && (
-          <button onClick={() => state.unplan(task.id)} style={{ padding: '6px 12px', background: 'transparent', color: INK_MUTED, border: 'none', borderRadius: 'var(--radius-sm)', fontFamily: 'inherit', fontSize: 12, cursor: 'pointer' }}>Unplan</button>
+          <button onClick={() => state.unplan(task.id)} style={{ padding: '4px 10px', background: 'transparent', color: INK_MUTED, border: 'none', borderRadius: 'var(--radius-sm)', fontFamily: 'inherit', fontSize: 12, cursor: 'pointer' }}>Unplan</button>
         )}
         <div ref={moveRef} style={{ position: 'relative' }}>
-          <button onClick={() => setMoveOpen((o) => !o)} title="Move to a different group (writes group_override)" style={{ padding: '6px 12px', background: moveOpen ? withAlpha(ACCENT_TEAL, 20) : 'transparent', color: moveOpen ? ACCENT_TEAL : INK, border: `1px solid ${moveOpen ? ACCENT_TEAL : 'transparent'}`, borderRadius: 'var(--radius-sm)', fontFamily: 'inherit', fontSize: 12, cursor: 'pointer' }}>Move →</button>
+          <button onClick={() => setMoveOpen((o) => !o)} title="Move to a different group (writes group_override)" style={{ padding: '4px 10px', background: moveOpen ? withAlpha(ACCENT_TEAL, 20) : 'transparent', color: moveOpen ? ACCENT_TEAL : INK, border: `1px solid ${moveOpen ? ACCENT_TEAL : 'transparent'}`, borderRadius: 'var(--radius-sm)', fontFamily: 'inherit', fontSize: 12, cursor: 'pointer' }}>Move →</button>
           {moveOpen && (
             <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: 4, minWidth: 200, background: PANEL_BG, border: '1px solid rgba(255,255,255,0.12)', borderRadius: 'var(--radius-sm)', zIndex: 30, boxShadow: '0 4px 12px rgba(0,0,0,0.4)' }}>
               {TODAY_MOVE_OPTIONS.map((opt) => (
@@ -182,8 +180,6 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
             </div>
           )}
         </div>
-        <LinkRow links={linkSet} />
-        {project && <span style={{ marginLeft: 'auto', fontSize: 11, color: INK_DIM }}>{project.name}</span>}
       </div>
 
       {/* Inherited project links — read-only, shown under action bar near project context. */}
