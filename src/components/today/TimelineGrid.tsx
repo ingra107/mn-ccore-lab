@@ -319,12 +319,18 @@ function AgendaGapRow({
     },
     [timedTasks, gapStartMin],
   )
+  // timedBlocksBottom: the px bottom of the tallest block in the absolute lane —
+  // i.e. max(topPx + heightPx) across all columns. Used as the expand-drawer anchor
+  // so a drawer always sits below the FULL block cluster, never just its own column.
+  const timedBlocksBottom = useMemo(() => {
+    if (timedPlacementMap.size === 0) return 0
+    return Math.max(...Array.from(timedPlacementMap.values()).map((p) => p.topPx + p.heightPx))
+  }, [timedPlacementMap])
   const containerMinHeight = useMemo(() => {
     const base = baseHeight  // already = pxForGap(freeMinutes) from the model
-    if (timedPlacementMap.size === 0) return base
-    const tasksExtent = Math.max(...Array.from(timedPlacementMap.values()).map((p) => p.topPx + p.heightPx))
-    return Math.max(base, tasksExtent)
-  }, [baseHeight, timedPlacementMap])
+    if (timedBlocksBottom === 0) return base
+    return Math.max(base, timedBlocksBottom)
+  }, [baseHeight, timedBlocksBottom])
 
   // Item 3: ghost placement — recompute packTaskBlocks with the dragging task's
   // plan_start_min replaced by the live snapped position. This gives the ghost
@@ -480,16 +486,20 @@ function AgendaGapRow({
           sit in flow below the block layer via paddingTop offset. */}
       {timedTasks.map((t) => {
         if (expandedId !== t.id) return null
-        // Fix C: look up by id, not positional index.
-        const p = timedPlacementMap.get(t.id)
-        // adjacentTopPx: place the drawer flush below the block's bottom edge.
-        const adjacentTopPx = p ? p.topPx + p.heightPx : containerMinHeight
+        // Drawer anchor: use timedBlocksBottom (max bottom across ALL columns),
+        // not just the expanded block's own topPx + heightPx.
+        // In the multi-column case a sibling block in another column may extend
+        // lower than the expanded block — anchoring at the individual block's
+        // bottom causes the drawer to visually overlap that taller sibling.
+        // timedBlocksBottom is always correct for single-column too (it equals
+        // the one block's bottom when there's only one block).
+        const adjacentTopPx = timedBlocksBottom > 0 ? timedBlocksBottom : containerMinHeight
         return (
           <div
             key={`expanded-${t.id}`}
             style={{
               paddingTop: adjacentTopPx,
-              // Gold left border visually connects the drawer to the block above.
+              // Gold left border visually connects the drawer to the block cluster above.
               borderLeft: `3px solid ${withAlpha(ACCENT_GOLD, 55)}`,
               marginBottom: 4,
               // Ensure the drawer renders above the absolute block layer (z 1) so
