@@ -30,13 +30,13 @@
 //   - OverlapBand coral badge / "conflict" copy for timed overlaps
 //   - boxed right-fixed-width service rail
 
-import { useMemo, useState, useRef, type CSSProperties, type ReactNode } from 'react'
+import { useMemo, useState, useRef, useCallback, type CSSProperties, type ReactNode } from 'react'
 import { useTaskBlockGesture } from './useTaskBlockGesture'
 import { EventRow, type SaveStatus } from './MeetingRow'
 import { PlannedTaskRow } from './PlannedTaskRow'
 import {
   buildTimelineModel, pxForMeeting, PX_PER_MIN, GAP_FLOOR,
-  TIMELINE_TASK_BLOCKS, packTaskBlocks,
+  TIMELINE_TASK_BLOCKS, packTaskBlocks, MEETING_FLOOR,
 } from './timelineModel'
 import {
   ACCENT_GOLD, ACCENT_TEAL, ACCENT_CORAL, INK, INK_DIM, withAlpha,
@@ -78,6 +78,7 @@ function TimedTaskBlock({
   expandedId,
   onMove,
   onResize,
+  onGhostUpdate,
 }: {
   task: TaskRow
   topPx: number
@@ -94,6 +95,8 @@ function TimedTaskBlock({
   onMove: (id: string, newPlanStartMin: number) => void
   /** Called to commit resize: writes estimated_minutes. */
   onResize: (id: string, newEstimatedMinutes: number) => void
+  /** Called during move gesture with live snapped landing min (null on gesture end). */
+  onGhostUpdate?: (taskId: string, snappedMin: number | null) => void
 }) {
   const expanded = expandedId === task.id
   const visibleColCount = Math.min(colCount, 3)
@@ -111,6 +114,7 @@ function TimedTaskBlock({
       onExpand,
       onMove,
       onResize,
+      onGhostUpdate,
     })
 
   const isDragging = mode === 'move'
@@ -273,6 +277,11 @@ function AgendaGapRow({
   nowOffsetPx?: number
 }) {
   const [dragOver, setDragOver] = useState(false)
+  // Item 3: ghost state — tracks which task is being dragged + its live snapped position.
+  const [ghostState, setGhostState] = useState<{ taskId: string; snappedMin: number } | null>(null)
+  const onGhostUpdate = useCallback((taskId: string, snappedMin: number | null) => {
+    setGhostState(snappedMin == null ? null : { taskId, snappedMin })
+  }, [])
   // Ref for pointer-Y placement on timed drops (Directive 2: free pointer-Y).
   const gapDivRef = useRef<HTMLDivElement>(null)
 
@@ -310,6 +319,31 @@ function AgendaGapRow({
     const tasksExtent = Math.max(...timedPlacements.map((p) => p.topPx + p.heightPx))
     return Math.max(base, tasksExtent)
   }, [baseHeight, timedPlacements])
+
+  // Item 3: ghost placement — recompute packTaskBlocks with the dragging task's
+  // plan_start_min replaced by the live snapped position. This gives the ghost
+  // block its correct column (overlap-aware) and height.
+  const ghostPlacement = useMemo(() => {
+    if (!ghostState || timedTasks.length === 0) return null
+    const { taskId, snappedMin } = ghostState
+    const ghostTask = timedTasks.find((t) => t.id === taskId)
+    if (!ghostTask) return null
+    // Substitute the ghost task's start time; keep all others unchanged.
+    const withGhost = timedTasks.map((t) =>
+      t.id === taskId ? { ...t, plan_start_min: snappedMin } : t
+    )
+    const placements = packTaskBlocks(withGhost, gapStartMin)
+    const idx = withGhost.findIndex((t) => t.id === taskId)
+    const p = placements[idx]
+    if (!p) return null
+    const dur = ghostTask.estimated_minutes ?? 30
+    return {
+      topPx: Math.round((snappedMin - gapStartMin) * PX_PER_MIN),
+      heightPx: Math.max(MEETING_FLOOR, Math.round(dur * PX_PER_MIN)),
+      colIdx: p.colIdx,
+      colCount: p.colCount,
+    }
+  }, [ghostState, timedTasks, gapStartMin])
 
   const fmtFree = freeMinutes >= 60
     ? `${Math.floor(freeMinutes / 60)}h${freeMinutes % 60 > 0 ? ` ${freeMinutes % 60}m` : ''} free`
@@ -390,10 +424,39 @@ function AgendaGapRow({
                   onResize={(id, newEstimatedMinutes) =>
                     state.planAt(id, slot, null, newEstimatedMinutes)
                   }
+                  onGhostUpdate={onGhostUpdate}
                 />
               </div>
             )
           })}
+          {/* Item 3: drag ghost overlay — shows projected landing position + correct
+              column from packTaskBlocks (overlap-aware). Dashed gold outline, no fill,
+              pointer-events: none so it doesn't interfere with the actual drag. */}
+          {ghostPlacement && (() => {
+            const gp = ghostPlacement
+            const visibleColCount = Math.min(gp.colCount, 3)
+            const leftPct = (gp.colIdx / visibleColCount) * 100
+            const widthPct = (1 / visibleColCount) * 100
+            return (
+              <div
+                aria-hidden="true"
+                style={{
+                  position: 'absolute',
+                  top: gp.topPx,
+                  height: gp.heightPx,
+                  left: `${leftPct}%`,
+                  width: `${widthPct}%`,
+                  boxSizing: 'border-box',
+                  border: `2px dashed ${ACCENT_GOLD}`,
+                  borderRadius: 5,
+                  background: withAlpha(ACCENT_GOLD, 8),
+                  pointerEvents: 'none',
+                  zIndex: 20,
+                  transition: 'top 80ms ease, height 80ms ease',
+                }}
+              />
+            )
+          })()}
         </div>
       )}
 

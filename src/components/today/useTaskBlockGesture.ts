@@ -34,6 +34,9 @@ export interface TaskBlockGestureState {
   heightDeltaPx: number
   /** Active gesture mode; null when idle. */
   mode: GestureMode
+  /** During a move gesture: the snapped + clamped landing minute (for ghost preview).
+   *  null when idle or during resize. */
+  snappedLandingMin: number | null
 }
 
 export interface TaskBlockGestureHandlers {
@@ -59,6 +62,9 @@ export interface UseTaskBlockGestureOptions {
   onMove: (id: string, newPlanStartMin: number) => void
   /** Called to commit resize: writes estimated_minutes. */
   onResize: (id: string, newEstimatedMinutes: number) => void
+  /** Optional: called during move gesture with the live snapped landing minute,
+   *  and with null when the gesture ends. Used by AgendaGapRow for ghost preview. */
+  onGhostUpdate?: (taskId: string, snappedMin: number | null) => void
 }
 
 // ── Hook ─────────────────────────────────────────────────────────────────────
@@ -72,6 +78,7 @@ export function useTaskBlockGesture({
   onExpand,
   onMove,
   onResize,
+  onGhostUpdate,
 }: UseTaskBlockGestureOptions): [TaskBlockGestureState, TaskBlockGestureHandlers] {
   const dur = estimatedMinutes ?? 30
 
@@ -79,6 +86,7 @@ export function useTaskBlockGesture({
   const [translatePx, setTranslatePx] = useState(0)
   const [heightDeltaPx, setHeightDeltaPx] = useState(0)
   const [mode, setMode] = useState<GestureMode>(null)
+  const [snappedLandingMin, setSnappedLandingMin] = useState<number | null>(null)
 
   // Stable gesture state stored in a ref (pointerId, origin, cumulative delta).
   // Avoids stale-closure issues in event handlers.
@@ -99,10 +107,17 @@ export function useTaskBlockGesture({
     const deltaY = e.clientY - g.startY
     if (g.mode === 'move') {
       setTranslatePx(deltaY)
+      // Live ghost preview: compute snapped + clamped landing minute
+      const rawNew = planStartMin + deltaY / PX_PER_MIN
+      const snapped = snap15(rawNew)
+      const maxStart = gapEndMin - dur
+      const clamped = Math.max(gapStartMin, Math.min(maxStart, snapped))
+      setSnappedLandingMin(clamped)
+      onGhostUpdate?.(taskId, clamped)
     } else if (g.mode === 'resize') {
       setHeightDeltaPx(deltaY)
     }
-  }, [])
+  }, [taskId, planStartMin, dur, gapStartMin, gapEndMin, onGhostUpdate])
 
   const handlePointerUp = useCallback((e: PointerEvent) => {
     const g = gestureRef.current
@@ -123,6 +138,8 @@ export function useTaskBlockGesture({
     setTranslatePx(0)
     setHeightDeltaPx(0)
     setMode(null)
+    setSnappedLandingMin(null)
+    onGhostUpdate?.(taskId, null)
 
     const gMode = g.mode
     gestureRef.current = null
@@ -158,7 +175,7 @@ export function useTaskBlockGesture({
         onResize(taskId, clamped)
       }
     }
-  }, [taskId, planStartMin, dur, gapStartMin, gapEndMin, onExpand, onMove, onResize, handlePointerMove])
+  }, [taskId, planStartMin, dur, gapStartMin, gapEndMin, onExpand, onMove, onResize, onGhostUpdate, handlePointerMove])
 
   // ── pointerdown on BODY (move gesture) ──────────────────────────────────────
 
@@ -206,7 +223,7 @@ export function useTaskBlockGesture({
   }, [handlePointerMove, handlePointerUp])
 
   return [
-    { translatePx, heightDeltaPx, mode },
+    { translatePx, heightDeltaPx, mode, snappedLandingMin },
     { onPointerDownBody, onPointerDownResize },
   ]
 }
