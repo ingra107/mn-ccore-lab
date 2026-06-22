@@ -291,38 +291,53 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
         >+</button>
       </div>
 
-      {/* Subtasks + Blocks (A1: below fold) */}
-      <div style={{ marginTop: 14 }}>
-        <div style={{ fontSize: 10, color: INK_DIM, marginBottom: 6 }}>Subtasks</div>
-        {detailQuery.isLoading && <div style={{ fontSize: 11, color: INK_DIM, fontStyle: 'italic' }}>Loading…</div>}
-        {!detailQuery.isLoading && subtasks.length === 0 && <div style={{ fontSize: 11, color: INK_DIM, fontStyle: 'italic' }}>None yet.</div>}
-        {subtasks.map((s) => (
-          <div key={s.id} style={{ display: 'flex', gap: 6, padding: '3px 0', alignItems: 'flex-start' }}>
-            <input
-              type="checkbox"
-              checked={s.completed === 1}
-              onChange={() => toggleSubtask.mutate(s.id, {
-                onSettled: () => queryClient.invalidateQueries({ queryKey: ['task-detail', task.id] }),
-              })}
-              style={{ marginTop: 2, accentColor: ACCENT_GREEN, cursor: 'pointer' }}
-            />
-            <span style={{ fontSize: 12, color: s.completed === 1 ? INK_DIM : INK, textDecoration: s.completed === 1 ? 'line-through' : 'none', lineHeight: 1.4 }}>{s.title}</span>
-          </div>
-        ))}
-        {blocks.length > 0 && (
-          <div style={{ marginTop: 10 }}>
-            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: ACCENT_ORANGE, marginBottom: 4 }}>Blocks</div>
-            {blocks.map((b) => (
-              <div key={b.id} style={{ fontSize: 11, color: INK, padding: '2px 0' }}>↳ {b.title}</div>
-            ))}
-          </div>
-        )}
-      </div>
+      {/* 2-column: Subtasks (col 1) | Workflow (col 2) — Directive 3 (2026-06-22).
+          Responsive: side-by-side on ≥480px, stacked on narrow/mobile.
+          Uses CSS grid so the columns size naturally to their content.
+          TaskDetailPanel (full editor) does NOT share this layout — this is the
+          compact Today-drawer / timeline-expand context only. */}
+      <div
+        style={{
+          marginTop: 14,
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+          gap: 16,
+          alignItems: 'start',
+        }}
+      >
+        {/* Subtasks + Blocks (col 1) */}
+        <div>
+          <div style={{ fontSize: 10, color: INK_DIM, marginBottom: 6 }}>Subtasks</div>
+          {detailQuery.isLoading && <div style={{ fontSize: 11, color: INK_DIM, fontStyle: 'italic' }}>Loading…</div>}
+          {!detailQuery.isLoading && subtasks.length === 0 && <div style={{ fontSize: 11, color: INK_DIM, fontStyle: 'italic' }}>None yet.</div>}
+          {subtasks.map((s) => (
+            <div key={s.id} style={{ display: 'flex', gap: 6, padding: '3px 0', alignItems: 'flex-start' }}>
+              <input
+                type="checkbox"
+                checked={s.completed === 1}
+                onChange={() => toggleSubtask.mutate(s.id, {
+                  onSettled: () => queryClient.invalidateQueries({ queryKey: ['task-detail', task.id] }),
+                })}
+                style={{ marginTop: 2, accentColor: ACCENT_GREEN, cursor: 'pointer' }}
+              />
+              <span style={{ fontSize: 12, color: s.completed === 1 ? INK_DIM : INK, textDecoration: s.completed === 1 ? 'line-through' : 'none', lineHeight: 1.4 }}>{s.title}</span>
+            </div>
+          ))}
+          {blocks.length > 0 && (
+            <div style={{ marginTop: 10 }}>
+              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: ACCENT_ORANGE, marginBottom: 4 }}>Blocks</div>
+              {blocks.map((b) => (
+                <div key={b.id} style={{ fontSize: 11, color: INK, padding: '2px 0' }}>↳ {b.title}</div>
+              ))}
+            </div>
+          )}
+        </div>
 
-      {/* Workflow fields — v55 (waiting_on / next_checkin_date / promised_to / promise_date) */}
-      <div style={{ marginTop: 14 }}>
-        <div style={{ fontSize: 10, color: INK_DIM, marginBottom: 8 }}>Workflow</div>
-        <WorkflowSection fields={workflowFields} onChange={saveWorkflowField} />
+        {/* Workflow fields (col 2) — v55 waiting_on / next_checkin_date / promised_to / promise_date */}
+        <div>
+          <div style={{ fontSize: 10, color: INK_DIM, marginBottom: 8 }}>Workflow</div>
+          <WorkflowSection fields={workflowFields} onChange={saveWorkflowField} />
+        </div>
       </div>
 
       {/* Full editor panel — mounted locally; TaskDetailPanel handles backdrop,
