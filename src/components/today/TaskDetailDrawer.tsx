@@ -250,53 +250,13 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
         >Add description…</button>
       )}
 
-      {/* Inline field row: Status · Priority · Project · Due — canonical GhostSelect (A1: below fold) */}
-      <TaskInlineFieldRow
-        status={task.status}
-        priority={task.priority}
-        projectId={task.project_id}
-        dueDate={task.due_date}
-        onUpdate={(fields) => {
-          const prev = task.status
-          updateTask.mutate({ id: task.id, fields })
-          // Show undo toast for status changes, mirroring useTaskFieldEditors.
-          // (The mutation now derives `completed` from `status` automatically
-          // so the optimistic cache stays consistent — see useUpdateTask.onMutate.)
-          if ('status' in fields && typeof fields.status === 'string' && fields.status !== prev) {
-            const label = STATUS_OPTIONS.find(o => o.value === fields.status)?.label ?? String(fields.status)
-            undoToast.showUndo(`Status → ${label}`, () =>
-              updateTask.mutate({ id: task.id, fields: { status: prev } })
-            )
-          }
-        }}
-        onOpenEditor={() => setFullEditorTask(task)}
-        style={{ marginTop: 14 }}
-      />
-
-      {/* Duration stepper — step by 15m, min 15, max 480; writes estimated_minutes on change */}
-      <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
-        <span style={{ fontSize: 10, color: INK_DIM, minWidth: 52 }}>Duration</span>
-        <button
-          onClick={() => adjustDuration(-DURATION_STEP)}
-          disabled={durationMins <= DURATION_MIN}
-          aria-label="Decrease duration by 15 minutes"
-          style={{ width: 22, height: 22, display: 'grid', placeItems: 'center', background: 'transparent', border: `1px solid rgba(255,255,255,0.12)`, borderRadius: 4, color: durationMins <= DURATION_MIN ? INK_DIM : INK, cursor: durationMins <= DURATION_MIN ? 'default' : 'pointer', fontFamily: 'inherit', fontSize: 13, lineHeight: 1, opacity: durationMins <= DURATION_MIN ? 0.35 : 0.8 }}
-        >−</button>
-        <span style={{ fontSize: 11, color: INK, fontVariantNumeric: 'tabular-nums', minWidth: 36, textAlign: 'center' }}>{fmtDuration(durationMins)}</span>
-        <button
-          onClick={() => adjustDuration(DURATION_STEP)}
-          disabled={durationMins >= DURATION_MAX}
-          aria-label="Increase duration by 15 minutes"
-          style={{ width: 22, height: 22, display: 'grid', placeItems: 'center', background: 'transparent', border: `1px solid rgba(255,255,255,0.12)`, borderRadius: 4, color: durationMins >= DURATION_MAX ? INK_DIM : INK, cursor: durationMins >= DURATION_MAX ? 'default' : 'pointer', fontFamily: 'inherit', fontSize: 13, lineHeight: 1, opacity: durationMins >= DURATION_MAX ? 0.35 : 0.8 }}
-        >+</button>
-      </div>
-
-      {/* 2-column: Subtasks (col 1) | Workflow (col 2) — Directive 3 (2026-06-22).
-          Flex-wrap layout: each col is flex:1 1 200px so they sit side-by-side
-          when the drawer is wide enough and stack to a single column on narrow/
-          mobile. Avoids the auto-fill phantom-column problem (repeat(auto-fill)
-          creates 3 equal cols on a ~600px drawer, visually centering Workflow).
-          TaskDetailPanel (full editor) does NOT share this layout. */}
+      {/* 2-column top-aligned layout (2026-06-22 polish):
+          LEFT: status pills → Duration → Subtasks (stacked, full height)
+          RIGHT: Workflow pulled to TOP — starts at the same edge as status pills.
+          Both columns begin at the same vertical position; content fills down
+          naturally → minimal bottom negative space without feeling cluttered.
+          Flex-wrap: stacks to 1 column on narrow drawers (<~416px).
+          TaskDetailPanel (full editor) is NOT affected. */}
       <div
         style={{
           marginTop: 14,
@@ -306,35 +266,76 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
           alignItems: 'flex-start',
         }}
       >
-        {/* Subtasks + Blocks (col 1) */}
-        <div style={{ flex: '1 1 200px', minWidth: 0 }}>
-          <div style={{ fontSize: 10, color: INK_DIM, marginBottom: 6 }}>Subtasks</div>
-          {detailQuery.isLoading && <div style={{ fontSize: 11, color: INK_DIM, fontStyle: 'italic' }}>Loading…</div>}
-          {!detailQuery.isLoading && subtasks.length === 0 && <div style={{ fontSize: 11, color: INK_DIM, fontStyle: 'italic' }}>None yet.</div>}
-          {subtasks.map((s) => (
-            <div key={s.id} style={{ display: 'flex', gap: 6, padding: '3px 0', alignItems: 'flex-start' }}>
-              <input
-                type="checkbox"
-                checked={s.completed === 1}
-                onChange={() => toggleSubtask.mutate(s.id, {
-                  onSettled: () => queryClient.invalidateQueries({ queryKey: ['task-detail', task.id] }),
-                })}
-                style={{ marginTop: 2, accentColor: ACCENT_GREEN, cursor: 'pointer' }}
-              />
-              <span style={{ fontSize: 12, color: s.completed === 1 ? INK_DIM : INK, textDecoration: s.completed === 1 ? 'line-through' : 'none', lineHeight: 1.4 }}>{s.title}</span>
-            </div>
-          ))}
-          {blocks.length > 0 && (
-            <div style={{ marginTop: 10 }}>
-              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: ACCENT_ORANGE, marginBottom: 4 }}>Blocks</div>
-              {blocks.map((b) => (
-                <div key={b.id} style={{ fontSize: 11, color: INK, padding: '2px 0' }}>↳ {b.title}</div>
-              ))}
-            </div>
-          )}
+        {/* LEFT column: Status/meta pills → Duration → Subtasks */}
+        <div style={{ flex: '1 1 200px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
+
+          {/* Status · Priority · Project · Due — wraps within the column */}
+          <TaskInlineFieldRow
+            status={task.status}
+            priority={task.priority}
+            projectId={task.project_id}
+            dueDate={task.due_date}
+            onUpdate={(fields) => {
+              const prev = task.status
+              updateTask.mutate({ id: task.id, fields })
+              if ('status' in fields && typeof fields.status === 'string' && fields.status !== prev) {
+                const label = STATUS_OPTIONS.find(o => o.value === fields.status)?.label ?? String(fields.status)
+                undoToast.showUndo(`Status → ${label}`, () =>
+                  updateTask.mutate({ id: task.id, fields: { status: prev } })
+                )
+              }
+            }}
+            onOpenEditor={() => setFullEditorTask(task)}
+          />
+
+          {/* Duration stepper */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ fontSize: 10, color: INK_DIM, minWidth: 52 }}>Duration</span>
+            <button
+              onClick={() => adjustDuration(-DURATION_STEP)}
+              disabled={durationMins <= DURATION_MIN}
+              aria-label="Decrease duration by 15 minutes"
+              style={{ width: 22, height: 22, display: 'grid', placeItems: 'center', background: 'transparent', border: `1px solid rgba(255,255,255,0.12)`, borderRadius: 4, color: durationMins <= DURATION_MIN ? INK_DIM : INK, cursor: durationMins <= DURATION_MIN ? 'default' : 'pointer', fontFamily: 'inherit', fontSize: 13, lineHeight: 1, opacity: durationMins <= DURATION_MIN ? 0.35 : 0.8 }}
+            >−</button>
+            <span style={{ fontSize: 11, color: INK, fontVariantNumeric: 'tabular-nums', minWidth: 36, textAlign: 'center' }}>{fmtDuration(durationMins)}</span>
+            <button
+              onClick={() => adjustDuration(DURATION_STEP)}
+              disabled={durationMins >= DURATION_MAX}
+              aria-label="Increase duration by 15 minutes"
+              style={{ width: 22, height: 22, display: 'grid', placeItems: 'center', background: 'transparent', border: `1px solid rgba(255,255,255,0.12)`, borderRadius: 4, color: durationMins >= DURATION_MAX ? INK_DIM : INK, cursor: durationMins >= DURATION_MAX ? 'default' : 'pointer', fontFamily: 'inherit', fontSize: 13, lineHeight: 1, opacity: durationMins >= DURATION_MAX ? 0.35 : 0.8 }}
+            >+</button>
+          </div>
+
+          {/* Subtasks + Blocks */}
+          <div>
+            <div style={{ fontSize: 10, color: INK_DIM, marginBottom: 6 }}>Subtasks</div>
+            {detailQuery.isLoading && <div style={{ fontSize: 11, color: INK_DIM, fontStyle: 'italic' }}>Loading…</div>}
+            {!detailQuery.isLoading && subtasks.length === 0 && <div style={{ fontSize: 11, color: INK_DIM, fontStyle: 'italic' }}>None yet.</div>}
+            {subtasks.map((s) => (
+              <div key={s.id} style={{ display: 'flex', gap: 6, padding: '3px 0', alignItems: 'flex-start' }}>
+                <input
+                  type="checkbox"
+                  checked={s.completed === 1}
+                  onChange={() => toggleSubtask.mutate(s.id, {
+                    onSettled: () => queryClient.invalidateQueries({ queryKey: ['task-detail', task.id] }),
+                  })}
+                  style={{ marginTop: 2, accentColor: ACCENT_GREEN, cursor: 'pointer' }}
+                />
+                <span style={{ fontSize: 12, color: s.completed === 1 ? INK_DIM : INK, textDecoration: s.completed === 1 ? 'line-through' : 'none', lineHeight: 1.4 }}>{s.title}</span>
+              </div>
+            ))}
+            {blocks.length > 0 && (
+              <div style={{ marginTop: 10 }}>
+                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: ACCENT_ORANGE, marginBottom: 4 }}>Blocks</div>
+                {blocks.map((b) => (
+                  <div key={b.id} style={{ fontSize: 11, color: INK, padding: '2px 0' }}>↳ {b.title}</div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Workflow fields (col 2) — v55 waiting_on / next_checkin_date / promised_to / promise_date.
+        {/* RIGHT column: Workflow — top-aligned with left col's status pills.
             compact=true: smaller input height + font, de-emphasised. */}
         <div style={{ flex: '1 1 200px', minWidth: 0 }}>
           <div style={{ fontSize: 10, color: INK_DIM, marginBottom: 8 }}>Workflow</div>

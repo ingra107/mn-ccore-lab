@@ -195,6 +195,9 @@ function TimedTaskBlock({
           color: ACCENT_GOLD,
           fontWeight: 600,
           marginLeft: 2,
+          marginTop: 5,
+          marginBottom: 3,
+          display: 'inline-block',
           // Visible even when the block is short — overflow:visible on parent.
           whiteSpace: 'nowrap',
         }}>▾ details below</span>
