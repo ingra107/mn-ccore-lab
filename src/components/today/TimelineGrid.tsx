@@ -39,7 +39,7 @@ import {
   TIMELINE_TASK_BLOCKS, packTaskBlocks, MEETING_FLOOR,
 } from './timelineModel'
 import {
-  ACCENT_GOLD, ACCENT_TEAL, ACCENT_CORAL, INK, INK_DIM, withAlpha,
+  ACCENT_GOLD, ACCENT_TEAL, ACCENT_CORAL, INK, INK_DIM, PAGE_BG, withAlpha,
   type TodayEvent, type PlannedSlot,
 } from './constants'
 import type { TodayStateApi } from '../../hooks/useTodayState'
@@ -136,9 +136,8 @@ function TimedTaskBlock({
     background: withAlpha(ACCENT_GOLD, isDragging || isResizing ? 18 : expanded ? 16 : 10),
     border: `1px solid ${withAlpha(ACCENT_GOLD, isDragging || isResizing ? 50 : expanded ? 55 : 30)}`,
     borderRadius: 5,
-    // overflow: 'visible' (NOT 'hidden') — the "▾ expanded below" hint and any
-    // overflow content must remain readable. 'hidden' was clipping the indicator
-    // inside small blocks, making expand appear to do nothing (Bug 1 fix).
+    // overflow: 'visible' (NOT 'hidden') — overflow content must remain readable.
+    // 'hidden' clips content inside small blocks.
     overflow: 'visible',
     cursor: isDragging ? 'grabbing' : 'grab',
     display: 'flex',
@@ -156,9 +155,6 @@ function TimedTaskBlock({
 
   const durLabel = dur < 60 ? `${dur}m` : `${Math.floor(dur / 60)}h${dur % 60 > 0 ? ` ${dur % 60}m` : ''}`
 
-  // The expansion (TaskDetailDrawer) renders in NORMAL FLOW in AgendaGapRow
-  // below the timed-blocks layer — keeps the GH#80 invariant (expandable
-  // content never absolute, always pushes the gap down).
   return (
     <div
       style={blockStyle}
@@ -198,19 +194,6 @@ function TimedTaskBlock({
           {durLabel}
         </span>
       </div>
-      {expanded && (
-        <span style={{
-          fontSize: 9,
-          color: ACCENT_GOLD,
-          fontWeight: 600,
-          marginLeft: 2,
-          marginTop: 5,
-          marginBottom: 3,
-          display: 'inline-block',
-          // Visible even when the block is short — overflow:visible on parent.
-          whiteSpace: 'nowrap',
-        }}>▾ details below</span>
-      )}
       {/* Resize strip — bottom 6px (11px on touch via @media hover:none).
           Must NOT propagate pointerdown to body handler (stopPropagation in hook). */}
       <div
@@ -487,35 +470,32 @@ function AgendaGapRow({
         </div>
       )}
 
-      {/* Normal-flow expanded drawers — one per timed task, adjacent to its block.
-          Each drawer uses paddingTop = block's bottom edge (topPx + heightPx) so it
-          renders immediately below the block that was clicked, not at the gap bottom.
-          GH#80 invariant preserved: TaskDetailDrawer is never absolute-positioned;
-          it lives in normal flow and pushes the gap container down as it grows.
-          The absolute block layer is overlaid on top (z-index 1); expanded drawers
-          sit in flow below the block layer via paddingTop offset. */}
+      {/* Absolute expand drawer — opens in-place directly below the CLICKED block.
+          Anchors at the clicked block's own bottom edge (topPx + heightPx from the
+          per-id placement map), NOT at timedBlocksBottom (the cluster bottom).
+          Overlays any lower same-gap task blocks — that is intentional (in-place
+          popover; the far-jump to cluster bottom was the bug).
+          GH#80 preserved: overlays only empty gap space and lower task blocks,
+          never cuts a MEETING (meetings are separate units in a different layer). */}
       {timedTasks.map((t) => {
         if (expandedId !== t.id) return null
-        // Drawer anchor: use timedBlocksBottom (max bottom across ALL columns),
-        // not just the expanded block's own topPx + heightPx.
-        // In the multi-column case a sibling block in another column may extend
-        // lower than the expanded block — anchoring at the individual block's
-        // bottom causes the drawer to visually overlap that taller sibling.
-        // timedBlocksBottom is always correct for single-column too (it equals
-        // the one block's bottom when there's only one block).
-        const adjacentTopPx = timedBlocksBottom > 0 ? timedBlocksBottom : containerMinHeight
+        const placement = timedPlacementMap.get(t.id)
+        // Fall back to containerMinHeight if placement is somehow missing (no timedBlocksBottom jump).
+        const drawerTopPx = placement ? placement.topPx + placement.heightPx : containerMinHeight
         return (
           <div
             key={`expanded-${t.id}`}
             style={{
-              paddingTop: adjacentTopPx,
-              // Gold left border visually connects the drawer to the block cluster above.
+              position: 'absolute',
+              top: drawerTopPx,
+              left: 0,
+              right: 0,
+              // Opaque background so the drawer hides lower blocks cleanly.
+              background: PAGE_BG,
+              // Gold left border visually connects the drawer to its block.
               borderLeft: `3px solid ${withAlpha(ACCENT_GOLD, 55)}`,
-              marginBottom: 4,
-              // Ensure the drawer renders above the absolute block layer (z 1) so
-              // it isn't obscured by other blocks rendered after it.
-              position: 'relative',
-              zIndex: 2,
+              // Above the absolute block layer (z 1) and ghost (z 2).
+              zIndex: 10,
             }}
           >
             <PlannedTaskRow
