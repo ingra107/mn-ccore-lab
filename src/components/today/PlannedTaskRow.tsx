@@ -16,7 +16,7 @@ function fmtDuration(mins: number): string {
 }
 
 import { useState } from 'react'
-import { GripVertical } from 'lucide-react'
+import { GripHorizontal } from 'lucide-react'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { LinkRow, ProjectLink, type TaskLink } from './primitives'
 import { TaskDetailDrawer } from './TaskDetailDrawer'
@@ -91,7 +91,7 @@ export function PlannedTaskRow({ task, project, state, timeHint, small = false, 
                 // target; negative margin absorbs it so the row doesn't shift.
                 style={{ display: 'inline-flex', alignItems: 'center', cursor: 'grab', color: INK_DIM, visibility: hover ? 'visible' : 'hidden', userSelect: 'none', flexShrink: 0, padding: '4px 5px', margin: '-4px -1px' }}
               >
-                <GripVertical {...ICON_PROPS} size={12} />
+                <GripHorizontal {...ICON_PROPS} size={12} />
               </span>
             )}
             {/* Compact WorkOnActions — hidden until hover (CSS hov-opacity).

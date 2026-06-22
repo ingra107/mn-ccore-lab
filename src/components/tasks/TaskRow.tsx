@@ -27,7 +27,7 @@
 // AND on My Hub's lighter card surface.
 
 import { useRef, useState, type ReactNode } from 'react'
-import { GripVertical, MapPin, Pin } from 'lucide-react'
+import { GripHorizontal, MapPin, Pin } from 'lucide-react'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { Link } from 'react-router-dom'
 import { PATHS } from '../../constants/paths'
@@ -228,7 +228,7 @@ function DragHandle({ show, draggable, onDragStart }: { show: boolean; draggable
       // padding so row layout doesn't shift.
       style={{ display: 'inline-flex', alignItems: 'center', cursor: 'grab', color: INK_MUTED, visibility: show ? 'visible' : 'hidden', transition: 'visibility 0s', flexShrink: 0, userSelect: 'none', verticalAlign: 'middle', marginLeft: 2, padding: '4px 5px', margin: '-4px -1px -4px 1px' }}
     >
-      <GripVertical {...ICON_PROPS} size={12} />
+      <GripHorizontal {...ICON_PROPS} size={12} />
     </span>
   )
 }
