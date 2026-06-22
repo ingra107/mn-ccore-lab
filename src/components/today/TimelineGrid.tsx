@@ -141,9 +141,10 @@ function TimedTaskBlock({
     flexDirection: 'column',
     gap: 2,
     zIndex: isDragging || isResizing ? 10 : expanded ? 3 : 1,
-    // Live preview: translateY while dragging (unsnapped, no PATCH per frame)
+    // Live preview: translateY while dragging (snapped 15-min steps, no PATCH per frame).
+    // Fix A: short transition makes snap-steps feel smooth rather than jumpy.
     transform: translatePx !== 0 ? `translateY(${translatePx}px)` : undefined,
-    transition: isDragging || isResizing ? 'none' : 'transform 0ms',
+    transition: isDragging ? 'transform 80ms ease' : isResizing ? 'none' : 'transform 0ms',
     touchAction: 'none',  // prevent browser scroll-hijack during pointer gesture
     userSelect: 'none',
     willChange: isDragging ? 'transform' : isResizing ? 'height' : 'auto',
@@ -309,20 +310,26 @@ function AgendaGapRow({
   // Compute absolute placements once; derive container height from them.
   // Gap auto-grow: max(pxForGap(freeMinutes), tasksExtentPx).
   // Level-1: timed-block overflow into the next unit is unrepresentable.
-  const timedPlacements = useMemo(
-    () => packTaskBlocks(timedTasks, gapStartMin),
+  // Fix C: store as Map<id, placement> — packTaskBlocks sorts internally so
+  // positional indexing by original task order produces wrong column assignments.
+  const timedPlacementMap = useMemo(
+    () => {
+      const arr = packTaskBlocks(timedTasks, gapStartMin)
+      return new Map(arr.map((p) => [p.id, p]))
+    },
     [timedTasks, gapStartMin],
   )
   const containerMinHeight = useMemo(() => {
     const base = baseHeight  // already = pxForGap(freeMinutes) from the model
-    if (timedPlacements.length === 0) return base
-    const tasksExtent = Math.max(...timedPlacements.map((p) => p.topPx + p.heightPx))
+    if (timedPlacementMap.size === 0) return base
+    const tasksExtent = Math.max(...Array.from(timedPlacementMap.values()).map((p) => p.topPx + p.heightPx))
     return Math.max(base, tasksExtent)
-  }, [baseHeight, timedPlacements])
+  }, [baseHeight, timedPlacementMap])
 
   // Item 3: ghost placement — recompute packTaskBlocks with the dragging task's
   // plan_start_min replaced by the live snapped position. This gives the ghost
   // block its correct column (overlap-aware) and height.
+  // Fix C: look up by p.id, not positional index (packTaskBlocks sorts internally).
   const ghostPlacement = useMemo(() => {
     if (!ghostState || timedTasks.length === 0) return null
     const { taskId, snappedMin } = ghostState
@@ -333,8 +340,8 @@ function AgendaGapRow({
       t.id === taskId ? { ...t, plan_start_min: snappedMin } : t
     )
     const placements = packTaskBlocks(withGhost, gapStartMin)
-    const idx = withGhost.findIndex((t) => t.id === taskId)
-    const p = placements[idx]
+    // Fix C: find by id, not by original array position.
+    const p = placements.find((pl) => pl.id === taskId)
     if (!p) return null
     const dur = ghostTask.estimated_minutes ?? 30
     return {
@@ -373,7 +380,9 @@ function AgendaGapRow({
             const gapTop = gapDivRef.current.getBoundingClientRect().top
             const rawMins = gapStartMin + (e.clientY - gapTop) / PX_PER_MIN
             const snapped = Math.round(rawMins / 15) * 15
-            startMin = Math.max(gapStartMin, Math.min(gapEndMin - 15, snapped))
+            // Fix D: clamp by duration so a 60-min task can't drop into the final
+            // 15 min of a gap — matches move clamp in useTaskBlockGesture (gapEndMin - dur).
+            startMin = Math.max(gapStartMin, Math.min(gapEndMin - estimatedMins, snapped))
           }
           onDropTask(id, slot, startMin, estimatedMins)
         } else {
@@ -399,12 +408,14 @@ function AgendaGapRow({
           left: 0,
           right: 0,
           bottom: 0,
-          overflowX: timedPlacements[0]?.colCount > 3 ? 'auto' : 'visible',
+          overflowX: (timedPlacementMap.values().next().value?.colCount ?? 0) > 3 ? 'auto' : 'visible',
           overflowY: 'visible',
           pointerEvents: 'none',  // children re-enable their own pointer events
         }}>
-          {timedTasks.map((t, i) => {
-            const p = timedPlacements[i]
+          {timedTasks.map((t) => {
+            // Fix C: look up by task id — packTaskBlocks sorts internally so
+            // timedPlacements[i] (original order) was wrong when order changed.
+            const p = timedPlacementMap.get(t.id)
             if (!p) return null
             return (
               <div key={t.id} style={{ pointerEvents: 'auto' }}>
@@ -467,9 +478,10 @@ function AgendaGapRow({
           it lives in normal flow and pushes the gap container down as it grows.
           The absolute block layer is overlaid on top (z-index 1); expanded drawers
           sit in flow below the block layer via paddingTop offset. */}
-      {timedTasks.map((t, i) => {
+      {timedTasks.map((t) => {
         if (expandedId !== t.id) return null
-        const p = timedPlacements[i]
+        // Fix C: look up by id, not positional index.
+        const p = timedPlacementMap.get(t.id)
         // adjacentTopPx: place the drawer flush below the block's bottom edge.
         const adjacentTopPx = p ? p.topPx + p.heightPx : containerMinHeight
         return (

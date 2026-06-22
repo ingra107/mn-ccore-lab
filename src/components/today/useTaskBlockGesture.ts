@@ -106,12 +106,14 @@ export function useTaskBlockGesture({
     if (!g || g.pointerId !== e.pointerId) return
     const deltaY = e.clientY - g.startY
     if (g.mode === 'move') {
-      setTranslatePx(deltaY)
-      // Live ghost preview: compute snapped + clamped landing minute
+      // Fix A: snap the live preview to match the ghost + eventual commit.
+      // setTranslatePx(deltaY) was raw px → block followed cursor then JUMPed to
+      // snapped position on release. Now both block and ghost move in 15-min steps.
       const rawNew = planStartMin + deltaY / PX_PER_MIN
       const snapped = snap15(rawNew)
       const maxStart = gapEndMin - dur
       const clamped = Math.max(gapStartMin, Math.min(maxStart, snapped))
+      setTranslatePx((clamped - planStartMin) * PX_PER_MIN)
       setSnappedLandingMin(clamped)
       onGhostUpdate?.(taskId, clamped)
     } else if (g.mode === 'resize') {
@@ -146,9 +148,10 @@ export function useTaskBlockGesture({
 
     // 8px threshold (raised from 4px): a casual desktop click moves 4–6px;
     // 4px was too tight and suppressed expand on ordinary clicks.
+    // Fix B: sub-threshold on the RESIZE strip is a no-op (not an expand).
+    // Only treat sub-threshold as a click-to-expand when mode is 'move' (body drag).
     if (absDelta < 8) {
-      // CLICK — fire expand, no write
-      if (!g.committed) onExpand(taskId)
+      if (gMode !== 'resize' && !g.committed) onExpand(taskId)
       return
     }
 

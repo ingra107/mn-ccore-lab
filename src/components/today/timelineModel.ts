@@ -117,6 +117,10 @@ export function packColumns(events: TodayEvent[]): ColPlacement[] {
 // Returns parallel to input tasks (same order as sorted timedTasks caller passes).
 
 export interface TaskBlockPlacement extends ColPlacement {
+  /** Task id — used by consumers to look up by id instead of positional index.
+   *  packTaskBlocks sorts internally; positional indexing with the original
+   *  task array order produces wrong column assignments. Always look up by id. */
+  id: string
   /** px from the gap's top edge (plan_start_min - gap.startMin) * PX_PER_MIN */
   topPx: number
   /** px height: max(MEETING_FLOOR, estimated_minutes * PX_PER_MIN) */
@@ -164,12 +168,16 @@ export function packTaskBlocks(
 
   const placements = packColumns(fakeEvents)
 
+  // Fix C: attach id to each placement so consumers look up by t.id, not
+  // positional index. packTaskBlocks sorts internally; indexing the result array
+  // by the original task-array position produces wrong column assignments when
+  // sort changes the order.
   return sorted.map((t, i) => {
     const start = t.plan_start_min as number
     const dur = t.estimated_minutes ?? 30
     const topPx = Math.round((start - gapStartMin) * PX_PER_MIN)
     const heightPx = Math.max(MEETING_FLOOR, Math.round(dur * PX_PER_MIN))
-    return { ...placements[i], topPx, heightPx }
+    return { id: t.id, ...placements[i], topPx, heightPx }
   })
 }
 
