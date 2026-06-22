@@ -30,7 +30,7 @@
 //   - OverlapBand coral badge / "conflict" copy for timed overlaps
 //   - boxed right-fixed-width service rail
 
-import { useMemo, useState, useRef, type CSSProperties } from 'react'
+import { useMemo, useState, useRef, type CSSProperties, type ReactNode } from 'react'
 import { useTaskBlockGesture } from './useTaskBlockGesture'
 import { EventRow, type SaveStatus } from './MeetingRow'
 import { PlannedTaskRow } from './PlannedTaskRow'
@@ -249,6 +249,8 @@ function AgendaGapRow({
   expandedId,
   onExpand,
   onDropTask,
+  nowLineEl,
+  nowOffsetPx,
 }: {
   slot: PlannedSlot
   freeMinutes: number
@@ -265,6 +267,10 @@ function AgendaGapRow({
   onExpand: (id: string) => void
   /** Phase 3: includes plan_start_min + estimated_minutes for timed drops. */
   onDropTask: (id: string, slot: PlannedSlot, plan_start_min?: number, estimated_minutes?: number) => void
+  /** When now falls inside this gap, pass the now-line element + its px offset
+   *  from the gap top so it renders at the correct fractional position. */
+  nowLineEl?: ReactNode
+  nowOffsetPx?: number
 }) {
   const [dragOver, setDragOver] = useState(false)
   // Ref for pointer-Y placement on timed drops (Directive 2: free pointer-Y).
@@ -464,6 +470,24 @@ function AgendaGapRow({
       }}>
         {dragOver ? '↓ drop here' : fmtFree}
       </div>
+
+      {/* Now-line at fractional position within this gap.
+          Absolutely positioned so it overlays the proportional axis at the
+          correct minute offset without disrupting the normal-flow content. */}
+      {nowLineEl != null && nowOffsetPx != null && (
+        <div
+          style={{
+            position: 'absolute',
+            top: nowOffsetPx,
+            left: 0,
+            right: 0,
+            pointerEvents: 'none',
+            zIndex: 5,
+          }}
+        >
+          {nowLineEl}
+        </div>
+      )}
     </div>
   )
 }
@@ -690,7 +714,8 @@ export function TimelineGrid({
   const nowColor = inMeeting ? ACCENT_CORAL : ACCENT_GOLD
   const nowLabel = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
 
-  const model = useMemo(() => buildTimelineModel(events), [events])
+  // Pass nowMin so dayStart always encompasses now + MORNING_FLOOR.
+  const model = useMemo(() => buildTimelineModel(events, { nowMin: now }), [events, now])
   const { allDayEvents, serviceBlocks, units, dayStart } = model
 
   const nowLineElement = (
@@ -743,6 +768,16 @@ export function TimelineGrid({
   for (const unit of units) {
     if (unit.kind === 'gap') {
       tryInsertNow(unit.startMin)
+      // When now falls inside this gap, render the now-line at its correct
+      // fractional px position rather than inserting it between flow elements
+      // (which would always put it at gap-bottom = wrong position).
+      const nowInGap = !nowInserted
+        && now >= unit.startMin
+        && now < unit.endMin
+        && now >= model.dayStart
+        && now <= model.dayEnd
+      const nowOffsetPx = nowInGap ? Math.round((now - unit.startMin) * PX_PER_MIN) : undefined
+      if (nowInGap) nowInserted = true
       agendaElements.push(
         <AgendaGapRow
           key={unit.slot}
@@ -757,6 +792,8 @@ export function TimelineGrid({
           expandedId={expandedId}
           onExpand={onExpand}
           onDropTask={onDropTask}
+          nowLineEl={nowInGap ? nowLineElement : undefined}
+          nowOffsetPx={nowOffsetPx}
         />
       )
     } else if (unit.kind === 'meeting') {

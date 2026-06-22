@@ -37,6 +37,13 @@ export const PX_PER_MIN = 0.9      // raised from 0.6 to distinguish 30/45/60/90
 export const MEETING_FLOOR = 27    // lowered from 40 — 30min=27px(hits floor), 60min=54px
 export const GAP_FLOOR = 24        // min-height for a gap row
 
+// ── Morning planning floor ─────────────────────────────────────────────────
+// dayStart is always ≤ MORNING_FLOOR (7 AM) so the axis covers pre-first-event
+// morning time even on days where the first event is late.  Nick may adjust to
+// 6*60 if he wants an earlier window.  The 30-min lead on the first event and
+// nowMin are also factored in (whichever is earliest wins).
+export const MORNING_FLOOR = 7 * 60   // 7:00 AM in minutes-since-midnight
+
 export const pxForMeeting = (min: number): number =>
   Math.max(MEETING_FLOOR, Math.round(min * PX_PER_MIN))
 
@@ -243,9 +250,10 @@ export interface TimelineModel {
 export function buildTimelineModel(
   events: TodayEvent[],
   {
-    defaultDayStart = 7 * 60,
+    defaultDayStart = MORNING_FLOOR,
     defaultDayEnd = 20 * 60,
-  }: { defaultDayStart?: number; defaultDayEnd?: number } = {},
+    nowMin,
+  }: { defaultDayStart?: number; defaultDayEnd?: number; nowMin?: number } = {},
 ): TimelineModel {
   // 1. Partition
   const allDayEvents = events.filter((e) => !!e.isAllDay)
@@ -286,9 +294,22 @@ export function buildTimelineModel(
   const untimedCount = untimedEvents.length
   const globalClusterCount = untimedCount + clusters.length
 
-  // 4. Compute day window from timed events only (service blocks excluded)
+  // 4. Compute day window from timed events only (service blocks excluded).
+  //    dayStart = earliest of: defaultDayStart (MORNING_FLOOR=7AM), nowMin,
+  //    and (earliestEvent - 30).  This ensures the axis always covers:
+  //      (a) at least MORNING_FLOOR (7 AM morning planning window),
+  //      (b) the current time (now-line never falls before the axis top),
+  //      (c) 30 min lead before the earliest event.
+  //    dayEnd extends to include nowMin (now-line never falls after axis bottom)
+  //    plus a 30-min tail on the last event.
   let dayStart = defaultDayStart
   let dayEnd = defaultDayEnd
+  // Factor in nowMin first (before event-based narrowing) so the window always
+  // encompasses the current time regardless of whether there are timed events.
+  if (nowMin != null) {
+    dayStart = Math.min(dayStart, nowMin)
+    dayEnd   = Math.max(dayEnd,   nowMin)
+  }
   if (timedEvents.length > 0) {
     const minStart = Math.min(...timedEvents.map((e) => e.startMin as number))
     const maxEnd = Math.max(...timedEvents.map((e) =>
@@ -297,6 +318,7 @@ export function buildTimelineModel(
     dayStart = Math.max(0, Math.min(dayStart, minStart - 30))
     dayEnd = Math.max(dayEnd, maxEnd + 30)
   }
+  dayStart = Math.max(0, dayStart)
 
   // 5. Build agendaUnits
   const units: TimelineUnit[] = []
