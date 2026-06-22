@@ -31,7 +31,7 @@
 //   - boxed right-fixed-width service rail
 
 import { useMemo, useState, useRef, useCallback, type CSSProperties, type ReactNode } from 'react'
-import { useTaskBlockGesture } from './useTaskBlockGesture'
+import { useTaskBlockGesture, type FreeWindow } from './useTaskBlockGesture'
 import { EventRow, type SaveStatus } from './MeetingRow'
 import { PlannedTaskRow } from './PlannedTaskRow'
 import {
@@ -74,6 +74,7 @@ function TimedTaskBlock({
   colCount,
   gapStartMin,
   gapEndMin,
+  freeWindows,
   onExpand,
   expandedId,
   onMove,
@@ -85,14 +86,16 @@ function TimedTaskBlock({
   heightPx: number
   colIdx: number
   colCount: number
-  /** Gap start in minutes-since-midnight — for move clamp lower bound. */
+  /** Gap start in minutes-since-midnight — for single-gap fallback. */
   gapStartMin: number
-  /** Gap end in minutes-since-midnight — for move clamp upper bound. */
+  /** Gap end in minutes-since-midnight — for single-gap fallback. */
   gapEndMin: number
+  /** All droppable gap windows for the day — enables cross-gap drag. */
+  freeWindows: FreeWindow[]
   onExpand: (id: string) => void
   expandedId: string | null
-  /** Called to commit move: writes plan_start_min. */
-  onMove: (id: string, newPlanStartMin: number) => void
+  /** Called to commit move: writes plan_start_min (+ slot for cross-gap). */
+  onMove: (id: string, newSlot: PlannedSlot, newPlanStartMin: number) => void
   /** Called to commit resize: writes estimated_minutes. */
   onResize: (id: string, newEstimatedMinutes: number) => void
   /** Called during move gesture with live snapped landing min (null on gesture end). */
@@ -111,6 +114,7 @@ function TimedTaskBlock({
       estimatedMinutes: task.estimated_minutes,
       gapStartMin,
       gapEndMin,
+      freeWindows,
       onExpand,
       onMove,
       onResize,
@@ -248,6 +252,7 @@ function AgendaGapRow({
   baseHeight,
   gapStartMin,
   gapEndMin,
+  freeWindows,
   tasks,
   state,
   projectsByPid,
@@ -265,6 +270,10 @@ function AgendaGapRow({
   gapStartMin: number
   /** Minutes-since-midnight of the gap end. Used for move-clamp upper bound. */
   gapEndMin: number
+  /** All droppable gap windows for the day — enables cross-gap drag.
+   *  Each entry includes startMin, endMin, and the slot to write when a task
+   *  lands there. Passed through to useTaskBlockGesture on each timed block. */
+  freeWindows: FreeWindow[]
   tasks: TaskRow[]
   state: TodayStateApi
   projectsByPid: Map<string, { name: string; slug: string; category?: string | null }>
@@ -433,10 +442,11 @@ function AgendaGapRow({
                   colCount={p.colCount}
                   gapStartMin={gapStartMin}
                   gapEndMin={gapEndMin}
+                  freeWindows={freeWindows}
                   onExpand={onExpand}
                   expandedId={expandedId}
-                  onMove={(id, newPlanStartMin) =>
-                    state.planAt(id, slot, newPlanStartMin, null)
+                  onMove={(id, newSlot, newPlanStartMin) =>
+                    state.planAt(id, newSlot, newPlanStartMin, null)
                   }
                   onResize={(id, newEstimatedMinutes) =>
                     state.planAt(id, slot, null, newEstimatedMinutes)
@@ -835,8 +845,20 @@ export function TimelineGrid({
     </div>
   )
 
+  // Build the complete free-window list for the day — passed to every AgendaGapRow
+  // so timed blocks inside each gap can drag across meeting boundaries into any gap.
+  // Only timed gap units (startMin > 0) are droppable destinations for timed blocks.
+  const freeWindows: FreeWindow[] = useMemo(
+    () => units
+      .filter((u): u is typeof u & { kind: 'gap'; startMin: number; endMin: number; slot: PlannedSlot } =>
+        u.kind === 'gap' && (u as { startMin?: number }).startMin != null && (u as { startMin: number }).startMin > 0
+      )
+      .map((u) => ({ startMin: u.startMin, endMin: u.endMin, slot: u.slot })),
+    [units],
+  )
+
   // Build agenda unit elements with now-line injection
-  const agendaElements: React.ReactNode[] = []
+  const agendaElements: ReactNode[] = []
   let nowInserted = false
 
   const tryInsertNow = (unitStart: number) => {
@@ -871,6 +893,7 @@ export function TimelineGrid({
           baseHeight={unit.baseHeight}
           gapStartMin={unit.startMin}
           gapEndMin={unit.endMin}
+          freeWindows={freeWindows}
           tasks={tasks}
           state={state}
           projectsByPid={projectsByPid}
@@ -920,6 +943,7 @@ export function TimelineGrid({
             baseHeight={GAP_FLOOR}
             gapStartMin={0}
             gapEndMin={0}
+            freeWindows={freeWindows}
             tasks={tasks}
             state={state}
             projectsByPid={projectsByPid}

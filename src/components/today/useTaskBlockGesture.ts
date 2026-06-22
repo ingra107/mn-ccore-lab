@@ -16,11 +16,62 @@
 
 import { useRef, useState, useCallback, type PointerEvent as ReactPointerEvent } from 'react'
 import { PX_PER_MIN } from './timelineModel'
+import type { PlannedSlot } from './constants'
 
 // ── Snap helper ──────────────────────────────────────────────────────────────
 
 function snap15(minutes: number): number {
   return Math.round(minutes / 15) * 15
+}
+
+// ── Free-window type ─────────────────────────────────────────────────────────
+// A gap window that a task block can legally land in (cross-gap drag).
+export interface FreeWindow {
+  startMin: number
+  endMin: number
+  slot: PlannedSlot
+}
+
+// ── Cross-gap position resolver ──────────────────────────────────────────────
+// Given a raw minute value (after applying deltaY), find the best legal landing
+// position across ALL free windows for the day.
+//
+// Rules:
+//   1. rawMin inside a free window → clamp to [w.startMin, w.endMin - dur].
+//   2. rawMin inside a meeting (between two windows) → nearest window by edge distance.
+//   3. Before all windows → clamp to first window start.
+//   4. After all windows → clamp to last window endMin - dur.
+//
+// Returns { slot, clampedMin } or null when freeWindows is empty.
+export function resolveAcrossGaps(
+  rawMin: number,
+  dur: number,
+  freeWindows: FreeWindow[],
+): { slot: PlannedSlot; clampedMin: number } | null {
+  if (freeWindows.length === 0) return null
+
+  // 1. rawMin inside a free window
+  for (const w of freeWindows) {
+    if (rawMin >= w.startMin && rawMin < w.endMin) {
+      const clamped = Math.max(w.startMin, Math.min(w.endMin - dur, rawMin))
+      return { slot: w.slot, clampedMin: clamped }
+    }
+  }
+
+  // 2–4. rawMin in a meeting or outside all windows — find nearest window by edge
+  let bestWindow = freeWindows[0]
+  let bestDist = Infinity
+  for (const w of freeWindows) {
+    const distToStart = Math.abs(rawMin - w.startMin)
+    const distToEnd = Math.abs(rawMin - (w.endMin - dur))
+    const dist = Math.min(distToStart, distToEnd)
+    if (dist < bestDist) {
+      bestDist = dist
+      bestWindow = w
+    }
+  }
+  const clamped = Math.max(bestWindow.startMin, Math.min(bestWindow.endMin - dur, rawMin))
+  return { slot: bestWindow.slot, clampedMin: clamped }
 }
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -52,14 +103,18 @@ export interface UseTaskBlockGestureOptions {
   planStartMin: number
   /** Current estimated_minutes (defaults to 30 if null/undefined). */
   estimatedMinutes: number | null | undefined
-  /** Gap's start time in minutes-since-midnight (for move clamp). */
+  /** Gap's start time in minutes-since-midnight (for single-gap clamp fallback). */
   gapStartMin: number
-  /** Gap's end time in minutes-since-midnight (for move clamp). */
+  /** Gap's end time in minutes-since-midnight (for single-gap clamp fallback). */
   gapEndMin: number
-  /** Called on expand click (movement < 4px = click). */
+  /** All droppable gap windows across the day. When provided, cross-gap drag is
+   *  enabled: a drag past a meeting boundary snaps to the nearest free window.
+   *  When absent, the gesture falls back to single-gap clamp [gapStartMin, gapEndMin]. */
+  freeWindows?: FreeWindow[]
+  /** Called on expand click (movement < 8px = click). */
   onExpand: (id: string) => void
-  /** Called to commit move: writes plan_start_min. */
-  onMove: (id: string, newPlanStartMin: number) => void
+  /** Called to commit move: writes plan_start_min (and slot when cross-gap). */
+  onMove: (id: string, newSlot: PlannedSlot, newPlanStartMin: number) => void
   /** Called to commit resize: writes estimated_minutes. */
   onResize: (id: string, newEstimatedMinutes: number) => void
   /** Optional: called during move gesture with the live snapped landing minute,
@@ -75,6 +130,7 @@ export function useTaskBlockGesture({
   estimatedMinutes,
   gapStartMin,
   gapEndMin,
+  freeWindows,
   onExpand,
   onMove,
   onResize,
@@ -107,19 +163,25 @@ export function useTaskBlockGesture({
     const deltaY = e.clientY - g.startY
     if (g.mode === 'move') {
       // Fix A: snap the live preview to match the ghost + eventual commit.
-      // setTranslatePx(deltaY) was raw px → block followed cursor then JUMPed to
-      // snapped position on release. Now both block and ghost move in 15-min steps.
+      // Cross-gap: use resolveAcrossGaps when freeWindows available, otherwise
+      // fall back to single-gap clamp [gapStartMin, gapEndMin - dur].
       const rawNew = planStartMin + deltaY / PX_PER_MIN
       const snapped = snap15(rawNew)
-      const maxStart = gapEndMin - dur
-      const clamped = Math.max(gapStartMin, Math.min(maxStart, snapped))
+      let clamped: number
+      if (freeWindows && freeWindows.length > 0) {
+        const resolved = resolveAcrossGaps(snapped, dur, freeWindows)
+        clamped = resolved ? snap15(resolved.clampedMin) : snapped
+      } else {
+        const maxStart = gapEndMin - dur
+        clamped = Math.max(gapStartMin, Math.min(maxStart, snapped))
+      }
       setTranslatePx((clamped - planStartMin) * PX_PER_MIN)
       setSnappedLandingMin(clamped)
       onGhostUpdate?.(taskId, clamped)
     } else if (g.mode === 'resize') {
       setHeightDeltaPx(deltaY)
     }
-  }, [taskId, planStartMin, dur, gapStartMin, gapEndMin, onGhostUpdate])
+  }, [taskId, planStartMin, dur, gapStartMin, gapEndMin, freeWindows, onGhostUpdate])
 
   const handlePointerUp = useCallback((e: PointerEvent) => {
     const g = gestureRef.current
@@ -163,11 +225,15 @@ export function useTaskBlockGesture({
     if (gMode === 'move') {
       const rawNewStart = planStartMin + deltaMins
       const snapped = snap15(rawNewStart)
-      // Clamp: [gapStartMin, gapEndMin − dur]
-      const maxStart = gapEndMin - dur
-      const clamped = Math.max(gapStartMin, Math.min(maxStart, snapped))
-      if (clamped !== planStartMin) {
-        onMove(taskId, clamped)
+      // Cross-gap: AgendaGapRow always supplies freeWindows (at minimum a single
+      // entry for its own gap), so resolveAcrossGaps always finds a valid window.
+      if (freeWindows && freeWindows.length > 0) {
+        const resolved = resolveAcrossGaps(snapped, dur, freeWindows)
+        if (resolved) {
+          const finalMin = snap15(resolved.clampedMin)
+          // Always commit — slot may have changed even if minute is same (cross-gap).
+          onMove(taskId, resolved.slot, finalMin)
+        }
       }
     } else if (gMode === 'resize') {
       const rawNewDur = dur + deltaMins
@@ -178,7 +244,7 @@ export function useTaskBlockGesture({
         onResize(taskId, clamped)
       }
     }
-  }, [taskId, planStartMin, dur, gapStartMin, gapEndMin, onExpand, onMove, onResize, onGhostUpdate, handlePointerMove])
+  }, [taskId, planStartMin, dur, gapStartMin, gapEndMin, freeWindows, onExpand, onMove, onResize, onGhostUpdate, handlePointerMove])
 
   // ── pointerdown on BODY (move gesture) ──────────────────────────────────────
 
