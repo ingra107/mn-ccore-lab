@@ -3,13 +3,16 @@
 //
 // Extracted from src/pages/portal/TodayPage.tsx (B2_Group).
 
-import { useMemo } from 'react'
+import { useMemo, useState, useCallback } from 'react'
 import { TaskRow } from './TaskRow'
 import { GROUP_META, INK_DIM, PANEL_BG, withAlpha, isTaskDone, type GroupKey } from './constants'
 import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow as TaskRowData } from '../../lib/api'
 
-export function TaskGroup({ gkey, tasks, projectsByPid, state, expandedId, onExpand }: { gkey: GroupKey; tasks: TaskRowData[]; projectsByPid: Map<string, { name: string; slug: string; category?: string | null }>; state: TodayStateApi; expandedId: string | null; onExpand: (id: string) => void }) {
+// expandedId/onExpand no longer come from TodayPage — TaskGroup owns its own
+// expand state so clicking a row here never expands the same task in Timeline
+// or PlannedTodaySection (Item 2 fix, 2026-06-22).
+export function TaskGroup({ gkey, tasks, projectsByPid, state }: { gkey: GroupKey; tasks: TaskRowData[]; projectsByPid: Map<string, { name: string; slug: string; category?: string | null }>; state: TodayStateApi }) {
   const meta = GROUP_META[gkey]
   const doneCount = tasks.filter((t) => state.done[t.id] || isTaskDone(t)).length
   const sorted = useMemo(() => {
@@ -18,6 +21,9 @@ export function TaskGroup({ gkey, tasks, projectsByPid, state, expandedId, onExp
     const done = tasks.filter((t) => state.done[t.id])
     return [...planned, ...active, ...done]
   }, [tasks, state.planned, state.done])
+
+  const [expandedId, setExpandedId] = useState<string | null>(null)
+  const onExpand = useCallback((id: string) => { setExpandedId((p) => (p === id ? null : id)) }, [])
 
   if (tasks.length === 0) return null
   return (

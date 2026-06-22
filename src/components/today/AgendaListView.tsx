@@ -27,7 +27,7 @@
 // pre-Phase-6 version), which diverged from buildTimelineModel on days with
 // untimed events.
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useCallback } from 'react'
 import { PlannedTaskRow } from './PlannedTaskRow'
 import { buildTimelineModel } from './timelineModel'
 import {
@@ -263,8 +263,8 @@ export interface AgendaListViewProps {
   tasks: TaskRow[]
   state: TodayStateApi
   projectsByPid: Map<string, { name: string; slug: string; category?: string | null }>
-  expandedId: string | null
-  onExpand: (id: string) => void
+  // expandedId/onExpand removed: AgendaListView owns its own expand state so
+  // clicking a row here never expands the same task on Timeline (Item 2 fix).
   // Lifted dismiss state (#170 — shared with Timeline so toggling views
   // does not reset dismissed meetings).
   dismissedIds: Record<string, boolean>
@@ -282,14 +282,15 @@ export function AgendaListView({
   tasks,
   state,
   projectsByPid,
-  expandedId,
-  onExpand,
   dismissedIds,
   onDismiss,
   onRestoreDismissed,
 }: AgendaListViewProps) {
   // Live 60s ticker — fixes #168 (stale now-marker in Agenda mode).
   const now = useNowMinutes()
+  // Per-surface expand state (Item 2 fix, 2026-06-22).
+  const [expandedId, setExpandedId] = useState<string | null>(null)
+  const onExpand = useCallback((id: string) => { setExpandedId((p) => (p === id ? null : id)) }, [])
 
   const visibleEvents = events.filter((e) => !dismissedIds[e.id])
   const visibleTomorrow = tomorrowEvents.filter((e) => !dismissedIds[e.id])

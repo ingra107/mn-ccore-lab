@@ -14,7 +14,7 @@
 // where they belong. Only the "no specific time" strip tasks + rightNow appear
 // here (same scope as the old strip inside Timeline).
 
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { PATHS } from '../../constants/paths'
 import { useIsMobile } from '../../hooks/useIsMobile'
@@ -31,8 +31,8 @@ interface PlannedTodaySectionProps {
   stripTasks: TaskRow[]
   state: TodayStateApi
   projectsByPid: Map<string, { name: string; slug: string; category?: string | null }>
-  expandedId: string | null
-  onExpand: (id: string) => void
+  // expandedId/onExpand removed: each surface owns its own expand state so
+  // clicking a row here doesn't expand the same task in Timeline or TaskGroup.
 }
 
 export function PlannedTodaySection({
@@ -41,10 +41,11 @@ export function PlannedTodaySection({
   stripTasks,
   state,
   projectsByPid,
-  expandedId,
-  onExpand,
 }: PlannedTodaySectionProps) {
   const [chatExpanded, setChatExpanded] = useState(false)
+  // Per-surface expand state (Item 2 fix).
+  const [expandedId, setExpandedId] = useState<string | null>(null)
+  const onExpand = useCallback((id: string) => { setExpandedId((p) => (p === id ? null : id)) }, [])
   const isPhone = useIsMobile(768)
 
   const hasAnything = rightNowTask || stripTasks.length > 0

@@ -103,8 +103,10 @@ export default function TodayPage() {
     const open = new Set(allTaskIds)
     return Object.keys(state.done).filter((id) => state.done[id] && !confirmed.has(id) && !open.has(id))
   }, [state.done, completedTodayIds, allTaskIds])
-  const [expandedId, setExpandedId] = useState<string | null>(null)
-  const onExpand = useCallback((id: string) => { setExpandedId((p) => (p === id ? null : id)) }, [])
+  // expandedId/onExpand removed from TodayPage (Item 2 fix, 2026-06-22):
+  // each surface (Timeline, PlannedTodaySection, AgendaListView, TaskGroup)
+  // now owns its own expand state so clicking one instance never expands the
+  // same task rendered on a different surface.
 
   // Lifted dismiss state (#170) — shared across Timeline↔Agenda so toggling
   // views does not reset dismissed meetings.
@@ -439,8 +441,6 @@ export default function TodayPage() {
             tasks={tasks}
             state={state}
             projectsByPid={projectsByPid}
-            expandedId={expandedId}
-            onExpand={onExpand}
             activeView={todayView}
             onToggleView={setTodayView}
             dismissedIds={dismissedEventIds}
@@ -496,8 +496,6 @@ export default function TodayPage() {
               tasks={tasks}
               state={state}
               projectsByPid={projectsByPid}
-              expandedId={expandedId}
-              onExpand={onExpand}
               dismissedIds={dismissedEventIds}
               onDismiss={onDismissEvent}
               onRestoreDismissed={onRestoreAllDismissed}
@@ -511,8 +509,6 @@ export default function TodayPage() {
           stripTasks={stripTasks}
           state={state}
           projectsByPid={projectsByPid}
-          expandedId={expandedId}
-          onExpand={onExpand}
         />
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14, marginTop: 8 }}>
@@ -531,8 +527,6 @@ export default function TodayPage() {
               tasks={grouped[gkey]}
               projectsByPid={projectsByPid}
               state={state}
-              expandedId={expandedId}
-              onExpand={onExpand}
             />
           ))
         )}

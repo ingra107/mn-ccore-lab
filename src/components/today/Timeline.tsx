@@ -138,8 +138,9 @@ interface TimelineProps {
   tasks: TaskRow[]
   state: TodayStateApi
   projectsByPid: Map<string, { name: string; slug: string; category?: string | null }>
-  expandedId: string | null
-  onExpand: (id: string) => void
+  // expandedId/onExpand removed: Timeline owns its own expand state so that
+  // clicking a timeline block only expands the timeline instance, not list rows
+  // that render the same task in PlannedTodaySection / TaskGroup (Item 2 fix).
   // View toggle (Phase 2). When provided, renders the Timeline⇄Agenda toggle
   // in the section header. activeView tells the toggle which button is active.
   activeView?: 'timeline' | 'agenda'
@@ -151,7 +152,11 @@ interface TimelineProps {
   onRestoreDismissed: () => void
 }
 
-export function Timeline({ events, tasks, state, projectsByPid, expandedId, onExpand, activeView, onToggleView, dismissedIds, onDismiss, onRestoreDismissed }: TimelineProps) {
+export function Timeline({ events, tasks, state, projectsByPid, activeView, onToggleView, dismissedIds, onDismiss, onRestoreDismissed }: TimelineProps) {
+  // Per-surface expand state: Timeline owns its own expandedId so that expanding
+  // a task block here never opens the same task in list rows below.
+  const [expandedId, setExpandedId] = useState<string | null>(null)
+  const onExpand = useCallback((id: string) => { setExpandedId((p) => (p === id ? null : id)) }, [])
   const navigate = useNavigate()
   // Hoist isPhone so EventRow + OverlapBand share one matchMedia listener.
   const isPhone = useIsMobile(768)
