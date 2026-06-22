@@ -13,6 +13,7 @@
 import { TaskRow as SharedTaskRow } from '../tasks/TaskRow'
 import { useDensity } from '../DensityToggle'
 import { TaskDetailDrawer } from './TaskDetailDrawer'
+import { LinkRow, type TaskLink } from './primitives'
 import { tagForTask } from './constants'
 import { ACCENT_GOLD, ACCENT_CORAL, INK_MUTED } from './constants'
 import { formatShortDate } from '../../lib/dateUtils'
@@ -31,6 +32,21 @@ export function TaskRow({ task, project, state, expandedId, onExpand, projectsBy
     e.dataTransfer.effectAllowed = 'move'
     e.dataTransfer.setData('text/plain', task.id)
   }
+
+  // Directive 4 (2026-06-22): key_link_* icons in row — parity with MyTasks ListView.
+  // Reuses today/primitives LinkRow (same icon resolution as MyTasks LinksBar).
+  // key_link_* slots are the only row-level links; stored DB links appear only
+  // in the expanded TaskDetailDrawer (useTaskLinks, per existing design).
+  const rowLinks: TaskLink[] = [
+    [task.key_link_1, task.key_link_1_desc],
+    [task.key_link_2, task.key_link_2_desc],
+    [task.key_link_3, task.key_link_3_desc],
+  ].flatMap(([url, desc]) =>
+    typeof url === 'string' && url.length > 0
+      ? [{ url, desc: desc ?? undefined } satisfies TaskLink]
+      : [],
+  )
+  const linkMeta = rowLinks.length > 0 ? <LinkRow links={rowLinks} /> : null
 
   // v55 workflow badges — compact second line, only when a field is set and
   // the task isn't done. Preserved verbatim from the pre-refactor row.
@@ -72,6 +88,7 @@ export function TaskRow({ task, project, state, expandedId, onExpand, projectsBy
       onTogglePlan={() => (planned?.slot === 'strip' ? state.unplan(task.id) : state.planAt(task.id, 'strip'))}
       leadingTag={tagForTask(task, projectsByPid)}
       belowTitle={workflowBadges}
+      extraMeta={linkMeta}
     >
       <TaskDetailDrawer task={task} project={project} state={state} />
     </SharedTaskRow>
