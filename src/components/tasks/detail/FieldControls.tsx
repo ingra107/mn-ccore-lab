@@ -388,10 +388,12 @@ export interface WorkflowFields {
   promise_date?: string | null
 }
 
-function WorkflowTextInput({ value, placeholder, onSave }: { value: string; placeholder: string; onSave: (v: string | null) => void }) {
+function WorkflowTextInput({ value, placeholder, onSave, compact }: { value: string; placeholder: string; onSave: (v: string | null) => void; compact?: boolean }) {
   const [draft, setDraft] = useState(value)
   useEffect(() => { setDraft(value) }, [value])
   const commit = () => { onSave(draft.trim() || null) }
+  // compact=true (Today drawer): smaller input — px-2 py-1 text-xs vs px-3 py-1.5 text-sm.
+  const sizeClass = compact ? 'px-2 py-1 text-xs' : 'px-3 py-1.5 text-sm'
   return (
     <input
       type="text"
@@ -400,7 +402,7 @@ function WorkflowTextInput({ value, placeholder, onSave }: { value: string; plac
       onChange={(e) => setDraft(e.target.value)}
       onBlur={commit}
       onKeyDown={(e) => { if (e.key === 'Enter') { e.currentTarget.blur() } }}
-      className="w-full text-sm outline-none rounded-md px-3 py-1.5"
+      className={`w-full outline-none rounded-md ${sizeClass}`}
       style={{ color: 'var(--ink)', background: 'var(--field-bg, rgba(0,0,0,0.04))', border: '1px solid var(--border-subtle)' }}
     />
   )
@@ -414,46 +416,51 @@ function WorkflowDateInput({ value, onSave }: { value: string; onSave: (v: strin
   return <InlineDatePicker value={value || null} onChange={onSave} />
 }
 
-export function WorkflowSection({ fields, onChange }: { fields: WorkflowFields; onChange: (patch: Partial<WorkflowFields>) => void }) {
+export function WorkflowSection({ fields, onChange, compact }: { fields: WorkflowFields; onChange: (patch: Partial<WorkflowFields>) => void; compact?: boolean }) {
+  // compact=true (Today drawer): smaller label font + tighter row gap.
+  const labelSize = compact ? '10px' : 'var(--label-size)'
+  const rowGap = compact ? 4 : undefined  // undefined → falls back to CSS var
   return (
-    <div className="flex flex-col" style={{ gap: 'var(--sp-sm, 10px)' }}>
-      <div className="grid grid-cols-2" style={{ gap: 'var(--sp-sm, 10px)' }}>
+    <div className="flex flex-col" style={{ gap: compact ? 8 : 'var(--sp-sm, 10px)' }}>
+      <div className="grid grid-cols-2" style={{ gap: compact ? 8 : 'var(--sp-sm, 10px)' }}>
         {/* Waiting on */}
-        <div className="flex flex-col" style={{ gap: 'var(--sp-xs, 6px)' }}>
-          <label className="flex items-center" style={{ gap: 'var(--sp-xs, 6px)', fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', fontWeight: 'var(--label-weight)' }}>
-            <Clock {...ICON_PROPS} size={11} style={{ opacity: 0.85 }} />
+        <div className="flex flex-col" style={{ gap: rowGap ?? 'var(--sp-xs, 6px)' }}>
+          <label className="flex items-center" style={{ gap: 4, fontSize: labelSize, color: 'var(--slate)', opacity: 'var(--ink-label)', fontWeight: 'var(--label-weight)' }}>
+            <Clock {...ICON_PROPS} size={10} style={{ opacity: 0.75 }} />
             Waiting on
           </label>
           <WorkflowTextInput
             value={fields.waiting_on ?? ''}
-            placeholder="Who or what am I waiting on…"
+            placeholder="Who or what…"
             onSave={(v) => onChange({ waiting_on: v })}
+            compact={compact}
           />
         </div>
         {/* Next check-in */}
-        <div className="flex flex-col" style={{ gap: 'var(--sp-xs, 6px)' }}>
-          <label className="flex items-center" style={{ gap: 'var(--sp-xs, 6px)', fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', fontWeight: 'var(--label-weight)' }}>
-            <Clock {...ICON_PROPS} size={11} style={{ opacity: 0.85 }} />
+        <div className="flex flex-col" style={{ gap: rowGap ?? 'var(--sp-xs, 6px)' }}>
+          <label className="flex items-center" style={{ gap: 4, fontSize: labelSize, color: 'var(--slate)', opacity: 'var(--ink-label)', fontWeight: 'var(--label-weight)' }}>
+            <Clock {...ICON_PROPS} size={10} style={{ opacity: 0.75 }} />
             Next check-in
           </label>
           <WorkflowDateInput value={fields.next_checkin_date ?? ''} onSave={(v) => onChange({ next_checkin_date: v })} />
         </div>
         {/* Promised to */}
-        <div className="flex flex-col" style={{ gap: 'var(--sp-xs, 6px)' }}>
-          <label className="flex items-center" style={{ gap: 'var(--sp-xs, 6px)', fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', fontWeight: 'var(--label-weight)' }}>
-            <Handshake {...ICON_PROPS} size={11} style={{ opacity: 0.85 }} />
+        <div className="flex flex-col" style={{ gap: rowGap ?? 'var(--sp-xs, 6px)' }}>
+          <label className="flex items-center" style={{ gap: 4, fontSize: labelSize, color: 'var(--slate)', opacity: 'var(--ink-label)', fontWeight: 'var(--label-weight)' }}>
+            <Handshake {...ICON_PROPS} size={10} style={{ opacity: 0.75 }} />
             Promised to
           </label>
           <WorkflowTextInput
             value={fields.promised_to ?? ''}
-            placeholder="Who did I commit this to…"
+            placeholder="Who I committed to…"
             onSave={(v) => onChange({ promised_to: v })}
+            compact={compact}
           />
         </div>
         {/* Promise date */}
-        <div className="flex flex-col" style={{ gap: 'var(--sp-xs, 6px)' }}>
-          <label className="flex items-center" style={{ gap: 'var(--sp-xs, 6px)', fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', fontWeight: 'var(--label-weight)' }}>
-            <Handshake {...ICON_PROPS} size={11} style={{ opacity: 0.85 }} />
+        <div className="flex flex-col" style={{ gap: rowGap ?? 'var(--sp-xs, 6px)' }}>
+          <label className="flex items-center" style={{ gap: 4, fontSize: labelSize, color: 'var(--slate)', opacity: 'var(--ink-label)', fontWeight: 'var(--label-weight)' }}>
+            <Handshake {...ICON_PROPS} size={10} style={{ opacity: 0.75 }} />
             By when
           </label>
           <WorkflowDateInput value={fields.promise_date ?? ''} onSave={(v) => onChange({ promise_date: v })} />

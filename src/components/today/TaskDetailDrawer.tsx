@@ -125,7 +125,7 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
   }, [task.id, updateTask])
 
   return (
-    <div onClick={(e) => e.stopPropagation()} style={{ padding: '14px 16px 16px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+    <div onClick={(e) => e.stopPropagation()} style={{ padding: '20px 18px 18px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
       {/* Action bar */}
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 12, flexWrap: 'wrap' }}>
         {!isDone && (
@@ -292,21 +292,22 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
       </div>
 
       {/* 2-column: Subtasks (col 1) | Workflow (col 2) — Directive 3 (2026-06-22).
-          Responsive: side-by-side on ≥480px, stacked on narrow/mobile.
-          Uses CSS grid so the columns size naturally to their content.
-          TaskDetailPanel (full editor) does NOT share this layout — this is the
-          compact Today-drawer / timeline-expand context only. */}
+          Flex-wrap layout: each col is flex:1 1 200px so they sit side-by-side
+          when the drawer is wide enough and stack to a single column on narrow/
+          mobile. Avoids the auto-fill phantom-column problem (repeat(auto-fill)
+          creates 3 equal cols on a ~600px drawer, visually centering Workflow).
+          TaskDetailPanel (full editor) does NOT share this layout. */}
       <div
         style={{
           marginTop: 14,
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+          display: 'flex',
+          flexWrap: 'wrap',
           gap: 16,
-          alignItems: 'start',
+          alignItems: 'flex-start',
         }}
       >
         {/* Subtasks + Blocks (col 1) */}
-        <div>
+        <div style={{ flex: '1 1 200px', minWidth: 0 }}>
           <div style={{ fontSize: 10, color: INK_DIM, marginBottom: 6 }}>Subtasks</div>
           {detailQuery.isLoading && <div style={{ fontSize: 11, color: INK_DIM, fontStyle: 'italic' }}>Loading…</div>}
           {!detailQuery.isLoading && subtasks.length === 0 && <div style={{ fontSize: 11, color: INK_DIM, fontStyle: 'italic' }}>None yet.</div>}
@@ -333,10 +334,11 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
           )}
         </div>
 
-        {/* Workflow fields (col 2) — v55 waiting_on / next_checkin_date / promised_to / promise_date */}
-        <div>
+        {/* Workflow fields (col 2) — v55 waiting_on / next_checkin_date / promised_to / promise_date.
+            compact=true: smaller input height + font, de-emphasised. */}
+        <div style={{ flex: '1 1 200px', minWidth: 0 }}>
           <div style={{ fontSize: 10, color: INK_DIM, marginBottom: 8 }}>Workflow</div>
-          <WorkflowSection fields={workflowFields} onChange={saveWorkflowField} />
+          <WorkflowSection fields={workflowFields} onChange={saveWorkflowField} compact />
         </div>
       </div>
 
