@@ -176,7 +176,7 @@ function TimedTaskBlock({
         {/* Wide drag-grip indicator — hover-revealed, wider 2×4-style GripHorizontal.
             Pure visual affordance; the whole block body is the drag target. */}
         <GripHorizontal
-          size={16}
+          size={20}
           aria-hidden
           style={{
             flexShrink: 0,
