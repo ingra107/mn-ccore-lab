@@ -125,15 +125,18 @@ function TimedTaskBlock({
     width: `${widthPct}%`,
     boxSizing: 'border-box',
     padding: '3px 6px 3px 6px',
-    background: withAlpha(ACCENT_GOLD, isDragging || isResizing ? 18 : 10),
-    border: `1px solid ${withAlpha(ACCENT_GOLD, isDragging || isResizing ? 50 : 30)}`,
+    background: withAlpha(ACCENT_GOLD, isDragging || isResizing ? 18 : expanded ? 16 : 10),
+    border: `1px solid ${withAlpha(ACCENT_GOLD, isDragging || isResizing ? 50 : expanded ? 55 : 30)}`,
     borderRadius: 5,
-    overflow: 'hidden',
+    // overflow: 'visible' (NOT 'hidden') — the "▾ expanded below" hint and any
+    // overflow content must remain readable. 'hidden' was clipping the indicator
+    // inside small blocks, making expand appear to do nothing (Bug 1 fix).
+    overflow: 'visible',
     cursor: isDragging ? 'grabbing' : 'grab',
     display: 'flex',
     flexDirection: 'column',
     gap: 2,
-    zIndex: isDragging || isResizing ? 10 : 1,
+    zIndex: isDragging || isResizing ? 10 : expanded ? 3 : 1,
     // Live preview: translateY while dragging (unsnapped, no PATCH per frame)
     transform: translatePx !== 0 ? `translateY(${translatePx}px)` : undefined,
     transition: isDragging || isResizing ? 'none' : 'transform 0ms',
@@ -187,7 +190,14 @@ function TimedTaskBlock({
         </span>
       </div>
       {expanded && (
-        <span style={{ fontSize: 9, color: ACCENT_GOLD, marginLeft: 2 }}>▾ expanded below</span>
+        <span style={{
+          fontSize: 9,
+          color: ACCENT_GOLD,
+          fontWeight: 600,
+          marginLeft: 2,
+          // Visible even when the block is short — overflow:visible on parent.
+          whiteSpace: 'nowrap',
+        }}>▾ details below</span>
       )}
       {/* Resize strip — bottom 6px (11px on touch via @media hover:none).
           Must NOT propagate pointerdown to body handler (stopPropagation in hook). */}
@@ -371,20 +381,29 @@ function AgendaGapRow({
           the gap down (GH#80 invariant: absolute content never clips/bleeds);
           (b) untimed tasks: full-width stacked (Phase-1 graceful fallback). */}
       <div style={timedTasks.length > 0 ? { marginTop: containerMinHeight } : undefined}>
-        {/* Expanded timed task drawer: render full PlannedTaskRow in normal flow */}
+        {/* Expanded timed task drawer: render full PlannedTaskRow in normal flow.
+            Gold left border provides a visual link from the block above to this
+            expanded surface, making the connection legible. */}
         {timedTasks
           .filter((t) => expandedId === t.id)
           .map((t) => (
-            <PlannedTaskRow
+            <div
               key={`expanded-${t.id}`}
-              task={t}
-              project={t.project_id ? projectsByPid.get(t.project_id) ?? null : null}
-              state={state}
-              small
-              onExpand={onExpand}
-              expandedId={expandedId}
-              projectsByPid={projectsByPid}
-            />
+              style={{
+                borderLeft: `3px solid ${withAlpha(ACCENT_GOLD, 55)}`,
+                marginBottom: 4,
+              }}
+            >
+              <PlannedTaskRow
+                task={t}
+                project={t.project_id ? projectsByPid.get(t.project_id) ?? null : null}
+                state={state}
+                small
+                onExpand={onExpand}
+                expandedId={expandedId}
+                projectsByPid={projectsByPid}
+              />
+            </div>
           ))
         }
         {/* Untimed tasks: full-width stacked (Phase-1 behavior, graceful fallback) */}

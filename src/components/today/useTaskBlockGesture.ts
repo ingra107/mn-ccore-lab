@@ -110,8 +110,11 @@ export function useTaskBlockGesture({
     const deltaY = e.clientY - g.startY
     const absDelta = Math.abs(deltaY)
 
-    // Clean up listeners from the element
-    const el = e.target as HTMLElement
+    // Clean up listeners from the CAPTURING element (currentTarget), NOT e.target.
+    // With setPointerCapture the event fires on the capturing element, but e.target
+    // remains the original hit-target (may be a child span). Using e.target here
+    // would try to remove listeners from the wrong element, causing accumulation.
+    const el = e.currentTarget as HTMLElement
     el.removeEventListener('pointermove', handlePointerMove)
     el.removeEventListener('pointerup', handlePointerUp)
     el.removeEventListener('pointercancel', handlePointerUp)
@@ -124,7 +127,9 @@ export function useTaskBlockGesture({
     const gMode = g.mode
     gestureRef.current = null
 
-    if (absDelta < 4) {
+    // 8px threshold (raised from 4px): a casual desktop click moves 4–6px;
+    // 4px was too tight and suppressed expand on ordinary clicks.
+    if (absDelta < 8) {
       // CLICK — fire expand, no write
       if (!g.committed) onExpand(taskId)
       return
