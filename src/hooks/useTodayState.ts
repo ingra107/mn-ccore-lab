@@ -4,10 +4,11 @@
 // plan_rank) via src/lib/todayPlan.ts (Workstream B, schema v75, 2026-06-09).
 //
 // What changed vs the LS era:
-//   - `rightNow` + `planned` now DERIVE from today's task rows (planned_for ==
-//     today). plan/promote/unplan PATCH the task (optimistic, Hub-first) instead
-//     of writing LS. The plan is durable + cross-device — every team member's
-//     Today cockpit reads the same synced plan.
+//   - `planned` now DERIVES from today's task rows (planned_for == today).
+//     plan/unplan PATCH the task (optimistic, Hub-first) instead of writing LS.
+//     The plan is durable + cross-device — every team member's Today cockpit
+//     reads the same synced plan. (`rightNow` was retired with the Right Now
+//     concept; derivePlanState no longer returns it.)
 //   - `done` stays PURELY optimistic-local (completions are already durable via
 //     `status`; this map is the instant-feedback + undo layer, reconciled against
 //     the cache). It no longer persists to LS — a reload re-derives done-ness from
@@ -53,7 +54,7 @@ export function useTodayState(tasks: TaskRow[], completedTodayIds: string[] = []
   const migrate = useLegacyPlanMigration()
 
   // `done` is the only LOCAL state now — optimistic completion feedback + undo.
-  // (rightNow/planned derive from the synced task columns below.)
+  // (planned derives from the synced task columns below.)
   const [done, setDone] = useState<Record<string, boolean>>({})
 
   // One-time LS→columns migration: once tasks have loaded, lift any legacy
