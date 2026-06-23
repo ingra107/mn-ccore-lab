@@ -2,6 +2,7 @@ import { useState, useRef, useMemo, useCallback, useEffect } from 'react'
 import { useQueryClient, useQuery } from '@tanstack/react-query'
 import { useParams, Link, useSearchParams, useNavigate } from 'react-router-dom'
 import Breadcrumb from '../components/Breadcrumb'
+import { Button } from '../components/ui/Button'
 import { stageIndex, toApiStage } from '../lib/stageNormalize'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -145,21 +146,18 @@ export default function ProjectDetail() {
         <p style={{ color: 'var(--slate)', marginBottom: '1.25rem' }}>
           There was a problem fetching the project data. Check your connection and try again.
         </p>
-        <button
+        <Button
+          variant="primary"
           onClick={() => window.location.reload()}
           style={{
             padding: '6px 16px',
             borderRadius: 'var(--radius-lg)',
-            background: 'var(--teal-solid)',
-            color: '#fff',
-            border: 'none',
-            cursor: 'pointer',
             fontSize: '13px',
             fontWeight: 500,
           }}
         >
           Retry
-        </button>
+        </Button>
       </div>
     )
   }

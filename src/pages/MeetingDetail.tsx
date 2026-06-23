@@ -2,6 +2,7 @@ import { useState, useRef, useMemo, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import Breadcrumb from '../components/Breadcrumb'
 import RoundPrompt from '../components/RoundPrompt'
+import { Button } from '../components/ui/Button'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Calendar,
@@ -591,14 +592,14 @@ export default function MeetingDetail() {
                       <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--teal)' }}>
                         {selectedActionIds.size} selected
                       </span>
-                      <button
+                      <Button
+                        variant="primary"
                         onClick={handleBatchComplete}
-                        className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors"
-                        style={{ background: 'var(--teal-solid)', color: 'white', border: 'none', cursor: 'pointer' }}
+                        style={{ gap: '6px', padding: '4px 10px', borderRadius: 'var(--radius-md)', fontSize: '11px', fontWeight: 500 }}
                       >
                         <CheckCircle2 {...ICON_PROPS} size={12} />
                         Complete All
-                      </button>
+                      </Button>
                       <button
                         onClick={() => setSelectedActionIds(new Set())}
                         className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] transition-colors"

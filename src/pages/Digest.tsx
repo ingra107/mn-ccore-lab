@@ -21,6 +21,7 @@ import { emailToSlug } from '../lib/emailSlug'
 import { useDigest, useDigestDates, useProjects, useDigestComments, useDigestCommentCounts } from '../hooks/useApiData'
 import type { DigestPaper, DigestComment } from '../hooks/useApiData'
 import { useUpdateDigestStatus, useLinkPaper, useCreateDigestComment } from '../hooks/useMutations'
+import { Button } from '../components/ui/Button'
 import { getPersonInfo } from '../data/team'
 import { formatMediumDate } from '../lib/dateUtils'
 import Avatar from '../components/Avatar'
@@ -560,20 +561,22 @@ function PaperCard({ paper, projects, commentCount }: { paper: DigestPaper; proj
                 outline: 'none',
               }}
             />
-            <button
+            <Button
+              variant="primary"
               type="submit"
               disabled={!commentText.trim() || createComment.isPending}
-              className="cursor-pointer p-1.5 rounded-md transition-colors"
+              aria-label="Submit comment"
               style={{
+                padding: '6px',
+                borderRadius: 'var(--radius-md)',
                 background: commentText.trim() ? 'var(--teal-solid)' : 'transparent',
                 color: commentText.trim() ? 'var(--cream)' : 'var(--slate)',
-                border: 'none',
+                cursor: 'pointer',
                 opacity: commentText.trim() ? 1 : 0.85,
               }}
-              aria-label="Submit comment"
             >
               <Send {...ICON_PROPS} size={14} />
-            </button>
+            </Button>
           </form>
         </div>
       )}

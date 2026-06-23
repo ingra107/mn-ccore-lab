@@ -18,6 +18,7 @@ import { MNCCORE_PROCESS_URI } from '../../lib/urlClassify'
 import { emailToSlug } from '../../lib/emailSlug'
 import { usePageMeta } from '../../hooks/usePageMeta'
 import HeartbeatLine from '../../components/HeartbeatLine'
+import { Button } from '../../components/ui/Button'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
 import { DoneBox } from '../../components/tasks/TaskRow'
 import { useTodayView } from '../../hooks/useTodayView'
@@ -296,12 +297,13 @@ export default function TodayPage() {
           <p style={{ fontSize: 13, color: INK_MUTED, marginBottom: 20 }}>
             There was a problem fetching your tasks or projects. Check your connection and try again.
           </p>
-          <button
+          <Button
+            variant="primary"
             onClick={() => { tasksQuery.refetch(); projectsQuery.refetch() }}
-            style={{ padding: '8px 20px', borderRadius: 'var(--radius-lg)', background: '#0d6f68', color: '#fff', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 500 }}
+            style={{ padding: '8px 20px', borderRadius: 'var(--radius-lg)', fontSize: '13px', fontWeight: 500 }}
           >
             Retry
-          </button>
+          </Button>
         </div>
       </div>
     )

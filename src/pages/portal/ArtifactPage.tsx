@@ -16,6 +16,7 @@ import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
 import { usePageMeta } from '../../hooks/usePageMeta'
 import { FileText, History, Copy, ClipboardList, FolderKanban, Send, Lock } from 'lucide-react'
 import PageContainer from '../../components/PageContainer'
+import { Button } from '../../components/ui/Button'
 import { TextSkeleton } from '../../components/LoadingSkeleton'
 import EmptyState from '../../components/EmptyState'
 import MarkdownView from '../../components/MarkdownView'
@@ -343,21 +344,21 @@ export default function ArtifactPage() {
                 >
                   <Lock {...ICON_PROPS} size={9} /> {authorOnly ? 'Only you' : 'Visible to team'}
                 </button>
-                <button
+                <Button
+                  variant="primary"
                   type="button"
                   onClick={handlePostComment}
                   disabled={!comment.trim() || postComment.isPending}
-                  className="inline-flex items-center gap-1 cursor-pointer"
                   style={{
-                    marginLeft: 'auto', fontSize: 12, fontWeight: 500, padding: '5px 14px',
-                    borderRadius: 'var(--radius-md)', border: 'none',
+                    marginLeft: 'auto', gap: '4px', fontSize: 12, fontWeight: 500, padding: '5px 14px',
+                    borderRadius: 'var(--radius-md)',
                     background: comment.trim() ? 'var(--teal-solid)' : 'var(--surface-2, rgba(100,116,139,0.2))',
                     color: comment.trim() ? 'var(--ink-bright, #fff)' : 'var(--slate)',
                     cursor: comment.trim() ? 'pointer' : 'not-allowed', opacity: postComment.isPending ? 0.7 : 1,
                   }}
                 >
                   <Send {...ICON_PROPS} size={11} /> {postComment.isPending ? 'Posting…' : 'Comment'}
-                </button>
+                </Button>
               </div>
             </>
           )}

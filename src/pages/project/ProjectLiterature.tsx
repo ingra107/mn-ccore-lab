@@ -5,6 +5,7 @@ import { useProjectPapers, usePublications } from '../../hooks/useApiData'
 import { useUnlinkPaper, useLinkPaper } from '../../hooks/useMutations'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { ACCENT_GOLD, PANEL_BG, withAlpha } from '../../lib/taskGrouping'
+import { Button } from '../../components/ui/Button'
 
 interface ProjectLiteratureProps {
   projectSlug: string
@@ -371,21 +372,23 @@ function LinkPaperModal({ projectSlug, linkedPaperIds, onLink, onClose }: {
               className="flex-1 text-sm px-3 py-2 rounded-lg border bg-transparent"
               style={{ color: 'var(--ink)', borderColor: 'var(--border-subtle)' }}
             />
-            <button
+            <Button
+              variant="primary"
               onClick={lookupDoi}
               disabled={doiLoading || !doi.trim()}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-[12px] font-medium"
               style={{
-                backgroundColor: 'var(--teal-solid)',
-                color: 'var(--ink-bright, #fff)',
-                border: 'none',
+                gap: '6px',
+                padding: '8px 16px',
+                borderRadius: 'var(--radius-lg)',
+                fontSize: '12px',
+                fontWeight: 500,
                 cursor: 'pointer',
                 opacity: doiLoading || !doi.trim() ? 0.85 : 1,
               }}
             >
               {doiLoading ? <Loader2 {...ICON_PROPS} size={14} className="animate-spin" /> : null}
               Auto-Fill
-            </button>
+            </Button>
           </div>
 
           {doiError && (
@@ -408,24 +411,28 @@ function LinkPaperModal({ projectSlug, linkedPaperIds, onLink, onClose }: {
                 <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.85, fontStyle: 'italic' }}>{doiData.journal}</span>
                 <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>{doiData.year}</span>
               </div>
-              <button
+              <Button
+                variant="primary"
                 onClick={() => {
                   const cleanDoi = doi.trim().replace(/^https?:\/\/doi\.org\//, '')
                   createAndLink.mutate({ ...doiData, doi: cleanDoi })
                 }}
                 disabled={createAndLink.isPending}
-                className="mt-2 flex items-center gap-2 px-4 py-2 rounded-lg text-[12px] font-medium w-fit"
                 style={{
-                  backgroundColor: 'var(--teal-solid)',
-                  color: 'var(--ink-bright, #fff)',
-                  border: 'none',
+                  marginTop: '8px',
+                  width: 'fit-content',
+                  gap: '8px',
+                  padding: '8px 16px',
+                  borderRadius: 'var(--radius-lg)',
+                  fontSize: '12px',
+                  fontWeight: 500,
                   cursor: 'pointer',
                   opacity: createAndLink.isPending ? 0.85 : 1,
                 }}
               >
                 <Plus {...ICON_PROPS} size={14} />
                 {createAndLink.isPending ? 'Adding...' : 'Add & Link to Project'}
-              </button>
+              </Button>
             </div>
           )}
         </div>
