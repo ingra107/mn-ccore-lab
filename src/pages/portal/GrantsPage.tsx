@@ -19,6 +19,7 @@ import EmptyState from '../../components/EmptyState'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
 import Avatar from '../../components/Avatar'
 import InlineSelect from '../../components/InlineSelect'
+import { Button } from '../../components/ui/Button'
 import { useUndoToast } from '../../components/UndoToast'
 import { ColumnHeader, TableContainer, TableControls } from '../../components/table'
 import { useGrantTimeline, GRANT_STATUS_OPTIONS } from '../../hooks/useGrantTimeline'
@@ -841,19 +842,21 @@ export default function GrantsPage() {
               </span>
             )}
           </div>
-          <button
+          <Button
+            variant="primary"
             onClick={() => setShowAddMilestone(true)}
             className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-colors"
             style={{
-              background: 'var(--teal-solid)',
-              color: 'var(--ink-bright, #fff)',
-              border: 'none',
-              cursor: 'pointer',
+              gap: '0.25rem',
+              padding: '4px 10px',
+              borderRadius: '9999px',
+              fontSize: '0.75rem',
+              fontWeight: 500,
             }}
           >
             <Plus {...ICON_PROPS} size={12} />
             Add Milestone
-          </button>
+          </Button>
         </div>
 
         {milestonesLoading ? (

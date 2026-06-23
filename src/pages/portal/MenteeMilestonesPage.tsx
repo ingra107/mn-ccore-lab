@@ -9,6 +9,7 @@ import EmptyState from '../../components/EmptyState'
 import EmptyStateArt from '../../components/EmptyStateArt'
 import Avatar from '../../components/Avatar'
 import InlineSelect from '../../components/InlineSelect'
+import { Button } from '../../components/ui/Button'
 import { useUndoToast } from '../../components/UndoToast'
 import { useMenteeMilestones, useMenteeOverview, useActivity } from '../../hooks/useApiData'
 import type { MenteeMilestoneRow } from '../../hooks/useApiData'
@@ -222,19 +223,21 @@ export default function MenteeMilestonesPage() {
           />
 
           {/* Add button */}
-          <button
+          <Button
+            variant="primary"
             onClick={() => setShowAddModal(true)}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors"
             style={{
-              background: 'var(--teal-solid)',
-              color: 'var(--ink-bright, #fff)',
-              border: 'none',
-              cursor: 'pointer',
+              gap: '0.375rem',
+              padding: '6px 12px',
+              borderRadius: '9999px',
+              fontSize: '0.75rem',
+              fontWeight: 500,
             }}
           >
             <Plus {...ICON_PROPS} size={14} />
             Add Milestone
-          </button>
+          </Button>
         </div>
       </PageHeader>
 
@@ -1023,14 +1026,15 @@ function AddMilestoneModal({ menteeSlugs, onClose }: { menteeSlugs: string[]; on
           >
             Cancel
           </button>
-          <button
+          <Button
+            variant="primary"
             onClick={handleSubmit}
             disabled={!title.trim() || createMilestone.isPending}
             className="flex items-center gap-1.5"
             style={{
+              gap: '0.375rem',
               padding: 'var(--sp-sm) var(--sp-lg)',
               borderRadius: 'var(--radius-lg)',
-              border: 'none',
               background: title.trim() ? 'var(--teal-solid)' : 'var(--border-subtle)',
               color: title.trim() ? 'var(--ink-bright, #fff)' : 'var(--slate)',
               fontSize: 'var(--value-size)',
@@ -1041,7 +1045,7 @@ function AddMilestoneModal({ menteeSlugs, onClose }: { menteeSlugs: string[]; on
           >
             <Check {...ICON_PROPS} size={14} />
             {createMilestone.isPending ? 'Creating...' : 'Create Milestone'}
-          </button>
+          </Button>
         </div>
       </motion.div>
     </motion.div>

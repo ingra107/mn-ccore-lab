@@ -18,6 +18,7 @@ import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
 import Avatar from '../../components/Avatar'
 import InlineSelect from '../../components/InlineSelect'
+import { Button } from '../../components/ui/Button'
 import { useDecisions, useDecisionsForReview, useDecisionTags } from '../../hooks/useApiData'
 import { isProductionVisible } from '../../lib/isProductionVisible'
 import { useCreateDecision, useUpdateDecisionOutcome } from '../../hooks/useMutations'
@@ -1017,22 +1018,21 @@ export default function DecisionsPage() {
                 Timeline
               </button>
             </div>
-            <button
+            <Button
+              variant="primary"
               onClick={() => setShowCreate(true)}
               className="flex items-center gap-2 px-4 py-2"
               style={{
-                backgroundColor: 'var(--teal-solid)',
-                color: 'var(--ink-bright, #fff)',
-                border: 'none',
+                gap: '0.5rem',
+                padding: '8px 16px',
                 borderRadius: 'var(--radius-lg)',
                 fontSize: 'var(--text-small)',
                 fontWeight: 500,
-                cursor: 'pointer',
               }}
             >
               <Plus {...ICON_PROPS} size={16} />
               Log Decision
-            </button>
+            </Button>
           </div>
         }
       >

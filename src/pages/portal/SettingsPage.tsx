@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
+import { Button } from '../../components/ui/Button'
 import { TextSkeleton } from '../../components/LoadingSkeleton'
 import { staggerContainer, staggerItem } from '../../lib/animations'
 import InlineSelect from '../../components/InlineSelect'
@@ -919,14 +920,15 @@ function CreateTemplateForm({ onSubmit }: { onSubmit: (name: string, stages: str
           <button onClick={() => setOpen(false)} className="px-3 py-1.5 rounded-md text-sm" style={{ color: 'var(--slate)', cursor: 'pointer', background: 'none', border: '1px solid var(--border-subtle)' }}>
             Cancel
           </button>
-          <button
+          <Button
+            variant="primary"
             onClick={handleSubmit}
             disabled={!name.trim() || stages.filter((s) => s.trim()).length < 2}
             className="px-3 py-1.5 rounded-md text-sm font-medium"
-            style={{ backgroundColor: 'var(--teal-solid)', color: 'white', cursor: 'pointer', border: 'none', opacity: (!name.trim() || stages.filter((s) => s.trim()).length < 2) ? 0.85 : 1 }}
+            style={{ padding: '6px 12px', borderRadius: 'var(--radius-md)', fontSize: '0.875rem', fontWeight: 500, cursor: 'pointer', opacity: (!name.trim() || stages.filter((s) => s.trim()).length < 2) ? 0.85 : 1 }}
           >
             Create Template
-          </button>
+          </Button>
         </div>
       </div>
     </div>
