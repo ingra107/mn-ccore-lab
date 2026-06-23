@@ -96,7 +96,7 @@ function resolveKeyLinkSlot(
     [2, task.key_link_2],
     [3, task.key_link_3],
   ];
-  for (const [n, val] of slots) {
+  for (const [, val] of slots) {
     if (val === url) return { slot: null, alreadyPresent: true };
   }
   for (const [n, val] of slots) {

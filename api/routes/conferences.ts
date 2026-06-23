@@ -176,7 +176,7 @@ export async function handleCreateConference(request: Request, user: AuthUser, e
 // is moving to, beyond the existing-row gate that withExistingRowProject provides.
 // Outer signature (id, request, user, env) unchanged for api/index.ts compatibility.
 export async function handleUpdateConference(id: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
-  return withExistingRowProject('conference_submissions', async (req, e, rowId, _projectId) => {
+  return withExistingRowProject('conference_submissions', async (req, e, rowId) => {
     const body = await req.json() as Record<string, unknown>;
     const allowedFields = [
       'project_id', 'conference', 'conference_date', 'submission_type', 'title',

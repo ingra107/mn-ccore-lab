@@ -1,5 +1,5 @@
 import type { Env } from '../helpers';
-import { json, error, generateId, isPiRequest } from '../helpers';
+import { json, error, isPiRequest } from '../helpers';
 import { safeRow } from '../lib/task-cols';
 
 // GET /api/email-drafts — list all drafts, with optional ?status=draft filter

@@ -69,7 +69,10 @@ export async function handleGetNarratives(env: Env): Promise<Response> {
         if (isRelevant) {
           for (const t of topics) topicCounts.set(t, (topicCounts.get(t) || 0) + 1);
         }
-      } catch {}
+      } catch {
+        // Malformed topics/author_slugs JSON on a single publication row is
+        // tolerated — skip it rather than failing the whole analytics rollup.
+      }
     }
     const sharedTopics = [...topicCounts.entries()]
       .filter(([, c]) => c >= 1)

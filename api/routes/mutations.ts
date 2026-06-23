@@ -22,7 +22,7 @@
 // write path through this endpoint as part of A3 ship.
 
 import type { AuthUser, Env, ValidationFlags } from '../helpers';
-import { json, error, generateId, assertProtectedNotNull, getValidationFlags, safeTaskRow, safeRow, projectRefToCanonical, isPiRequest, actorSlug } from '../helpers';
+import { json, error, generateId, assertProtectedNotNull, getValidationFlags, safeRow, projectRefToCanonical, isPiRequest, actorSlug } from '../helpers';
 import { FK_SLUG_FIELDS } from '../lib/task-cols';
 import { nowInstant } from '../lib/time';
 import { assertEnumDomain, assertCompletionTriad } from '../lib/enum-domains';

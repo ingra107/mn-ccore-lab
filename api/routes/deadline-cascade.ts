@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, actorSlug, assertProjectVisible, projectRefToCanonical, resolveAndGuardProject } from '../helpers';
+import { json, error, generateId, logActivity, actorSlug, assertProjectVisible, resolveAndGuardProject } from '../helpers';
 
 // ── Types ──────────────────────────────────────────────────
 
@@ -30,69 +30,6 @@ interface CascadeGraph {
 }
 
 // ── Helpers ────────────────────────────────────────────────
-
-async function fetchNodeById(id: string, type: string, env: Env): Promise<DeadlineNode | null> {
-  if (type === 'milestone') {
-    const row = await env.DB.prepare(
-      'SELECT m.id, m.title, m.target_date as due_date, m.status, m.project_id, p.title as project_title FROM milestones m LEFT JOIN projects p ON m.project_id = p.slug WHERE m.id = ?'
-    ).bind(id).first();
-    if (!row) return null;
-    return {
-      id: row.id as string,
-      type: 'milestone',
-      title: row.title as string,
-      due_date: row.due_date as string | null,
-      status: row.status as string,
-      project_id: row.project_id as string | null,
-      project_title: row.project_title as string | null,
-    };
-  }
-  if (type === 'task') {
-    const row = await env.DB.prepare(
-      'SELECT t.id, COALESCE(t.title, t.description) as title, t.due_date, t.status, t.project_id, p.title as project_title FROM tasks t LEFT JOIN projects p ON t.project_id = p.slug WHERE t.id = ?'
-    ).bind(id).first();
-    if (!row) return null;
-    return {
-      id: row.id as string,
-      type: 'task',
-      title: row.title as string,
-      due_date: row.due_date as string | null,
-      status: row.status as string,
-      project_id: row.project_id as string | null,
-      project_title: row.project_title as string | null,
-    };
-  }
-  // For 'deadline' type, check both tables
-  const milestone = await env.DB.prepare(
-    'SELECT m.id, m.title, m.target_date as due_date, m.status, m.project_id, p.title as project_title FROM milestones m LEFT JOIN projects p ON m.project_id = p.slug WHERE m.id = ?'
-  ).bind(id).first();
-  if (milestone) {
-    return {
-      id: milestone.id as string,
-      type: 'milestone',
-      title: milestone.title as string,
-      due_date: milestone.due_date as string | null,
-      status: milestone.status as string,
-      project_id: milestone.project_id as string | null,
-      project_title: milestone.project_title as string | null,
-    };
-  }
-  const task = await env.DB.prepare(
-    'SELECT t.id, COALESCE(t.title, t.description) as title, t.due_date, t.status, t.project_id, p.title as project_title FROM tasks t LEFT JOIN projects p ON t.project_id = p.slug WHERE t.id = ?'
-  ).bind(id).first();
-  if (task) {
-    return {
-      id: task.id as string,
-      type: 'task',
-      title: task.title as string,
-      due_date: task.due_date as string | null,
-      status: task.status as string,
-      project_id: task.project_id as string | null,
-      project_title: task.project_title as string | null,
-    };
-  }
-  return null;
-}
 
 // Traverse dependency graph downstream from a node, computing shifted dates
 function computeImpact(

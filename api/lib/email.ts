@@ -46,7 +46,7 @@ export function taskAssignmentEmail(assignerName: string, taskTitle: string, tas
         <div style="background: #ffffff; padding: 20px; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 8px 8px;">
           <p style="margin: 0 0 12px; color: #0f1923;"><strong>${assignerName}</strong> assigned you a task:</p>
           <p style="margin: 0 0 16px; color: #0f1923; font-size: 16px; font-weight: 500;">${taskTitle}</p>
-          <a href="${HUB_URL}/tasks" style="display: inline-block; padding: 8px 20px; background: #2d8a8a; color: white; text-decoration: none; border-radius: 6px; font-size: 14px;">
+          <a href="${HUB_URL}/portal/my-tasks?open=${encodeURIComponent(taskId)}" style="display: inline-block; padding: 8px 20px; background: #2d8a8a; color: white; text-decoration: none; border-radius: 6px; font-size: 14px;">
             View Task
           </a>
         </div>

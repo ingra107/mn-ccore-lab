@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, parseMentions, actorSlug, isPiRequest, resolveActor, assertProjectVisible, canSeePbProjectRow, projectRefToCanonical } from '../helpers';
+import { json, error, generateId, logActivity, isPiRequest, resolveActor, assertProjectVisible, canSeePbProjectRow, projectRefToCanonical } from '../helpers';
 import { ctToday } from '../lib/ct-date';
 import { nowInstant } from '../lib/time';
 import { applyMutation } from './mutations';

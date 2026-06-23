@@ -21,7 +21,6 @@
  *                           notifications if thresholds exceeded
  */
 
-import type { Env } from '../types';
 import { generateId } from '../helpers';
 
 // ── Registry ────────────────────────────────────────────────────────────────

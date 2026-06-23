@@ -120,7 +120,7 @@ export async function handleInsightConnections(env: Env): Promise<Response> {
     categoryGroups.get(p.category)!.push(p)
   }
 
-  for (const [_cat, group] of categoryGroups) {
+  for (const group of categoryGroups.values()) {
     for (let i = 0; i < group.length; i++) {
       for (let j = i + 1; j < group.length; j++) {
         const a = group[i]
@@ -173,7 +173,7 @@ export async function handleInsightConnections(env: Env): Promise<Response> {
     paperToProjects.get(link.paper_id)!.push(link.project_slug)
   }
 
-  for (const [_paperId, projectSlugs] of paperToProjects) {
+  for (const projectSlugs of paperToProjects.values()) {
     if (projectSlugs.length < 2) continue
     for (let i = 0; i < projectSlugs.length; i++) {
       for (let j = i + 1; j < projectSlugs.length; j++) {
@@ -200,7 +200,7 @@ export async function handleInsightConnections(env: Env): Promise<Response> {
 
   // Combine edges per pair — aggregate reasons, take max strength
   const combined: InsightEdge[] = []
-  for (const [_, pairEdges] of pairBest) {
+  for (const pairEdges of pairBest.values()) {
     const best = pairEdges.reduce((a, b) => (a.strength > b.strength ? a : b))
     const allReasons = pairEdges.map((e) => e.reason)
     const combinedStrength = Math.min(1, pairEdges.reduce((sum, e) => sum + e.strength, 0))

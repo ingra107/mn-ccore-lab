@@ -3,32 +3,6 @@ import { json, error, generateId, logActivity, actorSlug, assertProjectVisible }
 import { withProjectWrite, withExistingRowProject } from '../lib/route-guards';
 import { hiddenResource } from '../lib/hidden-resource';
 
-// ── Types ──
-
-interface RevisionRow {
-  id: string;
-  project_id: string;
-  round: number;
-  submitted_at: string | null;
-  response_due: string | null;
-  status: string;
-  journal: string | null;
-  notes: string | null;
-  created_at: string;
-}
-
-interface CommentRow {
-  id: string;
-  revision_id: string;
-  reviewer_number: number;
-  comment_text: string;
-  assigned_to: string;
-  status: string;
-  response_text: string | null;
-  resolved_at: string | null;
-  created_at: string;
-}
-
 const VALID_REVISION_STATUSES = ['in_progress', 'submitted', 'accepted', 'rejected'];
 const VALID_COMMENT_STATUSES = ['pending', 'in_progress', 'done', 'wont_fix'];
 
@@ -134,7 +108,7 @@ export async function handleCreateRevision(request: Request, user: AuthUser, env
 // Inner receives the canonical projectId; outer signature (id, request, user, env)
 // is unchanged for api/index.ts compatibility.
 export async function handleUpdateRevision(id: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
-  return withExistingRowProject('manuscript_revisions', async (req, e, rowId, _projectId) => {
+  return withExistingRowProject('manuscript_revisions', async (req, e, rowId) => {
     const body = await req.json() as {
       submitted_at?: string;
       response_due?: string;

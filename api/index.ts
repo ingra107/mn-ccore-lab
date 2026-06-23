@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import type { Context, Next } from 'hono';
+import type { Context } from 'hono';
 import type { Env } from './types';
 import { corsHeaders, corsHeadersFor, json, error, getAuthUser, isPiRequest, getPiEmails, ensureTeamMember, actorSlugFromRequest, logActivity, assertProjectVisible } from './helpers';
 // Z1.3 (2026-05-28): metadata-first route registration. Every defineRoute({...})

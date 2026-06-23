@@ -1,5 +1,5 @@
 import type { Env } from '../helpers';
-import { json, error, generateId, actorSlugFromRequest, isPiRequest } from '../helpers';
+import { json, error, actorSlugFromRequest, isPiRequest } from '../helpers';
 import { nowInstant } from '../lib/time';
 
 // GET /api/notifications?unread=

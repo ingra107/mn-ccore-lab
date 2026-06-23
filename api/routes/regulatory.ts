@@ -155,7 +155,7 @@ export async function handleCreateRegulatoryItem(request: Request, user: AuthUse
 // project_id reparent, also gate the new target as conferences.ts does.
 // Outer signature (id, request, user, env) unchanged for api/index.ts.
 export async function handleUpdateRegulatoryItem(id: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
-  return withExistingRowProject('regulatory_items', async (req, e, rowId, _projectId) => {
+  return withExistingRowProject('regulatory_items', async (req, e, rowId) => {
     const body = await req.json() as Record<string, unknown>;
     const allowedFields = ['title', 'item_type', 'protocol_number', 'approved_date', 'expiration_date', 'renewal_due', 'status', 'notes'];
     const { sql, params, hasUpdates } = buildUpdate(body, allowedFields);

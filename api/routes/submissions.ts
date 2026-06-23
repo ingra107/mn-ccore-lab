@@ -84,7 +84,7 @@ export async function handleCreateSubmission(request: Request, user: AuthUser, e
 // a future spec adds project_id reparent, also gate the new target as
 // conferences.ts does. Outer signature (id, request, user, env) unchanged.
 export async function handleUpdateSubmission(id: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
-  return withExistingRowProject('submission_events', async (req, e, rowId, _projectId) => {
+  return withExistingRowProject('submission_events', async (req, e, rowId) => {
     const body = await req.json() as {
       event_type?: string;
       event_date?: string;
