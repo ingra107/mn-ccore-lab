@@ -615,7 +615,7 @@ function ProjectDetailInner({ project }: InnerProps) {
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.2 }}
-        style={{ marginBottom: '16px' }}
+        style={{ marginBottom: 'var(--sp-lg)' }}
       >
         {/* Title row */}
         <div className="flex items-start justify-between gap-4 mb-3">
@@ -915,7 +915,7 @@ function ProjectDetailInner({ project }: InnerProps) {
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
             className="overflow-hidden"
-              style={{ marginBottom: '12px' }}
+              style={{ marginBottom: 'var(--sp-md)' }}
             >
               <div
                 style={{
@@ -1000,7 +1000,7 @@ function ProjectDetailInner({ project }: InnerProps) {
         </AnimatePresence>
 
       {/* Tab navigation — M-31 + PD-11 (role/keyboard) + PD-12 (counts) + PD-16 (overflow fade) */}
-      <div style={{ position: 'relative', marginBottom: '24px' }} className="project-tab-strip-wrap">
+      <div style={{ position: 'relative', marginBottom: 'var(--sp-xl)' }} className="project-tab-strip-wrap">
       {tabStripHasOverflow && <div aria-hidden="true" className="project-tab-strip-fade" />}
       <div
         ref={tabStripRef}
@@ -1628,7 +1628,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                     color: isCurrent ? 'var(--gold)' : isFuture ? 'var(--slate)' : 'var(--ink)',
                     opacity: isCurrent ? 1 : isFuture ? 0.85 : 0.85,
                     fontWeight: isCurrent ? 700 : 400,
-                    marginTop: '8px',
+                    marginTop: 'var(--sp-sm)',
                     textAlign: 'center',
                     lineHeight: 1.2,
                     whiteSpace: 'nowrap',
@@ -1674,7 +1674,7 @@ function ProjectDetailInner({ project }: InnerProps) {
             className="detail-card"
           >
             {/* Description — inline editable */}
-            <div style={{ marginBottom: '16px' }}>
+            <div style={{ marginBottom: 'var(--sp-lg)' }}>
               <label
                 style={{
                   fontSize: '10px',
@@ -1775,7 +1775,7 @@ function ProjectDetailInner({ project }: InnerProps) {
 
             {/* Team */}
             {project.team && project.team.length > 0 && (
-              <div style={{ marginBottom: '16px' }}>
+              <div style={{ marginBottom: 'var(--sp-lg)' }}>
                 <label
                   style={{
                     fontSize: '10px',
@@ -1784,7 +1784,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                     textTransform: 'uppercase',
                     letterSpacing: '0.06em',
                     display: 'block',
-                    marginBottom: '8px',
+                    marginBottom: 'var(--sp-sm)',
                   }}
                 >
                   Team
@@ -1819,7 +1819,7 @@ function ProjectDetailInner({ project }: InnerProps) {
             )}
 
             {/* Metadata row */}
-            <div className="flex flex-wrap gap-4" style={{ marginTop: '8px' }}>
+            <div className="flex flex-wrap gap-4" style={{ marginTop: 'var(--sp-sm)' }}>
               {project.googleDocUrl && (
                 <a
                   href={project.googleDocUrl}
@@ -1893,7 +1893,7 @@ function ProjectDetailInner({ project }: InnerProps) {
           <div style={{ background: 'var(--ice)', borderRadius: 'var(--radius-xl)', padding: '16px 20px' }} className="detail-card">
             <FileUpload entityType="project" entityId={project.slug} />
           </div>
-          <p style={{ fontSize: '11px', color: 'var(--muted)', marginTop: '8px' }}>
+          <p style={{ fontSize: '11px', color: 'var(--muted)', marginTop: 'var(--sp-sm)' }}>
             Drop a file or click to upload. Attachments are stored on R2 and searchable via the Search page.
           </p>
         </div>

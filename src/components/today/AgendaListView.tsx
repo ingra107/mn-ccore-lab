@@ -376,7 +376,7 @@ export function AgendaListView({
   // Trailing now-marker if not yet inserted.
   if (!nowInserted) rows.push({ type: 'now' })
 
-  // Trailing tasks in 'strip' slot (right_now / strip planned tasks not in any gap).
+  // Trailing tasks in 'strip' slot (strip planned tasks not in any calendar gap).
   // These live outside the model units — render them after the interleaved section.
   const stripTasks = plannedTasksBySlot.get('strip') ?? []
 

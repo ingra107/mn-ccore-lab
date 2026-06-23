@@ -582,7 +582,7 @@ export default function Projects() {
                             }}
                           >
                             {/* Title with pin star, category dot, and health indicator */}
-                            <div className="flex items-center gap-2.5" style={{ paddingRight: '16px' }}>
+                            <div className="flex items-center gap-2.5" style={{ paddingRight: 'var(--sp-lg)' }}>
                               <button
                                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); togglePin(project.slug) }}
                                 style={{
@@ -771,7 +771,7 @@ export default function Projects() {
                             }}
                           >
                             {/* Title row */}
-                            <div className="flex items-start gap-2" style={{ marginBottom: '8px' }}>
+                            <div className="flex items-start gap-2" style={{ marginBottom: 'var(--sp-sm)' }}>
                               <span
                                 style={{
                                   width: 6,
