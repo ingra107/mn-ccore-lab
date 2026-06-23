@@ -9,6 +9,7 @@ import { useState } from 'react'
 import { GripHorizontal } from 'lucide-react'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { LinkRow, ProjectLink, type TaskLink } from './primitives'
+import { Chip } from '../ui/Chip'
 import { TaskDetailDrawer } from './TaskDetailDrawer'
 import { DoneBox } from '../tasks/TaskRow'
 import { tagForTask, withAlpha } from './constants'
@@ -57,15 +58,27 @@ export function PlannedTaskRow({ task, project, state, timeHint, small = false, 
                 unplanned rows below. A complete short title is not a truncation. */}
             <span title={task.short_title && task.short_title !== task.title ? task.title : undefined} style={{ fontSize: 13, color: isDone ? INK_DIM : INK, textDecoration: isDone ? 'line-through' : 'none', fontWeight: 500 }}>{task.short_title || task.title}</span>
             {task.group_override && (
-              <span title={`Moved manually (${task.group_override})`} style={{ fontSize: 9, color: ACCENT_TEAL, padding: '1px 5px', background: withAlpha(ACCENT_TEAL, 9), border: `1px solid ${withAlpha(ACCENT_TEAL, 28)}`, borderRadius: 999 }}>📍</span>
+              <Chip
+                color={ACCENT_TEAL}
+                bordered
+                pill
+                fillAlpha={9}
+                borderAlpha={28}
+                title={`Moved manually (${task.group_override})`}
+              >📍</Chip>
             )}
             <ProjectLink name={project?.name ?? null} slug={project?.slug} />
             <LinkRow links={links} />
             {/* Duration chip — read-only; shows estimated_minutes ?? 30 */}
-            <span
+            <Chip
+              color={ACCENT_GOLD}
+              bordered
+              pill
+              fillAlpha={9}
+              borderAlpha={28}
               title={`Estimated duration${task.estimated_minutes ? '' : ' (default)'}`}
-              style={{ fontSize: 9, color: ACCENT_GOLD, padding: '1px 5px', background: withAlpha(ACCENT_GOLD, 9), border: `1px solid ${withAlpha(ACCENT_GOLD, 28)}`, borderRadius: 999, fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}
-            >{fmtDuration(task.estimated_minutes ?? 30)}</span>
+              style={{ fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}
+            >{fmtDuration(task.estimated_minutes ?? 30)}</Chip>
             {!isDone && <span style={{ fontSize: 11, color: INK_DIM }}>{expanded ? '▾' : '▸'}</span>}
             {/* Drag handle — hover-revealed, co-located with the right controls.
                 .task-grip keeps the @media(hover:none) touch-hide rule working.
