@@ -122,7 +122,7 @@ After Nick answers the decision queue:
 - Cross-repo schema migrations queued: D7, D8, D9, D28 (need decision docs + brain.db lockstep)
 
 ### Deploy readiness
-- Schema v54 SQL ready at `api/schema-v54-team-citations.sql` (Bundle G — needs `wrangler d1 execute`)
+- Schema v54 SQL ready at `api/schema-v54-team-citations.sql` (Bundle G — needs `wrangler d1 execute`) <!-- wrangler-d1-allowed -->
 - Pages deploy ready (no auto-deploy per Rule 9)
 - Single-command flow at `scripts/deploy-audit-wave.sh`
 
@@ -161,7 +161,7 @@ ALTER TABLE team_members ADD COLUMN citation_count INTEGER DEFAULT NULL;
 ALTER TABLE team_members ADD COLUMN h_index INTEGER DEFAULT NULL;
 ALTER TABLE team_members ADD COLUMN last_scholar_refresh TIMESTAMP DEFAULT NULL;
 ```
-Deploy: `npx wrangler d1 execute mnccore-lab --remote --file=api/schema-v54-team-citations.sql`
+Deploy: `npx wrangler d1 execute mnccore-lab --remote --file=api/schema-v54-team-citations.sql` <!-- wrangler-d1-allowed -->
 
 Until applied, `/api/citations` returns zeros and StatsCard shows `—`.
 
@@ -348,3 +348,161 @@ Dispatch order recommended in `DECISIONS-RESOLVED.md` § "Dispatch plan." Wave 1
 - `DECISIONS-RESOLVED.md` (new) — single source of truth for fix phase
 - `progress-log.md` (this entry)
 - `DECISION-QUEUE.md` — superseded by DECISIONS-RESOLVED.md, kept for reference
+
+---
+
+## 2026-04-28 (Bundle C) — SmartCompose universal sweep (D14, 9 sites)
+
+**Phase**: Fix. Worktree branch `worktree-agent-a0a6127405e0436b7`.
+Bundle C from `DECISIONS-RESOLVED.md` § Dispatch plan. 9 sites covered;
+SmartCompose extended to support non-task surfaces. `npm run build` +
+`tsc --noEmit` clean after each commit.
+
+### Foundation: extend SmartCompose to be flexible
+
+- **File:line confirmed**: yes — only 3 prior callers (TaskDetailDrawer,
+  MyTasks InlineDetail/TaskDrawer), all task-mode.
+- **Action**: Added optional `onSubmit`, `value`/`onChange`, `submitting`,
+  `uploadContext`, `theme='dark'|'light'`, `bare`, `autoFocus`,
+  `alwaysShowToolbar`, `submitLabel`/`submittingLabel`, `hideKbdHint`,
+  `hideSubmitButton`, `rows` props. Existing 3 callers unchanged
+  (task mode = pass `taskId`, default behavior preserved). Custom mode
+  = pass `onSubmit` + (optional) `uploadContext` for R2 keying. Paste-image
+  now wired inside SmartCompose (was caller-side before).
+- **Commit**: `16e029de` — feat(SmartCompose): add custom-mode + light theme + flexible upload context (D14 prep)
+
+### TP-01 — TodayPage morning thought (P0, D11 prefix-routed + time-aware)
+
+- **File:line confirmed**: yes — `src/pages/portal/TodayPage.tsx:237-244`
+  was bare `<input>` with no submit handler / state / keybind.
+- **git log since audit**: none.
+- **Reproduction**: typing in the input did literally nothing — confirmed.
+- **Status**: STILL BROKEN → FIXED.
+- **Action**: New component `src/components/today/MorningThoughtCompose.tsx`
+  wraps SmartCompose (theme='dark', bare, rows=1) with D11 routing:
+  - `@hermes <text>` → POST `/api/ai-requests` with `source_type='daily_thought'`
+  - `note: <text>` → append to `today_state_<day>.thoughts` (LS array)
+  - default → `useCreateTask` w/ `assignee=userSlug`, `group_override='priorities'`
+  - Time-aware: `new Date().getHours() >= 17` → placeholder swaps to
+    "Plan tomorrow's first move…" + tasks default `due_date=tomorrow`.
+- **Decision**: D11.
+- **Commit**: `d8239394`.
+
+### TP-02 — Today RightNow chat input (P0)
+
+- **File:line confirmed**: yes — `src/components/today/RightNowCard.tsx:67-71`
+  was bare `<input>`, no handler.
+- **git log since audit**: none.
+- **Status**: STILL BROKEN → FIXED.
+- **Action**: Replaced with `<SmartCompose taskId={task.id} theme="dark"
+  bare rows=1 autoFocus />`. @hermes detection on the active task happens
+  server-side via `/@(hermes|claude)\b/i` regex on save (existing path,
+  unchanged). autoFocus so chat input gets keyboard focus when expand chevron flips.
+- **Commit**: `a710f5ca`.
+
+### PD-6 — ProjectDetail Overview Quick compose (P0)
+
+- **File:line confirmed**: yes — `src/pages/ProjectDetail.tsx:853-1057`
+  had `appendToCompose('@')` and `appendToCompose(':')` (literal char appends).
+- **git log since audit**: none.
+- **Status**: STILL BROKEN → FIXED.
+- **Action**: Replaced the textarea + decorative @ / : / 📎 row with
+  `<SmartCompose theme='light' bare value/onChange/onSubmit alwaysShowToolbar
+  uploadContext={type:'project', id:slug} submitLabel={...} />`. Preserved
+  Note/Comment type toggle, drag-drop wrapper (calls existing uploadToCompose),
+  BottomSheet trigger label (still updates because state shared via value/onChange),
+  broadcastProjectTyping firing from onChange. Removed dead imports
+  (AtSign, Smile, Paperclip, appendCharToInput, quickComposeTextRef,
+  quickComposeFileInputRef, appendToCompose helper).
+- **Commit**: `2d65f176`.
+
+### PD-6 family — ProjectUpdateFeed compose
+
+- **File:line confirmed**: yes — `src/components/ProjectUpdateFeed.tsx`
+  used `MentionInput` (partial Phase 38) but predated SmartCompose.
+- **Status**: STILL BROKEN → FIXED.
+- **Action**: Migrated to SmartCompose (theme='light', bare). Preserved
+  the 4 type pills (progress/blocker/result/question) as a header row
+  above the compose. UpdateCard reactions stay (per-row, separate from compose).
+  Adds emoji palette + R2 paperclip + paste-image (were all missing).
+- **Commit**: `ce5d537a`.
+
+### PD-6 family — ProjectComments compose
+
+- **File:line confirmed**: yes — `src/components/ProjectComments.tsx`
+  used `MentionInput` but predated SmartCompose.
+- **Status**: STILL BROKEN → FIXED.
+- **Action**: Migrated to SmartCompose (theme='light', bare). Comments
+  uniform — no type pills. Hermes per-row rendering (HermesResponse w/
+  HermesMark, gold card) in the comments LIST is unchanged. Adds emoji
+  palette + R2 paperclip + paste-image.
+- **Commit**: `b220e53d`.
+
+### MTG-02 — MeetingDetail action items form
+
+- **File:line confirmed**: yes — `src/pages/MeetingDetail.tsx:1133-1167`
+  had `appendCh('@')` + `appendCh(':')` decorative buttons.
+- **Status**: STILL BROKEN → FIXED.
+- **Action**: Replaced bare `<input>` + decorative buttons with SmartCompose
+  (theme='light', bare, value/onChange controlled). NLP quick-add via
+  `parseQuickAddInput` PRESERVED — token preview chips below still render
+  on every keystroke since `text` state lives in this component, and
+  submit feeds parsed.title/assigneeSlug/dueDate/priority into useCreateTask
+  exactly as before. broadcastMeetingTyping fires on onChange. Form → div
+  (SmartCompose handles Cmd+Enter; native form submit removed).
+  Removed AddActionItemForm-local uploadToCompose + inputRef + fileInputRef.
+- **Commit**: `ecb077a6`.
+
+### MTG-03 — MeetingDetail notes editor
+
+- **File:line confirmed**: yes — `src/pages/MeetingDetail.tsx:752-779`
+  was plain 12-row `<textarea>`, no @-mention / no markdown / no Hermes.
+- **Status**: STILL BROKEN → FIXED.
+- **Action**: Replaced with SmartCompose (theme='light', bare, value=notesDraft
+  onChange=setNotesDraft onSubmit=updateNotes+exitEditMode rows=12 autoFocus
+  alwaysShowToolbar submitLabel='Save Notes'). Cmd+Enter still saves;
+  Escape cancel kept on wrapper div. Cancel button retained alongside.
+  Verified: no Hermes regex on meeting notes server-side (brief was
+  speculative — confirmed via `grep -rn "hermes|claude" api/routes/meetings.ts`).
+- **Commit**: `7b5611aa`.
+
+### ATL-05 — AskTheLab composer + answer form
+
+- **File:line confirmed**: yes — modal at `:501-511`, answer form at `:392-399`.
+- **Status**: STILL BROKEN → FIXED.
+- **Action**: Two sites:
+  - **Question modal**: SmartCompose with `value`/`onChange`/`hideSubmitButton`
+    (modal's own "Ask the Lab" button is canonical) + `onSubmit` calls
+    extracted `submitQuestion()` helper. Cmd+Enter still triggers via
+    SmartCompose's keydown. @hermes appears in mention dropdown — gives
+    user a visible hint AI assist exists.
+  - **Answer form**: SmartCompose (theme='light', bare, alwaysShowToolbar)
+    with `submitLabel='Reply'`. Cmd+Enter submits answer. Real R2 attach
+    via `uploadContext={type:'answer', entityType:'question'}` so a
+    researcher can drop screenshots/PDFs.
+- **New SmartCompose prop**: `hideSubmitButton` (used by the question modal
+  where form-level submit is canonical).
+- **Commit**: `0e358229`.
+
+### Bundle C summary
+
+- 9 sites + 1 foundation commit = **10 commits** on worktree branch.
+- Build clean (`npm run build` + `tsc --noEmit -p tsconfig.app.json`)
+  after each commit.
+- SmartCompose now handles 11 surfaces total (3 prior task-mode +
+  8 new — RightNow uses task mode, the other 7 use custom mode).
+- Worktree NOT pushed; Nick to merge per CLAUDE.md Rule 9.
+
+### Skipped / not in scope
+
+- **PD-6 outer drag-drop wrapper kept** (uploads via existing
+  uploadToCompose path that appends a markdown link — different from
+  SmartCompose's paperclip flow which is also wired). Both work; no conflict.
+- **MeetingDetail action items: token preview chips kept inline below
+  the compose** (lines ~1115-1145 in current file). They were preserved
+  per spec — the brief said NLP quick-add must keep working.
+- **AskTheLab modal width (max-w-md)** left as-is per brief ("separate
+  fix later").
+- **TodayPage compose container chrome (🧠 emoji + dashed border)**
+  kept; only the inner input swapped. CLAUDE.md Rule 7 (zero monospace)
+  preserved (kbd hint moved to be conditional via `hideKbdHint`).
