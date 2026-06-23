@@ -7,6 +7,7 @@ import { useDebounce } from '../hooks/useDebounce'
 import SentimentBadge from './SentimentBadge'
 import InlineSelect from './InlineSelect'
 import { Button } from './ui/Button'
+import Field from './ui/Field'
 import Modal from './ui/Modal'
 import { parseTagsString } from '../lib/tagUtils'
 import { parseDbUtc } from '../lib/time'
@@ -114,16 +115,6 @@ export default function CreateDecisionModal({ projects, onCreate, onClose, open 
     }
   }
 
-  const labelStyle = {
-    fontSize: '10px',
-    color: 'var(--slate)',
-    opacity: 0.85,
-    textTransform: 'uppercase' as const,
-    letterSpacing: '0.06em',
-    display: 'block',
-    marginBottom: '4px',
-  }
-
   const inputStyle = {
     width: '100%',
     fontSize: 'var(--value-size)',
@@ -168,17 +159,18 @@ export default function CreateDecisionModal({ projects, onCreate, onClose, open 
     >
       <div className="flex flex-col gap-4">
         <div>
-          <label htmlFor="decision-title" style={labelStyle}>Decision Title</label>
-          <input
-            id="decision-title"
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="What was decided?"
-            style={inputStyle}
-            aria-required="true"
-            autoFocus
-          />
+          <Field label="Decision Title" htmlFor="decision-title" size="micro" noContainer>
+            <input
+              id="decision-title"
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="What was decided?"
+              style={inputStyle}
+              aria-required="true"
+              autoFocus
+            />
+          </Field>
           {similarDecisions.length > 0 && (
             <div className="mt-3 p-3 rounded-lg" style={{ background: 'var(--gold-hover)', border: `1px dashed ${withAlpha(ACCENT_GOLD, 20)}` }}>
               <div className="flex items-center gap-1.5 mb-2">
@@ -212,45 +204,49 @@ export default function CreateDecisionModal({ projects, onCreate, onClose, open 
         </div>
 
         <div>
-          <label style={labelStyle}>Rationale</label>
-          <textarea
-            value={rationale}
-            onChange={(e) => setRationale(e.target.value)}
-            placeholder="Why was this decision made?"
-            rows={3}
-            style={{ ...inputStyle, resize: 'vertical' }}
-          />
+          <Field label="Rationale" size="micro" noContainer>
+            <textarea
+              value={rationale}
+              onChange={(e) => setRationale(e.target.value)}
+              placeholder="Why was this decision made?"
+              rows={3}
+              style={{ ...inputStyle, resize: 'vertical' }}
+            />
+          </Field>
         </div>
 
         <div>
-          <label style={labelStyle}>Context</label>
-          <textarea
-            value={context}
-            onChange={(e) => setContext(e.target.value)}
-            placeholder="What were the alternatives considered?"
-            rows={2}
-            style={{ ...inputStyle, resize: 'vertical' }}
-          />
+          <Field label="Context" size="micro" noContainer>
+            <textarea
+              value={context}
+              onChange={(e) => setContext(e.target.value)}
+              placeholder="What were the alternatives considered?"
+              rows={2}
+              style={{ ...inputStyle, resize: 'vertical' }}
+            />
+          </Field>
         </div>
 
         <div className="flex gap-4">
           <div style={{ flex: 1 }}>
-            <label style={labelStyle}>Primary Project (optional)</label>
-            <InlineSelect
-              value={projectSlug}
-              options={[{ value: '', label: 'No project' }, ...projects.map(p => ({ value: p.slug, label: p.title }))]}
-              onChange={setProjectSlug}
-            />
+            <Field label="Primary Project (optional)" size="micro" noContainer>
+              <InlineSelect
+                value={projectSlug}
+                options={[{ value: '', label: 'No project' }, ...projects.map(p => ({ value: p.slug, label: p.title }))]}
+                onChange={setProjectSlug}
+              />
+            </Field>
           </div>
           <div style={{ flex: 1 }}>
-            <label style={labelStyle}>Tags (comma-separated)</label>
-            <input
-              type="text"
-              value={tags}
-              onChange={(e) => setTags(e.target.value)}
-              placeholder="e.g. statistics, methodology"
-              style={inputStyle}
-            />
+            <Field label="Tags (comma-separated)" size="micro" noContainer>
+              <input
+                type="text"
+                value={tags}
+                onChange={(e) => setTags(e.target.value)}
+                placeholder="e.g. statistics, methodology"
+                style={inputStyle}
+              />
+            </Field>
             {/* Tag auto-suggestions */}
             {newSuggestions.length > 0 && (
               <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
@@ -280,8 +276,8 @@ export default function CreateDecisionModal({ projects, onCreate, onClose, open 
 
         {/* Linked Projects */}
         <div>
-          <label style={labelStyle}>Linked Projects (optional)</label>
-          <div className="relative">
+          <Field label="Linked Projects (optional)" size="micro" noContainer>
+            <div className="relative">
             <div className="flex items-center gap-1" style={{ ...inputStyle, padding: 'var(--sp-xs) var(--sp-sm)', flexWrap: 'wrap' }}>
               {linkedProjectSlugs.map((slug) => {
                 const projTitle = projects.find((p) => p.slug === slug)?.title || slug
@@ -344,7 +340,8 @@ export default function CreateDecisionModal({ projects, onCreate, onClose, open 
                 ))}
               </div>
             )}
-          </div>
+            </div>
+          </Field>
         </div>
       </div>
     </Modal>
