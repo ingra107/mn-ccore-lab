@@ -965,7 +965,7 @@ export async function handleAddComment(
 
 // POST /api/projects/:slug/updates — post project update
 export async function handlePostProjectUpdate(slug: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
-  const body = await request.json() as { content: string; update_type?: string; author?: string };
+  const body = await request.json() as { content: string; update_type?: string; author?: string; source_table?: string | null; source_id?: string | null };
   if (!body.content) return error('content required', 400);
 
   // Phase 1b-extended: block non-PI callers from posting updates on a PB-category project.
@@ -984,6 +984,13 @@ export async function handlePostProjectUpdate(slug: string, request: Request, us
   if ('error' in actor) return error(actor.error, 400);
   if (!canonicalId) return error('Project not found', 404);
 
+  // Idempotency source key (2026-06-23 PB session-close capture): when BOTH
+  // are present, postActivityEntry takes the INSERT-OR-IGNORE path against the
+  // partial UNIQUE(source_table, source_id) index, so a re-post (PB session-
+  // close + overnight Inbox flush computing the same key) is dropped server-
+  // side. Require the pair or neither — a half-set would store a non-NULL
+  // source_table with NULL source_id outside the index's intent.
+  const hasSourceKey = body.source_table != null && body.source_id != null;
   const posted = await postActivityEntry({
     env,
     user,
@@ -994,6 +1001,8 @@ export async function handlePostProjectUpdate(slug: string, request: Request, us
     body: body.content,
     actorSlug: actor.slug,
     projectSlug: slug,
+    sourceTable: hasSourceKey ? body.source_table : null,
+    sourceId: hasSourceKey ? body.source_id : null,
   });
   if (!posted.ok) return error(posted.error, posted.status);
 

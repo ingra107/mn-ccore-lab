@@ -573,6 +573,55 @@ describe('P2-A — project composers write activity_entries; old reads are proje
     const body = await res.json() as { data: { kind: string }[] }
     expect(body.data.map(d => d.kind).sort()).toEqual(['comment', 'update'])
   })
+
+  // PB session-close capture (2026-06-23): the route forwards source_table /
+  // source_id from the request body to postActivityEntry, so a re-post with the
+  // SAME key (session-close + overnight Inbox flush) is INSERT-OR-IGNORE'd.
+  it('handlePostProjectUpdate forwards source_table/source_id; a second post with the same key is deduped to ONE row', async () => {
+    const ctx = makeEnv(FX)
+    const post = () => handlePostProjectUpdate(
+      'alpha',
+      natePostReq({
+        content: 'progress: shipped the capture pass',
+        source_table: 'pb_progress_note',
+        source_id: 'abc123def456abc123def456abc12300',
+      }),
+      NATE,
+      ctx.env,
+    )
+
+    const first = await post()
+    expect(first.status).toBe(201)
+    const firstRow = ctx.ae.find(r => r.entity_type === 'project' && r.source_table === 'pb_progress_note')
+    expect(firstRow).toBeDefined()
+    expect(firstRow!.source_table).toBe('pb_progress_note')
+    expect(firstRow!.source_id).toBe('abc123def456abc123def456abc12300')
+    const after1 = ctx.ae.length
+
+    // Second identical post — INSERT OR IGNORE drops it; no new row.
+    const second = await post()
+    expect(second.status).toBe(201) // route still returns the canonical (pre-existing) row
+    expect(ctx.ae.length).toBe(after1) // NO duplicate
+    expect(ctx.ae.filter(r => r.source_table === 'pb_progress_note').length).toBe(1)
+  })
+
+  // Half-set source params must NOT store a non-NULL source_table with a NULL
+  // source_id (outside the partial UNIQUE index's intent). The route requires
+  // the pair or neither.
+  it('handlePostProjectUpdate ignores a half-set source key (source_table without source_id)', async () => {
+    const ctx = makeEnv(FX)
+    const res = await handlePostProjectUpdate(
+      'alpha',
+      natePostReq({ content: 'no key', source_table: 'pb_progress_note' }),
+      NATE,
+      ctx.env,
+    )
+    expect(res.status).toBe(201)
+    const row = ctx.ae.find(r => r.entity_type === 'project' && r.kind === 'update')
+    expect(row).toBeDefined()
+    expect(row!.source_table).toBeNull()
+    expect(row!.source_id).toBeNull()
+  })
 })
 
 // ── Hermes placeholder ────────────────────────────────────────────────────────────
