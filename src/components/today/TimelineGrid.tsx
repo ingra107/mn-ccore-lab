@@ -43,6 +43,7 @@ import {
   ACCENT_GOLD, ACCENT_TEAL, ACCENT_CORAL, INK, INK_DIM, PAGE_BG, withAlpha,
   type TodayEvent, type PlannedSlot,
 } from './constants'
+import { fmtDuration } from './utils'
 import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow } from '../../lib/api'
 
@@ -155,7 +156,7 @@ function TimedTaskBlock({
     willChange: isDragging ? 'transform' : isResizing ? 'height' : 'auto',
   }
 
-  const durLabel = dur < 60 ? `${dur}m` : `${Math.floor(dur / 60)}h${dur % 60 > 0 ? ` ${dur % 60}m` : ''}`
+  const durLabel = fmtDuration(dur)
 
   return (
     <div
@@ -173,7 +174,7 @@ function TimedTaskBlock({
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 4, minWidth: 0, flex: 1 }}>
-        {/* Wide drag-grip indicator — hover-revealed, wider 2×4-style GripHorizontal.
+        {/* Drag-grip indicator — hover-revealed GripHorizontal (size 16).
             Pure visual affordance; the whole block body is the drag target. */}
         <GripHorizontal
           size={16}
@@ -328,8 +329,10 @@ function AgendaGapRow({
     [timedTasks, gapStartMin],
   )
   // timedBlocksBottom: the px bottom of the tallest block in the absolute lane —
-  // i.e. max(topPx + heightPx) across all columns. Used as the expand-drawer anchor
-  // so a drawer always sits below the FULL block cluster, never just its own column.
+  // i.e. max(topPx + heightPx) across all columns. Feeds containerMinHeight so the
+  // gap container always grows to contain every timed block (Level-1: no overflow).
+  // (The expand drawer anchors at its OWN block's bottom — see drawerTopPx below —
+  // NOT at this cluster bottom; that far-jump anchor was reverted.)
   const timedBlocksBottom = useMemo(() => {
     if (timedPlacementMap.size === 0) return 0
     return Math.max(...Array.from(timedPlacementMap.values()).map((p) => p.topPx + p.heightPx))

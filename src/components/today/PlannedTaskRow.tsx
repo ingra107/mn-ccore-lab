@@ -5,16 +5,6 @@
 // Extracted from src/pages/portal/TodayPage.tsx. Same TaskDetailDrawer
 // expansion as the regular TaskRow (CD spec: click body = expand drawer).
 
-// ── helpers ───────────────────────────────────────────────────────────────
-
-/** Format raw minutes as a concise label: 30 → "30m", 60 → "1h", 90 → "1h 30m". */
-function fmtDuration(mins: number): string {
-  if (mins < 60) return `${mins}m`
-  const h = Math.floor(mins / 60)
-  const m = mins % 60
-  return m === 0 ? `${h}h` : `${h}h ${m}m`
-}
-
 import { useState } from 'react'
 import { GripHorizontal } from 'lucide-react'
 import { ICON_PROPS } from '../../lib/iconProps'
@@ -23,6 +13,7 @@ import { TaskDetailDrawer } from './TaskDetailDrawer'
 import { DoneBox } from '../tasks/TaskRow'
 import { tagForTask, withAlpha } from './constants'
 import { ACCENT_GOLD, ACCENT_TEAL, INK, INK_DIM } from './constants'
+import { fmtDuration } from './utils'
 import { isTaskDone } from '../../lib/taskGrouping'
 import WorkOnActions from '../WorkOnActions'
 import type { TodayStateApi } from '../../hooks/useTodayState'

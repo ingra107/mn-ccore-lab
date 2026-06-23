@@ -26,6 +26,7 @@ import {
   INK, INK_MUTED, INK_DIM, PANEL_BG,
   TODAY_MOVE_OPTIONS, withAlpha,
 } from './constants'
+import { fmtDuration } from './utils'
 import { isTaskDone } from '../../lib/taskGrouping'
 import { STATUS_OPTIONS } from '../../lib/taskConstants'
 import { stripMeetingMarker } from '../../lib/textUtils'
@@ -35,14 +36,6 @@ import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow } from '../../lib/api'
 
 // ── helpers ───────────────────────────────────────────────────────────────
-
-/** Format a raw minute count as a human label: 30 → "30m", 60 → "1h", 90 → "1h 30m". */
-function fmtDuration(mins: number): string {
-  if (mins < 60) return `${mins}m`
-  const h = Math.floor(mins / 60)
-  const m = mins % 60
-  return m === 0 ? `${h}h` : `${h}h ${m}m`
-}
 
 const DURATION_MIN = 15
 const DURATION_MAX = 480

@@ -181,25 +181,6 @@ export function packTaskBlocks(
   })
 }
 
-/**
- * Compute the minimum gap container height needed to contain all timed task
- * blocks without overflow into the next timeline unit.
- * Gap auto-grow: max(pxForGap(freeMinutes), tasksExtentPx).
- * tasksExtentPx = max over timed tasks of (top + height).
- * This is computed here (model layer) and used in AgendaGapRow.
- */
-export function gapAutoHeight(
-  freeMinutes: number,
-  timedTasks: TaskRow[],
-  gapStartMin: number,
-): number {
-  const base = pxForGap(freeMinutes)
-  if (timedTasks.length === 0) return base
-  const placements = packTaskBlocks(timedTasks, gapStartMin)
-  const tasksExtent = Math.max(...placements.map((p) => p.topPx + p.heightPx))
-  return Math.max(base, tasksExtent)
-}
-
 // ── Agenda unit types ─────────────────────────────────────────────────────
 
 export interface GapUnit {
@@ -218,11 +199,6 @@ export interface MeetingUnit {
   endMin: number
   minutes: number
   baseHeight: number
-}
-
-export interface OverlapColumn {
-  events: TodayEvent[]
-  placements: ColPlacement[]
 }
 
 export interface OverlapUnit {

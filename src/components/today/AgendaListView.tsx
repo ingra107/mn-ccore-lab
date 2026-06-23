@@ -37,6 +37,7 @@ import {
 import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow } from '../../lib/api'
 import { useNowMinutes } from './Timeline'
+import { fmtDuration } from './utils'
 
 // ── helpers ───────────────────────────────────────────────────────────────
 
@@ -49,11 +50,7 @@ function fmtMin(min: number): string {
 }
 
 function durationLabel(startMin: number, endMin: number): string {
-  const mins = endMin - startMin
-  if (mins < 60) return `${mins}m`
-  const h = Math.floor(mins / 60)
-  const m = mins % 60
-  return m === 0 ? `${h}h` : `${h}h ${m}m`
+  return fmtDuration(endMin - startMin)
 }
 
 // ── AgendaEventRow ────────────────────────────────────────────────────────
