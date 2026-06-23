@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "lint": "eslint . && npm run lint:select-star && npm run lint:color-concat && npm run lint:no-optional-request && npm run lint:token-snap",
+    "lint": "node -e \"const{execSync}=require('child_process');const steps=['eslint .','npm run lint:select-star','npm run lint:color-concat','npm run lint:no-optional-request','npm run lint:token-snap'];let failed=false;for(const s of steps){try{execSync(s,{stdio:'inherit'})}catch{failed=true;console.error('[lint] FAILED: '+s)}}process.exit(failed?1:0)\"",
     "lint:opacity": "node scripts/check-opacity-floor.mjs",
     "lint:select-star": "node scripts/check-select-star.mjs --enforce",
     "lint:color-concat": "node scripts/check-color-string-concat.mjs --enforce",

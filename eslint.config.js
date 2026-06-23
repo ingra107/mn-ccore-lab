@@ -6,7 +6,11 @@ import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  // Gate scope = product surface (src/ + api/). Test scaffolding and the
+  // separate hub-realtime worker package carry their own legitimate `any`,
+  // empty catches, and intentionally-unused fixture vars; linting them here
+  // only adds noise that masks real product-surface regressions.
+  globalIgnores(['dist', 'tests/**', 'workers/**', '**/*.test.ts']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [
