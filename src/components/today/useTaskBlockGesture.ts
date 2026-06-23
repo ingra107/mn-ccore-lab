@@ -85,9 +85,6 @@ export interface TaskBlockGestureState {
   heightDeltaPx: number
   /** Active gesture mode; null when idle. */
   mode: GestureMode
-  /** During a move gesture: the snapped + clamped landing minute (for ghost preview).
-   *  null when idle or during resize. */
-  snappedLandingMin: number | null
 }
 
 export interface TaskBlockGestureHandlers {
@@ -142,7 +139,6 @@ export function useTaskBlockGesture({
   const [translatePx, setTranslatePx] = useState(0)
   const [heightDeltaPx, setHeightDeltaPx] = useState(0)
   const [mode, setMode] = useState<GestureMode>(null)
-  const [snappedLandingMin, setSnappedLandingMin] = useState<number | null>(null)
 
   // Stable gesture state stored in a ref (pointerId, origin, cumulative delta).
   // Avoids stale-closure issues in event handlers.
@@ -176,7 +172,6 @@ export function useTaskBlockGesture({
         clamped = Math.max(gapStartMin, Math.min(maxStart, snapped))
       }
       setTranslatePx((clamped - planStartMin) * PX_PER_MIN)
-      setSnappedLandingMin(clamped)
       onGhostUpdate?.(taskId, clamped)
     } else if (g.mode === 'resize') {
       setHeightDeltaPx(deltaY)
@@ -202,7 +197,6 @@ export function useTaskBlockGesture({
     setTranslatePx(0)
     setHeightDeltaPx(0)
     setMode(null)
-    setSnappedLandingMin(null)
     onGhostUpdate?.(taskId, null)
 
     const gMode = g.mode
@@ -292,7 +286,7 @@ export function useTaskBlockGesture({
   }, [handlePointerMove, handlePointerUp])
 
   return [
-    { translatePx, heightDeltaPx, mode, snappedLandingMin },
+    { translatePx, heightDeltaPx, mode },
     { onPointerDownBody, onPointerDownResize },
   ]
 }
