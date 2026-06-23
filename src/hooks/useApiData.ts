@@ -1462,16 +1462,28 @@ export interface TaskLinksPayload {
   projectLinks: StoredLink[]
 }
 
+// Named module-scope queryFns so tests exercise the REAL fetch+parse path
+// (not an inline mirror that can silently drift). Backlog #144, 2026-06-22.
+export async function fetchTaskLinks(taskId: string | null): Promise<TaskLinksPayload> {
+  if (!taskId) return { links: [], projectLinks: [] }
+  const res = await fetch(`/api/tasks/${taskId}/links`)
+  if (!res.ok) return { links: [], projectLinks: [] }
+  const data = await res.json() as TaskLinksPayload
+  return data
+}
+
+export async function fetchProjectLinks(slug: string | null): Promise<StoredLink[]> {
+  if (!slug) return []
+  const res = await fetch(`/api/projects/${slug}/links`)
+  if (!res.ok) return []
+  const data = await res.json() as { links: StoredLink[] }
+  return data.links ?? []
+}
+
 export function useTaskLinks(taskId: string | null) {
   return useQuery({
     queryKey: ['task-links', taskId],
-    queryFn: async (): Promise<TaskLinksPayload> => {
-      if (!taskId) return { links: [], projectLinks: [] }
-      const res = await fetch(`/api/tasks/${taskId}/links`)
-      if (!res.ok) return { links: [], projectLinks: [] }
-      const data = await res.json() as TaskLinksPayload
-      return data
-    },
+    queryFn: () => fetchTaskLinks(taskId),
     staleTime: 60 * 1000,
     enabled: !!taskId,
   })
@@ -1480,13 +1492,7 @@ export function useTaskLinks(taskId: string | null) {
 export function useProjectLinks(slug: string | null) {
   return useQuery({
     queryKey: ['project-links', slug],
-    queryFn: async (): Promise<StoredLink[]> => {
-      if (!slug) return []
-      const res = await fetch(`/api/projects/${slug}/links`)
-      if (!res.ok) return []
-      const data = await res.json() as { links: StoredLink[] }
-      return data.links ?? []
-    },
+    queryFn: () => fetchProjectLinks(slug),
     staleTime: 60 * 1000,
     enabled: !!slug,
   })

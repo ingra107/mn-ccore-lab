@@ -42,11 +42,17 @@ export function LinksBar({ task }: { task: TaskRow }) {
         // then try canonical normalizer (delivers 15-type icons from slot URLs),
         // then fall back to classifyUrl's coarse 5-bucket icon.
         const { href, Icon: FallbackIcon, typeLabel, isHttp } = classifyUrl(l.url)
-        const resolvedType = (l as { type?: string | null }).type || normalizeLink(l.url)?.type
+        const storedType = (l as { type?: string | null }).type
+        const resolvedType = storedType || normalizeLink(l.url)?.type
         const iconSpec = resolvedType ? iconForType(resolvedType) : null
         const Icon = iconSpec ? iconSpec.Icon : FallbackIcon
         const color = iconSpec ? iconSpec.color : INK_DIM
-        const tooltip = l.desc || typeLabel
+        // Mode-B tooltip (link spec §B): "{type} · {desc}" when a stored type is
+        // present, else fall back to the human desc (then classifyUrl label).
+        // Matches today/LinkRow so both surfaces read identically.
+        const tooltip = storedType
+          ? (l.desc ? `${storedType} · ${l.desc}` : l.desc || typeLabel)
+          : l.desc || typeLabel
         return (
           <a
             key={i}

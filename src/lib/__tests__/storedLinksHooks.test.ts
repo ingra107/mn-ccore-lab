@@ -1,45 +1,27 @@
 /**
  * storedLinksHooks — unit tests for useTaskLinks / useProjectLinks queryFn
- * shapes (B3 Task 8b, 2026-06-21).
+ * shapes (B3 Task 8b, 2026-06-21; honesty refactor backlog #144, 2026-06-22).
  *
- * Tests the fetch + parse logic in isolation by directly calling the
- * queryFn closures (extracted inline) against a mocked global fetch.
- * No React / React Query context needed for this shape-verification layer.
+ * Tests the REAL fetch + parse logic by importing the production queryFns
+ * (fetchTaskLinks / fetchProjectLinks from src/hooks/useApiData.ts) and
+ * driving them against a mocked global fetch. No React / React Query context
+ * needed for this shape-verification layer — but the test now breaks if the
+ * real hook's fetch shape breaks (no inline mirror to drift out of sync).
  *
  * Run: npx vitest run --config vitest.config.lib.ts
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, vi, afterEach } from 'vitest'
+import {
+  fetchTaskLinks,
+  fetchProjectLinks,
+  type StoredLink,
+  type TaskLinksPayload,
+} from '../../hooks/useApiData'
 
-// ── Minimal inline queryFn mirrors (so tests stay in sync with the hook) ─────
-// These mirror the actual queryFn logic from useApiData.ts — if the hook
-// changes its fetch shape, update these mirrors to match.
-
-type StoredLink = {
-  id: string
-  role: string
-  type: string
-  canonical_url: string
-  short_title: string | null
-  sort_order: number
-}
-
-type TaskLinksPayload = { links: StoredLink[]; projectLinks: StoredLink[] }
-
-async function taskLinksQueryFn(taskId: string | null): Promise<TaskLinksPayload> {
-  if (!taskId) return { links: [], projectLinks: [] }
-  const res = await fetch(`/api/tasks/${taskId}/links`)
-  if (!res.ok) return { links: [], projectLinks: [] }
-  return res.json() as Promise<TaskLinksPayload>
-}
-
-async function projectLinksQueryFn(slug: string | null): Promise<StoredLink[]> {
-  if (!slug) return []
-  const res = await fetch(`/api/projects/${slug}/links`)
-  if (!res.ok) return []
-  const data = await res.json() as { links: StoredLink[] }
-  return data.links ?? []
-}
+// Alias the production queryFns to the names the suite asserts against.
+const taskLinksQueryFn = fetchTaskLinks
+const projectLinksQueryFn = fetchProjectLinks
 
 // ── Fixtures ─────────────────────────────────────────────────────────────────
 
@@ -73,7 +55,7 @@ function mockFetch(responseBody: unknown, status = 200) {
 
 // ── useTaskLinks queryFn ──────────────────────────────────────────────────────
 
-describe('taskLinksQueryFn (mirrors useTaskLinks)', () => {
+describe('fetchTaskLinks (real useTaskLinks queryFn)', () => {
   afterEach(() => {
     vi.restoreAllMocks()
   })
@@ -125,7 +107,7 @@ describe('taskLinksQueryFn (mirrors useTaskLinks)', () => {
 
 // ── useProjectLinks queryFn ───────────────────────────────────────────────────
 
-describe('projectLinksQueryFn (mirrors useProjectLinks)', () => {
+describe('fetchProjectLinks (real useProjectLinks queryFn)', () => {
   afterEach(() => {
     vi.restoreAllMocks()
   })
