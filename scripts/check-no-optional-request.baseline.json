@@ -1,10 +1,5 @@
 [
   {
-    "file": "api/routes/digest-email.ts",
-    "line": 689,
-    "sample": "request?: Request"
-  },
-  {
     "file": "api/routes/lane3.ts",
     "line": 49,
     "sample": "request?: Request"

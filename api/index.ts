@@ -2758,7 +2758,7 @@ defineRoute({
   auth: 'authed',
   entity: 'digest',
   visibility: 'na',
-  handler: (c) => handleSendDailyDigests(E(c), R(c)),
+  handler: (c) => handleSendDailyDigests(E(c), { kind: 'http', request: R(c) }),
 });
 
 // Email drafts sync
@@ -3021,7 +3021,7 @@ export default {
       case '0 11 * * *': {
         console.log('[DailyDigest] Triggering coordinator daily brief...');
         try {
-          await handleSendDailyDigests(env);
+          await handleSendDailyDigests(env, { kind: 'cron' });
         } catch (e) {
           console.log(`[DailyDigest] Failed (non-fatal): ${e}`);
         }

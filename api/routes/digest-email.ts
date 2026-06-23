@@ -687,15 +687,27 @@ async function composeDailyDigest(env: Env, member: CoordinatorMember): Promise<
 }
 
 /**
+ * How the daily fan-out was triggered. The trust decision is explicit in the
+ * type, not inferred from request-presence: the HTTP path always carries its
+ * Request (PI/API-key gated), the cron path never does (trusted in-process
+ * service). Making `request` part of the `http` variant means there is no
+ * representable "HTTP call without a Request" — the optional-Request hole the
+ * Z5.2 lint bans cannot recur here.
+ */
+export type DailyDigestTrigger =
+  | { kind: 'http'; request: Request }
+  | { kind: 'cron' };
+
+/**
  * POST /api/digest-email/daily — send coordinator daily brief to all directors + coordinators.
  * Can be triggered by cron (via scheduled handler) or manually via POST.
  * Requires RESEND_API_KEY.
  */
-export async function handleSendDailyDigests(env: Env, request?: Request): Promise<Response> {
-  // B6: the daily fan-out is PI/service-only. When invoked over HTTP (request
-  // present) require PI/API-key; when invoked by the scheduled cron (no
-  // request) it's the trusted service path and runs unguarded.
-  if (request && !(await isPiRequest(request, env))) {
+export async function handleSendDailyDigests(env: Env, trigger: DailyDigestTrigger): Promise<Response> {
+  // B6: the daily fan-out is PI/service-only. HTTP callers must pass the
+  // PI/API-key check; the scheduled cron is the trusted service path and runs
+  // unguarded.
+  if (trigger.kind === 'http' && !(await isPiRequest(trigger.request, env))) {
     return error('Forbidden — daily digest fan-out is PI/service-only', 403);
   }
   if (!env.RESEND_API_KEY) {
