@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { ChevronDown, ChevronUp, Settings2, Plus, CalendarPlus, FolderPlus, Pin, RotateCcw, Clock, AlertTriangle } from 'lucide-react'
 import DashboardGrid from '../components/dashboard/DashboardGrid'
 import SegmentedToggle from '../components/ui/SegmentedToggle'
+import { Button } from '../components/ui/Button'
 import { resetLayouts } from '../lib/dashboardLayout'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 import { usePageMeta } from '../hooks/usePageMeta'
@@ -544,22 +545,26 @@ export default function Dashboard() {
             <QuickCaptureBar noMargin />
           </div>
           <div className="flex items-center gap-1.5 flex-shrink-0">
-            <Link
+            <Button
+              as={Link}
               to={`${PATHS.myTasks}?create=true`}
-              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-colors portal-footer-link"
-              style={{ color: 'var(--ink-bright, #fff)', backgroundColor: 'var(--teal-solid)', textDecoration: 'none' }}
+              variant="primary"
+              className="transition-colors portal-footer-link"
+              style={{ padding: '6px 12px', fontSize: '11px', fontWeight: 600, borderRadius: 'var(--radius-lg)', textDecoration: 'none' }}
             >
               <Plus size={12} strokeWidth={1.5} absoluteStrokeWidth />
               Task
-            </Link>
-            <Link
+            </Button>
+            <Button
+              as={Link}
               to={PATHS.meetings}
-              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-colors border hover:bg-black/5 dark:hover:bg-white/5 portal-footer-link"
-              style={{ color: 'var(--slate)', borderColor: 'var(--border-subtle)', textDecoration: 'none' }}
+              variant="secondary"
+              className="transition-colors hover:bg-black/5 dark:hover:bg-white/5 portal-footer-link"
+              style={{ padding: '6px 12px', fontSize: '11px', fontWeight: 500, borderRadius: 'var(--radius-lg)', textDecoration: 'none' }}
             >
               <CalendarPlus size={12} strokeWidth={1.5} absoluteStrokeWidth />
               Meeting
-            </Link>
+            </Button>
             <Link
               to={`${PATHS.ideas}?create=true`}
               className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-colors border hover:bg-black/5 dark:hover:bg-white/5 portal-footer-link"

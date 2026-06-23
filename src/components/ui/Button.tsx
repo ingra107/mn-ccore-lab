@@ -1,9 +1,38 @@
-import type { ButtonHTMLAttributes, CSSProperties } from 'react'
+import type {
+  CSSProperties,
+  ComponentPropsWithoutRef,
+  ElementType,
+  ReactNode,
+} from 'react'
+import { createElement } from 'react'
 
-export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'gold' | 'ghost-gold'
-  size?: 'sm' | 'md' | 'lg'
+export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'gold' | 'ghost-gold'
+export type ButtonSize = 'sm' | 'md' | 'lg'
+
+/**
+ * Own props the Button controls regardless of which element it renders as.
+ * `style`, `children`, and `disabled` are shared by every element we target
+ * (button / a / react-router Link), so they live here; everything else comes
+ * from the rendered element's own prop type via the polymorphic `as`.
+ */
+interface ButtonOwnProps {
+  variant?: ButtonVariant
+  size?: ButtonSize
+  disabled?: boolean
+  style?: CSSProperties
+  children?: ReactNode
 }
+
+/**
+ * Polymorphic Button. Defaults to `<button>`; pass `as={Link}` (or `as="a"`,
+ * any element/component) to render a `<Link>`-styled-as-button while reusing
+ * Button's variant/size styling. The rendered element's full prop surface is
+ * preserved and type-checked (e.g. `to` is required when `as={Link}`), with no
+ * `any` escape hatch.
+ */
+export type ButtonProps<E extends ElementType = 'button'> = ButtonOwnProps & {
+  as?: E
+} & Omit<ComponentPropsWithoutRef<E>, keyof ButtonOwnProps | 'as'>
 
 const VARIANT_STYLES: Record<NonNullable<ButtonProps['variant']>, CSSProperties> = {
   primary: {
@@ -73,14 +102,17 @@ const COMMON_STYLE: CSSProperties = {
   cursor: 'pointer',
 }
 
-export function Button({
+export function Button<E extends ElementType = 'button'>({
+  as,
   variant = 'secondary',
   size = 'md',
   disabled,
   style,
   children,
   ...rest
-}: ButtonProps) {
+}: ButtonProps<E>) {
+  const Component = (as ?? 'button') as ElementType
+
   const computedStyle: CSSProperties = {
     ...COMMON_STYLE,
     ...VARIANT_STYLES[variant],
@@ -89,10 +121,14 @@ export function Button({
     ...style,
   }
 
-  return (
-    <button disabled={disabled} style={computedStyle} {...rest}>
-      {children}
-    </button>
+  // `disabled` is a native <button> attribute; on an anchor / Link it would be
+  // an invalid DOM prop. Only forward it when we actually render a <button>.
+  const disabledProp = Component === 'button' ? { disabled } : {}
+
+  return createElement(
+    Component,
+    { ...disabledProp, style: computedStyle, ...rest },
+    children,
   )
 }
 

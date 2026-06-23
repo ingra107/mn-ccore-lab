@@ -4,6 +4,7 @@ import EmptyStateArt from './EmptyStateArt'
 import type { EmptyArtVariant } from './EmptyStateArt'
 import { PATHS } from '../constants/paths'
 import { ICON_PROPS } from '../lib/iconProps'
+import { Button } from './ui/Button'
 
 /**
  * S8 — branded entity-not-found state. Replaces the bare "<Thing> not found"
@@ -67,21 +68,23 @@ export default function EntityNotFound({
         </p>
 
         <div className="flex flex-wrap items-center gap-2">
-          <Link
+          <Button
+            as={Link}
             to={searchTo}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium"
-            style={{ background: 'var(--teal-solid)', color: 'var(--ink-bright, #fff)', textDecoration: 'none' }}
+            variant="primary"
+            style={{ padding: '6px 12px', fontSize: '0.875rem', fontWeight: 500, borderRadius: 'var(--radius-lg)', textDecoration: 'none' }}
           >
             <Search {...ICON_PROPS} size={14} />
             Search{reference ? ` for “${reference}”` : ''}
-          </Link>
-          <Link
+          </Button>
+          <Button
+            as={Link}
             to={backTo.to}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm"
-            style={{ border: '1px solid var(--border-subtle)', color: 'var(--ink)', textDecoration: 'none' }}
+            variant="secondary"
+            style={{ padding: '6px 12px', fontSize: '0.875rem', fontWeight: 400, borderRadius: 'var(--radius-lg)', color: 'var(--ink)', textDecoration: 'none' }}
           >
             {backTo.label}
-          </Link>
+          </Button>
         </div>
 
         {siblings.length > 0 && (
