@@ -2,17 +2,19 @@
 // schema v75, 2026-06-09). Replaces the per-browser `today_state_*`
 // localStorage blob with three SYNCED task columns:
 //   planned_for  civil date 'YYYY-MM-DD' — "planned today" = == todayKey()
-//   plan_slot    'right_now' | 'strip' | `between-${n}`
+//   plan_slot    'strip' | `between-${n}`  ('right_now' retired — see below)
 //   plan_rank    REAL ordering (fractional so a drag-insert never renumbers)
 //
 // This module is the ONE place that reads/writes the plan columns, so:
 //   - useTodayState (the Today/MyTasks SEAM) backs onto these helpers,
 //   - MyTasks' former raw LS pokes (index.tsx onBulkPlanToday,
-//     InlineDetail promote/planToday, constants readPlannedToday) re-point here.
+//     InlineDetail planToday, constants readPlannedToday) re-point here.
 //
-// `right_now` is a SINGLETON per assignee-day: promoting a task unsets the
-// previous right_now task (back to slot 'strip'). Races resolve LWW (Hub
-// seq/hash) — acceptable for a per-assignee surface.
+// `right_now` is RETIRED from the UI (the Right Now badge / promote action /
+// auto-promote were removed). No frontend path WRITES 'right_now' anymore except
+// the one-time legacy-LS migrator below (which lifts a pre-existing LS rightNow
+// onto the columns). derivePlanState still READS a stored 'right_now' value for
+// back-compat and maps it to a normal planned ('strip') task.
 //
 // Plans are disposable/self-expiring: a stale planned_for from a prior day is
 // simply ignored (every reader filters planned_for == today). No history table,
@@ -58,14 +60,19 @@ function toPlannedSlot(slot: string | null | undefined): PlannedSlot {
 }
 
 /** Derive the {rightNow, planned} plan state from today's task rows. Only tasks
- *  with planned_for == today participate (self-expiring). The right_now task is
- *  the (single) task whose plan_slot === 'right_now'. */
+ *  with planned_for == today participate (self-expiring). `rightNow` is retained
+ *  for back-compat (a task whose stored plan_slot === 'right_now') but is no
+ *  longer consumed by the UI — see the legacy read-compat note in the loop. */
 export function derivePlanState(tasks: TaskRow[], today: string = todayKey()): DerivedPlanState {
   let rightNow: string | null = null
   const planned: Record<string, { slot: PlannedSlot }> = {}
   for (const t of tasks) {
     if (!isPlannedToday(t, today)) continue
     planned[t.id] = { slot: toPlannedSlot(t.plan_slot) }
+    // Legacy read-compat: the right_now slot was retired from the UI (no badge,
+    // no promote action). A task still carrying a stored 'right_now' value is
+    // mapped through here harmlessly — toPlannedSlot already coerces its display
+    // slot to 'strip', so it renders as a normal planned task.
     if (t.plan_slot === RIGHT_NOW) rightNow = t.id
   }
   return { rightNow, planned }
@@ -94,8 +101,6 @@ export interface TodayPlanApi {
   planTask: (id: string, slot?: PlannedSlot, tasks?: TaskRow[]) => void
   /** Remove a task from today's plan (clears all 3 columns). */
   unplanTask: (id: string) => void
-  /** Promote a task to Right Now — singleton: unsets the previous right_now. */
-  promoteToRightNow: (id: string, tasks: TaskRow[]) => void
   /** Set a task's plan_slot (e.g. drop into a timeline gap 'between-<n>').
    *  Phase 3: optionally also writes plan_start_min + estimated_minutes so a
    *  freshly-dropped task becomes an absolute-positioned timed block. */
@@ -113,8 +118,7 @@ export function useTodayPlan(): TodayPlanApi {
 
   // Fallback task source for callers that don't hold the full list (e.g.
   // InlineDetail receives a single row). Scans every ['tasks', ...] cache entry
-  // (the query is filter-keyed) and dedups by id — enough to find the prior
-  // right_now task for singleton enforcement + compute a plan_rank.
+  // (the query is filter-keyed) and dedups by id — enough to compute a plan_rank.
   const tasksFromCache = useCallback((): TaskRow[] => {
     const byId = new Map<string, TaskRow>()
     const entries = queryClient.getQueriesData<TaskRow[]>({ queryKey: ['tasks'] })
@@ -156,23 +160,7 @@ export function useTodayPlan(): TodayPlanApi {
     updateTask.mutate({ id, fields })
   }, [updateTask])
 
-  const promoteToRightNow = useCallback((id: string, tasks: TaskRow[]) => {
-    const today = todayKey()
-    const all = resolveTasks(tasks)
-    // Singleton: demote the current right_now task (back to 'strip') if it's a
-    // different task. (LWW on races — see module header.)
-    const prev = all.find((t) => isPlannedToday(t, today) && t.plan_slot === RIGHT_NOW && t.id !== id)
-    if (prev) {
-      updateTask.mutate({ id: prev.id, fields: { plan_slot: 'strip' } })
-    }
-    // Promote target — also ensures it's planned for today (carry a rank if new).
-    const target = all.find((t) => t.id === id)
-    const fields: Record<string, unknown> = { planned_for: today, plan_slot: RIGHT_NOW }
-    if (!target || target.plan_rank == null) fields.plan_rank = nextPlanRank(all)
-    updateTask.mutate({ id, fields })
-  }, [updateTask, resolveTasks])
-
-  return { planTask, unplanTask, promoteToRightNow, setPlanSlot }
+  return { planTask, unplanTask, setPlanSlot }
 }
 
 // ── One-time localStorage migration ─────────────────────────────────────────

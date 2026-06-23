@@ -151,8 +151,10 @@ export interface TaskRow {
    *  that replace the per-browser today_state_* localStorage blob.
    *  - planned_for: civil date 'YYYY-MM-DD'. "planned today" = == todayKey().
    *    NULL = unplanned. Self-expiring (no history table).
-   *  - plan_slot: 'right_now' | 'strip' | `between-${n}`. right_now is a
-   *    singleton per assignee-day (enforced in src/lib/todayPlan.ts).
+   *  - plan_slot: 'strip' | `between-${n}`. ('right_now' is RETIRED from the UI —
+   *    no frontend path writes it except the one-time legacy-LS migrator in
+   *    src/lib/todayPlan.ts; derivePlanState still reads stored 'right_now' values
+   *    for back-compat and maps them to a normal planned task.)
    *  - plan_rank: REAL ordering within the plan (fractional). */
   planned_for?: string | null
   plan_slot?: string | null
