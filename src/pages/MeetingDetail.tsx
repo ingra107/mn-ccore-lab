@@ -124,7 +124,7 @@ export default function MeetingDetail() {
 
   // Multi-select for action items
   const [selectedActionIds, setSelectedActionIds] = useState<Set<string>>(new Set())
-  const toggleActionSelect = (id: string) => setSelectedActionIds(prev => { const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next })
+  const toggleActionSelect = (id: string) => setSelectedActionIds(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next })
 
   // Local action item order — persists in state during session
   // IMPORTANT: must be declared BEFORE conditional early returns to satisfy Rules of Hooks

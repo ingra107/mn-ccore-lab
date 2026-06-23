@@ -191,7 +191,7 @@ export default function ProjectLiterature({ projectSlug, isPi }: ProjectLiteratu
   )
 }
 
-function LinkPaperModal({ projectSlug, linkedPaperIds, onLink, onClose }: {
+function LinkPaperModal({ linkedPaperIds, onLink, onClose }: {
   projectSlug: string
   linkedPaperIds: string[]
   onLink: (paperId: string) => void

@@ -48,9 +48,8 @@ import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
 
 // ── Unified feed row shape (activity_entries) ─────────────────────────────────
 
-interface UnifiedEntryRow extends ActivityEntryItemRow {
-  // All fields from ActivityEntryItemRow; no additions needed.
-}
+// All fields from ActivityEntryItemRow; no additions needed.
+type UnifiedEntryRow = ActivityEntryItemRow
 
 // ── Filter taxonomy ───────────────────────────────────────────────────────────
 

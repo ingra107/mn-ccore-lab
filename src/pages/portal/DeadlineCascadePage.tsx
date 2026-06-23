@@ -52,7 +52,7 @@ export default function DeadlineCascadePage() {
     // Assign dependencies to project groups
     for (const dep of allData.dependencies) {
       // Find which project group contains the upstream node
-      for (const [_key, group] of groups) {
+      for (const group of groups.values()) {
         const nodeIds = new Set(group.nodes.map(n => n.id))
         if (nodeIds.has(dep.upstream_id) || nodeIds.has(dep.downstream_id)) {
           group.deps.push(dep)

@@ -61,7 +61,7 @@ function flowLayout(cards: GridCard[], cols: number): Layout[] {
   let y = 0
   let rowHeight = 1
   for (const card of cards) {
-    let w = Math.min(card.defaultW ?? 1, cols)
+    const w = Math.min(card.defaultW ?? 1, cols)
     const h = card.defaultH ?? 1
     if (x + w > cols) {
       x = 0

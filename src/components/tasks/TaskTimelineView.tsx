@@ -33,7 +33,7 @@ const priorityOpacity: Record<string, number> = {
   low: 0.85,
 }
 
-export default function TaskTimelineView({ tasks, onStatusChange, onOpenDetail }: TaskTimelineViewProps) {
+export default function TaskTimelineView({ tasks, onOpenDetail }: TaskTimelineViewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [tooltip, setTooltip] = useState<{ task: TaskRow; x: number; y: number } | null>(null)
 

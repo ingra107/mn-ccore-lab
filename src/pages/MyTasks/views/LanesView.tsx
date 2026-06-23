@@ -46,8 +46,8 @@ export function LanesView({ byGroup, selected, toggleSelect, selectRange, anchor
   const [peek, setPeek] = useState<Set<GroupKey>>(() => readSet(LS_PEEK))
   useEffect(() => { writeSet(LS_COLLAPSED, collapsed) }, [collapsed])
   useEffect(() => { writeSet(LS_PEEK, peek) }, [peek])
-  const toggleC = (k: GroupKey) => setCollapsed((s) => { const n = new Set(s); n.has(k) ? n.delete(k) : n.add(k); return n })
-  const toggleP = (k: GroupKey) => setPeek((s) => { const n = new Set(s); n.has(k) ? n.delete(k) : n.add(k); return n })
+  const toggleC = (k: GroupKey) => setCollapsed((s) => { const n = new Set(s); if (n.has(k)) n.delete(k); else n.add(k); return n })
+  const toggleP = (k: GroupKey) => setPeek((s) => { const n = new Set(s); if (n.has(k)) n.delete(k); else n.add(k); return n })
 
   // Phase G: Ctrl/Meta held → select-mode affordance on rows.
   const selectModeActive = useSelectMode(true)

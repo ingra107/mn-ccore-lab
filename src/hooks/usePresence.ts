@@ -78,7 +78,8 @@ export function useIntentBroadcast(
       if (msg.type === 'intent-leave') {
         setPeerIntents((prev) => {
           if (!prev[msg.slug]) return prev
-          const { [msg.slug]: _drop, ...rest } = prev
+          const rest = { ...prev }
+          delete rest[msg.slug]
           return rest
         })
         return

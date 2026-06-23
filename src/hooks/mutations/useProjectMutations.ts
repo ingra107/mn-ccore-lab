@@ -251,7 +251,7 @@ export function useLinkPaper() {
 export function useUnlinkPaper() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, project_slug }: { id: string; project_slug: string }) =>
+    mutationFn: ({ id }: { id: string; project_slug: string }) =>
       fetch(`/api/paper-links/${id}/delete`, { method: 'POST' }).then((r) => r.json()),
     onSettled: (_data, _err, variables) => {
       queryClient.invalidateQueries({ queryKey: ['project-papers', variables.project_slug] })

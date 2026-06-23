@@ -14,7 +14,7 @@ export function useSelection() {
   // Toggle a single task in/out of the selection and set it as the anchor.
   // Ctrl/Meta+click calls this.
   const toggleSelect = useCallback((id: string) => {
-    setSelected((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n })
+    setSelected((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n })
     setAnchorId(id)
   }, [])
 
@@ -24,7 +24,7 @@ export function useSelection() {
   const selectRange = useCallback((targetId: string, orderedIds: string[], currentAnchor: string | null) => {
     if (!currentAnchor || !orderedIds.includes(currentAnchor)) {
       // No anchor → fall back to single toggle + set anchor
-      setSelected((s) => { const n = new Set(s); n.has(targetId) ? n.delete(targetId) : n.add(targetId); return n })
+      setSelected((s) => { const n = new Set(s); if (n.has(targetId)) n.delete(targetId); else n.add(targetId); return n })
       setAnchorId(targetId)
       return
     }
@@ -32,7 +32,7 @@ export function useSelection() {
     const targetIdx = orderedIds.indexOf(targetId)
     if (anchorIdx === -1 || targetIdx === -1) {
       // Target not in visible list — single toggle
-      setSelected((s) => { const n = new Set(s); n.has(targetId) ? n.delete(targetId) : n.add(targetId); return n })
+      setSelected((s) => { const n = new Set(s); if (n.has(targetId)) n.delete(targetId); else n.add(targetId); return n })
       setAnchorId(targetId)
       return
     }

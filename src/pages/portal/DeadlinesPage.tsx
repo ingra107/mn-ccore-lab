@@ -79,7 +79,7 @@ export default function DeadlinesPage() {
   const taskEditors = useTaskFieldEditors()
   const [selectedTask, setSelectedTask] = useState<TaskRow | null>(null)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
-  const toggleSelect = (id: string) => setSelectedIds(prev => { const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next })
+  const toggleSelect = (id: string) => setSelectedIds(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next })
   const isLoading = tasksLoading || grantsLoading
 
   const handleFieldChange = useCallback((id: string, field: string, value: unknown) => {

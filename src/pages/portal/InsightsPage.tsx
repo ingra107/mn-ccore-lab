@@ -777,7 +777,8 @@ function StalledRegistry({ rows }: { rows: DashboardData['stalledRegistry'] }) {
       showSuccess('Follow-up task created')
       // Reset that row's date so re-click starts at default again.
       setPendingDates((prev) => {
-        const { [variables.slug]: _drop, ...rest } = prev
+        const rest = { ...prev }
+        delete rest[variables.slug]
         return rest
       })
     },

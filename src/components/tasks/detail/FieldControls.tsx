@@ -555,7 +555,6 @@ export function TaskInlineFieldRow({
   projectId,
   dueDate,
   onUpdate,
-  onOpenEditor,
   style,
 }: {
   status: string

@@ -65,7 +65,7 @@ export default function CommandPalette() {
     })
   }, [location.pathname])
   useEffect(() => {
-    try { sessionStorage.setItem(RECENT_KEY, JSON.stringify(recentRoutes)) } catch {}
+    try { sessionStorage.setItem(RECENT_KEY, JSON.stringify(recentRoutes)) } catch { /* best-effort; sessionStorage can throw in private mode / on quota */ }
   }, [recentRoutes])
 
   // Global Cmd+K listener

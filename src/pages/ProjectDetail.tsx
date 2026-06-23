@@ -262,7 +262,7 @@ function ProjectDetailInner({ project }: InnerProps) {
   // reinstall window listeners on every ProjectDetail render (was re-created
   // per-render as an inline arrow — flagged in Phase G scoping pass).
   const toggleSelect = useCallback((id: string) => {
-    setSelectedIds(prev => { const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next })
+    setSelectedIds(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next })
     setSelectAnchorId(id)
   }, [])
 
@@ -2031,7 +2031,7 @@ function ProjectDetailInner({ project }: InnerProps) {
               <button
                 type="button"
                 onClick={() => {
-                  try { localStorage.setItem('mnccore.banner.notes-comments.dismissed', '1') } catch {}
+                  try { localStorage.setItem('mnccore.banner.notes-comments.dismissed', '1') } catch { /* best-effort; localStorage can throw in private mode / on quota */ }
                   setNotesCommentsBannerDismissed(true)
                 }}
                 aria-label="Dismiss explainer"
