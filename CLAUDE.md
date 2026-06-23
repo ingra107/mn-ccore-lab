@@ -10,7 +10,7 @@ Before writing any code or answering any question about this project, read:
 4. **`CHANGELOG.md`** — top entry = most recent phase; jump here when asked "what changed."
 5. **`docs/OBSERVABILITY.md`** — `/api/health` runbook.
 
-Historical material in `docs/archived/` — safe to ignore unless explicitly spelunking history. Detailed design reference in `docs/design-system.md`.
+Historical material in `docs/archived/` — safe to ignore unless explicitly spelunking history. Detailed design reference in `docs/design-system.md` — its top section **"Design Principles (Nick's bar)"** is the 10 standing UI rules to read BEFORE building any component.
 
 ## Vision
 
@@ -39,7 +39,7 @@ The MN-CCORE Lab Hub is the **team's operating surface** — where research gets
 
 ### Design Ethos: Operational, Not Editorial (Decision: 2026-04-01)
 
-The Hub is a **research operations center**, not a magazine. Full rationale: `Context/Decisions/2026-04-01_hub-design-ethos-pivot.md` (PB repo). Detailed design reference in `docs/design-system.md`.
+The Hub is a **research operations center**, not a magazine. Full rationale: `Context/Decisions/2026-04-01_hub-design-ethos-pivot.md` (PB repo). Detailed design reference in `docs/design-system.md` — read its **"Design Principles (Nick's bar)"** section (the 10 standing UI rules) before building any component.
 
 **Core principles (NEVER violate):**
 1. **Dark-first design.** Dark bg is deep neutral (#0b1017), NOT blue-tinted. Text is #e2e8f0. Light mode secondary.

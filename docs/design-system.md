@@ -5,6 +5,39 @@ This file is reference-only — load it when doing design system work.
 
 ---
 
+## Design Principles (Nick's bar)
+
+Nick's standing bar for EVERY Hub UI build (distilled 2026-06-21 from the Today-timeline
+rebuild). Read these BEFORE writing any component - they are the lens the more mechanical
+token/spec sections below serve. They apply to every surface a task or project appears on
+(Today rows, timeline blocks, MyTasks, Projects table, detail panels). Deviations need
+Nick's explicit OK.
+
+1. **Close dead space, but do not crowd.** Tighten padding, row heights, and gaps to remove
+   empty/negative space - balanced against information overload. Dense is fine; cramped is not.
+2. **Show each piece of info exactly ONCE per view.** Never repeat the same link, project name,
+   or control across rows in a single view. De-duplicate before shipping.
+3. **Expand and reveal IN PLACE.** The UI opens right where the user clicks or acts - never jerk
+   or jump the viewport to a far position. Anchor expansion at the clicked element.
+4. **Make every affordance identical on every surface.** The same control looks and behaves the
+   same wherever a task/project appears, so "when I see X I know exactly what it is." Reuse the
+   shared component; never fork a one-off variant.
+5. **Cut chrome that adds no info.** Remove labels and indicators that crowd without informing;
+   make the affordance self-evident instead of annotating it.
+6. **Surface affordances inline and compact.** Put controls directly on the row as compact,
+   icon-only triggers where space allows - do not bury them behind an expand.
+7. **Use familiar idioms.** Match the standard pattern the user already recognizes; do not invent
+   a novel interaction when a known one fits.
+8. **Order deterministically and consistently.** Sort by a defined priority that is the same
+   everywhere, so "which is leftmost" is predictable (e.g. links: iwd_ -> google doc -> email
+   thread -> email draft -> others).
+9. **De-conflate distinct concepts into distinct affordances.** One control means one thing; never
+   overload a single control with two meanings.
+10. **Group related things by proximity.** Place related elements close together (action row near
+    the title; expand control near its block).
+
+---
+
 ## Animation Timing (5 durations + 2 easings)
 
 - `--duration-instant: 0ms` — state toggles, checkbox
