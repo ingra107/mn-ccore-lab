@@ -23,5 +23,12 @@ export default defineConfig([
       ecmaVersion: 2020,
       globals: globals.browser,
     },
+    rules: {
+      // Honor the _-prefix intentional-unused convention the code already
+      // follows (handler signature args like _ctx/_env, destructure-omit like
+      // _drop/_key). Without this the convention was unenforced and those vars
+      // still flagged. Genuinely-dead (non-_) code stays an error.
+      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' }],
+    },
   },
 ])
