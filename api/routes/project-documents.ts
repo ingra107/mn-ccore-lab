@@ -1,19 +1,24 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, isPiRequest, resolveActor, assertProjectVisible } from '../helpers';
+import { json, error, generateId, logActivity, isPiRequest, resolveActor, resolveAndGuardProject } from '../helpers';
 import { idempotentDelete } from '../lib/idempotent-delete';
 
 type DocType = 'folder' | 'draft' | 'data' | 'protocol' | 'submission' | 'link';
 
 // GET /api/projects/:slug/documents — list documents linked to a project
 export async function handleGetProjectDocuments(projectSlug: string, request: Request, env: Env): Promise<Response> {
-  // Phase 1b-B: block non-PI callers from listing documents of a PB-category project.
-  const block = await assertProjectVisible(request, env, projectSlug);
+  // project_documents.project_id is an FK to projects(id) — the canonical proj_*
+  // PK after the P2 re-key. Resolve the URL slug to that PK (resolveAndGuardProject
+  // also runs the Phase 1b-B PB-visibility gate, returning a 403/404 block).
+  const { block, projectId } = await resolveAndGuardProject(request, env, projectSlug);
   if (block) return block;
+  // Match the canonical PK AND the raw slug: rows inserted before this route was
+  // fixed still hold the slug in project_id, so read both keys (same id-OR-slug
+  // tolerance the project-delete cascade uses, projects.ts).
   const result = await env.DB.prepare(
     `SELECT * FROM project_documents
-     WHERE project_id = ?
+     WHERE project_id = ? OR project_id = ?
      ORDER BY created_at DESC`
-  ).bind(projectSlug).all();
+  ).bind(projectId, projectSlug).all();
   return json({ data: result.results, count: result.results.length });
 }
 
@@ -38,8 +43,11 @@ export async function handleCreateProjectDocument(
     return error('url is required', 400);
   }
 
-  // Phase 1b-extended: block non-PI callers from attaching documents to a PB-category project.
-  const block = await assertProjectVisible(request, env, projectSlug);
+  // Resolve the URL slug to the canonical proj_* PK (project_documents.project_id
+  // is an FK to projects(id)) and run the Phase 1b-extended PB-visibility gate in
+  // one SELECT. Pre-fix this bound the raw slug, re-polluting child FKs with slugs
+  // post-P2-rekey (the exact failure resolveAndGuardProject was built to prevent).
+  const { block, projectId } = await resolveAndGuardProject(request, env, projectSlug);
   if (block) return block;
 
   const id = generateId();
@@ -52,7 +60,7 @@ export async function handleCreateProjectDocument(
   await env.DB.prepare(
     `INSERT INTO project_documents (id, project_id, title, url, doc_type, created_by)
      VALUES (?, ?, ?, ?, ?, ?)`
-  ).bind(id, projectSlug, body.title.trim(), body.url.trim(), docType, createdBy).run();
+  ).bind(id, projectId, body.title.trim(), body.url.trim(), docType, createdBy).run();
 
   await logActivity(
     env,
