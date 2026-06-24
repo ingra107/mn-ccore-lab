@@ -1,33 +1,26 @@
-// PulseCard — FOCUS / SYNC tiles + NEXT MILESTONES + MENTEES summary.
-// SYNC turns coral if >24h per CLAUDE.md Rule 59. focusMin = today's
-// planned-task minutes proxy.
+// PulseCard — FOCUS tile + NEXT MILESTONES + MENTEES summary.
+// focusMin = today's real PB pomodoro minutes.
+//
+// #85: the SYNC tile was REMOVED — it read hoursSinceLastSync(), which is always
+// Infinity in the browser (nothing writes the mnccore_last_sync_at LS key), so it
+// permanently showed "—h". A control that can't be truthful is removed, not faked.
 //
 // Extracted from src/pages/portal/TodayPage.tsx (B2_Rail_Pulse).
 
-import { ACCENT_GOLD, ACCENT_GREEN, ACCENT_CORAL, INK, INK_MUTED, INK_DIM } from '../constants'
+import { ACCENT_GOLD, INK, INK_MUTED, INK_DIM } from '../constants'
 
-export function PulseCard({ focusMin, syncHours, milestones, mentees }: { focusMin: number; syncHours: number; milestones: Array<{ title: string; days: number }>; mentees: Array<{ name: string; next: string }> }) {
-  // CD spec: FOCUS / SYNC tiles + NEXT MILESTONES + MENTEES.
-  // SYNC turns coral if >24h per Rule 59. focusMin = today's planned-task minutes proxy.
-  const syncColor = syncHours > 24 ? ACCENT_CORAL : ACCENT_GREEN
-  const syncLabel = syncHours === Infinity ? '—' : String(syncHours)
+export function PulseCard({ focusMin, milestones, mentees }: { focusMin: number; milestones: Array<{ title: string; days: number }>; mentees: Array<{ name: string; next: string }> }) {
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
         <span style={{ width: 6, height: 6, borderRadius: '50%', background: ACCENT_GOLD }} />
         <h4 style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: ACCENT_GOLD, margin: 0 }}>Pulse</h4>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginBottom: 10 }}>
+      <div style={{ marginBottom: 10 }}>
         <div style={{ padding: '8px 10px', background: 'rgba(255,255,255,0.03)', borderRadius: 'var(--radius-sm)' }}>
           <div style={{ fontSize: 10, color: INK_MUTED, letterSpacing: '0.04em' }}>FOCUS</div>
           <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--task-ink)', fontVariantNumeric: 'tabular-nums' }}>
             {focusMin}<span style={{ fontSize: 11, color: INK_MUTED, fontWeight: 400, marginLeft: 2 }}>min</span>
-          </div>
-        </div>
-        <div style={{ padding: '8px 10px', background: 'rgba(255,255,255,0.03)', borderRadius: 'var(--radius-sm)' }} title={syncHours === Infinity ? 'No sync recorded yet' : `Last brain.db sync ${syncHours}h ago`}>
-          <div style={{ fontSize: 10, color: INK_MUTED, letterSpacing: '0.04em' }}>SYNC</div>
-          <div style={{ fontSize: 18, fontWeight: 700, color: syncColor, fontVariantNumeric: 'tabular-nums' }}>
-            {syncLabel}<span style={{ fontSize: 11, color: INK_MUTED, fontWeight: 400, marginLeft: 2 }}>h</span>
           </div>
         </div>
       </div>

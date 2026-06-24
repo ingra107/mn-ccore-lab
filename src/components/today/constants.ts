@@ -126,18 +126,6 @@ export function getGroupForTask(t: TaskRow, projectsBySlug: Map<string, { catego
   return 'deep'
 }
 
-// Sync staleness lookup — last successful sync timestamp from localStorage.
-// Coral if >24h per Rule 59. Returns hours-since-sync or Infinity if never synced.
-export function hoursSinceLastSync(): number {
-  try {
-    const raw = window.localStorage.getItem('mnccore_last_sync_at')
-    if (!raw) return Infinity
-    const t = new Date(raw).getTime()
-    if (isNaN(t)) return Infinity
-    return Math.floor((Date.now() - t) / 3600000)
-  } catch { return Infinity }
-}
-
 export function formatTodayDate(): string {
   return new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
 }

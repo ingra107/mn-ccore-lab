@@ -31,7 +31,7 @@ import {
   ACCENT_GOLD, ACCENT_GREEN,
   INK, INK_MUTED, INK_DIM, PAGE_BG,
   todayKey, daysSince, formatTodayDate,
-  meetingToEvent, calendarEventToTodayEvent, isToday, hoursSinceLastSync,
+  meetingToEvent, calendarEventToTodayEvent, isToday,
   getGroupForTask, isTaskDone,
   type GroupKey, type TodayEvent, type DailyCounts,
 } from '../../components/today/constants'
@@ -202,7 +202,6 @@ export default function TodayPage() {
     const todayRow = perDay.find((d) => d.day === today)
     return todayRow?.total_minutes ?? 0
   }, [sessionStatsQuery.data])
-  const syncHours = useMemo(() => hoursSinceLastSync(), [])
   const mentees = useMemo(() => {
     const allTasks = tasksQuery.data ?? []
     return researchTeam.map((m) => {
@@ -540,7 +539,7 @@ export default function TodayPage() {
         <HermesSuggestsCard overdueTasks={overdueTasks} stalledProjects={stalledProjects} menteesWithDue={mentees} />
         <NeedsAttentionCard overdueTasks={overdueTasks} stalledProjects={stalledProjects} />
         <ProjectsCard projects={projectsForRail} />
-        <PulseCard focusMin={focusMin} syncHours={syncHours} milestones={milestones} mentees={mentees} />
+        <PulseCard focusMin={focusMin} milestones={milestones} mentees={mentees} />
       </aside>
     </div>
   )
