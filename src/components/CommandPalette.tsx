@@ -503,11 +503,28 @@ export default function CommandPalette() {
     el?.scrollIntoView({ block: 'nearest' })
   }, [selectedIndex])
 
+  // #88 (Nick 2026-06-24): the results are RENDERED grouped + sorted by
+  // categoryOrder, so the visual order differs from `filtered` (push order).
+  // Keyboard nav (the highlight via globalIdx) follows the rendered order, but
+  // ArrowDown's clamp + Enter used `filtered[selectedIndex]` (push order) — so
+  // Enter activated a DIFFERENT row than the highlighted one ("arrows don't
+  // work"). Navigate against the SAME flattened order that's rendered.
+  const orderedItems = useMemo(() => {
+    const order: Record<string, number> = { recent: 0, context: 1, action: 2, filter: 3, navigation: 4, task: 5, project: 6, person: 7, meeting: 8 }
+    const g = filtered.reduce((acc, item) => {
+      ;(acc[item.category] ||= []).push(item)
+      return acc
+    }, {} as Record<string, CommandItem[]>)
+    return Object.entries(g)
+      .sort(([a], [b]) => (order[a] ?? 9) - (order[b] ?? 9))
+      .flatMap(([, items]) => items)
+  }, [filtered])
+
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault()
-        setSelectedIndex((i) => Math.min(i + 1, filtered.length - 1))
+        setSelectedIndex((i) => Math.min(i + 1, orderedItems.length - 1))
         break
       case 'ArrowUp':
         e.preventDefault()
@@ -515,13 +532,13 @@ export default function CommandPalette() {
         break
       case 'Enter':
         e.preventDefault()
-        filtered[selectedIndex]?.action()
+        orderedItems[selectedIndex]?.action()
         break
       case 'Escape':
         setOpen(false)
         break
     }
-  }, [filtered, selectedIndex])
+  }, [orderedItems, selectedIndex])
 
   const categoryOrder: Record<string, number> = { recent: 0, context: 1, action: 2, filter: 3, navigation: 4, task: 5, project: 6, person: 7, meeting: 8 }
   const grouped = open ? filtered.reduce((acc, item) => {
