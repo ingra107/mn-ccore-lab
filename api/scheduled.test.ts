@@ -128,7 +128,7 @@ describe('scheduled() cron dispatch', () => {
     await scheduledHandler(makeEvent('0 11 * * *'), env, {})
 
     expect(mockHandleSendDailyDigests).toHaveBeenCalledTimes(1)
-    expect(mockHandleSendDailyDigests).toHaveBeenCalledWith(env)
+    expect(mockHandleSendDailyDigests).toHaveBeenCalledWith(env, { kind: 'cron' })
     expect(mockPollAllStaleFeeds).not.toHaveBeenCalled()
     expect(mockHandleCheckImpact).not.toHaveBeenCalled()
   })
