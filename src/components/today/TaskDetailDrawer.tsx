@@ -31,7 +31,6 @@ import { isTaskDone } from '../../lib/taskGrouping'
 import { STATUS_OPTIONS } from '../../lib/taskConstants'
 import { stripMeetingMarker } from '../../lib/textUtils'
 import { Button } from '../ui/Button'
-import WorkOnActions from '../WorkOnActions'
 import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow } from '../../lib/api'
 
@@ -41,7 +40,10 @@ const DURATION_MIN = 15
 const DURATION_MAX = 480
 const DURATION_STEP = 15
 
-export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; project: { name: string; slug: string; primary_folder?: string | null } | null; state: TodayStateApi }) {
+// `project` is still accepted (the row adapter passes it) but no longer used in
+// the drawer — #93 removed the duplicate WorkOnActions launch (it lives in the
+// task row's title area). Kept in the prop type for caller compatibility.
+export function TaskDetailDrawer({ task, state }: { task: TaskRow; project?: { name: string; slug: string; primary_folder?: string | null } | null; state: TodayStateApi }) {
   const isPlanned = !!state.planned[task.id]
   // Slack-style seen (Nick 2026-06-11): expanding the drawer acknowledges the
   // assignment silently when the viewer is the assignee.
@@ -113,81 +115,72 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
     updateTask.mutate({ id: task.id, fields: patch as Record<string, unknown> })
   }, [task.id, updateTask])
 
+  // #93 (Nick 2026-06-24 + codex consult): tighter top padding (was 20px) so the
+  // drawer hugs the row instead of opening with a gap.
   return (
-    <div onClick={(e) => e.stopPropagation()} style={{ padding: '20px 18px 18px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-      {/* Action bar — FIX 2: project name removed (shown in title-row parenthetical).
-          FIX 1: LinkRow removed (links already shown in title meta row).
-          FIX 3: marginBottom 12→6; button padding 6px→4px to tighten row height. */}
-      <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 6, flexWrap: 'wrap' }}>
-        {!isDone && (
-          <button onClick={() => state.markDone(task.id)} style={{ padding: '4px 10px', background: 'transparent', color: ACCENT_GREEN, border: 'none', borderRadius: 'var(--radius-sm)', fontFamily: 'inherit', fontSize: 12, cursor: 'pointer' }}>✓ Complete</button>
-        )}
-        {/* Real Claude Code launch — uses project's primary_folder. Graceful
-            fallback: disabled with tooltip when no folder is set. */}
-        {project?.primary_folder ? (
-          <WorkOnActions
-            primaryFolder={project.primary_folder}
-            projectLabel={project.name}
-            variant="compact"
-          />
-        ) : !isDone && (
-          <button
-            disabled
-            title="Set a project folder to work on this in Claude"
-            style={{ padding: '4px 10px', background: 'none', border: 'none', color: 'rgba(255,255,255,0.25)', fontSize: 12, cursor: 'not-allowed', display: 'inline-flex', alignItems: 'center', gap: 4 }}
-          >▶</button>
-        )}
-        {!isPlanned && !isDone && (
-          <Button
-            variant="ghost-gold"
-            size="sm"
-            onClick={() => state.planAt(task.id, 'strip')}
-            style={{ padding: '4px 10px', fontSize: 12, borderRadius: 'var(--radius-sm)' }}
-          >📌 Plan for today</Button>
-        )}
-        {isPlanned && (
-          <button onClick={() => state.unplan(task.id)} style={{ padding: '4px 10px', background: 'transparent', color: INK_MUTED, border: 'none', borderRadius: 'var(--radius-sm)', fontFamily: 'inherit', fontSize: 12, cursor: 'pointer' }}>Unplan</button>
-        )}
-        <div ref={moveRef} style={{ position: 'relative' }}>
-          <button onClick={() => setMoveOpen((o) => !o)} title="Move to a different group (writes group_override)" style={{ padding: '4px 10px', background: moveOpen ? withAlpha(ACCENT_TEAL, 20) : 'transparent', color: moveOpen ? ACCENT_TEAL : INK, border: `1px solid ${moveOpen ? ACCENT_TEAL : 'transparent'}`, borderRadius: 'var(--radius-sm)', fontFamily: 'inherit', fontSize: 12, cursor: 'pointer' }}>Move →</button>
-          {moveOpen && (
-            <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: 4, minWidth: 200, background: PANEL_BG, border: '1px solid rgba(255,255,255,0.12)', borderRadius: 'var(--radius-sm)', zIndex: 30, boxShadow: '0 4px 12px rgba(0,0,0,0.4)' }}>
-              {TODAY_MOVE_OPTIONS.map((opt) => (
-                <button
-                  key={opt.key}
-                  onClick={() => moveToGroup(opt)}
-                  disabled={updateTask.isPending}
-                  style={{ display: 'block', width: '100%', textAlign: 'left', padding: '6px 10px', fontSize: 11, background: task.group_override === opt.key ? withAlpha(ACCENT_TEAL, 15) : 'transparent', border: 'none', color: task.group_override === opt.key ? ACCENT_TEAL : INK, fontFamily: 'inherit', cursor: updateTask.isPending ? 'wait' : 'pointer' }}
-                >{opt.label}{task.group_override === opt.key ? ' ✓' : ''}</button>
-              ))}
-              {task.group_override && (
-                <>
-                  <div style={{ height: 1, background: 'rgba(255,255,255,0.08)', margin: '4px 0' }} />
-                  <button
-                    onClick={resetGroup}
-                    disabled={updateTask.isPending}
-                    style={{ display: 'block', width: '100%', textAlign: 'left', padding: '6px 10px', fontSize: 11, background: 'transparent', border: 'none', color: INK_DIM, fontFamily: 'inherit', cursor: updateTask.isPending ? 'wait' : 'pointer', fontStyle: 'italic' }}
-                  >↺ Reset to auto-classify</button>
-                </>
-              )}
-            </div>
+    <div onClick={(e) => e.stopPropagation()} style={{ padding: '10px 18px 16px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+      {/* Action row — de-duplicated + de-boxed (#93).
+          REMOVED: "✓ Complete" (the task ROW's DoneBox already completes) and
+          WorkOnActions (folder/▶ live in the row's title area) — show each
+          control once. LEFT: Plan / Set section / Full editor. RIGHT: project-
+          link chips, quiet + right-aligned (no "Project links" label), wrapping
+          below on narrow drawers. Composer follows immediately. */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 8, flexWrap: 'wrap' }}>
+        {/* Left: actions */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          {!isPlanned && !isDone && (
+            <Button
+              variant="ghost-gold"
+              size="sm"
+              onClick={() => state.planAt(task.id, 'strip')}
+              style={{ padding: '4px 10px', fontSize: 12, borderRadius: 'var(--radius-sm)' }}
+            >📌 Plan for today</Button>
           )}
+          {isPlanned && (
+            <button onClick={() => state.unplan(task.id)} style={{ padding: '4px 10px', background: 'transparent', color: INK_MUTED, border: 'none', borderRadius: 'var(--radius-sm)', fontFamily: 'inherit', fontSize: 12, cursor: 'pointer' }}>Unplan</button>
+          )}
+          <div ref={moveRef} style={{ position: 'relative' }}>
+            {/* #93: "Move →" renamed "Set section" — it re-buckets the task into a
+                Today section (Deep work / Priorities / Quick / …) via group_override,
+                NOT moving it between projects. */}
+            <button onClick={() => setMoveOpen((o) => !o)} title="Set which Today section this task lives in (Deep work / Priorities / Quick / …)" style={{ padding: '4px 10px', background: moveOpen ? withAlpha(ACCENT_TEAL, 20) : 'transparent', color: moveOpen ? ACCENT_TEAL : INK, border: `1px solid ${moveOpen ? ACCENT_TEAL : 'transparent'}`, borderRadius: 'var(--radius-sm)', fontFamily: 'inherit', fontSize: 12, cursor: 'pointer' }}>Set section ▾</button>
+            {moveOpen && (
+              <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: 4, minWidth: 200, background: PANEL_BG, border: '1px solid rgba(255,255,255,0.12)', borderRadius: 'var(--radius-sm)', zIndex: 30, boxShadow: '0 4px 12px rgba(0,0,0,0.4)' }}>
+                {TODAY_MOVE_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.key}
+                    onClick={() => moveToGroup(opt)}
+                    disabled={updateTask.isPending}
+                    style={{ display: 'block', width: '100%', textAlign: 'left', padding: '6px 10px', fontSize: 11, background: task.group_override === opt.key ? withAlpha(ACCENT_TEAL, 15) : 'transparent', border: 'none', color: task.group_override === opt.key ? ACCENT_TEAL : INK, fontFamily: 'inherit', cursor: updateTask.isPending ? 'wait' : 'pointer' }}
+                  >{opt.label}{task.group_override === opt.key ? ' ✓' : ''}</button>
+                ))}
+                {task.group_override && (
+                  <>
+                    <div style={{ height: 1, background: 'rgba(255,255,255,0.08)', margin: '4px 0' }} />
+                    <button
+                      onClick={resetGroup}
+                      disabled={updateTask.isPending}
+                      style={{ display: 'block', width: '100%', textAlign: 'left', padding: '6px 10px', fontSize: 11, background: 'transparent', border: 'none', color: INK_DIM, fontFamily: 'inherit', cursor: updateTask.isPending ? 'wait' : 'pointer', fontStyle: 'italic' }}
+                    >↺ Reset to auto-classify</button>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+          {/* #93: explicit Full editor entry (the drawer previously only reached it
+              via "view all →" / the empty-description opener). */}
+          <button onClick={() => setFullEditorTask(task)} title="Open the full task editor" style={{ padding: '4px 10px', background: 'transparent', color: 'var(--teal)', border: 'none', borderRadius: 'var(--radius-sm)', fontFamily: 'inherit', fontSize: 12, cursor: 'pointer' }}>⊞ Full editor</button>
         </div>
-      </div>
-
-      {/* Inherited project links — read-only, shown under action bar near project context. */}
-      {projectLinks.length > 0 && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 10 }}>
-          <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', fontWeight: 'var(--label-weight)' }}>
-            Project links
-          </span>
-          <div className="flex flex-wrap gap-2">
+        {/* Right: quiet project-link chips (no label) — pushed to the right edge,
+            wraps below the actions on a narrow drawer. */}
+        {projectLinks.length > 0 && (
+          <div className="flex flex-wrap gap-2" style={{ marginLeft: 'auto', justifyContent: 'flex-end' }}>
             {projectLinks.map((link) => (
               <StoredLinkChip key={link.id} link={link} />
             ))}
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* SmartCompose — directly under action bar; @me lock toggle */}
       <SmartCompose taskId={task.id} placeholder="Note or @hermes…" showMeLock showHermesToggle bare alwaysShowToolbar />
