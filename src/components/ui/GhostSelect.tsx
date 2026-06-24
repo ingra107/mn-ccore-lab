@@ -85,7 +85,8 @@ export default function GhostSelect({
   const computePosition = useCallback(() => {
     if (!triggerRef.current) return
     const rect = triggerRef.current.getBoundingClientRect()
-    setPos({ top: rect.bottom + 4, left: rect.left, minWidth: rect.width })
+    // #90: clamp into the viewport so the 300px menu never runs off the bottom/right edge.
+    setPos({ top: Math.min(rect.bottom + 4, window.innerHeight - 308), left: Math.min(rect.left, window.innerWidth - 160), minWidth: rect.width })
   }, [])
 
   // rAF-throttled reposition for scroll/resize tracking
@@ -100,7 +101,8 @@ export default function GhostSelect({
         setOpen(false)
         return
       }
-      setPos({ top: rect.bottom + 4, left: rect.left, minWidth: rect.width })
+      // #90: clamp into the viewport so the 300px menu never runs off the bottom/right edge.
+    setPos({ top: Math.min(rect.bottom + 4, window.innerHeight - 308), left: Math.min(rect.left, window.innerWidth - 160), minWidth: rect.width })
     })
   }, [])
 

@@ -27,7 +27,13 @@ export default function InlineSelect({ value, options, onChange, size = 'sm', al
   const updatePosition = useCallback(() => {
     if (buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect()
-      setPos({ top: rect.bottom + 4, left: rect.left })
+      // #90 (Nick 2026-06-24): clamp so a long menu near the bottom of the
+      // viewport stays on-screen (it was rendering off the bottom edge with no
+      // way to scroll to the lower options). Mirrors InlineDatePicker's clamp.
+      setPos({
+        top: Math.min(rect.bottom + 4, window.innerHeight - 332),
+        left: Math.min(rect.left, window.innerWidth - 140),
+      })
     }
   }, [])
 
@@ -179,6 +185,7 @@ export default function InlineSelect({ value, options, onChange, size = 'sm', al
               />
             </div>
           )}
+          <div style={{ maxHeight: 300, overflowY: 'auto' }}>
           {filtered.map((opt, idx) => (
             <button
               key={opt.value}
@@ -214,6 +221,7 @@ export default function InlineSelect({ value, options, onChange, size = 'sm', al
               {opt.label}
             </button>
           ))}
+          </div>
         </div>,
         document.body
       )}
