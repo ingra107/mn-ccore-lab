@@ -210,21 +210,12 @@ export default function MemberPage() {
   }, [allCommitments])
   const hasCommitments = openCommitments.length + doneCommitments.length > 0
 
-  if (!member) {
-    return <Navigate to="/team" replace />
-  }
-
-  const displayName = member.slug
-    ? formatTier(member.slug, 'formal')
-    : member.credentials
-      ? `${member.name}, ${member.credentials}`
-      : member.name
-
   // P3-07: filter publications by authorSlugs first (canonical, post Phase
   // 36b rename) and fall back to substring match on `authors` for legacy
   // pubs that haven't been re-tagged. Member slug = team_members.slug.
+  // Must be above the early `if (!member)` return to satisfy Rules of Hooks.
   const memberPubs = useMemo(() => {
-    if (!publications.length) return []
+    if (!member || !publications.length) return []
     return publications.filter((p) => {
       const slugs = (p as any).authorSlugs ?? (p as any).author_slugs ?? ''
       const slugList = typeof slugs === 'string'
@@ -234,9 +225,10 @@ export default function MemberPage() {
       if (member.authorName && p.authors?.includes(member.authorName)) return true
       return false
     })
-  }, [publications, member.slug, member.authorName])
+  }, [publications, member])
 
   // Derive research topics from publications
+  // Must be above the early `if (!member)` return to satisfy Rules of Hooks.
   const topicCounts = useMemo(() => {
     const counts: Record<string, number> = {}
     memberPubs.forEach((p) => {
@@ -248,6 +240,38 @@ export default function MemberPage() {
       .sort((a, b) => b[1] - a[1])
       .slice(0, 6)
   }, [memberPubs])
+
+  const publishedCount = memberPubs.filter((p) => p.status === 'Published').length
+  const yearRange =
+    memberPubs.length > 0
+      ? `${Math.min(...memberPubs.map((p) => p.year))}–${Math.max(...memberPubs.map((p) => p.year))}`
+      : ''
+
+  // Must be above the early `if (!member)` return to satisfy Rules of Hooks.
+  // When member is undefined (slug mismatch), these values are placeholders —
+  // the Navigate below fires before any render uses them.
+  const displayName = member
+    ? member.slug
+      ? formatTier(member.slug, 'formal')
+      : member.credentials
+        ? `${member.name}, ${member.credentials}`
+        : member.name
+    : ''
+
+  usePageMeta(
+    member ? `${member.name} | MN-CCORE Lab` : 'MN-CCORE Lab',
+    member
+      ? `${displayName} — ${member.role} at MN-CCORE Lab, University of Minnesota.${publishedCount > 0 ? ` ${publishedCount} publications.` : ''}`
+      : '',
+    {
+      ogType: 'profile',
+      ogImage: slug ? `https://mn-ccore-lab.pages.dev/og/team/${slug}` : undefined,
+    },
+  )
+
+  if (!member) {
+    return <Navigate to="/team" replace />
+  }
 
   // Build links
   const existingLinks = member.links ?? []
@@ -262,21 +286,6 @@ export default function MemberPage() {
           },
         ]
       : existingLinks
-
-  const publishedCount = memberPubs.filter((p) => p.status === 'Published').length
-  const yearRange =
-    memberPubs.length > 0
-      ? `${Math.min(...memberPubs.map((p) => p.year))}–${Math.max(...memberPubs.map((p) => p.year))}`
-      : ''
-
-  usePageMeta(
-    `${member.name} | MN-CCORE Lab`,
-    `${displayName} — ${member.role} at MN-CCORE Lab, University of Minnesota.${publishedCount > 0 ? ` ${publishedCount} publications.` : ''}`,
-    {
-      ogType: 'profile',
-      ogImage: slug ? `https://mn-ccore-lab.pages.dev/og/team/${slug}` : undefined,
-    },
-  )
 
   // Render the formal full name in the header ("Robert Adams Dudley" not
   // "Adams Dudley"). credentials stay separate so LabPageLayout's h1 keeps

@@ -47,6 +47,10 @@ function getProjectColor(name: string): string {
 // ── Activity Chart (inline SVG) ────────────────────────────────
 
 function ActivityChart({ data }: { data: { day: string; count: number; total_minutes: number }[] }) {
+  // Must be above the early return to satisfy Rules of Hooks — useState call
+  // count must be the same on every render regardless of whether data is empty.
+  const [hoveredIdx, setHoveredIdx] = useState<number | null>(null)
+
   if (!data.length) return null
 
   // Fill in missing days for last 30 days
@@ -62,7 +66,6 @@ function ActivityChart({ data }: { data: { day: string; count: number; total_min
 
   const maxCount = Math.max(...days.map(d => d.count), 1)
   const chartHeight = 80
-  const [hoveredIdx, setHoveredIdx] = useState<number | null>(null)
 
   return (
     <div style={{ marginBottom: 20 }}>

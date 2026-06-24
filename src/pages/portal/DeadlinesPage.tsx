@@ -1259,17 +1259,9 @@ function UpcomingConferencesSection() {
 // ── Timeline View ────────────────────────────────────────────
 
 function DeadlineTimeline({ items }: { items: DeadlineItem[] }) {
-  if (items.length === 0) {
-    return (
-      <EmptyState
-        icon={<GanttChartSquare size={40} />}
-        title="Timeline is clear"
-        subtitle="Task due dates and grant milestones plot onto this timeline as they're scheduled."
-      />
-    )
-  }
-
-  // Group by week
+  // Group by week — must be above the early return to satisfy Rules of Hooks.
+  // When items is empty the memo returns an empty array and the EmptyState
+  // renders below; the memo result is never used in that branch.
   const byWeek = useMemo(() => {
     const groups = new Map<string, DeadlineItem[]>()
     for (const item of items) {
@@ -1285,6 +1277,16 @@ function DeadlineTimeline({ items }: { items: DeadlineItem[] }) {
     }
     return [...groups.entries()].sort((a, b) => a[0].localeCompare(b[0]))
   }, [items])
+
+  if (items.length === 0) {
+    return (
+      <EmptyState
+        icon={<GanttChartSquare size={40} />}
+        title="Timeline is clear"
+        subtitle="Task due dates and grant milestones plot onto this timeline as they're scheduled."
+      />
+    )
+  }
 
   return (
     <div className="relative pl-6">
