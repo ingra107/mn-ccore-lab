@@ -67,7 +67,7 @@ interface ScoredResult {
    * "abstract", etc.) so the frontend can show "matched in description". */
   matchedField?: string | null;
   /** Per-type metadata for type-specific row rendering (S-12). */
-  details?: Record<string, any> | null;
+  details?: Record<string, unknown> | null;
 }
 
 /** Build a ~120-char snippet centered on the first occurrence of `q`
@@ -230,7 +230,7 @@ export async function handleGetSearch(url: URL, env: Env, canSeePb = false): Pro
   const results: ScoredResult[] = [];
 
   // Tasks
-  for (const t of (tasks.results || []) as any[]) {
+  for (const t of (tasks.results || []) as Record<string, unknown>[]) {
     const timestamp = t.created_at || t.due_date;
     const score = TYPE_PRIORITY.task
       + recencyBoost(timestamp)
@@ -265,7 +265,7 @@ export async function handleGetSearch(url: URL, env: Env, canSeePb = false): Pro
   }
 
   // Projects
-  for (const p of (projects.results || []) as any[]) {
+  for (const p of (projects.results || []) as Record<string, unknown>[]) {
     const timestamp = p.updated_at;
     const score = TYPE_PRIORITY.project
       + recencyBoost(timestamp)
@@ -294,7 +294,7 @@ export async function handleGetSearch(url: URL, env: Env, canSeePb = false): Pro
   }
 
   // Meetings
-  for (const m of (meetings.results || []) as any[]) {
+  for (const m of (meetings.results || []) as Record<string, unknown>[]) {
     const timestamp = m.date;
     const score = TYPE_PRIORITY.meeting
       + recencyBoost(timestamp)
@@ -321,7 +321,7 @@ export async function handleGetSearch(url: URL, env: Env, canSeePb = false): Pro
   }
 
   // Ideas
-  for (const i of (ideas.results || []) as any[]) {
+  for (const i of (ideas.results || []) as Record<string, unknown>[]) {
     const timestamp = i.created_at;
     const score = TYPE_PRIORITY.idea
       + recencyBoost(timestamp)
@@ -344,7 +344,7 @@ export async function handleGetSearch(url: URL, env: Env, canSeePb = false): Pro
   }
 
   // Comments
-  for (const c of (comments.results || []) as any[]) {
+  for (const c of (comments.results || []) as Record<string, unknown>[]) {
     const timestamp = c.created_at;
     const score = TYPE_PRIORITY.comment
       + recencyBoost(timestamp)
@@ -364,7 +364,7 @@ export async function handleGetSearch(url: URL, env: Env, canSeePb = false): Pro
   }
 
   // Activity
-  for (const a of (activity.results || []) as any[]) {
+  for (const a of (activity.results || []) as Record<string, unknown>[]) {
     const timestamp = a.timestamp;
     const score = TYPE_PRIORITY.activity
       + recencyBoost(timestamp)
@@ -384,7 +384,7 @@ export async function handleGetSearch(url: URL, env: Env, canSeePb = false): Pro
   }
 
   // Project notes (project_updates)
-  for (const n of (notes.results || []) as any[]) {
+  for (const n of (notes.results || []) as Record<string, unknown>[]) {
     const timestamp = n.created_at;
     const score = TYPE_PRIORITY.note
       + recencyBoost(timestamp)
@@ -404,7 +404,7 @@ export async function handleGetSearch(url: URL, env: Env, canSeePb = false): Pro
   }
 
   // Task notes (task_updates)
-  for (const n of (taskNotes.results || []) as any[]) {
+  for (const n of (taskNotes.results || []) as Record<string, unknown>[]) {
     const timestamp = n.created_at;
     const score = TYPE_PRIORITY.task_note
       + recencyBoost(timestamp)
@@ -424,7 +424,7 @@ export async function handleGetSearch(url: URL, env: Env, canSeePb = false): Pro
   }
 
   // Task comments
-  for (const c of (taskComments.results || []) as any[]) {
+  for (const c of (taskComments.results || []) as Record<string, unknown>[]) {
     const timestamp = c.created_at;
     const score = TYPE_PRIORITY.task_comment
       + recencyBoost(timestamp)
@@ -444,7 +444,7 @@ export async function handleGetSearch(url: URL, env: Env, canSeePb = false): Pro
   }
 
   // Decisions
-  for (const d of (decisions.results || []) as any[]) {
+  for (const d of (decisions.results || []) as Record<string, unknown>[]) {
     const timestamp = d.created_at;
     const score = TYPE_PRIORITY.decision
       + recencyBoost(timestamp)
@@ -474,7 +474,7 @@ export async function handleGetSearch(url: URL, env: Env, canSeePb = false): Pro
   }
 
   // File attachments
-  for (const f of (files.results || []) as any[]) {
+  for (const f of (files.results || []) as Record<string, unknown>[]) {
     const timestamp = f.created_at;
     const score = TYPE_PRIORITY.file
       + recencyBoost(timestamp)
@@ -503,7 +503,7 @@ export async function handleGetSearch(url: URL, env: Env, canSeePb = false): Pro
   }
 
   // Meeting action items
-  for (const a of (actionItems.results || []) as any[]) {
+  for (const a of (actionItems.results || []) as Record<string, unknown>[]) {
     const timestamp = a.created_at;
     const score = TYPE_PRIORITY.action_item
       + recencyBoost(timestamp)
@@ -524,7 +524,7 @@ export async function handleGetSearch(url: URL, env: Env, canSeePb = false): Pro
   }
 
   // Publications
-  for (const p of (publications.results || []) as any[]) {
+  for (const p of (publications.results || []) as Record<string, unknown>[]) {
     const timestamp = p.created_at;
     const score = TYPE_PRIORITY.publication
       + recencyBoost(timestamp)
@@ -553,7 +553,7 @@ export async function handleGetSearch(url: URL, env: Env, canSeePb = false): Pro
   }
 
   // NIH grants
-  for (const g of (grants.results || []) as any[]) {
+  for (const g of (grants.results || []) as Record<string, unknown>[]) {
     const timestamp = g.last_synced;
     const score = TYPE_PRIORITY.grant
       + recencyBoost(timestamp)
@@ -581,7 +581,7 @@ export async function handleGetSearch(url: URL, env: Env, canSeePb = false): Pro
   }
 
   // Artifacts (Hermes deliverables)
-  for (const a of (artifacts.results || []) as any[]) {
+  for (const a of (artifacts.results || []) as Record<string, unknown>[]) {
     const timestamp = a.updated_at;
     const score = TYPE_PRIORITY.artifact
       + recencyBoost(timestamp)

@@ -55,7 +55,7 @@ export async function handleProactiveBrief(request: Request, env: Env): Promise<
     // Suggested focus = highest priority overdue task
     const priorityOrder: Record<string, number> = { urgent: 4, high: 3, medium: 2, low: 1 };
     const suggestedFocus = overdue.length > 0
-      ? overdue.sort((a: any, b: any) => (priorityOrder[b.priority] || 0) - (priorityOrder[a.priority] || 0))[0]
+      ? overdue.sort((a: Record<string, unknown>, b: Record<string, unknown>) => (priorityOrder[b.priority as string] || 0) - (priorityOrder[a.priority as string] || 0))[0]
       : dueToday.length > 0 ? dueToday[0] : null;
 
     // Generate human-readable bullets
@@ -76,7 +76,7 @@ export async function handleProactiveBrief(request: Request, env: Env): Promise<
         bullets,
       },
     });
-  } catch (e: any) {
-    return error(`Proactive brief failed: ${e.message}`, 500);
+  } catch (e) {
+    return error(`Proactive brief failed: ${(e as Error).message}`, 500);
   }
 }

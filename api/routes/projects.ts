@@ -303,7 +303,7 @@ export async function handleGetProjectUpdates(slug: string, request: Request, en
        AND ${vis.clause}
      ORDER BY ae.created_at DESC, ae.id DESC`
   ).bind(canonicalId, ...vis.binds).all();
-  const rows = (result.results || []).map((r: any) => ({ ...r, project_id: slug }));
+  const rows = (result.results || []).map((r: Record<string, unknown>) => ({ ...r, project_id: slug }));
   return json({ data: rows, count: rows.length });
 }
 
@@ -727,7 +727,6 @@ export async function handleDeleteProject(
   user: AuthUser,
   env: Env,
   request: Request,
-  url?: URL,
 ): Promise<Response> {
   const existing = await env.DB.prepare(
     'SELECT id, title, slug, category FROM projects WHERE id = ? OR slug = ?'

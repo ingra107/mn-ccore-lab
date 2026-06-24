@@ -78,7 +78,7 @@ export async function handlePBHealth(env: Env): Promise<Response> {
         },
       },
     });
-  } catch (e: any) {
-    return error(`PB health check failed: ${e.message}`, 500);
+  } catch (e) {
+    return error(`PB health check failed: ${(e as Error).message}`, 500);
   }
 }

@@ -260,15 +260,15 @@ export async function handleResponseTime(env: Env): Promise<Response> {
 
   return json({
     data: {
-      monthly: (monthly.results || []).map((r: any) => ({
+      monthly: (monthly.results || []).map((r: Record<string, unknown>) => ({
         month: r.month,
         completed: r.completed,
-        avg_days: r.avg_days ? +r.avg_days.toFixed(1) : 0,
+        avg_days: (r.avg_days as number | null) ? +(r.avg_days as number).toFixed(1) : 0,
       })),
-      byPriority: (byPriority.results || []).map((r: any) => ({
+      byPriority: (byPriority.results || []).map((r: Record<string, unknown>) => ({
         priority: r.priority,
         count: r.count,
-        avg_days: r.avg_days ? +r.avg_days.toFixed(1) : 0,
+        avg_days: (r.avg_days as number | null) ? +(r.avg_days as number).toFixed(1) : 0,
       })),
     },
   });

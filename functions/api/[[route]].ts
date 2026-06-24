@@ -17,5 +17,5 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // Forward the ExecutionContext so Hono handlers can use `c.executionCtx.waitUntil`
   // for fire-and-forget background work (e.g. the eager iCal feed poll on add).
   // Without this third arg, Hono throws "This context has no ExecutionContext".
-  return handler.fetch(context.request, context.env as any, context as ExecutionContext)
+  return handler.fetch(context.request, context.env as Env, context as ExecutionContext)
 }

@@ -78,7 +78,7 @@ export async function handleGetExpiringItems(url: URL, env: Env, canSeePb = fals
   `).bind(cutoffIso).all();
 
   // Annotate with days_remaining
-  const items = (result.results || []).map((item: any) => {
+  const items = (result.results || []).map((item: Record<string, unknown>) => {
     const exp = new Date(item.expiration_date + 'T23:59:59');
     const daysRemaining = Math.ceil((exp.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
     return { ...item, days_remaining: daysRemaining };
@@ -193,7 +193,7 @@ export async function handleRegulatoryIcs(id: string, env: Env, request: Request
   // legitimately needed here for the ICS DESCRIPTION field; safeRow would strip it.
   const item = await env.DB.prepare(
     'SELECT id, project_id, item_type, title, protocol_number, approved_date, expiration_date, renewal_due, status, notes, created_at FROM regulatory_items WHERE id = ?'
-  ).bind(id).first() as Record<string, any> | null;
+  ).bind(id).first() as Record<string, unknown> | null;
   if (!item) return error('Regulatory item not found', 404);
 
   // Phase 1b-extended: block non-PI callers from generating an ICS for a
@@ -258,7 +258,7 @@ export async function handleRenewRegulatoryItem(id: string, request: Request, us
   // copy to new row), item_type, title, protocol_number (copied to new row).
   const existing = await env.DB.prepare(
     'SELECT id, project_id, item_type, title, protocol_number, approved_date, expiration_date, renewal_due, status, notes, created_at FROM regulatory_items WHERE id = ?'
-  ).bind(id).first() as Record<string, any> | null;
+  ).bind(id).first() as Record<string, unknown> | null;
   if (!existing) return error('Regulatory item not found', 404);
 
   // Phase 1b-extended: gate on the existing row's project. The renew creates a

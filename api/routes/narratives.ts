@@ -30,21 +30,21 @@ export async function handleGetNarratives(env: Env): Promise<Response> {
     ).all(),
   ]);
 
-  const projectList = (projects.results || []) as any[];
-  const depList = (deps.results || []) as any[];
-  const pubList = (pubs.results || []) as any[];
+  const projectList = (projects.results || []) as Record<string, unknown>[];
+  const depList = (deps.results || []) as Record<string, unknown>[];
+  const pubList = (pubs.results || []) as Record<string, unknown>[];
 
   const stageOrder = ['idea', 'data_collection', 'data_analysis', 'writing', 'submitted', 'revisions', 'published'];
 
   // Group by category
-  const byCategory = new Map<string, any[]>();
+  const byCategory = new Map<string, Record<string, unknown>[]>();
   for (const p of projectList) {
     const cat = p.category || 'other';
     if (!byCategory.has(cat)) byCategory.set(cat, []);
     byCategory.get(cat)!.push(p);
   }
 
-  const narratives: any[] = [];
+  const narratives: Record<string, unknown>[] = [];
 
   for (const [category, categoryProjects] of byCategory) {
     if (categoryProjects.length < 1) continue;
@@ -52,7 +52,7 @@ export async function handleGetNarratives(env: Env): Promise<Response> {
     // Find connected projects via dependencies
     const connected = new Set<string>();
     for (const d of depList) {
-      if (categoryProjects.some((p: any) => p.slug === d.from_slug || p.slug === d.to_slug)) {
+      if (categoryProjects.some((p) => p.slug === d.from_slug || p.slug === d.to_slug)) {
         connected.add(d.from_slug);
         connected.add(d.to_slug);
       }
@@ -65,7 +65,7 @@ export async function handleGetNarratives(env: Env): Promise<Response> {
       try {
         const topics = JSON.parse(pub.topics) as string[];
         const slugs = pub.author_slugs ? JSON.parse(pub.author_slugs) : [];
-        const isRelevant = categoryProjects.some((cp: any) => slugs.includes(cp.pi));
+        const isRelevant = categoryProjects.some((cp) => slugs.includes(cp.pi));
         if (isRelevant) {
           for (const t of topics) topicCounts.set(t, (topicCounts.get(t) || 0) + 1);
         }
@@ -87,10 +87,10 @@ export async function handleGetNarratives(env: Env): Promise<Response> {
 
     // Related publications
     const relatedPubs = pubList
-      .filter((p: any) => {
+      .filter((p) => {
         try {
           const slugs = JSON.parse(p.author_slugs || '[]');
-          return categoryProjects.some((cp: any) => slugs.includes(cp.pi));
+          return categoryProjects.some((cp) => slugs.includes(cp.pi));
         } catch {
           return false;
         }
@@ -102,13 +102,13 @@ export async function handleGetNarratives(env: Env): Promise<Response> {
       title: CATEGORY_LABELS[category] || category.charAt(0).toUpperCase() + category.slice(1),
       category,
       projectCount: categoryProjects.length,
-      projects: categoryProjects.map((p: any) => ({
+      projects: categoryProjects.map((p) => ({
         slug: p.slug, title: p.title, stage: p.stage, pi: p.pi, description: p.description,
       })),
       connectedCount: connected.size,
       sharedTopics: sharedTopics.map(([topic, count]) => ({ topic, count })),
       stageDistribution: stageOrder.map((s) => ({ stage: s, count: stageCounts.get(s) || 0 })),
-      relatedPubs: relatedPubs.map((p: any) => ({ id: p.id, title: p.title, year: p.year })),
+      relatedPubs: relatedPubs.map((p) => ({ id: p.id, title: p.title, year: p.year })),
     });
   }
 

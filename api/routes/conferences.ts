@@ -80,7 +80,7 @@ export async function handleGetUpcomingConferences(env: Env, canSeePb = false): 
 
   // Annotate with days_until for the most relevant deadline
   const now = new Date();
-  const items = (result.results || []).map((row: any) => {
+  const items = (result.results || []).map((row: Record<string, unknown>) => {
     let relevant_date = row.conference_date;
     if (row.status === 'planning' && row.abstract_due) {
       relevant_date = row.abstract_due;

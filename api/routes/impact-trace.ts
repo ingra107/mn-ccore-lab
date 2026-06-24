@@ -17,7 +17,7 @@ export async function handleCheckImpact(env: Env): Promise<Response> {
     AND al.timestamp > datetime('now', '-7 days')
   `).all();
 
-  for (const change of (recentStageChanges.results || []) as any[]) {
+  for (const change of (recentStageChanges.results || []) as Record<string, unknown>[]) {
     // Find people who completed tasks on this project recently
     const contributors = await env.DB.prepare(`
       SELECT DISTINCT completed_by as slug FROM tasks
@@ -25,7 +25,7 @@ export async function handleCheckImpact(env: Env): Promise<Response> {
       AND completed_by IS NOT NULL
     `).bind(change.project_slug).all();
 
-    for (const contrib of (contributors.results || []) as any[]) {
+    for (const contrib of (contributors.results || []) as Record<string, unknown>[]) {
       const slug = actorSlug(contrib.slug as string);
       // Check if we already sent this notification (dedup by recipient + source)
       const existing = await env.DB.prepare(
@@ -53,7 +53,7 @@ export async function handleCheckImpact(env: Env): Promise<Response> {
     AND author_slugs IS NOT NULL
   `).all();
 
-  for (const pub of (recentPublications.results || []) as any[]) {
+  for (const pub of (recentPublications.results || []) as Record<string, unknown>[]) {
     try {
       const slugs = JSON.parse(pub.author_slugs as string) as string[];
       for (const slug of slugs) {

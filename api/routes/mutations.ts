@@ -22,7 +22,7 @@
 // write path through this endpoint as part of A3 ship.
 
 import type { AuthUser, Env, ValidationFlags } from '../helpers';
-import { json, error, generateId, assertProtectedNotNull, getValidationFlags, safeRow, projectRefToCanonical, isPiRequest, actorSlug } from '../helpers';
+import { json, error, generateId, assertProtectedNotNull, getValidationFlags, safeRow, projectRefToCanonical, isPiRequest, actorSlug, logActivity } from '../helpers';
 import { FK_SLUG_FIELDS } from '../lib/task-cols';
 import { nowInstant } from '../lib/time';
 import { assertEnumDomain, assertCompletionTriad } from '../lib/enum-domains';
@@ -998,6 +998,17 @@ export async function applyDelete(env: Env, mut: Mutation, user: AuthUser): Prom
   ).bind(...deleteVals).run();
 
   const r = await readCanonical(env, mut.table, mut.record_id);
+
+  // Record actor attribution for the delete — mirrors the logActivity calls in
+  // handleDeleteTask / handleDeleteProject (route-level). PB-origin deletes bypass
+  // those routes and land here directly, so attribution would otherwise be lost.
+  // Non-fatal: a logActivity failure must not abort the delete that already landed.
+  try {
+    await logActivity(env, mut.table, `Deleted ${mut.table} record ${mut.record_id}`, user.email, mut.record_id, mut.table);
+  } catch (logErr) {
+    console.warn('applyDelete logActivity failed (non-fatal):', logErr);
+  }
+
   return mkResult(mut.mutation_id, 'accepted', {
     result_seq: r?.seq as number | undefined,
     canonical_payload: r || undefined,

@@ -45,6 +45,15 @@ export async function handlePBSessions(request: Request, env: Env): Promise<Resp
   return json({ data: result.results || [], count: (result.results || []).length })
 }
 
+interface PBSessionTotals {
+  total_sessions: number;
+  total_minutes: number;
+  avg_minutes: number;
+  sessions_this_week: number;
+  total_actions: number;
+  total_commits: number;
+}
+
 // GET /api/pb/sessions/stats
 export async function handlePBSessionStats(env: Env): Promise<Response> {
   const [totals, perProject, perDay] = await Promise.all([
@@ -58,7 +67,7 @@ export async function handlePBSessionStats(env: Env): Promise<Response> {
         COALESCE(SUM(actions_count), 0) as total_actions,
         COALESCE(SUM(commits_count), 0) as total_commits
       FROM pb_sessions
-    `).first(),
+    `).first<PBSessionTotals>(),
 
     // Sessions per project (top 20)
     env.DB.prepare(`
@@ -82,12 +91,12 @@ export async function handlePBSessionStats(env: Env): Promise<Response> {
 
   return json({
     data: {
-      total_sessions: (totals as any)?.total_sessions ?? 0,
-      total_hours: Math.round(((totals as any)?.total_minutes ?? 0) / 60 * 10) / 10,
-      avg_minutes: Math.round((totals as any)?.avg_minutes ?? 0),
-      sessions_this_week: (totals as any)?.sessions_this_week ?? 0,
-      total_actions: (totals as any)?.total_actions ?? 0,
-      total_commits: (totals as any)?.total_commits ?? 0,
+      total_sessions: totals?.total_sessions ?? 0,
+      total_hours: Math.round((totals?.total_minutes ?? 0) / 60 * 10) / 10,
+      avg_minutes: Math.round(totals?.avg_minutes ?? 0),
+      sessions_this_week: totals?.sessions_this_week ?? 0,
+      total_actions: totals?.total_actions ?? 0,
+      total_commits: totals?.total_commits ?? 0,
       per_project: perProject.results || [],
       per_day: perDay.results || [],
     },

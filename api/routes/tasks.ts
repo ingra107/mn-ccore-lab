@@ -1439,8 +1439,8 @@ export async function handleMobileTasksToHub(request: Request, user: AuthUser, e
       created++;
 
       await logActivity(env, 'task', `Mobile→Hub: "${title.slice(0, 80)}"`, user.email, id, 'task');
-    } catch (e: any) {
-      errors.push(`${pwaTask.id}: ${e.message || String(e)}`);
+    } catch (e) {
+      errors.push(`${pwaTask.id}: ${(e as Error).message || String(e)}`);
     }
   }
 

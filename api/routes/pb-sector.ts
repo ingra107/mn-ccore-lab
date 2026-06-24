@@ -134,7 +134,7 @@ export async function handleSendDispatch(request: Request, user: AuthUser, env: 
     "SELECT * FROM dispatch_queue WHERE status = 'pending' ORDER BY created_at ASC"
   ).all()
 
-  const items = (pending.results || []) as any[]
+  const items = (pending.results || []) as Record<string, unknown>[]
   if (items.length === 0) return json({ data: { dispatched: 0 } })
 
   // Mark all pending as dispatched
@@ -162,7 +162,7 @@ export async function handleCompleteDispatchItem(request: Request, env: Env): Pr
   // is false — an AI reply that quotes @someone (or @hermes) must not re-fire
   // mention notifications or a recursive AI request.
   if (body.response) {
-    const item = await env.DB.prepare('SELECT task_id FROM dispatch_queue WHERE id = ?').bind(body.id).first() as any
+    const item = await env.DB.prepare('SELECT task_id FROM dispatch_queue WHERE id = ?').bind(body.id).first<{ task_id: string | null }>()
     if (item?.task_id) {
       await postActivityEntry({
         env,
