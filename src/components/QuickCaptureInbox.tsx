@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { Inbox, X, Send } from 'lucide-react'
-import { useAuth } from '../hooks/useAuth'
 import { useProjects } from '../hooks/useApiData'
 import { useUndoToast } from './UndoToast'
 import InlineSelect from './InlineSelect'
@@ -36,7 +35,6 @@ export default function QuickCaptureInbox() {
   const dialogRef = useRef<HTMLDivElement>(null)
   const previousFocusRef = useRef<HTMLElement | null>(null)
   const eventIdRef = useRef<string | null>(null)
-  const { user } = useAuth()
   const { data: projects } = useProjects(undefined, { enabled: open })
   const { showSuccess } = useUndoToast()
 
