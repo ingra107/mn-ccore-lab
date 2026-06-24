@@ -22,6 +22,7 @@
  */
 
 import { generateId } from '../helpers';
+import { nowInstant } from './time';
 
 // ── Registry ────────────────────────────────────────────────────────────────
 
@@ -232,7 +233,7 @@ export async function monitorD1Health(
   db: D1Database,
   pruneResults: Record<string, { deleted: number; error?: string }>
 ): Promise<D1HealthReport> {
-  const checkedAt = new Date().toISOString();
+  const checkedAt = nowInstant();
   const tables: LedgerHealth[] = [];
   let alertTriggered = false;
 
