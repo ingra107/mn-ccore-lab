@@ -1,3 +1,18 @@
+# ▶ BUG SWEEP #80–#93 — ALL FIXED + DEPLOYED + PUSHED (2026-06-24). Live = `f88eca09`.
+
+Cleared the entire open in-app bug queue (#80→#92, 13 reports) plus Nick's chat-requested editor redesign (#93) and a Projects sort tweak. **All frontend + one API reader fix (email-drafts JOIN + PI-gate) — NO schema/migration/table change.** Every fix deployed via `npm run deploy:pages:gated` and verified by the post-deploy probe; all bug_reports rows resolved (queue empty) except #87 (dismissed = feature request).
+
+**What shipped (one-liners):**
+- **#80** long timeline blocks → kept the compact Service rail (Nick's call; the redesign already shows title + fixes the squash). **#82** date/inline-editor hover drew a box ON TOP of the ghost tint → dropped the box on `InlineDatePicker` + `InlineSelect` (class-level "ghost not box"). **#83/#86** `🔗` join icon → petite gold **"Join" pill** (MeetingRow + AgendaListView). **#84** Email Drafts card → pencil (`SquarePen`) icon + JOIN task title + PI-gated `gmail_draft_url` (team can't open Nick's gmail). **#85** removed the permanently-dead "Sync time unknown" indicator (StatusBar + Pulse SYNC tile — the LS key is never written). **#87** Scholar/ORCID publications → **dismissed** (feature, not bug). **#88** ⌘K arrow-nav: Enter hit the wrong row (grouped vs filtered order) AND the highlight flickered back to 0 (reset effect keyed on `filtered` ref) → fixed both. **#89** Hermes pulse keyframe animated `opacity:0→1` (avatar vanished/flashed) → transform-only. **#90** long inline dropdowns ran off-screen → viewport-clamp + scrollable (`InlineSelect` + `GhostSelect`). **#91** Projects list: header/row column misalign (missing trailing 52px col), too-narrow (now `wideBody`), titles overflowing the fixed row (now clamp), default sort → **most-recent-activity**. **#92** TaskCard hover actions rendered on top of the assignee avatar → avatar fades on hover + opaque action bg. **#93** Today `TaskDetailDrawer` de-dup (codex-consulted): removed Complete + WorkOnActions (dupes of the row), renamed "Move →" → **"Set section"**, added **Full editor**, project links → quiet right-aligned chip cluster, tighter top padding.
+
+**Still OPEN / next:**
+- **NOW marker "keeps getting off"** on the Today timeline (Nick is still testing; tracked). Likely the proportional-with-floors model's non-linear scale (now-line is time-accurate WITHIN its gap, but cross-block spacing isn't linear) vs. a true ordering bug — needs a repro. Don't guess-fix; the now-line was redesigned 4× (P1–P4 absolute-canvas removed).
+- **⭐ Cross-page consistency sweep** is now the TOP item in `Projects/mn-ccore-lab-hub/hub-future-ideas.md` (Nick 2026-06-24): task-expand parity (InlineDetail → TaskDetailDrawer canon), one link vocabulary, consistent normal/compact variants for links/composer/action-items/due·project·status. The session-close `/simplify` deferred findings (JoinPill extract, shared dropdown clamp util, shared GRID_COLS, CommandPalette categoryOrder dedup, a pre-existing InlineSelect scroll-listener leak) are captured there too — fold them into that pass.
+
+**Env note:** the PM git-bash `fork()` crash (`add_item … Git … failed`) was heavy this session (~50% of bash calls); retry wins — see `project_repo-environment-gotchas`.
+
+---
+
 # ▶▶ NEXT SESSION — FINISH THE SESSION-HANDOFF REDESIGN (shell-gated). 2026-06-15.
 
 > This file is mid-shrink (1291→~45 lines: generated header + pointers-only). Plan + status:
