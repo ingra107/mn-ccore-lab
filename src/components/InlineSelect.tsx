@@ -89,7 +89,7 @@ export default function InlineSelect({ value, options, onChange, size = 'sm', al
     <>
       <button
         ref={buttonRef}
-        className="inline-select-trigger hov-bg hov-border"
+        className="inline-select-trigger hov-bg"
         aria-expanded={open}
         aria-haspopup="listbox"
         onClick={(e) => {
@@ -118,9 +118,11 @@ export default function InlineSelect({ value, options, onChange, size = 'sm', al
           overflow: 'hidden',
           textOverflow: 'ellipsis',
           color: current?.color || 'var(--slate)',
-          transition: 'background-color var(--duration-normal) var(--ease-out), border-color var(--duration-normal) var(--ease-out), box-shadow var(--duration-normal) var(--ease-out)',
+          // #81 (Nick 2026-06-24): hover shows the ghost tint ONLY — no outline
+          // box. Per-cell boxes on every inline editor made the whole table read
+          // as boxy. Border stays transparent; keyboard focus keeps its outline.
+          transition: 'background-color var(--duration-normal) var(--ease-out), box-shadow var(--duration-normal) var(--ease-out)',
           '--hov-bg': open ? 'none' : 'var(--teal-hover)',
-          '--hov-border': open ? 'transparent' : 'var(--border-subtle)',
         } as React.CSSProperties}
       >
         {/* N1.01: inline-flex children don't ellipsize a bare text node —

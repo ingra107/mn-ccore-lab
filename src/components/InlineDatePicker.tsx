@@ -131,10 +131,13 @@ export default function InlineDatePicker({ value, onChange }: InlineDatePickerPr
     <div ref={containerRef} style={{ position: 'relative' }}>
       <button
         onClick={(e) => { e.stopPropagation(); setOpen((o) => !o) }}
-        className="inline-flex items-center gap-1 rounded-md transition-colors hov-bg hov-border"
+        className="inline-flex items-center gap-1 rounded-md transition-colors hov-bg"
         aria-haspopup="dialog"
         aria-expanded={open}
         style={{
+          // #82 (Nick 2026-06-24): hover shows the ghost tint ONLY — no outline
+          // box. A box on top of the ghost is duplicative (matches the project
+          // GhostSelect, which tints on hover and borders only on focus).
           padding: '3px 8px',
           border: '1px solid transparent',
           background: 'none',
@@ -145,7 +148,6 @@ export default function InlineDatePicker({ value, onChange }: InlineDatePickerPr
           opacity: 0.85,
           fontVariantNumeric: 'tabular-nums',
           '--hov-bg': 'var(--teal-hover)',
-          '--hov-border': 'var(--border-subtle)',
         } as React.CSSProperties}
       >
         <CalendarDays {...ICON_PROPS} size={11} />

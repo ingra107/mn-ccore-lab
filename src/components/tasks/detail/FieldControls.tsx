@@ -503,26 +503,12 @@ export function ProjectInlineGhostSelect({ value, onChange }: { value: string; o
 }
 
 export function DueInlineSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  // #82 (Nick 2026-06-24): the date control is a single ghost pill — the inner
+  // InlineDatePicker already provides the hover tint. The old wrapper added its
+  // OWN hover tint + padding around the picker, which double-layered and read as
+  // a box. Keep only the tooltip + alignment; let the picker be the one ghost.
   return (
-    <div
-      data-ghost-pill
-      title="Due date"
-      className="transition-colors hov-bg"
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 4,
-        fontSize: 'var(--label-size)',
-        color: value ? 'var(--ink)' : 'var(--slate)',
-        opacity: value ? 1 : 0.85,
-        padding: '3px 10px',
-        borderRadius: 'var(--radius-full)',
-        border: '1px solid transparent',
-        cursor: 'pointer',
-        transition: 'background 0.12s',
-        '--hov-bg': 'var(--hover-subtle)',
-      } as React.CSSProperties}
-    >
+    <div data-ghost-pill title="Due date" style={{ display: 'inline-flex', alignItems: 'center' }}>
       <DateInput value={value} onChange={onChange} />
     </div>
   )
