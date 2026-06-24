@@ -238,7 +238,7 @@ export function useTaskBlockGesture({
         onResize(taskId, clamped)
       }
     }
-  }, [taskId, planStartMin, dur, gapStartMin, gapEndMin, freeWindows, onExpand, onMove, onResize, onGhostUpdate, handlePointerMove])
+  }, [taskId, planStartMin, dur, freeWindows, onExpand, onMove, onResize, onGhostUpdate, handlePointerMove])
 
   // ── pointerdown on BODY (move gesture) ──────────────────────────────────────
 

@@ -146,7 +146,7 @@ export default function QuickCaptureInbox() {
       setSubmitting(false)
       showSuccess('Failed to save — retry')
     }
-  }, [text, tag, projectId, user?.email, submitting, showSuccess, close])
+  }, [text, tag, projectId, submitting, showSuccess, close])
 
   const onTextareaKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {

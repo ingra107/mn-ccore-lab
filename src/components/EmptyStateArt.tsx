@@ -67,14 +67,13 @@ export default function EmptyStateArt({
     'aria-label': title,
   }
   const accentProps = { stroke: accent, strokeWidth: 1.75, fill: 'none' }
-  const Title = () => (title ? <title>{title}</title> : null)
 
   switch (variant) {
     case 'tasks':
       // Clipboard outline + 3 lines + accent checkmark on the top line
       return (
         <svg {...common}>
-          <Title />
+          {title && <title>{title}</title>}
           <rect x="50" y="22" width="60" height="78" rx="4" />
           <rect x="66" y="14" width="28" height="14" rx="3" />
           <path d="M62 46 L98 46" />
@@ -88,7 +87,7 @@ export default function EmptyStateArt({
       // Lightbulb with sketched rays + accent filament glow
       return (
         <svg {...common}>
-          <Title />
+          {title && <title>{title}</title>}
           <path d="M68 56 C68 41 92 41 92 56 C92 64 86 67 86 75 L74 75 C74 67 68 64 68 56 Z" />
           <path d="M76 84 L84 84" />
           <path d="M76 90 L84 90" />
@@ -105,7 +104,7 @@ export default function EmptyStateArt({
       // Open notebook (two facing pages) + accent margin scribble
       return (
         <svg {...common}>
-          <Title />
+          {title && <title>{title}</title>}
           <path d="M20 32 L80 24 L80 100 L20 92 Z" />
           <path d="M140 32 L80 24 L80 100 L140 92 Z" />
           <path d="M80 24 L80 100" />
@@ -122,7 +121,7 @@ export default function EmptyStateArt({
       // Wall clock at quarter past + accent hour hand
       return (
         <svg {...common}>
-          <Title />
+          {title && <title>{title}</title>}
           <circle cx="80" cy="60" r="34" />
           <path d="M80 32 L80 36" />
           <path d="M80 84 L80 88" />
@@ -137,7 +136,7 @@ export default function EmptyStateArt({
       // Stacked papers with corner page-curl + accent line
       return (
         <svg {...common}>
-          <Title />
+          {title && <title>{title}</title>}
           <path d="M48 38 L96 38 L96 92 L48 92 Z" opacity="0.45" />
           <path d="M56 30 L104 30 L104 84 L56 84 Z" opacity="0.7" />
           <path d="M64 22 L104 22 L112 30 L112 76 L64 76 Z" />
@@ -151,7 +150,7 @@ export default function EmptyStateArt({
       // Folder with bevel + circular accent stamp
       return (
         <svg {...common}>
-          <Title />
+          {title && <title>{title}</title>}
           <path d="M28 38 L70 38 L78 46 L132 46 L132 96 L28 96 Z" />
           <path d="M28 50 L132 50" opacity="0.4" />
           <circle {...accentProps} cx="106" cy="76" r="14" strokeDasharray="3 3" />
@@ -162,7 +161,7 @@ export default function EmptyStateArt({
       // Magnifier on a row of data dots
       return (
         <svg {...common}>
-          <Title />
+          {title && <title>{title}</title>}
           <circle cx="38" cy="80" r="3" />
           <circle cx="56" cy="80" r="3" />
           <circle cx="74" cy="80" r="3" />
@@ -178,7 +177,7 @@ export default function EmptyStateArt({
       // Erlenmeyer flask with measure markings + accent meniscus
       return (
         <svg {...common}>
-          <Title />
+          {title && <title>{title}</title>}
           <path d="M68 22 L92 22" />
           <path d="M70 22 L70 50 L52 92 C50 96 53 100 57 100 L103 100 C107 100 110 96 108 92 L90 50 L90 22" />
           <path d="M62 78 L98 78" opacity="0.5" />
