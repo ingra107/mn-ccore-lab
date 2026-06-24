@@ -7,8 +7,10 @@
 // prototype source for searchability.
 
 import { useState } from 'react'
+import { Video } from 'lucide-react'
 import { ACCENT_TEAL, ACCENT_GOLD, INK, INK_DIM, withAlpha, type TodayEvent } from './constants'
 import { useIsMobile } from '../../hooks/useIsMobile'
+import { ICON_PROPS } from '../../lib/iconProps'
 
 export type SaveStatus = 'idle' | 'saving' | 'saved'
 
@@ -33,9 +35,10 @@ export function EventRow({ e, onDismiss, overlap = false, note, onNote, saveStat
         <span title="Calendar event" aria-hidden="true" style={{ width: 6, height: 6, borderRadius: '50%', background: ACCENT_TEAL, flexShrink: 0 }} />
         <span className="meeting-row-title" style={{ color: INK }}>{e.title}</span>
         {e.meetingUrl && (
-          // GH#80 P4: Join is an icon-only link. The wide pill ate the title
-          // when blocks were narrow. Icon stays right of the title dot, never
-          // between dot and title text, so title still gets full flex width.
+          // #83/#86: petite "Join" pill (was a 🔗 icon — a chain link did not
+          // read as "join the meeting"). Gold = user-driven action (Rule 59),
+          // small font like the timeline duration pills. flexShrink:0 keeps the
+          // title's full flex width.
           <a
             href={e.meetingUrl}
             target="_blank"
@@ -43,10 +46,16 @@ export function EventRow({ e, onDismiss, overlap = false, note, onNote, saveStat
             onClick={(ev) => ev.stopPropagation()}
             title="Join meeting"
             aria-label="Join meeting"
-            className="hov-opacity"
-            style={{ display: 'inline-flex', alignItems: 'center', fontSize: 14, color: ACCENT_GOLD, textDecoration: 'none', flexShrink: 0, padding: '0 2px', opacity: 0.85, transition: 'opacity 120ms', '--hov-opacity': '1' } as React.CSSProperties}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 3,
+              fontSize: 9, fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase',
+              color: ACCENT_GOLD, background: withAlpha(ACCENT_GOLD, 12),
+              border: `1px solid ${withAlpha(ACCENT_GOLD, 30)}`, borderRadius: 999,
+              padding: '1px 7px', textDecoration: 'none', flexShrink: 0, lineHeight: 1.5,
+            }}
           >
-            🔗
+            <Video {...ICON_PROPS} size={11} aria-hidden />
+            Join
           </a>
         )}
         {e.loc && <span className="meeting-row-loc" style={{ fontSize: 11, color: ACCENT_TEAL }}>📍 {e.loc}</span>}

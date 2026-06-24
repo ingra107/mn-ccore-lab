@@ -28,8 +28,10 @@
 // untimed events.
 
 import { useMemo, useState, useCallback } from 'react'
+import { Video } from 'lucide-react'
 import { PlannedTaskRow } from './PlannedTaskRow'
 import { buildTimelineModel } from './timelineModel'
+import { ICON_PROPS } from '../../lib/iconProps'
 import {
   ACCENT_GOLD, ACCENT_TEAL, ACCENT_CORAL, INK, INK_DIM, INK_MUTED,
   withAlpha, type TodayEvent, type PlannedSlot,
@@ -139,8 +141,8 @@ function AgendaEventRow({
             </span>
           )}
           {event.meetingUrl && (
-            // Phase 0: Join inline (🔗) in the title row so a meeting with a URL
-            // isn't taller than other rows — matches MeetingRow's treatment.
+            // #83/#86: petite "Join" pill in the title row — matches MeetingRow's
+            // treatment (was a 🔗 icon that didn't read as "join the meeting").
             <a
               href={event.meetingUrl}
               target="_blank"
@@ -148,9 +150,16 @@ function AgendaEventRow({
               onClick={(e) => e.stopPropagation()}
               title="Join meeting"
               aria-label="Join meeting"
-              style={{ fontSize: 13, color: ACCENT_GOLD, textDecoration: 'none', flexShrink: 0, lineHeight: 1, padding: '0 1px' }}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 3,
+                fontSize: 9, fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase',
+                color: ACCENT_GOLD, background: withAlpha(ACCENT_GOLD, 12),
+                border: `1px solid ${withAlpha(ACCENT_GOLD, 30)}`, borderRadius: 999,
+                padding: '1px 7px', textDecoration: 'none', flexShrink: 0, lineHeight: 1.5,
+              }}
             >
-              🔗
+              <Video {...ICON_PROPS} size={11} aria-hidden />
+              Join
             </a>
           )}
         </div>
