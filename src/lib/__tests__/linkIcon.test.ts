@@ -17,7 +17,7 @@ import { PencilLine, Globe } from 'lucide-react'
 // pbLinkIcons.generated.ts. If this assertion fails, the Hub icon map has
 // drifted from the PB link_contract.py source of truth.
 // Regenerate: cd ~/Peripheral-Brain && python -X utf8 scripts/links/gen_links.py
-const PB_CONTRACT_HASH = '5403258cb2ddc522864425d90397b9f8994d95516e3830203b2ce769c43add4d'
+const PB_CONTRACT_HASH = '174be485bbe9b2739dd0bb47dfbbd1f23069089dc7150647d27167f7054267d5'
 
 describe('iconForType', () => {
   it('returns PencilLine for gmail_draft with Gmail red token', () => {
@@ -42,12 +42,12 @@ describe('iconForType', () => {
     expect(Icon).toBe(Globe)
   })
 
-  it('returns correct Icon for all 15 known types', () => {
+  it('returns correct Icon for all 16 known types', () => {
     const types = [
       'google_doc', 'google_sheet', 'google_slide', 'google_form',
       'box_folder', 'github_repo', 'github_issue', 'github_tree',
       'gmail_thread', 'gmail_draft', 'obsidian_note',
-      'local_folder', 'local_file', 'script', 'web',
+      'local_folder', 'local_file', 'script', 'web', 'artifact',
     ]
     for (const t of types) {
       const spec = iconForType(t)

@@ -166,6 +166,7 @@
   --link-local-file:    #475569;
   --link-script:        #475569;
   --link-web:           #475569;
+  --link-artifact:      #6B5420;   /* Hermes artifact gold (dark override below) */
 }
 
 .dark {
@@ -173,6 +174,8 @@
   --link-github-repo:   #E6EDF3;
   --link-github-issue:  #E6EDF3;
   --link-github-tree:   #E6EDF3;
+  /* Artifact gold → brighter on dark surfaces (colorDark: #DCB355) */
+  --link-artifact:      #DCB355;
 }
 
 /* ── Dark mode variables ── */

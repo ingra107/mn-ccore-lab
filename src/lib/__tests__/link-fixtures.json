@@ -128,6 +128,14 @@
     }
   },
   {
+    "raw": "https://mn-ccore-lab.pages.dev/portal/artifacts/art_0a1b2c3d4e5f6789",
+    "expected": {
+      "type": "artifact",
+      "canonical_url": "https://mn-ccore-lab.pages.dev/portal/artifacts/art_0a1b2c3d4e5f6789",
+      "short_title": "Artifact"
+    }
+  },
+  {
     "raw": "https://docs.google.com/document/d/1z5om70ImuWwpm7y-FvFfxg7V_tDvTtnXnyIrb-Fr9Gg/edit",
     "expected": {
       "type": "google_doc",

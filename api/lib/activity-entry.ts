@@ -41,6 +41,9 @@ import { HERMES_DETECT_RE, HERMES_STRIP_RE } from './hermes-mention';
 // (PB _capture_artifacts) was covering; that sweep becomes a pure safety-net.
 import { matchAllArtifactUrls, artifactIdFromUrl } from './artifact-url';
 import { resolveKeyLinkSlot, hermesKeyLinkDesc, type TaskKeyLinkRow } from './key-link';
+// #196: mirror artifact URLs into the synced `links` table (P5 readers) too —
+// the slot write alone is invisible to TODAY.md / the Hub link panel.
+import { mirrorArtifactLink } from './artifact-link-mirror';
 
 export type EntityType = 'task' | 'project' | 'artifact';
 
@@ -289,6 +292,14 @@ export async function postActivityEntry(input: PostActivityEntryInput): Promise<
           // Defensive: re-read if the batch driver didn't surface RETURNING rows.
           row = await env.DB.prepare('SELECT * FROM activity_entries WHERE id = ?').bind(id).first<Record<string, unknown>>();
         }
+      }
+      // #196: mirror each artifact URL into the synced links table so the P5
+      // readers (TODAY.md, Hub link panel) render it — independent of slot
+      // availability (uncapped) and idempotent. Runs after the comment+slot
+      // batch; never throws (slot is the recoverable fallback).
+      for (const url of artifactUrls) {
+        const desc = await artifactDescForUrl(env, url);
+        await mirrorArtifactLink(env, 'tasks', entityId, url, desc, user);
       }
     }
   }

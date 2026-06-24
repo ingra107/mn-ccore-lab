@@ -30,6 +30,7 @@ import {
   File,
   FileCode,
   Globe,
+  Sparkles,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { PB_LINK_ICONS, ICONS_HASH } from './pbLinkIcons.generated'
@@ -43,7 +44,7 @@ export interface LinkIconSpec {
 
 /**
  * Lucide component registry — maps the displayName string from PB_LINK_ICONS
- * to the imported Lucide component. Must be kept in sync with the 15 types
+ * to the imported Lucide component. Must be kept in sync with the 16 types
  * in link_contract.py LINK_TYPE_ICONS. The parity test
  * (src/lib/__tests__/iconMapParity.test.ts) asserts every PB_LINK_ICONS entry
  * has a matching key here.
@@ -64,6 +65,7 @@ const LUCIDE_REGISTRY: Record<string, LucideIcon> = {
   File,
   FileCode,
   Globe,
+  Sparkles,
 }
 
 /**

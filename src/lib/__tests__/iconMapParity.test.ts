@@ -50,8 +50,8 @@ const CSS_LIGHT_TOKENS = parseCssLightTokens()
 describe('PB_LINK_ICONS ↔ ICON_MAP parity', () => {
   const types = Object.keys(PB_LINK_ICONS)
 
-  it('covers all 15 link types from link_contract.py', () => {
-    expect(types.length).toBe(15)
+  it('covers all 16 link types from link_contract.py', () => {
+    expect(types.length).toBe(16)
   })
 
   for (const type of types) {

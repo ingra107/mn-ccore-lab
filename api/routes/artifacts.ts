@@ -79,6 +79,9 @@ export async function handleGetArtifact(id: string, env: Env): Promise<Response>
 // comment-path hook in lib/activity-entry.ts — SSOT in lib/key-link.ts so the
 // two backfill paths can't drift.
 import { resolveKeyLinkSlot, hermesKeyLinkDesc, type TaskKeyLinkRow } from '../lib/key-link';
+// #196: also mirror the artifact into the synced `links` table (the P5 readers
+// were cut over to it; a slot-only link is invisible on TODAY.md).
+import { mirrorArtifactLink } from '../lib/artifact-link-mirror';
 
 // ── POST /api/artifacts ─────────────────────────────────────────────────────────
 // Create an artifact. Callable by Hermes (API key → created_by='claude-ai' when
@@ -173,6 +176,12 @@ export async function handleCreateArtifact(
         ).bind(artifactUrl, desc, taskId);
         await env.DB.batch([insertArtifact, updateTask]);
       }
+
+      // #196: mirror into the synced links table so the P5 readers render the
+      // artifact link — regardless of slot outcome (already_linked / slots_full
+      // / freshly slotted), since the links table is uncapped. Idempotent +
+      // never throws; the slot is the recoverable fallback.
+      await mirrorArtifactLink(env, 'tasks', taskId, artifactUrl, hermesKeyLinkDesc(body.title), user);
     }
   } else {
     // No task_id — plain artifact create, no link attempt.

@@ -1,5 +1,5 @@
 // GENERATED from scripts/links/link_contract.py -- DO NOT EDIT BY HAND.
-// rules_hash=8834258fca1956b1852d0dde05112b359ea9617cdf534bef34343756b0b8f94a
+// rules_hash=ebc66ba17952db8a83b8116a7b8b23724fa870d7d610454c119b62143b16f44d
 // Regenerate: python -X utf8 scripts/links/gen_links.py (in the Peripheral-Brain repo).
 //
 // INERT (Phase 1): exported but not imported by app code. urlClassify.ts is the
@@ -7,7 +7,7 @@
 // (link-fixtures.json) is asserted against normalizeLink() by vitest so this
 // interpreter can never silently drift from the PB Python runtime.
 
-export const PB_LINK_TYPES = ["google_doc", "google_sheet", "google_slide", "google_form", "box_folder", "github_repo", "github_issue", "github_tree", "gmail_thread", "gmail_draft", "obsidian_note", "local_folder", "local_file", "script", "web"] as const
+export const PB_LINK_TYPES = ["google_doc", "google_sheet", "google_slide", "google_form", "box_folder", "github_repo", "github_issue", "github_tree", "gmail_thread", "gmail_draft", "obsidian_note", "local_folder", "local_file", "script", "web", "artifact"] as const
 export type PbLinkType = (typeof PB_LINK_TYPES)[number]
 
 export interface PbCanonicalLink {
@@ -17,7 +17,7 @@ export interface PbCanonicalLink {
   source_raw: string | null
 }
 
-export const PB_LINK_RULES_HASH = '8834258fca1956b1852d0dde05112b359ea9617cdf534bef34343756b0b8f94a'
+export const PB_LINK_RULES_HASH = 'ebc66ba17952db8a83b8116a7b8b23724fa870d7d610454c119b62143b16f44d'
 
 interface PbLinkRule {
   type: string
@@ -139,6 +139,13 @@ const PB_LINK_RULES: PbLinkRule[] = [
     "match": "((?:[A-Za-z]:[\\\\/]|/c/|~/|\\./)[^\\s]*)",
     "title": "\\1",
     "type": "local_folder"
+  },
+  {
+    "canonical": "https://mn-ccore-lab.pages.dev/portal/artifacts/\\1",
+    "id_group": 1,
+    "match": "https?://[^\\s]+/portal/artifacts/(art_[0-9a-f]+)",
+    "title": "Artifact",
+    "type": "artifact"
   },
   {
     "canonical": "\\0",
