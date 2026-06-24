@@ -1407,10 +1407,14 @@ a:hover {
 /* HermesMark pulse — Hermes ack moment. M-11.
    600ms scale-in + micro-rotate + brief gold halo via box-shadow.
    Plays once per mount. Reduced-motion drops the transform/halo and
-   keeps a 150ms opacity fade only. */
+   keeps a 150ms opacity fade only.
+   #89 (Nick 2026-06-24): the 0% keyframe used to set opacity:0 → the mark
+   vanished and then abruptly flashed in, which read as "very odd" (and
+   violated Rule 44: mount animations are transform-only). The glyph now stays
+   fully visible and only scales/rotates/halos in. */
 @keyframes hermes-pulse-in {
-  0%   { transform: scale(0.7) rotate(-18deg); opacity: 0; box-shadow: 0 0 0 0 rgba(220, 179, 85, 0); }
-  35%  { transform: scale(1.12) rotate(4deg);  opacity: 1; box-shadow: 0 0 0 8px rgba(220, 179, 85, 0.18); }
+  0%   { transform: scale(0.7) rotate(-18deg); box-shadow: 0 0 0 0 rgba(220, 179, 85, 0); }
+  35%  { transform: scale(1.12) rotate(4deg);  box-shadow: 0 0 0 8px rgba(220, 179, 85, 0.18); }
   70%  { transform: scale(0.98) rotate(-1deg); box-shadow: 0 0 0 14px rgba(220, 179, 85, 0.06); }
   100% { transform: scale(1) rotate(0);        box-shadow: 0 0 0 0 rgba(220, 179, 85, 0); }
 }
