@@ -257,8 +257,10 @@ export default function Projects() {
   const [showCreate, setShowCreate] = useState(false)
   const [focusedIndex, setFocusedIndex] = useState(-1)
   const rowRefs = useRef<(HTMLDivElement | null)[]>([])
-  type ProjectSortKey = 'title' | 'status' | 'stage' | 'pi' | 'category'
-  const [sortKey, setSortKey] = useState<ProjectSortKey>('stage')
+  type ProjectSortKey = 'title' | 'status' | 'stage' | 'pi' | 'category' | 'activity'
+  // Nick 2026-06-24: the list opens ordered by MOST RECENT ACTIVITY (newest
+  // first) — the "what's moving" view. Other column headers still re-sort.
+  const [sortKey, setSortKey] = useState<ProjectSortKey>('activity')
   const [sortAsc, setSortAsc] = useState(true)
   const [pinnedSlugs, setPinnedSlugs] = useState<Set<string>>(() => {
     try { return new Set(JSON.parse(localStorage.getItem('pinned-projects') || '[]')) } catch { return new Set() }
@@ -313,6 +315,14 @@ export default function Projects() {
         }
         case 'pi': cmp = (a.pi || '').localeCompare(b.pi || ''); break
         case 'category': cmp = (a.category || '').localeCompare(b.category || ''); break
+        case 'activity': {
+          // Most recent activity first. lastActivity is the displayed "Xd ago"
+          // value; fall back to meaningful-movement / updated_at.
+          const tA = Date.parse(a.lastActivity || a.last_meaningful_movement || a.updated_at || '') || 0
+          const tB = Date.parse(b.lastActivity || b.last_meaningful_movement || b.updated_at || '') || 0
+          cmp = tB - tA
+          break
+        }
       }
       if (cmp === 0) cmp = a.title.localeCompare(b.title)
       return sortAsc ? cmp : -cmp
