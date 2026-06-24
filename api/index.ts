@@ -1526,7 +1526,7 @@ defineRoute({
   auth: 'authed',
   entity: 'email-drafts',
   visibility: 'na',
-  handler: (c) => handleGetPendingDrafts(E(c)),
+  handler: (c) => handleGetPendingDrafts(R(c), E(c)),
 });
 
 // ─────────────────────────────────────────────────────────────────────────────

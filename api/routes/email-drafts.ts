@@ -22,12 +22,26 @@ export async function handleGetEmailDrafts(url: URL, env: Env): Promise<Response
   return json({ data: rows, count: rows.length });
 }
 
-// GET /api/email-drafts/pending — count and list pending drafts
-export async function handleGetPendingDrafts(env: Env): Promise<Response> {
+// GET /api/email-drafts/pending — count and list pending drafts.
+// JOINs tasks so each draft carries the human task title (#84 — the card showed
+// "Untitled draft" because the table only stores task_id, no title). The private
+// gmail_draft_url is re-attached for PI / API-key callers ONLY: it links to
+// Nick's gmail compose view, which team members must not be able to open.
+export async function handleGetPendingDrafts(request: Request, env: Env): Promise<Response> {
+  const isPi = await isPiRequest(request, env);
   const result = await env.DB.prepare(
-    "SELECT * FROM email_drafts WHERE status = 'draft' ORDER BY created_at DESC"
+    `SELECT d.*, t.title AS task_title, t.short_title AS task_short_title
+       FROM email_drafts d
+       LEFT JOIN tasks t ON t.id = d.task_id
+      WHERE d.status = 'draft'
+      ORDER BY d.created_at DESC`
   ).all();
-  const drafts = result.results.map(r => safeRow('email_drafts', r as Record<string, unknown>));
+  const drafts = result.results.map(r => {
+    const row = r as Record<string, unknown>;
+    const safe = safeRow('email_drafts', row);
+    if (isPi && row.gmail_draft_url != null) safe.gmail_draft_url = row.gmail_draft_url;
+    return safe;
+  });
   return json({ count: drafts.length, drafts });
 }
 
