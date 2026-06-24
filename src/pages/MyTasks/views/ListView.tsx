@@ -124,7 +124,11 @@ export function ListView({ filtered, selected, toggleSelect, selectRange, anchor
        <div className="mt-band">
         <div>
         <div style={{ padding: '10px 16px 0' }}><OverdueBanner tasks={filtered} /></div>
-        <div className="list-view-header" style={{ display: 'grid', gridTemplateColumns: '32px 26px 1fr 150px 100px 80px 110px 110px 70px', padding: '6px 16px', borderBottom: '1px solid rgba(255,255,255,0.08)', fontSize: 9.5, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: INK_DIM, position: 'sticky', top: 0, background: PAGE_BG, zIndex: 1 }}>
+        {/* #81 (Nick 2026-06-24): header grid must match the ROW grid exactly —
+            the row has a trailing 52px Work column the header was missing, so the
+            1fr Title soaked up the extra 52px and every column after it drifted
+            out of alignment. Add the matching Work column (empty header cell). */}
+        <div className="list-view-header" style={{ display: 'grid', gridTemplateColumns: '32px 26px 1fr 150px 100px 80px 110px 110px 70px 52px', padding: '6px 16px', borderBottom: '1px solid rgba(255,255,255,0.08)', fontSize: 9.5, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: INK_DIM, position: 'sticky', top: 0, background: PAGE_BG, zIndex: 1 }}>
           <div className="list-view-col-cursor"></div>
           <div className="list-view-col-done"></div>
           <div>Title</div>
@@ -134,6 +138,7 @@ export function ListView({ filtered, selected, toggleSelect, selectRange, anchor
           <div className="list-view-col-status">Status</div>
           <div className="list-view-col-owner">Owner</div>
           <div className="list-view-col-links" style={{ textAlign: 'right' }}>Links</div>
+          <div className="list-view-col-work"></div>
         </div>
         {filtered.length === 0 && <NoTasksMatch />}
         {filtered.length > 0 && (
@@ -246,12 +251,16 @@ function ListRow({ task, project, isCursor, isSelected, selectModeActive, onClic
         fontSize: 12,
         height: 44,
         borderBottom: '1px solid rgba(255,255,255,0.04)',
-        // Issue 4/5: selected (teal 3px) wins over cursor/planned/overdue.
+        // Issue 4/5: selected (teal 3px) wins over planned/overdue.
         // Use TEAL for selection — NOT gold — so it's visually distinct from
         // the planned gold bar and overdue coral bar.
+        // #81 (Nick 2026-06-24): the cursor row no longer paints a left edge —
+        // the ▶ arrow + faint bg already mark "which one you're on", so an edge
+        // color too was redundant ("the colors on the edge AND the arrow … if
+        // they are saying the same thing"). Edge is now reserved for the
+        // distinct states: selected / planned / overdue.
         borderLeft: `3px solid ${
           isSelected ? ACCENT_TEAL
-          : isCursor ? meta.color
           : planned ? ACCENT_GOLD
           : overdue ? ACCENT_CORAL
           : 'transparent'
