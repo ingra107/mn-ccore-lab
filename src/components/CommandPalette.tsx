@@ -492,14 +492,18 @@ export default function CommandPalette() {
       .slice(0, 12)
   }, [allItems, query, isProjectMode, projectModeItems])
 
-  // Reset selection when filter changes
-  useEffect(() => { setSelectedIndex(0) }, [filtered])
+  // #88 follow-up (Nick 2026-06-24): reset to the top when the QUERY changes
+  // (a new search) — NOT on `filtered`'s identity. `filtered` gets a fresh array
+  // reference on most renders, so a `[filtered]` dep re-ran setSelectedIndex(0)
+  // on every ArrowDown — the highlight moved to 1 then snapped back to 0 ("it
+  // flickers but stays put"). Keying on `query` lets arrow nav actually hold.
+  useEffect(() => { setSelectedIndex(0) }, [query])
 
-  // Scroll selected into view — KEEP: keyboard-cursor nav within the palette.
-  // selectedIndex changes on ArrowUp/Down keydown; onMouseEnter also updates
-  // it but the hovered item is already visible so block:'nearest' is a no-op.
+  // Scroll the selected row into view — KEEP: keyboard-cursor nav within the
+  // palette. Rows are GROUPED (category divs), so listRef.children are the group
+  // wrappers, not the flat option rows — target the option by its id instead.
   useEffect(() => {
-    const el = listRef.current?.children[selectedIndex] as HTMLElement
+    const el = listRef.current?.querySelector<HTMLElement>(`#cmd-result-${selectedIndex}`)
     el?.scrollIntoView({ block: 'nearest' })
   }, [selectedIndex])
 
