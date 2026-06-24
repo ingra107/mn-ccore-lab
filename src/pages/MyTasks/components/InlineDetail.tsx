@@ -19,6 +19,7 @@ import { localDateKey } from '../../../lib/dateUtils'
 import { STATUS_OPTIONS } from '../../../lib/taskConstants'
 import { TaskActivityFeed } from '../../../components/tasks/detail/TaskActivityFeed'
 import StoredLinkChip from '../../../components/StoredLinkChip'
+import LinkifiedText from '../../../components/LinkifiedText'
 import {
   ACCENT_TEAL, ACCENT_GREEN,
   INK, INK_DIM, PANEL_BG,
@@ -136,19 +137,24 @@ export function InlineDetail({ task, projectName, primaryFolder, onOpenEditor }:
       {/* Description — clamped to ~3 lines with "more" expander (C) */}
       {task.description && (
         <div style={{ marginBottom: 10 }}>
-          <div
+          {/* #81: linkify raw URLs into readable, clickable chips (was plain
+              text — bare URLs rendered unshortened + unclickable). pre-wrap so
+              line breaks survive (LinkifiedText leaves non-URL text untouched). */}
+          <LinkifiedText
+            text={stripMeetingMarker(task.description)}
             style={{
+              display: descExpanded ? 'block' : '-webkit-box',
               fontSize: 11,
               color: INK_MUTED,
               lineHeight: 1.5,
+              whiteSpace: 'pre-wrap',
               ...(descExpanded ? {} : {
-                display: '-webkit-box',
                 WebkitLineClamp: 3,
                 WebkitBoxOrient: 'vertical' as React.CSSProperties['WebkitBoxOrient'],
                 overflow: 'hidden',
               }),
             }}
-          >{stripMeetingMarker(task.description)}</div>
+          />
           {!descExpanded && (
             <button
               onClick={() => setDescExpanded(true)}
