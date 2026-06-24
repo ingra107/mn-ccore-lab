@@ -395,8 +395,9 @@ export default function Projects() {
       /* 2026-06-10b (Nick): the Pipeline kanban is WIDE multi-column content —
          let it grow rightward to fit (anchored left edge, fluid right) instead
          of cramming 7 stages into --col-main and h-scrolling inside the band.
-         The List/table view stays at --col-main. */
-      wideBody={viewMode === 'pipeline'}
+         #91 (Nick 2026-06-24): the List/table now also grows wide ("the whole
+         width can likely be longer") — the 3fr Title column absorbs the room. */
+      wideBody={true}
       filters={
         <>
           {/* S21: removed the "Try Pipeline view" promo coach-mark — it rendered
@@ -482,7 +483,10 @@ export default function Projects() {
             <div
               className="hidden md:grid"
               style={{
-                gridTemplateColumns: 'minmax(320px, 3fr) 110px 110px 120px 80px 90px',
+                /* #91 (Nick 2026-06-24): header grid must match the ROW grid —
+                   the row has a trailing 52px Links/Work column the header
+                   lacked, so columns drifted out of alignment. */
+                gridTemplateColumns: 'minmax(320px, 3fr) 110px 110px 120px 80px 90px 52px',
                 padding: 'var(--sp-sm) var(--sp-xl)',
                 borderBottom: '1px solid var(--border-subtle)',
               }}
@@ -616,15 +620,27 @@ export default function Projects() {
                                   marginTop: '-1px',
                                 }}
                               />
-                              <span
-                                style={{
-                                  fontSize: '14px',
-                                  fontWeight: 500,
-                                  color: 'var(--ink)',
-                                  lineHeight: 1.35,
-                                }}
-                              >
-                                {stripConsortiumPrefix(project.title).clean}
+                              {/* #91 (Nick 2026-06-24): title + short_name each
+                                  clamp to ONE line so they can't overflow the
+                                  fixed row height and overlap the row below.
+                                  flex:1/minWidth:0 lets the cell shrink so
+                                  ellipsis engages within the grid column. */}
+                              <span style={{ minWidth: 0, flex: 1 }}>
+                                <span
+                                  style={{
+                                    fontSize: '14px',
+                                    fontWeight: 500,
+                                    color: 'var(--ink)',
+                                    lineHeight: 1.35,
+                                    display: 'block',
+                                    whiteSpace: 'nowrap',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                  }}
+                                  title={stripConsortiumPrefix(project.title).clean}
+                                >
+                                  {stripConsortiumPrefix(project.title).clean}
+                                </span>
                                 {project.short_name && (
                                   <span style={{
                                     fontSize: '11px',
@@ -632,6 +648,9 @@ export default function Projects() {
                                     opacity: 0.75,
                                     display: 'block',
                                     marginTop: '1px',
+                                    whiteSpace: 'nowrap',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
                                   }}>
                                     {project.short_name}
                                   </span>
