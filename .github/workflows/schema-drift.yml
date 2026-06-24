@@ -201,9 +201,36 @@ jobs:
           # historical migration replayed cleanly against current base.
           sqlite3 committed.db < committed-bundle.sql 2> sqlite-errors.log || true
           # Show only unexpected errors (not the known overlap cases).
-          if grep -v -E "duplicate column name|table [a-z_]+ already exists|index [a-z_]+ already exists" sqlite-errors.log | grep -q "error"; then
+          #
+          # Known expected replay errors (schema-history artifacts, not real drift):
+          #   "no such column: title|body"       — schema-v22 INSERT…SELECT from lab_questions/
+          #                                         lab_answers uses the OLD column names (title,
+          #                                         body) that v22 itself renames; bootstrap already
+          #                                         has the renamed schema so these columns are gone
+          #                                         by replay time.  Final diff still validates
+          #                                         the resulting table shape.
+          #   "no such column: machine_id|       — schema-v48 CREATE INDEX ON pomodoro_sessions
+          #    project_id"                          references machine_id/project_id, but at replay
+          #                                         time pomodoro_sessions still has the v20 schema
+          #                                         (no those columns) because v48's CREATE TABLE IF
+          #                                         NOT EXISTS silently no-ops.  v49 later recreates
+          #                                         the table with the correct schema; the indices
+          #                                         there succeed.  Final diff validates the result.
+          #   "no such table: main.comments"     — schema-v46 adds an index on a `comments` table
+          #                                         that was never promoted to the committed schema
+          #                                         (the live comments surface uses task_comments).
+          #                                         The index is therefore never created; no drift.
+          #
+          # If a NEW unexpected error appears (e.g. "no such column: foo" for some other column
+          # name, or a genuine syntax error), it will NOT match these patterns and WILL surface
+          # as a warning — keeping the signal sharp.
+          KNOWN_ERRORS="duplicate column name|table [a-z_]+ already exists|index [a-z_]+ already exists"
+          KNOWN_ERRORS="${KNOWN_ERRORS}|no such column: title|no such column: body"
+          KNOWN_ERRORS="${KNOWN_ERRORS}|no such column: machine_id|no such column: project_id"
+          KNOWN_ERRORS="${KNOWN_ERRORS}|no such table: main.comments"
+          if grep -v -E "${KNOWN_ERRORS}" sqlite-errors.log | grep -qi "error"; then
             echo "::warning::Unexpected sqlite errors during committed schema build (see log below)"
-            grep -v -E "duplicate column name|table [a-z_]+ already exists|index [a-z_]+ already exists" sqlite-errors.log | head -20 || true
+            grep -v -E "${KNOWN_ERRORS}" sqlite-errors.log | head -20 || true
           fi
           sqlite3 committed.db .schema > committed-raw.sql
           node -e "
