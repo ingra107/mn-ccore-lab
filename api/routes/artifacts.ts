@@ -75,35 +75,10 @@ export async function handleGetArtifact(id: string, env: Env): Promise<Response>
 }
 
 // ── key_link slot helpers ────────────────────────────────────────────────────
-// Maximum 120 chars for description so it fits comfortably in Obsidian/TODAY.md.
-const KEY_LINK_DESC_MAX = 120;
-
-interface TaskKeyLinkRow {
-  key_link_1: string | null;
-  key_link_2: string | null;
-  key_link_3: string | null;
-}
-
-// Returns { slot: 1|2|3, alreadyPresent: false } for the first empty slot, or
-// { slot: null, alreadyPresent: false } when all three are occupied, or
-// { slot: null, alreadyPresent: true } when the URL is already linked.
-function resolveKeyLinkSlot(
-  task: TaskKeyLinkRow,
-  url: string,
-): { slot: 1 | 2 | 3 | null; alreadyPresent: boolean } {
-  const slots: [1 | 2 | 3, string | null][] = [
-    [1, task.key_link_1],
-    [2, task.key_link_2],
-    [3, task.key_link_3],
-  ];
-  for (const [, val] of slots) {
-    if (val === url) return { slot: null, alreadyPresent: true };
-  }
-  for (const [n, val] of slots) {
-    if (!val) return { slot: n, alreadyPresent: false };
-  }
-  return { slot: null, alreadyPresent: false };
-}
+// Slot model (resolver + desc cap + row shape) is shared with the at-source
+// comment-path hook in lib/activity-entry.ts — SSOT in lib/key-link.ts so the
+// two backfill paths can't drift.
+import { resolveKeyLinkSlot, hermesKeyLinkDesc, type TaskKeyLinkRow } from '../lib/key-link';
 
 // ── POST /api/artifacts ─────────────────────────────────────────────────────────
 // Create an artifact. Callable by Hermes (API key → created_by='claude-ai' when
@@ -192,7 +167,7 @@ export async function handleCreateArtifact(
         // anti-pattern-allowed: compound batch (insertArtifact + key_link update) requires
         // atomicity that routing through /api/mutations would break; key_link_N slots are
         // a write-once link cache, not A3-conflict-resolution targets (no base_seq/hash).
-        const desc = `Hermes: ${body.title.trim()}`.slice(0, KEY_LINK_DESC_MAX);
+        const desc = hermesKeyLinkDesc(body.title);
         const updateTask = env.DB.prepare(
           `UPDATE tasks SET key_link_${slot} = ?, key_link_${slot}_desc = ? WHERE id = ?`
         ).bind(artifactUrl, desc, taskId);

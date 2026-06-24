@@ -667,7 +667,9 @@ export async function handleAddTaskComment(taskId: string, request: Request, use
     content: r.body,
     created_at: r.created_at,
   };
-  return json({ data: created }, 201);
+  // Surface the artifact at-source key_link outcome (top-level, mirroring the
+  // create-path's `linkSkipped`) so a non-zero slots_full is a visible signal.
+  return json({ data: created, ...(posted.linkSkipped ? { linkSkipped: posted.linkSkipped } : {}) }, 201);
 }
 
 // GET /api/tasks/:id/activity — the UNIFIED feed (Design C, v77).

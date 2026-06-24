@@ -34,6 +34,13 @@ import {
 // Hermes trigger regexes — SSOT in lib/hermes-mention.ts (shared with
 // routes/questions.ts so the trigger pattern can't drift between surfaces).
 import { HERMES_DETECT_RE, HERMES_STRIP_RE } from './hermes-mention';
+// Artifact key_link at-source hook (Phase 1, 2026-06-23): a comment posted on a
+// task whose body carries an artifact portal URL links that artifact into a free
+// key_link slot in the SAME atomic batch as the comment insert — mirroring the
+// CREATE path (routes/artifacts.ts). Closes the residual the /process band-aid
+// (PB _capture_artifacts) was covering; that sweep becomes a pure safety-net.
+import { matchAllArtifactUrls, artifactIdFromUrl } from './artifact-url';
+import { resolveKeyLinkSlot, hermesKeyLinkDesc, type TaskKeyLinkRow } from './key-link';
 
 export type EntityType = 'task' | 'project' | 'artifact';
 
@@ -79,7 +86,20 @@ export interface PostActivityEntryInput {
 }
 
 export type PostActivityEntryResult =
-  | { ok: true; row: Record<string, unknown> }
+  | {
+      ok: true;
+      row: Record<string, unknown>;
+      /**
+       * Set only on the artifact key_link at-source path (task comment whose body
+       * carried artifact URL[s]). Mirrors the CREATE path's `linkSkipped`:
+       *   'already_linked' — every URL was already in a slot (idempotent no-op)
+       *   'slots_full'     — at least one URL had no free slot to land in
+       * Absent when no artifact URL was present, every URL linked cleanly, or the
+       * entity wasn't a task. The route surfaces it as `linkSkipped` on the
+       * response so a non-zero slots_full count is a visible signal.
+       */
+      linkSkipped?: 'already_linked' | 'slots_full';
+    }
   | { ok: false; error: string; status: number };
 
 /**
@@ -219,11 +239,15 @@ export async function postActivityEntry(input: PostActivityEntryInput): Promise<
   ] as const;
 
   let row: Record<string, unknown> | null;
+  let linkSkipped: 'already_linked' | 'slots_full' | undefined;
   if (sourceTable) {
     // Backfill path: INSERT OR IGNORE may skip on a UNIQUE(source_table,
     // source_id) conflict, where RETURNING yields nothing — so insert, then
     // resolve the canonical row (the freshly-inserted one, or the pre-existing
-    // one on conflict). Idempotency: a re-run never duplicates.
+    // one on conflict). Idempotency: a re-run never duplicates. The key_link
+    // hook is NOT folded here — backfill is the PB-migration replay path, not a
+    // live comment post; the live paths (routes/tasks.ts, ai-requests.ts) never
+    // set sourceTable, so the at-source hook below covers every live comment.
     await env.DB.prepare(`INSERT OR IGNORE INTO activity_entries ${cols} ${vals}`).bind(...binds).run();
     row = await env.DB.prepare('SELECT * FROM activity_entries WHERE id = ?').bind(id).first<Record<string, unknown>>();
     if (!row) {
@@ -232,9 +256,41 @@ export async function postActivityEntry(input: PostActivityEntryInput): Promise<
       ).bind(sourceTable, sourceId).first<Record<string, unknown>>();
     }
   } else {
-    // Normal path: no conflict possible, so RETURNING * gives the canonical row
-    // in one round trip.
-    row = await env.DB.prepare(`INSERT INTO activity_entries ${cols} ${vals} RETURNING *`).bind(...binds).first<Record<string, unknown>>();
+    // ── artifact key_link at-source hook ──────────────────────────────────────
+    // When a comment lands on a TASK and its body carries one or more artifact
+    // portal URLs, link each into a free key_link slot in the SAME DB.batch() as
+    // the comment insert — so the comment cannot post without its links landing
+    // together (Level-1 atomicity, mirroring routes/artifacts.ts:199). Build the
+    // UPDATE statements first, then batch [insert, ...updates].
+    const artifactUrls =
+      entityType === 'task' && kind === 'comment' ? matchAllArtifactUrls(body) : [];
+
+    const insertStmt = env.DB.prepare(
+      `INSERT INTO activity_entries ${cols} ${vals} RETURNING *`
+    ).bind(...binds);
+
+    if (artifactUrls.length === 0) {
+      // Common path: no artifact URL — single-statement insert, RETURNING * in
+      // one round trip (unchanged from before the hook).
+      row = await insertStmt.first<Record<string, unknown>>();
+    } else {
+      const linkResult = await buildArtifactKeyLinkUpdates(env, entityId, artifactUrls);
+      linkSkipped = linkResult.linkSkipped;
+      if (linkResult.updates.length === 0) {
+        // Nothing to link (all already-present and/or no free slots) — plain
+        // insert. linkSkipped still reports the reason.
+        row = await insertStmt.first<Record<string, unknown>>();
+      } else {
+        // Atomic: comment insert + every key_link UPDATE in one batch. The first
+        // batch result holds the RETURNING * row from the insert.
+        const results = await env.DB.batch([insertStmt, ...linkResult.updates]);
+        row = (results[0]?.results as Record<string, unknown>[] | undefined)?.[0] ?? null;
+        if (!row) {
+          // Defensive: re-read if the batch driver didn't surface RETURNING rows.
+          row = await env.DB.prepare('SELECT * FROM activity_entries WHERE id = ?').bind(id).first<Record<string, unknown>>();
+        }
+      }
+    }
   }
 
   // ── side effects: @mention notifications + Hermes dispatch ──────────────────
@@ -320,7 +376,92 @@ export async function postActivityEntry(input: PostActivityEntryInput): Promise<
     }
   }
 
-  return { ok: true, row: row ?? {} };
+  return { ok: true, row: row ?? {}, ...(linkSkipped ? { linkSkipped } : {}) };
+}
+
+// ── artifact key_link at-source: build the UPDATE statements ──────────────────
+// Given a task id and the artifact URLs found in a comment body, resolve a free
+// key_link slot for each (left-to-right) and return the prepared UPDATE
+// statements to fold into the comment-insert batch. Reuses resolveKeyLinkSlot +
+// hermesKeyLinkDesc (SSOT lib/key-link.ts) so the slot rules match the CREATE
+// path. The slot picture is tracked locally across the loop so two URLs in one
+// comment don't both grab slot 1.
+//
+// linkSkipped semantics (mirrors routes/artifacts.ts): 'already_linked' when
+// every URL was already present, 'slots_full' when at least one URL had no free
+// slot. undefined when ≥1 URL produced a fresh UPDATE.
+async function buildArtifactKeyLinkUpdates(
+  env: Env,
+  taskId: string,
+  urls: string[],
+): Promise<{ updates: D1PreparedStatement[]; linkSkipped: 'already_linked' | 'slots_full' | undefined }> {
+  const task = await env.DB
+    .prepare('SELECT key_link_1, key_link_2, key_link_3 FROM tasks WHERE id = ? AND deleted_at IS NULL LIMIT 1')
+    .bind(taskId)
+    .first<TaskKeyLinkRow>();
+  if (!task) {
+    // Task gone/deleted between the entity check and here — nothing to link.
+    // (postActivityEntry already 404s a missing task before this point on the
+    // non-caller-provided path; this is the belt-and-braces read.)
+    return { updates: [], linkSkipped: undefined };
+  }
+
+  // Mutable slot view so sequential URLs fill distinct slots.
+  const slots: TaskKeyLinkRow = {
+    key_link_1: task.key_link_1,
+    key_link_2: task.key_link_2,
+    key_link_3: task.key_link_3,
+  };
+  const updates: D1PreparedStatement[] = [];
+  let anyAlreadyPresent = false;
+  let anyFull = false;
+
+  for (const url of urls) {
+    const { slot, alreadyPresent } = resolveKeyLinkSlot(slots, url);
+    if (alreadyPresent) {
+      anyAlreadyPresent = true;
+      continue;
+    }
+    if (slot === null) {
+      anyFull = true;
+      continue;
+    }
+    const desc = await artifactDescForUrl(env, url);
+    updates.push(
+      env.DB.prepare(
+        `UPDATE tasks SET key_link_${slot} = ?, key_link_${slot}_desc = ? WHERE id = ?`
+      ).bind(url, desc, taskId),
+    );
+    // Reflect the write in the local view so the next URL skips this slot.
+    slots[`key_link_${slot}` as keyof TaskKeyLinkRow] = url;
+  }
+
+  // Reason only matters when nothing fresh was written. slots_full dominates
+  // already_linked (a full task is the actionable signal).
+  let linkSkipped: 'already_linked' | 'slots_full' | undefined;
+  if (updates.length === 0) {
+    if (anyFull) linkSkipped = 'slots_full';
+    else if (anyAlreadyPresent) linkSkipped = 'already_linked';
+  } else if (anyFull) {
+    // Some landed, some didn't fit — still surface the full signal.
+    linkSkipped = 'slots_full';
+  }
+  return { updates, linkSkipped };
+}
+
+// Description for a key_link from an artifact URL: prefer the artifact's title
+// (`Hermes: <title>`), fall back to a generic label when the row isn't found
+// (e.g. URL from a different deploy, or artifact deleted). Never throws.
+async function artifactDescForUrl(env: Env, url: string): Promise<string> {
+  const artId = artifactIdFromUrl(url);
+  if (artId) {
+    const art = await env.DB
+      .prepare('SELECT title FROM artifacts WHERE id = ? LIMIT 1')
+      .bind(artId)
+      .first<{ title: string | null }>();
+    if (art?.title) return hermesKeyLinkDesc(art.title);
+  }
+  return hermesKeyLinkDesc('artifact');
 }
 
 async function fireMentionNotifications(

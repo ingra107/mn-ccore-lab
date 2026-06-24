@@ -54,8 +54,15 @@ const byCreatedDesc = (a: AERow, b: AERow) =>
   a.created_at < b.created_at ? 1 : a.created_at > b.created_at ? -1 : a.id < b.id ? 1 : -1
 
 interface Fixtures {
-  tasks: Record<string, { project_id: string | null; deleted_at?: string | null; title?: string; assignee?: string | null }>
+  tasks: Record<string, {
+    project_id: string | null; deleted_at?: string | null; title?: string; assignee?: string | null
+    // key_link slots — the artifact at-source comment-path hook reads/writes these.
+    key_link_1?: string | null; key_link_2?: string | null; key_link_3?: string | null
+    key_link_1_desc?: string | null; key_link_2_desc?: string | null; key_link_3_desc?: string | null
+  }>
   projects: Record<string, { id: string; slug: string | null; category: string | null }>
+  // artifacts keyed by art_ id → { title } for the key_link desc lookup.
+  artifacts: Record<string, { title: string | null }>
   teamSlugs: Set<string>
 }
 
@@ -66,6 +73,7 @@ function makeEnv(fx: Partial<Fixtures> = {}) {
   let clock = 0
   const tasks = fx.tasks ?? {}
   const projects = fx.projects ?? {}
+  const artifacts = fx.artifacts ?? {}
   const teamSlugs = fx.teamSlugs ?? new Set(['nick-ingraham', 'nate-mesfin'])
 
   // Resolve a project ref (id or slug) → canonical id.
@@ -125,6 +133,21 @@ function makeEnv(fx: Partial<Fixtures> = {}) {
               return t && t.deleted_at == null
                 ? { project_id: t.project_id, assignee: t.assignee ?? null, title: t.title ?? '' }
                 : null
+            }
+            // Artifact at-source hook: slot state read (key_link_1/2/3).
+            if (/SELECT key_link_1, key_link_2, key_link_3 FROM tasks WHERE id = \? AND deleted_at IS NULL/.test(sql)) {
+              const t = tasks[binds[0] as string]
+              if (!t || t.deleted_at != null) return null
+              return {
+                key_link_1: t.key_link_1 ?? null,
+                key_link_2: t.key_link_2 ?? null,
+                key_link_3: t.key_link_3 ?? null,
+              }
+            }
+            // Artifact at-source hook: title lookup for the key_link description.
+            if (/SELECT title FROM artifacts WHERE id = \?/.test(sql)) {
+              const a = artifacts[binds[0] as string]
+              return a ? { title: a.title } : null
             }
             // Owner re-notification lookup (2026-06-11): assignee + title.
             if (/SELECT assignee, title FROM tasks WHERE id = \? AND deleted_at IS NULL/.test(sql)) {
@@ -242,11 +265,26 @@ function makeEnv(fx: Partial<Fixtures> = {}) {
                 const dup = ae.find(r => r.source_table === sourceTable && r.source_id === sourceId)
                 if (dup) return { meta: { changes: 0 } }
               }
-              insertActivityEntry(binds as any[])
+              const inserted = insertActivityEntry(binds as any[])
+              // RETURNING * insert (used inside the at-source batch): surface the
+              // row so batch() can return it per-statement like real D1.
+              if (/RETURNING \*/.test(sql)) return { meta: { changes: 1 }, results: [inserted] }
               return { meta: { changes: 1 } }
             }
             if (/INSERT INTO notifications/.test(sql)) { notifications.push({ binds: [...binds] }); return { meta: {} } }
             if (/INSERT INTO ai_requests/.test(sql)) { aiRequests.push({ binds: [...binds] }); return { meta: {} } }
+            // Artifact at-source hook: key_link slot UPDATE — apply to the in-memory task.
+            const klm = sql.match(/UPDATE tasks SET key_link_(\d) = \?, key_link_\d_desc = \? WHERE id = \?/)
+            if (klm) {
+              const slot = klm[1]
+              const [url, desc, taskId] = binds as [string, string, string]
+              const t = tasks[taskId]
+              if (t) {
+                ;(t as Record<string, unknown>)[`key_link_${slot}`] = url
+                ;(t as Record<string, unknown>)[`key_link_${slot}_desc`] = desc
+              }
+              return { meta: { changes: t ? 1 : 0 } }
+            }
             if (/DELETE FROM activity_entries/.test(sql)) {
               // Task delete: WHERE entity_type='task' AND entity_id=?
               const id = binds[0] as string
@@ -261,7 +299,20 @@ function makeEnv(fx: Partial<Fixtures> = {}) {
         stmt.bind = (...args: unknown[]) => { binds = [...binds, ...args]; return stmt }
         return stmt
       },
-      batch: async (stmts: any[]) => { for (const s of stmts) { if (s && typeof s.run === 'function') await s.run() } return [] },
+      batch: async (stmts: any[]) => {
+        // Mirror D1: per-statement results. The at-source hook reads
+        // results[0].results[0] (the RETURNING * comment row) from this array.
+        const out: unknown[] = []
+        for (const s of stmts) {
+          if (s && typeof s.run === 'function') {
+            const r = await s.run()
+            out.push({ results: (r && (r as any).results) ?? [], meta: (r as any)?.meta ?? {} })
+          } else {
+            out.push({ results: [], meta: {} })
+          }
+        }
+        return out
+      },
     },
   } as unknown as Env
 
@@ -331,6 +382,265 @@ describe('postActivityEntry — @me policy strips prefix + sets author visibilit
     const { env, ae } = makeEnv(FX)
     await postActivityEntry({ env, user: NATE, entityType: 'task', entityId: 't1', kind: 'comment', body: 'hello team', actorSlug: 'nate-mesfin' })
     expect(ae[0].visibility).toBe('team')
+  })
+})
+
+// ── artifact key_link at-source hook (comment path) ─────────────────────────────
+// A comment posted on a TASK whose body carries an artifact portal URL links the
+// artifact into a free key_link slot in the SAME batch as the comment insert —
+// mirroring the CREATE path (routes/artifacts.ts). Closes the residual the PB
+// /process _capture_artifacts band-aid was covering.
+describe('postActivityEntry — artifact key_link at source (task comment path)', () => {
+  // A fresh fixture per test (the hook mutates task slots).
+  function ctxWithArtifact(taskSlots: Partial<Record<'key_link_1' | 'key_link_2' | 'key_link_3', string | null>> = {}) {
+    return makeEnv({
+      tasks: { t1: { project_id: 'proj_a', title: 'Task One', ...taskSlots } },
+      projects: { a: { id: 'proj_a', slug: 'alpha', category: 'MNCCORE' } },
+      artifacts: { art_abc123: { title: 'Sepsis lit review' } },
+      teamSlugs: new Set(['nick-ingraham', 'nate-mesfin']),
+    })
+  }
+  const URL_ABC = 'https://mn-ccore-lab.pages.dev/portal/artifacts/art_abc123'
+
+  it('comment with an artifact URL → links into the first free slot, comment still posts', async () => {
+    const { env, ae } = ctxWithArtifact()
+    const r = await postActivityEntry({
+      env, user: NICK, entityType: 'task', entityId: 't1', kind: 'comment',
+      body: `Full write-up: ${URL_ABC}`, actorSlug: 'nick-ingraham',
+    })
+    expect(r.ok).toBe(true)
+    // Comment landed.
+    expect(ae.some(e => e.entity_id === 't1' && e.kind === 'comment')).toBe(true)
+    // No linkSkipped flag (a fresh link was written).
+    expect((r as { linkSkipped?: string }).linkSkipped).toBeUndefined()
+  })
+
+  it('links the artifact title as `Hermes: <title>` description', async () => {
+    const { env } = ctxWithArtifact()
+    // Capture the UPDATE binds via a wrapper.
+    const updates: Array<{ sql: string; binds: unknown[] }> = []
+    const origPrepare = env.DB.prepare.bind(env.DB)
+    ;(env.DB as { prepare: unknown }).prepare = (sql: string) => {
+      const stmt = origPrepare(sql)
+      if (/UPDATE tasks SET key_link_\d/.test(sql)) {
+        const origBind = stmt.bind.bind(stmt)
+        stmt.bind = (...args: unknown[]) => { updates.push({ sql, binds: args }); return origBind(...args) }
+      }
+      return stmt
+    }
+    await postActivityEntry({
+      env, user: NICK, entityType: 'task', entityId: 't1', kind: 'comment',
+      body: `here: ${URL_ABC}`, actorSlug: 'nick-ingraham',
+    })
+    expect(updates).toHaveLength(1)
+    expect(updates[0].sql).toMatch(/UPDATE tasks SET key_link_1/)
+    expect(updates[0].binds[0]).toBe(URL_ABC)
+    expect(updates[0].binds[1]).toBe('Hermes: Sepsis lit review')
+    expect(updates[0].binds[2]).toBe('t1')
+  })
+
+  it('falls back to a generic desc when the artifact row is not found', async () => {
+    const { env } = makeEnv({
+      tasks: { t1: { project_id: 'proj_a', title: 'Task One' } },
+      projects: { a: { id: 'proj_a', slug: 'alpha', category: 'MNCCORE' } },
+      artifacts: {}, // no artifact row for the URL's id
+      teamSlugs: new Set(['nick-ingraham']),
+    })
+    const updates: Array<unknown[]> = []
+    const origPrepare = env.DB.prepare.bind(env.DB)
+    ;(env.DB as { prepare: unknown }).prepare = (sql: string) => {
+      const stmt = origPrepare(sql)
+      if (/UPDATE tasks SET key_link_\d/.test(sql)) {
+        const origBind = stmt.bind.bind(stmt)
+        stmt.bind = (...args: unknown[]) => { updates.push(args); return origBind(...args) }
+      }
+      return stmt
+    }
+    await postActivityEntry({
+      env, user: NICK, entityType: 'task', entityId: 't1', kind: 'comment',
+      body: `see ${URL_ABC}`, actorSlug: 'nick-ingraham',
+    })
+    expect(updates).toHaveLength(1)
+    expect(updates[0][1]).toBe('Hermes: artifact')
+  })
+
+  it('idempotent — URL already in a slot → no UPDATE, linkSkipped=already_linked', async () => {
+    const { env } = ctxWithArtifact({ key_link_1: URL_ABC })
+    const updates: unknown[] = []
+    const origPrepare = env.DB.prepare.bind(env.DB)
+    ;(env.DB as { prepare: unknown }).prepare = (sql: string) => {
+      const stmt = origPrepare(sql)
+      if (/UPDATE tasks SET key_link_\d/.test(sql)) updates.push(sql)
+      return stmt
+    }
+    const r = await postActivityEntry({
+      env, user: NICK, entityType: 'task', entityId: 't1', kind: 'comment',
+      body: `again: ${URL_ABC}`, actorSlug: 'nick-ingraham',
+    })
+    expect(r.ok).toBe(true)
+    expect(updates).toHaveLength(0)
+    expect((r as { linkSkipped?: string }).linkSkipped).toBe('already_linked')
+  })
+
+  it('all 3 slots full → no link, linkSkipped=slots_full, comment still posts', async () => {
+    const { env, ae } = ctxWithArtifact({
+      key_link_1: 'https://x/1', key_link_2: 'https://x/2', key_link_3: 'https://x/3',
+    })
+    const r = await postActivityEntry({
+      env, user: NICK, entityType: 'task', entityId: 't1', kind: 'comment',
+      body: `won't fit: ${URL_ABC}`, actorSlug: 'nick-ingraham',
+    })
+    expect(r.ok).toBe(true)
+    expect((r as { linkSkipped?: string }).linkSkipped).toBe('slots_full')
+    // Comment still posted.
+    expect(ae.some(e => e.entity_id === 't1' && e.kind === 'comment')).toBe(true)
+  })
+
+  it('two artifact URLs in one comment fill two distinct slots, left-to-right', async () => {
+    const { env } = makeEnv({
+      tasks: { t1: { project_id: 'proj_a', title: 'Task One' } },
+      projects: { a: { id: 'proj_a', slug: 'alpha', category: 'MNCCORE' } },
+      artifacts: { art_abc123: { title: 'First' }, art_def456: { title: 'Second' } },
+      teamSlugs: new Set(['nick-ingraham']),
+    })
+    const url2 = 'https://mn-ccore-lab.pages.dev/portal/artifacts/art_def456'
+    const updates: Array<{ sql: string; binds: unknown[] }> = []
+    const origPrepare = env.DB.prepare.bind(env.DB)
+    ;(env.DB as { prepare: unknown }).prepare = (sql: string) => {
+      const stmt = origPrepare(sql)
+      if (/UPDATE tasks SET key_link_\d/.test(sql)) {
+        const origBind = stmt.bind.bind(stmt)
+        stmt.bind = (...args: unknown[]) => { updates.push({ sql, binds: args }); return origBind(...args) }
+      }
+      return stmt
+    }
+    await postActivityEntry({
+      env, user: NICK, entityType: 'task', entityId: 't1', kind: 'comment',
+      body: `two: ${URL_ABC} and ${url2}`, actorSlug: 'nick-ingraham',
+    })
+    expect(updates).toHaveLength(2)
+    expect(updates[0].sql).toMatch(/key_link_1/)
+    expect(updates[0].binds[0]).toBe(URL_ABC)
+    expect(updates[1].sql).toMatch(/key_link_2/)
+    expect(updates[1].binds[0]).toBe(url2)
+  })
+
+  it('partial fit: 1 free slot + 2 URLs → links 1, linkSkipped=slots_full', async () => {
+    const { env } = makeEnv({
+      tasks: { t1: { project_id: 'proj_a', title: 'Task One', key_link_1: 'https://x/1', key_link_2: 'https://x/2' } },
+      projects: { a: { id: 'proj_a', slug: 'alpha', category: 'MNCCORE' } },
+      artifacts: { art_abc123: { title: 'First' }, art_def456: { title: 'Second' } },
+      teamSlugs: new Set(['nick-ingraham']),
+    })
+    const url2 = 'https://mn-ccore-lab.pages.dev/portal/artifacts/art_def456'
+    const updates: string[] = []
+    const origPrepare = env.DB.prepare.bind(env.DB)
+    ;(env.DB as { prepare: unknown }).prepare = (sql: string) => {
+      const stmt = origPrepare(sql)
+      if (/UPDATE tasks SET key_link_\d/.test(sql)) updates.push(sql)
+      return stmt
+    }
+    const r = await postActivityEntry({
+      env, user: NICK, entityType: 'task', entityId: 't1', kind: 'comment',
+      body: `${URL_ABC} ${url2}`, actorSlug: 'nick-ingraham',
+    })
+    expect(updates).toHaveLength(1)
+    expect(updates[0]).toMatch(/key_link_3/)
+    expect((r as { linkSkipped?: string }).linkSkipped).toBe('slots_full')
+  })
+
+  it('comment on a PROJECT entity → no link attempt', async () => {
+    const { env } = ctxWithArtifact()
+    const updates: string[] = []
+    const origPrepare = env.DB.prepare.bind(env.DB)
+    ;(env.DB as { prepare: unknown }).prepare = (sql: string) => {
+      const stmt = origPrepare(sql)
+      if (/UPDATE tasks SET key_link_\d/.test(sql)) updates.push(sql)
+      return stmt
+    }
+    const r = await postActivityEntry({
+      env, user: NICK, entityType: 'project', entityId: 'proj_a', kind: 'comment',
+      body: `project note with ${URL_ABC}`, actorSlug: 'nick-ingraham', projectSlug: 'alpha',
+    })
+    expect(r.ok).toBe(true)
+    expect(updates).toHaveLength(0)
+  })
+
+  it('task UPDATE (kind=update) with an artifact URL → no link attempt (comment-path only)', async () => {
+    const { env } = ctxWithArtifact()
+    const updates: string[] = []
+    const origPrepare = env.DB.prepare.bind(env.DB)
+    ;(env.DB as { prepare: unknown }).prepare = (sql: string) => {
+      const stmt = origPrepare(sql)
+      if (/UPDATE tasks SET key_link_\d/.test(sql)) updates.push(sql)
+      return stmt
+    }
+    const r = await postActivityEntry({
+      env, user: NICK, entityType: 'task', entityId: 't1', kind: 'update', updateType: 'progress',
+      body: `progress: ${URL_ABC}`, actorSlug: 'nick-ingraham',
+    })
+    expect(r.ok).toBe(true)
+    expect(updates).toHaveLength(0)
+  })
+
+  it('comment with a non-artifact URL → ignored, no link attempt', async () => {
+    const { env } = ctxWithArtifact()
+    const updates: string[] = []
+    const origPrepare = env.DB.prepare.bind(env.DB)
+    ;(env.DB as { prepare: unknown }).prepare = (sql: string) => {
+      const stmt = origPrepare(sql)
+      if (/UPDATE tasks SET key_link_\d/.test(sql)) updates.push(sql)
+      return stmt
+    }
+    const r = await postActivityEntry({
+      env, user: NICK, entityType: 'task', entityId: 't1', kind: 'comment',
+      body: 'see https://docs.google.com/document/d/abc for the draft', actorSlug: 'nick-ingraham',
+    })
+    expect(r.ok).toBe(true)
+    expect(updates).toHaveLength(0)
+    expect((r as { linkSkipped?: string }).linkSkipped).toBeUndefined()
+  })
+
+  it('posting the same artifact-URL comment twice → exactly one key_link', async () => {
+    const { env } = ctxWithArtifact()
+    let updateCount = 0
+    const origPrepare = env.DB.prepare.bind(env.DB)
+    ;(env.DB as { prepare: unknown }).prepare = (sql: string) => {
+      const stmt = origPrepare(sql)
+      if (/UPDATE tasks SET key_link_\d/.test(sql)) updateCount++
+      return stmt
+    }
+    const first = await postActivityEntry({
+      env, user: NICK, entityType: 'task', entityId: 't1', kind: 'comment',
+      body: `first: ${URL_ABC}`, actorSlug: 'nick-ingraham',
+    })
+    const second = await postActivityEntry({
+      env, user: NICK, entityType: 'task', entityId: 't1', kind: 'comment',
+      body: `second: ${URL_ABC}`, actorSlug: 'nick-ingraham',
+    })
+    expect(first.ok && second.ok).toBe(true)
+    expect(updateCount).toBe(1) // only the first wrote a slot
+    expect((second as { linkSkipped?: string }).linkSkipped).toBe('already_linked')
+  })
+
+  // End-to-end through the actual route: linkSkipped surfaces on the response.
+  it('route handleAddTaskComment surfaces linkSkipped=slots_full on the response', async () => {
+    const { env } = ctxWithArtifact({
+      key_link_1: 'https://x/1', key_link_2: 'https://x/2', key_link_3: 'https://x/3',
+    })
+    const res = await handleAddTaskComment('t1', natePostReq({ content: `won't fit: ${URL_ABC}` }), NATE, env)
+    expect(res.status).toBe(201)
+    const payload = await res.json() as { data: unknown; linkSkipped?: string }
+    expect(payload.linkSkipped).toBe('slots_full')
+    expect(payload.data).toBeTruthy() // comment still created
+  })
+
+  it('route handleAddTaskComment: clean link → no linkSkipped on the response', async () => {
+    const { env } = ctxWithArtifact()
+    const res = await handleAddTaskComment('t1', natePostReq({ content: `here: ${URL_ABC}` }), NATE, env)
+    expect(res.status).toBe(201)
+    const payload = await res.json() as { linkSkipped?: string }
+    expect(payload.linkSkipped).toBeUndefined()
   })
 })
 
