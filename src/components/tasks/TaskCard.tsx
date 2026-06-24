@@ -183,8 +183,10 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
           </div>
         </div>
 
-        {/* Assignee avatar */}
-        <div className="flex-shrink-0" style={{ width: 28, height: 28 }}>
+        {/* Assignee avatar — fades out on hover so the hover-action buttons
+            (which sit at the same right edge) replace it instead of rendering
+            ON TOP of the face (#92, Nick 2026-06-24). */}
+        <div className="flex-shrink-0 transition-opacity group-hover:opacity-0" style={{ width: 28, height: 28 }}>
           <Avatar
             name={person.name}
             initials={person.initials}
@@ -195,8 +197,10 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
         </div>
       </div>
 
-      {/* Action buttons — hidden until hover, then fully interactive */}
-      <div data-hover-actions className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity">
+      {/* Action buttons — hidden until hover, then fully interactive. Opaque
+          card-matching background so the cluster cleanly covers the faded avatar
+          and never bleeds the title through the icons (#92). */}
+      <div data-hover-actions className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity" style={{ background: isDone ? 'var(--hover-subtle)' : 'var(--cream)', borderRadius: 'var(--radius-md)' }}>
         {/* Quick complete/uncomplete toggle — primary action, always discoverable */}
         <button
           onClick={(e) => {
