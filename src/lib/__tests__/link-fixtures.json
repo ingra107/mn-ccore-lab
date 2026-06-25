@@ -112,6 +112,30 @@
     }
   },
   {
+    "raw": "[[Projects/lpv-adherence-paper/iwd-lpv-revision-chest-cc]]",
+    "expected": {
+      "type": "iwd",
+      "canonical_url": "[[Projects/lpv-adherence-paper/iwd-lpv-revision-chest-cc]]",
+      "short_title": "Projects/lpv-adherence-paper/iwd-lpv-revision-chest-cc"
+    }
+  },
+  {
+    "raw": "obsidian://open?vault=Peripheral-Brain&file=Projects%2Fr01-provider-variation-across-clif%2Fiwd-fresh-eyes-review-2026-06-11",
+    "expected": {
+      "type": "iwd",
+      "canonical_url": "obsidian://open?vault=Peripheral-Brain&file=Projects%2Fr01-provider-variation-across-clif%2Fiwd-fresh-eyes-review-2026-06-11",
+      "short_title": "Projects%2Fr01-provider-variation-across-clif%2Fiwd-fresh-eyes-review-2026-06-11"
+    }
+  },
+  {
+    "raw": "[[notes/iwd-mid/regular-note]]",
+    "expected": {
+      "type": "obsidian_note",
+      "canonical_url": "[[notes/iwd-mid/regular-note]]",
+      "short_title": "notes/iwd-mid/regular-note"
+    }
+  },
+  {
     "raw": "C:\\Users\\ingra107\\Peripheral-Brain\\scripts\\db\\sync.py",
     "expected": {
       "type": "script",

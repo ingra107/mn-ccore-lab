@@ -1,5 +1,5 @@
 // GENERATED from scripts/links/link_contract.py -- DO NOT EDIT BY HAND.
-// rules_hash=586e28ebdf59290ee55b1b3ca7774dea17b790b98dea532402dfcb233620133f
+// rules_hash=443356e3328238512fbcec426431e0259ede186ed8e1b15a95c081015d667f0d
 // Regenerate: python -X utf8 scripts/links/gen_links.py (in the Peripheral-Brain repo).
 //
 // INERT (Phase 1): exported but not imported by app code. urlClassify.ts is the
@@ -17,7 +17,7 @@ export interface PbCanonicalLink {
   source_raw: string | null
 }
 
-export const PB_LINK_RULES_HASH = '586e28ebdf59290ee55b1b3ca7774dea17b790b98dea532402dfcb233620133f'
+export const PB_LINK_RULES_HASH = '443356e3328238512fbcec426431e0259ede186ed8e1b15a95c081015d667f0d'
 
 interface PbLinkRule {
   type: string
@@ -108,14 +108,14 @@ const PB_LINK_RULES: PbLinkRule[] = [
   {
     "canonical": "[[\\1]]",
     "id_group": 1,
-    "match": "\\[\\[(iwd[_-][^\\]|]*)(?:\\|[^\\]]+)?\\]\\]",
+    "match": "\\[\\[((?:[^\\]|]*/)?iwd[_-][^\\]|/]*)(?:\\|[^\\]]+)?\\]\\]",
     "title": "\\1",
     "type": "iwd"
   },
   {
     "canonical": "\\0",
     "id_group": 1,
-    "match": "obsidian://open\\?[^\\s]*file=(iwd[_-][\\w%./+-]*)",
+    "match": "obsidian://open\\?[^\\s]*file=((?:[\\w%.+-]*(?:%2[Ff]|/))*iwd[_-](?:(?!%2[Ff])[\\w%.+-])*)(?=$|[&#])",
     "title": "\\1",
     "type": "iwd"
   },
