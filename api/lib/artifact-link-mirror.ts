@@ -60,6 +60,13 @@ export type ArtifactLinkMirrorResult =
  * Routes through the EXPORTED applyInsert (precedent: routes/handoffs.ts:78-90),
  * so the row gets last_mutation_id stamping + the trg_links_seq_insert-assigned
  * seq the A3 pull cursor needs.
+ *
+ * NB (#199c): calling applyInsert directly BYPASSES processOne's gate stack —
+ * ALLOWED_TABLES / TABLE_FIELDS / assertProtectedNotNull / assertEnumDomain.
+ * Safe today: all 8 payload cols below are whitelisted and `links` has no enum
+ * domain. But a future `links` column omitted from the whitelist would fail
+ * SILENTLY at D1 here (status 'failed', no validation error). Keep this payload
+ * in lockstep with the links mutation schema, or route through processOne.
  */
 export async function mirrorArtifactLink(
   env: Env,
