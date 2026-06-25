@@ -13,7 +13,7 @@ import SmartCompose from '../../../components/SmartCompose'
 import { useUpdateTask, useBulkUpdateTasks, useToggleSubtask } from '../../../hooks/useMutations'
 import { useTaskDetail, useTaskLinks } from '../../../hooks/useApiData'
 import { useQueryClient } from '@tanstack/react-query'
-import { useAutoAcknowledge } from '../../../hooks/useAutoAcknowledge'
+import { useTaskViewTracking } from '../../../hooks/useTaskViewTracking'
 import { useUndoToast } from '../../../components/UndoToast'
 import { localDateKey } from '../../../lib/dateUtils'
 import { STATUS_OPTIONS } from '../../../lib/taskConstants'
@@ -54,7 +54,7 @@ export function InlineDetail({ task, projectName, primaryFolder, onOpenEditor }:
   const plan = useTodayPlan()
   // Slack-style seen (Nick 2026-06-11): expanding the row acknowledges the
   // assignment silently when the viewer is the assignee.
-  useAutoAcknowledge(task)
+  useTaskViewTracking(task)
   // Workstream B (schema v75): promoted / planned derive from the SYNCED task
   // columns on THIS row (planned_for == today), not the retired today_state_* LS.
   const plannedToday = !!task.planned_for && task.planned_for.slice(0, 10) === todayKey()

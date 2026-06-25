@@ -25,7 +25,6 @@ import { useTodayView } from '../../hooks/useTodayView'
 import { AgendaListView } from '../../components/today/AgendaListView'
 import { researchTeam } from '../../data/team'
 import { useTodayState } from '../../hooks/useTodayState'
-import { useDragAutoScroll } from '../../hooks/useDragAutoScroll'
 import {
   GROUP_ORDER,
   ACCENT_GOLD, ACCENT_GREEN,
@@ -37,6 +36,7 @@ import {
 } from '../../components/today/constants'
 import { PillStrip } from '../../components/today/PillStrip'
 import { Timeline } from '../../components/today/Timeline'
+import { TodayDndContext } from '../../components/today/TodayDndContext'
 import { PlannedTodaySection } from '../../components/today/PlannedTodaySection'
 import { TaskGroup } from '../../components/today/TaskGroup'
 import { MorningThoughtCompose } from '../../components/today/MorningThoughtCompose'
@@ -52,10 +52,8 @@ export default function TodayPage() {
   const { user } = useAuth()
   const { launch: launchProcess } = useProtocolLaunch()
   const userSlug = emailToSlug(user?.email)
-  // Native HTML5 drag can't scroll the window; without this a below-fold task
-  // can't be dragged up to the timeline drop zones. Drag = plan into a slot;
-  // the 📌 row button is the no-drag path. (Today drag-to-plan fix, 2026-06-04.)
-  useDragAutoScroll()
+  // autoScroll handled by dnd-kit DndContext (enabled by default via PointerSensor)
+  // — replaced useDragAutoScroll() which listened on 'dragover' (HTML5; now dead).
 
   const tasksQuery = useTasks(userSlug ? { assignee: userSlug } : undefined)
   const projectsQuery = useProjects()
@@ -407,6 +405,11 @@ export default function TodayPage() {
           </div>
         </div>
 
+        {/* TodayDndContext: single DndContext spanning Timeline (droppables = gaps)
+            + PlannedTodaySection + TaskGroup (draggables = task rows).
+            GH#150: replaces both HTML5 DnD (list→gap) and raw pointer events (block move). */}
+        <TodayDndContext state={state} tasks={tasks}>
+
         {/* Today view: Timeline (drag-to-plan) or Agenda (linear scan).
             The toggle lives in the Timeline section header; AgendaListView
             renders its own header-less version when view === 'agenda'. */}
@@ -503,6 +506,8 @@ export default function TodayPage() {
             />
           ))
         )}
+
+        </TodayDndContext>
 
         <div data-b2-completed style={{ marginTop: 24, paddingTop: 16, borderTop: '1px dashed rgba(255,255,255,0.08)' }}>
           <div onClick={() => setCompletedOpen(!completedOpen)} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', padding: '4px 0' }}>

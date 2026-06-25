@@ -30,9 +30,11 @@
 //   - OverlapBand coral badge / "conflict" copy for timed overlaps
 //   - boxed right-fixed-width service rail
 
-import { useMemo, useState, useRef, useCallback, type CSSProperties, type ReactNode } from 'react'
+import { useMemo, useState, useCallback, type CSSProperties, type ReactNode } from 'react'
 import { GripHorizontal } from 'lucide-react'
-import { useTaskBlockGesture, type FreeWindow } from './useTaskBlockGesture'
+import { useDroppable } from '@dnd-kit/core'
+import { useTaskBlockDrag } from './useTaskBlockDrag'
+import type { FreeWindow } from './useTaskBlockGesture'
 import { EventRow, type SaveStatus } from './MeetingRow'
 import { PlannedTaskRow } from './PlannedTaskRow'
 import {
@@ -59,13 +61,15 @@ function fmtMin(min: number): string {
 // ── TimedTaskBlock ─────────────────────────────────────────────────────────
 // Compact absolute-positioned block for a TIMED planned task inside a gap.
 //
-// Phase 4: pointer-driven MOVE + RESIZE via useTaskBlockGesture.
-//   - Body drag (onPointerDownBody) → moves the block vertically → writes plan_start_min.
-//   - Bottom-edge 6px strip (11px on touch, @media hover:none) → resizes → writes estimated_minutes.
-//   - Click (movement < 4px) → onExpand(id) — expand behavior preserved.
-//   - Live preview: translateY for move, heightDelta for resize (no PATCH on pointermove).
-//   - Commit once on pointerup, snap to 15min, clamp move to gap bounds.
-//   - Cursor: grab on body, grabbing while dragging, ns-resize on strip.
+// GH#150 (2026-06-24): migrated from raw pointer events to dnd-kit.
+//   - Body drag → dnd-kit PointerSensor via useTaskBlockDrag + useDraggable().
+//     Live translateY preview driven by dnd-kit transform.y, snapped 15min.
+//     Commit fires via TodayDndContext.onDragEnd → state.planAt.
+//   - Bottom-edge 6px strip → RAW pointer events (resize; dnd-kit has no resize
+//     primitive). Strip fires stopPropagation to prevent dnd-kit activation.
+//   - Click (< 4px activation constraint) → dnd-kit does NOT start drag →
+//     native onClick fires → onClickExpand → onExpand(id). Expand preserved.
+//   - Keyboard: dnd-kit KeyboardSensor (Space/Enter=pickup, arrows=move, Escape=cancel).
 //
 // Phase 3 ONLY rendered when TIMELINE_TASK_BLOCKS === true.
 function TimedTaskBlock({
@@ -79,7 +83,6 @@ function TimedTaskBlock({
   freeWindows,
   onExpand,
   expandedId,
-  onMove,
   onResize,
   onGhostUpdate,
 }: {
@@ -96,8 +99,6 @@ function TimedTaskBlock({
   freeWindows: FreeWindow[]
   onExpand: (id: string) => void
   expandedId: string | null
-  /** Called to commit move: writes plan_start_min (+ slot for cross-gap). */
-  onMove: (id: string, newSlot: PlannedSlot, newPlanStartMin: number) => void
   /** Called to commit resize: writes estimated_minutes. */
   onResize: (id: string, newEstimatedMinutes: number) => void
   /** Called during move gesture with live snapped landing min (null on gesture end). */
@@ -109,22 +110,29 @@ function TimedTaskBlock({
   const widthPct = (1 / visibleColCount) * 100
   const dur = task.estimated_minutes ?? 30
 
-  const [{ translatePx, heightDeltaPx, mode }, { onPointerDownBody, onPointerDownResize }] =
-    useTaskBlockGesture({
-      taskId: task.id,
-      planStartMin: task.plan_start_min ?? gapStartMin,
-      estimatedMinutes: task.estimated_minutes,
-      gapStartMin,
-      gapEndMin,
-      freeWindows,
-      onExpand,
-      onMove,
-      onResize,
-      onGhostUpdate,
-    })
+  const {
+    setNodeRef,
+    attributes,
+    listeners,
+    isDragging,
+    translatePx,
+    heightDeltaPx,
+    isResizing,
+    onPointerDownResize,
+    onClickExpand,
+  } = useTaskBlockDrag({
+    taskId: task.id,
+    task,
+    planStartMin: task.plan_start_min ?? gapStartMin,
+    estimatedMinutes: task.estimated_minutes,
+    gapStartMin,
+    gapEndMin,
+    freeWindows,
+    onExpand,
+    onResize,
+    onGhostUpdate,
+  })
 
-  const isDragging = mode === 'move'
-  const isResizing = mode === 'resize'
   const liveHeightPx = Math.max(heightPx + heightDeltaPx, 15)  // never collapse below 15px
   const [isHovered, setIsHovered] = useState(false)
 
@@ -140,7 +148,6 @@ function TimedTaskBlock({
     border: `1px solid ${withAlpha(ACCENT_GOLD, isDragging || isResizing ? 50 : expanded ? 55 : 30)}`,
     borderRadius: 5,
     // overflow: 'visible' (NOT 'hidden') — overflow content must remain readable.
-    // 'hidden' clips content inside small blocks.
     overflow: 'visible',
     cursor: isDragging ? 'grabbing' : 'grab',
     display: 'flex',
@@ -148,30 +155,28 @@ function TimedTaskBlock({
     gap: 2,
     zIndex: isDragging || isResizing ? 10 : expanded ? 3 : 1,
     // Live preview: translateY while dragging (snapped 15-min steps, no PATCH per frame).
-    // Fix A: short transition makes snap-steps feel smooth rather than jumpy.
     transform: translatePx !== 0 ? `translateY(${translatePx}px)` : undefined,
     transition: isDragging ? 'transform 80ms ease' : isResizing ? 'none' : 'transform 0ms',
     touchAction: 'none',  // prevent browser scroll-hijack during pointer gesture
     userSelect: 'none',
     willChange: isDragging ? 'transform' : isResizing ? 'height' : 'auto',
+    outline: isDragging ? `2px solid ${withAlpha(ACCENT_GOLD, 60)}` : 'none',
   }
 
   const durLabel = fmtDuration(dur)
 
   return (
     <div
+      ref={setNodeRef}
       style={blockStyle}
-      onPointerDown={onPointerDownBody}
+      onClick={onClickExpand}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       title={task.title}
       data-task-id={task.id}
       aria-label={`${task.short_title || task.title} — ${durLabel}`}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onExpand(task.id) }
-      }}
+      {...attributes}
+      {...listeners}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 4, minWidth: 0, flex: 1 }}>
         {/* Drag-grip indicator — hover-revealed GripHorizontal (size 16).
@@ -212,7 +217,7 @@ function TimedTaskBlock({
         </span>
       </div>
       {/* Resize strip — bottom 6px (11px on touch via @media hover:none).
-          Must NOT propagate pointerdown to body handler (stopPropagation in hook). */}
+          stopPropagation prevents dnd-kit PointerSensor from activating during resize. */}
       <div
         onPointerDown={onPointerDownResize}
         style={{
@@ -222,8 +227,6 @@ function TimedTaskBlock({
           right: 0,
           height: 6,
           cursor: 'ns-resize',
-          // @media (hover:none) / touch: wider 11px strip for touch targets
-          // We achieve the wider strip with a CSS class; inline style covers mouse.
           touchAction: 'none',
         }}
         className="task-block-resize-strip"
@@ -258,7 +261,6 @@ function AgendaGapRow({
   projectsByPid,
   expandedId,
   onExpand,
-  onDropTask,
   nowLineEl,
   nowOffsetPx,
 }: {
@@ -279,21 +281,25 @@ function AgendaGapRow({
   projectsByPid: Map<string, { name: string; slug: string; category?: string | null; primary_folder?: string | null }>
   expandedId: string | null
   onExpand: (id: string) => void
-  /** Phase 3: includes plan_start_min + estimated_minutes for timed drops. */
-  onDropTask: (id: string, slot: PlannedSlot, plan_start_min?: number, estimated_minutes?: number) => void
   /** When now falls inside this gap, pass the now-line element + its px offset
    *  from the gap top so it renders at the correct fractional position. */
   nowLineEl?: ReactNode
   nowOffsetPx?: number
 }) {
-  const [dragOver, setDragOver] = useState(false)
-  // Item 3: ghost state — tracks which task is being dragged + its live snapped position.
+  // dnd-kit droppable — replaces HTML5 onDragOver/onDrop (GH#150).
+  // The slot encodes the drop destination for TodayDndContext.onDragEnd.
+  // gapStartMin/gapEndMin are passed in droppable data so onDragEnd can recover
+  // the pointer-Y position and compute a snapped plan_start_min (Directive 2).
+  const { isOver, setNodeRef: setDropRef } = useDroppable({
+    id: `slot:${slot}`,
+    data: { gapStartMin, gapEndMin },
+  })
+  const dragOver = isOver
+  // Ghost state — tracks which task is being dragged + its live snapped position.
   const [ghostState, setGhostState] = useState<{ taskId: string; snappedMin: number } | null>(null)
   const onGhostUpdate = useCallback((taskId: string, snappedMin: number | null) => {
     setGhostState(snappedMin == null ? null : { taskId, snappedMin })
   }, [])
-  // Ref for pointer-Y placement on timed drops (Directive 2: free pointer-Y).
-  const gapDivRef = useRef<HTMLDivElement>(null)
 
   const tasksInGap = useMemo(() =>
     state.plannedIds()
@@ -375,37 +381,10 @@ function AgendaGapRow({
 
   return (
     <div
-      // .today-drop-zone class → hidden on touch (index.css, native DnD doesn't fire there)
-      ref={gapDivRef}
-      className="today-drop-zone"
-      onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
-      onDragLeave={() => setDragOver(false)}
-      onDrop={(e) => {
-        e.preventDefault()
-        setDragOver(false)
-        const id = e.dataTransfer.getData('text/plain')
-        if (!id) return
-        if (TIMELINE_TASK_BLOCKS && gapStartMin > 0) {
-          // Directive 2 (2026-06-22): free pointer-Y placement — drop snaps to the
-          // pointer's Y position within the gap, not the gap's start.
-          // minutes = (pointer offset from gap top) / PX_PER_MIN, snapped 15min,
-          // clamped to [gapStartMin, gapEndMin].
-          const droppedTask = tasks.find((t) => t.id === id)
-          const estimatedMins = droppedTask?.estimated_minutes ?? 30
-          let startMin = gapStartMin  // fallback if no ref
-          if (gapDivRef.current) {
-            const gapTop = gapDivRef.current.getBoundingClientRect().top
-            const rawMins = gapStartMin + (e.clientY - gapTop) / PX_PER_MIN
-            const snapped = Math.round(rawMins / 15) * 15
-            // Fix D: clamp by duration so a 60-min task can't drop into the final
-            // 15 min of a gap — matches move clamp in useTaskBlockGesture (gapEndMin - dur).
-            startMin = Math.max(gapStartMin, Math.min(gapEndMin - estimatedMins, snapped))
-          }
-          onDropTask(id, slot, startMin, estimatedMins)
-        } else {
-          onDropTask(id, slot)
-        }
-      }}
+      // GH#150: setDropRef registers this gap as a dnd-kit droppable.
+      // dragOver (isOver from useDroppable) drives highlight — replaces HTML5 onDragOver.
+      // TodayDndContext.onDragEnd calls state.planAt when a task drops here.
+      ref={setDropRef}
       style={{
         minHeight: containerMinHeight,
         borderTop: `1px dashed ${withAlpha(ACCENT_GOLD, dragOver ? 55 : 15)}`,
@@ -447,9 +426,6 @@ function AgendaGapRow({
                   freeWindows={freeWindows}
                   onExpand={onExpand}
                   expandedId={expandedId}
-                  onMove={(id, newSlot, newPlanStartMin) =>
-                    state.planAt(id, newSlot, newPlanStartMin, null)
-                  }
                   onResize={(id, newEstimatedMinutes) =>
                     state.planAt(id, slot, null, newEstimatedMinutes)
                   }
@@ -799,12 +775,6 @@ export function TimelineGrid({
   now,
   inMeeting,
 }: TimelineGridProps) {
-  const onDropTask = (
-    id: string,
-    slot: PlannedSlot,
-    plan_start_min?: number,
-    estimated_minutes?: number,
-  ) => state.planAt(id, slot, plan_start_min, estimated_minutes)
   const nowColor = inMeeting ? ACCENT_CORAL : ACCENT_GOLD
   const nowLabel = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
 
@@ -898,7 +868,6 @@ export function TimelineGrid({
           projectsByPid={projectsByPid}
           expandedId={expandedId}
           onExpand={onExpand}
-          onDropTask={onDropTask}
           nowLineEl={nowInGap ? nowLineElement : undefined}
           nowOffsetPx={nowOffsetPx}
         />
@@ -948,7 +917,6 @@ export function TimelineGrid({
             projectsByPid={projectsByPid}
             expandedId={expandedId}
             onExpand={onExpand}
-            onDropTask={onDropTask}
           />
           {unit.events.map((e) => (
             <EventRow

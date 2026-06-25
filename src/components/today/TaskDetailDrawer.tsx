@@ -12,7 +12,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useTaskDetail, useTaskLinks } from '../../hooks/useApiData'
 import SmartCompose from '../SmartCompose'
 import { useUpdateTask, useToggleSubtask } from '../../hooks/useMutations'
-import { useAutoAcknowledge } from '../../hooks/useAutoAcknowledge'
+import { useTaskViewTracking } from '../../hooks/useTaskViewTracking'
 import { useUndoToast } from '../UndoToast'
 
 import { WorkflowSection } from '../tasks/detail/FieldControls'
@@ -47,7 +47,7 @@ export function TaskDetailDrawer({ task, state }: { task: TaskRow; project?: { n
   const isPlanned = !!state.planned[task.id]
   // Slack-style seen (Nick 2026-06-11): expanding the drawer acknowledges the
   // assignment silently when the viewer is the assignee.
-  useAutoAcknowledge(task)
+  useTaskViewTracking(task)
   const detailQuery = useTaskDetail(task.id)
   const detail = detailQuery.data
   const { data: linksData } = useTaskLinks(task.id)

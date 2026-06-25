@@ -12,7 +12,7 @@ import CollapsibleSection from '../CollapsibleSection'
 import FileUpload from '../FileUpload'
 const RichTextEditor = lazy(() => import('../RichTextEditor'))
 import { useUpdateTask, useUpdateTaskStatus, usePostTaskUpdate, useBulkUpdateTasks } from '../../hooks/useMutations'
-import { useAutoAcknowledge } from '../../hooks/useAutoAcknowledge'
+import { useTaskViewTracking } from '../../hooks/useTaskViewTracking'
 import { useProjects, useDecisions, useTaskLinks } from '../../hooks/useApiData'
 import StoredLinkChip from '../StoredLinkChip'
 import GhostSelect from '../ui/GhostSelect'
@@ -128,7 +128,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
   const taskPeerIntents = useIntentBroadcast('task', task?.id, taskSelfIntent)
   // Slack-style seen: opening the panel acknowledges the assignment silently
   // (assignee-only; replaces the old explicit Acknowledge button).
-  useAutoAcknowledge(task)
+  useTaskViewTracking(task)
   const { showUndo } = useUndoToast()
   // Support ?tab= deep links; retire 'notes' and 'comments' → 'activity'.
   const [activeTab, setActiveTab] = useState<Tab>(() => {
@@ -638,7 +638,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
           >
 
             {/* Acknowledgement is now automatic — opening this panel as the
-                assignee fires it (useAutoAcknowledge above). The old explicit
+                assignee fires it (useTaskViewTracking above). The old explicit
                 "Acknowledge Assignment" button is gone (Nick 2026-06-11:
                 Slack-style — seeing the task IS the acknowledgement). */}
 

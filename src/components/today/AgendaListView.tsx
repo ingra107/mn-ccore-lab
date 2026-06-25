@@ -9,9 +9,9 @@
 //     All-day events rendered first in an all-day band.
 //   - Interleaved planned tasks between meetings (the Hub's edge over native
 //     calendar apps — Agenda shows tasks-to-work-through, not just meetings).
-//   - Drop zones between rows (Phase 6): thin .today-drop-zone separators that
-//     accept HTML5 DnD drops from the task list. Slot-only write (no plan_start_min
-//     — Agenda has no time axis). Auto-hidden on touch via CSS (.today-drop-zone).
+//   - Drop zones between rows (Phase 6 / GH#150): thin separators that accept
+//     dnd-kit drops from the task list. Slot-only write (no plan_start_min
+//     — Agenda has no time axis). Uses useDroppable() (same model as TimelineGrid).
 //   - Read-mostly: complete tasks (DoneBox) + open drawer (click title).
 //   - Tomorrow section: shows tomorrow's D1 meetings so Nick can scan ahead.
 //   - No notes textarea (scan-mode; click title → drawer for details).
@@ -28,6 +28,7 @@
 // untimed events.
 
 import { useMemo, useState, useCallback } from 'react'
+import { useDroppable } from '@dnd-kit/core'
 import { Video } from 'lucide-react'
 import { PlannedTaskRow } from './PlannedTaskRow'
 import { buildTimelineModel } from './timelineModel'
@@ -207,38 +208,23 @@ function SectionHeader({ label }: { label: string }) {
 }
 
 // ── AgendaDropSeparator ───────────────────────────────────────────────────
-// Thin .today-drop-zone element that accepts a task dropped from the task list.
-// Slot-only write (no plan_start_min — Agenda has no time axis).
-// Auto-hidden on touch via .today-drop-zone CSS (index.css:1754).
-// Mirrors AgendaGapRow's onDragOver/onDrop shape (TimelineGrid.tsx).
-function AgendaDropSeparator({
-  slot,
-  onDropTask,
-}: {
-  slot: PlannedSlot
-  onDropTask: (id: string, slot: PlannedSlot) => void
-}) {
-  const [dragOver, setDragOver] = useState(false)
+// Thin dnd-kit droppable separator that accepts a task dragged from the task
+// list. Slot-only write (no plan_start_min — Agenda has no time axis).
+// GH#150: replaced HTML5 onDragOver/onDrop with useDroppable() to match the
+// TimelineGrid pattern. No className needed; visibility controlled by isOver.
+function AgendaDropSeparator({ slot }: { slot: PlannedSlot }) {
+  const { isOver, setNodeRef } = useDroppable({ id: `slot:${slot}` })
 
   return (
     <div
-      className="today-drop-zone"
-      onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
-      onDragLeave={() => setDragOver(false)}
-      onDrop={(e) => {
-        e.preventDefault()
-        setDragOver(false)
-        const id = e.dataTransfer.getData('text/plain')
-        if (!id) return
-        onDropTask(id, slot)
-      }}
+      ref={setNodeRef}
       style={{
-        height: dragOver ? 20 : 6,
+        height: isOver ? 20 : 6,
         marginTop: 1,
         marginBottom: 1,
         borderRadius: 4,
-        border: `1px dashed ${withAlpha(ACCENT_GOLD, dragOver ? 55 : 15)}`,
-        background: dragOver ? withAlpha(ACCENT_GOLD, 8) : 'transparent',
+        border: `1px dashed ${withAlpha(ACCENT_GOLD, isOver ? 55 : 15)}`,
+        background: isOver ? withAlpha(ACCENT_GOLD, 8) : 'transparent',
         transition: 'all 120ms',
         display: 'flex',
         alignItems: 'center',
@@ -247,7 +233,7 @@ function AgendaDropSeparator({
         overflow: 'hidden',
       }}
     >
-      {dragOver && (
+      {isOver && (
         <span style={{
           fontSize: 9,
           color: ACCENT_GOLD,
@@ -300,12 +286,6 @@ export function AgendaListView({
 
   const visibleEvents = events.filter((e) => !dismissedIds[e.id])
   const visibleTomorrow = tomorrowEvents.filter((e) => !dismissedIds[e.id])
-
-  // Slot-only drop handler (Agenda has no time axis — no plan_start_min written).
-  // Same contract as Timeline's onDropTask → state.planAt(id, slot).
-  const onDropTask = (id: string, slot: PlannedSlot) => {
-    state.planAt(id, slot)
-  }
 
   // Partition into all-day + timed (sorted by startMin) using buildTimelineModel.
   // buildTimelineModel is the single source of truth for slot identity (Phase 6).
@@ -472,7 +452,7 @@ export function AgendaListView({
           // drop zone + any tasks in this slot
           return (
             <div key={`drop-${row.slot}`} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <AgendaDropSeparator slot={row.slot} onDropTask={onDropTask} />
+              <AgendaDropSeparator slot={row.slot} />
               {row.tasks.map((task) => (
                 <PlannedTaskRow
                   key={task.id}

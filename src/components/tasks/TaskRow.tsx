@@ -209,10 +209,9 @@ export interface SharedTaskRowProps {
 }
 
 // DragHandle — hover-revealed grab icon co-located with the 📌 plan pin.
-// Carries the full HTML5 DnD contract (draggable + dataTransfer text/plain id)
-// previously owned by the left-gutter Grip. stopPropagation on click/mousedown
-// prevents row expand from firing when the user grabs this icon.
-// .task-grip class keeps the @media(hover:none) touch-hide rule working.
+// Carries the dnd-kit drag contract (useDraggable listeners spread onto the span).
+// stopPropagation on click/mousedown prevents row expand from firing when the
+// user grabs this icon. .task-grip class is a hook for any future CSS targeting.
 function DragHandle({ show, draggable, onDragStart }: { show: boolean; draggable?: boolean; onDragStart?: (e: React.DragEvent) => void }) {
   if (!draggable) return null
   return (

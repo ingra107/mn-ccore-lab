@@ -1,4 +1,7 @@
-// useAutoAcknowledge — Slack-style "seen" semantics for assignments
+// useTaskViewTracking — on task-detail open, fires TWO distinct signals
+// (functionally separate; the old name "useAutoAcknowledge" advertised only one):
+//   1. mark SEEN for ANY viewer (entity_seen) — "you looked at this at T"
+//   2. ACKNOWLEDGE for the ASSIGNEE only (acknowledged_at) — one-shot NEW signal
 // (Nick 2026-06-11: "once you click on it or see that task ... then its done").
 //
 // Opening a task's detail surface IS the acknowledgement: when the viewer is
@@ -24,7 +27,7 @@ interface AckableTask {
   status: string
 }
 
-export function useAutoAcknowledge(task: AckableTask | null | undefined) {
+export function useTaskViewTracking(task: AckableTask | null | undefined) {
   const { user } = useAuth()
   const viewerSlug = useMemo(() => emailToSlug(user?.email), [user?.email])
   const { mutate: ackMutate } = useAcknowledgeTask()
