@@ -47,6 +47,7 @@ import { HandoffSection } from './detail/HandoffSection'
 import { TaskActivityFeed } from './detail/TaskActivityFeed'
 import TaskIntelligence from './detail/TaskIntelligence'
 import KeyLinksEditor from '../KeyLinksEditor'
+import { displayRank } from '../../lib/pbLinkDisplayOrder.generated'
 import { Brain } from 'lucide-react'
 
 type Tab = 'overview' | 'intelligence' | 'activity' | 'files' | 'details'
@@ -1210,7 +1211,11 @@ function DetailKeyLinks({
   // Task-own links are no longer shown read-only here — they are already
   // covered by KeyLinksEditor below (slots backfilled 1:1 from links table).
   const { data: linksData } = useTaskLinks(task.id)
-  const projectLinks = linksData?.projectLinks ?? []
+  // Sort: type-priority (displayRank) primary, sort_order as tiebreaker.
+  // Mirrors PB sections.py render order so both surfaces agree by construction.
+  const projectLinks = [...(linksData?.projectLinks ?? [])].sort(
+    (a, b) => displayRank(a.type) - displayRank(b.type) || a.sort_order - b.sort_order
+  )
 
   // 3-slot key_link_* for the WRITE path (add/edit/remove) — kept until P3/P4.
   const slotLinks = [

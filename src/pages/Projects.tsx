@@ -29,6 +29,7 @@ import { ICON_PROPS } from '../lib/iconProps'
 import { useAllProjectLinks } from '../hooks/useApiData'
 import type { StoredLink } from '../hooks/useApiData'
 import { iconForType } from '../lib/linkIcon'
+import { displayRank } from '../lib/pbLinkDisplayOrder.generated'
 import { useProtocolLaunch } from '../hooks/useProtocolLaunch'
 import WorkOnActions from '../components/WorkOnActions'
 
@@ -78,7 +79,12 @@ const LINKS_OVERFLOW_THRESHOLD = 4
 function ProjectLinksCell({ links }: { links: StoredLink[] }) {
   const { launch } = useProtocolLaunch()
   if (links.length === 0) return null
-  const visible = links.slice(0, LINKS_OVERFLOW_THRESHOLD)
+  // Sort: type-priority (displayRank) primary, existing sort_order as tiebreaker.
+  // Stable sort mirrors PB sections.py render order so both surfaces agree.
+  const sorted = [...links].sort(
+    (a, b) => displayRank(a.type) - displayRank(b.type) || a.sort_order - b.sort_order
+  )
+  const visible = sorted.slice(0, LINKS_OVERFLOW_THRESHOLD)
   const overflow = links.length - visible.length
   return (
     <span

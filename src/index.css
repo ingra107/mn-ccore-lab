@@ -167,6 +167,7 @@
   --link-script:        #475569;
   --link-web:           #475569;
   --link-artifact:      #6B5420;   /* Hermes artifact gold (dark override below) */
+  --link-iwd:           #4F46E5;   /* IWD indigo (dark override below) */
 }
 
 .dark {
@@ -176,6 +177,8 @@
   --link-github-tree:   #E6EDF3;
   /* Artifact gold → brighter on dark surfaces (colorDark: #DCB355) */
   --link-artifact:      #DCB355;
+  /* IWD indigo → lighter on dark surfaces (colorDark: #A5B4FC) */
+  --link-iwd:           #A5B4FC;
 }
 
 /* ── Dark mode variables ── */

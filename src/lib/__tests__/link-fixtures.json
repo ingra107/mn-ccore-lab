@@ -96,6 +96,22 @@
     }
   },
   {
+    "raw": "[[iwd_adams-feedback-2026-06-20]]",
+    "expected": {
+      "type": "iwd",
+      "canonical_url": "[[iwd_adams-feedback-2026-06-20]]",
+      "short_title": "iwd_adams-feedback-2026-06-20"
+    }
+  },
+  {
+    "raw": "obsidian://open?vault=PB&file=iwd-r03-resubmission-revisions",
+    "expected": {
+      "type": "iwd",
+      "canonical_url": "obsidian://open?vault=PB&file=iwd-r03-resubmission-revisions",
+      "short_title": "iwd-r03-resubmission-revisions"
+    }
+  },
+  {
     "raw": "C:\\Users\\ingra107\\Peripheral-Brain\\scripts\\db\\sync.py",
     "expected": {
       "type": "script",

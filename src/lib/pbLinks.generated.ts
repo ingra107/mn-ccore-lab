@@ -1,5 +1,5 @@
 // GENERATED from scripts/links/link_contract.py -- DO NOT EDIT BY HAND.
-// rules_hash=ebc66ba17952db8a83b8116a7b8b23724fa870d7d610454c119b62143b16f44d
+// rules_hash=586e28ebdf59290ee55b1b3ca7774dea17b790b98dea532402dfcb233620133f
 // Regenerate: python -X utf8 scripts/links/gen_links.py (in the Peripheral-Brain repo).
 //
 // INERT (Phase 1): exported but not imported by app code. urlClassify.ts is the
@@ -7,7 +7,7 @@
 // (link-fixtures.json) is asserted against normalizeLink() by vitest so this
 // interpreter can never silently drift from the PB Python runtime.
 
-export const PB_LINK_TYPES = ["google_doc", "google_sheet", "google_slide", "google_form", "box_folder", "github_repo", "github_issue", "github_tree", "gmail_thread", "gmail_draft", "obsidian_note", "local_folder", "local_file", "script", "web", "artifact"] as const
+export const PB_LINK_TYPES = ["iwd", "google_doc", "google_sheet", "google_slide", "google_form", "box_folder", "github_repo", "github_issue", "github_tree", "gmail_thread", "gmail_draft", "obsidian_note", "local_folder", "local_file", "script", "web", "artifact"] as const
 export type PbLinkType = (typeof PB_LINK_TYPES)[number]
 
 export interface PbCanonicalLink {
@@ -17,7 +17,7 @@ export interface PbCanonicalLink {
   source_raw: string | null
 }
 
-export const PB_LINK_RULES_HASH = 'ebc66ba17952db8a83b8116a7b8b23724fa870d7d610454c119b62143b16f44d'
+export const PB_LINK_RULES_HASH = '586e28ebdf59290ee55b1b3ca7774dea17b790b98dea532402dfcb233620133f'
 
 interface PbLinkRule {
   type: string
@@ -108,6 +108,20 @@ const PB_LINK_RULES: PbLinkRule[] = [
   {
     "canonical": "[[\\1]]",
     "id_group": 1,
+    "match": "\\[\\[(iwd[_-][^\\]|]*)(?:\\|[^\\]]+)?\\]\\]",
+    "title": "\\1",
+    "type": "iwd"
+  },
+  {
+    "canonical": "\\0",
+    "id_group": 1,
+    "match": "obsidian://open\\?[^\\s]*file=(iwd[_-][\\w%./+-]*)",
+    "title": "\\1",
+    "type": "iwd"
+  },
+  {
+    "canonical": "[[\\1]]",
+    "id_group": 1,
     "match": "\\[\\[([^\\]|]+)(?:\\|[^\\]]+)?\\]\\]",
     "title": "\\1",
     "type": "obsidian_note"
@@ -143,7 +157,7 @@ const PB_LINK_RULES: PbLinkRule[] = [
   {
     "canonical": "https://mn-ccore-lab.pages.dev/portal/artifacts/\\1",
     "id_group": 1,
-    "match": "https?://[^\\s]+/portal/artifacts/(art_[0-9a-f]+)",
+    "match": "https?://[^\\s]+/portal/artifacts/(art_[0-9a-fA-F]+)",
     "title": "Artifact",
     "type": "artifact"
   },
