@@ -118,13 +118,6 @@ export async function mirrorArtifactLink(
       client_ts: nowInstant(),
       issued_at: nowInstant(),
     };
-    // #199c (defense-in-depth note): applyInsert is the raw insert primitive — it
-    // BYPASSES processOne's ALLOWED_TABLES / TABLE_FIELDS / assertProtectedNotNull /
-    // assertEnumDomain gates. Safe today: all 8 payload cols above are whitelisted
-    // and `links` carries no enum domain. RISK if links ever gains a field not in
-    // the insert whitelist OR an enum-constrained column — it would fail silently at
-    // D1 and surface only as a 'failed' return, not a validation error. Keep this
-    // payload in sync with the links insert whitelist if the schema grows.
     const res = await applyInsert(env, mut, user);
     return res.status === 'accepted' ? 'inserted' : 'failed';
   } catch (e) {
