@@ -1,12 +1,15 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, projectRefToCanonical } from '../helpers';
+import { json, error, generateId, projectRefToCanonical, actorSlug } from '../helpers';
 import { postActivityEntry } from '../lib/activity-entry';
 import type { EntityType } from '../lib/activity-entry';
+import { ARTIFACT_URL_RE } from '../lib/artifact-url';
 
-// GET /api/ai-requests?status=&project_slug=
+// GET /api/ai-requests?status=&project_slug=&source_type=&source_id=
 export async function handleGetAIRequests(url: URL, env: Env): Promise<Response> {
   const status = url.searchParams.get('status');
   const projectSlug = url.searchParams.get('project_slug');
+  const sourceType = url.searchParams.get('source_type');
+  const sourceId = url.searchParams.get('source_id');
 
   let query = 'SELECT * FROM ai_requests WHERE 1=1';
   const params: string[] = [];
@@ -19,6 +22,16 @@ export async function handleGetAIRequests(url: URL, env: Env): Promise<Response>
   if (projectSlug) {
     query += ' AND project_slug = ?';
     params.push(projectSlug);
+  }
+
+  if (sourceType) {
+    query += ' AND source_type = ?';
+    params.push(sourceType);
+  }
+
+  if (sourceId) {
+    query += ' AND source_id = ?';
+    params.push(sourceId);
   }
 
   query += ' ORDER BY created_at DESC';
@@ -134,6 +147,8 @@ export async function handleUpdateAIResponse(
     source_type: string;
     source_id: string;
     project_slug: string | null;
+    requested_by: string | null;
+    prompt: string;
   }>();
   if (!updated) {
     return error('AI request not found', 404);
@@ -147,6 +162,15 @@ export async function handleUpdateAIResponse(
       updated.source_type === 'artifact_comment')
   ) {
     await _postHermesResponse(env, updated, body.response.trim());
+  }
+
+  // 3. Notify the submitter on every completion (all source_types, incl. daily_thought).
+  if (status === 'completed') {
+    try {
+      await _notifySubmitter(env, updated, body.response.trim());
+    } catch (e) {
+      console.error('[handleUpdateAIResponse] submitter notify failed:', e);
+    }
   }
 
   return json({ data: updated });
@@ -220,5 +244,101 @@ async function _postHermesResponse(
       taskProjectId,
       fireSideEffects: false,
     });
+  }
+}
+
+/**
+ * Notify the ai_request's submitter that Hermes has replied.
+ *
+ * Fires for ALL source_types (daily_thought, task_comment, project_comment,
+ * artifact_comment, and any future types). Skips when requested_by is absent.
+ *
+ * Idempotent: at most one notification per (recipient_slug, 'ai_request', req.id).
+ * The completion UPDATE at L127 is unconditional, so the guard lives here, not
+ * on the UPDATE. Safe to call on repeated response-POST retries.
+ */
+async function _notifySubmitter(
+  env: Env,
+  req: {
+    id: string;
+    source_type: string;
+    source_id: string;
+    project_slug: string | null;
+    requested_by: string | null;
+    prompt: string;
+  },
+  responseText: string,
+): Promise<void> {
+  if (!req.requested_by) return;
+
+  const recipientSlug = actorSlug(req.requested_by);
+  if (!recipientSlug) return;
+
+  // Idempotency: at most one notification per (recipient, ai_request, req.id).
+  const existing = await env.DB.prepare(
+    "SELECT id FROM notifications WHERE recipient_slug = ? AND source_type = 'ai_request' AND source_id = ? LIMIT 1"
+  ).bind(recipientSlug, req.id).first<{ id: string }>();
+  if (existing) return;
+
+  const link = await _hermesNotifyLink(env, req, responseText);
+  const title = `Hermes replied to: ${req.prompt.slice(0, 60)}`;
+
+  await env.DB.prepare(
+    'INSERT INTO notifications (id, recipient_slug, type, source_type, source_id, title, body, link) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+  ).bind(
+    generateId(),
+    recipientSlug,
+    'update',
+    'ai_request',
+    req.id,
+    title,
+    null,
+    link,
+  ).run();
+}
+
+/**
+ * Resolve the deep-link for a Hermes reply notification.
+ *
+ * Priority order:
+ *   1. Artifact URL embedded in the response text (Hermes produced an artifact).
+ *   2. Source-surface fallback keyed on source_type:
+ *      - daily_thought → /today
+ *      - task_comment  → /portal/my-tasks?open=<task_id>
+ *      - project_comment → /portal/projects/<slug>
+ *      - artifact_comment → /portal/artifacts/<artifact_id>
+ *      - other → /portal/dashboard
+ */
+async function _hermesNotifyLink(
+  env: Env,
+  req: { source_type: string; source_id: string; project_slug: string | null },
+  responseText: string,
+): Promise<string | null> {
+  // An artifact URL in the response takes priority over the source surface.
+  const artMatch = responseText.match(ARTIFACT_URL_RE);
+  if (artMatch) {
+    const relPath = artMatch[0].match(/\/portal\/artifacts\/art_[0-9a-f]+/i);
+    if (relPath) return relPath[0];
+  }
+
+  switch (req.source_type) {
+    case 'daily_thought':
+      return '/today';
+    case 'task_comment': {
+      const entry = await env.DB.prepare(
+        'SELECT entity_id FROM activity_entries WHERE id = ? LIMIT 1'
+      ).bind(req.source_id).first<{ entity_id: string }>();
+      return entry ? `/portal/my-tasks?open=${entry.entity_id}` : '/portal/my-tasks';
+    }
+    case 'project_comment':
+      return req.project_slug ? `/portal/projects/${req.project_slug}` : '/portal/overview';
+    case 'artifact_comment': {
+      const entry = await env.DB.prepare(
+        'SELECT entity_id FROM activity_entries WHERE id = ? LIMIT 1'
+      ).bind(req.source_id).first<{ entity_id: string }>();
+      return entry ? `/portal/artifacts/${entry.entity_id}` : '/portal/artifacts';
+    }
+    default:
+      return '/portal/dashboard';
   }
 }

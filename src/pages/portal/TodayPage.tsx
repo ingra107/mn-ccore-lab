@@ -40,6 +40,7 @@ import { TodayDndContext } from '../../components/today/TodayDndContext'
 import { PlannedTodaySection } from '../../components/today/PlannedTodaySection'
 import { TaskGroup } from '../../components/today/TaskGroup'
 import { MorningThoughtCompose } from '../../components/today/MorningThoughtCompose'
+import { HermesThoughtReplies } from '../../components/today/HermesThoughtReplies'
 import { HermesSuggestsCard } from '../../components/today/rail/HermesSuggestsCard'
 import { NeedsAttentionCard } from '../../components/today/rail/NeedsAttentionCard'
 import { ProjectsCard } from '../../components/today/rail/ProjectsCard'
@@ -398,12 +399,15 @@ export default function TodayPage() {
 
         <PillStrip counts={counts} />
 
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 20 }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 12 }}>
           <span style={{ fontSize: 14, marginTop: 2 }}>🧠</span>
           <div style={{ flex: 1, minWidth: 0 }}>
             <MorningThoughtCompose />
           </div>
         </div>
+
+        {/* Hermes replies to @hermes daily_thought prompts (TP-A1: previously rendered nowhere) */}
+        <HermesThoughtReplies dateKey={todayKey()} />
 
         {/* TodayDndContext: single DndContext spanning Timeline (droppables = gaps)
             + PlannedTodaySection + TaskGroup (draggables = task rows).

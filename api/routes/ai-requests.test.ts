@@ -1,5 +1,5 @@
 /**
- * ai-requests.test.ts — T4 Hermes response lane
+ * ai-requests.test.ts — T4 Hermes response lane + submitter notifications
  *
  * Covers:
  *   - handleUpdateAIResponse for source_type='task_comment': updates placeholder + writes timeline
@@ -9,6 +9,7 @@
  *   - fallback INSERT when placeholder is missing
  *   - non-comment source_types (e.g. 'direct') do NOT write to timeline
  *   - failed status does NOT write to timeline
+ *   - submitter notifications: INSERT on every completion, idempotent, correct link
  */
 
 import { describe, it, expect, vi } from 'vitest';
@@ -27,13 +28,15 @@ const mockPostActivity = vi.mocked(postActivityEntry);
 
 // ── DB stub factory ────────────────────────────────────────────────────────────
 
-type RowKey = 'aiReq' | 'trigEntry' | 'placeholder';
+type RowKey = 'aiReq' | 'trigEntry' | 'placeholder' | 'existingNotif';
 
 function makeDb(opts: {
   aiReq?: Record<string, unknown> | null;
   trigEntry?: Record<string, unknown> | null;
   placeholder?: Record<string, unknown> | null;
   taskRow?: { project_id: string | null } | null;
+  /** Pre-existing notification row — used to test idempotency (non-null = skip INSERT). */
+  existingNotif?: { id: string } | null;
   captureUpdate?: (sql: string, binds: unknown[]) => void;
 }) {
   return {
@@ -51,6 +54,7 @@ function makeDb(opts: {
           if (/FROM activity_entries WHERE id/.test(sql)) return opts.trigEntry ?? null;
           if (/actor_slug = 'claude-ai'/.test(sql) && /Thinking/.test(sql)) return opts.placeholder ?? null;
           if (/FROM tasks WHERE id/.test(sql)) return opts.taskRow ?? null;
+          if (/FROM notifications/.test(sql)) return opts.existingNotif ?? null;
           return null;
         },
         all: async () => ({ results: [] }),
@@ -273,5 +277,214 @@ describe('handleUpdateAIResponse — T4 Hermes response lane', () => {
     const env = { DB: db } as unknown as Env;
     const res = await handleUpdateAIResponse('ai-missing', makeRequest({ response: 'ok' }), env);
     expect(res.status).toBe(404);
+  });
+});
+
+// ── Submitter notifications ────────────────────────────────────────────────────
+//
+// INSERT INTO notifications for every completed ai_request, keyed by
+// requested_by email → actorSlug (LUT-mapped, e.g. ingra107 → nick-ingraham).
+// Idempotent: repeated response-POST retries skip the INSERT when a
+// (recipient_slug, 'ai_request', ai_request.id) row already exists.
+
+describe('handleUpdateAIResponse — submitter notifications', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('inserts notification for daily_thought completion with requested_by set', async () => {
+    const inserts: Array<{ sql: string; binds: unknown[] }> = [];
+    const db = makeDb({
+      aiReq: {
+        id: 'ai-n1',
+        source_type: 'daily_thought',
+        source_id: '2026-06-25',
+        project_slug: null,
+        requested_by: 'ingra107@umn.edu',
+        prompt: 'What should I focus on today?',
+      },
+      captureUpdate: (sql, binds) => inserts.push({ sql, binds }),
+    });
+    const env = { DB: db } as unknown as Env;
+
+    const res = await handleUpdateAIResponse(
+      'ai-n1',
+      makeRequest({ response: 'Focus on the manuscript revision.' }),
+      env,
+    );
+
+    expect(res.status).toBe(200);
+    const notifInsert = inserts.find(i => /INSERT INTO notifications/.test(i.sql));
+    expect(notifInsert).toBeDefined();
+    // binds: [id, recipient_slug, type, source_type, source_id, title, body, link]
+    expect(notifInsert!.binds[1]).toBe('nick-ingraham');   // actorSlug('ingra107@umn.edu')
+    expect(notifInsert!.binds[2]).toBe('update');
+    expect(notifInsert!.binds[3]).toBe('ai_request');
+    expect(notifInsert!.binds[4]).toBe('ai-n1');           // source_id = ai_request.id
+    expect(notifInsert!.binds[5] as string).toContain('Hermes replied to:');
+    expect(notifInsert!.binds[6]).toBeNull();              // body = null
+    expect(notifInsert!.binds[7]).toBe('/today');          // daily_thought link
+  });
+
+  it('does not insert notification when requested_by is null', async () => {
+    const inserts: Array<{ sql: string; binds: unknown[] }> = [];
+    const db = makeDb({
+      aiReq: {
+        id: 'ai-n2',
+        source_type: 'daily_thought',
+        source_id: '2026-06-25',
+        project_slug: null,
+        requested_by: null,
+        prompt: 'No submitter',
+      },
+      captureUpdate: (sql, binds) => inserts.push({ sql, binds }),
+    });
+    const env = { DB: db } as unknown as Env;
+
+    await handleUpdateAIResponse('ai-n2', makeRequest({ response: 'Answer.' }), env);
+
+    expect(inserts.find(i => /INSERT INTO notifications/.test(i.sql))).toBeUndefined();
+  });
+
+  it('skips INSERT when notification already exists (idempotent retry)', async () => {
+    const inserts: Array<{ sql: string; binds: unknown[] }> = [];
+    const db = makeDb({
+      aiReq: {
+        id: 'ai-n3',
+        source_type: 'daily_thought',
+        source_id: '2026-06-25',
+        project_slug: null,
+        requested_by: 'ingra107@umn.edu',
+        prompt: 'Already notified prompt',
+      },
+      existingNotif: { id: 'notif-already-exists' },
+      captureUpdate: (sql, binds) => inserts.push({ sql, binds }),
+    });
+    const env = { DB: db } as unknown as Env;
+
+    await handleUpdateAIResponse('ai-n3', makeRequest({ response: 'Answer.' }), env);
+
+    expect(inserts.find(i => /INSERT INTO notifications/.test(i.sql))).toBeUndefined();
+  });
+
+  it('does not insert notification when status=failed', async () => {
+    const inserts: Array<{ sql: string; binds: unknown[] }> = [];
+    const db = makeDb({
+      aiReq: {
+        id: 'ai-n4',
+        source_type: 'daily_thought',
+        source_id: '2026-06-25',
+        project_slug: null,
+        requested_by: 'ingra107@umn.edu',
+        prompt: 'Failed request',
+      },
+      captureUpdate: (sql, binds) => inserts.push({ sql, binds }),
+    });
+    const env = { DB: db } as unknown as Env;
+
+    await handleUpdateAIResponse('ai-n4', makeRequest({ response: 'Error.', status: 'failed' }), env);
+
+    expect(inserts.find(i => /INSERT INTO notifications/.test(i.sql))).toBeUndefined();
+  });
+
+  it('task_comment notification links to /portal/my-tasks?open=<entity_id>', async () => {
+    const inserts: Array<{ sql: string; binds: unknown[] }> = [];
+    const db = makeDb({
+      aiReq: {
+        id: 'ai-n5',
+        source_type: 'task_comment',
+        source_id: 'ae-trigger-n5',
+        project_slug: null,
+        requested_by: 'ingra107@umn.edu',
+        prompt: 'Analyze this task for me',
+      },
+      trigEntry: { entity_id: 'task-n5', entity_type: 'task', visibility: 'team' },
+      placeholder: null,
+      taskRow: null,
+      captureUpdate: (sql, binds) => inserts.push({ sql, binds }),
+    });
+    const env = { DB: db } as unknown as Env;
+
+    await handleUpdateAIResponse('ai-n5', makeRequest({ response: 'Task analysis done.' }), env);
+
+    const notifInsert = inserts.find(i => /INSERT INTO notifications/.test(i.sql));
+    expect(notifInsert).toBeDefined();
+    expect(notifInsert!.binds[7]).toBe('/portal/my-tasks?open=task-n5');
+  });
+
+  it('project_comment notification links to /portal/projects/:slug', async () => {
+    const inserts: Array<{ sql: string; binds: unknown[] }> = [];
+    const db = makeDb({
+      aiReq: {
+        id: 'ai-n6',
+        source_type: 'project_comment',
+        source_id: 'ae-trigger-n6',
+        project_slug: 'lpv-paper',
+        requested_by: 'ingra107@umn.edu',
+        prompt: 'Review project status',
+      },
+      trigEntry: { entity_id: 'proj-n6', entity_type: 'project', visibility: 'team' },
+      placeholder: null,
+      captureUpdate: (sql, binds) => inserts.push({ sql, binds }),
+    });
+    const env = { DB: db } as unknown as Env;
+
+    await handleUpdateAIResponse('ai-n6', makeRequest({ response: 'Project is on track.' }), env);
+
+    const notifInsert = inserts.find(i => /INSERT INTO notifications/.test(i.sql));
+    expect(notifInsert).toBeDefined();
+    expect(notifInsert!.binds[7]).toBe('/portal/projects/lpv-paper');
+  });
+
+  it('uses artifact URL from response text as link when present (all source_types)', async () => {
+    const inserts: Array<{ sql: string; binds: unknown[] }> = [];
+    const db = makeDb({
+      aiReq: {
+        id: 'ai-n7',
+        source_type: 'task_comment',
+        source_id: 'ae-trigger-n7',
+        project_slug: null,
+        requested_by: 'ingra107@umn.edu',
+        prompt: 'Summarize this task',
+      },
+      trigEntry: { entity_id: 'task-n7', entity_type: 'task', visibility: 'team' },
+      placeholder: null,
+      taskRow: null,
+      captureUpdate: (sql, binds) => inserts.push({ sql, binds }),
+    });
+    const env = { DB: db } as unknown as Env;
+
+    const responseWithArtifact = 'Here is your summary: https://mn-ccore-lab.pages.dev/portal/artifacts/art_abc123def456';
+
+    await handleUpdateAIResponse('ai-n7', makeRequest({ response: responseWithArtifact }), env);
+
+    const notifInsert = inserts.find(i => /INSERT INTO notifications/.test(i.sql));
+    expect(notifInsert).toBeDefined();
+    // Artifact URL → relative path extracted; /portal/my-tasks link not used.
+    expect(notifInsert!.binds[7]).toBe('/portal/artifacts/art_abc123def456');
+  });
+
+  it('artifact_comment notification links to /portal/artifacts/:entity_id', async () => {
+    const inserts: Array<{ sql: string; binds: unknown[] }> = [];
+    const db = makeDb({
+      aiReq: {
+        id: 'ai-n8',
+        source_type: 'artifact_comment',
+        source_id: 'ae-trigger-n8',
+        project_slug: null,
+        requested_by: 'ingra107@umn.edu',
+        prompt: 'Revise this artifact',
+      },
+      trigEntry: { entity_id: 'art_deadbeef', entity_type: 'artifact', visibility: 'team' },
+      placeholder: null,
+      captureUpdate: (sql, binds) => inserts.push({ sql, binds }),
+    });
+    const env = { DB: db } as unknown as Env;
+
+    await handleUpdateAIResponse('ai-n8', makeRequest({ response: 'Artifact revised.' }), env);
+
+    const notifInsert = inserts.find(i => /INSERT INTO notifications/.test(i.sql));
+    expect(notifInsert).toBeDefined();
+    expect(notifInsert!.binds[7]).toBe('/portal/artifacts/art_deadbeef');
   });
 });

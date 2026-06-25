@@ -1724,6 +1724,43 @@ export function useInsightSuggestions(projectId: string) {
   })
 }
 
+// ── Daily-Thought Hermes Replies ────────────────────────────
+
+export interface DailyThoughtReply {
+  id: string
+  prompt: string
+  response: string | null
+  status: string  // 'pending' | 'completed' | other backend values
+  responded_at: string | null
+  created_at: string
+}
+
+/** Fetch today's @hermes daily_thought ai_requests (all statuses) so the
+ *  Today page can show pending ("Thinking…") and completed replies. */
+export function useDailyThoughtReplies(dateKey: string) {
+  return useQuery({
+    queryKey: ['ai-requests', 'daily_thought', dateKey],
+    queryFn: async (): Promise<DailyThoughtReply[]> => {
+      const params = new URLSearchParams({
+        source_type: 'daily_thought',
+        source_id: dateKey,
+      })
+      const res = await fetch(`/api/ai-requests?${params}`)
+      if (!res.ok) return []
+      const data = await res.json() as { data?: DailyThoughtReply[] }
+      return data.data ?? []
+    },
+    staleTime: 30 * 1000,
+    // Poll every 10 s while any item is still pending so Thinking… resolves promptly.
+    refetchInterval: (query) => {
+      const rows = query.state.data
+      if (!rows || rows.length === 0) return false
+      return rows.some((r) => r.status !== 'completed') ? 10 * 1000 : false
+    },
+    enabled: !!dateKey,
+  })
+}
+
 // ── Paper-to-Project linking (enriched) ─────────────────────
 
 interface LinkedProject {
