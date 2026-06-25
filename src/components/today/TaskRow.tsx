@@ -10,6 +10,7 @@
 // shared, generic one") — the generic row lives in components/tasks/; this
 // file is the Today-specific binding.
 
+import { useDraggable } from '@dnd-kit/core'
 import { TaskRow as SharedTaskRow } from '../tasks/TaskRow'
 import { useDensity } from '../DensityToggle'
 import { TaskDetailDrawer } from './TaskDetailDrawer'
@@ -28,10 +29,18 @@ export function TaskRow({ task, project, state, expandedId, onExpand, projectsBy
   const planned = state.planned[task.id]
   const expanded = expandedId === task.id && !isDone
 
-  const onDragStart = (e: React.DragEvent) => {
-    e.dataTransfer.effectAllowed = 'move'
-    e.dataTransfer.setData('text/plain', task.id)
-  }
+  // dnd-kit draggable (GH#150): replaces HTML5 draggable/onDragStart.
+  // We wrap the SharedTaskRow in a useDraggable div. The PointerSensor in
+  // TodayDndContext detects pointerdown anywhere on the wrapper and activates
+  // the drag. The SharedTaskRow's DragHandle grip is the visual affordance;
+  // draggable=false on SharedTaskRow disables the browser's native HTML5 DnD
+  // so only dnd-kit fires.
+  const { attributes: dragAttrs, listeners: dragListeners, setNodeRef: setDragNodeRef, isDragging: isListDragging } = useDraggable({
+    id: `list-task:${task.id}`,
+    disabled: isDone,
+    data: { taskId: task.id, source: 'list', task },
+  })
+  const onDragStart = undefined  // No HTML5 drag; dnd-kit handles it
 
   // Directive 4 (2026-06-22): key_link_* icons in row — parity with MyTasks ListView.
   // Reuses today/primitives LinkRow (same icon resolution as MyTasks LinksBar).
@@ -80,6 +89,16 @@ export function TaskRow({ task, project, state, expandedId, onExpand, projectsBy
   ) : null
 
   return (
+    // dnd-kit wrapper: setNodeRef + listeners activate the PointerSensor when the
+    // user grabs the row (specifically the grip icon inside SharedTaskRow).
+    // draggable=false on SharedTaskRow disables native HTML5 DnD.
+    // opacity: 0.5 while actively dragging for visual feedback.
+    <div
+      ref={setDragNodeRef}
+      {...dragAttrs}
+      {...dragListeners}
+      style={{ opacity: isListDragging ? 0.5 : 1 }}
+    >
     <SharedTaskRow
       task={task}
       project={project}
@@ -91,7 +110,7 @@ export function TaskRow({ task, project, state, expandedId, onExpand, projectsBy
       isPlanned={!!planned}
       plannedLabel={planned?.slot === 'strip' ? 'planned' : 'scheduled'}
       showGroupOverridePin
-      draggable={!isDone}
+      draggable={false}
       onDragStart={onDragStart}
       onTogglePlan={() => (planned?.slot === 'strip' ? state.unplan(task.id) : state.planAt(task.id, 'strip'))}
       leadingTag={tagForTask(task, projectsByPid)}
@@ -100,5 +119,6 @@ export function TaskRow({ task, project, state, expandedId, onExpand, projectsBy
     >
       <TaskDetailDrawer task={task} project={project} state={state} />
     </SharedTaskRow>
+    </div>
   )
 }

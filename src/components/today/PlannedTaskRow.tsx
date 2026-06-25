@@ -6,6 +6,7 @@
 // expansion as the regular TaskRow (CD spec: click body = expand drawer).
 
 import { useState } from 'react'
+import { useDraggable } from '@dnd-kit/core'
 import { GripHorizontal } from 'lucide-react'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { LinkRow, ProjectLink, type TaskLink } from './primitives'
@@ -29,13 +30,14 @@ export function PlannedTaskRow({ task, project, state, timeHint, small = false, 
   if (task.key_link_1) links.push({ url: task.key_link_1, desc: task.key_link_1_desc })
   if (task.key_link_2) links.push({ url: task.key_link_2, desc: task.key_link_2_desc })
   if (task.key_link_3) links.push({ url: task.key_link_3, desc: task.key_link_3_desc })
-  // Drag handle: a planned task stays draggable so it can be re-slotted into a
-  // specific timeline gap (the DropZones call state.planAt for any id).
-  // Drag contract unchanged: dataTransfer text/plain = task.id, effectAllowed='move'.
-  const onDragStart = (e: React.DragEvent) => {
-    e.dataTransfer.effectAllowed = 'move'
-    e.dataTransfer.setData('text/plain', task.id)
-  }
+  // Drag handle: dnd-kit useDraggable replaces HTML5 draggable/onDragStart (GH#150).
+  // The grip span carries {listeners} so only the ⋮⋮ icon activates the drag,
+  // not the whole row — prevents accidental row click + drag conflicts.
+  const { attributes: dragAttributes, listeners: dragListeners, setNodeRef: setDragRef, isDragging: isBlockDragging } = useDraggable({
+    id: `planned-task:${task.id}`,
+    disabled: isDone,
+    data: { taskId: task.id, source: 'list', task },
+  })
   return (
     <div
       data-task-id={task.id}
@@ -80,20 +82,21 @@ export function PlannedTaskRow({ task, project, state, timeHint, small = false, 
               style={{ fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}
             >{fmtDuration(task.estimated_minutes ?? 30)}</Chip>
             {!isDone && <span style={{ fontSize: 11, color: INK_DIM }}>{expanded ? '▾' : '▸'}</span>}
-            {/* Drag handle — hover-revealed, co-located with the right controls.
-                .task-grip keeps the @media(hover:none) touch-hide rule working.
-                stopPropagation prevents whole-row-click expand from firing. */}
+            {/* Drag handle — dnd-kit useDraggable (GH#150). Only the grip icon
+                activates the drag; the row body click remains expand-only.
+                stopPropagation on click/mouseDown prevents row expand. */}
             {!isDone && (
               <span
-                draggable
-                onDragStart={onDragStart}
+                ref={setDragRef}
+                {...dragAttributes}
+                {...dragListeners}
                 onClick={(e) => e.stopPropagation()}
                 onMouseDown={(e) => e.stopPropagation()}
                 title="Drag to timeline to give this a time slot"
                 className="task-grip"
                 // ~50% larger hit area (Nick 2026-06-19): padding grows the click
                 // target; negative margin absorbs it so the row doesn't shift.
-                style={{ display: 'inline-flex', alignItems: 'center', cursor: 'grab', color: INK_DIM, visibility: hover ? 'visible' : 'hidden', userSelect: 'none', flexShrink: 0, padding: '4px 5px', margin: '-4px -1px' }}
+                style={{ display: 'inline-flex', alignItems: 'center', cursor: isBlockDragging ? 'grabbing' : 'grab', color: INK_DIM, visibility: hover ? 'visible' : 'hidden', userSelect: 'none', flexShrink: 0, padding: '4px 5px', margin: '-4px -1px' }}
               >
                 <GripHorizontal {...ICON_PROPS} size={12} />
               </span>

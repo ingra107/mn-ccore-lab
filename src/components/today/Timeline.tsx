@@ -40,6 +40,7 @@
 //   - DropZone for the pure-untimed-only fallback (no timed events at all)
 
 import { useState, useCallback, useEffect, useRef } from 'react'
+import { useDroppable } from '@dnd-kit/core'
 import { useNavigate } from 'react-router-dom'
 import { PATHS } from '../../constants/paths'
 import EmptyState from '../EmptyState'
@@ -112,21 +113,24 @@ export function useNowMinutes(): number {
 }
 
 // Fallback drop zone for the case of no timed events and no rail events —
-// a simple dashed strip at the bottom.
-function DropZone({ slot, label, onDropTask }: { slot: PlannedSlot; label: string; onDropTask: (id: string, slot: PlannedSlot) => void }) {
+// a simple dashed strip at the bottom. Uses dnd-kit useDroppable (GH#150).
+function DropZone({ slot, label }: { slot: PlannedSlot; label: string }) {
+  const { isOver, setNodeRef } = useDroppable({ id: `slot:${slot}` })
   return (
     <div
-      className="today-drop-zone"
-      onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = ACCENT_GOLD; e.currentTarget.style.background = withAlpha(ACCENT_GOLD, 8) }}
-      onDragLeave={(e) => { e.currentTarget.style.borderColor = withAlpha(ACCENT_GOLD, 15); e.currentTarget.style.background = 'transparent' }}
-      onDrop={(e) => {
-        e.preventDefault()
-        e.currentTarget.style.borderColor = withAlpha(ACCENT_GOLD, 15)
-        e.currentTarget.style.background = 'transparent'
-        const id = e.dataTransfer.getData('text/plain')
-        if (id) onDropTask(id, slot)
+      ref={setNodeRef}
+      style={{
+        padding: '6px 14px',
+        margin: '4px 0',
+        border: `1px dashed ${withAlpha(ACCENT_GOLD, isOver ? 55 : 15)}`,
+        borderRadius: 6,
+        fontSize: 11,
+        color: INK_DIM,
+        textAlign: 'center',
+        transition: 'all 120ms',
+        fontStyle: 'italic',
+        background: isOver ? withAlpha(ACCENT_GOLD, 8) : 'transparent',
       }}
-      style={{ padding: '6px 14px', margin: '4px 0', border: `1px dashed ${withAlpha(ACCENT_GOLD, 15)}`, borderRadius: 6, fontSize: 11, color: INK_DIM, textAlign: 'center', transition: 'all 120ms', fontStyle: 'italic' }}
     >
       {label}
     </div>
@@ -192,7 +196,7 @@ export function Timeline({ events, tasks, state, projectsByPid, activeView, onTo
   // Collect real D1 meeting ids that have local notes to auto-save.
   const touchedMeetingIds = Object.keys(meetingNotes).filter((id) => !id.startsWith('cal-'))
 
-  const onDropTask = useCallback((id: string, slot: PlannedSlot) => state.planAt(id, slot), [state])
+  // onDropTask removed — gap drops now routed via TodayDndContext.onDragEnd (GH#150)
 
   // Determine if any visible event is happening now (for coral vs gold now-line).
   const inMeeting = visibleMeetings.some(
@@ -310,7 +314,6 @@ export function Timeline({ events, tasks, state, projectsByPid, activeView, onTo
         <DropZone
           slot={`between-0` as PlannedSlot}
           label="drop a task here to plan it for today"
-          onDropTask={onDropTask}
         />
       )}
 
