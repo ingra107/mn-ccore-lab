@@ -9,10 +9,12 @@
 //
 // `statusLabel` is exported as a pure function for unit testing.
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { fetchApi } from '../../lib/api'
 import { useProtocolLaunch } from '../../hooks/useProtocolLaunch'
 import { buildLaunchUri } from '../../lib/launch'
+import { buildWorkOnUri } from '../../lib/urlClassify'
+import { useProjects } from '../../hooks/useApiData'
 import { formatDbLocal } from '../../lib/time'
 
 // ── Pure helper — exported for unit tests ────────────────────────────────────
@@ -47,6 +49,18 @@ export default function LaunchLogPanel() {
   const [err, setErr] = useState<string | null>(null)
   const [refireErr, setRefireErr] = useState<string | null>(null)
   const { launch } = useProtocolLaunch()
+  const { data: projects = [] } = useProjects()
+
+  // Slug → primary_folder map for @workon project-scoped re-fires (#229).
+  const folderBySlug = useMemo(
+    () =>
+      new Map(
+        projects
+          .filter((p) => p.primary_folder)
+          .map((p) => [p.slug, p.primary_folder!]),
+      ),
+    [projects],
+  )
 
   const load = useCallback(() =>
     fetchApi<LaunchRow[]>('/api/launch-log')
@@ -64,14 +78,30 @@ export default function LaunchLogPanel() {
       const { data: newRow } = await fetchApi<LaunchRow>(`/api/launch-log/${row.id}/refire`, { method: 'POST' })
 
       if (row.origin === 'computer') {
-        // Server cannot fire mnccore:// (browser-only); do it here instead.
-        // Fire via the opaque token so the seed never travels through the URI.
-        const uri = buildLaunchUri(newRow.id)
-        await launch(uri, {
-          successMessage: `Re-firing @${row.tag}…`,
-          copyText: row.seed || undefined,
-          copyMessage: `@${row.tag} seed copied — paste if the handler didn't open`,
-        })
+        if (row.tag === 'workon') {
+          // @workon: fire the folder URI directly so project context is never
+          // lost if the /refire endpoint does not clone project_slug (#229).
+          // Using buildWorkOnUri (mnccore://workon/<folder>) bypasses the
+          // opaque-token resolution path and keeps the project scope intact.
+          const folder = row.project_slug ? folderBySlug.get(row.project_slug) : undefined
+          if (folder) {
+            await launch(buildWorkOnUri(folder), {
+              successMessage: 'Launching Claude in this project…',
+              copyText: folder,
+              copyMessage: 'Launching… (folder copied as backup)',
+            })
+          }
+          // No folder: row still recorded, nothing to fire on this machine.
+        } else {
+          // @quickchat and future tags: opaque-token launch (#222).
+          // Server cannot fire mnccore:// (browser-only); do it here instead.
+          const uri = buildLaunchUri(newRow.id)
+          await launch(uri, {
+            successMessage: `Re-firing @${row.tag}…`,
+            copyText: row.seed || undefined,
+            copyMessage: `@${row.tag} seed copied — paste if the handler didn't open`,
+          })
+        }
       }
       // mobile-origin: pending row created above; home poller will pick it up.
       load()
