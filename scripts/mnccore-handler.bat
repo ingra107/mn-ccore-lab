@@ -9,7 +9,10 @@ echo %date% %time% ARGS: %* >> "%TEMP%\mnccore-handler.log"
 :: Invoked by the browser/OS with a single arg: the full mnccore:// URL.
 ::
 :: Verbs:
-::   mnccore://open/<url-encoded-path>      → Explorer-open a folder/file (legacy; kept).
+::   mnccore://open/<url-encoded-path>      → Explorer-open a directory (legacy; kept).
+::                                            Refuses non-directory targets (files, execs).
+::                                            Level-1: "!target!\" existence test makes the
+::                                            file-exec path unrepresentable — no ext denylist.
 ::   mnccore://launch/<lnch_token>          → opaque-token launch (@-tag security Wave 2).
 ::                                            The token is handed to PB's resolve_launch.py,
 ::                                            which claims the seed from the Hub over an
@@ -140,6 +143,15 @@ exit /b 0
 set "target=%~1"
 if not exist "!target!" (
     call :fail "Path not found: !target!"
+    exit /b 1
+)
+:: SECURITY (Level-1): only directories are safe to open via URI.
+:: Batch idiom: `exist "path\"` (trailing backslash) resolves only if path is a
+:: directory — files, including executables, never match. This makes the "URI
+:: hands a .bat/.exe to explorer → OS runs it" path UNREPRESENTABLE; no
+:: extension denylist is needed or used (denylist has gaps; directory-only does not).
+if not exist "!target!\" (
+    call :fail "open: refused — target is not a directory: !target!"
     exit /b 1
 )
 if defined MNCCORE_HANDLER_DRYRUN (
