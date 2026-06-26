@@ -236,7 +236,7 @@ function TranscriptModal({ open, onClose, meetings }: { open: boolean; onClose: 
   const [transcript, setTranscript] = useState('')
   const [meetingId, setMeetingId] = useState('')
   const [saving, setSaving] = useState(false)
-  const { showSuccess } = useUndoToast()
+  const { showSuccess, showError } = useUndoToast()
   const queryClient = useQueryClient()
 
   // P1-5: AI processing isn't wired yet, so the honest, useful action is to
@@ -258,7 +258,7 @@ function TranscriptModal({ open, onClose, meetings }: { open: boolean; onClose: 
       onClose()
     } catch (err) {
       console.error('Save transcript failed:', err)
-      showSuccess('Saving transcript failed — please try again.')
+      showError('Saving transcript failed — please try again.')
       setSaving(false)
     }
   }

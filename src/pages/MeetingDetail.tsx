@@ -94,7 +94,7 @@ export default function MeetingDetail() {
   const { id } = useParams<{ id: string }>()
   const { data: meeting, isLoading } = useMeetingDetail(id || '')
   const { isAuthenticated } = useAuth()
-  const { showSuccess } = useToast()
+  const { showSuccess, showError } = useToast()
   const [copiedSummary, setCopiedSummary] = useState(false)
   const [generatingAgenda, setGeneratingAgenda] = useState(false)
   const [agendaCopied, setAgendaCopied] = useState(false)
@@ -333,7 +333,7 @@ export default function MeetingDetail() {
       showSuccess('Agenda copied to clipboard')
       setTimeout(() => setAgendaCopied(false), 2500)
     } catch {
-      showSuccess('Could not generate agenda')
+      showError('Could not generate agenda')
     } finally {
       setGeneratingAgenda(false)
     }

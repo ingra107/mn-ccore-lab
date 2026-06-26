@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect, useMemo, createContext, useContext } from 'react'
-import { Undo2, X, Check } from 'lucide-react'
+import { Undo2, X, Check, AlertCircle, Info } from 'lucide-react'
 import { ICON_PROPS } from '../lib/iconProps'
 
 interface ToastAction {
@@ -24,14 +24,30 @@ interface SuccessToast {
   action?: ToastAction
 }
 
-type Toast = UndoToast | SuccessToast
+interface ErrorToast {
+  id: string
+  type: 'error'
+  message: string
+  action?: ToastAction
+}
+
+interface InfoToast {
+  id: string
+  type: 'info'
+  message: string
+  action?: ToastAction
+}
+
+type Toast = UndoToast | SuccessToast | ErrorToast | InfoToast
 
 interface ToastContextType {
   showUndo: (message: string, onUndo: () => void) => void
   showSuccess: (message: string, action?: ToastAction) => void
+  showError: (message: string, action?: ToastAction) => void
+  showInfo: (message: string, action?: ToastAction) => void
 }
 
-const ToastContext = createContext<ToastContextType>({ showUndo: () => {}, showSuccess: () => {} })
+const ToastContext = createContext<ToastContextType>({ showUndo: () => {}, showSuccess: () => {}, showError: () => {}, showInfo: () => {} })
 
 export function useUndoToast() {
   return useContext(ToastContext)
@@ -83,6 +99,30 @@ export function UndoToastProvider({ children }: { children: React.ReactNode }) {
     timers.current.set(id, timer)
   }, [])
 
+  const showError = useCallback((message: string, action?: ToastAction) => {
+    const id = Date.now().toString() + '-e'
+    setToasts((prev) => [...prev, { id, type: 'error', message, action }])
+
+    // Auto-dismiss after 5 seconds — errors need more reading time
+    const timer = setTimeout(() => {
+      timers.current.delete(id)
+      setToasts((prev) => prev.filter((t) => t.id !== id))
+    }, 5000)
+    timers.current.set(id, timer)
+  }, [])
+
+  const showInfo = useCallback((message: string, action?: ToastAction) => {
+    const id = Date.now().toString() + '-i'
+    setToasts((prev) => [...prev, { id, type: 'info', message, action }])
+
+    // Auto-dismiss after 3 seconds (same as success)
+    const timer = setTimeout(() => {
+      timers.current.delete(id)
+      setToasts((prev) => prev.filter((t) => t.id !== id))
+    }, 3000)
+    timers.current.set(id, timer)
+  }, [])
+
   const dismiss = useCallback((id: string) => {
     clearTimer(id)
     setDismissingIds((prev) => { const s = new Set(prev); s.add(id); return s })
@@ -97,11 +137,11 @@ export function UndoToastProvider({ children }: { children: React.ReactNode }) {
     dismiss(toast.id)
   }, [dismiss])
 
-  // Stable context value — showUndo/showSuccess are useCallback'd so the
+  // Stable context value — all show* callbacks are useCallback'd so the
   // memo key never changes. Without this, every state-driven re-render of
   // UndoToastProvider hands consumers a fresh object and re-renders them
   // (PortalLayout wraps all portal pages — expensive).
-  const contextValue = useMemo(() => ({ showUndo, showSuccess }), [showUndo, showSuccess])
+  const contextValue = useMemo(() => ({ showUndo, showSuccess, showError, showInfo }), [showUndo, showSuccess, showError, showInfo])
 
   return (
     <ToastContext.Provider value={contextValue}>
@@ -139,7 +179,12 @@ export function UndoToastProvider({ children }: { children: React.ReactNode }) {
         {toasts.map((toast) => (
           <div
             key={toast.id}
-            data-testid={toast.type === 'undo' ? 'undo-toast' : 'success-toast'}
+            data-testid={
+              toast.type === 'undo' ? 'undo-toast'
+              : toast.type === 'error' ? 'error-toast'
+              : toast.type === 'info' ? 'info-toast'
+              : 'success-toast'
+            }
             style={{
               animation: dismissingIds.has(toast.id)
                 ? 'toast-out 150ms var(--ease-out) forwards'
@@ -153,17 +198,26 @@ export function UndoToastProvider({ children }: { children: React.ReactNode }) {
               background: 'var(--ink)',
               color: 'var(--cream)',
               fontSize: '13px',
-              fontWeight: toast.type === 'success' ? 400 : 500,
+              fontWeight: toast.type === 'undo' ? 500 : 400,
               boxShadow: 'var(--shadow-card-hover)',
               minWidth: '240px',
-              borderLeft: toast.type === 'success' ? '3px solid var(--teal)' : 'none',
+              borderLeft: toast.type === 'success' ? '3px solid var(--teal)'
+                : toast.type === 'error' ? '3px solid var(--maroon)'
+                : toast.type === 'info' ? '3px solid var(--gold)'
+                : 'none',
             }}
           >
             {toast.type === 'success' && (
               <Check {...ICON_PROPS} size={14} style={{ color: 'var(--teal)', flexShrink: 0 }} />
             )}
+            {toast.type === 'error' && (
+              <AlertCircle {...ICON_PROPS} size={14} style={{ color: 'var(--maroon)', flexShrink: 0 }} />
+            )}
+            {toast.type === 'info' && (
+              <Info {...ICON_PROPS} size={14} style={{ color: 'var(--gold)', flexShrink: 0 }} />
+            )}
             <span style={{ flex: 1 }}>{toast.message}</span>
-            {toast.type === 'success' && toast.action && (
+            {toast.type !== 'undo' && toast.action && (
               <button
                 data-testid="toast-action-button"
                 onClick={() => { toast.action!.onClick(); dismiss(toast.id) }}

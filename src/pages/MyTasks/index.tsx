@@ -224,7 +224,7 @@ export default function UnifiedMyTasks() {
     const ids = [...selected]
     Promise.all(ids.map((id) => updateTask.mutateAsync({ id, fields: { due_date: due } })))
       .then(() => { undoToast.showSuccess(`Snoozed ${ids.length} task${ids.length === 1 ? '' : 's'} +1d`); clearSelection() })
-      .catch((err) => { console.error('Snooze failed:', err); undoToast.showSuccess('Snooze failed — please try again.') })
+      .catch((err) => { console.error('Snooze failed:', err); undoToast.showError('Snooze failed — please try again.') })
   }, [selected, updateTask, clearSelection, undoToast])
 
   const onBulkComplete = useCallback(() => {

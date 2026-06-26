@@ -130,7 +130,7 @@ export default function TaskIntelligence({ task }: TaskIntelligenceProps) {
   const prior = series[series.length - 2] ?? 0
   const delta = recent - prior
 
-  const { showSuccess } = useToast()
+  const { showSuccess, showError } = useToast()
   const [draftRequested, setDraftRequested] = useState(false)
 
   const requestDraft = async () => {
@@ -152,7 +152,7 @@ export default function TaskIntelligence({ task }: TaskIntelligenceProps) {
     } catch (err) {
       setDraftRequested(false)
       console.error('[TaskIntelligence] dispatch failed:', err)
-      showSuccess('Could not queue Hermes draft — check console.')
+      showError('Could not queue Hermes draft — check console.')
     }
   }
 

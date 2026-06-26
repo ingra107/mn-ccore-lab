@@ -1450,7 +1450,7 @@ function OverviewQuickAdd({
   const { typingPeers, broadcastTyping } = useTyping('task', taskId)
   const appendCh = (ch: string) => appendCharToInput(textareaRef, ch, setText)
   const postUpdate = usePostTaskUpdate(taskId)
-  const { showSuccess } = useToast()
+  const { showSuccess, showError, showInfo } = useToast()
   const { launch: protocolLaunch } = useProtocolLaunch()
   const queryClient = useQueryClient()
 
@@ -1560,7 +1560,7 @@ function OverviewQuickAdd({
               copyMessage: 'Launching… (folder copied as backup)',
             })
           }
-          showSuccess(origin === 'computer' ? 'No project folder set for this task' : 'Saved to your launch log — mobile launch goes live in Phase 2')
+          showInfo(origin === 'computer' ? 'No project folder set for this task' : 'Saved to your launch log — mobile launch goes live in Phase 2')
         })
         .then(() => reset())
         .catch((e) => {
@@ -1568,7 +1568,7 @@ function OverviewQuickAdd({
           // Fail-loud: show a toast so the user knows the launch didn't work.
           // Deliberately do NOT call reset() here — the user's seed stays in
           // the textarea so they can retry without retyping it.
-          showSuccess('@workon failed — your seed is still here, try again')
+          showError('@workon failed — your seed is still here, try again')
         })
       return
     }
@@ -1595,12 +1595,12 @@ function OverviewQuickAdd({
               copyMessage: 'Launching Quick Chat… (seed copied as backup)',
             })
           }
-          showSuccess('Saved to your launch log — mobile launch goes live in Phase 2')
+          showInfo('Saved to your launch log — mobile launch goes live in Phase 2')
         })
         .then(() => reset())
         .catch((e) => {
           console.error('@quickchat from task comment failed:', e)
-          showSuccess('@quickchat failed — your seed is still here, try again')
+          showError('@quickchat failed — your seed is still here, try again')
         })
       return
     }
@@ -1619,7 +1619,7 @@ function OverviewQuickAdd({
         .then(() => { showSuccess('Sent to Hermes'); reset() })
         .catch((e) => {
           console.error('@hermes from task comment failed:', e)
-          showSuccess('@hermes failed — your message is still here, try again')
+          showError('@hermes failed — your message is still here, try again')
         })
       return
     }
@@ -1637,7 +1637,7 @@ function OverviewQuickAdd({
         .then(() => { showSuccess('Sent to improvement backlog'); reset() })
         .catch((e) => {
           console.error('@backlog from task comment failed:', e)
-          showSuccess('@backlog failed — your message is still here, try again')
+          showError('@backlog failed — your message is still here, try again')
         })
       return
     }

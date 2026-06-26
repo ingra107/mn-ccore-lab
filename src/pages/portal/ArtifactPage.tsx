@@ -56,7 +56,7 @@ export default function ArtifactPage() {
   const navigate = useNavigate()
   const qc = useQueryClient()
   const { isAuthenticated } = useAuth()
-  const { showSuccess } = useToast()
+  const { showSuccess, showError } = useToast()
 
   const [showHistory, setShowHistory] = useState(false)
   const [comment, setComment] = useState('')
@@ -109,7 +109,7 @@ export default function ArtifactPage() {
       qc.invalidateQueries({ queryKey: ['artifact-activity', id] })
       showSuccess('Comment posted')
     },
-    onError: () => showSuccess('Could not post comment — try again'),
+    onError: () => showError('Could not post comment — try again'),
   })
 
   const handlePostComment = () => {
@@ -124,7 +124,7 @@ export default function ArtifactPage() {
       await navigator.clipboard.writeText(artifact.body_md)
       showSuccess('Markdown copied to clipboard')
     } catch {
-      showSuccess('Could not copy to clipboard')
+      showError('Could not copy to clipboard')
     }
   }
 

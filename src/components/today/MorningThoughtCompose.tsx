@@ -95,12 +95,12 @@ export function MorningThoughtCompose() {
             copyMessage: 'Launching Quick Chat… (seed copied as backup)',
           })
         } else {
-          undoToast.showSuccess('Saved to your launch log — mobile launch goes live in Phase 2')
+          undoToast.showInfo('Saved to your launch log — mobile launch goes live in Phase 2')
         }
         appendDailyThought(content, 'task')
       } catch (err) {
         console.error('@quickchat launch failed:', err)
-        undoToast.showSuccess(`@quickchat failed: ${err instanceof Error ? err.message : 'try again'}`)
+        undoToast.showError(`@quickchat failed: ${err instanceof Error ? err.message : 'try again'}`)
       }
       return
     }
@@ -110,7 +110,7 @@ export function MorningThoughtCompose() {
     // path so a seed-shaped string cannot post as a team-visible task.
     // The right surface is a task comment box (OverviewQuickAdd).
     if (/^@workon\b/i.test(content)) {
-      undoToast.showSuccess('@workon needs a task — open a task and type @workon there')
+      undoToast.showInfo('@workon needs a task — open a task and type @workon there')
       return
     }
 
@@ -132,7 +132,7 @@ export function MorningThoughtCompose() {
         undoToast.showSuccess('Sent to Hermes')
       } catch (err) {
         console.error('Morning thought → Hermes failed:', err)
-        undoToast.showSuccess(`Sending to Hermes failed: ${err instanceof Error ? err.message : 'please try again.'}`)
+        undoToast.showError(`Sending to Hermes failed: ${err instanceof Error ? err.message : 'please try again.'}`)
       }
       return
     }
@@ -155,7 +155,7 @@ export function MorningThoughtCompose() {
         undoToast.showSuccess('Sent to improvement backlog')
       } catch (err) {
         console.error('Morning thought → backlog failed:', err)
-        undoToast.showSuccess(`Sending to backlog failed: ${err instanceof Error ? err.message : 'please try again.'}`)
+        undoToast.showError(`Sending to backlog failed: ${err instanceof Error ? err.message : 'please try again.'}`)
       }
       return
     }
@@ -176,14 +176,14 @@ export function MorningThoughtCompose() {
         undoToast.showSuccess('Saved to today\'s thoughts')
       } catch (err) {
         console.error('Morning thought → note failed:', err)
-        undoToast.showSuccess(`Note save failed: ${err instanceof Error ? err.message : 'please try again.'}`)
+        undoToast.showError(`Note save failed: ${err instanceof Error ? err.message : 'please try again.'}`)
       }
       return
     }
 
     // Route 4 — default: create a task in the user's default group.
     if (!userSlug) {
-      undoToast.showSuccess('Sign in to capture tasks.')
+      undoToast.showInfo('Sign in to capture tasks.')
       return
     }
     const due_date = isEvening ? tomorrowISO() : undefined

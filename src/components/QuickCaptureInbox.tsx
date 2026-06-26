@@ -36,7 +36,7 @@ export default function QuickCaptureInbox() {
   const previousFocusRef = useRef<HTMLElement | null>(null)
   const eventIdRef = useRef<string | null>(null)
   const { data: projects } = useProjects(undefined, { enabled: open })
-  const { showSuccess } = useUndoToast()
+  const { showSuccess, showError } = useUndoToast()
 
   const close = useCallback(() => {
     setOpen(false)
@@ -142,9 +142,9 @@ export default function QuickCaptureInbox() {
       }, 400)
     } catch {
       setSubmitting(false)
-      showSuccess('Failed to save — retry')
+      showError('Failed to save — retry')
     }
-  }, [text, tag, projectId, submitting, showSuccess, close])
+  }, [text, tag, projectId, submitting, showSuccess, showError, close])
 
   const onTextareaKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {

@@ -190,7 +190,7 @@ interface InnerProps {
 function ProjectDetailInner({ project }: InnerProps) {
   // D1 mutations
   const d1Update = useUpdateProject(project.slug)
-  const { showUndo, showSuccess } = useUndoToast()
+  const { showUndo, showSuccess, showError } = useUndoToast()
   const { data: projectUpdates = [] } = useProjectUpdates(project.slug)
   const { data: projectComments = [] } = useComments(project.slug)
   const { isAuthenticated, user } = useAuth()
@@ -345,11 +345,11 @@ function ProjectDetailInner({ project }: InnerProps) {
         queryClient.invalidateQueries({ queryKey: ['projects'] })
         navigate(PATHS.projects)
       } else {
-        showSuccess('Delete failed — please try again or contact Nick.')
+        showError('Delete failed — please try again or contact Nick.')
       }
     } catch (err) {
       console.error('Delete project failed', err)
-      showSuccess('Delete failed — please try again.')
+      showError('Delete failed — please try again.')
     }
   }
   const handleDuplicateProject = async () => {
@@ -372,11 +372,11 @@ function ProjectDetailInner({ project }: InnerProps) {
         queryClient.invalidateQueries({ queryKey: ['projects'] })
         navigate(`${PATHS.projects}/${json.data.slug}`)
       } else {
-        showSuccess('Duplicate failed — please try again.')
+        showError('Duplicate failed — please try again.')
       }
     } catch (err) {
       console.error('Duplicate project failed', err)
-      showSuccess('Duplicate failed — please try again.')
+      showError('Duplicate failed — please try again.')
     }
   }
 
