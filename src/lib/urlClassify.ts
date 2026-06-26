@@ -157,8 +157,17 @@ export function classifyUrl(url: string): ClassifiedUrl {
   const isLocalPath = url.startsWith('file:///') || isDrivePath || isUncPath || (url.startsWith('/') && !url.startsWith('//'))
   const isBat = url.endsWith('.bat') || url.endsWith('.cmd') || url.endsWith('.ps1')
   if (isBat) {
+    // @-tag security Wave 2: arbitrary local-script launch via
+    // mnccore://launch/<path> is RETIRED. The Windows handler now refuses any
+    // launch arg that is not an opaque `lnch_` token, so emitting a path-launch
+    // URI here is DEAD (the handler rejects it). A .bat/.cmd/.ps1 link is now a
+    // COPY-ONLY affordance: keep the Script icon/label for display, but the href
+    // is the raw path (isHttp:false → useProtocolLaunch copies it to the
+    // clipboard; the browser will not navigate to a C:\ path). Do NOT fall
+    // through to buildOpenFolderUri — that hands the path to explorer.exe, whose
+    // file association would re-introduce a script-execution path.
     return {
-      href: `mnccore://launch/${normalizeLocalFolderPath(url)}`,
+      href: url,
       Icon: Play,
       typeLabel: 'Script',
       isHttp: false,
@@ -198,27 +207,6 @@ export function classifyUrl(url: string): ClassifiedUrl {
  */
 export function buildWorkOnUri(folderPath: string): string {
   return `mnccore://workon/${normalizeLocalFolderPath(folderPath)}`
-}
-
-/**
- * Encode a seed string for mnccore:// URIs.
- * `encodeURIComponent` leaves `! ' ( ) *` unencoded; the Windows batch handler
- * uses delayed-expansion (`!` → nothing), so `fix this!` would arrive as `fix this`.
- * This helper adds a second pass that percent-encodes those five sub-delimiters.
- */
-function encodeWithSubDelims(s: string): string {
-  return encodeURIComponent(s).replace(/[!'()*]/g, c => '%' + c.charCodeAt(0).toString(16).toUpperCase());
-}
-
-/** mnccore://workon/<folder>?seed=<encoded> — seed consumed + deleted on launch. */
-export function buildSeededWorkOnUri(folderPath: string, seed: string): string {
-  const base = `mnccore://workon/${normalizeLocalFolderPath(folderPath)}`;
-  return seed.trim() ? `${base}?seed=${encodeWithSubDelims(seed.trim())}` : base;
-}
-
-/** mnccore://quickchat?seed=<encoded> — launches Quick_Chat in PB root, seeded. */
-export function buildQuickChatUri(seed: string): string {
-  return seed.trim() ? `mnccore://quickchat?seed=${encodeWithSubDelims(seed.trim())}` : 'mnccore://quickchat';
 }
 
 /** Build `mnccore://open/<folder>` for an Explorer open of a local path. */

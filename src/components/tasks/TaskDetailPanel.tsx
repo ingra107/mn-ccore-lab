@@ -27,7 +27,8 @@ import { ACCENT_GOLD, PANEL_BG, isTaskDone, withAlpha } from '../../lib/taskGrou
 import MentionInput from '../MentionInput'
 import TypingIndicator from '../TypingIndicator'
 import { getPersonInfo, getAllMembers, directors } from '../../data/team'
-import { shortLabelForUrl, gmailKind, buildSeededWorkOnUri } from '../../lib/urlClassify'
+import { shortLabelForUrl, gmailKind } from '../../lib/urlClassify'
+import { buildLaunchUri } from '../../lib/launch'
 import { detectOrigin } from '../../lib/launchOrigin'
 import { useProtocolLaunch } from '../../hooks/useProtocolLaunch'
 import LinkChip from '../LinkChip'
@@ -1547,10 +1548,13 @@ function OverviewQuickAdd({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tag: 'workon', seed, origin, project_slug: projectSlug ?? null }),
       })
-        .then((res) => { if (!res.ok) throw new Error(`launch-log ${res.status}`) })
-        .then(() => {
+        .then((res) => {
+          if (!res.ok) throw new Error(`launch-log ${res.status}`)
+          return res.json() as Promise<{ data: { id: string } }>
+        })
+        .then(({ data }) => {
           if (origin === 'computer' && folder) {
-            return protocolLaunch(buildSeededWorkOnUri(folder, seed), {
+            return protocolLaunch(buildLaunchUri(data.id), {
               copyText: folder,
               successMessage: 'Launching Claude in this project…',
               copyMessage: 'Launching… (folder copied as backup)',

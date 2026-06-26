@@ -10,16 +10,22 @@ echo %date% %time% ARGS: %* >> "%TEMP%\mnccore-handler.log"
 ::
 :: Verbs:
 ::   mnccore://open/<url-encoded-path>      → Explorer-open a folder/file (legacy; kept).
-::   mnccore://launch/<url-encoded-script>  → run a .bat/.cmd/.ps1 (legacy; kept).
+::   mnccore://launch/<lnch_token>          → opaque-token launch (@-tag security Wave 2).
+::                                            The token is handed to PB's resolve_launch.py,
+::                                            which claims the seed from the Hub over an
+::                                            AUTHENTICATED channel and launches the verb
+::                                            (quickchat|workon) LOCALLY. NO path/script arg
+::                                            is accepted — the verb REFUSES anything that is
+::                                            not an lnch_<alnum> token, so the old arbitrary
+::                                            .bat/.cmd/.ps1 exec (arbitrary local code) is GONE.
 ::   mnccore://workon/<url-encoded-folder>  → launch "<folder>\Start Claude.bat" in that folder.
-::     [?seed=<encoded>]                      optional seed written to <folder>\.pb-seed.txt.
 ::                                            SECURITY: refuses unless the decoded path is a
 ::                                            directory AND <folder>\Start Claude.bat exists.
 ::                                            The hardcoded basename "Start Claude.bat" IS the
 ::                                            allowlist — no other filename is ever executed.
 ::   mnccore://process                      → run %USERPROFILE%\Peripheral-Brain\Quick_Process.bat.
 ::   mnccore://bugsquash                     → run <this dir>\bug-squasher.bat (sibling).
-::   mnccore://quickchat[?seed=<encoded>]   → seed PB root + launch Quick_Chat_seeded.bat.
+::   mnccore://quickchat                    → launch Quick_Chat_seeded.bat in PB root.
 ::   mnccore://obsidian/<url-encoded-note>  → open a vault note. WARM (Obsidian
 ::                                            running): the Obsidian CLI shim
 ::                                            (Obsidian.com open) — the protocol's
@@ -51,19 +57,10 @@ set "url=!url:mnccore://=!"
 :: Strip a single trailing slash (verb-only URLs like "process/" or trailing on paths).
 if "!url:~-1!"=="/" set "url=!url:~0,-1!"
 
-:: Split a ?seed=<...> query off the URL before verb dispatch. The seed stays
-:: percent-encoded by design — [A-Za-z0-9%._~-] only, safe for echo( into a file;
-:: the consumer (Quick_Chat_seeded.bat via Python) URL-decodes once on read.
-set "seed="
-set "qs="
-echo !url! | findstr /C:"?seed=" >nul
-if !errorlevel! EQU 0 (
-    for /f "tokens=1* delims=?" %%A in ("!url!") do (
-        set "url=%%A"
-        set "qs=%%B"
-    )
-    set "seed=!qs:~5!"
-)
+:: Wave 2 (@-tag security): seeds NO LONGER travel through the mnccore:// URI.
+:: The old `?seed=<encoded>` query parse + per-verb seed-file writes were removed.
+:: The seed is fetched from the Hub by resolve_launch.py over an AUTHENTICATED
+:: channel — see the launch/<lnch_token> verb below.
 
 :: ── verb dispatch ───────────────────────────────────────────────────────────
 :: Each branch CALLs its verb subroutine then propagates that routine's
@@ -77,7 +74,9 @@ if "!url:~0,5!"=="open/" (
 )
 if "!url:~0,7!"=="launch/" (
     set "arg=!url:~7!"
-    call :decode arg
+    rem NO :decode here — the launch arg must stay an opaque token. Decoding would
+    rem turn percent-encoded shell metacharacters (%22 %26 ...) into live chars;
+    rem leaving them inert lets verb_launch's strict alnum gate reject them.
     call :verb_launch "!arg!"
     exit /b !errorlevel!
 )
@@ -151,27 +150,33 @@ if defined MNCCORE_HANDLER_DRYRUN (
 exit /b 0
 
 
-:: ── :verb_launch <script> ── run a .bat/.cmd/.ps1 (legacy KeyLinks "Script") ──
+:: ── :verb_launch <token> ── opaque-token launch (@-tag security Wave 2) ───────
+:: SECURITY: this verb runs NOTHING by path. It accepts ONLY an opaque
+:: `lnch_<alnum>` token and hands it to PB's resolve_launch.py, which claims the
+:: seed from the Hub over an AUTHENTICATED channel and launches the verb
+:: (quickchat|workon) locally. Any other arg is REFUSED — the old arbitrary
+:: .bat/.cmd/.ps1 exec (arbitrary local code from a URI-supplied path) is GONE, so
+:: no URI path can reach `start` / `powershell -File` via this verb anymore.
+:: Charset gate: the quoted echo keeps & | < > inert and the un-decoded arg keeps
+:: %-escapes literal, so a crafted arg FAILS ^"lnch_<alnum>"$ instead of injecting
+:: (the leading/trailing `.` match the wrapping quotes). resolve_launch.py
+:: re-validates the token before any network/launch.
 :verb_launch
-set "script=%~1"
-if not exist "!script!" (
-    call :fail "Script not found: !script!"
+echo "%~1"| findstr /R /C:"^.lnch_[0-9A-Za-z][0-9A-Za-z]*.$" >nul
+if errorlevel 1 (
+    call :fail "launch: refused — not an opaque lnch_ token: %~1"
     exit /b 1
 )
-for %%F in ("!script!") do set "ext=%%~xF"
+set "resolver=%USERPROFILE%\Peripheral-Brain\scripts\utils\resolve_launch.py"
+if not exist "!resolver!" (
+    call :fail "launch: resolver not found at !resolver!"
+    exit /b 1
+)
 if defined MNCCORE_HANDLER_DRYRUN (
-    if /I "!ext!"==".ps1" (
-        echo DRYRUN launch: powershell -ExecutionPolicy Bypass -File "!script!"
-    ) else (
-        echo DRYRUN launch: start "" "!script!"
-    )
+    echo DRYRUN launch-token: python -X utf8 "!resolver!" "%~1"
     exit /b 0
 )
-if /I "!ext!"==".ps1" (
-    powershell -ExecutionPolicy Bypass -File "!script!"
-) else (
-    start "" "!script!"
-)
+python -X utf8 "!resolver!" "%~1"
 exit /b 0
 
 
@@ -193,11 +198,8 @@ if not exist "!bat!" (
     exit /b 1
 )
 if defined MNCCORE_HANDLER_DRYRUN (
-    echo DRYRUN workon: start "" /D "!folder!" "!bat!"  seed="!seed!"
+    echo DRYRUN workon: start "" /D "!folder!" "!bat!"
     exit /b 0
-)
-if defined seed (
-    > "!folder!\.pb-seed.txt" echo(!seed!
 )
 start "" /D "!folder!" "!bat!"
 exit /b 0
@@ -219,9 +221,11 @@ start "" /D "%USERPROFILE%\Peripheral-Brain" "!qp!"
 exit /b 0
 
 
-:: ── :verb_quickchat ── seed PB root + launch Quick_Chat_seeded.bat ───────────
+:: ── :verb_quickchat ── launch Quick_Chat_seeded.bat in PB root ───────────────
 :: SECURITY: fixed target, no path arg. The only file run is the literal
-:: %USERPROFILE%\Peripheral-Brain\Quick_Chat_seeded.bat.
+:: %USERPROFILE%\Peripheral-Brain\Quick_Chat_seeded.bat. (Wave 2: no longer
+:: seeds from the URI — a seeded @quickchat now flows through the launch/<token>
+:: verb -> resolve_launch.py, which writes the seed after an authenticated claim.)
 :verb_quickchat
 set "pbroot=%USERPROFILE%\Peripheral-Brain"
 set "qc=!pbroot!\Quick_Chat_seeded.bat"
@@ -230,11 +234,8 @@ if not exist "!qc!" (
     exit /b 1
 )
 if defined MNCCORE_HANDLER_DRYRUN (
-    echo DRYRUN quickchat: start "" /D "!pbroot!" "!qc!"  seed="!seed!"
+    echo DRYRUN quickchat: start "" /D "!pbroot!" "!qc!"
     exit /b 0
-)
-if defined seed (
-    > "!pbroot!\.pb-seed.txt" echo(!seed!
 )
 start "" /D "!pbroot!" "!qc!"
 exit /b 0

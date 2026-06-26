@@ -26,7 +26,7 @@ import { nowInstant } from '../../lib/time'
 import { useIsMobile } from '../../hooks/useIsMobile'
 import { localDateKey } from '../../lib/dateUtils'
 import { detectOrigin } from '../../lib/launchOrigin'
-import { buildQuickChatUri } from '../../lib/urlClassify'
+import { buildLaunchUri } from '../../lib/launch'
 import { useProtocolLaunch } from '../../hooks/useProtocolLaunch'
 
 const DEFAULT_GROUP_OVERRIDE = 'priorities'
@@ -85,8 +85,9 @@ export function MorningThoughtCompose() {
           body: JSON.stringify({ tag: 'quickchat', seed, origin }),
         })
         if (!res.ok) throw new Error(`/api/launch-log ${res.status}`)
+        const { data } = await res.json() as { data: { id: string } }
         if (origin === 'computer') {
-          await protocolLaunch(buildQuickChatUri(seed), {
+          await protocolLaunch(buildLaunchUri(data.id), {
             copyText: seed,
             successMessage: 'Launching Quick Chat on this machine…',
             copyMessage: 'Launching Quick Chat… (seed copied as backup)',

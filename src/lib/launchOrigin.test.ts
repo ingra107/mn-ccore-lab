@@ -1,7 +1,7 @@
 // src/lib/launchOrigin.test.ts
 import { describe, it, expect } from 'vitest';
 import { detectOrigin } from './launchOrigin';
-import { buildSeededWorkOnUri, buildQuickChatUri } from './urlClassify';
+import { buildLaunchUri } from './launch';
 
 describe('detectOrigin', () => {
   it('returns mobile when userAgentData.mobile is true', () => {
@@ -18,24 +18,12 @@ describe('detectOrigin', () => {
   });
 });
 
-describe('seeded URI builders', () => {
-  it('encodes the seed into the workon URI', () => {
-    expect(buildSeededWorkOnUri('C:\\\\X\\\\proj', 'fix it & ship'))
-      .toBe('mnccore://workon/C:/X/proj?seed=fix%20it%20%26%20ship');
+describe('buildLaunchUri', () => {
+  it('builds a launch URI from an opaque id', () => {
+    expect(buildLaunchUri('lnch_abc123')).toBe('mnccore://launch/lnch_abc123');
   });
-  it('builds a quickchat URI with seed', () => {
-    expect(buildQuickChatUri('hi there')).toBe('mnccore://quickchat?seed=hi%20there');
-  });
-  it('encodes ! to %21 in workon seed (Windows batch delayed-expansion safety)', () => {
-    expect(buildSeededWorkOnUri('C:\\\\X\\\\proj', 'fix this!'))
-      .toBe('mnccore://workon/C:/X/proj?seed=fix%20this%21');
-  });
-  it('encodes ! to %21 in quickchat seed', () => {
-    expect(buildQuickChatUri('help!')).toBe('mnccore://quickchat?seed=help%21');
-  });
-  it("encodes ' ( ) * in seeds", () => {
-    expect(buildQuickChatUri("it's done (really) *done*"))
-      .toBe("mnccore://quickchat?seed=it%27s%20done%20%28really%29%20%2Adone%2A");
+  it('percent-encodes any special characters in the id', () => {
+    expect(buildLaunchUri('lnch_a/b')).toBe('mnccore://launch/lnch_a%2Fb');
   });
 });
 

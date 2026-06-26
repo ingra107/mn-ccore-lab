@@ -14,14 +14,15 @@ export async function handleCreateLaunch(request: Request, user: AuthUser, env: 
   };
   if (!TAGS.includes(b.tag)) return error('tag must be quickchat or workon', 400);
   if (!ORIGINS.includes(b.origin)) return error('origin must be computer or mobile', 400);
-  const status = b.status ?? (b.origin === 'mobile' ? 'pending' : 'launched');
+  const status = b.status ?? 'pending';
   if (!STATUSES.includes(status)) return error('invalid status', 400);
 
-  const id = generateId();
+  const id = 'lnch_' + generateId();
   const launchedAt = status === 'launched' ? "datetime('now')" : 'NULL';
+  const expiresAt = b.origin === 'computer' ? "datetime('now','+10 minutes')" : "datetime('now','+2 hours')";
   await env.DB.prepare(
-    `INSERT INTO launch_log (id, tag, seed, origin, target_machine, project_slug, status, requested_by, launched_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ${launchedAt})`
+    `INSERT INTO launch_log (id, tag, seed, origin, target_machine, project_slug, status, requested_by, launched_at, expires_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ${launchedAt}, ${expiresAt})`
   ).bind(
     id, b.tag, (b.seed ?? '').trim(), b.origin,
     b.target_machine ?? null, b.project_slug ?? null, status, user.email,
@@ -65,4 +66,17 @@ export async function handleRefireLaunch(id: string, user: AuthUser, env: Env): 
     body: JSON.stringify({ tag: src.tag, seed: src.seed, origin: src.origin, target_machine: src.target_machine, project_slug: src.project_slug }),
   });
   return handleCreateLaunch(fakeReq, user, env);
+}
+
+// POST /api/launch-log/:id/claim — atomic single-use opaque-token claim; UNSCOPED (no requested_by filter).
+// Returns { verb, seed, project_slug } on success. 410 if token invalid, expired, or already consumed.
+export async function handleClaimLaunch(id: string, _request: Request, _user: AuthUser, env: Env): Promise<Response> {
+  const result = await env.DB.prepare(
+    `UPDATE launch_log SET status='launched', consumed_at=datetime('now'), launched_at=datetime('now')
+     WHERE id=? AND consumed_at IS NULL AND expires_at IS NOT NULL AND expires_at > datetime('now')`
+  ).bind(id).run();
+  if (result.meta.changes !== 1) return error('launch token invalid, expired, or already consumed', 410);
+  const row = await env.DB.prepare('SELECT * FROM launch_log WHERE id = ?')
+    .bind(id).first<{ tag: string; seed: string; project_slug: string | null }>();
+  return json({ data: { verb: row!.tag, seed: row!.seed, project_slug: row!.project_slug } });
 }

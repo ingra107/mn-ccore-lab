@@ -12,7 +12,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { fetchApi } from '../../lib/api'
 import { useProtocolLaunch } from '../../hooks/useProtocolLaunch'
-import { buildQuickChatUri } from '../../lib/urlClassify'
+import { buildLaunchUri } from '../../lib/launch'
 import { formatDbLocal } from '../../lib/time'
 
 // ── Pure helper — exported for unit tests ────────────────────────────────────
@@ -60,13 +60,13 @@ export default function LaunchLogPanel() {
     setRefireErr(null)
     try {
       // Always create a new row server-side (preserves history — no mutation).
-      await fetchApi(`/api/launch-log/${row.id}/refire`, { method: 'POST' })
+      // The /refire endpoint returns { data: newRow } with a fresh opaque id.
+      const { data: newRow } = await fetchApi<LaunchRow>(`/api/launch-log/${row.id}/refire`, { method: 'POST' })
 
       if (row.origin === 'computer') {
         // Server cannot fire mnccore:// (browser-only); do it here instead.
-        // tag==='workon' ideally uses buildSeededWorkOnUri but needs a folder path
-        // not stored in the log; fallback to quickchat-style is acceptable per brief.
-        const uri = buildQuickChatUri(row.seed)
+        // Fire via the opaque token so the seed never travels through the URI.
+        const uri = buildLaunchUri(newRow.id)
         await launch(uri, {
           successMessage: `Re-firing @${row.tag}…`,
           copyText: row.seed || undefined,
