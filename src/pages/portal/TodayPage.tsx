@@ -41,6 +41,7 @@ import { PlannedTodaySection } from '../../components/today/PlannedTodaySection'
 import { TaskGroup } from '../../components/today/TaskGroup'
 import { MorningThoughtCompose } from '../../components/today/MorningThoughtCompose'
 import { HermesThoughtReplies } from '../../components/today/HermesThoughtReplies'
+import { PomodoroControl } from '../../components/today/PomodoroControl'
 import { HermesSuggestsCard } from '../../components/today/rail/HermesSuggestsCard'
 import { NeedsAttentionCard } from '../../components/today/rail/NeedsAttentionCard'
 import { ProjectsCard } from '../../components/today/rail/ProjectsCard'
@@ -361,22 +362,28 @@ export default function TodayPage() {
               protocol (fire-and-forget). Gold = user-driven action (Rule 59).
               No server route — purely a local-protocol trigger. */}
           {user.isPi && (
-            <button
-              type="button"
-              onClick={() => launchProcess(MNCCORE_PROCESS_URI, {
-                successMessage: 'Launching /process on this machine…',
-                copyMessage: 'Launching /process on this machine…',
-              })}
-              title="Run /process on this machine"
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: 6, alignSelf: 'center',
-                background: withAlpha(ACCENT_GOLD, 12), border: `1px solid ${withAlpha(ACCENT_GOLD, 35)}`,
-                color: ACCENT_GOLD, borderRadius: 6, padding: '5px 11px',
-                fontSize: 13, fontWeight: 500, cursor: 'pointer', flexShrink: 0,
-              }}
-            >
-              ⚙ Process
-            </button>
+            <>
+              {/* PomodoroControl: calls localhost:5555 directly from the browser.
+                  Laptop-only by design — phone can't reach localhost. CORS is
+                  handled server-side (flask-cors). Graceful if server is off. */}
+              <PomodoroControl />
+              <button
+                type="button"
+                onClick={() => launchProcess(MNCCORE_PROCESS_URI, {
+                  successMessage: 'Launching /process on this machine…',
+                  copyMessage: 'Launching /process on this machine…',
+                })}
+                title="Run /process on this machine"
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6, alignSelf: 'center',
+                  background: withAlpha(ACCENT_GOLD, 12), border: `1px solid ${withAlpha(ACCENT_GOLD, 35)}`,
+                  color: ACCENT_GOLD, borderRadius: 6, padding: '5px 11px',
+                  fontSize: 13, fontWeight: 500, cursor: 'pointer', flexShrink: 0,
+                }}
+              >
+                ⚙ Process
+              </button>
+            </>
           )}
         </div>
         {/* N1.21 — flex-start keeps the dismiss × anchored to the first line
