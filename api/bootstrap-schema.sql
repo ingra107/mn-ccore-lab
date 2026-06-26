@@ -2,7 +2,7 @@
 --
 -- THIS FILE IS NOT THE CURRENT PRODUCTION SCHEMA.
 -- It is the seed schema applied once when D1 was bootstrapped.
--- Current production state = this file + 60 migrations (api/schema-v*.sql).
+-- Current production state = this file + migrations in api/schema-v*.sql (see scripts/schema-version-snapshot.json for the canonical list).
 -- For current schema, run: wrangler d1 export mnccore-lab --remote  -- wrangler-d1-allowed
 --
 -- Run with: wrangler d1 execute mnccore-lab --file=api/bootstrap-schema.sql  -- wrangler-d1-allowed
@@ -142,6 +142,7 @@ END;
 -- launch_log (v89: @-tag delegation launch log -- recovery surface + mobile queue)
 -- Hub-D1-ONLY. NOT registered in PB synced_table_registry; no brain.db mirror.
 -- The seed lives ONLY here; it is never written to activity_entries.
+-- seq / last_mutation_id / seq-triggers omitted: Hub-only table, A3 sync unused.
 CREATE TABLE IF NOT EXISTS launch_log (
     id              TEXT PRIMARY KEY,
     tag             TEXT NOT NULL CHECK (tag IN ('quickchat','workon')),
@@ -153,9 +154,7 @@ CREATE TABLE IF NOT EXISTS launch_log (
                       CHECK (status IN ('pending','launched','failed','completed','expired')),
     requested_by    TEXT,
     created_at      TEXT NOT NULL DEFAULT (datetime('now')),
-    launched_at     TEXT,
-    seq             INTEGER DEFAULT 0,
-    last_mutation_id TEXT
+    launched_at     TEXT
 );
 
 CREATE INDEX IF NOT EXISTS idx_launch_log_status ON launch_log(status);
@@ -163,16 +162,4 @@ CREATE INDEX IF NOT EXISTS idx_launch_log_origin_status ON launch_log(origin, st
 CREATE INDEX IF NOT EXISTS idx_launch_log_requested_by ON launch_log(requested_by, created_at);
 
 DROP TRIGGER IF EXISTS trg_launch_log_seq_insert;
-CREATE TRIGGER trg_launch_log_seq_insert AFTER INSERT ON launch_log
-FOR EACH ROW WHEN NEW.seq = 0
-BEGIN
-  UPDATE launch_log SET seq = (SELECT COALESCE(MAX(seq),0)+1 FROM launch_log WHERE rowid != NEW.rowid)
-  WHERE rowid = NEW.rowid;
-END;
-
 DROP TRIGGER IF EXISTS trg_launch_log_seq_update;
-CREATE TRIGGER trg_launch_log_seq_update AFTER UPDATE ON launch_log
-FOR EACH ROW WHEN NEW.seq = OLD.seq
-BEGIN
-  UPDATE launch_log SET seq = (SELECT COALESCE(MAX(seq),0)+1 FROM launch_log) WHERE id = NEW.id;
-END;

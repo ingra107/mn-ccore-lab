@@ -92,7 +92,7 @@ export function MorningThoughtCompose() {
             copyMessage: 'Launching Quick Chat… (seed copied as backup)',
           })
         } else {
-          undoToast.showSuccess('Sent to home — check Telegram to drive it')
+          undoToast.showSuccess('Saved to your launch log — mobile launch goes live in Phase 2')
         }
         appendDailyThought(content, 'task')
       } catch (err) {

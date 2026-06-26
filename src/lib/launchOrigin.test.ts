@@ -26,6 +26,17 @@ describe('seeded URI builders', () => {
   it('builds a quickchat URI with seed', () => {
     expect(buildQuickChatUri('hi there')).toBe('mnccore://quickchat?seed=hi%20there');
   });
+  it('encodes ! to %21 in workon seed (Windows batch delayed-expansion safety)', () => {
+    expect(buildSeededWorkOnUri('C:\\\\X\\\\proj', 'fix this!'))
+      .toBe('mnccore://workon/C:/X/proj?seed=fix%20this%21');
+  });
+  it('encodes ! to %21 in quickchat seed', () => {
+    expect(buildQuickChatUri('help!')).toBe('mnccore://quickchat?seed=help%21');
+  });
+  it("encodes ' ( ) * in seeds", () => {
+    expect(buildQuickChatUri("it's done (really) *done*"))
+      .toBe("mnccore://quickchat?seed=it%27s%20done%20%28really%29%20%2Adone%2A");
+  });
 });
 
 describe('@quickchat parse', () => {

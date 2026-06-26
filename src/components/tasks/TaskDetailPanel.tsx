@@ -1556,10 +1556,16 @@ function OverviewQuickAdd({
               copyMessage: 'Launching… (folder copied as backup)',
             })
           }
-          showSuccess(origin === 'computer' ? 'No project folder set for this task' : 'Sent to home — check Telegram')
+          showSuccess(origin === 'computer' ? 'No project folder set for this task' : 'Saved to your launch log — mobile launch goes live in Phase 2')
         })
         .then(() => reset())
-        .catch((e) => { console.error('@workon failed:', e) })
+        .catch((e) => {
+          console.error('@workon failed:', e)
+          // Fail-loud: show a toast so the user knows the launch didn't work.
+          // Deliberately do NOT call reset() here — the user's seed stays in
+          // the textarea so they can retry without retyping it.
+          showSuccess('@workon failed — your seed is still here, try again')
+        })
       return
     }
     if (mode === 'note') {
