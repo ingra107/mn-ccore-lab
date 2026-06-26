@@ -313,5 +313,6 @@ export async function handleDeleteInboxEvent(
     actorSlug: user.email,
     activityCategory: 'inbox_event',
     activityEntityType: 'inbox_event',
+    gateProject: false, // inbox_events has no project_id column
   });
 }

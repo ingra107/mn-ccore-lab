@@ -30,6 +30,13 @@ export interface IdempotentDeleteArgs {
   activityCategory?: string;
   /** Activity-log entity-type label. Defaults to the table name. */
   activityEntityType?: string;
+  /**
+   * Set false for tables with NO project_id column (e.g. inbox_events). The
+   * project-ACL SELECT hard-codes `project_id`, which 500s ("no such column:
+   * project_id") on tables that lack it. Default true preserves the
+   * project-scoped SELECT+gate for tasks/projects and every existing caller.
+   */
+  gateProject?: boolean;
 }
 
 /**
@@ -60,15 +67,19 @@ export interface IdempotentDeleteArgs {
  */
 export async function idempotentDelete(args: IdempotentDeleteArgs): Promise<Response> {
   const { table, id, mode, request, env } = args;
+  // Tables without a project_id column (e.g. inbox_events) opt out of the
+  // project-ACL SELECT+gate, which otherwise 500s on the hard-coded project_id.
+  const gateProject = args.gateProject !== false;
 
   if (mode === 'soft') {
+    const cols = gateProject ? 'id, deleted_at, project_id' : 'id, deleted_at';
     const row = await env.DB.prepare(
-      `SELECT id, deleted_at, project_id FROM ${table} WHERE id = ?`,
-    ).bind(id).first<{ id: string; deleted_at: string | null; project_id: string | null }>();
+      `SELECT ${cols} FROM ${table} WHERE id = ?`,
+    ).bind(id).first<{ id: string; deleted_at: string | null; project_id?: string | null }>();
 
     if (!row) return hiddenResource();
 
-    if (row.project_id) {
+    if (gateProject && row.project_id) {
       const block = await assertProjectVisible(request, env, row.project_id);
       if (block) return block;
     }
@@ -106,9 +117,11 @@ export async function idempotentDelete(args: IdempotentDeleteArgs): Promise<Resp
   // Pre-flight SELECT to gate on PB visibility if the row has a project_id.
   // The SELECT result is discarded after the gate check — the DELETE is the
   // source of truth for whether a row existed (meta.changes).
-  const row = await env.DB.prepare(
-    `SELECT id, project_id FROM ${table} WHERE id = ?`,
-  ).bind(id).first<{ id: string; project_id: string | null }>();
+  const row = gateProject
+    ? await env.DB.prepare(
+        `SELECT id, project_id FROM ${table} WHERE id = ?`,
+      ).bind(id).first<{ id: string; project_id: string | null }>()
+    : null;
 
   if (row?.project_id) {
     const block = await assertProjectVisible(request, env, row.project_id);
