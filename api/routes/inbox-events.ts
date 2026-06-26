@@ -7,6 +7,7 @@
 //
 // Endpoints:
 //   GET    /api/inbox-events?seq_after=N        — pull list_since
+//   POST   /api/inbox-events                    — browser single-capture (A2 wave 3)
 //   POST   /api/inbox-events/sync-bulk          — push bulk upsert
 //   POST   /api/inbox-events/:id/delete         — soft-delete tombstone
 //
@@ -15,7 +16,7 @@
 // rejected-stale rows synced.
 
 import type { AuthUser, Env } from '../helpers';
-import { json, error, logActivity, isPiRequest } from '../helpers';
+import { json, error, logActivity, isPiRequest, generateId } from '../helpers';
 import { idempotentDelete } from '../lib/idempotent-delete';
 
 const INBOX_EVENT_ALLOWED_SOURCES = new Set([
@@ -244,6 +245,52 @@ export async function handleSyncBulkInboxEvents(
   );
 
   return json({ data: { ok: true, inserted, rejected_stale: rejectedStale, results } });
+}
+
+// POST /api/inbox-events — browser-facing single-capture endpoint.
+//
+// Auth: 'authed' (CF-Access browser JWT OR Bearer API key). NOT PI-gated:
+// any authenticated Hub user can capture a note (e.g. from the Today-bar).
+//
+// Body: { raw_text: string, source?: string }
+//   source defaults to 'hub_ui'; must be in INBOX_EVENT_ALLOWED_SOURCES.
+//
+// seq advance: automatic via trg_inbox_events_seq_insert (schema-v57):
+//   AFTER INSERT WHEN NEW.seq = 0 → sets seq = MAX(seq)+1.
+//   Plain INSERT omits seq → DEFAULT 0 → trigger fires. Row is immediately
+//   pull-visible to PB sync (GET /api/inbox-events?seq_after=N).
+export async function handleCreateInboxEvent(
+  request: Request,
+  user: AuthUser,
+  env: Env,
+): Promise<Response> {
+  const body = await request.json() as { raw_text?: unknown; source?: unknown };
+
+  const rawText = typeof body.raw_text === 'string' ? body.raw_text.trim() : '';
+  if (!rawText) {
+    return error('raw_text is required and must be non-empty', 400);
+  }
+
+  const source = typeof body.source === 'string' ? body.source : 'hub_ui';
+  if (!INBOX_EVENT_ALLOWED_SOURCES.has(source)) {
+    return error(
+      `unknown source "${source}"; allowed: ${Array.from(INBOX_EVENT_ALLOWED_SOURCES).join(', ')}`,
+      400,
+    );
+  }
+
+  const id = generateId('inbox_event');
+  await env.DB.prepare(
+    `INSERT INTO inbox_events (id, source, raw_text, captured_at, created_at, updated_at)
+     VALUES (?, ?, ?, datetime('now'), datetime('now'), datetime('now'))`
+  ).bind(id, source, rawText).run();
+
+  const row = await env.DB.prepare(
+    `SELECT id, source, raw_text, captured_at, seq, created_at, updated_at
+     FROM inbox_events WHERE id = ?`
+  ).bind(id).first();
+
+  return json({ data: row }, 201);
 }
 
 // POST /api/inbox-events/:id/delete — soft-delete tombstone.

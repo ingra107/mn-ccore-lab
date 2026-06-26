@@ -18,7 +18,7 @@ import { handleUploadUrl, handleUploadDone, handleListFiles, handleGetFile, hand
 // ── Route modules ──────────────────────────────────────────
 import { handleGetTasks, handleGetTask, handleActionItems, handleOverdueCount, handleUpdateTaskStatus, handleToggleTask, handleUpdateTask, handleCreateTask, handleGetTaskComments, handleAddTaskComment, handleGetTaskActivity, handleGetTaskDetail, handleGetTaskUpdates, handleGetRecentTaskUpdates, handleGetRecentTaskComments, handlePostTaskUpdate, handleBatchUpdateTasks, handleAcknowledgeTask, handleDeleteTask, handleMobileTasksToHub } from './routes/tasks';
 import { handleMarkSeen, handleGetUnseenActivity } from './routes/seen';
-import { handleInboxEvents, handleSyncBulkInboxEvents, handleDeleteInboxEvent } from './routes/inbox-events';
+import { handleInboxEvents, handleSyncBulkInboxEvents, handleDeleteInboxEvent, handleCreateInboxEvent } from './routes/inbox-events';
 import { handleMutations } from './routes/mutations';
 import { handleGetProjects, handleGetProject, handleCreateProject, handleGetComments, handleGetProjectUpdates, handleGetProjectActivity, handleProjectHealth, handleRecentUpdates, handleUpdateProject, handleDeleteProject, handleGetDeletedProjectsSince, handleAddComment, handlePostProjectUpdate, handleGetMilestones, handleUpdateMilestoneNote, handleUpdateMilestoneCompletion } from './routes/projects';
 import { handleGetMeetings, handleNextMeeting, handleGetMeeting, handleGetAgendaItems, handleAddAgendaItem, handleReorderAgenda, handleCreateMeeting, handleUpdateMeetingNotes, handleMeetingPrep, handleGenerateAgenda } from './routes/meetings';
@@ -1792,6 +1792,16 @@ defineRoute({
   entity: 'inbox-events',
   visibility: 'na',
   handler: (c) => handleDeleteInboxEvent(c.req.param('id'), R(c), USER(c), E(c)),
+});
+// Browser single-capture — 'authed' (CF-Access OR Bearer), NOT PI-gated.
+// Registered after /sync-bulk and /:id/delete so static segments match first.
+defineRoute({
+  method: 'POST',
+  path: '/api/inbox-events',
+  auth: 'authed',
+  entity: 'inbox-events',
+  visibility: 'na',
+  handler: (c) => handleCreateInboxEvent(R(c), USER(c), E(c)),
 });
 // PI-or-API-key gate: raw_payload_json/notes are private to Nick's capture pipeline.
 defineRoute({

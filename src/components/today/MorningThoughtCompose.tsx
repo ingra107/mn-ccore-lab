@@ -3,10 +3,12 @@
 // Replaces the bare decorative <input> at TodayPage.tsx with a real submit
 // handler. Routing rules per audit decision D11:
 //
-//   `@hermes <text>` → POST /api/ai-requests with source_type='daily_thought'
-//   `note: <text>`   → append to today_state_${YYYY-MM-DD}.thoughts (LS array)
-//   default          → useCreateTask({assignee, group_override}) — creates
-//                      a task in the user's default bucket (priorities)
+//   `@quickchat <text>` → POST /api/launch-log (origin-aware Claude Code launch)
+//   `@hermes <text>`    → POST /api/ai-requests with source_type='daily_thought'
+//   `@backlog[: ]<txt>` → POST /api/ai-requests with source_type='backlog_idea'
+//   `note: <text>`      → POST /api/inbox-events (durable) + LS echo for instant UX
+//   default             → useCreateTask({assignee, group_override}) — creates
+//                         a task in the user's default bucket (priorities)
 //
 // Time-aware (after 5pm CT — local hour >= 17):
 //   - placeholder swaps to "Plan tomorrow's first move…"
@@ -126,16 +128,51 @@ export function MorningThoughtCompose() {
       return
     }
 
-    // Route 2 — note: prefix
-    if (/^note:\s*/i.test(content)) {
-      const text = content.replace(/^note:\s*/i, '').trim()
-      if (!text) return
-      appendDailyThought(text, 'note')
-      undoToast.showSuccess('Saved to today\'s thoughts')
+    // Route 2 — @backlog[: ] prefix → improvement backlog via ai-requests
+    if (/^@backlog\b[:]?/i.test(content)) {
+      const idea = content.replace(/^@backlog[:]?\s*/i, '').trim() || content
+      try {
+        const res = await fetch('/api/ai-requests', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            source_type: 'backlog_idea',
+            source_id: todayKey(),
+            prompt: idea,
+          }),
+        })
+        if (!res.ok) throw new Error(`/api/ai-requests ${res.status}`)
+        appendDailyThought(content, 'hermes')
+        undoToast.showSuccess('Sent to improvement backlog')
+      } catch (err) {
+        console.error('Morning thought → backlog failed:', err)
+        undoToast.showSuccess(`Sending to backlog failed: ${err instanceof Error ? err.message : 'please try again.'}`)
+      }
       return
     }
 
-    // Route 3 — default: create a task in the user's default group.
+    // Route 3 — note: prefix (durable: POST to inbox-events + LS echo for instant UX)
+    if (/^note:\s*/i.test(content)) {
+      const text = content.replace(/^note:\s*/i, '').trim()
+      if (!text) return
+      // Instant UX echo — visible before the network round-trip completes
+      appendDailyThought(text, 'note')
+      try {
+        const res = await fetch('/api/inbox-events', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ raw_text: text, source: 'hub_ui' }),
+        })
+        if (!res.ok) throw new Error(`/api/inbox-events ${res.status}`)
+        undoToast.showSuccess('Saved to today\'s thoughts')
+      } catch (err) {
+        console.error('Morning thought → note failed:', err)
+        undoToast.showSuccess(`Note save failed: ${err instanceof Error ? err.message : 'please try again.'}`)
+      }
+      return
+    }
+
+    // Route 4 — default: create a task in the user's default group.
     if (!userSlug) {
       undoToast.showSuccess('Sign in to capture tasks.')
       return
