@@ -24,11 +24,14 @@ CHECKS (all against prod D1, read-only):
   3. TODAY'S LESSONS L1/L2: no active rel dangling to a missing typed kg node
      (except known_residues); no deleted_at-only project kg tombstone.
 
-INVOCATION (CI): python3 scripts/check-project-identity-gate.py
-  Uses `wrangler d1 execute mnccore-lab --remote --json --command "<sql>"`.
-  In CI the D1-scoped CLOUDFLARE_API_TOKEN/ACCOUNT_ID env is set by the workflow
-  (same as the schema-drift dump step). The .githooks raw-d1 ban exempts
-  .github/workflows/, and this script is only invoked from CI.
+INVOCATION: python3 scripts/check-project-identity-gate.py   (CI + local predeploy)
+  Uses a raw `wrangler d1 execute` subcommand (wrangler-d1-allowed: the real call
+  in d1_query is list-split with a CI-conditional env strip, NOT a wrapper bypass).
+  Run BOTH in CI and locally as `npm run predeploy:identity` before a gated deploy.
+  In CI the workflow sets a D1-scoped CLOUDFLARE_API_TOKEN/ACCOUNT_ID (the .githooks
+  raw-d1 ban exempts .github/workflows/) so those are KEPT; locally the same-named
+  vars are the Pages-scoped secrets.ps1 token that shadows OAuth, so d1_query
+  STRIPS them (see _d1_env/_is_ci) — the #247 fix that stopped the local 7403.
 
   --self-test : run the assertion logic against an in-memory SQLite fixture (no
   network) so the script's SQL is exercised offline (used by a unit step / local).
@@ -40,6 +43,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import sqlite3
 import subprocess
@@ -93,11 +97,39 @@ def _wrangler_cmd() -> list[str]:
     raise RuntimeError("wrangler not found on PATH or repo node_modules")
 
 
+# Env vars that secrets.ps1 exports locally for Pages deploys (Pages-scoped, NO
+# D1 scope). When present they SHADOW the D1-capable OAuth creds at
+# ~/.wrangler/config/default.toml → every `wrangler d1` call 7403s. Misdiagnosed
+# as "deploy token lost D1 access" SIX times (PB memory
+# feedback_wrangler-home-auth-works + agent_knowledge wrangler-d1-sanctioned-entry-
+# point). The strip makes the local fix STRUCTURAL, mirroring scripts/wrangler_d1.py.
+_SHADOWING_ENV = ("CLOUDFLARE_API_TOKEN", "CLOUDFLARE_ACCOUNT_ID")
+
+
+def _is_ci() -> bool:
+    """In CI the workflow sets a PROPER D1-scoped CLOUDFLARE_API_TOKEN/ACCOUNT_ID
+    (the .githooks raw-d1 ban exempts .github/workflows) — those MUST be kept.
+    Locally the same-named vars are the Pages-scoped secrets.ps1 token that
+    shadows OAuth — those MUST be stripped. So the strip is CI-conditional, unlike
+    wrangler_d1.py's unconditional strip (which is never run in CI)."""
+    return os.environ.get("CI") == "true" or os.environ.get("GITHUB_ACTIONS") == "true"
+
+
+def _d1_env() -> dict[str, str]:
+    """Env for the wrangler subprocess: strip the shadowing vars locally so the
+    gate falls back to the D1-capable OAuth creds; keep them in CI (real D1 token)."""
+    env = os.environ.copy()
+    if not _is_ci():
+        for var in _SHADOWING_ENV:
+            env.pop(var, None)  # no-op when absent
+    return env
+
+
 def d1_query(sql: str) -> list[dict]:
     cmd = _wrangler_cmd() + ["d1", "execute", DB, "--remote", "--json",
                              "--command", sql]
     proc = subprocess.run(cmd, capture_output=True, text=True,
-                          cwd=str(_HERE.parent))
+                          cwd=str(_HERE.parent), env=_d1_env())
     if proc.returncode != 0:
         raise RuntimeError(f"wrangler d1 failed: {proc.stderr[-1500:]}")
     data = json.loads(proc.stdout)
