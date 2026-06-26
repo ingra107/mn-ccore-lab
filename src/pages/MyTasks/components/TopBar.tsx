@@ -5,7 +5,7 @@
 // Extracted from src/pages/portal/UnifiedMyTasks.tsx.
 
 import { useState } from 'react'
-import { AlertTriangle, Clock, Plus, Sparkles, Pin, SlidersHorizontal, Timer } from 'lucide-react'
+import { AlertTriangle, Clock, Plus, Sparkles, Pin, SlidersHorizontal, Timer, ThumbsDown } from 'lucide-react'
 import { researchTeam } from '../../../data/team'
 import SavedViewsMenu from '../../../components/SavedViewsMenu'
 import { ViewPicker } from './ViewPicker'
@@ -49,6 +49,7 @@ export function TopBar({ view, setView, search, setSearch, filter, setFilter, qu
     { k: 'overdue', l: <><AlertTriangle {...ICON_PROPS} size={11} style={{ color: ACCENT_CORAL }} /> Overdue</>, color: ACCENT_CORAL },
     { k: 'waiting', l: <><Clock {...ICON_PROPS} size={11} style={{ color: ACCENT_ORANGE }} /> Waiting on</>, color: ACCENT_ORANGE },
     { k: 'stale', l: <><Timer {...ICON_PROPS} size={11} style={{ color: ACCENT_ORANGE }} /> Stale</>, color: ACCENT_ORANGE },
+    { k: 'declined', l: <><ThumbsDown {...ICON_PROPS} size={11} style={{ color: ACCENT_CORAL }} /> Declined</>, color: ACCENT_CORAL },
   ]
   const hasFilters = filter.priority || filter.project || filter.mentee || filter.group || search || quickView !== 'all'
   return (

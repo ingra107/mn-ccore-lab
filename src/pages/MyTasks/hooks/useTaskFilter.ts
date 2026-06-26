@@ -47,6 +47,7 @@ export function useTaskFilter({ allTasks, filter, search, quickView, plannedSet,
     if (quickView === 'overdue') base = base.filter((t) => t.due_date && t.due_date.slice(0, 10) < today && !isTaskDone(t))
     if (quickView === 'waiting') base = base.filter((t) => t.status === 'waiting_external' && !isTaskDone(t))
     if (quickView === 'stale') base = base.filter((t) => daysSince(t.updated_at) >= taskStaleDays && t.status === 'in_progress' && !isTaskDone(t))
+    if (quickView === 'declined') base = base.filter((t) => t.approval_status === 'declined')
     return base.filter((t) => {
       if (filter.hideCompleted && isTaskDone(t)) return false
       if (filter.priority && t.priority !== filter.priority) return false

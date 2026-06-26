@@ -33,6 +33,14 @@ export const STATUS_BG: Record<string, string> = STATUS_BG_EXTENDED
 export const STATUS_ORDER: Record<string, number> = { blocked: 0, waiting_external: 1, in_progress: 2, todo: 3, done: 4 }
 export const STATUS_CYCLE = ['todo', 'in_progress', 'done'] as const
 
+// ── Approval Status (meeting_approval tasks) ──
+// Used by Accept/Decline buttons on TaskCard for tasks with source='meeting_approval'.
+// Colors: green=accepted (positive), coral=declined (warning, per Rule 59).
+export const APPROVAL_STATUS_OPTIONS = [
+  { value: 'accepted', label: 'Accept', color: 'var(--task-accent-green)' },
+  { value: 'declined', label: 'Decline', color: 'var(--task-accent-coral)' },
+] as const
+
 // ── Priority ──
 
 // Same SSOT note as Status above: urgent/high/medium match the shared

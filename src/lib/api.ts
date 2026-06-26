@@ -171,6 +171,10 @@ export interface TaskRow {
   updated_at?: string
   meeting_title?: string
   meeting_date?: string
+  /** Approval status for meeting-approval tasks (source='meeting_approval').
+   *  Set by PB when creating the task (pending), updated here via Accept/Decline.
+   *  Non-meeting tasks leave this null. Schema v83 (approval_status column). */
+  approval_status?: 'pending' | 'accepted' | 'declined' | null
 }
 
 export interface PBSessionRow {
