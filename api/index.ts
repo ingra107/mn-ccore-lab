@@ -55,6 +55,7 @@ import { handleCheckImpact } from './routes/impact-trace';
 import { handlePIDashboard, handleMenteeVelocity, handleResponseTime, handleTeamEngagement, handleTeamByExpertise } from './routes/pi-dashboard';
 import { handleCadenceCheck } from './routes/meeting-cadence';
 import { handleGetAIRequests, handleCreateAIRequest, handleUpdateAIResponse } from './routes/ai-requests';
+import { handleCreateLaunch, handleListLaunches, handleSetLaunchStatus, handleRefireLaunch } from './routes/launch-log';
 import { handleGetArtifacts, handleGetArtifact, handleGetArtifactActivity, handleCreateArtifact, handleReviseArtifact, handleDeleteArtifact, handleAddArtifactComment } from './routes/artifacts';
 import { escapeHtml } from './lib/escapeHtml';
 import { handlePBCapture, handlePBDefer, handleAddToDispatch, handleGetPendingDispatch, handleSendDispatch, handleCompleteDispatchItem } from './routes/pb-sector';
@@ -1030,6 +1031,18 @@ defineRoute({
   entity: 'ai-requests',
   visibility: 'na',
   handler: (c) => handleGetAIRequests(U(c), E(c)),
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Launch log (@-tag delegation) — Nick-private reads, authed writes
+// ─────────────────────────────────────────────────────────────────────────────
+defineRoute({
+  method: 'GET',
+  path: '/api/launch-log',
+  auth: 'authed',
+  entity: 'launch-log',
+  visibility: 'na',
+  handler: (c) => handleListLaunches(U(c), USER(c), E(c)),
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -2422,6 +2435,11 @@ defineRoute({
   visibility: 'na',
   handler: (c) => handleUpdateAIResponse(c.req.param('id'), R(c), E(c)),
 });
+
+// Launch log writes
+defineRoute({ method: 'POST', path: '/api/launch-log',            auth: 'authed', entity: 'launch-log', visibility: 'na', handler: (c) => handleCreateLaunch(R(c), USER(c), E(c)) });
+defineRoute({ method: 'POST', path: '/api/launch-log/:id/status', auth: 'authed', entity: 'launch-log', visibility: 'na', handler: (c) => handleSetLaunchStatus(c.req.param('id'), R(c), E(c)) });
+defineRoute({ method: 'POST', path: '/api/launch-log/:id/refire', auth: 'authed', entity: 'launch-log', visibility: 'na', handler: (c) => handleRefireLaunch(c.req.param('id'), USER(c), E(c)) });
 
 // Artifacts writes — specific-before-generic. Create is authed (Hermes via API
 // key, or a team member). Revise/comments authed; delete PI-gated in-handler.
