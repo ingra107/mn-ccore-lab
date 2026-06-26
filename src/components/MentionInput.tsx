@@ -3,6 +3,15 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useTeamSlugs } from '../hooks/useMentionAutocomplete'
 import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
 
+// Known command @-tags — visually distinguished from person @-mentions and
+// excluded from person-autocomplete when the filter exactly matches.
+const KNOWN_COMMAND_TAGS: Record<string, { label: string; color: string; bg: string }> = {
+  hermes:   { label: '⌘ Hermes AI',         color: 'var(--gold)',  bg: 'var(--gold-active)'   },
+  quickchat: { label: '⌘ Quick Chat launch', color: 'var(--teal)', bg: 'var(--teal-active)'   },
+  workon:   { label: '⌘ Work On launch',     color: 'var(--teal)', bg: 'var(--teal-active)'   },
+  backlog:  { label: '⌘ Backlog idea',       color: 'var(--slate)', bg: 'var(--hover-subtle)' },
+}
+
 interface MentionInputProps {
   value: string
   onChange: (value: string) => void
@@ -49,8 +58,11 @@ export default function MentionInput({
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   const filteredSlugs = useMemo(() => {
-    if (!mentionFilter) return teamSlugs
     const lower = mentionFilter.toLowerCase()
+    // Exact match on a known command @-tag: suppress person autocomplete so the
+    // dropdown doesn't compete with the command-routing UI signal.
+    if (lower in KNOWN_COMMAND_TAGS) return []
+    if (!lower) return teamSlugs
     return teamSlugs.filter(
       (t) =>
         t.slug.toLowerCase().includes(lower) ||
@@ -167,30 +179,41 @@ export default function MentionInput({
     onKeyDown?.(e)
   }
 
-  // Render value with @mention highlighting
+  // Render value with @mention highlighting.
   // We use an overlay approach: the textarea holds the plain text,
-  // and we show a mirrored div behind it with highlighted mentions
+  // and we show a mirrored div behind it with highlighted spans.
+  // isCommand=true: known launch @-tag (teal); false: person @-mention (gold).
   const highlightedParts = useMemo(() => {
-    const parts: { text: string; isMention: boolean }[] = []
+    const parts: { text: string; isMention: boolean; isCommand: boolean }[] = []
     const regex = /@(\w[\w-]*)/g
     let lastIndex = 0
     let match: RegExpExecArray | null
 
     while ((match = regex.exec(value)) !== null) {
       if (match.index > lastIndex) {
-        parts.push({ text: value.slice(lastIndex, match.index), isMention: false })
+        parts.push({ text: value.slice(lastIndex, match.index), isMention: false, isCommand: false })
       }
-      parts.push({ text: match[0], isMention: true })
+      const isCommand = match[1].toLowerCase() in KNOWN_COMMAND_TAGS
+      parts.push({ text: match[0], isMention: true, isCommand })
       lastIndex = match.index + match[0].length
     }
     if (lastIndex < value.length) {
-      parts.push({ text: value.slice(lastIndex), isMention: false })
+      parts.push({ text: value.slice(lastIndex), isMention: false, isCommand: false })
     }
     return parts
   }, [value])
 
-  // We need to know if there are any mentions to decide if we show the highlight overlay
+  // Show the overlay whenever there are any @-mentions (person or command).
   const hasMentions = highlightedParts.some((p) => p.isMention)
+
+  // Detect a known command @-tag at the START of the value (token complete =
+  // followed by whitespace or end-of-string). Drives the command-badge below
+  // the textarea — visible in both light and dark mode regardless of overlay.
+  const detectedCommand = useMemo(() => {
+    const m = value.match(/^@(\w[\w-]*)(?:\s|$)/i)
+    if (!m) return null
+    return KNOWN_COMMAND_TAGS[m[1].toLowerCase()] ?? null
+  }, [value])
 
   return (
     <div style={{ position: 'relative', flex: 1 }}>
@@ -221,7 +244,15 @@ export default function MentionInput({
             part.isMention ? (
               <span
                 key={i}
-                style={{
+                style={part.isCommand ? {
+                  // Command @-tags: teal to distinguish from person @-mentions
+                  color: 'var(--teal)',
+                  fontWeight: 600,
+                  background: 'var(--teal-active)',
+                  borderRadius: 'var(--radius-sm)',
+                  padding: '0 2px',
+                } : {
+                  // Person @-mentions: gold (unchanged)
                   color: 'var(--gold)',
                   fontWeight: 600,
                   background: 'var(--gold-active)',
@@ -261,6 +292,37 @@ export default function MentionInput({
           caretColor: hasMentions ? 'var(--ink)' : undefined,
         }}
       />
+
+      {/* Command @-tag badge — bottom-right corner of the textarea (absolute,
+          no layout shift). Visible in both light and dark mode because it
+          carries its own background — supplements the overlay which only
+          shows through transparent/near-transparent textarea bgs. */}
+      {detectedCommand && (
+        <div
+          aria-live="polite"
+          aria-label={`Command recognized: ${detectedCommand.label}`}
+          style={{
+            position: 'absolute',
+            bottom: 4,
+            right: 6,
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 3,
+            padding: '1px 6px',
+            borderRadius: 'var(--radius-sm)',
+            background: detectedCommand.bg,
+            color: detectedCommand.color,
+            fontSize: 9,
+            fontWeight: 600,
+            fontFamily: 'var(--font-body, inherit)',
+            userSelect: 'none',
+            lineHeight: 1.6,
+            pointerEvents: 'none',
+          }}
+        >
+          {detectedCommand.label}
+        </div>
+      )}
 
       {/* Mention autocomplete dropdown */}
       <AnimatePresence>

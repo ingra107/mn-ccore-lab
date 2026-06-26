@@ -1572,6 +1572,75 @@ function OverviewQuickAdd({
         })
       return
     }
+    // ── @quickchat: seeded quick-chat launch (same as Today bar) ─────────────
+    // Seed-isolation guard: a @quickchat seed typed in a comment box must
+    // NEVER reach /api/tasks/:id/comments (team-visible). Early return enforces.
+    if (/^@quickchat\b/i.test(v)) {
+      const seed = v.replace(/^@quickchat\s*/i, '').trim()
+      const origin = detectOrigin()
+      fetch('/api/launch-log', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tag: 'quickchat', seed, origin }),
+      })
+        .then((res) => {
+          if (!res.ok) throw new Error(`launch-log ${res.status}`)
+          return res.json() as Promise<{ data: { id: string } }>
+        })
+        .then(({ data }) => {
+          if (origin === 'computer') {
+            return protocolLaunch(buildLaunchUri(data.id), {
+              copyText: seed,
+              successMessage: 'Launching Quick Chat on this machine…',
+              copyMessage: 'Launching Quick Chat… (seed copied as backup)',
+            })
+          }
+          showSuccess('Saved to your launch log — mobile launch goes live in Phase 2')
+        })
+        .then(() => reset())
+        .catch((e) => {
+          console.error('@quickchat from task comment failed:', e)
+          showSuccess('@quickchat failed — your seed is still here, try again')
+        })
+      return
+    }
+    // ── @hermes prefix typed directly: route to /api/ai-requests ─────────────
+    // The Hermes toggle (forHermes) posts via comment + dispatch/add.
+    // A direct @hermes prefix is a Today-bar-style intent; route there instead
+    // of letting it fall through to submitComment as team-visible activity.
+    if (/^@hermes\b/i.test(v)) {
+      const prompt = v.replace(/^@hermes\s*/i, '').trim() || v
+      fetch('/api/ai-requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ source_type: 'daily_thought', source_id: taskId, prompt }),
+      })
+        .then((res) => { if (!res.ok) throw new Error(`/api/ai-requests ${res.status}`) })
+        .then(() => { showSuccess('Sent to Hermes'); reset() })
+        .catch((e) => {
+          console.error('@hermes from task comment failed:', e)
+          showSuccess('@hermes failed — your message is still here, try again')
+        })
+      return
+    }
+    // ── @backlog: improvement-backlog idea ────────────────────────────────────
+    // Same route as Today bar: /api/ai-requests with source_type='backlog_idea'.
+    // Intercept before submitComment so the idea does not post as team comment.
+    if (/^@backlog\b[:]?/i.test(v)) {
+      const idea = v.replace(/^@backlog[:]?\s*/i, '').trim() || v
+      fetch('/api/ai-requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ source_type: 'backlog_idea', source_id: taskId, prompt: idea }),
+      })
+        .then((res) => { if (!res.ok) throw new Error(`/api/ai-requests ${res.status}`) })
+        .then(() => { showSuccess('Sent to improvement backlog'); reset() })
+        .catch((e) => {
+          console.error('@backlog from task comment failed:', e)
+          showSuccess('@backlog failed — your message is still here, try again')
+        })
+      return
+    }
     if (mode === 'note') {
       postUpdate.mutate(
         { content: v, update_type: 'progress' },

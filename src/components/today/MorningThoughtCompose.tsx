@@ -105,6 +105,15 @@ export function MorningThoughtCompose() {
       return
     }
 
+    // Route 0.5 — @workon: no task/project context in the Today bar.
+    // Seed-isolation guard: intercept before the default task-creation
+    // path so a seed-shaped string cannot post as a team-visible task.
+    // The right surface is a task comment box (OverviewQuickAdd).
+    if (/^@workon\b/i.test(content)) {
+      undoToast.showSuccess('@workon needs a task — open a task and type @workon there')
+      return
+    }
+
     // Route 1 — @hermes prefix
     if (/^@hermes\b/i.test(content)) {
       const prompt = content.replace(/^@hermes\s*/i, '').trim() || content
