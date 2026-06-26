@@ -37,3 +37,19 @@ describe('@quickchat parse', () => {
     expect(/^@quickchat\b/i.test('@QuickChat hi')).toBe(true);
   });
 });
+
+describe('@workon parse', () => {
+  const strip = (s: string) => s.replace(/^@workon\s*/i, '').trim();
+  it('strips and trims', () => {
+    expect(strip('@workon improve the methods')).toBe('improve the methods');
+  });
+  it('handles extra spaces after tag', () => {
+    expect(strip('@workon   fix the bug  ')).toBe('fix the bug');
+  });
+  it('matches case-insensitively', () => {
+    expect(/^@workon\b/i.test('@WorkOn something')).toBe(true);
+  });
+  it('does not match @workonmore (word-boundary)', () => {
+    expect(/^@workon\b/i.test('@workonmore')).toBe(false);
+  });
+});

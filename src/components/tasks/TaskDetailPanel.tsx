@@ -27,7 +27,9 @@ import { ACCENT_GOLD, PANEL_BG, isTaskDone, withAlpha } from '../../lib/taskGrou
 import MentionInput from '../MentionInput'
 import TypingIndicator from '../TypingIndicator'
 import { getPersonInfo, getAllMembers, directors } from '../../data/team'
-import { shortLabelForUrl, gmailKind } from '../../lib/urlClassify'
+import { shortLabelForUrl, gmailKind, buildSeededWorkOnUri } from '../../lib/urlClassify'
+import { detectOrigin } from '../../lib/launchOrigin'
+import { useProtocolLaunch } from '../../hooks/useProtocolLaunch'
 import LinkChip from '../LinkChip'
 import Avatar from '../Avatar'
 import InlineSelect from '../InlineSelect'
@@ -576,6 +578,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
               taskId={task.id}
               taskTitle={task.title}
               projectSlug={task.project_id}
+              primaryFolder={taskProject?.primary_folder}
               onJumpToTab={(tab) => setActiveTab(tab)}
               onContentChange={setQuickAddHasContent}
             />
@@ -591,6 +594,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
                 taskId={task.id}
                 taskTitle={task.title}
                 projectSlug={task.project_id}
+                primaryFolder={taskProject?.primary_folder}
                 onJumpToTab={(tab) => setActiveTab(tab)}
                 onContentChange={setQuickAddHasContent}
               />
@@ -1421,12 +1425,14 @@ function OverviewQuickAdd({
   taskId,
   taskTitle,
   projectSlug,
+  primaryFolder,
   onJumpToTab,
   onContentChange,
 }: {
   taskId: string
   taskTitle?: string | null
   projectSlug?: string | null
+  primaryFolder?: string | null
   onJumpToTab: (tab: Tab) => void
   onContentChange?: (hasContent: boolean) => void
 }) {
@@ -1444,6 +1450,7 @@ function OverviewQuickAdd({
   const appendCh = (ch: string) => appendCharToInput(textareaRef, ch, setText)
   const postUpdate = usePostTaskUpdate(taskId)
   const { showSuccess } = useToast()
+  const { launch: protocolLaunch } = useProtocolLaunch()
   const queryClient = useQueryClient()
 
   // Composing = focused OR has text — drives textarea rows + action row visibility.
@@ -1527,6 +1534,34 @@ function OverviewQuickAdd({
     e.preventDefault()
     const v = text.trim()
     if (!v) return
+    // ── @workon: seeded project launch ────────────────────────────────────────
+    // CRITICAL SEED ISOLATION: this branch MUST return before submitComment runs.
+    // The seed must NEVER reach /api/tasks/:id/comments or /api/pb/dispatch/add
+    // — those are team-visible endpoints. The early `return` below enforces this.
+    if (/^@workon\b/i.test(v)) {
+      const seed = v.replace(/^@workon\s*/i, '').trim()
+      const origin = detectOrigin()
+      const folder = primaryFolder ?? ''
+      fetch('/api/launch-log', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tag: 'workon', seed, origin, project_slug: projectSlug ?? null }),
+      })
+        .then((res) => { if (!res.ok) throw new Error(`launch-log ${res.status}`) })
+        .then(() => {
+          if (origin === 'computer' && folder) {
+            return protocolLaunch(buildSeededWorkOnUri(folder, seed), {
+              copyText: folder,
+              successMessage: 'Launching Claude in this project…',
+              copyMessage: 'Launching… (folder copied as backup)',
+            })
+          }
+          showSuccess(origin === 'computer' ? 'No project folder set for this task' : 'Sent to home — check Telegram')
+        })
+        .then(() => reset())
+        .catch((e) => { console.error('@workon failed:', e) })
+      return
+    }
     if (mode === 'note') {
       postUpdate.mutate(
         { content: v, update_type: 'progress' },
