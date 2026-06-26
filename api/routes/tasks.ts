@@ -316,7 +316,11 @@ const TASK_ALLOWED_FIELDS = new Set(['title', 'description', 'description_json',
   'planned_for', 'plan_slot', 'plan_rank',
   // Today timeline task-blocks Phase 2 (schema-v87, 2026-06-19): fine start
   // time, minutes since midnight (0..1439); NULL = not time-positioned.
-  'plan_start_min']);
+  'plan_start_min',
+  // Meeting Accept/Decline (schema-v90, 2026-06-25): the REST route must mirror
+  // the A3 field-authority contract — the frontend Accept/Decline buttons PATCH
+  // this via POST /api/tasks/:id. Omitting it silently dropped the field → 400.
+  'approval_status']);
 const VALID_GROUP_OVERRIDES = new Set(['deep', 'priorities', 'quick', 'pb', 'etl']);
 // plan_slot vocabulary: 'right_now' | 'strip' | 'between-<n>' (<n> a non-negative
 // integer timeline-gap index). Parametric (between-<n>) so it's value-guarded here,
