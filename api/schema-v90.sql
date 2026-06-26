@@ -1,0 +1,11 @@
+-- schema-v90.sql: meeting Accept/Decline approval gate (meeting-approve-decline Phase 0)
+-- Task 0.4: D1 column for approval_status.
+-- (v89 slot taken by schema-v89-launch-log.sql @-tag delegation)
+--
+-- Nullable tri-state (pending|accepted|declined); NULL = a normal task.
+-- Only tasks with source='meeting_approval' ever use this column.
+-- Hub-synced via /api/mutations (field-authority.generated.ts adds it at contract 0.7.x).
+-- Decision: Context/Decisions/2026-06-25-meeting-approval-status-field.md (PB repo)
+-- Applied to prod D1 (mnccore-lab, b8453e9b) 2026-06-25 (file was schema-v89.sql at apply time;
+-- renamed to v90 post-apply to avoid collision with schema-v89-launch-log.sql).
+ALTER TABLE tasks ADD COLUMN approval_status TEXT;
