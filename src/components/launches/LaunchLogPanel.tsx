@@ -9,10 +9,11 @@
 //
 // `statusLabel` is exported as a pure function for unit testing.
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { fetchApi } from '../../lib/api'
 import { useProtocolLaunch } from '../../hooks/useProtocolLaunch'
 import { buildQuickChatUri } from '../../lib/urlClassify'
+import { formatDbLocal } from '../../lib/time'
 
 // ── Pure helper — exported for unit tests ────────────────────────────────────
 
@@ -44,38 +45,50 @@ interface LaunchRow {
 export default function LaunchLogPanel() {
   const [rows, setRows] = useState<LaunchRow[]>([])
   const [err, setErr] = useState<string | null>(null)
+  const [refireErr, setRefireErr] = useState<string | null>(null)
   const { launch } = useProtocolLaunch()
 
-  const load = () =>
+  const load = useCallback(() =>
     fetchApi<LaunchRow[]>('/api/launch-log')
       .then((r) => setRows(r.data ?? []))
-      .catch((e) => setErr(e instanceof Error ? e.message : 'load failed'))
+      .catch((e) => setErr(e instanceof Error ? e.message : 'load failed')),
+  [])
 
-  useEffect(() => { load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { load() }, [load])
 
   const refire = async (row: LaunchRow) => {
-    // Always create a new row server-side (preserves history — no mutation).
-    await fetchApi(`/api/launch-log/${row.id}/refire`, { method: 'POST' })
+    setRefireErr(null)
+    try {
+      // Always create a new row server-side (preserves history — no mutation).
+      await fetchApi(`/api/launch-log/${row.id}/refire`, { method: 'POST' })
 
-    if (row.origin === 'computer') {
-      // Server cannot fire mnccore:// (browser-only); do it here instead.
-      // tag==='workon' ideally uses buildSeededWorkOnUri but needs a folder path
-      // not stored in the log; fallback to quickchat-style is acceptable per brief.
-      const uri = buildQuickChatUri(row.seed)
-      await launch(uri, {
-        successMessage: `Re-firing @${row.tag}…`,
-        copyText: row.seed || undefined,
-        copyMessage: `@${row.tag} seed copied — paste if the handler didn't open`,
-      })
+      if (row.origin === 'computer') {
+        // Server cannot fire mnccore:// (browser-only); do it here instead.
+        // tag==='workon' ideally uses buildSeededWorkOnUri but needs a folder path
+        // not stored in the log; fallback to quickchat-style is acceptable per brief.
+        const uri = buildQuickChatUri(row.seed)
+        await launch(uri, {
+          successMessage: `Re-firing @${row.tag}…`,
+          copyText: row.seed || undefined,
+          copyMessage: `@${row.tag} seed copied — paste if the handler didn't open`,
+        })
+      }
+      // mobile-origin: pending row created above; home poller will pick it up.
+      load()
+    } catch (e) {
+      setRefireErr(e instanceof Error ? e.message : 're-fire failed')
     }
-    // mobile-origin: pending row created above; home poller will pick it up.
-    load()
   }
 
   if (err) return <div className="text-sm" style={{ color: 'var(--maroon)' }}>Launches: {err}</div>
 
   return (
     <div className="flex flex-col gap-1">
+      {refireErr && (
+        <p style={{ fontSize: 'var(--text-label)', color: 'var(--maroon)', margin: 0 }}>
+          Re-fire failed: {refireErr}
+        </p>
+      )}
       {rows.length === 0 ? (
         <p style={{ fontSize: 'var(--text-label)', color: 'var(--slate)', opacity: 0.75, textAlign: 'center', padding: '12px 0' }}>
           No launches yet.
@@ -95,12 +108,18 @@ export default function LaunchLogPanel() {
             <span style={{ fontFamily: 'monospace', color: 'var(--teal)', flexShrink: 0 }}>
               @{r.tag}
             </span>
+            <span style={{ color: 'var(--slate)', opacity: 0.6, flexShrink: 0 }}>
+              {r.origin}
+            </span>
             <span
               className="flex-1 truncate"
               title={r.seed}
               style={{ color: 'var(--ink)', opacity: 0.85 }}
             >
               {r.seed || '(no seed)'}
+            </span>
+            <span style={{ color: 'var(--slate)', opacity: 0.6, flexShrink: 0 }}>
+              {formatDbLocal(r.created_at, 'datetime')}
             </span>
             <span style={{ color: 'var(--slate)', opacity: 0.75, flexShrink: 0 }}>
               {statusLabel(r.status)}
