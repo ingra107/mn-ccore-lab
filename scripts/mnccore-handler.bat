@@ -12,12 +12,14 @@ echo %date% %time% ARGS: %* >> "%TEMP%\mnccore-handler.log"
 ::   mnccore://open/<url-encoded-path>      → Explorer-open a folder/file (legacy; kept).
 ::   mnccore://launch/<url-encoded-script>  → run a .bat/.cmd/.ps1 (legacy; kept).
 ::   mnccore://workon/<url-encoded-folder>  → launch "<folder>\Start Claude.bat" in that folder.
+::     [?seed=<encoded>]                      optional seed written to <folder>\.pb-seed.txt.
 ::                                            SECURITY: refuses unless the decoded path is a
 ::                                            directory AND <folder>\Start Claude.bat exists.
 ::                                            The hardcoded basename "Start Claude.bat" IS the
 ::                                            allowlist — no other filename is ever executed.
 ::   mnccore://process                      → run %USERPROFILE%\Peripheral-Brain\Quick_Process.bat.
 ::   mnccore://bugsquash                     → run <this dir>\bug-squasher.bat (sibling).
+::   mnccore://quickchat[?seed=<encoded>]   → seed PB root + launch Quick_Chat_seeded.bat.
 ::   mnccore://obsidian/<url-encoded-note>  → open a vault note. WARM (Obsidian
 ::                                            running): the Obsidian CLI shim
 ::                                            (Obsidian.com open) — the protocol's
@@ -48,6 +50,20 @@ set "url=!url:mnccore://=!"
 
 :: Strip a single trailing slash (verb-only URLs like "process/" or trailing on paths).
 if "!url:~-1!"=="/" set "url=!url:~0,-1!"
+
+:: Split a ?seed=<...> query off the URL before verb dispatch. The seed stays
+:: percent-encoded by design — [A-Za-z0-9%._~-] only, safe for echo( into a file;
+:: the consumer (Quick_Chat_seeded.bat via Python) URL-decodes once on read.
+set "seed="
+set "qs="
+echo !url! | findstr /C:"?seed=" >nul
+if !errorlevel! EQU 0 (
+    for /f "tokens=1* delims=?" %%A in ("!url!") do (
+        set "url=%%A"
+        set "qs=%%B"
+    )
+    set "seed=!qs:~5!"
+)
 
 :: ── verb dispatch ───────────────────────────────────────────────────────────
 :: Each branch CALLs its verb subroutine then propagates that routine's
@@ -86,6 +102,10 @@ if /I "!url!"=="process" (
 )
 if /I "!url!"=="bugsquash" (
     call :verb_bugsquash
+    exit /b !errorlevel!
+)
+if /I "!url!"=="quickchat" (
+    call :verb_quickchat
     exit /b !errorlevel!
 )
 
@@ -173,8 +193,11 @@ if not exist "!bat!" (
     exit /b 1
 )
 if defined MNCCORE_HANDLER_DRYRUN (
-    echo DRYRUN workon: start "" /D "!folder!" "!bat!"
+    echo DRYRUN workon: start "" /D "!folder!" "!bat!"  seed="!seed!"
     exit /b 0
+)
+if defined seed (
+    > "!folder!\.pb-seed.txt" echo(!seed!
 )
 start "" /D "!folder!" "!bat!"
 exit /b 0
@@ -193,6 +216,27 @@ if defined MNCCORE_HANDLER_DRYRUN (
 )
 :: CWD = the PB repo root so relative paths inside Quick_Process.bat resolve.
 start "" /D "%USERPROFILE%\Peripheral-Brain" "!qp!"
+exit /b 0
+
+
+:: ── :verb_quickchat ── seed PB root + launch Quick_Chat_seeded.bat ───────────
+:: SECURITY: fixed target, no path arg. The only file run is the literal
+:: %USERPROFILE%\Peripheral-Brain\Quick_Chat_seeded.bat.
+:verb_quickchat
+set "pbroot=%USERPROFILE%\Peripheral-Brain"
+set "qc=!pbroot!\Quick_Chat_seeded.bat"
+if not exist "!qc!" (
+    call :fail "quickchat: Quick_Chat_seeded.bat not found at !qc!"
+    exit /b 1
+)
+if defined MNCCORE_HANDLER_DRYRUN (
+    echo DRYRUN quickchat: start "" /D "!pbroot!" "!qc!"  seed="!seed!"
+    exit /b 0
+)
+if defined seed (
+    > "!pbroot!\.pb-seed.txt" echo(!seed!
+)
+start "" /D "!pbroot!" "!qc!"
 exit /b 0
 
 
