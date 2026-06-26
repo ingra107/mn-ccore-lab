@@ -2438,7 +2438,7 @@ defineRoute({
 
 // Launch log writes
 defineRoute({ method: 'POST', path: '/api/launch-log',            auth: 'authed', entity: 'launch-log', visibility: 'na', handler: (c) => handleCreateLaunch(R(c), USER(c), E(c)) });
-defineRoute({ method: 'POST', path: '/api/launch-log/:id/status', auth: 'authed', entity: 'launch-log', visibility: 'na', handler: (c) => handleSetLaunchStatus(c.req.param('id'), R(c), E(c)) });
+defineRoute({ method: 'POST', path: '/api/launch-log/:id/status', auth: 'authed', entity: 'launch-log', visibility: 'na', handler: (c) => handleSetLaunchStatus(c.req.param('id'), R(c), USER(c), E(c)) });
 defineRoute({ method: 'POST', path: '/api/launch-log/:id/refire', auth: 'authed', entity: 'launch-log', visibility: 'na', handler: (c) => handleRefireLaunch(c.req.param('id'), USER(c), E(c)) });
 
 // Artifacts writes — specific-before-generic. Create is authed (Hermes via API

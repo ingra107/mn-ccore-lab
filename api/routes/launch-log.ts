@@ -45,12 +45,12 @@ export async function handleListLaunches(url: URL, user: AuthUser, env: Env): Pr
 }
 
 // POST /api/launch-log/:id/status — update status (and launched_at if transitioning to launched)
-export async function handleSetLaunchStatus(id: string, request: Request, env: Env): Promise<Response> {
+export async function handleSetLaunchStatus(id: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
   const b = await request.json() as { status: string };
   if (!STATUSES.includes(b.status)) return error('invalid status', 400);
   const setLaunched = b.status === 'launched' ? ", launched_at = datetime('now')" : '';
-  await env.DB.prepare(`UPDATE launch_log SET status = ?${setLaunched} WHERE id = ?`).bind(b.status, id).run();
-  const row = await env.DB.prepare('SELECT * FROM launch_log WHERE id = ?').bind(id).first();
+  await env.DB.prepare(`UPDATE launch_log SET status = ?${setLaunched} WHERE id = ? AND requested_by = ?`).bind(b.status, id, user.email).run();
+  const row = await env.DB.prepare('SELECT * FROM launch_log WHERE id = ? AND requested_by = ?').bind(id, user.email).first();
   if (!row) return error('launch not found', 404);
   return json({ data: row });
 }

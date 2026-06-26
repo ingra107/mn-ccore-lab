@@ -1,5 +1,5 @@
 // api/routes/launch-log.test.ts
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import type { Env } from '../helpers';
 import { handleCreateLaunch, handleListLaunches, handleSetLaunchStatus } from './launch-log';
 
@@ -48,9 +48,18 @@ describe('handleSetLaunchStatus', () => {
   it('updates status + launched_at and returns the row', async () => {
     const db = makeDb({ first: { id: 'L1', status: 'launched' } });
     const env = { DB: db } as unknown as Env;
-    const res = await handleSetLaunchStatus('L1', req({ status: 'launched' }), env);
+    const res = await handleSetLaunchStatus('L1', req({ status: 'launched' }), USER, env);
     expect(res.status).toBe(200);
     const upd = db._captured.find((c: any) => /UPDATE launch_log SET status/.test(c.sql));
     expect(upd.binds).toContain('launched');
+    expect(upd.sql).toContain('launched_at');
+  });
+
+  it('returns 404 when a different user tries to update', async () => {
+    const db = makeDb({ first: null });
+    const env = { DB: db } as unknown as Env;
+    const other = { email: 'someone@else.com', name: 'Other' };
+    const res = await handleSetLaunchStatus('L1', req({ status: 'launched' }), other, env);
+    expect(res.status).toBe(404);
   });
 });
