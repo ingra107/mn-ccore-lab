@@ -4,9 +4,10 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   SquareCheck, Clock, Calendar,
   Activity, ArrowRight, AlertTriangle, TrendingUp,
-  Lightbulb, User, History,
+  Lightbulb, User, History, Zap,
   ChevronDown,
 } from 'lucide-react'
+import LaunchLogPanel from '../../components/launches/LaunchLogPanel'
 import PageHeader from '../../components/PageHeader'
 import { CardSkeleton } from '../../components/LoadingSkeleton'
 import OnboardingChecklist from '../../components/OnboardingChecklist'
@@ -1058,6 +1059,11 @@ export default function PersonalPage() {
               projectsCount={projects.length}
               pendingCount={pendingTasks.length}
             />
+            {currentUser && (
+              <CompactCard title="My Launches" icon={Zap} iconColor="var(--slate)">
+                <LaunchLogPanel />
+              </CompactCard>
+            )}
           </div>
         </motion.div>
       </motion.div>

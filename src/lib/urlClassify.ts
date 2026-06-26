@@ -128,6 +128,10 @@ export function normalizeLocalFolderPath(raw: string): string {
   if (isUnc) {
     // Preserve exactly one leading `//` for a UNC share.
     p = '//' + p.replace(/^\/+/, '')
+  } else {
+    // Collapse consecutive forward slashes that arise from escaped backslashes
+    // (e.g. JSON-escaped C:\\X\\proj → C://X//proj → C:/X/proj).
+    p = p.replace(/\/{2,}/g, '/')
   }
   // Trim trailing slashes (but never reduce a bare "/" or UNC "//" to empty).
   p = p.replace(/\/+$/, '')
@@ -194,6 +198,27 @@ export function classifyUrl(url: string): ClassifiedUrl {
  */
 export function buildWorkOnUri(folderPath: string): string {
   return `mnccore://workon/${normalizeLocalFolderPath(folderPath)}`
+}
+
+/**
+ * Encode a seed string for mnccore:// URIs.
+ * `encodeURIComponent` leaves `! ' ( ) *` unencoded; the Windows batch handler
+ * uses delayed-expansion (`!` → nothing), so `fix this!` would arrive as `fix this`.
+ * This helper adds a second pass that percent-encodes those five sub-delimiters.
+ */
+function encodeWithSubDelims(s: string): string {
+  return encodeURIComponent(s).replace(/[!'()*]/g, c => '%' + c.charCodeAt(0).toString(16).toUpperCase());
+}
+
+/** mnccore://workon/<folder>?seed=<encoded> — seed consumed + deleted on launch. */
+export function buildSeededWorkOnUri(folderPath: string, seed: string): string {
+  const base = `mnccore://workon/${normalizeLocalFolderPath(folderPath)}`;
+  return seed.trim() ? `${base}?seed=${encodeWithSubDelims(seed.trim())}` : base;
+}
+
+/** mnccore://quickchat?seed=<encoded> — launches Quick_Chat in PB root, seeded. */
+export function buildQuickChatUri(seed: string): string {
+  return seed.trim() ? `mnccore://quickchat?seed=${encodeWithSubDelims(seed.trim())}` : 'mnccore://quickchat';
 }
 
 /** Build `mnccore://open/<folder>` for an Explorer open of a local path. */

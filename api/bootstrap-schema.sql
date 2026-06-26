@@ -2,10 +2,10 @@
 --
 -- THIS FILE IS NOT THE CURRENT PRODUCTION SCHEMA.
 -- It is the seed schema applied once when D1 was bootstrapped.
--- Current production state = this file + 60 migrations (api/schema-v*.sql).
--- For current schema, run: wrangler d1 export mnccore-lab --remote
+-- Current production state = this file + migrations in api/schema-v*.sql (see scripts/schema-version-snapshot.json for the canonical list).
+-- For current schema, run: wrangler d1 export mnccore-lab --remote  -- wrangler-d1-allowed
 --
--- Run with: wrangler d1 execute mnccore-lab --file=api/bootstrap-schema.sql
+-- Run with: wrangler d1 execute mnccore-lab --file=api/bootstrap-schema.sql  -- wrangler-d1-allowed
 
 -- Publications
 CREATE TABLE IF NOT EXISTS publications (
@@ -92,3 +92,74 @@ CREATE TABLE IF NOT EXISTS activity_log (
   actor TEXT,
   timestamp TEXT DEFAULT (datetime('now'))
 );
+
+-- Links (v88: link-normalization Phase 2 -- typed links as first-class Hub-synced table)
+CREATE TABLE IF NOT EXISTS links (
+    id            TEXT PRIMARY KEY,
+    owner_table   TEXT NOT NULL CHECK (owner_table IN ('tasks','projects')),
+    owner_id      TEXT NOT NULL,
+    role          TEXT NOT NULL DEFAULT 'key',
+    type          TEXT NOT NULL,
+    canonical_url TEXT NOT NULL,
+    short_title   TEXT NOT NULL,
+    source_raw    TEXT,
+    sort_order    INTEGER NOT NULL DEFAULT 0,
+    deleted_at    TEXT,
+    seq           INTEGER DEFAULT 0,
+    last_mutation_id TEXT,
+    created_at    TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at    TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_links_owner_role_url
+    ON links(owner_table, owner_id, role, canonical_url)
+    WHERE deleted_at IS NULL;
+
+CREATE INDEX IF NOT EXISTS idx_links_owner ON links(owner_table, owner_id);
+CREATE INDEX IF NOT EXISTS idx_links_type ON links(type);
+CREATE INDEX IF NOT EXISTS idx_links_seq ON links(seq);
+
+DROP TRIGGER IF EXISTS trg_links_seq_insert;
+CREATE TRIGGER trg_links_seq_insert AFTER INSERT ON links
+FOR EACH ROW
+WHEN NEW.seq = 0
+BEGIN
+  UPDATE links
+  SET seq = (SELECT COALESCE(MAX(seq), 0) + 1 FROM links WHERE rowid != NEW.rowid)
+  WHERE rowid = NEW.rowid;
+END;
+
+DROP TRIGGER IF EXISTS trg_links_seq_update;
+CREATE TRIGGER trg_links_seq_update AFTER UPDATE ON links
+FOR EACH ROW
+WHEN NEW.seq = OLD.seq
+BEGIN
+  UPDATE links
+  SET seq = (SELECT COALESCE(MAX(seq), 0) + 1 FROM links)
+  WHERE id = NEW.id;
+END;
+
+-- launch_log (v89: @-tag delegation launch log -- recovery surface + mobile queue)
+-- Hub-D1-ONLY. NOT registered in PB synced_table_registry; no brain.db mirror.
+-- The seed lives ONLY here; it is never written to activity_entries.
+-- seq / last_mutation_id / seq-triggers omitted: Hub-only table, A3 sync unused.
+CREATE TABLE IF NOT EXISTS launch_log (
+    id              TEXT PRIMARY KEY,
+    tag             TEXT NOT NULL CHECK (tag IN ('quickchat','workon')),
+    seed            TEXT NOT NULL DEFAULT '',
+    origin          TEXT NOT NULL CHECK (origin IN ('computer','mobile')),
+    target_machine  TEXT,
+    project_slug    TEXT,
+    status          TEXT NOT NULL DEFAULT 'pending'
+                      CHECK (status IN ('pending','launched','failed','completed','expired')),
+    requested_by    TEXT,
+    created_at      TEXT NOT NULL DEFAULT (datetime('now')),
+    launched_at     TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_launch_log_status ON launch_log(status);
+CREATE INDEX IF NOT EXISTS idx_launch_log_origin_status ON launch_log(origin, status);
+CREATE INDEX IF NOT EXISTS idx_launch_log_requested_by ON launch_log(requested_by, created_at);
+
+DROP TRIGGER IF EXISTS trg_launch_log_seq_insert;
+DROP TRIGGER IF EXISTS trg_launch_log_seq_update;
