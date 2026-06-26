@@ -489,6 +489,9 @@ export async function handleCreateTask(request: Request, user: AuthUser, env: En
     short_title?: string | null;
     source_thread_id?: string | null;
     related_message_ids?: string | null;
+    // Meeting Accept/Decline (schema-v90, 2026-06-25): PB sets 'pending' on
+    // create; Accept/Decline buttons patch to 'accepted'/'declined' later.
+    approval_status?: 'pending' | 'accepted' | 'declined' | null;
   };
   if (!body.description || !body.assignee) return error('description and assignee required', 400);
 
@@ -556,6 +559,9 @@ export async function handleCreateTask(request: Request, user: AuthUser, env: En
       short_title: body.short_title ?? null,
       source_thread_id: body.source_thread_id ?? null,
       related_message_ids: body.related_message_ids ?? null,
+      // Meeting Accept/Decline (schema-v90, 2026-06-25): pass through from
+      // request body so PB-created meeting_approval tasks land with 'pending'.
+      approval_status: body.approval_status ?? null,
       // PB §2D (2026-06-10): every source_thread_id-bearing task is minted
       // HERE (Apps Script "Email Tasks") — derive the Gmail-thread link at
       // create so PB's backfill_email_links.py + invariant I40 can retire.

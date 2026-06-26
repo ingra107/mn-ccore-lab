@@ -41,6 +41,11 @@ const TASK_PLAIN_COLS = [
   // minutes since midnight (0..1439); NULL = not time-positioned. Read-exposed so
   // /api/tasks returns it AND PB pull mirrors it (R10 Hub-rebuildable).
   'plan_start_min',
+  // Meeting Accept/Decline (schema-v90, 2026-06-25): approval status for
+  // source='meeting_approval' tasks — 'pending'|'accepted'|'declined'|null.
+  // Not private (not in TASK_PRIVATE_COLS), must be read-exposed so Accept/Decline
+  // patches round-trip and PB pull mirrors the field (R10 Hub-rebuildable).
+  'approval_status',
   // NOTE: `notes` is deliberately omitted — private brain.db field.
   // NOTE: `project_id` is NOT in this list — it is resolved to slug below.
 ];
