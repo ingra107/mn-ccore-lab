@@ -1,7 +1,7 @@
 // api/routes/launch-log.test.ts
 import { describe, it, expect } from 'vitest';
 import type { Env } from '../helpers';
-import { handleCreateLaunch, handleListLaunches, handleSetLaunchStatus, handleClaimLaunch } from './launch-log';
+import { handleCreateLaunch, handleListLaunches, handleSetLaunchStatus, handleClaimLaunch, handleListPendingLaunches } from './launch-log';
 
 function makeDb(seed: { rows?: any[]; first?: any } = {}) {
   const captured: Array<{ sql: string; binds: unknown[] }> = [];
@@ -105,6 +105,78 @@ describe('handleClaimLaunch', () => {
     const res = await handleClaimLaunch('lnch_legacy', claimReq('lnch_legacy'), USER, env);
     expect(res.status).toBe(410);
   });
+});
+
+// ── makeDbForPending: captures all() SQL for assertion ───────────────────────
+function makeDbForPending(rows: any[] = []) {
+  const captured: Array<{ sql: string }> = [];
+  const db: any = {
+    _captured: captured,
+    prepare(sql: string) {
+      const stmt: any = {
+        bind: () => stmt,
+        run: async () => ({ success: true }),
+        first: async () => null,
+        all: async () => { captured.push({ sql }); return { results: rows }; },
+      };
+      return stmt;
+    },
+  };
+  return db;
+}
+
+describe('handleListPendingLaunches', () => {
+  it('returns pending mobile unconsumed unexpired rows unscoped by requested_by', async () => {
+    const rows = [
+      { id: 'lnch_a', created_at: '2026-06-26T01:00:00Z' },
+      { id: 'lnch_b', created_at: '2026-06-26T01:01:00Z' },
+    ];
+    const db = makeDbForPending(rows);
+    const env = { DB: db } as unknown as Env;
+    const res = await handleListPendingLaunches(env);
+    expect(res.status).toBe(200);
+    const body = await res.json() as any;
+    expect(body.data).toHaveLength(2);
+    expect(body.data[0].id).toBe('lnch_a');
+    expect(body.data[1].id).toBe('lnch_b');
+  });
+
+  it('SQL is unscoped (no requested_by filter) and projects only id + created_at', async () => {
+    const db = makeDbForPending([]);
+    const env = { DB: db } as unknown as Env;
+    await handleListPendingLaunches(env);
+    const { sql } = db._captured[0];
+    expect(sql).toContain("status='pending'");
+    expect(sql).toContain("origin='mobile'");
+    expect(sql).toContain('consumed_at IS NULL');
+    expect(sql).toContain("expires_at > datetime('now')");
+    expect(sql).toContain('SELECT id, created_at');
+    // unscoped: a row owned by a different requested_by is still returned
+    expect(sql).not.toContain('requested_by');
+  });
+
+  it('response carries no seed field (SELECT projects id + created_at only)', async () => {
+    const rows = [{ id: 'lnch_c', created_at: '2026-06-26T02:00:00Z' }];
+    const db = makeDbForPending(rows);
+    const env = { DB: db } as unknown as Env;
+    const res = await handleListPendingLaunches(env);
+    const body = await res.json() as any;
+    expect(body.data[0]).toHaveProperty('id');
+    expect(body.data[0]).toHaveProperty('created_at');
+    expect(body.data[0]).not.toHaveProperty('seed');
+  });
+
+  it('returns empty array when no pending mobile rows exist', async () => {
+    const db = makeDbForPending([]);
+    const env = { DB: db } as unknown as Env;
+    const res = await handleListPendingLaunches(env);
+    expect(res.status).toBe(200);
+    const body = await res.json() as any;
+    expect(body.data).toHaveLength(0);
+  });
+
+  // 403 for non-PI callers is enforced by app.use('/api/pb/*') middleware (index.ts:282),
+  // not this handler — no per-handler auth check required or tested here.
 });
 
 describe('handleSetLaunchStatus', () => {

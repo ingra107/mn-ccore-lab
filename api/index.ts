@@ -55,7 +55,7 @@ import { handleCheckImpact } from './routes/impact-trace';
 import { handlePIDashboard, handleMenteeVelocity, handleResponseTime, handleTeamEngagement, handleTeamByExpertise } from './routes/pi-dashboard';
 import { handleCadenceCheck } from './routes/meeting-cadence';
 import { handleGetAIRequests, handleCreateAIRequest, handleUpdateAIResponse } from './routes/ai-requests';
-import { handleCreateLaunch, handleListLaunches, handleSetLaunchStatus, handleRefireLaunch, handleClaimLaunch } from './routes/launch-log';
+import { handleCreateLaunch, handleListLaunches, handleSetLaunchStatus, handleRefireLaunch, handleClaimLaunch, handleListPendingLaunches } from './routes/launch-log';
 import { handleGetArtifacts, handleGetArtifact, handleGetArtifactActivity, handleCreateArtifact, handleReviseArtifact, handleDeleteArtifact, handleAddArtifactComment } from './routes/artifacts';
 import { escapeHtml } from './lib/escapeHtml';
 import { handlePBCapture, handlePBDefer, handleAddToDispatch, handleGetPendingDispatch, handleSendDispatch, handleCompleteDispatchItem } from './routes/pb-sector';
@@ -1043,6 +1043,17 @@ defineRoute({
   entity: 'launch-log',
   visibility: 'na',
   handler: (c) => handleListLaunches(U(c), USER(c), E(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/pb/launch-log/pending',
+  auth: 'pi',
+  entity: 'pb',
+  visibility: 'na',
+  // PI-gate enforced by app.use('/api/pb/*') middleware (index.ts:282). UNSCOPED — returns
+  // all mobile pending rows regardless of requested_by (browser's email-equality filter stays
+  // on handleListLaunches; that filter is the recovery-view privacy scope, not the queue gate).
+  handler: (c) => handleListPendingLaunches(E(c)),
 });
 
 // ─────────────────────────────────────────────────────────────────────────────

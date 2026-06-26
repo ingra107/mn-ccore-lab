@@ -68,6 +68,18 @@ export async function handleRefireLaunch(id: string, user: AuthUser, env: Env): 
   return handleCreateLaunch(fakeReq, user, env);
 }
 
+// GET /api/pb/launch-log/pending — UNSCOPED (no requested_by filter); PI-gated by app-level middleware.
+// Returns only id + created_at; seed intentionally omitted (defense-in-depth: leaking the list never leaks a seed).
+export async function handleListPendingLaunches(env: Env): Promise<Response> {
+  const r = await env.DB.prepare(
+    `SELECT id, created_at FROM launch_log
+     WHERE status='pending' AND origin='mobile' AND consumed_at IS NULL
+       AND expires_at > datetime('now')
+     ORDER BY created_at ASC LIMIT 50`
+  ).all();
+  return json({ data: r.results ?? [] });
+}
+
 // POST /api/launch-log/:id/claim — atomic single-use opaque-token claim; UNSCOPED (no requested_by filter).
 // Returns { verb, seed, project_slug } on success. 410 if token invalid, expired, or already consumed.
 export async function handleClaimLaunch(id: string, _request: Request, _user: AuthUser, env: Env): Promise<Response> {
