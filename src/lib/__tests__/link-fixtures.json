@@ -138,7 +138,7 @@
   {
     "raw": "C:\\Users\\ingra107\\Peripheral-Brain\\scripts\\db\\sync.py",
     "expected": {
-      "type": "script",
+      "type": "local_file",
       "canonical_url": "~/Peripheral-Brain/scripts/db/sync.py",
       "short_title": "~/Peripheral-Brain/scripts/db/sync.py"
     }

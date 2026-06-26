@@ -29,7 +29,6 @@ import {
   BookText,
   FolderOpen,
   File,
-  FileCode,
   Globe,
   Sparkles,
 } from 'lucide-react'
@@ -65,7 +64,6 @@ const LUCIDE_REGISTRY: Record<string, LucideIcon> = {
   BookText,
   FolderOpen,
   File,
-  FileCode,
   Globe,
   Sparkles,
 }

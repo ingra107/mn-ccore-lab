@@ -1,5 +1,5 @@
 // GENERATED from scripts/links/link_contract.py -- DO NOT EDIT BY HAND.
-// rules_hash=443356e3328238512fbcec426431e0259ede186ed8e1b15a95c081015d667f0d
+// rules_hash=b69323ec315cb66938d0dd9d9f525c8f81febdfd0257368502ab6971f69a1d4e
 // Regenerate: python -X utf8 scripts/links/gen_links.py (in the Peripheral-Brain repo).
 //
 // INERT (Phase 1): exported but not imported by app code. urlClassify.ts is the
@@ -7,7 +7,7 @@
 // (link-fixtures.json) is asserted against normalizeLink() by vitest so this
 // interpreter can never silently drift from the PB Python runtime.
 
-export const PB_LINK_TYPES = ["iwd", "google_doc", "google_sheet", "google_slide", "google_form", "box_folder", "github_repo", "github_issue", "github_tree", "gmail_thread", "gmail_draft", "obsidian_note", "local_folder", "local_file", "script", "web", "artifact"] as const
+export const PB_LINK_TYPES = ["iwd", "google_doc", "google_sheet", "google_slide", "google_form", "box_folder", "github_repo", "github_issue", "github_tree", "gmail_thread", "gmail_draft", "obsidian_note", "local_folder", "local_file", "web", "artifact"] as const
 export type PbLinkType = (typeof PB_LINK_TYPES)[number]
 
 export interface PbCanonicalLink {
@@ -17,7 +17,7 @@ export interface PbCanonicalLink {
   source_raw: string | null
 }
 
-export const PB_LINK_RULES_HASH = '443356e3328238512fbcec426431e0259ede186ed8e1b15a95c081015d667f0d'
+export const PB_LINK_RULES_HASH = 'b69323ec315cb66938d0dd9d9f525c8f81febdfd0257368502ab6971f69a1d4e'
 
 interface PbLinkRule {
   type: string
@@ -136,13 +136,6 @@ const PB_LINK_RULES: PbLinkRule[] = [
   {
     "canonical": "\\1",
     "id_group": 1,
-    "match": "((?:[A-Za-z]:[\\\\/]|/c/|~/|\\./)[^\\s]*\\.(?:py|sh|ps1|js|ts|R|qmd|sql|bat))$",
-    "title": "\\1",
-    "type": "script"
-  },
-  {
-    "canonical": "\\1",
-    "id_group": 1,
     "match": "((?:[A-Za-z]:[\\\\/]|/c/|~/|\\./)[^\\s]*\\.[A-Za-z0-9]{1,5})$",
     "title": "\\1",
     "type": "local_file"
@@ -190,7 +183,7 @@ function expand(template: string, m: RegExpMatchArray): string {
   return out
 }
 
-const LOCAL_TYPES = new Set(['script', 'local_file', 'local_folder'])
+const LOCAL_TYPES = new Set(['local_file', 'local_folder'])
 // Home-dir prefixes for both laptops (work=ingra107, home=ingra via junction).
 // Hard-coded so canonicalization is machine-independent; mirrors normalize._HOME_RE.
 const HOME_RE = new RegExp('^(?:[A-Za-z]:/|/c/)Users/(?:ingra107|ingra)/')
