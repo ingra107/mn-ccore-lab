@@ -27,3 +27,13 @@ describe('seeded URI builders', () => {
     expect(buildQuickChatUri('hi there')).toBe('mnccore://quickchat?seed=hi%20there');
   });
 });
+
+describe('@quickchat parse', () => {
+  const strip = (s: string) => s.replace(/^@quickchat\s*/i, '').trim();
+  it('strips the tag and trims', () => {
+    expect(strip('@quickchat  rework the figure ')).toBe('rework the figure');
+  });
+  it('matches case-insensitively', () => {
+    expect(/^@quickchat\b/i.test('@QuickChat hi')).toBe(true);
+  });
+});

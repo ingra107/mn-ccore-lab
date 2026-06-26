@@ -15,7 +15,7 @@
 // The brief says to use SmartCompose; we do — `theme="dark"` + `bare` so the
 // existing PANEL_BG container styling on TodayPage stays intact.
 
-import { useCallback, useMemo } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import SmartCompose from '../SmartCompose'
 import { useAuth } from '../../hooks/useAuth'
 import { emailToSlug } from '../../lib/emailSlug'
@@ -25,6 +25,9 @@ import { todayKey } from './constants'
 import { nowInstant } from '../../lib/time'
 import { useIsMobile } from '../../hooks/useIsMobile'
 import { localDateKey } from '../../lib/dateUtils'
+import { detectOrigin } from '../../lib/launchOrigin'
+import { buildQuickChatUri } from '../../lib/urlClassify'
+import { useProtocolLaunch } from '../../hooks/useProtocolLaunch'
 
 const DEFAULT_GROUP_OVERRIDE = 'priorities'
 
@@ -52,6 +55,8 @@ export function MorningThoughtCompose() {
   const userSlug = emailToSlug(user?.email)
   const createTask = useCreateTask()
   const undoToast = useUndoToast()
+  const { launch: protocolLaunch } = useProtocolLaunch()
+  const [forceHome, setForceHome] = useState(false)
 
   // Compute "after 5pm" once per render — reasonable for the mount lifetime
   // of this surface. Page is a daily landing; user reloads if they cross 5pm.
@@ -68,6 +73,34 @@ export function MorningThoughtCompose() {
   const handleSubmit = useCallback(async (raw: string) => {
     const content = raw.trim()
     if (!content) return
+
+    // Route 0 — @quickchat: launch a seeded Claude Code session (origin-aware).
+    if (/^@quickchat\b/i.test(content)) {
+      const seed = content.replace(/^@quickchat\s*/i, '').trim()
+      const origin = forceHome ? 'mobile' : detectOrigin()
+      try {
+        const res = await fetch('/api/launch-log', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tag: 'quickchat', seed, origin }),
+        })
+        if (!res.ok) throw new Error(`/api/launch-log ${res.status}`)
+        if (origin === 'computer') {
+          await protocolLaunch(buildQuickChatUri(seed), {
+            copyText: seed,
+            successMessage: 'Launching Quick Chat on this machine…',
+            copyMessage: 'Launching Quick Chat… (seed copied as backup)',
+          })
+        } else {
+          undoToast.showSuccess('Sent to home — check Telegram to drive it')
+        }
+        appendDailyThought(content, 'task')
+      } catch (err) {
+        console.error('@quickchat launch failed:', err)
+        undoToast.showSuccess(`@quickchat failed: ${err instanceof Error ? err.message : 'try again'}`)
+      }
+      return
+    }
 
     // Route 1 — @hermes prefix
     if (/^@hermes\b/i.test(content)) {
@@ -132,19 +165,30 @@ export function MorningThoughtCompose() {
         },
       })
     })
-  }, [userSlug, isEvening, createTask, undoToast])
+  }, [userSlug, isEvening, createTask, undoToast, protocolLaunch, forceHome])
 
   return (
-    <SmartCompose
-      placeholder={placeholder}
-      theme="dark"
-      bare
-      rows={1}
-      submitLabel="Capture"
-      submittingLabel="Capturing…"
-      onSubmit={handleSubmit}
-      submitting={createTask.isPending}
-      uploadContext={{ type: 'daily_thought', id: todayKey(), entityType: 'task' }}
-    />
+    <>
+      <SmartCompose
+        placeholder={placeholder}
+        theme="dark"
+        bare
+        rows={1}
+        submitLabel="Capture"
+        submittingLabel="Capturing…"
+        onSubmit={handleSubmit}
+        submitting={createTask.isPending}
+        uploadContext={{ type: 'daily_thought', id: todayKey(), entityType: 'task' }}
+      />
+      <label className="flex items-center gap-1.5 justify-end text-xs text-neutral-400 cursor-pointer select-none mt-1">
+        <input
+          type="checkbox"
+          checked={forceHome}
+          onChange={e => setForceHome(e.target.checked)}
+          className="accent-violet-400"
+        />
+        send to home
+      </label>
+    </>
   )
 }
