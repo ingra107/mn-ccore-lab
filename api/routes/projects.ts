@@ -520,7 +520,7 @@ export async function handleRecentUpdates(url: URL, env: Env, canSeePb = false):
 //   due_date, github_url, journal, key_files, manuscript_path, next_action,
 //   primary_folder, publication_date, pubmed_id, stage_entered_at, stage_notes, tier.
 // (created_at excluded — insert-only field, not valid to UPDATE.)
-const PROJECT_ALLOWED_FIELDS = new Set([
+export const PROJECT_ALLOWED_FIELDS = new Set([
   'title', 'status', 'description', 'category', 'stage', 'pi', 'slug',
   'pi_context', 'strategic_context', 'short_name',
   // key_link_* added in schema-v42

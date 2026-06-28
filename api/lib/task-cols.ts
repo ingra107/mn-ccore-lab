@@ -15,7 +15,7 @@
 // detail endpoints before this fix. Prefixed `t.` so it composes with the
 // meetings LEFT JOIN. Exported so other route modules (proactive-brief, etc.)
 // can reuse without duplicating the column list.
-const TASK_PLAIN_COLS = [
+export const TASK_PLAIN_COLS = [
   'id', 'meeting_id', 'title', 'description', 'assignee',
   'assigned_by', 'due_date', 'priority', 'status', 'source', 'completed',
   'completed_at', 'completed_by', 'created_at', 'updated_at', 'deleted_at',
