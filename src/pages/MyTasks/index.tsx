@@ -28,6 +28,7 @@ import { LanesView } from './views/LanesView'
 import { ListView } from './views/ListView'
 const TaskBoardView = lazy(() => import('../../components/tasks/TaskBoardView'))
 import { useTaskFilter } from './hooks/useTaskFilter'
+import { PendingMeetingsCard } from '../../components/tasks/PendingMeetingsCard'
 import { useSelection } from './hooks/useSelection'
 import { useOpenParam } from '../../hooks/useOpenParam'
 import { useIsMobile } from '../../hooks/useIsMobile'
@@ -161,8 +162,23 @@ export default function UnifiedMyTasks() {
 
   const allTasks = tasksQuery.data ?? []
 
+  // Pending meeting-approval tasks are surfaced in PendingMeetingsCard above the list.
+  // They are excluded from the regular task filter so they don't double-render.
+  // approval_status === 'pending' is unambiguous — only meeting_approval source rows
+  // carry it; normal tasks leave it null (schema v83, decision 2026-06-25).
+  const pendingMeetingTasks = useMemo(
+    () => allTasks.filter((t) => t.approval_status === 'pending'),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [tasksQuery.data],
+  )
+  const nonPendingTasks = useMemo(
+    () => allTasks.filter((t) => t.approval_status !== 'pending'),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [tasksQuery.data],
+  )
+
   const { filtered, byGroup } = useTaskFilter({
-    allTasks, filter, search, quickView, plannedSet, projectsByPid,
+    allTasks: nonPendingTasks, filter, search, quickView, plannedSet, projectsByPid,
   })
 
   const drawerTask = drawer ? allTasks.find((t) => t.id === drawer) ?? null : null
@@ -333,6 +349,9 @@ export default function UnifiedMyTasks() {
       )}
       <div style={{ flex: 1, minHeight: 0, display: 'flex', overflow: 'hidden' }}>
         <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          {/* Pending meetings triage card — shown above the task list on all views.
+              Disappears automatically once all meetings are accepted or declined. */}
+          {!isLoading && <PendingMeetingsCard tasks={pendingMeetingTasks} />}
           {isLoading ? (
             <div className="mt-band" style={{ paddingTop: 24, paddingBottom: 24 }}><div style={{ maxWidth: 'var(--col-main)' }}><TableSkeleton /></div></div>
           ) : effectiveView === 'columns' ? (

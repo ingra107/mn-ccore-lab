@@ -46,6 +46,7 @@ import { HermesSuggestsCard } from '../../components/today/rail/HermesSuggestsCa
 import { NeedsAttentionCard } from '../../components/today/rail/NeedsAttentionCard'
 import { ProjectsCard } from '../../components/today/rail/ProjectsCard'
 import { PulseCard } from '../../components/today/rail/PulseCard'
+import { PendingMeetingsCard } from '../../components/tasks/PendingMeetingsCard'
 import type { TaskRow } from '../../lib/api'
 import { withAlpha } from '../../lib/taskGrouping'
 
@@ -66,7 +67,16 @@ export default function TodayPage() {
   // the prior fake `plannedIds × 30` math. Returns 0 if no sessions today.
   const sessionStatsQuery = usePBSessionStats()
 
-  const tasks: TaskRow[] = useMemo(() => (tasksQuery.data ?? []).filter((t) => t.completed === 0 && t.status !== 'done'), [tasksQuery.data])
+  // Pending meeting-approval tasks are surfaced in PendingMeetingsCard (above the task groups)
+  // and excluded from the regular task groups to prevent double-render.
+  const pendingMeetingTasks: TaskRow[] = useMemo(
+    () => (tasksQuery.data ?? []).filter((t) => t.approval_status === 'pending'),
+    [tasksQuery.data],
+  )
+  const tasks: TaskRow[] = useMemo(
+    () => (tasksQuery.data ?? []).filter((t) => t.completed === 0 && t.status !== 'done' && t.approval_status !== 'pending'),
+    [tasksQuery.data],
+  )
 
   // Tasks completed *today* per the cache — the source of truth across every
   // surface (and this page's own optimistic completion). isToday() resolves the
@@ -403,6 +413,11 @@ export default function TodayPage() {
             </button>
           </div>
         )}
+
+        {/* Pending meetings triage card — shown before the pill strip so captured
+            meetings requiring a decision are the first thing Nick sees. Disappears
+            automatically once all pending meetings are accepted or declined. */}
+        <PendingMeetingsCard tasks={pendingMeetingTasks} />
 
         <PillStrip counts={counts} />
 

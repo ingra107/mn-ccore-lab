@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { CalendarDays, FolderKanban, Flag, RotateCcw, Eye, AlertTriangle, CheckCircle2, ThumbsUp, ThumbsDown } from 'lucide-react'
+import { CalendarDays, FolderKanban, Flag, RotateCcw, Eye, AlertTriangle, CheckCircle2, ThumbsUp } from 'lucide-react'
 import { useUndoToast } from '../UndoToast'
 import Avatar from '../Avatar'
 import { getPersonInfo } from '../../data/team'
@@ -272,62 +272,8 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
           <Eye size={15} strokeWidth={1.5} absoluteStrokeWidth />
         </button>
 
-        {/* Accept/Decline — meeting approval tasks only (source='meeting_approval').
-            Shown when pending; Re-accept shown when declined. */}
-        {task.approval_status === 'pending' && (
-          <>
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                mutateTask({ id: task.id, fields: { approval_status: 'accepted' } })
-                showUndo('Meeting accepted', () => mutateTask({ id: task.id, fields: { approval_status: 'pending' } }))
-              }}
-              title="Accept meeting"
-              data-testid="approval-accept"
-              className="hover:!bg-[rgba(15,25,35,0.10)] dark:hover:!bg-[rgba(255,255,255,0.12)]"
-              style={{
-                background: 'transparent',
-                border: 'none',
-                borderRadius: 'var(--radius-md)',
-                padding: '6px',
-                cursor: 'pointer',
-                color: 'var(--task-accent-green)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                touchAction: 'manipulation',
-              }}
-            >
-              <ThumbsUp size={15} strokeWidth={1.5} absoluteStrokeWidth />
-            </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                mutateTask({ id: task.id, fields: { approval_status: 'declined' } })
-                showUndo('Meeting declined', () => mutateTask({ id: task.id, fields: { approval_status: 'pending' } }))
-              }}
-              title="Decline meeting"
-              data-testid="approval-decline"
-              className="hover:!bg-[rgba(15,25,35,0.10)] dark:hover:!bg-[rgba(255,255,255,0.12)]"
-              style={{
-                background: 'transparent',
-                border: 'none',
-                borderRadius: 'var(--radius-md)',
-                padding: '6px',
-                cursor: 'pointer',
-                color: 'var(--task-accent-coral)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                touchAction: 'manipulation',
-              }}
-            >
-              <ThumbsDown size={15} strokeWidth={1.5} absoluteStrokeWidth />
-            </button>
-          </>
-        )}
-
-        {/* Re-accept — shown on declined tasks in the declined quick-view */}
+        {/* Re-accept — shown on declined tasks in the declined quick-view.
+            Pending tasks are handled by PendingMeetingsCard above the list. */}
         {task.approval_status === 'declined' && (
           <button
             onClick={(e) => {
