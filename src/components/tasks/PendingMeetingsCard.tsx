@@ -14,6 +14,15 @@ import { useUpdateTask } from '../../hooks/useMutations'
 import { useUndoToast } from '../UndoToast'
 import type { TaskRow } from '../../lib/api'
 
+/** Strip the "Meeting: … [pending approval]" wrapper the approval task name
+ *  carries, so the card shows the bare meeting title (mirrors the Telegram side). */
+function cleanMeetingTitle(name: string): string {
+  return name
+    .replace(/^Meeting:\s*/, '')
+    .replace(/\s*\[pending approval\]\s*$/, '')
+    .trim()
+}
+
 /** Returns a compact relative time string for when the meeting was captured. */
 function capturedAgo(iso: string): string {
   const ms = Date.now() - new Date(iso).getTime()
@@ -109,8 +118,9 @@ export function PendingMeetingsCard({ tasks }: PendingMeetingsCardProps) {
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
               }}>
-                {/* meeting_title is the raw capture title; fall back to task title */}
-                {task.meeting_title || task.title}
+                {/* meeting_title is the raw capture title; fall back to the task
+                    name with the "Meeting: … [pending approval]" wrapper stripped */}
+                {task.meeting_title || cleanMeetingTitle(task.title)}
               </div>
               <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2 }}>
                 Captured {capturedAgo(task.created_at)}
