@@ -29,6 +29,7 @@ import { ICON_PROPS } from '../lib/iconProps'
 import { useAllProjectLinks } from '../hooks/useApiData'
 import type { StoredLink } from '../hooks/useApiData'
 import { iconForType } from '../lib/linkIcon'
+import { classifyUrl } from '../lib/urlClassify'
 import { displayRank } from '../lib/pbLinkDisplayOrder.generated'
 import { useProtocolLaunch } from '../hooks/useProtocolLaunch'
 import WorkOnActions from '../components/WorkOnActions'
@@ -93,7 +94,9 @@ function ProjectLinksCell({ links }: { links: StoredLink[] }) {
     >
       {visible.map((link) => {
         const { Icon, color } = iconForType(link.type)
-        const isHttp = link.canonical_url.startsWith('http')
+        // classifyUrl resolves [[wikilink]] canonical_urls to the correct
+        // mnccore://obsidian/<target> launch URI. isHttp is authoritative here.
+        const { href: launchUri, isHttp } = classifyUrl(link.canonical_url)
         const tooltip = `${link.type} · ${link.short_title || link.canonical_url}`
         return (
           <a
@@ -107,7 +110,7 @@ function ProjectLinksCell({ links }: { links: StoredLink[] }) {
               e.stopPropagation()
               if (!isHttp) {
                 e.preventDefault()
-                void launch(link.canonical_url, {
+                void launch(launchUri, {
                   copyText: link.canonical_url,
                   successMessage: `Opening ${link.type}… (path copied as backup)`,
                 })
