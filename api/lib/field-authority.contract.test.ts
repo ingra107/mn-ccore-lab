@@ -141,17 +141,16 @@ describe('B) task update allow-list (TASK_ALLOWED_FIELDS) vs TABLE_FIELDS.tasks'
 // ════════════════════════════════════════════════════════════════════════════
 const PROJECT_UPDATE_EXCLUDED = new Set<string>([
   'created_at',      // insert-only (PROJECT_ALLOWED_FIELDS comment, projects.ts:522)
-  // `type` VERDICT (codex flag): projects.type IS in TABLE_FIELDS.projects (wire-
-  // accepted via /api/mutations) but is referenced NOWHERE in api/routes/projects.ts
-  // — not set by handleCreateProject, not in PROJECT_ALLOWED_FIELDS. So project.type
-  // is WRITE-ONLY via the A3 sync path (PB brain.db → Hub); it cannot be created or
-  // edited through the Hub REST surface. The B-8 sweep (projects.ts:516-522) added
-  // every sibling field TABLE_FIELDS.projects accepts EXCEPT `type` (and the
-  // legitimately insert-only `created_at`). Its sibling `domain` IS allow-listed,
-  // so the type/category/domain trio is asymmetric. This is a LIKELY LATENT GAP,
-  // not a clearly-intended exclusion — surfaced to the orchestrator for a backlog
-  // row. Parked here (not made RED) so the test is green on today's reality per the
-  // "no live route-behavior change" constraint; revisit when #225's verdict lands.
+  // `type` VERDICT (resolved 2026-06-28, backlog #270): DELIBERATE EXCLUSION, NOT a
+  // gap. projects.type IS in TABLE_FIELDS.projects (wire-accepted via /api/mutations,
+  // PB→Hub) but is intentionally NOT in PROJECT_ALLOWED_FIELDS / handleCreateProject:
+  // `type` is PB-OWNED source-of-truth (Nick's fine taxonomy — R01/K/CLIF/…), and the
+  // Hub-UI must NOT let a teammate author it. Stated explicitly in commit b1b8f2c6
+  // (Slice B, 2026-06-06): "PROJECT_ALLOWED_FIELDS is NOT changed: Hub-UI cannot author
+  // type; only PB sets it via /api/mutations." Hub derives the coarse team-view
+  // `category` from it (read-only). See Context/Decisions/2026-05-08-hub-category-
+  // three-bucket-design.md. So `type` belongs in PROJECT_UPDATE_EXCLUDED by design —
+  // it is correctly REST-unsettable; its sibling `domain` IS Hub-editable, by intent.
   'type',
 ])
 
