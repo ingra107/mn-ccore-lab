@@ -9,46 +9,10 @@
  * Any column added here must NOT be in TASK_PRIVATE_COLS, and vice-versa.
  */
 
-// AM-5 (SEC-T0-4): explicit task column list that EXCLUDES the private
-// `notes` column. `notes` is the brain.db private field (team-visible content
-// lives in `description`); `SELECT t.*` leaked it on both the list and the
-// detail endpoints before this fix. Prefixed `t.` so it composes with the
-// meetings LEFT JOIN. Exported so other route modules (proactive-brief, etc.)
-// can reuse without duplicating the column list.
-export const TASK_PLAIN_COLS = [
-  'id', 'meeting_id', 'title', 'description', 'assignee',
-  'assigned_by', 'due_date', 'priority', 'status', 'source', 'completed',
-  'completed_at', 'completed_by', 'created_at', 'updated_at', 'deleted_at',
-  'acknowledged_at', 'acknowledged_by', 'watchers', 'reminder_days',
-  'instructions', 'key_link_1', 'key_link_1_desc', 'key_link_2',
-  'key_link_2_desc', 'key_link_3', 'key_link_3_desc', 'effort', 'short_title',
-  'source_thread_id', 'related_message_ids', 'blocked_by', 'description_json',
-  'group_override', 'seq', 'deadline', 'waiting_on', 'promised_to',
-  'promise_date', 'next_checkin_date', 'nick_followup_date',
-  'requires_nick_brain', 'estimated_minutes', 'deadline_type', 'next_artifact',
-  'inbox_event_id', 'last_mutation_id',
-  // Slice B B-5 (2026-06-06): waiting_since + email_link promoted from PB-only
-  // to Hub-canonical synced columns. Must be in TASK_PLAIN_COLS so pull returns
-  // them (write-accept without read-expose = not Hub-rebuildable, R10 class).
-  'waiting_since', 'email_link',
-  // Workstream B (schema-v75, 2026-06-09): the Today operating-day plan as synced
-  // task columns (replaces the per-browser today_state_* localStorage blob).
-  // planned_for (civil date) / plan_slot ('right_now'|'strip'|'between-<n>') /
-  // plan_rank (REAL ordering). Must be read-exposed so /api/tasks returns them for
-  // the Today/MyTasks frontend AND so PB pull mirrors them (R10 Hub-rebuildable).
-  'planned_for', 'plan_slot', 'plan_rank',
-  // Today timeline task-blocks Phase 2 (schema-v87, 2026-06-19): fine start time,
-  // minutes since midnight (0..1439); NULL = not time-positioned. Read-exposed so
-  // /api/tasks returns it AND PB pull mirrors it (R10 Hub-rebuildable).
-  'plan_start_min',
-  // Meeting Accept/Decline (schema-v90, 2026-06-25): approval status for
-  // source='meeting_approval' tasks — 'pending'|'accepted'|'declined'|null.
-  // Not private (not in TASK_PRIVATE_COLS), must be read-exposed so Accept/Decline
-  // patches round-trip and PB pull mirrors the field (R10 Hub-rebuildable).
-  'approval_status',
-  // NOTE: `notes` is deliberately omitted — private brain.db field.
-  // NOTE: `project_id` is NOT in this list — it is resolved to slug below.
-];
+// Generated from schema_dsl §6 — see pb-schema/pb_schema/generated/route-field-lists.generated.ts / backlog #225 A1.
+// NOTE: `notes` deliberately omitted (private brain.db field). `project_id` resolved to slug below via PROJECT_ID_AS_SLUG.
+import { TASK_PLAIN_COLS } from '../../pb-schema/pb_schema/generated/route-field-lists.generated.ts';
+export { TASK_PLAIN_COLS };
 
 // `project_id` slug-resolution at the READ boundary (Direction 1, 2026-06-05).
 // STORAGE holds the typed proj_* PK (P2 `aa85c71b`), but every read consumer —

@@ -5,6 +5,7 @@ import { nowInstant } from '../lib/time';
 import { applyMutation } from './mutations';
 import { activityVisibilityGate, postActivityEntry } from '../lib/activity-entry';
 import { enumFieldsFor } from '../lib/enum-domains';
+import { PROJECT_ALLOWED_FIELDS } from '../../pb-schema/pb_schema/generated/route-field-lists.generated.ts';
 
 // Stage 4 #12-followup (2026-05-09): Nick-only visibility gate for
 // 'Peripheral Brain' category. Two ways to be "Nick" for this gate:
@@ -511,29 +512,9 @@ export async function handleRecentUpdates(url: URL, env: Env, canSeePb = false):
 }
 
 // POST /api/projects/:id — update project fields
-// Hoisted to module scope — avoids allocation per request
-//
-// B-8 (2026-06-04): closed allowlist-lag — added all fields TABLE_FIELDS.projects
-// accepts but this route was silently dropping. Purely additive: all previously-
-// accepted fields remain accepted; nothing is removed or rejected.
-// Added: analysis_path, author_role, box_url, citation, context_links, doi, domain,
-//   due_date, github_url, journal, key_files, manuscript_path, next_action,
-//   primary_folder, publication_date, pubmed_id, stage_entered_at, stage_notes, tier.
-// (created_at excluded — insert-only field, not valid to UPDATE.)
-export const PROJECT_ALLOWED_FIELDS = new Set([
-  'title', 'status', 'description', 'category', 'stage', 'pi', 'slug',
-  'pi_context', 'strategic_context', 'short_name',
-  // key_link_* added in schema-v42
-  'key_link_1', 'key_link_1_desc', 'key_link_2', 'key_link_2_desc', 'key_link_3', 'key_link_3_desc',
-  // W1 (schema-v55) operational state + pipeline metadata
-  'state', 'next_artifact', 'last_meaningful_movement', 'stale_active_since',
-  // B-8 (2026-06-04): fields accepted by /api/mutations TABLE_FIELDS.projects
-  // but previously silently dropped by this route's field-whitelist check.
-  'analysis_path', 'author_role', 'box_url', 'citation', 'context_links',
-  'doi', 'domain', 'due_date', 'github_url', 'journal', 'key_files',
-  'manuscript_path', 'next_action', 'primary_folder', 'publication_date',
-  'pubmed_id', 'stage_entered_at', 'stage_notes', 'tier',
-]);
+// Generated from schema_dsl §6 — see pb-schema/pb_schema/generated/route-field-lists.generated.ts / backlog #225 A1.
+// (created_at, type excluded — insert-only / PB-owned; see contract test section C.)
+export { PROJECT_ALLOWED_FIELDS };
 const PROJECT_REQUIRED_FIELDS = new Set(['status', 'stage', 'category']);
 
 // Canonical enum guards — reject arbitrary string storage. Sourced from

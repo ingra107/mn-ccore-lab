@@ -10,6 +10,7 @@ import { applyMutation } from './mutations';
 // or via api/helpers.ts which already re-exports it (zero callers used this path).
 import { TASK_SELECT_COLS, TASK_SELECT_COLS_TYPED } from '../lib/task-cols';
 import { postActivityEntry, activityVisibilityGate } from '../lib/activity-entry';
+import { TASK_ALLOWED_FIELDS } from '../../pb-schema/pb_schema/generated/route-field-lists.generated.ts';
 
 // ── Fix 3: guardTaskProject ────────────────────────────────────────────────────
 //
@@ -297,30 +298,8 @@ export async function handleToggleTask(id: string, user: AuthUser, env: Env): Pr
 }
 
 // POST /api/tasks/:id — update task fields
-// Hoisted to module scope — avoids allocation per request
-// 2026-04-20 Airtable Funeral P2-1: added v47 fields (notes, effort,
-// short_title, source_thread_id, related_message_ids) so Gmail Apps
-// Script updateAirtableTasks → updateHubTasks can carry them through.
-// 2026-04-21 I18 drift investigation: added completed_at, completed_by,
-// completed so brain.db backfills can carry authentic historical
-// timestamps (prior behavior stamped datetime('now') even when the
-// client passed an explicit value from the local DB).
-// `notes` REMOVED 2026-06-10 (pb-schema 0.4.0 retired the wire alias): the
-// route filter now silently drops a stray `notes` so a legacy client's update
-// doesn't 409 the whole patch at applyMutation's TABLE_FIELDS gate.
-export const TASK_ALLOWED_FIELDS = new Set(['title', 'description', 'description_json', 'assignee', 'assigned_by', 'due_date', 'deadline', 'priority', 'status', 'project_id', 'meeting_id', 'blocked_by', 'key_link_1', 'key_link_1_desc', 'key_link_2', 'key_link_2_desc', 'key_link_3', 'key_link_3_desc', 'effort', 'short_title', 'source_thread_id', 'related_message_ids', 'completed', 'completed_at', 'completed_by', 'group_override',
-  // W1 (schema-v55) operational metadata
-  'waiting_on', 'promised_to', 'promise_date', 'next_checkin_date', 'nick_followup_date',
-  'requires_nick_brain', 'estimated_minutes', 'deadline_type', 'next_artifact', 'inbox_event_id',
-  // Workstream B (schema-v75, 2026-06-09): Today operating-day plan as synced columns.
-  'planned_for', 'plan_slot', 'plan_rank',
-  // Today timeline task-blocks Phase 2 (schema-v87, 2026-06-19): fine start
-  // time, minutes since midnight (0..1439); NULL = not time-positioned.
-  'plan_start_min',
-  // Meeting Accept/Decline (schema-v90, 2026-06-25): the REST route must mirror
-  // the A3 field-authority contract — the frontend Accept/Decline buttons PATCH
-  // this via POST /api/tasks/:id. Omitting it silently dropped the field → 400.
-  'approval_status']);
+// Generated from schema_dsl §6 — see pb-schema/pb_schema/generated/route-field-lists.generated.ts / backlog #225 A1.
+export { TASK_ALLOWED_FIELDS };
 const VALID_GROUP_OVERRIDES = new Set(['deep', 'priorities', 'quick', 'pb', 'etl']);
 // plan_slot vocabulary: 'right_now' | 'strip' | 'between-<n>' (<n> a non-negative
 // integer timeline-gap index). Parametric (between-<n>) so it's value-guarded here,
