@@ -1560,7 +1560,7 @@ function OverviewQuickAdd({
               copyMessage: 'Launching… (folder copied as backup)',
             })
           }
-          showInfo(origin === 'computer' ? 'No project folder set for this task' : 'Saved to your launch log — mobile launch goes live in Phase 2')
+          showInfo(origin === 'computer' ? 'No project folder set for this task' : 'Queued — your home machine will pick it up')
         })
         .then(() => reset())
         .catch((e) => {
@@ -1595,7 +1595,7 @@ function OverviewQuickAdd({
               copyMessage: 'Launching Quick Chat… (seed copied as backup)',
             })
           }
-          showInfo('Saved to your launch log — mobile launch goes live in Phase 2')
+          showInfo('Queued — your home machine will pick it up')
         })
         .then(() => reset())
         .catch((e) => {

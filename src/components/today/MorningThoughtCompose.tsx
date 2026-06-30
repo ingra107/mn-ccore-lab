@@ -95,7 +95,7 @@ export function MorningThoughtCompose() {
             copyMessage: 'Launching Quick Chat… (seed copied as backup)',
           })
         } else {
-          undoToast.showInfo('Saved to your launch log — mobile launch goes live in Phase 2')
+          undoToast.showInfo('Queued — your home machine will pick it up')
         }
         appendDailyThought(content, 'task')
       } catch (err) {

@@ -14,7 +14,7 @@ import { useState, useMemo, useCallback } from 'react'
 import { useTasks, useProjects, useMeetingsApi, useExpiringRegulatory, useUserCalendarEvents, usePBSessionStats } from '../../hooks/useApiData'
 import { useAuth } from '../../hooks/useAuth'
 import { useProtocolLaunch } from '../../hooks/useProtocolLaunch'
-import { MNCCORE_PROCESS_URI } from '../../lib/urlClassify'
+import { MNCCORE_PROCESS_URI, MNCCORE_QUICKCHAT_URI } from '../../lib/urlClassify'
 import { emailToSlug } from '../../lib/emailSlug'
 import { usePageMeta } from '../../hooks/usePageMeta'
 import HeartbeatLine from '../../components/HeartbeatLine'
@@ -377,6 +377,26 @@ export default function TodayPage() {
                   Laptop-only by design — phone can't reach localhost. CORS is
                   handled server-side (flask-cors). Graceful if server is off. */}
               <PomodoroControl />
+              {/* G1-A1: verb-only Quick Chat button — fires mnccore://quickchat which
+                  runs Quick_Chat_seeded.bat (loads today's context on startup).
+                  Computer-origin only; no launch_log row, no backend. Rule 59 gold. */}
+              <button
+                type="button"
+                onClick={() => launchProcess(MNCCORE_QUICKCHAT_URI, {
+                  successMessage: 'Launching Quick Chat on this machine…',
+                  copyMessage: 'Launching Quick Chat on this machine…',
+                })}
+                title="Open Quick Chat on this machine"
+                aria-label="Open Quick Chat on this machine"
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6, alignSelf: 'center',
+                  background: withAlpha(ACCENT_GOLD, 12), border: `1px solid ${withAlpha(ACCENT_GOLD, 35)}`,
+                  color: ACCENT_GOLD, borderRadius: 6, padding: '5px 11px',
+                  fontSize: 13, fontWeight: 500, cursor: 'pointer', flexShrink: 0,
+                }}
+              >
+                💬 Quick Chat
+              </button>
               <button
                 type="button"
                 onClick={() => launchProcess(MNCCORE_PROCESS_URI, {

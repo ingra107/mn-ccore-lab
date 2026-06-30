@@ -221,6 +221,14 @@ export function buildOpenFolderUri(folderPath: string): string {
 export const MNCCORE_PROCESS_URI = 'mnccore://process'
 
 /**
+ * The verb-only `mnccore://quickchat` URI — runs Quick_Chat_seeded.bat on the
+ * local machine, which loads today's context from .pb-seed.txt on startup. No
+ * path segment (the handler matches the bare verb, mnccore-handler.bat L241).
+ * Computer-origin only; mobile uses the launch_log + home-poller path instead.
+ */
+export const MNCCORE_QUICKCHAT_URI = 'mnccore://quickchat'
+
+/**
  * Domain-aware short label for a URL. Used in chip text when the link has
  * no user-provided description.
  *   https://github.com/ingra107/mn-ccore-lab/pull/42 -> github.com
