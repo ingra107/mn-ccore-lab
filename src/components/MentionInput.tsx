@@ -12,6 +12,13 @@ const KNOWN_COMMAND_TAGS: Record<string, { label: string; color: string; bg: str
   backlog:  { label: '⌘ Backlog idea',       color: 'var(--slate)', bg: 'var(--hover-subtle)' },
 }
 
+// One row in the unified @-dropdown -- a recognized command or a team member.
+// Commands render first (see filteredCommands); both share keyboard nav via
+// selectedIndex over the combined mentionOptions list.
+type MentionOption =
+  | { kind: 'command'; key: string; label: string; color: string; bg: string }
+  | { kind: 'person'; slug: string; name: string }
+
 interface MentionInputProps {
   value: string
   onChange: (value: string) => void
@@ -69,6 +76,27 @@ export default function MentionInput({
         t.name.toLowerCase().includes(lower)
     )
   }, [teamSlugs, mentionFilter])
+
+  // Command @-tags whose key starts with the current filter -- shown above the
+  // person suggestions so @hermes/@quickchat/@workon/@backlog are discoverable
+  // from the dropdown instead of requiring exact blind typing. Same exact-match
+  // suppression as filteredSlugs: once a tag is fully typed, the dropdown closes
+  // and Enter falls through to the command-routing handler (#221) rather than
+  // re-inserting what's already there.
+  const filteredCommands = useMemo(() => {
+    const lower = mentionFilter.toLowerCase()
+    if (lower in KNOWN_COMMAND_TAGS) return []
+    return Object.entries(KNOWN_COMMAND_TAGS).filter(([key]) => key.startsWith(lower))
+  }, [mentionFilter])
+
+  // Commands first, people after -- the single list keyboard nav + render walk.
+  const mentionOptions: MentionOption[] = useMemo(
+    () => [
+      ...filteredCommands.map(([key, cmd]) => ({ kind: 'command' as const, key, ...cmd })),
+      ...filteredSlugs.map((p) => ({ kind: 'person' as const, slug: p.slug, name: p.name })),
+    ],
+    [filteredCommands, filteredSlugs]
+  )
 
   // Reset selected index when filter changes
   useEffect(() => {
@@ -153,10 +181,10 @@ export default function MentionInput({
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
-    if (mentionOpen && filteredSlugs.length > 0) {
+    if (mentionOpen && mentionOptions.length > 0) {
       if (e.key === 'ArrowDown') {
         e.preventDefault()
-        setSelectedIndex((prev) => Math.min(prev + 1, filteredSlugs.length - 1))
+        setSelectedIndex((prev) => Math.min(prev + 1, mentionOptions.length - 1))
         return
       }
       if (e.key === 'ArrowUp') {
@@ -166,7 +194,8 @@ export default function MentionInput({
       }
       if (e.key === 'Enter' || e.key === 'Tab') {
         e.preventDefault()
-        insertMention(filteredSlugs[selectedIndex].slug)
+        const opt = mentionOptions[selectedIndex]
+        insertMention(opt.kind === 'command' ? opt.key : opt.slug)
         return
       }
       if (e.key === 'Escape') {
@@ -326,7 +355,7 @@ export default function MentionInput({
 
       {/* Mention autocomplete dropdown */}
       <AnimatePresence>
-        {mentionOpen && filteredSlugs.length > 0 && (
+        {mentionOpen && mentionOptions.length > 0 && (
           <motion.div
             ref={dropdownRef}
             initial={{ opacity: 0, y: dropdownPosition === 'below' ? 4 : -4 }}
@@ -350,47 +379,79 @@ export default function MentionInput({
               padding: 'var(--sp-xs) 0',
             }}
           >
-            {filteredSlugs.map((person, index) => (
-              <button
-                key={person.slug}
-                type="button"
-                onMouseDown={(e) => {
-                  e.preventDefault() // prevent blur
-                  insertMention(person.slug)
-                }}
-                onMouseEnter={() => setSelectedIndex(index)}
-                className="cursor-pointer w-full text-left"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  padding: 'var(--sp-sm) var(--sp-md)',
-                  fontSize: '13px',
-                  color: 'var(--ink)',
-                  background: index === selectedIndex ? 'var(--gold-active)' : 'transparent',
-                  border: 'none',
-                  transition: 'background 0.1s',
-                }}
-              >
-                <span
+            {mentionOptions.map((opt, index) =>
+              opt.kind === 'command' ? (
+                <button
+                  key={`cmd-${opt.key}`}
+                  type="button"
+                  onMouseDown={(e) => {
+                    e.preventDefault() // prevent blur
+                    insertMention(opt.key)
+                  }}
+                  onMouseEnter={() => setSelectedIndex(index)}
+                  className="cursor-pointer w-full text-left"
                   style={{
-                    fontWeight: 500,
-                    flex: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: 'var(--sp-sm) var(--sp-md)',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    color: opt.color,
+                    background: index === selectedIndex ? opt.bg : 'transparent',
+                    border: 'none',
+                    borderBottom:
+                      index === filteredCommands.length - 1 && filteredSlugs.length > 0
+                        ? `1px solid ${withAlpha(ACCENT_GOLD, 10)}`
+                        : 'none',
+                    transition: 'background 0.1s',
                   }}
                 >
-                  {person.name}
-                </span>
-                <span
+                  <span style={{ flex: 1 }}>{opt.label}</span>
+                  <span style={{ fontSize: '11px', opacity: 0.85 }}>@{opt.key}</span>
+                </button>
+              ) : (
+                <button
+                  key={opt.slug}
+                  type="button"
+                  onMouseDown={(e) => {
+                    e.preventDefault() // prevent blur
+                    insertMention(opt.slug)
+                  }}
+                  onMouseEnter={() => setSelectedIndex(index)}
+                  className="cursor-pointer w-full text-left"
                   style={{
-                    fontSize: '11px',
-                    color: 'var(--gold)',
-                    opacity: 0.85,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: 'var(--sp-sm) var(--sp-md)',
+                    fontSize: '13px',
+                    color: 'var(--ink)',
+                    background: index === selectedIndex ? 'var(--gold-active)' : 'transparent',
+                    border: 'none',
+                    transition: 'background 0.1s',
                   }}
                 >
-                  @{person.slug}
-                </span>
-              </button>
-            ))}
+                  <span
+                    style={{
+                      fontWeight: 500,
+                      flex: 1,
+                    }}
+                  >
+                    {opt.name}
+                  </span>
+                  <span
+                    style={{
+                      fontSize: '11px',
+                      color: 'var(--gold)',
+                      opacity: 0.85,
+                    }}
+                  >
+                    @{opt.slug}
+                  </span>
+                </button>
+              )
+            )}
           </motion.div>
         )}
       </AnimatePresence>
