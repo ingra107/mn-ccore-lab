@@ -90,7 +90,7 @@ test.describe('Meeting Approval — approval_status field round-trips', () => {
 
   test.afterAll(async ({ request }) => {
     if (taskId) {
-      await cleanupTestTasks(request, BASE, [taskId])
+      await cleanupTestTasks(request)
     }
   })
 })

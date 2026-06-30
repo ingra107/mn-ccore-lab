@@ -26,6 +26,7 @@
     "test:local:setup": "tsx scripts/local-db-bootstrap.ts && tsx scripts/local-db-seed.ts",
     "test:prod": "playwright test --config=playwright.config.prod.ts",
     "test:smoke": "npx playwright test tests/smoke.spec.ts --config=playwright.config.prod.ts",
+    "test:meeting-approval": "npx playwright test --config=playwright.config.meeting-approval.ts",
     "test:headed": "npx playwright test --headed",
     "preflight": "tsx scripts/pre-flight/00-orchestrator.ts",
     "preflight:pi": "tsx scripts/pre-flight/persona-pi-power-user.ts",

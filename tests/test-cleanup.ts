@@ -8,7 +8,7 @@
  * Test entity patterns (title/name/question starts with or contains):
  *   INSPECTION *, DAILYTEST-*, EDGE *, SYNC-*, JOURNEY-*, KEYLINK TEST,
  *   AUDIT TEST, TIMEZONE-PROBE-*, DUE-DATE-PROBE-*, SYNCTEST-*,
- *   _TEST_DELETE_*, M5_SMOKE_DELETE*, test_delete_*
+ *   _TEST_DELETE_*, M5_SMOKE_DELETE*, MTGAPPROVAL_SMOKE*, test_delete_*
  *
  * BASE URL respects PLAYWRIGHT_BASE_URL env var so cleanup targets the
  * same environment as the test run (preview vs prod).
@@ -40,6 +40,8 @@ const TEST_PREFIXES = [
   'test_delete_',
   // M5 smoke
   'M5_SMOKE_DELETE',
+  // Meeting-approval smoke (Phase 2 — approval_status round-trip)
+  'MTGAPPROVAL_SMOKE',
   // pre-flight persona marker (mk() helper in shared.ts)
   'test_delete_preflight_',
 ]
