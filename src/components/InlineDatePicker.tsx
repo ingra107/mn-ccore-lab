@@ -1,8 +1,9 @@
-import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { ChevronDown, CalendarDays } from 'lucide-react'
 import { formatShortDate } from '../lib/dateUtils'
 import { ICON_PROPS } from '../lib/iconProps'
+import { usePortalDropdown, type PortalDropdownPosition } from '../hooks/usePortalDropdown'
 
 interface InlineDatePickerProps {
   value: string | null
@@ -29,8 +30,6 @@ const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 
 // keeps working without edits.
 export default function InlineDatePicker({ value, onChange }: InlineDatePickerProps) {
   const [open, setOpen] = useState(false)
-  const containerRef = useRef<HTMLDivElement>(null)
-  const popRef = useRef<HTMLDivElement>(null)
 
   const now = new Date()
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
@@ -48,6 +47,28 @@ export default function InlineDatePicker({ value, onChange }: InlineDatePickerPr
     return new Date(base.getFullYear(), base.getMonth(), 1)
   })
 
+  // #383: consolidate onto usePortalDropdown. This popover never had scroll/
+  // resize handling — its first portal iteration (GH #24, 2026-04-22)
+  // computed position once at render with no listener, and the P1-3 rewrite
+  // (b1fdb7a0) kept that shape. In its real mount contexts (ListView's
+  // virtualized scrollRef, TaskGridView's board, Deadlines/Insights page
+  // scroll) a mid-open scroll left the popover stuck at a stale position,
+  // detached from its trigger — worse than InlineSelect's old close-on-
+  // scroll, since it neither followed nor closed. minWidth/maxHeight below
+  // are unused by this component's JSX (it keeps its fixed `width: 248` and
+  // unclamped intrinsic height) but required by the shared position shape.
+  // Outside-click still closes WITHOUT committing (the value only changes
+  // when a day/preset is actually picked) — `onClose` here is a pure
+  // setOpen(false), matching the removed handler exactly.
+  const getPosition = useCallback((rect: DOMRect): PortalDropdownPosition => ({
+    top: Math.min(rect.bottom + 4, window.innerHeight - 320),
+    left: Math.min(rect.left, window.innerWidth - 256),
+    minWidth: 248,
+    maxHeight: 320,
+  }), [])
+  const closeMenu = useCallback(() => setOpen(false), [])
+  const { triggerRef, menuRef, pos } = usePortalDropdown<HTMLDivElement>({ open, onClose: closeMenu, getPosition })
+
   // Reset the grid to the current value each time the popover opens.
   useEffect(() => {
     if (!open) return
@@ -55,7 +76,7 @@ export default function InlineDatePicker({ value, onChange }: InlineDatePickerPr
     setCursor(base)
     setViewMonth(new Date(base.getFullYear(), base.getMonth(), 1))
     // focus the popover so arrow keys land here, not the page
-    requestAnimationFrame(() => popRef.current?.focus())
+    requestAnimationFrame(() => menuRef.current?.focus())
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, value])
 
@@ -63,20 +84,6 @@ export default function InlineDatePicker({ value, onChange }: InlineDatePickerPr
     if (next !== value) onChange(next)   // optimistic write
     setOpen(false)
   }, [value, onChange])
-
-  // Outside-click closes WITHOUT committing a pending grid focus (the value
-  // only changes when a day/preset is actually picked).
-  useEffect(() => {
-    if (!open) return
-    const handler = (e: MouseEvent) => {
-      if (
-        containerRef.current && !containerRef.current.contains(e.target as Node) &&
-        popRef.current && !popRef.current.contains(e.target as Node)
-      ) setOpen(false)
-    }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [open])
 
   const presets = useMemo(() => {
     const tmrw = new Date(today.getTime() + 86400000)
@@ -125,10 +132,8 @@ export default function InlineDatePicker({ value, onChange }: InlineDatePickerPr
     }
   }
 
-  const triggerRect = containerRef.current?.getBoundingClientRect()
-
   return (
-    <div ref={containerRef} style={{ position: 'relative' }}>
+    <div ref={triggerRef} style={{ position: 'relative' }}>
       <button
         onClick={(e) => { e.stopPropagation(); setOpen((o) => !o) }}
         className="inline-flex items-center gap-1 rounded-md transition-colors hov-bg"
@@ -160,9 +165,9 @@ export default function InlineDatePicker({ value, onChange }: InlineDatePickerPr
         <ChevronDown {...ICON_PROPS} size={10} style={{ opacity: 0.85 }} />
       </button>
 
-      {open && triggerRect && createPortal(
+      {open && createPortal(
         <div
-          ref={popRef}
+          ref={menuRef}
           role="dialog"
           aria-label="Choose a date"
           tabIndex={-1}
@@ -171,8 +176,8 @@ export default function InlineDatePicker({ value, onChange }: InlineDatePickerPr
           onMouseDown={(e) => e.stopPropagation()}
           style={{
             position: 'fixed',
-            top: Math.min(triggerRect.bottom + 4, window.innerHeight - 320),
-            left: Math.min(triggerRect.left, window.innerWidth - 256),
+            top: pos.top,
+            left: pos.left,
             width: 248,
             background: 'var(--cream)',
             border: '1px solid var(--border-subtle)',

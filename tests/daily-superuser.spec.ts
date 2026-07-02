@@ -1694,7 +1694,13 @@ test.describe('EXHAUSTIVE — Every interactive element verified', () => {
     await page.screenshot({ path: 'review/exhaustive-inline-outside-click.png' })
   })
 
-  test('22. InlineSelect scroll closes: open dropdown → scroll page → dropdown closes', async ({ page }) => {
+  test('22. InlineSelect scroll reposition: open dropdown → scroll page → dropdown follows (or closes only once its trigger is off-screen)', async ({ page }) => {
+    // #383: InlineSelect moved onto the shared usePortalDropdown hook, which
+    // repositions the menu on scroll instead of closing it outright (the old
+    // close-on-any-scroll was the same bug already fixed in GhostSelect,
+    // aba74719). Still observational — no hard expect(), since whether
+    // window-level scroll moves anything here depends on whether MyTasks'
+    // own container is the scrolling element.
     await go(page, P.myTasks)
     const statusBtn = page.locator('button:has-text("To Do"), button:has-text("In Progress")').first()
     if (await statusBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
@@ -1706,7 +1712,7 @@ test.describe('EXHAUSTIVE — Every interactive element verified', () => {
         await page.evaluate(() => window.scrollBy(0, 200))
         await page.waitForTimeout(300)
         const dropdownAfterScroll = await page.locator('[role="listbox"], [class*="dropdown"], [class*="popover"]').first().isVisible({ timeout: 500 }).catch(() => false)
-        console.log(`Dropdown visible after scroll: ${dropdownAfterScroll}`)
+        console.log(`Dropdown visible after scroll (should stay open unless trigger scrolled off-screen): ${dropdownAfterScroll}`)
       }
     }
     await page.screenshot({ path: 'review/exhaustive-inline-scroll-close.png' })

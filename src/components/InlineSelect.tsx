@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { ChevronDown } from 'lucide-react'
 import { ICON_PROPS } from '../lib/iconProps'
+import { usePortalDropdown, type PortalDropdownPosition } from '../hooks/usePortalDropdown'
 
 interface InlineSelectProps {
   value: string
@@ -19,43 +20,28 @@ export default function InlineSelect({ value, options, onChange, size = 'sm', al
   const [open, setOpen] = useState(false)
   const [filter, setFilter] = useState('')
   const [focusedIdx, setFocusedIdx] = useState(-1)
-  const buttonRef = useRef<HTMLButtonElement>(null)
-  const dropdownRef = useRef<HTMLDivElement>(null)
   const filterRef = useRef<HTMLInputElement>(null)
-  const [pos, setPos] = useState({ top: 0, left: 0 })
 
-  const updatePosition = useCallback(() => {
-    if (buttonRef.current) {
-      const rect = buttonRef.current.getBoundingClientRect()
-      // #90 (Nick 2026-06-24): clamp so a long menu near the bottom of the
-      // viewport stays on-screen (it was rendering off the bottom edge with no
-      // way to scroll to the lower options). Mirrors InlineDatePicker's clamp.
-      setPos({
-        top: Math.min(rect.bottom + 4, window.innerHeight - 332),
-        left: Math.min(rect.left, window.innerWidth - 140),
-      })
-    }
-  }, [])
-
-  useEffect(() => {
-    if (!open) return
-    updatePosition()
-    const handler = (e: MouseEvent) => {
-      const target = e.target as Node
-      if (
-        buttonRef.current && !buttonRef.current.contains(target) &&
-        dropdownRef.current && !dropdownRef.current.contains(target)
-      ) {
-        setOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', handler)
-    window.addEventListener('scroll', () => setOpen(false), true)
-    return () => {
-      document.removeEventListener('mousedown', handler)
-      window.removeEventListener('scroll', () => setOpen(false), true)
-    }
-  }, [open, updatePosition])
+  const closeMenu = useCallback(() => setOpen(false), [])
+  // #90 (Nick 2026-06-24): clamp so a long menu near the bottom of the
+  // viewport stays on-screen (it was rendering off the bottom edge with no
+  // way to scroll to the lower options). Mirrors InlineDatePicker's clamp.
+  // minWidth/maxHeight are static — this menu has always sized itself from
+  // fixed values (120px / 300px below), not the trigger rect.
+  //
+  // #383: previously closed outright on any scroll (pre-dated the reposition
+  // approach — the very first portal fix here, Apr 2026, before GhostSelect/
+  // FilterChip existed to establish reposition-on-scroll as the pattern).
+  // GhostSelect hit the identical close-on-scroll shape and it was diagnosed
+  // and fixed as a bug there (aba74719, "GhostSelect scroll bug: replace
+  // onScroll-close with rAF-throttled reposition"). Same fix applies here.
+  const getPosition = useCallback((rect: DOMRect): PortalDropdownPosition => ({
+    top: Math.min(rect.bottom + 4, window.innerHeight - 332),
+    left: Math.min(rect.left, window.innerWidth - 140),
+    minWidth: 120,
+    maxHeight: 300,
+  }), [])
+  const { triggerRef, menuRef, pos } = usePortalDropdown<HTMLButtonElement>({ open, onClose: closeMenu, getPosition })
 
   useEffect(() => {
     if (open) {
@@ -94,7 +80,7 @@ export default function InlineSelect({ value, options, onChange, size = 'sm', al
   return (
     <>
       <button
-        ref={buttonRef}
+        ref={triggerRef}
         className="inline-select-trigger hov-bg"
         aria-expanded={open}
         aria-haspopup="listbox"
@@ -144,7 +130,7 @@ export default function InlineSelect({ value, options, onChange, size = 'sm', al
 
       {open && createPortal(
         <div
-          ref={dropdownRef}
+          ref={menuRef}
           role="listbox"
           aria-label="Select options"
           style={{
