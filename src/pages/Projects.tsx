@@ -2,7 +2,7 @@ import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { FolderKanban, GitBranch, Plus, List, LayoutGrid, Star } from 'lucide-react'
-import { stageIndex, toApiStage } from '../lib/stageNormalize'
+import { stageIndex, toApiStage, normalizeStage, stageLabel } from '../lib/stageNormalize'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useProjects, useDependencies, useProjectHealth, useTasks } from '../hooks/useApiData'
 import { useLabPrefs } from '../hooks/useLabPrefs'
@@ -171,7 +171,11 @@ const HEALTH_STATUS_COLOR: Record<string, string> = {
 }
 
 function getStageProjects(stage: Stage, filtered: Project[]): Project[] {
-  return filtered.filter((p) => p.stage === stage)
+  // #91-class fix: normalize before comparing. A legacy-cased raw value
+  // ("Idea"/"Submitted") never equals the canonical lowercase `stage`
+  // param, so unnormalized comparison silently dropped those projects
+  // from every Pipeline column.
+  return filtered.filter((p) => normalizeStage(p.stage) === stage)
 }
 
 export default function Projects() {
@@ -308,18 +312,33 @@ export default function Projects() {
     }
     else base = projects.filter((p) => p.category === activeCategory)
     return [...base].sort((a, b) => {
-      // Pinned always first
-      const aPinned = pinnedSlugs.has(a.slug) ? 0 : 1
-      const bPinned = pinnedSlugs.has(b.slug) ? 0 : 1
-      if (aPinned !== bPinned) return aPinned - bPinned
+      // Pinned always first — EXCEPT when explicitly grouped by stage (#91):
+      // pin-priority there splits same-stage rows into two non-adjacent
+      // runs, producing a duplicate stage-group header lower in the list.
+      // Stage sort keeps pin only as a within-stage tiebreak below.
+      if (sortKey !== 'stage') {
+        const aPinned = pinnedSlugs.has(a.slug) ? 0 : 1
+        const bPinned = pinnedSlugs.has(b.slug) ? 0 : 1
+        if (aPinned !== bPinned) return aPinned - bPinned
+      }
       let cmp = 0
       switch (sortKey) {
         case 'title': cmp = a.title.localeCompare(b.title); break
         case 'status': cmp = (a.status || '').localeCompare(b.status || ''); break
         case 'stage': {
-          const stageA = STAGE_ORDER[a.stage ?? ''] ?? 99
-          const stageB = STAGE_ORDER[b.stage ?? ''] ?? 99
+          // #91: compare NORMALIZED stage. Raw project.stage mixes legacy
+          // Title-Case aliases ("Idea", "Submitted") with canonical
+          // lowercase values ("idea", "review") — comparing raw strings
+          // treats the same logical stage as two different sort buckets,
+          // which is the "multiple idea sections" bug.
+          const stageA = STAGE_ORDER[normalizeStage(a.stage) || ''] ?? 99
+          const stageB = STAGE_ORDER[normalizeStage(b.stage) || ''] ?? 99
           cmp = stageA - stageB
+          if (cmp === 0) {
+            const aPinned = pinnedSlugs.has(a.slug) ? 0 : 1
+            const bPinned = pinnedSlugs.has(b.slug) ? 0 : 1
+            if (aPinned !== bPinned) cmp = aPinned - bPinned
+          }
           break
         }
         case 'pi': cmp = (a.pi || '').localeCompare(b.pi || ''); break
@@ -545,8 +564,14 @@ export default function Projects() {
                   let lastStage = ''
                   return filtered.map((project, index) => {
                     const projectHealth = healthBySlug.get(project.slug)
-                    const showStageHeader = project.stage !== lastStage
-                    lastStage = project.stage ?? ''
+                    // #91: compare NORMALIZED stage so a legacy-cased value
+                    // ("Idea") and its canonical form ("idea") are treated as
+                    // the SAME group — both render the same uppercase label,
+                    // so an un-normalized compare produced two identical-
+                    // looking "IDEA" headers lower in the list.
+                    const normalizedStage = normalizeStage(project.stage)
+                    const showStageHeader = normalizedStage !== lastStage
+                    lastStage = normalizedStage
                     const isFocused = focusedIndex === index
 
                     return (
@@ -571,7 +596,7 @@ export default function Projects() {
                                 flexShrink: 0,
                               }}
                             >
-                              {project.stage}
+                              {stageLabel(project.stage)}
                             </span>
                             <span
                               style={{
@@ -581,7 +606,7 @@ export default function Projects() {
                                 flexShrink: 0,
                               }}
                             >
-                              {filtered.filter((p) => p.stage === project.stage).length}
+                              {filtered.filter((p) => normalizeStage(p.stage) === normalizedStage).length}
                             </span>
                             <div style={{ flex: 1, height: '1px', background: 'var(--border-subtle)' }} />
                           </div>
@@ -754,7 +779,7 @@ export default function Projects() {
 
                             {/* Stage (inline editable) — S17: instant + undo */}
                             <InlineSelect
-                              value={project.stage || 'idea'}
+                              value={normalizeStage(project.stage) || 'idea'}
                               options={STAGES.map((s) => ({ value: s, label: STAGE_LABELS[s] }))}
                               onChange={(val) => handleStageChange(project.slug, val, project.stage)}
                             />
@@ -864,7 +889,7 @@ export default function Projects() {
                                 onChange={(val) => inlineUpdate.mutate({ slug: project.slug, fields: { status: val } })}
                               />
                               <InlineSelect
-                                value={project.stage || 'idea'}
+                                value={normalizeStage(project.stage) || 'idea'}
                                 options={STAGES.map((s) => ({ value: s, label: STAGE_LABELS[s] }))}
                                 onChange={(val) => handleStageChange(project.slug, val, project.stage)}
                               />
@@ -919,13 +944,17 @@ export default function Projects() {
               >
                 {[
                   { label: 'Count', value: filtered.length },
+                  // #91: bucket by NORMALIZED stage — raw project.stage mixes
+                  // legacy Title-Case aliases with canonical lowercase values,
+                  // so this row used to fragment one logical stage (e.g.
+                  // "Idea" + "idea") into separate entries.
                   ...Object.entries(
                     filtered.reduce((acc, p) => {
-                      const stage = p.stage || 'Unknown'
+                      const stage = normalizeStage(p.stage) || 'Unknown'
                       acc[stage] = (acc[stage] || 0) + 1
                       return acc
                     }, {} as Record<string, number>)
-                  ).map(([stage, count]) => ({ label: stage, value: count })),
+                  ).map(([stage, count]) => ({ label: stage === 'Unknown' ? 'Unknown' : stageLabel(stage), value: count })),
                 ].map(s => (
                   <span key={s.label} style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
                     {s.label}{' '}

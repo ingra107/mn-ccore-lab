@@ -882,48 +882,6 @@
     "sample": "rgba(201,168,76,0.04)"
   },
   {
-    "file": "src/components/tasks/TaskCard.tsx",
-    "line": 214,
-    "kind": "token-rgba-literal",
-    "sample": "rgba(15,25,35,0.10)"
-  },
-  {
-    "file": "src/components/tasks/TaskCard.tsx",
-    "line": 216,
-    "kind": "token-rgba-literal",
-    "sample": "rgba(15,25,35,0.10)"
-  },
-  {
-    "file": "src/components/tasks/TaskCard.tsx",
-    "line": 235,
-    "kind": "token-rgba-literal",
-    "sample": "rgba(15,25,35,0.10)"
-  },
-  {
-    "file": "src/components/tasks/TaskCard.tsx",
-    "line": 237,
-    "kind": "token-rgba-literal",
-    "sample": "rgba(15,25,35,0.10)"
-  },
-  {
-    "file": "src/components/tasks/TaskCard.tsx",
-    "line": 256,
-    "kind": "token-rgba-literal",
-    "sample": "rgba(15,25,35,0.10)"
-  },
-  {
-    "file": "src/components/tasks/TaskCard.tsx",
-    "line": 258,
-    "kind": "token-rgba-literal",
-    "sample": "rgba(15,25,35,0.10)"
-  },
-  {
-    "file": "src/components/tasks/TaskCard.tsx",
-    "line": 286,
-    "kind": "token-rgba-literal",
-    "sample": "rgba(15,25,35,0.10)"
-  },
-  {
     "file": "src/components/tasks/TaskDetailPanel.tsx",
     "line": 234,
     "kind": "token-rgba-literal",
@@ -2050,5 +2008,29 @@
     "line": 100,
     "kind": "token-rgba-literal",
     "sample": "rgba(15, 25, 35, 0.1)"
+  },
+  {
+    "file": "src/components/tasks/TaskCard.tsx",
+    "line": 225,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(15,25,35,0.10)"
+  },
+  {
+    "file": "src/components/tasks/TaskCard.tsx",
+    "line": 246,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(15,25,35,0.10)"
+  },
+  {
+    "file": "src/components/tasks/TaskCard.tsx",
+    "line": 267,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(15,25,35,0.10)"
+  },
+  {
+    "file": "src/components/tasks/TaskCard.tsx",
+    "line": 295,
+    "kind": "token-rgba-literal",
+    "sample": "rgba(15,25,35,0.10)"
   }
 ]

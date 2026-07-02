@@ -209,25 +209,35 @@ export default function MentionInput({
   }
 
   // Render value with @mention highlighting.
-  // We use an overlay approach: the textarea holds the plain text,
-  // and we show a mirrored div behind it with highlighted spans.
-  // isCommand=true: known launch @-tag (teal); false: person @-mention (gold).
+  // We use an overlay approach: the textarea holds the plain text (in the
+  // caller's normal ink color — the ONLY visible copy of the glyphs), and a
+  // mirrored div sits behind it drawing a colored BACKGROUND PILL under each
+  // @mention. The overlay's own text is always transparent (inherited from
+  // the parent's `color: transparent`) — a native <textarea> can't recolor a
+  // substring of its value, so duplicating the mention text here in an
+  // opaque gold/teal color (the pre-#89 code) just double-prints a second,
+  // slightly misaligned copy underneath the real one, reading as smeared/
+  // ghosted text. Background-only avoids that structurally: there is only
+  // ever one visible text layer.
+  // bg: per-command tint from KNOWN_COMMAND_TAGS (gold for @hermes, teal for
+  // @quickchat/@workon, slate for @backlog) to match the command badge below
+  // the textarea and the dropdown row styling; person @-mentions get gold.
   const highlightedParts = useMemo(() => {
-    const parts: { text: string; isMention: boolean; isCommand: boolean }[] = []
+    const parts: { text: string; isMention: boolean; bg?: string }[] = []
     const regex = /@(\w[\w-]*)/g
     let lastIndex = 0
     let match: RegExpExecArray | null
 
     while ((match = regex.exec(value)) !== null) {
       if (match.index > lastIndex) {
-        parts.push({ text: value.slice(lastIndex, match.index), isMention: false, isCommand: false })
+        parts.push({ text: value.slice(lastIndex, match.index), isMention: false })
       }
-      const isCommand = match[1].toLowerCase() in KNOWN_COMMAND_TAGS
-      parts.push({ text: match[0], isMention: true, isCommand })
+      const cmd = KNOWN_COMMAND_TAGS[match[1].toLowerCase()]
+      parts.push({ text: match[0], isMention: true, bg: cmd ? cmd.bg : 'var(--gold-active)' })
       lastIndex = match.index + match[0].length
     }
     if (lastIndex < value.length) {
-      parts.push({ text: value.slice(lastIndex), isMention: false, isCommand: false })
+      parts.push({ text: value.slice(lastIndex), isMention: false })
     }
     return parts
   }, [value])
@@ -271,22 +281,14 @@ export default function MentionInput({
         >
           {highlightedParts.map((part, i) =>
             part.isMention ? (
+              // No `color`/`padding` here on purpose: color inherits the
+              // parent's `transparent` (see comment above `highlightedParts`)
+              // and padding would widen this span's flow width vs. the real
+              // textarea's unpadded characters, drifting everything after it
+              // out of alignment.
               <span
                 key={i}
-                style={part.isCommand ? {
-                  // Command @-tags: teal to distinguish from person @-mentions
-                  color: 'var(--teal)',
-                  fontWeight: 600,
-                  background: 'var(--teal-active)',
-                  borderRadius: 'var(--radius-sm)',
-                  padding: '0 2px',
-                } : {
-                  // Person @-mentions: gold (unchanged)
-                  color: 'var(--gold)',
-                  fontWeight: 600,
-                  background: 'var(--gold-active)',
-                  borderRadius: 'var(--radius-sm)',
-                }}
+                style={{ background: part.bg, borderRadius: 'var(--radius-sm)' }}
               >
                 {part.text}
               </span>
@@ -316,8 +318,9 @@ export default function MentionInput({
           ...style,
           width: '100%',
           position: 'relative',
-          // When mentions are present, make textarea text use a special caret-color approach
-          // The highlight overlay handles the visual. Textarea text stays normal for editing.
+          // Textarea text is the ONLY visible glyph layer (normal ink color,
+          // unchanged) — the overlay behind it draws background pills only.
+          // Explicit caret color keeps the cursor visible against those pills.
           caretColor: hasMentions ? 'var(--ink)' : undefined,
         }}
       />

@@ -575,6 +575,8 @@ function AgendaMeetingRow({
   saveStatus,
   onDismiss,
   isPhone,
+  nowLineEl,
+  nowOffsetPx,
 }: {
   event: TodayEvent
   startMin: number
@@ -584,6 +586,12 @@ function AgendaMeetingRow({
   saveStatus: Record<string, SaveStatus>
   onDismiss: (id: string) => void
   isPhone: boolean
+  /** #83: when now falls DURING this meeting, render the now-line at its
+   *  fractional px position within the meeting shell (mirrors AgendaGapRow's
+   *  nowInGap handling — without this, "now" only inserts at the START of a
+   *  later unit, visually landing at the meeting's END time). */
+  nowLineEl?: ReactNode
+  nowOffsetPx?: number
 }) {
   return (
     <div
@@ -595,6 +603,21 @@ function AgendaMeetingRow({
         borderTop: `1px solid ${withAlpha(ACCENT_TEAL, 10)}`,
       }}
     >
+      {/* #83: now-line at fractional position within this meeting */}
+      {nowLineEl != null && nowOffsetPx != null && (
+        <div
+          style={{
+            position: 'absolute',
+            top: nowOffsetPx,
+            left: 0,
+            right: 0,
+            pointerEvents: 'none',
+            zIndex: 5,
+          }}
+        >
+          {nowLineEl}
+        </div>
+      )}
       {/* Time label in left 44px spine */}
       <div
         aria-hidden="true"
@@ -642,6 +665,8 @@ function AgendaOverlapRegion({
   saveStatus,
   onDismiss,
   isPhone,
+  nowLineEl,
+  nowOffsetPx,
 }: {
   unit: {
     events: TodayEvent[]
@@ -656,6 +681,10 @@ function AgendaOverlapRegion({
   saveStatus: Record<string, SaveStatus>
   onDismiss: (id: string) => void
   isPhone: boolean
+  /** #83: when now falls DURING this overlap cluster, render the now-line at
+   *  its fractional px position (mirrors AgendaGapRow's nowInGap handling). */
+  nowLineEl?: ReactNode
+  nowOffsetPx?: number
 }) {
   const colCount = unit.placements[0]?.colCount ?? 1
 
@@ -681,6 +710,21 @@ function AgendaOverlapRegion({
         position: 'relative',
       }}
     >
+      {/* #83: now-line at fractional position within this overlap cluster */}
+      {nowLineEl != null && nowOffsetPx != null && (
+        <div
+          style={{
+            position: 'absolute',
+            top: nowOffsetPx,
+            left: 0,
+            right: 0,
+            pointerEvents: 'none',
+            zIndex: 5,
+          }}
+        >
+          {nowLineEl}
+        </div>
+      )}
       {/* Time label */}
       <div
         aria-hidden="true"
@@ -874,6 +918,18 @@ export function TimelineGrid({
       )
     } else if (unit.kind === 'meeting') {
       tryInsertNow(unit.startMin)
+      // #83: when now falls DURING this meeting, render the now-line at its
+      // fractional px position — same fix shape as nowInGap above. Without
+      // this branch, tryInsertNow never fires (now >= unit.startMin) and the
+      // line falls through to the START of the next unit, visually landing
+      // at the meeting's END time instead of its true current-time position.
+      const nowInMeeting = !nowInserted
+        && now >= unit.startMin
+        && now < unit.endMin
+        && now >= model.dayStart
+        && now <= model.dayEnd
+      const nowOffsetPxMeeting = nowInMeeting ? Math.round((now - unit.startMin) * PX_PER_MIN) : undefined
+      if (nowInMeeting) nowInserted = true
       agendaElements.push(
         <AgendaMeetingRow
           key={unit.event.id}
@@ -885,10 +941,20 @@ export function TimelineGrid({
           saveStatus={saveStatus}
           onDismiss={onDismiss}
           isPhone={isPhone}
+          nowLineEl={nowInMeeting ? nowLineElement : undefined}
+          nowOffsetPx={nowOffsetPxMeeting}
         />
       )
     } else if (unit.kind === 'overlap') {
       tryInsertNow(unit.startMin)
+      // #83: same fix as the meeting branch above, for overlap clusters.
+      const nowInOverlap = !nowInserted
+        && now >= unit.startMin
+        && now < unit.endMin
+        && now >= model.dayStart
+        && now <= model.dayEnd
+      const nowOffsetPxOverlap = nowInOverlap ? Math.round((now - unit.startMin) * PX_PER_MIN) : undefined
+      if (nowInOverlap) nowInserted = true
       agendaElements.push(
         <AgendaOverlapRegion
           key={unit.events.map((e) => e.id).join('|')}
@@ -898,6 +964,8 @@ export function TimelineGrid({
           saveStatus={saveStatus}
           onDismiss={onDismiss}
           isPhone={isPhone}
+          nowLineEl={nowInOverlap ? nowLineElement : undefined}
+          nowOffsetPx={nowOffsetPxOverlap}
         />
       )
     } else if (unit.kind === 'untimed') {
