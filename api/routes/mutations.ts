@@ -526,52 +526,92 @@ async function processOne(
 
 // ── Apply functions (per-op; per-table column dispatch inside) ──────────────
 
+/**
+ * Build the adoptable "deduped" result that BOTH task-insert identity classes
+ * return: status='accepted', the winner's canonical payload, and — flag-gated
+ * on hub_dedup_adoptable — the winner PK as canonical_id so the PB outbox ack
+ * adopts it via a hub_slug alias. One helper keeps the (title, project_id) and
+ * (source, meeting_id) classes AND their serial + race-loser paths returning a
+ * byte-identical shape.
+ */
+async function dedupAccepted(
+  env: Env,
+  mut: Mutation,
+  winnerId: string,
+  flags: ValidationFlags | undefined,
+  reason: string,
+): Promise<MutationResult> {
+  const canonical = await readCanonical(env, 'tasks', winnerId);
+  return mkResult(mut.mutation_id, 'accepted', {
+    result_seq: canonical?.seq as number | undefined,
+    canonical_payload: canonical || undefined,
+    canonical_id: flags?.dedup ? winnerId : undefined,
+    reason,
+  });
+}
+
 export async function applyInsert(env: Env, mut: Mutation, user: AuthUser, flags?: ValidationFlags): Promise<MutationResult> {
   if (!mut.payload) return mutErr(mut.mutation_id, 'insert requires payload');
 
-  // I18 dedup (2026-05-03): for tasks inserts, reject duplicate (title, project_id)
-  // pairs when an active (non-deleted, non-done) row already exists. This closes
-  // the RC2 leak where two machines running mechanic_triage both push an
-  // "Approve: MECHANIC: I3" task and Hub stores both as separate rows.
+  // Task-insert dedup has TWO explicit identity classes (2026-07-02 meeting-dedup
+  // wave; supersedes the single universal I18 (title, project_id) rule):
   //
-  // Edge cases:
-  //   - project_id IS NULL: two tasks with same title but both null project_id
-  //     ARE duplicates of each other (SQL IS NULL match).
-  //   - deleted rows: excluded (deleted_at IS NOT NULL). A soft-deleted row
-  //     with the same title is fine to re-create.
-  //   - status='done': excluded. A completed task with same title should not
-  //     block a new open task of the same name (recurring tasks, re-opens).
+  //   1. source='meeting_approval' — a meeting-approval task is the durable
+  //      cross-machine approval handle for a staged transcript, keyed by
+  //      (source, meeting_id). Distinct meetings routinely share a title
+  //      ("Meeting: … [pending approval]"), so title/project dedup would falsely
+  //      adopt the wrong meeting, orphan the second transcript, and mis-key its
+  //      Telegram buttons onto the adopted winner. These rows dedup ONLY by
+  //      (source, meeting_id) and NEVER consult (title, project_id). A missing
+  //      meeting_id is an explicit error — never guessed, never title-deduped.
+  //
+  //   2. everything else — the original I18 rule: reject a second active
+  //      (non-deleted, non-done) row with the same (title, project_id), closing
+  //      the RC2 leak where two machines running mechanic_triage both push an
+  //      "Approve: MECHANIC: I3" task. The query now EXCLUDES meeting-approval
+  //      rows so a meeting row is never a title-match winner for a name-keyed
+  //      task (once meeting approvals have a typed identity, cross-adoption is
+  //      unsafe). project_id IS NULL matches NULL; deleted + done rows excluded.
+  //
   //   - Race condition: the INSERT below uses ON CONFLICT(id) DO NOTHING, so
-  //     two concurrent inserts with the same record_id are already covered by
-  //     Bug Y idempotency. The dedup check here covers the separate-PK case
-  //     (two DIFFERENT record_ids for the same conceptual task).
+  //     two concurrent inserts with the same record_id are covered by Bug Y
+  //     idempotency. The dedup checks here cover the separate-PK case (two
+  //     DIFFERENT record_ids for the same conceptual task); the two partial
+  //     unique indexes in schema-v92 are the structural backstop for the
+  //     SELECT-then-INSERT race window, and the catch below mirrors this order.
+  //
+  // The two SELECT predicates BYTE-MATCH their partial unique indexes
+  // (idx_tasks_meeting_approval_active, idx_tasks_title_project_active in
+  // schema-v92); a SELECT/index mismatch reopens the race hole through the catch.
   if (mut.table === 'tasks') {
-    const title = (mut.payload as Record<string, unknown>).title as string | undefined;
-    const projectId = (mut.payload as Record<string, unknown>).project_id as string | null | undefined;
-    if (title) {
-      // Use IS ? instead of = ? so NULL project_id matches NULL (SQL equality
-      // NULL = NULL is false; IS NULL = IS NULL is true).
+    const p = mut.payload as Record<string, unknown>;
+    const source = p.source as string | undefined;
+    if (source === 'meeting_approval') {
+      const meetingId = p.meeting_id as string | undefined;
+      if (!meetingId) {
+        return mutErr(mut.mutation_id, 'meeting_approval task requires meeting_id');
+      }
       const dup = await env.DB.prepare(
-        `SELECT id FROM tasks WHERE title = ? AND project_id IS ? AND deleted_at IS NULL AND status != 'done' LIMIT 1`
-      ).bind(title, projectId ?? null).first<{ id: string }>();
+        `SELECT id FROM tasks WHERE source = 'meeting_approval' AND meeting_id = ? AND deleted_at IS NULL AND status != 'done' LIMIT 1`,
+      ).bind(meetingId).first<{ id: string }>();
       if (dup) {
-        // Return the existing row as the canonical result. Outbox treats
-        // this as accepted-idempotent: the conceptual task exists on Hub,
-        // the PB-side can adopt the existing Hub id via alias.
-        //
-        // V3 dedup (hub_dedup_adoptable): when the flag is ON, surface the
-        // WINNER's PK as canonical_id so the PB outbox ack handler can adopt it
-        // via a hub_slug alias (closing the zombie-row class). The
-        // canonical_payload is also returned so the cache converges. The flag
-        // gates only the canonical_id surfacing — the dedup itself (returning
-        // accepted, not a second row) is pre-existing I18 behavior.
-        const canonical = await readCanonical(env, 'tasks', dup.id);
-        return mkResult(mut.mutation_id, 'accepted', {
-          result_seq: canonical?.seq as number | undefined,
-          canonical_payload: canonical || undefined,
-          canonical_id: flags?.dedup ? dup.id : undefined,
-          reason: `deduped: active task with same (title, project_id) exists as ${dup.id}`,
-        });
+        return dedupAccepted(env, mut, dup.id, flags,
+          `deduped: active meeting_approval task with same meeting_id exists as ${dup.id}`);
+      }
+    } else {
+      const title = p.title as string | undefined;
+      const projectId = p.project_id as string | null | undefined;
+      if (title) {
+        // IS ? not = ? so NULL project_id matches NULL (NULL = NULL is false;
+        // NULL IS NULL is true). The source guard keeps meeting-approval rows
+        // out of the name identity class.
+        const dup = await env.DB.prepare(
+          `SELECT id FROM tasks WHERE title = ? AND project_id IS ? AND deleted_at IS NULL AND status != 'done' AND (source IS NULL OR source != 'meeting_approval') LIMIT 1`,
+        ).bind(title, projectId ?? null).first<{ id: string }>();
+        if (dup) {
+          return dedupAccepted(env, mut, dup.id, flags,
+            `deduped: active task with same (title, project_id) exists as ${dup.id}`);
+        }
       }
     }
   }
@@ -666,33 +706,45 @@ export async function applyInsert(env: Env, mut: Mutation, user: AuthUser, flags
   try {
     await env.DB.prepare(sql).bind(...vals).run();
   } catch (e) {
-    // V3 dedup race-loser path (tasks.dedup.test.ts:382 TODO):
-    // The serial dedup SELECT above runs BEFORE the winner's INSERT commits in a
-    // true race, so it finds no row. The INSERT then fires the partial unique
-    // index `idx_tasks_title_project_active` ON (title, project_id) WHERE
-    // deleted_at IS NULL AND status != 'done' -> a UNIQUE constraint error that
-    // ON CONFLICT(id) does NOT absorb (different conflict target). Pre-fix this
-    // dead-lettered an actually-accepted conceptual task. Fix: re-run the
-    // dup-lookup and return the SAME adoptable `accepted` + canonical_id the
-    // serial path returns, so the race-loser adopts the winner's PK via alias.
+    // Race-loser path: the serial dedup SELECT above runs BEFORE the winner's
+    // INSERT commits in a true race, so it finds no row. The INSERT then fires
+    // one of the two partial unique indexes (idx_tasks_meeting_approval_active
+    // for meeting-approval rows, idx_tasks_title_project_active for name-keyed
+    // rows) -> a UNIQUE constraint error that ON CONFLICT(id) does NOT absorb
+    // (different conflict target). Pre-fix this dead-lettered an actually-
+    // accepted conceptual task. Fix: dispatch by source in the SAME order as
+    // the serial path — a meeting-index failure re-queries by (source,
+    // meeting_id) and NEVER falls through to title adoption — then return the
+    // SAME adoptable `accepted` + canonical_id so the race-loser adopts the
+    // winner's PK via alias.
     const msg = (e as Error).message ?? '';
     const isUniqueRace =
       mut.table === 'tasks' && /UNIQUE constraint failed/i.test(msg);
     if (isUniqueRace) {
-      const title = (mut.payload as Record<string, unknown>).title as string | undefined;
-      const projectId = (mut.payload as Record<string, unknown>).project_id as string | null | undefined;
-      if (title) {
-        const dup = await env.DB.prepare(
-          `SELECT id FROM tasks WHERE title = ? AND project_id IS ? AND deleted_at IS NULL AND status != 'done' LIMIT 1`,
-        ).bind(title, projectId ?? null).first<{ id: string }>();
-        if (dup) {
-          const canonical = await readCanonical(env, 'tasks', dup.id);
-          return mkResult(mut.mutation_id, 'accepted', {
-            result_seq: canonical?.seq as number | undefined,
-            canonical_payload: canonical || undefined,
-            canonical_id: flags?.dedup ? dup.id : undefined,
-            reason: `deduped (race-loser): active task with same (title, project_id) exists as ${dup.id}`,
-          });
+      const p = mut.payload as Record<string, unknown>;
+      const source = p.source as string | undefined;
+      if (source === 'meeting_approval') {
+        const meetingId = p.meeting_id as string | undefined;
+        if (meetingId) {
+          const dup = await env.DB.prepare(
+            `SELECT id FROM tasks WHERE source = 'meeting_approval' AND meeting_id = ? AND deleted_at IS NULL AND status != 'done' LIMIT 1`,
+          ).bind(meetingId).first<{ id: string }>();
+          if (dup) {
+            return dedupAccepted(env, mut, dup.id, flags,
+              `deduped (race-loser): active meeting_approval task with same meeting_id exists as ${dup.id}`);
+          }
+        }
+      } else {
+        const title = p.title as string | undefined;
+        const projectId = p.project_id as string | null | undefined;
+        if (title) {
+          const dup = await env.DB.prepare(
+            `SELECT id FROM tasks WHERE title = ? AND project_id IS ? AND deleted_at IS NULL AND status != 'done' AND (source IS NULL OR source != 'meeting_approval') LIMIT 1`,
+          ).bind(title, projectId ?? null).first<{ id: string }>();
+          if (dup) {
+            return dedupAccepted(env, mut, dup.id, flags,
+              `deduped (race-loser): active task with same (title, project_id) exists as ${dup.id}`);
+          }
         }
       }
     }
