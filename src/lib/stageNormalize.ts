@@ -96,11 +96,19 @@ export function toApiStage(uiStage: string): ApiStage {
 }
 
 // ── Canonical display: label + color, keyed by the canonical lowercase stage ──
-// Any surface that renders a stage indicator should normalizeStage() the raw
-// value (API lowercase OR legacy Title Case) and then look up here, so label
-// text and dot/strip colors stay consistent across ProjectDetail / Narratives /
-// Trajectory / Analytics etc. Colors reuse the WCAG-AA-pinned set from
-// taskConstants.ts STAGE_COLORS (audited 2026-04-18) — keep them in sync.
+// Hub #361a (2026-07-02): normalizeStage() is called ONLY at the data-ingress
+// chokepoints — rowToProject() + useNarratives() in useApiData.ts, and the
+// optimistic mutation-cache merges in Projects.tsx / ManuscriptsPage.tsx /
+// useProjectMutations.ts (which bypass rowToProject and need their own
+// normalization before the local cache write). Every component downstream of
+// those reads an already-canonical `stage`, so component code should NOT call
+// normalizeStage() itself — that scattered-guard pattern is what let #91
+// recur across 4 read sites in one page. stageLabel()/stageColor()/
+// stageIndex() below still normalize internally (defense-in-depth for any
+// value that reaches them from outside the ingress, e.g. a literal string),
+// so they remain safe to call directly with any raw or canonical stage.
+// Colors reuse the WCAG-AA-pinned set from taskConstants.ts STAGE_COLORS
+// (audited 2026-04-18) — keep them in sync.
 const CANONICAL_STAGE_LABELS: Record<CanonicalStage, string> = {
   idea: 'Idea',
   data_collection: 'Data Collection',

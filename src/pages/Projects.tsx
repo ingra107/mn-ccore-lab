@@ -171,11 +171,11 @@ const HEALTH_STATUS_COLOR: Record<string, string> = {
 }
 
 function getStageProjects(stage: Stage, filtered: Project[]): Project[] {
-  // #91-class fix: normalize before comparing. A legacy-cased raw value
-  // ("Idea"/"Submitted") never equals the canonical lowercase `stage`
-  // param, so unnormalized comparison silently dropped those projects
-  // from every Pipeline column.
-  return filtered.filter((p) => normalizeStage(p.stage) === stage)
+  // #91-class fix, now structural (Hub #361a): rowToProject() normalizes
+  // stage at ingress, so every project.stage here is already canonical —
+  // a legacy-cased raw value ("Idea"/"Submitted") can no longer reach this
+  // comparison at all, so no per-read normalize() call is needed.
+  return filtered.filter((p) => p.stage === stage)
 }
 
 export default function Projects() {
@@ -222,7 +222,17 @@ export default function Projects() {
       await queryClient.cancelQueries({ queryKey: ['projects'] })
       const prev = queryClient.getQueryData<Project[]>(['projects'])
       if (prev) {
-        queryClient.setQueryData<Project[]>(['projects'], prev.map(p => p.slug === slug ? { ...p, ...fields } : p))
+        // Ingress chokepoint (Hub #361a): this optimistic cache merge is a
+        // SECOND stage-data entry point that bypasses rowToProject entirely.
+        // `fields.stage` here is toApiStage() output (e.g. 'data_analysis' /
+        // 'submitted') — the wire shape, needed as-is for the mutationFn PATCH
+        // body — but the local `['projects']` cache must hold the UI's
+        // canonical value or every read site downstream (now normalize-free)
+        // would briefly see a non-canonical stage until onSettled refetches.
+        const optimisticFields = 'stage' in fields
+          ? { ...fields, stage: normalizeStage(fields.stage as string) || fields.stage }
+          : fields
+        queryClient.setQueryData<Project[]>(['projects'], prev.map(p => p.slug === slug ? { ...p, ...optimisticFields } : p))
       }
       return { prev }
     },
@@ -324,13 +334,12 @@ export default function Projects() {
         case 'title': cmp = a.title.localeCompare(b.title); break
         case 'status': cmp = (a.status || '').localeCompare(b.status || ''); break
         case 'stage': {
-          // #91: compare NORMALIZED stage. Raw project.stage mixes legacy
-          // Title-Case aliases ("Idea", "Submitted") with canonical
-          // lowercase values ("idea", "review") — comparing raw strings
-          // treats the same logical stage as two different sort buckets,
-          // which is the "multiple idea sections" bug.
-          const stageA = STAGE_ORDER[normalizeStage(a.stage) || ''] ?? 99
-          const stageB = STAGE_ORDER[normalizeStage(b.stage) || ''] ?? 99
+          // #91-class fix, now structural (Hub #361a): project.stage is
+          // normalized at ingress (rowToProject), so raw legacy Title-Case
+          // values can no longer reach this comparison — no per-read
+          // normalize() call needed to avoid the "multiple idea sections" bug.
+          const stageA = STAGE_ORDER[a.stage || ''] ?? 99
+          const stageB = STAGE_ORDER[b.stage || ''] ?? 99
           cmp = stageA - stageB
           if (cmp === 0) cmp = pinCmp
           break
@@ -558,12 +567,12 @@ export default function Projects() {
                   let lastStage = ''
                   return filtered.map((project, index) => {
                     const projectHealth = healthBySlug.get(project.slug)
-                    // #91: compare NORMALIZED stage so a legacy-cased value
-                    // ("Idea") and its canonical form ("idea") are treated as
-                    // the SAME group — both render the same uppercase label,
-                    // so an un-normalized compare produced two identical-
-                    // looking "IDEA" headers lower in the list.
-                    const normalizedStage = normalizeStage(project.stage)
+                    // #91-class fix, now structural (Hub #361a): project.stage
+                    // is already canonical at ingress, so a legacy-cased value
+                    // ("Idea") can no longer diverge from its canonical form
+                    // ("idea") here — no per-read normalize() needed to avoid
+                    // splitting one group into two identical-looking headers.
+                    const normalizedStage = project.stage || ''
                     const showStageHeader = normalizedStage !== lastStage
                     lastStage = normalizedStage
                     const isFocused = focusedIndex === index
@@ -600,7 +609,7 @@ export default function Projects() {
                                 flexShrink: 0,
                               }}
                             >
-                              {filtered.filter((p) => normalizeStage(p.stage) === normalizedStage).length}
+                              {filtered.filter((p) => (p.stage || '') === normalizedStage).length}
                             </span>
                             <div style={{ flex: 1, height: '1px', background: 'var(--border-subtle)' }} />
                           </div>
@@ -773,7 +782,7 @@ export default function Projects() {
 
                             {/* Stage (inline editable) — S17: instant + undo */}
                             <InlineSelect
-                              value={normalizeStage(project.stage) || 'idea'}
+                              value={project.stage || 'idea'}
                               options={STAGES.map((s) => ({ value: s, label: STAGE_LABELS[s] }))}
                               onChange={(val) => handleStageChange(project.slug, val, project.stage)}
                             />
@@ -883,7 +892,7 @@ export default function Projects() {
                                 onChange={(val) => inlineUpdate.mutate({ slug: project.slug, fields: { status: val } })}
                               />
                               <InlineSelect
-                                value={normalizeStage(project.stage) || 'idea'}
+                                value={project.stage || 'idea'}
                                 options={STAGES.map((s) => ({ value: s, label: STAGE_LABELS[s] }))}
                                 onChange={(val) => handleStageChange(project.slug, val, project.stage)}
                               />
@@ -938,13 +947,13 @@ export default function Projects() {
               >
                 {[
                   { label: 'Count', value: filtered.length },
-                  // #91: bucket by NORMALIZED stage — raw project.stage mixes
-                  // legacy Title-Case aliases with canonical lowercase values,
-                  // so this row used to fragment one logical stage (e.g.
-                  // "Idea" + "idea") into separate entries.
+                  // #91-class fix, now structural (Hub #361a): bucket by
+                  // project.stage directly — ingress normalization means a
+                  // legacy Title-Case alias ("Idea") can no longer fragment
+                  // one logical stage into two separate count entries.
                   ...Object.entries(
                     filtered.reduce((acc, p) => {
-                      const stage = normalizeStage(p.stage) || 'Unknown'
+                      const stage = p.stage || 'Unknown'
                       acc[stage] = (acc[stage] || 0) + 1
                       return acc
                     }, {} as Record<string, number>)

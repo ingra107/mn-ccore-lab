@@ -9,16 +9,17 @@ import { useNarratives } from '../../hooks/useApiData'
 import { usePageMeta } from '../../hooks/usePageMeta'
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 import { PATHS } from '../../constants/paths'
-import { stageColor, stageLabel, normalizeStage } from '../../lib/stageNormalize'
+import { stageColor, stageLabel } from '../../lib/stageNormalize'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
 
-// The /api/narratives endpoint emits canonical *lowercase* stage values
-// (idea / data_collection / data_analysis / writing / submitted / revisions /
-// published). normalizeStage() folds those onto the 7-stage canonical ladder;
-// stageColor()/stageLabel() (shared, WCAG-AA-pinned) drive the dots + text so
-// colors and labels stay consistent with ProjectDetail / Trajectory / etc.
-// Short pipeline-pill abbreviation, keyed by the normalized canonical stage.
+// useNarratives() (Hub #361a) is the ingress chokepoint for this shape: it
+// normalizes every stageDistribution/projects `.stage` value onto the UI's
+// 7-stage canonical ladder before this component ever sees it, so `stage`
+// here is always one of the STAGE_ABBREV keys below — no per-read
+// normalizeStage() call needed. stageColor()/stageLabel() (shared,
+// WCAG-AA-pinned) drive the dots + text so colors and labels stay consistent
+// with ProjectDetail / Trajectory / etc.
 const STAGE_ABBREV: Record<string, string> = {
   idea: 'Idea',
   data_collection: 'Data',
@@ -30,8 +31,7 @@ const STAGE_ABBREV: Record<string, string> = {
 }
 
 function stageAbbrev(stage: string): string {
-  const normalized = normalizeStage(stage)
-  return (normalized && STAGE_ABBREV[normalized]) || stageLabel(stage) || stage
+  return STAGE_ABBREV[stage] || stageLabel(stage) || stage
 }
 
 export default function NarrativesPage() {

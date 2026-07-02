@@ -6,6 +6,7 @@ import type { Comment, ProjectDocumentRow } from '../useApiData'
 import { nowInstant } from '../../lib/time'
 import { useUndoToast } from '../../components/UndoToast'
 import { PATHS } from '../../constants/paths'
+import { normalizeStage } from '../../lib/stageNormalize'
 
 // ── Project mutations ───────────────────────────────────────
 
@@ -54,10 +55,20 @@ export function useUpdateProject(projectId: string) {
       const previousProjects = queryClient.getQueryData<Project[]>(['projects'])
 
       if (previousProjects) {
+        // Ingress chokepoint (Hub #361a): this optimistic merge feeds the
+        // SAME `['projects']` cache Projects.tsx/ManuscriptsPage.tsx read
+        // (both normalize-free downstream of rowToProject). `fields.stage`
+        // is toApiStage() wire-shape output when the caller is a stage
+        // change (e.g. ProjectDetail's handleStageChange) — needed as-is
+        // for the mutationFn PATCH body, but the local cache write must
+        // hold the UI canonical value.
+        const optimisticFields = fields.stage != null
+          ? { ...fields, stage: (normalizeStage(fields.stage) || fields.stage) as Project['stage'] }
+          : fields
         queryClient.setQueryData<Project[]>(
           ['projects'],
           previousProjects.map((p) =>
-            p.slug === projectId ? { ...p, ...fields } : p
+            p.slug === projectId ? { ...p, ...optimisticFields } : p
           )
         )
       }

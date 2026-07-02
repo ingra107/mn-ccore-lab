@@ -65,6 +65,7 @@ import type {
   PBSessionRow,
 } from '../lib/api'
 import { localDateKey } from '../lib/dateUtils'
+import { normalizeStage } from '../lib/stageNormalize'
 
 // Re-export lib/api row types that consumers import via this module.
 // Narrow surface: only the types actually consumed by components. Other
@@ -129,7 +130,12 @@ function rowToProject(row: ProjectRow): Project {
     category: row.category || '',
     pi: row.pi || '',
     slug: row.slug || '',
-    stage: row.stage as Project['stage'],
+    // Ingress chokepoint (Hub #361a): fold legacy Title-Case / granular API
+    // sub-stages ("Idea", "data_analysis", "submitted") onto the UI's 7-stage
+    // canonical ladder ONCE here, so every downstream component reads an
+    // already-canonical value and never needs to call normalizeStage() itself.
+    // Falls back to the raw value if unrecognized (same as stageLabel/stageColor).
+    stage: (normalizeStage(row.stage) || row.stage) as Project['stage'],
     strategic_context: row.strategic_context || undefined,
     updated_at: row.updated_at || undefined,
     stage_entered_at: row.stage_entered_at || undefined,
@@ -1343,7 +1349,19 @@ export function useNarratives() {
       const res = await fetch('/api/narratives')
       if (!res.ok) return []
       const data = await res.json()
-      return (data.data || []) as NarrativeArc[]
+      const arcs = (data.data || []) as NarrativeArc[]
+      // Ingress chokepoint (Hub #361a): /api/narratives is a separate data
+      // shape from rowToProject (aggregated distribution + project stubs),
+      // so it needs its own normalization pass. stageOrder on the API side
+      // is a fixed 7-value set (idea/data_collection/data_analysis/writing/
+      // submitted/revisions/published) — normalizeStage() maps each 1:1 onto
+      // the UI ladder with no collisions, so a plain re-key (no re-aggregation)
+      // is safe here.
+      return arcs.map((arc) => ({
+        ...arc,
+        stageDistribution: arc.stageDistribution.map((s) => ({ ...s, stage: normalizeStage(s.stage) || s.stage })),
+        projects: arc.projects.map((p) => ({ ...p, stage: normalizeStage(p.stage) || p.stage })),
+      }))
     },
     staleTime: 10 * 60 * 1000,
   })
