@@ -24,6 +24,7 @@
  */
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
+import { usePortalDropdown, type PortalDropdownPosition } from '../../hooks/usePortalDropdown'
 
 export interface GhostSelectOption {
   value: string
@@ -67,11 +68,7 @@ export default function GhostSelect({
   const [open, setOpen] = useState(false)
   const [focusedIdx, setFocusedIdx] = useState(-1)
   const [query, setQuery] = useState('')
-  const triggerRef = useRef<HTMLButtonElement>(null)
-  const menuRef = useRef<HTMLDivElement>(null)
   const searchRef = useRef<HTMLInputElement>(null)
-  const rafRef = useRef<number | null>(null)
-  const [pos, setPos] = useState({ top: 0, left: 0, minWidth: 0 })
 
   const currentOption = options.find((o) => o.value === value)
   const displayLabel = triggerLabel ?? (currentOption?.label ?? value)
@@ -81,67 +78,31 @@ export default function GhostSelect({
     ? options.filter((o) => o.label.toLowerCase().includes(query.toLowerCase()))
     : options
 
-  // Position the portal dropdown flush below the trigger button
-  const computePosition = useCallback(() => {
-    if (!triggerRef.current) return
-    const rect = triggerRef.current.getBoundingClientRect()
-    // #90: clamp into the viewport so the 300px menu never runs off the bottom/right edge.
-    setPos({ top: Math.min(rect.bottom + 4, window.innerHeight - 308), left: Math.min(rect.left, window.innerWidth - 160), minWidth: rect.width })
-  }, [])
+  const closeMenu = useCallback(() => setOpen(false), [])
+  // #90: clamp `top` (not maxHeight) into the viewport so the fixed 300px
+  // menu never runs off the bottom/right edge — GhostSelect's menu height
+  // is constant (list + optional sticky search), so repositioning it as a
+  // whole keeps it fully visible rather than truncating content.
+  const getPosition = useCallback((rect: DOMRect): PortalDropdownPosition => ({
+    top: Math.min(rect.bottom + 4, window.innerHeight - 308),
+    left: Math.min(rect.left, window.innerWidth - 160),
+    minWidth: rect.width,
+    maxHeight: 300,
+  }), [])
+  const { triggerRef, menuRef, pos } = usePortalDropdown<HTMLButtonElement>({ open, onClose: closeMenu, getPosition })
 
-  // rAF-throttled reposition for scroll/resize tracking
-  const scheduleReposition = useCallback(() => {
-    if (rafRef.current !== null) return
-    rafRef.current = requestAnimationFrame(() => {
-      rafRef.current = null
-      if (!triggerRef.current) return
-      const rect = triggerRef.current.getBoundingClientRect()
-      // If the trigger has fully scrolled out of view, close
-      if (rect.bottom < 0 || rect.top > window.innerHeight) {
-        setOpen(false)
-        return
-      }
-      // #90: clamp into the viewport so the 300px menu never runs off the bottom/right edge.
-    setPos({ top: Math.min(rect.bottom + 4, window.innerHeight - 308), left: Math.min(rect.left, window.innerWidth - 160), minWidth: rect.width })
-    })
-  }, [])
-
-  // Open/close side effects
+  // Open/close side effects local to GhostSelect (focus/filter state, not
+  // portal positioning — that's usePortalDropdown's concern).
   useEffect(() => {
     if (!open) {
       setFocusedIdx(-1)
       setQuery('')
-      if (rafRef.current !== null) {
-        cancelAnimationFrame(rafRef.current)
-        rafRef.current = null
-      }
       return
     }
-    computePosition()
     // Pre-select the current value index so arrow keys start from there
     const idx = options.findIndex((o) => o.value === value)
     setFocusedIdx(idx >= 0 ? idx : 0)
-
-    const onMouseDown = (e: MouseEvent) => {
-      const target = e.target as Node
-      const inTrigger = triggerRef.current?.contains(target)
-      const inMenu = menuRef.current?.contains(target)
-      if (!inTrigger && !inMenu) setOpen(false)
-    }
-    document.addEventListener('mousedown', onMouseDown)
-    // Track scroll/resize to REPOSITION (not close) the menu
-    window.addEventListener('scroll', scheduleReposition, { capture: true, passive: true })
-    window.addEventListener('resize', scheduleReposition, { passive: true })
-    return () => {
-      document.removeEventListener('mousedown', onMouseDown)
-      window.removeEventListener('scroll', scheduleReposition, true)
-      window.removeEventListener('resize', scheduleReposition)
-      if (rafRef.current !== null) {
-        cancelAnimationFrame(rafRef.current)
-        rafRef.current = null
-      }
-    }
-  }, [open, computePosition, scheduleReposition, options, value])
+  }, [open, options, value])
 
   // When searchable: auto-focus the search input when the menu opens
   useEffect(() => {
@@ -276,7 +237,7 @@ export default function GhostSelect({
             top: pos.top,
             left: pos.left,
             minWidth: Math.max(pos.minWidth, 140),
-            maxHeight: 300,
+            maxHeight: pos.maxHeight,
             overflowY: 'auto',
             backgroundColor: 'var(--cream)',
             border: '1px solid var(--border-subtle)',

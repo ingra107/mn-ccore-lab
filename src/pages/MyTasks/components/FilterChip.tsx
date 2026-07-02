@@ -10,78 +10,43 @@
 //
 // MT-29 — aria-haspopup + aria-expanded on the dropdown toggle (was
 // inconsistent w/ SavedViewsMenu).
+//
+// Portal positioning (open, clamp, scroll/resize reposition, outside-click)
+// is shared with GhostSelect via usePortalDropdown — see #90.
 
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
+import { usePortalDropdown, type PortalDropdownPosition } from '../../../hooks/usePortalDropdown'
 import { ACCENT_TEAL, INK, INK_DIM, PANEL_BG, withAlpha, type FilterOption } from '../constants'
 
 export function FilterChip({ label, value, options, onChange }: { label: string; value: string | null; options: FilterOption[]; onChange: (v: string | null) => void }) {
   const [open, setOpen] = useState(false)
   const [filter, setFilter] = useState('')
   const [focusedIdx, setFocusedIdx] = useState(-1)
-  const ref = useRef<HTMLDivElement>(null)
-  const menuRef = useRef<HTMLDivElement>(null)
   const filterInputRef = useRef<HTMLInputElement>(null)
-  const rafRef = useRef<number | null>(null)
   const showTypeahead = options.length >= 5
+
+  const closeMenu = useCallback(() => setOpen(false), [])
   // #90: the menu used to be position:absolute inside this trigger's own
   // wrapper — with no portal and no viewport clamp, a trigger sitting low
   // on the page pushed the option list past the bottom of the viewport
-  // with no way to scroll to the rest. Portal to document.body + fixed
-  // positioning + clamp, mirroring GhostSelect's #90 fix.
-  const [pos, setPos] = useState({ top: 0, left: 0, minWidth: 200, maxHeight: 320 })
-
-  const computePosition = useCallback(() => {
-    if (!ref.current) return
-    const rect = ref.current.getBoundingClientRect()
-    setPos({
-      top: rect.bottom + 4,
-      left: Math.min(rect.left, window.innerWidth - 220),
-      minWidth: rect.width,
-      maxHeight: Math.max(Math.min(320, window.innerHeight - rect.bottom - 12), 120),
-    })
-  }, [])
-
-  const scheduleReposition = useCallback(() => {
-    if (rafRef.current !== null) return
-    rafRef.current = requestAnimationFrame(() => {
-      rafRef.current = null
-      if (!ref.current) return
-      const rect = ref.current.getBoundingClientRect()
-      // Trigger scrolled out of view entirely — close rather than float a
-      // detached menu.
-      if (rect.bottom < 0 || rect.top > window.innerHeight) { setOpen(false); return }
-      computePosition() // one source of truth for the clamp math
-    })
-  }, [computePosition])
+  // with no way to scroll to the rest. Clamp maxHeight (floor 120px) rather
+  // than repositioning `top` — the menu always stays anchored directly
+  // below the trigger and becomes internally scrollable when space is tight.
+  const getPosition = useCallback((rect: DOMRect): PortalDropdownPosition => ({
+    top: rect.bottom + 4,
+    left: Math.min(rect.left, window.innerWidth - 220),
+    minWidth: rect.width,
+    maxHeight: Math.max(Math.min(320, window.innerHeight - rect.bottom - 12), 120),
+  }), [])
+  const { triggerRef, menuRef, pos } = usePortalDropdown<HTMLDivElement>({ open, onClose: closeMenu, getPosition })
 
   useEffect(() => {
     if (!open) return
     setFilter('')
     setFocusedIdx(-1)
     if (showTypeahead) setTimeout(() => filterInputRef.current?.focus(), 0)
-    computePosition()
-    const close = (e: MouseEvent) => {
-      const target = e.target as Node
-      const inTrigger = ref.current?.contains(target)
-      const inMenu = menuRef.current?.contains(target)
-      if (!inTrigger && !inMenu) setOpen(false)
-    }
-    document.addEventListener('mousedown', close)
-    // Track scroll/resize to REPOSITION (not close) the menu — same
-    // contract as GhostSelect so the two shared pickers behave identically.
-    window.addEventListener('scroll', scheduleReposition, { capture: true, passive: true })
-    window.addEventListener('resize', scheduleReposition, { passive: true })
-    return () => {
-      document.removeEventListener('mousedown', close)
-      window.removeEventListener('scroll', scheduleReposition, true)
-      window.removeEventListener('resize', scheduleReposition)
-      if (rafRef.current !== null) {
-        cancelAnimationFrame(rafRef.current)
-        rafRef.current = null
-      }
-    }
-  }, [open, showTypeahead, computePosition, scheduleReposition])
+  }, [open, showTypeahead])
 
   const filtered = useMemo(() => {
     if (!filter) return options
@@ -102,7 +67,7 @@ export function FilterChip({ label, value, options, onChange }: { label: string;
 
   const active = options.find((o) => o.v === value)
   return (
-    <div ref={ref} style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 999, background: 'rgba(255,255,255,0.02)', fontSize: 11, minHeight: 26 }}>
+    <div ref={triggerRef} style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 999, background: 'rgba(255,255,255,0.02)', fontSize: 11, minHeight: 26 }}>
       <span style={{ color: INK_DIM, paddingLeft: 10, paddingRight: 6, letterSpacing: '0.02em' }}>{label}</span>
       <button
         onClick={() => setOpen(!open)}
