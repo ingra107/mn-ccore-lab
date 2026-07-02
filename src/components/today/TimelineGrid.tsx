@@ -885,19 +885,22 @@ export function TimelineGrid({
     }
   }
 
+  // When now falls INSIDE a unit (gap/meeting/overlap), the now-line renders at
+  // its fractional px position within that unit instead of between flow elements
+  // (#83: without this, tryInsertNow never fires mid-unit and the line landed at
+  // the NEXT unit's start = the meeting's end edge). One predicate for all three
+  // unit kinds so the boundary rules can't drift (post-#83 /simplify collapse).
+  const nowWithin = (u: { startMin: number; endMin: number }): number | undefined => {
+    if (nowInserted || now < u.startMin || now >= u.endMin) return undefined
+    if (now < model.dayStart || now > model.dayEnd) return undefined
+    nowInserted = true
+    return Math.round((now - u.startMin) * PX_PER_MIN)
+  }
+
   for (const unit of units) {
     if (unit.kind === 'gap') {
       tryInsertNow(unit.startMin)
-      // When now falls inside this gap, render the now-line at its correct
-      // fractional px position rather than inserting it between flow elements
-      // (which would always put it at gap-bottom = wrong position).
-      const nowInGap = !nowInserted
-        && now >= unit.startMin
-        && now < unit.endMin
-        && now >= model.dayStart
-        && now <= model.dayEnd
-      const nowOffsetPx = nowInGap ? Math.round((now - unit.startMin) * PX_PER_MIN) : undefined
-      if (nowInGap) nowInserted = true
+      const nowOffsetPx = nowWithin(unit)
       agendaElements.push(
         <AgendaGapRow
           key={unit.slot}
@@ -912,24 +915,13 @@ export function TimelineGrid({
           projectsByPid={projectsByPid}
           expandedId={expandedId}
           onExpand={onExpand}
-          nowLineEl={nowInGap ? nowLineElement : undefined}
+          nowLineEl={nowOffsetPx !== undefined ? nowLineElement : undefined}
           nowOffsetPx={nowOffsetPx}
         />
       )
     } else if (unit.kind === 'meeting') {
       tryInsertNow(unit.startMin)
-      // #83: when now falls DURING this meeting, render the now-line at its
-      // fractional px position — same fix shape as nowInGap above. Without
-      // this branch, tryInsertNow never fires (now >= unit.startMin) and the
-      // line falls through to the START of the next unit, visually landing
-      // at the meeting's END time instead of its true current-time position.
-      const nowInMeeting = !nowInserted
-        && now >= unit.startMin
-        && now < unit.endMin
-        && now >= model.dayStart
-        && now <= model.dayEnd
-      const nowOffsetPxMeeting = nowInMeeting ? Math.round((now - unit.startMin) * PX_PER_MIN) : undefined
-      if (nowInMeeting) nowInserted = true
+      const nowOffsetPxMeeting = nowWithin(unit)
       agendaElements.push(
         <AgendaMeetingRow
           key={unit.event.id}
@@ -941,20 +933,13 @@ export function TimelineGrid({
           saveStatus={saveStatus}
           onDismiss={onDismiss}
           isPhone={isPhone}
-          nowLineEl={nowInMeeting ? nowLineElement : undefined}
+          nowLineEl={nowOffsetPxMeeting !== undefined ? nowLineElement : undefined}
           nowOffsetPx={nowOffsetPxMeeting}
         />
       )
     } else if (unit.kind === 'overlap') {
       tryInsertNow(unit.startMin)
-      // #83: same fix as the meeting branch above, for overlap clusters.
-      const nowInOverlap = !nowInserted
-        && now >= unit.startMin
-        && now < unit.endMin
-        && now >= model.dayStart
-        && now <= model.dayEnd
-      const nowOffsetPxOverlap = nowInOverlap ? Math.round((now - unit.startMin) * PX_PER_MIN) : undefined
-      if (nowInOverlap) nowInserted = true
+      const nowOffsetPxOverlap = nowWithin(unit)
       agendaElements.push(
         <AgendaOverlapRegion
           key={unit.events.map((e) => e.id).join('|')}
@@ -964,7 +949,7 @@ export function TimelineGrid({
           saveStatus={saveStatus}
           onDismiss={onDismiss}
           isPhone={isPhone}
-          nowLineEl={nowInOverlap ? nowLineElement : undefined}
+          nowLineEl={nowOffsetPxOverlap !== undefined ? nowLineElement : undefined}
           nowOffsetPx={nowOffsetPxOverlap}
         />
       )

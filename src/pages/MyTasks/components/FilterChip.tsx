@@ -51,14 +51,9 @@ export function FilterChip({ label, value, options, onChange }: { label: string;
       // Trigger scrolled out of view entirely — close rather than float a
       // detached menu.
       if (rect.bottom < 0 || rect.top > window.innerHeight) { setOpen(false); return }
-      setPos({
-        top: rect.bottom + 4,
-        left: Math.min(rect.left, window.innerWidth - 220),
-        minWidth: rect.width,
-        maxHeight: Math.max(Math.min(320, window.innerHeight - rect.bottom - 12), 120),
-      })
+      computePosition() // one source of truth for the clamp math
     })
-  }, [])
+  }, [computePosition])
 
   useEffect(() => {
     if (!open) return

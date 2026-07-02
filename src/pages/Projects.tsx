@@ -312,15 +312,13 @@ export default function Projects() {
     }
     else base = projects.filter((p) => p.category === activeCategory)
     return [...base].sort((a, b) => {
+      const pinCmp =
+        (pinnedSlugs.has(a.slug) ? 0 : 1) - (pinnedSlugs.has(b.slug) ? 0 : 1)
       // Pinned always first — EXCEPT when explicitly grouped by stage (#91):
       // pin-priority there splits same-stage rows into two non-adjacent
       // runs, producing a duplicate stage-group header lower in the list.
       // Stage sort keeps pin only as a within-stage tiebreak below.
-      if (sortKey !== 'stage') {
-        const aPinned = pinnedSlugs.has(a.slug) ? 0 : 1
-        const bPinned = pinnedSlugs.has(b.slug) ? 0 : 1
-        if (aPinned !== bPinned) return aPinned - bPinned
-      }
+      if (sortKey !== 'stage' && pinCmp !== 0) return pinCmp
       let cmp = 0
       switch (sortKey) {
         case 'title': cmp = a.title.localeCompare(b.title); break
@@ -334,11 +332,7 @@ export default function Projects() {
           const stageA = STAGE_ORDER[normalizeStage(a.stage) || ''] ?? 99
           const stageB = STAGE_ORDER[normalizeStage(b.stage) || ''] ?? 99
           cmp = stageA - stageB
-          if (cmp === 0) {
-            const aPinned = pinnedSlugs.has(a.slug) ? 0 : 1
-            const bPinned = pinnedSlugs.has(b.slug) ? 0 : 1
-            if (aPinned !== bPinned) cmp = aPinned - bPinned
-          }
+          if (cmp === 0) cmp = pinCmp
           break
         }
         case 'pi': cmp = (a.pi || '').localeCompare(b.pi || ''); break
@@ -954,7 +948,7 @@ export default function Projects() {
                       acc[stage] = (acc[stage] || 0) + 1
                       return acc
                     }, {} as Record<string, number>)
-                  ).map(([stage, count]) => ({ label: stage === 'Unknown' ? 'Unknown' : stageLabel(stage), value: count })),
+                  ).map(([stage, count]) => ({ label: stageLabel(stage), value: count })),
                 ].map(s => (
                   <span key={s.label} style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
                     {s.label}{' '}
