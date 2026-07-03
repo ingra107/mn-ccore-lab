@@ -52,12 +52,24 @@ _SHADOWING_ENV = ("CLOUDFLARE_API_TOKEN", "CLOUDFLARE_ACCOUNT_ID")
 class WranglerD1Error(RuntimeError):
     """Raised when a wrangler invocation exits non-zero."""
 
-    def __init__(self, returncode: int, stderr: str, cmd: Sequence[str]):
+    def __init__(self, returncode: int, stderr: str, cmd: Sequence[str],
+                 stdout: str = ""):
         self.returncode = returncode
         self.stderr = stderr
+        self.stdout = stdout
         self.cmd = list(cmd)
+        # `wrangler d1 execute --json` writes its error PAYLOAD to STDOUT, not
+        # stderr — on a transient CF flake stderr is often empty, so a
+        # stderr-only message was a bare "wrangler exited 1:" with zero
+        # diagnostic (the 2026-06-30 + 07-02 activity-gardener crashes; PB
+        # backlog #416). Include a stdout tail too so the actual error text
+        # survives. stderr-present behavior is unchanged (stdout defaults empty).
+        detail = (stderr or "").strip()
+        out = (stdout or "").strip()
+        if out:
+            detail = f"{detail} | stdout: {out}" if detail else f"stdout: {out}"
         super().__init__(
-            f"wrangler exited {returncode}: {(stderr or '')[-2000:]}"
+            f"wrangler exited {returncode}: {detail[-2000:]}"
         )
 
 
@@ -117,7 +129,8 @@ def run_wrangler(argv: Sequence[str], *, timeout: int = 120) -> WranglerResult:
         cwd=str(_repo_root()),
     )
     if proc.returncode != 0:
-        raise WranglerD1Error(proc.returncode, proc.stderr, cmd)
+        raise WranglerD1Error(proc.returncode, proc.stderr, cmd,
+                              stdout=proc.stdout)
     return WranglerResult(proc.returncode, proc.stdout, proc.stderr)
 
 
