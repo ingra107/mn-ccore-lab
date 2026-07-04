@@ -11,11 +11,12 @@
 //   - No dedup against deleted rows
 //   - No dedup against done rows
 
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import { nowInstant } from '../lib/time'
 import { applyUpdate } from './mutations'
 import type { Mutation } from './mutations'
 import type { Env, AuthUser } from '../helpers'
+import { _resetValidationFlagsCache } from '../helpers'
 
 // ── Shared stub DB ──────────────────────────────────────────────────────────
 
@@ -372,25 +373,32 @@ describe('mutations.ts applyInsert — I18 (title, project_id) dedup', () => {
 //     ON tasks(title, project_id) WHERE deleted_at IS NULL AND status != 'done'
 // makes this structural: the race-loser INSERT throws a constraint error.
 //
-// The catch(e) in processOne wraps it as:
-//   { status: 'error', reason: 'apply error: UNIQUE constraint failed: ...' }
-//
-// CLIENT-SIDE GAP (documented 2026-05-03, flagged to builder):
-//   The outbox ack handler receives HTTP 200 with status='error'. The serial
-//   dedup path returns status='accepted' with reason containing 'deduped' and
-//   the canonical winner id — the client can adopt the alias. The race-loser
-//   path currently returns status='error' with a raw constraint message, which
-//   the outbox may dead-letter rather than alias-adopt. Builder should add a
-//   catch in applyInsert for the UNIQUE constraint on (title, project_id) that
-//   performs the same dup-lookup-and-return-deduped logic as the serial path.
-//   See data/shared/hub-schema-changes.jsonl for the builder handoff entry.
+// applyInsert's catch(e) (mutations.ts, 2026-07-02 meeting-dedup wave, commit
+// 1dfe81bf) re-queries by (title, project_id) — same predicate as the serial
+// SELECT — and, when the winner is now visible, returns the SAME adoptable
+// `accepted` + canonical_id response as the serial path (reason prefixed
+// "deduped (race-loser)"). The race-loser no longer dead-letters; it adopts
+// the winner's PK via alias, closing the client-side gap previously documented
+// here (flagged 2026-05-03, resolved 2026-07-02).
 
-// Stub DB that simulates the race: SELECT returns null for both concurrent
-// calls (empty store at check time), but the second INSERT throws a UNIQUE
-// constraint error matching the partial index firing.
+// Parses "INSERT INTO tasks (c1, c2, ...) VALUES (...)" -> column names, so
+// the stored row reflects the ACTUAL payload key order (applyInsert builds
+// columns from Object.keys(payload), not a fixed schema-wide order). A prior
+// version of this stub hardcoded positional indices assuming a fixed legacy
+// column layout (title at index 3, status at index 10); with this test's
+// payload key order that silently stored the STATUS value under `title`,
+// which the race-loser catch's honest re-query then failed to match. Faithful
+// parsing (mirrors tasks.meeting-dedup.test.ts's insertColumns) makes the stub
+// correct regardless of payload key order.
+function insertColumns(sql: string): string[] {
+  const m = sql.match(/INSERT INTO \w+ \(([^)]*)\)/i)
+  return m ? m[1].split(',').map(s => s.trim()) : []
+}
+
 function makeRaceStubDB() {
   const store: Map<string, Record<string, unknown>> = new Map()
   let insertCount = 0
+  let titleProjectSelectCalls = 0
 
   function makeStmt(sql: string, boundVals: unknown[]): any {
     return {
@@ -398,9 +406,22 @@ function makeRaceStubDB() {
 
       first: async <T>() => {
         const upper = sql.trim().toUpperCase()
-        // Dedup SELECT: always returns null — simulating the race window where
-        // the winner hasn't committed yet when both machines check.
         if (upper.includes('TITLE =') && upper.includes('PROJECT_ID IS')) {
+          titleProjectSelectCalls += 1
+          // Calls 1-2 = the serial pre-insert dedup checks for BOTH machines
+          // (the race window: neither writer's INSERT has committed yet, so
+          // both miss). Call 3+ = the race-loser's catch re-query, which fires
+          // strictly AFTER the winner's INSERT has committed (that commit is
+          // the only reason the loser's INSERT hit the UNIQUE constraint in
+          // the first place) — an honest store lookup reflects that.
+          if (titleProjectSelectCalls <= 2) return null as T | null
+          const title = boundVals[0] as string
+          const projectId = (boundVals[1] === undefined ? null : boundVals[1]) as string | null
+          for (const row of store.values()) {
+            if (row.title === title && (row.project_id ?? null) === projectId && !row.deleted_at && row.status !== 'done') {
+              return { id: row.id } as T
+            }
+          }
           return null as T | null
         }
         // processed_mutations idempotency check
@@ -413,6 +434,16 @@ function makeRaceStubDB() {
       },
 
       all: async <T>() => {
+        const upper = sql.trim().toUpperCase()
+        // getValidationFlags: SELECT key, value FROM lab_settings WHERE key IN (...)
+        // Stubbed ON so canonical_id is surfaced on the adoptable response,
+        // matching prod (mirrors tasks.meeting-dedup.test.ts convention).
+        if (upper.includes('FROM LAB_SETTINGS')) {
+          return {
+            results: [{ key: 'hub_dedup_adoptable', value: '1' }] as unknown as T[],
+            success: true, meta: {},
+          }
+        }
         return { results: [] as T[], success: true, meta: {} }
       },
 
@@ -425,17 +456,13 @@ function makeRaceStubDB() {
           insertCount++
           const id = boundVals[0] as string
           if (insertCount === 1) {
-            // First INSERT (home-machine winner): succeeds
-            store.set(id, {
-              id,
-              title: boundVals[3],
-              project_id: boundVals[2] ?? null,
-              status: boundVals[10] ?? 'todo',
-              deleted_at: null,
-              seq: 1,
-              last_mutation_id: boundVals[boundVals.length - 1],
-              updated_at: nowInstant(),
-            })
+            // First INSERT (home-machine winner): succeeds. Column names parsed
+            // from the SQL text so the row reflects the actual payload key order.
+            const cols = insertColumns(sql)
+            const row: Record<string, unknown> = { deleted_at: null, seq: 1 }
+            cols.forEach((c, i) => { if (i < boundVals.length) row[c] = boundVals[i] })
+            if (!('updated_at' in row)) row.updated_at = nowInstant()
+            store.set(id, row)
             return { meta: { changes: 1 } }
           } else {
             // Second INSERT (work-machine loser): partial index fires.
@@ -462,21 +489,25 @@ function makeRaceStubDB() {
 }
 
 describe('partial index race backstop — concurrent dup INSERT (18:00:27 shape)', () => {
+  beforeEach(() => { _resetValidationFlagsCache() })
+
   // Regression test for the 2026-05-03 18:00:27 incident:
   // Both home + work machines pushed "Approve: MECHANIC: I18 — 0p+19t" near-
   // simultaneously. Phase 2 serial dedup didn't catch it because both machines
   // passed the SELECT check before either INSERT landed.
   //
-  // With the partial index in place (2be4a01b):
+  // With the partial index in place (2be4a01b) AND the race-loser catch (commit
+  // 1dfe81bf, 2026-07-02):
   //   - The winner INSERT succeeds → row in store
   //   - The loser INSERT hits the UNIQUE constraint → throws
-  //   - processOne catch(e) wraps it as status='error'
+  //   - applyInsert's catch(e) re-queries by (title, project_id), finds the now-
+  //     committed winner, and returns the SAME adoptable accepted+canonical_id
+  //     response as the serial dedup path (reason: "deduped (race-loser): ...")
   //
-  // This test DOCUMENTS the current behavior (error response to loser) and
-  // asserts the partial index fires (regression would be: both succeed).
-  // The client-side gap (status='error' vs 'accepted+deduped') is flagged to
-  // builder via data/shared/hub-schema-changes.jsonl.
-  it('test_partial_index_catches_concurrent_dup_insert_race: loser gets error, winner succeeds', async () => {
+  // This test DOCUMENTS the current behavior (the loser adopts the winner via
+  // alias, it does NOT dead-letter) and asserts the partial index still fires
+  // structurally (regression would be: both rows land as separate tasks).
+  it('test_partial_index_catches_concurrent_dup_insert_race: loser adopts winner via race-loser catch', async () => {
     const db = makeRaceStubDB()
     const { handleMutations } = await import('./mutations')
 
@@ -546,24 +577,24 @@ describe('partial index race backstop — concurrent dup INSERT (18:00:27 shape)
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${TEST_API_KEY}` },
     })
     const respWork = await handleMutations(reqWork, fakeUser, fakeEnv)
-    const bodyWork = await respWork.json() as { results: Array<{ status: string; reason?: string }> }
+    const bodyWork = await respWork.json() as { results: Array<{ status: string; reason?: string; canonical_id?: string }> }
 
-    // Partial index fired: loser gets status='error' (current behavior — see gap note)
-    // If this assert fails, it means the index was dropped and BOTH inserts succeeded
-    // (regression: back to the 18:00:27 dup state).
-    expect(bodyWork.results[0].status).toBe('error')
-    expect(bodyWork.results[0].reason).toContain('UNIQUE constraint failed')
+    // Partial index fired (INSERT threw), but the race-loser catch re-queried
+    // and adopted the winner: status='accepted', not 'error'.
+    // If this regresses to status='error', the catch's re-query stopped
+    // finding the winner (or was removed) — back to dead-lettering the loser.
+    expect(bodyWork.results[0].status).toBe('accepted')
+    expect(bodyWork.results[0].reason).toContain('race-loser')
+    expect(bodyWork.results[0].reason).toContain('task_01KQQ1SRTWBWREJY0SHPTE5RPJ')
+    expect(bodyWork.results[0].canonical_id).toBe('task_01KQQ1SRTWBWREJY0SHPTE5RPJ')
 
-    // The duplicate was NOT inserted — only the winner row exists
+    // The duplicate was NOT inserted as a separate row — only the winner row exists
     expect(db._store.has('task_01KQQ1SRTWBWREJY0SHPTE5RXX')).toBe(false)
 
-    // Verify index count: both SELECTs saw empty state (race window), both
-    // attempted INSERT — proves the serial dedup didn't help here.
+    // Verify index count: both SERIAL SELECTs saw empty state (race window),
+    // both attempted INSERT — proves the serial dedup didn't catch this, only
+    // the structural partial index + catch backstop did.
     expect(db._insertCount()).toBe(2)
-
-    // CLIENT-SIDE GAP: the loser gets status='error' not status='accepted' with
-    // reason='deduped'. Builder needs to catch the UNIQUE constraint in applyInsert
-    // and return the deduped response. See data/shared/hub-schema-changes.jsonl.
   })
 
   it('regression proof: without the index both concurrent inserts would succeed', async () => {
