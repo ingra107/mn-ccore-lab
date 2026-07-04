@@ -13,6 +13,9 @@
 // with slightly different clamp math). getPosition is a caller-supplied
 // pure function of the trigger rect so each dropdown keeps its own clamp
 // strategy without re-duplicating the portal/reposition/close plumbing.
+// The reposition-on-scroll behavior (vs. the old close-on-any-scroll) is a
+// separate, later fix — GhostSelect's scroll bug (aba74719, 2026-06-11) —
+// not part of #90, which was clamp math only.
 
 import { useState, useRef, useEffect, useCallback, type RefObject } from 'react'
 
