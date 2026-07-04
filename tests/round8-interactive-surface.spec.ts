@@ -162,10 +162,14 @@ test.describe('Interactive surface scan', () => {
       const openedAt = Date.now()
       // Force click to bypass any hover/overlay interception
       await dateCellBtn.click({ force: true }).catch(() => {})
-      // Immediate probes at 50/150/500/1200 ms
+      // The P1-3 rewrite (b1fdb7a0, 2026-06-09) replaced the native
+      // <input type="date"> edit mode with a portal popover:
+      // role="dialog" aria-label="Choose a date" (InlineDatePicker.tsx:171-172).
+      // Probe for that popover, not the retired input.
+      const popover = page.locator('[role="dialog"][aria-label="Choose a date"]')
       const probe = async (delay: number) => {
         await page.waitForTimeout(delay)
-        return await page.locator('input[type="date"]').count()
+        return await popover.count()
       }
       const at50 = await probe(50)
       const at150 = await probe(100)
@@ -180,7 +184,7 @@ test.describe('Interactive surface scan', () => {
         element: 'date-picker',
         action: 'click date button',
         result,
-        notes: `input[type=date] count at 50/150/500/1200ms = ${at50}/${at150}/${at500}/${at1200}; preset buttons visible at end = ${presetsVisible}. ${flashed ? 'CONFIRMS bug #10 — flash-close' : at1200 === 0 ? 'never rendered — click or portal issue' : 'stable'}`,
+        notes: `dialog[aria-label="Choose a date"] count at 50/150/500/1200ms = ${at50}/${at150}/${at500}/${at1200}; preset buttons visible at end = ${presetsVisible}. ${flashed ? 'CONFIRMS bug #10 — flash-close' : at1200 === 0 ? 'never rendered — click or portal issue' : 'stable'}`,
         latencyMs: Date.now() - openedAt,
       })
       if (at1200 > 0) await page.keyboard.press('Escape')
