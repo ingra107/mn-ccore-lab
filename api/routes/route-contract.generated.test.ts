@@ -81,11 +81,22 @@ describe('route contract — generated from ROUTE_REGISTRY', () => {
     // 243 as of 2026-06-21 — B3 Task 8 (+2): GET /api/tasks/:id/links,
     //   GET /api/projects/:slug/links (frontend-accessible stored-links sub-resources).
     // 244 as of 2026-06-21 — backlog #147 (+1): GET /api/projects/links (bulk).
+    // 251 as of 2026-07-04 (backlog #470 — stale-snapshot catch-up, 7 additions
+    // accrued across commits that shipped without bumping this count):
+    //   e4556df9 feat(api): launch-log routes for @-tag delegation (+4):
+    //     GET /api/launch-log, POST /api/launch-log,
+    //     POST /api/launch-log/:id/status, POST /api/launch-log/:id/refire
+    //   f90cdcf9 feat(launch): Hub-minted opaque-token launch protocol (+1):
+    //     POST /api/launch-log/:id/claim
+    //   ee0b1a6b feat(launch-log): unscoped PI-gated GET (+1):
+    //     GET /api/pb/launch-log/pending
+    //   826fd3bf feat(today): durable note capture + @backlog tag (+1):
+    //     POST /api/inbox-events (browser single-capture; GET already existed)
     // Adding a route → increment this number. Removing a route → decrement it.
     // This makes route deletion require explicit acknowledgment, preventing
     // silent surface regression (codex final-audit finding #9, 2026-05-28).
     // If you are intentionally adding or removing routes, update this count.
-    expect(ROUTE_REGISTRY).toHaveLength(244)
+    expect(ROUTE_REGISTRY).toHaveLength(251)
   })
 
   it('every non-public route has either entity or visibility metadata', () => {

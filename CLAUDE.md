@@ -357,7 +357,7 @@ User-level agents at `~/.claude/agents/`. Persistent memory in `agent_knowledge.
 | Worker deploy / D1 query / mutations.ts / KV / R2 / hub_ai_listener / wrangler | **hub-backend** (Sonnet) |
 | Schema drift between brain.db ↔ D1 / pending change-spec from Builder / type generation | **hub-schema-sync** (Sonnet) |
 
-**Cross-system handoff:** Builder writes change-specs to `C:/Users/ingra107/Peripheral-Brain/data/shared/hub-schema-changes.jsonl`. On next Hub session, dispatch `hub-schema-sync` to apply pending specs.
+**Cross-system handoff (updated 2026-07-04 — the jsonl handoff file below is retired; F1, 2026-06-02):** field-authority changes originate in PB's `scripts/db/schema_dsl.py` (SSOT), flow through `schema_dsl_codegen.py` + `pb-schema/sync_from_pb.py` into the `pb-schema` submodule's generated artifacts, and reach Hub when `mn-ccore-lab` bumps the submodule pointer + deploys — `mutations.ts` imports `TABLE_FIELDS` from the generated package rather than an inline literal. D1 schema migrations (CREATE TABLE / ALTER) are still a separate `hub-schema-sync` step per the standard schema-change workflow (decision doc → migration → pb-schema regen).
 
 **Depth-2 limit:** Hub specialists cannot dispatch other agents directly — return "next: dispatch X" to COO.
 
