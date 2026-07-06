@@ -11,7 +11,7 @@ import { useState, useMemo, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { PATHS } from '../../../constants/paths'
 import { ACCENT_TEAL, ACCENT_GOLD, INK, INK_MUTED, INK_DIM } from '../constants'
-import { CollapseChevron } from '../SectionCollapseToggle'
+import { CollapseChevron, collapseToggleProps } from '../SectionCollapseToggle'
 
 const SHOW_ALL_KEY = 'today_projects_show_all'
 
@@ -50,12 +50,7 @@ export function ProjectsCard({ projects }: { projects: ProjectEntry[] }) {
   return (
     <div style={{ marginBottom: 14 }}>
       <div
-        role="button"
-        tabIndex={0}
-        aria-expanded={open}
-        aria-label={open ? 'Collapse Projects' : 'Expand Projects'}
-        onClick={() => setOpen((o) => !o)}
-        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen((o) => !o) } }}
+        {...collapseToggleProps(open, () => setOpen((o) => !o), 'Projects')}
         style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, cursor: 'pointer' }}
       >
         <span style={{ width: 6, height: 6, borderRadius: '50%', background: ACCENT_TEAL }} />

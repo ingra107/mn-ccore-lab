@@ -5,7 +5,7 @@
 
 import { useMemo, useState, useCallback } from 'react'
 import { TaskRow } from './TaskRow'
-import { CollapseChevron } from './SectionCollapseToggle'
+import { CollapseChevron, collapseToggleProps } from './SectionCollapseToggle'
 import { GROUP_META, INK_DIM, PANEL_BG, withAlpha, isTaskDone, type GroupKey } from './constants'
 import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow as TaskRowData } from '../../lib/api'
@@ -34,12 +34,7 @@ export function TaskGroup({ gkey, tasks, projectsByPid, state }: { gkey: GroupKe
   return (
     <div style={{ marginBottom: 20 }}>
       <div
-        role="button"
-        tabIndex={0}
-        aria-expanded={open}
-        aria-label={open ? `Collapse ${meta.label}` : `Expand ${meta.label}`}
-        onClick={() => setOpen((o) => !o)}
-        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen((o) => !o) } }}
+        {...collapseToggleProps(open, () => setOpen((o) => !o), meta.label)}
         style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, padding: '0 2px', cursor: 'pointer' }}
       >
         <span style={{ fontSize: 14 }}>{meta.icon}</span>

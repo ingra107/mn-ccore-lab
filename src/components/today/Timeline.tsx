@@ -48,7 +48,7 @@ import EmptyStateArt from '../EmptyStateArt'
 import { type SaveStatus } from './MeetingRow'
 import { useIsMobile } from '../../hooks/useIsMobile'
 import { TimelineGrid } from './TimelineGrid'
-import { CollapseChevron } from './SectionCollapseToggle'
+import { CollapseChevron, collapseToggleProps } from './SectionCollapseToggle'
 import {
   ACCENT_GOLD, ACCENT_TEAL, INK_DIM, withAlpha,
   type PlannedSlot, type TodayEvent,
@@ -234,12 +234,7 @@ export function Timeline({ events, tasks, state, projectsByPid, activeView, onTo
           needed). */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
         <div
-          role="button"
-          tabIndex={0}
-          aria-expanded={open}
-          aria-label={open ? 'Collapse Today section' : 'Expand Today section'}
-          onClick={onToggleOpen}
-          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggleOpen() } }}
+          {...collapseToggleProps(open, onToggleOpen, 'Today section')}
           style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}
         >
           <span style={{ fontSize: 16 }}>📅</span>

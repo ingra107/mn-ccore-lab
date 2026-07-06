@@ -14,7 +14,7 @@
 
 import { useState } from 'react'
 import { ACCENT_GOLD, INK, INK_MUTED, daysSince, withAlpha } from '../constants'
-import { CollapseChevron } from '../SectionCollapseToggle'
+import { CollapseChevron, collapseToggleProps } from '../SectionCollapseToggle'
 import type { TaskRow } from '../../../lib/api'
 
 interface HermesSuggestsProps {
@@ -65,12 +65,7 @@ export function HermesSuggestsCard({ overdueTasks, stalledProjects, menteesWithD
   return (
     <div style={{ padding: 14, background: withAlpha(ACCENT_GOLD, 6), border: `1px solid ${withAlpha(ACCENT_GOLD, 20)}`, borderRadius: 'var(--radius-md)', marginBottom: 14 }}>
       <div
-        role="button"
-        tabIndex={0}
-        aria-expanded={open}
-        aria-label={open ? "Collapse Today's focus" : "Expand Today's focus"}
-        onClick={() => setOpen((o) => !o)}
-        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen((o) => !o) } }}
+        {...collapseToggleProps(open, () => setOpen((o) => !o), "Today's focus")}
         style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: open ? 8 : 0, cursor: 'pointer' }}
       >
         <span style={{ width: 6, height: 6, borderRadius: '50%', background: ACCENT_GOLD }} />

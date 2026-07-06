@@ -17,7 +17,7 @@
 import { useState, useCallback } from 'react'
 import { useDroppable } from '@dnd-kit/core'
 import { PlannedTaskRow } from './PlannedTaskRow'
-import { CollapseChevron } from './SectionCollapseToggle'
+import { CollapseChevron, collapseToggleProps } from './SectionCollapseToggle'
 import { ACCENT_GOLD, ACCENT_TEAL, INK_DIM, INK_MUTED, withAlpha } from './constants'
 import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow } from '../../lib/api'
@@ -58,12 +58,7 @@ export function PlannedTodaySection({
     >
       {/* Section header — clear boundary between calendar and planned list */}
       <div
-        role="button"
-        tabIndex={0}
-        aria-expanded={open}
-        aria-label={open ? 'Collapse Planned today' : 'Expand Planned today'}
-        onClick={() => setOpen((o) => !o)}
-        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen((o) => !o) } }}
+        {...collapseToggleProps(open, () => setOpen((o) => !o), 'Planned today')}
         style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14, cursor: 'pointer' }}
       >
         <span style={{ fontSize: 14 }}>📋</span>

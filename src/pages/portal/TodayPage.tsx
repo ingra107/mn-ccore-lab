@@ -36,7 +36,7 @@ import {
 } from '../../components/today/constants'
 import { PillStrip } from '../../components/today/PillStrip'
 import { Timeline } from '../../components/today/Timeline'
-import { CollapseChevron } from '../../components/today/SectionCollapseToggle'
+import { CollapseChevron, collapseToggleProps } from '../../components/today/SectionCollapseToggle'
 import { TodayDndContext } from '../../components/today/TodayDndContext'
 import { PlannedTodaySection } from '../../components/today/PlannedTodaySection'
 import { TaskGroup } from '../../components/today/TaskGroup'
@@ -503,12 +503,7 @@ export default function TodayPage() {
                 clicks never reach the collapse handler. */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
               <div
-                role="button"
-                tabIndex={0}
-                aria-expanded={timelineOpen}
-                aria-label={timelineOpen ? 'Collapse Today section' : 'Expand Today section'}
-                onClick={() => setTimelineOpen((o) => !o)}
-                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setTimelineOpen((o) => !o) } }}
+                {...collapseToggleProps(timelineOpen, () => setTimelineOpen((o) => !o), 'Today section')}
                 style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}
               >
                 <span style={{ fontSize: 16 }}>📅</span>
@@ -597,19 +592,14 @@ export default function TodayPage() {
 
         <div data-b2-completed style={{ marginTop: 24, paddingTop: 16, borderTop: '1px dashed rgba(255,255,255,0.08)' }}>
           <div
-            role="button"
-            tabIndex={0}
-            aria-expanded={completedOpen}
-            aria-label={completedOpen ? 'Collapse Completed today' : 'Expand Completed today'}
-            onClick={() => setCompletedOpen(!completedOpen)}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setCompletedOpen(!completedOpen) } }}
+            {...collapseToggleProps(completedOpen, () => setCompletedOpen(!completedOpen), 'Completed today')}
             style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', padding: '4px 0' }}
           >
             <span style={{ fontSize: 12, color: ACCENT_GREEN }}>✓</span>
             <span style={{ fontSize: 11, color: INK_MUTED, letterSpacing: '0.06em', textTransform: 'uppercase', fontWeight: 500 }}>
               Completed today ({doneTodayDetail.length + localDoneIds.length})
             </span>
-            <span style={{ color: INK_DIM }}>{completedOpen ? '▾' : '▸'}</span>
+            <CollapseChevron open={completedOpen} />
           </div>
           {completedOpen && (
             <div style={{ marginTop: 12, paddingLeft: 20 }}>

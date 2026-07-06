@@ -7,7 +7,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ACCENT_CORAL, ACCENT_ORANGE, INK, INK_DIM, daysSince, withAlpha } from '../constants'
-import { CollapseChevron } from '../SectionCollapseToggle'
+import { CollapseChevron, collapseToggleProps } from '../SectionCollapseToggle'
 import { PATHS } from '../../../constants/paths'
 import type { TaskRow } from '../../../lib/api'
 import TaskTitle from '../../tasks/TaskTitle'
@@ -23,12 +23,7 @@ export function NeedsAttentionCard({ overdueTasks, stalledProjects }: { overdueT
   return (
     <div data-b2-attention style={{ marginBottom: 14 }}>
       <div
-        role="button"
-        tabIndex={0}
-        aria-expanded={open}
-        aria-label={open ? 'Collapse Needs attention' : 'Expand Needs attention'}
-        onClick={() => setOpen((o) => !o)}
-        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen((o) => !o) } }}
+        {...collapseToggleProps(open, () => setOpen((o) => !o), 'Needs attention')}
         style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8, cursor: 'pointer' }}
       >
         <span style={{ width: 6, height: 6, borderRadius: '50%', background: ACCENT_CORAL }} />

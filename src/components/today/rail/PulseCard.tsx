@@ -9,7 +9,7 @@
 
 import { useState } from 'react'
 import { ACCENT_GOLD, INK, INK_MUTED, INK_DIM } from '../constants'
-import { CollapseChevron } from '../SectionCollapseToggle'
+import { CollapseChevron, collapseToggleProps } from '../SectionCollapseToggle'
 
 export function PulseCard({ focusMin, milestones, mentees }: { focusMin: number; milestones: Array<{ title: string; days: number }>; mentees: Array<{ name: string; next: string }> }) {
   // Session-only collapse — starts expanded on every load (no localStorage).
@@ -17,12 +17,7 @@ export function PulseCard({ focusMin, milestones, mentees }: { focusMin: number;
   return (
     <div>
       <div
-        role="button"
-        tabIndex={0}
-        aria-expanded={open}
-        aria-label={open ? 'Collapse Pulse' : 'Expand Pulse'}
-        onClick={() => setOpen((o) => !o)}
-        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen((o) => !o) } }}
+        {...collapseToggleProps(open, () => setOpen((o) => !o), 'Pulse')}
         style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8, cursor: 'pointer' }}
       >
         <span style={{ width: 6, height: 6, borderRadius: '50%', background: ACCENT_GOLD }} />
