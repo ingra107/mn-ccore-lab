@@ -176,6 +176,14 @@
     }
   },
   {
+    "raw": "https://claude.ai/code/artifact/8c4ef21e-a9f5-428a-bf70-1fc318aa15d5?foo=bar",
+    "expected": {
+      "type": "artifact",
+      "canonical_url": "https://claude.ai/code/artifact/8c4ef21e-a9f5-428a-bf70-1fc318aa15d5",
+      "short_title": "Claude Artifact"
+    }
+  },
+  {
     "raw": "https://docs.google.com/document/d/1z5om70ImuWwpm7y-FvFfxg7V_tDvTtnXnyIrb-Fr9Gg/edit",
     "expected": {
       "type": "google_doc",
