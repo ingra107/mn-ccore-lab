@@ -91,7 +91,6 @@ export function TaskRow({ task, project, state, expandedId, onExpand, projectsBy
   return (
     // dnd-kit wrapper: setNodeRef + listeners activate the PointerSensor when the
     // user grabs the row (specifically the grip icon inside SharedTaskRow).
-    // draggable=false on SharedTaskRow disables native HTML5 DnD.
     // opacity: 0.5 while actively dragging for visual feedback.
     <div
       ref={setDragNodeRef}
@@ -110,7 +109,16 @@ export function TaskRow({ task, project, state, expandedId, onExpand, projectsBy
       isPlanned={!!planned}
       plannedLabel={planned?.slot === 'strip' ? 'planned' : 'scheduled'}
       showGroupOverridePin
-      draggable={false}
+      // draggable gates ONLY SharedTaskRow's DragHandle render (the visual ⋮⋮
+      // grip icon) — it is never applied as a native HTML draggable= attribute
+      // anywhere in SharedTaskRow (today/TaskRow.tsx is its sole caller passing
+      // this prop; grep-verified 2026-07-06). The GH#150 migration set this to
+      // a hardcoded `false` believing it disabled native HTML5 DnD, but with
+      // onDragStart already undefined there was nothing native to disable —
+      // the only real effect was silently deleting the grip icon (regression,
+      // found while root-causing drag-to-plan test failures; see #492 handoff).
+      // Restored to the pre-migration `!isDone` gate.
+      draggable={!isDone}
       onDragStart={onDragStart}
       onTogglePlan={() => (planned?.slot === 'strip' ? state.unplan(task.id) : state.planAt(task.id, 'strip'))}
       leadingTag={tagForTask(task, projectsByPid)}

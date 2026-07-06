@@ -4,11 +4,21 @@
 // + in-page SmartCompose chat were replaced by the ubiquitous WorkOnActions
 // (📂 + ▶) that appear inline on every task surface. The strip list now shows
 // ALL planned-strip tasks (rightNow is no longer excluded from this list).
+//
+// `slot:strip` droppable (2026-07-06, found while root-causing drag-to-plan
+// test failures — see #492 handoff): when this section was extracted out of
+// Timeline.tsx (2f080f0f, 2026-06-16) and the whole surface later migrated to
+// dnd-kit (bcd72c6a, GH#150, 2026-06-24), nobody re-registered a droppable
+// here. TodayDndContext.onDragEnd already routes any `slot:strip` drop to
+// state.planAt(taskId, 'strip') — it just had no droppable to land on, so
+// dragging a task onto "Planned today" silently no-opped (confirmed via a
+// live probe: zero API calls fired). The 📌 button path was unaffected.
 
 import { useState, useCallback } from 'react'
+import { useDroppable } from '@dnd-kit/core'
 import { PlannedTaskRow } from './PlannedTaskRow'
 import { CollapseChevron } from './SectionCollapseToggle'
-import { ACCENT_TEAL, INK_DIM, INK_MUTED } from './constants'
+import { ACCENT_GOLD, ACCENT_TEAL, INK_DIM, INK_MUTED, withAlpha } from './constants'
 import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow } from '../../lib/api'
 
@@ -29,8 +39,23 @@ export function PlannedTodaySection({
   // Session-only collapse — starts expanded on every load (Nick's ask, no localStorage).
   const [open, setOpen] = useState(true)
 
+  // dnd-kit droppable — TodayDndContext.onDragEnd already handles `slot:strip`
+  // (writes plan_slot='strip', no plan_start_min); this registers the target.
+  const { isOver, setNodeRef } = useDroppable({ id: 'slot:strip' })
+
   return (
-    <section data-b2-planned-today style={{ marginBottom: 24 }}>
+    <section
+      ref={setNodeRef}
+      data-b2-planned-today
+      style={{
+        marginBottom: 24,
+        borderRadius: 8,
+        outline: isOver ? `1.5px dashed ${withAlpha(ACCENT_GOLD, 55)}` : '1.5px dashed transparent',
+        outlineOffset: 4,
+        background: isOver ? withAlpha(ACCENT_GOLD, 6) : 'transparent',
+        transition: 'all 120ms',
+      }}
+    >
       {/* Section header — clear boundary between calendar and planned list */}
       <div
         role="button"
