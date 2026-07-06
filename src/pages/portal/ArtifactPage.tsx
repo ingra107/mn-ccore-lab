@@ -43,6 +43,10 @@ interface Artifact {
   title: string
   body_md: string
   version: number
+  // content_type is additive (schema-v94); older rows / pre-migration
+  // fetches may not carry it — treat anything other than the literal
+  // 'html' as markdown (the safe default, matches today's render).
+  content_type?: 'markdown' | 'html' | string
   task_id: string | null
   project_id: string | null
   created_by: string
@@ -289,12 +293,34 @@ export default function ArtifactPage() {
           </button>
         </div>
 
-        {/* ── Document body ── */}
+        {/* ── Document body ──
+            HTML artifacts (content_type='html', schema-v94) render LIVE in a
+            sandboxed iframe: sandbox="allow-scripts" WITHOUT "allow-same-origin"
+            puts the doc in an opaque origin — scripts run (interactive
+            artifacts work) but it can never read/touch the Hub session
+            (cookies, storage, parent DOM). Markdown artifacts (default,
+            including missing/undefined content_type) render exactly as
+            before via MarkdownView — no regression there. */}
         <div
           className="detail-card"
           style={{ background: 'var(--ice)', borderRadius: 'var(--radius-xl)', padding: '1.5rem 1.75rem', marginBottom: '2rem' }}
         >
-          <MarkdownView source={artifact.body_md} />
+          {artifact.content_type === 'html' ? (
+            <iframe
+              title={`${artifact.title} (interactive artifact)`}
+              sandbox="allow-scripts"
+              srcDoc={artifact.body_md}
+              style={{
+                width: '100%',
+                minHeight: '70vh',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: 'var(--radius-lg)',
+                background: '#fff',
+              }}
+            />
+          ) : (
+            <MarkdownView source={artifact.body_md} />
+          )}
         </div>
 
         {/* ── Activity feed + composer ── */}

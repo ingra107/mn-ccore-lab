@@ -1,5 +1,5 @@
 // GENERATED from scripts/links/link_contract.py -- DO NOT EDIT BY HAND.
-// rules_hash=d60a279df8e057334f379173ac46be43b51810211d02f678b1c571db0d2bfda5
+// rules_hash=2b9403b2fe4d72515e8ae193e47a2271d0d2e6e306d46a3509403e5fc8170969
 // Regenerate: python -X utf8 scripts/links/gen_links.py (in the Peripheral-Brain repo).
 //
 // INERT (Phase 1): exported but not imported by app code. urlClassify.ts is the
@@ -17,7 +17,7 @@ export interface PbCanonicalLink {
   source_raw: string | null
 }
 
-export const PB_LINK_RULES_HASH = 'd60a279df8e057334f379173ac46be43b51810211d02f678b1c571db0d2bfda5'
+export const PB_LINK_RULES_HASH = '2b9403b2fe4d72515e8ae193e47a2271d0d2e6e306d46a3509403e5fc8170969'
 
 interface PbLinkRule {
   type: string
@@ -159,6 +159,13 @@ const PB_LINK_RULES: PbLinkRule[] = [
     "id_group": 1,
     "match": "https?://claude\\.ai/code/artifact/([0-9a-fA-F-]{8,})",
     "title": "Claude Artifact",
+    "type": "artifact"
+  },
+  {
+    "canonical": "https://mn-ccore-lab.pages.dev/a/\\1",
+    "id_group": 1,
+    "match": "https?://[^\\s]+/a/(art_[0-9a-fA-F]+)",
+    "title": "Artifact",
     "type": "artifact"
   },
   {

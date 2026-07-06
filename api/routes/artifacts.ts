@@ -31,9 +31,26 @@ interface ArtifactRow {
   task_id: string | null;
   project_id: string | null;
   created_by: string;
+  // schema-v94: content_type/visibility — see api/routes/public-artifact.ts for
+  // the public GET /a/:id consumer of these two columns.
+  content_type: string;
+  visibility: string;
   created_at: string;
   updated_at: string;
 }
+
+// schema-v94 allow-lists. Any value outside these is rejected 400 in
+// handleCreateArtifact; the DB CHECK constraints (schema-v94-artifact-visibility.sql)
+// are the backstop for writers that bypass this route.
+const ALLOWED_CONTENT_TYPES = new Set(['markdown', 'html']);
+const ALLOWED_VISIBILITIES = new Set(['team', 'public']);
+
+// Abuse cap on stored body size. ~2M chars comfortably fits rich self-contained
+// HTML artifacts (inline CSS/JS + reasonably-sized data: URI images) while
+// bounding the blast radius of a single D1 row / worker-memory allocation from
+// a malicious or buggy caller — a clear 400 here beats an opaque D1/worker
+// failure further downstream for an oversized payload.
+const MAX_BODY_MD_LENGTH = 2_000_000;
 
 // ── GET /api/artifacts?since=&limit= ────────────────────────────────────────────
 // List artifacts newest-first. `?since=` (ISO/SQL UTC) filters updated_at > since
@@ -86,9 +103,15 @@ import { mirrorArtifactLink } from '../lib/artifact-link-mirror';
 // ── POST /api/artifacts ─────────────────────────────────────────────────────────
 // Create an artifact. Callable by Hermes (API key → created_by='claude-ai' when
 // the body says so) and by authed team members. Body:
-//   { title, body_md, task_id?, project_id?, created_by? }
+//   { title, body_md, task_id?, project_id?, created_by?, content_type?, visibility? }
 // project_id is stored as-given (typed proj_* per Slice-C convention — the caller
 // passes the canonical id; we do not slug-resolve here).
+//
+// schema-v94: content_type ('markdown' default | 'html') + visibility ('team'
+// default | 'public') — omitting either preserves pre-v94 behavior exactly.
+// 'public' + 'html' is the only combination the new public GET /a/:id route
+// (api/routes/public-artifact.ts) will ever serve; every other combination
+// 404s there. An out-of-allow-list value is rejected 400, never coerced.
 //
 // Level-1 invariant: when task_id is supplied, the artifact CANNOT be created
 // without attempting to link it — the INSERT(artifact) and UPDATE(task key_link)
@@ -107,10 +130,27 @@ export async function handleCreateArtifact(
     task_id?: string | null;
     project_id?: string | null;
     created_by?: string;
+    content_type?: string;
+    visibility?: string;
   };
 
   if (!body.title?.trim()) return error('title required', 400);
   if (!body.body_md?.trim()) return error('body_md required', 400);
+  if (body.body_md.length > MAX_BODY_MD_LENGTH) {
+    return error(`body_md exceeds maximum size (${MAX_BODY_MD_LENGTH.toLocaleString()} chars)`, 400);
+  }
+
+  // schema-v94: content_type/visibility are optional — omitting either preserves
+  // today's behavior exactly (markdown, team). A caller that supplies a value
+  // outside the allow-list is rejected, not silently coerced to the default.
+  if (body.content_type !== undefined && !ALLOWED_CONTENT_TYPES.has(body.content_type)) {
+    return error(`content_type must be one of: ${[...ALLOWED_CONTENT_TYPES].join(', ')}`, 400);
+  }
+  if (body.visibility !== undefined && !ALLOWED_VISIBILITIES.has(body.visibility)) {
+    return error(`visibility must be one of: ${[...ALLOWED_VISIBILITIES].join(', ')}`, 400);
+  }
+  const contentType = body.content_type ?? 'markdown';
+  const visibility = body.visibility ?? 'team';
 
   // Resolve the author. claude-ai (Hermes) is always allowed; impersonating a
   // specific team slug requires PI/service authority (resolveActor enforces).
@@ -124,8 +164,8 @@ export async function handleCreateArtifact(
 
   // Build the artifact INSERT statement (always executed).
   const insertArtifact = env.DB.prepare(
-    `INSERT INTO artifacts (id, title, body_md, version, task_id, project_id, created_by, created_at, updated_at)
-     VALUES (?, ?, ?, 1, ?, ?, ?, datetime('now'), datetime('now'))`
+    `INSERT INTO artifacts (id, title, body_md, version, task_id, project_id, created_by, content_type, visibility, created_at, updated_at)
+     VALUES (?, ?, ?, 1, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`
   ).bind(
     id,
     body.title.trim(),
@@ -133,6 +173,8 @@ export async function handleCreateArtifact(
     taskId,
     body.project_id || null,
     actor.slug,
+    contentType,
+    visibility,
   );
 
   // When task_id is provided, attempt to backfill the first empty key_link slot
@@ -221,10 +263,22 @@ export async function handleReviseArtifact(
   ).bind(id).first<ArtifactRow>();
   if (!current) return error('Artifact not found', 404);
 
+  const isPi = await isPiRequest(request, env);
   const actor = await resolveActor(env, user, body.revised_by, {
-    allowImpersonation: await isPiRequest(request, env),
+    allowImpersonation: isPi,
   });
   if ('error' in actor) return error(actor.error, 400);
+
+  // Ownership gate (mirrors handleDeleteArtifact's PI-only gate below, plus a
+  // creator carve-out): without this, ANY authed team member could overwrite
+  // body_md on someone ELSE's artifact — including one already visibility=
+  // 'public' and served live at GET /a/:id — i.e. inject arbitrary HTML into
+  // a link a third party already has open. Only the artifact's own creator
+  // or a PI/service-key (Hermes' hub_ai_listener auths via PB_API_KEY, which
+  // isPiRequest() treats as PI-equivalent) may revise.
+  if (actor.slug !== current.created_by && !isPi) {
+    return error('Forbidden — only the artifact creator or a PI may revise it', 403);
+  }
 
   // 1. Archive the CURRENT body at its current version number.
   await env.DB.prepare(

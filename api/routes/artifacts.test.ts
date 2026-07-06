@@ -2,7 +2,7 @@
  * artifacts.test.ts — Hermes Artifacts v1 route behavior.
  *
  * Covers:
- *   - create: validation (title/body_md required), id mint, version=1, actor
+ *   - create: validation (title/body_md required, body_md size cap), id mint, version=1, actor
  *   - create + key_link: task_id set + empty slots → slot 1 gets abs URL + desc
  *   - create + key_link: task_id set + slots 1&2 full → writes slot 3
  *   - create + key_link: task_id set + all 3 full → no link write, artifact created
@@ -11,6 +11,7 @@
  *   - get: 404 when missing; returns artifact + versions
  *   - revise: archives current body, bumps version, idempotent archive (INSERT OR IGNORE)
  *   - revise: 404 when missing; body_md required
+ *   - revise: ownership gate — creator or PI allowed, other member 403
  *   - comments: routes through postActivityEntry(entityType='artifact')
  *   - delete: PI-gated (403 for non-PI), cascades activity_entries + versions
  */
@@ -137,6 +138,24 @@ describe('artifacts routes', () => {
     expect(res.status).toBe(400);
   });
 
+  it('create: 400 when body_md exceeds the size cap', async () => {
+    const env = { DB: makeDb({}) } as unknown as Env;
+    const oversized = 'x'.repeat(2_000_001);
+    const res = await handleCreateArtifact(req({ title: 'Too big', body_md: oversized }), USER, env);
+    expect(res.status).toBe(400);
+    const payload = await res.json() as { error?: string };
+    expect(payload.error).toMatch(/exceeds maximum size/);
+  });
+
+  it('create: exactly at the size cap is accepted', async () => {
+    const writes: Array<{ sql: string; binds: unknown[] }> = [];
+    const created = { id: 'art_cap', title: 'At cap', body_md: 'x', version: 1, created_by: 'nick-ingraham' };
+    const env = { DB: makeDb({ artifact: created, captureWrite: (sql, binds) => writes.push({ sql, binds }) }) } as unknown as Env;
+    const atCap = 'x'.repeat(2_000_000);
+    const res = await handleCreateArtifact(req({ title: 'At cap', body_md: atCap }), USER, env);
+    expect(res.status).toBe(201);
+  });
+
   it('create: inserts with version 1 and art_ id, returns 201', async () => {
     const writes: Array<{ sql: string; binds: unknown[] }> = [];
     const created = { id: 'art_xyz', title: 'Lit review', body_md: '# Hello', version: 1, created_by: 'claude-ai' };
@@ -156,6 +175,50 @@ describe('artifacts routes', () => {
     expect(insert!.binds).toContain('task_1');
     expect(insert!.binds).toContain('proj_1');
     expect(insert!.binds).toContain('claude-ai');
+  });
+
+  // ── create: schema-v94 content_type/visibility ───────────────────────────────
+
+  it('create: omitting content_type/visibility defaults to markdown/team', async () => {
+    const writes: Array<{ sql: string; binds: unknown[] }> = [];
+    const created = { id: 'art_defaults', title: 'T', body_md: 'B', version: 1, created_by: 'nick-ingraham' };
+    const env = { DB: makeDb({ artifact: created, captureWrite: (sql, binds) => writes.push({ sql, binds }) }) } as unknown as Env;
+
+    const res = await handleCreateArtifact(req({ title: 'T', body_md: 'B' }), USER, env);
+
+    expect(res.status).toBe(201);
+    const insert = writes.find((w) => /INSERT INTO artifacts/.test(w.sql));
+    expect(insert!.binds).toContain('markdown');
+    expect(insert!.binds).toContain('team');
+  });
+
+  it('create: accepts content_type=html + visibility=public, stores both', async () => {
+    const writes: Array<{ sql: string; binds: unknown[] }> = [];
+    const created = { id: 'art_public', title: 'Shared', body_md: '<html></html>', version: 1, created_by: 'nick-ingraham' };
+    const env = { DB: makeDb({ artifact: created, captureWrite: (sql, binds) => writes.push({ sql, binds }) }) } as unknown as Env;
+
+    const res = await handleCreateArtifact(
+      req({ title: 'Shared', body_md: '<html></html>', content_type: 'html', visibility: 'public' }),
+      USER,
+      env,
+    );
+
+    expect(res.status).toBe(201);
+    const insert = writes.find((w) => /INSERT INTO artifacts/.test(w.sql));
+    expect(insert!.binds).toContain('html');
+    expect(insert!.binds).toContain('public');
+  });
+
+  it('create: 400 on invalid content_type', async () => {
+    const env = { DB: makeDb({}) } as unknown as Env;
+    const res = await handleCreateArtifact(req({ title: 'T', body_md: 'B', content_type: 'pdf' }), USER, env);
+    expect(res.status).toBe(400);
+  });
+
+  it('create: 400 on invalid visibility', async () => {
+    const env = { DB: makeDb({}) } as unknown as Env;
+    const res = await handleCreateArtifact(req({ title: 'T', body_md: 'B', visibility: 'world' }), USER, env);
+    expect(res.status).toBe(400);
   });
 
   // ── create + key_link auto-backfill ──────────────────────────────────────────
@@ -368,8 +431,11 @@ describe('artifacts routes', () => {
 
   it('revise: archives current body at current version, bumps to version+1', async () => {
     const writes: Array<{ sql: string; binds: unknown[] }> = [];
+    // created_by='claude-ai' matches the mocked resolveActor's resolution for
+    // the { email: 'claude-ai' } caller below — this test exercises the
+    // creator-matches-actor branch of the ownership gate, not the PI branch.
     const env = { DB: makeDb({
-      artifact: { id: 'art_1', version: 2, body_md: 'old body', title: 'Old title' },
+      artifact: { id: 'art_1', version: 2, body_md: 'old body', title: 'Old title', created_by: 'claude-ai' },
       captureWrite: (sql, binds) => writes.push({ sql, binds }),
     }) } as unknown as Env;
 
@@ -393,6 +459,40 @@ describe('artifacts routes', () => {
     expect(update).toBeDefined();
     expect(update!.binds).toContain('new body');
     expect(update!.binds).toContain(3);           // version+1
+  });
+
+  // ── revise: ownership gate ───────────────────────────────────────────────────
+
+  it('revise: creator (actor.slug === created_by) is allowed even when not PI', async () => {
+    mockIsPi.mockResolvedValue(false);
+    const env = { DB: makeDb({
+      artifact: { id: 'art_1', version: 1, body_md: 'old', title: 'T', created_by: 'nick-ingraham' },
+    }) } as unknown as Env;
+    // Mocked resolveActor resolves USER (non-claude-ai email) to 'nick-ingraham'.
+    const res = await handleReviseArtifact('art_1', req({ body_md: 'new' }), USER, env);
+    expect(res.status).toBe(200);
+  });
+
+  it('revise: PI is allowed to revise an artifact they did not create', async () => {
+    mockIsPi.mockResolvedValue(true);
+    const env = { DB: makeDb({
+      artifact: { id: 'art_1', version: 1, body_md: 'old', title: 'T', created_by: 'someone-else' },
+    }) } as unknown as Env;
+    const res = await handleReviseArtifact('art_1', req({ body_md: 'new' }), USER, env);
+    expect(res.status).toBe(200);
+  });
+
+  it('revise: 403 for a non-creator, non-PI team member', async () => {
+    mockIsPi.mockResolvedValue(false);
+    const env = { DB: makeDb({
+      artifact: { id: 'art_1', version: 1, body_md: 'old', title: 'T', created_by: 'someone-else' },
+    }) } as unknown as Env;
+    // USER resolves to 'nick-ingraham' via the mocked resolveActor — mismatches
+    // created_by='someone-else', and isPiRequest is mocked false.
+    const res = await handleReviseArtifact('art_1', req({ body_md: 'new' }), USER, env);
+    expect(res.status).toBe(403);
+    const payload = await res.json() as { error?: string };
+    expect(payload.error).toMatch(/creator or a PI/);
   });
 
   // ── comments ──────────────────────────────────────────────────────────────────
