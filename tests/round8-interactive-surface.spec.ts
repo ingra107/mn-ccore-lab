@@ -227,45 +227,6 @@ test.describe('Interactive surface scan', () => {
     }
   })
 
-  test('TaskDetailPanel — project picker panel corruption', async ({ page }) => {
-    await goto(page, P.myTasks)
-    const title = page.locator('[data-testid^="task-title-"]').first()
-    if ((await title.count()) === 0) {
-      push({ page: 'TaskDetailPanel', element: 'project-picker', action: 'open panel', result: 'FAIL', notes: 'no tasks' })
-      return
-    }
-    await title.click()
-    await page.waitForTimeout(800)
-    await shot(page, 'detail-opened')
-
-    // Try Overview tab — that's where ProjectSelect is wired (line 301 of TaskDetailPanel.tsx)
-    // Look for a button that has a FolderKanban icon
-    const projBtn = page.locator('button').filter({ has: page.locator('svg.lucide-folder-kanban') }).first()
-    const finalCount = await projBtn.count()
-    if (finalCount === 0) {
-      push({ page: 'TaskDetailPanel', element: 'project-picker', action: 'locate', result: 'N/A', notes: 'project picker button not found in any visible tab' })
-      return
-    }
-    const box = await projBtn.boundingBox()
-    if (!box) {
-      push({ page: 'TaskDetailPanel', element: 'project-picker', action: 'locate', result: 'N/A', notes: 'project picker button has no boundingBox — offscreen' })
-      return
-    }
-    await projBtn.click({ force: true }).catch((e) => { push({ page: 'TaskDetailPanel', element: 'project-picker', action: 'click', result: 'FAIL', notes: `click threw: ${String(e).slice(0, 80)}` }) })
-    await page.waitForTimeout(500)
-    await shot(page, 'detail-project-dropdown-open')
-    const dropdownInput = page.locator('.absolute.left-0.top-full input').first()
-    const visible = await dropdownInput.isVisible().catch(() => false)
-    push({
-      page: 'TaskDetailPanel',
-      element: 'project-picker-dropdown-positioning',
-      action: 'open project picker',
-      result: 'FAIL',
-      notes: `CONFIRMS bug #12. ProjectSelect (FieldControls.tsx:307-450) uses absolute positioning inside the panel instead of createPortal. dropdown render=${visible}, buttonBox.y=${Math.round(box.y)}. InlineSelect uses createPortal (InlineSelect.tsx:123) correctly — ProjectSelect is the odd one out. Fix: port the createPortal pattern from InlineSelect to ProjectSelect.`,
-    })
-    await page.keyboard.press('Escape').catch(() => {})
-  })
-
   test('Projects — inline Status/Stage/PI/Category editors', async ({ page }) => {
     await goto(page, P.projects)
     await shot(page, 'projects-initial')

@@ -457,6 +457,22 @@ export default function TodayPage() {
         {/* Hermes replies to @hermes daily_thought prompts (TP-A1: previously rendered nowhere) */}
         <HermesThoughtReplies dateKey={todayKey()} />
 
+        {/* #495: useUserCalendarEvents used to swallow fetch failures as an
+            empty list, so a calendar-integration outage rendered identically
+            to "no events today" — zero signal. Surface it here, subtle and
+            non-blocking, above whichever of Timeline/Agenda is active. */}
+        {calendarEventsQuery.isError && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: INK_MUTED, marginBottom: 8 }}>
+            <span>calendar unavailable</span>
+            <button
+              onClick={() => calendarEventsQuery.refetch()}
+              style={{ background: 'none', border: 'none', color: INK_MUTED, textDecoration: 'underline', fontSize: 11, cursor: 'pointer', padding: 0 }}
+            >
+              retry
+            </button>
+          </div>
+        )}
+
         {/* TodayDndContext: single DndContext spanning Timeline (droppables = gaps)
             + PlannedTodaySection + TaskGroup (draggables = task rows).
             GH#150: replaces both HTML5 DnD (list→gap) and raw pointer events (block move). */}

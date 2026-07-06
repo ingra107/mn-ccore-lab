@@ -1619,7 +1619,11 @@ export function useUserCalendarEvents() {
     queryKey: ['user-calendar-events'],
     queryFn: async (): Promise<UserCalendarEvent[]> => {
       const res = await fetch('/api/integrations/calendar/events')
-      if (!res.ok) return []
+      // #495: this used to swallow failures as `return []`, which renders
+      // identically to "no events today" — a real backend outage produced
+      // zero signal (masked the 2026-07-06 calendar outage post-mortem).
+      // Throw so react-query surfaces isError and TodayPage can show it.
+      if (!res.ok) throw new Error(`calendar events fetch failed: ${res.status}`)
       const j = await res.json() as { events: UserCalendarEvent[] }
       return j.events
     },
