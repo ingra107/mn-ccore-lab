@@ -1,40 +1,63 @@
-name = "mn-ccore-lab-api"
+# ═══ TOP LEVEL IS DELIBERATELY INERT (post-mortem 2026-07-06, backlog #500) ═══
+# Prod capability is GRANTED, not inherited. Every binding and every cron lives
+# under [env.production] ONLY. Consequences, by construction:
+#   - bare `wrangler deploy`            → mints/updates "mn-ccore-lab-api-scratch":
+#                                         no D1, no R2, no service binding, no crons.
+#                                         Inert. (The wrapper blocks even this — see
+#                                         scripts/wrangler_d1.py deploy guard.)
+#   - `wrangler deploy --name anything` → copies THIS top level → equally inert.
+#   - `wrangler deploy --env test`      → error (no [env.test] defined); envs do
+#                                         NOT inherit bindings/triggers in wrangler.
+# The June-7 `mn-ccore-lab-api-test` twin (prod bindings + crons via a copy of the
+# old all-top-level config; raced the prod crons for a month and wiped the calendar
+# cache — see Context/Decisions/2026-07-06-calendar-outage-orphaned-test-worker.md
+# in Peripheral-Brain) is unrepresentable under this construction.
+#
+# PROD DEPLOY (the only form that touches the real worker):
+#   python scripts/wrangler_d1.py deploy --env production
+name = "mn-ccore-lab-api-scratch"
 main = "api/index.ts"
 compatibility_date = "2024-09-23"
 compatibility_flags = ["nodejs_compat"]
 
-[[d1_databases]]
+[site]
+bucket = "./dist"
+
+# ─── PRODUCTION — the real worker. name pinned so deploys update it in place. ───
+[env.production]
+name = "mn-ccore-lab-api"
+
+[[env.production.d1_databases]]
 binding = "DB"
 database_name = "mnccore-lab"
 database_id = "b8453e9b-7c5f-4029-b07d-dd89c05d00cf"
 
-[[d1_databases]]
+# DB_TEST is LIVE machinery, not legacy: the X-Test-Mode header swap
+# (api/index.ts:218-231, guarded by TEST_MODE_KEY) routes test-mode requests
+# to mnccore-lab-test. Do not drop without retiring that path (backlog #502a
+# resolved KEEP, 2026-07-06).
+[[env.production.d1_databases]]
 binding = "DB_TEST"
 database_name = "mnccore-lab-test"
 database_id = "a30fe84d-0891-4035-9358-f7813b5f5807"
 
-[triggers]
+[env.production.triggers]
 # Morning pulse email: weekdays at 7 AM CT (13:00 UTC)
-# To activate: wrangler secret put SENDGRID_API_KEY
+#   To activate: wrangler secret put SENDGRID_API_KEY --env production
 # Daily coordinator digest: every day at 6 AM CT (11:00 UTC during DST)
-# To activate: wrangler secret put RESEND_API_KEY
-# iCal feed poller: hourly (96/day → 24/day). ETag/If-Modified-Since
-# makes most polls cheap (~200 bytes 304 vs ~500KB full fetch).
+#   To activate: wrangler secret put RESEND_API_KEY --env production
+# iCal feed poller: hourly. ETag/If-Modified-Since makes most polls cheap
+#   (~200 bytes 304 vs ~500KB full fetch).
 crons = ["0 13 * * 1-5", "0 11 * * *", "0 * * * *"]
 
-[[r2_buckets]]
+[[env.production.r2_buckets]]
 binding = "FILES"
 bucket_name = "mnccore-files"
 
 # Service binding to the hub-realtime Worker for DO broadcast. Cross-Worker
-# Durable Object access requires this — prior `env.NOTIFICATION_HUB` used as
-# a DurableObjectNamespace silently returned undefined because no binding
-# existed. Now `env.NOTIFICATION_HUB.fetch(...)` routes internally through
-# the CF edge network (no public DNS/TLS hop) to the hub-realtime worker,
-# which forwards to the DO's onRequest for broadcast.
-[[services]]
+# Durable Object access requires this — `env.NOTIFICATION_HUB.fetch(...)`
+# routes internally through the CF edge to hub-realtime, which forwards to
+# the DO's onRequest for broadcast.
+[[env.production.services]]
 binding = "NOTIFICATION_HUB"
 service = "hub-realtime"
-
-[site]
-bucket = "./dist"

@@ -181,6 +181,19 @@ def run_d1(
 if __name__ == "__main__":
     import sys
 
+    # Deploy guard (#500, post-mortem 2026-07-06): the top level of wrangler.toml
+    # is deliberately inert — a bare `deploy` would mint a binding-less scratch
+    # worker, never the real one. Fail loud instead of deploying the wrong thing.
+    if sys.argv[1:2] == ["deploy"] and not any(
+        a in ("--env", "-e") or a.startswith(("--env=", "-e=")) for a in sys.argv[2:]
+    ):
+        sys.stderr.write(
+            "deploy without --env is blocked: wrangler.toml's top level is inert "
+            "by design (backlog #500).\nProd deploy: "
+            "python scripts/wrangler_d1.py deploy --env production\n"
+        )
+        sys.exit(2)
+
     # CLI fallback: `python scripts/wrangler_d1.py d1 execute mnccore-lab ...`
     # mirrors the shell shim. Prefer the shell shim for command-line use.
     res = run_wrangler(sys.argv[1:])
