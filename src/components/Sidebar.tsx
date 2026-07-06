@@ -33,7 +33,8 @@ import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../hooks/useAuth'
 import { useDarkMode } from '../hooks/useDarkMode'
 import NotificationBell from './NotificationBell'
-import { useNextMeeting } from '../hooks/useApiData'
+import { useNextMeeting, useMeetingsApi } from '../hooks/useApiData'
+import { useMeetingNotesSeen } from '../hooks/useMeetingNotesSeen'
 import { PATHS } from '../constants/paths'
 import Avatar from './Avatar'
 import { getPersonInfo } from '../data/team'
@@ -70,6 +71,13 @@ interface NavItem {
   label: string
   icon: React.ComponentType<{ size?: number; strokeWidth?: number; absoluteStrokeWidth?: boolean }>
   badge?: number
+  /** Override the default badge colors when there's no badgeAction (e.g. an
+   *  "unseen, not urgent" badge that should read gold like My Tasks rather
+   *  than the default maroon "overdue" red). */
+  badgeBg?: string
+  badgeColor?: string
+  /** Tooltip for a plain (non-badgeAction) badge. */
+  badgeTitle?: string
   hint?: string // small secondary text (e.g. "Today")
   /** Present when the badge is its own click target (navigates elsewhere). */
   badgeAction?: BadgeAction
@@ -154,6 +162,17 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
 
   // Next meeting countdown — uses lightweight /api/meetings/next (not full meetings list)
   const { data: nextMeeting } = useNextMeeting()
+
+  // New-notes badge (PB #499 option b) — shares the ['meetings'] query cache
+  // with the Meetings/Transcripts pages (free if either was already visited
+  // this session); no lighter-weight endpoint exists (v1 constraint: no
+  // schema/API change).
+  const { data: meetingRows = [] } = useMeetingsApi()
+  const { isNew: isMeetingNew } = useMeetingNotesSeen()
+  const newMeetingsCount = useMemo(
+    () => meetingRows.filter(isMeetingNew).length,
+    [meetingRows, isMeetingNew]
+  )
   const nextMeetingLabel = useMemo(() => {
     if (!nextMeeting?.date) return null
     const now = new Date()
@@ -211,10 +230,27 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
     items: group.items.map(item => {
       if (item.to === PATHS.myTasks && myUnseen > 0)
         return { ...item, badge: myUnseen, badgeAction: MY_TASKS_BADGE_ACTION }
-      if (item.to === PATHS.meetings && nextMeetingLabel) return { ...item, hint: nextMeetingLabel }
+      if (item.to === PATHS.meetings) {
+        let next = item
+        if (nextMeetingLabel) next = { ...next, hint: nextMeetingLabel }
+        // Gold = "unseen, not urgent" (matches My Tasks idiom) — meetings
+        // badge and row share one destination, so no badgeAction needed;
+        // it drains on visit like My Tasks, never a manual dismiss (Nick
+        // 2026-06-11: a badge that doesn't drain when you interact is noise).
+        if (newMeetingsCount > 0) {
+          next = {
+            ...next,
+            badge: newMeetingsCount,
+            badgeBg: 'var(--gold)',
+            badgeColor: '#1a1a1a',
+            badgeTitle: `${newMeetingsCount} meeting${newMeetingsCount === 1 ? '' : 's'} with new notes`,
+          }
+        }
+        return next
+      }
       return item
     }),
-  })), [allGroups, myUnseen, nextMeetingLabel])
+  })), [allGroups, myUnseen, nextMeetingLabel, newMeetingsCount])
 
   const isActive = (path: string) => {
     if (path === PATHS.dashboard) return location.pathname === PATHS.dashboard
@@ -325,15 +361,15 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
                       // The My Tasks badge is its OWN click target (Nick
                       // 2026-06-11): the count → My Items "New for You" triage
                       // list, while the rest of the row still goes to My Tasks.
-                      title={item.badgeAction ? item.badgeAction.title(item.badge) : undefined}
+                      title={item.badgeAction ? item.badgeAction.title(item.badge) : item.badgeTitle}
                       role={item.badgeAction ? 'link' : undefined}
                       tabIndex={item.badgeAction ? 0 : undefined}
                       aria-label={item.badgeAction ? item.badgeAction.ariaLabel(item.badge) : undefined}
                       onClick={item.badgeAction ? (e) => { e.preventDefault(); e.stopPropagation(); navigate(item.badgeAction!.navigateTo); onNavigate?.() } : undefined}
                       onKeyDown={item.badgeAction ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); navigate(item.badgeAction!.navigateTo); onNavigate?.() } } : undefined}
                       style={{
-                        backgroundColor: item.badgeAction ? item.badgeAction.badgeBg : 'var(--maroon-solid)',
-                        color: item.badgeAction ? item.badgeAction.badgeColor : 'var(--ink-bright, #fff)',
+                        backgroundColor: item.badgeAction ? item.badgeAction.badgeBg : (item.badgeBg ?? 'var(--maroon-solid)'),
+                        color: item.badgeAction ? item.badgeAction.badgeColor : (item.badgeColor ?? 'var(--ink-bright, #fff)'),
                         cursor: item.badgeAction ? 'pointer' : undefined,
                       }}
                     >

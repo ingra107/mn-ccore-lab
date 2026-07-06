@@ -33,6 +33,7 @@ import { useMeetingDetail } from '../hooks/useApiData'
 import type { ActionItemRow as ActionItemRowType, AgendaItemRow } from '../hooks/useApiData'
 import { useQueryClient } from '@tanstack/react-query'
 import { useToggleActionItem, useAddAgendaItem, useUpdateMeetingNotes, useCreateDecision, useCreateTask } from '../hooks/useMutations'
+import { useMeetingNotesSeen } from '../hooks/useMeetingNotesSeen'
 import FileUpload from '../components/FileUpload'
 import TypingIndicator from '../components/TypingIndicator'
 import { parseCarriedForward, emDashifyTitle } from '../lib/textUtils'
@@ -121,6 +122,12 @@ export default function MeetingDetail() {
   useEffect(() => {
     if (showDecisionForm) decisionTitleRef.current?.focus({ preventScroll: true })
   }, [showDecisionForm])
+
+  // Viewing this page counts as "seen" for the Meetings new-notes badge/pill.
+  const { markSeen } = useMeetingNotesSeen()
+  useEffect(() => {
+    if (meeting?.id) markSeen(meeting.id, meeting.updated_at)
+  }, [meeting?.id, meeting?.updated_at, markSeen])
 
   // Multi-select for action items
   const [selectedActionIds, setSelectedActionIds] = useState<Set<string>>(new Set())

@@ -24,6 +24,7 @@ import PageTooltip, { dismissPageTooltip } from '../components/PageTooltip'
 import type { Meeting, ActionItem } from '../data/types'
 import { PATHS } from '../constants/paths'
 import { useOpenParam } from '../hooks/useOpenParam'
+import { useMeetingNotesSeen } from '../hooks/useMeetingNotesSeen'
 import { ICON_PROPS } from '../lib/iconProps'
 import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
 
@@ -422,6 +423,8 @@ export default function Meetings() {
   const toggleMutation = useToggleActionItem()
   const { showUndo } = useUndoToast()
   const createActionMutation = useCreateActionItem()
+  const { isNew: isMeetingNew, markSeen: markMeetingSeen } = useMeetingNotesSeen()
+  const meetingRowById = useMemo(() => new Map(meetingRows.map((r) => [r.id, r])), [meetingRows])
 
   const toggleWithUndo = (id: string) => {
     toggleMutation.mutate(id)
@@ -504,6 +507,15 @@ export default function Meetings() {
 
   const effectiveSelectedId = selectedMeetingId ?? filteredMeetings[0]?.id ?? null
   const selectedMeeting = filteredMeetings.find((m) => m.id === effectiveSelectedId) ?? null
+
+  // Viewing a meeting in the split-panel detail (default-selected or
+  // clicked) counts as "seen" for the new-notes badge/pill — this is the
+  // primary browsing path, not just the standalone /meetings/:id route.
+  useEffect(() => {
+    if (!selectedMeeting) return
+    const row = meetingRowById.get(selectedMeeting.id)
+    if (row) markMeetingSeen(row.id, row.updated_at)
+  }, [selectedMeeting?.id, meetingRowById, markMeetingSeen])
 
   useListKeyboardNav({ itemCount: filteredMeetings.length, focusedIndex, setFocusedIndex })
 
@@ -787,6 +799,8 @@ export default function Meetings() {
                 const isNext = isNextMeeting(meeting)
                 const actionCount = meeting.actionItems?.length ?? 0
                 const pendingCount = meeting.actionItems?.filter((a) => !a.completed).length ?? 0
+                const row = meetingRowById.get(meeting.id)
+                const hasNewNotes = row ? isMeetingNew(row) : false
                 return (
                   <button key={meeting.id} type="button" className="cursor-pointer w-full text-left hov-bg"
                     style={{ display: 'block', padding: '10px 12px', borderBottom: '1px solid var(--border-subtle)', background: isSelected ? 'rgba(45,138,138,0.08)' : 'transparent', borderLeft: isNext ? '3px solid var(--teal)' : isSelected ? '3px solid rgba(45,138,138,0.4)' : '3px solid transparent', transition: 'background 150ms ease', outline: 'none', '--hov-bg': isSelected ? 'rgba(45,138,138,0.08)' : withAlpha(ACCENT_GOLD, 4) } as React.CSSProperties}
@@ -795,11 +809,21 @@ export default function Meetings() {
                       <span style={{ fontSize: '11px', color: isNext ? 'var(--teal)' : 'var(--slate)', opacity: isNext ? 1 : 0.85, flexShrink: 0, fontWeight: isNext ? 600 : 400, minWidth: '46px' }}>
                         {formatShortDate(meeting.date)}
                       </span>
-                      {actionCount > 0 && (
-                        <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '10px', background: pendingCount > 0 ? withAlpha(ACCENT_GOLD, 15) : 'rgba(45,138,138,0.12)', color: pendingCount > 0 ? 'var(--gold)' : 'var(--teal)', flexShrink: 0, fontWeight: 500 }}>
-                          {pendingCount > 0 ? `${pendingCount} actions` : '✓'}
-                        </span>
-                      )}
+                      <div className="flex items-center gap-1" style={{ flexShrink: 0 }}>
+                        {hasNewNotes && (
+                          <span
+                            title="New notes since your last visit"
+                            style={{ fontSize: '9px', fontWeight: 700, padding: '1px 6px', borderRadius: '10px', background: 'var(--gold)', color: '#1a1a1a', letterSpacing: '0.02em' }}
+                          >
+                            NEW
+                          </span>
+                        )}
+                        {actionCount > 0 && (
+                          <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '10px', background: pendingCount > 0 ? withAlpha(ACCENT_GOLD, 15) : 'rgba(45,138,138,0.12)', color: pendingCount > 0 ? 'var(--gold)' : 'var(--teal)', fontWeight: 500 }}>
+                            {pendingCount > 0 ? `${pendingCount} actions` : '✓'}
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <p style={{ fontSize: '12px', color: isSelected ? 'var(--ink)' : 'var(--slate)', margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', opacity: isSelected ? 1 : 0.85, fontWeight: isSelected ? 500 : 400 }}>
                       {emDashifyTitle(meeting.title)}
