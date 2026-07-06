@@ -28,6 +28,7 @@ import { MeLockToggle } from './ui/MeLockToggle'
 import MentionInput from './MentionInput'
 import HermesMark from './HermesMark'
 import { usePostTaskUpdate } from '../hooks/useMutations'
+import { useLaunchCommands, type LaunchCommandContext } from '../hooks/useLaunchCommands'
 import { useUndoToast } from './UndoToast'
 import { ICON_PROPS } from '../lib/iconProps'
 import { withAlpha } from '../lib/taskGrouping'
@@ -82,6 +83,13 @@ interface BaseProps {
    *  submit, directing the note to the AI assistant. Mutually exclusive
    *  with the @me lock (you can't be private AND send to Hermes). */
   showHermesToggle?: boolean
+  /** Project context for @workon/@quickchat launch routing (useLaunchCommands).
+   *  Task mode ALWAYS intercepts launch tags (seed isolation — the command
+   *  fires a launch instead of posting a team-visible comment); this prop just
+   *  enriches the launch with the project folder/slug. Custom mode intercepts
+   *  only when this prop is passed (surfaces with their own tag routing, like
+   *  MorningThoughtCompose, omit it). */
+  launchContext?: LaunchCommandContext
 }
 
 interface TaskModeProps extends BaseProps {
@@ -123,6 +131,7 @@ export default function SmartCompose(props: SmartComposeProps) {
     hideSubmitButton = false,
     showMeLock = false,
     showHermesToggle = false,
+    launchContext,
   } = props
 
   const [meLocked, setMeLocked] = useState(false)
@@ -153,6 +162,7 @@ export default function SmartCompose(props: SmartComposeProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const undoToast = useUndoToast()
+  const { tryLaunchCommand } = useLaunchCommands()
 
   useEffect(() => {
     // preventScroll: keeps focus without browser-scrolling the textarea into
@@ -191,6 +201,16 @@ export default function SmartCompose(props: SmartComposeProps) {
   const submit = useCallback(async () => {
     const raw = val.trim()
     if (!raw) return
+    // @workon/@quickchat launch tags never post as comments (seed isolation —
+    // see useLaunchCommands). Task mode always intercepts; custom mode only
+    // when the surface opted in via launchContext. Runs on `raw`, before the
+    // @hermes/@me lock prefixes, so a typed launch tag always wins.
+    if (!isCustomMode || launchContext) {
+      const routed = tryLaunchCommand(raw, launchContext ?? {}, () => {
+        if (!isControlled) setVal('')
+      })
+      if (routed) return
+    }
     // Prepend prefix based on active lock (mutually exclusive: @hermes wins over @me).
     const content = showHermesToggle && hermesLocked && !raw.startsWith('@hermes ')
       ? `@hermes ${raw}`
@@ -215,7 +235,7 @@ export default function SmartCompose(props: SmartComposeProps) {
         },
       })
     }
-  }, [val, showMeLock, meLocked, showHermesToggle, hermesLocked, isCustomMode, props, isControlled, setVal, taskMutation, undoToast])
+  }, [val, showMeLock, meLocked, showHermesToggle, hermesLocked, isCustomMode, props, isControlled, setVal, taskMutation, undoToast, tryLaunchCommand, launchContext])
 
   const onKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {

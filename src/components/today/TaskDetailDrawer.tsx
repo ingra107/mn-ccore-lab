@@ -43,7 +43,7 @@ const DURATION_STEP = 15
 // `project` is still accepted (the row adapter passes it) but no longer used in
 // the drawer — #93 removed the duplicate WorkOnActions launch (it lives in the
 // task row's title area). Kept in the prop type for caller compatibility.
-export function TaskDetailDrawer({ task, state }: { task: TaskRow; project?: { name: string; slug: string; primary_folder?: string | null } | null; state: TodayStateApi }) {
+export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; project?: { name: string; slug: string; primary_folder?: string | null } | null; state: TodayStateApi }) {
   const isPlanned = !!state.planned[task.id]
   // Slack-style seen (Nick 2026-06-11): expanding the drawer acknowledges the
   // assignment silently when the viewer is the assignee.
@@ -183,7 +183,15 @@ export function TaskDetailDrawer({ task, state }: { task: TaskRow; project?: { n
       </div>
 
       {/* SmartCompose — directly under action bar; @me lock toggle */}
-      <SmartCompose taskId={task.id} placeholder="Note or @hermes…" showMeLock showHermesToggle bare alwaysShowToolbar />
+      <SmartCompose
+        taskId={task.id}
+        placeholder="Note or @hermes…"
+        showMeLock
+        showHermesToggle
+        bare
+        alwaysShowToolbar
+        launchContext={{ projectSlug: project?.slug ?? task.project_id ?? null, primaryFolder: project?.primary_folder ?? null }}
+      />
 
       {/* Activity peek — 3 entries newest-first; "view all →" opens full editor */}
       <div style={{ marginTop: 14 }}>

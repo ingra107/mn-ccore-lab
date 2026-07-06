@@ -28,9 +28,7 @@ import MentionInput from '../MentionInput'
 import TypingIndicator from '../TypingIndicator'
 import { getPersonInfo, getAllMembers, directors } from '../../data/team'
 import { shortLabelForUrl, gmailKind } from '../../lib/urlClassify'
-import { buildLaunchUri } from '../../lib/launch'
-import { detectOrigin } from '../../lib/launchOrigin'
-import { useProtocolLaunch } from '../../hooks/useProtocolLaunch'
+import { useLaunchCommands } from '../../hooks/useLaunchCommands'
 import LinkChip from '../LinkChip'
 import Avatar from '../Avatar'
 import InlineSelect from '../InlineSelect'
@@ -1450,8 +1448,8 @@ function OverviewQuickAdd({
   const { typingPeers, broadcastTyping } = useTyping('task', taskId)
   const appendCh = (ch: string) => appendCharToInput(textareaRef, ch, setText)
   const postUpdate = usePostTaskUpdate(taskId)
-  const { showSuccess, showError, showInfo } = useToast()
-  const { launch: protocolLaunch } = useProtocolLaunch()
+  const { showSuccess, showError } = useToast()
+  const { tryLaunchCommand } = useLaunchCommands()
   const queryClient = useQueryClient()
 
   // Composing = focused OR has text — drives textarea rows + action row visibility.
@@ -1535,75 +1533,13 @@ function OverviewQuickAdd({
     e.preventDefault()
     const v = text.trim()
     if (!v) return
-    // ── @workon: seeded project launch ────────────────────────────────────────
-    // CRITICAL SEED ISOLATION: this branch MUST return before submitComment runs.
-    // The seed must NEVER reach /api/tasks/:id/comments or /api/pb/dispatch/add
-    // — those are team-visible endpoints. The early `return` below enforces this.
-    if (/^@workon\b/i.test(v)) {
-      const seed = v.replace(/^@workon\s*/i, '').trim()
-      const origin = detectOrigin()
-      const folder = primaryFolder ?? ''
-      fetch('/api/launch-log', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tag: 'workon', seed, origin, project_slug: projectSlug ?? null }),
-      })
-        .then((res) => {
-          if (!res.ok) throw new Error(`launch-log ${res.status}`)
-          return res.json() as Promise<{ data: { id: string } }>
-        })
-        .then(({ data }) => {
-          if (origin === 'computer' && folder) {
-            return protocolLaunch(buildLaunchUri(data.id), {
-              copyText: folder,
-              successMessage: 'Launching Claude in this project…',
-              copyMessage: 'Launching… (folder copied as backup)',
-            })
-          }
-          showInfo(origin === 'computer' ? 'No project folder set for this task' : 'Queued — your home machine will pick it up')
-        })
-        .then(() => reset())
-        .catch((e) => {
-          console.error('@workon failed:', e)
-          // Fail-loud: show a toast so the user knows the launch didn't work.
-          // Deliberately do NOT call reset() here — the user's seed stays in
-          // the textarea so they can retry without retyping it.
-          showError('@workon failed — your seed is still here, try again')
-        })
-      return
-    }
-    // ── @quickchat: seeded quick-chat launch (same as Today bar) ─────────────
-    // Seed-isolation guard: a @quickchat seed typed in a comment box must
-    // NEVER reach /api/tasks/:id/comments (team-visible). Early return enforces.
-    if (/^@quickchat\b/i.test(v)) {
-      const seed = v.replace(/^@quickchat\s*/i, '').trim()
-      const origin = detectOrigin()
-      fetch('/api/launch-log', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tag: 'quickchat', seed, origin }),
-      })
-        .then((res) => {
-          if (!res.ok) throw new Error(`launch-log ${res.status}`)
-          return res.json() as Promise<{ data: { id: string } }>
-        })
-        .then(({ data }) => {
-          if (origin === 'computer') {
-            return protocolLaunch(buildLaunchUri(data.id), {
-              copyText: seed,
-              successMessage: 'Launching Quick Chat on this machine…',
-              copyMessage: 'Launching Quick Chat… (seed copied as backup)',
-            })
-          }
-          showInfo('Queued — your home machine will pick it up')
-        })
-        .then(() => reset())
-        .catch((e) => {
-          console.error('@quickchat from task comment failed:', e)
-          showError('@quickchat failed — your seed is still here, try again')
-        })
-      return
-    }
+    // ── @workon/@quickchat: seeded launches (shared routing) ─────────────────
+    // CRITICAL SEED ISOLATION: must run before submitComment — the seed
+    // persists to launch_log ONLY, never /api/tasks/:id/comments or
+    // /api/pb/dispatch/add (team-visible). useLaunchCommands owns the flow;
+    // reset() fires only on success, so a failed launch keeps the seed in the
+    // textarea for retry.
+    if (tryLaunchCommand(v, { projectSlug, primaryFolder }, reset)) return
     // ── @hermes prefix typed directly: route to /api/ai-requests ─────────────
     // The Hermes toggle (forHermes) posts via comment + dispatch/add.
     // A direct @hermes prefix is a Today-bar-style intent; route there instead
