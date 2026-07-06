@@ -34,7 +34,7 @@ import { handleGetSettings, handleUpdateSettings, handleGetWorkflowTemplates, ha
 import { handleGetReactions, handleToggleReaction } from './routes/reactions';
 import { handleCalendarEvents } from './routes/calendar';
 import { handleListFeeds, handleAddFeed, handleDeleteFeed, handleListEvents, pollAllStaleFeeds } from './routes/calendar-feeds';
-import { handleGetActivity, handleActivityHeatmap } from './routes/activity';
+import { handleGetActivity, handleActivityHeatmap, handleDeleteActivityEntry } from './routes/activity';
 import { handleGetSubtasks, handleCreateSubtask, handleToggleSubtask, handleDeleteSubtask, handleReorderSubtasks } from './routes/subtasks';
 import { handleTeamPulse } from './routes/team-pulse';
 import { handleGetPaperLinks, handleLinkPaper, handleUnlinkPaper, handlePapersByProject, handlePapersByPublication } from './routes/paper-links';
@@ -1178,6 +1178,16 @@ defineRoute({
   entity: 'activity',
   visibility: 'na',
   handler: (c) => handleActivityHeatmap(U(c), E(c)),
+});
+// Manual activity deletion (author or PI) — house delete shape (POST :id/delete,
+// same as /api/conferences/:id/delete).
+defineRoute({
+  method: 'POST',
+  path: '/api/activity/:id/delete',
+  auth: 'authed',
+  entity: 'activity',
+  visibility: 'na',
+  handler: (c) => handleDeleteActivityEntry(c.req.param('id'), R(c), USER(c), E(c)),
 });
 defineRoute({
   method: 'GET',

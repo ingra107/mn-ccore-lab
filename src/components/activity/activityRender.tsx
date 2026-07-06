@@ -23,7 +23,7 @@
 // bar colour are the only per-kind visual differentiators; the structure is
 // invariant so every entry reads as part of the same thread regardless of kind.
 
-import { type ReactNode } from 'react'
+import { type ReactNode, useEffect, useState } from 'react'
 import {
   TrendingUp,
   AlertTriangle,
@@ -34,6 +34,7 @@ import {
   Lock,
   ClipboardList,
   Settings2,
+  Trash2,
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { formatRelativeTime } from '../../lib/dateUtils'
@@ -46,7 +47,7 @@ import HermesResponse from '../HermesResponse'
 import HermesPending, { isHermesPending } from '../HermesPending'
 import ReactionBar from '../ReactionBar'
 import type { StoredKind, UpdateType } from '../../../shared/activityKinds'
-import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
+import { ACCENT_CORAL, ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
 
 // ── Design constants ──────────────────────────────────────────────────────────
 //
@@ -267,6 +268,58 @@ export interface ActivityEntryItemProps {
    * pass 2 for task-entity rows.
    */
   taskOriginBorderWidth?: number
+
+  /**
+   * When set, renders a two-step-confirm trash button on the name row and
+   * calls this on the confirming click. Callers pass it only on entries the
+   * viewer may delete (own entries, or any entry for the PI) — the server
+   * re-enforces author-or-PI regardless.
+   */
+  onDelete?: () => void
+}
+
+// ── DeleteEntryButton ─────────────────────────────────────────────────────────
+// Two-step inline confirm: first click arms (coral, 3s window), second click
+// deletes. No browser dialog. Rendered only when a caller passes onDelete;
+// the API re-enforces author-or-PI server-side.
+function DeleteEntryButton({ onDelete }: { onDelete: () => void }) {
+  const [armed, setArmed] = useState(false)
+  useEffect(() => {
+    if (!armed) return
+    const t = setTimeout(() => setArmed(false), 3000)
+    return () => clearTimeout(t)
+  }, [armed])
+  return (
+    <button
+      type="button"
+      onClick={(e) => {
+        e.stopPropagation()
+        if (armed) {
+          setArmed(false)
+          onDelete()
+        } else {
+          setArmed(true)
+        }
+      }}
+      title={armed ? 'Click again to delete permanently' : 'Delete entry'}
+      aria-label={armed ? 'Click again to delete permanently' : 'Delete entry'}
+      className="inline-flex items-center justify-center cursor-pointer hov-color"
+      style={{
+        width: 18,
+        height: 18,
+        flexShrink: 0,
+        background: 'transparent',
+        border: 'none',
+        borderRadius: 'var(--radius-sm)',
+        color: armed ? ACCENT_CORAL : 'var(--slate)',
+        opacity: armed ? 1 : 0.45,
+        padding: 0,
+        '--hov-color': ACCENT_CORAL,
+      } as React.CSSProperties}
+    >
+      <Trash2 size={11} strokeWidth={1.5} absoluteStrokeWidth aria-hidden="true" />
+    </button>
+  )
 }
 
 // ── TaskOriginBadge ───────────────────────────────────────────────────────────
@@ -387,6 +440,7 @@ export function ActivityEntryItem({
   motionProps,
   cardPadding = CARD_PADDING,
   taskOriginBorderWidth = 3,
+  onDelete,
 }: ActivityEntryItemProps) {
   const isTask = entry.entity_type === 'task'
   const isHermes = entry.actor_slug === 'claude-ai'
@@ -521,6 +575,7 @@ export function ActivityEntryItem({
             <HermesMark size={10} variant="icon" aria-hidden="true" />
             {entry.visibility === 'author' && <AuthorOnlyBadge />}
             <EntryTime ts={entry.created_at} className="ml-auto" />
+            {onDelete && <DeleteEntryButton onDelete={onDelete} />}
           </div>
         </div>
         {/* Body */}
@@ -586,6 +641,7 @@ export function ActivityEntryItem({
             {nameBadge}
             {entry.visibility === 'author' && <AuthorOnlyBadge />}
             <EntryTime ts={entry.created_at} className="ml-auto" />
+            {onDelete && <DeleteEntryButton onDelete={onDelete} />}
           </div>
 
           {/* Body */}

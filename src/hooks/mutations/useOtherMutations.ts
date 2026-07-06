@@ -80,6 +80,31 @@ export function usePostTaskUpdate(taskId: string) {
   })
 }
 
+// ── Activity entry deletion (author or PI) ──────────────────
+// POST /api/activity/:id/delete — hard-deletes an activity_entries row
+// (comment/note/update). The server enforces author-or-PI; the UI only
+// offers the button on entries the viewer may delete.
+export function useDeleteActivityEntry() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (input: { id: string; taskId?: string; projectSlug?: string }) =>
+      fetchApi(`/api/activity/${input.id}/delete`, { method: 'POST' }),
+
+    onSettled: (_data, _err, input) => {
+      if (input.taskId) {
+        queryClient.invalidateQueries({ queryKey: ['task-activity', input.taskId] })
+        queryClient.invalidateQueries({ queryKey: ['task-comments', input.taskId] })
+        queryClient.invalidateQueries({ queryKey: ['task-detail', input.taskId] })
+      }
+      if (input.projectSlug) {
+        queryClient.invalidateQueries({ queryKey: ['project-activity', input.projectSlug] })
+      }
+      queryClient.invalidateQueries({ queryKey: ['activity'] })
+    },
+  })
+}
+
 // ── Reaction mutations ─────────────────────────────────────
 
 export function useToggleReaction() {

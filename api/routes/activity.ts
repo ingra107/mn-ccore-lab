@@ -1,5 +1,6 @@
-import type { Env } from '../helpers';
-import { json } from '../helpers';
+import type { Env, AuthUser } from '../helpers';
+import { json, error, actorSlug, isPiRequest } from '../helpers';
+import { idempotentDelete } from '../lib/idempotent-delete';
 import { isTestFixture } from '../lib/fixtures';
 import { ctToday } from '../lib/ct-date';
 
@@ -43,6 +44,38 @@ export async function handleGetActivity(url: URL, env: Env, canSeePb = false): P
   }
   rows = rows.slice(0, limit);
   return json({ data: rows, count: rows.length });
+}
+
+// POST /api/activity/:id/delete — remove an activity_entries row (comment /
+// note / update) by id. Authorization: the entry's AUTHOR or the PI — team
+// members manage their own posts; the PI can moderate anything (Nick
+// 2026-07-06: manual delete for activities). Hard delete: activity_entries
+// has no deleted_at column (Z4.2 doctrine — don't force soft). The
+// project-visibility gate runs inside idempotentDelete via the row's
+// project_id.
+export async function handleDeleteActivityEntry(id: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
+  const row = await env.DB.prepare(
+    'SELECT id, actor_slug FROM activity_entries WHERE id = ?',
+  ).bind(id).first<{ id: string; actor_slug: string }>();
+  // Hard-delete is idempotent by definition: absent row = desired end-state
+  // (same semantics as idempotentDelete hard mode).
+  if (!row) return json({ data: { id, deleted: true, idempotent: true } });
+
+  const caller = actorSlug(user.email);
+  if (row.actor_slug !== caller && !(await isPiRequest(request, env))) {
+    return error('Only the author or the PI can delete an activity entry', 403);
+  }
+
+  return idempotentDelete({
+    table: 'activity_entries',
+    id,
+    mode: 'hard',
+    request,
+    env,
+    actorSlug: caller,
+    activityCategory: 'activity',
+    activityEntityType: 'activity_entry',
+  });
 }
 
 // GET /api/activity/heatmap?slug=&days=

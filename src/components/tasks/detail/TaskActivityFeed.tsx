@@ -24,6 +24,9 @@ import { useQuery } from '@tanstack/react-query'
 import { ActivityEntryItem, type ActivityEntryItemRow } from '../../activity/activityRender'
 import { filterMatchesKind, type TaskFeedFilter } from '../../../../shared/activityKinds'
 import type { StoredKind, UpdateType } from '../../../../shared/activityKinds'
+import { useAuth } from '../../../hooks/useAuth'
+import { useDeleteActivityEntry } from '../../../hooks/useMutations'
+import { emailToSlug } from '../../../lib/emailSlug'
 
 // ── Shape ────────────────────────────────────────────────────────────────────
 
@@ -70,6 +73,12 @@ interface TaskActivityFeedProps {
 
 export function TaskActivityFeed({ taskId, peekCount, hidePills, avatarSize }: TaskActivityFeedProps) {
   const [filter, setFilter] = useState<TaskFeedFilter>('all')
+
+  // Manual delete (Nick 2026-07-06): own entries, or any entry for the PI.
+  // The server re-enforces author-or-PI on POST /api/activity/:id/delete.
+  const { user } = useAuth()
+  const viewerSlug = emailToSlug(user?.email)
+  const deleteEntry = useDeleteActivityEntry()
 
   const { data: entries = [], isLoading } = useQuery<ActivityEntryItemRow[]>({
     queryKey: ['task-activity', taskId],
@@ -161,6 +170,11 @@ export function TaskActivityFeed({ taskId, peekCount, hidePills, avatarSize }: T
               // Task-feed: otherwise canonical defaults — showReactions=false
               // (default), showTaskOriginBadge=false (default). No animation
               // wrapper in the task feed.
+              onDelete={
+                user?.isPi || (viewerSlug && entry.actor_slug === viewerSlug)
+                  ? () => deleteEntry.mutate({ id: entry.id, taskId })
+                  : undefined
+              }
             />
           ))}
         </div>

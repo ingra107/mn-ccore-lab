@@ -23,6 +23,7 @@ import {
   handleGetTaskActivity,
 } from '../routes/tasks'
 import { handleGetProjectActivity, handleAddComment, handlePostProjectUpdate, handleGetComments, handleGetProjectUpdates } from '../routes/projects'
+import { handleDeleteActivityEntry } from '../routes/activity'
 
 const TEST_MODE_KEY = 'local-test-key-do-not-use-in-prod'
 const PI_EMAIL = 'ingra107@umn.edu'
@@ -194,6 +195,16 @@ function makeEnv(fx: Partial<Fixtures> = {}) {
             if (/SELECT \* FROM activity_entries WHERE id = \?/.test(sql)) {
               return ae.find(r => r.id === binds[0]) ?? null
             }
+            // handleDeleteActivityEntry auth probe + idempotentDelete's hard-mode
+            // project-gate probe (explicit column lists, WHERE id = ?).
+            if (/SELECT id, actor_slug FROM activity_entries WHERE id = \?/.test(sql)) {
+              const r = ae.find(x => x.id === binds[0])
+              return r ? { id: r.id, actor_slug: r.actor_slug } : null
+            }
+            if (/SELECT id, project_id FROM activity_entries WHERE id = \?/.test(sql)) {
+              const r = ae.find(x => x.id === binds[0])
+              return r ? { id: r.id, project_id: r.project_id } : null
+            }
             if (/FROM activity_entries WHERE source_table = \? AND source_id = \?/.test(sql)) {
               return ae.find(r => r.source_table === binds[0] && r.source_id === binds[1]) ?? null
             }
@@ -286,12 +297,19 @@ function makeEnv(fx: Partial<Fixtures> = {}) {
               return { meta: { changes: t ? 1 : 0 } }
             }
             if (/DELETE FROM activity_entries/.test(sql)) {
-              // Task delete: WHERE entity_type='task' AND entity_id=?
-              const id = binds[0] as string
-              for (let i = ae.length - 1; i >= 0; i--) {
-                if (ae[i].entity_type === 'task' && ae[i].entity_id === id) ae.splice(i, 1)
+              // Task delete cascade: WHERE entity_type='task' AND entity_id=?
+              if (/entity_id = \?/.test(sql)) {
+                const id = binds[0] as string
+                for (let i = ae.length - 1; i >= 0; i--) {
+                  if (ae[i].entity_type === 'task' && ae[i].entity_id === id) ae.splice(i, 1)
+                }
+                return { meta: {} }
               }
-              return { meta: {} }
+              // Row-targeted delete (idempotentDelete hard mode): WHERE id = ?
+              const rowId = binds[0] as string
+              const idx = ae.findIndex(r => r.id === rowId)
+              if (idx >= 0) { ae.splice(idx, 1); return { meta: { changes: 1 } } }
+              return { meta: { changes: 0 } }
             }
             return { meta: {} }
           },
@@ -968,5 +986,51 @@ describe('task delete cascades activity_entries', () => {
     const delReq = new Request('https://x/api/test', { method: 'POST', headers: { 'X-Test-Mode-Key': TEST_MODE_KEY, 'X-Test-User': PI_EMAIL } })
     await handleDeleteTask('t1', delReq, NICK, ctx.env)
     expect(ctx.ae.filter(r => r.entity_type === 'task' && r.entity_id === 't1').length).toBe(0)
+  })
+})
+
+// ── Manual activity deletion (author or PI) — POST /api/activity/:id/delete ──
+
+describe('handleDeleteActivityEntry — author-or-PI manual delete', () => {
+  async function seed(env: Env, actorSlug: string): Promise<string> {
+    const user = actorSlug === 'nick-ingraham' ? NICK : NATE
+    const r = await postActivityEntry({ env, user, entityType: 'task', entityId: 't1', kind: 'comment', body: 'to be deleted', actorSlug })
+    if (!r.ok) throw new Error('seed failed')
+    return r.row.id
+  }
+
+  it('author deletes their own entry (hard delete)', async () => {
+    const { env, ae } = makeEnv(FX)
+    const id = await seed(env, 'nate-mesfin')
+    const res = await handleDeleteActivityEntry(id, nateReq(), NATE, env)
+    expect(res.status).toBe(200)
+    const body = await res.json() as { data: { deleted: boolean; idempotent: boolean } }
+    expect(body.data.deleted).toBe(true)
+    expect(body.data.idempotent).toBe(false)
+    expect(ae.find(r => r.id === id)).toBeUndefined()
+  })
+
+  it("non-PI cannot delete someone else's entry (403, row intact)", async () => {
+    const { env, ae } = makeEnv(FX)
+    const id = await seed(env, 'nick-ingraham')
+    const res = await handleDeleteActivityEntry(id, nateReq(), NATE, env)
+    expect(res.status).toBe(403)
+    expect(ae.find(r => r.id === id)).toBeDefined()
+  })
+
+  it("PI deletes anyone's entry", async () => {
+    const { env, ae } = makeEnv(FX)
+    const id = await seed(env, 'nate-mesfin')
+    const res = await handleDeleteActivityEntry(id, piReq(), NICK, env)
+    expect(res.status).toBe(200)
+    expect(ae.find(r => r.id === id)).toBeUndefined()
+  })
+
+  it('missing row is idempotent (200, idempotent:true)', async () => {
+    const { env } = makeEnv(FX)
+    const res = await handleDeleteActivityEntry('ae_missing', piReq(), NICK, env)
+    expect(res.status).toBe(200)
+    const body = await res.json() as { data: { idempotent: boolean } }
+    expect(body.data.idempotent).toBe(true)
   })
 })

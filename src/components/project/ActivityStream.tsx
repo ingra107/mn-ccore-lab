@@ -28,7 +28,7 @@ import {
   useActionItems,
   type ActionItemRow,
 } from '../../hooks/useApiData'
-import { usePostProjectUpdate, useAddComment, useToggleActionItem } from '../../hooks/useMutations'
+import { usePostProjectUpdate, useAddComment, useToggleActionItem, useDeleteActivityEntry } from '../../hooks/useMutations'
 import { useAuth } from '../../hooks/useAuth'
 import { emailToSlug } from '../../lib/emailSlug'
 import { getPersonInfo } from '../../data/team'
@@ -115,6 +115,13 @@ export default function ActivityStream({ project, filter }: Props) {
   const postUpdate = usePostProjectUpdate(slug)
   const addComment = useAddComment(slug)
   const toggleAction = useToggleActionItem()
+
+  // Manual delete (Nick 2026-07-06): own entries, or any entry for the PI.
+  // Server re-enforces author-or-PI on POST /api/activity/:id/delete.
+  const deleteEntry = useDeleteActivityEntry()
+  const viewerSlug = emailToSlug(user?.email)
+  const canDeleteEntry = (row: UnifiedEntryRow) =>
+    !!(user?.isPi || (viewerSlug && row.actor_slug === viewerSlug))
 
   // Note composer state (type pill)
   const [noteType, setNoteType] = useState('progress')
@@ -318,10 +325,24 @@ export default function ActivityStream({ project, filter }: Props) {
         <div className="flex flex-col gap-2">
           <AnimatePresence mode="popLayout">
             {visible.map((event) => (
-              <StreamItem key={event.id} event={event} onToggleAction={(id) => {
-                toggleAction.mutate(id)
-                showUndo('Action item toggled', () => toggleAction.mutate(id))
-              }} />
+              <StreamItem
+                key={event.id}
+                event={event}
+                onToggleAction={(id) => {
+                  toggleAction.mutate(id)
+                  showUndo('Action item toggled', () => toggleAction.mutate(id))
+                }}
+                onDeleteEntry={
+                  event.kind === 'unified-entry' && canDeleteEntry(event.row)
+                    ? () =>
+                        deleteEntry.mutate({
+                          id: event.row.id,
+                          projectSlug: slug,
+                          taskId: event.row.entity_type === 'task' ? event.row.entity_id : undefined,
+                        })
+                    : undefined
+                }
+              />
             ))}
           </AnimatePresence>
         </div>
@@ -332,7 +353,7 @@ export default function ActivityStream({ project, filter }: Props) {
 
 // ── Per-event renderers ──────────────────────────────────────────────────
 
-function StreamItem({ event, onToggleAction }: { event: StreamEvent; onToggleAction: (id: string) => void }) {
+function StreamItem({ event, onToggleAction, onDeleteEntry }: { event: StreamEvent; onToggleAction: (id: string) => void; onDeleteEntry?: () => void }) {
   switch (event.kind) {
     case 'action':
       return <ActionItemRowView action={event.row} onToggle={onToggleAction} />
@@ -345,6 +366,7 @@ function StreamItem({ event, onToggleAction }: { event: StreamEvent; onToggleAct
           showTaskOriginBadge={true}
           taskOriginBorderWidth={2}
           motionProps={itemMotion}
+          onDelete={onDeleteEntry}
         />
       )
   }
