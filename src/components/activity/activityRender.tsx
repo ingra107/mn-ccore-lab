@@ -48,6 +48,20 @@ import HermesPending, { isHermesPending } from '../HermesPending'
 import ReactionBar from '../ReactionBar'
 import type { StoredKind, UpdateType } from '../../../shared/activityKinds'
 import { ACCENT_CORAL, ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
+import { emailToSlug } from '../../lib/emailSlug'
+
+// Client-side mirror of the server's author-or-PI delete rule
+// (handleDeleteActivityEntry, api/routes/activity.ts). Gates whether the
+// trash button renders on an entry; the server re-enforces regardless.
+// One shared predicate so the feed surfaces can't drift apart.
+export function canDeleteActivityEntry(
+  user: { email?: string; isPi?: boolean } | null | undefined,
+  actorSlug: string,
+): boolean {
+  if (user?.isPi) return true
+  const viewerSlug = emailToSlug(user?.email)
+  return !!viewerSlug && actorSlug === viewerSlug
+}
 
 // ── Design constants ──────────────────────────────────────────────────────────
 //

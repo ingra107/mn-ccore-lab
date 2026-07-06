@@ -15,33 +15,25 @@
 // a11y (focus the row → Space to pick up, arrows to move) is unchanged.
 
 import { KeyboardSensor, PointerSensor } from '@dnd-kit/core'
+import { isEditableTarget } from './editableTarget'
 
-function isEditableTarget(target: EventTarget | null): boolean {
-  if (!(target instanceof HTMLElement)) return false
-  return (
-    target.tagName === 'INPUT' ||
-    target.tagName === 'TEXTAREA' ||
-    target.tagName === 'SELECT' ||
-    target.isContentEditable
-  )
+// Wrap a stock activator handler: events from editable elements never
+// activate; everything else delegates unchanged.
+function guardHandler<F extends (...args: never[]) => unknown>(handler: F): F {
+  return ((...args: Parameters<F>) =>
+    isEditableTarget((args[0] as { target: EventTarget | null }).target)
+      ? false
+      : (handler as (...a: Parameters<F>) => unknown)(...args)) as F
 }
 
 export class InputSafeKeyboardSensor extends KeyboardSensor {
   static activators: typeof KeyboardSensor.activators = KeyboardSensor.activators.map(
-    (activator) => ({
-      ...activator,
-      handler: (...args: Parameters<typeof activator.handler>) =>
-        isEditableTarget(args[0].target) ? false : activator.handler(...args),
-    }),
+    (activator) => ({ ...activator, handler: guardHandler(activator.handler) }),
   )
 }
 
 export class InputSafePointerSensor extends PointerSensor {
   static activators: typeof PointerSensor.activators = PointerSensor.activators.map(
-    (activator) => ({
-      ...activator,
-      handler: (...args: Parameters<typeof activator.handler>) =>
-        isEditableTarget(args[0].target) ? false : activator.handler(...args),
-    }),
+    (activator) => ({ ...activator, handler: guardHandler(activator.handler) }),
   )
 }

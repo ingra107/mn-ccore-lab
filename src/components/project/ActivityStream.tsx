@@ -41,6 +41,7 @@ import type { Project } from '../../data/types'
 import { deriveRenderKind, filterMatchesKind } from '../../../shared/activityKinds'
 import {
   ActivityEntryItem,
+  canDeleteActivityEntry,
   type ActivityEntryItemRow,
 } from '../activity/activityRender'
 import { ICON_PROPS } from '../../lib/iconProps'
@@ -119,9 +120,6 @@ export default function ActivityStream({ project, filter }: Props) {
   // Manual delete (Nick 2026-07-06): own entries, or any entry for the PI.
   // Server re-enforces author-or-PI on POST /api/activity/:id/delete.
   const deleteEntry = useDeleteActivityEntry()
-  const viewerSlug = emailToSlug(user?.email)
-  const canDeleteEntry = (row: UnifiedEntryRow) =>
-    !!(user?.isPi || (viewerSlug && row.actor_slug === viewerSlug))
 
   // Note composer state (type pill)
   const [noteType, setNoteType] = useState('progress')
@@ -333,7 +331,7 @@ export default function ActivityStream({ project, filter }: Props) {
                   showUndo('Action item toggled', () => toggleAction.mutate(id))
                 }}
                 onDeleteEntry={
-                  event.kind === 'unified-entry' && canDeleteEntry(event.row)
+                  event.kind === 'unified-entry' && canDeleteActivityEntry(user, event.row.actor_slug)
                     ? () =>
                         deleteEntry.mutate({
                           id: event.row.id,
