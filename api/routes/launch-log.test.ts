@@ -141,46 +141,25 @@ describe('handleClaimLaunch', () => {
   });
 });
 
-// ── makeClaimDbWithTask: claim + task lookup; dispatches .first() by SQL ──────
-// The claim endpoint now runs TWO SELECTs when the row carries a task_id: the
-// launch_log row, then the tasks row for context composition. This stub returns
-// launchRow for the launch_log query and taskRow for the tasks query.
-function makeClaimDbWithTask({ changes = 1, launchRow = null as any, taskRow = null as any } = {}) {
-  const db: any = {
-    prepare(sql: string) {
-      let binds: unknown[] = [];
-      const stmt: any = {
-        bind: (...a: unknown[]) => { binds = [...binds, ...a]; return stmt; },
-        run:   async () => ({ meta: { changes } }),
-        first: async () => {
-          if (/FROM launch_log/.test(sql)) return launchRow;
-          if (/FROM tasks/.test(sql)) return taskRow;
-          return null;
-        },
-        all:   async () => ({ results: [] }),
-      };
-      return stmt;
-    },
-  };
-  return db;
-}
-
 describe('handleClaimLaunch — task-context composition (#485)', () => {
   // NOTE: this is the SINGLE seed-to-session exit for BOTH the computer route
   // (resolve_launch.py) AND the mobile route (hub_ai_listener claims the same
   // endpoint), so these cases cover the "forward path" too — there is no
   // separate worker-side forward that reads the seed.
-  const taskRow = {
-    title: 'Wire the freshness guard',
-    status: 'in_progress',
-    due_date: '2026-07-10',
-    description: 'Guard TODAY.md regen against stale frontmatter.',
+  // The claim runs ONE LEFT-JOINed SELECT (launch row + task context), so the
+  // plain makeDbForClaim stub serves these too — firstRow is the flat joined row.
+  const taskCols = {
+    task_pk: 'task_1',
+    task_title: 'Wire the freshness guard',
+    task_status: 'in_progress',
+    task_due: '2026-07-10',
+    task_description: 'Guard TODAY.md regen against stale frontmatter.',
     project_name: 'PB Sector',
   };
 
   it('prepends the task-context header and preserves the raw seed after a blank line', async () => {
-    const launchRow = { tag: 'quickchat', seed: 'has it been done?', project_slug: 'pb-sector', task_id: 'task_1' };
-    const db = makeClaimDbWithTask({ changes: 1, launchRow, taskRow });
+    const firstRow = { tag: 'quickchat', seed: 'has it been done?', project_slug: 'pb-sector', task_id: 'task_1', ...taskCols };
+    const db = makeDbForClaim({ changes: 1, firstRow });
     const env = { DB: db } as unknown as Env;
     const res = await handleClaimLaunch('lnch_ctx', claimReq('lnch_ctx'), USER, env);
     expect(res.status).toBe(200);
@@ -198,8 +177,8 @@ describe('handleClaimLaunch — task-context composition (#485)', () => {
   });
 
   it('returns the raw seed unchanged when the launch carried no task_id', async () => {
-    const launchRow = { tag: 'quickchat', seed: 'fix the figure', project_slug: null, task_id: null };
-    const db = makeClaimDbWithTask({ changes: 1, launchRow });
+    const firstRow = { tag: 'quickchat', seed: 'fix the figure', project_slug: null, task_id: null };
+    const db = makeDbForClaim({ changes: 1, firstRow });
     const env = { DB: db } as unknown as Env;
     const res = await handleClaimLaunch('lnch_raw', claimReq('lnch_raw'), USER, env);
     const body = await res.json() as any;
@@ -207,8 +186,9 @@ describe('handleClaimLaunch — task-context composition (#485)', () => {
   });
 
   it('falls back to the raw seed when task_id points to a missing/deleted task', async () => {
-    const launchRow = { tag: 'workon', seed: 'pick this up', project_slug: 'x', task_id: 'task_gone' };
-    const db = makeClaimDbWithTask({ changes: 1, launchRow, taskRow: null });
+    // Join sentinel: task_id set but task_pk NULL (deleted_at guard nulled the join)
+    const firstRow = { tag: 'workon', seed: 'pick this up', project_slug: 'x', task_id: 'task_gone', task_pk: null };
+    const db = makeDbForClaim({ changes: 1, firstRow });
     const env = { DB: db } as unknown as Env;
     const res = await handleClaimLaunch('lnch_miss', claimReq('lnch_miss'), USER, env);
     const body = await res.json() as any;
@@ -217,8 +197,8 @@ describe('handleClaimLaunch — task-context composition (#485)', () => {
 
   it('truncates a long description to keep the header bounded', async () => {
     const longDesc = 'x'.repeat(900);
-    const launchRow = { tag: 'workon', seed: 'go', project_slug: 'x', task_id: 'task_long' };
-    const db = makeClaimDbWithTask({ changes: 1, launchRow, taskRow: { ...taskRow, description: longDesc } });
+    const firstRow = { tag: 'workon', seed: 'go', project_slug: 'x', task_id: 'task_long', ...taskCols, task_description: longDesc };
+    const db = makeDbForClaim({ changes: 1, firstRow });
     const env = { DB: db } as unknown as Env;
     const res = await handleClaimLaunch('lnch_long', claimReq('lnch_long'), USER, env);
     const body = await res.json() as any;

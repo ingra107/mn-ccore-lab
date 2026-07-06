@@ -95,50 +95,42 @@ export async function handleListPendingLaunches(env: Env): Promise<Response> {
 // keep showing the RAW stored seed and must NOT call this. (#485)
 const SEED_DESC_MAX = 500; // description chars kept in the header — bounds total length
 
-// Compose fresh task context into a launch seed. When the launch carried a
-// task_id (fired from a task compose surface), fetch that task from D1 (the
-// canonical arbiter — context is fresh at claim time, never a compose-time
-// snapshot) and prepend a compact context header so the seeded session knows
-// what "this" refers to. task_id NULL (Today-bar @quickchat, legacy rows) or a
-// missing task → the raw seed is returned UNCHANGED (graceful; a miss is logged).
-async function composeSeedWithTaskContext(env: Env, taskId: string | null | undefined, rawSeed: string): Promise<string> {
-  if (!taskId) return rawSeed;
-  const task = await env.DB.prepare(
-    `SELECT t.title, t.status, t.due_date, t.description,
-            COALESCE(p.title, t.project_id) AS project_name
-       FROM tasks t
-       LEFT JOIN projects p ON p.id = t.project_id OR p.slug = t.project_id
-      WHERE t.id = ? AND t.deleted_at IS NULL`
-  ).bind(taskId).first<{
-    title: string | null; status: string | null; due_date: string | null;
-    description: string | null; project_name: string | null;
-  }>();
-  if (!task) {
-    // A stale/deleted task_id is not fatal — the launch still works, just context-free.
-    console.warn(`[launch-log] claim: task_id ${taskId} not found (deleted or stale) — returning raw seed`);
-    return rawSeed;
-  }
-  return `${buildTaskContextHeader(task)}\n\n${rawSeed}`;
-}
+// The claim row: launch fields + the source task's context, fetched in ONE
+// LEFT-JOINed query (task fields are NULL for context-free launches).
+// task_pk is the join sentinel: task_id set but task_pk NULL = missing/deleted task.
+type ClaimRow = {
+  tag: string; seed: string; project_slug: string | null; task_id: string | null;
+  task_pk: string | null; task_title: string | null; task_status: string | null;
+  task_due: string | null; task_description: string | null; project_name: string | null;
+};
 
-// Compact, plain-text, bounded context header. Kept intentionally terse: it rides
-// in front of Nick's seed and (on the mobile route) gets newline-collapsed onto
-// one line by launch_remote_chat_v2, so inline ` · ` separators stay readable.
-function buildTaskContextHeader(task: {
-  title: string | null; status: string | null; due_date: string | null;
-  description: string | null; project_name: string | null;
-}): string {
+// Compose fresh task context into a launch seed. When the launch carried a
+// task_id (fired from a task compose surface), the claim query joins that task
+// from D1 (the canonical arbiter — context is fresh at claim time, never a
+// compose-time snapshot) and this prepends a compact context header so the
+// seeded session knows what "this" refers to. task_id NULL (Today-bar
+// @quickchat, legacy rows) or a missing task → the raw seed is returned
+// UNCHANGED (graceful; a miss is logged). Header kept intentionally terse: it
+// rides in front of Nick's seed and (on the mobile route) gets newline-collapsed
+// onto one line by launch_remote_chat_v2, so inline ` · ` separators stay readable.
+function composeSeedWithTaskContext(row: ClaimRow): string {
+  if (!row.task_id) return row.seed;
+  if (!row.task_pk) {
+    // A stale/deleted task_id is not fatal — the launch still works, just context-free.
+    console.warn(`[launch-log] claim: task_id ${row.task_id} not found (deleted or stale) — returning raw seed`);
+    return row.seed;
+  }
   const lines = [
     '[Task context — you were launched from this task card]',
-    `Task: ${task.title ?? '(untitled)'}`,
-    `Status: ${task.status ?? 'unknown'} · Due: ${task.due_date ?? 'none'} · Project: ${task.project_name ?? 'none'}`,
+    `Task: ${row.task_title ?? '(untitled)'}`,
+    `Status: ${row.task_status ?? 'unknown'} · Due: ${row.task_due ?? 'none'} · Project: ${row.project_name ?? 'none'}`,
   ];
-  const desc = (task.description ?? '').trim();
+  const desc = (row.task_description ?? '').trim();
   if (desc) {
     const truncated = desc.length > SEED_DESC_MAX ? `${desc.slice(0, SEED_DESC_MAX)}…` : desc;
     lines.push(`Description: ${truncated}`);
   }
-  return lines.join('\n');
+  return `${lines.join('\n')}\n\n${row.seed}`;
 }
 
 // POST /api/launch-log/:id/claim — atomic single-use opaque-token claim; UNSCOPED (no requested_by filter).
@@ -151,8 +143,19 @@ export async function handleClaimLaunch(id: string, _request: Request, _user: Au
      WHERE id=? AND consumed_at IS NULL AND expires_at IS NOT NULL AND expires_at > datetime('now')`
   ).bind(id).run();
   if (result.meta.changes !== 1) return error('launch token invalid, expired, or already consumed', 410);
-  const row = await env.DB.prepare('SELECT * FROM launch_log WHERE id = ?')
-    .bind(id).first<{ tag: string; seed: string; project_slug: string | null; task_id: string | null }>();
-  const seed = await composeSeedWithTaskContext(env, row!.task_id, row!.seed);
+  // One round-trip: launch row + (when task_id is set) the task context. The
+  // deleted_at guard lives in the JOIN condition, not WHERE — a deleted task
+  // must null the task columns, never drop the launch row itself.
+  const row = await env.DB.prepare(
+    `SELECT ll.tag, ll.seed, ll.project_slug, ll.task_id,
+            t.id AS task_pk, t.title AS task_title, t.status AS task_status,
+            t.due_date AS task_due, t.description AS task_description,
+            COALESCE(p.title, t.project_id) AS project_name
+       FROM launch_log ll
+       LEFT JOIN tasks t ON t.id = ll.task_id AND t.deleted_at IS NULL
+       LEFT JOIN projects p ON p.id = t.project_id OR p.slug = t.project_id
+      WHERE ll.id = ?`
+  ).bind(id).first<ClaimRow>();
+  const seed = composeSeedWithTaskContext(row!);
   return json({ data: { verb: row!.tag, seed, project_slug: row!.project_slug } });
 }
