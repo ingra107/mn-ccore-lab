@@ -4,8 +4,8 @@
     "rootDir": "C:/Users/ingra107/mn-ccore-lab/tests",
     "forbidOnly": false,
     "fullyParallel": false,
-    "globalSetup": "C:\\Users\\ingra107\\mn-ccore-lab\\tests\\test-seed.ts",
-    "globalTeardown": null,
+    "globalSetup": null,
+    "globalTeardown": "C:\\Users\\ingra107\\mn-ccore-lab\\tests\\global-teardown.ts",
     "globalTimeout": 0,
     "grep": {},
     "grepInvert": null,
@@ -62,8 +62,8 @@
     }
   ],
   "stats": {
-    "startTime": "2026-05-30T03:54:45.350Z",
-    "duration": 965.1479999999999,
+    "startTime": "2026-06-26T04:18:26.240Z",
+    "duration": 339.64699999999993,
     "expected": 0,
     "skipped": 0,
     "unexpected": 0,

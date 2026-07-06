@@ -44,6 +44,16 @@ review/dogfood/
 review/dogfood-round*/
 review/visual-audit/
 review/journey-*.png
+review/audit-0609/
+review/audit-results.json
+review/edge-fix-*/
+review/light-audit-*/
+review/codex-*.md
+review/MN-CCORE Lab Hub Design System*/
+# Session scratch + build-output copies (regenerable / handoff-only)
+Scratch-handoff/
+dist-screenshot/
+src/lib/__tests__/__screenshots__/
 review/*.png
 review/audit-newteammate/
 review/a11y-deep/
