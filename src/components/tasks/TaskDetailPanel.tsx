@@ -238,20 +238,21 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
     }
   }, [])
 
-  // Close on click outside
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
-        onClose()
-      }
-    }
-    // Delay to prevent immediate close from the click that opened it
-    const timer = setTimeout(() => document.addEventListener('mousedown', handler), 100)
-    return () => {
-      clearTimeout(timer)
-      document.removeEventListener('mousedown', handler)
-    }
-  }, [onClose])
+  // Close-on-click-outside is wired on the backdrop element itself (below),
+  // not via a document-level mousedown+contains() scan. Several fields in
+  // this panel (Status/Priority/Project GhostSelect, Recurrence InlineSelect,
+  // Due-date InlineDatePicker) render their open menu through createPortal
+  // straight to document.body — a DOM SIBLING of panelRef, not a descendant.
+  // A contains()-based check can never see those nodes as "inside," so it
+  // closed the whole panel on the first mousedown into any of them (bug:
+  // clicking the Project search box, or clicking a project option, dismissed
+  // the entire editor before the option's own onClick could commit the
+  // selection). The backdrop is a real DOM node beneath the panel (z-40 vs
+  // the panel's z-50 and the portal menus' z-9999); a portal menu painted on
+  // top of it structurally intercepts the click before it ever reaches the
+  // backdrop, so this is safe by construction — no ref/contains bookkeeping
+  // needed. Mirrors the same backdrop-onClick pattern already proven safe in
+  // Modal.tsx.
 
   if (!task) return null
 
@@ -302,10 +303,13 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
 
   return (
     <>
-      {/* Backdrop — tap to dismiss + fades with swipe progress on mobile. */}
+      {/* Backdrop — tap to dismiss + fades with swipe progress on mobile.
+          onClick (not a document-level listener) is what makes this safe
+          for portal-rendered dropdown content — see the comment above. */}
       <motion.div
         data-testid="detail-backdrop"
         className="fixed inset-0 z-40"
+        onClick={onClose}
         style={{
           backgroundColor: withAlpha(PANEL_BG, 30),
           opacity: backdropOpacity,
