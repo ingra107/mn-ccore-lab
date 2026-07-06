@@ -1,0 +1,91 @@
+name: Fresh-Bootstrap Replay Gate
+
+# WHY THIS EXISTS (backlog #492, 2026-07-06).
+#
+# `tsx scripts/local-db-bootstrap.ts` replays api/bootstrap-schema.sql + every
+# api/schema-v*.sql migration, in version order, against a BLANK local
+# Miniflare D1 (then local-db-seed.ts inserts fixture rows). This is the exact
+# path `npm run test:local:setup` runs from empty state.
+#
+# The failure class: when someone edits api/bootstrap-schema.sql to mirror a
+# column an OLD migration adds via ALTER (the v43 / v91 / v93 class) or drops a
+# table an old migration indexes (the v46 class), that old migration becomes
+# redundant/orphaned. A fresh replay then throws "duplicate column name: X" or
+# "no such table: Y" — but NOTHING in CI ran a fresh replay, so the break sat
+# undiscovered for weeks until a human ran test:local:setup from a wiped
+# .wrangler/state. THREE instances of this class hit in a single session
+# (schema-v46 / v91 / v93); even the same-commit mirror fixes forgot to register
+# the fresh-bootstrap skip twice (a915e9fa, d48290b5). Human diligence is not a
+# detector. This job IS the detector.
+#
+# HOW IT DIFFERS FROM schema-drift.yml: that workflow is a nightly job that
+# diffs the PROD D1 schema TEXTUALLY (`wrangler d1 execute --remote`, needs
+# CLOUDFLARE_* secrets + the private pb-schema submodule PAT) and cannot catch a
+# replay-ORDER failure against an empty DB. This job needs NO cloud creds and NO
+# submodule: the bootstrap script strips CLOUDFLARE_API_TOKEN/ACCOUNT_ID and
+# runs `wrangler d1 execute --local` against Miniflare. The bootstrap+seed exit
+# code IS the pass/fail signal — no Playwright, no browser, no remote D1.
+
+on:
+  pull_request:
+    paths:
+      - 'api/bootstrap-schema.sql'
+      - 'api/schema-v*.sql'
+      - 'scripts/local-db-*.ts'
+      - 'wrangler.local.toml'
+      - '.github/workflows/fresh-bootstrap-replay.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'api/bootstrap-schema.sql'
+      - 'api/schema-v*.sql'
+      - 'scripts/local-db-*.ts'
+      - 'wrangler.local.toml'
+      - '.github/workflows/fresh-bootstrap-replay.yml'
+  schedule:
+    - cron: '0 8 * * 1'   # Mondays 08:00 UTC — weekly drift backstop
+  workflow_dispatch: {}
+
+# Cancel an in-flight run when a newer commit lands on the same PR/branch.
+concurrency:
+  group: fresh-bootstrap-replay-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  fresh-bootstrap-replay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      # We never run Playwright here — skip the browser download so `npm ci`
+      # stays fast (~30-60s cached).
+      PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+      # Disable wrangler's first-run telemetry prompt so no step can hang
+      # waiting on stdin in a non-interactive runner.
+      WRANGLER_SEND_METRICS: 'false'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        # No `submodules: recursive` on purpose: local-db-bootstrap.ts +
+        # local-db-seed.ts only read api/*.sql and scripts/seed/phase0-plan.json.
+        # Neither imports the private pb-schema submodule, so we skip it (and the
+        # PB_SCHEMA_PAT the schema-drift workflow needs for it).
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Fresh-bootstrap replay against blank Miniflare D1
+        # Wipes .wrangler/state/v3/d1, replays bootstrap-schema.sql + every
+        # api/schema-v*.sql in version order against an empty local D1, then
+        # seeds fixture rows. ANY apply error exits non-zero and fails the job
+        # LOUD — the orphaned-migration class this gate exists to catch. Uses
+        # `wrangler d1 execute --local` (Miniflare); no cloud creds needed.
+        run: npm run test:local:setup
