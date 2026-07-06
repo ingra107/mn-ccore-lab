@@ -5,6 +5,7 @@
 
 import { useMemo, useState, useCallback } from 'react'
 import { TaskRow } from './TaskRow'
+import { CollapseChevron } from './SectionCollapseToggle'
 import { GROUP_META, INK_DIM, PANEL_BG, withAlpha, isTaskDone, type GroupKey } from './constants'
 import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow as TaskRowData } from '../../lib/api'
@@ -24,29 +25,44 @@ export function TaskGroup({ gkey, tasks, projectsByPid, state }: { gkey: GroupKe
 
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const onExpand = useCallback((id: string) => { setExpandedId((p) => (p === id ? null : id)) }, [])
+  // Session-only collapse, per-instance — one TaskGroup per gkey, so each
+  // group's open state is naturally independent. Starts expanded (Nick's
+  // ask, no localStorage persistence).
+  const [open, setOpen] = useState(true)
 
   if (tasks.length === 0) return null
   return (
     <div style={{ marginBottom: 20 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, padding: '0 2px' }}>
+      <div
+        role="button"
+        tabIndex={0}
+        aria-expanded={open}
+        aria-label={open ? `Collapse ${meta.label}` : `Expand ${meta.label}`}
+        onClick={() => setOpen((o) => !o)}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen((o) => !o) } }}
+        style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, padding: '0 2px', cursor: 'pointer' }}
+      >
         <span style={{ fontSize: 14 }}>{meta.icon}</span>
         <h4 style={{ fontSize: 12, fontWeight: 700, color: 'var(--task-ink)', letterSpacing: '0.06em', textTransform: 'uppercase', margin: 0 }}>{meta.label}</h4>
         <span style={{ fontSize: 11, color: INK_DIM, fontVariantNumeric: 'tabular-nums' }}>{doneCount}/{tasks.length}</span>
         <div style={{ flex: 1, height: 1, background: withAlpha(meta.color, 13), marginLeft: 4 }} />
+        <CollapseChevron open={open} color={meta.color} />
       </div>
-      <div style={{ background: PANEL_BG, border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8, overflow: 'hidden' }}>
-        {sorted.map((t) => (
-          <TaskRow
-            key={t.id}
-            task={t}
-            project={t.project_id ? projectsByPid.get(t.project_id) ?? null : null}
-            state={state}
-            expandedId={expandedId}
-            onExpand={onExpand}
-            projectsByPid={projectsByPid}
-          />
-        ))}
-      </div>
+      {open && (
+        <div style={{ background: PANEL_BG, border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8, overflow: 'hidden' }}>
+          {sorted.map((t) => (
+            <TaskRow
+              key={t.id}
+              task={t}
+              project={t.project_id ? projectsByPid.get(t.project_id) ?? null : null}
+              state={state}
+              expandedId={expandedId}
+              onExpand={onExpand}
+              projectsByPid={projectsByPid}
+            />
+          ))}
+        </div>
+      )}
     </div>
   )
 }

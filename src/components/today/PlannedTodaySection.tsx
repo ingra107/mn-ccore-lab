@@ -7,7 +7,8 @@
 
 import { useState, useCallback } from 'react'
 import { PlannedTaskRow } from './PlannedTaskRow'
-import { INK_DIM, INK_MUTED } from './constants'
+import { CollapseChevron } from './SectionCollapseToggle'
+import { ACCENT_TEAL, INK_DIM, INK_MUTED } from './constants'
 import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow } from '../../lib/api'
 
@@ -25,18 +26,30 @@ export function PlannedTodaySection({
   // Per-surface expand state (Item 2 fix).
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const onExpand = useCallback((id: string) => { setExpandedId((p) => (p === id ? null : id)) }, [])
+  // Session-only collapse — starts expanded on every load (Nick's ask, no localStorage).
+  const [open, setOpen] = useState(true)
 
   return (
     <section data-b2-planned-today style={{ marginBottom: 24 }}>
       {/* Section header — clear boundary between calendar and planned list */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+      <div
+        role="button"
+        tabIndex={0}
+        aria-expanded={open}
+        aria-label={open ? 'Collapse Planned today' : 'Expand Planned today'}
+        onClick={() => setOpen((o) => !o)}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen((o) => !o) } }}
+        style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14, cursor: 'pointer' }}
+      >
         <span style={{ fontSize: 14 }}>📋</span>
         <h3 style={{ fontSize: 13, fontWeight: 600, color: 'var(--task-ink)', letterSpacing: '-0.01em', margin: 0, whiteSpace: 'nowrap' }}>Planned today</h3>
-        <span className="today-section-hint" style={{ fontSize: 11, color: INK_DIM }}>✓ done · × to unplan</span>
+        <span style={{ fontSize: 11, color: INK_DIM, fontVariantNumeric: 'tabular-nums' }}>{stripTasks.length}</span>
+        {open && <span className="today-section-hint" style={{ fontSize: 11, color: INK_DIM }}>✓ done · × to unplan</span>}
         <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.08)', marginLeft: 4 }} />
+        <CollapseChevron open={open} color={ACCENT_TEAL} />
       </div>
 
-      {stripTasks.length === 0 ? (
+      {open && (stripTasks.length === 0 ? (
         /* Empty state */
         <div style={{ padding: '16px 20px', marginBottom: 4, textAlign: 'center', background: 'rgba(255,255,255,0.02)', border: '1px dashed rgba(255,255,255,0.14)', borderRadius: 8 }}>
           <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: INK_DIM, marginRight: 10 }}>Nothing planned</span>
@@ -56,7 +69,7 @@ export function PlannedTodaySection({
             />
           ))}
         </div>
-      )}
+      ))}
     </section>
   )
 }

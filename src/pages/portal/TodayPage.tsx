@@ -36,6 +36,7 @@ import {
 } from '../../components/today/constants'
 import { PillStrip } from '../../components/today/PillStrip'
 import { Timeline } from '../../components/today/Timeline'
+import { CollapseChevron } from '../../components/today/SectionCollapseToggle'
 import { TodayDndContext } from '../../components/today/TodayDndContext'
 import { PlannedTodaySection } from '../../components/today/PlannedTodaySection'
 import { TaskGroup } from '../../components/today/TaskGroup'
@@ -286,6 +287,11 @@ export default function TodayPage() {
   const isLoading = tasksQuery.isLoading || projectsQuery.isLoading
   const isError = tasksQuery.isError || projectsQuery.isError
   const [completedOpen, setCompletedOpen] = useState(false)
+  // Section collapse state — session-only (no localStorage), every section
+  // starts expanded on every load per Nick's ask. timelineOpen is shared by
+  // both the Timeline and Agenda-mode headers so the "Today" section stays
+  // rolled up (or open) across a view-toggle switch.
+  const [timelineOpen, setTimelineOpen] = useState(true)
   // S20: the how-to micro-copy under the H1 is now a one-time dismissible hint
   // (was permanent above-the-fold clutter). The same instructions also sit
   // contextually next to "All today's tasks", so dismissing loses nothing.
@@ -470,13 +476,29 @@ export default function TodayPage() {
             dismissedIds={dismissedEventIds}
             onDismiss={onDismissEvent}
             onRestoreDismissed={onRestoreAllDismissed}
+            open={timelineOpen}
+            onToggleOpen={() => setTimelineOpen((o) => !o)}
           />
         ) : (
           <section data-b2-agenda style={{ marginBottom: 24 }}>
-            {/* Header with toggle — mirrors Timeline header for consistent affordance */}
+            {/* Header with toggle — mirrors Timeline header for consistent affordance.
+                Only the icon+title+chevron are the collapse-click target — the
+                view-toggle group and hint are siblings, not descendants, so their
+                clicks never reach the collapse handler. */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-              <span style={{ fontSize: 16 }}>📅</span>
-              <h2 style={{ fontSize: 18, fontWeight: 600, color: 'var(--task-ink)', letterSpacing: '-0.02em', margin: 0, whiteSpace: 'nowrap' }}>Today</h2>
+              <div
+                role="button"
+                tabIndex={0}
+                aria-expanded={timelineOpen}
+                aria-label={timelineOpen ? 'Collapse Today section' : 'Expand Today section'}
+                onClick={() => setTimelineOpen((o) => !o)}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setTimelineOpen((o) => !o) } }}
+                style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}
+              >
+                <span style={{ fontSize: 16 }}>📅</span>
+                <h2 style={{ fontSize: 18, fontWeight: 600, color: 'var(--task-ink)', letterSpacing: '-0.02em', margin: 0, whiteSpace: 'nowrap' }}>Today</h2>
+                <CollapseChevron open={timelineOpen} color={ACCENT_GOLD} />
+              </div>
               <div
                 role="group"
                 aria-label="Today view"
@@ -514,16 +536,18 @@ export default function TodayPage() {
               </div>
               <span style={{ fontSize: 11, color: INK_DIM }}>scan your day · click to open · × to hide</span>
             </div>
-            <AgendaListView
-              events={todaysMeetings}
-              tomorrowEvents={tomorrowMeetings}
-              tasks={tasks}
-              state={state}
-              projectsByPid={projectsByPid}
-              dismissedIds={dismissedEventIds}
-              onDismiss={onDismissEvent}
-              onRestoreDismissed={onRestoreAllDismissed}
-            />
+            {timelineOpen && (
+              <AgendaListView
+                events={todaysMeetings}
+                tomorrowEvents={tomorrowMeetings}
+                tasks={tasks}
+                state={state}
+                projectsByPid={projectsByPid}
+                dismissedIds={dismissedEventIds}
+                onDismiss={onDismissEvent}
+                onRestoreDismissed={onRestoreAllDismissed}
+              />
+            )}
           </section>
         )}
 
@@ -556,7 +580,15 @@ export default function TodayPage() {
         </TodayDndContext>
 
         <div data-b2-completed style={{ marginTop: 24, paddingTop: 16, borderTop: '1px dashed rgba(255,255,255,0.08)' }}>
-          <div onClick={() => setCompletedOpen(!completedOpen)} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', padding: '4px 0' }}>
+          <div
+            role="button"
+            tabIndex={0}
+            aria-expanded={completedOpen}
+            aria-label={completedOpen ? 'Collapse Completed today' : 'Expand Completed today'}
+            onClick={() => setCompletedOpen(!completedOpen)}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setCompletedOpen(!completedOpen) } }}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', padding: '4px 0' }}
+          >
             <span style={{ fontSize: 12, color: ACCENT_GREEN }}>✓</span>
             <span style={{ fontSize: 11, color: INK_MUTED, letterSpacing: '0.06em', textTransform: 'uppercase', fontWeight: 500 }}>
               Completed today ({doneTodayDetail.length + localDoneIds.length})

@@ -48,6 +48,7 @@ import EmptyStateArt from '../EmptyStateArt'
 import { type SaveStatus } from './MeetingRow'
 import { useIsMobile } from '../../hooks/useIsMobile'
 import { TimelineGrid } from './TimelineGrid'
+import { CollapseChevron } from './SectionCollapseToggle'
 import {
   ACCENT_GOLD, ACCENT_TEAL, INK_DIM, withAlpha,
   type PlannedSlot, type TodayEvent,
@@ -154,9 +155,13 @@ interface TimelineProps {
   dismissedIds: Record<string, boolean>
   onDismiss: (id: string) => void
   onRestoreDismissed: () => void
+  // Collapse state lifted to TodayPage so the "Today" section stays rolled
+  // up (or open) across a Timeline⇄Agenda view switch.
+  open: boolean
+  onToggleOpen: () => void
 }
 
-export function Timeline({ events, tasks, state, projectsByPid, activeView, onToggleView, dismissedIds, onDismiss, onRestoreDismissed }: TimelineProps) {
+export function Timeline({ events, tasks, state, projectsByPid, activeView, onToggleView, dismissedIds, onDismiss, onRestoreDismissed, open, onToggleOpen }: TimelineProps) {
   // Per-surface expand state: Timeline owns its own expandedId so that expanding
   // a task block here never opens the same task in list rows below.
   const [expandedId, setExpandedId] = useState<string | null>(null)
@@ -223,10 +228,24 @@ export function Timeline({ events, tasks, state, projectsByPid, activeView, onTo
         />
       ))}
 
-      {/* Header */}
+      {/* Header. Only the icon+title+chevron are the collapse-click target —
+          the view-toggle group, hint, and restore button are siblings so
+          their clicks never reach the collapse handler (no stopPropagation
+          needed). */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-        <span style={{ fontSize: 16 }}>📅</span>
-        <h2 style={{ fontSize: 18, fontWeight: 600, color: 'var(--task-ink)', letterSpacing: '-0.02em', margin: 0, whiteSpace: 'nowrap' }}>Today</h2>
+        <div
+          role="button"
+          tabIndex={0}
+          aria-expanded={open}
+          aria-label={open ? 'Collapse Today section' : 'Expand Today section'}
+          onClick={onToggleOpen}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggleOpen() } }}
+          style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}
+        >
+          <span style={{ fontSize: 16 }}>📅</span>
+          <h2 style={{ fontSize: 18, fontWeight: 600, color: 'var(--task-ink)', letterSpacing: '-0.02em', margin: 0, whiteSpace: 'nowrap' }}>Today</h2>
+          <CollapseChevron open={open} color={ACCENT_TEAL} />
+        </div>
         {/* Timeline⇄Agenda view toggle — rendered when parent passes activeView + onToggleView */}
         {onToggleView && (
           <div
@@ -277,44 +296,48 @@ export function Timeline({ events, tasks, state, projectsByPid, activeView, onTo
         )}
       </div>
 
-      {/* Empty state */}
-      {visibleMeetings.length === 0 && (
-        <div style={{ background: withAlpha(ACCENT_GOLD, 3), border: `1px dashed ${withAlpha(ACCENT_GOLD, 15)}`, borderRadius: 8 }}>
-          <EmptyState
-            compact
-            icon={<EmptyStateArt variant="meetings" width={96} height={72} />}
-            title="No meetings today"
-            subtitle="A clear calendar. Connect a feed if you expected to see meetings here."
-            action={{ label: 'Connect a calendar →', onClick: () => navigate(PATHS.settings) }}
-          />
-        </div>
-      )}
+      {open && (
+        <>
+          {/* Empty state */}
+          {visibleMeetings.length === 0 && (
+            <div style={{ background: withAlpha(ACCENT_GOLD, 3), border: `1px dashed ${withAlpha(ACCENT_GOLD, 15)}`, borderRadius: 8 }}>
+              <EmptyState
+                compact
+                icon={<EmptyStateArt variant="meetings" width={96} height={72} />}
+                title="No meetings today"
+                subtitle="A clear calendar. Connect a feed if you expected to see meetings here."
+                action={{ label: 'Connect a calendar →', onClick: () => navigate(PATHS.settings) }}
+              />
+            </div>
+          )}
 
-      {/* TimelineGrid handles allDay + service + timed flow */}
-      {visibleMeetings.length > 0 && (
-        <TimelineGrid
-          events={visibleMeetings}
-          tasks={tasks}
-          state={state}
-          projectsByPid={projectsByPid}
-          expandedId={expandedId}
-          onExpand={onExpand}
-          notes={meetingNotes}
-          onNote={(id, v) => setMeetingNotes((s) => ({ ...s, [id]: v }))}
-          saveStatus={meetingSaveState}
-          onDismiss={onDismiss}
-          isPhone={isPhone}
-          now={now}
-          inMeeting={inMeeting}
-        />
-      )}
+          {/* TimelineGrid handles allDay + service + timed flow */}
+          {visibleMeetings.length > 0 && (
+            <TimelineGrid
+              events={visibleMeetings}
+              tasks={tasks}
+              state={state}
+              projectsByPid={projectsByPid}
+              expandedId={expandedId}
+              onExpand={onExpand}
+              notes={meetingNotes}
+              onNote={(id, v) => setMeetingNotes((s) => ({ ...s, [id]: v }))}
+              saveStatus={meetingSaveState}
+              onDismiss={onDismiss}
+              isPhone={isPhone}
+              now={now}
+              inMeeting={inMeeting}
+            />
+          )}
 
-      {/* Fallback drop zone when no events at all */}
-      {visibleMeetings.length === 0 && !hasAnyEvents && (
-        <DropZone
-          slot={`between-0` as PlannedSlot}
-          label="drop a task here to plan it for today"
-        />
+          {/* Fallback drop zone when no events at all */}
+          {visibleMeetings.length === 0 && !hasAnyEvents && (
+            <DropZone
+              slot={`between-0` as PlannedSlot}
+              label="drop a task here to plan it for today"
+            />
+          )}
+        </>
       )}
 
       {/* Strip-slot planned tasks (no specific time) now live in

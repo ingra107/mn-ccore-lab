@@ -7,15 +7,31 @@
 //
 // Extracted from src/pages/portal/TodayPage.tsx (B2_Rail_Pulse).
 
+import { useState } from 'react'
 import { ACCENT_GOLD, INK, INK_MUTED, INK_DIM } from '../constants'
+import { CollapseChevron } from '../SectionCollapseToggle'
 
 export function PulseCard({ focusMin, milestones, mentees }: { focusMin: number; milestones: Array<{ title: string; days: number }>; mentees: Array<{ name: string; next: string }> }) {
+  // Session-only collapse — starts expanded on every load (no localStorage).
+  const [open, setOpen] = useState(true)
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+      <div
+        role="button"
+        tabIndex={0}
+        aria-expanded={open}
+        aria-label={open ? 'Collapse Pulse' : 'Expand Pulse'}
+        onClick={() => setOpen((o) => !o)}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen((o) => !o) } }}
+        style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8, cursor: 'pointer' }}
+      >
         <span style={{ width: 6, height: 6, borderRadius: '50%', background: ACCENT_GOLD }} />
         <h4 style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: ACCENT_GOLD, margin: 0 }}>Pulse</h4>
+        <span style={{ fontSize: 11, color: INK_DIM, marginLeft: 'auto', fontVariantNumeric: 'tabular-nums' }}>{focusMin}min</span>
+        <CollapseChevron open={open} color={ACCENT_GOLD} />
       </div>
+      {open && (
+      <>
       <div style={{ marginBottom: 10 }}>
         <div style={{ padding: '8px 10px', background: 'rgba(255,255,255,0.03)', borderRadius: 'var(--radius-sm)' }}>
           <div style={{ fontSize: 10, color: INK_MUTED, letterSpacing: '0.04em' }}>FOCUS</div>
@@ -45,6 +61,8 @@ export function PulseCard({ focusMin, milestones, mentees }: { focusMin: number;
             </div>
           ))}
         </>
+      )}
+      </>
       )}
     </div>
   )

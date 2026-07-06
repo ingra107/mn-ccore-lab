@@ -11,6 +11,7 @@ import { useState, useMemo, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { PATHS } from '../../../constants/paths'
 import { ACCENT_TEAL, ACCENT_GOLD, INK, INK_MUTED, INK_DIM } from '../constants'
+import { CollapseChevron } from '../SectionCollapseToggle'
 
 const SHOW_ALL_KEY = 'today_projects_show_all'
 
@@ -22,6 +23,8 @@ interface ProjectEntry {
 }
 
 export function ProjectsCard({ projects }: { projects: ProjectEntry[] }) {
+  // Session-only collapse — starts expanded on every load (no localStorage).
+  const [open, setOpen] = useState(true)
   const [q, setQ] = useState('')
   const [showAll, setShowAll] = useState<boolean>(() => {
     try { return window.localStorage.getItem(SHOW_ALL_KEY) === '1' } catch { return false }
@@ -46,13 +49,24 @@ export function ProjectsCard({ projects }: { projects: ProjectEntry[] }) {
 
   return (
     <div style={{ marginBottom: 14 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+      <div
+        role="button"
+        tabIndex={0}
+        aria-expanded={open}
+        aria-label={open ? 'Collapse Projects' : 'Expand Projects'}
+        onClick={() => setOpen((o) => !o)}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen((o) => !o) } }}
+        style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, cursor: 'pointer' }}
+      >
         <span style={{ width: 6, height: 6, borderRadius: '50%', background: ACCENT_TEAL }} />
         <h4 style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: ACCENT_TEAL, margin: 0 }}>Projects</h4>
         <span style={{ fontSize: 11, color: INK_DIM, marginLeft: 'auto' }}>
           {useAll ? totalCount : `${relevantCount} today`}
         </span>
+        <CollapseChevron open={open} color={ACCENT_TEAL} />
       </div>
+      {open && (
+      <>
       <input
         value={q}
         onChange={(e) => setQ(e.target.value)}
@@ -98,6 +112,8 @@ export function ProjectsCard({ projects }: { projects: ProjectEntry[] }) {
         >
           {showAll ? `Show today only (${relevantCount})` : `Show all (${totalCount})`}
         </button>
+      )}
+      </>
       )}
     </div>
   )

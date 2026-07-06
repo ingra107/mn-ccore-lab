@@ -12,7 +12,9 @@
 //
 // Extracted from src/pages/portal/TodayPage.tsx (B2_Rail_Alert).
 
+import { useState } from 'react'
 import { ACCENT_GOLD, INK, INK_MUTED, daysSince, withAlpha } from '../constants'
+import { CollapseChevron } from '../SectionCollapseToggle'
 import type { TaskRow } from '../../../lib/api'
 
 interface HermesSuggestsProps {
@@ -22,6 +24,8 @@ interface HermesSuggestsProps {
 }
 
 export function HermesSuggestsCard({ overdueTasks, stalledProjects, menteesWithDue }: HermesSuggestsProps) {
+  // Session-only collapse — starts expanded on every load (no localStorage).
+  const [open, setOpen] = useState(true)
   // Algorithmic 3-bullet suggestion (CD spec parity — focus + ul of bullets).
   // Real Hermes requires async (60s listener poll); defer to a follow-up that
   // creates an ai_request once/day and caches the response per-user.
@@ -60,14 +64,27 @@ export function HermesSuggestsCard({ overdueTasks, stalledProjects, menteesWithD
 
   return (
     <div style={{ padding: 14, background: withAlpha(ACCENT_GOLD, 6), border: `1px solid ${withAlpha(ACCENT_GOLD, 20)}`, borderRadius: 'var(--radius-md)', marginBottom: 14 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+      <div
+        role="button"
+        tabIndex={0}
+        aria-expanded={open}
+        aria-label={open ? "Collapse Today's focus" : "Expand Today's focus"}
+        onClick={() => setOpen((o) => !o)}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen((o) => !o) } }}
+        style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: open ? 8 : 0, cursor: 'pointer' }}
+      >
         <span style={{ width: 6, height: 6, borderRadius: '50%', background: ACCENT_GOLD }} />
         <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: ACCENT_GOLD }}>Today's focus</span>
+        <CollapseChevron open={open} color={ACCENT_GOLD} />
       </div>
-      <div style={{ fontSize: 12, color: INK, lineHeight: 1.5, marginBottom: 8 }}>{focus}</div>
-      <ul style={{ margin: 0, paddingLeft: 14, fontSize: 11, color: INK_MUTED, lineHeight: 1.7 }}>
-        {bullets.slice(0, 3).map((b, i) => <li key={i}>{b}</li>)}
-      </ul>
+      {open && (
+        <>
+          <div style={{ fontSize: 12, color: INK, lineHeight: 1.5, marginBottom: 8 }}>{focus}</div>
+          <ul style={{ margin: 0, paddingLeft: 14, fontSize: 11, color: INK_MUTED, lineHeight: 1.7 }}>
+            {bullets.slice(0, 3).map((b, i) => <li key={i}>{b}</li>)}
+          </ul>
+        </>
+      )}
     </div>
   )
 }

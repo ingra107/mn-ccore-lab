@@ -4,13 +4,17 @@
 //
 // Extracted from src/pages/portal/TodayPage.tsx (B2_Rail_Attention).
 
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ACCENT_CORAL, ACCENT_ORANGE, INK, INK_DIM, daysSince, withAlpha } from '../constants'
+import { CollapseChevron } from '../SectionCollapseToggle'
 import { PATHS } from '../../../constants/paths'
 import type { TaskRow } from '../../../lib/api'
 import TaskTitle from '../../tasks/TaskTitle'
 
 export function NeedsAttentionCard({ overdueTasks, stalledProjects }: { overdueTasks: TaskRow[]; stalledProjects: Array<{ name: string; days: number }> }) {
+  // Session-only collapse — starts expanded on every load (no localStorage).
+  const [open, setOpen] = useState(true)
   // TP-18: when more than 5 in either bucket, append a "+N more →" link
   // that filters MyTasks (overdue) / Projects (stalled) to the matching
   // subset. Keeps top-5 readable without burying the long-tail count.
@@ -18,10 +22,22 @@ export function NeedsAttentionCard({ overdueTasks, stalledProjects }: { overdueT
   const stalledExtra = Math.max(0, stalledProjects.length - 5)
   return (
     <div data-b2-attention style={{ marginBottom: 14 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+      <div
+        role="button"
+        tabIndex={0}
+        aria-expanded={open}
+        aria-label={open ? 'Collapse Needs attention' : 'Expand Needs attention'}
+        onClick={() => setOpen((o) => !o)}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen((o) => !o) } }}
+        style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8, cursor: 'pointer' }}
+      >
         <span style={{ width: 6, height: 6, borderRadius: '50%', background: ACCENT_CORAL }} />
         <h4 style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: ACCENT_CORAL, margin: 0 }}>Needs attention</h4>
+        <span style={{ fontSize: 11, color: INK_DIM, marginLeft: 'auto', fontVariantNumeric: 'tabular-nums' }}>{overdueTasks.length + stalledProjects.length}</span>
+        <CollapseChevron open={open} color={ACCENT_CORAL} />
       </div>
+      {open && (
+      <>
       <div style={{ padding: 12, background: withAlpha(ACCENT_CORAL, 4), border: `1px solid ${withAlpha(ACCENT_CORAL, 15)}`, borderRadius: 'var(--radius-md)', marginBottom: 8 }}>
         <div style={{ fontSize: 10, color: ACCENT_CORAL, marginBottom: 4, fontWeight: 600, letterSpacing: '0.04em' }}>OVERDUE</div>
         {overdueTasks.length === 0 && (
@@ -70,6 +86,8 @@ export function NeedsAttentionCard({ overdueTasks, stalledProjects }: { overdueT
           </Link>
         )}
       </div>
+      </>
+      )}
     </div>
   )
 }
