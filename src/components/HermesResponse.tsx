@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { ExternalLink } from 'lucide-react'
 import { PATHS } from '../constants/paths'
 import { ICON_PROPS } from '../lib/iconProps'
+import LinkifiedText from './LinkifiedText'
 
 export type HermesCitation =
   | { type: 'project'; slug: string; title: string }
@@ -43,7 +44,9 @@ export function parseHermesContent(raw: string): ParsedHermes {
 
 function citationHref(c: HermesCitation): string | null {
   if (c.type === 'project' && c.slug) return PATHS.project(c.slug)
-  if (c.type === 'task' && c.id) return `${PATHS.tasks}?focus=${encodeURIComponent(c.id)}`
+  // openTask is the app-wide deep-link param (useOpenParam) that opens the
+  // task editor drawer — NOT `focus`, which nothing on MyTasks consumes.
+  if (c.type === 'task' && c.id) return `${PATHS.tasks}?openTask=${encodeURIComponent(c.id)}`
   if (c.type === 'meeting' && c.id) return PATHS.meeting(c.id)
   if (c.type === 'publication') {
     if (c.url) return c.url
@@ -61,7 +64,7 @@ export default function HermesResponse({ content }: { content: string }) {
         className="text-sm leading-relaxed"
         style={{ color: 'var(--ink)', margin: 0, whiteSpace: 'pre-wrap' }}
       >
-        {prose}
+        <LinkifiedText text={prose} />
       </p>
 
       {findings.length > 0 && (
