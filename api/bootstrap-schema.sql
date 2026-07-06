@@ -155,7 +155,9 @@ CREATE TABLE IF NOT EXISTS launch_log (
                       CHECK (status IN ('pending','launched','failed','completed','expired')),
     requested_by    TEXT,
     created_at      TEXT NOT NULL DEFAULT (datetime('now')),
-    launched_at     TEXT
+    launched_at     TEXT,
+    expires_at      TEXT,  -- v91: claim requires expires_at IS NOT NULL; was missing from this mirror (drift caught during #485)
+    consumed_at     TEXT   -- v91: claim requires consumed_at IS NULL; single-use token consumption stamp
 );
 
 CREATE INDEX IF NOT EXISTS idx_launch_log_status ON launch_log(status);
