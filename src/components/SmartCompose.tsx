@@ -28,7 +28,7 @@ import { MeLockToggle } from './ui/MeLockToggle'
 import MentionInput from './MentionInput'
 import HermesMark from './HermesMark'
 import { usePostTaskUpdate } from '../hooks/useMutations'
-import { useLaunchCommands, type LaunchCommandContext } from '../hooks/useLaunchCommands'
+import { useLaunchCommands, taskLaunchContext, type LaunchCommandContext } from '../hooks/useLaunchCommands'
 import { useUndoToast } from './UndoToast'
 import { ICON_PROPS } from '../lib/iconProps'
 import { withAlpha } from '../lib/taskGrouping'
@@ -213,7 +213,7 @@ export default function SmartCompose(props: SmartComposeProps) {
       // launchContext verbatim (a custom task surface may set taskId there).
       const ctx: LaunchCommandContext = isCustomMode
         ? (launchContext ?? {})
-        : { ...launchContext, taskId: (props as TaskModeProps).taskId }
+        : taskLaunchContext((props as TaskModeProps).taskId, launchContext ?? {})
       const routed = tryLaunchCommand(raw, ctx, () => {
         if (!isControlled) setVal('')
       })

@@ -31,6 +31,18 @@ export interface LaunchCommandContext {
   taskId?: string | null
 }
 
+/** Build the launch context for a TASK compose surface. taskId is a REQUIRED
+ *  argument — a task surface cannot construct its context without it, so a new
+ *  surface can't silently launch context-free (#490; the worker still degrades
+ *  gracefully if it somehow receives none). Every task compose surface routes
+ *  through this; only non-task surfaces (Today bar) pass a plain context. */
+export function taskLaunchContext(
+  taskId: string,
+  base: Omit<LaunchCommandContext, 'taskId'> = {},
+): LaunchCommandContext {
+  return { ...base, taskId }
+}
+
 export function useLaunchCommands() {
   const { launch: protocolLaunch } = useProtocolLaunch()
   const { showInfo, showError } = useToast()

@@ -28,7 +28,7 @@ import MentionInput from '../MentionInput'
 import TypingIndicator from '../TypingIndicator'
 import { getPersonInfo, getAllMembers, directors } from '../../data/team'
 import { shortLabelForUrl, gmailKind } from '../../lib/urlClassify'
-import { useLaunchCommands } from '../../hooks/useLaunchCommands'
+import { useLaunchCommands, taskLaunchContext } from '../../hooks/useLaunchCommands'
 import LinkChip from '../LinkChip'
 import Avatar from '../Avatar'
 import InlineSelect from '../InlineSelect'
@@ -1539,7 +1539,7 @@ function OverviewQuickAdd({
     // /api/pb/dispatch/add (team-visible). useLaunchCommands owns the flow;
     // reset() fires only on success, so a failed launch keeps the seed in the
     // textarea for retry.
-    if (tryLaunchCommand(v, { projectSlug, primaryFolder, taskId }, reset)) return
+    if (tryLaunchCommand(v, taskLaunchContext(taskId, { projectSlug, primaryFolder }), reset)) return
     // ── @hermes prefix typed directly: route to /api/ai-requests ─────────────
     // The Hermes toggle (forHermes) posts via comment + dispatch/add.
     // A direct @hermes prefix is a Today-bar-style intent; route there instead
