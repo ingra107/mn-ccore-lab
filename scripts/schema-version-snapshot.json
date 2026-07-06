@@ -1,7 +1,7 @@
 {
   "description": "Canonical set of api/schema-v*.sql migration files. Regenerate with: python scripts/check-schema-versions.py --update",
-  "hash": "8adef2673705e0f9736d53ed4f01c95ee8264813d575e527ce21433f94511e89",
-  "file_count": 96,
+  "hash": "8db547276eb7c8885e202cf9813105745e29daf35c240870b4dd2401bb9a45f1",
+  "file_count": 97,
   "files": [
     "schema-v2.sql",
     "schema-v3.sql",
@@ -98,11 +98,12 @@
     "schema-v89-launch-log.sql",
     "schema-v90.sql",
     "schema-v91.sql",
-    "schema-v92-tasks-meeting-approval-dedup.sql"
+    "schema-v92-tasks-meeting-approval-dedup.sql",
+    "schema-v93-launch-log-task-id.sql"
   ],
   "version_range": [
     2,
-    92
+    93
   ],
   "gaps": [
     35,

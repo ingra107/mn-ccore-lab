@@ -1,7 +1,7 @@
 // api/routes/launch-log.test.ts
 import { describe, it, expect } from 'vitest';
 import type { Env } from '../helpers';
-import { handleCreateLaunch, handleListLaunches, handleSetLaunchStatus, handleClaimLaunch, handleListPendingLaunches } from './launch-log';
+import { handleCreateLaunch, handleListLaunches, handleSetLaunchStatus, handleClaimLaunch, handleListPendingLaunches, handleRefireLaunch } from './launch-log';
 
 function makeDb(seed: { rows?: any[]; first?: any } = {}) {
   const captured: Array<{ sql: string; binds: unknown[] }> = [];
@@ -41,6 +41,40 @@ describe('handleCreateLaunch', () => {
     const env = { DB: makeDb() } as unknown as Env;
     const res = await handleCreateLaunch(req({ tag: 'bogus', seed: 'x', origin: 'computer' }), USER, env);
     expect(res.status).toBe(400);
+  });
+
+  it('stores task_id when the launch fired from a task compose surface (#485)', async () => {
+    const db = makeDb({ first: { id: 'L2', tag: 'quickchat', seed: 'x', task_id: 'task_1' } });
+    const env = { DB: db } as unknown as Env;
+    const res = await handleCreateLaunch(req({ tag: 'quickchat', seed: 'x', origin: 'computer', task_id: 'task_1' }), USER, env);
+    expect(res.status).toBe(201);
+    const insert = db._captured.find((c: any) => /INSERT INTO launch_log/.test(c.sql));
+    expect(insert.sql).toContain('task_id');
+    expect(insert.binds).toContain('task_1');
+  });
+
+  it('stores task_id as NULL for a context-free launch (Today bar #485)', async () => {
+    const db = makeDb({ first: { id: 'L3', tag: 'quickchat', seed: 'x' } });
+    const env = { DB: db } as unknown as Env;
+    const res = await handleCreateLaunch(req({ tag: 'quickchat', seed: 'x', origin: 'computer' }), USER, env);
+    expect(res.status).toBe(201);
+    const insert = db._captured.find((c: any) => /INSERT INTO launch_log/.test(c.sql));
+    // task_id column present in the INSERT, bound to null when absent from the body.
+    expect(insert.sql).toContain('task_id');
+    expect(insert.binds).toContain(null);
+  });
+});
+
+describe('handleRefireLaunch', () => {
+  it('carries task_id forward into the cloned launch (#485)', async () => {
+    // The source row has a task_id; refire re-POSTs it so the clone keeps task
+    // context (the new row re-composes fresh context at its own claim).
+    const db = makeDb({ first: { id: 'L4', tag: 'workon', seed: 's', origin: 'computer', target_machine: null, project_slug: 'p', task_id: 'task_9' } });
+    const env = { DB: db } as unknown as Env;
+    const res = await handleRefireLaunch('L4', USER, env);
+    expect(res.status).toBe(201);
+    const insert = db._captured.find((c: any) => /INSERT INTO launch_log/.test(c.sql));
+    expect(insert.binds).toContain('task_9');
   });
 });
 
@@ -104,6 +138,94 @@ describe('handleClaimLaunch', () => {
     const env = { DB: db } as unknown as Env;
     const res = await handleClaimLaunch('lnch_legacy', claimReq('lnch_legacy'), USER, env);
     expect(res.status).toBe(410);
+  });
+});
+
+// ── makeClaimDbWithTask: claim + task lookup; dispatches .first() by SQL ──────
+// The claim endpoint now runs TWO SELECTs when the row carries a task_id: the
+// launch_log row, then the tasks row for context composition. This stub returns
+// launchRow for the launch_log query and taskRow for the tasks query.
+function makeClaimDbWithTask({ changes = 1, launchRow = null as any, taskRow = null as any } = {}) {
+  const db: any = {
+    prepare(sql: string) {
+      let binds: unknown[] = [];
+      const stmt: any = {
+        bind: (...a: unknown[]) => { binds = [...binds, ...a]; return stmt; },
+        run:   async () => ({ meta: { changes } }),
+        first: async () => {
+          if (/FROM launch_log/.test(sql)) return launchRow;
+          if (/FROM tasks/.test(sql)) return taskRow;
+          return null;
+        },
+        all:   async () => ({ results: [] }),
+      };
+      return stmt;
+    },
+  };
+  return db;
+}
+
+describe('handleClaimLaunch — task-context composition (#485)', () => {
+  // NOTE: this is the SINGLE seed-to-session exit for BOTH the computer route
+  // (resolve_launch.py) AND the mobile route (hub_ai_listener claims the same
+  // endpoint), so these cases cover the "forward path" too — there is no
+  // separate worker-side forward that reads the seed.
+  const taskRow = {
+    title: 'Wire the freshness guard',
+    status: 'in_progress',
+    due_date: '2026-07-10',
+    description: 'Guard TODAY.md regen against stale frontmatter.',
+    project_name: 'PB Sector',
+  };
+
+  it('prepends the task-context header and preserves the raw seed after a blank line', async () => {
+    const launchRow = { tag: 'quickchat', seed: 'has it been done?', project_slug: 'pb-sector', task_id: 'task_1' };
+    const db = makeClaimDbWithTask({ changes: 1, launchRow, taskRow });
+    const env = { DB: db } as unknown as Env;
+    const res = await handleClaimLaunch('lnch_ctx', claimReq('lnch_ctx'), USER, env);
+    expect(res.status).toBe(200);
+    const body = await res.json() as any;
+    expect(body.data.verb).toBe('quickchat');
+    expect(body.data.project_slug).toBe('pb-sector');
+    expect(body.data.seed).toContain('[Task context');
+    expect(body.data.seed).toContain('Wire the freshness guard');
+    expect(body.data.seed).toContain('in_progress');
+    expect(body.data.seed).toContain('PB Sector');
+    expect(body.data.seed).toContain('Guard TODAY.md regen');
+    // header, blank line, then the raw seed verbatim at the end
+    expect(body.data.seed).toContain('\n\nhas it been done?');
+    expect(body.data.seed.endsWith('has it been done?')).toBe(true);
+  });
+
+  it('returns the raw seed unchanged when the launch carried no task_id', async () => {
+    const launchRow = { tag: 'quickchat', seed: 'fix the figure', project_slug: null, task_id: null };
+    const db = makeClaimDbWithTask({ changes: 1, launchRow });
+    const env = { DB: db } as unknown as Env;
+    const res = await handleClaimLaunch('lnch_raw', claimReq('lnch_raw'), USER, env);
+    const body = await res.json() as any;
+    expect(body.data.seed).toBe('fix the figure');
+  });
+
+  it('falls back to the raw seed when task_id points to a missing/deleted task', async () => {
+    const launchRow = { tag: 'workon', seed: 'pick this up', project_slug: 'x', task_id: 'task_gone' };
+    const db = makeClaimDbWithTask({ changes: 1, launchRow, taskRow: null });
+    const env = { DB: db } as unknown as Env;
+    const res = await handleClaimLaunch('lnch_miss', claimReq('lnch_miss'), USER, env);
+    const body = await res.json() as any;
+    expect(body.data.seed).toBe('pick this up');
+  });
+
+  it('truncates a long description to keep the header bounded', async () => {
+    const longDesc = 'x'.repeat(900);
+    const launchRow = { tag: 'workon', seed: 'go', project_slug: 'x', task_id: 'task_long' };
+    const db = makeClaimDbWithTask({ changes: 1, launchRow, taskRow: { ...taskRow, description: longDesc } });
+    const env = { DB: db } as unknown as Env;
+    const res = await handleClaimLaunch('lnch_long', claimReq('lnch_long'), USER, env);
+    const body = await res.json() as any;
+    // 500-char cap + ellipsis; the full 900-char description never appears.
+    expect(body.data.seed).toContain('…');
+    expect(body.data.seed).not.toContain('x'.repeat(600));
+    expect(body.data.seed.endsWith('go')).toBe(true);
   });
 });
 

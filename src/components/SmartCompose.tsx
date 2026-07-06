@@ -206,7 +206,15 @@ export default function SmartCompose(props: SmartComposeProps) {
     // when the surface opted in via launchContext. Runs on `raw`, before the
     // @hermes/@me lock prefixes, so a typed launch tag always wins.
     if (!isCustomMode || launchContext) {
-      const routed = tryLaunchCommand(raw, launchContext ?? {}, () => {
+      // Task mode always carries its own taskId into the launch context, so a
+      // @workon/@quickchat fired from any task compose surface (Today drawer,
+      // MyTasks InlineDetail) reaches the worker with task identity and the
+      // surface can't forget it (#485). Custom mode uses the caller's
+      // launchContext verbatim (a custom task surface may set taskId there).
+      const ctx: LaunchCommandContext = isCustomMode
+        ? (launchContext ?? {})
+        : { ...launchContext, taskId: (props as TaskModeProps).taskId }
+      const routed = tryLaunchCommand(raw, ctx, () => {
         if (!isControlled) setVal('')
       })
       if (routed) return

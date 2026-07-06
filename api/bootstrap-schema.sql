@@ -150,6 +150,7 @@ CREATE TABLE IF NOT EXISTS launch_log (
     origin          TEXT NOT NULL CHECK (origin IN ('computer','mobile')),
     target_machine  TEXT,
     project_slug    TEXT,
+    task_id         TEXT,  -- v93: source task for a launch fired from a task compose surface; worker composes its context into the seed at claim time (#485)
     status          TEXT NOT NULL DEFAULT 'pending'
                       CHECK (status IN ('pending','launched','failed','completed','expired')),
     requested_by    TEXT,

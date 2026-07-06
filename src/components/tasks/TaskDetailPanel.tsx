@@ -1539,7 +1539,7 @@ function OverviewQuickAdd({
     // /api/pb/dispatch/add (team-visible). useLaunchCommands owns the flow;
     // reset() fires only on success, so a failed launch keeps the seed in the
     // textarea for retry.
-    if (tryLaunchCommand(v, { projectSlug, primaryFolder }, reset)) return
+    if (tryLaunchCommand(v, { projectSlug, primaryFolder, taskId }, reset)) return
     // ── @hermes prefix typed directly: route to /api/ai-requests ─────────────
     // The Hermes toggle (forHermes) posts via comment + dispatch/add.
     // A direct @hermes prefix is a Today-bar-style intent; route there instead

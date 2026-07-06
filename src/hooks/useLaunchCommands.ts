@@ -25,6 +25,10 @@ export interface LaunchCommandContext {
   projectSlug?: string | null
   /** projects.primary_folder — the computer route opens the session here. */
   primaryFolder?: string | null
+  /** Source task id when the launch fires from a task compose surface. The
+   *  worker composes that task's context into the seed at claim time (#485);
+   *  the browser sends only the id — Hub resolves the context behind auth. */
+  taskId?: string | null
 }
 
 export function useLaunchCommands() {
@@ -46,9 +50,12 @@ export function useLaunchCommands() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(
+          // task_id is sent symmetrically for BOTH tags — a @quickchat fired
+          // from a task card carries context just like @workon (#485). Null on
+          // context-free surfaces (Today bar) → the claim returns the raw seed.
           isWorkon
-            ? { tag: 'workon', seed: cmd.seed, origin, project_slug: ctx.projectSlug ?? null }
-            : { tag: 'quickchat', seed: cmd.seed, origin },
+            ? { tag: 'workon', seed: cmd.seed, origin, project_slug: ctx.projectSlug ?? null, task_id: ctx.taskId ?? null }
+            : { tag: 'quickchat', seed: cmd.seed, origin, task_id: ctx.taskId ?? null },
         ),
       })
         .then((res) => {

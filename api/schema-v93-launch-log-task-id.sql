@@ -1,0 +1,13 @@
+-- schema-v93-launch-log-task-id.sql: carry task context into @quickchat/@workon launches (backlog #485, 2026-07-06)
+-- Run with: bash scripts/wrangler-d1 d1 execute mnccore-lab --file=api/schema-v93-launch-log-task-id.sql --remote
+--
+-- When a launch fires from a task compose surface (a task card's OverviewQuickAdd,
+-- the Today TaskDetailDrawer, or MyTasks InlineDetail), task_id records WHICH task
+-- it came from. The worker composes that task's context (title/status/due/project/
+-- description) into the seed at CLAIM time (Hub-D1-canonical: fresh from the arbiter,
+-- not a compose-time snapshot) so the seeded session knows what "this" refers to.
+--
+-- Additive + nullable. Legacy rows and non-task launches (@quickchat from the Today
+-- bar) keep task_id NULL → the claim returns the raw seed unchanged. Hub-D1-ONLY:
+-- launch_log is not registered in PB's synced_table_registry and has no brain.db mirror.
+ALTER TABLE launch_log ADD COLUMN task_id TEXT;
