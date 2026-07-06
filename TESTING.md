@@ -126,7 +126,7 @@ npm run test:local:setup        # apply schema + seed the local D1
 2. **`tsx scripts/local-db-seed.ts`** — reads `scripts/seed/phase0-plan.json`,
    strips the `test_delete_` prefix off every title/slug (the local DB is
    isolated so no guard prefix is needed), and inserts via direct
-   `wrangler d1 execute --local --config=wrangler.local.toml` with
+   `wrangler d1 execute --local --config=wrangler.local.toml` with <!-- wrangler-d1-allowed: docs -->
    batched SQL files (same Windows-libuv-safe pattern as
    `scripts/seed/phase0-direct-sql.ts`).
 
@@ -210,13 +210,13 @@ it's not `mn-ccore-lab`.  This means:
 
 `.github/workflows/schema-drift.yml` runs nightly (09:00 UTC / ~3am CT)
 and on manual `workflow_dispatch`.  It dumps the live prod D1 schema via
-`wrangler d1 execute mnccore-lab --remote --command ".schema"`, builds a
+`wrangler d1 execute mnccore-lab --remote --command ".schema"`, builds a <!-- wrangler-d1-allowed: docs -->
 concatenated committed-schema reference from `api/bootstrap-schema.sql` +
 `api/schema-v*.sql` in version order, and `diff`s them.  Drift fails the
 job and uploads a `schema-drift-diff` artifact for inspection.
 
 **This workflow is the only place in the repo that runs
-`wrangler d1 execute --remote`.**  Everything else goes through `--local`
+`wrangler d1 execute --remote`.**  Everything else goes through `--local` <!-- wrangler-d1-allowed: docs -->
 Miniflare.
 
 **Required GitHub secrets** (configured once by a repo admin in
@@ -243,6 +243,16 @@ Miniflare.
   creates.  The bootstrap script handles this via suffix-rank sort.  Do
   not add more variants without updating the comparator in
   `scripts/local-db-bootstrap.ts`.
+- **Migrations referencing since-dropped tables:** a handful of historical
+  `schema-v*.sql` files assume prod state that no longer matches a fresh
+  bootstrap (columns added elsewhere, indexes reconciled elsewhere, or —
+  per #492 — a table dropped by a later migration and since removed from
+  `bootstrap-schema.sql`).  Whole-file-incompatible migrations are listed in
+  `FRESH_BOOTSTRAP_SKIP`; migrations where only SOME statements are
+  incompatible (the rest being real, non-redundant SQL that must still
+  apply) are listed in `FRESH_BOOTSTRAP_STRIP_STATEMENTS`, both in
+  `scripts/local-db-bootstrap.ts`. Neither list edits the checked-in
+  migration file — bootstrap applies a filtered copy in `.wrangler/` only.
 - **Windows libuv handle race:** direct `execSync` calls to wrangler in a
   tight loop trigger an assertion failure
   (`!(handle->flags & UV_HANDLE_CLOSING)`) on Windows Node.  Both

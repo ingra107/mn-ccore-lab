@@ -24,7 +24,7 @@
  * so re-running is safe.
  */
 
-import { readdirSync, existsSync, rmSync } from 'node:fs'
+import { readdirSync, existsSync, rmSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { execSync } from 'node:child_process'
@@ -35,6 +35,7 @@ const SCHEMA_DIR = join(REPO_ROOT, 'api')
 const WRANGLER_CONFIG = join(REPO_ROOT, 'wrangler.local.toml')
 const DB_NAME = 'mnccore-lab'
 const LOCAL_D1_STATE = join(REPO_ROOT, '.wrangler/state/v3/d1')
+const STRIP_TMP_DIR = join(REPO_ROOT, '.wrangler', '_bootstrap-strip-tmp')
 
 type MigrationFile = { path: string; file: string; version: number; suffixRank: number }
 
@@ -72,7 +73,85 @@ const FRESH_BOOTSTRAP_SKIP: ReadonlySet<string> = new Set([
   // index throws "no such column: machine_id", aborting the whole chain (which
   // is why blocked_by from v49 never landed → GET /api/tasks 500). Skip it.
   'schema-v48.sql',
+  // bootstrap-schema.sql (base) already declares launch_log.expires_at +
+  // .consumed_at (mirrored in a915e9fa, 2026-07-06, to fix the claim WHERE
+  // clause on a fresh bootstrap). v91's two ADD COLUMN statements are now
+  // fully redundant with that mirror and trip "duplicate column name:
+  // expires_at" on a fresh bootstrap. Prod applied v91 as an ALTER because
+  // its schema predated both columns — the base schema has since caught up
+  // (same class as schema-v43.sql above; found while fixing #492).
+  'schema-v91.sql',
+  // bootstrap-schema.sql (base) already declares launch_log.task_id (mirrored
+  // in the SAME commit as this migration, d48290b5, 2026-07-06, #485). The
+  // mirror + the ADD COLUMN both landed together but nobody registered the
+  // now-redundant ALTER for fresh bootstrap, so it trips "duplicate column
+  // name: task_id" — a fresh bootstrap never runs in CI, so this went
+  // unnoticed same-day. Same class as v91/v43 above (found while fixing
+  // #492; 3rd occurrence of this class in one session — see #492 report for
+  // the systemic recommendation).
+  'schema-v93-launch-log-task-id.sql',
 ])
+
+/**
+ * Unlike FRESH_BOOTSTRAP_SKIP (drops an entire file), these files have ONE
+ * OR MORE statements that are individually incompatible with fresh-schema
+ * bootstrap while the REST of the file remains valid and non-redundant —
+ * skipping the whole file would silently lose real, unique-elsewhere index
+ * coverage. Each pattern is stripped from a copy of the file (the checked-in
+ * migration is never touched) before applying.
+ *
+ * schema-v46.sql: `idx_comments_project ON comments(...)`. The `comments`
+ * table was physically dropped from prod D1 in schema-v78 (2026-06-10), then
+ * its CREATE TABLE block was removed from api/bootstrap-schema.sql on
+ * 2026-06-14 (commit d20d70e9, docs/2026-06-14-retire-legacy-d1-twins-and-
+ * my-tasks-legacy.md) because it was dead weight with zero live handlers.
+ * `comments` was the ONLY one of the four schema-v78-dropped tables that was
+ * ever created by bootstrap-schema.sql directly rather than by a numbered
+ * migration (task_comments/v8, task_updates/v36, project_updates/v2 all
+ * still exist earlier in the fresh-bootstrap replay chain, so their v46
+ * indexes apply fine) — so on a fresh bootstrap `comments` never exists at
+ * all, and v46's index on it 404s with "no such table: main.comments". The
+ * other 8 statements in v46 are real, non-redundant indexes on tables that
+ * are still present at that point in the replay and must still apply.
+ */
+const FRESH_BOOTSTRAP_STRIP_STATEMENTS: ReadonlyMap<string, RegExp[]> = new Map([
+  [
+    'schema-v46.sql',
+    [/^CREATE INDEX IF NOT EXISTS idx_comments_project ON comments\(project_id, created_at DESC\);\s*$/m],
+  ],
+])
+
+/**
+ * Returns the path wrangler should apply for this migration: the original
+ * file, unless it has FRESH_BOOTSTRAP_STRIP_STATEMENTS patterns, in which
+ * case a filtered copy is written under STRIP_TMP_DIR (gitignored, .wrangler-
+ * local only) with the incompatible statement(s) replaced by a comment.
+ * Raises if a pattern matches nothing — a silently-stale pattern is worse
+ * than a loud failure (the checked-in migration content may have changed).
+ */
+function resolveApplyPath(m: MigrationFile): string {
+  const patterns = FRESH_BOOTSTRAP_STRIP_STATEMENTS.get(m.file)
+  if (!patterns) return m.path
+
+  const original = readFileSync(m.path, 'utf8')
+  let filtered = original
+  for (const pattern of patterns) {
+    if (!pattern.test(filtered)) {
+      throw new Error(
+        `[local-db-bootstrap] FRESH_BOOTSTRAP_STRIP_STATEMENTS pattern for ${m.file} matched nothing — ` +
+        `the migration content changed since this rule was written; re-check scripts/local-db-bootstrap.ts.`
+      )
+    }
+    filtered = filtered.replace(
+      pattern,
+      '-- [fresh-bootstrap] statement stripped — see FRESH_BOOTSTRAP_STRIP_STATEMENTS in scripts/local-db-bootstrap.ts'
+    )
+  }
+  mkdirSync(STRIP_TMP_DIR, { recursive: true })
+  const outPath = join(STRIP_TMP_DIR, m.file)
+  writeFileSync(outPath, filtered, 'utf8')
+  return outPath
+}
 
 function parseMigrationFile(file: string): MigrationFile | null {
   // Matches "schema-v22.sql" and "schema-v22-rename-columns.sql".
@@ -113,7 +192,7 @@ function applySqlFile(absPath: string, label: string) {
     throw new Error(`${label}: file missing at ${absPath}`)
   }
   const forwardPath = absPath.replace(/\\/g, '/')
-  const cmd = `npx wrangler d1 execute ${DB_NAME} --local --config="${WRANGLER_CONFIG.replace(/\\/g, '/')}" --file="${forwardPath}"`
+  const cmd = `npx wrangler d1 execute ${DB_NAME} --local --config="${WRANGLER_CONFIG.replace(/\\/g, '/')}" --file="${forwardPath}"` // wrangler-d1-allowed: --local Miniflare, no cloud auth
   process.stdout.write(`  [apply] ${label} ... `)
   try {
     execSync(cmd, { stdio: ['ignore', 'pipe', 'pipe'], env: wranglerEnv() })
@@ -166,7 +245,9 @@ function run() {
       console.log(`  [skip]  ${m.file} — incompatible with fresh-schema bootstrap (see TESTING.md)`)
       continue
     }
-    applySqlFile(m.path, `${m.file} (v${m.version}${m.suffixRank ? ' variant' : ''})`)
+    const applyPath = resolveApplyPath(m)
+    const strippedNote = applyPath !== m.path ? ', statement stripped' : ''
+    applySqlFile(applyPath, `${m.file} (v${m.version}${m.suffixRank ? ' variant' : ''}${strippedNote})`)
   }
 
   console.log('[local-db-bootstrap] done')

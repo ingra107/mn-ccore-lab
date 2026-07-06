@@ -6,7 +6,7 @@
  * Reads scripts/seed/phase0-plan.json, strips the `test_delete_` prefix from
  * every human-visible field (the local DB is isolated so no guard-prefix is
  * needed — plain readable titles make the UI lived-in), and inserts rows via
- * direct D1 SQL using `wrangler d1 execute --local --config=wrangler.local.toml`.
+ * direct D1 SQL using `wrangler d1 execute --local --config=wrangler.local.toml`. (wrangler-d1-allowed: --local only)
  *
  * NOT via Hub API — the local D1 sits behind the Worker running via
  * `wrangler pages dev --local`, which may or may not be up when we seed.
@@ -17,7 +17,7 @@
  * path from scripts/seed/phase0-seed.ts):
  *   team_members (PI + non-PI + claude-ai), lab_settings (pi_emails),
  *   projects, tasks, ideas, hub_decisions, meetings, publications,
- *   task_comments, reactions, grants, milestones, manuscript_revisions,
+ *   activity_entries, reactions, grants, milestones, manuscript_revisions,
  *   research_digest
  *
  * Uses the same batched-file execution pattern as phase0-direct-sql.ts to
@@ -74,7 +74,7 @@ function d1Flush(label: string) {
   writeFileSync(sqlFile, pendingSql.join('\n'))
   const forwardFile = sqlFile.replace(/\\/g, '/')
   const forwardCfg = WRANGLER_CONFIG.replace(/\\/g, '/')
-  const cmd = `npx wrangler d1 execute ${DB_NAME} --local --config="${forwardCfg}" --file="${forwardFile}"`
+  const cmd = `npx wrangler d1 execute ${DB_NAME} --local --config="${forwardCfg}" --file="${forwardFile}"` // wrangler-d1-allowed: --local Miniflare, no cloud auth
   const env = { ...process.env }
   delete env.CLOUDFLARE_API_TOKEN
   delete env.CLOUDFLARE_ACCOUNT_ID
