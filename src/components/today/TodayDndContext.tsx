@@ -32,14 +32,13 @@ import type { ReactNode } from 'react'
 import {
   DndContext,
   DragOverlay,
-  PointerSensor,
-  KeyboardSensor,
   useSensor,
   useSensors,
   type DragEndEvent,
   type DragStartEvent,
   type Active,
 } from '@dnd-kit/core'
+import { InputSafeKeyboardSensor, InputSafePointerSensor } from '../../lib/dndSensors'
 import { restrictToWindowEdges } from '@dnd-kit/modifiers'
 import { useState, useCallback } from 'react'
 import type { TodayStateApi } from '../../hooks/useTodayState'
@@ -102,18 +101,22 @@ interface TodayDndContextProps {
 export function TodayDndContext({ children, state, tasks }: TodayDndContextProps) {
   const [activeItem, setActiveItem] = useState<Active | null>(null)
 
+  // Input-safe sensor variants (lib/dndSensors): TaskRow's draggable wrapper
+  // contains the expanded TaskDetailDrawer's compose textarea, so keystrokes
+  // and text-selection drags bubbling out of form fields must never activate
+  // a drag (stock sensors ate every Space and popped the DragOverlay ghost).
   const sensors = useSensors(
-    useSensor(PointerSensor, {
+    useSensor(InputSafePointerSensor, {
       // 4px activation constraint — separates click-to-expand from drag-to-plan.
       // Matches the prior 4px threshold in useTaskBlockGesture (raised to 8px for
       // move, but list drags only need 4px since click=expand is on the body not
       // the grip handle).
       activationConstraint: { distance: 4 },
     }),
-    useSensor(KeyboardSensor, {
-      // Default keyboard sensor: Space/Enter to pick up, arrow keys to move,
-      // Enter/Space to drop, Escape to cancel. Adds real keyboard a11y that was
-      // absent in both prior paradigms.
+    useSensor(InputSafeKeyboardSensor, {
+      // Space/Enter to pick up, arrow keys to move, Enter/Space to drop,
+      // Escape to cancel. Adds real keyboard a11y that was absent in both
+      // prior paradigms.
     }),
   )
 

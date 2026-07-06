@@ -4,8 +4,6 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { FileText, Plus, List, GitBranch, BookOpen, ExternalLink } from 'lucide-react'
 import {
   DndContext,
-  PointerSensor,
-  KeyboardSensor,
   useSensor,
   useSensors,
   useDraggable,
@@ -14,6 +12,7 @@ import {
   type DragEndEvent,
   type DragStartEvent,
 } from '@dnd-kit/core'
+import { InputSafeKeyboardSensor, InputSafePointerSensor } from '../../lib/dndSensors'
 import DataPage from '../../components/DataPage'
 import Avatar from '../../components/Avatar'
 import CreateProjectModal from '../../components/CreateProjectModal'
@@ -992,8 +991,8 @@ function PipelineBoard({
 }) {
   const [activeId, setActiveId] = useState<string | null>(null)
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
-    useSensor(KeyboardSensor),
+    useSensor(InputSafePointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(InputSafeKeyboardSensor),
   )
 
   const allProjects = useMemo(() => {
