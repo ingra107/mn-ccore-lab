@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { nowInstant } from '../lib/time'
 
 const STORAGE_KEY = 'mnccore-meeting-notes-seen-v1'
@@ -46,6 +46,27 @@ export function computeIsNew(seenMap: SeenMap | null, meeting: MeetingFreshnessI
   return meeting.updated_at > lastSeen
 }
 
+// One in-flight seed fetch shared across ALL hook instances (Sidebar is
+// always mounted alongside whichever meetings surface triggers cold start,
+// so without module-level coalescing each instance would fire its own
+// identical /api/meetings request). Reset on failure so a later mount retries.
+let seedFetch: Promise<SeenMap> | null = null
+
+function fetchBaseline(): Promise<SeenMap> {
+  if (!seedFetch) {
+    seedFetch = (async () => {
+      const res = await fetch('/api/meetings')
+      if (!res.ok) throw new Error(`meetings fetch ${res.status}`)
+      const json = await res.json() as { data?: MeetingFreshnessInput[] }
+      return seedBaseline(json.data || [])
+    })().catch((err) => {
+      seedFetch = null
+      throw err
+    })
+  }
+  return seedFetch
+}
+
 /**
  * Per-device "have I seen this meeting's current notes" tracker (v1,
  * localStorage-only — PB backlog #499 option b: no schema/API change).
@@ -66,23 +87,17 @@ export function computeIsNew(seenMap: SeenMap | null, meeting: MeetingFreshnessI
  */
 export function useMeetingNotesSeen() {
   const [seenMap, setSeenMap] = useState<SeenMap | null>(loadSeenMap)
-  const seeding = useRef(false)
 
   useEffect(() => {
-    if (seenMap !== null || seeding.current) return
-    seeding.current = true
-    ;(async () => {
-      try {
-        const res = await fetch('/api/meetings')
-        if (!res.ok) throw new Error(`meetings fetch ${res.status}`)
-        const json = await res.json() as { data?: MeetingFreshnessInput[] }
-        const baseline = seedBaseline(json.data || [])
-        saveSeenMap(baseline)
-        setSeenMap(baseline)
-      } catch {
-        seeding.current = false // retry on next mount (offline / transient failure)
-      }
-    })()
+    if (seenMap !== null) return
+    let cancelled = false
+    fetchBaseline()
+      .then((baseline) => {
+        saveSeenMap(baseline) // idempotent across instances — same content
+        if (!cancelled) setSeenMap(baseline)
+      })
+      .catch(() => { /* stay null; a later mount retries via the reset seedFetch */ })
+    return () => { cancelled = true }
   }, [seenMap])
 
   const isNew = useCallback(

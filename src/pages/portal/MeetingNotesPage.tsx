@@ -202,15 +202,14 @@ export default function MeetingNotesPage() {
                   )}
                 </div>
                 {m.notes ? (
-                  isMeetingNew(m) ? (
-                    <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold" style={{ color: '#1a1a1a', backgroundColor: 'var(--gold)' }}>
-                      New notes
-                    </span>
-                  ) : (
-                    <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ color: 'var(--green)', backgroundColor: 'var(--green-hover)' }}>
-                      Notes available
-                    </span>
-                  )
+                  <span
+                    className={`text-[10px] px-2 py-0.5 rounded-full${isMeetingNew(m) ? ' font-semibold' : ''}`}
+                    style={isMeetingNew(m)
+                      ? { color: '#1a1a1a', backgroundColor: 'var(--gold)' }
+                      : { color: 'var(--green)', backgroundColor: 'var(--green-hover)' }}
+                  >
+                    {isMeetingNew(m) ? 'New notes' : 'Notes available'}
+                  </span>
                 ) : (
                   <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ color: 'var(--slate)', backgroundColor: 'rgba(100,116,139,0.06)' }}>
                     No notes

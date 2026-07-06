@@ -60,6 +60,7 @@ function meetingRowToMeeting(row: MeetingRow, actionItems: ActionItemRow[]): Mee
     agenda: parseJsonArray(row.agenda),
     decisions: parseJsonArray(row.decisions),
     notes: row.notes || undefined,
+    updated_at: row.updated_at || undefined,
     actionItems: meetingActions.map((ai) => ({
       id: ai.id,
       description: ai.description,
@@ -424,7 +425,6 @@ export default function Meetings() {
   const { showUndo } = useUndoToast()
   const createActionMutation = useCreateActionItem()
   const { isNew: isMeetingNew, markSeen: markMeetingSeen } = useMeetingNotesSeen()
-  const meetingRowById = useMemo(() => new Map(meetingRows.map((r) => [r.id, r])), [meetingRows])
 
   const toggleWithUndo = (id: string) => {
     toggleMutation.mutate(id)
@@ -513,9 +513,8 @@ export default function Meetings() {
   // primary browsing path, not just the standalone /meetings/:id route.
   useEffect(() => {
     if (!selectedMeeting) return
-    const row = meetingRowById.get(selectedMeeting.id)
-    if (row) markMeetingSeen(row.id, row.updated_at)
-  }, [selectedMeeting?.id, meetingRowById, markMeetingSeen])
+    markMeetingSeen(selectedMeeting.id, selectedMeeting.updated_at)
+  }, [selectedMeeting?.id, selectedMeeting?.updated_at, markMeetingSeen])
 
   useListKeyboardNav({ itemCount: filteredMeetings.length, focusedIndex, setFocusedIndex })
 
@@ -799,8 +798,7 @@ export default function Meetings() {
                 const isNext = isNextMeeting(meeting)
                 const actionCount = meeting.actionItems?.length ?? 0
                 const pendingCount = meeting.actionItems?.filter((a) => !a.completed).length ?? 0
-                const row = meetingRowById.get(meeting.id)
-                const hasNewNotes = row ? isMeetingNew(row) : false
+                const hasNewNotes = isMeetingNew(meeting)
                 return (
                   <button key={meeting.id} type="button" className="cursor-pointer w-full text-left hov-bg"
                     style={{ display: 'block', padding: '10px 12px', borderBottom: '1px solid var(--border-subtle)', background: isSelected ? 'rgba(45,138,138,0.08)' : 'transparent', borderLeft: isNext ? '3px solid var(--teal)' : isSelected ? '3px solid rgba(45,138,138,0.4)' : '3px solid transparent', transition: 'background 150ms ease', outline: 'none', '--hov-bg': isSelected ? 'rgba(45,138,138,0.08)' : withAlpha(ACCENT_GOLD, 4) } as React.CSSProperties}

@@ -154,4 +154,5 @@ export interface Meeting {
   actionItems?: ActionItem[]
   decisions?: string[]
   notes?: string
+  updated_at?: string  // server row timestamp — drives the new-notes freshness pill
 }
