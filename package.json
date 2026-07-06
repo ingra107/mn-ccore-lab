@@ -21,6 +21,7 @@
     "test": "npm run test:local",
     "test:api": "vitest run --config vitest.config.api.ts",
     "audit:schema-contract": "tsx scripts/audit-schema-contract.ts",
+    "audit:writer-shapes": "python scripts/writer-shape-check.py",
     "test:local": "concurrently -k -s first \"wrangler dev api/index.ts --local --config=wrangler.local.toml --port 8787\" \"wait-on http-get://localhost:8787/api/projects && playwright test --config=playwright.config.local.ts\"",
     "test:journeys": "concurrently -k -s first \"wrangler dev api/index.ts --local --config=wrangler.local.toml --port 8787\" \"vite --port 5173\" \"wait-on http-get://localhost:5173 && playwright test --config=playwright.config.journeys.ts\"",
     "test:local:setup": "tsx scripts/local-db-bootstrap.ts && tsx scripts/local-db-seed.ts",
