@@ -395,8 +395,12 @@ export interface TaskUpdateRow {
   created_at: string
 }
 
-interface MeetingDetail extends MeetingRow {
-  action_items: ActionItemRow[]
+export interface MeetingDetail extends MeetingRow {
+  // T3/T7: action_items is now real task rows (TASK_SELECT_COLS-shaped) —
+  // `tasks WHERE meeting_id IN (id, source_id)`, not the legacy action_items
+  // table. ActionItemRow (below) still describes /api/action-items, which
+  // Task 9 retires separately.
+  action_items: TaskRow[]
   agenda_items: AgendaItemRow[]
 }
 
@@ -501,16 +505,39 @@ export function useMeetingDetail(id: string) {
       status: 'completed',
       created_at: staticMeeting.date,
       updated_at: staticMeeting.date,
-      action_items: (staticMeeting.actionItems || []).map((a, i) => ({
+      // T7: action_items is real task rows now (TaskRow-shaped) — fill the
+      // required TaskRow fields with dev-fallback defaults; this static path
+      // only feeds local dev without a live API.
+      action_items: (staticMeeting.actionItems || []).map((a, i): TaskRow => ({
         id: `static-ai-${i}`,
         meeting_id: staticMeeting.id,
         project_id: a.projectSlug || null,
+        title: a.description,
         description: a.description,
         assignee: a.assignee,
+        assigned_by: null,
         due_date: a.dueDate || null,
+        priority: 'medium',
+        status: a.completed ? 'done' : 'todo',
+        source: 'meeting',
         completed: a.completed ? 1 : 0,
         completed_at: null,
         completed_by: null,
+        blocked_by: null,
+        acknowledged_at: null,
+        acknowledged_by: null,
+        watchers: null,
+        reminder_days: null,
+        instructions: null,
+        recurrence: null,
+        recurrence_parent_id: null,
+        description_json: null,
+        key_link_1: null,
+        key_link_1_desc: null,
+        key_link_2: null,
+        key_link_2_desc: null,
+        key_link_3: null,
+        key_link_3_desc: null,
         created_at: staticMeeting.date,
       })),
       agenda_items: [],

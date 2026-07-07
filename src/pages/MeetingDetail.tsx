@@ -7,7 +7,6 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   Calendar,
   CheckCircle2,
-  Circle,
   ListChecks,
   MessageSquarePlus,
   FileText,
@@ -33,14 +32,15 @@ import { InputSafePointerSensor, InputSafeTouchSensor } from '../lib/dndSensors'
 import { isEditableTarget } from '../lib/editableTarget'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useMeetingDetail, useProjects } from '../hooks/useApiData'
-import type { ActionItemRow as ActionItemRowType, AgendaItemRow } from '../hooks/useApiData'
+import type { AgendaItemRow, MeetingDetail as MeetingDetailData } from '../hooks/useApiData'
+import type { TaskRow } from '../lib/api'
 import { useQueryClient } from '@tanstack/react-query'
-import { useToggleActionItem, useAddAgendaItem, useUpdateMeetingNotes, useCreateDecision, useCreateTask, useUpdateMeetingMeta } from '../hooks/useMutations'
+import { useAddAgendaItem, useUpdateMeetingNotes, useCreateDecision, useCreateTask, useUpdateMeetingMeta, useUpdateTask, useBulkUpdateTasks } from '../hooks/useMutations'
 import { useMeetingNotesSeen } from '../hooks/useMeetingNotesSeen'
 import FileUpload from '../components/FileUpload'
 import TypingIndicator from '../components/TypingIndicator'
 import MarkdownView from '../components/MarkdownView'
-import { parseCarriedForward, emDashifyTitle } from '../lib/textUtils'
+import { emDashifyTitle } from '../lib/textUtils'
 import { parseQuickAddInput } from '../lib/parseQuickAdd'
 import { emailToSlug } from '../lib/emailSlug'
 import { useAuth } from '../hooks/useAuth'
@@ -54,15 +54,17 @@ import HoverCard from '../components/HoverCard'
 import type { HoverCardData } from '../components/HoverCard'
 import { useHoverCard } from '../hooks/useHoverCard'
 import { getPersonInfo, getMemberBySlug, directors, getAllMembers } from '../data/team'
-import { formatLongDate, isOverdue as isItemOverdue } from '../lib/dateUtils'
+import { formatLongDate } from '../lib/dateUtils'
 import { getMeetingFacilitator } from '../lib/facilitator'
 import { PATHS } from '../constants/paths'
 import SmartCompose from '../components/SmartCompose'
 import HeartbeatLine from '../components/HeartbeatLine'
 import EntityNotFound from '../components/EntityNotFound'
 import { ICON_PROPS } from '../lib/iconProps'
-import DueLabel from '../components/DueLabel'
-import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
+import { ACCENT_GOLD, withAlpha, isTaskDone } from '../lib/taskGrouping'
+import { TaskRow as SharedTaskRow } from '../components/tasks/TaskRow'
+import { InlineDetail } from './MyTasks/components/InlineDetail'
+import TaskDetailPanel from '../components/tasks/TaskDetailPanel'
 
 function buildMemberHoverData(slug: string): HoverCardData {
   const p = getPersonInfo(slug)
@@ -111,17 +113,24 @@ export default function MeetingDetail() {
   const [generatingAgenda, setGeneratingAgenda] = useState(false)
   const [agendaCopied, setAgendaCopied] = useState(false)
   // Hooks must be called unconditionally (before any conditional returns)
-  const toggleAction = useToggleActionItem()
   const { showUndo } = useUndoToast()
-  const handleToggleAction = (id: string) => {
-    toggleAction.mutate(id)
-    showUndo('Action item toggled', () => toggleAction.mutate(id))
-  }
+  const queryClient = useQueryClient()
+  // T7: action items are real task rows — toggle/complete through the same
+  // mutations MyTasks uses, not the legacy /api/action-items endpoint.
+  const updateTask = useUpdateTask()
+  const bulkUpdateTasks = useBulkUpdateTasks()
   const addAgenda = useAddAgendaItem(meeting?.id || '')
   const updateNotes = useUpdateMeetingNotes(meeting?.id || '')
   // T6: single mutation for all metadata edits (title/type/attendees/tags).
   const updateMeta = useUpdateMeetingMeta(meeting?.id || '')
   const { data: allProjects = [] } = useProjects()
+  // T7: project lookup for the real-task action item rows (name + primary_folder
+  // for TaskRow/InlineDetail's project chip + WorkOnActions launch button).
+  const projectsBySlug = useMemo(() => {
+    const m = new Map<string, { name: string; slug: string; primary_folder?: string | null }>()
+    for (const p of allProjects) m.set(p.slug, { name: p.title, slug: p.slug, primary_folder: p.primary_folder })
+    return m
+  }, [allProjects])
   const [editingTitle, setEditingTitle] = useState(false)
   const [titleDraft, setTitleDraft] = useState('')
   const titleInputRef = useRef<HTMLInputElement>(null)
@@ -150,100 +159,61 @@ export default function MeetingDetail() {
   // Multi-select for action items
   const [selectedActionIds, setSelectedActionIds] = useState<Set<string>>(new Set())
   const toggleActionSelect = (id: string) => setSelectedActionIds(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next })
+  // T7: inline-expand + full-editor state for the real-task action item rows.
+  const [expandedActionId, setExpandedActionId] = useState<string | null>(null)
+  const [fullEditorTask, setFullEditorTask] = useState<TaskRow | null>(null)
 
-  // Local action item order — persists in state during session
-  // IMPORTANT: must be declared BEFORE conditional early returns to satisfy Rules of Hooks
-  const [actionOrder, setActionOrder] = useState<string[]>([])
-  // S9: agenda drag order — same local-order pattern as actions. Without this
+  // S9: agenda drag order — same local-order pattern as before. Without this
   // the agenda drag computed arrayMove + POSTed but never wrote the new order,
   // so the item visually snapped back until a refetch.
   const [agendaOrder, setAgendaOrder] = useState<string[]>([])
   // Dedupe Cartesian duplicates from join (mirrors MyItems.tsx:678).
   // Key: normalized title + assignee + due. Newest updated_at wins.
   const dedupedActionItems = useMemo(() => {
-    const seen = new Map<string, ActionItemRowType>()
+    const seen = new Map<string, TaskRow>()
     for (const item of meeting?.action_items || []) {
-      const text = (item.description || '').replace(/^\[Carried forward\]\s*/i, '').toLowerCase().trim()
+      const text = (item.title || item.description || '').replace(/^\[Carried forward\]\s*/i, '').toLowerCase().trim()
       const key = `${text}::${item.assignee ?? ''}::${item.due_date ?? ''}`
       const existing = seen.get(key)
-      const itemTs = (item as any).updated_at ?? item.created_at ?? ''
-      const existingTs = existing ? ((existing as any).updated_at ?? existing.created_at ?? '') : ''
+      const itemTs = item.updated_at ?? item.created_at ?? ''
+      const existingTs = existing ? (existing.updated_at ?? existing.created_at ?? '') : ''
       if (!existing || itemTs > existingTs) {
         seen.set(key, item)
       }
     }
     return [...seen.values()]
   }, [meeting?.action_items])
-  const pendingActions = useMemo(
-    () => dedupedActionItems.filter((a: ActionItemRowType) => !a.completed),
-    [dedupedActionItems]
-  )
-  const completedActions = useMemo(
-    () => dedupedActionItems.filter((a: ActionItemRowType) => a.completed),
-    [dedupedActionItems]
-  )
-  const orderedPendingActions = useMemo(() => {
-    if (actionOrder.length === 0) return pendingActions
-    const orderMap = new Map(actionOrder.map((id, i) => [id, i]))
-    return [...pendingActions].sort((a, b) => {
-      const ai = orderMap.get(a.id)
-      const bi = orderMap.get(b.id)
-      if (ai === undefined && bi === undefined) return 0
-      if (ai === undefined) return 1
-      if (bi === undefined) return -1
-      return ai - bi
+  // T7: single sort replaces per-user drag-reorder (dnd-kit wiring removed) —
+  // incomplete first, then due date (nulls last), then created_at.
+  const sortedActionItems = useMemo(() => {
+    return [...dedupedActionItems].sort((a, b) => {
+      const aDone = isTaskDone(a) ? 1 : 0
+      const bDone = isTaskDone(b) ? 1 : 0
+      if (aDone !== bDone) return aDone - bDone
+      const aDue = a.due_date ?? '9999-99-99'
+      const bDue = b.due_date ?? '9999-99-99'
+      if (aDue !== bDue) return aDue < bDue ? -1 : 1
+      return (a.created_at ?? '') < (b.created_at ?? '') ? -1 : 1
     })
-  }, [pendingActions, actionOrder])
+  }, [dedupedActionItems])
+  const pendingActions = useMemo(() => sortedActionItems.filter((a) => !isTaskDone(a)), [sortedActionItems])
+  const completedActions = useMemo(() => sortedActionItems.filter((a) => isTaskDone(a)), [sortedActionItems])
 
-  // Keyboard nav on action items: n focuses add form, j/k move focus, x or
-  // Enter toggles focused action. focusedActionIndex + the current actions
-  // list are read from refs so the window listener is not rebuilt on every
-  // focus move (would re-attach ~N times per keystroke).
-  const [focusedActionIndex, setFocusedActionIndex] = useState(-1)
-  const focusedActionIndexRef = useRef(focusedActionIndex)
-  const orderedPendingActionsRef = useRef(orderedPendingActions)
-  focusedActionIndexRef.current = focusedActionIndex
-  orderedPendingActionsRef.current = orderedPendingActions
+  // "n" still focuses the add-item compose box — independent of the removed
+  // drag/focus-index nav, kept as its own small effect.
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      // #486: was missing the `select` check the canonical predicate has.
       if (isEditableTarget(document.activeElement)) return
       if (e.metaKey || e.ctrlKey || e.altKey) return
-      const list = orderedPendingActionsRef.current
-      const total = list.length
       if (e.key === 'n') {
         e.preventDefault()
         const add = document.querySelector<HTMLInputElement>('[data-testid="meeting-action-add"]')
         add?.focus()
-      } else if (e.key === 'j') {
-        e.preventDefault()
-        setFocusedActionIndex((i) => (total === 0 ? -1 : Math.min(total - 1, i + 1)))
-      } else if (e.key === 'k') {
-        e.preventDefault()
-        setFocusedActionIndex((i) => (total === 0 ? -1 : Math.max(0, i - 1)))
-      } else if (e.key === 'x' || e.key === 'Enter') {
-        const idx = focusedActionIndexRef.current
-        if (idx >= 0 && idx < total) {
-          e.preventDefault()
-          handleToggleAction(list[idx].id)
-        }
       }
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
   }, [])
-
-  const handleBatchComplete = () => {
-    for (const id of selectedActionIds) {
-      toggleAction.mutate(id)
-    }
-    showUndo(`Completed ${selectedActionIds.size} action item(s)`, () => {
-      for (const id of selectedActionIds) {
-        toggleAction.mutate(id)
-      }
-    })
-    setSelectedActionIds(new Set())
-  }
 
   // #514: input-safe variants (same class as #481); both SortableAgendaItem
   // and SortableActionItem scope listeners to a dedicated grip-handle
@@ -325,14 +295,58 @@ export default function MeetingDetail() {
     })
   }
 
-  function handleActionDragEnd(event: DragEndEvent) {
-    const { active, over } = event
-    if (!over || active.id === over.id) return
-    const oldIndex = orderedPendingActions.findIndex(i => i.id === active.id)
-    const newIndex = orderedPendingActions.findIndex(i => i.id === over.id)
-    if (oldIndex === -1 || newIndex === -1) return
-    const reordered = arrayMove(orderedPendingActions, oldIndex, newIndex)
-    setActionOrder(reordered.map(i => i.id))
+  // T7: single-row done toggle for action items. Optimistically patches this
+  // page's own `['meeting', id]` cache (the shared TaskRow's DoneBox must feel
+  // instant — Design Principle #8), then a real task mutation. Uncomplete
+  // writes status directly (mirrors MyTasks' onToggleComplete); complete
+  // routes through the batch 'complete' action so completed_at is server-set.
+  const meetingQueryKey = ['meeting', meeting.id] as const
+  function handleToggleActionDone(item: TaskRow) {
+    const wasDone = isTaskDone(item)
+    const prevData = queryClient.getQueryData<MeetingDetailData>(meetingQueryKey)
+    queryClient.setQueryData<MeetingDetailData>(meetingQueryKey, (data) => data && {
+      ...data,
+      action_items: (data.action_items || []).map((a) =>
+        a.id === item.id ? { ...a, status: wasDone ? 'todo' : 'done', completed: wasDone ? 0 : 1 } : a
+      ),
+    })
+    const revert = () => queryClient.setQueryData(meetingQueryKey, prevData)
+    const settle = () => queryClient.invalidateQueries({ queryKey: meetingQueryKey })
+    if (wasDone) {
+      updateTask.mutate({ id: item.id, fields: { status: 'todo', completed: 0 } }, {
+        onError: revert,
+        onSuccess: () => {
+          settle()
+          showUndo('Marked not done', () => updateTask.mutate({ id: item.id, fields: { status: 'done', completed: 1 } }, { onSuccess: settle }))
+        },
+      })
+    } else {
+      bulkUpdateTasks.mutate({ ids: [item.id], action: 'complete' }, {
+        onError: revert,
+        onSuccess: () => {
+          settle()
+          showUndo('Completed', () => updateTask.mutate({ id: item.id, fields: { status: 'todo', completed: 0 } }, { onSuccess: settle }))
+        },
+      })
+    }
+  }
+
+  function handleBatchComplete() {
+    const ids = [...selectedActionIds]
+    const prevData = queryClient.getQueryData<MeetingDetailData>(meetingQueryKey)
+    queryClient.setQueryData<MeetingDetailData>(meetingQueryKey, (data) => data && {
+      ...data,
+      action_items: (data.action_items || []).map((a) => ids.includes(a.id) ? { ...a, status: 'done', completed: 1 } : a),
+    })
+    bulkUpdateTasks.mutate({ ids, action: 'complete' }, {
+      onError: () => queryClient.setQueryData(meetingQueryKey, prevData),
+      onSuccess: () => queryClient.invalidateQueries({ queryKey: meetingQueryKey }),
+    })
+    showUndo(`Completed ${ids.length} action item(s)`, () => {
+      for (const id of ids) updateTask.mutate({ id, fields: { status: 'todo', completed: 0 } })
+      queryClient.invalidateQueries({ queryKey: meetingQueryKey })
+    })
+    setSelectedActionIds(new Set())
   }
 
   async function handleGenerateAgenda() {
@@ -429,10 +443,10 @@ export default function MeetingDetail() {
                   decisions.forEach(d => lines.push(`- ${d}`))
                   lines.push('')
                 }
-                const actions = (meeting.action_items || []).filter((a: any) => !a.completed)
+                const actions = (meeting.action_items || []).filter((a) => !a.completed)
                 if (actions.length > 0) {
                   lines.push('## Open Action Items')
-                  actions.forEach((a: any) => lines.push(`- [ ] ${a.description} (@${a.assignee})`))
+                  actions.forEach((a) => lines.push(`- [ ] ${a.title || a.description} (@${a.assignee})`))
                   lines.push('')
                 }
                 if (meeting.notes) {
@@ -654,16 +668,35 @@ export default function MeetingDetail() {
                 )}
               </AnimatePresence>
 
-              {/* Pending items (drag-to-reorder) */}
-              {orderedPendingActions.length > 0 && (
+              {/* Pending items — real task rows via the shared TaskRow */}
+              {pendingActions.length > 0 && (
                 <div className="mb-3">
-                  <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleActionDragEnd}>
-                    <SortableContext items={orderedPendingActions.map(i => i.id)} strategy={verticalListSortingStrategy}>
-                      {orderedPendingActions.map((item, idx) => (
-                        <SortableActionItem key={item.id} item={item} onToggle={handleToggleAction} selected={selectedActionIds.has(item.id)} onToggleSelect={toggleActionSelect} isFocused={idx === focusedActionIndex} />
-                      ))}
-                    </SortableContext>
-                  </DndContext>
+                  {pendingActions.map((item) => {
+                    const project = item.project_id ? projectsBySlug.get(item.project_id) ?? null : null
+                    return (
+                      <SharedTaskRow
+                        key={item.id}
+                        task={item}
+                        project={project}
+                        isDone={false}
+                        onToggleDone={() => handleToggleActionDone(item)}
+                        isExpanded={expandedActionId === item.id}
+                        onToggleExpand={() => setExpandedActionId(expandedActionId === item.id ? null : item.id)}
+                        onOpenEditor={() => setFullEditorTask(item)}
+                        isSelected={selectedActionIds.has(item.id)}
+                        selectionActive={selectedActionIds.size > 0}
+                        onToggleSelect={() => toggleActionSelect(item.id)}
+                        extraMeta={<AssigneeMeta slug={item.assignee} />}
+                      >
+                        <InlineDetail
+                          task={item}
+                          projectName={project?.name}
+                          primaryFolder={project?.primary_folder}
+                          onOpenEditor={() => setFullEditorTask(item)}
+                        />
+                      </SharedTaskRow>
+                    )
+                  })}
                 </div>
               )}
 
@@ -673,10 +706,37 @@ export default function MeetingDetail() {
                   <p style={{ fontSize: 'var(--label-size)', fontWeight: 'var(--label-weight)', color: 'var(--slate)', opacity: 'var(--ink-label)', marginBottom: '6px' }}>
                     Completed
                   </p>
-                  {completedActions.map((item) => (
-                    <ActionItemRow key={item.id} item={item} onToggle={handleToggleAction} selected={selectedActionIds.has(item.id)} onToggleSelect={toggleActionSelect} />
-                  ))}
+                  {completedActions.map((item) => {
+                    const project = item.project_id ? projectsBySlug.get(item.project_id) ?? null : null
+                    return (
+                      <SharedTaskRow
+                        key={item.id}
+                        task={item}
+                        project={project}
+                        isDone={true}
+                        onToggleDone={() => handleToggleActionDone(item)}
+                        isExpanded={expandedActionId === item.id}
+                        onToggleExpand={() => setExpandedActionId(expandedActionId === item.id ? null : item.id)}
+                        onOpenEditor={() => setFullEditorTask(item)}
+                        isSelected={selectedActionIds.has(item.id)}
+                        selectionActive={selectedActionIds.size > 0}
+                        onToggleSelect={() => toggleActionSelect(item.id)}
+                        extraMeta={<AssigneeMeta slug={item.assignee} />}
+                      >
+                        <InlineDetail
+                          task={item}
+                          projectName={project?.name}
+                          primaryFolder={project?.primary_folder}
+                          onOpenEditor={() => setFullEditorTask(item)}
+                        />
+                      </SharedTaskRow>
+                    )
+                  })}
                 </div>
+              )}
+
+              {fullEditorTask && (
+                <TaskDetailPanel task={fullEditorTask} onClose={() => setFullEditorTask(null)} />
               )}
 
               {actionItems.length === 0 && (
@@ -933,39 +993,6 @@ function SortableAgendaItem({ item, AGENDA_TYPE_ICONS }: { item: AgendaItemRow; 
   )
 }
 
-function SortableActionItem({ item, onToggle, selected, onToggleSelect, isFocused }: { item: ActionItemRowType; onToggle: (id: string) => void; selected?: boolean; onToggleSelect?: (id: string) => void; isFocused?: boolean }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id })
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.85 : 1,
-    zIndex: isDragging ? 'var(--z-sticky)' : ('auto' as const),
-    outline: isFocused ? '2px solid var(--teal)' : 'none',
-    outlineOffset: isFocused ? '-2px' : '0',
-    borderRadius: 'var(--radius-md)',
-  }
-
-  return (
-    // dnd-kit attributes live on the explicit drag handle button, not the
-    // wrapper div — avoids axe nested-interactive when the child ActionItemRow
-    // renders its own buttons.
-    <div ref={setNodeRef} style={style} className="flex items-center group/action">
-      <button
-        {...attributes}
-        {...listeners}
-        aria-label="Reorder action item"
-        className="flex-shrink-0 cursor-grab active:cursor-grabbing opacity-0 group-hover/action:opacity-100 transition-opacity"
-        style={{ background: 'none', border: 'none', padding: '2px', color: 'var(--slate)', opacity: 0.75 }}
-      >
-        <GripVertical {...ICON_PROPS} size={14} />
-      </button>
-      <div style={{ flex: 1 }}>
-        <ActionItemRow item={item} onToggle={onToggle} selected={selected} onToggleSelect={onToggleSelect} />
-      </div>
-    </div>
-  )
-}
-
 function AttendeeChip({ slug }: { slug: string }) {
   const p = getPersonInfo(slug)
   const hoverCard = useHoverCard()
@@ -995,95 +1022,32 @@ function AttendeeChip({ slug }: { slug: string }) {
   )
 }
 
-function ActionItemRow({ item, onToggle, selected, onToggleSelect }: { item: ActionItemRowType; onToggle?: (id: string) => void; selected?: boolean; onToggleSelect?: (id: string) => void }) {
-  const person = getPersonInfo(item.assignee)
-  // R4: use canonical isOverdue() (T23:59:59) — hand-rolled `new Date(due) < new Date()`
-  // missed T23:59:59 and showed today's items as overdue. Action items have no status field.
-  const isOverdue = item.due_date && !item.completed && isItemOverdue(item.due_date)
+// Assignee avatar chip — action items span multiple attendees (unlike
+// MyTasks, which never shows assignee since every row is already "mine"),
+// so the shared TaskRow's `extraMeta` slot carries who owns each item.
+function AssigneeMeta({ slug }: { slug: string }) {
+  const person = getPersonInfo(slug)
   const hoverCard = useHoverCard()
-  const memberData = buildMemberHoverData(item.assignee)
-
+  const memberData = buildMemberHoverData(slug)
   return (
     <div
-      className="action-item-row flex items-start gap-3 py-2.5"
-      style={{ borderBottom: `1px solid ${withAlpha(ACCENT_GOLD, 6)}`, cursor: 'pointer', borderRadius: 'var(--radius-md)', margin: '0 -8px', padding: '10px 8px', transition: 'background 0.15s', background: selected ? 'var(--teal-hover)' : undefined }}
-      // role="button" removed (axe nested-interactive): row contains a
-      // checkbox button + task-title button inside. Background click still
-      // toggles via e.target === e.currentTarget guard.
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onToggle?.(item.id)
-      }}
+      ref={hoverCard.triggerRef as React.RefObject<HTMLDivElement>}
+      className="flex items-center gap-1"
+      onMouseEnter={hoverCard.handlers.onMouseEnter}
+      onMouseLeave={hoverCard.handlers.onMouseLeave}
+      style={{ flexShrink: 0 }}
     >
-      {/* Select checkbox */}
-      {onToggleSelect && (
-        <div className="flex-shrink-0" style={{ display: 'flex', alignItems: 'center', paddingTop: 'var(--sp-md)' }}>
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); onToggleSelect(item.id) }}
-            style={{
-              width: 16,
-              height: 16,
-              borderRadius: 'var(--radius-sm)',
-              border: `1.5px solid ${selected ? 'var(--teal)' : 'var(--border-default)'}`,
-              background: selected ? 'var(--teal-solid)' : 'transparent',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: 0,
-              transition: 'all 150ms ease',
-            }}
-            aria-label={selected ? 'Deselect action item' : 'Select action item'}
-          >
-            {selected && (
-              <Check {...ICON_PROPS} size={10} style={{ color: 'white' }} />
-            )}
-          </button>
-        </div>
-      )}
-
-      {/* Touch target: 44px invisible hit area around the 20px circle */}
-      <div className="flex-shrink-0 relative" style={{ width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <button type="button" className="cursor-pointer hover:scale-110 transition-transform"
-          onClick={(e) => { e.stopPropagation(); onToggle?.(item.id) }}
-          style={{ background: 'none', border: 'none', padding: 0, width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', color: item.completed ? 'var(--teal)' : isOverdue ? 'var(--maroon)' : 'var(--slate)', opacity: item.completed ? 1 : 0.85 }}
-          title={item.completed ? 'Mark as pending' : 'Mark as completed'}>
-          {item.completed ? <CheckCircle2 {...ICON_PROPS} size={20} /> : <Circle {...ICON_PROPS} size={20} />}
-        </button>
+      <div style={{ width: 16, height: 16 }}>
+        <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="2xs" variant="ice" />
       </div>
-      <div style={{ flex: 1, paddingTop: '10px' }}>
-        <p style={{ fontSize: 'var(--value-size)', color: 'var(--ink)', margin: 0, lineHeight: 1.4, textDecoration: item.completed ? 'line-through' : 'none', opacity: item.completed ? 0.85 : 1 }}>
-          {(() => { const { isCarried, clean } = parseCarriedForward(item.description); return (<>{isCarried && <span className="carried-badge">↻ carried</span>}{clean}</>); })()}
-        </p>
-        <div className="flex flex-wrap items-center gap-3 mt-1">
-          <div
-            ref={hoverCard.triggerRef as React.RefObject<HTMLDivElement>}
-            className="flex items-center gap-1"
-            onMouseEnter={hoverCard.handlers.onMouseEnter}
-            onMouseLeave={hoverCard.handlers.onMouseLeave}
-          >
-            <div style={{ width: 16, height: 16 }}>
-              <Avatar name={person.name} initials={person.initials} photoUrl={person.photoUrl} size="2xs" variant="ice" />
-            </div>
-            <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.75 }}>{person.name.split(' ')[0]}</span>
-            <HoverCard
-              data={memberData}
-              isVisible={hoverCard.isVisible}
-              position={hoverCard.position}
-              cardRef={hoverCard.cardRef}
-              cardHandlers={hoverCard.cardHandlers}
-            />
-          </div>
-          {item.due_date && (
-            <DueLabel due={item.due_date} style={{ fontSize: '10px' }} />
-          )}
-          {item.project_id && (
-            <Link to={PATHS.project(item.project_id)} onClick={(e) => e.stopPropagation()} style={{ fontSize: '10px', color: 'var(--gold)', textDecoration: 'none' }}>
-              {item.project_id}
-            </Link>
-          )}
-        </div>
-      </div>
+      <span style={{ fontSize: 10, color: 'var(--slate)', opacity: 0.75 }}>{person.name.split(' ')[0]}</span>
+      <HoverCard
+        data={memberData}
+        isVisible={hoverCard.isVisible}
+        position={hoverCard.position}
+        cardRef={hoverCard.cardRef}
+        cardHandlers={hoverCard.cardHandlers}
+      />
     </div>
   )
 }
@@ -1367,7 +1331,7 @@ function AttendanceSection({ attendees, updateMeta }: { attendees: string[]; upd
 // ── Tags Section (projects discussed) ───────────────────────
 function TagsSection({ meeting, actionItems, allProjects, updateMeta }: {
   meeting: { tags: string | null }
-  actionItems: ActionItemRowType[]
+  actionItems: TaskRow[]
   allProjects: { slug: string; title: string }[]
   updateMeta: ReturnType<typeof useUpdateMeetingMeta>
 }) {
