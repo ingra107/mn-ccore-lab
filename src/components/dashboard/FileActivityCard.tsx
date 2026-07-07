@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { FileCode } from 'lucide-react'
 import { useFileActivityHeatmap } from '../../hooks/useApiData'
 import BentoCard from './BentoCard'
+import { QueryErrorNote } from '../QueryErrorNote'
 
 interface HeatmapDay {
   date: string
@@ -9,7 +10,7 @@ interface HeatmapDay {
 }
 
 export default function FileActivityCard() {
-  const { data, isLoading } = useFileActivityHeatmap(90)
+  const { data, isLoading, isError, refetch } = useFileActivityHeatmap(90)
 
   const days: HeatmapDay[] = (data as HeatmapDay[] | undefined) ?? []
 
@@ -75,6 +76,10 @@ export default function FileActivityCard() {
           {[1, 2, 3].map(i => (
             <div key={i} className="h-3 rounded" style={{ background: 'var(--border-subtle)', width: `${50 + i * 15}%` }} />
           ))}
+        </div>
+      ) : isError ? (
+        <div className="flex items-center justify-center h-full">
+          <QueryErrorNote label="file activity" onRetry={() => refetch()} />
         </div>
       ) : (
         <div>

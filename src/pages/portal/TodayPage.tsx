@@ -48,6 +48,7 @@ import { NeedsAttentionCard } from '../../components/today/rail/NeedsAttentionCa
 import { ProjectsCard } from '../../components/today/rail/ProjectsCard'
 import { PulseCard } from '../../components/today/rail/PulseCard'
 import { PendingMeetingsCard } from '../../components/tasks/PendingMeetingsCard'
+import { QueryErrorNote } from '../../components/QueryErrorNote'
 import type { TaskRow } from '../../lib/api'
 import { withAlpha } from '../../lib/taskGrouping'
 
@@ -457,20 +458,22 @@ export default function TodayPage() {
         {/* Hermes replies to @hermes daily_thought prompts (TP-A1: previously rendered nowhere) */}
         <HermesThoughtReplies dateKey={todayKey()} />
 
-        {/* #495: useUserCalendarEvents used to swallow fetch failures as an
-            empty list, so a calendar-integration outage rendered identically
-            to "no events today" — zero signal. Surface it here, subtle and
-            non-blocking, above whichever of Timeline/Agenda is active. */}
+        {/* #495/#507: these queries used to swallow fetch failures as empty
+            data, so a backend outage rendered identically to "nothing due
+            today" — zero signal (masked the 2026-07-06 calendar outage for
+            a month in the calendar hook alone). Surface each here, subtle
+            and non-blocking, above whichever of Timeline/Agenda is active. */}
         {calendarEventsQuery.isError && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: INK_MUTED, marginBottom: 8 }}>
-            <span>calendar unavailable</span>
-            <button
-              onClick={() => calendarEventsQuery.refetch()}
-              style={{ background: 'none', border: 'none', color: INK_MUTED, textDecoration: 'underline', fontSize: 11, cursor: 'pointer', padding: 0 }}
-            >
-              retry
-            </button>
-          </div>
+          <QueryErrorNote label="calendar" onRetry={() => calendarEventsQuery.refetch()} />
+        )}
+        {meetingsQuery.isError && (
+          <QueryErrorNote label="meetings" onRetry={() => meetingsQuery.refetch()} />
+        )}
+        {regulatoryQuery.isError && (
+          <QueryErrorNote label="regulatory deadlines" onRetry={() => regulatoryQuery.refetch()} />
+        )}
+        {sessionStatsQuery.isError && (
+          <QueryErrorNote label="session stats" onRetry={() => sessionStatsQuery.refetch()} />
         )}
 
         {/* TodayDndContext: single DndContext spanning Timeline (droppables = gaps)

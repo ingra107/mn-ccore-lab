@@ -2,6 +2,7 @@ import { SquarePen } from 'lucide-react'
 import { useEmailDraftsPending } from '../../hooks/useApiData'
 import BentoCard from './BentoCard'
 import { ICON_PROPS } from '../../lib/iconProps'
+import { QueryErrorNote } from '../QueryErrorNote'
 
 interface EmailDraft {
   id: string
@@ -14,18 +15,22 @@ interface EmailDraft {
 }
 
 export default function EmailDraftsCard() {
-  const { data, isLoading } = useEmailDraftsPending()
+  const { data, isLoading, isError, refetch } = useEmailDraftsPending()
 
   const drafts: EmailDraft[] = (data as EmailDraft[] | undefined) ?? []
   const count = drafts.length
 
   return (
-    <BentoCard title="Email Drafts" icon={SquarePen} subtitle={isLoading ? undefined : `${count} pending`}>
+    <BentoCard title="Email Drafts" icon={SquarePen} subtitle={isLoading || isError ? undefined : `${count} pending`}>
       {isLoading ? (
         <div className="flex flex-col gap-2">
           {[1, 2, 3].map(i => (
             <div key={i} className="h-3 rounded" style={{ background: 'var(--border-subtle)', width: `${60 + i * 10}%` }} />
           ))}
+        </div>
+      ) : isError ? (
+        <div className="flex items-center justify-center h-full">
+          <QueryErrorNote label="email drafts" onRetry={() => refetch()} />
         </div>
       ) : count === 0 ? (
         <div className="flex items-center justify-center h-full">

@@ -170,6 +170,28 @@ function rowToGrant(row: GrantRow): Grant {
 
 const STALE_TIME = 5 * 60 * 1000 // 5 minutes
 
+// ── Fetch primitive ─────────────────────────────────────────
+//
+// #507: ~40 hooks below used to `if (!res.ok) return []` (or null/{}), which
+// renders identically to "genuinely no data" — a real backend failure
+// produced zero signal. That exact class masked the 2026-07-06 calendar
+// outage for a month in ONE hook (fixed loud in #495/31f75259). fetchJson
+// throws by default so react-query surfaces `isError` instead of a swallow.
+//
+// Scoped to the ad hoc `fetch()` call sites in this file whose endpoints
+// return heterogeneous raw shapes (`{data}`, `{events}`, `{items,count}`,
+// bare arrays/objects) that callers destructure themselves. Endpoints going
+// through the typed row-fetchers in lib/api.ts (fetchTasks, fetchProjects,
+// etc.) already throw via `fetchApi`'s `ApiError` — no change needed there.
+async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
+  // init is only forwarded when the caller passes one — matches the exact
+  // single-arg `fetch(url)` call shape every converted site used before,
+  // so mocked-fetch call-arg assertions in existing tests keep matching.
+  const res = init ? await fetch(url, init) : await fetch(url)
+  if (!res.ok) throw new Error(`fetch failed: ${res.status} ${url}`)
+  return res.json() as Promise<T>
+}
+
 export function usePublications(params?: {
   year?: number
   status?: string
@@ -233,12 +255,8 @@ export function useStats() {
   return useQuery({
     queryKey: ['stats'],
     queryFn: async () => {
-      try {
-        const res = await fetchStats()
-        return res.data
-      } catch {
-        return null
-      }
+      const res = await fetchStats()
+      return res.data
     },
     staleTime: STALE_TIME,
   })
@@ -257,12 +275,8 @@ export function useCitations(options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: ['citations'],
     queryFn: async () => {
-      try {
-        const res = await fetchCitations()
-        return res.data
-      } catch {
-        return null
-      }
+      const res = await fetchCitations()
+      return res.data
     },
     staleTime: 60 * 60 * 1000, // 1 hour — matches server edge-cache TTL.
     retry: false,
@@ -284,14 +298,8 @@ export function useComments(projectId: string) {
   return useQuery({
     queryKey: ['comments', projectId],
     queryFn: async () => {
-      try {
-        const res = await fetch(`/api/projects/${projectId}/comments`)
-        if (!res.ok) return []
-        const data = await res.json()
-        return (data.data || []) as Comment[]
-      } catch {
-        return []
-      }
+      const data = await fetchJson<{ data?: Comment[] }>(`/api/projects/${projectId}/comments`)
+      return data.data || []
     },
     staleTime: 60 * 1000, // 1 minute for comments
     enabled: !!projectId,
@@ -314,16 +322,10 @@ export function useActivity(limit: number = 20, actor?: string) {
   return useQuery({
     queryKey: ['activity', limit, actor],
     queryFn: async () => {
-      try {
-        const params = new URLSearchParams({ limit: String(limit) })
-        if (actor) params.set('actor', actor)
-        const res = await fetch(`/api/activity?${params}`)
-        if (!res.ok) return []
-        const data = await res.json()
-        return (data.data || []) as ActivityEntry[]
-      } catch {
-        return []
-      }
+      const params = new URLSearchParams({ limit: String(limit) })
+      if (actor) params.set('actor', actor)
+      const data = await fetchJson<{ data?: ActivityEntry[] }>(`/api/activity?${params}`)
+      return data.data || []
     },
     staleTime: 60 * 1000,
   })
@@ -528,17 +530,11 @@ export function useActionItems(filters?: { assignee?: string; completed?: string
   return useQuery({
     queryKey: ['action-items', filters],
     queryFn: async () => {
-      try {
-        const qs = new URLSearchParams()
-        if (filters?.assignee) qs.set('assignee', filters.assignee)
-        if (filters?.completed) qs.set('completed', filters.completed)
-        const res = await fetch(`/api/action-items?${qs}`)
-        if (!res.ok) return []
-        const data = await res.json()
-        return data.data as ActionItemRow[]
-      } catch {
-        return []
-      }
+      const qs = new URLSearchParams()
+      if (filters?.assignee) qs.set('assignee', filters.assignee)
+      if (filters?.completed) qs.set('completed', filters.completed)
+      const data = await fetchJson<{ data?: ActionItemRow[] }>(`/api/action-items?${qs}`)
+      return data.data ?? []
     },
     staleTime: 60 * 1000,
   })
@@ -603,20 +599,14 @@ export function useDigest(params?: { date?: string; status?: string; topic?: str
   return useQuery({
     queryKey: ['digest', params],
     queryFn: async () => {
-      try {
-        const qs = new URLSearchParams()
-        if (params?.date) qs.set('date', params.date)
-        if (params?.status) qs.set('status', params.status)
-        if (params?.topic) qs.set('topic', params.topic)
-        if (params?.limit) qs.set('limit', String(params.limit))
-        if (params?.with_relevance) qs.set('with_relevance', 'true')
-        const res = await fetch(`/api/digest?${qs}`)
-        if (!res.ok) return []
-        const data = await res.json()
-        return (data.data || []) as DigestPaper[]
-      } catch {
-        return []
-      }
+      const qs = new URLSearchParams()
+      if (params?.date) qs.set('date', params.date)
+      if (params?.status) qs.set('status', params.status)
+      if (params?.topic) qs.set('topic', params.topic)
+      if (params?.limit) qs.set('limit', String(params.limit))
+      if (params?.with_relevance) qs.set('with_relevance', 'true')
+      const data = await fetchJson<{ data?: DigestPaper[] }>(`/api/digest?${qs}`)
+      return data.data || []
     },
     staleTime: STALE_TIME,
   })
@@ -626,14 +616,8 @@ export function useDigestDates() {
   return useQuery({
     queryKey: ['digest-dates'],
     queryFn: async () => {
-      try {
-        const res = await fetch('/api/digest/dates')
-        if (!res.ok) return []
-        const data = await res.json()
-        return (data.data || []) as { date: string; count: number }[]
-      } catch {
-        return []
-      }
+      const data = await fetchJson<{ data?: { date: string; count: number }[] }>('/api/digest/dates')
+      return data.data || []
     },
     staleTime: STALE_TIME,
   })
@@ -652,14 +636,8 @@ export function useDigestComments(paperId: string | null) {
     queryKey: ['digest-comments', paperId],
     queryFn: async () => {
       if (!paperId) return []
-      try {
-        const res = await fetch(`/api/digest/${paperId}/comments`)
-        if (!res.ok) return []
-        const data = await res.json()
-        return (data.data || []) as DigestComment[]
-      } catch {
-        return []
-      }
+      const data = await fetchJson<{ data?: DigestComment[] }>(`/api/digest/${paperId}/comments`)
+      return data.data || []
     },
     enabled: !!paperId,
     staleTime: STALE_TIME,
@@ -670,15 +648,9 @@ export function useDigestCommentCounts(date?: string) {
   return useQuery({
     queryKey: ['digest-comment-counts', date],
     queryFn: async () => {
-      try {
-        const qs = date ? `?date=${date}` : ''
-        const res = await fetch(`/api/digest/comment-counts${qs}`)
-        if (!res.ok) return {}
-        const data = await res.json()
-        return (data.data || {}) as Record<string, number>
-      } catch {
-        return {}
-      }
+      const qs = date ? `?date=${date}` : ''
+      const data = await fetchJson<{ data?: Record<string, number> }>(`/api/digest/comment-counts${qs}`)
+      return data.data || {}
     },
     staleTime: STALE_TIME,
   })
@@ -719,13 +691,7 @@ export function useProjectHealth() {
   return useQuery({
     queryKey: ['project-health'],
     queryFn: async () => {
-      try {
-        const res = await fetch('/api/projects/health')
-        if (!res.ok) return { data: [] as ProjectHealth[], summary: { total: 0, healthy: 0, needs_attention: 0, at_risk: 0, critical: 0, avg_score: 0 } }
-        return await res.json() as { data: ProjectHealth[], summary: HealthSummary }
-      } catch {
-        return { data: [] as ProjectHealth[], summary: { total: 0, healthy: 0, needs_attention: 0, at_risk: 0, critical: 0, avg_score: 0 } }
-      }
+      return await fetchJson<{ data: ProjectHealth[], summary: HealthSummary }>('/api/projects/health')
     },
     staleTime: STALE_TIME,
   })
@@ -774,10 +740,8 @@ export function useSubtasks(taskId: string) {
   return useQuery({
     queryKey: ['subtasks', taskId],
     queryFn: async () => {
-      const res = await fetch(`/api/tasks/${taskId}/subtasks`)
-      if (!res.ok) return []
-      const data = await res.json()
-      return (data.data || []) as SubtaskRow[]
+      const data = await fetchJson<{ data?: SubtaskRow[] }>(`/api/tasks/${taskId}/subtasks`)
+      return data.data || []
     },
     staleTime: 30 * 1000,
     enabled: !!taskId,
@@ -803,9 +767,7 @@ export function useTaskDetail(taskId: string | null) {
     queryKey: ['task-detail', taskId],
     queryFn: async (): Promise<TaskDetailPayload> => {
       if (!taskId) return { updates: [], subtasks: [], blocks: [] }
-      const res = await fetch(`/api/tasks/${taskId}/detail`)
-      if (!res.ok) return { updates: [], subtasks: [], blocks: [] }
-      const data = await res.json() as { data: TaskDetailPayload }
+      const data = await fetchJson<{ data: TaskDetailPayload }>(`/api/tasks/${taskId}/detail`)
       return data.data
     },
     staleTime: 30 * 1000,
@@ -833,10 +795,8 @@ export function useHandoffs(taskId: string) {
   return useQuery({
     queryKey: ['handoffs', taskId],
     queryFn: async () => {
-      const res = await fetch(`/api/tasks/${taskId}/handoffs`)
-      if (!res.ok) return []
-      const data = await res.json()
-      return (data.data || []) as HandoffRow[]
+      const data = await fetchJson<{ data?: HandoffRow[] }>(`/api/tasks/${taskId}/handoffs`)
+      return data.data || []
     },
     staleTime: 30 * 1000,
     enabled: !!taskId,
@@ -864,10 +824,8 @@ export function useProjectPapers(slug: string) {
   return useQuery({
     queryKey: ['project-papers', slug],
     queryFn: async () => {
-      const res = await fetch(`/api/projects/${slug}/papers`)
-      if (!res.ok) return []
-      const data = await res.json()
-      return (data.data || []) as PaperProjectLink[]
+      const data = await fetchJson<{ data?: PaperProjectLink[] }>(`/api/projects/${slug}/papers`)
+      return data.data || []
     },
     staleTime: 60 * 1000,
     enabled: !!slug,
@@ -889,10 +847,8 @@ export function useReactions(targetType: string, targetId: string) {
   return useQuery({
     queryKey: ['reactions', targetType, targetId],
     queryFn: async () => {
-      const res = await fetch(`/api/reactions?target_type=${targetType}&target_id=${targetId}`)
-      if (!res.ok) return []
-      const data = await res.json()
-      return (data.data || []) as Reaction[]
+      const data = await fetchJson<{ data?: Reaction[] }>(`/api/reactions?target_type=${targetType}&target_id=${targetId}`)
+      return data.data || []
     },
     staleTime: 30 * 1000,
     enabled: !!targetId,
@@ -905,14 +861,8 @@ export function useProjectUpdates(slug: string) {
   return useQuery({
     queryKey: ['project-updates', slug],
     queryFn: async () => {
-      try {
-        const res = await fetch(`/api/projects/${slug}/updates`)
-        if (!res.ok) return []
-        const data = await res.json()
-        return data.data as ProjectUpdateRow[]
-      } catch {
-        return []
-      }
+      const data = await fetchJson<{ data?: ProjectUpdateRow[] }>(`/api/projects/${slug}/updates`)
+      return data.data ?? []
     },
     staleTime: 60 * 1000,
     enabled: !!slug,
@@ -935,14 +885,8 @@ export function useProjectDocuments(slug: string) {
   return useQuery({
     queryKey: ['project-documents', slug],
     queryFn: async () => {
-      try {
-        const res = await fetch(`/api/projects/${slug}/documents`)
-        if (!res.ok) return []
-        const data = await res.json()
-        return data.data as ProjectDocumentRow[]
-      } catch {
-        return []
-      }
+      const data = await fetchJson<{ data?: ProjectDocumentRow[] }>(`/api/projects/${slug}/documents`)
+      return data.data ?? []
     },
     staleTime: 60 * 1000,
     enabled: !!slug,
@@ -953,14 +897,8 @@ export function useTaskUpdates(taskId: string) {
   return useQuery({
     queryKey: ['task-updates', taskId],
     queryFn: async () => {
-      try {
-        const res = await fetch(`/api/tasks/${taskId}/updates`)
-        if (!res.ok) return []
-        const data = await res.json()
-        return data.data as TaskUpdateRow[]
-      } catch {
-        return []
-      }
+      const data = await fetchJson<{ data?: TaskUpdateRow[] }>(`/api/tasks/${taskId}/updates`)
+      return data.data ?? []
     },
     staleTime: 30 * 1000,
     enabled: !!taskId,
@@ -979,14 +917,8 @@ export function useTeamPulse(hours: number = 48) {
   return useQuery({
     queryKey: ['team-pulse', hours],
     queryFn: async () => {
-      try {
-        const res = await fetch(`/api/team/pulse?hours=${hours}`)
-        if (!res.ok) return null
-        const data = await res.json()
-        return data.data as TeamPulseData
-      } catch {
-        return null
-      }
+      const data = await fetchJson<{ data: TeamPulseData }>(`/api/team/pulse?hours=${hours}`)
+      return data.data
     },
     staleTime: 5 * 60 * 1000,
   })
@@ -1028,10 +960,8 @@ export function useDecisions(projectSlug?: string, tag?: string) {
       if (tag) params.set('tag', tag)
       const qs = params.toString()
       const url = `/api/decisions${qs ? `?${qs}` : ''}`
-      const res = await fetch(url)
-      if (!res.ok) return []
-      const data = await res.json()
-      return (data.data || []) as DecisionRow[]
+      const data = await fetchJson<{ data?: DecisionRow[] }>(url)
+      return data.data || []
     },
     staleTime: 60 * 1000,
   })
@@ -1041,10 +971,8 @@ export function useDecisionsForReview() {
   return useQuery({
     queryKey: ['decisions', 'review'],
     queryFn: async () => {
-      const res = await fetch('/api/decisions/review')
-      if (!res.ok) return []
-      const data = await res.json()
-      return (data.data || []) as DecisionRow[]
+      const data = await fetchJson<{ data?: DecisionRow[] }>('/api/decisions/review')
+      return data.data || []
     },
     staleTime: 5 * 60 * 1000,
   })
@@ -1054,10 +982,8 @@ export function useSimilarDecisions(query: string) {
   return useQuery({
     queryKey: ['decisions', 'similar', query],
     queryFn: async () => {
-      const res = await fetch(`/api/decisions/similar?q=${encodeURIComponent(query)}`)
-      if (!res.ok) return []
-      const data = await res.json()
-      return (data.data || []) as DecisionRow[]
+      const data = await fetchJson<{ data?: DecisionRow[] }>(`/api/decisions/similar?q=${encodeURIComponent(query)}`)
+      return data.data || []
     },
     staleTime: 30 * 1000,
     enabled: !!query && query.length >= 2,
@@ -1068,10 +994,8 @@ export function useSimilarDecisionsById(id: string) {
   return useQuery({
     queryKey: ['decisions', 'similar-by-id', id],
     queryFn: async () => {
-      const res = await fetch(`/api/decisions/similar-by-id?id=${encodeURIComponent(id)}`)
-      if (!res.ok) return []
-      const data = await res.json()
-      return (data.data || []) as DecisionRow[]
+      const data = await fetchJson<{ data?: DecisionRow[] }>(`/api/decisions/similar-by-id?id=${encodeURIComponent(id)}`)
+      return data.data || []
     },
     staleTime: 60 * 1000,
     enabled: !!id,
@@ -1082,10 +1006,8 @@ export function useDecisionTags() {
   return useQuery({
     queryKey: ['decisions', 'tags'],
     queryFn: async () => {
-      const res = await fetch('/api/decisions/tags')
-      if (!res.ok) return []
-      const data = await res.json()
-      return (data.data || []) as DecisionTagCount[]
+      const data = await fetchJson<{ data?: DecisionTagCount[] }>('/api/decisions/tags')
+      return data.data || []
     },
     staleTime: 5 * 60 * 1000,
   })
@@ -1097,12 +1019,8 @@ export function useDependencies() {
   return useQuery({
     queryKey: ['dependencies'],
     queryFn: async () => {
-      try {
-        const res = await fetchDependencies()
-        return res.data as DependencyRow[]
-      } catch {
-        return []
-      }
+      const res = await fetchDependencies()
+      return res.data as DependencyRow[]
     },
     staleTime: STALE_TIME,
   })
@@ -1112,12 +1030,8 @@ export function useProjectDependencies(slug: string) {
   return useQuery({
     queryKey: ['dependencies', slug],
     queryFn: async () => {
-      try {
-        const res = await fetchProjectDependencies(slug)
-        return res.data as DependencyRow[]
-      } catch {
-        return []
-      }
+      const res = await fetchProjectDependencies(slug)
+      return res.data as DependencyRow[]
     },
     staleTime: 60 * 1000,
     enabled: !!slug,
@@ -1139,10 +1053,8 @@ export function useTrajectory(slug: string) {
   return useQuery({
     queryKey: ['trajectory', slug],
     queryFn: async () => {
-      const res = await fetch(`/api/team/${slug}/trajectory`)
-      if (!res.ok) return null
-      const data = await res.json()
-      return data.data as TrajectoryData
+      const data = await fetchJson<{ data: TrajectoryData }>(`/api/team/${slug}/trajectory`)
+      return data.data
     },
     staleTime: 5 * 60 * 1000,
     enabled: !!slug,
@@ -1218,10 +1130,8 @@ export function useContributions(slug: string, period: number) {
   return useQuery({
     queryKey: ['contributions', slug, period],
     queryFn: async () => {
-      const res = await fetch(`/api/team/${slug}/contributions?period=${period}`)
-      if (!res.ok) return null
-      const data = await res.json()
-      return data.data as ContributionsData
+      const data = await fetchJson<{ data: ContributionsData }>(`/api/team/${slug}/contributions?period=${period}`)
+      return data.data
     },
     staleTime: 5 * 60 * 1000,
     enabled: !!slug,
@@ -1245,10 +1155,8 @@ export function useContributionScore(slug: string | undefined, days = 90) {
   return useQuery({
     queryKey: ['contribution-score', slug, days],
     queryFn: async () => {
-      const res = await fetch(`/api/analytics/contributions?slug=${slug}&days=${days}`)
-      if (!res.ok) return null
-      const data = await res.json()
-      return data.data as ContributionScoreData
+      const data = await fetchJson<{ data: ContributionScoreData }>(`/api/analytics/contributions?slug=${slug}&days=${days}`)
+      return data.data
     },
     staleTime: 5 * 60 * 1000,
     enabled: !!slug,
@@ -1275,9 +1183,7 @@ export function useSimilarGrants(keywords: string, ic?: string) {
     queryFn: async () => {
       const params = new URLSearchParams({ keywords })
       if (ic) params.set('ic', ic)
-      const res = await fetch(`/api/grants/similar?${params}`)
-      if (!res.ok) return { data: [] as SimilarGrant[], total: 0 }
-      return await res.json() as { data: SimilarGrant[]; total: number }
+      return await fetchJson<{ data: SimilarGrant[]; total: number }>(`/api/grants/similar?${params}`)
     },
     staleTime: 30 * 60 * 1000,
     enabled: !!keywords && keywords.length > 2,
@@ -1290,12 +1196,8 @@ export function useExpertise(slug?: string) {
   return useQuery({
     queryKey: ['expertise', slug || 'all'],
     queryFn: async () => {
-      try {
-        const res = await fetchExpertise(slug ? { slug } : undefined)
-        return res.data as ExpertiseTag[]
-      } catch {
-        return []
-      }
+      const res = await fetchExpertise(slug ? { slug } : undefined)
+      return res.data as ExpertiseTag[]
     },
     staleTime: STALE_TIME,
     enabled: slug !== undefined ? !!slug : true,
@@ -1346,10 +1248,8 @@ export function useNarratives() {
   return useQuery({
     queryKey: ['narratives'],
     queryFn: async () => {
-      const res = await fetch('/api/narratives')
-      if (!res.ok) return []
-      const data = await res.json()
-      const arcs = (data.data || []) as NarrativeArc[]
+      const data = await fetchJson<{ data?: NarrativeArc[] }>('/api/narratives')
+      const arcs = data.data || []
       // Ingress chokepoint (Hub #361a): /api/narratives is a separate data
       // shape from rowToProject (aggregated distribution + project stubs),
       // so it needs its own normalization pass. stageOrder on the API side
@@ -1373,9 +1273,7 @@ export function useDispatchPending() {
   return useQuery({
     queryKey: ['dispatch-pending'],
     queryFn: async () => {
-      const res = await fetch('/api/pb/dispatch/pending')
-      if (!res.ok) return { items: [], count: 0 }
-      const data = await res.json()
+      const data = await fetchJson<{ data?: unknown[]; count?: number }>('/api/pb/dispatch/pending')
       return { items: data.data || [], count: data.count || 0 }
     },
     staleTime: 30 * 1000,
@@ -1389,10 +1287,8 @@ export function useTodayMd() {
   return useQuery({
     queryKey: ['today-md'],
     queryFn: async () => {
-      const res = await fetch('/api/pb/today')
-      if (!res.ok) return ''
-      const data = await res.json()
-      return (data.data?.content || '') as string
+      const data = await fetchJson<{ data?: { content?: string } }>('/api/pb/today')
+      return data.data?.content || ''
     },
     staleTime: 60 * 1000,
     refetchInterval: 5 * 60 * 1000,
@@ -1484,17 +1380,12 @@ export interface TaskLinksPayload {
 // (not an inline mirror that can silently drift). Backlog #144, 2026-06-22.
 export async function fetchTaskLinks(taskId: string | null): Promise<TaskLinksPayload> {
   if (!taskId) return { links: [], projectLinks: [] }
-  const res = await fetch(`/api/tasks/${taskId}/links`)
-  if (!res.ok) return { links: [], projectLinks: [] }
-  const data = await res.json() as TaskLinksPayload
-  return data
+  return fetchJson<TaskLinksPayload>(`/api/tasks/${taskId}/links`)
 }
 
 export async function fetchProjectLinks(slug: string | null): Promise<StoredLink[]> {
   if (!slug) return []
-  const res = await fetch(`/api/projects/${slug}/links`)
-  if (!res.ok) return []
-  const data = await res.json() as { links: StoredLink[] }
+  const data = await fetchJson<{ links: StoredLink[] }>(`/api/projects/${slug}/links`)
   return data.links ?? []
 }
 
@@ -1524,9 +1415,7 @@ export function useAllProjectLinks() {
   return useQuery({
     queryKey: ['all-project-links'],
     queryFn: async (): Promise<Record<string, StoredLink[]>> => {
-      const res = await fetch('/api/projects/links')
-      if (!res.ok) return {}
-      const data = await res.json() as { projects: Record<string, StoredLink[]> }
+      const data = await fetchJson<{ projects: Record<string, StoredLink[]> }>('/api/projects/links')
       return data.projects ?? {}
     },
     staleTime: 60 * 1000,
@@ -1667,9 +1556,8 @@ export function usePBHealth() {
   return useQuery({
     queryKey: ['pb-health'],
     queryFn: async () => {
-      const res = await fetch('/api/pb/health')
-      if (!res.ok) return null
-      return (await res.json()).data as PBHealthData
+      const data = await fetchJson<{ data: PBHealthData }>('/api/pb/health')
+      return data.data
     },
     staleTime: 2 * 60 * 1000,
     refetchInterval: 5 * 60 * 1000,
@@ -1717,10 +1605,8 @@ export function useInsightConnections() {
   return useQuery({
     queryKey: ['insight-connections'],
     queryFn: async () => {
-      const res = await fetch('/api/insights/connections')
-      if (!res.ok) return []
-      const data = await res.json()
-      return (data.data || []) as InsightEdge[]
+      const data = await fetchJson<{ data?: InsightEdge[] }>('/api/insights/connections')
+      return data.data || []
     },
     staleTime: 5 * 60 * 1000,
   })
@@ -1737,10 +1623,8 @@ export function useInsightSuggestions(projectId: string) {
   return useQuery({
     queryKey: ['insight-suggestions', projectId],
     queryFn: async () => {
-      const res = await fetch(`/api/insights/suggestions?project_id=${encodeURIComponent(projectId)}`)
-      if (!res.ok) return []
-      const data = await res.json()
-      return (data.data || []) as InsightSuggestion[]
+      const data = await fetchJson<{ data?: InsightSuggestion[] }>(`/api/insights/suggestions?project_id=${encodeURIComponent(projectId)}`)
+      return data.data || []
     },
     staleTime: 5 * 60 * 1000,
     enabled: !!projectId,
@@ -1768,9 +1652,7 @@ export function useDailyThoughtReplies(dateKey: string) {
         source_type: 'daily_thought',
         source_id: dateKey,
       })
-      const res = await fetch(`/api/ai-requests?${params}`)
-      if (!res.ok) return []
-      const data = await res.json() as { data?: DailyThoughtReply[] }
+      const data = await fetchJson<{ data?: DailyThoughtReply[] }>(`/api/ai-requests?${params}`)
       return data.data ?? []
     },
     staleTime: 30 * 1000,
@@ -1805,9 +1687,7 @@ export function useEmailDraftsPending() {
   return useQuery({
     queryKey: ['email-drafts-pending'],
     queryFn: async () => {
-      const res = await fetch('/api/email-drafts/pending')
-      if (!res.ok) return []
-      const data = await res.json()
+      const data = await fetchJson<{ data?: unknown[] }>('/api/email-drafts/pending')
       return data.data ?? []
     },
     staleTime: 2 * 60 * 1000,
@@ -1820,9 +1700,7 @@ export function useProactiveBrief() {
   return useQuery({
     queryKey: ['proactive-brief'],
     queryFn: async () => {
-      const res = await fetch('/api/proactive-brief')
-      if (!res.ok) return null
-      const data = await res.json()
+      const data = await fetchJson<{ data?: unknown }>('/api/proactive-brief')
       return data.data ?? null
     },
     staleTime: 5 * 60 * 1000,
@@ -1835,9 +1713,7 @@ export function useFileActivityHeatmap(days = 90) {
   return useQuery({
     queryKey: ['file-activity-heatmap', days],
     queryFn: async () => {
-      const res = await fetch(`/api/file-activity/heatmap?days=${days}`)
-      if (!res.ok) return []
-      const data = await res.json()
+      const data = await fetchJson<{ data?: unknown[] }>(`/api/file-activity/heatmap?days=${days}`)
       return data.data ?? []
     },
     staleTime: 10 * 60 * 1000,
@@ -1850,10 +1726,8 @@ export function useLinkedProjects(publicationId: string) {
   return useQuery({
     queryKey: ['linked-projects', publicationId],
     queryFn: async () => {
-      const res = await fetch(`/api/papers/by-publication?publication_id=${encodeURIComponent(publicationId)}`)
-      if (!res.ok) return []
-      const data = await res.json()
-      return (data.data || []) as LinkedProject[]
+      const data = await fetchJson<{ data?: LinkedProject[] }>(`/api/papers/by-publication?publication_id=${encodeURIComponent(publicationId)}`)
+      return data.data || []
     },
     staleTime: 60 * 1000,
     enabled: !!publicationId,

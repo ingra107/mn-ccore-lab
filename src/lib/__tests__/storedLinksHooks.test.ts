@@ -66,11 +66,9 @@ describe('fetchTaskLinks (real useTaskLinks queryFn)', () => {
     expect(result.projectLinks).toEqual([])
   })
 
-  it('returns empty payload on non-ok fetch', async () => {
+  it('throws on non-ok fetch (#507: no longer swallows as an empty payload)', async () => {
     mockFetch({}, 403)
-    const result = await taskLinksQueryFn('task_001')
-    expect(result.links).toEqual([])
-    expect(result.projectLinks).toEqual([])
+    await expect(taskLinksQueryFn('task_001')).rejects.toThrow()
   })
 
   it('returns links and projectLinks from a successful fetch', async () => {
@@ -117,10 +115,9 @@ describe('fetchProjectLinks (real useProjectLinks queryFn)', () => {
     expect(result).toEqual([])
   })
 
-  it('returns empty array on non-ok fetch', async () => {
+  it('throws on non-ok fetch (#507: no longer swallows as an empty array)', async () => {
     mockFetch({}, 404)
-    const result = await projectLinksQueryFn('missing-slug')
-    expect(result).toEqual([])
+    await expect(projectLinksQueryFn('missing-slug')).rejects.toThrow()
   })
 
   it('returns links array from a successful fetch', async () => {
@@ -182,9 +179,8 @@ describe('projectLinks surface guard (drives TaskDetailDrawer + InlineDetail)', 
     expect(result.projectLinks.length > 0).toBe(false)
   })
 
-  it('non-ok fetch → projectLinks empty (both surfaces stay hidden)', async () => {
+  it('non-ok fetch throws (#507) — react-query surfaces isError, not a silently-hidden empty payload', async () => {
     mockFetch({}, 500)
-    const result = await taskLinksQueryFn('task_001')
-    expect(result.projectLinks.length > 0).toBe(false)
+    await expect(taskLinksQueryFn('task_001')).rejects.toThrow()
   })
 })

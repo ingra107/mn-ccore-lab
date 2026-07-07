@@ -3,6 +3,7 @@ import { useProactiveBrief } from '../../hooks/useApiData'
 import BentoCard from './BentoCard'
 import { PATHS } from '../../constants/paths'
 import { ICON_PROPS } from '../../lib/iconProps'
+import { QueryErrorNote } from '../QueryErrorNote'
 
 interface ProactiveBriefData {
   bullets: string[]
@@ -16,7 +17,7 @@ interface ProactiveBriefData {
 }
 
 export default function ProactiveBriefCard() {
-  const { data, isLoading } = useProactiveBrief()
+  const { data, isLoading, isError, refetch } = useProactiveBrief()
 
   const brief = data as ProactiveBriefData | undefined
 
@@ -27,6 +28,10 @@ export default function ProactiveBriefCard() {
           {[1, 2, 3, 4].map(i => (
             <div key={i} className="h-3 rounded" style={{ background: 'var(--border-subtle)', width: `${50 + i * 12}%` }} />
           ))}
+        </div>
+      ) : isError ? (
+        <div className="flex items-center justify-center h-full">
+          <QueryErrorNote label="brief" onRetry={() => refetch()} />
         </div>
       ) : !brief ? (
         <div className="flex items-center justify-center h-full">
