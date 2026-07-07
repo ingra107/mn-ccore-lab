@@ -4,9 +4,10 @@ import BentoCard from './BentoCard'
 import { useTeamPulse } from '../../hooks/useApiData'
 import { directors, getAllMembers } from '../../data/team'
 import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
+import { QueryErrorNote } from '../QueryErrorNote'
 
 function TeamPulseCard() {
-  const { data } = useTeamPulse(48)
+  const { data, isError, refetch } = useTeamPulse(48)
 
   const allMembers = useMemo(() => {
     const list: { name: string; initials: string; photoUrl?: string; slug: string }[] = []
@@ -35,6 +36,15 @@ function TeamPulseCard() {
 
   return (
     <BentoCard title="Team Pulse" subtitle="last 48 hours" size="span-2" icon={Users}>
+      {isError ? (
+        // #507 follow-up: the headline ("N of M active") and avatar
+        // highlighting both derive from `data` -- on a thrown fetch failure
+        // they'd read as a confirmed "0 active," not "unknown." Replace the
+        // whole body rather than let a false-looking zero stand next to the note.
+        <div className="flex items-center justify-center" style={{ minHeight: 80 }}>
+          <QueryErrorNote label="team pulse" onRetry={() => refetch()} />
+        </div>
+      ) : (
       <div className="flex flex-col gap-3">
         {/* Headline */}
         <div className="flex items-center gap-2">
@@ -103,6 +113,7 @@ function TeamPulseCard() {
           )}
         </div>
       </div>
+      )}
     </BentoCard>
   )
 }

@@ -6,9 +6,10 @@ import { useInsightConnections } from '../../hooks/useApiData'
 import { useQueryClient } from '@tanstack/react-query'
 import { PATHS } from '../../constants/paths'
 import { ICON_PROPS } from '../../lib/iconProps'
+import { QueryErrorNote } from '../QueryErrorNote'
 
 function InsightsCard() {
-  const { data: connections = [], isLoading } = useInsightConnections()
+  const { data: connections = [], isLoading, isError, refetch } = useInsightConnections()
   const queryClient = useQueryClient()
   const [refreshing, setRefreshing] = useState(false)
 
@@ -23,7 +24,7 @@ function InsightsCard() {
   return (
     <BentoCard
       title="Cross-Project Insights"
-      subtitle={`${connections.length} connections found`}
+      subtitle={isError ? undefined : `${connections.length} connections found`}
       size="span-2"
       icon={Sparkles}
     >
@@ -60,6 +61,10 @@ function InsightsCard() {
           <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
             Analyzing connections...
           </span>
+        </div>
+      ) : isError ? (
+        <div className="flex items-center justify-center py-8">
+          <QueryErrorNote label="insights" onRetry={() => refetch()} />
         </div>
       ) : top5.length === 0 ? (
         <div className="flex items-center justify-center py-8">

@@ -42,6 +42,10 @@ export default function SystemHealthMiniCard() {
       label = `${issues} issue${issues !== 1 ? 's' : ''}`
     }
   } else if (!isLoading) {
+    // #507 follow-up: covers BOTH "no health row yet" and a thrown fetch
+    // failure (usePBHealth() now throws on !res.ok) — either way `health`
+    // is falsy here, and "Unavailable" + red status already communicates
+    // "don't trust this" without needing a separate isError branch.
     status = 'red'
     label = 'Unavailable'
   }

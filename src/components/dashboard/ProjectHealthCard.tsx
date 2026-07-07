@@ -11,6 +11,7 @@ import { PATHS } from '../../constants/paths'
 import { ICON_PROPS } from '../../lib/iconProps'
 import SegmentedToggle from '../ui/SegmentedToggle'
 import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
+import { QueryErrorNote } from '../QueryErrorNote'
 
 const STATUS_COLORS: Record<string, string> = {
   'Healthy': 'var(--green)',
@@ -62,7 +63,7 @@ function FactorTooltip({ factors, score }: { factors: HealthFactors; score: numb
 }
 
 function ProjectHealthCard() {
-  const { data } = useProjectHealth()
+  const { data, isError, refetch } = useProjectHealth()
   const [showHealthy, setShowHealthy] = useState(false)
   // P3-02: heatmap view as alt to the truncated list. localStorage persists.
   const [viewMode, setViewMode] = useState<'list' | 'heatmap'>(() => {
@@ -88,7 +89,7 @@ function ProjectHealthCard() {
   return (
     <BentoCard
       title="Project Health"
-      subtitle={`${summary.total} projects tracked`}
+      subtitle={isError ? undefined : `${summary.total} projects tracked`}
       size="span-2"
       icon={HeartPulse}
     >
@@ -235,23 +236,30 @@ function ProjectHealthCard() {
             </>
           )}
 
-          {/* Empty state */}
+          {/* Empty state -- #507 follow-up: distinguish a thrown fetch
+              failure (isError) from a genuinely empty project set. */}
           {projects.length === 0 && (
-            <div
-              className="flex flex-col items-center justify-center py-8"
-              style={{ opacity: 0.85 }}
-            >
-              <HeartPulse size={24} style={{ color: 'var(--teal)', marginBottom: '8px' }} />
-              <p
-                style={{
-                  fontSize: '12px',
-                  color: 'var(--slate)',
-                  margin: 0,
-                }}
+            isError ? (
+              <div className="flex flex-col items-center justify-center py-8" style={{ opacity: 0.85 }}>
+                <QueryErrorNote label="project health" onRetry={() => refetch()} />
+              </div>
+            ) : (
+              <div
+                className="flex flex-col items-center justify-center py-8"
+                style={{ opacity: 0.85 }}
               >
-                No project data available
-              </p>
-            </div>
+                <HeartPulse size={24} style={{ color: 'var(--teal)', marginBottom: '8px' }} />
+                <p
+                  style={{
+                    fontSize: '12px',
+                    color: 'var(--slate)',
+                    margin: 0,
+                  }}
+                >
+                  No project data available
+                </p>
+              </div>
+            )
           )}
         </div>
         )}

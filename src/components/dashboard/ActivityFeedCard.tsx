@@ -10,6 +10,7 @@ import { formatRelativeTime } from '../../lib/dateUtils'
 import { PATHS } from '../../constants/paths'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
+import { QueryErrorNote } from '../QueryErrorNote'
 
 interface FeedItem {
   id: string
@@ -46,7 +47,7 @@ function dotColorForType(type: string): string {
 function ActivityFeedCard() {
   const mounted = useDashboardMounted()
   // Over-fetch a bit so the post-filter feed still has 5 items.
-  const { data: rawActivity = [] } = useActivity(20)
+  const { data: rawActivity = [], isError, refetch } = useActivity(20)
 
   const items = useMemo<FeedItem[]>(() => {
     if (!mounted) return []
@@ -105,9 +106,15 @@ function ActivityFeedCard() {
             />
 
             {items.length === 0 && (
-              <div className="py-4 text-center" style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
-                No recent activity yet.
-              </div>
+              isError ? (
+                <div className="py-4 flex items-center justify-center">
+                  <QueryErrorNote label="activity feed" onRetry={() => refetch()} />
+                </div>
+              ) : (
+                <div className="py-4 text-center" style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
+                  No recent activity yet.
+                </div>
+              )
             )}
             {items.map((item, i) => {
               return (

@@ -7,6 +7,7 @@ import { useDashboardMounted } from '../../pages/Dashboard'
 import { isProjectActive } from '../../lib/taskConstants'
 import type { LucideIcon } from 'lucide-react'
 import { ICON_PROPS } from '../../lib/iconProps'
+import { QueryErrorNote } from '../QueryErrorNote'
 
 interface StatItem {
   icon: LucideIcon
@@ -100,7 +101,7 @@ function StatsCard() {
   const { data: publications = [] } = usePublications(undefined, { enabled: mounted })
   const { data: projects = [] } = useProjects(undefined, { enabled: mounted })
   const { data: team = [] } = useTeam({ enabled: mounted })
-  const { data: citations, isLoading: citationsLoading } = useCitations({ enabled: mounted })
+  const { data: citations, isLoading: citationsLoading, isError: citationsError, refetch: refetchCitations } = useCitations({ enabled: mounted })
 
   const teamSize = team.length
   const activeProjects = projects.filter((p) => isProjectActive(p.status)).length
@@ -117,6 +118,11 @@ function StatsCard() {
 
   if (citationsLoading || !mounted) {
     citationDisplay = '…'
+  } else if (citationsError) {
+    // #507 follow-up: distinct from "no scholarly fetch has run yet" below --
+    // a thrown fetch failure shouldn't read as "0 citations collected."
+    citationDisplay = '—'
+    citationTooltip = 'Citations unavailable — fetch failed.'
   } else if (!citations || citations.members_with_data === 0) {
     citationDisplay = '—'
     citationTooltip = 'Citations collected weekly via Google Scholar. No data yet.'
@@ -154,6 +160,9 @@ function StatsCard() {
           <MiniStat key={stat.label} {...stat} delay={i * 120} />
         ))}
       </div>
+      {citationsError && (
+        <QueryErrorNote label="citations" onRetry={() => refetchCitations()} />
+      )}
     </BentoCard>
   )
 }

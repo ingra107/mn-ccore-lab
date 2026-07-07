@@ -32,6 +32,10 @@ function typeColor(type: Deadline['type']): string {
 
 function UpcomingCard() {
   const { data: meetings = [] } = useMeetingsApi()
+  // #507 follow-up opt-out: a useActionItems failure only hides the
+  // "N/M pending" sub-row below (guarded by `meetingActionCounts.total > 0`)
+  // -- it never renders a false "0 pending" claim, so no isError branch here.
+  // Deadlines (from tasks/grants) and the meeting banner are unaffected.
   const { data: allActionItems = [] } = useActionItems()
   const { data: cadence } = useMeetingCadence()
   const { data: tasks = [] } = useTasks()

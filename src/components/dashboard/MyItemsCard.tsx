@@ -12,11 +12,12 @@ import BentoCard from './BentoCard'
 import { PATHS } from '../../constants/paths'
 import DueLabel from '../DueLabel'
 import { ICON_PROPS } from '../../lib/iconProps'
+import { QueryErrorNote } from '../QueryErrorNote'
 
 function MyItemsCard() {
   const { user } = useAuth()
   const userSlug = emailToSlug(user?.email)
-  const { data: allItems = [] } = useActionItems(
+  const { data: allItems = [], isError, refetch } = useActionItems(
     userSlug ? { assignee: userSlug } : undefined
   )
   const { data: unreadCount = 0 } = useUnreadCount(userSlug)
@@ -127,12 +128,18 @@ function MyItemsCard() {
         })}
 
         {pending.length === 0 && (
-          <div className="flex items-center gap-2 py-3">
-            <CheckCircle2 {...ICON_PROPS} size={14} style={{ color: 'var(--teal)' }} />
-            <span style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.75 }}>
-              All caught up
-            </span>
-          </div>
+          isError ? (
+            <div className="flex items-center gap-2 py-3">
+              <QueryErrorNote label="action items" onRetry={() => refetch()} />
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 py-3">
+              <CheckCircle2 {...ICON_PROPS} size={14} style={{ color: 'var(--teal)' }} />
+              <span style={{ fontSize: '12px', color: 'var(--slate)', opacity: 0.75 }}>
+                All caught up
+              </span>
+            </div>
+          )
         )}
 
         {/* View all link */}
