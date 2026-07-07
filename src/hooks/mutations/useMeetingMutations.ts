@@ -39,6 +39,23 @@ export function useUpdateMeetingNotes(meetingId: string) {
   })
 }
 
+// ── Meeting Metadata mutation ───────────────────────────────
+
+export function useUpdateMeetingMeta(meetingId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: { attendees?: string[]; title?: string; type?: string; tags?: string[] }) =>
+      fetchApi(`/api/meetings/${meetingId}/meta`, {
+        method: 'POST',
+        body: JSON.stringify(input),
+      }),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['meeting', meetingId] })
+      queryClient.invalidateQueries({ queryKey: ['activity'] })
+    },
+  })
+}
+
 // ── Action Item mutations ───────────────────────────────────
 
 export function useCreateActionItem() {

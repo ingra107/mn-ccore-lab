@@ -151,6 +151,28 @@ export async function handleUpdateMeetingNotes(meetingId: string, request: Reque
   return json({ data: updated });
 }
 
+// POST /api/meetings/:id/meta — edit meeting metadata (attendees/title/type/tags).
+// Hub edits are canonical: the PB pipeline only sets these on INSERT, so a
+// manual edit here can never be overwritten by a re-push. Date is NOT editable
+// (it is half of the dedup key).
+export async function handleUpdateMeetingMeta(meetingId: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
+  const body = await request.json() as { attendees?: string[]; title?: string; type?: string; tags?: string[] };
+  const sets: string[] = [];
+  const binds: unknown[] = [];
+  if (Array.isArray(body.attendees)) { sets.push('attendees = ?'); binds.push(JSON.stringify(body.attendees)); }
+  if (typeof body.title === 'string' && body.title.trim()) { sets.push('title = ?'); binds.push(body.title.trim()); }
+  if (typeof body.type === 'string' && body.type) { sets.push('type = ?'); binds.push(body.type); }
+  if (Array.isArray(body.tags)) { sets.push('tags = ?'); binds.push(JSON.stringify(body.tags)); }
+  if (sets.length === 0) return error('no editable fields provided', 400);
+  const result = await env.DB.prepare(
+    `UPDATE meetings SET ${sets.join(', ')}, updated_at = datetime('now') WHERE id = ?`
+  ).bind(...binds, meetingId).run();
+  if (!result.meta || result.meta.changes === 0) return error('Meeting not found', 404);
+  await logActivity(env, 'meeting', `Updated meeting details`, user.email, meetingId, 'meeting');
+  const updated = await env.DB.prepare('SELECT * FROM meetings WHERE id = ?').bind(meetingId).first();
+  return json({ data: updated });
+}
+
 // GET /api/meetings/:id/prep — facilitator prep view data.
 // Auth-gated: prep data contains task details, prior action items, activity log.
 // Unauth callers get 401 (mirrors the handleGetMeeting pattern).

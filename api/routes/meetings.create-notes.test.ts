@@ -15,7 +15,7 @@
 // real D1. No live binding, no network, no prod Hub.
 
 import { describe, it, expect, beforeEach } from 'vitest'
-import { handleCreateMeeting } from './meetings'
+import { handleCreateMeeting, handleUpdateMeetingMeta } from './meetings'
 import type { AuthUser, Env } from '../helpers'
 
 // ── Minimal stateful D1 stub (meetings + activity_log) ───────────────────────
@@ -61,7 +61,7 @@ function makeStatefulEnv(seed: Row[] = []): { env: Env; meetings: Row[]; notific
             })
             return { meta: { changes: 1 } }
           }
-          if (upper.startsWith('UPDATE MEETINGS')) {
+          if (upper.startsWith('UPDATE MEETINGS') && upper.includes('COALESCE')) {
             // UPDATE ... SET notes = COALESCE(?, notes), decisions = COALESCE(?, decisions),
             //               tags = COALESCE(?, tags), source_id = COALESCE(source_id, ?),
             //               updated_at = ... WHERE id = ?
@@ -76,6 +76,24 @@ function makeStatefulEnv(seed: Row[] = []): { env: Env; meetings: Row[]; notific
               return { meta: { changes: 1 } }
             }
             return { meta: { changes: 0 } }
+          }
+          if (upper.startsWith('UPDATE MEETINGS')) {
+            // T5 meta endpoint: dynamic SET clause built from whichever fields
+            // were provided, e.g. "SET attendees = ?, title = ?, updated_at =
+            // datetime('now') WHERE id = ?". Parse the column names in order
+            // (skip updated_at — it has no bind placeholder) and assign the
+            // trailing bind args (last is always the id) positionally.
+            const setClause = (s.match(/SET\s+(.*?)\s+WHERE/is) ?? ['', ''])[1]
+            const cols = setClause
+              .split(',')
+              .map((c) => c.trim().split('=')[0].trim())
+              .filter((c) => c.toLowerCase() !== 'updated_at')
+            const id = args[args.length - 1]
+            const row = meetings.find((m) => m.id === id)
+            if (!row) return { meta: { changes: 0 } }
+            cols.forEach((col, i) => { row[col] = args[i] })
+            row.updated_at = '2026-05-29T12:00:00Z'
+            return { meta: { changes: 1 } }
           }
           if (upper.startsWith('INSERT INTO NOTIFICATIONS')) {
             // INSERT (id, recipient_slug, type, source_type, source_id, title, body, link)
@@ -448,5 +466,83 @@ describe('handleCreateMeeting — debrief notification (fire-once bell)', () => 
     )
     expect(res.status).toBe(200)
     expect(notifications).toHaveLength(0)
+  })
+})
+
+// T5 — POST /api/meetings/:id/meta. Hub edits are canonical: the PB pipeline
+// only sets attendees/title/type/tags on INSERT, so a manual edit here can
+// never be overwritten by a re-push.
+describe('handleUpdateMeetingMeta — T5 metadata edit endpoint', () => {
+  function seedMeeting(overrides: Row = {}): { env: Env; meetings: Row[] } {
+    return makeStatefulEnv([
+      {
+        id: 'mtg-2026-05-29-meta0001',
+        date: '2026-05-29',
+        title: 'Original Title',
+        type: 'biweekly',
+        attendees: JSON.stringify(['orig@umn.edu']),
+        tags: JSON.stringify(['orig-tag']),
+        notes: 'kept notes',
+        decisions: null,
+        status: 'upcoming',
+        ...overrides,
+      },
+    ])
+  }
+
+  it('updates only the provided fields, leaving others untouched', async () => {
+    const { env, meetings } = seedMeeting()
+    const res = await handleUpdateMeetingMeta(
+      'mtg-2026-05-29-meta0001',
+      makeRequest({ title: 'Renamed Meeting' }),
+      makeUser(), env,
+    )
+    const body = await res.json() as { data: Row }
+
+    expect(res.status).toBe(200)
+    expect(meetings[0].title).toBe('Renamed Meeting')
+    // untouched fields survive
+    expect(meetings[0].type).toBe('biweekly')
+    expect(meetings[0].attendees).toBe(JSON.stringify(['orig@umn.edu']))
+    expect(meetings[0].tags).toBe(JSON.stringify(['orig-tag']))
+    expect(meetings[0].notes).toBe('kept notes')
+    expect(body.data.title).toBe('Renamed Meeting')
+  })
+
+  it('400s on an empty body (no editable fields provided)', async () => {
+    const { env, meetings } = seedMeeting()
+    const res = await handleUpdateMeetingMeta(
+      'mtg-2026-05-29-meta0001',
+      makeRequest({}),
+      makeUser(), env,
+    )
+    expect(res.status).toBe(400)
+    // nothing mutated
+    expect(meetings[0].title).toBe('Original Title')
+  })
+
+  it('404s on an unknown meeting id', async () => {
+    const { env } = seedMeeting()
+    const res = await handleUpdateMeetingMeta(
+      'mtg-does-not-exist',
+      makeRequest({ title: 'New Title' }),
+      makeUser(), env,
+    )
+    expect(res.status).toBe(404)
+  })
+
+  it('persists attendees as a JSON-stringified array', async () => {
+    const { env, meetings } = seedMeeting()
+    const attendees = ['a@umn.edu', 'b@umn.edu']
+    const res = await handleUpdateMeetingMeta(
+      'mtg-2026-05-29-meta0001',
+      makeRequest({ attendees }),
+      makeUser(), env,
+    )
+    const body = await res.json() as { data: Row }
+
+    expect(res.status).toBe(200)
+    expect(meetings[0].attendees).toBe(JSON.stringify(attendees))
+    expect(JSON.parse(body.data.attendees as string)).toEqual(attendees)
   })
 })
