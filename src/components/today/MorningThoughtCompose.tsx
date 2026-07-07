@@ -28,7 +28,7 @@ import { nowInstant } from '../../lib/time'
 import { useIsMobile } from '../../hooks/useIsMobile'
 import { localDateKey } from '../../lib/dateUtils'
 import { useLaunchCommands } from '../../hooks/useLaunchCommands'
-import { isBacklogPrefix, stripBacklogPrefix } from '../../lib/hermesRouting'
+import { isBacklogPrefix, stripBacklogPrefix, isHermesPrefix, stripHermesPrefix } from '../../lib/hermesRouting'
 
 const DEFAULT_GROUP_OVERRIDE = 'priorities'
 
@@ -102,8 +102,8 @@ export function MorningThoughtCompose() {
     }
 
     // Route 1 — @hermes prefix
-    if (/^@hermes\b/i.test(content)) {
-      const prompt = content.replace(/^@hermes\s*/i, '').trim() || content
+    if (isHermesPrefix(content)) {
+      const prompt = stripHermesPrefix(content)
       try {
         const res = await fetch('/api/ai-requests', {
           method: 'POST',
