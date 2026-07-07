@@ -10,7 +10,7 @@
  */
 
 import { describe, it, expect, vi } from 'vitest'
-import { InputSafeKeyboardSensor, InputSafePointerSensor } from '../lib/dndSensors'
+import { InputSafeKeyboardSensor, InputSafePointerSensor, InputSafeTouchSensor } from '../lib/dndSensors'
 
 // Minimal activator context: no activatorNode registered (the TaskRow case —
 // listeners spread on the wrapper, setActivatorNodeRef unused).
@@ -36,6 +36,17 @@ function firePointerActivator(target: HTMLElement) {
   }
   // PointerSensor's activator signature is (event, options) — no context arg.
   return InputSafePointerSensor.activators[0].handler(event as never, {} as never)
+}
+
+function fireTouchActivator(target: HTMLElement) {
+  const event = {
+    // TouchSensor extends the same AbstractPointerSensor base as
+    // PointerSensor and shares its (event, options) activator signature;
+    // its real handler additionally reads nativeEvent.touches.length.
+    nativeEvent: { touches: [{}] },
+    target,
+  }
+  return InputSafeTouchSensor.activators[0].handler(event as never, {} as never)
 }
 
 describe('InputSafeKeyboardSensor', () => {
@@ -65,5 +76,15 @@ describe('InputSafePointerSensor', () => {
 
   it('still activates on pointerdown from a non-editable element', () => {
     expect(firePointerActivator(document.createElement('div'))).toBe(true)
+  })
+})
+
+describe('InputSafeTouchSensor', () => {
+  it('does NOT activate on touchstart inside a textarea (mobile #481)', () => {
+    expect(fireTouchActivator(document.createElement('textarea'))).toBe(false)
+  })
+
+  it('still activates on touchstart from a non-editable element (long-press drag preserved)', () => {
+    expect(fireTouchActivator(document.createElement('div'))).toBe(true)
   })
 })

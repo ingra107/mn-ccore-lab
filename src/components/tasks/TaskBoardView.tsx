@@ -3,7 +3,6 @@ import {
   DndContext,
   DragOverlay,
   closestCorners,
-  TouchSensor,
   useSensor,
   useSensors,
   useDroppable,
@@ -19,7 +18,7 @@ import Avatar from '../Avatar'
 import { getPersonInfo } from '../../data/team'
 import type { TaskRow } from '../../lib/api'
 import { ICON_PROPS } from '../../lib/iconProps'
-import { InputSafeKeyboardSensor, InputSafePointerSensor } from '../../lib/dndSensors'
+import { InputSafeKeyboardSensor, InputSafePointerSensor, InputSafeTouchSensor } from '../../lib/dndSensors'
 
 interface TaskBoardViewProps {
   tasks: TaskRow[]
@@ -81,10 +80,11 @@ export default function TaskBoardView({ tasks, onStatusChange, onSelect }: TaskB
   // (250ms long-press so tap-to-open-detail still works); KeyboardSensor
   // gives a11y drag via arrow keys. Fix for P1-R2-08. Input-safe variants
   // (lib/dndSensors) keep typing/text-selection in nested form fields from
-  // activating a drag.
+  // activating a drag (#481: TouchSensor was the one sensor still stock here
+  // — same class as the 242ec76e Pointer/Keyboard fix, just missed).
   const sensors = useSensors(
     useSensor(InputSafePointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } }),
+    useSensor(InputSafeTouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } }),
     useSensor(InputSafeKeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   )
 

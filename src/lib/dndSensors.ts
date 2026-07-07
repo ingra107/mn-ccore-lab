@@ -9,12 +9,14 @@
 // comment box picked up the row: preventDefault ate the character and the
 // DragOverlay ghost appeared over the page. PointerSensor has the sibling
 // failure — drag-selecting text inside a nested field starts a row drag.
+// TouchSensor (mobile long-press) shares PointerSensor's base class and the
+// same failure shape.
 //
 // These subclasses reject activation when the event originates in an editable
 // element and delegate everything else to the stock activators, so keyboard
 // a11y (focus the row → Space to pick up, arrows to move) is unchanged.
 
-import { KeyboardSensor, PointerSensor } from '@dnd-kit/core'
+import { KeyboardSensor, PointerSensor, TouchSensor } from '@dnd-kit/core'
 import { isEditableTarget } from './editableTarget'
 
 // Wrap a stock activator handler: events from editable elements never
@@ -34,6 +36,17 @@ export class InputSafeKeyboardSensor extends KeyboardSensor {
 
 export class InputSafePointerSensor extends PointerSensor {
   static activators: typeof PointerSensor.activators = PointerSensor.activators.map(
+    (activator) => ({ ...activator, handler: guardHandler(activator.handler) }),
+  )
+}
+
+// TouchSensor extends the same AbstractPointerSensor base as PointerSensor
+// and shares its activator signature (`({ nativeEvent }, { onActivation }) =>
+// boolean`, first arg carrying `.target`) -- same footgun (a long-press
+// starting on a nested input/textarea should text-select, not drag), same
+// guard.
+export class InputSafeTouchSensor extends TouchSensor {
+  static activators: typeof TouchSensor.activators = TouchSensor.activators.map(
     (activator) => ({ ...activator, handler: guardHandler(activator.handler) }),
   )
 }
