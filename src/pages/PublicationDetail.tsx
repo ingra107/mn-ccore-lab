@@ -8,6 +8,7 @@ import { getPersonInfo } from '../data/team'
 import { PATHS } from '../constants/paths'
 import { ICON_PROPS } from '../lib/iconProps'
 import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
+import { QueryErrorNote } from '../components/QueryErrorNote'
 
 const TOPIC_DISPLAY: Record<string, string> = {
   clif: 'CLIF',
@@ -387,9 +388,11 @@ const CATEGORY_COLORS: Record<string, { bg: string; text: string; label: string 
 }
 
 function LinkedProjectsSection({ publicationId }: { publicationId: string }) {
-  const { data: linkedProjects = [] } = useLinkedProjects(publicationId)
+  const { data: linkedProjects = [], isError, refetch } = useLinkedProjects(publicationId)
 
-  if (linkedProjects.length === 0) return null
+  // #507 follow-up: a bare `.length === 0` return-null used to silently
+  // vanish this whole section on a thrown fetch failure too.
+  if (linkedProjects.length === 0 && !isError) return null
 
   return (
     <motion.div
@@ -398,6 +401,10 @@ function LinkedProjectsSection({ publicationId }: { publicationId: string }) {
       transition={{ duration: 0.25, delay: 0.2 }}
       style={{ marginTop: '2rem' }}
     >
+      {isError ? (
+        <QueryErrorNote label="linked projects" onRetry={() => refetch()} />
+      ) : (
+      <>
       <div className="flex items-center gap-2 mb-3">
         <FolderOpen {...ICON_PROPS} size={16} style={{ color: 'var(--teal)' }} />
         <h2
@@ -490,6 +497,8 @@ function LinkedProjectsSection({ publicationId }: { publicationId: string }) {
           })}
         </div>
       </div>
+      </>
+      )}
     </motion.div>
   )
 }

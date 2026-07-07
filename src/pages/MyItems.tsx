@@ -20,6 +20,7 @@ import { emailToSlug } from '../lib/emailSlug'
 import { useActionItems, useTasks } from '../hooks/useApiData'
 import type { ActionItemRow } from '../hooks/useApiData'
 import type { TaskRow } from '../lib/api'
+import { QueryErrorNote } from '../components/QueryErrorNote'
 
 // In-place task editor (Nick 2026-06-11: clicking a NEW item must open the
 // actionable thing, not just another page). Lazy — only loads when a row is
@@ -622,7 +623,7 @@ export default function MyItems() {
   const userSlug = emailToSlug(user?.email) || 'nick-ingraham'
 
   // Data hooks
-  const { data: allActionItems = [] } = useActionItems(
+  const { data: allActionItems = [], isError: actionItemsError, refetch: refetchActionItems } = useActionItems(
     userSlug ? { assignee: userSlug } : undefined
   )
   // "New for you" (Slack-style seen, 2026-06-11): open tasks assigned to you
@@ -937,7 +938,11 @@ export default function MyItems() {
         <div style={{ marginBottom: '2.5rem' }}>
           <SectionHeader title="Pending Action Items" />
 
-          {pending.length === 0 ? (
+          {actionItemsError ? (
+            <div className="card" style={{ padding: '2rem', textAlign: 'center' }}>
+              <QueryErrorNote label="action items" onRetry={() => refetchActionItems()} />
+            </div>
+          ) : pending.length === 0 ? (
             <div
               className="card"
               style={{

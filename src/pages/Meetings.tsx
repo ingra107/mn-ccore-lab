@@ -419,6 +419,11 @@ export default function Meetings() {
   const [mobileShowDetail, setMobileShowDetail] = useState(false)
 
   const { data: meetingRows = [], isLoading: meetingsLoading } = useMeetingsApi()
+  // #507 follow-up opt-out: actionItemRows only enriches each meeting with
+  // its action-item list/count inside meetingRowToMeeting below -- the
+  // page's real content is meetingRows (useMeetingsApi, already-throwing,
+  // untouched by this wave). A failure here degrades to "0 action items"
+  // per meeting rather than blocking the meetings list itself.
   const { data: actionItemRows = [] } = useActionItems()
   const { data: cadence } = useMeetingCadence()
   const toggleMutation = useToggleActionItem()

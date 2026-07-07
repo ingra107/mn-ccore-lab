@@ -29,6 +29,7 @@ import PageHeader from '../components/PageHeader'
 import HeartbeatLine from '../components/HeartbeatLine'
 import { ICON_PROPS } from '../lib/iconProps'
 import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
+import { QueryErrorNote } from '../components/QueryErrorNote'
 
 type StatusFilter = 'all' | 'new' | 'saved'
 
@@ -668,13 +669,13 @@ export default function Digest() {
   )
 
   // Fetch available dates
-  const { data: dates = [] } = useDigestDates()
+  const { data: dates = [], isError: datesError, refetch: refetchDates } = useDigestDates()
 
   // Auto-select most recent date when dates load
   const activeDate = selectedDate ?? (dates.length > 0 ? dates[0].date : undefined)
 
   // Fetch papers for the active date (with relevance matching)
-  const { data: papers = [], isLoading } = useDigest({
+  const { data: papers = [], isLoading, isError: papersError, refetch: refetchPapers } = useDigest({
     date: activeDate,
     status: statusFilter === 'all' ? undefined : statusFilter,
     topic: topicFilter ?? undefined,
@@ -761,7 +762,17 @@ export default function Digest() {
         </PageHeader>
       </section>
 
-      {isEmpty ? (
+      {/* #507 follow-up: distinguish a thrown fetch failure (useDigestDates
+          or the main useDigest papers query) from "no digest has run yet" --
+          both used to fall through to the same "No research digest yet"
+          empty state. */}
+      {(datesError || papersError) ? (
+        <section className="content-container pb-16">
+          <div className="flex items-center justify-center py-16">
+            <QueryErrorNote label="research digest" onRetry={() => { refetchDates(); refetchPapers() }} />
+          </div>
+        </section>
+      ) : isEmpty ? (
         <section className="content-container pb-16">
           <EmptyState />
         </section>
