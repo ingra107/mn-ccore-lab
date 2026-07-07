@@ -95,11 +95,14 @@ describe('route contract — generated from ROUTE_REGISTRY', () => {
     // 252 as of 2026-07-06 — 448b0228 feat(activity): manual delete (+1):
     //   POST /api/activity/:id/delete (shipped without bumping this count;
     //   caught red at HEAD during #485 work).
+    // 253 as of 2026-07-07 — 7a3a5a3d T5: POST /api/meetings/:id/meta (+1)
+    //   (shipped without bumping this count; caught red at HEAD during the
+    //   task-comment paste-to-image work).
     // Adding a route → increment this number. Removing a route → decrement it.
     // This makes route deletion require explicit acknowledgment, preventing
     // silent surface regression (codex final-audit finding #9, 2026-05-28).
     // If you are intentionally adding or removing routes, update this count.
-    expect(ROUTE_REGISTRY).toHaveLength(252)
+    expect(ROUTE_REGISTRY).toHaveLength(253)
   })
 
   it('every non-public route has either entity or visibility metadata', () => {
