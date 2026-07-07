@@ -33,6 +33,7 @@ import { withAlpha } from '../../../lib/taskGrouping'
 import type { TaskRow } from '../../../lib/api'
 import { TaskInlineFieldRow } from '../../../components/tasks/detail/FieldControls'
 import TaskDetailPanel from '../../../components/tasks/TaskDetailPanel'
+import { TaskHermesReplies } from '../../../components/tasks/TaskHermesReplies'
 import WorkOnActions from '../../../components/WorkOnActions'
 
 // Muted color for feed items (not in the re-exported constants set).
@@ -226,6 +227,8 @@ export function InlineDetail({ task, projectName, primaryFolder, onOpenEditor }:
       {/* SmartCompose — directly under action bar (A2) with @me lock toggle */}
       <div style={{ marginBottom: 10 }}>
         <SmartCompose taskId={task.id} placeholder="Note or @hermes…" showMeLock showHermesToggle bare alwaysShowToolbar launchContext={{ projectSlug: task.project_id ?? null }} />
+        {/* #519 — task-scoped Hermes round-trip reader (polls until answered). */}
+        <TaskHermesReplies taskId={task.id} style={{ marginTop: 8, marginBottom: 0 }} />
       </div>
 
       {/* Next step — first open subtask, silent when none */}

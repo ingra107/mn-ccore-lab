@@ -47,8 +47,10 @@ import { TaskDependenciesSection } from './detail/TaskDependencies'
 import { SubtaskSection } from './detail/SubtaskSection'
 import { HandoffSection } from './detail/HandoffSection'
 import { TaskActivityFeed } from './detail/TaskActivityFeed'
+import { TaskHermesReplies } from './TaskHermesReplies'
 import TaskIntelligence from './detail/TaskIntelligence'
 import KeyLinksEditor from '../KeyLinksEditor'
+import { isHermesPrefix, stripHermesPrefix } from '../../lib/hermesRouting'
 import { displayRank } from '../../lib/pbLinkDisplayOrder.generated'
 import { Brain } from 'lucide-react'
 
@@ -604,6 +606,10 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
               />
             </div>
           )}
+          {/* #519 — task-scoped Hermes round-trip: a typed @hermes above posts an
+              ai_request keyed by this task; this reader shows the reply (polls
+              until the listener answers). Renders nothing until there's a reply. */}
+          <TaskHermesReplies taskId={task.id} style={{ marginTop: 'var(--sp-sm)', marginBottom: 0 }} />
         </div>
 
         {/* Tab Bar — sits below the composer card with its own border-b. */}
@@ -1557,8 +1563,8 @@ function OverviewQuickAdd({
     // The Hermes toggle (forHermes) posts via comment + dispatch/add.
     // A direct @hermes prefix is a Today-bar-style intent; route there instead
     // of letting it fall through to submitComment as team-visible activity.
-    if (/^@hermes\b/i.test(v)) {
-      const prompt = v.replace(/^@hermes\s*/i, '').trim() || v
+    if (isHermesPrefix(v)) {
+      const prompt = stripHermesPrefix(v)
       fetch('/api/ai-requests', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

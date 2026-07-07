@@ -20,6 +20,7 @@ import type { WorkflowFields } from '../tasks/detail/FieldControls'
 import { TaskInlineFieldRow } from '../tasks/detail/FieldControls'
 import { TaskActivityFeed } from '../tasks/detail/TaskActivityFeed'
 import TaskDetailPanel from '../tasks/TaskDetailPanel'
+import { TaskHermesReplies } from '../tasks/TaskHermesReplies'
 import StoredLinkChip from '../StoredLinkChip'
 import {
   ACCENT_TEAL, ACCENT_ORANGE, ACCENT_GREEN,
@@ -192,6 +193,10 @@ export function TaskDetailDrawer({ task, project, state }: { task: TaskRow; proj
         alwaysShowToolbar
         launchContext={{ projectSlug: project?.slug ?? task.project_id ?? null, primaryFolder: project?.primary_folder ?? null }}
       />
+
+      {/* #519 — task-scoped Hermes round-trip: a typed @hermes above routes to
+          ai-requests; this reader shows the reply (polls until answered). */}
+      <TaskHermesReplies taskId={task.id} style={{ marginTop: 10, marginBottom: 0 }} />
 
       {/* Activity peek — 3 entries newest-first; "view all →" opens full editor */}
       <div style={{ marginTop: 14 }}>

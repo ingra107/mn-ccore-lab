@@ -29,6 +29,7 @@ import MentionInput from './MentionInput'
 import HermesMark from './HermesMark'
 import { usePostTaskUpdate } from '../hooks/useMutations'
 import { useLaunchCommands, taskLaunchContext, type LaunchCommandContext } from '../hooks/useLaunchCommands'
+import { isHermesPrefix, stripHermesPrefix } from '../lib/hermesRouting'
 import { useUndoToast } from './UndoToast'
 import { ICON_PROPS } from '../lib/iconProps'
 import { withAlpha } from '../lib/taskGrouping'
@@ -218,6 +219,32 @@ export default function SmartCompose(props: SmartComposeProps) {
         if (!isControlled) setVal('')
       })
       if (routed) return
+    }
+    // ── @hermes prefix (task mode): real Hermes round-trip via /api/ai-requests ──
+    // Converges task compose surfaces onto the transport TaskDetailPanel already
+    // uses (#484 item 4): a typed "@hermes …" posts an ai_request keyed by the
+    // task id — read back by TaskHermesReplies (#519) — instead of a plain
+    // comment that only manual /process triage would answer. Runs AFTER the
+    // launch-tag interception (so @workon/@quickchat still win) and only on the
+    // PREFIX form; a mid-text @hermes ("ask @hermes about X") stays a comment.
+    // The Hermes toggle's @hermes prepend is intentionally left as-is (still a
+    // comment) — only a typed prefix routes here.
+    if (!isCustomMode && isHermesPrefix(raw)) {
+      const taskId = (props as TaskModeProps).taskId
+      try {
+        const res = await fetch('/api/ai-requests', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ source_type: 'daily_thought', source_id: taskId, prompt: stripHermesPrefix(raw) }),
+        })
+        if (!res.ok) throw new Error(`/api/ai-requests ${res.status}`)
+        setVal('')
+        undoToast.showSuccess('Sent to Hermes')
+      } catch (err) {
+        console.error('@hermes from task compose failed:', err)
+        undoToast.showError('@hermes failed — your message is still here, try again')
+      }
+      return
     }
     // Prepend prefix based on active lock (mutually exclusive: @hermes wins over @me).
     const content = showHermesToggle && hermesLocked && !raw.startsWith('@hermes ')
