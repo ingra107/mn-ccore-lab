@@ -1382,7 +1382,7 @@ defineRoute({
   visibility: 'pb-aware',
   handler: (c) => {
   const key = c.req.param('rest');
-  return handleGetFile(key, E(c), CSP(c));
+  return handleGetFile(key, E(c), CSP(c), c.req.query('raw') === '1');
 },
 });
 

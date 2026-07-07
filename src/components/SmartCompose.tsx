@@ -293,13 +293,15 @@ export default function SmartCompose(props: SmartComposeProps) {
           context: { type: uploadContext.type, id: uploadContext.id },
         }),
       })
+      if (!urlRes.ok) throw new Error(`Failed to get upload URL (${urlRes.status}) — R2 may not be configured`)
       const urlData = await urlRes.json() as { data?: { uploadUrl: string; key: string } }
       if (!urlData.data?.uploadUrl) throw new Error('Failed to get upload URL — R2 may not be configured')
-      await fetch(urlData.data.uploadUrl, {
+      const putRes = await fetch(urlData.data.uploadUrl, {
         method: 'PUT',
         body: file,
         headers: { 'Content-Type': file.type || 'application/octet-stream' },
       })
+      if (!putRes.ok) throw new Error(`Upload to storage failed (${putRes.status})`)
       const doneRes = await fetch('/api/upload/done', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -312,9 +314,14 @@ export default function SmartCompose(props: SmartComposeProps) {
           entityId: uploadContext.id,
         }),
       })
-      const doneData = await doneRes.json() as { data?: { downloadUrl?: string; url?: string } }
-      const url = doneData.data?.downloadUrl ?? doneData.data?.url ?? `/api/files/${urlData.data.key}`
-      insertAtCursor(`[${file.name}](${url}) `)
+      if (!doneRes.ok) throw new Error(`Recording attachment failed (${doneRes.status})`)
+      const doneData = await doneRes.json() as { data?: { url?: string } }
+      // Same-origin, non-expiring raw-bytes link (api/routes/uploads.ts
+      // handleUploadDone) — falls back to constructing it client-side only if
+      // an older/unpatched worker is still serving the response.
+      const url = doneData.data?.url ?? `/api/files/${urlData.data.key}?raw=1`
+      const isImage = (file.type || '').startsWith('image/')
+      insertAtCursor(isImage ? `![${file.name}](${url}) ` : `[${file.name}](${url}) `)
       undoToast.showSuccess(`Attached ${file.name}`)
     } catch (err) {
       console.error('Attach failed:', err)

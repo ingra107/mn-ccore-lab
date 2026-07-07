@@ -6,9 +6,10 @@ import { useProtocolLaunch } from '../hooks/useProtocolLaunch'
 /**
  * Render text with auto-linkified URLs. Pure URLs are replaced with
  * classified chips (folder icon for Box / local paths, journal icon for
- * known publishers, ExternalLink for generic). Non-URL text renders
- * unchanged so line breaks (via `whiteSpace: pre-wrap` on the parent)
- * still survive.
+ * known publishers, ExternalLink for generic). `![alt](url)` image markdown
+ * (inserted by SmartCompose / OverviewQuickAdd on image paste-upload) renders
+ * as a constrained, click-to-open thumbnail. Non-URL text renders unchanged
+ * so line breaks (via `whiteSpace: pre-wrap` on the parent) still survive.
  *
  * Matches the visual vocabulary of `KeyLinksEditor` — one URL style
  * across the app, per Nick's 'links must MAKE SENSE + be INTUITIVE'
@@ -24,13 +25,51 @@ import { useProtocolLaunch } from '../hooks/useProtocolLaunch'
 // the handler's exists-check + copied-path toast make that recoverable,
 // while truncation was silently wrong on EVERY spaced path. Trailing
 // punctuation/whitespace is trimmed after match.
-const URL_RE = /(https?:\/\/\S+|file:\/\/\/\S+|[A-Za-z]:[\\/][^\n<>"|?*]+)/g
 const TRAILING_PUNCT_RE = /[\s.,;:!?)\]}>'"]+$/
+
+// Markdown image syntax, ![alt](url) — the paste-to-upload composers
+// (SmartCompose, OverviewQuickAdd) insert this for image attachments.
+// `url` is restricted to same-origin /api/files/ (our own raw-bytes route)
+// or http(s) — never file:// or a bare drive path, so an <img src> can never
+// point at something that isn't a real, fetchable image endpoint.
+// Combined with the original bare-URL matcher via alternation so one pass
+// produces images and plain link-chips in the right order; group 1/2 = image
+// alt/url, group 3 = the bare-URL match (identical pattern to the old
+// standalone URL_RE, just renumbered by the outer alternation).
+const COMBINED_RE = /!\[([^\]]*)\]\(((?:\/api\/files\/|https?:\/\/)[^)\s]+)\)|(https?:\/\/\S+|file:\/\/\/\S+|[A-Za-z]:[\\/][^\n<>"|?*]+)/g
 
 interface Props {
   text: string
   className?: string
   style?: React.CSSProperties
+}
+
+// Constrained inline thumbnail, click-to-open the full image in a new tab.
+// stopPropagation matches the row-click-interactive-cells convention used
+// elsewhere in the activity feed (e.g. TaskOriginBadge) — comment bodies can
+// sit inside clickable containers on some surfaces.
+function ImageChip({ src, alt }: { src: string; alt: string }) {
+  return (
+    <a
+      href={src}
+      target="_blank"
+      rel="noopener noreferrer"
+      onClick={(e) => e.stopPropagation()}
+      style={{ display: 'inline-block', margin: '4px 0' }}
+    >
+      <img
+        src={src}
+        alt={alt}
+        style={{
+          display: 'block',
+          maxWidth: '100%',
+          maxHeight: 240,
+          borderRadius: 'var(--radius-md)',
+          border: '1px solid var(--border-subtle)',
+        }}
+      />
+    </a>
+  )
 }
 
 export default function LinkifiedText({ text, className, style }: Props) {
@@ -39,10 +78,27 @@ export default function LinkifiedText({ text, className, style }: Props) {
   const parts: React.ReactNode[] = []
   let lastIdx = 0
   let match: RegExpExecArray | null
-  URL_RE.lastIndex = 0
+  // Fresh instance per render — a /g regex is stateful (.lastIndex), and
+  // mutating the shared module-level COMBINED_RE isn't safe to rely on
+  // (also trips react-hooks/immutability: "modifying a variable defined
+  // outside a component/hook").
+  const re = new RegExp(COMBINED_RE.source, COMBINED_RE.flags)
 
-  while ((match = URL_RE.exec(text)) !== null) {
+  while ((match = re.exec(text)) !== null) {
     const start = match.index
+
+    // Image markdown branch — groups 1 (alt) / 2 (url).
+    if (match[2] !== undefined) {
+      const full = match[0]
+      const end = start + full.length
+      if (start > lastIdx) parts.push(text.slice(lastIdx, start))
+      parts.push(<ImageChip key={`img-${start}`} src={match[2]} alt={match[1] || 'pasted image'} />)
+      lastIdx = end
+      re.lastIndex = lastIdx
+      continue
+    }
+
+    // Bare-URL branch — unchanged from the original URL_RE handling below.
     let matched = match[0]
     // N1.19 — bare paths are LINE-bounded (so spaced folder names survive),
     // which over-captured trailing prose into the chip. Punctuation-then-
@@ -110,7 +166,7 @@ export default function LinkifiedText({ text, className, style }: Props) {
     lastIdx = urlEnd + trail.length
     // The match may have been shortened at a prose boundary — rewind the
     // regex so the text after the cut is scanned as normal prose.
-    URL_RE.lastIndex = lastIdx
+    re.lastIndex = lastIdx
   }
 
   if (lastIdx < text.length) {

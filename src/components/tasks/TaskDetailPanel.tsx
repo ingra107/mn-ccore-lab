@@ -1483,25 +1483,35 @@ function OverviewQuickAdd({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ filename: file.name, contentType: file.type || 'application/octet-stream', context: { type: 'task', id: taskId } }),
       })
+      if (!urlRes.ok) throw new Error(`presign failed (${urlRes.status})`)
       const urlData = await urlRes.json() as { data?: { uploadUrl?: string; key?: string } }
       if (!urlData.data?.uploadUrl || !urlData.data?.key) throw new Error('presign failed')
-      await fetch(urlData.data.uploadUrl, { method: 'PUT', body: file, headers: { 'Content-Type': file.type || 'application/octet-stream' } })
+      const putRes = await fetch(urlData.data.uploadUrl, { method: 'PUT', body: file, headers: { 'Content-Type': file.type || 'application/octet-stream' } })
+      if (!putRes.ok) throw new Error(`upload to storage failed (${putRes.status})`)
       const doneRes = await fetch('/api/upload/done', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ key: urlData.data.key, filename: file.name, contentType: file.type, sizeBytes: file.size, entityType: 'task', entityId: taskId }),
       })
+      if (!doneRes.ok) throw new Error(`recording attachment failed (${doneRes.status})`)
       const doneData = await doneRes.json() as { data?: { url?: string } }
       queryClient.invalidateQueries({ queryKey: ['attachments', 'task', taskId] })
       queryClient.invalidateQueries({ queryKey: ['task-files', taskId] })
-      const link = doneData.data?.url ?? `/api/files/${urlData.data.key}`
-      setText((prev) => (prev ? `${prev}\n[${file.name}](${link})` : `[${file.name}](${link})`))
+      // Same-origin, non-expiring raw-bytes link (see api/routes/uploads.ts
+      // handleUploadDone) — falls back to constructing it client-side only if
+      // an older/unpatched worker is still serving the response.
+      const link = doneData.data?.url ?? `/api/files/${urlData.data.key}?raw=1`
+      const isImage = (file.type || '').startsWith('image/')
+      const md = isImage ? `![${file.name}](${link})` : `[${file.name}](${link})`
+      setText((prev) => (prev ? `${prev}\n${md}` : md))
+      showSuccess(`Attached ${file.name}`)
     } catch (err) {
       console.error('compose upload failed', err)
+      showError(`Attach failed: ${err instanceof Error ? err.message : 'please try again.'}`)
     } finally {
       setUploading(false)
     }
-  }, [taskId, queryClient])
+  }, [taskId, queryClient, showSuccess, showError])
 
   // N1.22 — short strings on phones: the idle one-row input is narrow next
   // to the mode pills, and the long placeholder clipped to "@mention a".

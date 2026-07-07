@@ -27,7 +27,7 @@ import { handleGetSessions } from './sessions'
 import { handleLane3List } from './lane3'
 import { handleInboxEvents, handleSyncBulkInboxEvents } from './inbox-events'
 import { handleRegulatoryIcs } from './regulatory'
-import { handleUploadUrl, handleUploadDone } from './uploads'
+import { handleUploadUrl, handleUploadDone, handleGetFile } from './uploads'
 import { handleCreateDecision } from './decisions'
 import { handleSyncEmailDrafts } from './email-drafts'
 import { handleSyncFileActivity } from './file-activity'
@@ -558,6 +558,109 @@ describe('handleUploadUrl / handleUploadDone — canAccessEntity on context', ()
     const res = await handleUploadDone(req, user, env)
     // File not in R2 (FILES not bound) → 400 from R2 head check, but NOT 403
     expect(res.status).not.toBe(403)
+  })
+
+  it('handleUploadDone: response carries a same-origin, non-expiring url for the composer to insert', async () => {
+    const env = uploadsEnv(false)
+    const req = new Request('https://x/api/upload/done', {
+      method: 'POST',
+      headers: {
+        'X-Test-Mode-Key': 'local-test-key-do-not-use-in-prod',
+        'X-Test-User': NON_PI_EMAIL,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        key: 'task/task-1/1700000000000-shot.png',
+        filename: 'shot.png',
+        contentType: 'image/png',
+        sizeBytes: 512,
+        entityType: 'task',
+        entityId: 'task-1',
+      }),
+    })
+    const user = { email: NON_PI_EMAIL, name: 'Nate' }
+    const res = await handleUploadDone(req, user, env)
+    expect(res.status).toBe(200)
+    const data = await res.json() as { data?: { url?: string } }
+    // Same-origin path (not a presigned R2 URL — those expire in 1h, useless
+    // for a link embedded permanently in a comment body).
+    expect(data.data?.url).toBe('/api/files/task/task-1/1700000000000-shot.png?raw=1')
+  })
+})
+
+// ── 7b. GET /api/files/:key raw-bytes route (paste-to-image render path) ─────
+
+describe('handleGetFile — raw=true streams bytes for <img src>', () => {
+  function fileRow() {
+    return { entity_type: 'task', entity_id: 'task-1', filename: 'shot.png', content_type: 'image/png' }
+  }
+
+  function envWithFiles(filesBinding: unknown) {
+    return makeEnv({
+      DB: {
+        prepare: (sql: string) => ({
+          bind: (..._args: unknown[]) => ({
+            first: async () => (/FROM file_attachments/.test(sql) ? fileRow() : null),
+            all: async () => ({ results: [] }),
+            run: async () => ({ success: true }),
+          }),
+          first: async () => null,
+          all: async () => ({ results: [] }),
+          run: async () => ({ success: true }),
+        }),
+        batch: async () => [],
+      } as unknown as Env['DB'],
+      FILES: filesBinding,
+    } as unknown as Env)
+  }
+
+  it('streams the object body with its content-type when FILES.get resolves', async () => {
+    const env = envWithFiles({
+      get: async (_key: string) => ({
+        body: new Response('fake-bytes').body,
+        httpMetadata: { contentType: 'image/png' },
+        writeHttpMetadata: (headers: Headers) => headers.set('content-type', 'image/png'),
+      }),
+    })
+    const res = await handleGetFile('task/task-1/shot.png', env, false, true)
+    expect(res.status).toBe(200)
+    expect(res.headers.get('content-type')).toBe('image/png')
+    expect(await res.text()).toBe('fake-bytes')
+  })
+
+  it('returns 404 when the R2 object is missing (never silently 200s an empty image)', async () => {
+    const env = envWithFiles({ get: async () => null })
+    const res = await handleGetFile('task/task-1/missing.png', env, false, true)
+    expect(res.status).toBe(404)
+  })
+
+  it('returns 503 (not a silent empty 200) when the FILES binding itself is absent', async () => {
+    const env = envWithFiles(undefined)
+    const res = await handleGetFile('task/task-1/shot.png', env, false, true)
+    expect(res.status).toBe(503)
+  })
+
+  it('raw=false (default) is unchanged — still the presigned-URL JSON envelope', async () => {
+    const env = makeEnv({
+      R2_ACCESS_KEY_ID: 'k', R2_SECRET_ACCESS_KEY: 's', CF_ACCOUNT_ID: 'a',
+      DB: {
+        prepare: (sql: string) => ({
+          bind: (..._args: unknown[]) => ({
+            first: async () => (/FROM file_attachments/.test(sql) ? fileRow() : null),
+            all: async () => ({ results: [] }),
+            run: async () => ({ success: true }),
+          }),
+          first: async () => null,
+          all: async () => ({ results: [] }),
+          run: async () => ({ success: true }),
+        }),
+        batch: async () => [],
+      } as unknown as Env['DB'],
+    } as unknown as Env)
+    const res = await handleGetFile('task/task-1/shot.png', env, false, false)
+    expect(res.status).toBe(200)
+    const data = await res.json() as { data?: { downloadUrl?: string } }
+    expect(data.data?.downloadUrl).toContain('X-Amz-Signature')
   })
 })
 

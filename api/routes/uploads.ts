@@ -145,7 +145,13 @@ export async function handleUploadDone(request: Request, user: AuthUser, env: En
     uploadedBy
   ).run();
 
-  return json({ id, key: body.key, filename: body.filename });
+  // `url` is a same-origin, non-expiring pointer at the raw-bytes route below
+  // (unlike the presigned R2 URL from /api/upload/url, which expires in 1h —
+  // useless for a link embedded permanently in a comment/note body). Callers
+  // (SmartCompose, OverviewQuickAdd) insert this directly instead of falling
+  // back to the JSON-envelope GET /api/files/:key.
+  const url = `/api/files/${body.key}?raw=1`;
+  return json({ id, key: body.key, filename: body.filename, url });
 }
 
 /** GET /api/files?entity_type=X&entity_id=Y — list attachments */
@@ -170,23 +176,42 @@ export async function handleListFiles(url: URL, env: Env, canSeePb = false): Pro
   return json(safe);
 }
 
-/** GET /api/files/:key+ — generate presigned GET URL for downloading */
-export async function handleGetFile(key: string, env: Env, canSeePb = false): Promise<Response> {
-  if (!env.R2_ACCESS_KEY_ID || !env.R2_SECRET_ACCESS_KEY || !env.CF_ACCOUNT_ID) {
-    return error('R2 not configured', 503);
-  }
-
+/** GET /api/files/:key+ — presigned download URL (JSON envelope).
+ *  GET /api/files/:key+?raw=1 — the actual bytes, streamed same-origin. This
+ *  is what an <img src> / direct browser navigation needs: the JSON form
+ *  can't be dropped into an <img> tag, and the presigned URL it contains
+ *  expires in 1h — dead weight for a link embedded permanently in a comment.
+ */
+export async function handleGetFile(key: string, env: Env, canSeePb = false, raw = false): Promise<Response> {
   // B11: resolve the attachment row (authoritative entity_type/entity_id —
   // the key prefix alone is client-supplied) and block signing a download URL
   // for files on a PB-category project for non-PI callers. If no row matches
   // the key we fall back to the key prefix so legacy keys still gate.
   const row = await env.DB.prepare(
-    'SELECT entity_type, entity_id FROM file_attachments WHERE r2_key = ? LIMIT 1'
-  ).bind(key).first<{ entity_type: string; entity_id: string }>();
+    'SELECT entity_type, entity_id, filename, content_type FROM file_attachments WHERE r2_key = ? LIMIT 1'
+  ).bind(key).first<{ entity_type: string; entity_id: string; filename: string | null; content_type: string | null }>();
   const entityType = row?.entity_type ?? key.split('/')[0] ?? '';
   const entityId = row?.entity_id ?? key.split('/')[1] ?? '';
   if (entityType && !(await canAccessEntity(env, entityType, entityId, canSeePb))) {
     return error('Forbidden', 403);
+  }
+
+  if (raw) {
+    if (!env.FILES) return error('File storage not configured', 503);
+    const obj = await env.FILES.get(key);
+    if (!obj) return error('File not found in storage', 404);
+    const headers = new Headers();
+    obj.writeHttpMetadata(headers);
+    headers.set('Content-Type', obj.httpMetadata?.contentType || row?.content_type || 'application/octet-stream');
+    headers.set('Access-Control-Allow-Origin', '*');
+    // Immutable content-addressed-ish key (timestamp-prefixed, never overwritten
+    // in place) — safe to cache aggressively client-side.
+    headers.set('Cache-Control', 'private, max-age=86400');
+    return new Response(obj.body, { headers });
+  }
+
+  if (!env.R2_ACCESS_KEY_ID || !env.R2_SECRET_ACCESS_KEY || !env.CF_ACCOUNT_ID) {
+    return error('R2 not configured', 503);
   }
 
   const r2 = new AwsClient({
