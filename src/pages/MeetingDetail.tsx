@@ -29,6 +29,7 @@ import type { DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { InputSafePointerSensor, InputSafeTouchSensor } from '../lib/dndSensors'
+import { isEditableTarget } from '../lib/editableTarget'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useMeetingDetail } from '../hooks/useApiData'
 import type { ActionItemRow as ActionItemRowType, AgendaItemRow } from '../hooks/useApiData'
@@ -189,9 +190,8 @@ export default function MeetingDetail() {
   orderedPendingActionsRef.current = orderedPendingActions
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      const el = document.activeElement as HTMLElement | null
-      const isTyping = el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)
-      if (isTyping) return
+      // #486: was missing the `select` check the canonical predicate has.
+      if (isEditableTarget(document.activeElement)) return
       if (e.metaKey || e.ctrlKey || e.altKey) return
       const list = orderedPendingActionsRef.current
       const total = list.length

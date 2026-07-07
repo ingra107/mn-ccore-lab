@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PATHS } from '../constants/paths'
+import { isEditableTarget } from '../lib/editableTarget'
 
 /**
  * Global keyboard shortcuts for the portal.
@@ -48,10 +49,7 @@ export function useKeyboardShortcuts() {
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       // Don't trigger shortcuts when typing in inputs
-      const target = e.target as HTMLElement
-      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable) {
-        return
-      }
+      if (isEditableTarget(e.target)) return
 
       // Don't trigger with modifier keys (except for Cmd+K which CommandPalette handles)
       if (e.metaKey || e.ctrlKey || e.altKey) return

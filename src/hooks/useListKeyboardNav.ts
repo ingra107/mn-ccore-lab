@@ -1,4 +1,5 @@
 import { useEffect, useCallback, useRef } from 'react'
+import { isEditableTarget } from '../lib/editableTarget'
 
 interface UseListKeyboardNavOptions {
   /** Total items in the list */
@@ -41,8 +42,7 @@ export function useListKeyboardNav({
   const handler = useCallback((e: KeyboardEvent) => {
     if (disabledRef.current) return
 
-    const target = e.target as HTMLElement
-    if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable) return
+    if (isEditableTarget(e.target)) return
     if (e.metaKey || e.ctrlKey || e.altKey) return
 
     const count = countRef.current

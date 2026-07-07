@@ -1,6 +1,7 @@
 import { useEffect, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PATHS } from '../constants/paths'
+import { isEditableTarget } from '../lib/editableTarget'
 
 interface UseProjectKeyboardNavOptions {
   /** Total number of projects in the list */
@@ -49,15 +50,7 @@ export function useProjectKeyboardNav({
     if (!enabledRef.current) return
 
     // Don't trigger when typing in inputs
-    const target = e.target as HTMLElement
-    if (
-      target.tagName === 'INPUT' ||
-      target.tagName === 'TEXTAREA' ||
-      target.tagName === 'SELECT' ||
-      target.isContentEditable
-    ) {
-      return
-    }
+    if (isEditableTarget(e.target)) return
 
     // Don't trigger with modifier keys
     if (e.metaKey || e.ctrlKey || e.altKey) return

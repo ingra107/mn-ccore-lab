@@ -2,7 +2,7 @@
  * Global quick-add modal — the single canonical capture surface (Decision #5).
  *
  * Open from anywhere via the `q` shortcut (single key, no modifier; only when
- * no input/textarea/contenteditable is focused — matching Ideas' `n` precedent),
+ * no input/textarea/select/contenteditable is focused — matching Ideas' `n` precedent),
  * the floating "+" FAB, or the `mn-ccore:open-quick-add` window event (which
  * lets any surface — QuickCaptureBar, Personal's quick capture — route into this
  * one primitive instead of forking its own capture input).
@@ -24,6 +24,7 @@ import { useCreateTask } from '../hooks/useMutations'
 import { useToast } from '../hooks/useToast'
 import { useAuth } from '../hooks/useAuth'
 import { emailToSlug } from '../lib/emailSlug'
+import { isEditableTarget } from '../lib/editableTarget'
 import { ICON_PROPS } from '../lib/iconProps'
 import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
 
@@ -275,9 +276,10 @@ export function useQuickAddShortcut(open: () => void) {
       // ignore modified `q` (Cmd+Q quit, Ctrl+Q etc.) and IME composition
       if (e.metaKey || e.ctrlKey || e.altKey || e.isComposing) return
       if (e.key !== 'q' && e.key !== 'Q') return
-      const target = e.target as HTMLElement
-      const tag = target.tagName.toLowerCase()
-      if (tag === 'input' || tag === 'textarea' || target.isContentEditable) return
+      // #486: was missing the `select` check the canonical predicate has —
+      // pressing q while a dropdown has focus (native letter-jump to a 'q'
+      // option) shouldn't also pop the quick-add modal.
+      if (isEditableTarget(e.target)) return
       e.preventDefault()
       open()
     }

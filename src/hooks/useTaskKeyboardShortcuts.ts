@@ -1,4 +1,5 @@
 import { useEffect, useCallback, useRef } from 'react'
+import { isEditableTarget } from '../lib/editableTarget'
 
 interface UseTaskKeyboardShortcutsOptions {
   /** Total number of tasks in the list */
@@ -88,15 +89,7 @@ export function useTaskKeyboardShortcuts({
 
   const handler = useCallback((e: KeyboardEvent) => {
     // Don't trigger when typing in inputs
-    const target = e.target as HTMLElement
-    if (
-      target.tagName === 'INPUT' ||
-      target.tagName === 'TEXTAREA' ||
-      target.tagName === 'SELECT' ||
-      target.isContentEditable
-    ) {
-      return
-    }
+    if (isEditableTarget(e.target)) return
 
     // Don't trigger with modifier keys
     if (e.metaKey || e.ctrlKey || e.altKey) return
