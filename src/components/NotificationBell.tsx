@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { Bell, AtSign, UserPlus, Clock, RefreshCw, CheckCheck, Sparkles } from 'lucide-react'
+import { Bell, AtSign, UserPlus, Clock, RefreshCw, CheckCheck, Sparkles, Calendar } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../hooks/useAuth'
 import { emailToSlug } from '../lib/emailSlug'
@@ -16,6 +16,7 @@ const TYPE_ICONS: Record<string, typeof Bell> = {
   deadline: Clock,
   update: RefreshCw,
   impact: Sparkles,
+  meeting_debrief: Calendar,
 }
 
 // align: which edge of the bell the dropdown anchors to. 'right' (default)
