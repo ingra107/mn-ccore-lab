@@ -24,11 +24,9 @@ import {
   HelpCircle,
   Activity as ActivityIcon,
 } from 'lucide-react'
-import {
-  useActionItems,
-  type ActionItemRow,
-} from '../../hooks/useApiData'
-import { usePostProjectUpdate, useAddComment, useToggleActionItem, useDeleteActivityEntry } from '../../hooks/useMutations'
+import { useMeetingLinkedTasks } from '../../hooks/useApiData'
+import type { TaskRow } from '../../lib/api'
+import { usePostProjectUpdate, useAddComment, useUpdateTask, useBulkUpdateTasks, useDeleteActivityEntry } from '../../hooks/useMutations'
 import { useAuth } from '../../hooks/useAuth'
 import { emailToSlug } from '../../lib/emailSlug'
 import { getPersonInfo } from '../../data/team'
@@ -45,7 +43,7 @@ import {
   type ActivityEntryItemRow,
 } from '../activity/activityRender'
 import { ICON_PROPS } from '../../lib/iconProps'
-import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
+import { ACCENT_GOLD, isTaskDone, withAlpha } from '../../lib/taskGrouping'
 
 // ── Unified feed row shape (activity_entries) ─────────────────────────────────
 
@@ -74,7 +72,7 @@ const NOTE_TYPE_CONFIG: Record<string, { icon: typeof TrendingUp; color: string;
 // composers write activity_entries now and the old endpoints are projections
 // over the same rows, so merging both sources would render every entry twice.
 type StreamEvent =
-  | { kind: 'action';        ts: string; id: string; row: ActionItemRow }
+  | { kind: 'action';        ts: string; id: string; row: TaskRow }
   | { kind: 'unified-entry'; ts: string; id: string; row: UnifiedEntryRow }
 
 // motion props shared across all animated stream items.
@@ -89,7 +87,13 @@ const itemMotion = {
 export default function ActivityStream({ project, filter }: Props) {
   const slug = project.slug
 
-  const { data: actionRows = [] } = useActionItems()
+  // T19 (#547): meeting-linked tasks for this project (tasks.meeting_id),
+  // not the dead action_items table. Server-side project filter (task-cols
+  // resolves slug-or-typed-PK, api/routes/tasks.ts:131) replaces the old
+  // client-side `project_id === slug || project_id === title` heuristic,
+  // which was an action_items-specific artifact — TaskRow.project_id is
+  // already resolved to the canonical slug.
+  const { data: actionRows = [] } = useMeetingLinkedTasks({ project: project.slug })
 
   // ── Unified feed (Design C, v77) — whole-picture project activity ────────────
   // Includes project-level activity_entries AND task rows rolled up by project_id.
@@ -115,7 +119,18 @@ export default function ActivityStream({ project, filter }: Props) {
   const { showUndo } = useUndoToast()
   const postUpdate = usePostProjectUpdate(slug)
   const addComment = useAddComment(slug)
-  const toggleAction = useToggleActionItem()
+  // T19: mark-done/reopen mirrors Meetings.tsx's setActionDone — uncomplete
+  // writes status directly, complete routes through the batch 'complete'
+  // action so completed_at is server-set.
+  const updateTask = useUpdateTask()
+  const bulkUpdateTasks = useBulkUpdateTasks()
+  const setActionDone = (id: string, done: boolean) => {
+    if (done) {
+      bulkUpdateTasks.mutate({ ids: [id], action: 'complete' })
+    } else {
+      updateTask.mutate({ id, fields: { status: 'todo', completed: 0 } })
+    }
+  }
 
   // Manual delete (Nick 2026-07-06): own entries, or any entry for the PI.
   // Server re-enforces author-or-PI on POST /api/activity/:id/delete.
@@ -127,14 +142,6 @@ export default function ActivityStream({ project, filter }: Props) {
   // Which composer to show in the combined ('all') view: note or comment.
   const [composeKind, setComposeKind] = useState<'note' | 'comment'>('note')
 
-  const relatedActions = useMemo(
-    () =>
-      actionRows.filter(
-        (ai) => ai.project_id === project.slug || ai.project_id === project.title,
-      ),
-    [actionRows, project.slug, project.title],
-  )
-
   // Merge sources into one time-ordered list, newest first. The unified feed
   // IS the project's activity (project rows + task rollup); action items are
   // the only remaining sidecar source.
@@ -142,13 +149,13 @@ export default function ActivityStream({ project, filter }: Props) {
     const out: StreamEvent[] = []
     // Action items only appear in the unfiltered ('all') view.
     if (filter === 'all') {
-      for (const a of relatedActions) out.push({ kind: 'action', ts: a.created_at, id: `act-${a.id}`, row: a })
+      for (const a of actionRows) out.push({ kind: 'action', ts: a.created_at, id: `act-${a.id}`, row: a })
     }
     for (const e of unifiedEntries) {
       out.push({ kind: 'unified-entry', ts: e.created_at, id: `ue-${e.id}`, row: e })
     }
     return out.sort((a, b) => (a.ts > b.ts ? -1 : a.ts < b.ts ? 1 : 0))
-  }, [relatedActions, unifiedEntries, filter])
+  }, [actionRows, unifiedEntries, filter])
 
   // Apply the active filter via filterMatchesKind (shared/activityKinds.ts).
   const visible = useMemo(() => {
@@ -326,9 +333,10 @@ export default function ActivityStream({ project, filter }: Props) {
               <StreamItem
                 key={event.id}
                 event={event}
-                onToggleAction={(id) => {
-                  toggleAction.mutate(id)
-                  showUndo('Action item toggled', () => toggleAction.mutate(id))
+                onToggleAction={(task) => {
+                  const wasDone = isTaskDone(task)
+                  setActionDone(task.id, !wasDone)
+                  showUndo('Action item toggled', () => setActionDone(task.id, wasDone))
                 }}
                 onDeleteEntry={
                   event.kind === 'unified-entry' && canDeleteActivityEntry(user, event.row.actor_slug)
@@ -351,7 +359,7 @@ export default function ActivityStream({ project, filter }: Props) {
 
 // ── Per-event renderers ──────────────────────────────────────────────────
 
-function StreamItem({ event, onToggleAction, onDeleteEntry }: { event: StreamEvent; onToggleAction: (id: string) => void; onDeleteEntry?: () => void }) {
+function StreamItem({ event, onToggleAction, onDeleteEntry }: { event: StreamEvent; onToggleAction: (task: TaskRow) => void; onDeleteEntry?: () => void }) {
   switch (event.kind) {
     case 'action':
       return <ActionItemRowView action={event.row} onToggle={onToggleAction} />
@@ -370,8 +378,8 @@ function StreamItem({ event, onToggleAction, onDeleteEntry }: { event: StreamEve
   }
 }
 
-function ActionItemRowView({ action, onToggle }: { action: ActionItemRow; onToggle: (id: string) => void }) {
-  const completed = action.completed === 1
+function ActionItemRowView({ action, onToggle }: { action: TaskRow; onToggle: (task: TaskRow) => void }) {
+  const completed = isTaskDone(action)
   return (
     <motion.div
       {...itemMotion}
@@ -381,7 +389,7 @@ function ActionItemRowView({ action, onToggle }: { action: ActionItemRow; onTogg
       <div className="flex items-start gap-3">
         <motion.button
           type="button"
-          onClick={() => onToggle(action.id)}
+          onClick={() => onToggle(action)}
           className="cursor-pointer flex-shrink-0 mt-0.5"
           style={{ background: 'none', border: 'none', padding: 0, color: completed ? 'var(--teal)' : 'var(--slate)' }}
           whileTap={{ scale: 0.85 }}
