@@ -142,7 +142,6 @@ export function useCreateHandoff(taskId: string) {
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['handoffs', taskId] })
       queryClient.invalidateQueries({ queryKey: ['tasks'] })
-      queryClient.invalidateQueries({ queryKey: ['action-items'] })
       queryClient.invalidateQueries({ queryKey: ['activity'] })
       queryClient.invalidateQueries({ queryKey: ['notifications'] })
     },

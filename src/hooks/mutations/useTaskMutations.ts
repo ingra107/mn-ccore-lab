@@ -22,7 +22,6 @@ export function useCreateTask() {
 
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] })
-      queryClient.invalidateQueries({ queryKey: ['action-items'] })
       queryClient.invalidateQueries({ queryKey: ['activity'] })
     },
   })
@@ -53,7 +52,6 @@ export function useUpdateTaskStatus() {
 
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] })
-      queryClient.invalidateQueries({ queryKey: ['action-items'] })
       queryClient.invalidateQueries({ queryKey: ['meeting'] })
       queryClient.invalidateQueries({ queryKey: ['activity'] })
     },
@@ -96,7 +94,6 @@ export function useUpdateTask() {
 
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] })
-      queryClient.invalidateQueries({ queryKey: ['action-items'] })
       queryClient.invalidateQueries({ queryKey: ['activity'] })
     },
   })
@@ -136,7 +133,6 @@ export function useBulkUpdateTasks() {
 
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] })
-      queryClient.invalidateQueries({ queryKey: ['action-items'] })
       queryClient.invalidateQueries({ queryKey: ['activity'] })
     },
   })
