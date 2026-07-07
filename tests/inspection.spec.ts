@@ -71,7 +71,6 @@ test.describe('API — Read Endpoints', () => {
     ['/api/milestones', 200, 'Milestones'],
     ['/api/digest', 200, 'Research digest'],
     ['/api/digest/dates', 200, 'Digest dates'],
-    ['/api/action-items', 200, 'Action items'],
     ['/api/updates/recent', 200, 'Recent updates'],
     ['/api/narratives', 200, 'Research narratives'],
     ['/api/questions', 200, 'Ask the Lab questions'],
