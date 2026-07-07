@@ -93,7 +93,12 @@ export async function handleGetUnseenActivity(request: Request, env: Env): Promi
          ORDER BY latest_at DESC`
       ).bind(viewer).all(),
     ]);
-    const data = [...(taskProjectRows.results ?? []), ...(meetingRows.results ?? [])];
+    // meetings has no deleted_at column (checked v2..v95) — if soft-delete
+    // lands there later, this arm needs the same guard as t/p.deleted_at above.
+    // Re-sort the merged arms globally: each arm is ordered internally, but
+    // concatenation alone would rank every task/project above every meeting.
+    const data = [...(taskProjectRows.results ?? []), ...(meetingRows.results ?? [])]
+      .sort((a, b) => String((b as { latest_at?: string }).latest_at ?? '').localeCompare(String((a as { latest_at?: string }).latest_at ?? '')));
     return json({ data, count: data.length });
   } catch (e) {
     console.error('handleGetUnseenActivity failed (entity_seen missing pre-migration?):', e);
