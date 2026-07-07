@@ -148,7 +148,7 @@ export interface Meeting {
   id: string
   date: string  // ISO date
   title: string
-  type: 'biweekly' | 'ad-hoc' | 'journal-club'
+  type: 'biweekly' | 'ad-hoc' | 'journal-club' | 'one-on-one'
   attendees?: string[]  // team member slugs
   agenda?: string[]
   actionItems?: ActionItem[]

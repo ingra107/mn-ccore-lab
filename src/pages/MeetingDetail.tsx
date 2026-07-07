@@ -23,6 +23,7 @@ import {
   X,
   Sparkles,
   Upload as UploadIcon,
+  Pencil,
 } from 'lucide-react'
 import { DndContext, closestCenter, useSensor, useSensors } from '@dnd-kit/core'
 import type { DragEndEvent } from '@dnd-kit/core'
@@ -31,10 +32,10 @@ import { CSS } from '@dnd-kit/utilities'
 import { InputSafePointerSensor, InputSafeTouchSensor } from '../lib/dndSensors'
 import { isEditableTarget } from '../lib/editableTarget'
 import { usePageMeta } from '../hooks/usePageMeta'
-import { useMeetingDetail } from '../hooks/useApiData'
+import { useMeetingDetail, useProjects } from '../hooks/useApiData'
 import type { ActionItemRow as ActionItemRowType, AgendaItemRow } from '../hooks/useApiData'
 import { useQueryClient } from '@tanstack/react-query'
-import { useToggleActionItem, useAddAgendaItem, useUpdateMeetingNotes, useCreateDecision, useCreateTask } from '../hooks/useMutations'
+import { useToggleActionItem, useAddAgendaItem, useUpdateMeetingNotes, useCreateDecision, useCreateTask, useUpdateMeetingMeta } from '../hooks/useMutations'
 import { useMeetingNotesSeen } from '../hooks/useMeetingNotesSeen'
 import FileUpload from '../components/FileUpload'
 import TypingIndicator from '../components/TypingIndicator'
@@ -94,6 +95,13 @@ const AGENDA_TYPE_ICONS: Record<string, typeof Lightbulb> = {
   document: ExternalLink,
 }
 
+const MEETING_TYPE_OPTIONS: { value: string; label: string }[] = [
+  { value: 'biweekly', label: 'Biweekly' },
+  { value: 'ad-hoc', label: 'Ad-hoc' },
+  { value: 'journal-club', label: 'Journal Club' },
+  { value: 'one-on-one', label: 'One-on-one' },
+]
+
 export default function MeetingDetail() {
   const { id } = useParams<{ id: string }>()
   const { data: meeting, isLoading } = useMeetingDetail(id || '')
@@ -111,6 +119,13 @@ export default function MeetingDetail() {
   }
   const addAgenda = useAddAgendaItem(meeting?.id || '')
   const updateNotes = useUpdateMeetingNotes(meeting?.id || '')
+  // T6: single mutation for all metadata edits (title/type/attendees/tags).
+  const updateMeta = useUpdateMeetingMeta(meeting?.id || '')
+  const { data: allProjects = [] } = useProjects()
+  const [editingTitle, setEditingTitle] = useState(false)
+  const [titleDraft, setTitleDraft] = useState('')
+  const titleInputRef = useRef<HTMLInputElement>(null)
+  useEffect(() => { if (editingTitle) titleInputRef.current?.focus({ preventScroll: true }) }, [editingTitle])
   const viewerSlugs = usePresence('meeting', meeting?.id)
   const [meetingHasCompose, setMeetingHasCompose] = useState(false)
   const meetingSelfIntent: Intent = meetingHasCompose ? 'commenting' : 'viewing'
@@ -352,6 +367,14 @@ export default function MeetingDetail() {
     }
   }
 
+  function handleTitleSave() {
+    setEditingTitle(false)
+    const trimmed = titleDraft.trim()
+    if (meeting && trimmed && trimmed !== meeting.title.trim()) {
+      updateMeta.mutate({ title: trimmed })
+    }
+  }
+
   return (
     <div style={{ minHeight: '100vh' }}>
       <div className="content-container" style={{ paddingBottom: '4rem' }}>
@@ -365,9 +388,19 @@ export default function MeetingDetail() {
               style={{ fontSize: 'var(--label-size)', background: statusStyle.bg, color: statusStyle.text }}>
               <Calendar {...ICON_PROPS} size={12} /> {meeting.status}
             </span>
-            <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
-              {meeting.type}
-            </span>
+            <select
+              aria-label="Meeting type"
+              value={meeting.type}
+              onChange={(e) => updateMeta.mutate({ type: e.target.value })}
+              style={{
+                fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)',
+                background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0,
+              }}
+            >
+              {MEETING_TYPE_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
             <WatchButton id={meeting.id} type="meeting" label={meeting.title} />
             {viewerSlugs.length > 0 && <PresenceAvatars slugs={viewerSlugs} peerIntents={meetingPeerIntents} />}
             <Link
@@ -442,9 +475,34 @@ export default function MeetingDetail() {
             </button>
           </div>
 
-          <h1 style={{ fontWeight: 600, fontSize: 'clamp(1.5rem, 3.5vw, 2.25rem)', color: 'var(--ink)', lineHeight: 1.15, margin: 0 }}>
-            {emDashifyTitle(meeting.title)}
-          </h1>
+          {editingTitle ? (
+            <input
+              value={titleDraft}
+              onChange={(e) => setTitleDraft(e.target.value)}
+              onBlur={handleTitleSave}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') { e.preventDefault(); handleTitleSave() }
+                if (e.key === 'Escape') { setTitleDraft(meeting.title); setEditingTitle(false) }
+              }}
+              ref={titleInputRef}
+              aria-label="Edit meeting title"
+              style={{
+                fontWeight: 600, fontSize: 'clamp(1.5rem, 3.5vw, 2.25rem)', color: 'var(--ink)',
+                background: 'none', border: 'none', borderBottom: '2px solid var(--teal)', outline: 'none',
+                padding: '2px 0', width: '100%', fontFamily: 'inherit', lineHeight: 1.15,
+              }}
+            />
+          ) : (
+            <h1
+              className="group/title"
+              onClick={() => { setTitleDraft(meeting.title); setEditingTitle(true) }}
+              title="Click to edit title"
+              style={{ fontWeight: 600, fontSize: 'clamp(1.5rem, 3.5vw, 2.25rem)', color: 'var(--ink)', lineHeight: 1.15, margin: 0, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 8 }}
+            >
+              {emDashifyTitle(meeting.title)}
+              <Pencil {...ICON_PROPS} size={14} className="opacity-0 group-hover/title:opacity-60 transition-opacity" style={{ color: 'var(--slate)', flexShrink: 0 }} />
+            </h1>
+          )}
           <p style={{ fontSize: '15px', color: 'var(--slate)', marginTop: '6px' }}>
             {formatLongDate(meeting.date)}
           </p>
@@ -472,45 +530,15 @@ export default function MeetingDetail() {
           })()}
 
           {/* Attendees — clickable toggle */}
-          <AttendanceSection meetingId={meeting.id} attendees={attendees} />
+          <AttendanceSection attendees={attendees} updateMeta={updateMeta} />
 
           <div style={{ height: '1px', background: 'linear-gradient(to right, var(--gold), transparent)', opacity: 0.85, marginTop: '1.5rem' }} />
         </motion.div>
 
         {/* Projects discussed — schema-v72 `tags` (everything the meeting
-            touched, set by the PB push) when present; else fall back to the
-            action items' project_id. */}
-        {(() => {
-          const tagSlugs = parseJsonArray(meeting.tags)
-          const projectSlugs = tagSlugs.length > 0
-            ? tagSlugs
-            : [...new Set(actionItems.filter(a => a.project_id).map(a => a.project_id!))]
-          if (projectSlugs.length === 0) return null
-          return (
-            <div className="flex items-center gap-2 mt-4 flex-wrap">
-              <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 'var(--label-weight)' }}>
-                Projects discussed
-              </span>
-              {projectSlugs.map((slug: string) => (
-                <a
-                  key={slug}
-                  href={PATHS.project(slug)}
-                  style={{
-                    fontSize: 'var(--label-size)',
-                    padding: '2px 8px',
-                    borderRadius: 'var(--radius-lg)',
-                    backgroundColor: 'var(--teal-active)',
-                    color: 'var(--teal)',
-                    textDecoration: 'none',
-                    fontWeight: 'var(--label-weight)',
-                  }}
-                >
-                  {slug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
-                </a>
-              ))}
-            </div>
-          )
-        })()}
+            touched, set by the PB push or edited here) when present; else
+            fall back to the action items' project_id (read-only derivation). */}
+        <TagsSection meeting={meeting} actionItems={actionItems} allProjects={allProjects} updateMeta={updateMeta} />
 
         {/* Two-column: Agenda + Action Items (action items first on mobile) */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 mt-6 sm:mt-8">
@@ -1260,7 +1288,7 @@ function AddAgendaForm({ isAuthenticated, onAdd }: { isAuthenticated: boolean; o
 }
 
 // ── Attendance Section ───────────────────────────────────
-function AttendanceSection({ meetingId, attendees }: { meetingId: string; attendees: string[] }) {
+function AttendanceSection({ attendees, updateMeta }: { attendees: string[]; updateMeta: ReturnType<typeof useUpdateMeetingMeta> }) {
   const [expanded, setExpanded] = useState(false)
   const [localAttendees, setLocalAttendees] = useState<string[]>(attendees)
   const { showUndo } = useUndoToast()
@@ -1268,23 +1296,18 @@ function AttendanceSection({ meetingId, attendees }: { meetingId: string; attend
   const allPeople = [...directors, ...getAllMembers()].filter(p => p.slug)
   const uniquePeople = allPeople.filter((p, i) => allPeople.findIndex(x => x.slug === p.slug) === i)
 
-  const toggleAttendee = async (slug: string) => {
+  const toggleAttendee = (slug: string) => {
     const prevList = localAttendees
     const newList = localAttendees.includes(slug)
       ? localAttendees.filter(s => s !== slug)
       : [...localAttendees, slug]
     setLocalAttendees(newList)
-    try {
-      const res = await fetch(`/api/meetings/${meetingId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ attendees: JSON.stringify(newList) }),
-      })
-      if (!res.ok) throw new Error('Save failed')
-    } catch {
-      setLocalAttendees(prevList)
-      showUndo('Attendance save failed — undone', () => {})
-    }
+    updateMeta.mutate({ attendees: newList }, {
+      onError: () => {
+        setLocalAttendees(prevList)
+        showUndo('Attendance save failed — undone', () => {})
+      },
+    })
   }
 
   return (
@@ -1332,6 +1355,100 @@ function AttendanceSection({ meetingId, attendees }: { meetingId: string; attend
                 <Avatar name={p.name} initials={p.initials} photoUrl={p.photoUrl} size="sm-icon" />
                 {p.name.split(' ')[0]}
                 {present && <UserCheck {...ICON_PROPS} size={10} style={{ marginLeft: 'auto' }} />}
+              </button>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── Tags Section (projects discussed) ───────────────────────
+function TagsSection({ meeting, actionItems, allProjects, updateMeta }: {
+  meeting: { tags: string | null }
+  actionItems: ActionItemRowType[]
+  allProjects: { slug: string; title: string }[]
+  updateMeta: ReturnType<typeof useUpdateMeetingMeta>
+}) {
+  const [expanded, setExpanded] = useState(false)
+  const storedTags = parseJsonArray(meeting.tags)
+  // Fallback derivation (read-only until the user edits): projects implied by
+  // the action items, shown when no explicit tags have been set yet.
+  const derivedTags = [...new Set(actionItems.filter(a => a.project_id).map(a => a.project_id!))]
+  const displayTags = storedTags.length > 0 ? storedTags : derivedTags
+  // Seed the editable draft from whatever is currently showing, so opening
+  // the editor on a never-tagged meeting lets Nick just confirm the
+  // auto-derived list into real tags with one click.
+  const [localTags, setLocalTags] = useState<string[]>(displayTags)
+
+  if (displayTags.length === 0 && !expanded) return null
+
+  const projectTitle = (slug: string) => allProjects.find(p => p.slug === slug)?.title
+    ?? slug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+
+  const toggleTag = (slug: string) => {
+    const newList = localTags.includes(slug)
+      ? localTags.filter(s => s !== slug)
+      : [...localTags, slug]
+    setLocalTags(newList)
+    updateMeta.mutate({ tags: newList })
+  }
+
+  return (
+    <div className="mt-4">
+      <div className="flex items-center gap-2 flex-wrap">
+        <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 'var(--label-weight)' }}>
+          Projects discussed
+        </span>
+        {(expanded ? localTags : displayTags).map((slug: string) => (
+          <a
+            key={slug}
+            href={PATHS.project(slug)}
+            onClick={(e) => { if (expanded) e.preventDefault() }}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 4,
+              fontSize: 'var(--label-size)',
+              padding: '2px 8px',
+              borderRadius: 'var(--radius-lg)',
+              backgroundColor: 'var(--teal-active)',
+              color: 'var(--teal)',
+              textDecoration: 'none',
+              fontWeight: 'var(--label-weight)',
+            }}
+          >
+            {projectTitle(slug)}
+            {expanded && (
+              <X {...ICON_PROPS} size={10} onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleTag(slug) }} />
+            )}
+          </a>
+        ))}
+        <button
+          onClick={() => { if (!expanded) setLocalTags(displayTags); setExpanded(!expanded) }}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '10px', color: 'var(--teal)' }}
+        >
+          {expanded ? 'Done' : '+ Edit'}
+        </button>
+      </div>
+      {expanded && (
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 mt-3 p-3 rounded-lg" style={{ backgroundColor: 'var(--ice)', border: '1px solid var(--border-subtle)' }}>
+          {allProjects.map(project => {
+            const present = localTags.includes(project.slug)
+            return (
+              <button
+                key={project.slug}
+                onClick={() => toggleTag(project.slug)}
+                className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-[11px] transition-colors text-left"
+                style={{
+                  background: present ? 'var(--teal-active)' : 'none',
+                  border: `1px solid ${present ? 'var(--teal)' : 'var(--border-subtle)'}`,
+                  color: present ? 'var(--teal)' : 'var(--slate)',
+                  cursor: 'pointer',
+                  opacity: present ? 1 : 0.85,
+                }}
+              >
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{project.title}</span>
+                {present && <Check {...ICON_PROPS} size={10} style={{ marginLeft: 'auto', flexShrink: 0 }} />}
               </button>
             )
           })}
