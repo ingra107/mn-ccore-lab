@@ -17,8 +17,7 @@ import { usePageMeta } from '../hooks/usePageMeta'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 import { useAuth } from '../hooks/useAuth'
 import { emailToSlug } from '../lib/emailSlug'
-import { useActionItems, useTasks } from '../hooks/useApiData'
-import type { ActionItemRow } from '../hooks/useApiData'
+import { useMeetingLinkedTasks, useTasks } from '../hooks/useApiData'
 import type { TaskRow } from '../lib/api'
 import { QueryErrorNote } from '../components/QueryErrorNote'
 
@@ -30,7 +29,7 @@ import { useNotifications, useUnreadCount, useMarkRead, useMarkAllRead } from '.
 import { useUnseenActivity } from '../hooks/useEntitySeen'
 import { AttentionChip } from '../components/tasks/AttentionChip'
 import type { NotificationRow } from '../hooks/useNotifications'
-import { useToggleActionItem } from '../hooks/useMutations'
+import { useUpdateTask, useBulkUpdateTasks } from '../hooks/useMutations'
 import { useUndoToast } from '../components/UndoToast'
 import { useCommitments } from '../hooks/useCommitments'
 import type { CommitmentRow } from '../hooks/useCommitments'
@@ -233,7 +232,7 @@ function ActionItemCard({
   item,
   onToggle,
 }: {
-  item: ActionItemRow
+  item: TaskRow
   onToggle: (id: string) => void
 }) {
   const person = getPersonInfo(item.assignee)
@@ -623,7 +622,9 @@ export default function MyItems() {
   const userSlug = emailToSlug(user?.email) || 'nick-ingraham'
 
   // Data hooks
-  const { data: allActionItems = [], isError: actionItemsError, refetch: refetchActionItems } = useActionItems(
+  // T19 (#547): meeting-linked tasks (tasks.meeting_id), not the dead
+  // action_items table — see useMeetingLinkedTasks() doc comment.
+  const { data: allActionItems = [], isError: actionItemsError, refetch: refetchActionItems } = useMeetingLinkedTasks(
     userSlug ? { assignee: userSlug } : undefined
   )
   // "New for you" (Slack-style seen, 2026-06-11): open tasks assigned to you
@@ -663,14 +664,25 @@ export default function MyItems() {
   const { data: unreadCount = 0 } = useUnreadCount(userSlug)
   const markRead = useMarkRead(userSlug)
   const markAllRead = useMarkAllRead(userSlug)
-  const toggleAction = useToggleActionItem()
+  // T19: mark-done/reopen mirrors Meetings.tsx's setActionDone — uncomplete
+  // writes status directly, complete routes through the batch 'complete'
+  // action so completed_at is server-set.
+  const updateTaskMutation = useUpdateTask()
+  const bulkUpdateTasksMutation = useBulkUpdateTasks()
   const { showUndo } = useUndoToast()
 
+  const setActionDone = (id: string, done: boolean) => {
+    if (done) {
+      bulkUpdateTasksMutation.mutate({ ids: [id], action: 'complete' })
+    } else {
+      updateTaskMutation.mutate({ id, fields: { status: 'todo', completed: 0 } })
+    }
+  }
   const handleToggle = (id: string) => {
     const item = allActionItems.find(a => a.id === id)
     const wasCompleted = item?.completed === 1
-    toggleAction.mutate(id)
-    showUndo(wasCompleted ? 'Reopened action item' : 'Completed action item', () => toggleAction.mutate(id))
+    setActionDone(id, !wasCompleted)
+    showUndo(wasCompleted ? 'Reopened action item' : 'Completed action item', () => setActionDone(id, wasCompleted))
   }
   const { data: allCommitments = [] } = useCommitments()
 
@@ -703,7 +715,7 @@ export default function MyItems() {
 
   // Deduplicate carried-forward items (keep most recent version)
   const dedupedItems = useMemo(() => {
-    const seen = new Map<string, ActionItemRow>()
+    const seen = new Map<string, TaskRow>()
     for (const item of allActionItems) {
       const normalized = (item.description || '').replace(/^\[Carried forward\]\s*/i, '').toLowerCase()
       const key = `${normalized}::${item.assignee}`
@@ -717,8 +729,8 @@ export default function MyItems() {
 
   // Split action items into pending vs completed
   const { pending, completed } = useMemo(() => {
-    const p: ActionItemRow[] = []
-    const c: ActionItemRow[] = []
+    const p: TaskRow[] = []
+    const c: TaskRow[] = []
     for (const item of dedupedItems) {
       if (item.completed) {
         c.push(item)
