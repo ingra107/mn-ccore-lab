@@ -16,7 +16,7 @@ import { notifyClients } from './lib/notify';
 import { handleUploadUrl, handleUploadDone, handleListFiles, handleGetFile, handleDeleteFile } from './routes/uploads';
 
 // ── Route modules ──────────────────────────────────────────
-import { handleGetTasks, handleGetTask, handleActionItems, handleOverdueCount, handleUpdateTaskStatus, handleToggleTask, handleUpdateTask, handleCreateTask, handleGetTaskComments, handleAddTaskComment, handleGetTaskActivity, handleGetTaskDetail, handleGetTaskUpdates, handleGetRecentTaskUpdates, handleGetRecentTaskComments, handlePostTaskUpdate, handleBatchUpdateTasks, handleAcknowledgeTask, handleDeleteTask, handleMobileTasksToHub } from './routes/tasks';
+import { handleGetTasks, handleGetTask, handleOverdueCount, handleUpdateTaskStatus, handleUpdateTask, handleCreateTask, handleGetTaskComments, handleAddTaskComment, handleGetTaskActivity, handleGetTaskDetail, handleGetTaskUpdates, handleGetRecentTaskUpdates, handleGetRecentTaskComments, handlePostTaskUpdate, handleBatchUpdateTasks, handleAcknowledgeTask, handleDeleteTask, handleMobileTasksToHub } from './routes/tasks';
 import { handleMarkSeen, handleGetUnseenActivity } from './routes/seen';
 import { handleInboxEvents, handleSyncBulkInboxEvents, handleDeleteInboxEvent, handleCreateInboxEvent } from './routes/inbox-events';
 import { handleMutations } from './routes/mutations';
@@ -1225,14 +1225,6 @@ defineRoute({
 });
 defineRoute({
   method: 'GET',
-  path: '/api/action-items',
-  auth: 'authed',
-  entity: 'tasks',
-  visibility: 'na',
-  handler: (c) => handleActionItems(U(c), E(c)),
-});
-defineRoute({
-  method: 'GET',
   path: '/api/updates/recent',
   auth: 'authed',
   entity: 'projects',
@@ -2096,23 +2088,8 @@ defineRoute({
   handler: (c) => handleDeleteSubtask(c.req.param('id'), R(c), E(c)),
 });
 
-// Action items (backward compat)
-defineRoute({
-  method: 'POST',
-  path: '/api/action-items/:id/toggle',
-  auth: 'authed',
-  entity: 'tasks',
-  visibility: 'na',
-  handler: (c) => handleToggleTask(c.req.param('id'), USER(c), E(c)),
-});
-defineRoute({
-  method: 'POST',
-  path: '/api/action-items',
-  auth: 'authed',
-  entity: 'tasks',
-  visibility: 'na',
-  handler: (c) => handleCreateTask(R(c), USER(c), E(c)),
-});
+// Action items (GET /api/action-items, POST /api/action-items[/:id/toggle])
+// retired in T19 (#547) — all six live readers converted to the tasks model.
 
 // Meetings
 defineRoute({

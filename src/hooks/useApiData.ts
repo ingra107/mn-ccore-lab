@@ -355,21 +355,6 @@ export interface MeetingRow {
   source_id?: string | null
 }
 
-export interface ActionItemRow {
-  id: string
-  meeting_id: string | null
-  project_id: string | null
-  description: string
-  assignee: string
-  due_date: string | null
-  completed: number
-  completed_at: string | null
-  completed_by: string | null
-  created_at: string
-  meeting_title?: string
-  meeting_date?: string
-}
-
 export interface AgendaItemRow {
   id: string
   meeting_id: string
@@ -401,10 +386,9 @@ export interface TaskUpdateRow {
 }
 
 export interface MeetingDetail extends MeetingRow {
-  // T3/T7: action_items is now real task rows (TASK_SELECT_COLS-shaped) —
-  // `tasks WHERE meeting_id IN (id, source_id)`, not the legacy action_items
-  // table. ActionItemRow (below) still describes /api/action-items, which
-  // Task 9 retires separately.
+  // T3/T7: action_items is real task rows (TASK_SELECT_COLS-shaped) —
+  // `tasks WHERE meeting_id IN (id, source_id)`. The legacy action_items
+  // table + its /api/action-items routes/hooks were retired in T19 (#547).
   action_items: TaskRow[]
   agenda_items: AgendaItemRow[]
 }
@@ -569,23 +553,10 @@ export function useMeetingDetail(id: string) {
   })
 }
 
-export function useActionItems(filters?: { assignee?: string; completed?: string }) {
-  return useQuery({
-    queryKey: ['action-items', filters],
-    queryFn: async () => {
-      const qs = new URLSearchParams()
-      if (filters?.assignee) qs.set('assignee', filters.assignee)
-      if (filters?.completed) qs.set('completed', filters.completed)
-      const data = await fetchJson<{ data?: ActionItemRow[] }>(`/api/action-items?${qs}`)
-      return data.data ?? []
-    },
-    staleTime: 60 * 1000,
-  })
-}
-
-// T19 (#547): meeting-linked tasks (tasks.meeting_id), the replacement source
-// for the six surfaces that read the dead action_items table (see T9's
-// meetingRowToMeeting comment in Meetings.tsx for the same rationale).
+// T19 (#547): meeting-linked tasks (tasks.meeting_id) — the replacement for
+// the retired /api/action-items table + useActionItems/useToggleActionItem/
+// useCreateActionItem hooks (see T9's meetingRowToMeeting comment in
+// Meetings.tsx for the same rationale).
 // Deliberately fetchTasks() directly, NOT useTasks() — useTasks() runs
 // dedupTasks(), which collapses same title+assignee tasks GLOBALLY, including
 // across meeting and non-meeting tasks. Filtering to meeting_id BEFORE any

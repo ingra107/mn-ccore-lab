@@ -1,5 +1,5 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, logActivity, actorSlug, isPiRequest, resolveActor, safeTaskRow, assertProjectVisible, projectRefToCanonical } from '../helpers';
+import { json, error, generateId, logActivity, actorSlug, isPiRequest, resolveActor, assertProjectVisible, projectRefToCanonical } from '../helpers';
 import { filterFixtures } from '../lib/fixtures';
 import { ctToday } from '../lib/ct-date';
 import { nowInstant } from '../lib/time';
@@ -230,72 +230,11 @@ export async function handleGetTask(id: string, env: Env, request: Request): Pro
   return json({ data: task });
 }
 
-// GET /api/action-items — query the action_items table (meeting action items, NOT tasks)
-export async function handleActionItems(url: URL, env: Env): Promise<Response> {
-  const assignee = url.searchParams.get('assignee');
-  const completed = url.searchParams.get('completed');
-
-  let query = 'SELECT a.*, m.title as meeting_title, m.date as meeting_date FROM action_items a LEFT JOIN meetings m ON a.meeting_id = m.id WHERE 1=1';
-  const params: (string | number)[] = [];
-
-  if (assignee) { query += ' AND a.assignee = ?'; params.push(assignee); }
-  if (completed === '0') { query += ' AND a.completed = 0'; }
-  else if (completed === '1') { query += ' AND a.completed = 1'; }
-
-  query += ' ORDER BY a.created_at DESC';
-
-  const result = await env.DB.prepare(query).bind(...params).all();
-  return json({ data: result.results || [] });
-}
-
-// POST /api/action-items/:id/toggle — toggles done/todo on action_items
-export async function handleToggleTask(id: string, user: AuthUser, env: Env): Promise<Response> {
-  // Try action_items first, fall back to tasks
-  let item = await env.DB.prepare('SELECT * FROM action_items WHERE id = ?').bind(id).first<{ completed: number; description: string }>();
-  const table = item ? 'action_items' : 'tasks';
-  if (!item) {
-    item = await env.DB.prepare('SELECT * FROM tasks WHERE id = ?').bind(id).first<{ completed: number; description: string }>();
-  }
-  if (!item) return error('Item not found', 404);
-
-  const newCompleted = item.completed ? 0 : 1;
-  const newStatus = newCompleted ? 'done' : 'todo';
-
-  if (table === 'action_items') {
-    await env.DB.prepare(
-      "UPDATE action_items SET completed = ?, completed_at = ?, completed_by = ? WHERE id = ?"
-    ).bind(newCompleted, newCompleted ? nowInstant() : null, newCompleted ? user.email : null, id).run();
-  } else {
-    // Route through applyMutation so last_mutation_id is stamped (Phase 3.1).
-    const toggleMutResult = await applyMutation(env, {
-      table: 'tasks',
-      record_id: id,
-      op: 'update',
-      patch: {
-        status: newStatus,
-        completed: newCompleted,
-        completed_at: newCompleted ? nowInstant() : null,
-        completed_by: newCompleted ? user.email : null,
-      },
-      route: 'handleToggleTask',
-      user,
-    });
-    if (toggleMutResult.status !== 'accepted' && toggleMutResult.status !== 'merged_clean') {
-      return error(`mutation rejected: ${toggleMutResult.status} — ${toggleMutResult.reason ?? ''}`, 409);
-    }
-  }
-
-  await logActivity(env, 'task', `${newCompleted ? 'Completed' : 'Reopened'}: "${item.description}"`, user.email, id, table === 'action_items' ? 'action_item' : 'task');
-
-  // SEC-P2-01: use TASK_SELECT_COLS for tasks to exclude the private `notes`
-  // column. safeTaskRow strips any remnant (defense-in-depth for test stubs
-  // and any future SELECT * that slips in). action_items has no notes column.
-  const raw = table === 'tasks'
-    ? await env.DB.prepare(`SELECT ${TASK_SELECT_COLS} FROM tasks t WHERE t.id = ?`).bind(id).first<Record<string, unknown>>()
-    : await env.DB.prepare(`SELECT * FROM action_items WHERE id = ?`).bind(id).first<Record<string, unknown>>();
-  const updated = (raw && table === 'tasks') ? safeTaskRow(raw) : raw;
-  return json({ data: updated });
-}
+// GET /api/action-items and POST /api/action-items/:id/toggle (handleActionItems,
+// handleToggleTask) were retired in T19 (#547) — the action_items table has had
+// no writes since ~2026-03-30 (POST /api/action-items aliased to handleCreateTask
+// before this sprint) and every reader has converted to the tasks model. The
+// action_items TABLE stays (rollback net, one cycle) — see schema-v96 backfill.
 
 // POST /api/tasks/:id — update task fields
 // Generated from schema_dsl §6 — see pb-schema/pb_schema/generated/route-field-lists.generated.ts / backlog #225 A1.
@@ -1080,9 +1019,9 @@ export async function handleDeleteTask(id: string, request: Request, user: AuthU
 // acknowledged_at / acknowledged_by are Hub-internal CRM fields (assignee receipts,
 // notifications) — HUB_ONLY: no brain.db column and the PB outbox never emits them.
 // As of pb-schema 0.4.0 (8fc11923, 2026-06-10) they ARE in the tasks wire contract,
-// which let HUB-7 route this write through applyMutation (last_mutation_id stamped,
-// handleToggleTask pattern). No raw UPDATE remains here; route_no_raw_writes.test.ts
-// guards this function like any other.
+// which let HUB-7 route this write through applyMutation (last_mutation_id
+// stamped). No raw UPDATE remains here; route_no_raw_writes.test.ts guards
+// this function like any other.
 export async function handleAcknowledgeTask(id: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
   const task = await env.DB.prepare('SELECT * FROM tasks WHERE id = ?').bind(id).first<{ title: string; description: string; assignee: string; assigned_by: string | null; acknowledged_at: string | null; project_id: string | null }>();
   if (!task) return error('Task not found', 404);
@@ -1113,8 +1052,8 @@ export async function handleAcknowledgeTask(id: string, request: Request, user: 
   const acknowledgedBy = overrideSlug ?? actorSlug(user.email);
 
   // HUB-7 (2026-06-10): route through applyMutation so last_mutation_id is
-  // stamped (same pattern as handleToggleTask). Unblocked by pb-schema 0.4.0,
-  // which added acknowledged_at/acknowledged_by to the tasks wire contract.
+  // stamped. Unblocked by pb-schema 0.4.0, which added
+  // acknowledged_at/acknowledged_by to the tasks wire contract.
   const ackMutResult = await applyMutation(env, {
     table: 'tasks',
     record_id: id,

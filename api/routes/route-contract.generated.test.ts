@@ -98,11 +98,15 @@ describe('route contract — generated from ROUTE_REGISTRY', () => {
     // 253 as of 2026-07-07 — 7a3a5a3d T5: POST /api/meetings/:id/meta (+1)
     //   (shipped without bumping this count; caught red at HEAD during the
     //   task-comment paste-to-image work).
+    // 250 as of 2026-07-07 — T19 (#547) action_items retirement (-3):
+    //   GET /api/action-items, POST /api/action-items,
+    //   POST /api/action-items/:id/toggle. All six live readers converted to
+    //   the tasks model; the action_items TABLE stays (rollback net).
     // Adding a route → increment this number. Removing a route → decrement it.
     // This makes route deletion require explicit acknowledgment, preventing
     // silent surface regression (codex final-audit finding #9, 2026-05-28).
     // If you are intentionally adding or removing routes, update this count.
-    expect(ROUTE_REGISTRY).toHaveLength(253)
+    expect(ROUTE_REGISTRY).toHaveLength(250)
   })
 
   it('every non-public route has either entity or visibility metadata', () => {
