@@ -416,7 +416,9 @@ export default function SmartCompose(props: SmartComposeProps) {
               theme={theme}
             />
           )}
-          {/* Hermes toggle — directs note to the AI assistant on submit */}
+          {/* Queue-for-Claude toggle — queues this note to dispatch_queue for
+              Nick's next Claude Code session on submit. Distinct from a typed
+              @hermes prefix (real-time, handled by isHermesPrefix above) — #520. */}
           {showHermesToggle && (
             <button
               type="button"
@@ -429,8 +431,8 @@ export default function SmartCompose(props: SmartComposeProps) {
                   return !h
                 })
               }}
-              title={hermesLocked ? 'Sending to Hermes — click to send publicly' : 'Click to direct this note to Hermes AI'}
-              aria-label={hermesLocked ? 'Hermes mode on — note will go to AI assistant' : 'Hermes mode off — click to send to AI assistant'}
+              title={hermesLocked ? 'Queued for Claude — click to send as a public note instead' : 'Click to queue this note for your next Claude Code session'}
+              aria-label={hermesLocked ? 'Queue-for-Claude mode on — note will be queued, not posted' : 'Queue-for-Claude mode off — click to queue this note instead of posting it'}
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: 3,
                 height: 22,
@@ -453,7 +455,7 @@ export default function SmartCompose(props: SmartComposeProps) {
               }}
             >
               <HermesMark size={11} color={hermesLocked ? (isDark ? '#dcb355' : 'var(--gold)') : 'currentColor'} />
-              Hermes
+              Queue for Claude
             </button>
           )}
           {/* Emoji picker — opens above the toolbar */}

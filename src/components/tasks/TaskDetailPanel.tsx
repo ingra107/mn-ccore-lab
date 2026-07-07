@@ -1560,7 +1560,9 @@ function OverviewQuickAdd({
     // textarea for retry.
     if (tryLaunchCommand(v, taskLaunchContext(taskId, { projectSlug, primaryFolder }), reset)) return
     // ── @hermes prefix typed directly: route to /api/ai-requests ─────────────
-    // The Hermes toggle (forHermes) posts via comment + dispatch/add.
+    // The Queue-for-Claude toggle (forHermes) posts via comment + dispatch/add —
+    // this queues to the dispatch_queue lane for Nick's next Claude Code session
+    // start, it does not fire a real-time Hermes round-trip (see #520).
     // A direct @hermes prefix is a Today-bar-style intent; route there instead
     // of letting it fall through to submitComment as team-visible activity.
     if (isHermesPrefix(v)) {
@@ -1794,7 +1796,10 @@ function OverviewQuickAdd({
               onToggle={() => setMeOnly((v) => !v)}
             />
 
-            {/* Hermes toggle — only relevant for comments, pill style */}
+            {/* Queue-for-Claude toggle — only relevant for comments, pill style.
+                Distinct from the typed @hermes prefix above: this queues the
+                comment to dispatch_queue for Nick's next Claude Code session,
+                it is NOT a real-time Hermes round-trip (#520). */}
             {mode === 'comment' && (
               <button
                 type="button"
@@ -1802,8 +1807,8 @@ function OverviewQuickAdd({
                 aria-checked={forHermes ? "true" : "false"}
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => setForHermes((v) => !v)}
-                aria-label={forHermes ? 'Hermes notified — click to remove' : 'Notify Hermes AI assistant'}
-                title="Route to Hermes AI"
+                aria-label={forHermes ? 'Queued for Claude — click to remove' : 'Queue this comment for your next Claude Code session'}
+                title="Queue for Claude's next session (not real-time — type @hermes to ask now)"
                 className="flex-shrink-0 inline-flex items-center gap-1"
                 style={{
                   height: 22,
@@ -1835,7 +1840,7 @@ function OverviewQuickAdd({
                     opacity: forHermes ? 1 : 0.70,
                   }}
                 />
-                Hermes
+                Queue for Claude
               </button>
             )}
 
@@ -1867,9 +1872,9 @@ function OverviewQuickAdd({
               <button
                 type="submit"
                 aria-label={mode === 'comment'
-                  ? (forHermes ? 'Post comment and notify Hermes' : 'Post comment')
+                  ? (forHermes ? 'Post comment and queue for Claude' : 'Post comment')
                   : 'Add note'}
-                title={`${mode === 'comment' ? (forHermes ? 'Post + dispatch to Hermes' : 'Post comment') : 'Add note'} · Ctrl+Enter`}
+                title={`${mode === 'comment' ? (forHermes ? 'Post + queue for Claude session' : 'Post comment') : 'Add note'} · Ctrl+Enter`}
                 className="flex-shrink-0 inline-flex items-center justify-center"
                 style={{
                   background: forHermes && mode === 'comment' ? 'var(--gold)' : 'var(--teal-solid)',
