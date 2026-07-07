@@ -1,10 +1,11 @@
 import { memo, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { Calendar, AlertCircle, ArrowRight, ListChecks, CalendarOff, UserCheck } from 'lucide-react'
-import { useMeetingsApi, useActionItems, useMeetingCadence, useTasks } from '../../hooks/useApiData'
+import { useMeetingsApi, useMeetingLinkedTasks, useMeetingCadence, useTasks } from '../../hooks/useApiData'
 import { useGrantTimeline } from '../../hooks/useGrantTimeline'
 import { getMeetingFacilitator } from '../../lib/facilitator'
 import { localDateKey } from '../../lib/dateUtils'
+import { countActionsByMeetingId } from '../../lib/meetingTaskCounts'
 import { ACCENT_GOLD, isTaskDone, withAlpha } from '../../lib/taskGrouping'
 import { getPersonInfo } from '../../data/team'
 import BentoCard from './BentoCard'
@@ -32,11 +33,11 @@ function typeColor(type: Deadline['type']): string {
 
 function UpcomingCard() {
   const { data: meetings = [] } = useMeetingsApi()
-  // #507 follow-up opt-out: a useActionItems failure only hides the
+  // #507 follow-up opt-out: a useMeetingLinkedTasks failure only hides the
   // "N/M pending" sub-row below (guarded by `meetingActionCounts.total > 0`)
   // -- it never renders a false "0 pending" claim, so no isError branch here.
   // Deadlines (from tasks/grants) and the meeting banner are unaffected.
-  const { data: allActionItems = [] } = useActionItems()
+  const { data: allMeetingTasks = [] } = useMeetingLinkedTasks()
   const { data: cadence } = useMeetingCadence()
   const { data: tasks = [] } = useTasks()
   const { data: grants = [] } = useGrantTimeline()
@@ -113,15 +114,14 @@ function UpcomingCard() {
     return future[0] ?? null
   }, [meetings])
 
-  // Count action items for the next meeting
+  // T19 (#547): dual-id join (T3: IN (id, source_id)) via the shared
+  // countActionsByMeetingId, so a PB-calendar-matched next meeting's tasks
+  // aren't undercounted.
   const meetingActionCounts = useMemo(() => {
     if (!nextMeeting) return { pending: 0, total: 0 }
-    const meetingActions = allActionItems.filter((a) => a.meeting_id === nextMeeting.id)
-    return {
-      pending: meetingActions.filter((a) => !a.completed).length,
-      total: meetingActions.length,
-    }
-  }, [nextMeeting, allActionItems])
+    const counts = countActionsByMeetingId(allMeetingTasks, [nextMeeting]).get(nextMeeting.id)
+    return { pending: counts?.pendingCount ?? 0, total: counts?.actionCount ?? 0 }
+  }, [nextMeeting, allMeetingTasks])
 
   return (
     <BentoCard title="Upcoming" subtitle="Deadlines & milestones" size="span-1" icon={Calendar} drillDown>
