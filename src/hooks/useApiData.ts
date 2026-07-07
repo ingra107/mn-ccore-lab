@@ -583,6 +583,27 @@ export function useActionItems(filters?: { assignee?: string; completed?: string
   })
 }
 
+// T19 (#547): meeting-linked tasks (tasks.meeting_id), the replacement source
+// for the six surfaces that read the dead action_items table (see T9's
+// meetingRowToMeeting comment in Meetings.tsx for the same rationale).
+// Deliberately fetchTasks() directly, NOT useTasks() — useTasks() runs
+// dedupTasks(), which collapses same title+assignee tasks GLOBALLY, including
+// across meeting and non-meeting tasks. Filtering to meeting_id BEFORE any
+// dedup (callers do their own, scoped dedup if they need one) avoids a
+// meeting-linked item losing to an unrelated same-title task for the same
+// cache slot. No-filter calls share ONE cache entry (['tasks',
+// 'all-for-meeting-counts']) with Meetings.tsx's per-meeting count/list joins.
+export function useMeetingLinkedTasks(filters?: { assignee?: string; project?: string }) {
+  return useQuery({
+    queryKey: ['tasks', 'all-for-meeting-counts', filters],
+    queryFn: async () => {
+      const rows = (await fetchTasks(filters)).data as TaskRow[]
+      return rows.filter((t) => t.meeting_id)
+    },
+    staleTime: 60 * 1000,
+  })
+}
+
 // ── Tasks (unified task system) ──────────────────────────────
 
 // Dedup carried-forward items: normalize "[Carried forward]" prefix, keep most recent per description+assignee

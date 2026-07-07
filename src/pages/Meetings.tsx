@@ -1,15 +1,15 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQueryClient } from '@tanstack/react-query'
 import { Activity, Calendar, CheckCircle2, Circle, Search, Clock, Plus, Users, UserCheck, ListChecks, ArrowRight, ChevronLeft, Scale } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 import { useListKeyboardNav } from '../hooks/useListKeyboardNav'
-import { useMeetingsApi, useMeetingCadence, useMeetingDetail, useProjects } from '../hooks/useApiData'
+import { useMeetingsApi, useMeetingCadence, useMeetingDetail, useProjects, useMeetingLinkedTasks } from '../hooks/useApiData'
 import type { MeetingRow, MeetingDetail as MeetingDetailData } from '../hooks/useApiData'
-import { fetchTasks } from '../lib/api'
 import type { TaskRow } from '../lib/api'
+import { countActionsByMeetingId } from '../lib/meetingTaskCounts'
 import { useCreateTask, useCreateDecision, useUpdateTask, useBulkUpdateTasks } from '../hooks/useMutations'
 import { useUndoToast } from '../components/UndoToast'
 import { useToast } from '../hooks/useToast'
@@ -443,22 +443,15 @@ export default function Meetings() {
   const { data: unseen } = useUnseenActivity()
   const markSeen = useMarkSeen()
 
-  // T9: real tasks (tasks.meeting_id), not the legacy action_items table —
-  // one unscoped fetch shared by the per-meeting actionItems list
+  // T9/T19 (#547): real tasks (tasks.meeting_id), not the legacy action_items
+  // table — one unscoped fetch shared by the per-meeting actionItems list
   // (meetingRowToMeeting, below), the list-row counts (actionCountsByMeetingId),
   // and the global "All Pending Actions" widget (derived from meetings ->
-  // actionItems, so it inherits this source automatically). Deliberately
-  // fetchTasks() directly, NOT useTasks() — useTasks() runs dedupTasks(),
-  // which collapses same title+assignee tasks GLOBALLY across ALL meetings
-  // (by design, for "one row per recurring item" list views). That would
-  // silently move a carried-forward item's count/identity off its
-  // originating meeting onto whichever later meeting's copy survives the
-  // dedup — wrong for a per-meeting aggregate/list, which needs every row.
-  const { data: allTasksData = [] } = useQuery({
-    queryKey: ['tasks', 'all-for-meeting-counts'],
-    queryFn: async () => (await fetchTasks()).data as TaskRow[],
-    staleTime: 60 * 1000,
-  })
+  // actionItems, so it inherits this source automatically). useMeetingLinkedTasks()
+  // deliberately bypasses useTasks()'s dedupTasks() cross-source collapsing —
+  // see its doc comment in useApiData.ts — and shares its cache entry with the
+  // dashboard "next meeting" widgets that need the same per-meeting counts.
+  const { data: allTasksData = [] } = useMeetingLinkedTasks()
   const tasksByMeetingId = useMemo(() => {
     const map = new Map<string, TaskRow[]>()
     for (const t of allTasksData) {
@@ -492,31 +485,14 @@ export default function Meetings() {
     showUndo(next ? 'Action item completed' : 'Action item reopened', () => setActionDone(id, currentlyDone))
   }
 
-  // T8: list-row action counts — real tasks (tasks.meeting_id), not the
-  // legacy action_items table. One unscoped fetch + client-side group-by,
-  // keyed on BOTH id and source_id (T3's dual-id join: `IN (id, source_id)`)
-  // so a PB-calendar-matched meeting's tasks still count under its row.
-  const actionCountsByMeetingId = useMemo(() => {
-    const byRawMeetingId = new Map<string, { actionCount: number; pendingCount: number }>()
-    for (const t of allTasksData) {
-      if (!t.meeting_id) continue
-      const c = byRawMeetingId.get(t.meeting_id) ?? { actionCount: 0, pendingCount: 0 }
-      c.actionCount += 1
-      if (!isTaskDone(t)) c.pendingCount += 1
-      byRawMeetingId.set(t.meeting_id, c)
-    }
-    const merged = new Map<string, { actionCount: number; pendingCount: number }>()
-    for (const row of meetingRows) {
-      const fromId = byRawMeetingId.get(row.id)
-      const fromSourceId = row.source_id && row.source_id !== row.id ? byRawMeetingId.get(row.source_id) : undefined
-      if (!fromId && !fromSourceId) continue
-      merged.set(row.id, {
-        actionCount: (fromId?.actionCount ?? 0) + (fromSourceId?.actionCount ?? 0),
-        pendingCount: (fromId?.pendingCount ?? 0) + (fromSourceId?.pendingCount ?? 0),
-      })
-    }
-    return merged
-  }, [allTasksData, meetingRows])
+  // T8/T19: list-row action counts — real tasks (tasks.meeting_id), not the
+  // legacy action_items table. Dual-id join (T3: `IN (id, source_id)`)
+  // extracted to countActionsByMeetingId (src/lib/meetingTaskCounts.ts) so
+  // the dashboard "next meeting" widgets share the same join (#547 T19).
+  const actionCountsByMeetingId = useMemo(
+    () => countActionsByMeetingId(allTasksData, meetingRows),
+    [allTasksData, meetingRows]
+  )
 
   const [showAddAction, setShowAddAction] = useState(false)
   const [newActionDesc, setNewActionDesc] = useState('')
