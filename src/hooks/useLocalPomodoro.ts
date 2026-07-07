@@ -16,6 +16,7 @@
 // return Allow-Origin + Allow-Methods: GET,POST,OPTIONS + Allow-Headers: Content-Type.
 
 import { useState, useEffect, useCallback } from 'react'
+import { fetchWithTimeout } from '../lib/api'
 
 const POMO_BASE = 'http://localhost:5555'
 const POLL_MS = 5000    // background status poll (local tick drives display between polls)
@@ -42,16 +43,6 @@ export interface UseLocalPomodoroResult {
   stop: () => Promise<void>
 }
 
-async function fetchWithTimeout(url: string, init?: RequestInit): Promise<Response> {
-  const ctrl = new AbortController()
-  const timer = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS)
-  try {
-    return await fetch(url, { ...init, signal: ctrl.signal })
-  } finally {
-    clearTimeout(timer)
-  }
-}
-
 export function useLocalPomodoro(): UseLocalPomodoroResult {
   const [status, setStatus] = useState<PomoStatus | null>(null)
   const [serverReachable, setServerReachable] = useState(false)
@@ -59,7 +50,7 @@ export function useLocalPomodoro(): UseLocalPomodoroResult {
 
   const fetchStatus = useCallback(async () => {
     try {
-      const res = await fetchWithTimeout(`${POMO_BASE}/api/status`)
+      const res = await fetchWithTimeout(`${POMO_BASE}/api/status`, undefined, FETCH_TIMEOUT_MS)
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const data = await res.json() as PomoStatus
       setStatus(data)
@@ -85,7 +76,7 @@ export function useLocalPomodoro(): UseLocalPomodoroResult {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(opts ?? {}),
-      })
+      }, FETCH_TIMEOUT_MS)
     } catch {
       // unreachable — fetchStatus below updates serverReachable
     } finally {
@@ -101,7 +92,7 @@ export function useLocalPomodoro(): UseLocalPomodoroResult {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: '{}',
-      })
+      }, FETCH_TIMEOUT_MS)
     } catch {
       // unreachable — fetchStatus below updates serverReachable
     } finally {

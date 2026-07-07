@@ -215,6 +215,20 @@ class ApiError extends Error {
   }
 }
 
+/** fetch() with an AbortController-based timeout — aborts (rejecting) if the
+ *  response doesn't arrive within `timeoutMs`, instead of hanging indefinitely.
+ *  For endpoints that may simply not be running (e.g. the local Pomodoro
+ *  server) rather than the Hub's own D1-backed API (which fetchApi() covers). */
+export async function fetchWithTimeout(url: string, init?: RequestInit, timeoutMs = 2000): Promise<Response> {
+  const ctrl = new AbortController()
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs)
+  try {
+    return await fetch(url, { ...init, signal: ctrl.signal })
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
 export async function fetchApi<T>(path: string, init?: RequestInit): Promise<ApiResponse<T>> {
   const res = await fetch(path, {
     ...init,
