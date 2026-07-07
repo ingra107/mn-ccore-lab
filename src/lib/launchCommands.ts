@@ -37,9 +37,12 @@ export interface LaunchExecutionContext {
 }
 
 export interface LaunchExecutionDeps {
-  /** Injected so tests don't need a browser fetch/DOM. Production callers
-   *  (useLaunchCommands) always pass the real global fetch. */
-  fetchFn: typeof fetch
+  /** Injected so tests don't need a browser fetch/DOM. OMITTED by production
+   *  callers — they take the default bound global fetch (see executeLaunchCommand).
+   *  Do NOT wire the bare native `fetch` here: it gets invoked as `fetchFn(...)`,
+   *  and browser fetch throws "Illegal invocation" unless its receiver is the
+   *  global object (regression #543, from #525's DI extraction, 2026-07-07). */
+  fetchFn?: typeof fetch
   detectOriginFn: () => 'computer' | 'mobile'
   protocolLaunch: (uri: string, opts: { copyText: string; successMessage: string; copyMessage: string }) => Promise<void>
   showInfo: (message: string) => void
@@ -63,8 +66,12 @@ export async function executeLaunchCommand(
   const isWorkon = cmd.tag === 'workon'
   const origin = ctx.originOverride ?? deps.detectOriginFn()
   const folder = ctx.primaryFolder ?? ''
+  // Call fetch as a bare global (receiver = window). Invoking native browser
+  // fetch as `deps.fetchFn(...)` sets the receiver to `deps` → "Illegal
+  // invocation" throw BEFORE the request is sent (#543). Tests inject their own.
+  const doFetch = deps.fetchFn ?? ((...args: Parameters<typeof fetch>) => fetch(...args))
   try {
-    const res = await deps.fetchFn('/api/launch-log', {
+    const res = await doFetch('/api/launch-log', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(

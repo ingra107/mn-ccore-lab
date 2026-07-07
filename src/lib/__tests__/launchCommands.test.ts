@@ -166,6 +166,36 @@ describe('executeLaunchCommand — failure handling', () => {
   })
 })
 
+describe('executeLaunchCommand — default fetch wiring (#543 regression)', () => {
+  // #525 wired `fetchFn: fetch` (a receiver-detached native fetch) into the
+  // production call sites; in the browser that throws "Illegal invocation"
+  // BEFORE the POST, surfacing as the failure toast with no launch_log row.
+  // The fix: production OMITS fetchFn and the lib defaults it to a bound global
+  // fetch. This locks that contract — and, being omit-able, a required-fetchFn
+  // regression would fail to type-check here.
+  it('omitting fetchFn uses the global fetch and POSTs to /api/launch-log', async () => {
+    const globalFetch = vi
+      .fn()
+      .mockResolvedValue({ ok: true, json: async () => ({ data: { id: 'lnch_default' } }) })
+    const original = globalThis.fetch
+    globalThis.fetch = globalFetch as unknown as typeof fetch
+    try {
+      const deps: LaunchExecutionDeps = {
+        // fetchFn deliberately omitted — mirrors the production wiring
+        detectOriginFn: vi.fn().mockReturnValue('mobile'),
+        protocolLaunch: vi.fn().mockResolvedValue(undefined),
+        showInfo: vi.fn(),
+        showError: vi.fn(),
+      }
+      await executeLaunchCommand({ tag: 'quickchat', seed: 'hi' }, {}, deps)
+      expect(globalFetch).toHaveBeenCalledWith('/api/launch-log', expect.objectContaining({ method: 'POST' }))
+      expect(deps.showError).not.toHaveBeenCalled()
+    } finally {
+      globalThis.fetch = original
+    }
+  })
+})
+
 describe('executeLaunchCommand — awaited timing (#525)', () => {
   it('the returned promise resolves only AFTER protocolLaunch completes, not fire-and-forget', async () => {
     let protocolLaunchResolved = false
