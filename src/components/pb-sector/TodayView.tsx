@@ -6,6 +6,7 @@ import { CardSkeleton } from '../LoadingSkeleton'
 import EmptyState from '../EmptyState'
 import { localDateKey } from '../../lib/dateUtils'
 import { ICON_PROPS } from '../../lib/iconProps'
+import { QueryErrorNote } from '../QueryErrorNote'
 
 // ── Markdown line types ──────────────────────────────────────
 
@@ -434,7 +435,7 @@ function SectionBlock({ section, onToggleTask }: { section: Section; onToggleTas
 // ── Main TodayView ───────────────────────────────────────────
 
 export default function TodayView() {
-  const { data: content, isLoading } = useTodayMd()
+  const { data: content, isLoading, isError, refetch } = useTodayMd()
   const [localToggles, setLocalToggles] = useState<Record<string, boolean>>({})
 
   const sections = useMemo(() => {
@@ -470,6 +471,18 @@ export default function TodayView() {
   }, [sections, localToggles])
 
   if (isLoading) return <CardSkeleton count={3} />
+
+  // #507 follow-up: distinguish a thrown fetch failure from "hasn't synced
+  // yet" -- the two used to render the same empty state, and a failure here
+  // reads to Nick as "sync is broken" (worse than it looks) when it's
+  // actually "TODAY.md just hasn't landed."
+  if (isError) {
+    return (
+      <div className="flex items-center justify-center min-h-[40vh]">
+        <QueryErrorNote label="TODAY.md" onRetry={() => refetch()} />
+      </div>
+    )
+  }
 
   if (!content?.trim()) {
     return (

@@ -9,6 +9,7 @@ import { PATHS } from '../../constants/paths'
 import InlineSelect from '../../components/InlineSelect'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
+import { QueryErrorNote } from '../../components/QueryErrorNote'
 
 interface ProjectDependenciesProps {
   project: Project
@@ -37,7 +38,7 @@ const REL_OPTIONS = [
 ]
 
 export default function ProjectDependencies({ project, isPi }: ProjectDependenciesProps) {
-  const { data: deps = [] } = useProjectDependencies(project.slug)
+  const { data: deps = [], isError, refetch } = useProjectDependencies(project.slug)
   const { data: allProjects = [] } = useProjects()
   const createDep = useCreateDependency()
   const deleteDep = useDeleteDependency()
@@ -268,7 +269,9 @@ export default function ProjectDependencies({ project, isPi }: ProjectDependenci
         }}
         className="detail-card"
       >
-        {outgoing.length === 0 && incoming.length === 0 ? (
+        {isError ? (
+          <QueryErrorNote label="dependencies" onRetry={() => refetch()} />
+        ) : outgoing.length === 0 && incoming.length === 0 ? (
           <p
             style={{
               fontSize: '12px',

@@ -28,6 +28,7 @@ import { isProductionVisible, isProductionVisibleActivity } from '../../lib/isPr
 import TaskTitle from '../../components/tasks/TaskTitle'
 import { useRecentlyViewed } from '../../hooks/useRecentlyViewed'
 import { ROLE_LABELS } from '../../lib/roleDefaults'
+import { QueryErrorNote } from '../../components/QueryErrorNote'
 import type { UserRole } from '../../lib/roleDefaults'
 import { PATHS } from '../../constants/paths'
 import TaskDetailPanel from '../../components/tasks/TaskDetailPanel'
@@ -467,10 +468,14 @@ function UpcomingCard({ deadlines, overdue }: { deadlines: TaskRow[]; overdue: T
 
 // ── Recent Activity Card ─────────────────────────────────────
 
-function RecentActivityCard({ activity }: { activity: { id: string; type: string; description: string; actor: string | null; timestamp: string }[] }) {
+function RecentActivityCard({ activity, isError, onRetry }: { activity: { id: string; type: string; description: string; actor: string | null; timestamp: string }[]; isError?: boolean; onRetry?: () => void }) {
   return (
     <CompactCard title="Recent Activity" icon={Activity} iconColor="var(--gold)">
-      {activity.length === 0 ? (
+      {isError ? (
+        <div style={{ padding: '12px 0', display: 'flex', justifyContent: 'center' }}>
+          <QueryErrorNote label="activity" onRetry={() => onRetry?.()} />
+        </div>
+      ) : activity.length === 0 ? (
         <p style={{ fontSize: 'var(--text-label)', color: 'var(--slate)', opacity: 0.75, textAlign: 'center', padding: '12px 0' }}>
           No recent activity
         </p>
@@ -566,7 +571,7 @@ export default function PersonalPage() {
   const { role, setRoleOverride, clearRoleOverride } = useUserRole()
 
   const { data: allTasks = [], isLoading: tasksLoading } = useTasks()
-  const { data: rawActivity = [] } = useActivity(10)
+  const { data: rawActivity = [], isError: activityError, refetch: refetchActivity } = useActivity(10)
   const activity = useMemo(
     () => rawActivity.filter((a) => isProductionVisibleActivity({ description: a.description })),
     [rawActivity],
@@ -1052,7 +1057,7 @@ export default function PersonalPage() {
         <motion.div variants={staggerItem}>
           <div className="flex flex-col gap-4">
             <UpcomingCard deadlines={upcomingDeadlines} overdue={overdueTasks} />
-            <RecentActivityCard activity={activity} />
+            <RecentActivityCard activity={activity} isError={activityError} onRetry={refetchActivity} />
             <QuickStatsCard
               completedThisWeek={completedThisWeek}
               overdueCount={overdueTasks.length}

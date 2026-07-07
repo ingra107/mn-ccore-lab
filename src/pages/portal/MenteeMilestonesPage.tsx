@@ -20,6 +20,7 @@ import { parseDbUtc } from '../../lib/time'
 import { isProductionVisible } from '../../lib/isProductionVisible'
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 import { ICON_PROPS } from '../../lib/iconProps'
+import { QueryErrorNote } from '../../components/QueryErrorNote'
 
 // ── Constants ──────────────────────────────────────────────
 
@@ -62,7 +63,7 @@ export default function MenteeMilestonesPage() {
   const [expandedRow, setExpandedRow] = useState<string | null>(null)
   const [focusedIndex, setFocusedIndex] = useState(-1)
 
-  const { data: rawMilestones = [], isLoading: milestonesLoading } = useMenteeMilestones({
+  const { data: rawMilestones = [], isLoading: milestonesLoading, isError: milestonesError, refetch: refetchMilestones } = useMenteeMilestones({
     mentee: filterMentee || undefined,
     status: filterStatus || undefined,
     type: filterType || undefined,
@@ -71,12 +72,17 @@ export default function MenteeMilestonesPage() {
     () => rawMilestones.filter((m: any) => isProductionVisible(m.title)),
     [rawMilestones],
   )
-  const { data: overview = [], isLoading: overviewLoading } = useMenteeOverview()
+  const { data: overview = [], isLoading: overviewLoading, isError: overviewError, refetch: refetchOverview } = useMenteeOverview()
   // Per-actor last-activity queries (limit=1, actor-filtered) so high activity
   // volume doesn't hide old entries. Mentee roster confirmed by Nick 2026-04-20:
   // Dan Shyu, Beret Fitzgerald, Claire Collins, Michael Kalinoski.
   // Casey Eddington (Data Analyst) and Kendall McEachron (Faculty Collaborator)
   // are not mentees and were removed.
+  // #507 follow-up opt-out: a failure on any of the 4 per-actor queries below
+  // (or on useMenteeOverview) just omits that mentee's "Quiet"/"Needs
+  // check-in" badge or overview stat -- no false claim is rendered (the
+  // badge/count simply doesn't appear), and the main milestones table (the
+  // real page content, isError-handled below) is unaffected.
   const { data: actShyu = [] }       = useActivity(1, 'dan-shyu')
   const { data: actFitzgerald = [] } = useActivity(1, 'beret-fitzgerald')
   const { data: actCollins = [] }    = useActivity(1, 'claire-collins')
@@ -241,6 +247,16 @@ export default function MenteeMilestonesPage() {
         </div>
       </PageHeader>
 
+      {/* #507 follow-up: the overview cards below claim a specific "N
+          upcoming"/"N overdue" count per mentee -- on a fetch failure that
+          would otherwise read as a confirmed zero. Flag it once here rather
+          than restructuring every card. */}
+      {overviewError && (
+        <div className="mb-4">
+          <QueryErrorNote label="mentee overview stats" onRetry={() => refetchOverview()} />
+        </div>
+      )}
+
       {/* PI Overview Cards */}
       {!filterMentee && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
@@ -352,6 +368,10 @@ export default function MenteeMilestonesPage() {
       <div className="mt-2">
         {isLoading ? (
           <TableSkeleton rows={8} cols={5} />
+        ) : milestonesError ? (
+          <div className="flex items-center justify-center py-10">
+            <QueryErrorNote label="milestones" onRetry={() => refetchMilestones()} />
+          </div>
         ) : flatList.length === 0 ? (
           <EmptyState
             icon={<EmptyStateArt variant="grants" />}
