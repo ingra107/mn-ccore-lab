@@ -40,6 +40,20 @@ interface InfoToast {
 
 type Toast = UndoToast | SuccessToast | ErrorToast | InfoToast
 
+// Per-type presentation — testid, left-border accent, and icon. One lookup
+// instead of a parallel ternary chain per property (#252 finding 2).
+const TOAST_STYLES: Record<Toast['type'], {
+  testId: string
+  borderColor: string | null
+  Icon: typeof Check | null
+  iconColor: string
+}> = {
+  success: { testId: 'success-toast', borderColor: 'var(--teal)',   Icon: Check,       iconColor: 'var(--teal)' },
+  error:   { testId: 'error-toast',   borderColor: 'var(--maroon)', Icon: AlertCircle, iconColor: 'var(--maroon)' },
+  info:    { testId: 'info-toast',    borderColor: 'var(--gold)',   Icon: Info,        iconColor: 'var(--gold)' },
+  undo:    { testId: 'undo-toast',    borderColor: null,            Icon: null,        iconColor: '' },
+}
+
 interface ToastContextType {
   showUndo: (message: string, onUndo: () => void) => void
   showSuccess: (message: string, action?: ToastAction) => void
@@ -176,15 +190,12 @@ export function UndoToastProvider({ children }: { children: React.ReactNode }) {
           pointerEvents: 'none',
         }}
       >
-        {toasts.map((toast) => (
+        {toasts.map((toast) => {
+          const presentation = TOAST_STYLES[toast.type]
+          return (
           <div
             key={toast.id}
-            data-testid={
-              toast.type === 'undo' ? 'undo-toast'
-              : toast.type === 'error' ? 'error-toast'
-              : toast.type === 'info' ? 'info-toast'
-              : 'success-toast'
-            }
+            data-testid={presentation.testId}
             style={{
               animation: dismissingIds.has(toast.id)
                 ? 'toast-out 150ms var(--ease-out) forwards'
@@ -201,20 +212,11 @@ export function UndoToastProvider({ children }: { children: React.ReactNode }) {
               fontWeight: toast.type === 'undo' ? 500 : 400,
               boxShadow: 'var(--shadow-card-hover)',
               minWidth: '240px',
-              borderLeft: toast.type === 'success' ? '3px solid var(--teal)'
-                : toast.type === 'error' ? '3px solid var(--maroon)'
-                : toast.type === 'info' ? '3px solid var(--gold)'
-                : 'none',
+              borderLeft: presentation.borderColor ? `3px solid ${presentation.borderColor}` : 'none',
             }}
           >
-            {toast.type === 'success' && (
-              <Check {...ICON_PROPS} size={14} style={{ color: 'var(--teal)', flexShrink: 0 }} />
-            )}
-            {toast.type === 'error' && (
-              <AlertCircle {...ICON_PROPS} size={14} style={{ color: 'var(--maroon)', flexShrink: 0 }} />
-            )}
-            {toast.type === 'info' && (
-              <Info {...ICON_PROPS} size={14} style={{ color: 'var(--gold)', flexShrink: 0 }} />
+            {presentation.Icon && (
+              <presentation.Icon {...ICON_PROPS} size={14} style={{ color: presentation.iconColor, flexShrink: 0 }} />
             )}
             <span style={{ flex: 1 }}>{toast.message}</span>
             {toast.type !== 'undo' && toast.action && (
@@ -279,7 +281,8 @@ export function UndoToastProvider({ children }: { children: React.ReactNode }) {
               <X {...ICON_PROPS} size={14} />
             </button>
           </div>
-        ))}
+          )
+        })}
       </div>
       </ToastContext.Provider>
   )
