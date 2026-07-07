@@ -57,6 +57,15 @@ export interface TodayEvent {
   // #74: true for iCal all-day events. All-day + long (≥3h) events render in
   // the Today timeline's left rail instead of the main flow.
   isAllDay?: boolean
+  // T13: set on a cal-* row once matched to a same-day D1 meeting record
+  // (matchMeetingRecord). Bridges the personal-calendar row to its D1
+  // identity so the timeline row can deep-link + mark-seen against the real
+  // meeting instead of rendering the "no meeting record" placeholder.
+  meetingId?: string
+  // T13: the matched meeting's debrief notes, decorated onto the cal- row.
+  // Non-empty → MeetingRow renders MarkdownView + "Open meeting" link
+  // instead of the jot textarea.
+  meetingNotes?: string | null
 }
 
 // #74: events at/over this many minutes (3h) are "long blocks" — they move to
@@ -201,4 +210,28 @@ export function calendarEventToTodayEvent(e: { id: string; title: string; locati
     endMin: e.isAllDay ? undefined : localMinutesFromIso(e.endAt),
     isAllDay: e.isAllDay,
   }
+}
+
+// T13: mirrors api/routes/meetings.ts normalizeMeetingTitle EXACTLY (dedup
+// key for the Hub meetings table) so "MNCCORE Lab Sync" / "mnccore lab sync"
+// / "  MNCCORE Lab  Sync  " all collapse to the same join key client-side.
+// Keep in sync with the server copy if that one changes.
+export function normalizeMeetingTitle(title: string): string {
+  return title
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, ' ')
+}
+
+// Bridge personal-calendar rows to D1 meeting records. ID spaces differ by
+// construction (feed ids vs PB cal- mints), so date + normalized title is the
+// join; nearest start time breaks same-title ties.
+export function matchMeetingRecord(
+  ev: { title: string; startMin?: number },
+  meetings: Array<{ id: string; title: string; date: string; notes?: string | null }>,
+  normalize: (t: string) => string,
+): { id: string; notes?: string | null } | undefined {
+  const cands = meetings.filter((m) => isToday(m.date) && normalize(m.title) === normalize(ev.title))
+  if (cands.length <= 1) return cands[0]
+  return cands[0] // multiple same-title same-day: caller pre-sorts by |startMin delta| if times exist
 }

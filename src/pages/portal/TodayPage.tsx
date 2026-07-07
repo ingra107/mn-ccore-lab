@@ -31,6 +31,7 @@ import {
   INK, INK_MUTED, INK_DIM, PAGE_BG,
   todayKey, daysSince, formatTodayDate,
   meetingToEvent, calendarEventToTodayEvent, isToday,
+  matchMeetingRecord, normalizeMeetingTitle,
   getGroupForTask, isTaskDone,
   type GroupKey, type TodayEvent, type DailyCounts,
 } from '../../components/today/constants'
@@ -233,19 +234,35 @@ export default function TodayPage() {
   // events appear in chronological order and untimed meetings sink to the
   // top as the "all day" band.
   const todaysMeetings: TodayEvent[] = useMemo(() => {
-    const meetings = (meetingsQuery.data ?? []).filter((m) => isToday(m.date)).map(meetingToEvent)
+    const rawMeetings = (meetingsQuery.data ?? []).filter((m) => isToday(m.date))
+    const meetings = rawMeetings.map(meetingToEvent)
     const personal = (calendarEventsQuery.data ?? [])
       .filter((e) => isToday(e.startAt))
       .map(calendarEventToTodayEvent)
+
+    // T13: bridge personal-calendar rows to their D1 meeting record (same
+    // day + normalized title). A matched meeting already renders as its own
+    // untimed native row above (`meetings`) — decorate the richer, timed
+    // cal- row with the D1 identity/notes and drop the now-redundant native
+    // row so the same real-world meeting shows once, not twice.
+    const matchedMeetingIds = new Set<string>()
+    const decoratedPersonal = personal.map((e) => {
+      const match = matchMeetingRecord(e, rawMeetings, normalizeMeetingTitle)
+      if (!match) return e
+      matchedMeetingIds.add(match.id)
+      return { ...e, meetingId: match.id, meetingNotes: match.notes ?? null }
+    })
+    const dedupedMeetings = meetings.filter((m) => !matchedMeetingIds.has(m.id))
+
     // Personal events with a real time go after untimed meetings, sorted
     // by start. Untimed events keep insertion order (D1 returns by date).
     // Sort by startMin (wall-clock minutes, numeric) — NOT a.time.localeCompare
     // which gives wrong order for AM/PM strings ("9:30 AM" > "12:00 PM"
     // lexicographically because "9" > "1").
-    const timed = personal.filter((e) => e.time !== '—' && e.time !== 'all day')
-    const untimed = personal.filter((e) => e.time === '—' || e.time === 'all day')
+    const timed = decoratedPersonal.filter((e) => e.time !== '—' && e.time !== 'all day')
+    const untimed = decoratedPersonal.filter((e) => e.time === '—' || e.time === 'all day')
     timed.sort((a, b) => (a.startMin ?? 0) - (b.startMin ?? 0))
-    return [...untimed, ...meetings, ...timed]
+    return [...untimed, ...dedupedMeetings, ...timed]
   }, [meetingsQuery.data, calendarEventsQuery.data])
 
   // Tomorrow events — shown in Agenda mode's Tomorrow section so Nick can
