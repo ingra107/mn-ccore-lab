@@ -3,8 +3,8 @@ import { Link } from 'react-router-dom'
 import { User, Circle, CheckCircle2, ArrowRight, AlertTriangle } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { emailToSlug } from '../../lib/emailSlug'
-import { useActionItems } from '../../hooks/useApiData'
-import type { ActionItemRow } from '../../hooks/useApiData'
+import { useMeetingLinkedTasks } from '../../hooks/useApiData'
+import type { TaskRow } from '../../lib/api'
 import { useUnreadCount } from '../../hooks/useNotifications'
 import { getPersonInfo } from '../../data/team'
 import { isOverdue } from '../../lib/dateUtils'
@@ -17,14 +17,16 @@ import { QueryErrorNote } from '../QueryErrorNote'
 function MyItemsCard() {
   const { user } = useAuth()
   const userSlug = emailToSlug(user?.email)
-  const { data: allItems = [], isError, refetch } = useActionItems(
+  // T19 (#547): meeting-linked tasks (tasks.meeting_id), not the dead
+  // action_items table — see useMeetingLinkedTasks() doc comment.
+  const { data: allItems = [], isError, refetch } = useMeetingLinkedTasks(
     userSlug ? { assignee: userSlug } : undefined
   )
   const { data: unreadCount = 0 } = useUnreadCount(userSlug)
 
   // Deduplicate carried-forward items
   const items = useMemo(() => {
-    const seen = new Map<string, ActionItemRow>()
+    const seen = new Map<string, TaskRow>()
     for (const item of allItems) {
       const normalized = item.description.replace(/^\[Carried forward\]\s*/i, '').toLowerCase()
       const key = `${normalized}::${item.assignee}`
