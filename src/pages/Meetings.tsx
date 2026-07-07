@@ -320,7 +320,7 @@ function MeetingDetail({ meeting, onToggleAction }: MeetingDetailProps) {
       {meeting.notes && (
         <div className="mb-6">
           <h4 className="mtg-section-label mb-2">Notes</h4>
-          <MarkdownView source={meeting.notes} className="text-sm" />
+          <MarkdownView source={meeting.notes} />
         </div>
       )}
 
