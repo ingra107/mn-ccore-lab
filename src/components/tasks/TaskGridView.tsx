@@ -6,10 +6,11 @@ import { PATHS } from '../../constants/paths'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { useAutoAnimate } from '@formkit/auto-animate/react'
 import { CheckCircle2, ChevronDown, ChevronRight, Circle, Archive, Link2, Plus, MessageSquare, Clipboard, Check, GripVertical, Pin, RotateCcw, Square } from 'lucide-react'
-import { DndContext, closestCenter, PointerSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core'
+import { DndContext, closestCenter, useSensor, useSensors } from '@dnd-kit/core'
 import type { DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy, horizontalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import { InputSafePointerSensor, InputSafeTouchSensor } from '../../lib/dndSensors'
 import InlineAssigneePicker from '../InlineAssigneePicker'
 import InlineDatePicker from '../InlineDatePicker'
 import { useUndoToast } from '../UndoToast'
@@ -167,10 +168,12 @@ export default function TaskGridView({ tasks, allTasks, onStatusChange, onFieldC
 
   // ── Column reorder DnD (separate from subtask DnD) ──
   // TouchSensor delay 300ms — longer than row drag so a tap on header
-  // sorts (not drags) by default.
+  // sorts (not drags) by default. #514: input-safe variants (same class as
+  // #481); listeners are grip-scoped (SortableColumnHeader's drag-handle
+  // button), so this is preventive, not a fix for a reachable bug today.
   const columnSensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 10 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 300, tolerance: 5 } }),
+    useSensor(InputSafePointerSensor, { activationConstraint: { distance: 10 } }),
+    useSensor(InputSafeTouchSensor, { activationConstraint: { delay: 300, tolerance: 5 } }),
   )
 
   const handleColumnDragEnd = useCallback((event: DragEndEvent) => {
@@ -1698,9 +1701,12 @@ function InlineSubtaskRow({ taskId, onHeightChange }: { taskId: string; onHeight
   const inputRef = useRef<HTMLInputElement>(null)
   const prevSubtaskCount = useRef(subtasks.length)
 
+  // #514: input-safe variants (same class as #481); listeners are
+  // grip-scoped (InlineSortableSubtask's GripVertical button, not the
+  // row), so this is preventive, not a fix for a reachable bug today.
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } }),
+    useSensor(InputSafePointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(InputSafeTouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } }),
   )
 
   useEffect(() => {

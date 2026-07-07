@@ -24,10 +24,11 @@ import {
   Sparkles,
   Upload as UploadIcon,
 } from 'lucide-react'
-import { DndContext, closestCenter, PointerSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core'
+import { DndContext, closestCenter, useSensor, useSensors } from '@dnd-kit/core'
 import type { DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import { InputSafePointerSensor, InputSafeTouchSensor } from '../lib/dndSensors'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useMeetingDetail } from '../hooks/useApiData'
 import type { ActionItemRow as ActionItemRowType, AgendaItemRow } from '../hooks/useApiData'
@@ -228,9 +229,13 @@ export default function MeetingDetail() {
     setSelectedActionIds(new Set())
   }
 
+  // #514: input-safe variants (same class as #481); both SortableAgendaItem
+  // and SortableActionItem scope listeners to a dedicated grip-handle
+  // button (not the row/card), so this is preventive hardening rather than
+  // a fix for a reachable bug today.
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } }),
+    useSensor(InputSafePointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(InputSafeTouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } }),
   )
 
   usePageMeta(

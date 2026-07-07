@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import {
   Circle, CheckCircle2, ListChecks, Plus, Trash2, GripVertical,
 } from 'lucide-react'
-import { DndContext, closestCenter, PointerSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core'
+import { DndContext, closestCenter, useSensor, useSensors } from '@dnd-kit/core'
 import type { DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
@@ -11,6 +11,7 @@ import CollapsibleSection from '../../CollapsibleSection'
 import { useSubtasks } from '../../../hooks/useApiData'
 import { useCreateSubtask, useToggleSubtask, useDeleteSubtask, useReorderSubtasks } from '../../../hooks/useMutations'
 import { ICON_PROPS } from '../../../lib/iconProps'
+import { InputSafePointerSensor, InputSafeTouchSensor } from '../../../lib/dndSensors'
 
 // ── Subtask Section (collapsible wrapper) ───────────────────
 
@@ -118,9 +119,13 @@ function SubtaskChecklist({ taskId }: { taskId: string }) {
   const [newTitle, setNewTitle] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
 
+  // #514: converted from stock Pointer/TouchSensor to the input-safe
+  // variants (same class as #481). listeners here are already grip-scoped
+  // (SortableSubtaskItem's GripVertical button, not the row), so this is
+  // preventive hardening, not a fix for a reachable bug today.
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } }),
+    useSensor(InputSafePointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(InputSafeTouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } }),
   )
 
   const completed = subtasks.filter((s) => s.completed).length
