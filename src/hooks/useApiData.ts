@@ -429,7 +429,13 @@ export function useMeetingsApi(options?: { enabled?: boolean }) {
       const data = await res.json()
       return data.data as MeetingRow[]
     },
-    initialData: () => staticToMeetingRows(),
+    // #506: this used to seed initialData unconditionally, including in
+    // production -- unlike every sibling hook's static fallback (see
+    // usePublications/useTeam/useProjects/useGrants above, DEV-gated in
+    // 315f9197 for bundle size + prod-data-integrity), so a prod page
+    // reading ['meetings'] before the real fetch resolved briefly saw the
+    // 6-row demo dataset as ground truth. Same rationale applies here.
+    initialData: import.meta.env.DEV ? () => staticToMeetingRows() : undefined,
     staleTime: STALE_TIME,
     retry: false,
     enabled: options?.enabled ?? true,
@@ -519,7 +525,12 @@ export function useMeetingDetail(id: string) {
       const data = await res.json()
       return data.data as MeetingDetail
     },
-    initialData: buildFallback,
+    // #506 (same class): buildFallback's own comment already says "dev
+    // fallback," but nothing enforced it -- only DEV-gate it here. Lower
+    // practical severity than useMeetingsApi above (buildFallback returns
+    // undefined -- i.e. no-op -- unless a real meeting id happens to
+    // collide with one of the 6 static demo ids), but still wrong in kind.
+    initialData: import.meta.env.DEV ? buildFallback : undefined,
     staleTime: 60 * 1000,
     enabled: !!id,
     retry: false,
