@@ -50,7 +50,7 @@ import { TaskActivityFeed } from './detail/TaskActivityFeed'
 import { TaskHermesReplies } from './TaskHermesReplies'
 import TaskIntelligence from './detail/TaskIntelligence'
 import KeyLinksEditor from '../KeyLinksEditor'
-import { isHermesPrefix, stripHermesPrefix } from '../../lib/hermesRouting'
+import { isHermesPrefix, stripHermesPrefix, isBacklogPrefix, stripBacklogPrefix } from '../../lib/hermesRouting'
 import { displayRank } from '../../lib/pbLinkDisplayOrder.generated'
 import { Brain } from 'lucide-react'
 
@@ -1581,8 +1581,8 @@ function OverviewQuickAdd({
     // ── @backlog: improvement-backlog idea ────────────────────────────────────
     // Same route as Today bar: /api/ai-requests with source_type='backlog_idea'.
     // Intercept before submitComment so the idea does not post as team comment.
-    if (/^@backlog\b[:]?/i.test(v)) {
-      const idea = v.replace(/^@backlog[:]?\s*/i, '').trim() || v
+    if (isBacklogPrefix(v)) {
+      const idea = stripBacklogPrefix(v)
       fetch('/api/ai-requests', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

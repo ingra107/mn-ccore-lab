@@ -30,6 +30,7 @@ import { localDateKey } from '../../lib/dateUtils'
 import { detectOrigin } from '../../lib/launchOrigin'
 import { buildLaunchUri } from '../../lib/launch'
 import { useProtocolLaunch } from '../../hooks/useProtocolLaunch'
+import { isBacklogPrefix, stripBacklogPrefix } from '../../lib/hermesRouting'
 
 const DEFAULT_GROUP_OVERRIDE = 'priorities'
 
@@ -138,8 +139,8 @@ export function MorningThoughtCompose() {
     }
 
     // Route 2 — @backlog[: ] prefix → improvement backlog via ai-requests
-    if (/^@backlog\b[:]?/i.test(content)) {
-      const idea = content.replace(/^@backlog[:]?\s*/i, '').trim() || content
+    if (isBacklogPrefix(content)) {
+      const idea = stripBacklogPrefix(content)
       try {
         const res = await fetch('/api/ai-requests', {
           method: 'POST',
