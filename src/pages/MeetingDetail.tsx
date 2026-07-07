@@ -38,6 +38,7 @@ import { useToggleActionItem, useAddAgendaItem, useUpdateMeetingNotes, useCreate
 import { useMeetingNotesSeen } from '../hooks/useMeetingNotesSeen'
 import FileUpload from '../components/FileUpload'
 import TypingIndicator from '../components/TypingIndicator'
+import MarkdownView from '../components/MarkdownView'
 import { parseCarriedForward, emDashifyTitle } from '../lib/textUtils'
 import { parseQuickAddInput } from '../lib/parseQuickAdd'
 import { emailToSlug } from '../lib/emailSlug'
@@ -837,9 +838,7 @@ export default function MeetingDetail() {
             ) : (
               <div className="relative group">
                 {meeting?.notes ? (
-                  <div style={{ fontSize: '14px', lineHeight: 1.7, color: 'var(--ink)', whiteSpace: 'pre-wrap' }}>
-                    {meeting.notes}
-                  </div>
+                  <MarkdownView source={meeting.notes} />
                 ) : (
                   <p style={{ fontSize: 'var(--value-size)', color: 'var(--slate)', opacity: 'var(--ink-label)', fontStyle: 'italic', margin: 0, cursor: 'pointer' }}
                     onClick={() => { setNotesDraft(''); setEditingNotes(true) }}>

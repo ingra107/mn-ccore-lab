@@ -25,6 +25,7 @@ import type { Meeting, ActionItem } from '../data/types'
 import { PATHS } from '../constants/paths'
 import { useOpenParam } from '../hooks/useOpenParam'
 import { useMeetingNotesSeen } from '../hooks/useMeetingNotesSeen'
+import MarkdownView from '../components/MarkdownView'
 import { ICON_PROPS } from '../lib/iconProps'
 import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
 
@@ -319,7 +320,7 @@ function MeetingDetail({ meeting, onToggleAction }: MeetingDetailProps) {
       {meeting.notes && (
         <div className="mb-6">
           <h4 className="mtg-section-label mb-2">Notes</h4>
-          <p className="text-sm leading-relaxed" style={{ color: 'var(--slate)' }}>{meeting.notes}</p>
+          <MarkdownView source={meeting.notes} className="text-sm" />
         </div>
       )}
 
