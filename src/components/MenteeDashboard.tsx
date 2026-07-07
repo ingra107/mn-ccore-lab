@@ -11,7 +11,7 @@ import {
 import HoverCard from './HoverCard'
 import type { HoverCardData } from './HoverCard'
 import { useHoverCard } from '../hooks/useHoverCard'
-import { usePublications, useActionItems, useProjects } from '../hooks/useApiData'
+import { usePublications, useMeetingLinkedTasks, useProjects } from '../hooks/useApiData'
 import { PATHS } from '../constants/paths'
 import { ICON_PROPS } from '../lib/iconProps'
 
@@ -22,7 +22,9 @@ interface Props {
 
 export default function MenteeDashboard({ slug, name }: Props) {
   const { data: publications = [] } = usePublications()
-  const { data: actionItems = [] } = useActionItems({ assignee: slug })
+  // T19 (#547): meeting-linked tasks (tasks.meeting_id), not the dead
+  // action_items table — see useMeetingLinkedTasks() doc comment.
+  const { data: actionItems = [] } = useMeetingLinkedTasks({ assignee: slug })
   const { data: projects = [] } = useProjects()
 
   // Filter data for this person
