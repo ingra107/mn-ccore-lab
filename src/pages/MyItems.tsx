@@ -651,7 +651,10 @@ export default function MyItems() {
   // Task rows open the in-place editor (marks seen → row self-removes);
   // project rows go to the project page (its visit marks seen).
   const { data: unseenActivity } = useUnseenActivity()
-  const activityRows = unseenActivity?.rows ?? []
+  // Meetings joined the unseen feed (T11) but this list has no meeting
+  // open-handler and meetings surface their own NEW/teal on the meetings tab
+  // + TODAY rows — keep this list tasks/projects only.
+  const activityRows = (unseenActivity?.rows ?? []).filter((r) => r.entity_type !== 'meeting')
   const taskById = useMemo(() => new Map(myOpenTasks.map((t: TaskRow) => [t.id, t])), [myOpenTasks])
   const openActivityRow = (r: { entity_type: string; entity_id: string; project_slug: string | null }) => {
     if (r.entity_type === 'task') {
