@@ -67,8 +67,15 @@ export async function handleGetMeeting(id: string, env: Env, isAuthed = false): 
   // hack once project_id became a correlated subquery — aliasing is the root fix.)
   // Meeting agenda/notes (the meeting row itself) are team-internal-visible
   // by design — only the task rows in action_items are the leak risk.
+  //
+  // v95: tasks.meeting_id may carry either the Hub-minted meeting id or PB's
+  // calendar-match source_id, so the join matches either id space. NULL-safety
+  // is by construction (`IN (id, NULL)` degrades to `= id`) — no guard needed.
+  const sourceId = (meeting as { source_id?: string | null }).source_id ?? null;
   const [actionItemsRaw, agendaItems] = await Promise.all([
-    env.DB.prepare(`SELECT ${TASK_SELECT_COLS} FROM tasks t WHERE t.meeting_id = ? ORDER BY t.created_at`).bind(id).all<Record<string, unknown>>(),
+    env.DB.prepare(
+      `SELECT ${TASK_SELECT_COLS} FROM tasks t WHERE t.meeting_id IN (?, ?) ORDER BY t.created_at`
+    ).bind(id, sourceId ?? id).all<Record<string, unknown>>(),
     env.DB.prepare('SELECT * FROM agenda_items WHERE meeting_id = ? ORDER BY sort_order, created_at').bind(id).all(),
   ]);
   const actionItems = { ...actionItemsRaw, results: (actionItemsRaw.results ?? []).map(safeTaskRow) };
@@ -159,8 +166,8 @@ export async function handleMeetingPrep(meetingId: string, env: Env, isAuthed = 
   // Find the previous meeting (for carry-forward context). MUST resolve
   // before the parallel fan-out below — prevActionItems depends on it.
   const prevMeeting = await env.DB.prepare(
-    'SELECT id, date, title FROM meetings WHERE date < ? ORDER BY date DESC LIMIT 1'
-  ).bind(meeting.date as string).first();
+    'SELECT id, date, title, source_id FROM meetings WHERE date < ? ORDER BY date DESC LIMIT 1'
+  ).bind(meeting.date as string).first<{ id: string; date: string; title: string; source_id: string | null }>();
 
   // T2.3 (2026-05-28): parallelize the 5 independent reads. recentActivity,
   // upcomingDeadlines, agendaItems, overdueTasks read disjoint tables on
@@ -178,14 +185,15 @@ export async function handleMeetingPrep(meetingId: string, env: Env, isAuthed = 
     overdueTasksRes,
   ] = await Promise.all([
     // Action items from previous meeting (if any). PB-filtered via the join.
+    // v95: matches either the Hub id or PB's calendar-match source_id.
     prevMeeting
       ? env.DB.prepare(
           `SELECT t.id, t.description, t.assignee, t.completed, t.due_date
            FROM tasks t
            LEFT JOIN projects p ON p.id = t.project_id OR p.slug = t.project_id
-           WHERE t.meeting_id = ?${pbFilter}
+           WHERE t.meeting_id IN (?, ?)${pbFilter}
            ORDER BY t.completed ASC, t.assignee`
-        ).bind(prevMeeting.id).all()
+        ).bind(prevMeeting.id, prevMeeting.source_id ?? prevMeeting.id).all()
       : Promise.resolve({ results: [] as Record<string, unknown>[] }),
     // Recent project activity (last 14 days) — stage changes, completed tasks, comments.
     env.DB.prepare(
@@ -268,11 +276,13 @@ export async function handleGenerateAgenda(meetingId: string, env: Env, isAuthed
   // today / weekOut, all available at fan-out time). Sequential await accumulated
   // ~5x round-trip latency on a frequent-ish endpoint (agenda generation).
   const [carriedForward, urgentTasks, stalledProjects, regulatory, recentUpdates] = await Promise.all([
-    // 1. Carried-forward and open action items from previous meetings
+    // 1. Carried-forward and open action items from previous meetings.
+    // v95: JOIN matches either id space; NULL-safe by construction
+    // (`IN (m.id, NULL)` degrades to `= m.id`) — no guard needed.
     env.DB.prepare(
       `SELECT t.id, t.title, t.description, t.assignee, t.due_date, t.status
        FROM tasks t
-       JOIN meetings m ON t.meeting_id = m.id
+       JOIN meetings m ON t.meeting_id IN (m.id, m.source_id)
        LEFT JOIN projects p ON p.id = t.project_id OR p.slug = t.project_id
        WHERE m.date < ? AND (t.completed = 0 OR t.status NOT IN ('done','completed'))${pbFilterP}
        ORDER BY m.date DESC, t.created_at
