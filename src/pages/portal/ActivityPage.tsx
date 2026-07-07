@@ -18,6 +18,7 @@ import InlineSelect from '../../components/InlineSelect'
 import { staggerContainer, staggerItem } from '../../lib/animations'
 import { isProductionVisibleActivity } from '../../lib/isProductionVisible'
 import { ICON_PROPS } from '../../lib/iconProps'
+import { QueryErrorNote } from '../../components/QueryErrorNote'
 
 const typeOptions = [
   { value: '', label: 'All Types' },
@@ -45,7 +46,7 @@ export default function ActivityPage() {
   // chunk. The page previously rendered all 200 rows at ~14.7K px tall.
   const PAGE_SIZE = 50
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
-  const { data: rawActivity = [], isLoading } = useActivity(200)
+  const { data: rawActivity = [], isLoading, isError, refetch } = useActivity(200)
   const allActivity = useMemo(
     () => rawActivity.filter((a) => isProductionVisibleActivity({ description: a.description })),
     [rawActivity],
@@ -273,7 +274,12 @@ export default function ActivityPage() {
             )
           })
         })()}
-        {!isLoading && grouped.length === 0 && (
+        {!isLoading && isError && (
+          <div className="flex items-center justify-center py-10">
+            <QueryErrorNote label="activity feed" onRetry={() => refetch()} />
+          </div>
+        )}
+        {!isLoading && !isError && grouped.length === 0 && (
           <EmptyState
             icon={<ActivityIcon size={40} />}
             title={filterTypes.length > 0 ? 'No matches for that filter' : 'A quiet day in the lab'}

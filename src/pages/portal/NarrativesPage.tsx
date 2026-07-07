@@ -12,6 +12,7 @@ import { PATHS } from '../../constants/paths'
 import { stageColor, stageLabel } from '../../lib/stageNormalize'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
+import { QueryErrorNote } from '../../components/QueryErrorNote'
 
 // useNarratives() (Hub #361a) is the ingress chokepoint for this shape: it
 // normalizes every stageDistribution/projects `.stage` value onto the UI's
@@ -36,7 +37,7 @@ function stageAbbrev(stage: string): string {
 
 export default function NarrativesPage() {
   usePageMeta('Research Narratives | MN-CCORE Lab', 'Auto-detected research arcs across the lab.')
-  const { data: narratives = [], isLoading } = useNarratives()
+  const { data: narratives = [], isLoading, isError, refetch } = useNarratives()
   const [focusedIndex, setFocusedIndex] = useState(-1)
   const [searchTerm, setSearchTerm] = useState('')
 
@@ -83,6 +84,10 @@ export default function NarrativesPage() {
 
       {isLoading ? (
         <TableSkeleton rows={5} cols={3} />
+      ) : isError ? (
+        <div className="flex items-center justify-center py-10">
+          <QueryErrorNote label="research narratives" onRetry={() => refetch()} />
+        </div>
       ) : filteredNarratives.length === 0 ? (
         <EmptyState
           icon={<BookOpen size={40} />}

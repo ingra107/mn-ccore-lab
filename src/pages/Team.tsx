@@ -16,6 +16,11 @@ import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
 
 export default function Team() {
   const { data: publications = [] } = usePublications()
+  // #507 follow-up opt-out: this page's core content is the static team
+  // roster (directors/seniorMentors/facultyCollaborators/researchTeam, all
+  // from data/team.ts, not an API hook) -- it always renders regardless of
+  // these two. A failure here just omits the expertise-tag pills and the
+  // "active this week" green dot, no false claim, page structure intact.
   const { data: allExpertise = [] } = useExpertise() as { data: ExpertiseTag[] }
   const { data: recentActivity = [] } = useActivity(50)
 

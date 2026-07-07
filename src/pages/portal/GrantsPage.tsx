@@ -32,6 +32,7 @@ import { formatMediumDate, isOverdue, getDaysUntil } from '../../lib/dateUtils'
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
+import { QueryErrorNote } from '../../components/QueryErrorNote'
 
 // ── Gantt chart constants ──────────────────────────────────────
 const CHART_MIN_YEAR = 2023
@@ -1010,6 +1011,16 @@ export default function GrantsPage() {
             <p style={{ fontSize: 'var(--value-size)', color: 'var(--slate)', opacity: 0.85 }}>
               Searching NIH RePORTER...
             </p>
+          </div>
+        )}
+
+        {/* #507 follow-up: without this, a thrown fetch failure rendered as
+            total blank space here -- no loading message, no results, and the
+            "no results" check below (`data?.data?.length === 0`) never
+            matches `undefined`, so nothing told the user the search failed. */}
+        {similarGrants.isError && !similarGrants.isLoading && (
+          <div className="text-center py-6">
+            <QueryErrorNote label="grant search" onRetry={() => similarGrants.refetch()} />
           </div>
         )}
 
