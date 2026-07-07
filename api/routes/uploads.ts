@@ -150,7 +150,7 @@ export async function handleUploadDone(request: Request, user: AuthUser, env: En
   // useless for a link embedded permanently in a comment/note body). Callers
   // (SmartCompose, OverviewQuickAdd) insert this directly instead of falling
   // back to the JSON-envelope GET /api/files/:key.
-  const url = `/api/files/${body.key}?raw=1`;
+  const url = `/api/files/${body.key}/raw`;
   return json({ id, key: body.key, filename: body.filename, url });
 }
 
@@ -177,10 +177,13 @@ export async function handleListFiles(url: URL, env: Env, canSeePb = false): Pro
 }
 
 /** GET /api/files/:key+ — presigned download URL (JSON envelope).
- *  GET /api/files/:key+?raw=1 — the actual bytes, streamed same-origin. This
+ *  GET /api/files/:key+/raw — the actual bytes, streamed same-origin. This
  *  is what an <img src> / direct browser navigation needs: the JSON form
  *  can't be dropped into an <img> tag, and the presigned URL it contains
  *  expires in 1h — dead weight for a link embedded permanently in a comment.
+ *  (`raw` is parsed out of the `/raw` path suffix by the router — see
+ *  api/index.ts; a literal defineRoute for `/raw` can't win against the
+ *  `:rest{.+}` wildcard this route already registers, verified empirically.)
  */
 export async function handleGetFile(key: string, env: Env, canSeePb = false, raw = false): Promise<Response> {
   // B11: resolve the attachment row (authoritative entity_type/entity_id —

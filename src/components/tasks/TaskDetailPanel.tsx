@@ -1461,6 +1461,14 @@ function OverviewQuickAdd({
   const [meOnly, setMeOnly] = useState(false)
   const [dragOver, setDragOver] = useState(false)
   const [uploading, setUploading] = useState(false)
+  // Instant optimistic preview while the real R2 upload runs in the
+  // background (mirrors BugReportModal's screenshot-preview UX — the base64
+  // dataUrl is local-only, never submitted/stored; the durable path is still
+  // the presigned-R2 flow below, Path A). Cleared on success (the real
+  // markdown link is in the textarea by then) or failure (loud toast fires
+  // instead) — its only job is bridging the async gap between paste and
+  // upload completion.
+  const [pendingUploads, setPendingUploads] = useState<{ id: string; dataUrl: string; filename: string }[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const isMobile = useIsMobile()
@@ -1476,6 +1484,16 @@ function OverviewQuickAdd({
 
   // T-04 inline file drop — same presigned-R2 flow as FileUpload.
   const uploadToCompose = useCallback(async (file: File) => {
+    const isImage = (file.type || '').startsWith('image/')
+    const previewId = crypto.randomUUID()
+    if (isImage) {
+      const reader = new FileReader()
+      reader.onload = () => {
+        const dataUrl = reader.result as string
+        setPendingUploads((prev) => [...prev, { id: previewId, dataUrl, filename: file.name }])
+      }
+      reader.readAsDataURL(file)
+    }
     setUploading(true)
     try {
       const urlRes = await fetch('/api/upload/url', {
@@ -1500,8 +1518,7 @@ function OverviewQuickAdd({
       // Same-origin, non-expiring raw-bytes link (see api/routes/uploads.ts
       // handleUploadDone) — falls back to constructing it client-side only if
       // an older/unpatched worker is still serving the response.
-      const link = doneData.data?.url ?? `/api/files/${urlData.data.key}?raw=1`
-      const isImage = (file.type || '').startsWith('image/')
+      const link = doneData.data?.url ?? `/api/files/${urlData.data.key}/raw`
       const md = isImage ? `![${file.name}](${link})` : `[${file.name}](${link})`
       setText((prev) => (prev ? `${prev}\n${md}` : md))
       showSuccess(`Attached ${file.name}`)
@@ -1510,6 +1527,7 @@ function OverviewQuickAdd({
       showError(`Attach failed: ${err instanceof Error ? err.message : 'please try again.'}`)
     } finally {
       setUploading(false)
+      setPendingUploads((prev) => prev.filter((p) => p.id !== previewId))
     }
   }, [taskId, queryClient, showSuccess, showError])
 
@@ -1756,6 +1774,29 @@ function OverviewQuickAdd({
             }}
           />
         </div>
+
+        {/* ── Pending-upload thumbnail strip: instant optimistic preview ── */}
+        {pendingUploads.length > 0 && (
+          <div className="flex items-center gap-2 flex-wrap" style={{ marginTop: 6 }}>
+            {pendingUploads.map((p) => (
+              <div
+                key={p.id}
+                className="relative flex-shrink-0"
+                style={{ width: 44, height: 44, borderRadius: 'var(--radius-sm)', overflow: 'hidden', border: '1px solid var(--border-subtle)' }}
+              >
+                <img src={p.dataUrl} alt={p.filename} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                <div
+                  className="absolute inset-0 flex items-center justify-center"
+                  style={{ background: 'rgba(0,0,0,0.35)' }}
+                  aria-label={`Uploading ${p.filename}`}
+                  title={`Uploading ${p.filename}…`}
+                >
+                  <Loader2 size={14} strokeWidth={2} absoluteStrokeWidth className="animate-spin" style={{ color: '#fff' }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* ── Composing action row (Slack-style): below the textarea ── */}
         {composing && (

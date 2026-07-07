@@ -41,7 +41,7 @@ import { formatRelativeTime } from '../../lib/dateUtils'
 import { parseDbUtc, formatDbLocal } from '../../lib/time'
 import { getPersonInfo } from '../../data/team'
 import Avatar from '../Avatar'
-import LinkifiedText from '../LinkifiedText'
+import LinkifiedText, { ImageChip } from '../LinkifiedText'
 import HermesMark from '../HermesMark'
 import HermesResponse from '../HermesResponse'
 import HermesPending, { isHermesPending } from '../HermesPending'
@@ -61,6 +61,39 @@ export function canDeleteActivityEntry(
   if (user?.isPi) return true
   const viewerSlug = emailToSlug(user?.email)
   return !!viewerSlug && actorSlug === viewerSlug
+}
+
+// ── Body render: markdown-image pre-pass + LinkifiedText ─────────────────────
+//
+// The paste-to-upload composers (SmartCompose, OverviewQuickAdd) insert
+// `![alt](url)` for image attachments. This is the ONLY place that markdown
+// image syntax is recognized — deliberately scoped here rather than into
+// LinkifiedText itself, so LinkifiedText's ~10 other callers (MarkdownView,
+// HermesResponse, ArtifactPage, etc.) are untouched. `url` is restricted to
+// same-origin /api/files/ or http(s) by the regex itself, so an <img src>
+// can never point at something that isn't a real, fetchable image endpoint.
+const IMG_MD_RE = /!\[([^\]]*)\]\(((?:\/api\/files\/|https?:\/\/)[^)\s]+)\)/g
+
+function renderBodyWithImages(text: string): ReactNode {
+  if (!text) return null
+  const parts: ReactNode[] = []
+  let lastIdx = 0
+  let match: RegExpExecArray | null
+  const re = new RegExp(IMG_MD_RE.source, IMG_MD_RE.flags) // fresh instance — see LinkifiedText's own note on shared /g regex state
+  let key = 0
+
+  while ((match = re.exec(text)) !== null) {
+    const start = match.index
+    if (start > lastIdx) {
+      parts.push(<LinkifiedText key={`t-${key++}`} text={text.slice(lastIdx, start)} />)
+    }
+    parts.push(<ImageChip key={`img-${key++}`} src={match[2]} alt={match[1] || 'pasted image'} />)
+    lastIdx = start + match[0].length
+  }
+  if (lastIdx < text.length) {
+    parts.push(<LinkifiedText key={`t-${key++}`} text={text.slice(lastIdx)} />)
+  }
+  return <>{parts}</>
 }
 
 // ── Design constants ──────────────────────────────────────────────────────────
@@ -535,7 +568,7 @@ export function ActivityEntryItem({
   // use a brief verb phrase so the entry is self-describing.
   const completionBody: ReactNode =
     entry.body ? (
-      <LinkifiedText text={entry.body} />
+      renderBodyWithImages(entry.body)
     ) : isTask && showTaskOriginBadge && taskHref ? (
       <>
         {'Completed '}
@@ -672,7 +705,7 @@ export function ActivityEntryItem({
             {entry.kind === 'completion' ? (
               completionBody
             ) : (
-              <LinkifiedText text={entry.body} />
+              renderBodyWithImages(entry.body)
             )}
           </p>
 

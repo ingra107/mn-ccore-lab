@@ -1371,9 +1371,14 @@ defineRoute({
   visibility: 'pb-aware',
   handler: (c) => handleListFiles(U(c), E(c), CSP(c)),
 });
-// GET /api/files/:key+ — presigned download URL. Key can contain slashes
-// (R2 key paths). Hono's wildcard match in the URL `:*` isn't used because
-// we need the full rest-of-path as a single string — match regex-style.
+// GET /api/files/:key+ — presigned download URL (JSON envelope).
+// GET /api/files/:key+/raw — the actual bytes (see handleGetFile).
+// Key can contain slashes (R2 key paths), so this is ONE route matching the
+// full rest-of-path as a single string (Hono wildcard-regex, not `:*`). A
+// separate `defineRoute` for a literal `/raw` suffix does NOT work here —
+// verified empirically: Hono's router still resolves it to THIS wildcard
+// (`:rest{.+}` greedily captures ".../raw" too) regardless of registration
+// order, so `/raw` is parsed out of `rest` inside this one handler instead.
 defineRoute({
   method: 'GET',
   path: '/api/files/:rest{.+}',
@@ -1381,8 +1386,13 @@ defineRoute({
   entity: 'files',
   visibility: 'pb-aware',
   handler: (c) => {
-  const key = c.req.param('rest');
-  return handleGetFile(key, E(c), CSP(c), c.req.query('raw') === '1');
+  let key = c.req.param('rest');
+  let raw = false;
+  if (key.endsWith('/raw')) {
+    raw = true;
+    key = key.slice(0, -'/raw'.length);
+  }
+  return handleGetFile(key, E(c), CSP(c), raw);
 },
 });
 

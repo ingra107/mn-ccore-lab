@@ -584,7 +584,7 @@ describe('handleUploadUrl / handleUploadDone — canAccessEntity on context', ()
     const data = await res.json() as { data?: { url?: string } }
     // Same-origin path (not a presigned R2 URL — those expire in 1h, useless
     // for a link embedded permanently in a comment body).
-    expect(data.data?.url).toBe('/api/files/task/task-1/1700000000000-shot.png?raw=1')
+    expect(data.data?.url).toBe('/api/files/task/task-1/1700000000000-shot.png/raw')
   })
 })
 

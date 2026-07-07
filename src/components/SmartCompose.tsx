@@ -160,6 +160,12 @@ export default function SmartCompose(props: SmartComposeProps) {
   const [focused, setFocused] = useState(false)
   const [emojiOpen, setEmojiOpen] = useState(false)
   const [uploading, setUploading] = useState(false)
+  // Instant optimistic preview while the real R2 upload runs (mirrors
+  // BugReportModal's screenshot-preview UX — local base64 only, never
+  // submitted/stored; the durable path is still the presigned-R2 flow below,
+  // Path A). Cleared on success (real markdown link now in the textarea) or
+  // failure (loud toast fires instead).
+  const [pendingUploads, setPendingUploads] = useState<{ id: string; dataUrl: string; filename: string }[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const undoToast = useUndoToast()
@@ -282,6 +288,16 @@ export default function SmartCompose(props: SmartComposeProps) {
   const handleFiles = useCallback(async (files: FileList | null) => {
     const file = files?.[0]
     if (!file || !uploadContext) return
+    const isImage = (file.type || '').startsWith('image/')
+    const previewId = crypto.randomUUID()
+    if (isImage) {
+      const reader = new FileReader()
+      reader.onload = () => {
+        const dataUrl = reader.result as string
+        setPendingUploads((prev) => [...prev, { id: previewId, dataUrl, filename: file.name }])
+      }
+      reader.readAsDataURL(file)
+    }
     setUploading(true)
     try {
       const urlRes = await fetch('/api/upload/url', {
@@ -319,8 +335,7 @@ export default function SmartCompose(props: SmartComposeProps) {
       // Same-origin, non-expiring raw-bytes link (api/routes/uploads.ts
       // handleUploadDone) — falls back to constructing it client-side only if
       // an older/unpatched worker is still serving the response.
-      const url = doneData.data?.url ?? `/api/files/${urlData.data.key}?raw=1`
-      const isImage = (file.type || '').startsWith('image/')
+      const url = doneData.data?.url ?? `/api/files/${urlData.data.key}/raw`
       insertAtCursor(isImage ? `![${file.name}](${url}) ` : `[${file.name}](${url}) `)
       undoToast.showSuccess(`Attached ${file.name}`)
     } catch (err) {
@@ -328,6 +343,7 @@ export default function SmartCompose(props: SmartComposeProps) {
       undoToast.showError(`Attach failed: ${err instanceof Error ? err.message : 'please try again.'}`)
     } finally {
       setUploading(false)
+      setPendingUploads((prev) => prev.filter((p) => p.id !== previewId))
     }
   }, [uploadContext, insertAtCursor, undoToast])
 
@@ -397,6 +413,26 @@ export default function SmartCompose(props: SmartComposeProps) {
         style={{ display: 'none' }}
         onChange={(e) => { handleFiles(e.target.files); e.target.value = '' }}
       />
+      {/* Pending-upload thumbnail strip: instant optimistic preview */}
+      {pendingUploads.length > 0 && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginTop: 6 }}>
+          {pendingUploads.map((p) => (
+            <div
+              key={p.id}
+              style={{ position: 'relative', flexShrink: 0, width: 40, height: 40, borderRadius: 'var(--radius-sm)', overflow: 'hidden', border: isDark ? '1px solid rgba(255,255,255,0.12)' : '1px solid var(--border-subtle)' }}
+            >
+              <img src={p.dataUrl} alt={p.filename} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              <div
+                style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                aria-label={`Uploading ${p.filename}`}
+                title={`Uploading ${p.filename}…`}
+              >
+                <Loader2 size={12} strokeWidth={2} absoluteStrokeWidth className="animate-spin" style={{ color: '#fff' }} />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
       {/* Slack-style action row — below the textarea, left = quiet icon-buttons, right = Post */}
       {showToolbar && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 6, position: 'relative' }}>
