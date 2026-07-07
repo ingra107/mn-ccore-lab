@@ -9,9 +9,16 @@
 //
 // POST /api/seen           {entity_type, entity_id} → upsert last_seen_at=now.
 //                          Fired by every detail-open (task panel/drawer,
-//                          ProjectDetail) — the act of looking IS the mark.
+//                          ProjectDetail, meeting notes) — the act of looking
+//                          IS the mark.
 // GET  /api/seen/unseen    → [{entity_type, entity_id, new_count, latest_at,
-//                          title, project_slug}] for the calling viewer.
+//                          title, project_slug}] for task/project rows, PLUS
+//                          meeting rows {entity_type: 'meeting', entity_id,
+//                          never_seen, latest_at, title, project_slug: null}
+//                          — meetings have no activity_entries feed, so
+//                          "unseen" is just (no seen row) OR (updated_at >
+//                          last_seen_at), with never_seen=1 marking the
+//                          former (2026-07-07, task T11).
 //
 // Both endpoints are FAIL-SOFT pre-migration: if entity_seen doesn't exist on
 // this DB yet, GET returns an empty list and POST no-ops — so the worker can
@@ -20,7 +27,7 @@
 import type { Env } from '../helpers';
 import { json, error, actorSlugFromRequest } from '../helpers';
 
-const SEEN_TYPES = new Set(['task', 'project']);
+const SEEN_TYPES = new Set(['task', 'project', 'meeting']);
 
 export async function handleMarkSeen(request: Request, env: Env): Promise<Response> {
   const viewer = await actorSlugFromRequest(request, env);
@@ -29,7 +36,7 @@ export async function handleMarkSeen(request: Request, env: Env): Promise<Respon
   const entityType = body.entity_type ?? '';
   const entityId = body.entity_id ?? '';
   if (!SEEN_TYPES.has(entityType) || !entityId) {
-    return error("entity_type ('task'|'project') and entity_id required", 400);
+    return error("entity_type ('task'|'project'|'meeting') and entity_id required", 400);
   }
   try {
     await env.DB.prepare(
@@ -48,29 +55,45 @@ export async function handleGetUnseenActivity(request: Request, env: Env): Promi
   const viewer = await actorSlugFromRequest(request, env);
   if (!viewer) return json({ data: [], count: 0 });
   try {
-    const rows = await env.DB.prepare(
-      `SELECT es.entity_type, es.entity_id,
-              COUNT(*) AS new_count,
-              MAX(ae.created_at) AS latest_at,
-              CASE WHEN es.entity_type = 'task'
-                   THEN COALESCE(t.short_title, t.title)
-                   ELSE COALESCE(p.short_name, p.title) END AS title,
-              p.slug AS project_slug
-       FROM entity_seen es
-       JOIN activity_entries ae
-         ON ae.entity_type = es.entity_type AND ae.entity_id = es.entity_id
-        AND ae.visibility = 'team'
-        AND ae.actor_slug != es.viewer_slug
-        AND ae.created_at > es.last_seen_at
-       LEFT JOIN tasks t ON es.entity_type = 'task' AND t.id = es.entity_id
-       LEFT JOIN projects p ON es.entity_type = 'project' AND p.id = es.entity_id
-       WHERE es.viewer_slug = ?
-         AND (es.entity_type != 'task' OR t.deleted_at IS NULL)
-         AND (es.entity_type != 'project' OR p.deleted_at IS NULL)
-       GROUP BY es.entity_type, es.entity_id
-       ORDER BY latest_at DESC`
-    ).bind(viewer).all();
-    const data = rows.results ?? [];
+    const [taskProjectRows, meetingRows] = await Promise.all([
+      env.DB.prepare(
+        `SELECT es.entity_type, es.entity_id,
+                COUNT(*) AS new_count,
+                MAX(ae.created_at) AS latest_at,
+                CASE WHEN es.entity_type = 'task'
+                     THEN COALESCE(t.short_title, t.title)
+                     ELSE COALESCE(p.short_name, p.title) END AS title,
+                p.slug AS project_slug
+         FROM entity_seen es
+         JOIN activity_entries ae
+           ON ae.entity_type = es.entity_type AND ae.entity_id = es.entity_id
+          AND ae.visibility = 'team'
+          AND ae.actor_slug != es.viewer_slug
+          AND ae.created_at > es.last_seen_at
+         LEFT JOIN tasks t ON es.entity_type = 'task' AND t.id = es.entity_id
+         LEFT JOIN projects p ON es.entity_type = 'project' AND p.id = es.entity_id
+         WHERE es.viewer_slug = ?
+           AND (es.entity_type != 'task' OR t.deleted_at IS NULL)
+           AND (es.entity_type != 'project' OR p.deleted_at IS NULL)
+         GROUP BY es.entity_type, es.entity_id
+         ORDER BY latest_at DESC`
+      ).bind(viewer).all(),
+      // Meetings have no activity_entries feed — "unseen" is a direct
+      // updated_at vs last_seen_at compare, with never_seen=1 when no seen
+      // row exists yet (LEFT JOIN, not the INNER JOIN above).
+      env.DB.prepare(
+        `SELECT 'meeting' AS entity_type, m.id AS entity_id,
+                CASE WHEN es.last_seen_at IS NULL THEN 1 ELSE 0 END AS never_seen,
+                m.updated_at AS latest_at, m.title, NULL AS project_slug
+         FROM meetings m
+         LEFT JOIN entity_seen es
+           ON es.entity_type = 'meeting' AND es.entity_id = m.id AND es.viewer_slug = ?
+         WHERE m.notes IS NOT NULL
+           AND (es.last_seen_at IS NULL OR m.updated_at > es.last_seen_at)
+         ORDER BY latest_at DESC`
+      ).bind(viewer).all(),
+    ]);
+    const data = [...(taskProjectRows.results ?? []), ...(meetingRows.results ?? [])];
     return json({ data, count: data.length });
   } catch (e) {
     console.error('handleGetUnseenActivity failed (entity_seen missing pre-migration?):', e);
