@@ -24,6 +24,7 @@ import WatchButton from '../components/WatchButton'
 import { PATHS } from '../constants/paths'
 import { ICON_PROPS } from '../lib/iconProps'
 import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
+import { QueryErrorNote } from '../components/QueryErrorNote'
 
 const TOPIC_DISPLAY: Record<string, string> = {
   clif: 'CLIF',
@@ -170,7 +171,7 @@ export default function MemberPage() {
     .filter(Boolean) ?? []
 
   // Expertise tags for this member
-  const { data: expertiseTags = [] } = useExpertise(slug)
+  const { data: expertiseTags = [], isError: expertiseError, refetch: refetchExpertise } = useExpertise(slug)
   const addExpertiseMut = useAddExpertise(slug || '')
   const removeExpertiseMut = useRemoveExpertise(slug || '')
   const [newTag, setNewTag] = useState('')
@@ -624,7 +625,9 @@ export default function MemberPage() {
               </motion.div>
             )}
 
-            {expertiseTags.length === 0 && !showAddTag && (
+            {expertiseError ? (
+              <QueryErrorNote label="expertise tags" onRetry={() => refetchExpertise()} />
+            ) : expertiseTags.length === 0 && !showAddTag && (
               <p className="text-sm" style={{ color: 'var(--slate)', opacity: 0.75 }}>
                 No expertise tags yet.{isAuthenticated ? ' Click + Add to tag areas of expertise.' : ''}
               </p>
@@ -819,6 +822,10 @@ function MiniSparkline({ data }: { data: number[] }) {
 function ContributionScoreCard({ slug }: { slug: string }) {
   const { data, isLoading } = useContributionScore(slug)
 
+  // #507 follow-up opt-out: small secondary stat card sitting above the real
+  // activity signal (ActivityHeatmap, rendered regardless right below this).
+  // A failure here just omits the card -- no false claim, and the Activity
+  // section as a whole doesn't go blank.
   if (isLoading || !data) return null
 
   const trend = TREND_ARROWS[data.trend] || TREND_ARROWS.stable
@@ -896,9 +903,13 @@ const MILESTONE_STATUS_COLORS: Record<string, string> = {
 }
 
 function MemberMilestones({ slug }: { slug: string }) {
-  const { data: milestones = [], isLoading } = useMenteeMilestones({ mentee: slug })
+  const { data: milestones = [], isLoading, isError, refetch } = useMenteeMilestones({ mentee: slug })
 
-  if (isLoading || milestones.length === 0) return null
+  // #507 follow-up: a bare `.length === 0` return-null used to vanish this
+  // whole named section (with its own header + "View all" link) on a
+  // thrown fetch failure too. isError now renders a visible retry note.
+  if (isLoading) return null
+  if (!isError && milestones.length === 0) return null
 
   const enriched = milestones.map((m: MenteeMilestoneRow) => {
     const isOverdueCalc = m.status !== 'completed' && isOverdue(m.due_date)
@@ -934,6 +945,9 @@ function MemberMilestones({ slug }: { slug: string }) {
           </Link>
         </div>
 
+        {isError ? (
+          <QueryErrorNote label="milestones" onRetry={() => refetch()} />
+        ) : (
         <div className="flex flex-col gap-2">
           {open.map((m) => (
             <MilestoneMiniCard key={m.id} milestone={m} isOverdue={m._isOverdue} />
@@ -942,6 +956,7 @@ function MemberMilestones({ slug }: { slug: string }) {
             <MilestoneMiniCard key={m.id} milestone={m} isOverdue={false} />
           ))}
         </div>
+        )}
       </section>
     </>
   )

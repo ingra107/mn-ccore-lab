@@ -1207,7 +1207,7 @@ function ContributionTimeline({ entries }: { entries: TimelineEntry[] }) {
 
 function ContributionsPanel({ slug, memberName }: { slug: string; memberName: string }) {
   const [period, setPeriod] = useState(90)
-  const { data: contributions, isLoading } = useContributions(slug, period)
+  const { data: contributions, isLoading, refetch: refetchContributions } = useContributions(slug, period)
 
   const timeline = useMemo(
     () => (contributions ? buildTimeline(contributions) : []),
@@ -1223,11 +1223,20 @@ function ContributionsPanel({ slug, memberName }: { slug: string; memberName: st
   }
 
   if (!contributions) {
+    // #507 follow-up: same reasoning as the trajectory empty-state above --
+    // a successful fetch always returns a real object, so this branch is
+    // error-specific already. Real retry via refetch() instead of reload.
     return (
       <div className="py-16 text-center">
-        <p style={{ fontSize: '14px', color: 'var(--slate)' }}>
-          Unable to load contribution data. Try refreshing the page.
+        <p style={{ fontSize: '14px', color: 'var(--slate)', marginBottom: '0.75rem' }}>
+          Unable to load contribution data.
         </p>
+        <button
+          onClick={() => refetchContributions()}
+          style={{ fontSize: '13px', color: 'var(--teal)', background: 'none', border: 'none', textDecoration: 'underline', cursor: 'pointer' }}
+        >
+          Retry
+        </button>
       </div>
     )
   }
@@ -1309,7 +1318,7 @@ export default function TrajectoryPage() {
   const location = useLocation()
   const teamBase = location.pathname.startsWith('/portal/') ? '/portal/team' : '/team'
   const member = slug ? getMemberBySlug(slug) : undefined
-  const { data: trajectory, isLoading } = useTrajectory(slug || '')
+  const { data: trajectory, isLoading, refetch: refetchTrajectory } = useTrajectory(slug || '')
   const [activeTab, setActiveTab] = useState<TabId>('trajectory')
 
   usePageMeta(
@@ -1578,12 +1587,23 @@ export default function TrajectoryPage() {
               </>
             )}
 
-            {/* Empty state (no data at all and not loading) */}
+            {/* #507 follow-up: a successful fetch always returns a real
+                TrajectoryData object (arrays inside can be empty, but the
+                object itself isn't falsy) -- `!trajectory` here only fires
+                on a thrown fetch failure, so this message was already
+                error-specific pre-#507. Swapping the full-page-reload
+                instruction for a real retry via refetch(). */}
             {!isLoading && !trajectory && (
               <div className="py-16 text-center">
-                <p style={{ fontSize: '14px', color: 'var(--slate)' }}>
-                  Unable to load trajectory data. Try refreshing the page.
+                <p style={{ fontSize: '14px', color: 'var(--slate)', marginBottom: '0.75rem' }}>
+                  Unable to load trajectory data.
                 </p>
+                <button
+                  onClick={() => refetchTrajectory()}
+                  style={{ fontSize: '13px', color: 'var(--teal)', background: 'none', border: 'none', textDecoration: 'underline', cursor: 'pointer' }}
+                >
+                  Retry
+                </button>
               </div>
             )}
           </motion.div>
