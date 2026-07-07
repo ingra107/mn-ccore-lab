@@ -12,6 +12,12 @@ const KNOWN_COMMAND_TAGS: Record<string, { label: string; color: string; bg: str
   backlog:  { label: '⌘ Backlog idea',       color: 'var(--slate)', bg: 'var(--hover-subtle)' },
 }
 
+// Detects a command @-tag at the START of the value — module-level so it isn't
+// re-literal-ed on every keystroke (#252 finding 4). Stateless (no g/y flag),
+// safe to share across calls unlike the highlight overlay's global-flag regex
+// below (which is intentionally per-render — see its own comment).
+const COMMAND_TAG_PREFIX_RE = /^@(\w[\w-]*)(?:\s|$)/i
+
 // One row in the unified @-dropdown -- a recognized command or a team member.
 // Commands render first (see filteredCommands); both share keyboard nav via
 // selectedIndex over the combined mentionOptions list.
@@ -224,6 +230,10 @@ export default function MentionInput({
   // the textarea and the dropdown row styling; person @-mentions get gold.
   const highlightedParts = useMemo(() => {
     const parts: { text: string; isMention: boolean; bg?: string }[] = []
+    // Global-flag regex used with .exec() in a loop below — its `lastIndex`
+    // is mutated as stateful scan progress, so this one MUST stay a fresh
+    // per-call instance (a module-level shared instance would carry stale
+    // lastIndex across renders). Not the same case as COMMAND_TAG_PREFIX_RE.
     const regex = /@(\w[\w-]*)/g
     let lastIndex = 0
     let match: RegExpExecArray | null
@@ -249,7 +259,7 @@ export default function MentionInput({
   // followed by whitespace or end-of-string). Drives the command-badge below
   // the textarea — visible in both light and dark mode regardless of overlay.
   const detectedCommand = useMemo(() => {
-    const m = value.match(/^@(\w[\w-]*)(?:\s|$)/i)
+    const m = value.match(COMMAND_TAG_PREFIX_RE)
     if (!m) return null
     return KNOWN_COMMAND_TAGS[m[1].toLowerCase()] ?? null
   }, [value])
