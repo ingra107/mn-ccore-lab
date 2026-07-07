@@ -26,8 +26,9 @@ function normalize(title: string): string {
   return title.toLowerCase().trim().replace(/\s+/g, ' ')
 }
 
-function makeStatefulEnv(seed: Row[] = []): { env: Env; meetings: Row[] } {
+function makeStatefulEnv(seed: Row[] = []): { env: Env; meetings: Row[]; notifications: Row[] } {
   const meetings: Row[] = seed.map((r) => ({ ...r }))
+  const notifications: Row[] = []
 
   const prepare = (sql: string) => {
     const s = sql.trim()
@@ -76,6 +77,15 @@ function makeStatefulEnv(seed: Row[] = []): { env: Env; meetings: Row[] } {
             }
             return { meta: { changes: 0 } }
           }
+          if (upper.startsWith('INSERT INTO NOTIFICATIONS')) {
+            // INSERT (id, recipient_slug, type, source_type, source_id, title, body, link)
+            const [id, recipientSlug, type, sourceType, sourceId, title, bodyText, link] = args
+            notifications.push({
+              id, recipient_slug: recipientSlug, type, source_type: sourceType,
+              source_id: sourceId, title, body: bodyText, link,
+            })
+            return { meta: { changes: 1 } }
+          }
           // activity_log insert and anything else: no-op
           return { meta: { changes: 1 } }
         },
@@ -88,7 +98,7 @@ function makeStatefulEnv(seed: Row[] = []): { env: Env; meetings: Row[] } {
   }
 
   const env = { DB: { prepare } } as unknown as Env
-  return { env, meetings }
+  return { env, meetings, notifications }
 }
 
 function makeUser(email = 'ingra107@umn.edu'): AuthUser {
@@ -345,5 +355,98 @@ describe('handleCreateMeeting — schema-v72 tags (multi-tagging) persistence', 
     expect(res.status).toBe(200)
     expect(meetings).toHaveLength(1)
     expect(meetings[0].tags).toBe(existingTags)
+  })
+})
+
+// Commits 3e22831c/b040f100 — the "debrief landed" bell fires only on the
+// notes-less -> notes-full transition (insert-with-notes, or the first dedup
+// upsert that adds a summary). A later re-push (notes already present) must
+// NOT fire a second bell — that path surfaces via the entity_seen teal dot
+// instead. These tests assert the exact fire count via the stub's recorded
+// `notifications` inserts, not just response shape.
+describe('handleCreateMeeting — debrief notification (fire-once bell)', () => {
+  it('insert-with-notes fires exactly ONE notification, keyed to the hub meeting id (never source_id)', async () => {
+    const { env, notifications } = makeStatefulEnv()
+    const res = await handleCreateMeeting(
+      makeRequest({
+        date: '2026-05-29',
+        title: 'Nick / Adams 1:1',
+        notes: '## Summary\n\nDiscussed the R03 resubmission.',
+        source_id: 'pb-calendar-evt-999',
+      }),
+      makeUser(), env,
+    )
+    const body = await res.json() as { data: Row }
+    const hubId = body.data.id as string
+
+    expect(res.status).toBe(201)
+    expect(notifications).toHaveLength(1)
+    expect(notifications[0].type).toBe('meeting_debrief')
+    expect(notifications[0].recipient_slug).toBe('nick-ingraham')
+    // source_id + link use the minted hub id, never the PB calendar source_id.
+    expect(notifications[0].source_id).toBe(hubId)
+    expect(notifications[0].source_id).not.toBe('pb-calendar-evt-999')
+    expect(notifications[0].link).toBe(`/portal/meetings/${hubId}`)
+  })
+
+  it('insert WITHOUT notes fires ZERO notifications', async () => {
+    const { env, notifications } = makeStatefulEnv()
+    const res = await handleCreateMeeting(
+      makeRequest({ date: '2026-05-29', title: 'Bare Meeting' }),
+      makeUser(), env,
+    )
+    expect(res.status).toBe(201)
+    expect(notifications).toHaveLength(0)
+  })
+
+  it('dedup transition notes null -> present fires exactly ONE notification', async () => {
+    const { env, meetings, notifications } = makeStatefulEnv([
+      {
+        id: 'mtg-2026-05-29-notif0001',
+        date: '2026-05-29',
+        title: 'MN-CCORE: Nick Adams',
+        notes: null,
+        decisions: null,
+        status: 'upcoming',
+      },
+    ])
+    const res = await handleCreateMeeting(
+      makeRequest({
+        date: '2026-05-29',
+        title: 'mn-ccore:  nick  adams', // normalizes to the same key
+        notes: '## Summary\n\nFull extracted summary text.',
+      }),
+      makeUser(), env,
+    )
+    expect(res.status).toBe(200)
+    expect(meetings).toHaveLength(1) // dedup, no duplicate meeting row
+    expect(notifications).toHaveLength(1)
+    expect(notifications[0].type).toBe('meeting_debrief')
+    expect(notifications[0].recipient_slug).toBe('nick-ingraham')
+    expect(notifications[0].source_id).toBe('mtg-2026-05-29-notif0001')
+    expect(notifications[0].link).toBe('/portal/meetings/mtg-2026-05-29-notif0001')
+  })
+
+  it('dedup re-push where the existing row already HAD notes fires ZERO notifications (no repeat bell)', async () => {
+    const { env, notifications } = makeStatefulEnv([
+      {
+        id: 'mtg-2026-05-29-notif0002',
+        date: '2026-05-29',
+        title: 'MN-CCORE: Nick Adams',
+        notes: '## Summary\n\nAlready-summarized meeting.',
+        decisions: null,
+        status: 'upcoming',
+      },
+    ])
+    const res = await handleCreateMeeting(
+      makeRequest({
+        date: '2026-05-29',
+        title: 'mn-ccore:  nick  adams',
+        notes: '## Summary\n\nRe-pushed / refreshed summary text.',
+      }),
+      makeUser(), env,
+    )
+    expect(res.status).toBe(200)
+    expect(notifications).toHaveLength(0)
   })
 })
