@@ -690,23 +690,22 @@ function makeMobileEnv() {
       first: async <T>() => {
         const upper = sql.trim().toUpperCase()
 
-        // Dedup SELECT for handleMobileTasksToHub (pre-fix and post-fix shapes)
-        // Pre-fix:  WHERE lower(trim(title)) = lower(trim(?)) AND assignee = ? AND completed = 0 AND deleted_at IS NULL
-        // Post-fix: + AND ((project_id IS NULL AND ? IS NULL) OR project_id = ?)
-        if (upper.includes('LOWER(TRIM(TITLE))') && upper.includes('ASSIGNEE =')) {
+        // Dedup SELECT for handleMobileTasksToHub (#523 2026-07-07: assignee
+        // dropped from the key — it never protected anything, since
+        // applyInsert's own (title, project_id) I18 rule below doesn't scope
+        // by assignee either. Shapes: pre-project-id (Phase 1.4, no longer
+        // live), post-project-id-pre-#523 (had ASSIGNEE =), post-#523 (this one).
+        if (upper.includes('LOWER(TRIM(TITLE))')) {
           const title = (boundVals[0] as string).toLowerCase().trim()
-          const assignee = boundVals[1] as string
-          // Post-fix: project_id is boundVals[2] and boundVals[3]
-          const projectId = boundVals.length >= 4 ? (boundVals[2] as string | null) : undefined
+          // project_id is boundVals[1] and boundVals[2] (assignee bind dropped #523)
+          const projectId = boundVals.length >= 3 ? (boundVals[1] as string | null) : undefined
 
           for (const row of store.values()) {
             const rowTitle = ((row.title as string) ?? '').toLowerCase().trim()
-            const rowAssignee = row.assignee as string
             const rowCompleted = row.completed as number
             const rowDeletedAt = row.deleted_at
 
             if (rowTitle !== title) continue
-            if (rowAssignee !== assignee) continue
             if (rowCompleted !== 0) continue
             if (rowDeletedAt) continue
 
@@ -719,6 +718,33 @@ function makeMobileEnv() {
 
             return { id: row.id } as T
           }
+          return null as T | null
+        }
+
+        // applyInsert's central I18 (title, project_id) dedup — fires INSIDE
+        // applyMutation for any row the pre-check above missed (#523
+        // fallthrough coverage). Mirrors makeStubDB's matcher.
+        if (upper.includes('TITLE =') && upper.includes('PROJECT_ID IS')) {
+          const title = boundVals[0] as string
+          const projectId = (boundVals[1] === undefined ? null : boundVals[1]) as string | null
+          for (const row of store.values()) {
+            if (
+              row.title === title &&
+              (row.project_id ?? null) === projectId &&
+              !row.deleted_at &&
+              row.status !== 'done'
+            ) {
+              return { id: row.id } as T
+            }
+          }
+          return null as T | null
+        }
+
+        // getValidationFlags: SELECT key, value FROM lab_settings WHERE key IN (...)
+        // Returns nothing → all flags OFF, matching the "null → OFF" convention
+        // used elsewhere in this file. canonical_id (flag-gated) isn't needed —
+        // the fix reads canonical_payload.id, which is unconditional.
+        if (upper.includes('LAB_SETTINGS')) {
           return null as T | null
         }
 
@@ -852,5 +878,72 @@ describe('Phase 1.4 — mobile dedup includes project_id', () => {
 
     expect(body.data.deduped).toBe(1)
     expect(body.data.id_map['mobile_dup']).toBe('task_existing2')
+  })
+
+  // #523 (2026-07-07): assignee dropped from the pre-check key — it never
+  // actually protected anything (applyInsert's own (title, project_id) I18
+  // rule downstream doesn't scope by assignee either, so a cross-assignee
+  // same-title-project row would merge there regardless). This proves the
+  // pre-check now catches it directly instead of silently creating a second
+  // row that a moment later would have collided with I18 anyway.
+  it('different assignee, same title+project_id now deduplicates (#523)', async () => {
+    const { env, seedTask } = makeMobileEnv()
+
+    seedTask({
+      id: 'task_existing3',
+      title: 'shared owner-agnostic title',
+      assignee: 'someone-else',
+      project_id: 'proj_D',
+      status: 'todo',
+      completed: 0,
+    })
+
+    const { handleMobileTasksToHub } = await import('./tasks')
+
+    const req = new Request('https://example.com/api/sync/mobile-tasks-to-hub', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${TEST_API_KEY}` },
+      body: JSON.stringify({
+        tasks: [{ id: 'mobile_cross_assignee', title: 'shared owner-agnostic title', assignee: 'nick-ingraham', project_id: 'proj_D' }],
+      }),
+    })
+
+    const response = await handleMobileTasksToHub(req, mobileUser, env as any)
+    const body = await response.json() as { data: { deduped: number; created: number; id_map: Record<string, string> } }
+
+    expect(body.data.deduped).toBe(1)
+    expect(body.data.created).toBe(0)
+    expect(body.data.id_map['mobile_cross_assignee']).toBe('task_existing3')
+  })
+
+  // #523: lower(trim()) normalization is KEPT — genuine tolerance for typed
+  // mobile input that applyInsert's central exact `title = ?` rule lacks.
+  it('case + whitespace variant of an existing title still deduplicates', async () => {
+    const { env, seedTask } = makeMobileEnv()
+
+    seedTask({
+      id: 'task_existing4',
+      title: 'Buy milk',
+      assignee: 'nick-ingraham',
+      project_id: null,
+      status: 'todo',
+      completed: 0,
+    })
+
+    const { handleMobileTasksToHub } = await import('./tasks')
+
+    const req = new Request('https://example.com/api/sync/mobile-tasks-to-hub', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${TEST_API_KEY}` },
+      body: JSON.stringify({
+        tasks: [{ id: 'mobile_case_variant', title: '  buy MILK  ', assignee: 'nick-ingraham' }],
+      }),
+    })
+
+    const response = await handleMobileTasksToHub(req, mobileUser, env as any)
+    const body = await response.json() as { data: { deduped: number; id_map: Record<string, string> } }
+
+    expect(body.data.deduped).toBe(1)
+    expect(body.data.id_map['mobile_case_variant']).toBe('task_existing4')
   })
 })

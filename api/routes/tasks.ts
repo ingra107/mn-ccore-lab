@@ -553,7 +553,16 @@ export async function handleCreateTask(request: Request, user: AuthUser, env: En
     return error(`mutation rejected: ${createMutResult.status} — ${createMutResult.reason ?? ''}`, 409);
   }
 
-  await logActivity(env, 'task', `Created task: "${title}" → ${body.assignee}`, user.email, id, 'task');
+  // #523: applyInsert's I18 (title, project_id) dedup can adopt an EXISTING
+  // row instead of inserting `id` — canonical_payload.id is the row that
+  // actually represents this create afterward. Without this, a dedup hit
+  // silently returned {data: null} below (the SELECT ... WHERE id = ? found
+  // nothing, since `id` was never inserted). This route has no pre-check of
+  // its own (unlike handleMobileTasksToHub) — every direct-route/Gmail create
+  // relies on this to be correct.
+  const resultId = (createMutResult.canonical_payload?.id as string | undefined) ?? id;
+
+  await logActivity(env, 'task', `Created task: "${title}" → ${body.assignee}`, user.email, resultId, 'task');
 
   // Notify assignee if it's someone else
   try {
@@ -567,10 +576,10 @@ export async function handleCreateTask(request: Request, user: AuthUser, env: En
         assignee,
         'assignment',
         'task',
-        id,
+        resultId,
         `${user.name || user.email} assigned you a task`,
         title.slice(0, 200),
-        `/portal/my-tasks?open=${id}`,
+        `/portal/my-tasks?open=${resultId}`,
       ).run();
 
       // Email notification (fire-and-forget, only if Resend configured)
@@ -578,7 +587,7 @@ export async function handleCreateTask(request: Request, user: AuthUser, env: En
         const { sendEmail, taskAssignmentEmail } = await import('../lib/email');
         const member = await env.DB.prepare('SELECT name, email FROM team_members WHERE slug = ?').bind(assignee).first<{ name: string; email: string | null }>();
         if (member) {
-          const email = taskAssignmentEmail(user.name || user.email, title, id);
+          const email = taskAssignmentEmail(user.name || user.email, title, resultId);
           email.to = member.email || `${assignee}@umn.edu`;
           sendEmail(env.RESEND_API_KEY, email).catch(() => {});
         }
@@ -588,7 +597,7 @@ export async function handleCreateTask(request: Request, user: AuthUser, env: En
     console.error('Failed to create assignment notification:', e);
   }
 
-  const created = await env.DB.prepare(`SELECT ${TASK_SELECT_COLS} FROM tasks t WHERE t.id = ?`).bind(id).first();
+  const created = await env.DB.prepare(`SELECT ${TASK_SELECT_COLS} FROM tasks t WHERE t.id = ?`).bind(resultId).first();
   return json({ data: created }, 201);
 }
 
@@ -1374,11 +1383,20 @@ export async function handleMobileTasksToHub(request: Request, user: AuthUser, e
       resolvedProjectId = await projectRefToCanonical(env, resolvedProjectId);
     }
 
-    // Dedup: same (title, assignee, project_id) already open in Hub?
-    // NULL project_id matches NULL project_id via IS operator.
+    // Dedup: same (normalized title, project_id) already open in Hub? Converges
+    // toward applyInsert's central I18 rule (title, project_id) — #523:
+    // assignee dropped 2026-07-07. It never actually protected anything: even
+    // when this pre-check missed (different assignee), the applyMutation call
+    // below still runs applyInsert's own (title, project_id) dedup — which
+    // does NOT consider assignee — so a cross-assignee same-title-project row
+    // would merge there anyway. Scoping by assignee here just made this
+    // pre-check miss cases the fallthrough caught regardless, with the
+    // id_map/counter bug fixed below. lower(trim()) normalization is KEPT —
+    // genuine tolerance for typed mobile input that the central rule's exact
+    // `title = ?` doesn't provide. NULL project_id matches NULL via IS.
     const existing = await env.DB.prepare(
-      'SELECT id FROM tasks WHERE lower(trim(title)) = lower(trim(?)) AND assignee = ? AND ((project_id IS NULL AND ? IS NULL) OR project_id = ?) AND completed = 0 AND deleted_at IS NULL LIMIT 1'
-    ).bind(title, assignee, resolvedProjectId, resolvedProjectId).first<{ id: string }>();
+      'SELECT id FROM tasks WHERE lower(trim(title)) = lower(trim(?)) AND ((project_id IS NULL AND ? IS NULL) OR project_id = ?) AND completed = 0 AND deleted_at IS NULL LIMIT 1'
+    ).bind(title, resolvedProjectId, resolvedProjectId).first<{ id: string }>();
 
     if (existing) {
       id_map[pwaTask.id] = existing.id;
@@ -1424,10 +1442,21 @@ export async function handleMobileTasksToHub(request: Request, user: AuthUser, e
         errors.push(`${pwaTask.id}: mutation ${mobileMutResult.status} — ${mobileMutResult.reason ?? ''}`);
         continue;
       }
-      id_map[pwaTask.id] = id;
-      created++;
-
-      await logActivity(env, 'task', `Mobile→Hub: "${title.slice(0, 80)}"`, user.email, id, 'task');
+      // #523: applyMutation's own I18 (title, project_id) dedup can still fire
+      // here even after the pre-check above passes (e.g. a completed/status
+      // triad drift on an older row) — canonical_payload.id is the row that
+      // now represents this conceptual task, whether freshly inserted (= id)
+      // or an existing row this insert merged onto instead. Preferring it
+      // over the locally-generated `id` keeps id_map/created/deduped accurate
+      // rather than pointing the PWA client at an id that was never written.
+      const resultId = (mobileMutResult.canonical_payload?.id as string | undefined) ?? id;
+      id_map[pwaTask.id] = resultId;
+      if (resultId !== id) {
+        deduped++;
+      } else {
+        created++;
+        await logActivity(env, 'task', `Mobile→Hub: "${title.slice(0, 80)}"`, user.email, id, 'task');
+      }
     } catch (e) {
       errors.push(`${pwaTask.id}: ${(e as Error).message || String(e)}`);
     }
