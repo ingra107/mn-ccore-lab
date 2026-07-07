@@ -72,6 +72,9 @@ export function useCreateActionItem() {
       queryClient.invalidateQueries({ queryKey: ['action-items'] })
       queryClient.invalidateQueries({ queryKey: ['meeting'] })
       queryClient.invalidateQueries({ queryKey: ['activity'] })
+      // /api/action-items writes a real task now; the meetings list-row counts
+      // read the ['tasks', 'all-for-meeting-counts'] query — refresh it too.
+      queryClient.invalidateQueries({ queryKey: ['tasks'] })
     },
   })
 }
