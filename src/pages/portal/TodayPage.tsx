@@ -241,16 +241,18 @@ export default function TodayPage() {
       .map(calendarEventToTodayEvent)
 
     // T13: bridge personal-calendar rows to their D1 meeting record (same
-    // day + normalized title). A matched meeting already renders as its own
-    // untimed native row above (`meetings`) — decorate the richer, timed
-    // cal- row with the D1 identity/notes and drop the now-redundant native
-    // row so the same real-world meeting shows once, not twice.
+    // day + normalized title). Merge ONLY once the meeting has debrief notes:
+    // the decorated cal- row shows read-only notes + deep link, so it can
+    // replace the native row. A matched meeting WITHOUT notes keeps its
+    // native untimed row — that row carries the live jot textarea
+    // (MeetingNotesAutoSave), and the cal- row's textarea is disabled by
+    // isCalEvent; merging early would silently kill in-meeting jotting.
     const matchedMeetingIds = new Set<string>()
     const decoratedPersonal = personal.map((e) => {
       const match = matchMeetingRecord(e, rawMeetings, normalizeMeetingTitle)
-      if (!match) return e
+      if (!match || !match.notes) return e
       matchedMeetingIds.add(match.id)
-      return { ...e, meetingId: match.id, meetingNotes: match.notes ?? null }
+      return { ...e, meetingId: match.id, meetingNotes: match.notes }
     })
     const dedupedMeetings = meetings.filter((m) => !matchedMeetingIds.has(m.id))
 
