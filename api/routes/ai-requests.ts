@@ -303,7 +303,14 @@ async function _notifySubmitter(
  * Priority order:
  *   1. Artifact URL embedded in the response text (Hermes produced an artifact).
  *   2. Source-surface fallback keyed on source_type:
- *      - daily_thought → /today
+ *      - daily_thought, source_id = task_<ulid> → /portal/my-tasks?openTask=<task_id>
+ *        (#521: a typed @hermes prefix on a task compose surface — TaskDetailPanel,
+ *        SmartCompose task mode — posts source_type='daily_thought' with the TASK id
+ *        as source_id, per hermesRouting.ts's contract; task ids are always
+ *        `task_<ulid>` (generateId('task')), which a date-key source_id (the
+ *        Today-bar's `YYYY-MM-DD`) can never collide with)
+ *      - daily_thought, source_id = date-key → /today (the Today-bar's own
+ *        MorningThoughtCompose)
  *      - task_comment  → /portal/my-tasks?open=<task_id>
  *      - project_comment → /portal/projects/<slug>
  *      - artifact_comment → /portal/artifacts/<artifact_id>
@@ -323,7 +330,9 @@ async function _hermesNotifyLink(
 
   switch (req.source_type) {
     case 'daily_thought':
-      return '/today';
+      return req.source_id.startsWith('task_')
+        ? `/portal/my-tasks?openTask=${encodeURIComponent(req.source_id)}`
+        : '/today';
     case 'task_comment': {
       const entry = await env.DB.prepare(
         'SELECT entity_id FROM activity_entries WHERE id = ? LIMIT 1'

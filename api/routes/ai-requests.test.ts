@@ -326,6 +326,33 @@ describe('handleUpdateAIResponse — submitter notifications', () => {
     expect(notifInsert!.binds[7]).toBe('/today');          // daily_thought link
   });
 
+  it('daily_thought notification with a task-keyed source_id links to ?openTask= (#521)', async () => {
+    const inserts: Array<{ sql: string; binds: unknown[] }> = [];
+    const db = makeDb({
+      aiReq: {
+        id: 'ai-n1b',
+        source_type: 'daily_thought',
+        source_id: 'task_01hqz3x9k2v8m4n6p7q8r9s0',
+        project_slug: null,
+        requested_by: 'ingra107@umn.edu',
+        prompt: '@hermes what should I do next on this task?',
+      },
+      captureUpdate: (sql, binds) => inserts.push({ sql, binds }),
+    });
+    const env = { DB: db } as unknown as Env;
+
+    const res = await handleUpdateAIResponse(
+      'ai-n1b',
+      makeRequest({ response: 'Finish the draft first.' }),
+      env,
+    );
+
+    expect(res.status).toBe(200);
+    const notifInsert = inserts.find(i => /INSERT INTO notifications/.test(i.sql));
+    expect(notifInsert).toBeDefined();
+    expect(notifInsert!.binds[7]).toBe('/portal/my-tasks?openTask=task_01hqz3x9k2v8m4n6p7q8r9s0');
+  });
+
   it('does not insert notification when requested_by is null', async () => {
     const inserts: Array<{ sql: string; binds: unknown[] }> = [];
     const db = makeDb({
