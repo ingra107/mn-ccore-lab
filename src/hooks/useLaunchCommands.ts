@@ -12,24 +12,19 @@
 // identically — before this, the Today drawer and MyTasks InlineDetail
 // (SmartCompose task mode) posted the seed as a team-visible Progress comment
 // and launched nothing.
+//
+// The actual fetch/protocolLaunch/toast execution lives in lib/launchCommands.ts
+// (executeLaunchCommand) — this hook is a thin wrapper supplying the real
+// dependencies (fetch, detectOrigin, useProtocolLaunch, useToast) so the
+// execution logic is node-mode testable without a React rendering harness.
 
 import { useCallback } from 'react'
-import { matchLaunchCommand } from '../lib/launchCommands'
+import { matchLaunchCommand, executeLaunchCommand, type LaunchExecutionContext } from '../lib/launchCommands'
 import { detectOrigin } from '../lib/launchOrigin'
-import { buildLaunchUri } from '../lib/launch'
 import { useProtocolLaunch } from './useProtocolLaunch'
 import { useToast } from './useToast'
 
-export interface LaunchCommandContext {
-  /** Task's project slug — @workon scopes the session to this project. */
-  projectSlug?: string | null
-  /** projects.primary_folder — the computer route opens the session here. */
-  primaryFolder?: string | null
-  /** Source task id when the launch fires from a task compose surface. The
-   *  worker composes that task's context into the seed at claim time (#485);
-   *  the browser sends only the id — Hub resolves the context behind auth. */
-  taskId?: string | null
-}
+export type LaunchCommandContext = LaunchExecutionContext
 
 /** Build the launch context for a TASK compose surface. taskId is a REQUIRED
  *  argument — a task surface cannot construct its context without it, so a new
@@ -50,50 +45,35 @@ export function useLaunchCommands() {
   /** Route text as a launch command if it starts with @workon/@quickchat.
    *  Returns true when routed — the caller must NOT post the text anywhere
    *  and must NOT clear its input directly: onLaunched fires on success and
-   *  is where the caller clears; on failure the seed stays put for retry. */
+   *  is where the caller clears; on failure the seed stays put for retry.
+   *  Fire-and-forget: the returned boolean tells the caller "routed", not
+   *  "completed" — completion is signaled via onLaunched. */
   const tryLaunchCommand = useCallback(
     (text: string, ctx: LaunchCommandContext = {}, onLaunched?: () => void): boolean => {
       const cmd = matchLaunchCommand(text)
       if (!cmd) return false
-      const isWorkon = cmd.tag === 'workon'
-      const origin = detectOrigin()
-      const folder = ctx.primaryFolder ?? ''
-      fetch('/api/launch-log', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(
-          // task_id is sent symmetrically for BOTH tags — a @quickchat fired
-          // from a task card carries context just like @workon (#485). Null on
-          // context-free surfaces (Today bar) → the claim returns the raw seed.
-          isWorkon
-            ? { tag: 'workon', seed: cmd.seed, origin, project_slug: ctx.projectSlug ?? null, task_id: ctx.taskId ?? null }
-            : { tag: 'quickchat', seed: cmd.seed, origin, task_id: ctx.taskId ?? null },
-        ),
-      })
-        .then((res) => {
-          if (!res.ok) throw new Error(`launch-log ${res.status}`)
-          return res.json() as Promise<{ data: { id: string } }>
-        })
-        .then(({ data }) => {
-          if (origin === 'computer' && (!isWorkon || folder)) {
-            return protocolLaunch(buildLaunchUri(data.id), {
-              copyText: isWorkon ? folder : cmd.seed,
-              successMessage: isWorkon ? 'Launching Claude in this project…' : 'Launching Quick Chat on this machine…',
-              copyMessage: isWorkon ? 'Launching… (folder copied as backup)' : 'Launching Quick Chat… (seed copied as backup)',
-            })
-          }
-          showInfo(origin === 'computer' ? 'No project folder set for this task' : 'Queued — your home machine will pick it up')
-        })
-        .then(() => onLaunched?.())
-        .catch((e) => {
-          console.error(`@${cmd.tag} failed:`, e)
-          // Fail-loud + seed-preserving: the caller's input still holds the text.
-          showError(`@${cmd.tag} failed — your text is still here, try again`)
-        })
+      void executeLaunchCommand(cmd, ctx, { fetchFn: fetch, detectOriginFn: detectOrigin, protocolLaunch, showInfo, showError }, onLaunched)
       return true
     },
     [protocolLaunch, showInfo, showError],
   )
 
-  return { tryLaunchCommand }
+  /** Same routing as tryLaunchCommand, but AWAITS the full launch attempt
+   *  before resolving — for callers whose own promise gates caller-visible
+   *  timing (#525: MorningThoughtCompose's SmartCompose parent clears the
+   *  input only after onSubmit's promise resolves, not fire-and-forget).
+   *  Resolves `false` when `text` isn't a launch command (caller falls
+   *  through to its next route); resolves `true` after routing + executing,
+   *  success or failure (executeLaunchCommand never rejects). */
+  const tryLaunchCommandAwaited = useCallback(
+    async (text: string, ctx: LaunchCommandContext = {}, onLaunched?: () => void): Promise<boolean> => {
+      const cmd = matchLaunchCommand(text)
+      if (!cmd) return false
+      await executeLaunchCommand(cmd, ctx, { fetchFn: fetch, detectOriginFn: detectOrigin, protocolLaunch, showInfo, showError }, onLaunched)
+      return true
+    },
+    [protocolLaunch, showInfo, showError],
+  )
+
+  return { tryLaunchCommand, tryLaunchCommandAwaited }
 }

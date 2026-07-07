@@ -27,9 +27,7 @@ import { todayKey } from './constants'
 import { nowInstant } from '../../lib/time'
 import { useIsMobile } from '../../hooks/useIsMobile'
 import { localDateKey } from '../../lib/dateUtils'
-import { detectOrigin } from '../../lib/launchOrigin'
-import { buildLaunchUri } from '../../lib/launch'
-import { useProtocolLaunch } from '../../hooks/useProtocolLaunch'
+import { useLaunchCommands } from '../../hooks/useLaunchCommands'
 import { isBacklogPrefix, stripBacklogPrefix } from '../../lib/hermesRouting'
 
 const DEFAULT_GROUP_OVERRIDE = 'priorities'
@@ -58,7 +56,7 @@ export function MorningThoughtCompose() {
   const userSlug = emailToSlug(user?.email)
   const createTask = useCreateTask()
   const undoToast = useUndoToast()
-  const { launch: protocolLaunch } = useProtocolLaunch()
+  const { tryLaunchCommandAwaited } = useLaunchCommands()
   const [forceHome, setForceHome] = useState(false)
 
   // Compute "after 5pm" once per render — reasonable for the mount lifetime
@@ -78,31 +76,19 @@ export function MorningThoughtCompose() {
     if (!content) return
 
     // Route 0 — @quickchat: launch a seeded Claude Code session (origin-aware).
+    // Converged onto the shared useLaunchCommands hook (#525) — forceHome maps
+    // to originOverride so "send to home" still forces the delegate-to-home
+    // path regardless of detectOrigin(). Awaited (tryLaunchCommandAwaited, not
+    // the fire-and-forget tryLaunchCommand) so handleSubmit's own promise
+    // still resolves only after the full launch attempt completes, matching
+    // this surface's original timing — SmartCompose clears its input only
+    // after onSubmit's promise resolves.
     if (/^@quickchat\b/i.test(content)) {
-      const seed = content.replace(/^@quickchat\s*/i, '').trim()
-      const origin = forceHome ? 'mobile' : detectOrigin()
-      try {
-        const res = await fetch('/api/launch-log', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ tag: 'quickchat', seed, origin }),
-        })
-        if (!res.ok) throw new Error(`/api/launch-log ${res.status}`)
-        const { data } = await res.json() as { data: { id: string } }
-        if (origin === 'computer') {
-          await protocolLaunch(buildLaunchUri(data.id), {
-            copyText: seed,
-            successMessage: 'Launching Quick Chat on this machine…',
-            copyMessage: 'Launching Quick Chat… (seed copied as backup)',
-          })
-        } else {
-          undoToast.showInfo('Queued — your home machine will pick it up')
-        }
-        appendDailyThought(content, 'task')
-      } catch (err) {
-        console.error('@quickchat launch failed:', err)
-        undoToast.showError(`@quickchat failed: ${err instanceof Error ? err.message : 'try again'}`)
-      }
+      await tryLaunchCommandAwaited(
+        content,
+        { originOverride: forceHome ? 'mobile' : undefined },
+        () => appendDailyThought(content, 'task'),
+      )
       return
     }
 
@@ -213,7 +199,7 @@ export function MorningThoughtCompose() {
         },
       })
     })
-  }, [userSlug, isEvening, createTask, undoToast, protocolLaunch, forceHome])
+  }, [userSlug, isEvening, createTask, undoToast, tryLaunchCommandAwaited, forceHome])
 
   return (
     <>
