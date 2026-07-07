@@ -6,11 +6,11 @@ import { Link, useNavigate } from 'react-router-dom'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 import { useListKeyboardNav } from '../hooks/useListKeyboardNav'
-import { useMeetingsApi, useActionItems, useMeetingCadence, useMeetingDetail, useProjects } from '../hooks/useApiData'
-import type { MeetingRow, ActionItemRow, MeetingDetail as MeetingDetailData } from '../hooks/useApiData'
+import { useMeetingsApi, useMeetingCadence, useMeetingDetail, useProjects } from '../hooks/useApiData'
+import type { MeetingRow, MeetingDetail as MeetingDetailData } from '../hooks/useApiData'
 import { fetchTasks } from '../lib/api'
 import type { TaskRow } from '../lib/api'
-import { useToggleActionItem, useCreateActionItem, useCreateDecision, useUpdateTask, useBulkUpdateTasks } from '../hooks/useMutations'
+import { useCreateTask, useCreateDecision, useUpdateTask, useBulkUpdateTasks } from '../hooks/useMutations'
 import { useUndoToast } from '../components/UndoToast'
 import { useToast } from '../hooks/useToast'
 import { directors, getAllMembers, getPersonInfo } from '../data/team'
@@ -54,8 +54,15 @@ function parseJsonArray(val: string | null): string[] {
   }
 }
 
-function meetingRowToMeeting(row: MeetingRow, actionItems: ActionItemRow[]): Meeting {
-  const meetingActions = actionItems.filter((ai) => ai.meeting_id === row.id)
+// T9: sourced from real tasks (tasks.meeting_id), not the legacy action_items
+// table — tasksByMeetingId is grouped from the same allTasksData fetch the
+// list-row counts (actionCountsByMeetingId) use, keyed on BOTH id and
+// source_id (T3's dual-id join) so a PB-calendar-matched meeting's tasks
+// still show up under its row.
+function meetingRowToMeeting(row: MeetingRow, tasksByMeetingId: Map<string, TaskRow[]>): Meeting {
+  const fromId = tasksByMeetingId.get(row.id) ?? []
+  const fromSourceId = row.source_id && row.source_id !== row.id ? tasksByMeetingId.get(row.source_id) ?? [] : []
+  const meetingActions = fromSourceId.length ? [...fromId, ...fromSourceId] : fromId
   return {
     id: row.id,
     date: row.date,
@@ -66,13 +73,13 @@ function meetingRowToMeeting(row: MeetingRow, actionItems: ActionItemRow[]): Mee
     decisions: parseJsonArray(row.decisions),
     notes: row.notes || undefined,
     updated_at: row.updated_at || undefined,
-    actionItems: meetingActions.map((ai) => ({
-      id: ai.id,
-      description: ai.description,
-      assignee: ai.assignee,
-      dueDate: ai.due_date || undefined,
-      completed: ai.completed === 1,
-      projectSlug: ai.project_id || undefined,
+    actionItems: meetingActions.map((t) => ({
+      id: t.id,
+      description: t.description,
+      assignee: t.assignee,
+      dueDate: t.due_date || undefined,
+      completed: isTaskDone(t),
+      projectSlug: t.project_id || undefined,
     })),
   }
 }
@@ -425,47 +432,70 @@ export default function Meetings() {
   const [mobileShowDetail, setMobileShowDetail] = useState(false)
 
   const { data: meetingRows = [], isLoading: meetingsLoading } = useMeetingsApi()
-  // #507 follow-up opt-out: actionItemRows only enriches each meeting with
-  // its action-item list/count inside meetingRowToMeeting below -- the
-  // page's real content is meetingRows (useMeetingsApi, already-throwing,
-  // untouched by this wave). A failure here degrades to "0 action items"
-  // per meeting rather than blocking the meetings list itself.
-  const { data: actionItemRows = [] } = useActionItems()
   const { data: cadence } = useMeetingCadence()
-  const toggleMutation = useToggleActionItem()
   const { showUndo } = useUndoToast()
-  const createActionMutation = useCreateActionItem()
+  const createTaskMutation = useCreateTask()
+  const updateTaskMutation = useUpdateTask()
+  const bulkUpdateTasksMutation = useBulkUpdateTasks()
   // T12: server-backed seen tracking (schema v81) replaces the per-device
   // localStorage hook — multi-device consistent, and the gold/teal split
   // (never_seen vs updated-since-seen) matches the app-wide attention canon.
   const { data: unseen } = useUnseenActivity()
   const markSeen = useMarkSeen()
 
-  const toggleWithUndo = (id: string) => {
-    toggleMutation.mutate(id)
-    showUndo('Action item toggled', () => toggleMutation.mutate(id))
-  }
-
-  const meetings = useMemo(
-    () => meetingRows.map((row) => meetingRowToMeeting(row, actionItemRows)),
-    [meetingRows, actionItemRows]
-  )
-
-  // T8: list-row action counts — real tasks (tasks.meeting_id), not the
-  // legacy action_items table. One unscoped fetch + client-side group-by,
-  // keyed on BOTH id and source_id (T3's dual-id join: `IN (id, source_id)`)
-  // so a PB-calendar-matched meeting's tasks still count under its row.
-  // Deliberately fetchTasks() directly, NOT useTasks() — useTasks() runs
-  // dedupTasks(), which collapses same title+assignee tasks GLOBALLY across
-  // ALL meetings (by design, for "one row per recurring item" list views).
-  // That would silently move a carried-forward item's count off its
+  // T9: real tasks (tasks.meeting_id), not the legacy action_items table —
+  // one unscoped fetch shared by the per-meeting actionItems list
+  // (meetingRowToMeeting, below), the list-row counts (actionCountsByMeetingId),
+  // and the global "All Pending Actions" widget (derived from meetings ->
+  // actionItems, so it inherits this source automatically). Deliberately
+  // fetchTasks() directly, NOT useTasks() — useTasks() runs dedupTasks(),
+  // which collapses same title+assignee tasks GLOBALLY across ALL meetings
+  // (by design, for "one row per recurring item" list views). That would
+  // silently move a carried-forward item's count/identity off its
   // originating meeting onto whichever later meeting's copy survives the
-  // dedup — wrong for a per-meeting aggregate, which needs every row.
+  // dedup — wrong for a per-meeting aggregate/list, which needs every row.
   const { data: allTasksData = [] } = useQuery({
     queryKey: ['tasks', 'all-for-meeting-counts'],
     queryFn: async () => (await fetchTasks()).data as TaskRow[],
     staleTime: 60 * 1000,
   })
+  const tasksByMeetingId = useMemo(() => {
+    const map = new Map<string, TaskRow[]>()
+    for (const t of allTasksData) {
+      if (!t.meeting_id) continue
+      const arr = map.get(t.meeting_id)
+      if (arr) arr.push(t)
+      else map.set(t.meeting_id, [t])
+    }
+    return map
+  }, [allTasksData])
+
+  const meetings = useMemo(
+    () => meetingRows.map((row) => meetingRowToMeeting(row, tasksByMeetingId)),
+    [meetingRows, tasksByMeetingId]
+  )
+
+  // T9: mark-done/reopen for a global-list action item — same
+  // useUpdateTask/useBulkUpdateTasks pattern MeetingDetail's
+  // handleToggleDone already uses. Direction is known from which bucket
+  // (pending vs completed) the click came from, so no read-back is needed.
+  const setActionDone = (id: string, done: boolean) => {
+    if (done) {
+      bulkUpdateTasksMutation.mutate({ ids: [id], action: 'complete' })
+    } else {
+      updateTaskMutation.mutate({ id, fields: { status: 'todo', completed: 0 } })
+    }
+  }
+  const toggleWithUndo = (id: string, currentlyDone: boolean) => {
+    const next = !currentlyDone
+    setActionDone(id, next)
+    showUndo(next ? 'Action item completed' : 'Action item reopened', () => setActionDone(id, currentlyDone))
+  }
+
+  // T8: list-row action counts — real tasks (tasks.meeting_id), not the
+  // legacy action_items table. One unscoped fetch + client-side group-by,
+  // keyed on BOTH id and source_id (T3's dual-id join: `IN (id, source_id)`)
+  // so a PB-calendar-matched meeting's tasks still count under its row.
   const actionCountsByMeetingId = useMemo(() => {
     const byRawMeetingId = new Map<string, { actionCount: number; pendingCount: number }>()
     for (const t of allTasksData) {
@@ -580,7 +610,7 @@ export default function Meetings() {
     if (!newActionDesc.trim()) return
     const sortedMeetings = [...meetings].sort((a, b) => b.date.localeCompare(a.date))
     const targetMeetingId = sortedMeetings[0]?.id
-    createActionMutation.mutate({
+    createTaskMutation.mutate({
       meeting_id: targetMeetingId,
       description: newActionDesc.trim(),
       assignee: newActionAssignee,
@@ -935,7 +965,7 @@ export default function Meetings() {
                           style={{ background: 'var(--cream)', border: `1px solid ${withAlpha(ACCENT_GOLD, 15)}`, boxShadow: 'var(--shadow-card)' }}>
                           <button type="button" className="cursor-pointer shrink-0 mt-0.5 action-toggle-btn"
                             style={{ background: 'none', border: 'none', padding: 'var(--sp-md)', margin: '-10px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 'var(--radius-sm)', transition: 'transform 0.15s ease', minWidth: '44px', minHeight: '44px' }}
-                            onClick={() => item.id && toggleWithUndo(item.id)}
+                            onClick={() => item.id && toggleWithUndo(item.id, false)}
                             onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.2)' }}
                             onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)' }}
                             title="Mark as completed">
@@ -1021,7 +1051,7 @@ export default function Meetings() {
                           <div key={item.id || item.description} className="flex items-start gap-3 p-2.5 rounded-lg action-item-card" style={{ background: 'var(--cream)', opacity: 0.85 }}>
                             <button type="button" className="cursor-pointer shrink-0 mt-0.5 action-toggle-btn"
                               style={{ background: 'none', border: 'none', padding: 'var(--sp-md)', margin: '-10px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 'var(--radius-sm)', transition: 'transform 0.15s ease', minWidth: '44px', minHeight: '44px' }}
-                              onClick={() => item.id && toggleWithUndo(item.id)}
+                              onClick={() => item.id && toggleWithUndo(item.id, true)}
                               onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.2)' }}
                               onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)' }}
                               title="Mark as pending">
