@@ -51,19 +51,25 @@ interface SidebarProps {
   onNavigate?: () => void
 }
 
-/** Data-driven click action for a nav badge (ROW 84). Keeps all badge
- *  interaction logic in navWithBadges rather than scattered across JSX. */
+/** Appearance of a nav badge pill (ROW 84 / #509). ONE shape for how the
+ *  badge looks, regardless of whether it's also a separate click target —
+ *  replaces the old badgeBg/badgeColor/badgeTitle trio + BadgeAction's own
+ *  copy of the same three fields. Callers pre-resolve `title` to a string
+ *  at construction time (the count is already known in navWithBadges). */
+interface BadgeStyle {
+  bg: string
+  color: string
+  title: string
+}
+
+/** Data-driven click BEHAVIOR for a nav badge (ROW 84) when the badge is
+ *  its own separate click target (navigates elsewhere than the row).
+ *  Appearance lives in NavItem.badgeStyle regardless of badgeAction. */
 interface BadgeAction {
-  /** Tooltip / title for the badge element. Receives the badge count. */
-  title: (count: number) => string
-  /** aria-label for the badge element. Receives the badge count. */
-  ariaLabel: (count: number) => string
   /** Route to navigate to when the badge is clicked / activated. */
   navigateTo: string
-  /** Background fill for the badge pill. */
-  badgeBg: string
-  /** Foreground color for the badge pill. */
-  badgeColor: string
+  /** aria-label for the badge element (pre-resolved with the count). */
+  ariaLabel: string
 }
 
 interface NavItem {
@@ -71,13 +77,10 @@ interface NavItem {
   label: string
   icon: React.ComponentType<{ size?: number; strokeWidth?: number; absoluteStrokeWidth?: boolean }>
   badge?: number
-  /** Override the default badge colors when there's no badgeAction (e.g. an
-   *  "unseen, not urgent" badge that should read gold like My Tasks rather
-   *  than the default maroon "overdue" red). */
-  badgeBg?: string
-  badgeColor?: string
-  /** Tooltip for a plain (non-badgeAction) badge. */
-  badgeTitle?: string
+  /** Badge pill appearance (bg/color/tooltip). Set for ANY badge, whether or
+   *  not it's also a badgeAction click target. Falls back to the default
+   *  maroon "overdue" look when unset. */
+  badgeStyle?: BadgeStyle
   hint?: string // small secondary text (e.g. "Today")
   /** Present when the badge is its own click target (navigates elsewhere). */
   badgeAction?: BadgeAction
@@ -215,21 +218,27 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
   // Inject badge counts into nav items. nextMeetingLabel was missing from
   // the dep array previously — a stale "Today"/"Tomorrow" hint could
   // persist until another dep changed.
-  // ROW 84: badgeAction is defined once here, not in JSX conditionals.
-  const MY_TASKS_BADGE_ACTION: BadgeAction = {
-    title: (n) => `${n} task${n === 1 ? '' : 's'} you haven't opened yet — click to triage in My Items`,
-    ariaLabel: (n) => `${n} new task${n === 1 ? '' : 's'} — open My Items`,
-    navigateTo: PATHS.myItems,
-    badgeBg: 'var(--gold)',
-    // Gold bg takes a fixed dark literal, not var(--ink) (CLAUDE.md gold rule).
-    badgeColor: '#1a1a1a',
-  }
-
+  // ROW 84 / #509: badge appearance+behavior defined once here, not in JSX
+  // conditionals. badgeStyle is the pill's look (shared shape, whether or
+  // not the badge is also a click target); badgeAction is pure behavior.
   const navWithBadges = useMemo(() => allGroups.map(group => ({
     ...group,
     items: group.items.map(item => {
       if (item.to === PATHS.myTasks && myUnseen > 0)
-        return { ...item, badge: myUnseen, badgeAction: MY_TASKS_BADGE_ACTION }
+        return {
+          ...item,
+          badge: myUnseen,
+          badgeStyle: {
+            bg: 'var(--gold)',
+            // Gold bg takes a fixed dark literal, not var(--ink) (CLAUDE.md gold rule).
+            color: '#1a1a1a',
+            title: `${myUnseen} task${myUnseen === 1 ? '' : 's'} you haven't opened yet — click to triage in My Items`,
+          },
+          badgeAction: {
+            navigateTo: PATHS.myItems,
+            ariaLabel: `${myUnseen} new task${myUnseen === 1 ? '' : 's'} — open My Items`,
+          },
+        }
       if (item.to === PATHS.meetings) {
         let next = item
         if (nextMeetingLabel) next = { ...next, hint: nextMeetingLabel }
@@ -241,9 +250,11 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
           next = {
             ...next,
             badge: newMeetingsCount,
-            badgeBg: 'var(--gold)',
-            badgeColor: '#1a1a1a',
-            badgeTitle: `${newMeetingsCount} meeting${newMeetingsCount === 1 ? '' : 's'} with new notes`,
+            badgeStyle: {
+              bg: 'var(--gold)',
+              color: '#1a1a1a',
+              title: `${newMeetingsCount} meeting${newMeetingsCount === 1 ? '' : 's'} with new notes`,
+            },
           }
         }
         return next
@@ -356,20 +367,21 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
                   {!collapsed && item.badge !== undefined && item.badge > 0 && (
                     <span
                       className="ml-auto text-xs px-1.5 py-0.5 rounded-full"
-                      // ROW 84: all per-badge interaction driven by badgeAction
-                      // data injected in navWithBadges, not inline path checks.
-                      // The My Tasks badge is its OWN click target (Nick
-                      // 2026-06-11): the count → My Items "New for You" triage
-                      // list, while the rest of the row still goes to My Tasks.
-                      title={item.badgeAction ? item.badgeAction.title(item.badge) : item.badgeTitle}
+                      // ROW 84 / #509: appearance reads badgeStyle directly (one
+                      // shape, whether or not the badge is also a click target);
+                      // only the click BEHAVIOR still forks on badgeAction. The
+                      // My Tasks badge is its OWN click target (Nick 2026-06-11):
+                      // the count → My Items "New for You" triage list, while the
+                      // rest of the row still goes to My Tasks.
+                      title={item.badgeStyle?.title}
                       role={item.badgeAction ? 'link' : undefined}
                       tabIndex={item.badgeAction ? 0 : undefined}
-                      aria-label={item.badgeAction ? item.badgeAction.ariaLabel(item.badge) : undefined}
+                      aria-label={item.badgeAction?.ariaLabel}
                       onClick={item.badgeAction ? (e) => { e.preventDefault(); e.stopPropagation(); navigate(item.badgeAction!.navigateTo); onNavigate?.() } : undefined}
                       onKeyDown={item.badgeAction ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); navigate(item.badgeAction!.navigateTo); onNavigate?.() } } : undefined}
                       style={{
-                        backgroundColor: item.badgeAction ? item.badgeAction.badgeBg : (item.badgeBg ?? 'var(--maroon-solid)'),
-                        color: item.badgeAction ? item.badgeAction.badgeColor : (item.badgeColor ?? 'var(--ink-bright, #fff)'),
+                        backgroundColor: item.badgeStyle?.bg ?? 'var(--maroon-solid)',
+                        color: item.badgeStyle?.color ?? 'var(--ink-bright, #fff)',
                         cursor: item.badgeAction ? 'pointer' : undefined,
                       }}
                     >
