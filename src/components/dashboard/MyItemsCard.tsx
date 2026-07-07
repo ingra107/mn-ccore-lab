@@ -13,6 +13,7 @@ import { PATHS } from '../../constants/paths'
 import DueLabel from '../DueLabel'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { QueryErrorNote } from '../QueryErrorNote'
+import { isTaskDone } from '../../lib/taskGrouping'
 
 function MyItemsCard() {
   const { user } = useAuth()
@@ -38,7 +39,7 @@ function MyItemsCard() {
     return [...seen.values()]
   }, [allItems])
 
-  const pending = items.filter((i) => !i.completed)
+  const pending = items.filter((i) => !isTaskDone(i))
   const overdueCount = pending.filter((i) => isOverdue(i.due_date)).length
 
   return (

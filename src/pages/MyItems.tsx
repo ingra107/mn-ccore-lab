@@ -40,6 +40,7 @@ import { parseCarriedForward } from '../lib/textUtils'
 import { PATHS } from '../constants/paths'
 import { ICON_PROPS } from '../lib/iconProps'
 import DueLabel from '../components/DueLabel'
+import { isTaskDone } from '../lib/taskGrouping'
 
 // ── Helpers ─────────────────────────────────────────────────
 
@@ -236,7 +237,8 @@ function ActionItemCard({
   onToggle: (id: string) => void
 }) {
   const person = getPersonInfo(item.assignee)
-  const overdue = !item.completed && isOverdue(item.due_date)
+  const isDone = isTaskDone(item)
+  const overdue = !isDone && isOverdue(item.due_date)
 
   return (
     <motion.div
@@ -261,15 +263,15 @@ function ActionItemCard({
             border: 'none',
             padding: 2,
             cursor: 'pointer',
-            color: item.completed ? 'var(--teal)' : 'var(--slate)',
-            opacity: item.completed ? 1 : 0.85,
+            color: isDone ? 'var(--teal)' : 'var(--slate)',
+            opacity: isDone ? 1 : 0.85,
             flexShrink: 0,
             marginTop: 2,
             transition: 'color 0.2s, opacity 0.2s',
           }}
-          aria-label={item.completed ? 'Mark incomplete' : 'Mark complete'}
+          aria-label={isDone ? 'Mark incomplete' : 'Mark complete'}
         >
-          {item.completed ? <CheckCircle2 {...ICON_PROPS} size={20} /> : <Circle {...ICON_PROPS} size={20} />}
+          {isDone ? <CheckCircle2 {...ICON_PROPS} size={20} /> : <Circle {...ICON_PROPS} size={20} />}
         </button>
 
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -278,8 +280,8 @@ function ActionItemCard({
               fontSize: '15px',
               color: 'var(--ink)',
               lineHeight: 1.4,
-              textDecoration: item.completed ? 'line-through' : 'none',
-              opacity: item.completed ? 0.85 : 1,
+              textDecoration: isDone ? 'line-through' : 'none',
+              opacity: isDone ? 0.85 : 1,
             }}
           >
             {(() => { const { isCarried, clean } = parseCarriedForward(item.description); return (<>{isCarried && <span className="carried-badge">↻ carried</span>}{clean}</>); })()}
@@ -680,7 +682,7 @@ export default function MyItems() {
   }
   const handleToggle = (id: string) => {
     const item = allActionItems.find(a => a.id === id)
-    const wasCompleted = item?.completed === 1
+    const wasCompleted = item ? isTaskDone(item) : false
     setActionDone(id, !wasCompleted)
     showUndo(wasCompleted ? 'Reopened action item' : 'Completed action item', () => setActionDone(id, wasCompleted))
   }
@@ -732,7 +734,7 @@ export default function MyItems() {
     const p: TaskRow[] = []
     const c: TaskRow[] = []
     for (const item of dedupedItems) {
-      if (item.completed) {
+      if (isTaskDone(item)) {
         c.push(item)
       } else {
         p.push(item)

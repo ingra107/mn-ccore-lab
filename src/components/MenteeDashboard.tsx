@@ -14,6 +14,7 @@ import { useHoverCard } from '../hooks/useHoverCard'
 import { usePublications, useMeetingLinkedTasks, useProjects } from '../hooks/useApiData'
 import { PATHS } from '../constants/paths'
 import { ICON_PROPS } from '../lib/iconProps'
+import { isTaskDone } from '../lib/taskGrouping'
 
 interface Props {
   slug: string
@@ -29,8 +30,8 @@ export default function MenteeDashboard({ slug, name }: Props) {
 
   // Filter data for this person
   const myPubs = publications.filter((p) => p.authorSlugs?.includes(slug))
-  const myPending = actionItems.filter((a) => !a.completed)
-  const myCompleted = actionItems.filter((a) => a.completed)
+  const myPending = actionItems.filter((a) => !isTaskDone(a))
+  const myCompleted = actionItems.filter((a) => isTaskDone(a))
   const myProjects = projects.filter((p) => p.pi === slug || p.team?.includes(slug))
 
   const firstName = name.split(' ')[0]
