@@ -1387,7 +1387,11 @@ defineRoute({
   visibility: 'pb-aware',
   handler: (c) => {
   let key = c.req.param('rest');
-  let raw = false;
+  // Raw bytes are requested either as a `/raw` path suffix or `?raw=1` —
+  // upload/done emits the query form (uploads.ts), so BOTH must resolve here;
+  // the halves shipped on different conventions once (2026-07-07) and every
+  // inline <img> silently got the JSON envelope instead of bytes.
+  let raw = c.req.query('raw') === '1';
   if (key.endsWith('/raw')) {
     raw = true;
     key = key.slice(0, -'/raw'.length);
