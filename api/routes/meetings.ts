@@ -17,7 +17,27 @@ export async function handleNextMeeting(env: Env): Promise<Response> {
 // content — `agenda`, `notes`, `decisions`, `attendees` — which the public
 // `SELECT *` previously leaked. Authed callers (the gated /portal/meetings
 // list page) get the full row so the existing UI keeps rendering those fields.
-const MEETING_PUBLIC_COLS = 'id, date, title, type, status, facilitator, created_at, updated_at';
+const MEETING_PUBLIC_COLS = 'id, date, title, type, status, facilitator, created_at, updated_at, source_id';
+
+// One-shot "debrief landed" bell: fires only when a push transitions a meeting
+// from notes-less to notes-full (insert-with-notes or first notes upsert).
+// Later re-pushes surface via the entity_seen teal dot, never a second bell.
+async function fireMeetingDebriefNotification(env: Env, meetingId: string, sourceId: string | null, title: string): Promise<void> {
+  const ids = sourceId ? [meetingId, sourceId] : [meetingId];
+  const placeholders = ids.map(() => '?').join(',');
+  const cnt = await env.DB.prepare(
+    `SELECT COUNT(*) as n FROM tasks WHERE meeting_id IN (${placeholders})`
+  ).bind(...ids).first<{ n: number }>();
+  const n = cnt?.n ?? 0;
+  await env.DB.prepare(
+    'INSERT INTO notifications (id, recipient_slug, type, source_type, source_id, title, body, link) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+  ).bind(
+    generateId(), 'nick-ingraham', 'meeting_debrief', 'meeting', meetingId,
+    `Meeting debriefed: ${title}`,
+    n > 0 ? `${n} task${n === 1 ? '' : 's'} linked — review, edit, or reassign` : 'Notes ready to review',
+    `/portal/meetings/${meetingId}`,
+  ).run();
+}
 
 // GET /api/meetings — list all meetings
 // `isAuthed` true when the caller has a valid JWT or API key (resolved by the
@@ -393,6 +413,7 @@ export async function handleCreateMeeting(request: Request, user: AuthUser, env:
   const body = await request.json() as {
     date: string; title: string; type?: string; attendees?: string[];
     notes?: string | null; decisions?: string | null; tags?: string[] | null;
+    source_id?: string | null;
   };
   if (!body.date || !body.title) return error('date and title required', 400);
 
@@ -408,7 +429,7 @@ export async function handleCreateMeeting(request: Request, user: AuthUser, env:
   // miss "Lab Meeting" vs "lab  meeting".
   const sameDate = await env.DB.prepare(
     'SELECT * FROM meetings WHERE date = ?'
-  ).bind(body.date).all<{ id: string; date: string; title: string }>();
+  ).bind(body.date).all<{ id: string; date: string; title: string; notes: string | null }>();
   const existing = (sameDate.results ?? []).find(
     (m) => normalizeMeetingTitle(m.title) === normalizedTitle,
   );
@@ -416,23 +437,31 @@ export async function handleCreateMeeting(request: Request, user: AuthUser, env:
     // Upsert: if the re-push carries notes/decisions/tags, refresh the row. The
     // COALESCE-on-null-payload pattern means a null/absent field never wipes
     // an existing value — only a provided (non-null) summary/tags overwrites.
+    // source_id is SET-ONCE (COALESCE(source_id, ?) — existing wins): identity,
+    // not refreshable content, opposite direction from notes/decisions/tags.
+    const hadNotes = !!(existing as { notes?: string | null }).notes;
     const hasNotes = body.notes !== undefined && body.notes !== null;
     const hasDecisions = body.decisions !== undefined && body.decisions !== null;
     const hasTags = tagsJson !== null;
-    if (hasNotes || hasDecisions || hasTags) {
+    if (hasNotes || hasDecisions || hasTags || body.source_id) {
       await env.DB.prepare(
         `UPDATE meetings
             SET notes = COALESCE(?, notes),
                 decisions = COALESCE(?, decisions),
                 tags = COALESCE(?, tags),
+                source_id = COALESCE(source_id, ?),
                 updated_at = datetime('now')
           WHERE id = ?`
       ).bind(
         hasNotes ? body.notes : null,
         hasDecisions ? body.decisions : null,
         hasTags ? tagsJson : null,
+        body.source_id ?? null,
         existing.id,
       ).run();
+      if (hasNotes && !hadNotes) {
+        await fireMeetingDebriefNotification(env, existing.id, body.source_id ?? null, body.title);
+      }
       const refreshed = await env.DB.prepare('SELECT * FROM meetings WHERE id = ?').bind(existing.id).first();
       return json({ data: refreshed }, 200);
     }
@@ -441,14 +470,19 @@ export async function handleCreateMeeting(request: Request, user: AuthUser, env:
 
   const id = `mtg-${body.date}-${generateId().slice(0, 8)}`;
   await env.DB.prepare(
-    'INSERT INTO meetings (id, date, title, type, attendees, notes, decisions, tags, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    'INSERT INTO meetings (id, date, title, type, attendees, notes, decisions, tags, status, source_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
   ).bind(
     id, body.date, body.title, body.type ?? 'biweekly',
     body.attendees ? JSON.stringify(body.attendees) : null,
     body.notes ?? null, body.decisions ?? null, tagsJson, 'upcoming',
+    body.source_id ?? null,
   ).run();
 
   await logActivity(env, 'meeting', `Created meeting: "${body.title}" on ${body.date}`, user.email, id, 'meeting');
+
+  if (body.notes !== undefined && body.notes !== null) {
+    await fireMeetingDebriefNotification(env, id, body.source_id ?? null, body.title);
+  }
 
   const created = await env.DB.prepare('SELECT * FROM meetings WHERE id = ?').bind(id).first();
   return json({ data: created }, 201);

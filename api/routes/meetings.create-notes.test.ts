@@ -50,25 +50,27 @@ function makeStatefulEnv(seed: Row[] = []): { env: Env; meetings: Row[] } {
         },
         run: async () => {
           if (upper.startsWith('INSERT INTO MEETINGS')) {
-            // INSERT (id, date, title, type, attendees, notes, decisions, tags, status)
-            const [id, date, title, type, attendees, notes, decisions, tags, status] = args
+            // INSERT (id, date, title, type, attendees, notes, decisions, tags, status, source_id)
+            const [id, date, title, type, attendees, notes, decisions, tags, status, sourceId] = args
             meetings.push({
               id, date, title, type, attendees,
               notes: notes ?? null, decisions: decisions ?? null,
-              tags: tags ?? null,
+              tags: tags ?? null, source_id: sourceId ?? null,
               status, created_at: '2026-05-29T00:00:00Z', updated_at: '2026-05-29T00:00:00Z',
             })
             return { meta: { changes: 1 } }
           }
           if (upper.startsWith('UPDATE MEETINGS')) {
             // UPDATE ... SET notes = COALESCE(?, notes), decisions = COALESCE(?, decisions),
-            //               tags = COALESCE(?, tags), updated_at = ... WHERE id = ?
-            const [notesArg, decisionsArg, tagsArg, id] = args
+            //               tags = COALESCE(?, tags), source_id = COALESCE(source_id, ?),
+            //               updated_at = ... WHERE id = ?
+            const [notesArg, decisionsArg, tagsArg, sourceIdArg, id] = args
             const row = meetings.find((m) => m.id === id)
             if (row) {
               if (notesArg !== null && notesArg !== undefined) row.notes = notesArg
               if (decisionsArg !== null && decisionsArg !== undefined) row.decisions = decisionsArg
               if (tagsArg !== null && tagsArg !== undefined) row.tags = tagsArg
+              if (!row.source_id && sourceIdArg !== null && sourceIdArg !== undefined) row.source_id = sourceIdArg
               row.updated_at = '2026-05-29T12:00:00Z'
               return { meta: { changes: 1 } }
             }
