@@ -28,7 +28,7 @@ import PageTooltip, { dismissPageTooltip } from '../components/PageTooltip'
 import type { Meeting, ActionItem } from '../data/types'
 import { PATHS } from '../constants/paths'
 import { useOpenParam } from '../hooks/useOpenParam'
-import { useMeetingNotesSeen } from '../hooks/useMeetingNotesSeen'
+import { useUnseenActivity, useMarkSeen } from '../hooks/useEntitySeen'
 import MarkdownView from '../components/MarkdownView'
 import { ICON_PROPS } from '../lib/iconProps'
 import { ACCENT_GOLD, withAlpha, isTaskDone } from '../lib/taskGrouping'
@@ -435,7 +435,11 @@ export default function Meetings() {
   const toggleMutation = useToggleActionItem()
   const { showUndo } = useUndoToast()
   const createActionMutation = useCreateActionItem()
-  const { isNew: isMeetingNew, markSeen: markMeetingSeen } = useMeetingNotesSeen()
+  // T12: server-backed seen tracking (schema v81) replaces the per-device
+  // localStorage hook — multi-device consistent, and the gold/teal split
+  // (never_seen vs updated-since-seen) matches the app-wide attention canon.
+  const { data: unseen } = useUnseenActivity()
+  const markSeen = useMarkSeen()
 
   const toggleWithUndo = (id: string) => {
     toggleMutation.mutate(id)
@@ -561,8 +565,8 @@ export default function Meetings() {
   // primary browsing path, not just the standalone /meetings/:id route.
   useEffect(() => {
     if (!selectedMeeting) return
-    markMeetingSeen(selectedMeeting.id, selectedMeeting.updated_at)
-  }, [selectedMeeting?.id, selectedMeeting?.updated_at, markMeetingSeen])
+    markSeen('meeting', selectedMeeting.id)
+  }, [selectedMeeting?.id, markSeen])
 
   useListKeyboardNav({ itemCount: filteredMeetings.length, focusedIndex, setFocusedIndex })
 
@@ -841,7 +845,9 @@ export default function Meetings() {
                 const isSelected = meeting.id === effectiveSelectedId
                 const isNext = isNextMeeting(meeting)
                 const { actionCount = 0, pendingCount = 0 } = actionCountsByMeetingId.get(meeting.id) ?? {}
-                const hasNewNotes = isMeetingNew(meeting)
+                const meetingSeen = unseen?.meetings.get(meeting.id)
+                const isNeverSeen = meetingSeen?.never_seen === 1
+                const hasUpdateSinceSeen = !!meetingSeen && !isNeverSeen
                 return (
                   <button key={meeting.id} type="button" className="cursor-pointer w-full text-left hov-bg"
                     style={{ display: 'block', padding: '10px 12px', borderBottom: '1px solid var(--border-subtle)', background: isSelected ? 'rgba(45,138,138,0.08)' : 'transparent', borderLeft: isNext ? '3px solid var(--teal)' : isSelected ? '3px solid rgba(45,138,138,0.4)' : '3px solid transparent', transition: 'background 150ms ease', outline: 'none', '--hov-bg': isSelected ? 'rgba(45,138,138,0.08)' : withAlpha(ACCENT_GOLD, 4) } as React.CSSProperties}
@@ -851,13 +857,20 @@ export default function Meetings() {
                         {formatShortDate(meeting.date)}
                       </span>
                       <div className="flex items-center gap-1" style={{ flexShrink: 0 }}>
-                        {hasNewNotes && (
+                        {isNeverSeen && (
                           <span
                             title="New notes since your last visit"
                             style={{ fontSize: '9px', fontWeight: 700, padding: '1px 6px', borderRadius: '10px', background: 'var(--gold)', color: '#1a1a1a', letterSpacing: '0.02em' }}
                           >
                             NEW
                           </span>
+                        )}
+                        {hasUpdateSinceSeen && (
+                          <span
+                            aria-hidden="true"
+                            title="Updated since you last looked"
+                            style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--teal)', boxShadow: '0 0 0 2.5px rgba(45,138,138,0.15)', flexShrink: 0 }}
+                          />
                         )}
                         {actionCount > 0 && (
                           <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '10px', background: pendingCount > 0 ? withAlpha(ACCENT_GOLD, 15) : 'rgba(45,138,138,0.12)', color: pendingCount > 0 ? 'var(--gold)' : 'var(--teal)', fontWeight: 500 }}>

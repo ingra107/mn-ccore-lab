@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
@@ -17,7 +17,7 @@ import InlineSelect from '../../components/InlineSelect'
 import { TableSkeleton } from '../../components/LoadingSkeleton'
 import { useUndoToast } from '../../components/UndoToast'
 import { useMeetingsApi } from '../../hooks/useApiData'
-import { useMeetingNotesSeen } from '../../hooks/useMeetingNotesSeen'
+import { useUnseenActivity } from '../../hooks/useEntitySeen'
 import { formatMediumDate } from '../../lib/dateUtils'
 import { useListKeyboardNav } from '../../hooks/useListKeyboardNav'
 import { PATHS } from '../../constants/paths'
@@ -99,7 +99,12 @@ export default function MeetingNotesPage() {
   const [showCreate, setShowCreate] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const { data: meetings = [], isLoading } = useMeetingsApi()
-  const { isNew: isMeetingNew } = useMeetingNotesSeen()
+  // T12: server-backed seen (schema v81) — any row present in `meetings`
+  // means new-since-last-look; this page's 2-state pill treats never_seen
+  // and updated-since-seen the same ("New notes"), unlike Meetings.tsx's
+  // gold/teal split.
+  const { data: unseen } = useUnseenActivity()
+  const isMeetingNew = useCallback((m: { id: string }) => unseen?.meetings.has(m.id) ?? false, [unseen])
   const [focusedIndex, setFocusedIndex] = useState(-1)
 
   const filteredMeetings = useMemo(() => {

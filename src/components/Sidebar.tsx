@@ -33,8 +33,8 @@ import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../hooks/useAuth'
 import { useDarkMode } from '../hooks/useDarkMode'
 import NotificationBell from './NotificationBell'
-import { useNextMeeting, useMeetingsApi } from '../hooks/useApiData'
-import { useMeetingNotesSeen } from '../hooks/useMeetingNotesSeen'
+import { useNextMeeting } from '../hooks/useApiData'
+import { useUnseenActivity } from '../hooks/useEntitySeen'
 import { PATHS } from '../constants/paths'
 import Avatar from './Avatar'
 import { getPersonInfo } from '../data/team'
@@ -166,16 +166,11 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
   // Next meeting countdown — uses lightweight /api/meetings/next (not full meetings list)
   const { data: nextMeeting } = useNextMeeting()
 
-  // New-notes badge (PB #499 option b) — shares the ['meetings'] query cache
-  // with the Meetings/Transcripts pages (free if either was already visited
-  // this session); no lighter-weight endpoint exists (v1 constraint: no
-  // schema/API change).
-  const { data: meetingRows = [] } = useMeetingsApi()
-  const { isNew: isMeetingNew } = useMeetingNotesSeen()
-  const newMeetingsCount = useMemo(
-    () => meetingRows.filter(isMeetingNew).length,
-    [meetingRows, isMeetingNew]
-  )
+  // New-notes badge — T12: server-backed seen (schema v81) via
+  // GET /api/seen/unseen's meeting arm (T11) directly gives the unseen set,
+  // so this no longer needs its own ['meetings'] list fetch just to count.
+  const { data: unseen } = useUnseenActivity()
+  const newMeetingsCount = unseen?.meetings.size ?? 0
   const nextMeetingLabel = useMemo(() => {
     if (!nextMeeting?.date) return null
     const now = new Date()

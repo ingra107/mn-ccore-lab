@@ -16,21 +16,28 @@ import { useCallback } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 
 export interface UnseenActivityRow {
-  entity_type: 'task' | 'project'
+  entity_type: 'task' | 'project' | 'meeting'
   entity_id: string
+  /** task/project rows only — count of new activity_entries since last seen. */
   new_count: number
   latest_at: string
   title: string | null
   project_slug: string | null
+  /** meeting rows only (T11) — 1 = never opened (gold NEW), 0 = opened before
+   *  but updated since (teal ●). Meetings have no activity_entries feed, so
+   *  there's no new_count to show for them — branch on entity_type, not on
+   *  new_count, when rendering. */
+  never_seen?: number
 }
 
 export interface UnseenActivityMaps {
   tasks: Map<string, UnseenActivityRow>
   projects: Map<string, UnseenActivityRow>
+  meetings: Map<string, UnseenActivityRow>
   rows: UnseenActivityRow[]
 }
 
-const EMPTY: UnseenActivityMaps = { tasks: new Map(), projects: new Map(), rows: [] }
+const EMPTY: UnseenActivityMaps = { tasks: new Map(), projects: new Map(), meetings: new Map(), rows: [] }
 
 export function useUnseenActivity() {
   return useQuery<UnseenActivityMaps>({
@@ -42,8 +49,12 @@ export function useUnseenActivity() {
       const rows = json.data ?? []
       const tasks = new Map<string, UnseenActivityRow>()
       const projects = new Map<string, UnseenActivityRow>()
-      for (const r of rows) (r.entity_type === 'task' ? tasks : projects).set(r.entity_id, r)
-      return { tasks, projects, rows }
+      const meetings = new Map<string, UnseenActivityRow>()
+      for (const r of rows) {
+        const target = r.entity_type === 'task' ? tasks : r.entity_type === 'project' ? projects : meetings
+        target.set(r.entity_id, r)
+      }
+      return { tasks, projects, meetings, rows }
     },
     staleTime: 30 * 1000,
     refetchOnWindowFocus: true,
@@ -52,7 +63,7 @@ export function useUnseenActivity() {
 
 export function useMarkSeen() {
   const queryClient = useQueryClient()
-  return useCallback((entityType: 'task' | 'project', entityId: string) => {
+  return useCallback((entityType: 'task' | 'project' | 'meeting', entityId: string) => {
     fetch('/api/seen', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
