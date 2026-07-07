@@ -92,9 +92,24 @@ export function TaskRow({ task, project, state, expandedId, onExpand, projectsBy
     // dnd-kit wrapper: setNodeRef + listeners activate the PointerSensor when the
     // user grabs the row (specifically the grip icon inside SharedTaskRow).
     // opacity: 0.5 while actively dragging for visual feedback.
+    //
+    // #482: dragAttrs (role="button", tabIndex, aria-roledescription) is
+    // spread ONLY while collapsed. dragListeners (the actual drag-activation
+    // handlers) stays unconditional either way -- dnd-kit returns these as
+    // two fully independent objects (verified against useDraggable's own
+    // .d.ts), so this changes NOTHING about drag activation: pointer-
+    // anywhere-on-the-row and keyboard drag-when-collapsed both work exactly
+    // as before. What changes is that while EXPANDED (TaskDetailDrawer open,
+    // with its own real interactive children), the wrapper no longer claims
+    // role="button" -- screen readers stop announcing the whole expanded
+    // card as one draggable button around a comment box, subtasks, etc.
+    // Deliberately does NOT touch the separate, still-open question of
+    // whether row-anywhere pointer drag itself should narrow to a grip
+    // handle (PlannedTaskRow's pattern) -- that's a real behavior change
+    // needing Nick's call, not an a11y-only fix.
     <div
       ref={setDragNodeRef}
-      {...dragAttrs}
+      {...(expanded ? {} : dragAttrs)}
       {...dragListeners}
       style={{ opacity: isListDragging ? 0.5 : 1 }}
     >
