@@ -1,9 +1,10 @@
 import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { Calendar, ArrowRight, CheckCircle2, UserCheck } from 'lucide-react'
-import { useMeetingsApi, useActionItems } from '../hooks/useApiData'
+import { useMeetingsApi, useMeetingLinkedTasks } from '../hooks/useApiData'
 import { getMeetingFacilitator } from '../lib/facilitator'
 import { localDateKey } from '../lib/dateUtils'
+import { countActionsByMeetingId } from '../lib/meetingTaskCounts'
 import { getPersonInfo } from '../data/team'
 import { PATHS } from '../constants/paths'
 import { ICON_PROPS } from '../lib/iconProps'
@@ -11,7 +12,7 @@ import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
 
 export default function UpcomingMeetingBanner() {
   const { data: meetings = [] } = useMeetingsApi()
-  const { data: actionItems = [] } = useActionItems()
+  const { data: allMeetingTasks = [] } = useMeetingLinkedTasks()
 
   // Find the next upcoming meeting: status='upcoming' or nearest future date
   const nextMeeting = useMemo(() => {
@@ -28,13 +29,13 @@ export default function UpcomingMeetingBanner() {
     return future[0] || null
   }, [meetings])
 
-  // Count pending action items for this meeting
+  // T19 (#547): dual-id join (T3: IN (id, source_id)) via the shared
+  // countActionsByMeetingId, so a PB-calendar-matched next meeting's tasks
+  // aren't undercounted.
   const pendingCount = useMemo(() => {
     if (!nextMeeting) return 0
-    return actionItems.filter(
-      (ai) => ai.meeting_id === nextMeeting.id && !ai.completed
-    ).length
-  }, [nextMeeting, actionItems])
+    return countActionsByMeetingId(allMeetingTasks, [nextMeeting]).get(nextMeeting.id)?.pendingCount ?? 0
+  }, [nextMeeting, allMeetingTasks])
 
   if (!nextMeeting) return null
 
