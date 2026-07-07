@@ -1,13 +1,16 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Activity, Calendar, CheckCircle2, Circle, Search, Clock, Plus, Users, UserCheck, ListChecks, ArrowRight, ChevronLeft, Scale } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { usePageMeta } from '../hooks/usePageMeta'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 import { useListKeyboardNav } from '../hooks/useListKeyboardNav'
-import { useMeetingsApi, useActionItems, useMeetingCadence } from '../hooks/useApiData'
-import type { MeetingRow, ActionItemRow } from '../hooks/useApiData'
-import { useToggleActionItem, useCreateActionItem, useCreateDecision } from '../hooks/useMutations'
+import { useMeetingsApi, useActionItems, useMeetingCadence, useMeetingDetail, useProjects } from '../hooks/useApiData'
+import type { MeetingRow, ActionItemRow, MeetingDetail as MeetingDetailData } from '../hooks/useApiData'
+import { fetchTasks } from '../lib/api'
+import type { TaskRow } from '../lib/api'
+import { useToggleActionItem, useCreateActionItem, useCreateDecision, useUpdateTask, useBulkUpdateTasks } from '../hooks/useMutations'
 import { useUndoToast } from '../components/UndoToast'
 import { useToast } from '../hooks/useToast'
 import { directors, getAllMembers, getPersonInfo } from '../data/team'
@@ -17,6 +20,7 @@ import Avatar from '../components/Avatar'
 import PageHeader from '../components/PageHeader'
 import InlineSelect from '../components/InlineSelect'
 import InlineAssigneePicker from '../components/InlineAssigneePicker'
+import { TaskRow as SharedTaskRow } from '../components/tasks/TaskRow'
 import { getMeetingFacilitator } from '../lib/facilitator'
 import { parseCarriedForward, emDashifyTitle } from '../lib/textUtils'
 import { formatFullDate, formatShortDate, localDateKey } from '../lib/dateUtils'
@@ -27,7 +31,7 @@ import { useOpenParam } from '../hooks/useOpenParam'
 import { useMeetingNotesSeen } from '../hooks/useMeetingNotesSeen'
 import MarkdownView from '../components/MarkdownView'
 import { ICON_PROPS } from '../lib/iconProps'
-import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
+import { ACCENT_GOLD, withAlpha, isTaskDone } from '../lib/taskGrouping'
 
 type FilterMode = 'all' | 'decisions' | 'actions'
 
@@ -115,14 +119,43 @@ interface ActionItemWithContext extends ActionItem {
 
 interface MeetingDetailProps {
   meeting: Meeting
-  onToggleAction: (meetingId: string, actionId: string) => void
 }
 
-function MeetingDetail({ meeting, onToggleAction }: MeetingDetailProps) {
-  const pendingActions = meeting.actionItems?.filter((a) => !a.completed).length ?? 0
-  const totalActions = meeting.actionItems?.length ?? 0
+function MeetingDetail({ meeting }: MeetingDetailProps) {
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
+  const updateTask = useUpdateTask()
+  const bulkUpdateTasks = useBulkUpdateTasks()
+  const { data: allProjects = [] } = useProjects()
+
+  // T8: real task rows — same GET /api/meetings/:id join Task 7 uses —
+  // replace the legacy action_items-table-derived meeting.actionItems for
+  // both the header counts and the Action Items list below.
+  const { data: fullMeeting } = useMeetingDetail(meeting.id)
+  const realActionItems = fullMeeting?.action_items ?? []
+  const pendingActions = realActionItems.filter((a) => !isTaskDone(a)).length
+  const totalActions = realActionItems.length
   const fSlug = getMeetingFacilitator(meeting.date)
   const fInfo = fSlug ? getPersonInfo(fSlug) : null
+
+  const meetingQueryKey = ['meeting', meeting.id] as const
+  function handleToggleDone(item: TaskRow) {
+    const wasDone = isTaskDone(item)
+    const prevData = queryClient.getQueryData<MeetingDetailData>(meetingQueryKey)
+    queryClient.setQueryData<MeetingDetailData>(meetingQueryKey, (data) => data && {
+      ...data,
+      action_items: data.action_items.map((a) =>
+        a.id === item.id ? { ...a, status: wasDone ? 'todo' : 'done', completed: wasDone ? 0 : 1 } : a
+      ),
+    })
+    const revert = () => queryClient.setQueryData(meetingQueryKey, prevData)
+    const settle = () => queryClient.invalidateQueries({ queryKey: meetingQueryKey })
+    if (wasDone) {
+      updateTask.mutate({ id: item.id, fields: { status: 'todo', completed: 0 } }, { onError: revert, onSuccess: settle })
+    } else {
+      bulkUpdateTasks.mutate({ ids: [item.id], action: 'complete' }, { onError: revert, onSuccess: settle })
+    }
+  }
 
   // M-26: Log Decision inline form
   const [showDecisionForm, setShowDecisionForm] = useState(false)
@@ -152,15 +185,6 @@ function MeetingDetail({ meeting, onToggleAction }: MeetingDetailProps) {
       },
     })
   }
-
-  // M-07: Show carried-forward items with cleaned descriptions
-  const actionItemsWithCarried = useMemo(() => {
-    if (!meeting.actionItems) return []
-    return meeting.actionItems.map((item) => {
-      const { isCarried, clean } = parseCarriedForward(item.description)
-      return { ...item, isCarried, cleanDescription: clean }
-    })
-  }, [meeting.actionItems])
 
   return (
     <div>
@@ -268,49 +292,30 @@ function MeetingDetail({ meeting, onToggleAction }: MeetingDetailProps) {
         </div>
       )}
 
-      {/* M-07: action items with carried-forward badges */}
-      {actionItemsWithCarried.length > 0 && (
+      {/* T8: real task rows, compact — no InlineDetail in this narrow panel;
+          body-click navigates to the full meeting page for editing. The
+          checkbox stays inline (Rule 9: only the status circle changes
+          status without navigating). */}
+      {realActionItems.length > 0 && (
         <div className="mb-6">
           <h4 className="mtg-section-label mb-2">Action Items</h4>
-          <div className="space-y-2">
-            {actionItemsWithCarried.map((item, i) => {
-              const info = getPersonInfo(item.assignee)
+          <div>
+            {realActionItems.map((item) => {
+              const project = item.project_id
+                ? (() => { const p = allProjects.find((pr) => pr.slug === item.project_id); return p ? { name: p.title, slug: p.slug } : null })()
+                : null
               return (
-                <div key={i} className="flex items-start gap-2 text-sm" style={{ color: 'var(--ink)' }}>
-                  <button
-                    type="button"
-                    className="cursor-pointer shrink-0 mt-0.5 action-toggle-btn"
-                    style={{ background: 'none', border: 'none', padding: 'var(--sp-md)', margin: '-10px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 'var(--radius-sm)', transition: 'transform 0.15s ease', minWidth: '44px', minHeight: '44px' }}
-                    onClick={() => { if (item.id) onToggleAction(meeting.id, item.id) }}
-                    onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.2)' }}
-                    onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)' }}
-                    title={item.completed ? 'Mark as pending' : 'Mark as completed'}
-                  >
-                    {item.completed
-                      ? <CheckCircle2 {...ICON_PROPS} size={16} style={{ color: 'var(--teal)' }} />
-                      : <Circle {...ICON_PROPS} size={16} style={{ color: 'var(--gold)' }} />
-                    }
-                  </button>
-                  <div className="flex-1 min-w-0">
-                    <span style={{ textDecoration: item.completed ? 'line-through' : 'none', opacity: item.completed ? 0.85 : 1 }}>
-                      {item.isCarried && <span className="carried-badge">&#x21bb; carried</span>}
-                      {item.cleanDescription}
-                    </span>
-                    <div className="flex items-center gap-2 mt-1">
-                      <div className="flex items-center gap-1">
-                        <div style={{ width: 16, height: 16 }}>
-                          <Avatar name={info.name} initials={info.initials} photoUrl={info.photoUrl} variant="ice" size="2xs" />
-                        </div>
-                        <span className="text-xs" style={{ color: 'var(--slate)', opacity: 0.85 }}>{info.name}</span>
-                      </div>
-                      {item.dueDate && (
-                        <span className="text-xs" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
-                          due {formatShortDate(item.dueDate)}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                <SharedTaskRow
+                  key={item.id}
+                  task={item}
+                  project={project}
+                  dense
+                  isDone={isTaskDone(item)}
+                  onToggleDone={() => handleToggleDone(item)}
+                  isExpanded={false}
+                  onToggleExpand={() => navigate(PATHS.meeting(meeting.id))}
+                  hideCaret
+                />
               )
             })}
           </div>
@@ -442,6 +447,43 @@ export default function Meetings() {
     [meetingRows, actionItemRows]
   )
 
+  // T8: list-row action counts — real tasks (tasks.meeting_id), not the
+  // legacy action_items table. One unscoped fetch + client-side group-by,
+  // keyed on BOTH id and source_id (T3's dual-id join: `IN (id, source_id)`)
+  // so a PB-calendar-matched meeting's tasks still count under its row.
+  // Deliberately fetchTasks() directly, NOT useTasks() — useTasks() runs
+  // dedupTasks(), which collapses same title+assignee tasks GLOBALLY across
+  // ALL meetings (by design, for "one row per recurring item" list views).
+  // That would silently move a carried-forward item's count off its
+  // originating meeting onto whichever later meeting's copy survives the
+  // dedup — wrong for a per-meeting aggregate, which needs every row.
+  const { data: allTasksData = [] } = useQuery({
+    queryKey: ['tasks', 'all-for-meeting-counts'],
+    queryFn: async () => (await fetchTasks()).data as TaskRow[],
+    staleTime: 60 * 1000,
+  })
+  const actionCountsByMeetingId = useMemo(() => {
+    const byRawMeetingId = new Map<string, { actionCount: number; pendingCount: number }>()
+    for (const t of allTasksData) {
+      if (!t.meeting_id) continue
+      const c = byRawMeetingId.get(t.meeting_id) ?? { actionCount: 0, pendingCount: 0 }
+      c.actionCount += 1
+      if (!isTaskDone(t)) c.pendingCount += 1
+      byRawMeetingId.set(t.meeting_id, c)
+    }
+    const merged = new Map<string, { actionCount: number; pendingCount: number }>()
+    for (const row of meetingRows) {
+      const fromId = byRawMeetingId.get(row.id)
+      const fromSourceId = row.source_id && row.source_id !== row.id ? byRawMeetingId.get(row.source_id) : undefined
+      if (!fromId && !fromSourceId) continue
+      merged.set(row.id, {
+        actionCount: (fromId?.actionCount ?? 0) + (fromSourceId?.actionCount ?? 0),
+        pendingCount: (fromId?.pendingCount ?? 0) + (fromSourceId?.pendingCount ?? 0),
+      })
+    }
+    return merged
+  }, [allTasksData, meetingRows])
+
   const [showAddAction, setShowAddAction] = useState(false)
   const [newActionDesc, setNewActionDesc] = useState('')
   const [newActionAssignee, setNewActionAssignee] = useState('nick-ingraham')
@@ -529,10 +571,6 @@ export default function Meetings() {
     { key: 'decisions', label: 'Decisions' },
     { key: 'actions', label: 'Actions' },
   ]
-
-  function handleToggleAction(_meetingId: string, actionId: string) {
-    toggleWithUndo(actionId)
-  }
 
   function handleAddActionItem() {
     if (!newActionDesc.trim()) return
@@ -802,8 +840,7 @@ export default function Meetings() {
               filteredMeetings.map((meeting, idx) => {
                 const isSelected = meeting.id === effectiveSelectedId
                 const isNext = isNextMeeting(meeting)
-                const actionCount = meeting.actionItems?.length ?? 0
-                const pendingCount = meeting.actionItems?.filter((a) => !a.completed).length ?? 0
+                const { actionCount = 0, pendingCount = 0 } = actionCountsByMeetingId.get(meeting.id) ?? {}
                 const hasNewNotes = isMeetingNew(meeting)
                 return (
                   <button key={meeting.id} type="button" className="cursor-pointer w-full text-left hov-bg"
@@ -870,7 +907,7 @@ export default function Meetings() {
           </button>
           {selectedMeeting ? (
             <motion.div key={selectedMeeting.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}>
-              <MeetingDetail meeting={selectedMeeting} onToggleAction={handleToggleAction} />
+              <MeetingDetail meeting={selectedMeeting} />
 
               <div style={{ marginTop: '2.5rem', paddingTop: '2rem' }}>
                 <h3 className="text-base font-medium mb-4" style={{ color: 'var(--ink)' }}>All Pending Actions</h3>

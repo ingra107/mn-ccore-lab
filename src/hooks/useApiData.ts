@@ -348,6 +348,11 @@ export interface MeetingRow {
   status: string
   created_at: string
   updated_at: string
+  /** v95: PB's calendar-match id, when this meeting was matched from a PB
+   *  push. tasks.meeting_id may carry either this id space or `id` — the
+   *  join in handleGetMeeting matches `IN (id, source_id)`; any client-side
+   *  aggregation across meeting_id (T8 list-row counts) must do the same. */
+  source_id?: string | null
 }
 
 export interface ActionItemRow {
