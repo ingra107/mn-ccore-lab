@@ -513,6 +513,31 @@ describe('handleUploadUrl / handleUploadDone — canAccessEntity on context', ()
     expect(res.status).not.toBe(403)
   })
 
+  it('handleUploadUrl: presigned URL is path-style with the bucket segment', async () => {
+    // R2's S3 API resolves the first path segment as the bucket. Presigning
+    // without it 403'd every PUT since the feature shipped (bucket-less URL bug).
+    const env = uploadsEnv(false)
+    const req = new Request('https://x/api/upload/url', {
+      method: 'POST',
+      headers: {
+        'X-Test-Mode-Key': 'local-test-key-do-not-use-in-prod',
+        'X-Test-User': NON_PI_EMAIL,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        filename: 'shot.png',
+        contentType: 'image/png',
+        context: { type: 'task', id: 'task-123' },
+      }),
+    })
+    const user = { email: NON_PI_EMAIL, name: 'Nate' }
+    const res = await handleUploadUrl(req, user, env)
+    expect(res.status).toBe(200)
+    const { data } = await res.json() as { data: { uploadUrl: string; key: string } }
+    const path = new URL(data.uploadUrl).pathname
+    expect(path).toBe(`/mnccore-files/${data.key}`)
+  })
+
   it('handleUploadDone: blocks non-PI committing a file record on a PB project', async () => {
     const env = uploadsEnv(true)
     const req = new Request('https://x/api/upload/done', {

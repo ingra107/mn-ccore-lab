@@ -8,6 +8,12 @@ interface AuthUser {
   name: string;
 }
 
+// R2's S3 API is path-style: https://{account}.r2.cloudflarestorage.com/{bucket}/{key}.
+// Presigning without the bucket segment made R2 read the key's first segment
+// ("task"/"project"/"meeting") as a nonexistent bucket -> 403 AccessDenied on every
+// PUT since the feature shipped (88f54cbd). Must match wrangler.toml's FILES bucket.
+const R2_BUCKET = 'mnccore-files';
+
 function json(data: unknown, status = 200) {
   return new Response(JSON.stringify({ data }), {
     status,
@@ -81,7 +87,7 @@ export async function handleUploadUrl(request: Request, user: AuthUser, env: Env
     secretAccessKey: env.R2_SECRET_ACCESS_KEY,
   });
 
-  const url = new URL(`https://${env.CF_ACCOUNT_ID}.r2.cloudflarestorage.com/${key}`);
+  const url = new URL(`https://${env.CF_ACCOUNT_ID}.r2.cloudflarestorage.com/${R2_BUCKET}/${key}`);
   url.searchParams.set('X-Amz-Expires', '3600');
 
   const signed = await r2.sign(
@@ -222,7 +228,7 @@ export async function handleGetFile(key: string, env: Env, canSeePb = false, raw
     secretAccessKey: env.R2_SECRET_ACCESS_KEY,
   });
 
-  const url = new URL(`https://${env.CF_ACCOUNT_ID}.r2.cloudflarestorage.com/${key}`);
+  const url = new URL(`https://${env.CF_ACCOUNT_ID}.r2.cloudflarestorage.com/${R2_BUCKET}/${key}`);
   url.searchParams.set('X-Amz-Expires', '3600');
 
   const signed = await r2.sign(new Request(url, { method: 'GET' }), {
