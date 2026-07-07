@@ -14,6 +14,7 @@ const RichTextEditor = lazy(() => import('../RichTextEditor'))
 import { useUpdateTask, useUpdateTaskStatus, usePostTaskUpdate, useBulkUpdateTasks } from '../../hooks/useMutations'
 import { useTaskViewTracking } from '../../hooks/useTaskViewTracking'
 import { useProjects, useDecisions, useTaskLinks } from '../../hooks/useApiData'
+import { QueryErrorNote } from '../QueryErrorNote'
 import StoredLinkChip from '../StoredLinkChip'
 import GhostSelect from '../ui/GhostSelect'
 import type { DecisionRow } from '../../hooks/useApiData'
@@ -1135,7 +1136,11 @@ const DECISIONS_SENTIMENT_BADGE: Record<string, { color: string; bg: string }> =
 }
 
 function ProjectDecisionsSection({ projectSlug }: { projectSlug: string }) {
-  const { data: decisions = [] } = useDecisions(projectSlug)
+  const { data: decisions = [], isError, refetch } = useDecisions(projectSlug)
+
+  if (isError) {
+    return <QueryErrorNote label="decisions" onRetry={() => refetch()} />
+  }
 
   if (decisions.length === 0) {
     return (
@@ -1217,6 +1222,10 @@ function DetailKeyLinks({
   // Inherited project links from the links table (read-only, visually separated).
   // Task-own links are no longer shown read-only here — they are already
   // covered by KeyLinksEditor below (slots backfilled 1:1 from links table).
+  // #507 follow-up opt-out: this is a read-only OPTIONAL enrichment (task's
+  // own key-link write path is unaffected) that already hides itself when
+  // empty (`projectLinks.length > 0` below) -- a fetch failure degrades the
+  // same as "no inherited links," no false claim.
   const { data: linksData } = useTaskLinks(task.id)
   // Sort: type-priority (displayRank) primary, sort_order as tiebreaker.
   // Mirrors PB sections.py render order so both surfaces agree by construction.

@@ -791,7 +791,7 @@ export default function DecisionsPage() {
   const [sortKey, setSortKey] = useState<DecisionSortKey>('created_at')
   const [sortAsc, setSortAsc] = useState(false)
 
-  const { data: rawAllDecisions = [], isLoading } = useDecisions(
+  const { data: rawAllDecisions = [], isLoading, isError, refetch } = useDecisions(
     undefined,
     filterTag || undefined
   )
@@ -800,6 +800,11 @@ export default function DecisionsPage() {
     () => rawAllDecisions.filter(d => isProductionVisible(d.title)),
     [rawAllDecisions]
   )
+  // #507 follow-up opt-out: reviewDecisions/tagCounts are secondary
+  // enrichments (the "Record outcome?" prompt section, the tag-filter pill
+  // row) that already gate on `.length > 0` -- a failure here just hides
+  // that optional section, same as "none yet," with no false claim. The
+  // page's core content (allDecisions, below) gets the real isError branch.
   const { data: reviewDecisions = [] } = useDecisionsForReview()
   const { data: projects = [] } = useProjects()
   const { data: tagCounts = [] } = useDecisionTags()
@@ -1192,6 +1197,13 @@ export default function DecisionsPage() {
 
         {isLoading ? (
           <TableSkeleton rows={5} cols={6} />
+        ) : isError ? (
+          <EmptyState
+            icon={<Scale size={40} />}
+            title="Couldn't load decisions"
+            subtitle="Something went wrong fetching the decision log."
+            action={{ label: 'Retry', onClick: () => refetch() }}
+          />
         ) : filteredDecisions.length === 0 ? (
           <EmptyState
             icon={<Scale size={40} />}

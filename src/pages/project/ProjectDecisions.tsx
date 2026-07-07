@@ -7,15 +7,20 @@ import { formatMediumDate } from '../../lib/dateUtils'
 import { PATHS } from '../../constants/paths'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
+import { QueryErrorNote } from '../../components/QueryErrorNote'
 
 interface ProjectDecisionsProps {
   projectSlug: string
 }
 
 export default function ProjectDecisions({ projectSlug }: ProjectDecisionsProps) {
-  const { data: decisions = [] } = useDecisions(projectSlug)
+  const { data: decisions = [], isError, refetch } = useDecisions(projectSlug)
 
-  if (decisions.length === 0) return null
+  // #507 follow-up: a bare `decisions.length === 0` return-null used to
+  // vanish this whole section on a thrown fetch failure too -- Nick would
+  // never see the Decisions card for a project whose decisions failed to
+  // load. isError now renders a visible retry note instead of nothing.
+  if (decisions.length === 0 && !isError) return null
 
   return (
     <motion.div
@@ -57,6 +62,9 @@ export default function ProjectDecisions({ projectSlug }: ProjectDecisionsProps)
         }}
         className="detail-card"
       >
+        {isError ? (
+        <QueryErrorNote label="decisions" onRetry={() => refetch()} />
+        ) : (
         <div className="flex flex-col gap-3">
           {decisions.slice(0, 5).map((decision: DecisionRow) => (
             <div
@@ -143,6 +151,7 @@ export default function ProjectDecisions({ projectSlug }: ProjectDecisionsProps)
             </Link>
           )}
         </div>
+        )}
       </div>
     </motion.div>
   )

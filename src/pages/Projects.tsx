@@ -186,6 +186,12 @@ export default function Projects() {
 
   const { data: projects = [] } = useProjects()
   const { data: allTasks = [] } = useTasks()
+  // #507 follow-up opt-out: dependencies/healthData/allProjectLinks are all
+  // per-row OPTIONAL enrichments (dependency map inside a collapsible toggle,
+  // health progress bar, link icons) layered onto the page's real query
+  // (useProjects, above -- unaffected). A failure here degrades to "badge/
+  // icon/panel just doesn't render" with no false claim, same as "no data
+  // yet" -- not worth a page-level error block for a secondary decoration.
   const { data: dependencies = [] } = useDependencies()
   const { data: healthData } = useProjectHealth()
   const { data: allProjectLinks = {} } = useAllProjectLinks()

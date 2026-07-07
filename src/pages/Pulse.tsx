@@ -44,6 +44,13 @@ import type { SparkPoint } from '../components/pulse/PulseSparkline'
 
 const ROTATE_INTERVAL = 8000
 
+// #507 follow-up opt-out (whole file): this is an unattended kiosk display
+// (lab TV wall signage) with no chrome, no nav, no click targets -- a retry
+// affordance has nobody to click it. Every data-driven scene already
+// degrades gracefully on empty/failed data by simply not rendering (e.g.
+// `if (health) { ... }`, `if (grants.length) { ... }`), which is the right
+// behavior here regardless of whether the cause was "no data" or "fetch
+// failed" -- fewer scenes cycle rather than a broken/misleading one.
 export default function Pulse() {
   const [activeIndex, setActiveIndex] = useState(0)
   // P3-01: persisted pause toggle so the kiosk can be parked on one slide
