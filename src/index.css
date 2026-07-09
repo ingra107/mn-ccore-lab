@@ -1762,9 +1762,14 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
 /* Activity-card trash: hover-hide until the card is hovered (Nick 2026-07-09 —
    declutter the feed so comments read cleanly). visibility (not opacity) keeps it
    out of the AT tree when hidden (Rule 27). Touch devices (no hover) always show. */
-.detail-card .ae-delete { visibility: hidden; }
-.detail-card:hover .ae-delete { visibility: visible; }
-@media (hover: none) { .detail-card .ae-delete { visibility: visible; } }
+.detail-card .ae-delete,
+.lc-row .ae-delete { visibility: hidden; }
+.detail-card:hover .ae-delete,
+.lc-row:hover .ae-delete { visibility: visible; }
+@media (hover: none) {
+  .detail-card .ae-delete,
+  .lc-row .ae-delete { visibility: visible; }
+}
 
 /* Pretty hover/focus tooltip primitive (Nick 2026-07-09 — the native title box is
    bland). Add class "tip" + data-tip="…" to any element and it shows a styled dark

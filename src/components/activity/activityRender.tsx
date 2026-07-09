@@ -324,7 +324,7 @@ export interface ActivityEntryItemProps {
 // Two-step inline confirm: first click arms (coral, 3s window), second click
 // deletes. No browser dialog. Rendered only when a caller passes onDelete;
 // the API re-enforces author-or-PI server-side.
-function DeleteEntryButton({ onDelete }: { onDelete: () => void }) {
+export function DeleteEntryButton({ onDelete }: { onDelete: () => void }) {
   const [armed, setArmed] = useState(false)
   useEffect(() => {
     if (!armed) return
@@ -499,7 +499,7 @@ export function ActivityEntryItem({
   if (entry.kind === 'system' || entry.kind === 'completion') {
     return (
       <ActivityEntryWrapper motionProps={motionProps}>
-        <LifecycleActivityLine entry={entry} />
+        <LifecycleActivityLine entry={entry} onDelete={onDelete} />
       </ActivityEntryWrapper>
     )
   }
