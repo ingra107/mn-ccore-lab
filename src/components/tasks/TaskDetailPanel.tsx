@@ -1810,7 +1810,7 @@ function OverviewQuickAdd({
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
               aria-label="Attach file"
-              data-tip="Attach file (drop or paste an image too)"
+              data-tip="Attach file"
               className="flex-shrink-0 inline-flex items-center justify-center tip"
               style={composerIconBtn}
             >
@@ -1823,7 +1823,7 @@ function OverviewQuickAdd({
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => appendCh('@')}
               aria-label="Mention teammate"
-              data-tip="@mention a teammate"
+              data-tip="Mention"
               className="flex-shrink-0 inline-flex items-center justify-center tip"
               style={composerIconBtn}
             >
@@ -1834,7 +1834,7 @@ function OverviewQuickAdd({
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => appendCh(':')}
               aria-label="Add emoji"
-              data-tip="Add emoji (:emoji:)"
+              data-tip="Emoji"
               className="flex-shrink-0 inline-flex items-center justify-center tip"
               style={composerIconBtn}
             >
@@ -1859,7 +1859,7 @@ function OverviewQuickAdd({
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => setForHermes((v) => !v)}
                 aria-label={forHermes ? 'Queued for Claude — click to remove' : 'Queue this comment for your next Claude Code session'}
-                data-tip="Queue for Claude's next session (not real-time — type @hermes to ask now)"
+                data-tip="Queue for Claude"
                 className="flex-shrink-0 inline-flex items-center gap-1 tip"
                 style={{
                   height: 22,
@@ -1913,8 +1913,8 @@ function OverviewQuickAdd({
                 cursor: 'pointer',
                 whiteSpace: 'nowrap',
               }}
-              className="tip"
-              data-tip="Jump to full Activity tab"
+              className="tip tip-end"
+              data-tip="Full activity"
             >
               See all →
             </button>
@@ -1926,8 +1926,8 @@ function OverviewQuickAdd({
                 aria-label={mode === 'comment'
                   ? (forHermes ? 'Post comment and queue for Claude' : 'Post comment')
                   : 'Add note'}
-                data-tip={`${mode === 'comment' ? (forHermes ? 'Post + queue for Claude session' : 'Post comment') : 'Add note'} · Ctrl+Enter`}
-                className="flex-shrink-0 inline-flex items-center justify-center tip"
+                data-tip={`${mode === 'comment' ? (forHermes ? 'Post + queue' : 'Post') : 'Add note'} · Ctrl+Enter`}
+                className="flex-shrink-0 inline-flex items-center justify-center tip tip-end"
                 style={{
                   background: forHermes && mode === 'comment' ? 'var(--gold)' : 'var(--teal-solid)',
                   color: 'var(--ink-bright, #fff)',

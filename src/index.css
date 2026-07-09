@@ -1782,8 +1782,12 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
 .tip[data-tip]::after {
   content: attr(data-tip);
   position: absolute;
-  bottom: calc(100% + 6px);
-  right: 0;
+  /* Below the element, extending right — approximates the native title's
+     "just below/right of the pointer" feel (elements are usually small icons,
+     so element-anchored ≈ cursor-anchored). Right-edge elements that would
+     overflow use .tip-end (right-anchored) instead. */
+  top: calc(100% + 6px);
+  left: 0;
   z-index: 60;
   white-space: nowrap;
   font-style: normal;
@@ -1797,10 +1801,14 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
   padding: 5px 9px;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
   opacity: 0;
-  transform: translateY(3px);
+  transform: translateY(-3px);
   transition: opacity 0.12s ease, transform 0.12s ease;
   pointer-events: none;
 }
+/* Right-anchored variant for elements sitting at a container's right edge
+   (feed timestamps, row due/project chips, composer submit) so the tooltip
+   extends left instead of overflowing the edge. */
+.tip-end[data-tip]::after { left: auto; right: 0; }
 .tip[data-tip]:hover::after,
 .tip[data-tip]:focus-visible::after { opacity: 1; transform: translateY(0); }
 @media (prefers-reduced-motion: reduce) {

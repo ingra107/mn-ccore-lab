@@ -51,7 +51,8 @@ export function LinkRow({ links }: { links: TaskLink[] }) {
             href={isHttp ? href : l.url}
             target={isHttp ? '_blank' : undefined}
             rel={isHttp ? 'noopener noreferrer' : undefined}
-            title={tooltip}
+            className="tip"
+            data-tip={tooltip}
             aria-label={tooltip}
             onClick={(e) => {
               e.stopPropagation()

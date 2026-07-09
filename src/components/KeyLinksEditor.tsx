@@ -101,17 +101,18 @@ function LinkRow({
       </a>
       <button
         onClick={onEdit}
-        title="Edit link"
+        data-tip="Edit link"
         aria-label="Edit link"
-        className="opacity-0 group-hover:opacity-100 transition-opacity"
+        className="opacity-0 group-hover:opacity-100 transition-opacity tip"
         style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: 0, display: 'grid', flexShrink: 0 }}
       >
         <Pencil {...ICON_PROPS} size={11} />
       </button>
       <button
         onClick={onRemove}
-        title="Remove link"
+        data-tip="Remove link"
         aria-label="Remove link"
+        className="tip"
         style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: 0, display: 'grid', flexShrink: 0, opacity: 0.7 }}
       >
         <X {...ICON_PROPS} size={12} />
@@ -185,7 +186,8 @@ function LinkForm({
             color: 'var(--slate)',
             cursor: 'pointer',
           }}
-          title="Cancel (Esc)"
+          className="tip"
+          data-tip="Cancel (Esc)"
         >
           <X {...ICON_PROPS} size={12} style={{ display: 'inline', marginRight: 4 }} /> Cancel
         </button>
@@ -202,7 +204,8 @@ function LinkForm({
             cursor: canSave ? 'pointer' : 'not-allowed',
             fontWeight: 500,
           }}
-          title="Save (Ctrl+Enter)"
+          className="tip"
+          data-tip="Save (Ctrl+Enter)"
         >
           <Check {...ICON_PROPS} size={12} style={{ display: 'inline', marginRight: 4 }} /> Save
         </button>

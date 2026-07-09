@@ -95,7 +95,7 @@ function DueChip({ due, status }: { due: string; status?: string }) {
   const color = overdue ? ACCENT_CORAL : isToday ? ACCENT_GOLD : INK_MUTED
   return (
     <span
-      className="tip"
+      className="tip tip-end"
       data-tip={`Due ${dueDay}`}
       aria-label={`Due ${dueDay}`}
       style={{ fontSize: 11, color, fontVariantNumeric: 'tabular-nums', fontWeight: overdue ? 600 : 500, flexShrink: 0, whiteSpace: 'nowrap' }}
@@ -113,7 +113,7 @@ function ProjectTag({ project }: { project: { name: string; slug: string } | nul
     // .tip lives on the WRAPPER, not the Link: the Link has overflow:hidden for
     // its ellipsis, which would clip the tooltip ::after. The wrapper has no
     // overflow so the styled tooltip escapes.
-    <span className="tip" data-tip={`Jump to ${project.name}`} style={{ display: 'inline-flex', minWidth: 0, flexShrink: 0 }}>
+    <span className="tip tip-end" data-tip={`Jump to ${project.name}`} style={{ display: 'inline-flex', minWidth: 0, flexShrink: 0 }}>
       <Link
         to={PATHS.project(project.slug)}
         onClick={(e) => e.stopPropagation()}
@@ -143,7 +143,7 @@ function PlannedChip({ label = 'planned', onUnplan }: { label?: string; onUnplan
         className="planned-chip tip"
         onClick={(e) => { e.stopPropagation(); onUnplan() }}
         onMouseDown={(e) => e.stopPropagation()}
-        data-tip="Planned for today — click to unplan"
+        data-tip="Click to unplan"
         aria-label="Unplan task"
         style={{ ...base, cursor: 'pointer', fontFamily: 'inherit', display: 'inline-flex', alignItems: 'center', gap: 3 }}
       >
@@ -227,8 +227,8 @@ function DragHandle({ show, draggable, onDragStart }: { show: boolean; draggable
       onDragStart={onDragStart}
       onClick={(e) => e.stopPropagation()}
       onMouseDown={(e) => e.stopPropagation()}
-      data-tip="Drag to timeline to schedule this task"
-      aria-label="Drag to timeline to schedule this task"
+      data-tip="Drag to schedule"
+      aria-label="Drag to schedule"
       className="task-grip tip"
       // ~50% larger hit area (Nick 2026-06-19): padding enlarges the click target
       // without changing the 12px icon's visual size. Negative margin absorbs the
@@ -318,11 +318,10 @@ export function TaskRow(props: SharedTaskRowProps) {
   const rowOverdue = !isDone && !!task.due_date && isOverdue(task.due_date, task.status)
 
   // Prefer the curated short_title (PB-generated for long task names) for the row.
-  // The full title stays available on hover (native title attr) and in the expanded
-  // drawer. A complete short title is not a truncation — Rule 68 unaffected.
+  // The full title is available in the expanded drawer — NOT on hover (Nick
+  // 2026-07-09: "i don't need the long title when i hover over tasks"). A complete
+  // short title is not a truncation — Rule 68 unaffected.
   const displayTitle = task.short_title || task.title
-  // Full title on hover only when a (differing) short_title is what's shown.
-  const fullTitleHover = displayTitle !== task.title ? task.title : undefined
 
   // Title-click → full editor (only when the surface wires onOpenEditor).
   // Select gestures keep working from the title: shift-click / selection-mode
@@ -332,8 +331,6 @@ export function TaskRow(props: SharedTaskRowProps) {
     <span
       role="button"
       tabIndex={0}
-      className="tip"
-      data-tip={fullTitleHover ?? 'Open task editor'}
       onClick={(e) => {
         if (lpTimer.current === 'fired') return                          // long-press selected — let the row swallow it
         if (selectable && (e.shiftKey || e.ctrlKey || e.metaKey || selectionActive)) return  // bubble → select
@@ -368,7 +365,7 @@ export function TaskRow(props: SharedTaskRowProps) {
       className="today-plan-btn tip"
       onClick={(e) => { e.stopPropagation(); onTogglePlan() }}
       onMouseDown={(e) => e.stopPropagation()}
-      data-tip="Plan for today (no specific time)"
+      data-tip="Plan for today"
       aria-label="Plan task for today"
       // ~50% larger hit area (Nick 2026-06-19): padding grows the click target;
       // negative margin keeps the row layout from shifting.
@@ -439,7 +436,7 @@ export function TaskRow(props: SharedTaskRowProps) {
         {stack ? (
           /* narrow rail: title full-width, meta stacks below */
           <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 5, paddingTop: 1 }}>
-            <span className="tip" data-tip={onOpenEditor ? undefined : fullTitleHover} style={{ fontSize: 13.5, color: isDone ? INK_MUTED : INK, fontWeight: 500, textDecoration: isDone ? 'line-through' : 'none', lineHeight: 1.4, textWrap: 'pretty' as const }}>
+            <span style={{ fontSize: 13.5, color: isDone ? INK_MUTED : INK, fontWeight: 500, textDecoration: isDone ? 'line-through' : 'none', lineHeight: 1.4, textWrap: 'pretty' as const }}>
               {leadingTag && <span style={{ marginRight: 6 }} aria-hidden="true">{leadingTag}</span>}
               {titleNode}
               {newChip}
@@ -455,7 +452,7 @@ export function TaskRow(props: SharedTaskRowProps) {
           <div style={{ flex: 1, minWidth: 0, paddingTop: 1 }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 9 }}>
               {/* title — full, wraps, never clipped */}
-              <span className="tip" data-tip={onOpenEditor ? undefined : fullTitleHover} style={{ flex: 1, minWidth: 0, fontSize: 13.5, color: isDone ? INK_MUTED : INK, fontWeight: 500, textDecoration: isDone ? 'line-through' : 'none', lineHeight: 1.4, textWrap: 'pretty' as const }}>
+              <span style={{ flex: 1, minWidth: 0, fontSize: 13.5, color: isDone ? INK_MUTED : INK, fontWeight: 500, textDecoration: isDone ? 'line-through' : 'none', lineHeight: 1.4, textWrap: 'pretty' as const }}>
                 {leadingTag && <span style={{ marginRight: 6 }} aria-hidden="true">{leadingTag}</span>}
                   {titleNode}
                 {newChip}

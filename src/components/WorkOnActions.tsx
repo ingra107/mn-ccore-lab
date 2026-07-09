@@ -46,10 +46,10 @@ export default function WorkOnActions({ primaryFolder, projectLabel, variant = '
     }
     return (
       <>
-        <button type="button" onClick={openFolder} title="Open project folder" aria-label="Open project folder" style={iconBtn}>
+        <button type="button" onClick={openFolder} className="tip" data-tip="Open folder" aria-label="Open project folder" style={iconBtn}>
           <FolderOpen {...ICON_PROPS} size={13} />
         </button>
-        <button type="button" onClick={workOn} title="Work on this in Claude (this machine)" aria-label="Work on this in Claude" style={iconBtn}>
+        <button type="button" onClick={workOn} className="tip" data-tip="Work on in Claude" aria-label="Work on this in Claude" style={iconBtn}>
           <Play {...ICON_PROPS} size={13} />
         </button>
       </>
@@ -67,7 +67,8 @@ export default function WorkOnActions({ primaryFolder, projectLabel, variant = '
       <button
         type="button"
         onClick={openFolder}
-        title="Open the project's working folder in Explorer"
+        className="tip"
+        data-tip="Open in Explorer"
         style={{ ...btn, background: 'var(--ice)', color: 'var(--slate)' }}
       >
         <FolderOpen {...ICON_PROPS} size={14} /> Open folder
@@ -75,7 +76,8 @@ export default function WorkOnActions({ primaryFolder, projectLabel, variant = '
       <button
         type="button"
         onClick={workOn}
-        title="Launch Claude in this project on the machine you're using"
+        className="tip"
+        data-tip="Launch here"
         style={{ ...btn, background: 'var(--teal-solid)', color: 'var(--ink-bright)', border: '1px solid var(--teal-solid)' }}
       >
         <Play {...ICON_PROPS} size={14} /> Work on this in Claude

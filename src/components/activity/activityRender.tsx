@@ -208,7 +208,7 @@ export function EntryTime({ ts, className }: { ts: string; className?: string })
   return (
     <time
       dateTime={isNaN(d.getTime()) ? ts : d.toISOString()}
-      className={`tip ${className ?? ''}`}
+      className={`tip tip-end ${className ?? ''}`}
       data-tip={abs}
       aria-label={abs}
       style={STYLE_TIME}
