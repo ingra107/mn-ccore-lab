@@ -200,7 +200,10 @@ export function AuthorOnlyBadge() {
 export function EntryTime({ ts, className }: { ts: string; className?: string }) {
   const d = parseDbUtc(ts)
   const abs = isNaN(d.getTime()) ? ts : formatDbLocal(ts, 'datetime')
-  const rel = formatRelativeTime(ts)
+  // Drop the trailing " ago" — the activity feed wants a tight, clean timestamp
+  // column ("1h" / "54m" / "3d" / "Jun 24"), and lifecycle + comment rows share
+  // this component so they stay identical (Nick 2026-07-09).
+  const rel = formatRelativeTime(ts).replace(/ ago$/, '')
   return (
     <time
       dateTime={isNaN(d.getTime()) ? ts : d.toISOString()}

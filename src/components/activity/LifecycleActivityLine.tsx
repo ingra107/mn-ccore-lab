@@ -31,10 +31,12 @@ export function LifecycleActivityLine({ entry }: { entry: ActivityEntryItemRow }
     ev === 'created' ? 'var(--gold)' : ev === 'completed' ? 'var(--green)' : 'var(--teal)'
   const who = getPersonInfo(entry.actor_slug)?.name ?? entry.actor_slug
 
+  // padding L=15px (3px accent bar + 12px card pad), R=12px → the lifecycle
+  // timestamp shares ONE right-edge column with the comment timestamps (Nick 2026-07-09).
   return (
     <div
       className="flex items-baseline gap-2"
-      style={{ padding: '0.1rem 0.5rem', fontStyle: 'italic', color: 'var(--muted)', fontSize: '0.72rem', lineHeight: 1.3 }}
+      style={{ padding: '0.1rem 12px 0.1rem 15px', fontStyle: 'italic', color: 'var(--muted)', fontSize: '0.72rem', lineHeight: 1.3 }}
     >
       <span
         aria-hidden="true"
