@@ -67,7 +67,33 @@ The audit found NO further whisper candidates. The app's other filled pills
 
 ---
 
-## Wave 1 — ship first (P1, seen every day; 4 files, single-component edits)
+## ⚠️ Execution learning (found while shipping Wave 1) — READ BEFORE Waves 2/3
+
+**`.tip` self-clips inside ANY `overflow: hidden` ancestor** (it's an absolutely-
+positioned `::after`). Native `title=` is the OS tooltip — it escapes all clipping.
+So the rule for Recipe B is: **only convert a `title=` to `.tip` when neither the
+element NOR any ancestor up to the scroll container has `overflow: hidden/auto`.**
+- If the element itself clips for an ellipsis (e.g. a truncating title/link) →
+  move `.tip` to a NON-clipping WRAPPER (see ProjectTag fix in TaskRow.tsx).
+- If it sits in an intentionally-clipped **power-grid / table cell** (ellipsis
+  columns) → **LEAVE the native `title=`** — that's the correct choice there.
+This killed Wave-1 item 2 (ListView) and item 3 (today/TaskRow workflow chips):
+their tooltips live in clipped cells. **Directly affects Wave 2 items 11
+(Projects.tsx rows) + 12 (ProjectDetail) + 13 (Sidebar collapsed) — grep each
+tooltip's ancestor chain for overflow before converting.**
+
+## Wave 1 — ✅ SHIPPED 2026-07-09 (commit 769baa86, live)
+
+Done: Recipe A card lift on PersonalPage (My Tasks panel + CompactCard ×4) +
+PendingMeetingsCard (fill swap only — they already have borders, so no hairline).
+Recipe B `.tip` on the **shared TaskRow.tsx (all 10 tooltips** — expanded past the
+listed 7 to include DoneBox/PlannedChip/DragHandle/planBtn so the row has ZERO
+bland tooltips; ProjectTag wrapped to avoid self-clip) and **TaskCard.tsx (all 5**
+— Status/Complete/Priority/View-details/Re-accept). **Skipped** item 2 (ListView)
++ item 3 (today/TaskRow) per the clipping learning above. Baseline line-numbers
+for TaskCard's static Tailwind rgba classes bumped (they shifted +2 lines).
+
+## Wave 1 — original targets (for reference)
 
 1. **`src/components/tasks/TaskRow.tsx`** — Recipe B on its 7 tooltips:
    `:68` (done toggle), `:98` (`Due ${dueDay}`), `:114` (`Jump to ${project.name}`),
