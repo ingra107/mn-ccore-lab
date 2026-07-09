@@ -1759,6 +1759,13 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
 .hov-border:hover:not(:disabled) { border-color: var(--hov-border) !important; }
 .hov-opacity:hover:not(:disabled) { opacity: var(--hov-opacity) !important; }
 
+/* Activity-card trash: hover-hide until the card is hovered (Nick 2026-07-09 —
+   declutter the feed so comments read cleanly). visibility (not opacity) keeps it
+   out of the AT tree when hidden (Rule 27). Touch devices (no hover) always show. */
+.detail-card .ae-delete { visibility: hidden; }
+.detail-card:hover .ae-delete { visibility: visible; }
+@media (hover: none) { .detail-card .ae-delete { visibility: visible; } }
+
 /* ── Touch target utility (WCAG 2.5.5 — 44×44px minimum) ── */
 .touch-target {
   min-height: 44px;

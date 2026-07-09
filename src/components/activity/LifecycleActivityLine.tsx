@@ -44,7 +44,7 @@ export function LifecycleActivityLine({ entry }: { entry: ActivityEntryItemRow }
   return (
     <div
       className="flex items-baseline gap-2"
-      style={{ padding: '0.25rem 0.5rem', fontStyle: 'italic', color: 'var(--muted)', fontSize: '0.85rem', lineHeight: 1.4 }}
+      style={{ padding: '0.1rem 0.5rem', fontStyle: 'italic', color: 'var(--muted)', fontSize: '0.78rem', lineHeight: 1.3 }}
     >
       <span
         aria-hidden="true"
@@ -60,7 +60,7 @@ export function LifecycleActivityLine({ entry }: { entry: ActivityEntryItemRow }
         title={fullLocal}
         style={{
           marginLeft: 'auto', paddingLeft: '0.8rem', flex: 'none', fontStyle: 'normal',
-          color: 'var(--ink-faint)', fontSize: '0.78rem', fontVariantNumeric: 'tabular-nums', cursor: 'help',
+          color: 'var(--ink-faint)', fontSize: '0.72rem', fontVariantNumeric: 'tabular-nums', cursor: 'help',
         }}
       >
         {shownTime}

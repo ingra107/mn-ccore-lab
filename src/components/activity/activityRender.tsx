@@ -107,7 +107,7 @@ const AVATAR_SIZE = 'base-sm' as const
 const AVATAR_GAP = 'gap-3'
 
 /** Padding inside each entry card (vertical block, horizontal inline). */
-const CARD_PADDING = '10px 14px'
+const CARD_PADDING = '8px 12px'
 
 /** Font size for the author name line and body (12 px). */
 const BODY_FONT_SIZE = 'var(--text-small)'
@@ -341,7 +341,7 @@ function DeleteEntryButton({ onDelete }: { onDelete: () => void }) {
       }}
       title={armed ? 'Click again to delete permanently' : 'Delete entry'}
       aria-label={armed ? 'Click again to delete permanently' : 'Delete entry'}
-      className="inline-flex items-center justify-center cursor-pointer hov-color"
+      className="inline-flex items-center justify-center cursor-pointer hov-color ae-delete"
       style={{
         width: 18,
         height: 18,
@@ -519,13 +519,17 @@ export function ActivityEntryItem({
 
   // ── Shared card shell ─────────────────────────────────────────────────────
   const cardStyle: React.CSSProperties = {
-    background: isHermes ? 'var(--gold-hover)' : 'var(--cream)',
+    // Comment/update cards LIFT above the page (--surface-2) with a hairline edge
+    // (--card-hairline) so they read as distinct blocks — restoring the
+    // figure/ground separation that near-black-on-near-black (--cream == page bg
+    // in dark mode) had erased. This is what makes the feed scannable before
+    // reading (Nick 2026-07-09). Hermes keeps its gold-ring treatment.
+    background: isHermes ? 'var(--gold-hover)' : 'var(--surface-2)',
     borderRadius: 'var(--radius-lg)',
     padding: cardPadding,
-    borderLeft: `3px solid ${barColor}`,
     ...(isHermes
       ? { border: `1px solid ${withAlpha(ACCENT_GOLD, 15)}`, borderLeft: `3px solid ${barColor}` }
-      : {}),
+      : { borderLeft: `3px solid ${barColor}`, boxShadow: 'var(--card-hairline)' }),
     ...taskOriginStyle,
   }
 
