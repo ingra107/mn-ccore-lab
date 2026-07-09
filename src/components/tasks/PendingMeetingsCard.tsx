@@ -49,7 +49,10 @@ export function PendingMeetingsCard({ tasks }: PendingMeetingsCardProps) {
   return (
     <div className="mt-band" style={{ paddingTop: 12, paddingBottom: 0 }}>
       <div style={{
-        background: 'var(--cream)',
+        // Recipe A (figure/ground): lift above the dark page bg. Keeps the
+        // teal accent bar + border-default edge; no extra hairline (would be
+        // a boxy double-edge).
+        background: 'var(--surface-2)',
         border: '1px solid var(--border-default)',
         borderLeft: '3px solid var(--task-accent-teal)',
         borderRadius: 'var(--radius-lg)',

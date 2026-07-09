@@ -250,7 +250,11 @@ function MyTasksColumn({
         display: 'flex',
         flexDirection: 'column',
         gap: 0,
-        background: 'var(--cream)',
+        // Recipe A (figure/ground): --cream == the page body bg in dark mode,
+        // so the panel read flat against the page. --surface-2 lifts it a step
+        // above; the existing border-subtle stays as the edge (no hairline —
+        // avoids a boxy double-edge).
+        background: 'var(--surface-2)',
       }}
     >
       {/* Header */}
@@ -397,7 +401,10 @@ function CompactCard({
         border: '1px solid var(--border-subtle)',
         borderRadius: 'var(--radius-lg)',
         padding: 'var(--sp-lg)',
-        background: 'var(--cream)',
+        // Recipe A (figure/ground): lift above the dark page bg (--cream ==
+        // body bg in dark mode). Border-subtle stays as the edge. One edit
+        // lifts all four My Hub CompactCard sections.
+        background: 'var(--surface-2)',
       }}
     >
       <div className="flex items-center justify-between mb-3">

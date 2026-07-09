@@ -98,8 +98,9 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
               const label = next === 'done' ? 'Completed' : next === 'in_progress' ? 'In Progress' : 'To Do'
               showUndo(`Marked "${(task.title || task.description).slice(0, 30)}..." as ${label}`, () => onStatusChange(task.id, prev))
             }}
-            className="cursor-pointer"
-            title={`Status: ${(STATUS_OPTIONS.find((s) => s.value === task.status) || STATUS_OPTIONS[0]).label} — click to advance`}
+            className="cursor-pointer tip"
+            data-tip={`Status: ${(STATUS_OPTIONS.find((s) => s.value === task.status) || STATUS_OPTIONS[0]).label} — click to advance`}
+            aria-label={`Status: ${(STATUS_OPTIONS.find((s) => s.value === task.status) || STATUS_OPTIONS[0]).label} — click to advance`}
             style={{ background: 'none', border: 'none', padding: 'var(--sp-xs)', margin: '-4px' }}
           >
             {(() => {
@@ -221,8 +222,9 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
             onStatusChange(task.id, next)
             showUndo(`${isTaskDone(task) ? 'Reopened' : 'Completed'} task`, () => onStatusChange(task.id, prev))
           }}
-          title={isTaskDone(task) ? 'Reopen' : 'Complete'}
-          className="hover:!bg-[rgba(15,25,35,0.10)] dark:hover:!bg-[rgba(255,255,255,0.12)]"
+          data-tip={isTaskDone(task) ? 'Reopen' : 'Complete'}
+          aria-label={isTaskDone(task) ? 'Reopen' : 'Complete'}
+          className="tip hover:!bg-[rgba(15,25,35,0.10)] dark:hover:!bg-[rgba(255,255,255,0.12)]"
           style={{
             background: 'transparent',
             border: 'none',
@@ -242,8 +244,9 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
         {/* Priority cycle */}
         <button
           onClick={(e) => { e.stopPropagation(); cyclePriority() }}
-          title={`Priority: ${task.priority}`}
-          className="hover:!bg-[rgba(15,25,35,0.10)] dark:hover:!bg-[rgba(255,255,255,0.12)]"
+          data-tip={`Priority: ${task.priority}`}
+          aria-label={`Priority: ${task.priority}`}
+          className="tip hover:!bg-[rgba(15,25,35,0.10)] dark:hover:!bg-[rgba(255,255,255,0.12)]"
           style={{
             background: 'transparent',
             border: 'none',
@@ -263,8 +266,9 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
         {/* Peek (view details) */}
         <button
           onClick={(e) => { e.stopPropagation(); onClick?.() }}
-          title="View details"
-          className="hover:!bg-[rgba(15,25,35,0.10)] dark:hover:!bg-[rgba(255,255,255,0.12)]"
+          data-tip="View details"
+          aria-label="View details"
+          className="tip hover:!bg-[rgba(15,25,35,0.10)] dark:hover:!bg-[rgba(255,255,255,0.12)]"
           style={{
             background: 'transparent',
             border: 'none',
@@ -290,9 +294,10 @@ export default function TaskCard({ task, onStatusChange, onPriorityChange, compa
               mutateTask({ id: task.id, fields: { approval_status: 'accepted' } })
               showUndo('Meeting re-accepted', () => mutateTask({ id: task.id, fields: { approval_status: 'declined' } }))
             }}
-            title="Re-accept meeting"
+            data-tip="Re-accept meeting"
+            aria-label="Re-accept meeting"
             data-testid="approval-reaccept"
-            className="hover:!bg-[rgba(15,25,35,0.10)] dark:hover:!bg-[rgba(255,255,255,0.12)]"
+            className="tip hover:!bg-[rgba(15,25,35,0.10)] dark:hover:!bg-[rgba(255,255,255,0.12)]"
             style={{
               background: 'transparent',
               border: 'none',

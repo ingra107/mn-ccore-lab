@@ -62,10 +62,10 @@ export function DoneBox({ done, onToggle, color = ACCENT_GREEN }: { done: boolea
       // N1.08: .done-box is excluded from the blanket 44px mobile min-height
       // (which stretched this 17px square into a 17×44 capsule app-wide);
       // an invisible ::before pseudo-element restores the 44px touch target.
-      className="done-box"
+      className="done-box tip"
       onClick={(e) => { e.stopPropagation(); onToggle() }}
       onMouseDown={(e) => e.stopPropagation()}
-      title={done ? 'Mark not done' : 'Mark done'}
+      data-tip={done ? 'Mark not done' : 'Mark done'}
       aria-label={done ? 'Mark not done' : 'Mark done'}
       aria-pressed={done}
       style={{
@@ -95,7 +95,9 @@ function DueChip({ due, status }: { due: string; status?: string }) {
   const color = overdue ? ACCENT_CORAL : isToday ? ACCENT_GOLD : INK_MUTED
   return (
     <span
-      title={`Due ${dueDay}`}
+      className="tip"
+      data-tip={`Due ${dueDay}`}
+      aria-label={`Due ${dueDay}`}
       style={{ fontSize: 11, color, fontVariantNumeric: 'tabular-nums', fontWeight: overdue ? 600 : 500, flexShrink: 0, whiteSpace: 'nowrap' }}
     >
       {dueLabelText(due, overdue)}
@@ -108,14 +110,19 @@ function DueChip({ due, status }: { due: string; status?: string }) {
 function ProjectTag({ project }: { project: { name: string; slug: string } | null }) {
   if (!project) return null
   return (
-    <Link
-      to={PATHS.project(project.slug)}
-      onClick={(e) => e.stopPropagation()}
-      title={`Jump to ${project.name}`}
-      style={{ fontSize: 11, color: ACCENT_TEAL, opacity: 0.92, flexShrink: 0, whiteSpace: 'nowrap', textDecoration: 'none', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis' }}
-    >
-      {project.name}
-    </Link>
+    // .tip lives on the WRAPPER, not the Link: the Link has overflow:hidden for
+    // its ellipsis, which would clip the tooltip ::after. The wrapper has no
+    // overflow so the styled tooltip escapes.
+    <span className="tip" data-tip={`Jump to ${project.name}`} style={{ display: 'inline-flex', minWidth: 0, flexShrink: 0 }}>
+      <Link
+        to={PATHS.project(project.slug)}
+        onClick={(e) => e.stopPropagation()}
+        aria-label={`Jump to ${project.name}`}
+        style={{ fontSize: 11, color: ACCENT_TEAL, opacity: 0.92, flexShrink: 0, whiteSpace: 'nowrap', textDecoration: 'none', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis' }}
+      >
+        {project.name}
+      </Link>
+    </span>
   )
 }
 
@@ -133,10 +140,10 @@ function PlannedChip({ label = 'planned', onUnplan }: { label?: string; onUnplan
     return (
       <button
         type="button"
-        className="planned-chip"
+        className="planned-chip tip"
         onClick={(e) => { e.stopPropagation(); onUnplan() }}
         onMouseDown={(e) => e.stopPropagation()}
-        title="Planned for today — click to unplan"
+        data-tip="Planned for today — click to unplan"
         aria-label="Unplan task"
         style={{ ...base, cursor: 'pointer', fontFamily: 'inherit', display: 'inline-flex', alignItems: 'center', gap: 3 }}
       >
@@ -220,8 +227,9 @@ function DragHandle({ show, draggable, onDragStart }: { show: boolean; draggable
       onDragStart={onDragStart}
       onClick={(e) => e.stopPropagation()}
       onMouseDown={(e) => e.stopPropagation()}
-      title="Drag to timeline to schedule this task"
-      className="task-grip"
+      data-tip="Drag to timeline to schedule this task"
+      aria-label="Drag to timeline to schedule this task"
+      className="task-grip tip"
       // ~50% larger hit area (Nick 2026-06-19): padding enlarges the click target
       // without changing the 12px icon's visual size. Negative margin absorbs the
       // padding so row layout doesn't shift.
@@ -324,7 +332,8 @@ export function TaskRow(props: SharedTaskRowProps) {
     <span
       role="button"
       tabIndex={0}
-      title={fullTitleHover ?? 'Open task editor'}
+      className="tip"
+      data-tip={fullTitleHover ?? 'Open task editor'}
       onClick={(e) => {
         if (lpTimer.current === 'fired') return                          // long-press selected — let the row swallow it
         if (selectable && (e.shiftKey || e.ctrlKey || e.metaKey || selectionActive)) return  // bubble → select
@@ -356,10 +365,10 @@ export function TaskRow(props: SharedTaskRowProps) {
     <button
       type="button"
       data-plan-btn={task.id}
-      className="today-plan-btn"
+      className="today-plan-btn tip"
       onClick={(e) => { e.stopPropagation(); onTogglePlan() }}
       onMouseDown={(e) => e.stopPropagation()}
-      title="Plan for today (no specific time)"
+      data-tip="Plan for today (no specific time)"
       aria-label="Plan task for today"
       // ~50% larger hit area (Nick 2026-06-19): padding grows the click target;
       // negative margin keeps the row layout from shifting.
@@ -430,7 +439,7 @@ export function TaskRow(props: SharedTaskRowProps) {
         {stack ? (
           /* narrow rail: title full-width, meta stacks below */
           <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 5, paddingTop: 1 }}>
-            <span title={onOpenEditor ? undefined : fullTitleHover} style={{ fontSize: 13.5, color: isDone ? INK_MUTED : INK, fontWeight: 500, textDecoration: isDone ? 'line-through' : 'none', lineHeight: 1.4, textWrap: 'pretty' as const }}>
+            <span className="tip" data-tip={onOpenEditor ? undefined : fullTitleHover} style={{ fontSize: 13.5, color: isDone ? INK_MUTED : INK, fontWeight: 500, textDecoration: isDone ? 'line-through' : 'none', lineHeight: 1.4, textWrap: 'pretty' as const }}>
               {leadingTag && <span style={{ marginRight: 6 }} aria-hidden="true">{leadingTag}</span>}
               {titleNode}
               {newChip}
@@ -446,12 +455,12 @@ export function TaskRow(props: SharedTaskRowProps) {
           <div style={{ flex: 1, minWidth: 0, paddingTop: 1 }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 9 }}>
               {/* title — full, wraps, never clipped */}
-              <span title={onOpenEditor ? undefined : fullTitleHover} style={{ flex: 1, minWidth: 0, fontSize: 13.5, color: isDone ? INK_MUTED : INK, fontWeight: 500, textDecoration: isDone ? 'line-through' : 'none', lineHeight: 1.4, textWrap: 'pretty' as const }}>
+              <span className="tip" data-tip={onOpenEditor ? undefined : fullTitleHover} style={{ flex: 1, minWidth: 0, fontSize: 13.5, color: isDone ? INK_MUTED : INK, fontWeight: 500, textDecoration: isDone ? 'line-through' : 'none', lineHeight: 1.4, textWrap: 'pretty' as const }}>
                 {leadingTag && <span style={{ marginRight: 6 }} aria-hidden="true">{leadingTag}</span>}
                   {titleNode}
                 {newChip}
                 {showGroupOverridePin && task.group_override && (
-                  <span title={`Moved manually (${task.group_override})`} style={{ display: 'inline-flex', alignItems: 'center', color: ACCENT_TEAL, padding: '1px 5px', background: withAlpha(ACCENT_TEAL, 9), border: `1px solid ${withAlpha(ACCENT_TEAL, 28)}`, borderRadius: 999, marginLeft: 6 }}>
+                  <span className="tip" data-tip={`Moved manually (${task.group_override})`} aria-label={`Moved manually (${task.group_override})`} style={{ display: 'inline-flex', alignItems: 'center', color: ACCENT_TEAL, padding: '1px 5px', background: withAlpha(ACCENT_TEAL, 9), border: `1px solid ${withAlpha(ACCENT_TEAL, 28)}`, borderRadius: 999, marginLeft: 6 }}>
                     <MapPin {...ICON_PROPS} size={11} />
                   </span>
                 )}
