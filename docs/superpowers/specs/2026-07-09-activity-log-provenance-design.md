@@ -31,13 +31,22 @@ schema migration, no new columns, no pb-schema bump, no PB coordination.**
 ## Decisions (Nick, 2026-07-09)
 
 1. **Events:** Created · Completed/Reopened · key state changes — **status,
-   assignee, project move, due-date/deadline**. NOT every field edit (avoids the
-   clutter Nick flagged; title/description/priority/short_title edits are *not*
-   tracked in this build).
+   assignee, project move, due-date/deadline, priority**. NOT every field edit
+   (avoids the clutter Nick flagged; **title, description, short_title, effort**
+   edits are *not* tracked in this build).
 2. **Default view:** visible by default in the "All" feed; the existing **System**
    filter pill isolates them.
 3. **Entities:** tasks **and** projects. Project events: created (with category),
    stage change, status change / marked done / published.
+4. **Line voice:** terse system-log style — `Created · from a meeting — nick`,
+   `Status: todo → in progress — will` — not narrative prose (keeps it distinct
+   from comments).
+5. **Marker:** a quiet **typed glyph per event**, muted: `＋` created · `⇄`
+   changed · `✓` completed · `↻` reopened (project stage/status use `⇄`). Faster
+   event-type recognition than a uniform dot, still recessive.
+6. **Bursts:** one line per change (no same-actor folding this build). A
+   "fold consecutive changes" collapse is a possible fast-follow if it proves
+   noisy in practice — NOT in scope here.
 
 ## Architecture
 
@@ -82,6 +91,11 @@ re-notify / Hermes on an auto-generated line), `actorSlug` = the resolved caller
 | Assignee | `system` | `Assigned to @will` / `Reassigned @nick → @will` / `Unassigned` | `{event:'assignee', from, to}` |
 | Project | `system` | `Moved to <Project>` / `Removed from project` | `{event:'project', from, to}` |
 | Due/deadline | `system` | `Due date set to Jul 15` / `changed to …` / `cleared` | `{event:'due', field, from, to}` |
+| Priority | `system` | `Priority: medium → high` | `{event:'priority', from, to}` |
+
+The leading **glyph is derived from the event** at render (see Rendering):
+`created→＋`, `completed→✓`, `reopened→↻`, everything else `→⇄`. It is NOT stored
+— only `kind` + `metadata_json.event` are.
 
 Origin qualifier (creation only), derived from the row:
 - `meeting_id` set, or `source ∈ {meeting, meeting_approval}` → ` (from a meeting)`
@@ -114,9 +128,11 @@ sourceId    = `${mut.mutation_id}:${event}`   // e.g. 'mut_01K…:status'
 
 Each mutation is one accepted action; replays (Bug-Y race, sync re-push) carry the
 **same** `mutation_id` → no duplicate row. A genuinely new transition is a new
-mutation → a new row. (Must confirm the v77 partial index covers arbitrary
-`source_table` values, not just the backfill tables — verified in the plan step;
-if it's table-scoped, widen it or add a dedicated index — still no data migration.)
+mutation → a new row. **Confirmed** the v77 index is generic:
+`CREATE UNIQUE INDEX idx_ae_source ON activity_entries (source_table, source_id)
+WHERE source_table IS NOT NULL` (`api/schema-v77-activity-entries.sql:63`) — it
+covers **any** `source_table`, so `'lifecycle'` idempotency works with **no schema
+change**.
 
 ### Actor resolution
 
@@ -136,10 +152,21 @@ attributed message card:
 - **single line, small, italic, muted** — `font-style: italic`, muted color via
   the `--muted` / `--ink-muted` token (NOT a raw low opacity — must stay AA per
   the opacity policy; italic-muted reads as de-emphasized while remaining legible);
-- **a subtle leading marker** — a small `●` dot / thin glyph in a low-emphasis
-  accent (neutral or teal-muted), sized per Rule 74 (`ICON_PROPS`, ≤20px);
-- **inline timestamp** — relative, viewer-local, via `dateUtils`/`lib/time.ts`
-  with the `<time dateTime>` zoned-UTC attribute (Rule 73);
+- **a subtle typed leading glyph** derived from the event (`＋` created · `⇄`
+  changed · `✓` completed · `↻` reopened), in a low-emphasis muted accent
+  (created→gold-muted, completed→green-muted, else teal-muted); if rendered as a
+  lucide icon rather than a text glyph, size per Rule 74 (`ICON_PROPS`, ≤20px,
+  `strokeWidth 1.5 absoluteStrokeWidth`);
+- **inline timestamp with hover-to-absolute** (Nick 2026-07-09) — every lifecycle
+  line's time is a `<time dateTime="<utc-iso>" title="<full viewer-local date +
+  time>">`, so hovering the relative time reveals the exact local datetime
+  ("hover over the 1d shows the date and time in local time = absolute best").
+  The **Created** line shows an **absolute local date + time inline** (e.g.
+  `Jul 6, 2:14 PM`), *not* just relative — creation time is the anchor provenance
+  fact. All other lifecycle lines show the relative form (`3d`) and reveal the
+  absolute on hover. Absolute string via `formatLocal()` (lib/time.ts); relative
+  via the existing `dateUtils` relative formatter; both viewer-local and
+  traveler-aware per the time discipline;
 - **NO avatar, NO comment bubble/surface, NO hover actions, tighter vertical
   rhythm** than a comment row — comments keep their author avatar + name +
   surface; lifecycle lines recede between them.
