@@ -1,5 +1,5 @@
 -- MN-CCORE Lab Hub — Schema v6: Unified Tasks (replaces action_items)
--- Run with: wrangler d1 execute mnccore-lab --file=api/schema-v6.sql --remote
+-- Run with: scripts/wrangler-d1 d1 execute mnccore-lab --file=api/schema-v6.sql --remote
 --
 -- Creates unified tasks table, backfills from action_items (19 rows).
 -- action_items table is preserved as safety net for 1-2 weeks.
@@ -45,7 +45,12 @@ SELECT
   assignee,
   due_date,
   completed,
-  completed_at,
+  -- action_items rows may carry completed=1 with a NULL completed_at (the
+  -- seed rows in seed-v2.sql never set it). Deriving `status` from
+  -- `completed` while passing `completed_at` through raw emits
+  -- status='done' AND completed_at IS NULL, which violates invariant I2.
+  -- Derive both from the same expression so that state is unrepresentable.
+  CASE WHEN completed = 1 THEN COALESCE(completed_at, created_at) END,
   completed_by,
   created_at,
   CASE WHEN meeting_id IS NOT NULL THEN 'meeting' ELSE 'manual' END,

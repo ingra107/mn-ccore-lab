@@ -25,6 +25,16 @@
 --
 -- Column mapping copied verbatim from schema-v6.sql:36-54.
 --
+-- AMENDED 2026-07-09: the copied mapping derived `status` from `completed`
+-- but passed `completed_at` through raw. The 15 seed rows carry completed=1
+-- with a NULL completed_at, so this backfill wrote 11 tasks at
+-- status='done' AND completed_at IS NULL — breaking invariant I2 and turning
+-- audit-runner red on both machines from 2026-07-08. `completed_at` is now
+-- derived from the same `completed` expression as `status`, so the two
+-- cannot disagree. Same fix applied at the source template (schema-v6.sql).
+-- Existing prod rows are repaired by schema-v97-completed-at-repair.sql.
+-- Still idempotent: INSERT OR IGNORE on an already-backfilled DB is a no-op.
+--
 -- APPLY (test FIRST, probe, then prod — sanctioned wrapper ONLY):
 --   scripts/wrangler-d1 d1 execute mnccore-lab-test --remote --file=api/schema-v96-action-items-backfill.sql
 --   scripts/wrangler-d1 d1 execute mnccore-lab      --remote --file=api/schema-v96-action-items-backfill.sql
@@ -42,7 +52,7 @@ SELECT
   assignee,
   due_date,
   completed,
-  completed_at,
+  CASE WHEN completed = 1 THEN COALESCE(completed_at, created_at) END,
   completed_by,
   created_at,
   CASE WHEN meeting_id IS NOT NULL THEN 'meeting' ELSE 'manual' END,
