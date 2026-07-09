@@ -158,7 +158,7 @@ const STYLE_TIME: React.CSSProperties = {
 }
 
 const STYLE_TEXT_COL: React.CSSProperties = { flex: 1, minWidth: 0 }
-const STYLE_NAME_ROW: React.CSSProperties = { marginBottom: 4 }
+const STYLE_NAME_ROW: React.CSSProperties = { marginBottom: 2 }
 
 // ── Per-kind accent bar colours ───────────────────────────────────────────────
 //
@@ -409,14 +409,18 @@ function TaskOriginBadge({
 function UpdateBadge({ updateType }: { updateType: UpdateType }) {
   const cfg = UPDATE_TYPE_CONFIG[updateType] || UPDATE_TYPE_CONFIG.progress
   const Icon = cfg.icon
+  // Whisper, not a pill (Nick 2026-07-09): the saturated filled badge was the
+  // one loud colored element in the feed and kept snagging the eye. No fill, no
+  // border, muted text — the type is still legible, and the left accent bar
+  // already carries the type COLOUR. "Premium = refined restraint."
   return (
     <span
       aria-label={`Note type: ${cfg.label}`}
-      className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded"
+      className="inline-flex items-center gap-0.5"
       style={{
         fontSize: META_FONT_SIZE,
-        background: cfg.bg,
-        color: cfg.color,
+        color: 'var(--muted)',
+        opacity: 0.75,
         flexShrink: 0,
       }}
     >
@@ -529,7 +533,7 @@ export function ActivityEntryItem({
     padding: cardPadding,
     ...(isHermes
       ? { border: `1px solid ${withAlpha(ACCENT_GOLD, 15)}`, borderLeft: `3px solid ${barColor}` }
-      : { borderLeft: `3px solid ${barColor}`, boxShadow: 'var(--card-hairline)' }),
+      : { borderLeft: `3px solid ${barColor}`, boxShadow: '0 0 0 1px color-mix(in srgb, var(--slate) 15%, transparent)' }),
     ...taskOriginStyle,
   }
 
