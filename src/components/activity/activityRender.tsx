@@ -32,6 +32,7 @@ import {
   Terminal,
   Lock,
   ClipboardList,
+  Pencil,
   Trash2,
 } from 'lucide-react'
 import { motion } from 'framer-motion'
@@ -318,6 +319,14 @@ export interface ActivityEntryItemProps {
    * re-enforces author-or-PI regardless.
    */
   onDelete?: () => void
+
+  /**
+   * Author-or-PI edit handler for a comment/note body. When present, a
+   * hover-revealed pencil opens an inline editor; Save calls this with the new
+   * body. Gated by the caller (same canDeleteActivityEntry rule). Only wired for
+   * comment/update rows — lifecycle + Hermes rows don't receive it.
+   */
+  onEdit?: (newBody: string) => void
 }
 
 // ── DeleteEntryButton ─────────────────────────────────────────────────────────
@@ -361,6 +370,69 @@ export function DeleteEntryButton({ onDelete }: { onDelete: () => void }) {
     >
       <Trash2 size={11} strokeWidth={1.5} absoluteStrokeWidth aria-hidden="true" />
     </button>
+  )
+}
+
+// Hover-revealed pencil that opens the inline editor (comments/notes only).
+function EditEntryButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={(e) => { e.stopPropagation(); onClick() }}
+      title="Edit"
+      aria-label="Edit comment"
+      className="inline-flex items-center justify-center cursor-pointer hov-color ae-edit"
+      style={{
+        width: 18, height: 18, flexShrink: 0, background: 'transparent', border: 'none',
+        borderRadius: 'var(--radius-sm)', color: 'var(--slate)', opacity: 0.45, padding: 0,
+        '--hov-color': 'var(--teal)',
+      } as React.CSSProperties}
+    >
+      <Pencil size={11} strokeWidth={1.5} absoluteStrokeWidth aria-hidden="true" />
+    </button>
+  )
+}
+
+// Inline comment editor: textarea prefilled with the current body + Save/Cancel.
+// ⌘/Ctrl+Enter saves, Esc cancels. Closes on save (the mutation's invalidation
+// refetches the edited body).
+function InlineCommentEditor({ initial, onSave, onCancel }: { initial: string; onSave: (v: string) => void; onCancel: () => void }) {
+  const [val, setVal] = useState(initial)
+  const rows = Math.min(10, Math.max(2, initial.split('\n').length + 1))
+  return (
+    <div className="flex flex-col gap-1.5">
+      <textarea
+        value={val}
+        onChange={(e) => setVal(e.target.value)}
+        autoFocus
+        rows={rows}
+        className="w-full"
+        style={{
+          fontSize: BODY_FONT_SIZE, color: 'var(--ink)', background: 'var(--surface-1)',
+          border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-sm)',
+          padding: '6px 8px', lineHeight: 1.5, resize: 'vertical', fontFamily: 'inherit',
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'Escape') { e.preventDefault(); onCancel() }
+          if (e.key === 'Enter' && (e.metaKey || e.ctrlKey) && val.trim()) { e.preventDefault(); onSave(val.trim()) }
+        }}
+      />
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => { if (val.trim()) onSave(val.trim()) }}
+          disabled={!val.trim()}
+          className="cursor-pointer"
+          style={{ fontSize: META_FONT_SIZE, fontWeight: 'var(--weight-ui)' as React.CSSProperties['fontWeight'], color: '#fff', background: 'var(--teal-solid)', border: 'none', borderRadius: 'var(--radius-sm)', padding: '3px 12px' }}
+        >
+          Save
+        </button>
+        <button type="button" onClick={onCancel} className="cursor-pointer" style={{ fontSize: META_FONT_SIZE, color: 'var(--slate)', background: 'transparent', border: 'none', padding: '3px 6px' }}>
+          Cancel
+        </button>
+        <span style={{ fontSize: '10px', color: 'var(--slate)', opacity: 0.5 }}>⌘↵ save · Esc cancel</span>
+      </div>
+    </div>
   )
 }
 
@@ -487,10 +559,16 @@ export function ActivityEntryItem({
   cardPadding = CARD_PADDING,
   taskOriginBorderWidth = 3,
   onDelete,
+  onEdit,
 }: ActivityEntryItemProps) {
   const isTask = entry.entity_type === 'task'
   const isHermes = entry.actor_slug === 'claude-ai'
   const person = getPersonInfo(entry.actor_slug)
+  const [editing, setEditing] = useState(false)
+  // "(edited)" marker — set by handleEditActivityEntry in metadata_json.edited.
+  const wasEdited = (() => {
+    try { return !!(entry.metadata_json && JSON.parse(entry.metadata_json).edited) } catch { return false }
+  })()
 
   // Lifecycle rows (created / completed / changed) render as a quiet minimal
   // line, NOT a comment card — overriding the (previously unused-in-prod) card
@@ -661,22 +739,34 @@ export function ActivityEntryItem({
             {nameBadge}
             {entry.visibility === 'author' && <AuthorOnlyBadge />}
             <EntryTime ts={entry.created_at} className="ml-auto" />
+            {onEdit && !editing && <EditEntryButton onClick={() => setEditing(true)} />}
             {onDelete && <DeleteEntryButton onDelete={onDelete} />}
           </div>
 
-          {/* Body */}
-          <p
-            style={{
-              fontSize: textSize,
-              color: 'var(--ink)',
-              opacity: 'var(--ink-primary)',
-              lineHeight: 1.55,
-              margin: 0,
-              whiteSpace: 'pre-wrap',
-            }}
-          >
-            {renderBodyWithImages(entry.body)}
-          </p>
+          {/* Body — inline editor while editing, else the rendered body + (edited) tag */}
+          {editing && onEdit ? (
+            <InlineCommentEditor
+              initial={entry.body}
+              onSave={(v) => { onEdit(v); setEditing(false) }}
+              onCancel={() => setEditing(false)}
+            />
+          ) : (
+            <p
+              style={{
+                fontSize: textSize,
+                color: 'var(--ink)',
+                opacity: 'var(--ink-primary)',
+                lineHeight: 1.55,
+                margin: 0,
+                whiteSpace: 'pre-wrap',
+              }}
+            >
+              {renderBodyWithImages(entry.body)}
+              {wasEdited && (
+                <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.5, fontStyle: 'italic', marginLeft: 6 }}>(edited)</span>
+              )}
+            </p>
+          )}
 
           {/* Reactions (project-entity rows only) */}
           {showReactions && !isTask && (

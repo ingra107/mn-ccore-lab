@@ -26,7 +26,7 @@ import {
 } from 'lucide-react'
 import { useMeetingLinkedTasks } from '../../hooks/useApiData'
 import type { TaskRow } from '../../lib/api'
-import { usePostProjectUpdate, useAddComment, useUpdateTask, useBulkUpdateTasks, useDeleteActivityEntry } from '../../hooks/useMutations'
+import { usePostProjectUpdate, useAddComment, useUpdateTask, useBulkUpdateTasks, useDeleteActivityEntry, useEditActivityEntry } from '../../hooks/useMutations'
 import { useAuth } from '../../hooks/useAuth'
 import { emailToSlug } from '../../lib/emailSlug'
 import { getPersonInfo } from '../../data/team'
@@ -135,6 +135,7 @@ export default function ActivityStream({ project, filter }: Props) {
   // Manual delete (Nick 2026-07-06): own entries, or any entry for the PI.
   // Server re-enforces author-or-PI on POST /api/activity/:id/delete.
   const deleteEntry = useDeleteActivityEntry()
+  const editEntry = useEditActivityEntry()
 
   // Note composer state (type pill)
   const [noteType, setNoteType] = useState('progress')
@@ -348,6 +349,17 @@ export default function ActivityStream({ project, filter }: Props) {
                         })
                     : undefined
                 }
+                onEditEntry={
+                  event.kind === 'unified-entry' && canDeleteActivityEntry(user, event.row.actor_slug)
+                    ? (body) =>
+                        editEntry.mutate({
+                          id: event.row.id,
+                          body,
+                          projectSlug: slug,
+                          taskId: event.row.entity_type === 'task' ? event.row.entity_id : undefined,
+                        })
+                    : undefined
+                }
               />
             ))}
           </AnimatePresence>
@@ -359,7 +371,7 @@ export default function ActivityStream({ project, filter }: Props) {
 
 // ── Per-event renderers ──────────────────────────────────────────────────
 
-function StreamItem({ event, onToggleAction, onDeleteEntry }: { event: StreamEvent; onToggleAction: (task: TaskRow) => void; onDeleteEntry?: () => void }) {
+function StreamItem({ event, onToggleAction, onDeleteEntry, onEditEntry }: { event: StreamEvent; onToggleAction: (task: TaskRow) => void; onDeleteEntry?: () => void; onEditEntry?: (body: string) => void }) {
   switch (event.kind) {
     case 'action':
       return <ActionItemRowView action={event.row} onToggle={onToggleAction} />
@@ -373,6 +385,7 @@ function StreamItem({ event, onToggleAction, onDeleteEntry }: { event: StreamEve
           taskOriginBorderWidth={2}
           motionProps={itemMotion}
           onDelete={onDeleteEntry}
+          onEdit={onEditEntry}
         />
       )
   }

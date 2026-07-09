@@ -34,7 +34,7 @@ import { handleGetSettings, handleUpdateSettings, handleGetWorkflowTemplates, ha
 import { handleGetReactions, handleToggleReaction } from './routes/reactions';
 import { handleCalendarEvents } from './routes/calendar';
 import { handleListFeeds, handleAddFeed, handleDeleteFeed, handleListEvents, pollAllStaleFeeds } from './routes/calendar-feeds';
-import { handleGetActivity, handleActivityHeatmap, handleDeleteActivityEntry } from './routes/activity';
+import { handleGetActivity, handleActivityHeatmap, handleDeleteActivityEntry, handleEditActivityEntry } from './routes/activity';
 import { handleGetSubtasks, handleCreateSubtask, handleToggleSubtask, handleDeleteSubtask, handleReorderSubtasks } from './routes/subtasks';
 import { handleTeamPulse } from './routes/team-pulse';
 import { handleGetPaperLinks, handleLinkPaper, handleUnlinkPaper, handlePapersByProject, handlePapersByPublication } from './routes/paper-links';
@@ -1188,6 +1188,14 @@ defineRoute({
   entity: 'activity',
   visibility: 'na',
   handler: (c) => handleDeleteActivityEntry(c.req.param('id'), R(c), USER(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/activity/:id/edit',
+  auth: 'authed',
+  entity: 'activity',
+  visibility: 'na',
+  handler: (c) => handleEditActivityEntry(c.req.param('id'), R(c), USER(c), E(c)),
 });
 defineRoute({
   method: 'GET',

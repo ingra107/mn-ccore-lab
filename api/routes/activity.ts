@@ -78,6 +78,43 @@ export async function handleDeleteActivityEntry(id: string, request: Request, us
   });
 }
 
+// POST /api/activity/:id/edit — author-or-PI edit of a comment/note body.
+// Only comments + notes are editable; the auto-generated lifecycle system/
+// completion rows are deleted, not edited. Marks metadata_json.edited=true so the
+// UI can show an "(edited)" tag — no schema change. Mentions are NOT re-parsed
+// (an edit must not re-fire @mention notifications).
+export async function handleEditActivityEntry(id: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
+  const payload = (await request.json().catch(() => ({}))) as { body?: unknown };
+  const newBody = typeof payload.body === 'string' ? payload.body.trim() : '';
+  if (!newBody) return error('body required', 400);
+
+  const row = await env.DB.prepare(
+    'SELECT id, actor_slug, kind, metadata_json FROM activity_entries WHERE id = ?',
+  ).bind(id).first<{ id: string; actor_slug: string; kind: string; metadata_json: string | null }>();
+  if (!row) return error('Activity entry not found', 404);
+  if (row.kind !== 'comment' && row.kind !== 'update') {
+    return error('Only comments and notes can be edited', 400);
+  }
+
+  const caller = actorSlug(user.email);
+  if (row.actor_slug !== caller && !(await isPiRequest(request, env))) {
+    return error('Only the author or the PI can edit an activity entry', 403);
+  }
+
+  let meta: Record<string, unknown> = {};
+  try {
+    meta = row.metadata_json ? JSON.parse(row.metadata_json) : {};
+  } catch {
+    meta = {};
+  }
+  meta.edited = true;
+
+  const updated = await env.DB.prepare(
+    'UPDATE activity_entries SET body = ?, metadata_json = ? WHERE id = ? RETURNING *',
+  ).bind(newBody, JSON.stringify(meta), id).first();
+  return json({ data: updated });
+}
+
 // GET /api/activity/heatmap?slug=&days=
 export async function handleActivityHeatmap(url: URL, env: Env): Promise<Response> {
   const slug = url.searchParams.get('slug');

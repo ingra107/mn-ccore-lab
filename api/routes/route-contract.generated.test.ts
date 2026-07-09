@@ -102,11 +102,13 @@ describe('route contract — generated from ROUTE_REGISTRY', () => {
     //   GET /api/action-items, POST /api/action-items,
     //   POST /api/action-items/:id/toggle. All six live readers converted to
     //   the tasks model; the action_items TABLE stays (rollback net).
+    // 251 as of 2026-07-09 — activity-provenance readability (+1):
+    //   POST /api/activity/:id/edit (author-or-PI comment/note body edit; #93).
     // Adding a route → increment this number. Removing a route → decrement it.
     // This makes route deletion require explicit acknowledgment, preventing
     // silent surface regression (codex final-audit finding #9, 2026-05-28).
     // If you are intentionally adding or removing routes, update this count.
-    expect(ROUTE_REGISTRY).toHaveLength(250)
+    expect(ROUTE_REGISTRY).toHaveLength(251)
   })
 
   it('every non-public route has either entity or visibility metadata', () => {

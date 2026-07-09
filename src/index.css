@@ -1763,11 +1763,14 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
    declutter the feed so comments read cleanly). visibility (not opacity) keeps it
    out of the AT tree when hidden (Rule 27). Touch devices (no hover) always show. */
 .detail-card .ae-delete,
+.detail-card .ae-edit,
 .lc-row .ae-delete { visibility: hidden; }
 .detail-card:hover .ae-delete,
+.detail-card:hover .ae-edit,
 .lc-row:hover .ae-delete { visibility: visible; }
 @media (hover: none) {
   .detail-card .ae-delete,
+  .detail-card .ae-edit,
   .lc-row .ae-delete { visibility: visible; }
 }
 

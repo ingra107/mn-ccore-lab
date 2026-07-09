@@ -23,7 +23,7 @@ import {
   handleGetTaskActivity,
 } from '../routes/tasks'
 import { handleGetProjectActivity, handleAddComment, handlePostProjectUpdate, handleGetComments, handleGetProjectUpdates } from '../routes/projects'
-import { handleDeleteActivityEntry } from '../routes/activity'
+import { handleDeleteActivityEntry, handleEditActivityEntry } from '../routes/activity'
 
 const TEST_MODE_KEY = 'local-test-key-do-not-use-in-prod'
 const PI_EMAIL = 'ingra107@umn.edu'
@@ -200,6 +200,19 @@ function makeEnv(fx: Partial<Fixtures> = {}) {
             if (/SELECT id, actor_slug FROM activity_entries WHERE id = \?/.test(sql)) {
               const r = ae.find(x => x.id === binds[0])
               return r ? { id: r.id, actor_slug: r.actor_slug } : null
+            }
+            // handleEditActivityEntry auth+kind probe.
+            if (/SELECT id, actor_slug, kind, metadata_json FROM activity_entries WHERE id = \?/.test(sql)) {
+              const r = ae.find(x => x.id === binds[0])
+              return r ? { id: r.id, actor_slug: r.actor_slug, kind: r.kind, metadata_json: r.metadata_json } : null
+            }
+            // handleEditActivityEntry body update (RETURNING * via .first()).
+            if (/UPDATE activity_entries SET body = \?, metadata_json = \? WHERE id = \? RETURNING \*/.test(sql)) {
+              const r = ae.find(x => x.id === binds[2])
+              if (!r) return null
+              r.body = binds[0] as string
+              r.metadata_json = binds[1] as string
+              return { ...r }
             }
             if (/SELECT id, project_id FROM activity_entries WHERE id = \?/.test(sql)) {
               const r = ae.find(x => x.id === binds[0])
@@ -1032,5 +1045,63 @@ describe('handleDeleteActivityEntry — author-or-PI manual delete', () => {
     expect(res.status).toBe(200)
     const body = await res.json() as { data: { idempotent: boolean } }
     expect(body.data.idempotent).toBe(true)
+  })
+})
+
+describe('handleEditActivityEntry — author-or-PI edit', () => {
+  async function seed(env: Env, actorSlug: string, kind: 'comment' | 'update' = 'comment'): Promise<string> {
+    const user = actorSlug === 'nick-ingraham' ? NICK : NATE
+    const r = await postActivityEntry({
+      env, user, entityType: 'task', entityId: 't1', kind, body: 'original body', actorSlug,
+      ...(kind === 'update' ? { updateType: 'progress' } : {}),
+    })
+    if (!r.ok) throw new Error('seed failed')
+    return r.row.id as string
+  }
+  function editReq(email: string, body: unknown): Request {
+    return new Request('https://x/api/test', {
+      method: 'POST',
+      headers: { 'X-Test-Mode-Key': TEST_MODE_KEY, 'X-Test-User': email, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+  }
+
+  it('author edits their own comment (body updated + edited flag)', async () => {
+    const { env, ae } = makeEnv(FX)
+    const id = await seed(env, 'nate-mesfin')
+    const res = await handleEditActivityEntry(id, editReq(NON_PI_EMAIL, { body: 'revised body' }), NATE, env)
+    expect(res.status).toBe(200)
+    const row = ae.find(r => r.id === id)!
+    expect(row.body).toBe('revised body')
+    expect(JSON.parse(row.metadata_json!).edited).toBe(true)
+  })
+
+  it("non-PI cannot edit someone else's comment (403, body intact)", async () => {
+    const { env, ae } = makeEnv(FX)
+    const id = await seed(env, 'nick-ingraham')
+    const res = await handleEditActivityEntry(id, editReq(NON_PI_EMAIL, { body: 'hijack' }), NATE, env)
+    expect(res.status).toBe(403)
+    expect(ae.find(r => r.id === id)!.body).toBe('original body')
+  })
+
+  it("PI edits anyone's comment", async () => {
+    const { env, ae } = makeEnv(FX)
+    const id = await seed(env, 'nate-mesfin')
+    const res = await handleEditActivityEntry(id, editReq(PI_EMAIL, { body: 'pi fix' }), NICK, env)
+    expect(res.status).toBe(200)
+    expect(ae.find(r => r.id === id)!.body).toBe('pi fix')
+  })
+
+  it('empty body is rejected (400)', async () => {
+    const { env } = makeEnv(FX)
+    const id = await seed(env, 'nate-mesfin')
+    const res = await handleEditActivityEntry(id, editReq(NON_PI_EMAIL, { body: '   ' }), NATE, env)
+    expect(res.status).toBe(400)
+  })
+
+  it('missing row is 404', async () => {
+    const { env } = makeEnv(FX)
+    const res = await handleEditActivityEntry('ae_missing', editReq(PI_EMAIL, { body: 'x' }), NICK, env)
+    expect(res.status).toBe(404)
   })
 })

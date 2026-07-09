@@ -105,6 +105,30 @@ export function useDeleteActivityEntry() {
   })
 }
 
+export function useEditActivityEntry() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (input: { id: string; body: string; taskId?: string; projectSlug?: string }) =>
+      fetchApi(`/api/activity/${input.id}/edit`, {
+        method: 'POST',
+        body: JSON.stringify({ body: input.body }),
+      }),
+
+    onSettled: (_data, _err, input) => {
+      if (input.taskId) {
+        queryClient.invalidateQueries({ queryKey: ['task-activity', input.taskId] })
+        queryClient.invalidateQueries({ queryKey: ['task-comments', input.taskId] })
+        queryClient.invalidateQueries({ queryKey: ['task-detail', input.taskId] })
+      }
+      if (input.projectSlug) {
+        queryClient.invalidateQueries({ queryKey: ['project-activity', input.projectSlug] })
+      }
+      queryClient.invalidateQueries({ queryKey: ['activity'] })
+    },
+  })
+}
+
 // ── Reaction mutations ─────────────────────────────────────
 
 export function useToggleReaction() {

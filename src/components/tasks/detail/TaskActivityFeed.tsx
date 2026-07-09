@@ -25,7 +25,7 @@ import { ActivityEntryItem, canDeleteActivityEntry, type ActivityEntryItemRow } 
 import { filterMatchesKind, type TaskFeedFilter } from '../../../../shared/activityKinds'
 import type { StoredKind, UpdateType } from '../../../../shared/activityKinds'
 import { useAuth } from '../../../hooks/useAuth'
-import { useDeleteActivityEntry } from '../../../hooks/useMutations'
+import { useDeleteActivityEntry, useEditActivityEntry } from '../../../hooks/useMutations'
 
 // ── Shape ────────────────────────────────────────────────────────────────────
 
@@ -77,6 +77,7 @@ export function TaskActivityFeed({ taskId, peekCount, hidePills, avatarSize }: T
   // The server re-enforces author-or-PI on POST /api/activity/:id/delete.
   const { user } = useAuth()
   const deleteEntry = useDeleteActivityEntry()
+  const editEntry = useEditActivityEntry()
 
   const { data: entries = [], isLoading } = useQuery<ActivityEntryItemRow[]>({
     queryKey: ['task-activity', taskId],
@@ -171,6 +172,11 @@ export function TaskActivityFeed({ taskId, peekCount, hidePills, avatarSize }: T
               onDelete={
                 canDeleteActivityEntry(user, entry.actor_slug)
                   ? () => deleteEntry.mutate({ id: entry.id, taskId })
+                  : undefined
+              }
+              onEdit={
+                canDeleteActivityEntry(user, entry.actor_slug)
+                  ? (body) => editEntry.mutate({ id: entry.id, body, taskId })
                   : undefined
               }
             />
