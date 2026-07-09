@@ -26,6 +26,7 @@ import { json, error, generateId, assertProtectedNotNull, getValidationFlags, sa
 import { FK_SLUG_FIELDS } from '../lib/task-cols';
 import { nowInstant } from '../lib/time';
 import { assertEnumDomain, assertCompletionTriad } from '../lib/enum-domains';
+import { emitLifecycleActivity } from '../lib/lifecycle-activity';
 import { TABLE_FIELDS } from '../../pb-schema/pb_schema/generated/field-authority.generated.ts';
 
 const ALLOWED_TABLES = new Set([
@@ -752,6 +753,13 @@ export async function applyInsert(env: Env, mut: Mutation, user: AuthUser, flags
     // records the original error (preserves the existing failure shape).
     throw e;
   }
+
+  // Lifecycle activity: record the create as a quiet "system" line. Reached only
+  // on the genuine-insert path (dedup/race adoptions return earlier via
+  // dedupAccepted). Non-fatal — emitLifecycleActivity swallows its own errors so
+  // a lifecycle-entry failure never fails an accepted insert.
+  await emitLifecycleActivity(env, mut, user, null);
+
   const canonical = await readCanonical(env, mut.table, mut.record_id);
   return mkResult(mut.mutation_id, 'accepted', {
     result_seq: canonical?.seq as number | undefined,
@@ -917,6 +925,9 @@ export async function applyUpdate(env: Env, mut: Mutation, user: AuthUser, flags
       // Hub-UI completion mutations (no feedback loop: the project UPDATE is a
       // direct D1 write, not routed through the mutation protocol).
       await advanceProjectMovement(env, mut, current);
+      // Lifecycle activity: complete / reopen / key-change lines. `current` is the
+      // pre-patch before-image (applyPatch's D1 UPDATE doesn't mutate it). Non-fatal.
+      await emitLifecycleActivity(env, mut, user, current);
       return mkResult(mut.mutation_id, 'merged_clean', {
         result_seq: r.seq as number | undefined,
         canonical_payload: r,
@@ -929,6 +940,9 @@ export async function applyUpdate(env: Env, mut: Mutation, user: AuthUser, flags
   // Advance parent project staleness fields on task completion.
   // See comment on the merged_clean path above — same semantics.
   await advanceProjectMovement(env, mut, current);
+  // Lifecycle activity: complete / reopen / key-change lines. `current` is the
+  // pre-patch before-image (applyPatch's D1 UPDATE doesn't mutate it). Non-fatal.
+  await emitLifecycleActivity(env, mut, user, current);
   return mkResult(mut.mutation_id, 'accepted', {
     result_seq: r.seq as number | undefined,
     canonical_payload: r,

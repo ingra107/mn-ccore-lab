@@ -28,12 +28,10 @@ import {
   TrendingUp,
   AlertTriangle,
   CheckCircle,
-  CheckCircle2,
   HelpCircle,
   Terminal,
   Lock,
   ClipboardList,
-  Settings2,
   Trash2,
 } from 'lucide-react'
 import { motion } from 'framer-motion'
@@ -45,6 +43,7 @@ import LinkifiedText, { ImageChip } from '../LinkifiedText'
 import HermesMark from '../HermesMark'
 import HermesResponse from '../HermesResponse'
 import HermesPending, { isHermesPending } from '../HermesPending'
+import { LifecycleActivityLine } from './LifecycleActivityLine'
 import ReactionBar from '../ReactionBar'
 import type { StoredKind, UpdateType } from '../../../shared/activityKinds'
 import { ACCENT_CORAL, ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
@@ -160,14 +159,6 @@ const STYLE_TIME: React.CSSProperties = {
 
 const STYLE_TEXT_COL: React.CSSProperties = { flex: 1, minWidth: 0 }
 const STYLE_NAME_ROW: React.CSSProperties = { marginBottom: 4 }
-const STYLE_COMPLETION_ICON: React.CSSProperties = { color: 'var(--green)', flexShrink: 0 }
-const STYLE_SYSTEM_BADGE: React.CSSProperties = {
-  fontSize: META_FONT_SIZE,
-  background: 'rgba(100,116,139,0.08)',
-  color: 'var(--slate)',
-  opacity: 0.85,
-  flexShrink: 0,
-}
 
 // ── Per-kind accent bar colours ───────────────────────────────────────────────
 //
@@ -493,6 +484,18 @@ export function ActivityEntryItem({
   const isHermes = entry.actor_slug === 'claude-ai'
   const person = getPersonInfo(entry.actor_slug)
 
+  // Lifecycle rows (created / completed / changed) render as a quiet minimal
+  // line, NOT a comment card — overriding the (previously unused-in-prod) card
+  // treatment for these kinds. Hermes rows are always kind='comment', so this
+  // never catches them. See LifecycleActivityLine + the 2026-07-09 spec (#93).
+  if (entry.kind === 'system' || entry.kind === 'completion') {
+    return (
+      <ActivityEntryWrapper motionProps={motionProps}>
+        <LifecycleActivityLine entry={entry} />
+      </ActivityEntryWrapper>
+    )
+  }
+
   // Deep-link back to the task in the My Tasks view (project-stream only).
   const taskHref = isTask
     ? `/portal/my-tasks?openTask=${encodeURIComponent(entry.entity_id)}`
@@ -537,52 +540,10 @@ export function ActivityEntryItem({
   let nameBadge: ReactNode = null
   if (entry.kind === 'update' && entry.update_type) {
     nameBadge = <UpdateBadge updateType={entry.update_type} />
-  } else if (entry.kind === 'completion') {
-    nameBadge = (
-      <span
-        aria-label="Completed"
-        title="Completed"
-        className="inline-flex items-center"
-        style={STYLE_COMPLETION_ICON}
-      >
-        <CheckCircle2 size={12} strokeWidth={1.5} absoluteStrokeWidth aria-hidden="true" />
-      </span>
-    )
-  } else if (entry.kind === 'system') {
-    nameBadge = (
-      <span
-        className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded"
-        style={STYLE_SYSTEM_BADGE}
-      >
-        <Settings2 size={9} strokeWidth={1.5} absoluteStrokeWidth aria-hidden="true" />
-        System
-      </span>
-    )
   } else if (entry.kind === 'comment' && showCommentBadge) {
     // Retained for backward compat only — gold bar already signals discussion.
     nameBadge = null
   }
-
-  // ── Body text for completion entries ─────────────────────────────────────
-  // Completion rows express the action via the body.  If there is no body,
-  // use a brief verb phrase so the entry is self-describing.
-  const completionBody: ReactNode =
-    entry.body ? (
-      renderBodyWithImages(entry.body)
-    ) : isTask && showTaskOriginBadge && taskHref ? (
-      <>
-        {'Completed '}
-        <a
-          href={taskHref}
-          onClick={(e) => e.stopPropagation()}
-          style={{ color: 'var(--teal)', fontWeight: 500, textDecoration: 'none' }}
-        >
-          {taskLabel || 'this task'}
-        </a>
-      </>
-    ) : (
-      'Completed this task.'
-    )
 
   // ── Hermes: same skeleton, gold-ring card ────────────────────────────────
   if (isHermes) {
@@ -702,11 +663,7 @@ export function ActivityEntryItem({
               whiteSpace: 'pre-wrap',
             }}
           >
-            {entry.kind === 'completion' ? (
-              completionBody
-            ) : (
-              renderBodyWithImages(entry.body)
-            )}
+            {renderBodyWithImages(entry.body)}
           </p>
 
           {/* Reactions (project-entity rows only) */}
