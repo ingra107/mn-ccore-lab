@@ -67,7 +67,8 @@ export default function QuickAddForm({
             <div
               className="quick-add-form-container p-4 rounded-xl mt-2"
               style={{
-                background: 'var(--cream)',
+                // Recipe A: lift above the dark page bg (gold border + shadow = edge).
+                background: 'var(--surface-2)',
                 border: `1px solid ${withAlpha(ACCENT_GOLD, 20)}`,
                 boxShadow: 'var(--shadow-card)',
               }}

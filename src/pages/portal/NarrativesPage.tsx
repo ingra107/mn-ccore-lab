@@ -97,7 +97,7 @@ export default function NarrativesPage() {
       ) : (
         <div className="table-container flex flex-col gap-5 mt-5" style={{ padding: '20px' }}>
           {filteredNarratives.map((arc) => (
-            <div key={arc.id} className="p-5 rounded-xl" style={{ background: 'var(--cream)', border: '1px solid var(--border-subtle)' }}>
+            <div key={arc.id} className="p-5 rounded-xl" style={{ background: 'var(--surface-2)', border: '1px solid var(--border-subtle)' }}>
               {/* Header */}
               <div className="flex items-center gap-2 mb-3">
                 <BookOpen {...ICON_PROPS} size={16} style={{ color: 'var(--gold)' }} />

@@ -164,7 +164,21 @@ Item 8's nested `.pipeline-column` (`--ice`) left as-is (reads fine after the ca
 
 ---
 
-## Wave 3 — P3 (low-traffic / minor consistency)
+## Wave 3 — ✅ SHIPPED 2026-07-09 (code complete; deploy pending storm window)
+
+Done: Recipe A lift on NarrativesPage arc cards + QuickAddForm composer wrapper.
+Recipe B `.tip` on the TaskDetailPanel composer cluster (7: mode-toggle, attach,
+@mention, emoji, queue-for-Claude, "See all", submit) — **skipped the upload-progress
+overlay (1792)**: it sits in a 44×44 `overflow:hidden` thumbnail and would self-clip.
+**Item 17 (ActivityStream NOTE_TYPE_CONFIG DRY) SKIPPED — the premise was wrong:**
+NOTE_TYPE_CONFIG (note-type PICKER: 4 user types, `borderBg` @0.25) and
+UPDATE_TYPE_CONFIG (render config: 5 types incl. `session`, `borderColor` @0.4) have
+DIVERGED. Importing one for the other would (a) break pill borders (`config.borderBg`
+→ undefined at ActivityStream.tsx:260) and (b) inject a bogus "Session" pill into the
+user-facing note picker. Not a safe DRY — left as-is (a real DRY needs a shared base +
+per-use extension, more work than the cosmetic value).
+
+## Wave 3 — original targets (for reference)
 
 14. **`src/pages/portal/NarrativesPage.tsx:100`** — Recipe A (low-traffic).
 15. **`src/components/QuickAddForm.tsx:67-75`** — Recipe A (small composer wrapper).

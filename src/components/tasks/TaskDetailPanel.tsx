@@ -1692,8 +1692,8 @@ function OverviewQuickAdd({
                   role="tab"
                   aria-selected={isActive ? "true" : "false"}
                   onClick={() => setMode(m)}
-                  title={TOOLTIPS[m]}
-                  className="cursor-pointer inline-flex items-center gap-1 transition-all"
+                  data-tip={TOOLTIPS[m]}
+                  className="cursor-pointer inline-flex items-center gap-1 transition-all tip"
                   style={{
                     fontSize: '10px',
                     fontWeight: isActive ? 600 : 400,
@@ -1810,8 +1810,8 @@ function OverviewQuickAdd({
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
               aria-label="Attach file"
-              title="Attach file (drop or paste an image too)"
-              className="flex-shrink-0 inline-flex items-center justify-center"
+              data-tip="Attach file (drop or paste an image too)"
+              className="flex-shrink-0 inline-flex items-center justify-center tip"
               style={composerIconBtn}
             >
               {uploading
@@ -1823,8 +1823,8 @@ function OverviewQuickAdd({
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => appendCh('@')}
               aria-label="Mention teammate"
-              title="@mention a teammate"
-              className="flex-shrink-0 inline-flex items-center justify-center"
+              data-tip="@mention a teammate"
+              className="flex-shrink-0 inline-flex items-center justify-center tip"
               style={composerIconBtn}
             >
               <AtSign size={12} strokeWidth={1.5} absoluteStrokeWidth />
@@ -1834,8 +1834,8 @@ function OverviewQuickAdd({
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => appendCh(':')}
               aria-label="Add emoji"
-              title="Add emoji (:emoji:)"
-              className="flex-shrink-0 inline-flex items-center justify-center"
+              data-tip="Add emoji (:emoji:)"
+              className="flex-shrink-0 inline-flex items-center justify-center tip"
               style={composerIconBtn}
             >
               <Smile size={12} strokeWidth={1.5} absoluteStrokeWidth />
@@ -1859,8 +1859,8 @@ function OverviewQuickAdd({
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => setForHermes((v) => !v)}
                 aria-label={forHermes ? 'Queued for Claude — click to remove' : 'Queue this comment for your next Claude Code session'}
-                title="Queue for Claude's next session (not real-time — type @hermes to ask now)"
-                className="flex-shrink-0 inline-flex items-center gap-1"
+                data-tip="Queue for Claude's next session (not real-time — type @hermes to ask now)"
+                className="flex-shrink-0 inline-flex items-center gap-1 tip"
                 style={{
                   height: 22,
                   paddingLeft: 6,
@@ -1913,7 +1913,8 @@ function OverviewQuickAdd({
                 cursor: 'pointer',
                 whiteSpace: 'nowrap',
               }}
-              title="Jump to full Activity tab"
+              className="tip"
+              data-tip="Jump to full Activity tab"
             >
               See all →
             </button>
@@ -1925,8 +1926,8 @@ function OverviewQuickAdd({
                 aria-label={mode === 'comment'
                   ? (forHermes ? 'Post comment and queue for Claude' : 'Post comment')
                   : 'Add note'}
-                title={`${mode === 'comment' ? (forHermes ? 'Post + queue for Claude session' : 'Post comment') : 'Add note'} · Ctrl+Enter`}
-                className="flex-shrink-0 inline-flex items-center justify-center"
+                data-tip={`${mode === 'comment' ? (forHermes ? 'Post + queue for Claude session' : 'Post comment') : 'Add note'} · Ctrl+Enter`}
+                className="flex-shrink-0 inline-flex items-center justify-center tip"
                 style={{
                   background: forHermes && mode === 'comment' ? 'var(--gold)' : 'var(--teal-solid)',
                   color: 'var(--ink-bright, #fff)',
