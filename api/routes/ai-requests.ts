@@ -52,6 +52,30 @@ export async function handleGetAIRequests(url: URL, env: Env): Promise<Response>
   });
 }
 
+/**
+ * Derive the entity routing token (`task: <id>` / `project: <id>`) that the PB
+ * listener resolves into a readable context block — title, status, description,
+ * comment thread (hub_ai_listener.build_entity_context).
+ *
+ * dispatchHermes() sets that token for @hermes MENTIONS inside a comment. The
+ * typed "@hermes …" PREFIX surfaces (hermesRouting.ts → source_type
+ * 'daily_thought', source_id = <task_id>) posted here directly and never set it,
+ * so those requests reached the fenced model as a bare question with zero
+ * awareness of the task they were asked on. Deriving it at this INSERT — the one
+ * chokepoint every poster passes through — means no surface has to remember the
+ * token, now or later.
+ *
+ * Prefix discrimination is the contract _hermesNotifyLink already relies on
+ * (#521): entity ids are always `task_<ulid>` / `proj_<ulid>` (generateId), which
+ * a date-key source_id (the Today bar's `YYYY-MM-DD`) or an activity-entry id
+ * (32-char hex, what dispatchHermes passes) can never collide with.
+ */
+function deriveEntityContext(sourceId: string): string | null {
+  if (sourceId.startsWith('task_')) return `task: ${sourceId}`;
+  if (sourceId.startsWith('proj_')) return `project: ${sourceId}`;
+  return null;
+}
+
 // POST /api/ai-requests — create a new AI request
 export async function handleCreateAIRequest(
   request: Request,
@@ -85,7 +109,7 @@ export async function handleCreateAIRequest(
     body.source_id,
     canonicalProjectSlug,
     body.prompt.trim(),
-    body.context || null,
+    body.context || deriveEntityContext(body.source_id),
     user.email,
   ).run();
 

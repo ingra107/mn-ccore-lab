@@ -22,7 +22,7 @@ vi.mock('../lib/activity-entry', () => ({
 }));
 
 import { postActivityEntry } from '../lib/activity-entry';
-import { handleUpdateAIResponse } from './ai-requests';
+import { handleCreateAIRequest, handleUpdateAIResponse } from './ai-requests';
 
 const mockPostActivity = vi.mocked(postActivityEntry);
 
@@ -513,5 +513,78 @@ describe('handleUpdateAIResponse — submitter notifications', () => {
     const notifInsert = inserts.find(i => /INSERT INTO notifications/.test(i.sql));
     expect(notifInsert).toBeDefined();
     expect(notifInsert!.binds[7]).toBe('/portal/artifacts/art_deadbeef');
+  });
+});
+
+// ── handleCreateAIRequest: entity context derivation ───────────────────────────
+//
+// A typed "@hermes …" prefix on a task compose surface posts source_type
+// 'daily_thought' + source_id=<task_id> with NO context. The fenced listener
+// resolves ai_requests.context to orient itself; without the token it answered
+// with zero awareness of the task. The route derives the token from source_id.
+
+describe('handleCreateAIRequest — entity context derivation', () => {
+  /** context is bind index 5 of the ai_requests INSERT. */
+  async function createAndGetContext(body: Record<string, unknown>): Promise<unknown> {
+    const inserts: { sql: string; binds: unknown[] }[] = [];
+    const db = makeDb({
+      aiReq: { id: 'ai-new' },
+      captureUpdate: (sql, binds) => inserts.push({ sql, binds }),
+    });
+    const env = { DB: db } as unknown as Env;
+    const req = new Request('https://example.com/api/ai-requests', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+    await handleCreateAIRequest(req, { email: 'nick@umn.edu', name: 'Nick' } as never, env);
+    const insert = inserts.find(i => /INSERT INTO ai_requests/.test(i.sql));
+    expect(insert).toBeDefined();
+    return insert!.binds[5];
+  }
+
+  it('derives "task: <id>" for a typed @hermes prefix on a task (daily_thought + task_ id)', async () => {
+    const ctx = await createAndGetContext({
+      source_type: 'daily_thought',
+      source_id: 'task_01KWKFBXABCDEFGHJKMNPQRSTV',
+      prompt: 'draft a reply to Trung',
+    });
+    expect(ctx).toBe('task: task_01KWKFBXABCDEFGHJKMNPQRSTV');
+  });
+
+  it('derives "project: <id>" for a proj_ source_id', async () => {
+    const ctx = await createAndGetContext({
+      source_type: 'daily_thought',
+      source_id: 'proj_01KWKFBXABCDEFGHJKMNPQRSTV',
+      prompt: 'what is left here?',
+    });
+    expect(ctx).toBe('project: proj_01KWKFBXABCDEFGHJKMNPQRSTV');
+  });
+
+  it('leaves an explicit caller context untouched (dispatchHermes mention lane)', async () => {
+    const ctx = await createAndGetContext({
+      source_type: 'task_comment',
+      source_id: 'deadbeefdeadbeefdeadbeefdeadbeef', // activity_entry id
+      prompt: 'thoughts?',
+      context: 'task: task_01EXPLICIT',
+    });
+    expect(ctx).toBe('task: task_01EXPLICIT');
+  });
+
+  it('stores NULL for a date-key source_id (Today bar has no entity)', async () => {
+    const ctx = await createAndGetContext({
+      source_type: 'daily_thought',
+      source_id: '2026-07-09',
+      prompt: 'what should I focus on?',
+    });
+    expect(ctx).toBeNull();
+  });
+
+  it('stores NULL for an activity-entry source_id with no caller context', async () => {
+    const ctx = await createAndGetContext({
+      source_type: 'lab_question',
+      source_id: 'deadbeefdeadbeefdeadbeefdeadbeef',
+      prompt: 'question',
+    });
+    expect(ctx).toBeNull();
   });
 });
