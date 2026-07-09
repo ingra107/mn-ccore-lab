@@ -897,7 +897,9 @@ function PipelineCard({ project, dragging }: { project: Project; dragging?: bool
     <div
       className="project-card"
       style={{
-        background: 'var(--cream)',
+        // Recipe A: .project-card has no base lift, so cream == the dark page
+        // bg rendered flat. --surface-2 lifts it; the shadow-card below is the edge.
+        background: 'var(--surface-2)',
         borderRadius: 'var(--radius-lg)',
         padding: '14px',
         boxShadow: dragging ? 'var(--shadow-elevated)' : 'var(--shadow-card)',

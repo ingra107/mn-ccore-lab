@@ -278,7 +278,9 @@ export default function MenteeMilestonesPage() {
                   border: '1px solid var(--border-subtle)',
                   borderRadius: 'var(--radius-xl)',
                   cursor: 'pointer',
-                  background: 'var(--cream)',
+                  // NO inline background: .card supplies the dark-mode gradient
+                  // lift (linear-gradient(--surface-2)); an inline `background`
+                  // shorthand resets background-image and DEFEATS that lift.
                 }}
                 whileHover={{ scale: 1.01 }}
               >

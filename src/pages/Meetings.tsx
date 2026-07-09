@@ -938,7 +938,7 @@ export default function Meetings() {
                       const { isCarried: itemIsCarried, clean: itemClean } = parseCarriedForward(item.description)
                       return (
                         <div key={item.id || item.description} className="flex items-start gap-3 p-3 rounded-lg action-item-card"
-                          style={{ background: 'var(--cream)', border: `1px solid ${withAlpha(ACCENT_GOLD, 15)}`, boxShadow: 'var(--shadow-card)' }}>
+                          style={{ background: 'var(--surface-2)', border: `1px solid ${withAlpha(ACCENT_GOLD, 15)}`, boxShadow: 'var(--shadow-card)' }}>
                           <button type="button" className="cursor-pointer shrink-0 mt-0.5 action-toggle-btn"
                             style={{ background: 'none', border: 'none', padding: 'var(--sp-md)', margin: '-10px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 'var(--radius-sm)', transition: 'transform 0.15s ease', minWidth: '44px', minHeight: '44px' }}
                             onClick={() => item.id && toggleWithUndo(item.id, false)}
@@ -1024,7 +1024,7 @@ export default function Meetings() {
                         const info = getPersonInfo(item.assignee)
                         const { isCarried: cIsCarried, clean: cClean } = parseCarriedForward(item.description)
                         return (
-                          <div key={item.id || item.description} className="flex items-start gap-3 p-2.5 rounded-lg action-item-card" style={{ background: 'var(--cream)', opacity: 0.85 }}>
+                          <div key={item.id || item.description} className="flex items-start gap-3 p-2.5 rounded-lg action-item-card" style={{ background: 'var(--surface-2)', opacity: 0.85 }}>
                             <button type="button" className="cursor-pointer shrink-0 mt-0.5 action-toggle-btn"
                               style={{ background: 'none', border: 'none', padding: 'var(--sp-md)', margin: '-10px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 'var(--radius-sm)', transition: 'transform 0.15s ease', minWidth: '44px', minHeight: '44px' }}
                               onClick={() => item.id && toggleWithUndo(item.id, true)}

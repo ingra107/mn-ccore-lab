@@ -658,7 +658,9 @@ export default function Projects() {
                                 }}
                                 onMouseOver={(e) => { if (!pinnedSlugs.has(project.slug)) e.currentTarget.style.opacity = '0.75' }}
                                 onMouseOut={(e) => { if (!pinnedSlugs.has(project.slug)) e.currentTarget.style.opacity = '0.45' }}
-                                title={pinnedSlugs.has(project.slug) ? 'Unpin project' : 'Pin to top'}
+                                className="tip"
+                                data-tip={pinnedSlugs.has(project.slug) ? 'Unpin project' : 'Pin to top'}
+                                aria-label={pinnedSlugs.has(project.slug) ? 'Unpin project' : 'Pin to top'}
                               >
                                 <Star {...ICON_PROPS} size={12} fill={pinnedSlugs.has(project.slug) ? 'var(--gold)' : 'none'} />
                               </button>
@@ -678,7 +680,10 @@ export default function Projects() {
                                   fixed row height and overlap the row below.
                                   flex:1/minWidth:0 lets the cell shrink so
                                   ellipsis engages within the grid column. */}
-                              <span style={{ minWidth: 0, flex: 1 }}>
+                              {/* .tip lives on THIS wrapper (no overflow) — the inner
+                                  title span clips for its ellipsis and would clip the
+                                  ::after; the span keeps aria-label for the full name. */}
+                              <span className="tip" data-tip={stripConsortiumPrefix(project.title).clean} style={{ minWidth: 0, flex: 1 }}>
                                 <span
                                   style={{
                                     fontSize: '14px',
@@ -690,7 +695,7 @@ export default function Projects() {
                                     overflow: 'hidden',
                                     textOverflow: 'ellipsis',
                                   }}
-                                  title={stripConsortiumPrefix(project.title).clean}
+                                  aria-label={stripConsortiumPrefix(project.title).clean}
                                 >
                                   {stripConsortiumPrefix(project.title).clean}
                                 </span>
@@ -713,15 +718,16 @@ export default function Projects() {
                               {(() => {
                                 const tc = taskCountByProject.get(project.slug) || 0
                                 return tc > 0 ? (
-                                  <span style={{ fontSize: '10px', color: 'var(--teal)', flexShrink: 0 }} title={`${tc} open task${tc !== 1 ? 's' : ''}`}>
+                                  <span className="tip" style={{ fontSize: '10px', color: 'var(--teal)', flexShrink: 0 }} data-tip={`${tc} open task${tc !== 1 ? 's' : ''}`} aria-label={`${tc} open task${tc !== 1 ? 's' : ''}`}>
                                     {tc}
                                   </span>
                                 ) : null
                               })()}
                               {projectHealth && (
                                 <span
-                                  title={`Health: ${projectHealth.score}/100 — ${projectHealth.status}`}
-                                  className="inline-flex items-center gap-1"
+                                  data-tip={`Health: ${projectHealth.score}/100 — ${projectHealth.status}`}
+                                  aria-label={`Health: ${projectHealth.score}/100 — ${projectHealth.status}`}
+                                  className="inline-flex items-center gap-1 tip"
                                   style={{ flexShrink: 0, marginLeft: '-2px' }}
                                 >
                                   <span style={{
@@ -744,7 +750,7 @@ export default function Projects() {
                                 </span>
                               )}
                               {/* Stage progress dots */}
-                              <span className="inline-flex items-center gap-0.5 ml-1" title={`Stage: ${project.stage || 'idea'}`}>
+                              <span className="inline-flex items-center gap-0.5 ml-1 tip" data-tip={`Stage: ${project.stage || 'idea'}`} aria-label={`Stage: ${project.stage || 'idea'}`}>
                                 {STAGES.map((s, si) => {
                                   // Brain.db granular stages → 6-stage canonical (P2-R2-14)
                                   const currentIdx = stageIndex(project.stage)
@@ -772,7 +778,7 @@ export default function Projects() {
                                     color: days > 30 ? 'var(--maroon)' : days > 14 ? 'var(--orange)' : 'var(--slate)',
                                     opacity: 0.85,
                                     flexShrink: 0,
-                                  }} title={`Last activity ${days} days ago`}>
+                                  }} className="tip" data-tip={`Last activity ${days} days ago`} aria-label={`Last activity ${days} days ago`}>
                                     {days}d ago
                                   </span>
                                 )

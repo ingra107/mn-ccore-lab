@@ -110,7 +110,8 @@ export default function OnboardingChecklist() {
         style={{
           borderRadius: 'var(--radius-2xl)',
           padding: '1rem 1.25rem',
-          background: 'var(--cream)',
+          // Recipe A: lift above the dark page bg (gold border + shadow = edge).
+          background: 'var(--surface-2)',
           border: `1px solid ${withAlpha(ACCENT_GOLD, 12)}`,
           boxShadow: 'var(--shadow-card)',
           cursor: 'pointer',
@@ -187,7 +188,8 @@ export default function OnboardingChecklist() {
       style={{
         borderRadius: 'var(--radius-2xl)',
         padding: '1.5rem',
-        background: 'var(--cream)',
+        // Recipe A: lift above the dark page bg (gold border + shadow = edge).
+        background: 'var(--surface-2)',
         border: `1px solid ${withAlpha(ACCENT_GOLD, 12)}`,
         boxShadow: 'var(--shadow-card)',
       }}

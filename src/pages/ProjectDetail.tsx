@@ -722,9 +722,10 @@ function ProjectDetailInner({ project }: InnerProps) {
           <div className="flex items-center gap-2 flex-shrink-0">
             <button
               onClick={handleCopyLink}
-              className="p-1.5 rounded-md transition-colors hover:bg-black/5"
+              className="p-1.5 rounded-md transition-colors hover:bg-black/5 tip"
               style={{ background: 'none', border: 'none', cursor: 'pointer', color: copied ? 'var(--teal)' : 'var(--slate)', opacity: copied ? 1 : 0.85 }}
-              title={copied ? 'Link copied!' : 'Copy link'}
+              data-tip={copied ? 'Link copied!' : 'Copy link'}
+              aria-label={copied ? 'Link copied!' : 'Copy link'}
             >
               {copied ? <Check {...ICON_PROPS} size={14} /> : <Link2 {...ICON_PROPS} size={14} />}
             </button>
@@ -739,9 +740,10 @@ function ProjectDetailInner({ project }: InnerProps) {
                     setTimeout(() => setActionMenuOpen(false), 150)
                   }
                 }}
-                className="p-1.5 rounded-md transition-colors hover:bg-black/5"
+                className="p-1.5 rounded-md transition-colors hover:bg-black/5 tip"
                 style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', opacity: 0.85 }}
-                title="More actions"
+                data-tip="More actions"
+                aria-label="More actions"
                 aria-haspopup="menu"
                 aria-expanded={actionMenuOpen}
               >
@@ -1236,7 +1238,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                       <div
                         key={item.id}
                         onClick={() => goToStream(item.kind === 'note' ? 'notes' : 'comments')}
-                        className="hov-bg"
+                        className="hov-bg tip"
                         style={{
                           display: 'flex', alignItems: 'flex-start', gap: '6px',
                           fontSize: '11px', color: 'var(--ink)', lineHeight: 1.35,
@@ -1244,7 +1246,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                           cursor: 'pointer', transition: 'background 150ms ease',
                           '--hov-bg': 'var(--hover-subtle)',
                         } as React.CSSProperties}
-                        title={fullWhen}
+                        data-tip={fullWhen}
                       >
                         <span
                           style={{
@@ -1598,7 +1600,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                   // N1.16: .stage-dot exempts this from the blanket 44px mobile
                   // button min-height (which stretched the dots into tall
                   // ellipses); a ::before pseudo restores the touch target.
-                  className="cursor-pointer stage-dot"
+                  className="cursor-pointer stage-dot tip"
                   style={{
                     width: isCurrent ? '20px' : '14px',
                     height: isCurrent ? '20px' : '14px',
@@ -1618,11 +1620,12 @@ function ProjectDetailInner({ project }: InnerProps) {
                   }}
                   whileHover={{ scale: 1.3 }}
                   whileTap={{ scale: 0.9 }}
-                  title={`Move to ${STAGE_LABELS[stage]}`}
+                  data-tip={`Move to ${STAGE_LABELS[stage]}`}
+                  aria-label={`Move to ${STAGE_LABELS[stage]}`}
                 />
                 <span
-                  className={`project-stage-label${isCurrent ? ' is-current' : ''}`}
-                  title={STAGE_LABELS[stage]}
+                  className={`project-stage-label${isCurrent ? ' is-current' : ''} tip`}
+                  data-tip={STAGE_LABELS[stage]}
                   style={{
                     fontSize: '10px',
                     color: isCurrent ? 'var(--gold)' : isFuture ? 'var(--slate)' : 'var(--ink)',
@@ -1935,9 +1938,10 @@ function ProjectDetailInner({ project }: InnerProps) {
                     setTasksCopied(true)
                     setTimeout(() => setTasksCopied(false), 2000)
                   }}
-                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-colors border"
+                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-colors border tip"
                   style={{ color: tasksCopied ? 'var(--green)' : 'var(--slate)', borderColor: tasksCopied ? 'var(--green)' : 'var(--border-subtle)', background: 'none', cursor: 'pointer', opacity: tasksCopied ? 1 : 0.85 }}
-                  title={tasksCopied ? 'Copied!' : 'Copy task list to clipboard'}
+                  data-tip={tasksCopied ? 'Copied!' : 'Copy task list to clipboard'}
+                  aria-label={tasksCopied ? 'Copied!' : 'Copy task list to clipboard'}
                 >
                   {tasksCopied ? <Check {...ICON_PROPS} size={11} /> : <FileText {...ICON_PROPS} size={11} />}
                   {tasksCopied ? 'Copied' : 'Copy'}

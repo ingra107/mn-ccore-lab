@@ -23,7 +23,9 @@ export default function ProjectCard({ project }: ProjectCardProps) {
       transition={{ duration: 0.2 }}
       className="project-card"
       style={{
-        background: 'var(--cream)',
+        // Recipe A: .project-card has no base lift — lift cream→surface-2 so
+        // the kanban card reads above the dark page bg (shadow-card = the edge).
+        background: 'var(--surface-2)',
         borderRadius: 'var(--radius-lg)',
         padding: 'var(--sp-lg)',
         cursor: 'pointer',
