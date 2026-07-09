@@ -204,8 +204,9 @@ export function EntryTime({ ts, className }: { ts: string; className?: string })
   return (
     <time
       dateTime={isNaN(d.getTime()) ? ts : d.toISOString()}
-      className={className}
-      title={abs}
+      className={`tip ${className ?? ''}`}
+      data-tip={abs}
+      aria-label={abs}
       style={STYLE_TIME}
     >
       {rel}
@@ -647,7 +648,7 @@ export function ActivityEntryItem({
             <span
               style={{
                 fontSize: textSize,
-                fontWeight: 'var(--weight-ui)' as React.CSSProperties['fontWeight'],
+                fontWeight: 'var(--weight-heading)' as React.CSSProperties['fontWeight'],
                 color: 'var(--ink)',
                 flexShrink: 0,
               }}

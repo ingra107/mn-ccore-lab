@@ -1,14 +1,13 @@
 // LifecycleActivityLine — quiet "system chrome" for lifecycle rows (kind
 // 'system' | 'completion'). NOT a message: one small italic muted line with a
-// typed event glyph, the actor, and a timestamp. Created shows an absolute local
-// datetime inline; all others show relative time; every time hovers to the exact
-// viewer-local date+time (Nick 2026-07-09). Consumed by the ONE shared row
-// renderer (ActivityEntryItem), so both feeds stay identical.
+// typed event glyph, the actor, and a timestamp.
 //
-// Design ref: docs/superpowers/specs/2026-07-09-activity-log-provenance-design.md
+// The timestamp reuses EntryTime — the SAME component the comment boxes use — so
+// format, style, and hover-to-exact-local are IDENTICAL across the feed and the
+// two row types don't visually diverge (Nick 2026-07-09). Design ref:
+// docs/superpowers/specs/2026-07-09-activity-log-provenance-design.md
 import { getPersonInfo } from '../../data/team'
-import { formatLocal } from '../../lib/time'
-import { formatRelativeTime } from '../../lib/dateUtils'
+import { EntryTime } from './activityRender'
 import type { ActivityEntryItemRow } from './activityRender'
 
 // Typed event glyph (Nick's pick over a uniform dot). Derived, never stored.
@@ -31,20 +30,11 @@ export function LifecycleActivityLine({ entry }: { entry: ActivityEntryItemRow }
   const glyphColor =
     ev === 'created' ? 'var(--gold)' : ev === 'completed' ? 'var(--green)' : 'var(--teal)'
   const who = getPersonInfo(entry.actor_slug)?.name ?? entry.actor_slug
-  const iso = entry.created_at
-  const isCreated = ev === 'created'
-
-  // Created → absolute local datetime inline (the anchor provenance fact).
-  // Others → relative. Both reveal the exact local date+time on hover.
-  const shownTime = isCreated
-    ? formatLocal(iso, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
-    : formatRelativeTime(iso)
-  const fullLocal = formatLocal(iso, { dateStyle: 'medium', timeStyle: 'short' })
 
   return (
     <div
       className="flex items-baseline gap-2"
-      style={{ padding: '0.1rem 0.5rem', fontStyle: 'italic', color: 'var(--muted)', fontSize: '0.78rem', lineHeight: 1.3 }}
+      style={{ padding: '0.1rem 0.5rem', fontStyle: 'italic', color: 'var(--muted)', fontSize: '0.72rem', lineHeight: 1.3 }}
     >
       <span
         aria-hidden="true"
@@ -55,16 +45,8 @@ export function LifecycleActivityLine({ entry }: { entry: ActivityEntryItemRow }
       <span style={{ minWidth: 0 }}>
         {entry.body} <span style={{ fontStyle: 'normal', fontWeight: 600 }}>— {who}</span>
       </span>
-      <time
-        dateTime={iso}
-        title={fullLocal}
-        style={{
-          marginLeft: 'auto', paddingLeft: '0.8rem', flex: 'none', fontStyle: 'normal',
-          color: 'var(--ink-faint)', fontSize: '0.72rem', fontVariantNumeric: 'tabular-nums', cursor: 'help',
-        }}
-      >
-        {shownTime}
-      </time>
+      {/* Same timestamp component as the comment rows → identical format + hover. */}
+      <EntryTime ts={entry.created_at} className="ml-auto" />
     </div>
   )
 }

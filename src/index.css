@@ -1766,6 +1766,39 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
 .detail-card:hover .ae-delete { visibility: visible; }
 @media (hover: none) { .detail-card .ae-delete { visibility: visible; } }
 
+/* Pretty hover/focus tooltip primitive (Nick 2026-07-09 — the native title box is
+   bland). Add class "tip" + data-tip="…" to any element and it shows a styled dark
+   chip instead of the OS default. Reused by EntryTime, so every activity timestamp
+   (comments + lifecycle lines) gets it. Dark chip works on both themes. */
+.tip { position: relative; }
+.tip[data-tip]::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  right: 0;
+  z-index: 60;
+  white-space: nowrap;
+  font-style: normal;
+  font-weight: var(--weight-ui);
+  font-size: 0.72rem;
+  letter-spacing: 0.01em;
+  color: #eef2f7;
+  background: #20293a;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 7px;
+  padding: 5px 9px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+  opacity: 0;
+  transform: translateY(3px);
+  transition: opacity 0.12s ease, transform 0.12s ease;
+  pointer-events: none;
+}
+.tip[data-tip]:hover::after,
+.tip[data-tip]:focus-visible::after { opacity: 1; transform: translateY(0); }
+@media (prefers-reduced-motion: reduce) {
+  .tip[data-tip]::after { transition: none; transform: none; }
+}
+
 /* ── Touch target utility (WCAG 2.5.5 — 44×44px minimum) ── */
 .touch-target {
   min-height: 44px;
