@@ -45,14 +45,16 @@ export function LinkRow({ links }: { links: TaskLink[] }) {
         const tooltip = l.type
           ? (l.desc ? `${l.type} · ${l.desc}` : l.desc || typeLabel)
           : l.desc || typeLabel
+        // Gmail / email icons are self-evident (one thing) — no hover tooltip
+        // (Nick 2026-07-09). aria-label stays for screen readers.
+        const isEmail = typeLabel === 'Gmail' || /gmail|email/i.test(resolvedType ?? '')
         return (
           <a
             key={i}
             href={isHttp ? href : l.url}
             target={isHttp ? '_blank' : undefined}
             rel={isHttp ? 'noopener noreferrer' : undefined}
-            className="tip"
-            data-tip={tooltip}
+            data-tip={isEmail ? undefined : tooltip}
             aria-label={tooltip}
             onClick={(e) => {
               e.stopPropagation()

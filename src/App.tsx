@@ -10,6 +10,7 @@ import PageErrorBoundary from './components/PageErrorBoundary'
 import RequireAuth from './components/RequireAuth'
 import HeartbeatLine from './components/HeartbeatLine'
 import { Button } from './components/ui/Button'
+import { TooltipLayer } from './components/TooltipLayer'
 const Home = lazy(() => import('./pages/Home'))
 import { AuthProvider } from './context/AuthContext'
 import { PATHS } from './constants/paths'
@@ -190,6 +191,9 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <MotionConfig reducedMotion="user">
+      {/* Global tooltip layer — renders styled [data-tip] chips in a body
+          portal so they escape overflow clipping (Nick 2026-07-09). */}
+      <TooltipLayer />
       <BrowserRouter>
         <AuthProvider>
           <ViewTransitionWrapper>

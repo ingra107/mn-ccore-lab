@@ -684,8 +684,8 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
                     <button
                       type="button"
                       onClick={() => { onClose(); navigate(PATHS.project(task.project_id!)) }}
-                      title="Open project"
                       aria-label="Open project"
+                      className="link-affordance"
                       style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', flexShrink: 0, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--teal)', fontSize: 'var(--text-small)', fontWeight: 500, padding: '2px 4px' }}
                     >
                       Open <ExternalLink size={12} strokeWidth={1.5} absoluteStrokeWidth />

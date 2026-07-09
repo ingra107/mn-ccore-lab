@@ -1778,42 +1778,18 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
    bland). Add class "tip" + data-tip="…" to any element and it shows a styled dark
    chip instead of the OS default. Reused by EntryTime, so every activity timestamp
    (comments + lifecycle lines) gets it. Dark chip works on both themes. */
+/* Styled tooltips are rendered by <TooltipLayer> (a body-portal chip) so they
+   escape overflow clipping — see src/components/TooltipLayer.tsx. The former CSS
+   `.tip::after` pseudo-element clipped inside any overflow:hidden ancestor
+   (dense rows, thumbnails), showing only its top sliver (Nick 2026-07-09).
+   `.tip` / `.tip-end` are now inert markers; the layer keys on `[data-tip]`. */
 .tip { position: relative; }
-.tip[data-tip]::after {
-  content: attr(data-tip);
-  position: absolute;
-  /* Below the element, extending right — approximates the native title's
-     "just below/right of the pointer" feel (elements are usually small icons,
-     so element-anchored ≈ cursor-anchored). Right-edge elements that would
-     overflow use .tip-end (right-anchored) instead. */
-  top: calc(100% + 6px);
-  left: 0;
-  z-index: 60;
-  white-space: nowrap;
-  font-style: normal;
-  font-weight: var(--weight-ui);
-  font-size: 0.72rem;
-  letter-spacing: 0.01em;
-  color: #eef2f7;
-  background: #20293a;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 7px;
-  padding: 5px 9px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
-  opacity: 0;
-  transform: translateY(-3px);
-  transition: opacity 0.12s ease, transform 0.12s ease;
-  pointer-events: none;
-}
-/* Right-anchored variant for elements sitting at a container's right edge
-   (feed timestamps, row due/project chips, composer submit) so the tooltip
-   extends left instead of overflowing the edge. */
-.tip-end[data-tip]::after { left: auto; right: 0; }
-.tip[data-tip]:hover::after,
-.tip[data-tip]:focus-visible::after { opacity: 1; transform: translateY(0); }
-@media (prefers-reduced-motion: reduce) {
-  .tip[data-tip]::after { transition: none; transform: none; }
-}
+
+/* Named links (project name, "Open project", …): the link nature should be
+   self-evident on HOVER via an underline — no "Jump to X" tooltip needed
+   (Nick 2026-07-09). Pairs with the teal interactive color at rest. */
+.link-affordance { text-decoration: none; text-underline-offset: 2px; }
+.link-affordance:hover, .link-affordance:focus-visible { text-decoration: underline; }
 
 /* ── Touch target utility (WCAG 2.5.5 — 44×44px minimum) ── */
 .touch-target {

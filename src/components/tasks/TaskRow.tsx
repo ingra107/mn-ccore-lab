@@ -110,19 +110,18 @@ function DueChip({ due, status }: { due: string; status?: string }) {
 function ProjectTag({ project }: { project: { name: string; slug: string } | null }) {
   if (!project) return null
   return (
-    // .tip lives on the WRAPPER, not the Link: the Link has overflow:hidden for
-    // its ellipsis, which would clip the tooltip ::after. The wrapper has no
-    // overflow so the styled tooltip escapes.
-    <span className="tip tip-end" data-tip={`Jump to ${project.name}`} style={{ display: 'inline-flex', minWidth: 0, flexShrink: 0 }}>
-      <Link
-        to={PATHS.project(project.slug)}
-        onClick={(e) => e.stopPropagation()}
-        aria-label={`Jump to ${project.name}`}
-        style={{ fontSize: 11, color: ACCENT_TEAL, opacity: 0.92, flexShrink: 0, whiteSpace: 'nowrap', textDecoration: 'none', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis' }}
-      >
-        {project.name}
-      </Link>
-    </span>
+    // Teal color + hover-underline (.link-affordance) make the link self-evident —
+    // no "Jump to X" tooltip needed (Nick 2026-07-09). aria-label keeps the
+    // destination for screen readers.
+    <Link
+      to={PATHS.project(project.slug)}
+      onClick={(e) => e.stopPropagation()}
+      aria-label={`Open ${project.name}`}
+      className="link-affordance"
+      style={{ fontSize: 11, color: ACCENT_TEAL, opacity: 0.92, flexShrink: 0, whiteSpace: 'nowrap', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis' }}
+    >
+      {project.name}
+    </Link>
   )
 }
 
