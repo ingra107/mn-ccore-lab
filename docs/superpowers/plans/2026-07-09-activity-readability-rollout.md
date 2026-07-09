@@ -122,7 +122,19 @@ change → no `test:api` needed, but running it is cheap insurance. Deploy
 
 ---
 
-## Wave 2 — P2 (secondary views / lower frequency; disjoint files, batchable)
+## Wave 2 — ✅ SHIPPED 2026-07-09 (commit e467b279, live)
+
+Done: Recipe A card lifts — MenteeMilestones defeated-lift `.card` bug (removed the
+inline `background` override; grep-verified sole instance), Manuscripts PipelineCard
++ Projects-kanban ProjectCard, Meetings action-item cards (active + completed),
+Onboarding checklist (collapsed + expanded). Recipe B `.tip` — Projects list rows
+(6; ellipsis title's tip moved to its non-clipping parent) + ProjectDetail (6:
+copy-link/more-actions/stage-dot/stage-label/recent-activity-row/copy-tasks).
+**Skipped item 13 (Sidebar)** — `.tip` anchors up-right, wrong for a vertical
+collapsed nav (needs a right-side tooltip); native title is correct + non-clipping.
+Item 8's nested `.pipeline-column` (`--ice`) left as-is (reads fine after the card lift).
+
+## Wave 2 — original targets (for reference)
 
 7. **`src/pages/portal/MenteeMilestonesPage.tsx:270-284`** — DISTINCT BUG: `className="card"`
    (which HAS a working `.dark .card` gradient-lift at `src/index.css:892-896`) + an
