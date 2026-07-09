@@ -1,3 +1,21 @@
+# ▶ ACTIVITY-READABILITY ROLLOUT + PORTAL TOOLTIP LAYER — SHIPPED (2026-07-09). Live = `b2b69bc7`.
+
+Nick-driven UI polish arc: the activity-feed (#93) primitives propagated site-wide + the tooltip system rebuilt. **All frontend — NO schema/API/route change (still schema v82).** 7 commits, all deployed via `npm run deploy:pages:gated` + pushed; every deploy probe passed.
+
+**What shipped:**
+- **Card lift (figure/ground):** in dark mode `--cream` == the page body bg, so bordered cards read flat. Lifted the card surfaces to `--surface-2` (My Hub panel + CompactCards, Pending-meetings, Manuscripts pipeline, Projects kanban `ProjectCard`, Meetings action-items, Onboarding, Narratives, QuickAddForm) + fixed the **MenteeMilestones defeated-`.card`-gradient bug** (an inline `background` reset `background-image`, killing the `.dark .card` lift).
+- **Styled tooltips → `TooltipLayer`:** the first cut was a CSS `.tip::after` pseudo-element, which **clipped inside any `overflow:hidden` ancestor** (Nick: "you can only see the top part of the box"). Rebuilt as `src/components/TooltipLayer.tsx` — one delegated document listener → a single `position:fixed` chip in a **body portal** (escapes all overflow) → dynamic, anchored bottom-right of the pointer, viewport-clamped. Elements just carry a **`data-tip`** attribute; `.tip`/`.tip-end` are now inert markers. Mounted once in `App.tsx`. **CLAUDE.md Known-Gotcha added — never reintroduce a CSS pseudo-tooltip.**
+- **Link affordance:** named links (project name, "Open project") drop the "Jump to X" tooltip for teal + hover-underline (`.link-affordance`, index.css). Self-evident icons (Gmail/email) get NO tooltip.
+- **Removed** the full-title-on-hover on task rows (Nick: "i don't need the long title when i hover over tasks") — the full title lives in the detail drawer only. **CLAUDE.md Rule 68 updated.** Terse tooltip copy throughout.
+
+**Deliberate skips (all recorded in the plan):** My Tasks List view + other power-grid/ellipsis cells (native `title` escapes clipping — correct there); Sidebar collapsed-nav (`.tip` anchor was wrong for a vertical nav); the ActivityStream `NOTE_TYPE_CONFIG` "DRY" (configs had diverged — importing the other would drop pill borders + inject a bogus "Session" pill).
+
+**Plan (all 3 waves marked shipped) + learnings:** `docs/superpowers/plans/2026-07-09-activity-readability-rollout.md`. Memory: `feedback_hover-tooltip-design.md`.
+
+**Env:** the git-bash `fork()` storm was BRUTAL this session (12+ consecutive blocked build/commit attempts in stretches) — retry wins; see `project_repo-environment-gotchas`.
+
+---
+
 # ▶ BUG SWEEP #80–#93 — ALL FIXED + DEPLOYED + PUSHED (2026-06-24). Live = `f88eca09`.
 
 Cleared the entire open in-app bug queue (#80→#92, 13 reports) plus Nick's chat-requested editor redesign (#93) and a Projects sort tweak. **All frontend + one API reader fix (email-drafts JOIN + PI-gate) — NO schema/migration/table change.** Every fix deployed via `npm run deploy:pages:gated` and verified by the post-deploy probe; all bug_reports rows resolved (queue empty) except #87 (dismissed = feature request).
