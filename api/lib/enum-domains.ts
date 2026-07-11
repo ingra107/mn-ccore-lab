@@ -182,5 +182,13 @@ export function assertCompletionTriad(
   if (completed && !isDone) {
     return `completion-triad: tasks.completed=1 requires status='done' (got status=${JSON.stringify(status)})`;
   }
+  // completed_at set must agree with completed=1 (schema-v98 D1 trigger parity —
+  // the 4th OR clause in trg_tasks_completion_triad_guard_ins/_upd). A
+  // completed_at-only patch on an already-completed row PASSES here: `completed`
+  // resolves from `current` when absent from `fields`, so this only fires when
+  // the RESULTING state genuinely has completed_at set without completed=1.
+  if (hasCompletedAt && !completed) {
+    return `completion-triad: tasks.completed_at set requires completed=1 (got completed=${JSON.stringify(completedRaw)})`;
+  }
   return null;
 }

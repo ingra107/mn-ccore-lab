@@ -517,4 +517,13 @@ describe('V4 completion-triad', () => {
     const current = { status: 'done', completed: 0, completed_at: null }  // legacy-inconsistent stored state
     expect(assertCompletionTriad('tasks', current, { due_date: '2026-06-01' })).toBeNull()
   })
+  // schema-v98 D1 trigger parity — 4th clause (completed_at set requires completed=1).
+  it('completed_at set without completed=1 rejected', () => {
+    const err = assertCompletionTriad('tasks', null, { status: 'todo', completed: 0, completed_at: '2026-07-10 12:00:00' })
+    expect(err).toMatch(/completed_at set requires completed=1/)
+  })
+  it('completed_at-only patch on an already-completed row still passes', () => {
+    const current = { status: 'done', completed: 1, completed_at: '2026-07-09 10:00:00' }
+    expect(assertCompletionTriad('tasks', current, { completed_at: '2026-07-10 12:00:00' })).toBeNull()
+  })
 })
