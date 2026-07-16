@@ -148,11 +148,14 @@ function run() {
     const id = mintId('task')
     taskIdByOriginalDesc.set(t.description, id)
     const desc = stripPrefix(t.description)!
+    // schema-v98 completion-triad guard: status=done <=> completed=1 <=> completed_at set.
+    const isDone = t.status === 'done'
     d1Execute(
-      `INSERT INTO tasks (id, project_id, title, description, assignee, due_date, priority, status, source) VALUES (` +
+      `INSERT INTO tasks (id, project_id, title, description, assignee, due_date, priority, status, completed, completed_at, source) VALUES (` +
       `${sqlEscape(id)}, ${sqlEscape(project_id)}, ${sqlEscape(desc)}, ${sqlEscape(desc)}, ` +
       `${sqlEscape(t.assignee)}, ${sqlEscape(daysFromNow(t.due_in_days))}, ` +
-      `${sqlEscape(t.priority)}, ${sqlEscape(t.status)}, 'manual')`
+      `${sqlEscape(t.priority)}, ${sqlEscape(t.status)}, ${isDone ? 1 : 0}, ` +
+      `${isDone ? "datetime('now')" : 'NULL'}, 'manual')`
     )
   }
   d1Flush('tasks')
@@ -194,11 +197,13 @@ function run() {
     // Action items as tasks with meeting_id
     for (const ai of m.action_items ?? []) {
       const aiId = mintId('task')
+      // schema-v98 triad: done rows must also carry completed=1 + completed_at.
       d1Execute(
-        `INSERT INTO tasks (id, meeting_id, title, description, assignee, due_date, priority, status, source) VALUES (` +
+        `INSERT INTO tasks (id, meeting_id, title, description, assignee, due_date, priority, status, completed, completed_at, source) VALUES (` +
         `${sqlEscape(aiId)}, ${sqlEscape(id)}, ${sqlEscape(stripPrefix(ai.description))}, ` +
         `${sqlEscape(stripPrefix(ai.description))}, ${sqlEscape(ai.assignee)}, ` +
-        `${sqlEscape(daysFromNow(ai.due_in_days))}, 'medium', ${sqlEscape(ai.done ? 'done' : 'todo')}, 'meeting')`
+        `${sqlEscape(daysFromNow(ai.due_in_days))}, 'medium', ${sqlEscape(ai.done ? 'done' : 'todo')}, ` +
+        `${ai.done ? 1 : 0}, ${ai.done ? "datetime('now')" : 'NULL'}, 'meeting')`
       )
     }
   }
