@@ -229,4 +229,26 @@ if git diff --cached --name-only --diff-filter=AM \
     fi
 fi
 
+# ---------------------------------------------------------------------------
+# Vitest gate (backlog #505, 2026-07-16). Before this, NOTHING in the repo
+# ran any vitest suite as a commit/CI gate — `npm run test:api` (1129+ tests)
+# only ran manually, and the two configs covering src/ (vitest.config.lib.ts,
+# node-mode pure-logic; vitest.config.ts, browser-mode component tests) had
+# no npm script at all, so a src/ logic test (e.g. #499's seen-tracking
+# tests) had to be run ad-hoc via `npx tsx`, outside any gate. #546 is the
+# concrete cost of an untested seam shipping through a green-but-never-run
+# suite. Scoped to fire only when api/, src/, a vitest config, or
+# package.json is staged — keeps doc-only / Scratch-only commits fast. All
+# three suites combined run in ~5-10s on a full checkout.
+if git diff --cached --name-only --diff-filter=ACMR \
+        | grep -qE "^api/.*\.tsx?$|^src/.*\.tsx?$|^vitest\.config.*\.ts$|^package\.json$"; then
+    echo "[hub-precommit] api/ or src/ staged -- running vitest gate (api + lib + src)..."
+    if ! npm run --silent test:vitest; then
+        echo ""
+        echo "BLOCKED: vitest suite failed (api/lib/src). Fix the code or the test"
+        echo "before committing -- see CLAUDE.md 'Testing' section for the three configs."
+        exit 1
+    fi
+fi
+
 exit 0
