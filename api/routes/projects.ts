@@ -127,6 +127,8 @@ export async function handleCreateProject(
     stage?: string
     description?: string
     pi?: string
+    domain?: string
+    tier?: string
   };
 
   if (!body.title?.trim()) {
@@ -162,6 +164,15 @@ export async function handleCreateProject(
   const piActor = await resolveActor(env, user, body.pi, { allowImpersonation: true });
   if ('error' in piActor) return error(piActor.error, 400);
 
+  // #614 (2026-07-16): domain/tier were the only two create-payload fields
+  // with no default — every project created through this route (vs PB's
+  // `create_project()`, which defaults domain="Research"/tier="2-Biweekly")
+  // landed with NULL domain/tier, silently dropping it from the Dataview
+  // dashboards that filter on those fields. Mirror PB's defaults (both are
+  // valid canonical values per api/enum-domains.generated.json: domain ∈
+  // {Research, Grants, Teaching, Personal, Professional Development}; tier
+  // ∈ {1-Weekly, 2-Biweekly, 3-Monthly}) so a Hub-created project is never
+  // worse-defaulted than a PB-created one.
   const createProjMut = await applyMutation(env, {
     table: 'projects',
     record_id: id,
@@ -175,6 +186,8 @@ export async function handleCreateProject(
       description: body.description || '',
       pi: piActor.slug,
       status: 'active',
+      domain: body.domain || 'Research',
+      tier: body.tier || '2-Biweekly',
       created_at: nowInstant(),
     },
     route: 'handleCreateProject',
