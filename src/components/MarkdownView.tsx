@@ -19,6 +19,19 @@ import LinkifiedText from './LinkifiedText'
 interface Props {
   source: string
   className?: string
+  /**
+   * Caller-side style override, shallow-merged onto the wrapper div AFTER
+   * the default (so e.g. `style={{ fontSize: 'var(--text-body)' }}` wins).
+   *
+   * #544 (2026-07-16): a prior `className="text-sm"` override was proven
+   * INERT — the wrapper set its font-size via inline `style`, and an inline
+   * style always beats a class regardless of specificity tricks, full stop.
+   * `style` fixes that by construction: the caller's override lands in the
+   * SAME style object, not a competing class. Every block below (headings,
+   * list items, paragraphs) sizes itself in `em` relative to this wrapper,
+   * so one fontSize override scales the whole rendered document coherently.
+   */
+  style?: React.CSSProperties
 }
 
 // ── inline parsing ──────────────────────────────────────────────────────────
@@ -117,14 +130,37 @@ function renderEmphasis(text: string, keyPrefix: string): ReactNode[] {
 
 // ── block parsing ───────────────────────────────────────────────────────────
 
-export default function MarkdownView({ source, className }: Props) {
+export default function MarkdownView({ source, className, style }: Props) {
   // Parse once per source change — long artifacts re-parse on every parent
   // render otherwise. (Keep the /g regex literals function-local: hoisting
   // them shares lastIndex state across calls, a stateful-regex bug.)
   const blocks = useMemo(() => parseBlocks(source), [source])
 
   return (
-    <div className={className} style={{ fontSize: 'var(--value-size, 15px)' }}>
+    <div
+      className={className}
+      style={{
+        // #544: was `var(--value-size, 15px)`. --value-size is ALWAYS
+        // defined at :root (= --text-body, 13px — "primary content, cell
+        // values", index.css), so that 15px fallback never actually fired;
+        // the real rendered default was 13px, a dense-table-cell token, not
+        // a prose token. --text-md (16px — "body paragraphs, descriptions",
+        // index.css) is the scale's own documented match for this
+        // component's long-form use (Hermes Artifacts, meeting notes).
+        //
+        // KNOWN CALLER MIGRATION: HermesReplyList.tsx wraps this component
+        // in `<div style={{'--value-size': '13px'}}>` specifically to reach
+        // in and shrink this fontSize (its own comment: "MarkdownView only
+        // accepts source + className; style must be on a parent"). Since
+        // this no longer reads --value-size, that wrapper is now a no-op —
+        // Hermes replies will render at the new 16px default like every
+        // other caller until that file is migrated to `style={{ fontSize:
+        // 'var(--value-size)' }}` on this component directly (now
+        // supported) and its wrapper div removed.
+        fontSize: 'var(--text-md, 16px)',
+        ...style,
+      }}
+    >
       {blocks.map((b, idx) => (
         <Fragment key={idx}>{b}</Fragment>
       ))}

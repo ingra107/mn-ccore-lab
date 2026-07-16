@@ -14,6 +14,7 @@
 
 import { useCallback } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { isMeetingUnseenWithinCap } from '../lib/seen'
 
 export interface UnseenActivityRow {
   entity_type: 'task' | 'project' | 'meeting'
@@ -46,7 +47,15 @@ export function useUnseenActivity() {
       const res = await fetch('/api/seen/unseen')
       if (!res.ok) return EMPTY
       const json = await res.json() as { data: UnseenActivityRow[] }
-      const rows = json.data ?? []
+      // #548: cap the cold-start never_seen flood on ancient, un-visited
+      // meetings — see src/lib/seen.ts for the recency-window rationale.
+      // Drops the row entirely (no badge signal) rather than flipping
+      // never_seen to 0, which would just repaint the flood teal instead
+      // of clearing it (a "seen" row still renders the update-since-seen
+      // dot when meetingSeen is truthy).
+      const rows = (json.data ?? []).filter(
+        (r) => !(r.entity_type === 'meeting' && r.never_seen === 1 && !isMeetingUnseenWithinCap(r.latest_at)),
+      )
       const tasks = new Map<string, UnseenActivityRow>()
       const projects = new Map<string, UnseenActivityRow>()
       const meetings = new Map<string, UnseenActivityRow>()

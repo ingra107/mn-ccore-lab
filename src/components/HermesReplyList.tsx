@@ -112,11 +112,9 @@ export function HermesReplyCard({ prompt, response, status, created_at, responde
       {expanded && (
         isCompleted
           ? (
-            // Wrap in a div to set --value-size CSS variable (MarkdownView reads it).
-            // MarkdownView only accepts source + className; style must be on a parent.
-            <div style={{ '--value-size': '13px' } as React.CSSProperties}>
-              <MarkdownView source={response!} />
-            </div>
+            // Chat-list density: MarkdownView's default grew to 16px (#544);
+            // Hermes replies deliberately stay compact via the size prop.
+            <MarkdownView source={response!} style={{ fontSize: '13px' }} />
           )
           : <HermesPending askedAt={created_at} />
       )}
