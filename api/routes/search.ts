@@ -12,7 +12,6 @@ const TYPE_PRIORITY: Record<string, number> = {
   decision: 5,
   note: 4,
   task_note: 4,
-  action_item: 4,
   publication: 4,
   grant: 4,
   comment: 3,
@@ -137,12 +136,30 @@ export async function handleGetSearch(url: URL, env: Env, canSeePb = false): Pro
   const pbProjectIdSet = `SELECT id FROM projects WHERE category = 'Peripheral Brain'
       UNION SELECT slug FROM projects WHERE category = 'Peripheral Brain'`;
 
-  // Search across 15 tables in parallel — Slack-parity unified search.
+  // Search across 14 tables in parallel — Slack-parity unified search.
   // Promise.allSettled isolates each source: one D1 timeout or transient
   // error returns partial results rather than a total search failure.
+  //
+  // #552 (2026-07-16): the "actionItems" source (raw `action_items` table)
+  // was retired here — the 7th and last reader T19 (#547) missed. Recovered
+  // intent: T19 converted every OTHER action_items reader to the tasks model
+  // (meetings.ts:75-81 reads action items as `tasks WHERE meeting_id IN
+  // (...)`); the table itself stopped taking writes ~2026-03-30 and its full
+  // historical content was backfilled into `tasks` by
+  // schema-v96-action-items-backfill.sql with the SAME id (INSERT OR IGNORE
+  // INTO tasks(id, ...) SELECT id, ... FROM action_items). Verified live
+  // (prod D1, 2026-07-16): `SELECT COUNT(*) FROM action_items a LEFT JOIN
+  // tasks t ON t.id = a.id WHERE t.id IS NULL OR t.deleted_at IS NOT NULL`
+  // = 0 — every action_items row already has a live tasks row, and the
+  // unconditional `tasks` search leg above (no meeting_id filter) already
+  // matches it on the same title/description. Re-adding a parallel
+  // action_items query would have produced DUPLICATE hits (same task,
+  // shown once as type='task' and once as type='action_item') for zero new
+  // coverage — dropping the leg is the lossless fix, not "convert." The
+  // action_items TABLE itself stays (rollback net; PB backlog #562).
   const SOURCE_NAMES = [
     'tasks', 'projects', 'meetings', 'ideas', 'comments', 'activity',
-    'notes', 'taskNotes', 'taskComments', 'decisions', 'files', 'actionItems',
+    'notes', 'taskNotes', 'taskComments', 'decisions', 'files',
     'publications', 'grants', 'artifacts',
   ] as const;
 
@@ -196,10 +213,6 @@ export async function handleGetSearch(url: URL, env: Env, canSeePb = false): Pro
         canSeePb ? '' : ` AND NOT (entity_type = 'project' AND entity_id IN (${pbProjectIdSet}))`
       } LIMIT ?`
     ).bind(like, limit).all(),
-    // Action items
-    env.DB.prepare(
-      'SELECT a.id, a.description, a.assignee, a.completed, a.due_date, a.meeting_id, a.created_at, m.title as meeting_title FROM action_items a LEFT JOIN meetings m ON a.meeting_id = m.id WHERE a.description LIKE ? LIMIT ?'
-    ).bind(like, limit).all(),
     // Publications
     env.DB.prepare(
       'SELECT id, title, journal, year, authors, status, created_at FROM publications WHERE (title LIKE ? OR journal LIKE ? OR authors LIKE ? OR abstract LIKE ?) LIMIT ?'
@@ -218,7 +231,7 @@ export async function handleGetSearch(url: URL, env: Env, canSeePb = false): Pro
   const failedSources: string[] = [];
   const [
     tasks, projects, meetings, ideas, comments, activity,
-    notes, taskNotes, taskComments, decisions, files, actionItems,
+    notes, taskNotes, taskComments, decisions, files,
     publications, grants, artifacts,
   ] = settled.map((outcome, i) => {
     if (outcome.status === 'fulfilled') return outcome.value;
@@ -502,27 +515,6 @@ export async function handleGetSearch(url: URL, env: Env, canSeePb = false): Pro
     });
   }
 
-  // Meeting action items
-  for (const a of (actionItems.results || []) as Record<string, unknown>[]) {
-    const timestamp = a.created_at;
-    const score = TYPE_PRIORITY.action_item
-      + recencyBoost(timestamp)
-      + titleMatchBonus(a.description, q)
-      + (a.completed ? -2 : 1);
-    const match = pickMatch(q, [{ name: 'description', value: a.description }]);
-    results.push({
-      id: a.id,
-      type: 'action_item',
-      title: a.description,
-      subtitle: `action · ${a.assignee}${a.meeting_title ? ` · ${a.meeting_title}` : ''}${a.due_date ? ` · due ${a.due_date}` : ''}`,
-      url: a.meeting_id ? `/portal/meetings/${a.meeting_id}` : '/portal/meetings',
-      score,
-      timestamp,
-      snippet: match.snippet,
-      matchedField: match.matchedField,
-    });
-  }
-
   // Publications
   for (const p of (publications.results || []) as Record<string, unknown>[]) {
     const timestamp = p.created_at;
@@ -615,7 +607,7 @@ export async function handleGetSearch(url: URL, env: Env, canSeePb = false): Pro
     return bTime - aTime;
   });
 
-  // Return top 50 — with 15 entity types searched, 20 was too narrow
+  // Return top 50 — with 14 entity types searched, 20 was too narrow
   // (notes/decisions/files got pushed out by tasks/projects hitting the
   // cap). 50 gives per-type visibility without overwhelming the UI.
   const top = results.slice(0, 50);
