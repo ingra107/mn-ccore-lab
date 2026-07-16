@@ -5,7 +5,7 @@ import { motion } from 'framer-motion'
 import {
   Search, SquareCheck, FolderKanban, Users, Lightbulb,
   MessageSquare, Activity, ArrowRight, X, Clock, Trash2,
-  ScrollText, Scale, Paperclip, ListChecks, BookOpen, Banknote,
+  ScrollText, Scale, Paperclip, BookOpen, Banknote,
   AlertTriangle, Calendar, FileText,
 } from 'lucide-react'
 import PageHeader from '../../components/PageHeader'
@@ -46,7 +46,6 @@ const typeConfig: Record<string, { icon: typeof Search; color: string; label: st
   comment: { icon: MessageSquare, color: 'var(--slate)', label: 'Comment' },
   task_comment: { icon: MessageSquare, color: 'var(--slate)', label: 'Task comment' },
   decision: { icon: Scale, color: 'var(--maroon)', label: 'Decision' },
-  action_item: { icon: ListChecks, color: 'var(--teal)', label: 'Action item' },
   file: { icon: Paperclip, color: 'var(--slate)', label: 'File' },
   publication: { icon: BookOpen, color: 'var(--gold)', label: 'Publication' },
   grant: { icon: Banknote, color: 'var(--green)', label: 'Grant' },
@@ -335,7 +334,7 @@ export default function SearchPage() {
   const typeOrder = [
     'task', 'project', 'meeting', 'idea',
     'note', 'task_note', 'comment', 'task_comment',
-    'decision', 'action_item', 'file',
+    'decision', 'file',
     'publication', 'grant', 'activity',
   ]
 
@@ -377,14 +376,12 @@ export default function SearchPage() {
     if (statusFilter !== 'all') {
       out = out.filter(r => {
         const d = r.details || {}
-        // Only tasks + action_items have a meaningful open/done split.
+        // Only tasks have a meaningful open/done split (#552: the search API's
+        // action_item leg was retired — meeting-linked action items now
+        // surface as type='task').
         if (r.type === 'task') {
           const isDone = d.status === 'done' || d.status === 'completed'
           return statusFilter === 'open' ? !isDone : isDone
-        }
-        if (r.type === 'action_item') {
-          // action_item has a `completed` boolean (not in details — fold into details server-side later)
-          return true
         }
         // Other types pass through regardless of status.
         return true
