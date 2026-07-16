@@ -63,14 +63,17 @@ function makeStatefulEnv(seed: Row[] = []): { env: Env; meetings: Row[]; notific
           }
           if (upper.startsWith('UPDATE MEETINGS') && upper.includes('COALESCE')) {
             // UPDATE ... SET notes = COALESCE(?, notes), decisions = COALESCE(?, decisions),
-            //               tags = COALESCE(?, tags), source_id = COALESCE(source_id, ?),
+            //               tags = COALESCE(?, tags), attendees = COALESCE(?, attendees),
+            //               type = COALESCE(?, type), source_id = COALESCE(source_id, ?),
             //               updated_at = ... WHERE id = ?
-            const [notesArg, decisionsArg, tagsArg, sourceIdArg, id] = args
+            const [notesArg, decisionsArg, tagsArg, attendeesArg, typeArg, sourceIdArg, id] = args
             const row = meetings.find((m) => m.id === id)
             if (row) {
               if (notesArg !== null && notesArg !== undefined) row.notes = notesArg
               if (decisionsArg !== null && decisionsArg !== undefined) row.decisions = decisionsArg
               if (tagsArg !== null && tagsArg !== undefined) row.tags = tagsArg
+              if (attendeesArg !== null && attendeesArg !== undefined) row.attendees = attendeesArg
+              if (typeArg !== null && typeArg !== undefined) row.type = typeArg
               if (!row.source_id && sourceIdArg !== null && sourceIdArg !== undefined) row.source_id = sourceIdArg
               row.updated_at = '2026-05-29T12:00:00Z'
               return { meta: { changes: 1 } }
@@ -267,6 +270,106 @@ describe('handleCreateMeeting — Slice 4 notes/decisions persistence', () => {
     expect(res.status).toBe(200)
     expect(meetings).toHaveLength(1)
     expect(meetings[0].notes).toBe(existingNotes)
+  })
+})
+
+// PB commit c8e4ff306 (2026-07-07) made the push carry `attendees` (and,
+// heuristically, `type`) on EVERY push, not just the first — see
+// shared-schema-registry.md "/meetings push payload" entry. Before this fix
+// only the INSERT branch persisted them, so any meeting matched via the
+// dedup path kept NULL attendees forever.
+describe('handleCreateMeeting — attendees/type persistence on the dedup path', () => {
+  it('UPDATEs attendees on the dedup (upsert) path when the re-push carries them', async () => {
+    const { env, meetings } = makeStatefulEnv([
+      {
+        id: 'mtg-2026-07-15-attnd0001',
+        date: '2026-07-15',
+        title: 'MN-CCORE: Nick Adams',
+        type: 'biweekly',
+        attendees: null,
+        notes: 'kept notes',
+        decisions: null,
+        status: 'upcoming',
+      },
+    ])
+    const attendees = ['dudley@umn.edu', 'ingra107@umn.edu']
+    const res = await handleCreateMeeting(
+      makeRequest({ date: '2026-07-15', title: 'mn-ccore:  nick  adams', attendees }),
+      makeUser(), env,
+    )
+    const body = await res.json() as { data: Row }
+
+    expect(res.status).toBe(200)
+    expect(meetings).toHaveLength(1) // dedup, no duplicate row
+    expect(meetings[0].attendees).toBe(JSON.stringify(attendees))
+    expect(JSON.parse(body.data.attendees as string)).toEqual(attendees)
+  })
+
+  it('dedup re-push with an absent/empty attendees does NOT wipe an existing attendees list', async () => {
+    const existingAttendees = JSON.stringify(['a@umn.edu', 'b@umn.edu'])
+    const { env, meetings } = makeStatefulEnv([
+      {
+        id: 'mtg-2026-07-15-attnd0002',
+        date: '2026-07-15',
+        title: 'Lab Sync',
+        type: 'biweekly',
+        attendees: existingAttendees,
+        notes: 'n',
+        decisions: null,
+        status: 'upcoming',
+      },
+    ])
+    // Re-push carrying notes but no attendees key at all.
+    const res1 = await handleCreateMeeting(
+      makeRequest({ date: '2026-07-15', title: 'lab sync', notes: 'refreshed' }),
+      makeUser(), env,
+    )
+    expect(res1.status).toBe(200)
+    expect(meetings[0].attendees).toBe(existingAttendees)
+
+    // Re-push explicitly carrying an empty attendees array (unparseable frontmatter).
+    const res2 = await handleCreateMeeting(
+      makeRequest({ date: '2026-07-15', title: 'lab sync', attendees: [] }),
+      makeUser(), env,
+    )
+    const body2 = await res2.json() as { data: Row }
+    expect(res2.status).toBe(200)
+    expect(meetings).toHaveLength(1)
+    expect(meetings[0].attendees).toBe(existingAttendees) // still not clobbered
+    expect(body2.data.attendees).toBe(existingAttendees)
+  })
+
+  it('UPDATEs type on the dedup path only when the payload carries one; never defaults it', async () => {
+    const { env, meetings } = makeStatefulEnv([
+      {
+        id: 'mtg-2026-07-15-type0001',
+        date: '2026-07-15',
+        title: 'Nick / Adams 1:1',
+        type: null,
+        attendees: null,
+        notes: null,
+        decisions: null,
+        status: 'upcoming',
+      },
+    ])
+    // Re-push with a real type value: applies.
+    const res1 = await handleCreateMeeting(
+      makeRequest({ date: '2026-07-15', title: 'nick / adams 1:1', type: 'one-on-one', notes: 'n' }),
+      makeUser(), env,
+    )
+    expect(res1.status).toBe(200)
+    expect(meetings[0].type).toBe('one-on-one')
+
+    // Re-push with type omitted: existing type is left alone, never reset to
+    // the INSERT-only 'biweekly' default.
+    const res2 = await handleCreateMeeting(
+      makeRequest({ date: '2026-07-15', title: 'nick / adams 1:1', notes: 'n2' }),
+      makeUser(), env,
+    )
+    const body2 = await res2.json() as { data: Row }
+    expect(res2.status).toBe(200)
+    expect(meetings[0].type).toBe('one-on-one')
+    expect(body2.data.type).toBe('one-on-one')
   })
 })
 
@@ -469,9 +572,13 @@ describe('handleCreateMeeting — debrief notification (fire-once bell)', () => 
   })
 })
 
-// T5 — POST /api/meetings/:id/meta. Hub edits are canonical: the PB pipeline
-// only sets attendees/title/type/tags on INSERT, so a manual edit here can
-// never be overwritten by a re-push.
+// T5 — POST /api/meetings/:id/meta. `title` and `tags` are still PB-authored
+// only on INSERT/explicit-carry (see the tags describe block above), so a
+// manual edit to those stays put across a bare re-push. `attendees`/`type`
+// are the exception since PB commit c8e4ff306 (2026-07-07): PB now carries
+// them on every push, so a manual T5 correction to attendees/type can be
+// overwritten by a subsequent PB re-push that carries a differing value —
+// same COALESCE-on-carried-value contract as notes/decisions.
 describe('handleUpdateMeetingMeta — T5 metadata edit endpoint', () => {
   function seedMeeting(overrides: Row = {}): { env: Env; meetings: Row[] } {
     return makeStatefulEnv([

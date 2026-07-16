@@ -441,6 +441,16 @@ function normalizeMeetingTitle(title: string): string {
 // is persisted exactly like notes/decisions: JSON.stringify'd into the INSERT
 // and COALESCE-upserted on the dedup path so a null/absent `tags` never wipes
 // an existing value. Column added by api/schema-v72-meetings-tags.sql.
+//
+// attendees + type on the dedup path (2026-07-15): PB commit c8e4ff306
+// (2026-07-07) made the push carry `attendees` (parsed from the note's
+// frontmatter, omitted only when empty/unparseable) and `type` ("one-on-one"
+// heuristic, otherwise omitted) on EVERY push, not just the first — see
+// shared-schema-registry.md "/meetings push payload" entry. Until this fix
+// only the INSERT branch persisted them, so any meeting that already had a
+// Hub row (pushed before this date, or any date+title dedup match) kept NULL
+// attendees forever. Both now follow the same COALESCE-on-carried-value
+// pattern as notes/decisions/tags: absent/empty never wipes an existing value.
 export async function handleCreateMeeting(request: Request, user: AuthUser, env: Env): Promise<Response> {
   const body = await request.json() as {
     date: string; title: string; type?: string; attendees?: string[];
@@ -454,6 +464,14 @@ export async function handleCreateMeeting(request: Request, user: AuthUser, env:
   // distinguish "no tags this push" from "wipe the tags".
   const tagsJson = Array.isArray(body.tags) ? JSON.stringify(body.tags) : null;
 
+  // `attendees` mirrors `tags`'s JSON-string contract, but treats an EMPTY
+  // array the same as absent (a push that carries `attendees: []` must not
+  // wipe a previously-recorded attendee list on the dedup path). Matches the
+  // INSERT branch's `JSON.stringify(body.attendees)` serialization exactly.
+  const attendeesJson = Array.isArray(body.attendees) && body.attendees.length > 0
+    ? JSON.stringify(body.attendees)
+    : null;
+
   const normalizedTitle = normalizeMeetingTitle(body.title);
 
   // Fetch candidates on the same date and normalize each one's title before
@@ -466,21 +484,29 @@ export async function handleCreateMeeting(request: Request, user: AuthUser, env:
     (m) => normalizeMeetingTitle(m.title) === normalizedTitle,
   );
   if (existing) {
-    // Upsert: if the re-push carries notes/decisions/tags, refresh the row. The
-    // COALESCE-on-null-payload pattern means a null/absent field never wipes
-    // an existing value — only a provided (non-null) summary/tags overwrites.
-    // source_id is SET-ONCE (COALESCE(source_id, ?) — existing wins): identity,
-    // not refreshable content, opposite direction from notes/decisions/tags.
+    // Upsert: if the re-push carries notes/decisions/tags/attendees/type,
+    // refresh the row. The COALESCE-on-carried-value pattern means an
+    // absent/empty field never wipes an existing value — only a provided
+    // (non-null / non-empty) value overwrites. source_id is SET-ONCE
+    // (COALESCE(source_id, ?) — existing wins): identity, not refreshable
+    // content, opposite direction from the other fields.
     const hadNotes = !!(existing as { notes?: string | null }).notes;
     const hasNotes = body.notes !== undefined && body.notes !== null;
     const hasDecisions = body.decisions !== undefined && body.decisions !== null;
     const hasTags = tagsJson !== null;
-    if (hasNotes || hasDecisions || hasTags || body.source_id) {
+    const hasAttendees = attendeesJson !== null;
+    // type: only overwrite when the payload carries a real value — never
+    // clobber an existing row's type with a default (matches the INSERT
+    // branch's `body.type ?? 'biweekly'` default applying to NEW rows only).
+    const hasType = typeof body.type === 'string' && body.type.length > 0;
+    if (hasNotes || hasDecisions || hasTags || hasAttendees || hasType || body.source_id) {
       await env.DB.prepare(
         `UPDATE meetings
             SET notes = COALESCE(?, notes),
                 decisions = COALESCE(?, decisions),
                 tags = COALESCE(?, tags),
+                attendees = COALESCE(?, attendees),
+                type = COALESCE(?, type),
                 source_id = COALESCE(source_id, ?),
                 updated_at = datetime('now')
           WHERE id = ?`
@@ -488,6 +514,8 @@ export async function handleCreateMeeting(request: Request, user: AuthUser, env:
         hasNotes ? body.notes : null,
         hasDecisions ? body.decisions : null,
         hasTags ? tagsJson : null,
+        hasAttendees ? attendeesJson : null,
+        hasType ? body.type : null,
         body.source_id ?? null,
         existing.id,
       ).run();
