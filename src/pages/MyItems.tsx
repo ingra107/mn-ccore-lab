@@ -759,7 +759,10 @@ export default function MyItems() {
       return 0
     })
     return { pending: p, completed: c }
-  }, [allActionItems])
+    // Dep was [allActionItems] but the body reads dedupedItems (the deduped,
+    // memoized derivative) — both happened to share the same upstream
+    // trigger today, but the array should track what's actually used.
+  }, [dedupedItems])
 
   // Unread notifications first, then by date
   const sortedNotifications = useMemo(() => {

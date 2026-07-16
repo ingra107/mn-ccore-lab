@@ -77,6 +77,10 @@ export function TooltipLayer() {
     if (left < pad) left = pad
     if (top + h + pad > window.innerHeight) top = tip.cy - h - offY    // flip above the pointer
     if (top < pad) top = pad
+    // Genuine post-layout measurement: chipRef's rendered size is only knowable
+    // after paint, so this can't be computed during render. Textbook
+    // useLayoutEffect "measure then adjust" use case.
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- see comment above
     setPos({ left, top })
   }, [tip])
 

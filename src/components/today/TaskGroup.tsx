@@ -5,7 +5,8 @@
 
 import { useMemo, useState, useCallback } from 'react'
 import { TaskRow } from './TaskRow'
-import { CollapseChevron, collapseToggleProps } from './SectionCollapseToggle'
+import { CollapseChevron } from './SectionCollapseToggle'
+import { collapseToggleProps } from './collapseToggleProps'
 import { GROUP_META, INK_DIM, PANEL_BG, withAlpha, isTaskDone, type GroupKey } from './constants'
 import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow as TaskRowData } from '../../lib/api'

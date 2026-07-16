@@ -288,7 +288,14 @@ function ProjectHealthRow({ project }: { project: ProjectHealth }) {
   const [showTooltip, setShowTooltip] = useState(false)
   const color = STATUS_COLORS[project.status]
   const isBad = project.status === 'Critical' || project.status === 'At Risk'
-  const hoverCard = useHoverCard()
+  const {
+    isVisible: hoverIsVisible,
+    position: hoverPosition,
+    triggerRef: hoverTriggerRef,
+    cardRef: hoverCardRef,
+    handlers: hoverHandlers,
+    cardHandlers: hoverCardHandlers,
+  } = useHoverCard()
 
   const projectData: HoverCardData = {
     type: 'project',
@@ -324,9 +331,9 @@ function ProjectHealthRow({ project }: { project: ProjectHealth }) {
 
       {/* Project title */}
       <span
-        ref={hoverCard.triggerRef as React.RefObject<HTMLSpanElement>}
-        onMouseEnter={hoverCard.handlers.onMouseEnter}
-        onMouseLeave={hoverCard.handlers.onMouseLeave}
+        ref={hoverTriggerRef as React.RefObject<HTMLSpanElement>}
+        onMouseEnter={hoverHandlers.onMouseEnter}
+        onMouseLeave={hoverHandlers.onMouseLeave}
         style={{
           fontSize: '12px',
           color: 'var(--ink)',
@@ -343,10 +350,10 @@ function ProjectHealthRow({ project }: { project: ProjectHealth }) {
       </span>
       <HoverCard
         data={projectData}
-        isVisible={hoverCard.isVisible}
-        position={hoverCard.position}
-        cardRef={hoverCard.cardRef}
-        cardHandlers={hoverCard.cardHandlers}
+        isVisible={hoverIsVisible}
+        position={hoverPosition}
+        cardRef={hoverCardRef}
+        cardHandlers={hoverCardHandlers}
       />
 
       {/* Health bar + score */}

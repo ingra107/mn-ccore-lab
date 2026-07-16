@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { statusLabel } from './LaunchLogPanel';
+import { statusLabel } from './launchStatusLabel';
 
 describe('statusLabel', () => {
   it('maps statuses to human labels', () => {

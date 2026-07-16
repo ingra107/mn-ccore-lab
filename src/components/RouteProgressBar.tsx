@@ -11,11 +11,19 @@ export default function RouteProgressBar() {
   const [visible, setVisible] = useState(false)
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  useEffect(() => {
-    // Start progress
+  // Start progress on every route change (including mount — prevPathname
+  // starts as null so the very first render counts as "changed" too).
+  // Adjusted during render (React's "adjusting state when a prop changes"
+  // pattern) rather than an effect; the timer-driven remainder of the
+  // sequence below still needs a real effect.
+  const [prevPathname, setPrevPathname] = useState<string | null>(null)
+  if (location.pathname !== prevPathname) {
+    setPrevPathname(location.pathname)
     setVisible(true)
     setProgress(30)
+  }
 
+  useEffect(() => {
     // Quick jump to ~70%
     timeoutRef.current = setTimeout(() => setProgress(70), 80)
 

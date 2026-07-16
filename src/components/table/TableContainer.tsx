@@ -22,7 +22,6 @@ interface TableContainerProps {
  * inner grids. Callers that need semantic table roles should apply them
  * directly on their row wrappers.
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export default function TableContainer({ children, className, ariaLabel: _ariaLabel, id }: TableContainerProps) {
   return (
     <div id={id} className={`table-container${className ? ` ${className}` : ''}`}>

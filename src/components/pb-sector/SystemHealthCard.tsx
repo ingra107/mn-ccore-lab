@@ -8,6 +8,9 @@ import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
 function StatusDot({ timestamp }: { timestamp: string | null }) {
   const color = useMemo(() => {
     if (!timestamp) return 'var(--maroon)'
+    // Deliberately live — recomputes whenever `timestamp` changes, and
+    // staleness should track real time while this dot stays mounted.
+    // eslint-disable-next-line react-hooks/purity -- see comment above
     const age = Date.now() - parseDbUtc(timestamp).getTime()
     const hours = age / (1000 * 60 * 60)
     if (hours < 1) return 'var(--green-light)'     // green — fresh

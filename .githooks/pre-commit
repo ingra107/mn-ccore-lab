@@ -249,6 +249,17 @@ if git diff --cached --name-only --diff-filter=ACMR \
         echo "before committing -- see CLAUDE.md 'Testing' section for the three configs."
         exit 1
     fi
+    # eslint zero-error ratchet (backlog #174 burn-down, 2026-07-16): src/ reached
+    # 0 errors via a 4-agent wave; this gate keeps it there. eslint exits nonzero
+    # only on ERRORS (warnings pass), so this is the errors-stay-zero contract.
+    echo "[hub-precommit] eslint zero-error gate (src/)..."
+    if ! npx --no-install eslint src; then
+        echo ""
+        echo "BLOCKED: eslint errors in src/ (baseline is ZERO since 2026-07-16)."
+        echo "Fix the error or add a disable-with-reason comment; do not let the"
+        echo "count regrow -- 440 problems were burned down to 0 in one day."
+        exit 1
+    fi
 fi
 
 exit 0

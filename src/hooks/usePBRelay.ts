@@ -1,9 +1,17 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 
+export interface RelayMessage {
+  from: string
+  to: string
+  topic: string
+  prompt?: string
+  status: 'pending' | 'completed' | string
+}
+
 export function useRelayMessages() {
   return useQuery({
     queryKey: ['pb-relay'],
-    queryFn: async () => {
+    queryFn: async (): Promise<RelayMessage[]> => {
       const res = await fetch('/api/pb/relay')
       if (!res.ok) return []
       const data = await res.json()

@@ -33,6 +33,11 @@ interface SearchResult {
   timestamp?: string
   snippet?: string | null
   matchedField?: string | null
+  // Heterogeneous per-`type` metadata bag (task/project/meeting/... each
+  // carry different keys) read loosely at ~4 sites below (d.assignee,
+  // d.status, ...); narrowing to `unknown` would need a cast at every read
+  // for no real safety gain here.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   details?: Record<string, any> | null
 }
 
@@ -367,6 +372,7 @@ export default function SearchPage() {
       })
     }
     if (timeFilter !== 'all') {
+      // eslint-disable-next-line react-hooks/purity -- deliberate snapshot at memoize time, recomputes with timeFilter
       const cutoff = Date.now() - (timeFilter === '7d' ? 7 : 30) * 86400_000
       out = out.filter(r => {
         if (!r.timestamp) return false
@@ -481,7 +487,7 @@ export default function SearchPage() {
         style={{
           position: 'sticky',
           top: 0,
-          zIndex: 'var(--z-sticky)' as any,
+          zIndex: 'var(--z-sticky)',
           background: 'var(--page-bg)',
           paddingBottom: 'var(--sp-sm)',
           paddingTop: 'var(--sp-xs)',

@@ -216,27 +216,31 @@ function StackedBar({ segments, height = 28 }: {
   const total = segments.reduce((s, seg) => s + seg.value, 0)
   if (total === 0) return null
 
-  let x = 0
+  // Cumulative x-offset via reduce (no mutable accumulator captured inside
+  // the JSX-producing map callback) — same running-offset math, purity-safe.
+  const positioned = segments.reduce<{ seg: (typeof segments)[number]; x: number; w: number }[]>((acc, seg) => {
+    const w = (seg.value / total) * 100
+    const prev = acc[acc.length - 1]
+    const x = prev ? prev.x + prev.w : 0
+    acc.push({ seg, x, w })
+    return acc
+  }, [])
+
   return (
     <div>
       <svg width="100%" height={height} viewBox={`0 0 100 ${height}`} preserveAspectRatio="none">
-        {segments.map((seg, i) => {
-          const w = (seg.value / total) * 100
-          const el = (
-            <rect
-              key={i}
-              x={x}
-              y={0}
-              width={w}
-              height={height}
-              rx={i === 0 ? 4 : 0}
-              fill={seg.color}
-              style={{ opacity: 0.85 }}
-            />
-          )
-          x += w
-          return el
-        })}
+        {positioned.map(({ seg, x, w }, i) => (
+          <rect
+            key={i}
+            x={x}
+            y={0}
+            width={w}
+            height={height}
+            rx={i === 0 ? 4 : 0}
+            fill={seg.color}
+            style={{ opacity: 0.85 }}
+          />
+        ))}
       </svg>
       <div className="flex flex-wrap gap-3 mt-2">
         {segments.filter(s => s.value > 0).map((seg, i) => (

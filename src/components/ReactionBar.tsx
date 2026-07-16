@@ -50,8 +50,12 @@ export default function ReactionBar({ targetType, targetId, compact }: ReactionB
     // Optimistic update
     const prev = queryClient.getQueryData<Reaction[]>(['reactions', targetType, targetId]) || []
     const existing = prev.find((r) => r.user_slug === currentSlug && r.emoji === emoji)
+    // handleToggle only ever runs from an onClick handler (see call sites
+    // below) — the compiler's static analysis can't prove that, so it
+    // conservatively flags this plain closure as if it ran during render.
     const next = existing
       ? prev.filter((r) => r.id !== existing.id)
+      // eslint-disable-next-line react-hooks/purity -- event-handler-only, see comment above
       : [...prev, { id: `optimistic-${Date.now()}`, target_type: targetType, target_id: targetId, user_slug: currentSlug, emoji, created_at: nowInstant() }]
     queryClient.setQueryData(['reactions', targetType, targetId], next)
 

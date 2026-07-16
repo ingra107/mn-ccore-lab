@@ -109,17 +109,16 @@ export function useAuth(): AuthContextValue {
 
 // Hook for the provider to manage auth state
 export function useAuthState(): AuthContextValue {
-  const [user, setUser] = useState<AuthUser>(defaultUser)
-  const [isLoading, setIsLoading] = useState(true)
+  // First try cookie (instant paint — isPi=false until API hydrates).
+  // getAuthFromCookie() reads synchronously-available document.cookie, so the
+  // initial value is decided via lazy init instead of an effect.
+  const [user, setUser] = useState<AuthUser>(() => {
+    const cookieUser = getAuthFromCookie()
+    return cookieUser.isAuthenticated ? cookieUser : defaultUser
+  })
+  const [isLoading, setIsLoading] = useState(() => !getAuthFromCookie().isAuthenticated)
 
   useEffect(() => {
-    // First try cookie (instant paint — isPi=false until API hydrates)
-    const cookieUser = getAuthFromCookie()
-    if (cookieUser.isAuthenticated) {
-      setUser(cookieUser)
-      setIsLoading(false)
-    }
-
     // Always hit API to get authoritative isPi (cookie cannot know it)
     fetchAuthStatus().then((apiUser) => {
       setUser(apiUser)

@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { History, Clock, GitCommit, Zap, Monitor, Filter, Search } from 'lucide-react'
 import { usePBSessions, usePBSessionStats } from '../../hooks/useApiData'
@@ -248,8 +248,14 @@ export default function SessionHistory() {
     setFocusedIndex,
   })
 
-  // Reset focus on filter change
-  useEffect(() => { setFocusedIndex(-1) }, [projectFilter, sinceFilter, searchTerm])
+  // Reset focus on filter change. Adjusted during render (React's
+  // "adjusting state based on a prop change" pattern) instead of an effect.
+  const focusResetKey = `${projectFilter}|${sinceFilter}|${searchTerm}`
+  const [prevFocusResetKey, setPrevFocusResetKey] = useState(focusResetKey)
+  if (focusResetKey !== prevFocusResetKey) {
+    setPrevFocusResetKey(focusResetKey)
+    setFocusedIndex(-1)
+  }
 
   // Date filter presets
   const setDatePreset = useCallback((preset: string) => {

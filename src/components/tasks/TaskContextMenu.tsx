@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import {
   Circle, CheckCircle2, Clock, Ban, ChevronRight,
@@ -136,6 +136,7 @@ function SubmenuItem({
   const [open, setOpen] = useState(false)
   const itemRef = useRef<HTMLDivElement>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const [submenuStyle, setSubmenuStyle] = useState<React.CSSProperties>({ position: 'absolute', left: '100%', top: 0 })
 
   const handleMouseEnter = () => {
     clearTimeout(timerRef.current)
@@ -151,9 +152,11 @@ function SubmenuItem({
     return () => clearTimeout(timerRef.current)
   }, [])
 
-  // Calculate submenu position
-  const getSubmenuStyle = (): React.CSSProperties => {
-    if (!itemRef.current) return { position: 'absolute', left: '100%', top: 0 }
+  // Calculate submenu position once the trigger's layout is known, right
+  // before the submenu paints — avoids reading itemRef.current during render.
+  useLayoutEffect(() => {
+    if (!open) return
+    if (!itemRef.current) return
     const rect = itemRef.current.getBoundingClientRect()
     const submenuWidth = 160
     const viewportWidth = window.innerWidth
@@ -161,15 +164,15 @@ function SubmenuItem({
     // Open to the left if not enough room on the right
     const openLeft = rect.right + submenuWidth > viewportWidth
 
-    return {
+    setSubmenuStyle({
       position: 'fixed',
       top: `${rect.top - 4}px`,
       left: openLeft ? `${rect.left - submenuWidth - 2}px` : `${rect.right + 2}px`,
       minWidth: `${submenuWidth}px`,
       ...menuStyles,
       zIndex: 'var(--z-toast)',
-    }
-  }
+    })
+  }, [open])
 
   return (
     <div
@@ -190,7 +193,7 @@ function SubmenuItem({
 
       {open && (
         <div
-          style={getSubmenuStyle()}
+          style={submenuStyle}
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
         >
@@ -230,6 +233,9 @@ export default function TaskContextMenu({
     if (x < 8) x = 8
     if (y < 8) y = 8
 
+    // Genuine post-layout measurement: menuRef's rendered size is only
+    // knowable after paint, so this can't be computed during render.
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- see comment above
     setAdjustedPos({ x, y })
   }, [state.isOpen, state.position])
 

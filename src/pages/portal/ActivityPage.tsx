@@ -307,20 +307,20 @@ export default function ActivityPage() {
 
 function ActivityAvatar({ slug }: { slug: string }) {
   const p = getPersonInfo(slug)
-  const hoverCard = useHoverCard()
+  const { triggerRef, isVisible, position, cardRef, cardHandlers, handlers } = useHoverCard()
   const dir = directors.find(d => d.slug === slug)
   const member = getMemberBySlug(slug)
   const data: HoverCardData = { type: 'member', name: p.name, role: dir?.role || member?.role, photoUrl: p.photoUrl, initials: p.initials }
 
   return (
     <div
-      ref={hoverCard.triggerRef as React.RefObject<HTMLDivElement>}
+      ref={triggerRef as React.RefObject<HTMLDivElement>}
       style={{ width: 24, height: 24, flexShrink: 0, position: 'relative' }}
-      onMouseEnter={hoverCard.handlers.onMouseEnter}
-      onMouseLeave={hoverCard.handlers.onMouseLeave}
+      onMouseEnter={handlers.onMouseEnter}
+      onMouseLeave={handlers.onMouseLeave}
     >
       <Avatar name={p.name} initials={p.initials} photoUrl={p.photoUrl} size="tight" variant="ice" />
-      <HoverCard data={data} isVisible={hoverCard.isVisible} position={hoverCard.position} cardRef={hoverCard.cardRef} cardHandlers={hoverCard.cardHandlers} />
+      <HoverCard data={data} isVisible={isVisible} position={position} cardRef={cardRef} cardHandlers={cardHandlers} />
     </div>
   )
 }

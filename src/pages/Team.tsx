@@ -24,8 +24,11 @@ export default function Team() {
   const { data: allExpertise = [] } = useExpertise() as { data: ExpertiseTag[] }
   const { data: recentActivity = [] } = useActivity(50)
 
-  // Members active in last 7 days
+  // Members active in last 7 days. Date.now() is an intentional snapshot at
+  // memoize time (recomputes when recentActivity changes) — not a per-render
+  // purity concern in practice.
   const activeSlugs = useMemo(() => {
+    // eslint-disable-next-line react-hooks/purity -- deliberate snapshot, see comment above
     const cutoff = new Date(Date.now() - 7 * 86400000).toISOString()
     const slugs = new Set<string>()
     for (const a of recentActivity) {

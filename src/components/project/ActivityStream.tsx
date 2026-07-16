@@ -39,9 +39,9 @@ import type { Project } from '../../data/types'
 import { deriveRenderKind, filterMatchesKind } from '../../../shared/activityKinds'
 import {
   ActivityEntryItem,
-  canDeleteActivityEntry,
   type ActivityEntryItemRow,
 } from '../activity/activityRender'
+import { canDeleteActivityEntry } from '../activity/activityPermissions'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { ACCENT_GOLD, isTaskDone, withAlpha } from '../../lib/taskGrouping'
 

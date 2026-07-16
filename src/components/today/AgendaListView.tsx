@@ -39,7 +39,7 @@ import {
 } from './constants'
 import type { TodayStateApi } from '../../hooks/useTodayState'
 import type { TaskRow } from '../../lib/api'
-import { useNowMinutes } from './Timeline'
+import { useNowMinutes } from './useNowMinutes'
 import { fmtDuration } from './utils'
 
 // ── helpers ───────────────────────────────────────────────────────────────

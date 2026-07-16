@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { Radio, Send, Check, ChevronDown, ChevronUp } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useRelayMessages, useCreateRelay, useCompleteRelay } from '../../hooks/usePBRelay'
+import { useRelayMessages, useCreateRelay, useCompleteRelay, type RelayMessage } from '../../hooks/usePBRelay'
 import InlineSelect from '../InlineSelect'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
@@ -17,8 +17,8 @@ export default function RelayCard() {
   const [from, setFrom] = useState('work')
   const [to, setTo] = useState('home')
 
-  const pending = useMemo(() => messages.filter((m: any) => m.status === 'pending'), [messages])
-  const completed = useMemo(() => messages.filter((m: any) => m.status === 'completed'), [messages])
+  const pending = useMemo(() => messages.filter((m: RelayMessage) => m.status === 'pending'), [messages])
+  const completed = useMemo(() => messages.filter((m: RelayMessage) => m.status === 'completed'), [messages])
 
   const handleSend = () => {
     if (!topic.trim() || !prompt.trim()) return
@@ -102,7 +102,7 @@ export default function RelayCard() {
                   No pending relay messages
                 </div>
               )}
-              {pending.map((msg: any, i: number) => {
+              {pending.map((msg: RelayMessage, i: number) => {
                 const originalIndex = messages.indexOf(msg)
                 return (
                   <div
@@ -141,7 +141,7 @@ export default function RelayCard() {
               })}
 
               {/* Completed (dimmed, last 3) */}
-              {completed.slice(-3).map((msg: any, i: number) => (
+              {completed.slice(-3).map((msg: RelayMessage, i: number) => (
                 <div
                   key={`done-${i}`}
                   className="flex items-center gap-2"

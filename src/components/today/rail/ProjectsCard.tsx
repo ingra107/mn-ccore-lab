@@ -11,7 +11,8 @@ import { useState, useMemo, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { PATHS } from '../../../constants/paths'
 import { ACCENT_TEAL, ACCENT_GOLD, INK, INK_MUTED, INK_DIM } from '../constants'
-import { CollapseChevron, collapseToggleProps } from '../SectionCollapseToggle'
+import { CollapseChevron } from '../SectionCollapseToggle'
+import { collapseToggleProps } from '../collapseToggleProps'
 
 const SHOW_ALL_KEY = 'today_projects_show_all'
 

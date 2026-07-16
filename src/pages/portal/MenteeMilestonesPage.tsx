@@ -69,7 +69,7 @@ export default function MenteeMilestonesPage() {
     type: filterType || undefined,
   })
   const milestones = useMemo(
-    () => rawMilestones.filter((m: any) => isProductionVisible(m.title)),
+    () => rawMilestones.filter((m: MenteeMilestoneRow) => isProductionVisible(m.title)),
     [rawMilestones],
   )
   const { data: overview = [], isLoading: overviewLoading, isError: overviewError, refetch: refetchOverview } = useMenteeOverview()
@@ -92,8 +92,11 @@ export default function MenteeMilestonesPage() {
 
   const isLoading = milestonesLoading || overviewLoading
 
-  // Compute days since last activity per mentee slug (per-actor queries, immune to global feed volume)
+  // Compute days since last activity per mentee slug (per-actor queries, immune to global feed volume).
+  // Date.now() is an intentional snapshot at memoize time — recomputes
+  // whenever any of the per-actor activity queries change.
   const daysSinceActivity = useMemo<Map<string, number>>(() => {
+    // eslint-disable-next-line react-hooks/purity -- deliberate snapshot, see comment above
     const now = Date.now()
     const map = new Map<string, number>()
     const perActorEntries: [string, typeof actShyu][] = [

@@ -41,7 +41,14 @@ export default function InlineAssigneePicker({ value, onChange, compact }: Inlin
   const allMembers = getAssignableMembers()
   const q = search.toLowerCase()
   const members = q ? allMembers.filter(m => m.name.toLowerCase().includes(q) || m.slug.toLowerCase().includes(q)) : allMembers
-  const hoverCard = useHoverCard()
+  const {
+    isVisible: hoverIsVisible,
+    position: hoverPosition,
+    triggerRef: hoverTriggerRef,
+    cardRef: hoverCardRef,
+    handlers: hoverHandlers,
+    cardHandlers: hoverCardHandlers,
+  } = useHoverCard()
 
   // Build member HoverCard data
   const memberData: HoverCardData | null = (() => {
@@ -58,10 +65,19 @@ export default function InlineAssigneePicker({ value, onChange, compact }: Inlin
     }
   })()
 
+  // Reset search/focus state on open, adjusted during render (React's
+  // "adjusting state when a prop changes" pattern) rather than an effect.
+  const [prevOpen, setPrevOpen] = useState(open)
+  if (open !== prevOpen) {
+    setPrevOpen(open)
+    if (open) {
+      setSearch('')
+      setFocusedIdx(-1)
+    }
+  }
+
   useEffect(() => {
     if (!open) return
-    setSearch('')
-    setFocusedIdx(-1)
     setTimeout(() => searchRef.current?.focus(), 0)
     const handler = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
@@ -85,7 +101,7 @@ export default function InlineAssigneePicker({ value, onChange, compact }: Inlin
   return (
     <div ref={ref} style={{ position: 'relative' }}>
       <button
-        ref={hoverCard.triggerRef as React.RefObject<HTMLButtonElement>}
+        ref={hoverTriggerRef as React.RefObject<HTMLButtonElement>}
         onClick={(e) => { e.stopPropagation(); setOpen(!open) }}
         aria-label={`Assignee: ${person.name || value || 'unassigned'} — click to change`}
         className="inline-flex items-center gap-1.5 rounded-md transition-colors inline-assignee-btn"
@@ -101,11 +117,11 @@ export default function InlineAssigneePicker({ value, onChange, compact }: Inlin
         onMouseEnter={(e) => {
           e.currentTarget.style.borderColor = 'var(--border-subtle)'
           e.currentTarget.style.background = 'var(--teal-hover)'
-          if (!open && memberData) hoverCard.handlers.onMouseEnter()
+          if (!open && memberData) hoverHandlers.onMouseEnter()
         }}
         onMouseLeave={(e) => {
           if (!open) { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.background = 'none' }
-          hoverCard.handlers.onMouseLeave()
+          hoverHandlers.onMouseLeave()
         }}
       >
         <div style={{ width: 20, height: 20, flexShrink: 0 }}>
@@ -136,10 +152,10 @@ export default function InlineAssigneePicker({ value, onChange, compact }: Inlin
       {memberData && !open && (
         <HoverCard
           data={memberData}
-          isVisible={hoverCard.isVisible}
-          position={hoverCard.position}
-          cardRef={hoverCard.cardRef}
-          cardHandlers={hoverCard.cardHandlers}
+          isVisible={hoverIsVisible}
+          position={hoverPosition}
+          cardRef={hoverCardRef}
+          cardHandlers={hoverCardHandlers}
         />
       )}
       {open && (

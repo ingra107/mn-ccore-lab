@@ -14,7 +14,8 @@
 
 import { useState } from 'react'
 import { ACCENT_GOLD, INK, INK_MUTED, daysSince, withAlpha } from '../constants'
-import { CollapseChevron, collapseToggleProps } from '../SectionCollapseToggle'
+import { CollapseChevron } from '../SectionCollapseToggle'
+import { collapseToggleProps } from '../collapseToggleProps'
 import type { TaskRow } from '../../../lib/api'
 
 interface HermesSuggestsProps {

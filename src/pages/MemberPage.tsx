@@ -218,7 +218,7 @@ export default function MemberPage() {
   const memberPubs = useMemo(() => {
     if (!member || !publications.length) return []
     return publications.filter((p) => {
-      const slugs = (p as any).authorSlugs ?? (p as any).author_slugs ?? ''
+      const slugs = p.authorSlugs ?? ''
       const slugList = typeof slugs === 'string'
         ? slugs.split(',').map((s) => s.trim().toLowerCase())
         : Array.isArray(slugs) ? slugs.map((s) => String(s).toLowerCase()) : []

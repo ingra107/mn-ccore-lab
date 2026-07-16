@@ -559,7 +559,7 @@ export default function SmartCompose(props: SmartComposeProps) {
                 background: submitBg,
                 color: submitColor,
                 border: 'none',
-                borderRadius: isDark ? 3 : 'var(--radius-sm)' as any,
+                borderRadius: isDark ? 3 : 'var(--radius-sm)',
                 cursor: submitting ? 'wait' : 'pointer',
                 fontFamily: 'inherit',
                 fontWeight: 600,
@@ -607,7 +607,7 @@ export default function SmartCompose(props: SmartComposeProps) {
 
 function ToolbarBtn({ children, onClick, label, active, disabled, theme }: { children: React.ReactNode; onClick: () => void; label: string; active?: boolean; disabled?: boolean; theme?: 'dark' | 'light' }) {
   const isDark = theme !== 'light'
-  const baseColor = isDark ? INK_DIM_DARK : 'var(--slate)' as any
+  const baseColor = isDark ? INK_DIM_DARK : 'var(--slate)'
   const activeColor = isDark ? ACCENT_TEAL : 'var(--teal)'
   const baseBorder = isDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid var(--border-subtle)'
   const activeBorder = isDark ? `1px solid ${withAlpha(ACCENT_TEAL, 30)}` : '1px solid var(--teal)'

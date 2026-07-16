@@ -830,19 +830,31 @@ function TaskGridRow({
   const [commentDraft, setCommentDraft] = useState('')
   const [completingAnim, setCompletingAnim] = useState(false)
   const [rowFadeAnim, setRowFadeAnim] = useState(false)
-  const prevStatusRef = useRef(task.status)
 
-  // Detect status change to 'done' for completion animation
-  useEffect(() => {
-    if (task.status === 'done' && prevStatusRef.current !== 'done') {
+  // Detect status change to 'done' for completion animation. Adjusted during
+  // render (React's "adjusting state when a prop changes" pattern) rather
+  // than an effect; the two timer effects below independently clear each
+  // flag once it flips true (each self-contained, so they can't race).
+  const [prevStatus, setPrevStatus] = useState(task.status)
+  if (task.status !== prevStatus) {
+    setPrevStatus(task.status)
+    if (task.status === 'done') {
       setCompletingAnim(true)
       setRowFadeAnim(true)
-      const timer = setTimeout(() => setCompletingAnim(false), 350)
-      const fadeTimer = setTimeout(() => setRowFadeAnim(false), 650)
-      return () => { clearTimeout(timer); clearTimeout(fadeTimer) }
     }
-    prevStatusRef.current = task.status
-  }, [task.status])
+  }
+
+  useEffect(() => {
+    if (!completingAnim) return
+    const timer = setTimeout(() => setCompletingAnim(false), 350)
+    return () => clearTimeout(timer)
+  }, [completingAnim])
+
+  useEffect(() => {
+    if (!rowFadeAnim) return
+    const fadeTimer = setTimeout(() => setRowFadeAnim(false), 650)
+    return () => clearTimeout(fadeTimer)
+  }, [rowFadeAnim])
 
   // DD-7 long-press on mobile opens the same context menu that right-click
   // opens on desktop. iOS/Android have no right-click; long-press is the
@@ -1817,8 +1829,7 @@ function InlineCellSelect({
   const [pos, setPos] = useState<{ top: number; left: number; minWidth: number }>({ top: 0, left: 0, minWidth: 130 })
   const buttonRef = useRef<HTMLButtonElement>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
-  const listboxIdBase = useId()
-  const listboxId = useRef(listboxIdBase)
+  const listboxId = useId()
   const filterRef = useRef<HTMLInputElement>(null)
 
   const filtered = useMemo(() => {
@@ -1834,11 +1845,20 @@ function InlineCellSelect({
     }
   }, [])
 
+  // Reset filter/focus state on open, adjusted during render (React's
+  // "adjusting state when a prop changes" pattern) rather than an effect.
+  const [prevOpen, setPrevOpen] = useState(open)
+  if (open !== prevOpen) {
+    setPrevOpen(open)
+    if (open) {
+      setFilter('')
+      setFocusedIdx(-1)
+    }
+  }
+
   useEffect(() => {
     if (!open) return
     updatePosition()
-    setFilter('')
-    setFocusedIdx(-1)
     setTimeout(() => filterRef.current?.focus(), 0)
     const handler = (e: MouseEvent) => {
       const target = e.target as Node
@@ -1872,7 +1892,7 @@ function InlineCellSelect({
   }
 
   const activeDescendant = open && focusedIdx >= 0 && filtered[focusedIdx]
-    ? `${listboxId.current}-opt-${focusedIdx}`
+    ? `${listboxId}-opt-${focusedIdx}`
     : undefined
 
   return (
@@ -1883,7 +1903,7 @@ function InlineCellSelect({
         aria-label={label ? `${label}: ${selectedLabel} — click to change` : selectedLabel}
         aria-haspopup="listbox"
         aria-expanded={open}
-        aria-controls={open ? listboxId.current : undefined}
+        aria-controls={open ? listboxId : undefined}
         aria-activedescendant={activeDescendant}
         onClick={(e) => { e.stopPropagation(); setOpen(!open) }}
         className="inline-flex items-center gap-1 rounded-md transition-colors hov-bg hov-border"
@@ -1911,7 +1931,7 @@ function InlineCellSelect({
           />
           <div
             ref={dropdownRef}
-            id={listboxId.current}
+            id={listboxId}
             role="listbox"
             aria-label="Select option"
             onKeyDown={handleKeyDown}
@@ -1949,7 +1969,7 @@ function InlineCellSelect({
             {filtered.map((opt, idx) => (
               <button
                 key={opt.value}
-                id={`${listboxId.current}-opt-${idx}`}
+                id={`${listboxId}-opt-${idx}`}
                 role="option"
                 aria-selected={opt.value === value ? "true" : "false"}
                 onClick={(e) => { e.stopPropagation(); onChange(opt.value); setOpen(false) }}

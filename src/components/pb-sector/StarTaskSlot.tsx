@@ -5,16 +5,31 @@ import PomodoroCircles from './PomodoroCircles'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
 
+/** Shape this component actually reads off the starred task. */
+interface StarTask {
+  id: string
+  title?: string
+  description?: string
+  project_title?: string
+}
+
+/** Shape of a suggestion row — text fields + the "carried forward" marker. */
+interface StarTaskSuggestion {
+  title?: string
+  description?: string
+  _isCarried?: boolean
+}
+
 interface StarTaskSlotProps {
-  task: any | null
+  task: StarTask | null
   pomodorosCompleted: number
   pomodoroActive: boolean
   onComplete: (id: string) => void
   onStartPomo: (taskId: string) => void
-  onClickTitle: (task: any) => void
+  onClickTitle: (task: StarTask) => void
   onAddClick: () => void
-  suggestion?: any | null
-  onAcceptSuggestion?: (task: any) => void
+  suggestion?: StarTaskSuggestion | null
+  onAcceptSuggestion?: (task: StarTaskSuggestion) => void
 }
 
 export default function StarTaskSlot({ task, pomodorosCompleted, pomodoroActive, onComplete, onStartPomo, onClickTitle, onAddClick, suggestion, onAcceptSuggestion }: StarTaskSlotProps) {

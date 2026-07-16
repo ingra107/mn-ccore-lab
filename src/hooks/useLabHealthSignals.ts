@@ -17,6 +17,8 @@ import {
   useMenteeMilestones,
 } from './useApiData'
 import { isOverdue } from '../lib/dateUtils'
+import type { TaskRow, MenteeMilestoneRow } from '../lib/api'
+import type { Project, Grant } from '../data/types'
 
 const STALLED_THRESHOLD_DAYS = 30
 
@@ -48,11 +50,15 @@ export function useLabHealthSignals(options?: { enabled?: boolean }): LabHealthS
   const { data: mentees, isLoading: menteesLoading } = useMenteeMilestones()
 
   return useMemo(() => {
+    // Deliberately live — recomputes whenever any query result changes, and
+    // every downstream check (overdue/stalled/expiring) should track real
+    // time rather than freeze at mount.
+    // eslint-disable-next-line react-hooks/purity -- see comment above
     const now = Date.now()
 
-    const overdueCount = (tasks ?? []).filter((t: any) => !t.completed && isOverdue(t.due_date, t.status)).length
+    const overdueCount = (tasks ?? []).filter((t: TaskRow) => !t.completed && isOverdue(t.due_date, t.status)).length
 
-    const stalledManuscriptCount = (projects ?? []).filter((p: any) => {
+    const stalledManuscriptCount = (projects ?? []).filter((p: Project) => {
       if (!p.stage || p.stage === 'published') return false
       // Only count research-output stages, not all projects
       const manuscriptStages = ['idea', 'data_collection', 'analysis', 'data_analysis', 'writing', 'submitted', 'review']
@@ -60,14 +66,20 @@ export function useLabHealthSignals(options?: { enabled?: boolean }): LabHealthS
       return daysInStage(p) > STALLED_THRESHOLD_DAYS
     }).length
 
-    const stalledMenteeCount = (mentees ?? []).filter((m: any) => {
+    const stalledMenteeCount = (mentees ?? []).filter((m: MenteeMilestoneRow) => {
       if (!m.due_date) return false
       if (m.status === 'completed' || m.status === 'done') return false
       const d = new Date(m.due_date).getTime()
       return !isNaN(d) && d < now
     }).length
 
-    const grantDeadlineCount = (grants ?? []).filter((g: any) => {
+    // NOTE: Grant (the type useGrants() actually resolves to, via rowToGrant())
+    // carries no date field — end_date/deadline/endDate are all pre-existing
+    // dead reads (always undefined, so this count is always 0 today). Typed
+    // as an intersection rather than `any` to preserve that exact runtime
+    // shape/behavior; not a behavior change, just removing the `any` escape
+    // hatch. Out-of-scope business-logic fix — surfaced separately.
+    const grantDeadlineCount = (grants ?? []).filter((g: Grant & { end_date?: string; deadline?: string; endDate?: string }) => {
       const deadline = g.end_date || g.deadline || g.endDate
       if (!deadline) return false
       const d = new Date(deadline).getTime()
@@ -81,7 +93,7 @@ export function useLabHealthSignals(options?: { enabled?: boolean }): LabHealthS
     // Inactivity: if we have no tasks updated within the last 3 days across the team,
     // flag it. This is a cheap proxy — proper activity_log analysis can come later.
     const threeDaysAgo = now - 3 * 86_400_000
-    const recentTaskUpdate = (tasks ?? []).some((t: any) => {
+    const recentTaskUpdate = (tasks ?? []).some((t: TaskRow) => {
       const u = t.updated_at || t.created_at
       if (!u) return false
       const d = new Date(u).getTime()

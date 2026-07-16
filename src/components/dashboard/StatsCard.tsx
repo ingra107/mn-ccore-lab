@@ -131,6 +131,9 @@ function StatsCard() {
     const refreshLabel = formatRelativeRefresh(citations.last_refresh)
     if (refreshLabel) {
       const refreshedAt = citations.last_refresh ? Date.parse(citations.last_refresh) : NaN
+      // Deliberately live — this staleness check should track real time while
+      // the dashboard stays mounted, not freeze at mount.
+      // eslint-disable-next-line react-hooks/purity -- see comment above
       const ageDays = Number.isNaN(refreshedAt) ? 0 : (Date.now() - refreshedAt) / (1000 * 60 * 60 * 24)
       if (ageDays > STALE_AFTER_DAYS) {
         staleSubtitle = refreshLabel

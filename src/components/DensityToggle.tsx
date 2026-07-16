@@ -36,6 +36,11 @@ function applyRootDensity(density: Density) {
   root.setAttribute('data-density', density)
 }
 
+// Clean fix is extracting this hook to src/hooks/useDensity.ts, but its 6
+// importers span src/pages/** (out of scope for this partition) and
+// src/components/today/TaskRow.tsx (another agent's territory this wave) —
+// deferred to a follow-up that can touch both.
+// eslint-disable-next-line react-refresh/only-export-components -- see comment above
 export function useDensity(): [Density, (d: Density) => void] {
   const [density, setDensityState] = useState<Density>(() => readDensity())
 

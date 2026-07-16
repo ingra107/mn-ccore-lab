@@ -18,6 +18,10 @@ const DISMISS_EVENT = 'mnccore-tooltip-dismiss'
 
 /** Imperatively dismiss a PageTooltip from anywhere — e.g. the first time
  *  a user clicks the surface the hint pointed at. Persists across reloads. */
+// Clean fix is extracting this to a small util file, but its only caller,
+// src/pages/Meetings.tsx, is out of scope for this partition — deferred to a
+// follow-up that can touch it.
+// eslint-disable-next-line react-refresh/only-export-components -- see comment above
 export function dismissPageTooltip(id: string): void {
   try { localStorage.setItem(STORAGE_PREFIX + id, '1') } catch { /* ok */ }
   if (typeof window !== 'undefined') {

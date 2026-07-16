@@ -73,6 +73,10 @@ export function useRecentlyViewed() {
     const label = labelForPath(path)
     if (!label) return // Skip unlabeled paths (home, contact, etc.)
 
+    // Genuine external-system sync: records Date.now() and persists to
+    // localStorage on every route change — not a pure prop->state mirror, so
+    // this can't move to a render-time adjustment without making render impure.
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- see comment above
     setRecent((prev) => {
       // Remove duplicate
       const filtered = prev.filter((p) => p.path !== path)

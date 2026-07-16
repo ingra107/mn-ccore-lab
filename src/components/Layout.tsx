@@ -92,10 +92,17 @@ export default function Layout() {
     }, 150)
   }, [])
 
-  useEffect(() => {
+  // Close menus on route change, adjusted during render (React's "adjusting
+  // state when a prop changes" pattern) rather than an effect.
+  const [prevPathname, setPrevPathname] = useState(location.pathname)
+  if (location.pathname !== prevPathname) {
+    setPrevPathname(location.pathname)
     setMenuOpen(false)
     setResearchOpen(false)
     setMobileResearchOpen(false)
+  }
+
+  useEffect(() => {
     // Delay scroll to avoid conflict with IntersectionObserver initialization
     const timer = setTimeout(() => window.scrollTo(0, 0), 50)
     return () => clearTimeout(timer)

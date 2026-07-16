@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { BookOpen, ChevronDown, ChevronRight, Sparkles } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ICON_PROPS } from '../../lib/iconProps'
@@ -50,15 +50,18 @@ export default function ReflectionPanel({ reflection, onSave }: ReflectionPanelP
   const [focus, setFocus] = useState(reflection?.focus_rating || 0)
   const [saved, setSaved] = useState(false)
 
-  // Sync from prop changes
-  useEffect(() => {
+  // Sync from prop changes. Adjusted during render (React's "adjusting state
+  // when a prop changes" pattern) rather than an effect.
+  const [prevReflection, setPrevReflection] = useState(reflection)
+  if (reflection !== prevReflection) {
+    setPrevReflection(reflection)
     if (reflection) {
       setHighlight(reflection.highlight || '')
       setLearned(reflection.learned || '')
       setEnergy(reflection.energy_rating || 0)
       setFocus(reflection.focus_rating || 0)
     }
-  }, [reflection])
+  }
 
   const handleSave = () => {
     onSave({

@@ -83,6 +83,12 @@ export function useCountUp(
   // the DOM before the user scrolls the section into view (for SEO/accessibility).
   // When startOnView is false (hero stats), the animation starts immediately so
   // we always use the animated count.
+  // animatedRef must NOT be state here: flipping it via setState would force an
+  // extra render between "animation started" and "first RAF frame lands a real
+  // count", flashing 0 in the DOM — exactly what this fallback exists to prevent.
+  // The ref write never itself triggers a render; it is only observed on the
+  // next render already caused by setCount.
+  // eslint-disable-next-line react-hooks/refs -- see comment above
   const display = (startOnView && !animatedRef.current) ? target : count
 
   return { count: display, ref }

@@ -995,17 +995,17 @@ function SortableAgendaItem({ item, AGENDA_TYPE_ICONS }: { item: AgendaItemRow; 
 
 function AttendeeChip({ slug }: { slug: string }) {
   const p = getPersonInfo(slug)
-  const hoverCard = useHoverCard()
+  const { triggerRef, isVisible, position, cardRef, cardHandlers, handlers } = useHoverCard()
   const memberData = buildMemberHoverData(slug)
 
   return (
     <div
       key={slug}
-      ref={hoverCard.triggerRef as React.RefObject<HTMLDivElement>}
+      ref={triggerRef as React.RefObject<HTMLDivElement>}
       className="flex items-center gap-1.5 flex-shrink-0"
       title={p.name}
-      onMouseEnter={hoverCard.handlers.onMouseEnter}
-      onMouseLeave={hoverCard.handlers.onMouseLeave}
+      onMouseEnter={handlers.onMouseEnter}
+      onMouseLeave={handlers.onMouseLeave}
     >
       <div style={{ width: 24, height: 24 }}>
         <Avatar name={p.name} initials={p.initials} photoUrl={p.photoUrl} size="tight" variant="ice" />
@@ -1013,10 +1013,10 @@ function AttendeeChip({ slug }: { slug: string }) {
       <span style={{ fontSize: '12px', color: 'var(--ink)', whiteSpace: 'nowrap' }}>{p.name.split(' ')[0]}</span>
       <HoverCard
         data={memberData}
-        isVisible={hoverCard.isVisible}
-        position={hoverCard.position}
-        cardRef={hoverCard.cardRef}
-        cardHandlers={hoverCard.cardHandlers}
+        isVisible={isVisible}
+        position={position}
+        cardRef={cardRef}
+        cardHandlers={cardHandlers}
       />
     </div>
   )
@@ -1027,14 +1027,14 @@ function AttendeeChip({ slug }: { slug: string }) {
 // so the shared TaskRow's `extraMeta` slot carries who owns each item.
 function AssigneeMeta({ slug }: { slug: string }) {
   const person = getPersonInfo(slug)
-  const hoverCard = useHoverCard()
+  const { triggerRef, isVisible, position, cardRef, cardHandlers, handlers } = useHoverCard()
   const memberData = buildMemberHoverData(slug)
   return (
     <div
-      ref={hoverCard.triggerRef as React.RefObject<HTMLDivElement>}
+      ref={triggerRef as React.RefObject<HTMLDivElement>}
       className="flex items-center gap-1"
-      onMouseEnter={hoverCard.handlers.onMouseEnter}
-      onMouseLeave={hoverCard.handlers.onMouseLeave}
+      onMouseEnter={handlers.onMouseEnter}
+      onMouseLeave={handlers.onMouseLeave}
       style={{ flexShrink: 0 }}
     >
       <div style={{ width: 16, height: 16 }}>
@@ -1043,10 +1043,10 @@ function AssigneeMeta({ slug }: { slug: string }) {
       <span style={{ fontSize: 10, color: 'var(--slate)', opacity: 0.75 }}>{person.name.split(' ')[0]}</span>
       <HoverCard
         data={memberData}
-        isVisible={hoverCard.isVisible}
-        position={hoverCard.position}
-        cardRef={hoverCard.cardRef}
-        cardHandlers={hoverCard.cardHandlers}
+        isVisible={isVisible}
+        position={position}
+        cardRef={cardRef}
+        cardHandlers={cardHandlers}
       />
     </div>
   )
@@ -1107,7 +1107,7 @@ function AddActionItemForm({ meetingId, isAuthenticated, onSuccess, onContentCha
         <div style={{ flex: 1, minWidth: 0 }}>
           {!isAuthenticated && import.meta.env.PROD ? (
             <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.75, display: 'inline-block', padding: '8px 0' }}>
-              <a href="/api/auth/login" style={{ color: 'var(--teal)', fontWeight: 'var(--weight-ui)' as any, textDecoration: 'underline' }}>Sign in</a> to add action items
+              <a href="/api/auth/login" style={{ color: 'var(--teal)', fontWeight: 'var(--weight-ui)' as React.CSSProperties['fontWeight'], textDecoration: 'underline' }}>Sign in</a> to add action items
             </span>
           ) : (
             <SmartCompose
@@ -1212,7 +1212,7 @@ function AddAgendaForm({ isAuthenticated, onAdd }: { isAuthenticated: boolean; o
         </div>
         {!isAuthenticated && import.meta.env.PROD && !text.trim() && (
           <span style={{ fontSize: '11px', color: 'var(--slate)', opacity: 0.75 }}>
-            <a href="/api/auth/login" style={{ color: 'var(--teal)', fontWeight: 'var(--weight-ui)' as any, textDecoration: 'underline' }}>Sign in</a> to add items
+            <a href="/api/auth/login" style={{ color: 'var(--teal)', fontWeight: 'var(--weight-ui)' as React.CSSProperties['fontWeight'], textDecoration: 'underline' }}>Sign in</a> to add items
           </span>
         )}
         {text.trim() && (

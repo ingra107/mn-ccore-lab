@@ -24,7 +24,9 @@ interface ParsedHermes {
 
 const FENCE_PATTERN = /\n*```hermes\s*\n([\s\S]*?)\n```\s*$/
 
-export function parseHermesContent(raw: string): ParsedHermes {
+// Not exported — no external caller (verified 2026-07-16); a stray `export`
+// was tripping react-refresh's components-only contract for this file.
+function parseHermesContent(raw: string): ParsedHermes {
   const match = raw.match(FENCE_PATTERN)
   if (!match) return { prose: raw, citations: [], findings: [] }
 

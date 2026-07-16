@@ -138,6 +138,7 @@ export default function ProfilePage() {
   }
 
   const m = member
+  // eslint-disable-next-line react-hooks/purity -- "just saved" hint window, relies on Date.now() at render time (pre-existing behavior, not restructuring the timer here)
   const showSavedHint = savedAt && (Date.now() - savedAt) < 3000
 
   return (

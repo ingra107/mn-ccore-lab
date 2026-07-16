@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, type ElementType } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Calendar, ChevronLeft, ChevronRight, Users, SquareCheck, Diamond, Download } from 'lucide-react'
@@ -370,7 +370,7 @@ function DayCellRender({ dateStr, today, dayEvents }: { dateStr: string; today: 
         {dayEvents.slice(0, 3).map((e) => {
           const config = eventColors[e.type] || eventColors.task
           const to = eventLinkTo(e)
-          const Wrapper = to ? Link : 'div' as any
+          const Wrapper: ElementType = to ? Link : 'div'
           const wrapperProps = to ? { to } : {}
           return (
             <Wrapper key={e.id} {...wrapperProps} className="text-[10px] px-1 py-0.5 rounded truncate block" style={{ color: config.color, backgroundColor: config.bg, textDecoration: 'none', cursor: to ? 'pointer' : 'default' }} title={formatBrandName(e.title)}>
@@ -481,7 +481,7 @@ function DayView({ date, events }: { date: Date; events: CalendarEvent[] }) {
               const Icon = eventIcons[e.type] || Calendar
               const assignee = e.meta?.assignee as string | undefined
               const to = eventLinkTo(e)
-              const Wrapper = to ? Link : 'div' as any
+              const Wrapper: ElementType = to ? Link : 'div'
               const wrapperProps = to ? { to } : {}
 
               return (
@@ -550,7 +550,7 @@ function AgendaView({ events }: { events: CalendarEvent[] }) {
                 const Icon = eventIcons[e.type] || Calendar
                 const assignee = e.meta?.assignee as string | undefined
                 const to = eventLinkTo(e)
-                const AgendaWrapper = to ? Link : 'div' as any
+                const AgendaWrapper: ElementType = to ? Link : 'div'
                 const agendaProps = to ? { to } : {}
                 return (
                   <motion.div key={e.id} variants={staggerItem}>

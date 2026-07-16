@@ -60,15 +60,15 @@ function persistDismissed(set: Set<string>) {
 
 export default function PhaseReleaseBanner() {
   const release = RELEASES[CURRENT_RELEASE]
-  const [visible, setVisible] = useState(false)
+  // `release` is a module-constant lookup (never changes post-mount) and
+  // getDismissed() reads synchronously-available localStorage — decide
+  // initial visibility via lazy init instead of an effect.
+  const [visible, setVisible] = useState(() => {
+    if (!release) return false
+    return !getDismissed().has(release.id)
+  })
   const [expanded, setExpanded] = useState(false)
   const panelRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (!release) return
-    const dismissed = getDismissed()
-    if (!dismissed.has(release.id)) setVisible(true)
-  }, [release])
 
   // Close popover on outside click or Escape
   useEffect(() => {

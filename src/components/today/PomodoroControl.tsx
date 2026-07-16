@@ -25,13 +25,20 @@ export function PomodoroControl() {
   const { showSuccess } = useToast()
 
   // Local tick: derives elapsed from start_time every second so the display
-  // stays live between the 5s background polls.
-  const [localElapsed, setLocalElapsed] = useState<number>(status?.elapsed_seconds ?? 0)
+  // stays live between the 5s background polls. This state is owned ONLY by
+  // the ticking effect below — while inactive there's nothing to tick, so we
+  // never push a value into it from a "reset" branch. Instead the displayed
+  // value (`displayElapsed`) is derived at render time: ticking `localElapsed`
+  // while active, the server-reported `elapsed_seconds` otherwise. This was
+  // previously a setState-in-effect (an early-return branch that reset
+  // localElapsed to elapsed_seconds whenever inactive) — that branch was pure
+  // derived state with no independent purpose (every active-session tick
+  // recomputes elapsed fully from start_time via Date.now(), never reading the
+  // prior localElapsed), so the reset is now a render-time computation instead
+  // of a state write.
+  const [localElapsed, setLocalElapsed] = useState<number>(0)
   useEffect(() => {
-    if (!status?.active || !status.start_time) {
-      setLocalElapsed(status?.elapsed_seconds ?? 0)
-      return
-    }
+    if (!status?.active || !status.start_time) return
     const tick = () => {
       // start_time is Python datetime.now().isoformat() — local time, no tz offset.
       // JS parses no-tz ISO strings as local time, so the subtraction is correct
@@ -42,7 +49,9 @@ export function PomodoroControl() {
     tick()
     const id = setInterval(tick, 1000)
     return () => clearInterval(id)
-  }, [status?.active, status?.start_time, status?.elapsed_seconds])
+  }, [status?.active, status?.start_time])
+
+  const displayElapsed = status?.active ? localElapsed : (status?.elapsed_seconds ?? 0)
 
   const handleStart = async () => {
     await start()
@@ -51,7 +60,7 @@ export function PomodoroControl() {
   }
 
   const handleStop = async () => {
-    const minLogged = Math.round(localElapsed / 60)
+    const minLogged = Math.round(displayElapsed / 60)
     await stop()
     showSuccess(`Focus session stopped — ${minLogged}m logged`)
   }
@@ -82,7 +91,7 @@ export function PomodoroControl() {
         type="button"
         onClick={handleStop}
         disabled={isLoading}
-        title={`Stop focus timer · ${formatElapsed(localElapsed)} elapsed`}
+        title={`Stop focus timer · ${formatElapsed(displayElapsed)} elapsed`}
         style={{
           display: 'inline-flex', alignItems: 'center', gap: 6, alignSelf: 'center',
           background: withAlpha(ACCENT_TEAL, 12), border: `1px solid ${withAlpha(ACCENT_TEAL, 35)}`,
@@ -91,7 +100,7 @@ export function PomodoroControl() {
           flexShrink: 0, fontVariantNumeric: 'tabular-nums',
         }}
       >
-        ⏹ {formatElapsed(localElapsed)}
+        ⏹ {formatElapsed(displayElapsed)}
       </button>
     )
   }

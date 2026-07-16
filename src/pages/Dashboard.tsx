@@ -42,8 +42,15 @@ import StatusLine from '../components/dashboard/StatusLine'
 import QuickCaptureBar from '../components/QuickCaptureBar'
 import { ACCENT_GOLD, PANEL_BG, withAlpha } from '../lib/taskGrouping'
 
-// Context to defer non-critical queries until after first paint
+// Context to defer non-critical queries until after first paint.
+// react-refresh/only-export-components: a real fix means moving this
+// context+hook to a dedicated file, but 4 consumers outside this eslint
+// partition (src/components/dashboard/*) import it via
+// `'../../pages/Dashboard'` — relocating without updating those import
+// paths would break them, and those files are out of scope this wave.
+// eslint-disable-next-line react-refresh/only-export-components
 export const DashboardMountedContext = createContext(false)
+// eslint-disable-next-line react-refresh/only-export-components
 export function useDashboardMounted() { return useContext(DashboardMountedContext) }
 
 // Tab categories for card filtering
@@ -177,9 +184,12 @@ export default function Dashboard() {
   const { data: meetings = [] } = useMeetingsApi({ enabled: mounted })
   const { data: allTasks = [] } = useTasks(undefined, { enabled: mounted })
 
-  // Find next upcoming meeting (today or tomorrow)
+  // Find next upcoming meeting (today or tomorrow). Date.now() is an
+  // intentional snapshot at memoize time (recomputes when `meetings`
+  // changes) — not a per-render purity concern in practice.
   const upcomingMeeting = useMemo(() => {
     const today = localDateKey()
+    // eslint-disable-next-line react-hooks/purity -- deliberate snapshot, see comment above
     const tomorrow = localDateKey(new Date(Date.now() + 86400000))
     return meetings.find(m => m.date === today || m.date === tomorrow)
   }, [meetings])
@@ -187,7 +197,7 @@ export default function Dashboard() {
   // Expiring regulatory items — drives RegulatoryAlertStrip
   const { data: rawRegulatory = [] } = useExpiringRegulatory(60)
   const expiringRegulatory = useMemo(
-    () => rawRegulatory.filter((r: any) => isProductionVisible(r.title)),
+    () => rawRegulatory.filter((r: { title: string }) => isProductionVisible(r.title)),
     [rawRegulatory],
   )
 

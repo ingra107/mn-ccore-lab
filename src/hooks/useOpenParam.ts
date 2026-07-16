@@ -48,7 +48,9 @@ export function useOpenParam(
   // Keep the latest onOpen without making it a dependency (callers often pass an
   // inline closure).
   const onOpenRef = useRef(onOpen)
-  onOpenRef.current = onOpen
+  useEffect(() => {
+    onOpenRef.current = onOpen
+  })
 
   useEffect(() => {
     if (!ready) return

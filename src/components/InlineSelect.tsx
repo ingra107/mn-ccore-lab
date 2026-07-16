@@ -43,12 +43,19 @@ export default function InlineSelect({ value, options, onChange, size = 'sm', al
   }), [])
   const { triggerRef, menuRef, pos } = usePortalDropdown<HTMLButtonElement>({ open, onClose: closeMenu, getPosition })
 
-  useEffect(() => {
+  // Reset filter/focus state on open, adjusted during render (React's
+  // "adjusting state when a prop changes" pattern) rather than an effect.
+  const [prevOpen, setPrevOpen] = useState(open)
+  if (open !== prevOpen) {
+    setPrevOpen(open)
     if (open) {
       setFilter('')
       setFocusedIdx(-1)
-      setTimeout(() => filterRef.current?.focus(), 0)
     }
+  }
+
+  useEffect(() => {
+    if (open) setTimeout(() => filterRef.current?.focus(), 0)
   }, [open])
 
   const filtered = useMemo(() => {

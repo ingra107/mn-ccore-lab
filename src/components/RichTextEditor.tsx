@@ -1,4 +1,4 @@
-import { useEditor, EditorContent } from '@tiptap/react'
+import { useEditor, EditorContent, type JSONContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
 import Link from '@tiptap/extension-link'
@@ -18,7 +18,7 @@ interface RichTextEditorProps {
   noBorder?: boolean
 }
 
-function parseContent(json: string | null, plainText?: string | null): any {
+function parseContent(json: string | null, plainText?: string | null): JSONContent {
   if (json) {
     try { return JSON.parse(json) } catch { /* fall through */ }
   }

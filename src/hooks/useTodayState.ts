@@ -73,17 +73,22 @@ export function useTodayState(tasks: TaskRow[], completedTodayIds: string[] = []
   // markDone sets done[id] for instant feedback; once the cache CONFIRMS the
   // task is completed today, the "Completed today" surface renders straight from
   // the cache, so we prune the optimistic flag (prevents double-count + a stale
-  // "done" after a cross-surface reopen). Issue #46.
-  useEffect(() => {
-    if (completedTodayIds.length === 0) return
-    const confirmed = new Set(completedTodayIds)
-    setDone((prev) => {
-      let changed = false
-      const next = { ...prev }
-      for (const id of Object.keys(next)) if (confirmed.has(id)) { delete next[id]; changed = true }
-      return changed ? next : prev
-    })
-  }, [completedTodayIds])
+  // "done" after a cross-surface reopen). Issue #46. Adjusted during render
+  // (React's "adjusting state when a prop changes" pattern) rather than an
+  // effect — pure derivation from the completedTodayIds prop.
+  const [prevCompletedTodayIds, setPrevCompletedTodayIds] = useState(completedTodayIds)
+  if (completedTodayIds !== prevCompletedTodayIds) {
+    setPrevCompletedTodayIds(completedTodayIds)
+    if (completedTodayIds.length > 0) {
+      const confirmed = new Set(completedTodayIds)
+      setDone((prev) => {
+        let changed = false
+        const next = { ...prev }
+        for (const id of Object.keys(next)) if (confirmed.has(id)) { delete next[id]; changed = true }
+        return changed ? next : prev
+      })
+    }
+  }
 
   const plannedIds = useCallback(() => Object.keys(planned).filter((id) => !done[id]), [planned, done])
 

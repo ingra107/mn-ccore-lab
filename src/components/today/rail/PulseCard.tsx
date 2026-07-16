@@ -9,7 +9,8 @@
 
 import { useState } from 'react'
 import { ACCENT_GOLD, INK, INK_MUTED, INK_DIM } from '../constants'
-import { CollapseChevron, collapseToggleProps } from '../SectionCollapseToggle'
+import { CollapseChevron } from '../SectionCollapseToggle'
+import { collapseToggleProps } from '../collapseToggleProps'
 
 export function PulseCard({ focusMin, milestones, mentees }: { focusMin: number; milestones: Array<{ title: string; days: number }>; mentees: Array<{ name: string; next: string }> }) {
   // Session-only collapse — starts expanded on every load (no localStorage).

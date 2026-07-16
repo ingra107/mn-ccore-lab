@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import { Scale, History, Search } from 'lucide-react'
 import { useSimilarDecisions } from '../hooks/useApiData'
 import { useCreateDecision } from '../hooks/useMutations'
@@ -106,7 +106,9 @@ export default function CreateDecisionModal({ projects, onCreate, onClose, open 
   // Keep a live ref to handleSubmit so the onExtraKeyDown handler always calls
   // the latest closure (with the current title/rationale/etc. state).
   const handleSubmitRef = useRef(handleSubmit)
-  handleSubmitRef.current = handleSubmit
+  useEffect(() => {
+    handleSubmitRef.current = handleSubmit
+  })
 
   const handleExtraKeyDown = (e: KeyboardEvent) => {
     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {

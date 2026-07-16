@@ -312,6 +312,13 @@ export default function MentionInput({
       <textarea
         ref={(el) => {
           textareaRef.current = el
+          // Manual ref-forwarding: `inputRef` is a caller-owned ref object
+          // passed in as a prop so the parent can reach the underlying
+          // textarea (this component doesn't use forwardRef). Writing
+          // `.current` on a caller-owned ref is the standard forwarding
+          // mechanism; the compiler's immutability check can't distinguish
+          // it from mutating an arbitrary prop.
+          // eslint-disable-next-line react-hooks/immutability -- see comment above
           if (inputRef) (inputRef as React.MutableRefObject<HTMLTextAreaElement | null>).current = el
         }}
         value={value}

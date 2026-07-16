@@ -48,7 +48,9 @@ import EmptyStateArt from '../EmptyStateArt'
 import { type SaveStatus } from './MeetingRow'
 import { useIsMobile } from '../../hooks/useIsMobile'
 import { TimelineGrid } from './TimelineGrid'
-import { CollapseChevron, collapseToggleProps } from './SectionCollapseToggle'
+import { CollapseChevron } from './SectionCollapseToggle'
+import { collapseToggleProps } from './collapseToggleProps'
+import { useNowMinutes } from './useNowMinutes'
 import {
   ACCENT_GOLD, ACCENT_TEAL, INK_DIM, withAlpha,
   type PlannedSlot, type TodayEvent,
@@ -91,26 +93,6 @@ function MeetingNotesAutoSave({ meetingId, notes, onStatus }: { meetingId: strin
   }, [notes, meetingId])
 
   return null
-}
-
-// TP-09: 1px now-line. Updates every 60s via setInterval. Static — no
-// animation — so prefers-reduced-motion is a no-op.
-// Exported so AgendaListView (and TodayPage) can share the same clock without
-// passing `now` as a prop (fixes #168 agenda now-marker freeze).
-export function useNowMinutes(): number {
-  const [now, setNow] = useState(() => {
-    const d = new Date()
-    return d.getHours() * 60 + d.getMinutes()
-  })
-  useEffect(() => {
-    const tick = () => {
-      const d = new Date()
-      setNow(d.getHours() * 60 + d.getMinutes())
-    }
-    const id = setInterval(tick, 60_000)
-    return () => clearInterval(id)
-  }, [])
-  return now
 }
 
 // Fallback drop zone for the case of no timed events and no rail events —

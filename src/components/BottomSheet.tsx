@@ -96,7 +96,7 @@ export default function BottomSheet({ open, onClose, title, children }: BottomSh
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            style={{ background: 'rgba(0,0,0,0.45)', zIndex: 'var(--z-modal-backdrop)' as any }}
+            style={{ background: 'rgba(0,0,0,0.45)', zIndex: 'var(--z-modal-backdrop)' as unknown as number }}
             aria-hidden
           />
           <motion.div
@@ -118,7 +118,7 @@ export default function BottomSheet({ open, onClose, title, children }: BottomSh
             }}
             style={{
               outline: 'none',
-              zIndex: 'var(--z-modal)' as any,
+              zIndex: 'var(--z-modal)' as unknown as number,
               background: 'var(--cream)',
               borderTopLeftRadius: 'var(--radius-2xl)',
               borderTopRightRadius: 'var(--radius-2xl)',

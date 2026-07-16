@@ -111,12 +111,19 @@ export function InlineDetail({ task, projectName, primaryFolder, onOpenEditor }:
 
   // MT-10 — single-row Complete button. Without it the only completion path
   // was select-then-bulk (3 clicks for what should be 1).
+  // Deliberate fine-grained deps (task.id/task.status, what isTaskDone and
+  // the mutate call actually read) rather than the whole `task` object —
+  // keeps `complete`'s identity stable across unrelated task-field edits
+  // (title, assignee, ...). The compiler wants the whole object since it
+  // can't see inside isTaskDone(); widening would recreate this callback
+  // on every inline edit, a real behavior change.
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization
   const complete = useCallback(() => {
     if (isTaskDone(task)) return
     bulkUpdate.mutate({ ids: [task.id], action: 'complete' }, {
       onSuccess: () => undoToast.showSuccess('Completed'),
     })
-  }, [task.id, task.completed, task.status, bulkUpdate, undoToast])
+  }, [task.id, task.completed, task.status, bulkUpdate, undoToast]) // eslint-disable-line react-hooks/exhaustive-deps
   const isCompleted = isTaskDone(task)
 
   // "view all →" opens the full editor via the prop path that already exists

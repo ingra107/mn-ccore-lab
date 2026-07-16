@@ -21,6 +21,14 @@ interface FocusTask {
   due_date?: string | null
 }
 
+/** Shape of an empty-slot suggestion row — only the fields this component
+ *  actually reads (title/description text + the "carried forward" marker). */
+interface FocusTaskSuggestion {
+  title?: string
+  description?: string
+  _isCarried?: boolean
+}
+
 interface FocusTaskSlotProps {
   tasks: FocusTask[]
   pomodoroData: Record<string, { completed: number; active: boolean }>
@@ -28,8 +36,8 @@ interface FocusTaskSlotProps {
   onStartPomo: (taskId: string) => void
   onClickTitle: (task: FocusTask) => void
   onAddClick: () => void
-  suggestions?: any[]
-  onAcceptSuggestion?: (task: any) => void
+  suggestions?: FocusTaskSuggestion[]
+  onAcceptSuggestion?: (task: FocusTaskSuggestion) => void
 }
 
 function SortableFocusItem({ task, index, pomodorosCompleted, pomodoroActive, onComplete, onStartPomo, onClickTitle }: {

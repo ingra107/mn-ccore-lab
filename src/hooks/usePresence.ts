@@ -56,6 +56,16 @@ export function useIntentBroadcast(
   const mySlug = user?.email ? emailToSlug(user.email) : ''
   const [peerIntents, setPeerIntents] = useState<Record<string, { intent: Intent; lastSeen: number }>>({})
   const lastBroadcastRef = useRef<Intent>('viewing')
+  // Latest-value ref: the subscription effect below intentionally does NOT
+  // depend on selfIntent (re-subscribing/tearing down the socket + interval
+  // on every intent change, e.g. every keystroke while 'editing', would be
+  // wasteful and disruptive). But a reconnect after selfIntent has changed
+  // still needs to broadcast the CURRENT intent, not a stale closed-over
+  // value — so bus.onOpen reads this ref instead of the `selfIntent` param.
+  const selfIntentRef = useRef(selfIntent)
+  useEffect(() => {
+    selfIntentRef.current = selfIntent
+  }, [selfIntent])
 
   useEffect(() => {
     if (!entityId || !mySlug) return
@@ -68,7 +78,7 @@ export function useIntentBroadcast(
       } satisfies IntentMessage)
     }
 
-    const stopOpen = bus.onOpen(() => send(selfIntent))
+    const stopOpen = bus.onOpen(() => send(selfIntentRef.current))
 
     const stopMsg = bus.subscribe((data) => {
       const msg = data as IntentMessage

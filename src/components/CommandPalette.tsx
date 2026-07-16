@@ -347,7 +347,7 @@ export default function CommandPalette() {
     const projectById: Record<string, string> = {}
     for (const p of projects) projectById[p.slug] = p.title
     for (const task of tasks.filter((t) => !isTaskDone(t))) {
-      const pid = (task as any).project_id || (task as any).project_slug
+      const pid = task.project_id || (task as unknown as { project_slug?: string }).project_slug
       const projectName = (pid && projectById[pid]) || ''
       const due = task.due_date ? new Date(task.due_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''
       const bits = [projectName, due].filter(Boolean)
@@ -403,7 +403,7 @@ export default function CommandPalette() {
     }
 
     return items
-  }, [tasks, projects, team, meetings, navigate, user?.isPi, launch])
+  }, [tasks, projects, team, meetings, navigate, user?.isPi, launch, currentUserSlug, location.pathname, recentRoutes])
 
   // Project mode: when query starts with `/`
   const isProjectMode = query.startsWith('/')
@@ -416,7 +416,7 @@ export default function CommandPalette() {
     const taskCounts: Record<string, number> = {}
     const nextActions: Record<string, string> = {}
     for (const task of tasks.filter(t => !isTaskDone(t))) {
-      const pid = (task as any).project_id || (task as any).project_slug
+      const pid = task.project_id || (task as unknown as { project_slug?: string }).project_slug
       if (pid) {
         taskCounts[pid] = (taskCounts[pid] || 0) + 1
         // First open task becomes next action (sorted by priority already from API)
@@ -445,8 +445,8 @@ export default function CommandPalette() {
       } as CommandItem & { _taskCount: number; _stage: string }
     }).sort((a, b) => {
       // Sort by task count descending (most active first), then alphabetically
-      const ac = (a as any)._taskCount || 0
-      const bc = (b as any)._taskCount || 0
+      const ac = (a as CommandItem & { _taskCount: number })._taskCount || 0
+      const bc = (b as CommandItem & { _taskCount: number })._taskCount || 0
       if (bc !== ac) return bc - ac
       return a.label.localeCompare(b.label)
     })

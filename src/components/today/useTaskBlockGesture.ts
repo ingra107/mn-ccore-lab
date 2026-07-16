@@ -142,11 +142,29 @@ export function useTaskBlockGesture({
 
   // Stable gesture state stored in a ref (pointerId, origin, cumulative delta).
   // Avoids stale-closure issues in event handlers.
+  //
+  // moveListener/upListener: the EXACT function references passed to
+  // addEventListener at pointerdown time. Cleanup (pointerup/pointercancel)
+  // removes listeners via these stored references rather than reading
+  // handlePointerMove/handlePointerUp from the enclosing closure — the latter
+  // required handlePointerUp to reference itself inside its own body (flagged
+  // by react-hooks/immutability: "Cannot access variable before it is
+  // declared"). That self-reference happened to be TDZ-safe today only
+  // because onPointerDownBody/onPointerDownResize both list handlePointerUp
+  // in their own deps arrays, forcing them to re-create in lockstep whenever
+  // handlePointerUp's identity changes (e.g. AgendaGapRow's inline onResize
+  // prop churns on every ghost-preview re-render mid-gesture) — an unenforced
+  // invariant across three separate useCallback calls. Capturing the
+  // attached-at-pointerdown reference removes that coupling: cleanup always
+  // detaches exactly what was attached, regardless of how the surrounding
+  // hooks evolve.
   const gestureRef = useRef<{
     pointerId: number
     startY: number
     mode: GestureMode
     committed: boolean
+    moveListener: (e: PointerEvent) => void
+    upListener: (e: PointerEvent) => void
   } | null>(null)
 
   // ── Shared pointermove / pointerup / pointercancel handlers ─────────────────
@@ -188,10 +206,13 @@ export function useTaskBlockGesture({
     // With setPointerCapture the event fires on the capturing element, but e.target
     // remains the original hit-target (may be a child span). Using e.target here
     // would try to remove listeners from the wrong element, causing accumulation.
+    // Remove via g.moveListener/g.upListener (the references stored at
+    // pointerdown time) — not the outer handlePointerMove/handlePointerUp — so
+    // cleanup always matches what was actually attached (see gestureRef doc above).
     const el = e.currentTarget as HTMLElement
-    el.removeEventListener('pointermove', handlePointerMove)
-    el.removeEventListener('pointerup', handlePointerUp)
-    el.removeEventListener('pointercancel', handlePointerUp)
+    el.removeEventListener('pointermove', g.moveListener)
+    el.removeEventListener('pointerup', g.upListener)
+    el.removeEventListener('pointercancel', g.upListener)
 
     // Reset preview state
     setTranslatePx(0)
@@ -238,7 +259,11 @@ export function useTaskBlockGesture({
         onResize(taskId, clamped)
       }
     }
-  }, [taskId, planStartMin, dur, freeWindows, onExpand, onMove, onResize, onGhostUpdate, handlePointerMove])
+    // Note: handlePointerMove is NOT a dependency — its identity is no longer
+    // read in this body (cleanup now uses g.moveListener, captured at
+    // pointerdown time); listing it here would only cause needless
+    // re-creation of this callback whenever handlePointerMove churns.
+  }, [taskId, planStartMin, dur, freeWindows, onExpand, onMove, onResize, onGhostUpdate])
 
   // ── pointerdown on BODY (move gesture) ──────────────────────────────────────
 
@@ -255,6 +280,8 @@ export function useTaskBlockGesture({
       startY: e.clientY,
       mode: 'move',
       committed: false,
+      moveListener: handlePointerMove,
+      upListener: handlePointerUp,
     }
     setMode('move')
 
@@ -277,6 +304,8 @@ export function useTaskBlockGesture({
       startY: e.clientY,
       mode: 'resize',
       committed: false,
+      moveListener: handlePointerMove,
+      upListener: handlePointerUp,
     }
     setMode('resize')
 

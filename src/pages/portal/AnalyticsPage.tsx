@@ -561,6 +561,7 @@ export default function AnalyticsPage() {
             <div className="text-center py-6">
               <div className="flex items-center justify-center gap-2 mb-2">
                 <span className="text-3xl font-bold" style={{ color: 'var(--teal)' }}>
+                  {/* eslint-disable-next-line react-hooks/purity -- rolling 7-day cutoff, intentionally recomputed fresh each render */}
                   {tasks.filter(t => t.completed_at && t.completed_at >= new Date(Date.now() - 7 * 86400000).toISOString()).length}
                 </span>
                 <span className="text-sm" style={{ color: 'var(--slate)' }}>tasks completed</span>

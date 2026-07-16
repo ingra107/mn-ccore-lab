@@ -247,20 +247,23 @@ export default function SettingsPage() {
   // T-34 "changed-this-session" dots. Snapshot settings on first load;
   // compare current per-tab to detect dirty tabs. Auto-saves clear nothing —
   // the dot signals "you edited this tab since opening settings."
-  const initialSettingsRef = useRef<any>(null)
-  useEffect(() => {
-    if (settings && !initialSettingsRef.current) initialSettingsRef.current = { ...settings }
-  }, [settings])
+  // Adjust state during render (React-endorsed "store info from a prop"
+  // pattern: https://react.dev/learn/you-might-not-need-an-effect) rather
+  // than an effect — avoids both a ref-read-during-render and a
+  // setState-in-effect cascading render for what's a one-time snapshot.
+  const [initialSettings, setInitialSettings] = useState<Record<string, unknown> | null>(null)
+  if (settings && !initialSettings) {
+    setInitialSettings({ ...settings })
+  }
   const dirtyTabs = useMemo(() => {
     const out = new Set<string>()
-    const initial = initialSettingsRef.current
-    if (!initial || !settings) return out
+    if (!initialSettings || !settings) return out
     const profileKeys = ['lab_name', 'lab_description', 'lab_icon', 'lab_type']
-    if (profileKeys.some((k) => JSON.stringify(initial[k]) !== JSON.stringify((settings as any)[k]))) out.add('profile')
+    if (profileKeys.some((k) => JSON.stringify(initialSettings[k]) !== JSON.stringify((settings as Record<string, unknown>)[k]))) out.add('profile')
     // Other tabs either save outside the settings row (appearance = localStorage,
     // danger = actions) or have no tracked fields yet.
     return out
-  }, [settings])
+  }, [settings, initialSettings])
   type TabKey = (typeof TABS)[number]['key']
   const [activeTab, setActiveTab] = useState<TabKey>(() => {
     if (typeof window === 'undefined') return 'profile'

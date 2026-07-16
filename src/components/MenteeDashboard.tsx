@@ -165,7 +165,14 @@ export default function MenteeDashboard({ slug, name }: Props) {
 }
 
 function MenteeProjectLink({ project }: { project: { slug: string; title: string; stage?: string; status?: string; category?: string; description?: string; pi?: string; team?: string[] } }) {
-  const hoverCard = useHoverCard()
+  const {
+    isVisible: hoverIsVisible,
+    position: hoverPosition,
+    triggerRef: hoverTriggerRef,
+    cardRef: hoverCardRef,
+    handlers: hoverHandlers,
+    cardHandlers: hoverCardHandlers,
+  } = useHoverCard()
   const projectData: HoverCardData = {
     type: 'project',
     title: project.title,
@@ -179,12 +186,12 @@ function MenteeProjectLink({ project }: { project: { slug: string; title: string
 
   return (
     <Link
-      ref={hoverCard.triggerRef as React.RefObject<HTMLAnchorElement>}
+      ref={hoverTriggerRef as React.RefObject<HTMLAnchorElement>}
       to={PATHS.project(project.slug)}
       style={{ fontSize: '12px', color: 'var(--ink)', textDecoration: 'none', lineHeight: 1.3 }}
       className="hover:opacity-80"
-      onMouseEnter={hoverCard.handlers.onMouseEnter}
-      onMouseLeave={hoverCard.handlers.onMouseLeave}
+      onMouseEnter={hoverHandlers.onMouseEnter}
+      onMouseLeave={hoverHandlers.onMouseLeave}
     >
       <span style={{ fontSize: '10px', color: 'var(--gold)', marginRight: 'var(--sp-xs)' }}>
         {project.stage || project.status}
@@ -192,10 +199,10 @@ function MenteeProjectLink({ project }: { project: { slug: string; title: string
       {project.title.length > 50 ? project.title.slice(0, 47) + '...' : project.title}
       <HoverCard
         data={projectData}
-        isVisible={hoverCard.isVisible}
-        position={hoverCard.position}
-        cardRef={hoverCard.cardRef}
-        cardHandlers={hoverCard.cardHandlers}
+        isVisible={hoverIsVisible}
+        position={hoverPosition}
+        cardRef={hoverCardRef}
+        cardHandlers={hoverCardHandlers}
       />
     </Link>
   )

@@ -37,10 +37,13 @@ export default function PortalLayout() {
   const location = useLocation()
   const [focusMode, setFocusMode] = useState(false)
 
-  // Close mobile menu on route change
-  useEffect(() => {
+  // Close mobile menu on route change. Adjusted during render (React's
+  // "adjusting state when a prop changes" pattern) rather than an effect.
+  const [prevPathname, setPrevPathname] = useState(location.pathname)
+  if (location.pathname !== prevPathname) {
+    setPrevPathname(location.pathname)
     setMobileOpen(false)
-  }, [location.pathname])
+  }
 
   // Close mobile menu on Escape key
   useEffect(() => {

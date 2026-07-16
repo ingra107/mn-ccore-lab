@@ -268,10 +268,19 @@ export function AssigneeSelect({ value, onChange }: { value: string; onChange: (
     enabled: open,
   })
 
+  // Reset search/focus state on open, adjusted during render (React's
+  // "adjusting state when a prop changes" pattern) rather than an effect.
+  const [prevOpen, setPrevOpen] = useState(open)
+  if (open !== prevOpen) {
+    setPrevOpen(open)
+    if (open) {
+      setSearch('')
+      setFocusedIdx(-1)
+    }
+  }
+
   useEffect(() => {
     if (!open) return
-    setSearch('')
-    setFocusedIdx(-1)
     setTimeout(() => searchRef.current?.focus(), 0)
     const handler = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)

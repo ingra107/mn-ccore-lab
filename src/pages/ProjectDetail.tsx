@@ -762,7 +762,7 @@ function ProjectDetailInner({ project }: InnerProps) {
                     border: '1px solid var(--border-default)',
                     borderRadius: 'var(--radius-lg)',
                     boxShadow: 'var(--shadow-menu)',
-                    zIndex: 'var(--z-dropdown)' as any,
+                    zIndex: 'var(--z-dropdown)',
                     padding: '4px',
                   }}
                 >

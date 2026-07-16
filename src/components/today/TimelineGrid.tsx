@@ -40,6 +40,7 @@ import { PlannedTaskRow } from './PlannedTaskRow'
 import {
   buildTimelineModel, pxForMeeting, PX_PER_MIN, GAP_FLOOR,
   TIMELINE_TASK_BLOCKS, packTaskBlocks, MEETING_FLOOR,
+  type TimelineUnit,
 } from './timelineModel'
 import {
   ACCENT_GOLD, ACCENT_TEAL, ACCENT_CORAL, INK, INK_DIM, PAGE_BG, withAlpha,
@@ -56,6 +57,31 @@ function fmtMin(min: number): string {
   const hour = h > 12 ? h - 12 : h === 0 ? 12 : h
   const ampm = h < 12 ? 'AM' : 'PM'
   return m === 0 ? `${hour} ${ampm}` : `${hour}:${String(m).padStart(2, '0')} ${ampm}`
+}
+
+// ── Now-line placement ────────────────────────────────────────────────────
+// Pure function: where should the now-line render among `units`? Replaces a
+// former mutable-`nowInserted`-flag scan (flagged by react-hooks/immutability
+// as "Cannot reassign variable after render completes" — a `let` reassigned
+// from inside per-unit closures during the render loop). Untimed units are
+// skipped (no startMin/endMin axis, matching the prior behavior where
+// tryInsertNow/nowWithin were never called for them). First match wins, same
+// left-to-right scan order as the original.
+type NowPlacement =
+  | { mode: 'before'; index: number }
+  | { mode: 'within'; index: number; offsetPx: number }
+  | { mode: 'trail' }
+  | null
+
+function computeNowPlacement(units: TimelineUnit[], now: number, dayStart: number, dayEnd: number): NowPlacement {
+  if (now < dayStart || now > dayEnd) return null
+  for (let i = 0; i < units.length; i++) {
+    const u = units[i]
+    if (u.kind === 'untimed') continue
+    if (now < u.startMin) return { mode: 'before', index: i }
+    if (now < u.endMin) return { mode: 'within', index: i, offsetPx: Math.round((now - u.startMin) * PX_PER_MIN) }
+  }
+  return { mode: 'trail' }
 }
 
 // ── TimedTaskBlock ─────────────────────────────────────────────────────────
@@ -870,37 +896,39 @@ export function TimelineGrid({
     [units],
   )
 
+  // Where (if anywhere) the now-line lands among `units`, computed as a pure
+  // pre-pass instead of a mutable `nowInserted` flag threaded through closures
+  // during the render loop (that pattern reassigned a captured variable from
+  // inside per-unit helper calls — "Cannot reassign variable after render
+  // completes" — and, more importantly, made the "insert exactly once" rule an
+  // implicit side effect of call ORDER rather than a computed fact). This scan
+  // mirrors the prior tryInsertNow/nowWithin logic exactly: skip 'untimed'
+  // units (no startMin/endMin axis), and on the first unit where `now` falls
+  // before its start ('before') or inside it ('within'), stop — matching the
+  // old first-writer-wins semantics without any reassignment.
+  const nowPlacement = useMemo(
+    () => computeNowPlacement(units, now, model.dayStart, model.dayEnd),
+    [units, now, model.dayStart, model.dayEnd],
+  )
+
   // Build agenda unit elements with now-line injection
   const agendaElements: ReactNode[] = []
-  let nowInserted = false
 
-  const tryInsertNow = (unitStart: number) => {
-    if (!nowInserted && now >= (model.dayStart) && now <= (model.dayEnd) && now < unitStart) {
-      nowInserted = true
+  units.forEach((unit, unitIndex) => {
+    const insertBeforeThisUnit = nowPlacement?.mode === 'before' && nowPlacement.index === unitIndex
+    const withinOffsetPx = nowPlacement?.mode === 'within' && nowPlacement.index === unitIndex
+      ? nowPlacement.offsetPx
+      : undefined
+
+    if (insertBeforeThisUnit) {
       agendaElements.push(
         <div key="__now__" style={{ pointerEvents: 'none' }}>
           {nowLineElement}
         </div>
       )
     }
-  }
 
-  // When now falls INSIDE a unit (gap/meeting/overlap), the now-line renders at
-  // its fractional px position within that unit instead of between flow elements
-  // (#83: without this, tryInsertNow never fires mid-unit and the line landed at
-  // the NEXT unit's start = the meeting's end edge). One predicate for all three
-  // unit kinds so the boundary rules can't drift (post-#83 /simplify collapse).
-  const nowWithin = (u: { startMin: number; endMin: number }): number | undefined => {
-    if (nowInserted || now < u.startMin || now >= u.endMin) return undefined
-    if (now < model.dayStart || now > model.dayEnd) return undefined
-    nowInserted = true
-    return Math.round((now - u.startMin) * PX_PER_MIN)
-  }
-
-  for (const unit of units) {
     if (unit.kind === 'gap') {
-      tryInsertNow(unit.startMin)
-      const nowOffsetPx = nowWithin(unit)
       agendaElements.push(
         <AgendaGapRow
           key={unit.slot}
@@ -915,13 +943,11 @@ export function TimelineGrid({
           projectsByPid={projectsByPid}
           expandedId={expandedId}
           onExpand={onExpand}
-          nowLineEl={nowOffsetPx !== undefined ? nowLineElement : undefined}
-          nowOffsetPx={nowOffsetPx}
+          nowLineEl={withinOffsetPx !== undefined ? nowLineElement : undefined}
+          nowOffsetPx={withinOffsetPx}
         />
       )
     } else if (unit.kind === 'meeting') {
-      tryInsertNow(unit.startMin)
-      const nowOffsetPxMeeting = nowWithin(unit)
       agendaElements.push(
         <AgendaMeetingRow
           key={unit.event.id}
@@ -933,13 +959,11 @@ export function TimelineGrid({
           saveStatus={saveStatus}
           onDismiss={onDismiss}
           isPhone={isPhone}
-          nowLineEl={nowOffsetPxMeeting !== undefined ? nowLineElement : undefined}
-          nowOffsetPx={nowOffsetPxMeeting}
+          nowLineEl={withinOffsetPx !== undefined ? nowLineElement : undefined}
+          nowOffsetPx={withinOffsetPx}
         />
       )
     } else if (unit.kind === 'overlap') {
-      tryInsertNow(unit.startMin)
-      const nowOffsetPxOverlap = nowWithin(unit)
       agendaElements.push(
         <AgendaOverlapRegion
           key={unit.events.map((e) => e.id).join('|')}
@@ -949,8 +973,8 @@ export function TimelineGrid({
           saveStatus={saveStatus}
           onDismiss={onDismiss}
           isPhone={isPhone}
-          nowLineEl={nowOffsetPxOverlap !== undefined ? nowLineElement : undefined}
-          nowOffsetPx={nowOffsetPxOverlap}
+          nowLineEl={withinOffsetPx !== undefined ? nowLineElement : undefined}
+          nowOffsetPx={withinOffsetPx}
         />
       )
     } else if (unit.kind === 'untimed') {
@@ -986,10 +1010,10 @@ export function TimelineGrid({
         </div>
       )
     }
-  }
+  })
 
   // Insert now-line at end if past all units
-  if (!nowInserted && now >= model.dayStart && now <= model.dayEnd) {
+  if (nowPlacement?.mode === 'trail') {
     agendaElements.push(
       <div key="__now_trail__" style={{ pointerEvents: 'none' }}>
         {nowLineElement}

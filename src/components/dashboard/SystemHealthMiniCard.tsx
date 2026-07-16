@@ -23,18 +23,17 @@ export default function SystemHealthMiniCard() {
   let issues = 0
 
   if (health) {
-    // Check sync freshness
-    const syncAge = health.lastTaskSync
-      ? (Date.now() - new Date(health.lastTaskSync).getTime()) / 60000
-      : Infinity
+    // Check sync freshness. Deliberately live — this health card can stay
+    // mounted for a long session, and staleness should track real time.
+    // eslint-disable-next-line react-hooks/purity -- see comment above
+    const syncAge = health.lastTaskSync ? (Date.now() - new Date(health.lastTaskSync).getTime()) / 60000 : Infinity
 
     if (syncAge > 60) { issues++; status = 'amber' }
     if (syncAge > 360) { status = 'red' }
 
-    // Check activity freshness
-    const activityAge = health.lastActivityTimestamp
-      ? (Date.now() - new Date(health.lastActivityTimestamp).getTime()) / 60000
-      : Infinity
+    // Check activity freshness. Same deliberately-live rationale as above.
+    // eslint-disable-next-line react-hooks/purity -- see comment above
+    const activityAge = health.lastActivityTimestamp ? (Date.now() - new Date(health.lastActivityTimestamp).getTime()) / 60000 : Infinity
 
     if (activityAge > 120) { issues++ }
 

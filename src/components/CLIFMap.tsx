@@ -29,16 +29,18 @@ const REGION_ORDER: CLIFSite['region'][] = ['West', 'Midwest', 'Northeast', 'Sou
 
 export default function CLIFMap() {
   const sectionRef = useRef<HTMLElement>(null)
-  const [visible, setVisible] = useState(false)
+  // Reduced-motion is known synchronously at mount — decide the initial value
+  // via lazy init instead of an effect so there's no setState-in-effect for
+  // that branch. The IntersectionObserver subscription below still needs an
+  // effect (genuine external-system sync).
+  const [visible, setVisible] = useState(
+    () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  )
 
   useEffect(() => {
+    if (visible) return
     const section = sectionRef.current
     if (!section) return
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    if (prefersReducedMotion) {
-      setVisible(true)
-      return
-    }
     const observer = new IntersectionObserver(
       (entries) => entries.forEach((entry) => {
         if (entry.isIntersecting) {
@@ -50,7 +52,7 @@ export default function CLIFMap() {
     )
     observer.observe(section)
     return () => observer.disconnect()
-  }, [])
+  }, [visible])
 
   return (
     <section

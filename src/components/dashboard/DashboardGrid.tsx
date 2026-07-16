@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Responsive, WidthProvider, type Layout, type Layouts } from 'react-grid-layout'
 import {
   DASHBOARD_GRID_BREAKPOINTS,
@@ -40,7 +40,7 @@ export default function DashboardGrid({
   renderOverlay,
 }: DashboardGridProps) {
   const cardsKey = useMemo(() => cards.map(c => c.id).join('|'), [cards])
-  const lastCardsKey = useRef(cardsKey)
+  const [prevCardsKey, setPrevCardsKey] = useState(cardsKey)
 
   const [layouts, setLayouts] = useState<Layouts>(() => {
     const saved = loadSavedLayouts(section, userSlug)
@@ -48,12 +48,13 @@ export default function DashboardGrid({
   })
   const [currentBp, setCurrentBp] = useState<keyof typeof DASHBOARD_GRID_ROW_HEIGHT>('lg')
 
-  // Reconcile when the card set changes (visibility toggles, pinning)
-  useEffect(() => {
-    if (lastCardsKey.current === cardsKey) return
-    lastCardsKey.current = cardsKey
+  // Reconcile when the card set changes (visibility toggles, pinning).
+  // Adjusted during render (React's "adjusting state when a prop changes"
+  // pattern) rather than an effect.
+  if (cardsKey !== prevCardsKey) {
+    setPrevCardsKey(cardsKey)
     setLayouts(prev => reconcileLayouts(cards, prev))
-  }, [cardsKey, cards])
+  }
 
   const handleLayoutChange = useCallback(
     (_current: Layout[], all: Layouts) => {

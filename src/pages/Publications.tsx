@@ -238,7 +238,7 @@ export default function Publications() {
               const journalCount = new Set(filtered.map(p => p.journal).filter(Boolean)).size
               const firstAuthorCount = filtered.filter(p => {
                 const first = (p.authors || '').split(/[,;]/)[0]?.trim().toLowerCase() || ''
-                const slugs = (p as any).authorSlugs ?? (p as any).author_slugs ?? ''
+                const slugs = (p.authorSlugs ?? []).join(',')
                 return /\bingraham\b/i.test(first) || /(^|,)\s*nick-ingraham\s*(,|$)/i.test(slugs)
               }).length
               const thisYear = new Date().getFullYear()

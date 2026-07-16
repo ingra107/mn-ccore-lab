@@ -88,17 +88,28 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
   const [dueTouched, setDueTouched] = useState(false)
   const [priority, setPriority] = useState('medium')
 
-  // When modal opens, re-derive default assignee if user hasn't touched it
-  useEffect(() => {
+  // When modal opens, re-derive default assignee if user hasn't touched it.
+  // Adjusted during render (React's "adjusting state when a prop changes"
+  // pattern) rather than an effect — the joined key mirrors the effect's old
+  // dependency tuple, so this fires exactly when any of the three would have
+  // re-run the effect.
+  const assigneeSyncKey = `${open}|${defaultAssignee}|${assigneeTouched}`
+  const [prevAssigneeSyncKey, setPrevAssigneeSyncKey] = useState(assigneeSyncKey)
+  if (assigneeSyncKey !== prevAssigneeSyncKey) {
+    setPrevAssigneeSyncKey(assigneeSyncKey)
     if (open && !assigneeTouched) setAssignee(defaultAssignee)
-  }, [open, defaultAssignee, assigneeTouched])
+  }
 
   // When the modal (re)opens, default the due date to today unless the user has
   // edited it this session. Re-stamps today on each fresh open so a modal opened
-  // yesterday and reopened today shows today, not the stale day.
-  useEffect(() => {
+  // yesterday and reopened today shows today, not the stale day. Same
+  // render-time-adjustment pattern as above.
+  const dueSyncKey = `${open}|${dueTouched}`
+  const [prevDueSyncKey, setPrevDueSyncKey] = useState(dueSyncKey)
+  if (dueSyncKey !== prevDueSyncKey) {
+    setPrevDueSyncKey(dueSyncKey)
     if (open && !dueTouched) setDueDate(todayCivil())
-  }, [open, dueTouched])
+  }
 
   // Autofill suggestions
   const [suggestions, setSuggestions] = useState<AutofillSuggestions>({
@@ -180,7 +191,9 @@ export default function CreateTaskModal({ open, onClose, onCreate }: CreateTaskM
   }, [title, description, assignee, projectId, dueDate, priority, defaultAssignee, onCreate, onClose])
 
   const handleSubmitRef = useRef(handleSubmit)
-  handleSubmitRef.current = handleSubmit
+  useEffect(() => {
+    handleSubmitRef.current = handleSubmit
+  })
 
   const handleExtraKeyDown = (e: KeyboardEvent) => {
     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {

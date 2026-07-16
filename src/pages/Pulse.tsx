@@ -158,7 +158,7 @@ export default function Pulse() {
                 <HeartbeatLine width={220} height={48} variant="slow" />
               </span>
             </div>
-            {/* eslint-disable-next-line @typescript-eslint/no-unused-expressions */}
+            { }
             {void total}
           </PulseScene>
         ),

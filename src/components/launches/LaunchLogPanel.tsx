@@ -7,7 +7,8 @@
 //     cannot fire local URIs, so client-side firing is mandatory here (§backlog #222).
 //   - mobile-origin: just POSTs /refire (creates a pending row for the home poller).
 //
-// `statusLabel` is exported as a pure function for unit testing.
+// `statusLabel` (pure, unit-tested) lives in ./launchStatusLabel.ts — split
+// out so this file's react-refresh contract stays components-only.
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { fetchApi } from '../../lib/api'
@@ -16,19 +17,7 @@ import { buildLaunchUri } from '../../lib/launch'
 import { buildWorkOnUri } from '../../lib/urlClassify'
 import { useProjects } from '../../hooks/useApiData'
 import { formatDbLocal } from '../../lib/time'
-
-// ── Pure helper — exported for unit tests ────────────────────────────────────
-
-export function statusLabel(s: string): string {
-  switch (s) {
-    case 'launched':  return 'Launched'
-    case 'pending':   return 'Waiting for home'
-    case 'completed': return 'Completed'
-    case 'failed':    return 'Failed'
-    case 'expired':   return 'Expired (home was offline)'
-    default:          return s
-  }
-}
+import { statusLabel } from './launchStatusLabel'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 

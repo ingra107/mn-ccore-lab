@@ -63,6 +63,10 @@ interface ToastContextType {
 
 const ToastContext = createContext<ToastContextType>({ showUndo: () => {}, showSuccess: () => {}, showError: () => {}, showInfo: () => {} })
 
+// Clean fix is extracting this hook (+ ToastContext) to its own file, but it
+// has 15+ importers across src/pages/** (out of scope for this partition) —
+// deferred to a follow-up that can touch all of them.
+// eslint-disable-next-line react-refresh/only-export-components -- see comment above
 export function useUndoToast() {
   return useContext(ToastContext)
 }

@@ -43,6 +43,10 @@ export function FilterChip({ label, value, options, onChange }: { label: string;
 
   useEffect(() => {
     if (!open) return
+    // Deliberate reset-on-open, paired with the DOM focus() call below —
+    // this effect is already syncing with an external system (focus), so
+    // the reset lives alongside it rather than moving to render-time.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setFilter('')
     setFocusedIdx(-1)
     if (showTypeahead) setTimeout(() => filterInputRef.current?.focus(), 0)

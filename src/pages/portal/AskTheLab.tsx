@@ -38,9 +38,12 @@ export default function AskTheLab() {
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
 
-  // Auto-open create modal from URL params
+  // Auto-open create modal from URL params. Kept as an effect (not moved to
+  // render-time) because it also clears the URL via setSearchParams — a
+  // real external-system sync, not a pure local-state adjustment.
   useEffect(() => {
     if (searchParams.get('create') === 'true') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setShowCreate(true)
       setSearchParams({}, { replace: true })
     }

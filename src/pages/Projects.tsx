@@ -369,8 +369,16 @@ export default function Projects() {
   // Project slugs in display order for keyboard nav
   const projectSlugs = useMemo(() => filtered.map((p) => p.slug), [filtered])
 
-  // Reset focus when filter/view changes
-  useEffect(() => { setFocusedIndex(-1) }, [activeCategory, viewMode])
+  // Reset focus when filter/view changes. Adjusted during render (React's
+  // "adjusting state based on a prop change" pattern:
+  // https://react.dev/learn/you-might-not-need-an-effect) instead of an
+  // effect, avoiding an extra commit-then-effect cascade.
+  const focusResetKey = `${activeCategory}|${viewMode}`
+  const [prevFocusResetKey, setPrevFocusResetKey] = useState(focusResetKey)
+  if (focusResetKey !== prevFocusResetKey) {
+    setPrevFocusResetKey(focusResetKey)
+    setFocusedIndex(-1)
+  }
 
   // Dynamic page title
   useEffect(() => {

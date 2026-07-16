@@ -60,14 +60,14 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
 
   const handleStatusChange = (conf: ConferenceSubmissionRow, newStatus: ConferenceStatus) => {
     const prev = conf.status
-    const updates: Record<string, unknown> = { status: newStatus }
+    const updates: Partial<{ status: ConferenceStatus; abstract_submitted_at: string; accepted_at: string }> = { status: newStatus }
     if (newStatus === 'submitted' && !conf.abstract_submitted_at) {
       updates.abstract_submitted_at = localDateKey()
     }
     if (newStatus === 'accepted' && !conf.accepted_at) {
       updates.accepted_at = localDateKey()
     }
-    updateMutation.mutate({ id: conf.id, fields: updates as any })
+    updateMutation.mutate({ id: conf.id, fields: updates })
     showUndo(`Status -> ${newStatus}`, () => updateMutation.mutate({ id: conf.id, fields: { status: prev as ConferenceStatus } }))
   }
 

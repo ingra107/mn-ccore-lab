@@ -9,6 +9,7 @@ import { PATHS } from '../constants/paths'
 import { ICON_PROPS } from '../lib/iconProps'
 import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
 import { QueryErrorNote } from '../components/QueryErrorNote'
+import type { Publication } from '../data/types'
 
 const TOPIC_DISPLAY: Record<string, string> = {
   clif: 'CLIF',
@@ -316,8 +317,14 @@ export default function PublicationDetail() {
 
 // ── T-40 stub sections ───────────────────────────────────────
 
-function TrialRegSection({ pub }: { pub: any }) {
-  const nct = pub?.nct_id || pub?.trial_registry
+// T-40 fields not yet on the Publication schema — the section renders
+// null until a trial-registry field lands (kept as an optional shape
+// rather than `any` so a future schema addition is caught by the type
+// system instead of silently type-checking anything).
+type PublicationWithTrialReg = Publication & { nct_id?: string; trial_registry?: string }
+
+function TrialRegSection({ pub }: { pub: PublicationWithTrialReg }) {
+  const nct = pub.nct_id || pub.trial_registry
   if (!nct) return null
   const href = nct.startsWith('http') ? nct : `https://clinicaltrials.gov/study/${nct}`
   return (
@@ -333,9 +340,9 @@ function TrialRegSection({ pub }: { pub: any }) {
   )
 }
 
-function RelatedPublicationsSection({ pub, allPubs }: { pub: any; allPubs: any[] }) {
+function RelatedPublicationsSection({ pub, allPubs }: { pub: Publication; allPubs: Publication[] }) {
   const related = (allPubs || [])
-    .filter((p) => p.id !== pub.id && (p.topics || []).some((t: string) => (pub.topics || []).includes(t)))
+    .filter((p) => p.id !== pub.id && (p.topics || []).some((t) => (pub.topics || []).includes(t)))
     .slice(0, 3)
   if (related.length === 0) return null
   return (
@@ -346,7 +353,7 @@ function RelatedPublicationsSection({ pub, allPubs }: { pub: any; allPubs: any[]
         <span style={{ fontSize: 'var(--label-size)', color: 'var(--slate)', opacity: 0.75 }}>{related.length}</span>
       </div>
       <div className="flex flex-col gap-2" style={{ background: 'var(--ice)', borderRadius: 'var(--radius-xl)', padding: '16px 20px' }}>
-        {related.map((p: any) => (
+        {related.map((p) => (
           <Link
             key={p.id}
             to={`/publications/${encodeURIComponent(p.id)}`}
@@ -362,7 +369,7 @@ function RelatedPublicationsSection({ pub, allPubs }: { pub: any; allPubs: any[]
   )
 }
 
-function PressMentionsSection({ pub }: { pub: any }) {
+function PressMentionsSection({ pub }: { pub: Publication }) {
   // Only for recent (last 3y) publications — older papers don't need the empty slot.
   const thisYear = new Date().getFullYear()
   if (!pub.year || pub.year < thisYear - 3) return null

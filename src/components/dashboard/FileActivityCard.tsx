@@ -12,7 +12,10 @@ interface HeatmapDay {
 export default function FileActivityCard() {
   const { data, isLoading, isError, refetch } = useFileActivityHeatmap(90)
 
-  const days: HeatmapDay[] = (data as HeatmapDay[] | undefined) ?? []
+  // Memoized so its reference stays stable across renders — `?? []` otherwise
+  // creates a new array every render while loading, defeating the grid memo
+  // below.
+  const days: HeatmapDay[] = useMemo(() => (data as HeatmapDay[] | undefined) ?? [], [data])
 
   const { grid, totalThisWeek } = useMemo(() => {
     // Build a 13 weeks x 7 days grid (91 cells)

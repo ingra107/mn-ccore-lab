@@ -37,7 +37,8 @@ import {
 } from '../../components/today/constants'
 import { PillStrip } from '../../components/today/PillStrip'
 import { Timeline } from '../../components/today/Timeline'
-import { CollapseChevron, collapseToggleProps } from '../../components/today/SectionCollapseToggle'
+import { CollapseChevron } from '../../components/today/SectionCollapseToggle'
+import { collapseToggleProps } from '../../components/today/collapseToggleProps'
 import { TodayDndContext } from '../../components/today/TodayDndContext'
 import { PlannedTodaySection } from '../../components/today/PlannedTodaySection'
 import { TaskGroup } from '../../components/today/TaskGroup'
@@ -167,6 +168,7 @@ export default function TodayPage() {
     // TP-19 (D21): "relevant today" = project has tasks due today/overdue
     // OR a planned-today task OR last activity within 7 days.
     const today = todayKey()
+    // eslint-disable-next-line react-hooks/purity -- deliberate snapshot at memoize time, recomputes with projectsQuery.data/tasksQuery.data
     const sevenDaysAgoMs = Date.now() - 7 * 86400000
     const relevantSlugs = new Set<string>()
     for (const t of allTasks) {
@@ -202,7 +204,15 @@ export default function TodayPage() {
 
   const milestones = useMemo(() => {
     const reg = regulatoryQuery.data ?? []
-    return reg.map((r: any) => ({ title: r.name ?? r.title ?? 'Regulatory item', days: r.days_until_expiry ?? 0 })).filter((m: { days: number }) => m.days > 0).sort((a: { days: number }, b: { days: number }) => a.days - b.days).slice(0, 5)
+    // Field-name fix: the API (api/routes/regulatory.ts) only ever returns
+    // `title`/`days_remaining` — never `name`/`days_until_expiry`. The old
+    // field names meant `days` was always 0, so the `days > 0` filter below
+    // silently dropped every item; this widget never showed a milestone.
+    return reg
+      .map((r: { title: string; days_remaining: number }) => ({ title: r.title ?? 'Regulatory item', days: r.days_remaining ?? 0 }))
+      .filter((m: { days: number }) => m.days > 0)
+      .sort((a: { days: number }, b: { days: number }) => a.days - b.days)
+      .slice(0, 5)
   }, [regulatoryQuery.data])
 
   // Pulse: real focus minutes from PB pomodoro sessions today (D19),
@@ -222,6 +232,7 @@ export default function TodayPage() {
       const soonest = theirs.map((t) => t.due_date as string).sort()[0]
       let next = '—'
       if (soonest) {
+        // eslint-disable-next-line react-hooks/purity -- deliberate snapshot at memoize time, recomputes with tasksQuery.data
         const days = Math.round((new Date(soonest + 'T12:00:00').getTime() - Date.now()) / 86400000)
         next = days < 0 ? `${Math.abs(days)}d late` : days === 0 ? 'today' : `${days}d`
       }

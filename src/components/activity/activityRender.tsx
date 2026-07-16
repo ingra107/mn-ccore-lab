@@ -43,25 +43,16 @@ import Avatar from '../Avatar'
 import LinkifiedText, { ImageChip } from '../LinkifiedText'
 import HermesMark from '../HermesMark'
 import HermesResponse from '../HermesResponse'
-import HermesPending, { isHermesPending } from '../HermesPending'
+import HermesPending from '../HermesPending'
+import { isHermesPending } from '../hermesPendingUtil'
 import { LifecycleActivityLine } from './LifecycleActivityLine'
 import ReactionBar from '../ReactionBar'
 import type { StoredKind, UpdateType } from '../../../shared/activityKinds'
 import { ACCENT_CORAL, ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
-import { emailToSlug } from '../../lib/emailSlug'
-
-// Client-side mirror of the server's author-or-PI delete rule
-// (handleDeleteActivityEntry, api/routes/activity.ts). Gates whether the
-// trash button renders on an entry; the server re-enforces regardless.
-// One shared predicate so the feed surfaces can't drift apart.
-export function canDeleteActivityEntry(
-  user: { email?: string; isPi?: boolean } | null | undefined,
-  actorSlug: string,
-): boolean {
-  if (user?.isPi) return true
-  const viewerSlug = emailToSlug(user?.email)
-  return !!viewerSlug && actorSlug === viewerSlug
-}
+// canDeleteActivityEntry moved to ./activityPermissions.ts (2026-07-16 lint
+// burndown, #174) — this file's react-refresh contract is components-only;
+// that predicate was the sole non-component export besides UPDATE_TYPE_CONFIG
+// (now module-private below). Callers: ActivityStream.tsx, TaskActivityFeed.tsx.
 
 // ── Body render: markdown-image pre-pass + LinkifiedText ─────────────────────
 //
@@ -121,7 +112,7 @@ const META_FONT_SIZE = 'var(--text-caption)'
 // ONE superset map for kind='update' sub-kinds. Keys are typed from UPDATE_TYPES
 // (shared/activityKinds.ts) so the render map can never drift from the enum.
 
-export interface UpdateTypeRenderConfig {
+interface UpdateTypeRenderConfig {
   icon: typeof TrendingUp
   color: string
   bg: string
@@ -129,7 +120,9 @@ export interface UpdateTypeRenderConfig {
   label: string
 }
 
-export const UPDATE_TYPE_CONFIG: Record<UpdateType, UpdateTypeRenderConfig> = {
+// Module-private — no external caller imports this (verified 2026-07-16);
+// exporting it was the other non-component export tripping react-refresh.
+const UPDATE_TYPE_CONFIG: Record<UpdateType, UpdateTypeRenderConfig> = {
   progress: { icon: TrendingUp,    color: 'var(--teal)',   bg: 'var(--teal-active)',     borderColor: 'rgba(45,138,138,0.4)',   label: 'Progress' },
   blocker:  { icon: AlertTriangle, color: 'var(--maroon)', bg: 'rgba(122,0,25,0.1)',     borderColor: 'rgba(122,0,25,0.4)',     label: 'Blocker' },
   result:   { icon: CheckCircle,   color: 'var(--green)',  bg: 'rgba(34,197,94,0.1)',    borderColor: 'rgba(34,197,94,0.4)',    label: 'Result' },

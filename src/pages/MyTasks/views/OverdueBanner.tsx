@@ -10,7 +10,9 @@ import { isOverdue } from '../../../lib/dateUtils'
 import { ACCENT_CORAL, withAlpha, isTaskDone } from '../constants'
 import type { TaskRow } from '../../../lib/api'
 
-export function countOverdue(tasks: TaskRow[]): number {
+// Not exported — zero consumers outside this file (react-refresh/only-export-components
+// requires a component-only file; this is the module-private count helper).
+function countOverdue(tasks: TaskRow[]): number {
   return tasks.filter((t) => !isTaskDone(t) && t.due_date && isOverdue(t.due_date, t.status)).length
 }
 

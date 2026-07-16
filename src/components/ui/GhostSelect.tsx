@@ -92,17 +92,22 @@ export default function GhostSelect({
   const { triggerRef, menuRef, pos } = usePortalDropdown<HTMLButtonElement>({ open, onClose: closeMenu, getPosition })
 
   // Open/close side effects local to GhostSelect (focus/filter state, not
-  // portal positioning — that's usePortalDropdown's concern).
-  useEffect(() => {
+  // portal positioning — that's usePortalDropdown's concern). Adjusted during
+  // render (React's "adjusting state when a prop changes" pattern) rather
+  // than an effect; the joined key mirrors the effect's old dependency tuple.
+  const menuKey = `${open}|${options.map((o) => o.value).join('␟')}|${value}`
+  const [prevMenuKey, setPrevMenuKey] = useState(menuKey)
+  if (menuKey !== prevMenuKey) {
+    setPrevMenuKey(menuKey)
     if (!open) {
       setFocusedIdx(-1)
       setQuery('')
-      return
+    } else {
+      // Pre-select the current value index so arrow keys start from there
+      const idx = options.findIndex((o) => o.value === value)
+      setFocusedIdx(idx >= 0 ? idx : 0)
     }
-    // Pre-select the current value index so arrow keys start from there
-    const idx = options.findIndex((o) => o.value === value)
-    setFocusedIdx(idx >= 0 ? idx : 0)
-  }, [open, options, value])
+  }
 
   // When searchable: auto-focus the search input when the menu opens
   useEffect(() => {
@@ -117,17 +122,21 @@ export default function GhostSelect({
     if (!open || searchable) return
     const first = menuRef.current?.querySelector<HTMLElement>('[role="option"]')
     first?.focus()
-  }, [open, searchable])
+  }, [open, searchable, menuRef])
 
-  // Reset focused index when filter changes
-  useEffect(() => {
+  // Reset focused index when filter changes. Same render-time-adjustment
+  // pattern as above.
+  const filterKey = `${query}|${filteredOptions.length}`
+  const [prevFilterKey, setPrevFilterKey] = useState(filterKey)
+  if (filterKey !== prevFilterKey) {
+    setPrevFilterKey(filterKey)
     setFocusedIdx(filteredOptions.length > 0 ? 0 : -1)
-  }, [query, filteredOptions.length])
+  }
 
   const closeAndRefocus = useCallback(() => {
     setOpen(false)
     triggerRef.current?.focus()
-  }, [])
+  }, [triggerRef])
 
   const handleTriggerKeyDown = (e: React.KeyboardEvent) => {
     if (!open) {

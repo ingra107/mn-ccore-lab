@@ -64,9 +64,12 @@ export default function IdeasPage() {
     window.localStorage.setItem('ideas-view', viewMode)
   }, [viewMode])
 
-  // Auto-open create modal from URL params (keyboard shortcut N)
+  // Auto-open create modal from URL params (keyboard shortcut N). Kept as
+  // an effect (not moved to render-time) because it also clears the URL
+  // via setSearchParams — a real external-system sync.
   useEffect(() => {
     if (searchParams.get('create') === 'true') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setShowCreate(true)
       setSearchParams({}, { replace: true })
     }
@@ -123,8 +126,13 @@ export default function IdeasPage() {
     disabled: showCreate,
   })
 
-  // Reset focus when filters change
-  useEffect(() => { setFocusedIndex(-1) }, [filterStatus])
+  // Reset focus when filters change. Adjusted during render (React's
+  // "adjusting state based on a prop change" pattern) instead of an effect.
+  const [prevFilterStatus, setPrevFilterStatus] = useState(filterStatus)
+  if (filterStatus !== prevFilterStatus) {
+    setPrevFilterStatus(filterStatus)
+    setFocusedIndex(-1)
+  }
 
   // N key opens create modal
   useEffect(() => {
@@ -565,9 +573,12 @@ function IdeaRowView({
   const [editArea, setEditArea] = useState(idea.research_area ?? '')
   const editTitleRef = useRef<HTMLInputElement>(null)
 
-  // Reset edit fields when editing opens; focus title without scroll
+  // Reset edit fields when editing opens; focus title without scroll.
+  // Kept as an effect (already syncing with the DOM via focus()) rather
+  // than moved to render-time.
   useEffect(() => {
     if (isEditing) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setEditTitle(idea.title)
       setEditDescription(idea.description ?? '')
       setEditArea(idea.research_area ?? '')

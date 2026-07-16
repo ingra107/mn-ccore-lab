@@ -42,10 +42,14 @@ export default function MobileTabBar() {
   const [overflowOpen, setOverflowOpen] = useState(false)
   const [bugReportOpen, setBugReportOpen] = useState(false)
 
-  // Close drawer when route changes (covers programmatic nav after Link click)
-  useEffect(() => {
+  // Close drawer when route changes (covers programmatic nav after Link click).
+  // Adjusted during render (React's "adjusting state when a prop changes"
+  // pattern) rather than an effect.
+  const [prevPathname, setPrevPathname] = useState(pathname)
+  if (pathname !== prevPathname) {
+    setPrevPathname(pathname)
     setOverflowOpen(false)
-  }, [pathname])
+  }
 
   // Escape key closes drawer
   useEffect(() => {

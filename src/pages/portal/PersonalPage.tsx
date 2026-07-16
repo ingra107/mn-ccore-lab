@@ -40,6 +40,15 @@ import type { TaskRow } from '../../lib/api'
 import { staggerContainer, staggerItem } from '../../lib/animations'
 import { ICON_PROPS } from '../../lib/iconProps'
 
+// M-25: minimal shape for the regulatory-expiring alert strip — the full
+// ExpiringRegulatoryRow type lives unexported in lib/api.ts; this covers
+// only the fields this page actually reads.
+interface RegulatoryAlertItem {
+  id: string
+  title: string
+  days_remaining: number | null
+}
+
 // ── Onboarding completion check ─────────────────────────────
 function isOnboardingDismissed(): boolean {
   try {
@@ -113,7 +122,7 @@ function RoleSelector({ role, onSelect }: { role: UserRole; onSelect: (role: Use
             border: '1px solid var(--border-subtle)',
             background: 'var(--cream)',
             boxShadow: 'var(--shadow-card)',
-            zIndex: 'var(--z-dropdown)' as any,
+            zIndex: 'var(--z-dropdown)',
             overflow: 'hidden',
           }}
         >
@@ -261,7 +270,7 @@ function MyTasksColumn({
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <SquareCheck {...ICON_PROPS} size={14} style={{ color: 'var(--teal)' }} />
-          <span style={{ fontSize: 'var(--text-base)', fontWeight: 'var(--weight-heading)' as any, color: 'var(--ink)' }}>
+          <span style={{ fontSize: 'var(--text-base)', fontWeight: 'var(--weight-heading)' as React.CSSProperties['fontWeight'], color: 'var(--ink)' }}>
             My Tasks
           </span>
           {overdueTasks.length > 0 && (
@@ -410,7 +419,7 @@ function CompactCard({
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <Icon {...ICON_PROPS} size={13} style={{ color: iconColor }} />
-          <span style={{ fontSize: 'var(--text-base)', fontWeight: 'var(--weight-heading)' as any, color: 'var(--ink)' }}>
+          <span style={{ fontSize: 'var(--text-base)', fontWeight: 'var(--weight-heading)' as React.CSSProperties['fontWeight'], color: 'var(--ink)' }}>
             {title}
           </span>
         </div>
@@ -446,7 +455,7 @@ function UpcomingCard({ deadlines, overdue }: { deadlines: TaskRow[]; overdue: T
       ) : (
         <div className="flex flex-col gap-1">
           {items.map((item) => {
-            const isOverdue = '_isOverdue' in item && (item as any)._isOverdue
+            const isOverdue = '_isOverdue' in item && item._isOverdue
             return (
               <div key={item.id} className="flex items-center gap-2" style={{ minHeight: 28 }}>
                 {isOverdue
@@ -461,7 +470,7 @@ function UpcomingCard({ deadlines, overdue }: { deadlines: TaskRow[]; overdue: T
                 </span>
                 <DueLabel
                   due={item.due_date}
-                  status={(item as any).status}
+                  status={item.status}
                   style={{ fontSize: 10, flexShrink: 0 }}
                 />
               </div>
@@ -587,7 +596,7 @@ export default function PersonalPage() {
   // M-25: Regulatory alerts -- visible at top of Personal, not buried
   const { data: rawRegulatory = [] } = useExpiringRegulatory(60)
   const expiringRegulatory = useMemo(
-    () => rawRegulatory.filter((r: any) => isProductionVisible(r.title)),
+    () => rawRegulatory.filter((r: RegulatoryAlertItem) => isProductionVisible(r.title)),
     [rawRegulatory],
   )
 
@@ -606,7 +615,12 @@ export default function PersonalPage() {
   const shouldPinOnboarding = !onboarding.dismissed && onboarding.progress < 80 && onboarding.currentDay < 30
 
   useEffect(() => {
-    // Re-check after mount in case localStorage wasn't ready
+    // Re-check after mount in case localStorage wasn't ready. Deliberate
+    // one-time re-sync from an external store (localStorage) that the lazy
+    // useState initializer above already races on first paint — restructuring
+    // to useSyncExternalStore would change hydration-timing behavior, so keep
+    // the effect and suppress the compiler's generic setState-in-effect flag.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setOnboardingDismissed(isOnboardingDismissed())
   }, [])
 
@@ -695,6 +709,11 @@ export default function PersonalPage() {
 
   const STATUS_CYCLE: Record<string, string> = { todo: 'in_progress', in_progress: 'done', done: 'todo', blocked: 'todo', waiting_external: 'todo' }
 
+  // handleStatusChange/STATUS_CYCLE deliberately omitted: handleStatusChange
+  // is rebuilt on every pendingTasks/updateStatus/showUndo change, and
+  // cycleStatus must stay keyed to focusedTask only so the global
+  // keyboard-shortcut binding below doesn't churn.
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization
   const cycleStatus = useCallback(() => {
     if (!focusedTask) return
     const next = STATUS_CYCLE[focusedTask.status] ?? 'in_progress'
@@ -707,12 +726,15 @@ export default function PersonalPage() {
 
   const openDetailForFocused = useCallback(() => {
     if (focusedTask) setSelectedTask(focusedTask)
-  }, [focusedTask])
+  }, [focusedTask, setSelectedTask])
 
   const closeOverlay = useCallback(() => {
     setSelectedTask(null)
-  }, [])
+  }, [setSelectedTask])
 
+  // updateTask/showUndo deliberately omitted — same rationale as cycleStatus
+  // above: keep this bound to focusedTask only, not the mutation/toast hooks.
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization
   const snoozeFocused = useCallback(() => {
     if (!focusedTask || !focusedTask.due_date) return
     const d = new Date(focusedTask.due_date + 'T12:00:00')
@@ -928,7 +950,7 @@ export default function PersonalPage() {
               gap: 'var(--sp-xs)',
             }}
           >
-            {expiringRegulatory.slice(0, 5).map((reg: any) => (
+            {expiringRegulatory.slice(0, 5).map((reg: RegulatoryAlertItem) => (
               <div
                 key={reg.id}
                 className="flex items-center gap-2"

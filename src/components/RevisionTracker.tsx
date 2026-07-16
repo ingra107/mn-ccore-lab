@@ -862,6 +862,9 @@ export function ActiveRevisionsDashboard({ revisions }: { revisions: RevisionRow
 
   // T-29 skip-it: sort by urgency so overdue + unresolved-comment-heavy rows
   // surface first. Full 3-subgroup UI is round 7 (pending schema check).
+  // Deliberately live (not frozen via useState/useMemo) — this dashboard can
+  // stay mounted for hours, and urgency/daysOverdue should track real time.
+  // eslint-disable-next-line react-hooks/purity -- see comment above
   const now = Date.now()
   const sorted = [...revisions].sort((a, b) => urgencyScore(b, now) - urgencyScore(a, now))
   const count = sorted.length

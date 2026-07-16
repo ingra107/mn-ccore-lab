@@ -586,6 +586,7 @@ export default function GrantsPage() {
                 if (grant.start_date && grant.end_date && !isProposed) {
                   const start = new Date(grant.start_date).getTime()
                   const end = new Date(grant.end_date).getTime()
+                  // eslint-disable-next-line react-hooks/purity -- grant timeline progress bar, intentionally recomputed fresh each render
                   const current = Date.now()
                   progress = Math.max(0, Math.min(100, ((current - start) / (end - start)) * 100))
                 }

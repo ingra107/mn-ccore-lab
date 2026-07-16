@@ -90,7 +90,7 @@ export default function ReleaseRibbon() {
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-sm)', flex: 1, minWidth: 0 }}>
           <Sparkles {...ICON_PROPS} size={14} style={{ color: 'var(--gold)', flexShrink: 0 }} />
-          <span style={{ fontSize: 'var(--text-small)', color: 'var(--ink)', fontWeight: 'var(--weight-ui)' as any }}>
+          <span style={{ fontSize: 'var(--text-small)', color: 'var(--ink)', fontWeight: 'var(--weight-ui)' as unknown as number }}>
             {release.title}:
           </span>
           <span style={{ fontSize: 'var(--text-small)', color: 'var(--ink)', opacity: 0.85, minWidth: 0 }}>

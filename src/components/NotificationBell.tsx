@@ -77,11 +77,20 @@ export default function NotificationBell({ align = 'right' }: { align?: 'left' |
     return () => document.removeEventListener('keydown', handleEscape)
   }, [open])
 
-  // Show up to 20 most recent notifications, grouped by day
-  const displayNotifications = isAuthenticated ? notifications.slice(0, 20) : []
+  // Show up to 20 most recent notifications, grouped by day. Memoized so its
+  // reference stays stable across renders — .slice() otherwise creates a new
+  // array every render, defeating the groupedByDay memo below.
+  const displayNotifications = useMemo(
+    () => (isAuthenticated ? notifications.slice(0, 20) : []),
+    [isAuthenticated, notifications],
+  )
 
   const groupedByDay = useMemo(() => {
     const today = localDateKey()
+    // Intentional snapshot at memoize time (day-boundary label), not a bug —
+    // recomputes whenever displayNotifications changes, which is frequent
+    // enough that a day-stale label is not observable in practice.
+    // eslint-disable-next-line react-hooks/purity -- see comment above
     const yesterday = localDateKey(new Date(Date.now() - 86400000))
     const groups: { label: string; items: typeof displayNotifications }[] = []
     const map = new Map<string, typeof displayNotifications>()

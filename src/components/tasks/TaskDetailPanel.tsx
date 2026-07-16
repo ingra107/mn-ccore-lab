@@ -332,6 +332,7 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
         dragConstraints={{ left: 0, right: 0 }}
         dragElastic={{ left: 0, right: 0.6 }}
         dragMomentum={false}
+        // eslint-disable-next-line react-hooks/refs -- deliberate imperative-ref read (see edgeGuardRef comment above): avoids a state round-trip per touchmove that caused a real Pixel-5 inert-drag bug (restored 2026-04-23).
         dragListener={!edgeGuardRef.current}
         onDragStart={() => {
           if (edgeGuardRef.current) return false
@@ -496,12 +497,12 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
                   </span>
                 </span>
               )}
-              {(task as any).recurrence && (
+              {task.recurrence && (
                 <span className="flex items-center gap-2" style={{ whiteSpace: 'nowrap' }}>
                   <span aria-hidden="true">·</span>
                   <span className="px-1.5 py-0.5 rounded-full" style={{ backgroundColor: 'var(--gold-active)', color: 'var(--gold)', opacity: 1 }}>
                     <RefreshCw size={8} strokeWidth={1.5} absoluteStrokeWidth style={{ display: 'inline', marginRight: 2 }} aria-hidden="true" />
-                    {(task as any).recurrence}
+                    {task.recurrence}
                   </span>
                 </span>
               )}

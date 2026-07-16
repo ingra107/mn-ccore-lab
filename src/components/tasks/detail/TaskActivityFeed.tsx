@@ -21,7 +21,8 @@
 
 import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { ActivityEntryItem, canDeleteActivityEntry, type ActivityEntryItemRow } from '../../activity/activityRender'
+import { ActivityEntryItem, type ActivityEntryItemRow } from '../../activity/activityRender'
+import { canDeleteActivityEntry } from '../../activity/activityPermissions'
 import { filterMatchesKind, type TaskFeedFilter } from '../../../../shared/activityKinds'
 import type { StoredKind, UpdateType } from '../../../../shared/activityKinds'
 import { useAuth } from '../../../hooks/useAuth'

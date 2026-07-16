@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { getRealtimeBus } from '../lib/realtimeBus'
 
@@ -6,11 +6,14 @@ export function useRealtimeSync() {
   const queryClient = useQueryClient()
   const lastVersionRef = useRef<string>('0')
 
-  const invalidateAll = () => {
+  // useCallback so this has a stable identity across renders — otherwise
+  // every effect below that references it would need to re-subscribe on
+  // every render just because a new function was created.
+  const invalidateAll = useCallback(() => {
     queryClient.invalidateQueries({
       predicate: (query) => query.queryKey[0] !== '_version',
     })
-  }
+  }, [queryClient])
 
   // Phase 2: WebSocket via Durable Object (instant, ~1s). Shares the single
   // realtimeBus socket with presence/typing/intent hooks.
@@ -36,7 +39,7 @@ export function useRealtimeSync() {
       }
     })
     return stop
-  }, [queryClient])
+  }, [queryClient, invalidateAll])
 
   // Phase 1: Polling — /api/version is cheap; 15s gives acceptable cross-tab
   // latency without thrashing. NOTIFICATION_HUB is wired in wrangler.toml
@@ -69,13 +72,13 @@ export function useRealtimeSync() {
     if (data) {
       lastVersionRef.current = data
     }
-  }, [data, queryClient])
+  }, [data, queryClient, invalidateAll])
 
   // BroadcastChannel: instant same-device tab sync
   useEffect(() => {
     const bc = new BroadcastChannel('mnccore-sync')
     bc.onmessage = () => invalidateAll()
     return () => bc.close()
-  }, [queryClient])
+  }, [queryClient, invalidateAll])
 }
 

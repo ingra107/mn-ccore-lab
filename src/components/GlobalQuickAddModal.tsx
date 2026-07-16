@@ -64,9 +64,14 @@ function GlobalQuickAddModal({ isOpen, onClose }: Props) {
   const { user } = useAuth()
   const fallbackAssignee = user?.email ? emailToSlug(user.email) : 'nick-ingraham'
 
-  useEffect(() => {
+  // Reset the input when the modal closes. Adjusted during render (React's
+  // "adjusting state when a prop changes" pattern) instead of an effect — the
+  // modal stays mounted while hidden, so this can't rely on a remount/key.
+  const [prevIsOpen, setPrevIsOpen] = useState(isOpen)
+  if (isOpen !== prevIsOpen) {
+    setPrevIsOpen(isOpen)
     if (!isOpen) setValue('')
-  }, [isOpen])
+  }
 
   const handleSubmit = useCallback(() => {
     const parsed = parseQuickAddInput(value)
@@ -265,11 +270,17 @@ function GlobalQuickAddModal({ isOpen, onClose }: Props) {
 
 export const QUICK_ADD_EVENT = 'mn-ccore:open-quick-add'
 
+// Clean fix is extracting these two into src/hooks/, but their importers
+// span src/pages/portal/PersonalPage.tsx (out of scope for this partition) —
+// deferred to a follow-up that can touch it.
+
 /** Dispatch from anywhere to open the single canonical quick-add modal. */
+// eslint-disable-next-line react-refresh/only-export-components -- see comment above
 export function openGlobalQuickAdd() {
   window.dispatchEvent(new Event(QUICK_ADD_EVENT))
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- see comment above
 export function useQuickAddShortcut(open: () => void) {
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {

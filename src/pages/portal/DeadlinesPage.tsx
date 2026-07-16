@@ -464,19 +464,19 @@ export default function DeadlinesPage() {
                   background: 'var(--teal-hover)',
                 }}
               >
-                {[
+                {([
                   { label: 'Total', value: deadlines.length },
                   ...(overdue.length > 0 ? [{ label: 'Overdue', value: overdue.length, color: 'var(--maroon)' }] : []),
                   { label: 'This Week', value: thisWeek.length },
                   { label: 'Next Week', value: nextWeek.length },
                   { label: 'Later', value: later.length },
                   { label: 'Done', value: completed.length, color: 'var(--green)' },
-                ].map(s => (
+                ] as { label: string; value: number; color?: string }[]).map(s => (
                   // Parent opacity compounds with green/gold count span →
                   // fails AA. Use --muted directly, no opacity. r7 2026-04-22.
                   <span key={s.label} style={{ fontSize: 'var(--label-size)', color: 'var(--muted)' }}>
                     {s.label}{' '}
-                    <span style={{ fontWeight: 600, color: (s as any).color || 'var(--slate)', fontVariantNumeric: 'tabular-nums' }}>
+                    <span style={{ fontWeight: 600, color: s.color || 'var(--slate)', fontVariantNumeric: 'tabular-nums' }}>
                       {s.value}
                     </span>
                   </span>

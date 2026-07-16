@@ -4,12 +4,23 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { ACCENT_GOLD, PANEL_BG, isTaskDone, withAlpha } from '../../lib/taskGrouping'
 
+/** Shape this component actually reads off a candidate task. */
+interface SearchableTask {
+  id: string
+  title?: string
+  description?: string
+  project_title?: string
+  status?: string | null
+  priority?: string
+  due_date?: string | null
+}
+
 interface TaskSearchDropdownProps {
-  tasks: any[]
+  tasks: SearchableTask[]
   excludeIds: Set<string>
   isOpen: boolean
   onClose: () => void
-  onSelect: (task: any) => void
+  onSelect: (task: SearchableTask) => void
   slotLabel: string
 }
 
@@ -17,11 +28,16 @@ export default function TaskSearchDropdown({ tasks, excludeIds, isOpen, onClose,
   const [query, setQuery] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
 
+  // Reset query on open, adjusted during render (React's "adjusting state
+  // when a prop changes" pattern) rather than an effect.
+  const [prevIsOpen, setPrevIsOpen] = useState(isOpen)
+  if (isOpen !== prevIsOpen) {
+    setPrevIsOpen(isOpen)
+    if (isOpen) setQuery('')
+  }
+
   useEffect(() => {
-    if (isOpen) {
-      setQuery('')
-      setTimeout(() => inputRef.current?.focus(), 50)
-    }
+    if (isOpen) setTimeout(() => inputRef.current?.focus(), 50)
   }, [isOpen])
 
   // Filter: not completed, not already in plan, matches query

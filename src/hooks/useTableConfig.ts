@@ -50,8 +50,6 @@ function saveConfig(tableId: string, config: TableConfig) {
 export function useTableConfig(tableId: string, defaults: TableConfig) {
   const [config, setConfig] = useState<TableConfig>(() => loadConfig(tableId, defaults))
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const configRef = useRef(config)
-  configRef.current = config
 
   // Debounced save on every config change
   useEffect(() => {
