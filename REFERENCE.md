@@ -45,7 +45,7 @@ server-side via X-API-Key + `REQUIRE_AUTH` + JWT verify.
 | milestones | 30+ | Project milestones + deadlines |
 | meetings | 20+ | Biweekly meetings + agendas |
 | agenda_items | dynamic | Per-meeting agenda items |
-| action_items | 50+ | Legacy action items (pre-task system) |
+| action_items | 8 | Legacy action items (pre-task system) — frozen since ~2026-03-30, content losslessly mirrored into `tasks`; queued for DROP (schema-v99, backlog #562), staged not yet applied as of 2026-07-16 |
 | project_updates | DROPPED 2026-06-10 | schema-v78; snapshots at Scratch/t3-drop-snapshots-2026-06-10/ |
 | project_comments | DROPPED 2026-06-10 | schema-v78 (was `comments` table); snapshots at Scratch/t3-drop-snapshots-2026-06-10/ |
 | research_digest | 152+ | Weekly paper digests |

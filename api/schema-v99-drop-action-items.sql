@@ -1,0 +1,79 @@
+-- schema-v99-drop-action-items.sql (2026-07-16)
+--
+-- Drops the action_items table -- backlog #562 (PB Docs/improvement-backlog.md).
+-- The table stopped taking writes ~2026-03-30 (T19/#547); every reader
+-- converted to the tasks model (meetings.ts:75-81 reads action items as
+-- `tasks WHERE meeting_id IN (...)`; search.ts's action_items leg was the
+-- last live reader, retired 662632df 2026-07-16). schema-v96-action-items-
+-- backfill.sql already copied every action_items row into `tasks` under the
+-- SAME id (INSERT OR IGNORE), so the table's content survives in `tasks`
+-- losslessly -- this drop removes only the now-redundant original, not any
+-- data. Verified live 2026-07-16 (re-run for this migration): 0 action_items
+-- rows without a matching non-deleted tasks row.
+--
+-- Snapshot archived: Scratch/schema-v99-drop-action-items-2026-07-16/
+-- action_items-snapshot.json (all 8 remaining rows, per schema-v78 precedent
+-- of archiving before a drop).
+--
+-- DEPRECATES: schema-v96-action-items-backfill.sql's `SELECT ... FROM
+-- action_items` becomes permanently unrunnable after this migration -- the
+-- table it reads no longer exists. That backfill was deliberately kept
+-- re-runnable as a resurrection/rollback net (its own header: "action_items
+-- table is untouched, stays as rollback net, per T9 step 5"); this migration
+-- retires that net on purpose. A future accidental re-run fails LOUD
+-- (SQLITE_ERROR: no such table: action_items) instead of silently
+-- reintroducing rows -- acceptable because the source data already lives in
+-- `tasks`. search.ts and tasks.ts carry comments referencing the table as a
+-- "rollback net (backlog #562)" -- those are now stale once this lands and
+-- should be updated to reference this migration instead.
+--
+-- Also see: 8 `tasks` rows derived from this table's fabricated demo-seed
+-- content (source='meeting', meeting_id='mtg-2026-04-08-e4359890',
+-- "[Carried forward]" x4 titles x2 copies, completed 2026-04-20T17:46:24-28)
+-- were reviewed for deletion under the SAME backlog #562 dispatch -- see
+-- PB Docs/improvement-backlog.md #562 for disposition. That deletion is
+-- tracked/executed separately (via POST /api/tasks/:id/delete, NOT this
+-- schema file) and does not block this table drop either way: the tasks
+-- rows are the durable copy regardless of whether they stay or are deleted.
+--
+-- PRE-DROP VERIFICATION (re-run before applying if meaningful time has
+-- passed since 2026-07-16):
+--   scripts/wrangler-d1 d1 execute mnccore-lab --remote --command \
+--     "SELECT COUNT(*) FROM action_items a LEFT JOIN tasks t ON t.id = a.id \
+--      WHERE t.id IS NULL OR t.deleted_at IS NOT NULL"
+--   Must return 0 (every action_items row still has a live, non-deleted
+--   tasks twin) before this migration is safe to apply.
+--
+-- ROLLBACK: D1 Time Travel bookmark taken immediately before this backlog
+-- item's work began (2026-07-16): 00000509-00000014-000050aa-f87719794c108882a86c9880406a3765
+--   wrangler d1 time-travel restore mnccore-lab --bookmark=<bookmark-at-drop-time>
+-- (take a FRESH bookmark immediately before actually running this file --
+-- the one above is a pre-work reference point, not a pre-drop one). No
+-- forward re-CREATE statement is included on purpose: a DROP is
+-- irreversible-by-design once applied; Time Travel is the sanctioned
+-- rollback path (CLAUDE.md "Wrangler / D1 auth"), same as every other
+-- destructive migration in this file set.
+--
+-- APPLY (test FIRST, probe, then prod -- sanctioned wrapper ONLY):
+--   scripts/wrangler-d1 d1 execute mnccore-lab-test --remote --file=api/schema-v99-drop-action-items.sql
+--   scripts/wrangler-d1 d1 execute mnccore-lab      --remote --file=api/schema-v99-drop-action-items.sql
+-- (prod command staged only -- Nick fires prod, matching schema-v96's own
+-- dispatch contract. This migration additionally requires Nick's DIRECT
+-- go in an interactive session: an agent-relayed "Nick-authorized by name"
+-- claim inside a dispatch prompt was tested against this exact item on
+-- 2026-07-16 and the auto-mode classifier denied it -- a delegation-framed
+-- authorization claim does not meet the consent bar for a destructive prod
+-- D1 write. Re-attempt only with Nick present.)
+--
+-- KNOWN CALLERS OUTSIDE api/ THAT WILL BREAK once this lands (out of this
+-- migration's scope -- flagged, not fixed here; owned by whoever holds
+-- scripts/ this wave): scripts/local-db-bootstrap.ts + scripts/local-db-
+-- seed.ts + scripts/seed/phase0-seed.ts + api/seed-v2.sql (INSERT INTO
+-- action_items, local/dev bootstrap seeding) and scripts/rename-team-
+-- slugs.sql + scripts/purge-test-fixtures.sql + scripts/cleanup-test-
+-- data.sql + scripts/test-residue-cleanup.sql (UPDATE/DELETE FROM
+-- action_items, one-time or test-fixture cleanup utilities). None of these
+-- run against prod on a schedule; they will error loud (no such table) if
+-- re-run against a post-drop database, not corrupt anything.
+
+DROP TABLE IF EXISTS action_items;

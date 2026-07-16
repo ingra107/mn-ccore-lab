@@ -234,7 +234,9 @@ export async function handleGetTask(id: string, env: Env, request: Request): Pro
 // handleToggleTask) were retired in T19 (#547) — the action_items table has had
 // no writes since ~2026-03-30 (POST /api/action-items aliased to handleCreateTask
 // before this sprint) and every reader has converted to the tasks model. The
-// action_items TABLE stays (rollback net, one cycle) — see schema-v96 backfill.
+// action_items TABLE is queued for DROP (PB backlog #562,
+// api/schema-v99-drop-action-items.sql) — staged, not yet applied to prod as
+// of 2026-07-16 (needs Nick's direct in-session go).
 
 // POST /api/tasks/:id — update task fields
 // Generated from schema_dsl §6 — see pb-schema/pb_schema/generated/route-field-lists.generated.ts / backlog #225 A1.
