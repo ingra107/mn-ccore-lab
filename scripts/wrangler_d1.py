@@ -123,6 +123,11 @@ def run_wrangler(argv: Sequence[str], *, timeout: int = 120) -> WranglerResult:
     proc = subprocess.run(
         cmd,
         text=True,
+        # wrangler emits UTF-8 (box-drawing chars in deploy banners); without an
+        # explicit encoding, Windows decodes with cp1252 and the reader thread
+        # dies on bytes like 0x8f (hit on the 2026-07-16 worker deploy).
+        encoding="utf-8",
+        errors="replace",
         capture_output=True,
         timeout=timeout,
         env=_stripped_env(),
@@ -180,6 +185,13 @@ def run_d1(
 
 if __name__ == "__main__":
     import sys
+
+    # Wrangler's output carries emoji + box-drawing chars; a cp1252 console
+    # (Task Scheduler, bare python on Windows) dies re-printing them. Replace,
+    # never crash — this wrapper's output is informational.
+    for _stream in (sys.stdout, sys.stderr):
+        if hasattr(_stream, "reconfigure"):
+            _stream.reconfigure(encoding="utf-8", errors="replace")
 
     # Deploy guard (#500, post-mortem 2026-07-06): the top level of wrangler.toml
     # is deliberately inert — a bare `deploy` would mint a binding-less scratch
