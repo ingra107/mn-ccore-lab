@@ -23,11 +23,36 @@
 // Both endpoints are FAIL-SOFT pre-migration: if entity_seen doesn't exist on
 // this DB yet, GET returns an empty list and POST no-ops — so the worker can
 // deploy ahead of the prod migration without 500s.
+//
+// #740 (2026-07-16, backend half of #548): #548 added a CLIENT-side recency
+// cap (src/lib/seen.ts MEETING_UNSEEN_RECENCY_CAP_DAYS=14) that filters the
+// cold-start never_seen-meeting flood in the browser — it bounds what the
+// browser PROCESSES, not what this route SHIPS over the wire. Every
+// never-opened meeting since the dawn of the table was still being
+// serialized into the response on every poll. MEETING_NEVER_SEEN_PAYLOAD_CAP_DAYS
+// below bounds the payload at the SQL layer, mirroring the client window
+// with margin (see the constant's own comment for why margin, and why the
+// bound applies ONLY to the never_seen=1 arm).
 
 import type { Env } from '../helpers';
 import { json, error, actorSlugFromRequest } from '../helpers';
 
 const SEEN_TYPES = new Set(['task', 'project', 'meeting']);
+
+// Server-side payload bound for the never_seen (cold-start, no entity_seen
+// row) meetings arm. Mirrors src/lib/seen.ts's MEETING_UNSEEN_RECENCY_CAP_DAYS
+// (14, #548) but wider — the server bound must be a SUPERSET of what the
+// client keeps, never narrower, because the client's own filter is what
+// actually decides badging; the server's job here is only to stop shipping
+// years-old never-opened meetings over the wire on every poll. The margin
+// (30 vs 14) absorbs clock skew between D1's datetime('now') and the
+// browser's Date.now(), plus room for the client cap to widen later without
+// this bound silently starving it. Applies ONLY to never_seen=1 rows — a
+// previously-seen meeting with new activity since last look has NO recency
+// cap on either side (#548's client filter doesn't touch it either): that's
+// a legitimate, unbounded-recency "new activity" signal, not the cold-start
+// flood this exists to bound.
+const MEETING_NEVER_SEEN_PAYLOAD_CAP_DAYS = 30;
 
 export async function handleMarkSeen(request: Request, env: Env): Promise<Response> {
   const viewer = await actorSlugFromRequest(request, env);
@@ -81,6 +106,13 @@ export async function handleGetUnseenActivity(request: Request, env: Env): Promi
       // Meetings have no activity_entries feed — "unseen" is a direct
       // updated_at vs last_seen_at compare, with never_seen=1 when no seen
       // row exists yet (LEFT JOIN, not the INNER JOIN above).
+      //
+      // #740: the never_seen=1 arm (no entity_seen row at all) is additionally
+      // bound to MEETING_NEVER_SEEN_PAYLOAD_CAP_DAYS — without it this arm is
+      // an unbounded LEFT JOIN over every never-opened meeting ever. The
+      // already-seen arm (es.last_seen_at IS NOT NULL) is deliberately left
+      // uncapped — "new activity since I last looked" has no natural staleness
+      // window and #548's client-side cap doesn't touch it either.
       env.DB.prepare(
         `SELECT 'meeting' AS entity_type, m.id AS entity_id,
                 CASE WHEN es.last_seen_at IS NULL THEN 1 ELSE 0 END AS never_seen,
@@ -89,9 +121,12 @@ export async function handleGetUnseenActivity(request: Request, env: Env): Promi
          LEFT JOIN entity_seen es
            ON es.entity_type = 'meeting' AND es.entity_id = m.id AND es.viewer_slug = ?
          WHERE m.notes IS NOT NULL
-           AND (es.last_seen_at IS NULL OR m.updated_at > es.last_seen_at)
+           AND (
+             (es.last_seen_at IS NULL AND m.updated_at > datetime('now', ?))
+             OR (es.last_seen_at IS NOT NULL AND m.updated_at > es.last_seen_at)
+           )
          ORDER BY latest_at DESC`
-      ).bind(viewer).all(),
+      ).bind(viewer, `-${MEETING_NEVER_SEEN_PAYLOAD_CAP_DAYS} days`).all(),
     ]);
     // meetings has no deleted_at column (checked v2..v95) — if soft-delete
     // lands there later, this arm needs the same guard as t/p.deleted_at above.
