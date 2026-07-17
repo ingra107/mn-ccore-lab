@@ -8,7 +8,7 @@
 -- Server-side filter (api/lib/fixtures.ts) prevents NEW leakage.
 --
 -- Run against prod once, in a maintenance window:
---   npx wrangler d1 execute mnccore-lab --remote \
+--   bash scripts/wrangler-d1 d1 execute mnccore-lab --remote \
 --     --file=scripts/purge-test-fixtures.sql
 --
 -- D1 runs the whole file as one transaction — failure rolls back
@@ -29,7 +29,10 @@
 -- ── Delete child rows whose parent is a fixture ──────────────────────
 -- task_files / task_handoffs / task_subtasks reference tasks(id).
 -- `lab_answers` cascades from lab_questions automatically.
--- action_items + agenda_items reference meetings.
+-- agenda_items reference meetings; action items are now tasks with
+-- meeting_id set (action_items table DROPPED, backlog #742, 2026-07-16 —
+-- see api/schema-v99-drop-action-items.sql), so they're already covered
+-- by the tasks-title-pattern DELETE below.
 -- milestones + project_documents reference projects.
 
 -- Activity entries for test tasks (replaces task_comments + task_updates, schema-v78)
@@ -79,12 +82,9 @@ DELETE FROM task_subtasks WHERE task_id IN (
 );
 
 -- Meeting-related children
-DELETE FROM action_items WHERE meeting_id IN (
-  SELECT id FROM meetings WHERE
-    LOWER(title) LIKE '\_test\_delete\_%' ESCAPE '\' OR
-    LOWER(title) LIKE 'test\_delete\_%' ESCAPE '\' OR
-    LOWER(title) LIKE 'deep-audit-%'
-);
+-- (action_items DELETE removed here — table DROPPED, backlog #742,
+-- 2026-07-16; action-item rows now live as `tasks` and are caught by the
+-- tasks-title-pattern DELETE further below)
 DELETE FROM agenda_items WHERE meeting_id IN (
   SELECT id FROM meetings WHERE
     LOWER(title) LIKE '\_test\_delete\_%' ESCAPE '\' OR

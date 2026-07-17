@@ -10,9 +10,11 @@ DELETE FROM ideas WHERE LOWER(title) LIKE 'test_delete_%' OR LOWER(description) 
 
 DELETE FROM hub_decisions WHERE LOWER(title) LIKE 'test_delete_%';
 
--- agenda_items + action_items + tasks reference meeting_id. Clean cascading.
+-- agenda_items + tasks reference meeting_id. Clean cascading.
+-- (action_items DELETE removed here — table DROPPED, backlog #742,
+-- 2026-07-16; action-item rows now live as `tasks`, already detached by
+-- the meeting_id=NULL UPDATE below)
 DELETE FROM agenda_items WHERE meeting_id IN (SELECT id FROM meetings WHERE LOWER(title) LIKE 'test_delete_%');
-DELETE FROM action_items WHERE meeting_id IN (SELECT id FROM meetings WHERE LOWER(title) LIKE 'test_delete_%');
 UPDATE tasks SET meeting_id = NULL, updated_at = datetime('now') WHERE meeting_id IN (SELECT id FROM meetings WHERE LOWER(title) LIKE 'test_delete_%');
 DELETE FROM meetings WHERE LOWER(title) LIKE 'test_delete_%';
 

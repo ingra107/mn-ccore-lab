@@ -1,6 +1,6 @@
 -- Cleanup all test data tagged with test_delete_ prefix
 -- FK-ordered deletion: dependent records first
--- Usage: npx wrangler d1 execute mnccore-lab --remote --file=scripts/cleanup-test-data.sql
+-- Usage: bash scripts/wrangler-d1 d1 execute mnccore-lab --remote --file=scripts/cleanup-test-data.sql
 
 -- Activity entries on test tasks (task_comments/task_updates dropped schema-v78, 2026-06-10)
 DELETE FROM activity_entries WHERE entity_type = 'task' AND entity_id IN (SELECT id FROM tasks WHERE id LIKE 'test_delete_%' OR title LIKE 'test_delete_%');
@@ -19,7 +19,9 @@ DELETE FROM ideas WHERE id LIKE 'test_delete_%' OR title LIKE 'test_delete_%';
 DELETE FROM hub_decisions WHERE id LIKE 'test_delete_%' OR title LIKE 'test_delete_%';
 
 -- Meetings + agenda + action items
-DELETE FROM action_items WHERE meeting_id IN (SELECT id FROM meetings WHERE id LIKE 'test_delete_%' OR title LIKE 'test_delete_%');
+-- (action_items DELETE removed here — table DROPPED, backlog #742,
+-- 2026-07-16; action-item rows now live as `tasks`, already covered by
+-- the tasks soft-delete above)
 DELETE FROM agenda_items WHERE meeting_id IN (SELECT id FROM meetings WHERE id LIKE 'test_delete_%' OR title LIKE 'test_delete_%');
 DELETE FROM meetings WHERE id LIKE 'test_delete_%' OR title LIKE 'test_delete_%';
 
