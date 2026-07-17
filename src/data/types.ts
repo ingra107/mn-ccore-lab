@@ -62,6 +62,7 @@ export interface Grant {
   pi: string
   proposed?: boolean
   status?: GrantLifecycleStatus | 'Active' | 'Pending' | 'Completed'
+  end_date?: string // ISO date — grant period end, mapped from D1 GrantRow.end_date
   visibility?: 'public' | 'internal' // default: 'public'
 }
 

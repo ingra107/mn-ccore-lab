@@ -73,14 +73,9 @@ export function useLabHealthSignals(options?: { enabled?: boolean }): LabHealthS
       return !isNaN(d) && d < now
     }).length
 
-    // NOTE: Grant (the type useGrants() actually resolves to, via rowToGrant())
-    // carries no date field — end_date/deadline/endDate are all pre-existing
-    // dead reads (always undefined, so this count is always 0 today). Typed
-    // as an intersection rather than `any` to preserve that exact runtime
-    // shape/behavior; not a behavior change, just removing the `any` escape
-    // hatch. Out-of-scope business-logic fix — surfaced separately.
-    const grantDeadlineCount = (grants ?? []).filter((g: Grant & { end_date?: string; deadline?: string; endDate?: string }) => {
-      const deadline = g.end_date || g.deadline || g.endDate
+    // Grants whose period end lands within the next 60 days.
+    const grantDeadlineCount = (grants ?? []).filter((g: Grant) => {
+      const deadline = g.end_date
       if (!deadline) return false
       const d = new Date(deadline).getTime()
       if (isNaN(d)) return false

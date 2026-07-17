@@ -4,7 +4,13 @@ export interface NotificationRow {
   id: string
   recipient_slug: string
   type: string        // 'mention', 'assignment', 'deadline', 'update', 'impact'
-  source_type: string // 'comment', 'project_update', 'action_item', 'project', 'publication'
+  // #737: verified against every `INSERT INTO notifications` site in api/
+  // (tasks.ts, meetings.ts, impact-trace.ts, handoffs.ts, activity-entry.ts,
+  // ledger-retention.ts, ai-requests.ts) on 2026-07-16 — 'action_item' is
+  // stale: the action_items table stopped taking writes ~2026-03-30 (T19/
+  // #547) and was dropped entirely by schema-v99-drop-action-items.sql
+  // (2026-07-16); nothing stamps that value anymore.
+  source_type: string // 'task', 'task_comment', 'artifact_comment', 'project', 'meeting', 'publication', 'ai_request', 'db_health'
   source_id: string
   title: string
   body: string | null

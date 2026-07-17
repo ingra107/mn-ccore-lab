@@ -158,6 +158,7 @@ function rowToGrant(row: GrantRow): Grant {
     pi: row.pi || '',
     proposed: row.proposed === 1,
     status: row.proposed ? 'Pending' : 'Active',
+    end_date: row.end_date || undefined,
   }
 }
 

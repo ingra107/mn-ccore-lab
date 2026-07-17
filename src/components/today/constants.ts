@@ -226,12 +226,31 @@ export function normalizeMeetingTitle(title: string): string {
 // Bridge personal-calendar rows to D1 meeting records. ID spaces differ by
 // construction (feed ids vs PB cal- mints), so date + normalized title is the
 // join; nearest start time breaks same-title ties.
+//
+// #549: D1 `meetings` rows are date-only today (see TodayPage.tsx's own
+// "date-only, no time" comment) — `rawMeetings` is never enriched with a
+// `startMin`, so in current production data every tie still falls back to
+// list order below (cands[0]), exactly as before. The tie-break itself is
+// implemented for real so it activates the moment any caller passes
+// candidates carrying `startMin` — no-op today is a data-availability fact,
+// not a stub in this function.
 export function matchMeetingRecord(
   ev: { title: string; startMin?: number },
-  meetings: Array<{ id: string; title: string; date: string; notes?: string | null }>,
+  meetings: Array<{ id: string; title: string; date: string; notes?: string | null; startMin?: number }>,
   normalize: (t: string) => string,
 ): { id: string; notes?: string | null } | undefined {
   const cands = meetings.filter((m) => isToday(m.date) && normalize(m.title) === normalize(ev.title))
   if (cands.length <= 1) return cands[0]
-  return cands[0] // multiple same-title same-day: caller pre-sorts by |startMin delta| if times exist
+  if (ev.startMin == null) return cands[0] // no signal to break the tie on — list order
+  let best = cands[0]
+  let bestDelta = Infinity
+  for (const m of cands) {
+    if (m.startMin == null) continue
+    const delta = Math.abs(m.startMin - ev.startMin)
+    if (delta < bestDelta) {
+      bestDelta = delta
+      best = m
+    }
+  }
+  return best
 }
