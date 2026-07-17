@@ -5,6 +5,7 @@ import { useAddProjectDocument, useDeleteProjectDocument } from '../../hooks/use
 import type { ProjectDocumentRow } from '../../hooks/useApiData'
 import InlineSelect from '../../components/InlineSelect'
 import { ICON_PROPS } from '../../lib/iconProps'
+import { Button } from '../../components/ui/Button'
 
 interface ProjectDocumentsProps {
   projectSlug: string
@@ -158,12 +159,10 @@ export default function ProjectDocuments({ projectSlug }: ProjectDocumentsProps)
                   >
                     {config.label}
                   </span>
-                  <button
+                  <Button
+                    variant="ghost"
                     onClick={() => handleDelete(doc.id)}
                     style={{
-                      background: 'none',
-                      border: 'none',
-                      cursor: 'pointer',
                       padding: '2px',
                       color: 'var(--slate)',
                       opacity: hoveredId === doc.id ? 0.85 : 0,
@@ -174,7 +173,7 @@ export default function ProjectDocuments({ projectSlug }: ProjectDocumentsProps)
                     aria-label="Remove document link"
                   >
                     <X {...ICON_PROPS} size={14} />
-                  </button>
+                  </Button>
                 </div>
               )
             })}
@@ -221,37 +220,40 @@ export default function ProjectDocuments({ projectSlug }: ProjectDocumentsProps)
               const config = DOC_TYPE_CONFIG[preset.doc_type]
               const Icon = config.icon
               return (
-                <button
+                <Button
                   key={preset.doc_type}
+                  variant="secondary"
                   onClick={() => handlePreset(preset)}
                   className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-colors"
                   style={{
                     background: 'transparent',
                     color: 'var(--slate)',
-                    border: '1px solid var(--border-subtle)',
-                    cursor: 'pointer',
+                    padding: '6px 10px',
+                    borderRadius: 'var(--radius-lg)',
                     opacity: 0.85,
                   }}
                 >
                   <Icon {...ICON_PROPS} size={12} style={{ color: config.color }} />
                   {preset.label}
-                </button>
+                </Button>
               )
             })}
-            <button
+            <Button
+              variant="secondary"
               onClick={() => { setShowForm(true); setDocType('link'); setUrlPlaceholder('https://...') }}
               className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-colors"
               style={{
                 background: 'transparent',
                 color: 'var(--teal)',
                 border: '1px solid var(--teal)',
-                cursor: 'pointer',
+                padding: '6px 10px',
+                borderRadius: 'var(--radius-lg)',
                 opacity: 0.8,
               }}
             >
               <Plus {...ICON_PROPS} size={12} />
               Other
-            </button>
+            </Button>
           </div>
         )}
 
@@ -277,14 +279,12 @@ export default function ProjectDocuments({ projectSlug }: ProjectDocumentsProps)
                 onChange={(v) => setDocType(v as ProjectDocumentRow['doc_type'])}
                 alwaysShowChevron
               />
-              <button
+              <Button
+                variant="ghost"
                 type="button"
                 onClick={() => { setShowForm(false); setTitle(''); setUrl('') }}
                 style={{
                   marginLeft: 'auto',
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
                   color: 'var(--slate)',
                   opacity: 0.75,
                   padding: '2px',
@@ -292,7 +292,7 @@ export default function ProjectDocuments({ projectSlug }: ProjectDocumentsProps)
                 aria-label="Cancel"
               >
                 <X {...ICON_PROPS} size={14} />
-              </button>
+              </Button>
             </div>
             <div className="flex flex-col gap-2">
               <input
@@ -329,33 +329,36 @@ export default function ProjectDocuments({ projectSlug }: ProjectDocumentsProps)
               />
             </div>
             <div className="flex items-center gap-2 mt-2">
-              <button
+              <Button
+                variant="primary"
                 type="submit"
                 disabled={!title.trim() || !url.trim()}
                 className="px-3 py-1.5 rounded-md text-xs font-medium"
                 style={{
                   background: title.trim() && url.trim() ? 'var(--teal-solid)' : 'var(--slate)',
                   color: 'var(--ink-bright, #fff)',
-                  border: 'none',
+                  padding: '6px 12px',
+                  borderRadius: 'var(--radius-md)',
                   cursor: title.trim() && url.trim() ? 'pointer' : 'not-allowed',
                   opacity: title.trim() && url.trim() ? 1 : 0.85,
                 }}
               >
                 Add Link
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="secondary"
                 type="button"
                 onClick={() => { setShowForm(false); setTitle(''); setUrl('') }}
                 className="px-3 py-1.5 rounded-md text-xs"
                 style={{
                   color: 'var(--slate)',
                   background: 'none',
-                  border: '1px solid var(--border-subtle)',
-                  cursor: 'pointer',
+                  padding: '6px 12px',
+                  borderRadius: 'var(--radius-md)',
                 }}
               >
                 Cancel
-              </button>
+              </Button>
             </div>
           </form>
         )}

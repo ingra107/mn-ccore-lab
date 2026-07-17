@@ -6,6 +6,7 @@ import { useUndoToast } from './UndoToast'
 import InlineSelect from './InlineSelect'
 import { nowInstant } from '../lib/time'
 import { ICON_PROPS } from '../lib/iconProps'
+import { Button } from './ui/Button'
 
 type InboxTag = 'note' | 'idea' | 'decision' | 'follow-up' | 'meeting-note'
 
@@ -218,22 +219,20 @@ export default function QuickCaptureInbox() {
               → Peripheral Brain
             </span>
           </h2>
-          <button
+          <Button
+            variant="ghost"
             type="button"
             onClick={close}
             aria-label="Close"
             style={{
-              background: 'transparent',
-              border: 'none',
               padding: 'var(--sp-xs)',
-              cursor: 'pointer',
               color: 'var(--ink-muted, var(--slate))',
               borderRadius: 'var(--radius-sm)',
               display: 'flex',
             }}
           >
             <X {...ICON_PROPS} size={16} />
-          </button>
+          </Button>
         </div>
 
         {/* Textarea */}
@@ -347,23 +346,23 @@ export default function QuickCaptureInbox() {
             Ctrl+Enter to save · Esc to cancel
           </span>
           <div style={{ display: 'flex', gap: 'var(--sp-sm)' }}>
-            <button
+            <Button
+              variant="secondary"
               type="button"
               onClick={close}
               style={{
                 padding: '6px 12px',
                 background: 'transparent',
-                border: '1px solid var(--border-subtle)',
                 borderRadius: 'var(--radius-md)',
                 color: 'var(--ink-muted, var(--slate))',
                 fontSize: 'var(--text-small, 12px)',
                 fontWeight: 500,
-                cursor: 'pointer',
               }}
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="primary"
               type="button"
               onClick={submit}
               disabled={!text.trim() || submitting}
@@ -385,7 +384,7 @@ export default function QuickCaptureInbox() {
             >
               <Send {...ICON_PROPS} size={12} />
               Capture
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -417,7 +416,8 @@ export default function QuickCaptureInbox() {
   return (
     <>
       {/* FAB: positioned above the existing quick-add FAB (bottom: ~36px) */}
-      <button
+      <Button
+        variant="ghost"
         type="button"
         onClick={() => setOpen(true)}
         aria-label="Quick capture to inbox (Ctrl+I)"
@@ -433,13 +433,12 @@ export default function QuickCaptureInbox() {
           color: 'var(--teal)',
           border: 'none',
           boxShadow: 'var(--shadow-card, 0 2px 8px rgba(0,0,0,0.15))',
-          cursor: 'pointer',
           zIndex: 'var(--z-sticky)' as unknown as number,
           opacity: 0.9,
         }}
       >
         <Inbox size={18} strokeWidth={2} />
-      </button>
+      </Button>
 
       {typeof document !== 'undefined' && sheet
         ? createPortal(sheet, document.body)

@@ -5,6 +5,7 @@ import { normalizeLink } from '../lib/pbLinks.generated'
 import { iconForType } from '../lib/linkIcon'
 import { useProtocolLaunch } from '../hooks/useProtocolLaunch'
 import { ICON_PROPS } from '../lib/iconProps'
+import { Button } from './ui/Button'
 
 // Shared editor for the 3-slot key_link_1/2/3 + _desc pattern used on tasks
 // and projects. Display mode shows Mode-A labeled chips (neutral ice/slate pill
@@ -99,24 +100,26 @@ function LinkRow({
       >
         {displayLabel}
       </a>
-      <button
+      <Button
+        variant="ghost"
         onClick={onEdit}
         data-tip="Edit link"
         aria-label="Edit link"
         className="opacity-0 group-hover:opacity-100 transition-opacity tip"
-        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: 0, display: 'grid', flexShrink: 0 }}
+        style={{ color: 'var(--slate)', padding: 0, display: 'grid', flexShrink: 0 }}
       >
         <Pencil {...ICON_PROPS} size={11} />
-      </button>
-      <button
+      </Button>
+      <Button
+        variant="ghost"
         onClick={onRemove}
         data-tip="Remove link"
         aria-label="Remove link"
         className="tip"
-        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: 0, display: 'grid', flexShrink: 0, opacity: 0.7 }}
+        style={{ color: 'var(--slate)', padding: 0, display: 'grid', flexShrink: 0, opacity: 0.7 }}
       >
         <X {...ICON_PROPS} size={12} />
-      </button>
+      </Button>
     </span>
   )
 }
@@ -175,40 +178,38 @@ function LinkForm({
         style={inputStyle}
       />
       <div className="flex items-center gap-2 justify-end">
-        <button
+        <Button
+          variant="secondary"
           onClick={onCancel}
           style={{
-            background: 'none',
-            border: '1px solid var(--border-subtle)',
             borderRadius: 'var(--radius-md)',
             padding: '4px 10px',
             fontSize: 'var(--text-small)',
-            color: 'var(--slate)',
-            cursor: 'pointer',
           }}
           className="tip"
           data-tip="Cancel (Esc)"
         >
           <X {...ICON_PROPS} size={12} style={{ display: 'inline', marginRight: 4 }} /> Cancel
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="primary"
           onClick={() => canSave && onSave({ url: url.trim(), desc: desc.trim() || null })}
           disabled={!canSave}
           style={{
             background: canSave ? 'var(--teal-solid)' : 'var(--border-subtle)',
-            border: 'none',
             borderRadius: 'var(--radius-md)',
             padding: '4px 10px',
             fontSize: 'var(--text-small)',
             color: canSave ? 'var(--ink-bright)' : 'var(--slate)',
             cursor: canSave ? 'pointer' : 'not-allowed',
             fontWeight: 500,
+            opacity: 1,
           }}
           className="tip"
           data-tip="Save (Ctrl+Enter)"
         >
           <Check {...ICON_PROPS} size={12} style={{ display: 'inline', marginRight: 4 }} /> Save
-        </button>
+        </Button>
       </div>
     </div>
   )
@@ -302,18 +303,16 @@ export default function KeyLinksEditor({ links, onSave, hideLabel = false, maxSl
         {canAdd && !addingNew && (
           // Quiet text button — no dashed box. Resting: ghost text.
           // Hover: subtle tint appears, opacity lifts.
-          <button
+          <Button
+            variant="ghost"
             onClick={() => setAddingNew(true)}
             aria-label={populated.length === 0 ? 'Add a key link' : 'Add another key link'}
             className="flex items-center gap-1 self-start rounded transition-colors hov-opacity hov-bg"
             style={{
-              background: 'none',
-              border: 'none',
               padding: '3px 4px',
               fontSize: 'var(--text-small)',
               color: 'var(--teal)',
               opacity: 0.75,
-              cursor: 'pointer',
               fontFamily: 'inherit',
               '--hov-opacity': '1',
               '--hov-bg': 'var(--teal-hover)',
@@ -321,7 +320,7 @@ export default function KeyLinksEditor({ links, onSave, hideLabel = false, maxSl
           >
             <Plus {...ICON_PROPS} size={11} />
             {populated.length === 0 ? 'Add a key link' : 'Add another'}
-          </button>
+          </Button>
         )}
       </div>
     </div>

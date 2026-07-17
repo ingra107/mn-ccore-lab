@@ -2,7 +2,7 @@ import { memo, useMemo, useState, useEffect, useRef } from 'react'
 import { Tags } from 'lucide-react'
 import BentoCard from './BentoCard'
 import { usePublications } from '../../hooks/useApiData'
-import { useDashboardMounted } from '../../pages/Dashboard'
+import { useDashboardMounted } from './dashboardMounted'
 
 const TOPIC_DISPLAY: Record<string, string> = {
   clif: 'CLIF',

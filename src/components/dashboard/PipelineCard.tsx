@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { GitBranch } from 'lucide-react'
 import BentoCard from './BentoCard'
 import { usePublications } from '../../hooks/useApiData'
-import { useDashboardMounted } from '../../pages/Dashboard'
+import { useDashboardMounted } from './dashboardMounted'
 import { ACCENT_GOLD, withAlpha } from '../../lib/taskGrouping'
 
 interface Stage {

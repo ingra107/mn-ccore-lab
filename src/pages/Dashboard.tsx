@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect, createContext, useContext } from 'react'
+import { useState, useCallback, useMemo, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { ChevronDown, ChevronUp, Settings2, Plus, CalendarPlus, FolderPlus, Pin, RotateCcw, Clock, AlertTriangle } from 'lucide-react'
 import DashboardGrid from '../components/dashboard/DashboardGrid'
@@ -41,17 +41,7 @@ import LabHealthScore from '../components/dashboard/LabHealthScore'
 import StatusLine from '../components/dashboard/StatusLine'
 import QuickCaptureBar from '../components/QuickCaptureBar'
 import { ACCENT_GOLD, PANEL_BG, withAlpha } from '../lib/taskGrouping'
-
-// Context to defer non-critical queries until after first paint.
-// react-refresh/only-export-components: a real fix means moving this
-// context+hook to a dedicated file, but 4 consumers outside this eslint
-// partition (src/components/dashboard/*) import it via
-// `'../../pages/Dashboard'` — relocating without updating those import
-// paths would break them, and those files are out of scope this wave.
-// eslint-disable-next-line react-refresh/only-export-components
-export const DashboardMountedContext = createContext(false)
-// eslint-disable-next-line react-refresh/only-export-components
-export function useDashboardMounted() { return useContext(DashboardMountedContext) }
+import { DashboardMountedContext } from '../components/dashboard/dashboardMounted'
 
 // Tab categories for card filtering
 type DashboardTab = 'overview' | 'projects' | 'people' | 'deadlines'

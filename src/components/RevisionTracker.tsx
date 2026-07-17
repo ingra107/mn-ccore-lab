@@ -37,6 +37,7 @@ import EmptyState from './EmptyState'
 import { getStatusBg } from '../lib/statusColors'
 import { PATHS } from '../constants/paths'
 import { ICON_PROPS } from '../lib/iconProps'
+import { Button } from './ui/Button'
 
 // ── Constants ──
 
@@ -125,7 +126,8 @@ export default function RevisionTracker({ projectId }: RevisionTrackerProps) {
             </span>
           )}
         </div>
-        <button
+        <Button
+          variant="secondary"
           onClick={() => setShowAddForm(!showAddForm)}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hov-bg"
           style={{
@@ -133,15 +135,15 @@ export default function RevisionTracker({ projectId }: RevisionTrackerProps) {
             color: 'var(--teal)',
             fontSize: '12px',
             fontWeight: 500,
-            border: '1px solid var(--border-subtle)',
-            cursor: 'pointer',
+            padding: '6px 12px',
+            borderRadius: 'var(--radius-lg)',
             transition: 'background 150ms ease-out',
             '--hov-bg': 'var(--teal-hover)',
           } as React.CSSProperties}
         >
           <Plus {...ICON_PROPS} size={14} />
           Add Round
-        </button>
+        </Button>
       </div>
 
       {/* Add round form */}
@@ -214,7 +216,8 @@ export default function RevisionTracker({ projectId }: RevisionTrackerProps) {
                     }}
                   />
                 </div>
-                <button
+                <Button
+                  variant="primary"
                   onClick={handleAddRound}
                   className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg"
                   style={{
@@ -222,14 +225,14 @@ export default function RevisionTracker({ projectId }: RevisionTrackerProps) {
                     color: 'var(--ink-bright, #fff)',
                     fontSize: 'var(--value-size)',
                     fontWeight: 500,
-                    border: 'none',
-                    cursor: 'pointer',
+                    padding: '6px 16px',
+                    borderRadius: 'var(--radius-lg)',
                     transition: 'opacity 150ms',
                   }}
                 >
                   <Send {...ICON_PROPS} size={13} />
                   Create
-                </button>
+                </Button>
               </div>
             </div>
           </motion.div>
@@ -300,7 +303,8 @@ function RevisionRound({ revision, projectId, isExpanded, onToggle, onStatusChan
       }}
     >
       {/* Round header */}
-      <button
+      <Button
+        variant="ghost"
         onClick={onToggle}
         className="w-full text-left hov-bg"
         style={{
@@ -309,9 +313,6 @@ function RevisionRound({ revision, projectId, isExpanded, onToggle, onStatusChan
           alignItems: 'center',
           gap: '12px',
           padding: '14px 16px',
-          background: 'none',
-          border: 'none',
-          cursor: 'pointer',
           transition: 'background 150ms',
           '--hov-bg': 'var(--gold-hover)',
         } as React.CSSProperties}
@@ -405,7 +406,7 @@ function RevisionRound({ revision, projectId, isExpanded, onToggle, onStatusChan
             <ChevronRight {...ICON_PROPS} size={16} style={{ color: 'var(--slate)', opacity: 0.75 }} />
           )}
         </div>
-      </button>
+      </Button>
 
       {/* Expanded comments section */}
       <AnimatePresence>
@@ -616,40 +617,38 @@ function RevisionCommentsList({ revisionId, projectId }: RevisionCommentsListPro
                                   autoFocus
                                 />
                                 <div className="flex flex-col gap-1">
-                                  <button
+                                  <Button
+                                    variant="primary"
                                     onClick={() => handleSaveResponse(comment.id)}
                                     style={{
                                       fontSize: 'var(--label-size)',
                                       color: 'var(--ink-bright, #fff)',
                                       background: 'var(--teal-solid)',
-                                      border: 'none',
                                       borderRadius: 'var(--radius-md)',
                                       padding: '4px 10px',
-                                      cursor: 'pointer',
                                     }}
                                   >
                                     Save
-                                  </button>
-                                  <button
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
                                     onClick={() => setEditingResponse(null)}
                                     style={{
                                       fontSize: 'var(--label-size)',
                                       color: 'var(--slate)',
-                                      background: 'none',
-                                      border: 'none',
-                                      cursor: 'pointer',
                                       padding: '4px 10px',
                                     }}
                                   >
                                     Cancel
-                                  </button>
+                                  </Button>
                                 </div>
                               </div>
                             )}
 
                             {/* Add response link (when no response yet) */}
                             {!comment.response_text && editingResponse !== comment.id && (
-                              <button
+                              <Button
+                                variant="ghost"
                                 onClick={() => {
                                   setEditingResponse(comment.id)
                                   setResponseDraft('')
@@ -658,16 +657,13 @@ function RevisionCommentsList({ revisionId, projectId }: RevisionCommentsListPro
                                   fontSize: 'var(--label-size)',
                                   color: 'var(--teal)',
                                   opacity: 0.85,
-                                  background: 'none',
-                                  border: 'none',
-                                  cursor: 'pointer',
                                   padding: 'var(--sp-xs) 0 0',
                                   marginTop: 'var(--sp-xs)',
                                   display: 'block',
                                 }}
                               >
                                 + Add response
-                              </button>
+                              </Button>
                             )}
                           </div>
 
@@ -715,22 +711,20 @@ function RevisionCommentsList({ revisionId, projectId }: RevisionCommentsListPro
       {/* Add comment button / form */}
       <div style={{ marginTop: '12px' }}>
         {!showAddComment ? (
-          <button
+          <Button
+            variant="ghost"
             onClick={() => setShowAddComment(true)}
             className="flex items-center gap-1.5"
             style={{
               fontSize: '12px',
               color: 'var(--teal)',
               opacity: 0.85,
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
               padding: 0,
             }}
           >
             <Plus {...ICON_PROPS} size={14} />
             Add Comment
-          </button>
+          </Button>
         ) : (
           <motion.div
             initial={{ opacity: 0, y: 4 }}
@@ -800,7 +794,8 @@ function RevisionCommentsList({ revisionId, projectId }: RevisionCommentsListPro
               autoFocus
             />
             <div className="flex items-center gap-2">
-              <button
+              <Button
+                variant="primary"
                 onClick={handleAddComment}
                 disabled={!newCommentText.trim()}
                 className="flex items-center gap-1.5 px-3 py-1 rounded-md"
@@ -809,15 +804,17 @@ function RevisionCommentsList({ revisionId, projectId }: RevisionCommentsListPro
                   fontWeight: 500,
                   color: 'var(--ink-bright, #fff)',
                   background: newCommentText.trim() ? 'var(--teal-solid)' : 'var(--slate)',
-                  border: 'none',
+                  padding: '4px 12px',
+                  borderRadius: 'var(--radius-md)',
                   cursor: newCommentText.trim() ? 'pointer' : 'not-allowed',
                   opacity: newCommentText.trim() ? 1 : 0.85,
                 }}
               >
                 <Plus {...ICON_PROPS} size={13} />
                 Add
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="ghost"
                 onClick={() => {
                   setShowAddComment(false)
                   setNewCommentText('')
@@ -825,14 +822,11 @@ function RevisionCommentsList({ revisionId, projectId }: RevisionCommentsListPro
                 style={{
                   fontSize: '12px',
                   color: 'var(--slate)',
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
                   padding: 'var(--sp-xs) var(--sp-sm)',
                 }}
               >
                 Cancel
-              </button>
+              </Button>
             </div>
           </motion.div>
         )}

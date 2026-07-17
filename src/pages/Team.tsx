@@ -13,6 +13,7 @@ import { mentees } from '../data/mentees'
 import { displayName } from '../lib/nameUtils'
 import { ICON_PROPS } from '../lib/iconProps'
 import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
+import { Button } from '../components/ui/Button'
 
 export default function Team() {
   const { data: publications = [] } = usePublications()
@@ -128,24 +129,26 @@ export default function Team() {
         <section className="py-3 content-container">
           <div className="flex flex-wrap items-center gap-2">
             {expertiseFilter && (
-              <button
+              <Button
+                variant="primary"
                 onClick={() => setSearchParams({})}
                 className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] transition-colors"
                 style={{
                   fontWeight: 400,
                   background: 'var(--teal-solid)',
                   color: 'var(--ink-bright, #fff)',
-                  border: 'none',
-                  cursor: 'pointer',
+                  padding: '4px 10px',
+                  borderRadius: 'var(--radius-full)',
                 }}
               >
                 {expertiseFilter}
                 <X {...ICON_PROPS} size={10} />
-              </button>
+              </Button>
             )}
             {!expertiseFilter && allTags.slice(0, 12).map(({ tag, count }) => (
-              <button
+              <Button
                 key={tag}
+                variant="secondary"
                 onClick={() => setSearchParams({ expertise: tag })}
                 className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] hover:opacity-80"
                 style={{
@@ -153,13 +156,14 @@ export default function Team() {
                   background: 'var(--teal-active)',
                   color: 'var(--teal)',
                   border: '1px solid rgba(45,138,138,0.2)',
-                  cursor: 'pointer',
+                  padding: '4px 10px',
+                  borderRadius: 'var(--radius-full)',
                   transition: 'opacity var(--duration-normal, 150ms) var(--ease-out)',
                 }}
               >
                 {tag}
                 <span style={{ opacity: 0.85, fontSize: '10px' }}>{count}</span>
-              </button>
+              </Button>
             ))}
           </div>
         </section>

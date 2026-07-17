@@ -29,6 +29,7 @@ import EmptyState from './EmptyState'
 import InlineSelect from './InlineSelect'
 import { getStatusColor, getStatusBg } from '../lib/statusColors'
 import { ICON_PROPS } from '../lib/iconProps'
+import { Button } from './ui/Button'
 
 // ── Event config ──
 
@@ -228,30 +229,28 @@ function AddEventForm({
       </div>
 
       <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-        <button
+        <Button
+          variant="secondary"
           type="button"
           onClick={onClose}
           style={{
             padding: '5px 14px',
             fontSize: '12px',
             fontWeight: 'var(--label-weight)',
-            borderRadius: 'var(--radius-md)',
-            border: '1px solid var(--border-subtle)',
             background: 'transparent',
             color: 'var(--slate)',
-            cursor: 'pointer',
           }}
         >
           Cancel
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="primary"
           type="submit"
           disabled={createEvent.isPending}
           style={{
             padding: '5px 14px',
             fontSize: '12px',
             fontWeight: 600,
-            borderRadius: 'var(--radius-md)',
             border: '1px solid var(--teal)',
             background: 'var(--teal-solid)',
             color: 'var(--ink-bright, #fff)',
@@ -260,7 +259,7 @@ function AddEventForm({
           }}
         >
           {createEvent.isPending ? 'Adding...' : 'Add Event'}
-        </button>
+        </Button>
       </div>
     </motion.form>
   )
@@ -372,15 +371,14 @@ function TimelineEvent({
           </span>
 
           {/* Delete button */}
-          <button
+          <Button
+            variant="ghost"
             onClick={(e) => { e.stopPropagation(); onDelete(event.id) }}
             title="Delete event"
             style={{
               marginLeft: 'auto',
               padding: '2px',
               background: 'transparent',
-              border: 'none',
-              cursor: 'pointer',
               color: 'var(--slate)',
               opacity: 0.75,
               transition: 'opacity 0.15s',
@@ -389,7 +387,7 @@ function TimelineEvent({
             onMouseLeave={(e) => { (e.target as HTMLElement).style.opacity = '0.3' }}
           >
             <Trash2 {...ICON_PROPS} size={12} />
-          </button>
+          </Button>
         </div>
 
         {/* Journal */}
@@ -443,7 +441,8 @@ export default function SubmissionTimeline({ projectId }: { projectId: string })
             </span>
           )}
         </div>
-        <button
+        <Button
+          variant="secondary"
           onClick={() => setShowAdd(!showAdd)}
           style={{
             display: 'flex',
@@ -452,11 +451,8 @@ export default function SubmissionTimeline({ projectId }: { projectId: string })
             padding: '4px 10px',
             fontSize: '12px',
             fontWeight: 'var(--label-weight)',
-            borderRadius: 'var(--radius-md)',
-            border: '1px solid var(--border-subtle)',
             background: 'transparent',
             color: 'var(--teal)',
-            cursor: 'pointer',
             transition: 'background 0.12s ease-out',
           }}
           onMouseEnter={(e) => { (e.target as HTMLElement).style.background = 'var(--teal-hover)' }}
@@ -464,7 +460,7 @@ export default function SubmissionTimeline({ projectId }: { projectId: string })
         >
           <Plus {...ICON_PROPS} size={12} />
           Add Event
-        </button>
+        </Button>
       </div>
 
       {/* Add event form */}

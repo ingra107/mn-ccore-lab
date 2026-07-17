@@ -9,6 +9,7 @@ import { useCreateConference, useUpdateConference, useDeleteConference } from '.
 import { formatShortDate, localDateKey, isOverdue } from '../lib/dateUtils'
 import type { ConferenceSubmissionRow, ConferenceSubmissionType, ConferenceStatus, MaterialsStatus } from '../lib/api'
 import { ICON_PROPS } from '../lib/iconProps'
+import { Button } from './ui/Button'
 
 const STATUS_OPTIONS: { value: ConferenceStatus; label: string; color: string }[] = [
   { value: 'planning', label: 'Planning', color: 'var(--slate)' },
@@ -252,12 +253,10 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
 
                   {/* Travel */}
                   <td style={{ padding: 'var(--sp-sm)', textAlign: 'center' }}>
-                    <button
+                    <Button
+                      variant="ghost"
                       onClick={() => handleTravelToggle(conf)}
                       style={{
-                        background: 'none',
-                        border: 'none',
-                        cursor: 'pointer',
                         padding: '2px',
                         display: 'inline-flex',
                         alignItems: 'center',
@@ -275,18 +274,16 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
                       {conf.travel_booked ? (
                         <Check {...ICON_PROPS} size={10} style={{ color: 'var(--teal)' }} />
                       ) : null}
-                    </button>
+                    </Button>
                   </td>
 
                   {/* Delete */}
                   <td style={{ padding: 'var(--sp-sm)' }}>
-                    <button
+                    <Button
+                      variant="ghost"
                       onClick={() => handleDelete(conf)}
                       className="hov-opacity hov-color"
                       style={{
-                        background: 'none',
-                        border: 'none',
-                        cursor: 'pointer',
                         color: 'var(--slate)',
                         opacity: 0.75,
                         padding: '2px',
@@ -295,7 +292,7 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
                       } as React.CSSProperties}
                     >
                       <Trash2 {...ICON_PROPS} size={12} />
-                    </button>
+                    </Button>
                   </td>
                 </tr>
               ))}
@@ -385,7 +382,8 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
             />
           </div>
           <div style={{ display: 'flex', gap: '8px' }}>
-            <button
+            <Button
+              variant="primary"
               onClick={handleAdd}
               disabled={!form.conference.trim() || !form.title.trim()}
               style={{
@@ -393,7 +391,6 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
                 fontWeight: 'var(--label-weight)',
                 padding: '5px 14px',
                 borderRadius: 'var(--radius-md)',
-                border: 'none',
                 background: 'var(--teal-solid)',
                 color: 'var(--ink-bright, #fff)',
                 cursor: !form.conference.trim() || !form.title.trim() ? 'not-allowed' : 'pointer',
@@ -401,25 +398,25 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
               }}
             >
               Add
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="secondary"
               onClick={() => setShowForm(false)}
               style={{
                 fontSize: 'var(--label-size)',
                 padding: '5px 14px',
                 borderRadius: 'var(--radius-md)',
-                border: '1px solid var(--border-subtle)',
                 background: 'none',
                 color: 'var(--slate)',
-                cursor: 'pointer',
               }}
             >
               Cancel
-            </button>
+            </Button>
           </div>
         </div>
       ) : (
-        <button
+        <Button
+          variant="ghost"
           onClick={() => setShowForm(true)}
           className="hov-opacity"
           style={{
@@ -429,9 +426,6 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
             marginTop: activeConfs.length > 0 ? '8px' : '0',
             fontSize: 'var(--label-size)',
             color: 'var(--teal)',
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
             padding: 'var(--sp-xs) 0',
             opacity: 0.85,
             '--hov-opacity': '1',
@@ -439,7 +433,7 @@ export default function ConferencePrep({ projectId }: ConferencePrepProps) {
         >
           <Plus {...ICON_PROPS} size={12} />
           Add Submission
-        </button>
+        </Button>
       )}
 
       {/* Empty state */}
