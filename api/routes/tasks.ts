@@ -167,7 +167,7 @@ export async function handleUpdateTaskStatus(id: string, request: Request, user:
     return error('status must be one of: todo, in_progress, done, blocked, waiting_external', 400);
   }
 
-  const item = await env.DB.prepare('SELECT * FROM tasks WHERE id = ?').bind(id).first<{ title: string; description: string; assignee: string; assigned_by: string | null }>();
+  const item = await env.DB.prepare('SELECT title, description, assigned_by FROM tasks WHERE id = ?').bind(id).first<{ title: string; description: string; assigned_by: string | null }>();
   if (!item) return error('Task not found', 404);
 
   const completed = body.status === 'done' ? 1 : 0;
@@ -1025,7 +1025,7 @@ export async function handleDeleteTask(id: string, request: Request, user: AuthU
 // stamped). No raw UPDATE remains here; route_no_raw_writes.test.ts guards
 // this function like any other.
 export async function handleAcknowledgeTask(id: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
-  const task = await env.DB.prepare('SELECT * FROM tasks WHERE id = ?').bind(id).first<{ title: string; description: string; assignee: string; assigned_by: string | null; acknowledged_at: string | null; project_id: string | null }>();
+  const task = await env.DB.prepare('SELECT title, description, assigned_by, acknowledged_at, project_id FROM tasks WHERE id = ?').bind(id).first<{ title: string; description: string; assigned_by: string | null; acknowledged_at: string | null; project_id: string | null }>();
   if (!task) return error('Task not found', 404);
 
   // T1.1: PB-visibility gate. Non-PI callers cannot acknowledge tasks attached
