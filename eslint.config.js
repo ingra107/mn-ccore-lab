@@ -6,13 +6,30 @@ import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  // Gate scope = product surface (src/ + api/). Test scaffolding and the
-  // separate hub-realtime worker package carry their own legitimate `any`,
-  // empty catches, and intentionally-unused fixture vars; linting them here
-  // only adds noise that masks real product-surface regressions.
-  globalIgnores(['dist', 'tests/**', 'workers/**', '**/*.test.ts']),
+  // Gate scope = product surface (src/ + api/), enforced as an ALLOWLIST via
+  // `files` below rather than a blocklist of everything else. Test
+  // scaffolding, the separate hub-realtime worker package, one-off audit/
+  // seed/preflight tooling under scripts/, and ad-hoc scratch dirs
+  // (.audit-scratch/, .stitch/, review/) all carry their own legitimate
+  // `any`, empty catches, and intentionally-unused fixture vars; linting
+  // them here only adds noise that masks real product-surface regressions.
+  // An allowlist means a newly-added scratch/tooling dir is never
+  // accidentally swept in (backlog #753, 2026-07-18: `eslint .` had drifted
+  // to 217 problems, 204 of them outside src/+api/, because globalIgnores
+  // was a blocklist that named `tests/**`/`workers/**` but not the four
+  // non-product dirs that had since sprung up: scripts/, .audit-scratch/,
+  // .stitch/, review/). `**/*.test.ts` stays ignored within the allowlist
+  // too (unit-test fixtures carry legitimate `any`/unused vars per the
+  // original c8f18c55 scoping decision) -- without it, switching to an
+  // allowlist would newly lint every co-located `src/**/*.test.ts` /
+  // `api/**/*.test.ts` file and regrow errors the ratchet never covered.
+  // `.wrangler/` is wrangler's gitignored local-dev cache (`.gitignore:25`) --
+  // ESLint still walks its generated `.js` bundles regardless of the `files`
+  // allowlist above (a base linterOption, not a rule, fires on them) and
+  // flags `Unused eslint-disable directive` inside the build output.
+  globalIgnores(['dist', '**/*.test.ts', '.wrangler/**']),
   {
-    files: ['**/*.{ts,tsx}'],
+    files: ['src/**/*.{ts,tsx}', 'api/**/*.{ts,tsx}'],
     extends: [
       js.configs.recommended,
       tseslint.configs.recommended,
