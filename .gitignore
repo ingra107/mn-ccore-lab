@@ -25,6 +25,7 @@ dist-ssr
 .wrangler/
 test-results/
 playwright-report/
+.vitest-attachments/
 .claude/
 
 # Generated SQL (contains brain.db data, regenerated on demand)
