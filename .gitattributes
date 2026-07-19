@@ -1,0 +1,6 @@
+# Keep the cross-repo A3 hash-contract vector file byte-identical to its PB
+# twin (Peripheral-Brain/tests/fixtures/hash_vectors.json). Both are emitted LF
+# by scripts/db/gen_hash_vectors.py; without this pin core.autocrlf=true would
+# rewrite this checkout to CRLF, so the two committed copies would no longer be
+# byte-identical on disk. See PB backlog #730.
+api/routes/hash_vectors.json text eol=lf
