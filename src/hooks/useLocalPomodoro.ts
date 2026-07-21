@@ -18,7 +18,9 @@
 import { useState, useEffect, useCallback } from 'react'
 import { fetchWithTimeout } from '../lib/api'
 
-const POMO_BASE = 'http://localhost:5555'
+// Exported so callers can also open the timer's own web UI (PomodoroControl
+// opens it on Start) without a second hardcoded copy of the origin.
+export const POMO_BASE = 'http://localhost:5555'
 const POLL_MS = 5000    // background status poll (local tick drives display between polls)
 const FETCH_TIMEOUT_MS = 2000
 

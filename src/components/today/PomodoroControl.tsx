@@ -10,9 +10,11 @@
 // at the call site. Only Nick's machine runs the server, so no relay needed.
 
 import { useEffect, useState } from 'react'
-import { useLocalPomodoro } from '../../hooks/useLocalPomodoro'
+import { useLocalPomodoro, POMO_BASE } from '../../hooks/useLocalPomodoro'
 import { useToast } from '../../hooks/useToast'
 import { ACCENT_GOLD, ACCENT_TEAL, withAlpha } from '../../lib/taskGrouping'
+
+const POMO_APP_URL = `${POMO_BASE}/`
 
 function formatElapsed(seconds: number): string {
   const m = Math.floor(seconds / 60)
@@ -54,6 +56,13 @@ export function PomodoroControl() {
   const displayElapsed = status?.active ? localElapsed : (status?.elapsed_seconds ?? 0)
 
   const handleStart = async () => {
+    // Open the local timer UI too, matching Obsidian's ▶ Start (pomo_launch.vbs
+    // opens http://localhost:5555 and then POSTs /api/start) so the session is
+    // visibly tracked. Must fire SYNCHRONOUSLY inside the click handler — after
+    // an await the user gesture is spent and the popup blocker kills it. Safe to
+    // open unconditionally here: this branch only renders when serverReachable.
+    // Named target → repeat clicks reuse the same tab instead of piling up.
+    window.open(POMO_APP_URL, 'pb-focus-timer')
     await start()
     if (serverReachable) showSuccess('Focus timer started')
     // If unreachable, the hook clears serverReachable → button flips to idle state.
