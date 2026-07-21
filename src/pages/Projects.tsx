@@ -713,11 +713,15 @@ export default function Projects() {
                                   ::after; the span keeps aria-label for the full name. */}
                               <span
                                 className="tip"
-                                data-tip={
-                                  project.short_name
-                                    ? `${stripConsortiumPrefix(project.title).clean} · ${project.short_name}`
-                                    : stripConsortiumPrefix(project.title).clean
-                                }
+                                data-tip={(() => {
+                                  const clean = stripConsortiumPrefix(project.title).clean
+                                  // Plenty of projects set short_name to the title
+                                  // verbatim; appending it there reads as a stutter
+                                  // ("Teaching · Teaching"), so only add it when it
+                                  // actually carries something the title doesn't.
+                                  const short = project.short_name?.trim()
+                                  return short && short !== clean ? `${clean} · ${short}` : clean
+                                })()}
                                 style={{ minWidth: 0, flex: 1 }}
                               >
                                 <span
