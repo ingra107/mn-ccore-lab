@@ -90,7 +90,10 @@ function ProjectLinksCell({ links }: { links: StoredLink[] }) {
   const overflow = links.length - visible.length
   return (
     <span
-      style={{ display: 'inline-flex', alignItems: 'center', gap: 3, flexWrap: 'nowrap' }}
+      // minHeight matches the single-line value cells (Status/Stage/PI/Group) so
+      // that under the row grid's align-items:start these icons center on the
+      // SAME line as the values instead of riding ~4px high in the taller track.
+      style={{ display: 'inline-flex', alignItems: 'center', minHeight: 24, gap: 3, flexWrap: 'nowrap' }}
       onClick={(e) => e.preventDefault()}
     >
       {visible.map((link) => {
@@ -646,7 +649,15 @@ export default function Projects() {
                               gridTemplateColumns: 'minmax(320px, 3fr) 110px 110px 120px 80px 90px 52px',
                               padding: `var(--row-padding-y) 24px`,
                               borderBottom: '1px solid var(--border-subtle)',
-                              alignItems: 'center',
+                              // 'start', not 'center': the title cell is a TWO-line
+                              // stack (title + short_name), so it alone sets the grid
+                              // track height (~37px) while every other cell is one
+                              // line. Centering each cell in that track dropped the
+                              // single-line values into the GAP between the title and
+                              // its subtitle — 9px below the title they label, at
+                              // every density (measured 36/44/52px). Starting them
+                              // instead lands them on the title's own line (2px).
+                              alignItems: 'start',
                               cursor: 'pointer',
                               transition: 'background var(--duration-fast) ease-out',
                             }}
@@ -815,7 +826,12 @@ export default function Projects() {
                             {/* PI (inline editable) — S19: resolve the current
                                 value through displayName so a non-director slug
                                 (e.g. "nick") never renders raw in the cell. */}
-                            <div onClick={(e) => e.preventDefault()}>
+                            {/* The wrapper exists only to swallow the click so the row
+                                Link doesn't navigate — it must not also change layout.
+                                As a bare block it left PI/Group as the only two value
+                                columns NOT flex-centered, sitting 2px below Status and
+                                Stage and visibly breaking the value line. */}
+                            <div className="flex items-center" onClick={(e) => e.preventDefault()}>
                               <InlineSelect
                                 value={project.pi || ''}
                                 options={piOptions(project.pi)}
@@ -824,7 +840,7 @@ export default function Projects() {
                             </div>
 
                             {/* Category (inline editable) — 3-bucket canonical */}
-                            <div onClick={(e) => e.preventDefault()}>
+                            <div className="flex items-center" onClick={(e) => e.preventDefault()}>
                               <InlineSelect
                                 value={project.category || ''}
                                 options={[
@@ -843,7 +859,7 @@ export default function Projects() {
                             <div
                               onClick={(e) => { e.preventDefault(); e.stopPropagation() }}
                               onMouseDown={(e) => e.stopPropagation()}
-                              style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}
+                              style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', minHeight: 24 }}
                             >
                               {project.primary_folder && (
                                 <WorkOnActions primaryFolder={project.primary_folder} projectLabel={project.short_name || project.title} variant="compact" />
