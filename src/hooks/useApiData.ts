@@ -158,6 +158,10 @@ export function rowToProject(row: ProjectRow): Project {
     // days-since-meaningful-movement instead of falling back to updated_at.
     last_meaningful_movement: row.last_meaningful_movement || undefined,
     stale_active_since: row.stale_active_since || undefined,
+    // #95: the API's derived `last_activity` rollup → the camelCase field 8 UI
+    // sites already read (Projects sort + "Xd ago" chip, ProjectDetail, Today
+    // relevance). It had NO producer before, so every one of them saw undefined.
+    lastActivity: row.last_activity || undefined,
     // Local working-folder path — drives the mnccore:// "Open folder" /
     // "Work on this in Claude" affordances (ProjectDetail + TaskDetailPanel).
     primary_folder: row.primary_folder || undefined,

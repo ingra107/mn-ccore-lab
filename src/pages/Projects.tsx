@@ -7,6 +7,7 @@ import { usePageMeta } from '../hooks/usePageMeta'
 import { useProjects, useDependencies, useProjectHealth, useTasks } from '../hooks/useApiData'
 import { useLabPrefs } from '../hooks/useLabPrefs'
 import { PANEL_BG, daysSince, withAlpha } from '../lib/taskGrouping'
+import { parseDbUtc } from '../lib/time'
 import { useCreateProject } from '../hooks/useMutations'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { updateProject } from '../lib/api'
@@ -353,10 +354,14 @@ export default function Projects() {
         case 'pi': cmp = (a.pi || '').localeCompare(b.pi || ''); break
         case 'category': cmp = (a.category || '').localeCompare(b.category || ''); break
         case 'activity': {
-          // Most recent activity first. lastActivity is the displayed "Xd ago"
-          // value; fall back to meaningful-movement / updated_at.
-          const tA = Date.parse(a.lastActivity || a.last_meaningful_movement || a.updated_at || '') || 0
-          const tB = Date.parse(b.lastActivity || b.last_meaningful_movement || b.updated_at || '') || 0
+          // Most recent activity first. lastActivity is the real worked-on
+          // signal (#95 — MAX activity_entries: updates documented + tasks
+          // completed within the project); meaningful-movement / updated_at
+          // remain fallbacks for projects with no stream rows yet.
+          // parseDbUtc, not Date.parse: bare D1 stamps are UTC and native
+          // parsing would read them as local (src/lib/time.ts).
+          const tA = parseDbUtc(a.lastActivity || a.last_meaningful_movement || a.updated_at).getTime() || 0
+          const tB = parseDbUtc(b.lastActivity || b.last_meaningful_movement || b.updated_at).getTime() || 0
           cmp = tB - tA
           break
         }
@@ -778,7 +783,7 @@ export default function Projects() {
                               </span>
                               {/* Last activity / staleness indicator */}
                               {project.lastActivity && (() => {
-                                const days = Math.floor((Date.now() - new Date(project.lastActivity!).getTime()) / 86400000)
+                                const days = Math.floor((Date.now() - parseDbUtc(project.lastActivity).getTime()) / 86400000)
                                 if (days < 7) return null
                                 return (
                                   <span style={{

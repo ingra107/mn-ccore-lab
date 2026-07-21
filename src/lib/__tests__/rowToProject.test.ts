@@ -81,6 +81,20 @@ describe('rowToProject — every ProjectRow field the API can return survives th
     expect(project.pi_context).toBeUndefined()
   })
 
+  it('maps the derived last_activity rollup onto lastActivity (#95: previously had NO producer)', () => {
+    // The snake_case→camelCase rename means the spread can't carry this one.
+    // Before #95 nothing ever assigned `lastActivity`, so the Projects list's
+    // activity sort silently fell back to updated_at and its "Xd ago"
+    // staleness chip — gated on `project.lastActivity &&` — never rendered.
+    const project = rowToProject(makeRow({ last_activity: '2026-07-20T17:08:58Z' }))
+    expect(project.lastActivity).toBe('2026-07-20T17:08:58Z')
+  })
+
+  it('coalesces an absent/null last_activity to undefined (project with no stream rows yet)', () => {
+    expect(rowToProject(makeRow({ last_activity: null })).lastActivity).toBeUndefined()
+    expect(rowToProject(makeRow()).lastActivity).toBeUndefined()
+  })
+
   it('a NEW passthrough-shaped field added to ProjectRow requires zero mapper changes', () => {
     // Guards the structural fix itself: any field spread from `row` whose
     // name+shape matches `Project` needs no explicit line in rowToProject.

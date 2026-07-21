@@ -61,6 +61,11 @@ export interface ProjectRow {
   // unified P2-9 staleness basis without re-deriving it from updated_at.
   last_meaningful_movement?: string | null
   stale_active_since?: string | null
+  // #95 (2026-07-21): DERIVED, not a stored column — MAX(activity_entries.created_at)
+  // for this project (its own updates/comments UNION its tasks' lifecycle rows),
+  // emitted as a zoned ISO instant. Present only on the browser list read; the
+  // `seq_after` sync wire is deliberately left as the raw stored row.
+  last_activity?: string | null
   // Local working-folder path (schema v71, returned by GET /api/projects via
   // SELECT *). Drives the mnccore:// "Open folder" / "Work on this in Claude"
   // affordances. NULL for projects without a local/Box working dir.
