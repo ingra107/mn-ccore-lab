@@ -13,12 +13,38 @@
  */
 import { test, expect, go } from './fixtures'
 import { P } from '../../helpers/paths'
+import type { Locator } from '@playwright/test'
 
 const API = 'http://localhost:8787'
 const AUTH = {
   'X-Test-Mode-Key': 'local-test-key-do-not-use-in-prod',
   'X-Test-User': 'ingra107@umn.edu',
   'Content-Type': 'application/json',
+}
+
+/**
+ * Collect the accessible name of every interactive element in a row that is
+ * exposed to assistive tech (aria-hidden subtrees excluded, since those are
+ * deliberately pointer-only duplicates).
+ *
+ * This is the CLASS-level guard, not a spot check: any future control added to
+ * a row that collides with an existing name fails here. The duplicate "Mark
+ * done" defect that shipped in the first cut of this strip was invisible to
+ * review, to tsc, and to 1400 unit tests — only the rendered a11y tree showed
+ * it, and only because a locator resolved to two elements. A named assertion
+ * for that one string would not have caught the NEXT collision.
+ */
+async function accessibleNames(row: Locator): Promise<string[]> {
+  return row.evaluate((el: Element) => {
+    const out: string[] = []
+    const nodes = el.querySelectorAll('button, a[href], input, select, [role="combobox"], [role="button"], [role="link"]')
+    for (const n of Array.from(nodes)) {
+      if (n.closest('[aria-hidden="true"]')) continue
+      const name = (n.getAttribute('aria-label') || n.textContent || '').trim()
+      if (name) out.push(name)
+    }
+    return out
+  })
 }
 
 test.describe('Meeting action items — quick row actions', () => {
@@ -58,6 +84,12 @@ test.describe('Meeting action items — quick row actions', () => {
       // duplicate on the first run of this spec.
       await expect(row.getByRole('button', { name: 'Mark done' })).toHaveCount(1)
 
+      // No two exposed controls on the row may share an accessible name.
+      const names = await accessibleNames(row)
+      expect(names.length).toBeGreaterThan(0)
+      expect(names, `duplicate accessible name(s) on the row: ${names.join(' | ')}`)
+        .toEqual([...new Set(names)])
+
       // One click deletes — no confirm dialog stands in the way.
       await row.hover()
       await row.getByRole('button', { name: 'Delete action item' }).click()
@@ -81,9 +113,12 @@ test.describe('Meeting action items — quick row actions', () => {
   })
 
   // The failure that prompted the whole feature: a meeting's action items landed
-  // on the WRONG project and there was no fast way to move them. The chip has to
-  // (a) read at rest, so a mis-route is spottable, and (b) re-route in one pick.
-  test('project chip re-routes an action item without opening any panel', async ({ journeyPage: page, request }) => {
+  // on the WRONG project and there was no fast way to move them. The row has to
+  // (a) read at rest, so a mis-route is spottable, (b) re-route in one pick, and
+  // (c) still click through to the project (Nick 2026-07-21 — both affordances,
+  // not one). This test drives BOTH paths on the SAME row so their hit areas and
+  // accessible names are proven distinct in situ, not just in isolation.
+  test('project chip re-routes, and the arrow navigates, on the same row', async ({ journeyPage: page, request }) => {
     const meetings = await (await request.get(`${API}/api/meetings`, { headers: AUTH })).json()
     const meetingId = meetings.data[0].id as string
     const projects = await (await request.get(`${API}/api/projects`, { headers: AUTH })).json()
@@ -107,6 +142,9 @@ test.describe('Meeting action items — quick row actions', () => {
       const chip = row.getByRole('combobox', { name: 'Project' })
       await expect(chip).toHaveText(/No project/, { timeout: 5000 })
 
+      // ...and an unrouted row offers NO navigation arrow — there is nowhere to go.
+      await expect(row.getByRole('link', { name: /^Open / })).toHaveCount(0)
+
       await chip.click()
       await page.getByRole('option', { name: target.title, exact: true }).first().click()
 
@@ -116,6 +154,30 @@ test.describe('Meeting action items — quick row actions', () => {
       const after = await (await request.get(`${API}/api/meetings/${meetingId}`, { headers: AUTH })).json()
       const moved = after.data.action_items.find((a: { id: string }) => a.id === taskId)
       expect(moved.project_id).toBe(target.slug)
+
+      // Now that the row IS routed, the navigation arrow appears alongside the
+      // picker — two controls, still no name collision.
+      const navLink = row.getByRole('link', { name: `Open ${target.title}` })
+      await expect(navLink).toHaveCount(1)
+
+      const names = await accessibleNames(row)
+      expect(names, `duplicate accessible name(s) on the routed row: ${names.join(' | ')}`)
+        .toEqual([...new Set(names)])
+
+      // Distinct hit areas: the arrow and the chip must not overlap, or a fast
+      // sweep would navigate when it meant to reassign.
+      const chipBox = await chip.boundingBox()
+      const navBox = await navLink.boundingBox()
+      expect(chipBox).toBeTruthy()
+      expect(navBox).toBeTruthy()
+      const overlaps =
+        chipBox!.x < navBox!.x + navBox!.width && navBox!.x < chipBox!.x + chipBox!.width &&
+        chipBox!.y < navBox!.y + navBox!.height && navBox!.y < chipBox!.y + chipBox!.height
+      expect(overlaps, 'project picker and navigation arrow must not overlap').toBe(false)
+
+      // And the arrow actually navigates to the project.
+      await navLink.click()
+      await expect(page).toHaveURL(new RegExp(`/projects/${target.slug}$`), { timeout: 10000 })
     } finally {
       await request.post(`${API}/api/tasks/batch`, { headers: AUTH, data: { action: 'delete', ids: [taskId] } })
     }

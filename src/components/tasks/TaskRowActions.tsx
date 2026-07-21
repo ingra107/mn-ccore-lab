@@ -8,14 +8,30 @@
 // repeated 20× per debrief.
 //
 // Contract:
-//   • Project chip  — ALWAYS visible. Not hover-gated on purpose: the failure
-//     this exists to fix is "a whole meeting's items landed on the WRONG
-//     project", which you can only spot if the project reads at rest. It also
-//     renders "No project" for unrouted items, which the plain ProjectTag link
-//     (TaskRow.tsx) cannot — it renders nothing when project is null, i.e. the
-//     exact rows most likely to be mis-routed were the least visible.
-//     Surfaces that mount this strip should pass `project={null}` to TaskRow so
-//     the row carries ONE project affordance, not two competing ones.
+//   • Project cluster — ALWAYS visible, TWO deliberately separate controls
+//     (Nick 2026-07-21, overturning the first cut which dropped navigation):
+//       – the CHIP (combobox, "Project") shows the project name, or "No project"
+//         when unrouted, and opens the searchable picker. Not hover-gated: the
+//         failure this exists to fix is "a whole meeting's items landed on the
+//         WRONG project", which you can only spot if the project reads at rest.
+//         It shows "No project" for unrouted items, which the plain ProjectTag
+//         link (TaskRow.tsx) cannot — that renders NOTHING when project is null,
+//         so the rows most likely to be mis-routed were the least visible.
+//       – the ARROW (link, "Open <name>") navigates to the project, and renders
+//         ONLY when the row is actually routed. It resolves the project from
+//         the SAME query that labels the chip, so the two can never disagree.
+//     Why the big target is the picker and not the link, inverting the usual
+//     "project name = link" reading: this is a TRIAGE surface. Re-routing is the
+//     frequent act here (it is the reason the feature exists); navigating away
+//     is rare and the page already carries project links in "Projects
+//     discussed". The frequent action gets the generous hit area. They are
+//     separate elements with different ROLES (combobox vs link) and different
+//     accessible names, so neither the pointer nor the a11y tree can confuse
+//     them — pinned by the accessible-name uniqueness sweep in
+//     tests/local/journeys/meeting-row-actions.spec.ts.
+//     Surfaces mounting this strip should pass `project={null}` to TaskRow so
+//     the row does not ALSO render ProjectTag, which would print the project
+//     name twice.
 //   • Verbs (done / edit / delete) — revealed on row hover or keyboard focus
 //     via the `.task-row-verbs` class in index.css. Deliberately CSS-driven,
 //     not React `hover` state: hover state never fires on Tab, and a strip that
@@ -40,9 +56,12 @@
 // GhostSelect combobox the full editor and both inline drawers use), so the
 // option list, search, keyboard nav and ARIA are identical everywhere.
 
-import { Check, Pencil, Trash2 } from 'lucide-react'
+import { ArrowUpRight, Check, Pencil, Trash2 } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { ICON_PROPS } from '../../lib/iconProps'
+import { PATHS } from '../../constants/paths'
 import { ProjectInlineGhostSelect } from './detail/FieldControls'
+import { useProjectPickerList } from '../../hooks/useProjectPickerList'
 
 export interface TaskRowActionsProps {
   isDone: boolean
@@ -109,6 +128,14 @@ function VerbButton({
 export function TaskRowActions({
   isDone, projectId, onToggleDone, onOpenEditor, onProjectChange, onDelete,
 }: TaskRowActionsProps) {
+  // Resolved from the SAME query that labels the chip (hooks/useProjectPickerList)
+  // so the arrow and the chip can never disagree about what this row is routed
+  // to. No arrow when the slug is unknown — there is nowhere to navigate — while
+  // the chip still falls back to showing the raw slug, so an unresolvable route
+  // stays VISIBLE even though it is not navigable.
+  const { data: projectList = [] } = useProjectPickerList()
+  const project = projectId ? projectList.find((p) => p.slug === projectId) ?? null : null
+
   return (
     <div
       className="task-row-actions"
@@ -122,6 +149,34 @@ export function TaskRowActions({
         value={projectId ?? ''}
         onChange={(v) => onProjectChange(v || null)}
       />
+      {project && (
+        // Navigation, kept distinct from the picker beside it: its own element,
+        // its own role (link), its own name. An icon-only link has no text to
+        // underline, so unlike a NAMED link it does carry a tooltip — the
+        // "named links need no tooltip" rule (index.css .link-affordance) is
+        // about project-name links, which this is not.
+        <Link
+          to={PATHS.project(project.slug)}
+          onClick={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
+          className="tip tip-end"
+          data-tip={`Open ${project.title}`}
+          aria-label={`Open ${project.title}`}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'var(--teal)',
+            opacity: 0.9,
+            padding: 'var(--sp-xs)',
+            borderRadius: 'var(--radius-md)',
+            flexShrink: 0,
+            lineHeight: 1,
+          }}
+        >
+          <ArrowUpRight {...ICON_PROPS} size={12} />
+        </Link>
+      )}
       <div className="task-row-verbs" style={{ display: 'inline-flex', alignItems: 'center', gap: 2 }}>
         <VerbButton label={isDone ? 'Mark not done' : 'Mark done'} onClick={onToggleDone} decorative>
           <Check {...ICON_PROPS} size={13} style={{ color: isDone ? 'var(--green)' : undefined }} />

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { useProjectPickerList } from '../../../hooks/useProjectPickerList'
 import GhostSelect from '../../ui/GhostSelect'
 import {
   Circle, Flag, Check, Clock, Handshake,
@@ -476,18 +477,13 @@ export function WorkflowSection({ fields, onChange, compact }: { fields: Workflo
 }
 
 // ── Inline Ghost Selects (shared by TaskDetailPanel, TaskDetailDrawer, InlineDetail) ──
+//
+// The option list lives in hooks/useProjectPickerList so sibling controls (e.g.
+// TaskRowActions' navigation arrow) resolve a row's project from the SAME cache
+// this chip labels itself from — see that file for the divergence it prevents.
 
 export function ProjectInlineGhostSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  const { data: projectList = [] } = useQuery({
-    queryKey: ['projects'],
-    queryFn: async () => {
-      const res = await fetch('/api/projects')
-      if (!res.ok) return []
-      const data = await res.json()
-      return data.data as { slug: string; title: string }[]
-    },
-    staleTime: 5 * 60 * 1000,
-  })
+  const { data: projectList = [] } = useProjectPickerList()
 
   const options = [
     { value: '', label: 'No project' },

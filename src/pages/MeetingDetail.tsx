@@ -756,11 +756,10 @@ export default function MeetingDetail() {
                       <SharedTaskRow
                         key={item.id}
                         task={item}
-                        // project={null}: TaskRowActions carries the project as
-                        // an editable chip, so the row must not ALSO render the
-                        // read-only ProjectTag link — one project affordance per
-                        // row, and the editable one wins here because mis-routed
-                        // items are the problem this page has to make fixable.
+                        // project={null}: TaskRowActions owns BOTH project
+                        // affordances (picker chip + navigation arrow), so the
+                        // row must not also render ProjectTag — that would
+                        // print the project name twice on the same line.
                         project={null}
                         isDone={false}
                         onToggleDone={() => handleToggleActionDone(item)}
@@ -806,8 +805,8 @@ export default function MeetingDetail() {
                       <SharedTaskRow
                         key={item.id}
                         task={item}
-                        // See the pending list above — TaskRowActions owns the
-                        // project affordance on this page.
+                        // See the pending list above — TaskRowActions owns both
+                        // project affordances on this page.
                         project={null}
                         isDone={true}
                         onToggleDone={() => handleToggleActionDone(item)}

@@ -106,7 +106,13 @@ function DueChip({ due, status }: { due: string; status?: string }) {
 }
 
 // Project name = a LINK that jumps to the project (navigation), distinct from
-// the folder-icon "reassign project" control inside the editor (handoff §1).
+// the "reassign project" control (handoff §1). NOTE (2026-07-21): that reassign
+// control is NOT a folder icon as this comment claimed for months — no folder
+// affordance exists anywhere in src/components/tasks. It is the searchable
+// ProjectInlineGhostSelect chip (detail/FieldControls.tsx), used by the full
+// editor, both inline drawers, and now TaskRowActions. Corrected rather than
+// left in place: a comment naming a control that does not exist is what a
+// future reader would design against.
 function ProjectTag({ project }: { project: { name: string; slug: string } | null }) {
   if (!project) return null
   return (
