@@ -708,29 +708,40 @@ export default function Projects() {
                                   align-items:center lands every column on one line.
                                   flex:1/minWidth:0 lets the cell shrink so ellipsis
                                   engages within the grid column. */}
-                              {/* .tip lives on THIS wrapper (no overflow) — the inner
-                                  title span clips for its ellipsis and would clip the
-                                  ::after; the span keeps aria-label for the full name. */}
-                              <span
-                                className="tip"
-                                data-tip={(() => {
-                                  const clean = stripConsortiumPrefix(project.title).clean
-                                  // Plenty of projects set short_name to the title
-                                  // verbatim; appending it there reads as a stutter
-                                  // ("Teaching · Teaching"), so only add it when it
-                                  // actually carries something the title doesn't.
-                                  const short = project.short_name?.trim()
-                                  return short && short !== clean ? `${clean} · ${short}` : clean
-                                })()}
-                                style={{ minWidth: 0, flex: 1 }}
-                              >
+                              {/* data-tip sits on the TITLE TEXT, not this wrapper
+                                  (Nick 2026-07-21: "hover should only be if i am ON
+                                  the title... not the whole box"). The wrapper is
+                                  flex:1 so it spans the rest of the 817px column and
+                                  pushes the trailing badges right — putting the tip on
+                                  it armed that entire empty run as a hover target.
+                                  The old reason for hanging it here is DEAD: it dodged
+                                  the CSS `.tip::after`, which the inner span's
+                                  overflow:hidden would clip. Tooltips now render
+                                  through TooltipLayer — a position:fixed chip in a body
+                                  portal that escapes every overflow ancestor — so the
+                                  clipping element is a perfectly good trigger.
+                                  Wrapper is display:flex so the inner span shrink-wraps
+                                  to its TEXT (a flex item sizes to content) instead of
+                                  filling the row as a block; minWidth:0 still lets it
+                                  shrink so the ellipsis engages. */}
+                              <span style={{ minWidth: 0, flex: 1, display: 'flex', alignItems: 'center' }}>
                                 <span
+                                  className="tip"
+                                  data-tip={(() => {
+                                    const clean = stripConsortiumPrefix(project.title).clean
+                                    // Plenty of projects set short_name to the title
+                                    // verbatim; appending it there reads as a stutter
+                                    // ("Teaching · Teaching"), so only add it when it
+                                    // actually carries something the title doesn't.
+                                    const short = project.short_name?.trim()
+                                    return short && short !== clean ? `${clean} · ${short}` : clean
+                                  })()}
                                   style={{
                                     fontSize: '14px',
                                     fontWeight: 500,
                                     color: 'var(--ink)',
                                     lineHeight: 1.35,
-                                    display: 'block',
+                                    minWidth: 0,
                                     whiteSpace: 'nowrap',
                                     overflow: 'hidden',
                                     textOverflow: 'ellipsis',
