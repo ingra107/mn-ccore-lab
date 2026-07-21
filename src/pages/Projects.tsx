@@ -90,10 +90,7 @@ function ProjectLinksCell({ links }: { links: StoredLink[] }) {
   const overflow = links.length - visible.length
   return (
     <span
-      // minHeight matches the single-line value cells (Status/Stage/PI/Group) so
-      // that under the row grid's align-items:start these icons center on the
-      // SAME line as the values instead of riding ~4px high in the taller track.
-      style={{ display: 'inline-flex', alignItems: 'center', minHeight: 24, gap: 3, flexWrap: 'nowrap' }}
+      style={{ display: 'inline-flex', alignItems: 'center', gap: 3, flexWrap: 'nowrap' }}
       onClick={(e) => e.preventDefault()}
     >
       {visible.map((link) => {
@@ -649,15 +646,14 @@ export default function Projects() {
                               gridTemplateColumns: 'minmax(320px, 3fr) 110px 110px 120px 80px 90px 52px',
                               padding: `var(--row-padding-y) 24px`,
                               borderBottom: '1px solid var(--border-subtle)',
-                              // 'start', not 'center': the title cell is a TWO-line
-                              // stack (title + short_name), so it alone sets the grid
-                              // track height (~37px) while every other cell is one
-                              // line. Centering each cell in that track dropped the
-                              // single-line values into the GAP between the title and
-                              // its subtitle — 9px below the title they label, at
-                              // every density (measured 36/44/52px). Starting them
-                              // instead lands them on the title's own line (2px).
-                              alignItems: 'start',
+                              // Plain centering is correct again now that the title
+                              // cell is a single line (short_name moved to the hover
+                              // tip). Every cell is one line, so they all center on
+                              // the same axis — measured identical text centers across
+                              // Title/Status/Stage/PI/Group. The earlier align-items:
+                              // start was only needed to cope with the two-line title
+                              // cell overflowing the fixed row height.
+                              alignItems: 'center',
                               cursor: 'pointer',
                               transition: 'background var(--duration-fast) ease-out',
                             }}
@@ -699,15 +695,31 @@ export default function Projects() {
                                   marginTop: '-1px',
                                 }}
                               />
-                              {/* #91 (Nick 2026-06-24): title + short_name each
-                                  clamp to ONE line so they can't overflow the
-                                  fixed row height and overlap the row below.
-                                  flex:1/minWidth:0 lets the cell shrink so
-                                  ellipsis engages within the grid column. */}
+                              {/* Nick 2026-07-21: the title cell is ONE line, and
+                                  short_name moved onto the hover tip. It used to be a
+                                  two-line stack, which made the cell ~36px of content
+                                  inside a row locked to 44px with 11px padding — a
+                                  22px box. The overflow meant the row's border-bottom,
+                                  painted at the row edge, cut straight THROUGH the
+                                  short_name, and no single-line value column could
+                                  ever align with the title (they centered in the gap
+                                  between the two lines). One line makes the 44px row
+                                  honest: content clears the divider by 12px and plain
+                                  align-items:center lands every column on one line.
+                                  flex:1/minWidth:0 lets the cell shrink so ellipsis
+                                  engages within the grid column. */}
                               {/* .tip lives on THIS wrapper (no overflow) — the inner
                                   title span clips for its ellipsis and would clip the
                                   ::after; the span keeps aria-label for the full name. */}
-                              <span className="tip" data-tip={stripConsortiumPrefix(project.title).clean} style={{ minWidth: 0, flex: 1 }}>
+                              <span
+                                className="tip"
+                                data-tip={
+                                  project.short_name
+                                    ? `${stripConsortiumPrefix(project.title).clean} · ${project.short_name}`
+                                    : stripConsortiumPrefix(project.title).clean
+                                }
+                                style={{ minWidth: 0, flex: 1 }}
+                              >
                                 <span
                                   style={{
                                     fontSize: '14px',
@@ -723,20 +735,6 @@ export default function Projects() {
                                 >
                                   {stripConsortiumPrefix(project.title).clean}
                                 </span>
-                                {project.short_name && (
-                                  <span style={{
-                                    fontSize: '11px',
-                                    color: 'var(--slate)',
-                                    opacity: 0.75,
-                                    display: 'block',
-                                    marginTop: '1px',
-                                    whiteSpace: 'nowrap',
-                                    overflow: 'hidden',
-                                    textOverflow: 'ellipsis',
-                                  }}>
-                                    {project.short_name}
-                                  </span>
-                                )}
                               </span>
                               {/* Task count badge */}
                               {(() => {
@@ -859,7 +857,7 @@ export default function Projects() {
                             <div
                               onClick={(e) => { e.preventDefault(); e.stopPropagation() }}
                               onMouseDown={(e) => e.stopPropagation()}
-                              style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', minHeight: 24 }}
+                              style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}
                             >
                               {project.primary_folder && (
                                 <WorkOnActions primaryFolder={project.primary_folder} projectLabel={project.short_name || project.title} variant="compact" />
