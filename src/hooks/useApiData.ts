@@ -121,10 +121,19 @@ function rowToTeamMember(row: TeamMemberRow): TeamMember {
   }
 }
 
-function rowToProject(row: ProjectRow): Project {
+export function rowToProject(row: ProjectRow): Project {
   return {
-    id: row.id,
-    title: row.title,
+    // Spread FIRST (Level-1 fix, 2026-07-21): any ProjectRow field that
+    // shares its name+shape with `Project` (id, title, created_at,
+    // key_link_1..3(+_desc), ...) flows through automatically — a future
+    // passthrough column added to ProjectRow can never again be silently
+    // dropped here the way short_name/pi_context/created_at were (declared
+    // on ProjectRow, never copied) and key_link_1..3 were (not even
+    // declared). Only fields needing a real transform (rename, null-coalesce,
+    // enum normalize/cast) get an explicit override below — object-literal
+    // semantics mean a later key always wins over the spread, at both the
+    // type level and the runtime value.
+    ...row,
     status: row.status as Project['status'],
     description: row.description || undefined,
     category: row.category || '',
@@ -139,6 +148,11 @@ function rowToProject(row: ProjectRow): Project {
     strategic_context: row.strategic_context || undefined,
     updated_at: row.updated_at || undefined,
     stage_entered_at: row.stage_entered_at || undefined,
+    // short_name / pi_context are declared `string | null` on ProjectRow but
+    // `string | undefined` (no null) on Project — need the coalesce even
+    // though they're pure passthroughs otherwise.
+    short_name: row.short_name || undefined,
+    pi_context: row.pi_context || undefined,
     // INFRA-8 / P2-9: re-surface pipeline-movement metadata that rowToProject
     // previously dropped, so the unified staleness basis can read
     // days-since-meaningful-movement instead of falling back to updated_at.

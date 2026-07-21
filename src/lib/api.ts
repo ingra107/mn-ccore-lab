@@ -65,6 +65,16 @@ export interface ProjectRow {
   // SELECT *). Drives the mnccore:// "Open folder" / "Work on this in Claude"
   // affordances. NULL for projects without a local/Box working dir.
   primary_folder?: string | null
+  // Key links (schema-v42, 2026-04-17). Was declared on `Project` (data/types.ts)
+  // but never declared here — bug found 2026-07-21: rowToProject silently
+  // dropped these on every refetch even though GET /api/projects (SELECT *)
+  // returns them. See rowToProject's spread-based mapping for the structural fix.
+  key_link_1?: string | null
+  key_link_1_desc?: string | null
+  key_link_2?: string | null
+  key_link_2_desc?: string | null
+  key_link_3?: string | null
+  key_link_3_desc?: string | null
 }
 
 export interface GrantRow {

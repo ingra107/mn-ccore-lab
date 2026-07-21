@@ -1382,7 +1382,17 @@ function ProjectDetailInner({ project }: InnerProps) {
                 button row. @ → MentionInput dropdown, : → emoji palette,
                 paperclip → real R2 upload via uploadContext. State is
                 shared via value/onChange so the BottomSheet trigger label
-                ("Draft: …") still updates and broadcastProjectTyping fires. */}
+                ("Draft: …") still updates and broadcastProjectTyping fires.
+                launchContext (bug found 2026-07-21): custom-mode SmartCompose
+                only intercepts @workon/@quickchat when this prop is passed
+                (seed-isolation opt-in — see useLaunchCommands.ts /
+                SmartCompose.tsx submit()). Without it, a typed "@workon …"
+                fell straight through to handleQuickCompose and posted as a
+                plain team-visible comment instead of firing a launch. No new
+                primitive needed — this wires the SAME opt-in TaskDetailPanel/
+                MorningThoughtCompose already use via useLaunchCommands;
+                @hermes stays server-side-detected here (postActivityEntry,
+                api/routes/projects.ts), unlike task mode. */}
             <SmartCompose
               theme="light"
               bare
@@ -1391,6 +1401,7 @@ function ProjectDetailInner({ project }: InnerProps) {
               onSubmit={async () => { await handleQuickCompose() }}
               submitting={quickComposeSubmitting}
               uploadContext={{ type: 'project', id: project.slug }}
+              launchContext={{ projectSlug: project.slug, primaryFolder: project.primary_folder, taskId: null }}
               placeholder={quickComposeKind === 'note' ? 'Post a note... (Cmd+Enter to send, paste or drop to attach)' : 'Comment to team... (Cmd+Enter to send)'}
               rows={2}
               alwaysShowToolbar

@@ -221,9 +221,17 @@ export default function SmartCompose(props: SmartComposeProps) {
       const ctx: LaunchCommandContext = isCustomMode
         ? (launchContext ?? {})
         : taskLaunchContext((props as TaskModeProps).taskId, launchContext ?? {})
-      const routed = tryLaunchCommand(raw, ctx, () => {
-        if (!isControlled) setVal('')
-      })
+      // setVal() already dispatches correctly for both modes (calls the
+      // caller's onChange when controlled, else sets internal state) — no
+      // `!isControlled` guard needed. Previously this only cleared
+      // uncontrolled state, which was a no-op-equivalent bug hidden until
+      // now: both prior launchContext consumers (InlineDetail, TaskDetailDrawer)
+      // are task mode, which is NEVER controlled, so `!isControlled` was
+      // always true for them. ProjectDetail (2026-07-21) is the first
+      // controlled custom-mode + launchContext consumer — without this fix a
+      // successful @workon/@quickchat launch would leave the seed text
+      // sitting in the (controlled) compose box instead of clearing it.
+      const routed = tryLaunchCommand(raw, ctx, () => setVal(''))
       if (routed) return
     }
     // ── @hermes prefix (task mode): real Hermes round-trip via /api/ai-requests ──
