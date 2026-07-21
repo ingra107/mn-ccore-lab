@@ -82,6 +82,7 @@ server-side via X-API-Key + `REQUIRE_AUTH` + JWT verify.
 
 ### Core Data
 - GET /api/team, /api/projects, /api/publications, /api/grants
+  - **`/api/projects` returns a DERIVED `last_activity`** (2026-07-21, #95) — `MAX(activity_entries.created_at)` for the project (its own rows ∪ its tasks' rows), emitted as a zone-explicit ISO instant. It is **not a stored column**; `SELECT *` alone will not produce it. Drives the Projects list's default "last worked on" sort + the "Xd ago" staleness chip (`Project.lastActivity` via `rowToProject`). **Present on the browser read ONLY — the `?seq_after=` cursor branch (PB sync wire) is deliberately byte-identical to the stored row**, mirroring the `tasks.project_id` browser-slug / sync-typed split. Don't "fix" the sync branch to include it.
 - GET /api/milestones, /api/meetings, /api/digest
 - GET /api/notifications, /api/commitments
 

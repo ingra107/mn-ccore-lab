@@ -3,6 +3,14 @@
 
 > Historical phase records moved from CLAUDE.md to keep the operating guide focused on current state. Each section is a complete record of what shipped, decisions made, and scores achieved.
 
+## 2026-07-21 — bug sweep #94/#95 + Projects-list row alignment
+
+Both open in-app bug reports fixed, then a Nick-driven alignment arc on the Projects list that came out of #95. Six commits (`7fb35371` #94 · `6699a5d2` #95 · `07e40040` alignment · `c192943d` one-line title · `71be3f8d` tip stutter · `97f14638` tip scope), all deployed + pushed, live `97f14638`. No schema/migration change (v82); one additive DERIVED API field.
+**#94** — project-feed lifecycle rows rendered a bare `"Completed"` with no subject. Frontend-only: the API already joined `task_title` and `ActivityEntryItem` already computed a task label + deep-link, but the `system|completion` early-return fired before that computation. Fixed at the class (every task lifecycle body is written from the task's POV and was equally subject-less on a project feed), not just "completed".
+**#95** — the Projects "last worked on" sort was already built; the DATA had no producer. `Project.lastActivity` was read by 8 UI sites and assigned by nothing, so the sort silently degraded to `updated_at` and the "Xd ago" chip never rendered once. `handleGetProjects` now derives `last_activity` = `MAX(activity_entries.created_at)` per project (its rows ∪ its tasks' rows) in one constant-cost aggregate; the `seq_after` sync branch is deliberately left byte-identical (browser projection vs replication raw row, mirroring the `tasks.project_id` split). 74/84 projects carry a real signal vs 45 on the old fallback.
+**Alignment arc** — columns were always aligned; the drift was vertical. The title cell was a two-line stack (title + `short_name`) that alone set the grid track height, so single-line values centered into the gap between the two lines (9px below the title), while PI/Group sat 2px lower still inside bare click-swallowing `<div>`s that dropped flex centering. Same root cause as the "dividers cut through the short name" report: a 44px row with 11px padding gives a 22px content box for 36px of content, so the border-bottom landed mid-subtitle. Nick chose keep-44px + `short_name` to the hover tip → one-line title cell, divider clears by 12px, plain `align-items:center` aligns all five columns. Reverted the interim `start` + `minHeight` shims. Tooltip then re-scoped from the full-width wrapper to the title text (hover zone 677px → 55px).
+**Process note:** three false "didn't ship" alarms from stale hashed JS chunks in the browser tab — plain reload / `caches.delete()` / `?cb=` all failed to dislodge one, and it once presented as a convincing layout failure. Verify by diffing the live entry's chunk reference against the local build hash, not by trusting the rendered page (runbook in SESSION-HANDOFF.md).
+
 ## 2026-06-15 (PM) — bug sweep #70–#79: full open GitHub bug queue cleared in one pass
 
 Ten reported bugs fixed, codex-reviewed, deployed (`c1e72aa4`), and pushed (`f3322214` 9 bugs · `4a95239b` #74 left rail · `5b9509e1` codex fixes). All 10 GitHub issues closed; 9 `bug_reports` rows resolved. Frontend + one API reader fix — no schema/route change (v82 / 74 tables / 240 routes).
@@ -1144,7 +1152,7 @@ real drift beneath them:
    columns, then diff.
 
 Once working, it surfaced **real drift accumulated over a year+** from
-schema changes shipped via `wrangler d1 execute` or `/api/admin/migrate`
+schema changes shipped via `wrangler d1 execute` or `/api/admin/migrate` <!-- wrangler-d1-allowed: historical prose, not an invocation -->
 without committing the SQL:
 
 - **v48-index-reconcile** — 27 indexes (24 prod-only, 3 phantom-committed).
