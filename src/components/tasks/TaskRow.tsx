@@ -212,6 +212,21 @@ export interface SharedTaskRowProps {
   extraMeta?: ReactNode    // surface-specific chips appended to the right cluster
   belowTitle?: ReactNode   // second line under the title (workflow badges…)
   children?: ReactNode     // inline detail rendered under the row when expanded
+  /**
+   * rowActions — trailing per-row action cluster, rendered AFTER the due chip
+   * at the far right of the meta row (`extraMeta` lands before the project +
+   * due chips, which is the wrong end for a verb strip). Distinct from
+   * `extraMeta`: that slot carries *information* chips, this one carries
+   * *controls*. Nothing renders when the prop is omitted, so every existing
+   * surface is byte-identical.
+   *
+   * Reveal-on-hover + keyboard reachability are the CALLER's concern via the
+   * `.task-row-actions` class (index.css) — the row deliberately does not gate
+   * it on its internal `hover` state, because that state does not fire on
+   * keyboard focus and an action strip that only exists on :hover is an
+   * accessibility bug.
+   */
+  rowActions?: ReactNode
 }
 
 // DragHandle — hover-revealed grab icon co-located with the 📌 plan pin.
@@ -247,7 +262,7 @@ export function TaskRow(props: SharedTaskRowProps) {
     draggable = false, onDragStart, onTogglePlan,
     isPlanned = false, plannedLabel, showGroupOverridePin = false,
     dense = false, stack: stackProp,
-    leadingTag, extraMeta, belowTitle, children,
+    leadingTag, extraMeta, belowTitle, children, rowActions,
   } = props
 
   // N1.02 — phone viewports stack by default (the audit found Today/Lanes
@@ -389,6 +404,7 @@ export function TaskRow(props: SharedTaskRowProps) {
       {extraMeta}
       <ProjectTag project={project} />
       {task.due_date && !isDone && <DueChip due={task.due_date} status={task.status} />}
+      {rowActions}
     </>
   )
 

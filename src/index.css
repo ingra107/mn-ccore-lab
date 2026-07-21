@@ -1868,6 +1868,32 @@ button[role="combobox"][aria-expanded="true"] .inline-select-chevron {
   }
 }
 
+/* TaskRowActions verb strip (done / edit / delete) — revealed on row hover.
+   `opacity`, NOT `visibility: hidden` / `display: none`: those remove the
+   buttons from the tab order, which would make the strip a mouse-only
+   affordance (the exact accessibility bug the .ae-delete pattern above has).
+   `:focus-within` reveals the strip the instant it is tabbed into, so keyboard
+   and screen-reader users reach the same actions. The reveal is keyed off the
+   row container ([data-task-id], set by TaskRow) rather than React hover state,
+   because hover state never fires on keyboard focus.
+
+   Reserved in-flow space (not an absolute overlay), so unlike
+   [data-hover-actions] it is safe to keep visible on touch — see the N1.07
+   note below for why the overlay variant had to hide there instead. */
+.task-row-verbs {
+  opacity: 0;
+  transition: opacity 140ms;
+}
+[data-task-id]:hover .task-row-verbs,
+.task-row-verbs:focus-within {
+  opacity: 1;
+}
+@media (hover: none) {
+  .task-row-verbs {
+    opacity: 1;
+  }
+}
+
 /* UX-9 (2026-06-09): iPad portrait (768–1023) is a touch device but sits
    ABOVE the prior 768px width gate, so it missed the touch-target floor +
    the iOS no-zoom font rule. Key these on `(hover: none) and (pointer: coarse)`

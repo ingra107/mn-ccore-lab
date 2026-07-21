@@ -104,11 +104,16 @@ describe('route contract — generated from ROUTE_REGISTRY', () => {
     //   the tasks model; the action_items TABLE stays (rollback net).
     // 251 as of 2026-07-09 — activity-provenance readability (+1):
     //   POST /api/activity/:id/edit (author-or-PI comment/note body edit; #93).
+    // 252 as of 2026-07-21 — undoable quick-delete (+1):
+    //   POST /api/tasks/:id/restore. Symmetric counterpart to :id/delete —
+    //   delete was one-way at the HTTP boundary even though the mutation layer
+    //   has always supported undelete, which is why the only "undo delete" in
+    //   the UI was a 5s deferred commit.
     // Adding a route → increment this number. Removing a route → decrement it.
     // This makes route deletion require explicit acknowledgment, preventing
     // silent surface regression (codex final-audit finding #9, 2026-05-28).
     // If you are intentionally adding or removing routes, update this count.
-    expect(ROUTE_REGISTRY).toHaveLength(251)
+    expect(ROUTE_REGISTRY).toHaveLength(252)
   })
 
   it('every non-public route has either entity or visibility metadata', () => {

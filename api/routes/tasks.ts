@@ -1016,6 +1016,119 @@ export async function handleDeleteTask(id: string, request: Request, user: AuthU
   return json({ data: { deleted: id, title: label } });
 }
 
+// POST /api/tasks/:id/restore — un-delete a soft-deleted task. The SYMMETRIC
+// counterpart to handleDeleteTask (ethos: push mirrors pull, write mirrors
+// rebuild — a delete lane with no restore lane is a half-implemented contract).
+//
+// WHY THIS EXISTS (2026-07-21): delete was one-way at the HTTP boundary. The
+// MUTATION layer has always supported undelete — applyUpdate's tombstone
+// resurrection guard explicitly allows a patch carrying a live `status`
+// (mutations.ts:836-853) and applyPatch's I7-INVERSE co-clears `deleted_at`
+// when status transitions FROM 'deleted' to a live value (mutations.ts:1376-1389,
+// the "symmetric clear" that PB's pull guard at hub.py:2093-2117 calls
+// load-bearing). But NO route reached it: POST /api/tasks/:id runs
+// guardTaskProject, whose `deleted_at IS NULL` filter (tasks.ts:29) 404s on
+// exactly the rows an undelete targets. That gap is why TaskDetailPanel
+// implements "undo delete" as a 5s DELAYED COMMIT instead of a real one
+// (TaskDetailPanel.tsx:274) — a workaround that loses the delete entirely if
+// the tab is closed/navigated inside the window. This route closes the gap so
+// undo can be a real restore of a real tombstone.
+//
+// CONVERGENCE CONTRACT (brain.db ↔ Hub D1): the restored row MUST land as
+// `{ status: <live>, deleted_at: NULL }`. PB's pull refuses the mixed shape
+// `{ status: <live>, deleted_at: <set> }` as suspicious-alive
+// (sync.pull.tombstone_inconsistent_state_refused) and re-tombstones on
+// `{ status: 'deleted' }` alone. We get the correct shape by patching STATUS
+// ONLY and letting I7-INVERSE clear deleted_at — note we CANNOT send
+// `deleted_at: null` explicitly even though mutations.ts:851's error text
+// suggests it: `deleted_at` is not in TABLE_FIELDS.tasks
+// (field-authority.generated.ts) so the mutation would be rejected as an
+// unknown field.
+//
+// Body: `{ status?: 'todo'|'in_progress'|'done'|'blocked'|'waiting_external' }`.
+// Defaults to 'todo'. The caller passes the row's PRE-DELETE status so an undo
+// is lossless — D1 cannot recover it on its own (applyDelete overwrites
+// `status` with 'deleted', mutations.ts:1056-1061).
+//
+// NOT restored (known asymmetry, documented rather than silently implied):
+// applyDelete/handleDeleteTask HARD-delete the task's activity_entries,
+// notifications and task_subtasks. Those are gone; this restores the task ROW.
+// Acceptable for the undo-a-just-created-action-item case this serves; a
+// comment-bearing task restored here comes back without its timeline.
+//
+// Idempotent: restoring a live task returns 200 with `idempotent: true`.
+const RESTORE_ALLOWED_STATUSES = ['todo', 'in_progress', 'done', 'blocked', 'waiting_external'];
+
+export async function handleRestoreTask(id: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
+  // Inline existence probe (NOT guardTaskProject) for the same reason
+  // handleDeleteTask inlines it: the rows this handler targets are soft-deleted,
+  // and guardTaskProject's `deleted_at IS NULL` filter would 404 every one of them.
+  const existing = await env.DB.prepare(
+    'SELECT id, title, description, deleted_at, project_id, completed_at, completed_by FROM tasks WHERE id = ?'
+  ).bind(id).first<{
+    id: string; title: string | null; description: string | null;
+    deleted_at: string | null; project_id: string | null;
+    completed_at: string | null; completed_by: string | null;
+  }>();
+
+  if (!existing) {
+    return error('Task not found', 404);
+  }
+
+  // T1.1 PB-visibility gate — same placement as handleDeleteTask: AFTER the
+  // existence probe (404 stays the correctness signal) but BEFORE the
+  // idempotent return, so non-PI can neither confirm nor alter PB-task lifecycle.
+  if (existing.project_id) {
+    const block = await assertProjectVisible(request, env, existing.project_id);
+    if (block) return block;
+  }
+
+  const label = existing.title || existing.description || id;
+
+  let body: Record<string, unknown> = {};
+  try { body = await request.json() as Record<string, unknown>; } catch { /* empty body → restore to 'todo' */ }
+  const restoreStatus = typeof body.status === 'string' ? body.status : 'todo';
+  if (!RESTORE_ALLOWED_STATUSES.includes(restoreStatus)) {
+    return error(`Invalid restore status "${restoreStatus}". Must be one of: ${RESTORE_ALLOWED_STATUSES.join(', ')}.`, 400);
+  }
+
+  if (!existing.deleted_at) {
+    await logActivity(env, 'task_restore', `Restored task (idempotent): ${label}`, user.email, id, 'task');
+    const live = await env.DB.prepare(`SELECT ${TASK_SELECT_COLS} FROM tasks t WHERE t.id = ?`).bind(id).first();
+    return json({ data: { restored: id, title: label, idempotent: true, task: live } });
+  }
+
+  // Completion triad must be internally consistent in the RESULTING state
+  // (assertCompletionTriad: status='done' <=> completed=1 <=> completed_at set).
+  // A task deleted while done keeps its completed_at/completed_by columns, so
+  // restoring TO done reuses them; restoring to any live non-done status clears
+  // both — mirrors handleUpdateTask's reopen behavior (tasks.ts:328-340).
+  const isDone = restoreStatus === 'done';
+  const patch: Record<string, unknown> = {
+    status: restoreStatus,
+    completed: isDone ? 1 : 0,
+    completed_at: isDone ? (existing.completed_at ?? nowInstant()) : null,
+    completed_by: isDone ? (existing.completed_by ?? user.email) : null,
+  };
+
+  const restoreMutResult = await applyMutation(env, {
+    table: 'tasks',
+    record_id: id,
+    op: 'update',
+    patch,
+    route: 'handleRestoreTask',
+    user,
+  });
+  if (restoreMutResult.status !== 'accepted' && restoreMutResult.status !== 'merged_clean') {
+    return error(`mutation rejected: ${restoreMutResult.status} — ${restoreMutResult.reason ?? ''}`, 409);
+  }
+
+  await logActivity(env, 'task_restore', `Restored task: ${label}`, user.email, id, 'task');
+
+  const restored = await env.DB.prepare(`SELECT ${TASK_SELECT_COLS} FROM tasks t WHERE t.id = ?`).bind(id).first();
+  return json({ data: { restored: id, title: label, task: restored } });
+}
+
 // POST /api/tasks/:id/acknowledge — closed-loop task acknowledgment (aviation CRM pattern)
 //
 // acknowledged_at / acknowledged_by are Hub-internal CRM fields (assignee receipts,

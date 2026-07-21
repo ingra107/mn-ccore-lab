@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { createTask, updateTaskStatus, updateTask, acknowledgeTask, fetchApi } from '../../lib/api'
+import { createTask, updateTaskStatus, updateTask, acknowledgeTask, restoreTask, fetchApi } from '../../lib/api'
 import type { TaskRow } from '../../lib/api'
 import { TASK_STATUS, optimisticListUpdate, rollbackSnapshots } from './utils'
 import { nowInstant } from '../../lib/time'
@@ -94,6 +94,12 @@ export function useUpdateTask() {
 
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] })
+      // ['meeting'] (2026-07-21): a meeting's action items ARE task rows, but
+      // they live in the ['meeting', id] cache, not ['tasks'] — so an edit made
+      // through TaskDetailPanel while standing on MeetingDetail never reached
+      // the row behind it. useUpdateTaskStatus already invalidated ['meeting']
+      // for exactly this reason; useUpdateTask was the asymmetric half.
+      queryClient.invalidateQueries({ queryKey: ['meeting'] })
       queryClient.invalidateQueries({ queryKey: ['activity'] })
     },
   })
@@ -133,6 +139,33 @@ export function useBulkUpdateTasks() {
 
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] })
+      queryClient.invalidateQueries({ queryKey: ['activity'] })
+    },
+  })
+}
+
+/**
+ * useRestoreTask — un-delete a soft-deleted task (the real inverse of
+ * useBulkUpdateTasks({ action: 'delete' })).
+ *
+ * `prevStatus` is the row's status BEFORE the delete; the server cannot recover
+ * it (the delete overwrites status with 'deleted'), so a lossless undo must
+ * carry it. Omit → restored as 'todo'.
+ *
+ * No optimistic patch here on purpose: the caller that owns the undo already
+ * holds an exact pre-delete snapshot of its own cache (that's what it rolls
+ * back), and a second, lossier optimistic write from this hook would race it.
+ * We only invalidate on settle so every surface re-reads the canonical row.
+ */
+export function useRestoreTask() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ id, prevStatus }: { id: string; prevStatus?: string }) => restoreTask(id, prevStatus),
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] })
+      queryClient.invalidateQueries({ queryKey: ['meeting'] })
       queryClient.invalidateQueries({ queryKey: ['activity'] })
     },
   })

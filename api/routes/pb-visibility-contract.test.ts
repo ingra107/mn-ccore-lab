@@ -75,6 +75,7 @@ import {
   handleUpdateTaskStatus,
   handleUpdateTask,
   handleDeleteTask,
+  handleRestoreTask,
   handleAcknowledgeTask,
 } from './tasks'
 import {
@@ -503,6 +504,18 @@ const patternWriteCases: PatternWriteCase[] = [
     callNonPiOnNonPb: () => handleDeleteTask('task1', nonPiPost({}), { email: NON_PI_EMAIL, name: 'Nate' }, nonPbEnv({ taskProjectId: 'mnccore-proj' })),
     callPiOnPb:       () => handleDeleteTask('task1', piPost({}), { email: PI_EMAIL, name: 'Nick' }, pbEnv({ taskProjectId: 'pb-proj' })),
     callApiKeyOnPb:   () => handleDeleteTask('task1', apiKeyPost({}), { email: 'service@api', name: 'S' }, pbEnv({ taskProjectId: 'pb-proj' })),
+  },
+  {
+    // handleRestoreTask (2026-07-21) — the undelete counterpart to
+    // :id/delete. Like handleDeleteTask it CANNOT use guardTaskProject (whose
+    // `deleted_at IS NULL` filter 404s the very rows it targets), so it inlines
+    // the same probe + assertProjectVisible pair. Inlined gates are exactly the
+    // ones that rot, which is why it earns a row here.
+    label: 'POST /api/tasks/:id/restore (handleRestoreTask) — T1.1 mutation gate',
+    callNonPiOnPb:    () => handleRestoreTask('task1', nonPiPost({}), { email: NON_PI_EMAIL, name: 'Nate' }, pbEnv({ taskProjectId: 'pb-proj' })),
+    callNonPiOnNonPb: () => handleRestoreTask('task1', nonPiPost({}), { email: NON_PI_EMAIL, name: 'Nate' }, nonPbEnv({ taskProjectId: 'mnccore-proj' })),
+    callPiOnPb:       () => handleRestoreTask('task1', piPost({}), { email: PI_EMAIL, name: 'Nick' }, pbEnv({ taskProjectId: 'pb-proj' })),
+    callApiKeyOnPb:   () => handleRestoreTask('task1', apiKeyPost({}), { email: 'service@api', name: 'S' }, pbEnv({ taskProjectId: 'pb-proj' })),
   },
   {
     label: 'POST /api/tasks/:id/acknowledge (handleAcknowledgeTask) — T1.1 mutation gate',

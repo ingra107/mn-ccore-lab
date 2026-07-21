@@ -16,7 +16,7 @@ import { notifyClients } from './lib/notify';
 import { handleUploadUrl, handleUploadDone, handleListFiles, handleGetFile, handleDeleteFile } from './routes/uploads';
 
 // ── Route modules ──────────────────────────────────────────
-import { handleGetTasks, handleGetTask, handleOverdueCount, handleUpdateTaskStatus, handleUpdateTask, handleCreateTask, handleGetTaskComments, handleAddTaskComment, handleGetTaskActivity, handleGetTaskDetail, handleGetTaskUpdates, handleGetRecentTaskUpdates, handleGetRecentTaskComments, handlePostTaskUpdate, handleBatchUpdateTasks, handleAcknowledgeTask, handleDeleteTask, handleMobileTasksToHub } from './routes/tasks';
+import { handleGetTasks, handleGetTask, handleOverdueCount, handleUpdateTaskStatus, handleUpdateTask, handleCreateTask, handleGetTaskComments, handleAddTaskComment, handleGetTaskActivity, handleGetTaskDetail, handleGetTaskUpdates, handleGetRecentTaskUpdates, handleGetRecentTaskComments, handlePostTaskUpdate, handleBatchUpdateTasks, handleAcknowledgeTask, handleDeleteTask, handleRestoreTask, handleMobileTasksToHub } from './routes/tasks';
 import { handleMarkSeen, handleGetUnseenActivity } from './routes/seen';
 import { handleInboxEvents, handleSyncBulkInboxEvents, handleDeleteInboxEvent, handleCreateInboxEvent } from './routes/inbox-events';
 import { handleMutations } from './routes/mutations';
@@ -1919,6 +1919,16 @@ defineRoute({
   entity: 'tasks',
   visibility: 'na',
   handler: (c) => handleDeleteTask(c.req.param('id'), R(c), USER(c), E(c)),
+});
+// Symmetric counterpart to :id/delete — un-sets the tombstone so a delete can
+// be a real, undoable operation instead of a one-way write (see handleRestoreTask).
+defineRoute({
+  method: 'POST',
+  path: '/api/tasks/:id/restore',
+  auth: 'authed',
+  entity: 'tasks',
+  visibility: 'na',
+  handler: (c) => handleRestoreTask(c.req.param('id'), R(c), USER(c), E(c)),
 });
 defineRoute({
   method: 'POST',

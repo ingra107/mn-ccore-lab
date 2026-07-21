@@ -35,7 +35,7 @@ import { useMeetingDetail, useProjects } from '../hooks/useApiData'
 import type { AgendaItemRow, MeetingDetail as MeetingDetailData } from '../hooks/useApiData'
 import type { TaskRow } from '../lib/api'
 import { useQueryClient } from '@tanstack/react-query'
-import { useAddAgendaItem, useUpdateMeetingNotes, useCreateDecision, useCreateTask, useUpdateMeetingMeta, useUpdateTask, useBulkUpdateTasks } from '../hooks/useMutations'
+import { useAddAgendaItem, useUpdateMeetingNotes, useCreateDecision, useCreateTask, useUpdateMeetingMeta, useUpdateTask, useBulkUpdateTasks, useRestoreTask } from '../hooks/useMutations'
 import { useMarkSeen } from '../hooks/useEntitySeen'
 import FileUpload from '../components/FileUpload'
 import TypingIndicator from '../components/TypingIndicator'
@@ -63,6 +63,7 @@ import EntityNotFound from '../components/EntityNotFound'
 import { ICON_PROPS } from '../lib/iconProps'
 import { ACCENT_GOLD, withAlpha, isTaskDone } from '../lib/taskGrouping'
 import { TaskRow as SharedTaskRow } from '../components/tasks/TaskRow'
+import { TaskRowActions } from '../components/tasks/TaskRowActions'
 import { InlineDetail } from './MyTasks/components/InlineDetail'
 import TaskDetailPanel from '../components/tasks/TaskDetailPanel'
 
@@ -119,6 +120,9 @@ export default function MeetingDetail() {
   // mutations MyTasks uses, not the legacy /api/action-items endpoint.
   const updateTask = useUpdateTask()
   const bulkUpdateTasks = useBulkUpdateTasks()
+  // Real un-delete (POST /api/tasks/:id/restore), so the delete below can be a
+  // genuine tombstone with a genuine undo rather than a deferred commit.
+  const restoreTask = useRestoreTask()
   const addAgenda = useAddAgendaItem(meeting?.id || '')
   const updateNotes = useUpdateMeetingNotes(meeting?.id || '')
   // T6: single mutation for all metadata edits (title/type/attendees/tags).
@@ -301,17 +305,31 @@ export default function MeetingDetail() {
   // writes status directly (mirrors MyTasks' onToggleComplete); complete
   // routes through the batch 'complete' action so completed_at is server-set.
   const meetingQueryKey = ['meeting', meeting.id] as const
-  function handleToggleActionDone(item: TaskRow) {
-    const wasDone = isTaskDone(item)
+
+  // Optimistically rewrite THIS page's own ['meeting', id] cache and hand back
+  // the revert/settle pair. The shared task mutation hooks only patch the
+  // ['tasks'] caches (mutations/utils optimisticListUpdate) — they cannot see
+  // MeetingDetailData's `action_items` shape, so every row action on this page
+  // has to patch it here or the row does not move until a refetch lands. This
+  // was already open-coded in handleToggleActionDone; the delete + reassign
+  // actions are the 2nd and 3rd caller, so it is extracted rather than forked.
+  function patchActionItems(mutate: (items: TaskRow[]) => TaskRow[]) {
     const prevData = queryClient.getQueryData<MeetingDetailData>(meetingQueryKey)
     queryClient.setQueryData<MeetingDetailData>(meetingQueryKey, (data) => data && {
       ...data,
-      action_items: (data.action_items || []).map((a) =>
-        a.id === item.id ? { ...a, status: wasDone ? 'todo' : 'done', completed: wasDone ? 0 : 1 } : a
-      ),
+      action_items: mutate(data.action_items || []),
     })
-    const revert = () => queryClient.setQueryData(meetingQueryKey, prevData)
-    const settle = () => queryClient.invalidateQueries({ queryKey: meetingQueryKey })
+    return {
+      revert: () => queryClient.setQueryData(meetingQueryKey, prevData),
+      settle: () => queryClient.invalidateQueries({ queryKey: meetingQueryKey }),
+    }
+  }
+
+  function handleToggleActionDone(item: TaskRow) {
+    const wasDone = isTaskDone(item)
+    const { revert, settle } = patchActionItems((items) => items.map((a) =>
+      a.id === item.id ? { ...a, status: wasDone ? 'todo' : 'done', completed: wasDone ? 0 : 1 } : a
+    ))
     if (wasDone) {
       updateTask.mutate({ id: item.id, fields: { status: 'todo', completed: 0 } }, {
         onError: revert,
@@ -329,6 +347,67 @@ export default function MeetingDetail() {
         },
       })
     }
+  }
+
+  // Quick delete with a REAL 5s undo (Nick 2026-07-21: "we over produce action
+  // items (which is OK) but ... i want to quick delete"). One click, no confirm
+  // dialog — a modal on every delete is friction on exactly the high-volume case.
+  //
+  // The delete lands on the server IMMEDIATELY (a real tombstone via the same
+  // bulk 'delete' action every other surface uses); undo calls the real restore
+  // endpoint. This is deliberately NOT TaskDetailPanel's delayed-commit pattern
+  // (TaskDetailPanel.tsx:280 — snapshot the cache, fire the delete only after
+  // the 5s window): that pattern predates the restore route and loses the
+  // delete outright if the tab is closed or navigated inside the window, and
+  // sweeping 20 items would leave 20 pending timers whose work evaporates on
+  // the first navigation. See DEPRECATES note in the session report.
+  //
+  // `prevStatus` is carried into the restore because D1 cannot recover it —
+  // applyDelete overwrites `status` with 'deleted' (mutations.ts:1056-1061).
+  function handleDeleteAction(item: TaskRow) {
+    const label = item.short_title || item.title || item.description || 'action item'
+    const shortLabel = label.length > 40 ? `${label.slice(0, 40)}…` : label
+    const prevStatus = item.status && item.status !== 'deleted' ? item.status : 'todo'
+
+    const { revert, settle } = patchActionItems((items) => items.filter((a) => a.id !== item.id))
+    bulkUpdateTasks.mutate({ ids: [item.id], action: 'delete' }, {
+      onError: () => { revert(); showError(`Could not delete "${shortLabel}"`) },
+      onSuccess: () => {
+        settle()
+        showUndo(`Deleted "${shortLabel}"`, () => {
+          restoreTask.mutate({ id: item.id, prevStatus }, {
+            onSuccess: settle,
+            onError: () => showError(`Could not restore "${shortLabel}"`),
+          })
+        })
+      },
+    })
+  }
+
+  // Quick project re-route from the row. This is the fix for the failure that
+  // triggered the whole request: a meeting's action items landed on the wrong
+  // project and there was no fast way to move them.
+  //
+  // Not routed through useTaskFieldEditors().onProjectChange — that shared hook
+  // is the right primitive everywhere its optimistic write reaches the surface,
+  // but it only patches ['tasks'], so on this page the chip would not move until
+  // a refetch. Same reason handleToggleActionDone writes its own patch. The undo
+  // re-applies through the identical path, so both directions behave the same.
+  function handleReassignAction(item: TaskRow, next: string | null) {
+    const prev = item.project_id ?? null
+    if (prev === next) return
+    const apply = (value: string | null) => {
+      const { revert, settle } = patchActionItems((items) => items.map((a) =>
+        a.id === item.id ? { ...a, project_id: value } : a
+      ))
+      updateTask.mutate({ id: item.id, fields: { project_id: value } }, {
+        onError: () => { revert(); showError('Could not change project') },
+        onSuccess: settle,
+      })
+    }
+    apply(next)
+    const nextName = next ? (projectsBySlug.get(next)?.name ?? next) : null
+    showUndo(nextName ? `Moved to ${nextName}` : 'Project cleared', () => apply(prev))
   }
 
   function handleBatchComplete() {
@@ -677,7 +756,12 @@ export default function MeetingDetail() {
                       <SharedTaskRow
                         key={item.id}
                         task={item}
-                        project={project}
+                        // project={null}: TaskRowActions carries the project as
+                        // an editable chip, so the row must not ALSO render the
+                        // read-only ProjectTag link — one project affordance per
+                        // row, and the editable one wins here because mis-routed
+                        // items are the problem this page has to make fixable.
+                        project={null}
                         isDone={false}
                         onToggleDone={() => handleToggleActionDone(item)}
                         isExpanded={expandedActionId === item.id}
@@ -687,6 +771,16 @@ export default function MeetingDetail() {
                         selectionActive={selectedActionIds.size > 0}
                         onToggleSelect={() => toggleActionSelect(item.id)}
                         extraMeta={<AssigneeMeta slug={item.assignee} />}
+                        rowActions={
+                          <TaskRowActions
+                            isDone={false}
+                            projectId={item.project_id ?? null}
+                            onToggleDone={() => handleToggleActionDone(item)}
+                            onOpenEditor={() => setFullEditorTask(item)}
+                            onProjectChange={(next) => handleReassignAction(item, next)}
+                            onDelete={() => handleDeleteAction(item)}
+                          />
+                        }
                       >
                         <InlineDetail
                           task={item}
@@ -712,7 +806,9 @@ export default function MeetingDetail() {
                       <SharedTaskRow
                         key={item.id}
                         task={item}
-                        project={project}
+                        // See the pending list above — TaskRowActions owns the
+                        // project affordance on this page.
+                        project={null}
                         isDone={true}
                         onToggleDone={() => handleToggleActionDone(item)}
                         isExpanded={expandedActionId === item.id}
@@ -722,6 +818,16 @@ export default function MeetingDetail() {
                         selectionActive={selectedActionIds.size > 0}
                         onToggleSelect={() => toggleActionSelect(item.id)}
                         extraMeta={<AssigneeMeta slug={item.assignee} />}
+                        rowActions={
+                          <TaskRowActions
+                            isDone={true}
+                            projectId={item.project_id ?? null}
+                            onToggleDone={() => handleToggleActionDone(item)}
+                            onOpenEditor={() => setFullEditorTask(item)}
+                            onProjectChange={(next) => handleReassignAction(item, next)}
+                            onDelete={() => handleDeleteAction(item)}
+                          />
+                        }
                       >
                         <InlineDetail
                           task={item}

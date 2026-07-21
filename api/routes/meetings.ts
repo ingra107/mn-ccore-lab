@@ -26,7 +26,7 @@ async function fireMeetingDebriefNotification(env: Env, meetingId: string, sourc
   const ids = sourceId ? [meetingId, sourceId] : [meetingId];
   const placeholders = ids.map(() => '?').join(',');
   const cnt = await env.DB.prepare(
-    `SELECT COUNT(*) as n FROM tasks WHERE meeting_id IN (${placeholders})`
+    `SELECT COUNT(*) as n FROM tasks WHERE meeting_id IN (${placeholders}) AND deleted_at IS NULL`
   ).bind(...ids).first<{ n: number }>();
   const n = cnt?.n ?? 0;
   await env.DB.prepare(
@@ -71,10 +71,16 @@ export async function handleGetMeeting(id: string, env: Env, isAuthed = false): 
   // v95: tasks.meeting_id may carry either the Hub-minted meeting id or PB's
   // calendar-match source_id, so the join matches either id space. NULL-safety
   // is by construction (`IN (id, NULL)` degrades to `= id`) — no guard needed.
+  //
+  // `t.deleted_at IS NULL` (2026-07-21): this query had NO tombstone filter, so
+  // a soft-deleted action item kept coming back on every refetch of this page —
+  // the deletion looked like it silently failed. Same contract as the task list
+  // endpoint (tasks.ts handleGetTasks `deletedFilter`); `IS NULL` (not the
+  // `OR = ''` variant at :321) is the app-wide form.
   const sourceId = (meeting as { source_id?: string | null }).source_id ?? null;
   const [actionItemsRaw, agendaItems] = await Promise.all([
     env.DB.prepare(
-      `SELECT ${TASK_SELECT_COLS} FROM tasks t WHERE t.meeting_id IN (?, ?) ORDER BY t.created_at`
+      `SELECT ${TASK_SELECT_COLS} FROM tasks t WHERE t.meeting_id IN (?, ?) AND t.deleted_at IS NULL ORDER BY t.created_at`
     ).bind(id, sourceId ?? id).all<Record<string, unknown>>(),
     env.DB.prepare('SELECT * FROM agenda_items WHERE meeting_id = ? ORDER BY sort_order, created_at').bind(id).all(),
   ]);
@@ -213,7 +219,7 @@ export async function handleMeetingPrep(meetingId: string, env: Env, isAuthed = 
           `SELECT t.id, t.description, t.assignee, t.completed, t.due_date
            FROM tasks t
            LEFT JOIN projects p ON p.id = t.project_id OR p.slug = t.project_id
-           WHERE t.meeting_id IN (?, ?)${pbFilter}
+           WHERE t.meeting_id IN (?, ?) AND t.deleted_at IS NULL${pbFilter}
            ORDER BY t.completed ASC, t.assignee`
         ).bind(prevMeeting.id, prevMeeting.source_id ?? prevMeeting.id).all()
       : Promise.resolve({ results: [] as Record<string, unknown>[] }),
@@ -236,7 +242,7 @@ export async function handleMeetingPrep(meetingId: string, env: Env, isAuthed = 
       `SELECT t.id, t.title, t.description, t.assignee, t.due_date, t.priority, t.status
        FROM tasks t
        LEFT JOIN projects p ON p.id = t.project_id OR p.slug = t.project_id
-       WHERE t.due_date BETWEEN ? AND ? AND t.completed = 0${pbFilter}
+       WHERE t.due_date BETWEEN ? AND ? AND t.completed = 0 AND t.deleted_at IS NULL${pbFilter}
        ORDER BY t.due_date`
     ).bind(today, twoWeeksOut).all(),
     // Current meeting's agenda items
@@ -248,7 +254,7 @@ export async function handleMeetingPrep(meetingId: string, env: Env, isAuthed = 
       `SELECT t.id, t.title, t.description, t.assignee, t.due_date, t.priority
        FROM tasks t
        LEFT JOIN projects p ON p.id = t.project_id OR p.slug = t.project_id
-       WHERE t.due_date < ? AND t.completed = 0${pbFilter}
+       WHERE t.due_date < ? AND t.completed = 0 AND t.deleted_at IS NULL${pbFilter}
        ORDER BY t.due_date`
     ).bind(today).all(),
   ]);
@@ -306,7 +312,7 @@ export async function handleGenerateAgenda(meetingId: string, env: Env, isAuthed
        FROM tasks t
        JOIN meetings m ON t.meeting_id IN (m.id, m.source_id)
        LEFT JOIN projects p ON p.id = t.project_id OR p.slug = t.project_id
-       WHERE m.date < ? AND (t.completed = 0 OR t.status NOT IN ('done','completed'))${pbFilterP}
+       WHERE m.date < ? AND t.deleted_at IS NULL AND (t.completed = 0 OR t.status NOT IN ('done','completed'))${pbFilterP}
        ORDER BY m.date DESC, t.created_at
        LIMIT 20`
     ).bind(meeting.date).all<{ id: string; title: string; description: string; assignee: string; due_date: string; status: string }>(),

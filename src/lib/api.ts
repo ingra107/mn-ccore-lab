@@ -388,6 +388,20 @@ export function acknowledgeTask(id: string) {
   })
 }
 
+/**
+ * Un-delete a soft-deleted task (inverse of the `delete` batch action).
+ *
+ * `status` is the task's PRE-DELETE status — pass it so an undo is lossless.
+ * D1 cannot recover it: the delete overwrites `status` with 'deleted'. Omitted
+ * → the server restores to 'todo'.
+ */
+export function restoreTask(id: string, status?: string) {
+  return fetchApi<{ restored: string; title: string; idempotent?: boolean; task: TaskRow | null }>(
+    `/api/tasks/${id}/restore`,
+    { method: 'POST', body: JSON.stringify(status ? { status } : {}) },
+  )
+}
+
 // ── Ideas endpoints ──────────────────────────────────────────
 
 export interface IdeaRow {
