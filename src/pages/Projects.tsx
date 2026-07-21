@@ -705,9 +705,7 @@ export default function Projects() {
                                   ever align with the title (they centered in the gap
                                   between the two lines). One line makes the 44px row
                                   honest: content clears the divider by 12px and plain
-                                  align-items:center lands every column on one line.
-                                  flex:1/minWidth:0 lets the cell shrink so ellipsis
-                                  engages within the grid column. */}
+                                  align-items:center lands every column on one line. */}
                               {/* data-tip sits on the TITLE TEXT, not this wrapper
                                   (Nick 2026-07-21: "hover should only be if i am ON
                                   the title... not the whole box"). The wrapper is

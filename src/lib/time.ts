@@ -5,6 +5,8 @@
 // Display via formatLocal(). Viewer zone = the browser's own zone by default
 // (traveler-aware for free); pass an explicit zone for server-side rendering.
 
+import { dbStampToIso } from '../../shared/dbTime';
+
 export type Instant = string & { readonly __brand: 'Instant' };
 export type CivilDate = string & { readonly __brand: 'CivilDate' };
 
@@ -39,15 +41,15 @@ export function formatLocal(iso: string, opts?: Intl.DateTimeFormatOptions): str
 export function parseDbUtc(value: string | null | undefined): Date {
   if (!value) return new Date(NaN);
   const s = value.trim();
-  // Date-only → noon local (calendar-day anchor, no zone math).
+  // Date-only → noon local (calendar-day anchor, no zone math). This is the one
+  // rule that can't move to shared/dbTime: it's a Date-shaping decision, not a
+  // statement about the stored wire format.
   if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return new Date(`${s}T12:00:00`);
-  // Already carries a zone (Z or ±HH:MM) → trust it.
-  if (/[zZ]$|[+-]\d{2}:?\d{2}$/.test(s)) return new Date(s);
-  // Bare datetime `YYYY-MM-DD[ T]HH:MM:SS[.fff]` → it's UTC; mark it so.
-  const m = s.match(/^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2}(?::\d{2})?(?:\.\d+)?)$/);
-  if (m) return new Date(`${m[1]}T${m[2]}Z`);
-  // Unknown shape — last-resort native parse (may be Invalid Date).
-  return new Date(s);
+  // Everything else is the wire-format question, and shared/dbTime.ts owns it —
+  // the SAME normalizer the API emits with, so the two can't drift. It marks a
+  // bare datetime as UTC, passes a zoned value through, and returns an unknown
+  // shape unchanged for the native last-resort parse below (Invalid Date if so).
+  return new Date(dbStampToIso(s));
 }
 
 /**

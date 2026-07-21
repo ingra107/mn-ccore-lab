@@ -1,7 +1,7 @@
 import type { AuthUser, Env } from '../helpers';
 import { json, error, generateId, logActivity, isPiRequest, resolveActor, assertProjectVisible, canSeePbProjectRow, projectRefToCanonical } from '../helpers';
 import { ctToday } from '../lib/ct-date';
-import { nowInstant } from '../lib/time';
+import { nowInstant, dbStampToIso } from '../lib/time';
 import { applyMutation } from './mutations';
 import { activityVisibilityGate, postActivityEntry } from '../lib/activity-entry';
 import { enumFieldsFor } from '../lib/enum-domains';
@@ -265,8 +265,6 @@ export async function handleGetProjects(url: URL, env: Env, user: AuthUser, apiK
     query += ' ORDER BY title ASC';
   }
 
-  const result = await env.DB.prepare(query).bind(...params).all();
-
   // #95 (2026-07-21): "last worked on" rollup for the browser list. Nick's basis
   // is explicit — a project counts as worked-on when we "document updates" on it
   // or "get tasks done within" it. That is exactly the whole-picture stream
@@ -280,22 +278,34 @@ export async function handleGetProjects(url: URL, env: Env, user: AuthUser, apiK
   // all before this — the Projects list's activity sort silently degraded to
   // updated_at and its "Xd ago" staleness chip never rendered.
   //
-  // One constant-cost aggregate (idx_ae_project), merged in memory — the same
-  // batched shape handleProjectHealth uses instead of a per-project N+1.
+  // One constant-cost aggregate (idx_ae_project = (project_id, created_at DESC),
+  // so MAX-per-group is an ordered index scan), merged in memory — the same
+  // batched shape handleProjectHealth uses instead of a per-project N+1. It does
+  // not depend on the projects SELECT, so the two are ISSUED TOGETHER: awaiting
+  // them in sequence would add a whole D1 round-trip to every Projects-page load
+  // for no reason.
   //
   // Cursor (`seq_after`) mode is the PB SYNC wire and is left byte-identical:
   // replication gets the raw stored row, the browser gets a derived display
-  // projection. Same split as the tasks.project_id slug projection.
-  if (seqAfterRaw === null) {
+  // projection. Same split as the tasks.project_id slug projection — so the
+  // rollup is only issued at all on the browser read.
+  const isBrowserRead = seqAfterRaw === null;
+  const [result, agg] = await Promise.all([
+    env.DB.prepare(query).bind(...params).all(),
+    isBrowserRead
+      ? env.DB.prepare(
+          `SELECT project_id, MAX(created_at) AS latest
+             FROM activity_entries
+            WHERE project_id IS NOT NULL
+            GROUP BY project_id`
+        ).all<{ project_id: string; latest: string }>()
+      : null,
+  ]);
+
+  if (isBrowserRead) {
     const rows = (result.results || []) as Record<string, unknown>[];
-    const agg = await env.DB.prepare(
-      `SELECT project_id, MAX(created_at) AS latest
-         FROM activity_entries
-        WHERE project_id IS NOT NULL
-        GROUP BY project_id`
-    ).all<{ project_id: string; latest: string }>();
     const latestByProject = new Map(
-      (agg.results || []).map((r) => [r.project_id, r.latest] as const)
+      (agg?.results || []).map((r) => [r.project_id, r.latest] as const)
     );
     for (const r of rows) {
       const latest = latestByProject.get(String(r.id));
@@ -357,21 +367,6 @@ export async function handleGetProjectUpdates(slug: string, request: Request, en
   ).bind(canonicalId, ...vis.binds).all();
   const rows = (result.results || []).map((r: Record<string, unknown>) => ({ ...r, project_id: slug }));
   return json({ data: rows, count: rows.length });
-}
-
-/**
- * A stored D1 timestamp → a zone-explicit ISO instant.
- *
- * D1 writes bare `YYYY-MM-DD HH:MM:SS` (no zone) but the value IS UTC. Handing
- * that to the browser unzoned makes `new Date(...)` read it as LOCAL time — the
- * exact class src/lib/time.ts `parseDbUtc` exists to close on the read side.
- * Already-zoned values (`...Z`, `...+05:00`) pass through untouched.
- */
-export function dbStampToIso(value: string): string {
-  const s = value.trim();
-  if (/[zZ]$|[+-]\d{2}:?\d{2}$/.test(s)) return s;
-  const m = s.match(/^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2}(?::\d{2})?(?:\.\d+)?)$/);
-  return m ? `${m[1]}T${m[2]}Z` : s;
 }
 
 // GET /api/projects/:idOrSlug/activity — the whole-picture project feed
