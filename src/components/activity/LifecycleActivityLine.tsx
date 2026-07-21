@@ -24,7 +24,20 @@ function eventOf(entry: ActivityEntryItemRow): string {
   return entry.kind === 'completion' ? 'completed' : 'changed'
 }
 
-export function LifecycleActivityLine({ entry, onDelete }: { entry: ActivityEntryItemRow; onDelete?: () => void }) {
+export function LifecycleActivityLine({
+  entry,
+  onDelete,
+  taskLabel,
+  taskHref,
+}: {
+  entry: ActivityEntryItemRow
+  onDelete?: () => void
+  /** Cross-entity feeds only (project stream): the originating task's display
+   *  title + deep-link. Omitted on a task's own feed, where the body's implicit
+   *  subject is already the page you're looking at. */
+  taskLabel?: string | null
+  taskHref?: string
+}) {
   const ev = eventOf(entry)
   const glyph = GLYPH[ev] ?? '⇄'
   const glyphColor =
@@ -45,7 +58,23 @@ export function LifecycleActivityLine({ entry, onDelete }: { entry: ActivityEntr
         {glyph}
       </span>
       <span style={{ minWidth: 0 }}>
-        {entry.body} <span style={{ fontStyle: 'normal', fontWeight: 600 }}>— {who}</span>
+        {entry.body}
+        {/* Cross-entity feeds: name the subject, and make it open the task
+            (Rule 73 — an activity click lands the actionable entity). */}
+        {taskLabel && taskHref && (
+          <>
+            {' · '}
+            <a
+              href={taskHref}
+              onClick={(e) => e.stopPropagation()}
+              className="link-affordance"
+              style={{ fontStyle: 'normal', color: 'var(--teal)' }}
+            >
+              {taskLabel}
+            </a>
+          </>
+        )}{' '}
+        <span style={{ fontStyle: 'normal', fontWeight: 600 }}>— {who}</span>
       </span>
       {/* Same timestamp component as the comment rows → identical format + hover. */}
       <EntryTime ts={entry.created_at} className="ml-auto" />

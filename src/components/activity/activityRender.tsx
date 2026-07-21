@@ -563,23 +563,34 @@ export function ActivityEntryItem({
     try { return !!(entry.metadata_json && JSON.parse(entry.metadata_json).edited) } catch { return false }
   })()
 
-  // Lifecycle rows (created / completed / changed) render as a quiet minimal
-  // line, NOT a comment card — overriding the (previously unused-in-prod) card
-  // treatment for these kinds. Hermes rows are always kind='comment', so this
-  // never catches them. See LifecycleActivityLine + the 2026-07-09 spec (#93).
-  if (entry.kind === 'system' || entry.kind === 'completion') {
-    return (
-      <ActivityEntryWrapper motionProps={motionProps}>
-        <LifecycleActivityLine entry={entry} onDelete={onDelete} />
-      </ActivityEntryWrapper>
-    )
-  }
-
   // Deep-link back to the task in the My Tasks view (project-stream only).
   const taskHref = isTask
     ? `/portal/my-tasks?openTask=${encodeURIComponent(entry.entity_id)}`
     : null
   const taskLabel = entry.task_title ?? null
+
+  // Lifecycle rows (created / completed / changed) render as a quiet minimal
+  // line, NOT a comment card — overriding the (previously unused-in-prod) card
+  // treatment for these kinds. Hermes rows are always kind='comment', so this
+  // never catches them. See LifecycleActivityLine + the 2026-07-09 spec (#93).
+  //
+  // In a CROSS-ENTITY feed (the project stream — showTaskOriginBadge), a task
+  // lifecycle body is context-free on its own: "Completed" never says WHAT was
+  // completed (#94). Pass the joined task title + deep-link so the line names
+  // its subject. Task-detail feeds stay bare — there the subject IS the page.
+  if (entry.kind === 'system' || entry.kind === 'completion') {
+    return (
+      <ActivityEntryWrapper motionProps={motionProps}>
+        <LifecycleActivityLine
+          entry={entry}
+          onDelete={onDelete}
+          {...(showTaskOriginBadge && isTask && taskHref
+            ? { taskLabel, taskHref }
+            : {})}
+        />
+      </ActivityEntryWrapper>
+    )
+  }
 
 
   // ── Determine bar colour ──────────────────────────────────────────────────
