@@ -26,6 +26,23 @@ describe('isHermesPrefix', () => {
     expect(isHermesPrefix('@quickchat hey')).toBe(false)
     expect(isHermesPrefix('@backlog idea here')).toBe(false)
   })
+
+  it('#891: matches a model-tag suffix, underscore or hyphen (was unreachable for underscore -- `_` is a regex word char, so a bare \\b never matched)', () => {
+    expect(isHermesPrefix('@hermes_opus do the analysis')).toBe(true)
+    expect(isHermesPrefix('@hermes-haiku quick summary')).toBe(true)
+    expect(isHermesPrefix('@hermes_sonnet routine task')).toBe(true)
+    expect(isHermesPrefix('@Hermes_Opus mixed case')).toBe(true) // case-insensitive
+  })
+
+  it('#891: an unrecognised underscore tag is a known, unchanged limitation (only opus/sonnet/haiku are literal alternatives)', () => {
+    // A hyphenated bogus tag already passed pre-#891 ('-' is never a regex
+    // word char, so \b held regardless of what followed it); an underscore
+    // bogus tag still does not, same structural reason '@hermes_opus' failed
+    // before this fix. Widening further was out of scope for #891 (row named
+    // only opus/sonnet/haiku) -- documented, not silently fixed.
+    expect(isHermesPrefix('@hermes-bogus still dispatches')).toBe(true)
+    expect(isHermesPrefix('@hermes_bogus does not dispatch')).toBe(false)
+  })
 })
 
 describe('stripHermesPrefix', () => {
@@ -37,6 +54,11 @@ describe('stripHermesPrefix', () => {
   it('falls back to the original when nothing follows the token', () => {
     expect(stripHermesPrefix('@hermes')).toBe('@hermes')
     expect(stripHermesPrefix('@hermes   ')).toBe('@hermes')
+  })
+
+  it('#891: leaves a model-tag suffix INTACT -- it must ride through to /api/ai-requests\' prompt field for PB\'s select_model() to parse (#217); do not widen this alongside HERMES_PREFIX_RE', () => {
+    expect(stripHermesPrefix('@hermes_opus do the thing')).toBe('_opus do the thing')
+    expect(stripHermesPrefix('@hermes-haiku quick one')).toBe('-haiku quick one')
   })
 })
 

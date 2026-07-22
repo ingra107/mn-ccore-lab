@@ -2,15 +2,12 @@ import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useTeamSlugs } from '../hooks/useMentionAutocomplete'
 import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
-
 // Known command @-tags — visually distinguished from person @-mentions and
-// excluded from person-autocomplete when the filter exactly matches.
-const KNOWN_COMMAND_TAGS: Record<string, { label: string; color: string; bg: string }> = {
-  hermes:   { label: '⌘ Hermes AI',         color: 'var(--gold)',  bg: 'var(--gold-active)'   },
-  quickchat: { label: '⌘ Quick Chat launch', color: 'var(--teal)', bg: 'var(--teal-active)'   },
-  workon:   { label: '⌘ Work On launch',     color: 'var(--teal)', bg: 'var(--teal-active)'   },
-  backlog:  { label: '⌘ Backlog idea',       color: 'var(--slate)', bg: 'var(--hover-subtle)' },
-}
+// excluded from person-autocomplete when the filter exactly matches. Also
+// carries the Hermes model-tag variants' gating logic (#891) — see
+// mentionCommandTags.ts for why they're a separate map from the always-
+// visible top-level tags.
+import { KNOWN_COMMAND_TAGS, isExactCommandTag, filterCommandTags } from '../lib/mentionCommandTags'
 
 // Detects a command @-tag at the START of the value — module-level so it isn't
 // re-literal-ed on every keystroke (#252 finding 4). Stateless (no g/y flag),
@@ -72,9 +69,10 @@ export default function MentionInput({
 
   const filteredSlugs = useMemo(() => {
     const lower = mentionFilter.toLowerCase()
-    // Exact match on a known command @-tag: suppress person autocomplete so the
-    // dropdown doesn't compete with the command-routing UI signal.
-    if (lower in KNOWN_COMMAND_TAGS) return []
+    // Exact match on a known command @-tag (base OR a Hermes model variant,
+    // #891): suppress person autocomplete so the dropdown doesn't compete
+    // with the command-routing UI signal.
+    if (isExactCommandTag(lower)) return []
     if (!lower) return teamSlugs
     return teamSlugs.filter(
       (t) =>
@@ -88,12 +86,11 @@ export default function MentionInput({
   // from the dropdown instead of requiring exact blind typing. Same exact-match
   // suppression as filteredSlugs: once a tag is fully typed, the dropdown closes
   // and Enter falls through to the command-routing handler (#221) rather than
-  // re-inserting what's already there.
-  const filteredCommands = useMemo(() => {
-    const lower = mentionFilter.toLowerCase()
-    if (lower in KNOWN_COMMAND_TAGS) return []
-    return Object.entries(KNOWN_COMMAND_TAGS).filter(([key]) => key.startsWith(lower))
-  }, [mentionFilter])
+  // re-inserting what's already there. Hermes model-tag variants (#891) are
+  // gated inside filterCommandTags on the filter string itself containing
+  // '-' -- see mentionCommandTags.ts for why that keeps them invisible while
+  // typing "@herm"/"@hermes".
+  const filteredCommands = useMemo(() => filterCommandTags(mentionFilter), [mentionFilter])
 
   // Commands first, people after -- the single list keyboard nav + render walk.
   const mentionOptions: MentionOption[] = useMemo(
