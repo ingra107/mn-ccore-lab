@@ -111,6 +111,7 @@ export default function MeetingDetail() {
   const { isAuthenticated } = useAuth()
   const { showSuccess, showError } = useToast()
   const [copiedSummary, setCopiedSummary] = useState(false)
+  const [copiedNotes, setCopiedNotes] = useState(false)
   const [generatingAgenda, setGeneratingAgenda] = useState(false)
   const [agendaCopied, setAgendaCopied] = useState(false)
   // Hooks must be called unconditionally (before any conditional returns)
@@ -983,6 +984,35 @@ export default function MeetingDetail() {
             <h3 style={{ fontWeight: 500, fontSize: '16px', color: 'var(--ink)', margin: 0 }}>
               Meeting Notes
             </h3>
+            {/* #96 — one-click copy of the notes body so Nick can paste them
+                straight to the team. Copies the raw markdown source (what
+                pastes cleanly into mail/Slack), not the rendered DOM. Sits in
+                the section header rather than the hover layer: "copy quick"
+                means always visible, unlike the Edit affordance below. */}
+            {!editingNotes && meeting?.notes && (
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(meeting.notes || '').then(() => {
+                    setCopiedNotes(true)
+                    setTimeout(() => setCopiedNotes(false), 2000)
+                  }).catch(() => showError('Could not copy notes'))
+                }}
+                data-tip={copiedNotes ? 'Copied' : 'Copy notes as text'}
+                aria-label="Copy meeting notes"
+                className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs transition-colors ml-auto"
+                style={{
+                  fontSize: 'var(--label-size)',
+                  color: copiedNotes ? 'var(--green)' : 'var(--slate)',
+                  border: `1px solid ${copiedNotes ? 'var(--green)' : 'var(--border-subtle)'}`,
+                  background: copiedNotes ? 'var(--green-hover)' : 'none',
+                  cursor: 'pointer',
+                  opacity: copiedNotes ? 1 : 0.85,
+                }}
+              >
+                {copiedNotes ? <Check {...ICON_PROPS} size={11} /> : <Copy {...ICON_PROPS} size={11} />}
+                {copiedNotes ? 'Copied!' : 'Copy'}
+              </button>
+            )}
           </div>
           <div style={{ background: 'var(--ice)', borderRadius: 'var(--radius-xl)', padding: '20px' }} className="detail-card">
             {editingNotes ? (
