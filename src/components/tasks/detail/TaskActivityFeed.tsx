@@ -24,7 +24,7 @@ import { useQuery } from '@tanstack/react-query'
 import { ActivityEntryItem, type ActivityEntryItemRow } from '../../activity/activityRender'
 import { ActivityThread } from '../../activity/ActivityThread'
 import { canDeleteActivityEntry } from '../../activity/activityPermissions'
-import { filterMatchesKind, type TaskFeedFilter } from '../../../../shared/activityKinds'
+import { filterMatchesKind, isRepliableKind, type TaskFeedFilter } from '../../../../shared/activityKinds'
 import type { StoredKind, UpdateType } from '../../../../shared/activityKinds'
 import { useAuth } from '../../../hooks/useAuth'
 import { useDeleteActivityEntry, useEditActivityEntry } from '../../../hooks/useMutations'
@@ -169,9 +169,10 @@ export function TaskActivityFeed({ taskId, peekCount, hidePills, avatarSize }: T
             // ROOTS above — never replies — so the Overview peek still shows N
             // conversations rather than N messages.
             //
-            // Lifecycle rows (system/completion) are not repliable server-side,
-            // so they render as a plain card with no thread affordance.
-            entry.kind === 'system' || entry.kind === 'completion' ? (
+            // Lifecycle rows are not repliable server-side (isRepliableKind is
+            // the one place that rule lives), so they render as a plain card
+            // with no thread affordance.
+            !isRepliableKind(entry.kind) ? (
               <ActivityEntryItem
                 key={entry.id}
                 entry={entry}

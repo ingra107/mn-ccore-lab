@@ -36,7 +36,7 @@ import { useUndoToast } from '../UndoToast'
 import SmartCompose from '../SmartCompose'
 import EmptyState from '../EmptyState'
 import type { Project } from '../../data/types'
-import { deriveRenderKind, filterMatchesKind } from '../../../shared/activityKinds'
+import { deriveRenderKind, filterMatchesKind, isRepliableKind } from '../../../shared/activityKinds'
 import {
   ActivityEntryItem,
   type ActivityEntryItemRow,
@@ -384,9 +384,10 @@ function StreamItem({ event, onToggleAction, onDeleteEntry, onEditEntry }: { eve
         taskOriginBorderWidth: 2,
         motionProps: itemMotion,
       }
-      // Lifecycle narration is not repliable (the API rejects it as a parent),
-      // so it renders as a plain card — same rule as the task feed.
-      if (event.row.kind === 'system' || event.row.kind === 'completion') {
+      // Lifecycle narration is not repliable (the API rejects it as a parent);
+      // isRepliableKind is the single home for that rule, shared with the task
+      // feed so the two surfaces cannot drift apart.
+      if (!isRepliableKind(event.row.kind)) {
         return <ActivityEntryItem {...itemProps} entry={event.row} onDelete={onDeleteEntry} />
       }
       // #98: a reply posted from the PROJECT feed still threads onto the entry's

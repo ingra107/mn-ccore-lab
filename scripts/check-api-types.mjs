@@ -50,6 +50,18 @@ for (const line of raw.split(/\r?\n/)) {
 }
 
 if (update) {
+  // The ratchet must only turn one way. Without this the floor is enforced by
+  // discipline alone: run --update after a refactor that ADDED errors and the
+  // baseline silently rises, which converts the gate into a rubber stamp
+  // exactly when it matters most.
+  const priorRaw = existsSync(BASELINE) ? JSON.parse(readFileSync(BASELINE, 'utf8')) : {}
+  const priorTotal = Object.values(priorRaw).reduce((a, b) => a + b, 0)
+  const newTotal = [...counts.values()].reduce((a, b) => a + b, 0)
+  if (newTotal > priorTotal) {
+    console.error(`[check-api-types] REFUSING --update: it would RAISE the floor ${priorTotal} -> ${newTotal}.`)
+    console.error('Fix the new errors first. The baseline may go down or stay flat, never up.')
+    process.exit(1)
+  }
   const out = Object.fromEntries([...counts.entries()].sort(([a], [b]) => a.localeCompare(b)))
   writeFileSync(BASELINE, JSON.stringify(out, null, 2) + '\n')
   console.log(`[check-api-types] baseline written: ${counts.size} signature(s), ${[...counts.values()].reduce((a, b) => a + b, 0)} error(s).`)

@@ -43,6 +43,22 @@ export function isVisibility(v: unknown): v is Visibility {
  * distinctly (task-comment | task-update | task-completion | task-system).
  * For other entity types the stored kind passes through unprefixed.
  */
+/**
+ * Can this entry be a conversational thread root (#98)?
+ *
+ * Lifecycle rows (`system` / `completion`) are generated narration, not
+ * something a person said — the API rejects them as a reply parent, so a feed
+ * must not offer a Reply control that would always error.
+ *
+ * Lives here because the rule is a property of the KIND, and it was previously
+ * spelled out as a literal `kind === 'system' || kind === 'completion'` in BOTH
+ * feed components — two copies of one semantic rule, free to diverge from each
+ * other and from the server that enforces it.
+ */
+export function isRepliableKind(kind: StoredKind): boolean {
+  return kind !== 'system' && kind !== 'completion';
+}
+
 export function deriveRenderKind(entityType: string, kind: StoredKind): string {
   if (entityType === 'task') return `task-${kind}`;
   return kind;
