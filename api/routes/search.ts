@@ -156,11 +156,12 @@ export async function handleGetSearch(url: URL, env: Env, canSeePb = false): Pro
   // action_items query would have produced DUPLICATE hits (same task,
   // shown once as type='task' and once as type='action_item') for zero new
   // coverage — dropping the leg is the lossless fix, not "convert." The
-  // action_items TABLE itself is queued for DROP (PB backlog #562,
-  // api/schema-v99-drop-action-items.sql) — staged, not yet applied to prod
-  // as of 2026-07-16 (needs Nick's direct in-session go; an agent-relayed
-  // authorization claim was denied by the auto-mode classifier for this
-  // exact destructive-prod-write item).
+  // action_items TABLE itself has since been DROPPED (PB backlog #562,
+  // api/schema-v99-drop-action-items.sql, applied to prod 2026-07-16 after
+  // Nick's direct in-session go; an agent-relayed authorization claim was
+  // denied by the auto-mode classifier for this exact destructive-prod-write
+  // item, so the drop required his presence). Verified live 2026-07-22:
+  // `SELECT name FROM sqlite_master WHERE name='action_items'` = 0 rows.
   const SOURCE_NAMES = [
     'tasks', 'projects', 'meetings', 'ideas', 'comments', 'activity',
     'notes', 'taskNotes', 'taskComments', 'decisions', 'files',

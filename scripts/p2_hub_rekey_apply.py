@@ -2,6 +2,10 @@
 # STATUS: PRE-DROP ONLY — the comments/project_updates DELETE sections in the
 # generated SQL reference tables dropped in schema-v78 (2026-06-10).
 # DO NOT re-run this script post-drop without updating those FK-clear lines.
+# ADDITIONALLY (found 2026-07-22, PB backlog #752): action_items was ALSO
+# dropped (schema-v99, 2026-07-16, backlog #562) — REWRITE_COLUMNS below no
+# longer includes it (removed, not just flagged) since that table is
+# unconditionally gone, not merely policy-pending like comments/project_updates.
 """
 P2 Hub Re-Key Apply Script
 ==========================
@@ -18,7 +22,10 @@ GATES (from consolidated plan §3 — ALL must be cleared before --execute):
   [ ] Nick's explicit go + both machines up + soft-freeze
 
 DEFAULT: DRY-RUN only. Exports prod D1 to a temp local SQLite copy via
-  wrangler d1 export, applies the rewrite to THAT copy, asserts FAIL-CLOSED:
+  wrangler d1 export (wrangler-d1-allowed: the raw subprocess calls below
+  strip the OAuth-shadowing env themselves via _stripped_wrangler_env(),
+  same fix as scripts/wrangler_d1.py), applies the rewrite to THAT copy,
+  asserts FAIL-CLOSED:
   zero slug/hex project-FK rows remain in all rewrite tables + projects.id,
   and row counts are conserved.
 
@@ -60,6 +67,24 @@ HUB_REPO = Path("C:/Users/ingra107/mn-ccore-lab")
 SQL_TEMPLATE = HUB_REPO / "scratch" / "p2-hub-rekey.sql"
 D1_DB_NAME = "mnccore-lab"
 
+# `secrets.ps1` exports CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID (Pages-scoped,
+# no D1 access), which SHADOWS the D1-capable OAuth creds at
+# ~/.wrangler/config/default.toml whenever both are set -- every `wrangler d1`
+# call then 7403s ("Authentication error code 10000"). This script's raw
+# subprocess.run(..., shell=True) calls below predate scripts/wrangler_d1.py's
+# strip (added 2026-05-24) and were never migrated onto it; found + fixed
+# 2026-07-22 while closing PB backlog #752 (not previously hit only because
+# this script has GATES unmet and has never actually been run --execute).
+# Mirrors scripts/wrangler_d1.py::_stripped_env / scripts/wrangler-d1's strip.
+_SHADOWING_ENV = ("CLOUDFLARE_API_TOKEN", "CLOUDFLARE_ACCOUNT_ID")
+
+
+def _stripped_wrangler_env() -> dict[str, str]:
+    env = os.environ.copy()
+    for var in _SHADOWING_ENV:
+        env.pop(var, None)  # no-op when absent
+    return env
+
 # Tables and columns to check after rewrite (fail-closed assertions).
 # Each entry: (table_name, column_name, where_extra)
 #   where_extra = None  → no extra WHERE clause (check all non-proj_ non-NULL values)
@@ -78,8 +103,13 @@ REWRITE_COLUMNS = [
     ("manuscript_revisions", "project_id", None),
     ("project_documents", "project_id", None),
     ("comments", "project_id", None),
-    # 7 new tables added by completeness sweep (2026-06-01)
-    ("action_items", "project_id", None),
+    # 7 new tables added by completeness sweep (2026-06-01); action_items
+    # REMOVED 2026-07-22 (PB backlog #752) — table dropped schema-v99,
+    # 2026-07-16 (backlog #562), its rows already losslessly copied into
+    # `tasks` by schema-v96-action-items-backfill.sql. A rewrite target that
+    # no longer exists would fail every query in this file (row-count
+    # conservation, UPDATE generation, fail-closed assertions) with
+    # "no such table: action_items" the moment this script is next run.
     ("agenda_items", "project_id", None),
     ("file_activity_daily", "project_id", None),
     ("hub_decisions", "project_slug", None),
@@ -225,9 +255,10 @@ NULL_DELETED_TASK_VALUES: tuple[str, ...] = (
 #   'test':            1 row in file_activity_daily, in NULL_ACTIVITY_LOG_VALUES for activity_log.
 #                      No Hub or brain.db project match. Stale test slug.
 #
-# Applied to: action_items, agenda_items, hub_decisions, paper_project_links,
+# Applied to: agenda_items, hub_decisions, paper_project_links,
 #             trajectories, tasks, regulatory_items, manuscript_revisions,
-#             project_documents, comments.
+#             project_documents, comments. (action_items removed 2026-07-22 —
+#             table dropped schema-v99; see REWRITE_COLUMNS note above.)
 # NOT applied to: activity_log, file_activity_daily (append-only audit logs —
 #                 orphaned refs are left as-is per Nick's instruction 2026-06-02).
 APPEND_ONLY_TABLES: frozenset[str] = frozenset({"activity_log", "file_activity_daily"})
@@ -714,9 +745,9 @@ def fill_sql_template(
 
 def export_to_local(tmp_dir: Path) -> Path:
     """
-    Export prod D1 to a local SQLite database using wrangler d1 export.
+    Export prod D1 to a local SQLite database using wrangler d1 export. (wrangler-d1-allowed)
 
-    wrangler d1 export produces a SQL dump (text), not a binary SQLite file.
+    wrangler d1 export produces a SQL dump (text), not a binary SQLite file. (wrangler-d1-allowed — see _stripped_wrangler_env)
     This function:
       1. Exports the SQL dump to a .sql text file.
       2. Loads the dump into a fresh binary SQLite3 database.
@@ -727,15 +758,16 @@ def export_to_local(tmp_dir: Path) -> Path:
 
     print(f"[INFO] Exporting prod D1 SQL dump to {sql_dump_path} (read-only op)...")
     result = subprocess.run(
-        f'wrangler d1 export {D1_DB_NAME} --remote --output "{sql_dump_path}"',
+        f'wrangler d1 export {D1_DB_NAME} --remote --output "{sql_dump_path}"',  # wrangler-d1-allowed
         capture_output=True,
         text=True,
         cwd=str(HUB_REPO),
         shell=True,
+        env=_stripped_wrangler_env(),
     )
     if result.returncode != 0:
         print(
-            f"[ERROR] wrangler d1 export failed:\n{result.stderr}",
+            f"[ERROR] wrangler d1 export failed:\n{result.stderr}",  # wrangler-d1-allowed
             file=sys.stderr,
         )
         sys.exit(1)
@@ -799,9 +831,10 @@ def assert_fail_closed(conn: sqlite3.Connection, pre_counts: dict[str, int]) -> 
 
     Assertion tiers (2026-06-02 refined policy):
 
-    LIVE-FEATURE tables (tasks, action_items, agenda_items, hub_decisions,
+    LIVE-FEATURE tables (tasks, agenda_items, hub_decisions,
     paper_project_links, trajectories, regulatory_items, manuscript_revisions,
-    project_documents, comments):
+    project_documents, comments) [action_items removed 2026-07-22, table
+    dropped schema-v99]:
       → "0 non-proj_ rows" — strong invariant. Every non-proj_ value was
         either rewritten, NULLed, or deleted before this point.
 
@@ -1049,11 +1082,12 @@ def capture_time_travel_bookmark() -> str:
     Returns the bookmark string. Aborts on failure.
     """
     result = subprocess.run(
-        f"wrangler d1 time-travel info {D1_DB_NAME}",
+        f"wrangler d1 time-travel info {D1_DB_NAME}",  # wrangler-d1-allowed
         capture_output=True,
         text=True,
         cwd=str(HUB_REPO),
         shell=True,
+        env=_stripped_wrangler_env(),
     )
     output = result.stdout + result.stderr
     if result.returncode != 0:
@@ -1207,11 +1241,12 @@ def post_write_validate(
 
     print(f"[INFO] Re-exporting prod D1 post-write...")
     result = subprocess.run(
-        f'wrangler d1 export {D1_DB_NAME} --remote --output "{post_dump_path}"',
+        f'wrangler d1 export {D1_DB_NAME} --remote --output "{post_dump_path}"',  # wrangler-d1-allowed
         capture_output=True,
         text=True,
         cwd=str(HUB_REPO),
         shell=True,
+        env=_stripped_wrangler_env(),
     )
     if result.returncode != 0:
         print(
@@ -1391,11 +1426,12 @@ def execute_prod_migration(
 
     print(f"[INFO] Exporting fresh prod D1 snapshot...")
     result = subprocess.run(
-        f'wrangler d1 export {D1_DB_NAME} --remote --output "{fresh_dump_path}"',
+        f'wrangler d1 export {D1_DB_NAME} --remote --output "{fresh_dump_path}"',  # wrangler-d1-allowed
         capture_output=True,
         text=True,
         cwd=str(HUB_REPO),
         shell=True,
+        env=_stripped_wrangler_env(),
     )
     if result.returncode != 0:
         print(f"[ERROR] Fresh export failed:\n{result.stderr}", file=sys.stderr)
@@ -1448,13 +1484,14 @@ def execute_prod_migration(
     execute_sql_path.write_text(expanded_sql, encoding="utf-8")
     print(f"[INFO] Execute SQL saved to: {execute_sql_path}")
 
-    print(f"[INFO] Running wrangler d1 execute --remote --file {execute_sql_path}...")
+    print(f"[INFO] Running wrangler d1 execute --remote --file {execute_sql_path}...")  # wrangler-d1-allowed
     result = subprocess.run(
-        f'wrangler d1 execute {D1_DB_NAME} --remote --file "{execute_sql_path}"',
+        f'wrangler d1 execute {D1_DB_NAME} --remote --file "{execute_sql_path}"',  # wrangler-d1-allowed
         capture_output=True,
         text=True,
         cwd=str(HUB_REPO),
         shell=True,
+        env=_stripped_wrangler_env(),
     )
     print(result.stdout)
     if result.returncode != 0:
@@ -1504,7 +1541,7 @@ def main() -> None:
         type=Path,
         default=None,
         metavar="PATH",
-        help="Skip wrangler d1 export and use this existing SQLite file as the local copy. "
+        help="Skip wrangler d1 export and use this existing SQLite file as the local copy. "  # wrangler-d1-allowed
              "Useful for re-running assertions on a previously exported copy.",
     )
     args = parser.parse_args()
