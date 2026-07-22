@@ -1,3 +1,75 @@
+# ▶▶ NEXT SESSION — EXECUTE THE HERMES LANE UNIFICATION. Plan is written, verified, and DECIDED.
+
+> **Read `docs/superpowers/plans/2026-07-22-hermes-lane-unification.md` §0 FIRST** — it carries
+> the orchestrator verification, the live measurements, and the owner decisions. Do NOT re-triage;
+> the scope and the blocking question are both settled.
+>
+> **Decisions already made (do not relitigate):** typed `@hermes` defaults to
+> **`visibility='author'`** (private, one-click share) — so the prefix-vs-mid-text distinction
+> SURVIVES, repurposed from selecting a *store* to selecting a *default audience*; scope is the
+> **FULL wave** (day entity + hide + backfill), chosen deliberately over a minimal fix; execute
+> in a fresh session.
+>
+> **Scale reality (measured, prod):** `daily_thought` = **16 rows** (7 task-keyed, 9 date-keyed),
+> 0 unanswered, 0 orphaned. `lab_question`/`lab_answer` = **0 rows ever** (Ask the Lab's Hermes
+> path has never fired — a retirement question, not a migration one).
+> **The hard part is the hide predicate across ~25 read sites; a missed site leaks silently.**
+
+# ▶ BUG SWEEP #96–#100 + TWO PRIVACY LEAKS + THREADED REPLIES — SHIPPED (2026-07-22). Live = `e8c0a169`.
+
+Full Bug-Squasher pass: the whole open queue cleared, plus two privacy defects that were NOT
+in any bug report, plus schema v100 threading. **12 commits, all deployed + pushed, every
+deploy probe PASS. 1176/1176 api tests.**
+
+**Bugs (all closed on GitHub + `bug_reports`):**
+- **#96** copy button on Meeting Notes (raw markdown, always visible when notes exist).
+- **#97** answered meeting approvals now CLOSE (`status='done'`) and drop out of both task
+  lists. Read-side filters on the ANSWER, not on status — that is what makes declining from
+  **Telegram** (a PB lane that writes `approval_status` only) drop the row here too. 2 stranded
+  prod rows repaired.
+- **#98** threaded replies — schema **v100** `activity_entries.parent_id`, one level, parent owns
+  identity, `@me` inherits downward only, roots-only feeds with a **viewer-specific**
+  `reply_count`, shared `ActivityThread` on both feeds. Hermes answers land IN the asking thread
+  with a bounded `<activity_thread_context>` transcript in the **prompt** (NOT `context` — that
+  grammar is the listener's, and keeping it untouched avoided a cross-repo lockstep).
+- **#99** Hermes answers on a task now raise the attention signal. Root cause was structural: a
+  typed `@hermes` writes `ai_requests`, and the seen system only ever read `activity_entries`, so
+  a badge was impossible. Fixed with a requester-scoped arm in `/api/seen/unseen`.
+- **#100** ⌘K — Enter fired the wrong row (two category-order copies, `?? 9` vs `|| 9`, and
+  `recent` ranks 0 which is falsy), and Create Task **navigated** to My Tasks instead of opening
+  the canonical in-place quick-add (a site missed by the #71 conversion).
+- **Dots retired; the left rail now means URGENCY** (Nick's call). Overdue is already loud via the
+  red `DueChip`, so the row's one full-height channel went to the signal that had none. One
+  signal per channel: rail = urgent, due text = when, chip = new, box = done.
+
+**⚠️ TWO PRIVACY LEAKS, neither reported, SAME root cause — a handler that never received the
+request cannot filter by who is asking:**
+1. `GET /api/ai-requests` returned full prompt+response with **no requester filter** — any
+   teammate could read anyone's Hermes history. Now requester-scoped (PI/API-key still see all;
+   the PB listener is verified working).
+2. `api/routes/search.ts` applied **no visibility gate** to its four `activity_entries` sources —
+   **`@me` notes were searchable by any authenticated teammate.** Every FEED gates in SQL; search
+   was simply never wired. Fixed `e7a29e5f`. **If a third instance of this shape appears, make it
+   a lint, not a third fix.**
+
+**`api/` WAS NEVER TYPECHECKED.** `tsc -b` covers only `"src"`. The #98 reply endpoint shipped
+testing `actor.ok` on a `{slug}|{error}` union and 500'd on every request; a compiler would have
+caught it instantly. Now: `tsconfig.api.json` + `npm run typecheck:api` (`check-api-types.mjs`),
+failing only on NEW errors against a **149-error baseline**, wired into `deploy:pages:gated`.
+Proven by reintroducing the exact bug (gate fails) and reverting (passes). Ratchet the baseline
+DOWN as debt clears; never up.
+
+**Gotchas worth keeping:** the vitest API doubles match SQL by **exact column list** — any change
+to a SELECT's columns returns null and looks like a logic bug (cost 3 debugging rounds). The
+git-bash `fork()` storm was heavy all session; retry wins, and subagents are a good escape hatch
+for running a command when the main shell is wedged.
+
+**⚠️ Something else is writing to this repo** — `9e0f202f`, `schema-v101`, `48a44dd1` (unpushed)
+and edits to `CLAUDE.md` all arrived mid-session from another actor. Identify it before assuming
+a clean tree.
+
+---
+
 # ▶ BUG SWEEP #94/#95 + PROJECTS-LIST ROW ALIGNMENT — SHIPPED (2026-07-21). Live = `97f14638`.
 
 Bug-Squasher pass on the 2 open in-app reports, then a Nick-driven alignment arc on the Projects list that came out of #95. **6 commits, all deployed via `npm run deploy:pages:gated` + pushed; every deploy probe passed. NO schema/migration/table change (still schema v82 / 74 tables).** One additive API field (derived, browser-read-only) — see below.

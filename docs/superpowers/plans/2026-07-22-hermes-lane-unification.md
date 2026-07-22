@@ -57,11 +57,23 @@ the request, so it was structurally unable to filter — the identical shape to 
 authenticated teammate. **FIXED AND DEPLOYED 2026-07-22 (commit `e7a29e5f`), standalone —
 it is NOT part of this wave and Phase 1 should not re-do it.**
 
-**Where the plan needs the owner, not an implementer:** §7 Q1 (default visibility of a
-typed `@hermes`) partially conflicts with what the owner asked for — he said he wants
-Hermes exchanges visible to teammates and taggable. The reconciliation is probably
-"private by DEFAULT, one click to share" rather than "team by default, hide when
-unwanted", but that is his call and it BLOCKS Phase 5.
+### OWNER DECISIONS — 2026-07-22, Phase 5 is UNBLOCKED
+
+1. **§7 Q1 RESOLVED → option (A), `visibility='author'`.** A typed `@hermes` prefix
+   defaults to PRIVATE, with an explicit one-click share. Nothing that is private today
+   becomes visible. The owner's "I want teammates to see what Hermes said" is satisfied by
+   the SHARE action and by mid-text mentions (which stay team-visible), not by the default.
+   **Consequence for §7 Q6:** the prefix-vs-mid-text distinction SURVIVES — repurposed. It
+   no longer selects a STORE (both write `activity_entries`); it selects the DEFAULT
+   AUDIENCE. `src/lib/hermesRouting.ts` keeps its `@hermes` half; update its comment, which
+   currently describes the routing meaning.
+2. **Scope: the FULL wave**, day entity + hide + backfill included. The orchestrator flagged
+   this as possible overbuild given 16 rows; the owner considered that and chose the full
+   wave anyway. Do not silently re-scope it down at implementation time.
+3. **Timing:** execute in a FRESH session. Nothing is implemented as of this commit.
+
+Still open and NOT blocking Phase 5: §7 Q4 (who may hide/unhide — proposal is any authed
+member, `hidden_by` recorded), and §7 Q5 (`day` in `SEEN_TYPES` — recommendation is no).
 
 ---
 
