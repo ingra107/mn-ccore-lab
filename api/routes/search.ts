@@ -1,5 +1,6 @@
 import type { Env } from '../helpers';
 import { json } from '../helpers';
+import { activityVisibilityGate } from '../lib/activity-entry';
 
 // --- Scoring constants ---
 
@@ -114,7 +115,7 @@ function pickMatch(q: string, fields: Array<{ name: string; value: string | null
 // project notes (project_updates), tasks (by parent project), and files (by
 // parent project). Non-project entities (ideas, meetings, publications,
 // grants, decisions, activity) are unaffected here.
-export async function handleGetSearch(url: URL, env: Env, canSeePb = false): Promise<Response> {
+export async function handleGetSearch(url: URL, env: Env, canSeePb = false, request?: Request): Promise<Response> {
   const q = url.searchParams.get('q')?.trim();
   if (!q || q.length < 2) return json({ data: [], count: 0 });
   // Upper bound: 200-char search strings are already absurdly long; cap to
@@ -135,6 +136,23 @@ export async function handleGetSearch(url: URL, env: Env, canSeePb = false): Pro
   // project (matched by id OR slug). Non-project rows pass through.
   const pbProjectIdSet = `SELECT id FROM projects WHERE category = 'Peripheral Brain'
       UNION SELECT slug FROM projects WHERE category = 'Peripheral Brain'`;
+
+  // ── @me privacy gate for the activity_entries sources ─────────────────────
+  //
+  // These four sources search `activity_entries.body` directly. Every FEED over
+  // that table applies activityVisibilityGate in SQL (Rule 70 — the @me gate is
+  // enforced at the read, not in React), but search was never wired to it: the
+  // handler did not even receive the request, so it had no requester to gate on
+  // — structurally unable to filter, exactly like GET /api/ai-requests was.
+  //
+  // Net effect before this: an `@me` note was invisible in the timeline but
+  // fully searchable by any authenticated teammate, body text and all. Privacy
+  // that holds on one read path and not another is not privacy.
+  //
+  // `request` is optional so existing callers keep compiling; when absent the
+  // gate falls back to team-only, which fails CLOSED (hides author rows) rather
+  // than open.
+  const vis = await activityVisibilityGate(request ?? new Request('https://internal/search'), env, 'ae');
 
   // Search across 14 tables in parallel — Slack-parity unified search.
   // Promise.allSettled isolates each source: one D1 timeout or transient
@@ -187,27 +205,27 @@ export async function handleGetSearch(url: URL, env: Env, canSeePb = false): Pro
     ).bind(like, like, limit).all(),
     // Project comments → activity_entries kind='comment', entity_type='project'
     env.DB.prepare(
-      `SELECT ae.id, ae.body AS content, ae.actor_slug AS author_id, ae.created_at, p.title as project_title, p.slug as project_slug FROM activity_entries ae JOIN projects p ON ae.project_id = p.id WHERE ae.entity_type='project' AND ae.kind='comment' AND ae.body LIKE ?${
+      `SELECT ae.id, ae.body AS content, ae.actor_slug AS author_id, ae.created_at, p.title as project_title, p.slug as project_slug FROM activity_entries ae JOIN projects p ON ae.project_id = p.id WHERE ae.entity_type='project' AND ae.kind='comment' AND ae.body LIKE ? AND ${vis.clause}${
         joinedProjPred ? ` AND (${joinedProjPred})` : ''
       } LIMIT ?`
-    ).bind(like, limit).all(),
+    ).bind(like, ...vis.binds, limit).all(),
     env.DB.prepare(
       'SELECT id, type, description, actor, timestamp FROM activity_log WHERE description LIKE ? ORDER BY timestamp DESC LIMIT ?'
     ).bind(like, limit).all(),
     // Project notes (activity_entries kind='update', entity_type='project')
     env.DB.prepare(
-      `SELECT ae.id, ae.body AS content, ae.actor_slug AS author, ae.update_type, ae.created_at, p.title as project_title, p.slug as project_slug FROM activity_entries ae JOIN projects p ON ae.project_id = p.id WHERE ae.entity_type='project' AND ae.kind='update' AND ae.body LIKE ?${
+      `SELECT ae.id, ae.body AS content, ae.actor_slug AS author, ae.update_type, ae.created_at, p.title as project_title, p.slug as project_slug FROM activity_entries ae JOIN projects p ON ae.project_id = p.id WHERE ae.entity_type='project' AND ae.kind='update' AND ae.body LIKE ? AND ${vis.clause}${
         joinedProjPred ? ` AND (${joinedProjPred})` : ''
       } LIMIT ?`
-    ).bind(like, limit).all(),
+    ).bind(like, ...vis.binds, limit).all(),
     // Task notes (activity_entries kind='update', entity_type='task')
     env.DB.prepare(
-      'SELECT ae.id, ae.body AS content, ae.actor_slug AS author_slug, ae.update_type, ae.created_at, ae.entity_id AS task_id, t.title as task_title FROM activity_entries ae LEFT JOIN tasks t ON ae.entity_id = t.id WHERE ae.entity_type=\'task\' AND ae.kind=\'update\' AND ae.body LIKE ? LIMIT ?'
-    ).bind(like, limit).all(),
+      `SELECT ae.id, ae.body AS content, ae.actor_slug AS author_slug, ae.update_type, ae.created_at, ae.entity_id AS task_id, t.title as task_title FROM activity_entries ae LEFT JOIN tasks t ON ae.entity_id = t.id WHERE ae.entity_type='task' AND ae.kind='update' AND ae.body LIKE ? AND ${vis.clause} LIMIT ?`
+    ).bind(like, ...vis.binds, limit).all(),
     // Task comments (activity_entries kind='comment', entity_type='task')
     env.DB.prepare(
-      'SELECT ae.id, ae.body AS content, ae.actor_slug AS author_slug, ae.created_at, ae.entity_id AS task_id, t.title as task_title FROM activity_entries ae LEFT JOIN tasks t ON ae.entity_id = t.id WHERE ae.entity_type=\'task\' AND ae.kind=\'comment\' AND ae.body LIKE ? LIMIT ?'
-    ).bind(like, limit).all(),
+      `SELECT ae.id, ae.body AS content, ae.actor_slug AS author_slug, ae.created_at, ae.entity_id AS task_id, t.title as task_title FROM activity_entries ae LEFT JOIN tasks t ON ae.entity_id = t.id WHERE ae.entity_type='task' AND ae.kind='comment' AND ae.body LIKE ? AND ${vis.clause} LIMIT ?`
+    ).bind(like, ...vis.binds, limit).all(),
     // Decisions
     env.DB.prepare(
       'SELECT id, title, rationale, context, outcome, project_slug, decided_by, created_at FROM hub_decisions WHERE (title LIKE ? OR rationale LIKE ? OR context LIKE ? OR outcome LIKE ?) LIMIT ?'

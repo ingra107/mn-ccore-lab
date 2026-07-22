@@ -1318,7 +1318,9 @@ defineRoute({
   auth: 'authed',
   entity: 'search',
   visibility: 'pb-aware',
-  handler: (c) => handleGetSearch(U(c), E(c), CSP(c)),
+  // R(c) is passed so search can apply the @me visibility gate — without the
+  // request it had no requester to gate on and leaked author-only bodies.
+  handler: (c) => handleGetSearch(U(c), E(c), CSP(c), R(c)),
 });
 defineRoute({
   method: 'GET',
