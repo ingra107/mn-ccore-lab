@@ -618,13 +618,27 @@ export async function handleGetTaskActivity(taskId: string, request: Request, en
   // Fix 3: guardTaskProject consolidates the repeated SELECT+assertProjectVisible pattern.
   const guard = await guardTaskProject(env, request, taskId);
   if (guard.block) return guard.block;
-  const vis = await activityVisibilityGate(request, env);
+  // #98: ROOTS only. Replies load on demand via GET /api/activity/:id/replies —
+  // returning them inline would let one long thread dominate the feed and would
+  // break the "peek the newest 3" slice the drawers do.
+  //
+  // Two gates, one per alias — NEVER regex-rewrite one clause into the other
+  // alias (that is the documented footgun that corrupted the task-project
+  // subquery; CLAUDE.md tasks.project_id note).
+  const visAe = await activityVisibilityGate(request, env, 'ae');
+  const visR = await activityVisibilityGate(request, env, 'r');
+  // reply_count is computed per-request, never stored: an @me reply is visible
+  // only to its author and the PI, so the honest count differs per viewer. The
+  // subquery carries the same gate as the outer read, so the badge can never
+  // advertise replies the viewer cannot open.
   const result = await env.DB.prepare(
-    `SELECT id, entity_type, entity_id, project_id, kind, visibility, actor_slug, body, mentions_json, update_type, metadata_json, created_at
-     FROM activity_entries
-     WHERE entity_type = 'task' AND entity_id = ? AND ${vis.clause}
-     ORDER BY created_at DESC, id DESC`
-  ).bind(taskId, ...vis.binds).all();
+    `SELECT ae.id, ae.entity_type, ae.entity_id, ae.project_id, ae.kind, ae.visibility, ae.actor_slug, ae.body, ae.mentions_json, ae.update_type, ae.metadata_json, ae.parent_id, ae.created_at,
+            (SELECT COUNT(*) FROM activity_entries r
+              WHERE r.parent_id = ae.id AND ${visR.clause}) AS reply_count
+     FROM activity_entries ae
+     WHERE ae.entity_type = 'task' AND ae.entity_id = ? AND ae.parent_id IS NULL AND ${visAe.clause}
+     ORDER BY ae.created_at DESC, ae.id DESC`
+  ).bind(...visR.binds, taskId, ...visAe.binds).all();
   return json({ data: result.results || [] });
 }
 
@@ -650,9 +664,12 @@ export async function handleGetTaskDetail(taskId: string, request: Request, env:
   const vis = await activityVisibilityGate(request, env);
   const [updatesRes, activityRes, subtasksRes, blocksRes] = await Promise.all([
     env.DB.prepare(
+      // #98: roots only. This fan-out flattens each row into a standalone
+      // kind:'note'; without the guard a reply would surface here detached from
+      // the comment it answers, reading as an out-of-context orphan.
       `SELECT id, body AS content, actor_slug AS author_slug, update_type, created_at
        FROM activity_entries
-       WHERE entity_type = 'task' AND entity_id = ? AND ${vis.clause}
+       WHERE entity_type = 'task' AND entity_id = ? AND parent_id IS NULL AND ${vis.clause}
        ORDER BY created_at DESC, id DESC LIMIT 20`
     ).bind(taskId, ...vis.binds).all(),
     env.DB.prepare(

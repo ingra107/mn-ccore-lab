@@ -34,7 +34,7 @@ import { handleGetSettings, handleUpdateSettings, handleGetWorkflowTemplates, ha
 import { handleGetReactions, handleToggleReaction } from './routes/reactions';
 import { handleCalendarEvents } from './routes/calendar';
 import { handleListFeeds, handleAddFeed, handleDeleteFeed, handleListEvents, pollAllStaleFeeds } from './routes/calendar-feeds';
-import { handleGetActivity, handleActivityHeatmap, handleDeleteActivityEntry, handleEditActivityEntry } from './routes/activity';
+import { handleGetActivity, handleActivityHeatmap, handleDeleteActivityEntry, handleEditActivityEntry, handleGetActivityReplies, handleCreateActivityReply } from './routes/activity';
 import { handleGetSubtasks, handleCreateSubtask, handleToggleSubtask, handleDeleteSubtask, handleReorderSubtasks } from './routes/subtasks';
 import { handleTeamPulse } from './routes/team-pulse';
 import { handleGetPaperLinks, handleLinkPaper, handleUnlinkPaper, handlePapersByProject, handlePapersByPublication } from './routes/paper-links';
@@ -1196,6 +1196,24 @@ defineRoute({
   entity: 'activity',
   visibility: 'na',
   handler: (c) => handleEditActivityEntry(c.req.param('id'), R(c), USER(c), E(c)),
+});
+// #98 threaded replies. GET is 'public' like the other activity reads — the
+// author-only rows are gated in SQL inside the handler, not by the route auth.
+defineRoute({
+  method: 'GET',
+  path: '/api/activity/:id/replies',
+  auth: 'public',
+  entity: 'activity',
+  visibility: 'na',
+  handler: (c) => handleGetActivityReplies(c.req.param('id'), R(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/activity/:id/replies',
+  auth: 'authed',
+  entity: 'activity',
+  visibility: 'na',
+  handler: (c) => handleCreateActivityReply(c.req.param('id'), R(c), USER(c), E(c)),
 });
 defineRoute({
   method: 'GET',

@@ -109,11 +109,14 @@ describe('route contract — generated from ROUTE_REGISTRY', () => {
     //   delete was one-way at the HTTP boundary even though the mutation layer
     //   has always supported undelete, which is why the only "undo delete" in
     //   the UI was a 5s deferred commit.
+    // 254 as of 2026-07-22 — threaded replies (+2, #98):
+    //   GET  /api/activity/:id/replies — the thread under one root, oldest-first.
+    //   POST /api/activity/:id/replies — reply to a specific comment.
     // Adding a route → increment this number. Removing a route → decrement it.
     // This makes route deletion require explicit acknowledgment, preventing
     // silent surface regression (codex final-audit finding #9, 2026-05-28).
     // If you are intentionally adding or removing routes, update this count.
-    expect(ROUTE_REGISTRY).toHaveLength(252)
+    expect(ROUTE_REGISTRY).toHaveLength(254)
   })
 
   it('every non-public route has either entity or visibility metadata', () => {

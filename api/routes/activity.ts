@@ -1,8 +1,9 @@
 import type { Env, AuthUser } from '../helpers';
-import { json, error, actorSlug, isPiRequest } from '../helpers';
+import { json, error, actorSlug, isPiRequest, resolveActor } from '../helpers';
 import { idempotentDelete } from '../lib/idempotent-delete';
 import { isTestFixture } from '../lib/fixtures';
 import { ctToday } from '../lib/ct-date';
+import { activityVisibilityGate, postActivityEntry } from '../lib/activity-entry';
 
 // GET /api/activity?limit=20&actor=slug
 // AM-3 (SEC-T0-1): `canSeePb` true for PI/Nick/service. This endpoint stays
@@ -66,6 +67,14 @@ export async function handleDeleteActivityEntry(id: string, request: Request, us
     return error('Only the author or the PI can delete an activity entry', 403);
   }
 
+  // #98: deleting a thread root takes its replies with it. schema-v100 carries
+  // no FK (see that file's header), so the cascade is explicit here rather than
+  // an invisible engine behaviour. Orphaned children would be unreachable — the
+  // reply feed only loads by parent_id — but would still count toward unseen
+  // activity and the project last_activity rollup, i.e. invisible rows driving
+  // visible badges. Runs before the row itself so a failure can't strand them.
+  await env.DB.prepare('DELETE FROM activity_entries WHERE parent_id = ?').bind(id).run();
+
   return idempotentDelete({
     table: 'activity_entries',
     id,
@@ -113,6 +122,93 @@ export async function handleEditActivityEntry(id: string, request: Request, user
     'UPDATE activity_entries SET body = ?, metadata_json = ? WHERE id = ? RETURNING *',
   ).bind(newBody, JSON.stringify(meta), id).first();
   return json({ data: updated });
+}
+
+// The reply columns every threaded read returns. Mirrors the shape the unified
+// feeds already emit (activityRender.tsx:ActivityEntryItemRow) plus parent_id,
+// so a reply renders through the SAME card component as a root.
+const REPLY_COLS = `ae.id, ae.entity_type, ae.entity_id, ae.project_id, ae.kind,
+  ae.visibility, ae.actor_slug, ae.body, ae.mentions_json, ae.update_type,
+  ae.metadata_json, ae.parent_id, ae.created_at`;
+
+// GET /api/activity/:parentId/replies — the thread under one root (#98).
+//
+// Replies come back OLDEST-FIRST: a thread is a conversation and reads top to
+// bottom, which is the opposite of the newest-first ROOT feeds. Both orderings
+// are deliberate; don't "fix" one to match the other.
+//
+// Visibility is gated in SQL on BOTH the reply and its root (the rootColumn arm
+// of activityVisibilityGate) so an author-only thread never leaks a child, and
+// so the thread's own author can still read Hermes's author-only answer.
+export async function handleGetActivityReplies(
+  parentId: string,
+  request: Request,
+  env: Env,
+): Promise<Response> {
+  const vis = await activityVisibilityGate(request, env, 'ae', 'root');
+  const rows = await env.DB.prepare(
+    `SELECT ${REPLY_COLS}
+       FROM activity_entries ae
+       JOIN activity_entries root ON root.id = ae.parent_id
+      WHERE ae.parent_id = ? AND ${vis.clause}
+      ORDER BY ae.created_at ASC, ae.id ASC`,
+  ).bind(parentId, ...vis.binds).all();
+  const data = rows.results ?? [];
+  return json({ data, count: data.length });
+}
+
+// POST /api/activity/:parentId/replies — reply to a specific comment (#98).
+//
+// Body: { content: string, visibility?: 'team'|'author', author_slug?: string }
+//
+// The caller supplies ONLY the parent and the text. entity_type / entity_id /
+// project_id are inherited from the parent inside postActivityEntry, so a client
+// cannot graft a reply onto an entity other than the one it is replying within.
+// Routing through the one write primitive also means a reply gets @mention
+// notifications, artifact key-link capture and @hermes dispatch on exactly the
+// same terms as a top-level comment — no second implementation to drift.
+export async function handleCreateActivityReply(
+  parentId: string,
+  request: Request,
+  user: AuthUser,
+  env: Env,
+): Promise<Response> {
+  const payload = (await request.json().catch(() => ({}))) as {
+    content?: unknown; visibility?: unknown; author_slug?: unknown;
+  };
+  const content = typeof payload.content === 'string' ? payload.content : '';
+  if (!content.trim()) return error('content required', 400);
+
+  const actor = await resolveActor(env, user, payload.author_slug as string | undefined, {
+    allowImpersonation: await isPiRequest(request, env),
+  });
+  if (!actor.ok) return error(actor.error, actor.status);
+
+  // Read the parent through the caller's own visibility gate FIRST. Without
+  // this, postActivityEntry would happily thread a reply onto an author-only
+  // entry the caller cannot see — turning the reply endpoint into an oracle for
+  // the existence of other people's private notes.
+  const vis = await activityVisibilityGate(request, env, 'ae');
+  const visible = await env.DB.prepare(
+    `SELECT ae.id FROM activity_entries ae WHERE ae.id = ? AND ${vis.clause}`,
+  ).bind(parentId, ...vis.binds).first<{ id: string }>();
+  if (!visible) return error('Parent activity entry not found', 404);
+
+  const result = await postActivityEntry({
+    env,
+    user,
+    // Identity is inherited from the parent; these are placeholders that
+    // postActivityEntry overwrites. They cannot influence where the reply lands.
+    entityType: 'task',
+    entityId: '',
+    parentId,
+    kind: 'comment',
+    body: content,
+    actorSlug: actor.slug,
+    visibility: payload.visibility === 'author' ? 'author' : undefined,
+  });
+  if (!result.ok) return error(result.error, result.status);
+  return json({ data: result.row }, 201);
 }
 
 // GET /api/activity/heatmap?slug=&days=

@@ -80,6 +80,21 @@ export interface PostActivityEntryInput {
   /** kind-specific extras, serialized to metadata_json. */
   metadata?: Record<string, unknown> | null;
   /**
+   * #98 threading. When set, this entry is a REPLY to that entry id.
+   *
+   * The parent is AUTHORITATIVE for identity: entity_type, entity_id and
+   * project_id are copied from it and any caller-supplied values are ignored,
+   * so a client can never graft a reply onto a different entity than the
+   * comment it appears under. Threads are ONE level deep — replying to a reply
+   * is rejected rather than silently re-parented, so `parent_id IS NULL` stays
+   * a reliable "is a root" test for every feed.
+   *
+   * Visibility inherits DOWNWARD only: a reply under an @me root is forced
+   * author-only (you cannot widen a private thread by answering it), while a
+   * reply may still narrow itself to @me under a team root.
+   */
+  parentId?: string | null;
+  /**
    * When false, suppress the @mention notification + Hermes dispatch side
    * effects (used by the Hermes placeholder/response writes themselves so an
    * AI reply that quotes @someone doesn't re-fire notifications/AI loops).
@@ -141,8 +156,6 @@ export async function postActivityEntry(input: PostActivityEntryInput): Promise<
   const {
     env,
     user,
-    entityType,
-    entityId,
     kind,
     actorSlug,
     sourceTable = null,
@@ -150,6 +163,11 @@ export async function postActivityEntry(input: PostActivityEntryInput): Promise<
     metadata = null,
     fireSideEffects = true,
   } = input;
+  // #98: identity is mutable because a reply INHERITS it from its parent (see
+  // the parent-resolution block below). Roots keep exactly what the caller passed.
+  let entityType = input.entityType;
+  let entityId = input.entityId;
+  const parentId = input.parentId ?? null;
 
   // ── validation ────────────────────────────────────────────────────────────
   if (!isStoredKind(kind)) {
@@ -176,8 +194,44 @@ export async function postActivityEntry(input: PostActivityEntryInput): Promise<
     return { ok: false, error: `update_type is only valid when kind='update'`, status: 400 };
   }
 
+  // ── #98 parent resolution (reply writes) ───────────────────────────────────
+  // Runs BEFORE the @me policy so an author-only root can force its replies
+  // author-only, and before entity derivation so the parent's identity is what
+  // gets derived against.
+  let parentVisibility: Visibility | null = null;
+  if (parentId) {
+    const parent = await env.DB.prepare(
+      'SELECT id, parent_id, entity_type, entity_id, kind, visibility FROM activity_entries WHERE id = ?'
+    ).bind(parentId).first<{
+      id: string; parent_id: string | null; entity_type: string;
+      entity_id: string; kind: string; visibility: string;
+    }>();
+    if (!parent) {
+      return { ok: false, error: 'Parent activity entry not found', status: 404 };
+    }
+    // One level. Replying to a reply is an ERROR, not a silent re-parent onto
+    // the root: silently re-parenting would make the UI's reply target differ
+    // from where the reply lands, and `parent_id IS NULL` must stay a reliable
+    // root test for every feed query.
+    if (parent.parent_id) {
+      return { ok: false, error: 'Replies are one level deep — reply to the thread root', status: 400 };
+    }
+    // Lifecycle rows (system/completion) are generated narration, not something
+    // a person said; they are not conversational roots.
+    if (parent.kind !== 'comment' && parent.kind !== 'update') {
+      return { ok: false, error: `Cannot reply to a '${parent.kind}' entry`, status: 400 };
+    }
+    // Parent is authoritative for identity — see PostActivityEntryInput.parentId.
+    entityType = parent.entity_type as EntityType;
+    entityId = parent.entity_id;
+    parentVisibility = parent.visibility === 'author' ? 'author' : 'team';
+  }
+
   // ── @me policy (strip prefix, decide visibility) ───────────────────────────
-  const { visibility, body } = applyMePolicy(input.body, input.visibility);
+  const { visibility: ownVisibility, body } = applyMePolicy(input.body, input.visibility);
+  // Downward-only inheritance: a private thread stays private no matter how the
+  // reply was composed; a team thread can still take a private reply.
+  const visibility: Visibility = parentVisibility === 'author' ? 'author' : ownVisibility;
   if (!body.trim()) {
     return { ok: false, error: 'body required', status: 400 };
   }
@@ -223,8 +277,8 @@ export async function postActivityEntry(input: PostActivityEntryInput): Promise<
 
   // ── insert (idempotent when a backfill source is provided) ─────────────────
   const id = generateId(); // 'ae_'-prefix is conceptual; generateId() mints a hex id (matches comments/updates legacy ids)
-  const cols = `(id, entity_type, entity_id, project_id, kind, visibility, actor_slug, body, mentions_json, update_type, metadata_json, source_table, source_id, created_at)`;
-  const vals = `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`;
+  const cols = `(id, entity_type, entity_id, project_id, kind, visibility, actor_slug, body, mentions_json, update_type, metadata_json, source_table, source_id, parent_id, created_at)`;
+  const vals = `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`;
   const binds = [
     id,
     entityType,
@@ -239,6 +293,7 @@ export async function postActivityEntry(input: PostActivityEntryInput): Promise<
     metadata ? JSON.stringify(metadata) : null,
     sourceTable,
     sourceId,
+    parentId,
   ] as const;
 
   let row: Record<string, unknown> | null;
@@ -604,6 +659,7 @@ export async function activityVisibilityGate(
   request: Request,
   env: Env,
   column = '',
+  rootColumn?: string,
 ): Promise<ActivityVisibilityGate> {
   const p = column ? `${column}.` : '';
   // canSeePb: API-key + PI callers see everything (including author-only).
@@ -614,6 +670,19 @@ export async function activityVisibilityGate(
   if (!slug) {
     // Unauthenticated / unresolvable actor: team-only.
     return { clause: `${p}visibility = 'team'`, binds: [] };
+  }
+  if (rootColumn) {
+    // #98 reply reads. A reply inherits author-only from its root, so under an
+    // @me thread EVERY child is visibility='author' — including Hermes's answer,
+    // whose actor_slug is 'claude-ai', not the viewer's. Without the third arm
+    // the thread's own owner could not read the reply he asked for. The arm is
+    // scoped to roots the viewer AUTHORED, so it widens nothing: an author-only
+    // root is already invisible to everyone else, hence so are its children.
+    const r = `${rootColumn}.`;
+    return {
+      clause: `(${p}visibility = 'team' OR ${p}actor_slug = ? OR (${r}visibility = 'author' AND ${r}actor_slug = ?))`,
+      binds: [slug, slug],
+    };
   }
   return { clause: `(${p}visibility = 'team' OR ${p}actor_slug = ?)`, binds: [slug] };
 }

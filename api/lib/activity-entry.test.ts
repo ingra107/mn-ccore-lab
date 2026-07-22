@@ -47,6 +47,8 @@ interface AERow {
   metadata_json: string | null
   source_table: string | null
   source_id: string | null
+  /** #98: NULL for a thread root, the root's id for a reply. */
+  parent_id?: string | null
   created_at: string
 }
 
@@ -88,10 +90,14 @@ function makeEnv(fx: Partial<Fixtures> = {}) {
   // Shared insert used by both the INSERT...run() path (backfill / OR IGNORE) and
   // the INSERT...RETURNING *.first() path (normal write). Returns the new row.
   function insertActivityEntry(binds: any[]): AERow {
-    const [id, entity_type, entity_id, project_id, kind, visibility, actor_slug, body, mentions_json, update_type, metadata_json, source_table, source_id] = binds
+    // parent_id is the 14th bind (#98) — positional, matching the column list in
+    // api/lib/activity-entry.ts. Keep these in lockstep: a silently-dropped
+    // trailing bind here would make every reply look like a root in tests.
+    const [id, entity_type, entity_id, project_id, kind, visibility, actor_slug, body, mentions_json, update_type, metadata_json, source_table, source_id, parent_id] = binds
     const row: AERow = {
       id, entity_type, entity_id, project_id, kind, visibility, actor_slug, body,
       mentions_json, update_type, metadata_json, source_table, source_id,
+      parent_id: parent_id ?? null,
       created_at: `2026-06-10 00:00:0${clock++}`,
     }
     ae.push(row)
@@ -225,11 +231,24 @@ function makeEnv(fx: Partial<Fixtures> = {}) {
           },
           all: async () => {
             // Per-task projections (comments / updates / activity / detail-updates).
-            if (/FROM activity_entries/.test(sql) && /entity_type = 'task' AND entity_id = \?/.test(sql)) {
-              const taskId = binds[0] as string
+            // The `(ae\.)?` tolerance matches what the project branches below
+            // already do: handleGetTaskActivity qualifies its columns because it
+            // joins a correlated reply-count subquery (#98), the other task
+            // projections don't.
+            if (/FROM activity_entries/.test(sql) && /(ae\.)?entity_type = 'task' AND (ae\.)?entity_id = \?/.test(sql)) {
+              // Do NOT assume binds[0]. A leading subquery contributes its own
+              // gate binds BEFORE the task id, so the id's position depends on
+              // the statement. Count the placeholders that precede it — exact
+              // for every shape, and still 0 for the un-prefixed projections.
+              const marker = sql.indexOf('entity_id = ?')
+              const taskIdIdx = (sql.slice(0, marker).match(/\?/g) || []).length
+              const taskId = binds[taskIdIdx] as string
               let rows = ae.filter(r => r.entity_type === 'task' && r.entity_id === taskId)
               if (/kind = 'comment'/.test(sql)) rows = rows.filter(r => r.kind === 'comment')
               if (/kind = 'update'/.test(sql)) rows = rows.filter(r => r.kind === 'update')
+              // #98: roots-only feeds. Without this a reply would surface in the
+              // unified feed here but not in prod — the double hiding a bug.
+              if (/parent_id IS NULL/.test(sql)) rows = rows.filter(r => !r.parent_id)
               rows = applyVisibilityFilter(rows, sql, binds)
               rows = [...rows].sort(byCreatedDesc)
               return { results: rows.map(r => projectRowForSql(sql, r)) }
@@ -318,6 +337,18 @@ function makeEnv(fx: Partial<Fixtures> = {}) {
                 }
                 return { meta: {} }
               }
+              // #98 thread cascade: WHERE parent_id = ? — delete a root's replies.
+              // This MUST be matched before the row-targeted fallback below:
+              // that fallback reads binds[0] as a ROW id, so an unmatched
+              // parent_id delete would silently delete the ROOT instead of its
+              // children — the double diverging from real SQL, not the code.
+              if (/parent_id = \?/.test(sql)) {
+                const parentId = binds[0] as string
+                for (let i = ae.length - 1; i >= 0; i--) {
+                  if (ae[i].parent_id === parentId) ae.splice(i, 1)
+                }
+                return { meta: {} }
+              }
               // Row-targeted delete (idempotentDelete hard mode): WHERE id = ?
               const rowId = binds[0] as string
               const idx = ae.findIndex(r => r.id === rowId)
@@ -365,6 +396,10 @@ function makeEnv(fx: Partial<Fixtures> = {}) {
       kind: r.kind, visibility: r.visibility, actor_slug: r.actor_slug, body: r.body,
       mentions_json: r.mentions_json, update_type: r.update_type, metadata_json: r.metadata_json,
       created_at: r.created_at,
+      // #98 threading columns — the real feeds select these, so the double must
+      // return them or a threading assertion would pass here and fail in prod.
+      parent_id: r.parent_id ?? null,
+      ...(/reply_count/.test(sql) ? { reply_count: ae.filter(x => x.parent_id === r.id).length } : {}),
     }
   }
 

@@ -381,6 +381,9 @@ export async function handleGetProjectActivity(idOrSlug: string, request: Reques
   const canonicalId = await projectRefToCanonical(env, idOrSlug);
   if (!canonicalId) return json({ data: [] });
   const vis = await activityVisibilityGate(request, env, 'ae');
+  // #98: a second gate for the reply-count subquery, aliased to 'r'. Two calls,
+  // never a regex rewrite of one clause into the other alias.
+  const visR = await activityVisibilityGate(request, env, 'r');
   // Whole-picture: every row tied to this project. postActivityEntry stores
   // project_id = entity_id for project-entity rows (api/lib/activity-entry.ts:
   // `projectId = entityId` in the project branch) and the task's project_id for
@@ -388,15 +391,23 @@ export async function handleGetProjectActivity(idOrSlug: string, request: Reques
   // covered cleanly by idx_ae_project, no OR that would defeat the index.
   // task_title (short_title || title, Rule 68 display form) is joined in so the
   // feed can NAME the originating task — entity_id alone renders meaningless.
+  //
+  // ROOTS only (#98) — a reply is read through the thread it belongs to, not as
+  // a loose event in the project stream. Note this changes only what the feed
+  // RENDERS; the project last_activity rollup still counts replies, because a
+  // reply genuinely means the project was worked on.
   const result = await env.DB.prepare(
-    `SELECT ae.id, ae.entity_type, ae.entity_id, ae.project_id, ae.kind, ae.visibility, ae.actor_slug, ae.body, ae.mentions_json, ae.update_type, ae.metadata_json, ae.created_at,
-            CASE WHEN ae.entity_type = 'task' THEN COALESCE(t.short_title, t.title) END AS task_title
+    `SELECT ae.id, ae.entity_type, ae.entity_id, ae.project_id, ae.kind, ae.visibility, ae.actor_slug, ae.body, ae.mentions_json, ae.update_type, ae.metadata_json, ae.parent_id, ae.created_at,
+            CASE WHEN ae.entity_type = 'task' THEN COALESCE(t.short_title, t.title) END AS task_title,
+            (SELECT COUNT(*) FROM activity_entries r
+              WHERE r.parent_id = ae.id AND ${visR.clause}) AS reply_count
      FROM activity_entries ae
      LEFT JOIN tasks t ON ae.entity_type = 'task' AND t.id = ae.entity_id
      WHERE ae.project_id = ?
+       AND ae.parent_id IS NULL
        AND ${vis.clause}
      ORDER BY ae.created_at DESC, ae.id DESC`
-  ).bind(canonicalId, ...vis.binds).all();
+  ).bind(...visR.binds, canonicalId, ...vis.binds).all();
   return json({ data: result.results || [], count: result.results?.length || 0 });
 }
 
