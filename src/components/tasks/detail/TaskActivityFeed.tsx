@@ -22,6 +22,7 @@
 import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { ActivityEntryItem, type ActivityEntryItemRow } from '../../activity/activityRender'
+import { ActivityThread } from '../../activity/ActivityThread'
 import { canDeleteActivityEntry } from '../../activity/activityPermissions'
 import { filterMatchesKind, type TaskFeedFilter } from '../../../../shared/activityKinds'
 import type { StoredKind, UpdateType } from '../../../../shared/activityKinds'
@@ -163,24 +164,34 @@ export function TaskActivityFeed({ taskId, peekCount, hidePills, avatarSize }: T
       ) : (
         <div className="flex flex-col gap-1.5">
           {visible.map((entry) => (
-            <ActivityEntryItem
-              key={entry.id}
-              entry={entry}
-              avatarSize={avatarSize}
-              // Task-feed: otherwise canonical defaults — showReactions=false
-              // (default), showTaskOriginBadge=false (default). No animation
-              // wrapper in the task feed.
-              onDelete={
-                canDeleteActivityEntry(user, entry.actor_slug)
-                  ? () => deleteEntry.mutate({ id: entry.id, taskId })
-                  : undefined
-              }
-              onEdit={
-                canDeleteActivityEntry(user, entry.actor_slug)
-                  ? (body) => editEntry.mutate({ id: entry.id, body, taskId })
-                  : undefined
-              }
-            />
+            // #98: every root renders through ActivityThread, which owns its own
+            // expansion, lazy reply fetch and inline composer. peekCount slices
+            // ROOTS above — never replies — so the Overview peek still shows N
+            // conversations rather than N messages.
+            //
+            // Lifecycle rows (system/completion) are not repliable server-side,
+            // so they render as a plain card with no thread affordance.
+            entry.kind === 'system' || entry.kind === 'completion' ? (
+              <ActivityEntryItem
+                key={entry.id}
+                entry={entry}
+                avatarSize={avatarSize}
+                onDelete={
+                  canDeleteActivityEntry(user, entry.actor_slug)
+                    ? () => deleteEntry.mutate({ id: entry.id, taskId })
+                    : undefined
+                }
+              />
+            ) : (
+              <ActivityThread
+                key={entry.id}
+                root={entry}
+                itemProps={{ avatarSize }}
+                invalidateKeys={[['task-activity', taskId]]}
+                onDelete={(e) => deleteEntry.mutate({ id: e.id, taskId })}
+                onEdit={(e, body) => editEntry.mutate({ id: e.id, body, taskId })}
+              />
+            )
           ))}
         </div>
       )}

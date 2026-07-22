@@ -41,6 +41,7 @@ import {
   ActivityEntryItem,
   type ActivityEntryItemRow,
 } from '../activity/activityRender'
+import { ActivityThread } from '../activity/ActivityThread'
 import { canDeleteActivityEntry } from '../activity/activityPermissions'
 import { ICON_PROPS } from '../../lib/iconProps'
 import { ACCENT_GOLD, isTaskDone, withAlpha } from '../../lib/taskGrouping'
@@ -375,19 +376,33 @@ function StreamItem({ event, onToggleAction, onDeleteEntry, onEditEntry }: { eve
   switch (event.kind) {
     case 'action':
       return <ActionItemRowView action={event.row} onToggle={onToggleAction} />
-    case 'unified-entry':
+    case 'unified-entry': {
+      // Project-stream anatomy: task-origin chip + reactions + animation.
+      const itemProps = {
+        showReactions: true,
+        showTaskOriginBadge: true,
+        taskOriginBorderWidth: 2,
+        motionProps: itemMotion,
+      }
+      // Lifecycle narration is not repliable (the API rejects it as a parent),
+      // so it renders as a plain card — same rule as the task feed.
+      if (event.row.kind === 'system' || event.row.kind === 'completion') {
+        return <ActivityEntryItem {...itemProps} entry={event.row} onDelete={onDeleteEntry} />
+      }
+      // #98: a reply posted from the PROJECT feed still threads onto the entry's
+      // own root — the reply endpoint takes only the parent id and inherits
+      // entity identity from it, so replying to a task-origin row lands on that
+      // TASK, not on the project. That is why no entity is passed here.
       return (
-        <ActivityEntryItem
-          entry={event.row}
-          // Project-stream: task-origin chip + reactions + animation.
-          showReactions={true}
-          showTaskOriginBadge={true}
-          taskOriginBorderWidth={2}
-          motionProps={itemMotion}
-          onDelete={onDeleteEntry}
-          onEdit={onEditEntry}
+        <ActivityThread
+          root={event.row}
+          itemProps={itemProps}
+          invalidateKeys={[['project-activity']]}
+          onDelete={onDeleteEntry ? () => onDeleteEntry() : undefined}
+          onEdit={onEditEntry ? (_e, body) => onEditEntry(body) : undefined}
         />
       )
+    }
   }
 }
 

@@ -34,7 +34,9 @@ import {
   ClipboardList,
   Pencil,
   Trash2,
+  ChevronRight,
 } from 'lucide-react'
+import { ICON_PROPS } from '../../lib/iconProps'
 import { motion } from 'framer-motion'
 import { formatRelativeTime } from '../../lib/dateUtils'
 import { parseDbUtc, formatDbLocal } from '../../lib/time'
@@ -230,6 +232,10 @@ export interface ActivityEntryItemRow {
   update_type: UpdateType | null
   metadata_json: string | null
   created_at: string
+  /** #98: NULL on a thread root, the root's id on a reply (schema v100). */
+  parent_id?: string | null
+  /** #98: viewer-specific, computed per request — never stored. Roots only. */
+  reply_count?: number
   // Project-feed additions (undefined in task-feed context):
   /** Joined server-side for task rows: COALESCE(short_title, title). */
   task_title?: string | null
@@ -320,6 +326,21 @@ export interface ActivityEntryItemProps {
    * comment/update rows — lifecycle + Hermes rows don't receive it.
    */
   onEdit?: (newBody: string) => void
+
+  // ── #98 threading ───────────────────────────────────────────────────────────
+  // Passed only by ActivityThread. A card that receives none of these renders
+  // exactly as before, so every existing call site is unaffected.
+
+  /** Opens the inline reply composer for this root. Absent on replies (one level). */
+  onReply?: () => void
+  /** Viewer-specific count from the server. 0/undefined renders no chip. */
+  replyCount?: number
+  /** Whether this root's thread is currently expanded. */
+  threadExpanded?: boolean
+  /** Toggles the thread open/closed. Present only when replyCount > 0. */
+  onToggleThread?: () => void
+  /** True when this card IS a reply — suppresses its own reply affordance. */
+  isReply?: boolean
 }
 
 // ── DeleteEntryButton ─────────────────────────────────────────────────────────
@@ -553,6 +574,11 @@ export function ActivityEntryItem({
   taskOriginBorderWidth = 3,
   onDelete,
   onEdit,
+  onReply,
+  replyCount,
+  threadExpanded,
+  onToggleThread,
+  isReply,
 }: ActivityEntryItemProps) {
   const isTask = entry.entity_type === 'task'
   const isHermes = entry.actor_slug === 'claude-ai'
@@ -778,6 +804,47 @@ export function ActivityEntryItem({
               targetType={entry.kind === 'update' ? 'project_update' : 'comment'}
               targetId={entry.id}
             />
+          )}
+
+          {/* #98 thread controls. Quiet by design — a thread affordance should
+              not out-shout the message it hangs off. The count stays visible
+              while COLLAPSED, which is the whole point: "so i can respond to
+              somebody else" needs to work without expanding first. */}
+          {(onReply || (replyCount ?? 0) > 0) && !isReply && (
+            <div className="flex items-center gap-3" style={{ marginTop: 6 }}>
+              {(replyCount ?? 0) > 0 && onToggleThread && (
+                <button
+                  type="button"
+                  onClick={onToggleThread}
+                  aria-expanded={threadExpanded ? 'true' : 'false'}
+                  className="cursor-pointer inline-flex items-center gap-1"
+                  style={{
+                    fontSize: '11px', fontWeight: 500, color: 'var(--teal)',
+                    background: 'none', border: 'none', padding: 0,
+                  }}
+                >
+                  <ChevronRight
+                    {...ICON_PROPS}
+                    size={12}
+                    style={{ transform: threadExpanded ? 'rotate(90deg)' : 'none', transition: 'transform 140ms' }}
+                  />
+                  {replyCount} {replyCount === 1 ? 'reply' : 'replies'}
+                </button>
+              )}
+              {onReply && (
+                <button
+                  type="button"
+                  onClick={onReply}
+                  className="cursor-pointer"
+                  style={{
+                    fontSize: '11px', color: 'var(--slate)', opacity: 0.85,
+                    background: 'none', border: 'none', padding: 0,
+                  }}
+                >
+                  Reply
+                </button>
+              )}
+            </div>
           )}
         </div>
       </div>
