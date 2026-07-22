@@ -287,7 +287,16 @@ hook uses (`wrangler-d1-allowed`, CLAUDE.md "Wrangler / D1 auth").
 
 ### 2.5 EVERY site that must honour it — enumerated
 
-**MUST FILTER (feeds / queues / badges / analytics) — 22 statements:**
+> 🔴 **THIS TABLE IS INCOMPLETE AND ITS COUNT IS WRONG — see §9.2.** An independent survey
+> found two omissions (`api/routes/search.ts:208,217,223,227` and
+> `api/routes/activity.ts:148`), and the "22 statements" claim below disagrees with its own
+> 25-row table. Do NOT drive the retrofit off this list. Build §2.4's
+> `scripts/check-activity-reads.mjs` FIRST and let the checker enumerate the sites — that is
+> the whole point of having a checker, and this table is now a worked example of why a
+> hand-maintained enumeration cannot be trusted (the same lesson CLAUDE.md already records
+> for schema versions and route counts). Corrected total: **30 statements.**
+
+**MUST FILTER (feeds / queues / badges / analytics) — ~~22~~ 30 statements, list below is partial:**
 
 | # | file:line | What |
 |---|---|---|
@@ -728,3 +737,324 @@ CLAUDE.md Rule 78.
 6. **The 149-error `typecheck:api` baseline** (`scripts/check-api-types.mjs:13`) — I read
    the mechanism but did not run `npm run typecheck:api`, so I cannot state which of the
    files this plan touches already carry baselined errors.
+
+---
+
+## 9. ADDENDUM — owner session 2 (2026-07-22 PM)
+
+Adds Quick Capture to the wave, records five new owner decisions, and corrects two
+verified errors in §2.5. Where this section conflicts with §7, **this section wins.**
+
+### 9.1 New owner decisions
+
+1. **Thread shape: each ask is its own dismissible thread root** on the day page — not one
+   running day-scrollback. Confirms §2.2 ("only roots can be hidden") and the §3.3 plan to
+   reuse `ActivityThread` unchanged. A day is a *list of conversations*, not a conversation.
+2. **Quick Capture `@hermes` ALWAYS targets the day entity**, from every page, with no
+   context sniffing. Explicitly rejected: binding to the task/project currently in view, and
+   a second `@hermes:here` token. Owner's words: it should be "agnostic to any project or
+   task." One rule, one destination.
+3. **Send does NOT navigate.** The user stays where they are and gets a toast.
+   ⚠️ **This REVERSES the owner's own opening framing** in the same session ("the ideal
+   situation is that after I press send I would be redirected immediately to the today
+   page"). He was asked directly to reconcile the two and chose stay-put, so a future reader
+   finding the earlier phrasing must not "restore" the redirect as a bug fix.
+4. **The Today nav item badges when Hermes answers**, and drains on visiting Today.
+   This is the replacement for the redirect — the answer finds you instead of you following it.
+5. **Hermes' day-page memory reach = today only, hidden threads INCLUDED.** Rejected a
+   rolling multi-day window and a "whatever fits the cap" walk-back, because the latter makes
+   recall silently vary with how chatty the day was.
+   → This **promotes §2.5's `dispatchHermes` exemption from an implementation detail to an
+   owner requirement.** `api/lib/activity-entry.ts:646` must keep seeing hidden rows, or
+   "remember what we talked about this morning" breaks the moment a thread is dismissed.
+   Dismiss is a *frontend* verb. It must never mean "forget."
+
+### 9.2 CORRECTIONS to §2.5 — two read sites the enumeration MISSES
+
+An independent read-site survey found **36** `activity_entries` read statements against
+§2.5's 25. Most of the delta is correctly-excluded MUST-NOT-FILTER sites (auth lookups,
+Hermes-internal routing), but **two are real omissions** — both confirmed by reading §2.5's
+table directly:
+
+| Missed site | Why it matters |
+|---|---|
+| `api/routes/search.ts:208, 217, 223, 227` (4 statements) | The four `activity_entries` search legs. **Not in §2.5 at all.** Search would happily return a dismissed thread. Note these received their *visibility* gate on 2026-07-22 (`e7a29e5f`) — **visibility ≠ hidden**; they are orthogonal axes and the new one is unwired. |
+| `api/routes/activity.ts:148` (`handleGetActivityReplies`) | Children inherit `hidden_at` (§2.2), so a direct reply fetch against a hidden root returns hidden children unless filtered. |
+
+**§2.5's MUST-FILTER count: 25 → 30 statements.**
+
+**The lesson is the lint, not the two patches.** A hand-maintained enumeration missed two
+sites on its first contact with an independent reader; it will miss more under edit.
+§2.4's `scripts/check-activity-reads.mjs` would have caught both mechanically.
+**Build the lint FIRST in Phase 1, before retrofitting any read** — then let it produce the
+site list, rather than trusting this document's table. The table is a hint; the checker is
+the source of truth. (Exactly the lesson CLAUDE.md already records for schema versions.)
+
+### 9.3 RE-JUDGED: the Today badge must NOT poll `ai_requests`
+
+A surface survey proposed feeding the badge from
+`GET /api/ai-requests?source_type=daily_thought&status=pending`. **Rejected.** That
+re-creates the precise coupling this wave exists to delete (§0: `ai_requests` becomes
+transport only) and would break the moment Phase 5/6 lands. The badge reads
+`activity_entries` through the seen model that already exists: `entity_seen` (v81) +
+`GET /api/seen/unseen` (`api/routes/seen.ts:103`).
+
+⚠️ **This reverses §7 Q5**, whose recommendation was *not* to add `day` to `SEEN_TYPES`.
+Owner decision 9.1.4 makes `day` a seen type necessarily — there is no other honest way to
+render the badge. §7 Q5 is now CLOSED as "yes, `day` joins `SEEN_TYPES`."
+
+### 9.4 Phase 8 — Quick Capture `@hermes` — **(B, after Phase 3)**
+
+**Verified current state:** `GlobalQuickAddModal.handleSubmit` → `parseQuickAddInput(value)`
+→ `createTask.mutate()`. `QuickAddTaskInput.tsx:209` is a **raw `<textarea>`**, not
+`MentionInput` — so quick capture has no @-mention affordance and no command-tag dropdown.
+
+> 🔴 **ORDERING LANDMINE — verified, not inferred.** `parseQuickAdd.ts:182` runs
+> `scan(/@([\w]+)/g, 'assignee')` — a **global** scan that fuzzy-matches team slugs
+> (`:221-232`), and `hermes` **is** a registered slug (added to `/api/team/slugs` by N1c).
+> So today, `@hermes what's blocking this` in quick capture parses `@hermes` as the
+> **assignee**, strips it from the title, and silently creates a task *assigned to Hermes*.
+> The `isHermesPrefix()` check MUST run **before** `parseQuickAddInput()`. If it runs after,
+> the token is already gone and the feature is unreachable — and it will typecheck and look
+> like it works.
+
+Steps:
+
+- **8.1** In `handleSubmit`, before `parseQuickAddInput`, branch on the **shared**
+  `isHermesPrefix()` (`src/lib/hermesRouting.ts:29`). Never re-implement the regex — it
+  carries the `@hermes-opus` / `@hermes_haiku` model-tag variants (#891) that PB's
+  `select_model()` parses.
+- **8.2** POST to Phase 3's `POST /api/days/:date/activity` with `todayKey()`, **keeping the
+  `@hermes` token in the body** (§3.4's inversion — strip it and Hermes never fires).
+- **8.3** Close the modal, toast "Asked Hermes", **do not navigate** (decision 9.1.3).
+- **8.4** Hard dependency on Phase 3 — the `day` entity and its route must exist first.
+
+**8.5 — do NOT swap the textarea for `MentionInput` as a convenience.** `MentionInput`
+advertises all four command tags unconditionally (`KNOWN_COMMAND_TAGS`), and as of this
+session's `SmartCompose` change **advertising a tag obliges routing it** (§9.6). Dropping
+`MentionInput` into quick capture would silently promise `@workon` / `@quickchat` /
+`@backlog` there too. Either wire all four or keep the plain textarea.
+**Recommend: keep the plain textarea**, hint `@hermes` in the placeholder, revisit later.
+
+### 9.5 Phase 9 — the Today nav badge — **(B, after 8)**
+
+- Add `day` to `SEEN_TYPES`; give `GET /api/seen/unseen` (`api/routes/seen.ts:103`) a
+  viewer-scoped `day` arm. It must honour the hide predicate (§2.5 row 24) — a dismissed
+  thread must not badge.
+- Render through the **existing** `navWithBadges` memo in `Sidebar.tsx` that already drives
+  the My Tasks and Meetings badges, using `AttentionChip` — **do not mint a new chip**
+  (CLAUDE.md Rule 29 / the Attention & Notification Canon).
+- **Badge honesty (Rule 73) is the acceptance test, not a nicety:** it must count exactly
+  what it claims (Hermes answers you have not seen), **drain** when you open Today, and
+  **click through** to the thread. A badge that lights on your own question rather than on
+  Hermes's answer is a lie — gate on the *reply*, not the root.
+- Drain via `useMarkSeen('day', todayKey())` on `TodayPage`.
+
+### 9.6 Wave 1, shipped separately — the `@workon` class fix
+
+Reported by the owner this session: a typed `@workon <text>` in a **project Notes** composer
+did nothing. Root cause was **not** the launch machinery — it was a promise/routing split:
+
+- `MentionInput` advertises `@workon` in **every** composer (`KNOWN_COMMAND_TAGS`), tints
+  the token, and renders a "command recognized" badge.
+- But `SmartCompose` custom mode intercepted launch tags **only when `launchContext` was
+  passed** — opt-IN. Un-opted composers posted the seed as a plain team-visible note,
+  launching nothing, and **breaking the seed-isolation contract** in `useLaunchCommands.ts`
+  ("`@workon 'remind me where we saved the IRB'` must never surface in team activity").
+- `ProjectDetail`'s quick-compose was patched as an **instance** on 2026-07-21;
+  `ActivityStream`'s note + comment composers were left broken — which is exactly where it
+  was hit again a day later.
+
+Fix (the class, not a third instance): **inverted the default.** Every composer now
+intercepts; a surface that routes tags itself opts OUT via `ownLaunchRouting`
+(`MorningThoughtCompose` only, which owns `@quickchat`'s `forceHome` override and already
+fails `@workon` loud at Route 0.5). `ActivityStream`'s two composers gained a real
+`launchContext` carrying `project.primary_folder`. A new composer now fails **loud** rather
+than silently posting a command as prose.
+
+⚠️ **Unverified at the time of writing** — an MSYS `fork()` storm blocked `tsc -b`,
+`typecheck:api`, commit, and deploy across 12 consecutive attempts. Must be built, tested
+and deployed before this is claimed as fixed.
+
+### 9.7 Revised sequencing
+
+| Wave | Contents | Deploy |
+|---|---|---|
+| **1** | §9.6 `@workon` class fix | its own deploy (small, unrelated, already written) |
+| **2** | Phases 0-6 **+ 8 + 9** | one deploy, per the owner's "one combined wave" |
+
+Phase 7 (Ask the Lab / `backlog_idea` disposition) stays deferred — §0 already established
+`lab_question`/`lab_answer` have never held a row, making it a retirement question.
+
+### 9.8 `scripts/check-activity-reads.mjs` — buildable spec (Phase 1, FIRST)
+
+§9.2 promoted this from a nice-to-have to the thing the retrofit is driven off. Spec:
+
+**Scan:** `api/**/*.ts`, excluding `*.test.ts`.
+
+**Unit of analysis is the SQL STATEMENT, not the line.** These queries are multi-line
+template literals; a line-based grep for `FROM activity_entries` would look at one line and
+never see the `WHERE` three lines below. Extract each template literal (or string) that
+contains `activity_entries`, flatten whitespace, then test the flattened statement.
+
+**Pass condition —** the flattened statement contains `hidden_at IS NULL`
+**or** the statement's source range carries the marker comment
+`activity-hidden-exempt: <reason>`.
+
+> ⚠️ Do **not** pass on the mere presence of the substring `hidden_at`. Every feed will
+> also SELECT `hidden_at` to render the "hidden" affordance, so a bare-substring check
+> would green-light a read that selects the column and never filters on it — a checker that
+> reports success while the leak is live is worse than no checker. Match the predicate.
+
+**Known exemptions** (each needs the marker + reason at implementation time, and each is an
+owner-visible decision, not a convenience):
+
+| Site | Reason |
+|---|---|
+| `api/lib/activity-entry.ts:646` (`dispatchHermes` transcript) | **Owner requirement 9.1.5** — Hermes must still see dismissed threads or "remember this morning" breaks. |
+| `api/lib/activity-entry.ts:215` (parent resolution on write) | Write-time inheritance; must read the parent's `hidden_at` to copy it. |
+| `api/routes/activity.ts:59, 101` | Auth-only lookups; they fetch a row to check who owns it, they do not render it. |
+| `api/routes/activity.ts:196` (`handleCreateActivityReply`) | Verifies the caller can see the parent. Replying to a hidden root is legitimate. |
+| `api/routes/ai-requests.ts:251, 278, 290, 418, 426` | Hermes response routing + placeholder resolution. Internal plumbing, never rendered. |
+
+**Prove the gate before trusting it.** Do exactly what this repo did for `typecheck:api`
+(SESSION-HANDOFF 2026-07-22): introduce a deliberate violation, confirm the checker FAILS,
+revert, confirm it PASSES. A gate that has never been observed failing is an assumption, not
+a control. Record both outcomes in the Phase 1 commit message.
+
+**Wiring:** its own npm script, run in CI and in `deploy:pages:gated`, alongside
+`typecheck:api`.
+
+### 9.9 §8 unknown #1 — **CLOSED by reading the listener source**
+
+`hub_ai_listener.py` lives in Peripheral Brain, which IS mounted as a working directory.
+Read at `C:/Users/ingra107/Peripheral-Brain/scripts/scheduled/hub_ai_listener.py`:
+
+- **(a) Does it tolerate `context = NULL`? YES — verified, two independent guards.**
+  `_parse_entity_context()` opens with `if not context: return None, None` (`:1199-1200`),
+  and `build_prompt`'s fallback arm is `elif context:` (`:456`) — a falsy test. A JSON
+  `null` arrives as Python `None`, which is falsy at both. `build_entity_context` then
+  returns `""` and no entity block is appended. **No crash, no cross-repo lockstep, no
+  listener change needed for the `day` lane.**
+- **(b) Does it branch on `source_type` beyond the artifact path? Only in three places,
+  none of which affect `daily_thought`.** Full enumeration of `source_type` reads:
+  `:436` (`build_prompt`), `:442` (`== 'lab_question'` → conversation history),
+  `:1344` (`artifact_comment` revision lane), `:1501` (`backlog_idea` lane), `:1576`
+  (dispatch). `daily_thought` takes the default path today and will continue to.
+  **§1.3's "keep `source_type='daily_thought'`" is confirmed correct.**
+
+### 9.10 🔴 CONFLICT — owner decision 9.1.5 is NOT delivered by any existing mechanism
+
+**Owner requirement:** ask a fresh question at 4pm and Hermes should recall the separate
+9am conversation ("hey remember we were talking this morning… what did you find re: xyz").
+
+**What the code actually does — verified, not inferred:**
+
+- Decision 9.1.1 makes **each ask its own thread root**.
+- `dispatchHermes` assembles its transcript with
+  `WHERE (id = ?1 OR parent_id = ?1) AND id != ?2` (`api/lib/activity-entry.ts:646-654`) —
+  **scoped to a single thread root.** Sibling threads are structurally invisible to it.
+- For a brand-new root, `?1` is the entry's own id and `?2` excludes it, so `prior` is
+  empty, the `if (prior.length > 0)` wrapper at `:658` never fires, and the model receives
+  the bare question.
+- For `entity_type='day'`, `context` is NULL by design (§1.3), so the listener adds no
+  entity block either (§9.9).
+
+**⇒ A new ask on the day page reaches Hermes with ZERO awareness of every other
+conversation that day. The owner's stated requirement fails.**
+
+This also **directly contradicts §1.3's row** *"Today-bar ask is CHEAP — preserved **by
+construction** … a fresh root has no prior. **No special case needed.**"* That row was
+correct when a day ask had no memory requirement. Decision 9.1.5 makes a special case
+mandatory, and the two goals genuinely trade off: day-scoped memory costs prompt tokens on
+**every** Today ask, which is precisely the cheapness the owner was recorded as valuing.
+
+**This needs an owner decision — do not silently pick one.** Sketch of the options:
+
+| Option | Mechanism | Cost |
+|---|---|---|
+| **A — day-scoped context** | For `entity_type='day'` only, widen the transcript query from "this root" to "today's roots + their replies" (still `visibility`- and requester-gated, hidden INCLUDED per 9.1.5). Reuse `THREAD_CONTEXT_MAX_*` caps. | Every Today ask carries the day's transcript. Simple, honest, matches 9.1.5 literally. Kills "cheap by construction". |
+| **B — continue-in-thread only** | No cross-thread memory. Continuity comes from replying **inside** an existing thread, which already works. | Free. But 9.1.5 as stated is not met — "remember this morning" fails on a new thread. |
+| **C — cheap default + explicit recall** | Bare ask stays cheap; a marker (a toggle, or `@hermes++`) opts that ask into the day transcript. | Preserves both, at the cost of one more thing to know. |
+
+Recommendation: **A**, because 9.1.5 was answered deliberately after being shown the
+alternatives, and because C adds a token the owner has to remember at the exact moment he
+is least likely to (mid-thought). But the cheapness trade is real and is the owner's call.
+
+**RESOLVED (same session): option A**, plus older-day retrieval scoped INTO this wave
+(§9.11). The owner was shown the "this widens an already-large wave" objection and chose
+the wider scope deliberately. Do not silently re-scope it down.
+
+### 9.11 Phase 10 — older-day retrieval — **(B, after 8)**
+
+Owner decision: Hermes should be able to reach conversations from *previous* days, not just
+today. Today = automatic (§9.10 option A); older = retrieved.
+
+#### 9.11.1 CORRECTION to the cost estimate the owner was shown
+
+The owner was told this needs "a tool through the fence + an auth model." **That was the
+naive design and it is probably wrong — the real cost is materially lower.**
+
+`hub_ai_listener.py:408` states it explicitly: *"The parent listener process is **NOT
+fenced**, so it resolves the entity here."* The listener already performs authenticated
+Hub reads on Hermes's behalf via `_hub_get_json()` (`:316-331`) and pastes the results into
+the prompt — that is exactly what `build_entity_context()` does for tasks and projects
+today. Older-day retrieval is **the same pattern with a different route.**
+
+Consequently:
+
+- **No fence change.** `HERMES_ALLOWED_TOOLS` (`:86-91`) stays `Read` / `WebSearch` /
+  `WebFetch` / `pubmed`. The #433 hardening is untouched.
+- **No new auth model.** The listener already holds `PB_API_KEY` and already calls the Hub.
+- **No new externally-reachable capability for Hermes itself.** Hermes remains a
+  pure read/answer process that cannot pull; the listener keeps doing all pulling.
+
+Prefer this over granting Hermes a retrieval tool. Granting the tool would widen the
+broadest externally-reachable headless entry point in the system for no benefit the
+listener-side pattern doesn't already provide.
+
+#### 9.11.2 🔴 THE HAZARD — retrieval must be REQUESTER-scoped, and the obvious implementation is a leak
+
+**Day threads default to `visibility='author'` (owner decision §0.1) — i.e. PRIVATE.**
+
+**The listener authenticates with `PB_API_KEY`, and an API-key caller BYPASSES the
+visibility gate** — Rule 70: *"PI/API-key sees all"*; Rule 78 documents the identical
+carve-out on `ai_requests` precisely so the PB listener can poll it.
+
+⇒ A naive `_hub_get_json(f"/days/{date}/activity")` returns **every user's private day
+threads**, and Hermes would answer *any team member's* question using the owner's private
+notes. That is not a hypothetical: it is the **exact shape of both privacy leaks fixed on
+2026-07-22** — a caller that structurally cannot see who is asking, therefore cannot
+filter — reproduced with a brand-new mechanism, on the one endpoint every team member can
+fire.
+
+**Non-negotiable design constraints for Phase 10:**
+
+1. Retrieval MUST be scoped to `req['requested_by']` — the human who asked — and **never**
+   to Hermes's identity or to the API key's ambient PI powers.
+2. Therefore the day-activity route needs an explicit act-as-requester parameter (or a
+   dedicated retrieval endpoint taking `requested_by`) that applies
+   `activityVisibilityGate` **for that user**, not for the caller. The API key authorises
+   the *call*; it must not widen the *audience*.
+3. **Fail CLOSED.** Absent or unresolvable `requested_by` ⇒ return nothing. Never fall
+   back to unscoped results.
+4. Must also honour the hide predicate per §9.1.5's rule: hidden-but-not-forgotten applies
+   to **the requester's own** hidden threads, never to anyone else's rows.
+5. Add a test that a non-owner requester retrieving a date on which the owner wrote a
+   private day thread gets **zero** rows. This is the regression test for the leak class,
+   and it should exist before the feature does.
+
+#### 9.11.3 Still to design — needs a codex consult before implementation
+
+Open, and deliberately NOT resolved unilaterally:
+
+- **Trigger.** Always fetch a bounded index of recent days? Detect temporal references
+  (fragile)? A two-pass "does Hermes need a prior day?" round-trip (an extra model call)?
+- **Shape.** Full transcripts (expensive) vs. an index of dates + first ~100 chars per root
+  (cheap, and enough for Hermes to say *"on Tuesday you discussed X"* and let the user click
+  through).
+- **Bound.** How far back, and what caps — `THREAD_CONTEXT_MAX_*` are per-thread and will
+  not translate directly.
+
+This phase should not be implemented until that design pass happens (the shell outage
+blocked the codex consult that would otherwise have run alongside this write-up).
