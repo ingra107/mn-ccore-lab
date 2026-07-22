@@ -75,6 +75,39 @@ export function isTaskDone(t: { status?: string | null }): boolean {
   return t.status === 'done'
 }
 
+/**
+ * Meeting-approval triage state (#97).
+ *
+ * A `source='meeting_approval'` task is a TRIAGE ARTIFACT, not work: it exists
+ * only to ask "did this captured meeting really happen?" `approval_status` is
+ * the tri-state answer, and only these rows ever carry it (normal tasks leave
+ * it NULL — schema v83, decision 2026-06-25).
+ *
+ * - pending  → belongs to PendingMeetingsCard, excluded from regular groups.
+ * - accepted → answered; the digest is queued and the artifact's job is over.
+ * - declined → answered "no"; there is nothing left to do.
+ *
+ * Both ANSWERED states must drop out of the regular task lists. Previously only
+ * 'pending' was filtered, so the instant Nick hit Accept or Decline the row fell
+ * straight back into Today / My Tasks rendered as an ordinary task with no
+ * approve/decline affordance — exactly the "these approve tasks show up like the
+ * normal asks" report.
+ *
+ * This read-side guard is load-bearing beyond the Hub's own buttons: the same
+ * meetings are triaged from OUTSIDE this repo (Nick declines via Telegram; that
+ * lane lives in Peripheral Brain and writes `approval_status` only, leaving
+ * `status='todo'`). Filtering on the answer rather than on `status` is what
+ * makes "if i decline on telegram i would hope this drops" hold no matter which
+ * surface did the declining.
+ */
+export function isApprovalPending(t: { approval_status?: string | null }): boolean {
+  return t.approval_status === 'pending'
+}
+
+export function isApprovalTriaged(t: { approval_status?: string | null }): boolean {
+  return t.approval_status === 'accepted' || t.approval_status === 'declined'
+}
+
 /** Today's date as YYYY-MM-DD string in browser local time. */
 export function todayKey(): string {
   const d = new Date()

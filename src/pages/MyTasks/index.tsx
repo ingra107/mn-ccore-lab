@@ -29,6 +29,7 @@ import { ListView } from './views/ListView'
 const TaskBoardView = lazy(() => import('../../components/tasks/TaskBoardView'))
 import { useTaskFilter } from './hooks/useTaskFilter'
 import { PendingMeetingsCard } from '../../components/tasks/PendingMeetingsCard'
+import { isApprovalPending, isApprovalTriaged } from '../../lib/taskGrouping'
 import { useSelection } from './hooks/useSelection'
 import { useOpenParam } from '../../hooks/useOpenParam'
 import { useIsMobile } from '../../hooks/useIsMobile'
@@ -167,12 +168,15 @@ export default function UnifiedMyTasks() {
   // approval_status === 'pending' is unambiguous — only meeting_approval source rows
   // carry it; normal tasks leave it null (schema v83, decision 2026-06-25).
   const pendingMeetingTasks = useMemo(
-    () => allTasks.filter((t) => t.approval_status === 'pending'),
+    () => allTasks.filter(isApprovalPending),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [tasksQuery.data],
   )
+  // #97: answered approvals (accepted/declined) are dropped too — see
+  // isApprovalTriaged. Previously only 'pending' was excluded, so a triaged
+  // meeting reappeared here as an ordinary task.
   const nonPendingTasks = useMemo(
-    () => allTasks.filter((t) => t.approval_status !== 'pending'),
+    () => allTasks.filter((t) => !isApprovalPending(t) && !isApprovalTriaged(t)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [tasksQuery.data],
   )

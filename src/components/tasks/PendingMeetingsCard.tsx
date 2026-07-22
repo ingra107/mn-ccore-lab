@@ -4,7 +4,8 @@
 // Mounted at the TOP of My Tasks and Today, above all regular task groups.
 // Pending meeting tasks are EXCLUDED from the regular task list to prevent double-render.
 //
-// Mutation path: mutateTask({ id, fields: { approval_status: 'accepted' | 'declined' } })
+// Mutation path: mutateTask({ id, fields: { approval_status: 'accepted' | 'declined',
+//                                            status: 'done' } })  <- #97: answering CLOSES it
 // Undo path: showUndo() reverts to 'pending' — identical to the old TaskCard inline buttons.
 //
 // Renders null when tasks is empty (no card appears when nothing is pending).
@@ -137,10 +138,16 @@ export function PendingMeetingsCard({ tasks }: PendingMeetingsCardProps) {
                 data-testid="pm-accept"
                 onClick={(e) => {
                   e.stopPropagation()
-                  mutateTask({ id: task.id, fields: { approval_status: 'accepted' } })
+                  // #97: close the row as well as answering it. The approval
+                  // task is a triage artifact — once answered it is not work,
+                  // so it must not linger as an open todo in counts, the digest
+                  // email or PB sync. The API derives the completed triad from
+                  // `status` (api/routes/tasks.ts:322-340), and undo's
+                  // status:'todo' clears it symmetrically.
+                  mutateTask({ id: task.id, fields: { approval_status: 'accepted', status: 'done' } })
                   showUndo(
                     'Meeting accepted — digest queued',
-                    () => mutateTask({ id: task.id, fields: { approval_status: 'pending' } }),
+                    () => mutateTask({ id: task.id, fields: { approval_status: 'pending', status: 'todo' } }),
                   )
                 }}
                 style={{
@@ -168,10 +175,11 @@ export function PendingMeetingsCard({ tasks }: PendingMeetingsCardProps) {
                 data-testid="pm-decline"
                 onClick={(e) => {
                   e.stopPropagation()
-                  mutateTask({ id: task.id, fields: { approval_status: 'declined' } })
+                  // #97: see the Accept handler — declining closes the row too.
+                  mutateTask({ id: task.id, fields: { approval_status: 'declined', status: 'done' } })
                   showUndo(
                     'Meeting declined',
-                    () => mutateTask({ id: task.id, fields: { approval_status: 'pending' } }),
+                    () => mutateTask({ id: task.id, fields: { approval_status: 'pending', status: 'todo' } }),
                   )
                 }}
                 style={{

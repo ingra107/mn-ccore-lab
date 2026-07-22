@@ -52,7 +52,7 @@ import { PulseCard } from '../../components/today/rail/PulseCard'
 import { PendingMeetingsCard } from '../../components/tasks/PendingMeetingsCard'
 import { QueryErrorNote } from '../../components/QueryErrorNote'
 import type { TaskRow } from '../../lib/api'
-import { withAlpha } from '../../lib/taskGrouping'
+import { withAlpha, isApprovalPending, isApprovalTriaged } from '../../lib/taskGrouping'
 
 export default function TodayPage() {
   usePageMeta('Today · MN-CCORE', 'Operating-day landing — what to work on, who you\'re meeting, what\'s overdue.')
@@ -74,11 +74,17 @@ export default function TodayPage() {
   // Pending meeting-approval tasks are surfaced in PendingMeetingsCard (above the task groups)
   // and excluded from the regular task groups to prevent double-render.
   const pendingMeetingTasks: TaskRow[] = useMemo(
-    () => (tasksQuery.data ?? []).filter((t) => t.approval_status === 'pending'),
+    () => (tasksQuery.data ?? []).filter(isApprovalPending),
     [tasksQuery.data],
   )
+  // #97: ANSWERED approvals (accepted/declined) drop out entirely — they are
+  // triage artifacts, not work. See isApprovalTriaged for why this is filtered
+  // on the answer rather than on status.
   const tasks: TaskRow[] = useMemo(
-    () => (tasksQuery.data ?? []).filter((t) => t.completed === 0 && t.status !== 'done' && t.approval_status !== 'pending'),
+    () => (tasksQuery.data ?? []).filter(
+      (t) => t.completed === 0 && t.status !== 'done'
+        && !isApprovalPending(t) && !isApprovalTriaged(t),
+    ),
     [tasksQuery.data],
   )
 
