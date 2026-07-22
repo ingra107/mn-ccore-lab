@@ -20,6 +20,7 @@
 import { test, expect, type Page } from '@playwright/test'
 import { cleanupTestTasks, cleanupTestMeetings, cleanupTestIdeas, cleanupTestDecisions } from './test-cleanup'
 import { P } from './helpers/paths'
+import { injectFakeAuth } from './helpers/capture-auth'
 
 // Honour PLAYWRIGHT_BASE_URL so test:smoke against a preview deploy targets
 // the preview, not hardcoded prod.
@@ -677,6 +678,56 @@ test.describe('FEATURE — @mention autocomplete', () => {
         await page.screenshot({ path: 'review/feature-mention-autocomplete.png' })
       }
     }
+    await page.keyboard.press('Escape')
+  })
+
+  // #891 (b) -- Nick's explicit requirement: typing "@herm"/"@hermes" must
+  // suggest ONLY plain @hermes; the -opus/-haiku model-tag variants must
+  // appear ONLY once '-' has been typed. Hard assertions (not just
+  // log+screenshot) because this is the exact regression the row exists to
+  // prevent -- opus/haiku competing with the sonnet default mid-word.
+  test('FEATURE #891: @hermes dropdown withholds opus/haiku until "-" is typed', async ({ page, context }) => {
+    // /portal/* is behind real Cloudflare Access on the canonical prod
+    // domain -- injectFakeAuth only satisfies the app-level useAuth() check,
+    // not Cloudflare's own edge gate, so this test must be pointed at an
+    // ungated URL (a preview-hash deploy) via PLAYWRIGHT_BASE_URL, same
+    // pattern as capture-interactions.spec.ts's CAPTURE_BASE_URL.
+    await injectFakeAuth(context, BASE)
+    await loadPage(page, P.myTasks)
+    await page.keyboard.press('j')
+    await page.waitForTimeout(200)
+    await page.keyboard.press('Enter')
+    await page.waitForTimeout(500)
+
+    const commentsTab = page.locator('button:has-text("Comments")')
+    if (!(await commentsTab.isVisible({ timeout: 3000 }).catch(() => false))) {
+      test.skip(true, 'Comments tab not visible -- cannot reach the mention input')
+    }
+    await commentsTab.click()
+    await page.waitForTimeout(300)
+
+    const input = page.locator('textarea, [contenteditable="true"], input[placeholder*="comment"]').first()
+    if (!(await input.isVisible().catch(() => false))) {
+      test.skip(true, 'Comment input not visible')
+    }
+    await input.click()
+
+    // Mid-word: only the base tag may appear, never a model variant.
+    await input.type('@herm', { delay: 60 })
+    await page.waitForTimeout(400)
+    const dropdown = page.locator('text=Hermes AI').first()
+    await expect(dropdown).toBeVisible({ timeout: 2000 })
+    await expect(page.getByText(/opus/i)).toHaveCount(0)
+    await expect(page.getByText(/haiku/i)).toHaveCount(0)
+    await page.screenshot({ path: 'review/feature-891-hermes-bare-no-variants.png' })
+
+    // Commit to a variant: typing '-' must reveal opus AND haiku.
+    await input.type('-', { delay: 60 })
+    await page.waitForTimeout(400)
+    await expect(page.getByText(/opus/i)).toBeVisible({ timeout: 2000 })
+    await expect(page.getByText(/haiku/i)).toBeVisible({ timeout: 2000 })
+    await page.screenshot({ path: 'review/feature-891-hermes-dash-shows-variants.png' })
+
     await page.keyboard.press('Escape')
   })
 })
