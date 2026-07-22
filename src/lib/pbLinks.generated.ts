@@ -1,5 +1,5 @@
 // GENERATED from scripts/links/link_contract.py -- DO NOT EDIT BY HAND.
-// rules_hash=2b9403b2fe4d72515e8ae193e47a2271d0d2e6e306d46a3509403e5fc8170969
+// rules_hash=25d2a4e93cda9ca07f9ca8b5e4e01079133530df49e4c1d621acc143b45869bd
 // Regenerate: python -X utf8 scripts/links/gen_links.py (in the Peripheral-Brain repo).
 //
 // INERT (Phase 1): exported but not imported by app code. urlClassify.ts is the
@@ -17,7 +17,7 @@ export interface PbCanonicalLink {
   source_raw: string | null
 }
 
-export const PB_LINK_RULES_HASH = '2b9403b2fe4d72515e8ae193e47a2271d0d2e6e306d46a3509403e5fc8170969'
+export const PB_LINK_RULES_HASH = '25d2a4e93cda9ca07f9ca8b5e4e01079133530df49e4c1d621acc143b45869bd'
 
 interface PbLinkRule {
   type: string
@@ -162,7 +162,7 @@ const PB_LINK_RULES: PbLinkRule[] = [
     "type": "artifact"
   },
   {
-    "canonical": "https://mn-ccore-lab.pages.dev/a/\\1",
+    "canonical": "https://mn-ccore-artifacts.pages.dev/a/\\1",
     "id_group": 1,
     "match": "https?://[^\\s]+/a/(art_[0-9a-fA-F]+)",
     "title": "Artifact",

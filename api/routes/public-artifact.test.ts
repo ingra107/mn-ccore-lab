@@ -11,11 +11,19 @@
  *   - 404 when the artifact id doesn't exist
  *   - 404 (no DB round-trip) when the id doesn't look like art_<hex>
  *   - the 404 response never leaks the stored body
+ *
+ * Plus the #508 origin-split half (2026-07-22): the HUB origin's /a/:id is now
+ * only a 301 to the cookieless artifact host, and must never touch D1 or emit a
+ * body.
  */
 
 import { describe, it, expect, vi } from 'vitest';
 import type { Env } from '../helpers';
-import { handleGetPublicArtifact } from './public-artifact';
+import {
+  handleGetPublicArtifact,
+  handleLegacyPublicArtifactRedirect,
+  PUBLIC_ARTIFACT_ORIGIN,
+} from './public-artifact';
 
 function makeDb(row: Record<string, unknown> | null) {
   const prepare = vi.fn((_sql: string) => ({
@@ -102,5 +110,58 @@ describe('GET /a/:id — public artifact serve', () => {
     expect(resTeam.status).toBe(resMissing.status);
     expect(await resTeam.text()).toBe(await resMissing.text());
     expect(resTeam.headers.get('X-Robots-Tag')).toBe(resMissing.headers.get('X-Robots-Tag'));
+  });
+});
+
+describe('GET /a/:id on the HUB origin — legacy 301 (#508 origin split)', () => {
+  it('redirects an art_<hex> id to the cookieless artifact origin, permanently', () => {
+    const res = handleLegacyPublicArtifactRedirect('art_b424399a8dfbdd6bcf59ac9563ce8f62');
+
+    expect(res.status).toBe(301);
+    expect(res.headers.get('Location')).toBe(
+      `${PUBLIC_ARTIFACT_ORIGIN}/a/art_b424399a8dfbdd6bcf59ac9563ce8f62`,
+    );
+    expect(res.headers.get('X-Robots-Tag')).toBe('noindex');
+    // A 301 with no freshness hint can be pinned by a browser forever.
+    expect(res.headers.get('Cache-Control')).toBe('public, max-age=3600');
+  });
+
+  it('the cookieless origin is a DIFFERENT SITE, not just a different path', () => {
+    // The entire security property of #508 rests on this being a distinct
+    // registrable *.pages.dev name (Public Suffix List boundary), so a Hub
+    // cookie cannot reach it. A refactor that "simplifies" this back to the Hub
+    // host silently reinstates the same-origin stored-XSS class.
+    expect(PUBLIC_ARTIFACT_ORIGIN).not.toContain('mn-ccore-lab.pages.dev');
+    expect(PUBLIC_ARTIFACT_ORIGIN).toMatch(/^https:\/\/[a-z0-9-]+\.pages\.dev$/);
+  });
+
+  it('emits NO body — the Hub origin can no longer serve artifact HTML at all', async () => {
+    const res = handleLegacyPublicArtifactRedirect('art_abc123');
+    expect(await res.text()).toBe('');
+  });
+
+  it('301s uniformly regardless of visibility/existence (no oracle, no DB read)', () => {
+    // Same shape for a known-public id and a made-up one: the redirect never
+    // consults D1, so it cannot leak whether an artifact exists or is public.
+    const a = handleLegacyPublicArtifactRedirect('art_b424399a8dfbdd6bcf59ac9563ce8f62');
+    const b = handleLegacyPublicArtifactRedirect('art_0000000000000000000000000000dead');
+    expect(a.status).toBe(b.status);
+    expect(a.headers.get('Cache-Control')).toBe(b.headers.get('Cache-Control'));
+  });
+
+  it('404s (no Location built) for anything that is not literally art_<hex>', () => {
+    for (const bad of [
+      '',
+      'not-an-artifact-id',
+      'art_',
+      'art_zzz',                       // non-hex
+      'art_abc/../../evil',            // path traversal into the Location header
+      'art_abc%0d%0aX-Injected: 1',    // CRLF header injection
+      '//evil.example.com',            // open-redirect shape
+    ]) {
+      const res = handleLegacyPublicArtifactRedirect(bad);
+      expect(res.status, `expected 404 for ${JSON.stringify(bad)}`).toBe(404);
+      expect(res.headers.get('Location')).toBeNull();
+    }
   });
 });

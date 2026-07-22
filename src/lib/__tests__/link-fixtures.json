@@ -187,7 +187,15 @@
     "raw": "https://mn-ccore-lab.pages.dev/a/art_0a1b2c3d4e5f60718293a4b5c6d7e8f9",
     "expected": {
       "type": "artifact",
-      "canonical_url": "https://mn-ccore-lab.pages.dev/a/art_0a1b2c3d4e5f60718293a4b5c6d7e8f9",
+      "canonical_url": "https://mn-ccore-artifacts.pages.dev/a/art_0a1b2c3d4e5f60718293a4b5c6d7e8f9",
+      "short_title": "Artifact"
+    }
+  },
+  {
+    "raw": "https://mn-ccore-artifacts.pages.dev/a/art_0a1b2c3d4e5f60718293a4b5c6d7e8f9",
+    "expected": {
+      "type": "artifact",
+      "canonical_url": "https://mn-ccore-artifacts.pages.dev/a/art_0a1b2c3d4e5f60718293a4b5c6d7e8f9",
       "short_title": "Artifact"
     }
   },

@@ -1,29 +1,31 @@
 /**
- * Cloudflare Pages Function — public, unauthenticated HTML artifact serving.
+ * Cloudflare Pages Function — LEGACY public-artifact path on the HUB origin.
  *
- * GET /a/:id — short shareable path, deliberately outside /api/* and /portal/*
- * so it hits NEITHER the in-code /api/* auth middleware (api/index.ts) NOR the
- * Cloudflare Access Zero Trust application (scoped to /portal/*). Mirrors the
- * functions/og/[type]/[slug].ts precedent: a Pages Function file-routed path
- * is matched before the SPA static-asset fallback, so this is never swallowed
- * by client-side routing.
+ * GET https://mn-ccore-lab.pages.dev/a/:id  →  301
+ *     https://mn-ccore-artifacts.pages.dev/a/:id
  *
- * All the actual logic (visibility/content_type gating, security headers)
- * lives in api/routes/public-artifact.ts — testable via the same node-mode
- * vitest harness as every other route handler (vitest.config.api.ts includes
- * api/**\/*.test.ts; functions/ is not covered, so this file stays a thin
- * forwarder, same shape as functions/api/[[route]].ts).
+ * Until 2026-07-22 this route SERVED the stored artifact HTML from the Hub's
+ * own host — the host that scopes the `CF_Authorization` auth cookie. The
+ * origin split (PB backlog #508, Nick-approved Option A; security review
+ * HIGH-2, 2026-07-06) moved the serving to a separate, cookieless Pages project
+ * so a CSP regression can no longer put user-authored script first-party on the
+ * Hub session. This stub is all that remains here, and it exists ONLY so links
+ * already shared with external readers keep resolving.
  *
- * Design ref: ~/Peripheral-Brain/Scratch/plans/2026-07-06-hub-hosted-public-artifacts-design.md.
+ * NOTE what this file no longer has: no D1 binding use, no body, no CSP
+ * dependency. There is now NO code path on the Hub origin that can emit stored
+ * artifact HTML. The redirect logic (and its strict `art_<hex>` gate) lives in
+ * api/routes/public-artifact.ts so it is covered by the same vitest file as the
+ * serve path.
+ *
+ * DO NOT re-add serving here. If a future need arises to render an artifact
+ * inside the Hub UI, use the team path's sandboxed `srcDoc` iframe
+ * (src/pages/portal/ArtifactPage.tsx), which is also opaque-origin.
  */
 
-import { handleGetPublicArtifact } from '../../api/routes/public-artifact'
+import { handleLegacyPublicArtifactRedirect } from '../../api/routes/public-artifact'
 
-interface Env {
-  DB: D1Database
-}
-
-export const onRequestGet: PagesFunction<Env> = async (context) => {
+export const onRequestGet: PagesFunction = async (context) => {
   const id = String(context.params.id)
-  return handleGetPublicArtifact(id, context.env)
+  return handleLegacyPublicArtifactRedirect(id)
 }

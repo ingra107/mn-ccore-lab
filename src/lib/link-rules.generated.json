@@ -134,7 +134,7 @@
       "type": "artifact"
     },
     {
-      "canonical": "https://mn-ccore-lab.pages.dev/a/\\1",
+      "canonical": "https://mn-ccore-artifacts.pages.dev/a/\\1",
       "id_group": 1,
       "match": "https?://[^\\s]+/a/(art_[0-9a-fA-F]+)",
       "title": "Artifact",

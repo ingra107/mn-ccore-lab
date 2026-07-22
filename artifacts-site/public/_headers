@@ -1,0 +1,9 @@
+# Static-asset headers for the cookieless artifact origin (backlog #508).
+# Pages applies these to STATIC responses only — the /a/:id Function sets its
+# own hardened header set in api/routes/public-artifact.ts. This file exists so
+# the landing page (and any future static file here) is never indexed and never
+# sniffed either.
+/*
+  X-Robots-Tag: noindex
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer

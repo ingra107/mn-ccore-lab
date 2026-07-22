@@ -3,14 +3,32 @@
 // Design ref: ~/Peripheral-Brain/Scratch/plans/2026-07-06-hub-hosted-public-artifacts-design.md
 // (Nick-approved 2026-07-06, PB #491 follow-on).
 //
-// GET /a/:id — the SHORT public path, wired via functions/a/[id].ts (a
-// Cloudflare Pages Function). That path is deliberately OUTSIDE /portal/*
-// (the Cloudflare Access Zero Trust application only gates /portal/*, per
-// api/index.ts:362-363) and OUTSIDE /api/* (the in-code auth middleware in
-// api/index.ts only runs on '/api/*'). So this handler is reachable by a
-// signed-out external visitor with NO Cloudflare Access JWT and NO API key —
-// same posture as the existing functions/og/[type]/[slug].ts share-card
-// generator, which already serves unauthenticated at this Pages project.
+// ═══ ORIGIN SPLIT (PB backlog #508, Nick-approved Option A, 2026-07-22) ═══
+// `GET /a/:id` is served from a SEPARATE, COOKIELESS Pages project:
+//   https://mn-ccore-artifacts.pages.dev/a/:id   (artifacts-site/functions/a/[id].ts)
+// The Hub's own origin (mn-ccore-lab.pages.dev) now only 301s that path here —
+// see handleLegacyPublicArtifactRedirect below + functions/a/[id].ts.
+//
+// WHY (security review 2026-07-06, HIGH-2): while the body was served from the
+// Hub's own host, ALL isolation rested on ONE response header. Any future CSP
+// loosening / edge transform / non-conforming client would have turned stored
+// artifact HTML into FIRST-PARTY script on the origin that scopes
+// `CF_Authorization` → same-origin stored XSS with full `/api/*` access as the
+// viewer. `*.pages.dev` is on the Public Suffix List, so the artifact host is a
+// different SITE (not merely a different origin) and no cookie can bridge it.
+// The wrong state is now unrepresentable by construction rather than blocked by
+// a header (ethos #15, Level 1). The hardened CSP below is KEPT anyway as
+// defense in depth — it is no longer the only thing standing there.
+//
+// The SAME handler runs on the artifacts origin — one implementation, one test
+// file, two deploy surfaces. Do not fork it.
+//
+// That path is deliberately OUTSIDE /portal/* (the Cloudflare Access Zero Trust
+// application only gates /portal/*, per api/index.ts:362-363) and OUTSIDE
+// /api/* (the in-code auth middleware in api/index.ts only runs on '/api/*').
+// So this handler is reachable by a signed-out external visitor with NO
+// Cloudflare Access JWT and NO API key — same posture as the existing
+// functions/og/[type]/[slug].ts share-card generator.
 //
 // Security-critical invariants:
 //   - Serves the raw stored body ONLY when visibility='public' AND
@@ -44,6 +62,22 @@
 //     design doc; publishing to `visibility='public'` is opt-in per artifact.
 
 import type { Env } from '../helpers';
+
+/**
+ * The cookieless origin that actually serves public artifact HTML (#508).
+ * Different SITE from the Hub (Public Suffix List boundary on *.pages.dev), so
+ * no Hub cookie can ever be sent to or set from it.
+ *
+ * Kept here — beside the handler and its tests — rather than in a config file,
+ * because the ONLY consumer is the legacy redirect below. PB's mirror of this
+ * literal lives in scripts/utils/hub_urls.py::hub_artifacts_base(); the PB link
+ * contract's `/a/` canonical (scripts/links/link_contract.py) is generated from
+ * it and pinned by the cross-repo fixture corpus (src/lib/__tests__/link-fixtures.json).
+ */
+export const PUBLIC_ARTIFACT_ORIGIN = 'https://mn-ccore-artifacts.pages.dev';
+
+/** `art_<hex>` — the mint shape (mintArtifactId in artifacts.ts). */
+const ARTIFACT_ID_RE = /^art_[0-9a-fA-F]+$/;
 
 interface PublicArtifactRow {
   body_md: string;
@@ -89,6 +123,41 @@ export async function handleGetPublicArtifact(id: string, env: Env): Promise<Res
         "sandbox allow-scripts; default-src 'none'; connect-src 'none'; form-action 'none'; base-uri 'none'; script-src 'unsafe-inline' 'unsafe-eval' data: blob:; style-src 'unsafe-inline' data:; img-src data: blob:; font-src data:; media-src data: blob:",
       'X-Content-Type-Options': 'nosniff',
       'Cache-Control': 'public, max-age=300',
+      'X-Robots-Tag': 'noindex',
+    },
+  });
+}
+
+/**
+ * The Hub origin's `/a/:id` after the #508 origin split: a permanent redirect
+ * to the cookieless artifact host. This is what keeps every already-shared
+ * link working (exactly one was in the wild when the split shipped —
+ * art_b424399a…, the LLM Ethics Workflow Map).
+ *
+ * Deliberate properties:
+ *  - It NEVER touches D1 and NEVER emits a body. The Hub origin no longer has
+ *    any code path that can put stored artifact HTML on the wire. That is the
+ *    whole point of #508 — not "the HTML is guarded here", but "the HTML is not
+ *    here".
+ *  - Uniform for EVERY art_-shaped id: public, team, markdown and nonexistent
+ *    all 301 identically, so this route is not an existence oracle either (the
+ *    visibility/content_type gate still runs, at the destination).
+ *  - STRICTER id validation than the serve path: the id lands in a `Location`
+ *    response header here, a different sink than the serve path's parameterized
+ *    SQL bind, so anything that is not literally `art_<hex>` 404s without
+ *    building a URL at all. Header injection / open redirect are unrepresentable.
+ *  - `max-age=3600` bounds how long a browser pins the 301 (a 301 with no
+ *    freshness hint may be cached indefinitely, which would make a future move
+ *    unfixable for prior visitors).
+ */
+export function handleLegacyPublicArtifactRedirect(id: string): Response {
+  if (!id || !ARTIFACT_ID_RE.test(id)) return notFound();
+
+  return new Response(null, {
+    status: 301,
+    headers: {
+      Location: `${PUBLIC_ARTIFACT_ORIGIN}/a/${id}`,
+      'Cache-Control': 'public, max-age=3600',
       'X-Robots-Tag': 'noindex',
     },
   });

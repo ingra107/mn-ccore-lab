@@ -1,0 +1,51 @@
+# ═══ THE COOKIELESS ARTIFACT ORIGIN (backlog #508, Option A) ═══
+#
+# A SECOND Cloudflare Pages project whose ONLY job is to serve public HTML
+# artifacts at `GET /a/:id`. It exists to make same-origin stored XSS against
+# the Hub session UNREPRESENTABLE rather than merely blocked by a header.
+#
+# Why a separate project and not a path on mn-ccore-lab.pages.dev:
+#   `*.pages.dev` is on the PUBLIC SUFFIX LIST, so `mn-ccore-artifacts.pages.dev`
+#   and `mn-ccore-lab.pages.dev` are different SITES, not merely different
+#   origins. A cookie scoped to the Hub (`CF_Authorization`) can NEVER be sent
+#   to, read by, or set from this origin — no `Domain=` attribute can bridge a
+#   PSL boundary. Same construction as claudeusercontent.com /
+#   githubusercontent.com. Even a TOTAL loss of the artifact CSP here cannot
+#   reach a signed-in Hub session. (The CSP is KEPT anyway, as defense in
+#   depth — see api/routes/public-artifact.ts.)
+#
+# DELIBERATELY MINIMAL — this project has, and must keep:
+#   - exactly ONE Function route: /a/:id  (functions/a/[id].ts)
+#   - a READ path to D1 only (the handler runs one parameterized SELECT)
+#   - NO /api/*, NO SPA, NO Cloudflare Access application, NO secrets,
+#     NO PB_API_KEY, NO cron triggers, NO R2, NO service bindings.
+#   Every one of those would re-import Hub authority into the very origin whose
+#   whole value is that it HAS no authority. Do not add them here.
+#
+# BINDINGS ARE CODE-OWNED HERE (unlike the main mn-ccore-lab Pages project,
+# whose bindings are dashboard-owned — CLAUDE.md "Deploy mode"). `wrangler pages
+# deploy` reads this file because it declares `pages_build_output_dir`, so the
+# D1 binding below is applied to the deployment itself. Keep it that way: a
+# binding in git is reviewable and reproducible.
+#
+# DEPLOY (from the repo root):
+#   npm run deploy:artifacts
+#     = wrangler pages deploy --cwd artifacts-site --branch main
+#       + node scripts/post-deploy-probe.mjs --artifacts-only
+#
+# The Functions directory resolves relative to `--cwd`, i.e. artifacts-site/functions.
+# functions/a/[id].ts imports the SHARED handler at ../../../api/routes/public-artifact
+# — one implementation, one test file, two deploy surfaces. Never fork it.
+
+name = "mn-ccore-artifacts"
+compatibility_date = "2024-09-23"
+pages_build_output_dir = "public"
+
+# Read-only in practice: handleGetPublicArtifact issues a single parameterized
+# SELECT against `artifacts`. Same prod D1 as the Hub (the artifact bodies live
+# there); the isolation this project buys is at the BROWSER origin boundary, not
+# at the database.
+[[d1_databases]]
+binding = "DB"
+database_name = "mnccore-lab"
+database_id = "b8453e9b-7c5f-4029-b07d-dd89c05d00cf"
