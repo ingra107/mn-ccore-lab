@@ -1,0 +1,41 @@
+{
+  // Typecheck the WORKER. Until this existed, `tsc -b` covered only "src"
+  // (tsconfig.app.json) plus vite.config.ts — the entire api/ directory, every
+  // route handler and the mutation layer, was never typechecked by any command
+  // in package.json.
+  //
+  // That is not theoretical: the #98 reply endpoint shipped testing `actor.ok`
+  // on a `{ slug } | { error }` union, which is a compile error. It reached
+  // production and 500'd on every request, and was caught only by an
+  // end-to-end probe. A compiler would have rejected it instantly.
+  //
+  // Tests are excluded: they use loose in-memory DB doubles whose shapes are
+  // deliberately partial, and forcing those to typecheck would push casts into
+  // the doubles rather than catch bugs in the code under test.
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "types": ["@cloudflare/workers-types"],
+    // Deliberately NOT `strict` yet. Turning strict on here produces 164
+    // pre-existing errors — a real cleanup project, and one that has nothing to
+    // do with the bug that motivated this file. At this level the check is
+    // GREEN today, so it can gate immediately instead of sitting behind a
+    // migration that never gets done.
+    //
+    // It still catches the class that shipped a 500: TS2339 ("property does not
+    // exist on type") fires regardless of strictness, which is exactly what
+    // `actor.ok` on a `{ slug } | { error }` union was.
+    //
+    // Ratchet from here — turn on strict flags as the 164 get cleared.
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "allowImportingTsExtensions": true
+  },
+  "include": ["api/**/*.ts", "shared/**/*.ts"],
+  "exclude": ["api/**/*.test.ts"]
+}
