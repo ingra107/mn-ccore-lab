@@ -270,5 +270,29 @@
       "canonical_url": "~/Peripheral-Brain/Docs/system-map.md",
       "short_title": "~/Peripheral-Brain/Docs/system-map.md"
     }
+  },
+  {
+    "raw": "C:\\1projects\\report.docx",
+    "expected": {
+      "type": "local_file",
+      "canonical_url": "C:/1projects/report.docx",
+      "short_title": "C:/1projects/report.docx"
+    }
+  },
+  {
+    "raw": "C:\\Users\\ingra107\\Box\\1data",
+    "expected": {
+      "type": "local_folder",
+      "canonical_url": "~/Box/1data",
+      "short_title": "~/Box/1data"
+    }
+  },
+  {
+    "raw": "[[iwd_\\1_thing]]",
+    "expected": {
+      "type": "iwd",
+      "canonical_url": "[[iwd_\\1_thing]]",
+      "short_title": "iwd_\\1_thing"
+    }
   }
 ]
