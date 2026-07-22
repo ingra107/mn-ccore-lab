@@ -33,6 +33,25 @@ interface CommandItem {
 const RECENT_KEY = 'mnccore-cmdk-recent'
 const RECENT_MAX = 5
 
+// ONE category ordering, used by BOTH the rendered grouping and the keyboard
+// navigation list (#100).
+//
+// These were two separate literals with two different fallbacks: nav used
+// `order[c] ?? 9`, the render used `categoryOrder[c] || 9`. 'recent' ranks 0,
+// which is FALSY — so `|| 9` shoved the Recent group to the BOTTOM visually
+// while nav kept it FIRST. With any recent item present, the highlighted row
+// and the row Enter actually fired were different rows, which is why pressing
+// Enter on "Create Task" opened a project instead. `??` vs `||` on a
+// zero-valued lookup, duplicated so the two copies could disagree.
+//
+// Keep this as the single source. If a new category is added, it gets a rank
+// here and both orderings move together by construction.
+const CATEGORY_RANK: Record<string, number> = {
+  recent: 0, context: 1, action: 2, filter: 3, navigation: 4,
+  task: 5, project: 6, person: 7, meeting: 8,
+}
+const categoryRank = (c: string): number => CATEGORY_RANK[c] ?? 9
+
 export default function CommandPalette() {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
@@ -514,13 +533,12 @@ export default function CommandPalette() {
   // Enter activated a DIFFERENT row than the highlighted one ("arrows don't
   // work"). Navigate against the SAME flattened order that's rendered.
   const orderedItems = useMemo(() => {
-    const order: Record<string, number> = { recent: 0, context: 1, action: 2, filter: 3, navigation: 4, task: 5, project: 6, person: 7, meeting: 8 }
     const g = filtered.reduce((acc, item) => {
       ;(acc[item.category] ||= []).push(item)
       return acc
     }, {} as Record<string, CommandItem[]>)
     return Object.entries(g)
-      .sort(([a], [b]) => (order[a] ?? 9) - (order[b] ?? 9))
+      .sort(([a], [b]) => categoryRank(a) - categoryRank(b))
       .flatMap(([, items]) => items)
   }, [filtered])
 
@@ -544,7 +562,6 @@ export default function CommandPalette() {
     }
   }, [orderedItems, selectedIndex])
 
-  const categoryOrder: Record<string, number> = { recent: 0, context: 1, action: 2, filter: 3, navigation: 4, task: 5, project: 6, person: 7, meeting: 8 }
   const grouped = open ? filtered.reduce((acc, item) => {
     if (!acc[item.category]) acc[item.category] = []
     acc[item.category].push(item)
@@ -620,7 +637,7 @@ export default function CommandPalette() {
         {/* Results */}
         <div ref={listRef} id="command-palette-results" role="listbox" aria-label="Search results" className="max-h-[50vh] overflow-y-auto py-1" style={{ scrollbarWidth: 'thin' }}>
           {Object.entries(grouped)
-            .sort(([a], [b]) => (categoryOrder[a] || 9) - (categoryOrder[b] || 9))
+            .sort(([a], [b]) => categoryRank(a) - categoryRank(b))
             .map(([category, items]) => (
               <div key={category}>
                 <div className="px-4 py-1.5 text-[10px] uppercase tracking-wider" style={{ color: 'var(--slate)', opacity: 'var(--ink-label)' }}>
