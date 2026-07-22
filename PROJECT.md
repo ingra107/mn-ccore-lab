@@ -16,7 +16,7 @@ platform for Nick's critical-care research group at UMN.
 
 **Live:** https://mn-ccore-lab.pages.dev  (LIVE for team — CF Access gates `/portal/*` via @umn.edu)
 **Repo:** https://github.com/ingra107/mn-ccore-lab  (720+ commits)
-**Current HEAD:** `8b85f558` (author ingra107). **Live deploy = `97f14638`** (2026-07-21) — bug sweep #94/#95 + the Projects-list row alignment arc. Schema **v82**. Verify the live deploy with `wrangler pages deployment list --project-name mn-ccore-lab`. See SESSION-HANDOFF.md top + CHANGELOG.md top for the round's record.
+**Latest round (2026-07-22):** bug sweep #96–#100, threaded replies (schema v100 `activity_entries.parent_id`), two unreported privacy leaks closed, and `api/` finally typechecked. **Do NOT read HEAD / live-deploy / schema-version off this line** — all three went stale here before (the schema field sat 19 migrations behind and nearly caused a migration to be misnumbered). Derive them: HEAD = `git log -1`; live deploy = `wrangler pages deployment list --project-name mn-ccore-lab` (Source column); schema = the highest-numbered `api/schema-v*.sql`, enforced by `python scripts/check-schema-versions.py`. See SESSION-HANDOFF.md top + CHANGELOG.md top for the round's record.
 **Quality gate:** 🟢 GREEN — build clean, inspection 149/149 post-simplify, smoke 27/27 (pre-simplify baseline), deep-audit 14/14 clean, axe WCAG 2.1 AA clean across 29 pages × 2 color schemes, schema-drift CI green.
 
 ## 🚨 Read these FIRST every session

@@ -30,11 +30,13 @@ shims in `src/App.tsx` placed outside `RequireAuth`.
 **API routes** (`/api/*`) are NOT gated by CF Access. Auth enforced
 server-side via X-API-Key + `REQUIRE_AUTH` + JWT verify.
 
-## D1 Tables (74 — sqlite_master, excl. sqlite_/internal; schema v82)
+## D1 Tables (75 on 2026-07-22; schema v101)
+
+> ⚠️ **Both numbers above are dated HINTS, not the source of truth** — this line read "74 / v82" while prod was at 75 / v101. Derive instead: tables = `SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_cf_%'` via `scripts/wrangler-d1`; schema = the highest-numbered `api/schema-v*.sql` (gated by `scripts/check-schema-versions.py`).
 
 | Table | Rows | Purpose |
 |-------|------|---------|
-| entity_seen | dynamic | Per-viewer seen tracking (schema v82, 2026-06-11): (entity_type, entity_id, viewer_slug, last_seen_at). Powers the new-activity signal (teal ● chips) vs NEW-assignment (gold, acknowledged_at). POST /api/seen + GET /api/seen/unseen. Hub-only, no PB lockstep. |
+| entity_seen | dynamic | Per-viewer seen tracking (schema **v81**, 2026-06-11 — `api/schema-v81-entity-seen.sql`; v82 is ai-request-tokens): (entity_type, entity_id, viewer_slug, last_seen_at). Powers the new-activity signal (teal ● chips) vs NEW-assignment (gold, acknowledged_at). POST /api/seen + GET /api/seen/unseen. Hub-only, no PB lockstep. |
 | artifacts | 0+ | Hermes Artifacts v1 (schema v79, 2026-06-11): md-stored deliverables rendered at /portal/artifacts/:id; version, typed proj_* project_id + task_id origin links. Long Hermes responses (>1500 chars / explicit doc ask) land here. |
 | artifact_versions | 0+ | Append-only revision history for artifacts (artifact_id, version, body_md, revised_by, revision_note). Comment-driven revisions via @hermes bump version. |
 | bug_reports | 0+ | Bug Squasher queue (schema v76, 2026-06-10): status open/resolved/dismissed + resolved_at + context cols; mirrors /api/bug-report GitHub issues. GET /api/bug-reports?status= + POST /api/bug-reports/:id/status (PI/API-key). |
