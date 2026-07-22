@@ -14,6 +14,7 @@ import { isTaskDone } from '../lib/taskGrouping'
 import { useTasks, useProjects, useTeam, useMeetingsApi } from '../hooks/useApiData'
 import { useAuth } from '../hooks/useAuth'
 import { useProtocolLaunch } from '../hooks/useProtocolLaunch'
+import { openGlobalQuickAdd } from './GlobalQuickAddModal'
 import { getPersonInfo } from '../data/team'
 import { PATHS, PUBLIC_PATHS } from '../constants/paths'
 import { emailToSlug } from '../lib/emailSlug'
@@ -194,7 +195,19 @@ export default function CommandPalette() {
       label: 'Create Task',
       sublabel: 'Add a new task',
       icon: Plus,
-      action: () => { navigate(`${PATHS.myTasks}?create=true`); setOpen(false) },
+      // #100: opens the canonical quick-add IN PLACE — it does NOT navigate.
+      //
+      // This used to `navigate(myTasks + '?create=true')`, which yanked you off
+      // whatever page you were on to My Tasks just to type a title (Nick, from
+      // the Today page: "i landed on the my tasks page for some reason").
+      // Rule 63d makes GlobalQuickAddModal the ONE capture surface, and it is
+      // mounted in PortalLayout, so it is already available on every portal
+      // page — there was never a reason to travel to reach it.
+      //
+      // The same conversion was already made for Personal's "New Task" in #71;
+      // this call site was simply missed by that pass. Creating from a command
+      // palette should leave you exactly where you were.
+      action: () => { setOpen(false); openGlobalQuickAdd() },
       category: 'action',
       shortcut: 'C',
     })
