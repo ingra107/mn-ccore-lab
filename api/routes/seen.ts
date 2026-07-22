@@ -35,9 +35,15 @@
 // bound applies ONLY to the never_seen=1 arm).
 
 import type { Env } from '../helpers';
-import { json, error, actorSlugFromRequest } from '../helpers';
+import { json, error, actorSlugFromRequest, getAuthUser } from '../helpers';
 
 const SEEN_TYPES = new Set(['task', 'project', 'meeting']);
+
+// #99 recency bound for the Hermes arm. That arm LEFT JOINs entity_seen (asking
+// a question is intent to hear the answer, so a never-opened task still
+// signals), which without a bound would let a cold start badge every Hermes
+// answer ever given. Same role as MEETING_NEVER_SEEN_PAYLOAD_CAP_DAYS below.
+const HERMES_UNSEEN_CAP_DAYS = 30;
 
 // Server-side payload bound for the never_seen (cold-start, no entity_seen
 // row) meetings arm. Mirrors src/lib/seen.ts's MEETING_UNSEEN_RECENCY_CAP_DAYS
@@ -79,8 +85,12 @@ export async function handleMarkSeen(request: Request, env: Env): Promise<Respon
 export async function handleGetUnseenActivity(request: Request, env: Env): Promise<Response> {
   const viewer = await actorSlugFromRequest(request, env);
   if (!viewer) return json({ data: [], count: 0 });
+  // #99: ai_requests.requested_by stores the EMAIL the ask was made with, while
+  // every other table here keys on the canonical slug. Both are matched so a row
+  // written through either shape still reaches its own author.
+  const viewerEmail = (await getAuthUser(request, env))?.email ?? viewer;
   try {
-    const [taskProjectRows, meetingRows] = await Promise.all([
+    const [taskProjectRows, meetingRows, hermesRows] = await Promise.all([
       env.DB.prepare(
         `SELECT es.entity_type, es.entity_id,
                 COUNT(*) AS new_count,
@@ -127,13 +137,80 @@ export async function handleGetUnseenActivity(request: Request, env: Env): Promi
            )
          ORDER BY latest_at DESC`
       ).bind(viewer, `-${MEETING_NEVER_SEEN_PAYLOAD_CAP_DAYS} days`).all(),
+      // #99 — Hermes answers on a task. A typed "@hermes …" prefix in a task
+      // composer does NOT write activity_entries: it routes to /api/ai-requests
+      // as source_type='daily_thought' with a task_* source_id (see
+      // src/lib/hermesRouting.ts), read back by TaskHermesReplies. The two arms
+      // above only ever look at activity_entries, so a Hermes answer was
+      // STRUCTURALLY incapable of producing a signal — you asked, it answered,
+      // and nothing anywhere said so. That is bug #99.
+      //
+      // Scoped to the ASKER. ai_requests has no visibility column, so requester
+      // identity is the only privacy model available; badging someone else's
+      // exchange would both leak it and be meaningless to them.
+      //
+      // LEFT JOIN, unlike the task/project arm's INNER JOIN: asking a question
+      // is itself intent to hear the answer, so a task you never opened still
+      // signals. The recency bound stops a cold start from resurrecting every
+      // answer ever given, mirroring the meetings never_seen arm.
+      env.DB.prepare(
+        `SELECT 'task' AS entity_type, ar.source_id AS entity_id,
+                COUNT(*) AS new_count,
+                MAX(ar.responded_at) AS latest_at,
+                COALESCE(t.short_title, t.title) AS title,
+                NULL AS project_slug
+         FROM ai_requests ar
+         JOIN tasks t ON t.id = ar.source_id AND t.deleted_at IS NULL
+         LEFT JOIN entity_seen es
+           ON es.entity_type = 'task' AND es.entity_id = ar.source_id AND es.viewer_slug = ?
+         WHERE ar.source_type = 'daily_thought'
+           AND ar.status = 'completed'
+           AND ar.responded_at IS NOT NULL
+           AND (lower(ar.requested_by) = lower(?) OR lower(ar.requested_by) = lower(?))
+           AND ar.responded_at > datetime('now', ?)
+           AND (es.last_seen_at IS NULL OR ar.responded_at > es.last_seen_at)
+         GROUP BY ar.source_id
+         ORDER BY latest_at DESC`
+      ).bind(
+        viewer,
+        viewerEmail,
+        viewer,
+        `-${HERMES_UNSEEN_CAP_DAYS} days`,
+      ).all(),
     ]);
     // meetings has no deleted_at column (checked v2..v95) — if soft-delete
     // lands there later, this arm needs the same guard as t/p.deleted_at above.
     // Re-sort the merged arms globally: each arm is ordered internally, but
     // concatenation alone would rank every task/project above every meeting.
-    const data = [...(taskProjectRows.results ?? []), ...(meetingRows.results ?? [])]
-      .sort((a, b) => String((b as { latest_at?: string }).latest_at ?? '').localeCompare(String((a as { latest_at?: string }).latest_at ?? '')));
+    // #99: the activity arm and the Hermes arm can BOTH report the same task —
+    // new comments and a new Hermes answer on one row. They must be COLLAPSED
+    // here, because the client maps rows by entity_id (useEntitySeen.ts:62-65),
+    // so two rows for one task would silently drop one signal; and since the
+    // list is sorted newest-first, the surviving one would be the OLDER. Sum the
+    // counts, keep the latest timestamp, and the badge stays honest: what it
+    // claims is what is actually new (Rule 73 badge honesty).
+    type UnseenRow = { entity_type?: string; entity_id?: string; new_count?: number; latest_at?: string };
+    const merged = new Map<string, UnseenRow>();
+    const ordered: UnseenRow[] = [];
+    for (const row of [
+      ...(taskProjectRows.results ?? []),
+      ...(meetingRows.results ?? []),
+      ...(hermesRows.results ?? []),
+    ] as UnseenRow[]) {
+      const key = `${row.entity_type}:${row.entity_id}`;
+      const prior = merged.get(key);
+      if (!prior) {
+        merged.set(key, { ...row });
+        ordered.push(merged.get(key)!);
+        continue;
+      }
+      prior.new_count = (prior.new_count ?? 0) + (row.new_count ?? 0);
+      if (String(row.latest_at ?? '') > String(prior.latest_at ?? '')) prior.latest_at = row.latest_at;
+    }
+    // Re-sort the merged arms globally: each arm is ordered internally, but
+    // concatenation alone would rank every task/project above every meeting.
+    const data = ordered.sort((a, b) =>
+      String(b.latest_at ?? '').localeCompare(String(a.latest_at ?? '')));
     return json({ data, count: data.length });
   } catch (e) {
     console.error('handleGetUnseenActivity failed (entity_seen missing pre-migration?):', e);

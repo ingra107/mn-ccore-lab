@@ -1030,7 +1030,10 @@ defineRoute({
   auth: 'authed',
   entity: 'ai-requests',
   visibility: 'na',
-  handler: (c) => handleGetAIRequests(U(c), E(c)),
+  // The REQUEST is passed so the handler can scope results to the requester.
+  // Previously only (url, env) went through, which is precisely why this read
+  // had no way to tell whose Hermes exchanges it was returning.
+  handler: (c) => handleGetAIRequests(U(c), E(c), R(c)),
 });
 
 // ─────────────────────────────────────────────────────────────────────────────

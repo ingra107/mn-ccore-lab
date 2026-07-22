@@ -1,11 +1,23 @@
 import type { AuthUser, Env } from '../helpers';
-import { json, error, generateId, projectRefToCanonical, actorSlug } from '../helpers';
+import { json, error, generateId, projectRefToCanonical, actorSlug, isPiRequest, getAuthUser } from '../helpers';
 import { postActivityEntry } from '../lib/activity-entry';
 import type { EntityType } from '../lib/activity-entry';
 import { ARTIFACT_URL_RE } from '../lib/artifact-url';
 
 // GET /api/ai-requests?status=&project_slug=&source_type=&source_id=
-export async function handleGetAIRequests(url: URL, env: Env): Promise<Response> {
+//
+// REQUESTER-SCOPED (2026-07-22). This read returns `SELECT *` — the full prompt
+// AND response — and it was gated only by `auth: 'authed'`, with no requester
+// filter anywhere in the handler and none in TaskHermesReplies either. Any
+// logged-in team member opening a task could therefore read every Hermes
+// exchange on it, including someone else's. Unlike activity_entries, this table
+// has NO visibility column, so there was no way to mark an exchange private:
+// the lane structurally could not express what @me expresses. `requested_by`
+// was already stored at creation and simply never consulted on read.
+//
+// PI / API-key callers keep seeing everything: the PB listener polls this
+// endpoint for pending work, and the PI is the operator of his own system.
+export async function handleGetAIRequests(url: URL, env: Env, request?: Request): Promise<Response> {
   const status = url.searchParams.get('status');
   const projectSlug = url.searchParams.get('project_slug');
   const sourceType = url.searchParams.get('source_type');
@@ -13,6 +25,22 @@ export async function handleGetAIRequests(url: URL, env: Env): Promise<Response>
 
   let query = 'SELECT * FROM ai_requests WHERE 1=1';
   const params: string[] = [];
+
+  // Scope to the caller unless they're PI/service. `requested_by` holds the
+  // EMAIL the request was made with, so compare on email and additionally on
+  // the canonical slug — rows written through paths that stored a slug (or an
+  // alias address) would otherwise become invisible to their own author, which
+  // fails closed in the wrong direction: silently hiding your own history.
+  if (request && !(await isPiRequest(request, env))) {
+    const user = await getAuthUser(request, env);
+    const email = user?.email ?? '';
+    if (!email) {
+      // Authenticated-but-unresolvable: return nothing rather than everything.
+      return json({ data: [], count: 0, tokens: { input: 0, output: 0, tracked: 0 } });
+    }
+    query += ' AND (lower(requested_by) = lower(?) OR lower(requested_by) = lower(?))';
+    params.push(email, actorSlug(email));
+  }
 
   if (status) {
     query += ' AND status = ?';
