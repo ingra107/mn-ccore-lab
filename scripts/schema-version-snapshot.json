@@ -1,7 +1,7 @@
 {
   "description": "Canonical set of api/schema-v*.sql migration files. Regenerate with: python scripts/check-schema-versions.py --update",
-  "hash": "aaac3169bf29f4b79dd62304efc8328ef2688927ccb5475a0c90fe1bb659cf4f",
-  "file_count": 103,
+  "hash": "76051c0661810a165e3adaa2bed7145523198d70ba32595387cc5f61c3e714df",
+  "file_count": 104,
   "files": [
     "schema-v2.sql",
     "schema-v3.sql",
@@ -105,11 +105,12 @@
     "schema-v96-action-items-backfill.sql",
     "schema-v97-completed-at-repair.sql",
     "schema-v98-tasks-completion-triad-guard.sql",
-    "schema-v99-drop-action-items.sql"
+    "schema-v99-drop-action-items.sql",
+    "schema-v100-activity-entries-threads.sql"
   ],
   "version_range": [
     2,
-    99
+    100
   ],
   "gaps": [
     35,
