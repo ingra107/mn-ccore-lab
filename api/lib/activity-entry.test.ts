@@ -203,6 +203,17 @@ function makeEnv(fx: Partial<Fixtures> = {}) {
             }
             // handleDeleteActivityEntry auth probe + idempotentDelete's hard-mode
             // project-gate probe (explicit column lists, WHERE id = ?).
+            // #98 parent resolution inside postActivityEntry. Its own column
+            // list, so it needs its own branch — the doubles match on the exact
+            // SELECT, and an unmatched read returns null, which postActivityEntry
+            // correctly reads as "parent not found" and 404s.
+            if (/SELECT id, parent_id, entity_type, entity_id, kind, visibility FROM activity_entries WHERE id = \?/.test(sql)) {
+              const r = ae.find(x => x.id === binds[0])
+              return r ? {
+                id: r.id, parent_id: r.parent_id ?? null, entity_type: r.entity_type,
+                entity_id: r.entity_id, kind: r.kind, visibility: r.visibility,
+              } : null
+            }
             if (/SELECT id, actor_slug FROM activity_entries WHERE id = \?/.test(sql)) {
               const r = ae.find(x => x.id === binds[0])
               return r ? { id: r.id, actor_slug: r.actor_slug } : null

@@ -246,10 +246,10 @@ async function _postHermesResponse(
         ? 'artifact'
         : 'project';
 
-  // Resolve the triggering entry to get entity_id + visibility.
+  // Resolve the triggering entry to get entity_id + visibility + its thread.
   const trigEntry = await env.DB.prepare(
-    'SELECT entity_id, entity_type, visibility FROM activity_entries WHERE id = ? LIMIT 1'
-  ).bind(req.source_id).first<{ entity_id: string; entity_type: string; visibility: string }>();
+    'SELECT entity_id, entity_type, visibility, parent_id, id FROM activity_entries WHERE id = ? LIMIT 1'
+  ).bind(req.source_id).first<{ entity_id: string; entity_type: string; visibility: string; parent_id: string | null; id: string }>();
 
   if (!trigEntry) {
     // Triggering entry deleted — nothing to anchor the response to; skip silently.
@@ -260,13 +260,40 @@ async function _postHermesResponse(
   const entityId = trigEntry.entity_id;
   const visibility = (trigEntry.visibility === 'author' ? 'author' : 'team') as 'author' | 'team';
 
-  // Look for the 'Thinking...' placeholder on the same entity.
-  const placeholder = await env.DB.prepare(
+  // #98: the thread this answer belongs to — a reply's root, or the entry
+  // itself when the ask was top-level.
+  const threadRootId = trigEntry.parent_id ?? trigEntry.id;
+
+  // Look for the 'Thinking...' placeholder, SCOPED TO THIS THREAD.
+  //
+  // The scope matters now that threads exist: this used to take the newest
+  // claude-ai placeholder anywhere on the entity, so with two asks in flight —
+  // say one at the top level and one inside a thread — an answer could
+  // overwrite the other conversation's placeholder and appear in the wrong
+  // place. Matching parent_id keeps each answer in the thread that asked.
+  // dispatchHermes writes the placeholder with parent_id = threadRootId, which
+  // is non-null even for a TOP-LEVEL ask (a root's thread is itself) — so match
+  // on threadRootId, not on trigEntry.parent_id.
+  let placeholder = await env.DB.prepare(
     `SELECT id FROM activity_entries
      WHERE entity_type = ? AND entity_id = ? AND actor_slug = 'claude-ai'
        AND kind = 'comment' AND body LIKE 'Thinking about this%'
+       AND parent_id = ?
      ORDER BY created_at DESC LIMIT 1`
-  ).bind(entityType, entityId).first<{ id: string }>();
+  ).bind(entityType, entityId, threadRootId).first<{ id: string }>();
+
+  // Fallback for requests already in flight when this shipped: their
+  // placeholders predate parent_id and carry NULL. Entity-scoped like the old
+  // lookup, so behaviour for those is exactly what it was.
+  if (!placeholder) {
+    placeholder = await env.DB.prepare(
+      `SELECT id FROM activity_entries
+       WHERE entity_type = ? AND entity_id = ? AND actor_slug = 'claude-ai'
+         AND kind = 'comment' AND body LIKE 'Thinking about this%'
+         AND parent_id IS NULL
+       ORDER BY created_at DESC LIMIT 1`
+    ).bind(entityType, entityId).first<{ id: string }>();
+  }
 
   if (placeholder) {
     // UPDATE the placeholder body in-place — no duplicate row.
@@ -295,6 +322,8 @@ async function _postHermesResponse(
       visibility,
       taskProjectId,
       fireSideEffects: false,
+      // #98: land in the asking thread, same as the placeholder would have.
+      parentId: threadRootId,
     });
   }
 }

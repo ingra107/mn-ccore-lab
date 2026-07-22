@@ -143,6 +143,17 @@ describe('Fix 1 — handleAddComment: @hermes uses project.id (UUID), not URL sl
               inserts.push({ sql, binds: [...boundVals] });
               return { id: boundVals[0], body: boundVals[7], actor_slug: boundVals[6], update_type: boundVals[9], created_at: '2026-06-10 00:00:00' };
             }
+            // #98: postActivityEntry resolves a parent when the Hermes
+            // placeholder threads onto its triggering entry. This is a PROJECT
+            // comment, so the parent must report project identity — the
+            // placeholder inherits entity_type/entity_id from it, and this test
+            // asserts the placeholder lands on project.id.
+            if (/SELECT id, parent_id, entity_type, entity_id, kind, visibility FROM activity_entries WHERE id = \?/.test(sql)) {
+              return {
+                id: boundVals[0], parent_id: null, entity_type: 'project',
+                entity_id: 'proj-uuid-001', kind: 'comment', visibility: 'team',
+              };
+            }
             if (sql.includes('FROM team_members WHERE slug = ?')) return { id: 'member_001' };
             if (sql.includes('FROM team_members WHERE email =')) return { id: 'member_001', slug: 'nick-ingraham' };
             return null;
@@ -258,7 +269,11 @@ describe('Fix 1b — handleAddTaskComment: @hermes creates ai_request + placehol
                 created_at: '2026-06-10 00:00:00',
               };
             }
-            if (sql.includes('FROM activity_entries WHERE id =')) return { id: 'ae-001', entity_id: 'task-001', actor_slug: 'nick-ingraham', body: '@hermes help', created_at: '2026-06-10 00:00:00' };
+            // #98: kind/visibility/parent_id are read by postActivityEntry's parent
+            // resolution when a Hermes placeholder threads onto its trigger. Without
+            // them the stub row looks like a non-repliable entry and the placeholder
+            // is never written.
+            if (sql.includes('FROM activity_entries WHERE id =')) return { id: 'ae-001', entity_type: 'task', entity_id: 'task-001', kind: 'comment', visibility: 'team', parent_id: null, actor_slug: 'nick-ingraham', body: '@hermes help', created_at: '2026-06-10 00:00:00' };
             if (sql.includes('FROM team_members WHERE slug =')) return { id: 'member_001', slug: 'nick-ingraham' };
             if (sql.includes('FROM team_members WHERE email =')) return { id: 'member_001', slug: 'nick-ingraham' };
             if (sql.includes('FROM tasks WHERE id = ? AND deleted_at IS NULL')) return { project_id: 'proj-slug-001' };
@@ -321,7 +336,7 @@ describe('Fix 1b — handleAddTaskComment: @hermes creates ai_request + placehol
           bind: (...args: unknown[]) => { boundVals = [...boundVals, ...args]; return stmt; },
           run: async () => { inserts.push({ sql }); return { success: true, meta: {}, results: [] }; },
           first: async () => {
-            if (sql.includes('FROM activity_entries WHERE id =')) return { id: 'ae-001', entity_id: 'task-001', actor_slug: 'nick-ingraham', body: 'regular comment', created_at: '2026-06-10 00:00:00' };
+            if (sql.includes('FROM activity_entries WHERE id =')) return { id: 'ae-001', entity_type: 'task', entity_id: 'task-001', kind: 'comment', visibility: 'team', parent_id: null, actor_slug: 'nick-ingraham', body: 'regular comment', created_at: '2026-06-10 00:00:00' };
             if (sql.includes('FROM team_members')) return { id: 'member_001', slug: 'nick-ingraham' };
             return null;
           },

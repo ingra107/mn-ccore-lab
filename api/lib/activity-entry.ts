@@ -20,7 +20,19 @@
 // call sites stay as-is and are not duplicated here.
 
 import type { AuthUser, Env } from '../helpers';
-import { generateId, parseMentions, actorSlugFromRequest, isPiRequest } from '../helpers';
+import { generateId, parseMentions, actorSlugFromRequest, isPiRequest, actorSlug } from '../helpers';
+
+// The pending-placeholder body. Written here, matched by the response handler
+// (api/routes/ai-requests.ts) and rendered as <HermesPending> by the UI
+// (src/components/hermesPendingUtil.ts). One literal, three consumers — do not
+// reword it without updating all three.
+const HERMES_PENDING_BODY = 'Thinking about this... (AI response pending)';
+
+// #98 thread-context bounds. A follow-up needs the recent exchange, not the
+// whole history: unbounded, one long thread would blow the model's context and
+// bury the actual question at the end of a wall of text.
+const THREAD_CONTEXT_MAX_MESSAGES = 12;
+const THREAD_CONTEXT_MAX_CHARS = 8000;
 import {
   STORED_KINDS,
   UPDATE_TYPES,
@@ -435,6 +447,11 @@ export async function postActivityEntry(input: PostActivityEntryInput): Promise<
           body,
           visibility,
           requestedBy: user.email,
+          // #98: the thread this ask belongs to. A reply's root is its parent;
+          // a root's own thread is itself. Hermes answers INTO that thread
+          // rather than starting a new one, and gets the preceding exchange as
+          // context so a follow-up ("make that email shorter") means something.
+          threadRootId: parentId ?? id,
         });
       } catch (e) {
         console.error('postActivityEntry: Hermes dispatch failed:', e);
@@ -587,6 +604,8 @@ async function dispatchHermes(
     body: string;
     visibility: Visibility;
     requestedBy: string;
+    /** #98: the thread root this ask belongs to (a root's own id, or a reply's parent). */
+    threadRootId?: string;
   },
 ): Promise<void> {
   const aiPrompt = args.body.replace(HERMES_STRIP_RE, '').trim();
@@ -605,9 +624,55 @@ async function dispatchHermes(
         : 'project_comment';
   const projectSlug = args.projectId;
   const aiId = generateId();
+
+  // #98 multi-turn. Nick: "if I wanted it to do something different with the
+  // email, it would have the context of what it did in the prior post."
+  //
+  // The transcript rides in the PROMPT, not in `context`. `context` is an
+  // entity-routing token ("task: <id>") that the external PB listener parses to
+  // build its own entity block — changing that field's grammar would break
+  // every already-deployed listener, and this must not require a cross-repo
+  // lockstep. The listener already feeds `prompt` to the model verbatim, so a
+  // fenced envelope reaches it with no listener change at all.
+  //
+  // Bounded: the root plus the most recent messages, oldest-first, ending just
+  // before the message that triggered this dispatch. Pending placeholders are
+  // excluded (they carry no content), and the visibility filter matches what
+  // the ASKER can see, so a thread transcript can never surface a sibling the
+  // requester isn't allowed to read.
+  let prompt = aiPrompt;
+  if (args.threadRootId) {
+    try {
+      const priorRes = await env.DB.prepare(
+        `SELECT actor_slug, body, created_at FROM activity_entries
+          WHERE (id = ?1 OR parent_id = ?1)
+            AND id != ?2
+            AND kind = 'comment'
+            AND body != ?3
+            AND (visibility = 'team' OR actor_slug = ?4)
+          ORDER BY created_at ASC, id ASC`
+      ).bind(args.threadRootId, args.entryId, HERMES_PENDING_BODY, actorSlug(args.requestedBy)).all<{
+        actor_slug: string; body: string; created_at: string;
+      }>();
+      const prior = (priorRes.results ?? []).slice(-THREAD_CONTEXT_MAX_MESSAGES);
+      if (prior.length > 0) {
+        const transcript = prior
+          .map((m) => `[${m.actor_slug === 'claude-ai' ? 'assistant hermes' : `user ${m.actor_slug}`} at ${m.created_at}]\n${m.body}`)
+          .join('\n\n')
+          .slice(-THREAD_CONTEXT_MAX_CHARS);
+        prompt =
+          `<activity_thread_context version="1" root_id="${args.threadRootId}">\n${transcript}\n</activity_thread_context>\n\n` +
+          `<current_request>\n${aiPrompt}\n</current_request>`;
+      }
+    } catch (e) {
+      // Context is an ENHANCEMENT — never let assembling it lose the question.
+      console.error('dispatchHermes: thread context assembly failed:', e);
+    }
+  }
+
   await env.DB.prepare(
     'INSERT INTO ai_requests (id, source_type, source_id, project_slug, prompt, context, requested_by) VALUES (?, ?, ?, ?, ?, ?, ?)'
-  ).bind(aiId, sourceType, args.entryId, projectSlug, aiPrompt, `${args.entityType}: ${args.entityId}`, args.requestedBy).run();
+  ).bind(aiId, sourceType, args.entryId, projectSlug, prompt, `${args.entityType}: ${args.entityId}`, args.requestedBy).run();
 
   // Placeholder so the UI shows "Thinking..." immediately. It is an
   // activity_entries comment authored by claude-ai. fireSideEffects=false so the
@@ -620,11 +685,16 @@ async function dispatchHermes(
     entityType: args.entityType,
     entityId: args.entityId,
     kind: 'comment',
-    body: 'Thinking about this... (AI response pending)',
+    body: HERMES_PENDING_BODY,
     actorSlug: 'claude-ai',
     visibility: args.visibility,
     taskProjectId: args.entityType === 'task' ? args.projectId : undefined,
     fireSideEffects: false,
+    // #98: answer INSIDE the thread that asked. Without this the placeholder
+    // (and the response that replaces it) landed as a new ROOT on the entity,
+    // so asking Hermes a follow-up inside a thread pushed its answer out of
+    // that thread entirely — the conversation visibly came apart.
+    parentId: args.threadRootId ?? null,
   });
 }
 
