@@ -39,7 +39,7 @@ import { AttentionChip } from './AttentionChip'
 import TaskTitle from './TaskTitle'
 import {
   ACCENT_GOLD, ACCENT_TEAL, ACCENT_CORAL, ACCENT_ORANGE, ACCENT_GREEN,
-  INK, INK_MUTED, INK_DIM, withAlpha, todayKey,
+  INK, INK_MUTED, withAlpha, todayKey,
 } from '../../lib/taskGrouping'
 import { dueLabelText, isOverdue } from '../../lib/dateUtils'
 import type { TaskRow as TaskRowData } from '../../lib/api'
@@ -47,11 +47,15 @@ import type { TaskRow as TaskRowData } from '../../lib/api'
 // Reserved priority-dot color. urgent/high carry a colored dot; everything
 // else gets a transparent dot of the SAME width so every title starts at the
 // identical x (handoff rule #6 — one fixed left edge).
+// Urgency rail colours (2026-07-22). ONLY urgent + high get a rail: 'medium'
+// and 'low' are the shapeless middle of the scale and painting them turns the
+// rail back into noise. The old map carried medium/gold + low/dim entries that
+// were UNREACHABLE — the dot they fed only ever rendered urgent/high — which is
+// exactly the kind of dead branch that makes a signal impossible to reason
+// about. Absent rail = "not urgent", and that reads fine.
 const PRIORITY_COLOR: Record<string, string> = {
   urgent: ACCENT_CORAL,
   high: ACCENT_ORANGE,
-  medium: ACCENT_GOLD,
-  low: INK_DIM,
 }
 
 // ── DoneBox — the canonical complete control. check = DONE, same everywhere ──
@@ -327,15 +331,25 @@ export function TaskRow(props: SharedTaskRowProps) {
     onToggleExpand()
   }
 
-  // reserved priority dot — colored for urgent/high, otherwise a transparent
-  // dot of identical width so every title starts at the same x.
-  const dotColor = (task.priority === 'urgent' || task.priority === 'high')
-    ? PRIORITY_COLOR[task.priority]
-    : (task.status === 'in_progress' ? ACCENT_TEAL : 'transparent')
-
-  // P1-12: overdue rows carry a coral left edge (Rule 59 — coral = overdue).
-  // Done tasks never read as overdue. Uses the shared isOverdue() (Rule 68).
-  const rowOverdue = !isDone && !!task.due_date && isOverdue(task.due_date, task.status)
+  // ── The left rail = URGENCY (Nick 2026-07-22) ─────────────────────────────
+  //
+  // Replaces both the priority/progress DOT (deleted) and the overdue rail.
+  //
+  // Why the rail moved off overdue: overdue is ALREADY the loudest thing on the
+  // row — DueChip renders it in coral at weight 600 with a worded label
+  // ("Yesterday", "3d late"), and it renders on every undone task that has a due
+  // date. Spending the row's only full-height channel restating that left
+  // urgency with no channel at all once the dot went. One signal, one channel:
+  // rail = how urgent, due text = when, AttentionChip = what's new, DoneBox =
+  // done.
+  //
+  // Why the dot died: it multiplexed priority AND progress through 7px with a
+  // precedence rule, so an in-progress high task rendered orange and its
+  // progress vanished; teal meant "in progress AND not urgent/high", which is
+  // not an invertible encoding. It was also aria-hidden with no legend, so it
+  // carried no meaning for a screen reader and none for a human who hadn't read
+  // the source.
+  const railColor = !isDone ? PRIORITY_COLOR[task.priority ?? ''] : undefined
 
   // Prefer the curated short_title (PB-generated for long task names) for the row.
   // The full title is available in the expanded drawer — NOT on hover (Nick
@@ -418,8 +432,6 @@ export function TaskRow(props: SharedTaskRowProps) {
     <div
       data-task-id={task.id}
       style={{
-        // P1-12: overdue rows carry a coral left edge so "what's slipping" reads
-        // in one sweep. Selection's teal inset wins when both apply.
         borderBottom: `1px solid ${withAlpha(INK, isDone ? 4 : 6)}`,
         // In select mode (selectionActive || isSelected) suppress the
         // isExpanded bg so teal selection is the SOLE visual emphasis.
@@ -430,13 +442,12 @@ export function TaskRow(props: SharedTaskRowProps) {
         // P1-7: NO whole-row opacity — that compounded with the muted title and
         // dropped meta/due below the 0.85 floor (Rule 43). Doneness now reads
         // from the filled check + line-through + muted title alone.
-        // Issue 4: selection left bar is TEAL (3px) — visually distinct from
-        // overdue CORAL (2px). Priority: selected > overdue (a selected overdue
-        // row reads teal, not coral — resolves issue 5's "stuck gold line"
-        // confusion by making the selected indicator always win).
+        // Selection's TEAL 3px still wins over the urgency rail: selection is a
+        // transient thing YOU are doing right now, urgency is a standing
+        // property of the task, and the active gesture has to be unambiguous.
         boxShadow: isSelected
           ? `inset 3px 0 0 ${ACCENT_TEAL}`
-          : (rowOverdue ? `inset 2px 0 0 ${ACCENT_CORAL}` : 'none'),
+          : (railColor ? `inset 2px 0 0 ${railColor}` : 'none'),
         transition: 'background 160ms',
       }}
     >
@@ -448,10 +459,17 @@ export function TaskRow(props: SharedTaskRowProps) {
         onClick={handleClick}
         style={{ display: 'flex', alignItems: 'flex-start', gap: 9, padding: dense ? '7px 14px' : '9px 14px', cursor: 'pointer', userSelect: 'none', minHeight: dense ? 34 : 38 }}
       >
-        {/* fixed left cluster — constant width so titles always start at the same x */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 9, flexShrink: 0, paddingTop: 1 }}>
+        {/* Fixed left cluster. The 7px priority/progress dot that used to sit
+            between the box and the title is GONE (2026-07-22) along with its
+            9px gap, so every title moves 16px left — uniformly, on every
+            surface that renders this row, which is why the reserve it provided
+            is not missed. Urgency now reads from the rail on the row edge.
+            The rail is pure colour, so the urgency it encodes is spoken here
+            instead — the deleted dot was aria-hidden and told a screen reader
+            nothing at all. */}
+        <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0, paddingTop: 1 }}>
           <DoneBox done={isDone} onToggle={onToggleDone} />
-          <span aria-hidden="true" style={{ width: 7, height: 7, borderRadius: '50%', flexShrink: 0, background: dotColor }} />
+          {railColor && <span className="sr-only">{task.priority === 'urgent' ? 'Urgent' : 'High priority'}</span>}
         </div>
 
         {stack ? (
