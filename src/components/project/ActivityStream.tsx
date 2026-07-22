@@ -288,6 +288,11 @@ export default function ActivityStream({ project, filter }: Props) {
             onSubmit={handlePostNote}
             submitting={postUpdate.isPending}
             uploadContext={{ type: 'project', id: slug }}
+            // Enriches a typed @workon/@quickchat with this project's folder so
+            // the launch actually opens a session here. Interception itself is
+            // the default now (SmartCompose ownLaunchRouting) — before that, a
+            // @workon typed in THIS composer posted its seed as a plain note.
+            launchContext={{ projectSlug: slug, primaryFolder: project.primary_folder, taskId: null }}
             placeholder="Post a note — informal progress log, visible to the team (use @mention to tag)"
             rows={2}
             alwaysShowToolbar
@@ -301,6 +306,7 @@ export default function ActivityStream({ project, filter }: Props) {
             onSubmit={handlePostComment}
             submitting={addComment.isPending}
             uploadContext={{ type: 'project', id: slug }}
+            launchContext={{ projectSlug: slug, primaryFolder: project.primary_folder, taskId: null }}
             placeholder="Add a comment — team discussion (use @mention to tag)"
             rows={2}
             alwaysShowToolbar

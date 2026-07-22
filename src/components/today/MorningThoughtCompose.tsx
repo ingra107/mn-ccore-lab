@@ -212,6 +212,11 @@ export function MorningThoughtCompose() {
         submittingLabel="Capturing…"
         onSubmit={handleSubmit}
         submitting={createTask.isPending}
+        // This surface routes the launch tags itself (Route 0 applies the
+        // forceHome originOverride to @quickchat; Route 0.5 fails @workon loud
+        // because the Today bar has no task/project context). Opting out keeps
+        // SmartCompose's shared interception from stealing them first.
+        ownLaunchRouting
         uploadContext={{ type: 'daily_thought', id: todayKey(), entityType: 'task' }}
       />
       <label className="flex items-center gap-1.5 justify-end text-xs text-neutral-400 cursor-pointer select-none mt-1">

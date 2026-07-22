@@ -84,13 +84,31 @@ interface BaseProps {
    *  submit, directing the note to the AI assistant. Mutually exclusive
    *  with the @me lock (you can't be private AND send to Hermes). */
   showHermesToggle?: boolean
-  /** Project context for @workon/@quickchat launch routing (useLaunchCommands).
-   *  Task mode ALWAYS intercepts launch tags (seed isolation — the command
-   *  fires a launch instead of posting a team-visible comment); this prop just
-   *  enriches the launch with the project folder/slug. Custom mode intercepts
-   *  only when this prop is passed (surfaces with their own tag routing, like
-   *  MorningThoughtCompose, omit it). */
+  /** Project/task context that ENRICHES a @workon/@quickchat launch with the
+   *  project folder, slug and task identity. Purely additive — whether the tag
+   *  is intercepted at all no longer depends on it (see ownLaunchRouting). */
   launchContext?: LaunchCommandContext
+  /** Opt OUT of the shared launch-tag interception because this surface routes
+   *  the tags itself (MorningThoughtCompose owns @quickchat so it can apply its
+   *  "send to home" originOverride).
+   *
+   *  Defaults to false — EVERY composer intercepts. Interception used to be
+   *  opt-IN, keyed on `launchContext` being passed, and that silently broke the
+   *  seed-isolation contract (useLaunchCommands.ts) at every surface nobody
+   *  remembered to opt in: MentionInput advertises @workon/@quickchat in its
+   *  dropdown UNCONDITIONALLY (KNOWN_COMMAND_TAGS) and even renders a "command
+   *  recognized" badge, so a composer that shows the dropdown has already
+   *  promised the user the tag works. Where it wasn't wired, a typed
+   *  "@workon <seed>" fell straight through and posted the seed as a plain
+   *  team-visible note — launching nothing, and leaking the exact text the
+   *  seed-isolation rule exists to keep out of team activity.
+   *
+   *  ProjectDetail's quick-compose was patched as an INSTANCE on 2026-07-21;
+   *  the ActivityStream note + comment composers were left broken, which is
+   *  how it was hit again on 2026-07-22. Inverting the default fixes the class:
+   *  a new composer now fails LOUD (a launch with no project folder toasts
+   *  "No project folder set") instead of silently posting a command as prose. */
+  ownLaunchRouting?: boolean
 }
 
 interface TaskModeProps extends BaseProps {
@@ -133,6 +151,7 @@ export default function SmartCompose(props: SmartComposeProps) {
     showMeLock = false,
     showHermesToggle = false,
     launchContext,
+    ownLaunchRouting = false,
   } = props
 
   const [meLocked, setMeLocked] = useState(false)
@@ -209,10 +228,10 @@ export default function SmartCompose(props: SmartComposeProps) {
     const raw = val.trim()
     if (!raw) return
     // @workon/@quickchat launch tags never post as comments (seed isolation —
-    // see useLaunchCommands). Task mode always intercepts; custom mode only
-    // when the surface opted in via launchContext. Runs on `raw`, before the
-    // @hermes/@me lock prefixes, so a typed launch tag always wins.
-    if (!isCustomMode || launchContext) {
+    // see useLaunchCommands). EVERY mode intercepts by default; a surface that
+    // routes the tags itself opts out via ownLaunchRouting. Runs on `raw`,
+    // before the @hermes/@me lock prefixes, so a typed launch tag always wins.
+    if (!ownLaunchRouting) {
       // Task mode always carries its own taskId into the launch context, so a
       // @workon/@quickchat fired from any task compose surface (Today drawer,
       // MyTasks InlineDetail) reaches the worker with task identity and the
@@ -284,7 +303,7 @@ export default function SmartCompose(props: SmartComposeProps) {
         },
       })
     }
-  }, [val, showMeLock, meLocked, showHermesToggle, hermesLocked, isCustomMode, props, isControlled, setVal, taskMutation, undoToast, tryLaunchCommand, launchContext])
+  }, [val, showMeLock, meLocked, showHermesToggle, hermesLocked, isCustomMode, props, isControlled, setVal, taskMutation, undoToast, tryLaunchCommand, launchContext, ownLaunchRouting])
 
   const onKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
