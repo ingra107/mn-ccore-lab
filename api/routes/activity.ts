@@ -179,10 +179,14 @@ export async function handleCreateActivityReply(
   const content = typeof payload.content === 'string' ? payload.content : '';
   if (!content.trim()) return error('content required', 400);
 
+  // resolveActor returns `{ slug } | { error }` — discriminate with `in`, the
+  // same shape every other caller uses (routes/tasks.ts:581). It has no `ok`
+  // field; testing one silently sent EVERY request down the error path with
+  // undefined arguments, which surfaced as a 500 on a perfectly valid reply.
   const actor = await resolveActor(env, user, payload.author_slug as string | undefined, {
     allowImpersonation: await isPiRequest(request, env),
   });
-  if (!actor.ok) return error(actor.error, actor.status);
+  if ('error' in actor) return error(actor.error, 400);
 
   // Read the parent through the caller's own visibility gate FIRST. Without
   // this, postActivityEntry would happily thread a reply onto an author-only
