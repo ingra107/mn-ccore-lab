@@ -15,6 +15,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Zap, X } from 'lucide-react'
@@ -26,7 +27,8 @@ import { useAuth } from '../hooks/useAuth'
 import { emailToSlug } from '../lib/emailSlug'
 import { isEditableTarget } from '../lib/editableTarget'
 import { ICON_PROPS } from '../lib/iconProps'
-import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
+import { ACCENT_GOLD, withAlpha, todayKey } from '../lib/taskGrouping'
+import { isHermesPrefix } from '../lib/hermesRouting'
 
 // ── Token hint pill ──────────────────────────────────────────
 
@@ -60,8 +62,9 @@ const PRIORITY_MAP: Record<number, string> = { 1: 'urgent', 2: 'high', 3: 'mediu
 function GlobalQuickAddModal({ isOpen, onClose }: Props) {
   const [value, setValue] = useState('')
   const createTask = useCreateTask()
-  const { showSuccess } = useToast()
+  const { showSuccess, showInfo, showError } = useToast()
   const { user } = useAuth()
+  const queryClient = useQueryClient()
   const fallbackAssignee = user?.email ? emailToSlug(user.email) : 'nick-ingraham'
 
   // Reset the input when the modal closes. Adjusted during render (React's
@@ -73,7 +76,44 @@ function GlobalQuickAddModal({ isOpen, onClose }: Props) {
     if (!isOpen) setValue('')
   }
 
-  const handleSubmit = useCallback(() => {
+  const handleSubmit = useCallback(async () => {
+    // Route 0 — @hermes prefix → a `day` conversation, same lane as
+    // MorningThoughtCompose (Hermes wave Phase 8). MUST run before
+    // parseQuickAddInput: parseQuickAdd's assignee scanner (`@([\w]+)`)
+    // matches ANY "@word" as an assignee-shaped token, "hermes" included —
+    // running the parser first swallows the prefix into a plain task
+    // (silently never reaching Hermes) instead of routing it. If the team
+    // roster ever grows an actual `hermes` slug this ordering also
+    // prevents the token from being consumed as a real assignee. ⚠️ KEEP
+    // the @hermes token in the body — the server's HERMES_DETECT_RE fires
+    // on the stored comment text.
+    const content = value.trim()
+    if (isHermesPrefix(content)) {
+      try {
+        const res = await fetch(`/api/days/${todayKey()}/activity`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content }),
+        })
+        if (!res.ok) throw new Error(`/api/days ${res.status}`)
+        queryClient.invalidateQueries({ queryKey: ['day-activity', todayKey()] })
+        const out = await res.json().catch(() => ({})) as { hermes?: { dispatched: boolean; reason?: string } }
+        if (out.hermes && !out.hermes.dispatched) {
+          showInfo(out.hermes.reason === 'empty'
+            ? 'Saved privately — add a question for Hermes'
+            : 'Saved privately, but Hermes could not be reached — try again')
+        } else {
+          showSuccess('Asked Hermes')
+        }
+      } catch (err) {
+        console.error('Quick add → Hermes failed:', err)
+        showError(`Sending to Hermes failed: ${err instanceof Error ? err.message : 'please try again.'}`)
+      }
+      setValue('')
+      onClose()
+      return
+    }
+
     const parsed = parseQuickAddInput(value)
     if (!parsed.title.trim()) return
 
@@ -90,7 +130,7 @@ function GlobalQuickAddModal({ isOpen, onClose }: Props) {
 
     setValue('')
     onClose()
-  }, [value, createTask, onClose, showSuccess, fallbackAssignee])
+  }, [value, createTask, onClose, showSuccess, showInfo, showError, queryClient, fallbackAssignee])
 
   useEffect(() => {
     if (!isOpen) return

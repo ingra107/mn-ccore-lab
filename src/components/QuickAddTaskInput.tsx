@@ -111,7 +111,7 @@ export default function QuickAddTaskInput({
   value,
   onChange,
   onSubmit,
-  placeholder = '@person p1 Apr 15 task description',
+  placeholder = '@person p1 Apr 15 task description, or @hermes to ask',
   autoFocus,
   onFocusChange,
 }: Props) {
