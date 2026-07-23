@@ -1,19 +1,35 @@
-# ▶▶ NEXT SESSION — EXECUTE THE HERMES LANE UNIFICATION. Plan is written, verified, and DECIDED.
+# ▶▶ HERMES LANE UNIFICATION — IN PROGRESS. Phases 1–3 SHIPPED + DEPLOYED. Resume at Phase 4 (backfill). 2026-07-23.
 
-> **Read `docs/superpowers/plans/2026-07-22-hermes-lane-unification.md` §0 FIRST** — it carries
-> the orchestrator verification, the live measurements, and the owner decisions. Do NOT re-triage;
-> the scope and the blocking question are both settled.
+> **Resume point is ONE line in `docs/superpowers/plans/2026-07-22-hermes-lane-unification.md` §0.5** —
+> it's the execution log (most-recent phase on top). Do NOT re-triage; scope + decisions are settled.
 >
-> **Decisions already made (do not relitigate):** typed `@hermes` defaults to
-> **`visibility='author'`** (private, one-click share) — so the prefix-vs-mid-text distinction
-> SURVIVES, repurposed from selecting a *store* to selecting a *default audience*; scope is the
-> **FULL wave** (day entity + hide + backfill), chosen deliberately over a minimal fix; execute
-> in a fresh session.
+> **DONE + LIVE (prod-verified, all pushed; HEAD `a157451a`):**
+> - **Phase 1** (`e5d5ba32`) — schema **v102** `hidden_at`/`hidden_by` + the shared `activityHiddenClause`
+>   predicate + `scripts/check-activity-reads.mjs` gate (wired into `deploy:pages:gated`) + all reads retrofitted.
+> - **Phase 2** (`e6dc831a`) — dismiss/restore: `POST /api/activity/:id/hide`, hidden inheritance on reply,
+>   `?include_hidden`/`hidden_count`, the eye affordance + `ShowHiddenToggle`. CLAUDE.md **Rule 79**.
+> - **Phase 3** (`64fa763f`) — the `day` entity: `GET/POST /api/days/:date/activity`, `DayActivityFeed` on the
+>   Today bar (reply-to-Hermes works), private-by-default morning thoughts, `daily_thought`+`context=NULL` dispatch,
+>   day-scoped memory, the `ai_requests` allowlist deletion. Route contract **257**. CLAUDE.md **Rule 80**.
 >
-> **Scale reality (measured, prod):** `daily_thought` = **16 rows** (7 task-keyed, 9 date-keyed),
-> 0 unanswered, 0 orphaned. `lab_question`/`lab_answer` = **0 rows ever** (Ask the Lab's Hermes
-> path has never fired — a retirement question, not a migration one).
-> **The hard part is the hide predicate across ~25 read sites; a missed site leaks silently.**
+> **NEXT: Phase 4 — backfill the ~16 `daily_thought` ai_requests rows into activity_entries** (§4). Procedure:
+> pre-flight probe `ai_requests` (the root `actor_slug` derivation depends on what `requested_by` holds — email vs
+> slug), write `api/backfill-v102-daily-thought.sql` (raw SQL to preserve timestamps; model on
+> `api/backfill-v77-task-messages.sql`; deterministic `bk_ai_req_<id>` / `bk_ai_resp_<id>` ids so the reply's
+> parent_id needs no join), apply to **`mnccore-lab-test` FIRST** → verify → prod, **`scripts/wrangler-d1` only**.
+> 🔴 **`visibility='author'` on BOTH rows — non-negotiable** (backfilling as `team` publishes every private Hermes
+> exchange). Idempotent via `INSERT OR IGNORE` on `idx_ae_source`; rollback = one DELETE. It's a PROD DATA migration —
+> run it with a CLEAN shell (the `fork()` storm was sustained this session), NOT via background-retry where a misread
+> could push a bad state to prod. Non-blocking (16 history rows; new asks already work).
+>
+> **Then:** 5 (typed-prefix writer flip — RISKIEST, codex consult) → 8 (Quick Capture `@hermes`) → 9 (Today nav badge)
+> → 10 (older-day retrieval — codex consult; §9.11 leak constraints) → 6 (deletions, after 24h dogfood).
+>
+> **Still open:** Nick's `@workon` empirical confirm (Wave 1 `650bdf19`); a stray note Nick pasted in the hub project
+> feed to delete; `HermesThoughtReplies` now orphaned (Phase 6 cleanup — its `useDailyThoughtReplies` hook still backs
+> TaskHermesReplies, so don't delete the hook). **Suggested manual check** (needs the home-laptop listener up): type
+> `@hermes what should I focus on today` on the Today page — expect a thread + "Thinking…" resolving to an answer you
+> can reply to, and the thought private.
 
 # ▶ BUG SWEEP #96–#100 + TWO PRIVACY LEAKS + THREADED REPLIES — SHIPPED (2026-07-22). Live = `e8c0a169`.
 
