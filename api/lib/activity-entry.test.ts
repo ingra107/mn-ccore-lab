@@ -1073,6 +1073,23 @@ describe('Hermes — @hermes lands a placeholder activity entry + ai_request', (
     expect(placeholder).toBeDefined()
     expect(placeholder!.visibility).toBe('author')
   })
+
+  // Phase 5 (the typed-prefix writer flip): SmartCompose + TaskDetailPanel post
+  // the body verbatim (@hermes token intact) with an explicit visibility:'author'
+  // field — NOT the @me prefix. The ask AND Hermes's answer must both stay
+  // author-only; a revert to team here republishes every private typed ask.
+  it("Phase 5: explicit visibility='author' + @hermes body keeps the ask AND the placeholder private", async () => {
+    const ctx = makeEnv(FX)
+    await handleAddTaskComment('t1', natePostReq({ content: '@hermes draft a reply to the reviewer', visibility: 'author' }), NATE, ctx.env)
+    const root = ctx.ae.find(r => r.actor_slug === 'nate-mesfin')
+    expect(root).toBeDefined()
+    expect(root!.visibility).toBe('author')
+    expect(root!.body).toBe('@hermes draft a reply to the reviewer') // token kept → Hermes fires
+    const placeholder = ctx.ae.find(r => r.actor_slug === 'claude-ai')
+    expect(placeholder).toBeDefined()
+    expect(placeholder!.visibility).toBe('author')
+    expect(ctx.aiRequests.length).toBe(1) // dispatched as a task_comment
+  })
 })
 
 // ── delete cascade ────────────────────────────────────────────────────────────────

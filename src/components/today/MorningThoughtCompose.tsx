@@ -4,7 +4,7 @@
 // handler. Routing rules per audit decision D11:
 //
 //   `@quickchat <text>` → POST /api/launch-log (origin-aware Claude Code launch)
-//   `@hermes <text>`    → POST /api/ai-requests with source_type='daily_thought'
+//   `@hermes <text>`    → POST /api/days/:date/activity (private day thread; Hermes answers in-thread — Phase 3/5)
 //   `@backlog[: ]<txt>` → POST /api/ai-requests with source_type='backlog_idea'
 //   `note: <text>`      → POST /api/inbox-events (durable) + LS echo for instant UX
 //   default             → useCreateTask({assignee, group_override}) — creates

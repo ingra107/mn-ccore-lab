@@ -79,6 +79,50 @@ member, `hidden_by` recorded), and §7 Q5 (`day` in `SEEN_TYPES` — recommendat
 
 ## 0.5 EXECUTION LOG (2026-07-22 PM — updates §2.5, §9.2)
 
+### 🟡 PHASE 5 CODE DONE + VERIFIED — deploy pending Nick's go (2026-07-23)
+
+The typed-`@hermes` writer flip. A typed prefix on a task now posts the body
+verbatim (token kept) to `POST /api/tasks/:id/comments` with `visibility:'author'`,
+so the ask is private by default (owner decision A) and Hermes answers in-thread.
+
+Scope was smaller than the plan's file list: only **two** writers still wrote the
+`daily_thought` lane — `SmartCompose.tsx` (task mode) and `TaskDetailPanel.tsx`.
+MorningThoughtCompose flipped to the day feed back in Phase 3; the plan's Phase 5
+list was stale (found by grep, not trusted). Its stale header comment + the
+`hermesRouting.ts` header were corrected; unused `stripHermesPrefix` imports dropped.
+
+Privacy holds. codex `gpt-5.6-sol` traced the chain and confirmed no path lands
+`team`: `handleAddTaskComment` forwards only `visibility:'author'` →
+`applyMePolicy` (`explicit==='author'`) → root, placeholder, and reply all
+`visibility='author'`; a teammate read is denied by the SQL gate; `@me`-strip does
+not touch the `@hermes` token so `HERMES_DETECT_RE` still fires; dispatch uses
+`source_type='task_comment'`, same as a mid-text `@hermes` comment.
+
+Codex also flagged one real regression, now fixed: the answer did not auto-appear.
+The pending "Thinking…" placeholder is a REPLY, and the roots feed never sees it,
+so `ActivityThread`'s reply query now polls every 10s while a reply is pending
+(idle otherwise). This fixes task, day, and project feeds — the day feed (Phase 3)
+had the same latent gap. Added a lock-in test: `handleAddTaskComment` with
+`visibility:'author'` + an `@hermes` body keeps the ask AND the placeholder private
+(`activity-entry.test.ts`), so a future revert to `team` fails the suite.
+
+Verify: `tsc -b --force` clean; `test:api` 1196/1196 (+1); `test:lib` 175/175;
+`npm run build` green. Files: `SmartCompose.tsx`, `TaskDetailPanel.tsx`,
+`MorningThoughtCompose.tsx`, `hermesRouting.ts`, `activity/ActivityThread.tsx`,
+`api/lib/activity-entry.test.ts`. NOT deployed — this is a Pages deploy that changes
+a team surface, so it waits for Nick's go, then `npm run deploy:pages:gated`.
+
+Toggle-vs-prefix split (team toggle vs private typed prefix) is intentional per
+codex — fine while the toggle stays labeled "Queue for Claude". Two PRE-EXISTING
+items codex raised (a swallowed Hermes-dispatch error reported as success; a
+short-prompt `<=5` char no-op) affect ALL `@hermes`, not the flip → backlog.
+
+**Next after deploy: Phase 6** (delete `TaskHermesReplies`/`HermesThoughtReplies`/
+`HermesReplyList` + the `ai_requests` @hermes reader arm + `hermesRouting`'s @hermes
+half — after a 24h dogfood window; load `/substrate-swap`). Then 8/9/10.
+
+---
+
 ### ✅ PHASE 4 COMPLETE — backfill applied to PROD (2026-07-23)
 
 The 16 historical `daily_thought` ai_requests rows now render in the unified

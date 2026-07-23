@@ -58,6 +58,14 @@ export function ActivityThread({ root, itemProps, invalidateKeys, onDelete, onEd
     },
     // Lazy: nothing is fetched until the thread is actually opened.
     enabled: expanded || composing,
+    // Poll every 10s while a reply is still "Thinking…" so a Hermes answer fills
+    // in without a manual refresh. A typed @hermes ask lands a pending placeholder
+    // reply that _postHermesResponse rewrites asynchronously; the placeholder is a
+    // REPLY, so the poll lives here (the roots feed never sees it). Idle otherwise.
+    refetchInterval: (q) =>
+      ((q.state.data as ActivityEntryItemRow[] | undefined) ?? []).some((r) => /Thinking about this/.test(r.body))
+        ? 10_000
+        : false,
     staleTime: 30 * 1000,
   })
 

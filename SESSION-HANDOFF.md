@@ -1,4 +1,4 @@
-# ▶▶ HERMES LANE UNIFICATION — IN PROGRESS. Phases 1–4 SHIPPED. Resume at Phase 5 (writer flip — RISKIEST). 2026-07-23.
+# ▶▶ HERMES LANE UNIFICATION — Phases 1–4 SHIPPED; Phase 5 code done + verified, DEPLOY PENDING Nick's go. 2026-07-23.
 
 > **Resume point is ONE line in `docs/superpowers/plans/2026-07-22-hermes-lane-unification.md` §0.5** —
 > it's the execution log (most-recent phase on top). Do NOT re-triage; scope + decisions are settled.
@@ -18,14 +18,19 @@
 >   `ai_requests` rows NOT deleted (transport log). Idempotent (`INSERT OR IGNORE` on `idx_ae_source`); rollback = one
 >   `DELETE ... WHERE source_table IN ('ai_requests','ai_requests_response')`. NON-CODE change — no Pages deploy.
 >
-> **NEXT: Phase 5 — flip the three typed-prefix writers** (`MorningThoughtCompose.tsx:104-125`,
-> `SmartCompose.tsx:246-262`, `TaskDetailPanel.tsx:1597-1611`) to post the body verbatim (`@hermes` intact) to the
-> entity's comment endpoint (§5 Phase 5). **RISKIEST phase — codex consult first** (it changes what teammates SEE;
-> visibility resolves per OWNER DECISION 1 = option A, `visibility='author'` default with an explicit share). No flag;
-> degradation path is `_postHermesResponse`'s fresh-insert fallback (degraded, never lost).
+> **Phase 5 — CODE DONE + VERIFIED, DEPLOY PENDING (see §0.5).** Flipped the two remaining task writers
+> (`SmartCompose.tsx`, `TaskDetailPanel.tsx`) — MorningThoughtCompose was already flipped in Phase 3, so the
+> plan's Phase 5 file list was stale. A typed `@hermes` now posts verbatim to `POST /api/tasks/:id/comments` with
+> `visibility:'author'` (private default, owner decision A). codex `gpt-5.6-sol` traced the chain and confirmed no
+> path lands `team`; also fixed the answer-doesn't-auto-appear regression (a poll on `ActivityThread`'s reply query
+> while a "Thinking…" reply exists — fixes task/day/project) + added a privacy lock-in test. `tsc` clean, `test:api`
+> 1196/1196, build green. **NEXT MOVE: deploy** (`npm run deploy:pages:gated`, needs Nick's go — team surface),
+> then Phase 6.
 >
-> **Then:** 8 (Quick Capture `@hermes`) → 9 (Today nav badge) → 10 (older-day retrieval — codex consult;
-> §9.11 leak constraints) → 6 (deletions, after 24h dogfood).
+> **NEXT after deploy: Phase 6** (delete `TaskHermesReplies`/`HermesThoughtReplies`/`HermesReplyList`, the
+> `ai_requests` @hermes reader arm, `hermesRouting`'s @hermes half — after a 24h dogfood window; load
+> `/substrate-swap`). **Then:** 8 (Quick Capture `@hermes`) → 9 (Today nav badge) → 10 (older-day retrieval — codex
+> consult; §9.11 leak constraints).
 >
 > **Still open:** Nick's `@workon` empirical confirm (Wave 1 `650bdf19`); a stray note Nick pasted in the hub project
 > feed to delete; `HermesThoughtReplies` now orphaned (Phase 6 cleanup — its `useDailyThoughtReplies` hook still backs

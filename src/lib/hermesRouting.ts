@@ -3,12 +3,18 @@
 // twice: @hermes in TaskDetailPanel + SmartCompose, @backlog in
 // TaskDetailPanel + MorningThoughtCompose).
 //
-// A typed "@hermes …" PREFIX is a command: it routes to /api/ai-requests
-// (source_type='daily_thought', source_id=<task_id>) for a real Hermes
-// round-trip, read back by TaskHermesReplies. A mid-text @hermes mention
-// ("ask @hermes about X") is NOT a command and stays a team-visible comment.
-// Consumers: TaskDetailPanel (OverviewQuickAdd inline composer) + SmartCompose
-// task mode (Today drawer, MyTasks InlineDetail).
+// A typed "@hermes …" PREFIX selects the DEFAULT AUDIENCE (Hermes wave Phase 5,
+// owner decision A): the composer posts the body VERBATIM (token intact) to the
+// entity's comment endpoint (POST /api/tasks/:id/comments, POST /api/days/:date/
+// activity) as a PRIVATE (visibility='author') activity_entries row; the server's
+// HERMES_DETECT_RE then fires an in-thread Hermes answer. A mid-text @hermes
+// mention ("ask @hermes about X") is NOT a prefix and stays a TEAM-visible
+// comment. The prefix/mid-text split no longer selects a STORE (both write
+// activity_entries) — it selects private-vs-team default. Consumers:
+// TaskDetailPanel + SmartCompose task mode (Today drawer, MyTasks InlineDetail) +
+// MorningThoughtCompose (Today bar → day feed). NOTE: stripHermesPrefix is no
+// longer used by the composers (they post verbatim) — retained for its tests;
+// the @hermes half is deleted in Phase 6.
 //
 // A typed "@backlog[:] …" PREFIX routes to /api/ai-requests with
 // source_type='backlog_idea' — same ai-requests lane, different downstream

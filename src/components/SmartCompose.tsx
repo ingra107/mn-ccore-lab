@@ -27,9 +27,10 @@ import { Paperclip, Smile, AtSign, Loader2, Send } from 'lucide-react'
 import { MeLockToggle } from './ui/MeLockToggle'
 import MentionInput from './MentionInput'
 import HermesMark from './HermesMark'
+import { useQueryClient } from '@tanstack/react-query'
 import { usePostTaskUpdate } from '../hooks/useMutations'
 import { useLaunchCommands, taskLaunchContext, type LaunchCommandContext } from '../hooks/useLaunchCommands'
-import { isHermesPrefix, stripHermesPrefix } from '../lib/hermesRouting'
+import { isHermesPrefix } from '../lib/hermesRouting'
 import { useUndoToast } from './UndoToast'
 import { ICON_PROPS } from '../lib/iconProps'
 import { withAlpha } from '../lib/taskGrouping'
@@ -159,6 +160,7 @@ export default function SmartCompose(props: SmartComposeProps) {
 
   const isCustomMode = 'onSubmit' in props && typeof props.onSubmit === 'function'
   const taskMutation = usePostTaskUpdate(isCustomMode ? '' : (props as TaskModeProps).taskId)
+  const queryClient = useQueryClient()
 
   // State: caller-controlled in custom mode (if value/onChange provided), else owned here.
   const [internalVal, setInternalVal] = useState('')
@@ -253,26 +255,31 @@ export default function SmartCompose(props: SmartComposeProps) {
       const routed = tryLaunchCommand(raw, ctx, () => setVal(''))
       if (routed) return
     }
-    // ── @hermes prefix (task mode): real Hermes round-trip via /api/ai-requests ──
-    // Converges task compose surfaces onto the transport TaskDetailPanel already
-    // uses (#484 item 4): a typed "@hermes …" posts an ai_request keyed by the
-    // task id — read back by TaskHermesReplies (#519) — instead of a plain
-    // comment that only manual /process triage would answer. Runs AFTER the
-    // launch-tag interception (so @workon/@quickchat still win) and only on the
-    // PREFIX form; a mid-text @hermes ("ask @hermes about X") stays a comment.
-    // The Hermes toggle's @hermes prepend is intentionally left as-is (still a
-    // comment) — only a typed prefix routes here.
+    // ── @hermes prefix (task mode): unified timeline (Hermes wave Phase 5) ──────
+    // A typed "@hermes …" posts the body VERBATIM (token intact) to the task's
+    // comment endpoint as a PRIVATE (visibility='author') activity_entries row —
+    // owner decision A: the typed prefix defaults private, distinct from a
+    // mid-text @hermes ("ask @hermes about X") which stays a team comment. The
+    // server's HERMES_DETECT_RE fires on the intact token → dispatchHermes
+    // answers IN-THREAD (source_type='task_comment'), and the answer inherits
+    // visibility='author'. KEEP the token: stripping it is a silent "no Hermes"
+    // (§3.4 inversion). Runs AFTER the launch-tag interception (@workon/@quickchat
+    // still win) and only on the PREFIX form. The Hermes toggle's @hermes prepend
+    // is intentionally left as-is (still a team comment) — only a typed prefix
+    // routes here. Was: POST /api/ai-requests source_type='daily_thought', read
+    // back by the now-orphaned TaskHermesReplies (deleted in Phase 6).
     if (!isCustomMode && isHermesPrefix(raw)) {
       const taskId = (props as TaskModeProps).taskId
       try {
-        const res = await fetch('/api/ai-requests', {
+        const res = await fetch(`/api/tasks/${taskId}/comments`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ source_type: 'daily_thought', source_id: taskId, prompt: stripHermesPrefix(raw) }),
+          body: JSON.stringify({ content: raw, visibility: 'author' }),
         })
-        if (!res.ok) throw new Error(`/api/ai-requests ${res.status}`)
+        if (!res.ok) throw new Error(`/api/tasks comment ${res.status}`)
         setVal('')
-        undoToast.showSuccess('Sent to Hermes')
+        queryClient.invalidateQueries({ queryKey: ['task-activity', taskId] })
+        undoToast.showSuccess('Asked Hermes')
       } catch (err) {
         console.error('@hermes from task compose failed:', err)
         undoToast.showError('@hermes failed — your message is still here, try again')
@@ -303,7 +310,7 @@ export default function SmartCompose(props: SmartComposeProps) {
         },
       })
     }
-  }, [val, showMeLock, meLocked, showHermesToggle, hermesLocked, isCustomMode, props, isControlled, setVal, taskMutation, undoToast, tryLaunchCommand, launchContext, ownLaunchRouting])
+  }, [val, showMeLock, meLocked, showHermesToggle, hermesLocked, isCustomMode, props, isControlled, setVal, taskMutation, undoToast, tryLaunchCommand, launchContext, ownLaunchRouting, queryClient])
 
   const onKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {

@@ -50,7 +50,7 @@ import { TaskActivityFeed } from './detail/TaskActivityFeed'
 import { TaskHermesReplies } from './TaskHermesReplies'
 import TaskIntelligence from './detail/TaskIntelligence'
 import KeyLinksEditor from '../KeyLinksEditor'
-import { isHermesPrefix, stripHermesPrefix, isBacklogPrefix, stripBacklogPrefix } from '../../lib/hermesRouting'
+import { isHermesPrefix, isBacklogPrefix, stripBacklogPrefix } from '../../lib/hermesRouting'
 import { displayRank } from '../../lib/pbLinkDisplayOrder.generated'
 import { Brain } from 'lucide-react'
 
@@ -1588,21 +1588,33 @@ function OverviewQuickAdd({
     // reset() fires only on success, so a failed launch keeps the seed in the
     // textarea for retry.
     if (tryLaunchCommand(v, taskLaunchContext(taskId, { projectSlug, primaryFolder }), reset)) return
-    // ── @hermes prefix typed directly: route to /api/ai-requests ─────────────
+    // ── @hermes prefix typed directly: PRIVATE Hermes thread on this task ─────
     // The Queue-for-Claude toggle (forHermes) posts via comment + dispatch/add —
     // this queues to the dispatch_queue lane for Nick's next Claude Code session
     // start, it does not fire a real-time Hermes round-trip (see #520).
-    // A direct @hermes prefix is a Today-bar-style intent; route there instead
-    // of letting it fall through to submitComment as team-visible activity.
+    // A direct @hermes prefix is a private ask: intercept before submitComment so
+    // it doesn't fall through as team-visible activity (owner decision A).
     if (isHermesPrefix(v)) {
-      const prompt = stripHermesPrefix(v)
-      fetch('/api/ai-requests', {
+      // Hermes wave Phase 5: post the body VERBATIM (@hermes token intact) to the
+      // task comment endpoint as PRIVATE (visibility='author') — owner decision A:
+      // a typed prefix defaults private (a mid-text @hermes stays team-visible).
+      // The server's HERMES_DETECT_RE fires on the intact token → dispatchHermes
+      // answers IN-THREAD (source_type='task_comment'); the answer inherits
+      // visibility='author'. KEEP the token: stripping is a silent "no Hermes"
+      // (§3.4 inversion). Was: POST /api/ai-requests source_type='daily_thought',
+      // read back by the now-orphaned TaskHermesReplies (deleted in Phase 6).
+      fetch(`/api/tasks/${taskId}/comments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ source_type: 'daily_thought', source_id: taskId, prompt }),
+        body: JSON.stringify({ content: v, visibility: 'author' }),
       })
-        .then((res) => { if (!res.ok) throw new Error(`/api/ai-requests ${res.status}`) })
-        .then(() => { showSuccess('Sent to Hermes'); reset() })
+        .then((res) => { if (!res.ok) throw new Error(`/api/tasks comment ${res.status}`) })
+        .then(() => {
+          showSuccess('Asked Hermes'); reset()
+          queryClient.invalidateQueries({ queryKey: ['task-comments', taskId] })
+          queryClient.invalidateQueries({ queryKey: ['task-activity', taskId] })
+          queryClient.invalidateQueries({ queryKey: ['activity'] })
+        })
         .catch((e) => {
           console.error('@hermes from task comment failed:', e)
           showError('@hermes failed — your message is still here, try again')
