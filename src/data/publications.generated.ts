@@ -7394,5 +7394,250 @@ export const generatedPublications: Publication[] = [
     "authorSlugs": [
       "michael-kalinoski"
     ]
+  },
+  {
+    "id": "gen-10-1016-j-jmb-2004-11-056",
+    "authors": "Brent D. Brower‐Toland, David A. Wacker, Robert M. Fulbright, John T. Lis, W. Lee Kraus, Michelle D. Wang",
+    "title": "Specific Contributions of Histone Tails and their Acetylation to the Mechanical Stability of Nucleosomes",
+    "journal": "Journal of Molecular Biology",
+    "year": 2004,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.jmb.2004.11.056",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/15663933/",
+    "topics": [],
+    "authorSlugs": [
+      "dave-wacker"
+    ]
+  },
+  {
+    "id": "gen-10-1128-mcb-01314-07",
+    "authors": "David A. Wacker, Donald D. Ruhl, Ehsan H. Balagamwala, Kristine M. Hope, Tong Zhang, W. Lee Kraus",
+    "title": "The DNA Binding and Catalytic Domains of Poly(ADP-Ribose) Polymerase 1 Cooperate in the Regulation of Chromatin Structure and Transcription",
+    "journal": "Molecular and Cellular Biology",
+    "year": 2007,
+    "status": "Published",
+    "doi": "https://doi.org/10.1128/mcb.01314-07",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/17785446/",
+    "topics": [],
+    "authorSlugs": [
+      "dave-wacker"
+    ]
+  },
+  {
+    "id": "gen-10-4266-acc-2021-00843",
+    "authors": "Alexander C. Haley, David A. Wacker",
+    "title": "Cinematic virtual reality for anxiety management in mechanically ventilated patients: a feasibility and pilot study",
+    "journal": "Acute and Critical Care",
+    "year": 2022,
+    "status": "Published",
+    "doi": "https://doi.org/10.4266/acc.2021.00843",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/35172527/",
+    "topics": [],
+    "authorSlugs": [
+      "dave-wacker"
+    ]
+  },
+  {
+    "id": "gen-10-1371-journal-pone-0136104",
+    "authors": "Ifeoma Jane Nwigwe, Yoon Jung Kim, David A. Wacker, Tae Hoon Kim",
+    "title": "Boundary Associated Long Noncoding RNA Mediates Long-Range Chromosomal Interactions",
+    "journal": "PLoS ONE",
+    "year": 2015,
+    "status": "Published",
+    "doi": "https://doi.org/10.1371/journal.pone.0136104",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/26302455/",
+    "topics": [],
+    "authorSlugs": [
+      "dave-wacker"
+    ]
+  },
+  {
+    "id": "gen-10-1002-ncp-70070",
+    "authors": "Scott W. McPherson, Frederik J. van Kuijk, Solmaz Ramezani, Susan Vitale, William H. Amundson, A. Caraganis, Kathleen Mahan, Rusdeep Mundae, Ronald A. Reilkoff, Emily Y. Chew, David A. Wacker",
+    "title": "Serum zinc level independently predicts need for inpatient intubation among patients hospitalized with COVID‐19: A prospective observational study",
+    "journal": "Nutrition in Clinical Practice",
+    "year": 2025,
+    "status": "Published",
+    "doi": "https://doi.org/10.1002/ncp.70070",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/41219174/",
+    "topics": [],
+    "authorSlugs": [
+      "dave-wacker"
+    ]
+  },
+  {
+    "id": "gen-10-1002-jcb-22060",
+    "authors": "David A. Wacker, Tae Hoon Kim",
+    "title": "From sextant to GPS: Twenty‐five years of mapping the genome with ChIP",
+    "journal": "Journal of Cellular Biochemistry",
+    "year": 2009,
+    "status": "Published",
+    "doi": "https://doi.org/10.1002/jcb.22060",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/19180576/",
+    "topics": [],
+    "authorSlugs": [
+      "dave-wacker"
+    ]
+  },
+  {
+    "id": "gen-dave-wacker-2018-managing-patients-with-oncologic-complications",
+    "authors": "David A. Wacker, Michael T. McCurdy, Jeffrey Nusbaum, Nachi Gupta",
+    "title": "Managing patients with oncologic complications in the emergency department [digest].",
+    "journal": "PubMed",
+    "year": 2018,
+    "status": "Published",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/29261479/",
+    "topics": [],
+    "authorSlugs": [
+      "dave-wacker"
+    ]
+  },
+  {
+    "id": "gen-dave-wacker-2010-hoxa-chromatin-barrier-contains-ctcf",
+    "authors": "David A. Wacker",
+    "title": "HOXA CHROMATIN BARRIER CONTAINS CTCF BINDING SITE-DEPENDENT PROMOTER ACTIVITY",
+    "journal": "",
+    "year": 2010,
+    "status": "Published",
+    "topics": [],
+    "authorSlugs": [
+      "dave-wacker"
+    ]
+  },
+  {
+    "id": "gen-10-1093-ndt-gft107",
+    "authors": "Chun‐Fu Lai, Shuei‐Liong Lin, Wen‐Chu Chiang, Y.-M. Chen, Ming‐Ling Kuo, Tun‐Jun Tsai, H. S. Hwang, Yeyoon Choi, K. C. Park, Kai-Chun Yang, H. S. Choi, S. H. Kim, S. J. Lee, Y. K. Chang, S. Y. Kim, C. W. Yang, Z. Xiujuan, R. Yoshimura, M. Matsuyama, J. Chargui, J.L. Touraine, N. Yoshimura, Aleksei Zulkarnaev, И. А. Василенко, Д. В. Артемов, A. V. Vatazin, S. K. Park, Kyung Pyo Kang, Sang Won Lee, W. Kim",
+    "title": "AKI - experimental models",
+    "journal": "Nephrology Dialysis Transplantation",
+    "year": 2013,
+    "status": "Published",
+    "doi": "https://doi.org/10.1093/ndt/gft107",
+    "topics": [],
+    "authorSlugs": [
+      "dave-wacker"
+    ]
+  },
+  {
+    "id": "gen-10-1097-cpm-0000000000000298",
+    "authors": "David A. Wacker",
+    "title": "Extracorporeal Membrane Oxygenation for Acute Respiratory Distress Syndrome: The Doctors are In, but the Jury is Still Out",
+    "journal": "Clinical Pulmonary Medicine",
+    "year": 2019,
+    "status": "Published",
+    "doi": "https://doi.org/10.1097/cpm.0000000000000298",
+    "topics": [],
+    "authorSlugs": [
+      "dave-wacker"
+    ]
+  },
+  {
+    "id": "gen-10-1242-jcs-261274",
+    "authors": "Casey Eddington, J Schwartz, Margaret A. Titus",
+    "title": "filoVision – using deep learning and tip markers to automate filopodia analysis",
+    "journal": "Journal of Cell Science",
+    "year": 2024,
+    "status": "Published",
+    "doi": "https://doi.org/10.1242/jcs.261274",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/38264939/",
+    "topics": [],
+    "authorSlugs": [
+      "casey-eddington"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-jbc-2025-108371",
+    "authors": "Casey Eddington, Margaret A. Titus",
+    "title": "The filopodial myosin DdMyo7 is a slow, calcium-regulated motor",
+    "journal": "Journal of Biological Chemistry",
+    "year": 2025,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.jbc.2025.108371",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/40043952/",
+    "topics": [],
+    "authorSlugs": [
+      "casey-eddington"
+    ]
+  },
+  {
+    "id": "gen-10-1074-jbc-h120-013153",
+    "authors": "Casey Eddington, Margaret A. Titus",
+    "title": "Putting the brakes on a myosin motor",
+    "journal": "Journal of Biological Chemistry",
+    "year": 2020,
+    "status": "Published",
+    "doi": "https://doi.org/10.1074/jbc.h120.013153",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/32198186/",
+    "topics": [],
+    "authorSlugs": [
+      "casey-eddington"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-bpj-2021-11-1450",
+    "authors": "Casey Eddington, Margaret A. Titus",
+    "title": "Characterization of a filopodial myosin",
+    "journal": "Biophysical Journal",
+    "year": 2022,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.bpj.2021.11.1450",
+    "topics": [],
+    "authorSlugs": [
+      "casey-eddington"
+    ]
+  },
+  {
+    "id": "gen-10-1093-ofid-ofac683",
+    "authors": "William Baskett, Adnan I. Qureshi, Daniel Shyu, Jane M. Armer, Chi‐Ren Shyu",
+    "title": "COVID-Specific Long-term Sequelae in Comparison to Common Viral Respiratory Infections: An Analysis of 17 487 Infected Adult Patients",
+    "journal": "Open Forum Infectious Diseases",
+    "year": 2022,
+    "status": "Published",
+    "doi": "https://doi.org/10.1093/ofid/ofac683",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/36686632/",
+    "topics": [],
+    "authorSlugs": [
+      "dan-shyu"
+    ]
+  },
+  {
+    "id": "gen-10-1177-1754337118823603",
+    "authors": "Brian R. Cummiskey, Goutham N Sankaran, Kevin G McIver, Daniel Shyu, Justin Markel, Thomas M. Talavage, Larry J. Leverenz, Janette J. Meyer, Douglas E. Adams, Eric A. Nauman",
+    "title": "Quantitative evaluation of impact attenuation by football helmets using a modal impulse hammer",
+    "journal": "Proceedings of the Institution of Mechanical Engineers Part P Journal of Sports Engineering and Technology",
+    "year": 2019,
+    "status": "Published",
+    "doi": "https://doi.org/10.1177/1754337118823603",
+    "topics": [],
+    "authorSlugs": [
+      "dan-shyu"
+    ]
+  },
+  {
+    "id": "gen-10-1371-journal-pone-0303443",
+    "authors": "Daniel Shyu, Peter Bliss, Alexander B. Adams, Roy Joseph Cho",
+    "title": "Development and performance evaluation of a solenoid valve assisted low-cost ventilator on gas exchange and respiratory mechanics in a porcine model",
+    "journal": "PLoS ONE",
+    "year": 2024,
+    "status": "Published",
+    "doi": "https://doi.org/10.1371/journal.pone.0303443",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/38753734/",
+    "topics": [],
+    "authorSlugs": [
+      "dan-shyu"
+    ]
+  },
+  {
+    "id": "gen-10-1109-tcbb-2014-2355208",
+    "authors": "Bin Pang, David Schlessman, Xingyan Kuang, Nan Zhao, Daniel Shyu, Dmitry Korkin, Chi‐Ren Shyu",
+    "title": "An Integrated Approach to Sequence-Independent Local Alignment of Protein Binding Sites",
+    "journal": "IEEE/ACM Transactions on Computational Biology and Bioinformatics",
+    "year": 2014,
+    "status": "Published",
+    "doi": "https://doi.org/10.1109/tcbb.2014.2355208",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/26357218/",
+    "topics": [],
+    "authorSlugs": [
+      "dan-shyu"
+    ]
   }
 ]

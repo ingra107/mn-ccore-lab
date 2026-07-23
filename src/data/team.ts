@@ -66,15 +66,15 @@ export const facultyCollaborators: TeamMember[] = [
   { name: 'Josh Trujeque', initials: 'JT', role: 'Faculty', credentials: 'MD', slug: 'josh-trujeque', authorName: 'Trujeque J', photoUrl: 'https://med.umn.edu/sites/med.umn.edu/files/images/picture9.png' },
   { name: 'Katie Pendleton', initials: 'KP', role: 'Faculty', credentials: 'MD', slug: 'katie-pendleton', orcidId: '0000-0003-3248-5738', authorName: 'Pendleton KM', photoUrl: 'https://med.umn.edu/sites/med.umn.edu/files/styles/bio_photo/public/web_profiles/2023-01/DOM-Faculty-_0112_Layer-187.png?itok=1xJq3yYt' },
   { name: 'Michael Kalinoski', initials: 'MK', role: 'Faculty', credentials: 'MD', slug: 'michael-kalinoski', orcidId: '0009-0007-6281-0630', authorName: 'Kalinoski M' },
-  { name: 'Dave Wacker', initials: 'DW', role: 'Faculty', credentials: 'MD', slug: 'dave-wacker', authorName: 'Wacker DA', photoUrl: 'https://med.umn.edu/sites/med.umn.edu/files/styles/bio_photo/public/web_profiles/2023-01/DOM-Faculty-_0028_Layer-271.png?itok=skFv-xW5' },
+  { name: 'Dave Wacker', initials: 'DW', role: 'Faculty', credentials: 'MD', slug: 'dave-wacker', orcidId: '0000-0002-1504-7819', openalexId: 'A5025128079', authorName: 'Wacker DA', photoUrl: 'https://med.umn.edu/sites/med.umn.edu/files/styles/bio_photo/public/web_profiles/2023-01/DOM-Faculty-_0028_Layer-271.png?itok=skFv-xW5' },
 ]
 
 // Order = activity level in MNCCORE (most active first). Keep updated.
 export const researchTeam: TeamMember[] = [
   { name: 'Steven Arriaza', initials: 'SA', role: 'Research Coordinator', slug: 'steven-arriaza' },
   { name: 'Emma Bromley', initials: 'EB', role: 'Research Coordinator', slug: 'emma-bromley', authorName: 'Bromley E' },
-  { name: 'Casey Eddington', initials: 'CE', role: 'Data Analyst', slug: 'casey-eddington', authorName: 'Eddington C' },
-  { name: 'Dan Shyu', initials: 'DS', role: 'Critical Care Fellow', credentials: 'MD', slug: 'dan-shyu', authorName: 'Shyu D', photoUrl: 'https://med.umn.edu/sites/med.umn.edu/files/images/shyu-daniel.png' },
+  { name: 'Casey Eddington', initials: 'CE', role: 'Data Analyst', slug: 'casey-eddington', openalexId: 'A5048819960', authorName: 'Eddington C' },
+  { name: 'Dan Shyu', initials: 'DS', role: 'Critical Care Fellow', credentials: 'MD', slug: 'dan-shyu', openalexId: 'A5111762982', authorName: 'Shyu D', photoUrl: 'https://med.umn.edu/sites/med.umn.edu/files/images/shyu-daniel.png' },
   { name: 'Beret Fitzgerald', initials: 'BF', role: 'Critical Care Fellow', credentials: 'MD', slug: 'beret-fitzgerald', authorName: 'Fitzgerald B', photoUrl: 'https://med.umn.edu/sites/med.umn.edu/files/images/fitzgerald-beret-001.png' },
   { name: 'Claire Collins', initials: 'CC', role: 'Medical Student Researcher', slug: 'claire-collins', authorName: 'Collins C' },
 ]
