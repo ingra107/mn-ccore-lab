@@ -23,7 +23,7 @@ import {
   handleGetTaskActivity,
 } from '../routes/tasks'
 import { handleGetProjectActivity, handleAddComment, handlePostProjectUpdate, handleGetComments, handleGetProjectUpdates } from '../routes/projects'
-import { handleDeleteActivityEntry, handleEditActivityEntry } from '../routes/activity'
+import { handleDeleteActivityEntry, handleEditActivityEntry, handleSetActivityHidden } from '../routes/activity'
 
 const TEST_MODE_KEY = 'local-test-key-do-not-use-in-prod'
 const PI_EMAIL = 'ingra107@umn.edu'
@@ -49,6 +49,8 @@ interface AERow {
   source_id: string | null
   /** #98: NULL for a thread root, the root's id for a reply. */
   parent_id?: string | null
+  /** v102: NULL = visible; a timestamp = dismissed (Hermes wave Phase 2). */
+  hidden_at?: string | null
   created_at: string
 }
 
@@ -90,14 +92,16 @@ function makeEnv(fx: Partial<Fixtures> = {}) {
   // Shared insert used by both the INSERT...run() path (backfill / OR IGNORE) and
   // the INSERT...RETURNING *.first() path (normal write). Returns the new row.
   function insertActivityEntry(binds: any[]): AERow {
-    // parent_id is the 14th bind (#98) — positional, matching the column list in
-    // api/lib/activity-entry.ts. Keep these in lockstep: a silently-dropped
-    // trailing bind here would make every reply look like a root in tests.
-    const [id, entity_type, entity_id, project_id, kind, visibility, actor_slug, body, mentions_json, update_type, metadata_json, source_table, source_id, parent_id] = binds
+    // parent_id is the 14th bind (#98), hidden_at the 15th (v102) — positional,
+    // matching the column list in api/lib/activity-entry.ts. Keep these in
+    // lockstep: a silently-dropped trailing bind here would make every reply look
+    // like a root (or every dismissed thread look visible) in tests.
+    const [id, entity_type, entity_id, project_id, kind, visibility, actor_slug, body, mentions_json, update_type, metadata_json, source_table, source_id, parent_id, hidden_at] = binds
     const row: AERow = {
       id, entity_type, entity_id, project_id, kind, visibility, actor_slug, body,
       mentions_json, update_type, metadata_json, source_table, source_id,
       parent_id: parent_id ?? null,
+      hidden_at: hidden_at ?? null,
       created_at: `2026-06-10 00:00:0${clock++}`,
     }
     ae.push(row)
@@ -207,11 +211,12 @@ function makeEnv(fx: Partial<Fixtures> = {}) {
             // list, so it needs its own branch — the doubles match on the exact
             // SELECT, and an unmatched read returns null, which postActivityEntry
             // correctly reads as "parent not found" and 404s.
-            if (/SELECT id, parent_id, entity_type, entity_id, kind, visibility FROM activity_entries WHERE id = \?/.test(sql)) {
+            if (/SELECT id, parent_id, entity_type, entity_id, kind, visibility, hidden_at FROM activity_entries WHERE id = \?/.test(sql)) {
               const r = ae.find(x => x.id === binds[0])
               return r ? {
                 id: r.id, parent_id: r.parent_id ?? null, entity_type: r.entity_type,
                 entity_id: r.entity_id, kind: r.kind, visibility: r.visibility,
+                hidden_at: r.hidden_at ?? null,
               } : null
             }
             if (/SELECT id, actor_slug FROM activity_entries WHERE id = \?/.test(sql)) {
@@ -222,6 +227,11 @@ function makeEnv(fx: Partial<Fixtures> = {}) {
             if (/SELECT id, actor_slug, kind, metadata_json FROM activity_entries WHERE id = \?/.test(sql)) {
               const r = ae.find(x => x.id === binds[0])
               return r ? { id: r.id, actor_slug: r.actor_slug, kind: r.kind, metadata_json: r.metadata_json } : null
+            }
+            // handleSetActivityHidden auth+root probe (v102).
+            if (/SELECT id, actor_slug, parent_id, kind FROM activity_entries WHERE id = \?/.test(sql)) {
+              const r = ae.find(x => x.id === binds[0])
+              return r ? { id: r.id, actor_slug: r.actor_slug, parent_id: r.parent_id ?? null, kind: r.kind } : null
             }
             // handleEditActivityEntry body update (RETURNING * via .first()).
             if (/UPDATE activity_entries SET body = \?, metadata_json = \? WHERE id = \? RETURNING \*/.test(sql)) {
@@ -324,6 +334,23 @@ function makeEnv(fx: Partial<Fixtures> = {}) {
               // row so batch() can return it per-statement like real D1.
               if (/RETURNING \*/.test(sql)) return { meta: { changes: 1 }, results: [inserted] }
               return { meta: { changes: 1 } }
+            }
+            // handleSetActivityHidden cascade (v102): hide sets a stamp + hidden_by,
+            // unhide NULLs both — both across root (id=?) AND its replies (parent_id=?).
+            if (/UPDATE activity_entries SET hidden_at/.test(sql)) {
+              const isHide = /hidden_by = \?/.test(sql) // hide binds [caller, id, id]; unhide binds [id, id]
+              const rootId = (isHide ? binds[1] : binds[0]) as string
+              const stamp = isHide ? '2026-06-10 12:00:00' : null
+              const by = isHide ? (binds[0] as string) : null
+              let changes = 0
+              for (const r of ae) {
+                if (r.id === rootId || r.parent_id === rootId) {
+                  r.hidden_at = stamp
+                  ;(r as Record<string, unknown>).hidden_by = by
+                  changes++
+                }
+              }
+              return { meta: { changes } }
             }
             if (/INSERT INTO notifications/.test(sql)) { notifications.push({ binds: [...binds] }); return { meta: {} } }
             if (/INSERT INTO ai_requests/.test(sql)) { aiRequests.push({ binds: [...binds] }); return { meta: {} } }
@@ -1148,6 +1175,104 @@ describe('handleEditActivityEntry — author-or-PI edit', () => {
   it('missing row is 404', async () => {
     const { env } = makeEnv(FX)
     const res = await handleEditActivityEntry('ae_missing', editReq(PI_EMAIL, { body: 'x' }), NICK, env)
+    expect(res.status).toBe(404)
+  })
+})
+
+// ── hide / dismiss (v102, Hermes wave Phase 2) ──────────────────────────────────
+// "Dismiss" hides a thread from feeds but RETAINS the rows. The subtle correctness
+// bit is INHERITANCE: a reply posted AFTER a root is dismissed must be born hidden,
+// or it leaks the thread back into the feed (§2.2). Exercised end-to-end through the
+// real endpoint + the real write primitive, not a stub.
+describe('handleSetActivityHidden — dismiss/restore a thread root (v102)', () => {
+  function hideReq(email: string, body: unknown): Request {
+    return new Request('https://x/api/test', {
+      method: 'POST',
+      headers: { 'X-Test-Mode-Key': TEST_MODE_KEY, 'X-Test-User': email, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+  }
+  async function seedRoot(env: Env, actorSlug = 'nate-mesfin'): Promise<string> {
+    const user = actorSlug === 'nick-ingraham' ? NICK : NATE
+    const r = await postActivityEntry({ env, user, entityType: 'task', entityId: 't1', kind: 'comment', body: 'root', actorSlug })
+    if (!r.ok) throw new Error('seed failed')
+    return r.row.id as string
+  }
+  async function reply(env: Env, parentId: string, actorSlug = 'nate-mesfin') {
+    const user = actorSlug === 'nick-ingraham' ? NICK : NATE
+    return postActivityEntry({ env, user, entityType: 'task', entityId: '', parentId, kind: 'comment', body: 'child', actorSlug })
+  }
+
+  it('author dismisses own root → 200 and hidden_at is set', async () => {
+    const { env, ae } = makeEnv(FX)
+    const id = await seedRoot(env)
+    const res = await handleSetActivityHidden(id, hideReq(NON_PI_EMAIL, { hidden: true }), NATE, env)
+    expect(res.status).toBe(200)
+    expect(ae.find(r => r.id === id)!.hidden_at).toBeTruthy()
+  })
+
+  it('a reply posted AFTER the dismiss is born hidden (inheritance — no leak)', async () => {
+    const { env, ae } = makeEnv(FX)
+    const id = await seedRoot(env)
+    await handleSetActivityHidden(id, hideReq(NON_PI_EMAIL, { hidden: true }), NATE, env)
+    const r = await reply(env, id)
+    expect(r.ok).toBe(true)
+    expect((r as { ok: true; row: Record<string, unknown> }).row.hidden_at).toBeTruthy()
+    expect(ae.find(x => x.parent_id === id)!.hidden_at).toBeTruthy()
+  })
+
+  it('dismiss cascades to a reply that already existed', async () => {
+    const { env, ae } = makeEnv(FX)
+    const id = await seedRoot(env)
+    await reply(env, id)
+    await handleSetActivityHidden(id, hideReq(NON_PI_EMAIL, { hidden: true }), NATE, env)
+    expect(ae.filter(r => r.id === id || r.parent_id === id).every(r => r.hidden_at)).toBe(true)
+  })
+
+  it('unhide clears hidden_at on root + replies', async () => {
+    const { env, ae } = makeEnv(FX)
+    const id = await seedRoot(env)
+    await reply(env, id)
+    await handleSetActivityHidden(id, hideReq(NON_PI_EMAIL, { hidden: true }), NATE, env)
+    await handleSetActivityHidden(id, hideReq(NON_PI_EMAIL, { hidden: false }), NATE, env)
+    expect(ae.filter(r => r.id === id || r.parent_id === id).every(r => r.hidden_at == null)).toBe(true)
+  })
+
+  it('hiding a REPLY is a 400 (only roots dismissible)', async () => {
+    const { env } = makeEnv(FX)
+    const id = await seedRoot(env)
+    const r = await reply(env, id)
+    const replyId = (r as { ok: true; row: Record<string, unknown> }).row.id as string
+    const res = await handleSetActivityHidden(replyId, hideReq(NON_PI_EMAIL, { hidden: true }), NATE, env)
+    expect(res.status).toBe(400)
+  })
+
+  it("non-PI cannot dismiss someone else's root (403, stays visible)", async () => {
+    const { env, ae } = makeEnv(FX)
+    const id = await seedRoot(env, 'nick-ingraham')
+    const res = await handleSetActivityHidden(id, hideReq(NON_PI_EMAIL, { hidden: true }), NATE, env)
+    expect(res.status).toBe(403)
+    expect(ae.find(r => r.id === id)!.hidden_at ?? null).toBeNull()
+  })
+
+  it('PI dismisses anyone\'s root', async () => {
+    const { env, ae } = makeEnv(FX)
+    const id = await seedRoot(env, 'nate-mesfin')
+    const res = await handleSetActivityHidden(id, hideReq(PI_EMAIL, { hidden: true }), NICK, env)
+    expect(res.status).toBe(200)
+    expect(ae.find(r => r.id === id)!.hidden_at).toBeTruthy()
+  })
+
+  it('non-boolean hidden is rejected (400)', async () => {
+    const { env } = makeEnv(FX)
+    const id = await seedRoot(env)
+    const res = await handleSetActivityHidden(id, hideReq(NON_PI_EMAIL, { hidden: 'yes' }), NATE, env)
+    expect(res.status).toBe(400)
+  })
+
+  it('missing row is 404', async () => {
+    const { env } = makeEnv(FX)
+    const res = await handleSetActivityHidden('ae_missing', hideReq(PI_EMAIL, { hidden: true }), NICK, env)
     expect(res.status).toBe(404)
   })
 })

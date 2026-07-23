@@ -126,6 +126,57 @@ export async function handleEditActivityEntry(id: string, request: Request, user
   return json({ data: updated });
 }
 
+// POST /api/activity/:id/hide — dismiss (hide) or restore (unhide) a thread ROOT
+// and every reply under it. Body: { hidden: boolean }. One route, symmetric —
+// unhide is the same verb with hidden:false; a hide/unhide pair would imply
+// asymmetric permissions, and the owner's model is symmetric + reversible.
+//
+// "Dismiss" is a FRONTEND verb (owner decision 9.1.5). The rows are RETAINED, not
+// deleted — they stay searchable and stay reachable by Hermes's own transcript
+// read, so "remember what we talked about this morning" still works on a
+// dismissed thread. This only sets the hidden_at gate that the feeds / badges /
+// analytics honour via activityHiddenClause; nothing is forgotten.
+//
+// Only a thread ROOT is hideable — hidden is a property of the whole THREAD,
+// carried on the root AND every reply (postActivityEntry inherits it on write),
+// so the cascade UPDATE keeps root + children in lockstep and `parent_id IS NULL`
+// stays the reliable root test. Hiding a reply is a 400, mirroring "replying to a
+// reply is a 400" (CLAUDE.md Rule 77). Authorization: the root's AUTHOR or the PI
+// — same as delete/edit.
+export async function handleSetActivityHidden(id: string, request: Request, user: AuthUser, env: Env): Promise<Response> {
+  const payload = (await request.json().catch(() => ({}))) as { hidden?: unknown };
+  if (typeof payload.hidden !== 'boolean') return error('hidden (boolean) required', 400);
+
+  // activity-hidden-exempt: hide-auth lookup — must resolve the root regardless of
+  // its current hidden state (unhide reads an already-hidden row).
+  const row = await env.DB.prepare(
+    'SELECT id, actor_slug, parent_id, kind FROM activity_entries WHERE id = ?',
+  ).bind(id).first<{ id: string; actor_slug: string; parent_id: string | null; kind: string }>();
+  if (!row) return error('Activity entry not found', 404);
+  if (row.parent_id) return error('Only a thread root can be dismissed — not a reply', 400);
+
+  const caller = actorSlug(user.email);
+  if (row.actor_slug !== caller && !(await isPiRequest(request, env))) {
+    return error('Only the author or the PI can dismiss an activity entry', 403);
+  }
+
+  // Cascade to root + all CURRENT replies in one statement (schema-v100 carries no
+  // FK by design; the cascade is explicit, like the delete cascade above). Replies
+  // posted AFTER this inherit hidden_at from the parent in postActivityEntry, so a
+  // late reply cannot leak the thread back into a feed. Timestamp via SQL
+  // datetime('now') — mirrors created_at, avoids a raw-date lint site.
+  if (payload.hidden) {
+    await env.DB.prepare(
+      "UPDATE activity_entries SET hidden_at = datetime('now'), hidden_by = ? WHERE id = ? OR parent_id = ?",
+    ).bind(caller, id, id).run();
+  } else {
+    await env.DB.prepare(
+      'UPDATE activity_entries SET hidden_at = NULL, hidden_by = NULL WHERE id = ? OR parent_id = ?',
+    ).bind(id, id).run();
+  }
+  return json({ data: { id, hidden: payload.hidden } });
+}
+
 // The reply columns every threaded read returns. Mirrors the shape the unified
 // feeds already emit (activityRender.tsx:ActivityEntryItemRow) plus parent_id,
 // so a reply renders through the SAME card component as a root.

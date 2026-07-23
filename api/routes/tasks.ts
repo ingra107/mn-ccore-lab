@@ -625,6 +625,10 @@ export async function handleGetTaskActivity(taskId: string, request: Request, en
   // Two gates, one per alias — NEVER regex-rewrite one clause into the other
   // alias (that is the documented footgun that corrupted the task-project
   // subquery; CLAUDE.md tasks.project_id note).
+  // Phase 2: ?include_hidden=1 is the "Show hidden" affordance — it flips
+  // activityHiddenClause's include arg on the outer roots read AND the reply_count
+  // subquery (a shown-hidden root must show its true reply count). Default false.
+  const includeHidden = new URL(request.url).searchParams.get('include_hidden') === '1';
   const visAe = await activityVisibilityGate(request, env, 'ae');
   const visR = await activityVisibilityGate(request, env, 'r');
   // reply_count is computed per-request, never stored: an @me reply is visible
@@ -632,14 +636,24 @@ export async function handleGetTaskActivity(taskId: string, request: Request, en
   // subquery carries the same gate as the outer read, so the badge can never
   // advertise replies the viewer cannot open.
   const result = await env.DB.prepare(
-    `SELECT ae.id, ae.entity_type, ae.entity_id, ae.project_id, ae.kind, ae.visibility, ae.actor_slug, ae.body, ae.mentions_json, ae.update_type, ae.metadata_json, ae.parent_id, ae.created_at,
+    `SELECT ae.id, ae.entity_type, ae.entity_id, ae.project_id, ae.kind, ae.visibility, ae.actor_slug, ae.body, ae.mentions_json, ae.update_type, ae.metadata_json, ae.parent_id, ae.hidden_at, ae.created_at,
             (SELECT COUNT(*) FROM activity_entries r
-              WHERE r.parent_id = ae.id AND ${activityHiddenClause('r')} AND ${visR.clause}) AS reply_count
+              WHERE r.parent_id = ae.id AND ${activityHiddenClause('r', includeHidden)} AND ${visR.clause}) AS reply_count
      FROM activity_entries ae
-     WHERE ae.entity_type = 'task' AND ae.entity_id = ? AND ae.parent_id IS NULL AND ${activityHiddenClause('ae')} AND ${visAe.clause}
+     WHERE ae.entity_type = 'task' AND ae.entity_id = ? AND ae.parent_id IS NULL AND ${activityHiddenClause('ae', includeHidden)} AND ${visAe.clause}
      ORDER BY ae.created_at DESC, ae.id DESC`
   ).bind(...visR.binds, taskId, ...visAe.binds).all();
-  return json({ data: result.results || [] });
+  // hidden_count: dismissed roots THIS viewer could reveal, so the UI can render
+  // "N hidden — show" without a second request. Reuses the visAe gate (same alias).
+  // activity-hidden-exempt: the reveal-affordance count DELIBERATELY selects
+  // dismissed roots (hidden_at IS NOT NULL); still requester-gated by visibility,
+  // returns a count only, never row content.
+  const hiddenRow = await env.DB.prepare(
+    `SELECT COUNT(*) AS n FROM activity_entries ae
+      WHERE ae.entity_type = 'task' AND ae.entity_id = ? AND ae.parent_id IS NULL
+        AND ae.hidden_at IS NOT NULL AND ${visAe.clause}`
+  ).bind(taskId, ...visAe.binds).first<{ n: number }>();
+  return json({ data: result.results || [], hidden_count: hiddenRow?.n ?? 0 });
 }
 
 // GET /api/tasks/:id/detail — fan-out for TodayPage/UnifiedMyTasks task detail drawer.

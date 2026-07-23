@@ -336,14 +336,23 @@ import { activityVisibilityGate, activityHiddenClause, postActivityEntry } from 
 export async function handleGetArtifactActivity(id: string, request: Request, env: Env): Promise<Response> {
   const artifact = await env.DB.prepare('SELECT id FROM artifacts WHERE id = ? LIMIT 1').bind(id).first<{ id: string }>();
   if (!artifact) return error('Artifact not found', 404);
+  // Phase 2: ?include_hidden=1 = the "Show hidden" affordance. Default false.
+  const includeHidden = new URL(request.url).searchParams.get('include_hidden') === '1';
   const vis = await activityVisibilityGate(request, env);
   const result = await env.DB.prepare(
-    `SELECT id, entity_type, entity_id, project_id, kind, visibility, actor_slug, body, mentions_json, update_type, metadata_json, created_at
+    `SELECT id, entity_type, entity_id, project_id, kind, visibility, actor_slug, body, mentions_json, update_type, metadata_json, hidden_at, created_at
      FROM activity_entries
-     WHERE entity_type = 'artifact' AND entity_id = ? AND ${activityHiddenClause()} AND ${vis.clause}
+     WHERE entity_type = 'artifact' AND entity_id = ? AND ${activityHiddenClause('', includeHidden)} AND ${vis.clause}
      ORDER BY created_at DESC, id DESC`
   ).bind(id, ...vis.binds).all();
-  return json({ data: result.results || [] });
+  // hidden_count: dismissed rows this viewer could reveal (see task feed).
+  // activity-hidden-exempt: reveal-affordance count DELIBERATELY selects dismissed
+  // rows (hidden_at IS NOT NULL); requester-gated by visibility, count only.
+  const hiddenRow = await env.DB.prepare(
+    `SELECT COUNT(*) AS n FROM activity_entries
+      WHERE entity_type = 'artifact' AND entity_id = ? AND hidden_at IS NOT NULL AND ${vis.clause}`
+  ).bind(id, ...vis.binds).first<{ n: number }>();
+  return json({ data: result.results || [], hidden_count: hiddenRow?.n ?? 0 });
 }
 
 // ── POST /api/artifacts/:id/comments ────────────────────────────────────────────

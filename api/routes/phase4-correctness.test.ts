@@ -148,10 +148,11 @@ describe('Fix 1 — handleAddComment: @hermes uses project.id (UUID), not URL sl
             // comment, so the parent must report project identity — the
             // placeholder inherits entity_type/entity_id from it, and this test
             // asserts the placeholder lands on project.id.
-            if (/SELECT id, parent_id, entity_type, entity_id, kind, visibility FROM activity_entries WHERE id = \?/.test(sql)) {
+            if (/SELECT id, parent_id, entity_type, entity_id, kind, visibility, hidden_at FROM activity_entries WHERE id = \?/.test(sql)) {
               return {
                 id: boundVals[0], parent_id: null, entity_type: 'project',
                 entity_id: 'proj-uuid-001', kind: 'comment', visibility: 'team',
+                hidden_at: null,
               };
             }
             if (sql.includes('FROM team_members WHERE slug = ?')) return { id: 'member_001' };

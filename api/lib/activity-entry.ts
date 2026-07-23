@@ -211,14 +211,15 @@ export async function postActivityEntry(input: PostActivityEntryInput): Promise<
   // author-only, and before entity derivation so the parent's identity is what
   // gets derived against.
   let parentVisibility: Visibility | null = null;
+  let parentHiddenAt: string | null = null;
   if (parentId) {
     // activity-hidden-exempt: write-path parent resolution — reads the parent to
     // INHERIT its hidden_at (and visibility) onto the reply; must see a hidden parent.
     const parent = await env.DB.prepare(
-      'SELECT id, parent_id, entity_type, entity_id, kind, visibility FROM activity_entries WHERE id = ?'
+      'SELECT id, parent_id, entity_type, entity_id, kind, visibility, hidden_at FROM activity_entries WHERE id = ?'
     ).bind(parentId).first<{
       id: string; parent_id: string | null; entity_type: string;
-      entity_id: string; kind: string; visibility: string;
+      entity_id: string; kind: string; visibility: string; hidden_at: string | null;
     }>();
     if (!parent) {
       return { ok: false, error: 'Parent activity entry not found', status: 404 };
@@ -239,6 +240,9 @@ export async function postActivityEntry(input: PostActivityEntryInput): Promise<
     entityType = parent.entity_type as EntityType;
     entityId = parent.entity_id;
     parentVisibility = parent.visibility === 'author' ? 'author' : 'team';
+    // Inherit the thread's hidden state so a reply to a dismissed root is born
+    // hidden too — a late reply must not leak the thread back into any feed (§2.2).
+    parentHiddenAt = parent.hidden_at ?? null;
   }
 
   // ── @me policy (strip prefix, decide visibility) ───────────────────────────
@@ -291,8 +295,12 @@ export async function postActivityEntry(input: PostActivityEntryInput): Promise<
 
   // ── insert (idempotent when a backfill source is provided) ─────────────────
   const id = generateId(); // 'ae_'-prefix is conceptual; generateId() mints a hex id (matches comments/updates legacy ids)
-  const cols = `(id, entity_type, entity_id, project_id, kind, visibility, actor_slug, body, mentions_json, update_type, metadata_json, source_table, source_id, parent_id, created_at)`;
-  const vals = `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`;
+  // hidden_at is the LAST bind (index 14), appended AFTER parent_id so indices
+  // 0-13 are unchanged — phase4-correctness.test.ts's positional asserts (ph[1],
+  // ph[2], ph[4], ph[6]) and the INSERT↔column-list contract stay green (§2.3
+  // bind-order landmine). NULL for a root; inherited from the parent for a reply.
+  const cols = `(id, entity_type, entity_id, project_id, kind, visibility, actor_slug, body, mentions_json, update_type, metadata_json, source_table, source_id, parent_id, hidden_at, created_at)`;
+  const vals = `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`;
   const binds = [
     id,
     entityType,
@@ -308,6 +316,7 @@ export async function postActivityEntry(input: PostActivityEntryInput): Promise<
     sourceTable,
     sourceId,
     parentId,
+    parentHiddenAt,
   ] as const;
 
   let row: Record<string, unknown> | null;

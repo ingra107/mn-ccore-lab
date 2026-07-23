@@ -112,11 +112,14 @@ describe('route contract — generated from ROUTE_REGISTRY', () => {
     // 254 as of 2026-07-22 — threaded replies (+2, #98):
     //   GET  /api/activity/:id/replies — the thread under one root, oldest-first.
     //   POST /api/activity/:id/replies — reply to a specific comment.
+    // 255 as of 2026-07-22 — dismiss/restore a thread (+1, Hermes wave Phase 2):
+    //   POST /api/activity/:id/hide — hide (retain) or restore a thread root +
+    //   its replies. Symmetric { hidden: boolean }; author-or-PI.
     // Adding a route → increment this number. Removing a route → decrement it.
     // This makes route deletion require explicit acknowledgment, preventing
     // silent surface regression (codex final-audit finding #9, 2026-05-28).
     // If you are intentionally adding or removing routes, update this count.
-    expect(ROUTE_REGISTRY).toHaveLength(254)
+    expect(ROUTE_REGISTRY).toHaveLength(255)
   })
 
   it('every non-public route has either entity or visibility metadata', () => {
