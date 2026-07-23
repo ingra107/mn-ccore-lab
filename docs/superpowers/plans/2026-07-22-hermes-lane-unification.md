@@ -1118,6 +1118,11 @@ Phase 9 above badges the Today/day bar. Nick wants the parallel for tasks, and o
   (`e.target.closest('button, a, input, textarea, [role="button"]')`) so links / the Reply button /
   edit-delete / mention chips still work. Follows the `hub-row-click-interactive-cells` pattern. Root
   only (not replies). Small, but the interactive-guard is the part to get right — do it as its own change.
+- **CLEANUP (from `/simplify`, low-pri):** the hermes-outcome → toast block (`out.hermes && !dispatched
+  ? showInfo(reason==='empty' ? … : …) : showSuccess('Asked Hermes')`) is copied in all three composers
+  (SmartCompose, TaskDetailPanel, MorningThoughtCompose) — 3rd copy = extract. A `hermesOutcomeToast(...)`
+  helper would centralize it; the only variation is the verb ("Posted" for tasks / "Saved" for the day
+  bar). Deferred — cross-file + cosmetic, not worth a re-deploy at close.
 
 ### 9.6 Wave 1, shipped separately — the `@workon` class fix
 
