@@ -1,4 +1,4 @@
-# ▶▶ HERMES LANE UNIFICATION — Phases 1–5 SHIPPED + DEPLOYED, working in the live UI. Resume: Phase 6 (deletions, plan CORRECTED) + the UX follow-ups below. 2026-07-23.
+# ▶▶ HERMES LANE UNIFICATION — Wave 2 (Phase 6, 8, 9/§9.5.1, §9.5.2 + answered_at) SHIPPED + DEPLOYED 2026-07-23 (live `1cb5ed32`, prod probe PASS). Resume: Phase 10 (older-day retrieval — needs a codex design consult) + 2 trivial extracts. 2026-07-23.
 
 > **Resume point is ONE line in `docs/superpowers/plans/2026-07-22-hermes-lane-unification.md` §0.5** —
 > it's the execution log (most-recent phase on top). Do NOT re-triage; scope + decisions are settled.
@@ -35,23 +35,19 @@
 > - **Reply-to-Hermes affordance** (`ed5d3f11`) — Hermes's answer shows a "Reply to Hermes" control; the composer
 >   pre-fills `@hermes ` on a Hermes thread (§9.5.2). Nick confirmed the whole flow works live (both rows 🔒 only-you).
 >
-> **NEXT: Phase 6 (deletions) — DATA-SAFE, but the plan was STALE; I CORRECTED it (see §0.5 note + Phase 6 block).**
-> Two corrections the "is it safe" check surfaced: (1) **KEEP `isHermesPrefix`** — it is the live typed-prefix
-> detector all 3 composers route on; the plan's "delete it" would break Phase 5. Only `stripHermesPrefix` is dead.
-> (2) **No 24h dogfood** — live check: 0 pending `ai_requests`, old rows backfilled, new path confirmed. Run it via
-> `/substrate-swap` in a fresh session (it's ~8 files + the `seen.ts` arm; build-verify each). Not done here on
-> purpose — a stale-plan deletion wave is the wrong thing to rush at session close.
+> **✅ WAVE 2 SHIPPED + DEPLOYED 2026-07-23 (live `1cb5ed32`, prod probe PASS — `/api/seen/unseen` 200). One combined deploy, commits `c8d747d9..ddc9eef4`:**
+> - **Phase 6 (partial)** (`d5d605de`) — deleted the dead `ai_requests` reader components/hooks/3 mounts + `stripHermesPrefix`. **KEPT `isHermesPrefix`.** The `seen.ts` Hermes arm was NOT bare-deleted: the plan's "plain arm already badges" premise was WRONG (plain arm filters `visibility='team'`; Phase-5 answers are `visibility='author'`), so it was REPLACED in Phase 9 (see §0.5 Phase 6 CORRECTED-AGAIN note item 3).
+> - **Phase 8** (`0fe61cf6`) — Quick Capture `@hermes` → `POST /api/days/:date/activity`; `isHermesPrefix` runs BEFORE `parseQuickAddInput` (the assign-to-slug landmine — note: no `hermes` team slug exists today, so the real pre-fix bug was swallow-into-plain-title). Plain textarea kept.
+> - **§9.5.2** (`f94618e0`) — click a thread root to expand/collapse; reuses the existing toggle + an interactive-child guard. The inline task drain already existed.
+> - **Phase 9 / §9.5.1** backend (`cfe0b9db`) + frontend (`28acecb3`) — private-Hermes-answer badge arm reading `activity_entries`. Ownership guard `root.actor_slug=viewer AND root.visibility='author'`, gate on the `claude-ai` reply. **codex `gpt-5.6-sol` = leak-safe**; mandatory leak-class regression test (non-owner → 0 rows). `'day'` is now first-class in the frontend seen model; Today nav badge + day-drain on `TodayPage`.
+> - **answered_at** (`ddc9eef4`, schema **v103**) — `activity_entries.answered_at` so the badge measures unseen/recency from ANSWER time, not ask time (codex + agent flagged the in-place-UPDATE bug: a mark-seen between ask and answer swallowed the badge; a >30d-late answer was dropped; `latest_at` showed ask time). Applied to **test + prod D1**; read side is `COALESCE(answered_at, created_at)`.
+> - **§9.10 day-scoped Hermes memory** was ALREADY shipped in Phase 3 — no work needed.
 >
-> **UX FOLLOW-UPS Nick asked for this session (captured in §9.5.1 / §9.5.2):**
-> - **Task nav badge + drain-on-inline-view (§9.5.1):** a new task comment should badge the My-Tasks nav + the task
->   row; expanding the task inline on Today should DRAIN it (not only the full drawer). Rides the seen model + Phase 9.
-> - **Click the thread ROOT box to expand/collapse (§9.5.2):** whole-box toggle, guard interactive children. Small.
+> **Nick's manual check (needs the home listener):** type `@hermes …` in Quick Capture and on the Today bar → a private thread + "Thinking…" → Hermes's answer in-thread; the Today nav + task row should badge an unseen answer and DRAIN when you open it; click a thread ROOT to expand/collapse.
 >
-> **STILL PENDING PHASES:** 8 (Quick Capture `@hermes`) → 9 (Today nav badge) → 10 (older-day retrieval).
-> ⚠️ **Quick Capture `@hermes` does NOT work yet (Nick hit this) — it's Phase 8, unbuilt, AND there's a landmine:**
-> today `@hermes …` in quick capture fuzzy-matches the `hermes` team slug and creates a task **assigned to Hermes**
-> (§9.4). `isHermesPrefix()` must run BEFORE `parseQuickAddInput()`. The **Today nav badge Nick wants IS Phase 9**
-> (§9.5) — badge on unseen Hermes answers, drains on opening Today.
+> **RESUME — remaining Hermes-unification work:**
+> - **Phase 10 (older-day retrieval)** — DEFERRED, needs a codex DESIGN consult FIRST (§9.11.3): trigger/shape/bound + the REQUESTER-scoping leak constraint (§9.11.2 — the listener's `PB_API_KEY` bypasses the visibility gate, so a naive fetch leaks every user's private day threads). Do NOT build before that design pass.
+> - **2 trivial extracts** (documented at source, low-pri): a shared `hermesOutcomeToast()` (now a 4th copy across the 3 composers + Quick Capture — plan §9.5.2 CLEANUP); export the `HERMES_PENDING_BODY` `'Thinking about this%'` literal (now ~5 consumers incl. `seen.ts`, `activity-entry.ts:29`).
 
 # ▶ BUG SWEEP #96–#100 + TWO PRIVACY LEAKS + THREADED REPLIES — SHIPPED (2026-07-22). Live = `e8c0a169`.
 
