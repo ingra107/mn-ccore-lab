@@ -79,6 +79,27 @@ member, `hidden_by` recorded), and §7 Q5 (`day` in `SEEN_TYPES` — recommendat
 
 ## 0.5 PHASE 1 EXECUTION LOG (2026-07-22 PM — updates §2.5, §9.2)
 
+### ✅ PHASE 1 COMPLETE + DEPLOYED (live = `e5d5ba32`, probe PASS)
+
+The entire read side of the dismiss mechanism is done and live. schema v102
+applied to **test + prod** D1; **all 46 reads** guarded (33 predicate) or exempt
+(13); the gate `node scripts/check-activity-reads.mjs` exits 0 and is wired into
+`deploy:pages:gated`; `tsc -b` clean; **`test:api` 1176/1176** (no SQL double
+broke). Nothing can leak a dismissed thread once one can be hidden — and until
+Phase 2 ships the hide endpoint, every `hidden_at` is NULL so the filters are
+currently no-ops (correct: read-side ready before write-side, the safe order).
+
+**Next: Phase 2** (hide/unhide endpoint + inheritance + cascade + the dismiss/
+"show hidden" UI). Then 3 (day entity) → 4 (backfill 16 rows) → 5 (writer flip,
+RISKIEST — codex consult) → 8 (Quick Capture) → 9 (nav badge) → 10 (retrieval —
+codex consult on trigger/shape/bound; §9.11's leak constraints are non-negotiable).
+
+Commits this session: `650bdf19` (Wave 1 workon) · `07b37808`+`43817903` (gate +
+13 exempt) · `e37a2ed1` (primitive + schema v102) · `3b12eb55` (this log) ·
+`541d5422` (33-read retrofit) · `e5d5ba32` (gate wired + deployed).
+
+---
+
 Landed and pushed, in order:
 
 - **Wave 1 — `@workon` class fix** (`650bdf19`, deployed, probe PASS). §9.6. Awaiting
