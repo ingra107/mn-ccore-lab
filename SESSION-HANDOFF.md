@@ -1,4 +1,4 @@
-# ▶▶ HERMES LANE UNIFICATION — Wave 2 (Phase 6, 8, 9/§9.5.1, §9.5.2 + answered_at) SHIPPED + DEPLOYED 2026-07-23 (live `1cb5ed32`, prod probe PASS). Resume: Phase 10 (older-day retrieval — needs a codex design consult) + 2 trivial extracts. 2026-07-23.
+# ▶▶ HERMES LANE UNIFICATION — Wave 2 SHIPPED+DEPLOYED (live `1cb5ed32`) AND Phase 10 BUILT (codex-designed, leak-verified; endpoint + listener committed) 2026-07-23. Resume: Phase 10 go-live = next Hub deploy (bundles the endpoint) + a home-listener end-to-end check; + 2 trivial extracts.
 
 > **Resume point is ONE line in `docs/superpowers/plans/2026-07-22-hermes-lane-unification.md` §0.5** —
 > it's the execution log (most-recent phase on top). Do NOT re-triage; scope + decisions are settled.
@@ -46,7 +46,7 @@
 > **Nick's manual check (needs the home listener):** type `@hermes …` in Quick Capture and on the Today bar → a private thread + "Thinking…" → Hermes's answer in-thread; the Today nav + task row should badge an unseen answer and DRAIN when you open it; click a thread ROOT to expand/collapse.
 >
 > **RESUME — remaining Hermes-unification work:**
-> - **Phase 10 (older-day retrieval)** — DEFERRED, needs a codex DESIGN consult FIRST (§9.11.3): trigger/shape/bound + the REQUESTER-scoping leak constraint (§9.11.2 — the listener's `PB_API_KEY` bypasses the visibility gate, so a naive fetch leaks every user's private day threads). Do NOT build before that design pass.
+> - **Phase 10 (older-day retrieval)** — ✅ BUILT 2026-07-23 (codex `gpt-5.6-sol` designed it; §9.11.3 records the design + owner decisions). Hub endpoint `GET /api/hermes/day-index` — own-only, requester-scoped, leak-safe by construction (`2c072fc4`; test:api 1225/1225 incl. the leak test) — plus the PB listener `build_prompt` prior-day-index (`f3a3b649d`, pushed to PB → home; 468/468). **NOT yet live end-to-end:** the endpoint rides the next Hub deploy (additive + fail-closed, safe to bundle); the round-trip needs the home listener (asleep). Owner decision: own-only audience.
 > - **2 trivial extracts** (documented at source, low-pri): a shared `hermesOutcomeToast()` (now a 4th copy across the 3 composers + Quick Capture — plan §9.5.2 CLEANUP); export the `HERMES_PENDING_BODY` `'Thinking about this%'` literal (now ~5 consumers incl. `seen.ts`, `activity-entry.ts:29`).
 
 # ▶ BUG SWEEP #96–#100 + TWO PRIVACY LEAKS + THREADED REPLIES — SHIPPED (2026-07-22). Live = `e8c0a169`.
