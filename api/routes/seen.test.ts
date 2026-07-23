@@ -49,14 +49,42 @@ interface SeenRow extends Row {
   last_seen_at: string // ISO
 }
 
-/** Minimal stateful D1 stub covering the two GET /api/seen/unseen arms. */
-function makeStatefulEnv(opts: { meetings?: Meeting[]; entitySeen?: SeenRow[] } = {}): {
+// §9.5.1 — the private-Hermes-answer arm's fixture rows. Shape mirrors the
+// real activity_entries columns the arm reads (see api/routes/seen.ts).
+interface ActivityEntryRow extends Row {
+  id: string
+  entity_type: string
+  entity_id: string
+  parent_id: string | null
+  visibility: string
+  actor_slug: string
+  body: string
+  hidden_at: string | null
+  created_at: string // ISO
+}
+
+interface TaskFixtureRow extends Row {
+  id: string
+  title: string | null
+  short_title: string | null
+  deleted_at: string | null
+}
+
+/** Minimal stateful D1 stub covering the three GET /api/seen/unseen arms. */
+function makeStatefulEnv(opts: {
+  meetings?: Meeting[]
+  entitySeen?: SeenRow[]
+  activityEntries?: ActivityEntryRow[]
+  tasks?: TaskFixtureRow[]
+} = {}): {
   env: Env
   entitySeen: SeenRow[]
   capturedMeetingArgs: unknown[][]
 } {
   const meetings = opts.meetings ?? []
   const entitySeen = opts.entitySeen ?? []
+  const activityEntries = opts.activityEntries ?? []
+  const tasks = opts.tasks ?? []
   const capturedMeetingArgs: unknown[][] = []
 
   const prepare = (sql: string) => {
@@ -64,6 +92,49 @@ function makeStatefulEnv(opts: { meetings?: Meeting[]; entitySeen?: SeenRow[] } 
     return {
       bind: (...args: unknown[]) => ({
         all: async <T = Row>() => {
+          // §9.5.1 — the private (@me) Hermes-answer arm. Unique fingerprint:
+          // this is the only arm whose FROM clause is activity_entries itself
+          // (the plain team arm's FROM is entity_seen; it only JOINs
+          // activity_entries as a second table).
+          if (upper.includes('FROM ACTIVITY_ENTRIES REPLY')) {
+            const [rootActorSlug, esViewerSlug, modifier] = args as [string, string, string]
+            const daysMatch = String(modifier).match(/-(\d+)\s*days/)
+            if (!daysMatch) throw new Error(`unexpected datetime modifier bind: ${modifier}`)
+            const capMs = NOW.getTime() - Number(daysMatch[1]) * DAY_MS
+            const byId = new Map(activityEntries.map((a) => [a.id, a]))
+            type Grouped = { entity_type: string; entity_id: string; new_count: number; latest_at: string; title: string | null; project_slug: null }
+            const groups = new Map<string, Grouped>()
+            for (const reply of activityEntries) {
+              if (reply.actor_slug !== 'claude-ai') continue
+              if (!reply.parent_id) continue
+              if (reply.hidden_at != null) continue
+              if (reply.body.startsWith('Thinking about this')) continue // placeholder, not yet answered
+              const root = byId.get(reply.parent_id)
+              if (!root) continue
+              if (root.visibility !== 'author') continue
+              if (root.actor_slug !== rootActorSlug) continue
+              if (root.entity_type !== 'task' && root.entity_type !== 'day') continue
+              if (root.hidden_at != null) continue
+              const task = root.entity_type === 'task' ? tasks.find((t) => t.id === root.entity_id) : undefined
+              if (root.entity_type === 'task' && task && task.deleted_at != null) continue
+              const replyMs = new Date(reply.created_at).getTime()
+              if (!(replyMs > capMs)) continue
+              const seen = entitySeen.find(
+                (es) => es.entity_type === root.entity_type && es.entity_id === root.entity_id && es.viewer_slug === esViewerSlug,
+              )
+              if (seen && !(replyMs > new Date(seen.last_seen_at).getTime())) continue
+              const key = `${root.entity_type}:${root.entity_id}`
+              const title = root.entity_type === 'task' ? (task?.short_title ?? task?.title ?? null) : null
+              const existing = groups.get(key)
+              if (existing) {
+                existing.new_count += 1
+                if (reply.created_at > existing.latest_at) existing.latest_at = reply.created_at
+              } else {
+                groups.set(key, { entity_type: root.entity_type, entity_id: root.entity_id, new_count: 1, latest_at: reply.created_at, title, project_slug: null })
+              }
+            }
+            return { results: Array.from(groups.values()) as unknown as T[] }
+          }
           if (upper.includes('FROM MEETINGS')) {
             capturedMeetingArgs.push(args)
             const [viewerSlug, modifier] = args as [string, string]
@@ -235,5 +306,116 @@ describe('handleMarkSeen — auth gate', () => {
       env,
     )
     expect(res.status).toBe(401)
+  })
+
+  it('accepts entity_type=day (Phase 9 §9.5.1 — day threads can now be marked seen)', async () => {
+    const { env } = makeStatefulEnv()
+    const res = await handleMarkSeen(
+      authedRequest('https://x/api/seen', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ entity_type: 'day', entity_id: '2026-07-15' }),
+      }),
+      env,
+    )
+    expect(res.status).toBe(200)
+  })
+})
+
+// §9.5.1 — the private (@me) Hermes-answer arm. Phase 5 moved typed @hermes
+// off ai_requests onto activity_entries; a private ask writes
+// visibility='author', which the plain team arm structurally cannot badge
+// (it requires visibility='team'). This arm reads activity_entries directly,
+// keyed on the reply Hermes itself writes, with an OWNERSHIP guard
+// (root.visibility='author' AND root.actor_slug=viewer) that is the whole
+// point of the arm — same leak class as the two 2026-07-22 defects.
+describe('handleGetUnseenActivity — private Hermes-answer arm (§9.5.1, PRIVACY-CRITICAL)', () => {
+  const privateTaskThread: ActivityEntryRow[] = [
+    {
+      id: 'root-task-a', entity_type: 'task', entity_id: 'task-1', parent_id: null,
+      visibility: 'author', actor_slug: 'nick-ingraham', body: '@hermes what should I do next?',
+      hidden_at: null, created_at: nowIso(-2),
+    },
+    {
+      id: 'reply-task-a', entity_type: 'task', entity_id: 'task-1', parent_id: 'root-task-a',
+      visibility: 'author', actor_slug: 'claude-ai', body: 'Here is my answer to your question.',
+      hidden_at: null, created_at: nowIso(-1),
+    },
+  ]
+  const taskFixture: TaskFixtureRow[] = [
+    { id: 'task-1', title: 'Task One', short_title: null, deleted_at: null },
+  ]
+
+  it('LEAK-CLASS REGRESSION (MANDATORY): a different viewer, who authored no thread, gets ZERO rows for another user\'s private answered Hermes thread', async () => {
+    const { env } = makeStatefulEnv({ activityEntries: privateTaskThread, tasks: taskFixture })
+    // 'user-b' authored nothing — the private root belongs to 'nick-ingraham'.
+    const res = await handleGetUnseenActivity(
+      authedRequest('https://x/api/seen/unseen', { headers: { 'X-Test-User': 'user-b@umn.edu' } }),
+      env,
+    )
+    const body = await res.json() as { data: Row[]; count: number }
+    expect(body.data).toEqual([])
+    expect(body.count).toBe(0)
+  })
+
+  it('badges the requester\'s OWN unseen Hermes answer on a private task thread', async () => {
+    const { env } = makeStatefulEnv({ activityEntries: privateTaskThread, tasks: taskFixture })
+    const res = await handleGetUnseenActivity(authedRequest('https://x/api/seen/unseen'), env)
+    const body = await res.json() as { data: Row[] }
+    expect(body.data).toHaveLength(1)
+    expect(body.data[0]).toMatchObject({ entity_type: 'task', entity_id: 'task-1', new_count: 1, title: 'Task One' })
+  })
+
+  it('badges the requester\'s OWN unseen Hermes answer on a private DAY thread (Today nav badge)', async () => {
+    const dayThread: ActivityEntryRow[] = [
+      {
+        id: 'root-day-a', entity_type: 'day', entity_id: '2026-07-15', parent_id: null,
+        visibility: 'author', actor_slug: 'nick-ingraham', body: '@hermes good morning, what is on today?',
+        hidden_at: null, created_at: nowIso(-2),
+      },
+      {
+        id: 'reply-day-a', entity_type: 'day', entity_id: '2026-07-15', parent_id: 'root-day-a',
+        visibility: 'author', actor_slug: 'claude-ai', body: 'Good morning — here is your day.',
+        hidden_at: null, created_at: nowIso(-1),
+      },
+    ]
+    const { env } = makeStatefulEnv({ activityEntries: dayThread })
+    const res = await handleGetUnseenActivity(authedRequest('https://x/api/seen/unseen'), env)
+    const body = await res.json() as { data: Row[] }
+    expect(body.data).toHaveLength(1)
+    expect(body.data[0]).toMatchObject({ entity_type: 'day', entity_id: '2026-07-15', new_count: 1 })
+  })
+
+  it('does NOT badge a private thread Hermes has not answered yet (still the "Thinking..." placeholder)', async () => {
+    const pendingThread: ActivityEntryRow[] = [
+      {
+        id: 'root-task-pending', entity_type: 'task', entity_id: 'task-2', parent_id: null,
+        visibility: 'author', actor_slug: 'nick-ingraham', body: '@hermes another question',
+        hidden_at: null, created_at: nowIso(-1),
+      },
+      {
+        id: 'reply-task-pending', entity_type: 'task', entity_id: 'task-2', parent_id: 'root-task-pending',
+        visibility: 'author', actor_slug: 'claude-ai', body: 'Thinking about this... (AI response pending)',
+        hidden_at: null, created_at: nowIso(-1),
+      },
+    ]
+    const { env } = makeStatefulEnv({
+      activityEntries: pendingThread,
+      tasks: [{ id: 'task-2', title: 'Task Two', short_title: null, deleted_at: null }],
+    })
+    const res = await handleGetUnseenActivity(authedRequest('https://x/api/seen/unseen'), env)
+    const body = await res.json() as { data: Row[] }
+    expect(body.data).toHaveLength(0)
+  })
+
+  it('does not re-badge once the requester has seen the thread AFTER the answer landed', async () => {
+    const { env } = makeStatefulEnv({
+      activityEntries: privateTaskThread,
+      tasks: taskFixture,
+      entitySeen: [{ entity_type: 'task', entity_id: 'task-1', viewer_slug: 'nick-ingraham', last_seen_at: nowIso(0) }],
+    })
+    const res = await handleGetUnseenActivity(authedRequest('https://x/api/seen/unseen'), env)
+    const body = await res.json() as { data: Row[] }
+    expect(body.data).toHaveLength(0)
   })
 })

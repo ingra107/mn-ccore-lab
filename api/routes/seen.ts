@@ -12,13 +12,16 @@
 //                          ProjectDetail, meeting notes) — the act of looking
 //                          IS the mark.
 // GET  /api/seen/unseen    → [{entity_type, entity_id, new_count, latest_at,
-//                          title, project_slug}] for task/project rows, PLUS
-//                          meeting rows {entity_type: 'meeting', entity_id,
-//                          never_seen, latest_at, title, project_slug: null}
-//                          — meetings have no activity_entries feed, so
-//                          "unseen" is just (no seen row) OR (updated_at >
-//                          last_seen_at), with never_seen=1 marking the
-//                          former (2026-07-07, task T11).
+//                          title, project_slug}] for task/project/day rows,
+//                          PLUS meeting rows {entity_type: 'meeting',
+//                          entity_id, never_seen, latest_at, title,
+//                          project_slug: null} — meetings have no
+//                          activity_entries feed, so "unseen" is just (no
+//                          seen row) OR (updated_at > last_seen_at), with
+//                          never_seen=1 marking the former (2026-07-07,
+//                          task T11). A 'day' row's own private (@me) Hermes
+//                          answer badges via a THIRD arm below (§9.5.1) —
+//                          see that arm's comment for the ownership model.
 //
 // Both endpoints are FAIL-SOFT pre-migration: if entity_seen doesn't exist on
 // this DB yet, GET returns an empty list and POST no-ops — so the worker can
@@ -35,14 +38,15 @@
 // bound applies ONLY to the never_seen=1 arm).
 
 import type { Env } from '../helpers';
-import { json, error, actorSlugFromRequest, getAuthUser } from '../helpers';
+import { json, error, actorSlugFromRequest } from '../helpers';
 
-const SEEN_TYPES = new Set(['task', 'project', 'meeting']);
+const SEEN_TYPES = new Set(['task', 'project', 'meeting', 'day']);
 
-// #99 recency bound for the Hermes arm. That arm LEFT JOINs entity_seen (asking
-// a question is intent to hear the answer, so a never-opened task still
-// signals), which without a bound would let a cold start badge every Hermes
-// answer ever given. Same role as MEETING_NEVER_SEEN_PAYLOAD_CAP_DAYS below.
+// #99 / §9.5.1 recency bound for the Hermes arm (reads activity_entries — see
+// the arm below). That arm LEFT JOINs entity_seen (asking a question is intent
+// to hear the answer, so a never-opened task still signals), which without a
+// bound would let a cold start badge every Hermes answer ever given. Same role
+// as MEETING_NEVER_SEEN_PAYLOAD_CAP_DAYS below.
 const HERMES_UNSEEN_CAP_DAYS = 30;
 
 // Server-side payload bound for the never_seen (cold-start, no entity_seen
@@ -67,7 +71,7 @@ export async function handleMarkSeen(request: Request, env: Env): Promise<Respon
   const entityType = body.entity_type ?? '';
   const entityId = body.entity_id ?? '';
   if (!SEEN_TYPES.has(entityType) || !entityId) {
-    return error("entity_type ('task'|'project'|'meeting') and entity_id required", 400);
+    return error("entity_type ('task'|'project'|'meeting'|'day') and entity_id required", 400);
   }
   try {
     await env.DB.prepare(
@@ -85,10 +89,6 @@ export async function handleMarkSeen(request: Request, env: Env): Promise<Respon
 export async function handleGetUnseenActivity(request: Request, env: Env): Promise<Response> {
   const viewer = await actorSlugFromRequest(request, env);
   if (!viewer) return json({ data: [], count: 0 });
-  // #99: ai_requests.requested_by stores the EMAIL the ask was made with, while
-  // every other table here keys on the canonical slug. Both are matched so a row
-  // written through either shape still reaches its own author.
-  const viewerEmail = (await getAuthUser(request, env))?.email ?? viewer;
   try {
     const [taskProjectRows, meetingRows, hermesRows] = await Promise.all([
       env.DB.prepare(
@@ -138,43 +138,85 @@ export async function handleGetUnseenActivity(request: Request, env: Env): Promi
            )
          ORDER BY latest_at DESC`
       ).bind(viewer, `-${MEETING_NEVER_SEEN_PAYLOAD_CAP_DAYS} days`).all(),
-      // #99 — Hermes answers on a task. A typed "@hermes …" prefix in a task
-      // composer does NOT write activity_entries: it routes to /api/ai-requests
-      // as source_type='daily_thought' with a task_* source_id (see
-      // src/lib/hermesRouting.ts), read back by TaskHermesReplies. The two arms
-      // above only ever look at activity_entries, so a Hermes answer was
-      // STRUCTURALLY incapable of producing a signal — you asked, it answered,
-      // and nothing anywhere said so. That is bug #99.
+      // #99 / §9.5.1 — Hermes answers on the REQUESTER'S OWN private (@me)
+      // thread. Phase 5 moved typed @hermes off ai_requests onto
+      // activity_entries: a private ask now writes visibility='author', which
+      // the plain team arm above deliberately EXCLUDES (visibility='team'), so
+      // a private Hermes answer badged NOTHING the day that shipped — the same
+      // structural-incapability shape as the original bug #99, recurring in the
+      // new store. This arm reads activity_entries directly, keyed on the reply
+      // row Hermes itself writes (see api/lib/activity-entry.ts dispatchHermes /
+      // api/routes/ai-requests.ts handleUpdateAIResponse):
+      //   - reply.actor_slug = 'claude-ai' AND reply.parent_id IS NOT NULL — a
+      //     reply Hermes wrote. handleUpdateAIResponse UPDATEs this row's body
+      //     in place when the answer lands rather than inserting a new one, so
+      //     the row's id (and created_at) is fixed at ASK time, not answer time.
+      //   - reply.body NOT LIKE the pending-placeholder text — a thread Hermes
+      //     hasn't answered YET must not badge (a bare ask ≠ an answer). Matches
+      //     activity-entry.ts's HERMES_PENDING_BODY = 'Thinking about this...
+      //     (AI response pending)' ("one literal, N consumers — do not reword
+      //     without updating all of them"; ai-requests.ts's placeholder lookup
+      //     uses the same LIKE-prefix convention rather than importing the
+      //     const, so this is consistent with existing practice, not a new one).
+      //   - the OWNERSHIP guard — THE WHOLE POINT, PRIVACY-CRITICAL:
+      //     root.visibility = 'author' AND root.actor_slug = viewer. A reply
+      //     inherits author-only visibility from its root (activity-entry.ts
+      //     postActivityEntry's parent-resolution block, and
+      //     activityVisibilityGate's rootColumn arm read the same way), so ONLY
+      //     the person who authored the private root may ever see Hermes's
+      //     answer to it — a different viewer gets zero rows, never a peek.
+      //     A TEAM-visible root's Hermes reply also inherits 'team' (not
+      //     'author'), so it is already picked up by the plain arm above; this
+      //     arm and that one are mutually exclusive by construction and are
+      //     never double-counted by the merge step below.
+      //   - both hidden_at guards (reply's AND root's) — hidden_at is a THREAD
+      //     property (root + every child share one value, updated together —
+      //     see activityHiddenClause's doc comment), so either alone is
+      //     logically sufficient; both are written so
+      //     scripts/check-activity-reads.mjs's guards-per-read count (2 reads:
+      //     FROM + JOIN) passes without leaning on that invariant forever.
+      //   - scoped to root.entity_type IN ('task','day') — the two surfaces
+      //     that currently render this badge (My-Tasks/task-row, and the Today
+      //     nav). A private @me Hermes ask under a project/artifact thread
+      //     wasn't badged by the old ai_requests arm either (it only ever
+      //     joined tasks) — unchanged scope, not a new gap.
       //
-      // Scoped to the ASKER. ai_requests has no visibility column, so requester
-      // identity is the only privacy model available; badging someone else's
-      // exchange would both leak it and be meaningless to them.
-      //
-      // LEFT JOIN, unlike the task/project arm's INNER JOIN: asking a question
-      // is itself intent to hear the answer, so a task you never opened still
-      // signals. The recency bound stops a cold start from resurrecting every
-      // answer ever given, mirroring the meetings never_seen arm.
+      // LEFT JOIN entity_seen, unlike the task/project arm's INNER JOIN: asking
+      // a question is itself intent to hear the answer, so a task/day you never
+      // opened still signals. The recency bound stops a cold start from
+      // resurrecting every private answer ever given, mirroring the meetings
+      // never_seen arm.
       env.DB.prepare(
-        `SELECT 'task' AS entity_type, ar.source_id AS entity_id,
+        `SELECT root.entity_type AS entity_type,
+                root.entity_id AS entity_id,
                 COUNT(*) AS new_count,
-                MAX(ar.responded_at) AS latest_at,
-                COALESCE(t.short_title, t.title) AS title,
+                MAX(reply.created_at) AS latest_at,
+                CASE WHEN root.entity_type = 'task'
+                     THEN COALESCE(t.short_title, t.title)
+                     ELSE NULL END AS title,
                 NULL AS project_slug
-         FROM ai_requests ar
-         JOIN tasks t ON t.id = ar.source_id AND t.deleted_at IS NULL
+         FROM activity_entries reply
+         JOIN activity_entries root
+           ON root.id = reply.parent_id
+          AND root.visibility = 'author'
+          AND root.actor_slug = ?
+          AND root.entity_type IN ('task', 'day')
+          AND root.hidden_at IS NULL
+         LEFT JOIN tasks t ON root.entity_type = 'task' AND t.id = root.entity_id
          LEFT JOIN entity_seen es
-           ON es.entity_type = 'task' AND es.entity_id = ar.source_id AND es.viewer_slug = ?
-         WHERE ar.source_type = 'daily_thought'
-           AND ar.status = 'completed'
-           AND ar.responded_at IS NOT NULL
-           AND (lower(ar.requested_by) = lower(?) OR lower(ar.requested_by) = lower(?))
-           AND ar.responded_at > datetime('now', ?)
-           AND (es.last_seen_at IS NULL OR ar.responded_at > es.last_seen_at)
-         GROUP BY ar.source_id
+           ON es.entity_type = root.entity_type AND es.entity_id = root.entity_id
+          AND es.viewer_slug = ?
+         WHERE reply.actor_slug = 'claude-ai'
+           AND reply.parent_id IS NOT NULL
+           AND reply.hidden_at IS NULL
+           AND reply.body NOT LIKE 'Thinking about this%'
+           AND (root.entity_type != 'task' OR t.deleted_at IS NULL)
+           AND reply.created_at > datetime('now', ?)
+           AND (es.last_seen_at IS NULL OR reply.created_at > es.last_seen_at)
+         GROUP BY root.entity_type, root.entity_id
          ORDER BY latest_at DESC`
       ).bind(
         viewer,
-        viewerEmail,
         viewer,
         `-${HERMES_UNSEEN_CAP_DAYS} days`,
       ).all(),
