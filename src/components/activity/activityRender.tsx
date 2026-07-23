@@ -600,21 +600,23 @@ function ActivityEntryWrapper({
   motionProps,
   style,
   className,
+  onClick,
   children,
 }: {
   motionProps?: object
   style?: React.CSSProperties
   className?: string
+  onClick?: (e: React.MouseEvent<HTMLDivElement>) => void
   children: ReactNode
 }) {
   if (motionProps) {
     return (
-      <motion.div {...(motionProps as object)} style={style} className={className}>
+      <motion.div {...(motionProps as object)} style={style} className={className} onClick={onClick}>
         {children}
       </motion.div>
     )
   }
-  return <div style={style} className={className}>{children}</div>
+  return <div style={style} className={className} onClick={onClick}>{children}</div>
 }
 
 export function ActivityEntryItem({
@@ -709,7 +711,32 @@ export function ActivityEntryItem({
     // colored child spans and fail AA (CLAUDE.md compound-opacity rule).
     ...(isHidden ? { borderLeft: '3px dashed var(--border-subtle)' } : {}),
     ...taskOriginStyle,
+    // §9.5.2 whole-card click affordance — only when there's a thread to open.
+    cursor: onToggleThread ? 'pointer' : undefined,
+    ...(onToggleThread ? ({ '--hov-bg': 'var(--hover-subtle)' } as React.CSSProperties) : {}),
   }
+
+  // ── Whole-card click toggles the thread (§9.5.2 progressive disclosure) ──
+  // onToggleThread is passed by ActivityThread ONLY on the root, and ONLY
+  // when replyCount > 0 — gating on its presence alone already gives us
+  // "root only" + "nothing to toggle when there are no replies" for free;
+  // no separate isReply/replyCount check needed. Reuses the SAME toggle
+  // (setExpanded) the "N replies" chevron already drives — one function,
+  // two triggers, not a forked handler.
+  const handleCardClick = onToggleThread
+    ? (e: React.MouseEvent<HTMLDivElement>) => {
+        // Bail on any interactive descendant — links, the Reply/edit/delete/
+        // dismiss buttons, reaction pills, the inline editor's textarea, etc.
+        // — so they keep working exactly as before. Read against the actual
+        // render tree here (activityRender.tsx + LinkifiedText, ReactionBar,
+        // HermesResponse): every interactive element in this card is a
+        // <button>, <a> (incl. react-router <Link>, which renders <a>), or
+        // (inside InlineCommentEditor) a <textarea>/<button> — no mention
+        // chips or custom role="button" elements exist in this tree today.
+        if ((e.target as HTMLElement).closest('button, a, input, textarea, select, [role="button"], [contenteditable]')) return
+        onToggleThread()
+      }
+    : undefined
 
   // ── Avatar dimension (matches sizeConfig in Avatar.tsx) ──────────────────
   const avatarDim = avatarSize === 'xs' ? 20 : 28
@@ -730,7 +757,12 @@ export function ActivityEntryItem({
   // ── Hermes: same skeleton, gold-ring card ────────────────────────────────
   if (isHermes) {
     return (
-      <ActivityEntryWrapper motionProps={motionProps} style={cardStyle} className="detail-card">
+      <ActivityEntryWrapper
+        motionProps={motionProps}
+        style={cardStyle}
+        className={onToggleThread ? 'detail-card hov-bg' : 'detail-card'}
+        onClick={handleCardClick}
+      >
         {/* Task-origin chip above the thread (project-feed only) */}
         {showTaskOriginBadge && isTask && taskHref && (
           <TaskOriginBadge
@@ -787,7 +819,12 @@ export function ActivityEntryItem({
   //
   // One unified skeleton.  The kind signals via barColor + nameBadge only.
   return (
-    <ActivityEntryWrapper motionProps={motionProps} style={cardStyle} className="detail-card">
+    <ActivityEntryWrapper
+      motionProps={motionProps}
+      style={cardStyle}
+      className={onToggleThread ? 'detail-card hov-bg' : 'detail-card'}
+      onClick={handleCardClick}
+    >
       {/* Task-origin chip above the thread (project-feed only) */}
       {showTaskOriginBadge && isTask && taskHref && (
         <TaskOriginBadge
