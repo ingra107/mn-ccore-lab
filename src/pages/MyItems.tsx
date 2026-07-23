@@ -653,8 +653,12 @@ export default function MyItems() {
   const { data: unseenActivity } = useUnseenActivity()
   // Meetings joined the unseen feed (T11) but this list has no meeting
   // open-handler and meetings surface their own NEW/teal on the meetings tab
-  // + TODAY rows — keep this list tasks/projects only.
-  const activityRows = (unseenActivity?.rows ?? []).filter((r) => r.entity_type !== 'meeting')
+  // + TODAY rows — keep this list tasks/projects only. 'day' rows (§9.5.1,
+  // Phase 9) are the same shape of exclusion: no open-handler here (title
+  // would fall back to the raw YYYY-MM-DD entity_id, and openActivityRow's
+  // task/project_slug branches both miss for a day row, so it would be a
+  // dead click) — Today's own nav badge (Sidebar) is that signal's surface.
+  const activityRows = (unseenActivity?.rows ?? []).filter((r) => r.entity_type !== 'meeting' && r.entity_type !== 'day')
   const taskById = useMemo(() => new Map(myOpenTasks.map((t: TaskRow) => [t.id, t])), [myOpenTasks])
   const openActivityRow = (r: { entity_type: string; entity_id: string; project_slug: string | null }) => {
     if (r.entity_type === 'task') {

@@ -10,9 +10,10 @@
 // (CLAUDE.md Rule 59). Click body = expand drawer; drag handle = plan;
 // 📂▶ Work = open project folder / launch Claude Code.
 
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
 import { useTasks, useProjects, useMeetingsApi, useExpiringRegulatory, useUserCalendarEvents, usePBSessionStats } from '../../hooks/useApiData'
 import { useAuth } from '../../hooks/useAuth'
+import { useMarkSeen } from '../../hooks/useEntitySeen'
 import { useProtocolLaunch } from '../../hooks/useProtocolLaunch'
 import { MNCCORE_PROCESS_URI, MNCCORE_QUICKCHAT_URI } from '../../lib/urlClassify'
 import { emailToSlug } from '../../lib/emailSlug'
@@ -70,6 +71,13 @@ export default function TodayPage() {
   // TP-16 (D19): focusMin reads from real PB pomodoro sessions instead of
   // the prior fake `plannedIds × 30` math. Returns 0 if no sessions today.
   const sessionStatsQuery = usePBSessionStats()
+
+  // §9.5.1 (Phase 9): mark the day itself seen when Today opens — mirrors
+  // ProjectDetail/MeetingDetail marking their own entity seen on mount.
+  // Drains the Sidebar's Today nav badge (unseen private Hermes answers on
+  // today's Today-bar thread, entity_type='day', CLAUDE.md Rule 80).
+  const markSeen = useMarkSeen()
+  useEffect(() => { markSeen('day', todayKey()) }, [markSeen])
 
   // Pending meeting-approval tasks are surfaced in PendingMeetingsCard (above the task groups)
   // and excluded from the regular task groups to prevent double-render.

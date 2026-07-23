@@ -7,19 +7,29 @@
 //                         activity by OTHERS since your last look (teal —
 //                         Rule 59: teal = communication/system, never gold).
 //
-// useUnseenActivity() → { tasks, projects } Maps keyed by entity id.
+// §9.5.1 (Phase 9): a THIRD entity_type, 'day' (the Today-bar conversation —
+// CLAUDE.md Rule 80), rides the same new_count shape as task/project. It is
+// NOT a meeting — route it to its own bucket, not the meetings fallback.
+// 'day' rows badge a private (@me) Hermes answer on the Today-bar thread
+// (Rule 59: gold = "...Hermes..."), read by Sidebar's Today nav item and
+// drained via useMarkSeen('day', todayKey()) when Today opens (TodayPage).
+//
+// useUnseenActivity() → { tasks, projects, meetings, days } Maps keyed by
+// entity id ('day' rows are keyed by their YYYY-MM-DD entity_id).
 // useMarkSeen()       → fire-and-forget POST /api/seen; invalidates the maps.
 // Detail surfaces call markSeen on open (tasks: inside useTaskViewTracking;
-// projects: ProjectDetail mount), so looking at the thing IS the mark.
+// projects: ProjectDetail mount; day: TodayPage mount), so looking at the
+// thing IS the mark.
 
 import { useCallback } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { isMeetingUnseenWithinCap } from '../lib/seen'
 
 export interface UnseenActivityRow {
-  entity_type: 'task' | 'project' | 'meeting'
+  entity_type: 'task' | 'project' | 'meeting' | 'day'
   entity_id: string
-  /** task/project rows only — count of new activity_entries since last seen. */
+  /** task/project/day rows — count of new activity_entries since last seen
+   *  (day: unseen Hermes replies on that date's private thread). */
   new_count: number
   latest_at: string
   title: string | null
@@ -35,10 +45,12 @@ export interface UnseenActivityMaps {
   tasks: Map<string, UnseenActivityRow>
   projects: Map<string, UnseenActivityRow>
   meetings: Map<string, UnseenActivityRow>
+  /** §9.5.1 — keyed by civil-date entity_id (YYYY-MM-DD), not by row id. */
+  days: Map<string, UnseenActivityRow>
   rows: UnseenActivityRow[]
 }
 
-const EMPTY: UnseenActivityMaps = { tasks: new Map(), projects: new Map(), meetings: new Map(), rows: [] }
+const EMPTY: UnseenActivityMaps = { tasks: new Map(), projects: new Map(), meetings: new Map(), days: new Map(), rows: [] }
 
 export function useUnseenActivity() {
   return useQuery<UnseenActivityMaps>({
@@ -59,11 +71,17 @@ export function useUnseenActivity() {
       const tasks = new Map<string, UnseenActivityRow>()
       const projects = new Map<string, UnseenActivityRow>()
       const meetings = new Map<string, UnseenActivityRow>()
+      const days = new Map<string, UnseenActivityRow>()
       for (const r of rows) {
-        const target = r.entity_type === 'task' ? tasks : r.entity_type === 'project' ? projects : meetings
+        // 'day' is its own bucket — NOT the meetings fallback (the pre-§9.5.1
+        // router had only 3 arms, so a 'day' row silently mis-routed there).
+        const target = r.entity_type === 'task' ? tasks
+          : r.entity_type === 'project' ? projects
+          : r.entity_type === 'day' ? days
+          : meetings
         target.set(r.entity_id, r)
       }
-      return { tasks, projects, meetings, rows }
+      return { tasks, projects, meetings, days, rows }
     },
     staleTime: 30 * 1000,
     refetchOnWindowFocus: true,
@@ -72,7 +90,7 @@ export function useUnseenActivity() {
 
 export function useMarkSeen() {
   const queryClient = useQueryClient()
-  return useCallback((entityType: 'task' | 'project' | 'meeting', entityId: string) => {
+  return useCallback((entityType: 'task' | 'project' | 'meeting' | 'day', entityId: string) => {
     fetch('/api/seen', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

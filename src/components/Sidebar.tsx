@@ -35,6 +35,7 @@ import { useDarkMode } from '../hooks/useDarkMode'
 import NotificationBell from './NotificationBell'
 import { useNextMeeting } from '../hooks/useApiData'
 import { useUnseenActivity } from '../hooks/useEntitySeen'
+import { todayKey } from '../lib/taskGrouping'
 import { PATHS } from '../constants/paths'
 import Avatar from './Avatar'
 import { getPersonInfo } from '../data/team'
@@ -171,6 +172,10 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
   // so this no longer needs its own ['meetings'] list fetch just to count.
   const { data: unseen } = useUnseenActivity()
   const newMeetingsCount = unseen?.meetings.size ?? 0
+  // §9.5.1 — Today nav badge: unseen private Hermes answers on today's
+  // Today-bar thread (entity_type='day', keyed by civil date). Drains via
+  // useMarkSeen('day', todayKey()) when TodayPage mounts (Rule 73 honesty).
+  const dayUnseen = unseen?.days.get(todayKey())?.new_count ?? 0
   const nextMeetingLabel = useMemo(() => {
     if (!nextMeeting?.date) return null
     const now = new Date()
@@ -219,6 +224,21 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
   const navWithBadges = useMemo(() => allGroups.map(group => ({
     ...group,
     items: group.items.map(item => {
+      // §9.5.1 — Today badge: gold (Rule 59: gold = "...Hermes...") matches
+      // the My Tasks/Meetings unseen idiom below. Row already navigates to
+      // Today (PATHS.dashboard), so no separate badgeAction — visiting the
+      // page + TodayPage's markSeen('day', ...) drains it, same shape as
+      // ProjectDetail/MeetingDetail's own mark-seen-on-open.
+      if (item.to === PATHS.dashboard && dayUnseen > 0)
+        return {
+          ...item,
+          badge: dayUnseen,
+          badgeStyle: {
+            bg: 'var(--gold)',
+            color: '#1a1a1a',
+            title: `${dayUnseen} Hermes ${dayUnseen === 1 ? 'answer' : 'answers'} on Today`,
+          },
+        }
       if (item.to === PATHS.myTasks && myUnseen > 0)
         return {
           ...item,
@@ -256,7 +276,7 @@ export default function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProp
       }
       return item
     }),
-  })), [allGroups, myUnseen, nextMeetingLabel, newMeetingsCount])
+  })), [allGroups, myUnseen, nextMeetingLabel, newMeetingsCount, dayUnseen])
 
   const isActive = (path: string) => {
     if (path === PATHS.dashboard) return location.pathname === PATHS.dashboard
