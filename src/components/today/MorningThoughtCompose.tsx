@@ -30,6 +30,7 @@ import { useIsMobile } from '../../hooks/useIsMobile'
 import { localDateKey } from '../../lib/dateUtils'
 import { useLaunchCommands } from '../../hooks/useLaunchCommands'
 import { isBacklogPrefix, stripBacklogPrefix, isHermesPrefix } from '../../lib/hermesRouting'
+import { askHermesOnDay, dayActivityQueryKey, hermesOutcomeToast } from '../../lib/askHermes'
 
 const DEFAULT_GROUP_OVERRIDE = 'priorities'
 
@@ -110,28 +111,21 @@ export function MorningThoughtCompose() {
     // — stripping it (as the old ai-requests lane did) is a silent "no Hermes"
     // (§3.4 inversion). Day threads default PRIVATE server-side.
     if (isHermesPrefix(content)) {
-      try {
-        const res = await fetch(`/api/days/${todayKey()}/activity`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ content }),
-        })
-        if (!res.ok) throw new Error(`/api/days ${res.status}`)
+      const result = await askHermesOnDay(content)
+      if (result.ok) {
         appendDailyThought(content, 'hermes')
         // Surface the new thread + its Thinking… placeholder immediately.
-        queryClient.invalidateQueries({ queryKey: ['day-activity', todayKey()] })
-        const out = await res.json().catch(() => ({})) as { hermes?: { dispatched: boolean; reason?: string } }
-        if (out.hermes && !out.hermes.dispatched) {
-          undoToast.showInfo(out.hermes.reason === 'empty'
-            ? 'Saved privately — add a question for Hermes'
-            : 'Saved privately, but Hermes could not be reached — try again')
-        } else {
-          undoToast.showSuccess('Asked Hermes')
-        }
-      } catch (err) {
-        console.error('Morning thought → Hermes failed:', err)
-        undoToast.showError(`Sending to Hermes failed: ${err instanceof Error ? err.message : 'please try again.'}`)
+        queryClient.invalidateQueries({ queryKey: dayActivityQueryKey() })
+      } else {
+        console.error('Morning thought → Hermes failed:', result.error)
       }
+      const toast = hermesOutcomeToast(result)
+      const show = {
+        success: undoToast.showSuccess,
+        info: undoToast.showInfo,
+        error: undoToast.showError,
+      }[toast.kind]
+      show(toast.text)
       return
     }
 

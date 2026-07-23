@@ -1130,11 +1130,32 @@ Phase 9 above badges the Today/day bar. Nick wants the parallel for tasks, and o
   (`e.target.closest('button, a, input, textarea, [role="button"]')`) so links / the Reply button /
   edit-delete / mention chips still work. Follows the `hub-row-click-interactive-cells` pattern. Root
   only (not replies). Small, but the interactive-guard is the part to get right — do it as its own change.
-- **CLEANUP (from `/simplify`, low-pri):** the hermes-outcome → toast block (`out.hermes && !dispatched
+- **CLEANUP (from `/simplify`, low-pri) — DONE 2026-07-23.** Extracted to `hermesOutcomeToast()` in
+  `src/lib/askHermes.ts`; the verb is the only parameter, and all five surfaces now call it. Phase 11
+  forced the issue: wiring the Ctrl+I capture box would have made it a fifth copy. Copy pinned by
+  `src/lib/__tests__/askHermes.test.ts` (9 tests) so the extraction is provably behavior-identical.
+  Original finding: the hermes-outcome → toast block (`out.hermes && !dispatched
   ? showInfo(reason==='empty' ? … : …) : showSuccess('Asked Hermes')`) is copied in all three composers
   (SmartCompose, TaskDetailPanel, MorningThoughtCompose) — 3rd copy = extract. A `hermesOutcomeToast(...)`
   helper would centralize it; the only variation is the verb ("Posted" for tasks / "Saved" for the day
   bar). Deferred — cross-file + cosmetic, not worth a re-deploy at close.
+
+### Phase 11 (2026-07-23) — the Ctrl+I capture box could not hear @hermes
+
+Nick typed `@hermes add to the backlog …` into the Ctrl+I Quick Capture sheet; it filed an untriaged
+`inbox_events` row and never reached Hermes. Not a regression — `QuickCaptureInbox` posts to
+`/api/inbox-events/sync-bulk`, which has no Hermes handling on either side, and Phase 8 had wired the
+prefix into the OTHER capture box (`GlobalQuickAddModal`, opened with `q`). An earlier ask the same day
+("what time is my CLIF meeting today") died the same silent way.
+
+Fix: `src/lib/askHermes.ts` — one `askHermesOnDay()` that every day-feed surface calls, so a new capture
+box gets the behavior by calling a function rather than by remembering to reimplement the block.
+`QuickCaptureInbox` now routes a typed prefix there (sheet stays open on failure so the text isn't lost)
+and its placeholder advertises `@hermes`.
+
+**Residual (not fixed):** the server side of `/api/inbox-events/sync-bulk` still ignores `@hermes`, so a
+capture arriving from the mobile PWA — which does not run this client code — still dies silently. Tracked
+as PB backlog #907.
 
 ### 9.6 Wave 1, shipped separately — the `@workon` class fix
 

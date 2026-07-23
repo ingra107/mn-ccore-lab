@@ -1,8 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { createPortal } from 'react-dom'
 import { Inbox, X, Send } from 'lucide-react'
 import { useProjects } from '../hooks/useApiData'
 import { useUndoToast } from './UndoToast'
+import { isHermesPrefix } from '../lib/hermesRouting'
+import { askHermesOnDay, dayActivityQueryKey, hermesOutcomeToast } from '../lib/askHermes'
 import InlineSelect from './InlineSelect'
 import { nowInstant } from '../lib/time'
 import { ICON_PROPS } from '../lib/iconProps'
@@ -25,6 +28,11 @@ const TAGS: { value: InboxTag; label: string }[] = [
  * a sheet that captures freeform text with a tag + optional project association
  * and files it to the `inbox` table. The Peripheral Brain pull script turns
  * each row into a markdown file in `Peripheral-Brain/Inbox/` overnight.
+ *
+ * EXCEPT a typed `@hermes …` prefix, which is a question rather than a note: it
+ * routes to the day feed via askHermesOnDay() instead of filing an inbox event.
+ * See src/lib/askHermes.ts for why (2026-07-23 — this was the one capture box
+ * Hermes could not hear, and it failed silently).
  */
 export default function QuickCaptureInbox() {
   const [open, setOpen] = useState(false)
@@ -37,7 +45,8 @@ export default function QuickCaptureInbox() {
   const previousFocusRef = useRef<HTMLElement | null>(null)
   const eventIdRef = useRef<string | null>(null)
   const { data: projects } = useProjects(undefined, { enabled: open })
-  const { showSuccess, showError } = useUndoToast()
+  const { showSuccess, showInfo, showError } = useUndoToast()
+  const queryClient = useQueryClient()
 
   const close = useCallback(() => {
     setOpen(false)
@@ -110,6 +119,34 @@ export default function QuickCaptureInbox() {
   const submit = useCallback(async () => {
     const trimmed = text.trim()
     if (!trimmed || submitting) return
+
+    // Route 0 — a typed @hermes prefix is a QUESTION, not a note to file. Send it
+    // to the day feed (same lane as the `q` quick-add and the Today bar) instead
+    // of burying it in inbox_events, which has no Hermes handling on either side.
+    // Nick typed `@hermes …` here twice on 2026-07-23 and both asks sat untriaged
+    // with no error — the box gave no hint that it was the one capture surface
+    // Hermes could not hear. The tag + project selectors are inbox-only concepts,
+    // so the prefix simply wins over them.
+    if (isHermesPrefix(trimmed)) {
+      setSubmitting(true)
+      const result = await askHermesOnDay(trimmed)
+      if (result.ok) {
+        setText('')
+        setProjectId('')
+        eventIdRef.current = null
+        queryClient.invalidateQueries({ queryKey: dayActivityQueryKey() })
+      } else {
+        console.error('Quick capture → Hermes failed:', result.error)
+      }
+      const toast = hermesOutcomeToast(result)
+      const show = { success: showSuccess, info: showInfo, error: showError }[toast.kind]
+      show(toast.text)
+      setSubmitting(false)
+      // Keep the sheet open on failure so the text isn't lost.
+      if (result.ok) close()
+      return
+    }
+
     setSubmitting(true)
     try {
       const now = nowInstant()
@@ -145,7 +182,7 @@ export default function QuickCaptureInbox() {
       setSubmitting(false)
       showError('Failed to save — retry')
     }
-  }, [text, tag, projectId, submitting, showSuccess, showError, close])
+  }, [text, tag, projectId, submitting, showSuccess, showInfo, showError, queryClient, close])
 
   const onTextareaKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
@@ -241,7 +278,7 @@ export default function QuickCaptureInbox() {
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={onTextareaKeyDown}
-          placeholder="What's on your mind? (Ctrl+Enter to save)"
+          placeholder="What's on your mind? (Ctrl+Enter to save, or @hermes to ask)"
           rows={3}
           style={{
             width: '100%',

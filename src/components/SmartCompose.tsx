@@ -31,6 +31,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { usePostTaskUpdate } from '../hooks/useMutations'
 import { useLaunchCommands, taskLaunchContext, type LaunchCommandContext } from '../hooks/useLaunchCommands'
 import { isHermesPrefix } from '../lib/hermesRouting'
+import { hermesOutcomeToast, type HermesDispatch } from '../lib/askHermes'
 import { useUndoToast } from './UndoToast'
 import { ICON_PROPS } from '../lib/iconProps'
 import { withAlpha } from '../lib/taskGrouping'
@@ -279,14 +280,11 @@ export default function SmartCompose(props: SmartComposeProps) {
         if (!res.ok) throw new Error(`/api/tasks comment ${res.status}`)
         setVal('')
         queryClient.invalidateQueries({ queryKey: ['task-activity', taskId] })
-        const out = await res.json().catch(() => ({})) as { hermes?: { dispatched: boolean; reason?: string } }
-        if (out.hermes && !out.hermes.dispatched) {
-          undoToast.showInfo(out.hermes.reason === 'empty'
-            ? 'Posted privately — add a question for Hermes'
-            : 'Posted privately, but Hermes could not be reached — try again')
-        } else {
-          undoToast.showSuccess('Asked Hermes')
-        }
+        const out = await res.json().catch(() => ({})) as { hermes?: HermesDispatch }
+        // Shared copy (src/lib/askHermes.ts) — the POST differs from the day feed's,
+        // the outcome wording does not. `ok: true` by construction: a non-2xx threw above.
+        const toast = hermesOutcomeToast({ ok: true, hermes: out.hermes }, 'Posted')
+        ;(toast.kind === 'info' ? undoToast.showInfo : undoToast.showSuccess)(toast.text)
       } catch (err) {
         console.error('@hermes from task compose failed:', err)
         undoToast.showError('@hermes failed — your message is still here, try again')

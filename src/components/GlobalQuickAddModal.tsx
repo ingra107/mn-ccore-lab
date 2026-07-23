@@ -27,8 +27,9 @@ import { useAuth } from '../hooks/useAuth'
 import { emailToSlug } from '../lib/emailSlug'
 import { isEditableTarget } from '../lib/editableTarget'
 import { ICON_PROPS } from '../lib/iconProps'
-import { ACCENT_GOLD, withAlpha, todayKey } from '../lib/taskGrouping'
+import { ACCENT_GOLD, withAlpha } from '../lib/taskGrouping'
 import { isHermesPrefix } from '../lib/hermesRouting'
+import { askHermesOnDay, dayActivityQueryKey, hermesOutcomeToast } from '../lib/askHermes'
 
 // ── Token hint pill ──────────────────────────────────────────
 
@@ -89,26 +90,16 @@ function GlobalQuickAddModal({ isOpen, onClose }: Props) {
     // on the stored comment text.
     const content = value.trim()
     if (isHermesPrefix(content)) {
-      try {
-        const res = await fetch(`/api/days/${todayKey()}/activity`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ content }),
-        })
-        if (!res.ok) throw new Error(`/api/days ${res.status}`)
-        queryClient.invalidateQueries({ queryKey: ['day-activity', todayKey()] })
-        const out = await res.json().catch(() => ({})) as { hermes?: { dispatched: boolean; reason?: string } }
-        if (out.hermes && !out.hermes.dispatched) {
-          showInfo(out.hermes.reason === 'empty'
-            ? 'Saved privately — add a question for Hermes'
-            : 'Saved privately, but Hermes could not be reached — try again')
-        } else {
-          showSuccess('Asked Hermes')
-        }
-      } catch (err) {
-        console.error('Quick add → Hermes failed:', err)
-        showError(`Sending to Hermes failed: ${err instanceof Error ? err.message : 'please try again.'}`)
+      const result = await askHermesOnDay(content)
+      if (result.ok) {
+        // Surface the new thread + its Thinking… placeholder immediately.
+        queryClient.invalidateQueries({ queryKey: dayActivityQueryKey() })
+      } else {
+        console.error('Quick add → Hermes failed:', result.error)
       }
+      const toast = hermesOutcomeToast(result)
+      const show = { success: showSuccess, info: showInfo, error: showError }[toast.kind]
+      show(toast.text)
       setValue('')
       onClose()
       return

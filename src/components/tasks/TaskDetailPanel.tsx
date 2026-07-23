@@ -50,6 +50,7 @@ import { TaskActivityFeed } from './detail/TaskActivityFeed'
 import TaskIntelligence from './detail/TaskIntelligence'
 import KeyLinksEditor from '../KeyLinksEditor'
 import { isHermesPrefix, isBacklogPrefix, stripBacklogPrefix } from '../../lib/hermesRouting'
+import { hermesOutcomeToast, type HermesDispatch } from '../../lib/askHermes'
 import { displayRank } from '../../lib/pbLinkDisplayOrder.generated'
 import { Brain } from 'lucide-react'
 
@@ -1605,20 +1606,17 @@ function OverviewQuickAdd({
       })
         .then(async (res) => {
           if (!res.ok) throw new Error(`/api/tasks comment ${res.status}`)
-          return (await res.json().catch(() => ({}))) as { hermes?: { dispatched: boolean; reason?: string } }
+          return (await res.json().catch(() => ({}))) as { hermes?: HermesDispatch }
         })
         .then((out) => {
           reset()
           queryClient.invalidateQueries({ queryKey: ['task-comments', taskId] })
           queryClient.invalidateQueries({ queryKey: ['task-activity', taskId] })
           queryClient.invalidateQueries({ queryKey: ['activity'] })
-          if (out.hermes && !out.hermes.dispatched) {
-            showInfo(out.hermes.reason === 'empty'
-              ? 'Posted privately — add a question for Hermes'
-              : 'Posted privately, but Hermes could not be reached — try again')
-          } else {
-            showSuccess('Asked Hermes')
-          }
+          // Shared copy (src/lib/askHermes.ts). `ok: true` by construction — a
+          // non-2xx threw in the step above and lands in .catch().
+          const toast = hermesOutcomeToast({ ok: true, hermes: out.hermes }, 'Posted')
+          ;(toast.kind === 'info' ? showInfo : showSuccess)(toast.text)
         })
         .catch((e) => {
           console.error('@hermes from task comment failed:', e)
