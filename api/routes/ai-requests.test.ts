@@ -7,7 +7,11 @@
  *   - visibility inheritance from the triggering entry (author-only @me case)
  *   - placeholder resolution: UPDATE body in-place when placeholder exists
  *   - fallback INSERT when placeholder is missing
- *   - non-comment source_types (e.g. 'direct') do NOT write to timeline
+ *   - self-gating (Hermes wave Phase 3): the source_type allowlist is GONE — the
+ *     writeback fires iff source_id resolves to an activity_entries row, so a
+ *     source_id that doesn't (a legacy daily_thought task/date key, 'direct',
+ *     a deleted entry) does NOT write, and routing is by the entry's OWN
+ *     entity_type (a 'day' ask threads its answer back correctly)
  *   - failed status does NOT write to timeline
  *   - submitter notifications: INSERT on every completion, idempotent, correct link
  */
@@ -224,10 +228,13 @@ describe('handleUpdateAIResponse — T4 Hermes response lane', () => {
     expect(mockPostActivity.mock.calls[0][0].visibility).toBe('team');
   });
 
-  // ── Non-comment source_types do NOT write to timeline ────────────────────────
+  // ── Self-gating: source_id that doesn't resolve → no timeline write ──────────
+  // (Phase 3 removed the source_type allowlist; the trigEntry lookup IS the gate.)
 
-  it('does not write to timeline for source_type="direct" (non-comment)', async () => {
+  it('does not write to timeline when source_id does not resolve to an activity_entries row', async () => {
     const db = makeDb({
+      // 'direct' stands in for any source whose source_id isn't an activity_entries
+      // id — also a legacy daily_thought task/date key, or a deleted entry.
       aiReq: { id: 'ai-7', source_type: 'direct', source_id: 'some-id', project_slug: null },
       trigEntry: null,
       placeholder: null,
@@ -238,6 +245,27 @@ describe('handleUpdateAIResponse — T4 Hermes response lane', () => {
 
     expect(res.status).toBe(200);
     expect(mockPostActivity).not.toHaveBeenCalled();
+  });
+
+  it('daily_thought (day ask) WRITES the answer back, routed by the entry\'s own entity_type', async () => {
+    // The positive control for the allowlist removal: source_type='daily_thought'
+    // was NOT in the old allowlist, so a day ask's answer would never have
+    // threaded back. Now it does — because source_id resolves to a 'day'
+    // activity_entries row and the placeholder UPDATE fires on it.
+    const updates: Array<{ sql: string; binds: unknown[] }> = [];
+    const db = makeDb({
+      aiReq: { id: 'ai-day', source_type: 'daily_thought', source_id: 'ae-day-root', project_slug: null },
+      trigEntry: { entity_id: '2026-07-22', entity_type: 'day', visibility: 'author', parent_id: null, id: 'ae-day-root' },
+      placeholder: { id: 'ae-day-ph' },
+      captureUpdate: (sql, binds) => updates.push({ sql, binds }),
+    });
+    const env = { DB: db } as unknown as Env;
+
+    const res = await handleUpdateAIResponse('ai-day', makeRequest({ response: 'Focus on the grant today.' }), env);
+    expect(res.status).toBe(200);
+    const phUpdate = updates.find(u => /UPDATE activity_entries SET body/.test(u.sql) && u.binds.includes('ae-day-ph'));
+    expect(phUpdate).toBeDefined();
+    expect(phUpdate!.binds[0]).toBe('Focus on the grant today.');
   });
 
   // ── status='failed' does NOT write to timeline ────────────────────────────────

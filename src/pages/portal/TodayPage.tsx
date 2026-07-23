@@ -43,7 +43,7 @@ import { TodayDndContext } from '../../components/today/TodayDndContext'
 import { PlannedTodaySection } from '../../components/today/PlannedTodaySection'
 import { TaskGroup } from '../../components/today/TaskGroup'
 import { MorningThoughtCompose } from '../../components/today/MorningThoughtCompose'
-import { HermesThoughtReplies } from '../../components/today/HermesThoughtReplies'
+import { DayActivityFeed } from '../../components/today/DayActivityFeed'
 import { PomodoroControl } from '../../components/today/PomodoroControl'
 import { HermesSuggestsCard } from '../../components/today/rail/HermesSuggestsCard'
 import { NeedsAttentionCard } from '../../components/today/rail/NeedsAttentionCard'
@@ -491,8 +491,9 @@ export default function TodayPage() {
           </div>
         </div>
 
-        {/* Hermes replies to @hermes daily_thought prompts (TP-A1: previously rendered nowhere) */}
-        <HermesThoughtReplies dateKey={todayKey()} />
+        {/* Today's conversations — @hermes asks become real threads you can reply
+            to (Hermes wave Phase 3). Replaces the flat daily_thought reply cards. */}
+        <DayActivityFeed dateKey={todayKey()} />
 
         {/* #495/#507: these queries used to swallow fetch failures as empty
             data, so a backend outage rendered identically to "nothing due

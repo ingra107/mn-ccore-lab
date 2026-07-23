@@ -18,6 +18,7 @@
 // existing PANEL_BG container styling on TodayPage stays intact.
 
 import { useCallback, useMemo, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import SmartCompose from '../SmartCompose'
 import { useAuth } from '../../hooks/useAuth'
 import { emailToSlug } from '../../lib/emailSlug'
@@ -28,7 +29,7 @@ import { nowInstant } from '../../lib/time'
 import { useIsMobile } from '../../hooks/useIsMobile'
 import { localDateKey } from '../../lib/dateUtils'
 import { useLaunchCommands } from '../../hooks/useLaunchCommands'
-import { isBacklogPrefix, stripBacklogPrefix, isHermesPrefix, stripHermesPrefix } from '../../lib/hermesRouting'
+import { isBacklogPrefix, stripBacklogPrefix, isHermesPrefix } from '../../lib/hermesRouting'
 
 const DEFAULT_GROUP_OVERRIDE = 'priorities'
 
@@ -56,6 +57,7 @@ export function MorningThoughtCompose() {
   const userSlug = emailToSlug(user?.email)
   const createTask = useCreateTask()
   const undoToast = useUndoToast()
+  const queryClient = useQueryClient()
   const { tryLaunchCommandAwaited } = useLaunchCommands()
   const [forceHome, setForceHome] = useState(false)
 
@@ -101,22 +103,24 @@ export function MorningThoughtCompose() {
       return
     }
 
-    // Route 1 — @hermes prefix
+    // Route 1 — @hermes prefix → a `day` conversation (Hermes wave Phase 3).
+    // Posts to the unified day feed so the ask becomes a real thread you can reply
+    // to, rendered inline by DayActivityFeed. ⚠️ KEEP the @hermes token in the
+    // body: the stored comment body is what the server's HERMES_DETECT_RE fires on
+    // — stripping it (as the old ai-requests lane did) is a silent "no Hermes"
+    // (§3.4 inversion). Day threads default PRIVATE server-side.
     if (isHermesPrefix(content)) {
-      const prompt = stripHermesPrefix(content)
       try {
-        const res = await fetch('/api/ai-requests', {
+        const res = await fetch(`/api/days/${todayKey()}/activity`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            source_type: 'daily_thought',
-            source_id: todayKey(),
-            prompt,
-          }),
+          body: JSON.stringify({ content }),
         })
-        if (!res.ok) throw new Error(`/api/ai-requests ${res.status}`)
+        if (!res.ok) throw new Error(`/api/days ${res.status}`)
         appendDailyThought(content, 'hermes')
-        undoToast.showSuccess('Sent to Hermes')
+        // Surface the new thread + its Thinking… placeholder immediately.
+        queryClient.invalidateQueries({ queryKey: ['day-activity', todayKey()] })
+        undoToast.showSuccess('Asked Hermes')
       } catch (err) {
         console.error('Morning thought → Hermes failed:', err)
         undoToast.showError(`Sending to Hermes failed: ${err instanceof Error ? err.message : 'please try again.'}`)
@@ -199,7 +203,7 @@ export function MorningThoughtCompose() {
         },
       })
     })
-  }, [userSlug, isEvening, createTask, undoToast, tryLaunchCommandAwaited, forceHome])
+  }, [userSlug, isEvening, createTask, undoToast, tryLaunchCommandAwaited, forceHome, queryClient])
 
   return (
     <>
