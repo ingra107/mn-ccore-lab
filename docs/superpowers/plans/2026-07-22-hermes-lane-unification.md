@@ -804,6 +804,18 @@ Independent of the hide work; touches only new surface.
 > 2. **The 24h dogfood is NOT needed.** Live check 2026-07-23: **zero pending `ai_requests`** anywhere,
 >    the 16 old `daily_thought` rows are already backfilled (Phase 4), and Nick confirmed the new path
 >    works in the UI. Nothing in-flight → nothing for the window to protect. Delete when ready.
+> 3. **CORRECTED AGAIN 2026-07-23 PM — the `seen.ts` Hermes-arm deletion is COUPLED to Phase 9 / §9.5.1;
+>    do NOT delete it as a bare cleanup.** Re-verification found the "delete outright" bullet's premise is
+>    WRONG: it claims the plain task/project arm (`seen.ts:94-116`) "already badges" the new Hermes answer.
+>    It does NOT — that arm filters `ae.visibility = 'team'` (`seen.ts:105`), and a Phase-5 Hermes exchange
+>    is written `visibility='author'` (private, owner decision A). So **no arm badges the new private Hermes
+>    answers today** — a latent gap Phase 9/§9.5.1 must close with an author-requester-scoped
+>    `activity_entries` arm (gate on the `claude-ai` reply, not the root). The old `ai_requests`-reading
+>    Hermes arm now only badges the frozen 16 backfilled rows (aging out ≤30d). Correct move: build the new
+>    author-scoped arm and DELETE the old `ai_requests` arm in the SAME change — replace, don't bare-delete.
+>    **Split executed 2026-07-23 PM:** the 3 components + 4 hook exports + 3 mount sites + `stripHermesPrefix`
+>    + stale comments were deleted (fully decoupled, verified 0-caller); the `seen.ts` arm is DEFERRED to ship
+>    with Phase 9/§9.5.1.
 >
 > **Deletion is data-safe now, but it is still an ~8-file substrate swap** (3 reader files + hooks +
 > 3 mount sites + the `seen.ts` arm). Run it through `/substrate-swap` in a fresh session (twin-file

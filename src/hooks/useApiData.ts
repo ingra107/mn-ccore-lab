@@ -1685,57 +1685,6 @@ export function useInsightSuggestions(projectId: string) {
   })
 }
 
-// ── Daily-Thought Hermes Replies ────────────────────────────
-
-export interface DailyThoughtReply {
-  id: string
-  prompt: string
-  response: string | null
-  status: string  // 'pending' | 'completed' | other backend values
-  responded_at: string | null
-  created_at: string
-}
-
-/** Shared query for @hermes ai_requests keyed by (source_type, source_id).
- *  Both the date-keyed Today reader and the task-id-keyed task reader (#519)
- *  drive off this one query+polling contract so they cannot drift.
- *  `keyTag` disambiguates the TanStack cache namespace per surface. */
-function useAiRequestReplies(sourceType: string, sourceId: string, keyTag: string) {
-  return useQuery({
-    queryKey: ['ai-requests', keyTag, sourceId],
-    queryFn: async (): Promise<DailyThoughtReply[]> => {
-      const params = new URLSearchParams({
-        source_type: sourceType,
-        source_id: sourceId,
-      })
-      const data = await fetchJson<{ data?: DailyThoughtReply[] }>(`/api/ai-requests?${params}`)
-      return data.data ?? []
-    },
-    staleTime: 30 * 1000,
-    // Poll every 10 s while any item is still pending so Thinking… resolves promptly.
-    refetchInterval: (query) => {
-      const rows = query.state.data
-      if (!rows || rows.length === 0) return false
-      return rows.some((r) => r.status !== 'completed') ? 10 * 1000 : false
-    },
-    enabled: !!sourceId,
-  })
-}
-
-/** Fetch today's @hermes daily_thought ai_requests (all statuses) so the
- *  Today page can show pending ("Thinking…") and completed replies. */
-export function useDailyThoughtReplies(dateKey: string) {
-  return useAiRequestReplies('daily_thought', dateKey, 'daily_thought')
-}
-
-/** Fetch a task's @hermes ai_requests so a task detail surface can show the
- *  request+response thread (#519). Task compose surfaces post @hermes with
- *  source_type='daily_thought', source_id=<task_id> (the shape TaskDetailPanel
- *  already writes) — a task_id source_id never collides with a date-key one. */
-export function useTaskHermesReplies(taskId: string) {
-  return useAiRequestReplies('daily_thought', taskId, 'task_hermes')
-}
-
 // ── Paper-to-Project linking (enriched) ─────────────────────
 
 interface LinkedProject {

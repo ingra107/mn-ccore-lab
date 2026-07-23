@@ -147,16 +147,6 @@ export default function MarkdownView({ source, className, style }: Props) {
         // a prose token. --text-md (16px — "body paragraphs, descriptions",
         // index.css) is the scale's own documented match for this
         // component's long-form use (Hermes Artifacts, meeting notes).
-        //
-        // KNOWN CALLER MIGRATION: HermesReplyList.tsx wraps this component
-        // in `<div style={{'--value-size': '13px'}}>` specifically to reach
-        // in and shrink this fontSize (its own comment: "MarkdownView only
-        // accepts source + className; style must be on a parent"). Since
-        // this no longer reads --value-size, that wrapper is now a no-op —
-        // Hermes replies will render at the new 16px default like every
-        // other caller until that file is migrated to `style={{ fontSize:
-        // 'var(--value-size)' }}` on this component directly (now
-        // supported) and its wrapper div removed.
         fontSize: 'var(--text-md, 16px)',
         ...style,
       }}

@@ -47,7 +47,6 @@ import { TaskDependenciesSection } from './detail/TaskDependencies'
 import { SubtaskSection } from './detail/SubtaskSection'
 import { HandoffSection } from './detail/HandoffSection'
 import { TaskActivityFeed } from './detail/TaskActivityFeed'
-import { TaskHermesReplies } from './TaskHermesReplies'
 import TaskIntelligence from './detail/TaskIntelligence'
 import KeyLinksEditor from '../KeyLinksEditor'
 import { isHermesPrefix, isBacklogPrefix, stripBacklogPrefix } from '../../lib/hermesRouting'
@@ -607,10 +606,6 @@ export default function TaskDetailPanel({ task: taskProp, onClose, onPrev, onNex
               />
             </div>
           )}
-          {/* #519 — task-scoped Hermes round-trip: a typed @hermes above posts an
-              ai_request keyed by this task; this reader shows the reply (polls
-              until the listener answers). Renders nothing until there's a reply. */}
-          <TaskHermesReplies taskId={task.id} style={{ marginTop: 'var(--sp-sm)', marginBottom: 0 }} />
         </div>
 
         {/* Tab Bar — sits below the composer card with its own border-b. */}
@@ -1602,7 +1597,7 @@ function OverviewQuickAdd({
       // answers IN-THREAD (source_type='task_comment'); the answer inherits
       // visibility='author'. KEEP the token: stripping is a silent "no Hermes"
       // (§3.4 inversion). Was: POST /api/ai-requests source_type='daily_thought',
-      // read back by the now-orphaned TaskHermesReplies (deleted in Phase 6).
+      // read via TaskActivityFeed's activity_entries thread (Phase 3-6 migration).
       fetch(`/api/tasks/${taskId}/comments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

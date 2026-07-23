@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { isHermesPrefix, stripHermesPrefix, isBacklogPrefix, stripBacklogPrefix } from '../hermesRouting'
+import { isHermesPrefix, isBacklogPrefix, stripBacklogPrefix } from '../hermesRouting'
 
 describe('isHermesPrefix', () => {
   it('matches the @hermes command prefix', () => {
@@ -42,23 +42,6 @@ describe('isHermesPrefix', () => {
     // only opus/sonnet/haiku) -- documented, not silently fixed.
     expect(isHermesPrefix('@hermes-bogus still dispatches')).toBe(true)
     expect(isHermesPrefix('@hermes_bogus does not dispatch')).toBe(false)
-  })
-})
-
-describe('stripHermesPrefix', () => {
-  it('removes the leading @hermes token', () => {
-    expect(stripHermesPrefix('@hermes do the thing')).toBe('do the thing')
-    expect(stripHermesPrefix('@hermes   extra   spaces')).toBe('extra   spaces')
-  })
-
-  it('falls back to the original when nothing follows the token', () => {
-    expect(stripHermesPrefix('@hermes')).toBe('@hermes')
-    expect(stripHermesPrefix('@hermes   ')).toBe('@hermes')
-  })
-
-  it('#891: leaves a model-tag suffix INTACT -- it must ride through to /api/ai-requests\' prompt field for PB\'s select_model() to parse (#217); do not widen this alongside HERMES_PREFIX_RE', () => {
-    expect(stripHermesPrefix('@hermes_opus do the thing')).toBe('_opus do the thing')
-    expect(stripHermesPrefix('@hermes-haiku quick one')).toBe('-haiku quick one')
   })
 })
 

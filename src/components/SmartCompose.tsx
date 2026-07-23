@@ -267,7 +267,7 @@ export default function SmartCompose(props: SmartComposeProps) {
     // still win) and only on the PREFIX form. The Hermes toggle's @hermes prepend
     // is intentionally left as-is (still a team comment) — only a typed prefix
     // routes here. Was: POST /api/ai-requests source_type='daily_thought', read
-    // back by the now-orphaned TaskHermesReplies (deleted in Phase 6).
+    // via TaskActivityFeed's activity_entries thread (Phase 3-6 migration).
     if (!isCustomMode && isHermesPrefix(raw)) {
       const taskId = (props as TaskModeProps).taskId
       try {
