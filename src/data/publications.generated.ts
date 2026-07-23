@@ -7076,6 +7076,710 @@ export const generatedPublications: Publication[] = [
     ]
   },
   {
+    "id": "gen-10-4269-ajtmh-20-0521",
+    "authors": "Shemal M. Shah, Holly Rodin, Hope Pogemiller, Oluwadayo A. Magbagbeola, Kenneth Ssebambulidde, Anteneh Zewde, Matthew Goers, Benjamin Katz, Itegbemie Obaitan, Ehab Fawzy Abdo, Sahar M. Hassany, Mohamed Elbadry, Abdelmajeed Moussa, Jasintha Mtengezo, Mark Dedzoe, B.E. Henkle, Martha Binta Bah, Matthew Sabongi, Johnstone Kayandabila, Robert Fell, Ifeorah Ijeoma, Lucy Ochola, Mirghani Yousif, José D. Debes",
+    "title": "Hepatitis B Awareness and Vaccination Patterns among Healthcare Workers in Africa",
+    "journal": "American Journal of Tropical Medicine and Hygiene",
+    "year": 2020,
+    "status": "Published",
+    "doi": "https://doi.org/10.4269/ajtmh.20-0521",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/33025875/",
+    "topics": [],
+    "authorSlugs": [
+      "benjamin-henkle"
+    ]
+  },
+  {
+    "id": "gen-10-1513-annalsats-202211-964oc",
+    "authors": "David M. MacDonald, Yuekai Ji, Selçuk Adabağ, Álvaro Alonso, Lin Y. Chen, B.E. Henkle, Stephen P. Juraschek, Faye L. Norby, Pamela L. Lutsey, Ken M. Kunisaki",
+    "title": "Cardiovascular Autonomic Function and Incident Chronic Obstructive Pulmonary Disease Hospitalizations in Atherosclerosis Risk in Communities",
+    "journal": "Annals of the American Thoracic Society",
+    "year": 2023,
+    "status": "Published",
+    "doi": "https://doi.org/10.1513/annalsats.202211-964oc",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/37364277/",
+    "topics": [],
+    "authorSlugs": [
+      "benjamin-henkle"
+    ]
+  },
+  {
+    "id": "gen-10-1183-23120541-00627-2022",
+    "authors": "B.E. Henkle, Rebecca Freese, Mary Dahlheimer, Catherine Kane, Karin F. Hoth, Ken M. Kunisaki",
+    "title": "Cognitive function and inhaler technique following recovery from exacerbations of COPD",
+    "journal": "ERJ Open Research",
+    "year": 2023,
+    "status": "Published",
+    "doi": "https://doi.org/10.1183/23120541.00627-2022",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/37143839/",
+    "topics": [],
+    "authorSlugs": [
+      "benjamin-henkle"
+    ]
+  },
+  {
+    "id": "gen-10-1093-gerona-glac026",
+    "authors": "Brian Joyce, Xuefen Chen, Kristine Yaffe, B.E. Henkle, Tao Gao, Yinan Zheng, Ravi Kalhan, George R. Washko, Ken M. Kunisaki, Bharat Thyagarajan, Myron D. Gross, David R. Jacobs, Donald M. Lloyd‐Jones, Kiang Liu, Stephen Sidney, Lifang Hou",
+    "title": "Pulmonary Function in Midlife as a Predictor of Later-Life Cognition: The Coronary Artery Risk Development in Adults (CARDIA) Study",
+    "journal": "The Journals of Gerontology Series A",
+    "year": 2022,
+    "status": "Published",
+    "doi": "https://doi.org/10.1093/gerona/glac026",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/35106576/",
+    "topics": [],
+    "authorSlugs": [
+      "benjamin-henkle"
+    ]
+  },
+  {
+    "id": "gen-10-2217-epi-2023-0164",
+    "authors": "Brian Joyce, Xuefen Chen, Tao Gao, Yinan Zheng, Drew R. Nannini, Lei Liu, B.E. Henkle, Ravi Kalhan, George R. Washko, Ken M. Kunisaki, Bharat Thyagarajan, Douglas E. Vaughan, Myron D. Gross, David R. Jacobs, Donald M. Lloyd‐Jones, Lifang Hou",
+    "title": "Associations Between Grimage Acceleration and Pulmonary Function in the Coronary Artery Risk Development in Young Adults (CARDIA) Study",
+    "journal": "Epigenomics",
+    "year": 2023,
+    "status": "Published",
+    "doi": "https://doi.org/10.2217/epi-2023-0164",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/37694401/",
+    "topics": [],
+    "authorSlugs": [
+      "benjamin-henkle"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-chest-2016-08-1441",
+    "authors": "B.E. Henkle, Patrick Arndt",
+    "title": "A 66-Year-Old Woman With Sudden Onset of Disseminated Intravascular Coagulation, Lactic Acidosis, and Hypoglycemia",
+    "journal": "CHEST Journal",
+    "year": 2017,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.chest.2016.08.1441",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/28183503/",
+    "topics": [],
+    "authorSlugs": [
+      "benjamin-henkle"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-chest-2017-08-1151",
+    "authors": "B.E. Henkle, William H. Amundson, Patrick Arndt",
+    "title": "Hyperammonemia After Lung Transplantation: A Rare and Fatal Complication",
+    "journal": "CHEST Journal",
+    "year": 2017,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.chest.2017.08.1151",
+    "topics": [],
+    "authorSlugs": [
+      "benjamin-henkle"
+    ]
+  },
+  {
+    "id": "gen-10-1096-fasebj-21-6-a1133",
+    "authors": "Therese Svarovsky, B.E. Henkle, Shelby L. O’Connor, David H. O’Connor, Amy Usborne",
+    "title": "Polycystic kidney disease in rhesus macaques (Macaca mulatta)",
+    "journal": "The FASEB Journal",
+    "year": 2007,
+    "status": "Published",
+    "doi": "https://doi.org/10.1096/fasebj.21.6.a1133",
+    "topics": [],
+    "authorSlugs": [
+      "benjamin-henkle"
+    ]
+  },
+  {
+    "id": "gen-10-1378-chest-2221402",
+    "authors": "B.E. Henkle, Patrick Arndt",
+    "title": "Disseminated Intravascular Coagulation, Lactic Acidosis, and Hypoglycemia: A Rare Hematologic and Metabolic-Oncologic Emergency",
+    "journal": "CHEST Journal",
+    "year": 2015,
+    "status": "Published",
+    "doi": "https://doi.org/10.1378/chest.2221402",
+    "topics": [],
+    "authorSlugs": [
+      "benjamin-henkle"
+    ]
+  },
+  {
+    "id": "gen-10-1183-23120541-00048-2021",
+    "authors": "B.E. Henkle, Laura A. Colangelo, Mark T. Dransfield, Lifang Hou, David R. Jacobs, Brian Joyce, Carrie L. Pistenmaa, Rachel K. Putman, Steve Sidney, Bharat Thyagarajan, George R. Washko, Kristine Yaffe, Ravi Kalhan, Ken M. Kunisaki",
+    "title": "The presence of emphysema on chest imaging and mid-life cognition",
+    "journal": "ERJ Open Research",
+    "year": 2021,
+    "status": "Published",
+    "doi": "https://doi.org/10.1183/23120541.00048-2021",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/33748259/",
+    "topics": [],
+    "authorSlugs": [
+      "benjamin-henkle"
+    ]
+  },
+  {
+    "id": "gen-10-2147-copd-s311572",
+    "authors": "Dongxing Zhao, Asghar Abbasi, Richard Casaburi, Alessandra Adami, Nicholas B. Tiller, Wei Yuan, Christopher Yee, Nicholas Jendzjowsky, David M. MacDonald, Ken M. Kunisaki, William W. Stringer, János Pórszász, Barry J. Make, Russell P. Bowler, Harry B. Rossiter",
+    "title": "Identifying a Heart Rate Recovery Criterion After a 6-Minute Walk Test in COPD",
+    "journal": "International Journal of COPD",
+    "year": 2021,
+    "status": "Published",
+    "doi": "https://doi.org/10.2147/copd.s311572",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/34511898/",
+    "topics": [],
+    "authorSlugs": [
+      "dave-macdonald"
+    ]
+  },
+  {
+    "id": "gen-10-1097-qad-0000000000002101",
+    "authors": "David M. MacDonald, Alexander D. Zanotto, Professor Gary S. Collins, Jason V. Baker, Marcin Czarnecki, Eliana Loiza, Daniel E. Nixon, Vasileios Papastamopoulos, Chris H. Wendt, Robin Wood, Ken M. Kunisaki",
+    "title": "Associations between baseline biomarkers and lung function in HIV-positive individuals",
+    "journal": "AIDS",
+    "year": 2018,
+    "status": "Published",
+    "doi": "https://doi.org/10.1097/qad.0000000000002101",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/30601153/",
+    "topics": [],
+    "authorSlugs": [
+      "dave-macdonald"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-bbmt-2012-01-013",
+    "authors": "T.M. Watson, David M. MacDonald, Xiaoyan Song, Kira A Bromwich, Joseph M. Campos, Jane Sande, Roberta L. DeBiasi",
+    "title": "Risk Factors for Molecular Detection of Adenovirus in Pediatric Hematopoietic Stem Cell Transplantation Recipients",
+    "journal": "Biology of Blood and Marrow Transplantation",
+    "year": 2012,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.bbmt.2012.01.013",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/22281300/",
+    "topics": [],
+    "authorSlugs": [
+      "dave-macdonald"
+    ]
+  },
+  {
+    "id": "gen-10-1111-ctr-12321",
+    "authors": "Danielle Berglund, David M. MacDonald, Scott Jackson, Richard Spong, Naim Issa, Aleksandra Kukla, Scott Reule, Marc Weber, Arthur J. Matas, Hassan N. Ibrahim",
+    "title": "Low birthweight and risk of albuminuria in living kidney donors",
+    "journal": "Clinical Transplantation",
+    "year": 2014,
+    "status": "Published",
+    "doi": "https://doi.org/10.1111/ctr.12321",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/24547690/",
+    "topics": [],
+    "authorSlugs": [
+      "dave-macdonald"
+    ]
+  },
+  {
+    "id": "gen-10-1513-annalsats-202109-1042oc",
+    "authors": "Trisha M. Parekh, Erika S. Helgeson, John E. Connett, Helen Voelker, Sharon X. Ling, Stephen C. Lazarus, Surya P. Bhatt, David M. MacDonald, Takudzwa Mkorombindo, Ken M. Kunisaki, Spyridon Fortis, David A. Kaminsky, Mark T. Dransfield",
+    "title": "Lung Function and the Risk of Exacerbation in the β-Blockers for the Prevention of Acute Exacerbations of Chronic Obstructive Pulmonary Disease Trial",
+    "journal": "Annals of the American Thoracic Society",
+    "year": 2022,
+    "status": "Published",
+    "doi": "https://doi.org/10.1513/annalsats.202109-1042oc",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/35363600/",
+    "topics": [],
+    "authorSlugs": [
+      "dave-macdonald"
+    ]
+  },
+  {
+    "id": "gen-10-15326-jcopdf-2021-0264",
+    "authors": "David M. MacDonald, Takudzwa Mkorombindo, Sharon X. Ling, Selçuk Adabağ, Richard Casaburi, John E. Connett, Erika S. Helgeson, János Pórszász, Harry B. Rossiter, William W. Stringer, Helen Voelker, Dongxing Zhao, Mark T. Dransfield, Ken M. Kunisaki",
+    "title": "Heart Rate Variability on 10-Second Electrocardiogram and Risk of Acute Exacerbation of COPD: A Secondary Analysis of the BLOCK COPD Trial",
+    "journal": "Chronic Obstructive Pulmonary Diseases Journal of the COPD Foundation",
+    "year": 2022,
+    "status": "Published",
+    "doi": "https://doi.org/10.15326/jcopdf.2021.0264",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/35403415/",
+    "topics": [],
+    "authorSlugs": [
+      "dave-macdonald"
+    ]
+  },
+  {
+    "id": "gen-10-1111-petr-12238",
+    "authors": "David M. MacDonald, Aleksandra K. Kukla, Sarah Ake, Danielle Berglund, Scott Jackson, Naim Issa, Richard Spong, Arthur J. Matas, Hassan N. Ibrahim",
+    "title": "Medical outcomes of adolescent live kidney donors",
+    "journal": "Pediatric Transplantation",
+    "year": 2014,
+    "status": "Published",
+    "doi": "https://doi.org/10.1111/petr.12238",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/24646177/",
+    "topics": [],
+    "authorSlugs": [
+      "dave-macdonald"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-rmed-2022-106775",
+    "authors": "David M. MacDonald, Elise F. Palzer, Asghar Abbasi, Arianne K. Baldomero, Surya P. Bhatt, Richard Casaburi, John E. Connett, Mark T. Dransfield, Nathaniel Gaeckle, Takudzwa Mkorombindo, Harry B. Rossiter, William W. Stringer, Nicholas B. Tiller, Chris H. Wendt, Dongxing Zhao, Ken M. Kunisaki",
+    "title": "Chronotropic index during 6-minute walk and acute respiratory events in COPDGene",
+    "journal": "Respiratory Medicine",
+    "year": 2022,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.rmed.2022.106775",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/35203009/",
+    "topics": [],
+    "authorSlugs": [
+      "dave-macdonald"
+    ]
+  },
+  {
+    "id": "gen-10-1038-s41598-023-29739-x",
+    "authors": "David M. MacDonald, Sarah Samorodnitsky, Chris H. Wendt, Jason V. Baker, Gary Collins, Monica Kruk, Eric F. Lock, Roger Paredes, Selvamuthu Poongulali, Danielle O. Weise, Alan Winston, Robin Wood, Ken M. Kunisaki, INSIGHT START Pulmonary Substudy Group, Bitten Aagaard, Paul Jansson, Mary Pearson, Abdel G. Babiker, Alejandro Arenas‐Pinto, Nafisah B Atako, Edward A. Dennis, S. Forcat, Fleur Hudson, B. Jackson, Daphne Maas, Caitlin G. Purvis, C. T. Russell, Sean Emery, Cara Donahue Carey, Megan Clewett",
+    "title": "Pneumoproteins and biomarkers of inflammation and coagulation do not predict rapid lung function decline in people living with HIV",
+    "journal": "Scientific Reports",
+    "year": 2023,
+    "status": "Published",
+    "doi": "https://doi.org/10.1038/s41598-023-29739-x",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/36959289/",
+    "topics": [],
+    "authorSlugs": [
+      "dave-macdonald"
+    ]
+  },
+  {
+    "id": "gen-10-1164-rccm-201911-2266le",
+    "authors": "Ken M. Kunisaki, Jason V. Baker, Gary Collins, David M. MacDonald, Elżbieta Bąkowska, Kamal Marhoum El Filali, Nnakelu Eriobu, Alberto La Rosa, John E. Connett",
+    "title": "Lung Function Decline in Early HIV Infection: Impact of Antiretroviral Drug Timing and Drug Regimen",
+    "journal": "American Journal of Respiratory and Critical Care Medicine",
+    "year": 2019,
+    "status": "Published",
+    "doi": "https://doi.org/10.1164/rccm.201911-2266le",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/31841641/",
+    "topics": [],
+    "authorSlugs": [
+      "dave-macdonald"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-amjms-2020-08-004",
+    "authors": "Nacide Ercan-Fang, Mai Mahmoud, Carol Cottrell, James P. Campbell, David M. MacDonald, Thurayya Arayssi, Don C. Rockey",
+    "title": "Best Practices in Resident Research- A National Survey of High Functioning Internal Medicine Residency Programs in Resident Research in USA",
+    "journal": "The American Journal of the Medical Sciences",
+    "year": 2020,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.amjms.2020.08.004",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/33288205/",
+    "topics": [],
+    "authorSlugs": [
+      "dave-macdonald"
+    ]
+  },
+  {
+    "id": "gen-10-1513-annalsats-202008-1085oc",
+    "authors": "David M. MacDonald, Erika S. Helgeson, Selçuk Adabağ, Richard Casaburi, John E. Connett, William W. Stringer, Helen Voelker, Mark T. Dransfield, Ken M. Kunisaki",
+    "title": "Chronotropic Index and Acute Exacerbations of Chronic Obstructive Pulmonary Disease: A Secondary Analysis of BLOCK COPD",
+    "journal": "Annals of the American Thoracic Society",
+    "year": 2021,
+    "status": "Published",
+    "doi": "https://doi.org/10.1513/annalsats.202008-1085oc",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/33784233/",
+    "topics": [],
+    "authorSlugs": [
+      "dave-macdonald"
+    ]
+  },
+  {
+    "id": "gen-10-15326-jcopdf-2024-0500",
+    "authors": "David M. MacDonald, Sarah Samorodnitsky, Eric F. Lock, Vincent S. Fan, Zijing Chen, Huong Q. Nguyen, Chris H. Wendt",
+    "title": "Biomarkers of Inflammation and Longitudinal Evaluation of Lung Function, Physical Activity, and Grip Strength: A Secondary Analysis in the CASCADE Study",
+    "journal": "Chronic Obstructive Pulmonary Diseases Journal of the COPD Foundation",
+    "year": 2024,
+    "status": "Published",
+    "doi": "https://doi.org/10.15326/jcopdf.2024.0500",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/38838254/",
+    "topics": [],
+    "authorSlugs": [
+      "dave-macdonald"
+    ]
+  },
+  {
+    "id": "gen-10-1164-rccm-202408-1625rl",
+    "authors": "David M. MacDonald, T Fischer, Selçuk Adabağ, Shakeel Amanullah, Jose Diaz, Philip Diaz, Ken M. Kunisaki, Pamela L. Lutsey, Christine Wendt",
+    "title": "Continuous Monitoring for Atrial Fibrillation in Individuals at Increased Risk of Acute Exacerbations of Chronic Obstructive Pulmonary Disease",
+    "journal": "American Journal of Respiratory and Critical Care Medicine",
+    "year": 2025,
+    "status": "Published",
+    "doi": "https://doi.org/10.1164/rccm.202408-1625rl",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/39918868/",
+    "topics": [],
+    "authorSlugs": [
+      "dave-macdonald"
+    ]
+  },
+  {
+    "id": "gen-10-1186-s12931-023-02471-w",
+    "authors": "Arianne K. Baldomero, David M. MacDonald, Adam Kaplan, Eric F. Lock, Michael H. Cho, Russell P. Bowler, Lucas A. Gillenwater, Ken M. Kunisaki, Chris H. Wendt",
+    "title": "Bilirubin-associated single nucleotide polymorphism (SNP) and respiratory health outcomes: a mendelian randomization study",
+    "journal": "Respiratory Research",
+    "year": 2023,
+    "status": "Published",
+    "doi": "https://doi.org/10.1186/s12931-023-02471-w",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/37474940/",
+    "topics": [],
+    "authorSlugs": [
+      "dave-macdonald"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-rmed-2025-108338",
+    "authors": "David M. MacDonald, Selçuk Adabağ, Lin Y. Chen, Wendy Wang, Stephen P. Juraschek, Sarath Raju, Jennifer A. Schrack, Elsayed Z. Soliman, Hau‐Tieng Wu, Ken M. Kunisaki, Pamela L. Lutsey",
+    "title": "Two-week heart rate variability measurements and lung health: a cross-sectional analysis in the ARIC study",
+    "journal": "Respiratory Medicine",
+    "year": 2025,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.rmed.2025.108338",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/40907832/",
+    "topics": [],
+    "authorSlugs": [
+      "dave-macdonald"
+    ]
+  },
+  {
+    "id": "gen-dave-macdonald-1984-progressive-bacterial-synergistic-gangrene-in",
+    "authors": "Corey Archer, William Rosenberg, Geraldine Scott, David M. MacDonald",
+    "title": "Progressive bacterial synergistic gangrene in patient with diabetes mellitus.",
+    "journal": "PubMed",
+    "year": 1984,
+    "status": "Published",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/6512820/",
+    "topics": [],
+    "authorSlugs": [
+      "dave-macdonald"
+    ]
+  },
+  {
+    "id": "gen-10-1111-j-1365-2230-1988-tb00647-x",
+    "authors": "Juliet N. Barker, David M. MacDonald",
+    "title": "Hamartoma moniliformis - a case report",
+    "journal": "Clinical and Experimental Dermatology",
+    "year": 1988,
+    "status": "Published",
+    "doi": "https://doi.org/10.1111/j.1365-2230.1988.tb00647.x",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/3208438/",
+    "topics": [],
+    "authorSlugs": [
+      "dave-macdonald"
+    ]
+  },
+  {
+    "id": "gen-10-1016-s0300-9785-74-80075-x",
+    "authors": "David M. MacDonald",
+    "title": "Thyroglossal cysts and fistulae",
+    "journal": "International Journal of Oral Surgery",
+    "year": 1974,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/s0300-9785(74)80075-x",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/4214183/",
+    "topics": [],
+    "authorSlugs": [
+      "dave-macdonald"
+    ]
+  },
+  {
+    "id": "gen-10-1111-j-1365-2133-1974-tb12505-x",
+    "authors": "David M. MacDonald, D.I. Williams",
+    "title": "(2) Lichen verrucosus et reticularis of Kaposi (porokeratosis striata of Nekam)",
+    "journal": "British Journal of Dermatology",
+    "year": 1974,
+    "status": "Published",
+    "doi": "https://doi.org/10.1111/j.1365-2133.1974.tb12505.x",
+    "topics": [],
+    "authorSlugs": [
+      "dave-macdonald"
+    ]
+  },
+  {
+    "id": "gen-10-1186-s12890-023-02748-2",
+    "authors": "R. Chad Wade, Takudzwa Mkorombindo, S. Ling, Erika S. Helgeson, David M. MacDonald, Krystle Pew, Helen Voelker, Vera Bittner, Ken M. Kunisaki, Matthew R. Lammi, Mark T. Dransfield",
+    "title": "Association between P-pulmonale and respiratory morbidity in COPD: a secondary analysis of the BLOCK-COPD trial",
+    "journal": "BMC Pulmonary Medicine",
+    "year": 2023,
+    "status": "Published",
+    "doi": "https://doi.org/10.1186/s12890-023-02748-2",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/37946165/",
+    "topics": [],
+    "authorSlugs": [
+      "dave-macdonald"
+    ]
+  },
+  {
+    "id": "gen-10-1111-j-1365-2230-1987-tb01881-x",
+    "authors": "R. Cerio, R S Wells, David M. MacDonald",
+    "title": "Calcifying arthropathy of the hips and diffuse hyperostosis associated with etretinate",
+    "journal": "Clinical and Experimental Dermatology",
+    "year": 1987,
+    "status": "Published",
+    "doi": "https://doi.org/10.1111/j.1365-2230.1987.tb01881.x",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/3677472/",
+    "topics": [],
+    "authorSlugs": [
+      "dave-macdonald"
+    ]
+  },
+  {
+    "id": "gen-10-1111-j-1365-2133-1983-tb11586-x",
+    "authors": "Christopher B. Zachary, G. Storey, David Holt, Dennis Slater, David M. MacDonald",
+    "title": "The nature of amiodarone photosensitivity and pigmentation",
+    "journal": "British Journal of Dermatology",
+    "year": 1983,
+    "status": "Published",
+    "doi": "https://doi.org/10.1111/j.1365-2133.1983.tb11586.x",
+    "topics": [],
+    "authorSlugs": [
+      "dave-macdonald"
+    ]
+  },
+  {
+    "id": "gen-dave-macdonald-1991-is-graft-versus-leukaemia-separable",
+    "authors": "Jiang Yz, David M. MacDonald, JO Cullis, AJ Barrett",
+    "title": "Is graft versus leukaemia separable from graft versus host disease?",
+    "journal": "PubMed",
+    "year": 1991,
+    "status": "Published",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/1878702/",
+    "topics": [],
+    "authorSlugs": [
+      "dave-macdonald"
+    ]
+  },
+  {
+    "id": "gen-dave-macdonald-2001-using-a-transcultural-patient-based",
+    "authors": "David M. MacDonald, Vivian Reznik",
+    "title": "Using a transcultural, patient based approach to improve patient outcome in a pediatric ESRD patient.",
+    "journal": "PubMed",
+    "year": 2001,
+    "status": "Published",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/12143467/",
+    "topics": [],
+    "authorSlugs": [
+      "dave-macdonald"
+    ]
+  },
+  {
+    "id": "gen-10-1111-j-1365-2133-1991-tb05513-x",
+    "authors": "J.M. McGregor, David M. MacDonald",
+    "title": "(44) Calcinosis cutis in polymyositis-scleroderma (Pm-ScI) overlap syndrome",
+    "journal": "British Journal of Dermatology",
+    "year": 1991,
+    "status": "Published",
+    "doi": "https://doi.org/10.1111/j.1365-2133.1991.tb05513.x",
+    "topics": [],
+    "authorSlugs": [
+      "dave-macdonald"
+    ]
+  },
+  {
+    "id": "gen-10-1111-j-1365-2133-1988-tb05402-x",
+    "authors": "Juliet N. Barker, Ronald Wells, David M. MacDonald",
+    "title": "(28) Dermatology at Guy's Hospital: the first hundred years",
+    "journal": "British Journal of Dermatology",
+    "year": 1988,
+    "status": "Published",
+    "doi": "https://doi.org/10.1111/j.1365-2133.1988.tb05402.x",
+    "topics": [],
+    "authorSlugs": [
+      "dave-macdonald"
+    ]
+  },
+  {
+    "id": "gen-dave-macdonald-1993-isolated-unilateral-clavicular-hypoplasia-a",
+    "authors": "K. Kozlowski, David M. MacDonald",
+    "title": "Isolated unilateral clavicular hypoplasia. A case report.",
+    "journal": "PubMed",
+    "year": 1993,
+    "status": "Published",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/8480030/",
+    "topics": [],
+    "authorSlugs": [
+      "dave-macdonald"
+    ]
+  },
+  {
+    "id": "gen-dave-macdonald-1960-fistula-of-sigmoid-colon-with",
+    "authors": "David M. MacDonald",
+    "title": "Fistula of sigmoid colon, with external orifice in right iliac fossa.",
+    "journal": "PubMed",
+    "year": 1960,
+    "status": "Published",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/13764727/",
+    "topics": [],
+    "authorSlugs": [
+      "dave-macdonald"
+    ]
+  },
+  {
+    "id": "gen-dave-macdonald-1960-survival-of-sigmoid-colon-after",
+    "authors": "David M. MacDonald",
+    "title": "Survival of sigmoid colon after traumatic division of the marginal artery.",
+    "journal": "PubMed",
+    "year": 1960,
+    "status": "Published",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/14419305/",
+    "topics": [],
+    "authorSlugs": [
+      "dave-macdonald"
+    ]
+  },
+  {
+    "id": "gen-dave-macdonald-1960-neurilemmoma-of-10th-dorsal-nerve",
+    "authors": "David M. MacDonald",
+    "title": "Neurilemmoma of 10th dorsal nerve. Presenting as an acute abdomen.",
+    "journal": "PubMed",
+    "year": 1960,
+    "status": "Published",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/14419304/",
+    "topics": [],
+    "authorSlugs": [
+      "dave-macdonald"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-chest-2021-07-1615",
+    "authors": "David M. MacDonald, Takudzwa Mkorombindo, SHARON LING, Selçuk Adabağ, Richard Casaburi, John Connett, Erika S. Helgeson, János Pórszász, Harry B. Rossiter, William W. Stringer, DONXING ZHAO, Mark T. Dransfield, Ken M. Kunisaki",
+    "title": "HEART RATE VARIABILITY ON 10-SECOND ECG AND RISK OF ACUTE EXACERBATIONS OF COPD: A SECONDARY ANALYSIS OF BLOCK COPD",
+    "journal": "CHEST Journal",
+    "year": 2021,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.chest.2021.07.1615",
+    "topics": [],
+    "authorSlugs": [
+      "dave-macdonald"
+    ]
+  },
+  {
+    "id": "gen-10-1136-bmj-1-3878-953",
+    "authors": "David M. MacDonald",
+    "title": "Major Hysteria",
+    "journal": "BMJ",
+    "year": 1935,
+    "status": "Published",
+    "doi": "https://doi.org/10.1136/bmj.1.3878.953",
+    "topics": [],
+    "authorSlugs": [
+      "dave-macdonald"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-chest-2024-06-2897",
+    "authors": "BROOKE HIRSCH, Arianne K. Baldomero, Ken M. Kunisaki, Chris H. Wendt, David M. MacDonald",
+    "title": "HOSPITALIZED ACUTE EXACERBATIONS OF CHRONIC OBSTRUCTIVE PULMONARY DISEASE AND BETA-BLOCKER USE INDICATIONS: A SINGLE-CENTER, RETROSPECTIVE STUDY",
+    "journal": "CHEST Journal",
+    "year": 2024,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.chest.2024.06.2897",
+    "topics": [],
+    "authorSlugs": [
+      "dave-macdonald"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-hrthm-2025-03-210",
+    "authors": "Stavros Mountantonakis, Trent M. Fischer, Veronica Ramos, Christine Wendt, David M. MacDonald",
+    "title": "PO-FP-043 ATRIAL FIBRILLATION BURDEN DURING HOSPITALIZATION FOR COPD EXACERBATION AND RISK OF SUBSEQUENT STROKE",
+    "journal": "Heart Rhythm",
+    "year": 2025,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.hrthm.2025.03.210",
+    "topics": [],
+    "authorSlugs": [
+      "dave-macdonald"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-chest-2025-07-3593",
+    "authors": "LYUBOV TIEGS, Anne C. Melzer, KATHRYN PENDLETON, Erin Wetherbee, David M. MacDonald",
+    "title": "CRACKING THE CASE: PULMONARY NODULES IN RHEUMATOID ARTHRITIS",
+    "journal": "CHEST Journal",
+    "year": 2025,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.chest.2025.07.3593",
+    "topics": [],
+    "authorSlugs": [
+      "dave-macdonald"
+    ]
+  },
+  {
+    "id": "gen-10-1093-ofid-ofaf695-2351",
+    "authors": "Lyubov Tiegs, Madison Okuno, Jamie Forschmiedt, KEN M KUNISAKI, Alexa A. Pragman, Kyle Rudser, Wendt CH, David M. MacDonald",
+    "title": "P-2188. \"CMV Seropositivity is Independently Associated With Worse Lung Function in NHANES III\"",
+    "journal": "Open Forum Infectious Diseases",
+    "year": 2026,
+    "status": "Published",
+    "doi": "https://doi.org/10.1093/ofid/ofaf695.2351",
+    "topics": [],
+    "authorSlugs": [
+      "dave-macdonald"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-vetmic-2013-12-012",
+    "authors": "Rami Musharrafieh, Luca Tacchi, Joshua Trujeque, Scott E. LaPatra, Irene Salinas",
+    "title": "Staphylococcus warneri, a resident skin commensal of rainbow trout (Oncorhynchus mykiss) with pathobiont characteristics",
+    "journal": "Veterinary Microbiology",
+    "year": 2013,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.vetmic.2013.12.012",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/24438987/",
+    "topics": [],
+    "authorSlugs": [
+      "josh-trujeque"
+    ]
+  },
+  {
+    "id": "gen-10-1212-wnl-90-15-supplement-p6-227",
+    "authors": "Joshua Trujeque, Dinesh Jillella, Guangbin Xia",
+    "title": "Rheumatoid Meningitis: An Unusual Stroke Mimic (P6.227)",
+    "journal": "Neurology",
+    "year": 2018,
+    "status": "Published",
+    "doi": "https://doi.org/10.1212/wnl.90.15_supplement.p6.227",
+    "topics": [],
+    "authorSlugs": [
+      "josh-trujeque"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-chest-2023-07-3996",
+    "authors": "JOSHUA TRUJEQUE",
+    "title": "HEMOPTYSIS DUE TO ENDOBRONCHIAL HSV TUMOR-LIKE LESION",
+    "journal": "CHEST Journal",
+    "year": 2023,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.chest.2023.07.3996",
+    "topics": [],
+    "authorSlugs": [
+      "josh-trujeque"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-chest-2023-07-1383",
+    "authors": "JOSHUA TRUJEQUE",
+    "title": "ACUTE RESPIRATORY FAILURE DUE TO IMMUNE CHECKPOINT INHIBITOR-INDUCED MYASTHENIA GRAVIS",
+    "journal": "CHEST Journal",
+    "year": 2023,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.chest.2023.07.1383",
+    "topics": [],
+    "authorSlugs": [
+      "josh-trujeque"
+    ]
+  },
+  {
+    "id": "gen-10-1200-jco-2026-44-16-suppl-e23148",
+    "authors": "Aditi Singh, Joshua Trujeque, Mark Alan Klein, Anne Melzer",
+    "title": "Lung cancer screening practices among head and neck cancer survivors in U.S. veterans: A pilot survey.",
+    "journal": "Journal of Clinical Oncology",
+    "year": 2026,
+    "status": "Published",
+    "doi": "https://doi.org/10.1200/jco.2026.44.16_suppl.e23148",
+    "topics": [],
+    "authorSlugs": [
+      "josh-trujeque"
+    ]
+  },
+  {
     "id": "gen-10-1164-rccm-201703-0537le",
     "authors": "Kathryn M. Pendleton, John R. Erb‐Downward, Yuwei Bao, William R. Branton, Nicole R. Falkowski, Duane W. Newton, Gary B. Huffnagle, Robert P. Dickson",
     "title": "Rapid Pathogen Identification in Bacterial Pneumonia Using Real-Time Metagenomics",
