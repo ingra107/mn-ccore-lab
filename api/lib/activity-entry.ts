@@ -765,3 +765,25 @@ export async function activityVisibilityGate(
   }
   return { clause: `(${p}visibility = 'team' OR ${p}actor_slug = ?)`, binds: [slug] };
 }
+
+/**
+ * The hidden-thread gate (schema v102 `hidden_at`). AND this into EVERY read of
+ * activity_entries that feeds a timeline, a queue, a badge, or a score. A missed
+ * site leaks a dismissed thread silently — `scripts/check-activity-reads.mjs` is
+ * the executable check that no read escapes this or an `activity-hidden-exempt:`
+ * marker.
+ *
+ * Hidden is a property of the THREAD: the root and every child carry the same
+ * `hidden_at` (postActivityEntry inherits it, and hide/unhide updates root +
+ * children together), so this is always a FLAT predicate — never a join.
+ *
+ * @param alias    column prefix (e.g. 'ae' → `ae.hidden_at`; '' → bare).
+ * @param include  the "Show hidden" affordance — the three per-entity feeds pass
+ *                 true to reveal dismissed threads on demand; everything else
+ *                 (queues, badges, scores, search) never does. Returns `1=1` so
+ *                 the call site is uniform whether or not hidden is shown.
+ */
+export function activityHiddenClause(alias = '', include = false): string {
+  if (include) return '1=1';
+  return `${alias ? alias + '.' : ''}hidden_at IS NULL`;
+}
