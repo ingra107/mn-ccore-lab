@@ -79,7 +79,7 @@ member, `hidden_by` recorded), and §7 Q5 (`day` in `SEEN_TYPES` — recommendat
 
 ## 0.5 EXECUTION LOG (2026-07-22 PM — updates §2.5, §9.2)
 
-### 🟡 PHASE 5 CODE DONE + VERIFIED — deploy pending Nick's go (2026-07-23)
+### ✅ PHASE 5 SHIPPED + DEPLOYED (live `eb08b8e8`, HEAD `d4906e46`, probe PASS) — 2026-07-23
 
 The typed-`@hermes` writer flip. A typed prefix on a task now posts the body
 verbatim (token kept) to `POST /api/tasks/:id/comments` with `visibility:'author'`,

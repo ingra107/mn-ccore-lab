@@ -1,4 +1,4 @@
-# ▶▶ HERMES LANE UNIFICATION — Phases 1–4 SHIPPED; Phase 5 code done + verified, DEPLOY PENDING Nick's go. 2026-07-23.
+# ▶▶ HERMES LANE UNIFICATION — Phases 1–5 SHIPPED + DEPLOYED. Resume: Phase 6 (deletions) after a 24h dogfood. 2026-07-23.
 
 > **Resume point is ONE line in `docs/superpowers/plans/2026-07-22-hermes-lane-unification.md` §0.5** —
 > it's the execution log (most-recent phase on top). Do NOT re-triage; scope + decisions are settled.
@@ -18,14 +18,15 @@
 >   `ai_requests` rows NOT deleted (transport log). Idempotent (`INSERT OR IGNORE` on `idx_ae_source`); rollback = one
 >   `DELETE ... WHERE source_table IN ('ai_requests','ai_requests_response')`. NON-CODE change — no Pages deploy.
 >
-> **Phase 5 — CODE DONE + VERIFIED, DEPLOY PENDING (see §0.5).** Flipped the two remaining task writers
+> **Phase 5 — SHIPPED + DEPLOYED** (live `eb08b8e8`, HEAD `d4906e46`, probe PASS; see §0.5). Flipped the two remaining task writers
 > (`SmartCompose.tsx`, `TaskDetailPanel.tsx`) — MorningThoughtCompose was already flipped in Phase 3, so the
 > plan's Phase 5 file list was stale. A typed `@hermes` now posts verbatim to `POST /api/tasks/:id/comments` with
 > `visibility:'author'` (private default, owner decision A). codex `gpt-5.6-sol` traced the chain and confirmed no
 > path lands `team`; also fixed the answer-doesn't-auto-appear regression (a poll on `ActivityThread`'s reply query
 > while a "Thinking…" reply exists — fixes task/day/project) + added a privacy lock-in test. `tsc` clean, `test:api`
-> 1196/1196, build green. **NEXT MOVE: deploy** (`npm run deploy:pages:gated`, needs Nick's go — team surface),
-> then Phase 6.
+> 1196/1196, build green. Deployed `2026-07-23` (live `eb08b8e8`, probe PASS). **Nick's manual check:** type
+> `@hermes <question>` on a task → a private thread + "Thinking…" resolving to Hermes's answer in-thread, and a
+> teammate can't see it.
 >
 > **NEXT after deploy: Phase 6** (delete `TaskHermesReplies`/`HermesThoughtReplies`/`HermesReplyList`, the
 > `ai_requests` @hermes reader arm, `hermesRouting`'s @hermes half — after a 24h dogfood window; load
