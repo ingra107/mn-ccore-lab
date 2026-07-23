@@ -121,11 +121,16 @@ describe('route contract — generated from ROUTE_REGISTRY', () => {
     // 258 as of 2026-07-23 — Hermes wave Phase 10 (+1): GET /api/hermes/day-index
     //   — the PB listener's leak-safe older-day retrieval (requester-scoped,
     //   API-key-only, own-only day roots; see api/routes/hermes.ts header).
+    // 262 as of 2026-07-23 — Artifacts Reference Gallery (+4, schema-v104):
+    //   GET    /api/artifacts/gallery      — curated tagged artifacts, newest-first.
+    //   GET    /api/artifact-tags          — distinct tags + counts.
+    //   POST   /api/artifacts/:id/tags     — add a collection tag (authed team).
+    //   DELETE /api/artifacts/:id/tags/:tag — remove a collection tag (authed team).
     // Adding a route → increment this number. Removing a route → decrement it.
     // This makes route deletion require explicit acknowledgment, preventing
     // silent surface regression (codex final-audit finding #9, 2026-05-28).
     // If you are intentionally adding or removing routes, update this count.
-    expect(ROUTE_REGISTRY).toHaveLength(258)
+    expect(ROUTE_REGISTRY).toHaveLength(262)
   })
 
   it('every non-public route has either entity or visibility metadata', () => {

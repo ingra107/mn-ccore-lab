@@ -45,6 +45,41 @@ interface ArtifactRow {
 const ALLOWED_CONTENT_TYPES = new Set(['markdown', 'html']);
 const ALLOWED_VISIBILITIES = new Set(['team', 'public']);
 
+// ── collection tags (schema-v104, Artifacts Reference Gallery) ────────────────
+// Design ref: docs/superpowers/specs/2026-07-23-artifacts-reference-gallery-design.md.
+//
+// A tag is the curation gate: an artifact appears in the gallery iff it carries
+// >=1 tag. normalizeTag is the SINGLE normalization point — every writer + the
+// DELETE-by-tag path route their input through it so a stored tag is always
+// lowercased, trimmed, and [a-z0-9-] only (spaces + punctuation collapse to a
+// single hyphen). The mirror lives in the SQL comment on schema-v104.
+const MAX_TAG_LENGTH = 64;
+export function normalizeTag(raw: string): string {
+  return raw
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '-')       // internal whitespace → hyphen
+    .replace(/[^a-z0-9-]/g, '') // drop anything else
+    .replace(/-+/g, '-')        // collapse hyphen runs
+    .replace(/^-+|-+$/g, '');   // trim leading/trailing hyphens
+}
+
+// The gallery + tags-list return artifact metadata WITHOUT body_md — a single
+// self-contained HTML artifact can be ~2M chars (MAX_BODY_MD_LENGTH), and the
+// gallery renders only title/tags/author/updated. Selecting the body for every
+// card would be a needless multi-MB payload.
+const GALLERY_COLS =
+  'id, title, version, task_id, project_id, created_by, content_type, visibility, created_at, updated_at';
+
+// A write is authed-team: the anonymous shim is the middleware's "no auth"
+// marker (api/index.ts sets user.email='anonymous' only when neither a CF Access
+// JWT nor an API key is present). DELETE-method routes bypass the POST/PUT auth
+// middleware entirely, so this in-handler guard — not the middleware — is what
+// fails a tag write closed. See the tags-write handlers below.
+function isAnonymous(user: AuthUser | null | undefined): boolean {
+  return !user || user.email === 'anonymous';
+}
+
 // Abuse cap on stored body size. ~2M chars comfortably fits rich self-contained
 // HTML artifacts (inline CSS/JS + reasonably-sized data: URI images) while
 // bounding the blast radius of a single D1 row / worker-memory allocation from
@@ -78,17 +113,133 @@ export async function handleGetArtifacts(url: URL, env: Env): Promise<Response> 
 // Single artifact + its version history (newest-first). The page renders body_md
 // and offers the history dropdown from `versions`.
 export async function handleGetArtifact(id: string, env: Env): Promise<Response> {
-  // One D1 round-trip for both reads — the page always wants artifact + history.
-  const [artifactRes, versionsRes] = await env.DB.batch([
+  // One D1 round-trip for all three reads — the page wants artifact + history +
+  // its collection tags (schema-v104, for the in-Hub tag editor).
+  const [artifactRes, versionsRes, tagsRes] = await env.DB.batch([
     env.DB.prepare('SELECT * FROM artifacts WHERE id = ? LIMIT 1').bind(id),
     env.DB.prepare(
       'SELECT artifact_id, version, revised_by, revision_note, created_at FROM artifact_versions WHERE artifact_id = ? ORDER BY version DESC'
     ).bind(id),
+    env.DB.prepare('SELECT tag FROM artifact_tags WHERE artifact_id = ? ORDER BY tag').bind(id),
   ]);
   const artifact = (artifactRes.results as ArtifactRow[] | undefined)?.[0];
   if (!artifact) return error('Artifact not found', 404);
 
-  return json({ data: { ...artifact, versions: versionsRes.results || [] } });
+  const tags = ((tagsRes.results as { tag: string }[] | undefined) || []).map((r) => r.tag);
+  return json({ data: { ...artifact, versions: versionsRes.results || [], tags } });
+}
+
+// ── GET /api/artifacts/gallery?tag=<t> ──────────────────────────────────────────
+// The Reference Gallery feed (schema-v104): artifacts having >=1 collection tag,
+// newest-first, each row carrying its full `tags: string[]`. `?tag=` narrows to
+// artifacts having that one tag (server-side) but still returns EVERY tag on each
+// matched artifact so the chips render whole. Returns { data, count }.
+//
+// MUST be registered before GET /api/artifacts/:id (the catch-all) — see the
+// route block in api/index.ts.
+export async function handleGetArtifactGallery(url: URL, env: Env): Promise<Response> {
+  const rawTag = url.searchParams.get('tag');
+  const tag = rawTag ? normalizeTag(rawTag) : null;
+
+  // Correlated subquery gathers each artifact's tags in one round-trip. The
+  // `IN (SELECT ... FROM artifact_tags [WHERE tag = ?])` clause is the curation
+  // gate — untagged artifacts never appear.
+  const where = tag
+    ? 'a.id IN (SELECT artifact_id FROM artifact_tags WHERE tag = ?)'
+    : 'a.id IN (SELECT artifact_id FROM artifact_tags)';
+  const query =
+    `SELECT ${GALLERY_COLS.split(', ').map((c) => `a.${c}`).join(', ')}, ` +
+    `(SELECT GROUP_CONCAT(t.tag) FROM artifact_tags t WHERE t.artifact_id = a.id) AS tags_csv ` +
+    `FROM artifacts a WHERE ${where} ORDER BY a.updated_at DESC, a.id DESC`;
+
+  const binds = tag ? [tag] : [];
+  const result = await env.DB.prepare(query).bind(...binds).all();
+  const rows = ((result.results as Record<string, unknown>[]) || []).map((r) => {
+    const { tags_csv, ...rest } = r as { tags_csv?: string | null };
+    const tags = tags_csv ? String(tags_csv).split(',').sort() : [];
+    return { ...rest, tags };
+  });
+  return json({ data: rows, count: rows.length });
+}
+
+// ── GET /api/artifact-tags ──────────────────────────────────────────────────────
+// Distinct tags with usage counts, busiest-first then alphabetical. Feeds the
+// gallery filter chips and the per-artifact editor autocomplete. { data, count }.
+export async function handleGetArtifactTags(env: Env): Promise<Response> {
+  const result = await env.DB.prepare(
+    'SELECT tag, COUNT(*) AS count FROM artifact_tags GROUP BY tag ORDER BY count DESC, tag'
+  ).all();
+  const rows = result.results || [];
+  return json({ data: rows, count: rows.length });
+}
+
+// ── POST /api/artifacts/:id/tags  { tag } ────────────────────────────────────────
+// Add one collection tag to an artifact (authed team). Normalizes, caps length,
+// validates the artifact exists, then INSERT OR IGNORE (idempotent on the PK).
+// Returns the artifact's full tag set so the client can reconcile without a
+// second fetch.
+export async function handleAddArtifactTag(
+  id: string,
+  request: Request,
+  user: AuthUser,
+  env: Env,
+): Promise<Response> {
+  if (isAnonymous(user)) return error('Authentication required', 401);
+
+  const body = await request.json() as { tag?: string };
+  if (!body.tag?.trim()) return error('tag required', 400);
+
+  const tag = normalizeTag(body.tag);
+  if (!tag) return error('tag must contain at least one of a-z, 0-9, or -', 400);
+  if (tag.length > MAX_TAG_LENGTH) return error(`tag exceeds ${MAX_TAG_LENGTH} chars`, 400);
+
+  const artifact = await env.DB
+    .prepare('SELECT id FROM artifacts WHERE id = ? LIMIT 1')
+    .bind(id)
+    .first<{ id: string }>();
+  if (!artifact) return error('Artifact not found', 404);
+
+  await env.DB
+    .prepare('INSERT OR IGNORE INTO artifact_tags (artifact_id, tag) VALUES (?, ?)')
+    .bind(id, tag)
+    .run();
+
+  const tags = await artifactTags(id, env);
+  return json({ data: { artifact_id: id, tag, tags } }, 201);
+}
+
+// ── DELETE /api/artifacts/:id/tags/:tag ──────────────────────────────────────────
+// Remove one collection tag (authed team). The :tag segment is normalized before
+// the delete so a display-cased or spaced value still matches the stored row.
+// Idempotent: deleting an absent tag is a 200 no-op. Returns the remaining set.
+export async function handleRemoveArtifactTag(
+  id: string,
+  rawTag: string,
+  request: Request,
+  user: AuthUser,
+  env: Env,
+): Promise<Response> {
+  if (isAnonymous(user)) return error('Authentication required', 401);
+
+  const tag = normalizeTag(rawTag);
+  if (!tag) return error('tag required', 400);
+
+  await env.DB
+    .prepare('DELETE FROM artifact_tags WHERE artifact_id = ? AND tag = ?')
+    .bind(id, tag)
+    .run();
+
+  const tags = await artifactTags(id, env);
+  return json({ data: { artifact_id: id, removed: tag, tags } });
+}
+
+// Shared read-back: an artifact's current tag set, alphabetical.
+async function artifactTags(id: string, env: Env): Promise<string[]> {
+  const res = await env.DB
+    .prepare('SELECT tag FROM artifact_tags WHERE artifact_id = ? ORDER BY tag')
+    .bind(id)
+    .all();
+  return ((res.results as { tag: string }[]) || []).map((r) => r.tag);
 }
 
 // ── key_link slot helpers ────────────────────────────────────────────────────

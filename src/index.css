@@ -1354,6 +1354,19 @@ a:hover {
   transform: translateY(-1px);
 }
 
+/* ── Artifacts gallery cards — subtle -1px hover lift (design-system bar). ── */
+.artifact-card {
+  transition: transform var(--transition-fast) ease, box-shadow var(--transition-fast) ease;
+}
+.artifact-card:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-card-hover);
+}
+@media (prefers-reduced-motion: reduce) {
+  .artifact-card { transition: none; }
+  .artifact-card:hover { transform: none; }
+}
+
 /* ── Context Menu animation ── */
 @keyframes contextMenuIn {
   from {

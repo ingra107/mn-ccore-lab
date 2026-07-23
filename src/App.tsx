@@ -116,6 +116,7 @@ const TodayPage = lazy(() => import('./pages/portal/TodayPage'))
 const Projects = lazy(() => import('./pages/Projects'))
 const ProjectDetail = lazy(() => import('./pages/ProjectDetail'))
 const ArtifactPage = lazy(() => import('./pages/portal/ArtifactPage'))
+const ArtifactsGalleryPage = lazy(() => import('./pages/portal/ArtifactsGalleryPage'))
 const Meetings = lazy(() => import('./pages/Meetings'))
 const MeetingDetail = lazy(() => import('./pages/MeetingDetail'))
 const MeetingPrep = lazy(() => import('./pages/MeetingPrep'))
@@ -279,6 +280,7 @@ export default function App() {
                   <Route path="/portal/deadline-cascade" element={<ErrorBoundary><DeadlineCascadePage /></ErrorBoundary>} />
                   <Route path="/portal/projects" element={<ErrorBoundary><Projects /></ErrorBoundary>} />
                   <Route path="/portal/projects/:slug" element={<ErrorBoundary><PageErrorBoundary pageName="ProjectDetail"><ProjectDetail /></PageErrorBoundary></ErrorBoundary>} />
+                  <Route path="/portal/artifacts" element={<ErrorBoundary><PageErrorBoundary pageName="ArtifactsGalleryPage"><ArtifactsGalleryPage /></PageErrorBoundary></ErrorBoundary>} />
                   <Route path="/portal/artifacts/:id" element={<ErrorBoundary><PageErrorBoundary pageName="ArtifactPage"><ArtifactPage /></PageErrorBoundary></ErrorBoundary>} />
                   <Route path="/portal/manuscripts" element={<ErrorBoundary><ManuscriptsPage /></ErrorBoundary>} />
                   <Route path="/portal/ideas" element={<ErrorBoundary><IdeasPage /></ErrorBoundary>} />

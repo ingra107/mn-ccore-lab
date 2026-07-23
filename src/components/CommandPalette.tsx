@@ -6,7 +6,7 @@ import {
   Clock, FolderKanban, FileText, Lightbulb, HelpCircle, BookOpen, DollarSign,
   Users, Plus, ArrowRight, Command, CalendarPlus,
   CheckCircle2, AlertTriangle, Flag, CircleDot, Scale, GitBranch,
-  Activity, BarChart3, Settings, Bug,
+  Activity, BarChart3, Settings, Bug, Library,
 } from 'lucide-react'
 import { spring } from '../lib/animations'
 import { localDateKey, isOverdue } from '../lib/dateUtils'
@@ -167,6 +167,7 @@ export default function CommandPalette() {
       { path: PATHS.digest, label: 'Research Digest', icon: BookOpen, shortcut: 'G L' },
       { path: PATHS.grants, label: 'Grants', icon: DollarSign },
       { path: PATHS.meetings, label: 'Meetings', icon: Users, shortcut: 'G M' },
+      { path: PATHS.artifacts, label: 'Artifacts', icon: Library },
       { path: PATHS.activity, label: 'Activity', icon: Activity },
       { path: PATHS.analytics, label: 'Analytics', icon: BarChart3 },
       { path: PATHS.piAnalytics, label: 'PI Analytics', icon: BarChart3 },

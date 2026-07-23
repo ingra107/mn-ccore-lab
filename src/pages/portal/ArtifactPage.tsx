@@ -14,7 +14,7 @@ import { useState, useMemo } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
 import { usePageMeta } from '../../hooks/usePageMeta'
-import { FileText, History, Copy, ClipboardList, FolderKanban, Send, Lock } from 'lucide-react'
+import { FileText, History, Copy, ClipboardList, FolderKanban, Send, Lock, Tag, X, Plus } from 'lucide-react'
 import PageContainer from '../../components/PageContainer'
 import { Button } from '../../components/ui/Button'
 import { TextSkeleton } from '../../components/LoadingSkeleton'
@@ -25,6 +25,7 @@ import { ActivityEntryItem, type ActivityEntryItemRow } from '../../components/a
 import { ShowHiddenToggle } from '../../components/activity/ShowHiddenToggle'
 import { canDeleteActivityEntry } from '../../components/activity/activityPermissions'
 import { useDismissThread } from '../../hooks/useMutations'
+import { useArtifactTags, useArtifactTagMutations } from '../../hooks/useArtifacts'
 import { useAuth } from '../../hooks/useAuth'
 import { useToast } from '../../hooks/useToast'
 import { PATHS } from '../../constants/paths'
@@ -56,6 +57,9 @@ interface Artifact {
   created_at: string
   updated_at: string
   versions: ArtifactVersion[]
+  // schema-v104 collection tags (Reference Gallery). Additive — pre-v104 fetches
+  // may omit it; treat undefined as no tags.
+  tags?: string[]
 }
 
 export default function ArtifactPage() {
@@ -68,6 +72,20 @@ export default function ArtifactPage() {
   const [showHistory, setShowHistory] = useState(false)
   const [comment, setComment] = useState('')
   const [authorOnly, setAuthorOnly] = useState(false)
+
+  // ── Collection tags (schema-v104 Reference Gallery editor) ──
+  const [tagInput, setTagInput] = useState('')
+  const { data: allTags = [] } = useArtifactTags()
+  const { addTag, removeTag } = useArtifactTagMutations(id)
+  const handleAddTag = () => {
+    const t = tagInput.trim()
+    if (!t) return
+    addTag.mutate(t, {
+      onSuccess: () => showSuccess('Tag added'),
+      onError: () => showError('Could not add tag'),
+    })
+    setTagInput('')
+  }
 
   const { data: artifact, isLoading } = useQuery<Artifact | null>({
     queryKey: ['artifact', id],
@@ -300,6 +318,80 @@ export default function ArtifactPage() {
             <Send {...ICON_PROPS} size={11} /> Download .md
           </button>
         </div>
+
+        {/* ── Collection tags editor (schema-v104 Reference Gallery) ──
+            Existing tags render as removable chips; the input adds a tag with
+            autocomplete from GET /api/artifact-tags. Optimistic via
+            useArtifactTagMutations; edit controls gated on auth (display of the
+            tags themselves is always visible). */}
+        {(() => {
+          const canEdit = isAuthenticated || !import.meta.env.PROD
+          const tags = artifact.tags ?? []
+          if (tags.length === 0 && !canEdit) return null
+          return (
+            <div className="flex items-center gap-2 flex-wrap" style={{ marginBottom: '1.5rem' }}>
+              <span className="inline-flex items-center gap-1" style={{ fontSize: 11, color: 'var(--slate)', opacity: 0.7 }}>
+                <Tag {...ICON_PROPS} size={11} /> Collections
+              </span>
+              {tags.map((t) => (
+                <span
+                  key={t}
+                  className="inline-flex items-center gap-1"
+                  style={{ fontSize: 11, fontWeight: 500, color: 'var(--teal)', background: 'var(--teal-active)', borderRadius: 'var(--radius-full)', padding: '3px 8px 3px 10px' }}
+                >
+                  {t}
+                  {canEdit && (
+                    <button
+                      type="button"
+                      onClick={() => removeTag.mutate(t, { onError: () => showError('Could not remove tag') })}
+                      aria-label={`Remove tag ${t}`}
+                      className="inline-flex items-center cursor-pointer"
+                      style={{ background: 'none', border: 'none', color: 'var(--teal)', padding: 0, opacity: 0.8 }}
+                    >
+                      <X {...ICON_PROPS} size={11} />
+                    </button>
+                  )}
+                </span>
+              ))}
+              {tags.length === 0 && (
+                <span style={{ fontSize: 11, color: 'var(--slate)', opacity: 0.6 }}>none yet</span>
+              )}
+              {canEdit && (
+                <span className="inline-flex items-center gap-1">
+                  <input
+                    list="artifact-tag-suggestions"
+                    value={tagInput}
+                    onChange={(e) => setTagInput(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddTag() } }}
+                    aria-label="Add a collection tag"
+                    placeholder="add tag…"
+                    style={{
+                      fontSize: 11, width: 120, padding: '3px 8px', borderRadius: 'var(--radius-full)',
+                      border: '1px solid var(--border-subtle)', background: 'var(--cream)', color: 'var(--ink)',
+                    }}
+                  />
+                  <datalist id="artifact-tag-suggestions">
+                    {allTags.map((t) => <option key={t.tag} value={t.tag} />)}
+                  </datalist>
+                  <button
+                    type="button"
+                    onClick={handleAddTag}
+                    disabled={!tagInput.trim() || addTag.isPending}
+                    aria-label="Add tag"
+                    className="inline-flex items-center cursor-pointer"
+                    style={{
+                      fontSize: 11, padding: '3px 8px', borderRadius: 'var(--radius-full)',
+                      background: 'var(--surface-2, rgba(100,116,139,0.12))', color: 'var(--slate)',
+                      border: '1px solid var(--border-subtle)', opacity: tagInput.trim() ? 1 : 0.5,
+                    }}
+                  >
+                    <Plus {...ICON_PROPS} size={11} />
+                  </button>
+                </span>
+              )}
+            </div>
+          )
+        })()}
 
         {/* ── Document body ──
             HTML artifacts (content_type='html', schema-v94) render LIVE in a

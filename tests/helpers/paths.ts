@@ -20,6 +20,7 @@ export const P = {
   deadlineCascade: '/portal/deadline-cascade',
   projects: '/portal/projects',
   project: (slug: string) => `/portal/projects/${slug}`,
+  artifacts: '/portal/artifacts',
   artifact: (id: string) => `/portal/artifacts/${id}`,
   manuscripts: '/portal/manuscripts',
   ideas: '/portal/ideas',

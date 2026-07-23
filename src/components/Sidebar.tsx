@@ -28,6 +28,7 @@ import {
   GitBranch,
   ClipboardList,
   LayoutGrid,
+  Library,
 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../hooks/useAuth'
@@ -125,6 +126,7 @@ const navGroups: NavGroup[] = [
       { to: PATHS.meetings, label: 'Meetings', icon: UsersIcon },
       { to: PATHS.meetingNotes, label: 'Transcripts', icon: FileText },
       { to: '/team', label: 'Team', icon: UsersIcon },
+      { to: PATHS.artifacts, label: 'Artifacts', icon: Library },
       { to: PATHS.activity, label: 'Activity', icon: Activity },
       { to: PATHS.analytics, label: 'Analytics', icon: BarChart3 },
       { to: PATHS.insights, label: 'Insights', icon: TrendingUp },

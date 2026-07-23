@@ -58,7 +58,7 @@ import { handleCadenceCheck } from './routes/meeting-cadence';
 import { handleGetAIRequests, handleCreateAIRequest, handleUpdateAIResponse } from './routes/ai-requests';
 import { handleGetHermesDayIndex } from './routes/hermes';
 import { handleCreateLaunch, handleListLaunches, handleSetLaunchStatus, handleRefireLaunch, handleClaimLaunch, handleListPendingLaunches } from './routes/launch-log';
-import { handleGetArtifacts, handleGetArtifact, handleGetArtifactActivity, handleCreateArtifact, handleReviseArtifact, handleDeleteArtifact, handleAddArtifactComment } from './routes/artifacts';
+import { handleGetArtifacts, handleGetArtifact, handleGetArtifactActivity, handleCreateArtifact, handleReviseArtifact, handleDeleteArtifact, handleAddArtifactComment, handleGetArtifactGallery, handleGetArtifactTags, handleAddArtifactTag, handleRemoveArtifactTag } from './routes/artifacts';
 import { escapeHtml } from './lib/escapeHtml';
 import { handlePBCapture, handlePBDefer, handleAddToDispatch, handleGetPendingDispatch, handleSendDispatch, handleCompleteDispatchItem } from './routes/pb-sector';
 import { handlePBSessions, handlePBSessionStats, handleCreatePBSession, handleBulkCreatePBSessions } from './routes/pb-sessions';
@@ -1086,6 +1086,25 @@ defineRoute({
   entity: 'artifacts',
   visibility: 'na',
   handler: (c) => handleGetArtifacts(U(c), E(c)),
+});
+// Reference Gallery (schema-v104) — curated, tagged artifacts. `gallery` and
+// `artifact-tags` MUST precede the /api/artifacts/:id catch-all below so Hono
+// resolves them before treating "gallery" as an :id.
+defineRoute({
+  method: 'GET',
+  path: '/api/artifacts/gallery',
+  auth: 'authed',
+  entity: 'artifacts',
+  visibility: 'na',
+  handler: (c) => handleGetArtifactGallery(U(c), E(c)),
+});
+defineRoute({
+  method: 'GET',
+  path: '/api/artifact-tags',
+  auth: 'authed',
+  entity: 'artifacts',
+  visibility: 'na',
+  handler: (c) => handleGetArtifactTags(E(c)),
 });
 defineRoute({
   method: 'GET',
@@ -2591,6 +2610,25 @@ defineRoute({
   entity: 'artifacts',
   visibility: 'na',
   handler: (c) => handleCreateArtifact(R(c), USER(c), E(c)),
+});
+// Collection-tag writes (schema-v104). Authed-team — the handlers gate on the
+// resolved user (the anonymous shim = no auth). The DELETE especially relies on
+// that in-handler guard: DELETE-method routes skip the POST/PUT auth middleware.
+defineRoute({
+  method: 'POST',
+  path: '/api/artifacts/:id/tags',
+  auth: 'authed',
+  entity: 'artifacts',
+  visibility: 'na',
+  handler: (c) => handleAddArtifactTag(c.req.param('id'), R(c), USER(c), E(c)),
+});
+defineRoute({
+  method: 'DELETE',
+  path: '/api/artifacts/:id/tags/:tag',
+  auth: 'authed',
+  entity: 'artifacts',
+  visibility: 'na',
+  handler: (c) => handleRemoveArtifactTag(c.req.param('id'), c.req.param('tag'), R(c), USER(c), E(c)),
 });
 
 // PB sector writes
