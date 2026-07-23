@@ -53,11 +53,14 @@ interface FetchMember {
   authorName?: string
   scholarId?: string
   orcidId?: string
+  openalexId?: string
 }
 
 const OUT = resolve(dirname(fileURLToPath(import.meta.url)), '../src/data/publications.generated.ts')
 const DELAY_MS = Number(process.env.PUBFETCH_DELAY_MS ?? 1500)
 const SKIP_SCHOLAR = process.env.PUBFETCH_NO_SCHOLAR === '1'
+const SKIP_OPENALEX = process.env.PUBFETCH_NO_OPENALEX === '1'
+const MAILTO = 'nicholas.ingraham@gmail.com'
 
 function allMembers(): FetchMember[] {
   // Raw arrays (NOT getAllMembers(), which drops orcidId when flattening directors).
@@ -70,6 +73,7 @@ function allMembers(): FetchMember[] {
       authorName: 'authorName' in m ? m.authorName : undefined,
       scholarId: m.scholarId,
       orcidId: 'orcidId' in m ? m.orcidId : undefined,
+      openalexId: 'openalexId' in m ? m.openalexId : undefined,
     }))
 }
 
@@ -202,26 +206,111 @@ async function fetchScholar(member: FetchMember): Promise<Publication[]> {
   return out
 }
 
+// ── OpenAlex (primary — fullest coverage) ────────────────────────────────────
+// Resolve an OpenAlex author id (stored openalexId, or via the member's ORCID),
+// then pull all their journal ARTICLES (`type:article` excludes preprints /
+// datasets / errata / book chapters). OpenAlex is a superset of ORCID + PubMed +
+// Crossref and carries the full author list — so it fills members whose ORCID is
+// empty (e.g. an ORCID with 0 works but 53 on OpenAlex).
+interface OAWork {
+  title?: string
+  display_name?: string
+  publication_year?: number
+  doi?: string | null
+  ids?: { pmid?: string }
+  authorships?: Array<{ author?: { display_name?: string } }>
+  primary_location?: { source?: { display_name?: string } }
+}
+interface OAWorksPage {
+  results?: OAWork[]
+  meta?: { next_cursor?: string | null }
+}
+
+async function resolveOpenAlexId(m: FetchMember): Promise<string | undefined> {
+  if (m.openalexId) return m.openalexId
+  if (!m.orcidId) return undefined
+  const res = await fetch(`https://api.openalex.org/authors/orcid:${m.orcidId}?mailto=${MAILTO}`)
+  if (!res.ok) return undefined
+  const a = (await res.json()) as { id?: string }
+  return a.id ? a.id.replace('https://openalex.org/', '') : undefined
+}
+
+async function fetchOpenAlex(member: FetchMember, authorId: string): Promise<Publication[]> {
+  const out: Publication[] = []
+  let cursor: string | null = '*'
+  let pages = 0
+  while (cursor && pages < 20) {
+    const url =
+      `https://api.openalex.org/works?filter=authorships.author.id:${authorId},type:article` +
+      `&per-page=200&cursor=${encodeURIComponent(cursor)}&mailto=${MAILTO}`
+    const res = await fetch(url)
+    if (!res.ok) throw new Error(`OpenAlex works ${res.status} for ${authorId}`)
+    const data = (await res.json()) as OAWorksPage
+    for (const w of data.results ?? []) {
+      const pub = mapOpenAlexWork(member, w)
+      if (pub) out.push(pub)
+    }
+    cursor = data.meta?.next_cursor ?? null
+    pages++
+    if (!(data.results ?? []).length) break
+  }
+  return out
+}
+
+function mapOpenAlexWork(member: FetchMember, w: OAWork): Publication | null {
+  const title = (w.title || w.display_name || '').trim()
+  if (!title || !isRealPublication(title)) return null
+  const year = w.publication_year
+  if (!year) return null
+  const doi = w.doi || undefined // already a full https://doi.org/... URL
+  const pmid = w.ids?.pmid ? w.ids.pmid.replace(/\D/g, '') : ''
+  const pubmed = pmid ? `https://pubmed.ncbi.nlm.nih.gov/${pmid}/` : undefined
+  const authors = (w.authorships ?? [])
+    .map((a) => a.author?.display_name?.trim())
+    .filter((n): n is string => Boolean(n))
+    .slice(0, 30)
+    .join(', ')
+  return {
+    id: makeId(member, title, year, doi),
+    authors: authors || member.authorName || member.name,
+    title,
+    journal: w.primary_location?.source?.display_name?.trim() || '',
+    year,
+    status: 'Published',
+    doi,
+    pubmed,
+    topics: [],
+    authorSlugs: [member.slug],
+  }
+}
+
 // ── driver ──────────────────────────────────────────────────────────────────
 async function main() {
   const members = allMembers()
   const all: Publication[] = []
+  let openalexCount = 0
   let orcidCount = 0
   let scholarCount = 0
   let skipped = 0
 
   for (const m of members) {
     try {
-      if (m.orcidId) {
+      const oaId = SKIP_OPENALEX ? undefined : await resolveOpenAlexId(m)
+      if (oaId) {
+        const pubs = await fetchOpenAlex(m, oaId)
+        all.push(...pubs)
+        openalexCount++
+        console.log(`  [OpenAlex] ${m.slug}: ${pubs.length} articles`)
+      } else if (m.orcidId) {
         const pubs = await fetchOrcid(m)
         all.push(...pubs)
         orcidCount++
-        console.log(`  [ORCID]   ${m.slug}: ${pubs.length} works`)
+        console.log(`  [ORCID]    ${m.slug}: ${pubs.length} works`)
       } else if (m.scholarId && !SKIP_SCHOLAR) {
         const pubs = await fetchScholar(m)
         all.push(...pubs)
         scholarCount++
-        console.log(`  [Scholar] ${m.slug}: ${pubs.length} works`)
+        console.log(`  [Scholar]  ${m.slug}: ${pubs.length} works`)
       } else {
         skipped++
         continue
@@ -229,7 +318,7 @@ async function main() {
     } catch (err) {
       // FENCED: a member's fetch failure never aborts the run.
       skipped++
-      console.warn(`  [SKIP]    ${m.slug}: ${(err as Error).message}`)
+      console.warn(`  [SKIP]     ${m.slug}: ${(err as Error).message}`)
     }
     await sleep(DELAY_MS)
   }
@@ -248,7 +337,7 @@ async function main() {
   writeFileSync(OUT, render(deduped), 'utf8')
   console.log(
     `\nWrote ${deduped.length} generated publications to publications.generated.ts ` +
-      `(orcid members=${orcidCount}, scholar members=${scholarCount}, skipped=${skipped}).`,
+      `(openalex=${openalexCount}, orcid=${orcidCount}, scholar=${scholarCount}, skipped=${skipped}).`,
   )
   console.log('Review the diff, then commit. Seeding prod D1 is a separate deploy step (Nick gates it).')
 }

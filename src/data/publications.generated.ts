@@ -9,178 +9,28 @@ import type { Publication } from './types'
  */
 export const generatedPublications: Publication[] = [
   {
-    "id": "gen-10-1038-s41598-023-46343-1",
-    "authors": "Sandra Castro-Pearson, Sarah Samorodnitsky, Kaifeng Yang, Sahar Lotfi-Emran, Nicholas E. Ingraham, Carolyn Bramante, Emma K. Jones, Sarah Greising, Meng Yu, Brian Steffen, Julia Svensson, Eric Åhlberg, Björn Österberg, David Wacker, Weihua Guan, Michael Puskarich, Anna Smed-Sörensen, Elizabeth Lusczek, Sandra E. Safo, Christopher J. Tignanelli",
-    "title": "Development of a proteomic signature associated with severe disease for patients with COVID-19 using data from 5 multicenter, randomized, controlled, and prospective studies",
-    "journal": "Scientific reports",
-    "year": 2023,
-    "status": "Published",
-    "doi": "https://doi.org/10.1038/s41598-023-46343-1",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/37985892/",
-    "topics": [],
-    "authorSlugs": [
-      "nick-ingraham"
-    ]
-  },
-  {
-    "id": "gen-10-12659-ajcr-941088",
-    "authors": "Michael Kalinoski, Nicholas E. Ingraham",
-    "title": "Ventilator-Associated Methicillin-Resistant Staphylococcus aureus (MRSA) Pneumonia in a Patient with a Negative MRSA Nasal Swab",
-    "journal": "American Journal of Case Reports",
-    "year": 2023,
-    "status": "Published",
-    "doi": "https://doi.org/10.12659/AJCR.941088",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/37837186/",
-    "topics": [],
-    "authorSlugs": [
-      "nick-ingraham"
-    ]
-  },
-  {
-    "id": "gen-10-1016-j-amjsurg-2024-05-008",
-    "authors": "Rachel Morris, Abdul Hafiz Al Tannir, Jeffrey Chipman, Anthony Charles, Nicholas E. Ingraham, Michael Kalinoski, Leah Bolden, Lianne Siegel, Christopher J. Tignanelli",
-    "title": "Deriving a definition of chronic critical illness",
-    "journal": "American journal of surgery",
-    "year": 2024,
-    "status": "Published",
-    "doi": "https://doi.org/10.1016/j.amjsurg.2024.05.008",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/38782686/",
-    "topics": [],
-    "authorSlugs": [
-      "nick-ingraham"
-    ]
-  },
-  {
-    "id": "gen-10-1177-26892820251380523",
-    "authors": "Nathan Mesfin, Nitesh Kumar Jain, Anwar Khedr, Hisham Mushtaq, Abbas B. Jama, Noura Attallah, Esraa Hassan, Benjamin Langworthy, Nicholas Ingraham, Juan Pablo Domecq Garces, Thoyaja Koritala, Donna Lee Armaignac, Nicholas Eugene Perkins, Katherine Belden, Vishakha Kumar, Karen Boman, Devang K. Sanghavi, Vikas Bansal, Rahul Kashyap, Rodrigo Cartin-Ceba, Abigail La Nou, Allan J. Walkey, R. Adams Dudley, Syed Anjum Khan",
-    "title": "Hospital and Temporal Variations in Limitations of Care Among Hospitalized Patients with COVID-19",
-    "journal": "Palliative Medicine Reports",
-    "year": 2025,
-    "status": "Published",
-    "doi": "https://doi.org/10.1177/26892820251380523",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/41142473/",
-    "topics": [],
-    "authorSlugs": [
-      "nick-ingraham"
-    ]
-  },
-  {
-    "id": "gen-10-1101-2025-09-05-25334955",
-    "authors": "Emily M. Olson, Matthew E. Modes, Timothy J. Rowe, Patrick G Lyons, Nicholas E. Ingraham, Nandita R. Nadig, Clara J. Schroedl, Catherine A Gao",
-    "title": "Variability in First Academic Medicine Job Offers in Pulmonary and Critical Care Medicine",
-    "journal": "",
-    "year": 2025,
-    "status": "Published",
-    "doi": "https://doi.org/10.1101/2025.09.05.25334955",
-    "topics": [],
-    "authorSlugs": [
-      "nick-ingraham"
-    ]
-  },
-  {
-    "id": "gen-10-1093-cid-ciac772",
-    "authors": "COVID-OUT study team, David R. Boulware, Tom Murray, Jennifer L Proper, Christopher J Tignanelli, John B. Buse, David M. Liebovitz, Jacinda M. Nicklas, Kenneth Cohen, Michael A Puskarich, Hrishikesh K. Belani, Lianne K Siegel, Nichole R. Klatt, David J Odde, Amy B. Karger, Nick E Ingraham, Katrina M Hartman, Via Rao, Aubrey A. Hagen, Barkha Patel, Sarah L. Fenno, Nandini Avula, Neha V. Reddy, Spencer M. Erickson, Sarah Lindberg, Regina Fricton, Samuel Lee, Adnin Zaman, Hanna G. Saveraid, Walker J. Tordsen, Matthew F Pullen, Nancy E. Sherwood, Jared D. Huling, Carolyn T. Bramante",
-    "title": "Impact of Severe Acute Respiratory Syndrome Coronavirus 2 (SARS-CoV-2) Vaccination and Booster on Coronavirus Disease 2019 (COVID-19) Symptom Severity over Time in the COVID-OUT Trial",
-    "journal": "Clinical Infectious Diseases",
-    "year": 2023,
-    "status": "Published",
-    "doi": "https://doi.org/10.1093/cid/ciac772",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/36124697/",
-    "topics": [],
-    "authorSlugs": [
-      "nick-ingraham"
-    ]
-  },
-  {
-    "id": "gen-10-1177-0885066620982905",
-    "authors": "Nicholas E. Ingraham, Victor Vakayil, Kathryn M. Pendleton, Alexandria J. Robbins, Rebecca L. Freese, Elise F. Palzer, Anthony Charles, R. Adams Dudley, Christopher J. Tignanelli",
-    "title": "Recent Trends in Admission Diagnosis and Related Mortality in the Medically Critically Ill",
-    "journal": "Journal of Intensive Care Medicine",
+    "id": "gen-10-1056-nejmoa2201662",
+    "authors": "Carolyn T. Bramante, Jared D. Huling, Christopher J. Tignanelli, John B. Buse, David Liebovitz, Jacinda M. Nicklas, Kenneth J. Cohen, Michael A. Puskarich, Hrishikesh Belani, Jennifer Proper, Lianne Siegel, Nichole R. Klatt, David J. Odde, Darlette Luke, Blake Anderson, Amy B. Karger, Nicholas E. Ingraham, Katrina M Hartman, Via Rao, Aubrey A Hagen, Barkha Patel, Sarah L. Fenno, Nandini Avula, Neha V Reddy, Spencer M Erickson, Sarah Lindberg, Regina Fricton, Samuel Lee, Adnin Zaman, Hanna G Saveraid",
+    "title": "Randomized Trial of Metformin, Ivermectin, and Fluvoxamine for Covid-19",
+    "journal": "New England Journal of Medicine",
     "year": 2022,
     "status": "Published",
-    "doi": "https://doi.org/10.1177/0885066620982905",
+    "doi": "https://doi.org/10.1056/nejmoa2201662",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/36070710/",
     "topics": [],
     "authorSlugs": [
       "nick-ingraham"
     ]
   },
   {
-    "id": "gen-10-1371-journal-pone-0283326",
-    "authors": "Farha Ikramuddin, Robert Jeenchen Chen, Tanya Melnik, Nicholas E. Ingraham, Nguyen Nguyen, Lianne Siegel, Michael G. Usher, Christopher J. Tignanelli, Leslie Morse",
-    "title": "Predictors of discharge disposition and mortality following hospitalization with SARS-CoV-2 infection",
-    "journal": "PLOS ONE",
-    "year": 2023,
+    "id": "gen-10-1016-s2666-7568-20-30033-7",
+    "authors": "Carolyn T. Bramante, Nicholas E. Ingraham, Thomas A. Murray, Schelomo Marmor, Shane Hovertsen, Jessica Gronski, Chace McNeil, Ruoying Feng, Gabriel Guzman, Nermine Abdelwahab, Samantha King, Leonardo Tamariz, Thomas P. Meehan, Kathryn M. Pendleton, Bradley Benson, Deneen Vojta, Christopher J. Tignanelli",
+    "title": "Metformin and risk of mortality in patients hospitalised with COVID-19: a retrospective cohort analysis",
+    "journal": "The Lancet Healthy Longevity",
+    "year": 2020,
     "status": "Published",
-    "doi": "https://doi.org/10.1371/journal.pone.0283326",
-    "topics": [],
-    "authorSlugs": [
-      "nick-ingraham"
-    ]
-  },
-  {
-    "id": "gen-10-1101-2025-03-10-25323672",
-    "authors": "Saki Amagai, Vaishvik Chaudhari, Kaveri Chhikara, Nicholas E. Ingraham, Chad H. Hochberg, Anna K Barker, Chengsheng Mao, Alexander C. Ortiz, Gary E. Weissman, Benjamin E. Schmid, Megan Schwinne, Sivasubramanium V. Bhavani, Shan Guleria, Zewei Liao, Nikolay Markov, Patrick G. Lyons, Brenna Park-Egan, William F. Parker, Yuan Luo, Juan C. Rojas, Catherine A. Gao",
-    "title": "The Epidemiology of Intensive Care Unit Readmissions Across Ten Health Systems",
-    "journal": "",
-    "year": 2025,
-    "status": "Published",
-    "doi": "https://doi.org/10.1101/2025.03.10.25323672",
-    "topics": [],
-    "authorSlugs": [
-      "nick-ingraham"
-    ]
-  },
-  {
-    "id": "gen-10-1001-jamanetworkopen-2022-2735",
-    "authors": "Michael A. Puskarich, Nicholas E. Ingraham, Lisa H. Merck, Brian E. Driver, David A. Wacker, Lauren Page Black, Alan E. Jones, Courtney V. Fletcher, Andrew M. South, Thomas A. Murray, Christopher Lewandowski, Joseph Farhat, Justin L. Benoit, Michelle H. Biros, Kartik Cherabuddi, Jeffrey G. Chipman, Timothy W. Schacker, Faheem W. Guirgis, Helen T. Voelker, Joseph S. Koopmeiners, Tyler D Bold, Christopher J. Tignanelli",
-    "title": "Efficacy of Losartan in Hospitalized Patients with COVID-19-Induced Lung Injury",
-    "journal": "JAMA Network Open",
-    "year": 2022,
-    "status": "Published",
-    "doi": "https://doi.org/10.1001/jamanetworkopen.2022.2735",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/35294537/",
-    "topics": [],
-    "authorSlugs": [
-      "nick-ingraham"
-    ]
-  },
-  {
-    "id": "gen-10-1371-journal-pone-0323535",
-    "authors": "Vedansh Thakkar, Greg M. Silverman, Abhinab Kc, Nicholas E. Ingraham, Emma K. Jones, Samantha King, Genevieve B. Melton, Rui Zhang, Christopher J. Tignanelli",
-    "title": "A comparative analysis of large language models versus traditional information extraction methods for real-world evidence of patient symptomatology in acute and post-acute sequelae of SARS-CoV-2",
-    "journal": "PloS one",
-    "year": 2025,
-    "status": "Published",
-    "doi": "https://doi.org/10.1371/journal.pone.0323535",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/40373001/",
-    "topics": [],
-    "authorSlugs": [
-      "nick-ingraham"
-    ]
-  },
-  {
-    "id": "gen-10-3389-fendo-2021-587801",
-    "authors": "Sherehan Ibrahim, Jamie R. Lowe, Carolyn T. Bramante, Surbhi Shah, Nichole R. Klatt, Nancy Sherwood, Louis Aronne, Michael Puskarich, Leonardo Tamariz, Ana Palacio, Eric Bomberg, Michael Usher, Samantha King, Brad Benson, Deneen Vojta, Chris Tignanelli, Nicholas Ingraham",
-    "title": "Metformin and Covid-19",
-    "journal": "Frontiers in Endocrinology",
-    "year": 2021,
-    "status": "Published",
-    "doi": "https://doi.org/10.3389/fendo.2021.587801",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/34367059/",
-    "topics": [],
-    "authorSlugs": [
-      "nick-ingraham"
-    ]
-  },
-  {
-    "id": "gen-10-1371-journal-pone-0262193",
-    "authors": "Monica I. Lupei, Danni Li, Nicholas E. Ingraham, Karyn D. Baum, Bradley Benson, Michael Puskarich, David Milbrandt, Genevieve B. Melton, Daren Scheppmann, Michael G. Usher, Christopher J. Tignanelli",
-    "title": "A 12-hospital prospective evaluation of a clinical decision support prognostic algorithm based on logistic regression as a form of machine learning to facilitate decision making for patients with suspected COVID-19",
-    "journal": "PloS one",
-    "year": 2022,
-    "status": "Published",
-    "doi": "https://doi.org/10.1371/journal.pone.0262193",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/34986168/",
+    "doi": "https://doi.org/10.1016/s2666-7568(20)30033-7",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/33521772/",
     "topics": [],
     "authorSlugs": [
       "nick-ingraham"
@@ -188,9 +38,9 @@ export const generatedPublications: Publication[] = [
   },
   {
     "id": "gen-10-1016-s1473-3099-23-00299-2",
-    "authors": "Carolyn T Bramante, John B Buse, David M Liebovitz, Jacinda M Nicklas, Michael A Puskarich, Ken Cohen, Hrishikesh K Belani, Blake J Anderson, Jared D Huling, Christopher J Tignanelli, Jennifer L Thompson, Matthew Pullen, Esteban Lemus Wirtz, Lianne K Siegel, Jennifer L Proper, David J Odde, Nichole R Klatt, Nancy E Sherwood, Sarah M Lindberg, Amy B Karger, Kenneth B Beckman, Spencer M Erickson, Sarah L Fenno, Katrina M Hartman, Michael R Rose, Tanvi Mehta, Barkha Patel, Gwendolyn Griffiths, Neeta S Bhat, Thomas A Murray, Nicholas Ingraham, David R Boulware",
-    "title": "Outpatient treatment of COVID-19 and incidence of post-COVID-19 condition over 10 months (COVID-OUT)",
-    "journal": "The Lancet. Infectious diseases",
+    "authors": "Carolyn T. Bramante, John B. Buse, David Liebovitz, Jacinda M. Nicklas, Michael A. Puskarich, Ken Cohen, Hrishikesh Belani, Blake Anderson, Jared D. Huling, Christopher J. Tignanelli, Jennifer L. Thompson, Matthew F Pullen, Esteban Lemus Wirtz, Lianne Siegel, Jennifer Proper, David J. Odde, Nichole R. Klatt, Nancy E. Sherwood, Sarah Lindberg, Amy B. Karger, Kenneth B. Beckman, Spencer M Erickson, Sarah L. Fenno, Katrina M Hartman, Michael R. Rose, Tanvi Mehta, Barkha P. Patel, Gwendolyn Griffiths, Neeta Bhat, Thomas A. Murray",
+    "title": "Outpatient treatment of COVID-19 and incidence of post-COVID-19 condition over 10 months (COVID-OUT): a multicentre, randomised, quadruple-blind, parallel-group, phase 3 trial",
+    "journal": "The Lancet Infectious Diseases",
     "year": 2023,
     "status": "Published",
     "doi": "https://doi.org/10.1016/s1473-3099(23)00299-2",
@@ -201,9 +51,79 @@ export const generatedPublications: Publication[] = [
     ]
   },
   {
+    "id": "gen-10-1016-s2213-2600-20-30226-5",
+    "authors": "Nicholas E. Ingraham, Sahar Lotfi‐Emran, Beth K Thielen, Kristina Techar, Rachel Morris, Shernan G. Holtan, R. Adams Dudley, Christopher J. Tignanelli",
+    "title": "Immunomodulation in COVID-19",
+    "journal": "The Lancet Respiratory Medicine",
+    "year": 2020,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/s2213-2600(20)30226-5",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/32380023/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1183-13993003-00912-2020",
+    "authors": "Nicholas E. Ingraham, Abdo Barakat, Ronald A. Reilkoff, Tamara Bezdicek, Timothy W. Schacker, Jeffrey G. Chipman, Christopher J. Tignanelli, Michael A. Puskarich",
+    "title": "Understanding the renin–angiotensin–aldosterone–SARS-CoV axis: a comprehensive review",
+    "journal": "European Respiratory Journal",
+    "year": 2020,
+    "status": "Published",
+    "doi": "https://doi.org/10.1183/13993003.00912-2020",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/32341103/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1002-jmv-26728",
+    "authors": "Basil S. Karam, Rachel Morris, Carolyn T. Bramante, Michael A. Puskarich, Emily Zolfaghari, Sahar Lotfi‐Emran, Nicholas E. Ingraham, Anthony Charles, David J. Odde, Christopher J. Tignanelli",
+    "title": "mTOR inhibition in COVID‐19: A commentary and review of efficacy in RNA viruses",
+    "journal": "Journal of Medical Virology",
+    "year": 2020,
+    "status": "Published",
+    "doi": "https://doi.org/10.1002/jmv.26728",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/33314219/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1016-s2213-2600-20-30153-3",
+    "authors": "Christopher J. Tignanelli, Nicholas E. Ingraham, Matthew A. Sparks, Ronald A. Reilkoff, Tamara Bezdicek, Bradley Benson, Timothy W. Schacker, Jeffrey G. Chipman, Michael A. Puskarich",
+    "title": "Antihypertensive drugs and risk of COVID-19?",
+    "journal": "The Lancet Respiratory Medicine",
+    "year": 2020,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/s2213-2600(20)30153-3",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/32222166/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1007-s11606-021-06790-w",
+    "authors": "Nicholas E. Ingraham, Laura N. Purcell, Basil S. Karam, R. Adams Dudley, Michael Usher, Christopher A. Warlick, Michele Allen, Genevieve B. Melton, Anthony Charles, Christopher J. Tignanelli",
+    "title": "Racial and Ethnic Disparities in Hospital Admissions from COVID-19: Determining the Impact of Neighborhood Deprivation and Primary Language",
+    "journal": "Journal of General Internal Medicine",
+    "year": 2021,
+    "status": "Published",
+    "doi": "https://doi.org/10.1007/s11606-021-06790-w",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/34003427/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
     "id": "gen-10-1002-ctm2-685",
-    "authors": "Nicholas E Ingraham, David H Ingbar",
-    "title": "The omicron variant of SARS-CoV-2",
+    "authors": "Nicholas E. Ingraham, David H. Ingbar",
+    "title": "The omicron variant of SARS‐CoV‐2: Understanding the known and living with unknowns",
     "journal": "Clinical and Translational Medicine",
     "year": 2021,
     "status": "Published",
@@ -215,292 +135,84 @@ export const generatedPublications: Publication[] = [
     ]
   },
   {
-    "id": "gen-10-1093-ofid-ofac066",
-    "authors": "Carolyn T. Bramante, Jennifer L. Proper, David R. Boulware, Amy B. Karger, Thomas Murray, Via Rao, Aubrey Hagen, Christopher J. Tignanelli, Michael Puskarich, Ken Cohen, David M. Liebovitz, Nichole R. Klatt, Courtney Broedlow, Katrina M. Hartman, Jacinda Nicklas, Sherehan Ibrahim, Adnin Zaman, Hanna Saveraid, Hrishikesh Belani, Nicholas Ingraham, Grace Christensen, Lianne Siegel, Nancy E. Sherwood, Regina Fricton, Sam Lee, David J. Odde, John B. Buse, Jared D. Huling",
-    "title": "Vaccination Against SARS-CoV-2 Is Associated With a Lower Viral Load and Likelihood of Systemic Symptoms",
-    "journal": "Open Forum Infectious Diseases",
-    "year": 2022,
-    "status": "Published",
-    "doi": "https://doi.org/10.1093/ofid/ofac066",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/35392460/",
-    "topics": [],
-    "authorSlugs": [
-      "nick-ingraham"
-    ]
-  },
-  {
-    "id": "gen-10-1016-j-jcrc-2022-154203",
-    "authors": "Sarah Samorodnitsky, Sandra Castro-Pearson, Kaifeng Yang, Sahar Lotfi-Emran, Nicholas E. Ingraham, Carolyn Bramante, Sarah Geising, Emma K. Jones, David Wacker, Michael Puskarich, Elizabeth Lusczek, Sandra Safo, Christopher J. Tignanelli",
-    "title": "Proteomic pathways associated with developing severe disease for patients with COVID-19: A biologic analysis of data from two multicenter randomized controlled trials encompassing 13 U.S. hospitals",
-    "journal": "Journal of Critical Care",
-    "year": 2023,
-    "status": "Published",
-    "doi": "https://doi.org/10.1016/j.jcrc.2022.154203",
-    "topics": [],
-    "authorSlugs": [
-      "nick-ingraham"
-    ]
-  },
-  {
-    "id": "gen-10-1016-j-apmr-2022-04-009",
-    "authors": "Nermine Abdelwahab, Nicholas E. Ingraham, Nguyen Nguyen, Lianne Siegel, Greg Silverman, Himanshu Shekhar Sahoo, Serguei Pakhomov, Leslie R. Morse, Joanne Billings, Michael G. Usher, Tanya E. Melnik, Christopher J. Tignanelli, Farha Ikramuddin",
-    "title": "Predictors of Postacute Sequelae of COVID-19 Development and Rehabilitation",
-    "journal": "Archives of Physical Medicine and Rehabilitation",
-    "year": 2022,
-    "status": "Published",
-    "doi": "https://doi.org/10.1016/j.apmr.2022.04.009",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/35569640/",
-    "topics": [],
-    "authorSlugs": [
-      "nick-ingraham"
-    ]
-  },
-  {
-    "id": "gen-10-1097-sla-0000000000005661",
-    "authors": "Nicholas E. Ingraham, Emma K. Jones, Samantha King, James Dries, Michael Phillips, Tyler Loftus, Heather L. Evans, Genevieve B. Melton, Christopher J. Tignanelli",
-    "title": "Re-Aiming Equity Evaluation in Clinical Decision Support",
-    "journal": "Annals of surgery",
-    "year": 2023,
-    "status": "Published",
-    "doi": "https://doi.org/10.1097/sla.0000000000005661",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/35943199/",
-    "topics": [],
-    "authorSlugs": [
-      "nick-ingraham"
-    ]
-  },
-  {
-    "id": "gen-10-1109-icmla55696-2022-00146",
-    "authors": "Himanshu S. Sahoo, Nicholas E. Ingraham, Greg M. Silverman, John M. Sartori",
-    "title": "Towards Fairness and Interpretability",
-    "journal": "Proceedings - 21st IEEE International Conference on Machine Learning and Applications, ICMLA 2022",
-    "year": 2022,
-    "status": "Published",
-    "doi": "https://doi.org/10.1109/ICMLA55696.2022.00146",
-    "topics": [],
-    "authorSlugs": [
-      "nick-ingraham"
-    ]
-  },
-  {
-    "id": "gen-10-1097-mlr-0000000000001878",
-    "authors": "Rachel Kohn, Gary E. Weissman, Wei Wang, Nicholas E. Ingraham, Stefania Scott, Brian Bayes, George L. Anesi, Scott D. Halpern, Patricia Kipnis, Vincent X. Liu, Raymond Adams Dudley, Meeta Prasad Kerlin",
-    "title": "Prediction of In-hospital Mortality Among Intensive Care Unit Patients Using Modified Daily Laboratory-based Acute Physiology Score, Version 2",
-    "journal": "Medical care",
-    "year": 2023,
-    "status": "Published",
-    "doi": "https://doi.org/10.1097/MLR.0000000000001878",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/37308947/",
-    "topics": [],
-    "authorSlugs": [
-      "nick-ingraham"
-    ]
-  },
-  {
-    "id": "gen-10-1002-lrh2-10420",
-    "authors": "Geetanjali Rajamani, Genevieve B. Melton, Deborah L. Pestka, Maya Peters, Iva Ninkovic, Elizabeth Lindemann, Timothy J. Beebe, Nathan Shippee, Bradley Benson, Abraham Jacob, Christopher Tignanelli, Nicholas E. Ingraham, Joseph S. Koopmeiners, Michael G. Usher",
-    "title": "Building to learn",
-    "journal": "Learning Health Systems",
-    "year": 2024,
-    "status": "Published",
-    "doi": "https://doi.org/10.1002/lrh2.10420",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/39036531/",
-    "topics": [],
-    "authorSlugs": [
-      "nick-ingraham"
-    ]
-  },
-  {
-    "id": "gen-10-1186-s13063-024-08474-2",
-    "authors": "The STOP-Sepsis Investigators, Milena Silva, David A. Wacker, Brian E. Driver, Abbey Staugaitis, Laura J. Niedernhofer, Elizabeth L. Schmidt, James L. Kirkland, Tamara Tchkonia, Tamara Evans, Carlos Hines Serrano, Steffen Ventz, Joseph S. Koopmeiners, Michael A. Puskarich, Michael Thorp, Steven Skolasinski, Ronald A. Reilkoff, Kathryn M. Pendleton, Kathleen Mahan, Aahd Kubbara, Sarah M. Kesler, Nicholas E. Ingraham, Milind Bhagat, Bimaje Akpa",
-    "title": "Senolytics To slOw Progression of Sepsis (STOP-Sepsis) in elderly patients",
-    "journal": "Trials",
-    "year": 2024,
-    "status": "Published",
-    "doi": "https://doi.org/10.1186/s13063-024-08474-2",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/39434114/",
-    "topics": [],
-    "authorSlugs": [
-      "nick-ingraham"
-    ]
-  },
-  {
-    "id": "gen-10-1093-jamia-ocae169",
-    "authors": "Joshua Trujeque, R. Adams Dudley, Nathan Mesfin, Nicholas E. Ingraham, Isai Ortiz, Ann Bangerter, Anjan Chakraborty, Dalton Schutte, Jeremy Yeung, Ying Liu, Alicia Woodward-Abel, Emma Bromley, Rui Zhang, Lisa A. Brenner, Joseph A. Simonetti",
-    "title": "Comparison of six natural language processing approaches to assessing firearm access in Veterans Health Administration electronic health records",
-    "journal": "Journal of the American Medical Informatics Association",
-    "year": 2025,
-    "status": "Published",
-    "doi": "https://doi.org/10.1093/jamia/ocae169",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/39530748/",
-    "topics": [],
-    "authorSlugs": [
-      "nick-ingraham"
-    ]
-  },
-  {
-    "id": "gen-10-1007-s00134-025-08029-2",
-    "authors": "Catherine A. Gao, Nicholas E. Ingraham, Chad H. Hochberg, Gary E. Weissman, William F. Parker",
-    "title": "Correspondence on “A common longitudinal intensive care unit data format (CLIF) for critical illness research”. Author’s reply",
-    "journal": "Intensive Care Medicine",
-    "year": 2025,
-    "status": "Published",
-    "doi": "https://doi.org/10.1007/s00134-025-08029-2",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/40658245/",
-    "topics": [],
-    "authorSlugs": [
-      "nick-ingraham"
-    ]
-  },
-  {
-    "id": "gen-10-1097-ccm-0000000000006333",
-    "authors": "Thomas F. Byrd, Tom A. Phelan, Nicholas E. Ingraham, Benjamin W. Langworthy, Ajay Bhasin, Abhinab Kc, Genevieve B. Melton-Meaux, Christopher J. Tignanelli",
-    "title": "Beyond Unplanned ICU Transfers",
-    "journal": "Critical care medicine",
-    "year": 2024,
-    "status": "Published",
-    "doi": "https://doi.org/10.1097/CCM.0000000000006333",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/38832836/",
-    "topics": [],
-    "authorSlugs": [
-      "nick-ingraham"
-    ]
-  },
-  {
-    "id": "gen-10-3233-shti231087",
-    "authors": "Greg M. Silverman, Geetanjali Rajamani, Nicholas E. Ingraham, James K. Glover, Himanshu S. Sahoo, Michael Usher, Rui Zhang, Farha Ikramuddin, Tanya E. Melnik, Genevieve B. Melton, Christopher J. Tignanelli",
-    "title": "A Symptom-Based Natural Language Processing Surveillance Pipeline for Post-COVID-19 Patients",
-    "journal": "MEDINFO 2023 - The Future is Accessible",
-    "year": 2024,
-    "status": "Published",
-    "doi": "https://doi.org/10.3233/SHTI231087",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/38269931/",
-    "topics": [],
-    "authorSlugs": [
-      "nick-ingraham"
-    ]
-  },
-  {
-    "id": "gen-10-1089-sur-2020-473",
-    "authors": "Nicholas E Ingraham, Samantha King, Jennifer Proper, Lianne Siegel, Emily J Zolfaghari, Thomas A Murray, Victor Vakayil, Adam Sheka, Ruoying Feng, Gabriel Guzman, Samit Sunny Roy, Dhannanjay Muddappa, Michael G Usher, Jeffrey G Chipman, Christopher J Tignanelli, Kathryn M Pendleton",
-    "title": "Morbidity and Mortality Trends of Pancreatitis",
-    "journal": "Surgical infections",
+    "id": "gen-10-1371-journal-pone-0248956",
+    "authors": "Elizabeth R. Lusczek, Nicholas E. Ingraham, Basil S. Karam, Jennifer Proper, Lianne Siegel, Erika S. Helgeson, Sahar Lotfi‐Emran, Emily Zolfaghari, Emma Jones, Michael Usher, Jeffrey G. Chipman, R. Adams Dudley, Bradley Benson, Genevieve B. Melton, Anthony Charles, Monica I. Lupei, Christopher J. Tignanelli",
+    "title": "Characterizing COVID-19 clinical phenotypes and associated comorbidities and complication profiles",
+    "journal": "PLoS ONE",
     "year": 2021,
     "status": "Published",
-    "doi": "https://doi.org/10.1089/sur.2020.473",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/34129395/",
+    "doi": "https://doi.org/10.1371/journal.pone.0248956",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/33788884/",
     "topics": [],
     "authorSlugs": [
       "nick-ingraham"
     ]
   },
   {
-    "id": "gen-10-1089-sur-2023-249",
-    "authors": "Samantha King, Jennifer Proper, Lianne K. Siegel, Nicholas E. Ingraham, Christopher J. Tignanelli, Jeffrey G. Chipman, Jason Ho",
-    "title": "Acute Appendicitis Treatment Strategies and Mortality Based on Critical Illness on Admission",
-    "journal": "Surgical infections",
-    "year": 2024,
+    "id": "gen-10-1016-j-eclinm-2021-100957",
+    "authors": "Michael A. Puskarich, Nathan W. Cummins, Nicholas E. Ingraham, David A. Wacker, Ronald A. Reilkoff, Brian E. Driver, Michelle H. Biros, Fernanda Bellolio, Jeffrey G. Chipman, Andrew C. Nelson, Kenneth B. Beckman, Ryan A. Langlois, Tyler D. Bold, Matthew T. Aliota, Timothy W. Schacker, Helen Voelker, Thomas A. Murray, Joseph S. Koopmeiners, Christopher J. Tignanelli",
+    "title": "A multi-center phase II randomized clinical trial of losartan on symptomatic outpatients with COVID-19",
+    "journal": "EClinicalMedicine",
+    "year": 2021,
     "status": "Published",
-    "doi": "https://doi.org/10.1089/sur.2023.249",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/38285892/",
+    "doi": "https://doi.org/10.1016/j.eclinm.2021.100957",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/34195577/",
     "topics": [],
     "authorSlugs": [
       "nick-ingraham"
     ]
   },
   {
-    "id": "gen-10-1371-journal-pone-0338943",
-    "authors": "Brian Hilliard, Tanvi Mehta, James Grace, Deborah L. Pestka, Nicholas E. Ingraham, Timothy Beebe, Christopher Tignanelli, Genevieve B. Melton, Nathan Shippee, Joseph S. Koopmeiners, Michael Usher",
-    "title": "Aligning cardiac monitoring with American Heart Association Guidelines",
-    "journal": "PloS one",
-    "year": 2026,
+    "id": "gen-10-3389-fendo-2021-587801",
+    "authors": "Sherehan M. Ibrahim, Jamie Lowe, Carolyn T. Bramante, Surbhi Shah, Nichole R. Klatt, Nancy E. Sherwood, Louis J. Aronne, Michael A. Puskarich, Leonardo Tamariz, Ana Palacio, Eric M. Bomberg, Michael Usher, Samantha King, Brad Benson, Deneen Vojta, Christopher J. Tignanelli, Nicholas E. Ingraham",
+    "title": "Metformin and Covid-19: Focused Review of Mechanisms and Current Literature Suggesting Benefit",
+    "journal": "Frontiers in Endocrinology",
+    "year": 2021,
     "status": "Published",
-    "doi": "https://doi.org/10.1371/journal.pone.0338943",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/41616031/",
+    "doi": "https://doi.org/10.3389/fendo.2021.587801",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/34367059/",
     "topics": [],
     "authorSlugs": [
       "nick-ingraham"
     ]
   },
   {
-    "id": "gen-10-1097-cce-0000000000001341",
-    "authors": "Saki Amagai, Vaishvik Chaudhari, Kaveri Chhikara, Nicholas E. Ingraham, Chad H. Hochberg, Anna K. Barker, Chengsheng Mao, Alexander C. Ortiz, Gary E. Weissman, Benjamin E. Schmid, Megan Schwinne, Sivasubramanium V. Bhavani, Shan Guleria, Zewei Liao, Nikolay Markov, Patrick G. Lyons, Brenna Park-Egan, William F. Parker, Yuan Luo, Juan C. Rojas, Catherine A. Gao",
-    "title": "The Epidemiology of ICU Readmissions Across Ten Health Systems",
-    "journal": "Critical Care Explorations",
-    "year": 2025,
-    "status": "Published",
-    "doi": "https://doi.org/10.1097/cce.0000000000001341",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/41165278/",
-    "topics": [],
-    "authorSlugs": [
-      "nick-ingraham"
-    ]
-  },
-  {
-    "id": "gen-10-1097-ccm-0000000000007148",
-    "authors": "on behalf of the Common Longitudinal ICU data Format (CLIF) Consortium, Anna K. Barker, Akihiko Nishimura, Mark Nuppnau, Kevin G. Buell, Patrick G. Lyons, Wan Ting Liao, Brenna Park-Egan, Benjamin E. Schmid, Nicholas E. Ingraham, Vaishvik Chaudhari, Catherine A. Gao, Alexander C. Ortiz, Gary E. Weissman, Kaveri Chhikara, Juan C. Rojas, Andre C.K.B. Amaral, William F. Parker, Theodore J. Iwashyna, David N. Hager, Michael W. Sjoding, Chad H. Hochberg",
-    "title": "Prone Positioning in a North American Cohort of Hypoxemic Patients on Mechanical Ventilation",
-    "journal": "Critical care medicine",
-    "year": 2026,
-    "status": "Published",
-    "doi": "https://doi.org/10.1097/CCM.0000000000007148",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/42171428/",
-    "topics": [],
-    "authorSlugs": [
-      "nick-ingraham"
-    ]
-  },
-  {
-    "id": "gen-10-1513-annalsats-202411-1135oc",
-    "authors": "Daniel Shyu, Nicholas E. Ingraham, Christopher A. Linke, Lianne Siegel, Jared A. Larson, Anna R. Benson, Kathryn M. Pendleton",
-    "title": "Overview of Peripheral Vasopressor Use in an Academic Health System",
-    "journal": "Annals of the American Thoracic Society",
-    "year": 2025,
-    "status": "Published",
-    "doi": "https://doi.org/10.1513/annalsats.202411-1135oc",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/40126143/",
-    "topics": [],
-    "authorSlugs": [
-      "nick-ingraham"
-    ]
-  },
-  {
-    "id": "gen-10-1093-annalsats-aaoaf067",
-    "authors": "Patrick G. Lyons, Kevin G. Buell, Kathryn A. Connell, Matthew A. Christensen, Chad H. Hochberg, Snigdha Jain, William F. Parker, Kaveri Chhikara, Juan C. Rojas, Catherine Blebea, Sivasubramanium V. Bhavani, Anna K. Barker, Nathan Mesfin, Nicholas E. Ingraham, Catherine A. Gao",
-    "title": "Federation, not centralization",
-    "journal": "Annals of the American Thoracic Society",
-    "year": 2026,
-    "status": "Published",
-    "doi": "https://doi.org/10.1093/annalsats/aaoaf067",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/41915560/",
-    "topics": [],
-    "authorSlugs": [
-      "nick-ingraham"
-    ]
-  },
-  {
-    "id": "gen-10-1056-nejmoa2201662",
-    "authors": "COVID-OUT Trial Team, Carolyn T. Bramante, Jared D. Huling, Christopher J. Tignanelli, John B. Buse, David M. Liebovitz, Jacinda M. Nicklas, Kenneth Cohen, Michael A. Puskarich, Hrishikesh K. Belani, Jennifer L. Proper, Lianne K. Siegel, Nichole R. Klatt, David J. Odde, Darlette G. Luke, Blake Anderson, Amy B. Karger, Nicholas E. Ingraham, Katrina M. Hartman, Via Rao, Aubrey A. Hagen, Barkha Patel, Sarah L. Fenno, Nandini Avula, Neha V. Reddy, Spencer M. Erickson, Sarah Lindberg, Regina Fricton, Samuel Lee, Adnin Zaman, Hanna G. Saveraid, Walker J. Tordsen, Matthew F. Pullen, Michelle Biros, Nancy E. Sherwood, Jennifer L. Thompson, David R. Boulware, Thomas A. Murray",
-    "title": "Randomized Trial of Metformin, Ivermectin, and Fluvoxamine for Covid-19",
-    "journal": "The New England journal of medicine",
+    "id": "gen-10-1001-jamanetworkopen-2022-2735",
+    "authors": "Michael A. Puskarich, Nicholas E. Ingraham, Lisa H. Merck, Brian E. Driver, David A. Wacker, Lauren Page Black, Alan E. Jones, Courtney V. Fletcher, Andrew M. South, Thomas A. Murray, Christopher Lewandowski, Joseph Farhat, Justin L. Benoit, Michelle H. Biros, Kartikeya Cherabuddi, Jeffrey G. Chipman, Timothy W. Schacker, Faheem W. Guirgis, Helen Voelker, Joseph S. Koopmeiners, Christopher J. Tignanelli, Angiotensin Receptor Blocker Based Lung Protective Strategies for Inpatients With COVID-19 (ALPS-IP) Investigators, Andrew C. Nelson, Alex Hall, David W. Wright, Ronald A. Reilkoff, Tyler D. Bold, Kenneth B. Beckman, Ryan A. Langlois, Matthew T. Aliota",
+    "title": "Efficacy of Losartan in Hospitalized Patients With COVID-19–Induced Lung Injury",
+    "journal": "JAMA Network Open",
     "year": 2022,
     "status": "Published",
-    "doi": "https://doi.org/10.1056/NEJMoa2201662",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/36070710/",
+    "doi": "https://doi.org/10.1001/jamanetworkopen.2022.2735",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/35294537/",
     "topics": [],
     "authorSlugs": [
       "nick-ingraham"
     ]
   },
   {
-    "id": "gen-10-1097-cce-0000000000001189",
-    "authors": "Nicholas E. Ingraham, Daniel Shyu, Tom Phelan, Nathan Mesfin, Benjamin Langworthy, Rachel Kohn, Meeta Prasad Kerlin, R. Adams Dudley",
-    "title": "Using Electronic Health Records to Identify the Daily Primary Provider During Hospitalization",
-    "journal": "Critical Care Explorations",
+    "id": "gen-10-1002-jmv-26873",
+    "authors": "Carolyn T. Bramante, John B. Buse, Leonardo Tamaritz, Ana Palacio, Ken Cohen, Deneen Vojta, David Liebovitz, Nia S. Mitchell, Jacinda M. Nicklas, Ildiko Lingvay, Jeanne M. Clark, Louis J. Aronne, Erik Anderson, Michael Usher, Ryan T. Demmer, Genevieve B. Melton, Nicholas E. Ingraham, Christopher J. Tignanelli",
+    "title": "Outpatient metformin use is associated with reduced severity of COVID‐19 disease in adults with overweight or obesity",
+    "journal": "Journal of Medical Virology",
+    "year": 2021,
+    "status": "Published",
+    "doi": "https://doi.org/10.1002/jmv.26873",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/33580540/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1093-cid-ciae159",
+    "authors": "Carolyn T. Bramante, Kenneth B. Beckman, Tanvi Mehta, Amy B. Karger, David J. Odde, Christopher J. Tignanelli, John B. Buse, Darrell M. Johnson, Ray Watson, Jerry J Daniel, David Liebovitz, Jacinda M. Nicklas, Ken Cohen, Michael A. Puskarich, Hrishikesh Belani, Lianne Siegel, Nichole R. Klatt, Blake Anderson, Katrina M Hartman, Via Rao, Aubrey A Hagen, Barkha Patel, Sarah L. Fenno, Nandini Avula, Neha V Reddy, Spencer M Erickson, Regina Fricton, Samuel Lee, Gwendolyn Griffiths, Matthew F Pullen",
+    "title": "Favorable Antiviral Effect of Metformin on SARS-CoV-2 Viral Load in a Randomized, Placebo-Controlled Clinical Trial of COVID-19",
+    "journal": "Clinical Infectious Diseases",
     "year": 2024,
     "status": "Published",
-    "doi": "https://doi.org/10.1097/CCE.0000000000001189",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/39700341/",
+    "doi": "https://doi.org/10.1093/cid/ciae159",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/38690892/",
     "topics": [],
     "authorSlugs": [
       "nick-ingraham"
@@ -508,7 +220,7 @@ export const generatedPublications: Publication[] = [
   },
   {
     "id": "gen-10-1007-s00134-025-07848-7",
-    "authors": "Juan C. Rojas, Patrick G. Lyons, Kaveri Chhikara, Vaishvik Chaudhari, Sivasubramanium V. Bhavani, Muna Nour, Kevin G. Buell, Kevin D. Smith, Catherine A. Gao, Saki Amagai, Chengsheng Mao, Yuan Luo, Anna K. Barker, Mark Nuppnau, Michael Hermsen, Jay L. Koyner, Haley Beck, Rachel Baccile, Zewei Liao, Kyle A. Carey, Brenna Park-Egan, Xuan Han, Alexander C. Ortiz, Benjamin E. Schmid, Gary E. Weissman, Chad H. Hochberg, Nicholas E. Ingraham, William F. Parker",
+    "authors": "J.C. Rojas, Patrick G. Lyons, K. Chhikara, Vaishvik Chaudhari, Sivasubramanium V. Bhavani, Muna Nour, Kevin G. Buell, Kevin D. Smith, Catherine A. Gao, Saki Amagai, Chengsheng Mao, Yuan Luo, Anna Barker, Mark Nuppnau, M. Hermsen, Jay L. Koyner, H. Beck, Rachel Baccile, Zewei Liao, Kyle A. Carey, Brenna Park-Egan, Xuan Han, Alexander C. Ortiz, Benjamin Schmid, Gary E. Weissman, Chad H. Hochberg, Nicholas E. Ingraham, William F. Parker",
     "title": "A common longitudinal intensive care unit data format (CLIF) for critical illness research",
     "journal": "Intensive Care Medicine",
     "year": 2025,
@@ -521,39 +233,321 @@ export const generatedPublications: Publication[] = [
     ]
   },
   {
-    "id": "gen-10-1101-2023-01-19-23284796",
+    "id": "gen-10-1148-ryai-210217",
+    "authors": "Ju Sun, Le Peng, Taihui Li, Dyah Adila, Zach Zaiman, Genevieve B. Melton, Nicholas E. Ingraham, Eric Murray, Daniel Boley, Sean Switzer, John L. Burns, Kun Huang, Tadashi Allen, Scott D. Steenburg, Judy Wawira Gichoya, Erich Kummerfeld, Christopher J. Tignanelli",
+    "title": "Performance of a Chest Radiograph AI Diagnostic Tool for COVID-19: A Prospective Observational Study",
+    "journal": "Radiology Artificial Intelligence",
+    "year": 2022,
+    "status": "Published",
+    "doi": "https://doi.org/10.1148/ryai.210217",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/35923381/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1613-jair-1-12631",
+    "authors": "Greg Silverman, Himanshu S. Sahoo, Nicholas E. Ingraham, Monica I. Lupei, Michael A. Puskarich, Michael Usher, James Dries, Raymond Finzel, Eric Murray, John Sartori, György Simon, Rui Zhang, Genevieve B. Melton, Christopher J. Tignanelli, Serguei Pakhomov",
+    "title": "NLP Methods for Extraction of Symptoms from Unstructured Data for Use in Prognostic COVID-19 Analytic Models",
+    "journal": "Journal of Artificial Intelligence Research",
+    "year": 2021,
+    "status": "Published",
+    "doi": "https://doi.org/10.1613/jair.1.12631",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1097-ta-0000000000002768",
+    "authors": "Victor Vakayil, Nicholas E. Ingraham, Alexandria J. Robbins, Rebecca Freese, Elise F. Northrop, Melissa E. Brunsvold, Kathryn M. Pendleton, Anthony Charles, Jeffrey G. Chipman, Christopher J. Tignanelli",
+    "title": "Epidemiological trends of surgical admissions to the intensive care unit in the United States",
+    "journal": "The Journal of Trauma: Injury, Infection, and Critical Care",
+    "year": 2020,
+    "status": "Published",
+    "doi": "https://doi.org/10.1097/ta.0000000000002768",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/32384370/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1089-sur-2020-473",
+    "authors": "Nicholas E. Ingraham, Samantha King, Jennifer Proper, Lianne Siegel, Emily Zolfaghari, Thomas A. Murray, Victor Vakayil, Adam Sheka, Ruoying Feng, Gabriel Guzman, Samit S. Roy, Dhannanjay Muddappa, Michael Usher, Jeffrey G. Chipman, Christopher J. Tignanelli, Kathryn M. Pendleton",
+    "title": "Morbidity and Mortality Trends of Pancreatitis: An Observational Study",
+    "journal": "Surgical Infections",
+    "year": 2021,
+    "status": "Published",
+    "doi": "https://doi.org/10.1089/sur.2020.473",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/34129395/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1097-cce-0000000000000108",
+    "authors": "Nicholas E. Ingraham, Christopher J. Tignanelli",
+    "title": "Fact Versus Science Fiction: Fighting Coronavirus Disease 2019 Requires the Wisdom to Know the Difference",
+    "journal": "Critical Care Explorations",
+    "year": 2020,
+    "status": "Published",
+    "doi": "https://doi.org/10.1097/cce.0000000000000108",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/32426750/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1093-ofid-ofac066",
+    "authors": "Carolyn T. Bramante, Jennifer Proper, David R. Boulware, Amy B. Karger, Thomas A. Murray, V. D. P. Rao, Aubrey A Hagen, Christopher J. Tignanelli, Michael A. Puskarich, Ken Cohen, David Liebovitz, Nichole R. Klatt, Courtney A. Broedlow, Katrina M Hartman, Jacinda M. Nicklas, Sherehan M. Ibrahim, Adnin Zaman, Hanna G Saveraid, Hrishikesh Belani, Nicholas E. Ingraham, Grace M. Christensen, Lianne Siegel, Nancy E. Sherwood, Regina Fricton, Sam Lee, David J. Odde, John B. Buse, Jared D. Huling",
+    "title": "Vaccination Against SARS-CoV-2 Is Associated With a Lower Viral Load and Likelihood of Systemic Symptoms",
+    "journal": "Open Forum Infectious Diseases",
+    "year": 2022,
+    "status": "Published",
+    "doi": "https://doi.org/10.1093/ofid/ofac066",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/35392460/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1371-journal-pone-0262193",
+    "authors": "Monica I. Lupei, Danni Li, Nicholas E. Ingraham, Karyn D. Baum, Bradley Benson, Michael A. Puskarich, David Milbrandt, Genevieve B. Melton, Daren Scheppmann, Michael Usher, Christopher J. Tignanelli",
+    "title": "A 12-hospital prospective evaluation of a clinical decision support prognostic algorithm based on logistic regression as a form of machine learning to facilitate decision making for patients with suspected COVID-19",
+    "journal": "PLoS ONE",
+    "year": 2022,
+    "status": "Published",
+    "doi": "https://doi.org/10.1371/journal.pone.0262193",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/34986168/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1097-sla-0000000000005661",
+    "authors": "Nicholas E. Ingraham, Emma Jones, Samantha King, James Dries, Michael Phillips, Tyler J. Loftus, Heather L. Evans, Genevieve B. Melton, Christopher J. Tignanelli",
+    "title": "Re-Aiming Equity Evaluation in Clinical Decision Support",
+    "journal": "Annals of Surgery",
+    "year": 2022,
+    "status": "Published",
+    "doi": "https://doi.org/10.1097/sla.0000000000005661",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/35943199/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-apmr-2022-04-009",
+    "authors": "Nermine Abdelwahab, Nicholas E. Ingraham, Nguyen Nguyen, Lianne Siegel, Greg Silverman, Himanshu S. Sahoo, Serguei Pakhomov, Leslie R. Morse, Joanne Billings, Michael Usher, Tanya E. Melnik, Christopher J. Tignanelli, Farha Ikramuddin",
+    "title": "Predictors of Postacute Sequelae of COVID-19 Development and Rehabilitation: A Retrospective Study",
+    "journal": "Archives of Physical Medicine and Rehabilitation",
+    "year": 2022,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.apmr.2022.04.009",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/35569640/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1186-s13054-020-02894-7",
+    "authors": "Nicholas E. Ingraham, David R. Boulware, Matthew A. Sparks, Timothy W. Schacker, Bradley Benson, Jeffrey A. Sparks, Thomas A. Murray, John E. Connett, Jeffrey G. Chipman, Anthony Charles, Christopher J. Tignanelli",
+    "title": "Shining a light on the evidence for hydroxychloroquine in SARS-CoV-2",
+    "journal": "Critical Care",
+    "year": 2020,
+    "status": "Published",
+    "doi": "https://doi.org/10.1186/s13054-020-02894-7",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/32345336/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1097-mlr-0000000000001878",
     "authors": "Rachel Kohn, Gary E. Weissman, Wei Wang, Nicholas E. Ingraham, Stefania Scott, Brian Bayes, George L. Anesi, Scott D. Halpern, Patricia Kipnis, Vincent X. Liu, R. Adams Dudley, Meeta Prasad Kerlin",
-    "title": "Prediction of in-hospital mortality among intensive care unit patients using modified daily Laboratory-based Acute Physiology Scores, version 2 (LAPS2)",
-    "journal": "",
+    "title": "Prediction of In-hospital Mortality Among Intensive Care Unit Patients Using Modified Daily Laboratory-based Acute Physiology Score, Version 2",
+    "journal": "Medical Care",
     "year": 2023,
     "status": "Published",
-    "doi": "https://doi.org/10.1101/2023.01.19.23284796",
+    "doi": "https://doi.org/10.1097/mlr.0000000000001878",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/37308947/",
     "topics": [],
     "authorSlugs": [
       "nick-ingraham"
     ]
   },
   {
-    "id": "gen-10-1007-s11606-021-06790-w",
-    "authors": "Nicholas E. Ingraham, Laura N. Purcell, Basil S. Karam, R. Adams Dudley, Michael G. Usher, Christopher A. Warlick, Michele L. Allen, Genevieve B. Melton, Anthony Charles, Christopher J. Tignanelli",
-    "title": "Racial and Ethnic Disparities in Hospital Admissions from COVID-19: Determining the Impact of Neighborhood Deprivation and Primary Language",
-    "journal": "Journal of General Internal Medicine",
-    "year": 2021,
+    "id": "gen-10-1186-s13063-024-08474-2",
+    "authors": "Milena Silva, David A. Wacker, Brian E. Driver, Abbey Staugaitis, Laura J. Niedernhofer, E Schmidt, James L. Kirkland, Tamar Tchkonia, Tamara S. Evans, Carlos Hines Serrano, Steffen Ventz, Joseph S. Koopmeiners, Michael A. Puskarich, The STOP-Sepsis Investigators, Bimaje Akpa, Milind Bhagat, Nicholas E. Ingraham, Sarah Kesler, Aahd Kubbara, Kathleen Mahan, Kathryn M. Pendleton, Ronald A. Reilkoff, Steven Skolasinski, MICHAEL W. THORP",
+    "title": "Senolytics To slOw Progression of Sepsis (STOP-Sepsis) in elderly patients: Study protocol for a multicenter, randomized, adaptive allocation clinical trial",
+    "journal": "Trials",
+    "year": 2024,
     "status": "Published",
-    "doi": "https://doi.org/10.1007/s11606-021-06790-w",
+    "doi": "https://doi.org/10.1186/s13063-024-08474-2",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/39434114/",
     "topics": [],
     "authorSlugs": [
       "nick-ingraham"
     ]
   },
   {
-    "id": "gen-10-1093-jamiaopen-ooab070",
-    "authors": "Himanshu S Sahoo, Greg M Silverman, Nicholas E Ingraham, Monica I Lupei, Michael A Puskarich, Raymond L Finzel, John Sartori, Rui Zhang, Benjamin C Knoll, Sijia Liu, Hongfang Liu, Genevieve B Melton, Christopher J Tignanelli, Serguei V S Pakhomov",
-    "title": "A fast, resource efficient, and reliable rule-based system for COVID-19 symptom identification",
-    "journal": "JAMIA Open",
+    "id": "gen-10-1513-annalsats-202411-1135oc",
+    "authors": "Daniel Shyu, Nicholas E. Ingraham, Christopher A. Linke, Lianne Siegel, Jared A Larson, Anna R Benson, Kathryn M. Pendleton",
+    "title": "Overview of Peripheral Vasopressor Use in an Academic Health System",
+    "journal": "Annals of the American Thoracic Society",
+    "year": 2025,
+    "status": "Published",
+    "doi": "https://doi.org/10.1513/annalsats.202411-1135oc",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/40126143/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1093-jamia-ocae169",
+    "authors": "Joshua Trujeque, R. Adams Dudley, Nathan Mesfin, Nicholas E. Ingraham, Isai Ortiz, Ann Bangerter, Anjan Chakraborty, Dalton Schutte, Jeremy Yeung, Ying Liu, Alicia Woodward-Abel, Emma Bromley, Rui Zhang, Lisa A. Brenner, Joseph A. Simonetti",
+    "title": "Comparison of six natural language processing approaches to assessing firearm access in Veterans Health Administration electronic health records",
+    "journal": "Journal of the American Medical Informatics Association",
+    "year": 2024,
+    "status": "Published",
+    "doi": "https://doi.org/10.1093/jamia/ocae169",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/39530748/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1371-journal-pone-0323535",
+    "authors": "Vedansh Thakkar, Greg Silverman, Abhinab Kc, Nicholas E. Ingraham, Emma Jones, Samantha King, Genevieve B. Melton, Rui Zhang, Christopher J. Tignanelli",
+    "title": "A comparative analysis of large language models versus traditional information extraction methods for real-world evidence of patient symptomatology in acute and post-acute sequelae of SARS-CoV-2",
+    "journal": "PLoS ONE",
+    "year": 2025,
+    "status": "Published",
+    "doi": "https://doi.org/10.1371/journal.pone.0323535",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/40373001/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1097-ccm-0000000000004524",
+    "authors": "Nicholas E. Ingraham, Victor Vakayil, Kathryn M. Pendleton, Alexandria J. Robbins, Rebecca Freese, Elise F. Northrop, Melissa E. Brunsvold, Anthony Charles, Jeffrey G. Chipman, Christopher J. Tignanelli",
+    "title": "National Trends and Variation of Functional Status Deterioration in the Medically Critically Ill*",
+    "journal": "Critical Care Medicine",
+    "year": 2020,
+    "status": "Published",
+    "doi": "https://doi.org/10.1097/ccm.0000000000004524",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/32886469/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1097-qai-0000000000001797",
+    "authors": "David M. MacDonald, Anne C. Melzer, Gary Collins, Anchalee Avihingsanon, Kristina Crothers, Nicholas E. Ingraham, Henry Mugerwa, Matti Ristola, Jonathan Shuter, Ken M. Kunisaki, for the INSIGHT START Pulmonary Substudy Group",
+    "title": "Smoking and Accelerated Lung Function Decline in HIV-Positive Individuals: A Secondary Analysis of the START Pulmonary Substudy",
+    "journal": "JAIDS Journal of Acquired Immune Deficiency Syndromes",
+    "year": 2018,
+    "status": "Published",
+    "doi": "https://doi.org/10.1097/qai.0000000000001797",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/29985804/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1155-2017-8682354",
+    "authors": "Nicholas E. Ingraham, Brenton Schneider, Jonathan D. Alpern",
+    "title": "Prosthetic Joint Infection due to<i> Mycobacterium avium-intracellulare</i> in a Patient with Rheumatoid Arthritis: A Case Report and Review of the Literature",
+    "journal": "Case Reports in Infectious Diseases",
+    "year": 2017,
+    "status": "Published",
+    "doi": "https://doi.org/10.1155/2017/8682354",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/28280641/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1093-cid-ciac772",
+    "authors": "David R. Boulware, Thomas A. Murray, Jennifer Proper, Christopher J. Tignanelli, John B. Buse, David Liebovitz, Jacinda M. Nicklas, Kenneth J. Cohen, Michael A. Puskarich, Hrishikesh Belani, Lianne Siegel, Nichole R. Klatt, David J. Odde, Amy B. Karger, Nicholas E. Ingraham, Katrina M Hartman, Via Rao, Aubrey A Hagen, Barkha Patel, Sarah L. Fenno, Nandini Avula, Neha V Reddy, Spencer M Erickson, Sarah Lindberg, Regina Fricton, Samuel Lee, Adnin Zaman, Hanna G Saveraid, Walker Tordsen, Matthew F Pullen",
+    "title": "Impact of Severe Acute Respiratory Syndrome Coronavirus 2 (SARS-CoV-2) Vaccination and Booster on Coronavirus Disease 2019 (COVID-19) Symptom Severity Over Time in the COVID-OUT Trial",
+    "journal": "Clinical Infectious Diseases",
+    "year": 2022,
+    "status": "Published",
+    "doi": "https://doi.org/10.1093/cid/ciac772",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/36124697/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-jpainsymman-2020-09-015",
+    "authors": "Alexandria J. Robbins, Nicholas E. Ingraham, Adam Sheka, Kathryn M. Pendleton, Rachel Morris, Alexander Rix, Victor Vakayil, Jeffrey G. Chipman, Anthony Charles, Christopher J. Tignanelli",
+    "title": "Discordant Cardiopulmonary Resuscitation and Code Status at Death",
+    "journal": "Journal of Pain and Symptom Management",
+    "year": 2020,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.jpainsymman.2020.09.015",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/32949762/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1089-sur-2019-192",
+    "authors": "Nicholas E. Ingraham, Christopher J. Tignanelli, Jeremiah Menk, Jeffrey G. Chipman",
+    "title": "Pre- and Peri-Operative Factors Associated with Chronic Critical Illness in Liver Transplant Recipients",
+    "journal": "Surgical Infections",
+    "year": 2019,
+    "status": "Published",
+    "doi": "https://doi.org/10.1089/sur.2019.192",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/31618109/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-resuscitation-2019-11-020",
+    "authors": "Jennifer Wong, Peter G. Duane, Nicholas E. Ingraham",
+    "title": "A case series of patients who were do not resuscitate but underwent cardiopulmonary resuscitation",
+    "journal": "Resuscitation",
+    "year": 2019,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.resuscitation.2019.11.020",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/31790757/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1097-pts-0000000000000916",
+    "authors": "Michael Usher, Christopher J. Tignanelli, Brian Hilliard, Zachary P. Kaltenborn, Monica I. Lupei, György Simon, Surbhi Shah, Jonathan Kirsch, Genevieve B. Melton, Nicholas E. Ingraham, Andrew Olson, Karyn D. Baum",
+    "title": "Responding to COVID-19 Through Interhospital Resource Coordination: A Mixed-Methods Evaluation",
+    "journal": "Journal of Patient Safety",
     "year": 2021,
     "status": "Published",
-    "doi": "https://doi.org/10.1093/jamiaopen/ooab070",
+    "doi": "https://doi.org/10.1097/pts.0000000000000916",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/34569998/",
     "topics": [],
     "authorSlugs": [
       "nick-ingraham"
@@ -567,252 +561,35 @@ export const generatedPublications: Publication[] = [
     "year": 2022,
     "status": "Published",
     "doi": "https://doi.org/10.3390/jcm11030627",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/35160078/",
     "topics": [],
     "authorSlugs": [
       "nick-ingraham"
     ]
   },
   {
-    "id": "gen-10-1148-ryai-210217",
-    "authors": "Ju Sun, Le Peng, Taihui Li, Dyah Adila, Zach Zaiman, Genevieve B. Melton-Meaux, Nicholas E. Ingraham, Eric Murray, Daniel Boley, Sean Switzer, John L. Burns, Kun Huang, Tadashi Allen, Scott D. Steenburg, Judy Wawira Gichoya, Erich Kummerfeld, Christopher J. Tignanelli",
-    "title": "Performance of a Chest Radiograph AI Diagnostic Tool for COVID-19: A Prospective Observational Study",
-    "journal": "Radiology: Artificial Intelligence",
-    "year": 2022,
+    "id": "gen-10-1097-ccm-0000000000006333",
+    "authors": "Thomas F. Byrd, Tom Phelan, Nicholas E. Ingraham, Benjamin Langworthy, Ajay Bhasin, Abhinab Kc, Genevieve B. Melton, Christopher J. Tignanelli",
+    "title": "Beyond Unplanned ICU Transfers: Linking a Revised Definition of Deterioration to Patient Outcomes",
+    "journal": "Critical Care Medicine",
+    "year": 2024,
     "status": "Published",
-    "doi": "https://doi.org/10.1148/ryai.210217",
+    "doi": "https://doi.org/10.1097/ccm.0000000000006333",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/38832836/",
     "topics": [],
     "authorSlugs": [
       "nick-ingraham"
     ]
   },
   {
-    "id": "gen-10-1097-pts-0000000000000916",
-    "authors": "Michael G Usher, Christopher J Tignanelli, Brian Hilliard, Zachary P Kaltenborn, Monica I Lupei, Gyorgy Simon, Surbhi Shah, Jonathan D Kirsch, Yan Genevieve B Melton, Nicholas E Ingraham, Andrew P J Olson, Karyn D Baum",
-    "title": "Responding to COVID-19 Through Interhospital Resource Coordination",
-    "journal": "Journal of Patient Safety",
-    "year": 2021,
+    "id": "gen-10-1038-s41598-023-46343-1",
+    "authors": "Sandra Castro‐Pearson, Sarah Samorodnitsky, Kaifeng Yang, Sahar Lotfi‐Emran, Nicholas E. Ingraham, Carolyn T. Bramante, Emma Jones, Sarah M. Greising, Meng Yu, Brian T. Steffen, Julia Svensson, Eric Åhlberg, Björn Österberg, David A. Wacker, Weihua Guan, Michael A. Puskarich, Anna Smed‐Sörensen, Elizabeth R. Lusczek, Sandra E. Safo, Christopher J. Tignanelli",
+    "title": "Development of a proteomic signature associated with severe disease for patients with COVID-19 using data from 5 multicenter, randomized, controlled, and prospective studies",
+    "journal": "Scientific Reports",
+    "year": 2023,
     "status": "Published",
-    "doi": "https://doi.org/10.1097/pts.0000000000000916",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/34569998/",
-    "topics": [],
-    "authorSlugs": [
-      "nick-ingraham"
-    ]
-  },
-  {
-    "id": "gen-10-1093-atsscholar-aapag010",
-    "authors": "Emily M Olson, Matthew E Modes, Timothy J Rowe, Patrick G Lyons, Nicholas E Ingraham, Nandita R Nadig, Clara J Schroedl, Catherine A Gao",
-    "title": "Variability in first academic medicine job offers in pulmonary and critical care medicine",
-    "journal": "ATS Scholar",
-    "year": 2026,
-    "status": "Published",
-    "doi": "https://doi.org/10.1093/atsscholar/aapag010",
-    "topics": [],
-    "authorSlugs": [
-      "nick-ingraham"
-    ]
-  },
-  {
-    "id": "gen-10-1097-ccm-0000000000004524",
-    "authors": "Nicholas E. Ingraham, Victor Vakayil, Kathryn M. Pendleton, Alexandria J. Robbins, Rebecca L. Freese, Elise F. Northrop, Melissa E. Brunsvold, Anthony Charles, Jeffrey G. Chipman, Christopher J. Tignanelli",
-    "title": "National Trends and Variation of Functional Status Deterioration in the Medically Critically Ill",
-    "journal": "Critical care medicine",
-    "year": 2020,
-    "status": "Published",
-    "doi": "https://doi.org/10.1097/CCM.0000000000004524",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/32886469/",
-    "topics": [],
-    "authorSlugs": [
-      "nick-ingraham"
-    ]
-  },
-  {
-    "id": "gen-10-1097-qai-0000000000001797",
-    "authors": "MacDonald, D.M., Melzer, A.C., Collins, G., Avihingsanon, A., Crothers, K., Ingraham, N.E., Mugerwa, H., Ristola, M., Shuter, J., Kunisaki, K.M.",
-    "title": "Smoking and accelerated lung function decline in HIV-positive individuals: A secondary analysis of the START pulmonary substudy",
-    "journal": "Journal of Acquired Immune Deficiency Syndromes",
-    "year": 2018,
-    "status": "Published",
-    "doi": "https://doi.org/10.1097/QAI.0000000000001797",
-    "topics": [],
-    "authorSlugs": [
-      "nick-ingraham"
-    ]
-  },
-  {
-    "id": "gen-10-1016-j-resuscitation-2019-11-020",
-    "authors": "Wong, J., Duane, P.G., Ingraham, N.E.",
-    "title": "A case series of patients who were do not resuscitate but underwent cardiopulmonary resuscitation",
-    "journal": "Resuscitation",
-    "year": 2020,
-    "status": "Published",
-    "doi": "https://doi.org/10.1016/j.resuscitation.2019.11.020",
-    "topics": [],
-    "authorSlugs": [
-      "nick-ingraham"
-    ]
-  },
-  {
-    "id": "gen-10-1002-jmv-26873",
-    "authors": "Carolyn T. Bramante, John Buse, Leonardo Tamaritz, Ana Palacio, Ken Cohen, Deneen Vojta, David Liebovitz, Nia Mitchell, Jacinda Nicklas, Ildiko Lingvay, Jeanne M. Clark, Louis J. Aronne, Erik Anderson, Michael Usher, Ryan Demmer, Genevieve B. Melton, Nicholas Ingraham, Christopher J. Tignanelli",
-    "title": "Outpatient metformin use is associated with reduced severity of COVID-19 disease in adults with overweight or obesity",
-    "journal": "Journal of Medical Virology",
-    "year": 2021,
-    "status": "Published",
-    "doi": "https://doi.org/10.1002/jmv.26873",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/33580540/",
-    "topics": [],
-    "authorSlugs": [
-      "nick-ingraham"
-    ]
-  },
-  {
-    "id": "gen-10-1613-jair-1-12631",
-    "authors": "Greg M Silverman, Himanshu S. Sahoo, Nick E Ingraham, Monica Lupei, Michael A. Puskarich, Michael Usher, James Dries, Raymond L Finzel, Eric Murray, John Sartori, Gyorgy J Simon, Rui Zhang, Genevieve B. Melton, Christopher J. Tignanelli, Serguei V.S. Pakhomov",
-    "title": "Nlp methods for extraction of symptoms from unstructured data for use in prognostic covid-19 analytic models",
-    "journal": "Journal of Artificial Intelligence Research",
-    "year": 2021,
-    "status": "Published",
-    "doi": "https://doi.org/10.1613/JAIR.1.12631",
-    "topics": [],
-    "authorSlugs": [
-      "nick-ingraham"
-    ]
-  },
-  {
-    "id": "gen-10-1183-13993003-00912-2020",
-    "authors": "Nicholas E. Ingraham, Abdo G. Barakat, Ronald Reilkoff, Tamara Bezdicek, Timothy Schacker, Jeffrey G. Chipman, Christopher J. Tignanelli, Michael A. Puskarich",
-    "title": "Understanding the renin–angiotensin–aldosterone–SARS-CoV axis: a comprehensive review",
-    "journal": "European Respiratory Journal",
-    "year": 2020,
-    "status": "Published",
-    "doi": "https://doi.org/10.1183/13993003.00912-2020",
-    "topics": [],
-    "authorSlugs": [
-      "nick-ingraham"
-    ]
-  },
-  {
-    "id": "gen-10-1016-s2213-2600-20-30153-3",
-    "authors": "Christopher J. Tignanelli, Nicholas E. Ingraham, Matthew A. Sparks, Ronald Reilkoff, Tamara Bezdicek, Bradley Benson, Timothy Schacker, Jeffrey G. Chipman, Michael A. Puskarich",
-    "title": "Antihypertensive drugs and risk of COVID-19?",
-    "journal": "The Lancet Respiratory Medicine",
-    "year": 2020,
-    "status": "Published",
-    "doi": "https://doi.org/10.1016/S2213-2600(20)30153-3",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/32222166/",
-    "topics": [],
-    "authorSlugs": [
-      "nick-ingraham"
-    ]
-  },
-  {
-    "id": "gen-10-1016-s2666-7568-20-30033-7",
-    "authors": "Carolyn T. Bramante, Nicholas E. Ingraham, Thomas A. Murray, Schelomo Marmor, Shane Hovertsen, Jessica Gronski, Chace McNeil, Ruoying Feng, Gabriel Guzman, Nermine Abdelwahab, Samantha King, Leonardo Tamariz, Thomas Meehan, Kathryn M. Pendleton, Bradley Benson, Deneen Vojta, Christopher J. Tignanelli",
-    "title": "Metformin and risk of mortality in patients hospitalised with COVID-19",
-    "journal": "The Lancet Healthy Longevity",
-    "year": 2021,
-    "status": "Published",
-    "doi": "https://doi.org/10.1016/S2666-7568(20)30033-7",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/33521772/",
-    "topics": [],
-    "authorSlugs": [
-      "nick-ingraham"
-    ]
-  },
-  {
-    "id": "gen-10-1016-j-eclinm-2021-100957",
-    "authors": "Michael A. Puskarich, Nathan W. Cummins, Nick E Ingraham, David A. Wacker, Ronald A. Reilkoff, Brian E Driver, Michelle H. Biros, Fernanda Bellolio, Jeffrey G. Chipman, Andrew C. Nelson, Kenny B Beckman, Ryan Langlois, Tyler Bold, Matthew T. Aliota, Timothy W. Schacker, Helen T. Voelker, Thomas A. Murray, Joseph S. Koopmeiners, Christopher J. Tignanelli",
-    "title": "A multi-center phase II randomized clinical trial of losartan on symptomatic outpatients with COVID-19",
-    "journal": "EClinicalMedicine",
-    "year": 2021,
-    "status": "Published",
-    "doi": "https://doi.org/10.1016/j.eclinm.2021.100957",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/34195577/",
-    "topics": [],
-    "authorSlugs": [
-      "nick-ingraham"
-    ]
-  },
-  {
-    "id": "gen-10-1186-s13054-020-02894-7",
-    "authors": "Nicholas E. Ingraham, David Boulware, Matthew A. Sparks, Timothy Schacker, Bradley Benson, Jeffrey A. Sparks, Thomas Murray, John Connett, Jeffrey G. Chipman, Anthony Charles, Christopher J. Tignanelli",
-    "title": "Shining a light on the evidence for hydroxychloroquine in SARS-CoV-2",
-    "journal": "Critical Care",
-    "year": 2020,
-    "status": "Published",
-    "doi": "https://doi.org/10.1186/s13054-020-02894-7",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/32345336/",
-    "topics": [],
-    "authorSlugs": [
-      "nick-ingraham"
-    ]
-  },
-  {
-    "id": "gen-10-1016-s2213-2600-20-30226-5",
-    "authors": "Nicholas E. Ingraham, Sahar Lotfi-Emran, Beth K. Thielen, Kristina Techar, Rachel S. Morris, Shernan G. Holtan, R. Adams Dudley, Christopher J. Tignanelli",
-    "title": "Immunomodulation in COVID-19",
-    "journal": "The Lancet. Respiratory medicine",
-    "year": 2020,
-    "status": "Published",
-    "doi": "https://doi.org/10.1016/S2213-2600(20)30226-5",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/32380023/",
-    "topics": [],
-    "authorSlugs": [
-      "nick-ingraham"
-    ]
-  },
-  {
-    "id": "gen-10-1016-j-jpainsymman-2020-09-015",
-    "authors": "Alexandria J. Robbins, Nicholas E. Ingraham, Adam C. Sheka, Kathryn M. Pendleton, Rachel Morris, Alexander Rix, Victor Vakayil, Jeffrey G. Chipman, Anthony Charles, Christopher J. Tignanelli",
-    "title": "Discordant Cardiopulmonary Resuscitation and Code Status at Death",
-    "journal": "Journal of Pain and Symptom Management",
-    "year": 2021,
-    "status": "Published",
-    "doi": "https://doi.org/10.1016/j.jpainsymman.2020.09.015",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/32949762/",
-    "topics": [],
-    "authorSlugs": [
-      "nick-ingraham"
-    ]
-  },
-  {
-    "id": "gen-10-1097-ta-0000000000002768",
-    "authors": "Victor A Vakayil, Nick E Ingraham, Alexandria J. Robbins, Rebecca Freese, Elise F. Northrop, Melissa E. Brunsvold, Kathryn M. Pendleton, Anthony Charles, Jeffrey G. Chipman, Christopher J. Tignanelli",
-    "title": "Epidemiological trends of surgical admissions to the intensive care unit in the United States",
-    "journal": "Journal of Trauma and Acute Care Surgery",
-    "year": 2020,
-    "status": "Published",
-    "doi": "https://doi.org/10.1097/TA.0000000000002768",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/32384370/",
-    "topics": [],
-    "authorSlugs": [
-      "nick-ingraham"
-    ]
-  },
-  {
-    "id": "gen-10-1002-jmv-26728",
-    "authors": "Basil S. Karam, Rachel S. Morris, Carolyn T. Bramante, Michael Puskarich, Emily J. Zolfaghari, Sahar Lotfi-Emran, Nicholas E. Ingraham, Anthony Charles, David J. Odde, Christopher J. Tignanelli",
-    "title": "mTOR inhibition in COVID-19",
-    "journal": "Journal of Medical Virology",
-    "year": 2020,
-    "status": "Published",
-    "doi": "https://doi.org/10.1002/jmv.26728",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/33314219/",
-    "topics": [],
-    "authorSlugs": [
-      "nick-ingraham"
-    ]
-  },
-  {
-    "id": "gen-10-1097-cce-0000000000000108",
-    "authors": "Nick E Ingraham, Christopher J. Tignanelli",
-    "title": "Fact Versus Science Fiction",
-    "journal": "Critical Care Explorations",
-    "year": 2020,
-    "status": "Published",
-    "doi": "https://doi.org/10.1097/CCE.0000000000000108",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/32426750/",
+    "doi": "https://doi.org/10.1038/s41598-023-46343-1",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/37985892/",
     "topics": [],
     "authorSlugs": [
       "nick-ingraham"
@@ -820,9 +597,9 @@ export const generatedPublications: Publication[] = [
   },
   {
     "id": "gen-10-1155-2012-597214",
-    "authors": "Audra A Kramer, Nicholas E Ingraham, Emily J Sharpe, Michelle Mynlieff",
-    "title": "Levels of Ca(V)1.2 L-Type Ca(2+) Channels Peak in the First Two Weeks in Rat Hippocampus Whereas Ca(V)1.3 Channels Steadily Increase through Development",
-    "journal": "Journal of signal transduction",
+    "authors": "Audra A. Kramer, Nicholas E. Ingraham, Emily J. Sharpe, Michelle Mynlieff",
+    "title": "Levels of 1.2 L-Type Channels Peak in the First Two Weeks in Rat Hippocampus Whereas 1.3 Channels Steadily Increase through Development",
+    "journal": "Journal of Signal Transduction",
     "year": 2012,
     "status": "Published",
     "doi": "https://doi.org/10.1155/2012/597214",
@@ -833,74 +610,393 @@ export const generatedPublications: Publication[] = [
     ]
   },
   {
-    "id": "gen-10-1089-sur-2019-192",
-    "authors": "Nicholas E. Ingraham, Christopher J. Tignanelli, Jeremiah Menk, Jeffrey G. Chipman",
-    "title": "Pre- and peri-operative factors associated with chronic critical illness in liver transplant recipients",
-    "journal": "Surgical infections",
+    "id": "gen-10-1177-0885066620982905",
+    "authors": "Nicholas E. Ingraham, Victor Vakayil, Kathryn M. Pendleton, Alexandria J. Robbins, Rebecca Freese, Elise F. Palzer, Anthony Charles, R. Adams Dudley, Christopher J. Tignanelli",
+    "title": "Recent Trends in Admission Diagnosis and Related Mortality in the Medically Critically Ill",
+    "journal": "Journal of Intensive Care Medicine",
     "year": 2020,
     "status": "Published",
-    "doi": "https://doi.org/10.1089/sur.2019.192",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/31618109/",
+    "doi": "https://doi.org/10.1177/0885066620982905",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/33353475/",
     "topics": [],
     "authorSlugs": [
       "nick-ingraham"
     ]
   },
   {
-    "id": "gen-10-1101-2020-09-02-20185983",
-    "authors": "Nicholas E. Ingraham, Laura N. Purcell, Basil S. Karam, R. Adams Dudley, Michael G. Usher, Christopher A. Warlick, Michele L. Allen, Genevieve B. Melton, Anthony Charles, Christopher J. Tignanelli",
-    "title": "Racial/Ethnic Disparities in Hospital Admissions from COVID-19 and Determining the Impact of Neighborhood Deprivation and Primary Language",
+    "id": "gen-10-1371-journal-pone-0283326",
+    "authors": "Farha Ikramuddin, Tanya Melnik, Nicholas E. Ingraham, Nguyen Nguyen, Lianne Siegel, Michael Usher, Christopher J. Tignanelli, Leslie R. Morse",
+    "title": "Predictors of discharge disposition and mortality following hospitalization with SARS-CoV-2 infection",
+    "journal": "PLoS ONE",
+    "year": 2023,
+    "status": "Published",
+    "doi": "https://doi.org/10.1371/journal.pone.0283326",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/37053224/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1002-lrh2-10420",
+    "authors": "Geetanjali Rajamani, Genevieve B. Melton, Deborah L. Pestka, Maya Peters, Iva Ninkovic, Elizabeth Lindemann, Timothy J. Beebe, Nathan D. Shippee, Bradley Benson, Abraham Jacob, Christopher J. Tignanelli, Nicholas E. Ingraham, Joseph S. Koopmeiners, Michael Usher",
+    "title": "Building to learn: Information technology innovations to enable rapid pragmatic evaluation in a learning health system",
+    "journal": "Learning Health Systems",
+    "year": 2024,
+    "status": "Published",
+    "doi": "https://doi.org/10.1002/lrh2.10420",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/39036531/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-amjsurg-2024-05-008",
+    "authors": "Rachel Morris, Abdul Hafiz Al Tannir, Jeffrey G. Chipman, Anthony Charles, Nicholas E. Ingraham, Michael Kalinoski, L. Bolden, Lianne Siegel, Christopher J. Tignanelli",
+    "title": "Deriving a definition of chronic critical illness: ICU stay of 10 days",
+    "journal": "The American Journal of Surgery",
+    "year": 2024,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.amjsurg.2024.05.008",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/38782686/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1093-jamiaopen-ooab070",
+    "authors": "Himanshu S. Sahoo, Greg Silverman, Nicholas E. Ingraham, Monica I. Lupei, Michael A. Puskarich, Raymond Finzel, John Sartori, Rui Zhang, Benjamin C. Knoll, Sijia Liu, Hongfang Liu, Genevieve B. Melton, Christopher J. Tignanelli, Serguei Pakhomov",
+    "title": "A fast, resource efficient, and reliable rule-based system for COVID-19 symptom identification",
+    "journal": "JAMIA Open",
+    "year": 2021,
+    "status": "Published",
+    "doi": "https://doi.org/10.1093/jamiaopen/ooab070",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/34423261/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1089-sur-2023-249",
+    "authors": "Samantha King, Jennifer Proper, Lianne Siegel, Nicholas E. Ingraham, Christopher J. Tignanelli, Jeffrey G. Chipman, Jason Ho",
+    "title": "Acute Appendicitis Treatment Strategies and Mortality Based on Critical Illness on Admission: An Observational Study",
+    "journal": "Surgical Infections",
+    "year": 2024,
+    "status": "Published",
+    "doi": "https://doi.org/10.1089/sur.2023.249",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/38285892/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1097-cce-0000000000001189",
+    "authors": "Nicholas E. Ingraham, Daniel Shyu, Tom Phelan, Nathan Mesfin, Benjamin Langworthy, Rachel Kohn, Meeta Prasad Kerlin, R. Adams Dudley",
+    "title": "Using Electronic Health Records to Identify the Daily Primary Provider During Hospitalization",
+    "journal": "Critical Care Explorations",
+    "year": 2024,
+    "status": "Published",
+    "doi": "https://doi.org/10.1097/cce.0000000000001189",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/39700341/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-12659-ajcr-941088",
+    "authors": "Michael Kalinoski, Nicholas E. Ingraham",
+    "title": "Ventilator-Associated Methicillin-Resistant Staphylococcus aureus (MRSA) Pneumonia in a Patient with a Negative MRSA Nasal Swab",
+    "journal": "American Journal of Case Reports",
+    "year": 2023,
+    "status": "Published",
+    "doi": "https://doi.org/10.12659/ajcr.941088",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/37837186/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-nick-ingraham-2012-the-first-twoweeks-in-rat",
+    "authors": "Audra A. Kramer, Nicholas E. Ingraham, Emily J. Sharpe, Michelle Mynlieff",
+    "title": "the First TwoWeeks in Rat HippocampusWhereas CaV1.3 Channels Steadily Increase through Development",
     "journal": "",
+    "year": 2012,
+    "status": "Published",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1097-01-ccm-0000550809-78715-2d",
+    "authors": "Nicholas E. Ingraham, Christopher J. Tignanelli, Jeffrey G. Chipman, Jeremiah Menk",
+    "title": "17: FAILURE TO LAUNCH: PREDICTORS OF THE CHRONICALLY CRITICALLY ILL POST-LIVER TRANSPLANT PATIENT",
+    "journal": "Critical Care Medicine",
+    "year": 2018,
+    "status": "Published",
+    "doi": "https://doi.org/10.1097/01.ccm.0000550809.78715.2d",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-jamcollsurg-2021-07-441",
+    "authors": "Emily Zolfaghari, Alexander M. Kuehne, Qi Wang, Christopher J. Tignanelli, Nicholas E. Ingraham",
+    "title": "Comparison of Visual Abstract vs #BetterPoster Style for Surgery Research Presentations",
+    "journal": "Journal of the American College of Surgeons",
+    "year": 2021,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.jamcollsurg.2021.07.441",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-jcrc-2022-154203",
+    "authors": "Sarah Samorodnitsky, Sandra Castro‐Pearson, Kaifeng Yang, Sahar Lotfi‐Emran, Nicholas E. Ingraham, Carolyn T. Bramante, Sarah Geising, Emma Jones, David P. Wacker, Michael A. Puskarich, Elizabeth R. Lusczek, Sandra E. Safo, Christopher J. Tignanelli",
+    "title": "Proteomic pathways associated with developing severe disease for patients with COVID-19: A biologic analysis of data from two multicenter randomized controlled trials encompassing 13 U.S. hospitals",
+    "journal": "Journal of Critical Care",
+    "year": 2023,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.jcrc.2022.154203",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-17615-kcfx-6s16",
+    "authors": "Emily Zolfaghari, Christopher J. Tignanelli, Sahar Lotfi‐Emran, Nicholas E. Ingraham, Anthony Charles, Rachel Morris, David J. Odde, Carolyn T. Bramante, Michael A. Puskarich, Basil S. Karam",
+    "title": "mTOR inhibition in COVID‐19: A commentary and review of efficacy in RNA viruses",
+    "journal": "UNC Libraries",
+    "year": 2024,
+    "status": "Published",
+    "doi": "https://doi.org/10.17615/kcfx-6s16",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1097-ccm-0000000000007148",
+    "authors": "Anna Barker, Akihiko Nishimura, Mark Nuppnau, Kevin G. Buell, Patrick G. Lyons, Wan‐Ting Liao, Brenna Park-Egan, B. Schmid, Nicholas E. Ingraham, Vaishvik Chaudhari, Catherine A. Gao, Alexander C. Ortiz, Gary E. Weissman, K. Chhikara, J.C. Rojas, Andre CKB Amaral, William F. Parker, Theodore J. Iwashyna, David N. Hager, Michael W. Sjoding, Chad H. Hochberg",
+    "title": "Prone Positioning in a North American Cohort of Hypoxemic Patients on Mechanical Ventilation",
+    "journal": "Critical Care Medicine",
+    "year": 2026,
+    "status": "Published",
+    "doi": "https://doi.org/10.1097/ccm.0000000000007148",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/40950483/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1177-26892820251380523",
+    "authors": "Nathan Mesfin, Nitesh Jain, Anwar Khedr, Hisham Mushtaq, Abbas B Jama, Noura Attallah, Esraa Hassan, Benjamin Langworthy, Nicholas E. Ingraham, Juan Pablo Domecq Garces, Thoyaja Koritala, Donna Lee Armaignac, Nicholas Perkins, Katherine Belden, Vishakha K. Kumar, Karen Boman, Devang Sanghavi, Vikas Bansal, Rahul Kashyap, Rodrigo Cartin‐Ceba, Abigail La Nou, Allan J. Walkey, R. Adams Dudley, Syed Anjum Khan, on behalf of the Society of Critical Care Medicine Discovery Viral Infection and Respiratory Illness Universal Study (VIRUS): Covid-19 Registry Investigator Group",
+    "title": "Hospital and Temporal Variations in Limitations of Care Among Hospitalized Patients with COVID-19: A VIRUS Registry Retrospective Cohort Study",
+    "journal": "Palliative Medicine Reports",
+    "year": 2025,
+    "status": "Published",
+    "doi": "https://doi.org/10.1177/26892820251380523",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/41142473/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1097-cce-0000000000001341",
+    "authors": "Saki Amagai, Vaishvik Chaudhari, K. Chhikara, Nicholas E. Ingraham, Chad H. Hochberg, Anna Barker, Chengsheng Mao, Alexander C. Ortiz, Gary E. Weissman, Benjamin Schmid, Megan Schwinne, Sivasubramanium V. Bhavani, Shan Guleria, Zewei Liao, N. V. Маrkov, Patrick G. Lyons, Brenna Park-Egan, William F. Parker, Yuan Luo, J.C. Rojas, Catherine A. Gao",
+    "title": "The Epidemiology of ICU Readmissions Across Ten Health Systems",
+    "journal": "Critical Care Explorations",
+    "year": 2025,
+    "status": "Published",
+    "doi": "https://doi.org/10.1097/cce.0000000000001341",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/41165278/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-17615-nvt1-gd84",
+    "authors": "Anthony Charles, Basil S. Karam, Nicholas E. Ingraham, Genevieve B. Melton, Michele Allen, Laura N. Purcell, Michael Usher, R. Adams Dudley, Tignanelli, Christopher J., Christopher A. Warlick",
+    "title": "Racial and Ethnic Disparities in Hospital Admissions from COVID-19: Determining the Impact of Neighborhood Deprivation and Primary Language",
+    "journal": "UNC Libraries",
+    "year": 2025,
+    "status": "Published",
+    "doi": "https://doi.org/10.17615/nvt1-gd84",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1093-annalsats-aaoaf067",
+    "authors": "Patrick G. Lyons, Kevin G. Buell, Kathryn A Connell, Matthew A. Christensen, Chad H. Hochberg, Sachin Jain, William F. Parker, K. Chhikara, J.C. Rojas, Catherine Blebea, Sivasubramanium V Bhavani, Anna Barker, Nathan Mesfin, Nicholas E. Ingraham, Catherine A Gao",
+    "title": "Federation, not centralization: a new paradigm for electronic health record–based critical care research",
+    "journal": "Annals of the American Thoracic Society",
+    "year": 2026,
+    "status": "Published",
+    "doi": "https://doi.org/10.1093/annalsats/aaoaf067",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/41915560/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1371-journal-pone-0338943",
+    "authors": "Brian Hilliard, Tanvi Mehta, James B. Grace, Deborah L. Pestka, Nicholas E. Ingraham, Timothy J. Beebe, Christopher Tignanelli, Genevieve B. Melton, Nathan Shippee, Joseph S. Koopmeiners, Michael Usher",
+    "title": "Aligning cardiac monitoring with American Heart Association Guidelines: Impact on utilization, hemodynamic monitoring, and outcomes",
+    "journal": "PLoS ONE",
+    "year": 2026,
+    "status": "Published",
+    "doi": "https://doi.org/10.1371/journal.pone.0338943",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/41616031/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1093-atsscholar-aapag010",
+    "authors": "Emily M. Olson, MATTHEW E MODES, Timothy J. Rowe, Patrick G. Lyons, Nicholas E. Ingraham, Nandita R Nadig, Clara J Schroedl, Catherine A. Gao",
+    "title": "Variability in first academic medicine job offers in pulmonary and critical care medicine",
+    "journal": "ATS Scholar",
+    "year": 2026,
+    "status": "Published",
+    "doi": "https://doi.org/10.1093/atsscholar/aapag010",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/41734005/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-chest-2026-03-043",
+    "authors": "Nathan Mesfin, Nicholas E. Ingraham, Benjamin Langworthy, R. Adams Dudley, Kathryn M. Pendleton",
+    "title": "National Retrospective Cohort Study Assessing Association of Hospital Transfer-In Prevalence With Hospital Outcomes",
+    "journal": "CHEST Journal",
+    "year": 2026,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.chest.2026.03.043",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/42036067/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1177-1753466620971146",
+    "authors": "Raj Parikh, Michael A. Garcia, Iniya Rajendran, Shelsey W. Johnson, Nathan Mesfin, Janice Weinberg, Christine C. Reardon",
+    "title": "ICU outcomes in Covid-19 patients with obesity",
+    "journal": "Therapeutic Advances in Respiratory Disease",
     "year": 2020,
     "status": "Published",
-    "doi": "https://doi.org/10.1101/2020.09.02.20185983",
+    "doi": "https://doi.org/10.1177/1753466620971146",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/33176612/",
     "topics": [],
     "authorSlugs": [
-      "nick-ingraham"
+      "nate-mesfin"
     ]
   },
   {
-    "id": "gen-10-1155-2017-8682354",
-    "authors": "Nicholas E. Ingraham, Brenton Schneider, Jonathan D. Alpern",
-    "title": "Prosthetic Joint Infection due to Mycobacterium avium-intracellulare in a Patient with Rheumatoid Arthritis: A Case Report and Review of the Literature",
-    "journal": "Case Reports in Infectious Diseases",
-    "year": 2017,
+    "id": "gen-10-1371-journal-pone-0291542",
+    "authors": "Jennifer A. Palmer, Megan B. McCullough, Jolie B. Wormwood, Renda Soylemez Wiener, Nathan Mesfin, Michael Still, Chris S. Xu, Amy M. Linsky",
+    "title": "Addressing clinician moral distress: Implications from a mixed methods evaluation during Covid-19",
+    "journal": "PLoS ONE",
+    "year": 2023,
     "status": "Published",
-    "doi": "https://doi.org/10.1155/2017/8682354",
+    "doi": "https://doi.org/10.1371/journal.pone.0291542",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/37713379/",
     "topics": [],
     "authorSlugs": [
-      "nick-ingraham"
+      "nate-mesfin"
     ]
   },
   {
-    "id": "gen-10-1177-2150132721996283",
-    "authors": "Nirjhar Dutta, Nicholas E. Ingraham, Michael G. Usher, Claudia Fox, Christopher J. Tignanelli, Carolyn T. Bramante",
-    "title": "We Should Do More to Offer Evidence-Based Treatment for an Important Modifiable Risk Factor for COVID-19: Obesity",
-    "journal": "Journal of Primary Care & Community Health",
+    "id": "gen-10-1089-jpm-2022-0394",
+    "authors": "Nathan Mesfin, Jolie B. Wormwood, Renda Soylemez Wiener, Michael Still, Chris S. Xu, Jennifer A. Palmer, Amy M. Linsky",
+    "title": "Impact of the COVID-19 Pandemic on Providing Recommendations During Goals-of-Care Conversations: A Multisite Survey",
+    "journal": "Journal of Palliative Medicine",
+    "year": 2023,
+    "status": "Published",
+    "doi": "https://doi.org/10.1089/jpm.2022.0394",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/36944150/",
+    "topics": [],
+    "authorSlugs": [
+      "nate-mesfin"
+    ]
+  },
+  {
+    "id": "gen-10-1177-0885066621993041",
+    "authors": "Justin K. Lui, Nathan Mesfin, Derin Tugal, Elizabeth S. Klings, Praveen Govender, Jeffrey S. Berman",
+    "title": "Critical Care of Patients With Cardiopulmonary Complications of Sarcoidosis",
+    "journal": "Journal of Intensive Care Medicine",
     "year": 2021,
     "status": "Published",
-    "doi": "https://doi.org/10.1177/2150132721996283",
+    "doi": "https://doi.org/10.1177/0885066621993041",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/33611981/",
     "topics": [],
     "authorSlugs": [
-      "nick-ingraham"
+      "nate-mesfin"
     ]
   },
   {
-    "id": "gen-10-1371-journal-pone-0248956",
-    "authors": "Elizabeth R. Lusczek, Chiara Lazzeri, Nicholas E. Ingraham, Basil S. Karam, Jennifer Proper, Lianne Siegel, Erika S. Helgeson, Sahar Lotfi-Emran, Emily J. Zolfaghari, Emma Jones, Michael G. Usher, Jeffrey G. Chipman, R. Adams Dudley, Bradley Benson, Genevieve B. Melton, Anthony Charles, Monica I. Lupei, Christopher J. Tignanelli",
-    "title": "Characterizing COVID-19 clinical phenotypes and associated comorbidities and complication profiles",
-    "journal": "PLOS ONE",
+    "id": "gen-10-1177-02692163211022622",
+    "authors": "Nathan Mesfin, Alexandra Fischman, Michael A. Garcia, Shelsey W. Johnson, Raj Parikh, Renda Soylemez Wiener",
+    "title": "Predictors to forgo resuscitative effort during Covid-19 critical illness at the height of the pandemic : A retrospective cohort study",
+    "journal": "Palliative Medicine",
     "year": 2021,
     "status": "Published",
-    "doi": "https://doi.org/10.1371/journal.pone.0248956",
+    "doi": "https://doi.org/10.1177/02692163211022622",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/34479453/",
     "topics": [],
     "authorSlugs": [
-      "nick-ingraham"
+      "nate-mesfin"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-chest-2024-06-009",
+    "authors": "Andrew R. Hwang, Nathan Mesfin, Matthew J. Kogut, Marva V. Foster, Marlena H. Shin, Daniel J. Sturgeon, Hillary J. Mull",
+    "title": "Percutaneous Lung Biopsy Prevalence and Use of the Lung CT Scan and Reporting Data System in the Veterans Health Administration Lung Cancer Screening Program",
+    "journal": "CHEST Journal",
+    "year": 2024,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.chest.2024.06.009",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/38945357/",
+    "topics": [],
+    "authorSlugs": [
+      "nate-mesfin"
+    ]
+  },
+  {
+    "id": "gen-10-1002-pul2-70021",
+    "authors": "J. Villamor Rodríguez, Haihua Zhang, Nathan Mesfin, Elizabeth S. Klings, Justin K. Lui",
+    "title": "Contribution of QRS Prolongation to Transplant‐Free Survival in Sarcoidosis‐Related Pulmonary Hypertension",
+    "journal": "Pulmonary Circulation",
+    "year": 2025,
+    "status": "Published",
+    "doi": "https://doi.org/10.1002/pul2.70021",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/40071062/",
+    "topics": [],
+    "authorSlugs": [
+      "nate-mesfin"
     ]
   },
   {
     "id": "gen-10-1016-j-chpulm-2023-100005",
-    "authors": "Kierstin Hederstedt, Nathan Mesfin, Mikhail C.S.S. Higgins, Daniel J. Sturgeon, Westyn Branch-Elliman, Marva V. Foster, Hillary J. Mull",
+    "authors": "Kierstin Hederstedt, Nathan Mesfin, Mikhail C.S.S. Higgins, Daniel J. Sturgeon, Westyn Branch‐Elliman, Marva Foster, Hillary J. Mull",
     "title": "Variation in Incidence of Pneumothorax Complications After Percutaneous Lung Biopsies Among Veterans Health Administration Hospitals",
     "journal": "CHEST Pulmonary",
     "year": 2023,
@@ -912,51 +1008,14 @@ export const generatedPublications: Publication[] = [
     ]
   },
   {
-    "id": "gen-10-1002-pul2-70021",
-    "authors": "Juan V. Rodriguez, Haihua Zhang, Nathan Mesfin, Elizabeth S. Klings, Justin K. Lui",
-    "title": "Contribution of QRS Prolongation to Transplant‐Free Survival in Sarcoidosis‐Related Pulmonary Hypertension",
-    "journal": "Pulmonary Circulation",
-    "year": 2025,
-    "status": "Published",
-    "doi": "https://doi.org/10.1002/pul2.70021",
-    "topics": [],
-    "authorSlugs": [
-      "nate-mesfin"
-    ]
-  },
-  {
-    "id": "gen-10-1016-j-chest-2026-03-043",
-    "authors": "Nathan Mesfin, Nicholas E. Ingraham, Benjamin Langworthy, R. Adams Dudley, Kathryn M. Pendleton",
-    "title": "National Retrospective Cohort Study Assessing Association of Hospital Transfer-In Prevalence With Hospital Outcomes",
-    "journal": "CHEST",
-    "year": 2026,
-    "status": "Published",
-    "doi": "https://doi.org/10.1016/j.chest.2026.03.043",
-    "topics": [],
-    "authorSlugs": [
-      "nate-mesfin"
-    ]
-  },
-  {
-    "id": "gen-10-1371-journal-pone-0291542",
+    "id": "gen-10-1016-j-chest-2021-02-077",
     "authors": "Nathan Mesfin",
-    "title": "Addressing clinician moral distress: Implications from a mixed methods evaluation during Covid-19",
-    "journal": "PLOS ONE",
-    "year": 2023,
+    "title": "Fluid Responsiveness During Sepsis",
+    "journal": "CHEST Journal",
+    "year": 2021,
     "status": "Published",
-    "doi": "https://doi.org/10.1371/JOURNAL.PONE.0291542",
-    "topics": [],
-    "authorSlugs": [
-      "nate-mesfin"
-    ]
-  },
-  {
-    "id": "gen-nate-mesfin-2023-i-want-a-dnr-but",
-    "authors": "Nathan Mesfin",
-    "title": "\"I WANT A DNR BUT MY DAUGHTER SAID NO:\" A QUALITATIVE STUDY OF GOALS OF CARE CONVERSATIONS DURING COVID",
-    "journal": "JOURNAL OF GENERAL INTERNAL MEDICINE",
-    "year": 2023,
-    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.chest.2021.02.077",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/34246403/",
     "topics": [],
     "authorSlugs": [
       "nate-mesfin"
@@ -964,102 +1023,26 @@ export const generatedPublications: Publication[] = [
   },
   {
     "id": "gen-10-1164-rccm-202206-1035rr",
-    "authors": "Nathan Mesfin",
+    "authors": "Nathan Mesfin, Ruchika Sangani, D. Shankar, Christine C. Reardon",
     "title": "New Frontiers in Therapeutics for Interstitial Lung Diseases",
-    "journal": "AMERICAN JOURNAL OF RESPIRATORY AND CRITICAL CARE MEDICINE",
+    "journal": "American Journal of Respiratory and Critical Care Medicine",
     "year": 2023,
     "status": "Published",
-    "doi": "https://doi.org/10.1164/RCCM.202206-1035RR",
+    "doi": "https://doi.org/10.1164/rccm.202206-1035rr",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/36735934/",
     "topics": [],
     "authorSlugs": [
       "nate-mesfin"
     ]
   },
   {
-    "id": "gen-10-1089-jpm-2022-0394",
-    "authors": "Nathan Mesfin",
-    "title": "Impact of the COVID-19 Pandemic on Providing Recommendations During Goals-of-Care Conversations: A Multisite Survey",
-    "journal": "JOURNAL OF PALLIATIVE MEDICINE",
+    "id": "gen-10-1016-j-chest-2023-07-3349",
+    "authors": "Nathan Mesfin, NITESH K. JAIN, Vikas Bansal, Amos Lal, Mikael Mir, Abbas B Jama, Noura Attallah, Aysun Tekin, ESRAA HASSAN, Hisham Mushtaq, Raghavendra Tirupathi, Karen Boman, Vishakha K. Kumar, Anwar Khedr, SARA ROBINSON, Marjan Jahani Kondori, Thoyaja Koritala, Abigail La Nou, RODRIGO CARTIN-CEBA, DEVANG SANGHAVI, Juan Pablo Domecq, Allan J. Walkey, RAHUL KASHYAP, SYED ANJ KHAN",
+    "title": "HOSPITAL VARIATIONS IN LIMITATIONS OF CARE AMONG HOSPITALIZED PATIENTS WITH COVID-19: RESULTS FROM THE SCCM DISCOVERY VIRUS COVID-19 REGISTRY STUDY",
+    "journal": "CHEST Journal",
     "year": 2023,
     "status": "Published",
-    "doi": "https://doi.org/10.1089/JPM.2022.0394",
-    "topics": [],
-    "authorSlugs": [
-      "nate-mesfin"
-    ]
-  },
-  {
-    "id": "gen-10-1177-02692163211022622",
-    "authors": "Nathan Mesfin",
-    "title": "Predictors to forgo resuscitative effort during Covid-19 critical illness at the height of the pandemic : A retrospective cohort study",
-    "journal": "PALLIATIVE MEDICINE",
-    "year": 2021,
-    "status": "Published",
-    "doi": "https://doi.org/10.1177/02692163211022622",
-    "topics": [],
-    "authorSlugs": [
-      "nate-mesfin"
-    ]
-  },
-  {
-    "id": "gen-10-1016-j-chest-2021-02-077",
-    "authors": "Nathan Mesfin",
-    "title": "Fluid Responsiveness During Sepsis The Unintended Intervention",
-    "journal": "CHEST",
-    "year": 2021,
-    "status": "Published",
-    "doi": "https://doi.org/10.1016/J.CHEST.2021.02.077",
-    "topics": [],
-    "authorSlugs": [
-      "nate-mesfin"
-    ]
-  },
-  {
-    "id": "gen-10-1177-0885066621993041",
-    "authors": "Nathan Mesfin",
-    "title": "Critical Care of Patients With Cardiopulmonary Complications of Sarcoidosis",
-    "journal": "JOURNAL OF INTENSIVE CARE MEDICINE",
-    "year": 2022,
-    "status": "Published",
-    "doi": "https://doi.org/10.1177/0885066621993041",
-    "topics": [],
-    "authorSlugs": [
-      "nate-mesfin"
-    ]
-  },
-  {
-    "id": "gen-10-1177-1753466620971146",
-    "authors": "Nathan Mesfin",
-    "title": "ICU outcomes in Covid-19 patients with obesity",
-    "journal": "THERAPEUTIC ADVANCES IN RESPIRATORY DISEASE",
-    "year": 2020,
-    "status": "Published",
-    "doi": "https://doi.org/10.1177/1753466620971146",
-    "topics": [],
-    "authorSlugs": [
-      "nate-mesfin"
-    ]
-  },
-  {
-    "id": "gen-nate-mesfin-2018-the-ultimate-tipping-point-a",
-    "authors": "Nathan Mesfin",
-    "title": "The Ultimate Tipping Point: A Case of Cerebral Edema and Brain Death as a Complication of TIPS in a Cirrhotic Patient",
-    "journal": "AMERICAN JOURNAL OF GASTROENTEROLOGY",
-    "year": 2018,
-    "status": "Published",
-    "topics": [],
-    "authorSlugs": [
-      "nate-mesfin"
-    ]
-  },
-  {
-    "id": "gen-10-1016-j-chest-2024-06-009",
-    "authors": "Nathan Mesfin",
-    "title": "Percutaneous Lung Biopsy Prevalence and Use of the Lung CT Scan and Reporting Data System in the Veterans Health Administration Lung Cancer Screening Program",
-    "journal": "CHEST",
-    "year": 2024,
-    "status": "Published",
-    "doi": "https://doi.org/10.1016/J.CHEST.2024.06.009",
+    "doi": "https://doi.org/10.1016/j.chest.2023.07.3349",
     "topics": [],
     "authorSlugs": [
       "nate-mesfin"
@@ -1069,47 +1052,1143 @@ export const generatedPublications: Publication[] = [
     "id": "gen-10-1016-j-chest-2023-07-3345",
     "authors": "Nathan Mesfin",
     "title": "BALANCING RESTORATIVE AND COMFORT-ORIENTED CARE DURING PATIENTS' TERMINAL HOSPITALIZATION: AN EMPIRICAL STUDY",
-    "journal": "CHEST",
+    "journal": "CHEST Journal",
     "year": 2023,
     "status": "Published",
-    "doi": "https://doi.org/10.1016/J.CHEST.2023.07.3345",
+    "doi": "https://doi.org/10.1016/j.chest.2023.07.3345",
     "topics": [],
     "authorSlugs": [
       "nate-mesfin"
     ]
   },
   {
-    "id": "gen-nate-mesfin-2023-hospital-variations-in-limitations-of",
-    "authors": "Nathan Mesfin",
-    "title": "HOSPITAL VARIATIONS IN LIMITATIONS OF CARE AMONG HOSPITALIZED PATIENTS WITH COVID-19: RESULTS FROM THE SCCM DISCOVERY VIRUS COVID-19 REGISTRY STUDY",
-    "journal": "CHEST",
-    "year": 2023,
-    "status": "Published",
-    "topics": [],
-    "authorSlugs": [
-      "nate-mesfin"
-    ]
-  },
-  {
-    "id": "gen-nate-mesfin-2023-temporal-variations-in-limitations-of",
-    "authors": "Nathan Mesfin",
+    "id": "gen-10-1016-j-chest-2023-07-3348",
+    "authors": "Noura Attallah, Nathan Mesfin, NITESH K. JAIN, Vikas Bansal, Aysun Tekin, Mikael Mir, Abbas B Jama, ESRAA HASSAN, Hisham Mushtaq, Amos Lal, Anwar Khedr, Juan Pablo Domecq, Vishakha K. Kumar, SARA ROBINSON, Marjan Jahani Kondori, Thoyaja Koritala, DEVANG SANGHAVI, Abigail La Nou, Karen Boman, Allan J. Walkey, RAHUL KASHYAP, SYED ANJ KHAN",
     "title": "TEMPORAL VARIATIONS IN LIMITATIONS OF CARE AMONG HOSPITALIZED PATIENTS: RESULTS FROM THE SCCM VIRAL INFECTION AND RESPIRATORY ILLNESS UNIVERSAL STUDY (VIRUS) COVID-19 REGISTRY",
-    "journal": "CHEST",
+    "journal": "CHEST Journal",
     "year": 2023,
     "status": "Published",
+    "doi": "https://doi.org/10.1016/j.chest.2023.07.3348",
     "topics": [],
     "authorSlugs": [
       "nate-mesfin"
     ]
   },
   {
-    "id": "gen-10-1177-0885066620962450",
-    "authors": "Malini Mahendra, Patrick McQuillen, R. Adams Dudley, Martina A. Steurer",
-    "title": "Variation in Arterial and Central Venous Catheter Use in Pediatric Intensive Care Units",
-    "journal": "Journal of Intensive Care Medicine",
-    "year": 2021,
+    "id": "gen-10-1001-jama-283-9-1159",
+    "authors": "R. Adams Dudley, Kirsten L. Johansen, R. Brand, Deborah J. Rennie, Arnold Milstein",
+    "title": "Selective referral to high-volume hospitals: estimating potentially avoidable deaths.",
+    "journal": "PubMed",
+    "year": 2000,
     "status": "Published",
-    "doi": "https://doi.org/10.1177/0885066620962450",
+    "doi": "https://doi.org/10.1001/jama.283.9.1159",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/10703778/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1056-nejmsa021899",
+    "authors": "Ashish K. Jha, Jonathan B. Perlin, Kenneth W. Kizer, R. Adams Dudley",
+    "title": "Effect of the Transformation of the Veterans Affairs Health Care System on the Quality of Care",
+    "journal": "New England Journal of Medicine",
+    "year": 2003,
+    "status": "Published",
+    "doi": "https://doi.org/10.1056/nejmsa021899",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/12773650/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1681-asn-2012080800",
+    "authors": "Raymond K. Hsu, Charles E. McCulloch, R. Adams Dudley, Lowell J. Lo, Chi‐yuan Hsu",
+    "title": "Temporal Changes in Incidence of Dialysis-Requiring AKI",
+    "journal": "Journal of the American Society of Nephrology",
+    "year": 2012,
+    "status": "Published",
+    "doi": "https://doi.org/10.1681/asn.2012080800",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/23222124/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1001-jamainternmed-2016-2765",
+    "authors": "Colette DeJong, Thomas Aguilar, Chien‐Wen Tseng, Grace A. Lin, W. John Boscardin, R. Adams Dudley",
+    "title": "Pharmaceutical Industry–Sponsored Meals and Physician Prescribing Patterns for Medicare Beneficiaries",
+    "journal": "JAMA Internal Medicine",
+    "year": 2016,
+    "status": "Published",
+    "doi": "https://doi.org/10.1001/jamainternmed.2016.2765",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/27322350/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1097-ccm-0b013e31824e68cf",
+    "authors": "Jeffrey D. Edwards, Amy J. Houtrow, Eduard E. Vasilevskis, Roberta S. Rehm, Barry P. Markovitz, Robert J. Graham, R. Adams Dudley",
+    "title": "Chronic conditions among children admitted to U.S. pediatric intensive care units",
+    "journal": "Critical Care Medicine",
+    "year": 2012,
+    "status": "Published",
+    "doi": "https://doi.org/10.1097/ccm.0b013e31824e68cf",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/22564961/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1001-jama-297-7-740",
+    "authors": "Meredith B. Rosenthal, R. Adams Dudley",
+    "title": "Pay-for-Performance",
+    "journal": "JAMA",
+    "year": 2007,
+    "status": "Published",
+    "doi": "https://doi.org/10.1001/jama.297.7.740",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/17312294/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1161-01-str-32-3-597",
+    "authors": "S. Claiborne Johnston, Shoujun Zhao, R. Adams Dudley, Mitchell F. Berman, Daryl R. Gress",
+    "title": "Treatment of Unruptured Cerebral Aneurysms in California",
+    "journal": "Stroke",
+    "year": 2001,
+    "status": "Published",
+    "doi": "https://doi.org/10.1161/01.str.32.3.597",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/11239174/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1136-bmjqs-2012-001360",
+    "authors": "Naomi S. Bardach, Renée Asteria-Peñaloza, W. John Boscardin, R. Adams Dudley",
+    "title": "The relationship between commercial website ratings and traditional hospital performance measures in the USA",
+    "journal": "BMJ Quality & Safety",
+    "year": 2012,
+    "status": "Published",
+    "doi": "https://doi.org/10.1136/bmjqs-2012-001360",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/23178860/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1146-annurev-publhealth-29-020907-090940",
+    "authors": "Kenneth W. Kizer, R. Adams Dudley",
+    "title": "Extreme Makeover: Transformation of the Veterans Health Care System",
+    "journal": "Annual Review of Public Health",
+    "year": 2009,
+    "status": "Published",
+    "doi": "https://doi.org/10.1146/annurev.publhealth.29.020907.090940",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/19296778/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1056-nejmsa1410846",
+    "authors": "Catherine L. Chen, Grace A. Lin, Naomi S. Bardach, Theodore H. Clay, W. John Boscardin, Adrian W. Gelb, Mervyn Maze, Michael A. Gropper, R. Adams Dudley",
+    "title": "Preoperative Medical Testing in Medicare Patients Undergoing Cataract Surgery",
+    "journal": "New England Journal of Medicine",
+    "year": 2015,
+    "status": "Published",
+    "doi": "https://doi.org/10.1056/nejmsa1410846",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/25875258/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-3322-caac-20039",
+    "authors": "Grace A. Lin, David S. Aaronson, Sara J. Knight, Peter R. Carroll, R. Adams Dudley",
+    "title": "Patient Decision Aids for Prostate Cancer Treatment: A Systematic Review of the Literature",
+    "journal": "CA A Cancer Journal for Clinicians",
+    "year": 2009,
+    "status": "Published",
+    "doi": "https://doi.org/10.3322/caac.20039",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/19841280/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-7326-m14-1616",
+    "authors": "Reena Duseja, Naomi S. Bardach, Grace A. Lin, Jinoos Yazdany, Mitzi L. Dean, Theodore H. Clay, W. John Boscardin, R. Adams Dudley",
+    "title": "Revisit Rates and Associated Costs After an Emergency Department Encounter",
+    "journal": "Annals of Internal Medicine",
+    "year": 2015,
+    "status": "Published",
+    "doi": "https://doi.org/10.7326/m14-1616",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/26030633/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1001-jama-2013-277353",
+    "authors": "Naomi S. Bardach, Jason Wang, Samantha F. De Leon, Sarah C. Shih, W. John Boscardin, Lee Goldman, R. Adams Dudley",
+    "title": "Effect of Pay-for-Performance Incentives on Quality of Care in Small Practices With Electronic Health Records",
+    "journal": "JAMA",
+    "year": 2013,
+    "status": "Published",
+    "doi": "https://doi.org/10.1001/jama.2013.277353",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/24026600/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-jval-2015-02-018",
+    "authors": "Ethan Basch, John A. Spertus, R. Adams Dudley, Albert W. Wu, Cynthia Chuahan, Perry Cohen, Mary Lou Smith, Nick Black, Amaris Crawford, Keri Christensen, Kathleen Blake, Christine Goertz",
+    "title": "Methods for Developing Patient-Reported Outcome-Based Performance Measures (PRO-PMs)",
+    "journal": "Value in Health",
+    "year": 2015,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.jval.2015.02.018",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/26091604/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1542-peds-2012-3527",
+    "authors": "Naomi S. Bardach, Eric Vittinghoff, Renée Asteria-Peñaloza, Jeffrey D. Edwards, Jinoos Yazdany, Henry Lee, W. John Boscardin, Michael D. Cabana, R. Adams Dudley",
+    "title": "Measuring Hospital Quality Using Pediatric Readmission and Revisit Rates",
+    "journal": "PEDIATRICS",
+    "year": 2013,
+    "status": "Published",
+    "doi": "https://doi.org/10.1542/peds.2012-3527",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/23979094/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1097-brs-0000000000001999",
+    "authors": "Caterina Y. Liu, Corinna C. Zygourakis, Seungwon Yoon, Tamara Kliot, Christopher Moriates, John K. Ratliff, R. Adams Dudley, Ralph Gonzales, Praveen V. Mummaneni, Christopher P. Ames",
+    "title": "Trends in Utilization and Cost of Cervical Spine Surgery Using the National Inpatient Sample Database, 2001 to 2013",
+    "journal": "Spine",
+    "year": 2017,
+    "status": "Published",
+    "doi": "https://doi.org/10.1097/brs.0000000000001999",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/28562473/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1001-jama-2013-276303",
+    "authors": "Laura A. Petersen, Kate Simpson, Kenneth Pietz, Tracy Urech, Sylvia J. Hysong, Jochen Profit, Douglas A. Conrad, R. Adams Dudley, LeChauncy D. Woodard",
+    "title": "Effects of Individual Physician-Level and Practice-Level Financial Incentives on Hypertension Care",
+    "journal": "JAMA",
+    "year": 2013,
+    "status": "Published",
+    "doi": "https://doi.org/10.1001/jama.2013.276303",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/24026599/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1001-jamanetworkopen-2018-5097",
+    "authors": "Ben J. Marafino, Miran Park, Jason M. Davies, Robert Thombley, Harold S. Luft, David C. Sing, Dhruv S. Kazi, Colette DeJong, W. John Boscardin, Mitzi L. Dean, R. Adams Dudley",
+    "title": "Validation of Prediction Models for Critical Care Outcomes Using Natural Language Processing of Electronic Health Record Data",
+    "journal": "JAMA Network Open",
+    "year": 2018,
+    "status": "Published",
+    "doi": "https://doi.org/10.1001/jamanetworkopen.2018.5097",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/30646310/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1111-j-1532-5415-2012-03915-x",
+    "authors": "Emily Finlayson, Shoujun Zhao, W. John Boscardin, Brant E. Fries, C. Seth Landefeld, R. Adams Dudley",
+    "title": "Functional Status After Colon Cancer Surgery in Elderly Nursing Home Residents",
+    "journal": "Journal of the American Geriatrics Society",
+    "year": 2012,
+    "status": "Published",
+    "doi": "https://doi.org/10.1111/j.1532-5415.2012.03915.x",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/22428583/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1001-jamasurg-2016-4674",
+    "authors": "Corinna C. Zygourakis, Victoria Valencia, Christopher Moriates, Christy Boscardin, Sereina Catschegn, Alvin Rajkomar, Kevin J. Bozic, Kent S. Hoo, Andrew N. Goldberg, Lawrence H. Pitts, Michael T. Lawton, R. Adams Dudley, Ralph Gonzales",
+    "title": "Association Between Surgeon Scorecard Use and Operating Room Costs",
+    "journal": "JAMA Surgery",
+    "year": 2016,
+    "status": "Published",
+    "doi": "https://doi.org/10.1001/jamasurg.2016.4674",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/27926758/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-7326-m13-1999",
+    "authors": "Dhruv S. Kazi, Alan M. Garber, Rashmee U. Shah, R. Adams Dudley, Matthew W. Mell, Ceron Rhee, Solomon Moshkevich, Derek Boothroyd, Douglas K Owens, Mark A. Hlatky",
+    "title": "Cost-Effectiveness of Genotype-Guided and Dual Antiplatelet Therapies in Acute Coronary Syndrome",
+    "journal": "Annals of Internal Medicine",
+    "year": 2014,
+    "status": "Published",
+    "doi": "https://doi.org/10.7326/m13-1999",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/24727840/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1177-0885066614534605",
+    "authors": "Erika J. Yoo, Jeffrey D. Edwards, Mitzi L. Dean, R. Adams Dudley",
+    "title": "Multidisciplinary Critical Care and Intensivist Staffing",
+    "journal": "Journal of Intensive Care Medicine",
+    "year": 2014,
+    "status": "Published",
+    "doi": "https://doi.org/10.1177/0885066614534605",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/24825859/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1002-art-38768",
+    "authors": "Jinoos Yazdany, Ben J. Marafino, Mitzi L. Dean, Naomi S. Bardach, Reena Duseja, Michael M. Ward, R. Adams Dudley",
+    "title": "Thirty‐Day Hospital Readmissions in Systemic Lupus Erythematosus: Predictors and Hospital‐ and State‐Level Variation",
+    "journal": "Arthritis & Rheumatology",
+    "year": 2014,
+    "status": "Published",
+    "doi": "https://doi.org/10.1002/art.38768",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/25110993/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-jalz-2019-03-015",
+    "authors": "Yingjia Chen, Leslie Wilson, John Kornak, R. Adams Dudley, Jennifer Merrilees, Stephen J. Bonasera, Christie Byrne, Kirby Lee, Winston Chiong, Bruce L. Miller, Katherine L. Possin",
+    "title": "The costs of dementia subtypes to California Medicare fee‐for‐service, 2015",
+    "journal": "Alzheimer s & Dementia",
+    "year": 2019,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.jalz.2019.03.015",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/31175026/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1111-j-1475-6773-2006-00661-x",
+    "authors": "Rodney A. Hayward, Michele Heisler, John Adams, R. Adams Dudley, Timothy P. Hofer",
+    "title": "Overestimating Outcome Rates: Statistical Estimation When Reliability Is Suboptimal",
+    "journal": "Health Services Research",
+    "year": 2006,
+    "status": "Published",
+    "doi": "https://doi.org/10.1111/j.1475-6773.2006.00661.x",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/17610445/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1377-hlthaff-2011-0990",
+    "authors": "Rachel M. Werner, R. Adams Dudley",
+    "title": "Medicare’s New Hospital Value-Based Purchasing Program Is Likely To Have Only A Small Impact On Hospital Payments",
+    "journal": "Health Affairs",
+    "year": 2012,
+    "status": "Published",
+    "doi": "https://doi.org/10.1377/hlthaff.2011.0990",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/22949441/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1002-art-39079",
+    "authors": "Jinoos Yazdany, R. Adams Dudley, Randi Chen, Grace A. Lin, Chien‐Wen Tseng",
+    "title": "Coverage for High‐Cost Specialty Drugs for Rheumatoid Arthritis in Medicare Part D",
+    "journal": "Arthritis & Rheumatology",
+    "year": 2015,
+    "status": "Published",
+    "doi": "https://doi.org/10.1002/art.39079",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/25900105/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1007-s11606-012-2071-z",
+    "authors": "Jinoos Yazdany, Laura Trupin, Chris Tonner, R. Adams Dudley, JoAnn Zell, Pantelis Panopalis, Gabriela Schmajuk, Laura Julián, Patricia Katz, Lindsey A. Criswell, Edward H. Yelin",
+    "title": "Quality of Care in Systemic Lupus Erythematosus: Application of Quality Measures to Understand Gaps in Care",
+    "journal": "Journal of General Internal Medicine",
+    "year": 2012,
+    "status": "Published",
+    "doi": "https://doi.org/10.1007/s11606-012-2071-z",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/22588825/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1001-jama-2025-6681",
+    "authors": "Akshay S. Desai, Adam Karns, Jolita Badarienė, Ahmad Aswad, Joel M. Neutel, Farhana Kazi, Wansu Park, Daniel Stiglitz, Nune Makarova, Andrea Havasi, Dion Zappe, Manish Saxena, KARDIA-2 Study Group, Rafik Abadier, Joanna Abbott, Saiaf Abdallah, Mahmud Abdulkadir, Nicole Abels, Alexander Abitbol, Khaled Abouollo, Irene Acacio, Uriel Acevedo Gomez, Uriel-salvador Acevedo Gomez, Marìa Fernanda Troncoso Acevedo, Sheyla Acevedo, Jessica Achan, Shrey Acharya, Armando Acosta Ruiz, Olga Lucía Acosta, Maria Acuna",
+    "title": "Add-On Treatment With Zilebesiran for Inadequately Controlled Hypertension",
+    "journal": "JAMA",
+    "year": 2025,
+    "status": "Published",
+    "doi": "https://doi.org/10.1001/jama.2025.6681",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/40434761/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1212-wnl-52-9-1799",
+    "authors": "S. Claiborne Johnston, R. Adams Dudley, Daryl R. Gress, Linda Ono",
+    "title": "Surgical and endovascular treatment of unruptured cerebral aneurysms at university hospitals",
+    "journal": "Neurology",
+    "year": 1999,
+    "status": "Published",
+    "doi": "https://doi.org/10.1212/wnl.52.9.1799",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/10371526/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1111-1468-0009-00109",
+    "authors": "R. Adams Dudley, Robert H. Miller, Tamir Y. Korenbrot, Harold S. Luft",
+    "title": "The Impact of Financial Incentives on Quality of Health Care",
+    "journal": "Milbank Quarterly",
+    "year": 1998,
+    "status": "Published",
+    "doi": "https://doi.org/10.1111/1468-0009.00109",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/9879306/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1378-chest-07-3061",
+    "authors": "Michael W. Kuzniewicz, Eduard E. Vasilevskis, Rondall Lane, Mitzi L. Dean, Nisha G. Trivedi, Deborah J. Rennie, Ted Clay, Pamela L. Kotler, R. Adams Dudley",
+    "title": "Variation in ICU Risk-Adjusted Mortality",
+    "journal": "CHEST Journal",
+    "year": 2008,
+    "status": "Published",
+    "doi": "https://doi.org/10.1378/chest.07-3061",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/18403657/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1053-ajkd-2003-50001",
+    "authors": "Kirsten L. Johansen, Giorgos K. Sakkas, Julie Doyle, Tiffany E. Shubert, R. Adams Dudley",
+    "title": "Exercise counseling practices among nephrologists caring for patients on dialysis",
+    "journal": "American Journal of Kidney Diseases",
+    "year": 2002,
+    "status": "Published",
+    "doi": "https://doi.org/10.1053/ajkd.2003.50001",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/12500234/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-healthpol-2006-03-001",
+    "authors": "Anne Frølich, Jason A Talavera, Peter Broadhead, R. Adams Dudley",
+    "title": "A behavioral model of clinician responses to incentives to improve quality",
+    "journal": "Health Policy",
+    "year": 2006,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.healthpol.2006.03.001",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/16624440/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-2337-dc07-1341",
+    "authors": "Chien‐Wen Tseng, Edward F. Tierney, Robert B. Gerzoff, R. Adams Dudley, Beth E. Waitzfelder, Ronald T. Ackermann, Andrew J. Karter, John D. Piette, Jesse C. Crosson, Quyen Ngo‐Metzger, Richard Chung, Carol M. Mangione",
+    "title": "Race/Ethnicity and Economic Differences in Cost-Related Medication Underuse Among Insured Adults With Diabetes",
+    "journal": "Diabetes Care",
+    "year": 2008,
+    "status": "Published",
+    "doi": "https://doi.org/10.2337/dc07-1341",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/18000177/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1093-neuros-nyx218",
+    "authors": "Corinna C. Zygourakis, Caterina Y. Liu, Malla Keefe, Christopher Moriates, John K. Ratliff, R. Adams Dudley, Ralph Gonzales, Praveen V. Mummaneni, Christopher P. Ames",
+    "title": "Analysis of National Rates, Cost, and Sources of Cost Variation in Adult Spinal Deformity",
+    "journal": "Neurosurgery",
+    "year": 2017,
+    "status": "Published",
+    "doi": "https://doi.org/10.1093/neuros/nyx218",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/28486687/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1001-jama-294-14-1821",
+    "authors": "R. Adams Dudley",
+    "title": "Pay-for-Performance Research",
+    "journal": "JAMA",
+    "year": 2005,
+    "status": "Published",
+    "doi": "https://doi.org/10.1001/jama.294.14.1821",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/16219887/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1097-mlr-0b013e318041f723",
+    "authors": "Lee Goldman, Eric Vittinghoff, R. Adams Dudley",
+    "title": "Quality of Care in Hospitals with a High Percent of Medicaid Patients",
+    "journal": "Medical Care",
+    "year": 2007,
+    "status": "Published",
+    "doi": "https://doi.org/10.1097/mlr.0b013e318041f723",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/17515786/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1378-chest-08-2591",
+    "authors": "Eduard E. Vasilevskis, Michael W. Kuzniewicz, Brian A. Cason, Rondall K. Lane, Mitzi L. Dean, Ted Clay, Deborah J. Rennie, Eric Vittinghoff, R. Adams Dudley",
+    "title": "Mortality Probability Model III and Simplified Acute Physiology Score II",
+    "journal": "CHEST Journal",
+    "year": 2009,
+    "status": "Published",
+    "doi": "https://doi.org/10.1378/chest.08-2591",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/19363210/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1097-01-mlr-0000196955-99704-64",
+    "authors": "Kenneth E. Covinsky, Joan F. Hilton, Karla Lindquist, R. Adams Dudley",
+    "title": "Development and Validation of an Index to Predict Activity of Daily Living Dependence in Community-Dwelling Elders",
+    "journal": "Medical Care",
+    "year": 2006,
+    "status": "Published",
+    "doi": "https://doi.org/10.1097/01.mlr.0000196955.99704.64",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/16434914/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1136-amiajnl-2014-002694",
+    "authors": "Ben J. Marafino, Jason M. Davies, Naomi S. Bardach, Mitzi L. Dean, R. Adams Dudley",
+    "title": "N-gram support vector machines for scalable procedure and diagnosis classification, with applications to clinical free text data from the intensive care unit",
+    "journal": "Journal of the American Medical Informatics Association",
+    "year": 2014,
+    "status": "Published",
+    "doi": "https://doi.org/10.1136/amiajnl-2014-002694",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/24786209/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1089-bfm-2011-0004",
+    "authors": "Henry Chong Lee, Sarah Martin-Anderson, R. Adams Dudley",
+    "title": "Clinician Perspectives on Barriers to and Opportunities for Skin-to-Skin Contact for Premature Infants in Neonatal Intensive Care Units",
+    "journal": "Breastfeeding Medicine",
+    "year": 2011,
+    "status": "Published",
+    "doi": "https://doi.org/10.1089/bfm.2011.0004",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/22011130/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1097-ccm-0b013e318206b3af",
+    "authors": "Sara E. Erickson, Eduard E. Vasilevskis, Michael W. Kuzniewicz, Brian A. Cason, Rondall K. Lane, Mitzi L. Dean, Deborah J. Rennie, R. Adams Dudley",
+    "title": "The effect of race and ethnicity on outcomes among patients in the intensive care unit: A comprehensive study involving socioeconomic status and resuscitation preferences*",
+    "journal": "Critical Care Medicine",
+    "year": 2010,
+    "status": "Published",
+    "doi": "https://doi.org/10.1097/ccm.0b013e318206b3af",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/21187746/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1097-aog-0b013e31820c3c9b",
+    "authors": "Henry Lee, Audrey Lyndon, Yair J. Blumenfeld, R. Adams Dudley, Jeffrey B. Gould",
+    "title": "Antenatal Steroid Administration for Premature Neonates in California",
+    "journal": "Obstetrics and Gynecology",
+    "year": 2011,
+    "status": "Published",
+    "doi": "https://doi.org/10.1097/aog.0b013e31820c3c9b",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/21446208/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1046-j-1523-1755-2003-00105-x",
+    "authors": "Ann M. O’Hare, R. Adams Dudley, Denise M. Hynes, Charles E. McCulloch, Daniel Navarro, Philip Colin, Kevin T. Stroupe, Joseph H. Rapp, Kirsten L. Johansen",
+    "title": "Impact of surgeon and surgical center characteristics on choice of permanent vascular access",
+    "journal": "Kidney International",
+    "year": 2003,
+    "status": "Published",
+    "doi": "https://doi.org/10.1046/j.1523-1755.2003.00105.x",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/12846766/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-jbi-2015-02-003",
+    "authors": "Ben J. Marafino, W. John Boscardin, R. Adams Dudley",
+    "title": "Efficient and sparse feature selection for biomedical text classification via the elastic net: Application to ICU risk stratification from nursing notes",
+    "journal": "Journal of Biomedical Informatics",
+    "year": 2015,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.jbi.2015.02.003",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/25700665/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1097-ccm-0b013e31829eb970",
+    "authors": "Jeffrey D. Edwards, Adam R. Lucas, Patricia W. Stone, W. John Boscardin, R. Adams Dudley",
+    "title": "Frequency, Risk Factors, and Outcomes of Early Unplanned Readmissions to PICUs*",
+    "journal": "Critical Care Medicine",
+    "year": 2013,
+    "status": "Published",
+    "doi": "https://doi.org/10.1097/ccm.0b013e31829eb970",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/23982030/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1111-1475-6773-12419",
+    "authors": "Martín Roland, R. Adams Dudley",
+    "title": "How Financial and Reputational Incentives Can Be Used to Improve Medical Care",
+    "journal": "Health Services Research",
+    "year": 2015,
+    "status": "Published",
+    "doi": "https://doi.org/10.1111/1475-6773.12419",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/26573887/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1001-jamainternmed-2015-8248",
+    "authors": "Adam J. Schoenfeld, Jason M. Davies, Ben J. Marafino, Mitzi L. Dean, Colette DeJong, Naomi S. Bardach, Dhruv S. Kazi, W. John Boscardin, Grace A. Lin, Reena Duseja, Y. John Mei, Ateev Mehrotra, R. Adams Dudley",
+    "title": "Variation in Quality of Urgent Health Care Provided During Commercial Virtual Visits",
+    "journal": "JAMA Internal Medicine",
+    "year": 2016,
+    "status": "Published",
+    "doi": "https://doi.org/10.1001/jamainternmed.2015.8248",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/27042813/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1146-annurev-publhealth-27-021405-102210",
+    "authors": "David L Robinowitz, R. Adams Dudley",
+    "title": "PUBLIC REPORTING OF PROVIDER PERFORMANCE: Can Its Impact Be Made Greater?",
+    "journal": "Annual Review of Public Health",
+    "year": 2005,
+    "status": "Published",
+    "doi": "https://doi.org/10.1146/annurev.publhealth.27.021405.102210",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/16533128/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1097-pcc-0000000000000844",
+    "authors": "Jeffrey D. Edwards, Amy J. Houtrow, Adam R. Lucas, Rachel L. Miller, Thomas G. Keens, Howard B. Panitch, R. Adams Dudley",
+    "title": "Children and Young Adults Who Received Tracheostomies or Were Initiated on Long-Term Ventilation in PICUs*",
+    "journal": "Pediatric Critical Care Medicine",
+    "year": 2016,
+    "status": "Published",
+    "doi": "https://doi.org/10.1097/pcc.0000000000000844",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/27367044/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1016-s1553-7250-08-34014-8",
+    "authors": "Robert M. Wachter, Nancy Foster, R. Adams Dudley",
+    "title": "Medicare’s Decision to Withhold Payment for Hospital Errors: The Devil Is in the Details",
+    "journal": "The Joint Commission Journal on Quality and Patient Safety",
+    "year": 2008,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/s1553-7250(08)34014-8",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/18351196/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1097-mlr-0b013e3181a39454",
+    "authors": "Eduard E. Vasilevskis, Michael W. Kuzniewicz, Mitzi L. Dean, Ted Clay, Eric Vittinghoff, Deborah J. Rennie, R. Adams Dudley",
+    "title": "Relationship Between Discharge Practices and Intensive Care Unit In-Hospital Mortality Performance",
+    "journal": "Medical Care",
+    "year": 2009,
+    "status": "Published",
+    "doi": "https://doi.org/10.1097/mlr.0b013e3181a39454",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/19536006/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-semarthrit-2018-10-018",
+    "authors": "Gabriela Schmajuk, Kashif Jafri, Michael Evans, Stephen Shiboski, Milena Gianfrancesco, Zara Izadi, Sarah L. Patterson, Ishita Aggarwal, Urmimala Sarkar, R. Adams Dudley, Jinoos Yazdany",
+    "title": "Pneumocystis jirovecii pneumonia (PJP) prophylaxis patterns among patients with rheumatic diseases receiving high-risk immunosuppressant drugs",
+    "journal": "Seminars in Arthritis and Rheumatism",
+    "year": 2018,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.semarthrit.2018.10.018",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/30449650/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1161-jaha-119-013450",
+    "authors": "Anushree Agarwal, Robert Thombley, Craig S. Broberg, I. Harris, Elyse Foster, Vaikom S. Mahadevan, Anitha S. John, Eric Vittinghoff, Gregory M. Marcus, R. Adams Dudley",
+    "title": "Age‐ and Lesion‐Related Comorbidity Burden Among US Adults With Congenital Heart Disease: A Population‐Based Study",
+    "journal": "Journal of the American Heart Association",
+    "year": 2019,
+    "status": "Published",
+    "doi": "https://doi.org/10.1161/jaha.119.013450",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/31575318/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1097-sla-0b013e3182383a78",
+    "authors": "Emily Finlayson, Li Wang, C. Seth Landefeld, R. Adams Dudley",
+    "title": "Major Abdominal Surgery in Nursing Home Residents",
+    "journal": "Annals of Surgery",
+    "year": 2011,
+    "status": "Published",
+    "doi": "https://doi.org/10.1097/sla.0b013e3182383a78",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/22020197/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1001-jamacardio-2019-2223",
+    "authors": "Colette DeJong, Dhruv S. Kazi, R. Adams Dudley, Randi Chen, Chien‐Wen Tseng",
+    "title": "Assessment of National Coverage and Out-of-Pocket Costs for Sacubitril/Valsartan Under Medicare Part D",
+    "journal": "JAMA Cardiology",
+    "year": 2019,
+    "status": "Published",
+    "doi": "https://doi.org/10.1001/jamacardio.2019.2223",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/31290933/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1161-01-cir-0000441966-31451-3f",
+    "authors": "Brahmajee K. Nallamothu, Carl L. Tommaso, H. Vernon Anderson, Jeffrey L. Anderson, Joseph C. Cleveland, R. Adams Dudley, Peter L. Duffy, David P. Faxon, Hitinder S. Gurm, Lawrence Hamilton, Neil C. Jensen, Richard Josephson, David J. Malenka, Calin V. Maniu, Kevin W. McCabe, James D. Mortimer, Manesh R. Patel, Stephen D. Persell, John S. Rumsfeld, Kendrick Shunk, Sidney C. Smith, Stephen J. Stanko, Brook Watts",
+    "title": "ACC/AHA/SCAI/AMA–Convened PCPI/NCQA 2013 Performance Measures for Adults Undergoing Percutaneous Coronary Intervention",
+    "journal": "Circulation",
+    "year": 2013,
+    "status": "Published",
+    "doi": "https://doi.org/10.1161/01.cir.0000441966.31451.3f",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/24357402/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1164-rccm-200903-0450st",
+    "authors": "Jeremy M. Kahn, Damon C. Scales, David H. Au, Shannon S. Carson, J. Randall Curtis, R. Adams Dudley, Theodore J. Iwashyna, Jerry A. Krishnan, J.R. Maurer, Richard A. Mularski, John Popovich, Gordon D. Rubenfeld, Tasnim Sinuff, John E. Heffner",
+    "title": "An Official American Thoracic Society Policy Statement: Pay-for-Performance in Pulmonary, Critical Care, and Sleep Medicine",
+    "journal": "American Journal of Respiratory and Critical Care Medicine",
+    "year": 2010,
+    "status": "Published",
+    "doi": "https://doi.org/10.1164/rccm.200903-0450st",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/20335385/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-7326-m15-1011",
+    "authors": "Alexander T. Sandhu, R. Adams Dudley, Dhruv S. Kazi",
+    "title": "A Cost Analysis of the American Board of Internal Medicine's Maintenance-of-Certification Program",
+    "journal": "Annals of Internal Medicine",
+    "year": 2015,
+    "status": "Published",
+    "doi": "https://doi.org/10.7326/m15-1011",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/26216046/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1001-jamapediatrics-2013-1316",
+    "authors": "Jeffrey D. Edwards, Amy J. Houtrow, Eduard E. Vasilevskis, R. Adams Dudley, Megumi J. Okumura",
+    "title": "Multi-institutional Profile of Adults Admitted to Pediatric Intensive Care Units",
+    "journal": "JAMA Pediatrics",
+    "year": 2013,
+    "status": "Published",
+    "doi": "https://doi.org/10.1001/jamapediatrics.2013.1316",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/23549637/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1001-jama-2015-13572",
+    "authors": "Colette DeJong, Catherine R. Lucey, R. Adams Dudley",
+    "title": "Incorporating a New Technology While Doing No Harm, Virtually",
+    "journal": "JAMA",
+    "year": 2015,
+    "status": "Published",
+    "doi": "https://doi.org/10.1001/jama.2015.13572",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/26647252/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-2215-cjn-01090115",
+    "authors": "Julie H. Ishida, Ben J. Marafino, Charles E. McCulloch, Lorien S. Dalrymple, R. Adams Dudley, Barbara Grimes, Kirsten L. Johansen",
+    "title": "Receipt of Intravenous Iron and Clinical Outcomes among Hemodialysis Patients Hospitalized for Infection",
+    "journal": "Clinical Journal of the American Society of Nephrology",
+    "year": 2015,
+    "status": "Published",
+    "doi": "https://doi.org/10.2215/cjn.01090115",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/26416943/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1001-jamainternmed-2020-2922",
+    "authors": "Colette DeJong, Camlyn Masuda, Randi Chen, Dhruv S. Kazi, R. Adams Dudley, Chien‐Wen Tseng",
+    "title": "Out-of-Pocket Costs for Novel Guideline-Directed Diabetes Therapies Under Medicare Part D",
+    "journal": "JAMA Internal Medicine",
+    "year": 2020,
+    "status": "Published",
+    "doi": "https://doi.org/10.1001/jamainternmed.2020.2922",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/32926091/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-healthpol-2008-02-002",
+    "authors": "Lee Goldman, R. Adams Dudley",
+    "title": "United States rural hospital quality in the Hospital Compare database—Accounting for hospital characteristics",
+    "journal": "Health Policy",
+    "year": 2008,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.healthpol.2008.02.002",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/18374447/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1093-neuros-nyx047",
+    "authors": "Corinna C. Zygourakis, Caterina Y. Liu, Glenn K. Wakam, Christopher Moriates, Christy Boscardin, Christopher P. Ames, Praveen V. Mummaneni, John K. Ratliff, R. Adams Dudley, Ralph Gonzales",
+    "title": "Geographic and Hospital Variation in Cost of Lumbar Laminectomy and Lumbar Fusion for Degenerative Conditions",
+    "journal": "Neurosurgery",
+    "year": 2017,
+    "status": "Published",
+    "doi": "https://doi.org/10.1093/neuros/nyx047",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/28327960/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1097-ccm-0000000000002439",
+    "authors": "Jeffrey D. Edwards, Adam R. Lucas, W. John Boscardin, R. Adams Dudley",
+    "title": "Repeated Critical Illness and Unplanned Readmissions Within 1 Year to PICUs*",
+    "journal": "Critical Care Medicine",
+    "year": 2017,
+    "status": "Published",
+    "doi": "https://doi.org/10.1097/ccm.0000000000002439",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/28708677/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-2215-cjn-12611212",
+    "authors": "Raymond K. Hsu, Charles E. McCulloch, Elaine Ku, R. Adams Dudley, Chi‐yuan Hsu",
+    "title": "Regional Variation in the Incidence of Dialysis-Requiring AKI in the United States",
+    "journal": "Clinical Journal of the American Society of Nephrology",
+    "year": 2013,
+    "status": "Published",
+    "doi": "https://doi.org/10.2215/cjn.12611212",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/23929923/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1001-jama-2018-7316",
+    "authors": "Jinoos Yazdany, R. Adams Dudley, Grace A. Lin, Randi Chen, Chien‐Wen Tseng",
+    "title": "Out-of-Pocket Costs for Infliximab and Its Biosimilar for Rheumatoid Arthritis Under Medicare Part D",
+    "journal": "JAMA",
+    "year": 2018,
+    "status": "Published",
+    "doi": "https://doi.org/10.1001/jama.2018.7316",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/30193264/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-annemergmed-2018-08-430",
+    "authors": "Timothy S. Anderson, Robert Thombley, R. Adams Dudley, Grace A. Lin",
+    "title": "Trends in Hospitalization, Readmission, and Diagnostic Testing of Patients Presenting to the Emergency Department With Syncope",
+    "journal": "Annals of Emergency Medicine",
+    "year": 2018,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.annemergmed.2018.08.430",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/30342727/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-acap-2010-04-025",
+    "authors": "Naomi S. Bardach, Alyna T. Chien, R. Adams Dudley",
+    "title": "Small Numbers Limit the Use of the Inpatient Pediatric Quality Indicators for Hospital Comparison",
+    "journal": "Academic Pediatrics",
+    "year": 2010,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.acap.2010.04.025",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/20599180/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1097-mlr-0b013e3181bd4783",
+    "authors": "Edward W. Gregg, Andrew J. Karter, Robert B. Gerzoff, Monika M. Safford, Arleen F. Brown, Chien‐Wen Tseng, Beth Waitzfielder, William H. Herman, Carol M. Mangione, Joseph V. Selby, Theodore J. Thompson, R. Adams Dudley",
+    "title": "Characteristics of Insured Patients With Persistent Gaps in Diabetes Care Services",
+    "journal": "Medical Care",
+    "year": 2009,
+    "status": "Published",
+    "doi": "https://doi.org/10.1097/mlr.0b013e3181bd4783",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/20009778/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-5034-inquiryjrnl-44-2-137",
+    "authors": "Lee Goldman, Stuart Henderson, Daniel Dohan, Jason A Talavera, R. Adams Dudley",
+    "title": "Public Reporting and Pay-for-Performance: Safety-Net Hospital Executives' Concerns and Policy Suggestions",
+    "journal": "INQUIRY The Journal of Health Care Organization Provision and Financing",
+    "year": 2007,
+    "status": "Published",
+    "doi": "https://doi.org/10.5034/inquiryjrnl_44.2.137",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/17850040/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1001-jamaophthalmol-2017-6372",
+    "authors": "Catherine L. Chen, Theodore H. Clay, Stephen D. McLeod, Han-Ying Peggy Chang, Adrian W. Gelb, R. Adams Dudley",
+    "title": "A Revised Estimate of Costs Associated With Routine Preoperative Testing in Medicare Cataract Patients With a Procedure-Specific Indicator",
+    "journal": "JAMA Ophthalmology",
+    "year": 2018,
+    "status": "Published",
+    "doi": "https://doi.org/10.1001/jamaophthalmol.2017.6372",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/29346472/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1001-jamainternmed-2016-9386",
+    "authors": "Chien‐Wen Tseng, Jinoos Yazdany, R. Adams Dudley, Colette DeJong, Dhruv S Kazi, Randi Chen, Grace A. Lin",
+    "title": "Medicare Part D Plans’ Coverage and Cost-Sharing for Acute Rescue and Preventive Inhalers for Chronic Obstructive Pulmonary Disease",
+    "journal": "JAMA Internal Medicine",
+    "year": 2017,
+    "status": "Published",
+    "doi": "https://doi.org/10.1001/jamainternmed.2016.9386",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/28241217/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1001-jamanetworkopen-2020-28510",
+    "authors": "Eric Yang, Emilio Galan, Robert Thombley, Andrew N. Lin, Jaeyun Seo, Chien‐Wen Tseng, Jack Resneck, Peter B. Bach, R. Adams Dudley",
+    "title": "Changes in Drug List Prices and Amounts Paid by Patients and Insurers",
+    "journal": "JAMA Network Open",
+    "year": 2020,
+    "status": "Published",
+    "doi": "https://doi.org/10.1001/jamanetworkopen.2020.28510",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/33295971/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1093-neuros-nyx133",
+    "authors": "Corinna C. Zygourakis, Caterina Y. Liu, Seungwon Yoon, Christopher Moriates, Christy Boscardin, R. Adams Dudley, Michael T. Lawton, Philip V. Theodosopoulos, Mitchel S. Berger, Ralph Gonzales",
+    "title": "Analysis of Cost Variation in Craniotomy for Tumor Using 2 National Databases",
+    "journal": "Neurosurgery",
+    "year": 2017,
+    "status": "Published",
+    "doi": "https://doi.org/10.1093/neuros/nyx133",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/28402457/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1001-jamanetworkopen-2022-40290",
+    "authors": "Arianne K. Baldomero, Ken M. Kunisaki, Chris H. Wendt, Ann Bangerter, Susan J. Diem, Kristine E. Ensrud, David Nelson, Carrie Henning‐Smith, Bradley A. Bart, Patrick Hammett, Hildi Hagedorn, R. Adams Dudley",
+    "title": "Drive Time and Receipt of Guideline-Recommended Screening, Diagnosis, and Treatment",
+    "journal": "JAMA Network Open",
+    "year": 2022,
+    "status": "Published",
+    "doi": "https://doi.org/10.1001/jamanetworkopen.2022.40290",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/36331503/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1001-jamainternmed-2022-4333",
+    "authors": "Dhivya Perumal, R. Adams Dudley, Siqi Gan, W. John Boscardin, Aditya Gill, Adrian W. Gelb, Sei J. Lee, Catherine L. Chen",
+    "title": "Anesthesia Care for Cataract Surgery in Medicare Beneficiaries",
+    "journal": "JAMA Internal Medicine",
+    "year": 2022,
+    "status": "Published",
+    "doi": "https://doi.org/10.1001/jamainternmed.2022.4333",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/36190717/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1377-hlthaff-2021-02030",
+    "authors": "Riley D. Shearer, Katherine Diaz Vickery, Peter Bodurtha, Paul E. Drawz, Steve Johnson, Jessica Jeruzal, Stephen C. Waring, Alanna M. Chamberlain, Anupam B. Kharbanda, Josh Leopold, Blair Harrison, Hattie Hiler, Rohan Khazanchi, Rebecca C. Rossom, Karen L. Margolis, Nayanjot Kaur, Miriam Halstead Muscoplat, Yue Yu, R. Adams Dudley, Niall A. M. Klyn, Tyler N. A. Winkelman",
+    "title": "COVID-19 Vaccination Of People Experiencing Homelessness And Incarceration In Minnesota",
+    "journal": "Health Affairs",
+    "year": 2022,
+    "status": "Published",
+    "doi": "https://doi.org/10.1377/hlthaff.2021.02030",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/35666963/",
     "topics": [],
     "authorSlugs": [
       "adams-dudley"
@@ -1120,146 +2199,2081 @@ export const generatedPublications: Publication[] = [
     "authors": "Anne M. Stey, Hemal K. Kanzaria, R. Adams Dudley, Karl Y. Bilimoria, M. Margaret Knudson, Rachael A. Callcut",
     "title": "Emergency Department Length of Stay and Mortality in Critically Injured Patients",
     "journal": "Journal of Intensive Care Medicine",
-    "year": 2022,
-    "status": "Published",
-    "doi": "https://doi.org/10.1177/0885066621995426",
-    "topics": [],
-    "authorSlugs": [
-      "adams-dudley"
-    ]
-  },
-  {
-    "id": "gen-10-1101-2021-12-23-21267853",
-    "authors": "Paul E Drawz, Malini DeSilva, Peter Bodurtha, Gabriela Vazquez Benitez, Anne Murray, Alanna M Chamberlain, R Adams Dudley, Stephen Waring, Anupam B Kharbanda, Daniel Murphy, Miriam Halstead Muscoplat, Victor Melendez, Karen L Margolis, Lynn McFarling, Roxana Lupu, Tyler N.A. Winkelman, Steve Johnson",
-    "title": "Effectiveness of BNT162b2 and mRNA-1273 Second Doses and Boosters for SARS-CoV-2 infection and SARS-CoV-2 Related Hospitalizations: A Statewide Report from the Minnesota Electronic Health Record Consortium",
-    "journal": "",
     "year": 2021,
     "status": "Published",
-    "doi": "https://doi.org/10.1101/2021.12.23.21267853",
+    "doi": "https://doi.org/10.1177/0885066621995426",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/33641512/",
     "topics": [],
     "authorSlugs": [
       "adams-dudley"
     ]
   },
   {
-    "id": "gen-10-1093-ajrccm-aamag159",
-    "authors": "Arianne K Baldomero, R Adams Dudley, Chris H Wendt",
-    "title": "Geographic Disparities in COPD Inhalers by Rurality, Drive Time, and Neighborhood Disadvantage",
-    "journal": "American Journal of Respiratory and Critical Care Medicine",
-    "year": 2026,
+    "id": "gen-10-1001-jamanetworkopen-2020-2739",
+    "authors": "Chien‐Wen Tseng, R. Adams Dudley, Randi Chen, Rochelle P. Walensky",
+    "title": "Medicare Part D and Cost-Sharing for Antiretroviral Therapy and Preexposure Prophylaxis",
+    "journal": "JAMA Network Open",
+    "year": 2020,
     "status": "Published",
-    "doi": "https://doi.org/10.1093/ajrccm/aamag159",
+    "doi": "https://doi.org/10.1001/jamanetworkopen.2020.2739",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/32286656/",
     "topics": [],
     "authorSlugs": [
       "adams-dudley"
     ]
   },
   {
-    "id": "gen-10-2196-86337",
-    "authors": "Tyler NA Winkelman, Kelly Bergmann, Peter Bodurtha, Alanna M Chamberlain, R Adams Dudley, David Haynes, Steven G Johnson, Thomas E Kottke, Karen L Margolis, Gabriela Vazquez Benitez, Devon Nerstad, Patrick Olson, James M Peacock, Nayanjot Kaur Rai, Stephen C Waring, Bjorn Westgard, Paul Englund Drawz",
-    "title": "Population Estimates and Hypertension and Diabetes Prevalence: Cross-Sectional Quantitative Study Comparing Electronic Health Record–Derived Counts, Census, and Centers for Disease Control and Prevention Population Level Analysis and Community Estimates",
-    "journal": "JMIR Public Health and Surveillance",
-    "year": 2026,
-    "status": "Published",
-    "doi": "https://doi.org/10.2196/86337",
-    "topics": [],
-    "authorSlugs": [
-      "adams-dudley"
-    ]
-  },
-  {
-    "id": "gen-10-1016-j-surg-2014-06-069",
-    "authors": "Laura Torbeck, Reed G. Williams, Jennifer Choi, Connie C. Schmitz, Jeffrey G. Chipman, Gary L. Dunnington",
-    "title": "How much guidance is given in the operating room? Factors influencing faculty self-reports, resident perceptions, and faculty/resident agreement",
-    "journal": "Surgery (United States)",
+    "id": "gen-10-1001-jamainternmed-2014-164",
+    "authors": "Grace A. Lin, R. Adams Dudley",
+    "title": "Fighting the “Oculostenotic Reflex”",
+    "journal": "JAMA Internal Medicine",
     "year": 2014,
     "status": "Published",
-    "doi": "https://doi.org/10.1016/j.surg.2014.06.069",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/25239321/",
+    "doi": "https://doi.org/10.1001/jamainternmed.2014.164",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/25156005/",
     "topics": [],
     "authorSlugs": [
-      "jeff-chipman"
+      "adams-dudley"
     ]
   },
   {
-    "id": "gen-10-1371-journal-ppat-1002437",
-    "authors": "Ming Zeng, Peter J. Southern, Cavan S. Reilly, Greg J. Beilman, Jeffrey G. Chipman, Timothy W. Schacker, Ashley T. Haase",
-    "title": "Lymphoid tissue damage in HIV-1 infection depletes naïve T cells and limits T cell reconstitution after antiretroviral therapy",
-    "journal": "PLoS Pathogens",
-    "year": 2012,
+    "id": "gen-10-1093-bjs-znab307",
+    "authors": "BJS Commission Team, Egide Abahuje, Aya Abbas, Mohamed A. Maksoud, A Abdelhady, S. Abdelhamid, H Faraj, Bushra Abdelqader, Hossam Abdou, Alend Abdullah, Merrie Harrison, E Abem Owusu, Abeer Aboalazayem, Rabii Aboulhosn, Shinya Oda, Aisha Abubakar, Ahmad Abutaka, D Acevedo Fontalvo, Sergio A. Acuña, A Adefemi, S Adegbola, T. Adenuga, Ademola Adeyeye, Ahmed Hilmi, K. Aditya, Theophilus Adjeso, R Aftab, Asma Afzal, Vyom Aggarwal, Ajay Aggarwal",
+    "title": "BJS commission on surgery and perioperative care post-COVID-19",
+    "journal": "British journal of surgery",
+    "year": 2021,
     "status": "Published",
-    "doi": "https://doi.org/10.1371/journal.ppat.1002437",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/22241988/",
+    "doi": "https://doi.org/10.1093/bjs/znab307",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/34624081/",
     "topics": [],
     "authorSlugs": [
-      "jeff-chipman"
+      "adams-dudley"
     ]
   },
   {
-    "id": "gen-10-1016-j-amjsurg-2010-02-006",
-    "authors": "Jeffrey G. Chipman, Travis P. Webb, Mohsen Shabahang, Stephanie F. Heller, Joan M. Vancamp, Amy L. Waer, Michael G. Luxenberg, Matthew Christenson, Connie C. Schmitz",
-    "title": "A multi-institutional study of the Family Conference Objective Structured Clinical Exam",
-    "journal": "American Journal of Surgery",
-    "year": 2011,
+    "id": "gen-10-1177-0885066620962450",
+    "authors": "Malini Mahendra, Patrick S. McQuillen, R. Adams Dudley, Martina A. Steurer",
+    "title": "Variation in Arterial and Central Venous Catheter Use in Pediatric Intensive Care Units",
+    "journal": "Journal of Intensive Care Medicine",
+    "year": 2020,
     "status": "Published",
-    "doi": "https://doi.org/10.1016/j.amjsurg.2010.02.006",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/20850709/",
+    "doi": "https://doi.org/10.1177/0885066620962450",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/32969326/",
     "topics": [],
     "authorSlugs": [
-      "jeff-chipman"
+      "adams-dudley"
     ]
   },
   {
-    "id": "gen-10-1016-j-surg-2010-04-006",
-    "authors": "Mara B. Antonoff, Jennifer A. Swanson, Robert D. Acton, Jeffrey G. Chipman, Michael A. Maddaus, Connie C. Schmitz, Jonathan D'Cunha",
-    "title": "Improving surgery intern confidence through the implementation of expanded orientation sessions",
-    "journal": "Surgery (United States)",
+    "id": "gen-10-1001-jamanetworkopen-2020-18752",
+    "authors": "Anushree Agarwal, Eric Vittinghoff, Janet J. Myers, R. Adams Dudley, Abigail Khan, Anitha S. John, Gregory M. Marcus",
+    "title": "Ambulatory Health Care Service Use and Costs Among Commercially Insured US Adults With Congenital Heart Disease",
+    "journal": "JAMA Network Open",
+    "year": 2020,
+    "status": "Published",
+    "doi": "https://doi.org/10.1001/jamanetworkopen.2020.18752",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/32970155/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1097-cce-0000000000000450",
+    "authors": "Malini Mahendra, Yanting Luo, Hunter Mills, Gundolf Schenk, Atul J. Butte, R. Adams Dudley",
+    "title": "Impact of Different Approaches to Preparing Notes for Analysis With Natural Language Processing on the Performance of Prediction Models in Intensive Care",
+    "journal": "Critical Care Explorations",
+    "year": 2021,
+    "status": "Published",
+    "doi": "https://doi.org/10.1097/cce.0000000000000450",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/34136824/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-2147-copd-s406899",
+    "authors": "Camille Robichaux, Jordan Aron, Chris H. Wendt, Jesse D. Berman, Austin Rau, Ann Bangerter, R. Adams Dudley, Arianne K. Baldomero",
+    "title": "Sociodemographic and Geographic Risk Factors for All-Cause Mortality in Patients with COPD",
+    "journal": "International Journal of COPD",
+    "year": 2023,
+    "status": "Published",
+    "doi": "https://doi.org/10.2147/copd.s406899",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/37521023/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-15326-jcopdf-2022-0303",
+    "authors": "Arianne K. Baldomero, Ken M. Kunisaki, Ann Bangerter, David Nelson, Chris H. Wendt, Spyridon Fortis, Hildi Hagedorn, R. Adams Dudley",
+    "title": "Beyond Access: Factors Associated With Spirometry Underutilization Among Patients With a Diagnosis of COPD in Urban Tertiary Care Centers",
+    "journal": "Chronic Obstructive Pulmonary Diseases Journal of the COPD Foundation",
+    "year": 2022,
+    "status": "Published",
+    "doi": "https://doi.org/10.15326/jcopdf.2022.0303",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/36040836/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-jchf-2024-11-020",
+    "authors": "Colette DeJong, Kosuke Inoue, Matthew S. Durstenfeld, Anubha Agarwal, Justin C. Chen, Chien‐Wen Tseng, R. Adams Dudley, Priscilla Y. Hsue, Dhruv S. Kazi",
+    "title": "Direct-to-Physician Marketing and Uptake of Optimal Medical Therapy for Heart Failure With Reduced Ejection Fraction",
+    "journal": "JACC Heart Failure",
+    "year": 2025,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.jchf.2024.11.020",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/40117391/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1056-nejm200104053441410",
+    "authors": "R. Adams Dudley, Harold S. Luft",
+    "title": "Managed Care in Transition",
+    "journal": "New England Journal of Medicine",
+    "year": 2001,
+    "status": "Published",
+    "doi": "https://doi.org/10.1056/nejm200104053441410",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/11287981/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1097-mlr-0b013e3180ca95fa",
+    "authors": "Gloria L. Beckles, David F. Williamson, Arleen F. Brown, Edward W. Gregg, Andrew J. Karter, Catherine Kim, R. Adams Dudley, Monika M. Safford, Mark R. Stevens, Theodore J. Thompson",
+    "title": "Agreement Between Self-Reports and Medical Records Was Only Fair in a Cross-Sectional Study of Performance of Annual Eye Examinations Among Adults With Diabetes in Managed Care",
+    "journal": "Medical Care",
+    "year": 2007,
+    "status": "Published",
+    "doi": "https://doi.org/10.1097/mlr.0b013e3180ca95fa",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/17712258/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1111-j-1532-5415-2007-01445-x",
+    "authors": "Chien‐Wen Tseng, R. Adams Dudley, Robert H. Brook, Emmett B. Keeler, W. Neil Steers, G. Caleb Alexander, Beth E. Waitzfelder, Carol M. Mangione",
+    "title": "Elderly Patients' Preferences and Experiences with Providers in Managing Their Drug Costs",
+    "journal": "Journal of the American Geriatrics Society",
+    "year": 2007,
+    "status": "Published",
+    "doi": "https://doi.org/10.1111/j.1532-5415.2007.01445.x",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/17944892/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1007-s11606-008-0706-x",
+    "authors": "Grace A. Lin, R. Adams Dudley, Rita F. Redberg",
+    "title": "Why Physicians Favor Use of Percutaneous Coronary Intervention to Medical Therapy: A Focus Group Study",
+    "journal": "Journal of General Internal Medicine",
+    "year": 2008,
+    "status": "Published",
+    "doi": "https://doi.org/10.1007/s11606-008-0706-x",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/18618192/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-pcd-2010-07-002",
+    "authors": "Beth E. Waitzfelder, Robert B. Gerzoff, Andrew J. Karter, Stephen Crystal, Mathew J. Bair, Susan L. Ettner, Arleen F. Brown, Usha Subramanian, Shou‐En Lu, David G. Marrero, William H. Herman, Joseph V. Selby, R. Adams Dudley",
+    "title": "Correlates of depression among people with diabetes: The Translating Research Into Action for Diabetes (TRIAD) study",
+    "journal": "Primary care diabetes",
     "year": 2010,
     "status": "Published",
-    "doi": "https://doi.org/10.1016/j.surg.2010.04.006",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/20627274/",
+    "doi": "https://doi.org/10.1016/j.pcd.2010.07.002",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/20832375/",
     "topics": [],
     "authorSlugs": [
-      "jeff-chipman"
+      "adams-dudley"
     ]
   },
   {
-    "id": "gen-10-1089-sur-2006-020",
-    "authors": "David E. Skarda, Jodie H. Taylor, Jeffrey G. Chipman, Matthew Larson, Jason V. Baker, Timothy W. Schacker, Gregory J. Beilman",
-    "title": "Inguinal lymph node biopsy in patients infected with the human immunodeficiency virus is safe",
-    "journal": "Surgical Infections",
-    "year": 2007,
+    "id": "gen-10-1093-jamia-ocz092",
+    "authors": "Neal Yuan, R. Adams Dudley, W. John Boscardin, Grace A. Lin",
+    "title": "Electronic health records systems and hospital clinical performance: a study of nationwide hospital data",
+    "journal": "Journal of the American Medical Informatics Association",
+    "year": 2019,
     "status": "Published",
-    "doi": "https://doi.org/10.1089/sur.2006.020",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/17437362/",
+    "doi": "https://doi.org/10.1093/jamia/ocz092",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/31233144/",
     "topics": [],
     "authorSlugs": [
-      "jeff-chipman"
+      "adams-dudley"
     ]
   },
   {
-    "id": "gen-10-1016-j-jsurg-2006-11-001",
-    "authors": "Jeffrey G. Chipman, Gregory J. Beilman, Constance C. Schmitz, Susan C. Seatter",
-    "title": "Development and Pilot Testing of an OSCE for Difficult Conversations in Surgical Intensive Care",
-    "journal": "Journal of Surgical Education",
-    "year": 2007,
+    "id": "gen-10-1111-j-1475-6773-2008-00867-x",
+    "authors": "Arlyss Anderson Rothman, Hayoung Park, Ron D. Hays, Carol A. Edwards, R. Adams Dudley",
+    "title": "Can Additional Patient Experience Items Improve the Reliability of and Add New Domains to the CAHPS<sup>®</sup> Hospital Survey?",
+    "journal": "Health Services Research",
+    "year": 2008,
     "status": "Published",
-    "doi": "https://doi.org/10.1016/j.jsurg.2006.11.001",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/17462207/",
+    "doi": "https://doi.org/10.1111/j.1475-6773.2008.00867.x",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/18522668/",
     "topics": [],
     "authorSlugs": [
-      "jeff-chipman"
+      "adams-dudley"
     ]
   },
   {
-    "id": "gen-10-1089-sur-2006-7-513",
-    "authors": "Jeffrey G. Chipman, Jodie H. Taylor, Melissa Thorson, David E. Skarda, Gregory J. Beilman",
-    "title": "Kinetic therapy beds are associated with more complications in patients with thoracolumbar spinal column injuries",
-    "journal": "Surgical Infections",
+    "id": "gen-10-1377-hlthaff-28-5-1498",
+    "authors": "Rachel M. Werner, R. Adams Dudley",
+    "title": "Making The ‘Pay’ Matter In Pay-For-Performance: Implications For Payment Strategies",
+    "journal": "Health Affairs",
+    "year": 2009,
+    "status": "Published",
+    "doi": "https://doi.org/10.1377/hlthaff.28.5.1498",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/19738269/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1353-hpu-2013-0122",
+    "authors": "Kim F. Rhoads, Justine Ngo, Yifei Ma, Lyen C. Huang, Mark L. Welton, R. Adams Dudley",
+    "title": "Do Hospitals that Serve a High Percentage of Medicaid Patients Perform Well on Evidence-based Guidelines for Colon Cancer Care?",
+    "journal": "Journal of Health Care for the Poor and Underserved",
+    "year": 2013,
+    "status": "Published",
+    "doi": "https://doi.org/10.1353/hpu.2013.0122",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/23974390/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1001-jamacardio-2017-3051",
+    "authors": "Dhruv S. Kazi, Christine Y. Lu, Grace A. Lin, Colette DeJong, R. Adams Dudley, Randi Chen, Chien‐Wen Tseng",
+    "title": "Nationwide Coverage and Cost-Sharing for PCSK9 Inhibitors Among Medicare Part D Plans",
+    "journal": "JAMA Cardiology",
+    "year": 2017,
+    "status": "Published",
+    "doi": "https://doi.org/10.1001/jamacardio.2017.3051",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/28903137/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-2196-jmir-3637",
+    "authors": "Naomi S. Bardach, Judith H. Hibbard, Felix Greaves, R. Adams Dudley",
+    "title": "Sources of Traffic and Visitors’ Preferences Regarding Online Public Reports of Quality: Web Analytics and Online Survey Results",
+    "journal": "Journal of Medical Internet Research",
+    "year": 2015,
+    "status": "Published",
+    "doi": "https://doi.org/10.2196/jmir.3637",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/25934100/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-ophtha-2020-09-013",
+    "authors": "Catherine L. Chen, Stephen D. McLeod, Thomas M. Lietman, Hui Shen, W. John Boscardin, Han-Ying Peggy Chang, Mary A. Whooley, Adrian W. Gelb, Sei J. Lee, R. Adams Dudley",
+    "title": "Preoperative Medical Testing and Falls in Medicare Beneficiaries Awaiting Cataract Surgery",
+    "journal": "Ophthalmology",
+    "year": 2020,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.ophtha.2020.09.013",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/32926912/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1089-bfm-2010-0021",
+    "authors": "Valerie J. Flaherman, Alyna T. Chien, Charles E. McCulloch, R. Adams Dudley",
+    "title": "Breastfeeding Rates Differ Significantly by Method Used: A Cause for Concern for Public Health Measurement",
+    "journal": "Breastfeeding Medicine",
+    "year": 2010,
+    "status": "Published",
+    "doi": "https://doi.org/10.1089/bfm.2010.0021",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/21091054/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1001-jama-2014-1026",
+    "authors": "Colette DeJong, John Santa, R. Adams Dudley",
+    "title": "Websites That Offer Care Over the Internet",
+    "journal": "JAMA",
+    "year": 2014,
+    "status": "Published",
+    "doi": "https://doi.org/10.1001/jama.2014.1026",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/24691602/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1089-bfm-2012-0056",
+    "authors": "Henry Chong Lee, Sarah Martin-Anderson, Audrey Lyndon, R. Adams Dudley",
+    "title": "Perspectives on Promoting Breastmilk Feedings for Premature Infants During a Quality Improvement Project",
+    "journal": "Breastfeeding Medicine",
+    "year": 2012,
+    "status": "Published",
+    "doi": "https://doi.org/10.1089/bfm.2012.0056",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/23186387/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1093-cid-ciac110",
+    "authors": "Paul E. Drawz, Malini B. DeSilva, Peter Bodurtha, Gabriela Vazquez‐Benitez, Anne M. Murray, Alanna M. Chamberlain, R. Adams Dudley, Stephen C. Waring, Anupam B. Kharbanda, Daniel Murphy, Miriam Halstead Muscoplat, Victor Meléndez, Karen L. Margolis, Lynn McFarling, Roxana Lupu, Tyler N. A. Winkelman, Steve Johnson",
+    "title": "Effectiveness of BNT162b2 and mRNA-1273 Second Doses and Boosters for Severe Acute Respiratory Syndrome Coronavirus 2 (SARS-CoV-2) Infection and SARS-CoV-2–Related Hospitalizations: A Statewide Report From the Minnesota Electronic Health Record Consortium",
+    "journal": "Clinical Infectious Diseases",
+    "year": 2022,
+    "status": "Published",
+    "doi": "https://doi.org/10.1093/cid/ciac110",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/35137021/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1001-archinternmed-2009-299",
+    "authors": "Grace A. Lin, R. Adams Dudley",
+    "title": "Patient-Centered Care",
+    "journal": "Archives of Internal Medicine",
+    "year": 2009,
+    "status": "Published",
+    "doi": "https://doi.org/10.1001/archinternmed.2009.299",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/19786671/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-adams-dudley-2013-small-practices-experience-with-ehr",
+    "authors": "Rohima Begum, Mandy Smith Ryan, Chloe H. Winther, Jason Wang, Naomi S. Bardach, Amanda Parsons, Sarah C. Shih, R. Adams Dudley",
+    "title": "Small practices' experience with EHR, quality measurement, and incentives.",
+    "journal": "PubMed",
+    "year": 2013,
+    "status": "Published",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/24511883/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-jcrc-2010-06-010",
+    "authors": "Eduard E. Vasilevskis, Michael W. Kuzniewicz, Brian A. Cason, Rondall K. Lane, Mitzi L. Dean, Ted Clay, Deborah J. Rennie, R. Adams Dudley",
+    "title": "Predictors of early postdischarge mortality in critically ill patients: A retrospective cohort study from the California Intensive Care Outcomes project",
+    "journal": "Journal of Critical Care",
+    "year": 2010,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.jcrc.2010.06.010",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/20716477/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1377-hlthaff-25-3-759",
+    "authors": "Ateev Mehrotra, Sonya A. Grier, R. Adams Dudley",
+    "title": "The Relationship Between Health Plan Advertising And Market Incentives: Evidence Of Risk-Selective Behavior",
+    "journal": "Health Affairs",
     "year": 2006,
     "status": "Published",
-    "doi": "https://doi.org/10.1089/sur.2006.7.513",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/17233568/",
+    "doi": "https://doi.org/10.1377/hlthaff.25.3.759",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/16684741/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1001-jama-2017-4455",
+    "authors": "Colette DeJong, R. Adams Dudley",
+    "title": "Reconsidering Physician–Pharmaceutical Industry Relationships",
+    "journal": "JAMA",
+    "year": 2017,
+    "status": "Published",
+    "doi": "https://doi.org/10.1001/jama.2017.4455",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/28464124/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1177-00333549211061317",
+    "authors": "Tyler N. A. Winkelman, Karen L. Margolis, Stephen C. Waring, Peter Bodurtha, Rohan Khazanchi, Stefan Gildemeister, Pamela J. Mink, Malini B. DeSilva, Anne M. Murray, Nayanjot Rai, Julie Sonier, Claire Neely, Steve Johnson, Alanna M. Chamberlain, Yue Yu, Lynn McFarling, R. Adams Dudley, Paul E. Drawz",
+    "title": "Minnesota Electronic Health Record Consortium COVID-19 Project: Informing Pandemic Response Through Statewide Collaboration Using Observational Data",
+    "journal": "Public Health Reports",
+    "year": 2022,
+    "status": "Published",
+    "doi": "https://doi.org/10.1177/00333549211061317",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/35060411/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-ajog-2025-04-051",
+    "authors": "Piyanga Athauda, Zonglun Li, Ruth MacSwan, R. Adams Dudley, Jenny Stokes, Christina Ammari, Davide Casagrandi, Alexey Zaikin, R. Napolitano",
+    "title": "Monitoring and timing of delivery in suspected late fetal growth restriction at term",
+    "journal": "American Journal of Obstetrics and Gynecology",
+    "year": 2025,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.ajog.2025.04.051",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/40311827/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-lana-2023-100597",
+    "authors": "Arianne K. Baldomero, Ken M. Kunisaki, Chris H. Wendt, Carrie Henning‐Smith, Hildi Hagedorn, Ann Bangerter, R. Adams Dudley",
+    "title": "Guideline-discordant inhaler regimens after COPD hospitalization: associations with rurality, drive time to care, and fragmented care – a United States cohort study",
+    "journal": "The Lancet Regional Health - Americas",
+    "year": 2023,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.lana.2023.100597",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/37766800/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1001-jamanetworkopen-2025-28898",
+    "authors": "Arianne K. Baldomero, Anne C. Melzer, Ken M. Kunisaki, Chris H. Wendt, Orly Vardeny, Hildi Hagedorn, Steven S. Fu, R. Adams Dudley",
+    "title": "Geographic Disparities by Rural-Urban Status and Drive Time to Care in Tobacco Treatment for COPD",
+    "journal": "JAMA Network Open",
+    "year": 2025,
+    "status": "Published",
+    "doi": "https://doi.org/10.1001/jamanetworkopen.2025.28898",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/40857000/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-15585-mmwr-mm7347a4",
+    "authors": "Stephen Contag, Elizabeth Dufort, Sarah Lim, Tyler N. A. Winkelman, Jennifer Zipprich, Lindsey Erickson, Mel Anacker, Nayanjot Kaur, Kristen D. Ojo, Danielle Kvasager, Henry D. Kunerth, R. Adams Dudley, Pamala Gahr, Kelly R. Bergmann, Alanna M. Chamberlain, Summer L. Martins, Stephen C. Waring, Bjorn Westgard, Kristin Sweet, Paul E. Drawz, Ruth Lynfield",
+    "title": "<i>Notes from the Field:</i> Human Parvovirus B19 Infections Among Pregnant Persons — Minnesota, January–September 2024",
+    "journal": "MMWR Morbidity and Mortality Weekly Report",
+    "year": 2024,
+    "status": "Published",
+    "doi": "https://doi.org/10.15585/mmwr.mm7347a4",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/39602427/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1016-0895-4356-93-90074-b",
+    "authors": "R. Adams Dudley, Frank E. Harrell, Lowri Smith, Daniel B. Mark, Robert M. Califf, David B. Pryor, Donald D. Glower, Joseph Lipscomb, Mark A. Hlatky",
+    "title": "Comparison of analytic models for estimating the effect of clinical factors on the cost of coronary artery bypass graft surgery",
+    "journal": "Journal of Clinical Epidemiology",
+    "year": 1993,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/0895-4356(93)90074-b",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/8455051/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1377-hlthaff-22-2-60",
+    "authors": "Ateev Mehrotra, Thomas Bodenheimer, R. Adams Dudley",
+    "title": "Employers’ Efforts To Measure And Improve Hospital Quality: Determinants Of Success",
+    "journal": "Health Affairs",
+    "year": 2003,
+    "status": "Published",
+    "doi": "https://doi.org/10.1377/hlthaff.22.2.60",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/12674408/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1097-00005650-200301000-00009",
+    "authors": "R. Adams Dudley, Carol Medlin, Lisa B. Hammann, Miriam G. Cisternas, Richard Brand, Deborah J. Rennie, Harold S. Luft",
+    "title": "The Best of Both Worlds?",
+    "journal": "Medical Care",
+    "year": 2003,
+    "status": "Published",
+    "doi": "https://doi.org/10.1097/00005650-200301000-00009",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/12544544/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1146-annurev-publhealth-24-100901-141008",
+    "authors": "Ateev Mehrotra, R. Adams Dudley, Harold S. Luft",
+    "title": "What's Behind the Health Expenditure Trends?",
+    "journal": "Annual Review of Public Health",
+    "year": 2003,
+    "status": "Published",
+    "doi": "https://doi.org/10.1146/annurev.publhealth.24.100901.141008",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/12524466/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1001-jama-297-23-2596",
+    "authors": "Chien‐Wen Tseng, Carol M. Mangione, Robert H. Brook, Emmett B. Keeler, R. Adams Dudley",
+    "title": "Identifying Widely Covered Drugs and Drug Coverage Variation Among Medicare Part D Formularies",
+    "journal": "JAMA",
+    "year": 2007,
+    "status": "Published",
+    "doi": "https://doi.org/10.1001/jama.297.23.2596",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/17579228/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-juro-2007-08-149",
+    "authors": "Tse-Sun Ku, Christopher J. Kane, Śaunak Sen, William G. Henderson, R. Adams Dudley, Brian A. Cason",
+    "title": "Effects of Hospital Procedure Volume and Resident Training on Clinical Outcomes and Resource Use in Radical Retropubic Prostatectomy Surgery in the Department of Veterans Affairs",
+    "journal": "The Journal of Urology",
+    "year": 2007,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.juro.2007.08.149",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/18001784/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1097-mlr-0b013e3182a53d72",
+    "authors": "Kim F. Rhoads, Leland K. Ackerson, Justine Ngo, Florette K. Hazard, S. V. Subramanian, R. Adams Dudley",
+    "title": "Adequacy of Lymph Node Examination in Colorectal Surgery",
+    "journal": "Medical Care",
+    "year": 2013,
+    "status": "Published",
+    "doi": "https://doi.org/10.1097/mlr.0b013e3182a53d72",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/23969586/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-jpeds-2012-04-020",
+    "authors": "Lisa Bain, R. Adams Dudley, Jeffrey B. Gould, Henry Lee",
+    "title": "Factors Associated with Failure to Screen Newborns for Retinopathy of Prematurity",
+    "journal": "The Journal of Pediatrics",
+    "year": 2012,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.jpeds.2012.04.020",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/22632876/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1001-archinternmed-2010-287",
+    "authors": "Chien Wen Tseng, Beth E. Waitzfelder, Edward F. Tierney, Robert B. Gerzoff, David G. Marrero, John D. Piette, Andrew J. Karter, J. David Curb, Richard Chung, Carol M. Mangione, Jesse C. Crosson, R. Adams Dudley",
+    "title": "Research Letters",
+    "journal": "Archives of Internal Medicine",
+    "year": 2010,
+    "status": "Published",
+    "doi": "https://doi.org/10.1001/archinternmed.2010.287",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/20837840/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1097-00132586-200002000-00016",
+    "authors": "Jonathan Showstack, Patricia Katz, John R. Lake, Robert S. Brown, R. Adams Dudley, Steven H. Belle, Russell H. Wiesner, Rowen K. Zetterman",
+    "title": "Resource Utilization in Liver Transplantation: Effects of Patient Characteristics and Clinical Practice",
+    "journal": "Survey of Anesthesiology",
+    "year": 2000,
+    "status": "Published",
+    "doi": "https://doi.org/10.1097/00132586-200002000-00016",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-jcrc-2014-10-016",
+    "authors": "Jeffrey D. Edwards, Eduard E. Vasilevskis, Erika J. Yoo, Amy J. Houtrow, W. John Boscardin, R. Adams Dudley, Megumi J. Okumura",
+    "title": "Adults with childhood-onset chronic conditions admitted to US pediatric and adult intensive care units",
+    "journal": "Journal of Critical Care",
+    "year": 2014,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.jcrc.2014.10.016",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/25466316/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1186-s12913-016-1752-4",
+    "authors": "Chien‐Wen Tseng, Grace A. Lin, James W. Davis, Deborah A. Taira, Jinoos Yazdany, Qimei He, Randi Chen, Allison Imamura, R. Adams Dudley",
+    "title": "Giving formulary and drug cost information to providers and impact on medication cost and use: a longitudinal non-randomized study",
+    "journal": "BMC Health Services Research",
+    "year": 2016,
+    "status": "Published",
+    "doi": "https://doi.org/10.1186/s12913-016-1752-4",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/27654857/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-ucl-2008-08-003",
+    "authors": "Kim F. Rhoads, Badrinath M. Konety, R. Adams Dudley",
+    "title": "Performance Measurement, Public Reporting, and Pay-for-Performance",
+    "journal": "Urologic Clinics of North America",
+    "year": 2008,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.ucl.2008.08.003",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/19038634/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1097-md-0000000000006528",
+    "authors": "Gabriela Schmajuk, Chris Tonner, Laura Trupin, Jing Li, Urmimala Sarkar, Dana Ludwig, Stephen Shiboski, Marina Sirota, R. Adams Dudley, Sara E. Murray, Jinoos Yazdany",
+    "title": "Using health-system-wide data to understand hepatitis B virus prophylaxis and reactivation outcomes in patients receiving rituximab",
+    "journal": "Medicine",
+    "year": 2017,
+    "status": "Published",
+    "doi": "https://doi.org/10.1097/md.0000000000006528",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/28353614/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1007-s00296-017-3782-6",
+    "authors": "Milena Gianfrancesco, Gabriela Schmajuk, Sarah Haserodt, Laura Trupin, Zara Izadi, Kashif Jafri, Stephen Shiboski, Marina Sirota, R. Adams Dudley, Jinoos Yazdany",
+    "title": "Hydroxychloroquine dosing in immune-mediated diseases: implications for patient safety",
+    "journal": "Rheumatology International",
+    "year": 2017,
+    "status": "Published",
+    "doi": "https://doi.org/10.1007/s00296-017-3782-6",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/28748425/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1038-s41372-020-0723-0",
+    "authors": "Malini Mahendra, Martina A. Steurer, Samuel F. Hohmann, Roberta L. Keller, Anil Aswani, R. Adams Dudley",
+    "title": "Predicting NICU admissions in near-term and term infants with low illness acuity",
+    "journal": "Journal of Perinatology",
+    "year": 2020,
+    "status": "Published",
+    "doi": "https://doi.org/10.1038/s41372-020-0723-0",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/32678315/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1001-archpediatrics-2011-41",
+    "authors": "Henry Lee, Alyna T. Chien, Naomi S. Bardach, Ted Clay, Jeffrey B. Gould, R. Adams Dudley",
+    "title": "The Impact of Statistical Choices on Neonatal Intensive Care Unit Quality Ratings Based on Nosocomial Infection Rates",
+    "journal": "Archives of Pediatrics and Adolescent Medicine",
+    "year": 2011,
+    "status": "Published",
+    "doi": "https://doi.org/10.1001/archpediatrics.2011.41",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/21536958/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-5435-jaaosglobal-d-19-00171",
+    "authors": "Catherine L. Chen, Molly M. Jeffery, Erin E. Krebs, Cornelius A. Thiels, Mark Schumacher, Adam J. Schwartz, Robert Thombley, Emily Finlayson, Rosa Rodríguez-Monguió, Derek Ward, R. Adams Dudley",
+    "title": "Long-Term Trends in Postoperative Opioid Prescribing, 1994 to 2014",
+    "journal": "JAAOS Global Research and Reviews",
+    "year": 2020,
+    "status": "Published",
+    "doi": "https://doi.org/10.5435/jaaosglobal-d-19-00171",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/32159068/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1377-hlthaff-23-6-163",
+    "authors": "Kenneth H. Chuang, Wade M Aubry, R. Adams Dudley",
+    "title": "Independent Medical Review Of Health Plan Coverage Denials: Early Trends",
+    "journal": "Health Affairs",
+    "year": 2004,
+    "status": "Published",
+    "doi": "https://doi.org/10.1377/hlthaff.23.6.163",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/15537595/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-6004-jnccn-2018-7024",
+    "authors": "Benjamin L. Franc, Timothy P. Copeland, Robert Thombley, Mi‐Ran Park, Ben J. Marafino, Mitzi L. Dean, W. John Boscardin, Hope S. Rugo, David Seidenwurm, Bhupinder Sharma, Stephen Johnston, R. Adams Dudley",
+    "title": "Geographic Variation in Postoperative Imaging for Low-Risk Breast Cancer",
+    "journal": "Journal of the National Comprehensive Cancer Network",
+    "year": 2018,
+    "status": "Published",
+    "doi": "https://doi.org/10.6004/jnccn.2018.7024",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/30006425/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-adams-dudley-2004-strategies-to-support-quality-based",
+    "authors": "R. Adams Dudley, Anne Frølich, David L Robinowitz, Jason A Talavera, Peter Broadhead, Harold S. Luft",
+    "title": "Strategies To Support Quality-based Purchasing",
+    "journal": "",
+    "year": 2004,
+    "status": "Published",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1177-1077558720919620",
+    "authors": "Brandon W. Yan, Frank A. Sloan, W. John Boscardin, Felicia Guo, R. Adams Dudley",
+    "title": "The Opioid Epidemic Blunted the Mortality Benefit of Medicaid Expansion",
+    "journal": "Medical Care Research and Review",
+    "year": 2020,
+    "status": "Published",
+    "doi": "https://doi.org/10.1177/1077558720919620",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/32403982/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-surg-2019-11-009",
+    "authors": "Anne M. Stey, Christopher A. Wybourn, Audrey Lyndon, M. Margaret Knudson, R. Adams Dudley, Pingyang Liu, Tasce Bongiovanni, Gery W. Ryan",
+    "title": "How care decisions are made among interdisciplinary providers caring for critically injured patients: A qualitative study",
+    "journal": "Surgery",
+    "year": 2019,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.surg.2019.11.009",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/31843221/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-2147-ppa-s289398",
+    "authors": "Neal Yuan, Christy Boscardin, Nadra E. Lisha, R. Adams Dudley, Grace A. Lin",
+    "title": "Is Better Patient Knowledge Associated with Different Treatment Preferences? A Survey of Patients with Stable Coronary Artery Disease",
+    "journal": "Patient Preference and Adherence",
+    "year": 2021,
+    "status": "Published",
+    "doi": "https://doi.org/10.2147/ppa.s289398",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/33531798/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1017-s0266462399015287",
+    "authors": "Patricia P. Katz, Jonathan Showstack, John R. Lake, Robert S. Brown, R. Adams Dudley, Mark Colwell, Russell H. Wiesner, Rowen K. Zetterman, James E. Everhart",
+    "title": "METHODS TO ESTIMATE AND ANALYZE MEDICAL CARE RESOURCE USE",
+    "journal": "International Journal of Technology Assessment in Health Care",
+    "year": 1999,
+    "status": "Published",
+    "doi": "https://doi.org/10.1017/s0266462399015287",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/10507195/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1161-circ-104-18-2155",
+    "authors": "Mark A. Hlatky, R. Adams Dudley",
+    "title": "Operator Volume and Clinical Outcomes of Primary Coronary Angioplasty for Patients With Acute Myocardial Infarction",
+    "journal": "Circulation",
+    "year": 2001,
+    "status": "Published",
+    "doi": "https://doi.org/10.1161/circ.104.18.2155",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/11684623/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1097-mlr-0b013e318298082f",
+    "authors": "Theodore A. Omachi, Steven E. Gregorich, Mark D. Eisner, Renée Asteria-Peñaloza, Irina Tolstykh, Edward H. Yelin, Carlos Iribarren, R. Adams Dudley, Paul D. Blanc",
+    "title": "Risk Adjustment for Health Care Financing in Chronic Disease",
+    "journal": "Medical Care",
+    "year": 2013,
+    "status": "Published",
+    "doi": "https://doi.org/10.1097/mlr.0b013e318298082f",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/23703646/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1186-1748-5908-6-114",
+    "authors": "Laura A. Petersen, Tracy Urech, Kate Simpson, Kenneth Pietz, Sylvia J. Hysong, Jochen Profit, Douglas A. Conrad, R. Adams Dudley, Meghan Z. Lutschg, Robert A. Petzel, LeChauncy D. Woodard",
+    "title": "Design, rationale, and baseline characteristics of a cluster randomized controlled trial of pay for performance for hypertension treatment: study protocol",
+    "journal": "Implementation Science",
+    "year": 2011,
+    "status": "Published",
+    "doi": "https://doi.org/10.1186/1748-5908-6-114",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/21967830/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1097-00005650-200111000-00005",
+    "authors": "R. Adams Dudley, Hedvig Hricak, Jüergen Scheidler, Kyle K. Yu, Carl L. Kalbhen, C. Bethan Powell, Lawrence H. Schwartz, Ellen M. Yetter, Charles M. O’Malley, Robert S. Warren",
+    "title": "Shared Patient Analysis",
+    "journal": "Medical Care",
+    "year": 2001,
+    "status": "Published",
+    "doi": "https://doi.org/10.1097/00005650-200111000-00005",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/11606872/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1186-1472-6963-12-254",
+    "authors": "Vanessa Grubbs, Laura Plantinga, Eric Vittinghoff, Ann M. O’Hare, R. Adams Dudley",
+    "title": "Medicare immunosuppressant coverage and access to kidney transplantation: a retrospective national cohort study",
+    "journal": "BMC Health Services Research",
+    "year": 2012,
+    "status": "Published",
+    "doi": "https://doi.org/10.1186/1472-6963-12-254",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/22894737/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1097-mlr-0000000000000418",
+    "authors": "Tracy Urech, LeChauncy Woodard, Salim S. Virani, R. Adams Dudley, Meghan Z. Lutschg, Laura A. Petersen",
+    "title": "Calculations of Financial Incentives for Providers in a Pay-for-Performance Program",
+    "journal": "Medical Care",
+    "year": 2015,
+    "status": "Published",
+    "doi": "https://doi.org/10.1097/mlr.0000000000000418",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/26340661/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1002-jhm-609",
+    "authors": "Eduard E. Vasilevskis, R. Justin Knebel, R. Adams Dudley, Robert M. Wachter, Andrew D. Auerbach",
+    "title": "Cross‐sectional analysis of hospitalist prevalence and quality of care in California",
+    "journal": "Journal of Hospital Medicine",
+    "year": 2010,
+    "status": "Published",
+    "doi": "https://doi.org/10.1002/jhm.609",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/20394024/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1111-apa-12096",
+    "authors": "Henry Lee, Priya Jegatheesan, Jeffrey B. Gould, R. Adams Dudley",
+    "title": "Hospital‐wide breastfeeding rates vs. breastmilk provision for very‐low‐birth‐weight infants",
+    "journal": "Acta Paediatrica",
+    "year": 2012,
+    "status": "Published",
+    "doi": "https://doi.org/10.1111/apa.12096",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/23174012/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1001-jamainternmed-2013-979",
+    "authors": "Julie H. Ishida, Charles E. McCulloch, R. Adams Dudley, Barbara Grimes, Kirsten L. Johansen",
+    "title": "Dialysis Facility Profit Status and Compliance With a Black Box Warning",
+    "journal": "JAMA Internal Medicine",
+    "year": 2013,
+    "status": "Published",
+    "doi": "https://doi.org/10.1001/jamainternmed.2013.979",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/23699967/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1200-jop-2016-010819",
+    "authors": "Christina A. Clarke, Steven M. Asch, Laurence C. Baker, Karl Y. Bilimoria, R. Adams Dudley, Niya Fong, Merry Holliday-Hanson, David Hopkins, Elizabeth M. Imholz, Jennifer Malin, Lisa M. Moy, Maryann O’Sullivan, Joseph P. Parker, Christopher S. Saigal, Bruce Spurlock, Stephanie S. Teleki, David S. Zingmond, Lance Lang",
+    "title": "Public Reporting of Hospital-Level Cancer Surgical Volumes in California: An Opportunity to Inform Decision Making and Improve Quality",
+    "journal": "Journal of Oncology Practice",
+    "year": 2016,
+    "status": "Published",
+    "doi": "https://doi.org/10.1200/jop.2016.010819",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/27601510/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1007-s11606-020-06129-x",
+    "authors": "Brandon W. Yan, Frank A. Sloan, R. Adams Dudley",
+    "title": "How Influenza Vaccination Rate Variation Could Inform Pandemic-Era Vaccination Efforts",
+    "journal": "Journal of General Internal Medicine",
+    "year": 2020,
+    "status": "Published",
+    "doi": "https://doi.org/10.1007/s11606-020-06129-x",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/32857264/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1097-coc-0000000000000446",
+    "authors": "Benjamin L. Franc, Timothy P. Copeland, Robert Thombley, Miran Park, Ben J. Marafino, Mitzi L. Dean, W. John Boscardin, Hope S. Rugo, R. Adams Dudley",
+    "title": "Geographic and Patient Characteristics Associated With Election of Prophylactic Mastectomy in Young Breast Cancer Patients With Early Disease",
+    "journal": "American Journal of Clinical Oncology",
+    "year": 2018,
+    "status": "Published",
+    "doi": "https://doi.org/10.1097/coc.0000000000000446",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/32463216/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1016-s1527-6465-00-80048-9",
+    "authors": "Jonathan Showstack, Patricia Katz, John R. Lake, R BROWNJR, R. Adams Dudley, Steven H. Belle, Russell H. Wiesner, R K Zetterman, J EVERHART, Roger G. Evans",
+    "title": "Discount pricing and the ?cost? of liver transplantation",
+    "journal": "Liver Transplantation",
+    "year": 2000,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/s1527-6465(00)80048-9",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1186-s13741-021-00230-3",
+    "authors": "Erica Langnas, Rosa Rodríguez-Monguió, Yanting Luo, Rhiannon Croci, R. Adams Dudley, Catherine L. Chen",
+    "title": "The association of multimodal analgesia and high-risk opioid discharge prescriptions in opioid-naive surgical patients",
+    "journal": "Perioperative Medicine",
+    "year": 2021,
+    "status": "Published",
+    "doi": "https://doi.org/10.1186/s13741-021-00230-3",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/34906217/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-wneu-2020-08-023",
+    "authors": "Caterina Liu, A. Karim Ahmed, Catherine L. Chen, R. Adams Dudley, Ralph Gonzales, Katie O. Orrico, Ketan Yerneni, Martin N. Stienen, Anand Veeravagu, Atman Desai, Jon Park, John K. Ratliff, Corinna C. Zygourakis",
+    "title": "Association Between Physician Industry Payments and Cost of Anterior Cervical Discectomy and Fusion in Medicare Beneficiaries",
+    "journal": "World Neurosurgery",
+    "year": 2020,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.wneu.2020.08.023",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/32791230/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1007-s11606-023-08118-2",
+    "authors": "Talitha Wilson, R. Adams Dudley, Ken M. Kunisaki, Chris H. Wendt, Carrie Henning‐Smith, Hildi Hagedorn, Arianne K. Baldomero",
+    "title": "Challenges and Recommendations for Improving Access to Evidence-Based COPD Management among Rural Veterans: Rural Primary Care Provider Perspectives",
+    "journal": "Journal of General Internal Medicine",
+    "year": 2023,
+    "status": "Published",
+    "doi": "https://doi.org/10.1007/s11606-023-08118-2",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/37029292/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1007-s10434-000-0325-1",
+    "authors": "Henry M. Kuerer, E. Shelley Hwang, James P. Anthony, R. Adams Dudley, Beth Crawford, Wade M Aubry, Laura J. Esserman",
+    "title": "Current National Health Insurance Coverage Policies for Breast and Ovarian Cancer Prophylactic Surgery",
+    "journal": "Annals of Surgical Oncology",
+    "year": 2000,
+    "status": "Published",
+    "doi": "https://doi.org/10.1007/s10434-000-0325-1",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/10864338/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1177-1077558700057002s07",
+    "authors": "R. Adams Dudley, Bruce E. Landon, Haya R. Rubin, Nancy L. Keating, Carol Medlin, Harold S. Luft",
+    "title": "Assessing the Relationship between Quality of Care and the Characteristics of Health Care Organizations",
+    "journal": "Medical Care Research and Review",
+    "year": 2000,
+    "status": "Published",
+    "doi": "https://doi.org/10.1177/1077558700057002s07",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/11105509/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1542-peds-2007-1158",
+    "authors": "Alyna T. Chien, R. Adams Dudley",
+    "title": "Pay-for-Performance in Pediatrics: Proceed With Caution",
+    "journal": "PEDIATRICS",
+    "year": 2007,
+    "status": "Published",
+    "doi": "https://doi.org/10.1542/peds.2007-1158",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/17606578/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1054-jcaf-2003-30",
+    "authors": "Edward P. Havranek, Harlan M. Krumholz, R. Adams Dudley, Kirkwood F. Adams, Douglas Gregory, Steven Lampert, JoAnn Lindenfeld, Barry M. Massie, Ileana L. Piña, Susan Restaino, Michael W. Rich, Marvin A. Konstam",
+    "title": "Aligning quality and payment for heart failure care: Defining the challenges",
+    "journal": "Journal of Cardiac Failure",
+    "year": 2003,
+    "status": "Published",
+    "doi": "https://doi.org/10.1054/jcaf.2003.30",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/13680543/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-5034-inquiryjrnl-41-2-203",
+    "authors": "Harold S. Luft, R. Adams Dudley",
+    "title": "Assessing Risk-Adjustment Approaches under Non-Random Selection",
+    "journal": "INQUIRY The Journal of Health Care Organization Provision and Financing",
+    "year": 2004,
+    "status": "Published",
+    "doi": "https://doi.org/10.5034/inquiryjrnl_41.2.203",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/15449434/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1097-mlr-0b013e3181e35b3a",
+    "authors": "Grace A. Lin, Rita F. Redberg, H. Vernon Anderson, Richard E. Shaw, Sarah Milford–Beland, Eric D. Peterson, Sunil V. Rao, Rachel M. Werner, R. Adams Dudley",
+    "title": "Impact of Changes in Clinical Practice Guidelines on Assessment of Quality of Care",
+    "journal": "Medical Care",
+    "year": 2010,
+    "status": "Published",
+    "doi": "https://doi.org/10.1097/mlr.0b013e3181e35b3a",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/20613660/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-adams-dudley-2010-health-information-technology-and-physicians",
+    "authors": "Chien Wen Tseng, Robert H. Brook, G. Caleb Alexander, Allen Hixon, Emmett B. Keeler, Carol M. Mangione, Randi Chen, Eric A. Jackson, R. Adams Dudley",
+    "title": "Health information technology and physicians' knowledge of drug costs.",
+    "journal": "PubMed",
+    "year": 2010,
+    "status": "Published",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/20370310/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1215-03616878-30-4-719",
+    "authors": "Helene Levens Lipton, Jonathan D. Agnew, Marilyn Stebbins, Angela Kuo, R. Adams Dudley",
+    "title": "Managing the Unmanageable: The Nature and Impact of Drug Risk in Physician Groups",
+    "journal": "Journal of Health Politics Policy and Law",
+    "year": 2005,
+    "status": "Published",
+    "doi": "https://doi.org/10.1215/03616878-30-4-719",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/16318167/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1111-j-1532-5415-2009-02244-x",
+    "authors": "Chien‐Wen Tseng, R. Adams Dudley, Robert H. Brook, Emmett B. Keeler, Allen Hixon, Luella R. Manlucu, Carol M. Mangione",
+    "title": "Elderly Patients' Knowledge of Drug Benefit Caps and Communication with Providers About Exceeding Caps",
+    "journal": "Journal of the American Geriatrics Society",
+    "year": 2009,
+    "status": "Published",
+    "doi": "https://doi.org/10.1111/j.1532-5415.2009.02244.x",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/19484840/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1215-03616878-24-4-705",
+    "authors": "R. Adams Dudley, Harold S. Luft",
+    "title": "Goals, Targets, and Tactics: Making Health Care Policy Decisions Explicit",
+    "journal": "Journal of Health Politics Policy and Law",
+    "year": 1999,
+    "status": "Published",
+    "doi": "https://doi.org/10.1215/03616878-24-4-705",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/10503154/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-adams-dudley-2008-determinants-of-willingness-to-voluntarily",
+    "authors": "Ritu Agarwal, Corey M. Angst, Guodong Gao, Jiban Khuntia, R. Adams Dudley",
+    "title": "Determinants of Willingness to Voluntarily Disclose Quality of Care Information among California Hospitals",
+    "journal": "",
+    "year": 2008,
+    "status": "Published",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1542-neo-12-8-e431",
+    "authors": "Henry Lee, R. Adams Dudley, Ralph Gonzales",
+    "title": "Translating Evidence into Practice, Policy, and Public Health in Perinatal Medicine",
+    "journal": "NeoReviews",
+    "year": 2011,
+    "status": "Published",
+    "doi": "https://doi.org/10.1542/neo.12-8-e431",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-17615-adjc-hr61",
+    "authors": "John S. Rumsfeld, Peter L. Duffy, Joseph C. Cleveland, Kendrick Shunk, Calin V. Maniu, Carl L. Tommaso, David P. Faxon, Richard Josephson, James D. Mortimer, Jeffrey L. Anderson, Brahmajee K. Nallamothu, Brook Watts, H. Vernon Anderson, Neil C. Jensen, Stephen J. Stanko, David J. Malenka, Hitinder S. Gurm, R. Adams Dudley, Lawrence Hamilton, Kevin W. McCabe, Manesh R. Patel, Stephen D. Persell, Sidney C. Smith",
+    "title": "ACC/AHA/SCAI/AMA-Convened PCPI/NCQA 2013 Performance Measures for Adults Undergoing Percutaneous Coronary Intervention A Report of the American College of Cardiology/American Heart Association Task Force on Performance Measures, the Society for Cardiovascular Angiography and Interventions, the American Medical Association-Convened Physician Consortium for Performance Improvement, and the National Committee for Quality Assurance",
+    "journal": "eScholarship (California Digital Library)",
+    "year": 2021,
+    "status": "Published",
+    "doi": "https://doi.org/10.17615/adjc-hr61",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-adams-dudley-1999-population-choice-and-variable-selection",
+    "authors": "R. Adams Dudley, D J Rennie, Harold S. Luft",
+    "title": "Population choice and variable selection in the estimation and application of risk models.",
+    "journal": "PubMed",
+    "year": 1999,
+    "status": "Published",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/10459374/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-adams-dudley-2004-methods-for-literature-search",
+    "authors": "R. Adams Dudley, Anne Frølich, David L Robinowitz, Jason A Talavera, Peter Broadhead, Harold S. Luft",
+    "title": "Methods for Literature Search",
+    "journal": "",
+    "year": 2004,
+    "status": "Published",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1177-088506602237105",
+    "authors": "Nisha Gupta, Pam L. Kotler, R. Adams Dudley",
+    "title": "Analytic Reviews: Considerations in the Development of Intensive Care Unit Report Cards",
+    "journal": "Journal of Intensive Care Medicine",
+    "year": 2002,
+    "status": "Published",
+    "doi": "https://doi.org/10.1177/088506602237105",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1111-j-1475-6773-2003-00183-x",
+    "authors": "Harold S. Luft, R. Adams Dudley",
+    "title": "Measuring Quality in Modern Managed Care",
+    "journal": "Health Services Research",
+    "year": 2003,
+    "status": "Published",
+    "doi": "https://doi.org/10.1111/j.1475-6773.2003.00183.x",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/14727777/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-adams-dudley-2002-creating-a-statewide-hospital-quality",
+    "authors": "R. Adams Dudley, Diane R. Rittenhouse, Richard Bae",
+    "title": "Creating a Statewide Hospital Quality Reporting System",
+    "journal": "",
+    "year": 2002,
+    "status": "Published",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1016-s1070-3241-00-26010-0",
+    "authors": "R. Adams Dudley, Lisa V. Bowers, Harold S. Luft",
+    "title": "Reconciling Quality Measurement with Financial Risk Adjustment in Health Plans",
+    "journal": "The Joint Commission Journal on Quality Improvement",
+    "year": 2000,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/s1070-3241(00)26010-0",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/10709147/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-4064-5-1-75-87",
+    "authors": "R. Adams Dudley",
+    "title": "On χ² tests of composite hypotheses",
+    "journal": "Banach Center Publications",
+    "year": 1979,
+    "status": "Published",
+    "doi": "https://doi.org/10.4064/-5-1-75-87",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1016-s0002-9343-01-00998-6",
+    "authors": "R. Adams Dudley, Carol M. Mangione",
+    "title": "Physician responses to evidence-based hospital referral programs",
+    "journal": "The American Journal of Medicine",
+    "year": 2001,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/s0002-9343(01)00998-6",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/11747855/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1212-01-wnl-0000086808-56096-da",
+    "authors": "R. Adams Dudley, Anne Frølich, David L Robinowitz, Jason A Talavera, Peter Broadhead, Harold S. Luft",
+    "title": "Results for Literature Search",
+    "journal": "",
+    "year": 2004,
+    "status": "Published",
+    "doi": "https://doi.org/10.1212/01.wnl.0000086808.56096.da",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1378-chest-1115194",
+    "authors": "Jeff Edwards, Amy J. Houtrow, Eduard E. Vasilevskis, R. Adams Dudley, Megumi J. Okumura",
+    "title": "A Profile of Adults Who Use Pediatric Intensive Care Services",
+    "journal": "CHEST Journal",
+    "year": 2011,
+    "status": "Published",
+    "doi": "https://doi.org/10.1378/chest.1115194",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-juro-2011-02-420",
+    "authors": "David S. Aaronson, Anobel Y. Odisho, Nancy K. Hills, R. Adams Dudley, Peter R. Carroll, Matthew R. Cooperberg",
+    "title": "336 REGIONAL AVAILABILITY OF PROTON BEAM THERAPY AND VARIATION IN TREATMENT FOR MEN WITH LOW RISK PROSTATE CANCER IN CALIFORNIA",
+    "journal": "The Journal of Urology",
+    "year": 2011,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.juro.2011.02.420",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1097-00006231-198405000-00008",
+    "authors": "E. H. Belcher, K. E. Britton, J Nĕmec, P. Pfannenstiel, V. A. Volodin, R. Adams Dudley, Salwa M. Nofal, B Vavrejn",
+    "title": "The optimization of nuclear medicine procedures for the diagnosis and management of thyroid disorders in developing countries",
+    "journal": "Nuclear Medicine Communications",
+    "year": 1984,
+    "status": "Published",
+    "doi": "https://doi.org/10.1097/00006231-198405000-00008",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/6099533/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1046-j-1524-4733-1999-24007-x",
+    "authors": "R. Adams Dudley",
+    "title": "Comparing the Quality of Care Provided by Health Plans: Are the Data There?",
+    "journal": "Value in Health",
+    "year": 1999,
+    "status": "Published",
+    "doi": "https://doi.org/10.1046/j.1524-4733.1999.24007.x",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/16674315/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1001-jama-2013-284478",
+    "authors": "Naomi S. Bardach, Sarah C. Shih, R. Adams Dudley",
+    "title": "Physician Payment Incentives to Improve Care Quality—Reply",
+    "journal": "JAMA",
+    "year": 2014,
+    "status": "Published",
+    "doi": "https://doi.org/10.1001/jama.2013.284478",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/24430326/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-spinee-2015-07-045",
+    "authors": "David C. Sing, Paul H. Yi, Thomas U. Aguilar, Dezba Coughlin, Jeffrey C. Lotz, R. Adams Dudley, Serena S. Hu",
+    "title": "BMP Decreases Risk of One-Year Revision in Primary Multilevel Anterior Column Fusion: A Longitudinal Analysis of 2,053 Patients",
+    "journal": "The Spine Journal",
+    "year": 2015,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.spinee.2015.07.045",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-adams-dudley-2004-methods-for-assessing-the-usefulness",
+    "authors": "R. Adams Dudley, Anne Frølich, David L Robinowitz, Jason A Talavera, Peter Broadhead, Harold S. Luft",
+    "title": "Methods for Assessing the Usefulness of Outcome Reports",
+    "journal": "",
+    "year": 2004,
+    "status": "Published",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-adams-dudley-2004-quality-based-purchasing-technical-expert",
+    "authors": "R. Adams Dudley, Anne Frølich, David L Robinowitz, Jason A Talavera, Peter Broadhead, Harold S. Luft",
+    "title": "Quality-based Purchasing Technical Expert Panel and Peer Reviewers",
+    "journal": "",
+    "year": 2004,
+    "status": "Published",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-adams-dudley-2004-assessing-the-usefulness-of-outcome",
+    "authors": "R. Adams Dudley, Anne Frølich, David L Robinowitz, Jason A Talavera, Peter Broadhead, Harold S. Luft",
+    "title": "Assessing the Usefulness of Outcome Reports",
+    "journal": "",
+    "year": 2004,
+    "status": "Published",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-adams-dudley-2004-table-table-15-scenario-1",
+    "authors": "R. Adams Dudley, Anne Frølich, David L Robinowitz, Jason A Talavera, Peter Broadhead, Harold S. Luft",
+    "title": "[Table], Table 15. Scenario 1, year 1: Sensitivity and specificity calculations",
+    "journal": "",
+    "year": 2004,
+    "status": "Published",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-adams-dudley-2004-figure-c12-scenario-3-hypothetical",
+    "authors": "R. Adams Dudley, Anne Frolich, David L Robinowitz, Jason A Talavera, Peter Broadhead, Harold S. Luft",
+    "title": "Figure C12, Scenario 3: Hypothetical World and Evaluation Function",
+    "journal": "",
+    "year": 2004,
+    "status": "Published",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-adams-dudley-2004-table-table-3-search-terms",
+    "authors": "R. Adams Dudley, Anne Frølich, David L Robinowitz, Jason A Talavera, Peter Broadhead, Harold S. Luft",
+    "title": "[Table], Table 3. Search terms and citations for Cochrane databases",
+    "journal": "",
+    "year": 2004,
+    "status": "Published",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-adams-dudley-2004-general-approach-to-simulations",
+    "authors": "R. Adams Dudley, Anne Frølich, David L Robinowitz, Jason A Talavera, Peter Broadhead, Harold S. Luft",
+    "title": "General Approach to Simulations",
+    "journal": "",
+    "year": 2004,
+    "status": "Published",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-adams-dudley-2004-results-of-simulations-to-assess",
+    "authors": "R. Adams Dudley, Anne Frølich, David L Robinowitz, Jason A Talavera, Peter Broadhead, Harold S. Luft",
+    "title": "Results of Simulations To Assess the Usefulness of Outcomes Reports",
+    "journal": "",
+    "year": 2004,
+    "status": "Published",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-adams-dudley-2004-table-table-1-information-sources",
+    "authors": "R. Adams Dudley, Anne Frølich, David L Robinowitz, Jason A Talavera, Peter Broadhead, Harold S. Luft",
+    "title": "[Table], Table 1. Information sources for literature review and catalog of ongoing research",
+    "journal": "",
+    "year": 2004,
+    "status": "Published",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-adams-dudley-2004-table-table-6-search-terms",
+    "authors": "R. Adams Dudley, Anne Frølich, David L Robinowitz, Jason A Talavera, Peter Broadhead, Harold S. Luft",
+    "title": "[Table], Table 6. Search terms and citations for GOLD",
+    "journal": "",
+    "year": 2004,
+    "status": "Published",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-adams-dudley-2004-table-table-12-ongoing-quality",
+    "authors": "R. Adams Dudley, Anne Frølich, David L Robinowitz, Jason A Talavera, Peter Broadhead, Harold S. Luft",
+    "title": "[Table], Table 12. Ongoing quality-based purchasing research: Other QBP projects",
+    "journal": "",
+    "year": 2004,
+    "status": "Published",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-adams-dudley-2004-table-table-4-evaluating-randomized",
+    "authors": "R. Adams Dudley, Anne Frølich, David L Robinowitz, Jason A Talavera, Peter Broadhead, Harold S. Luft",
+    "title": "[Table], Table 4. Evaluating randomized controlled trials for completeness of reporting",
+    "journal": "",
+    "year": 2004,
+    "status": "Published",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-adams-dudley-2004-table-table-5-information-sources",
+    "authors": "R. Adams Dudley, Anne Frølich, David L Robinowitz, Jason A Talavera, Peter Broadhead, Harold S. Luft",
+    "title": "[Table], Table 5. Information sources for the catalog of ongoing research",
+    "journal": "",
+    "year": 2004,
+    "status": "Published",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-adams-dudley-2004-figure-figure-6-hypothetical-world",
+    "authors": "R. Adams Dudley, Anne Frolich, David L Robinowitz, Jason A Talavera, Peter Broadhead, Harold S. Luft",
+    "title": "[Figure], Figure 6. Hypothetical world and evaluation function (adapted from Thomas and Hofer)",
+    "journal": "",
+    "year": 2004,
+    "status": "Published",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-adams-dudley-2004-figure-c15-scenario-3-three",
+    "authors": "R. Adams Dudley, Anne Frølich, David L Robinowitz, Jason A Talavera, Peter Broadhead, Harold S. Luft",
+    "title": "Figure C15, Scenario 3: Three-Year Derivative Scores, Predictive Values",
+    "journal": "",
+    "year": 2004,
+    "status": "Published",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-adams-dudley-2004-figure-figure-3-model-of",
+    "authors": "R. Adams Dudley, Anne Frølich, David L Robinowitz, Jason A Talavera, Peter Broadhead, Harold S. Luft",
+    "title": "[Figure], Figure 3. Model of an organization's response to incentives",
+    "journal": "",
+    "year": 2004,
+    "status": "Published",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-adams-dudley-2004-figure-c3-scenario-1-percentage",
+    "authors": "R. Adams Dudley, Anne Frølich, David L Robinowitz, Jason A Talavera, Peter Broadhead, Harold S. Luft",
+    "title": "Figure C3, Scenario 1: Percentage of Good vs. Bad Hospitals by 3-Year Star Score",
+    "journal": "",
+    "year": 2004,
+    "status": "Published",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-adams-dudley-2004-figure-c18-scenario-3-in",
+    "authors": "R. Adams Dudley, Anne Frølich, David L Robinowitz, Jason A Talavera, Peter Broadhead, Harold S. Luft",
+    "title": "Figure C18, Scenario 3: In 3 Years Ever Graded Poor vs. Never Graded Poor",
+    "journal": "",
+    "year": 2004,
+    "status": "Published",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-adams-dudley-2004-table-table-7-search-terms",
+    "authors": "R. Adams Dudley, Anne Frølich, David L Robinowitz, Jason A Talavera, Peter Broadhead, Harold S. Luft",
+    "title": "[Table], Table 7. Search terms and citations for HSRProj database",
+    "journal": "",
+    "year": 2004,
+    "status": "Published",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-adams-dudley-2004-figure-c9-scenario-2-proportion",
+    "authors": "R. Adams Dudley, Anne Frølich, David L Robinowitz, Jason A Talavera, Peter Broadhead, Harold S. Luft",
+    "title": "Figure C9, Scenario 2: Proportion of Poor, Good, and Superior Hospitals with Each Type of Derivative Score",
+    "journal": "",
+    "year": 2004,
+    "status": "Published",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-adams-dudley-2004-table-table-11-ongoing-quality",
+    "authors": "R. Adams Dudley, Anne Frølich, David L Robinowitz, Jason A Talavera, Peter Broadhead, Harold S. Luft",
+    "title": "[Table], Table 11. Ongoing quality-based purchasing research: Projects in the Rewarding Results initiative",
+    "journal": "",
+    "year": 2004,
+    "status": "Published",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-adams-dudley-2004-table-table-2-medline-searches",
+    "authors": "R. Adams Dudley, Anne Frølich, David L Robinowitz, Jason A Talavera, Peter Broadhead, Harold S. Luft",
+    "title": "[Table], Table 2. MEDLINE® searches to identify potentially relevant primary data",
+    "journal": "",
+    "year": 2004,
+    "status": "Published",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-adams-dudley-2004-table-acronyms-and-abbreviations",
+    "authors": "R. Adams Dudley, Anne Frølich, David L Robinowitz, Jason A Talavera, Peter Broadhead, Harold S. Luft",
+    "title": "[Table, Acronyms and Abbreviations].",
+    "journal": "",
+    "year": 2004,
+    "status": "Published",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-adams-dudley-2004-figure-c4-scenario-1-expected",
+    "authors": "R. Adams Dudley, Anne Frølich, David L Robinowitz, Jason A Talavera, Peter Broadhead, Harold S. Luft",
+    "title": "Figure C4, Scenario 1: Expected 3-Year Score Distribution for Good vs. Poor Hospitals",
+    "journal": "",
+    "year": 2004,
+    "status": "Published",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-adams-dudley-2004-table-table-8-design-information",
+    "authors": "R. Adams Dudley, Anne Frølich, David L Robinowitz, Jason A Talavera, Peter Broadhead, Harold S. Luft",
+    "title": "[Table], Table 8. Design information sought about ongoing research",
+    "journal": "",
+    "year": 2004,
+    "status": "Published",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-adams-dudley-2004-table-table-c6-scenario-1",
+    "authors": "R. Adams Dudley, Anne Frølich, David L Robinowitz, Jason A Talavera, Peter Broadhead, Harold S. Luft",
+    "title": "[Table], Table C6. Scenario 1: Expected Score Distribution for Good vs. Poor Hospitals over 3 Years",
+    "journal": "",
+    "year": 2004,
+    "status": "Published",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-adams-dudley-2004-table-table-14-scenario-1",
+    "authors": "R. Adams Dudley, Anne Frølich, David L Robinowitz, Jason A Talavera, Peter Broadhead, Harold S. Luft",
+    "title": "[Table], Table 14. Scenario 1: Predictive values, year 1",
+    "journal": "",
+    "year": 2004,
+    "status": "Published",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-adams-dudley-2004-table-table-c4-scenario-1",
+    "authors": "R. Adams Dudley, Anne Frølich, David L Robinowitz, Jason A Talavera, Peter Broadhead, Harold S. Luft",
+    "title": "[Table], Table C4. Scenario 1: Probability, Given that a Hospital Has Received Two, Three, or Four Stars over 2 Years, that It is Good vs. Poor",
+    "journal": "",
+    "year": 2004,
+    "status": "Published",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-adams-dudley-2004-figure-c16-scenario-3-expected",
+    "authors": "R. Adams Dudley, Anne Frølich, David L Robinowitz, Jason A Talavera, Peter Broadhead, Harold S. Luft",
+    "title": "Figure C16, Scenario 3: Expected Distribution of 3-year Star Scores by Hospital Type",
+    "journal": "",
+    "year": 2004,
+    "status": "Published",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-adams-dudley-2004-figure-c13-scenario-3-proportion",
+    "authors": "R. Adams Dudley, Anne Frølich, David L Robinowitz, Jason A Talavera, Peter Broadhead, Harold S. Luft",
+    "title": "Figure C13, Scenario 3: Proportion of Superior, Good, and Poor Hospitals by 2-Year Star Scores",
+    "journal": "",
+    "year": 2004,
+    "status": "Published",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-adams-dudley-2004-figure-c27-scenario-6-three",
+    "authors": "R. Adams Dudley, Anne Frølich, David L Robinowitz, Jason A Talavera, Peter Broadhead, Harold S. Luft",
+    "title": "Figure C27, Scenario 6: Three-Year Derivative Score Predictive Values",
+    "journal": "",
+    "year": 2004,
+    "status": "Published",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-adams-dudley-2004-table-table-10-available-results",
+    "authors": "R. Adams Dudley, Anne Frølich, David L Robinowitz, Jason A Talavera, Peter Broadhead, Harold S. Luft",
+    "title": "[Table], Table 10. Available results by conceptual model domains tested",
+    "journal": "",
+    "year": 2004,
+    "status": "Published",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-adams-dudley-2004-table-table-c5-scenario-1",
+    "authors": "R. Adams Dudley, Anne Frølich, David L Robinowitz, Jason A Talavera, Peter Broadhead, Harold S. Luft",
+    "title": "[Table], Table C5. Scenario 1: Expected Score Distribution over 2 Years",
+    "journal": "",
+    "year": 2004,
+    "status": "Published",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1001-jamainternmed-2016-5054",
+    "authors": "R. Adams Dudley",
+    "title": "Guideline Update for Article on Pharmaceutical Industry–Sponsored Meals",
+    "journal": "JAMA Internal Medicine",
+    "year": 2016,
+    "status": "Published",
+    "doi": "https://doi.org/10.1001/jamainternmed.2016.5054",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/27479897/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-7326-l16-0007",
+    "authors": "Alexander T. Sandhu, R. Adams Dudley, Dhruv S. Kazi",
+    "title": "Cost Analysis of the American Board of Internal Medicine's Maintenance-of-Certification Program",
+    "journal": "Annals of Internal Medicine",
+    "year": 2016,
+    "status": "Published",
+    "doi": "https://doi.org/10.7326/l16-0007",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/27089078/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-adams-dudley-2004-table-table-13-the-six",
+    "authors": "R. Adams Dudley, Anne Frølich, David L Robinowitz, Jason A Talavera, Peter Broadhead, Harold S. Luft",
+    "title": "[Table], Table 13. The six scenarios simulated",
+    "journal": "",
+    "year": 2004,
+    "status": "Published",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1001-jamainternmed-2016-7157",
+    "authors": "Colette DeJong, Chien‐Wen Tseng, R. Adams Dudley",
+    "title": "Important Distinctions Concerning Pharmaceutical Company–Sponsored Meals and Prescribing Patterns—Reply",
+    "journal": "JAMA Internal Medicine",
+    "year": 2016,
+    "status": "Published",
+    "doi": "https://doi.org/10.1001/jamainternmed.2016.7157",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/27918818/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1161-01-str-32-suppl-1-381",
+    "authors": "S. Claiborne Johnston, Shoujun Zhao, R. Adams Dudley, Daryl R. Gress",
+    "title": "Risk of unruptured aneurysm treatment in California",
+    "journal": "Stroke",
+    "year": 2000,
+    "status": "Published",
+    "doi": "https://doi.org/10.1161/01.str.32.suppl_1.381-a",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1111-tbj-13691",
+    "authors": "Benjamin L. Franc, Robert Thombley, Yanting Luo, W. John Boscardin, Hope S. Rugo, David Seidenwurm, R. Adams Dudley",
+    "title": "Identifying tests related to breast cancer care in claims data",
+    "journal": "The Breast Journal",
+    "year": 2019,
+    "status": "Published",
+    "doi": "https://doi.org/10.1111/tbj.13691",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/31736191/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1111-tbj-13758",
+    "authors": "Benjamin L. Franc, Robert Thombley, Yanting Luo, W. John Boscardin, Hope S. Rugo, David Seidenwurm, R. Adams Dudley",
+    "title": "Using diagnosis codes in claims data to identify cohorts of breast cancer patients following initial treatment",
+    "journal": "The Breast Journal",
+    "year": 2020,
+    "status": "Published",
+    "doi": "https://doi.org/10.1111/tbj.13758",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/31960541/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-annemergmed-2020-09-318",
+    "authors": "Nicolas Elliott, M.C. Nguyen, M.D. Nimmo, R. Adams Dudley, Molly Cook, Diane Begany, Susan Murillo, Katie M Best, Lisa Crowley, Bryan G Kane",
+    "title": "303 Assessing Resident Communication With Faculty from Multiple Specialties in Pediatric Simulation Designed to Provide Multi-Source Feedback",
+    "journal": "Annals of Emergency Medicine",
+    "year": 2020,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.annemergmed.2020.09.318",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-adams-dudley-2020-northeastern-section-of-the-aua",
+    "authors": "Louise Donnelly, J. Tang, Fangru Lian, P M Higgins, R Samarakoon, Karen Doersch, K Abston, Hyeyoung Kim, Xiaotian Li, Jennifer Bjazevic, A Spierling, Amrutha K Dr. Amrutha K, Huda Razvi, Jonathan Burton, Gabriel Lachance, Karine Robitaille, H Hovington, Alain Bergeron, Yves Fradet, Fradet, Connor Policastro, Mary Hughes, Filipa Abreu Martins, Jay Simhan, Nicolaas Lumen, Kumar Venkatesan, E. Pérez, Javier Angulo, S. Gupta, P Rusilko",
+    "title": "Northeastern Section of the AUA 72nd Annual Meeting Abstracts",
+    "journal": "",
+    "year": 2020,
+    "status": "Published",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1017-cts-2021-747",
+    "authors": "Arianne K. Baldomero, Ken M. Kunisaki, Patrick Hammett, David Nelson, Carrie Henning‐Smith, Ann Bangerter, Chris H. Wendt, R. Adams Dudley",
+    "title": "71016 Defining \"rurality\": Rural-urban disparities among COPD patients in national VA data",
+    "journal": "Journal of Clinical and Translational Science",
+    "year": 2021,
+    "status": "Published",
+    "doi": "https://doi.org/10.1017/cts.2021.747",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1017-cts-2023-250",
+    "authors": "Arianne K. Baldomero, Talitha Wilson, Ken M. Kunisaki, Chris H. Wendt, Ann Bangerter, R. Adams Dudley",
+    "title": "169 COPD Care for Patients in Rural Clinics: A Mixed Methods Evaluation",
+    "journal": "Journal of Clinical and Translational Science",
+    "year": 2023,
+    "status": "Published",
+    "doi": "https://doi.org/10.1017/cts.2023.250",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1016-s0735-1097-24-02601-9",
+    "authors": "Colette DeJong, Kosuke Inoue, Matthew S. Durstenfeld, Anubha Agarwal, Justin C. Chen, Chien‐Wen Tseng, R. Adams Dudley, Priscilla Y. Hsue, Dhruv S. Kazi",
+    "title": "DIRECT-TO-PHYSICIAN MARKETING AND ADOPTION OF GUIDELINE-DIRECTED MEDICAL THERAPY IN MEDICARE PART D",
+    "journal": "Journal of the American College of Cardiology",
+    "year": 2024,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/s0735-1097(24)02601-9",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1177-152397210200200404",
+    "authors": "Improving Quality of Care by Restructuring Provider Payments Project Team, Harold S. Luft, R. Adams Dudley",
+    "title": "Improving Helth Care by Linking Risk Adjustment and Condition-Specific Quality Measurement",
+    "journal": "Public Finance and Management",
+    "year": 2002,
+    "status": "Published",
+    "doi": "https://doi.org/10.1177/152397210200200404",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-chest-2024-06-2289",
+    "authors": "ALYSSA ANTON, Chris H. Wendt, KEN M KUNISAKI, R. Adams Dudley, A.K. Baldomero",
+    "title": "ENVIRONMENTAL, SOCIAL AND HEALTH DISPARITIES BETWEEN RURAL AND URBAN WOMEN WITH COPD IN A NATIONAL COHORT",
+    "journal": "CHEST Journal",
+    "year": 2024,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.chest.2024.06.2289",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1513-annalsats-202406-659rl",
+    "authors": "Alyssa Anton, Anne C. Melzer, Chris H. Wendt, Ken M. Kunisaki, R. Adams Dudley, Arianne K. Baldomero",
+    "title": "Characterizing Tobacco Use Status among a National Cohort of Patients with Chronic Obstructive Pulmonary Disease",
+    "journal": "Annals of the American Thoracic Society",
+    "year": 2025,
+    "status": "Published",
+    "doi": "https://doi.org/10.1513/annalsats.202406-659rl",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/40085063/",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1001-archinternmed-2010-287-a",
+    "authors": "Chien‐Wen Tseng, Beth E. Waitzfelder, Edward F. Tierney, Robert B. Gerzoff, David G. Marrero, John D. Piette, Andrew J. Karter, J. David Curb, Richard J. Chung, Carol M. Mangione, Jesse C. Crosson, R. Adams Dudley",
+    "title": "Patients' Willingness to Discuss Trade-offs to Lower Their Out-of-Pocket Drug Costs",
+    "journal": "Archives of Internal Medicine",
+    "year": 2010,
+    "status": "Published",
+    "doi": "https://doi.org/10.1001/archinternmed.2010.287-a",
+    "topics": [],
+    "authorSlugs": [
+      "adams-dudley"
+    ]
+  },
+  {
+    "id": "gen-10-1073-pnas-88-7-2692",
+    "authors": "Wei Xie, Jeffrey G. Chipman, Donald Robertson, R L Erikson, Daniel L. Simmons",
+    "title": "Expression of a mitogen-responsive gene encoding prostaglandin synthase is regulated by mRNA splicing.",
+    "journal": "Proceedings of the National Academy of Sciences",
+    "year": 1991,
+    "status": "Published",
+    "doi": "https://doi.org/10.1073/pnas.88.7.2692",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/1849272/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1073-pnas-1318249111",
+    "authors": "Courtney V. Fletcher, K A Staskus, Stephen W. Wietgrefe, Meghan Rothenberger, Cavan Reilly, Jeffrey G. Chipman, Gregory J. Beilman, Alexander Khoruts, Ann Thorkelson, Thomas Schmidt, Jodi Anderson, Katherine Perkey, Mario Stevenson, Alan S. Perelson, Daniel C. Douek, Ashley T. Haase, Timothy W. Schacker",
+    "title": "Persistent HIV-1 replication is associated with lower antiretroviral drug concentrations in lymphatic tissues",
+    "journal": "Proceedings of the National Academy of Sciences",
+    "year": 2014,
+    "status": "Published",
+    "doi": "https://doi.org/10.1073/pnas.1318249111",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/24469825/",
     "topics": [],
     "authorSlugs": [
       "jeff-chipman"
@@ -1267,7 +4281,7 @@ export const generatedPublications: Publication[] = [
   },
   {
     "id": "gen-10-1038-nature16933",
-    "authors": "Ramon Lorenzo-Redondo, Helen R. Fryer, Trevor Bedford, Eun Young Kim, John Archer, Sergei L. Kosakovsky Pond, Yoon Seok Chung, Sudhir Penugonda, Jeffrey G. Chipman, Courtney V. Fletcher, Timothy W. Schacker, Michael H. Malim, Andrew Rambaut, Ashley T. Haase, Angela R. McLean, Steven M. Wolinsky",
+    "authors": "Ramón Lorenzo-Redondo, Helen Fryer, Trevor Bedford, Eun‐Young Kim, John Archer, Sergei L. Kosakovsky Pond, Yoon‐Seok Chung, Sudhir Penugonda, Jeffrey G. Chipman, Courtney V. Fletcher, Timothy W. Schacker, Michael H. Malim, Andrew Rambaut, Ashley T. Haase, Angela R. McLean, Steven M. Wolinsky",
     "title": "Persistent HIV-1 replication maintains the tissue reservoir during therapy",
     "journal": "Nature",
     "year": 2016,
@@ -1280,84 +4294,42 @@ export const generatedPublications: Publication[] = [
     ]
   },
   {
-    "id": "gen-10-1089-sur-2015-131",
-    "authors": "Samir S. Khariwala, Bin Le, Brendan H G Pierce, Rachel Isaksson Vogel, Jeffrey G. Chipman",
-    "title": "Antibiotic Use after Free Tissue Reconstruction of Head and Neck Defects",
-    "journal": "Surgical Infections",
+    "id": "gen-10-1038-ni-3543",
+    "authors": "Yew Ann Leong, Yaping Chen, Hong Sheng Ong, Di Wu, Kevin Man, Claire Deléage, Martina Minnich, Benjamin J. Meckiff, Yunbo Wei, Zhaohua Hou, Dimitra Zotos, Kevin Fenix, Anurag Atnerkar, Simon Preston, Jeffrey G. Chipman, Gregory J. Beilman, Cody C. Allison, Lei Sun, Peng Wang, Jiawei Xu, Jesse G. Toe, Hao Lu, Yong Tao, Umaimainthan Palendira, Alexander L. Dent, Alan Landay, Marc Pellegrini, Iain Comerford, Shaun R. McColl, Timothy W. Schacker",
+    "title": "CXCR5+ follicular cytotoxic T cells control viral infection in B cell follicles",
+    "journal": "Nature Immunology",
     "year": 2016,
     "status": "Published",
-    "doi": "https://doi.org/10.1089/sur.2015.131",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/26501794/",
+    "doi": "https://doi.org/10.1038/ni.3543",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/27487330/",
     "topics": [],
     "authorSlugs": [
       "jeff-chipman"
     ]
   },
   {
-    "id": "gen-10-1089-sur-2014-144",
-    "authors": "Mary R. Kwaan, Genevieve B. Melton, Robert D. Madoff, Jeffrey G. Chipman",
-    "title": "Abdominoperineal resection, pelvic exenteration, and additional organ resection increase the risk of surgical site infection after elective colorectal surgery",
-    "journal": "Surgical Infections",
-    "year": 2015,
+    "id": "gen-10-1038-nm-4411",
+    "authors": "Jacob D. Estes, Cissy Kityo, Francis Ssali, Louise Swainson, Krystelle Nganou Makamdop, Gregory Q. Del Prete, Steven G. Deeks, Paul A. Luciw, Jeffrey G. Chipman, Gregory J. Beilman, Torfi Hoskuldsson, Alexander Khoruts, Jodi Anderson, Claire Deléage, Jacob Jasurda, Thomas Schmidt, Michael Hafertepe, Samuel P. Callisto, Hope Pearson, Thomas Reimann, Jared Schuster, Jordan Schoephoerster, Peter J. Southern, Katherine Perkey, Liang Shang, Stephen W. Wietgrefe, Courtney V. Fletcher, Jeffrey D. Lifson, Daniel C. Douek, Joseph M. McCune",
+    "title": "Defining total-body AIDS-virus burden with implications for curative strategies",
+    "journal": "Nature Medicine",
+    "year": 2017,
     "status": "Published",
-    "doi": "https://doi.org/10.1089/sur.2014.144",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/26237302/",
+    "doi": "https://doi.org/10.1038/nm.4411",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/28967921/",
     "topics": [],
     "authorSlugs": [
       "jeff-chipman"
     ]
   },
   {
-    "id": "gen-10-1016-j-surg-2015-05-011",
-    "authors": "Elissa K. Butler, Tu M. Tran, Anthony T. Fuller, Fredrick Makumbi, Samuel Luboga, Sheila Kisakye, Michael M. Haglund, Jeffrey G. Chipman, Moses Galukande",
-    "title": "Pilot study of a population-based survey to assess the prevalence of surgical conditions in Uganda",
-    "journal": "Surgery (United States)",
-    "year": 2015,
+    "id": "gen-10-1097-sla-0000000000002414",
+    "authors": "Brian C. George, Jordan D. Bohnen, Reed G. Williams, Shari L. Meyerson, Mary C. Schuller, Michael Clark, Andreas H. Meier, Laura Torbeck, Samuel P. Mandell, John Mullen, Douglas S. Smink, Rebecca E. Scully, Jeffrey G. Chipman, Edward D. Auyang, Kyla P. Terhune, Paul E. Wise, Jennifer Choi, Eugene F. Foley, Justin B. Dimick, Michael A. Choti, Nathaniel J. Soper, Keith D. Lillemoe, Joseph B. Zwischenberger, Gary L. Dunnington, Debra A. DaRosa, Jonathan P. Fryer",
+    "title": "Readiness of US General Surgery Residents for Independent Practice",
+    "journal": "Annals of Surgery",
+    "year": 2017,
     "status": "Published",
-    "doi": "https://doi.org/10.1016/j.surg.2015.05.011",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/26088920/",
-    "topics": [],
-    "authorSlugs": [
-      "jeff-chipman"
-    ]
-  },
-  {
-    "id": "gen-10-1007-s00268-015-3191-5",
-    "authors": "Anthony T. Fuller, Elissa K. Butler, Tu M. Tran, Fredrick Makumbi, Samuel Luboga, Christine Muhumza, Jeffrey G. Chipman, Reinou S. Groen, Shailvi Gupta, Adam L. Kushner, Moses Galukande, Michael M. Haglund",
-    "title": "Surgeons OverSeas Assessment of Surgical Need (SOSAS) Uganda",
-    "journal": "World Journal of Surgery",
-    "year": 2015,
-    "status": "Published",
-    "doi": "https://doi.org/10.1007/s00268-015-3191-5",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/26316109/",
-    "topics": [],
-    "authorSlugs": [
-      "jeff-chipman"
-    ]
-  },
-  {
-    "id": "gen-10-1016-j-jsurg-2014-10-013",
-    "authors": "Robert D. Acton, Jeffrey G. Chipman, Michelle Lunden, Connie C. Schmitz",
-    "title": "Unanticipated teaching demands rise with simulation training",
-    "journal": "Journal of Surgical Education",
-    "year": 2015,
-    "status": "Published",
-    "doi": "https://doi.org/10.1016/j.jsurg.2014.10.013",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/25467731/",
-    "topics": [],
-    "authorSlugs": [
-      "jeff-chipman"
-    ]
-  },
-  {
-    "id": "gen-10-1089-sur-2009-9931",
-    "authors": "Greg Beilman, Jeff Chipman",
-    "title": "Response to \"Power in the study of mortality and necrotizing soft tissue infections\"",
-    "journal": "Surgical Infections",
-    "year": 2015,
-    "status": "Published",
-    "doi": "https://doi.org/10.1089/sur.2009.9931",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/25137481/",
+    "doi": "https://doi.org/10.1097/sla.0000000000002414",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/28742711/",
     "topics": [],
     "authorSlugs": [
       "jeff-chipman"
@@ -1365,9 +4337,9 @@ export const generatedPublications: Publication[] = [
   },
   {
     "id": "gen-10-1073-pnas-1414926112",
-    "authors": "Meghan K. Rothenberger, Brandon F. Keele, Stephen W. Wietgrefe, Courtney V. Fletcher, Gregory J. Beilman, Jeffrey G. Chipman, Alexander Khoruts, Jacob D. Estes, Jodi Anderson, Samuel P. Callisto, Thomas E. Schmidt, Ann Thorkelson, Cavan Reilly, Katherine Perkey, Thomas G. Reimann, Netanya S. Utay, Krystelle Nganou Makamdop, Mario Stevenson, Daniel C. Douek, Ashley T. Haase, Timothy W. Schacker",
+    "authors": "Meghan Rothenberger, Brandon F. Keele, Stephen W. Wietgrefe, Courtney V. Fletcher, Gregory J. Beilman, Jeffrey G. Chipman, Alexander Khoruts, Jacob D. Estes, Jodi Anderson, Samuel P. Callisto, Thomas Schmidt, Ann Thorkelson, Cavan Reilly, Katherine Perkey, Thomas Reimann, Netanya S. Utay, Krystelle Nganou Makamdop, Mario Stevenson, Daniel C. Douek, Ashley T. Haase, Timothy W. Schacker",
     "title": "Large number of rebounding/founder HIV variants emerge from multifocal infection in lymphatic tissues after treatment interruption",
-    "journal": "Proceedings of the National Academy of Sciences of the United States of America",
+    "journal": "Proceedings of the National Academy of Sciences",
     "year": 2015,
     "status": "Published",
     "doi": "https://doi.org/10.1073/pnas.1414926112",
@@ -1378,194 +4350,28 @@ export const generatedPublications: Publication[] = [
     ]
   },
   {
-    "id": "gen-10-1089-sur-2013-179",
-    "authors": "Meghan K. Rothenberger, C. Kityo Mutuluuza, F. Ssali, Jake Jasurda, Thomas Schmidt, Timothy W. Schacker, Greg J. Beilman, Jeffrey G. Chipman",
-    "title": "Inguinal Lymph Node and Anorectal Mucosal Biopsies for Human Immunodeficiency Virus Research Protocols in an Emerging Nation",
-    "journal": "Surgical Infections",
-    "year": 2015,
+    "id": "gen-10-1016-j-jsurg-2016-08-010",
+    "authors": "Jordan D. Bohnen, Brian C. George, Reed G. Williams, Mary C. Schuller, Debra A. DaRosa, Laura Torbeck, John T. Mullen, Shari L. Meyerson, Edward D. Auyang, Jeffrey G. Chipman, Jennifer Choi, Michael A. Choti, Eric D. Endean, Eugene F. Foley, Samuel P. Mandell, Andreas H. Meier, Douglas S. Smink, Kyla P. Terhune, Paul E. Wise, Nathaniel J. Soper, Joseph B. Zwischenberger, Keith D. Lillemoe, Gary L. Dunnington, Jonathan P. Fryer",
+    "title": "The Feasibility of Real-Time Intraoperative Performance Assessment With SIMPL (System for Improving and Measuring Procedural Learning): Early Experience From a Multi-institutional Trial",
+    "journal": "Journal of surgical education",
+    "year": 2016,
     "status": "Published",
-    "doi": "https://doi.org/10.1089/sur.2013.179",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/25650809/",
+    "doi": "https://doi.org/10.1016/j.jsurg.2016.08.010",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/27886971/",
     "topics": [],
     "authorSlugs": [
       "jeff-chipman"
     ]
   },
   {
-    "id": "gen-10-1073-pnas-1318249111",
-    "authors": "Courtney V. Fletcher, Kathryn Staskus, Stephen W. Wietgrefe, Meghan Rothenberger, Cavan Reilly, Jeffrey G. Chipman, Greg J. Beilman, Alexander Khoruts, Ann Thorkelson, Thomas E. Schmidt, Jodi Anderson, Katherine Perkey, Mario Stevenson, Alan S. Perelson, Daniel C. Douek, Ashley T. Haase, Timothy W. Schacker",
-    "title": "Persistent HIV-1 replication is associated with lower antiretroviral drug concentrations in lymphatic tissues",
-    "journal": "Proceedings of the National Academy of Sciences of the United States of America",
-    "year": 2014,
-    "status": "Published",
-    "doi": "https://doi.org/10.1073/pnas.1318249111",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/24469825/",
-    "topics": [],
-    "authorSlugs": [
-      "jeff-chipman"
-    ]
-  },
-  {
-    "id": "gen-10-1016-j-jamcollsurg-2013-09-004",
-    "authors": "Genevieve B. Melton, Nora E. Burkart, Nathan G. Frey, Jeffrey G. Chipman, David A. Rothenberger, Selwyn M. Vickers",
-    "title": "Operative report teaching and synoptic operative reports",
-    "journal": "Journal of the American College of Surgeons",
-    "year": 2014,
-    "status": "Published",
-    "doi": "https://doi.org/10.1016/j.jamcollsurg.2013.09.004",
-    "topics": [],
-    "authorSlugs": [
-      "jeff-chipman"
-    ]
-  },
-  {
-    "id": "gen-10-1213-ane-0000000000000187",
-    "authors": "Monica I. Lupei, Jeffrey G. Chipman, Gregory J. Beilman, S. Cristina Oancea, Mojca R. Konia",
-    "title": "The association between ASA status and other risk stratification models on postoperative intensive care unit outcomes",
-    "journal": "Anesthesia and Analgesia",
-    "year": 2014,
-    "status": "Published",
-    "doi": "https://doi.org/10.1213/ANE.0000000000000187",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/24781569/",
-    "topics": [],
-    "authorSlugs": [
-      "jeff-chipman"
-    ]
-  },
-  {
-    "id": "gen-10-1097-shk-0b013e3182657a21",
-    "authors": "Uroghupatei P. Iyegha, Joseph J. Greenberg, Kristine E. Mulier, Jeffrey Chipman, Mark George, Greg J. Beilman",
-    "title": "Environmental hypothermia in porcine polytrauma and hemorrhagic shock is safe",
-    "journal": "Shock",
+    "id": "gen-10-1371-journal-ppat-1002437",
+    "authors": "Ming Zeng, Peter J. Southern, Cavan Reilly, Gregory J. Beilman, Jeffrey G. Chipman, Timothy W. Schacker, Ashley T. Haase",
+    "title": "Lymphoid Tissue Damage in HIV-1 Infection Depletes Naïve T Cells and Limits T Cell Reconstitution after Antiretroviral Therapy",
+    "journal": "PLoS Pathogens",
     "year": 2012,
     "status": "Published",
-    "doi": "https://doi.org/10.1097/SHK.0b013e3182657a21",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/22777118/",
-    "topics": [],
-    "authorSlugs": [
-      "jeff-chipman"
-    ]
-  },
-  {
-    "id": "gen-10-1182-blood-2012-03-418624",
-    "authors": "Ming Zeng, Mirko Paiardini, Jessica C. Engram, Greg J. Beilman, Jeffrey G. Chipman, Timothy W. Schacker, Guido Silvestri, Ashley T. Haase",
-    "title": "Critical role of CD4 T cells in maintaining lymphoid tissue structure for immune cell homeostasis and reconstitution",
-    "journal": "Blood",
-    "year": 2012,
-    "status": "Published",
-    "doi": "https://doi.org/10.1182/blood-2012-03-418624",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/22613799/",
-    "topics": [],
-    "authorSlugs": [
-      "jeff-chipman"
-    ]
-  },
-  {
-    "id": "gen-10-1089-sur-2010-033",
-    "authors": "Matthew C. Byrnes, Titi Adegboyega, Andrew Riggle, Jeffrey Chipman, Greg Beilman, Patty Reicks, Kim Boeser, Eric Irwin",
-    "title": "Nasal swabs collected routinely to screen for colonization by methicillin-resistant Staphylococcus aureus in intensive care units are a sensitive screening test for the organism in clinical cultures",
-    "journal": "Surgical Infections",
-    "year": 2010,
-    "status": "Published",
-    "doi": "https://doi.org/10.1089/sur.2010.033",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/20969468/",
-    "topics": [],
-    "authorSlugs": [
-      "jeff-chipman"
-    ]
-  },
-  {
-    "id": "gen-10-1089-sur-2010-032",
-    "authors": "Matthew C. Byrnes, Andrew Riggle, Greg Beilman, Jeffrey Chipman",
-    "title": "A novel technique to skin graft abdominal wall wounds surrounding enterocutaneous fistulas",
-    "journal": "Surgical Infections",
-    "year": 2010,
-    "status": "Published",
-    "doi": "https://doi.org/10.1089/sur.2010.032",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/20849289/",
-    "topics": [],
-    "authorSlugs": [
-      "jeff-chipman"
-    ]
-  },
-  {
-    "id": "gen-10-1016-j-amjsurg-2009-12-014",
-    "authors": "Ciarn T. Bradley, Travis P. Webb, Connie C. Schmitz, Jeffrey G. Chipman, Karen J. Brasel",
-    "title": "Structured teaching versus experiential learning of palliative care for surgical residents",
-    "journal": "American Journal of Surgery",
-    "year": 2010,
-    "status": "Published",
-    "doi": "https://doi.org/10.1016/j.amjsurg.2009.12.014",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/20538256/",
-    "topics": [],
-    "authorSlugs": [
-      "jeff-chipman"
-    ]
-  },
-  {
-    "id": "gen-10-1097-ta-0b013e3181effe2a",
-    "authors": "Eric Irwin, Matthew Byrnes, Scott Schultz, Jeffrey Chipman, Alan Beal, Mark Ahrendt, Greg Beilman, J. Kevin Croston",
-    "title": "A systematic method for follow-up improves removal rates for retrievable inferior vena cava filters in a trauma patient population",
-    "journal": "Journal of Trauma - Injury, Infection and Critical Care",
-    "year": 2010,
-    "status": "Published",
-    "doi": "https://doi.org/10.1097/TA.0b013e3181effe2a",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/20938273/",
-    "topics": [],
-    "authorSlugs": [
-      "jeff-chipman"
-    ]
-  },
-  {
-    "id": "gen-10-1089-sur-2008-054",
-    "authors": "Theodora A. Nemeth, Gregory J. Beilman, Carol L. Hamlin, Jeffrey G. Chipman",
-    "title": "Preoperative verification of timely antimicrobial prophylaxis does not improve compliance with guidelines",
-    "journal": "Surgical Infections",
-    "year": 2010,
-    "status": "Published",
-    "doi": "https://doi.org/10.1089/sur.2008.054",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/20662740/",
-    "topics": [],
-    "authorSlugs": [
-      "jeff-chipman"
-    ]
-  },
-  {
-    "id": "gen-jeff-chipman-2010-synthesis-versus-imitation",
-    "authors": "Robert D. Acton, Jeffrey G. Chipman, Julie Gilkeson, Connie C. Schmitz",
-    "title": "Synthesis versus imitation",
-    "journal": "Journal of Surgical Education",
-    "year": 2010,
-    "status": "Published",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/20630429/",
-    "topics": [],
-    "authorSlugs": [
-      "jeff-chipman"
-    ]
-  },
-  {
-    "id": "gen-10-1089-sur-2008-076",
-    "authors": "Monica I. Lupei, Henry J. Mann, Gregory J. Beilman, Cristina Oancea, Jeffrey G. Chipman",
-    "title": "Inadequate antibiotic therapy in solid organ transplant recipients is associated with a higher mortality rate",
-    "journal": "Surgical Infections",
-    "year": 2010,
-    "status": "Published",
-    "doi": "https://doi.org/10.1089/sur.2008.076",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/19785562/",
-    "topics": [],
-    "authorSlugs": [
-      "jeff-chipman"
-    ]
-  },
-  {
-    "id": "gen-10-1016-j-jsurg-2009-12-004",
-    "authors": "Jeffrey G. Chipman",
-    "title": "Things ain't what they used to be and probably never was (Will Rogers)",
-    "journal": "Journal of Surgical Education",
-    "year": 2010,
-    "status": "Published",
-    "doi": "https://doi.org/10.1016/j.jsurg.2009.12.004",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/20421087/",
+    "doi": "https://doi.org/10.1371/journal.ppat.1002437",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/22241988/",
     "topics": [],
     "authorSlugs": [
       "jeff-chipman"
@@ -1586,13 +4392,531 @@ export const generatedPublications: Publication[] = [
     ]
   },
   {
-    "id": "gen-jeff-chipman-2009-changes-in-vasopressin-use-and",
-    "authors": "M. I. Lupei, G. J. Beilman, J. G. Chipman, H. J. Mann",
-    "title": "Changes in vasopressin use and outcomes in surgical intensive care unit patients with septic shock.",
-    "journal": "Chirurgia",
-    "year": 2009,
+    "id": "gen-10-1016-j-jsurg-2018-06-025",
+    "authors": "Patricia K. Leach, Rachel M. Nygaard, Jeffrey G. Chipman, Melissa E. Brunsvold, Ashley P. Marek",
+    "title": "Impostor Phenomenon and Burnout in General Surgeons and General Surgery Residents",
+    "journal": "Journal of surgical education",
+    "year": 2018,
     "status": "Published",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/19943557/",
+    "doi": "https://doi.org/10.1016/j.jsurg.2018.06.025",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/30122638/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-surg-2019-06-006",
+    "authors": "Shari L. Meyerson, David D. Odell, Joseph B. Zwischenberger, Mary C. Schuller, Reed G. Williams, Jordan D. Bohnen, Gary L. Dunnington, Laura Torbeck, John T. Mullen, Samuel P. Mandell, Michael A. Choti, Eugene F. Foley, Chandrakanth Are, Edward D. Auyang, Jeffrey G. Chipman, Jennifer Choi, Andreas H. Meier, Douglas S. Smink, Kyla P. Terhune, Paul E. Wise, Nathaniel J. Soper, Keith D. Lillemoe, Jonathan P. Fryer, Brian C. George",
+    "title": "The effect of gender on operative autonomy in general surgery residents",
+    "journal": "Surgery",
+    "year": 2019,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.surg.2019.06.006",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/31326184/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1089-sur-2017-261",
+    "authors": "Steven J. Skube, Stephen A. Katz, Jeffrey G. Chipman, Christopher J. Tignanelli",
+    "title": "Acute Kidney Injury and Sepsis",
+    "journal": "Surgical Infections",
+    "year": 2018,
+    "status": "Published",
+    "doi": "https://doi.org/10.1089/sur.2017.261",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/29304308/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-cell-2021-05-023",
+    "authors": "Krystelle Nganou‐Makamdop, Aarthi Talla, Ashish Sharma, Samuel Darko, Amy Ransier, Farida Laboune, Jeffrey G. Chipman, Gregory J. Beilman, Torfi Hoskuldsson, Slim Fourati, Thomas Schmidt, Sahaana Arumugam, Noemia S. Lima, Damee Moon, Samuel P. Callisto, Jordan Schoephoerster, Jeffery Tomalka, Peter Mugyenyi, Francis Ssali, Proscovia Muloma, Patrick Ssengendo, Ana Rachel Léda, Ryan K. Cheu, Jacob K. Flynn, Antigoni Morou, Elsa Brunet‐Ratnasingham, Benigno Rodríguez, Michael M. Lederman, Daniel E. Kaufmann, Nichole R. Klatt",
+    "title": "Translocated microbiome composition determines immunological outcome in treated HIV infection",
+    "journal": "Cell",
+    "year": 2021,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.cell.2021.05.023",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/34237254/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1089-sur-2024-137",
+    "authors": "Jared M. Huston, Philip S. Barie, E. Patchen Dellinger, Joseph D. Forrester, Therèse M. Duane, Jeffrey M. Tessier, Robert G. Sawyer, Miguel Caínzos, Kemal Raşa, Jeffrey G. Chipman, Lillian S. Kao, Frederic M. Pieracci, Kristin P. Colling, Daithi S. Heffernan, Janice Lester",
+    "title": "The Surgical Infection Society Guidelines on the Management of Intra-Abdominal Infection: 2024 Update",
+    "journal": "Surgical Infections",
+    "year": 2024,
+    "status": "Published",
+    "doi": "https://doi.org/10.1089/sur.2024.137",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/38990709/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-surg-2017-10-011",
+    "authors": "Herbert P. Stride, Brian C. George, Reed G. Williams, Jordan D. Bohnen, Megan J. Eaton, Mary C. Schuller, Lihui Zhao, Amy Yang, Shari L. Meyerson, Rebecca E. Scully, Gary L. Dunnington, Laura Torbeck, John T. Mullen, Samuel P. Mandell, Michael A. Choti, Eugene F. Foley, Chandrakanth Are, Edward D. Auyang, Jeffrey G. Chipman, Jennifer Choi, Andreas H. Meier, Douglas S. Smink, Kyla P. Terhune, Paul E. Wise, Debra A. DaRosa, Nathaniel J. Soper, Jay B. Zwischenberger, Keith D. Lillemoe, Jonathan P. Fryer",
+    "title": "Relationship of procedural numbers with meaningful procedural autonomy in general surgery residents",
+    "journal": "Surgery",
+    "year": 2017,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.surg.2017.10.011",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/29277387/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1007-s00383-016-3957-3",
+    "authors": "Elissa K. Butler, Tu M. Tran, Anthony T. Fuller, Alexa Brammell, João Ricardo Nickenig Vissoci, Luciano de Andrade, Fredrick Makumbi, Samuel Luboga, Christine Muhumuza, Vincent Fred Ssennono, Jeffrey G. Chipman, Moses Galukande, Michael M. Haglund, Emily R. Smith",
+    "title": "Quantifying the pediatric surgical need in Uganda: results of a nationwide cross-sectional, household survey",
+    "journal": "Pediatric Surgery International",
+    "year": 2016,
+    "status": "Published",
+    "doi": "https://doi.org/10.1007/s00383-016-3957-3",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/27614904/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1093-infdis-jiad578",
+    "authors": "Jeffrey S. Miller, Joshua Rhein, Zachary Davis, Sarah Cooley, David H. McKenna, Jodi Anderson, Kevin Escandón-Vargas, Garritt Wieking, Jarrett Reichel, Ann Thorkelson, Siri Jorstad, Jeffrey T. Safrit, Patrick Soon‐Shiong, Gregory J. Beilman, Jeffrey G. Chipman, Timothy W. Schacker",
+    "title": "Safety and Virologic Impact of Haploidentical NK Cells Plus Interleukin 2 or N-803 in HIV Infection",
+    "journal": "The Journal of Infectious Diseases",
+    "year": 2024,
+    "status": "Published",
+    "doi": "https://doi.org/10.1093/infdis/jiad578",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/38207119/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1172-jci-insight-190831",
+    "authors": "Joshua Rhein, Jeffrey G. Chipman, Gregory J. Beilman, Ross Cromarty, Kevin Escandón-Vargas, Jodi Anderson, Garritt Wieking, Jarrett Reichel, Rodolfo Batres, Alexander Khoruts, Christopher M. Basting, Peter Hinderlie, Zachary Davis, Anne Eaton, Byron P. Vaughn, Elnaz Eilkhani, Jeffrey T. Safrit, Patrick Soon‐Shiong, Jason V. Baker, Nichole R. Klatt, Steven G. Deeks, Jeffrey S. Miller, Timothy W. Schacker",
+    "title": "Impact of the IL-15 superagonist N-803 on lymphatic reservoirs of HIV",
+    "journal": "JCI Insight",
+    "year": 2025,
+    "status": "Published",
+    "doi": "https://doi.org/10.1172/jci.insight.190831",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/40471871/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1097-01-ta-0000108630-34225-85",
+    "authors": "Jeffrey G. Chipman, William E. Deuser, Gregory J. Beilman",
+    "title": "Early Surgery for Thoracolumbar Spine Injuries Decreases Complications",
+    "journal": "The Journal of Trauma: Injury, Infection, and Critical Care",
+    "year": 2004,
+    "status": "Published",
+    "doi": "https://doi.org/10.1097/01.ta.0000108630.34225.85",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/14749565/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1089-sur-2007-085",
+    "authors": "Mark George, Natasha M. Rueth, David E. Skarda, Jeffrey G. Chipman, Robert R. Quickel, Gregory J. Beilman",
+    "title": "Hyperbaric Oxygen Does Not Improve Outcome in Patients with Necrotizing Soft Tissue Infection",
+    "journal": "Surgical Infections",
+    "year": 2008,
+    "status": "Published",
+    "doi": "https://doi.org/10.1089/sur.2007.085",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/18991520/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-jsurg-2014-10-013",
+    "authors": "Robert D. Acton, Jeffrey G. Chipman, Michelle Lunden, Connie C. Schmitz",
+    "title": "Unanticipated Teaching Demands Rise with Simulation Training: Strategies for Managing Faculty Workload",
+    "journal": "Journal of surgical education",
+    "year": 2014,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.jsurg.2014.10.013",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/25467731/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1182-blood-2012-03-418624",
+    "authors": "Ming Zeng, Mirko Paiardini, Jessica C. Engram, Gregory J. Beilman, Jeffrey G. Chipman, Timothy W. Schacker, Guido Silvestri, Ashley T. Haase",
+    "title": "Critical role of CD4 T cells in maintaining lymphoid tissue structure for immune cell homeostasis and reconstitution",
+    "journal": "Blood",
+    "year": 2012,
+    "status": "Published",
+    "doi": "https://doi.org/10.1182/blood-2012-03-418624",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/22613799/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1172-jci97377",
+    "authors": "Cissy Kityo, Krystelle Nganou Makamdop, Meghan Rothenberger, Jeffrey G. Chipman, Torfi Hoskuldsson, Gregory J. Beilman, Bartosz Grzywacz, Peter Mugyenyi, Francis Ssali, Rama Akondy, Jodi Anderson, Thomas Schmidt, Thomas Reimann, Samuel P. Callisto, Jordan Schoephoerster, Jared Schuster, Proscovia Muloma, Patrick Ssengendo, Eirini Moysi, Constantinos Petrovas, Ray Lanciotti, Lin Zhang, Maria T. Arévalo, Benigno Rodríguez, Ted M. Ross, Lydie Trautmann, Rafick‐Pierre Sékaly, Michael M. Lederman, Richard A. Koup, Rafi Ahmed",
+    "title": "Lymphoid tissue fibrosis is associated with impaired vaccine responses",
+    "journal": "Journal of Clinical Investigation",
+    "year": 2018,
+    "status": "Published",
+    "doi": "https://doi.org/10.1172/jci97377",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/29781814/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-jsurg-2006-11-001",
+    "authors": "Jeffrey G. Chipman, Gregory J. Beilman, Constance C. Schmitz, Susan C. Seatter",
+    "title": "Development and Pilot Testing of an OSCE for Difficult Conversations in Surgical Intensive Care",
+    "journal": "Journal of surgical education",
+    "year": 2007,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.jsurg.2006.11.001",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/17462207/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-surg-2017-07-028",
+    "authors": "Reed G. Williams, Brian C. George, Shari L. Meyerson, Jordan D. Bohnen, Gary L. Dunnington, Mary C. Schuller, Laura Torbeck, John T. Mullen, Edward D. Auyang, Jeffrey G. Chipman, Jennifer Choi, Michael A. Choti, Eric D. Endean, Eugene F. Foley, Samuel P. Mandell, Andreas H. Meier, Douglas S. Smink, Kyla P. Terhune, Paul E. Wise, Debra A. DaRosa, Nathaniel J. Soper, Joseph B. Zwischenberger, Keith D. Lillemoe, Jonathan P. Fryer",
+    "title": "What factors influence attending surgeon decisions about resident autonomy in the operating room?",
+    "journal": "Surgery",
+    "year": 2017,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.surg.2017.07.028",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/28950992/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1089-sur-2015-131",
+    "authors": "Samir S. Khariwala, Bin Le, Brendan H. G. Pierce, Rachel I. Vogel, Jeffrey G. Chipman",
+    "title": "Antibiotic Use after Free Tissue Reconstruction of Head and Neck Defects: Short Course vs. Long Course",
+    "journal": "Surgical Infections",
+    "year": 2015,
+    "status": "Published",
+    "doi": "https://doi.org/10.1089/sur.2015.131",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/26501794/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1097-acm-0000000000002429",
+    "authors": "Brittany Marcus-Blank, Jeffrey A. Dahlke, Jonathan P. Braman, Emily Borman-Shoap, Ezgi Tiryaki, Jeffrey G. Chipman, John S. Andrews, Paul R. Sackett, Michael J. Cullen",
+    "title": "Predicting Performance of First-Year Residents: Correlations Between Structured Interview, Licensure Exam, and Competency Scores in a Multi-Institutional Study",
+    "journal": "Academic Medicine",
+    "year": 2018,
+    "status": "Published",
+    "doi": "https://doi.org/10.1097/acm.0000000000002429",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/30157088/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1038-s41586-018-0493-4",
+    "authors": "Liliana Pérez, Jodi Anderson, Jeffrey G. Chipman, Ann Thorkelson, Tae‐Wook Chun, Susan Moir, Ashley T. Haase, Daniel C. Douek, Timothy W. Schacker, Eli Boritz",
+    "title": "Conflicting evidence for HIV enrichment in CD32+ CD4 T cells",
+    "journal": "Nature",
+    "year": 2018,
+    "status": "Published",
+    "doi": "https://doi.org/10.1038/s41586-018-0493-4",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/30232423/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-surg-2014-06-069",
+    "authors": "Laura Torbeck, Reed G. Williams, Jennifer Choi, Connie C. Schmitz, Jeffrey G. Chipman, Gary L. Dunnington",
+    "title": "How much guidance is given in the operating room? Factors influencing faculty self-reports, resident perceptions, and faculty/resident agreement",
+    "journal": "Surgery",
+    "year": 2014,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.surg.2014.06.069",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/25239321/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1213-ane-0000000000000187",
+    "authors": "Monica I. Lupei, Jeffrey G. Chipman, Gregory J. Beilman, S. Cristina Oancea, Mojca Remskar Konia",
+    "title": "The Association Between ASA Status and Other Risk Stratification Models on Postoperative Intensive Care Unit Outcomes",
+    "journal": "Anesthesia & Analgesia",
+    "year": 2014,
+    "status": "Published",
+    "doi": "https://doi.org/10.1213/ane.0000000000000187",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/24781569/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-jpedsurg-2017-03-045",
+    "authors": "Emily R. Smith, João Ricardo Nickenig Vissoci, Thiago Augusto Hernándes Rocha, Tu M. Tran, Anthony T. Fuller, Elissa K. Butler, Luciano de Andrade, Fredrick Makumbi, Samuel Luboga, Christine Muhumuza, Didacus B. Namanya, Jeffrey G. Chipman, Moses Galukande, Michael M. Haglund",
+    "title": "Geospatial analysis of unmet pediatric surgical need in Uganda",
+    "journal": "Journal of Pediatric Surgery",
+    "year": 2017,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.jpedsurg.2017.03.045",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/28427854/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1097-sih-0b013e31817e6149",
+    "authors": "Constance C. Schmitz, Jeffrey G. Chipman, Michael G. Luxenberg, Gregory J. Beilman",
+    "title": "Professionalism and Communication in the Intensive Care Unit",
+    "journal": "Simulation in Healthcare The Journal of the Society for Simulation in Healthcare",
+    "year": 2008,
+    "status": "Published",
+    "doi": "https://doi.org/10.1097/sih.0b013e31817e6149",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/19088667/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-jsurg-2018-09-004",
+    "authors": "Phillip J. Mercier, Steven J. Skube, Samantha L. Leonard, Ashley N. McElroy, Tyler G. Goettl, Melissa M. Najarian, Paula M. Termuhlen, Jeffrey G. Chipman",
+    "title": "Creating a Rural Surgery Track and a Review of Rural Surgery Training Programs",
+    "journal": "Journal of surgical education",
+    "year": 2018,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.jsurg.2018.09.004",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/30279137/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1097-ta-0000000000002569",
+    "authors": "Rachel Morris, David Milia, James W. Glover, Lena M. Napolitano, Benjamin Chen, Elizabeth Lindemann, Mark R. Hemmila, Deborah M. Stein, Erich Kummerfeld, Jeffrey G. Chipman, Christopher J. Tignanelli",
+    "title": "Predictors of elderly mortality after trauma: A novel outcome score",
+    "journal": "The Journal of Trauma: Injury, Infection, and Critical Care",
+    "year": 2019,
+    "status": "Published",
+    "doi": "https://doi.org/10.1097/ta.0000000000002569",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/31895331/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1097-ta-0b013e3181effe2a",
+    "authors": "Eric D. Irwin, Matthew C. Byrnes, Scott Schultz, Jeffrey G. Chipman, Alan Beal, Mark Ahrendt, Gregory J. Beilman, J. Kevin Croston",
+    "title": "A Systematic Method for Follow-Up Improves Removal Rates for Retrievable Inferior Vena Cava Filters in a Trauma Patient Population",
+    "journal": "The Journal of Trauma: Injury, Infection, and Critical Care",
+    "year": 2010,
+    "status": "Published",
+    "doi": "https://doi.org/10.1097/ta.0b013e3181effe2a",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/20938273/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1039-c6ta04289a",
+    "authors": "Xuan Liu, Bo You, Xin‐Yao Yu, Jeffrey G. Chipman, Yujie Sun",
+    "title": "Electrochemical oxidation to construct a nickel sulfide/oxide heterostructure with improvement of capacitance",
+    "journal": "Journal of Materials Chemistry A",
+    "year": 2016,
+    "status": "Published",
+    "doi": "https://doi.org/10.1039/c6ta04289a",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1007-s00268-015-3191-5",
+    "authors": "Anthony T. Fuller, Elissa K. Butler, Tu M. Tran, Fredrick Makumbi, Samuel Luboga, C. Muhumza, Jeffrey G. Chipman, Reinou S. Groen, Shailvi Gupta, Adam L. Kushner, Moses Galukande, Michael M. Haglund",
+    "title": "Surgeons OverSeas Assessment of Surgical Need (SOSAS) Uganda: Update for Household Survey",
+    "journal": "World Journal of Surgery",
+    "year": 2015,
+    "status": "Published",
+    "doi": "https://doi.org/10.1007/s00268-015-3191-5",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/26316109/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1097-sla-0000000000001970",
+    "authors": "Tu M. Tran, Anthony T. Fuller, Elissa K. Butler, Fredrick Makumbi, Samuel Luboga, Christine Muhumuza, Vincent Fred Ssennono, Jeffrey G. Chipman, Moses Galukande, Michael M. Haglund",
+    "title": "Burden of Surgical Conditions in Uganda",
+    "journal": "Annals of Surgery",
+    "year": 2016,
+    "status": "Published",
+    "doi": "https://doi.org/10.1097/sla.0000000000001970",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/27611619/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-jsurg-2018-05-003",
+    "authors": "Shanley B. Deal, Adnan Alseidi, Jeffrey G. Chipman, Jeffrey M. Gauvin, Michael P. Meara, Richard A. Sidwell, Dimitrios Stefanidis, Paul J. Schenarts",
+    "title": "Identifying Priorities for Faculty Development in General Surgery Using the Delphi Consensus Method",
+    "journal": "Journal of surgical education",
+    "year": 2018,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.jsurg.2018.05.003",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/30115566/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1089-sur-2010-033",
+    "authors": "Matthew C. Byrnes, Titi Adegboyega, Andrew Riggle, Jeffrey G. Chipman, Gregory J. Beilman, Patty Reicks, Kim Boeser, Eric D. Irwin",
+    "title": "Nasal Swabs Collected Routinely To Screen for Colonization by Methicillin-Resistant <i>Staphylococcus aureus</i> in Intensive Care Units Are a Sensitive Screening Test for the Organism in Clinical Cultures",
+    "journal": "Surgical Infections",
+    "year": 2010,
+    "status": "Published",
+    "doi": "https://doi.org/10.1089/sur.2010.033",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/20969468/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-amjsurg-2016-02-023",
+    "authors": "Connie C. Schmitz, Jonathan P. Braman, Norman S. Turner, Stephanie F. Heller, David M. Radosevich, Yelena Yan, Jane L. Miller, Jeffrey G. Chipman",
+    "title": "Learning by (video) example: a randomized study of communication skills training for end-of-life and error disclosure family care conferences",
+    "journal": "The American Journal of Surgery",
+    "year": 2016,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.amjsurg.2016.02.023",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/27474496/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1089-sur-2014-144",
+    "authors": "Mary R. Kwaan, Genevieve B. Melton, Robert D. Madoff, Jeffrey G. Chipman",
+    "title": "Abdominoperineal Resection, Pelvic Exenteration, and Additional Organ Resection Increase the Risk of Surgical Site Infection after Elective Colorectal Surgery: An American College of Surgeons National Surgical Quality Improvement Program Analysis",
+    "journal": "Surgical Infections",
+    "year": 2015,
+    "status": "Published",
+    "doi": "https://doi.org/10.1089/sur.2014.144",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/26237302/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-surg-2010-04-006",
+    "authors": "Mara B. Antonoff, Jennifer Swanson, Robert D. Acton, Jeffrey G. Chipman, Michael A. Maddaus, Connie C. Schmitz, Jonathan D’Cunha",
+    "title": "Improving surgery intern confidence through the implementation of expanded orientation sessions",
+    "journal": "Surgery",
+    "year": 2010,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.surg.2010.04.006",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/20627274/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1001-jamanetworkopen-2022-0873",
+    "authors": "Zachary Bergman, Michael Usher, Andrew Olson, Jeffrey G. Chipman, Melissa E. Brunsvold, Gregory J. Beilman, Christopher J. Tignanelli, Elizabeth R. Lusczek",
+    "title": "Comparison of Outcomes and Process of Care for Patients Treated at Hospitals Dedicated for COVID-19 Care vs Other Hospitals",
+    "journal": "JAMA Network Open",
+    "year": 2022,
+    "status": "Published",
+    "doi": "https://doi.org/10.1001/jamanetworkopen.2022.0873",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/35238935/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1177-000313481808400112",
+    "authors": "Ashley P. Marek, Jean Dominique Morancy, Jeffrey G. Chipman, Rachel M. Nygaard, Robert M. Roach, Michele M. Loor",
+    "title": "<i>Long-Term Functional Outcomes after Traumatic Thoracic and Lumbar Spine Fractures</i>",
+    "journal": "The American Surgeon",
+    "year": 2018,
+    "status": "Published",
+    "doi": "https://doi.org/10.1177/000313481808400112",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/29428017/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-jsurg-2019-12-016",
+    "authors": "Rebecca E. Scully, Shanley B. Deal, Michael Clark, Katherine Yang, Greg Wnuk, Douglas S. Smink, Jonathan P. Fryer, Jordan D. Bohnen, Ezra N. Teitelbaum, Shari L. Meyerson, Andreas H. Meier, Paul G. Gauger, Rishindra M. Reddy, Daniel E. Kendrick, Michael E. Stern, David T. Hughes, Jeffrey G. Chipman, Jitesh A. Patel, Adnan Alseidi, Brian C. George",
+    "title": "Concordance Between Expert and Nonexpert Ratings of Condensed Video-Based Trainee Operative Performance Assessment",
+    "journal": "Journal of surgical education",
+    "year": 2020,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.jsurg.2019.12.016",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/32201143/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-amjsurg-2009-12-014",
+    "authors": "Ciarán T. Bradley, Travis P. Webb, Connie C. Schmitz, Jeffrey G. Chipman, Karen J. Brasel",
+    "title": "Structured teaching versus experiential learning of palliative care for surgical residents",
+    "journal": "The American Journal of Surgery",
+    "year": 2010,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.amjsurg.2009.12.014",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/20538256/",
     "topics": [],
     "authorSlugs": [
       "jeff-chipman"
@@ -1600,9 +4924,9 @@ export const generatedPublications: Publication[] = [
   },
   {
     "id": "gen-10-1016-j-jsurg-2009-09-002",
-    "authors": "Mara B. Antonoff, Ryan C. Shelstad, Connie Schmitz, Jeffrey Chipman, Jonathan D'Cunha",
+    "authors": "Mara B. Antonoff, Ryan C. Shelstad, Connie C. Schmitz, Jeffrey G. Chipman, Jonathan D’Cunha",
     "title": "A Novel Critical Skills Curriculum for Surgical Interns Incorporating Simulation Training Improves Readiness for Acute Inpatient Care",
-    "journal": "Journal of Surgical Education",
+    "journal": "Journal of surgical education",
     "year": 2009,
     "status": "Published",
     "doi": "https://doi.org/10.1016/j.jsurg.2009.09.002",
@@ -1613,10 +4937,122 @@ export const generatedPublications: Publication[] = [
     ]
   },
   {
+    "id": "gen-10-1016-j-jsurg-2010-02-011",
+    "authors": "Robert D. Acton, Jeffrey G. Chipman, Julie Gilkeson, Connie C. Schmitz",
+    "title": "Synthesis Versus Imitation: Evaluation of a Medical Student Simulation Curriculum Via Objective Structured Assessment of Technical Skill",
+    "journal": "Journal of surgical education",
+    "year": 2010,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.jsurg.2010.02.011",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/20630429/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-jamcollsurg-2013-09-004",
+    "authors": "Genevieve B. Melton, Nora E. Burkart, Nathan G. Frey, Jeffrey G. Chipman, David A. Rothenberger, Selwyn M. Vickers",
+    "title": "Operative Report Teaching and Synoptic Operative Reports: A National Survey of Surgical Program Directors",
+    "journal": "Journal of the American College of Surgeons",
+    "year": 2013,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.jamcollsurg.2013.09.004",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/24210148/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1089-sur-2008-076",
+    "authors": "Monica I. Lupei, Henry J. Mann, Gregory J. Beilman, Cristina Oancea, Jeffrey G. Chipman",
+    "title": "Inadequate Antibiotic Therapy in Solid Organ Transplant Recipients Is Associated with a Higher Mortality Rate",
+    "journal": "Surgical Infections",
+    "year": 2009,
+    "status": "Published",
+    "doi": "https://doi.org/10.1089/sur.2008.076",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/19785562/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1111-acem-13340",
+    "authors": "Danielle Hart, Robert M. Rush, Gregory Rule, Joseph Clinton, Gregory J. Beilman, Shilo Anders, Rachel Brown, Mary Ann McNeil, Troy Reihsen, Jeffrey G. Chipman, Robert Sweet",
+    "title": "Training and Assessing Critical Airway, Breathing, and Hemorrhage Control Procedures for Trauma Care: Live Tissue Versus Synthetic Models",
+    "journal": "Academic Emergency Medicine",
+    "year": 2017,
+    "status": "Published",
+    "doi": "https://doi.org/10.1111/acem.13340",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/29077240/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-amjsurg-2010-02-006",
+    "authors": "Jeffrey G. Chipman, Travis P. Webb, Mohsen Shabahang, Stephanie F. Heller, Joan VanCamp, Amy L. Waer, Michael G. Luxenberg, Matthew Christenson, Connie C. Schmitz",
+    "title": "A multi-institutional study of the Family Conference Objective Structured Clinical Exam: a reliable assessment of professional communication",
+    "journal": "The American Journal of Surgery",
+    "year": 2010,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.amjsurg.2010.02.006",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/20850709/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1097-qai-0000000000002026",
+    "authors": "Meghan Rothenberger, Krystelle Nganou‐Makamdop, Cissy Kityo, Francis Ssali, Jeffrey G. Chipman, Gregory J. Beilman, Torfi Hoskuldsson, Jodi Anderson, Jake Jasurda, Thomas Schmidt, Samuel P. Calisto, Hope Pearson, Thomas Reimann, Caitlin David, Katherine Perkey, Peter J. Southern, Steve Wietgrefe, Erika S. Helgeson, Cavan Reilly, Ashley T. Haase, Daniel C. Douek, Courtney V. Fletcher, Timothy W. Schacker",
+    "title": "Impact of Integrase Inhibition Compared With Nonnucleoside Inhibition on HIV Reservoirs in Lymphoid Tissues",
+    "journal": "JAIDS Journal of Acquired Immune Deficiency Syndromes",
+    "year": 2019,
+    "status": "Published",
+    "doi": "https://doi.org/10.1097/qai.0000000000002026",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/31192893/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1089-sur-2008-054",
+    "authors": "Theodora A. Nemeth, Gregory J. Beilman, Carol L. Hamlin, Jeffrey G. Chipman",
+    "title": "Preoperative Verification of Timely Antimicrobial Prophylaxis Does Not Improve Compliance with Guidelines",
+    "journal": "Surgical Infections",
+    "year": 2010,
+    "status": "Published",
+    "doi": "https://doi.org/10.1089/sur.2008.054",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/20662740/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1007-s00268-016-3689-5",
+    "authors": "Steven Farber, João Ricardo Nickenig Vissoci, Tu M. Tran, Anthony T. Fuller, Elissa K. Butler, Luciano de Andrade, Catherine A. Staton, Fredrick Makumbi, Samuel Luboga, Christine Muhumuza, Didacus B. Namanya, Jeffrey G. Chipman, Moses Galukande, Michael M. Haglund",
+    "title": "Geospatial Analysis of Unmet Surgical Need in Uganda: An Analysis of SOSAS Survey Data",
+    "journal": "World Journal of Surgery",
+    "year": 2016,
+    "status": "Published",
+    "doi": "https://doi.org/10.1007/s00268-016-3689-5",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/27539489/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
     "id": "gen-10-1016-j-jsurg-2009-03-032",
     "authors": "Jeffrey G. Chipman, Robert D. Acton, Constance C. Schmitz",
-    "title": "Developing Surgical Skills Curricula",
-    "journal": "Journal of Surgical Education",
+    "title": "Developing Surgical Skills Curricula: Lessons Learned from Needs Assessment to Program Evaluation",
+    "journal": "Journal of surgical education",
     "year": 2009,
     "status": "Published",
     "doi": "https://doi.org/10.1016/j.jsurg.2009.03.032",
@@ -1627,52 +5063,10 @@ export const generatedPublications: Publication[] = [
     ]
   },
   {
-    "id": "gen-10-1089-sur-2007-085",
-    "authors": "Mark E. George, Natasha M. Rueth, David E. Skarda, Jeffery G. Chipman, Robert R. Quickel, Greg J. Beilman",
-    "title": "Hyperbaric oxygen does not improve outcome in patients with necrotizing soft tissue infection",
-    "journal": "Surgical Infections",
-    "year": 2009,
-    "status": "Published",
-    "doi": "https://doi.org/10.1089/sur.2007.085",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/18991520/",
-    "topics": [],
-    "authorSlugs": [
-      "jeff-chipman"
-    ]
-  },
-  {
-    "id": "gen-10-1097-sih-0b013e31817e6149",
-    "authors": "Constance C. Schmitz, Jeffrey G. Chipman, Gregory J. Beilman, Michael G. Luxenberg",
-    "title": "Professionalism and communication in the intensive care unit",
-    "journal": "Simulation in Healthcare",
-    "year": 2008,
-    "status": "Published",
-    "doi": "https://doi.org/10.1097/SIH.0b013e31817e6149",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/19088667/",
-    "topics": [],
-    "authorSlugs": [
-      "jeff-chipman"
-    ]
-  },
-  {
-    "id": "gen-10-1089-sur-2007-078",
-    "authors": "Nicholas Namias, Jonathan P. Meizoso, David H. Livingston, Charles Adams, Gregory J. Beilman, Walter Biffl, Juan J. Blondet, Patrick Blute, Jessica Bollinger, Susan A. Brundage, Jeffrey G. Chipman, Jeffrey A. Claridge, Raul Coimbra, Charles H. Cook, Joseph Cuschieri, Daniel L. Dent, Lynn Derting, Shaleagh Earl, Anthony Gerlach, Laura Hennessy, Jeanne Lee, Yanumei Li, Pamela Lipsett, Frederick Luchette, John E. Mazuski, Chet A. Morrison, Claudio Nunes, Kim Overton, Mary Ann Purtill, Marline Santos, Orla N. Smith, Sandy Swoboda, Ton That Hieu, Shirin Towfigh, Wael N. Yacoub, Charles J. Yowler",
-    "title": "Survey of surgical infections currently known (SOSICK)",
-    "journal": "Surgical Infections",
-    "year": 2008,
-    "status": "Published",
-    "doi": "https://doi.org/10.1089/sur.2007.078",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/18687044/",
-    "topics": [],
-    "authorSlugs": [
-      "jeff-chipman"
-    ]
-  },
-  {
     "id": "gen-10-1016-j-jsurg-2007-12-006",
     "authors": "Michael A. Maddaus, Jeffrey G. Chipman, Bryan A. Whitson, Shawn S. Groth, Connie C. Schmitz",
-    "title": "Rotation as a Course",
-    "journal": "Journal of Surgical Education",
+    "title": "Rotation as a Course: Lessons Learned from Developing a Hybrid Online/On-Ground Approach to General Surgical Resident Education",
+    "journal": "Journal of surgical education",
     "year": 2008,
     "status": "Published",
     "doi": "https://doi.org/10.1016/j.jsurg.2007.12.006",
@@ -1683,65 +5077,720 @@ export const generatedPublications: Publication[] = [
     ]
   },
   {
-    "id": "gen-jeff-chipman-2004-early-surgery-for-thoracolumbar-spine",
-    "authors": "Jeffrey G. Chipman, William E. Deuser, Greg J. Beilman, Gregory J. Jurkovich",
-    "title": "Early Surgery for Thoracolumbar Spine Injuries Decreases Complications",
-    "journal": "Journal of Trauma - Injury, Infection and Critical Care",
-    "year": 2004,
+    "id": "gen-10-1097-qai-0000000000001780",
+    "authors": "Michelle Chintanaphol, Carlo Sacdalan, Suthat Chottanapund, Suteeraporn Pinyakorn, Supranee Buranapraditkun, Trevor A. Crowell, Eugène Kroon, Sopark Manasnayakorn, Jeffrey G. Chipman, Timothy W. Schacker, Nelson L. Michael, Nittaya Phanuphak, Serena Spudich, Donn Colby, Jintanat Ananworanich, on behalf of the RV254/SEARCH010 study groups",
+    "title": "Brief Report: Safety and Tolerability of Inguinal Lymph Node Biopsy in Individuals With Acute HIV Infection in Thailand",
+    "journal": "JAIDS Journal of Acquired Immune Deficiency Syndromes",
+    "year": 2018,
     "status": "Published",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/14749565/",
+    "doi": "https://doi.org/10.1097/qai.0000000000001780",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/30212436/",
     "topics": [],
     "authorSlugs": [
       "jeff-chipman"
     ]
   },
   {
-    "id": "gen-10-1111-ajt-15119",
-    "authors": "Kendall R. McEachron, Gregory J. Beilman, Melena D. Bellin",
-    "title": "Sitagliptin treatment increases GLP-1 without improving diabetes outcomes after total pancreatectomy with islet autotransplantation",
-    "journal": "American Journal of Transplantation",
-    "year": 2019,
-    "status": "Published",
-    "doi": "https://doi.org/10.1111/ajt.15119",
-    "topics": [],
-    "authorSlugs": [
-      "kendall-mceachron"
-    ]
-  },
-  {
-    "id": "gen-10-1111-ctr-13647",
-    "authors": "Kendall R. McEachron, Mariya E. Skube, Yi Yang, James S. Hodges, Joshua Wilhelm, Gregory Beilman, Srinath Chinnakotla, Sarah J. Schwarzenberg, Melena D. Bellin",
-    "title": "Utility of arginine stimulation testing in preoperative assessment of children undergoing total pancreatectomy with islet autotransplantation",
-    "journal": "Clinical Transplantation",
-    "year": 2019,
-    "status": "Published",
-    "doi": "https://doi.org/10.1111/ctr.13647",
-    "topics": [],
-    "authorSlugs": [
-      "kendall-mceachron"
-    ]
-  },
-  {
-    "id": "gen-10-1111-tri-13762",
-    "authors": "Kendall R. McEachron, Yi Yang, James S. Hodges, Gregory J. Beilman, Varvara A. Kirchner, Timothy L. Pruett, Srinath Chinnakotla, Bernhard J. Hering, Melena D. Bellin",
-    "title": "Performance of modified Igls criteria to evaluate islet autograft function after total pancreatectomy with islet autotransplantation – a retrospective study",
-    "journal": "Transplant International",
+    "id": "gen-10-1016-j-jss-2021-04-003",
+    "authors": "Alexandria J. Robbins, Gregory J. Beilman, Tatiana Ditta, Ashley Benner, Drew A. Rosielle, Jeffrey G. Chipman, Elizabeth R. Lusczek",
+    "title": "Mortality After Elective Surgery: The Potential Role for Preoperative Palliative Care",
+    "journal": "Journal of Surgical Research",
     "year": 2021,
     "status": "Published",
-    "doi": "https://doi.org/10.1111/tri.13762",
+    "doi": "https://doi.org/10.1016/j.jss.2021.04.003",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/33984730/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-amjsurg-2019-11-040",
+    "authors": "Steven J. Skube, Nicole N. Thorndal, James Boulger, Kirby Clark, James E. Coverdill, Paula M. Termuhlen, Jeffrey G. Chipman, Robert D. Acton",
+    "title": "Outcomes and influences of rural-focused integrated clerkship programs in general surgery",
+    "journal": "The American Journal of Surgery",
+    "year": 2019,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.amjsurg.2019.11.040",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/31898943/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1097-shk-0b013e3182657a21",
+    "authors": "Uroghupatei P. Iyegha, Joseph J. Greenberg, Kristine E. Mulier, Jeffrey G. Chipman, Mark George, Gregory J. Beilman",
+    "title": "Environmental Hypothermia in Porcine Polytrauma and Hemorrhagic Shock is Safe",
+    "journal": "Shock",
+    "year": 2012,
+    "status": "Published",
+    "doi": "https://doi.org/10.1097/shk.0b013e3182657a21",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/22777118/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-amjsurg-2020-12-008",
+    "authors": "Matthew C. Bobel, Carolina Fernández Branson, Jeffrey G. Chipman, Andre R. Campbell, Melissa E. Brunsvold",
+    "title": "“Who wants me to do what?” varied expectations from key stakeholder groups in the surgical intensive care unit creates a challenging learning environment",
+    "journal": "The American Journal of Surgery",
+    "year": 2020,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.amjsurg.2020.12.008",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/33303187/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-jneb-2018-10-006",
+    "authors": "Mateja R. Savoie‐Roskos, Casey Coombs, Jaqueline Neid-Avila, Jeffrey G. Chipman, Sara Nelson, Leslie Rowley, Heidi LeBlanc",
+    "title": "Create Better Health: A Practical Approach to Improving Cooking Skills and Food Security",
+    "journal": "Journal of Nutrition Education and Behavior",
+    "year": 2018,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.jneb.2018.10.006",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/30472310/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-15766-mep-2374-8265-7948",
+    "authors": "Robert D. Acton, Connie C. Schmitz, Jeffrey G. Chipman, Troy Reihsen, Julie Gilkeson, Shawn S. Groth, John R. Raymond, Paula Anne Latz, William L. Gamble",
+    "title": "University of Minnesota Surgical Clerkship Simulation Skills Curriculum and Instructor Guide",
+    "journal": "MedEdPORTAL",
+    "year": 2010,
+    "status": "Published",
+    "doi": "https://doi.org/10.15766/mep_2374-8265.7948",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-surg-2018-04-034",
+    "authors": "Reed G. Williams, Brian C. George, Jordan D. Bohnen, Shari L. Meyerson, Mary C. Schuller, Andreas H. Meier, Laura Torbeck, Samuel P. Mandell, John T. Mullen, Douglas S. Smink, Jeffrey G. Chipman, Edward D. Auyang, Kyla P. Terhune, Paul E. Wise, Jennifer Choi, Eugene F. Foley, Michael A. Choti, Chandrakanth Are, Nathaniel J. Soper, Joseph B. Zwischenberger, Gary L. Dunnington, Keith D. Lillemoe, Jonathan P. Fryer",
+    "title": "Is the operative autonomy granted to a resident consistent with operative performance quality",
+    "journal": "Surgery",
+    "year": 2018,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.surg.2018.04.034",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/29929754/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-wneu-2017-11-099",
+    "authors": "Anthony T. Fuller, Jacquelyn Corley, Tu M. Tran, Elissa K. Butler, João Ricardo Nickenig Vissoci, Luciano de Andrade, Fredrick Makumbi, Samuel Luboga, Christine Muhumuza, Vincent Fred Ssennono, Jeffrey G. Chipman, Moses Galukande, Michael M. Haglund, Emily R. Smith",
+    "title": "Prevalence of Surgically Untreated Face, Head, and Neck Conditions in Uganda: A Cross-Sectional Nationwide Household Survey",
+    "journal": "World Neurosurgery",
+    "year": 2017,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.wneu.2017.11.099",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/29180091/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-7205-milmed-d-13-00247",
+    "authors": "Connie C. Schmitz, Jeffrey G. Chipman, Ken Yoshida, Rachel I. Vogel, François Sainfort, Gregory J. Beilman, Joseph Clinton, Jimmy Cooper, Troy Reihsen, Robert Sweet",
+    "title": "Reliability and Validity of a Test Designed to Assess Combat Medics' Readiness to Perform Life-Saving Procedures",
+    "journal": "Military Medicine",
+    "year": 2014,
+    "status": "Published",
+    "doi": "https://doi.org/10.7205/milmed-d-13-00247",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/24402984/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-surg-2015-05-011",
+    "authors": "Elissa K. Butler, Tu M. Tran, Anthony T. Fuller, Fredrick Makumbi, Samuel Luboga, Sheila Kisakye, Michael M. Haglund, Jeffrey G. Chipman, Moses Galukande",
+    "title": "Pilot study of a population-based survey to assess the prevalence of surgical conditions in Uganda",
+    "journal": "Surgery",
+    "year": 2015,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.surg.2015.05.011",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/26088920/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-17615-m4sm-kk61",
+    "authors": "Kevin Man, Yunbo Wei, Sharon R. Lewin, Anurag Atnerkar, Iain Comerford, Claire Deléage, Peng Wang, Yu, Di, Dimitra Zotos, Yaping Chen, Jiawei Xu, Shaun R. McColl, Jeffrey G. Chipman, Lei Sun, Zhaohua Hou, Simon Preston, Martina Minnich, Gabrielle T. Belz, Cody C. Allison, Hong Sheng Ong, Jacob D. Estes, Axel Kallies, Hao Lu, Alan Landay, Umaimainthan Palendira, Gregory J. Beilman, Benjamin J. Meckiff, Timothy W. Schacker, Kevin Fenix, Alexander L. Dent",
+    "title": "CXCR5+ follicular cytotoxic T cells control viral infection in B cell follicles",
+    "journal": "UNC Libraries",
+    "year": 2024,
+    "status": "Published",
+    "doi": "https://doi.org/10.17615/m4sm-kk61",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-jsurg-2018-09-002",
+    "authors": "Steven J. Skube, Archana Ramaswamy, Jeffrey G. Chipman, Robert D. Acton",
+    "title": "Medical Student Perceptions of 24-Hour Call",
+    "journal": "Journal of surgical education",
+    "year": 2018,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.jsurg.2018.09.002",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/30245059/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-4314-ahs-v19i1-54",
+    "authors": "Tu M. Tran, Anthony T. Fuller, Elissa K. Butler, Christine Muhumuza, Vincent Fred Ssennono, João Ricardo Nickenig Vissoci, Fredrick Makumbi, Jeffrey G. Chipman, Moses Galukande, Michael M. Haglund, Samuel Luboga",
+    "title": "Surgical need among the ageing population of Uganda",
+    "journal": "African Health Sciences",
+    "year": 2019,
+    "status": "Published",
+    "doi": "https://doi.org/10.4314/ahs.v19i1.54",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/31149008/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-4236-ss-2014-59061",
+    "authors": "Eileen Eggenberger, Samuel Márquez, Thu Doan, David M. Radosevich, Jeffrey G. Chipman, Kaysie L. Banton, Gregory J. Beilman",
+    "title": "Stuck in the Unit: Three-Year Outcomes Following Prolonged Stay in the Surgical Intensive Care Unit",
+    "journal": "Surgical Science",
+    "year": 2014,
+    "status": "Published",
+    "doi": "https://doi.org/10.4236/ss.2014.59061",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1089-sur-2006-7-513",
+    "authors": "Jeffrey G. Chipman, Jodie H. Taylor, Melissa Thorson, David E. Skarda, Gregory J. Beilman",
+    "title": "Kinetic Therapy Beds Are Associated with More Complications in Patients with Thoracolumbar Spinal Column Injuries",
+    "journal": "Surgical Infections",
+    "year": 2006,
+    "status": "Published",
+    "doi": "https://doi.org/10.1089/sur.2006.7.513",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/17233568/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1089-sur-2010-032",
+    "authors": "Matthew C. Byrnes, Andrew Riggle, Gregory J. Beilman, Jeffrey G. Chipman",
+    "title": "A Novel Technique To Skin Graft Abdominal Wall Wounds Surrounding Enterocutaneous Fistulas",
+    "journal": "Surgical Infections",
+    "year": 2010,
+    "status": "Published",
+    "doi": "https://doi.org/10.1089/sur.2010.032",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/20849289/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1097-ta-0b013e3181e93159",
+    "authors": "Hasan B. Alam, Jeffrey G. Chipman, Fred A. Luchette, Marc J. Shapiro, David A. Spain, William G. Cioffi",
+    "title": "Training and Certification in Surgical Critical Care: A Position Paper by the Surgical Critical Care Program Directors Society",
+    "journal": "The Journal of Trauma: Injury, Infection, and Critical Care",
+    "year": 2010,
+    "status": "Published",
+    "doi": "https://doi.org/10.1097/ta.0b013e3181e93159",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/20699761/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-amjsurg-2017-10-041",
+    "authors": "Carolina Fernández Branson, Jeffrey G. Chipman",
+    "title": "Improving surgical residents' communication in disclosing complications: A qualitative analysis of simulated physician and patient surrogate conversations",
+    "journal": "The American Journal of Surgery",
+    "year": 2017,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.amjsurg.2017.10.041",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/29137720/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1089-sur-2006-020",
+    "authors": "David E. Skarda, Jodie H. Taylor, Jeffrey G. Chipman, Matthew Larson, Jason V. Baker, Timothy W. Schacker, Gregory J. Beilman",
+    "title": "Inguinal Lymph Node Biopsy in Patients Infected with the Human Immunodeficiency Virus Is Safe",
+    "journal": "Surgical Infections",
+    "year": 2007,
+    "status": "Published",
+    "doi": "https://doi.org/10.1089/sur.2006.020",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/17437362/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1038-nature24635",
+    "authors": "Ramón Lorenzo-Redondo, Helen Fryer, Trevor Bedford, Eun-Young Kim, John Archer, Sergei L. Kosakovsky Pond, Yoon‐Seok Chung, Sudhir Penugonda, Jeffrey G. Chipman, Courtney V. Fletcher, Timothy W. Schacker, Michael H. Malim, Andrew Rambaut, Ashley T. Haase, Angela R. McLean, Steven M. Wolinsky",
+    "title": "Lorenzo-Redondo et al. reply",
+    "journal": "Nature",
+    "year": 2017,
+    "status": "Published",
+    "doi": "https://doi.org/10.1038/nature24635",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/29168807/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-hjc-2020-04-013",
+    "authors": "Marinos Kosmopoulos, Jason A. Bartos, Rajat Kalra, Tomaž Goslar, Claire Carlson, Andrew Shaffer, Ranjit John, Rose Kelly, Ganesh Raveendran, Melissa E. Brunsvold, Jeffrey G. Chipman, Gregory J. Beilman, Demetris Yannopoulos",
+    "title": "Patients treated with venoarterial extracorporeal membrane oxygenation have different baseline risk and outcomes dependent on indication and route of cannulation",
+    "journal": "Hellenic Journal of Cardiology",
+    "year": 2020,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.hjc.2020.04.013",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/32387591/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-jsurg-2018-05-014",
+    "authors": "Carolina Fernández Branson, James Houseworth, Jeffrey G. Chipman",
+    "title": "Communication Deficits Among Surgical Residents During Difficult Patient Family Conversations",
+    "journal": "Journal of surgical education",
+    "year": 2018,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.jsurg.2018.05.014",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/30195663/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1089-sur-2013-179",
+    "authors": "Meghan Rothenberger, C. Kityo Mutuluuza, Francis Ssali, Jake Jasurda, Thomas Schmidt, Timothy W. Schacker, Gregory J. Beilman, Jeffrey G. Chipman",
+    "title": "Inguinal Lymph Node and Anorectal Mucosal Biopsies for Human Immunodeficiency Virus Research Protocols in an Emerging Nation: Patient Outcomes and Lessons Learned",
+    "journal": "Surgical Infections",
+    "year": 2015,
+    "status": "Published",
+    "doi": "https://doi.org/10.1089/sur.2013.179",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/25650809/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-jsurg-2018-01-006",
+    "authors": "Steven J. Skube, Elliot G. Arsoniadis, Cyrus Jahansouz, Sherri Novitsky, Jeffrey G. Chipman",
+    "title": "Supplementing Resident Research Funding Through a Partnership With Local Industry",
+    "journal": "Journal of surgical education",
+    "year": 2018,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.jsurg.2018.01.006",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/29361506/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-5334-aogh-2427",
+    "authors": "Elissa K. Butler, Tu M. Tran, Anthony T. Fuller, Christine Muhumuza, Sarah Williams, João Ricardo Nickenig Vissoci, Samuel Luboga, Michael M. Haglund, Fredrick Makumbi, Moses Galukande, Jeffrey G. Chipman",
+    "title": "Optimizing Care for Ugandans with Untreated Abdominal Surgical Conditions",
+    "journal": "Annals of Global Health",
+    "year": 2019,
+    "status": "Published",
+    "doi": "https://doi.org/10.5334/aogh.2427",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/30951271/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1089-sur-2022-195",
+    "authors": "Zachary Bergman, Christopher J. Tignanelli, Robert Gould, Kathryn M. Pendleton, Jeffrey G. Chipman, Elizabeth R. Lusczek, Gregory J. Beilman",
+    "title": "Factors Associated with Mortality in Patients with COVID-19 Receiving Prolonged Ventilatory Support",
+    "journal": "Surgical Infections",
+    "year": 2022,
+    "status": "Published",
+    "doi": "https://doi.org/10.1089/sur.2022.195",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/36383156/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1006-abbi-1993-1496",
+    "authors": "Gary E. Evett, Weijie Xie, Jeffrey G. Chipman, Donald Robertson, DG Simmons",
+    "title": "Prostaglandin G/H Synthase Isoenzyme 2 Expression in Fibroblasts - Regulation by Dexamethasone, Mitogens, and Oncogenes",
+    "journal": "Archives of Biochemistry and Biophysics",
+    "year": 1993,
+    "status": "Published",
+    "doi": "https://doi.org/10.1006/abbi.1993.1496",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/8215400/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-15766-mep-2374-8265-9015",
+    "authors": "Connie C. Schmitz, Jane L. Miller, Anne Woll, Jeffrey G. Chipman",
+    "title": "Implementation Manual for the University of Minnesota Family Conference OSCE: An Assessment of Physicians' Professionalism and Interpersonal and Communication Skills in Discussing “Bad News”",
+    "journal": "MedEdPORTAL",
+    "year": 2011,
+    "status": "Published",
+    "doi": "https://doi.org/10.15766/mep_2374-8265.9015",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-15766-mep-2374-8265-8056",
+    "authors": "Mara B. Antonoff, Jeffrey G. Chipman, Connie C. Schmitz, Jonathan D’Cunha",
+    "title": "Critical Response Training for Surgical Interns",
+    "journal": "MedEdPORTAL",
+    "year": 2010,
+    "status": "Published",
+    "doi": "https://doi.org/10.15766/mep_2374-8265.8056",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-aogh-2016-04-516",
+    "authors": "Tu M. Tran, Steven Farber, João Ricardo Nickenig Vissoci, Anthony T. Fuller, Eric Butler, Luciano de Andrade, Catherine A. Staton, Fredrick Makumbi, Samuel Luboga, C. Muhumza, Jeffrey G. Chipman, Moses Galukande, Michael M. Haglund",
+    "title": "Geographic access and relationship to unmet surgical need in Uganda: a geospatial analysis of a household survey on burden of surgical conditions in Uganda",
+    "journal": "Annals of Global Health",
+    "year": 2016,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.aogh.2016.04.516",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-jamcollsurg-2009-06-270",
+    "authors": "Mara B. Antonoff, Ryan C. Shelstad, Jeffrey G. Chipman, Connie C. Schmitz, Jonathan D’Cunha",
+    "title": "Development and implementation of a simulation-based critical skills course for surgical interns: Lessons learned",
+    "journal": "Journal of the American College of Surgeons",
+    "year": 2009,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.jamcollsurg.2009.06.270",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-jss-2009-11-500",
+    "authors": "Samuel Márquez, Kristine E. Mulier, Andrew Nguyen, Elizabeth A. Jackson, Jeffrey G. Chipman, Gregory J. Beilman, John Delaney",
+    "title": "Comparision of PermacolTM and StratticeTM Biologic Mesh for the Repair of Abdominal Wall Defects",
+    "journal": "Journal of Surgical Research",
+    "year": 2010,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.jss.2009.11.500",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-jamcollsurg-2019-08-524",
+    "authors": "Emma K. Worthington, Matthew C. Bobel, Carolina Fernández Branson, John M. LaVelle, Jeffrey G. Chipman, Melissa E. Brunsvold",
+    "title": "Do General Surgery Trainees Demonstrate Less Empathetic and Supportive Communication than Family Medicine Trainees?",
+    "journal": "Journal of the American College of Surgeons",
+    "year": 2019,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.jamcollsurg.2019.08.524",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-jamcollsurg-2008-06-234",
+    "authors": "Mara B. Antonoff, Ryan C. Shelstad, Troy Reihsen, Connie C. Schmitz, Jeffrey G. Chipman, Jonathan D’Cunha",
+    "title": "A novel “critical skills” curriculum for surgical interns incorporating simulation training improves readiness for acute inpatient care",
+    "journal": "Journal of the American College of Surgeons",
+    "year": 2008,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.jamcollsurg.2008.06.234",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-jsurg-2008-01-049",
+    "authors": "Michael A. Maddaus, Connie C. Schmitz, Jeffrey G. Chipman",
+    "title": "Rotations as courses: preliminary results from a longitudinal study of resident use of online resources",
+    "journal": "Journal of surgical education",
+    "year": 2008,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.jsurg.2008.01.049",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-jsurg-2009-12-004",
+    "authors": "Jeffrey G. Chipman",
+    "title": "Things Ain't What They Used to Be and Probably Never Was (Will Rogers)",
+    "journal": "Journal of surgical education",
+    "year": 2010,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.jsurg.2009.12.004",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/20421087/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-jss-2012-10-441",
+    "authors": "Meghan Rothenberger, C. Kityo Mutuluuza, Francis Ssali, Jake Jasurda, Thomas Schmidt, Timothy W. Schacker, Gregory J. Beilman, Jeffrey G. Chipman",
+    "title": "Inguinal Lymph Node and Rectal Mucosal Biopsies for HIV Research Protocols in a Developing Nation: Patient Outcomes and Lessons Learned",
+    "journal": "Journal of Surgical Research",
+    "year": 2013,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.jss.2012.10.441",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-jeff-chipman-2010-changes-in-vasopressin-use-and",
+    "authors": "Monica I. Lupei, Gregory J. Beilman, Jeffrey G. Chipman, Henry J. Mann",
+    "title": "Changes in vasopressin use and outcomes in surgical intensive care unit patients with septic shock.",
+    "journal": "PubMed",
+    "year": 2010,
+    "status": "Published",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/19943557/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-aogh-2015-02-708",
+    "authors": "Alexandra Fuller, Eric Butler, Thierry Tran, Fred Makumbi, Samuel Luboga, Christine Muhumuza, Jeffrey G. Chipman, Moses Galukande, Michael M. Haglund",
+    "title": "Surgeons OverSeas Assessment of Surgical Need (SOSAS) Methodology Update and mobile-assisted data dissemination system (mADDS) Platform for Scale in Larger Low- and Middle-income Countries",
+    "journal": "Annals of Global Health",
+    "year": 2015,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.aogh.2015.02.708",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1089-sur-2009-9931",
+    "authors": "Gregory J. Beilman, Jeffrey G. Chipman",
+    "title": "Response to “Power in the Study of Mortality and Necrotizing Soft Tissue Infections”",
+    "journal": "Surgical Infections",
+    "year": 2014,
+    "status": "Published",
+    "doi": "https://doi.org/10.1089/sur.2009.9931",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/25137481/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-jss-2009-11-218",
+    "authors": "Mara B. Antonoff, Jennifer Swanson, Robert D. Acton, Jeffrey G. Chipman, Michael A. Maddaus, Connie C. Schmitz, Jonathan D’Cunha",
+    "title": "Improving Surgical Intern Confidence through the Implementation of Expanded Orientation Sessions",
+    "journal": "Journal of Surgical Research",
+    "year": 2010,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.jss.2009.11.218",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-aogh-2016-04-517",
+    "authors": "Eric Butler, Thanh Tran, A.T. Fuller, Samuel Luboga, Michael M. Haglund, Frederick Makumbi, Moses Galukande, Jeffrey G. Chipman",
+    "title": "Optimizing surgical care delivery in Uganda to address untreated abdominal surgical conditions",
+    "journal": "Annals of Global Health",
+    "year": 2016,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.aogh.2016.04.517",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-aogh-2016-04-429",
+    "authors": "C. Muhumza, Tu M. Tran, Eric Butler, Anthony T. Fuller, Michael M. Haglund, Samuel Luboga, Jeffrey G. Chipman, Moses Galukande, Fredrick Makumbi",
+    "title": "Reproductive health contribution to the burden of surgical conditions in Uganda",
+    "journal": "Annals of Global Health",
+    "year": 2016,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.aogh.2016.04.429",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1089-sur-2016-100",
+    "authors": "Jeffrey G. Chipman, Matthew R. Rosengart, Nabil Issa, Patrick J. O’Neill, Jeffrey S. Upperman",
+    "title": "Surgical Infection Society Curriculum Development Symposium: An Overview",
+    "journal": "Surgical Infections",
+    "year": 2016,
+    "status": "Published",
+    "doi": "https://doi.org/10.1089/sur.2016.100",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/27635470/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-jand-2018-08-098",
+    "authors": "Mateja R. Savoie‐Roskos, Jeffrey G. Chipman, Sarah Keyes",
+    "title": "Increasing Motivational Interviewing Self Efficacy and Perceived Skill Level Among Junior Dietetics Students",
+    "journal": "Journal of the Academy of Nutrition and Dietetics",
+    "year": 2018,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.jand.2018.08.098",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-jamcollsurg-2019-08-1229",
+    "authors": "Carolina Fernández Branson, Matthew C. Bobel, Melissa E. Brunsvold, Jeffrey G. Chipman",
+    "title": "Do Patients’ Expectations of Gendered Communication Unfairly Disadvantage Female Surgeons?",
+    "journal": "Journal of the American College of Surgeons",
+    "year": 2019,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.jamcollsurg.2019.08.1229",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-jamcollsurg-2019-08-270",
+    "authors": "Alexandria Coughlan, Jeffrey G. Chipman, Drew A. Rosielle, Elizabeth R. Lusczek, Tatiana Ditta, Gregory J. Beilman",
+    "title": "Mortality after Elective Surgery: The Potential Role for Palliative Care",
+    "journal": "Journal of the American College of Surgeons",
+    "year": 2019,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.jamcollsurg.2019.08.270",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-jsurg-2019-11-013",
+    "authors": "Matthew C. Bobel, Sarah E. Kemp, Wyatt A. Wagner, Archana Ramaswamy, Jeffrey G. Chipman",
+    "title": "Undergraduate, Nonmedical Students can Pass the FLS Manual Skills Exam With Minimal Practice",
+    "journal": "Journal of surgical education",
+    "year": 2019,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.jsurg.2019.11.013",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/31882238/",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-jamcollsurg-2020-08-517",
+    "authors": "Matthew C. Bobel, Sarah E. Kemp, Victor Vakayil, Mira A. Jurich, Carolina Fernández Branson, Jeffrey G. Chipman, Melissa E. Brunsvold",
+    "title": "Foreign Citizen and Male Surgical Trainees May Be Targets of Bias in Patient Safety Report Citations",
+    "journal": "Journal of the American College of Surgeons",
+    "year": 2020,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.jamcollsurg.2020.08.517",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1007-s44186-023-00152-2",
+    "authors": "Rebecca S. Gates, Brooke C. Bredbeck, Xilin Chen, Brian C. George, Michael Clark, Kayla Marcotte, Angela E. Thelen, Greg Wnuk, Daniel E. Kendrick, David T. Hughes, Paul G. Gauger, Jeffrey G. Chipman, George A. Sarosi, Andrew E. Krumm",
+    "title": "A multi-institutional study of surgical resident entrustability across multiple phases of care",
+    "journal": "Global Surgical Education - Journal of the Association for Surgical Education",
+    "year": 2023,
+    "status": "Published",
+    "doi": "https://doi.org/10.1007/s44186-023-00152-2",
+    "topics": [],
+    "authorSlugs": [
+      "jeff-chipman"
+    ]
+  },
+  {
+    "id": "gen-10-1097-mog-0000000000000458",
+    "authors": "Kendall R. McEachron, Melena D. Bellin",
+    "title": "Total pancreatectomy and islet autotransplantion for chronic and recurrent acute pancreatitis",
+    "journal": "Current Opinion in Gastroenterology",
+    "year": 2018,
+    "status": "Published",
+    "doi": "https://doi.org/10.1097/mog.0000000000000458",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/29901515/",
     "topics": [],
     "authorSlugs": [
       "kendall-mceachron"
     ]
   },
   {
-    "id": "gen-10-1016-j-suronc-2020-11-016",
-    "authors": "Kendall R. McEachron, Jacob S. Ankeny, Alexandria Robbins, Ariella M. Altman, Schelomo Marmor, Donna D'Souza, Robben Schat, Benjamin Spilseth, Eric H. Jensen",
-    "title": "Surgical microwave ablation of otherwise non-resectable colorectal cancer liver metastases: Expanding opportunities for long term survival",
-    "journal": "Surgical Oncology",
-    "year": 2021,
+    "id": "gen-10-1097-pec-0000000000001168",
+    "authors": "Brent D. Bauman, Kendall R. McEachron, Deborah Goldman, Amanda E. Louiselle, Eugene Zheng, David A. Mills, Jeffrey P. Louie, Bradley J. Segura",
+    "title": "Emergency Management of the Ingested Magnet",
+    "journal": "Pediatric Emergency Care",
+    "year": 2017,
     "status": "Published",
-    "doi": "https://doi.org/10.1016/j.suronc.2020.11.016",
+    "doi": "https://doi.org/10.1097/pec.0000000000001168",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/28463948/",
     "topics": [],
     "authorSlugs": [
       "kendall-mceachron"
@@ -1749,12 +5798,13 @@ export const generatedPublications: Publication[] = [
   },
   {
     "id": "gen-10-1111-pedi-13168",
-    "authors": "Kendall R. McEachron, Neha Potlapalli, Arpana Rayannavar, Elissa M. Downs, Sarah J. Schwarzenberg, Varvara A. Kirchner, Gregory J. Beilman, Srinath Chinnakotla, Melena D. Bellin",
+    "authors": "Kendall R. McEachron, Neha Potlapalli, Arpana Rayannavar, Elissa M. Downs, Sarah Jane Schwarzenberg, Varvara A. Kirchner, Gregory J. Beilman, Srinath Chinnakotla, Melena D. Bellin",
     "title": "Early use of continuous glucose monitoring in children and adolescents after total pancreatectomy with islet autotransplantation",
     "journal": "Pediatric Diabetes",
-    "year": 2021,
+    "year": 2020,
     "status": "Published",
     "doi": "https://doi.org/10.1111/pedi.13168",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/33271633/",
     "topics": [],
     "authorSlugs": [
       "kendall-mceachron"
@@ -1767,186 +5817,251 @@ export const generatedPublications: Publication[] = [
     "journal": "Pancreas",
     "year": 2022,
     "status": "Published",
-    "doi": "https://doi.org/10.1097/MPA.0000000000002096",
+    "doi": "https://doi.org/10.1097/mpa.0000000000002096",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/36099525/",
     "topics": [],
     "authorSlugs": [
       "kendall-mceachron"
     ]
   },
   {
-    "id": "gen-10-1136-tsaco-2025-001780",
-    "authors": "Kendall R McEachron, Todd W Costantini",
-    "title": "Invasive and non-invasive monitoring in the ICU",
-    "journal": "Trauma Surgery & Acute Care Open",
-    "year": 2025,
-    "status": "Published",
-    "doi": "https://doi.org/10.1136/tsaco-2025-001780",
-    "topics": [],
-    "authorSlugs": [
-      "kendall-mceachron"
-    ]
-  },
-  {
-    "id": "gen-10-1093-ndt-gfv018",
-    "authors": "Safadi, S., Saad, A., Quint, P.S., Sethi, S., Leung, N., Kurtin, P., Nasr, S.H.",
-    "title": "Disappearance of immunoglobulins from persistent renal amyloid deposits following stem cell transplantation for heavy-and light-chain amyloidosis",
-    "journal": "Nephrology Dialysis Transplantation",
-    "year": 2015,
-    "status": "Published",
-    "doi": "https://doi.org/10.1093/ndt/gfv018",
-    "topics": [],
-    "authorSlugs": [
-      "sami-safadi"
-    ]
-  },
-  {
-    "id": "gen-10-1016-j-pulmoe-2022-05-007",
-    "authors": "M. Ippolito, B. Simone, S. Safadi, E. Spinuzza, T. Catania, G. Ingoglia, M. Milazzo, S.M. Raineri, A. Giarratano, C. Gregoretti, A. Cortegiani",
-    "title": "Effectiveness of a remote simulation training in mechanical ventilation among trainees",
-    "journal": "Pulmonology",
-    "year": 2023,
-    "status": "Published",
-    "doi": "https://doi.org/10.1016/j.pulmoe.2022.05.007",
-    "topics": [],
-    "authorSlugs": [
-      "sami-safadi"
-    ]
-  },
-  {
-    "id": "gen-10-1186-s12947-020-00219-w",
-    "authors": "Aligholizadeh, E., Teeter, W., Patel, R., Hu, P., Fatima, S., Yang, S., Ramani, G., Safadi, S., Olivieri, P., Scalea, T., Murthi, S.",
-    "title": "A novel method of calculating stroke volume using point-of-care echocardiography",
-    "journal": "Cardiovascular Ultrasound",
+    "id": "gen-10-1111-tri-13762",
+    "authors": "Kendall R. McEachron, Yi Yang, James S. Hodges, Gregory J. Beilman, Varvara A. Kirchner, Timothy L. Pruett, Srinath Chinnakotla, Bernhard J. Hering, Melena D. Bellin",
+    "title": "Performance of modified Igls criteria to evaluate islet autograft function after total pancreatectomy with islet autotransplantation – a retrospective study",
+    "journal": "Transplant International",
     "year": 2020,
     "status": "Published",
-    "doi": "https://doi.org/10.1186/s12947-020-00219-w",
+    "doi": "https://doi.org/10.1111/tri.13762",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/33020957/",
     "topics": [],
     "authorSlugs": [
-      "sami-safadi"
+      "kendall-mceachron"
     ]
   },
   {
-    "id": "gen-10-1111-ctr-12482",
-    "authors": "Safadi, S., Dispenzieri, A., Amer, H., Gertz, M.A., Rajkumar, S.V., Hayman, S.R., Lacy, M.Q., Leung, N.",
-    "title": "Multiple myeloma after kidney transplantation",
-    "journal": "Clinical Transplantation",
-    "year": 2015,
+    "id": "gen-10-1097-mpg-0000000000002950",
+    "authors": "Kendall R. McEachron, Elissa M. Downs, Sarah Jane Schwarzenberg, Srinath Chinnakotla, Melena D. Bellin",
+    "title": "Fat‐soluble Vitamin Deficiency is Common in Children With Chronic Pancreatitis Undergoing Total Pancreatectomy With Islet Autotransplantation",
+    "journal": "Journal of Pediatric Gastroenterology and Nutrition",
+    "year": 2020,
     "status": "Published",
-    "doi": "https://doi.org/10.1111/ctr.12482",
+    "doi": "https://doi.org/10.1097/mpg.0000000000002950",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/32960829/",
     "topics": [],
     "authorSlugs": [
-      "sami-safadi"
+      "kendall-mceachron"
     ]
   },
   {
-    "id": "gen-10-34067-kid-0002322021",
-    "authors": "Sami Safadi, Sarah Murthi, Kianoush B. Kashani",
-    "title": "Use of Ultrasound to Assess Hemodynamics in Acutely Ill Patients",
-    "journal": "Kidney360",
+    "id": "gen-10-1016-j-pan-2021-08-013",
+    "authors": "Jillian K. Wothe, Robert Aidoo, Kendall R. McEachron, Tasma Harindhanavudhi, Guru Trikudanathan, Martin L. Freeman, Varvara A. Kirchner, Timothy L. Pruett, Gregory J. Beilman, James S. Hodges, Melena D. Bellin",
+    "title": "Reduced bone mineral density in the first year after total pancreatectomy with islet autotransplantation (TPIAT)",
+    "journal": "Pancreatology",
     "year": 2021,
     "status": "Published",
-    "doi": "https://doi.org/10.34067/KID.0002322021",
+    "doi": "https://doi.org/10.1016/j.pan.2021.08.013",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/34538580/",
     "topics": [],
     "authorSlugs": [
-      "sami-safadi"
+      "kendall-mceachron"
     ]
   },
   {
-    "id": "gen-10-1016-j-ekir-2017-03-003",
-    "authors": "Safadi, S., Albright, R.C., Dillon, J.J., Williams, A.W., Alahdab, F., Brown, J.K., Severson, A.L., Kremers, W.K., Ryan, M.A., Hogan, M.C.",
-    "title": "Prospective Study of Routine Heparin Avoidance Hemodialysis in a Tertiary Acute Care Inpatient Practice",
-    "journal": "Kidney International Reports",
-    "year": 2017,
-    "status": "Published",
-    "doi": "https://doi.org/10.1016/j.ekir.2017.03.003",
-    "topics": [],
-    "authorSlugs": [
-      "sami-safadi"
-    ]
-  },
-  {
-    "id": "gen-10-1016-j-mayocp-2019-06-011",
-    "authors": "Safadi, S., Hommos, M.S., Enders, F.T., Lieske, J.C., Kashani, K.B.",
-    "title": "Risk Factors for Acute Kidney Injury in Hospitalized Non–Critically Ill Patients: A Population-Based Study",
-    "journal": "Mayo Clinic Proceedings",
+    "id": "gen-10-1016-j-suronc-2020-11-016",
+    "authors": "Kendall R. McEachron, Jacob S. Ankeny, Alexandria J. Robbins, Ariella M. Altman, Schelomo Marmor, Donna D’Souza, Robben Schat, Benjamin Spilseth, Eric H. Jensen",
+    "title": "Surgical microwave ablation of otherwise non-resectable colorectal cancer liver metastases: Expanding opportunities for long term survival",
+    "journal": "Surgical Oncology",
     "year": 2020,
     "status": "Published",
-    "doi": "https://doi.org/10.1016/j.mayocp.2019.06.011",
+    "doi": "https://doi.org/10.1016/j.suronc.2020.11.016",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/33316680/",
     "topics": [],
     "authorSlugs": [
-      "sami-safadi"
+      "kendall-mceachron"
     ]
   },
   {
-    "id": "gen-10-3389-fpubh-2019-00244",
-    "authors": "Britton, N., Miller, M.A., Safadi, S., Siegel, A., Levine, A.R., McCurdy, M.T.",
-    "title": "Tele-ultrasound in resource-limited settings: A systematic review",
-    "journal": "Frontiers in Public Health",
+    "id": "gen-10-1111-ctr-13647",
+    "authors": "Kendall R. McEachron, Mariya E. Skube, Yi Yang, James S. Hodges, Joshua J. Wilhelm, Gregory J. Beilman, Srinath Chinnakotla, Sarah Jane Schwarzenberg, Melena D. Bellin",
+    "title": "Utility of arginine stimulation testing in preoperative assessment of children undergoing total pancreatectomy with islet autotransplantation",
+    "journal": "Clinical Transplantation",
     "year": 2019,
     "status": "Published",
-    "doi": "https://doi.org/10.3389/fpubh.2019.00244",
+    "doi": "https://doi.org/10.1111/ctr.13647",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/31230395/",
     "topics": [],
     "authorSlugs": [
-      "sami-safadi"
+      "kendall-mceachron"
     ]
   },
   {
-    "id": "gen-10-1186-s13054-017-1847-2",
-    "authors": "Kashani, K.B., Mao, S.A., Safadi, S., Amiot, B.P., Glorioso, J.M., Lieske, J.C., Nyberg, S.L., Zhang, X.",
-    "title": "Association between kidney intracapsular pressure and ultrasound elastography",
-    "journal": "Critical Care",
-    "year": 2017,
+    "id": "gen-10-2214-ajr-20-23303",
+    "authors": "Alexandria J. Robbins, Stephen Ritter, Matthew Markese, Mariya E. Skube, Kendall R. McEachron, Melena D. Bellin, Mark J. Stice, Gregory J. Beilman, Robben Schat, Benjamin Spilseth",
+    "title": "Atypical Hepatic Steatosis Patterns on MRI After Total Pancreatectomy With Islet Autotransplant",
+    "journal": "American Journal of Roentgenology",
+    "year": 2021,
     "status": "Published",
-    "doi": "https://doi.org/10.1186/s13054-017-1847-2",
+    "doi": "https://doi.org/10.2214/ajr.20.23303",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/33909467/",
     "topics": [],
     "authorSlugs": [
-      "sami-safadi"
+      "kendall-mceachron"
     ]
   },
   {
-    "id": "gen-10-1053-j-jrn-2014-09-003",
-    "authors": "Tucker, B.M., Safadi, S., Friedman, A.N.",
-    "title": "Is routine multivitamin supplementation necessary in US chronic adult hemodialysis patients? A systematic review",
-    "journal": "Journal of Renal Nutrition",
-    "year": 2015,
+    "id": "gen-10-1093-jscr-rjw121",
+    "authors": "Kendall R. McEachron, Wolfgang B. Gaertner",
+    "title": "Extradural sacrococcygeal subcutaneous ependymoma misdiagnosed as pilonidal disease: case report and review of the literature",
+    "journal": "Journal of Surgical Case Reports",
+    "year": 2016,
     "status": "Published",
-    "doi": "https://doi.org/10.1053/j.jrn.2014.09.003",
+    "doi": "https://doi.org/10.1093/jscr/rjw121",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/27432901/",
     "topics": [],
     "authorSlugs": [
-      "sami-safadi"
+      "kendall-mceachron"
     ]
   },
   {
-    "id": "gen-10-2196-15983",
-    "authors": "Tanner Skousen, Hani Safadi, Colleen Young, Elena Karahanna, Sami Safadi, Fouad Chebib",
-    "title": "Successful Moderation in Online Patient Communities: Inductive Case Study",
-    "journal": "Journal of Medical Internet Research",
+    "id": "gen-10-1097-mpa-0000000000001582",
+    "authors": "Kendall R. McEachron, Yi Yang, James S. Hodges, Gregory J. Beilman, Timothy L. Pruett, Varvara A. Kirchner, Ty B. Dunn, Martin L. Freeman, Guru Trikudanathan, Kristine E. Mulier, P. Ptacek, Melena D. Bellin",
+    "title": "Alterations in Enteroendocrine Hormones After Total Pancreatectomy With Islet Autotransplantation",
+    "journal": "Pancreas",
     "year": 2020,
     "status": "Published",
-    "doi": "https://doi.org/10.2196/15983",
+    "doi": "https://doi.org/10.1097/mpa.0000000000001582",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/32541637/",
     "topics": [],
     "authorSlugs": [
-      "sami-safadi"
+      "kendall-mceachron"
     ]
   },
   {
-    "id": "gen-10-1016-j-chest-2025-07-005",
-    "authors": "Sami Safadi, Roxana Amirahmadi, Abdulhakim Tlimat, Randal Rovinski, Junfeng Sun, Burton W. Lee, Nitin Seam, Abdulhakim Tlimat, Bashar Staitieh, Brian J. Clark, Burton W. Lee, Chandra Patel, Christian J. Woods, David C. Chu, Deepa Patel, Jonathan Kalehoff, Katrina Hawkins, Nitin Seam, Sami Safadi, Sandra Zaeh, Stephanie Maximous, Van Holden",
-    "title": "Quality of Human Expert vs Large Language Model-Generated Multiple-Choice Questions in the Field of Mechanical Ventilation",
-    "journal": "CHEST",
-    "year": 2025,
+    "id": "gen-10-1111-ajt-15119",
+    "authors": "Kendall R. McEachron, Gregory J. Beilman, Melena D. Bellin",
+    "title": "Sitagliptin treatment increases GLP-1 without improving diabetes outcomes after total pancreatectomy with islet autotransplantation",
+    "journal": "American Journal of Transplantation",
+    "year": 2018,
     "status": "Published",
-    "doi": "https://doi.org/10.1016/j.chest.2025.07.005",
+    "doi": "https://doi.org/10.1111/ajt.15119",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/30230221/",
     "topics": [],
     "authorSlugs": [
-      "sami-safadi"
+      "kendall-mceachron"
+    ]
+  },
+  {
+    "id": "gen-10-1097-mpa-0000000000001010",
+    "authors": "Kendall R. McEachron, Mary E. Melton, Gregory J. Beilman, Melena D. Bellin",
+    "title": "Psychiatric Comorbidities in Patients Undergoing Total Pancreatectomy With Islet Cell Autotransplantation and Associated Mortality",
+    "journal": "Pancreas",
+    "year": 2018,
+    "status": "Published",
+    "doi": "https://doi.org/10.1097/mpa.0000000000001010",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/29521946/",
+    "topics": [],
+    "authorSlugs": [
+      "kendall-mceachron"
+    ]
+  },
+  {
+    "id": "gen-10-21926-obm-transplant-1901042",
+    "authors": "Alexandria Coughlan, Kendall R. McEachron, Mariya E. Skube, Sydne Muratore, Melena D. Bellin, Gregory J. Beilman",
+    "title": "Where’s Waldo? Extrahepatic Site Options for Islet Transplantation",
+    "journal": "OBM Transplantation",
+    "year": 2019,
+    "status": "Published",
+    "doi": "https://doi.org/10.21926/obm.transplant.1901042",
+    "topics": [],
+    "authorSlugs": [
+      "kendall-mceachron"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-hpb-2020-11-396",
+    "authors": "Kendall R. McEachron, Jacob S. Ankeny, Alexandria J. Robbins, Ariella M. Altman, Schelomo Marmor, Donna D’Souza, Robben Schat, Benjamin Spilseth, Eric H. Jensen",
+    "title": "Minimally Invasive Microwave Ablation of Colorectal Cancer Liver Metastases: A Single Institution Experience with 135 Surgical Ablations",
+    "journal": "HPB",
+    "year": 2021,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.hpb.2020.11.396",
+    "topics": [],
+    "authorSlugs": [
+      "kendall-mceachron"
+    ]
+  },
+  {
+    "id": "gen-10-21037-jgo-21-203",
+    "authors": "Jillian K. Wothe, Kendall R. McEachron, Schelomo Marmor, Jacob S. Ankeny, Christopher J. LaRocca, Benjamin Spilseth, Robben Schat, Eric H. Jensen",
+    "title": "Surgical microwave ablation for multifocal non-resectable liver metastases: a single institution experience treating five or more liver lesions",
+    "journal": "Journal of Gastrointestinal Oncology",
+    "year": 2021,
+    "status": "Published",
+    "doi": "https://doi.org/10.21037/jgo-21-203",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/35070422/",
+    "topics": [],
+    "authorSlugs": [
+      "kendall-mceachron"
+    ]
+  },
+  {
+    "id": "gen-kendall-mceachron-2016-pediatric-ingestion-of-rare-earth",
+    "authors": "Kendall R. McEachron, Brent D. Bauman, Bradley J. Segura",
+    "title": "Pediatric Ingestion of Rare-Earth Magnets: A Growing Problem.",
+    "journal": "PubMed",
+    "year": 2016,
+    "status": "Published",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/27323530/",
+    "topics": [],
+    "authorSlugs": [
+      "kendall-mceachron"
+    ]
+  },
+  {
+    "id": "gen-10-2337-db20-364-or",
+    "authors": "Kendall R. McEachron, Yi Yang, Timothy L. Pruett, Melena D. Bellin",
+    "title": "364-OR: Igls Classification for Islet Autotransplantation",
+    "journal": "Diabetes",
+    "year": 2020,
+    "status": "Published",
+    "doi": "https://doi.org/10.2337/db20-364-or",
+    "topics": [],
+    "authorSlugs": [
+      "kendall-mceachron"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-jamcollsurg-2020-07-510",
+    "authors": "Harika Nalluri, Kendall R. McEachron, Christopher Staley, Melena D. Bellin",
+    "title": "Characterizing the Gut Microbiome in Patients with Chronic Pancreatitis before and after Total Pancreatectomy with Islet Autotransplantation",
+    "journal": "Journal of the American College of Surgeons",
+    "year": 2020,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.jamcollsurg.2020.07.510",
+    "topics": [],
+    "authorSlugs": [
+      "kendall-mceachron"
+    ]
+  },
+  {
+    "id": "gen-10-1097-ta-0000000000005033",
+    "authors": "Todd W. Costantini, Kendall R. McEachron, Walter L. Biffl, Jose Luis Diaz Diaz, Kenji Inaba, David H. Livingston, Lena Napolitano, Ali Salim, Robert Winchell, Raul Coimbra, Minnesota Minneapolis",
+    "title": "Evidence-based, cost-effective management of upper gastrointestinal hemorrhage. An algorithm of the Journal of Trauma and Acute Care Surgery emergency general surgery algorithms work group",
+    "journal": "The Journal of Trauma: Injury, Infection, and Critical Care",
+    "year": 2026,
+    "status": "Published",
+    "doi": "https://doi.org/10.1097/ta.0000000000005033",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/42206861/",
+    "topics": [],
+    "authorSlugs": [
+      "kendall-mceachron"
     ]
   },
   {
     "id": "gen-10-1038-s41467-023-44467-6",
-    "authors": "Debora L. Gisch, Michelle Brennan, Blue B. Lake, Jeannine Basta, Mark S. Keller, Ricardo Melo Ferreira, Shreeram Akilesh, Reetika Ghag, Charles Lu, Ying Hua Cheng, Kimberly S. Collins, Samir V. Parikh, Brad H. Rovin, Lynn Robbins, Lisa Stout, Kimberly Y. Conklin, Dinh Diep, Bo Zhang, Amanda Knoten, Daria Barwinska, Mahla Asghari, Angela R. Sabo, Michael J. Ferkowicz, Timothy A. Sutton, Katherine J. Kelly, Ian H. De Boer, Sylvia E. Rosas, Krzysztof Kiryluk, Jeffrey B. Hodgin, Fadhl Alakwaa, Seth Winfree, Nichole Jefferson, Aydın Türkmen, Joseph P. Gaut, Nils Gehlenborg, Carrie L. Phillips, Tarek M. El-Achkar, Pierre C. Dagher, Takashi Hato, Kun Zhang, Jonathan Himmelfarb, Matthias Kretzler, Shamim Mollah, Blue Lake, Alexander Morales, Isaac Stillman, Stewart Lecker, Steve Bogen, Ashish Verma, Guanghao Yu, Insa Schmidt, Joel Henderson, Laurence Beck, Pranav Yadati, Sushrut Waikar, Afolarin A. Amodu, Shana Maikhor, Titlayo Ilori, Mia R. Colona, Astrid Weins, Gearoid McMahon, Nir Hacohen, Anna Greka, Jamie L. Marshall, Paul J. Hoover, Vidya S. Viswanathan, Dana Crawford, Mark Aulisio, William Bush, Yijiang Chen, Anant Madabhushi, Charles O’Malley, Crystal Gadegbeku, Dianna Sendrey, Emilio Poggio, John O’Toole, John Sedor, Jonathan Taliercio, Lakeshia Bush, Leal Herlitz, Ellen Palmer, Jane Nguyen, Kassandra Spates-Harden, Leslie Cooperman, Stacey Jolly, Carissa Vinovskis, Andrew Bomback, Jonathan Barasch, Krzysztof Kiryluk, Paul Appelbaum, Vivette D’Agati, Cecilia Berrouet, Karla Mehl, Maya Sabatello, Ning Shang, Olivia Balderes, Pietro A. Canetta, Satoru Kudose, Joana de Pinho Gonçalves, Lukasz Migas, Raf Van de Plas, Roy Lardenoije, Laura Barisoni, Helmut Rennke, Abraham Verdoes, Angela Sabo, Debora Lidia Gisch, James Williams, Katherine Kelly, Kenneth Dunn, Michael Eadon, Michael Ferkowicz, Pierre Dagher, Seth Winfree, Sharon Bledsoe, Stephanie Wofford, Tarek Ashkar (El-Achkar), Timothy Sutton, William Bowen, Austen Slade, Elizabeth Record, Yinghua Cheng, Yashvardhan Jain, Bruce Herr, Ellen Quardokus, Ashley Wang, Celia Pamela Corona Villalobos, Chirag Parikh, Mohamed Atta, Steven Menez, Yumeng Wen, Alan Xu, Lauren Bernard, Camille Johansen, Sarah Chen, Sylvia Rosas, Isabel Donohoe, Jennifer Sun, Richard Knight, Anna Shpigel, Jack Bebiak, John Saul, Joseph Ardayfio, Robert Koewler, Roy Pinkeney, Taneisha Campbell, Evren Azeloglu, Girish Nadkarni, John He, Joji Tokita, Kirk Campbell, Marissa Patel, Sean Lefferts, Srinivas Ravi Iyengar, Stephen Ward, Steven Coca, Cijang He, Yuguang Xiong, Pottumarthi Prasad, Brad Rovin, John P. Shapiro, Samir Parikh, Sethu M. Madhavan, Jessica Lukowski, Dusan Velickovic, Ljiljana Pasa-Tolic, George (Holt) Oliver, Olga Troyanskaya, Rachel Sealfon, Weiguang Mao, Aaron Wong, Ari Pollack, Yury Goltsev, Brandon Ginley, Brendon Lutnick, Garry Nolan, Kavya Anjani, Tariq Mukatash, Zoltan G. Laszik, Baltazar Campos, Bijin Thajudeen, David Beyda, Erika Bracamonte, Frank Brosius, Gregory Woodhead, Katherine Mendoza, Nicole Marquez, Raymond Scott, Rebecca Tsosie, Milda Saunders, Adele Rike, E. Steve Woodle, Paul J. Lee, Rita R. Alloway, Tiffany Shi, Elena Hsieh, Jessica Kendrick, Joshua Thurman, Julia Wrobel, Laura Pyle, Petter Bjornstad, Nicholas Lucarelli, Pinaki Sarder, Amada Renteria, Ana Ricardo, Anand Srivastava, Devona Redmond, Eunice Carmona-Powell, James Bui, James Lash, Monica Fox, Natalie Meza, Ron Gaba, Suman Setty, Tanika Kelly, Chrysta Lienczewski, Dawit Demeke, Edgar Otto, Heather Ascani, Jeff Hodgin, Jennifer Schaub, John Hartman, Laura Mariani, Markus Bitzer, Michael Rose, Nikki Bonevich, Ninive Conser, Phillip McCown, Rachel Dull, Rajasree Menon, Rebecca Reamy, Sean Eddy, Ul Balis, Victoria Blanc, Viji Nair, Yongqun Oliver He, Zachary Wright, Becky Steck, Jinghui Luo, Renee Frey, Alyson Coleman, Dorisann Henderson-Brown, Jerica Berge, Maria Luiza Caramori, Oyedele Adeyi, Patrick Nachman, Sami Safadi, Siobhan Flanagan, Sisi Ma, Susan Klett, Susan Wolf, Tasma Harindhanavudhi, Via Rao, Amy Mottl, Anne Froment, Evan Zeitler, Peter Bream, Sara Kelley, Matthew Rosengart, Michele Elder, Paul Palevsky, Raghavan Murugan, Daniel E. Hall, Filitsa Bender, James Winters, John A. Kellum, Matthew Gilliam, Mitchell Tublin, Roderick Tan, Guanshi Zhang, Kumar Sharma, Manjeri Venkatachalam, Allen Hendricks, Asra Kermani, Jose Torrealba, Miguel Vazquez, Nancy Wang, Qi Cai, Richard Tyler Miller, Shihong Ma, Susan Hedayati, Andrew Hoofnagle, Artit Wangperawong, Ashley Berglund, Ashveena L. Dighe, Bessie Young, Brandon Larson, Brooke Berry, Charles Alpers, Christine Limonte, Christy Stutzke, Glenda Roberts, Ian de Boer, Jaime Snyder, Jimmy Phuong, Jonas Carson, Kasra Rezaei, Katherine Tuttle, Keith Brown, Kristina Blank, Natalya Sarkisova, Nichole Jefferson, Robyn McClelland, Sean Mooney, Yunbi Nam, Adam Wilcox, Christopher Park, Frederick Dowd, Kayleen Williams, Stephanie M. Grewenow, Stephen Daniel, Stuart Shankland, Annapurna Pamreddy, Hongping Ye, Richard Montellano, Shweta Bansal, Anil Pillai, Dianbo Zhang, Harold Park, Jiten Patel, Kamalanathan Sambandam, Mujeeb Basit, Natasha Wen, Orson W. Moe, Robert D. Toto, Simon C. Lee, Kavya Sharman, Richard M. Caprioli, Agnes Fogo, Jamie Allen, Jeffrey Spraggins, Katerina Djambazova, Mark de Caestecker, Martin Dufresne, Melissa Farrow, Anitha Vijayan, Brittany Minor, Gerald Nwanne, Joseph Gaut, Kristine Conlon, Madhurima Kaushal, Sabine M. Diettman, Angela M. Victoria Castro, Dennis Moledina, Francis P. Wilson, Gilbert Moeckel, Lloyd Cantley, Melissa Shaw, Vijayakumar Kakade, Tanima Arora, Sanjay Jain, Michael Rauchman, Michael T. Eadon",
+    "authors": "Debora L. Gisch, Michelle Brennan, Blue B. Lake, Jeannine Basta, Mark S. Keller, Ricardo Melo Ferreira, Shreeram Akilesh, Reetika Ghag, Charles Lu, Ying‐Hua Cheng, Kimberly S. Collins, Samir V. Parikh, Brad H. Rovin, Lynn W. Robbins, Lisa Stout, Kimberly Y. Conklin, Dinh Diep, Bo Zhang, Amanda Knoten, Daria Barwinska, Mahla Asghari, Angela R. Sabo, Michael J. Ferkowicz, Timothy A. Sutton, Katherine J. Kelly, Ian H. de Boer, Sylvia E. Rosas, Krzysztof Kiryluk, Jeffrey B. Hodgin, Fadhl Alakwaa",
     "title": "The chromatin landscape of healthy and injured cell types in the human kidney",
-    "journal": "Nature communications",
+    "journal": "Nature Communications",
     "year": 2024,
     "status": "Published",
     "doi": "https://doi.org/10.1038/s41467-023-44467-6",
@@ -1957,22 +6072,9 @@ export const generatedPublications: Publication[] = [
     ]
   },
   {
-    "id": "gen-10-1155-2014-108185",
-    "authors": "Sami Safadi, Michael Mao, John j. Dillon",
-    "title": "Ceftriaxone-Induced Acute Encephalopathy in a Peritoneal Dialysis Patient",
-    "journal": "Case Reports in Nephrology",
-    "year": 2014,
-    "status": "Published",
-    "doi": "https://doi.org/10.1155/2014/108185",
-    "topics": [],
-    "authorSlugs": [
-      "sami-safadi"
-    ]
-  },
-  {
     "id": "gen-10-1053-j-ajkd-2023-08-015",
-    "authors": "Kidney Precision Medicine Project, Tarek M. El-Achkar, Michael T. Eadon, Matthias Kretzler, Jonathan Himmelfarb, Blue Lake, Kun Zhang, Stewart Lecker, Alexander Morales, Steve Bogen, Afolarin A. Amodu, Laurence Beck, Joel Henderson, Titlayo Ilori, Shana Maikhor, Ingrid Onul, Insa Schmidt, Ashish Verma, Sushrut Waikar, Pranav Yadati, Guanghao Yu, Mia R. Colona, Gearoid McMahon, Nir Hacohen, Anna Greka, Paul J. Hoover, Jamie L. Marshall, Mark Aulisio, William Bush, Yijiang Chen, Dana Crawford, Anant Madabhushi, Vidya S. Viswanathan, Lakeshia Bush, Leslie Cooperman, Crystal Gadegbeku, Leal Herlitz, Stacey Jolly, Jane Nguyen, Charles O'Malley, John O'Toole, Ellen Palmer, Emilio Poggio, Kassandra Spates-Harden, John Sedor, Dianna Sendrey, Maria Luiza Caramori, Oyedele Adeyi, Sami Safadi, Susan Wolf, Sami Safadi, Tasma Harindhanavudhi",
-    "title": "Precision Medicine in Nephrology",
+    "authors": "Tarek M. El‐Achkar, Michael T. Eadon, Matthias Kretzler, Jonathan Himmelfarb, Blue B. Lake, Kun Zhang, Stewart H. Lecker, Alexander Morales, Steve Bogen, Afolarin Amodu, Laurence H. Beck, Joel Henderson, Titlayo Ilori, Shana Maikhor, Ingrid Onul, Insa M. Schmidt, Ashish Verma, Sushrut S. Waikar, Pranav Yadati, Guanghao Yu, Mia R. Colona, Gearoid M. McMahon, Nir Hacohen, Anna Greka, Paul Hoover, Jamie L. Marshall, Mark P. Aulisio, William S. Bush, Yijiang Chen, Dana C. Crawford",
+    "title": "Precision Medicine in Nephrology: An Integrative Framework of Multidimensional Data in the Kidney Precision Medicine Project",
     "journal": "American Journal of Kidney Diseases",
     "year": 2023,
     "status": "Published",
@@ -1984,14 +6086,70 @@ export const generatedPublications: Publication[] = [
     ]
   },
   {
-    "id": "gen-10-4187-respcare-12072",
-    "authors": "Sami Safadi, Megan Acho, Stephanie I. Maximous, Michael B. Keller, Eric Kriner, Christian J. Woods, Junfeng Sun, Bashar S. Staitieh, Burton W. Lee",
-    "title": "Comparison of Web-Based and On-Site Lung Simulators for Education in Mechanical Ventilation",
-    "journal": "Respiratory care",
-    "year": 2024,
+    "id": "gen-10-2196-15983",
+    "authors": "Tanner Skousen, Hani Safadi, Colleen Young, Elena Karahanna, Sami Safadi, Fouad T. Chebib",
+    "title": "Successful Moderation in Online Patient Communities: Inductive Case Study",
+    "journal": "Journal of Medical Internet Research",
+    "year": 2019,
     "status": "Published",
-    "doi": "https://doi.org/10.4187/respcare.12072",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/39379159/",
+    "doi": "https://doi.org/10.2196/15983",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/32181743/",
+    "topics": [],
+    "authorSlugs": [
+      "sami-safadi"
+    ]
+  },
+  {
+    "id": "gen-10-1093-ndt-gfv018",
+    "authors": "Sami Safadi, Ahmed Saad, Patrick Quint, Sanjeev Sethi, Nelson Leung, Paul J. Kurtin, Samih H. Nasr",
+    "title": "Disappearance of immunoglobulins from persistent renal amyloid deposits following stem cell transplantation for heavy-and light-chain amyloidosis",
+    "journal": "Nephrology Dialysis Transplantation",
+    "year": 2015,
+    "status": "Published",
+    "doi": "https://doi.org/10.1093/ndt/gfv018",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/25796445/",
+    "topics": [],
+    "authorSlugs": [
+      "sami-safadi"
+    ]
+  },
+  {
+    "id": "gen-10-1111-ctr-12482",
+    "authors": "Sami Safadi, Angela Dispenzieri, Hatem Amer, Morie A. Gertz, S. Vincent Rajkumar, Suzanne R. Hayman, Martha Q. Lacy, Nelson Leung",
+    "title": "Multiple myeloma after kidney transplantation",
+    "journal": "Clinical Transplantation",
+    "year": 2014,
+    "status": "Published",
+    "doi": "https://doi.org/10.1111/ctr.12482",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/25377159/",
+    "topics": [],
+    "authorSlugs": [
+      "sami-safadi"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-mayocp-2019-06-011",
+    "authors": "Sami Safadi, Musab S. Hommos, Felicity Enders, John C. Lieske, Kianoush Kashani",
+    "title": "Risk Factors for Acute Kidney Injury in Hospitalized Non–Critically Ill Patients: A Population-Based Study",
+    "journal": "Mayo Clinic Proceedings",
+    "year": 2020,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.mayocp.2019.06.011",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/32008812/",
+    "topics": [],
+    "authorSlugs": [
+      "sami-safadi"
+    ]
+  },
+  {
+    "id": "gen-10-34067-kid-0002322021",
+    "authors": "Sami Safadi, Sarah B. Murthi, Kianoush Kashani",
+    "title": "Use of Ultrasound to Assess Hemodynamics in Acutely Ill Patients",
+    "journal": "Kidney360",
+    "year": 2021,
+    "status": "Published",
+    "doi": "https://doi.org/10.34067/kid.0002322021",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/35369668/",
     "topics": [],
     "authorSlugs": [
       "sami-safadi"
@@ -1999,9 +6157,9 @@ export const generatedPublications: Publication[] = [
   },
   {
     "id": "gen-10-1089-respcare-12540",
-    "authors": "Abdulhakim Tlimat, Cosmo Fowler, Sami Safadi, Robert B. Johnson, Sandeep Bodduluri, Peter Morris, Surya P. Bhatt",
-    "title": "Artificial Intelligence for the Detection of Patient– Ventilator Asynchrony",
-    "journal": "Respiratory care",
+    "authors": "Abdulhakim Tlimat, Cosmo Fowler, Sami Safadi, Robert B. Johnson, Sandeep Bodduluri, Peter E. Morris, Peter Morris, Surya Prakash Bhatt, Surya Prakash Bhatt",
+    "title": "Artificial Intelligence for the Detection of Patient–Ventilator Asynchrony",
+    "journal": "Respiratory Care",
     "year": 2025,
     "status": "Published",
     "doi": "https://doi.org/10.1089/respcare.12540",
@@ -2012,8 +6170,105 @@ export const generatedPublications: Publication[] = [
     ]
   },
   {
+    "id": "gen-10-1016-j-chest-2025-07-005",
+    "authors": "Sami Safadi, Sami Safadi, R. Amirahmadi, Abdulhakim Tlimat, Randal Rovinski, Junfeng Sun, Burton W. Lee, Nitin Seam, Abdulhakim Tlimat, Bashar Staitieh, Brian J. Clark, Burton W. Lee, Chandra Patel, Christian J. Woods, David C. Chu, Deepa Patel, Jonathan Kalehoff, Katrina Hawkins, Nitin Seam, Sami Safadi, Sami Safadi, Sandra Zaeh, Stephanie Maximous, Van Holden",
+    "title": "Quality of Human Expert vs Large Language Model-Generated Multiple-Choice Questions in the Field of Mechanical Ventilation",
+    "journal": "CHEST Journal",
+    "year": 2025,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.chest.2025.07.005",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/40684906/",
+    "topics": [],
+    "authorSlugs": [
+      "sami-safadi"
+    ]
+  },
+  {
+    "id": "gen-10-1155-2014-108185",
+    "authors": "Sami Safadi, Michael A. Mao, John Dillon",
+    "title": "Ceftriaxone-Induced Acute Encephalopathy in a Peritoneal Dialysis Patient",
+    "journal": "Case Reports in Nephrology",
+    "year": 2014,
+    "status": "Published",
+    "doi": "https://doi.org/10.1155/2014/108185",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/25544915/",
+    "topics": [],
+    "authorSlugs": [
+      "sami-safadi"
+    ]
+  },
+  {
+    "id": "gen-10-1186-s13054-017-1847-2",
+    "authors": "Kianoush Kashani, Shennen A. Mao, Sami Safadi, Bruce Amiot, Jaime Glorioso, John C. Lieske, Scott L. Nyberg, Xiaoming Zhang",
+    "title": "Association between kidney intracapsular pressure and ultrasound elastography",
+    "journal": "Critical Care",
+    "year": 2017,
+    "status": "Published",
+    "doi": "https://doi.org/10.1186/s13054-017-1847-2",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/29047410/",
+    "topics": [],
+    "authorSlugs": [
+      "sami-safadi"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-ekir-2017-03-003",
+    "authors": "Sami Safadi, Robert C. Albright, John Dillon, Amy W. Williams, Fares Alahdab, Julie Brown, Amanda L. Severson, Walter K. Kremers, Mary Ann Ryan, Marie C. Hogan",
+    "title": "Prospective Study of Routine Heparin Avoidance Hemodialysis in a Tertiary Acute Care Inpatient Practice",
+    "journal": "Kidney International Reports",
+    "year": 2017,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.ekir.2017.03.003",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/29142987/",
+    "topics": [],
+    "authorSlugs": [
+      "sami-safadi"
+    ]
+  },
+  {
+    "id": "gen-10-1186-s12947-020-00219-w",
+    "authors": "Ehson Aligholizadeh, William Teeter, Rajan Patel, Peter Hu, Syeda Fatima, Shiming Yang, Gautam Ramani, Sami Safadi, P Olivieri, Thomas M. Scalea, Sarah B. Murthi",
+    "title": "A novel method of calculating stroke volume using point-of-care echocardiography",
+    "journal": "Cardiovascular Ultrasound",
+    "year": 2020,
+    "status": "Published",
+    "doi": "https://doi.org/10.1186/s12947-020-00219-w",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/32819371/",
+    "topics": [],
+    "authorSlugs": [
+      "sami-safadi"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-pulmoe-2022-05-007",
+    "authors": "Mariachiara Ippolito, Barbara Simone, Sami Safadi, Elisabetta Spinuzza, T. Catania, Giulia Ingoglia, Mario Milazzo, Santi Maurizio Raineri, Antonino Giarratano, Cesare Gregoretti, Andrea Cortegiani",
+    "title": "Effectiveness of a remote simulation training in mechanical ventilation among trainees",
+    "journal": "Pulmonology",
+    "year": 2022,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.pulmoe.2022.05.007",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/35963833/",
+    "topics": [],
+    "authorSlugs": [
+      "sami-safadi"
+    ]
+  },
+  {
+    "id": "gen-10-18848-2327-7920-cgp-v28i01-79-97",
+    "authors": "Sami Safadi, Dimitrios Vlachopoulos",
+    "title": "Understanding Faculty Perceptions of Quality Assurance in Saudi Higher Education",
+    "journal": "The International Journal of Assessment and Evaluation",
+    "year": 2021,
+    "status": "Published",
+    "doi": "https://doi.org/10.18848/2327-7920/cgp/v28i01/79-97",
+    "topics": [],
+    "authorSlugs": [
+      "sami-safadi"
+    ]
+  },
+  {
     "id": "gen-10-1007-s40620-024-01950-7",
-    "authors": "Sami Safadi, Musab S. Hommos, Charat Thongprayoon, Callen D. Giesen, Michael Bernaba, Kianoush B. Kashani, John C. Lieske",
+    "authors": "Sami Safadi, Musab S. Hommos, Charat Thongprayoon, Callen D. Giesen, Michael Bernaba, Kianoush Kashani, John C. Lieske",
     "title": "The role of biomarkers in early identification of acute kidney injury among non-critically ill patients",
     "journal": "Journal of Nephrology",
     "year": 2024,
@@ -2026,14 +6281,53 @@ export const generatedPublications: Publication[] = [
     ]
   },
   {
-    "id": "gen-10-2215-cjn-0000000000000276",
-    "authors": "Kidney Precision Medicine Project, Michael J. Ferkowicz, Ashish Verma, Daria Barwinska, Ricardo Melo Ferreira, Joel M. Henderson, Mary Kirkpatrick, Paolo S. Silva, Devin W. Steenkamp, Carrie L. Phillips, Sushrut S. Waikar, Timothy A. Sutton, Blue Lake, Kun Zhang, Stewart Lecker, Alexander Morales, Isaac Stillman, Steve Bogen, Afolarin A. Amodu, Laurence Beck, Joel Henderson, Titlayo Ilori, Shana Maikhor, Ingrid Onul, Insa Schmidt, Ashish Verma, Sushrut Waikar, Pranav Yadati, Guanghao Yu, Mia R. Colona, Gearoid McMahon, Astrid Weins, Nir Hacohen, Anna Greka, Paul J. Hoover, Jamie L. Marshall, Mark Aulisio, William Bush, Yijiang Chen, Dana Crawford, Anant Madabhushi, Vidya S. Viswanathan, Lakeshia Bush, Jerica Berge, Oyedele Adeyi, Patrick Nachman, Sami Safadi, Siobhan Flanagan, Sisi Ma, Susan Wolf, Tasma Harindhanavudhi",
-    "title": "Molecular Signatures of Glomerular Neovascularization in a Patient with Diabetic Kidney Disease",
-    "journal": "Clinical Journal of the American Society of Nephrology",
+    "id": "gen-10-4187-respcare-12072",
+    "authors": "Sami Safadi, Megan Acho, S. Maximous, Michael B. Keller, Eric Kriner, Christian Woods, Junfeng Sun, Bashar S. Staitieh, Burton W. Lee, Nitin Seam",
+    "title": "Comparison of Web-Based and On-Site Lung Simulators for Education in Mechanical Ventilation",
+    "journal": "Respiratory Care",
     "year": 2024,
     "status": "Published",
-    "doi": "https://doi.org/10.2215/CJN.0000000000000276",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/37533147/",
+    "doi": "https://doi.org/10.4187/respcare.12072",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/39379159/",
+    "topics": [],
+    "authorSlugs": [
+      "sami-safadi"
+    ]
+  },
+  {
+    "id": "gen-10-1681-asn-20250jx18kpk",
+    "authors": "I. Ismail, Patrick H. Nachman, Peter E. Thorne, Milen Saurin Patel, Sami Safadi",
+    "title": "Predictors of 24-Hour Sodium Correction in Moderate to Severe Hyponatremia",
+    "journal": "Journal of the American Society of Nephrology",
+    "year": 2025,
+    "status": "Published",
+    "doi": "https://doi.org/10.1681/asn.20250jx18kpk",
+    "topics": [],
+    "authorSlugs": [
+      "sami-safadi"
+    ]
+  },
+  {
+    "id": "gen-10-1681-asn-2025zp61zqt4",
+    "authors": "Milen Saurin Patel, Patrick H. Nachman, Peter E. Thorne, Ibrahim Ismail, Sami Safadi",
+    "title": "Serum Sodium Variation Associated with Increased Mortality in Hospitalized Patients with Moderate to Severe Hyponatremia",
+    "journal": "Journal of the American Society of Nephrology",
+    "year": 2025,
+    "status": "Published",
+    "doi": "https://doi.org/10.1681/asn.2025zp61zqt4",
+    "topics": [],
+    "authorSlugs": [
+      "sami-safadi"
+    ]
+  },
+  {
+    "id": "gen-10-1681-asn-20258t5evzx8",
+    "authors": "Erica Loon, Thomas M. Leventhal, Rich Evans, Ibrahim Ismail, Sami Safadi",
+    "title": "Association Between Hypotension and AKI in Hospitalized Patients with Cirrhosis",
+    "journal": "Journal of the American Society of Nephrology",
+    "year": 2025,
+    "status": "Published",
+    "doi": "https://doi.org/10.1681/asn.20258t5evzx8",
     "topics": [],
     "authorSlugs": [
       "sami-safadi"
@@ -2041,7 +6335,7 @@ export const generatedPublications: Publication[] = [
   },
   {
     "id": "gen-10-1093-atsscholar-aapaf008",
-    "authors": "the Critical Care Education Research Consortium, Roxana Amirahmadi, Muhtadi Alnababteh, Michael Keller, Junfeng Sun, Kavitha Bagavathy, Sami Safadi, Bashar S. Staitieh, Stephanie I. Maximous, Eric Kriner, Christian J. Woods, Emil Oweis, Matthew P. Schreiber, Nitin Seam, Burton W. Lee, Abdulhakim Tlimat, Brian J. Clark, Chandra Patel, David C. Chu, Deepa Patel, Jonathan Kalehoff, Katrina Hawkins, Sandra Zaeh, Van Holden",
+    "authors": "Roxana Amirahmadi, Muhtadi Alnababteh, Michael Keller, Junfeng Sun, Kavitha Bagavathy, Sami Safadi, Bashar S Staitieh, S. Maximous, Eric Kriner, Christian Woods, Emil Oweis, Matthew P. Schreiber, N. Seam, Burton W. Lee, Abdulhakim Tlimat, Brian J Clark, Chandra Patel, David C Chu, Deepa Patel, Jonathan Kalehoff, Katrina Hawkins, Sandra Zaeh, Van Holden",
     "title": "Ventilator waveform interpretation skills of attending intensivists relative to critical care fellows (VISA) study",
     "journal": "ATS Scholar",
     "year": 2026,
@@ -2054,26 +6348,224 @@ export const generatedPublications: Publication[] = [
     ]
   },
   {
-    "id": "gen-10-1016-j-chest-2023-11-025",
-    "authors": "Anne C. Melzer, Abbie Begnaud",
-    "title": "Planting the Seeds for Lung Cancer Screening Starts With Knowledge Holders",
-    "journal": "CHEST",
-    "year": 2024,
+    "id": "gen-10-1186-s12947-026-00373-7",
+    "authors": "Sarah Balderston Murthi, Shiming Yang, Peter P. Oliveri, Sami Safadi, Sydea Fatima, William Teeter",
+    "title": "Computer modeling to improve measurement of stroke volume with echocardiography",
+    "journal": "Cardiovascular Ultrasound",
+    "year": 2026,
     "status": "Published",
-    "doi": "https://doi.org/10.1016/j.chest.2023.11.025",
+    "doi": "https://doi.org/10.1186/s12947-026-00373-7",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/42402581/",
+    "topics": [],
+    "authorSlugs": [
+      "sami-safadi"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-jaci-2018-04-010",
+    "authors": "Jeong H. Yun, Andrew Lamb, Robert Chase, Dave Singh, Margaret M. Parker, Aabida Saferali, Jørgen Vestbo, Ruth Tal‐Singer, Peter J. Castaldi, Edwin K. Silverman, Craig P. Hersh, Craig P. Hersh, James D. Crapo, Edwin K. Silverman, Barry J. Make, Elizabeth A. Regan, Terri H. Beaty, Ferdouse Begum, Robert Busch, Peter J. Castaldi, Michael Cho, Dawn L. DeMeo, Adel R. Boueiz, Marilyn G. Foreman, Eitan Halper‐Stromberg, Nadia N. Hansel, Megan Hardin, Lystra P. Hayden, Craig P. Hersh, Craig P. Hersh",
+    "title": "Blood eosinophil count thresholds and exacerbations in patients with chronic obstructive pulmonary disease",
+    "journal": "Journal of Allergy and Clinical Immunology",
+    "year": 2018,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.jaci.2018.04.010",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/29709670/",
     "topics": [],
     "authorSlugs": [
       "abbie-begnaud"
     ]
   },
   {
-    "id": "gen-10-1164-rccm-202212-2216st",
-    "authors": "Katrina Steiling, Hasmeena Kathuria, Chidiebere Peter Echieh, David E. Ost, M. Patricia Rivera, Abbie Begnaud, Juan C. Celedón, Marjory Charlot, Frank Dietrick, Narjust Duma, Kwun M. Fong, Jean G. Ford, Michael K. Gould, Fernando Holguin, Eliseo J. Pérez-Stable, Nichole T. Tanner, Carey Conley Thomson, Renda Soylemez Wiener, Juan Wisnivesky",
-    "title": "Research Priorities for Interventions to Address Health Disparities in Lung Nodule Management: An Official American Thoracic Society Research Statement",
+    "id": "gen-10-1164-rccm-201705-0909ci",
+    "authors": "Anne M. Joseph, Alexander J. Rothman, Daniel Almirall, Abbie Begnaud, Caroline Chiles, Paul M. Cinciripini, Steven S. Fu, Amanda L. Graham, Bruce R. Lindgren, Anne C. Melzer, Jamie S. Ostroff, Elizabeth L. Seaman, Kathryn L. Taylor, Benjamin A. Toll, Steven B. Zeliadt, David M. Vock",
+    "title": "Lung Cancer Screening and Smoking Cessation Clinical Trials. SCALE (Smoking Cessation within the Context of Lung Cancer Screening) Collaboration",
     "journal": "American Journal of Respiratory and Critical Care Medicine",
+    "year": 2017,
+    "status": "Published",
+    "doi": "https://doi.org/10.1164/rccm.201705-0909ci",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/28977754/",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-chest-2021-01-084",
+    "authors": "Carrie L. Pistenmaa, Pietro Nardelli, Samuel Y. Ash, C.E. Come, Alejandro A. Díaz, Farbod N. Rahaghi, R. Graham Barr, Kendra A. Young, Gregory L. Kinney, J.P. Simmons, R. Chad Wade, J. Michael Wells, John E. Hokanson, George R. Washko, Raúl San Jośe Estépar, James D. Crapo, Edwin K. Silverman, Barry J. Make, Elizabeth A. Regan, Terri H. Beaty, Peter J. Castaldi, Michael H. Cho, Dawn L. DeMeo, Adel Boueiz, Marilyn G. Foreman, Auyon Ghosh, Lystra P. Hayden, Craig P. Hersh, Jacqueline B. Hetmanski, Brian D. Hobbs",
+    "title": "Pulmonary Arterial Pruning and Longitudinal Change in Percent Emphysema and Lung Function",
+    "journal": "CHEST Journal",
+    "year": 2021,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.chest.2021.01.084",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/33607083/",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1001-jamanetworkopen-2023-29903",
+    "authors": "Steven S. Fu, Alexander J. Rothman, David M. Vock, Bruce R. Lindgren, Daniel Almirall, Abbie Begnaud, Anne C. Melzer, Kelsey Schertz, Mariah Branson, David Haynes, Patrick Hammett, Anne M. Joseph",
+    "title": "Optimizing Longitudinal Tobacco Cessation Treatment in Lung Cancer Screening",
+    "journal": "JAMA Network Open",
     "year": 2023,
     "status": "Published",
-    "doi": "https://doi.org/10.1164/rccm.202212-2216ST",
+    "doi": "https://doi.org/10.1001/jamanetworkopen.2023.29903",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/37615989/",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1164-rccm-202501-0011st",
+    "authors": "Louise M. Henderson, Roger Y. Kim, Nichole T. Tanner, Emily B. Tsai, Abbie Begnaud, Farouk Dako, Michael Gieske, Kimberly Kallianos, Ilana B. Richman, Lori C. Sakoda, Ronald G. Schwartz, Joseph Yeboah, Kwun M. Fong, Stephen Lam, Pyng Lee, Mary Pasquinelli, Robert A. Smith, Matthew Triplette, L.T. Tanoue, M. Patricia Rivera",
+    "title": "Lung Cancer Screening and Incidental Findings: A Research Agenda: An Official American Thoracic Society Research Statement",
+    "journal": "American Journal of Respiratory and Critical Care Medicine",
+    "year": 2025,
+    "status": "Published",
+    "doi": "https://doi.org/10.1164/rccm.202501-0011st",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/39928329/",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-chest-2019-03-041",
+    "authors": "V. Kim, Huaqing Zhao, Elizabeth A. Regan, MeiLan K. Han, Barry J. Make, James D. Crapo, Paul Jones, Jeffrey L. Curtis, Edwin K. Silverman, Gerard J. Criner, James D. Crapo, Edwin K. Silverman, Barry J. Make, Elizabeth A. Regan, Terri H. Beaty, Ferdouse Begum, Robert Busch, Peter J. Castaldi, Michael Cho, Dawn L. DeMeo, Adel R. Boueiz, Marilyn G. Foreman, Eitan Halper‐Stromberg, Nadia N. Hansel, Megan Hardin, Lystra P. Hayden, Craig P. Hersh, Jacqueline B. Hetmanski, Brian D. Hobbs, John E. Hokanson",
+    "title": "The St. George’s Respiratory Questionnaire Definition of Chronic Bronchitis May Be a Better Predictor of COPD Exacerbations Compared With the Classic Definition",
+    "journal": "CHEST Journal",
+    "year": 2019,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.chest.2019.03.041",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/31047955/",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-cct-2017-07-002",
+    "authors": "Steven S. Fu, Alexander J. Rothman, David M. Vock, Bruce R. Lindgren, Daniel Almirall, Abbie Begnaud, Anne C. Melzer, Kelsey Schertz, Susan Glaeser, Patrick Hammett, Anne M. Joseph",
+    "title": "Program for lung cancer screening and tobacco cessation: Study protocol of a sequential, multiple assignment, randomized trial",
+    "journal": "Contemporary Clinical Trials",
+    "year": 2017,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.cct.2017.07.002",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/28687349/",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-lungcan-2015-10-009",
+    "authors": "Hiren J. Mehta, Abbie Begnaud, Andrea M. Penley, John Wynne, Paras Malhotra, Sebastián Fernández-Bussy, Jessica M. Cope, Jonathan J. Shuster, Michael A. Jantz",
+    "title": "Treatment of isolated mediastinal and hilar recurrence of lung cancer with bronchoscopic endobronchial ultrasound guided intratumoral injection of chemotherapy with cisplatin",
+    "journal": "Lung Cancer",
+    "year": 2015,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.lungcan.2015.10.009",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/26477968/",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1513-annalsats-201503-131oc",
+    "authors": "Hiren J. Mehta, Abbie Begnaud, Andrea M. Penley, John Wynne, Paras Malhotra, Sebastián Fernández-Bussy, Jessica Cope, Jonathan J. Shuster, Michael A. Jantz",
+    "title": "Restoration of Patency to Central Airways Occluded by Malignant Endobronchial Tumors Using Intratumoral Injection of Cisplatin",
+    "journal": "Annals of the American Thoracic Society",
+    "year": 2015,
+    "status": "Published",
+    "doi": "https://doi.org/10.1513/annalsats.201503-131oc",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/26072968/",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1186-s12931-022-02013-w",
+    "authors": "Auyon Ghosh, Brian D. Hobbs, Jeong H. Yun, Aabida Saferali, Matthew Moll, Zhonghui Xu, Robert Chase, Jarrett D. Morrow, John Ziniti, Frank C. Sciurba, Lucas Barwick, Andrew H. Limper, Kevin R. Flaherty, Gerard J. Criner, Kevin K. Brown, Robert A. Wise, Fernando J. Martínez, Daniel McGoldrick, Michael H. Cho, Dawn L. DeMeo, Edwin K. Silverman, Peter J. Castaldi, James D. Crapo, Edwin K. Silverman, Barry J. Make, Elizabeth A. Regan, Terri H. Beaty, Ferdouse Begum, Peter J. Castaldi, Michael H. Cho",
+    "title": "Lung tissue shows divergent gene expression between chronic obstructive pulmonary disease and idiopathic pulmonary fibrosis",
+    "journal": "Respiratory Research",
+    "year": 2022,
+    "status": "Published",
+    "doi": "https://doi.org/10.1186/s12931-022-02013-w",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/35449067/",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1513-annalsats-201812-908rl",
+    "authors": "Katherine Janssen, Kelsey Schertz, Nathan Rubin, Abbie Begnaud",
+    "title": "Incidental Findings in a Decentralized Lung Cancer Screening Program",
+    "journal": "Annals of the American Thoracic Society",
+    "year": 2019,
+    "status": "Published",
+    "doi": "https://doi.org/10.1513/annalsats.201812-908rl",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/31251089/",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-chest-2021-04-066",
+    "authors": "Divay Chandra, Aman Gupta, Gregory L. Kinney, Carl R. Fuhrman, Joseph K. Leader, Alejandro A. Díaz, Jessica Bon, R. Graham Barr, George R. Washko, Matthew J. Budoff, John E. Hokanson, Frank C. Sciurba, James D. Crapo, Edwin K. Silverman, Barry J. Make, Elizabeth A. Regan, Terri H. Beaty, Ferdouse Begum, Adel R. Boueiz, Peter J. Castaldi, Michael Cho, Dawn L. DeMeo, Marilyn G. Foreman, Eitan Halper‐Stromberg, Lystra P. Hayden, Craig P. Hersh, Jacqueline B. Hetmanski, Brian D. Hobbs, John E. Hokanson, Nan M. Laird",
+    "title": "The Association Between Lung Hyperinflation and Coronary Artery Disease in Smokers",
+    "journal": "CHEST Journal",
+    "year": 2021,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.chest.2021.04.066",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/33971144/",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-chest-2021-05-007",
+    "authors": "Vickram Tejwani, Ashraf Fawzy, Nirupama Putcha, Peter J. Castaldi, Michael H. Cho, Katherine Pratte, Surya P. Bhatt, David A. Lynch, Stephen M. Humphries, Gregory L. Kinney, Franco R. D’Alessio, Nadia N. Hansel, James D. Crapo, Edwin K. Silverman, Barry J. Make, Elizabeth A. Regan, Terri H. Beaty, Ferdouse Begum, Peter J. Castaldi, Michael H. Cho, Dawn L. DeMeo, Adel R. Boueiz, Marilyn G. Foreman, Eitan Halper‐Stromberg, Lystra P. Hayden, Craig P. Hersh, Jacqueline B. Hetmanski, Brian D. Hobbs, John E. Hokanson, Nan M. Laird",
+    "title": "Emphysema Progression and Lung Function Decline Among Angiotensin Converting Enzyme Inhibitors and Angiotensin-Receptor Blockade Users in the COPDGene Cohort",
+    "journal": "CHEST Journal",
+    "year": 2021,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.chest.2021.05.007",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/34029566/",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1161-jaha-123-033882",
+    "authors": "Han‐Mo Yang, Min Hyung Ryu, Vincent J. Carey, Gregory L. Kinney, John E. Hokanson, Mark T. Dransfield, Craig P. Hersh, Edwin K. Silverman, James D. Crapo, Edwin K. Silverman, Barry J. Make, Elizabeth A. Regan, Terri H. Beaty, Peter J. Castaldi, Michael H. Cho, Dawn L. DeMeo, Adel Boueiz, Marilyn G. Foreman, Auyon Ghosh, Lystra P. Hayden, Craig P. Hersh, Jacqueline B. Hetmanski, Brian D. Hobbs, John E. Hokanson, Wonji Kim, Nan M. Laird, Christoph Lange, Sharon M. Lutz, Merry‐Lynn McDonald, Dmitry Prokopenko",
+    "title": "Chronic Obstructive Pulmonary Disease Exacerbations Increase the Risk of Subsequent Cardiovascular Events: A Longitudinal Analysis of the COPDGene Study",
+    "journal": "Journal of the American Heart Association",
+    "year": 2024,
+    "status": "Published",
+    "doi": "https://doi.org/10.1161/jaha.123.033882",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/38818936/",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1200-cci-17-00033",
+    "authors": "Abbie Begnaud, Anne M. Joseph, Bruce R. Lindgren",
+    "title": "Randomized Electronic Promotion of Lung Cancer Screening: A Pilot",
+    "journal": "JCO Clinical Cancer Informatics",
+    "year": 2017,
+    "status": "Published",
+    "doi": "https://doi.org/10.1200/cci.17.00033",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/30657381/",
     "topics": [],
     "authorSlugs": [
       "abbie-begnaud"
@@ -2086,85 +6578,202 @@ export const generatedPublications: Publication[] = [
     "journal": "Cancer Prevention Research",
     "year": 2023,
     "status": "Published",
-    "doi": "https://doi.org/10.1158/1940-6207.CAPR-22-0314",
+    "doi": "https://doi.org/10.1158/1940-6207.capr-22-0314",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/36630997/",
     "topics": [],
     "authorSlugs": [
       "abbie-begnaud"
     ]
   },
   {
-    "id": "gen-10-1158-1940-6207-22495161",
-    "authors": "Madison D. Anderson, Wyatt J. Pickner, Abbie Begnaud",
-    "title": "Supplementary Materials 2 from Determinants of Lung Cancer Screening in a Minnesota Urban Indigenous Community: A Community-Based, Participatory, Action-Oriented Study",
-    "journal": "",
+    "id": "gen-10-1016-j-rmed-2023-107126",
+    "authors": "Thuonghien V. Tran, Gregory L. Kinney, Alejandro P. Comellas, Karin F. Hoth, Arianne K. Baldomero, A. James Mamary, Jeffrey L. Curtis, Nicola A. Hanania, Richard Casaburi, Kendra A. Young, V. Kim, Barry J. Make, Emily S. Wan, Alejandro A. Díaz, John E. Hokanson, James D. Crapo, Edwin K. Silverman, Surya P. Bhatt, Elizabeth A. Regan, Spyridon Fortis, James D. Crapo, Edwin K. Silverman, Barry J. Make, Elizabeth A. Regan, Terri H. Beaty, Peter J. Castaldi, Michael H. Cho, Dawn L. DeMeo, Adel Boueiz, Marilyn G. Foreman",
+    "title": "Prevalence of abnormal spirometry in individuals with a smoking history and no known obstructive lung disease",
+    "journal": "Respiratory Medicine",
     "year": 2023,
     "status": "Published",
-    "doi": "https://doi.org/10.1158/1940-6207.22495161",
+    "doi": "https://doi.org/10.1016/j.rmed.2023.107126",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/36717002/",
     "topics": [],
     "authorSlugs": [
       "abbie-begnaud"
     ]
   },
   {
-    "id": "gen-10-1158-1940-6207-22495158",
-    "authors": "Madison D. Anderson, Wyatt J. Pickner, Abbie Begnaud",
-    "title": "Supplementary Materials 3 from Determinants of Lung Cancer Screening in a Minnesota Urban Indigenous Community: A Community-Based, Participatory, Action-Oriented Study",
-    "journal": "",
+    "id": "gen-10-1378-chest-14-0823",
+    "authors": "Hiren J. Mehta, Paras Malhotra, Abbie Begnaud, Andrea M. Penley, Michael A. Jantz",
+    "title": "Treatment of Alveolar-Pleural Fistula With Endobronchial Application of Synthetic Hydrogel",
+    "journal": "CHEST Journal",
+    "year": 2014,
+    "status": "Published",
+    "doi": "https://doi.org/10.1378/chest.14-0823",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/25057803/",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1513-annalsats-201406-268oc",
+    "authors": "Abbie Begnaud, John E. Connett, Eileen M. Harwood, Michael A. Jantz, Hiren J. Mehta",
+    "title": "Measuring Central Airway Obstruction. What Do Bronchoscopists Do?",
+    "journal": "Annals of the American Thoracic Society",
+    "year": 2014,
+    "status": "Published",
+    "doi": "https://doi.org/10.1513/annalsats.201406-268oc",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/25514623/",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1200-edbk-159195",
+    "authors": "Abbie Begnaud, Thomas Hall, Tadashi Allen",
+    "title": "Lung Cancer Screening With Low-Dose CT: Implementation Amid Changing Public Policy at One Health Care System",
+    "journal": "American Society of Clinical Oncology Educational Book",
+    "year": 2016,
+    "status": "Published",
+    "doi": "https://doi.org/10.1200/edbk_159195",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-2217-pme-2020-0130",
+    "authors": "Dana Mowls Carroll, Carol Hernandez, Greg Braaten, Ellen Meier, Pamala A. Jacobson, Abbie Begnaud, Erin McGonagle, Linda Bane Frizzell, Dorothy K. Hatsukami",
+    "title": "Recommendations to Researchers for Aiding in Increasing American Indian Representation in Genetic Research and Personalized Medicine",
+    "journal": "Personalized Medicine",
+    "year": 2020,
+    "status": "Published",
+    "doi": "https://doi.org/10.2217/pme-2020-0130",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/33332195/",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-cllc-2019-10-012",
+    "authors": "Abbie Begnaud, Ping Yang, Camille Robichaux, Nathan Rubin, Robert A. Kratzke, Anne C. Melzer, Constantin Aliferis, Pamala A. Jacobson",
+    "title": "Evidence That Established Lung Cancer Mortality Disparities in American Indians Are Not Due to Lung Cancer Genetic Testing and Targeted Therapy Disparities",
+    "journal": "Clinical Lung Cancer",
+    "year": 2019,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.cllc.2019.10.012",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/31759888/",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1164-rccm-202212-2216st",
+    "authors": "Katrina Steiling, Hasmeena Kathuria, Chidiebere Peter Echieh, David E. Ost, M. Patricia Rivera, Abbie Begnaud, Juan C. Celedón, Marjory Charlot, Frank Dietrick, Narjust Duma, Kwun M. Fong, Jean G. Ford, Michael K. Gould, Fernando Holguín, Eliseo J. Pérez‐Stable, Nichole T. Tanner, Carey C. Thomson, Renda Soylemez Wiener, Juan P. Wisnivesky",
+    "title": "Research Priorities for Interventions to Address Health Disparities in Lung Nodule Management: An Official American Thoracic Society Research Statement",
+    "journal": "American Journal of Respiratory and Critical Care Medicine",
     "year": 2023,
     "status": "Published",
-    "doi": "https://doi.org/10.1158/1940-6207.22495158",
+    "doi": "https://doi.org/10.1164/rccm.202212-2216st",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/36920066/",
     "topics": [],
     "authorSlugs": [
       "abbie-begnaud"
     ]
   },
   {
-    "id": "gen-10-1158-1940-6207-22495164",
-    "authors": "Madison D. Anderson, Wyatt J. Pickner, Abbie Begnaud",
-    "title": "Supplementary Materials 1 from Determinants of Lung Cancer Screening in a Minnesota Urban Indigenous Community: A Community-Based, Participatory, Action-Oriented Study",
-    "journal": "",
+    "id": "gen-10-1177-21501319231212312",
+    "authors": "Camille Robichaux, Madison D. Anderson, Rebecca Freese, Antony Stately, Abbie Begnaud",
+    "title": "Lung Cancer Screening Outreach Program in an Urban Native American Clinic",
+    "journal": "Journal of Primary Care & Community Health",
     "year": 2023,
     "status": "Published",
-    "doi": "https://doi.org/10.1158/1940-6207.22495164",
+    "doi": "https://doi.org/10.1177/21501319231212312",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/37994788/",
     "topics": [],
     "authorSlugs": [
       "abbie-begnaud"
     ]
   },
   {
-    "id": "gen-10-1158-1940-6207-c-6534756-v1",
-    "authors": "Madison D. Anderson, Wyatt J. Pickner, Abbie Begnaud",
-    "title": "Data from Determinants of Lung Cancer Screening in a Minnesota Urban Indigenous Community: A Community-Based, Participatory, Action-Oriented Study",
-    "journal": "",
+    "id": "gen-10-1007-s10554-021-02241-z",
+    "authors": "Pratik S. Velangi, Barrett Kenny, Matthew Hooks, Adinan Kanda, Kelsey Schertz, Harmeet Kharoud, Gurmandeep S. Sandhu, Rajat Kalra, Tadashi Allen, Abbie Begnaud, Prabhjot S. Nijjar",
+    "title": "Impact of 2016 SCCT/STR guidelines for coronary artery calcium scoring of noncardiac chest CT scans on lung cancer screening CT reporting",
+    "journal": "International journal of cardiac imaging",
+    "year": 2021,
+    "status": "Published",
+    "doi": "https://doi.org/10.1007/s10554-021-02241-z",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/33860401/",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1136-tc-2024-058665",
+    "authors": "Dana Mowls Carroll, Dylan Jennings, Antony Stately, A. Kamath, Katelyn Tessier, Crina Cotoc, Andrew Egbert, Abbie Begnaud, Michael S. Businelle, Dorothy K. Hatsukami, Wyatt J. Pickner",
+    "title": "Pilot randomised controlled trial of a culturally aligned smoking cessation app for American Indian persons",
+    "journal": "Tobacco Control",
+    "year": 2024,
+    "status": "Published",
+    "doi": "https://doi.org/10.1136/tc-2024-058665",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/38964856/",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1097-jxx-0000000000001230",
+    "authors": "Lisa Carter-Bawa, Timothy J. Williamson, Nancy Alvey, Abbie Begnaud, Dannell Boatman, Deborah P. Brown, Deena Cook, Dusty Donaldson, Jill Feldman, Heidi A. Hamann, E. Kazerooni, L. Kearney, Eugene Manley, Drew Moghanaki, J. Ostroff, James Pantelas, Elyse Richelle Park, Maureen Rigney, Lauren Rosenthal, Elizabeth Scharnetzki, Joan Shiller, Smith Ra, Anne Stangl, Erica T. Warner, Douglas E. Wood, Jamie L. Studts",
+    "title": "Confronting nihilism and stigma in lung cancer: The nurse practitioner's role in restoring hope and trust",
+    "journal": "Journal of the American Association of Nurse Practitioners",
+    "year": 2025,
+    "status": "Published",
+    "doi": "https://doi.org/10.1097/jxx.0000000000001230",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/41441726/",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-ctarc-2021-100443",
+    "authors": "Anne C. Melzer, Abbie Begnaud, Bruce R. Lindgren, Kelsey Schertz, Steven S. Fu, David M. Vock, Alexander J. Rothman, Anne M. Joseph",
+    "title": "Self-reported exercise capacity among current smokers eligible for lung cancer screening: Distribution and association with key comorbidities",
+    "journal": "Cancer Treatment and Research Communications",
+    "year": 2021,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.ctarc.2021.100443",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/34371253/",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1002-lrh2-10378",
+    "authors": "Sirin Yilmaz, Michele LeClaire, Abbie Begnaud, Warren T. McKinney, Kasey R. Boehmer, Cory R. Schaffhausen, Mark Linzer",
+    "title": "Developing <scp>LHS</scp> scholars’ competency around reducing burnout and moral injury",
+    "journal": "Learning Health Systems",
     "year": 2023,
     "status": "Published",
-    "doi": "https://doi.org/10.1158/1940-6207.c.6534756.v1",
+    "doi": "https://doi.org/10.1002/lrh2.10378",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/38249843/",
     "topics": [],
     "authorSlugs": [
       "abbie-begnaud"
     ]
   },
   {
-    "id": "gen-10-1016-j-conctc-2022-100977",
-    "authors": "Abbie Begnaud, Steven S. Fu, Bruce Lindgren, Anne Melzer, Alexander J. Rothman, Kelsey Schertz, David M. Vock, Anne M. Joseph",
-    "title": "Latent constructs identified in older individuals who smoke cigarettes and are eligible for lung cancer screening: Factor analysis of baseline data from the PLUTO smoking cessation trial",
-    "journal": "Contemporary Clinical Trials Communications",
-    "year": 2022,
+    "id": "gen-10-1177-26320843231212427",
+    "authors": "Kelsey Schertz, Megan Petrik, Mariah Branson, Steven S. Fu, Alexander J. Rothman, Abbie Begnaud, Anne M. Joseph",
+    "title": "Disclosure of suicidal ideation in non-psychiatric clinical research: Experience using a novel suicide risk management algorithm in a multi-center smoking cessation trial",
+    "journal": "Research Methods in Medicine & Health Sciences",
+    "year": 2023,
     "status": "Published",
-    "doi": "https://doi.org/10.1016/j.conctc.2022.100977",
-    "topics": [],
-    "authorSlugs": [
-      "abbie-begnaud"
-    ]
-  },
-  {
-    "id": "gen-10-1093-ntr-ntag021",
-    "authors": "Rina I Horii, Alexander J Rothman, David M Vock, Anne M Joseph, Mariah Branson, Anne C Melzer, Abbie Begnaud, Steven S Fu",
-    "title": "When to Assess Responses to Treatments in Adaptive Interventions? An Experimental Analysis of Assessment Timing in a Smoking Cessation Treatment in the Context of Lung Cancer Screening",
-    "journal": "Nicotine and Tobacco Research",
-    "year": 2026,
-    "status": "Published",
-    "doi": "https://doi.org/10.1093/ntr/ntag021",
+    "doi": "https://doi.org/10.1177/26320843231212427",
     "topics": [],
     "authorSlugs": [
       "abbie-begnaud"
@@ -2184,13 +6793,26 @@ export const generatedPublications: Publication[] = [
     ]
   },
   {
+    "id": "gen-10-4236-ijcm-2024-1512034",
+    "authors": "Katie Capp, Jennifer Wong-Roushar, Matthew Yocum, Michael D. Evans, Heidi Gibson, Joseph C. Keenan, Abbie Begnaud, H. Erhan Dinçer, Alireza Nathani, Roy Joseph Cho",
+    "title": "Varying Suction Techniques in Thoracentesis",
+    "journal": "International Journal of Clinical Medicine",
+    "year": 2024,
+    "status": "Published",
+    "doi": "https://doi.org/10.4236/ijcm.2024.1512034",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
     "id": "gen-10-1097-lbr-0000000000001017",
-    "authors": "Sevak Keshishyan, Joseph Keenan, Erhan H. Dincer, Jennifer Wong, Abbie Begnaud, Alireza Nathani, Heidi Gibson, Sudarshan Setty, Roy J. Cho",
-    "title": "Navigating Atelectasis",
-    "journal": "Journal of Bronchology and Interventional Pulmonology",
+    "authors": "Sevak Keshishyan, Joseph C. Keenan, Erhan H. Dincer, Jennifer Wong, Abbie Begnaud, Alireza Nathani, Heidi Gibson, Sudarshan Setty, Roy Joseph Cho",
+    "title": "Navigating Atelectasis: Utilizing Transpulmonary Pressure to Enhance Robotic Bronchoscopy",
+    "journal": "Journal of Bronchology & Interventional Pulmonology",
     "year": 2025,
     "status": "Published",
-    "doi": "https://doi.org/10.1097/LBR.0000000000001017",
+    "doi": "https://doi.org/10.1097/lbr.0000000000001017",
     "pubmed": "https://pubmed.ncbi.nlm.nih.gov/40591660/",
     "topics": [],
     "authorSlugs": [
@@ -2198,41 +6820,119 @@ export const generatedPublications: Publication[] = [
     ]
   },
   {
-    "id": "gen-10-1353-hpu-2025-a967331",
-    "authors": "Elijah Johnson, An Garagiola, Antony Stately, Abbie Begnaud",
-    "title": "Community-Based Screening Events to Increase Lung Cancer Screening in an Urban AI/AN Clinic",
-    "journal": "Journal of health care for the poor and underserved",
-    "year": 2025,
+    "id": "gen-10-21037-jtd-2018-03-89",
+    "authors": "Abbie Begnaud, Robert A. Kratzke",
+    "title": "Meet the new boss: lung cancer staging",
+    "journal": "Journal of Thoracic Disease",
+    "year": 2018,
     "status": "Published",
-    "doi": "https://doi.org/10.1353/hpu.2025.a967331",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/40820774/",
+    "doi": "https://doi.org/10.21037/jtd.2018.03.89",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/29708135/",
     "topics": [],
     "authorSlugs": [
       "abbie-begnaud"
     ]
   },
   {
-    "id": "gen-10-1016-j-pmedr-2025-103173",
-    "authors": "Abbie Begnaud, Wyatt Pickner, Antony Stately, Dylan Jennings, Ebiere Okah, Katelyn M. Tessier, Michael Businelle, Dana Carroll",
-    "title": "Knowledge and attitudes about lung cancer screening amongst American Indian adults who use commercial tobacco",
-    "journal": "Preventive Medicine Reports",
-    "year": 2025,
+    "id": "gen-10-1378-chest-1704803",
+    "authors": "Firas Elmufdi, Abbie Begnaud, Vipul Patel",
+    "title": "Transbronchial Biopsy Still Has a Role in the Diagnosis of Pneumocystis Pneumonia - Even in HIV Infected Patients",
+    "journal": "CHEST Journal",
+    "year": 2013,
     "status": "Published",
-    "doi": "https://doi.org/10.1016/j.pmedr.2025.103173",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/40895342/",
+    "doi": "https://doi.org/10.1378/chest.1704803",
     "topics": [],
     "authorSlugs": [
       "abbie-begnaud"
     ]
   },
   {
-    "id": "gen-10-1164-rccm-202501-0011st",
-    "authors": "Louise M. Henderson, Roger Y. Kim, Nichole T. Tanner, Emily B. Tsai, Abbie Begnaud, Farouk Dako, Michael Gieske, Kimberly Kallianos, Ilana Richman, Lori C. Sakoda, Ronald G. Schwartz, Joseph Yeboah, Kwun M. Fong, Stephen Lam, Pyng Lee, Mary Pasquinelli, Robert A. Smith, Matthew Triplette, Lynn T. Tanoue, M. Patricia Rivera",
-    "title": "Lung Cancer Screening and Incidental Findings: A Research Agenda: An Official American Thoracic Society Research Statement",
-    "journal": "American Journal of Respiratory and Critical Care Medicine",
-    "year": 2025,
+    "id": "gen-10-1016-j-chest-2016-08-035",
+    "authors": "Abbie Begnaud, Bruce R. Lindgren",
+    "title": "Randomized Electronic Promotion of Lung Cancer Screening",
+    "journal": "CHEST Journal",
+    "year": 2016,
     "status": "Published",
-    "doi": "https://doi.org/10.1164/rccm.202501-0011ST",
+    "doi": "https://doi.org/10.1016/j.chest.2016.08.035",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-abbie-begnaud-2016-requirements-for-effective-lung-screening",
+    "authors": "Abbie Begnaud",
+    "title": "Requirements for Effective Lung Screening Programs Coming Into Focus",
+    "journal": "",
+    "year": 2016,
+    "status": "Published",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-jcct-2020-06-098",
+    "authors": "Pratik S. Velangi, Barrett Kenny, Matthew Hooks, Adinan Kanda, Kelsey Schertz, Rajat Kalra, Abbie Begnaud, Prabhjot S. Nijjar",
+    "title": "Impact Of 2016 SCCT/STR Guidelines For Coronary Artery Calcium Scoring Of Noncardiac Chest CT Scans On Lung Cancer Screening CT Reporting",
+    "journal": "Journal of cardiovascular computed tomography",
+    "year": 2020,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.jcct.2020.06.098",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1378-chest-1119912",
+    "authors": "Abbie Begnaud, Ragheed Alturkmani, Michael A. Jantz",
+    "title": "Medical Thoracoscopy With Simultaneous Placement of a PleurX Catheter for Management of Malignant Pleural Effusions",
+    "journal": "CHEST Journal",
+    "year": 2011,
+    "status": "Published",
+    "doi": "https://doi.org/10.1378/chest.1119912",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-conctc-2022-100977",
+    "authors": "Abbie Begnaud, Steven S. Fu, Bruce R. Lindgren, Anne C. Melzer, Alexander J. Rothman, Kelsey Schertz, David M. Vock, Anne M. Joseph",
+    "title": "Latent constructs identified in older individuals who smoke cigarettes and are eligible for lung cancer screening: Factor analysis of baseline data from the PLUTO smoking cessation trial",
+    "journal": "Contemporary Clinical Trials Communications",
+    "year": 2022,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.conctc.2022.100977",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/36052176/",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-chest-2023-07-2733",
+    "authors": "C. Lambert, Abbie Begnaud, David Haynes",
+    "title": "IDENTIFICATION OF INDIVIDUALS FOR LUNG CANCER SCREENING USING GEOSPATIAL ANALYSIS",
+    "journal": "CHEST Journal",
+    "year": 2023,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.chest.2023.07.2733",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-chest-2023-11-025",
+    "authors": "Anne C. Melzer, Abbie Begnaud",
+    "title": "Planting the Seeds for Lung Cancer Screening Starts With Knowledge Holders",
+    "journal": "CHEST Journal",
+    "year": 2024,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.chest.2023.11.025",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/38461009/",
     "topics": [],
     "authorSlugs": [
       "abbie-begnaud"
@@ -2252,52 +6952,11 @@ export const generatedPublications: Publication[] = [
     ]
   },
   {
-    "id": "gen-10-1158-1940-6207-capr-25-0114",
-    "authors": "Abbie Begnaud, Frank G. Ondrey",
-    "title": "Evidence-Based Lung Cancer Screening in a Tailored Package",
-    "journal": "Cancer Prevention Research",
-    "year": 2025,
-    "status": "Published",
-    "doi": "https://doi.org/10.1158/1940-6207.CAPR-25-0114",
-    "topics": [],
-    "authorSlugs": [
-      "abbie-begnaud"
-    ]
-  },
-  {
-    "id": "gen-10-1016-j-rmed-2023-107126",
-    "authors": "COPDGene® Investigators – Core Units, COPDGene® Investigators – Clinical Centers, Thuonghien V. Tran, Gregory L. Kinney, Alejandro Comellas, Karin F. Hoth, Arianne K. Baldomero, A. James Mamary, Jeffrey L. Curtis, Nicola Hanania, Richard Casaburi, Kendra A. Young, Victor Kim, Barry Make, Emily S. Wan, Alejandro A. Diaz, John Hokanson, James D. Crapo, Edwin K. Silverman, Surya P. Bhatt, Elizabeth Regan, Spyridon Fortis, Barry J. Make, Elizabeth A. Regan, Terri H. Beaty, Peter J. Castaldi, Michael H. Cho, Dawn L. DeMeo, Adel El Boueiz, Marilyn G. Foreman, Auyon Ghosh, Lystra P. Hayden, Craig P. Hersh, Jacqueline Hetmanski, Brian D. Hobbs, John E. Hokanson, Wonji Kim, Nan Laird, Christoph Lange, Sharon M. Lutz, Merry Lynn McDonald, Dmitry Prokopenko, Matthew Moll, Jarrett Morrow, Dandi Qiao, Aabida Saferali, Phuwanat Sakornsakolpat, Joseph Tashjian, Ken M. Kunisaki, Joanne Billings, Abbie Begnaud, Tadashi Allen",
-    "title": "Prevalence of abnormal spirometry in individuals with a smoking history and no known obstructive lung disease",
-    "journal": "Respiratory Medicine",
-    "year": 2023,
-    "status": "Published",
-    "doi": "https://doi.org/10.1016/j.rmed.2023.107126",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/36717002/",
-    "topics": [],
-    "authorSlugs": [
-      "abbie-begnaud"
-    ]
-  },
-  {
-    "id": "gen-10-1002-lrh2-10378",
-    "authors": "Sirin Yilmaz, Michele LeClaire, Abbie Begnaud, Warren McKinney, Kasey R. Boehmer, Cory Schaffhausen, Mark Linzer",
-    "title": "Developing LHS scholars’ competency around reducing burnout and moral injury",
-    "journal": "Learning Health Systems",
-    "year": 2024,
-    "status": "Published",
-    "doi": "https://doi.org/10.1002/lrh2.10378",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/38249843/",
-    "topics": [],
-    "authorSlugs": [
-      "abbie-begnaud"
-    ]
-  },
-  {
     "id": "gen-10-1007-s13187-024-02517-7",
-    "authors": "Manish R. Patel, Abbie Begnaud, Shanda H. Blackmon, Arkadiusz Z. Dudek, Naomi Fujioka, Janine C.K. Harewood, Pasi A. Jänne, Shirley Kern, Lacey Running Hawk, Ann M. Rusk, Fatima G. Wilder, Robert Winn, Nancy Torrison, Stephanie Searle",
+    "authors": "Manish R. Patel, Abbie Begnaud, Shanda H. Blackmon, Arkadiusz Z. Dudek, Naomi Fujioka, Janine Harewood, Pasi A. Jänne, Shirley Kern, Lacey Running Hawk, Ann M. Rusk, Fatima G. Wilder, Robert J. Winn, Nancy Torrison, Stephanie Searle",
     "title": "Improving Patient Understanding and Outcomes in Lung Cancer Using an Animated Patient’s Guide with Visual Formats of Learning",
     "journal": "Journal of Cancer Education",
-    "year": 2025,
+    "year": 2024,
     "status": "Published",
     "doi": "https://doi.org/10.1007/s13187-024-02517-7",
     "pubmed": "https://pubmed.ncbi.nlm.nih.gov/39438400/",
@@ -2307,41 +6966,14 @@ export const generatedPublications: Publication[] = [
     ]
   },
   {
-    "id": "gen-10-1177-21501319231212312",
-    "authors": "Camille Robichaux, Madison Anderson, Rebecca Freese, Antony Stately, Abbie Begnaud",
-    "title": "Lung Cancer Screening Outreach Program in an Urban Native American Clinic",
-    "journal": "Journal of Primary Care and Community Health",
-    "year": 2023,
+    "id": "gen-10-1111-1475-6773-14531",
+    "authors": "David Haynes, Eric Trempe, Eduardo Osegueda, Allison Iwan, Courtney Sarkin, Dori A. Cross, Abbie Begnaud, Kris Newcomer, Helen M. Parsons, Pinar Karaca Mandic",
+    "title": "A mixed–method community pilot of a digital social care referral platform for individuals with cancer",
+    "journal": "Health Services Research",
+    "year": 2025,
     "status": "Published",
-    "doi": "https://doi.org/10.1177/21501319231212312",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/37994788/",
-    "topics": [],
-    "authorSlugs": [
-      "abbie-begnaud"
-    ]
-  },
-  {
-    "id": "gen-10-1001-jamanetworkopen-2023-29903",
-    "authors": "Steven S. Fu, Alexander J. Rothman, David M. Vock, Bruce R. Lindgren, Daniel Almirall, Abbie Begnaud, Anne C. Melzer, Kelsey L. Schertz, Mariah Branson, David Haynes, Patrick Hammett, Anne M. Joseph",
-    "title": "Optimizing Longitudinal Tobacco Cessation Treatment in Lung Cancer Screening",
-    "journal": "JAMA Network Open",
-    "year": 2023,
-    "status": "Published",
-    "doi": "https://doi.org/10.1001/jamanetworkopen.2023.29903",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/37615989/",
-    "topics": [],
-    "authorSlugs": [
-      "abbie-begnaud"
-    ]
-  },
-  {
-    "id": "gen-10-52768-2833-2725-1155",
-    "authors": "Monika K Kakol, Heidi Gibson, Alireza Nathani, Abbie Begnaud, Jennifer L Wong, Joseph C Keenan, H. Erhan Dincer, Roy J Cho",
-    "title": "Feasibility of using airway contrast in the measurement of anastomotic stenosis in lung transplant patients",
-    "journal": "Open Journal of Clinical and Medical Images",
-    "year": 2023,
-    "status": "Published",
-    "doi": "https://doi.org/10.52768/2833-2725/1155",
+    "doi": "https://doi.org/10.1111/1475-6773.14531",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/40189310/",
     "topics": [],
     "authorSlugs": [
       "abbie-begnaud"
@@ -2349,8 +6981,8 @@ export const generatedPublications: Publication[] = [
   },
   {
     "id": "gen-10-1007-s00520-025-09523-5",
-    "authors": "David Haynes, Eric Trempe, Allison Iwan, Eduardo Osegueda, Courtney Sarkin, Dori Cross, Abbie Begnaud, Kris Newcomer, Helen M. Parsons, Pinar Karaca Mandic",
-    "title": "Enhancing cancer care through digital social care referrals",
+    "authors": "David Haynes, Eric Trempe, Allison Iwan, Eduardo Osegueda, Courtney Sarkin, Dori A. Cross, Abbie Begnaud, Kris Newcomer, Helen M. Parsons, Pinar Karaca Mandic",
+    "title": "Enhancing cancer care through digital social care referrals: insights from the ConnectedNest pilot study",
     "journal": "Supportive Care in Cancer",
     "year": 2025,
     "status": "Published",
@@ -2362,9 +6994,51 @@ export const generatedPublications: Publication[] = [
     ]
   },
   {
+    "id": "gen-10-1158-1940-6207-capr-25-0114",
+    "authors": "Abbie Begnaud, Frank G. Ondrey",
+    "title": "Evidence-Based Lung Cancer Screening in a Tailored Package",
+    "journal": "Cancer Prevention Research",
+    "year": 2025,
+    "status": "Published",
+    "doi": "https://doi.org/10.1158/1940-6207.capr-25-0114",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/40589267/",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-pmedr-2025-103173",
+    "authors": "Abbie Begnaud, Wyatt Pickner, Antony Stately, Jennings Dylan, Ebiere Okah, Katelyn M. Tessier, Michael Businelle, Dana Mowls Carroll",
+    "title": "Knowledge and attitudes about lung cancer screening amongst American Indian adults who use commercial tobacco",
+    "journal": "Preventive Medicine Reports",
+    "year": 2025,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.pmedr.2025.103173",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/40895342/",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1353-hpu-2025-a967331",
+    "authors": "Elijah Johnson, An Garagiola, Antony Stately, Abbie Begnaud",
+    "title": "Community-Based Screening Events to Increase Lung Cancer Screening in an Urban AI/AN Clinic",
+    "journal": "Journal of Health Care for the Poor and Underserved",
+    "year": 2025,
+    "status": "Published",
+    "doi": "https://doi.org/10.1353/hpu.2025.a967331",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/40820774/",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
     "id": "gen-10-1016-j-chpulm-2025-100228",
     "authors": "Milind Bhagat, Rebecca Freese, David Haynes, Abbie Begnaud",
-    "title": "Association of patient and neighborhood factors with lung cancer screening rates in Minnesota",
+    "title": "Association of Patient and Neighborhood Factors With Lung Cancer Screening Rates in Minnesota",
     "journal": "CHEST Pulmonary",
     "year": 2025,
     "status": "Published",
@@ -2375,484 +7049,350 @@ export const generatedPublications: Publication[] = [
     ]
   },
   {
-    "id": "gen-10-1158-1940-6207-30701584",
-    "authors": "Madison D. Anderson, Wyatt J. Pickner, Abbie Begnaud",
-    "title": "Supplementary Materials 3 from Determinants of Lung Cancer Screening in a Minnesota Urban Indigenous Community: A Community-Based, Participatory, Action-Oriented Study",
-    "journal": "",
-    "year": 2025,
-    "status": "Published",
-    "doi": "https://doi.org/10.1158/1940-6207.30701584",
-    "topics": [],
-    "authorSlugs": [
-      "abbie-begnaud"
-    ]
-  },
-  {
-    "id": "gen-10-1158-1940-6207-30701590",
-    "authors": "Madison D. Anderson, Wyatt J. Pickner, Abbie Begnaud",
-    "title": "Supplementary Materials 1 from Determinants of Lung Cancer Screening in a Minnesota Urban Indigenous Community: A Community-Based, Participatory, Action-Oriented Study",
-    "journal": "",
-    "year": 2025,
-    "status": "Published",
-    "doi": "https://doi.org/10.1158/1940-6207.30701590",
-    "topics": [],
-    "authorSlugs": [
-      "abbie-begnaud"
-    ]
-  },
-  {
-    "id": "gen-10-1158-1940-6207-30701587",
-    "authors": "Madison D. Anderson, Wyatt J. Pickner, Abbie Begnaud",
-    "title": "Supplementary Materials 2 from Determinants of Lung Cancer Screening in a Minnesota Urban Indigenous Community: A Community-Based, Participatory, Action-Oriented Study",
-    "journal": "",
-    "year": 2025,
-    "status": "Published",
-    "doi": "https://doi.org/10.1158/1940-6207.30701587",
-    "topics": [],
-    "authorSlugs": [
-      "abbie-begnaud"
-    ]
-  },
-  {
-    "id": "gen-10-1136-tc-2024-058665",
-    "authors": "Dana Mowls Carroll, Dylan Jennings, Antony Stately, Amika Kamath, Katelyn M. Tessier, Crina Cotoc, Andrew Egbert, Abbie Begnaud, Michael Businelle, Dorothy Hatsukami, Wyatt Pickner",
-    "title": "Pilot randomised controlled trial of a culturally aligned smoking cessation app for American Indian persons",
-    "journal": "Tobacco control",
-    "year": 2025,
-    "status": "Published",
-    "doi": "https://doi.org/10.1136/tc-2024-058665",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/38964856/",
-    "topics": [],
-    "authorSlugs": [
-      "abbie-begnaud"
-    ]
-  },
-  {
-    "id": "gen-10-1097-jxx-0000000000001230",
-    "authors": "Lisa Carter-Bawa, Timothy J. Williamson, Nancy Alvey, Abbie Begnaud, Dannell Boatman, Deborah P. Brown, Deena Cook, Dusty Donaldson, Jill Feldman, Heidi A. Hamann, Ella Kazerooni, Lauren Kearney, Eugene Manley, Drew Moghanaki, Jamie S. Ostroff, James Pantelas, Elyse R. Park, Maureen Rigney, Lauren Rosenthal, Elizabeth Scharnetzki, Joan Shiller, Robert A. Smith, Anne L. Stangl, Erica T. Warner, Douglas E. Wood, Jamie L. Studts",
-    "title": "Confronting nihilism and stigma in lung cancer",
-    "journal": "Journal of the American Association of Nurse Practitioners",
-    "year": 2026,
-    "status": "Published",
-    "doi": "https://doi.org/10.1097/JXX.0000000000001230",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/41441726/",
-    "topics": [],
-    "authorSlugs": [
-      "abbie-begnaud"
-    ]
-  },
-  {
-    "id": "gen-10-1513-annalsats-202103-240rl",
-    "authors": "On behalf of the COPDGene and SPIROMICS Investigators, Anand S. Iyer, Trisha M. Parekh, Jacqueline O'Toole, Surya P. Bhatt, Michelle N. Eakin, Jerry A. Krishnan, Abebaw M. Yohannes, Prescott G. Woodruff, Christopher B. Cooper, Richard E. Kanner, Nicola A. Hanania, Mark T. Dransfield, Elizabeth A. Regan, Karin F. Hoth, Victor Kim, James D. Crapo, Edwin K. Silverman, Barry J. Make, Terri Beaty, Ferdouse Begum, Peter J. Castaldi, Michael Cho, Dawn L. DeMeo, Adel R. Boueiz, Marilyn G. Foreman, Eitan Halper-Stromberg, Lystra P. Hayden, Craig P. Hersh, Jacqueline Hetmanski, Brian D. Hobbs, John E. Hokanson, Nan Laird, Christoph Lange, Sharon M. Lutz, Merry Lynn McDonald, Margaret M. Parker, Dmitry Prokopenko, Dandi Qiao, Phuwanat Sakornsakolpat, Emily S. Wan, Sungho Won, Juan Pablo Centeno, Jean Paul Charbonnier, Charlene McEvoy, Joseph Tashjian, Christine Wendt, Ken M. Kunisaki, Joanne Billings, Abbie Begnaud, Tadashi Allen",
-    "title": "Clinically Significant and Comorbid Anxiety and Depression Symptoms Predict Severe Respiratory Exacerbations in Smokers",
-    "journal": "Annals of the American Thoracic Society",
-    "year": 2022,
-    "status": "Published",
-    "doi": "https://doi.org/10.1513/AnnalsATS.202103-240RL",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/34343034/",
-    "topics": [],
-    "authorSlugs": [
-      "abbie-begnaud"
-    ]
-  },
-  {
-    "id": "gen-10-1164-rccm-202301-0067oc",
-    "authors": "COPDGene Investigators, Rahul Suryadevara, Andrew Gregory, Robin Lu, Zhonghui Xu, Aria Masoomi, Sharon M. Lutz, Seth Berman, Jeong H. Yun, Aabida Saferali, Min Hyung Ryu, Matthew Moll, Don D. Sin, Craig P. Hersh, Edwin K. Silverman, Jennifer Dy, Katherine A. Pratte, Russell P. Bowler, Peter J. Castaldi, Adel Boueiz, James D. Crapo, Barry J. Make, Elizabeth A. Regan, Terri H. Beaty, Peter J. Castaldi, Michael H. Cho, Dawn L. DeMeo, Adel Boueiz, Marilyn G. Foreman, Auyon Ghosh, Lystra P. Hayden, Jacqueline Hetmanski, Brian D. Hobbs, John E. Hokanson, Wonji Kim, Nan Laird, Christoph Lange, Sharon M. Lutz, Merry Lynn McDonald, Dmitry Prokopenko, Matthew Moll, Jarrett Morrow, Dandi Qiao, Elizabeth A. Regan, Charlene McEvoy, Joseph Tashjian, Christine Wendt, Ken M. Kunisaki, Joanne Billings, Abbie Begnaud, Tadashi Allen",
-    "title": "Blood-based Transcriptomic and Proteomic Biomarkers of Emphysema",
-    "journal": "American journal of respiratory and critical care medicine",
+    "id": "gen-10-21956-hrbopenres-15091-r39808",
+    "authors": "Abbie Begnaud",
+    "title": "Referee report. For: Co-designing a recruitment strategy for lung cancer screening in high-risk individuals: protocol for a mixed-methods study [version 1; peer review: 1 approved, 2 approved with reservations]",
+    "journal": "Faculty of 1000 Research Ltd",
     "year": 2024,
     "status": "Published",
-    "doi": "https://doi.org/10.1164/rccm.202301-0067OC",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/37917913/",
+    "doi": "https://doi.org/10.21956/hrbopenres.15091.r39808",
     "topics": [],
     "authorSlugs": [
       "abbie-begnaud"
     ]
   },
   {
-    "id": "gen-10-1164-rccm-202401-0023oc",
-    "authors": "The COPDGene Investigators, Spyridon Fortis, Matthew Strand, Surya P. Bhatt, Patrick Ten Eyck, Linder Wendt, Trisha Parekh, Mei Lan K. Han, John E. Hokanson, Gregory Kinney, Jeffrey L. Curtis, Russell P. Bowler, Emily S. Wan, Ken M. Kunisaki, Chris H. Wendt, Elizabeth Regan, Mark Dransfield, James D. Crapo, Edwin K. Silverman, Alejandro P. Comellas, James D. Crapo, Barry J. Make, Elizabeth A. Regan, Terri H. Beaty, Peter J. Castaldi, Michael H. Cho, Dawn L. DeMeo, Adel El Boueiz, Marilyn G. Foreman, Auyon Ghosh, Lystra P. Hayden, Craig P. Hersh, Jacqueline Hetmanski, Brian D. Hobbs, John E. Hokanson, Wonji Kim, Nan Laird, Christoph Lange, Sharon M. Lutz, Merry Lynn McDonald, Dmitry Prokopenko, Matthew Moll, Jarrett Morrow, Dandi Qiao, Elizabeth A. Regan, Charlene McEvoy, Joseph Tashjian, Christine Wendt, Joanne Billings, Abbie Begnaud, Tadashi Allen",
-    "title": "Respiratory Exacerbations and Lung Function Decline in People with Smoking History and Normal Spirometry",
-    "journal": "American journal of respiratory and critical care medicine",
+    "id": "gen-10-1093-ntr-ntag021",
+    "authors": "Rina I. Horii, Alexander J. Rothman, David M. Vock, Anne M. Joseph, Mariah Branson, Anne C. Melzer, Abbie Begnaud, Steven S. Fu",
+    "title": "When to Assess Responses to Treatments in Adaptive Interventions? An Experimental Analysis of Assessment Timing in a Smoking Cessation Treatment in the Context of Lung Cancer Screening",
+    "journal": "Nicotine & Tobacco Research",
+    "year": 2026,
+    "status": "Published",
+    "doi": "https://doi.org/10.1093/ntr/ntag021",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/41626753/",
+    "topics": [],
+    "authorSlugs": [
+      "abbie-begnaud"
+    ]
+  },
+  {
+    "id": "gen-10-1164-rccm-201703-0537le",
+    "authors": "Kathryn M. Pendleton, John R. Erb‐Downward, Yuwei Bao, William R. Branton, Nicole R. Falkowski, Duane W. Newton, Gary B. Huffnagle, Robert P. Dickson",
+    "title": "Rapid Pathogen Identification in Bacterial Pneumonia Using Real-Time Metagenomics",
+    "journal": "American Journal of Respiratory and Critical Care Medicine",
+    "year": 2017,
+    "status": "Published",
+    "doi": "https://doi.org/10.1164/rccm.201703-0537le",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/28475350/",
+    "topics": [],
+    "authorSlugs": [
+      "katie-pendleton"
+    ]
+  },
+  {
+    "id": "gen-10-1093-femspd-ftx029",
+    "authors": "Kathryn M. Pendleton, Gary B. Huffnagle, Robert P. Dickson",
+    "title": "The significance of<i>Candida</i>in the human respiratory tract: our evolving understanding",
+    "journal": "Pathogens and Disease",
+    "year": 2017,
+    "status": "Published",
+    "doi": "https://doi.org/10.1093/femspd/ftx029",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/28423168/",
+    "topics": [],
+    "authorSlugs": [
+      "katie-pendleton"
+    ]
+  },
+  {
+    "id": "gen-10-4187-respcare-07332",
+    "authors": "Nathaniel Gaeckle, Alexa A. Pragman, Kathryn M. Pendleton, Arianne K. Baldomero, Gerard J. Criner",
+    "title": "The Oral-Lung Axis: The Impact of Oral Health on Lung Health",
+    "journal": "Respiratory Care",
+    "year": 2020,
+    "status": "Published",
+    "doi": "https://doi.org/10.4187/respcare.07332",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/32156792/",
+    "topics": [],
+    "authorSlugs": [
+      "katie-pendleton"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-chest-2024-09-016",
+    "authors": "Angel Coz Yataco, Israa Soghier, Paul C. Hébert, Emilie P. Belley‐Côté, Margaret Disselkamp, David Flynn, Karin Halvorson, Jonathan M. Iaccarino, Wendy Lim, Christina C. Lindenmeyer, Peter Miller, Kevin O’Neil, Kathryn M. Pendleton, Lisa Vande Vusse, Daniel R. Ouellette",
+    "title": "Red Blood Cell Transfusion in Critically Ill Adults",
+    "journal": "CHEST Journal",
+    "year": 2024,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.chest.2024.09.016",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/39341492/",
+    "topics": [],
+    "authorSlugs": [
+      "katie-pendleton"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-chest-2025-02-029",
+    "authors": "Angel Coz Yataco, Israa Soghier, Paul C. Hébert, Emilie P. Belley‐Côté, Margaret Disselkamp, David Flynn, Karin Halvorson, Jonathan M. Iaccarino, Wendy Lim, Christina C. Lindenmeyer, Peter Miller, Kevin O’Neil, Kathryn M. Pendleton, Lisa K. Vande Vusse, Daniel R. Ouellette",
+    "title": "Transfusion of Fresh Frozen Plasma and Platelets in Critically Ill Adults",
+    "journal": "CHEST Journal",
     "year": 2025,
     "status": "Published",
-    "doi": "https://doi.org/10.1164/rccm.202401-0023OC",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/39946437/",
+    "doi": "https://doi.org/10.1016/j.chest.2025.02.029",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/40074060/",
     "topics": [],
     "authorSlugs": [
-      "abbie-begnaud"
+      "katie-pendleton"
     ]
   },
   {
-    "id": "gen-10-1186-s12931-021-01712-0",
-    "authors": "The COPDGene Investigators, Victor Kim, Wojciech R. Dolliver, Hrudaya P. Nath, Scott A. Grumley, Nina Terry, Asmaa Ahmed, Andrew Yen, Kathleen Jacobs, Seth Kligerman, Alejandro A. Diaz, James D. Crapo, Edwin K. Silverman, Barry J. Make, Elizabeth A. Regan, Terri Beaty, Ferdouse Begum, Peter J. Castaldi, Michael Cho, Dawn L. DeMeo, Adel R. Boueiz, Marilyn G. Foreman, Eitan Halper-Stromberg, Lystra P. Hayden, Craig P. Hersh, Jacqueline Hetmanski, Brian D. Hobbs, John E. Hokanson, Nan Laird, Christoph Lange, Sharon M. Lutz, Merry Lynn McDonald, Margaret M. Parker, Dmitry Prokopenko, Dandi Qiao, Elizabeth A. Regan, Phuwanat Sakornsakolpat, Edwin K. Silverman, Emily S. Wan, Sungho Won, Juan Pablo Centeno, Jean Paul Charbonnier, Harvey O. Coxson, Craig J. Galban, Charlene McEvoy, Joseph Tashjian, Christine Wendt, Ken M. Kunisaki, Joanne Billings, Abbie Begnaud, Tadashi Allen",
-    "title": "Mucus plugging on computed tomography and chronic bronchitis in chronic obstructive pulmonary disease",
-    "journal": "Respiratory research",
-    "year": 2021,
+    "id": "gen-10-1016-j-chstcc-2024-100085",
+    "authors": "Christopher A. Linke, Jenna L. Potter, Alissa Pool, Lindsay Berger, Frew Mekuria, Melissa Olson, T. L. Thomas, Kathryn M. Pendleton",
+    "title": "Improving Spontaneous Breathing Trials With a Respiratory Therapist-Driven Protocol",
+    "journal": "CHEST Critical Care",
+    "year": 2024,
     "status": "Published",
-    "doi": "https://doi.org/10.1186/s12931-021-01712-0",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/33865371/",
+    "doi": "https://doi.org/10.1016/j.chstcc.2024.100085",
     "topics": [],
     "authorSlugs": [
-      "abbie-begnaud"
+      "katie-pendleton"
     ]
   },
   {
-    "id": "gen-10-1016-j-chest-2021-04-066",
-    "authors": "COPDGene Investigators, Divay Chandra, Aman Gupta, Gregory L. Kinney, Carl R. Fuhrman, Joseph K. Leader, Alejandro A. Diaz, Jessica Bon, R. Graham Barr, George Washko, Matthew Budoff, John Hokanson, Frank C. Sciurba, James D. Crapo, Edwin K. Silverman, Barry J. Make, Elizabeth A. Regan, Terri Beaty, Ferdouse Begum, Adel R. Boueiz, Peter J. Castaldi, Michael Cho, Dawn L. DeMeo, Marilyn G. Foreman, Eitan Halper-Stromberg, Lystra P. Hayden, Craig P. Hersh, Jacqueline Hetmanski, Brian D. Hobbs, John E. Hokanson, Nan Laird, Christoph Lange, Sharon M. Lutz, Merry Lynn McDonald, Margaret M. Parker, Dmitry Prokopenko, Dandi Qiao, Phuwanat Sakornsakolpat, Emily S. Wan, Sungho Won, Mustafa Al Qaisi, Harvey O. Coxson, Teresa Gray, Mei Lan K. Han, Charlene McEvoy, Joseph Tashjian, Christine Wendt, Ken M. Kunisaki, Joanne Billings, Abbie Begnaud, Tadashi Allen",
-    "title": "The Association Between Lung Hyperinflation and Coronary Artery Disease in Smokers",
-    "journal": "Chest",
-    "year": 2021,
+    "id": "gen-10-12968-hmed-2024-0048",
+    "authors": "Michael Kalinoski, Thomas Kalinoski, Kathryn M. Pendleton",
+    "title": "The use of peripheral vasopressors and its implications for hospital medicine",
+    "journal": "British Journal of Hospital Medicine",
+    "year": 2024,
     "status": "Published",
-    "doi": "https://doi.org/10.1016/j.chest.2021.04.066",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/33971144/",
+    "doi": "https://doi.org/10.12968/hmed.2024.0048",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/39078910/",
     "topics": [],
     "authorSlugs": [
-      "abbie-begnaud"
+      "katie-pendleton"
     ]
   },
   {
-    "id": "gen-10-1016-j-chest-2021-05-007",
-    "authors": "COPDGene Investigators, Vickram Tejwani, Ashraf Fawzy, Nirupama Putcha, Peter J. Castaldi, Michael H. Cho, Katherine A. Pratte, Surya P. Bhatt, David A. Lynch, Stephen M. Humphries, Gregory L. Kinney, Franco R. D'Alessio, Nadia N. Hansel, James D. Crapo, Edwin K. Silverman, Barry J. Make, Elizabeth A. Regan, Terri Beaty, Ferdouse Begum, Michael Cho, Dawn L. DeMeo, Adel R. Boueiz, Marilyn G. Foreman, Eitan Halper-Stromberg, Lystra P. Hayden, Craig P. Hersh, Jacqueline Hetmanski, Brian D. Hobbs, John E. Hokanson, Nan Laird, Christoph Lange, Sharon M. Lutz, Merry Lynn McDonald, Margaret M. Parker, Dmitry Prokopenko, Dandi Qiao, Phuwanat Sakornsakolpat, Emily S. Wan, Sungho Won, Juan Pablo Centeno, Jean Paul Charbonnier, Harvey O. Coxson, Craig J. Galban, Mei Lan K. Han, Charlene McEvoy, Joseph Tashjian, Christine Wendt, Ken M. Kunisaki, Joanne Billings, Abbie Begnaud, Tadashi Allen",
-    "title": "Emphysema Progression and Lung Function Decline Among Angiotensin Converting Enzyme Inhibitors and Angiotensin-Receptor Blockade Users in the COPDGene Cohort",
-    "journal": "Chest",
-    "year": 2021,
+    "id": "gen-10-1097-cpm-0000000000000279",
+    "authors": "Kathryn M. Pendleton, Robert P. Dickson, Duane W. Newton, Timothy C. Hoffman, Gregory A. Yanik, Gary B. Huffnagle",
+    "title": "Respiratory Tract Colonization by Candida Species Portends Worse Outcomes in Immunocompromised Patients",
+    "journal": "Clinical Pulmonary Medicine",
+    "year": 2018,
     "status": "Published",
-    "doi": "https://doi.org/10.1016/j.chest.2021.05.007",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/34029566/",
+    "doi": "https://doi.org/10.1097/cpm.0000000000000279",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/30911217/",
     "topics": [],
     "authorSlugs": [
-      "abbie-begnaud"
+      "katie-pendleton"
     ]
   },
   {
-    "id": "gen-10-1186-s12931-022-02013-w",
-    "authors": "NHLBI Trans-Omics for Precision Medicine (TOPMed) Consortium, Auyon J. Ghosh, Brian D. Hobbs, Jeong H. Yun, Aabida Saferali, Matthew Moll, Zhonghui Xu, Robert P. Chase, Jarrett Morrow, John Ziniti, Frank Sciurba, Lucas Barwick, Andrew H. Limper, Kevin Flaherty, Gerard Criner, Kevin K. Brown, Robert A. Wise, Fernando J. Martinez, Daniel McGoldrick, Michael H. Cho, Dawn L. DeMeo, Edwin K. Silverman, Peter J. Castaldi, James D. Crapo, Barry J. Make, Elizabeth A. Regan, Terri Beaty, Ferdouse Begum, Peter J. Castaldi, Michael Cho, Dawn L. DeMeo, Adel R. Boueiz, Marilyn G. Foreman, Eitan Halper-Stromberg, Lystra P. Hayden, Jacqueline Hetmanski, Brian D. Hobbs, John E. Hokanson, Nan Laird, Christoph Lange, Sharon M. Lutz, Merry Lynn McDonald, Margaret M. Parker, Dmitry Prokopenko, Charlene McEvoy, Joseph Tashjian, Christine Wendt, Ken M. Kunisaki, Joanne Billings, Abbie Begnaud, Tadashi Allen",
-    "title": "Lung tissue shows divergent gene expression between chronic obstructive pulmonary disease and idiopathic pulmonary fibrosis",
-    "journal": "Respiratory research",
+    "id": "gen-10-1016-j-iccn-2020-102974",
+    "authors": "Leah B. Chapman, K Kopp, Michael Petty, Jodi L.A. Hartwig, Kathryn M. Pendleton, Kimberly J. Langer, Sonia J. Meiers",
+    "title": "Benefits of collaborative patient care rounds in the intensive care unit",
+    "journal": "Intensive and Critical Care Nursing",
+    "year": 2020,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.iccn.2020.102974",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/33262010/",
+    "topics": [],
+    "authorSlugs": [
+      "katie-pendleton"
+    ]
+  },
+  {
+    "id": "gen-10-1165-rcmb-2018-0068le",
+    "authors": "Pratik Jagtap, Kevin J. Viken, James R. Johnson, Thomas McGowan, Kathryn M. Pendleton, Timothy J. Griffin, Ryan C. Hunter, Joel Rudney, Maneesh Bhargava",
+    "title": "BAL Fluid Metaproteome in Acute Respiratory Failure",
+    "journal": "American Journal of Respiratory Cell and Molecular Biology",
+    "year": 2018,
+    "status": "Published",
+    "doi": "https://doi.org/10.1165/rcmb.2018-0068le",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/30382775/",
+    "topics": [],
+    "authorSlugs": [
+      "katie-pendleton"
+    ]
+  },
+  {
+    "id": "gen-10-1155-2022-9853344",
+    "authors": "Kathryn M. Pendleton, Laurel E. Stephenson, Nick Goeden, Anna R Benson, Qi Wang, Salman B. Mahmood, Kelly A. Considine, Matthew E. Prekker",
+    "title": "Ketamine Infusion for Sedation and Analgesia during Mechanical Ventilation in the ICU: A Multicenter Evaluation",
+    "journal": "Critical Care Research and Practice",
     "year": 2022,
     "status": "Published",
-    "doi": "https://doi.org/10.1186/s12931-022-02013-w",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/35449067/",
+    "doi": "https://doi.org/10.1155/2022/9853344",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/36504505/",
     "topics": [],
     "authorSlugs": [
-      "abbie-begnaud"
+      "katie-pendleton"
     ]
   },
   {
-    "id": "gen-10-1016-j-chest-2022-09-022",
-    "authors": "COPDGene Investigators, Brigid A. Adviento, Elizabeth A. Regan, Barry J. Make, Mei Lan K. Han, Marilyn G. Foreman, Anand S. Iyer, Surya P. Bhatt, Victor Kim, Jessica Bon, Xavier Soler, Gregory L. Kinney, Nicola A. Hanania, Katherine E. Lowe, Kristen E. Holm, Abebaw M. Yohannes, Gen Shinozaki, Karin F. Hoth, Jess G. Fiedorowicz, James D. Crapo, Edwin K. Silverman, Terri H. Beaty, Peter J. Castaldi, Michael H. Cho, Dawn L. DeMeo, Adel El Boueiz, Auyon Ghosh, Lystra P. Hayden, Craig P. Hersh, Jacqueline Hetmanski, Brian D. Hobbs, John E. Hokanson, Wonji Kim, Nan Laird, Christoph Lange, Sharon M. Lutz, Merry Lynn McDonald, Dmitry Prokopenko, Matthew Moll, Jarrett Morrow, Dandi Qiao, Aabida Saferali, Phuwanat Sakornsakolpat, Emily S. Wan, Charlene McEvoy, Joseph Tashjian, Christine Wendt, Ken M. Kunisaki, Joanne Billings, Abbie Begnaud, Tadashi Allen",
-    "title": "Clinical Markers Associated With Risk of Suicide or Drug Overdose Among Individuals With Smoking Exposure",
-    "journal": "Chest",
+    "id": "gen-10-1097-acm-0000000000003164",
+    "authors": "Kathryn M. Pendleton, Arghavan Salles",
+    "title": "Maternity Leave: Not Just a Challenge for Trainees",
+    "journal": "Academic Medicine",
+    "year": 2020,
+    "status": "Published",
+    "doi": "https://doi.org/10.1097/acm.0000000000003164",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/32209845/",
+    "topics": [],
+    "authorSlugs": [
+      "katie-pendleton"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-chest-2020-04-071",
+    "authors": "Alice Gallo de Moraes, Christopher L. Carroll, Gregory A. Schmidt, Kathryn M. Pendleton",
+    "title": "All That Glitters Isn’t Gold",
+    "journal": "CHEST Journal",
+    "year": 2020,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.chest.2020.04.071",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/32470388/",
+    "topics": [],
+    "authorSlugs": [
+      "katie-pendleton"
+    ]
+  },
+  {
+    "id": "gen-10-34197-ats-scholar-2024-0039oc",
+    "authors": "Aahd Kubbara, Jennifer S. Wong, Katie Capp, Selam Woldegerima, Michael A. Sundberg, Andrew Olson, Kathryn M. Pendleton",
+    "title": "Moving Toward Interprofessional Teaching in the Intensive Care Unit: A Mixed Methods Study",
+    "journal": "ATS Scholar",
+    "year": 2024,
+    "status": "Published",
+    "doi": "https://doi.org/10.34197/ats-scholar.2024-0039oc",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/39822222/",
+    "topics": [],
+    "authorSlugs": [
+      "katie-pendleton"
+    ]
+  },
+  {
+    "id": "gen-10-1177-2381468320963063",
+    "authors": "Bjorn P. Berg, S. Ayca Erdogan, Jennifer M. Lobo, Kathryn M. Pendleton",
+    "title": "A Method for Balancing Provider Schedules in Outpatient Specialty Clinics",
+    "journal": "MDM Policy & Practice",
+    "year": 2020,
+    "status": "Published",
+    "doi": "https://doi.org/10.1177/2381468320963063",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/33178888/",
+    "topics": [],
+    "authorSlugs": [
+      "katie-pendleton"
+    ]
+  },
+  {
+    "id": "gen-10-1097-cce-0000000000000864",
+    "authors": "Jennifer Proper, David A. Wacker, Salma Shaker, Jamie Heisdorffer, Rami M. Shaker, Larissa T. Shiue, Kathryn M. Pendleton, Lianne Siegel, Ronald A. Reilkoff",
+    "title": "Patient Outcomes and Unit Composition With Transition to a High-Intensity ICU Staffing Model: A Before-and-After Study",
+    "journal": "Critical Care Explorations",
     "year": 2023,
     "status": "Published",
-    "doi": "https://doi.org/10.1016/j.chest.2022.09.022",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/36167120/",
+    "doi": "https://doi.org/10.1097/cce.0000000000000864",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/36778910/",
     "topics": [],
     "authorSlugs": [
-      "abbie-begnaud"
+      "katie-pendleton"
     ]
   },
   {
-    "id": "gen-10-1007-978-3-031-38412-7-2",
-    "authors": "Christine M. Lambert, Abbie Begnaud",
-    "title": "Lung Cancer Screening",
-    "journal": "Respiratory Medicine (Switzerland)",
+    "id": "gen-10-1016-j-rmcr-2022-101742",
+    "authors": "John Selickman, Jacob Fiocchi, Hem Desai, Kathryn M. Pendleton",
+    "title": "Successful hemostasis in refractory alveolar hemorrhage using low-dose recombinant activated factor VII",
+    "journal": "Respiratory Medicine Case Reports",
+    "year": 2022,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.rmcr.2022.101742",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/36161235/",
+    "topics": [],
+    "authorSlugs": [
+      "katie-pendleton"
+    ]
+  },
+  {
+    "id": "gen-10-1097-cce-0000000000000933",
+    "authors": "Muhammad K. Hayat Syed, Kathryn M. Pendleton, John Park, Craig Weinert",
+    "title": "Physicians’ Clinical Behavior During Fluid Evaluation Encounters",
+    "journal": "Critical Care Explorations",
     "year": 2023,
     "status": "Published",
-    "doi": "https://doi.org/10.1007/978-3-031-38412-7_2",
+    "doi": "https://doi.org/10.1097/cce.0000000000000933",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/37387710/",
     "topics": [],
     "authorSlugs": [
-      "abbie-begnaud"
+      "katie-pendleton"
     ]
   },
   {
-    "id": "gen-abbie-begnaud-2017-randomized-electronic-promotion-of-lung",
-    "authors": "Begnaud A",
-    "title": "Randomized Electronic Promotion of Lung Cancer Screening: A Pilot",
-    "journal": "JCO Clinical Cancer Informatics",
-    "year": 2017,
+    "id": "gen-10-4266-acc-2023-01151",
+    "authors": "Anna M. Budde, Jenna L. Potter, Anna R Benson, Jared A Larson, Christopher A. Linke, Kathryn M. Pendleton",
+    "title": "Pre-intubation huddle to reduce peri-intubation adverse events",
+    "journal": "Acute and Critical Care",
+    "year": 2024,
     "status": "Published",
+    "doi": "https://doi.org/10.4266/acc.2023.01151",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/38224958/",
     "topics": [],
     "authorSlugs": [
-      "abbie-begnaud"
+      "katie-pendleton"
     ]
   },
   {
-    "id": "gen-10-1513-annalsats-201812-908rl",
-    "authors": "Katherine Janssen, Kelsey Schertz, Nathan Rubin, Abbie Begnaud",
-    "title": "Incidental Findings in a Decentralized Lung Cancer Screening Program",
-    "journal": "Annals of the American Thoracic Society",
-    "year": 2019,
+    "id": "gen-10-1016-j-rmcr-2024-101985",
+    "authors": "Kathryn M. Pendleton, Jacob Fiocchi, Julia Meyer, Alexandra Fuher, Sarah Green, William M. LeTourneau, Ronald A. Reilkoff",
+    "title": "High PEEP extubation as guided by esophageal manometry",
+    "journal": "Respiratory Medicine Case Reports",
+    "year": 2024,
     "status": "Published",
-    "doi": "https://doi.org/10.1513/AnnalsATS.201812-908RL",
+    "doi": "https://doi.org/10.1016/j.rmcr.2024.101985",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/38357549/",
     "topics": [],
     "authorSlugs": [
-      "abbie-begnaud"
+      "katie-pendleton"
     ]
   },
   {
-    "id": "gen-10-1016-j-lungcan-2015-10-009",
-    "authors": "Hiren J. Mehta, Abbie Begnaud, Andrea M. Penley, John Wynne, Paras Malhotra, Sebastian Fernandez-Bussy, Jessica M. Cope, Jonathan J. Shuster, Michael A. Jantz",
-    "title": "Treatment of isolated mediastinal and hilar recurrence of lung cancer with bronchoscopic endobronchial ultrasound guided intratumoral injection of chemotherapy with cisplatin",
-    "journal": "Lung Cancer",
-    "year": 2015,
+    "id": "gen-10-1016-j-chest-2025-07-1234",
+    "authors": "JOSEPH DE JONGE, KATHERINE SCHMIECHEN, C. Linke, R. Rovinski, Kathryn M. Pendleton",
+    "title": "SAFETY OF IMPLEMENTING A RESPIRATORY THERAPIST-DRIVEN SPONTANEOUS BREATHING TRIAL PROTOCOL IN CARDIAC ICU PATIENTS",
+    "journal": "CHEST Journal",
+    "year": 2025,
     "status": "Published",
-    "doi": "https://doi.org/10.1016/j.lungcan.2015.10.009",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/26477968/",
+    "doi": "https://doi.org/10.1016/j.chest.2025.07.1234",
     "topics": [],
     "authorSlugs": [
-      "abbie-begnaud"
+      "katie-pendleton"
     ]
   },
   {
-    "id": "gen-10-2217-pme-2020-0130",
-    "authors": "Dana M Carroll, Carol Hernandez, Greg Braaten, Ellen Meier, Pamala Jacobson, Abbie Begnaud, Erin McGonagle, Linda Bane Frizzell, Dorothy K Hatsukami",
-    "title": "Recommendations to Researchers for Aiding in Increasing American Indian Representation in Genetic Research and Personalized Medicine",
-    "journal": "Personalized Medicine",
-    "year": 2021,
+    "id": "gen-10-1002-alz70858-106799",
+    "authors": "Benjamin A Chapin, Kathryn M. Pendleton, Faith Kimmet, Cynthia Garvan, Steven T. DeKosky, John B. Williamson, Catherine C. Price",
+    "title": "Preoperative Visual Attention, Postoperative Delirium and Three‐Month Outcomes",
+    "journal": "Alzheimer s & Dementia",
+    "year": 2025,
     "status": "Published",
-    "doi": "https://doi.org/10.2217/pme-2020-0130",
+    "doi": "https://doi.org/10.1002/alz70858_106799",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/41452737/",
     "topics": [],
     "authorSlugs": [
-      "abbie-begnaud"
+      "katie-pendleton"
     ]
   },
   {
-    "id": "gen-10-1016-j-cllc-2019-10-012",
-    "authors": "Abbie Begnaud, Ping Yang, Camille Robichaux, Nathan Rubin, Robert Kratzke, Anne Melzer, Constantin Aliferis, Pamala Jacobson",
-    "title": "Evidence That Established Lung Cancer Mortality Disparities in American Indians Are Not Due to Lung Cancer Genetic Testing and Targeted Therapy Disparities",
-    "journal": "Clinical Lung Cancer",
-    "year": 2019,
+    "id": "gen-10-1016-j-toxrep-2025-102114",
+    "authors": "Elsa Sandeno, Sergey Karachenets, Kourtney Zehlke, Raza Khan, Michael Kalinoski, Pravin Meshram, James V. Harmon",
+    "title": "Survival following intentional overdose of veterinary insulin: A case report",
+    "journal": "Toxicology Reports",
+    "year": 2025,
     "status": "Published",
-    "doi": "https://doi.org/10.1016/j.cllc.2019.10.012",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/31759888/",
+    "doi": "https://doi.org/10.1016/j.toxrep.2025.102114",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/40977846/",
     "topics": [],
     "authorSlugs": [
-      "abbie-begnaud"
-    ]
-  },
-  {
-    "id": "gen-10-1378-chest-14-0823",
-    "authors": "Hiren J. Mehta, Paras Malhotra, Abbie Begnaud, Andrea M. Penley, Michael A. Jantz",
-    "title": "Treatment of alveolar-pleural fistula with endobronchial application of synthetic hydrogel",
-    "journal": "Chest",
-    "year": 2015,
-    "status": "Published",
-    "doi": "https://doi.org/10.1378/chest.14-0823",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/25057803/",
-    "topics": [],
-    "authorSlugs": [
-      "abbie-begnaud"
-    ]
-  },
-  {
-    "id": "gen-10-1016-j-ctarc-2021-100443",
-    "authors": "Anne C. Melzer, Abbie Begnaud, Bruce R. Lindgren, Kelsey L Schertz, Steven S. Fu, David M. Vock, Alexander J. Rothman, Anne M. Joseph",
-    "title": "Self-reported exercise capacity among current smokers eligible for lung cancer screening",
-    "journal": "Cancer Treatment Communications",
-    "year": 2021,
-    "status": "Published",
-    "doi": "https://doi.org/10.1016/j.ctarc.2021.100443",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/34371253/",
-    "topics": [],
-    "authorSlugs": [
-      "abbie-begnaud"
-    ]
-  },
-  {
-    "id": "gen-10-14694-edbk-159195",
-    "authors": "Abbie Begnaud, Thomas Hall, Tadashi L Allen",
-    "title": "Lung Cancer Screening With Low-Dose CT",
-    "journal": "American Society of Clinical Oncology educational book. American Society of Clinical Oncology. Meeting",
-    "year": 2016,
-    "status": "Published",
-    "doi": "https://doi.org/10.14694/EDBK_159195",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/27249755/",
-    "topics": [],
-    "authorSlugs": [
-      "abbie-begnaud"
-    ]
-  },
-  {
-    "id": "gen-10-1016-j-cct-2017-07-002",
-    "authors": "Steven S. Fu, Alexander J. Rothman, David M. Vock, Bruce Lindgren, Daniel Almirall, Abbie Begnaud, Anne Melzer, Kelsey Schertz, Susan Glaeser, Patrick Hammett, Anne M. Joseph",
-    "title": "Program for lung cancer screening and tobacco cessation",
-    "journal": "Contemporary Clinical Trials",
-    "year": 2017,
-    "status": "Published",
-    "doi": "https://doi.org/10.1016/j.cct.2017.07.002",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/28687349/",
-    "topics": [],
-    "authorSlugs": [
-      "abbie-begnaud"
-    ]
-  },
-  {
-    "id": "gen-10-21037-jtd-2018-03-89",
-    "authors": "Abbie Begnaud, Robert A. Kratzke",
-    "title": "Meet the new boss",
-    "journal": "Journal of Thoracic Disease",
-    "year": 2018,
-    "status": "Published",
-    "doi": "https://doi.org/10.21037/jtd.2018.03.89",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/29708135/",
-    "topics": [],
-    "authorSlugs": [
-      "abbie-begnaud"
-    ]
-  },
-  {
-    "id": "gen-abbie-begnaud-2020-identify-patients-likely-to-benefit",
-    "authors": "Abbie Begnaud, Joseph Leishman, Tanner J. Caverly",
-    "title": "Identify patients likely to benefit from lung cancer screening",
-    "journal": "American family physician",
-    "year": 2020,
-    "status": "Published",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/31939647/",
-    "topics": [],
-    "authorSlugs": [
-      "abbie-begnaud"
-    ]
-  },
-  {
-    "id": "gen-10-1007-s10554-021-02241-z",
-    "authors": "Pratik S Velangi, Barrett Kenny, Matthew Hooks, Adinan Kanda, Kelsey Schertz, Harmeet K Kharoud, Gurmandeep S. Sandhu, Rajat Kalra, Tadashi Allen, Abbie Begnaud, Prabhjot Singh Nijjar",
-    "title": "Impact of 2016 SCCT/STR guidelines for coronary artery calcium scoring of noncardiac chest CT scans on lung cancer screening CT reporting",
-    "journal": "International Journal of Cardiovascular Imaging",
-    "year": 2021,
-    "status": "Published",
-    "doi": "https://doi.org/10.1007/s10554-021-02241-z",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/33860401/",
-    "topics": [],
-    "authorSlugs": [
-      "abbie-begnaud"
-    ]
-  },
-  {
-    "id": "gen-10-1513-annalsats-201406-268oc",
-    "authors": "Abbie Begnaud, John E. Connett, Eileen M. Harwood, Michael A. Jantz, Hiren J. Mehta",
-    "title": "Measuring central airway obstruction",
-    "journal": "Annals of the American Thoracic Society",
-    "year": 2015,
-    "status": "Published",
-    "doi": "https://doi.org/10.1513/AnnalsATS.201406-268OC",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/25514623/",
-    "topics": [],
-    "authorSlugs": [
-      "abbie-begnaud"
-    ]
-  },
-  {
-    "id": "gen-10-1513-annalsats-201503-131oc",
-    "authors": "Hiren J. Mehta, Abbie Begnaud, Andrea M. Penley, John Wynne, Paras Malhotra, Sebastian Fernandez-Bussy, Jessica Cope, Jonathan J. Shuster, Michael A. Jantz",
-    "title": "Restoration of patency to central airways occluded by malignant endobronchial tumors using intratumoral injection of cisplatin",
-    "journal": "Annals of the American Thoracic Society",
-    "year": 2015,
-    "status": "Published",
-    "doi": "https://doi.org/10.1513/AnnalsATS.201503-131OC",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/26072968/",
-    "topics": [],
-    "authorSlugs": [
-      "abbie-begnaud"
-    ]
-  },
-  {
-    "id": "gen-10-1164-rccm-201705-0909ci",
-    "authors": "Anne M. Joseph, Alexander J. Rothman, Daniel Almirall, Abbie Begnaud, Caroline Chiles, Paul M. Cinciripini, Steven S. Fu, Amanda L. Graham, Bruce R. Lindgren, Anne C. Melzer, Jamie S. Ostroff, Elizabeth L. Seaman, Kathryn L. Taylor, Benjamin A. Toll, Steven B. Zeliadt, David M. Vock",
-    "title": "Lung Cancer Screening and Smoking Cessation Clinical Trials SCALE (Smoking Cessation within the Context of Lung Cancer Screening) Collaboration",
-    "journal": "American journal of respiratory and critical care medicine",
-    "year": 2018,
-    "status": "Published",
-    "doi": "https://doi.org/10.1164/rccm.201705-0909CI",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/28977754/",
-    "topics": [],
-    "authorSlugs": [
-      "abbie-begnaud"
-    ]
-  },
-  {
-    "id": "gen-10-1164-rccm-201804-0663oc",
-    "authors": "for the COPDGene Investigators, Emily S. Wan, Elizabeth A. Regan, John Hokanson, Mei Lan K. Han, Richard Casaburi, Barry J. Make, James D. Crapo, Dawn L. DeMeo, Edwin K. Silverman, Spyridon Fortis, Ferdouse Begum, Peter J. Castaldi, Michael Cho, Adel R. Boueiz, Marilyn G. Foreman, Eitan Halper-Stromberg, Lystra P. Hayden, Craig P. Hersh, Jacqueline Hetmanski, Brian D. Hobbs, Nan Laird, Christoph Lange, Sharon M. Lutz, Merry Lynn McDonald, Margaret M. Parker, Dandi Qiao, Elizabeth A. Regan, Sungho Won, Phuwanat Sakornsakolpat, Dmitry Prokopenko, Mustafa Al Qaisi, Harvey O. Coxson, Teresa Gray, Eric A. Hoffman, Stephen Humphries, Francine L. Jacobson, Philip F. Judy, Ella A. Kazerooni, Alex Kluiber, David A. Lynch, John D. Newell, Elizabeth A. Regan, James C. Ross, Raul San Jose Estepar, Joyce Schroeder, Christine H Wendt, Joanne L Billings, Abbie Begnaud, Tadashi L Allen",
-    "title": "Longitudinal phenotypes and mortality in preserved ratio impaired spirometry in the COPDGene study",
-    "journal": "American journal of respiratory and critical care medicine",
-    "year": 2018,
-    "status": "Published",
-    "doi": "https://doi.org/10.1164/rccm.201804-0663OC",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/29874098/",
-    "topics": [],
-    "authorSlugs": [
-      "abbie-begnaud"
-    ]
-  },
-  {
-    "id": "gen-10-1164-rccm-201908-1600oc",
-    "authors": "Alexandra L. Young, Felix J.S. Bragman, Bojidar Rangelov, Meilan K. Han, Craig J. Galbán, David A. Lynch, David J. Hawkes, Daniel C. Alexander, John R. Hurst, James D. Crapo, Edwin K. Silverman, Barry J. Make, Elizabeth A. Regan, Terri Beaty, Ferdouse Begum, Peter J. Castaldi, Michael Cho, Dawn L. DeMeo, Adel R. Boueiz, Marilyn G. Foreman, Eitan Halper-Stromberg, Lystra P. Hayden, Craig P. Hersh, Jacqueline Hetmanski, Brian D. Hobbs, John E. Hokanson, Nan Laird, Christoph Lange, Sharon M. Lutz, Merry Lynn McDonald, Margaret M. Parker, Dandi Qiao, Elizabeth A. Regan, Edwin K. Silverman, Emily S. Wan, Sungho Won, Phuwanat Sakornsakolpat, Dmitry Prokopenko, Mustafa Al Qaisi, Harvey O. Coxson, Teresa Gray, Eric A. Hoffman, Stephen Humphries, Francine L. Jacobson, Philip F. Judy, Ella A. Kazerooni, Alex Kluiber, David A. Lynch, John D. Newell, Elizabeth A. Regan, James C. Ross, Raul San Jose Estepar, Joyce Schroeder, Jered Sieren, Douglas Stinson, Berend C. Stoel, Juerg Tschirren, Edwin Van Beek, Bram Van Ginneken, Eva Van Rikxoort, George Washko, Carla G. Wilson, Robert Jensen, Douglas Everett, Jim Crooks, Camille Moore, Matt Strand, Carla G. Wilson, John E. Hokanson, John Hughes, Gregory Kinney, Sharon M. Lutz, Katherine Pratte, Kendra A. Young, Surya Bhatt, Jessica Bon, Barry J. Make, Carlos Martinez, Susan Murray, Elizabeth A. Regan, Xavier Soler, Carla G. Wilson, Russell P. Bowler, Katerina Kechris, Farnoush Banaei-Kashani, Jeffrey L. Curtis, Carlos H. Martinez, Perry G. Pernicano, Nicola Hanania, Philip Alapat, Mustafa Atik, Venkata Bandi, Aladin Boriek, Kalpatha Guntupalli, Elizabeth Guy, Arun Nachiappan, Amit Parulekar, Dawn L. DeMeo, Craig P. Hersh, Francine L. Jacobson, George Washko, R. Graham Barr, John Austin, Belinda D'Souza, Gregory D.N. Pearson, Anna Rozenshtein, Byron Thomashow, Neil MacIntyre, H. Page McAdams, Lacey Washington, Charlene McEvoy, Joseph Tashjian, Robert Wise, Robert Brown, Nadia N. Hansel, Karen Horton, Allison Lambert, Nirupama Putcha, Richard Casaburi, Alessandra Adami, Matthew Budoff, Hans Fischer, Janos Porszasz, Harry Rossiter, William Stringer, Amir Sharafkhaneh, Charlie Lan, Christine Wendt, Brian Bell, Marilyn G. Foreman, Eugene Berkowitz, Gloria Westney, Russel P. Bowler, David A. Lynch, Richard Rosiello, David Pace, Gerard Criner, David Ciccolella, Francis Cordova, Chandra Dass, Gilbert D'Alonzo, Parag Desai, Michael Jacobs, Steven Kelsen, Victor Kim, A. James Mamary, Nathaniel Marchetti, Aditi Satti, Kartik Shenoy, Robert M. Steiner, Alex Swift, Irene Swift, Maria Elena Vega-Sanchez, Mark Dransfield, William Bailey, Surya Bhatt, Anand Iyer, Hrudaya Nath, J. Michael Wells, Joe Ramsdell, Paul Friedman, Xavier Soler, Andrew Yen, Alejandro P. Comellas, Karin F. Hoth, John D. Newell, Brad Thompson, Ella A. Kazerooni, Carlos H. Martinez, Joanne Billings, Abbie Begnaud, Tadashi Allen, Frank Sciurba, Jessica Bon, Divay Chandra, Carl Fuhrman, Joel Weissfeld, Antonio Anzueto, Sandra Adams, Diego Maselli-Caceres, Mario E. Ruiz",
-    "title": "Disease progression modeling in chronic obstructive pulmonary disease",
-    "journal": "American journal of respiratory and critical care medicine",
-    "year": 2020,
-    "status": "Published",
-    "doi": "https://doi.org/10.1164/rccm.201908-1600OC",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/31657634/",
-    "topics": [],
-    "authorSlugs": [
-      "abbie-begnaud"
-    ]
-  },
-  {
-    "id": "gen-10-15326-jcopdf-7-1-2019-0138",
-    "authors": "COPDGene® Investigators, Craig P. Hersh, Soumya Zacharia, Ram Prakash Arivu Chelvan, Lystra P. Hayden, Ali Mirtar, Sara Zarei, Nirupama Putcha, James D. Crapo, Edwin K. Silverman, Barry J. Make, Elizabeth A. Regan, Terri Beaty, Ferdouse Begum, Peter J. Castaldi, Michael Cho, Dawn L. DeMeo, Adel R. Boueiz, Marilyn G. Foreman, Eitan Halper-Stromberg, Lystra P. Hayden, Craig P. Hersh, Jacqueline Hetmanski, Brian D. Hobbs, John E. Hokanson, Nan Laird, Christoph Lange, Sharon M. Lutz, Merry Lynn McDonald, Margaret M. Parker, Dandi Qiao, Elizabeth A. Regan, Edwin K. Silverman, Emily S. Wan, Sungho Won, Phuwanat Sakornsakolpat, Dmitry Prokopenko, Mustafa Al Qaisi, Harvey O. Coxson, Teresa Gray, Mei Lan K. Han, Eric A. Hoffman, Stephen Humphries, Francine L. Jacobson, Philip F. Judy, Charlene McEvoy, Joseph Tashjian, Christine Wendt, Joanne Billings, Abbie Begnaud, Tadashi Allen",
-    "title": "Immunoglobulin E as a biomarker for the overlap of atopic asthma and chronic obstructive pulmonary disease",
-    "journal": "Chronic Obstructive Pulmonary Diseases",
-    "year": 2020,
-    "status": "Published",
-    "doi": "https://doi.org/10.15326/jcopdf.7.1.2019.0138",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/31999898/",
-    "topics": [],
-    "authorSlugs": [
-      "abbie-begnaud"
-    ]
-  },
-  {
-    "id": "gen-10-1016-j-jaci-2018-04-010",
-    "authors": "COPDGene and ECLIPSE Investigators, Jeong H. Yun, Andrew Lamb, Robert Chase, Dave Singh, Margaret M. Parker, Aabida Saferali, Jørgen Vestbo, Ruth Tal-Singer, Peter J. Castaldi, Edwin K. Silverman, Craig P. Hersh, James D. Crapo, Edwin K. Silverman, Barry J. Make, Elizabeth A. Regan, Terri Beaty, Ferdouse Begum, Robert Busch, Peter J. Castaldi, Michael Cho, Dawn L. DeMeo, Adel R. Boueiz, Marilyn G. Foreman, Eitan Halper-Stromberg, Nadia N. Hansel, Megan E. Hardin, Lystra P. Hayden, Craig P. Hersh, Jacqueline Hetmanski, Brian D. Hobbs, John E. Hokanson, Nan Laird, Christoph Lange, Sharon M. Lutz, Merry Lynn McDonald, Margaret M. Parker, Dandi Qiao, Stephanie Santorico, Emily S. Wan, Sungho Won, Mustafa Al Qaisi, Harvey O. Coxson, Teresa Gray, Mei Lan K. Han, Eric A. Hoffman, Stephen Humphries, Francine L. Jacobson, Philip F. Judy, Ella A. Kazerooni, Alex Kluiber",
-    "title": "Blood eosinophil count thresholds and exacerbations in patients with chronic obstructive pulmonary disease",
-    "journal": "Journal of Allergy and Clinical Immunology",
-    "year": 2018,
-    "status": "Published",
-    "doi": "https://doi.org/10.1016/j.jaci.2018.04.010",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/29709670/",
-    "topics": [],
-    "authorSlugs": [
-      "abbie-begnaud"
-    ]
-  },
-  {
-    "id": "gen-10-1016-j-chest-2019-03-041",
-    "authors": "COPDGene Investigators, Victor Kim, Huaqing Zhao, Elizabeth Regan, Mei Lan K. Han, Barry J. Make, James D. Crapo, Paul W. Jones, Jeffrey L. Curtis, Edwin K. Silverman, Gerard J. Criner, Elizabeth A. Regan, Terri Beaty, Ferdouse Begum, Robert Busch, Peter J. Castaldi, Michael Cho, Dawn L. DeMeo, Adel R. Boueiz, Marilyn G. Foreman, Eitan Halper-Stromberg, Nadia N. Hansel, Megan E. Hardin, Lystra P. Hayden, Craig P. Hersh, Jacqueline Hetmanski, Brian D. Hobbs, John E. Hokanson, Nan Laird, Christoph Lange, Sharon M. Lutz, Merry Lynn McDonald, Margaret M. Parker, Dandi Qiao, Stephanie Santorico, Emily S. Wan, Sungho Won, Jean Paul Charbonnier, Harvey O. Coxson, Eric A. Hoffman, Stephen Humphries, Francine L. Jacobson, Philip F. Judy, Ella A. Kazerooni, Alex Kluiber, Charlene McEvoy, Joseph Tashjian, Christine Wendt, Joanne Billings, Abbie Begnaud, Tadashi Allen",
-    "title": "The St. George's Respiratory Questionnaire Definition of Chronic Bronchitis May Be a Better Predictor of COPD Exacerbations Compared With the Classic Definition",
-    "journal": "Chest",
-    "year": 2019,
-    "status": "Published",
-    "doi": "https://doi.org/10.1016/j.chest.2019.03.041",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/31047955/",
-    "topics": [],
-    "authorSlugs": [
-      "abbie-begnaud"
-    ]
-  },
-  {
-    "id": "gen-10-1016-j-chest-2021-01-084",
-    "authors": "COPDGene Investigators, Carrie L. Pistenmaa, P. Nardelli, S. Y. Ash, C. E. Come, A. A. Diaz, F. N. Rahaghi, R. G. Barr, K. A. Young, G. L. Kinney, J. P. Simmons, R. C. Wade, J. M. Wells, J. E. Hokanson, G. R. Washko, R. San José Estépar, James D. Crapo, Edwin K. Silverman, Barry J. Make, Elizabeth A. Regan, Terri H. Beaty, Peter J. Castaldi, Michael H. Cho, Dawn L. DeMeo, Adel El Boueiz, Marilyn G. Foreman, Auyon Ghosh, Lystra P. Hayden, Craig P. Hersh, Jacqueline Hetmanski, Brian D. Hobbs, John E. Hokanson, Wonji Kim, Nan Laird, Christoph Lange, Sharon M. Lutz, Merry Lynn McDonald, Dmitry Prokopenko, Matthew Moll, Jarrett Morrow, Dandi Qiao, Aabida Saferali, Phuwanat Sakornsakolpat, Emily S. Wan, Charlene McEvoy, Joseph Tashjian, Christine Wendt, Ken M. Kunisaki, Joanne Billings, Abbie Begnaud, Tadashi Allen",
-    "title": "Pulmonary Arterial Pruning and Longitudinal Change in Percent Emphysema and Lung Function",
-    "journal": "Chest",
-    "year": 2021,
-    "status": "Published",
-    "doi": "https://doi.org/10.1016/j.chest.2021.01.084",
-    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/33607083/",
-    "topics": [],
-    "authorSlugs": [
-      "abbie-begnaud"
+      "michael-kalinoski"
     ]
   }
 ]

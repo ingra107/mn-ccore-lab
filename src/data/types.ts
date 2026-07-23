@@ -10,6 +10,7 @@ export interface Director {
   photoUrl?: string
   scholarId?: string // Google Scholar user ID (the ?user= parameter)
   orcidId?: string // ORCID iD, e.g. "0000-0002-1825-0097" — primary publications source (#357)
+  openalexId?: string // OpenAlex author id, e.g. "A5048294211" — fullest publications source (#905)
 }
 
 export interface TeamMember {
@@ -23,6 +24,8 @@ export interface TeamMember {
   bio?: string
   links?: { label: string; href: string }[]
   scholarId?: string // Google Scholar user ID (the ?user= parameter)
+  orcidId?: string // ORCID iD — primary publications source (#357)
+  openalexId?: string // OpenAlex author id, e.g. "A5048294211" — fullest publications source (#905)
   /** True if this row was provisioned automatically on first login.
    *  Surfaces a "Pending review" badge in the Team UI until role is set. */
   autoCreated?: boolean
