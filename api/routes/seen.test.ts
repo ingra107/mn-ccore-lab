@@ -61,6 +61,10 @@ interface ActivityEntryRow extends Row {
   body: string
   hidden_at: string | null
   created_at: string // ISO
+  // schema-v103. Optional/nullable — undefined on every pre-v103 fixture
+  // above falls back to created_at via the double's COALESCE below, same as
+  // the real column's NULL default.
+  answered_at?: string | null // ISO
 }
 
 interface TaskFixtureRow extends Row {
@@ -117,7 +121,11 @@ function makeStatefulEnv(opts: {
               if (root.hidden_at != null) continue
               const task = root.entity_type === 'task' ? tasks.find((t) => t.id === root.entity_id) : undefined
               if (root.entity_type === 'task' && task && task.deleted_at != null) continue
-              const replyMs = new Date(reply.created_at).getTime()
+              // schema-v103: COALESCE(answered_at, created_at) — mirrors the
+              // real SQL in seen.ts. answered_at is undefined/null on every
+              // pre-v103 fixture, so this is a no-op there.
+              const effectiveAt = reply.answered_at ?? reply.created_at
+              const replyMs = new Date(effectiveAt).getTime()
               if (!(replyMs > capMs)) continue
               const seen = entitySeen.find(
                 (es) => es.entity_type === root.entity_type && es.entity_id === root.entity_id && es.viewer_slug === esViewerSlug,
@@ -128,9 +136,9 @@ function makeStatefulEnv(opts: {
               const existing = groups.get(key)
               if (existing) {
                 existing.new_count += 1
-                if (reply.created_at > existing.latest_at) existing.latest_at = reply.created_at
+                if (effectiveAt > existing.latest_at) existing.latest_at = effectiveAt
               } else {
-                groups.set(key, { entity_type: root.entity_type, entity_id: root.entity_id, new_count: 1, latest_at: reply.created_at, title, project_slug: null })
+                groups.set(key, { entity_type: root.entity_type, entity_id: root.entity_id, new_count: 1, latest_at: effectiveAt, title, project_slug: null })
               }
             }
             return { results: Array.from(groups.values()) as unknown as T[] }
@@ -417,5 +425,45 @@ describe('handleGetUnseenActivity — private Hermes-answer arm (§9.5.1, PRIVAC
     const res = await handleGetUnseenActivity(authedRequest('https://x/api/seen/unseen'), env)
     const body = await res.json() as { data: Row[] }
     expect(body.data).toHaveLength(0)
+  })
+
+  // schema-v103 regression (codex + a prior agent flagged this class): Hermes's
+  // answer is an in-place UPDATE of the placeholder row, so reply.created_at is
+  // fixed at ASK time forever. Before v103, mark-seen firing ANY time after the
+  // ask (even before Hermes actually answered) would swallow the badge, because
+  // the old check was `reply.created_at > es.last_seen_at` — created_at never
+  // moves, so once last_seen_at passed it, it could never pass it again. This
+  // is the MANDATORY regression: last_seen_at sits strictly BETWEEN
+  // placeholder-creation and answer-completion, and the thread MUST still
+  // badge because answered_at (set only when the answer lands) is after it.
+  it('badges an answer even when last_seen_at falls BETWEEN placeholder-creation and answer-completion (schema-v103, the in-place-UPDATE bug class)', async () => {
+    const thread: ActivityEntryRow[] = [
+      {
+        id: 'root-task-c', entity_type: 'task', entity_id: 'task-3', parent_id: null,
+        visibility: 'author', actor_slug: 'nick-ingraham', body: '@hermes a third question',
+        hidden_at: null, created_at: nowIso(-3),
+      },
+      {
+        // The placeholder was created at ask time (-3) and its body/answered_at
+        // were updated in-place at answer time (-1) — created_at never moved.
+        id: 'reply-task-c', entity_type: 'task', entity_id: 'task-3', parent_id: 'root-task-c',
+        visibility: 'author', actor_slug: 'claude-ai', body: 'Here is my third answer.',
+        hidden_at: null, created_at: nowIso(-3), answered_at: nowIso(-1),
+      },
+    ]
+    const { env } = makeStatefulEnv({
+      activityEntries: thread,
+      tasks: [{ id: 'task-3', title: 'Task Three', short_title: null, deleted_at: null }],
+      // last_seen_at (-2) is strictly between placeholder-creation (-3) and
+      // answer-completion (-1) — the exact window the old created_at-only
+      // check swallowed.
+      entitySeen: [{ entity_type: 'task', entity_id: 'task-3', viewer_slug: 'nick-ingraham', last_seen_at: nowIso(-2) }],
+    })
+    const res = await handleGetUnseenActivity(authedRequest('https://x/api/seen/unseen'), env)
+    const body = await res.json() as { data: Row[] }
+    expect(body.data).toHaveLength(1)
+    expect(body.data[0]).toMatchObject({ entity_type: 'task', entity_id: 'task-3', new_count: 1 })
+    // latest_at reflects ANSWER time, not the ask-time created_at.
+    expect(body.data[0].latest_at).toBe(nowIso(-1))
   })
 })

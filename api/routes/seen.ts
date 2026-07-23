@@ -150,7 +150,15 @@ export async function handleGetUnseenActivity(request: Request, env: Env): Promi
       //   - reply.actor_slug = 'claude-ai' AND reply.parent_id IS NOT NULL — a
       //     reply Hermes wrote. handleUpdateAIResponse UPDATEs this row's body
       //     in place when the answer lands rather than inserting a new one, so
-      //     the row's id (and created_at) is fixed at ASK time, not answer time.
+      //     the row's id (and created_at) is fixed at ASK time, not answer
+      //     time. schema-v103's `answered_at` (set by that same UPDATE, or by
+      //     a follow-up UPDATE on the fallback INSERT path) fixes this: every
+      //     recency/ordering use below reads COALESCE(reply.answered_at,
+      //     reply.created_at), never bare created_at, so a mark-seen between
+      //     ask and answer no longer swallows the badge, a >30-day-late answer
+      //     is no longer dropped by the cap, and latest_at reflects answer
+      //     time. NULL answered_at (pre-v103 rows) falls back to created_at —
+      //     unchanged behavior for anything Hermes hasn't touched since.
       //   - reply.body NOT LIKE the pending-placeholder text — a thread Hermes
       //     hasn't answered YET must not badge (a bare ask ≠ an answer). Matches
       //     activity-entry.ts's HERMES_PENDING_BODY = 'Thinking about this...
@@ -190,7 +198,7 @@ export async function handleGetUnseenActivity(request: Request, env: Env): Promi
         `SELECT root.entity_type AS entity_type,
                 root.entity_id AS entity_id,
                 COUNT(*) AS new_count,
-                MAX(reply.created_at) AS latest_at,
+                MAX(COALESCE(reply.answered_at, reply.created_at)) AS latest_at,
                 CASE WHEN root.entity_type = 'task'
                      THEN COALESCE(t.short_title, t.title)
                      ELSE NULL END AS title,
@@ -211,8 +219,8 @@ export async function handleGetUnseenActivity(request: Request, env: Env): Promi
            AND reply.hidden_at IS NULL
            AND reply.body NOT LIKE 'Thinking about this%'
            AND (root.entity_type != 'task' OR t.deleted_at IS NULL)
-           AND reply.created_at > datetime('now', ?)
-           AND (es.last_seen_at IS NULL OR reply.created_at > es.last_seen_at)
+           AND COALESCE(reply.answered_at, reply.created_at) > datetime('now', ?)
+           AND (es.last_seen_at IS NULL OR COALESCE(reply.answered_at, reply.created_at) > es.last_seen_at)
          GROUP BY root.entity_type, root.entity_id
          ORDER BY latest_at DESC`
       ).bind(

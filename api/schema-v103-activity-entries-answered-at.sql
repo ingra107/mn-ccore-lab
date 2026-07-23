@@ -1,0 +1,62 @@
+-- schema-v103-activity-entries-answered-at.sql (2026-07-23)
+--
+-- The private-Hermes-answer badge (api/routes/seen.ts §9.5.1, shipped
+-- cfe0b9db) measures unseen/recency off `reply.created_at`. That is wrong:
+-- Hermes's answer is an in-place `UPDATE activity_entries SET body = ?`
+-- against the 'Thinking about this...' placeholder row
+-- (api/routes/ai-requests.ts `_postHermesResponse`), so `created_at` stays
+-- fixed at ASK time forever, never at ANSWER time. Three consequences flagged
+-- by codex + a prior agent:
+--   1. mark-seen fired between the ask and the answer swallows the badge —
+--      last_seen_at can be AFTER created_at (ask) but BEFORE the answer
+--      actually lands, and the old `reply.created_at > es.last_seen_at`
+--      check reads that as "already seen."
+--   2. an answer that lands >HERMES_UNSEEN_CAP_DAYS (30) after the ASK is
+--      dropped by the recency cap even though the ANSWER is brand new.
+--   3. `latest_at` in the unseen payload shows ask time, not answer time —
+--      wrong "N days ago" in the UI.
+--
+-- ONE nullable column, NOT a metadata_json key (same reasoning as v102's
+-- hidden_at: the arm's WHERE/ORDER BY need a real, comparable column, and
+-- metadata_json is a display bag whose only key is `edited`).
+--
+-- NULL until Hermes answers. Set by api/routes/ai-requests.ts at the exact
+-- two points an answer lands:
+--   - the in-place placeholder UPDATE (`_postHermesResponse`'s primary path)
+--   - the fallback fresh-INSERT path (placeholder missing/already gone), via
+--     a follow-up single-column UPDATE keyed on the just-inserted row's id —
+--     postActivityEntry() is the shared write primitive for every kind of
+--     activity entry (task comments, project comments, artifact comments,
+--     Hermes placeholders); teaching it a Hermes-only column would touch its
+--     bind-order-sensitive INSERT (see schema-v100's positional-bind note)
+--     for every caller, not just this one Hermes fallback.
+--
+-- Every OTHER activity_entries row (human comments, updates, the pending
+-- placeholder itself before it's answered) keeps answered_at NULL forever —
+-- this column has exactly one writer-class (Hermes answers) and one
+-- reader-class (the private-Hermes-answer arm's COALESCE).
+--
+-- Read side: api/routes/seen.ts's private-Hermes arm replaces every
+-- `reply.created_at` use (the recency cap, the `es.last_seen_at` compare, and
+-- MAX(...) for latest_at) with `COALESCE(reply.answered_at, reply.created_at)`.
+-- The COALESCE is the compatibility seam: a pre-v103 row, or a row Hermes
+-- never got around to backfilling, still has answered_at NULL and behaves
+-- exactly as before (falls back to created_at). No backfill migration needed
+-- — old answered threads simply keep their ask-time recency until a NEW
+-- answer touches them, which is an acceptable one-time recency gap, not a
+-- correctness bug.
+--
+-- No index: this column is read only inside the already-narrow Hermes arm
+-- (root.actor_slug = viewer AND root.visibility = 'author' AND
+-- reply.actor_slug = 'claude-ai'), which is a small per-viewer row set already
+-- covered by idx_ae_parent (schema-v100). Adding an index here would be
+-- premature for a column with no independent scan pattern.
+--
+-- Rollback: the column is additive + nullable; pre-v103 code (seen.ts's old
+-- `reply.created_at`-only reads) ignores it. No index to drop.
+--
+-- Apply:
+--   scripts/wrangler-d1 d1 execute mnccore-lab-test --remote --file=api/schema-v103-activity-entries-answered-at.sql
+--   scripts/wrangler-d1 d1 execute mnccore-lab      --remote --file=api/schema-v103-activity-entries-answered-at.sql
+
+ALTER TABLE activity_entries ADD COLUMN answered_at TEXT;

@@ -303,8 +303,15 @@ async function _postHermesResponse(
     // UPDATE the placeholder body in-place — no duplicate row.
     // activity_entries has no updated_at column; body replacement is sufficient
     // since the UI re-renders on query invalidation.
+    //
+    // schema-v103: also stamp answered_at. created_at stays fixed at ASK time
+    // (the placeholder's own insert moment) forever — this in-place UPDATE is
+    // the ONLY write that ever happens to this row on the answer path, so
+    // answered_at must be set HERE or it never gets set at all. The private-
+    // Hermes-answer arm in api/routes/seen.ts reads it via
+    // COALESCE(answered_at, created_at) instead of bare created_at.
     await env.DB.prepare(
-      'UPDATE activity_entries SET body = ? WHERE id = ?'
+      "UPDATE activity_entries SET body = ?, answered_at = datetime('now') WHERE id = ?"
     ).bind(responseText, placeholder.id).run();
   } else {
     // No placeholder: insert a fresh comment as the AI actor.
@@ -315,7 +322,7 @@ async function _postHermesResponse(
       taskProjectId = taskRow?.project_id ?? null;
     }
 
-    await postActivityEntry({
+    const posted = await postActivityEntry({
       env,
       user: { email: 'claude-ai', name: 'Hermes' },
       entityType,
@@ -329,6 +336,26 @@ async function _postHermesResponse(
       // #98: land in the asking thread, same as the placeholder would have.
       parentId: threadRootId,
     });
+
+    // schema-v103: this fresh row's created_at IS its answer time (it's
+    // minted at answer time, unlike the placeholder-UPDATE branch above), so
+    // answered_at is redundant with created_at for THIS row today — but
+    // seen.ts's read side is a single COALESCE(answered_at, created_at) with
+    // no branch for "which write path produced this row." Leaving it NULL
+    // here would make that COALESCE correct only by accident (it'd fall back
+    // to created_at, which happens to already be answer time) rather than by
+    // construction. postActivityEntry() is the shared write primitive for
+    // every activity-entry kind (task/project/artifact comments, updates, the
+    // Hermes placeholder itself) with a bind-order-sensitive positional
+    // INSERT (schema-v100's note) — a follow-up single-column UPDATE keyed on
+    // the freshly-minted id is one extra statement on a rare fallback path
+    // (placeholder missing/already replaced) vs. threading a Hermes-only
+    // column through every caller of the shared primitive.
+    if (posted.ok) {
+      await env.DB.prepare(
+        "UPDATE activity_entries SET answered_at = datetime('now') WHERE id = ?"
+      ).bind(posted.row.id).run();
+    }
   }
 }
 
