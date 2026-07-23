@@ -62,10 +62,11 @@ function main() {
     toInsert.push(g)
   }
 
+  // NB: no `BEGIN TRANSACTION`/`COMMIT` — Cloudflare D1 rejects raw SQL
+  // transaction statements (it wraps a `--file` execution atomically itself).
   const lines: string[] = [
     '-- #357 non-destructive INSERT of auto-fetched publications absent from prod.',
     `-- generated=${generatedPublications.length} curated=${curatedPublications.length} prod=${prodRows.length} -> to-insert=${toInsert.length}`,
-    'BEGIN TRANSACTION;',
   ]
   for (const p of toInsert) {
     lines.push(
@@ -75,7 +76,6 @@ function main() {
         `${esc(p.doi)}, ${esc(p.pubmed)}, ${esc(p.abstract)}, ${jsonOrNull(p.topics)}, ${num(p.featured ? 1 : 0)}, ${jsonOrNull(p.authorSlugs)});`,
     )
   }
-  lines.push('COMMIT;')
   console.log(lines.join('\n'))
   console.error(`[insert-generated-pubs] ${toInsert.length} rows to INSERT (of ${generatedPublications.length} generated).`)
 }
