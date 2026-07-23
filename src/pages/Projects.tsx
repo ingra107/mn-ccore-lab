@@ -179,6 +179,26 @@ function getStageProjects(stage: Stage, filtered: Project[]): Project[] {
   return filtered.filter((p) => p.stage === stage)
 }
 
+// "Most recent activity" sort key. Take the NEWEST of the two real movement
+// signals — the derived activity rollup (lastActivity, #95) and the curated
+// last_meaningful_movement — instead of the first truthy one. A stale-but-
+// present lastActivity (it freezes when a project is worked through PB Hub-first
+// field writes, which post no activity_entries row) was shadowing a fresher
+// last_meaningful_movement and sinking actively-worked projects to the bottom
+// (e.g. the LPV R01: activity frozen 2026-03-12, real movement 2026-07). Fall
+// back to updated_at ONLY when both movement signals are absent — updated_at is
+// a row-touch stamp any sync write bumps (api/routes/projects.ts:277), so it
+// must never promote a project on its own. parseDbUtc (not Date.parse): bare D1
+// stamps are UTC and native parsing would read them as local.
+function projectRecencyMs(p: Project): number {
+  const ms = (v: string | null | undefined): number => {
+    const t = parseDbUtc(v).getTime()
+    return Number.isNaN(t) ? 0 : t
+  }
+  const move = Math.max(ms(p.lastActivity), ms(p.last_meaningful_movement))
+  return move || ms(p.updated_at)
+}
+
 export default function Projects() {
   usePageMeta(
     'Research Pipeline | MN-CCORE',
@@ -354,14 +374,13 @@ export default function Projects() {
         case 'pi': cmp = (a.pi || '').localeCompare(b.pi || ''); break
         case 'category': cmp = (a.category || '').localeCompare(b.category || ''); break
         case 'activity': {
-          // Most recent activity first. lastActivity is the real worked-on
-          // signal (#95 — MAX activity_entries: updates documented + tasks
-          // completed within the project); meaningful-movement / updated_at
-          // remain fallbacks for projects with no stream rows yet.
-          // parseDbUtc, not Date.parse: bare D1 stamps are UTC and native
-          // parsing would read them as local (src/lib/time.ts).
-          const tA = parseDbUtc(a.lastActivity || a.last_meaningful_movement || a.updated_at).getTime() || 0
-          const tB = parseDbUtc(b.lastActivity || b.last_meaningful_movement || b.updated_at).getTime() || 0
+          // Most recent real movement first — newest of {lastActivity,
+          // last_meaningful_movement}, updated_at only as a last resort.
+          // See projectRecencyMs above for why the old first-truthy chain
+          // (a stale lastActivity shadowing fresher movement) buried
+          // actively-worked projects.
+          const tA = projectRecencyMs(a)
+          const tB = projectRecencyMs(b)
           cmp = tB - tA
           break
         }
