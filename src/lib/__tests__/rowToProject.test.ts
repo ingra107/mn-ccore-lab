@@ -95,6 +95,12 @@ describe('rowToProject — every ProjectRow field the API can return survives th
     expect(rowToProject(makeRow()).lastActivity).toBeUndefined()
   })
 
+  it('maps type (schema-v73 grant/personal-taxonomy classification, independent of category)', () => {
+    expect(rowToProject(makeRow({ type: 'R01' })).type).toBe('R01')
+    expect(rowToProject(makeRow({ type: null })).type).toBeNull()
+    expect(rowToProject(makeRow()).type).toBeUndefined()
+  })
+
   it('a NEW passthrough-shaped field added to ProjectRow requires zero mapper changes', () => {
     // Guards the structural fix itself: any field spread from `row` whose
     // name+shape matches `Project` needs no explicit line in rowToProject.

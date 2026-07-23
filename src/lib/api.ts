@@ -70,6 +70,12 @@ export interface ProjectRow {
   // SELECT *). Drives the mnccore:// "Open folder" / "Work on this in Claude"
   // affordances. NULL for projects without a local/Box working dir.
   primary_folder?: string | null
+  // Fine-grained grant/personal-taxonomy classification (schema-v73,
+  // api/schema-v73-projects-type.sql: R01/R03/K/CLIF/Nick_Lab/Friends/
+  // Mentees/Admin/Personal). Independent of the coarse `category` bucket —
+  // see that migration's rationale. Nullable: pre-2026-06-06 rows may not
+  // be backfilled.
+  type?: string | null
   // Key links (schema-v42, 2026-04-17). Was declared on `Project` (data/types.ts)
   // but never declared here — bug found 2026-07-21: rowToProject silently
   // dropped these on every refetch even though GET /api/projects (SELECT *)

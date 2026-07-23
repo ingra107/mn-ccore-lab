@@ -85,6 +85,12 @@ export interface Project {
   status: 'active' | 'waiting_external' | 'blocked' | 'done' | string
   description?: string
   category: string
+  // Fine-grained grant/personal-taxonomy classification (schema-v73,
+  // api/schema-v73-projects-type.sql: R01/R03/K/CLIF/Nick_Lab/Friends/
+  // Mentees/Admin/Personal). Independent of `category` — see that
+  // migration's rationale. Nullable: pre-2026-06-06 rows may not be
+  // backfilled.
+  type?: string | null
   pi: string
   slug: string
   short_name?: string

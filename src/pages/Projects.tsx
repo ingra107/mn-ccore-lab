@@ -24,7 +24,8 @@ import { displayName } from '../lib/nameUtils'
 import type { Project } from '../data/types'
 import { useProjectKeyboardNav } from '../hooks/useProjectKeyboardNav'
 import { staggerContainer, staggerItem } from '../lib/animations'
-import { stripConsortiumPrefix } from '../lib/textUtils'
+import { stripConsortiumPrefix, stripGrantTypePrefix, isGrantProjectType } from '../lib/textUtils'
+import { Chip } from '../components/ui/Chip'
 import { PATHS } from '../constants/paths'
 import { ICON_PROPS } from '../lib/iconProps'
 import { useAllProjectLinks } from '../hooks/useApiData'
@@ -69,6 +70,25 @@ const CATEGORY_DOT: Record<string, string> = {
   lab: 'var(--teal)',
   nate: 'var(--orange)',
   mentee: 'var(--gold)',
+}
+
+// Grant-mechanism badge colors (projects.type, schema-v73). One tier more
+// specific than the category dot — R01/R03/K read at a glance in the dense
+// pipeline row. Only the 3 grant values in the `type` enum get a color;
+// non-grant types (CLIF, Nick_Lab, Friends, Mentees, Admin, Personal) never
+// render a badge (see isGrantProjectType).
+const GRANT_TYPE_COLOR: Record<string, string> = {
+  R01: 'var(--teal)',
+  R03: 'var(--maroon)',
+  K: 'var(--gold)',
+}
+
+// Fully-cleaned display title for a pipeline row: strip the consortium tag
+// first, then — if the project's own `type` says it's a grant — the
+// mechanism prefix too. The grant-type badge already shows the mechanism,
+// so leaving a literal "R01: " in the title text would stutter next to it.
+function cleanProjectTitle(project: Project): string {
+  return stripGrantTypePrefix(stripConsortiumPrefix(project.title).clean, project.type)
 }
 
 const STAGE_ORDER: Record<string, number> = Object.fromEntries(STAGES.map((s, i) => [s, i]))
@@ -714,6 +734,19 @@ export default function Projects() {
                                   marginTop: '-1px',
                                 }}
                               />
+                              {/* Grant-mechanism badge (projects.type, schema-v73) —
+                                  data-driven, never text pattern-matched. Only the 3
+                                  grant values (R01/R03/K) render; CLIF/Nick_Lab/etc
+                                  get no badge. */}
+                              {isGrantProjectType(project.type) && (
+                                <Chip
+                                  color={GRANT_TYPE_COLOR[project.type] ?? 'var(--slate)'}
+                                  bordered
+                                  title={`Grant mechanism: ${project.type}`}
+                                >
+                                  {project.type}
+                                </Chip>
+                              )}
                               {/* Nick 2026-07-21: the title cell is ONE line, and
                                   short_name moved onto the hover tip. It used to be a
                                   two-line stack, which made the cell ~36px of content
@@ -745,7 +778,7 @@ export default function Projects() {
                                 <span
                                   className="tip"
                                   data-tip={(() => {
-                                    const clean = stripConsortiumPrefix(project.title).clean
+                                    const clean = cleanProjectTitle(project)
                                     // Plenty of projects set short_name to the title
                                     // verbatim; appending it there reads as a stutter
                                     // ("Teaching · Teaching"), so only add it when it
@@ -763,9 +796,9 @@ export default function Projects() {
                                     overflow: 'hidden',
                                     textOverflow: 'ellipsis',
                                   }}
-                                  aria-label={stripConsortiumPrefix(project.title).clean}
+                                  aria-label={cleanProjectTitle(project)}
                                 >
-                                  {stripConsortiumPrefix(project.title).clean}
+                                  {cleanProjectTitle(project)}
                                 </span>
                               </span>
                               {/* Task count badge */}
@@ -920,6 +953,16 @@ export default function Projects() {
                                   marginTop: '6px',
                                 }}
                               />
+                              {isGrantProjectType(project.type) && (
+                                <Chip
+                                  color={GRANT_TYPE_COLOR[project.type] ?? 'var(--slate)'}
+                                  bordered
+                                  title={`Grant mechanism: ${project.type}`}
+                                  style={{ flexShrink: 0, marginTop: '2px' }}
+                                >
+                                  {project.type}
+                                </Chip>
+                              )}
                               <span
                                 style={{
                                   fontSize: '14px',
@@ -929,7 +972,7 @@ export default function Projects() {
                                   flex: 1,
                                 }}
                               >
-                                {stripConsortiumPrefix(project.title).clean}
+                                {cleanProjectTitle(project)}
                                 {project.short_name && (
                                   <span style={{
                                     fontSize: '11px',
