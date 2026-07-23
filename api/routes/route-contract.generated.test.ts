@@ -118,11 +118,14 @@ describe('route contract — generated from ROUTE_REGISTRY', () => {
     // 257 as of 2026-07-22 — the `day` entity feed (+2, Hermes wave Phase 3):
     //   GET  /api/days/:date/activity — a day's conversation roots (Today-bar).
     //   POST /api/days/:date/activity — start/add to a day conversation.
+    // 258 as of 2026-07-23 — Hermes wave Phase 10 (+1): GET /api/hermes/day-index
+    //   — the PB listener's leak-safe older-day retrieval (requester-scoped,
+    //   API-key-only, own-only day roots; see api/routes/hermes.ts header).
     // Adding a route → increment this number. Removing a route → decrement it.
     // This makes route deletion require explicit acknowledgment, preventing
     // silent surface regression (codex final-audit finding #9, 2026-05-28).
     // If you are intentionally adding or removing routes, update this count.
-    expect(ROUTE_REGISTRY).toHaveLength(257)
+    expect(ROUTE_REGISTRY).toHaveLength(258)
   })
 
   it('every non-public route has either entity or visibility metadata', () => {

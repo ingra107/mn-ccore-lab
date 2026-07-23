@@ -56,6 +56,7 @@ import { handleCheckImpact } from './routes/impact-trace';
 import { handlePIDashboard, handleMenteeVelocity, handleResponseTime, handleTeamEngagement, handleTeamByExpertise } from './routes/pi-dashboard';
 import { handleCadenceCheck } from './routes/meeting-cadence';
 import { handleGetAIRequests, handleCreateAIRequest, handleUpdateAIResponse } from './routes/ai-requests';
+import { handleGetHermesDayIndex } from './routes/hermes';
 import { handleCreateLaunch, handleListLaunches, handleSetLaunchStatus, handleRefireLaunch, handleClaimLaunch, handleListPendingLaunches } from './routes/launch-log';
 import { handleGetArtifacts, handleGetArtifact, handleGetArtifactActivity, handleCreateArtifact, handleReviseArtifact, handleDeleteArtifact, handleAddArtifactComment } from './routes/artifacts';
 import { escapeHtml } from './lib/escapeHtml';
@@ -1035,6 +1036,19 @@ defineRoute({
   // Previously only (url, env) went through, which is precisely why this read
   // had no way to tell whose Hermes exchanges it was returning.
   handler: (c) => handleGetAIRequests(U(c), E(c), R(c)),
+});
+// Hermes wave Phase 10 (2026-07-23) — the PB listener's older-day retrieval.
+// API-key-only in-handler (NOT the broader isPiRequest PI-or-key class — see
+// api/routes/hermes.ts header). `auth: 'pi'` here is documentation of the
+// server-to-server class, same as GET /api/bug-reports; the real gate is
+// `validateApiKey()` inside the handler.
+defineRoute({
+  method: 'GET',
+  path: '/api/hermes/day-index',
+  auth: 'pi',
+  entity: 'ai-requests',
+  visibility: 'na',
+  handler: (c) => handleGetHermesDayIndex(R(c), E(c)),
 });
 
 // ─────────────────────────────────────────────────────────────────────────────

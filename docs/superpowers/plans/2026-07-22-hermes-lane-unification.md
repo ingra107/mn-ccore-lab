@@ -1330,17 +1330,17 @@ fire.
    private day thread gets **zero** rows. This is the regression test for the leak class,
    and it should exist before the feature does.
 
-#### 9.11.3 Still to design — needs a codex consult before implementation
+#### 9.11.3 DESIGN DONE — codex `gpt-5.6-sol` consult 2026-07-23; owner decisions folded in. IMPLEMENTING.
 
-Open, and deliberately NOT resolved unilaterally:
+The design pass ran (it recovered the WHY, then designed the mechanism). Resolved:
 
-- **Trigger.** Always fetch a bounded index of recent days? Detect temporal references
-  (fragile)? A two-pass "does Hermes need a prior day?" round-trip (an extra model call)?
-- **Shape.** Full transcripts (expensive) vs. an index of dates + first ~100 chars per root
-  (cheap, and enough for Hermes to say *"on Tuesday you discussed X"* and let the user click
-  through).
-- **Bound.** How far back, and what caps — `THREAD_CONTEXT_MAX_*` are per-thread and will
-  not translate directly.
+- **Requester-scoping mechanism (the crux):** a NEW dedicated `GET /api/hermes/day-index?ai_request_id=&requested_by=` endpoint — NOT an `act_as` param on the browser `/days/:date/activity` route (which deliberately lets PI/API-key callers bypass visibility). The endpoint requires a REAL API key (not `isPiRequest`), loads the named `ai_requests` row, requires `requested_by` to match it EXACTLY, resolves to one canonical slug via a STRICT resolver (unknown identity → empty, never a default slug), resolves `source_id` to a day `activity_entries` row owned by the requester, and derives the anchor date from THAT row (never caller-supplied). Predicate has NO PI/API-key branch. Fails CLOSED to a uniform `{"data":[],"count":0}` on any mismatch (not an oracle).
+- **Audience (owner decision, Nick 2026-07-23): OWN-ONLY** — `actor_slug = requester`. Narrower than §9.10's current-day `team OR own`; a team day-history expansion, if ever wanted, is a separate reviewed change.
+- **Trigger:** always fetch one bounded index per `daily_thought` request during `build_prompt`, appended as a fenced `<prior_day_index>` block. Rejected: temporal-detection (brittle), two-pass model call (cost), a Hermes tool (widens the fence). Fail-soft on fetch failure.
+- **Shape:** an INDEX (date + root id + ~100-char preview + hidden flag), not transcripts. Hermes told to treat previews as hints, not full recall.
+- **Bound:** 30 preceding civil days (anchored to the trigger day, not the machine clock), 5 roots/day, 40 total, 100-char preview, 6000-char serialized cap, newest-first.
+- **Leak-regression test (mandatory):** a non-owner requester (valid API key + their own `ai_request_id`/`requested_by`) retrieving a date with an owner's private day root gets `{"data":[],"count":0}` and none of the owner's id/date/preview leaks. + controls (own hidden included, other's hidden excluded, mismatched/wrong ids → empty).
+- **Implementation-time verifies codex flagged:** require an ACTUAL API key (not `isPiRequest`); prove the slug resolver can't default for an unknown identity; no frontend deep-link URL yet (return date+id only); the 30d/5/40 caps are defaults to re-measure vs prod day-root density.
+- **Owner decision (Nick 2026-07-23): BUILD NOW.** End-to-end (retrieval + model response) can only be confirmed on the home listener — the Hub endpoint + PB listener change are unit-testable on work; the live confirm waits for home.
 
-This phase should not be implemented until that design pass happens (the shell outage
-blocked the codex consult that would otherwise have run alongside this write-up).
+Implementing: Hub endpoint (`GET /api/hermes/day-index`) → PB listener `build_prompt` change → deploy + home-verify.
