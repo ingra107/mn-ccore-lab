@@ -77,6 +77,48 @@ member, `hidden_by` recorded), and §7 Q5 (`day` in `SEEN_TYPES` — recommendat
 
 ---
 
+## 0.5 PHASE 1 EXECUTION LOG (2026-07-22 PM — updates §2.5, §9.2)
+
+Landed and pushed, in order:
+
+- **Wave 1 — `@workon` class fix** (`650bdf19`, deployed, probe PASS). §9.6. Awaiting
+  Nick's empirical confirm (type `@workon test` in a project Notes composer).
+- **The read-gate** `scripts/check-activity-reads.mjs` (`07b37808`, hardened in `43817903`).
+  Its build is the proof of §9.2's thesis: my own first checker had **false negatives**
+  (comment-apostrophes desynced a quote-scanner, dropping 5 reads) until rewritten as a
+  lexer. **AUTHORITATIVE COUNT = 46 read statements** (not the plan's 25, not the survey's
+  36). Markers attach to the nearest read and are consumed; a dangling marker fails the gate.
+- **13 exempt sites marked + verified** (`43817903`): 5 in activity-entry.ts (parent
+  resolution, 3 write-path read-backs, dispatchHermes transcript), 3 in activity.ts
+  (delete/edit auth, reply parent-visibility), 5 in ai-requests.ts (response routing, 2
+  placeholder finds, 2 redirect lookups). This was the positive control — LEAK→exempt on
+  real code.
+- **`activityHiddenClause` primitive + schema v102** (`e37a2ed1`): the shared predicate
+  (next to `activityVisibilityGate`) and `ALTER TABLE ADD hidden_at/hidden_by` + two partial
+  indexes. Both **inert** — the primitive has no callers, the migration is **NOT applied**.
+
+**Gate state: 46 reads = 0 guarded, 13 exempt, 33 UNGUARDED.** The 33 are the retrofit
+worklist — get them from `node scripts/check-activity-reads.mjs --list`, never a prose table.
+
+### ⛔ The remaining Phase 1 is gated on two things, deliberately not done unilaterally
+
+1. **A prod (and test) D1 migration.** v102 must be applied to BOTH D1s via
+   `scripts/wrangler-d1 … --file=api/schema-v102-…sql` **BEFORE** any predicate code deploys,
+   or every feed 500s on an unknown column. This is a change to the team's live DB — Nick's call.
+2. **The 33 predicate edits need `test:api`.** Per the SESSION-HANDOFF gotcha, the vitest API
+   doubles match SQL by **exact string**, so adding `AND hidden_at IS NULL` / an interpolated
+   `activityHiddenClause()` to a read — and adding `hidden_at` to the SELECT cols the feeds
+   need to render the dismiss affordance — **will** break doubles that must be updated in
+   lockstep. Doing 33 privacy-critical edits without a reliable test run is the exact setup
+   that produced the two 2026-07-22 leaks. The `fork()` storm made `test:api` unreliable this
+   session.
+
+**Correct next-session order:** apply v102 to test+prod D1 → retrofit the 33 reads (drive off
+`--list`, run `test:api` after each file, fix doubles) → gate reaches exit 0 → wire the checker
+into `typecheck:api`'s neighbourhood + `deploy:pages:gated` → deploy. Only then Phases 2-10.
+
+---
+
 ## 1. Recovered intent — why the split exists today
 
 ### 1.1 The two lanes, as built
