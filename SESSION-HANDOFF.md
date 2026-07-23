@@ -1,4 +1,4 @@
-# ▶▶ HERMES LANE UNIFICATION — Phases 1–5 SHIPPED + DEPLOYED. Resume: Phase 6 (deletions) after a 24h dogfood. 2026-07-23.
+# ▶▶ HERMES LANE UNIFICATION — Phases 1–5 SHIPPED + DEPLOYED, working in the live UI. Resume: Phase 6 (deletions, plan CORRECTED) + the UX follow-ups below. 2026-07-23.
 
 > **Resume point is ONE line in `docs/superpowers/plans/2026-07-22-hermes-lane-unification.md` §0.5** —
 > it's the execution log (most-recent phase on top). Do NOT re-triage; scope + decisions are settled.
@@ -28,16 +28,30 @@
 > `@hermes <question>` on a task → a private thread + "Thinking…" resolving to Hermes's answer in-thread, and a
 > teammate can't see it.
 >
-> **NEXT after deploy: Phase 6** (delete `TaskHermesReplies`/`HermesThoughtReplies`/`HermesReplyList`, the
-> `ai_requests` @hermes reader arm, `hermesRouting`'s @hermes half — after a 24h dogfood window; load
-> `/substrate-swap`). **Then:** 8 (Quick Capture `@hermes`) → 9 (Today nav badge) → 10 (older-day retrieval — codex
-> consult; §9.11 leak constraints).
+> **ALSO SHIPPED 2026-07-23 (after Phase 5, all deployed + prod-verified):**
+> - **@hermes honesty fix** (`1399934c`) — a swallowed dispatch error or a `<=5`-char no-op used to read as
+>   "Asked Hermes". `dispatchHermes` now returns `'dispatched'|'empty'` (arbitrary threshold gone); the outcome
+>   rides `postActivityEntry` → the two routes → the three composers, which say the truth. +2 tests, 1198/1198.
+> - **Reply-to-Hermes affordance** (`ed5d3f11`) — Hermes's answer shows a "Reply to Hermes" control; the composer
+>   pre-fills `@hermes ` on a Hermes thread (§9.5.2). Nick confirmed the whole flow works live (both rows 🔒 only-you).
 >
-> **Still open:** Nick's `@workon` empirical confirm (Wave 1 `650bdf19`); a stray note Nick pasted in the hub project
-> feed to delete; `HermesThoughtReplies` now orphaned (Phase 6 cleanup — its `useDailyThoughtReplies` hook still backs
-> TaskHermesReplies, so don't delete the hook). **Suggested manual check** (needs the home-laptop listener up): type
-> `@hermes what should I focus on today` on the Today page — expect a thread + "Thinking…" resolving to an answer you
-> can reply to, and the thought private.
+> **NEXT: Phase 6 (deletions) — DATA-SAFE, but the plan was STALE; I CORRECTED it (see §0.5 note + Phase 6 block).**
+> Two corrections the "is it safe" check surfaced: (1) **KEEP `isHermesPrefix`** — it is the live typed-prefix
+> detector all 3 composers route on; the plan's "delete it" would break Phase 5. Only `stripHermesPrefix` is dead.
+> (2) **No 24h dogfood** — live check: 0 pending `ai_requests`, old rows backfilled, new path confirmed. Run it via
+> `/substrate-swap` in a fresh session (it's ~8 files + the `seen.ts` arm; build-verify each). Not done here on
+> purpose — a stale-plan deletion wave is the wrong thing to rush at session close.
+>
+> **UX FOLLOW-UPS Nick asked for this session (captured in §9.5.1 / §9.5.2):**
+> - **Task nav badge + drain-on-inline-view (§9.5.1):** a new task comment should badge the My-Tasks nav + the task
+>   row; expanding the task inline on Today should DRAIN it (not only the full drawer). Rides the seen model + Phase 9.
+> - **Click the thread ROOT box to expand/collapse (§9.5.2):** whole-box toggle, guard interactive children. Small.
+>
+> **STILL PENDING PHASES:** 8 (Quick Capture `@hermes`) → 9 (Today nav badge) → 10 (older-day retrieval).
+> ⚠️ **Quick Capture `@hermes` does NOT work yet (Nick hit this) — it's Phase 8, unbuilt, AND there's a landmine:**
+> today `@hermes …` in quick capture fuzzy-matches the `hermes` team slug and creates a task **assigned to Hermes**
+> (§9.4). `isHermesPrefix()` must run BEFORE `parseQuickAddInput()`. The **Today nav badge Nick wants IS Phase 9**
+> (§9.5) — badge on unseen Hermes answers, drains on opening Today.
 
 # ▶ BUG SWEEP #96–#100 + TWO PRIVACY LEAKS + THREADED REPLIES — SHIPPED (2026-07-22). Live = `e8c0a169`.
 
