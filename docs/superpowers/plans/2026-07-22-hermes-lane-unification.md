@@ -79,6 +79,45 @@ member, `hidden_by` recorded), and §7 Q5 (`day` in `SEEN_TYPES` — recommendat
 
 ## 0.5 EXECUTION LOG (2026-07-22 PM — updates §2.5, §9.2)
 
+### ✅ PHASE 4 COMPLETE — backfill applied to PROD (2026-07-23)
+
+The 16 historical `daily_thought` ai_requests rows now render in the unified
+timeline. `api/backfill-v102-daily-thought.sql` (modeled on `backfill-v77`)
+inserted **32 activity_entries rows** into prod D1 (`mnccore-lab`) via
+`scripts/wrangler-d1`: 16 `@hermes` roots (`nick-ingraham`) + 16 answer replies
+(`claude-ai`), 9 `day` conversations + 7 `task` conversations, all `kind='comment'`.
+
+🔴 **`visibility='author'` on ALL 32 rows — verified post-apply** (`SUM(visibility!='author')=0`
+across both source_tables). No private Hermes exchange was published.
+
+Method (fresh session, clean foreground shells — no fork-storm this run):
+pre-flight probed prod (16 rows, all `requested_by='ingra107@umn.edu'`→`nick-ingraham`,
+7 task-keyed all live/not-deleted, 9 date-keyed, 0 pending, 0 null timestamps) →
+test D1 execution smoke (parse/bind/column-count valid) → read-only prod dry-run
+(exactly 16 roots + 16 replies, 0 excluded) → **codex `gpt-5.6-sol` audit = SHIP**
+("no row can have `visibility != 'author'`"; one doc-wording nit fixed; requester
+guard endorsed) → codex-requested pre-flight (no id/source_table collision → rollback
+selector exclusive; zero NULL/empty prompt·created_at·responded_at) → apply → postflight.
+
+Postflight (prod): 16 `source_table='ai_requests'` + 16 `'ai_requests_response'`,
+0 non-author, **0 orphan replies** (every `parent_id` resolves to its `bk_ai_req_<id>`
+root). The `ai_requests` rows are NOT deleted (transport log + token accounting).
+**Idempotent** (`INSERT OR IGNORE` on `idx_ae_source`); **rollback** = one line
+(`DELETE FROM activity_entries WHERE source_table IN ('ai_requests','ai_requests_response')`).
+
+Design deviation (documented in the SQL header): a `requested_by='ingra107@umn.edu'`
+WHERE-guard + hardcoded `'nick-ingraham'` actor_slug rather than reproducing the
+`EMAIL_PREFIX_TO_SLUG` dict in SQL — makes mis-attribution unrepresentable (a
+non-Nick row is skipped, never written under the wrong slug); codex endorsed as
+"safe, not too restrictive, preferable."
+
+**Next: Phase 5** (flip the three typed-prefix writers — RISKIEST; codex consult per
+the plan). Then 8 (Quick Capture `@hermes`) → 9 (nav badge) → 10 (older-day retrieval,
+codex consult) → 6 (deletions, after 24h dogfood). Backfilled `daily_thought` rows now
+live in the timeline; new asks already worked since Phase 3.
+
+---
+
 ### ✅ PHASE 3 COMPLETE + DEPLOYED (live = `64fa763f`, probe PASS) — 2026-07-22
 
 The `day` entity is live end-to-end. A Today-bar `@hermes` ask now becomes a real
