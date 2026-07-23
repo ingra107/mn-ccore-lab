@@ -79,6 +79,43 @@ member, `hidden_by` recorded), and §7 Q5 (`day` in `SEEN_TYPES` — recommendat
 
 ## 0.5 EXECUTION LOG (2026-07-22 PM — updates §2.5, §9.2)
 
+### ✅ PHASE 3 COMPLETE + DEPLOYED (live = `64fa763f`, probe PASS) — 2026-07-22
+
+The `day` entity is live end-to-end. A Today-bar `@hermes` ask now becomes a real
+`activity_entries` conversation (entity_type='day') you can reply to (incl. replying to
+Hermes) and dismiss — rendered by `DayActivityFeed` through the SAME `ActivityThread` as
+task/project feeds. Backend: EntityType+='day' (shape-validated, no `days` table, project_id
+always NULL); `dispatchHermes` uses the listener-safe `daily_thought` source_type + `context
+= NULL` for day (verified §9.9) and DAY-SCOPED memory (owner 9.1.5 — a day ask sees today's
+other threads, requester-scoped + visibility-gated, hidden included); the `ai_requests`
+source_type allowlist is DELETED (writeback routes by the triggering entry's own entity_type,
+self-gating on source_id-resolves); contributions exclude day. `GET/POST /api/days/:date/
+activity` (route contract 255 → **257**). Day threads default **PRIVATE** (owner §0.1),
+preserving the pre-wave privacy of morning thoughts (which lived in requester-scoped
+ai_requests). Frontend: Route-1 composer flips to the day feed KEEPING the `@hermes` token
+(§3.4 inversion); stay-put + invalidate (owner 9.1.3).
+
+Gates: `check-activity-reads` 52/34/18/0; `tsc -b` clean; **`test:api` 1195/1195** (+10 across
+day-entity acceptance/validation/dispatch, private-feed gate, and the ai-requests writeback
+self-gating positive control); prod probes (PB_API_KEY): GET valid date → 200 + hidden_count,
+GET/POST bad date → 400, POST empty → 400. Commits: `9d3c982e` (3a backend) · `64fa763f`
+(3b frontend). ⚠️ The `fork()` storm was sustained during this phase — build/commit/deploy
+were run via background self-retry loops (one bash startup, internal retry) once windows opened.
+
+**Suggested manual check (needs the home-laptop listener running):** on the Today page type
+`@hermes what should I focus on today` — a thread + "Thinking…" should appear inline, resolve
+to Hermes's answer, and you should be able to reply to it. Also confirm the morning thought is
+private (only you see it).
+
+**Next: Phase 4** (backfill the existing `daily_thought` ai_requests rows into activity_entries
+— test DB first, then prod, `scripts/wrangler-d1` only; §4). Then 5 (typed-prefix writer flip,
+RISKIEST — codex consult) → 8 (Quick Capture @hermes) → 9 (nav badge) → 10 (older-day retrieval
+— codex consult) → 6 (deletions, after 24h dogfood). ⚠️ Still open: Nick's `@workon` confirm
+(Wave 1, `650bdf19`); HermesThoughtReplies now orphaned (Phase 6 cleanup); old daily_thought
+rows from earlier today live in ai_requests until Phase 4 backfills them.
+
+---
+
 ### ✅ PHASE 2 COMPLETE + DEPLOYED (live = `e6dc831a`, probe PASS) — 2026-07-22
 
 The WRITE side of the dismiss mechanism is done and live. `POST /api/activity/:id/hide`
