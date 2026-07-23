@@ -24,6 +24,7 @@ import {
 } from '../routes/tasks'
 import { handleGetProjectActivity, handleAddComment, handlePostProjectUpdate, handleGetComments, handleGetProjectUpdates } from '../routes/projects'
 import { handleDeleteActivityEntry, handleEditActivityEntry, handleSetActivityHidden } from '../routes/activity'
+import { handleGetDayActivity, handlePostDayActivity } from '../routes/days'
 
 const TEST_MODE_KEY = 'local-test-key-do-not-use-in-prod'
 const PI_EMAIL = 'ingra107@umn.edu'
@@ -269,6 +270,19 @@ function makeEnv(fx: Partial<Fixtures> = {}) {
               if (/kind = 'update'/.test(sql)) rows = rows.filter(r => r.kind === 'update')
               // #98: roots-only feeds. Without this a reply would surface in the
               // unified feed here but not in prod — the double hiding a bug.
+              if (/parent_id IS NULL/.test(sql)) rows = rows.filter(r => !r.parent_id)
+              rows = applyVisibilityFilter(rows, sql, binds)
+              rows = [...rows].sort(byCreatedDesc)
+              return { results: rows.map(r => projectRowForSql(sql, r)) }
+            }
+            // Day feed (Phase 3): WHERE entity_type = 'day' AND ae.entity_id = ? —
+            // roots only, mirrors the task branch's bind-counting (a leading
+            // reply_count subquery contributes its gate binds before the date).
+            if (/FROM activity_entries/.test(sql) && /entity_type = 'day' AND ae\.entity_id = \?/.test(sql)) {
+              const marker = sql.indexOf('entity_id = ?')
+              const dateIdx = (sql.slice(0, marker).match(/\?/g) || []).length
+              const dateKey = binds[dateIdx] as string
+              let rows = ae.filter(r => r.entity_type === 'day' && r.entity_id === dateKey)
               if (/parent_id IS NULL/.test(sql)) rows = rows.filter(r => !r.parent_id)
               rows = applyVisibilityFilter(rows, sql, binds)
               rows = [...rows].sort(byCreatedDesc)
@@ -1274,5 +1288,97 @@ describe('handleSetActivityHidden — dismiss/restore a thread root (v102)', () 
     const { env } = makeEnv(FX)
     const res = await handleSetActivityHidden('ae_missing', hideReq(PI_EMAIL, { hidden: true }), NICK, env)
     expect(res.status).toBe(404)
+  })
+})
+
+// ── the `day` entity (Hermes wave Phase 3) ──────────────────────────────────────
+// A day is a civil-date bucket with NO table: the shape check IS the existence
+// check, project_id is always NULL, and a @hermes ask reuses the listener-safe
+// 'daily_thought' source_type with context=NULL. Day threads default PRIVATE.
+function dayPostReq(email: string, body: unknown): Request {
+  return new Request('https://x/api/test', {
+    method: 'POST',
+    headers: { 'X-Test-Mode-Key': TEST_MODE_KEY, 'X-Test-User': email, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+}
+function userGetReq(email: string): Request {
+  return new Request('https://x/api/test', { method: 'GET', headers: { 'X-Test-Mode-Key': TEST_MODE_KEY, 'X-Test-User': email } })
+}
+
+describe('postActivityEntry — day entity', () => {
+  it('accepts a valid civil date, project_id is NULL', async () => {
+    const { env, ae } = makeEnv(FX)
+    const r = await postActivityEntry({ env, user: NATE, entityType: 'day', entityId: '2026-07-22', kind: 'comment', body: 'a private thought', actorSlug: 'nate-mesfin', visibility: 'author' })
+    expect(r.ok).toBe(true)
+    expect(ae[0].entity_type).toBe('day')
+    expect(ae[0].project_id).toBeNull()
+  })
+
+  it('rejects a non-date entity_id (400) — no entity namespace by invention', async () => {
+    const { env } = makeEnv(FX)
+    const r = await postActivityEntry({ env, user: NATE, entityType: 'day', entityId: 'whatever', kind: 'comment', body: 'x', actorSlug: 'nate-mesfin' })
+    expect(r.ok).toBe(false)
+    if (!r.ok) expect(r.status).toBe(400)
+  })
+
+  it('@hermes on a day dispatches source_type=daily_thought with context=NULL (listener-safe)', async () => {
+    const { env, aiRequests } = makeEnv(FX)
+    const r = await postActivityEntry({ env, user: NATE, entityType: 'day', entityId: '2026-07-22', kind: 'comment', body: '@hermes what should I focus on today', actorSlug: 'nate-mesfin', visibility: 'author' })
+    expect(r.ok).toBe(true)
+    expect(aiRequests.length).toBe(1)
+    const binds = aiRequests[0].binds as unknown[]
+    expect(binds[1]).toBe('daily_thought') // source_type
+    expect(binds[5]).toBeNull()             // context — NEVER "day: <date>"
+  })
+})
+
+describe('handlePostDayActivity — private by default', () => {
+  it('a day post defaults to visibility=author (preserves pre-wave privacy)', async () => {
+    const { env, ae } = makeEnv(FX)
+    const res = await handlePostDayActivity('2026-07-22', dayPostReq(NON_PI_EMAIL, { content: 'plan the morning' }), NATE, env)
+    expect(res.status).toBe(201)
+    expect(ae[0].visibility).toBe('author')
+  })
+
+  it('an explicit share opts into team visibility', async () => {
+    const { env, ae } = makeEnv(FX)
+    await handlePostDayActivity('2026-07-22', dayPostReq(NON_PI_EMAIL, { content: 'team FYI', visibility: 'team' }), NATE, env)
+    expect(ae[0].visibility).toBe('team')
+  })
+
+  it('rejects a malformed date (400)', async () => {
+    const { env } = makeEnv(FX)
+    const res = await handlePostDayActivity('2026-7-2', dayPostReq(NON_PI_EMAIL, { content: 'x' }), NATE, env)
+    expect(res.status).toBe(400)
+  })
+})
+
+describe('handleGetDayActivity — private day feed', () => {
+  it('rejects a malformed date (400)', async () => {
+    const { env } = makeEnv(FX)
+    const res = await handleGetDayActivity('not-a-date', userGetReq(NON_PI_EMAIL), env)
+    expect(res.status).toBe(400)
+  })
+
+  it("the author sees their private day thread; a different non-PI actor does not", async () => {
+    const { env } = makeEnv(FX)
+    await handlePostDayActivity('2026-07-22', dayPostReq(NON_PI_EMAIL, { content: 'my private morning note' }), NATE, env)
+
+    const mine = await handleGetDayActivity('2026-07-22', userGetReq(NON_PI_EMAIL), env)
+    const mineBody = await mine.json() as { data: Array<{ body: string }> }
+    expect(mineBody.data.some(r => r.body.includes('private morning note'))).toBe(true)
+
+    const theirs = await handleGetDayActivity('2026-07-22', userGetReq('someone-else@umn.edu'), env)
+    const theirsBody = await theirs.json() as { data: Array<{ body: string }> }
+    expect(theirsBody.data.some(r => r.body.includes('private morning note'))).toBe(false)
+  })
+
+  it('the PI sees everyone\'s day threads (Rule 70)', async () => {
+    const { env } = makeEnv(FX)
+    await handlePostDayActivity('2026-07-22', dayPostReq(NON_PI_EMAIL, { content: 'natems private note' }), NATE, env)
+    const res = await handleGetDayActivity('2026-07-22', piReq(), env)
+    const body = await res.json() as { data: Array<{ body: string }> }
+    expect(body.data.some(r => r.body.includes('natems private note'))).toBe(true)
   })
 })

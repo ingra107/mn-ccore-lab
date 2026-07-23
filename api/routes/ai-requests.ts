@@ -206,13 +206,14 @@ export async function handleUpdateAIResponse(
     return error('AI request not found', 404);
   }
 
-  // 2. Post the response into the unified timeline for comment-sourced requests.
-  if (
-    status === 'completed' &&
-    (updated.source_type === 'task_comment' ||
-      updated.source_type === 'project_comment' ||
-      updated.source_type === 'artifact_comment')
-  ) {
+  // 2. Post the response into the unified timeline. _postHermesResponse resolves
+  // the triggering activity_entries row by source_id and no-ops if it isn't one,
+  // so this SELF-GATES: comment/day asks (source_id = an activity_entries id) get
+  // their answer threaded in; legacy daily_thought rows whose source_id is a task
+  // id or a date-key resolve to no row and are skipped, exactly as before. The old
+  // source_type allowlist is GONE — routing is by the entry's OWN entity_type, so
+  // adding the 'day' entity needs no new arm here (Hermes wave Phase 3).
+  if (status === 'completed') {
     await _postHermesResponse(env, updated, body.response.trim());
   }
 
@@ -238,15 +239,10 @@ async function _postHermesResponse(
   req: { source_type: string; source_id: string; project_slug: string | null },
   responseText: string,
 ): Promise<void> {
-  const isTask = req.source_type === 'task_comment';
-  const entityType: EntityType =
-    req.source_type === 'task_comment'
-      ? 'task'
-      : req.source_type === 'artifact_comment'
-        ? 'artifact'
-        : 'project';
-
-  // Resolve the triggering entry to get entity_id + visibility + its thread.
+  // Resolve the triggering entry FIRST — it is the source of truth for where the
+  // answer lands. Routing by the entry's OWN entity_type (not by source_type) is
+  // what lets a 'day' ask (source_type='daily_thought') thread its answer back
+  // correctly; source_type only ever mattered as a proxy for this (Hermes wave P3).
   // activity-hidden-exempt: Hermes response routing — the answer must land in
   // the asking thread even if the user dismissed it while Hermes was thinking.
   const trigEntry = await env.DB.prepare(
@@ -254,11 +250,14 @@ async function _postHermesResponse(
   ).bind(req.source_id).first<{ entity_id: string; entity_type: string; visibility: string; parent_id: string | null; id: string }>();
 
   if (!trigEntry) {
-    // Triggering entry deleted — nothing to anchor the response to; skip silently.
+    // source_id isn't an activity_entries id (a legacy daily_thought task/date
+    // key, or a deleted entry) — nothing to anchor the response to; skip silently.
     console.warn('[handleUpdateAIResponse] triggering activity entry not found for source_id=%s', req.source_id);
     return;
   }
 
+  const entityType = trigEntry.entity_type as EntityType;
+  const isTask = entityType === 'task';
   const entityId = trigEntry.entity_id;
   const visibility = (trigEntry.visibility === 'author' ? 'author' : 'team') as 'author' | 'team';
 

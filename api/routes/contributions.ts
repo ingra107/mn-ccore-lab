@@ -19,7 +19,9 @@ export async function handleGetContributions(slug: string, url: URL, env: Env): 
 
     // Comments made (activity_entries kind='comment')
     env.DB.prepare(
-      "SELECT id, body AS content, created_at FROM activity_entries WHERE kind='comment' AND hidden_at IS NULL AND actor_slug LIKE ? AND created_at > ? ORDER BY created_at DESC"
+      // entity_type != 'day' — a private morning thought is not a lab contribution
+      // (§3.2; this read has no entity_type predicate, so day comments would inflate it).
+      "SELECT id, body AS content, created_at FROM activity_entries WHERE kind='comment' AND entity_type != 'day' AND hidden_at IS NULL AND actor_slug LIKE ? AND created_at > ? ORDER BY created_at DESC"
     ).bind(`%${slug}%`, cutoff).all(),
 
     // Decisions involved in

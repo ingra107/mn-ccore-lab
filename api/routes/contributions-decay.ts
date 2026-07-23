@@ -58,7 +58,8 @@ export async function handleContributionsDecay(url: URL, env: Env): Promise<Resp
 
     // comments → activity_entries kind='comment'
     env.DB.prepare(
-      "SELECT created_at FROM activity_entries WHERE kind='comment' AND hidden_at IS NULL AND actor_slug LIKE ? AND created_at > ?"
+      // entity_type != 'day' — day comments are not contributions (§3.2).
+      "SELECT created_at FROM activity_entries WHERE kind='comment' AND entity_type != 'day' AND hidden_at IS NULL AND actor_slug LIKE ? AND created_at > ?"
     ).bind(`%${slug}%`, cutoff).all(),
 
     env.DB.prepare(

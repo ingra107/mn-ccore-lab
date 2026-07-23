@@ -35,6 +35,7 @@ import { handleGetReactions, handleToggleReaction } from './routes/reactions';
 import { handleCalendarEvents } from './routes/calendar';
 import { handleListFeeds, handleAddFeed, handleDeleteFeed, handleListEvents, pollAllStaleFeeds } from './routes/calendar-feeds';
 import { handleGetActivity, handleActivityHeatmap, handleDeleteActivityEntry, handleEditActivityEntry, handleSetActivityHidden, handleGetActivityReplies, handleCreateActivityReply } from './routes/activity';
+import { handleGetDayActivity, handlePostDayActivity } from './routes/days';
 import { handleGetSubtasks, handleCreateSubtask, handleToggleSubtask, handleDeleteSubtask, handleReorderSubtasks } from './routes/subtasks';
 import { handleTeamPulse } from './routes/team-pulse';
 import { handleGetPaperLinks, handleLinkPaper, handleUnlinkPaper, handlePapersByProject, handlePapersByPublication } from './routes/paper-links';
@@ -1079,6 +1080,25 @@ defineRoute({
   entity: 'artifacts',
   visibility: 'na',
   handler: (c) => handleGetArtifactActivity(c.req.param('id'), R(c), E(c)),
+});
+// The `day` entity feed (Hermes wave Phase 3) — Today-bar conversations, keyed by
+// a YYYY-MM-DD civil date. Shape-identical to the task/artifact activity feeds.
+// Day threads default PRIVATE, so both routes gate on the caller (visibility in SQL).
+defineRoute({
+  method: 'GET',
+  path: '/api/days/:date/activity',
+  auth: 'authed',
+  entity: 'activity',
+  visibility: 'na',
+  handler: (c) => handleGetDayActivity(c.req.param('date'), R(c), E(c)),
+});
+defineRoute({
+  method: 'POST',
+  path: '/api/days/:date/activity',
+  auth: 'authed',
+  entity: 'activity',
+  visibility: 'na',
+  handler: (c) => handlePostDayActivity(c.req.param('date'), R(c), USER(c), E(c)),
 });
 defineRoute({
   method: 'GET',

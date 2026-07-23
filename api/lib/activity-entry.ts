@@ -57,7 +57,7 @@ import { resolveKeyLinkSlot, hermesKeyLinkDesc, type TaskKeyLinkRow } from './ke
 // the slot write alone is invisible to TODAY.md / the Hub link panel.
 import { mirrorArtifactLink } from './artifact-link-mirror';
 
-export type EntityType = 'task' | 'project' | 'artifact';
+export type EntityType = 'task' | 'project' | 'artifact' | 'day';
 
 export interface PostActivityEntryInput {
   env: Env;
@@ -185,8 +185,8 @@ export async function postActivityEntry(input: PostActivityEntryInput): Promise<
   if (!isStoredKind(kind)) {
     return { ok: false, error: `kind must be one of ${STORED_KINDS.join('|')}`, status: 400 };
   }
-  if (entityType !== 'task' && entityType !== 'project' && entityType !== 'artifact') {
-    return { ok: false, error: `unknown entity_type "${entityType}" (expected 'task'|'project'|'artifact')`, status: 400 };
+  if (entityType !== 'task' && entityType !== 'project' && entityType !== 'artifact' && entityType !== 'day') {
+    return { ok: false, error: `unknown entity_type "${entityType}" (expected 'task'|'project'|'artifact'|'day')`, status: 400 };
   }
   if (input.visibility !== undefined && !isVisibility(input.visibility)) {
     return { ok: false, error: `visibility must be one of ${VISIBILITIES.join('|')}`, status: 400 };
@@ -280,13 +280,24 @@ export async function postActivityEntry(input: PostActivityEntryInput): Promise<
     ).bind(entityId).first<{ project_id: string | null }>();
     if (!art) return { ok: false, error: 'Artifact not found', status: 404 };
     projectId = art.project_id ?? null;
-  } else {
+  } else if (entityType === 'project') {
     // project entity: project_id = entity_id; confirm the project row exists.
     const proj = await env.DB.prepare(
       'SELECT id FROM projects WHERE id = ? LIMIT 1'
     ).bind(entityId).first<{ id: string }>();
     if (!proj) return { ok: false, error: 'Project not found', status: 404 };
     projectId = entityId;
+  } else {
+    // day entity (validated above). There is NO `days` table by design: a day row
+    // would carry a PK and nothing else, so the civil-date key IS its own
+    // existence proof — the SHAPE check is the existence check. Fail closed on
+    // anything else so a client can't mint an entity namespace by posting
+    // entity_type='day' with an arbitrary entity_id. project_id is ALWAYS NULL: a
+    // Today-bar ask must never move a project's health score (§3.2).
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(entityId)) {
+      return { ok: false, error: 'day entity_id must be a YYYY-MM-DD civil date', status: 400 };
+    }
+    projectId = null;
   }
 
   // ── mentions (store on the row regardless of side-effect dispatch) ──────────
@@ -629,15 +640,29 @@ async function dispatchHermes(
   // routes the response back correctly. Project entities use 'project_comment'
   // (the existing project Hermes convention); artifacts use 'artifact_comment'
   // so the listener takes the revision path (fetch artifact + comments →
-  // regenerate → POST /:id/revise) instead of a plain comment reply.
+  // regenerate → POST /:id/revise) instead of a plain comment reply. A 'day'
+  // ask reuses the pre-existing 'daily_thought' type — verified listener-safe
+  // (§9.9): daily_thought takes the listener's DEFAULT path, so no cross-repo
+  // change is needed for the day lane, and _postHermesResponse routes the answer
+  // back by the TRIGGERING ENTRY's entity_type, not by source_type.
   const sourceType =
     args.entityType === 'task'
       ? 'task_comment'
       : args.entityType === 'artifact'
         ? 'artifact_comment'
-        : 'project_comment';
+        : args.entityType === 'day'
+          ? 'daily_thought'
+          : 'project_comment';
   const projectSlug = args.projectId;
   const aiId = generateId();
+
+  // context is the listener's entity-routing token ("task: <id>" / "project: <id>").
+  // NULL for 'day': the external hub_ai_listener has never parsed a "day: <date>"
+  // token, and a bare date needs no entity block. §9.9 verified the listener
+  // treats a NULL/falsy context as "no entity" (two independent falsy guards),
+  // so this needs no cross-repo lockstep. This also matches today's behavior —
+  // deriveEntityContext() already returns null for a date-key source_id.
+  const context = args.entityType === 'day' ? null : `${args.entityType}: ${args.entityId}`;
 
   // #98 multi-turn. Nick: "if I wanted it to do something different with the
   // email, it would have the context of what it did in the prior post."
@@ -655,21 +680,30 @@ async function dispatchHermes(
   // the ASKER can see, so a thread transcript can never surface a sibling the
   // requester isn't allowed to read.
   let prompt = aiPrompt;
-  if (args.threadRootId) {
+  // Transcript memory. For a 'day' entity it is DAY-scoped (owner 9.1.5: "day-page
+  // memory reach = today only, hidden INCLUDED") — every ask on a given day sees
+  // that day's OTHER conversations, so "remember what we talked about this
+  // morning" works across separate threads, not just within one. For every other
+  // entity it stays THREAD-scoped (this root + its replies). Both are
+  // requester-scoped + visibility-gated in SQL, so a transcript can never surface
+  // a sibling the asker can't read; hidden rows ARE included (dismiss ≠ forget).
+  const dayScoped = args.entityType === 'day';
+  const scopeClause = dayScoped ? `entity_type = 'day' AND entity_id = ?1` : `(id = ?1 OR parent_id = ?1)`;
+  const scopeBind = dayScoped ? args.entityId : args.threadRootId;
+  if (scopeBind) {
     try {
-      // activity-hidden-exempt: Hermes thread transcript. Owner requirement
-      // (plan 9.1.5): "remember what we talked about this morning" must survive
-      // a dismiss — dismiss is a frontend verb, never "forget". Hermes must see
-      // hidden thread rows. Requester-scoped + visibility-gated below regardless.
+      // activity-hidden-exempt: Hermes transcript (thread- or day-scoped). Owner
+      // requirement 9.1.5: dismiss must not mean forget — Hermes sees hidden
+      // rows. Requester-scoped + visibility-gated in the WHERE below regardless.
       const priorRes = await env.DB.prepare(
         `SELECT actor_slug, body, created_at FROM activity_entries
-          WHERE (id = ?1 OR parent_id = ?1)
+          WHERE ${scopeClause}
             AND id != ?2
             AND kind = 'comment'
             AND body != ?3
             AND (visibility = 'team' OR actor_slug = ?4)
           ORDER BY created_at ASC, id ASC`
-      ).bind(args.threadRootId, args.entryId, HERMES_PENDING_BODY, actorSlug(args.requestedBy)).all<{
+      ).bind(scopeBind, args.entryId, HERMES_PENDING_BODY, actorSlug(args.requestedBy)).all<{
         actor_slug: string; body: string; created_at: string;
       }>();
       const prior = (priorRes.results ?? []).slice(-THREAD_CONTEXT_MAX_MESSAGES);
@@ -678,8 +712,9 @@ async function dispatchHermes(
           .map((m) => `[${m.actor_slug === 'claude-ai' ? 'assistant hermes' : `user ${m.actor_slug}`} at ${m.created_at}]\n${m.body}`)
           .join('\n\n')
           .slice(-THREAD_CONTEXT_MAX_CHARS);
+        const scopeAttr = dayScoped ? `day="${args.entityId}"` : `root_id="${args.threadRootId}"`;
         prompt =
-          `<activity_thread_context version="1" root_id="${args.threadRootId}">\n${transcript}\n</activity_thread_context>\n\n` +
+          `<activity_thread_context version="1" ${scopeAttr}>\n${transcript}\n</activity_thread_context>\n\n` +
           `<current_request>\n${aiPrompt}\n</current_request>`;
       }
     } catch (e) {
@@ -690,7 +725,7 @@ async function dispatchHermes(
 
   await env.DB.prepare(
     'INSERT INTO ai_requests (id, source_type, source_id, project_slug, prompt, context, requested_by) VALUES (?, ?, ?, ?, ?, ?, ?)'
-  ).bind(aiId, sourceType, args.entryId, projectSlug, prompt, `${args.entityType}: ${args.entityId}`, args.requestedBy).run();
+  ).bind(aiId, sourceType, args.entryId, projectSlug, prompt, context, args.requestedBy).run();
 
   // Placeholder so the UI shows "Thinking..." immediately. It is an
   // activity_entries comment authored by claude-ai. fireSideEffects=false so the
