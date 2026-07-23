@@ -7,4 +7,934 @@ import type { Publication } from './types'
  * These entries only fill gaps — mergePublications() keeps curated pubs
  * authoritative. Review before committing.
  */
-export const generatedPublications: Publication[] = []
+export const generatedPublications: Publication[] = [
+  {
+    "id": "gen-10-1097-ccm-0000000000007148",
+    "authors": "Nick Ingraham",
+    "title": "Prone Positioning in a North American Cohort of Hypoxemic Patients on Mechanical Ventilation",
+    "journal": "Critical care medicine",
+    "year": 2026,
+    "status": "Published",
+    "doi": "https://doi.org/10.1097/CCM.0000000000007148",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/42171428/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1093-atsscholar-aapag010",
+    "authors": "Nick Ingraham",
+    "title": "Variability in first academic medicine job offers in pulmonary and critical care medicine",
+    "journal": "ATS Scholar",
+    "year": 2026,
+    "status": "Published",
+    "doi": "https://doi.org/10.1093/atsscholar/aapag010",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-2196-preprints-97485",
+    "authors": "Nick Ingraham",
+    "title": "Natural Language Processing Identification of Non-prescribed Fentanyl Use in Electronic Health Records (Preprint)",
+    "journal": "",
+    "year": 2026,
+    "status": "Published",
+    "doi": "https://doi.org/10.2196/preprints.97485",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-2196-97485",
+    "authors": "Nick Ingraham",
+    "title": "Natural Language Processing Identification of Non-prescribed Fentanyl Use in Electronic Health Records: Algorithm Development and Validation (Preprint)",
+    "journal": "Journal of Medical Internet Research",
+    "year": 2026,
+    "status": "Published",
+    "doi": "https://doi.org/10.2196/97485",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1093-annalsats-aaoaf067",
+    "authors": "Nick Ingraham",
+    "title": "Federation, not centralization",
+    "journal": "Annals of the American Thoracic Society",
+    "year": 2026,
+    "status": "Published",
+    "doi": "https://doi.org/10.1093/annalsats/aaoaf067",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/41915560/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1371-journal-pone-0338943",
+    "authors": "Nick Ingraham",
+    "title": "Aligning cardiac monitoring with American Heart Association Guidelines",
+    "journal": "PloS one",
+    "year": 2026,
+    "status": "Published",
+    "doi": "https://doi.org/10.1371/journal.pone.0338943",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/41616031/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1097-cce-0000000000001341",
+    "authors": "Nick Ingraham",
+    "title": "The Epidemiology of ICU Readmissions Across Ten Health Systems",
+    "journal": "Critical Care Explorations",
+    "year": 2025,
+    "status": "Published",
+    "doi": "https://doi.org/10.1097/cce.0000000000001341",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/41165278/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1177-26892820251380523",
+    "authors": "Nick Ingraham",
+    "title": "Hospital and Temporal Variations in Limitations of Care Among Hospitalized Patients with COVID-19",
+    "journal": "Palliative Medicine Reports",
+    "year": 2025,
+    "status": "Published",
+    "doi": "https://doi.org/10.1177/26892820251380523",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/41142473/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1101-2025-09-05-25334955",
+    "authors": "Nick Ingraham",
+    "title": "Variability in First Academic Medicine Job Offers in Pulmonary and Critical Care Medicine",
+    "journal": "",
+    "year": 2025,
+    "status": "Published",
+    "doi": "https://doi.org/10.1101/2025.09.05.25334955",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1007-s00134-025-08029-2",
+    "authors": "Nick Ingraham",
+    "title": "Correspondence on “A common longitudinal intensive care unit data format (CLIF) for critical illness research”. Author’s reply",
+    "journal": "Intensive Care Medicine",
+    "year": 2025,
+    "status": "Published",
+    "doi": "https://doi.org/10.1007/s00134-025-08029-2",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/40658245/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1513-annalsats-202411-1135oc",
+    "authors": "Nick Ingraham",
+    "title": "Overview of Peripheral Vasopressor Use in an Academic Health System",
+    "journal": "Annals of the American Thoracic Society",
+    "year": 2025,
+    "status": "Published",
+    "doi": "https://doi.org/10.1513/annalsats.202411-1135oc",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/40126143/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1371-journal-pone-0323535",
+    "authors": "Nick Ingraham",
+    "title": "A comparative analysis of large language models versus traditional information extraction methods for real-world evidence of patient symptomatology in acute and post-acute sequelae of SARS-CoV-2",
+    "journal": "PloS one",
+    "year": 2025,
+    "status": "Published",
+    "doi": "https://doi.org/10.1371/journal.pone.0323535",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/40373001/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1101-2025-03-10-25323672",
+    "authors": "Nick Ingraham",
+    "title": "The Epidemiology of Intensive Care Unit Readmissions Across Ten Health Systems",
+    "journal": "",
+    "year": 2025,
+    "status": "Published",
+    "doi": "https://doi.org/10.1101/2025.03.10.25323672",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1007-s00134-025-07848-7",
+    "authors": "Nick Ingraham",
+    "title": "A common longitudinal intensive care unit data format (CLIF) for critical illness research",
+    "journal": "Intensive Care Medicine",
+    "year": 2025,
+    "status": "Published",
+    "doi": "https://doi.org/10.1007/s00134-025-07848-7",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/40080116/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1093-jamia-ocae169",
+    "authors": "Nick Ingraham",
+    "title": "Comparison of six natural language processing approaches to assessing firearm access in Veterans Health Administration electronic health records",
+    "journal": "Journal of the American Medical Informatics Association",
+    "year": 2025,
+    "status": "Published",
+    "doi": "https://doi.org/10.1093/jamia/ocae169",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/39530748/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1097-cce-0000000000001189",
+    "authors": "Nick Ingraham",
+    "title": "Using Electronic Health Records to Identify the Daily Primary Provider During Hospitalization",
+    "journal": "Critical Care Explorations",
+    "year": 2024,
+    "status": "Published",
+    "doi": "https://doi.org/10.1097/CCE.0000000000001189",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/39700341/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1186-s13063-024-08474-2",
+    "authors": "Nick Ingraham",
+    "title": "Senolytics To slOw Progression of Sepsis (STOP-Sepsis) in elderly patients",
+    "journal": "Trials",
+    "year": 2024,
+    "status": "Published",
+    "doi": "https://doi.org/10.1186/s13063-024-08474-2",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/39434114/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-amjsurg-2024-05-008",
+    "authors": "Nick Ingraham",
+    "title": "Deriving a definition of chronic critical illness",
+    "journal": "American journal of surgery",
+    "year": 2024,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.amjsurg.2024.05.008",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/38782686/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1097-ccm-0000000000006333",
+    "authors": "Nick Ingraham",
+    "title": "Beyond Unplanned ICU Transfers",
+    "journal": "Critical care medicine",
+    "year": 2024,
+    "status": "Published",
+    "doi": "https://doi.org/10.1097/CCM.0000000000006333",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/38832836/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1002-lrh2-10420",
+    "authors": "Nick Ingraham",
+    "title": "Building to learn",
+    "journal": "Learning Health Systems",
+    "year": 2024,
+    "status": "Published",
+    "doi": "https://doi.org/10.1002/lrh2.10420",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/39036531/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1089-sur-2023-249",
+    "authors": "Nick Ingraham",
+    "title": "Acute Appendicitis Treatment Strategies and Mortality Based on Critical Illness on Admission",
+    "journal": "Surgical infections",
+    "year": 2024,
+    "status": "Published",
+    "doi": "https://doi.org/10.1089/sur.2023.249",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/38285892/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-3233-shti231087",
+    "authors": "Nick Ingraham",
+    "title": "A Symptom-Based Natural Language Processing Surveillance Pipeline for Post-COVID-19 Patients",
+    "journal": "MEDINFO 2023 - The Future is Accessible",
+    "year": 2024,
+    "status": "Published",
+    "doi": "https://doi.org/10.3233/SHTI231087",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/38269931/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1038-s41598-023-46343-1",
+    "authors": "Nick Ingraham",
+    "title": "Development of a proteomic signature associated with severe disease for patients with COVID-19 using data from 5 multicenter, randomized, controlled, and prospective studies",
+    "journal": "Scientific reports",
+    "year": 2023,
+    "status": "Published",
+    "doi": "https://doi.org/10.1038/s41598-023-46343-1",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/37985892/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1016-s1473-3099-23-00299-2",
+    "authors": "Nick Ingraham",
+    "title": "Outpatient treatment of COVID-19 and incidence of post-COVID-19 condition over 10 months (COVID-OUT)",
+    "journal": "The Lancet. Infectious diseases",
+    "year": 2023,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/s1473-3099(23)00299-2",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/37302406/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1097-mlr-0000000000001878",
+    "authors": "Nick Ingraham",
+    "title": "Prediction of In-hospital Mortality Among Intensive Care Unit Patients Using Modified Daily Laboratory-based Acute Physiology Score, Version 2",
+    "journal": "Medical care",
+    "year": 2023,
+    "status": "Published",
+    "doi": "https://doi.org/10.1097/MLR.0000000000001878",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/37308947/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1371-journal-pone-0283326",
+    "authors": "Nick Ingraham",
+    "title": "Predictors of discharge disposition and mortality following hospitalization with SARS-CoV-2 infection",
+    "journal": "PLOS ONE",
+    "year": 2023,
+    "status": "Published",
+    "doi": "https://doi.org/10.1371/journal.pone.0283326",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-jcrc-2022-154203",
+    "authors": "Nick Ingraham",
+    "title": "Proteomic pathways associated with developing severe disease for patients with COVID-19: A biologic analysis of data from two multicenter randomized controlled trials encompassing 13 U.S. hospitals",
+    "journal": "Journal of Critical Care",
+    "year": 2023,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.jcrc.2022.154203",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1097-sla-0000000000005661",
+    "authors": "Nick Ingraham",
+    "title": "Re-Aiming Equity Evaluation in Clinical Decision Support",
+    "journal": "Annals of surgery",
+    "year": 2023,
+    "status": "Published",
+    "doi": "https://doi.org/10.1097/sla.0000000000005661",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/35943199/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1093-cid-ciac772",
+    "authors": "Nick Ingraham",
+    "title": "Impact of Severe Acute Respiratory Syndrome Coronavirus 2 (SARS-CoV-2) Vaccination and Booster on Coronavirus Disease 2019 (COVID-19) Symptom Severity over Time in the COVID-OUT Trial",
+    "journal": "Clinical Infectious Diseases",
+    "year": 2023,
+    "status": "Published",
+    "doi": "https://doi.org/10.1093/cid/ciac772",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/36124697/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1101-2023-01-19-23284796",
+    "authors": "Nick Ingraham",
+    "title": "Prediction of in-hospital mortality among intensive care unit patients using modified daily Laboratory-based Acute Physiology Scores, version 2 (LAPS2)",
+    "journal": "",
+    "year": 2023,
+    "status": "Published",
+    "doi": "https://doi.org/10.1101/2023.01.19.23284796",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-12659-ajcr-941088",
+    "authors": "Nick Ingraham",
+    "title": "Ventilator-Associated Methicillin-Resistant Staphylococcus aureus (MRSA) Pneumonia in a Patient with a Negative MRSA Nasal Swab",
+    "journal": "American Journal of Case Reports",
+    "year": 2023,
+    "status": "Published",
+    "doi": "https://doi.org/10.12659/AJCR.941088",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/37837186/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-apmr-2022-04-009",
+    "authors": "Nick Ingraham",
+    "title": "Predictors of Postacute Sequelae of COVID-19 Development and Rehabilitation",
+    "journal": "Archives of Physical Medicine and Rehabilitation",
+    "year": 2022,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.apmr.2022.04.009",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/35569640/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1056-nejmoa2201662",
+    "authors": "Nick Ingraham",
+    "title": "Randomized Trial of Metformin, Ivermectin, and Fluvoxamine for Covid-19",
+    "journal": "The New England journal of medicine",
+    "year": 2022,
+    "status": "Published",
+    "doi": "https://doi.org/10.1056/NEJMoa2201662",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/36070710/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1148-ryai-210217",
+    "authors": "Nick Ingraham",
+    "title": "Performance of a Chest Radiograph AI Diagnostic Tool for COVID-19: A Prospective Observational Study",
+    "journal": "Radiology: Artificial Intelligence",
+    "year": 2022,
+    "status": "Published",
+    "doi": "https://doi.org/10.1148/ryai.210217",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1093-ofid-ofac066",
+    "authors": "Nick Ingraham",
+    "title": "Vaccination Against SARS-CoV-2 Is Associated With a Lower Viral Load and Likelihood of Systemic Symptoms",
+    "journal": "Open Forum Infectious Diseases",
+    "year": 2022,
+    "status": "Published",
+    "doi": "https://doi.org/10.1093/ofid/ofac066",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/35392460/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1001-jamanetworkopen-2022-2735",
+    "authors": "Nick Ingraham",
+    "title": "Efficacy of Losartan in Hospitalized Patients with COVID-19-Induced Lung Injury",
+    "journal": "JAMA Network Open",
+    "year": 2022,
+    "status": "Published",
+    "doi": "https://doi.org/10.1001/jamanetworkopen.2022.2735",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/35294537/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1177-0885066620982905",
+    "authors": "Nick Ingraham",
+    "title": "Recent Trends in Admission Diagnosis and Related Mortality in the Medically Critically Ill",
+    "journal": "Journal of Intensive Care Medicine",
+    "year": 2022,
+    "status": "Published",
+    "doi": "https://doi.org/10.1177/0885066620982905",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-3390-jcm11030627",
+    "authors": "Nick Ingraham",
+    "title": "Serum Levels of Acylcarnitines and Amino Acids Are Associated with Liberation from Organ Support in Patients with Septic Shock",
+    "journal": "Journal of Clinical Medicine",
+    "year": 2022,
+    "status": "Published",
+    "doi": "https://doi.org/10.3390/jcm11030627",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1371-journal-pone-0262193",
+    "authors": "Nick Ingraham",
+    "title": "A 12-hospital prospective evaluation of a clinical decision support prognostic algorithm based on logistic regression as a form of machine learning to facilitate decision making for patients with suspected COVID-19",
+    "journal": "PloS one",
+    "year": 2022,
+    "status": "Published",
+    "doi": "https://doi.org/10.1371/journal.pone.0262193",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/34986168/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1109-icmla55696-2022-00146",
+    "authors": "Nick Ingraham",
+    "title": "Towards Fairness and Interpretability",
+    "journal": "Proceedings - 21st IEEE International Conference on Machine Learning and Applications, ICMLA 2022",
+    "year": 2022,
+    "status": "Published",
+    "doi": "https://doi.org/10.1109/ICMLA55696.2022.00146",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1089-sur-2020-473",
+    "authors": "Nick Ingraham",
+    "title": "Morbidity and Mortality Trends of Pancreatitis",
+    "journal": "Surgical infections",
+    "year": 2021,
+    "status": "Published",
+    "doi": "https://doi.org/10.1089/sur.2020.473",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/34129395/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1002-ctm2-685",
+    "authors": "Nick Ingraham",
+    "title": "The omicron variant of SARS-CoV-2",
+    "journal": "Clinical and Translational Medicine",
+    "year": 2021,
+    "status": "Published",
+    "doi": "https://doi.org/10.1002/ctm2.685",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/34911167/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1007-s11606-021-06790-w",
+    "authors": "Nick Ingraham",
+    "title": "Racial and Ethnic Disparities in Hospital Admissions from COVID-19: Determining the Impact of Neighborhood Deprivation and Primary Language",
+    "journal": "Journal of General Internal Medicine",
+    "year": 2021,
+    "status": "Published",
+    "doi": "https://doi.org/10.1007/s11606-021-06790-w",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1097-pts-0000000000000916",
+    "authors": "Nick Ingraham",
+    "title": "Responding to COVID-19 Through Interhospital Resource Coordination",
+    "journal": "Journal of Patient Safety",
+    "year": 2021,
+    "status": "Published",
+    "doi": "https://doi.org/10.1097/pts.0000000000000916",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/34569998/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1093-jamiaopen-ooab070",
+    "authors": "Nick Ingraham",
+    "title": "A fast, resource efficient, and reliable rule-based system for COVID-19 symptom identification",
+    "journal": "JAMIA Open",
+    "year": 2021,
+    "status": "Published",
+    "doi": "https://doi.org/10.1093/jamiaopen/ooab070",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-3389-fendo-2021-587801",
+    "authors": "Nick Ingraham",
+    "title": "Metformin and Covid-19",
+    "journal": "Frontiers in Endocrinology",
+    "year": 2021,
+    "status": "Published",
+    "doi": "https://doi.org/10.3389/fendo.2021.587801",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/34367059/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-eclinm-2021-100957",
+    "authors": "Nick Ingraham",
+    "title": "A multi-center phase II randomized clinical trial of losartan on symptomatic outpatients with COVID-19",
+    "journal": "EClinicalMedicine",
+    "year": 2021,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.eclinm.2021.100957",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/34195577/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1002-jmv-26873",
+    "authors": "Nick Ingraham",
+    "title": "Outpatient metformin use is associated with reduced severity of COVID-19 disease in adults with overweight or obesity",
+    "journal": "Journal of Medical Virology",
+    "year": 2021,
+    "status": "Published",
+    "doi": "https://doi.org/10.1002/jmv.26873",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/33580540/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-jpainsymman-2020-09-015",
+    "authors": "Nick Ingraham",
+    "title": "Discordant Cardiopulmonary Resuscitation and Code Status at Death",
+    "journal": "Journal of Pain and Symptom Management",
+    "year": 2021,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.jpainsymman.2020.09.015",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/32949762/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1371-journal-pone-0248956",
+    "authors": "Nick Ingraham",
+    "title": "Characterizing COVID-19 clinical phenotypes and associated comorbidities and complication profiles",
+    "journal": "PLOS ONE",
+    "year": 2021,
+    "status": "Published",
+    "doi": "https://doi.org/10.1371/journal.pone.0248956",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1016-s2666-7568-20-30033-7",
+    "authors": "Nick Ingraham",
+    "title": "Metformin and risk of mortality in patients hospitalised with COVID-19",
+    "journal": "The Lancet Healthy Longevity",
+    "year": 2021,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/S2666-7568(20)30033-7",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/33521772/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1177-2150132721996283",
+    "authors": "Nick Ingraham",
+    "title": "We Should Do More to Offer Evidence-Based Treatment for an Important Modifiable Risk Factor for COVID-19: Obesity",
+    "journal": "Journal of Primary Care & Community Health",
+    "year": 2021,
+    "status": "Published",
+    "doi": "https://doi.org/10.1177/2150132721996283",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1613-jair-1-12631",
+    "authors": "Nick Ingraham",
+    "title": "Nlp methods for extraction of symptoms from unstructured data for use in prognostic covid-19 analytic models",
+    "journal": "Journal of Artificial Intelligence Research",
+    "year": 2021,
+    "status": "Published",
+    "doi": "https://doi.org/10.1613/JAIR.1.12631",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1002-jmv-26728",
+    "authors": "Nick Ingraham",
+    "title": "mTOR inhibition in COVID-19",
+    "journal": "Journal of Medical Virology",
+    "year": 2020,
+    "status": "Published",
+    "doi": "https://doi.org/10.1002/jmv.26728",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/33314219/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1097-ccm-0000000000004524",
+    "authors": "Nick Ingraham",
+    "title": "National Trends and Variation of Functional Status Deterioration in the Medically Critically Ill",
+    "journal": "Critical care medicine",
+    "year": 2020,
+    "status": "Published",
+    "doi": "https://doi.org/10.1097/CCM.0000000000004524",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/32886469/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1101-2020-09-02-20185983",
+    "authors": "Nick Ingraham",
+    "title": "Racial/Ethnic Disparities in Hospital Admissions from COVID-19 and Determining the Impact of Neighborhood Deprivation and Primary Language",
+    "journal": "",
+    "year": 2020,
+    "status": "Published",
+    "doi": "https://doi.org/10.1101/2020.09.02.20185983",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1097-ta-0000000000002768",
+    "authors": "Nick Ingraham",
+    "title": "Epidemiological trends of surgical admissions to the intensive care unit in the United States",
+    "journal": "Journal of Trauma and Acute Care Surgery",
+    "year": 2020,
+    "status": "Published",
+    "doi": "https://doi.org/10.1097/TA.0000000000002768",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/32384370/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1183-13993003-00912-2020",
+    "authors": "Nick Ingraham",
+    "title": "Understanding the renin–angiotensin–aldosterone–SARS-CoV axis: a comprehensive review",
+    "journal": "European Respiratory Journal",
+    "year": 2020,
+    "status": "Published",
+    "doi": "https://doi.org/10.1183/13993003.00912-2020",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1016-s2213-2600-20-30226-5",
+    "authors": "Nick Ingraham",
+    "title": "Immunomodulation in COVID-19",
+    "journal": "The Lancet. Respiratory medicine",
+    "year": 2020,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/S2213-2600(20)30226-5",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/32380023/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1016-s2213-2600-20-30153-3",
+    "authors": "Nick Ingraham",
+    "title": "Antihypertensive drugs and risk of COVID-19?",
+    "journal": "The Lancet Respiratory Medicine",
+    "year": 2020,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/S2213-2600(20)30153-3",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/32222166/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1186-s13054-020-02894-7",
+    "authors": "Nick Ingraham",
+    "title": "Shining a light on the evidence for hydroxychloroquine in SARS-CoV-2",
+    "journal": "Critical Care",
+    "year": 2020,
+    "status": "Published",
+    "doi": "https://doi.org/10.1186/s13054-020-02894-7",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/32345336/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1097-cce-0000000000000108",
+    "authors": "Nick Ingraham",
+    "title": "Fact Versus Science Fiction",
+    "journal": "Critical Care Explorations",
+    "year": 2020,
+    "status": "Published",
+    "doi": "https://doi.org/10.1097/CCE.0000000000000108",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/32426750/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1089-sur-2019-192",
+    "authors": "Nick Ingraham",
+    "title": "Pre- and peri-operative factors associated with chronic critical illness in liver transplant recipients",
+    "journal": "Surgical infections",
+    "year": 2020,
+    "status": "Published",
+    "doi": "https://doi.org/10.1089/sur.2019.192",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/31618109/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1016-j-resuscitation-2019-11-020",
+    "authors": "Nick Ingraham",
+    "title": "A case series of patients who were do not resuscitate but underwent cardiopulmonary resuscitation",
+    "journal": "Resuscitation",
+    "year": 2020,
+    "status": "Published",
+    "doi": "https://doi.org/10.1016/j.resuscitation.2019.11.020",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1097-qai-0000000000001797",
+    "authors": "Nick Ingraham",
+    "title": "Smoking and accelerated lung function decline in HIV-positive individuals: A secondary analysis of the START pulmonary substudy",
+    "journal": "Journal of Acquired Immune Deficiency Syndromes",
+    "year": 2018,
+    "status": "Published",
+    "doi": "https://doi.org/10.1097/QAI.0000000000001797",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1155-2017-8682354",
+    "authors": "Nick Ingraham",
+    "title": "Prosthetic Joint Infection due to Mycobacterium avium-intracellulare in a Patient with Rheumatoid Arthritis: A Case Report and Review of the Literature",
+    "journal": "Case Reports in Infectious Diseases",
+    "year": 2017,
+    "status": "Published",
+    "doi": "https://doi.org/10.1155/2017/8682354",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-1155-2012-597214",
+    "authors": "Nick Ingraham",
+    "title": "Levels of Ca(V)1.2 L-Type Ca(2+) Channels Peak in the First Two Weeks in Rat Hippocampus Whereas Ca(V)1.3 Channels Steadily Increase through Development",
+    "journal": "Journal of signal transduction",
+    "year": 2012,
+    "status": "Published",
+    "doi": "https://doi.org/10.1155/2012/597214",
+    "pubmed": "https://pubmed.ncbi.nlm.nih.gov/23097697/",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  },
+  {
+    "id": "gen-10-20944-preprints202409-1518-v1",
+    "authors": "Nick Ingraham",
+    "title": "Comparison of Large Language Models Versus Traditional Information Extraction Methods for Real World Evidence of Patient Symptomatology in Acute and Post-Acute Sequelae of SARS-CoV-2",
+    "journal": "",
+    "year": 0,
+    "status": "Published",
+    "doi": "https://doi.org/10.20944/preprints202409.1518.v1",
+    "topics": [],
+    "authorSlugs": [
+      "nick-ingraham"
+    ]
+  }
+]

@@ -13,6 +13,7 @@ export const directors: Director[] = [
     bio: 'Physician-scientist focused on provider variation, lung-protective ventilation, and clinical decision-making in the ICU. Founding member of the CLIF Consortium.',
     photoUrl: 'https://med.umn.edu/sites/med.umn.edu/files/styles/bio_photo/public/web_profiles/2023-06/Nick%20Picture_2022.jpg?itok=VEDKgpUN',
     scholarId: 'ZKMVVHkAAAAJ', // Scholar stats (2026-03-24): citations 2626, h-index 24, i10-index 39
+    orcidId: '0000-0002-0292-0594', // #357 — ORCID primary source for publications
   },
   {
     name: 'Nathan Mesfin',

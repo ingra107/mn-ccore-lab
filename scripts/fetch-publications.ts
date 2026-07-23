@@ -30,6 +30,21 @@ import {
   facultyCollaborators,
   researchTeam,
 } from '../src/data/team'
+import { dedupKeys } from '../src/data/mergePublications'
+
+/**
+ * A work is a real publication (vs a conference-abstract stub or a
+ * correction/erratum) worth listing. ORCID feeds include bare abstract numbers
+ * as "titles" (e.g. "1609") and Author Correction / Erratum entries — neither
+ * belongs on a public publications list.
+ */
+function isRealPublication(title: string): boolean {
+  const t = title.trim()
+  if (t.length < 6) return false
+  if (/^\d+$/.test(t)) return false // conference abstract id, not a title
+  if (/^(correction|author correction|erratum|corrigendum)\b/i.test(t)) return false
+  return true
+}
 
 interface FetchMember {
   name: string
@@ -86,7 +101,7 @@ async function fetchOrcid(member: FetchMember): Promise<Publication[]> {
     const summary = group['work-summary']?.[0]
     if (!summary) continue
     const title = summary.title?.title?.value?.trim()
-    if (!title) continue
+    if (!title || !isRealPublication(title)) continue
     const year = numOrUndef(summary['publication-date']?.year?.value)
     const journal = summary['journal-title']?.value?.trim() || ''
     let doi: string | undefined
@@ -135,7 +150,7 @@ async function fetchScholar(member: FetchMember): Promise<Publication[]> {
   const rows = html.split('<tr class="gsc_a_tr">').slice(1)
   for (const row of rows) {
     const title = decodeEntities(matchGroup(row, /class="gsc_a_at"[^>]*>([^<]+)</))
-    if (!title) continue
+    if (!title || !isRealPublication(title)) continue
     const grays = [...row.matchAll(/class="gs_gray">([^<]*)</g)].map((m) => decodeEntities(m[1]))
     const authors = grays[0] || member.authorName || member.name
     const venue = grays[1] || ''
@@ -187,12 +202,14 @@ async function main() {
     await sleep(DELAY_MS)
   }
 
-  // Dedup within the generated set (stable, keep first).
+  // Dedup within the generated set (stable, keep first) — same multi-key logic
+  // mergePublications uses, so a title dup is caught even when only one copy
+  // carries a DOI.
   const seen = new Set<string>()
   const deduped = all.filter((p) => {
-    const key = (p.doi || p.pubmed || `${p.title}|${p.year}`).toLowerCase()
-    if (seen.has(key)) return false
-    seen.add(key)
+    const keys = dedupKeys(p)
+    if (keys.some((k) => seen.has(k))) return false
+    for (const k of keys) seen.add(k)
     return true
   })
 
